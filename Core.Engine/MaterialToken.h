@@ -1,0 +1,41 @@
+#pragma once
+
+#include "Graphics.h"
+
+#include "Core/Allocation.h"
+#include "Core/String.h"
+
+namespace Core {
+
+template <
+    typename        _Tag,
+    typename        _Char,
+    CaseSensitive   _CaseSensitive,
+    typename        _TokenTraits,
+    typename        _Allocator 
+>
+class Token;
+
+namespace Engine {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+class MaterialTokenTraits {
+public:
+    const std::locale& Locale() const { return std::locale::classic(); }
+    bool IsAllowedChar(char ch) const;
+};
+//----------------------------------------------------------------------------
+template <typename _Tag>
+using MaterialToken = Core::Token<
+    _Tag,
+    char,
+    CaseSensitive::False,
+    MaterialTokenTraits,
+    ALLOCATOR(Material, char)
+>;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace Engine
+} //!namespace Core

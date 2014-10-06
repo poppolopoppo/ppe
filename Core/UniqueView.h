@@ -1,0 +1,91 @@
+#pragma once
+
+#include "Core.h"
+#include "Alloca.h"
+#include "MemoryView.h"
+
+namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, typename _Deleter = checked_deleter<T> >
+class UniqueView : public MemoryView<T> {
+public:
+    typedef MemoryView<T> base_type;
+
+    using typename base_type::value_type;
+    using typename base_type::pointer;
+    using typename base_type::const_pointer;
+    using typename base_type::reference;
+    using typename base_type::const_reference;
+
+    using typename base_type::size_type;
+    using typename base_type::difference_type;
+
+    using typename base_type::iterator;
+    using typename base_type::iterator_category;
+
+    UniqueView();
+    ~UniqueView();
+
+    explicit UniqueView(const MemoryView<T>& other);
+    UniqueView(pointer storage, size_type capacity);
+
+    UniqueView(UniqueView&& rvalue);
+    UniqueView& operator =(UniqueView&& rvalue);
+
+    UniqueView(const UniqueView& other) = delete;
+    UniqueView& operator =(const UniqueView& other) = delete;
+};
+//----------------------------------------------------------------------------
+template <typename T, typename _Deleter >
+UniqueView<T, _Deleter>::UniqueView() {}
+//----------------------------------------------------------------------------
+template <typename T, typename _Deleter >
+UniqueView<T, _Deleter>::UniqueView(const MemoryView<T>& other)
+:   base_type(other) {}
+//----------------------------------------------------------------------------
+template <typename T, typename _Deleter >
+UniqueView<T, _Deleter>::UniqueView(pointer storage, size_type capacity)
+:   base_type(storage, capacity) {}
+//----------------------------------------------------------------------------
+template <typename T, typename _Deleter >
+UniqueView<T, _Deleter>::~UniqueView() {
+    if (_storage)
+        _Deleter()(_storage);
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Deleter >
+UniqueView<T, _Deleter>::UniqueView(UniqueView&& rvalue)
+:   base_type(std::move(rvalue)) {}
+//----------------------------------------------------------------------------
+template <typename T, typename _Deleter >
+auto UniqueView<T, _Deleter>::operator =(UniqueView&& rvalue) -> UniqueView& {
+    if (_storage)
+        _Deleter()(_storage);
+
+    base_type::operator =(std::move(rvalue));
+    return (*this);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T>
+using AllocaView = UniqueView<T, Core::AllocaDeleter<T> >;
+//----------------------------------------------------------------------------
+#define MALLOCA_VIEW(T, _COUNT) \
+    Core::AllocaView<T>( Core::TypedAlloca<T>(_COUNT), _COUNT )
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T>
+using UniqueArray = UniqueView<T, checked_deleter<T[]> >;
+//----------------------------------------------------------------------------
+template <typename T>
+inline UniqueArray<T> NewArray(size_t count) {
+    return UniqueArray<T>{ new T[count], count };
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace Core

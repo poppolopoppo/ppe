@@ -1,0 +1,69 @@
+#pragma once
+
+#include "Core/Core.h"
+
+#include <iosfwd>
+
+namespace Core {
+namespace Graphics {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+enum class WindowMessage : unsigned int {
+    Null                = 0x0000,
+    Create              = 0x0001,
+    Destroy             = 0x0002,
+    Move                = 0x0003,
+    Size                = 0x0005,
+    Activate            = 0x0006,
+    Focus               = 0x0007,
+    NoFocus             = 0x0008,
+    Enable              = 0x000A,
+    Paint               = 0x000F,
+    Close               = 0x0010,
+    Quit                = 0x0012,
+    Show                = 0x0018,
+    KeyDown             = 0x0100,
+    KeyUp               = 0x0101,
+    SysKeyDown          = 0x0104,
+    SysKeyUp            = 0x0105,
+    MouseMove           = 0x0200,
+    LButtonDown         = 0x0201,
+    LButtonUp           = 0x0202,
+    LButtonDblClick     = 0x0203,
+    RButtonDown         = 0x0204,
+    RButtonUp           = 0x0205,
+    RButtonDblClick     = 0x0206,
+    MButtonDown         = 0x0207,
+    MButtonUp           = 0x0208,
+    MButtonDblClick     = 0x0209,
+    MouseWheel          = 0x020A,
+    MouseHover          = 0x02A1,
+    MouseLeave          = 0x02A3,
+};
+//----------------------------------------------------------------------------
+typedef size_t  MessageWParam;
+#ifdef ARCH_X64
+typedef i64     MessageLParam;
+typedef i64     MessageResult;
+#else
+typedef long    MessageLParam;
+typedef long    MessageResult;
+#endif
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+const char *WindowMessageToCStr(WindowMessage msg);
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits>
+std::basic_ostream<_Char, _Traits>& operator <<(
+    std::basic_ostream<_Char, _Traits>& oss,
+    WindowMessage msg) {
+    const char *cstr = WindowMessageToCStr(msg);
+    return (cstr ? oss << cstr : oss << "0x" << std::hex << (unsigned int)msg);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace Graphics
+} //!namespace Core

@@ -1,0 +1,444 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Fichiers sources">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Fichiers d%27en-tête">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Fichiers de ressources">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Camera">
+      <UniqueIdentifier>{a608b6ad-e3fd-4140-8446-5eea6e0be69d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Effect">
+      <UniqueIdentifier>{16322114-cf08-4ff1-9995-7273ee02e108}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Mesh">
+      <UniqueIdentifier>{390d1a7a-4512-4526-b66f-ba0df60110e7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scene">
+      <UniqueIdentifier>{078ce92d-f3ce-4b85-bc39-463349f0f399}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Texture">
+      <UniqueIdentifier>{7d36d9ed-8ff5-4807-bd98-7a0e02fee130}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="World">
+      <UniqueIdentifier>{970ddf37-30fc-4e98-a80a-ed14b6707721}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Material">
+      <UniqueIdentifier>{b94ceefd-4a27-4dc9-ac50-813d0a5217e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Material\Parameters">
+      <UniqueIdentifier>{62307531-5715-4df3-b5fc-8c5696d2523f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Render">
+      <UniqueIdentifier>{ff6ffb3c-80ab-4915-a75e-07f34de6048c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Render\Layers">
+      <UniqueIdentifier>{1e7bc04a-859a-47f9-b934-72fa041e51fc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Lighting">
+      <UniqueIdentifier>{d62b0658-2fc1-44aa-ac44-9077038ba28b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Mesh\Geometry">
+      <UniqueIdentifier>{fc50a2ef-f3c5-4e44-b619-ba6bb8d1c8a1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Service">
+      <UniqueIdentifier>{f49ff206-0b0b-4012-aedf-ec937eb642c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Service\Services">
+      <UniqueIdentifier>{696018bf-f5d6-4432-b72f-8d9caeb2a266}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Render\Surfaces">
+      <UniqueIdentifier>{05339bde-09a6-4673-a8fb-d639d7c8ead1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Texture\Group">
+      <UniqueIdentifier>{65aa3ef1-10a0-4c73-8093-6cee34c52411}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraModel.h">
+      <Filter>Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraController.h">
+      <Filter>Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="Effect.h">
+      <Filter>Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="EffectDescriptor.h">
+      <Filter>Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="EffectProgram.h">
+      <Filter>Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="Material.h">
+      <Filter>Material</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialDatabase.h">
+      <Filter>Material</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialVariability.h">
+      <Filter>Material</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialParameterMemoizer.h">
+      <Filter>Material\Parameters</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialParameterBlock.h">
+      <Filter>Material\Parameters</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshLoader.h">
+      <Filter>Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshLoader-inl.h">
+      <Filter>Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureLoader.h">
+      <Filter>Texture</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureLoader-inl.h">
+      <Filter>Texture</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="World.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldTime.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialParameterCamera.h">
+      <Filter>Material\Parameters</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialParameterMemoizer-inl.h">
+      <Filter>Material\Parameters</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialParameterTime.h">
+      <Filter>Material\Parameters</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialParameterRandom.h">
+      <Filter>Material\Parameters</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialParameterTexture.h">
+      <Filter>Material\Parameters</Filter>
+    </ClInclude>
+    <ClInclude Include="LightingEnvironment.h">
+      <Filter>Lighting</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialParameterLighting.h">
+      <Filter>Material\Parameters</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialParameterMath.h">
+      <Filter>Material\Parameters</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialParameterMath-inl.h">
+      <Filter>Material\Parameters</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderState.h">
+      <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderTree.h">
+      <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderLayerSetRenderTarget.h">
+      <Filter>Render\Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderLayerClear.h">
+      <Filter>Render\Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="AbstractRenderLayer.h">
+      <Filter>Render\Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="AbstractMaterialParameter.h">
+      <Filter>Material\Parameters</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderBatch.h">
+      <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialEffect.h">
+      <Filter>Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="EffectConstantBuffer.h">
+      <Filter>Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialContext.h">
+      <Filter>Material</Filter>
+    </ClInclude>
+    <ClInclude Include="GenericVertex.h">
+      <Filter>Mesh\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="GenericVertexExport.h">
+      <Filter>Mesh\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="GenericVertexOptimizer.h">
+      <Filter>Mesh\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="GeometricPrimitives.h">
+      <Filter>Mesh\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderLayer.h">
+      <Filter>Render\Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderLayerDrawRect.h">
+      <Filter>Render\Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="DeviceEncapsulatorService.h">
+      <Filter>Service\Services</Filter>
+    </ClInclude>
+    <ClInclude Include="IService.h">
+      <Filter>Service</Filter>
+    </ClInclude>
+    <ClInclude Include="IServiceProvider.h">
+      <Filter>Service</Filter>
+    </ClInclude>
+    <ClInclude Include="ServiceContainer.h">
+      <Filter>Service</Filter>
+    </ClInclude>
+    <ClInclude Include="ISceneObserver.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="AbstractRenderSurface.h">
+      <Filter>Render\Surfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSurface.h">
+      <Filter>Render\Surfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="IWorldObserver.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="Service_fwd.h">
+      <Filter>Service</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderCommand.h">
+      <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureCache.h">
+      <Filter>Texture</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureCacheService.h">
+      <Filter>Service\Services</Filter>
+    </ClInclude>
+    <ClInclude Include="EffectCompilerService.h">
+      <Filter>Service\Services</Filter>
+    </ClInclude>
+    <ClInclude Include="EffectCompiler.h">
+      <Filter>Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderContext.h">
+      <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSurfaceRelative.h">
+      <Filter>Render\Surfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSurfaceProxy.h">
+      <Filter>Render\Surfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSurfaceBackBuffer.h">
+      <Filter>Render\Surfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSurfaceManager.h">
+      <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSurfaceService.h">
+      <Filter>Service\Services</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="CameraController.cpp">
+      <Filter>Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="CameraModel.cpp">
+      <Filter>Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="Effect.cpp">
+      <Filter>Effect</Filter>
+    </ClCompile>
+    <ClCompile Include="EffectDescriptor.cpp">
+      <Filter>Effect</Filter>
+    </ClCompile>
+    <ClCompile Include="EffectProgram.cpp">
+      <Filter>Effect</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>Material</Filter>
+    </ClCompile>
+    <ClCompile Include="MaterialDatabase.cpp">
+      <Filter>Material</Filter>
+    </ClCompile>
+    <ClCompile Include="MaterialVariability.cpp">
+      <Filter>Material</Filter>
+    </ClCompile>
+    <ClCompile Include="MaterialParameterBlock.cpp">
+      <Filter>Material\Parameters</Filter>
+    </ClCompile>
+    <ClCompile Include="MaterialParameterMemoizer.cpp">
+      <Filter>Material\Parameters</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshLoader.cpp">
+      <Filter>Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshLoader-PLY.cpp">
+      <Filter>Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureLoader.cpp">
+      <Filter>Texture</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureLoader-DDS.cpp">
+      <Filter>Texture</Filter>
+    </ClCompile>
+    <ClCompile Include="World.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldTime.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
+    <ClCompile Include="MaterialParameterCamera.cpp">
+      <Filter>Material\Parameters</Filter>
+    </ClCompile>
+    <ClCompile Include="MaterialParameterTime.cpp">
+      <Filter>Material\Parameters</Filter>
+    </ClCompile>
+    <ClCompile Include="MaterialParameterRandom.cpp">
+      <Filter>Material\Parameters</Filter>
+    </ClCompile>
+    <ClCompile Include="MaterialParameterTexture.cpp">
+      <Filter>Material\Parameters</Filter>
+    </ClCompile>
+    <ClCompile Include="LightingEnvironment.cpp">
+      <Filter>Lighting</Filter>
+    </ClCompile>
+    <ClCompile Include="MaterialParameterLighting.cpp">
+      <Filter>Material\Parameters</Filter>
+    </ClCompile>
+    <ClCompile Include="MaterialParameterMath.cpp">
+      <Filter>Material\Parameters</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderState.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderTree.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderLayerSetRenderTarget.cpp">
+      <Filter>Render\Layers</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderLayerClear.cpp">
+      <Filter>Render\Layers</Filter>
+    </ClCompile>
+    <ClCompile Include="AbstractRenderLayer.cpp">
+      <Filter>Render\Layers</Filter>
+    </ClCompile>
+    <ClCompile Include="AbstractMaterialParameter.cpp">
+      <Filter>Material\Parameters</Filter>
+    </ClCompile>
+    <ClCompile Include="MaterialEffect.cpp">
+      <Filter>Effect</Filter>
+    </ClCompile>
+    <ClCompile Include="EffectConstantBuffer.cpp">
+      <Filter>Effect</Filter>
+    </ClCompile>
+    <ClCompile Include="GenericVertex.cpp">
+      <Filter>Mesh\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="GenericVertexExport.cpp">
+      <Filter>Mesh\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="GenericVertexOptimizer.cpp">
+      <Filter>Mesh\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="GeometricPrimitives.cpp">
+      <Filter>Mesh\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderBatch.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderLayer.cpp">
+      <Filter>Render\Layers</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderLayerDrawRect.cpp">
+      <Filter>Render\Layers</Filter>
+    </ClCompile>
+    <ClCompile Include="DeviceEncapsulatorService.cpp">
+      <Filter>Service\Services</Filter>
+    </ClCompile>
+    <ClCompile Include="ServiceContainer.cpp">
+      <Filter>Service</Filter>
+    </ClCompile>
+    <ClCompile Include="IService.cpp">
+      <Filter>Service</Filter>
+    </ClCompile>
+    <ClCompile Include="AbstractRenderSurface.cpp">
+      <Filter>Render\Surfaces</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSurface.cpp">
+      <Filter>Render\Surfaces</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderCommand.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureCache.cpp">
+      <Filter>Texture</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureCacheService.cpp">
+      <Filter>Service\Services</Filter>
+    </ClCompile>
+    <ClCompile Include="EffectCompilerService.cpp">
+      <Filter>Service\Services</Filter>
+    </ClCompile>
+    <ClCompile Include="EffectCompiler.cpp">
+      <Filter>Effect</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderContext.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSurfaceRelative.cpp">
+      <Filter>Render\Surfaces</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSurfaceProxy.cpp">
+      <Filter>Render\Surfaces</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSurfaceBackBuffer.cpp">
+      <Filter>Render\Surfaces</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSurfaceManager.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSurfaceService.cpp">
+      <Filter>Service\Services</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

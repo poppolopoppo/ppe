@@ -1,0 +1,179 @@
+#include "stdafx.h"
+
+#include "Heap.h"
+
+#include <windows.h>
+#include <HeapApi.h>
+
+namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+static void* CreateHeap_(bool locked, size_t initialSize = 0, size_t maximumSize = 0) {
+    const DWORD heapOpts =
+        HEAP_GENERATE_EXCEPTIONS /* Throw exceptions when corupted or out of memory */
+        ;
+
+    HANDLE const handle = HeapCreate(heapOpts, initialSize, maximumSize);
+    if (!handle)
+        throw std::bad_alloc();
+
+#if _DEBUG
+    // Enable heap terminate-on-corruption.
+    // A correct application can continue to run even if this call fails,
+    // so it is safe to ignore the return value and call the function as follows:
+    // (void)HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
+    HeapSetInformation(handle, HeapEnableTerminationOnCorruption, NULL, 0);
+#endif
+
+    // Enable the low-fragmenation heap (LFH). Starting with Windows Vista,
+    // the LFH is enabled by default but this call does not cause an error.
+    ULONG  HeapFragValue = 2; // Low fragmentation heap
+    HeapSetInformation(handle, HeapCompatibilityInformation, &HeapFragValue, sizeof(HeapFragValue));
+
+    return handle;
+}
+//----------------------------------------------------------------------------
+static void ValidateHeap_(void* handle, void* ptr = nullptr) {
+#ifdef USE_HEAP_VALIDATION
+    Assert(handle);
+    if (!HeapValidate(handle, 0, ptr))
+        throw std::bad_alloc();
+#endif
+}
+//----------------------------------------------------------------------------
+static void DestroyHeap_(void* handle) {
+    ValidateHeap_(handle);
+    if (!HeapDestroy(handle))
+        throw std::bad_alloc();
+}
+//----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+Heap::Heap(const char* nameForDebug, bool locked, size_t maximumSize/* = 0 */)
+:   _handle(nullptr)
+#ifdef USE_MEMORY_DOMAINS
+,   _trackingData(nameForDebug)
+#endif
+    {
+    _handle = CreateHeap_(locked, maximumSize, maximumSize);
+}
+//----------------------------------------------------------------------------
+Heap::Heap(current_process_t)
+:   _handle(nullptr)
+#ifdef USE_MEMORY_DOMAINS
+,   _trackingData("Heap__current_process_t")
+#endif
+    {
+    _handle = GetProcessHeap();
+    Assert(_handle);
+}
+//----------------------------------------------------------------------------
+Heap::Heap(Heap&& rvalue)
+:   _handle(nullptr) {
+    std::swap(rvalue._handle, _handle);
+}
+//----------------------------------------------------------------------------
+Heap::~Heap() {
+    if (nullptr != _handle && GetProcessHeap() != _handle)
+        DestroyHeap_(_handle);
+}
+//----------------------------------------------------------------------------
+void* Heap::malloc(size_t size, MemoryTrackingData& trackingData) {
+#ifdef USE_MEMORY_DOMAINS
+    _trackingData.Allocate(1, size);
+    trackingData.Allocate(1, size);
+#endif
+    return HeapAlloc(_handle, 0, size);
+}
+//----------------------------------------------------------------------------
+void Heap::free(void *ptr, MemoryTrackingData& trackingData) {
+#ifdef USE_MEMORY_DOMAINS
+    const size_t blockCount = ptr ? 1 : 0;
+    const size_t size = HeapSize(_handle, 0, ptr);
+    _trackingData.Deallocate(blockCount, size);
+    trackingData.Deallocate(blockCount, size);
+#endif
+    HeapFree(_handle, 0, ptr);
+}
+//----------------------------------------------------------------------------
+void* Heap::calloc(size_t nmemb, size_t size, MemoryTrackingData& trackingData) {
+#ifdef USE_MEMORY_DOMAINS
+    _trackingData.Allocate(nmemb, size);
+    trackingData.Allocate(nmemb, size);
+#endif
+    return HeapAlloc(_handle, HEAP_ZERO_MEMORY, nmemb * size);
+}
+//----------------------------------------------------------------------------
+void* Heap::realloc(void *ptr, size_t size, MemoryTrackingData& trackingData) {
+#ifdef USE_MEMORY_DOMAINS
+    const size_t blockCount = ptr ? 1 : 0;
+    const size_t oldSize = HeapSize(_handle, 0, ptr);
+    _trackingData.Deallocate(blockCount, oldSize);
+    trackingData.Deallocate(blockCount, oldSize);
+    _trackingData.Allocate(1, size);
+    trackingData.Allocate(1, size);
+#endif
+    return HeapReAlloc(_handle, 0, ptr, size);
+}
+//----------------------------------------------------------------------------
+void* Heap::aligned_malloc(size_t size, size_t alignment, MemoryTrackingData& trackingData) {
+#ifdef USE_MEMORY_DOMAINS
+    _trackingData.Allocate(1, size + alignment);
+    trackingData.Allocate(1, size + alignment);
+#endif
+    void* const ptr = HeapAlloc(_handle, 0, size + alignment);
+    void** const aligned = reinterpret_cast<void**>(((size_t)ptr + alignment) & (~(alignment - 1)));
+    Assert((size_t)aligned - (size_t)ptr >= sizeof(size_t));
+    aligned[-1] = ptr;
+    return aligned;
+}
+//----------------------------------------------------------------------------
+void Heap::aligned_free(void *ptr, MemoryTrackingData& trackingData) {
+    void** const aligned = reinterpret_cast<void**>(ptr);
+    void* const block = aligned[-1];
+#ifdef USE_MEMORY_DOMAINS
+    const size_t blockCount = block ? 1 : 0;
+    const size_t size = HeapSize(_handle, 0, block);
+    _trackingData.Deallocate(blockCount, size);
+    trackingData.Deallocate(blockCount, size);
+#endif
+    HeapFree(_handle, 0, block);
+}
+//----------------------------------------------------------------------------
+void* Heap::aligned_calloc(size_t nmemb, size_t size, size_t alignment, MemoryTrackingData& trackingData) {
+#ifdef USE_MEMORY_DOMAINS
+    _trackingData.Allocate(1, size * nmemb + alignment);
+    trackingData.Allocate(1, size * nmemb + alignment);
+#endif
+    void* const ptr = HeapAlloc(_handle, HEAP_ZERO_MEMORY, size * nmemb + alignment);
+    void** const aligned = reinterpret_cast<void**>(((size_t)ptr + alignment) & (~(alignment - 1)));
+    Assert((size_t)aligned - (size_t)ptr >= sizeof(size_t));
+    aligned[-1] = ptr;
+    return aligned;
+}
+//----------------------------------------------------------------------------
+void* Heap::aligned_realloc(void *ptr, size_t size, size_t alignment, MemoryTrackingData& trackingData) {
+    void** aligned = reinterpret_cast<void**>(ptr);
+    void* const block = aligned[-1];
+#ifdef USE_MEMORY_DOMAINS
+    const size_t blockCount = block ? 1 : 0;
+    const size_t oldSize = HeapSize(_handle, 0, block);
+    _trackingData.Deallocate(blockCount, oldSize);
+    trackingData.Deallocate(blockCount, oldSize);
+    _trackingData.Allocate(1, size);
+    trackingData.Allocate(1, size);
+#endif
+    void* const new_ptr = HeapReAlloc(_handle, 0, block, size + alignment);
+    aligned = reinterpret_cast<void**>(((size_t)new_ptr + alignment) & (~(alignment - 1)));
+    aligned[-1] = new_ptr;
+    return new_ptr;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace Core

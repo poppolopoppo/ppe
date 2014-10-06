@@ -1,0 +1,18 @@
+// stdafx.h : fichier Include pour les fichiers Include système standard,
+// ou les fichiers Include spécifiques aux projets qui sont utilisés fréquemment,
+// et sont rarement modifiés
+//
+
+#pragma once
+
+#include "targetver.h"
+
+#include "Core/stdafx.h"
+#include "Core.Engine/stdafx.h"
+#include "Core.Graphics/stdafx.h"
+
+#include "Core/Core.h"
+#include "Core.Engine/Engine.h"
+#include "Core.Graphics/Graphics.h"
+
+#include "Core/Timeline.h"

@@ -1,0 +1,1038 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Allocators">
+      <UniqueIdentifier>{188a1567-83bb-46aa-8035-775495dd2765}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Memory">
+      <UniqueIdentifier>{7ffb3ce8-e8fe-403e-a336-d476b284da84}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Diagnostics">
+      <UniqueIdentifier>{cf05e6be-82bd-4600-9dd8-3c335c08df2e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="IO">
+      <UniqueIdentifier>{e1cdbf80-383f-42aa-8547-cd6227c76488}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Threads">
+      <UniqueIdentifier>{6176723d-a401-4168-b482-566bbc733393}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Meta">
+      <UniqueIdentifier>{008dd5f0-fab2-46ab-bc2a-b4e41b473435}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Containers">
+      <UniqueIdentifier>{c563c2a5-2d2f-461e-8d4d-f38da016b939}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="IO\FileSystem">
+      <UniqueIdentifier>{49e53964-7de9-4ba8-a6f6-790b54f0f554}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="IO\VirtualFileSystem">
+      <UniqueIdentifier>{49e442e4-bd48-4a06-ae56-acb2331b6c63}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Lexer">
+      <UniqueIdentifier>{796c5d20-97b8-49a3-9eea-24d28c5d969f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Parser">
+      <UniqueIdentifier>{247269c7-fbcc-41e4-be16-3a2d2a17d5e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Serialization">
+      <UniqueIdentifier>{72d7f64d-9c09-4c1a-8393-7be66aaffd4d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RTTI">
+      <UniqueIdentifier>{84e2d078-3e15-4b81-a306-b9d4ac8e828a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Maths">
+      <UniqueIdentifier>{e6e4ff6e-23de-4408-84a3-68bc06295148}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Color">
+      <UniqueIdentifier>{43e03e79-5152-4060-8adf-eee2e6579135}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Time">
+      <UniqueIdentifier>{ab03a6f7-32cd-43e6-bceb-cd72fbcb6280}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Maths\Geometry">
+      <UniqueIdentifier>{a5e77ea4-da6a-425f-8258-58579a5046e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Maths\Transform">
+      <UniqueIdentifier>{f32d9436-38a3-4beb-820e-8d73c462247b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Maths\Packing">
+      <UniqueIdentifier>{21d14a75-62a0-46a7-966e-13338fbdfac2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Maths\SphericalHarmonics">
+      <UniqueIdentifier>{edb0eb2b-614b-43c8-903c-0e7f20f69dbb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RTTI\Atom">
+      <UniqueIdentifier>{03fe961d-6fae-40c0-8818-c56a625bfbeb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RTTI\Class">
+      <UniqueIdentifier>{d3dd6477-0479-482a-9add-2e2f9bf176f7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RTTI\Object">
+      <UniqueIdentifier>{76a4a977-0f7c-4f91-8aa6-a779ad9a5a85}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RTTI\Property">
+      <UniqueIdentifier>{7845a686-4bbf-4ee8-8c65-b14e7ae63f70}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RTTI\Type">
+      <UniqueIdentifier>{850886a9-d07d-4854-8874-be137bd2b907}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Threads\Task">
+      <UniqueIdentifier>{ecaf5c81-460a-428b-8b7c-fe05d6ff315b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AllocatorBase.h">
+      <Filter>Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="Core.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TrackingAllocator.h">
+      <Filter>Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="MemoryTracking.h">
+      <Filter>Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="MemoryDomain.h">
+      <Filter>Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="MemoryDomain.Definitions-inl.h">
+      <Filter>Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="MemoryView.h">
+      <Filter>Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Mallocator.h">
+      <Filter>Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="StackAllocator.h">
+      <Filter>Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="MemoryStack.h">
+      <Filter>Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Callstack.h">
+      <Filter>Diagnostics</Filter>
+    </ClInclude>
+    <ClInclude Include="Allocation.h">
+      <Filter>Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="DecodedCallstack.h">
+      <Filter>Diagnostics</Filter>
+    </ClInclude>
+    <ClInclude Include="String.h">
+      <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="String-inl.h">
+      <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="Malloc.h">
+      <Filter>Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="Heap.h">
+      <Filter>Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="CrtDebug.h">
+      <Filter>Diagnostics</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger.h">
+      <Filter>Diagnostics</Filter>
+    </ClInclude>
+    <ClInclude Include="AlignedStorage.h">
+      <Filter>Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="HeapAllocator.h">
+      <Filter>Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="Regexp.h">
+      <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="Stream.h">
+      <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="Stream-inl.h">
+      <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="Singleton.h">
+      <Filter>Meta</Filter>
+    </ClInclude>
+    <ClInclude Include="TypeTraits.h">
+      <Filter>Meta</Filter>
+    </ClInclude>
+    <ClInclude Include="Cast.h">
+      <Filter>Meta</Filter>
+    </ClInclude>
+    <ClInclude Include="Alignment.h">
+      <Filter>Meta</Filter>
+    </ClInclude>
+    <ClInclude Include="ThreadLocalStorage.h">
+      <Filter>Threads</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="HashMap.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="Pair.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="Tuple.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="Delete.h">
+      <Filter>Meta</Filter>
+    </ClInclude>
+    <ClInclude Include="Alloca.h">
+      <Filter>Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="ThreadContext.h">
+      <Filter>Threads</Filter>
+    </ClInclude>
+    <ClInclude Include="ThreadLocalSingleton.h">
+      <Filter>Threads</Filter>
+    </ClInclude>
+    <ClInclude Include="BitField.h">
+      <Filter>Meta</Filter>
+    </ClInclude>
+    <ClInclude Include="PointerWFlags.h">
+      <Filter>Meta</Filter>
+    </ClInclude>
+    <ClInclude Include="UniqueView.h">
+      <Filter>Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="ThreadResource.h">
+      <Filter>Meta</Filter>
+    </ClInclude>
+    <ClInclude Include="RefPtr.h">
+      <Filter>Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="ThreadLocalAllocator.h">
+      <Filter>Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="ThreadLocalHeap.h">
+      <Filter>Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="RefPtr-inl.h">
+      <Filter>Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger-inl.h">
+      <Filter>Diagnostics</Filter>
+    </ClInclude>
+    <ClInclude Include="Token.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="Token-inl.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="HashSet.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystemProperties.h">
+      <Filter>IO\FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="Extname.h">
+      <Filter>IO\FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystem.h">
+      <Filter>IO\FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="BasenameNoExt.h">
+      <Filter>IO\FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="Basename.h">
+      <Filter>IO\FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="MountingPoint.h">
+      <Filter>IO\FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="Dirname.h">
+      <Filter>IO\FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="Dirpath.h">
+      <Filter>IO\FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="Filename.h">
+      <Filter>IO\FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="StringSlice.h">
+      <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="StringSlice-inl.h">
+      <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="UniquePtr.h">
+      <Filter>Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="VirtualFileSystemTrie.h">
+      <Filter>IO\VirtualFileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="AssociativeVector.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="AssociativeVector-inl.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="VirtualFileSystemNode.h">
+      <Filter>IO\VirtualFileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="VirtualFileSystemComponent.h">
+      <Filter>IO\VirtualFileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="VirtualFileSystemStream.h">
+      <Filter>IO\VirtualFileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="VirtualFileSystem.h">
+      <Filter>IO\VirtualFileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="VirtualFileSystemNativeStream.h">
+      <Filter>IO\VirtualFileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="VirtualFileSystemNativeComponent.h">
+      <Filter>IO\VirtualFileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="VirtualFileSystemPolicies.h">
+      <Filter>IO\VirtualFileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="Format.h">
+      <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="Format-inl.h">
+      <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="FormatHelpers.h">
+      <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="VirtualFileSystemStream-inl.h">
+      <Filter>IO\VirtualFileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="Hash.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="Hash-inl.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="Symbol.h">
+      <Filter>Lexer</Filter>
+    </ClInclude>
+    <ClInclude Include="Trie.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="Trie-inl.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="LookAheadReader.h">
+      <Filter>Lexer</Filter>
+    </ClInclude>
+    <ClInclude Include="Lexer.h">
+      <Filter>Lexer</Filter>
+    </ClInclude>
+    <ClInclude Include="SymbolTrie.h">
+      <Filter>Lexer</Filter>
+    </ClInclude>
+    <ClInclude Include="Location.h">
+      <Filter>Lexer</Filter>
+    </ClInclude>
+    <ClInclude Include="ParseResult.h">
+      <Filter>Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="ParseProduction.h">
+      <Filter>Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="ParseList.h">
+      <Filter>Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="Parser.h">
+      <Filter>Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="Match.h">
+      <Filter>Lexer</Filter>
+    </ClInclude>
+    <ClInclude Include="ParseExpression.h">
+      <Filter>Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="ParseExpression-inl.h">
+      <Filter>Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="ParseContext.h">
+      <Filter>Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="Grammar.h">
+      <Filter>Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="ParseStatement.h">
+      <Filter>Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="ParseItem.h">
+      <Filter>Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="Assert.h">
+      <Filter>Meta</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaTransaction.h">
+      <Filter>RTTI</Filter>
+    </ClInclude>
+    <ClInclude Include="RTTI.h">
+      <Filter>RTTI</Filter>
+    </ClInclude>
+    <ClInclude Include="RTTIMacros.h">
+      <Filter>RTTI</Filter>
+    </ClInclude>
+    <ClInclude Include="RTTIMacros-impl.h">
+      <Filter>RTTI</Filter>
+    </ClInclude>
+    <ClInclude Include="RTTIProperties.h">
+      <Filter>RTTI</Filter>
+    </ClInclude>
+    <ClInclude Include="MemoryPool.h">
+      <Filter>Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="MemoryPool-inl.h">
+      <Filter>Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="AutoSingleton.h">
+      <Filter>Meta</Filter>
+    </ClInclude>
+    <ClInclude Include="PoolAllocator.h">
+      <Filter>Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="PoolAllocator-impl.h">
+      <Filter>Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="MathHelpers.h">
+      <Filter>Maths</Filter>
+    </ClInclude>
+    <ClInclude Include="MathHelpers-inl.h">
+      <Filter>Maths</Filter>
+    </ClInclude>
+    <ClInclude Include="LastError.h">
+      <Filter>Diagnostics</Filter>
+    </ClInclude>
+    <ClInclude Include="ComPtr.h">
+      <Filter>Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="ComPtr-inl.h">
+      <Filter>Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="RandomGenerator.h">
+      <Filter>Maths</Filter>
+    </ClInclude>
+    <ClInclude Include="RandomGenerator-inl.h">
+      <Filter>Maths</Filter>
+    </ClInclude>
+    <ClInclude Include="RawStorage.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="RawStorage-inl.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="NumericLimits.h">
+      <Filter>Meta</Filter>
+    </ClInclude>
+    <ClInclude Include="Color.h">
+      <Filter>Color</Filter>
+    </ClInclude>
+    <ClInclude Include="Color-inl.h">
+      <Filter>Color</Filter>
+    </ClInclude>
+    <ClInclude Include="Timeline.h">
+      <Filter>Time</Filter>
+    </ClInclude>
+    <ClInclude Include="Units.h">
+      <Filter>Maths</Filter>
+    </ClInclude>
+    <ClInclude Include="Units-inl.h">
+      <Filter>Maths</Filter>
+    </ClInclude>
+    <ClInclude Include="Timely.h">
+      <Filter>Time</Filter>
+    </ClInclude>
+    <ClInclude Include="Timely-inl.h">
+      <Filter>Time</Filter>
+    </ClInclude>
+    <ClInclude Include="Timepoint.h">
+      <Filter>Time</Filter>
+    </ClInclude>
+    <ClInclude Include="VirtualFileSystem-inl.h">
+      <Filter>IO\VirtualFileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="Activator.h">
+      <Filter>Meta</Filter>
+    </ClInclude>
+    <ClInclude Include="Collision.h">
+      <Filter>Maths\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="Frustum.h">
+      <Filter>Maths\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="Plane.h">
+      <Filter>Maths\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="Plane-inl.h">
+      <Filter>Maths\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="Ray.h">
+      <Filter>Maths\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="Ray-inl.h">
+      <Filter>Maths\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="ScalarBoundingBox.h">
+      <Filter>Maths\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="ScalarBoundingBox.Shuffle-inl.h">
+      <Filter>Maths\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="ScalarBoundingBox_fwd.h">
+      <Filter>Maths\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="ScalarBoundingBoxHelpers.h">
+      <Filter>Maths\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="ScalarBoundingBoxHelpers-inl.h">
+      <Filter>Maths\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="ScalarBoundingBox-inl.h">
+      <Filter>Maths\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="Quaternion.h">
+      <Filter>Maths\Transform</Filter>
+    </ClInclude>
+    <ClInclude Include="QuaternionHelpers.h">
+      <Filter>Maths\Transform</Filter>
+    </ClInclude>
+    <ClInclude Include="Quaternion-inl.h">
+      <Filter>Maths\Transform</Filter>
+    </ClInclude>
+    <ClInclude Include="ScalarMatrix.h">
+      <Filter>Maths\Transform</Filter>
+    </ClInclude>
+    <ClInclude Include="ScalarMatrix_fwd.h">
+      <Filter>Maths\Transform</Filter>
+    </ClInclude>
+    <ClInclude Include="ScalarMatrixHelpers.h">
+      <Filter>Maths\Transform</Filter>
+    </ClInclude>
+    <ClInclude Include="ScalarMatrixHelpers-inl.h">
+      <Filter>Maths\Transform</Filter>
+    </ClInclude>
+    <ClInclude Include="ScalarMatrix-inl.h">
+      <Filter>Maths\Transform</Filter>
+    </ClInclude>
+    <ClInclude Include="ScalarVector.h">
+      <Filter>Maths\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="ScalarVector.Shuffle-inl.h">
+      <Filter>Maths\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="ScalarVector_fwd.h">
+      <Filter>Maths\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="ScalarVectorHelpers.h">
+      <Filter>Maths\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="ScalarVectorHelpers-inl.h">
+      <Filter>Maths\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="ScalarVector-inl.h">
+      <Filter>Maths\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="Sphere-inl.h">
+      <Filter>Maths\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="Sphere.h">
+      <Filter>Maths\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="ScalarRectangle.h">
+      <Filter>Maths\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="ScalarRectangle-inl.h">
+      <Filter>Maths\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="PackedVectors.h">
+      <Filter>Maths\Packing</Filter>
+    </ClInclude>
+    <ClInclude Include="PackedVectors-inl.h">
+      <Filter>Maths\Packing</Filter>
+    </ClInclude>
+    <ClInclude Include="PackingHelpers.h">
+      <Filter>Maths\Packing</Filter>
+    </ClInclude>
+    <ClInclude Include="PackingHelpers-inl.h">
+      <Filter>Maths\Packing</Filter>
+    </ClInclude>
+    <ClInclude Include="Frustum-inl.h">
+      <Filter>Maths\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="VirtualFileSystem_fwd.h">
+      <Filter>IO\VirtualFileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="ScalarRectangle_fwd.h">
+      <Filter>Maths\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="SHSample.h">
+      <Filter>Maths\SphericalHarmonics</Filter>
+    </ClInclude>
+    <ClInclude Include="SHSampleCollection.h">
+      <Filter>Maths\SphericalHarmonics</Filter>
+    </ClInclude>
+    <ClInclude Include="SHVector.h">
+      <Filter>Maths\SphericalHarmonics</Filter>
+    </ClInclude>
+    <ClInclude Include="SHVector_fwd.h">
+      <Filter>Maths\SphericalHarmonics</Filter>
+    </ClInclude>
+    <ClInclude Include="SHVector-inl.h">
+      <Filter>Maths\SphericalHarmonics</Filter>
+    </ClInclude>
+    <ClInclude Include="SHFunctionProjector.h">
+      <Filter>Maths\SphericalHarmonics</Filter>
+    </ClInclude>
+    <ClInclude Include="SHRotation.h">
+      <Filter>Maths\SphericalHarmonics</Filter>
+    </ClInclude>
+    <ClInclude Include="BuddyHeap.h">
+      <Filter>Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="BuddyAllocator.h">
+      <Filter>Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaAtom.h">
+      <Filter>RTTI\Atom</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaAtomDatabase.h">
+      <Filter>RTTI\Atom</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaAtom-inl.h">
+      <Filter>RTTI\Atom</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaClass.h">
+      <Filter>RTTI\Class</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaClassDatabase.h">
+      <Filter>RTTI\Class</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaClassName.h">
+      <Filter>RTTI\Class</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaObject.h">
+      <Filter>RTTI\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaObjectHelpers.h">
+      <Filter>RTTI\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaObjectName.h">
+      <Filter>RTTI\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaProperty.h">
+      <Filter>RTTI\Property</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaPropertyAccessor.h">
+      <Filter>RTTI\Property</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaPropertyAccessor-inl.h">
+      <Filter>RTTI\Property</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaProperty-inl.h">
+      <Filter>RTTI\Property</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaPropertyName.h">
+      <Filter>RTTI\Property</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaType.Definitions-inl.h">
+      <Filter>RTTI\Type</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaType.h">
+      <Filter>RTTI\Type</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaTypePromote.h">
+      <Filter>RTTI\Type</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaTypePromote-inl.h">
+      <Filter>RTTI\Type</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaTypeTraits.h">
+      <Filter>RTTI\Type</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaTypeTraits-inl.h">
+      <Filter>RTTI\Type</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaTypeVirtualTraits.h">
+      <Filter>RTTI\Type</Filter>
+    </ClInclude>
+    <ClInclude Include="MetaTypeVirtualTraits-inl.h">
+      <Filter>RTTI\Type</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="QuaternionHelpers-inl.h">
+      <Filter>Maths\Transform</Filter>
+    </ClInclude>
+    <ClInclude Include="MessageBox.h">
+      <Filter>Diagnostics</Filter>
+    </ClInclude>
+    <ClInclude Include="CurrentProcess.h">
+      <Filter>Diagnostics</Filter>
+    </ClInclude>
+    <ClInclude Include="ThreadPool.h">
+      <Filter>Threads</Filter>
+    </ClInclude>
+    <ClInclude Include="ProcessTime.h">
+      <Filter>Time</Filter>
+    </ClInclude>
+    <ClInclude Include="ConcurrentQueue.h">
+      <Filter>Threads</Filter>
+    </ClInclude>
+    <ClInclude Include="ConcurrentQueue-inl.h">
+      <Filter>Threads</Filter>
+    </ClInclude>
+    <ClInclude Include="Task.h">
+      <Filter>Threads\Task</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskEvaluator.h">
+      <Filter>Threads\Task</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskContext.h">
+      <Filter>Threads\Task</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskCompletionPort.h">
+      <Filter>Threads\Task</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskWorker.h">
+      <Filter>Threads\Task</Filter>
+    </ClInclude>
+    <ClInclude Include="LockFreeCircularArray.h">
+      <Filter>Threads</Filter>
+    </ClInclude>
+    <ClInclude Include="LockFreeCircularArray-inl.h">
+      <Filter>Threads</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector-inl.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="Observer.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="Observer-inl.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="Guid.h">
+      <Filter>Meta</Filter>
+    </ClInclude>
+    <ClInclude Include="Units.Definitions-inl.h">
+      <Filter>Maths</Filter>
+    </ClInclude>
+    <ClInclude Include="CRC64.h">
+      <Filter>IO</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MemoryTracking.cpp">
+      <Filter>Memory</Filter>
+    </ClCompile>
+    <ClCompile Include="MemoryDomain.cpp">
+      <Filter>Memory</Filter>
+    </ClCompile>
+    <ClCompile Include="Callstack.cpp">
+      <Filter>Diagnostics</Filter>
+    </ClCompile>
+    <ClCompile Include="DecodedCallstack.cpp">
+      <Filter>Diagnostics</Filter>
+    </ClCompile>
+    <ClCompile Include="Malloc.cpp">
+      <Filter>Allocators</Filter>
+    </ClCompile>
+    <ClCompile Include="Heap.cpp">
+      <Filter>Allocators</Filter>
+    </ClCompile>
+    <ClCompile Include="CrtDebug.cpp">
+      <Filter>Diagnostics</Filter>
+    </ClCompile>
+    <ClCompile Include="ThreadLocalStorage.cpp">
+      <Filter>Threads</Filter>
+    </ClCompile>
+    <ClCompile Include="ThreadContext.cpp">
+      <Filter>Threads</Filter>
+    </ClCompile>
+    <ClCompile Include="ThreadLocalHeap.cpp">
+      <Filter>Allocators</Filter>
+    </ClCompile>
+    <ClCompile Include="Logger.cpp">
+      <Filter>Diagnostics</Filter>
+    </ClCompile>
+    <ClCompile Include="String.cpp">
+      <Filter>IO</Filter>
+    </ClCompile>
+    <ClCompile Include="Extname.cpp">
+      <Filter>IO\FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSystem.cpp">
+      <Filter>IO\FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSystemProperties.cpp">
+      <Filter>IO\FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="BasenameNoExt.cpp">
+      <Filter>IO\FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="Basename.cpp">
+      <Filter>IO\FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="MountingPoint.cpp">
+      <Filter>IO\FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="Dirname.cpp">
+      <Filter>IO\FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="Dirpath.cpp">
+      <Filter>IO\FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="Filename.cpp">
+      <Filter>IO\FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="VirtualFileSystemNode.cpp">
+      <Filter>IO\VirtualFileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="VirtualFileSystemTrie.cpp">
+      <Filter>IO\VirtualFileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="VirtualFileSystem.cpp">
+      <Filter>IO\VirtualFileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="VirtualFileSystemNativeStream.cpp">
+      <Filter>IO\VirtualFileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="VirtualFileSystemNativeComponent.cpp">
+      <Filter>IO\VirtualFileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="VirtualFileSystemComponent.cpp">
+      <Filter>IO\VirtualFileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="FormatHelpers.cpp">
+      <Filter>IO</Filter>
+    </ClCompile>
+    <ClCompile Include="Symbol.cpp">
+      <Filter>Lexer</Filter>
+    </ClCompile>
+    <ClCompile Include="LookAheadReader.cpp">
+      <Filter>Lexer</Filter>
+    </ClCompile>
+    <ClCompile Include="Lexer.cpp">
+      <Filter>Lexer</Filter>
+    </ClCompile>
+    <ClCompile Include="SymbolTrie.cpp">
+      <Filter>Lexer</Filter>
+    </ClCompile>
+    <ClCompile Include="ParseList.cpp">
+      <Filter>Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="Parser.cpp">
+      <Filter>Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="Match.cpp">
+      <Filter>Lexer</Filter>
+    </ClCompile>
+    <ClCompile Include="ParseContext.cpp">
+      <Filter>Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="Grammar.cpp">
+      <Filter>Serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="ParseItem.cpp">
+      <Filter>Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="ParseStatement.cpp">
+      <Filter>Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="ParseExpression.cpp">
+      <Filter>Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="Assert.cpp">
+      <Filter>Meta</Filter>
+    </ClCompile>
+    <ClCompile Include="MetaTransaction.cpp">
+      <Filter>RTTI</Filter>
+    </ClCompile>
+    <ClCompile Include="RTTI.cpp">
+      <Filter>RTTI</Filter>
+    </ClCompile>
+    <ClCompile Include="RTTIProperties.cpp">
+      <Filter>RTTI</Filter>
+    </ClCompile>
+    <ClCompile Include="MemoryPool.cpp">
+      <Filter>Memory</Filter>
+    </ClCompile>
+    <ClCompile Include="AutoSingleton.cpp">
+      <Filter>Meta</Filter>
+    </ClCompile>
+    <ClCompile Include="LastError.cpp">
+      <Filter>Diagnostics</Filter>
+    </ClCompile>
+    <ClCompile Include="RandomGenerator.cpp">
+      <Filter>Maths</Filter>
+    </ClCompile>
+    <ClCompile Include="NumericLimits.cpp">
+      <Filter>Meta</Filter>
+    </ClCompile>
+    <ClCompile Include="Color.cpp">
+      <Filter>Color</Filter>
+    </ClCompile>
+    <ClCompile Include="Timeline.cpp">
+      <Filter>Time</Filter>
+    </ClCompile>
+    <ClCompile Include="Timepoint.cpp">
+      <Filter>Time</Filter>
+    </ClCompile>
+    <ClCompile Include="Alloca.cpp">
+      <Filter>Allocators</Filter>
+    </ClCompile>
+    <ClCompile Include="Collision.cpp">
+      <Filter>Maths\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="Plane.cpp">
+      <Filter>Maths\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="Ray.cpp">
+      <Filter>Maths\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="Quaternion.cpp">
+      <Filter>Maths\Transform</Filter>
+    </ClCompile>
+    <ClCompile Include="QuaternionHelpers.cpp">
+      <Filter>Maths\Transform</Filter>
+    </ClCompile>
+    <ClCompile Include="Sphere.cpp">
+      <Filter>Maths\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="PackingHelpers.cpp">
+      <Filter>Maths\Packing</Filter>
+    </ClCompile>
+    <ClCompile Include="Frustum.cpp">
+      <Filter>Maths\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="PackedVectors.cpp">
+      <Filter>Maths\Packing</Filter>
+    </ClCompile>
+    <ClCompile Include="VirtualFileSystem_fwd.cpp">
+      <Filter>IO\VirtualFileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="VirtualFileSystemStream.cpp">
+      <Filter>IO\VirtualFileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="SHSample.cpp">
+      <Filter>Maths\SphericalHarmonics</Filter>
+    </ClCompile>
+    <ClCompile Include="SHSampleCollection.cpp">
+      <Filter>Maths\SphericalHarmonics</Filter>
+    </ClCompile>
+    <ClCompile Include="SHFunctionProjector.cpp">
+      <Filter>Maths\SphericalHarmonics</Filter>
+    </ClCompile>
+    <ClCompile Include="SHRotation.cpp">
+      <Filter>Maths\SphericalHarmonics</Filter>
+    </ClCompile>
+    <ClCompile Include="BuddyHeap.cpp">
+      <Filter>Allocators</Filter>
+    </ClCompile>
+    <ClCompile Include="MetaAtomDatabase.cpp">
+      <Filter>RTTI\Atom</Filter>
+    </ClCompile>
+    <ClCompile Include="MetaClass.cpp">
+      <Filter>RTTI\Class</Filter>
+    </ClCompile>
+    <ClCompile Include="MetaClassDatabase.cpp">
+      <Filter>RTTI\Class</Filter>
+    </ClCompile>
+    <ClCompile Include="MetaClassName.cpp">
+      <Filter>RTTI\Class</Filter>
+    </ClCompile>
+    <ClCompile Include="MetaObject.cpp">
+      <Filter>RTTI\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="MetaObjectName.cpp">
+      <Filter>RTTI\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="MetaPropertyName.cpp">
+      <Filter>RTTI\Property</Filter>
+    </ClCompile>
+    <ClCompile Include="MetaType.cpp">
+      <Filter>RTTI\Type</Filter>
+    </ClCompile>
+    <ClCompile Include="MetaTypePromote.cpp">
+      <Filter>RTTI\Type</Filter>
+    </ClCompile>
+    <ClCompile Include="MetaTypeVirtualTraits.cpp">
+      <Filter>RTTI\Type</Filter>
+    </ClCompile>
+    <ClCompile Include="MetaObjectHelpers.cpp">
+      <Filter>RTTI\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="MessageBox.cpp">
+      <Filter>Diagnostics</Filter>
+    </ClCompile>
+    <ClCompile Include="MetaProperty.cpp">
+      <Filter>RTTI\Property</Filter>
+    </ClCompile>
+    <ClCompile Include="CurrentProcess.cpp">
+      <Filter>Diagnostics</Filter>
+    </ClCompile>
+    <ClCompile Include="ThreadPool.cpp">
+      <Filter>Threads</Filter>
+    </ClCompile>
+    <ClCompile Include="ProcessTime.cpp">
+      <Filter>Time</Filter>
+    </ClCompile>
+    <ClCompile Include="Task.cpp">
+      <Filter>Threads\Task</Filter>
+    </ClCompile>
+    <ClCompile Include="TaskContext.cpp">
+      <Filter>Threads\Task</Filter>
+    </ClCompile>
+    <ClCompile Include="TaskEvaluator.cpp">
+      <Filter>Threads\Task</Filter>
+    </ClCompile>
+    <ClCompile Include="TaskCompletionPort.cpp">
+      <Filter>Threads\Task</Filter>
+    </ClCompile>
+    <ClCompile Include="TaskWorker.cpp">
+      <Filter>Threads\Task</Filter>
+    </ClCompile>
+    <ClCompile Include="Guid.cpp">
+      <Filter>Meta</Filter>
+    </ClCompile>
+    <ClCompile Include="Units.cpp">
+      <Filter>Maths</Filter>
+    </ClCompile>
+    <ClCompile Include="CRC64.cpp">
+      <Filter>IO</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

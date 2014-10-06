@@ -1,0 +1,387 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Fichiers sources">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Fichiers d%27en-tête">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Fichiers de ressources">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Windows">
+      <UniqueIdentifier>{be316f56-3ef2-4032-998a-36670667e2f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Device">
+      <UniqueIdentifier>{73bb66b9-6f90-44f0-aecc-38a79ddbfbe0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Device\Geometry">
+      <UniqueIdentifier>{b742ca00-2464-4711-93d7-851c6ab36aa4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Device\Texture">
+      <UniqueIdentifier>{997e34e2-10dc-43ea-9dd7-0e3efad43dd6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Device\State">
+      <UniqueIdentifier>{eb16f9bf-ffdb-427a-b8bc-a1edff830e88}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Device\Shader">
+      <UniqueIdentifier>{da6ceeed-5cca-4466-8f2a-396d341bb1bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DirectX11">
+      <UniqueIdentifier>{13641f2f-711e-4d88-a8a1-2ae2ecf6c910}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DirectX11\Texture">
+      <UniqueIdentifier>{35e94ecc-4059-4891-b705-2aa301acd008}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DirectX11\State">
+      <UniqueIdentifier>{842e2888-d0f5-416f-94ff-7ee8acf0cfb0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DirectX11\Geometry">
+      <UniqueIdentifier>{0d6e7ef5-4279-4ffe-83fc-7e532a30b5f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DirectX11\Shader">
+      <UniqueIdentifier>{2e333868-2815-43d6-8773-428067424ede}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="BasicWindow.h">
+      <Filter>Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="WindowMessage.h">
+      <Filter>Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="DeviceEncapsulator.h">
+      <Filter>Device</Filter>
+    </ClInclude>
+    <ClInclude Include="PresentationParameters.h">
+      <Filter>Device</Filter>
+    </ClInclude>
+    <ClInclude Include="DeviceResource.h">
+      <Filter>Device</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexDeclaration.h">
+      <Filter>Device\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexDeclaration-inl.h">
+      <Filter>Device\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="SurfaceFormat.h">
+      <Filter>Device\Texture</Filter>
+    </ClInclude>
+    <ClInclude Include="PrimitiveType.h">
+      <Filter>Device\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="BlendState.h">
+      <Filter>Device\State</Filter>
+    </ClInclude>
+    <ClInclude Include="DepthStencilState.h">
+      <Filter>Device\State</Filter>
+    </ClInclude>
+    <ClInclude Include="RasterizerState.h">
+      <Filter>Device\State</Filter>
+    </ClInclude>
+    <ClInclude Include="SamplerState.h">
+      <Filter>Device\State</Filter>
+    </ClInclude>
+    <ClInclude Include="DeviceResourceBuffer.h">
+      <Filter>Device</Filter>
+    </ClInclude>
+    <ClInclude Include="IndexBuffer.h">
+      <Filter>Device\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexBuffer.h">
+      <Filter>Device\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="DX11DeviceWrapper.h">
+      <Filter>DirectX11</Filter>
+    </ClInclude>
+    <ClInclude Include="DeviceAPIDependantEntity.h">
+      <Filter>Device</Filter>
+    </ClInclude>
+    <ClInclude Include="DX11Includes.h">
+      <Filter>DirectX11</Filter>
+    </ClInclude>
+    <ClInclude Include="DX11SurfaceFormat.h">
+      <Filter>DirectX11\Texture</Filter>
+    </ClInclude>
+    <ClInclude Include="DX11ResourceBuffer.h">
+      <Filter>DirectX11</Filter>
+    </ClInclude>
+    <ClInclude Include="DX11DeviceEncapsulator.h">
+      <Filter>DirectX11</Filter>
+    </ClInclude>
+    <ClInclude Include="DX11BlendState.h">
+      <Filter>DirectX11\State</Filter>
+    </ClInclude>
+    <ClInclude Include="DX11DepthStencilState.h">
+      <Filter>DirectX11\State</Filter>
+    </ClInclude>
+    <ClInclude Include="DX11RasterizerState.h">
+      <Filter>DirectX11\State</Filter>
+    </ClInclude>
+    <ClInclude Include="DX11SamplerState.h">
+      <Filter>DirectX11\State</Filter>
+    </ClInclude>
+    <ClInclude Include="DX11PrimitiveType.h">
+      <Filter>DirectX11\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="DX11VertexDeclaration.h">
+      <Filter>DirectX11\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexSubPart.h">
+      <Filter>Device\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexSubPart-inl.h">
+      <Filter>Device\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="ConstantBuffer.h">
+      <Filter>Device\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="DX11ConstantWriter.h">
+      <Filter>DirectX11\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderProgram.h">
+      <Filter>Device\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderEffect.h">
+      <Filter>Device\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="DX11ShaderProgram.h">
+      <Filter>DirectX11\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="DX11CompilerIncludes.h">
+      <Filter>DirectX11</Filter>
+    </ClInclude>
+    <ClInclude Include="DeviceAPIEncapsulator.h">
+      <Filter>Device</Filter>
+    </ClInclude>
+    <ClInclude Include="DeviceEncapsulatorException.h">
+      <Filter>Device</Filter>
+    </ClInclude>
+    <ClInclude Include="DX11ShaderEffect.h">
+      <Filter>DirectX11\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsWindow.h">
+      <Filter>Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>Device\Texture</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture2D.h">
+      <Filter>Device\Texture</Filter>
+    </ClInclude>
+    <ClInclude Include="DX11Texture2D.h">
+      <Filter>DirectX11\Texture</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderTarget.h">
+      <Filter>Device\Texture</Filter>
+    </ClInclude>
+    <ClInclude Include="DepthStencil.h">
+      <Filter>Device\Texture</Filter>
+    </ClInclude>
+    <ClInclude Include="DX11RenderTarget.h">
+      <Filter>DirectX11\Texture</Filter>
+    </ClInclude>
+    <ClInclude Include="DX11DepthStencil.h">
+      <Filter>DirectX11\Texture</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderSource.h">
+      <Filter>Device\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="WindowMessageHandler.h">
+      <Filter>Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexTypes.h">
+      <Filter>Device\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexSubstitutions.h">
+      <Filter>Device\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="ConstantField.h">
+      <Filter>Device\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="ConstantBufferLayout.h">
+      <Filter>Device\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="BindName.h">
+      <Filter>Device</Filter>
+    </ClInclude>
+    <ClInclude Include="DeviceDiagnostics.h">
+      <Filter>Device</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="BasicWindow.cpp">
+      <Filter>Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="WindowMessage.cpp">
+      <Filter>Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="DeviceEncapsulator.cpp">
+      <Filter>Device</Filter>
+    </ClCompile>
+    <ClCompile Include="PresentationParameters.cpp">
+      <Filter>Device</Filter>
+    </ClCompile>
+    <ClCompile Include="DeviceResource.cpp">
+      <Filter>Device</Filter>
+    </ClCompile>
+    <ClCompile Include="VertexDeclaration.cpp">
+      <Filter>Device\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="SurfaceFormat.cpp">
+      <Filter>Device\Texture</Filter>
+    </ClCompile>
+    <ClCompile Include="PrimitiveType.cpp">
+      <Filter>Device\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="BlendState.cpp">
+      <Filter>Device\State</Filter>
+    </ClCompile>
+    <ClCompile Include="DepthStencilState.cpp">
+      <Filter>Device\State</Filter>
+    </ClCompile>
+    <ClCompile Include="RasterizerState.cpp">
+      <Filter>Device\State</Filter>
+    </ClCompile>
+    <ClCompile Include="SamplerState.cpp">
+      <Filter>Device\State</Filter>
+    </ClCompile>
+    <ClCompile Include="DeviceResourceBuffer.cpp">
+      <Filter>Device</Filter>
+    </ClCompile>
+    <ClCompile Include="IndexBuffer.cpp">
+      <Filter>Device\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="VertexBuffer.cpp">
+      <Filter>Device\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="DX11DeviceWrapper.cpp">
+      <Filter>DirectX11</Filter>
+    </ClCompile>
+    <ClCompile Include="DX11SurfaceFormat.cpp">
+      <Filter>DirectX11\Texture</Filter>
+    </ClCompile>
+    <ClCompile Include="DX11ResourceBuffer.cpp">
+      <Filter>DirectX11</Filter>
+    </ClCompile>
+    <ClCompile Include="DX11DeviceEncapsulator.cpp">
+      <Filter>DirectX11</Filter>
+    </ClCompile>
+    <ClCompile Include="DX11BlendState.cpp">
+      <Filter>DirectX11\State</Filter>
+    </ClCompile>
+    <ClCompile Include="DX11DepthStencilState.cpp">
+      <Filter>DirectX11\State</Filter>
+    </ClCompile>
+    <ClCompile Include="DX11RasterizerState.cpp">
+      <Filter>DirectX11\State</Filter>
+    </ClCompile>
+    <ClCompile Include="DX11SamplerState.cpp">
+      <Filter>DirectX11\State</Filter>
+    </ClCompile>
+    <ClCompile Include="DX11PrimitiveType.cpp">
+      <Filter>DirectX11\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="DX11VertexDeclaration.cpp">
+      <Filter>DirectX11\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="VertexSubPart.cpp">
+      <Filter>Device\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="ConstantBuffer.cpp">
+      <Filter>Device\Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="DeviceAPIDependantEntity.cpp">
+      <Filter>Device</Filter>
+    </ClCompile>
+    <ClCompile Include="DX11ConstantWriter.cpp">
+      <Filter>DirectX11\Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderProgram.cpp">
+      <Filter>Device\Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderEffect.cpp">
+      <Filter>Device\Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="DX11ShaderProgram.cpp">
+      <Filter>DirectX11\Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="DX11ShaderEffect.cpp">
+      <Filter>DirectX11\Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsWindow.cpp">
+      <Filter>Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>Device\Texture</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture2D.cpp">
+      <Filter>Device\Texture</Filter>
+    </ClCompile>
+    <ClCompile Include="DX11Texture2D.cpp">
+      <Filter>DirectX11\Texture</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderTarget.cpp">
+      <Filter>Device\Texture</Filter>
+    </ClCompile>
+    <ClCompile Include="DepthStencil.cpp">
+      <Filter>Device\Texture</Filter>
+    </ClCompile>
+    <ClCompile Include="DX11RenderTarget.cpp">
+      <Filter>DirectX11\Texture</Filter>
+    </ClCompile>
+    <ClCompile Include="DX11DepthStencil.cpp">
+      <Filter>DirectX11\Texture</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderSource.cpp">
+      <Filter>Device\Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="DeviceEncapsulatorException.cpp">
+      <Filter>Device</Filter>
+    </ClCompile>
+    <ClCompile Include="WindowMessageHandler.cpp">
+      <Filter>Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="VertexTypes.cpp">
+      <Filter>Device\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="VertexSubstitutions.cpp">
+      <Filter>Device\Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="ConstantField.cpp">
+      <Filter>Device\Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="ConstantBufferLayout.cpp">
+      <Filter>Device\Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="BindName.cpp">
+      <Filter>Device</Filter>
+    </ClCompile>
+    <ClCompile Include="DeviceDiagnostics.cpp">
+      <Filter>Device</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,95 @@
+#pragma once
+
+#include "Engine.h"
+
+#include "Core.Graphics/BindName.h"
+
+#include "Core/Pair.h"
+#include "Core/PointerWFlags.h"
+#include "Core/PoolAllocator.h"
+#include "Core/RefPtr.h"
+#include "Core/Vector.h"
+
+namespace Core {
+class Filename;
+
+namespace Graphics {
+class IDeviceAPIContextEncapsulator;
+class IDeviceAPIEncapsulator;
+FWD_REFPTR(SamplerState);
+FWD_REFPTR(Texture);
+}
+
+namespace Engine {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FWD_REFPTR(AbstractMaterialParameter);
+FWD_REFPTR(Effect);
+FWD_REFPTR(EffectConstantBuffer);
+FWD_REFPTR(Material);
+struct MaterialContext;
+FWD_REFPTR(RenderSurfaceLock);
+FWD_REFPTR(Scene);
+struct VariabilitySeed;
+//----------------------------------------------------------------------------
+class MaterialEffect : public RefCountable {
+public:
+    struct TextureSlot {
+        TextureSlot(const Graphics::BindName& name,
+                    const Graphics::SamplerState *sampler,
+                    bool useSRGB,
+                    bool isVirtualTexture = false);
+
+        Graphics::BindName Name;
+        Meta::PointerWFlags<const Graphics::SamplerState> SamplerWFlags;
+
+        const Graphics::SamplerState *Sampler() const {  return SamplerWFlags.Get(); }
+
+        bool UseSRGB() const { return SamplerWFlags.Flag0(); }
+
+        bool IsVirtualTexture() const { return SamplerWFlags.Flag1(); }
+        void SetIsVirtualTexture(bool value) { SamplerWFlags.SetFlag1(value); }
+    };
+
+    struct TextureBinding {
+        Core::Filename Filename;
+        Graphics::PCTexture Texture;
+        PRenderSurfaceLock SurfaceLock;
+    };
+
+    MaterialEffect(const Engine::Effect *effect, const Engine::Material *material);
+    ~MaterialEffect();
+
+    const PCEffect& Effect() const { return _effect; }
+    const PCMaterial& Material() const { return _material; }
+
+    const VECTOR(Effect, PEffectConstantBuffer)& Constants() const { return _constants; }
+    const VECTOR(Effect, TextureSlot)& TextureSlots() const { return _textureSlots; }
+    const VECTOR(Effect, TextureBinding)& TextureBindings() const { return _textureBindings; }
+
+    /* (1) link parameters and textures from database and material */
+    void Create(Graphics::IDeviceAPIEncapsulator *device, const Scene *scene);
+    /* (4) destroy binded resources, ready to call Create() again */
+    void Destroy(Graphics::IDeviceAPIEncapsulator *device);
+
+    /* (2) eval linked parameters and update constant buffers IFN, retrieves texture resources */
+    void Prepare(Graphics::IDeviceAPIEncapsulator *device, const Scene *scene, const VariabilitySeed *seeds);
+    /* (3) setup constant buffers and textures (with sampler states) on the device */
+    void Set(Graphics::IDeviceAPIContextEncapsulator *deviceContext);
+
+    SINGLETON_POOL_ALLOCATED_DECL(MaterialEffect);
+
+private:
+    PCEffect _effect;
+    PCMaterial _material;
+
+    VECTOR(Effect, PEffectConstantBuffer) _constants;
+    VECTOR(Effect, TextureSlot) _textureSlots;
+    VECTOR(Effect, TextureBinding) _textureBindings;
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace Engine
+} //!namespace Core

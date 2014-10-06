@@ -1,0 +1,151 @@
+#include "stdafx.h"
+
+#include "EffectDescriptor.h"
+
+#include "AbstractMaterialParameter.h"
+#include "RenderState.h"
+
+#include "Core.Graphics/BindName.h"
+#include "Core.Graphics/ShaderEffect.h"
+#include "Core.Graphics/ShaderProgram.h"
+#include "Core.Graphics/VertexDeclaration.h"
+
+#include "Core/PoolAllocator-impl.h"
+
+namespace Core {
+namespace Engine {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+SINGLETON_POOL_ALLOCATED_DEF(EffectDescriptor, );
+//----------------------------------------------------------------------------
+EffectDescriptor::EffectDescriptor() {}
+//----------------------------------------------------------------------------
+EffectDescriptor::~EffectDescriptor() {}
+//----------------------------------------------------------------------------
+EffectDescriptor::EffectDescriptor(
+    const char *name,
+    const Engine::RenderState *renderState,
+    const Filename& hs,
+    const Filename& ds,
+    const Filename& gs,
+    const Filename& vs,
+    const Filename& ps,
+    const Filename& cs,
+    Graphics::ShaderProfileType shaderProfile,
+    const Graphics::VertexDeclaration *vertexDeclaration,
+    const MemoryView<const Pair<String, String>>& defines,
+    const MemoryView<const Pair<Graphics::BindName, PAbstractMaterialParameter>>& parameters,
+    const MemoryView<const Pair<Graphics::BindName, Filename>>& textures )
+:   _name(name)
+,   _renderState(renderState)
+,   _hs(hs)
+,   _ds(ds)
+,   _gs(gs)
+,   _vs(vs)
+,   _ps(ps)
+,   _cs(cs)
+,   _shaderProfile(shaderProfile)
+,   _defines(defines.begin(), defines.end())
+,   _parameters(parameters.begin(), parameters.end())
+,   _textures(textures.begin(), textures.end()) {
+    Assert(name);
+    Assert( !hs.empty() ||
+            !ds.empty() ||
+            !gs.empty() ||
+            !vs.empty() ||
+            !ps.empty() ||
+            !cs.empty() );
+    AddVertexDeclaration(vertexDeclaration);
+}
+//----------------------------------------------------------------------------
+void EffectDescriptor::SetName(const char *name) {
+    Assert(name);
+    _name = name;
+}
+//----------------------------------------------------------------------------
+void EffectDescriptor::SetRenderState(const Engine::RenderState *value) {
+    _renderState = value;
+}
+//----------------------------------------------------------------------------
+const Filename& EffectDescriptor::ProgramFilename(Graphics::ShaderProgramType programType) const {
+    switch (programType)
+    {
+    case Core::Graphics::ShaderProgramType::Vertex:
+        return _vs;
+    case Core::Graphics::ShaderProgramType::Hull:
+        return _hs;
+    case Core::Graphics::ShaderProgramType::Domain:
+        return _ds;
+    case Core::Graphics::ShaderProgramType::Pixel:
+        return _ps;
+    case Core::Graphics::ShaderProgramType::Geometry:
+        return _gs;
+    case Core::Graphics::ShaderProgramType::Compute:
+        return _cs;
+    default:
+        AssertNotImplemented();
+        return _vs; // const ref expected ...
+    }
+}
+//----------------------------------------------------------------------------
+void EffectDescriptor::SetProgramFilename(Graphics::ShaderProgramType programType, const Filename& filename) {
+    switch (programType)
+    {
+    case Core::Graphics::ShaderProgramType::Vertex:
+        _vs = filename;
+        break;
+    case Core::Graphics::ShaderProgramType::Hull:
+        _hs = filename;
+        break;
+    case Core::Graphics::ShaderProgramType::Domain:
+        _ds = filename;
+        break;
+    case Core::Graphics::ShaderProgramType::Pixel:
+        _ps = filename;
+        break;
+    case Core::Graphics::ShaderProgramType::Geometry:
+        _gs = filename;
+        break;
+    case Core::Graphics::ShaderProgramType::Compute:
+        _cs = filename;
+        break;
+    default:
+        AssertNotImplemented();
+    }
+}
+//----------------------------------------------------------------------------
+void EffectDescriptor::AddVertexDeclaration(const Graphics::VertexDeclaration *declaration) {
+    Assert(declaration);
+
+    Graphics::PCVertexDeclaration pdeclaration(declaration);
+    Assert(!Contains(_vertexDeclarations, pdeclaration));
+
+    _vertexDeclarations.emplace_back(std::move(pdeclaration));
+}
+//----------------------------------------------------------------------------
+void EffectDescriptor::AddDefine(const String& name, const String& value) {
+    Assert(!name.empty());
+    Assert(!value.empty());
+
+    _defines.Insert_AssertUnique(name, value);
+}
+//----------------------------------------------------------------------------
+void EffectDescriptor::AddTexture(const Graphics::BindName& name, const Filename& filename) {
+    Assert(!name.empty());
+    Assert(!filename.empty());
+
+    _textures.Insert_AssertUnique(name, filename);
+}
+//----------------------------------------------------------------------------
+void EffectDescriptor::AddParameter(const Graphics::BindName& name, AbstractMaterialParameter *parameter) {
+    Assert(!name.empty());
+    Assert(parameter);
+
+    _parameters.Insert_AssertUnique(name, parameter);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace Engine
+} //!namespace Core
