@@ -1,0 +1,72 @@
+#pragma once
+
+#include "Core/Core.h"
+
+#define F_PI        3.14159265359f
+#define F_2PI       6.28318530718f
+#define F_3PI       9.42477796077f
+#define F_4PI       12.5663706144f
+#define F_PIOver3   1.0471975512f
+#define F_PIOver4   0.78539816339f
+#define F_2PIOver3  2.09439510239f
+#define F_HalfPi    1.57079632679f
+#define F_Deg2Rad   0.01745329251f
+#define F_Rad2Deg   57.2957795131f
+
+#define F_Epsilon   1e-3f
+#define F_EpsilonSQ 1e-9f
+
+namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T>
+FORCE_INLINE T Clamp(T value, T vmin, T vmax);
+//----------------------------------------------------------------------------
+template <typename T>
+FORCE_INLINE T Frac(T f);
+//----------------------------------------------------------------------------
+template <typename T, typename U>
+FORCE_INLINE T Lerp(T v0, T v1, U f);
+//----------------------------------------------------------------------------
+template <typename T>
+FORCE_INLINE float LinearStep(T value, T vmin, T vmax);
+//----------------------------------------------------------------------------
+template <typename T>
+FORCE_INLINE T Rcp(T f);
+//----------------------------------------------------------------------------
+template <typename T>
+FORCE_INLINE T RSqrt(T f);
+//----------------------------------------------------------------------------
+template <typename T>
+FORCE_INLINE T Saturate(T value) { return Clamp(value, T(0), T(1)); }
+//----------------------------------------------------------------------------
+template <typename T, typename U>
+FORCE_INLINE T SLerp(T v0, T v1, U f);
+//----------------------------------------------------------------------------
+template <typename T>
+FORCE_INLINE T Sqr(T x);
+//----------------------------------------------------------------------------
+template <typename T>
+FORCE_INLINE T Step(T y, T x);
+//----------------------------------------------------------------------------
+template <typename T, typename U>
+FORCE_INLINE U Smoothstep(T vmin, T vmax, U f);
+//----------------------------------------------------------------------------
+template <typename T, typename U>
+U Smootherstep(T vmin, T vmax, U f);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FORCE_INLINE float Degrees(float radians);
+//----------------------------------------------------------------------------
+FORCE_INLINE float Radians(float degrees);
+//----------------------------------------------------------------------------
+template <typename T>
+FORCE_INLINE void SinCos(T radians, T *fsin, T *fcos);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace Core
+
+#include "Core/Maths/MathHelpers-inl.h"
