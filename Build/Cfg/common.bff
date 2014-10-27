@@ -1,0 +1,23 @@
+
+#once
+
+// Global options
+//------------------------------------------------------------------------------
+
+.OutputBase = 'Output'
+.SourceBase = 'Source'
+
+.VSFBuildOptions      = '-showcmds -dist -cache'
+.AdditionalInclude    = '.'
+.AdditionalLibInclude = '.'
+
+// Unity/Blob files (shared across configs)
+//------------------------------------------------------------------------------
+.UnityNumFiles        = 1
+.UnityInputIsolateWritableFiles = false // disables unity build when true
+
+// Common configuration
+//------------------------------------------------------------------------------
+
+#include "compilers.bff"
+#include "visualstudio.bff"

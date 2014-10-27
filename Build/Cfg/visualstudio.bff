@@ -1,0 +1,56 @@
+
+#once
+
+//------------------------------------------------------------------------------
+// VisualStudio Project Generation
+//------------------------------------------------------------------------------
+.ProjectCommon =
+[
+    .ProjectBuildCommand        = 'cd "^$(ProjectDir)..\..\" &amp; "$FBuildBin$" $VSFBuildOptions$ -vs ^$(ProjectName)-^$(Configuration)'
+    .ProjectRebuildCommand      = 'cd "^$(ProjectDir)..\..\" &amp; "$FBuildBin$" $VSFBuildOptions$ -vs -clean ^$(ProjectName)-^$(Configuration)'
+
+    .OutputDirectory            = '^$(ProjectDir)..\..\$OutputBase$\^$(Configuration)\^$(ProjectName)'
+    .IntermediateDirectory      = '^$(ProjectDir)..\..\$OutputBase$\Intermediate\^$(Configuration)\^$(ProjectName)'
+
+    .Platform                   = 'Win32' // unused
+    .PlatformToolset            = 'v120'
+    .IncludeSearchPath          = '^$(ProjectDir)..;.\;$AdditionalInclude$'
+
+    .X86Defines                 = 'WIN32_LEAN_AND_MEAN;_WIN32;__WINDOWS__;WIN32;UNICODE;_UNICODE;VC_EXTRALEAN;DBGHELP_TRANSLATE_TCHAR;NOMINMAX'
+    .X64Defines                 = 'WIN32_LEAN_AND_MEAN;_WIN32;__WINDOWS__;WIN64;UNICODE;_UNICODE;VC_EXTRALEAN;DBGHELP_TRANSLATE_TCHAR;NOMINMAX'
+
+    .DebugDefines               = ';_DEBUG;DEBUG'
+    .ProfileDefines             = ';NDEBUG;RELEASE;PROFILING_ENABLED'
+    .ReleaseDefines             = ';NDEBUG;RELEASE'
+]
+
+.ProjectX86Debug        = [ Using( .ProjectCommon ) .Config = 'x86-Debug'   .PreprocessorDefinitions = .X86Defines + .DebugDefines ]
+.ProjectX86Profile      = [ Using( .ProjectCommon ) .Config = 'x86-Profile' .PreprocessorDefinitions = .X86Defines + .ProfileDefines ]
+.ProjectX86Release      = [ Using( .ProjectCommon ) .Config = 'x86-Release' .PreprocessorDefinitions = .X86Defines + .ReleaseDefines ]
+.ProjectX64Debug        = [ Using( .ProjectCommon ) .Config = 'x64-Debug'   .PreprocessorDefinitions = .X64Defines + .DebugDefines ]
+.ProjectX64Profile      = [ Using( .ProjectCommon ) .Config = 'x64-Profile' .PreprocessorDefinitions = .X64Defines + .ProfileDefines ]
+.ProjectX64Release      = [ Using( .ProjectCommon ) .Config = 'x64-Release' .PreprocessorDefinitions = .X64Defines + .ReleaseDefines ]
+.ProjectX86ClangDebug   = [ Using( .ProjectCommon ) .Config = 'x86Clang-Debug' ]
+
+.ProjectConfigs = { .ProjectX86Debug, .ProjectX86Profile, .ProjectX86Release,
+                    .ProjectX64Debug, .ProjectX64Profile, .ProjectX64Release,
+                    .ProjectX86ClangDebug }
+
+VCXProject( 'All-proj' )
+{
+    .ProjectOutput              = '.\All.vcxproj'
+    .ProjectFiles               = { '.\fbuild.bff' }
+    .ProjectBasePath            = '.\'
+}
+
+// Configurations
+//------------------------------------------------------------------------------
+.Configs = { .X86DebugConfig, .X86ProfileConfig, .X86ReleaseConfig,
+             .X64DebugConfig, .X64ProfileConfig, .X64ReleaseConfig,
+             .X86ClangConfig }
+
+.Configs_Windows_MSVC   = { .X86DebugConfig, .X86ProfileConfig, .X86ReleaseConfig,
+                            .X64DebugConfig, .X64ProfileConfig, .X64ReleaseConfig }
+.Configs_Windows_Clang  = { .X86ClangConfig }
+
+//------------------------------------------------------------------------------

@@ -1,0 +1,98 @@
+
+// Visual Studio Project Generation
+//--------------------------------------------------------------------------
+VCXProject( '$ProjectName$-proj' )
+{
+    .ProjectOutput              = '$ProjectPath$\$ProjectName$.vcxproj'
+    .ProjectInputPaths          = '$ProjectPath$\'
+    .ProjectBasePath            = '$ProjectPath$\'
+
+    .LocalDebuggerCommand       = '^$(ProjectDir)..\..\$OutputBase$\^$(Configuration)\$ProjectName$-^$(Configuration).exe'
+    .LocalDebuggerWorkingDirectory = '^$(ProjectDir)..\..\'
+}
+
+// Unity
+//--------------------------------------------------------------------------
+Unity( '$ProjectName$-UnityGenerate' )
+{
+    .UnityInputPath             = '$ProjectPath$\'
+    .UnityOutputPath            = '$OutputBase$\Unity\$ProjectPath$\'
+}
+
+// Windows (MSVC)
+//--------------------------------------------------------------------------
+// Lib
+ForEach( .Config in .Configs_Windows_MSVC )
+{
+    Using( .Config )
+
+    .OutputBase         + '\$Platform$-$Config$'
+    .IncludePath        = ' -I"$ProjectPath$" -I"$ProjectPath$\.." -I"$AdditionalInclude$"'
+
+    // Static Library
+    Library( '$ProjectName$-Lib-$Platform$-$Config$' )
+    {
+        // Input (Unity)
+        .CompilerInputUnity         = '$ProjectName$-UnityGenerate'
+        .CompilerOptions            + '$IncludePath$ -D_WINDOWS'
+
+        // Output
+        .CompilerOutputPath         = '$OutputBase$\$ProjectName$\'
+        .LibrarianOutput            = '$OutputBase$\$ProjectName$\$ProjectName$.lib'
+    }
+
+    // Executable
+    Executable( '$ProjectName$-Exe-$Platform$-$Config$' )
+    {
+        .Libraries                  = { 'Core-Lib-$Platform$-$Config$',
+                                        'Core.Graphics-Lib-$Platform$-$Config$',
+                                        'Core.Engine-Lib-$Platform$-$Config$',
+                                        'Core.Application-Lib-$Platform$-$Config$',
+                                        '$ProjectName$-Lib-$Platform$-$Config$' }
+
+        .LinkerOutput               = '$OutputBase$\$ProjectName$-$Platform$-$Config$.exe'
+        .LinkerOptions              + ' /LIBPATH:"$AdditionalLibInclude$\$Platform$\"'
+    }
+    Alias( '$ProjectName$-$Platform$-$Config$' ) { .Targets = '$ProjectName$-Exe-$Platform$-$Config$' }
+}
+
+// Windows (Clang)
+//--------------------------------------------------------------------------
+ForEach( .Config in .Configs_Windows_Clang )
+{
+    Using( .Config )
+
+    .OutputBase         + '\$Platform$-$Config$'
+    .IncludePath        = ' -I"$ProjectPath$" -I"$SourceBase$" -I"$AdditionalInclude$"'
+
+    // Static Library
+    Library( '$ProjectName$-Lib-$Platform$-$Config$' )
+    {
+        // Input (Unity)
+        .CompilerInputUnity         = '$ProjectName$-UnityGenerate'
+        .CompilerOptions            + '$IncludePath$ -D_WINDOWS'
+
+        // Output
+        .CompilerOutputPath         = '$OutputBase$\$ProjectName$\'
+        .LibrarianOutput            = '$OutputBase$\$ProjectName$\$ProjectName$.lib'
+    }
+    Alias( '$ProjectName$-$Platform$-$Config$' ) { .Targets = '$ProjectName$-Lib-$Platform$-$Config$' }
+}
+
+// Aliases
+//--------------------------------------------------------------------------
+// Per-Config
+Alias( '$ProjectName$-Debug' )      { .Targets = { '$ProjectName$-X86-Debug',   '$ProjectName$-X64-Debug', '$ProjectName$-X86Clang-Debug' } }
+Alias( '$ProjectName$-Profile' )    { .Targets = { '$ProjectName$-X86-Profile', '$ProjectName$-X64-Profile' } }
+Alias( '$ProjectName$-Release' )    { .Targets = { '$ProjectName$-X86-Release', '$ProjectName$-X64-Release' } }
+
+// Per-Platform
+Alias( '$ProjectName$-X86' )        { .Targets = { '$ProjectName$-X86-Debug', '$ProjectName$-X64-Release', '$ProjectName$-X86-Profile' } }
+Alias( '$ProjectName$-X64' )        { .Targets = { '$ProjectName$-X64-Debug', '$ProjectName$-X64-Release', '$ProjectName$-X64-Profile' } }
+Alias( '$ProjectName$-X86Clang' )   { .Targets = { '$ProjectName$-X86Clang-Debug' } }
+
+// All
+Alias( '$ProjectName$' )
+{
+    .Targets = { '$ProjectName$-Debug', '$ProjectName$-Profile', '$ProjectName$-Release' }
+}
