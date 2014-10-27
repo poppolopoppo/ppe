@@ -1,0 +1,450 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="Camera\Camera.cpp">
+      <Filter>Camera</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Camera\Camera.h">
+      <Filter>Camera</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Camera\CameraController.cpp">
+      <Filter>Camera</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Camera\CameraController.h">
+      <Filter>Camera</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Camera\CameraModel.cpp">
+      <Filter>Camera</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Camera\CameraModel.h">
+      <Filter>Camera</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Effect\Effect.cpp">
+      <Filter>Effect</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Effect\Effect.h">
+      <Filter>Effect</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Effect\EffectCompiler.cpp">
+      <Filter>Effect</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Effect\EffectCompiler.h">
+      <Filter>Effect</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Effect\EffectConstantBuffer.cpp">
+      <Filter>Effect</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Effect\EffectConstantBuffer.h">
+      <Filter>Effect</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Effect\EffectDescriptor.cpp">
+      <Filter>Effect</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Effect\EffectDescriptor.h">
+      <Filter>Effect</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Effect\EffectProgram.cpp">
+      <Filter>Effect</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Effect\EffectProgram.h">
+      <Filter>Effect</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Effect\MaterialEffect.cpp">
+      <Filter>Effect</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Effect\MaterialEffect.h">
+      <Filter>Effect</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Lighting\LightingEnvironment.cpp">
+      <Filter>Lighting</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Lighting\LightingEnvironment.h">
+      <Filter>Lighting</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\Parameters\AbstractMaterialParameter.cpp">
+      <Filter>Material\Parameters</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\Parameters\AbstractMaterialParameter.h">
+      <Filter>Material\Parameters</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\Parameters\MaterialParameterBlock.cpp">
+      <Filter>Material\Parameters</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\Parameters\MaterialParameterBlock.h">
+      <Filter>Material\Parameters</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\Parameters\MaterialParameterCamera.cpp">
+      <Filter>Material\Parameters</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\Parameters\MaterialParameterCamera.h">
+      <Filter>Material\Parameters</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\Parameters\MaterialParameterLighting.cpp">
+      <Filter>Material\Parameters</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\Parameters\MaterialParameterLighting.h">
+      <Filter>Material\Parameters</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\Parameters\MaterialParameterMath-inl.h">
+      <Filter>Material\Parameters</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\Parameters\MaterialParameterMath.cpp">
+      <Filter>Material\Parameters</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\Parameters\MaterialParameterMath.h">
+      <Filter>Material\Parameters</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\Parameters\MaterialParameterMemoizer-inl.h">
+      <Filter>Material\Parameters</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\Parameters\MaterialParameterMemoizer.cpp">
+      <Filter>Material\Parameters</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\Parameters\MaterialParameterMemoizer.h">
+      <Filter>Material\Parameters</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\Parameters\MaterialParameterRandom.cpp">
+      <Filter>Material\Parameters</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\Parameters\MaterialParameterRandom.h">
+      <Filter>Material\Parameters</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\Parameters\MaterialParameterTexture.cpp">
+      <Filter>Material\Parameters</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\Parameters\MaterialParameterTexture.h">
+      <Filter>Material\Parameters</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\Parameters\MaterialParameterTime.cpp">
+      <Filter>Material\Parameters</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\Parameters\MaterialParameterTime.h">
+      <Filter>Material\Parameters</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\Material.cpp">
+      <Filter>Material</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\Material.h">
+      <Filter>Material</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\MaterialContext.h">
+      <Filter>Material</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\MaterialDatabase.cpp">
+      <Filter>Material</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\MaterialDatabase.h">
+      <Filter>Material</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\MaterialToken.cpp">
+      <Filter>Material</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\MaterialToken.h">
+      <Filter>Material</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\MaterialVariability.cpp">
+      <Filter>Material</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\MaterialVariability.h">
+      <Filter>Material</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Mesh\Geometry\GenericVertex.cpp">
+      <Filter>Mesh\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Mesh\Geometry\GenericVertex.h">
+      <Filter>Mesh\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Mesh\Geometry\GenericVertexExport.cpp">
+      <Filter>Mesh\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Mesh\Geometry\GenericVertexExport.h">
+      <Filter>Mesh\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Mesh\Geometry\GenericVertexOptimizer.cpp">
+      <Filter>Mesh\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Mesh\Geometry\GenericVertexOptimizer.h">
+      <Filter>Mesh\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Mesh\Geometry\GeometricPrimitives.cpp">
+      <Filter>Mesh\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Mesh\Geometry\GeometricPrimitives.h">
+      <Filter>Mesh\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Mesh\MeshLoader-inl.h">
+      <Filter>Mesh</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Mesh\meshloader-ply.cpp">
+      <Filter>Mesh</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Mesh\MeshLoader.cpp">
+      <Filter>Mesh</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Mesh\MeshLoader.h">
+      <Filter>Mesh</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\Layers\AbstractRenderLayer.cpp">
+      <Filter>Render\Layers</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\Layers\AbstractRenderLayer.h">
+      <Filter>Render\Layers</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\Layers\RenderLayer.cpp">
+      <Filter>Render\Layers</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\Layers\RenderLayer.h">
+      <Filter>Render\Layers</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\Layers\RenderLayerClear.cpp">
+      <Filter>Render\Layers</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\Layers\RenderLayerClear.h">
+      <Filter>Render\Layers</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\Layers\RenderLayerDrawRect.cpp">
+      <Filter>Render\Layers</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\Layers\RenderLayerDrawRect.h">
+      <Filter>Render\Layers</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\Layers\RenderLayerSetRenderTarget.cpp">
+      <Filter>Render\Layers</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\Layers\RenderLayerSetRenderTarget.h">
+      <Filter>Render\Layers</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\Surfaces\AbstractRenderSurface.cpp">
+      <Filter>Render\Surfaces</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\Surfaces\AbstractRenderSurface.h">
+      <Filter>Render\Surfaces</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\Surfaces\RenderSurface.cpp">
+      <Filter>Render\Surfaces</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\Surfaces\RenderSurface.h">
+      <Filter>Render\Surfaces</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\Surfaces\RenderSurfaceBackBuffer.cpp">
+      <Filter>Render\Surfaces</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\Surfaces\RenderSurfaceBackBuffer.h">
+      <Filter>Render\Surfaces</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\Surfaces\RenderSurfaceProxy.cpp">
+      <Filter>Render\Surfaces</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\Surfaces\RenderSurfaceProxy.h">
+      <Filter>Render\Surfaces</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\Surfaces\RenderSurfaceRelative.cpp">
+      <Filter>Render\Surfaces</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\Surfaces\RenderSurfaceRelative.h">
+      <Filter>Render\Surfaces</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\RenderBatch.cpp">
+      <Filter>Render</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\RenderBatch.h">
+      <Filter>Render</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\RenderCommand.cpp">
+      <Filter>Render</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\RenderCommand.h">
+      <Filter>Render</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\RenderContext.cpp">
+      <Filter>Render</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\RenderContext.h">
+      <Filter>Render</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\RenderState.cpp">
+      <Filter>Render</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\RenderState.h">
+      <Filter>Render</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\RenderSurfaceManager.cpp">
+      <Filter>Render</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\RenderSurfaceManager.h">
+      <Filter>Render</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\RenderTree.cpp">
+      <Filter>Render</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Render\RenderTree.h">
+      <Filter>Render</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Scene\ISceneObserver.h">
+      <Filter>Scene</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Scene\Scene.cpp">
+      <Filter>Scene</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Scene\Scene.h">
+      <Filter>Scene</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Service\DeviceEncapsulatorService.cpp">
+      <Filter>Service</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Service\DeviceEncapsulatorService.h">
+      <Filter>Service</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Service\EffectCompilerService.cpp">
+      <Filter>Service</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Service\EffectCompilerService.h">
+      <Filter>Service</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Service\IService.cpp">
+      <Filter>Service</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Service\IService.h">
+      <Filter>Service</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Service\IServiceProvider.h">
+      <Filter>Service</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Service\RenderSurfaceService.cpp">
+      <Filter>Service</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Service\RenderSurfaceService.h">
+      <Filter>Service</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Service\ServiceContainer.cpp">
+      <Filter>Service</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Service\ServiceContainer.h">
+      <Filter>Service</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Service\Service_fwd.h">
+      <Filter>Service</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Service\TextureCacheService.cpp">
+      <Filter>Service</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Service\TextureCacheService.h">
+      <Filter>Service</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Texture\TextureCache.cpp">
+      <Filter>Texture</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Texture\TextureCache.h">
+      <Filter>Texture</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Texture\textureloader-dds.cpp">
+      <Filter>Texture</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Texture\TextureLoader-inl.h">
+      <Filter>Texture</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Texture\TextureLoader.cpp">
+      <Filter>Texture</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Texture\TextureLoader.h">
+      <Filter>Texture</Filter>
+    </CustomBuild>
+    <CustomBuild Include="World\IWorldObserver.h">
+      <Filter>World</Filter>
+    </CustomBuild>
+    <CustomBuild Include="World\World.cpp">
+      <Filter>World</Filter>
+    </CustomBuild>
+    <CustomBuild Include="World\World.h">
+      <Filter>World</Filter>
+    </CustomBuild>
+    <CustomBuild Include="World\WorldTime.cpp">
+      <Filter>World</Filter>
+    </CustomBuild>
+    <CustomBuild Include="World\WorldTime.h">
+      <Filter>World</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Engine.cpp">
+    </CustomBuild>
+    <CustomBuild Include="Engine.h">
+    </CustomBuild>
+    <CustomBuild Include="fbuild.bff">
+    </CustomBuild>
+    <CustomBuild Include="stdafx.cpp">
+    </CustomBuild>
+    <CustomBuild Include="stdafx.h">
+    </CustomBuild>
+    <CustomBuild Include="targetver.h">
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Camera">
+      <UniqueIdentifier>{3cb0eb33-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Effect">
+      <UniqueIdentifier>{b1cc94c4-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Lighting">
+      <UniqueIdentifier>{327e7725-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Material\Parameters">
+      <UniqueIdentifier>{569a2759-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Material">
+      <UniqueIdentifier>{85c817c3-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Mesh\Geometry">
+      <UniqueIdentifier>{7db4ddcf-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Mesh">
+      <UniqueIdentifier>{415d9568-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Render\Layers">
+      <UniqueIdentifier>{40ef5e94-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Render">
+      <UniqueIdentifier>{93f09c5c-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Render\Surfaces">
+      <UniqueIdentifier>{4c4694d1-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Scene">
+      <UniqueIdentifier>{18b8c0de-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Service">
+      <UniqueIdentifier>{2e20a34e-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Texture">
+      <UniqueIdentifier>{4ddb34ee-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="World">
+      <UniqueIdentifier>{fbb63e47-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

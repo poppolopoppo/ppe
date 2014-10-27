@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="x86-Debug|Win32">
+      <Configuration>x86-Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="x86-Profile|Win32">
+      <Configuration>x86-Profile</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="x86-Release|Win32">
+      <Configuration>x86-Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="x64-Debug|Win32">
+      <Configuration>x64-Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="x64-Profile|Win32">
+      <Configuration>x64-Profile</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="x64-Release|Win32">
+      <Configuration>x64-Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="x86Clang-Debug|Win32">
+      <Configuration>x86Clang-Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="Camera\Camera.cpp" />
+    <CustomBuild Include="Camera\Camera.h" />
+    <CustomBuild Include="Camera\CameraController.cpp" />
+    <CustomBuild Include="Camera\CameraController.h" />
+    <CustomBuild Include="Camera\CameraModel.cpp" />
+    <CustomBuild Include="Camera\CameraModel.h" />
+    <CustomBuild Include="Effect\Effect.cpp" />
+    <CustomBuild Include="Effect\Effect.h" />
+    <CustomBuild Include="Effect\EffectCompiler.cpp" />
+    <CustomBuild Include="Effect\EffectCompiler.h" />
+    <CustomBuild Include="Effect\EffectConstantBuffer.cpp" />
+    <CustomBuild Include="Effect\EffectConstantBuffer.h" />
+    <CustomBuild Include="Effect\EffectDescriptor.cpp" />
+    <CustomBuild Include="Effect\EffectDescriptor.h" />
+    <CustomBuild Include="Effect\EffectProgram.cpp" />
+    <CustomBuild Include="Effect\EffectProgram.h" />
+    <CustomBuild Include="Effect\MaterialEffect.cpp" />
+    <CustomBuild Include="Effect\MaterialEffect.h" />
+    <CustomBuild Include="Lighting\LightingEnvironment.cpp" />
+    <CustomBuild Include="Lighting\LightingEnvironment.h" />
+    <CustomBuild Include="Material\Parameters\AbstractMaterialParameter.cpp" />
+    <CustomBuild Include="Material\Parameters\AbstractMaterialParameter.h" />
+    <CustomBuild Include="Material\Parameters\MaterialParameterBlock.cpp" />
+    <CustomBuild Include="Material\Parameters\MaterialParameterBlock.h" />
+    <CustomBuild Include="Material\Parameters\MaterialParameterCamera.cpp" />
+    <CustomBuild Include="Material\Parameters\MaterialParameterCamera.h" />
+    <CustomBuild Include="Material\Parameters\MaterialParameterLighting.cpp" />
+    <CustomBuild Include="Material\Parameters\MaterialParameterLighting.h" />
+    <CustomBuild Include="Material\Parameters\MaterialParameterMath-inl.h" />
+    <CustomBuild Include="Material\Parameters\MaterialParameterMath.cpp" />
+    <CustomBuild Include="Material\Parameters\MaterialParameterMath.h" />
+    <CustomBuild Include="Material\Parameters\MaterialParameterMemoizer-inl.h" />
+    <CustomBuild Include="Material\Parameters\MaterialParameterMemoizer.cpp" />
+    <CustomBuild Include="Material\Parameters\MaterialParameterMemoizer.h" />
+    <CustomBuild Include="Material\Parameters\MaterialParameterRandom.cpp" />
+    <CustomBuild Include="Material\Parameters\MaterialParameterRandom.h" />
+    <CustomBuild Include="Material\Parameters\MaterialParameterTexture.cpp" />
+    <CustomBuild Include="Material\Parameters\MaterialParameterTexture.h" />
+    <CustomBuild Include="Material\Parameters\MaterialParameterTime.cpp" />
+    <CustomBuild Include="Material\Parameters\MaterialParameterTime.h" />
+    <CustomBuild Include="Material\Material.cpp" />
+    <CustomBuild Include="Material\Material.h" />
+    <CustomBuild Include="Material\MaterialContext.h" />
+    <CustomBuild Include="Material\MaterialDatabase.cpp" />
+    <CustomBuild Include="Material\MaterialDatabase.h" />
+    <CustomBuild Include="Material\MaterialToken.cpp" />
+    <CustomBuild Include="Material\MaterialToken.h" />
+    <CustomBuild Include="Material\MaterialVariability.cpp" />
+    <CustomBuild Include="Material\MaterialVariability.h" />
+    <CustomBuild Include="Mesh\Geometry\GenericVertex.cpp" />
+    <CustomBuild Include="Mesh\Geometry\GenericVertex.h" />
+    <CustomBuild Include="Mesh\Geometry\GenericVertexExport.cpp" />
+    <CustomBuild Include="Mesh\Geometry\GenericVertexExport.h" />
+    <CustomBuild Include="Mesh\Geometry\GenericVertexOptimizer.cpp" />
+    <CustomBuild Include="Mesh\Geometry\GenericVertexOptimizer.h" />
+    <CustomBuild Include="Mesh\Geometry\GeometricPrimitives.cpp" />
+    <CustomBuild Include="Mesh\Geometry\GeometricPrimitives.h" />
+    <CustomBuild Include="Mesh\MeshLoader-inl.h" />
+    <CustomBuild Include="Mesh\meshloader-ply.cpp" />
+    <CustomBuild Include="Mesh\MeshLoader.cpp" />
+    <CustomBuild Include="Mesh\MeshLoader.h" />
+    <CustomBuild Include="Render\Layers\AbstractRenderLayer.cpp" />
+    <CustomBuild Include="Render\Layers\AbstractRenderLayer.h" />
+    <CustomBuild Include="Render\Layers\RenderLayer.cpp" />
+    <CustomBuild Include="Render\Layers\RenderLayer.h" />
+    <CustomBuild Include="Render\Layers\RenderLayerClear.cpp" />
+    <CustomBuild Include="Render\Layers\RenderLayerClear.h" />
+    <CustomBuild Include="Render\Layers\RenderLayerDrawRect.cpp" />
+    <CustomBuild Include="Render\Layers\RenderLayerDrawRect.h" />
+    <CustomBuild Include="Render\Layers\RenderLayerSetRenderTarget.cpp" />
+    <CustomBuild Include="Render\Layers\RenderLayerSetRenderTarget.h" />
+    <CustomBuild Include="Render\Surfaces\AbstractRenderSurface.cpp" />
+    <CustomBuild Include="Render\Surfaces\AbstractRenderSurface.h" />
+    <CustomBuild Include="Render\Surfaces\RenderSurface.cpp" />
+    <CustomBuild Include="Render\Surfaces\RenderSurface.h" />
+    <CustomBuild Include="Render\Surfaces\RenderSurfaceBackBuffer.cpp" />
+    <CustomBuild Include="Render\Surfaces\RenderSurfaceBackBuffer.h" />
+    <CustomBuild Include="Render\Surfaces\RenderSurfaceProxy.cpp" />
+    <CustomBuild Include="Render\Surfaces\RenderSurfaceProxy.h" />
+    <CustomBuild Include="Render\Surfaces\RenderSurfaceRelative.cpp" />
+    <CustomBuild Include="Render\Surfaces\RenderSurfaceRelative.h" />
+    <CustomBuild Include="Render\RenderBatch.cpp" />
+    <CustomBuild Include="Render\RenderBatch.h" />
+    <CustomBuild Include="Render\RenderCommand.cpp" />
+    <CustomBuild Include="Render\RenderCommand.h" />
+    <CustomBuild Include="Render\RenderContext.cpp" />
+    <CustomBuild Include="Render\RenderContext.h" />
+    <CustomBuild Include="Render\RenderState.cpp" />
+    <CustomBuild Include="Render\RenderState.h" />
+    <CustomBuild Include="Render\RenderSurfaceManager.cpp" />
+    <CustomBuild Include="Render\RenderSurfaceManager.h" />
+    <CustomBuild Include="Render\RenderTree.cpp" />
+    <CustomBuild Include="Render\RenderTree.h" />
+    <CustomBuild Include="Scene\ISceneObserver.h" />
+    <CustomBuild Include="Scene\Scene.cpp" />
+    <CustomBuild Include="Scene\Scene.h" />
+    <CustomBuild Include="Service\DeviceEncapsulatorService.cpp" />
+    <CustomBuild Include="Service\DeviceEncapsulatorService.h" />
+    <CustomBuild Include="Service\EffectCompilerService.cpp" />
+    <CustomBuild Include="Service\EffectCompilerService.h" />
+    <CustomBuild Include="Service\IService.cpp" />
+    <CustomBuild Include="Service\IService.h" />
+    <CustomBuild Include="Service\IServiceProvider.h" />
+    <CustomBuild Include="Service\RenderSurfaceService.cpp" />
+    <CustomBuild Include="Service\RenderSurfaceService.h" />
+    <CustomBuild Include="Service\ServiceContainer.cpp" />
+    <CustomBuild Include="Service\ServiceContainer.h" />
+    <CustomBuild Include="Service\Service_fwd.h" />
+    <CustomBuild Include="Service\TextureCacheService.cpp" />
+    <CustomBuild Include="Service\TextureCacheService.h" />
+    <CustomBuild Include="Texture\TextureCache.cpp" />
+    <CustomBuild Include="Texture\TextureCache.h" />
+    <CustomBuild Include="Texture\textureloader-dds.cpp" />
+    <CustomBuild Include="Texture\TextureLoader-inl.h" />
+    <CustomBuild Include="Texture\TextureLoader.cpp" />
+    <CustomBuild Include="Texture\TextureLoader.h" />
+    <CustomBuild Include="World\IWorldObserver.h" />
+    <CustomBuild Include="World\World.cpp" />
+    <CustomBuild Include="World\World.h" />
+    <CustomBuild Include="World\WorldTime.cpp" />
+    <CustomBuild Include="World\WorldTime.h" />
+    <CustomBuild Include="Engine.cpp" />
+    <CustomBuild Include="Engine.h" />
+    <CustomBuild Include="fbuild.bff" />
+    <CustomBuild Include="stdafx.cpp" />
+    <CustomBuild Include="stdafx.h" />
+    <CustomBuild Include="targetver.h" />
+  </ItemGroup>
+  <ItemGroup>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{a859b141-6c94-4f93-bc2a-7f5284b7d434}</ProjectGuid>
+    <Keyword>MakeFileProj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x86-Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x86-Profile|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x86-Release|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x64-Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x64-Profile|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x64-Release|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x86Clang-Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='x86-Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='x86-Profile|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='x86-Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='x64-Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='x64-Profile|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='x64-Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='x86Clang-Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x86-Debug|Win32'">
+    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" -showcmds -dist -cache -vs $(ProjectName)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" -showcmds -dist -cache -vs -clean $(ProjectName)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakePreprocessorDefinitions>WIN32_LEAN_AND_MEAN;_WIN32;__WINDOWS__;WIN32;UNICODE;_UNICODE;VC_EXTRALEAN;DBGHELP_TRANSLATE_TCHAR;NOMINMAX;_DEBUG;DEBUG</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;.</NMakeIncludeSearchPath>
+    <IntDir>$(ProjectDir)..\..\Output\Intermediate\$(Configuration)\$(ProjectName)</IntDir>
+    <OutDir>$(ProjectDir)..\..\Output\$(Configuration)\$(ProjectName)</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x86-Profile|Win32'">
+    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" -showcmds -dist -cache -vs $(ProjectName)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" -showcmds -dist -cache -vs -clean $(ProjectName)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakePreprocessorDefinitions>WIN32_LEAN_AND_MEAN;_WIN32;__WINDOWS__;WIN32;UNICODE;_UNICODE;VC_EXTRALEAN;DBGHELP_TRANSLATE_TCHAR;NOMINMAX;NDEBUG;RELEASE;PROFILING_ENABLED</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;.</NMakeIncludeSearchPath>
+    <IntDir>$(ProjectDir)..\..\Output\Intermediate\$(Configuration)\$(ProjectName)</IntDir>
+    <OutDir>$(ProjectDir)..\..\Output\$(Configuration)\$(ProjectName)</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x86-Release|Win32'">
+    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" -showcmds -dist -cache -vs $(ProjectName)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" -showcmds -dist -cache -vs -clean $(ProjectName)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakePreprocessorDefinitions>WIN32_LEAN_AND_MEAN;_WIN32;__WINDOWS__;WIN32;UNICODE;_UNICODE;VC_EXTRALEAN;DBGHELP_TRANSLATE_TCHAR;NOMINMAX;NDEBUG;RELEASE</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;.</NMakeIncludeSearchPath>
+    <IntDir>$(ProjectDir)..\..\Output\Intermediate\$(Configuration)\$(ProjectName)</IntDir>
+    <OutDir>$(ProjectDir)..\..\Output\$(Configuration)\$(ProjectName)</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x64-Debug|Win32'">
+    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" -showcmds -dist -cache -vs $(ProjectName)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" -showcmds -dist -cache -vs -clean $(ProjectName)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakePreprocessorDefinitions>WIN32_LEAN_AND_MEAN;_WIN32;__WINDOWS__;WIN64;UNICODE;_UNICODE;VC_EXTRALEAN;DBGHELP_TRANSLATE_TCHAR;NOMINMAX;_DEBUG;DEBUG</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;.</NMakeIncludeSearchPath>
+    <IntDir>$(ProjectDir)..\..\Output\Intermediate\$(Configuration)\$(ProjectName)</IntDir>
+    <OutDir>$(ProjectDir)..\..\Output\$(Configuration)\$(ProjectName)</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x64-Profile|Win32'">
+    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" -showcmds -dist -cache -vs $(ProjectName)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" -showcmds -dist -cache -vs -clean $(ProjectName)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakePreprocessorDefinitions>WIN32_LEAN_AND_MEAN;_WIN32;__WINDOWS__;WIN64;UNICODE;_UNICODE;VC_EXTRALEAN;DBGHELP_TRANSLATE_TCHAR;NOMINMAX;NDEBUG;RELEASE;PROFILING_ENABLED</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;.</NMakeIncludeSearchPath>
+    <IntDir>$(ProjectDir)..\..\Output\Intermediate\$(Configuration)\$(ProjectName)</IntDir>
+    <OutDir>$(ProjectDir)..\..\Output\$(Configuration)\$(ProjectName)</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x64-Release|Win32'">
+    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" -showcmds -dist -cache -vs $(ProjectName)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" -showcmds -dist -cache -vs -clean $(ProjectName)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakePreprocessorDefinitions>WIN32_LEAN_AND_MEAN;_WIN32;__WINDOWS__;WIN64;UNICODE;_UNICODE;VC_EXTRALEAN;DBGHELP_TRANSLATE_TCHAR;NOMINMAX;NDEBUG;RELEASE</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;.</NMakeIncludeSearchPath>
+    <IntDir>$(ProjectDir)..\..\Output\Intermediate\$(Configuration)\$(ProjectName)</IntDir>
+    <OutDir>$(ProjectDir)..\..\Output\$(Configuration)\$(ProjectName)</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x86Clang-Debug|Win32'">
+    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" -showcmds -dist -cache -vs $(ProjectName)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" -showcmds -dist -cache -vs -clean $(ProjectName)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;.</NMakeIncludeSearchPath>
+    <IntDir>$(ProjectDir)..\..\Output\Intermediate\$(Configuration)\$(ProjectName)</IntDir>
+    <OutDir>$(ProjectDir)..\..\Output\$(Configuration)\$(ProjectName)</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='x86-Debug|Win32'">
+    <BuildLog>
+      <Path />
+    </BuildLog>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='x86-Profile|Win32'">
+    <BuildLog>
+      <Path />
+    </BuildLog>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='x86-Release|Win32'">
+    <BuildLog>
+      <Path />
+    </BuildLog>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='x64-Debug|Win32'">
+    <BuildLog>
+      <Path />
+    </BuildLog>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='x64-Profile|Win32'">
+    <BuildLog>
+      <Path />
+    </BuildLog>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='x64-Release|Win32'">
+    <BuildLog>
+      <Path />
+    </BuildLog>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='x86Clang-Debug|Win32'">
+    <BuildLog>
+      <Path />
+    </BuildLog>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+  <Import Condition="'$(ConfigurationType)' == 'Makefile' and Exists('$(VCTargetsPath)\Platforms\$(Platform)\SCE.Makefile.$(Platform).targets')" Project="$(VCTargetsPath)\Platforms\$(Platform)\SCE.Makefile.$(Platform).targets" />
+</Project>

@@ -1,0 +1,1071 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="Allocator\Alloca.cpp">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Allocator\Alloca.h">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Allocator\Allocation.h">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Allocator\AllocatorBase.h">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Allocator\BuddyAllocator.h">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Allocator\BuddyHeap.cpp">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Allocator\BuddyHeap.h">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Allocator\Heap.cpp">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Allocator\Heap.h">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Allocator\HeapAllocator.h">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Allocator\Malloc.cpp">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Allocator\Malloc.h">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Allocator\Mallocator.h">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Allocator\PoolAllocator-impl.h">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Allocator\PoolAllocator.h">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Allocator\StackAllocator.h">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Allocator\ThreadLocalAllocator.h">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Allocator\ThreadLocalHeap.cpp">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Allocator\ThreadLocalHeap.h">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Allocator\TrackingAllocator.h">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Color\Color-inl.h">
+      <Filter>Color</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Color\Color.cpp">
+      <Filter>Color</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Color\Color.h">
+      <Filter>Color</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Container\AssociativeVector-inl.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Container\AssociativeVector.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Container\Hash-inl.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Container\Hash.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Container\HashMap.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Container\HashSet.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Container\Observer-inl.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Container\Observer.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Container\Pair.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Container\RawStorage-inl.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Container\RawStorage.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Container\Token-inl.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Container\Token.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Container\Trie-inl.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Container\Trie.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Container\Tuple.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Container\Vector-inl.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Container\Vector.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Diagnostic\Callstack.cpp">
+      <Filter>Diagnostic</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Diagnostic\Callstack.h">
+      <Filter>Diagnostic</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Diagnostic\CrtDebug.cpp">
+      <Filter>Diagnostic</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Diagnostic\CrtDebug.h">
+      <Filter>Diagnostic</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Diagnostic\CurrentProcess.cpp">
+      <Filter>Diagnostic</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Diagnostic\CurrentProcess.h">
+      <Filter>Diagnostic</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Diagnostic\DecodedCallstack.cpp">
+      <Filter>Diagnostic</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Diagnostic\DecodedCallstack.h">
+      <Filter>Diagnostic</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Diagnostic\DialogBox.cpp">
+      <Filter>Diagnostic</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Diagnostic\DialogBox.h">
+      <Filter>Diagnostic</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Diagnostic\LastError.cpp">
+      <Filter>Diagnostic</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Diagnostic\LastError.h">
+      <Filter>Diagnostic</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Diagnostic\Logger-inl.h">
+      <Filter>Diagnostic</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Diagnostic\Logger.cpp">
+      <Filter>Diagnostic</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Diagnostic\Logger.h">
+      <Filter>Diagnostic</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\FS\Basename.cpp">
+      <Filter>IO\FS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\FS\Basename.h">
+      <Filter>IO\FS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\FS\BasenameNoExt.cpp">
+      <Filter>IO\FS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\FS\BasenameNoExt.h">
+      <Filter>IO\FS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\FS\Dirname.cpp">
+      <Filter>IO\FS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\FS\Dirname.h">
+      <Filter>IO\FS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\FS\Dirpath.cpp">
+      <Filter>IO\FS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\FS\Dirpath.h">
+      <Filter>IO\FS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\FS\Extname.cpp">
+      <Filter>IO\FS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\FS\Extname.h">
+      <Filter>IO\FS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\FS\Filename.cpp">
+      <Filter>IO\FS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\FS\Filename.h">
+      <Filter>IO\FS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\FS\FileSystemProperties.cpp">
+      <Filter>IO\FS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\FS\FileSystemProperties.h">
+      <Filter>IO\FS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\FS\MountingPoint.cpp">
+      <Filter>IO\FS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\FS\MountingPoint.h">
+      <Filter>IO\FS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\VFS\VirtualFileSystemComponent.cpp">
+      <Filter>IO\VFS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\VFS\VirtualFileSystemComponent.h">
+      <Filter>IO\VFS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\VFS\VirtualFileSystemNativeComponent.cpp">
+      <Filter>IO\VFS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\VFS\VirtualFileSystemNativeComponent.h">
+      <Filter>IO\VFS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\VFS\VirtualFileSystemNativeStream.cpp">
+      <Filter>IO\VFS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\VFS\VirtualFileSystemNativeStream.h">
+      <Filter>IO\VFS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\VFS\VirtualFileSystemNode.cpp">
+      <Filter>IO\VFS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\VFS\VirtualFileSystemNode.h">
+      <Filter>IO\VFS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\VFS\VirtualFileSystemPolicies.h">
+      <Filter>IO\VFS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\VFS\VirtualFileSystemStream-inl.h">
+      <Filter>IO\VFS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\VFS\VirtualFileSystemStream.cpp">
+      <Filter>IO\VFS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\VFS\VirtualFileSystemStream.h">
+      <Filter>IO\VFS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\VFS\VirtualFileSystemTrie.cpp">
+      <Filter>IO\VFS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\VFS\VirtualFileSystemTrie.h">
+      <Filter>IO\VFS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\CRC64.cpp">
+      <Filter>IO</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\CRC64.h">
+      <Filter>IO</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\FileSystem.cpp">
+      <Filter>IO</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\FileSystem.h">
+      <Filter>IO</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\Format-inl.h">
+      <Filter>IO</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\Format.h">
+      <Filter>IO</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\FormatHelpers.cpp">
+      <Filter>IO</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\FormatHelpers.h">
+      <Filter>IO</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\regexp.h">
+      <Filter>IO</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\Stream-inl.h">
+      <Filter>IO</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\Stream.h">
+      <Filter>IO</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\String-inl.h">
+      <Filter>IO</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\String.cpp">
+      <Filter>IO</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\String.h">
+      <Filter>IO</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\StringSlice-inl.h">
+      <Filter>IO</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\StringSlice.h">
+      <Filter>IO</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\VirtualFileSystem-inl.h">
+      <Filter>IO</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\VirtualFileSystem.cpp">
+      <Filter>IO</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\VirtualFileSystem.h">
+      <Filter>IO</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\VirtualFileSystem_fwd.cpp">
+      <Filter>IO</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\VirtualFileSystem_fwd.h">
+      <Filter>IO</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Lexer\Lexer.cpp">
+      <Filter>Lexer</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Lexer\Lexer.h">
+      <Filter>Lexer</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Lexer\Location.h">
+      <Filter>Lexer</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Lexer\LookAheadReader.cpp">
+      <Filter>Lexer</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Lexer\LookAheadReader.h">
+      <Filter>Lexer</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Lexer\Match.cpp">
+      <Filter>Lexer</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Lexer\Match.h">
+      <Filter>Lexer</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Lexer\Symbol.cpp">
+      <Filter>Lexer</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Lexer\Symbol.h">
+      <Filter>Lexer</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Lexer\SymbolTrie.cpp">
+      <Filter>Lexer</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Lexer\SymbolTrie.h">
+      <Filter>Lexer</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\Collision.cpp">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\Collision.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\Frustum-inl.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\Frustum.cpp">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\Frustum.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\Plane-inl.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\Plane.cpp">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\Plane.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\Ray-inl.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\Ray.cpp">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\Ray.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\ScalarBoundingBox-inl.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\ScalarBoundingBox.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\ScalarBoundingBox.Shuffle-inl.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\ScalarBoundingBoxHelpers-inl.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\ScalarBoundingBoxHelpers.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\ScalarBoundingBox_fwd.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\ScalarRectangle-inl.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\ScalarRectangle.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\ScalarRectangle_fwd.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\ScalarVector-inl.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\ScalarVector.cpp">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\ScalarVector.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\ScalarVector.Shuffle-inl.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\ScalarVectorHelpers-inl.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\ScalarVectorHelpers.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\ScalarVector_fwd.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\Sphere-inl.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\Sphere.cpp">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\Sphere.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Packing\PackedVectors-inl.h">
+      <Filter>Maths\Packing</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Packing\PackedVectors.cpp">
+      <Filter>Maths\Packing</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Packing\PackedVectors.h">
+      <Filter>Maths\Packing</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Packing\PackingHelpers-inl.h">
+      <Filter>Maths\Packing</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Packing\PackingHelpers.cpp">
+      <Filter>Maths\Packing</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Packing\PackingHelpers.h">
+      <Filter>Maths\Packing</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\SphericalHarmonics\SHFunctionProjector.cpp">
+      <Filter>Maths\SphericalHarmonics</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\SphericalHarmonics\SHFunctionProjector.h">
+      <Filter>Maths\SphericalHarmonics</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\SphericalHarmonics\SHRotation.cpp">
+      <Filter>Maths\SphericalHarmonics</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\SphericalHarmonics\SHRotation.h">
+      <Filter>Maths\SphericalHarmonics</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\SphericalHarmonics\SHSample.cpp">
+      <Filter>Maths\SphericalHarmonics</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\SphericalHarmonics\SHSample.h">
+      <Filter>Maths\SphericalHarmonics</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\SphericalHarmonics\SHSampleCollection.cpp">
+      <Filter>Maths\SphericalHarmonics</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\SphericalHarmonics\SHSampleCollection.h">
+      <Filter>Maths\SphericalHarmonics</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\SphericalHarmonics\SHVector-inl.h">
+      <Filter>Maths\SphericalHarmonics</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\SphericalHarmonics\SHVector.h">
+      <Filter>Maths\SphericalHarmonics</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\SphericalHarmonics\SHVector_fwd.h">
+      <Filter>Maths\SphericalHarmonics</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Transform\Quaternion-inl.h">
+      <Filter>Maths\Transform</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Transform\Quaternion.cpp">
+      <Filter>Maths\Transform</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Transform\Quaternion.h">
+      <Filter>Maths\Transform</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Transform\QuaternionHelpers-inl.h">
+      <Filter>Maths\Transform</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Transform\QuaternionHelpers.cpp">
+      <Filter>Maths\Transform</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Transform\QuaternionHelpers.h">
+      <Filter>Maths\Transform</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Transform\ScalarMatrix-inl.h">
+      <Filter>Maths\Transform</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Transform\ScalarMatrix.h">
+      <Filter>Maths\Transform</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Transform\ScalarMatrixHelpers-inl.h">
+      <Filter>Maths\Transform</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Transform\ScalarMatrixHelpers.h">
+      <Filter>Maths\Transform</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Transform\ScalarMatrix_fwd.h">
+      <Filter>Maths\Transform</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\MathHelpers-inl.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\MathHelpers.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\RandomGenerator-inl.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\RandomGenerator.cpp">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\RandomGenerator.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Units-inl.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Units.cpp">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Units.Definitions-inl.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Units.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\AlignedStorage.h">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\ComPtr-inl.h">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\ComPtr.h">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\MemoryDomain.cpp">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\MemoryDomain.Definitions-inl.h">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\MemoryDomain.h">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\MemoryPool-inl.h">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\MemoryPool.cpp">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\MemoryPool.h">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\MemoryStack.h">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\MemoryTracking.cpp">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\MemoryTracking.h">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\MemoryView.h">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\RefPtr-inl.h">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\RefPtr.h">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\UniquePtr.h">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\UniqueView.h">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Meta\Activator.h">
+      <Filter>Meta</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Meta\Alignment.h">
+      <Filter>Meta</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Meta\Assert.cpp">
+      <Filter>Meta</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Meta\Assert.h">
+      <Filter>Meta</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Meta\AutoSingleton.cpp">
+      <Filter>Meta</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Meta\AutoSingleton.h">
+      <Filter>Meta</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Meta\BitField.h">
+      <Filter>Meta</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Meta\Cast.h">
+      <Filter>Meta</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Meta\Delete.h">
+      <Filter>Meta</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Meta\Guid.cpp">
+      <Filter>Meta</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Meta\Guid.h">
+      <Filter>Meta</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Meta\NumericLimits.cpp">
+      <Filter>Meta</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Meta\NumericLimits.h">
+      <Filter>Meta</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Meta\OneTimeInitialize.h">
+      <Filter>Meta</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Meta\PointerWFlags.h">
+      <Filter>Meta</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Meta\Singleton.h">
+      <Filter>Meta</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Meta\ThreadResource.h">
+      <Filter>Meta</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Meta\TypeTraits.h">
+      <Filter>Meta</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\ParseContext.cpp">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\ParseContext.h">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\ParseExpression-inl.h">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\ParseExpression.cpp">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\ParseExpression.h">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\ParseItem.cpp">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\ParseItem.h">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\ParseList.cpp">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\ParseList.h">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\ParseProduction.h">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\Parser.cpp">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\Parser.h">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\ParseResult.h">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\ParseStatement.cpp">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\ParseStatement.h">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Atom\MetaAtom-inl.h">
+      <Filter>RTTI\Atom</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Atom\MetaAtom.h">
+      <Filter>RTTI\Atom</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Atom\MetaAtomDatabase.cpp">
+      <Filter>RTTI\Atom</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Atom\MetaAtomDatabase.h">
+      <Filter>RTTI\Atom</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Class\MetaClass.cpp">
+      <Filter>RTTI\Class</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Class\MetaClass.h">
+      <Filter>RTTI\Class</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Class\MetaClassDatabase.cpp">
+      <Filter>RTTI\Class</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Class\MetaClassDatabase.h">
+      <Filter>RTTI\Class</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Class\MetaClassName.cpp">
+      <Filter>RTTI\Class</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Class\MetaClassName.h">
+      <Filter>RTTI\Class</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Object\MetaObject.cpp">
+      <Filter>RTTI\Object</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Object\MetaObject.h">
+      <Filter>RTTI\Object</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Object\MetaObjectHelpers.cpp">
+      <Filter>RTTI\Object</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Object\MetaObjectHelpers.h">
+      <Filter>RTTI\Object</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Object\MetaObjectName.cpp">
+      <Filter>RTTI\Object</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Object\MetaObjectName.h">
+      <Filter>RTTI\Object</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Property\MetaProperty-inl.h">
+      <Filter>RTTI\Property</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Property\MetaProperty.cpp">
+      <Filter>RTTI\Property</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Property\MetaProperty.h">
+      <Filter>RTTI\Property</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Property\MetaPropertyAccessor-inl.h">
+      <Filter>RTTI\Property</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Property\MetaPropertyAccessor.h">
+      <Filter>RTTI\Property</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Property\MetaPropertyName.cpp">
+      <Filter>RTTI\Property</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Property\MetaPropertyName.h">
+      <Filter>RTTI\Property</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Type\MetaType.cpp">
+      <Filter>RTTI\Type</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Type\MetaType.Definitions-inl.h">
+      <Filter>RTTI\Type</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Type\MetaType.h">
+      <Filter>RTTI\Type</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Type\MetaTypePromote-inl.h">
+      <Filter>RTTI\Type</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Type\MetaTypePromote.cpp">
+      <Filter>RTTI\Type</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Type\MetaTypePromote.h">
+      <Filter>RTTI\Type</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Type\MetaTypeTraits-inl.h">
+      <Filter>RTTI\Type</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Type\MetaTypeTraits.h">
+      <Filter>RTTI\Type</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Type\MetaTypeVirtualTraits-inl.h">
+      <Filter>RTTI\Type</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Type\MetaTypeVirtualTraits.cpp">
+      <Filter>RTTI\Type</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\Type\MetaTypeVirtualTraits.h">
+      <Filter>RTTI\Type</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\MetaTransaction.cpp">
+      <Filter>RTTI</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\MetaTransaction.h">
+      <Filter>RTTI</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\RTTI.cpp">
+      <Filter>RTTI</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\RTTI.h">
+      <Filter>RTTI</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\RTTIMacros-impl.h">
+      <Filter>RTTI</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\RTTIMacros.h">
+      <Filter>RTTI</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\RTTIProperties.cpp">
+      <Filter>RTTI</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\RTTIProperties.h">
+      <Filter>RTTI</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Serialization\Grammar.cpp">
+      <Filter>Serialization</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Serialization\Grammar.h">
+      <Filter>Serialization</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Thread\Task\Task.cpp">
+      <Filter>Thread\Task</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Thread\Task\Task.h">
+      <Filter>Thread\Task</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Thread\Task\TaskCompletionPort.cpp">
+      <Filter>Thread\Task</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Thread\Task\TaskCompletionPort.h">
+      <Filter>Thread\Task</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Thread\Task\TaskContext.cpp">
+      <Filter>Thread\Task</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Thread\Task\TaskContext.h">
+      <Filter>Thread\Task</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Thread\Task\TaskEvaluator.cpp">
+      <Filter>Thread\Task</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Thread\Task\TaskEvaluator.h">
+      <Filter>Thread\Task</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Thread\Task\TaskWorker.cpp">
+      <Filter>Thread\Task</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Thread\Task\TaskWorker.h">
+      <Filter>Thread\Task</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Thread\ConcurrentQueue-inl.h">
+      <Filter>Thread</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Thread\ConcurrentQueue.h">
+      <Filter>Thread</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Thread\LockFreeCircularArray-inl.h">
+      <Filter>Thread</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Thread\LockFreeCircularArray.h">
+      <Filter>Thread</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Thread\ThreadContext.cpp">
+      <Filter>Thread</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Thread\ThreadContext.h">
+      <Filter>Thread</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Thread\ThreadLocalSingleton.h">
+      <Filter>Thread</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Thread\ThreadLocalStorage.cpp">
+      <Filter>Thread</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Thread\ThreadLocalStorage.h">
+      <Filter>Thread</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Thread\ThreadPool.cpp">
+      <Filter>Thread</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Thread\ThreadPool.h">
+      <Filter>Thread</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Time\ProcessTime.cpp">
+      <Filter>Time</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Time\ProcessTime.h">
+      <Filter>Time</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Time\Timeline.cpp">
+      <Filter>Time</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Time\Timeline.h">
+      <Filter>Time</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Time\Timely-inl.h">
+      <Filter>Time</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Time\Timely.h">
+      <Filter>Time</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Time\Timepoint.cpp">
+      <Filter>Time</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Time\Timepoint.h">
+      <Filter>Time</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Core.cpp">
+    </CustomBuild>
+    <CustomBuild Include="Core.h">
+    </CustomBuild>
+    <CustomBuild Include="fbuild.bff">
+    </CustomBuild>
+    <CustomBuild Include="stdafx.cpp">
+    </CustomBuild>
+    <CustomBuild Include="stdafx.h">
+    </CustomBuild>
+    <CustomBuild Include="targetver.h">
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Allocator">
+      <UniqueIdentifier>{4f8e170f-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Color">
+      <UniqueIdentifier>{a79767ed-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Container">
+      <UniqueIdentifier>{45536eb8-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Diagnostic">
+      <UniqueIdentifier>{b5218b59-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="IO\FS">
+      <UniqueIdentifier>{6151ba57-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="IO">
+      <UniqueIdentifier>{8601bab2-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="IO\VFS">
+      <UniqueIdentifier>{fe9d3f4a-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Lexer">
+      <UniqueIdentifier>{abbaf37e-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Maths\Geometry">
+      <UniqueIdentifier>{b9d80f2d-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Maths">
+      <UniqueIdentifier>{d20bfa26-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Maths\Packing">
+      <UniqueIdentifier>{bc28e1f6-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Maths\SphericalHarmonics">
+      <UniqueIdentifier>{1cd1e6b6-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Maths\Transform">
+      <UniqueIdentifier>{73452db9-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Memory">
+      <UniqueIdentifier>{edc13103-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Meta">
+      <UniqueIdentifier>{77c0bb0b-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Parser">
+      <UniqueIdentifier>{281ec645-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="RTTI\Atom">
+      <UniqueIdentifier>{c8d9a1f1-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="RTTI">
+      <UniqueIdentifier>{fa22ff3d-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="RTTI\Class">
+      <UniqueIdentifier>{e0ceeae5-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="RTTI\Object">
+      <UniqueIdentifier>{1870b63d-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="RTTI\Property">
+      <UniqueIdentifier>{70d73484-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="RTTI\Type">
+      <UniqueIdentifier>{644713a3-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Serialization">
+      <UniqueIdentifier>{b7d46781-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Thread\Task">
+      <UniqueIdentifier>{b7c19d92-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Thread">
+      <UniqueIdentifier>{368c49b5-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Time">
+      <UniqueIdentifier>{cfa6377b-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

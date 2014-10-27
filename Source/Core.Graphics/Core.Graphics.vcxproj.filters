@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="Device\Geometry\IndexBuffer.cpp">
+      <Filter>Device\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Geometry\IndexBuffer.h">
+      <Filter>Device\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Geometry\PrimitiveType.cpp">
+      <Filter>Device\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Geometry\PrimitiveType.h">
+      <Filter>Device\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Geometry\VertexBuffer.cpp">
+      <Filter>Device\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Geometry\VertexBuffer.h">
+      <Filter>Device\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Geometry\VertexDeclaration-inl.h">
+      <Filter>Device\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Geometry\VertexDeclaration.cpp">
+      <Filter>Device\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Geometry\VertexDeclaration.h">
+      <Filter>Device\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Geometry\VertexSubPart-inl.h">
+      <Filter>Device\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Geometry\VertexSubPart.cpp">
+      <Filter>Device\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Geometry\VertexSubPart.h">
+      <Filter>Device\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Geometry\VertexTypes.cpp">
+      <Filter>Device\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Geometry\VertexTypes.h">
+      <Filter>Device\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Shader\ConstantBuffer.cpp">
+      <Filter>Device\Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Shader\ConstantBuffer.h">
+      <Filter>Device\Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Shader\ConstantBufferLayout.cpp">
+      <Filter>Device\Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Shader\ConstantBufferLayout.h">
+      <Filter>Device\Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Shader\ConstantField.cpp">
+      <Filter>Device\Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Shader\ConstantField.h">
+      <Filter>Device\Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Shader\ShaderEffect.cpp">
+      <Filter>Device\Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Shader\ShaderEffect.h">
+      <Filter>Device\Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Shader\ShaderProgram.cpp">
+      <Filter>Device\Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Shader\ShaderProgram.h">
+      <Filter>Device\Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Shader\ShaderSource.cpp">
+      <Filter>Device\Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Shader\ShaderSource.h">
+      <Filter>Device\Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Shader\VertexSubstitutions.cpp">
+      <Filter>Device\Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Shader\VertexSubstitutions.h">
+      <Filter>Device\Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\State\BlendState.cpp">
+      <Filter>Device\State</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\State\BlendState.h">
+      <Filter>Device\State</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\State\DepthStencilState.cpp">
+      <Filter>Device\State</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\State\DepthStencilState.h">
+      <Filter>Device\State</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\State\RasterizerState.cpp">
+      <Filter>Device\State</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\State\RasterizerState.h">
+      <Filter>Device\State</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\State\SamplerState.cpp">
+      <Filter>Device\State</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\State\SamplerState.h">
+      <Filter>Device\State</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Texture\DepthStencil.cpp">
+      <Filter>Device\Texture</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Texture\DepthStencil.h">
+      <Filter>Device\Texture</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Texture\RenderTarget.cpp">
+      <Filter>Device\Texture</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Texture\RenderTarget.h">
+      <Filter>Device\Texture</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Texture\SurfaceFormat.cpp">
+      <Filter>Device\Texture</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Texture\SurfaceFormat.h">
+      <Filter>Device\Texture</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Texture\Texture.cpp">
+      <Filter>Device\Texture</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Texture\Texture.h">
+      <Filter>Device\Texture</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Texture\Texture2D.cpp">
+      <Filter>Device\Texture</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Texture\Texture2D.h">
+      <Filter>Device\Texture</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\BindName.cpp">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\BindName.h">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\DeviceAPIDependantEntity.cpp">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\DeviceAPIDependantEntity.h">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\DeviceAPIEncapsulator.h">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\DeviceDiagnostics.cpp">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\DeviceDiagnostics.h">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\DeviceEncapsulator.cpp">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\DeviceEncapsulator.h">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\DeviceEncapsulatorException.cpp">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\DeviceEncapsulatorException.h">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\DeviceResource.cpp">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\DeviceResource.h">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\DeviceResourceBuffer.cpp">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\DeviceResourceBuffer.h">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\PresentationParameters.cpp">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\PresentationParameters.h">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\Geometry\DX11PrimitiveType.cpp">
+      <Filter>DirectX11\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\Geometry\DX11PrimitiveType.h">
+      <Filter>DirectX11\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\Geometry\DX11VertexDeclaration.cpp">
+      <Filter>DirectX11\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\Geometry\DX11VertexDeclaration.h">
+      <Filter>DirectX11\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\Shader\DX11ConstantWriter.cpp">
+      <Filter>DirectX11\Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\Shader\DX11ConstantWriter.h">
+      <Filter>DirectX11\Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\Shader\DX11ShaderEffect.cpp">
+      <Filter>DirectX11\Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\Shader\DX11ShaderEffect.h">
+      <Filter>DirectX11\Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\Shader\DX11ShaderProgram.cpp">
+      <Filter>DirectX11\Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\Shader\DX11ShaderProgram.h">
+      <Filter>DirectX11\Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\State\DX11BlendState.cpp">
+      <Filter>DirectX11\State</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\State\DX11BlendState.h">
+      <Filter>DirectX11\State</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\State\DX11DepthStencilState.cpp">
+      <Filter>DirectX11\State</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\State\DX11DepthStencilState.h">
+      <Filter>DirectX11\State</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\State\DX11RasterizerState.cpp">
+      <Filter>DirectX11\State</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\State\DX11RasterizerState.h">
+      <Filter>DirectX11\State</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\State\DX11SamplerState.cpp">
+      <Filter>DirectX11\State</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\State\DX11SamplerState.h">
+      <Filter>DirectX11\State</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\Texture\DX11DepthStencil.cpp">
+      <Filter>DirectX11\Texture</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\Texture\DX11DepthStencil.h">
+      <Filter>DirectX11\Texture</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\Texture\DX11RenderTarget.cpp">
+      <Filter>DirectX11\Texture</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\Texture\DX11RenderTarget.h">
+      <Filter>DirectX11\Texture</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\Texture\DX11SurfaceFormat.cpp">
+      <Filter>DirectX11\Texture</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\Texture\DX11SurfaceFormat.h">
+      <Filter>DirectX11\Texture</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\Texture\DX11Texture2D.cpp">
+      <Filter>DirectX11\Texture</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\Texture\DX11Texture2D.h">
+      <Filter>DirectX11\Texture</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\DX11CompilerIncludes.h">
+      <Filter>DirectX11</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\DX11DeviceEncapsulator.cpp">
+      <Filter>DirectX11</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\DX11DeviceEncapsulator.h">
+      <Filter>DirectX11</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\DX11DeviceWrapper.cpp">
+      <Filter>DirectX11</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\DX11DeviceWrapper.h">
+      <Filter>DirectX11</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\DX11Includes.h">
+      <Filter>DirectX11</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\DX11ResourceBuffer.cpp">
+      <Filter>DirectX11</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\DX11ResourceBuffer.h">
+      <Filter>DirectX11</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Window\BasicWindow.cpp">
+      <Filter>Window</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Window\BasicWindow.h">
+      <Filter>Window</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Window\GraphicsWindow.cpp">
+      <Filter>Window</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Window\GraphicsWindow.h">
+      <Filter>Window</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Window\WindowMessage.cpp">
+      <Filter>Window</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Window\WindowMessage.h">
+      <Filter>Window</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Window\WindowMessageHandler.cpp">
+      <Filter>Window</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Window\WindowMessageHandler.h">
+      <Filter>Window</Filter>
+    </CustomBuild>
+    <CustomBuild Include="fbuild.bff">
+    </CustomBuild>
+    <CustomBuild Include="Graphics.cpp">
+    </CustomBuild>
+    <CustomBuild Include="Graphics.h">
+    </CustomBuild>
+    <CustomBuild Include="stdafx.cpp">
+    </CustomBuild>
+    <CustomBuild Include="stdafx.h">
+    </CustomBuild>
+    <CustomBuild Include="targetver.h">
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Device\Geometry">
+      <UniqueIdentifier>{53583786-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Device">
+      <UniqueIdentifier>{0e83b3b8-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Device\Shader">
+      <UniqueIdentifier>{a9d9bb6d-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Device\State">
+      <UniqueIdentifier>{3a72b4ce-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Device\Texture">
+      <UniqueIdentifier>{84869248-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="DirectX11\Geometry">
+      <UniqueIdentifier>{ae213ad4-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="DirectX11">
+      <UniqueIdentifier>{46fee008-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="DirectX11\Shader">
+      <UniqueIdentifier>{5c54da38-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="DirectX11\State">
+      <UniqueIdentifier>{b8d7b699-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="DirectX11\Texture">
+      <UniqueIdentifier>{9f72ba52-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Window">
+      <UniqueIdentifier>{8c48fceb-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
