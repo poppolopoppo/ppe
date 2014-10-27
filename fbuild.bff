@@ -1,0 +1,75 @@
+
+#once
+
+#include "Build/Cfg/common.bff"
+
+// All projects
+//------------------------------------------------------------------------------
+#include "Source/Core/fbuild.bff"
+#include "Source/Core.Graphics/fbuild.bff"
+#include "Source/Core.Engine/fbuild.bff"
+#include "Source/Core.Application/fbuild.bff"
+#include "Source/Core.Test/fbuild.bff"
+
+// Aliases : All-$Platform$-$Config$
+//------------------------------------------------------------------------------
+ForEach( .Config in .Configs )
+{
+  Using( .Config )
+
+  Alias( 'All-$Platform$-$Config$' )
+  {
+    .Targets    =
+    {
+      // executables
+      'Core.Test-$Platform$-$Config$',
+
+      // Clang doesn't link at the moment, so we need list all the libs manually
+      'Core-$Platform$-$Config$',
+      'Core.Graphics-$Platform$-$Config$',
+      'Core.Engine-$Platform$-$Config$',
+      'Core.Application-$Platform$-$Config$'
+    }
+  }
+}
+
+// Aliases : All-$Platform$
+//------------------------------------------------------------------------------
+.Platforms = { 'x86', 'x64' }
+ForEach( .Platform in .Platforms )
+{
+  Alias( 'All-$Platform$' )
+  {
+    .Targets    = { 'All-$Platform$-Debug',
+                    'All-$Platform$-Profile',
+                    'All-$Platform$-Release' }
+  }
+}
+Alias( 'All-x86Clang' )
+{
+  .Targets      = { 'All-x86Clang-Debug' }
+}
+
+// Aliases : All
+//------------------------------------------------------------------------------
+Alias( 'All' )
+{
+  .Targets    = { 'All-x86',
+                  'All-x86Clang',
+                  'All-x64' }
+}
+
+// Aliases : proj (all projects)
+//------------------------------------------------------------------------------
+Alias( 'proj' )
+{
+  .Targets    = { 'All-proj',
+                  'Core-proj',
+                  'Core.Graphics-proj',
+                  'Core.Engine-proj',
+                  'Core.Application-proj',
+                  'Core.Test-proj',
+                }
+}
+
+//------------------------------------------------------------------------------

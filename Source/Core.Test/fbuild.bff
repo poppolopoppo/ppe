@@ -1,0 +1,13 @@
+
+#once
+
+// Core.Test
+//------------------------------------------------------------------------------
+{
+    .ProjectName        = 'Core.Test'
+    .ProjectPath        = '$SourceBase$\Core.Test'
+
+    .AdditionalLibInclude  = '$DirectX11SDKPath$\Lib'
+
+    #include "../../Build/Cfg/binary.bff"
+}

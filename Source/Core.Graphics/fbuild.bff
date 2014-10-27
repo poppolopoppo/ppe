@@ -1,0 +1,14 @@
+
+#once
+
+// Core
+//------------------------------------------------------------------------------
+{
+    .ProjectName        = 'Core.Graphics'
+    .ProjectPath        = '$SourceBase$\Core.Graphics'
+    .PCHName            = 'stdafx'
+
+    .AdditionalInclude  = '$DirectX11SDKPath$\Include'
+
+    #include "../../Build/Cfg/library.bff"
+}
