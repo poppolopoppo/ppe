@@ -22,30 +22,33 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
+#define CORE_VIRTUALFILESYSTEM_STACKSIZE Dirpath::MaxDepth
+//----------------------------------------------------------------------------
 // inverse depth first search : components are pseudo-sorted decreasingly
 // by the number of token matching dirpath.
 static void MatchingComponents_DepthLast_(
     MemoryStack<VirtualFileSystemComponent *>& components,
     const VirtualFileSystemTrie *trie,
     const Dirpath& dirpath ) {
-    VirtualFileSystemNode* node = trie->GetNodeIFP(dirpath.MountingPoint());
+    MountingPoint mountingPoint;
+    const auto dirnames = MALLOCA_VIEW(Dirname, CORE_VIRTUALFILESYSTEM_STACKSIZE);
+    const size_t k = dirpath.ExpandPath(mountingPoint, dirnames);
+
+    VirtualFileSystemNode* node = trie->GetNodeIFP(mountingPoint);
     if (!node)
         return;
 
     for (VirtualFileSystemComponent *component : node->Components())
         components.PushPOD(component);
 
-    for (const Dirname& dirname : dirpath.Path()) {
+    for (size_t i = 0; i < k; ++i) {
         for (VirtualFileSystemComponent *component : node->Components())
             components.PushPOD(component);
 
-        node = node->GetNodeIFP(dirname);
-        if (!node)
+        if (!(node = node->GetNodeIFP(dirnames[i])) )
             break;
     }
 }
-//----------------------------------------------------------------------------
-#define CORE_VIRTUALFILESYSTEM_STACKSIZE 8
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------

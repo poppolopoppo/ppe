@@ -5,6 +5,7 @@
 #include "Core.Graphics/Device/DeviceAPIEncapsulator.h"
 
 #include "Core/Diagnostic/Logger.h"
+#include "Core/IO/FS/FileSystemTrie.h"
 
 #include "Surfaces/AbstractRenderSurface.h"
 
@@ -76,19 +77,10 @@ bool RenderSurfaceManager::TryUnalias(const Dirpath& dirpath, PAbstractRenderSur
     Assert(!dirpath.empty());
     Assert(renderSurface);
 
-    if (dirpath.MountingPoint() != _virtualDir.MountingPoint())
+    if (dirpath.PathNode()->Parent() != _virtualDir.PathNode())
         return false;
 
-    if (dirpath.Path().size() != _virtualDir.Path().size() + 1)
-        return false;
-
-    const auto end = _virtualDir.Path().begin();
-    auto j = dirpath.Path().begin();
-    for (auto i = _virtualDir.Path().begin(); i != end; ++i, ++j)
-        if (*i != *j)
-            return false;
-
-    const Dirname& virtualDirname = dirpath.Path().back();
+    const Dirname& virtualDirname = dirpath.LastDirname();
     Assert(!virtualDirname.empty());
 
     const auto it = _surfaces.find(virtualDirname);
@@ -101,14 +93,11 @@ bool RenderSurfaceManager::TryUnalias(const Dirpath& dirpath, PAbstractRenderSur
 }
 //----------------------------------------------------------------------------
 AbstractRenderSurface *RenderSurfaceManager::Unalias(const Dirpath& dirpath) const {
-#ifdef _DEBUG
-    {
-        PAbstractRenderSurface renderSurfaceForDBG;
-        Assert(TryUnalias(dirpath, &renderSurfaceForDBG));
-    }
-#endif
+    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(!dirpath.empty());
+    Assert(dirpath.PathNode()->Parent() == _virtualDir.PathNode());
 
-    const Dirname& virtualDirname = dirpath.Path().back();
+    const Dirname virtualDirname = dirpath.LastDirname();
     Assert(!virtualDirname.empty());
 
     AbstractRenderSurface *const result = _surfaces.at(virtualDirname).get();

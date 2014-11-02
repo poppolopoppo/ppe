@@ -2,7 +2,10 @@
 
 #include "Filename.h"
 
+#include "Dirname.h"
+
 #include "Container/Hash.h"
+#include "Memory/UniqueView.h"
 #include "IO/Stream.h"
 
 namespace Core {

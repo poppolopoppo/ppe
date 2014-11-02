@@ -7,6 +7,8 @@
 #include "Container/Vector.h"
 #include "Diagnostic/Logger.h"
 #include "IO/FileSystem.h"
+#include "IO/FS/FileSystemToken.h"
+#include "IO/FS/FileSystemTrie.h"
 #include "IO/Stream.h"
 
 // _waccess()
@@ -44,16 +46,19 @@ static void Unalias_(
     WOCStrStream& oss,
     const Dirpath& aliased,
     const Dirpath& alias, const WString& target) {
-    Assert(alias.MountingPoint() == aliased.MountingPoint());
-    Assert(alias.Path().size() <= aliased.Path().size());
-
-    const wchar_t sep(FileSystem::Separator);
+    Assert(alias.PathNode());
+    Assert(aliased.PathNode());
+    Assert(L'/' == target.back());
 
     oss << target;
+    if (aliased.PathNode() == alias.PathNode())
+        return;
 
-    const size_t count = aliased.Path().size();
-    for (size_t i = alias.Path().size(); i < count; ++i)
-        oss << aliased.Path()[i] << sep;
+    const auto subpath = MALLOCA_VIEW(FileSystemToken, Dirpath::MaxDepth);
+    const size_t k = FileSystemPath::Instance().Expand(subpath.Pointer(), subpath.size(), alias.PathNode(), aliased.PathNode());
+
+    for (size_t i = 0; i < k; ++i)
+        oss << subpath[i] << wchar_t(FileSystem::Separator);
 }
 //----------------------------------------------------------------------------
 static void Unalias_(
@@ -100,10 +105,6 @@ static size_t EnumerateFiles_Windows_(
         return 0;
     }
 
-    Dirpath currentPathAlias(alias);
-    if (aliased.Path().size() > alias.Path().size())
-        currentPathAlias.ConcatPath(aliased.Path().begin() + alias.Path().size(), aliased.Path().end());
-
     size_t total = 0;
 
     do {
@@ -115,10 +116,10 @@ static size_t EnumerateFiles_Windows_(
                 (L'.' == ffd.cFileName[1] && L'\0' == ffd.cFileName[2])) )
                 continue;
 
-            subDirectories.emplace_back(currentPathAlias, ffd.cFileName);
+            subDirectories.emplace_back(aliased, ffd.cFileName);
         }
         else {
-            foreach(Filename(currentPathAlias, ffd.cFileName));
+            foreach(Filename(aliased, ffd.cFileName));
             ++total;
         }
     } while (::FindNextFileW(hFind, &ffd));
@@ -259,22 +260,22 @@ UniquePtr<IVirtualFileSystemIStream> VirtualFileSystemNativeComponent::OpenReada
 bool VirtualFileSystemNativeComponent::TryCreateDirectory(const Dirpath& dirpath) {
     Assert(ModeWritable & _mode);
 
+    wchar_t nativeDirpath[NATIVE_ENTITYNAME_MAXSIZE];
+
     bool result = false;
 
-    wchar_t nativeDirpath[NATIVE_ENTITYNAME_MAXSIZE];
     WOCStrStream oss(nativeDirpath);
-
     oss << _target;
     nativeDirpath[oss.size()] = L'\0';
     result |= TryCreateDirectory_(nativeDirpath);
 
-    const wchar_t sep(FileSystem::Separator);
+    Assert(dirpath.PathNode());
 
-    const size_t k = dirpath.Path().size();
-    Assert(k >= _alias.Path().size());
+    const auto subpath = MALLOCA_VIEW(FileSystemToken, Dirpath::MaxDepth);
+    const size_t k = FileSystemPath::Instance().Expand(subpath.Pointer(), subpath.size(), _alias.PathNode(), dirpath.PathNode());
 
-    for (size_t i = _alias.Path().size(); i < k; ++i) {
-        oss << dirpath.Path()[i] << sep;
+    for (size_t i = 0; i < k; ++i) {
+        oss << subpath[i] << wchar_t(FileSystem::Separator);
         nativeDirpath[oss.size()] = L'\0';
         result |= TryCreateDirectory_(nativeDirpath);
     }
@@ -297,7 +298,8 @@ UniquePtr<IVirtualFileSystemIOStream> VirtualFileSystemNativeComponent::OpenRead
     Assert(ModeReadWritable & _mode);
 
     // TODO (12/13) : not supported
-    Assert(false);
+    AssertNotImplemented();
+
     return nullptr;
 }
 //----------------------------------------------------------------------------

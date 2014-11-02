@@ -45,8 +45,8 @@ public:
     const Core::Dirpath& Dirpath() const { return _dirpath; }
     const Core::Basename& Basename() const { return _basename; }
 
-    const Core::MountingPoint& MountingPoint() const { return _dirpath.MountingPoint(); }
-    const Core::Dirpath::Dirnames& Path() const { return _dirpath.Path(); }
+    Core::MountingPoint MountingPoint() const { return _dirpath.MountingPoint(); }
+    size_t ExpandPath(Core::MountingPoint& mountingPoint, MemoryView<Dirname>& dirnames) const { return _dirpath.ExpandPath(mountingPoint, dirnames); }
     const Core::BasenameNoExt& BasenameNoExt() const { return _basename.BasenameNoExt(); }
     const Core::Extname& Extname() const { return _basename.Extname(); }
 

@@ -39,7 +39,7 @@ public:
 protected:
     explicit VirtualFileSystemComponent(const Dirpath& alias);
 
-    Dirpath _alias;
+    const Dirpath _alias;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

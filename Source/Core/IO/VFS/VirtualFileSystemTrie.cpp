@@ -3,6 +3,8 @@
 #include "VirtualFileSystemTrie.h"
 
 #include "IO/FileSystem.h"
+#include "Memory/MemoryView.h"
+#include "Memory/UniqueView.h"
 
 #include "VirtualFileSystemComponent.h"
 #include "VirtualFileSystemNode.h"
@@ -65,7 +67,10 @@ void VirtualFileSystemTrie::RemoveComponent(VirtualFileSystemComponent* componen
 }
 //----------------------------------------------------------------------------
 VirtualFileSystemNode* VirtualFileSystemTrie::GetNode(const Dirpath& dirpath) {
-    const MountingPoint& mountingPoint = dirpath.MountingPoint();
+    MountingPoint mountingPoint;
+    const auto path = MALLOCA_VIEW(Dirname, Dirpath::MaxDepth);
+    const size_t k = dirpath.ExpandPath(mountingPoint, path);
+
     Assert(!mountingPoint.empty());
 
     PVirtualFileSystemNode& node = _nodes.Get(mountingPoint);
@@ -73,22 +78,26 @@ VirtualFileSystemNode* VirtualFileSystemTrie::GetNode(const Dirpath& dirpath) {
         node.reset(new VirtualFileSystemNode());
 
     VirtualFileSystemNode* result = node.get();
-    for (const Dirname& dirname : dirpath.Path())
-        result = result->GetNode(dirname);
+    for (size_t i = 0; i < k; ++i)
+        result = result->GetNode(path[i]);
 
     Assert(result);
     return result;
 }
 //----------------------------------------------------------------------------
 VirtualFileSystemNode* VirtualFileSystemTrie::GetNodeIFP(const Dirpath& dirpath) const {
-    if (dirpath.MountingPoint().empty())
+    MountingPoint mountingPoint;
+    const auto path = MALLOCA_VIEW(Dirname, Dirpath::MaxDepth);
+    const size_t k = dirpath.ExpandPath(mountingPoint, path);
+
+    if (mountingPoint.empty())
         return nullptr;
 
-    VirtualFileSystemNode* result = GetNodeIFP(dirpath.MountingPoint());
+    VirtualFileSystemNode* result = GetNodeIFP(mountingPoint);
     Assert(result);
 
-    for (const Dirname& dirname : dirpath.Path())
-        if (!(result = result->GetNodeIFP(dirname)))
+    for (size_t i = 0; i < k; ++i)
+        if (!(result = result->GetNodeIFP(path[i])))
             return nullptr;
 
     Assert(result);

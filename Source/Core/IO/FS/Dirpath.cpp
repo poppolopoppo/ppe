@@ -2,189 +2,213 @@
 
 #include "Dirpath.h"
 
+#include "Dirname.h"
+#include "FileSystemTrie.h"
+#include "MountingPoint.h"
+
+#include "Allocator/Alloca.h"
+#include "Memory/UniqueView.h"
+
+#include <algorithm>
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static bool ParseDirpath_(
-    const wchar_t *cstr,
-    size_t length,
-    MountingPoint& mountingPoint,
-    Dirpath::Dirnames& path
-    ) {
-    mountingPoint = MountingPoint();
-
-    if (!cstr || 0 == length) {
-        path.Clear_ReleaseMemory();
-        return false;
-    }
+static const FileSystemNode *ParseDirpath_(const FileSystem::char_type *cstr, size_t length) {
+    Assert(0 == length || cstr);
+    if (nullptr == cstr || 0 == length)
+        return nullptr;
 
     static const FileSystem::char_type *sep = L"\\/";
+    MALLOCA_STACK(FileSystemToken, path, Dirpath::MaxDepth);
 
-    WStringSlice slices[32];
+    BasicStringSlice<FileSystem::char_type> slice;
+    while (Split(&cstr, &length, sep, slice)) {
+        if (slice.empty()) // ex: "toto//file.ext" -> 1 empty slice at "//"
+            continue;
 
-    size_t count = 0;
-    while (Split(&cstr, &length, sep, slices[count])) {
-        Assert(count < lengthof(slices));
-        if (slices[count].size())
-            ++count;
+        const FileSystemToken token(slice);
+        path.PushPOD(token);
     }
 
-    if (0 == count) {
-        path.Clear_ReleaseMemory();
-        return false;
-    }
+    return FileSystemPath::Instance().GetOrCreate(path);
+}
+//----------------------------------------------------------------------------
+static const FileSystemNode *DirpathNode_(const MountingPoint& mountingPoint, const MemoryView<const Dirname>& path) {
+    size_t count = path.size();
+    if (!mountingPoint.empty())
+        ++count;
 
-    size_t first = 0;
-    if (slices[0].back() == L':') {
-        if (1 == slices[0].size()) {
-            path.Clear_ReleaseMemory();
-            return false;
-        }
+    if (0 == count)
+        return nullptr;
 
-        mountingPoint = MountingPoint(slices[0].begin(), slices[0].size() );
-        ++first;
-    }
+    const auto tokens = MALLOCA_VIEW(FileSystemToken, count);
+    FileSystemToken *t = tokens.Pointer();
+    if (!mountingPoint.empty())
+        *t++ = mountingPoint;
+    for (const Dirname& d : path)
+        *t++ = d;
 
-    path.Resize_DiscardData(count - first);
-    for (size_t i = first; i < count; ++i)
-        path[i - first] = Dirname(slices[i].begin(), slices[i].size() );
-
-    return true;
+    return FileSystemPath::Instance().GetOrCreate(tokens);
 }
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+Dirpath::Dirpath() {}
+//----------------------------------------------------------------------------
+Dirpath::~Dirpath() {}
+//----------------------------------------------------------------------------
 Dirpath::Dirpath(Dirpath&& rvalue)
-:   _mountingPoint(std::move(rvalue._mountingPoint))
-,   _path(std::move(rvalue._path)) {}
+:   _path(std::move(rvalue._path)) {}
 //----------------------------------------------------------------------------
 Dirpath& Dirpath::operator =(Dirpath&& rvalue) {
-    _mountingPoint = std::move(rvalue._mountingPoint);
     _path = std::move(rvalue._path);
     return *this;
 }
 //----------------------------------------------------------------------------
 Dirpath::Dirpath(const Dirpath& other)
-:   _mountingPoint(other._mountingPoint)
-,   _path(other._path) {}
+:   _path(other._path) {}
 //----------------------------------------------------------------------------
 Dirpath& Dirpath::operator =(const Dirpath& other) {
-    _mountingPoint = other._mountingPoint;
     _path = other._path;
     return *this;
 }
 //----------------------------------------------------------------------------
-Dirpath::Dirpath(const Core::MountingPoint& mountingPoint, Dirnames&& path)
-:   _mountingPoint(mountingPoint), _path(std::move(path)) {}
-//----------------------------------------------------------------------------
-Dirpath::Dirpath(const Core::MountingPoint& mountingPoint, const MemoryView<const Dirname>& path)
-:   _mountingPoint(mountingPoint), _path(path.begin(), path.end()) {}
-//----------------------------------------------------------------------------
-Dirpath::Dirpath(const Dirpath& other, const Dirname& append)
-:   _mountingPoint(other.MountingPoint()) {
-    Assert(!append.empty());
-    const size_t k = other._path.size();
-    _path.Resize_DiscardData(k + 1);
-    for (size_t i = 0; i < k; ++i)
-        _path[i] = other._path[i];
-    _path[k] = append;
+Dirpath::Dirpath(const Core::MountingPoint& mountingPoint, const MemoryView<const Dirname>& path) {
+    _path = DirpathNode_(mountingPoint, path);
 }
 //----------------------------------------------------------------------------
-Dirpath::Dirpath(const Dirpath& other, const MemoryView<const Dirname>& append)
-:   _mountingPoint(other.MountingPoint()) {
-    Assert(!append.empty());
-    const size_t k = other._path.size();
-    _path.Resize_DiscardData(k + append.size());
-    for (size_t i = 0; i < k; ++i)
-        _path[i] = other._path[i];
-    for (size_t i = 0; i < append.size(); ++i) {
-        Assert(!append[i].empty());
-        _path[k + i] = append[i];
-    }
+Dirpath::Dirpath(const Dirpath& other, const Dirname& append) {
+    _path = FileSystemPath::Instance().Concat(other._path, append);
+}
+//----------------------------------------------------------------------------
+Dirpath::Dirpath(const Dirpath& other, const MemoryView<const Dirname>& append) {
+    _path = FileSystemPath::Instance().Concat(other._path, append.Cast<const FileSystemToken>());
 }
 //----------------------------------------------------------------------------
 Dirpath::Dirpath(const FileSystem::char_type *content) {
-    Assert(content);
-    ParseDirpath_(content, Length(content), _mountingPoint, _path);
+    _path = ParseDirpath_(content, Length(content));
 }
 //----------------------------------------------------------------------------
 Dirpath& Dirpath::operator =(const FileSystem::char_type *content) {
-    Assert(content);
-    ParseDirpath_(content, Length(content), _mountingPoint, _path);
+    _path = ParseDirpath_(content, Length(content));
     return *this;
 }
 //----------------------------------------------------------------------------
 Dirpath::Dirpath(const FileSystem::char_type* content, size_t length) {
-    Assert(content);
-    ParseDirpath_(content, length, _mountingPoint, _path);
+    _path = ParseDirpath_(content, length);
 }
 //----------------------------------------------------------------------------
-Dirpath::Dirpath(const BasicStringSlice<FileSystem::char_type>& content) {
-    Assert(content.begin());
-    ParseDirpath_(content.begin(), content.size(), _mountingPoint, _path);
+Dirpath::Dirpath(const BasicStringSlice<FileSystem::char_type>& slice) {
+    _path = ParseDirpath_(slice.begin(), slice.size());
 }
 //----------------------------------------------------------------------------
-void Dirpath::ConcatPath(const Dirname& append) {
-    const size_t last = _path.size();
-    _path.Resize_KeepData(last + 1);
-    _path[last] = append;
+Dirpath& Dirpath::operator =(const BasicStringSlice<FileSystem::char_type>& slice) {
+    _path = ParseDirpath_(slice.begin(), slice.size());
+    return *this;
 }
 //----------------------------------------------------------------------------
-void Dirpath::ConcatPath(const MemoryView<const Dirname>& path) {
-    _path.insert(_path.end(), path.begin(), path.end());
+Dirpath::Dirpath(std::initializer_list<const FileSystem::char_type *> path)  {
+    const auto tokens = MALLOCA_VIEW(FileSystemToken, path.size());
+
+    size_t it = 0;
+    for (const FileSystem::char_type *wcstr : path) {
+        tokens[it++] = wcstr;
+        Assert(!tokens[it - 1].empty());
+    }
+
+    _path = FileSystemPath::Instance().GetOrCreate(tokens);
+    Assert(_path);
+}
+//----------------------------------------------------------------------------
+Core::MountingPoint Dirpath::MountingPoint() const {
+    if (nullptr == _path)
+        return Core::MountingPoint();
+
+    const auto path = MALLOCA_VIEW(FileSystemToken, MaxDepth);
+    const size_t k = FileSystemPath::Instance().Expand(path.Pointer(), path.size(), _path);
+    if (0 == k || L':' != path[0].MakeView().back())
+        return Core::MountingPoint();
+
+    return Core::MountingPoint(path[0]);
+}
+//----------------------------------------------------------------------------
+Core::Dirname Dirpath::LastDirname() const {
+    if (nullptr == _path)
+        return Core::Dirname();
+
+    const FileSystemToken& token = _path->Token();
+    if (L':' == token.MakeView().back())
+        return Core::Dirname();
+
+    return Core::Dirname(token);
+}
+//----------------------------------------------------------------------------
+size_t Dirpath::ExpandPath(Core::MountingPoint& mountingPoint, const MemoryView<Dirname>& dirnames) const {
+    if (nullptr == _path)
+        return 0;
+
+    const auto path = MALLOCA_VIEW(FileSystemToken, MaxDepth);
+    const size_t k = FileSystemPath::Instance().Expand(path.Pointer(), path.size(), _path);
+    if (0 == k)
+        return 0;
+
+    size_t it = 0;
+    if (L':' == path[0].MakeView().back())
+        mountingPoint = path[it++];
+
+    for (size_t i = 0; it + i < k; ++i)
+        dirnames[i] = path[it + i];
+
+    return (k -  it);
+}
+//----------------------------------------------------------------------------
+void Dirpath::Concat(const Dirname& append) {
+    Assert(!append.empty());
+    const FileSystemToken *ptoken = &append;
+    _path = FileSystemPath::Instance().Concat(_path, MakeView(ptoken, ptoken + 1));
+}
+//----------------------------------------------------------------------------
+void Dirpath::Concat(const MemoryView<const Dirname>& path) {
+    Assert(!path.empty());
+    _path = FileSystemPath::Instance().Concat(_path, path.Cast<const FileSystemToken>());
 }
 //----------------------------------------------------------------------------
 void Dirpath::Swap(Dirpath& other) {
-    std::swap(other._mountingPoint, _mountingPoint);
     std::swap(other._path, _path);
 }
 //----------------------------------------------------------------------------
-bool Dirpath::Equals(const Dirpath& other) const {
-    if (_mountingPoint != other._mountingPoint)
-        return false;
-
-    if (_path.size() != other._path.size())
-        return false;
-
-    const size_t count = _path.size();
-    for (size_t i = 0; i < count; ++i)
-    if (_path[i] != other._path[i])
-        return false;
-
-    return true;
-}
-//----------------------------------------------------------------------------
 bool Dirpath::Less(const Dirpath& other) const {
-    if (_mountingPoint == other._mountingPoint) {
-        const size_t count = _path.size() < other._path.size() ? _path.size() : other._path.size();
-        for (size_t i = 0; i < count; ++i) {
-            if (_path[i] < other._path[i])
-                return true;
-            else if (_path[i] != other._path[i])
-                return false;
-        }
+    if (_path == other._path || nullptr == other._path)
+        return false;
+    else if (nullptr == _path)
+        return true;
 
-        return _path.size() < other._path.size();
-    }
-    else {
-        return _mountingPoint < other._mountingPoint;
-    }
+    const auto& fsp = FileSystemPath::Instance();
+
+    const auto p0 = MALLOCA_VIEW(FileSystemToken, MaxDepth);
+    const size_t k0 = fsp.Expand(p0.Pointer(), p0.size(), _path);
+
+    const auto p1 = MALLOCA_VIEW(FileSystemToken, MaxDepth);
+    const size_t k1 = fsp.Expand(p1.Pointer(), p1.size(), other._path);
+
+    const size_t k = std::min(k0, k1);
+    for (size_t i = 0; i < k; ++i)
+        if (p0[i] < p1[i])
+            return true;
+        else if (p0[i] != p1[i])
+            return false;
+
+    return (k0 < k1);
 }
 //----------------------------------------------------------------------------
 size_t Dirpath::HashValue() const {
-    if (_path.empty())
-        return _mountingPoint.HashValue();
-
-    size_t h = _mountingPoint.HashValue();
-    for (const Dirname& dirname : _path)
-        h = hash_value(h, dirname);
-
-    return h;
+    return (_path) ? _path->HashValue() : 0;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
