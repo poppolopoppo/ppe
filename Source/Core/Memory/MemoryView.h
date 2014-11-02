@@ -60,6 +60,9 @@ public:
     MemoryView<T> SubRange(size_t offset, size_t count) const;
     MemoryView< typename std::add_const<T>::type > SubRangeConst(size_t offset, size_t count) const;
 
+    MemoryView<T> Pop() const { Assert(_size > 0); return MemoryView<T>(_storage, _size - 1); }
+    MemoryView<T> Shift() const { Assert(_size > 0); return MemoryView<T>(_storage + 1, _size - 1); }
+
     void Swap(MemoryView& other);
 
     template <typename U>
@@ -181,9 +184,9 @@ MemoryView<T> MakeView(T(&staticArray)[_Dim]) {
 //----------------------------------------------------------------------------
 template <typename _Category, typename _Ty>
 MemoryView<_Ty> MakeView(
-    std::iterator<_Category, _Ty, ptrdiff_t> begin,
-    std::iterator<_Category, _Ty, ptrdiff_t> end) {
-    return MemoryView<_Ty>(&*begin, std::distance(begin, end));
+    std::iterator<_Category, _Ty, ptrdiff_t>&& ibegin,
+    std::iterator<_Category, _Ty, ptrdiff_t>&& iend) {
+    return MemoryView<_Ty>(&*ibegin, std::distance(ibegin, iend));
 }
 //----------------------------------------------------------------------------
 template <typename _VectorLike>
@@ -203,9 +206,9 @@ MemoryView<const typename _VectorLike::value_type> MakeView(const _VectorLike& c
 }
 //----------------------------------------------------------------------------
 template <typename T>
-MemoryView< T > MakeView(T* begin, T* end) {
-    Assert(end >= begin);
-    return MemoryView< T >(begin, std::distance(begin, end));
+MemoryView< T > MakeView(T* pbegin, T* pend) {
+    Assert(pend >= pbegin);
+    return MemoryView< T >(pbegin, std::distance(pbegin, pend));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
