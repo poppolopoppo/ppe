@@ -39,7 +39,7 @@ void VertexBuffer::SetData(IDeviceAPIEncapsulator *device, size_t offset, const 
     _buffer.SetData(device, offset, src, stride, count);
 }
 //----------------------------------------------------------------------------
-void VertexBuffer::Create_(IDeviceAPIEncapsulator *device, const MemoryView<const u8>& optionalRawData) {
+void VertexBuffer::Create(IDeviceAPIEncapsulator *device, const MemoryView<const u8>& optionalRawData) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(device);

@@ -41,10 +41,10 @@ public:
 
     template <typename T>
     void Create(IDeviceAPIEncapsulator *device, const MemoryView<const T>& optionalData);
+    void Create(IDeviceAPIEncapsulator *device, const MemoryView<const u8>& optionalRawData);
     void Destroy(IDeviceAPIEncapsulator *device);
 
 private:
-    void Create_(IDeviceAPIEncapsulator *device, const MemoryView<const u8>& optionalRawData);
 
     PCVertexDeclaration _vertexDeclaration;
     DeviceResourceBuffer _buffer;
@@ -53,7 +53,7 @@ private:
 template <typename T>
 void VertexBuffer::Create(IDeviceAPIEncapsulator *device, const MemoryView<const T>& optionalData) {
     Assert(optionalData.SizeInBytes() == _vertexDeclaration->SizeInBytes() * VertexCount());
-    Create_(device, optionalData.Cast<const u8>());
+    Create(device, optionalData.Cast<const u8>());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
