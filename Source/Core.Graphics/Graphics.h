@@ -10,7 +10,7 @@ class DeviceEncapsulator;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // CoreStartup is the entry and exit point encapsulating every call to Core::Graphics::.
-// Constructed with the same lifetime than the program (or application if seggregated).
+// Constructed with the same lifetime than the program (or application if segregated).
 //----------------------------------------------------------------------------
 class GraphicsStartup {
 public:

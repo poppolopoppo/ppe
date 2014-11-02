@@ -152,7 +152,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // CoreStartup is the entry and exit point encapsulating every call to Core::.
-// Constructed with the same lifetime than the program (or application if seggregated).
+// Constructed with the same lifetime than the program (or application if segregated).
 //----------------------------------------------------------------------------
 class CoreStartup {
 public:

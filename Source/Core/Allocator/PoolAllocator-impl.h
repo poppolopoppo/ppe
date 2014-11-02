@@ -40,34 +40,34 @@ namespace Core {
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_POOL_ALLOCATOR_VERBOSE
     template <typename _Tag, typename _Type, bool _ThreadLocal>
-    struct SeggregatedPoolVerbose {
-        SeggregatedPoolVerbose() {
-            LOG(Information, L"[SEGPOOL] Starting seggregated pool for <{0}> and tag <{1}> ({2} block size{3})",
+    struct SegregatedPoolVerbose {
+        SegregatedPoolVerbose() {
+            LOG(Information, L"[SEGPOOL] Starting segregated pool for <{0}> and tag <{1}> ({2} block size{3})",
                 typeid(_Type).name(), typeid(_Tag).name(), sizeof(_Type),
                 _ThreadLocal ? L", thread local" : L"");
         }
-        ~SeggregatedPoolVerbose() {}
+        ~SegregatedPoolVerbose() {}
     };
 #   define CORE_POOL_ALLOCATOR_VERBOSE(_Tag, _Type, _ThreadLocal) \
-    ONE_TIME_DEFAULT_INITIALIZE(Core::SeggregatedPoolVerbose<_Tag COMMA _Type COMMA _ThreadLocal>, sPoolVerbose)
+    ONE_TIME_DEFAULT_INITIALIZE(Core::SegregatedPoolVerbose<_Tag COMMA _Type COMMA _ThreadLocal>, sPoolVerbose)
 #else
 #   define CORE_POOL_ALLOCATOR_VERBOSE(_Tag, _Type, _ThreadLocal) NOOP
 #endif //!WITH_CORE_POOL_ALLOCATOR_VERBOSE
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct DefaultPoolSeggreationTag {};
+struct DefaultPoolSegregationTag {};
 //----------------------------------------------------------------------------
 template <typename _Tag, size_t _BlockSize, typename _Allocator = ALLOCATOR(Pool, u64) >
-class SeggregatedPool :
+class SegregatedPool :
     public MemoryPool<true, _Allocator>
-,   Meta::AutoSingleton<SeggregatedPool<_Tag, _BlockSize, _Allocator> > {
+,   Meta::AutoSingleton<SegregatedPool<_Tag, _BlockSize, _Allocator> > {
 public:
-    typedef SeggregatedPool<_Tag, _BlockSize, _Allocator> self_type;
+    typedef SegregatedPool<_Tag, _BlockSize, _Allocator> self_type;
     typedef MemoryPool<true, _Allocator> memorypool_type;
     typedef Meta::AutoSingleton<self_type> singleton_type;
 
-    friend class Meta::AutoSingleton<SeggregatedPool<_Tag, _BlockSize, _Allocator> >;
+    friend class Meta::AutoSingleton<SegregatedPool<_Tag, _BlockSize, _Allocator> >;
 
     enum : size_t {
         ThisBlockSize = _BlockSize,
@@ -77,26 +77,26 @@ public:
     using singleton_type::Instance;
 
 private:
-    explicit SeggregatedPool()
+    explicit SegregatedPool()
         : memorypool_type(ThisBlockSize, ThisChunksize)
         , singleton_type(this) {}
 };
 //----------------------------------------------------------------------------
 template <typename _Tag, typename T, typename _Allocator = ALLOCATOR(Pool, u64) >
-class TypedSeggregatedPool {
+class TypedSegregatedPool {
 public:
-    TypedSeggregatedPool() = delete;
-    ~TypedSeggregatedPool() = delete;
+    TypedSegregatedPool() = delete;
+    ~TypedSegregatedPool() = delete;
 
-    typedef SeggregatedPool<_Tag, SNAP_SIZE_FOR_POOL_SEGREGATION(T), typename _Allocator::template rebind<u64>::other>
-            seggregatedpool_type;
+    typedef SegregatedPool<_Tag, SNAP_SIZE_FOR_POOL_SEGREGATION(T), typename _Allocator::template rebind<u64>::other>
+            segregatedpool_type;
 
 #pragma warning( push )
 #pragma warning( disable: 4503 )
 #pragma warning( disable: 4640 )
-    static seggregatedpool_type& Instance() {
+    static segregatedpool_type& Instance() {
         CORE_POOL_ALLOCATOR_VERBOSE(_Tag, T, false);
-        return seggregatedpool_type::Instance();
+        return segregatedpool_type::Instance();
     }
 #pragma warning( pop )
 };
@@ -104,15 +104,15 @@ public:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Tag, size_t _BlockSize, typename _Allocator = THREAD_LOCAL_ALLOCATOR(Pool, u64) >
-class ThreadLocalSeggregatedPool :
+class ThreadLocalSegregatedPool :
     public MemoryPool<false, _Allocator>
-,   Meta::AutoSingletonThreadLocal<ThreadLocalSeggregatedPool<_Tag, _BlockSize, _Allocator> > {
+,   Meta::AutoSingletonThreadLocal<ThreadLocalSegregatedPool<_Tag, _BlockSize, _Allocator> > {
 public:
-    typedef ThreadLocalSeggregatedPool<_Tag, _BlockSize, _Allocator> self_type;
+    typedef ThreadLocalSegregatedPool<_Tag, _BlockSize, _Allocator> self_type;
     typedef MemoryPool<false, _Allocator> memorypool_type;
     typedef Meta::AutoSingletonThreadLocal<self_type> singleton_type;
 
-    friend class Meta::AutoSingletonThreadLocal<ThreadLocalSeggregatedPool<_Tag, _BlockSize, _Allocator> >;
+    friend class Meta::AutoSingletonThreadLocal<ThreadLocalSegregatedPool<_Tag, _BlockSize, _Allocator> >;
 
     enum : size_t {
         ThisBlockSize = _BlockSize,
@@ -122,25 +122,25 @@ public:
     using singleton_type::Instance;
 
 private:
-    explicit ThreadLocalSeggregatedPool()
+    explicit ThreadLocalSegregatedPool()
         : memorypool_type(ThisBlockSize, ThisChunksize)
         , singleton_type(this) {}
 };
 //----------------------------------------------------------------------------
 template <typename _Tag, typename T, typename _Allocator = THREAD_LOCAL_ALLOCATOR(Pool, u64) >
-class TypedThreadLocalSeggregatedPool {
+class TypedThreadLocalSegregatedPool {
 public:
-    TypedThreadLocalSeggregatedPool() = delete;
-    ~TypedThreadLocalSeggregatedPool() = delete;
+    TypedThreadLocalSegregatedPool() = delete;
+    ~TypedThreadLocalSegregatedPool() = delete;
 
-    typedef ThreadLocalSeggregatedPool<_Tag, SNAP_SIZE_FOR_POOL_SEGREGATION(T), typename _Allocator::template rebind<u64>::other>
-            seggregatedpool_type;
+    typedef ThreadLocalSegregatedPool<_Tag, SNAP_SIZE_FOR_POOL_SEGREGATION(T), typename _Allocator::template rebind<u64>::other>
+            segregatedpool_type;
 
 #pragma warning( push )
 #pragma warning( disable: 4503 )
-    static seggregatedpool_type& Instance() {
+    static segregatedpool_type& Instance() {
         CORE_POOL_ALLOCATOR_VERBOSE(_Tag, T, true);
-        return seggregatedpool_type::Instance();
+        return segregatedpool_type::Instance();
     }
 #pragma warning( pop )
 };
@@ -177,23 +177,23 @@ public:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// _Tag enables user to control seggregation
+// _Tag enables user to control segregation
 //----------------------------------------------------------------------------
 #define SINGLETON_POOL_ALLOCATED_TAGGED_DEF(_Tag, _Type, _Prefix) \
-    SINGLETON_POOL_ALLOCATED_DEF_IMPL_(_Type, _Prefix, Core::TypedSeggregatedPool<_Tag COMMA _Type>)
+    SINGLETON_POOL_ALLOCATED_DEF_IMPL_(_Type, _Prefix, Core::TypedSegregatedPool<_Tag COMMA _Type>)
 //----------------------------------------------------------------------------
 #define THREAD_LOCAL_SINGLETON_POOL_ALLOCATED_TAGGED_DEF(_Tag, _Type, _Prefix) \
-    SINGLETON_POOL_ALLOCATED_DEF_IMPL_(_Type, _Prefix, Core::TypedThreadLocalSeggregatedPool<_Tag COMMA _Type>)
+    SINGLETON_POOL_ALLOCATED_DEF_IMPL_(_Type, _Prefix, Core::TypedThreadLocalSegregatedPool<_Tag COMMA _Type>)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// DefaultPoolSeggreationTag regroups all default pool allocated instances
+// DefaultPoolSegregationTag regroups all default pool allocated instances
 //----------------------------------------------------------------------------
 #define SINGLETON_POOL_ALLOCATED_DEF(_Type, _Prefix) \
-    SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Core::DefaultPoolSeggreationTag, _Type, _Prefix)
+    SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Core::DefaultPoolSegregationTag, _Type, _Prefix)
 //----------------------------------------------------------------------------
 #define THREAD_LOCAL_SINGLETON_POOL_ALLOCATED_DEF(_Type, _Prefix) \
-    THREAD_LOCAL_SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Core::DefaultPoolSeggreationTag, _Type, _Prefix)
+    THREAD_LOCAL_SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Core::DefaultPoolSegregationTag, _Type, _Prefix)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
