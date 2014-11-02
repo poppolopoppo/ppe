@@ -17,6 +17,8 @@ public:
 
     virtual void Start() override;
     virtual void Shutdown() override;
+
+    static void RedirectIOToConsole();
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

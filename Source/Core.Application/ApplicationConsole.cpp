@@ -19,12 +19,25 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-namespace {
+ApplicationConsole::ApplicationConsole(const wchar_t *appname)
+:   ApplicationBase(appname) {}
 //----------------------------------------------------------------------------
-// maximum mumber of lines the output console should have
-static const WORD MAX_CONSOLE_LINES = 500;
+ApplicationConsole::~ApplicationConsole() {}
 //----------------------------------------------------------------------------
-void RedirectIOToConsole() {
+void ApplicationConsole::Start() {
+    ApplicationBase::Start();
+
+    RedirectIOToConsole();
+}
+//----------------------------------------------------------------------------
+void ApplicationConsole::Shutdown() {
+    ApplicationBase::Shutdown();
+}
+//----------------------------------------------------------------------------
+void ApplicationConsole::RedirectIOToConsole() {
+    // maximum mumber of lines the output console should have
+    static const WORD MAX_CONSOLE_LINES = 500;
+
     int hConHandle;
     long lStdHandle;
 
@@ -74,25 +87,6 @@ void RedirectIOToConsole() {
     // point to console as well
 
     std::ios::sync_with_stdio();
-}
-//----------------------------------------------------------------------------
-} //!namespace
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-ApplicationConsole::ApplicationConsole(const wchar_t *appname)
-:   ApplicationBase(appname) {}
-//----------------------------------------------------------------------------
-ApplicationConsole::~ApplicationConsole() {}
-//----------------------------------------------------------------------------
-void ApplicationConsole::Start() {
-    ApplicationBase::Start();
-
-    RedirectIOToConsole();
-}
-//----------------------------------------------------------------------------
-void ApplicationConsole::Shutdown() {
-    ApplicationBase::Shutdown();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
