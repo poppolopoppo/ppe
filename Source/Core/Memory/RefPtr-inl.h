@@ -134,7 +134,7 @@ auto RefPtr<T>::operator =(const RefPtr& other) -> RefPtr& {
 template <typename T>
 template <typename U>
 RefPtr<T>::RefPtr(const RefPtr<U>& other)
-: _ptr(checked_cast<T *>(other.get())) {
+:   _ptr(checked_cast<T *>(other.get())) {
     IncRefCountIFP();
 }
 //----------------------------------------------------------------------------
@@ -203,12 +203,16 @@ SafePtr<T>::SafePtr()
 template <typename T>
 SafePtr<T>::SafePtr(T* ptr)
 :   _ptr(ptr) {
+#ifdef WITH_CORE_SAFEPTR
     IncRefCountIFP();
+#endif
 }
 //----------------------------------------------------------------------------
 template <typename T>
 SafePtr<T>::~SafePtr() {
+#ifdef WITH_CORE_SAFEPTR
     DecRefCountIFP();
+#endif
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -218,7 +222,9 @@ SafePtr<T>::SafePtr(SafePtr&& rvalue) : _ptr(rvalue._ptr) {
 //----------------------------------------------------------------------------
 template <typename T>
 auto SafePtr<T>::operator =(SafePtr&& rvalue) -> SafePtr& {
+#ifdef WITH_CORE_SAFEPTR
     DecRefCountIFP();
+#endif
     _ptr = rvalue._ptr;
     rvalue._ptr = nullptr;
     return *this;
@@ -226,34 +232,46 @@ auto SafePtr<T>::operator =(SafePtr&& rvalue) -> SafePtr& {
 //----------------------------------------------------------------------------
 template <typename T>
 SafePtr<T>::SafePtr(const SafePtr& other) : _ptr(other._ptr) {
+#ifdef WITH_CORE_SAFEPTR
     IncRefCountIFP();
+#endif
 }
 //----------------------------------------------------------------------------
 template <typename T>
 auto SafePtr<T>::operator =(const SafePtr& other) -> SafePtr& {
+#ifdef WITH_CORE_SAFEPTR
     if (other._ptr != _ptr) {
         DecRefCountIFP();
         _ptr = other._ptr;
         IncRefCountIFP();
     }
+#else
+    _ptr = other._ptr;
+#endif
     return *this;
 }
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
 SafePtr<T>::SafePtr(const SafePtr<U>& other)
-: _ptr(checked_cast<T *>(other.get())) {
+:   _ptr(checked_cast<T *>(other.get())) {
+#ifdef WITH_CORE_SAFEPTR
     IncRefCountIFP();
+#endif
 }
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
 auto SafePtr<T>::operator =(const SafePtr<U>& other) -> SafePtr& {
+#ifdef WITH_CORE_SAFEPTR
     if (other.get() != _ptr) {
         DecRefCountIFP();
         _ptr = checked_cast<T *>(other.get());
         IncRefCountIFP();
     }
+#else
+    _ptr = checked_cast<T *>(other.get());
+#endif
     return *this;
 }
 //----------------------------------------------------------------------------
@@ -267,7 +285,9 @@ SafePtr<T>::SafePtr(SafePtr<U>&& rvalue)
 template <typename T>
 template <typename U>
 auto SafePtr<T>::operator =(SafePtr<U>&& rvalue) -> SafePtr& {
+#ifdef WITH_CORE_SAFEPTR
     DecRefCountIFP();
+#endif
     _ptr = checked_cast<T *>(rvalue.get());
     rvalue._ptr = nullptr;
     return *this;
@@ -275,11 +295,15 @@ auto SafePtr<T>::operator =(SafePtr<U>&& rvalue) -> SafePtr& {
 //----------------------------------------------------------------------------
 template <typename T>
 void SafePtr<T>::reset(T* ptr/* = nullptr */) {
+#ifdef WITH_CORE_SAFEPTR
     if (ptr != _ptr) {
         DecRefCountIFP();
         _ptr = ptr;
         IncRefCountIFP();
     }
+#else
+    _ptr = ptr;
+#endif
 }
 //----------------------------------------------------------------------------
 template <typename T>
