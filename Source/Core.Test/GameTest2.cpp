@@ -39,7 +39,7 @@
 
 #include "Core.Engine/Camera/Camera.h"
 #include "Core.Engine/Mesh/Geometry/GenericVertexOptimizer.h"
-#include "Core.Engine/Mesh/MeshLoader.h"
+#include "Core.Engine/Mesh/Loader/MeshLoader.h"
 #include "Core.Engine/Scene/Scene.h"
 #include "Core.Engine/World/World.h"
 
@@ -88,7 +88,7 @@ void GameTest2::Shutdown() {
 void GameTest2::Initialize(const Timeline& time) {
     parent_type::Initialize(time);
 
-    VirtualFileSystem::Instance().MountNativePath(L"GameData:/", L"D:/Dropbox/code/cpp/DXCPP/Core/Data");
+    VirtualFileSystem::Instance().MountNativePath(L"GameData:/", L"Data/");
 
     using namespace Engine;
     using namespace Graphics;

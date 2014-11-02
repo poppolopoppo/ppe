@@ -34,7 +34,7 @@
 #include "Core.Engine/Mesh/Geometry/GenericVertex.h"
 #include "Core.Engine/Mesh/Geometry/GenericVertexOptimizer.h"
 #include "Core.Engine/Mesh/Geometry/GeometricPrimitives.h"
-#include "Core.Engine/Mesh/MeshLoader.h"
+#include "Core.Engine/Mesh/Loader/MeshLoader.h"
 
 #include "Core.Engine/Texture/TextureLoader.h"
 
