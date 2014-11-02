@@ -16,14 +16,14 @@ FWD_REFPTR(BasicWindow);
 //----------------------------------------------------------------------------
 class BasicWindow : public RefCountable {
 public:
-    BasicWindow(
-        const wchar_t *title,
-        int left, int top,
-        size_t width, size_t height,
-        BasicWindow *parent = nullptr);
+    BasicWindow(const wchar_t *title,
+                int left, int top,
+                size_t width, size_t height,
+                BasicWindow *parent = nullptr   );
     virtual ~BasicWindow();
 
     void *Handle() const { return _handle; }
+    const WString& Title() const { return _title; }
     size_t Width() const { return _width; }
     size_t Height() const { return _height; }
     BasicWindow *Parent() const { return _parent; }
@@ -75,6 +75,8 @@ private:
     void UpdateMessageHandlers_AfterDispatch_();
 
     void *_handle;
+
+    WString _title;
 
     size_t _width;
     size_t _height;

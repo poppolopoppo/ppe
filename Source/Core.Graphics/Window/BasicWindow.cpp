@@ -162,6 +162,7 @@ BasicWindow::BasicWindow(
     size_t width, size_t height,
     BasicWindow *parent/* = nullptr */)
 :   _handle(nullptr)
+,   _title(title)
 ,   _width(width)
 ,   _height(height)
 ,   _parent(parent)
@@ -318,7 +319,7 @@ void BasicWindow::RegisterMessageDelegate_(WindowMessage msg, IWindowMessageHand
     Assert(Contains(_handlers, handler));
     Assert(this == handler->Window());
 
-    LOG(Information, L"[Window] Register {1} message handler for handle {0}", _handle, msg);
+    LOG(Information, L"[Window] Register {1} message handler for window '{0}'", _title, msg);
 
     _dispatch.Insert_AssertUnique(msg, MakePair(handler, member));
 }
@@ -329,7 +330,7 @@ void BasicWindow::UnregisterMessageDelegate_(WindowMessage msg, IWindowMessageHa
     Assert(Contains(_handlers, handler));
     Assert(this == handler->Window());
 
-    LOG(Information, L"[Window] Unregister {1} message handler for handle {0}", _handle, msg);
+    LOG(Information, L"[Window] Unregister {1} message handler for window '{0}'", _title, msg);
 
     const auto it = _dispatch.Find(msg);
     AssertRelease(it != _dispatch.end());
