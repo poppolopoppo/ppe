@@ -2,16 +2,16 @@
 
 #include "Core/Core.h"
 
-#include "Core/Container/Token.h"
-#include "Core/IO/FS/FileSystemProperties.h"
+#include "Core/IO/FS/FileSystemToken.h"
+#include "Core/IO/StringSlice.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MountingPoint : public FileSystem::Token<MountingPoint> {
+class MountingPoint : public FileSystemToken {
 public:
-    typedef FileSystem::Token<MountingPoint> parent_type;
+    typedef FileSystemToken parent_type;
 
     MountingPoint() {}
     ~MountingPoint() {}
@@ -27,6 +27,12 @@ public:
 
     MountingPoint(const MountingPoint& other);
     MountingPoint& operator =(const MountingPoint& other);
+
+    MountingPoint(const BasicStringSlice<const FileSystem::char_type>& slice)
+        : MountingPoint(slice.Pointer(), slice.size()) {}
+
+    MountingPoint(const FileSystemToken& token);
+    MountingPoint& operator =(const FileSystemToken& token);
 
     void Swap(MountingPoint& other);
 };

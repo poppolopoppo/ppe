@@ -29,6 +29,17 @@ Extname& Extname::operator =(const Extname& other) {
     return *this;
 }
 //----------------------------------------------------------------------------
+Extname::Extname(const FileSystemToken& token)
+:   parent_type(token) {
+    Assert(token.empty() || L':' == *token.cstr());
+}
+//----------------------------------------------------------------------------
+Extname& Extname::operator =(const FileSystemToken& token) {
+    parent_type::operator =(token);
+    Assert(token.empty() || L':' == *token.cstr());
+    return *this;
+}
+//----------------------------------------------------------------------------
 void Extname::Swap(Extname& other) {
     parent_type::Swap(other);
 }

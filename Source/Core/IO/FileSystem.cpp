@@ -2,29 +2,26 @@
 
 #include "FileSystem.h"
 
+#include "FS/FileSystemTrie.h"
+#include "FS/FileSystemToken.h"
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FileSystemStartup::Start() {
-    Extname::Start(32);
-    MountingPoint::Start(32);
-    BasenameNoExt::Start(128);
-    Dirname::Start(128);
+    FileSystemToken::Start(1024);
+    FileSystemPath::Create();
 }
 //----------------------------------------------------------------------------
 void FileSystemStartup::Shutdown() {
-    Dirname::Shutdown();
-    BasenameNoExt::Shutdown();
-    MountingPoint::Shutdown();
-    Extname::Shutdown();
+    FileSystemPath::Destroy();
+    FileSystemToken::Shutdown();
 }
 //----------------------------------------------------------------------------
 void FileSystemStartup::Clear() {
-    Dirname::Clear();
-    BasenameNoExt::Clear();
-    MountingPoint::Clear();
-    Extname::Clear();
+    FileSystemPath::Instance().Clear();
+    FileSystemToken::Clear();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

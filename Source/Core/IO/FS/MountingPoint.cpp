@@ -29,6 +29,17 @@ MountingPoint& MountingPoint::operator =(const MountingPoint& other) {
     return *this;
 }
 //----------------------------------------------------------------------------
+MountingPoint::MountingPoint(const FileSystemToken& token)
+:   parent_type(token) {
+    Assert(token.empty() || L':' == token.MakeView().back());
+}
+//----------------------------------------------------------------------------
+MountingPoint& MountingPoint::operator =(const FileSystemToken& token) {
+    Assert(token.empty() || L':' == token.MakeView().back());
+    parent_type::operator =(token);
+    return *this;
+}
+//----------------------------------------------------------------------------
 void MountingPoint::Swap(MountingPoint& other) {
     parent_type::Swap(other);
 }

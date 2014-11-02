@@ -2,16 +2,16 @@
 
 #include "Core/Core.h"
 
-#include "Core/Container/Token.h"
-#include "Core/IO/FS/FileSystemProperties.h"
+#include "Core/IO/FS/FileSystemToken.h"
+#include "Core/IO/StringSlice.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class BasenameNoExt : public FileSystem::Token<BasenameNoExt> {
+class BasenameNoExt : public FileSystemToken {
 public:
-    typedef FileSystem::Token<BasenameNoExt> parent_type;
+    typedef FileSystemToken parent_type;
 
     BasenameNoExt() {}
     ~BasenameNoExt() {}
@@ -24,6 +24,12 @@ public:
     template <typename _CharTraits, typename _Allocator>
     BasenameNoExt(const std::basic_string<typename FileSystem::char_type, _CharTraits, _Allocator>& content)
         : BasenameNoExt(content.c_str(), content.size()) {}
+
+    BasenameNoExt(const BasicStringSlice<const FileSystem::char_type>& slice)
+        : BasenameNoExt(slice.Pointer(), slice.size()) {}
+
+    BasenameNoExt(const FileSystemToken& token);
+    BasenameNoExt& operator =(const FileSystemToken& token);
 
     BasenameNoExt(const BasenameNoExt& other);
     BasenameNoExt& operator =(const BasenameNoExt& other);

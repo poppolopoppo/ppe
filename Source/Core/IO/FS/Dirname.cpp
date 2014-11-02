@@ -25,6 +25,14 @@ Dirname& Dirname::operator =(const Dirname& other) {
     return *this;
 }
 //----------------------------------------------------------------------------
+Dirname::Dirname(const FileSystemToken& token)
+:   parent_type(token) {}
+//----------------------------------------------------------------------------
+Dirname& Dirname::operator =(const FileSystemToken& token) {
+    parent_type::operator =(token);
+    return *this;
+}
+//----------------------------------------------------------------------------
 void Dirname::Swap(Dirname& other) {
     parent_type::Swap(other);
 }

@@ -2,27 +2,33 @@
 
 #include "Core/Core.h"
 
-#include "Core/Allocator/Allocation.h"
-#include "Core/IO/String.h"
+#include "Core/IO/FS/FileSystemProperties.h"
 
 namespace Core {
-namespace FileSystem {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-typedef wchar_t char_type;
-//----------------------------------------------------------------------------
-enum : char_type { Separator = L'/', AltSeparator = L'\\' };
-//----------------------------------------------------------------------------
-class TokenTraits {
-public:
-    const std::locale& Locale() const { return std::locale::classic(); }
-    bool IsAllowedChar(wchar_t ch) const;
-};
-//----------------------------------------------------------------------------
-size_t SystemTemporaryDirectory(char_type *path, size_t capacity);
+template <
+    typename        _Tag,
+    typename        _Char,
+    CaseSensitive   _CaseSensitive,
+    typename        _TokenTraits,
+    typename        _Allocator
+>
+class Token;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace FileSystem
+struct FileSystemTokenTag;
+//----------------------------------------------------------------------------
+using FileSystemToken = Core::Token<
+    FileSystemTokenTag,
+    FileSystem::char_type,
+    CaseSensitive::False,
+    FileSystem::TokenTraits,
+    ALLOCATOR(FileSystem, FileSystem::char_type)
+>;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Core

@@ -25,6 +25,14 @@ BasenameNoExt& BasenameNoExt::operator =(const BasenameNoExt& other) {
     return *this;
 }
 //----------------------------------------------------------------------------
+BasenameNoExt::BasenameNoExt(const FileSystemToken& token)
+:   parent_type(token) {}
+//----------------------------------------------------------------------------
+BasenameNoExt& BasenameNoExt::operator =(const FileSystemToken& token) {
+    parent_type::operator =(token);
+    return *this;
+}
+//----------------------------------------------------------------------------
 void BasenameNoExt::Swap(BasenameNoExt& other) {
     parent_type::Swap(other);
 }
