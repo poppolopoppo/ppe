@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.Engine/Mesh/MeshLoader.h"
+#include "Core.Engine/Mesh/Loader/MeshLoader.h"
 
 namespace Core {
 namespace Engine {

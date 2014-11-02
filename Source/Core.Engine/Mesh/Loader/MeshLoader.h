@@ -103,4 +103,4 @@ bool ReadMeshData(const MeshHeader& header, const MemoryView<u8>& indices, Gener
 } //!namespace Engine
 } //!namespace Core
 
-#include "Core.Engine/Mesh/MeshLoader-inl.h"
+#include "Core.Engine/Mesh/Loader/MeshLoader-inl.h"
