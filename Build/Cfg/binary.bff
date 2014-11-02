@@ -7,7 +7,7 @@ VCXProject( '$ProjectName$-proj' )
     .ProjectInputPaths          = '$ProjectPath$\'
     .ProjectBasePath            = '$ProjectPath$\'
 
-    .LocalDebuggerCommand       = '^$(ProjectDir)..\..\$OutputBase$\^$(Configuration)\$ProjectName$-^$(Configuration).exe'
+    .LocalDebuggerCommand       = '^$(ProjectDir)..\..\$OutputBase$\Binary\$ProjectName$-^$(Configuration).exe'
     .LocalDebuggerWorkingDirectory = '^$(ProjectDir)..\..\'
 }
 
@@ -36,6 +36,7 @@ ForEach( .Config in .Configs_Windows_MSVC )
 {
     Using( .Config )
 
+    .OutputBinary       = '$OutputBase$\Binary'
     .OutputBase         + '\$Platform$-$Config$'
     .IncludePath        = ' -I"$ProjectPath$" -I"$ProjectPath$\.." -I"$AdditionalInclude$"'
 
@@ -61,7 +62,7 @@ ForEach( .Config in .Configs_Windows_MSVC )
                                         '$ProjectName$-Res',
                                         '$ProjectName$-Lib-$Platform$-$Config$' }
 
-        .LinkerOutput               = '$OutputBase$\$ProjectName$-$Platform$-$Config$.exe'
+        .LinkerOutput               = '$OutputBinary$\$ProjectName$-$Platform$-$Config$.exe'
         .LinkerOptions              + ' /LIBPATH:"$AdditionalLibInclude$\$Platform$\"'
     }
     Alias( '$ProjectName$-$Platform$-$Config$' ) { .Targets = '$ProjectName$-Exe-$Platform$-$Config$' }

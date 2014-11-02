@@ -14,7 +14,7 @@
 
     .Platform                   = 'Win32' // unused
     .PlatformToolset            = 'v120'
-    .IncludeSearchPath          = '^$(ProjectDir)..;.\;$AdditionalInclude$'
+    .IncludeSearchPath          = '^$(ProjectDir)..;.\;$DirectX11SDKPath$/Include;$AdditionalInclude$'
 
     .X86Defines                 = 'WIN32_LEAN_AND_MEAN;_WIN32;__WINDOWS__;WIN32;UNICODE;_UNICODE;VC_EXTRALEAN;DBGHELP_TRANSLATE_TCHAR;NOMINMAX'
     .X64Defines                 = 'WIN32_LEAN_AND_MEAN;_WIN32;__WINDOWS__;WIN64;UNICODE;_UNICODE;VC_EXTRALEAN;DBGHELP_TRANSLATE_TCHAR;NOMINMAX'
