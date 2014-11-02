@@ -290,7 +290,7 @@ void TestFileSystem_() {
     Filename f = L"data:/assets/3d/models/test.jpg";
     std::cout << f << " (" << hash_value(f) << ")" << std::endl;
     f = L"test.jpg";
-    std::cout << f << " (" << hash_value(f) << ")" << std::endl;
+    std::cout << f << " (" << hash_value(f) << ")" << " (basename: " << hash_value(f.Basename()) << ")" << std::endl;
     f = L"models/test.jpg";
     std::cout << f << " (" << hash_value(f) << ")" << std::endl;
     f = L"data:/assets/3d/models/";
@@ -323,10 +323,6 @@ void TestVirtualFileSystem_() {
     using namespace Core;
 
     VirtualFileSystemRoot& vfs = VirtualFileSystem::Instance();
-
-    VirtualFileSystemComponentStartup processStartup(
-        new VirtualFileSystemNativeComponent(L"Process:/", CurrentProcess::Instance().Directory())
-        );
 
     vfs.MountNativePath(L"C:", L"C:");
 
