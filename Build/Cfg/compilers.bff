@@ -116,6 +116,7 @@ Compiler( 'Compiler-x86Clang' )
     // Optimizations
     .CompilerDebugOptimizations     = ' /MDd /Od /sdl /RTC1 /GS /Oy- /GR /analyze'
     .CompilerReleaseOptimizations   = ' /MD /Ox /Oy /Oi /GS- /GF /GL /Gy /Gw /GR- /analyze'
+                                    + ' /Qvec-report:2' // http://msdn.microsoft.com/en-us/library/vstudio/jj614596.aspx
 
     .LibrarianDebugOptimizations    = ''
     .LibrarianReleaseOptimizations  = ' /LTCG'
