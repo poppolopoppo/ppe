@@ -12,21 +12,7 @@
 
 #include <iostream>
 
-#define CORE_RESOURCES 0
-
-#if defined(OS_WINDOWS) && CORE_RESOURCES
-//  Retrieves application icon for windows
-#   include <windows.h>
-#   ifdef DialogBox
-#       undef DialogBox
-#   endif
-#   include "resource.h"
-#   ifndef IDI_ICON1
-#       define IDI_ICON1 101 // work around buggy resource handling ...
-#   endif
-#endif
-
-#define APPLICATION_TYPE 3
+#define APPLICATION_TYPE 2
 
 #if   (0 == APPLICATION_TYPE)
 #   include "ApplicationTest.h"
@@ -36,12 +22,24 @@ typedef Core::ApplicationTest application_type;
 typedef Core::GameTest application_type;
 #elif (2 == APPLICATION_TYPE)
 #   include "GameTest2.h"
-typedef Core::GameTest2 application_type
+typedef Core::GameTest2 application_type;
 #elif (3 == APPLICATION_TYPE)
 #   include "GameTest3.h"
 typedef Core::GameTest3 application_type;
 #else
 #   error "unknown application type"
+#endif
+
+#ifdef OS_WINDOWS
+#   define CORE_RESOURCES 1
+#else
+#   define CORE_RESOURCES 0
+#endif
+
+#if defined(OS_WINDOWS) && CORE_RESOURCES
+//  Retrieves application icon for windows
+#   include <windows.h>
+#   include "resource.h"
 #endif
 
 static void PrintMemStats(const Core::CrtMemoryStats& memoryStats) {
@@ -80,7 +78,7 @@ static int Bootstrap(void *applicationHandle, int nShowCmd, int argc, const wcha
     Engine::EngineStartup startupEngine;
 
 #if defined(OS_WINDOWS) && CORE_RESOURCES
-    CurrentProcess::Instance().SetAppIcon(IDI_ICON1);
+    CurrentProcess::Instance().SetAppIcon(IDI_WINDOW_ICON);
 #endif
 
 #ifdef _DEBUG
@@ -122,7 +120,7 @@ int main(int argc, const wchar_t* argv[]) {
 #   endif
 
     int argc;
-    wchar_t *const *argv = CommandLineToArgvW(lpCmdLine, &argc);
+    wchar_t *const *argv = ::CommandLineToArgvW(lpCmdLine, &argc);
 #endif
 
     int result = 0;
