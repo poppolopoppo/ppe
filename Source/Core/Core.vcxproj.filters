@@ -211,6 +211,18 @@
     <CustomBuild Include="IO\FS\FileSystemProperties.h">
       <Filter>IO\FS</Filter>
     </CustomBuild>
+    <CustomBuild Include="IO\FS\FileSystemToken.h">
+      <Filter>IO\FS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\FS\FileSystemToken_fwd.h">
+      <Filter>IO\FS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\FS\FileSystemTrie.cpp">
+      <Filter>IO\FS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\FS\FileSystemTrie.h">
+      <Filter>IO\FS</Filter>
+    </CustomBuild>
     <CustomBuild Include="IO\FS\MountingPoint.cpp">
       <Filter>IO\FS</Filter>
     </CustomBuild>

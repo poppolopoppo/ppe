@@ -101,6 +101,10 @@
     <CustomBuild Include="IO\FS\Filename.h" />
     <CustomBuild Include="IO\FS\FileSystemProperties.cpp" />
     <CustomBuild Include="IO\FS\FileSystemProperties.h" />
+    <CustomBuild Include="IO\FS\FileSystemToken.h" />
+    <CustomBuild Include="IO\FS\FileSystemToken_fwd.h" />
+    <CustomBuild Include="IO\FS\FileSystemTrie.cpp" />
+    <CustomBuild Include="IO\FS\FileSystemTrie.h" />
     <CustomBuild Include="IO\FS\MountingPoint.cpp" />
     <CustomBuild Include="IO\FS\MountingPoint.h" />
     <CustomBuild Include="IO\VFS\VirtualFileSystemComponent.cpp" />
@@ -414,57 +418,57 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x86-Debug|Win32'">
-    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" -showcmds -dist -cache -vs $(ProjectName)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" -showcmds -dist -cache -vs -clean $(ProjectName)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -cache -vs $(ProjectName)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -cache -vs -clean $(ProjectName)-$(Configuration)</NMakeReBuildCommandLine>
     <NMakePreprocessorDefinitions>WIN32_LEAN_AND_MEAN;_WIN32;__WINDOWS__;WIN32;UNICODE;_UNICODE;VC_EXTRALEAN;DBGHELP_TRANSLATE_TCHAR;NOMINMAX;_DEBUG;DEBUG</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;C:/Program Files (x86)/Microsoft DirectX SDK (June 2010)/Include;.</NMakeIncludeSearchPath>
     <IntDir>$(ProjectDir)..\..\Output\Intermediate\$(Configuration)\$(ProjectName)</IntDir>
     <OutDir>$(ProjectDir)..\..\Output\$(Configuration)\$(ProjectName)</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x86-Profile|Win32'">
-    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" -showcmds -dist -cache -vs $(ProjectName)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" -showcmds -dist -cache -vs -clean $(ProjectName)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -cache -vs $(ProjectName)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -cache -vs -clean $(ProjectName)-$(Configuration)</NMakeReBuildCommandLine>
     <NMakePreprocessorDefinitions>WIN32_LEAN_AND_MEAN;_WIN32;__WINDOWS__;WIN32;UNICODE;_UNICODE;VC_EXTRALEAN;DBGHELP_TRANSLATE_TCHAR;NOMINMAX;NDEBUG;RELEASE;PROFILING_ENABLED</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;C:/Program Files (x86)/Microsoft DirectX SDK (June 2010)/Include;.</NMakeIncludeSearchPath>
     <IntDir>$(ProjectDir)..\..\Output\Intermediate\$(Configuration)\$(ProjectName)</IntDir>
     <OutDir>$(ProjectDir)..\..\Output\$(Configuration)\$(ProjectName)</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x86-Release|Win32'">
-    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" -showcmds -dist -cache -vs $(ProjectName)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" -showcmds -dist -cache -vs -clean $(ProjectName)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -cache -vs $(ProjectName)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -cache -vs -clean $(ProjectName)-$(Configuration)</NMakeReBuildCommandLine>
     <NMakePreprocessorDefinitions>WIN32_LEAN_AND_MEAN;_WIN32;__WINDOWS__;WIN32;UNICODE;_UNICODE;VC_EXTRALEAN;DBGHELP_TRANSLATE_TCHAR;NOMINMAX;NDEBUG;RELEASE</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;C:/Program Files (x86)/Microsoft DirectX SDK (June 2010)/Include;.</NMakeIncludeSearchPath>
     <IntDir>$(ProjectDir)..\..\Output\Intermediate\$(Configuration)\$(ProjectName)</IntDir>
     <OutDir>$(ProjectDir)..\..\Output\$(Configuration)\$(ProjectName)</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x64-Debug|Win32'">
-    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" -showcmds -dist -cache -vs $(ProjectName)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" -showcmds -dist -cache -vs -clean $(ProjectName)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -cache -vs $(ProjectName)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -cache -vs -clean $(ProjectName)-$(Configuration)</NMakeReBuildCommandLine>
     <NMakePreprocessorDefinitions>WIN32_LEAN_AND_MEAN;_WIN32;__WINDOWS__;WIN64;UNICODE;_UNICODE;VC_EXTRALEAN;DBGHELP_TRANSLATE_TCHAR;NOMINMAX;_DEBUG;DEBUG</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;C:/Program Files (x86)/Microsoft DirectX SDK (June 2010)/Include;.</NMakeIncludeSearchPath>
     <IntDir>$(ProjectDir)..\..\Output\Intermediate\$(Configuration)\$(ProjectName)</IntDir>
     <OutDir>$(ProjectDir)..\..\Output\$(Configuration)\$(ProjectName)</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x64-Profile|Win32'">
-    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" -showcmds -dist -cache -vs $(ProjectName)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" -showcmds -dist -cache -vs -clean $(ProjectName)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -cache -vs $(ProjectName)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -cache -vs -clean $(ProjectName)-$(Configuration)</NMakeReBuildCommandLine>
     <NMakePreprocessorDefinitions>WIN32_LEAN_AND_MEAN;_WIN32;__WINDOWS__;WIN64;UNICODE;_UNICODE;VC_EXTRALEAN;DBGHELP_TRANSLATE_TCHAR;NOMINMAX;NDEBUG;RELEASE;PROFILING_ENABLED</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;C:/Program Files (x86)/Microsoft DirectX SDK (June 2010)/Include;.</NMakeIncludeSearchPath>
     <IntDir>$(ProjectDir)..\..\Output\Intermediate\$(Configuration)\$(ProjectName)</IntDir>
     <OutDir>$(ProjectDir)..\..\Output\$(Configuration)\$(ProjectName)</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x64-Release|Win32'">
-    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" -showcmds -dist -cache -vs $(ProjectName)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" -showcmds -dist -cache -vs -clean $(ProjectName)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -cache -vs $(ProjectName)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -cache -vs -clean $(ProjectName)-$(Configuration)</NMakeReBuildCommandLine>
     <NMakePreprocessorDefinitions>WIN32_LEAN_AND_MEAN;_WIN32;__WINDOWS__;WIN64;UNICODE;_UNICODE;VC_EXTRALEAN;DBGHELP_TRANSLATE_TCHAR;NOMINMAX;NDEBUG;RELEASE</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;C:/Program Files (x86)/Microsoft DirectX SDK (June 2010)/Include;.</NMakeIncludeSearchPath>
     <IntDir>$(ProjectDir)..\..\Output\Intermediate\$(Configuration)\$(ProjectName)</IntDir>
     <OutDir>$(ProjectDir)..\..\Output\$(Configuration)\$(ProjectName)</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x86Clang-Debug|Win32'">
-    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" -showcmds -dist -cache -vs $(ProjectName)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" -showcmds -dist -cache -vs -clean $(ProjectName)-$(Configuration)</NMakeReBuildCommandLine>
-    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;.</NMakeIncludeSearchPath>
+    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -cache -vs $(ProjectName)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -cache -vs -clean $(ProjectName)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;C:/Program Files (x86)/Microsoft DirectX SDK (June 2010)/Include;.</NMakeIncludeSearchPath>
     <IntDir>$(ProjectDir)..\..\Output\Intermediate\$(Configuration)\$(ProjectName)</IntDir>
     <OutDir>$(ProjectDir)..\..\Output\$(Configuration)\$(ProjectName)</OutDir>
   </PropertyGroup>

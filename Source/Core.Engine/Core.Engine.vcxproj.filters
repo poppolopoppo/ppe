@@ -172,16 +172,46 @@
     <CustomBuild Include="Mesh\Geometry\GeometricPrimitives.h">
       <Filter>Mesh\Geometry</Filter>
     </CustomBuild>
-    <CustomBuild Include="Mesh\MeshLoader-inl.h">
+    <CustomBuild Include="Mesh\Loader\MeshLoader-inl.h">
+      <Filter>Mesh\Loader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Mesh\Loader\MeshLoader-PLY.cpp">
+      <Filter>Mesh\Loader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Mesh\Loader\MeshLoader.cpp">
+      <Filter>Mesh\Loader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Mesh\Loader\MeshLoader.h">
+      <Filter>Mesh\Loader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Mesh\MeshName.cpp">
       <Filter>Mesh</Filter>
     </CustomBuild>
-    <CustomBuild Include="Mesh\meshloader-ply.cpp">
+    <CustomBuild Include="Mesh\MeshName.h">
       <Filter>Mesh</Filter>
     </CustomBuild>
-    <CustomBuild Include="Mesh\MeshLoader.cpp">
+    <CustomBuild Include="Mesh\Model.cpp">
       <Filter>Mesh</Filter>
     </CustomBuild>
-    <CustomBuild Include="Mesh\MeshLoader.h">
+    <CustomBuild Include="Mesh\Model.h">
+      <Filter>Mesh</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Mesh\ModelMesh.cpp">
+      <Filter>Mesh</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Mesh\ModelMesh.h">
+      <Filter>Mesh</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Mesh\ModelMeshSubPart.cpp">
+      <Filter>Mesh</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Mesh\ModelMeshSubPart.h">
+      <Filter>Mesh</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Mesh\ModelSubPart.cpp">
+      <Filter>Mesh</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Mesh\ModelSubPart.h">
       <Filter>Mesh</Filter>
     </CustomBuild>
     <CustomBuild Include="Render\Layers\AbstractRenderLayer.cpp">
@@ -410,6 +440,11 @@
   <ItemGroup>
     <Filter Include="Mesh">
       <UniqueIdentifier>{415d9568-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Mesh\Loader">
+      <UniqueIdentifier>{66fdbb0e-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

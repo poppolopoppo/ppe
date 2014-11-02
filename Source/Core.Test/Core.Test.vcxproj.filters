@@ -5,6 +5,8 @@
     </CustomBuild>
     <CustomBuild Include="ApplicationTest.h">
     </CustomBuild>
+    <CustomBuild Include="Core.Test.rc">
+    </CustomBuild>
     <CustomBuild Include="fbuild.bff">
     </CustomBuild>
     <CustomBuild Include="GameTest.cpp">
@@ -19,7 +21,9 @@
     </CustomBuild>
     <CustomBuild Include="GameTest3.h">
     </CustomBuild>
-    <CustomBuild Include="main.cpp">
+    <CustomBuild Include="Main.cpp">
+    </CustomBuild>
+    <CustomBuild Include="resource.h">
     </CustomBuild>
     <CustomBuild Include="stdafx.cpp">
     </CustomBuild>
