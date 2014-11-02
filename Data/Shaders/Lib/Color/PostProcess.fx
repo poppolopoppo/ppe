@@ -26,12 +26,12 @@ Params DefaultParams() {
     Params p;
     p.Exposure = pow(2, 3);
     p.WhitePoint = 11.2;
-    p.BloomIntensity = 0.5;
+    p.BloomIntensity = 0.8;
     p.CubicLensK = 0.075;
     p.CubicLensKCube = 0.075;
     p.CubicLensDime = 5.0;
-    p.CubicLensBlur = 12.0;
-    p.AberrationChannels = float3(0.8,1.0,0.9);
+    p.CubicLensBlur = 15.0;
+    p.AberrationChannels = float3(0.85,1.15,1.00);
     p.Vignette = 1;
     return p;
 }
@@ -106,8 +106,10 @@ float3 CubicLensDistortion(
     float2 distorduv = float2(x, y);
 
     // chromatic aberration and distorsion
-    float3 pdistord = TEX2D(input, distorduv).rgb;
-    float3 pinput = TEX2D(input, uv).rgb;
+    float3 pdistord = 0;
+    pdistord.r = TEX2D(input, lerp(uv, distorduv, channels.r)).r;
+    pdistord.g = TEX2D(input, lerp(uv, distorduv, channels.g)).g;
+    pdistord.b = TEX2D(input, lerp(uv, distorduv, channels.b)).b;
 
 #if 1
     float3 pblured = Sampling::Bicubic(TEXTURE2DPARAM_CALL(blured), distorduv, bluredDuDv).rgb;
@@ -116,10 +118,9 @@ float3 CubicLensDistortion(
 #endif
 
     float curve = saturate(abs(1 - f)/(0.0015+abs(1 - f)));
-    //return curve;
 
     float3 result = lerp(pdistord, pblured, pow(curve, blur));
-    result = (result * channels + pinput * (1 - channels)) * (1 - pow(curve, dime));
+    result *= 1 - pow(curve, dime);
 
     uv = distorduv;
 

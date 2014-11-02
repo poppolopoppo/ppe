@@ -59,10 +59,13 @@ float4 pmain(PixelIn pixelIn) : SV_Target {
             pp.CubicLensK, pp.CubicLensKCube,
             pp.CubicLensDime, pp.CubicLensBlur,
             pp.AberrationChannels );
+
     //return float4(color, 1);
 
-    float3 bloom = Sampling::Bicubic(TEXTURE2DPARAM_CALL(uniLinearClamp_Bloom), bentUV, uniDuDv_Bloom.xy).rgb;
-    color = lerp(color, color + bloom, pp.BloomIntensity);
+#if 0
+    bentUV = uv;
+    color = TEX2D(uniLinearClamp_Principal, uv).rgb;
+#endif
 
     HDR::Params hdrParams;
     hdrParams.Exposure = pp.Exposure;
@@ -70,6 +73,9 @@ float4 pmain(PixelIn pixelIn) : SV_Target {
 
     color = HDR::ToneMap(color, hdrParams);
     color = saturate(color);
+
+    float3 bloom = Sampling::Bicubic(TEXTURE2DPARAM_CALL(uniLinearClamp_Bloom), bentUV, uniDuDv_Bloom.xy).rgb;
+    color = lerp(color, color + bloom, pp.BloomIntensity);
 
     //color = PostProcess::Grid(bentUV, uniDuDv_Principal, color, 28, 0.05);
     //color = PostProcess::Scanlines(bentUV, 1/uniDuDv_Principal.xy, color);
