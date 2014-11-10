@@ -49,8 +49,12 @@
     _Type& _Name = *(_Name##_OneTimePData); \
     assert(&(_Name)) // removes unused variable warning
 
-#define ONE_TIME_INITIALIZE(_Type, _Name, ...) _ONE_TIME_INITIALIZE_IMPL_(COMMA_PROTECT(_Type), _Name, (__VA_ARGS__), )
-#define ONE_TIME_DEFAULT_INITIALIZE(_Type, _Name)       _ONE_TIME_INITIALIZE_IMPL_(COMMA_PROTECT(_Type), _Name, (), )
+#define ONE_TIME_INITIALIZE(_Type, _Name, ...) \
+    _ONE_TIME_INITIALIZE_IMPL_(COMMA_PROTECT(_Type), _Name, (__VA_ARGS__), )
+#define ONE_TIME_DEFAULT_INITIALIZE(_Type, _Name) \
+    _ONE_TIME_INITIALIZE_IMPL_(COMMA_PROTECT(_Type), _Name, (), )
 
-#define ONE_TIME_INITIALIZE_THREAD_LOCAL(_Type, _Name, ...) _ONE_TIME_INITIALIZE_IMPL_(COMMA_PROTECT(_Type), _Name, (__VA_ARGS__), THREAD_LOCAL)
-#define ONE_TIME_DEFAULT_INITIALIZE_THREAD_LOCAL(_Type, _Name)       _ONE_TIME_INITIALIZE_IMPL_(COMMA_PROTECT(_Type), _Name, (), THREAD_LOCAL)
+#define ONE_TIME_INITIALIZE_THREAD_LOCAL(_Type, _Name, ...) \
+    _ONE_TIME_INITIALIZE_IMPL_(COMMA_PROTECT(_Type), _Name, (__VA_ARGS__), THREAD_LOCAL)
+#define ONE_TIME_DEFAULT_INITIALIZE_THREAD_LOCAL(_Type, _Name) \
+    _ONE_TIME_INITIALIZE_IMPL_(COMMA_PROTECT(_Type), _Name, (), THREAD_LOCAL)
