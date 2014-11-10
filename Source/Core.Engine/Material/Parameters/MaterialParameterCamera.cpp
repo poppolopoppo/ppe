@@ -91,9 +91,9 @@ bool MaterialParameterCamera_FrustumRays::Memoize_ReturnIfChanged_(float4x4 *cac
 
     float4x4 rays(0.0f);
     rays.SetAxisX(corners[4] - corners[0]);
-    rays.SetAxisX(corners[5] - corners[1]);
-    rays.SetAxisX(corners[6] - corners[2]);
-    rays.SetAxisX(corners[7] - corners[3]);
+    rays.SetAxisY(corners[5] - corners[1]);
+    rays.SetAxisZ(corners[6] - corners[2]);
+    rays.SetAxisT(corners[7] - corners[3]);
 
     const bool changed = (rays != *cached);
     *cached = rays;
