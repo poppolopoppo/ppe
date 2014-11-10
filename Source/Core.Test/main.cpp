@@ -81,14 +81,14 @@ static int Bootstrap(void *applicationHandle, int nShowCmd, int argc, const wcha
     CurrentProcess::Instance().SetAppIcon(IDI_WINDOW_ICON);
 #endif
 
-#ifdef _DEBUG
+#ifndef FINAL_RELEASE
     try
 #endif
     {
         _Application app;
         Application::LaunchApplication(&app);
     }
-#ifdef _DEBUG
+#ifndef FINAL_RELEASE
     catch (const std::exception& e)
     {
         const WString wwhat = ToWString(e.what());
@@ -97,7 +97,10 @@ static int Bootstrap(void *applicationHandle, int nShowCmd, int argc, const wcha
     }
 #endif
 
-    ReportDomainTrackingData();
+#ifndef FINAL_RELEASE
+    ReportAllTrackingData();
+#endif
+
     return CurrentProcess::Instance().ExitCode();
 }
 
@@ -128,7 +131,7 @@ int main(int argc, const wchar_t* argv[]) {
     {
         result = Bootstrap<application_type>(hInstance, nCmdShow, argc, const_cast<const wchar_t**>(&argv[0]));
 
-#ifdef OS_WINDOWS
+#if defined(OS_WINDOWS) && !defined(FINAL_RELEASE)
         CrtMemoryStats memoryStats;
         CrtDumpMemoryStats(&memoryStats);
         PrintMemStats(memoryStats);
