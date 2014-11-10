@@ -715,6 +715,8 @@ void DeviceEncapsulator::DrawInstancedPrimitives(PrimitiveType primitiveType, si
 //----------------------------------------------------------------------------
 // Diagnostics
 //----------------------------------------------------------------------------
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
+//----------------------------------------------------------------------------
 bool DeviceEncapsulator::IsProfilerAttached() const {
     THIS_THREADRESOURCE_CHECKACCESS();
 
@@ -743,6 +745,8 @@ void DeviceEncapsulator::SetMarker(const wchar_t *name) {
 
     return _deviceAPIDependantEncapsulator->Diagnostics()->SetMarker(name);
 }
+//----------------------------------------------------------------------------
+#endif //!WITH_CORE_GRAPHICS_DIAGNOSTICS
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

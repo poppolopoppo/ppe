@@ -2,7 +2,9 @@
 
 #include "Core.Graphics/Graphics.h"
 
-#define WITH_CORE_GRAPHICS_DIAGNOSTICS
+#ifndef FINAL_RELEASE
+#   define WITH_CORE_GRAPHICS_DIAGNOSTICS
+#endif
 
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
 #   include "Core/IO/Format.h"
@@ -16,6 +18,7 @@ namespace Graphics {
 class AbstractDeviceAPIEncapsulator;
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
+
 void Diagnostics_BeginEvent(const AbstractDeviceAPIEncapsulator *encapsulator, const char *cstr);
 void Diagnostics_SetMarker(const AbstractDeviceAPIEncapsulator *encapsulator, const char *cstr);
 

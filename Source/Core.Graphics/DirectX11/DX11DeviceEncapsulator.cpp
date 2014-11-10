@@ -432,7 +432,7 @@ void DeviceEncapsulator::SetTexture(ShaderProgramType stage, size_t slot, const 
     ::ID3D11ShaderResourceView *dx11ResourceView = nullptr;
 
     if (texture) {
-        const Graphics::Texture2D *texture2D = dynamic_cast<const Graphics::Texture2D *>(texture);
+        const Graphics::Texture2D *texture2D = checked_cast<const Graphics::Texture2D *>(texture);
         if (!texture2D)
             throw DeviceEncapsulatorException("DX11: can't set invalid texture type", this, texture);
 
@@ -627,9 +627,15 @@ void DeviceEncapsulator::DrawInstancedPrimitives(PrimitiveType primitiveType, si
 //----------------------------------------------------------------------------
 // Diagnostics
 //----------------------------------------------------------------------------
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
+//----------------------------------------------------------------------------
 bool DeviceEncapsulator::IsProfilerAttached() const {
+#ifdef WITH_DIRECTX11_DEBUG_MARKERS
     return  nullptr != _wrapper.UserDefinedAnnotation()/* &&
             _wrapper.UserDefinedAnnotation()->GetStatus() */;
+#else
+    return false;
+#endif
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::BeginEvent(const wchar_t *name) {
@@ -649,6 +655,8 @@ void DeviceEncapsulator::SetMarker(const wchar_t *name) {
 
     _wrapper.UserDefinedAnnotation()->SetMarker(name);
 }
+//----------------------------------------------------------------------------
+#endif //!WITH_CORE_GRAPHICS_DIAGNOSTICS
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

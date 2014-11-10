@@ -51,7 +51,9 @@ public:
     virtual IDeviceAPIEncapsulator *Device() const = 0;
     virtual IDeviceAPIContextEncapsulator *Context() const = 0;
     virtual IDeviceAPIShaderCompilerEncapsulator *Compiler() const = 0;
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
     virtual IDeviceAPIDiagnosticsEncapsulator *Diagnostics() const = 0;
+#endif
 
     virtual void Reset(const PresentationParameters& pp) = 0;
     virtual void Present() = 0;
@@ -88,7 +90,9 @@ class DeviceEncapsulator :
     private IDeviceAPIEncapsulator
 ,   private IDeviceAPIContextEncapsulator
 ,   private IDeviceAPIShaderCompilerEncapsulator
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
 ,   private IDeviceAPIDiagnosticsEncapsulator
+#endif
 ,   private Meta::ThreadResource {
 public:
     using Meta::ThreadResource::CheckThreadId;
@@ -108,7 +112,9 @@ public:
     IDeviceAPIEncapsulator *Device() const { return const_cast<DeviceEncapsulator *>(this); }
     IDeviceAPIContextEncapsulator *Context() const { return const_cast<DeviceEncapsulator *>(this); }
     IDeviceAPIShaderCompilerEncapsulator *Compiler() const { return const_cast<DeviceEncapsulator *>(this); }
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
     IDeviceAPIDiagnosticsEncapsulator *Diagnostics() const { return const_cast<DeviceEncapsulator *>(this); }
+#endif
 
     void Reset(const PresentationParameters& pp);
     void Present();
@@ -236,6 +242,7 @@ private: // IDeviceAPIShaderCompilerEncapsulator
         VECTOR(Shader, BindName)& textures,
         const ShaderProgram *program) override;
 
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
 private: // IDeviceAPIDiagnosticsEncapsulator() {}
 
     //virtual const AbstractDeviceAPIEncapsulator *Encapsulator() const override { return _deviceAPIDependantEncapsulator.get(); }
@@ -246,6 +253,7 @@ private: // IDeviceAPIDiagnosticsEncapsulator() {}
     virtual void EndEvent() override;
 
     virtual void SetMarker(const wchar_t *name) override;
+#endif //!WITH_CORE_GRAPHICS_DIAGNOSTICS
 
 private:
     UniquePtr<AbstractDeviceAPIEncapsulator> _deviceAPIDependantEncapsulator;

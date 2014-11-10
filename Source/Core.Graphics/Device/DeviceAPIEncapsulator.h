@@ -8,6 +8,10 @@
 #include "Core/Maths/Geometry/ScalarRectangle.h"
 #include "Core/Maths/Geometry/ScalarVector.h"
 
+#ifndef FINAL_RELEASE
+#   define WITH_CORE_GRAPHICS_DIAGNOSTICS
+#endif
+
 namespace Core {
     template <typename T>
     class MemoryView;
@@ -215,6 +219,7 @@ public:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
 class IDeviceAPIDiagnosticsEncapsulator {
 public:
     virtual ~IDeviceAPIDiagnosticsEncapsulator() {}
@@ -228,6 +233,7 @@ public:
 
     virtual void SetMarker(const wchar_t *name) = 0;
 };
+#endif //!WITH_CORE_GRAPHICS_DIAGNOSTICS
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

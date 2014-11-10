@@ -26,7 +26,9 @@ class DeviceEncapsulator :
 ,   private IDeviceAPIEncapsulator
 ,   private IDeviceAPIContextEncapsulator
 ,   private IDeviceAPIShaderCompilerEncapsulator
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
 ,   private IDeviceAPIDiagnosticsEncapsulator
+#endif
 {
 public:
     DeviceEncapsulator(Graphics::DeviceEncapsulator *owner, void *windowHandle, const PresentationParameters& pp);
@@ -37,7 +39,9 @@ public:
     virtual IDeviceAPIEncapsulator *Device() const override { return const_cast<DeviceEncapsulator *>(this); }
     virtual IDeviceAPIContextEncapsulator *Context() const override { return const_cast<DeviceEncapsulator *>(this); }
     virtual IDeviceAPIShaderCompilerEncapsulator *Compiler() const override { return const_cast<DeviceEncapsulator *>(this); }
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
     virtual IDeviceAPIDiagnosticsEncapsulator *Diagnostics() const override { return const_cast<DeviceEncapsulator *>(this); }
+#endif
 
     virtual void Reset(const PresentationParameters& pp) override;
     virtual void Present() override;
@@ -163,6 +167,7 @@ private: // IDeviceAPIShaderCompilerEncapsulator impl
         VECTOR(Shader, BindName)& textures,
         const Graphics::ShaderProgram *program) override;
 
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
 private: // IDeviceAPIDiagnosticsEncapsulator() {}
 
     //virtual const AbstractDeviceAPIEncapsulator *Encapsulator() const override { return _deviceAPIDependantEncapsulator.get(); }
@@ -173,6 +178,7 @@ private: // IDeviceAPIDiagnosticsEncapsulator() {}
     virtual void EndEvent() override;
 
     virtual void SetMarker(const wchar_t *name) override;
+#endif //!WITH_CORE_GRAPHICS_DIAGNOSTICS
 
 private:
     DeviceWrapper _wrapper;
