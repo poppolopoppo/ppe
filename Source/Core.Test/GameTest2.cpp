@@ -201,7 +201,7 @@ void GameTest2::Initialize(const Timeline& time) {
     const PAbstractRenderSurface downSizeDiv4 = new RenderSurfaceRelative("DownsizeDiv4", float2(0.25f), principal, SurfaceFormat::R11G11B10);
     const PAbstractRenderSurface bloom = new RenderSurfaceRelative("Bloom", float2(0.125f), principal, SurfaceFormat::R11G11B10);
 
-    textureCache->SetFallbackTexture2D(L"GameData:/Textures/error.dds");
+    textureCache->SetFallbackTexture2D(L"GameData:/Textures/Tech/error.dds");
     renderSurfaceManager->Register(backBuffer);
     renderSurfaceManager->Register(principal);
     renderSurfaceManager->Register(downSizeDiv2);

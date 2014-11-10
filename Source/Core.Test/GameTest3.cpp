@@ -235,7 +235,7 @@ void GameTest3::Initialize(const Timeline& time) {
 
     MountGameDataPath_();
 
-    textureCache->SetFallbackTexture2D(L"GameData:/Textures/error.dds");
+    textureCache->SetFallbackTexture2D(L"GameData:/Textures/Tech/error.dds");
 
     _world = new World("Test world", Services());
     _world->Initialize();
