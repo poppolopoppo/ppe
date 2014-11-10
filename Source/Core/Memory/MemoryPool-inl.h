@@ -26,7 +26,7 @@ MemoryPool<_Lock, _Allocator>::~MemoryPool() {
 }
 //----------------------------------------------------------------------------
 template <bool _Lock, typename _Allocator>
-void *MemoryPool<_Lock, _Allocator>::Allocate() {
+void *MemoryPool<_Lock, _Allocator>::Allocate(MemoryTrackingData *trackingData = nullptr) {
     threadlock_type::ScopeLock lock(*this);
 
     void *ptr;
@@ -37,11 +37,16 @@ void *MemoryPool<_Lock, _Allocator>::Allocate() {
     }
     Assert(ptr);
 
+#ifdef USE_MEMORY_DOMAINS
+    if (trackingData)
+        trackingData->Allocate(1, BlockSize());
+#endif
+
     return ptr;
 }
 //----------------------------------------------------------------------------
 template <bool _Lock, typename _Allocator>
-void MemoryPool<_Lock, _Allocator>::Deallocate(void *ptr) {
+void MemoryPool<_Lock, _Allocator>::Deallocate(void *ptr, MemoryTrackingData *trackingData = nullptr) {
     Assert(ptr);
 
     threadlock_type::ScopeLock lock(*this);
@@ -51,6 +56,11 @@ void MemoryPool<_Lock, _Allocator>::Deallocate(void *ptr) {
         return;
 
     DeallocateChunk_(chunk);
+
+#ifdef USE_MEMORY_DOMAINS
+    if (trackingData)
+        trackingData->Deallocate(1, BlockSize());
+#endif
 }
 //----------------------------------------------------------------------------
 template <bool _Lock, typename _Allocator>

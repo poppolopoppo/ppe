@@ -6,6 +6,7 @@
 #include "Core/Meta/ThreadResource.h"
 
 namespace Core {
+class MemoryTrackingData;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -96,6 +97,8 @@ public:
     typedef Meta::ThreadLock<_Lock> threadlock_type;
     typedef _Allocator allocator_type;
 
+    enum : bool { IsLocked = _Lock };
+
     MemoryPool(size_t blockSize, size_t chunkSize);
     MemoryPool(size_t blockSize, size_t chunkSize, allocator_type&& allocator);
     MemoryPool(size_t blockSize, size_t chunkSize, const allocator_type& allocator);
@@ -105,8 +108,8 @@ public:
     using MemoryPoolBase::ChunkSize;
     using MemoryPoolBase::BlockCountPerChunk;
 
-    void *Allocate();
-    void Deallocate(void *ptr);
+    void *Allocate(MemoryTrackingData *trackingData = nullptr);
+    void Deallocate(void *ptr, MemoryTrackingData *trackingData = nullptr);
 
     virtual void Clear_AssertCompletelyFree() override;
     virtual void Clear_IgnoreLeaks() override;
