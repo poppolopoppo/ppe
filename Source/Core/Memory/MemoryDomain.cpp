@@ -51,13 +51,26 @@ static MemoryTrackingData* gAllMemoryDomainTrackingData[] = {
 //----------------------------------------------------------------------------
 #undef MEMORY_DOMAIN_IMPL
 //----------------------------------------------------------------------------
-    }; //!gAllMemoryDomainTrackingData[]
+}; //!gAllMemoryDomainTrackingData[]
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
-MemoryView<MemoryTrackingData*> EachDomainTrackingData() {
-    return MakeView(gAllMemoryDomainTrackingData);
-}
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+#ifdef USE_MEMORY_DOMAINS
+static size_t gAllAdditionalTrackingDataCount = 0;
+static MemoryTrackingData* gAllAdditionalTrackingData[1024] = {nullptr};
+#endif
+//----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+#ifdef USE_MEMORY_DOMAINS
+//----------------------------------------------------------------------------
+namespace {
 //----------------------------------------------------------------------------
 static void TrackingDataAbsoluteName_(Core::OCStrStream&& oss, const Core::MemoryTrackingData& trackingData) {
     if (trackingData.Parent()) {
@@ -67,34 +80,91 @@ static void TrackingDataAbsoluteName_(Core::OCStrStream&& oss, const Core::Memor
     oss << trackingData.Name();
 }
 //----------------------------------------------------------------------------
-void ReportDomainTrackingData() {
-#ifdef USE_MEMORY_DOMAINS
-    std::cout << Repeat<90>("-") << std::endl;
+static void ReportTrackingData_(const char *name, const MemoryView<MemoryTrackingData *>& trackingDatas) {
+    const size_t width = 139;
+    const char *fmt = " {0:-73}|{1:10} {2:10} |{3:7} {4:7} |{5:11} {6:11}\n";
 
-    Format(std::cout, " {0:-34}|{1:7} {2:7} |{3:6} {4:6} |{5:10} {6:10}\n",
+    std::cout   << Repeat<width>("-") << std::endl
+                << "    " << name << std::endl
+                << Repeat<width>("-") << std::endl;
+
+    Format(std::cout, fmt,
         "Tracking Data Name",
         "Block", "Max",
         "Alloc", "Max",
-        "Total", "Max"
-        );
+        "Total", "Max" );
 
-    std::cout << Repeat<90>("-") << std::endl;
+    std::cout << Repeat<width>("-") << std::endl;
 
     char absoluteName[1024];
-    for (const auto trackingData : EachDomainTrackingData()) {
+    for (const auto trackingData : trackingDatas) {
         TrackingDataAbsoluteName_(OCStrStream(absoluteName), *trackingData);
-        Format(std::cout, " {0:-34}|{1:7} {2:7} |{3:6} {4:6} |{5:10} {6:10}\n",
+        Format(std::cout, fmt,
             absoluteName,
             trackingData->BlockCount(),
             trackingData->MaxBlockCount(),
             trackingData->AllocationCount(),
             trackingData->MaxAllocationCount(),
             trackingData->TotalSizeInBytes(),
-            trackingData->MaxTotalSizeInBytes()
-            );
+            trackingData->MaxTotalSizeInBytes() );
     }
 
-    std::cout << Repeat<90>("-") << std::endl;
+    std::cout << Repeat<width>("-") << std::endl;
+}
+//----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+#endif //!USE_MEMORY_DOMAINS
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+MemoryView<MemoryTrackingData *> EachDomainTrackingData() {
+#ifdef USE_MEMORY_DOMAINS
+    return MakeView(gAllMemoryDomainTrackingData);
+#else
+    return MemoryView<MemoryTrackingData *>();
+#endif
+}
+//----------------------------------------------------------------------------
+void ReportDomainTrackingData() {
+#ifdef USE_MEMORY_DOMAINS
+    ReportTrackingData_("Memory Domains", EachDomainTrackingData());
+#endif
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+void RegisterAdditionalTrackingData(MemoryTrackingData& trackingData) {
+#ifdef USE_MEMORY_DOMAINS
+    AssertRelease(gAllAdditionalTrackingDataCount < lengthof(gAllAdditionalTrackingData));
+    gAllAdditionalTrackingData[gAllAdditionalTrackingDataCount++] = &trackingData;
+#endif
+}
+//----------------------------------------------------------------------------
+MemoryView<MemoryTrackingData *> EachAdditionalTrackingData() {
+#ifdef USE_MEMORY_DOMAINS
+    return MemoryView<MemoryTrackingData *>(&gAllAdditionalTrackingData[0], gAllAdditionalTrackingDataCount);
+#else
+    return MemoryView<MemoryTrackingData *>();
+#endif
+}
+//----------------------------------------------------------------------------
+void ReportAdditionalTrackingData() {
+#ifdef USE_MEMORY_DOMAINS
+    const MemoryView<MemoryTrackingData *> datas = EachAdditionalTrackingData();
+    std::sort(datas.begin(), datas.end(), [](MemoryTrackingData *lhs, MemoryTrackingData *rhs) {
+        MemoryTrackingData *lhsp = lhs->Parent();
+        MemoryTrackingData *rhsp = rhs->Parent();
+        if (lhsp && rhsp)
+            return (lhsp < rhsp || (lhsp == rhsp && lhs < rhs));
+        else if (lhsp)
+            return (lhsp < rhs);
+        else if (rhsp)
+            return (lhs <= rhsp);
+        else
+            return (lhs < rhs);
+    });
+    ReportTrackingData_("Additional", EachAdditionalTrackingData());
 #endif
 }
 //----------------------------------------------------------------------------
