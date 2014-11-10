@@ -11,20 +11,19 @@ namespace Core {
 //----------------------------------------------------------------------------
 class MemoryTrackingData {
 public:
-    MemoryTrackingData(
-        const char* optionalName = "unknown",
-        MemoryTrackingData* optionalParent = nullptr);
+    MemoryTrackingData( const char* optionalName = "unknown",
+                        MemoryTrackingData* optionalParent = nullptr);
 
     const char* Name() const { return _name; }
     MemoryTrackingData* Parent() { return _parent; }
     const MemoryTrackingData* Parent() const { return _parent; }
 
-    size_t BlockCount() const { return _blockCount; }
-    size_t AllocationCount() const { return _allocationCount; }
+    CountOfElements BlockCount() const { return CountOfElements{ _blockCount }; }
+    CountOfElements AllocationCount() const { return CountOfElements{ _allocationCount }; }
     SizeInBytes TotalSizeInBytes() const { return SizeInBytes{ _totalSizeInBytes }; }
 
-    size_t MaxBlockCount() const { return _maxBlockCount; }
-    size_t MaxAllocationCount() const { return _maxAllocationCount; }
+    CountOfElements MaxBlockCount() const { return CountOfElements{ _maxBlockCount }; }
+    CountOfElements MaxAllocationCount() const { return CountOfElements{ _maxAllocationCount }; }
     SizeInBytes MaxTotalSizeInBytes() const { return SizeInBytes{ _maxTotalSizeInBytes }; }
 
     void Allocate(size_t blockCount, size_t strideInBytes);
