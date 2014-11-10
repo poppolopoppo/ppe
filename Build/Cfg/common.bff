@@ -8,8 +8,11 @@
 .SourceBase = 'Source'
 
 .VSFBuildOptions      = ' -cache'
-                      //+ ' -dist'
                       //+ ' -showcmds'
+                      //+ ' -dist'
+
+.VSFRebuildOptions    = ''
+
 .AdditionalInclude    = '.'
 .AdditionalLibInclude = '.'
 
