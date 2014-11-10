@@ -2,7 +2,9 @@
 
 #include "Core/Core.h"
 
-#define USE_MEMORY_DOMAINS
+#ifndef FINAL_RELEASE
+#   define USE_MEMORY_DOMAINS
+#endif
 
 namespace Core {
 template <typename T>
