@@ -69,4 +69,32 @@ void SizeInBytes::Format(wchar_t *buffer, size_t capacity) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+void CountOfElements::Format(char *buffer, size_t capacity) const {
+    BasicOCStrStream<char> oss(buffer, capacity);
+    oss.precision(2);
+    oss.flags(std::ios_base::fixed);
+
+    if (this->Value > 9e5f)
+        oss << (this->Value / 1e6f) << " M";
+    else if (this->Value > 9e2f)
+        oss << (this->Value / 1e3f) << " K";
+    else
+        oss << this->Value;
+}
+//----------------------------------------------------------------------------
+void CountOfElements::Format(wchar_t *buffer, size_t capacity) const {
+    BasicOCStrStream<wchar_t> oss(buffer, capacity);
+    oss.precision(2);
+    oss.flags(std::ios_base::fixed);
+
+    if (this->Value > 9e5f)
+        oss << (this->Value / 1e6f) << L" M";
+    else if (this->Value > 9e2f)
+        oss << (this->Value / 1e3f) << L" K";
+    else
+        oss << this->Value;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Core

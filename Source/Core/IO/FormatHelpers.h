@@ -26,6 +26,24 @@ std::basic_ostream<_Char, _Traits>& operator <<(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+struct CountOfElements {
+    uint64_t Value;
+
+    void Format(char *buffer, size_t capacity) const;
+    void Format(wchar_t *buffer, size_t capacity) const;
+};
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits>
+std::basic_ostream<_Char, _Traits>& operator <<(
+    std::basic_ostream<_Char, _Traits>& oss,
+    const CountOfElements& countOfElements) {
+    _Char buffer[32];
+    countOfElements.Format(buffer, lengthof(buffer));
+    return oss << buffer;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename T, size_t _Count>
 struct Repeater {
     const T *Value;
