@@ -113,16 +113,27 @@ Compiler( 'Compiler-x86Clang' )
                             + ' /ENTRY:"wWinMainCRTStartup"'    // UNICODE entry point
                             + ' /IGNORE:4001' ; don't complain about linking libs only
 
+
+    // Defines
+
+    .CompilerDebugDefines       = ' /D_DEBUG /DDEBUG   /D"_SECURE_SCL=1" /D"_ITERATOR_DEBUG_LEVEL=2"'
+    .CompilerReleaseDefines     = ' /DNDEBUG /DRELEASE /D"_SECURE_SCL=0" /D"_ITERATOR_DEBUG_LEVEL=0"'
+    .CompilerProfilerDefines    = ' /DPROFILING_ENABLED'
+    .CompilerFinalDefines       = ' /DNDEBUG /DRELEASE /DFINAL_RELEASE /D"_SECURE_SCL=0" /D"_ITERATOR_DEBUG_LEVEL=0"'
+
     // Optimizations
     .CompilerDebugOptimizations     = ' /MDd /Od /sdl /RTC1 /GS /Oy- /GR /analyze'
     .CompilerReleaseOptimizations   = ' /MD /Ox /Oy /Oi /GS- /GF /GL /Gy /Gw /GR- /analyze'
                                     + ' /Qvec-report:2' // http://msdn.microsoft.com/en-us/library/vstudio/jj614596.aspx
+    .CompilerFinalOptimizations     = '$CompilerReleaseOptimizations$'
 
     .LibrarianDebugOptimizations    = ''
     .LibrarianReleaseOptimizations  = ' /LTCG'
+    .LibrarianFinalOptimizations    = '$LibrarianReleaseOptimizations$'
 
     .LinkerDebugOptimizations       = ' /DEBUG'
-    .LinkerReleaseOptimizations     = ' /LTCG /OPT:REF,ICF /INCREMENTAL'
+    .LinkerReleaseOptimizations     = ' /DEBUG /LTCG /OPT:REF,ICF'      // std ICF iterations count in release (2 according to http://msdn.microsoft.com/en-us/library/bxwfs976.aspx)
+    .LinkerFinalOptimizations       = ' /DEBUG /LTCG /OPT:REF,ICF=4'    // more ICF iterations count in final to merge more duplicate code (measured, truly effective)
 
     .LinkerWindowsLibs              = ' /SUBSYSTEM:WINDOWS'
                                     + ' kernel32.lib'
@@ -139,6 +150,7 @@ Compiler( 'Compiler-x86Clang' )
                                     + ' MSVCRTD.LIB'
     .LinkerReleaseLibs              = .LinkerWindowsLibs
                                     + ' MSVCRT.LIB'
+    .LinkerFinalLibs                = '$LinkerReleaseLibs$'
 
     .BaseIncludePaths       = ' /I"./"'
                             + ' /I"$VSBasePath$/VC/include/"'
@@ -158,6 +170,7 @@ Compiler( 'Compiler-x86Clang' )
 .X86BaseConfig =
 [
     Using( .MSVCBaseConfig )
+    .Platform               = 'x86'
     .ToolsBasePath          = '$VSBasePath$\VC\bin'
     .Compiler               = 'Compiler-x86'
     .Librarian              = '$ToolsBasePath$\lib.exe'
@@ -167,16 +180,15 @@ Compiler( 'Compiler-x86Clang' )
     .PCHOptions             + ' /arch:SSE2'
                             + ' /DWIN32'
     .LinkerOptions          + ' /MACHINE:X86'
-    .Platform               = 'x86'
     .LinkerOptions          + ' /LIBPATH:"$WindowsLibPaths$/x86" /LIBPATH:"$VSBasePath$/VC/lib"'
 ]
 .X86DebugConfig =
 [
     Using( .X86BaseConfig )
     .Config                 = 'Debug'
-    .CompilerOptions        + ' /D_DEBUG /DDEBUG'
+    .CompilerOptions        + .CompilerDebugDefines
                             + .CompilerDebugOptimizations
-    .PCHOptions             + ' /D_DEBUG /DDEBUG'
+    .PCHOptions             + .CompilerDebugDefines
                             + .CompilerDebugOptimizations
     .LibrarianOptions       + .LibrarianDebugOptimizations
     .LinkerOptions          + .LinkerDebugOptimizations
@@ -186,20 +198,32 @@ Compiler( 'Compiler-x86Clang' )
 [
     Using( .X86BaseConfig )
     .Config                 = 'Release'
-    .CompilerOptions        + ' /DNDEBUG /DRELEASE'
+    .CompilerOptions        + .CompilerReleaseDefines
                             + .CompilerReleaseOptimizations
-    .PCHOptions             + ' /DNDEBUG /DRELEASE'
+    .PCHOptions             + .CompilerReleaseDefines
                             + .CompilerReleaseOptimizations
     .LibrarianOptions       + .LibrarianReleaseOptimizations
     .LinkerOptions          + .LinkerReleaseOptimizations
                             + .LinkerReleaseLibs
 ]
+.X86FinalConfig =
+[
+    Using( .X86BaseConfig )
+    .Config                 = 'Final'
+    .CompilerOptions        + .CompilerFinalDefines
+                            + .CompilerFinalOptimizations
+    .PCHOptions             + .CompilerFinalDefines
+                            + .CompilerFinalOptimizations
+    .LibrarianOptions       + .LibrarianFinalOptimizations
+    .LinkerOptions          + .LinkerFinalOptimizations
+                            + .LinkerFinalLibs
+]
 .X86ProfileConfig =
 [
     Using( .X86ReleaseConfig ) // Note: based on Release config
     .Config                 = 'Profile'
-    .CompilerOptions        + ' /DPROFILING_ENABLED'
-    .PCHOptions             + ' /DPROFILING_ENABLED'
+    .CompilerOptions        + .CompilerProfilerDefines
+    .PCHOptions             + .CompilerProfilerDefines
 ]
 
 // X64
@@ -207,6 +231,7 @@ Compiler( 'Compiler-x86Clang' )
 .X64BaseConfig =
 [
     Using( .MSVCBaseConfig )
+    .Platform               = 'x64'
     .ToolsBasePath          = '$VSBasePath$\VC\bin\x86_amd64'
     .Compiler               = 'Compiler-x64'
     .Librarian              = '$ToolsBasePath$\lib.exe'
@@ -214,16 +239,15 @@ Compiler( 'Compiler-x86Clang' )
     .CompilerOptions        + ' /DWIN64'
     .PCHOptions             + ' /DWIN64'
     .LinkerOptions          + ' /MACHINE:X64'
-    .Platform               = 'x64'
     .LinkerOptions          + ' /LIBPATH:"$WindowsLibPaths$/x64" /LIBPATH:"$VSBasePath$/VC/lib/amd64"'
 ]
 .X64DebugConfig =
 [
     Using( .X64BaseConfig )
     .Config                 = 'Debug'
-    .CompilerOptions        + ' /D_DEBUG /DDEBUG'
+    .CompilerOptions        + .CompilerDebugDefines
                             + .CompilerDebugOptimizations
-    .PCHOptions             + ' /D_DEBUG /DDEBUG'
+    .PCHOptions             + .CompilerDebugDefines
                             + .CompilerDebugOptimizations
     .LibrarianOptions       + .LibrarianDebugOptimizations
     .LinkerOptions          + .LinkerDebugOptimizations
@@ -233,20 +257,32 @@ Compiler( 'Compiler-x86Clang' )
 [
     Using( .X64BaseConfig )
     .Config                 = 'Release'
-    .CompilerOptions        + ' /DNDEBUG /DRELEASE'
+    .CompilerOptions        + .CompilerReleaseDefines
                             + .CompilerReleaseOptimizations
-    .PCHOptions             + ' /DNDEBUG /DRELEASE'
+    .PCHOptions             + .CompilerReleaseDefines
                             + .CompilerReleaseOptimizations
     .LibrarianOptions       + .LibrarianReleaseOptimizations
     .LinkerOptions          + .LinkerReleaseOptimizations
                             + .LinkerReleaseLibs
 ]
+.X64FinalConfig =
+[
+    Using( .X64BaseConfig )
+    .Config                 = 'Final'
+    .CompilerOptions        + .CompilerFinalDefines
+                            + .CompilerFinalOptimizations
+    .PCHOptions             + .CompilerFinalDefines
+                            + .CompilerFinalOptimizations
+    .LibrarianOptions       + .LibrarianFinalOptimizations
+    .LinkerOptions          + .LinkerFinalOptimizations
+                            + .LinkerFinalLibs
+]
 .X64ProfileConfig =
 [
     Using( .X64ReleaseConfig ) // Note: based on Release config
     .Config                 = 'Profile'
-    .CompilerOptions        + ' /DPROFILING_ENABLED'
-    .PCHOptions             + ' /DPROFILING_ENABLED'
+    .CompilerOptions        + .CompilerProfilerDefines
+    .PCHOptions             + .CompilerProfilerDefines
 ]
 
 // X86 Clang
@@ -306,6 +342,18 @@ Compiler( 'Compiler-x86Clang' )
 
     .UseExceptions          = ' -fexceptions'
 ]
+
+// Configurations
+//------------------------------------------------------------------------------
+.Configs = { .X86DebugConfig, .X86ProfileConfig, .X86ReleaseConfig, .X86FinalConfig,
+             .X64DebugConfig, .X64ProfileConfig, .X64ReleaseConfig, .X64FinalConfig,
+             .X86ClangConfig }
+
+.Configs_Windows_MSVC   = { .X86DebugConfig, .X86ProfileConfig, .X86ReleaseConfig, .X86FinalConfig,
+                            .X64DebugConfig, .X64ProfileConfig, .X64ReleaseConfig, .X64FinalConfig }
+.Configs_Windows_Clang  = { .X86ClangConfig }
+
+//------------------------------------------------------------------------------
 
 // Resource Compiler
 //------------------------------------------------------------------------------

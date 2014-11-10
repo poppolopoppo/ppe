@@ -42,7 +42,8 @@ ForEach( .Platform in .Platforms )
   {
     .Targets    = { 'All-$Platform$-Debug',
                     'All-$Platform$-Profile',
-                    'All-$Platform$-Release' }
+                    'All-$Platform$-Release',
+                    'All-$Platform$-Final' }
   }
 }
 Alias( 'All-x86Clang' )
