@@ -7,7 +7,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _ComInterface>
-ComPtr<_ComInterface>::ComPtr() {}
+ComPtr<_ComInterface>::ComPtr() : _comObject(nullptr) {}
 //----------------------------------------------------------------------------
 template <typename _ComInterface>
 ComPtr<_ComInterface>::ComPtr(_ComInterface* comObject)
