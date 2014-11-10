@@ -11,7 +11,7 @@
 #include "RTTI/Object/MetaObject.h"
 #include "RTTI/Type/MetaTypePromote.h"
 
-#pragma warning( disable : 4702 ) // warning C4702: impossible d'atteindre le code
+//#pragma warning( disable : 4702 ) // warning C4702: impossible d'atteindre le code
 // due to compiler optimizations in release mode
 
 namespace Core {
