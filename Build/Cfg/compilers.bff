@@ -122,8 +122,8 @@ Compiler( 'Compiler-x86Clang' )
     .CompilerFinalDefines       = ' /DNDEBUG /DRELEASE /DFINAL_RELEASE /D"_SECURE_SCL=0" /D"_ITERATOR_DEBUG_LEVEL=0"'
 
     // Optimizations
-    .CompilerDebugOptimizations     = ' /MDd /Od /sdl /RTC1 /GS /Oy- /GR /analyze'
-    .CompilerReleaseOptimizations   = ' /MD /Ox /Oy /Oi /GS- /GF /GL /Gy /Gw /GR- /analyze'
+    .CompilerDebugOptimizations     = ' /MDd /Od /sdl /RTC1 /GS /Oy- /GR'
+    .CompilerReleaseOptimizations   = ' /MD /Ox /Oy /Oi /GS- /GF /GL /Gy /Gw /GR-'
                                     + ' /Qvec-report:2' // http://msdn.microsoft.com/en-us/library/vstudio/jj614596.aspx
     .CompilerFinalOptimizations     = '$CompilerReleaseOptimizations$'
 
