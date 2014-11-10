@@ -5,7 +5,7 @@
 #include "Core.Graphics/Device/DeviceDiagnostics.h"
 
 #ifdef _DEBUG
-//#   define WITH_DIRECTX11_DEBUG_LAYER
+#   define WITH_DIRECTX11_DEBUG_LAYER
 #endif
 
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
