@@ -23,7 +23,7 @@ ForEach( .Config in .Configs_Windows_MSVC )
 {
     Using( .Config )
 
-    .OutputBase         + '\$Platform$-$Config$'
+    .OutputBase         + '\Intermediate\$Platform$-$Config$'
     .IncludePath        = ' -I"$ProjectPath$" -I"$SourceBase$" -I"$AdditionalInclude$"'
 
     // Static Library (Unity)
@@ -52,7 +52,7 @@ ForEach( .Config in .Configs_Windows_Clang )
 {
     Using( .Config )
 
-    .OutputBase         + '\$Platform$-$Config$'
+    .OutputBase         + '\Intermediate\$Platform$-$Config$'
     .IncludePath        = ' -I"$ProjectPath$" -I"$SourceBase$" -I"$AdditionalInclude$"'
 
     // Static Library

@@ -37,7 +37,7 @@ ForEach( .Config in .Configs_Windows_MSVC )
     Using( .Config )
 
     .OutputBinary       = '$OutputBase$\Binary'
-    .OutputBase         + '\$Platform$-$Config$'
+    .OutputBase         + '\Intermediate\$Platform$-$Config$'
     .IncludePath        = ' -I"$ProjectPath$" -I"$ProjectPath$\.." -I"$AdditionalInclude$"'
 
     // Static Library
@@ -74,7 +74,7 @@ ForEach( .Config in .Configs_Windows_Clang )
 {
     Using( .Config )
 
-    .OutputBase         + '\$Platform$-$Config$'
+    .OutputBase         + '\Intermediate\$Platform$-$Config$'
     .IncludePath        = ' -I"$ProjectPath$" -I"$SourceBase$" -I"$AdditionalInclude$"'
 
     // Static Library
