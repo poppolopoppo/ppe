@@ -182,6 +182,11 @@ MemoryView<T> MakeView(T(&staticArray)[_Dim]) {
     return MemoryView<T>(&staticArray[0], _Dim);
 }
 //----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+MemoryView<typename std::add_const<T>::type > MakeConstView(T(&staticArray)[_Dim]) {
+    return MemoryView<typename std::add_const<T>::type >(&staticArray[0], _Dim);
+}
+//----------------------------------------------------------------------------
 template <typename _Category, typename _Ty>
 MemoryView<_Ty> MakeView(
     std::iterator<_Category, _Ty, ptrdiff_t>&& ibegin,
@@ -209,6 +214,12 @@ template <typename T>
 MemoryView< T > MakeView(T* pbegin, T* pend) {
     Assert(pend >= pbegin);
     return MemoryView< T >(pbegin, std::distance(pbegin, pend));
+}
+//----------------------------------------------------------------------------
+template <typename T>
+MemoryView<typename std::add_const<T>::type > MakeConstView(T* pbegin, T* pend) {
+    Assert(pend >= pbegin);
+    return MemoryView<typename std::add_const<T>::type >(pbegin, std::distance(pbegin, pend));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
