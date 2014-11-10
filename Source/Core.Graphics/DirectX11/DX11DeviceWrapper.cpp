@@ -19,7 +19,6 @@
 #ifdef OS_WINDOWS
 #   include <DxErr.h>
 #   include <DXGIDebug.h>
-
 #   pragma comment(lib, "DxErr.lib")
 #else
 #   error "no support"
@@ -31,28 +30,15 @@ namespace DX11 {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceWrapper::DeviceWrapper() {}
+namespace {
 //----------------------------------------------------------------------------
-DeviceWrapper::~DeviceWrapper() {
-    Assert(!_dx11SwapChain);
-    Assert(!_dx11Device);
-    Assert(!_dx11ImmediateContext);
-
-    Assert(!_backBufferRenderTarget);
-    Assert(!_backBufferDepthStencil);
-}
-//----------------------------------------------------------------------------
-void DeviceWrapper::Create(DX11::DeviceEncapsulator *device, void *windowHandle, const PresentationParameters& presentationParameters) {
-    Assert(!_dx11SwapChain);
-    Assert(!_dx11Device);
-    Assert(!_dx11ImmediateContext);
-
-    Assert(!_backBufferRenderTarget);
-    Assert(!_backBufferDepthStencil);
-
-    Assert(device);
-    Assert(windowHandle);
-
+static bool CreateDX11DeviceAndSwapChainIFP_(
+    ComPtr<::ID3D11DeviceContext>& dx11ImmediateContext,
+    ComPtr<::ID3D11Device>& dx11Device,
+    ComPtr<::IDXGISwapChain>& dx11SwapChain,
+    ::D3D_FEATURE_LEVEL *dx11pFeatureLevel,
+    void *windowHandle,
+    const PresentationParameters& presentationParameters ) {
     UINT refreshRateDenominator = 1;
     switch (presentationParameters.PresentationInterval())
     {
@@ -102,19 +88,132 @@ void DeviceWrapper::Create(DX11::DeviceEncapsulator *device, void *windowHandle,
     sd.Windowed = presentationParameters.FullScreen() ? FALSE : TRUE;
     sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 
-    if( FAILED(::D3D11CreateDeviceAndSwapChain(
-            NULL,
-            driverTypes[0],
-            NULL,
-            createDeviceFlags,
-            featureLevels, lengthof(featureLevels),
-            D3D11_SDK_VERSION,
-            &sd,
-            _dx11SwapChain.GetAddressOf(),
-            _dx11Device.GetAddressOf(),
-            &_dx11FeatureLevel,
-            _dx11ImmediateContext.GetAddressOf())) )
-    {
+    const HRESULT result = ::D3D11CreateDeviceAndSwapChain(
+        NULL,
+        driverTypes[0],
+        NULL,
+        createDeviceFlags,
+        featureLevels, lengthof(featureLevels),
+        D3D11_SDK_VERSION,
+        &sd,
+        dx11SwapChain.GetAddressOf(),
+        dx11Device.GetAddressOf(),
+        dx11pFeatureLevel,
+        dx11ImmediateContext.GetAddressOf() );
+
+    return SUCCEEDED(result);
+}
+//----------------------------------------------------------------------------
+#ifdef WITH_DIRECTX11_DEBUG_LAYER
+static bool CreateDX11DebugLayerIFP_(
+    ::ID3D11Debug **dx11pDebug,
+    ::ID3D11InfoQueue **dx11pInfoQueue,
+    const ComPtr<::ID3D11Device>& dx11Device ) {
+    HRESULT result;
+
+    result = dx11Device.Get()->QueryInterface(__uuidof(::ID3D11Debug), (LPVOID *)dx11pDebug);
+    if (FAILED(result))
+        return false;
+    Assert(*dx11pDebug);
+
+    result = (*dx11pDebug)->QueryInterface(__uuidof(::ID3D11InfoQueue), (LPVOID *)dx11pInfoQueue);
+    if (FAILED(result))
+        return false;
+    Assert(*dx11pInfoQueue);
+
+    ::D3D11_MESSAGE_SEVERITY severities[] = {
+        D3D11_MESSAGE_SEVERITY_ERROR,
+        D3D11_MESSAGE_SEVERITY_CORRUPTION,
+        D3D11_MESSAGE_SEVERITY_WARNING
+    };
+
+    ::D3D11_INFO_QUEUE_FILTER_DESC allowList;
+    ::SecureZeroMemory(&allowList, sizeof(allowList));
+    allowList.NumSeverities = _countof(severities);
+    allowList.pSeverityList = &severities[0];
+
+    ::D3D11_INFO_QUEUE_FILTER_DESC denyList;
+    ::D3D11_MESSAGE_ID hide [] = { D3D11_MESSAGE_ID_SETPRIVATEDATA_CHANGINGPARAMS };
+    ::SecureZeroMemory(&denyList, sizeof(denyList));
+    denyList.NumIDs = _countof(hide);
+    denyList.pIDList = hide;
+
+    ::D3D11_INFO_QUEUE_FILTER filter = { 0 };
+    filter.AllowList = allowList;
+    filter.DenyList = denyList;
+    (*dx11pInfoQueue)->PushStorageFilter(&filter);
+
+    if (::IsDebuggerPresent()) {
+        (*dx11pInfoQueue)->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, true);
+        (*dx11pInfoQueue)->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, true);
+    }
+}
+#endif //!WITH_DIRECTX11_DEBUG_LAYER
+//----------------------------------------------------------------------------
+static Graphics::RenderTarget *CreateDX11BackBufferRenderTarget_(
+    DX11::DeviceEncapsulator *device,
+    const ComPtr<::ID3D11Device>& dx11Device,
+    const ComPtr<::IDXGISwapChain>& dx11SwapChain,
+    const PresentationParameters& presentationParameters ) {
+    ComPtr<::ID3D11Texture2D> pBackBuffer;
+    DX11_THROW_IF_FAILED(device->Device(), nullptr, (
+        dx11SwapChain->GetBuffer(0, __uuidof(::ID3D11Texture2D), (LPVOID *)pBackBuffer.GetAddressOf())
+        ));
+
+    DX11SetDeviceResourceName(pBackBuffer, "BackBuffer");
+
+    ComPtr<::ID3D11RenderTargetView> pBackBufferRenderTargetView;
+    DX11_THROW_IF_FAILED(device->Device(), nullptr, (
+        dx11Device->CreateRenderTargetView(pBackBuffer.Get(), nullptr, pBackBufferRenderTargetView.GetAddressOf())
+        ));
+
+    DX11SetDeviceResourceName(pBackBufferRenderTargetView, "BackBuffer");
+
+    Graphics::RenderTarget *const backBufferStorage = reinterpret_cast<Graphics::RenderTarget *>(operator new(sizeof(Graphics::RenderTarget)));
+    DX11::RenderTarget *const dx11RenderTarget = new DX11::RenderTarget(device->Device(), backBufferStorage, pBackBuffer.Get(), nullptr, pBackBufferRenderTargetView.Get());
+
+    DX11SetDeviceResourceName(dx11RenderTarget->RenderTargetView(), "BackBufferRenderTarget");
+
+    Graphics::RenderTarget *const backBufferRenderTarget = new ((void *)backBufferStorage) Graphics::RenderTarget(
+        presentationParameters.BackBufferWidth(),
+        presentationParameters.BackBufferHeight(),
+        presentationParameters.BackBufferFormat(),
+        dx11RenderTarget);
+
+    backBufferRenderTarget->SetResourceName("BackBufferRenderTarget");
+    backBufferRenderTarget->Freeze();
+
+    return backBufferRenderTarget;
+}
+//----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+DeviceWrapper::DeviceWrapper() {}
+//----------------------------------------------------------------------------
+DeviceWrapper::~DeviceWrapper() {
+    Assert(!_dx11SwapChain);
+    Assert(!_dx11Device);
+    Assert(!_dx11ImmediateContext);
+
+    Assert(!_backBufferRenderTarget);
+    Assert(!_backBufferDepthStencil);
+}
+//----------------------------------------------------------------------------
+void DeviceWrapper::Create(DX11::DeviceEncapsulator *device, void *windowHandle, const PresentationParameters& presentationParameters) {
+    Assert(!_dx11SwapChain);
+    Assert(!_dx11Device);
+    Assert(!_dx11ImmediateContext);
+
+    Assert(!_backBufferRenderTarget);
+    Assert(!_backBufferDepthStencil);
+
+    Assert(device);
+    Assert(windowHandle);
+
+    if (!CreateDX11DeviceAndSwapChainIFP_( _dx11ImmediateContext, _dx11Device, _dx11SwapChain, &_dx11FeatureLevel,
+                                                windowHandle, presentationParameters)) {
         CheckDeviceErrors(device);
     }
 
@@ -127,33 +226,7 @@ void DeviceWrapper::Create(DX11::DeviceEncapsulator *device, void *windowHandle,
     // debug layer
 
 #ifdef WITH_DIRECTX11_DEBUG_LAYER
-    if( SUCCEEDED( _dx11Device.Get()->QueryInterface(__uuidof(::ID3D11Debug), (LPVOID *)&_dx11Debug)) ) {
-        if( SUCCEEDED( _dx11Debug->QueryInterface(__uuidof(::ID3D11InfoQueue), (LPVOID *)&_dx11InfoQueue)) ) {
-            ::D3D11_INFO_QUEUE_FILTER filter = { 0 };
-
-            ::D3D11_INFO_QUEUE_FILTER_DESC allowList;
-            ::D3D11_MESSAGE_SEVERITY severities[] = {D3D11_MESSAGE_SEVERITY_ERROR, D3D11_MESSAGE_SEVERITY_CORRUPTION, D3D11_MESSAGE_SEVERITY_WARNING };
-            ::SecureZeroMemory(&allowList, sizeof(allowList));
-            allowList.NumSeverities = _countof(severities);
-            allowList.pSeverityList = &severities[0];
-
-            ::D3D11_INFO_QUEUE_FILTER_DESC denyList;
-            ::D3D11_MESSAGE_ID hide [] = { D3D11_MESSAGE_ID_SETPRIVATEDATA_CHANGINGPARAMS };
-            ::SecureZeroMemory(&denyList, sizeof(denyList));
-            denyList.NumIDs = _countof(hide);
-            denyList.pIDList = hide;
-
-            filter.AllowList = allowList;
-            filter.DenyList = denyList;
-
-            _dx11InfoQueue->PushStorageFilter(&filter);
-
-#   ifdef _DEBUG
-            _dx11InfoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, true);
-            //_dx11InfoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, true);
-#   endif
-        }
-    }
+    CreateDX11DebugLayerIFP_(&_dx11Debug, &_dx11InfoQueue, _dx11Device);
 #endif //!WITH_DIRECTX11_DEBUG_LAYER
 
     // set viewport
@@ -170,32 +243,8 @@ void DeviceWrapper::Create(DX11::DeviceEncapsulator *device, void *windowHandle,
 
     // create back buffer render target
 
-    ComPtr<::ID3D11Texture2D> pBackBuffer;
-    DX11_THROW_IF_FAILED(device->Device(), nullptr, (
-        _dx11SwapChain->GetBuffer(0, __uuidof(::ID3D11Texture2D), (LPVOID *)pBackBuffer.GetAddressOf())
-        ));
-
-    DX11SetDeviceResourceName(pBackBuffer, "BackBuffer");
-
-    ComPtr<::ID3D11RenderTargetView> pBackBufferRenderTargetView;
-    DX11_THROW_IF_FAILED(device->Device(), nullptr, (
-        _dx11Device->CreateRenderTargetView(pBackBuffer.Get(), nullptr, pBackBufferRenderTargetView.GetAddressOf())
-        ));
-
-    DX11SetDeviceResourceName(pBackBufferRenderTargetView, "BackBuffer");
-
-    Graphics::RenderTarget *const backBufferStorage = reinterpret_cast<Graphics::RenderTarget *>(operator new(sizeof(Graphics::RenderTarget)));
-    DX11::RenderTarget *const dx11RenderTarget = new DX11::RenderTarget(device->Device(), backBufferStorage, pBackBuffer.Get(), nullptr, pBackBufferRenderTargetView.Get());
-
-    DX11SetDeviceResourceName(dx11RenderTarget->RenderTargetView(), "BackBufferRenderTarget");
-
-    _backBufferRenderTarget = new ((void *)backBufferStorage) Graphics::RenderTarget(
-        presentationParameters.BackBufferWidth(),
-        presentationParameters.BackBufferHeight(),
-        presentationParameters.BackBufferFormat(),
-        dx11RenderTarget);
-    _backBufferRenderTarget->SetResourceName("BackBufferRenderTarget");
-    _backBufferRenderTarget->Freeze();
+    _backBufferRenderTarget = CreateDX11BackBufferRenderTarget_( device, _dx11Device, _dx11SwapChain, presentationParameters);
+    Assert(_backBufferRenderTarget);
 
     // create back buffer depth stencil IFN
 
@@ -205,6 +254,8 @@ void DeviceWrapper::Create(DX11::DeviceEncapsulator *device, void *windowHandle,
         _backBufferDepthStencil->Freeze();
         _backBufferDepthStencil->Create(device->Device());
     }
+
+    // final checks
 
     Assert(_dx11SwapChain);
     Assert(_dx11Device);
@@ -293,6 +344,7 @@ void DeviceWrapper::CheckDeviceErrors(const DX11::DeviceEncapsulator *encapsulat
 
         switch(message->Severity)
         {
+        case D3D11_MESSAGE_SEVERITY_MESSAGE:
         case D3D11_MESSAGE_SEVERITY_INFO:
             LOG(Information, L"[D3D11] {0}", message->pDescription);
             break;
