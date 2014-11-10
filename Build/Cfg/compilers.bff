@@ -176,9 +176,9 @@ Compiler( 'Compiler-x86Clang' )
     .Librarian              = '$ToolsBasePath$\lib.exe'
     .Linker                 = '$ToolsBasePath$\link.exe'
     .CompilerOptions        + ' /arch:SSE2'
-                            + ' /DWIN32'
+                            + ' /DWIN32 /DARCH_X86'
     .PCHOptions             + ' /arch:SSE2'
-                            + ' /DWIN32'
+                            + ' /DWIN32 /DARCH_X86'
     .LinkerOptions          + ' /MACHINE:X86'
     .LinkerOptions          + ' /LIBPATH:"$WindowsLibPaths$/x86" /LIBPATH:"$VSBasePath$/VC/lib"'
 ]
@@ -236,8 +236,8 @@ Compiler( 'Compiler-x86Clang' )
     .Compiler               = 'Compiler-x64'
     .Librarian              = '$ToolsBasePath$\lib.exe'
     .Linker                 = '$ToolsBasePath$\link.exe'
-    .CompilerOptions        + ' /DWIN64'
-    .PCHOptions             + ' /DWIN64'
+    .CompilerOptions        + ' /DWIN64 /DARCH_X64'
+    .PCHOptions             + ' /DWIN64 /DARCH_X64'
     .LinkerOptions          + ' /MACHINE:X64'
     .LinkerOptions          + ' /LIBPATH:"$WindowsLibPaths$/x64" /LIBPATH:"$VSBasePath$/VC/lib/amd64"'
 ]
@@ -307,6 +307,7 @@ Compiler( 'Compiler-x86Clang' )
                             + ' -D"_X86_=1" -D_M_IX86'
                             + ' -D"_INTEGRAL_MAX_BITS=64"'
                             + ' -D"_MSC_VER=1500"'
+                            + ' -D"ARCH_X86"'
 
                             // MS compatibility
                             + ' -fms-compatibility'

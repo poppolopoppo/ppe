@@ -20,6 +20,16 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#if     defined(ARCH_X64)
+static_assert(sizeof(size_t) == sizeof(uint64_t), "incoherent define");
+#elif   defined(ARCH_X86)
+static_assert(sizeof(size_t) == sizeof(uint32_t), "incoherent define");
+#else
+#   error "unknown architecture !"
+#endif
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 void CoreStartup::Start(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t** argv) {
     // 1 - process time
     ProcessTime::Start();
