@@ -30,6 +30,14 @@ protected:
     bool Memoize_ReturnIfChanged_(float3 *cached, const MaterialContext& context) override;
 };
 //----------------------------------------------------------------------------
+class MaterialParameterCamera_EyeUp : public AbstractMaterialParameterMemoizer<float3> {
+public:
+    MaterialParameterCamera_EyeUp() : AbstractMaterialParameterMemoizer(MaterialVariability::Scene) {}
+    virtual ~MaterialParameterCamera_EyeUp() {}
+protected:
+    bool Memoize_ReturnIfChanged_(float3 *cached, const MaterialContext& context) override;
+};
+//----------------------------------------------------------------------------
 class MaterialParameterCamera_View : public AbstractMaterialParameterMemoizer<float4x4> {
 public:
     MaterialParameterCamera_View() : AbstractMaterialParameterMemoizer(MaterialVariability::Scene) {}

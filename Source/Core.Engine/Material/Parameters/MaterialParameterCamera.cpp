@@ -32,6 +32,15 @@ bool MaterialParameterCamera_EyeDirection::Memoize_ReturnIfChanged_(float3 *cach
     return changed;
 }
 //----------------------------------------------------------------------------
+bool MaterialParameterCamera_EyeUp::Memoize_ReturnIfChanged_(float3 *cached, const MaterialContext& context) {
+    const float3 eyeUp = context.Scene->Camera()->Model().Parameters().UpDir;
+
+    const bool changed = (eyeUp != *cached);
+    *cached = eyeUp;
+
+    return changed;
+}
+//----------------------------------------------------------------------------
 bool MaterialParameterCamera_View::Memoize_ReturnIfChanged_(float4x4 *cached, const MaterialContext& context) {
     const float4x4& view = context.Scene->Camera()->Model().View();
 
@@ -108,6 +117,7 @@ void RegisterCameraMaterialParameters(MaterialDatabase *database) {
 
     database->BindParameter("uniEyeDirection",          new MaterialParameterCamera_EyeDirection() );
     database->BindParameter("uniEyePosition",           new MaterialParameterCamera_EyePosition() );
+    database->BindParameter("uniEyeUp",                 new MaterialParameterCamera_EyeUp() );
     database->BindParameter("uniView",                  new MaterialParameterCamera_View() );
     database->BindParameter("uniInvertView",            new MaterialParameterCamera_InvertView() );
     database->BindParameter("uniProjection",            new MaterialParameterCamera_Projection() );
