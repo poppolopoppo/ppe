@@ -17,23 +17,31 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-static void SetWindowHandle_(BasicWindow *wnd, void *handle) {
+struct BasicWindowHelper {
+    static void SetWindowHandle(BasicWindow *wnd, void *handle);
+    static void SetWindowFocus(BasicWindow *wnd, void *handle, bool hasFocus);
+    static void SetWindowSize(BasicWindow *wnd, void *handle, size_t width, size_t height);
+};
+//----------------------------------------------------------------------------
+void BasicWindowHelper::SetWindowHandle(BasicWindow *wnd, void *handle) {
     Assert(handle);
     wnd->_handle = handle;
 }
 //----------------------------------------------------------------------------
-static void SetWindowFocus_(BasicWindow *wnd, void *handle, bool hasFocus) {
+void BasicWindowHelper::SetWindowFocus(BasicWindow *wnd, void *handle, bool hasFocus) {
     Assert(wnd);
     Assert(wnd->_handle == handle);
     wnd->_wantFocus = hasFocus;
 }
 //----------------------------------------------------------------------------
-static void SetWindowSize_(BasicWindow *wnd, void *handle, size_t width, size_t height) {
+void BasicWindowHelper::SetWindowSize(BasicWindow *wnd, void *handle, size_t width, size_t height) {
     Assert(wnd);
     Assert(wnd->_handle == handle);
     wnd->_wantedWidth = width;
     wnd->_wantedHeight = height;
 }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
@@ -45,7 +53,7 @@ static LRESULT CALLBACK BasicWindowProc_(HWND handle, UINT msg, WPARAM wparam, L
     if (WM_NCCREATE == msg) {
         wnd = reinterpret_cast<BasicWindow *>(((LPCREATESTRUCT)lparam)->lpCreateParams);
         ::SetWindowLongPtr(handle, GWLP_USERDATA, checked_cast<LONG_PTR>(wnd));
-        SetWindowHandle_(wnd, handle);
+        BasicWindowHelper::SetWindowHandle(wnd, handle);
 
         const size_t appIcon = CurrentProcess::Instance().AppIcon();
         if (appIcon) { // set window icon from current process resources
@@ -79,15 +87,15 @@ static LRESULT CALLBACK BasicWindowProc_(HWND handle, UINT msg, WPARAM wparam, L
         return 0;
 
     case WM_SETFOCUS:
-        SetWindowFocus_(wnd, handle, true);
+        BasicWindowHelper::SetWindowFocus(wnd, handle, true);
         return 0;
 
     case WM_KILLFOCUS:
-        SetWindowFocus_(wnd, handle, false);
+        BasicWindowHelper::SetWindowFocus(wnd, handle, false);
         return 0;
 
     case WM_SIZE:
-        SetWindowSize_(wnd, handle, LOWORD(lparam), HIWORD(lparam));
+        BasicWindowHelper::SetWindowSize(wnd, handle, LOWORD(lparam), HIWORD(lparam));
         return 0;
     }
 

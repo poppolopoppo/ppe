@@ -62,10 +62,7 @@ protected:
 private:
     typedef Pair<IWindowMessageHandler *, IWindowMessageHandler::Delegate> WindowMessageHandlerDelegate;
 
-    friend void SetWindowHandle_(BasicWindow *wnd, void *handle);
-    friend void SetWindowFocus_(BasicWindow *wnd, void *handle, bool hasFocus);
-    friend void SetWindowSize_(BasicWindow *wnd, void *handle, size_t width, size_t height);
-
+    friend struct BasicWindowHelper;
     friend class IWindowMessageHandler;
 
     void RegisterMessageDelegate_(WindowMessage msg, IWindowMessageHandler *handler, IWindowMessageHandler::Delegate member);
