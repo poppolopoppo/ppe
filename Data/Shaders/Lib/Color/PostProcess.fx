@@ -27,11 +27,11 @@ Params DefaultParams() {
     p.Exposure = pow(2, 3);
     p.WhitePoint = 11.2;
     p.BloomIntensity = 0.8;
-    p.CubicLensK = 0.075;
-    p.CubicLensKCube = 0.075;
-    p.CubicLensDime = 5.0;
-    p.CubicLensBlur = 15.0;
-    p.AberrationChannels = float3(0.85,1.15,1.00);
+    p.CubicLensK = -0.25;
+    p.CubicLensKCube = 0.05;
+    p.CubicLensDime = 8.0;
+    p.CubicLensBlur = 40.0;
+    p.AberrationChannels = float3(0.95,1.05,1.00);
     p.Vignette = 1;
     return p;
 }

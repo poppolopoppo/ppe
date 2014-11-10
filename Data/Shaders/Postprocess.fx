@@ -43,8 +43,10 @@ float4 pmain(PixelIn pixelIn) : SV_Target {
 #if 0
     if (uv.x < 0.5)
         return TEX2DLOD(uniLinearClamp_Principal, uv, 0).rgba;
-    else
+    else if (uv.y < 0.5)
         return TEX2DLOD(uniLinearClamp_PrincipalBlur, uv, 0).rgba;
+    else
+        return Sampling::Bicubic(TEXTURE2DPARAM_CALL(uniLinearClamp_PrincipalBlur), uv, uniDuDv_PrincipalBlur);
 #endif
 
     PostProcess::Params pp = PostProcess::DefaultParams();
