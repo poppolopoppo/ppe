@@ -56,7 +56,7 @@ Alias( 'All-x86Clang' )
 Alias( 'All' )
 {
   .Targets    = { 'All-x86',
-                  'All-x86Clang',
+                  //'All-x86Clang', // CLANG is excluded since it does not compile for the moment (waiting for better windows support)
                   'All-x64' }
 }
 
