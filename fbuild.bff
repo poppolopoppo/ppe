@@ -73,4 +73,14 @@ Alias( 'proj' )
                 }
 }
 
+// Global distribution clean-up (deletes all intermediates and binaries)
+//------------------------------------------------------------------------------
+
+Exec( 'dist-clean' )
+{
+  .ExecExecutable = '$OutputBase$/dist_clean.bat'
+  .ExecInput      = '$OutputBase$/dist_clean.bat'
+  .ExecOutput     = '$OutputBase$/dist_clean.log'
+}
+
 //------------------------------------------------------------------------------
