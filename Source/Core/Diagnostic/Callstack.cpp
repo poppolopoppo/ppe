@@ -113,6 +113,8 @@ static void LoadModules_() {
     if (snap == (HANDLE)-1)
         return;
 
+#pragma warning( push )
+#pragma warning( disable : 4826 ) // warning C4826: La conversion de 'unsigned char *const ' en 'DWORD64' est de type signe étendu.
     BOOL module_found = Module32First(snap, &module_entry);
     while (module_found) {
         DWORD64 succeed = SymLoadModuleExW(
@@ -121,9 +123,10 @@ static void LoadModules_() {
             module_entry.szExePath,
             module_entry.szModule,
             (DWORD64)module_entry.modBaseAddr,
-            (DWORD)module_entry.modBaseSize,
+            module_entry.modBaseSize,
             NULL,
             0);
+#pragma warning( pop )
 
         LOG(Information, L"[Symbols] {0} for \"{1}\"",
             succeed ? L"Loaded" : L"Failed to load",
@@ -185,6 +188,8 @@ void Callstack::Decode(DecodedCallstack* decoded, size_t hash, const MemoryView<
     IMAGEHLP_LINEW64 line64;
     line64.SizeOfStruct = sizeof(IMAGEHLP_LINEW64);
 
+#pragma warning( push )
+#pragma warning( disable : 4826 ) // warning C4826: La conversion de 'unsigned char *const ' en 'DWORD64' est de type signe étendu.
     void* const* address = frames.begin();
     auto frame = reinterpret_cast<DecodedCallstack::Frame *>(&decoded->_frames);
     for (size_t i = 0; i < frames.size(); ++i, ++frame, ++address) {
@@ -215,6 +220,7 @@ void Callstack::Decode(DecodedCallstack* decoded, size_t hash, const MemoryView<
 
         ::new ((void*)frame) DecodedCallstack::Frame(*address, symbol, filename, line);
     }
+#pragma warning( pop )
 }
 //----------------------------------------------------------------------------
 void Callstack::Capture(Callstack* callstack, size_t framesToSkip, size_t framesToCapture) {
