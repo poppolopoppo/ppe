@@ -94,7 +94,7 @@ void GameTest2::Shutdown() {
 void GameTest2::Initialize(const Timeline& time) {
     parent_type::Initialize(time);
 
-    VirtualFileSystem::Instance().MountNativePath(L"GameData:/", L"Data/");
+    VirtualFileSystem::Instance().MountNativePath(L"GameData:\\", CurrentProcess::Instance().Directory() + L"\\..\\..\\Data\\");
 
     using namespace Engine;
     using namespace Graphics;
