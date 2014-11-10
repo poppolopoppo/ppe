@@ -2,6 +2,8 @@
 
 #include "Logger.h"
 
+#ifdef USE_LOGGER
+
 #include "IO/String.h"
 #include "IO/StringSlice.h"
 
@@ -118,3 +120,5 @@ void LoggerStartup::Shutdown() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Core
+
+#endif //!USE_LOGGER

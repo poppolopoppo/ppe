@@ -34,7 +34,9 @@ void CoreStartup::Start(void *applicationHandle, int nShowCmd, size_t argc, cons
     // 1 - process time
     ProcessTime::Start();
     // 2 - logger
+#ifdef USE_LOGGER
     LoggerStartup::Start();
+#endif
     // 3 - current process
     CurrentProcess::Create(applicationHandle, nShowCmd, argc, argv);
     // 4 - callstack symbols
@@ -83,7 +85,9 @@ void CoreStartup::Shutdown() {
     // 3 - current process
     CurrentProcess::Destroy();
     // 2 - logger
+#ifdef USE_LOGGER
     LoggerStartup::Shutdown();
+#endif
     // 1 - process time
     ProcessTime::Shutdown();
 }

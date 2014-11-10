@@ -2,7 +2,7 @@
 
 #include "Core/Core.h"
 
-#ifndef _FINAL
+#ifndef FINAL_RELEASE
 #   define USE_LOGGER
 #endif
 
@@ -11,6 +11,7 @@
 #include "Core/Memory/MemoryView.h"
 #include "Core/Memory/UniquePtr.h"
 #include "Core/Meta/Singleton.h"
+#include "Core/IO/FormatHelpers.h"
 
 #include <chrono>
 #include <iosfwd>
