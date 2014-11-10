@@ -6,7 +6,9 @@
 #   define WITH_CORE_ASSERT
 #endif
 
-#define WITH_CORE_ASSERT_RELEASE
+#ifndef FINAL_RELEASE
+#   define WITH_CORE_ASSERT_RELEASE
+#endif
 
 #if defined(NDEBUG) && defined(WITH_CORE_ASSERT)
 #   undef WITH_CORE_ASSERT
