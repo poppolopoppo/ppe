@@ -43,6 +43,7 @@
 #include "Core.Engine/Scene/Scene.h"
 #include "Core.Engine/World/World.h"
 
+#include "Core.Application/ApplicationConsole.h"
 #include "Core.Application/Input/Camera/KeyboardMouseCameraController.h"
 
 namespace Core {
@@ -63,7 +64,12 @@ GameTest2::GameTest2(const wchar_t *appname)
         true,
         0,
         Graphics::PresentInterval::Default ),
-    10, 10) {}
+    10, 10) {
+#ifndef FINAL_RELEASE
+    // creates a command window to show stdout messages
+    Application::ApplicationConsole::RedirectIOToConsole();
+#endif
+}
 //----------------------------------------------------------------------------
 GameTest2::~GameTest2() {}
 //----------------------------------------------------------------------------
