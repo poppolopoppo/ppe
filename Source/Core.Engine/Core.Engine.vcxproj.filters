@@ -367,7 +367,7 @@
     <CustomBuild Include="Texture\TextureCache.h">
       <Filter>Texture</Filter>
     </CustomBuild>
-    <CustomBuild Include="Texture\textureloader-dds.cpp">
+    <CustomBuild Include="Texture\TextureLoader-DDS.cpp">
       <Filter>Texture</Filter>
     </CustomBuild>
     <CustomBuild Include="Texture\TextureLoader-inl.h">
