@@ -31,7 +31,7 @@ PixelIn vmain(AppIn appIn) {
 float4 pmain(PixelIn pixelIn) : SV_Target {
 
     float2 uv = pixelIn.TexCoord;
-    float2 dudv = BlurDuDv * uniDuDvDimensions_Input.xy * 2;
+    float2 dudv = BlurDuDv * uniDuDvDimensions_Input.xy;
 
     const float3 fOffsets = { 0.0, 1.3846153846, 3.2307692308 };
     const float3 fWeights = { 0.2270270270, 0.3162162162, 0.0702702703 };

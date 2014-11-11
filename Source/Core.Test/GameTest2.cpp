@@ -107,6 +107,8 @@ void GameTest2::Initialize(const Timeline& time) {
     RenderSurfaceManager *const renderSurfaceManager = _context->RenderSurfaceService()->Manager();
     TextureCache *const textureCache = _context->TextureCacheService()->TextureCache();
 
+    // Basic mesh rendering effect
+
     EffectDescriptor *const basicEffectDescriptor = new EffectDescriptor();
     basicEffectDescriptor->SetName("BasicEffect");
     basicEffectDescriptor->SetRenderState(
@@ -117,6 +119,8 @@ void GameTest2::Initialize(const Timeline& time) {
     basicEffectDescriptor->SetPS(L"GameData:/Shaders/Basic.fx");
     basicEffectDescriptor->SetShaderProfile(ShaderProfileType::ShaderModel4_1);
     basicEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Float2__Normal0_UX10Y10Z10W2N::Declaration);
+
+    // Bloom selector effect
 
     EffectDescriptor *const bloomSelectorDescriptor = new EffectDescriptor();
     bloomSelectorDescriptor->SetName("BloomSelector");
@@ -136,6 +140,8 @@ void GameTest2::Initialize(const Timeline& time) {
     MaterialEffect *const bloomSelectorEffect = effectCompiler->CreateMaterialEffect(
         bloomSelectorDescriptor, bloomSelectorDescriptor->VertexDeclarations().front(), bloomSelectorMaterial);
 
+    // Separable gaussian blur 9x9 effect
+
     EffectDescriptor *const gaussianBlur9Descriptor = new EffectDescriptor();
     gaussianBlur9Descriptor->SetName("GaussianBlur9");
     gaussianBlur9Descriptor->SetRenderState(
@@ -148,18 +154,7 @@ void GameTest2::Initialize(const Timeline& time) {
     gaussianBlur9Descriptor->SetShaderProfile(ShaderProfileType::ShaderModel4_1);
     gaussianBlur9Descriptor->AddVertexDeclaration(Vertex::Position0_Float4__TexCoord0_Float2::Declaration);
 
-    Material *const bloomBlurHMaterial = new Material("GaussianBlur9H");
-    bloomBlurHMaterial->AddTexture("Input", L"VirtualData:/Surfaces/DownsizeDiv2/RT");
-    bloomBlurHMaterial->AddParameter("BlurDuDv", new MaterialParameterBlock<float2>(float2(1, 0)));
-
-    Material *const bloomBlurVMaterial = new Material("GaussianBlur9V");
-    bloomBlurVMaterial->AddTexture("Input", L"VirtualData:/Surfaces/DownsizeDiv4/RT");
-    bloomBlurVMaterial->AddParameter("BlurDuDv", new MaterialParameterBlock<float2>(float2(0, 0.5f)));
-
-    MaterialEffect *const bloomBlurHEffect = effectCompiler->CreateMaterialEffect(
-        gaussianBlur9Descriptor, gaussianBlur9Descriptor->VertexDeclarations().front(), bloomBlurHMaterial);
-    MaterialEffect *const bloomBlurVEffect = effectCompiler->CreateMaterialEffect(
-        gaussianBlur9Descriptor, gaussianBlur9Descriptor->VertexDeclarations().front(), bloomBlurVMaterial);
+    // Principal RT blur (gaussian9)
 
     Material *const principalBlurHMaterial = new Material("GaussianBlur9H");
     principalBlurHMaterial->AddTexture("Input", L"VirtualData:/Surfaces/Principal/RT");
@@ -173,6 +168,51 @@ void GameTest2::Initialize(const Timeline& time) {
         gaussianBlur9Descriptor, gaussianBlur9Descriptor->VertexDeclarations().front(), principalBlurHMaterial);
     MaterialEffect *const principalBlurVEffect = effectCompiler->CreateMaterialEffect(
         gaussianBlur9Descriptor, gaussianBlur9Descriptor->VertexDeclarations().front(), principalBlurVMaterial);
+
+    // Kawase blur effect
+
+    EffectDescriptor *const kawaseBlurDescriptor = new EffectDescriptor();
+    kawaseBlurDescriptor->SetName("KawaseBlur");
+    kawaseBlurDescriptor->SetRenderState(
+        new RenderState(RenderState::Blending::Opaque,
+                        RenderState::Culling::None,
+                        RenderState::DepthTest::None,
+                        RenderState::FillMode::Solid ));
+    kawaseBlurDescriptor->SetVS(L"GameData:/Shaders/KawaseBlur.fx");
+    kawaseBlurDescriptor->SetPS(L"GameData:/Shaders/KawaseBlur.fx");
+    kawaseBlurDescriptor->SetShaderProfile(ShaderProfileType::ShaderModel4_1);
+    kawaseBlurDescriptor->AddVertexDeclaration(Vertex::Position0_Float4__TexCoord0_Float2::Declaration);
+
+    Material *bloomBlurMaterials[5];
+
+    // Bloom blur effect (kawase)
+
+    bloomBlurMaterials[0] = new Material("KawaseBlur0");
+    bloomBlurMaterials[0]->AddTexture("Input", L"VirtualData:/Surfaces/DownsizeDiv2/RT");
+    bloomBlurMaterials[0]->AddParameter("uniPass", new MaterialParameterBlock<float>(0));
+
+    bloomBlurMaterials[1] = new Material("KawaseBlur1");
+    bloomBlurMaterials[1]->AddTexture("Input", L"VirtualData:/Surfaces/Bloom/RT");
+    bloomBlurMaterials[1]->AddParameter("uniPass", new MaterialParameterBlock<float>(1));
+
+    bloomBlurMaterials[2] = new Material("KawaseBlur2");
+    bloomBlurMaterials[2]->AddTexture("Input", L"VirtualData:/Surfaces/DownsizeDiv2/RT");
+    bloomBlurMaterials[2]->AddParameter("uniPass", new MaterialParameterBlock<float>(2));
+
+    bloomBlurMaterials[3] = new Material("KawaseBlur3");
+    bloomBlurMaterials[3]->AddTexture("Input", L"VirtualData:/Surfaces/Bloom/RT");
+    bloomBlurMaterials[3]->AddParameter("uniPass", new MaterialParameterBlock<float>(3));
+
+    bloomBlurMaterials[4] = new Material("KawaseBlur4");
+    bloomBlurMaterials[4]->AddTexture("Input", L"VirtualData:/Surfaces/DownsizeDiv2/RT");
+    bloomBlurMaterials[4]->AddParameter("uniPass", new MaterialParameterBlock<float>(4));
+
+    MaterialEffect *bloomBlurEffects[5];
+    for (size_t i = 0; i < lengthof(bloomBlurEffects); ++i)
+        bloomBlurEffects[i] = effectCompiler->CreateMaterialEffect(
+            kawaseBlurDescriptor, kawaseBlurDescriptor->VertexDeclarations().front(), bloomBlurMaterials[i]);
+
+    // Postprocess effect
 
     EffectDescriptor *const postprocessDescriptor = new EffectDescriptor();
     postprocessDescriptor->SetName("Postprocess");
@@ -189,7 +229,7 @@ void GameTest2::Initialize(const Timeline& time) {
     Material *const postprocessMaterial = new Material("Postprocess");
     postprocessMaterial->AddTexture("Principal", L"VirtualData:/Surfaces/Principal/RT");
     postprocessMaterial->AddTexture("Bloom", L"VirtualData:/Surfaces/Bloom/RT");
-    postprocessMaterial->AddTexture("PrincipalBlur", L"VirtualData:/Surfaces/DownsizeDiv4/RT");
+    postprocessMaterial->AddTexture("PrincipalBlur", L"VirtualData:/Surfaces/PrincipalBlur/RT");
 
     MaterialEffect *const postprocessEffect = effectCompiler->CreateMaterialEffect(
         postprocessDescriptor, postprocessDescriptor->VertexDeclarations().front(), postprocessMaterial);
@@ -201,17 +241,18 @@ void GameTest2::Initialize(const Timeline& time) {
     _camera = new PerspectiveCamera(F_PIOver3, 0.01f, 100.0f, viewport);
     _camera->SetController(_cameraController);
 
+    textureCache->SetFallbackTexture2D(L"GameData:/Textures/Tech/error.dds");
+
     const PAbstractRenderSurface backBuffer = new RenderSurfaceBackBuffer("BackBuffer", RenderSurfaceBackBuffer::RenderTarget_DepthStencil);
     const PAbstractRenderSurface principal = new RenderSurfaceRelative("Principal", float2::One(), SurfaceFormat::R16G16B16A16_F, SurfaceFormat::D24S8);
     const PAbstractRenderSurface downSizeDiv2 = new RenderSurfaceRelative("DownsizeDiv2", float2(0.5f), principal, SurfaceFormat::R11G11B10);
-    const PAbstractRenderSurface downSizeDiv4 = new RenderSurfaceRelative("DownsizeDiv4", float2(0.25f), principal, SurfaceFormat::R11G11B10);
-    const PAbstractRenderSurface bloom = new RenderSurfaceRelative("Bloom", float2(0.125f), principal, SurfaceFormat::R11G11B10);
+    const PAbstractRenderSurface principalBlur = new RenderSurfaceRelative("PrincipalBlur", float2(0.5f), principal, SurfaceFormat::R11G11B10);
+    const PAbstractRenderSurface bloom = new RenderSurfaceRelative("Bloom", float2(0.5f), principal, SurfaceFormat::R11G11B10);
 
-    textureCache->SetFallbackTexture2D(L"GameData:/Textures/Tech/error.dds");
     renderSurfaceManager->Register(backBuffer);
     renderSurfaceManager->Register(principal);
     renderSurfaceManager->Register(downSizeDiv2);
-    renderSurfaceManager->Register(downSizeDiv4);
+    renderSurfaceManager->Register(principalBlur);
     renderSurfaceManager->Register(bloom);
 
     _mainScene = new Scene("Main scene", _camera, _world, _context->MaterialDatabase());
@@ -222,14 +263,20 @@ void GameTest2::Initialize(const Timeline& time) {
 
     _mainScene->RenderTree()->Add(new RenderLayerSetRenderTarget(downSizeDiv2));
     _mainScene->RenderTree()->Add(new RenderLayerDrawRect(bloomSelectorEffect));
-    _mainScene->RenderTree()->Add(new RenderLayerSetRenderTarget(downSizeDiv4));
-    _mainScene->RenderTree()->Add(new RenderLayerDrawRect(bloomBlurHEffect));
     _mainScene->RenderTree()->Add(new RenderLayerSetRenderTarget(bloom));
-    _mainScene->RenderTree()->Add(new RenderLayerDrawRect(bloomBlurVEffect));
+    _mainScene->RenderTree()->Add(new RenderLayerDrawRect(bloomBlurEffects[0]));
+    _mainScene->RenderTree()->Add(new RenderLayerSetRenderTarget(downSizeDiv2));
+    _mainScene->RenderTree()->Add(new RenderLayerDrawRect(bloomBlurEffects[1]));
+    _mainScene->RenderTree()->Add(new RenderLayerSetRenderTarget(bloom));
+    _mainScene->RenderTree()->Add(new RenderLayerDrawRect(bloomBlurEffects[2]));
+    _mainScene->RenderTree()->Add(new RenderLayerSetRenderTarget(downSizeDiv2));
+    _mainScene->RenderTree()->Add(new RenderLayerDrawRect(bloomBlurEffects[3]));
+    _mainScene->RenderTree()->Add(new RenderLayerSetRenderTarget(bloom));
+    _mainScene->RenderTree()->Add(new RenderLayerDrawRect(bloomBlurEffects[4]));
 
     _mainScene->RenderTree()->Add(new RenderLayerSetRenderTarget(downSizeDiv2));
     _mainScene->RenderTree()->Add(new RenderLayerDrawRect(principalBlurHEffect));
-    _mainScene->RenderTree()->Add(new RenderLayerSetRenderTarget(downSizeDiv4));
+    _mainScene->RenderTree()->Add(new RenderLayerSetRenderTarget(principalBlur));
     _mainScene->RenderTree()->Add(new RenderLayerDrawRect(principalBlurVEffect));
 
     _mainScene->RenderTree()->Add(new RenderLayerSetRenderTarget(backBuffer));
