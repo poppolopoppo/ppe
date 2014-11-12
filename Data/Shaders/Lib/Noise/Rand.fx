@@ -1,12 +1,12 @@
 #ifndef LIB_NOISE_RAND_FX_INCLUDED_
 #define LIB_NOISE_RAND_FX_INCLUDED_
 
-float RandNoise(float2 seed) {
+float RandNoise_Unbound(float2 seed) {
     return sin(dot(seed, float2(12.9898, 78.233)*2.0)) * 43758.5453;
 }
 
 float2 Rand2(float2 xy) {
-    float noise = RandNoise(xy);
+    float noise = RandNoise_Unbound(xy);
 
     float2 result;
     result.x = frac(noise)*2.0 - 1.0;
@@ -15,7 +15,7 @@ float2 Rand2(float2 xy) {
 }
 
 float3 Rand3(float2 xy) {
-    float noise = RandNoise(xy);
+    float noise = RandNoise_Unbound(xy);
 
     float3 result;
     result.x = frac(noise)*2.0 - 1.0;
