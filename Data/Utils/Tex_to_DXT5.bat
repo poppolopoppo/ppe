@@ -1,2 +1,2 @@
 @ECHO OFF
-"%~d0\%~p0\texconv" -fl 11.0 -ft DDS -f BC3_UNORM "%1"
+"%~d0%~p0\Templates\_Tex_Template.bat" -f BC3_UNORM "%1"
