@@ -2,37 +2,24 @@
 
 #include "Core/Core.h"
 
-#include "Core/Container/Vector.h"
-#include "Core/Memory/RefPtr.h"
-#include "Core/Memory/UniquePtr.h"
-
-namespace Core { namespace Parser {
-    FWD_REFPTR(ParseItem);
-    class ParseList;
-}}
-
 namespace Core {
-namespace Serialization {
+namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class GrammarImpl;
+// SerializeStartup is the entry and exit point encapsulating every call to Core::Serialize::.
+// Constructed with the same lifetime than the program (or application if segregated).
 //----------------------------------------------------------------------------
-class Grammar {
+class SerializeStartup {
 public:
-    Grammar();
-    ~Grammar();
+    static void Start();
+    static void Shutdown();
 
-    Grammar(const Grammar&) = delete;
-    Grammar& operator =(const Grammar&) = delete;
-
-    Parser::PCParseItem Parse(Parser::ParseList& input) const;
-
-private:
-    UniquePtr<GrammarImpl> _impl;
+    SerializeStartup()  { Start(); }
+    ~SerializeStartup() { Shutdown(); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace Serialization
+} //!namespace Serialize
 } //!namespace Core

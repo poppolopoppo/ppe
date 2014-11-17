@@ -1,29 +1,19 @@
-#pragma once
+#include "stdafx.h"
 
-#include "Core/Core.h"
+#include "Serialize.h"
 
 namespace Core {
-namespace Graphics {
-class DeviceEncapsulator;
-
+namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// GraphicsStartup is the entry and exit point encapsulating every call to Core::Graphics::.
-// Constructed with the same lifetime than the program (or application if segregated).
+void SerializeStartup::Start() {
+
+}
 //----------------------------------------------------------------------------
-class GraphicsStartup {
-public:
-    static void Start();
-    static void Shutdown();
+void SerializeStartup::Shutdown() {
 
-    // necessary for static graphics resources (fail ?)
-    static void OnDeviceCreate(DeviceEncapsulator *device);
-    static void OnDeviceDestroy(DeviceEncapsulator *device);
-
-    GraphicsStartup()  { Start(); }
-    ~GraphicsStartup() { Shutdown(); }
-};
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

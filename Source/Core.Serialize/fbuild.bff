@@ -1,0 +1,12 @@
+
+#once
+
+// Core
+//------------------------------------------------------------------------------
+{
+    .ProjectName        = 'Core.Serialize'
+    .ProjectPath        = '$SourceBase$\Core.Serialize'
+    .PCHName            = 'stdafx'
+
+    #include "../../Build/Cfg/library.bff"
+}

@@ -2,30 +2,37 @@
 
 #include "Core/Core.h"
 
-namespace Core {
-namespace Graphics {
-class DeviceEncapsulator;
+#include "Core/Container/Vector.h"
+#include "Core/Memory/RefPtr.h"
+#include "Core/Memory/UniquePtr.h"
 
+namespace Core { namespace Parser {
+    FWD_REFPTR(ParseItem);
+    class ParseList;
+}}
+
+namespace Core {
+namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// GraphicsStartup is the entry and exit point encapsulating every call to Core::Graphics::.
-// Constructed with the same lifetime than the program (or application if segregated).
+class GrammarImpl;
 //----------------------------------------------------------------------------
-class GraphicsStartup {
+class Grammar {
 public:
-    static void Start();
-    static void Shutdown();
+    Grammar();
+    ~Grammar();
 
-    // necessary for static graphics resources (fail ?)
-    static void OnDeviceCreate(DeviceEncapsulator *device);
-    static void OnDeviceDestroy(DeviceEncapsulator *device);
+    Grammar(const Grammar&) = delete;
+    Grammar& operator =(const Grammar&) = delete;
 
-    GraphicsStartup()  { Start(); }
-    ~GraphicsStartup() { Shutdown(); }
+    Parser::PCParseItem Parse(Parser::ParseList& input) const;
+
+private:
+    UniquePtr<GrammarImpl> _impl;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace Graphics
+} //!namespace Serialize
 } //!namespace Core

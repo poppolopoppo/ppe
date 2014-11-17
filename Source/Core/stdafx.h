@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "Core/targetver.h"
+#include "targetver.h"
 
 #include <stdio.h>
 #include <tchar.h>
