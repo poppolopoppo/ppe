@@ -8,10 +8,10 @@
 
 #ifdef USE_LOGGER
 
+#include "Core/IO/FormatHelpers.h"
 #include "Core/Memory/MemoryView.h"
 #include "Core/Memory/UniquePtr.h"
 #include "Core/Meta/Singleton.h"
-#include "Core/IO/FormatHelpers.h"
 
 #include <chrono>
 #include <iosfwd>

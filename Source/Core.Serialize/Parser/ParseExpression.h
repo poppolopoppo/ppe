@@ -8,7 +8,7 @@
 #include "Core/RTTI/Property/MetaPropertyName.h"
 #include "Core/RTTI/Type/MetaType.h"
 
-#include "Core/Parser/ParseItem.h"
+#include "Core.Serialize/Parser/ParseItem.h"
 
 #include "Core/Allocator/PoolAllocator.h"
 #include "Core/Container/AssociativeVector.h"
@@ -319,4 +319,4 @@ inline Parser::Dictionary *MakeDictionary(
 } //!namespace Parser
 } //!namespace Core
 
-#include "Core/Parser/ParseExpression-inl.h"
+#include "Core.Serialize/Parser/ParseExpression-inl.h"

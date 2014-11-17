@@ -49,13 +49,13 @@
 #include "Core/RTTI/RTTIMacros-impl.h"
 #include "Core/RTTI/RTTIMacros.h"
 
-#include "Core/Lexer/Lexer.h"
-#include "Core/Lexer/SymbolTrie.h"
-#include "Core/Parser/Parser.h"
+#include "Core.Serialize/Lexer/Lexer.h"
+#include "Core.Serialize/Lexer/SymbolTrie.h"
+#include "Core.Serialize/Parser/Parser.h"
 
 #include "Core/Container/Tuple.h"
 
-#include "Core/Serialization/Grammar.h"
+#include "Core.Serialize/Grammar.h"
 
 #include "Core/Color/Color.h"
 

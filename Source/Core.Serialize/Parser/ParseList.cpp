@@ -2,7 +2,7 @@
 
 #include "ParseList.h"
 
-#include "Diagnostic/Logger.h"
+#include "Core/Diagnostic/Logger.h"
 #include "Lexer/Lexer.h"
 
 namespace Core {

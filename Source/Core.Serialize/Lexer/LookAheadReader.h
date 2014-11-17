@@ -2,8 +2,8 @@
 
 #include "Core/Core.h"
 
+#include "Core.Serialize/Lexer/Location.h"
 #include "Core/IO/StringSlice.h"
-#include "Core/Lexer/Location.h"
 
 namespace Core {
 class IVirtualFileSystemIStream;

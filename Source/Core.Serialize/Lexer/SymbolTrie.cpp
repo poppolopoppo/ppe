@@ -2,7 +2,7 @@
 
 #include "SymbolTrie.h"
 
-#include "Meta/Singleton.h"
+#include "Core/Meta/Singleton.h"
 
 namespace Core {
 namespace Lexer {

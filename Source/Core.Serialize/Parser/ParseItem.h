@@ -2,8 +2,8 @@
 
 #include "Core/Core.h"
 
+#include "Core.Serialize/Lexer/Location.h"
 #include "Core/IO/String.h"
-#include "Core/Lexer/Location.h"
 #include "Core/Memory/RefPtr.h"
 
 namespace Core {

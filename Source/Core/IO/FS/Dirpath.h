@@ -4,8 +4,8 @@
 
 #include "Core/IO/FS/FileSystemProperties.h"
 
-#include "Core/Memory/UniqueView.h"
 #include "Core/IO/StringSlice.h"
+#include "Core/Memory/UniqueView.h"
 
 #include <initializer_list>
 #include <iosfwd>

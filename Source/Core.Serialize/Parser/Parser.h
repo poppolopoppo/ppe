@@ -2,13 +2,13 @@
 
 #include "Core/Core.h"
 
-#include "Core/Parser/ParseContext.h"
-#include "Core/Parser/ParseExpression.h"
-#include "Core/Parser/ParseItem.h"
-#include "Core/Parser/ParseList.h"
-#include "Core/Parser/ParseProduction.h"
-#include "Core/Parser/ParseResult.h"
-#include "Core/Parser/ParseStatement.h"
+#include "Core.Serialize/Parser/ParseContext.h"
+#include "Core.Serialize/Parser/ParseExpression.h"
+#include "Core.Serialize/Parser/ParseItem.h"
+#include "Core.Serialize/Parser/ParseList.h"
+#include "Core.Serialize/Parser/ParseProduction.h"
+#include "Core.Serialize/Parser/ParseResult.h"
+#include "Core.Serialize/Parser/ParseStatement.h"
 
 namespace Core {
 namespace Parser {

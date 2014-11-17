@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Core/Parser/ParseExpression.h"
+#include "Core.Serialize/Parser/ParseExpression.h"
 
-#include "Core/Parser/ParseContext.h"
+#include "Core.Serialize/Parser/ParseContext.h"
 
 #include "Core/Allocator/PoolAllocator-impl.h"
 

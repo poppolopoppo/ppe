@@ -7,7 +7,7 @@
 #include "Core/Container/Trie.h"
 #include "Core/IO/String.h"
 
-#include "Core/Lexer/Symbol.h"
+#include "Core.Serialize/Lexer/Symbol.h"
 
 namespace Core {
 namespace Lexer {

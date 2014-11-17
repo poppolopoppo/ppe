@@ -6,9 +6,9 @@
 
 #include "Container/Vector.h"
 #include "Diagnostic/Logger.h"
-#include "IO/FileSystem.h"
 #include "IO/FS/FileSystemToken.h"
 #include "IO/FS/FileSystemTrie.h"
+#include "IO/FileSystem.h"
 #include "IO/Stream.h"
 
 // _waccess()

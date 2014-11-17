@@ -2,9 +2,9 @@
 
 #include "Core/Core.h"
 
+#include "Core.Serialize/Lexer/LookAheadReader.h"
+#include "Core.Serialize/Lexer/Match.h"
 #include "Core/IO/String.h"
-#include "Core/Lexer/LookAheadReader.h"
-#include "Core/Lexer/Match.h"
 
 namespace Core {
 namespace Lexer {

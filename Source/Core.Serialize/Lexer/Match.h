@@ -2,9 +2,9 @@
 
 #include "Core/Core.h"
 
+#include "Core.Serialize/Lexer/Location.h"
+#include "Core.Serialize/Lexer/Symbol.h"
 #include "Core/IO/String.h"
-#include "Core/Lexer/Location.h"
-#include "Core/Lexer/Symbol.h"
 
 #include <iosfwd>
 

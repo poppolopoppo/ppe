@@ -2,7 +2,7 @@
 
 #include "Core/Core.h"
 
-#include "Core/Parser/ParseItem.h"
+#include "Core.Serialize/Parser/ParseItem.h"
 
 #include "Core/RTTI/Object/MetaObjectName.h"
 #include "Core/RTTI/Property/MetaPropertyName.h"

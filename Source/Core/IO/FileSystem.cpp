@@ -2,8 +2,8 @@
 
 #include "FileSystem.h"
 
-#include "FS/FileSystemTrie.h"
 #include "FS/FileSystemToken.h"
+#include "FS/FileSystemTrie.h"
 
 namespace Core {
 //----------------------------------------------------------------------------

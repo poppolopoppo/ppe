@@ -2,7 +2,7 @@
 
 #include "Core.Graphics/Graphics.h"
 
-#include "Core.Graphics/Window/WindowMessage.H"
+#include "Core.Graphics/Window/WindowMessage.h"
 
 namespace Core {
 namespace Graphics {

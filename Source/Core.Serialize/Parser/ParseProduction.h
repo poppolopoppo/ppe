@@ -5,8 +5,8 @@
 #include "Core/Allocator/Allocation.h"
 #include "Core/Container/Tuple.h"
 
-#include "Core/Parser/ParseList.h"
-#include "Core/Parser/ParseResult.h"
+#include "Core.Serialize/Parser/ParseList.h"
+#include "Core.Serialize/Parser/ParseResult.h"
 
 #include <functional>
 #include <type_traits>

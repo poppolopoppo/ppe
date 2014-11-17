@@ -2,9 +2,9 @@
 
 #include "Core/Core.h"
 
-#include "Core/Lexer/Location.h"
-#include "Core/Lexer/Match.h"
-#include "Core/Lexer/Symbol.h"
+#include "Core.Serialize/Lexer/Location.h"
+#include "Core.Serialize/Lexer/Match.h"
+#include "Core.Serialize/Lexer/Symbol.h"
 
 #include "Core/Container/Vector.h"
 

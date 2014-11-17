@@ -5,11 +5,11 @@
 #include "Lexer/Lexer.h"
 #include "Parser/Parser.h"
 
-#include "IO/Format.h"
-#include "IO/Stream.h"
+#include "Core/IO/Format.h"
+#include "Core/IO/Stream.h"
 
-#include "RTTI/Object/MetaObject.h"
-#include "RTTI/Type/MetaTypePromote.h"
+#include "Core/RTTI/Object/MetaObject.h"
+#include "Core/RTTI/Type/MetaTypePromote.h"
 
 //#pragma warning( disable : 4702 ) // warning C4702: impossible d'atteindre le code
 // due to compiler optimizations in release mode

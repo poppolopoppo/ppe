@@ -2,7 +2,7 @@
 
 #include "LookAheadReader.h"
 
-#include "IO/VFS/VirtualFileSystemStream.h"
+#include "Core/IO/VFS/VirtualFileSystemStream.h"
 
 #include <locale>
 

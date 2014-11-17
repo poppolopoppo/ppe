@@ -6,12 +6,12 @@
 #include "ParseExpression.h"
 #include "Parser.h"
 
-#include "Allocator/PoolAllocator-impl.h"
-#include "IO/Format.h"
+#include "Core/Allocator/PoolAllocator-impl.h"
+#include "Core/IO/Format.h"
 
-#include "RTTI/Class/MetaClass.h"
-#include "RTTI/Object/MetaObject.h"
-#include "RTTI/Property/MetaProperty.h"
+#include "Core/RTTI/Class/MetaClass.h"
+#include "Core/RTTI/Object/MetaObject.h"
+#include "Core/RTTI/Property/MetaProperty.h"
 
 #include <iostream>
 

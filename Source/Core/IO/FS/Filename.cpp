@@ -5,8 +5,8 @@
 #include "Dirname.h"
 
 #include "Container/Hash.h"
-#include "Memory/UniqueView.h"
 #include "IO/Stream.h"
+#include "Memory/UniqueView.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
