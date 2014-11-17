@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="Lexer\Lexer.cpp">
+      <Filter>Lexer</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Lexer\Lexer.h">
+      <Filter>Lexer</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Lexer\Location.h">
+      <Filter>Lexer</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Lexer\LookAheadReader.cpp">
+      <Filter>Lexer</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Lexer\LookAheadReader.h">
+      <Filter>Lexer</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Lexer\Match.cpp">
+      <Filter>Lexer</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Lexer\Match.h">
+      <Filter>Lexer</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Lexer\Symbol.cpp">
+      <Filter>Lexer</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Lexer\Symbol.h">
+      <Filter>Lexer</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Lexer\SymbolTrie.cpp">
+      <Filter>Lexer</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Lexer\SymbolTrie.h">
+      <Filter>Lexer</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\ParseContext.cpp">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\ParseContext.h">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\ParseExpression-inl.h">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\ParseExpression.cpp">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\ParseExpression.h">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\ParseItem.cpp">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\ParseItem.h">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\ParseList.cpp">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\ParseList.h">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\ParseProduction.h">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\Parser.cpp">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\Parser.h">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\ParseResult.h">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\ParseStatement.cpp">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser\ParseStatement.h">
+      <Filter>Parser</Filter>
+    </CustomBuild>
+    <CustomBuild Include="fbuild.bff">
+    </CustomBuild>
+    <CustomBuild Include="Grammar.cpp">
+    </CustomBuild>
+    <CustomBuild Include="Grammar.h">
+    </CustomBuild>
+    <CustomBuild Include="Serialize.cpp">
+    </CustomBuild>
+    <CustomBuild Include="Serialize.h">
+    </CustomBuild>
+    <CustomBuild Include="stdafx.cpp">
+    </CustomBuild>
+    <CustomBuild Include="stdafx.h">
+    </CustomBuild>
+    <CustomBuild Include="targetver.h">
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Lexer">
+      <UniqueIdentifier>{abbaf37e-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Parser">
+      <UniqueIdentifier>{281ec645-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -334,39 +334,6 @@
     <CustomBuild Include="IO\VirtualFileSystem_fwd.h">
       <Filter>IO</Filter>
     </CustomBuild>
-    <CustomBuild Include="Lexer\Lexer.cpp">
-      <Filter>Lexer</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Lexer\Lexer.h">
-      <Filter>Lexer</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Lexer\Location.h">
-      <Filter>Lexer</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Lexer\LookAheadReader.cpp">
-      <Filter>Lexer</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Lexer\LookAheadReader.h">
-      <Filter>Lexer</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Lexer\Match.cpp">
-      <Filter>Lexer</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Lexer\Match.h">
-      <Filter>Lexer</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Lexer\Symbol.cpp">
-      <Filter>Lexer</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Lexer\Symbol.h">
-      <Filter>Lexer</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Lexer\SymbolTrie.cpp">
-      <Filter>Lexer</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Lexer\SymbolTrie.h">
-      <Filter>Lexer</Filter>
-    </CustomBuild>
     <CustomBuild Include="Maths\Geometry\Collision.cpp">
       <Filter>Maths\Geometry</Filter>
     </CustomBuild>
@@ -673,51 +640,6 @@
     <CustomBuild Include="Meta\TypeTraits.h">
       <Filter>Meta</Filter>
     </CustomBuild>
-    <CustomBuild Include="Parser\ParseContext.cpp">
-      <Filter>Parser</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Parser\ParseContext.h">
-      <Filter>Parser</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Parser\ParseExpression-inl.h">
-      <Filter>Parser</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Parser\ParseExpression.cpp">
-      <Filter>Parser</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Parser\ParseExpression.h">
-      <Filter>Parser</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Parser\ParseItem.cpp">
-      <Filter>Parser</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Parser\ParseItem.h">
-      <Filter>Parser</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Parser\ParseList.cpp">
-      <Filter>Parser</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Parser\ParseList.h">
-      <Filter>Parser</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Parser\ParseProduction.h">
-      <Filter>Parser</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Parser\Parser.cpp">
-      <Filter>Parser</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Parser\Parser.h">
-      <Filter>Parser</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Parser\ParseResult.h">
-      <Filter>Parser</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Parser\ParseStatement.cpp">
-      <Filter>Parser</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Parser\ParseStatement.h">
-      <Filter>Parser</Filter>
-    </CustomBuild>
     <CustomBuild Include="RTTI\Atom\MetaAtom-inl.h">
       <Filter>RTTI\Atom</Filter>
     </CustomBuild>
@@ -843,12 +765,6 @@
     </CustomBuild>
     <CustomBuild Include="RTTI\RTTIProperties.h">
       <Filter>RTTI</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Serialization\Grammar.cpp">
-      <Filter>Serialization</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Serialization\Grammar.h">
-      <Filter>Serialization</Filter>
     </CustomBuild>
     <CustomBuild Include="Thread\Task\Task.cpp">
       <Filter>Thread\Task</Filter>
@@ -986,11 +902,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="Lexer">
-      <UniqueIdentifier>{abbaf37e-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
     <Filter Include="Maths\Geometry">
       <UniqueIdentifier>{b9d80f2d-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
     </Filter>
@@ -1026,11 +937,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="Parser">
-      <UniqueIdentifier>{281ec645-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
     <Filter Include="RTTI\Atom">
       <UniqueIdentifier>{c8d9a1f1-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
     </Filter>
@@ -1058,11 +964,6 @@
   <ItemGroup>
     <Filter Include="RTTI\Type">
       <UniqueIdentifier>{644713a3-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <Filter Include="Serialization">
-      <UniqueIdentifier>{b7d46781-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

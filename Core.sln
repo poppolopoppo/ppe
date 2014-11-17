@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30723.0
+VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Core", "Source\Core\Core.vcxproj", "{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}"
 EndProject
@@ -11,9 +11,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Core.Engine", "Source\Core.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Core.Graphics", "Source\Core.Graphics\Core.Graphics.vcxproj", "{E556C316-6C94-4F93-BC2A-7F5284B7D434}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Core.Serialize", "Source\Core.Serialize\Core.Serialize.vcxproj", "{1DA7B718-6C94-4F93-BC2A-7F5284B7D434}"
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Core.Test", "Source\Core.Test\Core.Test.vcxproj", "{4086D486-6C94-4F93-BC2A-7F5284B7D434}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "All", "All.vcxproj", "{73202180-6C94-4F93-BC2A-7F5284B7D434}"
+EndProject
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -143,6 +145,25 @@ Global
 		{73202180-6C94-4F93-BC2A-7F5284B7D434}.Release|Win32.Build.0 = Release|Win32
 		{73202180-6C94-4F93-BC2A-7F5284B7D434}.Release|X64.ActiveCfg = Release|X64
 		{73202180-6C94-4F93-BC2A-7F5284B7D434}.Release|X64.Build.0 = Release|X64
+		{1DA7B718-6C94-4F93-BC2A-7F5284B7D434}.Clang-Debug|Win32.ActiveCfg = Clang-Debug|Win32
+		{1DA7B718-6C94-4F93-BC2A-7F5284B7D434}.Clang-Debug|Win32.Build.0 = Clang-Debug|Win32
+		{1DA7B718-6C94-4F93-BC2A-7F5284B7D434}.Clang-Debug|X64.ActiveCfg = Clang-Debug|Win32
+		{1DA7B718-6C94-4F93-BC2A-7F5284B7D434}.Debug|Win32.ActiveCfg = Debug|Win32
+		{1DA7B718-6C94-4F93-BC2A-7F5284B7D434}.Debug|Win32.Build.0 = Debug|Win32
+		{1DA7B718-6C94-4F93-BC2A-7F5284B7D434}.Debug|X64.ActiveCfg = Debug|X64
+		{1DA7B718-6C94-4F93-BC2A-7F5284B7D434}.Debug|X64.Build.0 = Debug|X64
+		{1DA7B718-6C94-4F93-BC2A-7F5284B7D434}.Final|Win32.ActiveCfg = Final|Win32
+		{1DA7B718-6C94-4F93-BC2A-7F5284B7D434}.Final|Win32.Build.0 = Final|Win32
+		{1DA7B718-6C94-4F93-BC2A-7F5284B7D434}.Final|X64.ActiveCfg = Final|X64
+		{1DA7B718-6C94-4F93-BC2A-7F5284B7D434}.Final|X64.Build.0 = Final|X64
+		{1DA7B718-6C94-4F93-BC2A-7F5284B7D434}.Profile|Win32.ActiveCfg = Profile|Win32
+		{1DA7B718-6C94-4F93-BC2A-7F5284B7D434}.Profile|Win32.Build.0 = Profile|Win32
+		{1DA7B718-6C94-4F93-BC2A-7F5284B7D434}.Profile|X64.ActiveCfg = Profile|X64
+		{1DA7B718-6C94-4F93-BC2A-7F5284B7D434}.Profile|X64.Build.0 = Profile|X64
+		{1DA7B718-6C94-4F93-BC2A-7F5284B7D434}.Release|Win32.ActiveCfg = Release|Win32
+		{1DA7B718-6C94-4F93-BC2A-7F5284B7D434}.Release|Win32.Build.0 = Release|Win32
+		{1DA7B718-6C94-4F93-BC2A-7F5284B7D434}.Release|X64.ActiveCfg = Release|X64
+		{1DA7B718-6C94-4F93-BC2A-7F5284B7D434}.Release|X64.Build.0 = Release|X64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

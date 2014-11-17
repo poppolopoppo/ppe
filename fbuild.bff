@@ -6,6 +6,7 @@
 // All projects
 //------------------------------------------------------------------------------
 #include "Source/Core/fbuild.bff"
+#include "Source/Core.Serialize/fbuild.bff"
 #include "Source/Core.Graphics/fbuild.bff"
 #include "Source/Core.Engine/fbuild.bff"
 #include "Source/Core.Application/fbuild.bff"
@@ -26,6 +27,7 @@ ForEach( .Config in .Configs )
 
       // Clang doesn't link at the moment, so we need list all the libs manually
       'Core-$Platform$-$Config$',
+      'Core.Serialize-$Platform$-$Config$',
       'Core.Graphics-$Platform$-$Config$',
       'Core.Engine-$Platform$-$Config$',
       'Core.Application-$Platform$-$Config$'
@@ -66,6 +68,7 @@ Alias( 'proj' )
 {
   .Targets    = { 'All-proj',
                   'Core-proj',
+                  'Core.Serialize-proj',
                   'Core.Graphics-proj',
                   'Core.Engine-proj',
                   'Core.Application-proj',
