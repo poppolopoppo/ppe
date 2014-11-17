@@ -546,7 +546,7 @@ static void TestLexerParser_() {
         oss->WriteArray("(2 + 3 * 2) + 3 + 0xFF 3 * 8 055 / -7");
     }
 
-    Serialization::Grammar grammar;
+    Serialize::Grammar grammar;
 
     {
         auto iss = vfs.OpenReadable(inputFilename);
