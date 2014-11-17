@@ -15,15 +15,16 @@ def scan_files(dir, filters, &block)
     end
 end
 
-SOURCEDIR = File.join(File.dirname($0), "Source/")
+SOURCEDIR = File.join(File.dirname($0), "../Source/")
 IGNOREFILES = /(stdafx|targetver)\./
 INCLUDEREXP = /#(\s*)include(\s+)"([^"]+)"/i
 TEMPEXT = '.fix.txt'
-BACKUPEXT = '.bak3.txt'
+BACKUPEXT = '.bak.txt'
 
 def all_headers(&block) scan_files(SOURCEDIR, /.*\.h$/i, &block) end
 def all_sources(&block) scan_files(SOURCEDIR, /.*\.cpp$/i, &block) end
 def all_temps(&block) scan_files(SOURCEDIR, /.*\.fix\.txt$/i, &block) end
+def all_backups(&block) scan_files(SOURCEDIR, /.*\.bak\.txt$/i, &block) end
 
 def parse(filename)
     source = filename.slice(SOURCEDIR.length..filename.length)
@@ -41,7 +42,8 @@ SOURCES = {}
 
 DO_HEADERS  = true
 DO_SOURCES  = true
-DRYRUN      = true
+DRYRUN      = false
+CLEARBACKUP = true
 
 if (DO_HEADERS)
     puts "Search for headers in '#{SOURCEDIR}' ..."
@@ -70,12 +72,17 @@ if (DO_HEADERS)
 
         File.open(filename + TEMPEXT, 'w') do |output|
             queue = []
-            lines.each do |line|
+            lines.each_with_index do |line, line_index|
                 if (match = line.match(INCLUDEREXP)) && !(match[3] =~ IGNOREFILES)
-                    b = File.basename(match[3])
-                    corrected = File.join(HEADERS[b], b)
-                    queue << "##{match[1]}include#{match[2]}\"#{corrected}\""
-                    fixs += 1
+                    begin
+                        b = File.basename(match[3])
+                        corrected = File.join(HEADERS[b], b)
+                        queue << "##{match[1]}include#{match[2]}\"#{corrected}\""
+                        fixs += 1
+                    rescue => e
+                        $stderr.puts "failed to parse '#{line}' in #{filename}:#{line_index} !"
+                        raise e
+                    end
                 else
                     queue.sort!
                     queue.each {|q| output.puts q }
@@ -177,6 +184,18 @@ else
     end
 
     puts "All changes were applied."
+
+end
+
+if (CLEARBACKUP)
+
+    puts "Removing backup files ..."
+
+    all_backups do |temp|
+        FileUtils.rm temp, :verbose => true
+    end
+
+    puts "All backups were deleted."
 
 end
 
