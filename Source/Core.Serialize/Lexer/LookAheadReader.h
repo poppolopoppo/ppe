@@ -15,7 +15,7 @@ namespace Lexer {
 class LookAheadReader {
 public:
     enum : size_t {
-        BufferCapacity = 1024,
+        BufferCapacity = 4096,
         BufferMask = (BufferCapacity - 1),
         HalfBufferCapacity = (BufferCapacity / 2),
         MaxWordLength = HalfBufferCapacity

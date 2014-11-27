@@ -5,6 +5,8 @@
 // Here goes the list of all the domains
 
 //------------------------------------------------------------------------------
+MEMORY_DOMAIN_IMPL(NoDomain,                Global)
+//------------------------------------------------------------------------------
 MEMORY_DOMAIN_IMPL(Core,                    Global)
 //------------------------------------------------------------------------------
 MEMORY_DOMAIN_IMPL(Alloca,                  Core)
@@ -12,8 +14,6 @@ MEMORY_DOMAIN_IMPL(Container,               Core)
 MEMORY_DOMAIN_IMPL(FileSystem,              Core)
 MEMORY_DOMAIN_IMPL(Internal,                Core)
 MEMORY_DOMAIN_IMPL(Maths,                   Core)
-MEMORY_DOMAIN_IMPL(Lexer,                   Core)
-MEMORY_DOMAIN_IMPL(Parser,                  Core)
 MEMORY_DOMAIN_IMPL(Pool,                    Core)
 MEMORY_DOMAIN_IMPL(RTTI,                    Core)
 MEMORY_DOMAIN_IMPL(Singleton,               Core)
@@ -21,6 +21,13 @@ MEMORY_DOMAIN_IMPL(String,                  Core)
 MEMORY_DOMAIN_IMPL(Task,                    Core)
 MEMORY_DOMAIN_IMPL(ThreadLocal,             Core)
 MEMORY_DOMAIN_IMPL(Token,                   Core)
+//------------------------------------------------------------------------------
+MEMORY_DOMAIN_IMPL(Serialize,               Core)
+//------------------------------------------------------------------------------
+MEMORY_DOMAIN_IMPL(Grammar,                 Serialize)
+MEMORY_DOMAIN_IMPL(Lexer,                   Serialize)
+MEMORY_DOMAIN_IMPL(Parser,                  Serialize)
+MEMORY_DOMAIN_IMPL(Transaction,             Serialize)
 //------------------------------------------------------------------------------
 MEMORY_DOMAIN_IMPL(Graphics,                Core)
 //------------------------------------------------------------------------------

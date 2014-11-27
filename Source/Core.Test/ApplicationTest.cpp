@@ -55,7 +55,7 @@
 
 #include "Core/Container/Tuple.h"
 
-#include "Core.Serialize/Grammar.h"
+#include "Core.Serialize/Text/Grammar.h"
 
 #include "Core/Color/Color.h"
 
@@ -1266,7 +1266,7 @@ void Tests() {
 
     TestTokens_();
 
-    TestRTTI_();
+    //TestRTTI_();
 
     TestLexerParser_();
 
