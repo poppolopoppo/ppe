@@ -79,11 +79,15 @@
     <CustomBuild Include="Parser\ParseStatement.h">
       <Filter>Parser</Filter>
     </CustomBuild>
+    <CustomBuild Include="Text\Grammar.cpp">
+      <Filter>Text</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Text\Grammar.h">
+      <Filter>Text</Filter>
+    </CustomBuild>
     <CustomBuild Include="fbuild.bff">
     </CustomBuild>
-    <CustomBuild Include="Grammar.cpp">
-    </CustomBuild>
-    <CustomBuild Include="Grammar.h">
+    <CustomBuild Include="ISerializer.h">
     </CustomBuild>
     <CustomBuild Include="Serialize.cpp">
     </CustomBuild>
@@ -104,6 +108,11 @@
   <ItemGroup>
     <Filter Include="Parser">
       <UniqueIdentifier>{281ec645-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Text">
+      <UniqueIdentifier>{9bb908f9-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

@@ -52,6 +52,7 @@
     <CustomBuild Include="Allocator\Malloc.cpp" />
     <CustomBuild Include="Allocator\Malloc.h" />
     <CustomBuild Include="Allocator\Mallocator.h" />
+    <CustomBuild Include="Allocator\New.h" />
     <CustomBuild Include="Allocator\PoolAllocator-impl.h" />
     <CustomBuild Include="Allocator\PoolAllocator.h" />
     <CustomBuild Include="Allocator\StackAllocator.h" />
@@ -294,6 +295,7 @@
     <CustomBuild Include="RTTI\RTTIMacros.h" />
     <CustomBuild Include="RTTI\RTTIProperties.cpp" />
     <CustomBuild Include="RTTI\RTTIProperties.h" />
+    <CustomBuild Include="RTTI\RTTI_fwd.h" />
     <CustomBuild Include="Thread\Task\Task.cpp" />
     <CustomBuild Include="Thread\Task\Task.h" />
     <CustomBuild Include="Thread\Task\TaskCompletionPort.cpp" />

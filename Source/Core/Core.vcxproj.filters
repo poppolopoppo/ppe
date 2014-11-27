@@ -40,6 +40,9 @@
     <CustomBuild Include="Allocator\Mallocator.h">
       <Filter>Allocator</Filter>
     </CustomBuild>
+    <CustomBuild Include="Allocator\New.h">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
     <CustomBuild Include="Allocator\PoolAllocator-impl.h">
       <Filter>Allocator</Filter>
     </CustomBuild>
@@ -764,6 +767,9 @@
       <Filter>RTTI</Filter>
     </CustomBuild>
     <CustomBuild Include="RTTI\RTTIProperties.h">
+      <Filter>RTTI</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTTI\RTTI_fwd.h">
       <Filter>RTTI</Filter>
     </CustomBuild>
     <CustomBuild Include="Thread\Task\Task.cpp">

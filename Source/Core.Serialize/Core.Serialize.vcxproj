@@ -65,9 +65,10 @@
     <CustomBuild Include="Parser\ParseResult.h" />
     <CustomBuild Include="Parser\ParseStatement.cpp" />
     <CustomBuild Include="Parser\ParseStatement.h" />
+    <CustomBuild Include="Text\Grammar.cpp" />
+    <CustomBuild Include="Text\Grammar.h" />
     <CustomBuild Include="fbuild.bff" />
-    <CustomBuild Include="Grammar.cpp" />
-    <CustomBuild Include="Grammar.h" />
+    <CustomBuild Include="ISerializer.h" />
     <CustomBuild Include="Serialize.cpp" />
     <CustomBuild Include="Serialize.h" />
     <CustomBuild Include="stdafx.cpp" />
