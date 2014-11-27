@@ -112,6 +112,35 @@
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#define CORE_ENABLE_EXCEPTIONS
+//----------------------------------------------------------------------------
+#ifdef CORE_ENABLE_EXCEPTIONS
+#    define CORE_THROW()                throw ()
+#    define CORE_THROW_IT(_EX)          throw _EX
+#    define CORE_THROW_VOID()           throw
+#    define CORE_TRY                    try
+#    define CORE_CATCH_BLOCK(_CODE)     _CODE
+#    define CORE_CATCH(_SPEC)           catch(_SPEC)
+#else
+#    define CORE_THROW()
+#    define CORE_THROW_IT(_EX)          CORE_ABORT(STRINGIZE(_EX))
+#    define CORE_THROW_VOID()           CORE_ABORT("throw")
+#    define CORE_TRY                    if (true)
+#    define CORE_CATCH_BLOCK(CODE)
+#    define CORE_CATCH(spec)            if (false)
+#endif
+//----------------------------------------------------------------------------
+#ifdef CPP_VISUALSTUDIO
+#   define CORE_THROW_SPECIFIER(_Type)  _THROW1(_Type)
+#   define CORE_RETURN_NOT_NULL         _Ret_notnull_ _Post_writable_byte_size_(size)
+#   define CORE_RETURN_MAYBE_NULL       _Ret_maybenull_ _Post_writable_byte_size_(size)
+#else
+#   define CORE_THROW_SPECIFIER(_Type) 
+#   define CORE_RETURN_NOT_NULL
+#endif
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 typedef uint8_t     u8;
 typedef uint16_t    u16;
 typedef uint32_t    u32;
