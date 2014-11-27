@@ -27,7 +27,7 @@ FWD_REFPTR(MetaObject);
 //----------------------------------------------------------------------------
 typedef uint64_t MetaTypeId;
 //----------------------------------------------------------------------------
-enum class MetaTypeFlags : uint32_t {
+enum class MetaTypeFlags : u32 {
     Scalar      = 0,
     Vector      = 1,
     Pair        = 2,
