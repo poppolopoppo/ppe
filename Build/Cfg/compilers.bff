@@ -8,11 +8,7 @@
 ;-------------------------------------------------------------------------------
 ; Windows Platform
 ;-------------------------------------------------------------------------------
-.FBuildBin          = 'Build\FBuild.exe'
-.VSBasePath         = 'D:/Program Files (x86)/Microsoft Visual Studio 12.0'
-.WindowsSDKBasePath = 'C:/Program Files (x86)/Windows Kits/8.1'
-.ClangBasePath      = 'D:/Program Files (x86)/LLVM'
-.DirectX11SDKPath   = 'C:/Program Files (x86)/Microsoft DirectX SDK (June 2010)'
+#include "../local_config.bff"
 
 ;-------------------------------------------------------------------------------
 ; Settings
