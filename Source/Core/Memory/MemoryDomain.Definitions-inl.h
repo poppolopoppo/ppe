@@ -27,6 +27,7 @@ MEMORY_DOMAIN_IMPL(Serialize,               Core)
 MEMORY_DOMAIN_IMPL(Grammar,                 Serialize)
 MEMORY_DOMAIN_IMPL(Lexer,                   Serialize)
 MEMORY_DOMAIN_IMPL(Parser,                  Serialize)
+MEMORY_DOMAIN_IMPL(Serializer,              Serialize)
 MEMORY_DOMAIN_IMPL(Transaction,             Serialize)
 //------------------------------------------------------------------------------
 MEMORY_DOMAIN_IMPL(Graphics,                Core)

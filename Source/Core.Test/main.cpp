@@ -7,6 +7,7 @@
 #include "Core/Memory/UniquePtr.h"
 
 #include "Core.Application/ApplicationWindow.h"
+#include "Core.Serialize/Serialize.h"
 #include "Core.Engine/Engine.h"
 #include "Core.Graphics/Graphics.h"
 
@@ -73,7 +74,8 @@ template <typename _Application>
 static int Bootstrap(void *applicationHandle, int nShowCmd, int argc, const wchar_t**argv) {
     using namespace Core;
 
-    CoreStartup startup{ applicationHandle, nShowCmd, size_t(argc), argv };
+    Core::CoreStartup startupCore{ applicationHandle, nShowCmd, size_t(argc), argv };
+    Serialize::SerializeStartup startupSerialize;
     Graphics::GraphicsStartup startupGraphics;
     Engine::EngineStartup startupEngine;
 
