@@ -85,7 +85,15 @@
     <CustomBuild Include="Text\Grammar.h">
       <Filter>Text</Filter>
     </CustomBuild>
+    <CustomBuild Include="Text\TextSerializer.cpp">
+      <Filter>Text</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Text\TextSerializer.h">
+      <Filter>Text</Filter>
+    </CustomBuild>
     <CustomBuild Include="fbuild.bff">
+    </CustomBuild>
+    <CustomBuild Include="ISerializer.cpp">
     </CustomBuild>
     <CustomBuild Include="ISerializer.h">
     </CustomBuild>
