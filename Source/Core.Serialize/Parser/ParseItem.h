@@ -24,6 +24,11 @@ public:
     virtual void Invoke(ParseContext *context) const = 0;
     virtual String ToString() const { return String(); }
 
+    template <typename _ParseItemImpl>
+    const _ParseItemImpl *As() const {
+        return dynamic_cast<const _ParseItemImpl *>(this); 
+    }
+
 private:
     Lexer::Location _site;
 };
