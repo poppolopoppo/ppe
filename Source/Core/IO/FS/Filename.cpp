@@ -130,6 +130,27 @@ String Filename::ToString() const {
     return String(cstr);
 }
 //----------------------------------------------------------------------------
+WString Filename::ToWString() const {
+    wchar_t wcstr[1024];
+    {
+        WOCStrStream oss(wcstr);
+        oss << *this;
+    }
+    return WString(wcstr);
+}
+//----------------------------------------------------------------------------
+size_t Filename::ToCStr(char *dst, size_t capacity) const {
+    OCStrStream oss(dst, capacity);
+    oss << *this;
+    return oss.tellp();
+}
+//----------------------------------------------------------------------------
+size_t Filename::ToWCStr(wchar_t *dst, size_t capacity) const {
+    WOCStrStream oss(dst, capacity);
+    oss << *this;
+    return oss.tellp();
+}
+//----------------------------------------------------------------------------
 void Filename::Swap(Filename& other) {
     swap(other._dirpath, _dirpath);
     swap(other._basename, _basename);

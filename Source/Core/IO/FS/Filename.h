@@ -57,7 +57,17 @@ public:
     bool Less(const Filename& other) const;
 
     size_t HashValue() const;
+
     String ToString() const;
+    WString ToWString() const;
+
+    size_t ToCStr(char *dst, size_t capacity) const;
+    size_t ToWCStr(wchar_t *dst, size_t capacity) const;
+
+    template <size_t _Dim>
+    size_t ToCStr(char (&dst)[_Dim]) const { return ToCStr(dst, _Dim); }
+    template <size_t _Dim>
+    size_t ToWCStr(wchar_t (&dst)[_Dim]) const { return ToWCStr(dst, _Dim); }
 
 private:
     Core::Dirpath _dirpath;
