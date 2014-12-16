@@ -340,7 +340,8 @@ void TestVirtualFileSystem_() {
 
     {
         auto oss = vfs.OpenReadable(L"Process:/tmp/1/2/test.txt");
-        auto read = oss->ReadAll<wchar_t>();
+        RAWSTORAGE(FileSystem, wchar_t) read;
+        oss->ReadAll(read);
         std::cout << read.Pointer() << std::endl;
     }
 
@@ -546,18 +547,17 @@ static void TestLexerParser_() {
         oss->WriteArray("(2 + 3 * 2) + 3 + 0xFF 3 * 8 055 / -7");
     }
 
-    Serialize::Grammar grammar;
-
     {
-        auto iss = vfs.OpenReadable(inputFilename);
+        RAWSTORAGE(Serializer, char) storage;
+        vfs.ReadAll(inputFilename, storage);
 
-        Lexer::Lexer lexer(iss.get(), nativeFilename.c_str());
+        Lexer::Lexer lexer(storage.MakeConstView(), nativeFilename.c_str());
         Parser::ParseList input(&lexer);
 
         Parser::ParseContext globalContext(nullptr);
 
         try {
-            Parser::PCParseStatement statement = grammar.Parse(input);
+            Parser::PCParseStatement statement = Serialize::Grammar_Parse(input);
 
             Parser::ParseContext localContext(globalContext.Transaction(), &globalContext);
             statement->Invoke(&localContext);
@@ -599,10 +599,10 @@ static void TestLexerParser_() {
             break;
 
         try {
-            Lexer::Lexer lexer(StringSlice(&line[0], Length(line)));
+            Lexer::Lexer lexer(StringSlice(&line[0], Length(line)), "@in_memory");
             Parser::ParseList input(&lexer);
 
-            Parser::PCParseItem item = grammar.Parse(input);
+            Parser::PCParseItem item = Serialize::Grammar_Parse(input);
             Assert(item);
 
             item->Invoke(&globalContext);

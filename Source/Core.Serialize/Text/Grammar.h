@@ -5,6 +5,7 @@
 #include "Core/Container/Vector.h"
 #include "Core/Memory/RefPtr.h"
 #include "Core/Memory/UniquePtr.h"
+#include "Core/Meta/Singleton.h"
 
 namespace Core { namespace Parser {
     FWD_REFPTR(ParseItem);
@@ -16,21 +17,11 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class GrammarImpl;
+void Grammar_Create();
 //----------------------------------------------------------------------------
-class Grammar {
-public:
-    Grammar();
-    ~Grammar();
-
-    Grammar(const Grammar&) = delete;
-    Grammar& operator =(const Grammar&) = delete;
-
-    Parser::PCParseItem Parse(Parser::ParseList& input) const;
-
-private:
-    UniquePtr<GrammarImpl> _impl;
-};
+void Grammar_Destroy();
+//----------------------------------------------------------------------------
+Parser::PCParseItem Grammar_Parse(Parser::ParseList& input);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

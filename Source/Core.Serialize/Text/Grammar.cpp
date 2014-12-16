@@ -11,9 +11,6 @@
 #include "Core/RTTI/Object/MetaObject.h"
 #include "Core/RTTI/Type/MetaTypePromote.h"
 
-//#pragma warning( disable : 4702 ) // warning C4702: impossible d'atteindre le code
-// due to compiler optimizations in release mode
-
 namespace Core {
 namespace Serialize {
 //----------------------------------------------------------------------------
@@ -1041,14 +1038,22 @@ Parser::PCParseItem GrammarImpl::Parse(Parser::ParseList& input) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Grammar::Grammar()
-:   _impl(new GrammarImpl()) {}
+static GrammarImpl *sGrammarImpl = nullptr;
 //----------------------------------------------------------------------------
-Grammar::~Grammar() {}
+void Grammar_Create() {
+    AssertRelease(nullptr == sGrammarImpl);
+    sGrammarImpl = new GrammarImpl();
+}
 //----------------------------------------------------------------------------
-Parser::PCParseItem Grammar::Parse(Parser::ParseList& input) const {
-    Assert(_impl);
-    return _impl->Parse(input);
+void Grammar_Destroy() {
+    AssertRelease(nullptr != sGrammarImpl);
+    delete sGrammarImpl;
+    sGrammarImpl = nullptr;
+}
+//----------------------------------------------------------------------------
+Parser::PCParseItem Grammar_Parse(Parser::ParseList& input) {
+    Assert(sGrammarImpl);
+    return sGrammarImpl->Parse(input);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
