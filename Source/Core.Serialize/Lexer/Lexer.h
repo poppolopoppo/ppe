@@ -28,8 +28,7 @@ private:
 //----------------------------------------------------------------------------
 class Lexer {
 public:
-    explicit Lexer(const StringSlice& input);
-    Lexer(IVirtualFileSystemIStream *stream, const char *sourceFileName);
+    Lexer(const StringSlice& input, const char *sourceFileName);
     ~Lexer();
 
     const Match *Peek();

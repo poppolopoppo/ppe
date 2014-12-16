@@ -14,15 +14,7 @@ namespace Lexer {
 //----------------------------------------------------------------------------
 class LookAheadReader {
 public:
-    enum : size_t {
-        BufferCapacity = 4096,
-        BufferMask = (BufferCapacity - 1),
-        HalfBufferCapacity = (BufferCapacity / 2),
-        MaxWordLength = HalfBufferCapacity
-    };
-
     LookAheadReader(const StringSlice& input, const char *sourceFileName);
-    LookAheadReader(IVirtualFileSystemIStream *stream, const char *sourceFileName);
     ~LookAheadReader();
 
     const char *SourceFileName() const { return _sourceFileName; }
@@ -31,7 +23,7 @@ public:
 
     Location SourceSite() const { return Location(_sourceFileName, _sourceLine, _sourceColumn); }
 
-    bool Eof() const { return _eof; }
+    bool Eof() const { return _buffer.SizeInBytes() == _bufferOffset; }
 
     void SeekForward(size_t offset);
     char Read();
@@ -39,19 +31,12 @@ public:
     void EatWhiteSpaces();
 
 private:
-    void RefillBuffer_(size_t index, size_t length);
-
-    IVirtualFileSystemIStream *_stream;
-
     const char *_sourceFileName;
     size_t _sourceLine;
     size_t _sourceColumn;
 
-    char _buffer[BufferCapacity];
+    StringSlice _buffer;
     size_t _bufferOffset;
-    size_t _bufferSize;
-
-    bool _eof;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

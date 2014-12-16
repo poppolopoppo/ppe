@@ -394,18 +394,11 @@ static bool Lex_Identifier_(LookAheadReader& reader, const Symbol **psymbol, Str
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Lexer::Lexer(const StringSlice& input)
-:   _sourceFileName("@memory")
+Lexer::Lexer(const StringSlice& input, const char *sourceFileName)
+:   _sourceFileName(sourceFileName)
 ,   _reader(input, _sourceFileName.c_str())
 ,   _peeking(false) {
-    _lexing.reserve(LookAheadReader::MaxWordLength);
-}
-//----------------------------------------------------------------------------
-Lexer::Lexer(IVirtualFileSystemIStream *stream, const char *sourceFileName)
-:   _sourceFileName(sourceFileName)
-,   _reader(stream, _sourceFileName.c_str())
-,   _peeking(false) {
-    _lexing.reserve(LookAheadReader::MaxWordLength);
+    _lexing.reserve(512);
 }
 //----------------------------------------------------------------------------
 Lexer::~Lexer() {}
