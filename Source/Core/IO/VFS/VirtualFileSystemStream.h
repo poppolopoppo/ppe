@@ -13,7 +13,18 @@ class RawStorage;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class IVirtualFileSystemIStream {
+class IVirtualFileSystemBaseStream {
+protected:
+    IVirtualFileSystemBaseStream() {}
+public:
+    virtual ~IVirtualFileSystemBaseStream() {}
+
+    virtual const Filename& SourceFilename() const = 0;
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+class IVirtualFileSystemIStream : public IVirtualFileSystemBaseStream {
 protected:
     IVirtualFileSystemIStream() {}
 public:
@@ -53,7 +64,7 @@ public:
     bool SeekI_FirstOf(char ch);
 };
 //----------------------------------------------------------------------------
-class IVirtualFileSystemOStream {
+class IVirtualFileSystemOStream : public IVirtualFileSystemBaseStream {
 protected:
     IVirtualFileSystemOStream() {}
 public:
