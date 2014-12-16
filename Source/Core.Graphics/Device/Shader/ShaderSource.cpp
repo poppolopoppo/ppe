@@ -118,7 +118,7 @@ ShaderSource *ShaderSource::LoadFromFile(   const Core::Filename& filename,
     Assert(!filename.empty());
 
     RAWSTORAGE_THREAD_LOCAL(Shader, char) sourceCode;
-    VirtualFileSystem::Instance().ReadAll_DiscardData(filename, sourceCode);
+    VirtualFileSystem::Instance().ReadAll(filename, sourceCode);
 
     ASSOCIATIVE_VECTOR_THREAD_LOCAL(Shader, String, String) sourceDefines(defines.size());
     sourceDefines.insert(defines.begin(), defines.end());

@@ -7,15 +7,19 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void VirtualFileSystemRoot::ReadAll_DiscardData(const Filename& filename, RawStorage<T, _Allocator>& storage, AccessPolicy::Mode policy/* = AccessPolicy::None */) {
-    const UniquePtr<IVirtualFileSystemIStream> istream = OpenReadable(filename, static_cast<AccessPolicy::Mode>(policy|AccessPolicy::Ate|AccessPolicy::Binary));
-
-    const std::streamsize sizeInBytes = istream->TellI();
-    Assert((sizeInBytes % sizeof(T)) == 0);
-    storage.Resize_DiscardData(checked_cast<size_t>(sizeInBytes / sizeof(T)));
-
-    istream->SeekI(0);
-    istream->Read(storage.Pointer(), sizeInBytes);
+void VirtualFileSystemRoot::ReadAll(const Filename& filename, RawStorage<T, _Allocator>& storage, AccessPolicy::Mode policy/* = AccessPolicy::None */) {
+    policy = static_cast<AccessPolicy::Mode>(policy|AccessPolicy::Binary);
+    const UniquePtr<IVirtualFileSystemIStream> istream = OpenReadable(filename, policy);
+    Assert(istream);
+    istream->ReadAll(storage);
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void VirtualFileSystemRoot::WriteAll(const Filename& filename, const RawStorage<T, _Allocator>& storage, AccessPolicy::Mode policy /* = AccessPolicy::None */) {
+    policy = static_cast<AccessPolicy::Mode>(policy|AccessPolicy::Binary);
+    const UniquePtr<IVirtualFileSystemOStream> ostream = OpenWritable(filename, policy);
+    Assert(ostream);
+    ostream->Write(storage.Pointer(), storage.SizeInBytes());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

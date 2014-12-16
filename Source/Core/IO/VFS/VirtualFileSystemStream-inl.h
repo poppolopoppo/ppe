@@ -16,17 +16,16 @@ bool IVirtualFileSystemIStream::ReadArray(T(&staticArray)[_Dim]) {
     return (_Dim * sizeof(T)) == ReadSome(staticArray, _Dim * sizeof(T));
 }
 //----------------------------------------------------------------------------
-template <typename T>
-UniqueArray<T> IVirtualFileSystemIStream::ReadAll() {
+template <typename T, typename _Allocator>
+void IVirtualFileSystemIStream::ReadAll(RawStorage<T, _Allocator>& dst) {
     const std::streamsize s = Size();
 
     Assert(0 == (s % sizeof(T)) );
-    auto buffer = NewArray<T>(checked_cast<size_t>(s / sizeof(T)));
+    dst.Resize_DiscardData(s / sizeof(T));
+    Assert(dst.SizeInBytes() == u64(s));
 
     SeekI(0);
-    Read(buffer.begin(), s);
-
-    return std::move(buffer);
+    Read(dst.Pointer(), s);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

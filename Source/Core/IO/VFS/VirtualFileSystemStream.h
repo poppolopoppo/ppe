@@ -7,6 +7,9 @@
 #include <iosfwd>
 
 namespace Core {
+class Filename;
+template <typename T, typename _Allocator>
+class RawStorage;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -36,8 +39,8 @@ public:
     template <typename T, size_t _Dim>
     bool ReadArray(T(&staticArray)[_Dim]);
 
-    template <typename T>
-    UniqueArray<T> ReadAll();
+    template <typename T, typename _Allocator>
+    void ReadAll(RawStorage<T, _Allocator>& dst);
 
     std::streamsize ReadLine(char *storage, std::streamsize capacity);
     std::streamsize ReadWord(char *storage, std::streamsize capacity);
