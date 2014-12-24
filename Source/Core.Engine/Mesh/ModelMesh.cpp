@@ -53,6 +53,8 @@ ModelMesh::~ModelMesh() {
 void ModelMesh::Create(Graphics::IDeviceAPIEncapsulator *device) {
     Assert(!_indexBuffer);
     Assert(!_vertexBuffer);
+    Assert(_indices.size());
+    Assert(_vertices.size());
 
     _indexBuffer = new Graphics::IndexBuffer(_indexType, _indexCount, Graphics::BufferMode::None, Graphics::BufferUsage::Default);
     if (Graphics::IndexElementSize::ThirtyTwoBits == _indexType) {
@@ -76,6 +78,11 @@ void ModelMesh::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
 
     RemoveRef_AssertReachZero(_indexBuffer);
     RemoveRef_AssertReachZero(_vertexBuffer);
+}
+//----------------------------------------------------------------------------
+void ModelMesh::ReleaseRawData() {
+    _indices.Clear_ReleaseMemory();
+    _vertices.Clear_ReleaseMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

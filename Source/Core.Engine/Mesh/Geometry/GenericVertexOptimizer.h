@@ -17,6 +17,8 @@ class GenericVertex;
 //----------------------------------------------------------------------------
 // http://fgiesen.wordpress.com/2013/12/14/simple-lossless-index-buffer-compression/
 //----------------------------------------------------------------------------
+void MergeDuplicateVertices(GenericVertex& vertices, const MemoryView<u32>& indices);
+//----------------------------------------------------------------------------
 void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount);
 //----------------------------------------------------------------------------
 void OptimizeVerticesOrder(GenericVertex& vertices, const MemoryView<u32>& indices);

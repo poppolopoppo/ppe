@@ -51,13 +51,16 @@ public:
     void SetDestination(const MemoryView<u8>& data);
     void SetDestination(void *dst, size_t sizeInBytes);
 
+    size_t VertexCountWritten() const;
     size_t VertexCountRemaining() const;
     void *CurrentVertex() const;
 
     void SeekVertex(size_t vertexIndex);
     bool NextVertex(); // advance to next offset, return if storage available
+    void PopVertex(); // delete last vertex
 
-    void ClearSubParts() const;
+    void ResetCurrentVertex() const;
+    void CopyVertex(size_t dst, size_t src) const;
 
     SubPart Position2f(size_t index) const;
     SubPart Position3f(size_t index) const;

@@ -248,6 +248,13 @@ void GenericVertex::SetDestination(void *dst, size_t sizeInBytes) {
     SetDestination(MemoryView<u8>(reinterpret_cast<u8 *>(dst), sizeInBytes));
 }
 //----------------------------------------------------------------------------
+size_t GenericVertex::VertexCountWritten() const { 
+    const size_t vertexSizeInBytes = _vertexDeclaration->SizeInBytes();
+    Assert(0 == ((_destination.SizeInBytes() - _vertexOffset) % vertexSizeInBytes) );
+
+    return 1 + _vertexOffset / vertexSizeInBytes;
+}
+//----------------------------------------------------------------------------
 size_t GenericVertex::VertexCountRemaining() const {
     const size_t vertexSizeInBytes = _vertexDeclaration->SizeInBytes();
     Assert(0 == ((_destination.SizeInBytes() - _vertexOffset) % vertexSizeInBytes) );
@@ -278,13 +285,26 @@ bool GenericVertex::NextVertex() {
     return _vertexOffset < _destination.SizeInBytes();
 }
 //----------------------------------------------------------------------------
-void GenericVertex::ClearSubParts() const {
+void GenericVertex::ResetCurrentVertex() const {
     void *const currentVertex = CurrentVertex();
 
     for (const Pair<Graphics::VertexSubPartKey, Graphics::VertexSubPartPOD>& it : _vertexDeclaration->SubParts()) {
         const Graphics::AbstractVertexSubPart *subPart = reinterpret_cast<const Graphics::AbstractVertexSubPart *>(&it.second);
         subPart->Clear(currentVertex);
     }
+}
+//----------------------------------------------------------------------------
+void GenericVertex::CopyVertex(size_t dst, size_t src) const {
+    if (dst == src)
+        return;
+
+    Assert(VertexCountWritten() > dst);
+    Assert(VertexCountWritten() > src);
+
+    const size_t vertexSizeInBytes = _vertexDeclaration->SizeInBytes();
+    memcpy( _destination.Pointer() + dst * vertexSizeInBytes, 
+            _destination.Pointer() + src * vertexSizeInBytes,
+            vertexSizeInBytes );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

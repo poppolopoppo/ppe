@@ -53,7 +53,7 @@ size_t hash_value_type(const T& value, typename std::enable_if<(sizeof(T) > size
 }
 //----------------------------------------------------------------------------
 template <typename _It>
-size_t hash_value_seq(_It&& begin, _It&& end) {
+size_t hash_value_seq(const _It& begin, const _It& end) {
     using Core::hash_value;
 #ifdef ARCH_X64
     const size_t _FNV_offset_basis = 14695981039346656037ULL;
@@ -63,8 +63,8 @@ size_t hash_value_seq(_It&& begin, _It&& end) {
     const size_t _FNV_prime = 16777619U;
 #endif
     size_t h = 0;
-    for (; begin != end; ++begin)
-        h = ((_FNV_offset_basis + h) ^ hash_value(*begin)) * _FNV_prime;
+    for (_It it = begin; it != end; ++it)
+        h = ((_FNV_offset_basis + h) ^ hash_value(*it)) * _FNV_prime;
 #ifdef ARCH_X64
     static_assert(sizeof(size_t) == 8, "This code is for 64-bit size_t.");
     h ^= h >> 32;

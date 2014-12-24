@@ -4,6 +4,7 @@
 
 #include "GenericVertex.h"
 
+#include "Core/Container/Hash.h"
 #include "Core.Graphics/Device/Geometry/VertexDeclaration.h"
 
 namespace Core {
@@ -36,6 +37,34 @@ struct VertexCache {
 }//!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+void MergeDuplicateVertices(GenericVertex& vertices, const MemoryView<u32>& indices) {
+    Assert(indices.size() >= 3);
+    Assert(0 == (indices.size() % 3));
+
+    const size_t vertexCount = vertices.VertexCountWritten();
+    if (0 == vertexCount)
+        return;
+
+    const size_t vertexSizeInBytes = vertices.VertexDeclaration()->SizeInBytes();
+    const size_t vertexSizeInU32 = vertexSizeInBytes / sizeof(u32);
+    Assert(0 == vertexSizeInBytes % sizeof(u32));
+
+    u8 *const vertexBegin = vertices.Destination().Pointer();
+    u8 *const vertexEnd = vertexBegin + vertexCount * vertexSizeInBytes;
+
+    const auto vertexHashes = MALLOCA_VIEW(size_t, vertexCount);
+    for (size_t i = 0; i < vertexCount; ++i) {
+        const u32 *vertexPtrU32 = reinterpret_cast<const u32 *>(vertexBegin + i * vertexSizeInBytes);
+        vertexHashes[i] = hash_value_seq(vertexPtrU32, vertexPtrU32 + vertexSizeInU32);
+    }
+
+    const auto vertexReindexation = MALLOCA_VIEW(u32, vertexCount);
+    for (size_t i = 0; i < vertexCount; ++i)
+        vertexReindexation[i] = checked_cast<u32>(i);
+
+    AssertNotImplemented(); // radix sort reindexation
+}
 //----------------------------------------------------------------------------
 void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
     Assert(indices.size() >= 3);
@@ -285,7 +314,7 @@ void OptimizeVerticesOrder(GenericVertex& vertices, const MemoryView<u32>& indic
 }
 //----------------------------------------------------------------------------
 void OptimizeIndicesAndVerticesOrder(GenericVertex& vertices, const MemoryView<u32>& indices) {
-    OptimizeIndicesOrder(indices, vertices.VertexCountRemaining());
+    OptimizeIndicesOrder(indices, vertices.VertexCountWritten());
     OptimizeVerticesOrder(vertices, indices);
 }
 //----------------------------------------------------------------------------

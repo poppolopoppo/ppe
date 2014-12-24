@@ -58,6 +58,8 @@ public:
     void Create(Graphics::IDeviceAPIEncapsulator *device);
     void Destroy(Graphics::IDeviceAPIEncapsulator *device);
 
+    void ReleaseRawData();
+
     SINGLETON_POOL_ALLOCATED_DECL(ModelMesh);
 
 private:

@@ -38,7 +38,7 @@ template <typename T>
 size_t hash_value_type(const T& value, typename std::enable_if<(sizeof(T) > sizeof(size_t)) && (sizeof(T) <= 2 * sizeof(size_t))>::type* = 0);
 //----------------------------------------------------------------------------
 template <typename _It>
-size_t hash_value_seq(_It&& begin, _It&& end);
+size_t hash_value_seq(const _It& begin, const _It& end);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
