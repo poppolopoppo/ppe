@@ -7,6 +7,8 @@
 #include "Core/Memory/MemoryView.h"
 #include "Core/Memory/RefPtr.h"
 
+#include "Core.Engine/Mesh/MeshName.h"
+
 namespace Core {
 namespace Graphics {
 class IDeviceAPIEncapsulator;
@@ -16,27 +18,28 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MeshName;
+FWD_REFPTR(ModelBone);
 FWD_REFPTR(ModelMesh);
-FWD_REFPTR(ModelSubPart);
 //----------------------------------------------------------------------------
 FWD_REFPTR(Model);
 class Model : public RefCountable {
 public:
-    Model(  const AABB3f& boundingBox,
-            VECTOR(Mesh, PModelMesh)&& meshes,
-            VECTOR(Mesh, PModelSubPart)&& subParts );
+    Model(  const MeshName& name,
+            const AABB3f& boundingBox,
+            VECTOR(Mesh, PModelBone)&& bones,
+            VECTOR(Mesh, PModelMesh)&& meshes );
     ~Model();
 
     Model(const Model& ) = delete;
     Model& operator =(const Model& ) = delete;
 
+    const MeshName& Name() const { return _name; }
     const AABB3f& BoundingBox() const { return _boundingBox; }
+    const VECTOR(Mesh, PModelBone)& Bones() const { return _bones; }
     const VECTOR(Mesh, PModelMesh)& Meshes() const { return _meshes; }
-    const VECTOR(Mesh, PModelSubPart)& SubParts() const { return _subParts; }
 
-    bool TryGetSubPart(const ModelSubPart **psubpart, const MeshName& name) const;
-    const ModelSubPart *SubPart(const MeshName& name) const;
+    bool TryGetBone(const ModelBone **pbone, const MeshName& name) const;
+    const ModelBone *Bone(const MeshName& name) const;
 
     void Create(Graphics::IDeviceAPIEncapsulator *device);
     void Destroy(Graphics::IDeviceAPIEncapsulator *device);
@@ -44,9 +47,10 @@ public:
     SINGLETON_POOL_ALLOCATED_DECL(Model);
 
 private:
+    MeshName _name;
     AABB3f _boundingBox;
+    VECTOR(Mesh, PModelBone) _bones;
     VECTOR(Mesh, PModelMesh) _meshes;
-    VECTOR(Mesh, PModelSubPart) _subParts;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

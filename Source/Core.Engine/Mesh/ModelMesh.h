@@ -21,26 +21,24 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FWD_REFPTR(Material);
 typedef RAWSTORAGE_ALIGNED(Mesh, u8, 16) MeshRawData;
+FWD_REFPTR(ModelMeshSubPart);
 //----------------------------------------------------------------------------
 FWD_REFPTR(ModelMesh);
 class ModelMesh : public RefCountable {
 public:
-    ModelMesh(  Engine::Material *material,
-                u32 indexCount,
+    ModelMesh(  u32 indexCount,
                 u32 vertexCount,
                 Graphics::PrimitiveType primitiveType,
                 Graphics::IndexElementSize indexType,
                 const Graphics::VertexDeclaration *vertexDeclaration,
                 MeshRawData&& indices,
-                MeshRawData&& vertices );
+                MeshRawData&& vertices,
+                VECTOR(Mesh, PModelMeshSubPart)&& subParts );
     ~ModelMesh();
 
     ModelMesh(const ModelMesh& ) = delete;
     ModelMesh& operator =(const ModelMesh& ) = delete;
-
-    const Engine::Material *Material() const { return _material.get(); }
 
     u32 IndexCount() const { return _indexCount; }
     u32 VertexCount() const { return _vertexCount; }
@@ -55,16 +53,16 @@ public:
     const Graphics::PIndexBuffer& IndexBuffer() const { return _indexBuffer; }
     const Graphics::PVertexBuffer& VertexBuffer() const { return _vertexBuffer; }
 
+    const VECTOR(Mesh, PModelMeshSubPart)& SubParts() const { return _subParts; }
+
     void Create(Graphics::IDeviceAPIEncapsulator *device);
     void Destroy(Graphics::IDeviceAPIEncapsulator *device);
 
-    void ReleaseRawData();
+    void ReleaseCpuMemory();
 
     SINGLETON_POOL_ALLOCATED_DECL(ModelMesh);
 
 private:
-    PMaterial _material;
-
     u32 _indexCount;
     u32 _vertexCount;
 
@@ -77,6 +75,8 @@ private:
 
     Graphics::PIndexBuffer _indexBuffer;
     Graphics::PVertexBuffer _vertexBuffer;
+
+    VECTOR(Mesh, PModelMeshSubPart) _subParts;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

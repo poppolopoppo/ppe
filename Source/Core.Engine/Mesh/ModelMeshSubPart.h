@@ -11,35 +11,42 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FWD_REFPTR(ModelMesh);
+FWD_REFPTR(Material);
 //----------------------------------------------------------------------------
 FWD_REFPTR(ModelMeshSubPart);
 class ModelMeshSubPart : public RefCountable {
 public:
-    ModelMeshSubPart(   u32 baseVertex,
+    ModelMeshSubPart(   const Engine::Material *material,
+                        u32 boneIndex,
+                        u32 baseVertex,
                         u32 firstIndex,
                         u32 indexCount,
-                        const AABB3f& boundingBox,
-                        const Engine::ModelMesh *modelMesh );
+                        const AABB3f& boundingBox );
     ~ModelMeshSubPart();
 
     ModelMeshSubPart(const ModelMeshSubPart& ) = delete;
     ModelMeshSubPart& operator =(const ModelMeshSubPart& ) = delete;
 
+    const PCMaterial& Material() const { return _material; }
+
+    u32 BoneIndex() const { return _boneIndex; }
     u32 BaseVertex() const { return _baseVertex; }
     u32 FirstIndex() const { return _firstIndex; }
     u32 IndexCount() const { return _indexCount; }
+
     const AABB3f& BoundingBox() const { return _boundingBox; }
-    const Engine::ModelMesh *ModelMesh() const { return _modelMesh.get(); }
 
     SINGLETON_POOL_ALLOCATED_DECL(ModelMeshSubPart);
 
 private:
+    PCMaterial _material;
+
+    u32 _boneIndex;
     u32 _baseVertex;
     u32 _firstIndex;
     u32 _indexCount;
+
     AABB3f _boundingBox;
-    SCModelMesh _modelMesh;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

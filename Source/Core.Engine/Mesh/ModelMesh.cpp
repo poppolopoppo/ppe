@@ -2,7 +2,7 @@
 
 #include "ModelMesh.h"
 
-#include "Material/Material.h"
+#include "ModelMeshSubPart.h"
 
 #include "Core.Graphics/Device/Geometry/IndexBuffer.h"
 #include "Core.Graphics/Device/Geometry/PrimitiveType.h"
@@ -19,23 +19,22 @@ namespace Engine {
 SINGLETON_POOL_ALLOCATED_DEF(ModelMesh, );
 //----------------------------------------------------------------------------
 ModelMesh::ModelMesh(
-    Engine::Material *material,
     u32 indexCount,
     u32 vertexCount,
     Graphics::PrimitiveType primitiveType,
     Graphics::IndexElementSize indexType,
     const Graphics::VertexDeclaration *vertexDeclaration,
     MeshRawData&& indices,
-    MeshRawData&& vertices )
-:   _material(material)
-,   _indexCount(indexCount)
+    MeshRawData&& vertices,
+    VECTOR(Mesh, PModelMeshSubPart)&& subParts )
+:   _indexCount(indexCount)
 ,   _vertexCount(vertexCount)
 ,   _primitiveType(primitiveType)
 ,   _indexType(indexType)
 ,   _vertexDeclaration(vertexDeclaration)
 ,   _indices(std::move(indices))
-,   _vertices(std::move(vertices)) {
-    Assert(material);
+,   _vertices(std::move(vertices))
+,   _subParts(std::move(subParts)) {
     Assert(indexCount > 0);
     Assert(vertexCount > 0);
     Assert(vertexDeclaration);
@@ -80,7 +79,7 @@ void ModelMesh::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
     RemoveRef_AssertReachZero(_vertexBuffer);
 }
 //----------------------------------------------------------------------------
-void ModelMesh::ReleaseRawData() {
+void ModelMesh::ReleaseCpuMemory() {
     _indices.Clear_ReleaseMemory();
     _vertices.Clear_ReleaseMemory();
 }

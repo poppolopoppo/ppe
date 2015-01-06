@@ -1,38 +1,33 @@
 #include "stdafx.h"
 
-#include "ModelSubPart.h"
-
-#include "ModelMeshSubPart.h"
+#include "ModelBone.h"
 
 #include "Core/Allocator/PoolAllocator-impl.h"
+#include "Core/Maths/Transform/ScalarMatrixHelpers.h"
 
 namespace Core {
 namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(ModelSubPart, );
+SINGLETON_POOL_ALLOCATED_DEF(ModelBone, );
 //----------------------------------------------------------------------------
-ModelSubPart::ModelSubPart(
+ModelBone::ModelBone(
     const MeshName& name,
     const MeshName& group,
-    const AABB3f& boundinbBox,
-    VECTOR(Mesh, PModelMeshSubPart)&& meshSubParts )
+    const float4x4& transform,
+    const AABB3f& boundingBox )
 :   _name(name)
 ,   _group(group)
-,   _boundingBox(boundinbBox)
-,   _meshSubParts(std::move(meshSubParts)) {
+,   _transform(transform)
+,   _boundingBox(boundingBox) {
     Assert(!name.empty());
     Assert(!group.empty());
-    Assert(boundinbBox.HasPositiveExtents());
-    Assert(_meshSubParts.size());
-#ifdef WITH_CORE_ASSERT
-    for (const PModelMeshSubPart& p : _meshSubParts)
-        Assert(_boundingBox.Contains(p->BoundingBox()));
-#endif
+    Assert(IsHomogeneous(_transform));
+    Assert(boundingBox.HasPositiveExtents());
 }
 //----------------------------------------------------------------------------
-ModelSubPart::~ModelSubPart() {}
+ModelBone::~ModelBone() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

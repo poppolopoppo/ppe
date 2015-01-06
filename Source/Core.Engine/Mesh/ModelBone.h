@@ -3,9 +3,7 @@
 #include "Core.Engine/Engine.h"
 
 #include "Core/Allocator/PoolAllocator.h"
-#include "Core/Container/Vector.h"
-#include "Core/Maths/Geometry/ScalarBoundingBox.h"
-#include "Core/Memory/MemoryView.h"
+#include "Core/Maths/Transform/ScalarMatrix.h"
 #include "Core/Memory/RefPtr.h"
 
 #include "Core.Engine/Mesh/MeshName.h"
@@ -15,32 +13,30 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FWD_REFPTR(ModelMeshSubPart);
-//----------------------------------------------------------------------------
-FWD_REFPTR(ModelSubPart);
-class ModelSubPart : public RefCountable {
+FWD_REFPTR(ModelBone);
+class ModelBone : public RefCountable {
 public:
-    ModelSubPart(   const MeshName& name,
-                    const MeshName& group,
-                    const AABB3f& boundinbBox,
-                    VECTOR(Mesh, PModelMeshSubPart)&& meshSubParts );
-    ~ModelSubPart();
+    ModelBone(  const MeshName& name,
+                const MeshName& group,
+                const float4x4& transform,
+                const AABB3f& boundingBox );
+    ~ModelBone();
 
-    ModelSubPart(const ModelSubPart& ) = delete;
-    ModelSubPart& operator =(const ModelSubPart& ) = delete;
+    ModelBone(const ModelBone& ) = delete;
+    ModelBone& operator =(const ModelBone& ) = delete;
 
     const MeshName& Name() const { return _name; }
     const MeshName& Group() const { return _group; }
+    const float4x4& Transform() const { return _transform; }
     const AABB3f& BoundingBox() const { return _boundingBox; }
-    const VECTOR(Mesh, PModelMeshSubPart)& MeshSubParts() const { return _meshSubParts; }
 
-    SINGLETON_POOL_ALLOCATED_DECL(ModelSubPart);
+    SINGLETON_POOL_ALLOCATED_DECL(ModelBone);
 
 private:
     MeshName _name;
     MeshName _group;
+    float4x4 _transform;
     AABB3f _boundingBox;
-    VECTOR(Mesh, PModelMeshSubPart) _meshSubParts;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

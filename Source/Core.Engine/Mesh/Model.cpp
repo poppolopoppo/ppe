@@ -2,9 +2,9 @@
 
 #include "Model.h"
 
+#include "ModelBone.h"
 #include "ModelMesh.h"
 #include "ModelMeshSubPart.h"
-#include "ModelSubPart.h"
 
 #include "Core/Allocator/PoolAllocator-impl.h"
 
@@ -16,20 +16,27 @@ namespace Engine {
 SINGLETON_POOL_ALLOCATED_DEF(Model, );
 //----------------------------------------------------------------------------
 Model::Model(
+    const MeshName& name,
     const AABB3f& boundingBox,
-    VECTOR(Mesh, PModelMesh)&& meshes,
-    VECTOR(Mesh, PModelSubPart)&& subParts )
+    VECTOR(Mesh, PModelBone)&& bones,
+    VECTOR(Mesh, PModelMesh)&& meshes )
 :   _boundingBox(boundingBox)
-,   _meshes(std::move(meshes))
-,   _subParts(std::move(subParts)) {
+,   _bones(std::move(bones))
+,   _meshes(std::move(meshes)) {
+    Assert(!name.empty());
     Assert(_boundingBox.HasPositiveExtents());
 #ifdef WITH_CORE_ASSERT
-    for (const PModelSubPart& modelSubPart : subParts) {
-        Assert(_boundingBox.Contains(modelSubPart->BoundingBox()));
-        for (const PModelMeshSubPart& meshSubPart : modelSubPart->MeshSubParts()) {
-            Assert(modelSubPart->BoundingBox().Contains(meshSubPart->BoundingBox()));
-            Assert(meshSubPart->BaseVertex() < meshSubPart->ModelMesh()->VertexCount());
-            Assert(meshSubPart->FirstIndex() + meshSubPart->IndexCount() <= meshSubPart->ModelMesh()->IndexCount());
+    for (const PModelBone& modelBone : _bones) {
+        Assert(modelBone);
+        Assert(_boundingBox.Contains(modelBone->BoundingBox()));
+    }
+    for (const PModelMesh& modelMesh : _meshes) {
+        Assert(modelMesh);
+        for (const PModelMeshSubPart& subPart : modelMesh->SubParts()) {
+            Assert(subPart);
+            Assert(_boundingBox.Contains(subPart->BoundingBox()));
+            Assert(subPart->BaseVertex() < modelMesh->VertexCount());
+            Assert(subPart->FirstIndex() + subPart->IndexCount() <= modelMesh->IndexCount());
         }
     }
 #endif
@@ -37,25 +44,25 @@ Model::Model(
 //----------------------------------------------------------------------------
 Model::~Model() {}
 //----------------------------------------------------------------------------
-bool Model::TryGetSubPart(const ModelSubPart **psubpart, const MeshName& name) const {
-    Assert(psubpart);
+bool Model::TryGetBone(const ModelBone **pbone, const MeshName& name) const {
+    Assert(pbone);
     Assert(!name.empty());
 
-    for (const PModelSubPart& s : _subParts)
-        if (s->Name() == name)
-        {
-            *psubpart = s.get();
+    for (const PModelBone& bone : _bones)
+        if (bone->Name() == name) {
+            *pbone = bone.get();
             return true;
         }
 
     return false;
 }
 //----------------------------------------------------------------------------
-const ModelSubPart *Model::SubPart(const MeshName& name) const {
-    const ModelSubPart *psubpart = nullptr;
-    if (!TryGetSubPart(&psubpart, name))
+const ModelBone *Model::Bone(const MeshName& name) const {
+    const ModelBone *bone = nullptr;
+    if (!TryGetBone(&bone, name))
         AssertNotReached();
-    return psubpart;
+    Assert(bone);
+    return bone;
 }
 //----------------------------------------------------------------------------
 void Model::Create(Graphics::IDeviceAPIEncapsulator *device) {
