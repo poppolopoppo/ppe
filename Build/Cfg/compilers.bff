@@ -38,7 +38,7 @@ Compiler( 'Compiler-x86' )
                     '$Root$\mspdbsrv.exe'
                     '$Root$\mspdbcore.dll'
                     '$Root$\mspft120.dll'
-                    '$Root$\1036\clui.dll'
+                    '$Root$\1033\clui.dll'
                     '$VSBasePath$\VC\redist\x86\Microsoft.VC120.CRT\msvcp120.dll'
                     '$VSBasePath$\VC\redist\x86\Microsoft.VC120.CRT\msvcr120.dll'
                     '$VSBasePath$\VC\redist\x86\Microsoft.VC120.CRT\vccorlib120.dll'
@@ -53,7 +53,7 @@ Compiler( 'Compiler-x64' )
                     '$Root$\amd64\c1xx.dll',
                     '$Root$\amd64\c1xxast.dll',
                     '$Root$\amd64\c2.dll',
-                    '$Root$\amd64\1036\clui.dll'
+                    '$Root$\amd64\1033\clui.dll'
                     '$Root$\amd64\msobj120.dll'
                     '$Root$\amd64\mspdb120.dll'
                     '$Root$\amd64\mspdbsrv.exe'
