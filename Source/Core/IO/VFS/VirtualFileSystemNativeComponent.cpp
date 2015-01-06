@@ -253,7 +253,7 @@ UniquePtr<IVirtualFileSystemIStream> VirtualFileSystemNativeComponent::OpenReada
     Unalias_(nativeFilename, lengthof(nativeFilename), filename, _alias, _target);
     LOG(Information, L"[VFS] OpenNativeReadable('{0}')", nativeFilename);
 
-    UniquePtr<IVirtualFileSystemIStream> result(new VirtualFileSystemNativeFileIStream(nativeFilename, policy));
+    UniquePtr<IVirtualFileSystemIStream> result(new VirtualFileSystemNativeFileIStream(filename, nativeFilename, policy));
     return result;
 }
 //----------------------------------------------------------------------------
@@ -290,7 +290,7 @@ UniquePtr<IVirtualFileSystemOStream> VirtualFileSystemNativeComponent::OpenWrita
     Unalias_(nativeFilename, lengthof(nativeFilename), filename, _alias, _target);
     LOG(Information, L"[VFS] OpenNativeWritable('{0}')", nativeFilename);
 
-    UniquePtr<IVirtualFileSystemOStream> result(new VirtualFileSystemNativeFileOStream(nativeFilename, policy));
+    UniquePtr<IVirtualFileSystemOStream> result(new VirtualFileSystemNativeFileOStream(filename, nativeFilename, policy));
     return result;
 }
 //----------------------------------------------------------------------------

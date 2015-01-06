@@ -4,6 +4,8 @@
 
 #include "Core/IO/Stream.h"
 
+#include "Core/IO/FS/Filename.h"
+
 #include "Core/IO/VFS/VirtualFileSystemPolicies.h"
 #include "Core/IO/VFS/VirtualFileSystemStream.h"
 
@@ -15,8 +17,10 @@ namespace Core {
 //----------------------------------------------------------------------------
 class VirtualFileSystemNativeFileIStream : public IVirtualFileSystemIStream {
 public:
-    VirtualFileSystemNativeFileIStream(const wchar_t* filename, AccessPolicy::Mode policy);
+    VirtualFileSystemNativeFileIStream(const Filename& filename, const wchar_t* native, AccessPolicy::Mode policy);
     virtual ~VirtualFileSystemNativeFileIStream();
+
+    virtual const Filename& SourceFilename() const override { return _filename; }
 
     virtual std::streamoff TellI() override;
     virtual void SeekI(std::streamoff offset) override;
@@ -31,12 +35,15 @@ public:
 
 private:
     FILE *_handle;
+    Filename _filename;
 };
 //----------------------------------------------------------------------------
 class VirtualFileSystemNativeFileOStream : public IVirtualFileSystemOStream {
 public:
-    VirtualFileSystemNativeFileOStream(const wchar_t* filename, AccessPolicy::Mode policy);
+    VirtualFileSystemNativeFileOStream(const Filename& filename, const wchar_t* native, AccessPolicy::Mode policy);
     virtual ~VirtualFileSystemNativeFileOStream();
+
+    virtual const Filename& SourceFilename() const override { return _filename; }
 
     virtual std::streamoff TellO() override;
     virtual void SeekO(std::streamoff offset) override;
@@ -44,6 +51,7 @@ public:
 
 private:
     FILE *_handle;
+    Filename _filename;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

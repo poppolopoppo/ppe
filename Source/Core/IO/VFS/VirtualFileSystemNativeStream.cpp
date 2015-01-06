@@ -64,9 +64,10 @@ static void CloseFileHandle_(FILE **handle) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-VirtualFileSystemNativeFileIStream::VirtualFileSystemNativeFileIStream(const wchar_t* filename, AccessPolicy::Mode policy)
-:   _handle(nullptr) {
-    if (!OpenFileHandle_(&_handle, filename, false, policy))
+VirtualFileSystemNativeFileIStream::VirtualFileSystemNativeFileIStream(const Filename& filename, const wchar_t* native, AccessPolicy::Mode policy)
+:   _handle(nullptr)
+,   _filename(filename) {
+    if (!OpenFileHandle_(&_handle, native, false, policy))
         AssertNotReached();
 }
 //----------------------------------------------------------------------------
@@ -142,9 +143,10 @@ std::streamsize VirtualFileSystemNativeFileIStream::Size() const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-VirtualFileSystemNativeFileOStream::VirtualFileSystemNativeFileOStream(const wchar_t* filename, AccessPolicy::Mode policy)
-:   _handle(nullptr) {
-    if (!OpenFileHandle_(&_handle, filename, true, policy))
+VirtualFileSystemNativeFileOStream::VirtualFileSystemNativeFileOStream(const Filename& filename, const wchar_t* native, AccessPolicy::Mode policy)
+:   _handle(nullptr)
+,   _filename(filename) {
+    if (!OpenFileHandle_(&_handle, native, true, policy))
         AssertNotReached();
 }
 //----------------------------------------------------------------------------
