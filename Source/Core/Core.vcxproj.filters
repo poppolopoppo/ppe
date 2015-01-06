@@ -82,6 +82,9 @@
     <CustomBuild Include="Container\Hash-inl.h">
       <Filter>Container</Filter>
     </CustomBuild>
+    <CustomBuild Include="Container\Hash.cpp">
+      <Filter>Container</Filter>
+    </CustomBuild>
     <CustomBuild Include="Container\Hash.h">
       <Filter>Container</Filter>
     </CustomBuild>
@@ -566,6 +569,9 @@
       <Filter>Memory</Filter>
     </CustomBuild>
     <CustomBuild Include="Memory\MemoryStack.h">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\MemoryStream.h">
       <Filter>Memory</Filter>
     </CustomBuild>
     <CustomBuild Include="Memory\MemoryTracking.cpp">

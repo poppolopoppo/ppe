@@ -66,6 +66,7 @@
     <CustomBuild Include="Container\AssociativeVector-inl.h" />
     <CustomBuild Include="Container\AssociativeVector.h" />
     <CustomBuild Include="Container\Hash-inl.h" />
+    <CustomBuild Include="Container\Hash.cpp" />
     <CustomBuild Include="Container\Hash.h" />
     <CustomBuild Include="Container\HashMap.h" />
     <CustomBuild Include="Container\HashSet.h" />
@@ -228,6 +229,7 @@
     <CustomBuild Include="Memory\MemoryPool.cpp" />
     <CustomBuild Include="Memory\MemoryPool.h" />
     <CustomBuild Include="Memory\MemoryStack.h" />
+    <CustomBuild Include="Memory\MemoryStream.h" />
     <CustomBuild Include="Memory\MemoryTracking.cpp" />
     <CustomBuild Include="Memory\MemoryTracking.h" />
     <CustomBuild Include="Memory\MemoryView.h" />

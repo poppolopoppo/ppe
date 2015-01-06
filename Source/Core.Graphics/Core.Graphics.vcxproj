@@ -41,6 +41,7 @@
   <ItemGroup>
     <CustomBuild Include="Device\Geometry\IndexBuffer.cpp" />
     <CustomBuild Include="Device\Geometry\IndexBuffer.h" />
+    <CustomBuild Include="Device\Geometry\IndexElementSize.h" />
     <CustomBuild Include="Device\Geometry\PrimitiveType.cpp" />
     <CustomBuild Include="Device\Geometry\PrimitiveType.h" />
     <CustomBuild Include="Device\Geometry\VertexBuffer.cpp" />

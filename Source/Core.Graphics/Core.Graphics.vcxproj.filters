@@ -7,6 +7,9 @@
     <CustomBuild Include="Device\Geometry\IndexBuffer.h">
       <Filter>Device\Geometry</Filter>
     </CustomBuild>
+    <CustomBuild Include="Device\Geometry\IndexElementSize.h">
+      <Filter>Device\Geometry</Filter>
+    </CustomBuild>
     <CustomBuild Include="Device\Geometry\PrimitiveType.cpp">
       <Filter>Device\Geometry</Filter>
     </CustomBuild>

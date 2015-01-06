@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <CustomBuild Include="Camera\Camera.cpp">
@@ -127,6 +127,12 @@
     <CustomBuild Include="Material\Material.h">
       <Filter>Material</Filter>
     </CustomBuild>
+    <CustomBuild Include="Material\MaterialConstNames.cpp">
+      <Filter>Material</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\MaterialConstNames.h">
+      <Filter>Material</Filter>
+    </CustomBuild>
     <CustomBuild Include="Material\MaterialContext.h">
       <Filter>Material</Filter>
     </CustomBuild>
@@ -184,6 +190,12 @@
     <CustomBuild Include="Mesh\Loader\MeshLoader.h">
       <Filter>Mesh\Loader</Filter>
     </CustomBuild>
+    <CustomBuild Include="Mesh\Loader\ModelBuilder.cpp">
+      <Filter>Mesh\Loader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Mesh\Loader\ModelBuilder.h">
+      <Filter>Mesh\Loader</Filter>
+    </CustomBuild>
     <CustomBuild Include="Mesh\MeshName.cpp">
       <Filter>Mesh</Filter>
     </CustomBuild>
@@ -196,6 +208,12 @@
     <CustomBuild Include="Mesh\Model.h">
       <Filter>Mesh</Filter>
     </CustomBuild>
+    <CustomBuild Include="Mesh\ModelBone.cpp">
+      <Filter>Mesh</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Mesh\ModelBone.h">
+      <Filter>Mesh</Filter>
+    </CustomBuild>
     <CustomBuild Include="Mesh\ModelMesh.cpp">
       <Filter>Mesh</Filter>
     </CustomBuild>
@@ -206,12 +224,6 @@
       <Filter>Mesh</Filter>
     </CustomBuild>
     <CustomBuild Include="Mesh\ModelMeshSubPart.h">
-      <Filter>Mesh</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Mesh\ModelSubPart.cpp">
-      <Filter>Mesh</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Mesh\ModelSubPart.h">
       <Filter>Mesh</Filter>
     </CustomBuild>
     <CustomBuild Include="Render\Layers\AbstractRenderLayer.cpp">
@@ -481,15 +493,5 @@
     <Filter Include="World">
       <UniqueIdentifier>{fbb63e47-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Mesh\Loader\ModelBuilder.h">
-      <Filter>Mesh\Loader</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\..\..\%40Core\git\Source\Core.Engine\Mesh\Loader\ModelBuilder.cpp">
-      <Filter>Mesh\Loader</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>
