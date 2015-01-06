@@ -68,7 +68,6 @@ void RenderBatch::Prepare(
     std::sort(_commands.begin(), _commands.end(), RenderCommandPtrLess());
 
     const Scene *scene = renderTree->Scene();
-    TextureCache *const TextureCache = renderTree->TextureCache();
 
     const RenderCommand *pred = nullptr;
     for (const RenderCommand *pcommand : _commands) {
