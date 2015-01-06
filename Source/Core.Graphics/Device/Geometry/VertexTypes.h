@@ -66,9 +66,38 @@ struct Position0_Float3__Color0_UByte4N {
     static const VertexDeclaration *Declaration;
 };
 //----------------------------------------------------------------------------
+struct Position0_Float3__Color0_UByte4N__Normal0_UX10Y10Z10W2N {
+    float3 Position0;
+    ubyte4n Color0;
+    UX10Y10Z10W2N Normal0;
+
+    static const VertexDeclaration *Declaration;
+};
+//----------------------------------------------------------------------------
+struct Position0_Float3__Normal0_UX10Y10Z10W2N {
+    float3 Position0;
+    UX10Y10Z10W2N Normal0;
+
+    static const VertexDeclaration *Declaration;
+};
+//----------------------------------------------------------------------------
 struct Position0_Float4__TexCoord0_Float2 {
     float4 Position0;
     float2 TexCoord0;
+
+    static const VertexDeclaration *Declaration;
+};
+//----------------------------------------------------------------------------
+struct Position0_Float4__TexCoord0_Half2 {
+    float4 Position0;
+    half2 TexCoord0;
+
+    static const VertexDeclaration *Declaration;
+};
+//----------------------------------------------------------------------------
+struct Position0_Float3__TexCoord0_Half2 {
+    float3 Position0;
+    half2 TexCoord0;
 
     static const VertexDeclaration *Declaration;
 };
@@ -81,11 +110,27 @@ struct Position0_Float3__Color0_UByte4N__TexCoord0_Float2 {
     static const VertexDeclaration *Declaration;
 };
 //----------------------------------------------------------------------------
+struct Position0_Float3__Color0_UByte4N__TexCoord0_Half2 {
+    float3 Position0;
+    ubyte4n Color0;
+    half2 TexCoord0;
+
+    static const VertexDeclaration *Declaration;
+};
+//----------------------------------------------------------------------------
 struct Position0_Float3__Color0_UByte4N__TexCoord0_Float2__Normal0_UX10Y10Z10W2N {
     float3 Position0;
     ubyte4n Color0;
     float2 TexCoord0;
     UX10Y10Z10W2N Normal0;
+
+    static const VertexDeclaration *Declaration;
+};
+//----------------------------------------------------------------------------
+struct Position0_Float3__TexCoord0_Half2__Normal0_UByte4N {
+    float3 Position0;
+    half2 TexCoord0;
+    float3 Normal0;
 
     static const VertexDeclaration *Declaration;
 };
@@ -112,6 +157,25 @@ struct Position0_Float3__TexCoord0_Half2__Normal0_UByte4N__Tangent0_UByte4N__Bin
 //----------------------------------------------------------------------------
 struct Position0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N {
     float3 Position0;
+    half2 TexCoord0;
+    UX10Y10Z10W2N Normal0;
+    UX10Y10Z10W2N Tangent0;
+
+    static const VertexDeclaration *Declaration;
+};
+//----------------------------------------------------------------------------
+struct Position0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N {
+    float3 Position0;
+    ubyte4n Color0;
+    half2 TexCoord0;
+    UX10Y10Z10W2N Normal0;
+
+    static const VertexDeclaration *Declaration;
+};
+//----------------------------------------------------------------------------
+struct Position0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N {
+    float3 Position0;
+    ubyte4n Color0;
     half2 TexCoord0;
     UX10Y10Z10W2N Normal0;
     UX10Y10Z10W2N Tangent0;

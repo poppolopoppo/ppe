@@ -40,6 +40,7 @@ void VertexDeclaration::AddTypedSubPart(T _Class:: *member, size_t index) {
     key.Reset(static_cast<VertexSubPartFormat>(type_traits::Format), _Semantic, index);
 
     const size_t offset = (size_t)&(reinterpret_cast<_Class *>(nullptr)->*member);
+    Assert(0 == offset % sizeof(u32));
 
     Assert(!SubPartIFP<T>(key));
 
