@@ -1,0 +1,53 @@
+#pragma once
+
+#include "Engine.h"
+
+namespace Core {
+namespace Graphics {
+class BindName;
+}
+
+namespace Engine {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+class MaterialConstNames {
+private:
+    MaterialConstNames();
+
+public:
+    // Parameters :
+    static const Graphics::BindName& AmbientColor();
+    static const Graphics::BindName& DiffuseColor();
+    static const Graphics::BindName& EmissiveColor();
+    static const Graphics::BindName& SpecularColor();
+
+    // Tags :
+    static const Graphics::BindName& Ambient();
+    static const Graphics::BindName& CastShadows();
+    static const Graphics::BindName& Color();
+    static const Graphics::BindName& Emissive();
+    static const Graphics::BindName& Highlight();
+    static const Graphics::BindName& Reflection();
+    static const Graphics::BindName& Transparency();
+    static const Graphics::BindName& Fresnel();
+    static const Graphics::BindName& Glass();
+
+    // Textures :
+    static const Graphics::BindName& AlphaMap();
+    static const Graphics::BindName& AmbientMap();
+    static const Graphics::BindName& DiffuseMap();
+    static const Graphics::BindName& DisplacementMap();
+    static const Graphics::BindName& NormalMap();
+    static const Graphics::BindName& ReflectionMap();
+    static const Graphics::BindName& SpecularColorMap();
+    static const Graphics::BindName& SpecularPowerMap();
+
+    static void Startup();
+    static void Shutdown();
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace Engine
+} //!namespace Core
