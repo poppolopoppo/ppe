@@ -137,7 +137,18 @@ struct Bit {
             typedef BitField<T, _BitField::End, Capacity - _BitField::End> type;
         };
     };
+
+    static T SetsCount(T bits) {
+        // https://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
+        bits = bits - ((bits >> 1) & (T)~(T)0/3);                           // temp
+        bits = (bits & (T)~(T)0/15*3) + ((bits >> 2) & (T)~(T)0/15*3);      // temp
+        bits = (bits + (bits >> 4)) & (T)~(T)0/255*15;                      // temp
+        return (T)(bits * ((T)~(T)0/255)) >> (sizeof(T) - 1) * CHAR_BIT;    // count
+    }
 };
+//----------------------------------------------------------------------------
+template <typename T>
+T BitSetsCount(T bits) { return Bit<T>::SetsCount(bits); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
