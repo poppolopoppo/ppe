@@ -68,15 +68,15 @@ bool ScalarBoundingBox<T, _Dim>::HasPositiveExtentsStrict() const {
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-void ScalarBoundingBox<T, _Dim>::Add(const vector_type& v) const {
-    _min = ::Min(_min, v);
-    _max = ::Max(_max, v);
+void ScalarBoundingBox<T, _Dim>::Add(const vector_type& v) {
+    _min = Core::Min(_min, v);
+    _max = Core::Max(_max, v);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-void ScalarBoundingBox<T, _Dim>::Add(const ScalarBoundingBox& other) const {
-    _min = ::Min(_min, other._min);
-    _max = ::Max(_max, other._max);
+void ScalarBoundingBox<T, _Dim>::Add(const ScalarBoundingBox& other) {
+    _min = Core::Min(_min, other._min);
+    _max = Core::Max(_max, other._max);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
@@ -148,10 +148,13 @@ void ScalarBoundingBox<T, _Dim>::GetCorners(const MemoryView<vector_type>& point
         Assert(points.size() == 2);
         points[0].x() = _min.x();
         points[0].y() = _min.y();
+
         points[1].x() = _max.x();
         points[1].y() = _min.y();
+
         points[2].x() = _max.x();
         points[2].y() = _max.y();
+
         points[3].x() = _min.x();
         points[3].y() = _max.y();
     }
@@ -160,24 +163,31 @@ void ScalarBoundingBox<T, _Dim>::GetCorners(const MemoryView<vector_type>& point
         points[0].x() = _min.x();
         points[0].y() = _min.y();
         points[0].z() = _min.z();
+
         points[1].x() = _min.x();
         points[1].y() = _min.y();
         points[1].z() = _max.z();
+
         points[2].x() = _min.x();
         points[2].y() = _max.y();
         points[2].z() = _max.z();
+
         points[3].x() = _min.x();
         points[3].y() = _max.y();
         points[3].z() = _min.z();
+
         points[4].x() = _max.x();
         points[4].y() = _min.y();
         points[4].z() = _max.z();
+
         points[5].x() = _max.x();
         points[5].y() = _max.y();
         points[5].z() = _max.z();
+
         points[6].x() = _max.x();
         points[6].y() = _max.y();
         points[6].z() = _min.z();
+
         points[7].x() = _max.x();
         points[7].y() = _max.y();
         points[7].z() = _max.z();

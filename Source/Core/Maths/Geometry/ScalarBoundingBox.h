@@ -42,8 +42,8 @@ public:
     bool HasPositiveExtents() const;
     bool HasPositiveExtentsStrict() const;
 
-    void Add(const vector_type& v) const;
-    void Add(const ScalarBoundingBox& other) const;
+    void Add(const vector_type& v);
+    void Add(const ScalarBoundingBox& other);
 
     template <typename _It>
     void AddRange(_It&& begin, _It&& end) {
