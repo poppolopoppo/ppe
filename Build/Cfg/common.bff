@@ -7,9 +7,10 @@
 .OutputBase = 'Output'
 .SourceBase = 'Source'
 
-.VSFBuildOptions      = ' -cache'
-                      //+ ' -showcmds'
-                      //+ ' -dist'
+.VSFBuildOptions      = ''
+                        + ' -cache'
+                    //  + ' -showcmds'
+                    //  + ' -dist'
 
 .VSFRebuildOptions    = ''
 
@@ -19,7 +20,7 @@
 // Unity/Blob files (shared across configs)
 //------------------------------------------------------------------------------
 .UnityNumFiles        = 8
-.UnityInputIsolateWritableFiles = false // disables unity build when true
+.UnityInputIsolateWritableFiles = true // disables unity build when true
 
 // Common configuration
 //------------------------------------------------------------------------------
