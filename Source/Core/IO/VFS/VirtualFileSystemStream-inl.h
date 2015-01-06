@@ -18,11 +18,12 @@ bool IVirtualFileSystemIStream::ReadArray(T(&staticArray)[_Dim]) {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void IVirtualFileSystemIStream::ReadAll(RawStorage<T, _Allocator>& dst) {
+    typedef RawStorage<T, _Allocator>::size_type size_type;
     const std::streamsize s = Size();
 
     Assert(0 == (s % sizeof(T)) );
-    dst.Resize_DiscardData(s / sizeof(T));
-    Assert(dst.SizeInBytes() == u64(s));
+    dst.Resize_DiscardData(checked_cast<size_type>(s / sizeof(T)) );
+    Assert(dst.SizeInBytes() == size_type(s));
 
     SeekI(0);
     Read(dst.Pointer(), s);
