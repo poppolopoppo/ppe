@@ -252,7 +252,7 @@ size_t GenericVertex::VertexCountWritten() const {
     const size_t vertexSizeInBytes = _vertexDeclaration->SizeInBytes();
     Assert(0 == ((_destination.SizeInBytes() - _vertexOffset) % vertexSizeInBytes) );
 
-    return 1 + _vertexOffset / vertexSizeInBytes;
+    return _vertexOffset / vertexSizeInBytes;
 }
 //----------------------------------------------------------------------------
 size_t GenericVertex::VertexCountRemaining() const {
@@ -273,7 +273,7 @@ void GenericVertex::SeekVertex(size_t vertexIndex) {
     Assert(_destination.size());
 
     _vertexOffset = _vertexDeclaration->SizeInBytes() * vertexIndex;
-    Assert(_vertexOffset < _destination.SizeInBytes());
+    Assert(_vertexOffset <= _destination.SizeInBytes());
 }
 //----------------------------------------------------------------------------
 bool GenericVertex::NextVertex() {
@@ -285,7 +285,7 @@ bool GenericVertex::NextVertex() {
     return _vertexOffset < _destination.SizeInBytes();
 }
 //----------------------------------------------------------------------------
-void GenericVertex::ResetCurrentVertex() const {
+void GenericVertex::ZeroMemory_CurrentVertex() const {
     void *const currentVertex = CurrentVertex();
 
     for (const Pair<Graphics::VertexSubPartKey, Graphics::VertexSubPartPOD>& it : _vertexDeclaration->SubParts()) {

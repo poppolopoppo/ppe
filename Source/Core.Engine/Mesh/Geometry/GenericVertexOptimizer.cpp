@@ -5,6 +5,7 @@
 #include "GenericVertex.h"
 
 #include "Core/Container/Hash.h"
+#include "Core/Memory/UniqueView.h"
 #include "Core.Graphics/Device/Geometry/VertexDeclaration.h"
 
 namespace Core {
@@ -39,31 +40,21 @@ struct VertexCache {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void MergeDuplicateVertices(GenericVertex& vertices, const MemoryView<u32>& indices) {
-    Assert(indices.size() >= 3);
     Assert(0 == (indices.size() % 3));
 
     const size_t vertexCount = vertices.VertexCountWritten();
     if (0 == vertexCount)
         return;
+    Assert(indices.size() >= 3);
 
+    const u8 *vertexPtr = vertices.Destination().Pointer();
     const size_t vertexSizeInBytes = vertices.VertexDeclaration()->SizeInBytes();
-    const size_t vertexSizeInU32 = vertexSizeInBytes / sizeof(u32);
-    Assert(0 == vertexSizeInBytes % sizeof(u32));
-
-    u8 *const vertexBegin = vertices.Destination().Pointer();
-    u8 *const vertexEnd = vertexBegin + vertexCount * vertexSizeInBytes;
+    AssertRelease(0 == (vertexSizeInBytes % sizeof(u32)) );
 
     const auto vertexHashes = MALLOCA_VIEW(size_t, vertexCount);
-    for (size_t i = 0; i < vertexCount; ++i) {
-        const u32 *vertexPtrU32 = reinterpret_cast<const u32 *>(vertexBegin + i * vertexSizeInBytes);
-        vertexHashes[i] = hash_value_seq(vertexPtrU32, vertexPtrU32 + vertexSizeInU32);
+    for (size_t i = 0; i < vertexCount; ++i, vertexPtr += vertexSizeInBytes) {
+
     }
-
-    const auto vertexReindexation = MALLOCA_VIEW(u32, vertexCount);
-    for (size_t i = 0; i < vertexCount; ++i)
-        vertexReindexation[i] = checked_cast<u32>(i);
-
-    AssertNotImplemented(); // radix sort reindexation
 }
 //----------------------------------------------------------------------------
 void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
@@ -286,10 +277,10 @@ void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
 }
 //----------------------------------------------------------------------------
 void OptimizeVerticesOrder(GenericVertex& vertices, const MemoryView<u32>& indices) {
-    Assert(vertices.VertexCountRemaining() >= 3);
+    Assert(vertices.VertexCountWritten() >= 3);
     Assert(indices.size() >= 3);
 
-    const size_t vertexCount = vertices.VertexCountRemaining();
+    const size_t vertexCount = vertices.VertexCountWritten();
     const size_t vertexSizeInBytes = vertices.VertexDeclaration()->SizeInBytes();
 
     const auto old2new = MALLOCA_VIEW(u32, vertexCount);
@@ -298,7 +289,8 @@ void OptimizeVerticesOrder(GenericVertex& vertices, const MemoryView<u32>& indic
     u32 sortedIndex = 0;
     u8 *const sortedPtr = reinterpret_cast<u8 *>(vertices.Destination().Pointer());
 
-    const auto tmpVertices = MALLOCA_VIEW(u8, vertices.Destination().SizeInBytes());
+    const size_t vertexAllSizeInBytes = vertices.VertexDeclaration()->SizeInBytes() * vertexCount;
+    const auto tmpVertices = MALLOCA_VIEW(u8, vertexAllSizeInBytes);
     memcpy(tmpVertices.Pointer(), sortedPtr, tmpVertices.SizeInBytes());
 
     // construct mapping and new VB

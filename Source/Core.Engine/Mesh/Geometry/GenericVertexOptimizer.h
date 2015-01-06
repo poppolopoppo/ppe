@@ -41,7 +41,8 @@ void OptimizeIndicesAndVerticesOrder(
 
     GenericVertex vertex(vertexDeclaration);
     vertex.SetDestination(vertices.Pointer(), vertices.SizeInBytes());
-    Assert(vertexCount == vertex.VertexCountRemaining());
+    vertex.SeekVertex(vertexCount);
+    Assert(vertexCount == vertex.VertexCountWritten());
 
     OptimizeIndicesAndVerticesOrder(vertex, indices);
 }

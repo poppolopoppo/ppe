@@ -388,7 +388,7 @@ void ExportVertices(
 
     size_t i = 0;
     do {
-        vertices.ClearSubParts();
+        vertices.ZeroMemory_CurrentVertex();
 
         if (sp_positions0) sp_positions0.AssignValue(vertices, (*positions0)[i]);
         if (sp_positions1) sp_positions1.AssignValue(vertices, (*positions1)[i]);
@@ -442,7 +442,7 @@ void ExportVertices(
 
     size_t i = 0;
     do {
-        vertices.ClearSubParts();
+        vertices.ZeroMemory_CurrentVertex();
 
         if (sp_positions0) sp_positions0.AssignValue(vertices, (*positions0)[i]);
         if (sp_colors0) sp_colors0.AssignValue(vertices, (*colors0)[i]);

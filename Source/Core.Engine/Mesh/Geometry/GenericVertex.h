@@ -4,6 +4,7 @@
 
 #include "Core/Color/Color.h"
 #include "Core/Maths/Geometry/ScalarVector_fwd.h"
+#include "Core/Maths/Packing/PackedVectors.h"
 #include "Core/Memory/MemoryView.h"
 
 namespace Core {
@@ -59,7 +60,7 @@ public:
     bool NextVertex(); // advance to next offset, return if storage available
     void PopVertex(); // delete last vertex
 
-    void ResetCurrentVertex() const;
+    void ZeroMemory_CurrentVertex() const;
     void CopyVertex(size_t dst, size_t src) const;
 
     SubPart Position2f(size_t index) const;
