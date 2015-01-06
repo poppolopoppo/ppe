@@ -48,12 +48,9 @@ char LookAheadReader::Read() {
 char LookAheadReader::Peek(size_t n) const {
     const size_t offset = _bufferOffset + n;
 
-    if (offset >= _buffer.SizeInBytes()) {
-        Assert(Eof());
-        return '\0';
-    }
-
-    return _buffer[offset];
+    return (offset >= _buffer.SizeInBytes()) 
+        ? '\0'
+        : _buffer[offset];
 }
 //----------------------------------------------------------------------------
 void LookAheadReader::EatWhiteSpaces() {
