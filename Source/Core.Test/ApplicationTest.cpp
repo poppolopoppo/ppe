@@ -137,6 +137,34 @@ void TestStrings_() {
     Format(std::cout, "{0:#4*4}\n", 42);
 }
 
+void TestHash_() {
+    using namespace Core;
+
+    static u32 numbers[6] = {9,18,27,36,45,54};
+
+    size_t h0 = hash_value(numbers);
+    size_t h1 = hash_value(numbers[0],numbers[1],numbers[2],numbers[3],numbers[4],numbers[5]);
+    size_t h2 = hash_value_seq(&numbers[0],&numbers[6]);
+
+    AssertRelease(h0 == h1);
+    AssertRelease(h1 == h2);
+
+    size_t h3 = hash_value(numbers, numbers, numbers);
+
+    size_t h4 = hash_value(4.1234567f);
+    size_t h5 = hash_value(4.1234568f);
+    AssertRelease(h4 != h5);
+
+    int toto = 42;
+    size_t h6 = hash_value(&toto);
+    size_t h7 = hash_value((const void *)&toto);
+    AssertRelease(h6 == h7);
+
+    size_t h8 = hash_value(&numbers);
+    size_t h9 = hash_value((const void *)&numbers);
+    AssertRelease(h8 == h9);
+}
+
 class A : public Core::RefCountable {
 public:
     A() {}
@@ -162,8 +190,8 @@ void TestPointers_() {
     RefPtr<C> c = new C();
 
     RefPtr<B> b = c;
-    Assert(b == c);
-    Assert(a != b);
+    AssertRelease(b == c);
+    AssertRelease(a != b);
 
     std::cout << c->Value() << std::endl;
 }
@@ -190,7 +218,7 @@ void TestThreads_() {
 
     const wchar_t* str = nullptr;
     if (!queue.Consume(str))
-        Assert(0);
+        AssertRelease(0);
 
     std::cout << str << std::endl;
 
@@ -235,16 +263,16 @@ void TestTokens_() {
 
     token_type t("toto");
     token_type v("Toto");
-    Assert(t == v);
+    AssertRelease(t == v);
 
     v = "tata";
-    Assert(t != v);
+    AssertRelease(t != v);
     v = t;
-    Assert(t == v);
+    AssertRelease(t == v);
 
     token_type e;
-    Assert(e != v);
-    Assert(e != t);
+    AssertRelease(e != v);
+    AssertRelease(e != t);
 
     token_type q = "";
 
@@ -264,8 +292,8 @@ void TestFileSystem_() {
     std::cout << Extname(L".jPG") << std::endl;
 
     Extname e{ WString(L".Jpg") };
-    Assert(e == ext);
-    Assert(e.cstr() == ext.cstr());
+    AssertRelease(e == ext);
+    AssertRelease(e.cstr() == ext.cstr());
     std::cout << e << " (" << hash_value(e) << ")" << std::endl;
 
     std::cout
@@ -307,9 +335,9 @@ void TestFileSystem_() {
     std::cout << f.Extname() << hash_value(f.Extname()) << std::endl;
     std::cout << basename.Extname() << hash_value(basename.Extname()) << std::endl;
 
-    Assert(hash_value(f) == hash_value(filename));
-    Assert(hash_value(e) == hash_value(filename.Extname()));
-    Assert(hash_value(e) == hash_value(basename.Extname()));
+    AssertRelease(hash_value(f) == hash_value(filename));
+    AssertRelease(hash_value(e) == hash_value(filename.Extname()));
+    AssertRelease(hash_value(e) == hash_value(basename.Extname()));
 
     Dirpath p = L"data:/assets/3d";
     std::cout << p << " (" << hash_value(p) << ")" << std::endl;
@@ -346,7 +374,7 @@ void TestVirtualFileSystem_() {
     }
 
     if (!vfs.FileExists(L"procesS:/tEsT.tXT"))
-        Assert(false);
+        AssertRelease(false);
 
     vfs.EnumerateFiles(L"process:/", true, [](const Core::Filename& filename) {
         std::cout << filename << std::endl;
@@ -509,7 +537,7 @@ static void TestRTTI_() {
 
     //auto wrongAtom = atom->Cast< int >();
     auto wrongAtom2 = atom->As< int >();
-    Assert(!wrongAtom2);
+    AssertRelease(!wrongAtom2);
 
     RTTI::MetaClassSingleton<Titi>::Destroy();
 }
@@ -603,7 +631,7 @@ static void TestLexerParser_() {
             Parser::ParseList input(&lexer);
 
             Parser::PCParseItem item = Serialize::Grammar_Parse(input);
-            Assert(item);
+            AssertRelease(item);
 
             item->Invoke(&globalContext);
         }
@@ -722,10 +750,10 @@ static void TestMaths_() {
 
     half4 h4(half(1.0f), half(0.0f), half(-1.0f), half(0.234f));
     float4 h4f = HalfUnpack(h4);
-    Assert(h4f.x() == 1.0f);
-    Assert(h4f.y() == 0.0f);
-    Assert(h4f.z() == -1.0f);
-    Assert(std::abs(1 - h4f.w() / 0.234f) <= 0.001f);
+    AssertRelease(h4f.x() == 1.0f);
+    AssertRelease(h4f.y() == 0.0f);
+    AssertRelease(h4f.z() == -1.0f);
+    AssertRelease(std::abs(1 - h4f.w() / 0.234f) <= 0.001f);
 
     half2 hmin = half2::MinValue();
     half2 hmax = half2::MaxValue();
@@ -952,11 +980,11 @@ void TestGraphics_() {
 
     Pair<const Graphics::VertexSubPartKey *, const Graphics::AbstractVertexSubPart *> it =
         vertexDecl.SubPartBySemantic(Graphics::VertexSubPartSemantic::Position, 0);
-    Assert(it.second);
+    AssertRelease(it.second);
     AssertRelease(it.first->Format() == Graphics::VertexSubPartFormat::Float3);
 
     it = vertexDecl.SubPartBySemantic(Graphics::VertexSubPartSemantic::Tangent, 0);
-    Assert(it.second);
+    AssertRelease(it.second);
     AssertRelease(it.first->Format() == Graphics::VertexSubPartFormat::UByte4);
 
     const auto *subpart = vertexDecl.TypedSubPart<Graphics::VertexSubPartFormat::UByte4>(Graphics::VertexSubPartSemantic::Normal, 0);
@@ -1049,7 +1077,7 @@ void TestGraphics_() {
     const Graphics::BlendState *blend = Graphics::BlendState::AlphaBlend;
     AssertRelease(blend->ColorSourceBlend() == Graphics::Blend::One);
     AssertRelease(blend->AlphaDestinationBlend() == Graphics::Blend::InverseSourceAlpha);
-    Assert(blend->Frozen());
+    AssertRelease(blend->Frozen());
 
     const Graphics::DepthStencilState *depth = Graphics::DepthStencilState::Default;
     AssertRelease(depth->DepthBufferEnabled());
@@ -1139,11 +1167,11 @@ void TestInputs_() {
     virtualKeyToKeyboardKey[VK_CONTROL] = u8(KeyboardKey::Shift);
 
     for (u8 i = 'A'; i <= 'Z'; ++i) {
-        Assert(u8(KeyboardKey::A) + i - 'A' == i);
+        AssertRelease(u8(KeyboardKey::A) + i - 'A' == i);
         virtualKeyToKeyboardKey[i] = i;
     }
     for (u8 i = '0'; i <= '9'; ++i) {
-        Assert(u8(KeyboardKey::_0) + i - '0' == i);
+        AssertRelease(u8(KeyboardKey::_0) + i - '0' == i);
         virtualKeyToKeyboardKey[i] = i;
     }
 
@@ -1167,7 +1195,7 @@ void Tests() {
 
     {
         //SKIP_MEMORY_LEAKS_IN_SCOPE();
-        //new int;
+        new int;
     }
 
     {
@@ -1259,6 +1287,8 @@ void Tests() {
     TestCallstack_();
 
     TestStrings_();
+
+    TestHash_();
 
     TestPointers_();
 

@@ -30,7 +30,7 @@ public:
         PCEffectDescriptor Descriptor;
         Graphics::PCVertexDeclaration VertexDeclaration;
 
-        size_t HashValue() const { return hash_value(Descriptor, VertexDeclaration); }
+        size_t HashValue() const { return hash_value_as_memory(*this); }
 
         bool operator ==(const EffectKey& other) const { return Descriptor == other.Descriptor && VertexDeclaration == other.VertexDeclaration; }
         bool operator !=(const EffectKey& other) const { return !operator ==(other); }

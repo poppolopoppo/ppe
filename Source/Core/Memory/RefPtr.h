@@ -141,6 +141,7 @@ protected:
 private:
     T* _ptr;
 };
+STATIC_ASSERT(sizeof(RefPtr<RefCountable>) == sizeof(RefCountable*));
 //----------------------------------------------------------------------------
 template <typename T>
 size_t hash_value(const RefPtr<T>& refPtr) {
