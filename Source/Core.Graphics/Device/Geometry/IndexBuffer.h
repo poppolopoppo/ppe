@@ -4,18 +4,12 @@
 
 #include "Core.Graphics/Device/DeviceResource.h"
 #include "Core.Graphics/Device/DeviceResourceBuffer.h"
+#include "Core.Graphics/Device/Geometry/IndexElementSize.h"
 
 namespace Core {
 namespace Graphics {
 class IDeviceAPIEncapsulator;
 
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-enum class IndexElementSize {
-    SixteenBits     = sizeof(u16),
-    ThirtyTwoBits   = sizeof(u32)
-};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
