@@ -24,7 +24,7 @@ public:
     virtual ~MaterialParameterBlock();
 
     MaterialParameterBlock(T&& rvalue);
-    MaterialParameterBlock(const T& rvalue);
+    MaterialParameterBlock(const T& value);
 
     const T& Value() const { return _value; }
 

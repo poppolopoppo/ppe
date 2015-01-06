@@ -19,9 +19,9 @@ template <typename T>
 MaterialParameterBlock<T>::~MaterialParameterBlock() {}
 //----------------------------------------------------------------------------
 template <typename T>
-MaterialParameterBlock<T>::MaterialParameterBlock(T&& value)
+MaterialParameterBlock<T>::MaterialParameterBlock(T&& rvalue)
 :   TypedMaterialParameter<T>(MaterialVariability::Frame)
-,   _value(std::move(value)) {}
+,   _value(std::move(rvalue)) {}
 //----------------------------------------------------------------------------
 template <typename T>
 MaterialParameterBlock<T>::MaterialParameterBlock(const T& value)

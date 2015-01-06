@@ -14,6 +14,7 @@ namespace Core {
 class Filename;
 
 namespace Graphics {
+class BindName;
 class IDeviceAPIContextEncapsulator;
 class IDeviceAPIEncapsulator;
 FWD_REFPTR(SamplerState);

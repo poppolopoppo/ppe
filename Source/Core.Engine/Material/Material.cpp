@@ -13,19 +13,29 @@ namespace Engine {
 //----------------------------------------------------------------------------
 SINGLETON_POOL_ALLOCATED_DEF(Material, );
 //----------------------------------------------------------------------------
-Material::Material(const char *name)
+Material::Material(const Graphics::BindName& name)
 :   _name(name) {
-    Assert(name);
+    Assert(!name.empty());
 }
 //----------------------------------------------------------------------------
 Material::Material(
-    const char *name,
-    const MemoryView<const Pair<Graphics::BindName, Filename>>& textures,
-    const MemoryView<const Pair<Graphics::BindName, PAbstractMaterialParameter>>& parameters )
+    const Graphics::BindName& name,
+    VECTOR(Material, Graphics::BindName)&& tags,
+    ASSOCIATIVE_VECTOR(Material, Graphics::BindName, Filename)&& textures,
+    ASSOCIATIVE_VECTOR(Material, Graphics::BindName, PAbstractMaterialParameter)&& parameters )
 :   _name(name)
-,   _textures(textures.begin(), textures.end())
-,   _parameters(parameters.begin(), parameters.end()) {
-    Assert(name);
+,   _tags(std::move(tags))
+,   _textures(std::move(textures))
+,   _parameters(std::move(parameters)) {
+    Assert(!name.empty());
+}
+//----------------------------------------------------------------------------
+Material::~Material() {}
+//----------------------------------------------------------------------------
+void Material::AddTag(const Graphics::BindName& name) {
+    Assert(!name.empty());
+
+    Insert_AssertUnique(_tags, name);
 }
 //----------------------------------------------------------------------------
 void Material::AddTexture(const Graphics::BindName& name, const Filename& filename) {
@@ -42,7 +52,12 @@ void Material::AddParameter(const Graphics::BindName& name, const PAbstractMater
     _parameters.Insert_AssertUnique(name, parameter);
 }
 //----------------------------------------------------------------------------
-Material::~Material() {}
+bool Material::Equals(const Material& other) const {
+    return (_name == other._name && 
+            _tags == other._tags &&
+            _textures == other._textures &&
+            _parameters == other._parameters );
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
