@@ -18,8 +18,14 @@ bool Contains(const Vector<T, _Allocator>& v, const T& elt) {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void Insert_AssertUnique(Vector<T, _Allocator>& v, const T& elt) {
-    Assert(!Contains(v COMMA elt));
+    Assert(!Contains(v, elt));
     v.emplace_back(elt);
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void Insert_AssertUnique(Vector<T, _Allocator>& v, T&& elt) {
+    Assert(!Contains(v, elt));
+    v.emplace_back(std::move(elt));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>

@@ -33,6 +33,9 @@ template <typename T, typename _Allocator>
 void Insert_AssertUnique(Vector<T, _Allocator>& v, const T& elt);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
+void Insert_AssertUnique(Vector<T, _Allocator>& v, T&& elt);
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
 void Remove_AssertExists(Vector<T, _Allocator>& v, const T& elt);
 //----------------------------------------------------------------------------
 // Fast erase : swap last elem with elem to erase and pop_back() the vector
