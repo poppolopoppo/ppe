@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+
+<Type Name="Core::MemoryView&lt;char&gt;">
+  <DisplayString>[_size] {_storage,[_size]s}</DisplayString>
+  <Expand>
+    <Item Name="[size]">_size</Item>
+    <ArrayItems>
+      <Size>_size</Size>
+      <ValuePointer>_storage</ValuePointer>
+    </ArrayItems>
+  </Expand>
+</Type>
+<Type Name="Core::MemoryView&lt;const char&gt;">
+  <DisplayString>[_size] {_storage,[_size]s}</DisplayString>
+  <Expand>
+    <Item Name="[size]">_size</Item>
+    <ArrayItems>
+      <Size>_size</Size>
+      <ValuePointer>_storage</ValuePointer>
+    </ArrayItems>
+  </Expand>
+</Type>
+<Type Name="Core::MemoryView&lt;wchar_t&gt;">
+  <DisplayString>[_size] {_storage,[_size]su}</DisplayString>
+  <Expand>
+    <Item Name="[size]">_size</Item>
+    <ArrayItems>
+      <Size>_size</Size>
+      <ValuePointer>_storage</ValuePointer>
+    </ArrayItems>
+  </Expand>
+</Type>
+<Type Name="Core::MemoryView&lt;const wchar_t&gt;">
+  <DisplayString>[_size] {_storage,[_size]su}</DisplayString>
+  <Expand>
+    <Item Name="[size]">_size</Item>
+    <ArrayItems>
+      <Size>_size</Size>
+      <ValuePointer>_storage</ValuePointer>
+    </ArrayItems>
+  </Expand>
+</Type>
+
+<Type Name="Core::MemoryView&lt;*&gt;">
+  <DisplayString>{{ size={_size} }}</DisplayString>
+  <Expand>
+    <Item Name="[size]">_size</Item>
+    <ArrayItems>
+      <Size>_size</Size>
+      <ValuePointer>_storage</ValuePointer>
+    </ArrayItems>
+  </Expand>
+</Type>
+
+<Type Name="Core::ScalarVector&lt;*, 1&gt;">
+  <DisplayString>{{ X={_data[0]} }}[1]</DisplayString>
+  <Expand>
+    <Item Name="[Dim]">1</Item>
+    <ArrayItems>
+      <Size>1</Size>
+      <ValuePointer>_data</ValuePointer>
+    </ArrayItems>
+  </Expand>
+</Type>
+<Type Name="Core::ScalarVector&lt;*, 2&gt;">
+  <DisplayString>{{ X={_data[0]}, Y={_data[1]} }}[2]</DisplayString>
+  <Expand>
+    <Item Name="[Dim]">2</Item>
+    <ArrayItems>
+      <Size>2</Size>
+      <ValuePointer>_data</ValuePointer>
+    </ArrayItems>
+  </Expand>
+</Type>
+<Type Name="Core::ScalarVector&lt;*, 3&gt;">
+  <DisplayString>{{ X={_data[0]}, Y={_data[1]}, Z={_data[2]} }}[3]</DisplayString>
+  <Expand>
+    <Item Name="[Dim]">3</Item>
+    <ArrayItems>
+      <Size>3</Size>
+      <ValuePointer>_data</ValuePointer>
+    </ArrayItems>
+  </Expand>
+</Type>
+<Type Name="Core::ScalarVector&lt;*, 4&gt;">
+  <DisplayString>{{ X={_data[0]}, Y={_data[1]}, Z={_data[2]}, W={_data[3]} }}[4]</DisplayString>
+  <Expand>
+    <Item Name="[Dim]">4</Item>
+    <ArrayItems>
+      <Size>4</Size>
+      <ValuePointer>_data</ValuePointer>
+    </ArrayItems>
+  </Expand>
+</Type>
+
+<Type Name="Core::Token&lt;*, char, *, *, * &gt;">
+  <DisplayString>[{(int)_data.Ptr[-1]}] {_data.Ptr,[_data.Ptr[-1]]s}</DisplayString>
+  <StringView>_data.Ptr,[_data.Ptr[-1]]s</StringView>
+</Type>
+<Type Name="Core::Token&lt;*, wchar_t, *, *, * &gt;">
+  <DisplayString>[{(int)_data.Ptr[-1]}] {_data.Ptr,[_data.Ptr[-1]]su}</DisplayString>
+  <StringView>_data.Ptr,[_data.Ptr[-1]]su</StringView>
+</Type>
+
+</AutoVisualizer>
