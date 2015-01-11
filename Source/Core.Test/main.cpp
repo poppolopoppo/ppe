@@ -121,6 +121,14 @@ int main(int argc, const wchar_t* argv[]) {
 
 #ifdef OS_WINDOWS
 #   ifdef _DEBUG
+    int debugHeapFlag = _CRTDBG_ALLOC_MEM_DF |
+                        _CRTDBG_CHECK_EVERY_1024_DF |
+                        _CRTDBG_DELAY_FREE_MEM_DF |
+                        _CRTDBG_LEAK_CHECK_DF;
+    _CrtSetDbgFlag(debugHeapFlag);
+    // les erreurs / assert de check lance une window qui break
+    _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG | _CRTDBG_MODE_WNDW);
+    _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG | _CRTDBG_MODE_WNDW);
     //_CrtSetBreakAlloc(1146); // for leak debugging purpose // %__NOCOMMIT%
 #   endif
 
