@@ -20,7 +20,10 @@ public:
     static const Graphics::BindName& AmbientColor();
     static const Graphics::BindName& DiffuseColor();
     static const Graphics::BindName& EmissiveColor();
+    static const Graphics::BindName& NormalDepth();
+    static const Graphics::BindName& RefractionIndex();
     static const Graphics::BindName& SpecularColor();
+    static const Graphics::BindName& SpecularExponent();
 
     // Tags :
     static const Graphics::BindName& Ambient();
@@ -29,6 +32,7 @@ public:
     static const Graphics::BindName& Emissive();
     static const Graphics::BindName& Highlight();
     static const Graphics::BindName& Reflection();
+    static const Graphics::BindName& Refraction();
     static const Graphics::BindName& Transparency();
     static const Graphics::BindName& Fresnel();
     static const Graphics::BindName& Glass();
@@ -43,7 +47,7 @@ public:
     static const Graphics::BindName& SpecularColorMap();
     static const Graphics::BindName& SpecularPowerMap();
 
-    static void Startup();
+    static void Start();
     static void Shutdown();
 };
 //----------------------------------------------------------------------------

@@ -14,7 +14,10 @@ namespace Engine {
     _Macro(AmbientColor) \
     _Macro(DiffuseColor) \
     _Macro(EmissiveColor) \
+    _Macro(NormalDepth) \
+    _Macro(RefractionIndex) \
     _Macro(SpecularColor) \
+    _Macro(SpecularExponent) \
     \
     _Macro(Ambient) \
     _Macro(CastShadows) \
@@ -22,6 +25,7 @@ namespace Engine {
     _Macro(Emissive) \
     _Macro(Highlight) \
     _Macro(Reflection) \
+    _Macro(Refraction) \
     _Macro(Transparency) \
     _Macro(Fresnel) \
     _Macro(Glass) \
@@ -61,7 +65,7 @@ FOREACH_MATERIALCONSTNAMES_NAME(DEF_MATERIALCONSTNAMES_ACCESSOR)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void MaterialConstNames::Startup() {
+void MaterialConstNames::Start() {
 #define DEF_MATERIALCONSTNAMES_STARTUP(_Name) \
     new ((void *)&CONCAT(gPod_, _Name)) Graphics::BindName(STRINGIZE(_Name));
 
@@ -69,8 +73,6 @@ void MaterialConstNames::Startup() {
 
 #undef DEF_MATERIALCONSTNAMES_STARTUP
 }
-//----------------------------------------------------------------------------
-#undef DEF_MATERIALCONSTNAMES_STARTUP
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
