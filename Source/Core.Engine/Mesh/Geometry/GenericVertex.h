@@ -26,20 +26,33 @@ public:
 
         operator bool () const { return (nullptr != Key); }
 
-        void AssignValue(GenericVertex& vertex, float value) const;
-        void AssignValue(GenericVertex& vertex, const float2& value) const;
-        void AssignValue(GenericVertex& vertex, const float3& value) const;
-        void AssignValue(GenericVertex& vertex, const float4& value) const;
-
-        void AssignValue(GenericVertex& vertex, const ColorRGBA& value) const;
-        void AssignValue(GenericVertex& vertex, const ColorRGBA16& value) const;
-        void AssignValue(GenericVertex& vertex, const ColorRGBAF& value) const;
-
-        void AssignValue(GenericVertex& vertex, const ColorBGRA& value) const;
-        void AssignValue(GenericVertex& vertex, const ColorBGRA16& value) const;
-        void AssignValue(GenericVertex& vertex, const ColorBGRAF& value) const;
-
         static SubPart Null() { return SubPart{nullptr, nullptr}; }
+
+        void ReadValue(GenericVertex& vertex, float *pValue) const;
+        void ReadValue(GenericVertex& vertex, float2 *pValue) const;
+        void ReadValue(GenericVertex& vertex, float3 *pValue) const;
+        void ReadValue(GenericVertex& vertex, float4 *pValue) const;
+
+        void ReadValue(GenericVertex& vertex, ColorRGBA *pValue) const;
+        void ReadValue(GenericVertex& vertex, ColorRGBA16 *pValue) const;
+        void ReadValue(GenericVertex& vertex, ColorRGBAF *pValue) const;
+
+        void ReadValue(GenericVertex& vertex, ColorBGRA *pValue) const;
+        void ReadValue(GenericVertex& vertex, ColorBGRA16 *pValue) const;
+        void ReadValue(GenericVertex& vertex, ColorBGRAF *pValue) const;
+
+        void WriteValue(GenericVertex& vertex, float value) const;
+        void WriteValue(GenericVertex& vertex, const float2& value) const;
+        void WriteValue(GenericVertex& vertex, const float3& value) const;
+        void WriteValue(GenericVertex& vertex, const float4& value) const;
+
+        void WriteValue(GenericVertex& vertex, const ColorRGBA& value) const;
+        void WriteValue(GenericVertex& vertex, const ColorRGBA16& value) const;
+        void WriteValue(GenericVertex& vertex, const ColorRGBAF& value) const;
+
+        void WriteValue(GenericVertex& vertex, const ColorBGRA& value) const;
+        void WriteValue(GenericVertex& vertex, const ColorBGRA16& value) const;
+        void WriteValue(GenericVertex& vertex, const ColorBGRAF& value) const;
     };
 
     GenericVertex(const Graphics::VertexDeclaration *vertexDeclaration);

@@ -91,18 +91,18 @@ static void CreateRectVertices_(
         const float4& uv  = texcoords0[i];
 
         if (position4f_0)
-            position4f_0.AssignValue(vertex, pos);
+            position4f_0.WriteValue(vertex, pos);
         else if (position3f_0)
-            position3f_0.AssignValue(vertex, pos.xyz());
+            position3f_0.WriteValue(vertex, pos.xyz());
         else if (position2f_0)
-            position2f_0.AssignValue(vertex, pos.xy());
+            position2f_0.WriteValue(vertex, pos.xy());
 
         if (texcoord4f_0)
-            texcoord4f_0.AssignValue(vertex, uv);
+            texcoord4f_0.WriteValue(vertex, uv);
         else if (texcoord3f_0)
-            texcoord3f_0.AssignValue(vertex, uv.xyz());
+            texcoord3f_0.WriteValue(vertex, uv.xyz());
         else if (texcoord2f_0)
-            texcoord2f_0.AssignValue(vertex, uv.xy());
+            texcoord2f_0.WriteValue(vertex, uv.xy());
 
         vertex.NextVertex();
     }

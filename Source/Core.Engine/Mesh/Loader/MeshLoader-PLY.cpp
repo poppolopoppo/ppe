@@ -402,9 +402,9 @@ bool ReadMeshData(const MeshHeader& header, const MemoryView<u8>& indices, Gener
 
             SanitizeNormal3_(vertexData.Normal); // beurk
 
-            sp_positions0.AssignValue(vertices, vertexData.Position);
-            sp_colors0.AssignValue(vertices, vertexData.Color);
-            sp_normals0.AssignValue(vertices, vertexData.Normal);
+            sp_positions0.WriteValue(vertices, vertexData.Position);
+            sp_colors0.WriteValue(vertices, vertexData.Color);
+            sp_normals0.WriteValue(vertices, vertexData.Normal);
 
             if (!vertices.NextVertex())
                 Assert(i + 1 == header.VertexCount);
@@ -423,10 +423,10 @@ bool ReadMeshData(const MeshHeader& header, const MemoryView<u8>& indices, Gener
 
             vertexData.UV.y() = 1 - vertexData.UV.y(); // double-beurk
 
-            sp_positions0.AssignValue(vertices, vertexData.Position);
-            sp_colors0.AssignValue(vertices, vertexData.Color);
-            sp_texcoord0.AssignValue(vertices, vertexData.UV);
-            sp_normals0.AssignValue(vertices, vertexData.Normal);
+            sp_positions0.WriteValue(vertices, vertexData.Position);
+            sp_colors0.WriteValue(vertices, vertexData.Color);
+            sp_texcoord0.WriteValue(vertices, vertexData.UV);
+            sp_normals0.WriteValue(vertices, vertexData.Normal);
 
             if (!vertices.NextVertex())
                 Assert(i + 1 == header.VertexCount);

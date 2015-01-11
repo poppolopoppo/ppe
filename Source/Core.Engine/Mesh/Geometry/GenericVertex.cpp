@@ -31,7 +31,31 @@ static bool AssignableFrom_(const Graphics::VertexSubPartFormat format, float ) 
     return false;
 }
 //----------------------------------------------------------------------------
-static void AssignValue_(
+static void ReadValue_(
+    void *const vertex, const Graphics::VertexSubPartKey& key,
+    const Graphics::AbstractVertexSubPart *subPart,
+    float *pValue) {
+    Assert(pValue);
+    using namespace Graphics;
+    switch (key.Format())
+    {
+    case VertexSubPartFormat::Float:
+        subPart->Get(vertex, pValue);
+        break;
+    case VertexSubPartFormat::Half:
+        {
+            HalfFloat packed;
+            subPart->Get(vertex, &packed);
+            *pValue = packed.Unpack();
+        }
+        break;
+    default:
+        AssertNotImplemented();
+        return;
+    }
+}
+//----------------------------------------------------------------------------
+static void WriteValue_(
     void *const vertex, const Graphics::VertexSubPartKey& key,
     const Graphics::AbstractVertexSubPart *subPart,
     float value) {
@@ -67,7 +91,59 @@ static bool AssignableFrom_(const Graphics::VertexSubPartFormat format, const fl
     return false;
 }
 //----------------------------------------------------------------------------
-static void AssignValue_(
+static void ReadValue_(
+    void *const vertex, const Graphics::VertexSubPartKey& key,
+    const Graphics::AbstractVertexSubPart *subPart,
+    float2 *pValue) {
+    Assert(pValue);
+    using namespace Graphics;
+    switch (key.Format())
+    {
+    case VertexSubPartFormat::Float2:
+        subPart->Get(vertex, pValue);
+        break;
+    case VertexSubPartFormat::Byte2N:
+        {
+            byte2n packed;
+            subPart->Get(vertex, &packed);
+            *pValue = NormUnpack(packed);
+        }
+        break;
+    case VertexSubPartFormat::UByte2N:
+        {
+            ubyte2n packed;
+            subPart->Get(vertex, &packed);
+            *pValue = NormUnpack(packed);
+        }
+        break;
+    case VertexSubPartFormat::Short2N:
+        {
+            short2n packed;
+            subPart->Get(vertex, &packed);
+            *pValue = NormUnpack(packed);
+        }
+        break;
+    case VertexSubPartFormat::UShort2N:
+        {
+            ushort2n packed;
+            subPart->Get(vertex, &packed);
+            *pValue = NormUnpack(packed);
+        }
+        break;
+    case VertexSubPartFormat::Half2:
+        {
+            half2 packed;
+            subPart->Get(vertex, &packed);
+            *pValue = HalfUnpack(packed);
+        }
+        break;
+    default:
+        AssertNotImplemented();
+        return;
+    }
+}
+//----------------------------------------------------------------------------
+static void WriteValue_(
     void *const vertex, const Graphics::VertexSubPartKey& key,
     const Graphics::AbstractVertexSubPart *subPart,
     const float2& value) {
@@ -108,6 +184,7 @@ static bool AssignableFrom_(const Graphics::VertexSubPartFormat format, const fl
     case VertexSubPartFormat::UByte4N:
     case VertexSubPartFormat::Short4N:
     case VertexSubPartFormat::UShort4N:
+    case VertexSubPartFormat::Half4:
     case VertexSubPartFormat::UX10Y10Z10W2N:
         return true;
     default:
@@ -116,7 +193,70 @@ static bool AssignableFrom_(const Graphics::VertexSubPartFormat format, const fl
     return false;
 }
 //----------------------------------------------------------------------------
-static void AssignValue_(void *const vertex, const Graphics::VertexSubPartKey& key, const Graphics::AbstractVertexSubPart *subPart, const float3& value) {
+static void ReadValue_(void *const vertex, const Graphics::VertexSubPartKey& key, const Graphics::AbstractVertexSubPart *subPart, float3 *pValue) {
+    Assert(pValue);
+    using namespace Graphics;
+    switch (key.Format())
+    {
+    case VertexSubPartFormat::Float3:
+        subPart->Get(vertex, pValue);
+        break;
+    case VertexSubPartFormat::Float4:
+        {
+            float4 extended;
+            subPart->Get(vertex, &extended);
+            *pValue = extended.xyz();
+        }
+        break;
+    case VertexSubPartFormat::Byte4N:
+        {
+            byte4n packed;
+            subPart->Get(vertex, &packed);
+            *pValue = NormUnpack(packed).xyz();
+        }
+        break;
+    case VertexSubPartFormat::UByte4N:
+        {
+            ubyte4n packed;
+            subPart->Get(vertex, &packed);
+            *pValue = NormUnpack(packed).xyz();
+        }
+        break;
+    case VertexSubPartFormat::Short4N:
+        {
+            short4n packed;
+            subPart->Get(vertex, &packed);
+            *pValue = NormUnpack(packed).xyz();
+        }
+        break;
+    case VertexSubPartFormat::UShort4N:
+        {
+            ushort4n packed;
+            subPart->Get(vertex, &packed);
+            *pValue = NormUnpack(packed).xyz();
+        }
+        break;
+    case VertexSubPartFormat::Half4:
+        {
+            half4 packed;
+            subPart->Get(vertex, &packed);
+            *pValue = HalfUnpack(packed).xyz();
+        }
+        break;
+    case VertexSubPartFormat::UX10Y10Z10W2N:
+        {
+            UX10Y10Z10W2N packed;
+            subPart->Get(vertex, &packed);
+            packed.Unpack_FloatM11(*pValue);
+        }
+        break;
+    default:
+        AssertNotImplemented();
+        return;
+    }
+}
+//----------------------------------------------------------------------------
+static void WriteValue_(void *const vertex, const Graphics::VertexSubPartKey& key, const Graphics::AbstractVertexSubPart *subPart, const float3& value) {
     using namespace Graphics;
     switch (key.Format())
     {
@@ -137,6 +277,9 @@ static void AssignValue_(void *const vertex, const Graphics::VertexSubPartKey& k
         break;
     case VertexSubPartFormat::UShort4N:
         subPart->Set(vertex, ushort4n(value.ZeroExtend()));
+        break;
+    case VertexSubPartFormat::Half4:
+        subPart->Set(vertex, HalfPack(value.ZeroExtend()));
         break;
     case VertexSubPartFormat::UX10Y10Z10W2N:
         subPart->Set(vertex, FloatM11_to_UX10Y10Z10W2N(value, 0));
@@ -165,7 +308,71 @@ static bool AssignableFrom_(const Graphics::VertexSubPartFormat format, const fl
     return false;
 }
 //----------------------------------------------------------------------------
-static void AssignValue_(
+static void ReadValue_(
+    void *const vertex,
+    const Graphics::VertexSubPartKey& key,
+    const Graphics::AbstractVertexSubPart *subPart,
+    float4 *pValue) {
+    Assert(pValue);
+    using namespace Graphics;
+    switch (key.Format())
+    {
+    case VertexSubPartFormat::Float4:
+        subPart->Get(vertex, pValue);
+        break;
+    case VertexSubPartFormat::Byte4N:
+        {
+            byte4n packed;
+            subPart->Get(vertex, &packed);
+            *pValue = NormUnpack(packed);
+        }
+        break;
+    case VertexSubPartFormat::UByte4N:
+        {
+            ubyte4n packed;
+            subPart->Get(vertex, &packed);
+            *pValue = NormUnpack(packed);
+        }
+        break;
+    case VertexSubPartFormat::Short4N:
+        {
+            short4n packed;
+            subPart->Get(vertex, &packed);
+            *pValue = NormUnpack(packed);
+        }
+        break;
+    case VertexSubPartFormat::UShort4N:
+        {
+            ushort4n packed;
+            subPart->Get(vertex, &packed);
+            *pValue = NormUnpack(packed);
+        }
+        break;
+    case VertexSubPartFormat::UX10Y10Z10W2N:
+        {
+            UX10Y10Z10W2N packed;
+            subPart->Get(vertex, &packed);
+
+            float3 xyz;
+            u8 w;
+            packed.Unpack_FloatM11(xyz, w);
+            *pValue = float4(xyz, float(w));
+        }
+        break;
+    case VertexSubPartFormat::Half4:
+        {
+            half4 packed;
+            subPart->Get(vertex, &packed);
+            *pValue = HalfUnpack(packed);
+        }
+        break;
+    default:
+        AssertNotImplemented();
+        return;
+    }
+}
+//----------------------------------------------------------------------------
+static void WriteValue_(
     void *const vertex,
     const Graphics::VertexSubPartKey& key,
     const Graphics::AbstractVertexSubPart *subPart,
@@ -204,24 +411,44 @@ static bool AssignableFrom_(const Graphics::VertexSubPartFormat format, const Co
     return AssignableFrom_(format, float4());
 }
 //----------------------------------------------------------------------------
-static void AssignValue_(void *const vertex, const Graphics::VertexSubPartKey& key, const Graphics::AbstractVertexSubPart *subPart, const ColorBGRAF& color) {
-    return AssignValue_(vertex, key, subPart, color.Data());
+static void ReadValue_(void *const vertex, const Graphics::VertexSubPartKey& key, const Graphics::AbstractVertexSubPart *subPart, ColorBGRAF *pColor) {
+    Assert(pColor);
+    float4 data;
+    ReadValue_(vertex, key, subPart, &data);
+    pColor->Data() = data;
+}
+//----------------------------------------------------------------------------
+static void WriteValue_(void *const vertex, const Graphics::VertexSubPartKey& key, const Graphics::AbstractVertexSubPart *subPart, const ColorBGRAF& color) {
+    WriteValue_(vertex, key, subPart, color.Data());
 }
 //----------------------------------------------------------------------------
 static bool AssignableFrom_(const Graphics::VertexSubPartFormat format, const ColorBGRA& ) {
     return AssignableFrom_(format, float4());
 }
 //----------------------------------------------------------------------------
-static void AssignValue_(void *const vertex, const Graphics::VertexSubPartKey& key, const Graphics::AbstractVertexSubPart *subPart, const ColorBGRA& color) {
-    return AssignValue_(vertex, key, subPart, ColorBGRAF(color).Data());
+static void ReadValue_(void *const vertex, const Graphics::VertexSubPartKey& key, const Graphics::AbstractVertexSubPart *subPart, ColorBGRA *pColor) {
+    Assert(pColor);
+    float4 data;
+    ReadValue_(vertex, key, subPart, &data);
+    *pColor = ColorBGRA(ColorBGRAF(data));
+}
+//----------------------------------------------------------------------------
+static void WriteValue_(void *const vertex, const Graphics::VertexSubPartKey& key, const Graphics::AbstractVertexSubPart *subPart, const ColorBGRA& color) {
+    WriteValue_(vertex, key, subPart, ColorBGRAF(color).Data());
 }
 //----------------------------------------------------------------------------
 static bool AssignableFrom_(const Graphics::VertexSubPartFormat format, const ColorBGRA16& ) {
     return AssignableFrom_(format, float4());
 }
 //----------------------------------------------------------------------------
-static void AssignValue_(void *const vertex, const Graphics::VertexSubPartKey& key, const Graphics::AbstractVertexSubPart *subPart, const ColorBGRA16& color) {
-    return AssignValue_(vertex, key, subPart, ColorBGRAF(color).Data());
+static void ReadValue_(void *const vertex, const Graphics::VertexSubPartKey& key, const Graphics::AbstractVertexSubPart *subPart, ColorBGRA16 *pColor) {
+    float4 data;
+    ReadValue_(vertex, key, subPart, &data);
+    *pColor = ColorBGRA16(ColorBGRAF(data));
+}
+//----------------------------------------------------------------------------
+static void WriteValue_(void *const vertex, const Graphics::VertexSubPartKey& key, const Graphics::AbstractVertexSubPart *subPart, const ColorBGRA16& color) {
+    WriteValue_(vertex, key, subPart, ColorBGRAF(color).Data());
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -309,62 +536,127 @@ void GenericVertex::CopyVertex(size_t dst, size_t src) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void GenericVertex::SubPart::AssignValue(GenericVertex& vertex, float value) const {
+void GenericVertex::SubPart::ReadValue(GenericVertex& vertex, float *pValue) const {
     Assert(Key);
-    AssignValue_(vertex.CurrentVertex(), *Key, Value, value);
+    Assert(pValue);
+    ReadValue_(vertex.CurrentVertex(), *Key, Value, pValue);
 }
 //----------------------------------------------------------------------------
-void GenericVertex::SubPart::AssignValue(GenericVertex& vertex, const float2& value) const {
+void GenericVertex::SubPart::ReadValue(GenericVertex& vertex, float2 *pValue) const {
     Assert(Key);
-    AssignValue_(vertex.CurrentVertex(), *Key, Value, value);
+    Assert(pValue);
+    ReadValue_(vertex.CurrentVertex(), *Key, Value, pValue);
 }
 //----------------------------------------------------------------------------
-void GenericVertex::SubPart::AssignValue(GenericVertex& vertex, const float3& value) const {
+void GenericVertex::SubPart::ReadValue(GenericVertex& vertex, float3 *pValue) const {
     Assert(Key);
-    AssignValue_(vertex.CurrentVertex(), *Key, Value, value);
+    Assert(pValue);
+    ReadValue_(vertex.CurrentVertex(), *Key, Value, pValue);
 }
 //----------------------------------------------------------------------------
-void GenericVertex::SubPart::AssignValue(GenericVertex& vertex, const float4& value) const {
+void GenericVertex::SubPart::ReadValue(GenericVertex& vertex, float4 *pValue) const {
     Assert(Key);
-    AssignValue_(vertex.CurrentVertex(), *Key, Value, value);
+    Assert(pValue);
+    ReadValue_(vertex.CurrentVertex(), *Key, Value, pValue);
 }
 //----------------------------------------------------------------------------
-void GenericVertex::SubPart::AssignValue(GenericVertex& vertex, const ColorRGBA& value) const {
+void GenericVertex::SubPart::ReadValue(GenericVertex& vertex, ColorRGBA *pValue) const {
     Assert(Key);
-    AssignValue_(vertex.CurrentVertex(), *Key, Value, ColorBGRA(value));
+    Assert(pValue);
+    ColorBGRA tmp;
+    ReadValue_(vertex.CurrentVertex(), *Key, Value, &tmp);
+    *pValue = tmp;
 }
 //----------------------------------------------------------------------------
-void GenericVertex::SubPart::AssignValue(GenericVertex& vertex, const ColorRGBA16& value) const {
+void GenericVertex::SubPart::ReadValue(GenericVertex& vertex, ColorRGBA16 *pValue) const {
     Assert(Key);
-    AssignValue_(vertex.CurrentVertex(), *Key, Value, ColorBGRA16(value));
+    Assert(pValue);
+    ColorBGRA16 tmp;
+    ReadValue_(vertex.CurrentVertex(), *Key, Value, &tmp);
+    *pValue = tmp;
 }
 //----------------------------------------------------------------------------
-void GenericVertex::SubPart::AssignValue(GenericVertex& vertex, const ColorRGBAF& value) const {
+void GenericVertex::SubPart::ReadValue(GenericVertex& vertex, ColorRGBAF *pValue) const {
     Assert(Key);
-    AssignValue_(vertex.CurrentVertex(), *Key, Value, ColorBGRAF(value));
+    Assert(pValue);
+    ColorBGRAF tmp;
+    ReadValue_(vertex.CurrentVertex(), *Key, Value, &tmp);
+    *pValue = tmp;
 }
 //----------------------------------------------------------------------------
-void GenericVertex::SubPart::AssignValue(GenericVertex& vertex, const ColorBGRA& value) const {
+void GenericVertex::SubPart::ReadValue(GenericVertex& vertex, ColorBGRA *pValue) const {
     Assert(Key);
-    AssignValue_(vertex.CurrentVertex(), *Key, Value, value);
+    ReadValue_(vertex.CurrentVertex(), *Key, Value, pValue);
 }
 //----------------------------------------------------------------------------
-void GenericVertex::SubPart::AssignValue(GenericVertex& vertex, const ColorBGRA16& value) const {
+void GenericVertex::SubPart::ReadValue(GenericVertex& vertex, ColorBGRA16 *pValue) const {
     Assert(Key);
-    AssignValue_(vertex.CurrentVertex(), *Key, Value, value);
+    Assert(pValue);
+    ReadValue_(vertex.CurrentVertex(), *Key, Value, pValue);
 }
 //----------------------------------------------------------------------------
-void GenericVertex::SubPart::AssignValue(GenericVertex& vertex, const ColorBGRAF& value) const {
+void GenericVertex::SubPart::ReadValue(GenericVertex& vertex, ColorBGRAF *pValue) const {
     Assert(Key);
-    AssignValue_(vertex.CurrentVertex(), *Key, Value, value);
+    Assert(pValue);
+    ReadValue_(vertex.CurrentVertex(), *Key, Value, pValue);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+void GenericVertex::SubPart::WriteValue(GenericVertex& vertex, float value) const {
+    Assert(Key);
+    WriteValue_(vertex.CurrentVertex(), *Key, Value, value);
+}
+//----------------------------------------------------------------------------
+void GenericVertex::SubPart::WriteValue(GenericVertex& vertex, const float2& value) const {
+    Assert(Key);
+    WriteValue_(vertex.CurrentVertex(), *Key, Value, value);
+}
+//----------------------------------------------------------------------------
+void GenericVertex::SubPart::WriteValue(GenericVertex& vertex, const float3& value) const {
+    Assert(Key);
+    WriteValue_(vertex.CurrentVertex(), *Key, Value, value);
+}
+//----------------------------------------------------------------------------
+void GenericVertex::SubPart::WriteValue(GenericVertex& vertex, const float4& value) const {
+    Assert(Key);
+    WriteValue_(vertex.CurrentVertex(), *Key, Value, value);
+}
+//----------------------------------------------------------------------------
+void GenericVertex::SubPart::WriteValue(GenericVertex& vertex, const ColorRGBA& value) const {
+    Assert(Key);
+    WriteValue_(vertex.CurrentVertex(), *Key, Value, ColorBGRA(value));
+}
+//----------------------------------------------------------------------------
+void GenericVertex::SubPart::WriteValue(GenericVertex& vertex, const ColorRGBA16& value) const {
+    Assert(Key);
+    WriteValue_(vertex.CurrentVertex(), *Key, Value, ColorBGRA16(value));
+}
+//----------------------------------------------------------------------------
+void GenericVertex::SubPart::WriteValue(GenericVertex& vertex, const ColorRGBAF& value) const {
+    Assert(Key);
+    WriteValue_(vertex.CurrentVertex(), *Key, Value, ColorBGRAF(value));
+}
+//----------------------------------------------------------------------------
+void GenericVertex::SubPart::WriteValue(GenericVertex& vertex, const ColorBGRA& value) const {
+    Assert(Key);
+    WriteValue_(vertex.CurrentVertex(), *Key, Value, value);
+}
+//----------------------------------------------------------------------------
+void GenericVertex::SubPart::WriteValue(GenericVertex& vertex, const ColorBGRA16& value) const {
+    Assert(Key);
+    WriteValue_(vertex.CurrentVertex(), *Key, Value, value);
+}
+//----------------------------------------------------------------------------
+void GenericVertex::SubPart::WriteValue(GenericVertex& vertex, const ColorBGRAF& value) const {
+    Assert(Key);
+    WriteValue_(vertex.CurrentVertex(), *Key, Value, value);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define DEF_GENERICVERTEX_SETTER(_NAME, _SEMANTIC, _TYPE) \
     GenericVertex::SubPart GenericVertex::_NAME(size_t index) const { \
-        Assert(VertexCountRemaining()); \
-        \
         const Pair<const Graphics::VertexSubPartKey *, const Graphics::AbstractVertexSubPart *> subPart = \
             _vertexDeclaration->SubPartBySemanticIFP(Graphics::VertexSubPartSemantic::_SEMANTIC, index); \
         \

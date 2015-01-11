@@ -390,29 +390,29 @@ void ExportVertices(
     do {
         vertices.ZeroMemory_CurrentVertex();
 
-        if (sp_positions0) sp_positions0.AssignValue(vertices, (*positions0)[i]);
-        if (sp_positions1) sp_positions1.AssignValue(vertices, (*positions1)[i]);
-        if (sp_positions2) sp_positions2.AssignValue(vertices, (*positions2)[i]);
+        if (sp_positions0) sp_positions0.WriteValue(vertices, (*positions0)[i]);
+        if (sp_positions1) sp_positions1.WriteValue(vertices, (*positions1)[i]);
+        if (sp_positions2) sp_positions2.WriteValue(vertices, (*positions2)[i]);
 
-        if (sp_colors0) sp_colors0.AssignValue(vertices, (*colors0)[i]);
-        if (sp_colors1) sp_colors1.AssignValue(vertices, (*colors1)[i]);
-        if (sp_colors2) sp_colors2.AssignValue(vertices, (*colors2)[i]);
+        if (sp_colors0) sp_colors0.WriteValue(vertices, (*colors0)[i]);
+        if (sp_colors1) sp_colors1.WriteValue(vertices, (*colors1)[i]);
+        if (sp_colors2) sp_colors2.WriteValue(vertices, (*colors2)[i]);
 
-        if (sp_texcoords0) sp_texcoords0.AssignValue(vertices, (*texCoords0)[i]);
-        if (sp_texcoords1) sp_texcoords1.AssignValue(vertices, (*texCoords1)[i]);
-        if (sp_texcoords2) sp_texcoords2.AssignValue(vertices, (*texCoords2)[i]);
+        if (sp_texcoords0) sp_texcoords0.WriteValue(vertices, (*texCoords0)[i]);
+        if (sp_texcoords1) sp_texcoords1.WriteValue(vertices, (*texCoords1)[i]);
+        if (sp_texcoords2) sp_texcoords2.WriteValue(vertices, (*texCoords2)[i]);
 
-        if (sp_normals0) sp_normals0.AssignValue(vertices, (*normals0)[i]);
-        if (sp_normals1) sp_normals1.AssignValue(vertices, (*normals1)[i]);
-        if (sp_normals2) sp_normals2.AssignValue(vertices, (*normals2)[i]);
+        if (sp_normals0) sp_normals0.WriteValue(vertices, (*normals0)[i]);
+        if (sp_normals1) sp_normals1.WriteValue(vertices, (*normals1)[i]);
+        if (sp_normals2) sp_normals2.WriteValue(vertices, (*normals2)[i]);
 
-        if (sp_tangents0) sp_tangents0.AssignValue(vertices, (*tangents0)[i]);
-        if (sp_tangents1) sp_tangents1.AssignValue(vertices, (*tangents1)[i]);
-        if (sp_tangents2) sp_tangents2.AssignValue(vertices, (*tangents2)[i]);
+        if (sp_tangents0) sp_tangents0.WriteValue(vertices, (*tangents0)[i]);
+        if (sp_tangents1) sp_tangents1.WriteValue(vertices, (*tangents1)[i]);
+        if (sp_tangents2) sp_tangents2.WriteValue(vertices, (*tangents2)[i]);
 
-        if (sp_birnormals0) sp_birnormals0.AssignValue(vertices, (*binormals0)[i]);
-        if (sp_birnormals1) sp_birnormals1.AssignValue(vertices, (*binormals1)[i]);
-        if (sp_birnormals2) sp_birnormals2.AssignValue(vertices, (*binormals2)[i]);
+        if (sp_birnormals0) sp_birnormals0.WriteValue(vertices, (*binormals0)[i]);
+        if (sp_birnormals1) sp_birnormals1.WriteValue(vertices, (*binormals1)[i]);
+        if (sp_birnormals2) sp_birnormals2.WriteValue(vertices, (*binormals2)[i]);
 
         ++i;
     }
@@ -444,12 +444,12 @@ void ExportVertices(
     do {
         vertices.ZeroMemory_CurrentVertex();
 
-        if (sp_positions0) sp_positions0.AssignValue(vertices, (*positions0)[i]);
-        if (sp_colors0) sp_colors0.AssignValue(vertices, (*colors0)[i]);
-        if (sp_texcoords0) sp_texcoords0.AssignValue(vertices, (*texCoords0)[i]);
-        if (sp_normals0) sp_normals0.AssignValue(vertices, (*normals0)[i]);
-        if (sp_tangents0) sp_tangents0.AssignValue(vertices, (*tangents0)[i]);
-        if (sp_birnormals0) sp_birnormals0.AssignValue(vertices, (*binormals0)[i]);
+        if (sp_positions0) sp_positions0.WriteValue(vertices, (*positions0)[i]);
+        if (sp_colors0) sp_colors0.WriteValue(vertices, (*colors0)[i]);
+        if (sp_texcoords0) sp_texcoords0.WriteValue(vertices, (*texCoords0)[i]);
+        if (sp_normals0) sp_normals0.WriteValue(vertices, (*normals0)[i]);
+        if (sp_tangents0) sp_tangents0.WriteValue(vertices, (*tangents0)[i]);
+        if (sp_birnormals0) sp_birnormals0.WriteValue(vertices, (*binormals0)[i]);
 
         ++i;
     }
