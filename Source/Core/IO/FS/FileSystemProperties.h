@@ -14,6 +14,8 @@ typedef wchar_t char_type;
 //----------------------------------------------------------------------------
 enum : char_type { Separator = L'/', AltSeparator = L'\\' };
 //----------------------------------------------------------------------------
+inline const char_type *Separators() { return L"/\\"; }
+//----------------------------------------------------------------------------
 class TokenTraits {
 public:
     const std::locale& Locale() const { return std::locale::classic(); }

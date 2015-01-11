@@ -66,6 +66,22 @@ static bool ParseFilename_(
     return ParseBasename_(basenamePtr + 1, length - (basenamePtr - cstr) - 1, basename);
 }
 //----------------------------------------------------------------------------
+static bool AppendRelname_(Dirpath& dirpath, Basename& basename, const MemoryView<const FileSystem::char_type>& relname) {
+    if (relname.empty())
+        return false;
+
+    const wchar_t *basenamePtr = std::max(
+        StrRChr(relname.Pointer(), FileSystem::Separator),
+        StrRChr(relname.Pointer(), FileSystem::AltSeparator)
+        );
+
+    if (!basenamePtr)
+        return ParseBasename_(relname.Pointer(), relname.size(), basename);
+
+    dirpath.Concat(relname.SubRange(0, basenamePtr - relname.Pointer()));
+    return ParseBasename_(basenamePtr + 1, relname.size() - (basenamePtr - relname.Pointer()) - 1, basename);
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -75,6 +91,18 @@ Filename::Filename(Core::Dirpath&& dirpath, Core::Basename&& basename)
 //----------------------------------------------------------------------------
 Filename::Filename(const Core::Dirpath& dirpath, const Core::Basename& basename)
 :   _dirpath(dirpath), _basename(basename) {}
+//----------------------------------------------------------------------------
+Filename::Filename(const Core::Dirpath& dirpath, const FileSystem::char_type *relfilename) 
+:   Filename(dirpath, MemoryView<const FileSystem::char_type>(relfilename, Length(relfilename)) ) {}
+//----------------------------------------------------------------------------
+Filename::Filename(const Core::Dirpath& dirpath, const FileSystem::char_type *relfilename, size_t length) 
+:   Filename(dirpath, MemoryView<const FileSystem::char_type>(relfilename, length) ) {}
+//----------------------------------------------------------------------------
+Filename::Filename(const Core::Dirpath& dirpath, const MemoryView<const FileSystem::char_type>& relfilename) 
+:   _dirpath(dirpath) {
+    if (!AppendRelname_(_dirpath, _basename, relfilename))
+        AssertNotReached();
+}
 //----------------------------------------------------------------------------
 Filename::Filename(Filename&& rvalue)
 :   _dirpath(std::move(rvalue._dirpath)),
@@ -98,23 +126,27 @@ Filename& Filename::operator =(const Filename& other) {
 //----------------------------------------------------------------------------
 Filename::Filename(const FileSystem::char_type* content) {
     Assert(content);
-    ParseFilename_(content, Length(content), _dirpath, _basename);
+    if (!ParseFilename_(content, Length(content), _dirpath, _basename))
+        AssertNotReached();
 }
 //----------------------------------------------------------------------------
 Filename& Filename::operator =(const FileSystem::char_type* content) {
     Assert(content);
-    ParseFilename_(content, Length(content), _dirpath, _basename);
+    if (!ParseFilename_(content, Length(content), _dirpath, _basename))
+        AssertNotReached();
     return *this;
 }
 //----------------------------------------------------------------------------
 Filename::Filename(const FileSystem::char_type* content, size_t length) {
     Assert(content);
-    ParseFilename_(content, length, _dirpath, _basename);
+    if (!ParseFilename_(content, length, _dirpath, _basename))
+        AssertNotReached();
 }
 //----------------------------------------------------------------------------
 Filename::Filename(const BasicStringSlice<FileSystem::char_type>& content) {
     Assert(content.begin());
-    ParseFilename_(content.begin(), content.size(), _dirpath, _basename);
+    if (!ParseFilename_(content.begin(), content.size(), _dirpath, _basename))
+        AssertNotReached();
 }
 //----------------------------------------------------------------------------
 size_t Filename::HashValue() const {

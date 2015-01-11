@@ -60,8 +60,12 @@ public:
 
     bool empty() const { return nullptr == _path; }
 
+    bool HasMountingPoint() const;
+
     void Concat(const Dirname& append);
     void Concat(const MemoryView<const Dirname>& path);
+    void Concat(const FileSystem::char_type *cstr);
+    void Concat(const MemoryView<const FileSystem::char_type>& strview);
 
     void Swap(Dirpath& other);
 

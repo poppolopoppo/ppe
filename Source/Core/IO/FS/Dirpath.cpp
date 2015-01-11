@@ -168,6 +168,10 @@ size_t Dirpath::ExpandPath(Core::MountingPoint& mountingPoint, const MemoryView<
     return (k -  it);
 }
 //----------------------------------------------------------------------------
+bool Dirpath::HasMountingPoint() const {
+    return !MountingPoint().empty(); 
+}
+//----------------------------------------------------------------------------
 void Dirpath::Concat(const Dirname& append) {
     Assert(!append.empty());
     const FileSystemToken *ptoken = &append;
@@ -177,6 +181,25 @@ void Dirpath::Concat(const Dirname& append) {
 void Dirpath::Concat(const MemoryView<const Dirname>& path) {
     Assert(!path.empty());
     _path = FileSystemPath::Instance().Concat(_path, path.Cast<const FileSystemToken>());
+}
+//----------------------------------------------------------------------------
+void Dirpath::Concat(const FileSystem::char_type *cstr) {
+    Assert(cstr);
+    return Concat(MemoryView<const FileSystem::char_type>(cstr, Length(cstr)) );
+}
+//----------------------------------------------------------------------------
+void Dirpath::Concat(const MemoryView<const FileSystem::char_type>& strview) {
+    Assert(strview.Pointer());
+
+    const FileSystem::char_type *separators = FileSystem::Separators();
+
+    size_t length = strview.size();
+    const FileSystem::char_type *cstr = strview.Pointer();
+
+    FileSystemTrie& trie = FileSystemPath::Instance();
+    MemoryView<const FileSystem::char_type> slice;
+    while (Split(&cstr, &length, separators, slice))
+        _path = trie.Concat(_path, FileSystemToken(slice) );
 }
 //----------------------------------------------------------------------------
 void Dirpath::Swap(Dirpath& other) {

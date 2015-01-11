@@ -23,6 +23,9 @@ public:
 
     Filename(Core::Dirpath&& dirpath, Core::Basename&& basename);
     Filename(const Core::Dirpath& dirpath, const Core::Basename& basename);
+    Filename(const Core::Dirpath& dirpath, const FileSystem::char_type *relfilename);
+    Filename(const Core::Dirpath& dirpath, const FileSystem::char_type *relfilename, size_t length);
+    Filename(const Core::Dirpath& dirpath, const MemoryView<const FileSystem::char_type>& relfilename);
 
     Filename(Filename&& rvalue);
     Filename& operator =(Filename&& rvalue);
@@ -50,8 +53,10 @@ public:
     const Core::BasenameNoExt& BasenameNoExt() const { return _basename.BasenameNoExt(); }
     const Core::Extname& Extname() const { return _basename.Extname(); }
 
-    bool empty() const { return _dirpath.empty() &&
-                                _basename.empty(); }
+    bool empty() const { return _dirpath.empty() && _basename.empty(); }
+
+    bool HasExtension() const { return _basename.HasExtension(); }
+    bool HasMountingPoint() const { return _dirpath.HasMountingPoint(); }
 
     bool Equals(const Filename& other) const;
     bool Less(const Filename& other) const;

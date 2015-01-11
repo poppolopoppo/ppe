@@ -39,7 +39,9 @@ public:
     const Core::BasenameNoExt& BasenameNoExt() const { return _basenameNoExt; }
     const Core::Extname& Extname() const { return _extname; }
 
-    bool empty() const { return _basenameNoExt.empty(); }
+    bool empty() const { return _basenameNoExt.empty() && _extname.empty(); }
+
+    bool HasExtension() const { return !_extname.empty(); }
 
     bool Equals(const Basename& other) const;
     bool Less(const Basename& other) const;
