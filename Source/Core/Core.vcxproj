@@ -135,6 +135,9 @@
     <CustomBuild Include="IO\CRC64.h" />
     <CustomBuild Include="IO\FileSystem.cpp" />
     <CustomBuild Include="IO\FileSystem.h" />
+    <CustomBuild Include="IO\FileSystemConstNames.cpp" />
+    <CustomBuild Include="IO\FileSystemConstNames.h" />
+    <CustomBuild Include="IO\FileSystem_fwd.h" />
     <CustomBuild Include="IO\Format-inl.h" />
     <CustomBuild Include="IO\Format.h" />
     <CustomBuild Include="IO\FormatHelpers.cpp" />

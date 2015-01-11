@@ -289,6 +289,15 @@
     <CustomBuild Include="IO\FileSystem.h">
       <Filter>IO</Filter>
     </CustomBuild>
+    <CustomBuild Include="IO\FileSystemConstNames.cpp">
+      <Filter>IO</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\FileSystemConstNames.h">
+      <Filter>IO</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\FileSystem_fwd.h">
+      <Filter>IO</Filter>
+    </CustomBuild>
     <CustomBuild Include="IO\Format-inl.h">
       <Filter>IO</Filter>
     </CustomBuild>

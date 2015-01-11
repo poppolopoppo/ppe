@@ -104,6 +104,8 @@
     <CustomBuild Include="Mesh\Loader\MeshLoader.h" />
     <CustomBuild Include="Mesh\Loader\ModelBuilder.cpp" />
     <CustomBuild Include="Mesh\Loader\ModelBuilder.h" />
+    <CustomBuild Include="Mesh\Loader\ModelLoader.cpp" />
+    <CustomBuild Include="Mesh\Loader\ModelLoader.h" />
     <CustomBuild Include="Mesh\MeshName.cpp" />
     <CustomBuild Include="Mesh\MeshName.h" />
     <CustomBuild Include="Mesh\Model.cpp" />

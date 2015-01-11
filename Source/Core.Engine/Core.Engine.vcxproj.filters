@@ -196,6 +196,12 @@
     <CustomBuild Include="Mesh\Loader\ModelBuilder.h">
       <Filter>Mesh\Loader</Filter>
     </CustomBuild>
+    <CustomBuild Include="Mesh\Loader\ModelLoader.cpp">
+      <Filter>Mesh\Loader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Mesh\Loader\ModelLoader.h">
+      <Filter>Mesh\Loader</Filter>
+    </CustomBuild>
     <CustomBuild Include="Mesh\MeshName.cpp">
       <Filter>Mesh</Filter>
     </CustomBuild>
