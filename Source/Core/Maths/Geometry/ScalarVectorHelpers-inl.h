@@ -125,7 +125,7 @@ FORCE_INLINE float Distance4(const ScalarVector<T, _Dim>& a, const ScalarVector<
 template <typename T, size_t _Dim>
 ScalarVector<T, _Dim> Normalize(const ScalarVector<T, _Dim>& v) {
     const float length = Length(v);
-    Assert(length > FLT_EPSILON); // no zero length normalize
+    Assert(length > 0); // no zero length normalize
     ScalarVector<T, _Dim> result;
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = static_cast<T>(v._data[i] / length);
@@ -135,7 +135,7 @@ ScalarVector<T, _Dim> Normalize(const ScalarVector<T, _Dim>& v) {
 template <typename T, size_t _Dim>
 ScalarVector<T, _Dim> Normalize2(const ScalarVector<T, _Dim>& v) {
     const float length = Length2(v);
-    Assert(length > FLT_EPSILON); // no zero length normalize
+    Assert(length > 0); // no zero length normalize
     ScalarVector<T, _Dim> result;
     result.x() = static_cast<T>(v.x() / length);
     result.y() = static_cast<T>(v.y() / length);
@@ -147,7 +147,7 @@ ScalarVector<T, _Dim> Normalize2(const ScalarVector<T, _Dim>& v) {
 template <typename T, size_t _Dim>
 ScalarVector<T, _Dim> Normalize3(const ScalarVector<T, _Dim>& v) {
     const float length = Length3(v);
-    Assert(length > FLT_EPSILON); // no zero length normalize
+    Assert(length > 0); // no zero length normalize
     ScalarVector<T, _Dim> result;
     result.x() = static_cast<T>(v.x() / length);
     result.y() = static_cast<T>(v.y() / length);
@@ -160,7 +160,7 @@ ScalarVector<T, _Dim> Normalize3(const ScalarVector<T, _Dim>& v) {
 template <typename T, size_t _Dim>
 ScalarVector<T, _Dim> Normalize4(const ScalarVector<T, _Dim>& v) {
     const float length = Length4(v);
-    Assert(length > FLT_EPSILON); // no zero length normalize
+    Assert(length > 0); // no zero length normalize
     ScalarVector<T, _Dim> result;
     result.x() = static_cast<T>(v.x() / length);
     result.y() = static_cast<T>(v.y() / length);
