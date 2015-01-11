@@ -30,6 +30,9 @@ template <typename T, typename _Allocator>
 bool Contains(const Vector<T, _Allocator>& v, const T& elt);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
+bool FindElementIndexIFP(size_t *pIndex, Vector<T, _Allocator>& v, const T& elt);
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
 void Insert_AssertUnique(Vector<T, _Allocator>& v, const T& elt);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>

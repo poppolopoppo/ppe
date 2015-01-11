@@ -17,6 +17,18 @@ bool Contains(const Vector<T, _Allocator>& v, const T& elt) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
+bool FindElementIndexIFP(size_t *pIndex, Vector<T, _Allocator>& v, const T& elt) {
+    Assert(pIndex);
+    const size_t size = v.size();
+    for (size_t i = 0; i < size; ++i)
+        if (elt == v[i]) {
+            *pIndex = i;
+            return true;
+        }
+    return false;
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
 void Insert_AssertUnique(Vector<T, _Allocator>& v, const T& elt) {
     Assert(!Contains(v, elt));
     v.emplace_back(elt);
