@@ -149,5 +149,129 @@ void ExportVertices(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+static void ComputeTriangleBasis_(
+    float3 *pTangent,
+    float3 *pBinormal,
+    const float3& pos0, 
+    const float3& pos1, 
+    const float3& pos2,
+    const float2& tex0,
+    const float2& tex1,
+    const float2& tex2 ) {
+    const float3 pos10 = pos1 - pos0;
+    const float3 pos20 = pos2 - pos0;
+    
+    const float2 tex10 = tex1 - tex0;
+    const float2 tex20 = tex2 - tex0;
+
+    float f = tex10.x() * tex20.y() - tex10.y() * tex20.x();
+    f = (fabs(f) < F_EpsilonSQ) ? 1.0f : 1.0f/f;
+
+    *pTangent = ((pos10 * tex20.y()) - (pos20 * tex10.y())) * f;
+    *pBinormal = ((pos20 * tex10.x()) - (pos10 * tex20.x())) * f;
+}
+//----------------------------------------------------------------------------
+void ComputeTangentSpace(GenericVertex& vertices, const MemoryView<const u32>& indices) {
+    const size_t indexCount = indices.size();
+    const size_t vertexCount = vertices.VertexCountWritten();
+    Assert(0 == (indexCount % 3)); // only triangle list
+
+    const GenericVertex::SubPart sp_positions0 = vertices.Position3f(0);
+    const GenericVertex::SubPart sp_texcoords0 = vertices.TexCoord2f(0);
+    const GenericVertex::SubPart sp_normals0 = vertices.Normal3f(0);
+    const GenericVertex::SubPart sp_tangents0 = vertices.Tangent3f(0);
+    const GenericVertex::SubPart sp_birnormals0 = vertices.Binormal3f(0);
+    const GenericVertex::SubPart sp_packedTangents0 = vertices.Tangent4f(0);
+
+    Assert(sp_positions0);
+    Assert(sp_texcoords0);
+    Assert(sp_normals0);
+
+    Assert(!sp_packedTangents0 || !sp_birnormals0);
+    Assert(sp_packedTangents0 || sp_tangents0);
+
+    const auto tangents = MALLOCA_VIEW(float3, vertexCount);
+    const auto binormals = MALLOCA_VIEW(float3, vertexCount);
+    for (size_t i = 0; i < vertexCount; ++i)
+        tangents[i] = binormals[i] = float3(0);
+
+    for (size_t i = 0; i < indexCount; i += 3) {
+        const size_t i0 = indices[i + 0];
+        const size_t i1 = indices[i + 1];
+        const size_t i2 = indices[i + 2];
+
+        float3 pos[3];
+        float2 tex[3];
+        vertices.SeekVertex(i0);
+        sp_positions0.ReadValue(vertices, &pos[0]);
+        sp_texcoords0.ReadValue(vertices, &tex[0]);
+        vertices.SeekVertex(i1);
+        sp_positions0.ReadValue(vertices, &pos[1]);
+        sp_texcoords0.ReadValue(vertices, &tex[1]);
+        vertices.SeekVertex(i2);
+        sp_positions0.ReadValue(vertices, &pos[2]);
+        sp_texcoords0.ReadValue(vertices, &tex[2]);
+
+        float3 tangent;
+        float3 binormal;
+        ComputeTriangleBasis_(  &tangent, &binormal, 
+                                pos[0], pos[1], pos[2],
+                                tex[0], tex[1], tex[2] );
+
+        tangents[i0] += tangent;
+        tangents[i1] += tangent;
+        tangents[i2] += tangent;
+
+        binormals[i0] += binormal;
+        binormals[i1] += binormal;
+        binormals[i2] += binormal;
+    }
+
+    for (size_t i = 0; i < vertexCount; ++i) {
+        float3 normal;
+        vertices.SeekVertex(i);
+        sp_normals0.ReadValue(vertices, &normal);
+
+        float3& tangent = tangents[i];
+        float3& binormal = binormals[i];
+
+        if (float3(0) == tangent) {
+            Assert(float3(0) != binormal);
+            binormal = Normalize3(binormal);
+            tangent = Cross(normal, binormal);
+        }
+        else if (float3(0) == binormal) {
+            Assert(float3(0) != tangent);
+            tangent = Normalize3(tangent);
+            binormal = Cross(tangent, normal);
+        }
+        else {
+            tangent = Normalize3(tangent);
+            binormal = Normalize3(binormal);
+        }
+
+        //Gram-Schmidt orthogonalization
+        tangent = Normalize3(tangent - normal * Dot3(normal, tangent));
+
+        //Right handed TBN space ?
+        const bool leftHanded = (Dot3(Cross(tangent, binormal), normal) < 0);
+        if (leftHanded)
+            binormal = -binormal;
+
+        if (sp_packedTangents0) {
+            const float4 tangentWHandedness(tangent, leftHanded ? 1 : 0);
+            sp_packedTangents0.WriteValue(vertices, tangentWHandedness);
+        }
+        else {
+            sp_tangents0.WriteValue(vertices, tangent);
+            sp_birnormals0.WriteValue(vertices, binormal);
+        }
+    }
+
+    vertices.SeekVertex(vertexCount);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Engine
 } //!namespace Core
