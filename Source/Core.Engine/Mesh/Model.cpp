@@ -20,7 +20,8 @@ Model::Model(
     const AABB3f& boundingBox,
     VECTOR(Mesh, PModelBone)&& bones,
     VECTOR(Mesh, PModelMesh)&& meshes )
-:   _boundingBox(boundingBox)
+:   _name(name)
+,   _boundingBox(boundingBox)
 ,   _bones(std::move(bones))
 ,   _meshes(std::move(meshes)) {
     Assert(!name.empty());
