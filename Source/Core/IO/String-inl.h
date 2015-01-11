@@ -17,36 +17,27 @@ bool Atoi(T *dst, const char *cstr, size_t length) {
     if (0 == length)
         return false;
 
-    bool neg = false;
+    const bool neg = ('-' == cstr[0]);
 
-    T v = 0;
-    T unit = 1;
+    i64 v = 0;
+    for (size_t i = neg ? 1 : 0; i < length; ++i) {
+        const char ch = cstr[i];
 
-    for (size_t i = length; i; --i, unit *= _Base) {
-        const char ch = cstr[i - 1];
-
-        T d = 0;
+        int d = 0;
         if (ch >= '0' && ch <= '9')
             d = ch - '0';
         else if (_Base > 10 && ch >= 'a' && ch <= 'f')
             d = ch - 'a' + 10;
         else if (_Base > 10 && ch >= 'A' && ch <= 'F')
             d = ch - 'A' + 10;
-        else if (ch == '-') {
-            if (i != 1)
-                return false;
-
-            neg = true;
-        }
-        else {
+        else
             return false;
-        }
 
         Assert(d < _Base);
-        v += d * unit;
+        v = v * _Base + d;
     }
 
-    *dst = (neg) ? T(-i64(v)) : v;
+    *dst = checked_cast<T>(neg ? -v : v);
     return true;
 }
 //----------------------------------------------------------------------------
@@ -55,9 +46,80 @@ bool Atoi(T *dst, const char (&cstr)[_Capacity]) {
     return Atoi<_Base, T>(dst, cstr, _Capacity);
 }
 //----------------------------------------------------------------------------
-template <size_t _Base, typename T, size_t _Capacity>
+template <size_t _Base, typename T>
 bool Atoi(T *dst, const String& str) {
     return Atoi<_Base, T>(dst, str.c_str(), str.size());
+}
+//----------------------------------------------------------------------------
+template <size_t _Base, typename T>
+bool Atoi(T *dst, const MemoryView<const char>& strview) {
+    return Atoi<_Base, T>(dst, strview.Pointer(), strview.size());
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T>
+bool Atof(T *dst, const char *cstr, size_t length) {
+    static_assert(std::is_floating_point<T>::value, "T must be a floating point type");
+
+    Assert(dst);
+    Assert(cstr);
+
+    if (0 == length)
+        return false;
+
+    size_t dot = 0;
+    for (; dot < length && cstr[dot] != '.'; ++dot);
+
+    const bool neg = ('-' == cstr[0]);
+
+    i64 integral = 0;
+    for (size_t i = neg ? 1 : 0; i < dot; ++i) {
+        const char ch = cstr[i];
+
+        i64 d = 0;
+        if (ch >= '0' && ch <= '9')
+            d = ch - '0';
+        else
+            return false;
+
+        Assert(d < 10);
+        integral = integral * 10 + d;
+    }
+
+    i64 fractional = 0;
+    i64 unit = 1;
+    for (size_t i = dot + 1; i < length; ++i, unit *= 10) {
+        const char ch = cstr[i];
+
+        int d = 0;
+        if (ch >= '0' && ch <= '9')
+            d = ch - '0';
+        else
+            return false;
+
+        fractional = fractional * 10 + d;
+    }
+
+    const double result = integral + double(fractional)/unit;
+    *dst = T(neg ? -result : result);
+
+    return true;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Capacity>
+bool Atof(T *dst, const char (&cstr)[_Capacity]) {
+    return Atof<T>(dst, cstr, _Capacity);
+}
+//----------------------------------------------------------------------------
+template <typename T>
+bool Atof(T *dst, const String& str) {
+    return Atof<T>(dst, str.c_str(), str.size());
+}
+//----------------------------------------------------------------------------
+template <typename T>
+bool Atof(T *dst, const MemoryView<const char>& strview) {
+    return Atof<T>(dst, strview.Pointer(), strview.size());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

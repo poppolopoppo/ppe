@@ -124,8 +124,25 @@ bool Atoi(T *dst, const char *cstr, size_t length);
 template <size_t _Base, typename T, size_t _Capacity>
 bool Atoi(T *dst, const char (&cstr)[_Capacity]);
 //----------------------------------------------------------------------------
-template <size_t _Base, typename T, size_t _Capacity>
+template <size_t _Base, typename T>
 bool Atoi(T *dst, const String& str);
+//----------------------------------------------------------------------------
+template <size_t _Base, typename T>
+bool Atoi(T *dst, const MemoryView<const char>& strview);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T>
+bool Atof(T *dst, const char *cstr, size_t length);
+//----------------------------------------------------------------------------
+template <typename T, size_t _Capacity>
+bool Atof(T *dst, const char (&cstr)[_Capacity]);
+//----------------------------------------------------------------------------
+template <typename T>
+bool Atof(T *dst, const String& str);
+//----------------------------------------------------------------------------
+template <typename T>
+bool Atof(T *dst, const MemoryView<const char>& strview);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -206,10 +223,12 @@ size_t ToWCStr(wchar_t *dst, size_t capacity, const String& str);
 String ToString(const wchar_t *wcstr, size_t length);
 String ToString(const wchar_t *wcstr);
 String ToString(const WString& wstr);
+inline String ToString(const MemoryView<const wchar_t>& strview) { return ToString(strview.Pointer(), strview.size()); }
 //----------------------------------------------------------------------------
 WString ToWString(const char *cstr, size_t length);
 WString ToWString(const char *cstr);
 WString ToWString(const String& str);
+inline WString ToWString(const MemoryView<const char>& strview) { return ToWString(strview.Pointer(), strview.size()); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
