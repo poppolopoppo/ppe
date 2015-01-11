@@ -53,9 +53,9 @@ public:
     Filename TemporaryFilename(const wchar_t *prefix, const wchar_t *ext) const;
 
     template <typename T, typename _Allocator>
-    void ReadAll(const Filename& filename, RawStorage<T, _Allocator>& storage, AccessPolicy::Mode policy = AccessPolicy::None);
+    bool ReadAll(const Filename& filename, RawStorage<T, _Allocator>& storage, AccessPolicy::Mode policy = AccessPolicy::None);
     template <typename T, typename _Allocator>
-    void WriteAll(const Filename& filename, const RawStorage<T, _Allocator>& storage, AccessPolicy::Mode policy = AccessPolicy::None);
+    bool WriteAll(const Filename& filename, const RawStorage<T, _Allocator>& storage, AccessPolicy::Mode policy = AccessPolicy::None);
 
 private:
     mutable std::mutex _barrier;

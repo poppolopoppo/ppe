@@ -2,16 +2,13 @@
 
 #include "Core/Core.h"
 
-#include "Core/IO/String.h"
+#include "Core/IO/FileSystem_fwd.h"
 #include "Core/IO/VFS/VirtualFileSystemPolicies.h"
 #include "Core/Memory/UniquePtr.h"
 
 #include <functional>
 
 namespace Core {
-class Dirpath;
-class Filename;
-
 class IVirtualFileSystemIStream;
 class IVirtualFileSystemIOStream;
 class IVirtualFileSystemOStream;
