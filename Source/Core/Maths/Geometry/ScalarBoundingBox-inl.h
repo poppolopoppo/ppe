@@ -96,17 +96,17 @@ bool ScalarBoundingBox<T, _Dim>::ContainsMaxStrict(const vector_type& v) const {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 bool ScalarBoundingBox<T, _Dim>::Contains(const ScalarBoundingBox& other) const {
-    return _min.AllLessOrEqual(other._min) && _max.AllLessOrEqual(other._max);
+    return _min.AllLessOrEqual(other._min) && _max.AllGreaterOrEqual(other._max);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 bool ScalarBoundingBox<T, _Dim>::ContainsStrict(const ScalarBoundingBox& other) const {
-    return _min.AllLessThan(other._min) && _max.AllLessThan(other._max);
+    return _min.AllLessThan(other._min) && _max.AllGreaterThan(other._max);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 bool ScalarBoundingBox<T, _Dim>::ContainsMaxStrict(const ScalarBoundingBox& other) const {
-    return _min.AllLessOrEqual(other._min) && _max.AllLessThan(other._max);
+    return _min.AllLessOrEqual(other._min) && _max.AllGreaterThan(other._max);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
