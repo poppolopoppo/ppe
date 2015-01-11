@@ -6,6 +6,7 @@
 #include "Core/Container/Vector.h"
 #include "Core/IO/FS/Filename.h"
 #include "Core/IO/String.h"
+#include "Core/IO/StringSlice.h"
 #include "Core/Maths/Geometry/ScalarVector_fwd.h"
 #include "Core/Maths/Transform/ScalarMatrix.h"
 
@@ -44,9 +45,9 @@ public:
     using TexcoordIndex = TypedIndex<TexcoordTag>;
 
     struct Face {
-        PositionIndex P[4];
-        NormalIndex N[4];
-        TexcoordIndex T[4];
+        PositionIndex   P[4];
+        NormalIndex     N[4];
+        TexcoordIndex   T[4];
 
         Face(const PositionIndex (&pos)[3]);
         Face(const PositionIndex (&pos)[3], const TexcoordIndex (&texcoords)[3]);
@@ -72,8 +73,7 @@ public:
 
             Normals     = 1<<0,
             Quad        = 1<<1,
-            Smooth      = 1<<2,
-            Texcoords   = 1<<3,
+            Texcoords   = 1<<2,
 
             Texcoords_Normals = Texcoords|Normals,
 
@@ -90,15 +90,21 @@ public:
         String Name;
         u32 Mode;
 
-        u32 SubPartStart;
-        u32 SubPartCount;
+        u32 Bone;
+        u32 Material;
+
+        u32 FaceStart;
+        u32 FaceCount;
 
         bool HasFlag(Flags flag) const { return flag == (Mode & flag); }
         void SetFlag(Flags flag) { Mode |= flag; }
+        void RemoveFlag(Flags flag) { Mode &= ~flag; }
 
         void SetMode_CheckCoherency(Flags mode) { Assert(Default == Mode || mode == Mode); Mode = mode; }
 
-        Group(String&& name) : Name(std::move(name)), Mode(Default), SubPartStart(UINT32_MAX), SubPartCount(UINT32_MAX) { Assert(Name.size()); }
+        Group(String&& name) :  Name(std::move(name)), Mode(Default)
+                             ,  Bone(UINT32_MAX), Material(UINT32_MAX)
+                             ,  FaceStart(UINT32_MAX), FaceCount(UINT32_MAX) { Assert(Name.size()); }
     };
 
     struct Material {
@@ -110,10 +116,11 @@ public:
             Emissive        = 1<<2,
             Highlight       = 1<<3,
             Reflection      = 1<<4,
-            Transparency    = 1<<5,
-            Glass           = 1<<6,
-            Fresnel         = 1<<7,
-            CastShadows     = 1<<8,
+            Refraction      = 1<<5,
+            Transparency    = 1<<6,
+            Glass           = 1<<7,
+            Fresnel         = 1<<8,
+            CastShadows     = 1<<9,
         };
 
         String Name;
@@ -123,11 +130,16 @@ public:
         ColorRGBAF EmissiveColor;
         ColorRGBAF SpecularColor;
 
+        float NormalDepth;
+        float RefractionIndex;
+        float SpecularExponent;
+
         Filename AlphaMap;
         Filename AmbientMap;
         Filename DiffuseMap;
         Filename DisplacementMap;
         Filename NormalMap;
+        Filename ReflectionMap;
         Filename SpecularColorMap;
         Filename SpecularPowerMap;
 
@@ -135,24 +147,25 @@ public:
 
         bool HasFlag(Flags flag) const { return flag == (Mode & flag); }
         void SetFlag(Flags flag) { Mode |= flag; }
+        void RemoveFlag(Flags flag) { Mode &= ~flag; }
 
-        Material(String&& name) : Name(std::move(name)), Mode(Default) { Assert(Name.size()); }
-    };
-
-    struct SubPart {
-        u32 FaceStart;
-        u32 FaceCount;
-
-        u16 Bone;
-        u16 Material;
-
-        SubPart() : FaceStart(UINT32_MAX), FaceCount(UINT32_MAX), Bone(UINT16_MAX), Material(UINT16_MAX) {}
+        Material(String&& name) : Name(std::move(name))
+            , AmbientColor(-1)
+            , DiffuseColor(-1)
+            , EmissiveColor(-1)
+            , NormalDepth(-1)
+            , SpecularColor(-1)
+            , RefractionIndex(-1)
+            , SpecularExponent(-1)
+            , Mode(Default) { Assert(Name.size()); }
     };
 
     ModelBuilder();
     ~ModelBuilder();
 
     const String& Name() const { return _name; }
+
+    bool empty() const { return _positions.empty(); }
 
     const VECTOR_THREAD_LOCAL(Mesh, float4)& Positions() const { return _positions; }
     const VECTOR_THREAD_LOCAL(Mesh, ColorRGBAF)& Colors() const { return _colors; }
@@ -163,7 +176,6 @@ public:
     const VECTOR_THREAD_LOCAL(Mesh, Face)& Faces() const { return _faces; }
     const VECTOR_THREAD_LOCAL(Mesh, Group)& Groups() const { return _groups; }
     const VECTOR_THREAD_LOCAL(Mesh, Material)& Materials() const { return _materials; }
-    const VECTOR_THREAD_LOCAL(Mesh, SubPart)& SubParts() const { return _subParts; }
 
     void SetName(const char *name) { SetName(String(name)); }
     void SetName(String&& name);
@@ -198,9 +210,9 @@ public:
     const Material& OpenedMaterial() const { Assert(_openMaterial); return _materials.back(); }
     void CloseMaterial(Material *material);
 
-    SubPart *OpenSubPart();
-    const SubPart& OpenedSubPart() const { Assert(_openSubPart); Assert(_openGroup); return _subParts.back(); }
-    void CloseSubPart(SubPart *material);
+    bool MaterialIndexFromName(size_t *pIndex, const StringSlice& name) const;
+    bool MaterialIndexFromName(size_t *pIndex, const String& name) const { return MaterialIndexFromName(pIndex, StringSlice(name.c_str(), name.size())); }
+    bool MaterialIndexFromName(size_t *pIndex, const char *name) const { return MaterialIndexFromName(pIndex, StringSlice(name, Length(name)) ); }
 
     PModel CreateModel();
     void Clear();
@@ -208,14 +220,12 @@ public:
 private:
     Group& OpenedGroup_() { Assert(_openGroup); return _groups.back(); }
     Material& OpenedMaterial_() { Assert(_openMaterial); return _materials.back(); }
-    SubPart& OpenedSubPart_() { Assert(_openSubPart); Assert(_openGroup); return _subParts.back(); }
 
     String _name;
 
 #ifdef WITH_CORE_ASSERT
     bool _openGroup     : 1;
     bool _openMaterial  : 1;
-    bool _openSubPart   : 1;
 #endif
 
     VECTOR_THREAD_LOCAL(Mesh, float4) _positions;
@@ -227,7 +237,6 @@ private:
     VECTOR_THREAD_LOCAL(Mesh, Face) _faces;
     VECTOR_THREAD_LOCAL(Mesh, Group) _groups;
     VECTOR_THREAD_LOCAL(Mesh, Material) _materials;
-    VECTOR_THREAD_LOCAL(Mesh, SubPart) _subParts;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

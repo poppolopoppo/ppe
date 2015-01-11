@@ -19,6 +19,7 @@
 #include "Core.Engine/Mesh/ModelMeshSubPart.h"
 
 #include "Core.Engine/Mesh/Geometry/GenericVertex.h"
+#include "Core.Engine/Mesh/Geometry/GenericVertexExport.h"
 #include "Core.Engine/Mesh/Geometry/GenericVertexOptimizer.h"
 
 #include "Core.Graphics/Device/Geometry/IndexElementSize.h"
@@ -51,6 +52,8 @@ static PMaterial CreateMaterial_(const ModelBuilder::Material& materialMB) {
         tags.push_back(MaterialConstNames::Highlight());
     if (materialMB.HasFlag(ModelBuilder::Material::Reflection))
         tags.push_back(MaterialConstNames::Reflection());
+    if (materialMB.HasFlag(ModelBuilder::Material::Refraction))
+        tags.push_back(MaterialConstNames::Refraction());
     if (materialMB.HasFlag(ModelBuilder::Material::Transparency))
         tags.push_back(MaterialConstNames::Transparency());
     if (materialMB.HasFlag(ModelBuilder::Material::Glass))
@@ -71,20 +74,29 @@ static PMaterial CreateMaterial_(const ModelBuilder::Material& materialMB) {
         textures.Insert_AssertUnique(MaterialConstNames::DisplacementMap(), materialMB.DisplacementMap);
     if (!materialMB.NormalMap.empty())
         textures.Insert_AssertUnique(MaterialConstNames::NormalMap(), materialMB.NormalMap);
+    if (!materialMB.ReflectionMap.empty())
+        textures.Insert_AssertUnique(MaterialConstNames::ReflectionMap(), materialMB.ReflectionMap);
     if (!materialMB.SpecularColorMap.empty())
         textures.Insert_AssertUnique(MaterialConstNames::SpecularColorMap(), materialMB.SpecularColorMap);
     if (!materialMB.SpecularPowerMap.empty())
         textures.Insert_AssertUnique(MaterialConstNames::SpecularPowerMap(), materialMB.SpecularPowerMap);
 
     parameters.reserve(4);
-    if (materialMB.AmbientColor.a() > 0)
+    if (materialMB.AmbientColor.a() >= 0)
         parameters.Insert_AssertUnique(MaterialConstNames::AmbientColor(), new MaterialParameterBlock<float4>(materialMB.AmbientColor.Data()));
-    if (materialMB.DiffuseColor.a() > 0)
+    if (materialMB.DiffuseColor.a() >= 0)
         parameters.Insert_AssertUnique(MaterialConstNames::DiffuseColor(), new MaterialParameterBlock<float4>(materialMB.DiffuseColor.Data()));
-    if (materialMB.EmissiveColor.a() > 0)
+    if (materialMB.EmissiveColor.a() >= 0)
         parameters.Insert_AssertUnique(MaterialConstNames::EmissiveColor(), new MaterialParameterBlock<float4>(materialMB.EmissiveColor.Data()));
-    if (materialMB.SpecularColor.a() > 0)
+    if (materialMB.SpecularColor.a() >= 0)
         parameters.Insert_AssertUnique(MaterialConstNames::SpecularColor(), new MaterialParameterBlock<float4>(materialMB.SpecularColor.Data()));
+
+    if (materialMB.NormalDepth >= 0)
+        parameters.Insert_AssertUnique(MaterialConstNames::NormalDepth(), new MaterialParameterBlock<float>(materialMB.NormalDepth));
+    if (materialMB.RefractionIndex >= 0)
+        parameters.Insert_AssertUnique(MaterialConstNames::RefractionIndex(), new MaterialParameterBlock<float>(materialMB.RefractionIndex));
+    if (materialMB.SpecularExponent >= 0)
+        parameters.Insert_AssertUnique(MaterialConstNames::SpecularExponent(), new MaterialParameterBlock<float>(materialMB.SpecularExponent));
 
     Assert(tags.capacity() == tags.size());
 #if 1 // realloc vector ?
@@ -142,30 +154,42 @@ static const Graphics::VertexDeclaration *GetVertexDeclaration_(const ModelBuild
     }
 }
 //----------------------------------------------------------------------------
-static PModelMesh CreateModelMesh_(
-    const ModelBuilder& mb, 
-    const MemoryView<PMaterial>& materials,
-    const MemoryView<AABB3f>& boneAABBs,
-    const ModelBuilder::Group& groupMB) {
+static const Graphics::VertexDeclaration *GetVertexDeclaration_(
+    const ModelBuilder::Group& groupMB, 
+    const ModelBuilder::Material& materialMB, 
+    bool useVertexColor) {
+    const bool useNormalMap = !materialMB.NormalMap.empty();
+    return GetVertexDeclaration_(ModelBuilder::Group::Flags(groupMB.Mode), useNormalMap, useVertexColor);
+}
+//----------------------------------------------------------------------------
+static void WriteGroupModelMesh_(
+    size_t *pIndexOffset,
+    size_t *pVertexOffset,
+    AABB3f& boundingBox,
+    MeshRawData& indexData,
+    MeshRawData& vertexData,
+    const ModelBuilder& mb,
+    const ModelBuilder::Group& groupMB,
+    const Graphics::VertexDeclaration *vertexDeclaration ) {
+    Assert(pIndexOffset);
+    Assert(pVertexOffset);
 
     const bool useQuads = groupMB.HasFlag(ModelBuilder::Group::Quad);
     const size_t vertexCountPerFace = useQuads ? 4 : 3;
 
-    const bool useVertexColor = (mb.Colors().size() == mb.Positions().size());
+    const size_t vertexCount = groupMB.FaceCount * vertexCountPerFace;
+    const size_t vertexOffsetInBytes = *pVertexOffset * vertexDeclaration->SizeInBytes();
+    const size_t vertexCountInBytes = vertexCount * vertexDeclaration->SizeInBytes();
 
-    size_t vertexCount = 0;
-    bool useNormalMap = false;
-    for (size_t s = 0; s < groupMB.SubPartCount; ++s) {
-        const ModelBuilder::SubPart& subPartMB = mb.SubParts()[groupMB.SubPartStart + s];
-        vertexCount += subPartMB.FaceCount * vertexCountPerFace; // will be merged afterwards
-        const ModelBuilder::Material& materialMB = mb.Materials()[subPartMB.Material];
-        useNormalMap |= (!materialMB.NormalMap.empty());
-    }
+    const MemoryView<u32> indices = indexData.MakeView().SubRange(*pIndexOffset * sizeof(u32), vertexCount * sizeof(u32)).Cast<u32>();
 
-    const Graphics::VertexDeclaration *vertexDeclaration = GetVertexDeclaration_(ModelBuilder::Group::Flags(groupMB.Mode), useNormalMap, useVertexColor);
-    Assert(vertexDeclaration);
+    const size_t firstIndex = *pIndexOffset;
+
+    *pIndexOffset += vertexCount;
+    *pVertexOffset += vertexCount;
 
     GenericVertex genericVertex(vertexDeclaration);
+    genericVertex.SetDestination(vertexData.MakeView().SubRange(vertexOffsetInBytes, vertexCountInBytes));
 
     const GenericVertex::SubPart position0_3f = genericVertex.Position3f(0);
     const GenericVertex::SubPart position0_4f = genericVertex.Position4f(0);
@@ -174,121 +198,33 @@ static PModelMesh CreateModelMesh_(
     const GenericVertex::SubPart normal0 = genericVertex.Normal3f(0);
     Assert(position0_4f || position0_3f);
 
-    MeshRawData vertices;
-    vertices.Resize_DiscardData(vertexDeclaration->SizeInBytes() * vertexCount);
-    genericVertex.SetDestination(vertices.MakeView());
-
-    RAWSTORAGE_THREAD_LOCAL(Mesh, u32) indices;
-    indices.Resize_DiscardData(vertexCount);
-
-    VECTOR_THREAD_LOCAL(Mesh, AABB3f) subPartAABBs;
-    subPartAABBs.resize(groupMB.SubPartCount);
-
     size_t indexCount = 0;
-    for (size_t s = 0; s < groupMB.SubPartCount; ++s) {
-        const ModelBuilder::SubPart& subPartMB = mb.SubParts()[groupMB.SubPartStart + s];
+    for (size_t f = 0; f < groupMB.FaceCount; ++f) {
+        const ModelBuilder::Face& face = mb.Faces()[groupMB.FaceStart + f];
 
-        AABB3f& subPartAABB = subPartAABBs[s];
-        for (size_t f = 0; f < subPartMB.FaceCount; ++f) {
-            const ModelBuilder::Face& face = mb.Faces()[subPartMB.FaceStart + f];
+        for (size_t v = 0; v < vertexCountPerFace; ++v) {
+            const float4& pos_4f = mb.Positions()[face.P[v]];
+            const float3 pos_3f = pos_4f.xyz();
 
-            for (size_t v = 0; v < vertexCountPerFace; ++v) {
-                const float4& pos_4f = mb.Positions()[face.P[v]];
-                const float3 pos_3f = pos_4f.xyz();
+            genericVertex.ZeroMemory_CurrentVertex();
 
-                subPartAABB.Add(pos_3f);
+            if (position0_4f)
+                position0_4f.WriteValue(genericVertex, pos_4f);
+            else
+                position0_3f.WriteValue(genericVertex, pos_3f);
 
-                genericVertex.ZeroMemory_CurrentVertex();
+            if (color0)     color0.WriteValue(genericVertex, mb.Colors()[face.P[v]]);
+            if (texcoord0)  texcoord0.WriteValue(genericVertex, mb.Texcoords()[face.T[v]].xy());
+            if (normal0)    normal0.WriteValue(genericVertex, mb.Normals()[face.N[v]]);
 
-                if (position0_4f)
-                    position0_4f.AssignValue(genericVertex, pos_4f);
-                else
-                    position0_3f.AssignValue(genericVertex, pos_3f);
+            genericVertex.NextVertex();
 
-                if (color0) color0.AssignValue(genericVertex, mb.Colors()[face.P[v]]);
-                if (texcoord0) texcoord0.AssignValue(genericVertex, mb.Texcoords()[face.T[v]]);
-                if (normal0) normal0.AssignValue(genericVertex, mb.Normals()[face.N[v]]);
+            boundingBox.Add(pos_3f);
 
-                if (!genericVertex.NextVertex())
-                    AssertNotReached();
-
-                indices[indexCount] = checked_cast<u32>(indexCount);
-                ++indexCount;
-            }
+            indices[indexCount] = checked_cast<u32>(firstIndex + indexCount);
+            ++indexCount;
         }
-
-        AABB3f& boneAABB = boneAABBs[subPartMB.Bone];
-        boneAABB.Add(subPartAABB);
     }
-
-    MergeDuplicateVertices(genericVertex, indices.MakeView());
-    OptimizeIndicesAndVerticesOrder(genericVertex, indices.MakeView());
-
-    if (genericVertex.VertexCountWritten() != vertexCount) {
-        vertexCount = genericVertex.VertexCountWritten();
-        vertices.Resize_KeepData(vertexDeclaration->SizeInBytes() * vertexCount);
-    }
-
-    VECTOR(Mesh, PModelMeshSubPart) meshSubParts;
-    meshSubParts.reserve(groupMB.SubPartCount);
-    for (size_t s = 0; s < groupMB.SubPartCount; ++s) {
-        const ModelBuilder::SubPart& subPartMB = mb.SubParts()[groupMB.SubPartStart + s];
-
-        u32 baseVertex = checked_cast<u32>(vertexCount);
-        if (useQuads)
-            for (size_t f = 0; f < subPartMB.FaceCount; ++f) {
-                const size_t i = f * 4;
-                baseVertex = std::min(baseVertex, indices[i + 0]);
-                baseVertex = std::min(baseVertex, indices[i + 1]);
-                baseVertex = std::min(baseVertex, indices[i + 2]);
-                baseVertex = std::min(baseVertex, indices[i + 3]);
-            }
-        else
-            for (size_t f = 0; f < subPartMB.FaceCount; ++f) {
-                const size_t i = f * 3;
-                baseVertex = std::min(baseVertex, indices[i + 0]);
-                baseVertex = std::min(baseVertex, indices[i + 1]);
-                baseVertex = std::min(baseVertex, indices[i + 2]);
-            }
-
-        const AABB3f& subPartAABB = subPartAABBs[s];
-
-        meshSubParts.emplace_back(new ModelMeshSubPart( materials[subPartMB.Material].get(), 
-                                                        checked_cast<u32>(subPartMB.Bone),
-                                                        checked_cast<u32>(baseVertex),
-                                                        checked_cast<u32>(subPartMB.FaceStart * vertexCountPerFace),
-                                                        checked_cast<u32>(subPartMB.FaceCount * vertexCountPerFace),
-                                                        subPartAABB ));
-    }
-
-    const Graphics::IndexElementSize indexElementSize = (vertexCount <= UINT16_MAX
-        ? Graphics::IndexElementSize::SixteenBits 
-        : Graphics::IndexElementSize::ThirtyTwoBits );
-
-    MeshRawData indices16Or32bits;
-    if (Graphics::IndexElementSize::SixteenBits == indexElementSize) {
-        indices16Or32bits.Resize_DiscardData(indices.size() * sizeof(u16));
-        u16 *pIndex = reinterpret_cast<u16 *>(indices16Or32bits.Pointer());
-        for (size_t i = 0; i < indexCount; ++i, ++pIndex)
-            pIndex[i] = checked_cast<u16>(indices[i]);
-    }
-    else {
-        indices16Or32bits.Resize_DiscardData(indices.size() * sizeof(u32));
-        Assert(indices.SizeInBytes() == indices16Or32bits.SizeInBytes());
-        memcpy(indices16Or32bits.Pointer(), indices.Pointer(), indices.SizeInBytes());
-    }
-
-    AssertRelease(!useQuads); // no primitive type for quads on graphics::device, triangulate quads ?
-    const Graphics::PrimitiveType primitiveType = Graphics::PrimitiveType::TriangleList;
-
-    return new ModelMesh(   checked_cast<u32>(indexCount),
-                            checked_cast<u32>(vertexCount),
-                            primitiveType,
-                            indexElementSize,
-                            vertexDeclaration,
-                            std::move(indices16Or32bits),
-                            std::move(vertices),
-                            std::move(meshSubParts) );
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -334,14 +270,12 @@ ModelBuilder::ModelBuilder()
 #ifdef WITH_CORE_ASSERT
 ,   _openGroup(false)
 ,   _openMaterial(false)
-,   _openSubPart(false)
 #endif
 {}
 //----------------------------------------------------------------------------
 ModelBuilder::~ModelBuilder() {
     Assert(!_openGroup);
     Assert(!_openMaterial);
-    Assert(!_openSubPart);
 }
 //----------------------------------------------------------------------------
 void ModelBuilder::SetName(String&& name) {
@@ -375,129 +309,49 @@ void ModelBuilder::AddNormal(const float3& value) {
 }
 //----------------------------------------------------------------------------
 void ModelBuilder::AddTriangle(const PositionIndex (&pos)[3]) {
-    Assert(_openSubPart);
     OpenedGroup_().SetMode_CheckCoherency(Group::Triangle);
-
-    Assert(_positions.size() > pos[0]);
-    Assert(_positions.size() > pos[1]);
-    Assert(_positions.size() > pos[2]);
 
     _faces.emplace_back(pos);
 }
 //----------------------------------------------------------------------------
 void ModelBuilder::AddTriangle(const PositionIndex (&pos)[3], const TexcoordIndex (&texcoords)[3]) {
-    Assert(_openSubPart);
     OpenedGroup_().SetMode_CheckCoherency(Group::Triangle_Texcoords);
-
-    Assert(_positions.size() > pos[0]);
-    Assert(_positions.size() > pos[1]);
-    Assert(_positions.size() > pos[2]);
-
-    Assert(_texcoords.size() > texcoords[0]);
-    Assert(_texcoords.size() > texcoords[1]);
-    Assert(_texcoords.size() > texcoords[2]);
 
     _faces.emplace_back(pos, texcoords);
 }
 //----------------------------------------------------------------------------
 void ModelBuilder::AddTriangle(const PositionIndex (&pos)[3], const TexcoordIndex (&texcoords)[3], const NormalIndex (&normals)[3]) {
-    Assert(_openSubPart);
     OpenedGroup_().SetMode_CheckCoherency(Group::Triangle_Texcoords_Normals);
-
-    Assert(_positions.size() > pos[0]);
-    Assert(_positions.size() > pos[1]);
-    Assert(_positions.size() > pos[2]);
-
-    Assert(_texcoords.size() > texcoords[0]);
-    Assert(_texcoords.size() > texcoords[1]);
-    Assert(_texcoords.size() > texcoords[2]);
-
-    Assert(_normals.size() > normals[0]);
-    Assert(_normals.size() > normals[1]);
-    Assert(_normals.size() > normals[2]);
 
     _faces.emplace_back(pos, texcoords, normals);
 }
 //----------------------------------------------------------------------------
 void ModelBuilder::AddTriangle(const PositionIndex (&pos)[3], const NormalIndex (&normals)[3]) {
-    Assert(_openSubPart);
     OpenedGroup_().SetMode_CheckCoherency(Group::Triangle_Normals);
-
-    Assert(_positions.size() > pos[0]);
-    Assert(_positions.size() > pos[1]);
-    Assert(_positions.size() > pos[2]);
-
-    Assert(_normals.size() > normals[0]);
-    Assert(_normals.size() > normals[1]);
-    Assert(_normals.size() > normals[2]);
 
     _faces.emplace_back(pos, normals);
 }
 //----------------------------------------------------------------------------
 void ModelBuilder::AddQuad(const PositionIndex (&pos)[4]) {
-    Assert(_openSubPart);
     OpenedGroup_().SetMode_CheckCoherency(Group::Quad);
-
-    Assert(_positions.size() > pos[0]);
-    Assert(_positions.size() > pos[1]);
-    Assert(_positions.size() > pos[2]);
-    Assert(_positions.size() > pos[3]);
 
     _faces.emplace_back(pos);
 }
 //----------------------------------------------------------------------------
 void ModelBuilder::AddQuad(const PositionIndex (&pos)[4], const TexcoordIndex (&texcoords)[4]) {
-    Assert(_openSubPart);
     OpenedGroup_().SetMode_CheckCoherency(Group::Quad_Texcoords);
-
-    Assert(_positions.size() > pos[0]);
-    Assert(_positions.size() > pos[1]);
-    Assert(_positions.size() > pos[2]);
-    Assert(_positions.size() > pos[3]);
-
-    Assert(_texcoords.size() > texcoords[0]);
-    Assert(_texcoords.size() > texcoords[1]);
-    Assert(_texcoords.size() > texcoords[2]);
-    Assert(_texcoords.size() > texcoords[3]);
 
     _faces.emplace_back(pos, texcoords);
 }
 //----------------------------------------------------------------------------
 void ModelBuilder::AddQuad(const PositionIndex (&pos)[4], const TexcoordIndex (&texcoords)[4], const NormalIndex (&normals)[4]) {
-    Assert(_openSubPart);
     OpenedGroup_().SetMode_CheckCoherency(Group::Quad_Texcoords_Normals);
-
-    Assert(_positions.size() > pos[0]);
-    Assert(_positions.size() > pos[1]);
-    Assert(_positions.size() > pos[2]);
-    Assert(_positions.size() > pos[3]);
-
-    Assert(_texcoords.size() > texcoords[0]);
-    Assert(_texcoords.size() > texcoords[1]);
-    Assert(_texcoords.size() > texcoords[2]);
-    Assert(_texcoords.size() > texcoords[3]);
-
-    Assert(_normals.size() > normals[0]);
-    Assert(_normals.size() > normals[1]);
-    Assert(_normals.size() > normals[2]);
-    Assert(_normals.size() > normals[3]);
 
     _faces.emplace_back(pos, texcoords, normals);
 }
 //----------------------------------------------------------------------------
 void ModelBuilder::AddQuad(const PositionIndex (&pos)[4], const NormalIndex (&normals)[4]) {
-    Assert(_openSubPart);
     OpenedGroup_().SetMode_CheckCoherency(Group::Quad_Normals);
-
-    Assert(_positions.size() > pos[0]);
-    Assert(_positions.size() > pos[1]);
-    Assert(_positions.size() > pos[2]);
-    Assert(_positions.size() > pos[3]);
-
-    Assert(_normals.size() > normals[0]);
-    Assert(_normals.size() > normals[1]);
-    Assert(_normals.size() > normals[2]);
-    Assert(_normals.size() > normals[3]);
 
     _faces.emplace_back(pos, normals);
 }
@@ -512,32 +366,29 @@ void ModelBuilder::AddBone(String&& name, const float4x4& transform) {
 ModelBuilder::Group *ModelBuilder::OpenGroup(String&& name) {
     Assert(!_openGroup);
     Assert(!_openMaterial);
-    Assert(!_openSubPart);
 #ifdef WITH_CORE_ASSERT
-    _openMaterial = true;
+    _openGroup = true;
 #endif
     _groups.emplace_back(std::move(name));
     Group *const group = &_groups.back();
-    group->SubPartStart = checked_cast<u32>(_subParts.size());
+    group->FaceStart = checked_cast<u32>(_faces.size());
     return &_groups.back();
 }
 //----------------------------------------------------------------------------
 void ModelBuilder::CloseGroup(Group *group) {
     Assert(_openGroup);
     Assert(!_openMaterial);
-    Assert(!_openSubPart);
     Assert(&_groups.back() == group);
 #ifdef WITH_CORE_ASSERT
     _openGroup = false;
 #endif
-    Assert(_subParts.size() >= group->SubPartStart);
-    group->SubPartCount = checked_cast<u32>(_faces.size() - group->SubPartStart);
+    Assert(_faces.size() >= group->FaceStart);
+    group->FaceCount = checked_cast<u32>(_faces.size() - group->FaceStart);
 }
 //----------------------------------------------------------------------------
 ModelBuilder::Material *ModelBuilder::OpenMaterial(String&& name) {
     Assert(!_openGroup);
     Assert(!_openMaterial);
-    Assert(!_openSubPart);
 #ifdef WITH_CORE_ASSERT
     _openMaterial = true;
 #endif
@@ -548,40 +399,30 @@ ModelBuilder::Material *ModelBuilder::OpenMaterial(String&& name) {
 void ModelBuilder::CloseMaterial(Material *material) {
     Assert(!_openGroup);
     Assert(_openMaterial);
-    Assert(!_openSubPart);
     Assert(&_materials.back() == material);
 #ifdef WITH_CORE_ASSERT
     _openMaterial = false;
 #endif
 }
 //----------------------------------------------------------------------------
-ModelBuilder::SubPart *ModelBuilder::OpenSubPart() {
-    Assert(_openGroup);
-    Assert(!_openMaterial);
-    Assert(!_openSubPart);
-#ifdef WITH_CORE_ASSERT
-    _openSubPart = true;
-#endif
-    _subParts.emplace_back();
-    _subParts.back().FaceStart = checked_cast<u32>(_faces.size());
-    return &_subParts.back();
-}
-//----------------------------------------------------------------------------
-void ModelBuilder::CloseSubPart(SubPart *subPart) {
-    Assert(_openGroup);
-    Assert(!_openMaterial);
-    Assert(_openSubPart);
-    Assert(&_subParts.back() == subPart);
-#ifdef WITH_CORE_ASSERT
-    _openSubPart = false;
-#endif
-    Assert(_faces.size() >= subPart->FaceStart);
-    Assert(_bones.size() > subPart->Bone);
-    Assert(_materials.size() > subPart->Material);
-    subPart->FaceCount = checked_cast<u32>(_faces.size() - subPart->FaceStart);
+bool ModelBuilder::MaterialIndexFromName(size_t *pIndex, const StringSlice& name) const {
+    Assert(pIndex);
+    Assert(!name.empty());
+
+    const size_t materialCount = _materials.size();
+    for (size_t i = 0; i < materialCount; ++i) {
+        const Material& materialMB = _materials[i];
+        if (0 == CompareN(materialMB.Name.c_str(), name.Pointer(), name.size())) {
+            *pIndex = i;
+            return true;
+        }
+    }
+
+    return false;
 }
 //----------------------------------------------------------------------------
 PModel ModelBuilder::CreateModel() {
+    Assert(_positions.size());
     Assert(_colors.empty() || _colors.size() == _positions.size());
 
     VECTOR(Mesh, PMaterial) materials;
@@ -589,32 +430,180 @@ PModel ModelBuilder::CreateModel() {
     for (const Material& m : _materials)
         materials.push_back(CreateMaterial_(m));
 
+    struct MeshStat {
+        size_t IndexCount;
+        size_t VertexCount;
+        size_t SubPartCount;
+        Graphics::PrimitiveType PrimitiveType;
+        MeshStat() : IndexCount(0), VertexCount(0), SubPartCount(0) {}
+    };
+    const bool useVertexColor = (_positions.size() == _colors.size());
+    const auto groupMeshIndices = MALLOCA_VIEW(size_t, _groups.size());
+    VECTOR_THREAD_LOCAL(Mesh, MeshStat) meshStats;
+    VECTOR_THREAD_LOCAL(Mesh, Graphics::PCVertexDeclaration) vertexDeclarations;
+    for (size_t i = 0; i < _groups.size(); ++i) {
+        const Group& groupMB = _groups[i];
+        const Graphics::PCVertexDeclaration vertexDeclaration = GetVertexDeclaration_(
+            groupMB, 
+            _materials[groupMB.Material], 
+            useVertexColor );
+
+        size_t meshIndex = 0;
+        if (!FindElementIndexIFP(&meshIndex, vertexDeclarations, vertexDeclaration)) {
+            meshIndex = meshStats.size();
+            meshStats.emplace_back();
+            vertexDeclarations.push_back(vertexDeclaration);
+        }
+
+        groupMeshIndices[i] = meshIndex;
+
+        const bool useQuad = groupMB.HasFlag(Group::Quad);
+        const size_t vertexCountPerFace = (useQuad ? 4 : 3);
+
+        MeshStat& meshStat = meshStats[meshIndex];
+        meshStat.IndexCount += groupMB.FaceCount * vertexCountPerFace;
+        meshStat.VertexCount += groupMB.FaceCount * vertexCountPerFace;
+        ++meshStat.SubPartCount;
+
+        AssertRelease(!useQuad); // No support for quad list
+        meshStat.PrimitiveType = Graphics::PrimitiveType::TriangleList;
+    }
+
+    struct MeshData {
+        size_t IndexOffset;
+        size_t VertexOffset;
+        MeshRawData Indices;
+        MeshRawData Vertices;
+        MeshData() : IndexOffset(0), VertexOffset(0) {}
+    };
+    VECTOR_THREAD_LOCAL(Mesh, MeshData) meshDatas;
+    meshDatas.resize(meshStats.size());
+    for (size_t i = 0; i < meshStats.size(); ++i) {
+        MeshData& meshData = meshDatas[i];
+        MeshStat& meshStat = meshStats[i];
+        meshData.Indices.Resize_DiscardData(sizeof(u32) * meshStat.IndexCount);
+        meshData.Vertices.Resize_DiscardData(vertexDeclarations[i]->SizeInBytes() * meshStat.VertexCount);
+    }
+
     VECTOR_THREAD_LOCAL(Mesh, AABB3f) boneAABBs;
     boneAABBs.resize(_bones.size());
+    VECTOR_THREAD_LOCAL(Mesh, AABB3f) groupAABBs;
+    groupAABBs.resize(_groups.size());
 
-    VECTOR(Mesh, PModelMesh) meshes;
-    meshes.reserve(_groups.size());
-    for (const Group& g : _groups)
-        meshes.push_back(CreateModelMesh_(*this, MakeView(materials), MakeView(boneAABBs), g));
+    for (size_t i = 0; i < _groups.size(); ++i) {
+        const Group& groupMB = _groups[i];
+        const size_t meshIndex = groupMeshIndices[i];
+        MeshData& meshData = meshDatas[meshIndex];
+
+        AABB3f& boundingBox = groupAABBs[i];
+        WriteGroupModelMesh_(   &meshData.IndexOffset, &meshData.VertexOffset, 
+                                boundingBox, 
+                                meshData.Indices, meshData.Vertices, 
+                                *this, groupMB, 
+                                vertexDeclarations[meshIndex] );
+
+        boneAABBs[groupMB.Bone].Add(boundingBox);
+    }
+
+    VECTOR(Mesh, PModelMesh) modelMeshes;
+    modelMeshes.reserve(meshDatas.size());
+    for (size_t i = 0; i < meshDatas.size(); ++i) {
+        MeshData& meshData = meshDatas[i];
+        MeshStat& meshStat = meshStats[i];
+
+        const MemoryView<u32> indices = meshData.Indices.MakeView().Cast<u32>();
+
+        GenericVertex genericVertex(vertexDeclarations[i]);
+        genericVertex.SetDestination(meshData.Vertices.MakeView());
+        genericVertex.SeekVertex(meshStat.VertexCount);
+
+        MergeDuplicateVertices(genericVertex, indices);
+        if (genericVertex.VertexCountWritten() != meshStat.VertexCount) {
+            meshStat.VertexCount = genericVertex.VertexCountWritten();
+            meshData.Vertices.Resize_KeepData(meshStat.VertexCount * genericVertex.VertexDeclaration()->SizeInBytes());
+            genericVertex.SetDestination(meshData.Vertices.MakeView());
+            genericVertex.SeekVertex(meshStat.VertexCount);
+        }
+
+        OptimizeIndicesAndVerticesOrder(genericVertex, indices);
+
+        if (genericVertex.Tangent3f(0) || genericVertex.Tangent4f(0))
+            ComputeTangentSpace(genericVertex, indices.Cast<const u32>());
+
+        VECTOR(Mesh, PModelMeshSubPart) subParts;
+        subParts.reserve(meshStat.SubPartCount);
+        size_t indexOffset = 0;
+        for (size_t j = 0; j < _groups.size(); ++j) {
+            const Group& groupMB = _groups[j];
+            if (groupMeshIndices[j] != i)
+                continue;
+
+            const bool useQuad = groupMB.HasFlag(Group::Quad);
+            const size_t vertexCountPerFace = (useQuad ? 4 : 3);
+
+            const size_t firstIndex = indexOffset;
+            const size_t indexCount = groupMB.FaceCount * vertexCountPerFace;
+            indexOffset += indexCount;
+
+            u32 baseVertex = meshStat.VertexCount;
+            for (size_t k = 0; k < indexCount; ++k)
+                baseVertex = std::min(baseVertex, indices[firstIndex + i]);
+
+            subParts.emplace_back(new ModelMeshSubPart(
+                MeshName(groupMB.Name),
+                checked_cast<u32>(groupMB.Bone),
+                checked_cast<u32>(baseVertex),
+                checked_cast<u32>(firstIndex),
+                checked_cast<u32>(indexCount),
+                groupAABBs[j],
+                materials[groupMB.Material] ));
+        }
+        Assert(subParts.size() == meshStat.SubPartCount);
+
+        const Graphics::IndexElementSize indexElementSize = (meshStat.VertexCount <= UINT16_MAX
+            ? Graphics::IndexElementSize::SixteenBits 
+            : Graphics::IndexElementSize::ThirtyTwoBits );
+
+        if (Graphics::IndexElementSize::SixteenBits == indexElementSize) {
+            MeshRawData indices16bits;
+            indices16bits.Resize_DiscardData(meshStat.IndexCount * sizeof(u16));
+
+            u32 *const pIndex32 = reinterpret_cast<u32 *>(meshData.Indices.Pointer());
+            u16 *const pIndex16 = reinterpret_cast<u16 *>(indices16bits.Pointer());
+            for (size_t i = 0; i < meshStat.IndexCount; ++i)
+                pIndex16[i] = checked_cast<u16>(pIndex32[i]);
+
+            meshData.Indices = std::move(indices16bits);
+        }
+
+        modelMeshes.emplace_back(new ModelMesh(
+            checked_cast<u32>(meshStat.IndexCount), 
+            checked_cast<u32>(meshStat.VertexCount),
+            meshStat.PrimitiveType,
+            indexElementSize,
+            vertexDeclarations[i].get(),
+            std::move(meshData.Indices),
+            std::move(meshData.Vertices),
+            std::move(subParts) ));
+    }
+    Assert(modelMeshes.size() == meshDatas.size());
 
     const size_t boneCount = _bones.size();
     VECTOR(Mesh, PModelBone) bones;
     bones.reserve(boneCount);
-    AABB3f boundingBox;
+    AABB3f modelBoundingBox;
     for (size_t b = 0; b < boneCount; ++b) {
         const AABB3f& boneAABB = boneAABBs[b];
-        boundingBox.Add(boneAABB);
+        modelBoundingBox.Add(boneAABB);
         bones.push_back(CreateBone_(_bones[b], boneAABB));
     }
 
-    const MeshName name(_name);
-    return new Model(name, boundingBox, std::move(bones), std::move(meshes));
+    return new Model(MeshName(_name), modelBoundingBox, std::move(bones), std::move(modelMeshes));
 }
 //----------------------------------------------------------------------------
 void ModelBuilder::Clear() {
     Assert(!_openGroup);
     Assert(!_openMaterial);
-    Assert(!_openSubPart);
 
     _name.clear();
 
@@ -627,7 +616,6 @@ void ModelBuilder::Clear() {
     _faces.clear();
     _groups.clear();
     _materials.clear();
-    _subParts.clear();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
