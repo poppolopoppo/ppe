@@ -68,11 +68,11 @@ U Smootherstep(T vmin, T vmax, U f) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-float Degrees(float radians) {
+FORCE_INLINE float Degrees(float radians) {
     return radians * F_Rad2Deg;
 }
 //----------------------------------------------------------------------------
-float Radians(float degrees) {
+FORCE_INLINE float Radians(float degrees) {
     return degrees * F_Deg2Rad;
 }
 //----------------------------------------------------------------------------
@@ -80,6 +80,22 @@ template <typename T>
 FORCE_INLINE void SinCos(T radians, T *fsin, T *fcos) {
     *fsin = std::sin(radians);
     *fcos = std::cos(radians);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+inline bool NearlyEquals(float A, float B, float maxRelDiff/* = 1e-3f */) {
+    // Calculate the difference.
+    const float diff = fabs(A - B);
+    A = fabs(A);
+    B = fabs(B);
+
+    // Find the largest
+    float largest = (B > A) ? B : A;
+
+    if (diff <= largest * maxRelDiff)
+        return true;
+    return false;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

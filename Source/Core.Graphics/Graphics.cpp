@@ -19,6 +19,7 @@
 #   define WITH_CORE_MATHS_UNITTESTS
 #endif
 #ifdef WITH_CORE_MATHS_UNITTESTS
+#   include "Core/Maths/MathHelpers.h"
 #   include "Core/Maths/Geometry/ScalarVectorHelpers.h"
 #   include "Core/Maths/Transform/QuaternionHelpers.h"
 #   include "Core/Maths/Transform/ScalarMatrixHelpers.h"
@@ -50,20 +51,6 @@ struct RawMatrix {
     }   data;
 };
 
-static bool AlmostEqualRelative_(float A, float B, float maxRelDiff=1e-3f)
-{
-    // Calculate the difference.
-    float diff = fabs(A - B);
-    A = fabs(A);
-    B = fabs(B);
-    // Find the largest
-    float largest = (B > A) ? B : A;
-
-    if (diff <= largest * maxRelDiff)
-        return true;
-    return false;
-}
-
 template <typename T, size_t _Dim>
 static bool Equals_(const XMVECTOR& lhs, const ScalarVector<T, _Dim>& rhs) {
     float lhs_d[_Dim];
@@ -72,7 +59,7 @@ static bool Equals_(const XMVECTOR& lhs, const ScalarVector<T, _Dim>& rhs) {
     memcpy(rhs_d, &rhs, sizeof(rhs_d));
 
     for (size_t i = 0; i < _Dim; ++i)
-        if (!AlmostEqualRelative_(lhs_d[i], rhs_d[i]))
+        if (!NearlyEquals(lhs_d[i], rhs_d[i]))
             return false;
 
     return true;
@@ -81,7 +68,7 @@ static bool Equals_(const XMVECTOR& lhs, const ScalarVector<T, _Dim>& rhs) {
 template <typename T, size_t _Width, size_t _Height>
 static bool Equals_(const ScalarMatrix<T, _Width, _Height>& lhs, const ScalarMatrix<T, _Width, _Height>& rhs) {
     for (size_t i = 0; i < _Width*_Height; ++i)
-        if (!AlmostEqualRelative_(lhs.data_()[i], rhs.data_()[i]))
+        if (!NearlyEquals(lhs.data_()[i], rhs.data_()[i]))
             return false;
 
     return true;
@@ -93,22 +80,22 @@ static bool Equals_(const XMMATRIX& lhs, const float4x4& rhs) {
     RawMatrix rhs_d;
     memcpy(&rhs_d, &rhs, sizeof(rhs_d));
 
-    Assert(AlmostEqualRelative_(rhs_d.data._23, rhs_d.data.m[1][2]));
-    Assert(AlmostEqualRelative_(rhs_d.data._23, rhs.at(1, 2)));
-    Assert(AlmostEqualRelative_(rhs_d.data._23, rhs.at<1, 2>()));
-    Assert(AlmostEqualRelative_(rhs_d.data._23, rhs._23()));
-    Assert(AlmostEqualRelative_(rhs_d.data._23, rhs.m12()));
+    Assert(NearlyEquals(rhs_d.data._23, rhs_d.data.m[1][2]));
+    Assert(NearlyEquals(rhs_d.data._23, rhs.at(1, 2)));
+    Assert(NearlyEquals(rhs_d.data._23, rhs.at<1, 2>()));
+    Assert(NearlyEquals(rhs_d.data._23, rhs._23()));
+    Assert(NearlyEquals(rhs_d.data._23, rhs.m12()));
 
-    Assert(AlmostEqualRelative_(rhs_d.data._12, rhs_d.data.m[0][1]));
-    Assert(AlmostEqualRelative_(rhs_d.data._12, rhs._12()));
-    Assert(AlmostEqualRelative_(rhs_d.data._12, rhs.m01()));
+    Assert(NearlyEquals(rhs_d.data._12, rhs_d.data.m[0][1]));
+    Assert(NearlyEquals(rhs_d.data._12, rhs._12()));
+    Assert(NearlyEquals(rhs_d.data._12, rhs.m01()));
 
-    Assert(AlmostEqualRelative_(rhs_d.data._34, rhs_d.data.m[2][3]));
-    Assert(AlmostEqualRelative_(rhs_d.data._34, rhs._34()));
-    Assert(AlmostEqualRelative_(rhs_d.data._34, rhs.m23()));
+    Assert(NearlyEquals(rhs_d.data._34, rhs_d.data.m[2][3]));
+    Assert(NearlyEquals(rhs_d.data._34, rhs._34()));
+    Assert(NearlyEquals(rhs_d.data._34, rhs.m23()));
 
     for (size_t i = 0; i < 16; ++i)
-        if (!AlmostEqualRelative_(lhs_d.data.raw[i], rhs_d.data.raw[i]))
+        if (!NearlyEquals(lhs_d.data.raw[i], rhs_d.data.raw[i]))
             return false;
 
     return true;
