@@ -7,7 +7,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Shuffle>
-BasicColor<T, _Shuffle>::BasicColor() : _data(T(0)) {}
+BasicColor<T, _Shuffle>::BasicColor() {}
 //----------------------------------------------------------------------------
 template <typename T, typename _Shuffle>
 BasicColor<T, _Shuffle>::~BasicColor() {}

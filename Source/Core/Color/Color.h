@@ -58,6 +58,8 @@ public:
     T b() const { return _data.get<_Shuffle::B>(); }
     T a() const { return _data.get<_Shuffle::A>(); }
 
+    ScalarVector<T, 3> rgb() const { return _data.Shuffle3<_Shuffle::R, _Shuffle::G, _Shuffle::B>(); }
+
     T& operator [](size_t i) { return _data[i]; }
     T operator [](size_t i) const { return _data[i]; }
 
