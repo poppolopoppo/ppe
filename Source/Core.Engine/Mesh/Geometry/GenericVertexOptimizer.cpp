@@ -8,6 +8,8 @@
 #include "Core/Memory/UniqueView.h"
 #include "Core.Graphics/Device/Geometry/VertexDeclaration.h"
 
+#include <algorithm>
+
 namespace Core {
 namespace Engine {
 //----------------------------------------------------------------------------
@@ -47,14 +49,58 @@ void MergeDuplicateVertices(GenericVertex& vertices, const MemoryView<u32>& indi
         return;
     Assert(indices.size() >= 3);
 
-    const u8 *vertexPtr = vertices.Destination().Pointer();
     const size_t vertexSizeInBytes = vertices.VertexDeclaration()->SizeInBytes();
-    AssertRelease(0 == (vertexSizeInBytes % sizeof(u32)) );
 
     const auto vertexHashes = MALLOCA_VIEW(size_t, vertexCount);
-    for (size_t i = 0; i < vertexCount; ++i, vertexPtr += vertexSizeInBytes) {
-
+    const auto vertexSorted = MALLOCA_VIEW(u32, vertexCount);
+    {
+        const u8 *vertexPtr = vertices.Destination().Pointer();
+        for (u32 i = 0; i < vertexCount; ++i, vertexPtr += vertexSizeInBytes) {
+            vertexHashes[i] = hash_value_as_memory(vertexPtr, vertexSizeInBytes);
+            vertexSorted[i] = i;
+        }
     }
+
+    std::stable_sort(vertexSorted.begin(), vertexSorted.end(), [&vertexHashes](u32 lhs, u32 rhs) {
+        return vertexHashes[lhs] < vertexHashes[rhs];
+    });
+
+    u8 *const vertexNewData = vertices.Destination().Pointer();
+    const auto vertexOldData = MALLOCA_VIEW(u8, vertexCount * vertexSizeInBytes);
+    memcpy(vertexOldData.Pointer(), vertexNewData, vertexOldData.SizeInBytes());
+
+    u32 mergedVertexCount = 0;
+    const auto vertexReindexation = MALLOCA_VIEW(u32, vertexCount);
+    for (u32 i = 0; i < vertexCount; ) {
+        const u32 mergedIndex = mergedVertexCount++;
+        const u32 originalIndex = vertexSorted[i];
+        vertexReindexation[originalIndex] = mergedIndex;
+
+        const size_t mergedHash = vertexHashes[originalIndex];
+
+        memcpy( vertexNewData + vertexSizeInBytes * mergedIndex, 
+                vertexOldData.Pointer() + vertexSizeInBytes * originalIndex,
+                vertexSizeInBytes );
+
+        ++i;
+        while (i < vertexCount && mergedHash == vertexHashes[vertexSorted[i]]) {
+            
+            if (0 == memcmp(vertexOldData.Pointer() + vertexSizeInBytes * originalIndex,
+                            vertexOldData.Pointer() + vertexSizeInBytes * vertexSorted[i],
+                            vertexSizeInBytes )) {
+                vertexReindexation[vertexSorted[i]] = mergedIndex;
+                ++i;
+            }
+            else {
+                break;
+            }
+        }
+    }
+
+    vertices.SeekVertex(mergedVertexCount);
+
+    for (u32& index : indices)
+        index = vertexReindexation[index];
 }
 //----------------------------------------------------------------------------
 void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
