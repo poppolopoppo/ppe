@@ -380,7 +380,9 @@ template <
 std::basic_ostream<_StreamChar, _StreamTraits>& operator <<(
     std::basic_ostream<_StreamChar, _StreamTraits>& oss,
     const Token<_Tag, _TokenChar, _CaseSensitive, _TokenTraits, _Allocator>& token) {
-    return oss << token.cstr();
+    if (!token.empty())
+        oss << token.cstr();
+    return oss;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
