@@ -24,6 +24,8 @@
     _Foreach(Position0_Float3__Color0_UByte4N__TexCoord0_Half2) \
     _Foreach(Position0_Float3__Color0_UByte4N__TexCoord0_Float2__Normal0_UX10Y10Z10W2N) \
     _Foreach(Position0_Float3__TexCoord0_Half2__Normal0_UByte4N) \
+    _Foreach(Position0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N) \
+    _Foreach(Position0_Float3__TexCoord0_Float2__Normal0_Float3) \
     _Foreach(Position0_Float3__TexCoord0_Float2__Normal0_Float3__Tangent0_Float3__Binormal0_Float3) \
     _Foreach(Position0_Float3__TexCoord0_Half2__Normal0_UByte4N__Tangent0_UByte4N__Binormal0_UByte4N) \
     _Foreach(Position0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N) \
@@ -150,6 +152,18 @@ void VertexTypes_Start() {
         vdecl.AddTypedSubPart<VertexSubPartSemantic::Position>(&Vertex::Position0_Float3__TexCoord0_Half2__Normal0_UByte4N::Position0, 0);
         vdecl.AddTypedSubPart<VertexSubPartSemantic::TexCoord>(&Vertex::Position0_Float3__TexCoord0_Half2__Normal0_UByte4N::TexCoord0, 0);
         vdecl.AddTypedSubPart<VertexSubPartSemantic::Normal>(&Vertex::Position0_Float3__TexCoord0_Half2__Normal0_UByte4N::Normal0, 0);
+    }
+    {
+        CREATE_VERTEXDECL_BUILTINTYPE(Position0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N);
+        vdecl.AddTypedSubPart<VertexSubPartSemantic::Position>(&Vertex::Position0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N::Position0, 0);
+        vdecl.AddTypedSubPart<VertexSubPartSemantic::TexCoord>(&Vertex::Position0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N::TexCoord0, 0);
+        vdecl.AddTypedSubPart<VertexSubPartSemantic::Normal>(&Vertex::Position0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N::Normal0, 0);
+    }
+    {
+        CREATE_VERTEXDECL_BUILTINTYPE(Position0_Float3__TexCoord0_Float2__Normal0_Float3);
+        vdecl.AddTypedSubPart<VertexSubPartSemantic::Position>(&Vertex::Position0_Float3__TexCoord0_Float2__Normal0_Float3::Position0, 0);
+        vdecl.AddTypedSubPart<VertexSubPartSemantic::TexCoord>(&Vertex::Position0_Float3__TexCoord0_Float2__Normal0_Float3::TexCoord0, 0);
+        vdecl.AddTypedSubPart<VertexSubPartSemantic::Normal>(&Vertex::Position0_Float3__TexCoord0_Float2__Normal0_Float3::Normal0, 0);
     }
     {
         CREATE_VERTEXDECL_BUILTINTYPE(Position0_Float3__TexCoord0_Float2__Normal0_Float3__Tangent0_Float3__Binormal0_Float3);

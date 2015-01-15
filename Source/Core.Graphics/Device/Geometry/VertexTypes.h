@@ -130,6 +130,22 @@ struct Position0_Float3__Color0_UByte4N__TexCoord0_Float2__Normal0_UX10Y10Z10W2N
 struct Position0_Float3__TexCoord0_Half2__Normal0_UByte4N {
     float3 Position0;
     half2 TexCoord0;
+    ubyte4n Normal0;
+
+    static const VertexDeclaration *Declaration;
+};
+//----------------------------------------------------------------------------
+struct Position0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N {
+    float3 Position0;
+    half2 TexCoord0;
+    UX10Y10Z10W2N Normal0;
+
+    static const VertexDeclaration *Declaration;
+};
+//----------------------------------------------------------------------------
+struct Position0_Float3__TexCoord0_Float2__Normal0_Float3 {
+    float3 Position0;
+    float2 TexCoord0;
     float3 Normal0;
 
     static const VertexDeclaration *Declaration;
