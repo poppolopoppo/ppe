@@ -46,8 +46,10 @@ struct RenderCommand {
 };
 STATIC_ASSERT(std::is_pod<RenderCommand>::value);
 //----------------------------------------------------------------------------
+typedef UniquePtr<const RenderCommand> URenderCommand;
+//----------------------------------------------------------------------------
 bool AcquireRenderCommand(
-    UniquePtr<const RenderCommand>& pcommand,
+    URenderCommand& pcommand,
     RenderTree *renderTree,
     const char *renderLayerName,
     const Material *material,
@@ -58,7 +60,7 @@ bool AcquireRenderCommand(
     size_t startIndex,
     size_t primitiveCount );
 //----------------------------------------------------------------------------
-void ReleaseRenderCommand(  UniquePtr<const RenderCommand>& pcommand,
+void ReleaseRenderCommand(  URenderCommand& pcommand,
                             Graphics::IDeviceAPIEncapsulator *device );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

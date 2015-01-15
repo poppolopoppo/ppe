@@ -6,6 +6,7 @@
 #include "Core/Maths/Geometry/ScalarBoundingBox.h"
 #include "Core/Memory/MemoryView.h"
 #include "Core/Memory/RefPtr.h"
+#include "Core/Memory/UniquePtr.h"
 
 #include "Core.Engine/Mesh/MeshName.h"
 
@@ -15,6 +16,9 @@ class IDeviceAPIEncapsulator;
 }
 
 namespace Engine {
+struct RenderCommand;
+typedef UniquePtr<const RenderCommand> URenderCommand;
+class RenderTree;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -52,6 +56,26 @@ private:
     VECTOR(Mesh, PModelBone) _bones;
     VECTOR(Mesh, PModelMesh) _meshes;
 };
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+struct ModelRenderCommand {
+    SCModel Model;
+    VECTOR(Mesh, URenderCommand) RenderCommands;
+    SINGLETON_POOL_ALLOCATED_DECL(ModelRenderCommand);
+};
+//----------------------------------------------------------------------------
+typedef UniquePtr<const ModelRenderCommand> UModelRenderCommand;
+//----------------------------------------------------------------------------
+bool AcquireModelRenderCommand( UModelRenderCommand& pModelCommand,
+                                Graphics::IDeviceAPIEncapsulator *device,
+                                RenderTree *renderTree,
+                                const char *renderLayerName,
+                                const Model *model );
+//----------------------------------------------------------------------------
+void ReleaseModelRenderCommand( UModelRenderCommand& pModelCommand,
+                                Graphics::IDeviceAPIEncapsulator *device,
+                                const Model *model );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
