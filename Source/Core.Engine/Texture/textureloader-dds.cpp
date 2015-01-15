@@ -117,6 +117,109 @@ enum DDS_DXGI_FORMAT : u32 {
     DDS_DXGI_FORMAT_R32G32B32A32_FLOAT,
 };
 
+enum DDS_D3D11_DXGI_FORMAT : u32 {
+    DDS_D3D11_DXGI_FORMAT_UNKNOWN	                    = 0,
+    DDS_D3D11_DXGI_FORMAT_R32G32B32A32_TYPELESS       = 1,
+    DDS_D3D11_DXGI_FORMAT_R32G32B32A32_FLOAT          = 2,
+    DDS_D3D11_DXGI_FORMAT_R32G32B32A32_UINT           = 3,
+    DDS_D3D11_DXGI_FORMAT_R32G32B32A32_SINT           = 4,
+    DDS_D3D11_DXGI_FORMAT_R32G32B32_TYPELESS          = 5,
+    DDS_D3D11_DXGI_FORMAT_R32G32B32_FLOAT             = 6,
+    DDS_D3D11_DXGI_FORMAT_R32G32B32_UINT              = 7,
+    DDS_D3D11_DXGI_FORMAT_R32G32B32_SINT              = 8,
+    DDS_D3D11_DXGI_FORMAT_R16G16B16A16_TYPELESS       = 9,
+    DDS_D3D11_DXGI_FORMAT_R16G16B16A16_FLOAT          = 10,
+    DDS_D3D11_DXGI_FORMAT_R16G16B16A16_UNORM          = 11,
+    DDS_D3D11_DXGI_FORMAT_R16G16B16A16_UINT           = 12,
+    DDS_D3D11_DXGI_FORMAT_R16G16B16A16_SNORM          = 13,
+    DDS_D3D11_DXGI_FORMAT_R16G16B16A16_SINT           = 14,
+    DDS_D3D11_DXGI_FORMAT_R32G32_TYPELESS             = 15,
+    DDS_D3D11_DXGI_FORMAT_R32G32_FLOAT                = 16,
+    DDS_D3D11_DXGI_FORMAT_R32G32_UINT                 = 17,
+    DDS_D3D11_DXGI_FORMAT_R32G32_SINT                 = 18,
+    DDS_D3D11_DXGI_FORMAT_R32G8X24_TYPELESS           = 19,
+    DDS_D3D11_DXGI_FORMAT_D32_FLOAT_S8X24_UINT        = 20,
+    DDS_D3D11_DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS    = 21,
+    DDS_D3D11_DXGI_FORMAT_X32_TYPELESS_G8X24_UINT     = 22,
+    DDS_D3D11_DXGI_FORMAT_R10G10B10A2_TYPELESS        = 23,
+    DDS_D3D11_DXGI_FORMAT_R10G10B10A2_UNORM           = 24,
+    DDS_D3D11_DXGI_FORMAT_R10G10B10A2_UINT            = 25,
+    DDS_D3D11_DXGI_FORMAT_R11G11B10_FLOAT             = 26,
+    DDS_D3D11_DXGI_FORMAT_R8G8B8A8_TYPELESS           = 27,
+    DDS_D3D11_DXGI_FORMAT_R8G8B8A8_UNORM              = 28,
+    DDS_D3D11_DXGI_FORMAT_R8G8B8A8_UNORM_SRGB         = 29,
+    DDS_D3D11_DXGI_FORMAT_R8G8B8A8_UINT               = 30,
+    DDS_D3D11_DXGI_FORMAT_R8G8B8A8_SNORM              = 31,
+    DDS_D3D11_DXGI_FORMAT_R8G8B8A8_SINT               = 32,
+    DDS_D3D11_DXGI_FORMAT_R16G16_TYPELESS             = 33,
+    DDS_D3D11_DXGI_FORMAT_R16G16_FLOAT                = 34,
+    DDS_D3D11_DXGI_FORMAT_R16G16_UNORM                = 35,
+    DDS_D3D11_DXGI_FORMAT_R16G16_UINT                 = 36,
+    DDS_D3D11_DXGI_FORMAT_R16G16_SNORM                = 37,
+    DDS_D3D11_DXGI_FORMAT_R16G16_SINT                 = 38,
+    DDS_D3D11_DXGI_FORMAT_R32_TYPELESS                = 39,
+    DDS_D3D11_DXGI_FORMAT_D32_FLOAT                   = 40,
+    DDS_D3D11_DXGI_FORMAT_R32_FLOAT                   = 41,
+    DDS_D3D11_DXGI_FORMAT_R32_UINT                    = 42,
+    DDS_D3D11_DXGI_FORMAT_R32_SINT                    = 43,
+    DDS_D3D11_DXGI_FORMAT_R24G8_TYPELESS              = 44,
+    DDS_D3D11_DXGI_FORMAT_D24_UNORM_S8_UINT           = 45,
+    DDS_D3D11_DXGI_FORMAT_R24_UNORM_X8_TYPELESS       = 46,
+    DDS_D3D11_DXGI_FORMAT_X24_TYPELESS_G8_UINT        = 47,
+    DDS_D3D11_DXGI_FORMAT_R8G8_TYPELESS               = 48,
+    DDS_D3D11_DXGI_FORMAT_R8G8_UNORM                  = 49,
+    DDS_D3D11_DXGI_FORMAT_R8G8_UINT                   = 50,
+    DDS_D3D11_DXGI_FORMAT_R8G8_SNORM                  = 51,
+    DDS_D3D11_DXGI_FORMAT_R8G8_SINT                   = 52,
+    DDS_D3D11_DXGI_FORMAT_R16_TYPELESS                = 53,
+    DDS_D3D11_DXGI_FORMAT_R16_FLOAT                   = 54,
+    DDS_D3D11_DXGI_FORMAT_D16_UNORM                   = 55,
+    DDS_D3D11_DXGI_FORMAT_R16_UNORM                   = 56,
+    DDS_D3D11_DXGI_FORMAT_R16_UINT                    = 57,
+    DDS_D3D11_DXGI_FORMAT_R16_SNORM                   = 58,
+    DDS_D3D11_DXGI_FORMAT_R16_SINT                    = 59,
+    DDS_D3D11_DXGI_FORMAT_R8_TYPELESS                 = 60,
+    DDS_D3D11_DXGI_FORMAT_R8_UNORM                    = 61,
+    DDS_D3D11_DXGI_FORMAT_R8_UINT                     = 62,
+    DDS_D3D11_DXGI_FORMAT_R8_SNORM                    = 63,
+    DDS_D3D11_DXGI_FORMAT_R8_SINT                     = 64,
+    DDS_D3D11_DXGI_FORMAT_A8_UNORM                    = 65,
+    DDS_D3D11_DXGI_FORMAT_R1_UNORM                    = 66,
+    DDS_D3D11_DXGI_FORMAT_R9G9B9E5_SHAREDEXP          = 67,
+    DDS_D3D11_DXGI_FORMAT_R8G8_B8G8_UNORM             = 68,
+    DDS_D3D11_DXGI_FORMAT_G8R8_G8B8_UNORM             = 69,
+    DDS_D3D11_DXGI_FORMAT_BC1_TYPELESS                = 70,
+    DDS_D3D11_DXGI_FORMAT_BC1_UNORM                   = 71,
+    DDS_D3D11_DXGI_FORMAT_BC1_UNORM_SRGB              = 72,
+    DDS_D3D11_DXGI_FORMAT_BC2_TYPELESS                = 73,
+    DDS_D3D11_DXGI_FORMAT_BC2_UNORM                   = 74,
+    DDS_D3D11_DXGI_FORMAT_BC2_UNORM_SRGB              = 75,
+    DDS_D3D11_DXGI_FORMAT_BC3_TYPELESS                = 76,
+    DDS_D3D11_DXGI_FORMAT_BC3_UNORM                   = 77,
+    DDS_D3D11_DXGI_FORMAT_BC3_UNORM_SRGB              = 78,
+    DDS_D3D11_DXGI_FORMAT_BC4_TYPELESS                = 79,
+    DDS_D3D11_DXGI_FORMAT_BC4_UNORM                   = 80,
+    DDS_D3D11_DXGI_FORMAT_BC4_SNORM                   = 81,
+    DDS_D3D11_DXGI_FORMAT_BC5_TYPELESS                = 82,
+    DDS_D3D11_DXGI_FORMAT_BC5_UNORM                   = 83,
+    DDS_D3D11_DXGI_FORMAT_BC5_SNORM                   = 84,
+    DDS_D3D11_DXGI_FORMAT_B5G6R5_UNORM                = 85,
+    DDS_D3D11_DXGI_FORMAT_B5G5R5A1_UNORM              = 86,
+    DDS_D3D11_DXGI_FORMAT_B8G8R8A8_UNORM              = 87,
+    DDS_D3D11_DXGI_FORMAT_B8G8R8X8_UNORM              = 88,
+    DDS_D3D11_DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM  = 89,
+    DDS_D3D11_DXGI_FORMAT_B8G8R8A8_TYPELESS           = 90,
+    DDS_D3D11_DXGI_FORMAT_B8G8R8A8_UNORM_SRGB         = 91,
+    DDS_D3D11_DXGI_FORMAT_B8G8R8X8_TYPELESS           = 92,
+    DDS_D3D11_DXGI_FORMAT_B8G8R8X8_UNORM_SRGB         = 93,
+    DDS_D3D11_DXGI_FORMAT_BC6H_TYPELESS               = 94,
+    DDS_D3D11_DXGI_FORMAT_BC6H_UF16                   = 95,
+    DDS_D3D11_DXGI_FORMAT_BC6H_SF16                   = 96,
+    DDS_D3D11_DXGI_FORMAT_BC7_TYPELESS                = 97,
+    DDS_D3D11_DXGI_FORMAT_BC7_UNORM                   = 98,
+    DDS_D3D11_DXGI_FORMAT_BC7_UNORM_SRGB              = 99,
+};
+
 enum DDS_D3D11_RESOURCE_DIMENSION : u32 {
     DDS_D3D11_RESOURCE_DIMENSION_UNKNOWN    = 0,
     DDS_D3D11_RESOURCE_DIMENSION_BUFFER        = 1,
@@ -466,6 +569,120 @@ bool ReadTextureHeader(TextureHeader& header, IVirtualFileSystemIStream *stream)
         }
 
         resDim = ddsHeaderDX10.resourceDimension;
+
+        switch (DDS_D3D11_DXGI_FORMAT(format))
+        {
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R32G32B32A32_FLOAT:
+            header.Format = Core::Graphics::SurfaceFormat::R32G32B32A32_F;
+            break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R32G32B32A32_UINT:
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R32G32B32A32_SINT:
+            header.Format = Core::Graphics::SurfaceFormat::R32G32B32A32;
+            break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16G16B16A16_FLOAT:
+            header.Format = Core::Graphics::SurfaceFormat::R16G16B16A16_F;
+            break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16G16B16A16_UNORM:
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16G16B16A16_UINT:
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16G16B16A16_SNORM:
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16G16B16A16_SINT:
+            header.Format = Core::Graphics::SurfaceFormat::R16G16B16A16;
+            break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R32G32_FLOAT:
+            header.Format = Core::Graphics::SurfaceFormat::R32G32_F;
+            break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R32G32_UINT:
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R32G32_SINT:
+            header.Format = Core::Graphics::SurfaceFormat::R32G32;
+            break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R10G10B10A2_UNORM:
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R10G10B10A2_UINT:
+            header.Format = Core::Graphics::SurfaceFormat::R10G10B10A2;
+            break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R11G11B10_FLOAT:
+            header.Format = Core::Graphics::SurfaceFormat::R11G11B10;
+            break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+            header.Format = Core::Graphics::SurfaceFormat::R8G8B8A8_SRGB;
+            break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R8G8B8A8_UNORM:
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R8G8B8A8_UINT:
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R8G8B8A8_SNORM:
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R8G8B8A8_SINT:
+            header.Format = Core::Graphics::SurfaceFormat::R8G8B8A8;
+            break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16G16_FLOAT:
+            header.Format = Core::Graphics::SurfaceFormat::R16G16_F;
+            break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16G16_UNORM:
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16G16_UINT:
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16G16_SNORM:
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16G16_SINT:
+            header.Format = Core::Graphics::SurfaceFormat::R16G16_F;
+            break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R32_FLOAT:
+            header.Format = Core::Graphics::SurfaceFormat::R32_F;
+            break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R32_UINT:
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R32_SINT:
+            header.Format = Core::Graphics::SurfaceFormat::R32;
+            break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R8G8_UNORM:
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R8G8_UINT:
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R8G8_SNORM:
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R8G8_SINT:
+            header.Format = Core::Graphics::SurfaceFormat::R8G8;
+            break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16_FLOAT:
+            header.Format = Core::Graphics::SurfaceFormat::R16_F;
+            break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16_UNORM:
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16_UINT:
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16_SNORM:
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16_SINT:
+            header.Format = Core::Graphics::SurfaceFormat::R16;
+            break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R8_UNORM:
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R8_UINT:
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R8_SNORM:
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R8_SINT:
+            header.Format = Core::Graphics::SurfaceFormat::R8;
+            break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_A8_UNORM:
+            header.Format = Core::Graphics::SurfaceFormat::A8;
+            break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_BC1_UNORM:
+            header.Format = Core::Graphics::SurfaceFormat::DXT1;
+            break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_BC1_UNORM_SRGB:
+            header.Format = Core::Graphics::SurfaceFormat::DXT1_SRGB;
+            break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_BC2_UNORM:
+            header.Format = Core::Graphics::SurfaceFormat::DXT3;
+            break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_BC2_UNORM_SRGB:
+            header.Format = Core::Graphics::SurfaceFormat::DXT3_SRGB;
+            break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_BC3_UNORM:
+            header.Format = Core::Graphics::SurfaceFormat::DXT5;
+            break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_BC3_UNORM_SRGB:
+            header.Format = Core::Graphics::SurfaceFormat::DXT5_SRGB;
+            break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_BC5_UNORM:
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_BC5_SNORM:
+            header.Format = Core::Graphics::SurfaceFormat::DXN0;
+            break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_B5G6R5_UNORM:
+            header.Format = Core::Graphics::SurfaceFormat::R5G6B5;
+            break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_B5G5R5A1_UNORM:
+            header.Format = Core::Graphics::SurfaceFormat::R5G5B5A1;
+            break;
+
+        default:
+            return false;
+        }
     }
     else
     {
@@ -494,6 +711,44 @@ bool ReadTextureHeader(TextureHeader& header, IVirtualFileSystemIStream *stream)
 
             // Note there's no way for a legacy Direct3D 9 DDS to express a '1D' texture
         }
+
+        switch (format)
+        {
+        case DDS_DXGI_FORMAT_A8_UNORM: header.Format = Core::Graphics::SurfaceFormat::A8; break;
+        case DDS_DXGI_FORMAT_BC5_SNORM: header.Format = Core::Graphics::SurfaceFormat::DXN0; break;
+        case DDS_DXGI_FORMAT_BC1_UNORM: header.Format = Core::Graphics::SurfaceFormat::DXT1; break;
+        case DDS_DXGI_FORMAT_BC2_UNORM: header.Format = Core::Graphics::SurfaceFormat::DXT3; break;
+        case DDS_DXGI_FORMAT_BC3_UNORM: header.Format = Core::Graphics::SurfaceFormat::DXT5; break;
+        case DDS_DXGI_FORMAT_ATI2: header.Format = Core::Graphics::SurfaceFormat::DXN0; break;
+        case DDS_DXGI_FORMAT_B5G5R5A1_UNORM: header.Format = Core::Graphics::SurfaceFormat::R5G5B5A1; break;
+        case DDS_DXGI_FORMAT_B5G6R5_UNORM: header.Format = Core::Graphics::SurfaceFormat::R5G6B5; break;
+        case DDS_DXGI_FORMAT_R8_UNORM: header.Format = Core::Graphics::SurfaceFormat::R8; break;
+        case DDS_DXGI_FORMAT_R8G8_UNORM: header.Format = Core::Graphics::SurfaceFormat::R8G8; break;
+        case DDS_DXGI_FORMAT_R8G8B8A8_UNORM: header.Format = Core::Graphics::SurfaceFormat::R8G8B8A8; break;
+        case DDS_DXGI_FORMAT_R10G10B10A2_UNORM: header.Format = Core::Graphics::SurfaceFormat::R10G10B10A2; break;
+        case DDS_DXGI_FORMAT_R16_UNORM: header.Format = Core::Graphics::SurfaceFormat::R16; break;
+        case DDS_DXGI_FORMAT_R16G16_UNORM: header.Format = Core::Graphics::SurfaceFormat::R16G16; break;
+        case DDS_DXGI_FORMAT_R16G16B16A16_UNORM: header.Format = Core::Graphics::SurfaceFormat::R16G16B16A16; break;
+        case DDS_DXGI_FORMAT_R16G16B16A16_FLOAT: header.Format = Core::Graphics::SurfaceFormat::R16G16B16A16_F; break;
+        case DDS_DXGI_FORMAT_R16G16_FLOAT: header.Format = Core::Graphics::SurfaceFormat::R16G16_F; break;
+        case DDS_DXGI_FORMAT_R16_FLOAT: header.Format = Core::Graphics::SurfaceFormat::R16_F; break;
+        case DDS_DXGI_FORMAT_R32G32B32A32_FLOAT: header.Format = Core::Graphics::SurfaceFormat::R32G32B32A32_F; break;
+        case DDS_DXGI_FORMAT_R32G32_FLOAT: header.Format = Core::Graphics::SurfaceFormat::R32G32_F; break;
+        case DDS_DXGI_FORMAT_R32_FLOAT: header.Format = Core::Graphics::SurfaceFormat::R32_F; break;
+
+        // TODO : SRGB, INT, UINT
+        /* case DDS_DXGI_FORMAT_BC1_UNORM_SRGB: header.Format = Core::Graphics::SurfaceFormat::DXT1_SRGB; break;
+        case DDS_DXGI_FORMAT_BC2_UNORM_SRGB: header.Format = Core::Graphics::SurfaceFormat::DXT3_SRGB; break;
+        case DDS_DXGI_FORMAT_BC3_UNORM_SRGB: header.Format = Core::Graphics::SurfaceFormat::DXT5_SRGB; break;
+        case DDS_DXGI_FORMAT_R8G8B8A8_UNORM_SRGB: header.Format = Core::Graphics::SurfaceFormat::R8G8B8A8_SRGB; break;
+        case DDS_DXGI_FORMAT_R32_UINT: header.Format = Core::Graphics::SurfaceFormat::R32; break;
+        case DDS_DXGI_FORMAT_R32G32_UINT: header.Format = Core::Graphics::SurfaceFormat::R32G32; break;
+        case DDS_DXGI_FORMAT_R32G32B32A32_UINT: header.Format = Core::Graphics::SurfaceFormat::R32G32B32A32; break; */
+
+        default:
+            return false;
+        }
+        Assert(header.Format);
     }
 
     // Bound sizes (for security purposes we don't trust DDS file metadata larger than the D3D 11.x hardware requirements)
@@ -537,44 +792,6 @@ bool ReadTextureHeader(TextureHeader& header, IVirtualFileSystemIStream *stream)
     }
 
     header.FaceCount = isCubeMap ? 6 : 1;
-
-    switch (format)
-    {
-    case DDS_DXGI_FORMAT_A8_UNORM: header.Format = Core::Graphics::SurfaceFormat::A8; break;
-    case DDS_DXGI_FORMAT_BC5_SNORM: header.Format = Core::Graphics::SurfaceFormat::DXN0; break;
-    case DDS_DXGI_FORMAT_BC1_UNORM: header.Format = Core::Graphics::SurfaceFormat::DXT1; break;
-    case DDS_DXGI_FORMAT_BC2_UNORM: header.Format = Core::Graphics::SurfaceFormat::DXT3; break;
-    case DDS_DXGI_FORMAT_BC3_UNORM: header.Format = Core::Graphics::SurfaceFormat::DXT5; break;
-    case DDS_DXGI_FORMAT_ATI2: header.Format = Core::Graphics::SurfaceFormat::DXN0; break;
-    case DDS_DXGI_FORMAT_B5G5R5A1_UNORM: header.Format = Core::Graphics::SurfaceFormat::R5G5B5A1; break;
-    case DDS_DXGI_FORMAT_B5G6R5_UNORM: header.Format = Core::Graphics::SurfaceFormat::R5G6B5; break;
-    case DDS_DXGI_FORMAT_R8_UNORM: header.Format = Core::Graphics::SurfaceFormat::R8; break;
-    case DDS_DXGI_FORMAT_R8G8_UNORM: header.Format = Core::Graphics::SurfaceFormat::R8G8; break;
-    case DDS_DXGI_FORMAT_R8G8B8A8_UNORM: header.Format = Core::Graphics::SurfaceFormat::R8G8B8A8; break;
-    case DDS_DXGI_FORMAT_R10G10B10A2_UNORM: header.Format = Core::Graphics::SurfaceFormat::R10G10B10A2; break;
-    case DDS_DXGI_FORMAT_R16_UNORM: header.Format = Core::Graphics::SurfaceFormat::R16; break;
-    case DDS_DXGI_FORMAT_R16G16_UNORM: header.Format = Core::Graphics::SurfaceFormat::R16G16; break;
-    case DDS_DXGI_FORMAT_R16G16B16A16_UNORM: header.Format = Core::Graphics::SurfaceFormat::R16G16B16A16; break;
-    case DDS_DXGI_FORMAT_R16G16B16A16_FLOAT: header.Format = Core::Graphics::SurfaceFormat::R16G16B16A16_F; break;
-    case DDS_DXGI_FORMAT_R16G16_FLOAT: header.Format = Core::Graphics::SurfaceFormat::R16G16_F; break;
-    case DDS_DXGI_FORMAT_R16_FLOAT: header.Format = Core::Graphics::SurfaceFormat::R16_F; break;
-    case DDS_DXGI_FORMAT_R32G32B32A32_FLOAT: header.Format = Core::Graphics::SurfaceFormat::R32G32B32A32_F; break;
-    case DDS_DXGI_FORMAT_R32G32_FLOAT: header.Format = Core::Graphics::SurfaceFormat::R32G32_F; break;
-    case DDS_DXGI_FORMAT_R32_FLOAT: header.Format = Core::Graphics::SurfaceFormat::R32_F; break;
-
-    // TODO : SRGB, INT, UINT
-    /* case DDS_DXGI_FORMAT_BC1_UNORM_SRGB: header.Format = Core::Graphics::SurfaceFormat::DXT1_SRGB; break;
-    case DDS_DXGI_FORMAT_BC2_UNORM_SRGB: header.Format = Core::Graphics::SurfaceFormat::DXT3_SRGB; break;
-    case DDS_DXGI_FORMAT_BC3_UNORM_SRGB: header.Format = Core::Graphics::SurfaceFormat::DXT5_SRGB; break;
-    case DDS_DXGI_FORMAT_R8G8B8A8_UNORM_SRGB: header.Format = Core::Graphics::SurfaceFormat::R8G8B8A8_SRGB; break;
-    case DDS_DXGI_FORMAT_R32_UINT: header.Format = Core::Graphics::SurfaceFormat::R32; break;
-    case DDS_DXGI_FORMAT_R32G32_UINT: header.Format = Core::Graphics::SurfaceFormat::R32G32; break;
-    case DDS_DXGI_FORMAT_R32G32B32A32_UINT: header.Format = Core::Graphics::SurfaceFormat::R32G32B32A32; break; */
-
-    default:
-        return false;
-    }
-    Assert(header.Format);
 
     const size_t headerSizeInBytes =
         header.Format->SizeOfTexture2DInBytes(header.Width, header.Height, header.LevelCount) *
