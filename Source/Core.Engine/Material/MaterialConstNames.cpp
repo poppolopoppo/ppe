@@ -20,20 +20,23 @@ namespace Engine {
     _Macro(SpecularExponent) \
     \
     _Macro(Ambient) \
+    _Macro(BumpMapping) \
     _Macro(CastShadows) \
     _Macro(Color) \
     _Macro(Emissive) \
+    _Macro(Fresnel) \
+    _Macro(Glass) \
     _Macro(Highlight) \
     _Macro(Reflection) \
     _Macro(Refraction) \
+    _Macro(SeparateAlpha) \
     _Macro(Transparency) \
-    _Macro(Fresnel) \
-    _Macro(Glass) \
     \
     _Macro(AlphaMap) \
     _Macro(AmbientMap) \
     _Macro(DiffuseMap) \
     _Macro(DisplacementMap) \
+    _Macro(EmissiveMap) \
     _Macro(NormalMap) \
     _Macro(ReflectionMap) \
     _Macro(SpecularColorMap) \

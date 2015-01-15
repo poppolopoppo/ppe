@@ -112,15 +112,17 @@ public:
             Default         = 0,
 
             Ambient         = 1<<0,
-            Color           = 1<<1,
-            Emissive        = 1<<2,
-            Highlight       = 1<<3,
-            Reflection      = 1<<4,
-            Refraction      = 1<<5,
-            Transparency    = 1<<6,
-            Glass           = 1<<7,
-            Fresnel         = 1<<8,
-            CastShadows     = 1<<9,
+            BumpMapping     = 1<<1,
+            Color           = 1<<2,
+            Emissive        = 1<<3,
+            Highlight       = 1<<4,
+            Reflection      = 1<<5,
+            Refraction      = 1<<6,
+            SeparateAlpha   = 1<<7,
+            Transparency    = 1<<8,
+            Glass           = 1<<9,
+            Fresnel         = 1<<10,
+            CastShadows     = 1<<11,
         };
 
         String Name;
@@ -138,6 +140,7 @@ public:
         Filename AmbientMap;
         Filename DiffuseMap;
         Filename DisplacementMap;
+        Filename EmissiveMap;
         Filename NormalMap;
         Filename ReflectionMap;
         Filename SpecularColorMap;
@@ -167,15 +170,15 @@ public:
 
     bool empty() const { return _positions.empty(); }
 
-    const VECTOR_THREAD_LOCAL(Mesh, float4)& Positions() const { return _positions; }
-    const VECTOR_THREAD_LOCAL(Mesh, ColorRGBAF)& Colors() const { return _colors; }
-    const VECTOR_THREAD_LOCAL(Mesh, float3)& Texcoords() const { return _texcoords; }
-    const VECTOR_THREAD_LOCAL(Mesh, float3)& Normals() const { return _normals; }
+    const VECTOR_THREAD_LOCAL(MeshGeneration, float4)& Positions() const { return _positions; }
+    const VECTOR_THREAD_LOCAL(MeshGeneration, ColorRGBAF)& Colors() const { return _colors; }
+    const VECTOR_THREAD_LOCAL(MeshGeneration, float3)& Texcoords() const { return _texcoords; }
+    const VECTOR_THREAD_LOCAL(MeshGeneration, float3)& Normals() const { return _normals; }
 
-    const VECTOR_THREAD_LOCAL(Mesh, Bone)& Bones() const { return _bones; }
-    const VECTOR_THREAD_LOCAL(Mesh, Face)& Faces() const { return _faces; }
-    const VECTOR_THREAD_LOCAL(Mesh, Group)& Groups() const { return _groups; }
-    const VECTOR_THREAD_LOCAL(Mesh, Material)& Materials() const { return _materials; }
+    const VECTOR_THREAD_LOCAL(MeshGeneration, Bone)& Bones() const { return _bones; }
+    const VECTOR_THREAD_LOCAL(MeshGeneration, Face)& Faces() const { return _faces; }
+    const VECTOR_THREAD_LOCAL(MeshGeneration, Group)& Groups() const { return _groups; }
+    const VECTOR_THREAD_LOCAL(MeshGeneration, Material)& Materials() const { return _materials; }
 
     void SetName(const char *name) { SetName(String(name)); }
     void SetName(String&& name);
@@ -228,15 +231,15 @@ private:
     bool _openMaterial  : 1;
 #endif
 
-    VECTOR_THREAD_LOCAL(Mesh, float4) _positions;
-    VECTOR_THREAD_LOCAL(Mesh, ColorRGBAF) _colors;
-    VECTOR_THREAD_LOCAL(Mesh, float3) _texcoords;
-    VECTOR_THREAD_LOCAL(Mesh, float3) _normals;
+    VECTOR_THREAD_LOCAL(MeshGeneration, float4) _positions;
+    VECTOR_THREAD_LOCAL(MeshGeneration, ColorRGBAF) _colors;
+    VECTOR_THREAD_LOCAL(MeshGeneration, float3) _texcoords;
+    VECTOR_THREAD_LOCAL(MeshGeneration, float3) _normals;
 
-    VECTOR_THREAD_LOCAL(Mesh, Bone) _bones;
-    VECTOR_THREAD_LOCAL(Mesh, Face) _faces;
-    VECTOR_THREAD_LOCAL(Mesh, Group) _groups;
-    VECTOR_THREAD_LOCAL(Mesh, Material) _materials;
+    VECTOR_THREAD_LOCAL(MeshGeneration, Bone) _bones;
+    VECTOR_THREAD_LOCAL(MeshGeneration, Face) _faces;
+    VECTOR_THREAD_LOCAL(MeshGeneration, Group) _groups;
+    VECTOR_THREAD_LOCAL(MeshGeneration, Material) _materials;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

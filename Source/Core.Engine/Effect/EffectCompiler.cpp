@@ -2,6 +2,7 @@
 
 #include "EffectCompiler.h"
 
+#include "Core.Graphics/Device/BindName.h"
 #include "Core.Graphics/Device/Geometry/VertexDeclaration.h"
 
 #include "Core/Diagnostic/Logger.h"
@@ -18,6 +19,30 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+struct EffectCompilerKey {
+    STATIC_CONST_INTEGRAL(size_t, TagCapacity, 8);
+
+    size_t HashValue;
+    PCEffectDescriptor Descriptor;
+    Graphics::BindName Tags[TagCapacity];
+    Graphics::PCVertexDeclaration VertexDeclaration;
+
+    bool operator ==(const EffectCompilerKey& other) const { 
+        return  HashValue == other.HashValue && 
+                Descriptor == other.Descriptor && 
+                VertexDeclaration == other.VertexDeclaration &&
+                std::equal(&Tags[0], &Tags[TagCapacity], other.Tags); // most expensive last
+    }
+
+    bool operator !=(const EffectCompilerKey& other) const { return !operator ==(other); }
+};
+//----------------------------------------------------------------------------
+size_t hash_value(const EffectCompilerKey& key) {
+    return key.HashValue;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 EffectCompiler::EffectCompiler() : _device(nullptr) {
     Assert(_variability.Value == VariabilitySeed::Invalid);
 }
@@ -31,7 +56,8 @@ EffectCompiler::~EffectCompiler() {
 //----------------------------------------------------------------------------
 Effect *EffectCompiler::GetOrCreateEffect(
     const EffectDescriptor *descriptor,
-    const Graphics::VertexDeclaration *vertexDeclaration)
+    const Graphics::VertexDeclaration *vertexDeclaration,
+    const MemoryView<const Graphics::BindName>& tags )
 {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(descriptor);
@@ -39,14 +65,19 @@ Effect *EffectCompiler::GetOrCreateEffect(
     Assert(_device);
     Assert(_variability.Value != VariabilitySeed::Invalid);
 
-    const EffectKey key = { descriptor, vertexDeclaration };
+    EffectCompilerKey key;
+    key.Descriptor = descriptor;
+    key.VertexDeclaration = vertexDeclaration;
+    for (size_t i = 0; i < tags.size(); ++i) key.Tags[i] = tags[i];
+    key.HashValue = hash_value(key.Descriptor, key.VertexDeclaration, key.Tags);
+
     PEffect& effect = _effects[key];
 
     if (!effect) {
         LOG(Information, L"[EffectCompiler] Create effect for descriptor <{0}> and vertex declaration <{1}> ...",
             descriptor->Name().c_str(), vertexDeclaration->ResourceName() );
 
-        effect = new Effect(descriptor, vertexDeclaration);
+        effect = new Effect(descriptor, vertexDeclaration, tags);
         effect->Create(_device);
     }
 
@@ -64,10 +95,16 @@ MaterialEffect *EffectCompiler::CreateMaterialEffect(
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(material);
 
-    LOG(Information, L"[EffectCompiler] Create material effect for material <{0}> descriptor <{1}> and vertex declaration <{2}> ...",
-        material->Name(), descriptor->Name().c_str(), vertexDeclaration->ResourceName() );
+    LOG(Information, L"[EffectCompiler] Create material effect '{0}' for material <{1}> descriptor <{2}> and vertex declaration <{3}> ...",
+        material->Description(), material->Name(), descriptor->Name().c_str(), vertexDeclaration->ResourceName() );
 
-    Effect *const effect = GetOrCreateEffect(descriptor, vertexDeclaration);
+    STACKLOCAL_POD_ARRAY(Graphics::BindName, activeTags, descriptor->Substitutions().size());
+    size_t activeTagsCount = 0;
+    for (const Pair<Graphics::BindName, String>& substitution : descriptor->Substitutions())
+        if (Contains(material->Tags(), substitution.first))
+            activeTags[activeTagsCount++] = substitution.first;
+
+    Effect *const effect = GetOrCreateEffect(descriptor, vertexDeclaration, activeTags.SubRangeConst(0, activeTagsCount) );
 
     return new MaterialEffect(effect, material);
 }
@@ -81,12 +118,18 @@ void EffectCompiler::RegenerateEffects() {
 
     const Units::Time::Seconds startedAt = ProcessTime::TotalSeconds();
 
-    for (const Pair<const EffectKey, PEffect>& effect : _effects) {
+    for (const Pair<const EffectCompilerKey, PEffect>& effect : _effects) {
         Assert(effect.second->Available());
 
+#ifdef USE_LOGGER
         LOG(Information, L"[EffectCompiler] Regenerate effect named \"{0}\" with vertex declaration <{1}> ...",
             effect.first.Descriptor->Name().c_str(),
             effect.first.VertexDeclaration->ResourceName() );
+
+        for (const Graphics::BindName& tag : effect.first.Tags)
+            if (!tag.empty())
+                LOG(Information, L"[EffectCompiler] - With material tag <{0}>", tag);
+#endif
 
         effect.second->Destroy(_device);
         effect.second->Create(_device);
@@ -106,7 +149,7 @@ void EffectCompiler::Clear() {
     Assert(_device);
     Assert(_variability.Value != VariabilitySeed::Invalid);
 
-    for (Pair<const EffectKey, PEffect>& effect : _effects) {
+    for (Pair<const EffectCompilerKey, PEffect>& effect : _effects) {
         Assert(effect.second->Available());
 
         effect.second->Destroy(_device);

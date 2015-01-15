@@ -42,11 +42,11 @@ float4 pmain(PixelIn pixelIn) : SV_Target {
 
 #if 0
     if (uv.x < 0.5)
+        /*return TEX2DLOD(uniLinearClamp_Bloom, uv, 0).rgba;
+    else //if (uv.x < 0.75)
         return TEX2DLOD(uniLinearClamp_Bloom, uv, 0).rgba;
-    /*else //if (uv.x < 0.75)
-        return TEX2DLOD(uniLinearClamp_Bloom, uv, 0).rgba;/*/
-    /*else
-        return Sampling::Bicubic(TEXTURE2DPARAM_CALL(uniLinearClamp_Bloom), uv, uniDuDv_Bloom);*/
+    else*/
+        return Sampling::Bicubic(TEXTURE2DPARAM_CALL(uniLinearClamp_Bloom), uv, uniDuDv_Bloom);
 #endif
 
     PostProcess::Params pp = PostProcess::DefaultParams();
@@ -64,19 +64,19 @@ float4 pmain(PixelIn pixelIn) : SV_Target {
 
     //return float4(color, 1);
 
-#if 0
+#if 1
     bentUV = uv;
     color = TEX2D(uniLinearClamp_Principal, uv).rgb;
 #endif
-
-    float3 bloom = Sampling::Bicubic(TEXTURE2DPARAM_CALL(uniLinearClamp_Bloom), bentUV, uniDuDv_Bloom.xy).rgb;
-    color = lerp(color, color + bloom, pp.BloomIntensity);
 
     HDR::Params hdrParams;
     hdrParams.Exposure = pp.Exposure;
     hdrParams.WhitePoint = pp.WhitePoint;
 
     color = HDR::ToneMap(color, hdrParams);
+
+    float3 bloom = Sampling::Bicubic(TEXTURE2DPARAM_CALL(uniLinearClamp_Bloom), bentUV, uniDuDv_Bloom.xy).rgb;
+    color = lerp(color, color + bloom, pp.BloomIntensity);
     color = saturate(color);
 
     //color = PostProcess::Grid(bentUV, uniDuDv_Principal, color, 28, 0.05);

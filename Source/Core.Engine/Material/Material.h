@@ -7,6 +7,7 @@
 #include "Core/Container/Pair.h"
 #include "Core/Container/Vector.h"
 #include "Core/IO/FS/Filename.h"
+#include "Core/IO/String.h"
 #include "Core/Memory/RefPtr.h"
 
 #include "Core.Graphics/Device/BindName.h"
@@ -23,6 +24,7 @@ class Material : public RefCountable {
 public:
     explicit Material(const Graphics::BindName& name);
     Material(   const Graphics::BindName& name,
+                const String& description,
                 VECTOR(Material, Graphics::BindName)&& tags,
                 ASSOCIATIVE_VECTOR(Material, Graphics::BindName, Filename)&& textures,
                 ASSOCIATIVE_VECTOR(Material, Graphics::BindName, PAbstractMaterialParameter)&& parameters );
@@ -32,6 +34,7 @@ public:
     Material& operator =(const Material& ) = delete;
 
     const Graphics::BindName& Name() const { return _name; }
+    const String& Description() const { return _description; }
 
     const VECTOR(Material, Graphics::BindName)& Tags() const { return _tags; }
     const ASSOCIATIVE_VECTOR(Material, Graphics::BindName, Filename)& Textures() const { return _textures; }
@@ -50,7 +53,7 @@ public:
 
 private:
     Graphics::BindName _name;
-
+    String _description;
     VECTOR(Material, Graphics::BindName) _tags;
     ASSOCIATIVE_VECTOR(Material, Graphics::BindName, Filename) _textures;
     ASSOCIATIVE_VECTOR(Material, Graphics::BindName, PAbstractMaterialParameter) _parameters;

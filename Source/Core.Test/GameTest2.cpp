@@ -40,6 +40,10 @@
 #include "Core.Engine/Camera/Camera.h"
 #include "Core.Engine/Mesh/Geometry/GenericVertexOptimizer.h"
 #include "Core.Engine/Mesh/Loader/MeshLoader.h"
+#include "Core.Engine/Mesh/Loader/ModelLoader.h"
+#include "Core.Engine/Mesh/Model.h"
+#include "Core.Engine/Mesh/ModelMesh.h"
+#include "Core.Engine/Mesh/ModelMeshSubPart.h"
 #include "Core.Engine/Scene/Scene.h"
 #include "Core.Engine/World/World.h"
 
@@ -103,7 +107,6 @@ void GameTest2::Initialize(const Timeline& time) {
     const ViewportF& viewport = DeviceEncapsulator()->Parameters().Viewport();
 
     EffectCompiler *const effectCompiler = _context->EffectCompilerService()->EffectCompiler();
-    MaterialDatabase *const materialDatabase = _context->MaterialDatabase();
     RenderSurfaceManager *const renderSurfaceManager = _context->RenderSurfaceService()->Manager();
     TextureCache *const textureCache = _context->TextureCacheService()->TextureCache();
 
@@ -313,7 +316,10 @@ void GameTest2::LoadContent() {
     using namespace Graphics;
 
     IDeviceAPIEncapsulator *const device = DeviceEncapsulator()->Device();
-    IDeviceAPIShaderCompilerEncapsulator *const compiler = DeviceEncapsulator()->Compiler();
+
+    PModel desertArena;
+    if (!LoadModel(desertArena, L"GameData:/Models/Infinity/DesertArena/DesertArena.obj"))
+        AssertNotReached();
 
     if (!LoadMesh<u32, vertex_type>(device, &_indices[0], &_vertices[0], L"GameData:/Models/dragon_40k.ply"))
         AssertNotReached();

@@ -35,6 +35,8 @@ public:
 
     ::ID3DBlob *Entity() const { return _entity.Get(); }
 
+    virtual size_t ProgramHashCode() const override { return _programHashCode; }
+
     SINGLETON_POOL_ALLOCATED_DECL(ShaderProgram);
 
     static void Preprocess( IDeviceAPIShaderCompilerEncapsulator *compiler,
@@ -50,6 +52,7 @@ public:
 
 private:
     ComPtr<::ID3DBlob> _entity;
+    size_t _programHashCode;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

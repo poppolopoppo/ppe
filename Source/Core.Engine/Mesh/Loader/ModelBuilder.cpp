@@ -27,6 +27,8 @@
 #include "Core.Graphics/Device/Geometry/VertexDeclaration.h"
 #include "Core.Graphics/Device/Geometry/VertexTypes.h"
 
+#include "Core/Diagnostic/Logger.h"
+
 namespace Core {
 namespace Engine {
 //----------------------------------------------------------------------------
@@ -44,24 +46,28 @@ static PMaterial CreateMaterial_(const ModelBuilder::Material& materialMB) {
     tags.reserve(Meta::BitSetsCount(materialMB.Mode));
     if (materialMB.HasFlag(ModelBuilder::Material::Ambient))
         tags.push_back(MaterialConstNames::Ambient());
+    if (materialMB.HasFlag(ModelBuilder::Material::BumpMapping))
+        tags.push_back(MaterialConstNames::BumpMapping());
+    if (materialMB.HasFlag(ModelBuilder::Material::CastShadows))
+        tags.push_back(MaterialConstNames::CastShadows());
     if (materialMB.HasFlag(ModelBuilder::Material::Color))
         tags.push_back(MaterialConstNames::Color());
     if (materialMB.HasFlag(ModelBuilder::Material::Emissive))
         tags.push_back(MaterialConstNames::Emissive());
+    if (materialMB.HasFlag(ModelBuilder::Material::Fresnel))
+        tags.push_back(MaterialConstNames::Fresnel());
+    if (materialMB.HasFlag(ModelBuilder::Material::Glass))
+        tags.push_back(MaterialConstNames::Glass());
     if (materialMB.HasFlag(ModelBuilder::Material::Highlight))
         tags.push_back(MaterialConstNames::Highlight());
     if (materialMB.HasFlag(ModelBuilder::Material::Reflection))
         tags.push_back(MaterialConstNames::Reflection());
     if (materialMB.HasFlag(ModelBuilder::Material::Refraction))
         tags.push_back(MaterialConstNames::Refraction());
+    if (materialMB.HasFlag(ModelBuilder::Material::SeparateAlpha))
+        tags.push_back(MaterialConstNames::SeparateAlpha());
     if (materialMB.HasFlag(ModelBuilder::Material::Transparency))
         tags.push_back(MaterialConstNames::Transparency());
-    if (materialMB.HasFlag(ModelBuilder::Material::Glass))
-        tags.push_back(MaterialConstNames::Glass());
-    if (materialMB.HasFlag(ModelBuilder::Material::Fresnel))
-        tags.push_back(MaterialConstNames::Fresnel());
-    if (materialMB.HasFlag(ModelBuilder::Material::CastShadows))
-        tags.push_back(MaterialConstNames::CastShadows());
 
     textures.reserve(7);
     if (!materialMB.AlphaMap.empty())
@@ -72,6 +78,8 @@ static PMaterial CreateMaterial_(const ModelBuilder::Material& materialMB) {
         textures.Insert_AssertUnique(MaterialConstNames::DiffuseMap(), materialMB.DiffuseMap);
     if (!materialMB.DisplacementMap.empty())
         textures.Insert_AssertUnique(MaterialConstNames::DisplacementMap(), materialMB.DisplacementMap);
+    if (!materialMB.EmissiveMap.empty())
+        textures.Insert_AssertUnique(MaterialConstNames::EmissiveMap(), materialMB.EmissiveMap);
     if (!materialMB.NormalMap.empty())
         textures.Insert_AssertUnique(MaterialConstNames::NormalMap(), materialMB.NormalMap);
     if (!materialMB.ReflectionMap.empty())
@@ -104,7 +112,9 @@ static PMaterial CreateMaterial_(const ModelBuilder::Material& materialMB) {
     parameters.Vector().shrink_to_fit();
 #endif
 
-    return new Material(materialMB.Name, std::move(tags), std::move(textures), std::move(parameters));
+    LOG(Information, L"[Model] Loaded material '{0}' with diffuse map '{1}'", materialMB.Name, materialMB.DiffuseMap);
+
+    return new Material("Standard", materialMB.Name, std::move(tags), std::move(textures), std::move(parameters));
 }
 //----------------------------------------------------------------------------
 static PModelBone CreateBone_(const ModelBuilder::Bone& boneMB, const AABB3f& boundingBox) {
@@ -124,7 +134,7 @@ static const Graphics::VertexDeclaration *GetVertexDeclaration_(const ModelBuild
         else if (useVertexColor)
             return Position0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N::Declaration;
         else
-            return Position0_Float3__TexCoord0_Half2__Normal0_UByte4N::Declaration;
+            return Position0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N::Declaration;
 
     }
     else if (ModelBuilder::Group::Texcoords == (mode & ModelBuilder::Group::Texcoords)) {
@@ -412,7 +422,8 @@ bool ModelBuilder::MaterialIndexFromName(size_t *pIndex, const StringSlice& name
     const size_t materialCount = _materials.size();
     for (size_t i = 0; i < materialCount; ++i) {
         const Material& materialMB = _materials[i];
-        if (0 == CompareN(materialMB.Name.c_str(), name.Pointer(), name.size())) {
+        if (materialMB.Name.size() == name.size() &&
+            0 == CompareN(materialMB.Name.c_str(), name.Pointer(), name.size())) {
             *pIndex = i;
             return true;
         }
@@ -425,7 +436,7 @@ PModel ModelBuilder::CreateModel() {
     Assert(_positions.size());
     Assert(_colors.empty() || _colors.size() == _positions.size());
 
-    VECTOR(Mesh, PMaterial) materials;
+    VECTOR_THREAD_LOCAL(MeshGeneration, PMaterial) materials;
     materials.reserve(_materials.size());
     for (const Material& m : _materials)
         materials.push_back(CreateMaterial_(m));
@@ -439,10 +450,14 @@ PModel ModelBuilder::CreateModel() {
     };
     const bool useVertexColor = (_positions.size() == _colors.size());
     const auto groupMeshIndices = MALLOCA_VIEW(size_t, _groups.size());
-    VECTOR_THREAD_LOCAL(Mesh, MeshStat) meshStats;
-    VECTOR_THREAD_LOCAL(Mesh, Graphics::PCVertexDeclaration) vertexDeclarations;
+    VECTOR_THREAD_LOCAL(MeshGeneration, MeshStat) meshStats;
+    VECTOR_THREAD_LOCAL(MeshGeneration, Graphics::PCVertexDeclaration) vertexDeclarations;
     for (size_t i = 0; i < _groups.size(); ++i) {
         const Group& groupMB = _groups[i];
+        Assert(groupMB.Bone < _bones.size());
+        Assert(groupMB.Material < _materials.size());
+        Assert(groupMB.FaceStart + groupMB.FaceCount <= _faces.size());
+
         const Graphics::PCVertexDeclaration vertexDeclaration = GetVertexDeclaration_(
             groupMB, 
             _materials[groupMB.Material], 
@@ -476,7 +491,7 @@ PModel ModelBuilder::CreateModel() {
         MeshRawData Vertices;
         MeshData() : IndexOffset(0), VertexOffset(0) {}
     };
-    VECTOR_THREAD_LOCAL(Mesh, MeshData) meshDatas;
+    VECTOR_THREAD_LOCAL(MeshGeneration, MeshData) meshDatas;
     meshDatas.resize(meshStats.size());
     for (size_t i = 0; i < meshStats.size(); ++i) {
         MeshData& meshData = meshDatas[i];
@@ -485,9 +500,9 @@ PModel ModelBuilder::CreateModel() {
         meshData.Vertices.Resize_DiscardData(vertexDeclarations[i]->SizeInBytes() * meshStat.VertexCount);
     }
 
-    VECTOR_THREAD_LOCAL(Mesh, AABB3f) boneAABBs;
+    VECTOR_THREAD_LOCAL(MeshGeneration, AABB3f) boneAABBs;
     boneAABBs.resize(_bones.size());
-    VECTOR_THREAD_LOCAL(Mesh, AABB3f) groupAABBs;
+    VECTOR_THREAD_LOCAL(MeshGeneration, AABB3f) groupAABBs;
     groupAABBs.resize(_groups.size());
 
     for (size_t i = 0; i < _groups.size(); ++i) {
@@ -525,7 +540,7 @@ PModel ModelBuilder::CreateModel() {
             genericVertex.SeekVertex(meshStat.VertexCount);
         }
 
-        OptimizeIndicesAndVerticesOrder(genericVertex, indices);
+        const float ACMR0 = VertexAverageCacheMissRate(indices);
 
         if (genericVertex.Tangent3f(0) || genericVertex.Tangent4f(0))
             ComputeTangentSpace(genericVertex, indices.Cast<const u32>());
@@ -545,20 +560,29 @@ PModel ModelBuilder::CreateModel() {
             const size_t indexCount = groupMB.FaceCount * vertexCountPerFace;
             indexOffset += indexCount;
 
-            u32 baseVertex = meshStat.VertexCount;
-            for (size_t k = 0; k < indexCount; ++k)
-                baseVertex = std::min(baseVertex, indices[firstIndex + i]);
+            OptimizeIndicesOrder(indices.SubRange(firstIndex, indexCount), genericVertex.VertexCountWritten());
+
+            const PMaterial& material = materials[groupMB.Material];
+
+            LOG(Information, L"[Model] {0}/{1}: material = '{2}'", _name, groupMB.Name, material->Description() );
 
             subParts.emplace_back(new ModelMeshSubPart(
                 MeshName(groupMB.Name),
                 checked_cast<u32>(groupMB.Bone),
-                checked_cast<u32>(baseVertex),
+                checked_cast<u32>(0),
                 checked_cast<u32>(firstIndex),
                 checked_cast<u32>(indexCount),
                 groupAABBs[j],
-                materials[groupMB.Material] ));
+                material ));
         }
         Assert(subParts.size() == meshStat.SubPartCount);
+
+        OptimizeVerticesOrder(genericVertex, indices);
+
+        const float ACMR1 = VertexAverageCacheMissRate(indices);
+
+        LOG(Warning, L"[Model] {0}/{1}: Optimized mesh average cache miss rate from {2}% to {3}%", 
+            _name, genericVertex.VertexDeclaration()->ToString(), ACMR0, ACMR1 );
 
         const Graphics::IndexElementSize indexElementSize = (meshStat.VertexCount <= UINT16_MAX
             ? Graphics::IndexElementSize::SixteenBits 
@@ -587,6 +611,7 @@ PModel ModelBuilder::CreateModel() {
             std::move(subParts) ));
     }
     Assert(modelMeshes.size() == meshDatas.size());
+
 
     const size_t boneCount = _bones.size();
     VECTOR(Mesh, PModelBone) bones;

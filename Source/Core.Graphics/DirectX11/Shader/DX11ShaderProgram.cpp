@@ -16,6 +16,7 @@
 
 #include "Core/Allocator/PoolAllocator-impl.h"
 #include "Core/Allocator/ThreadLocalHeap.h"
+#include "Core/Container/Hash.h"
 #include "Core/Container/Vector.h"
 #include "Core/IO/FS/Dirpath.h"
 #include "Core/IO/FS/Filename.h"
@@ -164,7 +165,8 @@ ShaderProgram::ShaderProgram(   IDeviceAPIShaderCompilerEncapsulator *compiler,
                                 ShaderCompilerFlags flags,
                                 const Graphics::ShaderSource *source,
                                 const Graphics::VertexDeclaration *vertexDeclaration)
-:   DeviceAPIDependantShaderProgram(compiler, owner, entryPoint, flags, source, vertexDeclaration) {
+:   DeviceAPIDependantShaderProgram(compiler, owner, entryPoint, flags, source, vertexDeclaration) 
+,   _programHashCode(0) {
     const MemoryView<const char> sourceCode = source->SourceCode();
 
     ShaderIncludeHandler_ dx11Include(ShaderSource::SystemDirpath(), source, vertexDeclaration);
@@ -220,6 +222,8 @@ ShaderProgram::ShaderProgram(   IDeviceAPIShaderCompilerEncapsulator *compiler,
         _entity = striped;
     }
     Assert(_entity);
+
+    _programHashCode = hash_value_as_memory(_entity->GetBufferPointer(), _entity->GetBufferSize());
 }
 //----------------------------------------------------------------------------
 ShaderProgram::~ShaderProgram() {

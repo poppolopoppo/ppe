@@ -25,6 +25,8 @@
 #include "Core/Allocator/PoolAllocator-impl.h"
 #include "Core/Diagnostic/Logger.h"
 #include "Core/IO/FS/Filename.h"
+#include "Core/IO/String.h"
+#include "Core/IO/StringSlice.h"
 
 namespace Core {
 namespace Engine {
@@ -39,6 +41,7 @@ static void CreateEffectProgramIFN_(
     const Graphics::PCVertexDeclaration& vertexDeclaration,
     const EffectDescriptor *effectDescriptor,
     Graphics::ShaderCompilerFlags compilerFlags,
+    const MemoryView<const Pair<String, String>>& defines,
     Graphics::IDeviceAPIShaderCompilerEncapsulator *compiler) {
     Assert(pprogram);
     Assert(!*pprogram);
@@ -61,7 +64,7 @@ static void CreateEffectProgramIFN_(
         compilerFlags,
         filename,
         vertexDeclaration,
-        MakeView(effectDescriptor->Defines()) );
+        defines );
 
     Assert((*pprogram)->Available());
 }
@@ -120,6 +123,44 @@ static const Graphics::RasterizerState *RasterizerStateFromRenderState_(const Re
     return nullptr;
 }
 //----------------------------------------------------------------------------
+static void AppendTagSubstitutions_(
+    VECTOR_THREAD_LOCAL(Effect, Pair<String COMMA String>)& defines, 
+    const ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, String)& substitutions,
+    const VECTOR(Effect, Graphics::BindName)& tags ) {
+
+    for (const Pair<Graphics::BindName, String>& substitution : substitutions) {
+        if (!Contains(tags, substitution.first))
+            continue;
+
+        Assert(!substitution.second.empty());
+        const char *cstr = substitution.second.c_str();
+        size_t size = substitution.second.size();
+
+        StringSlice define;
+        while (Split(&cstr, &size, ';', define)) {
+            Assert(!define.empty());
+
+            const char *pValue = nullptr;
+            for (const char& ch : define)
+                if ('=' == ch) {
+                    Assert(!pValue);
+                    pValue = &ch + 1;
+                    break;
+                }
+
+            if (pValue) {
+                String key(define.Pointer(), std::distance(define.Pointer(), pValue) - 1);
+                String value(pValue, std::distance(pValue, define.end()));
+                defines.emplace_back(std::move(key), std::move(value));
+            }
+            else {
+                String key(define.Pointer(), define.size());
+                defines.emplace_back(std::move(key), "1");
+            }
+        }
+    }
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -130,9 +171,11 @@ const Graphics::RasterizerState *Effect::AutomaticRasterizerState = nullptr;
 const Graphics::RasterizerState *Effect::DefaultRasterizerState = nullptr;
 //----------------------------------------------------------------------------
 Effect::Effect( const EffectDescriptor *descriptor,
-                const Graphics::VertexDeclaration *vertexDeclaration )
+                const Graphics::VertexDeclaration *vertexDeclaration,
+                const MemoryView<const Graphics::BindName>& tags )
 :   ShaderEffect(vertexDeclaration)
 ,   _descriptor(descriptor)
+,   _tags(tags.begin(), tags.end())
 ,   _blendState(BlendStateFromRenderState_(descriptor->RenderState()) )
 ,   _depthStencilState(DepthStencilStateFromRenderState_(descriptor->RenderState()) )
 ,   _rasterizerState(RasterizerStateFromRenderState_(descriptor->RenderState()) ) {
@@ -173,11 +216,16 @@ void Effect::Create(Graphics::IDeviceAPIEncapsulator *device) {
 
     const Graphics::VertexDeclaration *vertexDeclaration = this->VertexDeclaration();
 
-    Unfreeze();
+    VECTOR_THREAD_LOCAL(Effect, Pair<String COMMA String>) defines;
+    defines.reserve(_descriptor->Defines().size() + _tags.size());
+    defines.insert(defines.end(), _descriptor->Defines().begin(), _descriptor->Defines().end());
+    AppendTagSubstitutions_(defines, _descriptor->Substitutions(), _tags);
+
+    Unfreeze(); // enables ShaderEffect::SetStageProgram()
 
     for (ShaderProgramType stage : EachShaderProgramType()) {
         PEffectProgram program;
-        CreateEffectProgramIFN_(&program, stage, vertexDeclaration, _descriptor, compilerFlags, compiler);
+        CreateEffectProgramIFN_(&program, stage, vertexDeclaration, _descriptor, compilerFlags, MakeConstView(defines), compiler);
 
         if (!program)
             continue;

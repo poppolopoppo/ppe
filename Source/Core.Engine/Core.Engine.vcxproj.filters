@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <CustomBuild Include="Camera\Camera.cpp">
@@ -194,6 +194,9 @@
       <Filter>Mesh\Loader</Filter>
     </CustomBuild>
     <CustomBuild Include="Mesh\Loader\ModelBuilder.h">
+      <Filter>Mesh\Loader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Mesh\Loader\ModelLoader-Obj.cpp">
       <Filter>Mesh\Loader</Filter>
     </CustomBuild>
     <CustomBuild Include="Mesh\Loader\ModelLoader.cpp">
@@ -499,5 +502,10 @@
     <Filter Include="World">
       <UniqueIdentifier>{fbb63e47-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\%40Core\git\Source\Core.Engine\Mesh\Model_fwd.h">
+      <Filter>Mesh</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

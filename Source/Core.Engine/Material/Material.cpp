@@ -20,10 +20,12 @@ Material::Material(const Graphics::BindName& name)
 //----------------------------------------------------------------------------
 Material::Material(
     const Graphics::BindName& name,
+    const String& description,
     VECTOR(Material, Graphics::BindName)&& tags,
     ASSOCIATIVE_VECTOR(Material, Graphics::BindName, Filename)&& textures,
     ASSOCIATIVE_VECTOR(Material, Graphics::BindName, PAbstractMaterialParameter)&& parameters )
 :   _name(name)
+,   _description(description)
 ,   _tags(std::move(tags))
 ,   _textures(std::move(textures))
 ,   _parameters(std::move(parameters)) {

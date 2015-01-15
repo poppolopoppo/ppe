@@ -9,6 +9,7 @@ namespace BRDF {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct DirectionalLight {
+    float3  Ambient;
     float3  Color;
     float3  Direction;
 };
@@ -18,8 +19,8 @@ float3 Eval(
     DirectionalLight light,
     float3 normal, float3 view,
 
-    uniform int distribution_mode   = BRDF_DISTRIBUTION_GGX,
-    uniform int geometry_mode       = BRDF_GEOMETRY_WALTER,
+    uniform int distribution_mode   = BRDF_DISTRIBUTION_BECKMANN,
+    uniform int geometry_mode       = BRDF_GEOMETRY_COOKTORRANCE,
     uniform int diffuseenergy_mode  = BRDF_DIFFUSEENERGY_FRESNELDIFF
 
     ) {
@@ -42,9 +43,9 @@ float3 Eval(
     float3 color_diff =
         NdotL_clamped *
         DiffuseEnergyRatio(diffuseenergy_mode, m.Fresnel0, normal, light.Direction) *
-        (m.Diffuse / fPI) * (light.Color * fPI); // multipy with PI because from the definition of the punctual light source
+        (light.Color * fPI); // multipy with PI because from the definition of the punctual light source
 
-    return color_diff + color_spec;
+    return (color_diff + color_spec + light.Ambient) * (m.Diffuse / fPI);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

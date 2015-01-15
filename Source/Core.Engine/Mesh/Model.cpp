@@ -6,6 +6,9 @@
 #include "ModelMesh.h"
 #include "ModelMeshSubPart.h"
 
+#include "Core.Engine/Render/RenderCommand.h"
+#include "Core.Graphics/Device/Geometry/PrimitiveType.h"
+
 #include "Core/Allocator/PoolAllocator-impl.h"
 
 namespace Core {
@@ -74,6 +77,72 @@ void Model::Create(Graphics::IDeviceAPIEncapsulator *device) {
 void Model::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
     for (const PModelMesh& pmesh : _meshes)
         pmesh->Destroy(device);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+SINGLETON_POOL_ALLOCATED_DEF(ModelRenderCommand, );
+//----------------------------------------------------------------------------
+bool AcquireModelRenderCommand( UModelRenderCommand& pModelCommand,
+                                Graphics::IDeviceAPIEncapsulator *device,
+                                RenderTree *renderTree,
+                                const char *renderLayerName,
+                                const Model *model ) {
+    Assert(!pModelCommand);
+    Assert(device);
+    Assert(model);
+
+    ModelRenderCommand *result = new ModelRenderCommand();
+    result->Model = model;
+
+    size_t subPartCount = 0;
+    for (const PModelMesh& modelMesh : model->Meshes())
+        subPartCount += modelMesh->SubParts().size();
+
+    result->RenderCommands.reserve(subPartCount);
+
+    for (const PModelMesh& modelMesh : model->Meshes())
+        for (const PModelMeshSubPart& modelMeshSubPart : modelMesh->SubParts()) {
+            const size_t primitiveCount = Graphics::PrimitiveCount(modelMesh->PrimitiveType(), modelMeshSubPart->IndexCount());
+
+            URenderCommand pCommand;
+            if (!AcquireRenderCommand(  pCommand, 
+                                        renderTree, 
+                                        renderLayerName,
+                                        modelMeshSubPart->Material().get(),
+                                        modelMesh->IndexBuffer().get(),
+                                        modelMesh->VertexBuffer().get(),
+                                        modelMesh->PrimitiveType(),
+                                        modelMeshSubPart->BaseVertex(),
+                                        modelMeshSubPart->FirstIndex(),
+                                        primitiveCount) ) {
+                Assert(result->RenderCommands.empty());
+                delete result;
+                return false;
+            }
+            Assert(pCommand);
+
+            result->RenderCommands.push_back(std::move(pCommand));
+        }
+
+    pModelCommand.reset(result);
+    return true;
+}
+//----------------------------------------------------------------------------
+void ReleaseModelRenderCommand( UModelRenderCommand& pModelCommand,
+                                Graphics::IDeviceAPIEncapsulator *device,
+                                const Model *model ) {
+    Assert(pModelCommand);
+    Assert(model);
+    Assert(pModelCommand->Model.get() == model);
+
+    for (URenderCommand& pCommand : const_cast<ModelRenderCommand *>(pModelCommand.get())->RenderCommands) {
+        Assert(pCommand);
+        ReleaseRenderCommand(pCommand, device);
+        Assert(!pCommand);
+    }
+
+    pModelCommand.reset(nullptr);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

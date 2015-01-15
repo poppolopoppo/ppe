@@ -11,6 +11,7 @@ struct Params {
     float   Exposure;
     float   WhitePoint;
 
+    float   BloomBias;
     float   BloomIntensity;
 
     float   CubicLensK;
@@ -24,14 +25,15 @@ struct Params {
 //----------------------------------------------------------------------------
 Params DefaultParams() {
     Params p;
-    p.Exposure = pow(2, 3);
-    p.WhitePoint = 11.2;
-    p.BloomIntensity = 0.7;
-    p.CubicLensK = -0.3;
-    p.CubicLensKCube = 0.05;
-    p.CubicLensDime = 12.0;
-    p.CubicLensBlur = 25.0;
-    p.AberrationChannels = float3(0.9,1.1,1.0);
+    p.Exposure = 16;
+    p.WhitePoint = 9.2;
+    p.BloomBias = 0.5;
+    p.BloomIntensity = 1.0;
+    p.CubicLensK = -0.25;
+    p.CubicLensKCube = 0.1;
+    p.CubicLensDime = 20.0;
+    p.CubicLensBlur = 30.0;
+    p.AberrationChannels = float3(0.95,1.05,1.0);
     p.Vignette = 1;
     return p;
 }

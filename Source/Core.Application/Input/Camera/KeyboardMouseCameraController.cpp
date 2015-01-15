@@ -31,7 +31,7 @@ KeyboardMouseCameraController::KeyboardMouseCameraController(
 ,   _inertia(0.8f)
 
 ,   _slowSpeed(1.0f)
-,   _fastSpeed(2.0f) // when shift is pressed
+,   _fastSpeed(3.0f) // when shift is pressed
 
 ,   _mouseSpeed(1.0f)
 ,   _keyboardSpeed(2.5f)

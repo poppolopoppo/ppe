@@ -2,21 +2,23 @@
 
 #include "Core.Engine/Engine.h"
 
-#include "Core/Allocator/Allocation.h"
 #include "Core/Memory/RefPtr.h"
+#include "Core/Memory/UniquePtr.h"
 
 namespace Core {
-class Filename;
-template <typename T, typename _Allocator>
-class RawStorage;
 namespace Engine {
-FWD_REFPTR(Model);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-typedef RawStorage<char, THREAD_LOCAL_ALLOCATOR(MeshGeneration, char)> ModelStream;
+FWD_REFPTR(Model);
+FWD_REFPTR(ModelMesh);
+FWD_REFPTR(ModelMeshSubPart);
 //----------------------------------------------------------------------------
-bool LoadModel(PModel& pModel, const Filename& filename);
+struct RenderCommand;
+typedef UniquePtr<const RenderCommand> URenderCommand;
+//----------------------------------------------------------------------------
+struct ModelRenderCommand;
+typedef UniquePtr<const ModelRenderCommand> UModelRenderCommand;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

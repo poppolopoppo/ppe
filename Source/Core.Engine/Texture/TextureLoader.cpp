@@ -60,15 +60,19 @@ Graphics::Texture2D *Texture2DLoader::CreateTexture2D(
         switch (format->Type())
         {
         case Graphics::SurfaceFormatType::DXT1:
+        case Graphics::SurfaceFormatType::DXT1_SRGB:
             format = Graphics::SurfaceFormat::DXT1_SRGB;
             break;
         case Graphics::SurfaceFormatType::DXT3:
+        case Graphics::SurfaceFormatType::DXT3_SRGB:
             format = Graphics::SurfaceFormat::DXT3_SRGB;
             break;
         case Graphics::SurfaceFormatType::DXT5:
+        case Graphics::SurfaceFormatType::DXT5_SRGB:
             format = Graphics::SurfaceFormat::DXT5_SRGB;
             break;
         case Graphics::SurfaceFormatType::R8G8B8A8:
+        case Graphics::SurfaceFormatType::R8G8B8A8_SRGB:
             format = Graphics::SurfaceFormat::R8G8B8A8_SRGB;
             break;
         default:

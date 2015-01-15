@@ -121,6 +121,8 @@ template <typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
     const Core::Filename& filename) {
+    if (filename.empty())
+        return oss;
     if (!filename.Dirpath().empty())
         oss << filename.Dirpath();
     return oss << filename.Basename();

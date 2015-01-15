@@ -24,6 +24,7 @@ FWD_REFPTR(AbstractRenderSurface);
 FWD_REFPTR(Material);
 FWD_REFPTR(PerspectiveCamera);
 struct RenderCommand;
+typedef UniquePtr<const RenderCommand> URenderCommand;
 FWD_REFPTR(RenderContext);
 FWD_REFPTR(Scene);
 FWD_REFPTR(World);
@@ -74,7 +75,7 @@ private:
     Graphics::PVertexBuffer _vertices[2];
 
     Engine::PMaterial _materials[3];
-    UniquePtr<const Engine::RenderCommand> _commands[3];
+    Engine::URenderCommand _commands[3];
     RefPtr<Engine::MaterialParameterBlock<float4x4> > _transforms[3];
 };
 //----------------------------------------------------------------------------

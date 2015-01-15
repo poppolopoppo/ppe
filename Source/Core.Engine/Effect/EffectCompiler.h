@@ -11,6 +11,7 @@
 
 namespace Core {
 namespace Graphics {
+class BindName;
 class IDeviceAPIEncapsulator;
 FWD_REFPTR(VertexDeclaration);
 }
@@ -24,24 +25,18 @@ FWD_REFPTR(EffectDescriptor);
 FWD_REFPTR(Material);
 FWD_REFPTR(MaterialEffect);
 //----------------------------------------------------------------------------
+struct EffectCompilerKey;
+//----------------------------------------------------------------------------
 class EffectCompiler : public Meta::ThreadResource {
 public:
-    struct EffectKey {
-        PCEffectDescriptor Descriptor;
-        Graphics::PCVertexDeclaration VertexDeclaration;
-
-        size_t HashValue() const { return hash_value_as_memory(*this); }
-
-        bool operator ==(const EffectKey& other) const { return Descriptor == other.Descriptor && VertexDeclaration == other.VertexDeclaration; }
-        bool operator !=(const EffectKey& other) const { return !operator ==(other); }
-    };
-
     EffectCompiler();
     ~EffectCompiler();
 
     VariabilitySeed Variability() const { return _variability; }
 
-    Effect *GetOrCreateEffect(const EffectDescriptor *descriptor, const Graphics::VertexDeclaration *vertexDeclaration);
+    Effect *GetOrCreateEffect(  const EffectDescriptor *descriptor, 
+                                const Graphics::VertexDeclaration *vertexDeclaration,
+                                const MemoryView<const Graphics::BindName>& tags );
 
     MaterialEffect *CreateMaterialEffect(   const EffectDescriptor *descriptor,
                                             const Graphics::VertexDeclaration *vertexDeclaration,
@@ -57,12 +52,8 @@ private:
     Graphics::IDeviceAPIEncapsulator *_device;
 
     VariabilitySeed _variability;
-    HASHMAP(Effect, EffectKey, PEffect) _effects;
+    HASHMAP(Effect, EffectCompilerKey, PEffect) _effects;
 };
-//----------------------------------------------------------------------------
-inline size_t hash_value(const EffectCompiler::EffectKey& key) {
-    return key.HashValue();
-}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

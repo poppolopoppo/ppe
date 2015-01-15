@@ -255,6 +255,15 @@ std::basic_ostream<char, _Traits>& operator <<(
     std::basic_ostream<char, _Traits>& oss,
     const std::basic_string<wchar_t, _TraitsW, _Allocator>& wstr);
 //----------------------------------------------------------------------------
+template <  typename _Char, typename _Traits, 
+            typename _Char2, typename _Traits2,
+            typename _Allocator >
+std::basic_ostream<_Char, _Traits>& operator <<(
+    std::basic_ostream<_Char, _Traits>& oss,
+    const BasicString<_Char2, _Traits2, _Allocator>& str) {
+    return oss << str.c_str();
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Core
