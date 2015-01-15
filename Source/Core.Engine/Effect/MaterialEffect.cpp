@@ -245,7 +245,8 @@ void MaterialEffect::Create(Graphics::IDeviceAPIEncapsulator *device, const Scen
 
     const size_t textureCount = _textureSlots.size();
     for (size_t i = 0; i < textureCount; ++i)
-        PrepareTexture_(&_textureBindings[i].Filename, _textureSlots[i], _material, materialDatabase, textureCache, renderSurfaceManager);
+        PrepareTexture_(&_textureBindings[i].Filename, _textureSlots[i], _material, 
+                        materialDatabase, textureCache, renderSurfaceManager );
 
     for (const PEffectConstantBuffer& cbuffer : _constants)
         cbuffer->Prepare(device, _material, scene);

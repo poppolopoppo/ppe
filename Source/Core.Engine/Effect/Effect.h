@@ -8,6 +8,7 @@
 
 namespace Core {
 namespace Graphics {
+class BindName;
 FWD_REFPTR(BlendState);
 FWD_REFPTR(DepthStencilState);
 FWD_REFPTR(RasterizerState);
@@ -25,10 +26,13 @@ FWD_REFPTR(EffectDescriptor);
 class Effect : public Graphics::ShaderEffect {
 public:
     Effect( const EffectDescriptor *descriptor,
-            const Graphics::VertexDeclaration *vertexDeclaration);
+            const Graphics::VertexDeclaration *vertexDeclaration,
+            const MemoryView<const Graphics::BindName>& tags );
     virtual ~Effect();
 
     const PCEffectDescriptor& Descriptor() const { return _descriptor; }
+
+    const VECTOR(Effect, Graphics::BindName)& Tags() const { return _tags; }
 
     const Graphics::BlendState *BlendState() const { return _blendState.get(); }
     const Graphics::DepthStencilState *DepthStencilState() const { return _depthStencilState.get(); }
@@ -54,6 +58,8 @@ public:
 
 private:
     PCEffectDescriptor _descriptor;
+
+    VECTOR(Effect, Graphics::BindName) _tags;
 
     Graphics::PCBlendState _blendState;
     Graphics::PCDepthStencilState _depthStencilState;

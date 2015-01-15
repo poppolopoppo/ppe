@@ -40,6 +40,7 @@ public:
                         Graphics::ShaderProfileType shaderProfile,
                         const Graphics::VertexDeclaration *vertexDeclaration,
                         const MemoryView<const Pair<String, String>>& defines,
+                        const MemoryView<const Pair<Graphics::BindName, String>>& substitutions,
                         const MemoryView<const Pair<Graphics::BindName, PAbstractMaterialParameter>>& parameters,
                         const MemoryView<const Pair<Graphics::BindName, Filename>>& textures );
 
@@ -72,11 +73,13 @@ public:
     const VECTOR(Effect, Graphics::PCVertexDeclaration)& VertexDeclarations() const { return _vertexDeclarations; }
 
     const ASSOCIATIVE_VECTOR(Effect, String, String)& Defines() const { return _defines; }
+    const ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, String)& Substitutions() const { return _substitutions; }
     const ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, PAbstractMaterialParameter)& Parameters() const { return _parameters; }
     const ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, Filename)& Textures() const { return _textures; }
 
     void AddVertexDeclaration(const Graphics::VertexDeclaration *declaration);
     void AddDefine(const String& name, const String& value);
+    void AddSubstitution(const Graphics::BindName& tag, const String& defines);
     void AddTexture(const Graphics::BindName& name, const Filename& filename);
     void AddParameter(const Graphics::BindName& name, AbstractMaterialParameter *parameter);
 
@@ -99,6 +102,7 @@ private:
     VECTOR(Effect, Graphics::PCVertexDeclaration) _vertexDeclarations;
 
     ASSOCIATIVE_VECTOR(Effect, String, String) _defines;
+    ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, String) _substitutions;
     ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, Filename) _textures;
     ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, PAbstractMaterialParameter) _parameters;
 };

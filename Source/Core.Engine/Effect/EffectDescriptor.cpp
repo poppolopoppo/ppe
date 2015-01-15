@@ -35,6 +35,7 @@ EffectDescriptor::EffectDescriptor(
     Graphics::ShaderProfileType shaderProfile,
     const Graphics::VertexDeclaration *vertexDeclaration,
     const MemoryView<const Pair<String, String>>& defines,
+    const MemoryView<const Pair<Graphics::BindName, String>>& substitutions,
     const MemoryView<const Pair<Graphics::BindName, PAbstractMaterialParameter>>& parameters,
     const MemoryView<const Pair<Graphics::BindName, Filename>>& textures )
 :   _name(name)
@@ -47,6 +48,7 @@ EffectDescriptor::EffectDescriptor(
 ,   _cs(cs)
 ,   _shaderProfile(shaderProfile)
 ,   _defines(defines.begin(), defines.end())
+,   _substitutions(substitutions.begin(), substitutions.end())
 ,   _parameters(parameters.begin(), parameters.end())
 ,   _textures(textures.begin(), textures.end()) {
     Assert(name);
@@ -129,6 +131,13 @@ void EffectDescriptor::AddDefine(const String& name, const String& value) {
     Assert(!value.empty());
 
     _defines.Insert_AssertUnique(name, value);
+}
+//----------------------------------------------------------------------------
+void EffectDescriptor::AddSubstitution(const Graphics::BindName& tag, const String& defines) {
+    Assert(!tag.empty());
+    Assert(!defines.empty());
+
+    _substitutions.Insert_AssertUnique(tag, defines);
 }
 //----------------------------------------------------------------------------
 void EffectDescriptor::AddTexture(const Graphics::BindName& name, const Filename& filename) {
