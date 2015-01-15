@@ -132,10 +132,15 @@ void CompileShaderProgram(
     Assert(compiler);
     Assert(program);
 
+#ifdef USE_LOGGER
     LOG(Information, L"[Shader] Compiling {0} program with profile {1} from '{2}':{3}()",
         ShaderProgramTypeToCStr(program->ProgramType()),
         ShaderProfileTypeToCStr(program->ProfileType()),
         filename, entryPoint );
+
+    for (const Pair<String, String>& define : defines)
+        LOG(Information, L"[Shader] #define {0} {1}", define.first, define.second);
+#endif
 
     PShaderSource source;
     WString errorMessage;

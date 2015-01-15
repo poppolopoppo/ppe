@@ -119,6 +119,8 @@ public:
 
     const ShaderProgram *Owner() const { return _owner; }
 
+    virtual size_t ProgramHashCode() const = 0;
+
 private:
     ShaderProgram *_owner;
 };
