@@ -5,6 +5,7 @@
 #ifdef WITH_CORE_POOL_ALLOCATOR
 
 #include "Core/Allocator/ThreadLocalAllocator.h"
+#include "Core/IO/Format.h"
 #include "Core/Memory/MemoryDomain.h"
 #include "Core/Memory/MemoryPool.h"
 #include "Core/Memory/MemoryTracking.h"
