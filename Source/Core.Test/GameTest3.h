@@ -5,6 +5,8 @@
 #include "Core.Application/Application.h"
 #include "Core.Application/ApplicationWindow.h"
 
+#include "Core.Engine/Mesh/Model_fwd.h"
+
 #include "Core/Memory/UniquePtr.h"
 
 namespace Core {
@@ -15,7 +17,6 @@ FWD_REFPTR(VertexBuffer);
 
 namespace Engine {
 FWD_REFPTR(PerspectiveCamera);
-struct RenderCommand;
 FWD_REFPTR(RenderContext);
 FWD_REFPTR(Scene);
 FWD_REFPTR(World);
@@ -59,10 +60,8 @@ private:
     Engine::PRenderContext _context;
     Engine::PScene _mainScene;
 
-    // TODO : mesh pack
-    Graphics::PIndexBuffer _indices;
-    Graphics::PVertexBuffer _vertices;
-    UniquePtr<const Engine::RenderCommand> _command;
+    Engine::PModel _model;
+    Engine::UModelRenderCommand _renderCommand;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

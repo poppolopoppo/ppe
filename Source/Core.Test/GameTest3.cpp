@@ -17,10 +17,16 @@
 #include "Core.Engine/Effect/Effect.h"
 #include "Core.Engine/Effect/EffectDescriptor.h"
 #include "Core.Engine/Effect/MaterialEffect.h"
+
 #include "Core.Engine/Material/Material.h"
+#include "Core.Engine/Material/MaterialConstNames.h"
 #include "Core.Engine/Material/MaterialContext.h"
 #include "Core.Engine/Material/MaterialDatabase.h"
 #include "Core.Engine/Material/Parameters/MaterialParameterBlock.h"
+
+#include "Core.Engine/Mesh/Model.h"
+#include "Core.Engine/Mesh/Loader/ModelLoader.h"
+
 #include "Core.Engine/Render/Layers/RenderLayer.h"
 #include "Core.Engine/Render/Layers/RenderLayerClear.h"
 #include "Core.Engine/Render/Layers/RenderLayerDrawRect.h"
@@ -33,16 +39,16 @@
 #include "Core.Engine/Render/Surfaces/RenderSurfaceBackBuffer.h"
 #include "Core.Engine/Render/Surfaces/RenderSurfaceProxy.h"
 #include "Core.Engine/Render/Surfaces/RenderSurfaceRelative.h"
+
 #include "Core.Engine/Service/EffectCompilerService.h"
 #include "Core.Engine/Service/RenderSurfaceService.h"
 #include "Core.Engine/Service/TextureCacheService.h"
 
 #include "Core.Engine/Camera/Camera.h"
-#include "Core.Engine/Mesh/Geometry/GenericVertexOptimizer.h"
-#include "Core.Engine/Mesh/Loader/MeshLoader.h"
 #include "Core.Engine/Scene/Scene.h"
 #include "Core.Engine/World/World.h"
 
+#include "Core.Application/ApplicationConsole.h"
 #include "Core.Application/Input/Camera/KeyboardMouseCameraController.h"
 
 namespace Core {
@@ -54,8 +60,9 @@ typedef Graphics::Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Float2__No
 namespace {
 //----------------------------------------------------------------------------
 static void MountGameDataPath_() {
-    auto& const vfs = VirtualFileSystem::Instance();
-    vfs.MountNativePath(L"GameData:/", L"D:/Dropbox/code/cpp/DXCPP/Core/Data");
+    VirtualFileSystem::Instance().MountNativePath(
+        L"GameData:\\", 
+        CurrentProcess::Instance().Directory() + L"\\..\\..\\Data\\" );
 }
 //----------------------------------------------------------------------------
 static void SetupPostprocess_(
@@ -190,14 +197,19 @@ GameTest3::GameTest3(const wchar_t *appname)
     appname,
     Graphics::DeviceAPI::DirectX11,
     Graphics::PresentationParameters(
-        1280, 720,
+        1600, 900,
         Graphics::SurfaceFormat::R8G8B8A8_SRGB,
         Graphics::SurfaceFormat::D24S8,
         false,
         true,
         0,
         Graphics::PresentInterval::Default ),
-    10, 10) {}
+    10, 10) {
+#ifndef FINAL_RELEASE
+    // creates a command window to show stdout messages
+    Application::ApplicationConsole::RedirectIOToConsole();
+#endif
+}
 //----------------------------------------------------------------------------
 GameTest3::~GameTest3() {}
 //----------------------------------------------------------------------------
@@ -229,7 +241,6 @@ void GameTest3::Initialize(const Timeline& time) {
     const ViewportF& viewport = DeviceEncapsulator()->Parameters().Viewport();
 
     EffectCompiler *const effectCompiler = _context->EffectCompilerService()->EffectCompiler();
-    MaterialDatabase *const materialDatabase = _context->MaterialDatabase();
     RenderSurfaceManager *const renderSurfaceManager = _context->RenderSurfaceService()->Manager();
     TextureCache *const textureCache = _context->TextureCacheService()->TextureCache();
 
@@ -241,8 +252,10 @@ void GameTest3::Initialize(const Timeline& time) {
     _world->Initialize();
 
     _cameraController = new Application::KeyboardMouseCameraController(float3(0.0f, 3.0f, -6.0f), 0.0f, 0.5f*F_PIOver3, &Keyboard(), &Mouse());
-    _camera = new PerspectiveCamera(F_PIOver3, 0.01f, 100.0f, viewport);
+    _camera = new PerspectiveCamera(F_PIOver3, 0.01f, 1000.0f, viewport);
     _camera->SetController(_cameraController);
+
+    // Main scene
 
     const PAbstractRenderSurface backBuffer = new RenderSurfaceBackBuffer("BackBuffer", RenderSurfaceBackBuffer::RenderTarget_DepthStencil);
     const PAbstractRenderSurface principal = new RenderSurfaceRelative("Principal", float2::One(), SurfaceFormat::R16G16B16A16_F, SurfaceFormat::D24S8);
@@ -255,6 +268,8 @@ void GameTest3::Initialize(const Timeline& time) {
     _mainScene->RenderTree()->Add(new RenderLayerSetRenderTarget(principal));
     _mainScene->RenderTree()->Add(new RenderLayerClear(principal, Color::OliveDrab));
     _mainScene->RenderTree()->Add(new RenderLayer("Objects"));
+
+    // Postprocess settings
 
     SetupPostprocess_(_mainScene, principal, backBuffer, device, effectCompiler, renderSurfaceManager);
 
@@ -289,9 +304,48 @@ void GameTest3::LoadContent() {
     using namespace Graphics;
 
     IDeviceAPIEncapsulator *const device = DeviceEncapsulator()->Device();
-    IDeviceAPIShaderCompilerEncapsulator *const compiler = DeviceEncapsulator()->Compiler();
 
-    // TODO
+    // Standard model rendering effect
+
+    EffectDescriptor *const stdEffectDescriptor = new EffectDescriptor();
+    stdEffectDescriptor->SetName("StandardEffect");
+    stdEffectDescriptor->SetRenderState(
+        new RenderState(RenderState::Blending::AlphaBlend,
+                        RenderState::Culling::None,
+                        RenderState::DepthTest::Default ));
+    stdEffectDescriptor->SetVS(L"GameData:/Shaders/Standard.fx");
+    stdEffectDescriptor->SetPS(L"GameData:/Shaders/Standard.fx");
+    stdEffectDescriptor->SetShaderProfile(ShaderProfileType::ShaderModel4_1);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N::Declaration);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N::Declaration);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N::Declaration);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N::Declaration);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__TexCoord0_Float2__Normal0_Float3::Declaration);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Half2::Declaration);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Color0_UByte4N__Normal0_UX10Y10Z10W2N::Declaration);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Normal0_UX10Y10Z10W2N::Declaration);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Color0_UByte4N::Declaration);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3::Declaration);
+    stdEffectDescriptor->AddSubstitution(MaterialConstNames::BumpMapping(), "WITH_BUMP_MAPPING");
+    stdEffectDescriptor->AddSubstitution(MaterialConstNames::SeparateAlpha(), "WITH_SEPARATE_ALPHA=1");
+
+    _mainScene->MaterialDatabase()->BindEffect("Standard", stdEffectDescriptor);
+
+    //if (!LoadModel(_model, L"GameData:/Models/Infinity/DesertArena/DesertArena.obj"))
+    if (!LoadModel(_model, L"GameData:/Models/Infinity/BrokenTower/BrokenTower.obj"))
+    //if (!LoadModel(_model, L"GameData:/Models/Infinity/Beach/Beach.obj"))
+    //if (!LoadModel(_model, L"GameData:/Models/Infinity/Potion/Potion.obj"))
+    //if (!LoadModel(_model, L"GameData:/Models/Test/Cone.obj"))
+    //if (!LoadModel(_model, L"GameData:/Models/Test/TeaPot.obj"))
+    //if (!LoadModel(_model, L"GameData:/Models/Test/Scene.obj"))
+        AssertNotReached();
+
+    _model->Create(device);
+
+    if (!AcquireModelRenderCommand( _renderCommand, device, 
+                                    _mainScene->RenderTree(), "Objects",
+                                    _model.get() ))
+        AssertNotReached();
 }
 //----------------------------------------------------------------------------
 void GameTest3::UnloadContent() {
@@ -300,7 +354,10 @@ void GameTest3::UnloadContent() {
 
     IDeviceAPIEncapsulator *const device = DeviceEncapsulator()->Device();
 
-    // TODO
+    ReleaseModelRenderCommand(_renderCommand, device, _model);
+
+    _model->Destroy(device);
+    _model.reset(nullptr);
 
     parent_type::UnloadContent();
 }

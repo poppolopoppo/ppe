@@ -13,7 +13,7 @@
 
 #include <iostream>
 
-#define APPLICATION_TYPE 2
+#define APPLICATION_TYPE 3
 
 #if   (0 == APPLICATION_TYPE)
 #   include "ApplicationTest.h"
