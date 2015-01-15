@@ -332,7 +332,7 @@ size_t hash_value_as_memory(const void *ptr, size_t sizeInBytes) {
     const u8 *key = reinterpret_cast<const u8 *>(ptr);
     const uint32_t len = uint32_t(sizeInBytes);
 
-    STATIC_CONST_INTEGRAL(u32, seed, 16777619U);
+    STATIC_CONST_INTEGRAL(u32, seed, 16777619U); // makes this hash function unique to this program
 
     STATIC_CONST_INTEGRAL(u32, c1,  0xcc9e2d51);
     STATIC_CONST_INTEGRAL(u32, c2,  0x1b873593);
