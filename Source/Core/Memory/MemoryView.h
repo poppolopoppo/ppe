@@ -210,6 +210,14 @@ MemoryView<const typename _VectorLike::value_type> MakeView(const _VectorLike& c
         return MemoryView<const typename _VectorLike::value_type>();
 }
 //----------------------------------------------------------------------------
+template <typename _VectorLike>
+MemoryView<const typename _VectorLike::value_type> MakeConstView(const _VectorLike& container) {
+    if (container.begin() != container.end())
+        return MemoryView<const typename _VectorLike::value_type>(&*container.begin(), container.end() - container.begin());
+    else
+        return MemoryView<const typename _VectorLike::value_type>();
+}
+//----------------------------------------------------------------------------
 template <typename T>
 MemoryView< T > MakeView(T* pbegin, T* pend) {
     Assert(pend >= pbegin);
@@ -220,6 +228,13 @@ template <typename T>
 MemoryView<typename std::add_const<T>::type > MakeConstView(T* pbegin, T* pend) {
     Assert(pend >= pbegin);
     return MemoryView<typename std::add_const<T>::type >(pbegin, std::distance(pbegin, pend));
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T>
+size_t hash_value(const MemoryView<T>& view) {
+    return hash_value_seq(view.begin(), view.end());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
