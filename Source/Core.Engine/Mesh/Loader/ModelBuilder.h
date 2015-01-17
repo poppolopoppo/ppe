@@ -123,6 +123,8 @@ public:
             Glass           = 1<<9,
             Fresnel         = 1<<10,
             CastShadows     = 1<<11,
+
+            _InUse          = 1<<31,
         };
 
         String Name;

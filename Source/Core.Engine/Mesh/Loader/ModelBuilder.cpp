@@ -106,8 +106,8 @@ static PMaterial CreateMaterial_(const ModelBuilder::Material& materialMB) {
     if (materialMB.SpecularExponent >= 0)
         parameters.Insert_AssertUnique(MaterialConstNames::SpecularExponent(), new MaterialParameterBlock<float>(materialMB.SpecularExponent));
 
-    Assert(tags.capacity() == tags.size());
 #if 1 // realloc vector ?
+    tags.shrink_to_fit();
     textures.Vector().shrink_to_fit();
     parameters.Vector().shrink_to_fit();
 #endif
@@ -436,11 +436,6 @@ PModel ModelBuilder::CreateModel() {
     Assert(_positions.size());
     Assert(_colors.empty() || _colors.size() == _positions.size());
 
-    VECTOR_THREAD_LOCAL(MeshGeneration, PMaterial) materials;
-    materials.reserve(_materials.size());
-    for (const Material& m : _materials)
-        materials.push_back(CreateMaterial_(m));
-
     struct MeshStat {
         size_t IndexCount;
         size_t VertexCount;
@@ -457,6 +452,9 @@ PModel ModelBuilder::CreateModel() {
         Assert(groupMB.Bone < _bones.size());
         Assert(groupMB.Material < _materials.size());
         Assert(groupMB.FaceStart + groupMB.FaceCount <= _faces.size());
+
+        Material& materialMB = _materials[groupMB.Material];
+        materialMB.SetFlag(Material::_InUse);
 
         const Graphics::PCVertexDeclaration vertexDeclaration = GetVertexDeclaration_(
             groupMB, 
@@ -482,6 +480,14 @@ PModel ModelBuilder::CreateModel() {
 
         AssertRelease(!useQuad); // No support for quad list
         meshStat.PrimitiveType = Graphics::PrimitiveType::TriangleList;
+    }
+
+    VECTOR_THREAD_LOCAL(MeshGeneration, PMaterial) materials;
+    materials.resize(_materials.size());
+    for (size_t i = 0; i < _materials.size(); ++i) {
+        const Material& materialMB = _materials[i];
+        if (materialMB.HasFlag(Material::_InUse))
+            materials[i] = CreateMaterial_(materialMB);
     }
 
     struct MeshData {
