@@ -46,7 +46,7 @@ PixelIn vmain(AppIn appIn) {
 
 #if WITH_BUMP_MAPPING
     o.Tangent = AppIn_Get_Tangent0(appIn);
-    o.Binormal = cross(o.Tangent, o.Normal);
+    o.Binormal = AppIn_Get_Binormal0(appIn);
 #endif
 
     return o;
@@ -100,6 +100,12 @@ float LightingFuncGGX_OPT3(float3 N, float3 V, float3 L, float roughness, float 
 }
 
 float4 pmain(PixelIn pixelIn) : SV_Target {
+    float alpha = 1.0;
+#if WITH_SEPARATE_ALPHA
+    alpha = TEX2D(uniLinearWrap_AlphaMap, pixelIn.TexCoord).r;
+    clip(alpha - 50.0/255);
+#endif
+
     float3 normal = normalize(pixelIn.Normal);
     float3 viewer = normalize(pixelIn.Viewer);
 
@@ -123,26 +129,19 @@ float4 pmain(PixelIn pixelIn) : SV_Target {
     tangentSpace._11_12_13 = tangent;
     tangentSpace._21_22_23 = binormal;
     tangentSpace._31_32_33 = normal;
-    tangentSpace = transpose(tangentSpace);
 
     float4 normalMap = TEX2D(uniLinearWrap_NormalMap, pixelIn.TexCoord).rgba;
 
     normal.x = normalMap.r * normalMap.a;
     normal.y = normalMap.g;
-    normal.z = sqrt(1.001 - normal.x*normal.x - normal.y*normal.y);
+    normal.z = sqrt(1.0 + 1e-4 - saturate(normal.x*normal.x + normal.y*normal.y));
     normal = mul(tangentSpace, normal);
 #endif
 
     float3 diffuseWLight = BRDF::Eval(m, l, normal, viewer);
 
     //diffuseColor = 0.5;
-    //diffuseWLight = saturate(max(0, dot(normal, uniSunDirection)) + 0.15) * diffuseColor;
-
-    float alpha = 1.0;
-#if WITH_SEPARATE_ALPHA
-    alpha = TEX2D(uniLinearWrap_AlphaMap, pixelIn.TexCoord).r;
-    clip(alpha - 35.0/255);
-#endif
+    diffuseWLight = saturate(max(0, dot(normal, uniSunDirection)) + 0.15) * diffuseColor;
 
     float4 result = float4(diffuseWLight.rgb, alpha);
     result.rgb *= result.a;
