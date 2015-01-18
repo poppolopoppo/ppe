@@ -26,8 +26,7 @@ Texture2D::Texture2D(
     Assert(width);
     Assert(height);
     Assert(levelCount);
-    Assert(0 < (width>>(levelCount-1)) );
-    Assert(0 < (height>>(levelCount-1)) );
+    Assert(0 < (std::max(width, height)>>(levelCount-1)) );
     Assert(0 == (width % format->BlockSize()));
     Assert(0 == (height % format->BlockSize()));
 }

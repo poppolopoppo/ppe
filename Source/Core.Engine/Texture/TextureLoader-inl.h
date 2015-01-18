@@ -9,7 +9,7 @@ namespace Engine {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 bool BasicTextureLoader::Read(RawStorage<T, _Allocator>& pixels, const Filename& filename) {
-    Assert(filename.Extname().Equals(L".dds")); // only format supported for now
+    AssertRelease(filename.Extname().Equals(L".dds")); // only format supported for now
 
     UniquePtr<IVirtualFileSystemIStream> iss = VFS_OpenReadable(filename, AccessPolicy::Binary);
     Assert(iss);

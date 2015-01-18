@@ -81,8 +81,8 @@ size_t SurfaceFormat::SizeOfTexture2DInBytes(size_t width, size_t height, size_t
     for (size_t i = 0; i < levelCount; ++i) {
         totalSizeInBytes += SizeOfTexture2DInBytes(width, height);
 
-        width = width >> 1;
-        height = height >> 1;
+        width = std::max<size_t>(1, width >> 1);
+        height = std::max<size_t>(1, height >> 1);
     }
 
     return totalSizeInBytes;
