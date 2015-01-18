@@ -64,7 +64,7 @@ float4 pmain(PixelIn pixelIn) : SV_Target {
 
     //return float4(color, 1);
 
-#if 1
+#if 0
     bentUV = uv;
     color = TEX2D(uniLinearClamp_Principal, uv).rgb;
 #endif

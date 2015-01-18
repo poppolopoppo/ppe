@@ -25,8 +25,8 @@ struct Params {
 //----------------------------------------------------------------------------
 Params DefaultParams() {
     Params p;
-    p.Exposure = 16;
-    p.WhitePoint = 9.2;
+    p.Exposure = pow(2,3);
+    p.WhitePoint = 11.2;
     p.BloomBias = 0.5;
     p.BloomIntensity = 1.0;
     p.CubicLensK = -0.25;
