@@ -6,13 +6,38 @@
 #include "ModelMesh.h"
 #include "ModelMeshSubPart.h"
 
-#include "Core.Engine/Render/RenderCommand.h"
+#include "Core.Graphics/Device/BindName.h"
 #include "Core.Graphics/Device/Geometry/PrimitiveType.h"
+
+#include "Core.Engine/Material/Material.h"
+#include "Core.Engine/Render/RenderCommand.h"
 
 #include "Core/Allocator/PoolAllocator-impl.h"
 
 namespace Core {
 namespace Engine {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+static const char *SelectRenderLayerName_(
+    const Material *parMaterial,
+    const MemoryView<const Pair<Graphics::BindName, const char *>>& parTagToRenderLayerName,
+    const char *parFallbackRenderLayerName ) {
+    Assert(parMaterial);
+
+    for (const Pair<Graphics::BindName, const char *>& it : parTagToRenderLayerName)
+        if (Contains(parMaterial->Tags(), it.first)) {
+            Assert(it.second);
+            return it.second;
+        }
+
+    Assert(parFallbackRenderLayerName);
+    return parFallbackRenderLayerName;
+}
+//----------------------------------------------------------------------------
+} //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -86,11 +111,13 @@ SINGLETON_POOL_ALLOCATED_DEF(ModelRenderCommand, );
 bool AcquireModelRenderCommand( UModelRenderCommand& pModelCommand,
                                 Graphics::IDeviceAPIEncapsulator *device,
                                 RenderTree *renderTree,
-                                const char *renderLayerName,
+                                const MemoryView<const Pair<Graphics::BindName, const char *>>& parTagToRenderLayerName,
+                                const char *parFallbackRenderLayerName,
                                 const Model *model ) {
     Assert(!pModelCommand);
     Assert(device);
     Assert(model);
+    Assert(parTagToRenderLayerName.size() || parFallbackRenderLayerName);
 
     ModelRenderCommand *result = new ModelRenderCommand();
     result->Model = model;
@@ -104,6 +131,11 @@ bool AcquireModelRenderCommand( UModelRenderCommand& pModelCommand,
     for (const PModelMesh& modelMesh : model->Meshes())
         for (const PModelMeshSubPart& modelMeshSubPart : modelMesh->SubParts()) {
             const size_t primitiveCount = Graphics::PrimitiveCount(modelMesh->PrimitiveType(), modelMeshSubPart->IndexCount());
+
+            const char *renderLayerName = SelectRenderLayerName_(   modelMeshSubPart->Material().get(), 
+                                                                    parTagToRenderLayerName, 
+                                                                    parFallbackRenderLayerName );
+            Assert(renderLayerName);
 
             URenderCommand pCommand;
             if (!AcquireRenderCommand(  pCommand, 

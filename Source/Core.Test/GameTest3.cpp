@@ -267,7 +267,8 @@ void GameTest3::Initialize(const Timeline& time) {
 
     _mainScene->RenderTree()->Add(new RenderLayerSetRenderTarget(principal));
     _mainScene->RenderTree()->Add(new RenderLayerClear(principal, Color::OliveDrab));
-    _mainScene->RenderTree()->Add(new RenderLayer("Objects"));
+    _mainScene->RenderTree()->Add(new RenderLayer("Opaque_Objects"));
+    _mainScene->RenderTree()->Add(new RenderLayer("Transparent_Objects"));
 
     // Postprocess settings
 
@@ -332,18 +333,25 @@ void GameTest3::LoadContent() {
     _mainScene->MaterialDatabase()->BindEffect("Standard", stdEffectDescriptor);
 
     //if (!LoadModel(_model, L"GameData:/Models/Infinity/DesertArena/DesertArena.obj"))
-    if (!LoadModel(_model, L"GameData:/Models/Infinity/BrokenTower/BrokenTower.obj"))
+    //if (!LoadModel(_model, L"GameData:/Models/Infinity/BrokenTower/BrokenTower.obj"))
     //if (!LoadModel(_model, L"GameData:/Models/Infinity/Beach/Beach.obj"))
     //if (!LoadModel(_model, L"GameData:/Models/Infinity/Potion/Potion.obj"))
     //if (!LoadModel(_model, L"GameData:/Models/Test/Cone.obj"))
     //if (!LoadModel(_model, L"GameData:/Models/Test/TeaPot.obj"))
     //if (!LoadModel(_model, L"GameData:/Models/Test/Scene.obj"))
+    if (!LoadModel(_model, L"GameData:/Models/Sponza/sponza.obj"))
+    //if (!LoadModel(_model, L"GameData:/Models/Sponza/sponza_light.obj"))
         AssertNotReached();
 
     _model->Create(device);
 
+    const Pair<Graphics::BindName, const char *> tagToRenderLayerName[] = {
+        {MaterialConstNames::SeparateAlpha(), "Transparent_Objects"}
+    };
     if (!AcquireModelRenderCommand( _renderCommand, device, 
-                                    _mainScene->RenderTree(), "Objects",
+                                    _mainScene->RenderTree(),
+                                    MakeConstView(tagToRenderLayerName),
+                                    "Opaque_Objects",
                                     _model.get() ))
         AssertNotReached();
 }

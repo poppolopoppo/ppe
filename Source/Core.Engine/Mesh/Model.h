@@ -12,6 +12,7 @@
 
 namespace Core {
 namespace Graphics {
+class BindName;
 class IDeviceAPIEncapsulator;
 }
 
@@ -70,7 +71,8 @@ typedef UniquePtr<const ModelRenderCommand> UModelRenderCommand;
 bool AcquireModelRenderCommand( UModelRenderCommand& pModelCommand,
                                 Graphics::IDeviceAPIEncapsulator *device,
                                 RenderTree *renderTree,
-                                const char *renderLayerName,
+                                const MemoryView<const Pair<Graphics::BindName, const char *>>& parTagToRenderLayerName,
+                                const char *parFallbackRenderLayerName,
                                 const Model *model );
 //----------------------------------------------------------------------------
 void ReleaseModelRenderCommand( UModelRenderCommand& pModelCommand,
