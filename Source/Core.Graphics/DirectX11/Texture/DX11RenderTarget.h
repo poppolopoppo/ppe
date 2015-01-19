@@ -34,7 +34,7 @@ public:
     virtual void GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) override;
     virtual void SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) override;
 
-    virtual const IDeviceAPIDependantTexture2DContent *Content() const override { return this; }
+    virtual const IDeviceAPIDependantAbstractTextureContent *Content() const override { return this; }
 
     SINGLETON_POOL_ALLOCATED_DECL(RenderTarget);
 

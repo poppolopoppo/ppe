@@ -46,6 +46,11 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+class IDeviceAPIDependantAbstractTextureContent {
+public:
+    virtual ~IDeviceAPIDependantAbstractTextureContent() {}
+};
+//----------------------------------------------------------------------------
 class DeviceAPIDependantTexture : public DeviceAPIDependantEntity {
 public:
     DeviceAPIDependantTexture(IDeviceAPIEncapsulator *device, Texture *owner);
@@ -55,6 +60,8 @@ public:
 
     virtual void GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) = 0;
     virtual void SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) = 0;
+
+    virtual const IDeviceAPIDependantAbstractTextureContent *Content() const = 0;
 
 private:
     Texture *_owner;

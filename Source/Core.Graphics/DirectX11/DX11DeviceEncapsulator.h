@@ -86,8 +86,11 @@ private: // IDeviceAPIEncapsulator impl
 
     // Textures
 
-    virtual DeviceAPIDependantTexture2D *CreateTexture(Graphics::Texture2D *texture, const MemoryView<const u8>& optionalData) override;
-    virtual void DestroyTexture(Graphics::Texture2D *texture, PDeviceAPIDependantTexture2D& entity) override;
+    virtual DeviceAPIDependantTexture2D *CreateTexture2D(Graphics::Texture2D *texture, const MemoryView<const u8>& optionalData) override;
+    virtual void DestroyTexture2D(Graphics::Texture2D *texture, PDeviceAPIDependantTexture2D& entity) override;
+
+    virtual DeviceAPIDependantTextureCube *CreateTextureCube(Graphics::TextureCube *texture, const MemoryView<const u8>& optionalData) override;
+    virtual void DestroyTextureCube(Graphics::TextureCube *texture, PDeviceAPIDependantTextureCube& entity) override;
 
     // Render target
 

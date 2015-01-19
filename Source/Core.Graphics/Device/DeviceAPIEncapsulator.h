@@ -62,6 +62,8 @@ class Texture;
 FWD_REFPTR(DeviceAPIDependantTexture);
 class Texture2D;
 FWD_REFPTR(DeviceAPIDependantTexture2D);
+class TextureCube;
+FWD_REFPTR(DeviceAPIDependantTextureCube);
 class RenderTarget;
 FWD_REFPTR(DeviceAPIDependantRenderTarget);
 class DepthStencil;
@@ -123,8 +125,11 @@ public:
 
     // Textures
 
-    virtual DeviceAPIDependantTexture2D *CreateTexture(Texture2D *texture, const MemoryView<const u8>& optionalData) = 0;
-    virtual void DestroyTexture(Texture2D *texture, PDeviceAPIDependantTexture2D& entity) = 0;
+    virtual DeviceAPIDependantTexture2D *CreateTexture2D(Texture2D *texture, const MemoryView<const u8>& optionalData) = 0;
+    virtual void DestroyTexture2D(Texture2D *texture, PDeviceAPIDependantTexture2D& entity) = 0;
+
+    virtual DeviceAPIDependantTextureCube *CreateTextureCube(TextureCube *texture, const MemoryView<const u8>& optionalData) = 0;
+    virtual void DestroyTextureCube(TextureCube *texture, PDeviceAPIDependantTextureCube& entity) = 0;
 
     // Render target
 

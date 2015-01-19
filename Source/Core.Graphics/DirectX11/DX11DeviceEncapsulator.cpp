@@ -20,6 +20,7 @@
 #include "Texture/DX11RenderTarget.h"
 #include "Texture/DX11SurfaceFormat.h"
 #include "Texture/DX11Texture2D.h"
+#include "Texture/DX11TextureCube.h"
 
 #include "DX11DeviceWrapper.h"
 #include "DX11ResourceBuffer.h"
@@ -422,8 +423,20 @@ void DeviceEncapsulator::DestroyShaderEffect(Graphics::ShaderEffect *effect, PDe
 //----------------------------------------------------------------------------
 // Textures
 //---------------------------------------------------------------------------
-DeviceAPIDependantTexture2D *DeviceEncapsulator::CreateTexture(Graphics::Texture2D *texture, const MemoryView<const u8>& optionalData) {
+DeviceAPIDependantTexture2D *DeviceEncapsulator::CreateTexture2D(Graphics::Texture2D *texture, const MemoryView<const u8>& optionalData) {
     return new DX11::Texture2D(this, texture, optionalData);
+}
+//---------------------------------------------------------------------------
+void DeviceEncapsulator::DestroyTexture2D(Graphics::Texture2D *texture, PDeviceAPIDependantTexture2D& entity) {
+    RemoveRef_AssertReachZero(entity);
+}
+//---------------------------------------------------------------------------
+DeviceAPIDependantTextureCube *DeviceEncapsulator::CreateTextureCube(Graphics::TextureCube *texture, const MemoryView<const u8>& optionalData) {
+    return new DX11::TextureCube(this, texture, optionalData);
+}
+//---------------------------------------------------------------------------
+void DeviceEncapsulator::DestroyTextureCube(Graphics::TextureCube *texture, PDeviceAPIDependantTextureCube& entity) {
+    RemoveRef_AssertReachZero(entity);
 }
 //---------------------------------------------------------------------------
 void DeviceEncapsulator::SetTexture(ShaderProgramType stage, size_t slot, const Graphics::Texture *texture) {
@@ -432,11 +445,16 @@ void DeviceEncapsulator::SetTexture(ShaderProgramType stage, size_t slot, const 
     ::ID3D11ShaderResourceView *dx11ResourceView = nullptr;
 
     if (texture) {
-        const Graphics::Texture2D *texture2D = checked_cast<const Graphics::Texture2D *>(texture);
-        if (!texture2D)
-            throw DeviceEncapsulatorException("DX11: can't set invalid texture type", this, texture);
+        Assert(texture->Frozen());
+        Assert(texture->Available());
 
-        dx11ResourceView = checked_cast<const DX11::Texture2DContent *>(texture2D->DeviceAPIDependantTexture2D()->Content())->ShaderView();
+        const IDeviceAPIDependantAbstractTextureContent *content = texture->DeviceAPIDependantTexture()->Content();
+        if (!content)
+            throw DeviceEncapsulatorException("DX11: empty texture content could not be set to device", this, texture);
+
+        const DX11::AbstractTextureContent *dx11Content = checked_cast<const DX11::AbstractTextureContent *>(content);
+
+        dx11ResourceView = dx11Content->ShaderView();
         AssertRelease(dx11ResourceView);
     }
 
@@ -467,10 +485,6 @@ void DeviceEncapsulator::SetTexture(ShaderProgramType stage, size_t slot, const 
     }
 
     CHECK_DIRECTX11_ERROR();
-}
-//---------------------------------------------------------------------------
-void DeviceEncapsulator::DestroyTexture(Graphics::Texture2D *texture, PDeviceAPIDependantTexture2D& entity) {
-    RemoveRef_AssertReachZero(entity);
 }
 //----------------------------------------------------------------------------
 // Render Targets

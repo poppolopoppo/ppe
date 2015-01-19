@@ -9,35 +9,31 @@
 namespace Core {
 namespace Graphics {
 class IDeviceAPIEncapsulator;
-class DepthStencil;
-class RenderTarget;
-FWD_REFPTR(DeviceAPIDependantTexture2D);
+FWD_REFPTR(DeviceAPIDependantTextureCube);
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FWD_REFPTR(Texture2D);
-class Texture2D : public Texture {
+FWD_REFPTR(TextureCube);
+class TextureCube : public Texture {
 public:
-    friend class DepthStencil;
-    friend class RenderTarget;
+    enum class Face {
+        PositiveX = 0,
+        NegativeX,
+        PositiveY,
+        NegativeY,
+        PositiveZ,
+        NegativeZ,
+    };
 
-    Texture2D(
+    TextureCube(
         size_t width,
         size_t height,
         size_t levelCount,
         const SurfaceFormat *format,
         BufferMode mode,
         BufferUsage usage);
-    Texture2D(
-        size_t width,
-        size_t height,
-        size_t levelCount,
-        const SurfaceFormat *format,
-        BufferMode mode,
-        BufferUsage usage,
-        Graphics::DeviceAPIDependantTexture2D *deviceAPIDependantTexture2D);
-    virtual ~Texture2D();
+    virtual ~TextureCube();
 
     size_t Width() const { return _width; }
     size_t Height() const { return _height; }
@@ -45,10 +41,11 @@ public:
 
     float4 DuDvDimensions() const;
 
-    const PDeviceAPIDependantTexture2D& DeviceAPIDependantTexture2D() const { return _deviceAPIDependantTexture2D; }
+    const PDeviceAPIDependantTextureCube& DeviceAPIDependantTextureCube() const { return _deviceAPIDependantTextureCube; }
 
     void GetData(
         IDeviceAPIEncapsulator *device,
+        Face face,
         size_t level,
         size_t x, size_t y,
         size_t width, size_t height,
@@ -56,6 +53,7 @@ public:
 
     void SetData(
         IDeviceAPIEncapsulator *device,
+        Face face,
         size_t level,
         size_t x, size_t y,
         size_t width, size_t height,
@@ -79,23 +77,23 @@ private:
     u32 _height;
     u32 _levelCount;
 
-    PDeviceAPIDependantTexture2D _deviceAPIDependantTexture2D;
+    PDeviceAPIDependantTextureCube _deviceAPIDependantTextureCube;
 };
 //----------------------------------------------------------------------------
 template <typename T>
-void Texture2D::Create(IDeviceAPIEncapsulator *device, const MemoryView<const T>& optionalData) {
+void TextureCube::Create(IDeviceAPIEncapsulator *device, const MemoryView<const T>& optionalData) {
     Create_(device, optionalData.Cast<const u8>());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DeviceAPIDependantTexture2D : public Graphics::DeviceAPIDependantTexture {
+class DeviceAPIDependantTextureCube : public Graphics::DeviceAPIDependantTexture {
 public:
-    DeviceAPIDependantTexture2D(IDeviceAPIEncapsulator *device, Texture2D *owner, const MemoryView<const u8>& optionalData);
-    virtual ~DeviceAPIDependantTexture2D();
+    DeviceAPIDependantTextureCube(IDeviceAPIEncapsulator *device, TextureCube *owner, const MemoryView<const u8>& optionalData);
+    virtual ~DeviceAPIDependantTextureCube();
 
-    const Texture2D *Owner() const {
-        return checked_cast<const Texture2D *>(DeviceAPIDependantTexture::Owner());
+    const TextureCube *Owner() const {
+        return checked_cast<const TextureCube *>(DeviceAPIDependantTexture::Owner());
     }
 };
 //----------------------------------------------------------------------------
