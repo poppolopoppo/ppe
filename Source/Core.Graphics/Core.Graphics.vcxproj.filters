@@ -142,6 +142,12 @@
     <CustomBuild Include="Device\Texture\Texture2D.h">
       <Filter>Device\Texture</Filter>
     </CustomBuild>
+    <CustomBuild Include="Device\Texture\TextureCube.cpp">
+      <Filter>Device\Texture</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Texture\TextureCube.h">
+      <Filter>Device\Texture</Filter>
+    </CustomBuild>
     <CustomBuild Include="Device\BindName.cpp">
       <Filter>Device</Filter>
     </CustomBuild>
@@ -247,6 +253,12 @@
     <CustomBuild Include="DirectX11\State\DX11SamplerState.h">
       <Filter>DirectX11\State</Filter>
     </CustomBuild>
+    <CustomBuild Include="DirectX11\Texture\DX11AbstractTextureContent.cpp">
+      <Filter>DirectX11\Texture</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\Texture\DX11AbstractTextureContent.h">
+      <Filter>DirectX11\Texture</Filter>
+    </CustomBuild>
     <CustomBuild Include="DirectX11\Texture\DX11DepthStencil.cpp">
       <Filter>DirectX11\Texture</Filter>
     </CustomBuild>
@@ -269,6 +281,12 @@
       <Filter>DirectX11\Texture</Filter>
     </CustomBuild>
     <CustomBuild Include="DirectX11\Texture\DX11Texture2D.h">
+      <Filter>DirectX11\Texture</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\Texture\DX11TextureCube.cpp">
+      <Filter>DirectX11\Texture</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\Texture\DX11TextureCube.h">
       <Filter>DirectX11\Texture</Filter>
     </CustomBuild>
     <CustomBuild Include="DirectX11\DX11CompilerIncludes.h">

@@ -49,7 +49,7 @@
     <CustomBuild Include="GameTest2.h" />
     <CustomBuild Include="GameTest3.cpp" />
     <CustomBuild Include="GameTest3.h" />
-    <CustomBuild Include="Main.cpp" />
+    <CustomBuild Include="main.cpp" />
     <CustomBuild Include="resource.h" />
     <CustomBuild Include="stdafx.cpp" />
     <CustomBuild Include="stdafx.h" />

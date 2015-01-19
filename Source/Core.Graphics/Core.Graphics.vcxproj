@@ -86,6 +86,8 @@
     <CustomBuild Include="Device\Texture\Texture.h" />
     <CustomBuild Include="Device\Texture\Texture2D.cpp" />
     <CustomBuild Include="Device\Texture\Texture2D.h" />
+    <CustomBuild Include="Device\Texture\TextureCube.cpp" />
+    <CustomBuild Include="Device\Texture\TextureCube.h" />
     <CustomBuild Include="Device\BindName.cpp" />
     <CustomBuild Include="Device\BindName.h" />
     <CustomBuild Include="Device\DeviceAPIDependantEntity.cpp" />
@@ -121,6 +123,8 @@
     <CustomBuild Include="DirectX11\State\DX11RasterizerState.h" />
     <CustomBuild Include="DirectX11\State\DX11SamplerState.cpp" />
     <CustomBuild Include="DirectX11\State\DX11SamplerState.h" />
+    <CustomBuild Include="DirectX11\Texture\DX11AbstractTextureContent.cpp" />
+    <CustomBuild Include="DirectX11\Texture\DX11AbstractTextureContent.h" />
     <CustomBuild Include="DirectX11\Texture\DX11DepthStencil.cpp" />
     <CustomBuild Include="DirectX11\Texture\DX11DepthStencil.h" />
     <CustomBuild Include="DirectX11\Texture\DX11RenderTarget.cpp" />
@@ -129,6 +133,8 @@
     <CustomBuild Include="DirectX11\Texture\DX11SurfaceFormat.h" />
     <CustomBuild Include="DirectX11\Texture\DX11Texture2D.cpp" />
     <CustomBuild Include="DirectX11\Texture\DX11Texture2D.h" />
+    <CustomBuild Include="DirectX11\Texture\DX11TextureCube.cpp" />
+    <CustomBuild Include="DirectX11\Texture\DX11TextureCube.h" />
     <CustomBuild Include="DirectX11\DX11CompilerIncludes.h" />
     <CustomBuild Include="DirectX11\DX11DeviceEncapsulator.cpp" />
     <CustomBuild Include="DirectX11\DX11DeviceEncapsulator.h" />
