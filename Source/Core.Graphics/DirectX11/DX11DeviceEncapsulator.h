@@ -167,7 +167,7 @@ private: // IDeviceAPIShaderCompilerEncapsulator impl
 
     virtual void ReflectShaderProgram(
         ASSOCIATIVE_VECTOR(Shader, BindName, PCConstantBufferLayout)& constants,
-        VECTOR(Shader, BindName)& textures,
+        VECTOR(Shader, ShaderProgramTexture)& textures,
         const Graphics::ShaderProgram *program) override;
 
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS

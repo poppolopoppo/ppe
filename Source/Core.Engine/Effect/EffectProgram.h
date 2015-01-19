@@ -9,9 +9,9 @@
 
 namespace Core {
 namespace Graphics {
-class BindName;
 FWD_REFPTR(ConstantBufferLayout);
 class IDeviceAPIEncapsulator;
+struct ShaderProgramTexture;
 }
 
 namespace Engine {
@@ -35,13 +35,13 @@ public:
     virtual void Destroy(   Graphics::IDeviceAPIShaderCompilerEncapsulator *compiler) override;
 
     const ASSOCIATIVE_VECTOR(Shader, Graphics::BindName, Graphics::PCConstantBufferLayout)& Constants() const { return _constants; }
-    const VECTOR(Shader, Graphics::BindName)& Textures() const { return _textures; }
+    const VECTOR(Shader, Graphics::ShaderProgramTexture)& Textures() const { return _textures; }
 
-    SINGLETON_POOL_ALLOCATED_DECL(MaterialProgram);
+    SINGLETON_POOL_ALLOCATED_DECL(EffectProgram);
 
 private:
     ASSOCIATIVE_VECTOR(Shader, Graphics::BindName, Graphics::PCConstantBufferLayout) _constants;
-    VECTOR(Shader, Graphics::BindName) _textures;
+    VECTOR(Shader, Graphics::ShaderProgramTexture) _textures;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

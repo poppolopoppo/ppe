@@ -50,6 +50,7 @@ FWD_REFPTR(ConstantBufferLayout);
 FWD_REFPTR(DeviceAPIDependantConstantWriter);
 enum class ShaderCompilerFlags;
 class ShaderProgram;
+struct ShaderProgramTexture;
 enum class ShaderProgramType;
 FWD_REFPTR(DeviceAPIDependantShaderProgram);
 class ShaderEffect;
@@ -218,7 +219,7 @@ public:
 
     virtual void ReflectShaderProgram(
         ASSOCIATIVE_VECTOR(Shader, BindName, PCConstantBufferLayout)& constants,
-        VECTOR(Shader, BindName)& textures,
+        VECTOR(Shader, ShaderProgramTexture)& textures,
         const ShaderProgram *program) = 0;
 };
 //----------------------------------------------------------------------------

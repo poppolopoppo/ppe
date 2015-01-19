@@ -24,6 +24,7 @@
 #include "Core.Graphics/Device/Texture/RenderTarget.h"
 #include "Core.Graphics/Device/Texture/SurfaceFormat.h"
 #include "Core.Graphics/Device/Texture/Texture2D.h"
+#include "Core.Graphics/Device/Texture/TextureCube.h"
 
 #include "Core/Allocator/Alloca.h"
 #include "Core/Allocator/PoolAllocator-impl.h"
@@ -37,19 +38,19 @@ namespace Engine {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static MaterialEffect::TextureSlot TextureSlot_(const Graphics::BindName& name) {
+static MaterialEffect::TextureSlot TextureSlot_(const Graphics::BindName& name, bool isCubeMap) {
     Assert(!name.empty());
 
     const char *cstr = name.cstr();
     Assert(cstr);
 
-    const char AnisotropicClamp[] = "uniAnisotropicClamp_";
-    const char AnisotropicWrap[] = "uniAnisotropicWrap_";
-    const char LinearClamp[] = "uniLinearClamp_";
-    const char LinearWrap[] = "uniLinearWrap_";
-    const char PointClamp[] = "uniPointClamp_";
-    const char PointWrap[] = "uniPointWrap_";
-    const char SRGB[] = "uniSRGB_";
+    static const char AnisotropicClamp[] = "uniAnisotropicClamp_";
+    static const char AnisotropicWrap[] = "uniAnisotropicWrap_";
+    static const char LinearClamp[] = "uniLinearClamp_";
+    static const char LinearWrap[] = "uniLinearWrap_";
+    static const char PointClamp[] = "uniPointClamp_";
+    static const char PointWrap[] = "uniPointWrap_";
+    static const char SRGB[] = "uniSRGB_";
 
     const char *textureName = cstr;
     const Graphics::SamplerState *samplerState = Graphics::SamplerState::LinearClamp;
@@ -90,7 +91,7 @@ static MaterialEffect::TextureSlot TextureSlot_(const Graphics::BindName& name) 
     }
     while (true);
 
-    return MaterialEffect::TextureSlot(textureName, samplerState, useSRGB);
+    return MaterialEffect::TextureSlot(textureName, samplerState, useSRGB, isCubeMap);
 }
 //----------------------------------------------------------------------------
 static void PrepareTexture_(Filename *filename,
@@ -115,24 +116,24 @@ static void PrepareTexture_(Filename *filename,
     PAbstractRenderSurface renderSurface;
     if (renderSurfaceManager->TryUnalias(filename->Dirpath(), &renderSurface)) {
         Assert(renderSurface);
-        slot.SetIsVirtualTexture(true);
+        slot.IsVirtualTexture = true;
         Assert( filename->Basename() == renderSurfaceManager->RenderTargetName() ||
                 filename->Basename() == renderSurfaceManager->DepthStencilName() );
     }
     else {
-        slot.SetIsVirtualTexture(false);
-        textureCache->PrepareTexture2D(*filename, slot.UseSRGB());
+        slot.IsVirtualTexture = false;
+        textureCache->PrepareTexture(*filename, slot.UseSRGB);
     }
 }
 //----------------------------------------------------------------------------
-static void FetchTexture2D_(MaterialEffect::TextureBinding& binding,
+static void FetchTexture_(MaterialEffect::TextureBinding& binding,
                             const MaterialEffect::TextureSlot& slot,
                             TextureCache *textureCache,
                             RenderSurfaceManager *renderSurfaceManager,
                             Graphics::IDeviceAPIEncapsulator *device ) {
     const Filename& filename = binding.Filename;
 
-    if (slot.IsVirtualTexture()) {
+    if (slot.IsVirtualTexture) {
         AbstractRenderSurface *renderSurface = renderSurfaceManager->Unalias(filename.Dirpath());
         Assert(renderSurface->InUse()); // else the render target has never been filled !
 
@@ -153,7 +154,10 @@ static void FetchTexture2D_(MaterialEffect::TextureBinding& binding,
         }
     }
     else {
-        binding.Texture = textureCache->FetchTexture2D_Fallback(filename);
+        if (slot.IsCubeMap)
+            binding.Texture = textureCache->FetchTextureCube_Fallback(filename);
+        else
+            binding.Texture = textureCache->FetchTexture2D_Fallback(filename);
     }
     Assert(binding.Texture);
 }
@@ -164,7 +168,7 @@ static void DestroyTexture2D_(  MaterialEffect::TextureBinding& binding,
     Assert(binding.Texture);
     binding.Texture.reset(nullptr);
 
-    if (slot.IsVirtualTexture()) {
+    if (slot.IsVirtualTexture) {
         Assert(binding.SurfaceLock);
         binding.SurfaceLock->Release(device, binding.SurfaceLock);
         Assert(!binding.SurfaceLock);
@@ -179,11 +183,15 @@ MaterialEffect::TextureSlot::TextureSlot(
     const Graphics::BindName& name,
     const Graphics::SamplerState *sampler,
     bool useSRGB,
+    bool isCubeMap,
     bool isVirtuaTexture/* = false */)
-:   Name(name) {
+:   Name(name)
+,   Sampler(sampler) 
+,   UseSRGB(useSRGB) 
+,   IsCubeMap(isCubeMap)
+,   IsVirtualTexture(isVirtuaTexture) {
     Assert(!name.empty());
     Assert(sampler);
-    SamplerWFlags.Reset(sampler, useSRGB, isVirtuaTexture);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -230,8 +238,8 @@ void MaterialEffect::Create(Graphics::IDeviceAPIEncapsulator *device, const Scen
         }
 
         _textureSlots.reserve(_textureSlots.size() + program->Textures().size());
-        for (const Graphics::BindName& texture : program->Textures())
-            _textureSlots.emplace_back(TextureSlot_(texture));
+        for (const Graphics::ShaderProgramTexture& texture : program->Textures())
+            _textureSlots.emplace_back(TextureSlot_(texture.Name, texture.IsCubeMap));
     }
 
     _textureBindings.resize(_textureSlots.size());
@@ -280,7 +288,7 @@ void MaterialEffect::Prepare(Graphics::IDeviceAPIEncapsulator *device, const Sce
 
     const size_t textureCount = _textureSlots.size();
     for (size_t i = 0; i < textureCount; ++i)
-        FetchTexture2D_(_textureBindings[i], _textureSlots[i], textureCache, renderSurfaceManager, device);
+        FetchTexture_(_textureBindings[i], _textureSlots[i], textureCache, renderSurfaceManager, device);
 
     const MaterialContext context = { scene, this, MemoryView<const VariabilitySeed>(seeds, VariabilitySeed::Count) };
     for (const PEffectConstantBuffer& cbuffer : _constants)
@@ -313,11 +321,11 @@ void MaterialEffect::Set(Graphics::IDeviceAPIContextEncapsulator *deviceContext)
             // but each with and without the uniSRGB_ prefix ...
             // TODO : specify texture properties (including compression type, zip, preprocess operators)
             // globally with virtual filesystem regexps.
-            Assert( !_textureSlots[textureOffset + i].UseSRGB() ||
+            Assert( !_textureSlots[textureOffset + i].UseSRGB ||
                     texture->Format()->IsGammaSpace() );
 
             deviceContext->SetTexture(stage, i, texture);
-            deviceContext->SetSamplerState(stage, i, slot.Sampler());
+            deviceContext->SetSamplerState(stage, i, slot.Sampler);
         }
 
         constantOffset += constantCount;

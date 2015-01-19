@@ -159,8 +159,11 @@ private: // IDeviceAPIEncapsulator impl
 
     // Textures
 
-    virtual DeviceAPIDependantTexture2D *CreateTexture(Texture2D *texture, const MemoryView<const u8>& optionalData) override;
-    virtual void DestroyTexture(Texture2D *texture, PDeviceAPIDependantTexture2D& entity) override;
+    virtual DeviceAPIDependantTexture2D *CreateTexture2D(Texture2D *texture, const MemoryView<const u8>& optionalData) override;
+    virtual void DestroyTexture2D(Texture2D *texture, PDeviceAPIDependantTexture2D& entity) override;
+
+    virtual DeviceAPIDependantTextureCube *CreateTextureCube(TextureCube *texture, const MemoryView<const u8>& optionalData) override;
+    virtual void DestroyTextureCube(TextureCube *texture, PDeviceAPIDependantTextureCube& entity) override;
 
     // Render target
 
@@ -239,7 +242,7 @@ private: // IDeviceAPIShaderCompilerEncapsulator
 
     virtual void ReflectShaderProgram(
         ASSOCIATIVE_VECTOR(Shader, BindName, PCConstantBufferLayout)& constants,
-        VECTOR(Shader, BindName)& textures,
+        VECTOR(Shader, ShaderProgramTexture)& textures,
         const ShaderProgram *program) override;
 
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS

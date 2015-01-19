@@ -73,7 +73,7 @@ void ShaderProgram::Preprocess(
 void ShaderProgram::Reflect(
     IDeviceAPIShaderCompilerEncapsulator *compiler,
     ASSOCIATIVE_VECTOR(Shader, BindName, PCConstantBufferLayout)& constants,
-    VECTOR(Shader, BindName)& textures ) const {
+    VECTOR(Shader, ShaderProgramTexture)& textures ) const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(compiler);

@@ -40,17 +40,15 @@ public:
         TextureSlot(const Graphics::BindName& name,
                     const Graphics::SamplerState *sampler,
                     bool useSRGB,
+                    bool isCubeMap,
                     bool isVirtualTexture = false);
 
         Graphics::BindName Name;
-        Meta::PointerWFlags<const Graphics::SamplerState> SamplerWFlags;
+        const Graphics::SamplerState *Sampler;
 
-        const Graphics::SamplerState *Sampler() const {  return SamplerWFlags.Get(); }
-
-        bool UseSRGB() const { return SamplerWFlags.Flag0(); }
-
-        bool IsVirtualTexture() const { return SamplerWFlags.Flag1(); }
-        void SetIsVirtualTexture(bool value) { SamplerWFlags.SetFlag1(value); }
+        bool UseSRGB;
+        bool IsCubeMap;
+        bool IsVirtualTexture;
     };
 
     struct TextureBinding {

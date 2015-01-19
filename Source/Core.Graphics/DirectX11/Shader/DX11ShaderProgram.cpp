@@ -271,7 +271,7 @@ void ShaderProgram::Preprocess(
 void ShaderProgram::Reflect(
     IDeviceAPIShaderCompilerEncapsulator *compiler,
     ASSOCIATIVE_VECTOR(Shader, BindName, PCConstantBufferLayout)& constants,
-    VECTOR(Shader, BindName)& textures,
+    VECTOR(Shader, ShaderProgramTexture)& textures,
     const Graphics::ShaderProgram *program) {
     const DX11::ShaderProgram *const dx11Program = checked_cast<const DX11::ShaderProgram *>(
         program->DeviceAPIDependantProgram().get());
@@ -365,10 +365,15 @@ void ShaderProgram::Reflect(
             continue;
 
         AssertRelease(1 == dx11ResourceDesc.BindCount);
-        AssertRelease(::D3D_SRV_DIMENSION_TEXTURE2D == dx11ResourceDesc.Dimension);
+        AssertRelease(  ::D3D11_SRV_DIMENSION_TEXTURE2D == dx11ResourceDesc.Dimension ||
+                        ::D3D11_SRV_DIMENSION_TEXTURECUBE == dx11ResourceDesc.Dimension );
+
+        ShaderProgramTexture texture;
+        texture.Name = dx11ResourceDesc.Name;
+        texture.IsCubeMap = (::D3D11_SRV_DIMENSION_TEXTURECUBE == dx11ResourceDesc.Dimension);
 
         AssertRelease(dx11ResourceDesc.BindPoint == textures.size());
-        textures.emplace_back(dx11ResourceDesc.Name);
+        textures.push_back(texture);
     }
 }
 //----------------------------------------------------------------------------

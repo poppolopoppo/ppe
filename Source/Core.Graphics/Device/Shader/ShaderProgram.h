@@ -2,6 +2,7 @@
 
 #include "Core.Graphics/Graphics.h"
 
+#include "Core.Graphics/Device/BindName.h"
 #include "Core.Graphics/Device/DeviceAPIDependantEntity.h"
 #include "Core.Graphics/Device/DeviceResource.h"
 #include "Core.Graphics/Device/DeviceResourceBuffer.h"
@@ -12,7 +13,6 @@
 
 namespace Core {
 namespace Graphics {
-class BindName;
 FWD_REFPTR(ConstantBufferLayout);
 class IDeviceAPIShaderCompilerEncapsulator;
 FWD_REFPTR(DeviceAPIDependantShaderProgram);
@@ -60,6 +60,11 @@ MemoryView<const ShaderProgramType> EachShaderProgramType();
 const char *ShaderProgramTypeToCStr(ShaderProgramType program);
 const char *ShaderProgramTypeToEntryPoint(ShaderProgramType program);
 //----------------------------------------------------------------------------
+struct ShaderProgramTexture {
+    Graphics::BindName Name;
+    bool IsCubeMap;
+};
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(ShaderProgram);
@@ -91,7 +96,7 @@ public:
 
     void Reflect(   IDeviceAPIShaderCompilerEncapsulator *compiler,
                     ASSOCIATIVE_VECTOR(Shader, BindName, PCConstantBufferLayout)& constants,
-                    VECTOR(Shader, BindName)& textures ) const;
+                    VECTOR(Shader, ShaderProgramTexture)& textures ) const;
 
 private:
     typedef Meta::Bit<size_t>::First<2>::type bitprofile_type;

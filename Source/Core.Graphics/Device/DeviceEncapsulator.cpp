@@ -23,6 +23,7 @@
 #include "Texture/RenderTarget.h"
 #include "Texture/Texture.h"
 #include "Texture/Texture2D.h"
+#include "Texture/TextureCube.h"
 
 #ifdef OS_WINDOWS
 #   include "DirectX11/DX11DeviceEncapsulator.h"
@@ -515,7 +516,7 @@ void DeviceEncapsulator::PreprocessShaderProgram(
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::ReflectShaderProgram(
     ASSOCIATIVE_VECTOR(Shader, BindName, PCConstantBufferLayout)& constants,
-    VECTOR(Shader, BindName)& textures,
+    VECTOR(Shader, ShaderProgramTexture)& textures,
     const ShaderProgram *program) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(program);
@@ -566,12 +567,40 @@ void DeviceEncapsulator::DestroyShaderEffect(ShaderEffect *effect, PDeviceAPIDep
 //----------------------------------------------------------------------------
 // Textures
 //----------------------------------------------------------------------------
-DeviceAPIDependantTexture2D *DeviceEncapsulator::CreateTexture(Texture2D *texture, const MemoryView<const u8>& optionalData) {
+DeviceAPIDependantTexture2D *DeviceEncapsulator::CreateTexture2D(Texture2D *texture, const MemoryView<const u8>& optionalData) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(texture);
     Assert(texture->Frozen());
 
-    return _deviceAPIDependantEncapsulator->Device()->CreateTexture(texture, optionalData);
+    return _deviceAPIDependantEncapsulator->Device()->CreateTexture2D(texture, optionalData);
+}
+//----------------------------------------------------------------------------
+void DeviceEncapsulator::DestroyTexture2D(Texture2D *texture, PDeviceAPIDependantTexture2D& entity) {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(texture);
+    Assert(texture->Frozen());
+    Assert(entity);
+    Assert(&entity == &texture->DeviceAPIDependantTexture2D());
+
+    _deviceAPIDependantEncapsulator->Device()->DestroyTexture2D(texture, entity);
+}
+//----------------------------------------------------------------------------
+DeviceAPIDependantTextureCube *DeviceEncapsulator::CreateTextureCube(TextureCube *texture, const MemoryView<const u8>& optionalData) {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(texture);
+    Assert(texture->Frozen());
+
+    return _deviceAPIDependantEncapsulator->Device()->CreateTextureCube(texture, optionalData);
+}
+//----------------------------------------------------------------------------
+void DeviceEncapsulator::DestroyTextureCube(TextureCube *texture, PDeviceAPIDependantTextureCube& entity) {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(texture);
+    Assert(texture->Frozen());
+    Assert(entity);
+    Assert(&entity == &texture->DeviceAPIDependantTextureCube());
+
+    _deviceAPIDependantEncapsulator->Device()->DestroyTextureCube(texture, entity);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::SetTexture(ShaderProgramType stage, size_t slot, const Texture *texture) {
@@ -580,16 +609,6 @@ void DeviceEncapsulator::SetTexture(ShaderProgramType stage, size_t slot, const 
     Assert(!texture || texture->Available());
 
     _deviceAPIDependantEncapsulator->Context()->SetTexture(stage, slot, texture);
-}
-//----------------------------------------------------------------------------
-void DeviceEncapsulator::DestroyTexture(Texture2D *texture, PDeviceAPIDependantTexture2D& entity) {
-    THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(texture);
-    Assert(texture->Frozen());
-    Assert(entity);
-    Assert(&entity == &texture->DeviceAPIDependantTexture2D());
-
-    _deviceAPIDependantEncapsulator->Device()->DestroyTexture(texture, entity);
 }
 //----------------------------------------------------------------------------
 // Render Targets
