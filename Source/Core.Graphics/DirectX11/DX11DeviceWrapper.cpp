@@ -50,22 +50,24 @@ static bool CreateDX11DeviceAndSwapChainIFP_(
         AssertNotImplemented();
     }
 
-    UINT createDeviceFlags = 0;
+    UINT createDeviceFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 #ifdef WITH_DIRECTX11_DEBUG_LAYER
     createDeviceFlags |= ::D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
     const ::D3D_DRIVER_TYPE driverTypes[] = {
+#ifndef WITH_DIRECTX11_WARP_DRIVER
         ::D3D_DRIVER_TYPE_HARDWARE,
+#endif
         ::D3D_DRIVER_TYPE_WARP,
         ::D3D_DRIVER_TYPE_REFERENCE,
     };
 
     const ::D3D_FEATURE_LEVEL featureLevels[] = {
-        D3D_FEATURE_LEVEL_11_1,
-        D3D_FEATURE_LEVEL_11_0,
-        D3D_FEATURE_LEVEL_10_1,
-        D3D_FEATURE_LEVEL_10_0,
+        ::D3D_FEATURE_LEVEL_11_1,
+        ::D3D_FEATURE_LEVEL_11_0,
+        ::D3D_FEATURE_LEVEL_10_1,
+        ::D3D_FEATURE_LEVEL_10_0,
     };
 
     ::DXGI_SWAP_CHAIN_DESC sd;
@@ -86,7 +88,7 @@ static bool CreateDX11DeviceAndSwapChainIFP_(
     sd.SampleDesc.Quality = presentationParameters.MultiSampleCount() ? 1 : 0;
 
     sd.Windowed = presentationParameters.FullScreen() ? FALSE : TRUE;
-    sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    sd.SwapEffect = ::DXGI_SWAP_EFFECT_DISCARD;
 
     const HRESULT result = ::D3D11CreateDeviceAndSwapChain(
         NULL,
@@ -122,9 +124,9 @@ static bool CreateDX11DebugLayerIFP_(
     Assert(*dx11pInfoQueue);
 
     ::D3D11_MESSAGE_SEVERITY severities[] = {
-        D3D11_MESSAGE_SEVERITY_ERROR,
-        D3D11_MESSAGE_SEVERITY_CORRUPTION,
-        D3D11_MESSAGE_SEVERITY_WARNING
+        ::D3D11_MESSAGE_SEVERITY_ERROR,
+        ::D3D11_MESSAGE_SEVERITY_CORRUPTION,
+        ::D3D11_MESSAGE_SEVERITY_WARNING
     };
 
     ::D3D11_INFO_QUEUE_FILTER_DESC allowList;
@@ -133,7 +135,7 @@ static bool CreateDX11DebugLayerIFP_(
     allowList.pSeverityList = &severities[0];
 
     ::D3D11_INFO_QUEUE_FILTER_DESC denyList;
-    ::D3D11_MESSAGE_ID hide [] = { D3D11_MESSAGE_ID_SETPRIVATEDATA_CHANGINGPARAMS };
+    ::D3D11_MESSAGE_ID hide [] = { ::D3D11_MESSAGE_ID_SETPRIVATEDATA_CHANGINGPARAMS };
     ::SecureZeroMemory(&denyList, sizeof(denyList));
     denyList.NumIDs = _countof(hide);
     denyList.pIDList = hide;
@@ -144,8 +146,8 @@ static bool CreateDX11DebugLayerIFP_(
     (*dx11pInfoQueue)->PushStorageFilter(&filter);
 
     if (::IsDebuggerPresent()) {
-        (*dx11pInfoQueue)->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, true);
-        (*dx11pInfoQueue)->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, true);
+        (*dx11pInfoQueue)->SetBreakOnSeverity(::D3D11_MESSAGE_SEVERITY_CORRUPTION, true);
+        (*dx11pInfoQueue)->SetBreakOnSeverity(::D3D11_MESSAGE_SEVERITY_ERROR, true);
     }
 }
 #endif //!WITH_DIRECTX11_DEBUG_LAYER
@@ -302,7 +304,7 @@ void DeviceWrapper::Destroy(DX11::DeviceEncapsulator *device) {
 
     if (_dx11Debug) {
         _dx11Debug->Release();
-        _dx11Debug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
+        _dx11Debug->ReportLiveDeviceObjects(::D3D11_RLDO_DETAIL);
     }
 #endif
 
@@ -344,17 +346,17 @@ void DeviceWrapper::CheckDeviceErrors(const DX11::DeviceEncapsulator *encapsulat
 
         switch(message->Severity)
         {
-        case D3D11_MESSAGE_SEVERITY_MESSAGE:
-        case D3D11_MESSAGE_SEVERITY_INFO:
+        case ::D3D11_MESSAGE_SEVERITY_MESSAGE:
+        case ::D3D11_MESSAGE_SEVERITY_INFO:
             LOG(Information, L"[D3D11] {0}", message->pDescription);
             break;
 
-        case D3D11_MESSAGE_SEVERITY_WARNING:
+        case ::D3D11_MESSAGE_SEVERITY_WARNING:
             LOG(Warning, L"[D3D11] {0}", formatedMessage);
             break;
 
-        case D3D11_MESSAGE_SEVERITY_ERROR:
-        case D3D11_MESSAGE_SEVERITY_CORRUPTION:
+        case ::D3D11_MESSAGE_SEVERITY_ERROR:
+        case ::D3D11_MESSAGE_SEVERITY_CORRUPTION:
             LOG(Error, L"[D3D11] {0}", formatedMessage);
             throw DeviceEncapsulatorException(formatedMessage, encapsulator->Device());
             break;
