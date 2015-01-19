@@ -25,6 +25,7 @@ namespace Graphics {
 class IDeviceAPIEncapsulator;
 FWD_REFPTR(Texture);
 FWD_REFPTR(Texture2D);
+FWD_REFPTR(TextureCube);
 }
 
 namespace Engine {
@@ -87,6 +88,7 @@ public:
         const Graphics::Texture *Texture() const { return _texture.get(); }
 
         const Graphics::Texture2D *AsTexture2D() const;
+        const Graphics::TextureCube *AsTextureCube() const;
 
         SINGLETON_POOL_ALLOCATED_DECL(TextureEntry);
 
@@ -133,12 +135,18 @@ public:
     void SetFallbackTexture2D(const Filename& path);
     void SetFallbackTexture2D(const Graphics::Texture2D *texture);
 
+    void SetFallbackTextureCube(const Filename& path);
+    void SetFallbackTextureCube(const Graphics::TextureCube *texture);
+
     void Update();
 
-    void PrepareTexture2D(const Filename& filename, bool useSRGB = false, bool asynchronous = true);
+    void PrepareTexture(const Filename& filename, bool useSRGB = false, bool asynchronous = true);
 
     bool FetchTexture2D(const Filename& filename, const Graphics::Texture2D **texture) const;
     const Graphics::Texture2D *FetchTexture2D_Fallback(const Filename& filename) const;
+
+    bool FetchTextureCube(const Filename& filename, const Graphics::TextureCube **texture) const;
+    const Graphics::TextureCube *FetchTextureCube_Fallback(const Filename& filename) const;
 
     void UnloadTexture(const Filename& filename);
     void UnloadLRUTextures();
@@ -149,8 +157,9 @@ public:
     void Shutdown(Graphics::IDeviceAPIEncapsulator *device);
 
 private:
-    TextureEntry *LoadTexture2D_Sync_(const Filename& filename, bool useSRGB, bool keepData);
-    TextureEntry *LoadTexture2D_ASync_(const Filename& filename, bool useSRGB, bool keepData);
+    bool FetchTextureImpl_(const Filename& filename, const Graphics::Texture **texture) const;
+    TextureEntry *LoadTexture_Sync_(const Filename& filename, bool useSRGB, bool keepData);
+    TextureEntry *LoadTexture_ASync_(const Filename& filename, bool useSRGB, bool keepData);
     void UnloadTextureEntry_(UniquePtr<TextureEntry>& pentry);
 
 private:
@@ -164,6 +173,7 @@ private:
     TextureEntry *_mru;
 
     Graphics::PCTexture2D _fallbackTexture2D;
+    Graphics::PCTextureCube _fallbackTextureCube;
 
     std::mutex _barrier;
     VECTOR(Texture, PCTextureEntryAsyncJob) _pjobs;

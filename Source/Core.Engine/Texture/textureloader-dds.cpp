@@ -515,13 +515,11 @@ bool ReadTextureHeader(TextureHeader& header, IVirtualFileSystemIStream *stream)
     header.Width = ddsHeader.width;
     header.Height = ddsHeader.height;
     header.Depth = ddsHeader.depth;
-
-    header.FaceCount = 1;
     header.ArraySize = 1;
+    header.IsCubeMap = false;
 
     u32 resDim = DDS_D3D11_RESOURCE_DIMENSION_UNKNOWN;
     DDS_DXGI_FORMAT format = DDS_DXGI_FORMAT_UNKNOWN;
-    bool isCubeMap = false;
 
     header.LevelCount = ddsHeader.mipMapCount;
     if (0 == header.LevelCount) {
@@ -548,7 +546,7 @@ bool ReadTextureHeader(TextureHeader& header, IVirtualFileSystemIStream *stream)
         case DDS_D3D11_RESOURCE_DIMENSION_TEXTURE2D:
             if (ddsHeaderDX10.miscFlag & DDS_D3D11_RESOURCE_MISC_TEXTURECUBE) {
                 header.ArraySize *= 6;
-                isCubeMap = true;
+                header.IsCubeMap = true;
             }
 
             header.Depth = 1;
@@ -703,7 +701,7 @@ bool ReadTextureHeader(TextureHeader& header, IVirtualFileSystemIStream *stream)
                     return false;
 
                 header.ArraySize = 6;
-                isCubeMap = true;
+                header.IsCubeMap = true;
             }
 
             header.Depth = 1;
@@ -765,7 +763,7 @@ bool ReadTextureHeader(TextureHeader& header, IVirtualFileSystemIStream *stream)
             break;
 
         case DDS_D3D11_RESOURCE_DIMENSION_TEXTURE2D:
-            if (isCubeMap)
+            if (header.IsCubeMap)
             {
                 // This is the right bound because we set arraySize to (NumCubes*6) above
                 if ((header.ArraySize > DDS_D3D11_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION) ||
@@ -791,15 +789,12 @@ bool ReadTextureHeader(TextureHeader& header, IVirtualFileSystemIStream *stream)
             break;
     }
 
-    header.FaceCount = isCubeMap ? 6 : 1;
-
-    const size_t headerSizeInBytes =
+    const size_t dataSizeInBytes =
         header.Format->SizeOfTexture2DInBytes(header.Width, header.Height, header.LevelCount) *
         header.Depth *
-        header.FaceCount *
         header.ArraySize;
 
-    header.SizeInBytes = checked_cast<u32>(headerSizeInBytes);
+    header.SizeInBytes = checked_cast<u32>(dataSizeInBytes);
 
     const ptrdiff_t dataOffset = sizeof(u32) + sizeof(DDS_HEADER) + (bDXT10Header ? sizeof(DDS_HEADER_DXT10) : 0);
     AssertRelease(stream->TellI() == dataOffset);

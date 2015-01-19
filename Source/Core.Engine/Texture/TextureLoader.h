@@ -10,7 +10,9 @@ namespace Core {
 namespace Graphics {
 class IDeviceAPIEncapsulator;
 class SurfaceFormat;
+class Texture;
 class Texture2D;
+class TextureCube;
 }
 
 namespace Engine {
@@ -22,9 +24,9 @@ struct TextureHeader {
     u32 Height;
     u32 Depth;
     u32 LevelCount;
-    u32 FaceCount;
     u32 ArraySize;
     u32 SizeInBytes;
+    bool IsCubeMap;
     const Graphics::SurfaceFormat *Format;
 };
 //----------------------------------------------------------------------------
@@ -64,8 +66,18 @@ public:
                                             const MemoryView<const u8>& pixels,
                                             String&& name,
                                             bool useSRGB ) const;
+    Graphics::TextureCube *CreateTextureCube(   Graphics::IDeviceAPIEncapsulator *device,
+                                                const MemoryView<const u8>& pixels,
+                                                String&& name,
+                                                bool useSRGB ) const;
 
-    static Graphics::Texture2D *Load(Graphics::IDeviceAPIEncapsulator *device, const Filename& filename, bool useSRGB);
+    // choose the right texture class :
+    Graphics::Texture *CreateTexture(   Graphics::IDeviceAPIEncapsulator *device,
+                                        const MemoryView<const u8>& pixels,
+                                        String&& name,
+                                        bool useSRGB ) const;
+
+    static Graphics::Texture *Load(Graphics::IDeviceAPIEncapsulator *device, const Filename& filename, bool useSRGB);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
