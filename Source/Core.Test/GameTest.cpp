@@ -270,13 +270,13 @@ void GameTest::LoadContent() {
 
 #endif
 
-    _diffuseTexture = Texture2DLoader::Load(device, L"GameData:/Models/dragon_40k_ao.dds", true);
+    _diffuseTexture = checked_cast<Texture2D *>(Texture2DLoader::Load(device, L"GameData:/Models/dragon_40k_ao.dds", true));
     AssertRelease(_diffuseTexture);
 
-    _bumpTexture = Texture2DLoader::Load(device, L"GameData:/Models/dragon_40k_bump.dds", false);
+    _bumpTexture = checked_cast<Texture2D *>(Texture2DLoader::Load(device, L"GameData:/Models/dragon_40k_bump.dds", false));
     AssertRelease(_bumpTexture);
 
-    _screenDuDvTexture = Texture2DLoader::Load(device, L"GameData:/Textures/GrassDuDv.dds", false);
+    _screenDuDvTexture = checked_cast<Texture2D *>(Texture2DLoader::Load(device, L"GameData:/Textures/GrassDuDv.dds", false));
     AssertRelease(_screenDuDvTexture);
 
     const ViewportF& viewport = DeviceEncapsulator()->Parameters().Viewport();

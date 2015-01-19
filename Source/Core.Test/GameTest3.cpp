@@ -205,9 +205,11 @@ GameTest3::GameTest3(const wchar_t *appname)
         0,
         Graphics::PresentInterval::Default ),
     10, 10) {
+#if 1
 #ifndef FINAL_RELEASE
     // creates a command window to show stdout messages
     Application::ApplicationConsole::RedirectIOToConsole();
+#endif
 #endif
 }
 //----------------------------------------------------------------------------
@@ -246,7 +248,8 @@ void GameTest3::Initialize(const Timeline& time) {
 
     MountGameDataPath_();
 
-    textureCache->SetFallbackTexture2D(L"GameData:/Textures/Tech/error.dds");
+    textureCache->SetFallbackTexture2D(L"GameData:/Textures/Tech/error2D.dds");
+    textureCache->SetFallbackTextureCube(L"GameData:/Textures/Tech/errorCube.dds");
 
     _world = new World("Test world", Services());
     _world->Initialize();
@@ -331,6 +334,8 @@ void GameTest3::LoadContent() {
     stdEffectDescriptor->AddSubstitution(MaterialConstNames::SeparateAlpha(), "WITH_SEPARATE_ALPHA=1");
 
     _mainScene->MaterialDatabase()->BindEffect("Standard", stdEffectDescriptor);
+    _mainScene->MaterialDatabase()->BindTexture("IrradianceMap", L"GameData:/Textures/CubeMaps/SaintLazarusChurch2/IrradianceMap.dds");
+    _mainScene->MaterialDatabase()->BindTexture("ReflectionMap", L"GameData:/Textures/CubeMaps/SaintLazarusChurch2/ReflectionMap.dds");
 
     //if (!LoadModel(_model, L"GameData:/Models/Infinity/DesertArena/DesertArena.obj"))
     //if (!LoadModel(_model, L"GameData:/Models/Infinity/BrokenTower/BrokenTower.obj"))
@@ -339,7 +344,8 @@ void GameTest3::LoadContent() {
     //if (!LoadModel(_model, L"GameData:/Models/Test/Cone.obj"))
     //if (!LoadModel(_model, L"GameData:/Models/Test/TeaPot.obj"))
     //if (!LoadModel(_model, L"GameData:/Models/Test/Scene.obj"))
-    if (!LoadModel(_model, L"GameData:/Models/Sponza/sponza.obj"))
+    if (!LoadModel(_model, L"GameData:/Models/Test/Sphere.obj"))
+    //if (!LoadModel(_model, L"GameData:/Models/Sponza/sponza.obj"))
     //if (!LoadModel(_model, L"GameData:/Models/Sponza/sponza_light.obj"))
         AssertNotReached();
 

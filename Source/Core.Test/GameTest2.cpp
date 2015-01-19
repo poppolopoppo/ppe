@@ -244,7 +244,8 @@ void GameTest2::Initialize(const Timeline& time) {
     _camera = new PerspectiveCamera(F_PIOver3, 0.01f, 100.0f, viewport);
     _camera->SetController(_cameraController);
 
-    textureCache->SetFallbackTexture2D(L"GameData:/Textures/Tech/error.dds");
+    textureCache->SetFallbackTexture2D(L"GameData:/Textures/Tech/error2D.dds");
+    textureCache->SetFallbackTextureCube(L"GameData:/Textures/Tech/errorCube.dds");
 
     const PAbstractRenderSurface backBuffer = new RenderSurfaceBackBuffer("BackBuffer", RenderSurfaceBackBuffer::RenderTarget_DepthStencil);
     const PAbstractRenderSurface principal = new RenderSurfaceRelative("Principal", float2::One(), SurfaceFormat::R16G16B16A16_F, SurfaceFormat::D24S8);
