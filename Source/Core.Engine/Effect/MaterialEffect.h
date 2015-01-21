@@ -8,6 +8,7 @@
 #include "Core/Container/Pair.h"
 #include "Core/Container/Vector.h"
 #include "Core/Memory/RefPtr.h"
+#include "Core/Memory/WeakPtr.h"
 #include "Core/Meta/PointerWFlags.h"
 
 namespace Core {
@@ -18,7 +19,7 @@ class BindName;
 class IDeviceAPIContextEncapsulator;
 class IDeviceAPIEncapsulator;
 FWD_REFPTR(SamplerState);
-FWD_REFPTR(Texture);
+FWD_WEAKPTR(Texture);
 }
 
 namespace Engine {
@@ -53,7 +54,7 @@ public:
 
     struct TextureBinding {
         Core::Filename Filename;
-        Graphics::PCTexture Texture;
+        Graphics::WCTexture Texture;
         PRenderSurfaceLock SurfaceLock;
     };
 

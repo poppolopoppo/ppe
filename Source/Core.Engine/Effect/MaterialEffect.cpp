@@ -313,16 +313,14 @@ void MaterialEffect::Set(Graphics::IDeviceAPIContextEncapsulator *deviceContext)
             const TextureSlot& slot = _textureSlots[textureOffset + i];
             const TextureBinding& binding = _textureBindings[textureOffset + i];
 
-            const Graphics::PCTexture& texture = binding.Texture;
-            if (binding.SurfaceLock)
-                binding.SurfaceLock->Bind(stage, i); // tracks usage of RTs as texture to unbind them before using them as RT
+            // achtung, texture can be null as it's a weak reference pointing to the texture cache
+            // so cleaning the texture cache will reset that value !
+            const Graphics::WCTexture& texture = binding.Texture;
 
-            // the following assert will be summoned if 2 shaders ask for the same texture
-            // but each with and without the uniSRGB_ prefix ...
-            // TODO : specify texture properties (including compression type, zip, preprocess operators)
-            // globally with virtual filesystem regexps.
-            Assert( !_textureSlots[textureOffset + i].UseSRGB ||
-                    texture->Format()->IsGammaSpace() );
+            if (binding.SurfaceLock) {
+                Assert(texture);
+                binding.SurfaceLock->Bind(stage, i); // tracks usage of RTs as texture to unbind them before using them as RT
+            }
 
             deviceContext->SetTexture(stage, i, texture);
             deviceContext->SetSamplerState(stage, i, slot.Sampler);
