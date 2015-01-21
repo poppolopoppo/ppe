@@ -17,10 +17,10 @@
 #include "Core/Allocator/PoolAllocator-impl.h"
 
 #include "Core/Memory/MemoryView.h"
-#include "Core/Memory/MemoryStack.h"
 #include "Core/Memory/RefPtr.h"
 #include "Core/Memory/UniqueView.h"
 #include "Core/Memory/UniquePtr.h"
+#include "Core/Memory/WeakPtr.h"
 
 #include "Core/IO/FileSystem.h"
 #include "Core/IO/Format.h"
