@@ -16,7 +16,6 @@ ECHO #once
 ECHO ;-------------------------------------------------------------------------------
 ECHO ; Local Config
 ECHO ;-------------------------------------------------------------------------------
-ECHO .FBuildBin          = '%~d0%~p0FBuild.exe'
 ECHO .VSBasePath         = '%VS120COMNTOOLS%..\..\'
 ECHO .DirectX11SDKPath   = '%DXSDK_DIR%'
 ECHO .WindowsSDKBasePath = '%WindowsSDKBasePath%'

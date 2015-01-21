@@ -604,6 +604,15 @@
     <CustomBuild Include="Memory\UniqueView.h">
       <Filter>Memory</Filter>
     </CustomBuild>
+    <CustomBuild Include="Memory\WeakPtr-inl.h">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\WeakPtr.cpp">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\WeakPtr.h">
+      <Filter>Memory</Filter>
+    </CustomBuild>
     <CustomBuild Include="Meta\Activator.h">
       <Filter>Meta</Filter>
     </CustomBuild>

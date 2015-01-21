@@ -9,8 +9,8 @@
     .PlatformToolset            = 'v120'
     .IncludeSearchPath          = '^$(ProjectDir)..;.\;$DirectX11SDKPath$/Include;$AdditionalInclude$'
 
-    .ProjectBuildCommand        = 'cd "^$(ProjectDir)..\..\" &amp; "$FBuildBin$" $VSFBuildOptions$ -vs ^$(ProjectName)-^$(PlatformTarget)-^$(Configuration)'
-    .ProjectRebuildCommand      = 'cd "^$(ProjectDir)..\..\" &amp; "$FBuildBin$" $VSFRebuildOptions$ -vs -clean ^$(ProjectName)-^$(PlatformTarget)-^$(Configuration)'
+    .ProjectBuildCommand        = 'cd "^$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" $VSFBuildOptions$ -vs ^$(ProjectName)-^$(PlatformTarget)-^$(Configuration)'
+    .ProjectRebuildCommand      = 'cd "^$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" $VSFRebuildOptions$ -vs -clean ^$(ProjectName)-^$(PlatformTarget)-^$(Configuration)'
 
     .OutputDirectory            = '^$(ProjectDir)..\..\$OutputBase$\^$(PlatformTarget)-^$(Configuration)\^$(ProjectName)'
     .IntermediateDirectory      = '^$(ProjectDir)..\..\$OutputBase$\Intermediate\^$(PlatformTarget)-^$(Configuration)\^$(ProjectName)'
