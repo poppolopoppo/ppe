@@ -2,14 +2,16 @@
 
 #include "Core.Graphics/Graphics.h"
 
+#include "Core/IO/String.h"
+
 #include "Core/Memory/RefPtr.h"
+#include "Core/Memory/WeakPtr.h"
+
 #include "Core/Meta/BitField.h"
 #include "Core/Meta/ThreadResource.h"
 
-#define WITH_GRAPHICS_DEVICERESOURCE_NAME
-
-#ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
-#   include "Core/IO/String.h"
+#ifndef FINAL_RELEASE
+#   define WITH_GRAPHICS_DEVICERESOURCE_NAME
 #endif
 
 namespace Core {
@@ -36,7 +38,8 @@ const char *ResourceTypeToCStr(DeviceResourceType type);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(DeviceResource);
-class DeviceResource : public RefCountable, Meta::ThreadResource {
+FWD_WEAKPTR(DeviceResource);
+class DeviceResource : public WeakAndRefCountable {
 protected:
     DeviceResource(DeviceResourceType resourceType);
 
