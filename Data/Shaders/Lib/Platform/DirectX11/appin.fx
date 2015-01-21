@@ -30,6 +30,6 @@
 #define AppIn_Get_BinormalX_UX10Y10Z10W2N(v) ((v).xyz * 2 - 1)
 
 #define AppIn_Get_BinormalX_PackedInTangentW(normal_, tangent_, winding_) \
-    cross((tangent_), (normal_)) * ((winding_) > 0 ? -1 : 1)
+    (cross((normal_), (tangent_)) * ((winding_) != 0 ? 1 : -1))
 
 #endif //!_LIB_PLATFORM_DIRECTX11_APPIN_FX_INCLUDED

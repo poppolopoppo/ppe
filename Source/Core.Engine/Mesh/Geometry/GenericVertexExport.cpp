@@ -237,7 +237,7 @@ void ComputeTangentSpace(GenericVertex& vertices, const MemoryView<const u32>& i
 
         if (float3(0) == tangent && float3(0) == binormal) {
             tangent = float3(1, 0, 0);
-            binormal = Cross(tangent, normal);
+            binormal = Cross(normal, tangent);
         }
         else if (float3(0) == tangent) {
             Assert(float3(0) != binormal);
@@ -247,7 +247,7 @@ void ComputeTangentSpace(GenericVertex& vertices, const MemoryView<const u32>& i
         else if (float3(0) == binormal) {
             Assert(float3(0) != tangent);
             tangent = Normalize3(tangent);
-            binormal = Cross(tangent, normal);
+            binormal = Cross(normal, tangent);
         }
         else {
             tangent = Normalize3(tangent);
