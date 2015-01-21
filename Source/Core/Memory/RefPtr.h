@@ -66,6 +66,7 @@ private:
     bool DecRefCount_ReturnIfReachZero() const;
 
     mutable std::atomic<size_t> _refCount;
+
 #ifdef WITH_CORE_SAFEPTR
     // for debugging purpose : assert if SafePtr<> are still tracking that object
     template <typename T>
@@ -133,8 +134,6 @@ public:
     void Swap(RefPtr<U>& other);
 
 protected:
-    friend class RefPtrBase;
-
     void IncRefCountIFP() const;
     void DecRefCountIFP() const;
 
@@ -216,8 +215,6 @@ public:
     void Swap(SafePtr<U>& other);
 
 protected:
-    friend class RefPtrBase;
-
     void IncRefCountIFP() const;
     void DecRefCountIFP() const;
 
@@ -258,13 +255,13 @@ bool operator >=(const SafePtr<_Lhs>& lhs, const SafePtr<_Rhs>& rhs) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template < typename T, typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits> operator <<(std::basic_ostream<char, _Traits>& oss, const RefPtr<T>& refptr) {
+std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const RefPtr<T>& refptr) {
     return oss << refptr.get();
 }
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_SAFEPTR
 template < typename T, typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits> operator <<(std::basic_ostream<char, _Traits>& oss, const SafePtr<T>& safeptr) {
+std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const SafePtr<T>& safeptr) {
     return oss << safeptr.get();
 }
 #endif

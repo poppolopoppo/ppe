@@ -25,7 +25,6 @@ public:
     void CheckThreadId(std::thread::id threadId) const { Assert(threadId == _threadId); }
     void OwnedByThisThread() const { CheckThreadId(std::this_thread::get_id()); }
     void SetThreadId(std::thread::id threadId) { OwnedByThisThread(); _threadId = threadId; }
-#   define THIS_THREADRESOURCE_CHECKACCESS() OwnedByThisThread()
 private:
     std::thread::id _threadId;
 #else
@@ -35,9 +34,16 @@ private:
     void CheckThreadId(std::thread::id) const {}
     void OwnedByThisThread() const {}
     void SetThreadId(std::thread::id ) {}
-#   define THIS_THREADRESOURCE_CHECKACCESS() NOOP
 #endif
 };
+//----------------------------------------------------------------------------
+#ifdef WITH_CORE_THREADRESOURCE_CHECKS
+#   define THREADRESOURCE_CHECKACCESS(_pResource) (_pResource)->OwnedByThisThread()
+#else
+#   define THREADRESOURCE_CHECKACCESS(_pResource) NOOP
+#endif
+//----------------------------------------------------------------------------
+#define THIS_THREADRESOURCE_CHECKACCESS() THREADRESOURCE_CHECKACCESS(this)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
