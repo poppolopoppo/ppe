@@ -197,7 +197,7 @@ GameTest3::GameTest3(const wchar_t *appname)
     appname,
     Graphics::DeviceAPI::DirectX11,
     Graphics::PresentationParameters(
-        1600, 900,
+        640, 480,//1600, 900,
         Graphics::SurfaceFormat::R8G8B8A8_SRGB,
         Graphics::SurfaceFormat::D24S8,
         false,
@@ -388,6 +388,11 @@ void GameTest3::Update(const Timeline& time) {
     IDeviceAPIEncapsulator *const device = encapsulator->Device();
     IDeviceAPIContextEncapsulator *const context = encapsulator->Context();
 
+    // texture reloading
+    if (Keyboard().IsKeyPressed(KeyboardKey::Control) &&
+        Keyboard().IsKeyUp(KeyboardKey::F7)) {
+        _context->TextureCacheService()->TextureCache()->Clear();
+    }
     // shader compilation
     if (Keyboard().IsKeyPressed(KeyboardKey::Control) &&
         Keyboard().IsKeyUp(KeyboardKey::F8)) {
