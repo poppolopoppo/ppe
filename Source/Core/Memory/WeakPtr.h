@@ -24,7 +24,7 @@ class WeakPtrBase;
 class WeakAndRefCountable : public RefCountable, public Meta::ThreadResource {
 public:
     WeakAndRefCountable();
-    ~WeakAndRefCountable();
+    virtual ~WeakAndRefCountable();
 
     WeakAndRefCountable(WeakAndRefCountable&& );
     WeakAndRefCountable& operator =(WeakAndRefCountable&& );
