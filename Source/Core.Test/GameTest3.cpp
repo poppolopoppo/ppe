@@ -391,7 +391,7 @@ void GameTest3::Update(const Timeline& time) {
     // texture reloading
     if (Keyboard().IsKeyPressed(KeyboardKey::Control) &&
         Keyboard().IsKeyUp(KeyboardKey::F7)) {
-        _context->TextureCacheService()->TextureCache()->Clear();
+        _context->TextureCacheService()->TextureCache()->ReloadAllTextures();
     }
     // shader compilation
     if (Keyboard().IsKeyPressed(KeyboardKey::Control) &&

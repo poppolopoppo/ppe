@@ -133,10 +133,10 @@ public:
     const ThreadSafeBuddyHeap *Heap() const { return &_heap; }
 
     void SetFallbackTexture2D(const Filename& path);
-    void SetFallbackTexture2D(const Graphics::Texture2D *texture);
+    void SetFallbackTexture2D(Graphics::Texture2D *texture);
 
     void SetFallbackTextureCube(const Filename& path);
-    void SetFallbackTextureCube(const Graphics::TextureCube *texture);
+    void SetFallbackTextureCube(Graphics::TextureCube *texture);
 
     void Update();
 
@@ -152,6 +152,7 @@ public:
     void UnloadLRUTextures();
 
     void Clear();
+    void ReloadAllTextures();
 
     void Start(Graphics::IDeviceAPIEncapsulator *device);
     void Shutdown(Graphics::IDeviceAPIEncapsulator *device);
@@ -172,8 +173,8 @@ private:
     TextureEntry *_lru;
     TextureEntry *_mru;
 
-    Graphics::PCTexture2D _fallbackTexture2D;
-    Graphics::PCTextureCube _fallbackTextureCube;
+    Graphics::PTexture2D _fallbackTexture2D;
+    Graphics::PTextureCube _fallbackTextureCube;
 
     std::mutex _barrier;
     VECTOR(Texture, PCTextureEntryAsyncJob) _pjobs;

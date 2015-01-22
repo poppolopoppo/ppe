@@ -186,18 +186,17 @@ void TextureCache::SetFallbackTexture2D(const Filename& path) {
     Assert(_device);
 
     const bool useSRGB = true;
-    const bool keepData = false;
+    Graphics::Texture *texture = Texture2DLoader::Load(_device, path, useSRGB);
+    Assert(texture);
 
-    TextureEntry *pentry = LoadTexture_Sync_(path, useSRGB, keepData);
-    Assert(pentry);
-
-    SetFallbackTexture2D(pentry->AsTexture2D());
+    SetFallbackTexture2D(checked_cast<Graphics::Texture2D *>(texture));
 }
 //----------------------------------------------------------------------------
-void TextureCache::SetFallbackTexture2D(const Graphics::Texture2D *texture) {
+void TextureCache::SetFallbackTexture2D(Graphics::Texture2D *texture) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(texture);
-    Assert(_device);
+    Assert(texture->Frozen());
+    Assert(texture->Available());
 
     _fallbackTexture2D = texture;
 }
@@ -208,18 +207,17 @@ void TextureCache::SetFallbackTextureCube(const Filename& path) {
     Assert(_device);
 
     const bool useSRGB = true;
-    const bool keepData = false;
+    Graphics::Texture *texture = Texture2DLoader::Load(_device, path, useSRGB);
+    Assert(texture);
 
-    TextureEntry *pentry = LoadTexture_Sync_(path, useSRGB, keepData);
-    Assert(pentry);
-
-    SetFallbackTextureCube(pentry->AsTextureCube());
+    SetFallbackTextureCube(checked_cast<Graphics::TextureCube *>(texture));
 }
 //----------------------------------------------------------------------------
-void TextureCache::SetFallbackTextureCube(const Graphics::TextureCube *texture) {
+void TextureCache::SetFallbackTextureCube(Graphics::TextureCube *texture) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(texture);
-    Assert(_device);
+    Assert(texture->Frozen());
+    Assert(texture->Available());
 
     _fallbackTextureCube = texture;
 }
@@ -454,9 +452,6 @@ void TextureCache::Clear() {
 
     _completionPort.WaitAll();
 
-    _fallbackTexture2D = nullptr;
-    _fallbackTextureCube = nullptr;
-
     for (Pair<const Filename, UniquePtr<TextureEntry> >& entry : _textures) {
         UniquePtr<TextureEntry>& pentry = entry.second;
         Assert(pentry);
@@ -466,6 +461,48 @@ void TextureCache::Clear() {
     }
 
     _textures.clear();
+}
+//----------------------------------------------------------------------------
+void TextureCache::ReloadAllTextures() {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(_device);
+
+    _completionPort.WaitAll();
+
+    const size_t textureCount = _textures.size();
+
+    LOG(Information, L"[TextureCache] Reloading {0} textures ...", textureCount);
+
+    struct TextureQuery {
+        Core::Filename Filename;
+        bool KeepData   : 1;
+        bool UseSRGB    : 1;
+    };
+    STACKLOCAL_POD_ARRAY(TextureQuery, queries, textureCount);
+
+    size_t i = 0;
+    for (Pair<const Filename, UniquePtr<TextureEntry> >& entry : _textures) {
+        UniquePtr<TextureEntry>& pentry = entry.second;
+        Assert(pentry);
+        Assert(pentry->Filename() == entry.first);
+
+        new ((void *)&queries[i].Filename) Core::Filename(pentry->Filename());
+        queries[i].UseSRGB = pentry->UseSRGB();
+        queries[i].KeepData = pentry->KeepData();
+
+        UnloadTextureEntry_(pentry);
+
+        ++i;
+    }
+    Assert(textureCount == i);
+
+    _textures.clear();
+
+    for (const TextureQuery& query : queries) {
+        TextureEntry *const pentry = LoadTexture_ASync_(query.Filename, query.UseSRGB, query.KeepData);
+        Assert(pentry);
+        TextureEntry_InsertMRU_(&_lru, &_mru, pentry);
+    }
 }
 //----------------------------------------------------------------------------
 void TextureCache::Start(Graphics::IDeviceAPIEncapsulator *device) {
@@ -491,6 +528,15 @@ void TextureCache::Shutdown(Graphics::IDeviceAPIEncapsulator *device) {
     _completionPort.WaitAll();
 
     Clear();
+
+    if (_fallbackTexture2D) {
+        _fallbackTexture2D->Destroy(_device);
+        _fallbackTexture2D = nullptr;
+    }
+    if (_fallbackTextureCube) {
+        _fallbackTextureCube->Destroy(_device);
+        _fallbackTextureCube = nullptr;
+    }
 
     _heap.Shutdown();
     _device = nullptr;
