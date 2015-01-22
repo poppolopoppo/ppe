@@ -48,7 +48,7 @@ PixelIn vmain(AppIn appIn) {
 
     PixelIn o;
     o.HPOS = clipPos.xyzw;
-    o.TexCoord = AppIn_Get_TexCoord0(appIn)*3;
+    o.TexCoord = AppIn_Get_TexCoord0(appIn);
     o.Normal = AppIn_Get_Normal0(appIn);
     o.Eye = worldPos.xyz - uniEyePosition;
 
@@ -207,7 +207,7 @@ float3 SpecularTerm(float roughness, float3 H, float3 N, float3 V, float3 L, flo
     refl *= F/10.0;*/
 
     float3 refl = TEXCUBELOD(uniLinearWrap_ReflectionMap, reflect(V, N), roughness*9).rgb;
-    refl *= F;
+    refl *= F*0;
 
     float G = min(  (2.0 * NdotH * NdotV) / VdotH,
                     (2.0 * NdotH * NdotL) / VdotH );
@@ -219,11 +219,11 @@ float3 SpecularTerm(float roughness, float3 H, float3 N, float3 V, float3 L, flo
     float D = Distribution_GGX(roughness, NdotH);
 
     //return ((F * D * G) / (NdotL * NdotV)) * float3(1,1,1) + refl;
-    return ((F * D * G) / (4.0 * NdotL * NdotV)) * float3(1,1,1) + refl;
+    return ((F * D * G) / (4.0 * NdotL * NdotV)) + refl;
 }
 
 float3 DiffuseTerm(float3 N, float3 L, float F) {
-    return (1.0 - F) * max(dot(N, L), 0) * float3(1,1,1);
+    return (1.0 - F) * max(dot(N, L), 0);
 }
 
 // https://github.com/skurmedel/webglmat/blob/master/src/shaders/metal_fs.glsl
@@ -232,7 +232,7 @@ float3 Shade(Geometry g, Material m, DirectionalLight l) {
     float3 V = g.Eye;
     float3 L = l.Direction;
     float3 H = normalize(L + V);
-    float  F = Schlick_RefractiveIndex(m.RefractiveIndex, saturate(dot(H, V)) );
+    float  F = Schlick_RefractiveIndex(m.RefractiveIndex, dot(H, V) );
 
     float3 diffuse  = DiffuseTerm(N, L, F) * (m.Albedo * (1.0 - m.Metallic));
     float3 specular = SpecularTerm(m.Roughness, H, N, V, L, F) * lerp(float3(1,1,1), m.Albedo, m.Metallic);
@@ -248,6 +248,115 @@ float3 ToneMap(float3 color, float gamma) {
     return lerp(color, toned, 1.0 - luma);
 }
 
+#define ROUGHNESS_LOOK_UP  0
+#define ROUGHNESS_BECKMANN 1
+#define ROUGHNESS_GAUSSIAN 2
+#define ROUGHNESS_GGX      3
+
+float3 CookTorrance(float3 normal, float3 viewer, float3 light,
+                    float roughness_value,
+                    float ref_at_norm_incidence,
+                    float3 cDiffuse,
+                    float3 cSpecular,
+                    uniform int roughness_mode ) {
+    // Compute any aliases and intermediary values
+    // -------------------------------------------
+    float3 half_vector = normalize( light + viewer );
+    float NdotL        = max(0.0001, dot( normal, light ) );
+    float NdotH        = max(0.0001, dot( normal, half_vector ) );
+    float NdotV        = max(0.0001, dot( normal, viewer ) );
+    float VdotH        = max(0.0001, dot( viewer, half_vector ) );
+    float r_sq         = roughness_value * roughness_value;
+
+
+
+    // Evaluate the geometric term
+    // --------------------------------
+    float geo_numerator   = 2.0f * NdotH;
+    float geo_denominator = VdotH;
+
+    float geo_b = (geo_numerator * NdotV ) / geo_denominator;
+    float geo_c = (geo_numerator * NdotL ) / geo_denominator;
+    float geo   = min( 1.0f, min( geo_b, geo_c ) );
+
+
+
+    // Now evaluate the roughness term
+    // -------------------------------
+    float roughness;
+
+    /*
+    if( ROUGHNESS_LOOK_UP == roughness_mode )
+    {
+        // texture coordinate is:
+        float2 tc = { NdotH, roughness_value };
+
+        // Remap the NdotH value to be 0.0-1.0
+        // instead of -1.0..+1.0
+        tc.x += 1.0f;
+        tc.x /= 2.0f;
+
+        // look up the coefficient from the texture:
+        roughness = texRoughness.Sample( sampRoughness, tc );
+    }*/
+    if( ROUGHNESS_BECKMANN == roughness_mode )
+    {
+        float roughness_a = 1.0f / ( 4.0f * r_sq * pow( NdotH, 4 ) );
+        float roughness_b = NdotH * NdotH - 1.0f;
+        float roughness_c = r_sq * NdotH * NdotH;
+
+        roughness = roughness_a * exp( roughness_b / roughness_c );
+    }
+    if( ROUGHNESS_GAUSSIAN == roughness_mode )
+    {
+        // This variable could be exposed as a variable
+        // for the application to control:
+        float c = 1.0f;
+        float alpha = acos( dot( normal, half_vector ) );
+        roughness = c * exp( -( alpha / r_sq ) );
+    }
+    if (ROUGHNESS_GGX == roughness_mode )
+    {
+        float NdotH_sq = NdotH * NdotH;
+        roughness = r_sq / (fPI * pow(NdotH_sq * (r_sq - 1) + 1, 2));
+    }
+
+
+    // Next evaluate the Fresnel value
+    // -------------------------------
+    float fresnel = pow( 1.0f - VdotH, 5.0f );
+    fresnel *= ( 1.0f - ref_at_norm_incidence );
+    fresnel += ref_at_norm_incidence;
+
+
+
+    // Put all the terms together to compute
+    // the specular term in the equation
+    // -------------------------------------
+    float3 Rs_numerator   = ( fresnel * geo * roughness );
+    float Rs_denominator  = NdotV * NdotL;
+    float3 Rs             = Rs_numerator/ Rs_denominator;
+
+    // Put all the parts together to generate
+    // the final colour
+    // --------------------------------------
+    float3 refl = TEXCUBELOD(uniLinearWrap_ReflectionMap, reflect(-viewer, normal), roughness_value*9).rgb;
+    float3 irrd = TEXCUBE(uniLinearWrap_IrradianceMap, normal).rgb;
+    float3 final = (max(0.0f, NdotL) + irrd*0.15) * ((1 - fresnel) * (cSpecular * Rs + cDiffuse) + refl * fresnel);
+
+
+    return final;
+}
+
+float3 CookTorrance(Geometry g, Material m, DirectionalLight l) {
+    return CookTorrance(g.Normal, -g.Eye, l.Direction,
+                        m.Roughness,
+                        RefractiveIndex_to_Fresnel0(m.RefractiveIndex),
+                        m.Albedo * (1 - m.Metallic),
+                        lerp(float3(1,1,1), m.Albedo, m.Metallic),
+                        ROUGHNESS_GGX );
+}
+
 float4 pmain(PixelIn pixelIn) : SV_Target {
     float alpha = 1.0;
 #if WITH_SEPARATE_ALPHA
@@ -257,9 +366,9 @@ float4 pmain(PixelIn pixelIn) : SV_Target {
 
     Material m;
     m.Albedo = TEX2D(uniSRGB_uniLinearWrap_DiffuseMap, pixelIn.TexCoord).rgb;
-    m.Metallic = 0.0;
-    m.RefractiveIndex = 0.4;
-    m.Roughness = 0.9;
+    m.Metallic = 0.4;
+    m.RefractiveIndex = 0.1;
+    m.Roughness = 0.5;
 
     Geometry g;
     g.Normal = normalize(pixelIn.Normal);
@@ -275,8 +384,11 @@ float4 pmain(PixelIn pixelIn) : SV_Target {
 
     float3 shading = Shade(g, m, l);
 
+    shading = CookTorrance(g, m, l);
+
     float4 result = float4(shading, alpha);
     //result.rgb = ToneMap(result.rgb, 2.3);
+    //result.rgb = TEXCUBE(uniLinearWrap_ReflectionMap, g.Normal).rgb;
     result.rgb *= result.a;
 
     return result;

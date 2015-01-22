@@ -37,8 +37,11 @@ PixelIn vmain(AppIn appIn) {
 }
 
 float4 pmain(PixelIn pixelIn) : SV_Target {
-
     float2 uv = pixelIn.TexCoord;
+
+#if 0
+    return TEX2D(uniLinearClamp_Principal, uv).rgba;
+#endif
 
 #if 0
     if (uv.x < 0.5)

@@ -25,10 +25,10 @@ struct Params {
 //----------------------------------------------------------------------------
 Params DefaultParams() {
     Params p;
-    p.Exposure = pow(2,3);
+    p.Exposure = pow(2,2.5);
     p.WhitePoint = 11.2;
-    p.BloomBias = 0.5;
-    p.BloomIntensity = 1.0;
+    p.BloomBias = 0.15;
+    p.BloomIntensity = 0.7;
     p.CubicLensK = -0.25;
     p.CubicLensKCube = 0.1;
     p.CubicLensDime = 20.0;
@@ -49,7 +49,7 @@ float2 RadialDistortion(float2 coord, float2 pos, float distortion = 0.15) {
 //----------------------------------------------------------------------------
 float3 Vignette(float2 uv, float2 dudv, float3 color) {
     float2 vignette2 = saturate(min(uv, 1 - uv) * float2(1, dudv.x/dudv.y));
-    vignette2 = 1 - pow(1 - abs(vignette2), 80);
+    vignette2 = 1 - pow(1 - abs(vignette2), 60);
     float vignette = saturate(dot(vignette2, vignette2.yx).x);
 
     return color * vignette;
