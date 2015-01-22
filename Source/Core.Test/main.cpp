@@ -70,6 +70,8 @@ static void PrintMemStats(const Core::CrtMemoryStats& memoryStats) {
 #endif
 }
 
+//#define WITH_APPLICATION_TRY_CATCH
+
 template <typename _Application>
 static int Bootstrap(void *applicationHandle, int nShowCmd, int argc, const wchar_t**argv) {
     using namespace Core;
@@ -83,14 +85,14 @@ static int Bootstrap(void *applicationHandle, int nShowCmd, int argc, const wcha
     CurrentProcess::Instance().SetAppIcon(IDI_WINDOW_ICON);
 #endif
 
-#ifndef FINAL_RELEASE
+#ifdef WITH_APPLICATION_TRY_CATCH
     try
 #endif
     {
         _Application app;
         Application::LaunchApplication(&app);
     }
-#ifndef FINAL_RELEASE
+#ifdef WITH_APPLICATION_TRY_CATCH
     catch (const std::exception& e)
     {
         const WString wwhat = ToWString(e.what());
