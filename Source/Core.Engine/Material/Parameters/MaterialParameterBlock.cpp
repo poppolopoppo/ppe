@@ -81,6 +81,8 @@ bool TryCreateOptionalMaterialParameter(
     }
 
     const Graphics::BindName parameterName(&cstr[lengthof(uniOptional) - 1]);
+
+    // Try to find a parameter with this name :
     const auto it = material->Parameters().Find(parameterName);
     if (material->Parameters().end() != it) {
         Assert(it->second);
@@ -88,6 +90,13 @@ bool TryCreateOptionalMaterialParameter(
         return true;
     }
 
+    // If failed try to create a special parameter from that name (may exists with a modifier, like uniInvert_*) :
+    if (TryCreateDefaultMaterialParameter(param, material, scene, parameterName, field)) {
+        Assert(*param);
+        return true;
+    }
+
+    // If really failed create a place holder with a default value :
     switch (field.Type())
     {
     case Graphics::ConstantFieldType::Int:
