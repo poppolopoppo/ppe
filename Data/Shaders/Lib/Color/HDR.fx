@@ -29,8 +29,13 @@ static const float Uncharted2Tonemap_WhitePoint = 11.2;
 //----------------------------------------------------------------------------
 float3 ToneMap(float3 color, Params params) {
 
-    float3 tone = Uncharted2Tonemap(params.Exposure * color);
-    tone /= Uncharted2Tonemap(params.WhitePoint);
+    color = color * params.Exposure;
+
+    static const float exposureBias = 2.0f;
+    float3 curr = Uncharted2Tonemap(exposureBias*color);
+
+    float3 whiteScale = 1.0f/Uncharted2Tonemap(params.WhitePoint);
+    float3 tone = curr*whiteScale;
 
     return tone;
 }

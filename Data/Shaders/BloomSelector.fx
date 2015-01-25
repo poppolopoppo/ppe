@@ -41,7 +41,7 @@ float4 pmain(PixelIn pixelIn) : SV_Target {
     hdrParams.WhitePoint = pp.WhitePoint;
 
     float3 tone = HDR::Uncharted2Tonemap(2 * hdrParams.Exposure * color);
-    float3 selection = saturate(color / HDR::Uncharted2Tonemap(hdrParams.WhitePoint) - 1 + pp.BloomBias);
+    float3 selection = saturate(tone / HDR::Uncharted2Tonemap(hdrParams.WhitePoint) - 1 + pp.BloomBias);
 
     return float4(selection.rgb, 1);
 }

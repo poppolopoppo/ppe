@@ -42,5 +42,5 @@ float4 pmain(PixelIn pixelIn) : SV_Target {
         blur += TEX2D(uniLinearClamp_Input, uv - fOffsets[i] * dudv).rgb * fWeights[i];
     }
 
-    return float4(blur.rgb, 1);
+    return float4(saturate(blur.rgb), 1);
 }

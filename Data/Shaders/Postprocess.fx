@@ -44,6 +44,27 @@ float4 pmain(PixelIn pixelIn) : SV_Target {
 #endif
 
 #if 0
+    return TEX2D(uniLinearClamp_Bloom, uv).rgba;
+#endif
+#if 0
+    return Sampling::Bicubic(TEXTURE2DPARAM_CALL(uniLinearClamp_Bloom), uv, uniDuDv_Bloom.xy).rgba;
+#endif
+#if 0
+    return float4(Sampling::Bicubic(TEXTURE2DPARAM_CALL(uniLinearClamp_PrincipalBlur), uv, uniDuDv_Bloom.xy).rgb, 1);
+#endif
+
+#if 0
+    {
+        PostProcess::Params pp = PostProcess::DefaultParams();
+        HDR::Params hdrParams;
+        hdrParams.Exposure = pp.Exposure;
+        hdrParams.WhitePoint = pp.WhitePoint;
+        float3 color = HDR::ToneMap(TEX2D(uniLinearClamp_Principal, uv).rgb, hdrParams);
+        return float4(color, 1);
+    }
+#endif
+
+#if 0
     if (uv.x < 0.5)
         /*return TEX2DLOD(uniLinearClamp_Bloom, uv, 0).rgba;
     else //if (uv.x < 0.75)
@@ -54,6 +75,7 @@ float4 pmain(PixelIn pixelIn) : SV_Target {
 
     PostProcess::Params pp = PostProcess::DefaultParams();
 
+#if 1
     float2 bentUV = uv;
     float3 color = PostProcess::CubicLensDistortion(
             bentUV,
@@ -65,22 +87,22 @@ float4 pmain(PixelIn pixelIn) : SV_Target {
             pp.CubicLensDime, pp.CubicLensBlur,
             pp.AberrationChannels );
 
-    //return float4(color, 1);
+#else
+    float2 bentUV = uv;
+    float3 color = TEX2D(uniLinearClamp_Principal, uv).rgb;
 
-#if 0
-    bentUV = uv;
-    color = TEX2D(uniLinearClamp_Principal, uv).rgb;
 #endif
 
     HDR::Params hdrParams;
     hdrParams.Exposure = pp.Exposure;
     hdrParams.WhitePoint = pp.WhitePoint;
 
-    color = HDR::ToneMap(color, hdrParams);
-
+#if 1
     float3 bloom = Sampling::Bicubic(TEXTURE2DPARAM_CALL(uniLinearClamp_Bloom), bentUV, uniDuDv_Bloom.xy).rgb;
-    color = lerp(color, color + bloom, pp.BloomIntensity);
-    color = saturate(color);
+    color = color + bloom * pp.BloomIntensity;
+#endif
+
+    color = HDR::ToneMap(color, hdrParams);
 
     //color = PostProcess::Grid(bentUV, uniDuDv_Principal, color, 28, 0.05);
     //color = PostProcess::Scanlines(bentUV, 1/uniDuDv_Principal.xy, color);

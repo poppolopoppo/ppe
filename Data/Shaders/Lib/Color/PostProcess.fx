@@ -25,14 +25,14 @@ struct Params {
 //----------------------------------------------------------------------------
 Params DefaultParams() {
     Params p;
-    p.Exposure = pow(2,2.5);
+    p.Exposure = pow(2,3);
     p.WhitePoint = 11.2;
-    p.BloomBias = 0.15;
-    p.BloomIntensity = 0.7;
-    p.CubicLensK = -0.25;
+    p.BloomBias = 0.1;
+    p.BloomIntensity = 1.0;
+    p.CubicLensK = -0.3;
     p.CubicLensKCube = 0.1;
-    p.CubicLensDime = 20.0;
-    p.CubicLensBlur = 30.0;
+    p.CubicLensDime = 25.0;
+    p.CubicLensBlur = 60.0;
     p.AberrationChannels = float3(0.95,1.05,1.0);
     p.Vignette = 1;
     return p;
@@ -49,7 +49,7 @@ float2 RadialDistortion(float2 coord, float2 pos, float distortion = 0.15) {
 //----------------------------------------------------------------------------
 float3 Vignette(float2 uv, float2 dudv, float3 color) {
     float2 vignette2 = saturate(min(uv, 1 - uv) * float2(1, dudv.x/dudv.y));
-    vignette2 = 1 - pow(1 - abs(vignette2), 60);
+    vignette2 = 1 - pow(1 - abs(vignette2), 80);
     float vignette = saturate(dot(vignette2, vignette2.yx).x);
 
     return color * vignette;
@@ -121,8 +121,8 @@ float3 CubicLensDistortion(
 
     float curve = saturate(abs(1 - f)/(0.0015+abs(1 - f)));
 
-    float3 result = lerp(pdistord, pblured, pow(curve, blur));
-    result *= 1 - pow(curve, dime);
+    float3 result = lerp(pdistord, pblured, saturate(1.5*pow(curve, blur)) );
+    result *= saturate(1 - pow(curve, dime));
 
     uv = distorduv;
 
