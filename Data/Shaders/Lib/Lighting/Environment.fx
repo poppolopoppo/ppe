@@ -1,36 +1,35 @@
-#ifndef _LIB_LIGHTING_MATERIAL_FX_INCLUDED
-#define _LIB_LIGHTING_MATERIAL_FX_INCLUDED
+#ifndef _LIB_LIGHTING_ENVIRONMENT_FX_INCLUDED
+#define _LIB_LIGHTING_ENVIRONMENT_FX_INCLUDED
 
 namespace Lighting {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct Material {
-    float3  Albedo;
-    float   Metallic;
-    float   RefractiveIndex;
-    float   Roughness;
-    float3  SpecularColor;
+struct Environment {
+    float AmbientIntensity;
+    float ReflectionIntensity;
+    TEXTURECUBESTRUCT_DECL(IrradianceMap);
+    TEXTURECUBESTRUCT_DECL(ReflectionMap);
 };
 //----------------------------------------------------------------------------
-float3 Albedo_to_Diffuse(float3 albedo) {
-    return albedo * fInvPI;
+float3 IrradianceSample(TEXTURECUBEPARAM_DECL(CubeMap), float3 dir) {
+    return TEXCUBE(CubeMap, dir).rgb;
 }
 //----------------------------------------------------------------------------
-float RefractiveIndex_to_Fresnel0(float refractiveIndex) {
-    return Sqr((refractiveIndex - 1.0)/(refractiveIndex + 1.0));
+float3 Irradiance(Environment e, float3 dir) {
+    return IrradianceSample(TEXTURECUBESTRUCT_CALL(e, IrradianceMap), dir);
 }
 //----------------------------------------------------------------------------
-float Glossiness_to_Roughness(float glossiness) {
-    return 1.0 - glossiness;
+float3 ReflectionSample(TEXTURECUBEPARAM_DECL(CubeMap), float3 dir, float lod) {
+    return TEXCUBELOD(CubeMap, dir, lod).rgb;
 }
 //----------------------------------------------------------------------------
-float Roughness_to_Glossiness(float glossiness) {
-    return 1.0 - glossiness;
+float3 Reflection(Environment e, float3 dir, float roughness) {
+    return ReflectionSample(TEXTURECUBESTRUCT_CALL(e, ReflectionMap), dir, roughness*roughness*8.0f);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Lighting
 
-#endif //!_LIB_LIGHTING_MATERIAL_FX_INCLUDED
+#endif //!_LIB_LIGHTING_ENVIRONMENT_FX_INCLUDED
