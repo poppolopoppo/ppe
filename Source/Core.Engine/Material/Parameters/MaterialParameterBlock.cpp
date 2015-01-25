@@ -80,6 +80,14 @@ bool TryCreateOptionalMaterialParameter(
         return false;
     }
 
+    const Graphics::BindName parameterName(&cstr[lengthof(uniOptional) - 1]);
+    const auto it = material->Parameters().Find(parameterName);
+    if (material->Parameters().end() != it) {
+        Assert(it->second);
+        *param = it->second.get();
+        return true;
+    }
+
     switch (field.Type())
     {
     case Graphics::ConstantFieldType::Int:
