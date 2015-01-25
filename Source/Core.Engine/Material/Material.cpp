@@ -54,6 +54,20 @@ void Material::AddParameter(const Graphics::BindName& name, const PAbstractMater
     _parameters.Insert_AssertUnique(name, parameter);
 }
 //----------------------------------------------------------------------------
+void Material::SetTexture(const Graphics::BindName& name, const Filename& filename) {
+    Assert(!name.empty());
+    Assert(!filename.empty());
+
+    _textures.Get(name) = filename;
+}
+//----------------------------------------------------------------------------
+void Material::SetParameter(const Graphics::BindName& name, const PAbstractMaterialParameter& parameter) {
+    Assert(!name.empty());
+    Assert(parameter);
+
+    _parameters[name] = parameter;
+}
+//----------------------------------------------------------------------------
 bool Material::Equals(const Material& other) const {
     return (_name == other._name && 
             _tags == other._tags &&

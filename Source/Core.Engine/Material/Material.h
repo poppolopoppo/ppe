@@ -30,9 +30,6 @@ public:
                 ASSOCIATIVE_VECTOR(Material, Graphics::BindName, PAbstractMaterialParameter)&& parameters );
     ~Material();
 
-    Material(const Material& ) = delete;
-    Material& operator =(const Material& ) = delete;
-
     const Graphics::BindName& Name() const { return _name; }
     const String& Description() const { return _description; }
 
@@ -43,6 +40,9 @@ public:
     void AddTag(const Graphics::BindName& name);
     void AddTexture(const Graphics::BindName& name, const Filename& filename);
     void AddParameter(const Graphics::BindName& name, const PAbstractMaterialParameter& parameter);
+
+    void SetTexture(const Graphics::BindName& name, const Filename& filename);
+    void SetParameter(const Graphics::BindName& name, const PAbstractMaterialParameter& parameter);
 
     bool Equals(const Material& other) const;
 
