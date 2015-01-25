@@ -3,6 +3,8 @@
 #include "MaterialParameterBlock.h"
 
 #include "Material/Material.h"
+#include "Material/MaterialDatabase.h"
+#include "Scene/Scene.h"
 
 #include "Core.Graphics/Device/BindName.h"
 #include "Core.Graphics/Device/Shader/ConstantField.h"
@@ -88,6 +90,15 @@ bool TryCreateOptionalMaterialParameter(
         Assert(it->second);
         *param = it->second.get();
         return true;
+    }
+    else {
+        const MaterialDatabase *database = scene->MaterialDatabase();
+        PAbstractMaterialParameter result;
+        if (database->TryGetParameter(parameterName, result)) {
+            Assert(result);
+            *param = result.get();
+            return true;
+        }
     }
 
     // If failed try to create a special parameter from that name (may exists with a modifier, like uniInvert_*) :

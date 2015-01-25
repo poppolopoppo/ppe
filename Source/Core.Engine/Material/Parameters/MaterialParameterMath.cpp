@@ -271,14 +271,12 @@ bool TryCreateMathMaterialParameter(
     Assert(paramFunc);
     Assert(!parameterName.empty());
 
-    const MaterialDatabase *database = scene->MaterialDatabase();
-
     PAbstractMaterialParameter source;
     // Local source parameter search :
     if (!material->Parameters().TryGet(parameterName, &source)) {
         // Global source parameter search :
+        const MaterialDatabase *database = scene->MaterialDatabase();
         if (!database->TryGetParameter(parameterName, source)) {
-            AssertNotReached(); // failed to retrieve the source parameter, not binded ?
             return false;
         }
     }
