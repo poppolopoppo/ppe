@@ -322,7 +322,6 @@ ScalarMatrix<T, _NWidth, _NHeight> ScalarMatrix<T, _Width, _Height>::Crop() cons
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
 ScalarMatrix<T, _Width, _Height> ScalarMatrix<T, _Width, _Height>::Identity() {
-    STATIC_ASSERT(_Width == _Height);
     ScalarMatrix result;
     for (size_t col = 0; col < _Width; ++col)
         for (size_t row = 0; row < _Height; ++row)
