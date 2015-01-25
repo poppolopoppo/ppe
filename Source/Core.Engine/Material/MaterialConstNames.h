@@ -20,10 +20,13 @@ public:
     static const Graphics::BindName& AmbientColor();
     static const Graphics::BindName& DiffuseColor();
     static const Graphics::BindName& EmissiveColor();
+    static const Graphics::BindName& Metallic();
     static const Graphics::BindName& NormalDepth();
     static const Graphics::BindName& RefractiveIndex();
+    static const Graphics::BindName& Roughness();
     static const Graphics::BindName& SpecularColor();
     static const Graphics::BindName& SpecularExponent();
+    static const Graphics::BindName& World();
 
     // Tags :
     static const Graphics::BindName& Ambient();

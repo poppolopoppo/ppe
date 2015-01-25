@@ -14,10 +14,13 @@ namespace Engine {
     _Macro(AmbientColor) \
     _Macro(DiffuseColor) \
     _Macro(EmissiveColor) \
+    _Macro(Metallic) \
     _Macro(NormalDepth) \
     _Macro(RefractiveIndex) \
+    _Macro(Roughness) \
     _Macro(SpecularColor) \
     _Macro(SpecularExponent) \
+    _Macro(World) \
     \
     _Macro(Ambient) \
     _Macro(BumpMapping) \

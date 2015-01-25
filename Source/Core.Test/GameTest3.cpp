@@ -25,6 +25,9 @@
 #include "Core.Engine/Material/Parameters/MaterialParameterBlock.h"
 
 #include "Core.Engine/Mesh/Model.h"
+#include "Core.Engine/Mesh/ModelBone.h"
+#include "Core.Engine/Mesh/ModelMesh.h"
+#include "Core.Engine/Mesh/ModelMeshSubPart.h"
 #include "Core.Engine/Mesh/Loader/ModelLoader.h"
 
 #include "Core.Engine/Render/Layers/RenderLayer.h"
@@ -188,6 +191,98 @@ static void SetupPostprocess_(
     scene->RenderTree()->Add(new RenderLayerDrawRect(postprocessEffect));
 }
 //----------------------------------------------------------------------------
+static Engine::Model *CreatePBRTestModel_() {
+    Engine::PModel referenceModel;
+    if (!Engine::LoadModel(referenceModel, L"GameData:/Models/Test/Sphere.obj"))
+        AssertNotReached();
+
+    const Engine::PModelMesh modelMesh = referenceModel->Meshes().front();
+    const Engine::PModelMeshSubPart modelMeshSubPart = modelMesh->SubParts().front();
+    const Engine::PCMaterial material = modelMeshSubPart->Material();
+    const AABB3f& meshBoundingBox = referenceModel->BoundingBox();
+
+    const size_t rows = 10;
+    const size_t columns = 2;
+    const size_t depths = 10;
+
+    const float margin = 1.15f;
+
+    const float2 roughnessRange(0.05f, 1.0f);
+    const float2 refractiveIndexRange(0.05f, 3.0f);
+    const float2 metallicRange(0.0f, 1.0f);
+    const float3 positionRange(
+        meshBoundingBox.Extents().x()*rows*margin, 
+        meshBoundingBox.Extents().y()*columns*margin, 
+        meshBoundingBox.Extents().z()*depths*margin );
+
+    const float dr = 1.0f/(rows - 1);
+    const float dc = 1.0f/(columns - 1);
+    const float dd = 1.0f/(depths - 1);
+
+    VECTOR(Mesh, Engine::PModelMeshSubPart) newModelMeshSubParts;
+    newModelMeshSubParts.reserve(rows * columns);
+
+    AABB3f newBoundingBox;
+
+    for (size_t i = 0; i < rows; ++i) {
+        const float fx = i*dr;
+        const float roughness = Lerp(roughnessRange.x(), roughnessRange.y(), fx);
+        const float x = positionRange.x() * fx - positionRange.x() * 0.5f;
+
+        for (size_t j = 0; j < columns; ++j) {
+            const float fy = j*dc;
+            const float metallic = Lerp(metallicRange.x(), metallicRange.y(), fy);
+            const float y = positionRange.y() * fy - positionRange.y() * 0.5f;
+
+            for (size_t k = 0; k < depths; ++k) {
+                const float fz = k*dd;
+                const float refractiveIndex = Lerp(refractiveIndexRange.x(), refractiveIndexRange.y(), fz);
+                const float z = positionRange.z() * fz - positionRange.z() * 0.5f;
+
+                const float3 translation(x, y, z);
+                const float4x4 world = MakeTranslationMatrix(translation);
+                const AABB3f boundingBox(meshBoundingBox.Min()+translation, meshBoundingBox.Max()+translation);
+
+                Engine::Material *const newMaterial = new Engine::Material(*material);
+                newMaterial->SetParameter(Engine::MaterialConstNames::Metallic(), new Engine::MaterialParameterBlock<float>(metallic));
+                newMaterial->SetParameter(Engine::MaterialConstNames::Roughness(), new Engine::MaterialParameterBlock<float>(roughness));
+                newMaterial->SetParameter(Engine::MaterialConstNames::RefractiveIndex(), new Engine::MaterialParameterBlock<float>(refractiveIndex));
+                newMaterial->SetParameter(Engine::MaterialConstNames::World(), new Engine::MaterialParameterBlock<float4x4>(world));
+
+                newModelMeshSubParts.push_back(new Engine::ModelMeshSubPart(
+                    modelMeshSubPart->Name(),
+                    modelMeshSubPart->BoneIndex(),
+                    modelMeshSubPart->BaseVertex(),
+                    modelMeshSubPart->FirstIndex(),
+                    modelMeshSubPart->IndexCount(),
+                    boundingBox,
+                    newMaterial ));
+
+                newBoundingBox.Add(boundingBox);
+            }
+        }
+    }
+
+    Engine::MeshRawData indices(modelMesh->Indices());
+    Engine::MeshRawData vertices(modelMesh->Vertices());
+
+    VECTOR(Mesh, Engine::PModelBone) newModelBones;
+    newModelBones.push_back(referenceModel->Bones().front());
+
+    VECTOR(Mesh, Engine::PModelMesh) newModelMeshes;
+    newModelMeshes.push_back(new Engine::ModelMesh(
+        modelMesh->IndexCount(), 
+        modelMesh->VertexCount(),
+        modelMesh->PrimitiveType(),
+        modelMesh->IndexType(),
+        modelMesh->VertexDeclaration(),
+        std::move(indices),
+        std::move(vertices),
+        std::move(newModelMeshSubParts) ));
+
+    return new Engine::Model(referenceModel->Name(), newBoundingBox, std::move(newModelBones), std::move(newModelMeshes));
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -197,7 +292,8 @@ GameTest3::GameTest3(const wchar_t *appname)
     appname,
     Graphics::DeviceAPI::DirectX11,
     Graphics::PresentationParameters(
-        640, 480,//1600, 900,
+        //640, 480,
+        1600, 900,
         Graphics::SurfaceFormat::R8G8B8A8_SRGB,
         Graphics::SurfaceFormat::D24S8,
         false,
@@ -334,9 +430,10 @@ void GameTest3::LoadContent() {
     stdEffectDescriptor->AddSubstitution(MaterialConstNames::SeparateAlpha(), "WITH_SEPARATE_ALPHA=1");
 
     _mainScene->MaterialDatabase()->BindEffect("Standard", stdEffectDescriptor);
-    _mainScene->MaterialDatabase()->BindTexture("IrradianceMap", L"GameData:/Textures/CubeMaps/SaintLazarusChurch2/IrradianceMap.dds");
-    _mainScene->MaterialDatabase()->BindTexture("ReflectionMap", L"GameData:/Textures/CubeMaps/SaintLazarusChurch2/ReflectionMap.dds");
+    _mainScene->MaterialDatabase()->BindTexture("IrradianceMap", L"GameData:/Textures/CubeMaps/Test/Irradiance.dds");
+    _mainScene->MaterialDatabase()->BindTexture("ReflectionMap", L"GameData:/Textures/CubeMaps/Test/Reflection.dds");
 
+#if 0
     //if (!LoadModel(_model, L"GameData:/Models/Infinity/DesertArena/DesertArena.obj"))
     //if (!LoadModel(_model, L"GameData:/Models/Infinity/BrokenTower/BrokenTower.obj"))
     //if (!LoadModel(_model, L"GameData:/Models/Infinity/Beach/Beach.obj"))
@@ -344,10 +441,17 @@ void GameTest3::LoadContent() {
     //if (!LoadModel(_model, L"GameData:/Models/Test/Cone.obj"))
     //if (!LoadModel(_model, L"GameData:/Models/Test/TeaPot.obj"))
     //if (!LoadModel(_model, L"GameData:/Models/Test/Scene.obj"))
-    if (!LoadModel(_model, L"GameData:/Models/Test/Sphere.obj"))
-    //if (!LoadModel(_model, L"GameData:/Models/Sponza/sponza.obj"))
+    //if (!LoadModel(_model, L"GameData:/Models/Test/Sphere.obj"))
+    //if (!LoadModel(_model, L"GameData:/Models/Test/Bunny.obj"))
+    if (!LoadModel(_model, L"GameData:/Models/Sponza/sponza.obj"))
     //if (!LoadModel(_model, L"GameData:/Models/Sponza/sponza_light.obj"))
         AssertNotReached();
+
+#else
+    _model = CreatePBRTestModel_();
+    AssertRelease(_model);
+
+#endif
 
     _model->Create(device);
 
