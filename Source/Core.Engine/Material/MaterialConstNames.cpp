@@ -15,7 +15,7 @@ namespace Engine {
     _Macro(DiffuseColor) \
     _Macro(EmissiveColor) \
     _Macro(NormalDepth) \
-    _Macro(RefractionIndex) \
+    _Macro(RefractiveIndex) \
     _Macro(SpecularColor) \
     _Macro(SpecularExponent) \
     \

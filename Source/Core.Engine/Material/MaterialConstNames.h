@@ -21,7 +21,7 @@ public:
     static const Graphics::BindName& DiffuseColor();
     static const Graphics::BindName& EmissiveColor();
     static const Graphics::BindName& NormalDepth();
-    static const Graphics::BindName& RefractionIndex();
+    static const Graphics::BindName& RefractiveIndex();
     static const Graphics::BindName& SpecularColor();
     static const Graphics::BindName& SpecularExponent();
 

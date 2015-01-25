@@ -101,8 +101,8 @@ static PMaterial CreateMaterial_(const ModelBuilder::Material& materialMB) {
 
     if (materialMB.NormalDepth >= 0)
         parameters.Insert_AssertUnique(MaterialConstNames::NormalDepth(), new MaterialParameterBlock<float>(materialMB.NormalDepth));
-    if (materialMB.RefractionIndex >= 0)
-        parameters.Insert_AssertUnique(MaterialConstNames::RefractionIndex(), new MaterialParameterBlock<float>(materialMB.RefractionIndex));
+    if (materialMB.RefractiveIndex >= 0)
+        parameters.Insert_AssertUnique(MaterialConstNames::RefractiveIndex(), new MaterialParameterBlock<float>(materialMB.RefractiveIndex));
     if (materialMB.SpecularExponent >= 0)
         parameters.Insert_AssertUnique(MaterialConstNames::SpecularExponent(), new MaterialParameterBlock<float>(materialMB.SpecularExponent));
 

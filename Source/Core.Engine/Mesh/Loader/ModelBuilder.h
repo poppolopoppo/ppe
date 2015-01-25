@@ -124,7 +124,7 @@ public:
             Fresnel         = 1<<10,
             CastShadows     = 1<<11,
 
-            _InUse          = 1<<31,
+            _InUse          = 1<<30,
         };
 
         String Name;
@@ -135,7 +135,7 @@ public:
         ColorRGBAF SpecularColor;
 
         float NormalDepth;
-        float RefractionIndex;
+        float RefractiveIndex;
         float SpecularExponent;
 
         Filename AlphaMap;
@@ -160,7 +160,7 @@ public:
             , EmissiveColor(-1)
             , NormalDepth(-1)
             , SpecularColor(-1)
-            , RefractionIndex(-1)
+            , RefractiveIndex(-1)
             , SpecularExponent(-1)
             , Mode(Default) { Assert(Name.size()); }
     };

@@ -173,7 +173,7 @@ static bool LoadMaterial_Mtl_(ModelBuilder& builder, const Filename& filename) {
                 return false;
 
             Assert(pMaterialMB);
-            pMaterialMB->RefractionIndex = color.x();
+            pMaterialMB->RefractiveIndex = color.x();
         }
         else if (0 == CompareNI("Ns", firstToken.Pointer(), firstToken.size())) {
             float4 color(0,0,0,1);
