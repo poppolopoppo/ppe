@@ -120,6 +120,9 @@ public:
 
     void Remove_AssertExists(const _Key& key, const _Value& valueForDebug);
 
+    _Value& operator [](const _Key& key) { return Get(key); }
+    const _Value& operator [](const _Key& key) const { return At(key); }
+
     template <typename _It>
     void insert(_It&& begin, _It&& end) {
 #ifdef _DEBUG
