@@ -16,6 +16,15 @@
 #define TEXTURE2DPARAM_CALL(_Name) \
     _Name, Sampler_##_Name
 //----------------------------------------------------------------------------
+#define TEXTURE2DSTRUCT_DECL(_Name) \
+    Texture2D _Name; SamplerState Sampler_##_Name
+//----------------------------------------------------------------------------
+#define TEXTURE2DSTRUCT_CALL(_Struct, _Name) \
+    (_Struct)._Name, (_Struct).Sampler_##_Name
+//----------------------------------------------------------------------------
+#define TEXTURE2DSTRUCT_ASSIGN(_Struct, _Name, _Value) \
+    (_Struct)._Name = _Value; (_Struct).Sampler_##_Name = Sampler_##_Value
+//----------------------------------------------------------------------------
 #define TEX2D(_Name, _UV) \
     _Name.Sample(Sampler_##_Name, _UV)
 //----------------------------------------------------------------------------
@@ -38,6 +47,15 @@
 //----------------------------------------------------------------------------
 #define TEXTURECUBEPARAM_CALL(_Name) \
     _Name, Sampler_##_Name
+//----------------------------------------------------------------------------
+#define TEXTURECUBESTRUCT_DECL(_Name) \
+    TextureCube _Name; SamplerState Sampler_##_Name
+//----------------------------------------------------------------------------
+#define TEXTURECUBESTRUCT_CALL(_Struct, _Name) \
+    (_Struct)._Name, (_Struct).Sampler_##_Name
+//----------------------------------------------------------------------------
+#define TEXTURECUBESTRUCT_ASSIGN(_Struct, _Name, _Value) \
+    (_Struct)._Name = _Value; (_Struct).Sampler_##_Name = Sampler_##_Value
 //----------------------------------------------------------------------------
 #define TEXCUBE(_Name, _UVW) \
     _Name.Sample(Sampler_##_Name, _UVW)
