@@ -609,6 +609,12 @@ bool ReadTextureHeader(TextureHeader& header, IVirtualFileSystemIStream *stream)
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R8G8B8A8_SINT:
             header.Format = Core::Graphics::SurfaceFormat::R8G8B8A8;
             break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+            header.Format = Core::Graphics::SurfaceFormat::B8G8R8A8_SRGB;
+            break;
+        case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_B8G8R8A8_UNORM:
+            header.Format = Core::Graphics::SurfaceFormat::B8G8R8A8;
+            break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16G16_FLOAT:
             header.Format = Core::Graphics::SurfaceFormat::R16G16_F;
             break;
@@ -723,6 +729,7 @@ bool ReadTextureHeader(TextureHeader& header, IVirtualFileSystemIStream *stream)
         case DDS_DXGI_FORMAT_R8_UNORM: header.Format = Core::Graphics::SurfaceFormat::R8; break;
         case DDS_DXGI_FORMAT_R8G8_UNORM: header.Format = Core::Graphics::SurfaceFormat::R8G8; break;
         case DDS_DXGI_FORMAT_R8G8B8A8_UNORM: header.Format = Core::Graphics::SurfaceFormat::R8G8B8A8; break;
+        case DDS_DXGI_FORMAT_B8G8R8A8_UNORM: header.Format = Core::Graphics::SurfaceFormat::B8G8R8A8; break;
         case DDS_DXGI_FORMAT_R10G10B10A2_UNORM: header.Format = Core::Graphics::SurfaceFormat::R10G10B10A2; break;
         case DDS_DXGI_FORMAT_R16_UNORM: header.Format = Core::Graphics::SurfaceFormat::R16; break;
         case DDS_DXGI_FORMAT_R16G16_UNORM: header.Format = Core::Graphics::SurfaceFormat::R16G16; break;

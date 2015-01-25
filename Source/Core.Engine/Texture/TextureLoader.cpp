@@ -39,6 +39,10 @@ static const Graphics::SurfaceFormat *FinalizeSurfaceFormat_(const Graphics::Sur
         case Graphics::SurfaceFormatType::R8G8B8A8_SRGB:
             format = Graphics::SurfaceFormat::R8G8B8A8_SRGB;
             break;
+        case Graphics::SurfaceFormatType::B8G8R8A8:
+        case Graphics::SurfaceFormatType::B8G8R8A8_SRGB:
+            format = Graphics::SurfaceFormat::B8G8R8A8_SRGB;
+            break;
         default:
             AssertNotImplemented();
         }

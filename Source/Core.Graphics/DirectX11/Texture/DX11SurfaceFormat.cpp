@@ -49,6 +49,10 @@ DXGI_FORMAT SurfaceFormatTypeToDXGIFormat(SurfaceFormatType value) {
         return DXGI_FORMAT_R8G8B8A8_UNORM;
     case Core::Graphics::SurfaceFormatType::R8G8B8A8_SRGB:
         return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+    case Core::Graphics::SurfaceFormatType::B8G8R8A8:
+        return DXGI_FORMAT_B8G8R8A8_UNORM;
+    case Core::Graphics::SurfaceFormatType::B8G8R8A8_SRGB:
+        return DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
     case Core::Graphics::SurfaceFormatType::R10G10B10A2:
         return DXGI_FORMAT_R10G10B10A2_UNORM;
     case Core::Graphics::SurfaceFormatType::R11G11B10:
@@ -104,6 +108,8 @@ SurfaceFormatType DXGIFormatToSurfaceFormatType(DXGI_FORMAT value) {
     case DXGI_FORMAT_R8G8_UNORM: return Core::Graphics::SurfaceFormatType::R8G8;
     case DXGI_FORMAT_R8G8B8A8_UNORM: return Core::Graphics::SurfaceFormatType::R8G8B8A8;
     case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB: return Core::Graphics::SurfaceFormatType::R8G8B8A8_SRGB;
+    case DXGI_FORMAT_B8G8R8A8_UNORM: return Core::Graphics::SurfaceFormatType::B8G8R8A8;
+    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB: return Core::Graphics::SurfaceFormatType::B8G8R8A8_SRGB;
     case DXGI_FORMAT_R10G10B10A2_UNORM: return Core::Graphics::SurfaceFormatType::R10G10B10A2;
     case DXGI_FORMAT_R11G11B10_FLOAT: return Core::Graphics::SurfaceFormatType::R11G11B10;
     case DXGI_FORMAT_R16_UNORM: return Core::Graphics::SurfaceFormatType::R16;

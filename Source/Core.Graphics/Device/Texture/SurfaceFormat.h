@@ -33,20 +33,22 @@ enum class SurfaceFormatType : u32 {
     R8G8            = 15,
     R8G8B8A8        = 16,
     R8G8B8A8_SRGB   = 17,
-    R10G10B10A2     = 18,
-    R11G11B10       = 19,
-    R16             = 20,
-    R16G16          = 21,
-    R16G16B16A16    = 22,
-    R16G16B16A16_F  = 23,
-    R16G16_F        = 24,
-    R16_F           = 25,
-    R32             = 26,
-    R32G32          = 27,
-    R32G32B32A32    = 28,
-    R32G32B32A32_F  = 29,
-    R32G32_F        = 30,
-    R32_F           = 31,
+    B8G8R8A8        = 18,
+    B8G8R8A8_SRGB   = 19,
+    R10G10B10A2     = 20,
+    R11G11B10       = 21,
+    R16             = 22,
+    R16G16          = 23,
+    R16G16B16A16    = 24,
+    R16G16B16A16_F  = 25,
+    R16G16_F        = 26,
+    R16_F           = 27,
+    R32             = 28,
+    R32G32          = 29,
+    R32G32B32A32    = 30,
+    R32G32B32A32_F  = 31,
+    R32G32_F        = 32,
+    R32_F           = 33,
 
     __COUNT
 };
@@ -172,6 +174,8 @@ public:
     static const SurfaceFormat *R8G8;
     static const SurfaceFormat *R8G8B8A8;
     static const SurfaceFormat *R8G8B8A8_SRGB;
+    static const SurfaceFormat *B8G8R8A8;
+    static const SurfaceFormat *B8G8R8A8_SRGB;
     static const SurfaceFormat *R10G10B10A2;
     static const SurfaceFormat *R11G11B10;
     static const SurfaceFormat *R16;
