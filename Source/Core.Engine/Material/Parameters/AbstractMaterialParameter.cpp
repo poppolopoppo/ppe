@@ -5,12 +5,15 @@
 #include "Material/MaterialContext.h"
 #include "Material/MaterialDatabase.h"
 
+#include "MaterialParameterBlock.h"
 #include "MaterialParameterCamera.h"
 #include "MaterialParameterLighting.h"
 #include "MaterialParameterMath.h"
 #include "MaterialParameterRandom.h"
 #include "MaterialParameterTexture.h"
 #include "MaterialParameterTime.h"
+
+#include "Core.Graphics/Device/Shader/ConstantField.h"
 
 namespace Core {
 namespace Engine {
@@ -61,12 +64,14 @@ bool TryCreateDefaultMaterialParameter(
     AbstractMaterialParameter **param,
     const Material *material,
     const Scene *scene,
-    const Graphics::BindName& name ) {
+    const Graphics::BindName& name,
+    const Graphics::ConstantField& field ) {
     Assert(param);
     Assert(!name.empty());
 
-    return (    TryCreateMathMaterialParameter(param, material, scene, name)
-            ||  TryCreateTextureMaterialParameter(param, material, scene, name) );
+    return (    TryCreateMathMaterialParameter(param, material, scene, name, field)
+            ||  TryCreateTextureMaterialParameter(param, material, scene, name, field)
+            ||  TryCreateOptionalMaterialParameter(param, material, scene, name, field) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

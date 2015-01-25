@@ -48,6 +48,7 @@ void EffectConstantBuffer::Prepare(
 
     const size_t count = layout->Count();
     const auto names = layout->Names();
+    const auto fields = layout->Fields();
 
     _parameters.resize(count);
     _variability.Seed.Value = VariabilitySeed::Invalid;
@@ -55,13 +56,14 @@ void EffectConstantBuffer::Prepare(
 
     for (size_t i = 0; i < count; ++i) {
         const Graphics::BindName& name = names[i];
-        AbstractMaterialParameter *p = nullptr;
+        const Graphics::ConstantField& field = fields[i];
 
+        AbstractMaterialParameter *p = nullptr;
         const auto it = materialParameters.Find(name);
         if (materialParameters.end() == it) {
             if (!materialDatabase->TryGetParameter(name, &p)) {
                 // tries to create a material specific parameter :
-                if (!TryCreateDefaultMaterialParameter(&p, material, scene, name))
+                if (!TryCreateDefaultMaterialParameter(&p, material, scene, name, field))
                     AssertNotReached();
             }
         }

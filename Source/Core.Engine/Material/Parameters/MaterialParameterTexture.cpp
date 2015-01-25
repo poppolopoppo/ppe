@@ -9,6 +9,8 @@
 #include "Scene/Scene.h"
 #include "Texture/TextureCache.h"
 
+#include "Core.Graphics/Device/BindName.h"
+#include "Core.Graphics/Device/Shader/ConstantField.h"
 #include "Core.Graphics/Device/Texture/Texture2D.h"
 
 #include "Core/Allocator/PoolAllocator-impl.h"
@@ -105,7 +107,8 @@ bool TryCreateTextureMaterialParameter(
     AbstractMaterialParameter **param,
     const Material *material,
     const Scene *scene,
-    const Graphics::BindName& name ) {
+    const Graphics::BindName& name,
+    const Graphics::ConstantField& field ) {
     Assert(param);
     Assert(material);
     Assert(scene);
@@ -122,10 +125,12 @@ bool TryCreateTextureMaterialParameter(
     if (StartsWith(cstr, uniDuDvDimensions)) {
         hasDimensions = true;
         textureName = &cstr[lengthof(uniDuDvDimensions) - 1];
+        Assert(Graphics::ConstantFieldType::Float4 == field.Type());
     }
     else if (StartsWith(cstr, uniDuDv)) {
         Assert(!hasDimensions);
         textureName = &cstr[lengthof(uniDuDv) - 1];
+        Assert(Graphics::ConstantFieldType::Float2 == field.Type());
     }
     else {
         Assert(!*param);

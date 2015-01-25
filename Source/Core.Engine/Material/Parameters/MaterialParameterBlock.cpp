@@ -2,6 +2,11 @@
 
 #include "MaterialParameterBlock.h"
 
+#include "Material/Material.h"
+
+#include "Core.Graphics/Device/BindName.h"
+#include "Core.Graphics/Device/Shader/ConstantField.h"
+
 #include "Core/Allocator/PoolAllocator-impl.h"
 
 namespace Core {
@@ -52,6 +57,87 @@ void MaterialParameterBlock<T>::CopyTo_AssumeEvaluated_(void *dst, size_t sizeIn
 }
 //----------------------------------------------------------------------------
 CONSTANTFIELD_EXTERNALTEMPLATE_DEF(MaterialParameterBlock, );
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+bool TryCreateOptionalMaterialParameter(
+    AbstractMaterialParameter **param,
+    const Material *material,
+    const Scene *scene,
+    const Graphics::BindName& name,
+    const Graphics::ConstantField& field ) {
+    Assert(param);
+    Assert(material);
+    Assert(scene);
+    Assert(!name.empty());
+
+    const char *cstr = name.cstr();
+
+    const char uniOptional[] = "uniOptional_";
+
+    if (!StartsWith(cstr, uniOptional)) {
+        Assert(!*param);
+        return false;
+    }
+
+    switch (field.Type())
+    {
+    case Graphics::ConstantFieldType::Int:
+        *param = new MaterialParameterBlock<i32>(i32(0));
+        break;
+    case Graphics::ConstantFieldType::Int2:
+        *param = new MaterialParameterBlock<i322>(i322(0));
+        break;
+    case Graphics::ConstantFieldType::Int3:
+        *param = new MaterialParameterBlock<i323>(i323(0));
+        break;
+    case Graphics::ConstantFieldType::Int4:
+        *param = new MaterialParameterBlock<i324>(i324(0));
+        break;
+
+    case Graphics::ConstantFieldType::UInt:
+        *param = new MaterialParameterBlock<u32>(u32(0));
+        break;
+    case Graphics::ConstantFieldType::UInt2:
+        *param = new MaterialParameterBlock<u322>(u322(0));
+        break;
+    case Graphics::ConstantFieldType::UInt3:
+        *param = new MaterialParameterBlock<u323>(u323(0));
+        break;
+    case Graphics::ConstantFieldType::UInt4:
+        *param = new MaterialParameterBlock<u324>(u324(0));
+        break;
+
+    case Graphics::ConstantFieldType::Float:
+        *param = new MaterialParameterBlock<float>(float(0));
+        break;
+    case Graphics::ConstantFieldType::Float2:
+        *param = new MaterialParameterBlock<float2>(float2(0));
+        break;
+    case Graphics::ConstantFieldType::Float3:
+        *param = new MaterialParameterBlock<float3>(float3(0));
+        break;
+    case Graphics::ConstantFieldType::Float4:
+        *param = new MaterialParameterBlock<float4>(float4(0));
+        break;
+
+    case Graphics::ConstantFieldType::Float3x3:
+        *param = new MaterialParameterBlock<float3x3>(float3x3::Identity());
+        break;
+    case Graphics::ConstantFieldType::Float4x3:
+        *param = new MaterialParameterBlock<float4x3>(float4x3::Identity());
+        break;
+    case Graphics::ConstantFieldType::Float4x4:
+        *param = new MaterialParameterBlock<float4x4>(float4x4::Identity());
+        break;
+
+    default:
+        AssertNotImplemented();
+    }
+
+    Assert(*param);
+    return true;
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

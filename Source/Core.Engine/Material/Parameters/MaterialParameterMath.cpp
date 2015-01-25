@@ -8,6 +8,7 @@
 #include "Scene/Scene.h"
 
 #include "Core.Graphics/Device/BindName.h"
+#include "Core.Graphics/Device/Shader/ConstantField.h"
 
 #include "Core/Allocator/PoolAllocator-impl.h"
 #include "Core/Color/Color.h"
@@ -230,7 +231,8 @@ bool TryCreateMathMaterialParameter(
     AbstractMaterialParameter **param,
     const Material *material,
     const Scene *scene,
-    const Graphics::BindName& name ) {
+    const Graphics::BindName& name,
+    const Graphics::ConstantField& field ) {
     Assert(param);
     Assert(material);
     Assert(scene);

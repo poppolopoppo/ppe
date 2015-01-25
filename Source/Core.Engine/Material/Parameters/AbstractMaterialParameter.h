@@ -12,6 +12,7 @@
 namespace Core {
 namespace Graphics {
 class BindName;
+struct ConstantField;
 }
 
 namespace Engine {
@@ -86,7 +87,8 @@ bool TryCreateDefaultMaterialParameter(
     AbstractMaterialParameter **param,
     const Material *material,
     const Scene *scene,
-    const Graphics::BindName& name );
+    const Graphics::BindName& name,
+    const Graphics::ConstantField& field );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

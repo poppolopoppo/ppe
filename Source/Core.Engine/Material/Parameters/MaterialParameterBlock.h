@@ -45,5 +45,14 @@ CONSTANTFIELD_EXTERNALTEMPLATE_DECL(MaterialParameterBlock, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+bool TryCreateOptionalMaterialParameter(
+    AbstractMaterialParameter **param,
+    const Material *material,
+    const Scene *scene,
+    const Graphics::BindName& name,
+    const Graphics::ConstantField& field );
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Engine
 } //!namespace Core
