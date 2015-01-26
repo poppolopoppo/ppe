@@ -405,13 +405,14 @@ void GameTest3::LoadContent() {
 
     IDeviceAPIEncapsulator *const device = DeviceEncapsulator()->Device();
 
+#if 1
     // Standard model rendering effect
 
     EffectDescriptor *const stdEffectDescriptor = new EffectDescriptor();
     stdEffectDescriptor->SetName("StandardEffect");
     stdEffectDescriptor->SetRenderState(
         new RenderState(RenderState::Blending::AlphaBlend,
-                        RenderState::Culling::None,
+                        RenderState::Culling::CounterClockwise,
                         RenderState::DepthTest::Default ));
     stdEffectDescriptor->SetVS(L"GameData:/Shaders/Standard.fx");
     stdEffectDescriptor->SetPS(L"GameData:/Shaders/Standard.fx");
@@ -430,6 +431,35 @@ void GameTest3::LoadContent() {
     stdEffectDescriptor->AddSubstitution(MaterialConstNames::SeparateAlpha(), "WITH_SEPARATE_ALPHA=1");
 
     _mainScene->MaterialDatabase()->BindEffect("Standard", stdEffectDescriptor);
+
+#else
+    // AA Wireframe model rendering effect
+
+    EffectDescriptor *const wireframeEffectDescriptor = new EffectDescriptor();
+    wireframeEffectDescriptor->SetName("WireframeEffect");
+    wireframeEffectDescriptor->SetRenderState(
+        new RenderState(RenderState::Blending::AlphaBlend,
+                        RenderState::Culling::None,
+                        RenderState::DepthTest::Default,
+                        RenderState::FillMode::Solid ));
+    wireframeEffectDescriptor->SetVS(L"GameData:/Shaders/Wireframe.fx");
+    wireframeEffectDescriptor->SetGS(L"GameData:/Shaders/Wireframe.fx");
+    wireframeEffectDescriptor->SetPS(L"GameData:/Shaders/Wireframe.fx");
+    wireframeEffectDescriptor->SetShaderProfile(ShaderProfileType::ShaderModel4_1);
+    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N::Declaration);
+    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N::Declaration);
+    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N::Declaration);
+    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N::Declaration);
+    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__TexCoord0_Float2__Normal0_Float3::Declaration);
+    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Half2::Declaration);
+    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Color0_UByte4N__Normal0_UX10Y10Z10W2N::Declaration);
+    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Normal0_UX10Y10Z10W2N::Declaration);
+    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Color0_UByte4N::Declaration);
+    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3::Declaration);
+
+    _mainScene->MaterialDatabase()->BindEffect("Standard", wireframeEffectDescriptor);
+
+#endif
     _mainScene->MaterialDatabase()->BindTexture("IrradianceMap", L"GameData:/Textures/CubeMaps/Test/Irradiance.dds");
     _mainScene->MaterialDatabase()->BindTexture("ReflectionMap", L"GameData:/Textures/CubeMaps/Test/Reflection.dds");
 
