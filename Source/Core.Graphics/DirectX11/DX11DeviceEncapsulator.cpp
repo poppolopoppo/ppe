@@ -401,18 +401,12 @@ void DeviceEncapsulator::SetShaderEffect(const Graphics::ShaderEffect *effect) {
 
     context->IASetInputLayout(dx11Effect->InputLayout());
 
-    if (dx11Effect->VertexShader())
-        context->VSSetShader(dx11Effect->VertexShader(), NULL, 0);
-    if (dx11Effect->DomainShader())
-        context->DSSetShader(dx11Effect->DomainShader(), NULL, 0);
-    if (dx11Effect->HullShader())
-        context->HSSetShader(dx11Effect->HullShader(), NULL, 0);
-    if (dx11Effect->GeometryShader())
-        context->GSSetShader(dx11Effect->GeometryShader(), NULL, 0);
-    if (dx11Effect->PixelShader())
-        context->PSSetShader(dx11Effect->PixelShader(), NULL, 0);
-    if (dx11Effect->ComputeShader())
-        context->CSSetShader(dx11Effect->ComputeShader(), NULL, 0);
+    context->VSSetShader(dx11Effect->VertexShader(), NULL, 0);
+    context->DSSetShader(dx11Effect->DomainShader(), NULL, 0);
+    context->HSSetShader(dx11Effect->HullShader(), NULL, 0);
+    context->GSSetShader(dx11Effect->GeometryShader(), NULL, 0);
+    context->PSSetShader(dx11Effect->PixelShader(), NULL, 0);
+    context->CSSetShader(dx11Effect->ComputeShader(), NULL, 0);
 
     CHECK_DIRECTX11_ERROR();
 }
