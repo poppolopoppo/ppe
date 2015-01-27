@@ -34,12 +34,17 @@ void *MemoryPool<_Lock, _Allocator>::Allocate(MemoryTrackingData *trackingData =
         MemoryPoolChunk *const newChunk = AllocateChunk_();
         ptr = newChunk->AllocateBlock(BlockSize(), 1);
         AddChunk(newChunk);
+
+#ifdef USE_MEMORY_DOMAINS
+        if (trackingData && trackingData->Parent())
+            trackingData->Parent()->Pool_AllocateOneChunk(ChunkSize());
+#endif
     }
     Assert(ptr);
 
 #ifdef USE_MEMORY_DOMAINS
     if (trackingData)
-        trackingData->Allocate(1, BlockSize());
+        trackingData->Pool_AllocateOneBlock(BlockSize());
 #endif
 
     return ptr;
@@ -51,6 +56,11 @@ void MemoryPool<_Lock, _Allocator>::Deallocate(void *ptr, MemoryTrackingData *tr
 
     threadlock_type::ScopeLock lock(*this);
 
+#ifdef USE_MEMORY_DOMAINS
+    if (trackingData)
+        trackingData->Pool_DeallocateOneBlock(BlockSize());
+#endif
+
     MemoryPoolChunk *chunk;
     if (nullptr == (chunk = Deallocate_ReturnChunkToRelease(ptr)))
         return;
@@ -58,8 +68,8 @@ void MemoryPool<_Lock, _Allocator>::Deallocate(void *ptr, MemoryTrackingData *tr
     DeallocateChunk_(chunk);
 
 #ifdef USE_MEMORY_DOMAINS
-    if (trackingData)
-        trackingData->Deallocate(1, BlockSize());
+    if (trackingData && trackingData->Parent())
+        trackingData->Parent()->Pool_DeallocateOneChunk(ChunkSize());
 #endif
 }
 //----------------------------------------------------------------------------

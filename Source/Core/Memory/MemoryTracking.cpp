@@ -41,6 +41,68 @@ void MemoryTrackingData::Deallocate(size_t blockCount, size_t strideInBytes) {
         _parent->Deallocate(blockCount, strideInBytes);
 }
 //----------------------------------------------------------------------------
+void MemoryTrackingData::Pool_AllocateOneBlock(size_t blockSizeInBytes) {
+    if (_parent) {
+        ++_blockCount;
+        _totalSizeInBytes += blockSizeInBytes;
+        ++_allocationCount;
+
+        _maxBlockCount = max(_maxBlockCount, _blockCount).load();
+        _maxAllocationCount = max(_maxAllocationCount, _allocationCount).load();
+        _maxTotalSizeInBytes = max(_maxTotalSizeInBytes, _totalSizeInBytes).load();
+
+        _parent->Pool_AllocateOneBlock(blockSizeInBytes);
+    }
+    else {
+        ++_blockCount;
+        _maxBlockCount = max(_maxBlockCount, _blockCount).load();
+    }
+}
+//----------------------------------------------------------------------------
+void MemoryTrackingData::Pool_DeallocateOneBlock(size_t blockSizeInBytes) {
+    if (_parent) {
+        Assert(_blockCount >= 1);
+        Assert(_totalSizeInBytes >= blockSizeInBytes);
+        Assert(_allocationCount);
+
+        --_blockCount;
+        _totalSizeInBytes -= blockSizeInBytes;
+        --_allocationCount;
+
+        _parent->Pool_DeallocateOneBlock(blockSizeInBytes);
+    }
+    else {
+        Assert(_blockCount > 0);
+        --_blockCount;
+    }
+}
+//----------------------------------------------------------------------------
+void MemoryTrackingData::Pool_AllocateOneChunk(size_t chunkSizeInBytes) {
+    if (_parent) {
+        _parent->Pool_AllocateOneChunk(chunkSizeInBytes);
+    }
+    else {
+        _totalSizeInBytes += chunkSizeInBytes;
+        ++_allocationCount;
+
+        _maxAllocationCount = max(_maxAllocationCount, _allocationCount).load();
+        _maxTotalSizeInBytes = max(_maxTotalSizeInBytes, _totalSizeInBytes).load();
+    }
+}
+//----------------------------------------------------------------------------
+void MemoryTrackingData::Pool_DeallocateOneChunk(size_t chunkSizeInBytes) {
+    if (_parent) {
+        _parent->Pool_DeallocateOneChunk(chunkSizeInBytes);
+    }
+    else {
+        Assert(_totalSizeInBytes >= chunkSizeInBytes);
+        Assert(_allocationCount);
+
+        _totalSizeInBytes -= chunkSizeInBytes;
+        --_allocationCount;
+    }
+}
+//----------------------------------------------------------------------------
 void MemoryTrackingData::Append(const MemoryTrackingData& other) {
     _blockCount += other._blockCount;
     _allocationCount += other._allocationCount;

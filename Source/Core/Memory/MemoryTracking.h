@@ -29,6 +29,12 @@ public:
     void Allocate(size_t blockCount, size_t strideInBytes);
     void Deallocate(size_t blockCount, size_t strideInBytes);
 
+    // reserved for pool allocation tracking :
+    void Pool_AllocateOneBlock(size_t blockSizeInBytes);
+    void Pool_DeallocateOneBlock(size_t blockSizeInBytes);
+    void Pool_AllocateOneChunk(size_t chunkSizeInBytes);
+    void Pool_DeallocateOneChunk(size_t chunkSizeInBytes);
+
     void Append(const MemoryTrackingData& other);
 
     static MemoryTrackingData& Global();
