@@ -60,6 +60,7 @@ void RenderBatch::Remove(const RenderCommand *pcommand) {
 //----------------------------------------------------------------------------
 void RenderBatch::Prepare(
     Graphics::IDeviceAPIEncapsulator *device,
+    MaterialDatabase *materialDatabase,
     const RenderTree *renderTree,
     VariabilitySeed *seeds) {
     if (_commands.empty())
@@ -77,7 +78,7 @@ void RenderBatch::Prepare(
 
         if (!pred || pred->MaterialEffect != pcommand->MaterialEffect) {
             if (!pcommand->Ready) {
-                pcommand->MaterialEffect->Create(device, renderTree->Scene());
+                pcommand->MaterialEffect->Create(device, materialDatabase, renderTree->Scene());
                 pcommand->Ready = true;
             }
 

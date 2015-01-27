@@ -25,7 +25,7 @@ RenderLayer::~RenderLayer() {
     Assert(_effectVariability.Value == VariabilitySeed::Invalid);
 }
 //----------------------------------------------------------------------------
-void RenderLayer::PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, const RenderTree *renderTree, VariabilitySeed *seeds) {
+void RenderLayer::PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, const RenderTree *renderTree, VariabilitySeed *seeds) {
     const VariabilitySeed variability = renderTree->EffectCompiler()->Variability();
     if (variability != _effectVariability &&
         _effectVariability.Value != VariabilitySeed::Invalid ) {
@@ -33,10 +33,10 @@ void RenderLayer::PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, const R
             Name().c_str(), _effectVariability.Value, variability.Value );
 
         _batch.Destroy(device);
-        _batch.Prepare(device, renderTree, seeds); // prepare is done twice to ensure it has been called at least once before
+        _batch.Prepare(device, materialDatabase, renderTree, seeds); // prepare is done twice to ensure it has been called at least once before
     }
     else {
-        _batch.Prepare(device, renderTree, seeds);
+        _batch.Prepare(device, materialDatabase, renderTree, seeds);
     }
 
     _effectVariability = variability;

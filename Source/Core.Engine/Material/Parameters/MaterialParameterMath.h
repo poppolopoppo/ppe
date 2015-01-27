@@ -104,7 +104,8 @@ void RegisterMathMaterialParameters(MaterialDatabase *database);
 //----------------------------------------------------------------------------
 bool TryCreateMathMaterialParameter(
     AbstractMaterialParameter **param,
-    const Material *material,
+    MaterialEffect *materialEffect,
+    MaterialDatabase *materialDatabase,
     const Scene *scene,
     const Graphics::BindName& name,
     const Graphics::ConstantField& field );

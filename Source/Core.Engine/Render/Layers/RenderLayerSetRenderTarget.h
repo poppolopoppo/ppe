@@ -24,7 +24,7 @@ public:
     SINGLETON_POOL_ALLOCATED_DECL(RenderLayerSetRenderTarget);
 
 protected:
-    virtual void PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, const RenderTree *renderTree, VariabilitySeed *seeds) override;
+    virtual void PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, const RenderTree *renderTree, VariabilitySeed *seeds) override;
     virtual void RenderImpl_(Graphics::IDeviceAPIContextEncapsulator *context) override;
     virtual void DestroyImpl_(Graphics::IDeviceAPIEncapsulator *device, const RenderTree *renderTree) override;
 

@@ -73,7 +73,7 @@ RenderLayerSetRenderTarget::RenderLayerSetRenderTarget(const MemoryView<PAbstrac
 //----------------------------------------------------------------------------
 RenderLayerSetRenderTarget::~RenderLayerSetRenderTarget() {}
 //----------------------------------------------------------------------------
-void RenderLayerSetRenderTarget::PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, const RenderTree *renderTree, VariabilitySeed *seeds) {
+void RenderLayerSetRenderTarget::PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, const RenderTree *renderTree, VariabilitySeed *seeds) {
     for (size_t i = 0; i < _count; ++i)
         _surfaces[i]->Prepare(device, _surfaceLocks[i]);
 }

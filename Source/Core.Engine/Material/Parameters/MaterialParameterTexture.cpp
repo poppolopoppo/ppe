@@ -103,14 +103,23 @@ void RegisterTextureMaterialParameters(MaterialDatabase *database) {
     database->BindParameter("uniRenderTargetDuDvDimensions", new MaterialParameterTexture_RenderTargetDuDvDimensions() );
 }
 //----------------------------------------------------------------------------
+static AbstractMaterialParameter *CreateTextureParam_(const Graphics::BindName& textureName, bool hasDimensions) {
+    if (hasDimensions)
+        return new MaterialParameterTexture_DuDvDimensions(textureName);
+    else
+        return new MaterialParameterTexture_DuDv(textureName);
+}
+//----------------------------------------------------------------------------
 bool TryCreateTextureMaterialParameter(
     AbstractMaterialParameter **param,
-    const Material *material,
+    MaterialEffect *materialEffect,
+    MaterialDatabase *materialDatabase,
     const Scene *scene,
     const Graphics::BindName& name,
     const Graphics::ConstantField& field ) {
     Assert(param);
-    Assert(material);
+    Assert(materialEffect);
+    Assert(materialDatabase);
     Assert(scene);
     Assert(!name.empty());
 
@@ -141,23 +150,22 @@ bool TryCreateTextureMaterialParameter(
 
     Filename filename;
     // Local texture path search :
-    if (!material->Textures().TryGet(textureName, &filename)) {
-        /*
-        // Global texture path search :
-        if (!scene->MaterialDatabase()->TryGetTexture(textureName, &filename)) {
-            AssertNotReached(); // failed to retrieve the texture path, not binded ?
-            return false;
-        }
-        */
-        AssertNotReached(); // 07/09/14: texture properties are only readable if the texture is binded
+    if (materialEffect->Material()->Textures().TryGet(textureName, &filename)) {
+        Assert(!filename.empty());
+        *param = CreateTextureParam_(textureName, hasDimensions);
+        materialEffect->BindParameter(name, *param);
     }
-    Assert(!filename.empty());
+    // Global texture path search :
+    else if (materialDatabase->TryGetTexture(textureName, &filename)) {
+        Assert(!filename.empty());
+        *param = CreateTextureParam_(textureName, hasDimensions);
+        materialDatabase->BindParameter(name, *param);
+    }
+    else {
+        return false;
+    }
 
-    if (hasDimensions)
-        *param = new MaterialParameterTexture_DuDvDimensions(textureName);
-    else
-        *param = new MaterialParameterTexture_DuDv(textureName);
-
+    Assert(*param);
     return true;
 }
 //----------------------------------------------------------------------------

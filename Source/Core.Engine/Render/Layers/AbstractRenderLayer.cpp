@@ -55,8 +55,8 @@ const RenderBatch *AbstractRenderLayer::RenderBatchIFP() const {
     return RenderBatchIFPImpl_();
 }
 //----------------------------------------------------------------------------
-void AbstractRenderLayer::Prepare(Graphics::IDeviceAPIEncapsulator *device, const RenderTree *renderTree, VariabilitySeed *seeds) {
-    PrepareImpl_(device, renderTree, seeds);
+void AbstractRenderLayer::Prepare(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, const RenderTree *renderTree, VariabilitySeed *seeds) {
+    PrepareImpl_(device, materialDatabase, renderTree, seeds);
 }
 //----------------------------------------------------------------------------
 void AbstractRenderLayer::Render(Graphics::IDeviceAPIContextEncapsulator *context) {

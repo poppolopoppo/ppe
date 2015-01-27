@@ -12,10 +12,13 @@
 
 namespace Core {
 namespace Engine {
+struct MaterialContext;
+FWD_REFPTR(MaterialDatabase);
+FWD_REFPTR(MaterialEffect);
+class Scene;
+
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-struct MaterialContext;
 //----------------------------------------------------------------------------
 template <typename T>
 class MaterialParameterBlock : public TypedMaterialParameter<T> {
@@ -47,7 +50,8 @@ CONSTANTFIELD_EXTERNALTEMPLATE_DECL(MaterialParameterBlock, );
 //----------------------------------------------------------------------------
 bool TryCreateOptionalMaterialParameter(
     AbstractMaterialParameter **param,
-    const Material *material,
+    MaterialEffect *materialEffect,
+    MaterialDatabase *materialDatabase,
     const Scene *scene,
     const Graphics::BindName& name,
     const Graphics::ConstantField& field );

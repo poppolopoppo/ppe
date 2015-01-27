@@ -62,16 +62,17 @@ void RegisterDefaultMaterialParameters(MaterialDatabase *database) {
 //----------------------------------------------------------------------------
 bool TryCreateDefaultMaterialParameter(
     AbstractMaterialParameter **param,
-    const Material *material,
+    MaterialEffect *materialEffect,
+    MaterialDatabase *materialDatabase,
     const Scene *scene,
     const Graphics::BindName& name,
     const Graphics::ConstantField& field ) {
     Assert(param);
     Assert(!name.empty());
 
-    return (    TryCreateMathMaterialParameter(param, material, scene, name, field)
-            ||  TryCreateTextureMaterialParameter(param, material, scene, name, field)
-            ||  TryCreateOptionalMaterialParameter(param, material, scene, name, field) );
+    return (    TryCreateMathMaterialParameter(param, materialEffect, materialDatabase, scene, name, field)
+            ||  TryCreateTextureMaterialParameter(param, materialEffect, materialDatabase, scene, name, field)
+            ||  TryCreateOptionalMaterialParameter(param, materialEffect, materialDatabase, scene, name, field) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

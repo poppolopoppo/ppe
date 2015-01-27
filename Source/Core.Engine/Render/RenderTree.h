@@ -19,6 +19,7 @@ namespace Engine {
 //----------------------------------------------------------------------------
 FWD_REFPTR(AbstractRenderLayer);
 class EffectCompiler;
+FWD_REFPTR(MaterialDatabase);
 class RenderSurfaceManager;
 FWD_REFPTR(Scene);
 class TextureCache;
@@ -41,7 +42,7 @@ public:
     bool TryGet(const char *name, PAbstractRenderLayer& player) const;
 
     // (1) create the resources and sort if necessary
-    void Prepare(Graphics::IDeviceAPIEncapsulator *device, VariabilitySeed *seeds);
+    void Prepare(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, VariabilitySeed *seeds);
     // (2) change device context and execute draw calls
     void Render(Graphics::IDeviceAPIContextEncapsulator *context);
     // (3) called before death or disabling to destroy possibly created resources

@@ -20,8 +20,9 @@ namespace Engine {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(AbstractMaterialParameter);
-FWD_REFPTR(Material);
 struct MaterialContext;
+FWD_REFPTR(MaterialDatabase);
+FWD_REFPTR(MaterialEffect);
 FWD_REFPTR(Scene);
 //----------------------------------------------------------------------------
 class EffectConstantBuffer : public Graphics::ConstantBuffer {
@@ -34,7 +35,7 @@ public:
     const MaterialVariabilitySeed& Variability() const { return _variability; }
     const VECTOR(Effect, PAbstractMaterialParameter)& Parameters() const { return _parameters; }
 
-    void Prepare(Graphics::IDeviceAPIEncapsulator *device, const Material *material, const Scene *scene);
+    void Prepare(Graphics::IDeviceAPIEncapsulator *device, MaterialEffect *materialEffect, MaterialDatabase *materialDatabase, const Scene *scene);
     void Eval(Graphics::IDeviceAPIEncapsulator *device, const MaterialContext& context);
     bool Match(const Graphics::BindName& name, const Graphics::ConstantBufferLayout& layout) const;
 

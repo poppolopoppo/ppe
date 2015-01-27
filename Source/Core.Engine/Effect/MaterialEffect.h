@@ -4,6 +4,7 @@
 
 #include "Core.Graphics/Device/BindName.h"
 
+#include "Core/Container/AssociativeVector.h"
 #include "Core/Allocator/PoolAllocator.h"
 #include "Core/Container/Pair.h"
 #include "Core/Container/Vector.h"
@@ -31,6 +32,7 @@ FWD_REFPTR(Effect);
 FWD_REFPTR(EffectConstantBuffer);
 FWD_REFPTR(Material);
 struct MaterialContext;
+FWD_REFPTR(MaterialDatabase);
 FWD_REFPTR(RenderSurfaceLock);
 FWD_REFPTR(Scene);
 struct VariabilitySeed;
@@ -67,9 +69,12 @@ public:
     const VECTOR(Effect, PEffectConstantBuffer)& Constants() const { return _constants; }
     const VECTOR(Effect, TextureSlot)& TextureSlots() const { return _textureSlots; }
     const VECTOR(Effect, TextureBinding)& TextureBindings() const { return _textureBindings; }
+    const ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, PAbstractMaterialParameter)& Parameters() const { return _parameters; }
+    
+    void BindParameter(const Graphics::BindName& name, AbstractMaterialParameter *parameter);
 
     /* (1) link parameters and textures from database and material */
-    void Create(Graphics::IDeviceAPIEncapsulator *device, const Scene *scene);
+    void Create(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, const Scene *scene);
     /* (4) destroy binded resources, ready to call Create() again */
     void Destroy(Graphics::IDeviceAPIEncapsulator *device);
 
@@ -87,6 +92,7 @@ private:
     VECTOR(Effect, PEffectConstantBuffer) _constants;
     VECTOR(Effect, TextureSlot) _textureSlots;
     VECTOR(Effect, TextureBinding) _textureBindings;
+    ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, PAbstractMaterialParameter) _parameters;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

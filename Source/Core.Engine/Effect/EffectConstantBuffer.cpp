@@ -2,6 +2,8 @@
 
 #include "EffectConstantBuffer.h"
 
+#include "MaterialEffect.h"
+
 #include "Material/Material.h"
 #include "Material/MaterialContext.h"
 #include "Material/MaterialDatabase.h"
@@ -14,9 +16,32 @@
 
 #include "Core/Allocator/Alloca.h"
 #include "Core/Allocator/PoolAllocator-impl.h"
+#include "Core/Diagnostic/DialogBox.h"
 
 namespace Core {
 namespace Engine {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+static AbstractMaterialParameter *TryGetParameter_(
+    const Graphics::BindName& name, 
+    MaterialEffect *materialEffect, 
+    const Scene *scene ) {
+
+    PAbstractMaterialParameter param;
+    if (materialEffect->Material()->Parameters().TryGet(name, &param) ||
+        materialEffect->Parameters().TryGet(name, &param) ||
+        scene->MaterialDatabase()->TryGetParameter(name, param) ) {
+        Assert(param);
+        return param.get();
+    }
+
+    return nullptr;
+}
+//----------------------------------------------------------------------------
+} //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -39,10 +64,12 @@ EffectConstantBuffer::~EffectConstantBuffer() {}
 //----------------------------------------------------------------------------
 void EffectConstantBuffer::Prepare(
     Graphics::IDeviceAPIEncapsulator *device,
-    const Material *material,
+    MaterialEffect *materialEffect,
+    MaterialDatabase *materialDatabase,
     const Scene *scene ) {
+    const Material *material = materialEffect->Material();
     const auto materialParameters = material->Parameters();
-    const MaterialDatabase *materialDatabase = scene->MaterialDatabase();
+    Assert(materialDatabase == scene->MaterialDatabase());
 
     const Graphics::ConstantBufferLayout *layout = this->Layout();
 
@@ -58,24 +85,21 @@ void EffectConstantBuffer::Prepare(
         const Graphics::BindName& name = names[i];
         const Graphics::ConstantField& field = fields[i];
 
-        AbstractMaterialParameter *p = nullptr;
-        const auto it = materialParameters.Find(name);
-        if (materialParameters.end() == it) {
-            if (!materialDatabase->TryGetParameter(name, &p)) {
-                // tries to create a material specific parameter :
-                if (!TryCreateDefaultMaterialParameter(&p, material, scene, name, field))
-                    AssertNotReached();
-            }
-        }
-        else {
-            p = it->second.get();
-        }
-        Assert(p);
+        AbstractMaterialParameter *param = TryGetParameter_(name, materialEffect, scene);
 
-        if (SameOrMoreVariability(p->Variability(), _variability.Variability))
-            _variability.Variability = p->Variability();
+        if (!param && !TryCreateDefaultMaterialParameter(&param, materialEffect, materialDatabase, scene, name, field)) {
+            DialogBox::Show(L"Material parameter not found", DialogBox::Type::Ok, DialogBox::Icon::Aterisk,
+                L"Failed to retrieve parameter '{0}' in constant buffer '{1}' from material effect <{2}> !",
+                name.cstr(), _name.cstr(), material->Name().cstr() );
+            AssertNotImplemented(); // TODO : throw an exception to retry
+        }
 
-        _parameters[i] = p;
+        Assert(param);
+
+        if (SameOrMoreVariability(param->Variability(), _variability.Variability))
+            _variability.Variability = param->Variability();
+
+        _parameters[i] = param;
     }
 }
 //----------------------------------------------------------------------------

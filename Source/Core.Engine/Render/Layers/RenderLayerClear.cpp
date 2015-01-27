@@ -53,7 +53,7 @@ RenderLayerClear::~RenderLayerClear() {
     Assert(!_surfaceLock);
 }
 //----------------------------------------------------------------------------
-void RenderLayerClear::PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, const RenderTree *renderTree, VariabilitySeed *seeds) {
+void RenderLayerClear::PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, const RenderTree *renderTree, VariabilitySeed *seeds) {
     _surface->Prepare(device, _surfaceLock);
 }
 //----------------------------------------------------------------------------

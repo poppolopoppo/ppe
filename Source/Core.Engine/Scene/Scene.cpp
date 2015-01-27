@@ -110,7 +110,7 @@ void Scene::Prepare(Graphics::IDeviceAPIEncapsulator *device, VariabilitySeed *s
 
         seeds[size_t(MaterialVariability::Scene)].Next();
 
-        _renderTree.Prepare(device, seeds);
+        _renderTree.Prepare(device, &_materialDatabase, seeds);
 
         /**********************************************************************/
     }

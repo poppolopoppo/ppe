@@ -13,6 +13,7 @@
 namespace Core {
 namespace Engine {
 FWD_REFPTR(Material);
+FWD_REFPTR(MaterialEffect);
 FWD_REFPTR(MaterialDatabase);
 class Scene;
 
@@ -55,7 +56,8 @@ void RegisterTextureMaterialParameters(MaterialDatabase *database);
 //----------------------------------------------------------------------------
 bool TryCreateTextureMaterialParameter(
     AbstractMaterialParameter **param,
-    const Material *material,
+    MaterialEffect *materialEffect,
+    MaterialDatabase *materialDatabase,
     const Scene *scene,
     const Graphics::BindName& name,
     const Graphics::ConstantField& field );

@@ -17,6 +17,7 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+FWD_REFPTR(MaterialDatabase);
 FWD_REFPTR(MaterialEffect);
 class RenderTree;
 struct VariabilitySeed;
@@ -30,6 +31,7 @@ public:
     void Remove(const RenderCommand *pcommand);
 
     void Prepare(   Graphics::IDeviceAPIEncapsulator *device,
+                    MaterialDatabase *materialDatabase,
                     const RenderTree *renderTree,
                     VariabilitySeed *seeds);
     void Render(Graphics::IDeviceAPIContextEncapsulator *context);

@@ -22,6 +22,7 @@ namespace Engine {
 class Material;
 struct MaterialContext;
 class MaterialDatabase;
+class MaterialEffect;
 class Scene;
 template <typename T>
 class TypedMaterialParameter;
@@ -85,7 +86,8 @@ void RegisterDefaultMaterialParameters(MaterialDatabase *database);
 //----------------------------------------------------------------------------
 bool TryCreateDefaultMaterialParameter(
     AbstractMaterialParameter **param,
-    const Material *material,
+    MaterialEffect *materialEffect,
+    MaterialDatabase *materialDatabase,
     const Scene *scene,
     const Graphics::BindName& name,
     const Graphics::ConstantField& field );

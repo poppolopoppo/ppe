@@ -5,6 +5,7 @@
 #include "Effect.h"
 #include "EffectConstantBuffer.h"
 #include "EffectProgram.h"
+
 #include "Material/Material.h"
 #include "Material/MaterialContext.h"
 #include "Material/MaterialDatabase.h"
@@ -209,7 +210,14 @@ MaterialEffect::MaterialEffect(const Engine::Effect *effect, const Engine::Mater
 //----------------------------------------------------------------------------
 MaterialEffect::~MaterialEffect() {}
 //----------------------------------------------------------------------------
-void MaterialEffect::Create(Graphics::IDeviceAPIEncapsulator *device, const Scene *scene) {
+void MaterialEffect::BindParameter(const Graphics::BindName& name, AbstractMaterialParameter *parameter) {
+    Assert(!name.empty());
+    Assert(parameter);
+
+    _parameters.Insert_AssertUnique(name, parameter);
+}
+//----------------------------------------------------------------------------
+void MaterialEffect::Create(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, const Scene *scene) {
     Assert(_constants.empty());
     Assert(_textureSlots.empty());
     Assert(_textureBindings.empty());
@@ -244,8 +252,6 @@ void MaterialEffect::Create(Graphics::IDeviceAPIEncapsulator *device, const Scen
 
     _textureBindings.resize(_textureSlots.size());
 
-    const MaterialDatabase *materialDatabase = scene->MaterialDatabase();
-    Assert(materialDatabase);
     TextureCache *const textureCache = scene->RenderTree()->TextureCache();
     Assert(textureCache);
     RenderSurfaceManager *const renderSurfaceManager = scene->RenderTree()->RenderSurfaceManager();
@@ -257,7 +263,7 @@ void MaterialEffect::Create(Graphics::IDeviceAPIEncapsulator *device, const Scen
                         materialDatabase, textureCache, renderSurfaceManager );
 
     for (const PEffectConstantBuffer& cbuffer : _constants)
-        cbuffer->Prepare(device, _material, scene);
+        cbuffer->Prepare(device, this, materialDatabase, scene);
 }
 //----------------------------------------------------------------------------
 void MaterialEffect::Destroy(Graphics::IDeviceAPIEncapsulator *device) {

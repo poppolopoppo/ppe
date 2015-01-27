@@ -2,6 +2,7 @@
 
 #include "MaterialParameterMath.h"
 
+#include "Effect/MaterialEffect.h"
 #include "Material/Material.h"
 #include "Material/MaterialContext.h"
 #include "Material/MaterialDatabase.h"
@@ -229,12 +230,14 @@ void RegisterMathMaterialParameters(MaterialDatabase *database) {
 //----------------------------------------------------------------------------
 bool TryCreateMathMaterialParameter(
     AbstractMaterialParameter **param,
-    const Material *material,
+    MaterialEffect *materialEffect,
+    MaterialDatabase *materialDatabase,
     const Scene *scene,
     const Graphics::BindName& name,
     const Graphics::ConstantField& field ) {
     Assert(param);
-    Assert(material);
+    Assert(materialEffect);
+    Assert(materialDatabase);
     Assert(scene);
     Assert(!name.empty());
 
@@ -273,18 +276,23 @@ bool TryCreateMathMaterialParameter(
 
     PAbstractMaterialParameter source;
     // Local source parameter search :
-    if (!material->Parameters().TryGet(parameterName, &source)) {
-        // Global source parameter search :
-        const MaterialDatabase *database = scene->MaterialDatabase();
-        if (!database->TryGetParameter(parameterName, source)) {
-            return false;
-        }
+    if (materialEffect->Material()->Parameters().TryGet(parameterName, &source) ||
+        materialEffect->Parameters().TryGet(parameterName, &source) ) {
+        Assert(source);
+        *param = (*paramFunc)(source);
+        materialEffect->BindParameter(name, *param);
     }
-    Assert(source);
+    // Global source parameter search :
+    else if (materialDatabase->TryGetParameter(parameterName, source)) {
+        Assert(source);
+        *param = (*paramFunc)(source);
+        materialDatabase->BindParameter(name, *param);
+    }
+    else {
+        return false;
+    }
 
-    *param = (*paramFunc)(source);
     Assert(*param);
-
     return true;
 }
 //----------------------------------------------------------------------------

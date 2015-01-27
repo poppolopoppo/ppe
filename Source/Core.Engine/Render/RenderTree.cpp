@@ -87,12 +87,12 @@ bool RenderTree::TryGet(const char *name, PAbstractRenderLayer& player) const {
     return result;
 }
 //----------------------------------------------------------------------------
-void RenderTree::Prepare(Graphics::IDeviceAPIEncapsulator *device, VariabilitySeed *seeds) {
+void RenderTree::Prepare(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase,  VariabilitySeed *seeds) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(device);
 
     for (PAbstractRenderLayer& layer : _layers)
-        layer->Prepare(device, this, seeds);
+        layer->Prepare(device, materialDatabase, this, seeds);
 
     // tries to fetch possibly loaded textures after each prepare :
     TextureCache()->Update();

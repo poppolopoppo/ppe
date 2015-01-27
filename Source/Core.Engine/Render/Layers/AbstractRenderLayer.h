@@ -21,6 +21,7 @@ namespace Engine {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(AbstractRenderLayer);
+FWD_REFPTR(MaterialDatabase);
 class RenderBatch;
 class RenderTree;
 struct VariabilitySeed;
@@ -50,7 +51,7 @@ public:
     RenderBatch *RenderBatchIFP();
     const RenderBatch *RenderBatchIFP() const;
 
-    void Prepare(Graphics::IDeviceAPIEncapsulator *device, const RenderTree *renderTree, VariabilitySeed *seeds);
+    void Prepare(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, const RenderTree *renderTree, VariabilitySeed *seeds);
     void Render(Graphics::IDeviceAPIContextEncapsulator *context);
     void Destroy(Graphics::IDeviceAPIEncapsulator *device, const RenderTree *renderTree);
 
@@ -58,7 +59,7 @@ protected:
     virtual RenderBatch *RenderBatchIFPImpl_() { return nullptr; }
     virtual const RenderBatch *RenderBatchIFPImpl_() const { return nullptr; }
 
-    virtual void PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, const RenderTree *renderTree, VariabilitySeed *seeds) = 0;
+    virtual void PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, const RenderTree *renderTree, VariabilitySeed *seeds) = 0;
     virtual void RenderImpl_(Graphics::IDeviceAPIContextEncapsulator *context) = 0;
     virtual void DestroyImpl_(Graphics::IDeviceAPIEncapsulator *device, const RenderTree *renderTree) = 0;
 
