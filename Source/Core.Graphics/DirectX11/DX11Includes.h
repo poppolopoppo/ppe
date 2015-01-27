@@ -25,6 +25,10 @@
 #   else
 #       pragma comment (lib, "d3dx11.lib")
 #   endif
+
+//  Direct3D interface GUIDs
+#   pragma comment (lib, "dxguid.lib")
+
 #else
 #   error "no support"
 #endif
