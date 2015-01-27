@@ -2,6 +2,8 @@
 
 #include "Core/Core.h"
 
+#include "Core/IO/Format.h"
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -45,6 +47,13 @@ namespace DialogBox {
     inline Result YesNo(const wchar_t *text, const wchar_t *caption, Icon iconType) { return Show(text, caption, Type::YesNo, iconType); }
     inline Result RetryCancel(const wchar_t *text, const wchar_t *caption, Icon iconType) { return Show(text, caption, Type::RetryCancel, iconType); }
     inline Result CancelTryContinue(const wchar_t *text, const wchar_t *caption, Icon iconType) { return Show(text, caption, Type::CancelTryContinue, iconType); }
+
+    template <typename _Arg0, typename... _Args>
+    Result Show(const wchar_t *caption, Type dialogType, Icon iconType, const wchar_t *fmt, _Arg0&& arg0, _Args&&... args) {
+        wchar_t text[1024];
+        Format(text, fmt, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+        return Show(text, caption, dialogType, iconType);
+    }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
