@@ -18,7 +18,8 @@ struct VariabilitySeed;
 class RenderLayerSetRenderTarget : public AbstractRenderLayer {
 public:
     explicit RenderLayerSetRenderTarget(AbstractRenderSurface *surface);
-    explicit RenderLayerSetRenderTarget(const MemoryView<PAbstractRenderSurface>& surfaces);
+    explicit RenderLayerSetRenderTarget(const MemoryView<const PAbstractRenderSurface>& surfaces);
+    RenderLayerSetRenderTarget(const MemoryView<const PAbstractRenderSurface>& surfaces, const PAbstractRenderSurface& depthStencil);
     virtual ~RenderLayerSetRenderTarget();
 
     SINGLETON_POOL_ALLOCATED_DECL(RenderLayerSetRenderTarget);

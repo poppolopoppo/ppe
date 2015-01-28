@@ -30,7 +30,7 @@ static String RenderLayerSetRenderTargetName_(AbstractRenderSurface *surface) {
 #endif
 }
 //----------------------------------------------------------------------------
-static String RenderLayerSetRenderTargetName_(const MemoryView<PAbstractRenderSurface>& surfaces) {
+static String RenderLayerSetRenderTargetName_(const MemoryView<const PAbstractRenderSurface>& surfaces) {
 #ifdef WITH_CORE_ENGINE_RENDERLAYER_DEBUGNAME
     char buffer[2048];
     {
@@ -59,7 +59,7 @@ RenderLayerSetRenderTarget::RenderLayerSetRenderTarget(AbstractRenderSurface *su
     _surfaces[0] = surface;
 }
 //----------------------------------------------------------------------------
-RenderLayerSetRenderTarget::RenderLayerSetRenderTarget(const MemoryView<PAbstractRenderSurface>& surfaces)
+RenderLayerSetRenderTarget::RenderLayerSetRenderTarget(const MemoryView<const PAbstractRenderSurface>& surfaces)
 :   AbstractRenderLayer(RenderLayerSetRenderTargetName_(surfaces))
 ,   _count(surfaces.size()) {
     Assert(!surfaces.empty());
@@ -69,6 +69,21 @@ RenderLayerSetRenderTarget::RenderLayerSetRenderTarget(const MemoryView<PAbstrac
         _surfaces[i] = surfaces[i];
         Assert(_surfaces[i]);
     }
+}
+//----------------------------------------------------------------------------
+RenderLayerSetRenderTarget::RenderLayerSetRenderTarget(const MemoryView<const PAbstractRenderSurface>& surfaces, const PAbstractRenderSurface& depthStencil)
+:   AbstractRenderLayer(RenderLayerSetRenderTargetName_(surfaces))
+,   _count(surfaces.size() + 1) {
+    Assert(!surfaces.empty());
+    Assert(depthStencil);
+    Assert(surfaces.size() + 1 < MaxSurface); // hard coded value from directx11 macro D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT
+
+    for (size_t i = 0; i < _count - 1; ++i) {
+        _surfaces[i] = surfaces[i];
+        Assert(_surfaces[i]);
+    }
+
+    _surfaces[_count - 1] = depthStencil;
 }
 //----------------------------------------------------------------------------
 RenderLayerSetRenderTarget::~RenderLayerSetRenderTarget() {}
