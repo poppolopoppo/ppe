@@ -21,6 +21,10 @@
     </CustomBuild>
     <CustomBuild Include="GameTest3.h">
     </CustomBuild>
+    <CustomBuild Include="GameTest4.cpp">
+    </CustomBuild>
+    <CustomBuild Include="GameTest4.h">
+    </CustomBuild>
     <CustomBuild Include="main.cpp">
     </CustomBuild>
     <CustomBuild Include="resource.h">

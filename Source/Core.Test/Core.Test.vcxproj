@@ -49,6 +49,8 @@
     <CustomBuild Include="GameTest2.h" />
     <CustomBuild Include="GameTest3.cpp" />
     <CustomBuild Include="GameTest3.h" />
+    <CustomBuild Include="GameTest4.cpp" />
+    <CustomBuild Include="GameTest4.h" />
     <CustomBuild Include="main.cpp" />
     <CustomBuild Include="resource.h" />
     <CustomBuild Include="stdafx.cpp" />
