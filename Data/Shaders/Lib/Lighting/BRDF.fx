@@ -39,8 +39,7 @@ float3 Shade(   Geometry g, Material m, Environment e,
                 float3 lightDir, float3 lightColor, float lightAttenuation, float lightIntensity ) {
     float3 albedoColor = m.Albedo - m.Albedo * m.Metallic;
 
-    float fresnel0 = RefractiveIndex_to_Fresnel0(m.RefractiveIndex);
-    float3 specularColor = lerp(m.SpecularColor, m.Albedo, m.Metallic) * fresnel0;
+    float3 specularColor = lerp(m.SpecularColor, m.Albedo, m.Metallic);
 
     float3 lightingTerm = LightingTerm(albedoColor, specularColor, g.Normal, m.Roughness, lightColor, lightDir, g.Eye);
 

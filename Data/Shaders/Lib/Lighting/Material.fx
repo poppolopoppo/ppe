@@ -8,7 +8,6 @@ namespace Lighting {
 struct Material {
     float3  Albedo;
     float   Metallic;
-    float   RefractiveIndex;
     float   Roughness;
     float3  SpecularColor;
 };

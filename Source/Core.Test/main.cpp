@@ -13,7 +13,7 @@
 
 #include <iostream>
 
-#define APPLICATION_TYPE 3
+#define APPLICATION_TYPE 4
 
 #if   (0 == APPLICATION_TYPE)
 #   include "ApplicationTest.h"
@@ -27,6 +27,9 @@ typedef Core::GameTest2 application_type;
 #elif (3 == APPLICATION_TYPE)
 #   include "GameTest3.h"
 typedef Core::GameTest3 application_type;
+#elif (4 == APPLICATION_TYPE)
+#   include "GameTest4.h"
+typedef Core::GameTest4 application_type;
 #else
 #   error "unknown application type"
 #endif
