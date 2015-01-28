@@ -199,6 +199,7 @@ const ColorRGBA Color::Tan{u8(0xD2), u8(0xB4), u8(0x8C), u8(0xFF)};
 const ColorRGBA Color::Teal{u8(0x00), u8(0x80), u8(0x80), u8(0xFF)};
 const ColorRGBA Color::Thistle{u8(0xD8), u8(0xBF), u8(0xD8), u8(0xFF)};
 const ColorRGBA Color::Tomato{u8(0xFF), u8(0x63), u8(0x47), u8(0xFF)};
+const ColorRGBA Color::Transparent{u8(0x00), u8(0x00), u8(0x00), u8(0x00)};
 const ColorRGBA Color::Turquoise{u8(0x40), u8(0xE0), u8(0xD0), u8(0xFF)};
 const ColorRGBA Color::Violet{u8(0xEE), u8(0x82), u8(0xEE), u8(0xFF)};
 const ColorRGBA Color::Wheat{u8(0xF5), u8(0xDE), u8(0xB3), u8(0xFF)};
@@ -342,6 +343,7 @@ static const ColorRGBA *const gAllColors[] = {
     &Color::Teal,
     &Color::Thistle,
     &Color::Tomato,
+    &Color::Transparent,
     &Color::Turquoise,
     &Color::Violet,
     &Color::Wheat,

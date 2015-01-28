@@ -277,6 +277,7 @@ static const ColorRGBA Tan;
 static const ColorRGBA Teal;
 static const ColorRGBA Thistle;
 static const ColorRGBA Tomato;
+static const ColorRGBA Transparent;
 static const ColorRGBA Turquoise;
 static const ColorRGBA Violet;
 static const ColorRGBA Wheat;
