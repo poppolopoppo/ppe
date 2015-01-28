@@ -127,7 +127,7 @@ static void PrepareTexture_(Filename *filename,
     }
 }
 //----------------------------------------------------------------------------
-static void FetchTexture_(MaterialEffect::TextureBinding& binding,
+static void FetchTexture_(  MaterialEffect::TextureBinding& binding,
                             const MaterialEffect::TextureSlot& slot,
                             TextureCache *textureCache,
                             RenderSurfaceManager *renderSurfaceManager,
