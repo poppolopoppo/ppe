@@ -101,6 +101,23 @@ void AbstractTextureContent::CreateTextureImpl_(
         textureDesc.Format = SurfaceFormatTypeToDXGIFormat(owner->Format()->Type());
         textureDesc.ArraySize = (isCubeMap ? 6 : 1);
 
+        // necessarry to bind the depth buffer to the device :
+        switch (textureDesc.Format)
+        {
+        case DXGI_FORMAT_D16_UNORM:
+            textureDesc.Format = DXGI_FORMAT_R16_UNORM;
+            break;
+        case DXGI_FORMAT_D24_UNORM_S8_UINT:
+            textureDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;
+            break;
+        case DXGI_FORMAT_D32_FLOAT:
+            textureDesc.Format = DXGI_FORMAT_R32_FLOAT;
+            break;
+
+        default:
+            break;
+        }
+
         textureDesc.SampleDesc.Count = 1;
         textureDesc.SampleDesc.Quality = 0;
 
@@ -153,11 +170,29 @@ void AbstractTextureContent::CreateTextureImpl_(
     }
 
     Assert(nullptr != pTexture2D.Get());
-    if (D3D11_BIND_DEPTH_STENCIL != (bindFlags & D3D11_BIND_DEPTH_STENCIL)) {
+    {
         ::D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc;
         ::SecureZeroMemory(&viewDesc, sizeof(viewDesc));
 
         viewDesc.Format = SurfaceFormatTypeToDXGIFormat(owner->Format()->Type());
+
+        // necessarry to bind the depth buffer to the device :
+        switch (viewDesc.Format)
+        {
+        case DXGI_FORMAT_D16_UNORM:
+            viewDesc.Format = DXGI_FORMAT_R16_UNORM;
+            break;
+        case DXGI_FORMAT_D24_UNORM_S8_UINT:
+            viewDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+            break;
+        case DXGI_FORMAT_D32_FLOAT:
+            viewDesc.Format = DXGI_FORMAT_R32_FLOAT;
+            break;
+
+        default:
+            break;
+        }
+
         viewDesc.ViewDimension = (isCubeMap ? ::D3D11_SRV_DIMENSION_TEXTURECUBE : ::D3D11_SRV_DIMENSION_TEXTURE2D);
 
         const UINT mipLevels = checked_cast<UINT>(levelCount);

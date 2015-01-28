@@ -21,7 +21,7 @@ namespace DX11 {
 //----------------------------------------------------------------------------
 DepthStencil::DepthStencil(IDeviceAPIEncapsulator *device, Graphics::DepthStencil *owner, const MemoryView<const u8>& optionalData)
 :   DeviceAPIDependantDepthStencil(device, owner, optionalData)
-,   DX11::Texture2DContent(device, owner, optionalData, D3D11_BIND_DEPTH_STENCIL) {
+,   DX11::Texture2DContent(device, owner, optionalData, static_cast<::D3D11_BIND_FLAG>(D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL)) {
     const DeviceWrapper *wrapper = DX11DeviceWrapper(device);
     {
         ::D3D11_DEPTH_STENCIL_VIEW_DESC dSDesc;
