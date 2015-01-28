@@ -75,6 +75,12 @@ bool AcquireModelRenderCommand( UModelRenderCommand& pModelCommand,
                                 const char *parFallbackRenderLayerName,
                                 const Model *model );
 //----------------------------------------------------------------------------
+bool AcquireModelRenderCommand( UModelRenderCommand& pModelCommand,
+                                Graphics::IDeviceAPIEncapsulator *device,
+                                RenderTree *renderTree,
+                                const char *parRenderLayerName,
+                                const Model *model );
+//----------------------------------------------------------------------------
 void ReleaseModelRenderCommand( UModelRenderCommand& pModelCommand,
                                 Graphics::IDeviceAPIEncapsulator *device,
                                 const Model *model );

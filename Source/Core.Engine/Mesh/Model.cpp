@@ -161,6 +161,21 @@ bool AcquireModelRenderCommand( UModelRenderCommand& pModelCommand,
     return true;
 }
 //----------------------------------------------------------------------------
+bool AcquireModelRenderCommand( UModelRenderCommand& pModelCommand,
+                                Graphics::IDeviceAPIEncapsulator *device,
+                                RenderTree *renderTree,
+                                const char *parRenderLayerName,
+                                const Model *model ) {
+    Assert(parRenderLayerName);
+    return AcquireModelRenderCommand(
+        pModelCommand, 
+        device, 
+        renderTree, 
+        MemoryView<const Pair<Graphics::BindName, const char *>>(),
+        parRenderLayerName,
+        model );
+}
+//----------------------------------------------------------------------------
 void ReleaseModelRenderCommand( UModelRenderCommand& pModelCommand,
                                 Graphics::IDeviceAPIEncapsulator *device,
                                 const Model *model ) {
