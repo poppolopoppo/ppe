@@ -23,6 +23,18 @@ enum class FrustumPlane {
     Bottom
 };
 //----------------------------------------------------------------------------
+enum class FrustumCorner {
+    Near_LeftTop = 0,
+    Near_LeftBottom,
+    Near_RightBottom,
+    Near_RightTop,
+    
+    Far_LeftTop,
+    Far_LeftBottom,
+    Far_RightBottom,
+    Far_RightTop,
+};
+//----------------------------------------------------------------------------
 struct FrustumCameraParams {
     float3  Position;
     float3  LookAtDir;

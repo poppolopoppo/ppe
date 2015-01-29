@@ -14,6 +14,13 @@ class ICameraController;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+enum class CameraRay {
+    LeftTop = 0,
+    LeftBottom,
+    RightBottom,
+    RightTop
+};
+//----------------------------------------------------------------------------
 class CameraModel {
 public:
     CameraModel();
@@ -33,7 +40,10 @@ public:
     const Core::Frustum& Frustum() const { return _frustum; }
     MemoryView<const float3> FrustumCorners() const { return MakeView(_frustumCorners); }
 
-    const FrustumCameraParams& Parameters() const { return _paramaters; }
+    const FrustumCameraParams& Parameters() const { return _parameters; }
+
+    void GetFrustumRays(float3 (&rays)[4]) const { return GetFrustumRays(MakeView(rays)); }
+    void GetFrustumRays(const MemoryView<float3>& rays) const;
 
     void Update(const ICamera *camera, const ICameraController *controller);
     void CopyTo(CameraModel *dst) const;
@@ -50,7 +60,7 @@ private:
     Core::Frustum _frustum;
     float3 _frustumCorners[8];
 
-    FrustumCameraParams _paramaters;
+    FrustumCameraParams _parameters;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

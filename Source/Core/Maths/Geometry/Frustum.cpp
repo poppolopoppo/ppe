@@ -106,15 +106,15 @@ void Frustum::GetCorners(const MemoryView<float3>& points) const {
     const Plane& pnear = _planes[size_t(FrustumPlane::Near)];
     const Plane& pfar = _planes[size_t(FrustumPlane::Far)];
 
-    points[0] = Plane::Get3PlanesInterPoint(pnear,  pbottom,  pright);   //Near1
-    points[1] = Plane::Get3PlanesInterPoint(pnear,  ptop,  pright);      //Near2
-    points[2] = Plane::Get3PlanesInterPoint(pnear,  ptop,  pleft);       //Near3
-    points[3] = Plane::Get3PlanesInterPoint(pnear,  pbottom,  pleft);    //Near3
+    points[size_t(FrustumCorner::Near_LeftTop)]     = Plane::Get3PlanesInterPoint(pnear, pleft, ptop);
+    points[size_t(FrustumCorner::Near_LeftBottom)]  = Plane::Get3PlanesInterPoint(pnear, pleft, pbottom);
+    points[size_t(FrustumCorner::Near_RightBottom)] = Plane::Get3PlanesInterPoint(pnear, pright, pbottom);
+    points[size_t(FrustumCorner::Near_RightTop)]    = Plane::Get3PlanesInterPoint(pnear, pright, ptop);
 
-    points[4] = Plane::Get3PlanesInterPoint(pfar,  pbottom,  pright);    //Far1
-    points[5] = Plane::Get3PlanesInterPoint(pfar,  ptop,  pright);       //Far2
-    points[6] = Plane::Get3PlanesInterPoint(pfar,  ptop,  pleft);        //Far3
-    points[7] = Plane::Get3PlanesInterPoint(pfar,  pbottom,  pleft);     //Far3
+    points[size_t(FrustumCorner::Far_LeftTop)]      = Plane::Get3PlanesInterPoint(pfar, pleft, ptop);
+    points[size_t(FrustumCorner::Far_LeftBottom)]   = Plane::Get3PlanesInterPoint(pfar, pleft, pbottom);
+    points[size_t(FrustumCorner::Far_RightBottom)]  = Plane::Get3PlanesInterPoint(pfar, pright, pbottom);
+    points[size_t(FrustumCorner::Far_RightTop)]     = Plane::Get3PlanesInterPoint(pfar, pright, ptop);
 }
 //----------------------------------------------------------------------------
 void Frustum::GetCameraParams(FrustumCameraParams& params) const {
