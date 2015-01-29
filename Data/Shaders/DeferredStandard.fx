@@ -83,11 +83,13 @@ GBuffer::Layout pmain(PixelIn pixelIn) {
     float3 normal = normalize(pixelIn.Normal);
 #endif
 
+    float3 albedo = TEX2D(uniSRGB_uniLinearWrap_DiffuseMap, pixelIn.TexCoord).rgb;
+
     float3 specularColor = 1;
     specularColor *= Lighting::RefractiveIndex_to_Fresnel0(uniOptional_RefractiveIndex);
 
     GBuffer::Layout layout = (GBuffer::Layout)0;
-    GBuffer::Write_Albedo(layout, TEX2D(uniSRGB_uniLinearWrap_DiffuseMap, pixelIn.TexCoord).rgb);
+    GBuffer::Write_Albedo(layout, albedo);
     GBuffer::Write_Metallic(layout, uniOptional_Metallic);
     GBuffer::Write_SpecularColor(layout, specularColor);
     GBuffer::Write_Roughness(layout, uniOptional_Roughness);

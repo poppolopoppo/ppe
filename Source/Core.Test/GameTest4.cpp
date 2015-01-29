@@ -55,8 +55,6 @@
 #include "Core.Application/Input/Camera/KeyboardMouseCameraController.h"
 
 namespace Core {
-typedef Graphics::Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Float2__Normal0_UX10Y10Z10W2N vertex_type;
-
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -166,7 +164,7 @@ static Engine::MaterialEffect *DeferredShadeEffect_(Engine::EffectCompiler *effe
     using namespace Engine;
     using namespace Graphics;
 
-    PCVertexDeclaration const vertexDecl = Vertex::Position0_Float4__TexCoord0_Float2::Declaration;
+    PCVertexDeclaration const vertexDecl = Vertex::Position0_Float3__TexCoord0_Half2::Declaration;
 
     PEffectDescriptor const descriptor = new EffectDescriptor();
     descriptor->SetName("DeferredShade");
@@ -293,9 +291,9 @@ void GameTest4::Initialize(const Timeline& time) {
 
     // gbuffer rendering
     _mainScene->RenderTree()->Add(new RenderLayerSetRenderTarget(MakeConstView(gbuffer), depthBuffer));
-    _mainScene->RenderTree()->Add(new RenderLayerClear(gbuffer[0], Color::Transparent));
-    _mainScene->RenderTree()->Add(new RenderLayerClear(gbuffer[1], Color::Transparent));
-    _mainScene->RenderTree()->Add(new RenderLayerClear(gbuffer[2], Color::Gray));
+    _mainScene->RenderTree()->Add(new RenderLayerClear(gbuffer[0],  Color::Black));
+    _mainScene->RenderTree()->Add(new RenderLayerClear(gbuffer[1],  Color::Transparent));
+    _mainScene->RenderTree()->Add(new RenderLayerClear(gbuffer[2],  Color::Blue));
     _mainScene->RenderTree()->Add(new RenderLayerClear(depthBuffer, Color::Black));
     _mainScene->RenderTree()->Add(new RenderLayer("Opaque_Objects"));
 
