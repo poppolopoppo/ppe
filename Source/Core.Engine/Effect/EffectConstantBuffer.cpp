@@ -31,9 +31,15 @@ static AbstractMaterialParameter *TryGetParameter_(
     const Scene *scene ) {
 
     PAbstractMaterialParameter param;
-    if (materialEffect->Material()->Parameters().TryGet(name, &param) ||
-        materialEffect->Parameters().TryGet(name, &param) ||
-        scene->MaterialDatabase()->TryGetParameter(name, param) ) {
+    if (materialEffect->Material()->Parameters().TryGet(name, &param)) {
+        Assert(param);
+        return param.get();
+    }
+    if (materialEffect->Parameters().TryGet(name, &param)) {
+        Assert(param);
+        return param.get();
+    }
+    if (scene->MaterialDatabase()->TryGetParameter(name, param)) {
         Assert(param);
         return param.get();
     }
