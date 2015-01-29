@@ -12,6 +12,7 @@
 #include "Core/IO/Format.h"
 #include "Core/IO/String.h"
 
+#include "Camera/CameraModel.h"
 #include "Effect/Effect.h"
 #include "Effect/EffectCompiler.h"
 #include "Effect/MaterialEffect.h"
@@ -49,10 +50,10 @@ static void CreateRectVertices_(
 
     static const size_t vertexCount = 4; // triangle strip
     const float4 positions0[vertexCount] = {
-        {viewport.Left(),   viewport.Top(),     1, 1 },
-        {viewport.Left(),   viewport.Bottom(),  1, 1 },
-        {viewport.Right(),  viewport.Top(),     1, 1 },
-        {viewport.Right(),  viewport.Bottom(),  1, 1 },
+        {viewport.Left(),   viewport.Top(),     float(CameraRay::LeftBottom),   1 },
+        {viewport.Left(),   viewport.Bottom(),  float(CameraRay::LeftTop),      1 },
+        {viewport.Right(),  viewport.Top(),     float(CameraRay::RightBottom),  1 },
+        {viewport.Right(),  viewport.Bottom(),  float(CameraRay::RightTop),     1 },
     };
     const float4 texcoords0[vertexCount] = {
         { 0, 1, 0, 0 },
