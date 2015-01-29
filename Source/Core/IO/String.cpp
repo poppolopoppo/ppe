@@ -72,11 +72,13 @@ size_t hash_valueI(const wchar_t* wcstr, size_t length) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 size_t ToCStr(char *dst, size_t capacity, const wchar_t *wcstr, size_t length) {
-    if (0 == length)
-        return 0;
-
     Assert(dst);
     Assert(capacity);
+    if (0 == length) {
+        dst[0] = '\0';
+        return 0;
+    }
+
     Assert(wcstr);
 
     size_t written;
@@ -96,11 +98,13 @@ size_t ToCStr(char *dst, size_t capacity, const WString& wstr) {
 }
 //----------------------------------------------------------------------------
 size_t ToWCStr(wchar_t *dst, size_t capacity, const char *cstr, size_t length) {
-    if (0 == length)
-        return 0;
-
-    Assert(dst);
+Assert(dst);
     Assert(capacity);
+    if (0 == length) {
+        dst[0] = L'\0';
+        return 0;
+    }
+
     Assert(cstr);
 
     size_t written;
