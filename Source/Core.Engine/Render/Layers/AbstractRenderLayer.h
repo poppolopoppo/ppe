@@ -6,7 +6,7 @@
 #include "Core/Memory/RefPtr.h"
 #include "Core/Meta/PointerWFlags.h"
 
-#ifdef _DEBUG
+#if defined(_DEBUG) || defined(WITH_CORE_GRAPHICS_DIAGNOSTICS)
 #   define WITH_CORE_ENGINE_RENDERLAYER_DEBUGNAME
 #endif
 
