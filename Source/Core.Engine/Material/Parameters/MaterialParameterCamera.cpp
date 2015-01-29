@@ -96,16 +96,58 @@ bool MaterialParameterCamera_InvertViewProjection::Memoize_ReturnIfChanged_(floa
 }
 //----------------------------------------------------------------------------
 bool MaterialParameterCamera_FrustumRays::Memoize_ReturnIfChanged_(float4x4 *cached, const MaterialContext& context) {
-    const MemoryView<const float3> corners = context.Scene->Camera()->Model().FrustumCorners();
+    float3 cameraRays[4];
+    context.Scene->Camera()->Model().GetFrustumRays(cameraRays);
 
-    float4x4 rays(0.0f);
-    rays.SetAxisX(corners[4] - corners[0]);
-    rays.SetAxisY(corners[5] - corners[1]);
-    rays.SetAxisZ(corners[6] - corners[2]);
-    rays.SetAxisT(corners[7] - corners[3]);
+    float4x4 raysAsMatrix(0.0f);
+    raysAsMatrix.SetColumn(0, cameraRays[size_t(CameraRay::LeftTop)].ZeroExtend());
+    raysAsMatrix.SetColumn(1, cameraRays[size_t(CameraRay::LeftBottom)].ZeroExtend());
+    raysAsMatrix.SetColumn(2, cameraRays[size_t(CameraRay::RightBottom)].ZeroExtend());
+    raysAsMatrix.SetColumn(3, cameraRays[size_t(CameraRay::RightTop)].ZeroExtend());
 
-    const bool changed = (rays != *cached);
-    *cached = rays;
+    const bool changed = (raysAsMatrix != *cached);
+    *cached = raysAsMatrix;
+
+    return changed;
+}
+//----------------------------------------------------------------------------
+bool MaterialParameterCamera_NearFarZ::Memoize_ReturnIfChanged_(float2 *cached, const MaterialContext& context) {
+    const CameraModel& cameraModel = context.Scene->Camera()->Model();
+
+    const float2 nearFarZ(cameraModel.Parameters().ZNear, cameraModel.Parameters().ZFar);
+
+    const bool changed = (nearFarZ != *cached);
+    *cached = nearFarZ;
+
+    return changed;
+}
+//----------------------------------------------------------------------------
+bool MaterialParameterCamera_NearCorners::Memoize_ReturnIfChanged_(float4x4 *cached, const MaterialContext& context) {
+    const MemoryView<const float3> frustumCorners = context.Scene->Camera()->Model().FrustumCorners();
+
+    float4x4 pointsAsMatrix(0.0f);
+    pointsAsMatrix.SetColumn(0, frustumCorners[size_t(FrustumCorner::Near_LeftTop)].ZeroExtend());
+    pointsAsMatrix.SetColumn(1, frustumCorners[size_t(FrustumCorner::Near_LeftBottom)].ZeroExtend());
+    pointsAsMatrix.SetColumn(2, frustumCorners[size_t(FrustumCorner::Near_RightBottom)].ZeroExtend());
+    pointsAsMatrix.SetColumn(3, frustumCorners[size_t(FrustumCorner::Near_RightTop)].ZeroExtend());
+
+    const bool changed = (pointsAsMatrix != *cached);
+    *cached = pointsAsMatrix;
+
+    return changed;
+}
+//----------------------------------------------------------------------------
+bool MaterialParameterCamera_FarCorners::Memoize_ReturnIfChanged_(float4x4 *cached, const MaterialContext& context) {
+    const MemoryView<const float3> frustumCorners = context.Scene->Camera()->Model().FrustumCorners();
+
+    float4x4 pointsAsMatrix(0.0f);
+    pointsAsMatrix.SetColumn(0, frustumCorners[size_t(FrustumCorner::Far_LeftTop)].ZeroExtend());
+    pointsAsMatrix.SetColumn(1, frustumCorners[size_t(FrustumCorner::Far_LeftBottom)].ZeroExtend());
+    pointsAsMatrix.SetColumn(2, frustumCorners[size_t(FrustumCorner::Far_RightBottom)].ZeroExtend());
+    pointsAsMatrix.SetColumn(3, frustumCorners[size_t(FrustumCorner::Far_RightTop)].ZeroExtend());
+
+    const bool changed = (pointsAsMatrix != *cached);
+    *cached = pointsAsMatrix;
 
     return changed;
 }
@@ -125,6 +167,9 @@ void RegisterCameraMaterialParameters(MaterialDatabase *database) {
     database->BindParameter("uniViewProjection",        new MaterialParameterCamera_InvertView() );
     database->BindParameter("uniInvertViewProjection",  new MaterialParameterCamera_InvertViewProjection() );
     database->BindParameter("uniFrustumRays",           new MaterialParameterCamera_FrustumRays() );
+    database->BindParameter("uniNearFarZ",              new MaterialParameterCamera_NearFarZ() );
+    database->BindParameter("uniNearCorners",           new MaterialParameterCamera_NearCorners() );
+    database->BindParameter("uniFarCorners",            new MaterialParameterCamera_FarCorners() );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

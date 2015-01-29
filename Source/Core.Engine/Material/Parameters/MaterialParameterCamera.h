@@ -94,6 +94,30 @@ protected:
     bool Memoize_ReturnIfChanged_(float4x4 *cached, const MaterialContext& context) override;
 };
 //----------------------------------------------------------------------------
+class MaterialParameterCamera_NearFarZ : public AbstractMaterialParameterMemoizer<float2> {
+public:
+    MaterialParameterCamera_NearFarZ() : AbstractMaterialParameterMemoizer(MaterialVariability::Scene) {}
+    virtual ~MaterialParameterCamera_NearFarZ() {}
+protected:
+    bool Memoize_ReturnIfChanged_(float2 *cached, const MaterialContext& context) override;
+};
+//----------------------------------------------------------------------------
+class MaterialParameterCamera_NearCorners : public AbstractMaterialParameterMemoizer<float4x4> {
+public:
+    MaterialParameterCamera_NearCorners() : AbstractMaterialParameterMemoizer(MaterialVariability::Scene) {}
+    virtual ~MaterialParameterCamera_NearCorners() {}
+protected:
+    bool Memoize_ReturnIfChanged_(float4x4 *cached, const MaterialContext& context) override;
+};
+//----------------------------------------------------------------------------
+class MaterialParameterCamera_FarCorners : public AbstractMaterialParameterMemoizer<float4x4> {
+public:
+    MaterialParameterCamera_FarCorners() : AbstractMaterialParameterMemoizer(MaterialVariability::Scene) {}
+    virtual ~MaterialParameterCamera_FarCorners() {}
+protected:
+    bool Memoize_ReturnIfChanged_(float4x4 *cached, const MaterialContext& context) override;
+};
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void RegisterCameraMaterialParameters(MaterialDatabase *database);
