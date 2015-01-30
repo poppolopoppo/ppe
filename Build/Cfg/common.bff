@@ -9,8 +9,8 @@
 
 .VSFBuildOptions      = ''
                         + ' -cache'
-                        + ' -showcmds'
-                    //  + ' -dist'
+                    //    + ' -showcmds'
+                    //    + ' -dist'
 
 .VSFRebuildOptions    = ''
 
