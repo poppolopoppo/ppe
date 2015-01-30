@@ -323,6 +323,8 @@ Compiler( 'Compiler-x86Clang' )
                             + ' -Wno-unused-value' // TODO: Need to re-enable this
                             + ' -integrated-as' // use the built-in assembler (don't try to use gcc)
 
+                            + ' -Wno-error=incompatible-ms-struct' //http://lists.cs.uiuc.edu/pipermail/cfe-commits/Week-of-Mon-20140224/100153.html
+
                             + ' -fdata-sections'
                             + ' -ffunction-sections'
 
@@ -334,7 +336,7 @@ Compiler( 'Compiler-x86Clang' )
                             + ' /LIBPATH:"$WindowsLibPaths$/x86" /LIBPATH:"$VSBasePath$/VC/lib"'
                             + ' /MACHINE:X86'
 
-    .Platform               = 'x86Clang'
+    .Platform               = 'x86-Clang'
     .Config                 = 'Debug'
 
     .UseExceptions          = ' -fexceptions'

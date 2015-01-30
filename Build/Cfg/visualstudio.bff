@@ -50,7 +50,7 @@
 .ProjectX64Release      = [ Using( .ProjectX64Common ) .Config = 'Release' .PreprocessorDefinitions + .ReleaseDefines ]
 .ProjectX64Final        = [ Using( .ProjectX64Common ) .Config = 'Final'   .PreprocessorDefinitions + .FinalDefines ]
 
-.ProjectX86ClangDebug   = [ Using( .ProjectX86Common ) .Config = 'Clang-Debug' ]
+.ProjectX86ClangDebug   = [ Using( .ProjectX86Common ) .Config = 'Clang-Debug' .PreprocessorDefinitions + .DebugDefines ]
 
 .ProjectConfigs = { .ProjectX86Debug, .ProjectX86Profile, .ProjectX86Release, .ProjectX86Final,
                     .ProjectX64Debug, .ProjectX64Profile, .ProjectX64Release, .ProjectX64Final,

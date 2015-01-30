@@ -48,9 +48,9 @@ ForEach( .Platform in .Platforms )
                     'All-$Platform$-Final' }
   }
 }
-Alias( 'All-x86Clang' )
+Alias( 'All-x86-Clang' )
 {
-  .Targets      = { 'All-x86Clang-Debug' }
+  .Targets      = { 'All-x86-Clang-Debug' }
 }
 
 // Aliases : All
@@ -58,8 +58,9 @@ Alias( 'All-x86Clang' )
 Alias( 'All' )
 {
   .Targets    = { 'All-x86',
+                  'All-x64',
                   //'All-x86Clang', // CLANG is excluded since it does not compile for the moment (waiting for better windows support)
-                  'All-x64' }
+                }
 }
 
 // Aliases : proj (all projects)
@@ -73,6 +74,14 @@ Alias( 'proj' )
                   'Core.Engine-proj',
                   'Core.Application-proj',
                   'Core.Test-proj',
+                }
+}
+
+// Aliases : Clang
+//------------------------------------------------------------------------------
+Alias( 'Clang' )
+{
+  .Targets    = { 'All-x86-Clang', // CLANG is excluded since it does not compile for the moment (waiting for better windows support)
                 }
 }
 

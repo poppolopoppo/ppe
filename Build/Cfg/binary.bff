@@ -95,7 +95,7 @@ ForEach( .Config in .Configs_Windows_Clang )
 // Aliases
 //--------------------------------------------------------------------------
 // Per-Config
-Alias( '$ProjectName$-Debug' )      { .Targets = { '$ProjectName$-X86-Debug',   '$ProjectName$-X64-Debug', '$ProjectName$-X86Clang-Debug' } }
+Alias( '$ProjectName$-Debug' )      { .Targets = { '$ProjectName$-X86-Debug',   '$ProjectName$-X64-Debug' } }
 Alias( '$ProjectName$-Profile' )    { .Targets = { '$ProjectName$-X86-Profile', '$ProjectName$-X64-Profile' } }
 Alias( '$ProjectName$-Release' )    { .Targets = { '$ProjectName$-X86-Release', '$ProjectName$-X64-Release' } }
 Alias( '$ProjectName$-Final' )      { .Targets = { '$ProjectName$-X86-Final',   '$ProjectName$-X64-Final' } }
@@ -103,7 +103,7 @@ Alias( '$ProjectName$-Final' )      { .Targets = { '$ProjectName$-X86-Final',   
 // Per-Platform
 Alias( '$ProjectName$-X86' )        { .Targets = { '$ProjectName$-X86-Debug', '$ProjectName$-X64-Release', '$ProjectName$-X86-Profile', '$ProjectName$-X86-Final' } }
 Alias( '$ProjectName$-X64' )        { .Targets = { '$ProjectName$-X64-Debug', '$ProjectName$-X64-Release', '$ProjectName$-X64-Profile', '$ProjectName$-X64-Final' } }
-Alias( '$ProjectName$-X86Clang' )   { .Targets = { '$ProjectName$-X86Clang-Debug' } }
+Alias( '$ProjectName$-X86-Clang' )  { .Targets = { '$ProjectName$-X86-Clang-Debug' } }
 
 // All
 Alias( '$ProjectName$' )
