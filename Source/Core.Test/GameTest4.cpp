@@ -76,9 +76,9 @@ static Engine::Model *CreatePBRTestModel_() {
     const Engine::PCMaterial material = modelMeshSubPart->Material();
     const AABB3f& meshBoundingBox = referenceModel->BoundingBox();
 
-    const size_t rows = 10;
+    const size_t rows = 20;
     const size_t columns = 2;
-    const size_t depths = 10;
+    const size_t depths = 20;
 
     const float margin = 1.15f;
 
@@ -267,10 +267,6 @@ void GameTest4::Initialize(const Timeline& time) {
 
     renderSurfaceManager->Register(backBuffer);
     renderSurfaceManager->Register(depthBuffer);
-
-    const PAbstractRenderSurface principal = new RenderSurfaceRelative("Principal", float2::One(), SurfaceFormat::R16G16B16A16_F);
-
-    renderSurfaceManager->Register(principal);
 
     // GBuffer Layout :
     // (0) Diffuse RGB / Metallic A
