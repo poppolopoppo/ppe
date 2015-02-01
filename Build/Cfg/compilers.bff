@@ -288,13 +288,14 @@ Compiler( 'Compiler-x86Clang' )
     .ToolsBasePath          = '$ClangBasePath$\bin'
     .Compiler               = 'Compiler-x86Clang'
     .Librarian              = '$ToolsBasePath$\llvm-ar.exe'
-    .Linker                 = '$VSBasePath$\VC\bin\link.exe' //'$ToolsBasePath$\lld.exe'
+    .Linker                 = '$ToolsBasePath$\lld.exe'
 
     .WindowsLibPaths        = '$WindowsSDKBasePath$/lib/winv6.3/um'
 
     .CompilerOptions        = '-o"%2" "%1" -c -g'
                             + ' -I"./"'
-                            + ' -I"$VSBasePath$/VC/include/"'
+                            + ' -I"$ClangBasePath$/lib/clang/3.6.0/include"'
+                            + ' -I"$VSBasePath$/VC/include"'
                             + ' -I"$WindowsSDKBasePath$/include/um"'
                             + ' -I"$WindowsSDKBasePath$/include/shared"'
                             + ' -D"WIN32_LEAN_AND_MEAN" -D_WIN32 -D__WINDOWS__'
@@ -304,11 +305,12 @@ Compiler( 'Compiler-x86Clang' )
                             + ' -D"_INTEGRAL_MAX_BITS=64"'
                             + ' -D"_MSC_VER=1500"'
                             + ' -D"ARCH_X86"'
+                            + ' -m32'
 
                             // MS compatibility
                             + ' -fms-compatibility'
                             + ' -fms-extensions'
-                            + ' -fmsc-version=1700'
+                            + ' -fmsc-version=1800'
                             + ' -mms-bitfields'
                             + ' -Wno-microsoft' // suppress "enumerator value is not representable in the underlying type 'int' [-Wmicrosoft]'"
                             + ' -Wno-#pragma-messages'
@@ -323,8 +325,6 @@ Compiler( 'Compiler-x86Clang' )
                             + ' -Wno-unused-value' // TODO: Need to re-enable this
                             + ' -integrated-as' // use the built-in assembler (don't try to use gcc)
 
-                            + ' -Wno-error=incompatible-ms-struct' //http://lists.cs.uiuc.edu/pipermail/cfe-commits/Week-of-Mon-20140224/100153.html
-
                             + ' -fdata-sections'
                             + ' -ffunction-sections'
 
@@ -333,6 +333,7 @@ Compiler( 'Compiler-x86Clang' )
     .LibrarianOptions       = 'rc "%2" "%1"' // NOTE: output must come first
     .LinkerOptions          = '/NODEFAULTLIB /WX /NOLOGO /INCREMENTAL:NO /OUT:"%2" "%1" /DEBUG'
                             + ' /IGNORE:4001' ; don't complain about linking libs only
+                            + ' /LIBPATH:"$ClangBasePath$/lib/clang/3.6.0/lib/windows"'
                             + ' /LIBPATH:"$WindowsLibPaths$/x86" /LIBPATH:"$VSBasePath$/VC/lib"'
                             + ' /MACHINE:X86'
 
