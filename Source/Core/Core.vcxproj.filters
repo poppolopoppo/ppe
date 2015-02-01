@@ -109,6 +109,9 @@
     <CustomBuild Include="Container\RawStorage.h">
       <Filter>Container</Filter>
     </CustomBuild>
+    <CustomBuild Include="Container\RingBuffer.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
     <CustomBuild Include="Container\Token-inl.h">
       <Filter>Container</Filter>
     </CustomBuild>
@@ -129,6 +132,12 @@
     </CustomBuild>
     <CustomBuild Include="Container\Vector.h">
       <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Diagnostic\Assert.cpp">
+      <Filter>Diagnostic</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Diagnostic\Assert.h">
+      <Filter>Diagnostic</Filter>
     </CustomBuild>
     <CustomBuild Include="Diagnostic\Callstack.cpp">
       <Filter>Diagnostic</Filter>
@@ -619,12 +628,6 @@
     <CustomBuild Include="Meta\Alignment.h">
       <Filter>Meta</Filter>
     </CustomBuild>
-    <CustomBuild Include="Meta\Assert.cpp">
-      <Filter>Meta</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Meta\Assert.h">
-      <Filter>Meta</Filter>
-    </CustomBuild>
     <CustomBuild Include="Meta\AutoSingleton.cpp">
       <Filter>Meta</Filter>
     </CustomBuild>
@@ -632,6 +635,9 @@
       <Filter>Meta</Filter>
     </CustomBuild>
     <CustomBuild Include="Meta\BitField.h">
+      <Filter>Meta</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Meta\Callback.h">
       <Filter>Meta</Filter>
     </CustomBuild>
     <CustomBuild Include="Meta\Cast.h">
