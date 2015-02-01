@@ -15,13 +15,16 @@ cbuffer PerFrame {
     float4x4    uniProjection;
 };
 
-cbuffer PerObject {
+cbuffer PerMaterial {
     float       uniOptional_Metallic;
 #ifdef WITH_BUMP_MAPPING
     float       uniOptional_NormalDepth;
 #endif
     float       uniOptional_RefractiveIndex;
     float       uniOptional_Roughness;
+};
+
+cbuffer PerObject {
     float4x4    uniOptional_World;
     float4x4    uniOptional_uniInvertTranspose_World;
 };

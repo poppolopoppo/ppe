@@ -1,5 +1,6 @@
 
 #include "Lib/Platform/Config.fx"
+#include "Lib/Color/HDR.fx"
 #include "Lib/Color/SRGB.fx"
 #include "Lib/GBuffer/Depth.fx"
 #include "Lib/GBuffer/Layout.fx"
@@ -13,6 +14,10 @@ cbuffer PerFrame {
     float4x4    uniFarCorners;
     float4x4    uniNearCorners;
     float2      uniNearFarZ;
+    float       uniProcessTotalSeconds;
+};
+
+cbuffer Light {
     float3      uniSunDirection;
     float3      uniSRGB_uniSunColor;
 };
@@ -72,10 +77,10 @@ float4 pmain(PixelIn pixelIn) : SV_Target {
     Lighting::DirectionalLight l;
     l.Color = uniSRGB_uniSunColor;
     l.Direction = uniSunDirection;
-    l.Intensity = 1.0;
+    l.Intensity = 1.5;
 
     Lighting::Environment e;
-    e.AmbientIntensity = 0.03;
+    e.AmbientIntensity = 0.1;
     e.ReflectionIntensity = 1.0;
     TEXTURECUBESTRUCT_ASSIGN(e, IrradianceMap, uniSRGB_uniLinearClamp_IrradianceMap);
     TEXTURECUBESTRUCT_ASSIGN(e, ReflectionMap, uniSRGB_uniLinearClamp_ReflectionMap);
@@ -87,6 +92,8 @@ float4 pmain(PixelIn pixelIn) : SV_Target {
     m.SpecularColor = GBuffer::Read_SpecularColor(layout);
 
     float3 shading = Lighting::Shade(g, m, e, l);
+
+    shading = HDR::WhitePreservingLumaBasedReinhardToneMapping(shading);
 
     float4 result = float4(shading, 1);
     return result;
