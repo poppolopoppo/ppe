@@ -1,14 +1,14 @@
 #pragma once
 
-#include "Core.Application/Application.h"
+#include "Core.Engine/Engine.h"
 
 #include "Core.Graphics/Window/WindowMessageHandler.h"
 
-#include "Core.Application/Input/InputState.h"
-#include "Core.Application/Input/State/MouseButton.h"
+#include "Core.Engine/Input/InputState.h"
+#include "Core.Engine/Input/State/MouseButton.h"
 
 namespace Core {
-namespace Application {
+namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -78,5 +78,5 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace Application
+} //!namespace Engine
 } //!namespace Core

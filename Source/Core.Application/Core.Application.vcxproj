@@ -39,18 +39,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="Input\Camera\KeyboardMouseCameraController.cpp" />
-    <CustomBuild Include="Input\Camera\KeyboardMouseCameraController.h" />
-    <CustomBuild Include="Input\State\KeyboardInputHandler.cpp" />
-    <CustomBuild Include="Input\State\KeyboardInputHandler.h" />
-    <CustomBuild Include="Input\State\KeyboardKey.cpp" />
-    <CustomBuild Include="Input\State\KeyboardKey.h" />
-    <CustomBuild Include="Input\State\MouseButton.cpp" />
-    <CustomBuild Include="Input\State\MouseButton.h" />
-    <CustomBuild Include="Input\State\MouseInputHandler.cpp" />
-    <CustomBuild Include="Input\State\MouseInputHandler.h" />
-    <CustomBuild Include="Input\InputState-inl.h" />
-    <CustomBuild Include="Input\InputState.h" />
     <CustomBuild Include="Application.cpp" />
     <CustomBuild Include="Application.h" />
     <CustomBuild Include="ApplicationBase.cpp" />

@@ -1097,12 +1097,12 @@ void TestGraphics_() {
     colF = colF.ToLinear();
 }
 
-#include "Core.Application/Input/State/KeyboardKey.h"
-#include "Core.Application/Input/State/MouseButton.h"
+#include "Core.Engine/Input/State/KeyboardKey.h"
+#include "Core.Engine/Input/State/MouseButton.h"
 
 void TestInputs_() {
     using namespace Core;
-    using namespace Core::Application;
+    using namespace Core::Engine;
 
     std::cout << "static const u8 gVirtualKey_to_KeyboardKey[0xFF] = {" << std::endl;
 

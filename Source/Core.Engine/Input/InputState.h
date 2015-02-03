@@ -1,14 +1,14 @@
 #pragma once
 
-#include "Core.Application/Application.h"
+#include "Core.Engine/Engine.h"
 
-#include "Core.Application/Input/State/KeyboardKey.h"
-#include "Core.Application/Input/State/MouseButton.h"
+#include "Core.Engine/Input/State/KeyboardKey.h"
+#include "Core.Engine/Input/State/MouseButton.h"
 
 #include "Core/Memory/MemoryView.h"
 
 namespace Core {
-namespace Application {
+namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -57,7 +57,7 @@ typedef InputState<MouseButton, 6> MouseButtonState;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace Application
+} //!namespace Engine
 } //!namespace Core
 
-#include "Core.Application/Input/InputState-inl.h"
+#include "Core.Engine/Input/InputState-inl.h"

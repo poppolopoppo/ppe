@@ -21,6 +21,7 @@ FWD_REFPTR(RenderTarget);
 
 namespace Engine {
 FWD_REFPTR(AbstractRenderSurface);
+FWD_REFPTR(KeyboardMouseCameraController);
 FWD_REFPTR(Material);
 FWD_REFPTR(PerspectiveCamera);
 struct RenderCommand;
@@ -30,10 +31,6 @@ FWD_REFPTR(Scene);
 FWD_REFPTR(World);
 template <typename T>
 class MaterialParameterBlock;
-}
-
-namespace Application {
-FWD_REFPTR(KeyboardMouseCameraController);
 }
 
 //----------------------------------------------------------------------------
@@ -64,7 +61,7 @@ protected:
 
 private:
     Engine::PPerspectiveCamera _camera;
-    Application::PKeyboardMouseCameraController _cameraController;
+    Engine::PKeyboardMouseCameraController _cameraController;
 
     Engine::PWorld _world;
     Engine::PRenderContext _context;

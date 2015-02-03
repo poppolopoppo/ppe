@@ -55,6 +55,42 @@
     <CustomBuild Include="Effect\MaterialEffect.h">
       <Filter>Effect</Filter>
     </CustomBuild>
+    <CustomBuild Include="Input\Camera\KeyboardMouseCameraController.cpp">
+      <Filter>Input\Camera</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Input\Camera\KeyboardMouseCameraController.h">
+      <Filter>Input\Camera</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Input\State\KeyboardInputHandler.cpp">
+      <Filter>Input\State</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Input\State\KeyboardInputHandler.h">
+      <Filter>Input\State</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Input\State\KeyboardKey.cpp">
+      <Filter>Input\State</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Input\State\KeyboardKey.h">
+      <Filter>Input\State</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Input\State\MouseButton.cpp">
+      <Filter>Input\State</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Input\State\MouseButton.h">
+      <Filter>Input\State</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Input\State\MouseInputHandler.cpp">
+      <Filter>Input\State</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Input\State\MouseInputHandler.h">
+      <Filter>Input\State</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Input\InputState-inl.h">
+      <Filter>Input</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Input\InputState.h">
+      <Filter>Input</Filter>
+    </CustomBuild>
     <CustomBuild Include="Lighting\LightingEnvironment.cpp">
       <Filter>Lighting</Filter>
     </CustomBuild>
@@ -439,6 +475,21 @@
   <ItemGroup>
     <Filter Include="Effect">
       <UniqueIdentifier>{b1cc94c4-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Input\Camera">
+      <UniqueIdentifier>{d9dda30b-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Input">
+      <UniqueIdentifier>{19e91dd3-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Input\State">
+      <UniqueIdentifier>{daa4c832-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

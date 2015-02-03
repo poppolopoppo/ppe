@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Core.Application/Application.h"
+#include "Core.Engine/Engine.h"
 
 #include "Core.Engine/Camera/CameraController.h"
 
 namespace Core {
-namespace Application {
+namespace Engine {
 class KeyboardInputHandler;
 class MouseInputHandler;
 
@@ -83,5 +83,5 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace Application
+} //!namespace Engine
 } //!namespace Core

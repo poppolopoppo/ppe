@@ -41,8 +41,7 @@
 #include "Core.Engine/Camera/Camera.h"
 #include "Core.Engine/Camera/CameraController.h"
 #include "Core.Engine/Camera/CameraModel.h"
-
-#include "Core.Application/Input/Camera/KeyboardMouseCameraController.h"
+#include "Core.Engine/Input/Camera/KeyboardMouseCameraController.h"
 
 #include "Core/Container/RawStorage.h"
 #include "Core/Diagnostic/Logger.h"
@@ -131,7 +130,7 @@ void GameTest::Initialize(const Timeline& time) {
     const ViewportF& viewport = DeviceEncapsulator()->Parameters().Viewport();
 
     _camera = new PerspectiveCamera(F_PIOver3, 0.01f, 100.0f, viewport);
-    _cameraController = new Application::KeyboardMouseCameraController(float3(0.0f, 3.0f, -6.0f), 0.0f, 0.5f*F_PIOver3, &Keyboard(), &Mouse());
+    _cameraController = new Engine::KeyboardMouseCameraController(float3(0.0f, 3.0f, -6.0f), 0.0f, 0.5f*F_PIOver3, &Keyboard(), &Mouse());
     _camera->SetController(_cameraController);
 
     _sunLightDirection = Normalize3(float3( 0,1,-3));
@@ -369,6 +368,7 @@ void GameTest::Update(const Timeline& time) {
     parent_type::Update(time);
 
     using namespace Graphics;
+    using namespace Engine;
     using namespace Application;
 
     const Graphics::DeviceEncapsulator& encapsulator = *DeviceEncapsulator();

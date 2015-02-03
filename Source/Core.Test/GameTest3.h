@@ -20,9 +20,6 @@ FWD_REFPTR(PerspectiveCamera);
 FWD_REFPTR(RenderContext);
 FWD_REFPTR(Scene);
 FWD_REFPTR(World);
-}
-
-namespace Application {
 FWD_REFPTR(KeyboardMouseCameraController);
 }
 
@@ -54,7 +51,7 @@ protected:
 
 private:
     Engine::PPerspectiveCamera _camera;
-    Application::PKeyboardMouseCameraController _cameraController;
+    Engine::PKeyboardMouseCameraController _cameraController;
 
     Engine::PWorld _world;
     Engine::PRenderContext _context;

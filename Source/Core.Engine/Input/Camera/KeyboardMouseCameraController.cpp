@@ -13,7 +13,7 @@
 #include "Core.Graphics/Window/WindowMessageHandler.h"
 
 namespace Core {
-namespace Application {
+namespace Engine {
 class KeyboardInputHandler;
 class MouseInputHandler;
 
@@ -164,5 +164,5 @@ void KeyboardMouseCameraController::UpdateImpl(float4x4 *view, const Timeline& t
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace Application
+} //!namespace Engine
 } //!namespace Core

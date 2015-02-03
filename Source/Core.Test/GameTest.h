@@ -21,14 +21,10 @@ FWD_REFPTR(RenderTarget);
 }
 
 namespace Engine {
+FWD_REFPTR(KeyboardMouseCameraController);    
 FWD_REFPTR(PerspectiveCamera);
 }
 
-namespace Application {
-FWD_REFPTR(KeyboardMouseCameraController);
-}}
-
-namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -57,7 +53,7 @@ private:
     Timely::PulsarSmoothstep<float> _rotationAngle;
 
     Engine::PPerspectiveCamera _camera;
-    Application::PKeyboardMouseCameraController _cameraController;
+    Engine::PKeyboardMouseCameraController _cameraController;
 
     Graphics::PShaderEffect _shaderEffect;
 

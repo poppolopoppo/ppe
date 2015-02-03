@@ -3,7 +3,7 @@
 #include "KeyboardKey.h"
 
 namespace Core {
-namespace Application {
+namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -128,173 +128,173 @@ static const KeyboardKey gEachKeyboardKeys[] = {
 const char *KeyboardKeyToCStr(KeyboardKey value) {
     switch (value)
     {
-    case Core::Application::KeyboardKey::_0:
+    case Core::Engine::KeyboardKey::_0:
         return "0";
-    case Core::Application::KeyboardKey::_1:
+    case Core::Engine::KeyboardKey::_1:
         return "1";
-    case Core::Application::KeyboardKey::_2:
+    case Core::Engine::KeyboardKey::_2:
         return "2";
-    case Core::Application::KeyboardKey::_3:
+    case Core::Engine::KeyboardKey::_3:
         return "3";
-    case Core::Application::KeyboardKey::_4:
+    case Core::Engine::KeyboardKey::_4:
         return "4";
-    case Core::Application::KeyboardKey::_5:
+    case Core::Engine::KeyboardKey::_5:
         return "5";
-    case Core::Application::KeyboardKey::_6:
+    case Core::Engine::KeyboardKey::_6:
         return "6";
-    case Core::Application::KeyboardKey::_7:
+    case Core::Engine::KeyboardKey::_7:
         return "7";
-    case Core::Application::KeyboardKey::_8:
+    case Core::Engine::KeyboardKey::_8:
         return "8";
-    case Core::Application::KeyboardKey::_9:
+    case Core::Engine::KeyboardKey::_9:
         return "9";
-    case Core::Application::KeyboardKey::A:
+    case Core::Engine::KeyboardKey::A:
         return "A";
-    case Core::Application::KeyboardKey::B:
+    case Core::Engine::KeyboardKey::B:
         return "B";
-    case Core::Application::KeyboardKey::C:
+    case Core::Engine::KeyboardKey::C:
         return "C";
-    case Core::Application::KeyboardKey::D:
+    case Core::Engine::KeyboardKey::D:
         return "D";
-    case Core::Application::KeyboardKey::E:
+    case Core::Engine::KeyboardKey::E:
         return "E";
-    case Core::Application::KeyboardKey::F:
+    case Core::Engine::KeyboardKey::F:
         return "F";
-    case Core::Application::KeyboardKey::G:
+    case Core::Engine::KeyboardKey::G:
         return "G";
-    case Core::Application::KeyboardKey::H:
+    case Core::Engine::KeyboardKey::H:
         return "H";
-    case Core::Application::KeyboardKey::I:
+    case Core::Engine::KeyboardKey::I:
         return "I";
-    case Core::Application::KeyboardKey::J:
+    case Core::Engine::KeyboardKey::J:
         return "J";
-    case Core::Application::KeyboardKey::K:
+    case Core::Engine::KeyboardKey::K:
         return "K";
-    case Core::Application::KeyboardKey::L:
+    case Core::Engine::KeyboardKey::L:
         return "L";
-    case Core::Application::KeyboardKey::M:
+    case Core::Engine::KeyboardKey::M:
         return "M";
-    case Core::Application::KeyboardKey::N:
+    case Core::Engine::KeyboardKey::N:
         return "N";
-    case Core::Application::KeyboardKey::O:
+    case Core::Engine::KeyboardKey::O:
         return "O";
-    case Core::Application::KeyboardKey::P:
+    case Core::Engine::KeyboardKey::P:
         return "P";
-    case Core::Application::KeyboardKey::Q:
+    case Core::Engine::KeyboardKey::Q:
         return "Q";
-    case Core::Application::KeyboardKey::R:
+    case Core::Engine::KeyboardKey::R:
         return "R";
-    case Core::Application::KeyboardKey::S:
+    case Core::Engine::KeyboardKey::S:
         return "S";
-    case Core::Application::KeyboardKey::T:
+    case Core::Engine::KeyboardKey::T:
         return "T";
-    case Core::Application::KeyboardKey::U:
+    case Core::Engine::KeyboardKey::U:
         return "U";
-    case Core::Application::KeyboardKey::V:
+    case Core::Engine::KeyboardKey::V:
         return "V";
-    case Core::Application::KeyboardKey::W:
+    case Core::Engine::KeyboardKey::W:
         return "W";
-    case Core::Application::KeyboardKey::X:
+    case Core::Engine::KeyboardKey::X:
         return "X";
-    case Core::Application::KeyboardKey::Y:
+    case Core::Engine::KeyboardKey::Y:
         return "Y";
-    case Core::Application::KeyboardKey::Z:
+    case Core::Engine::KeyboardKey::Z:
         return "Z";
-    case Core::Application::KeyboardKey::Numpad0:
+    case Core::Engine::KeyboardKey::Numpad0:
         return "Numpad0";
-    case Core::Application::KeyboardKey::Numpad1:
+    case Core::Engine::KeyboardKey::Numpad1:
         return "Numpad1";
-    case Core::Application::KeyboardKey::Numpad2:
+    case Core::Engine::KeyboardKey::Numpad2:
         return "Numpad2";
-    case Core::Application::KeyboardKey::Numpad3:
+    case Core::Engine::KeyboardKey::Numpad3:
         return "Numpad3";
-    case Core::Application::KeyboardKey::Numpad4:
+    case Core::Engine::KeyboardKey::Numpad4:
         return "Numpad4";
-    case Core::Application::KeyboardKey::Numpad5:
+    case Core::Engine::KeyboardKey::Numpad5:
         return "Numpad5";
-    case Core::Application::KeyboardKey::Numpad6:
+    case Core::Engine::KeyboardKey::Numpad6:
         return "Numpad6";
-    case Core::Application::KeyboardKey::Numpad7:
+    case Core::Engine::KeyboardKey::Numpad7:
         return "Numpad7";
-    case Core::Application::KeyboardKey::Numpad8:
+    case Core::Engine::KeyboardKey::Numpad8:
         return "Numpad8";
-    case Core::Application::KeyboardKey::Numpad9:
+    case Core::Engine::KeyboardKey::Numpad9:
         return "Numpad9";
-    case Core::Application::KeyboardKey::Add:
+    case Core::Engine::KeyboardKey::Add:
         return "Add";
-    case Core::Application::KeyboardKey::Substract:
+    case Core::Engine::KeyboardKey::Substract:
         return "Substract";
-    case Core::Application::KeyboardKey::Multiply:
+    case Core::Engine::KeyboardKey::Multiply:
         return "Multiply";
-    case Core::Application::KeyboardKey::Divide:
+    case Core::Engine::KeyboardKey::Divide:
         return "Divide";
-    case Core::Application::KeyboardKey::F1:
+    case Core::Engine::KeyboardKey::F1:
         return "F1";
-    case Core::Application::KeyboardKey::F2:
+    case Core::Engine::KeyboardKey::F2:
         return "F2";
-    case Core::Application::KeyboardKey::F3:
+    case Core::Engine::KeyboardKey::F3:
         return "F3";
-    case Core::Application::KeyboardKey::F4:
+    case Core::Engine::KeyboardKey::F4:
         return "F4";
-    case Core::Application::KeyboardKey::F5:
+    case Core::Engine::KeyboardKey::F5:
         return "F5";
-    case Core::Application::KeyboardKey::F6:
+    case Core::Engine::KeyboardKey::F6:
         return "F6";
-    case Core::Application::KeyboardKey::F7:
+    case Core::Engine::KeyboardKey::F7:
         return "F7";
-    case Core::Application::KeyboardKey::F8:
+    case Core::Engine::KeyboardKey::F8:
         return "F8";
-    case Core::Application::KeyboardKey::F9:
+    case Core::Engine::KeyboardKey::F9:
         return "F9";
-    case Core::Application::KeyboardKey::F10:
+    case Core::Engine::KeyboardKey::F10:
         return "F10";
-    case Core::Application::KeyboardKey::F11:
+    case Core::Engine::KeyboardKey::F11:
         return "F11";
-    case Core::Application::KeyboardKey::F12:
+    case Core::Engine::KeyboardKey::F12:
         return "F12";
-    case Core::Application::KeyboardKey::Up:
+    case Core::Engine::KeyboardKey::Up:
         return "Up";
-    case Core::Application::KeyboardKey::Down:
+    case Core::Engine::KeyboardKey::Down:
         return "Down";
-    case Core::Application::KeyboardKey::Left:
+    case Core::Engine::KeyboardKey::Left:
         return "Left";
-    case Core::Application::KeyboardKey::Right:
+    case Core::Engine::KeyboardKey::Right:
         return "Right";
-    case Core::Application::KeyboardKey::Escape:
+    case Core::Engine::KeyboardKey::Escape:
         return "Escape";
-    case Core::Application::KeyboardKey::Space:
+    case Core::Engine::KeyboardKey::Space:
         return "Space";
-    case Core::Application::KeyboardKey::Pause:
+    case Core::Engine::KeyboardKey::Pause:
         return "Pause";
-    case Core::Application::KeyboardKey::PrintScreen:
+    case Core::Engine::KeyboardKey::PrintScreen:
         return "PrintScreen";
-    case Core::Application::KeyboardKey::ScrollLock:
+    case Core::Engine::KeyboardKey::ScrollLock:
         return "ScrollLock";
-    case Core::Application::KeyboardKey::Backspace:
+    case Core::Engine::KeyboardKey::Backspace:
         return "Backspace";
-    case Core::Application::KeyboardKey::Enter:
+    case Core::Engine::KeyboardKey::Enter:
         return "Enter";
-    case Core::Application::KeyboardKey::Tab:
+    case Core::Engine::KeyboardKey::Tab:
         return "Tab";
-    case Core::Application::KeyboardKey::Home:
+    case Core::Engine::KeyboardKey::Home:
         return "Home";
-    case Core::Application::KeyboardKey::End:
+    case Core::Engine::KeyboardKey::End:
         return "End";
-    case Core::Application::KeyboardKey::Insert:
+    case Core::Engine::KeyboardKey::Insert:
         return "Insert";
-    case Core::Application::KeyboardKey::Delete:
+    case Core::Engine::KeyboardKey::Delete:
         return "Delete";
-    case Core::Application::KeyboardKey::PageUp:
+    case Core::Engine::KeyboardKey::PageUp:
         return "PageUp";
-    case Core::Application::KeyboardKey::PageDown:
+    case Core::Engine::KeyboardKey::PageDown:
         return "PageDown";
-    case Core::Application::KeyboardKey::Alt:
+    case Core::Engine::KeyboardKey::Alt:
         return "Alt";
-    case Core::Application::KeyboardKey::Menu:
+    case Core::Engine::KeyboardKey::Menu:
         return "Menu";
-    case Core::Application::KeyboardKey::Control:
+    case Core::Engine::KeyboardKey::Control:
         return "Control";
-    case Core::Application::KeyboardKey::Shift:
+    case Core::Engine::KeyboardKey::Shift:
         return "Shift";
     }
     AssertNotImplemented();
@@ -307,5 +307,5 @@ MemoryView<const KeyboardKey> EachKeyboardKeys() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace Application
+} //!namespace Engine
 } //!namespace Core

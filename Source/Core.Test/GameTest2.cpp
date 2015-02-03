@@ -38,6 +38,7 @@
 #include "Core.Engine/Service/TextureCacheService.h"
 
 #include "Core.Engine/Camera/Camera.h"
+#include "Core.Engine/Input/Camera/KeyboardMouseCameraController.h"
 #include "Core.Engine/Mesh/Geometry/GenericVertexOptimizer.h"
 #include "Core.Engine/Mesh/Loader/MeshLoader.h"
 #include "Core.Engine/Mesh/Loader/ModelLoader.h"
@@ -48,7 +49,6 @@
 #include "Core.Engine/World/World.h"
 
 #include "Core.Application/ApplicationConsole.h"
-#include "Core.Application/Input/Camera/KeyboardMouseCameraController.h"
 
 namespace Core {
 typedef Graphics::Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Float2__Normal0_UX10Y10Z10W2N vertex_type;
@@ -240,7 +240,7 @@ void GameTest2::Initialize(const Timeline& time) {
     _world = new World("Test world", Services());
     _world->Initialize();
 
-    _cameraController = new Application::KeyboardMouseCameraController(float3(0.0f, 3.0f, -6.0f), 0.0f, 0.5f*F_PIOver3, &Keyboard(), &Mouse());
+    _cameraController = new KeyboardMouseCameraController(float3(0.0f, 3.0f, -6.0f), 0.0f, 0.5f*F_PIOver3, &Keyboard(), &Mouse());
     _camera = new PerspectiveCamera(F_PIOver3, 0.01f, 100.0f, viewport);
     _camera->SetController(_cameraController);
 
