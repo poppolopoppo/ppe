@@ -43,8 +43,7 @@ ALIGN(16) struct Guid {
 
     template <size_t _Dim>
     static Guid FromCStr(const char(&cstr)[_Dim]) {
-        Guid r;
-        STATIC_ASSERT(_Dim >= lengthof(r.Data.as_u8));
+        Guid r = Zero();
         for (size_t i = 0; i < lengthof(r.Data.as_u8); ++i)
             r.Data.as_u8[i] = cstr[i];
         return r;

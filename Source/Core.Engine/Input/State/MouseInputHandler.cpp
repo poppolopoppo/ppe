@@ -35,7 +35,9 @@ void MouseState::Clear() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-MouseInputHandler::MouseInputHandler() {}
+MouseInputHandler::MouseInputHandler() 
+:   _relativeX(0)
+,   _relativeY(0) {}
 //----------------------------------------------------------------------------
 MouseInputHandler::~MouseInputHandler() {}
 //----------------------------------------------------------------------------
@@ -89,6 +91,10 @@ Graphics::MessageResult MouseInputHandler::OnMouseMove_(Graphics::IWindowMessage
     MouseInputHandler *const mouse = checked_cast<MouseInputHandler *>(handler);
     mouse->_state._x = checked_cast<int>(LOWORD(lparam));
     mouse->_state._y = checked_cast<int>(HIWORD(lparam));
+
+    mouse->_relativeX = float(mouse->_state._x)/wnd->Width();
+    mouse->_relativeY = float(mouse->_state._y)/wnd->Height();
+
     return 0;
 }
 //----------------------------------------------------------------------------

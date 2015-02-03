@@ -127,7 +127,7 @@ void GameTest::Initialize(const Timeline& time) {
     _clearColor.Start(time, Units::Time::Seconds(3));
     _rotationAngle.Start(time, Units::Time::Minutes(0.5));
 
-    const ViewportF& viewport = DeviceEncapsulator()->Parameters().Viewport();
+    const ViewportF& viewport = DeviceEncapsulator().Parameters().Viewport();
 
     _camera = new PerspectiveCamera(F_PIOver3, 0.01f, 100.0f, viewport);
     _cameraController = new Engine::KeyboardMouseCameraController(float3(0.0f, 3.0f, -6.0f), 0.0f, 0.5f*F_PIOver3, &Keyboard(), &Mouse());
@@ -152,8 +152,8 @@ void GameTest::LoadContent() {
     using namespace Engine;
     using namespace Graphics;
 
-    IDeviceAPIEncapsulator *const device = DeviceEncapsulator()->Device();
-    IDeviceAPIShaderCompilerEncapsulator *const compiler = DeviceEncapsulator()->Compiler();
+    IDeviceAPIEncapsulator *const device = DeviceEncapsulator().Device();
+    IDeviceAPIShaderCompilerEncapsulator *const compiler = DeviceEncapsulator().Compiler();
 
     const VertexDeclaration *vertexDeclaration = Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Float2__Normal0_UX10Y10Z10W2N::Declaration;
 
@@ -278,7 +278,7 @@ void GameTest::LoadContent() {
     _screenDuDvTexture = checked_cast<Texture2D *>(Texture2DLoader::Load(device, L"GameData:/Textures/GrassDuDv.dds", false));
     AssertRelease(_screenDuDvTexture);
 
-    const ViewportF& viewport = DeviceEncapsulator()->Parameters().Viewport();
+    const ViewportF& viewport = DeviceEncapsulator().Parameters().Viewport();
 
     _renderTarget = new RenderTarget(size_t(viewport.Width()), size_t(viewport.Height()), SurfaceFormat::R16G16B16A16_F);
     _renderTarget->SetResourceName("SceneBuffer");
@@ -313,7 +313,7 @@ void GameTest::UnloadContent() {
 
     using namespace Graphics;
 
-    IDeviceAPIEncapsulator *const device = DeviceEncapsulator()->Device();
+    IDeviceAPIEncapsulator *const device = DeviceEncapsulator().Device();
 
     Assert(_screenDuDvTexture);
     _screenDuDvTexture->Destroy(device);
@@ -371,7 +371,7 @@ void GameTest::Update(const Timeline& time) {
     using namespace Engine;
     using namespace Application;
 
-    const Graphics::DeviceEncapsulator& encapsulator = *DeviceEncapsulator();
+    const Graphics::DeviceEncapsulator& encapsulator = DeviceEncapsulator();
 
     IDeviceAPIEncapsulator *const device = encapsulator.Device();
     IDeviceAPIContextEncapsulator *const context = encapsulator.Context();
@@ -428,7 +428,7 @@ void GameTest::Draw(const Timeline& time) {
 
     using namespace Graphics;
 
-    const Graphics::DeviceEncapsulator& encapsulator = *DeviceEncapsulator();
+    const Graphics::DeviceEncapsulator& encapsulator = DeviceEncapsulator();
 
     IDeviceAPIEncapsulator *const device = encapsulator.Device();
     IDeviceAPIContextEncapsulator *const context = encapsulator.Context();

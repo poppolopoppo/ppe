@@ -242,8 +242,8 @@ void GameTest4::Initialize(const Timeline& time) {
     using namespace Engine;
     using namespace Graphics;
 
-    IDeviceAPIEncapsulator *const device = DeviceEncapsulator()->Device();
-    const ViewportF& viewport = DeviceEncapsulator()->Parameters().Viewport();
+    IDeviceAPIEncapsulator *const device = DeviceEncapsulator().Device();
+    const ViewportF& viewport = DeviceEncapsulator().Parameters().Viewport();
 
     EffectCompiler *const effectCompiler = _context->EffectCompilerService()->EffectCompiler();
     RenderSurfaceManager *const renderSurfaceManager = _context->RenderSurfaceService()->Manager();
@@ -307,7 +307,7 @@ void GameTest4::Destroy() {
     using namespace Engine;
     using namespace Graphics;
 
-    IDeviceAPIEncapsulator *const device = DeviceEncapsulator()->Device();
+    IDeviceAPIEncapsulator *const device = DeviceEncapsulator().Device();
 
     _mainScene->Destroy(device);
     RemoveRef_AssertReachZero(_mainScene);
@@ -330,7 +330,7 @@ void GameTest4::LoadContent() {
     using namespace Engine;
     using namespace Graphics;
 
-    IDeviceAPIEncapsulator *const device = DeviceEncapsulator()->Device();
+    IDeviceAPIEncapsulator *const device = DeviceEncapsulator().Device();
 
     EffectDescriptor *const stdEffectDescriptor = new EffectDescriptor();
     stdEffectDescriptor->SetName("DeferredStandardEffect");
@@ -374,7 +374,7 @@ void GameTest4::UnloadContent() {
     using namespace Engine;
     using namespace Graphics;
 
-    IDeviceAPIEncapsulator *const device = DeviceEncapsulator()->Device();
+    IDeviceAPIEncapsulator *const device = DeviceEncapsulator().Device();
 
     ReleaseModelRenderCommand(_renderCommand, device, _model);
 
@@ -391,10 +391,10 @@ void GameTest4::Update(const Timeline& time) {
     using namespace Graphics;
     using namespace Application;
 
-    const Graphics::DeviceEncapsulator *encapsulator = DeviceEncapsulator();
+    const Graphics::DeviceEncapsulator& encapsulator = DeviceEncapsulator();
 
-    IDeviceAPIEncapsulator *const device = encapsulator->Device();
-    IDeviceAPIContextEncapsulator *const context = encapsulator->Context();
+    IDeviceAPIEncapsulator *const device = encapsulator.Device();
+    IDeviceAPIContextEncapsulator *const context = encapsulator.Context();
 
     // texture reloading
     if (Keyboard().IsKeyPressed(KeyboardKey::Control) &&
@@ -429,10 +429,10 @@ void GameTest4::Draw(const Timeline& time) {
     using namespace Engine;
     using namespace Graphics;
 
-    const Graphics::DeviceEncapsulator *encapsulator = DeviceEncapsulator();
+    const Graphics::DeviceEncapsulator& encapsulator = DeviceEncapsulator();
 
-    IDeviceAPIEncapsulator *const device = encapsulator->Device();
-    IDeviceAPIContextEncapsulator *const context = encapsulator->Context();
+    IDeviceAPIEncapsulator *const device = encapsulator.Device();
+    IDeviceAPIContextEncapsulator *const context = encapsulator.Context();
 
     _context->FrameTick();
 

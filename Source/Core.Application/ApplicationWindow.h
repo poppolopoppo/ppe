@@ -32,10 +32,9 @@ public:
                         int left, int top );
     virtual ~ApplicationWindow();
 
-    const Engine::MouseInputHandler& Mouse() const { return _mouse; }
-    const Engine::KeyboardInputHandler& Keyboard() const { return _keyboard; }
-
-    const Graphics::DeviceEncapsulator *DeviceEncapsulator() const;
+    const Engine::KeyboardInputHandler& Keyboard() const;
+    const Engine::MouseInputHandler& Mouse() const;
+    const Graphics::DeviceEncapsulator& DeviceEncapsulator() const;
 
     virtual void Start() override;
     virtual void Shutdown() override;
@@ -52,8 +51,8 @@ protected:
     virtual void OnLoseFocus() override;
 
 private:
-    Engine::MouseInputHandler _mouse;
-    Engine::KeyboardInputHandler _keyboard;
+    Engine::PKeyboardService _keyboardService;
+    Engine::PMouseService _mouseService;
     Engine::PDeviceEncapsulatorService _deviceService;
 };
 //----------------------------------------------------------------------------

@@ -103,8 +103,8 @@ void GameTest2::Initialize(const Timeline& time) {
     using namespace Engine;
     using namespace Graphics;
 
-    IDeviceAPIEncapsulator *const device = DeviceEncapsulator()->Device();
-    const ViewportF& viewport = DeviceEncapsulator()->Parameters().Viewport();
+    IDeviceAPIEncapsulator *const device = DeviceEncapsulator().Device();
+    const ViewportF& viewport = DeviceEncapsulator().Parameters().Viewport();
 
     EffectCompiler *const effectCompiler = _context->EffectCompilerService()->EffectCompiler();
     RenderSurfaceManager *const renderSurfaceManager = _context->RenderSurfaceService()->Manager();
@@ -293,7 +293,7 @@ void GameTest2::Destroy() {
     using namespace Engine;
     using namespace Graphics;
 
-    IDeviceAPIEncapsulator *const device = DeviceEncapsulator()->Device();
+    IDeviceAPIEncapsulator *const device = DeviceEncapsulator().Device();
 
     _mainScene->Destroy(device);
     RemoveRef_AssertReachZero(_mainScene);
@@ -316,7 +316,7 @@ void GameTest2::LoadContent() {
     using namespace Engine;
     using namespace Graphics;
 
-    IDeviceAPIEncapsulator *const device = DeviceEncapsulator()->Device();
+    IDeviceAPIEncapsulator *const device = DeviceEncapsulator().Device();
 
     PModel desertArena;
     if (!LoadModel(desertArena, L"GameData:/Models/Infinity/DesertArena/DesertArena.obj"))
@@ -381,7 +381,7 @@ void GameTest2::UnloadContent() {
     using namespace Engine;
     using namespace Graphics;
 
-    IDeviceAPIEncapsulator *const device = DeviceEncapsulator()->Device();
+    IDeviceAPIEncapsulator *const device = DeviceEncapsulator().Device();
 
     Assert(_commands[2]);
     ReleaseRenderCommand(_commands[2], device);
@@ -430,10 +430,10 @@ void GameTest2::Update(const Timeline& time) {
     using namespace Graphics;
     using namespace Application;
 
-    const Graphics::DeviceEncapsulator *encapsulator = DeviceEncapsulator();
+    const Graphics::DeviceEncapsulator& encapsulator = DeviceEncapsulator();
 
-    IDeviceAPIEncapsulator *const device = encapsulator->Device();
-    IDeviceAPIContextEncapsulator *const context = encapsulator->Context();
+    IDeviceAPIEncapsulator *const device = encapsulator.Device();
+    IDeviceAPIContextEncapsulator *const context = encapsulator.Context();
 
     // shader compilation
     if (Keyboard().IsKeyPressed(KeyboardKey::Control) &&
@@ -470,10 +470,10 @@ void GameTest2::Draw(const Timeline& time) {
     using namespace Engine;
     using namespace Graphics;
 
-    const Graphics::DeviceEncapsulator *encapsulator = DeviceEncapsulator();
+    const Graphics::DeviceEncapsulator& encapsulator = DeviceEncapsulator();
 
-    IDeviceAPIEncapsulator *const device = encapsulator->Device();
-    IDeviceAPIContextEncapsulator *const context = encapsulator->Context();
+    IDeviceAPIEncapsulator *const device = encapsulator.Device();
+    IDeviceAPIContextEncapsulator *const context = encapsulator.Context();
 
     _context->FrameTick();
 

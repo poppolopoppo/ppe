@@ -57,6 +57,9 @@ public:
     int ClientX() const { return _state.X(); }
     int ClientY() const { return _state.Y(); }
 
+    float RelativeX() const { return _relativeX; }
+    float RelativeY() const { return _relativeY; }
+
     bool IsButtonDown(MouseButton btn) const { return _state._buttonsDown.Contains(btn); }
     bool IsButtonPressed(MouseButton btn) const { return _state._buttonsPressed.Contains(btn); }
     bool IsButtonUp(MouseButton btn) const { return _state._buttonsUp.Contains(btn); }
@@ -74,6 +77,8 @@ protected:
 
 private:
     MouseState _state;
+    float _relativeX;
+    float _relativeY;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
