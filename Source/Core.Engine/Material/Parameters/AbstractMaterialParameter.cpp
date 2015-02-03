@@ -9,6 +9,7 @@
 #include "MaterialParameterCamera.h"
 #include "MaterialParameterLighting.h"
 #include "MaterialParameterMath.h"
+#include "MaterialParameterMouse.h"
 #include "MaterialParameterRandom.h"
 #include "MaterialParameterTexture.h"
 #include "MaterialParameterTime.h"
@@ -55,6 +56,7 @@ void RegisterDefaultMaterialParameters(MaterialDatabase *database) {
     RegisterCameraMaterialParameters(database);
     RegisterLightingMaterialParameters(database);
     RegisterMathMaterialParameters(database);
+    RegisterMouseMaterialParameters(database);
     RegisterRandomMaterialParameters(database);
     RegisterTextureMaterialParameters(database);
     RegisterTimeMaterialParameters(database);
