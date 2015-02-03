@@ -83,8 +83,6 @@
     <CustomBuild Include="Container\Tuple.h" />
     <CustomBuild Include="Container\Vector-inl.h" />
     <CustomBuild Include="Container\Vector.h" />
-    <CustomBuild Include="Diagnostic\Assert.cpp" />
-    <CustomBuild Include="Diagnostic\Assert.h" />
     <CustomBuild Include="Diagnostic\Callstack.cpp" />
     <CustomBuild Include="Diagnostic\Callstack.h" />
     <CustomBuild Include="Diagnostic\CrtDebug.cpp" />
@@ -248,6 +246,8 @@
     <CustomBuild Include="Memory\WeakPtr.h" />
     <CustomBuild Include="Meta\Activator.h" />
     <CustomBuild Include="Meta\Alignment.h" />
+    <CustomBuild Include="Meta\Assert.cpp" />
+    <CustomBuild Include="Meta\Assert.h" />
     <CustomBuild Include="Meta\AutoSingleton.cpp" />
     <CustomBuild Include="Meta\AutoSingleton.h" />
     <CustomBuild Include="Meta\BitField.h" />
