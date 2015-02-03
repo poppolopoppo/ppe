@@ -6,7 +6,7 @@
 #include "Core/Memory/RefPtr.h"
 #include "Core/Meta/ThreadResource.h"
 
-#include "Core.Engine/World/IWorldObserver.h"
+#include "Core.Engine/World/WorldObserver.h"
 #include "Core.Engine/World/WorldTime.h"
 
 namespace Core {
@@ -47,8 +47,8 @@ public:
 
     void Update(const Timeline& timeline);
 
-    void RegisterObserver(WorldEvent::Type eventFlags, IWorldObserver *observer);
-    void UnregisterObserver(WorldEvent::Type eventFlags, IWorldObserver *observer);
+    void RegisterObserver(WorldEvent::Type eventFlags, const WorldObserver& observer);
+    void UnregisterObserver(WorldEvent::Type eventFlags, const WorldObserver& observer);
 
 private:
     String _name;

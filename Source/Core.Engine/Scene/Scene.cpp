@@ -139,13 +139,13 @@ void Scene::Render(Graphics::IDeviceAPIContextEncapsulator *context) {
     Move_AssertEquals(&_status, SceneStatus::BeforeUpdate, SceneStatus::AfterRender);
 }
 //----------------------------------------------------------------------------
-void Scene::RegisterObserver(SceneEvent::Type eventFlags, ISceneObserver *observer) {
+void Scene::RegisterObserver(SceneEvent::Type eventFlags, const SceneObserver& observer) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     Core::RegisterObserver(_observers, observer, eventFlags);
 }
 //----------------------------------------------------------------------------
-void Scene::UnregisterObserver(SceneEvent::Type eventFlags, ISceneObserver *observer) {
+void Scene::UnregisterObserver(SceneEvent::Type eventFlags, const SceneObserver& observer) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     Core::UnregisterObserver(_observers, observer, eventFlags);

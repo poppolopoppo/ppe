@@ -8,7 +8,7 @@
 
 #include "Core.Engine/Material/MaterialDatabase.h"
 #include "Core.Engine/Render/RenderTree.h"
-#include "Core.Engine/Scene/ISceneObserver.h"
+#include "Core.Engine/Scene/SceneObserver.h"
 
 namespace Core {
 class Timeline;
@@ -56,8 +56,8 @@ public:
     void Prepare(Graphics::IDeviceAPIEncapsulator *device, VariabilitySeed *seeds);
     void Render(Graphics::IDeviceAPIContextEncapsulator *context);
 
-    void RegisterObserver(SceneEvent::Type eventFlags, ISceneObserver *observer);
-    void UnregisterObserver(SceneEvent::Type eventFlags, ISceneObserver *observer);
+    void RegisterObserver(SceneEvent::Type eventFlags, const SceneObserver& observer);
+    void UnregisterObserver(SceneEvent::Type eventFlags, const SceneObserver& observer);
 
 private:
     String _name;

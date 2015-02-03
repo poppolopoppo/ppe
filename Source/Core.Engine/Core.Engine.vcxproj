@@ -150,9 +150,9 @@
     <CustomBuild Include="Render\RenderSurfaceManager.h" />
     <CustomBuild Include="Render\RenderTree.cpp" />
     <CustomBuild Include="Render\RenderTree.h" />
-    <CustomBuild Include="Scene\ISceneObserver.h" />
     <CustomBuild Include="Scene\Scene.cpp" />
     <CustomBuild Include="Scene\Scene.h" />
+    <CustomBuild Include="Scene\SceneObserver.h" />
     <CustomBuild Include="Service\DeviceEncapsulatorService.cpp" />
     <CustomBuild Include="Service\DeviceEncapsulatorService.h" />
     <CustomBuild Include="Service\EffectCompilerService.cpp" />
@@ -173,9 +173,9 @@
     <CustomBuild Include="Texture\TextureLoader-inl.h" />
     <CustomBuild Include="Texture\TextureLoader.cpp" />
     <CustomBuild Include="Texture\TextureLoader.h" />
-    <CustomBuild Include="World\IWorldObserver.h" />
     <CustomBuild Include="World\World.cpp" />
     <CustomBuild Include="World\World.h" />
+    <CustomBuild Include="World\WorldObserver.h" />
     <CustomBuild Include="World\WorldTime.cpp" />
     <CustomBuild Include="World\WorldTime.h" />
     <CustomBuild Include="Engine.cpp" />

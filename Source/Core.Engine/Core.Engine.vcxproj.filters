@@ -334,13 +334,13 @@
     <CustomBuild Include="Render\RenderTree.h">
       <Filter>Render</Filter>
     </CustomBuild>
-    <CustomBuild Include="Scene\ISceneObserver.h">
-      <Filter>Scene</Filter>
-    </CustomBuild>
     <CustomBuild Include="Scene\Scene.cpp">
       <Filter>Scene</Filter>
     </CustomBuild>
     <CustomBuild Include="Scene\Scene.h">
+      <Filter>Scene</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Scene\SceneObserver.h">
       <Filter>Scene</Filter>
     </CustomBuild>
     <CustomBuild Include="Service\DeviceEncapsulatorService.cpp">
@@ -403,13 +403,13 @@
     <CustomBuild Include="Texture\TextureLoader.h">
       <Filter>Texture</Filter>
     </CustomBuild>
-    <CustomBuild Include="World\IWorldObserver.h">
-      <Filter>World</Filter>
-    </CustomBuild>
     <CustomBuild Include="World\World.cpp">
       <Filter>World</Filter>
     </CustomBuild>
     <CustomBuild Include="World\World.h">
+      <Filter>World</Filter>
+    </CustomBuild>
+    <CustomBuild Include="World\WorldObserver.h">
       <Filter>World</Filter>
     </CustomBuild>
     <CustomBuild Include="World\WorldTime.cpp">

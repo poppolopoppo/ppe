@@ -66,7 +66,7 @@ void World::Initialize() {
 
     LOG(Information, L"[World] Initialize world \"{0}\" ...", _name.c_str());
 
-    NotifyObservers(_observers, WorldEvent::BeforeInitialize, this);
+    Core::NotifyObservers(_observers, WorldEvent::BeforeInitialize, this);
     Move_AssertEquals(&_status, WorldStatus::Initialize, WorldStatus::BeforeInitialize);
     {
         /**********************************************************************/
@@ -77,7 +77,7 @@ void World::Initialize() {
         /**********************************************************************/
     }
     Move_AssertEquals(&_status, WorldStatus::AfterInitialize, WorldStatus::Initialize);
-    NotifyObservers(_observers, WorldEvent::AfterInitialize, this);
+    Core::NotifyObservers(_observers, WorldEvent::AfterInitialize, this);
 
     Move_AssertEquals(&_status, WorldStatus::BeforeUpdate, WorldStatus::AfterInitialize);
 }
@@ -89,7 +89,7 @@ void World::Destroy() {
 
     Move_AssertEquals(&_status, WorldStatus::BeforeDestroy, WorldStatus::BeforeUpdate);
 
-    NotifyObservers(_observers, WorldEvent::BeforeDestroy, this);
+    Core::NotifyObservers(_observers, WorldEvent::BeforeDestroy, this);
     Move_AssertEquals(&_status, WorldStatus::Destroy, WorldStatus::BeforeDestroy);
     {
         /**********************************************************************/
@@ -99,7 +99,7 @@ void World::Destroy() {
         /**********************************************************************/
     }
     Move_AssertEquals(&_status, WorldStatus::AfterDestroy, WorldStatus::Destroy);
-    NotifyObservers(_observers, WorldEvent::AfterDestroy, this);
+    Core::NotifyObservers(_observers, WorldEvent::AfterDestroy, this);
 
     Move_AssertEquals(&_status, WorldStatus::BeforeInitialize, WorldStatus::AfterDestroy);
 }
@@ -107,7 +107,7 @@ void World::Destroy() {
 void World::Update(const Timeline& timeline) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    NotifyObservers(_observers, WorldEvent::BeforeUpdate, this);
+    Core::NotifyObservers(_observers, WorldEvent::BeforeUpdate, this);
     Move_AssertEquals(&_status, WorldStatus::Update, WorldStatus::BeforeUpdate);
     {
         /**********************************************************************/
@@ -120,18 +120,18 @@ void World::Update(const Timeline& timeline) {
         /**********************************************************************/
     }
     Move_AssertEquals(&_status, WorldStatus::AfterUpdate, WorldStatus::Update);
-    NotifyObservers(_observers, WorldEvent::AfterUpdate, this);
+    Core::NotifyObservers(_observers, WorldEvent::AfterUpdate, this);
 
     Move_AssertEquals(&_status, WorldStatus::BeforeUpdate, WorldStatus::AfterUpdate);
 }
 //----------------------------------------------------------------------------
-void World::RegisterObserver(WorldEvent::Type eventFlags, IWorldObserver *observer) {
+void World::RegisterObserver(WorldEvent::Type eventFlags, const WorldObserver& observer) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     Core::RegisterObserver(_observers, observer, eventFlags);
 }
 //----------------------------------------------------------------------------
-void World::UnregisterObserver(WorldEvent::Type eventFlags, IWorldObserver *observer) {
+void World::UnregisterObserver(WorldEvent::Type eventFlags, const WorldObserver& observer) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     Core::UnregisterObserver(_observers, observer, eventFlags);
