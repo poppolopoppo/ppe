@@ -1,6 +1,9 @@
 
 #once
 
+// increment to force fbuild to regenerate its files
+// global version : 001
+
 // Global options
 //------------------------------------------------------------------------------
 
