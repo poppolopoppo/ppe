@@ -164,7 +164,7 @@ void RegisterCameraMaterialParameters(MaterialDatabase *database) {
     database->BindParameter("uniInvertView",            new MaterialParameterCamera_InvertView() );
     database->BindParameter("uniProjection",            new MaterialParameterCamera_Projection() );
     database->BindParameter("uniInvertProjection",      new MaterialParameterCamera_InvertProjection() );
-    database->BindParameter("uniViewProjection",        new MaterialParameterCamera_InvertView() );
+    database->BindParameter("uniViewProjection",        new MaterialParameterCamera_ViewProjection() );
     database->BindParameter("uniInvertViewProjection",  new MaterialParameterCamera_InvertViewProjection() );
     database->BindParameter("uniFrustumRays",           new MaterialParameterCamera_FrustumRays() );
     database->BindParameter("uniNearFarZ",              new MaterialParameterCamera_NearFarZ() );
