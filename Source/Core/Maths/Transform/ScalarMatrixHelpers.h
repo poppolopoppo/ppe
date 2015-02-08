@@ -310,6 +310,20 @@ ScalarMatrix<T, 4, 4> Make3DTransformMatrixAroundZ(const ScalarVector<T, 3>& tra
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename T>
+ScalarVector<T, 3> Transform3(const ScalarMatrix<T, 3, 3>& m, const ScalarVector<T, 3>& v);
+//----------------------------------------------------------------------------
+template <typename T>
+ScalarVector<T, 4> Transform3_OneExtend(const ScalarMatrix<T, 4, 4>& m, const ScalarVector<T, 3>& v);
+//----------------------------------------------------------------------------
+template <typename T>
+ScalarVector<T, 4> Transform3_ZeroExtend(const ScalarMatrix<T, 4, 4>& m, const ScalarVector<T, 3>& v);
+//----------------------------------------------------------------------------
+template <typename T>
+ScalarVector<T, 4> Transform4(const ScalarMatrix<T, 4, 4>& m, const ScalarVector<T, 4>& v);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Core
 
 #include "Core/Maths/Transform/ScalarMatrixHelpers-inl.h"

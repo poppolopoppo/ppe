@@ -246,33 +246,6 @@ ScalarVector<T, _Height> ScalarMatrix<T, _Width, _Height>::Multiply(const Scalar
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
-ScalarVector<T, _Height> ScalarMatrix<T, _Width, _Height>::Multiply_OneExtend(const ScalarVector<T, _Width - 1>& v) const {
-    STATIC_ASSERT(_Width > 1);
-    ScalarVector<T, _Height> result;
-    for (size_t j = 0; j < _Height; ++j) {
-        T& x = result._data[j];
-        x = at_(j, _Width - 1);
-        for (size_t i = 0; i < _Width - 1; ++i)
-            x += v._data[i] * at_(j, i);
-    }
-    return result;
-}
-//----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
-ScalarVector<T, _Height - 1> ScalarMatrix<T, _Width, _Height>::Multiply_ZeroExtend(const ScalarVector<T, _Width - 1>& v) const {
-    STATIC_ASSERT(_Width > 1);
-    STATIC_ASSERT(_Width == _Height);
-    ScalarVector<T, _Height - 1> result;
-    for (size_t j = 0; j < _Height - 1; ++j) {
-        T& x = result._data[j];
-        x = 0;
-        for (size_t i = 0; i < _Width - 1; ++i)
-            x += v._data[i] * at_(j, i);
-    }
-    return result;
-}
-//----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
 T ScalarMatrix<T, _Width, _Height>::Trace() const {
     STATIC_ASSERT(_Width == _Height);
     T result = 0;

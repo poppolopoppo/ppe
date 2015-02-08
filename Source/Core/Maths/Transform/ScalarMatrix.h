@@ -220,10 +220,6 @@ public:
     ScalarMatrix    operator +(const ScalarMatrix& other) const;
     ScalarMatrix    operator -(const ScalarMatrix& other) const;
 
-    column_type operator *(const row_type& v) const {
-        return Multiply(v);
-    }
-
     template <size_t _NWidth>
     ScalarMatrix<T, _NWidth, _Height> operator *(const ScalarMatrix<T, _NWidth, _Width>& other) const {
         return Multiply(other);
