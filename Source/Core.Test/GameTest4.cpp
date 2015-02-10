@@ -258,7 +258,7 @@ void GameTest4::Initialize(const Timeline& time) {
     _world->Initialize();
 
     _cameraController = new KeyboardMouseCameraController(float3(0.0f, 3.0f, -6.0f), 0.0f, 0.5f*F_PIOver3, &Keyboard(), &Mouse());
-    _camera = new PerspectiveCamera(F_PIOver3, 0.01f, 1000.0f, viewport);
+    _camera = new PerspectiveCamera(F_PIOver3, 1.0f, 100.0f, viewport);
     _camera->SetController(_cameraController);
 
     // Main scene
