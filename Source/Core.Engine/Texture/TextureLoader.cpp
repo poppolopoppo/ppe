@@ -157,7 +157,7 @@ Graphics::Texture *Texture2DLoader::Load(Graphics::IDeviceAPIEncapsulator *devic
     Assert(device);
     Assert(!filename.empty());
 
-    RAWSTORAGE_THREAD_LOCAL(Texture, u8) pixels;
+    RAWSTORAGE_ALIGNED(Texture, u8, 16) pixels;
 
     Texture2DLoader loader;
     if (!loader.Read(pixels, filename))
