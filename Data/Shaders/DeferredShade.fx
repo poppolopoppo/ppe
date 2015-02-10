@@ -4,17 +4,24 @@
 #include "Lib/Color/SRGB.fx"
 #include "Lib/GBuffer/Depth.fx"
 #include "Lib/GBuffer/Layout.fx"
+#include "Lib/GBuffer/Reconstruction.fx"
 #include "Lib/Lighting/DirectionalLight.fx"
 #include "Lib/Lighting/Environment.fx"
 #include "Lib/Lighting/Geometry.fx"
 #include "Lib/Lighting/Material.fx"
+#include "Lib/Lighting/PointLight.fx"
 #include "Lib/AutoAppIn.fx"
 
 cbuffer PerFrame {
+    float3      uniEyePosition;
     float4x4    uniFarCorners;
-    float4x4    uniNearCorners;
     float2      uniNearFarZ;
-    float       uniProcessTotalSeconds;
+    float4x4    uniInvertViewProjection;
+};
+
+cbuffer Application {
+    float4      uniMousePosition;
+    float4      uniMouseButtons;
 };
 
 cbuffer Light {
@@ -26,25 +33,19 @@ struct PixelIn {
     float4 HPOS         : SV_POSITION;
     float2 TexCoord     : TEXCOORD0;
     float3 FarPos       : TEXCOORD1;
-    float3 NearPos      : TEXCOORD2;
-};
-
-static const float3 gFarCorners[4] = {
-    uniFarCorners._11_21_31,
-    uniFarCorners._12_22_32,
-    uniFarCorners._13_23_33,
-    uniFarCorners._14_24_34,
-};
-
-static const float3 gNearCorners[4] = {
-    uniNearCorners._11_21_31,
-    uniNearCorners._12_22_32,
-    uniNearCorners._13_23_33,
-    uniNearCorners._14_24_34,
 };
 
 TEXTURECUBE(uniSRGB_uniLinearClamp_IrradianceMap);
 TEXTURECUBE(uniSRGB_uniLinearClamp_ReflectionMap);
+
+static float3 gFarCorners[4] = {
+    uniFarCorners._11_12_13,
+    uniFarCorners._21_22_23,
+    uniFarCorners._31_32_33,
+    uniFarCorners._41_42_43,
+};
+
+#include "Lib/Color/Ramp.fx"
 
 PixelIn vmain(AppIn appIn) {
 
@@ -56,23 +57,29 @@ PixelIn vmain(AppIn appIn) {
     PixelIn o;
     o.HPOS = clipPos;
     o.TexCoord = texCoord;
-    o.FarPos = gFarCorners[(int)position.z];
-    o.NearPos = gNearCorners[(int)position.z];
+    o.FarPos = gFarCorners[(int)position.z].xyz;
 
     return o;
 }
 
 float4 pmain(PixelIn pixelIn) : SV_Target {
-
+    float depth = GBuffer::ReadDepth(pixelIn.TexCoord);
     GBuffer::Layout layout = GBuffer::ReadLayout(pixelIn.TexCoord);
 
-    float depth = GBuffer::ReadDepth(pixelIn.TexCoord);
-    float linearDepth = GBuffer::LinearizeDepth(depth, uniNearFarZ.x, uniNearFarZ.y);
-    float3 worldPos = lerp(pixelIn.NearPos, pixelIn.FarPos, linearDepth);
+    float linearDepth = GBuffer::LinearizeDepth_Eye_FarPlane(depth, uniNearFarZ.x, uniNearFarZ.y);
+    float3 worldPos2 = lerp(uniEyePosition, pixelIn.FarPos, linearDepth);
+
+    float3 worldPos = GBuffer::TextureSpaceToWorldSpace(pixelIn.TexCoord, uniInvertViewProjection);
+
+    //return float4(linearDepth.xxx, 1);
+    //return float4(Ramp::Rainbow(linearDepth), 1);
+    return float4(Ramp::Rainbow(depth), 1);
+    return float4(abs(worldPos - worldPos2), 1);
 
     Lighting::Geometry g;
-    g.Eye = normalize(pixelIn.NearPos - pixelIn.FarPos);
-    g.Normal = GBuffer::Read_Normal(layout);
+    g.Eye = normalize(uniEyePosition - worldPos);
+    g.Normal = GBuffer::GetNormal(layout);
+    g.Position = worldPos;
 
     Lighting::DirectionalLight l;
     l.Color = uniSRGB_uniSunColor;
@@ -86,14 +93,31 @@ float4 pmain(PixelIn pixelIn) : SV_Target {
     TEXTURECUBESTRUCT_ASSIGN(e, ReflectionMap, uniSRGB_uniLinearClamp_ReflectionMap);
 
     Lighting::Material m;
-    m.Albedo = GBuffer::Read_Albedo(layout);
-    m.Metallic = GBuffer::Read_Metallic(layout);
-    m.Roughness = GBuffer::Read_Roughness(layout);
-    m.SpecularColor = GBuffer::Read_SpecularColor(layout);
+    m.Albedo = GBuffer::GetAlbedo(layout);
+    m.Metallic = GBuffer::GetMetallic(layout);
+    m.Roughness = GBuffer::GetRoughness(layout);
+    m.SpecularColor = GBuffer::GetSpecularColor(layout);
 
     float3 shading = Lighting::Shade(g, m, e, l);
 
-    shading = HDR::WhitePreservingLumaBasedReinhardToneMapping(shading);
+    if (uniMouseButtons.x > 0) {
+        float2 mouseDxy = 1 - saturate(abs(uniMousePosition.xy - pixelIn.HPOS.xy)*0.5);
+        shading.rg += mouseDxy;
+
+        Lighting::PointLight p;
+        p.Color = float3(1,0,0);
+        p.Cutoff = 0.5;
+        p.Intensity = 1;
+        p.Position = GBuffer::TextureSpaceToWorldSpace(uniMousePosition.zw, uniInvertViewProjection);
+        p.Radius = 3;
+
+        //m.Albedo = shading;
+        //
+        shading = Lighting::Shade(g, m, e, p);
+        //shading.rgb = linearDepth;
+    }
+
+    //shading = HDR::RomBinDaHouseToneMapping(shading);
 
     float4 result = float4(shading, 1);
     return result;
