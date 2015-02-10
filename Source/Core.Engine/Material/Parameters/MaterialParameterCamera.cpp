@@ -100,10 +100,10 @@ bool MaterialParameterCamera_FrustumRays::Memoize_ReturnIfChanged_(float4x4 *cac
     context.Scene->Camera()->Model().GetFrustumRays(cameraRays);
 
     float4x4 raysAsMatrix(0.0f);
-    raysAsMatrix.SetColumn(0, cameraRays[size_t(CameraRay::LeftTop)].ZeroExtend());
-    raysAsMatrix.SetColumn(1, cameraRays[size_t(CameraRay::LeftBottom)].ZeroExtend());
-    raysAsMatrix.SetColumn(2, cameraRays[size_t(CameraRay::RightBottom)].ZeroExtend());
-    raysAsMatrix.SetColumn(3, cameraRays[size_t(CameraRay::RightTop)].ZeroExtend());
+    raysAsMatrix.SetRow(size_t(CameraRay::LeftTop),         cameraRays[size_t(CameraRay::LeftTop)].ZeroExtend());
+    raysAsMatrix.SetRow(size_t(CameraRay::LeftBottom),      cameraRays[size_t(CameraRay::LeftBottom)].ZeroExtend());
+    raysAsMatrix.SetRow(size_t(CameraRay::RightBottom),     cameraRays[size_t(CameraRay::RightBottom)].ZeroExtend());
+    raysAsMatrix.SetRow(size_t(CameraRay::RightTop),        cameraRays[size_t(CameraRay::RightTop)].ZeroExtend());
 
     const bool changed = (raysAsMatrix != *cached);
     *cached = raysAsMatrix;
@@ -126,10 +126,10 @@ bool MaterialParameterCamera_NearCorners::Memoize_ReturnIfChanged_(float4x4 *cac
     const MemoryView<const float3> frustumCorners = context.Scene->Camera()->Model().FrustumCorners();
 
     float4x4 pointsAsMatrix(0.0f);
-    pointsAsMatrix.SetColumn(0, frustumCorners[size_t(FrustumCorner::Near_LeftTop)].ZeroExtend());
-    pointsAsMatrix.SetColumn(1, frustumCorners[size_t(FrustumCorner::Near_LeftBottom)].ZeroExtend());
-    pointsAsMatrix.SetColumn(2, frustumCorners[size_t(FrustumCorner::Near_RightBottom)].ZeroExtend());
-    pointsAsMatrix.SetColumn(3, frustumCorners[size_t(FrustumCorner::Near_RightTop)].ZeroExtend());
+    pointsAsMatrix.SetRow(size_t(CameraRay::LeftTop),       frustumCorners[size_t(FrustumCorner::Near_LeftTop)].ZeroExtend());
+    pointsAsMatrix.SetRow(size_t(CameraRay::LeftBottom),    frustumCorners[size_t(FrustumCorner::Near_LeftBottom)].ZeroExtend());
+    pointsAsMatrix.SetRow(size_t(CameraRay::RightBottom),   frustumCorners[size_t(FrustumCorner::Near_RightBottom)].ZeroExtend());
+    pointsAsMatrix.SetRow(size_t(CameraRay::RightTop),      frustumCorners[size_t(FrustumCorner::Near_RightTop)].ZeroExtend());
 
     const bool changed = (pointsAsMatrix != *cached);
     *cached = pointsAsMatrix;
@@ -141,10 +141,10 @@ bool MaterialParameterCamera_FarCorners::Memoize_ReturnIfChanged_(float4x4 *cach
     const MemoryView<const float3> frustumCorners = context.Scene->Camera()->Model().FrustumCorners();
 
     float4x4 pointsAsMatrix(0.0f);
-    pointsAsMatrix.SetColumn(0, frustumCorners[size_t(FrustumCorner::Far_LeftTop)].ZeroExtend());
-    pointsAsMatrix.SetColumn(1, frustumCorners[size_t(FrustumCorner::Far_LeftBottom)].ZeroExtend());
-    pointsAsMatrix.SetColumn(2, frustumCorners[size_t(FrustumCorner::Far_RightBottom)].ZeroExtend());
-    pointsAsMatrix.SetColumn(3, frustumCorners[size_t(FrustumCorner::Far_RightTop)].ZeroExtend());
+    pointsAsMatrix.SetRow(size_t(CameraRay::LeftTop),       frustumCorners[size_t(FrustumCorner::Far_LeftTop)].ZeroExtend());
+    pointsAsMatrix.SetRow(size_t(CameraRay::LeftBottom),    frustumCorners[size_t(FrustumCorner::Far_LeftBottom)].ZeroExtend());
+    pointsAsMatrix.SetRow(size_t(CameraRay::RightBottom),   frustumCorners[size_t(FrustumCorner::Far_RightBottom)].ZeroExtend());
+    pointsAsMatrix.SetRow(size_t(CameraRay::RightTop),      frustumCorners[size_t(FrustumCorner::Far_RightTop)].ZeroExtend());
 
     const bool changed = (pointsAsMatrix != *cached);
     *cached = pointsAsMatrix;
