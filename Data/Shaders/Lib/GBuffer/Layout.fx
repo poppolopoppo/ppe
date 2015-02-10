@@ -17,45 +17,45 @@ struct Layout {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-float3  Read_Albedo(in Layout layout) {
+float3  GetAlbedo(in Layout layout) {
     return layout.Albedo_Metallic.rgb;
 }
 //----------------------------------------------------------------------------
-float   Read_Metallic(in Layout layout) {
+float   GetMetallic(in Layout layout) {
     return layout.Albedo_Metallic.a;
 }
 //----------------------------------------------------------------------------
-float3  Read_SpecularColor(in Layout layout) {
+float3  GetSpecularColor(in Layout layout) {
     return layout.SpecularColor_Roughness.rgb;
 }
 //----------------------------------------------------------------------------
-float   Read_Roughness(in Layout layout) {
+float   GetRoughness(in Layout layout) {
     return layout.SpecularColor_Roughness.a;
 }
 //----------------------------------------------------------------------------
-float3  Read_Normal(in Layout layout) {
+float3  GetNormal(in Layout layout) {
     return normalize(layout.Normal.xyz * 2 - 1);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void    Write_Albedo(inout Layout layout, float3 albedo) {
+void    SetAlbedo(inout Layout layout, float3 albedo) {
     layout.Albedo_Metallic.rgb = albedo;
 }
 //----------------------------------------------------------------------------
-void    Write_Metallic(inout Layout layout, float metallic) {
+void    SetMetallic(inout Layout layout, float metallic) {
     layout.Albedo_Metallic.a = metallic;
 }
 //----------------------------------------------------------------------------
-void    Write_SpecularColor(inout Layout layout, float3 specularColor) {
+void    SetSpecularColor(inout Layout layout, float3 specularColor) {
     layout.SpecularColor_Roughness.rgb = specularColor;
 }
 //----------------------------------------------------------------------------
-void    Write_Roughness(inout Layout layout, float roughness) {
+void    SetRoughness(inout Layout layout, float roughness) {
     layout.SpecularColor_Roughness.a = roughness;
 }
 //----------------------------------------------------------------------------
-void    Write_Normal(inout Layout layout, float3 normal) {
+void    SetNormal(inout Layout layout, float3 normal) {
     layout.Normal.xyz = normal * 0.5 + 0.5;
 }
 //----------------------------------------------------------------------------
@@ -71,11 +71,11 @@ Layout ReadLayout(float2 uv) {
 //----------------------------------------------------------------------------
 Layout WriteLayout(float3 albedo, float metallic, float roughness, float3 specularColor, float3 normal) {
     Layout write;
-    Write_Albedo(write, albedo);
-    Write_Metallic(write, metallic);
-    Write_SpecularColor(write, specularColor);
-    Write_Roughness(write, roughness);
-    Write_Normal(write, normal);
+    SetAlbedo(write, albedo);
+    SetMetallic(write, metallic);
+    SetSpecularColor(write, specularColor);
+    SetRoughness(write, roughness);
+    SetNormal(write, normal);
     return write;
 }
 //----------------------------------------------------------------------------

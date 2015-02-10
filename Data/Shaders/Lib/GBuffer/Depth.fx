@@ -11,8 +11,14 @@ float ReadDepth(float2 uv) {
     return TEX2D(uniPointClamp_DepthBuffer, uv).r;
 }
 //----------------------------------------------------------------------------
-float LinearizeDepth(float depth, float near, float far) {
-    return (2.0 * near) / (far + near - depth * (far - near));
+// http://www.humus.name/temp/Linearize%20depth.txt
+float LinearizeDepth_NearPlane_FarPlane(float depth, float near, float far) {
+    return depth / (far - depth * (far - near));
+}
+//----------------------------------------------------------------------------
+// http://www.humus.name/temp/Linearize%20depth.txt
+float LinearizeDepth_Eye_FarPlane(float depth, float near, float far) {
+    return near / (far - depth * (far - near));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
