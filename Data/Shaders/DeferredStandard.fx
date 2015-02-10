@@ -11,8 +11,7 @@
 #endif
 
 cbuffer PerFrame {
-    float4x4    uniView;
-    float4x4    uniProjection;
+    float4x4    uniViewProjection;
 };
 
 cbuffer PerMaterial {
@@ -48,8 +47,7 @@ struct PixelIn {
 PixelIn vmain(AppIn appIn) {
     float4 objectPos = float4(AppIn_Get_Position0(appIn), 1);
     float4 worldPos = mul(uniOptional_World, objectPos);
-    float4 viewPos = mul(uniView, worldPos);
-    float4 clipPos = mul(uniProjection, viewPos);
+    float4 clipPos = mul(uniViewProjection, worldPos);
 
     float3 normal = AppIn_Get_Normal0(appIn);
 #if WITH_BUMP_MAPPING
@@ -92,11 +90,11 @@ GBuffer::Layout pmain(PixelIn pixelIn) {
     specularColor *= Lighting::RefractiveIndex_to_Fresnel0(uniOptional_RefractiveIndex);
 
     GBuffer::Layout layout = (GBuffer::Layout)0;
-    GBuffer::Write_Albedo(layout, albedo);
-    GBuffer::Write_Metallic(layout, uniOptional_Metallic);
-    GBuffer::Write_SpecularColor(layout, specularColor);
-    GBuffer::Write_Roughness(layout, uniOptional_Roughness);
-    GBuffer::Write_Normal(layout, normal);
+    GBuffer::SetAlbedo(layout, albedo);
+    GBuffer::SetMetallic(layout, uniOptional_Metallic);
+    GBuffer::SetSpecularColor(layout, specularColor);
+    GBuffer::SetRoughness(layout, uniOptional_Roughness);
+    GBuffer::SetNormal(layout, normal);
 
     return layout;
 }
