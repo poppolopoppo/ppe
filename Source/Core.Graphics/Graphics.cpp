@@ -186,6 +186,74 @@ static void MatrixUnitTests_() {
     const XMMATRIX x_otrh = XMMatrixOrthographicRH(1280.0f, 720.0f, 10.0f, 100.0f);
     const float4x4 c_otrh = MakeOrthographicRHMatrix(1280.0f, 720.0f, 10.0f, 100.0f);
     AssertRelease(Equals_(x_otrh, c_otrh));
+
+    const float m_view_raw[16] = {
+        0.720537543f,
+        -0.607772529f,
+        -0.333823651f,
+        0.000000000f,
+        -5.96046448e-008f,
+        0.481419027f,
+        -0.876490593f,
+        0.000000000f,
+        0.693415940f,
+        0.631544352f,
+        0.346880436f,
+        0.000000000f,
+        4.16049576f,
+        2.34500909f,
+        4.71075439f,
+        1.00000000f,
+    };
+
+    XMMATRIX x_view;
+    memcpy(&x_view, m_view_raw, sizeof(m_view_raw));
+    float4x4 c_view;
+    memcpy(&c_view, m_view_raw, sizeof(m_view_raw));
+    AssertRelease(Equals_(x_view, c_view));
+
+    const float m_proj_raw[16] = {
+        0.974278688f,
+        0.000000000f,
+        0.000000000f,
+        0.000000000f,
+        0.000000000f,
+        1.73205090f,
+        0.000000000f,
+        0.000000000f,
+        -0.000000000f,
+        -0.000000000f,
+        1.00001001f,
+        1.00000000f,
+        0.000000000f,
+        0.000000000f,
+        0.0100001004f,
+        0.000000000f,
+    };
+
+    XMMATRIX x_proj;
+    memcpy(&x_proj, m_proj_raw, sizeof(m_proj_raw));
+    float4x4 c_proj;
+    memcpy(&c_proj, m_proj_raw, sizeof(m_proj_raw));
+    AssertRelease(Equals_(x_proj, c_proj));
+
+    XMMATRIX x_viewproj = x_view * x_proj;
+    float4x4 c_viewproj = c_view.Multiply(c_proj);
+    AssertRelease(Equals_(x_viewproj, c_viewproj));
+
+    const float v_wpos_raw[4] = {12,26,8,1};
+
+    XMVECTOR x_wpos;
+    memcpy(&x_wpos, v_wpos_raw, sizeof(v_wpos_raw));
+    float4 c_wpos;
+    memcpy(&c_wpos, v_wpos_raw, sizeof(v_wpos_raw));
+    AssertRelease(Equals_(x_wpos, c_wpos));
+
+    XMVECTOR x_hpos = XMVector4Transform(x_wpos, x_viewproj);
+    float4 c_hpos = Transform4(c_viewproj, c_wpos);
+    AssertRelease(Equals_(x_hpos, c_hpos));
+    float4 c_hpos2 = Transform3_OneExtend(c_viewproj, c_wpos.xyz());
+    AssertRelease(Equals_(x_hpos, c_hpos2));
 }
 //----------------------------------------------------------------------------
 static void MathUnitTests_() {
