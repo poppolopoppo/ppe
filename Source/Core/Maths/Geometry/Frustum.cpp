@@ -62,35 +62,35 @@ void Frustum::SetMatrix(const float4x4& viewProjection) {
     pright.Normal().x() = _matrix._14() - _matrix._11();
     pright.Normal().y() = _matrix._24() - _matrix._21();
     pright.Normal().z() = _matrix._34() - _matrix._31();
-    pright.D() = _matrix._44() - _matrix._41();
+    pright.D()          = _matrix._44() - _matrix._41();
     pright = pright.Normalize();
 
     // Top plane
     ptop.Normal().x() = _matrix._14() - _matrix._12();
     ptop.Normal().y() = _matrix._24() - _matrix._22();
     ptop.Normal().z() = _matrix._34() - _matrix._32();
-    ptop.D() = _matrix._44() - _matrix._42();
+    ptop.D()          = _matrix._44() - _matrix._42();
     ptop = ptop.Normalize();
 
     // Bottom plane
     pbottom.Normal().x() = _matrix._14() + _matrix._12();
     pbottom.Normal().y() = _matrix._24() + _matrix._22();
     pbottom.Normal().z() = _matrix._34() + _matrix._32();
-    pbottom.D() = _matrix._44() + _matrix._42();
+    pbottom.D()          = _matrix._44() + _matrix._42();
     pbottom = pbottom.Normalize();
 
     // Near plane
     pnear.Normal().x() = _matrix._13();
     pnear.Normal().y() = _matrix._23();
     pnear.Normal().z() = _matrix._33();
-    pnear.D() = _matrix._43();
+    pnear.D()          = _matrix._43();
     pnear = pnear.Normalize();
 
     // Far plane
     pfar.Normal().x() = _matrix._14() - _matrix._13();
     pfar.Normal().y() = _matrix._24() - _matrix._23();
     pfar.Normal().z() = _matrix._34() - _matrix._33();
-    pfar.D() = _matrix._44() - _matrix._43();
+    pfar.D()          = _matrix._44() - _matrix._43();
     pfar = pfar.Normalize();
 }
 //----------------------------------------------------------------------------
