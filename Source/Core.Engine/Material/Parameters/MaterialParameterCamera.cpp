@@ -112,9 +112,9 @@ bool MaterialParameterCamera_FrustumRays::Memoize_ReturnIfChanged_(float4x4 *cac
 }
 //----------------------------------------------------------------------------
 bool MaterialParameterCamera_NearFarZ::Memoize_ReturnIfChanged_(float2 *cached, const MaterialContext& context) {
-    const CameraModel& cameraModel = context.Scene->Camera()->Model();
+    const ICamera *const camera = context.Scene->Camera();
 
-    const float2 nearFarZ(cameraModel.Parameters().ZNear, cameraModel.Parameters().ZFar);
+    const float2 nearFarZ(camera->ZNear(), camera->ZFar());
 
     const bool changed = (nearFarZ != *cached);
     *cached = nearFarZ;

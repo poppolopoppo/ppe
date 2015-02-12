@@ -13,9 +13,14 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ICamera::ICamera()
+ICamera::ICamera(float znear, float zfar)
 :   _projection(float4x4::Identity())
-,   _controller(nullptr) {}
+,   _controller(nullptr)
+,   _znear(znear)
+,   _zfar(zfar) {
+    Assert(0 <= znear);
+    Assert(znear < zfar);
+}
 //----------------------------------------------------------------------------
 ICamera::~ICamera() {}
 //----------------------------------------------------------------------------
@@ -44,11 +49,10 @@ void ICamera::OnResize(const ViewportF& viewport) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 PerspectiveCamera::PerspectiveCamera(float fov, float znear, float zfar, const ViewportF& viewport)
-:   _fov(fov), _znear(znear), _zfar(zfar)
+:   ICamera(znear, zfar)
+,   _fov(fov)
 ,   _aspectRatio(viewport.AspectRatio()) {
     Assert(0 < fov && F_2PI >= fov);
-    Assert(0 <= znear);
-    Assert(znear < zfar);
     Assert(0 < _aspectRatio);
 }
 //----------------------------------------------------------------------------
@@ -68,13 +72,11 @@ void PerspectiveCamera::OnResizeImpl(const ViewportF& viewport) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 OrthographicOffCenterCamera::OrthographicOffCenterCamera(float znear, float zfar, const ViewportF& viewport)
-:   _znear(znear), _zfar(zfar)
+:   ICamera(znear, zfar)
 ,   _left(viewport.Left())
 ,   _right(viewport.Right())
 ,   _bottom(viewport.Bottom())
 ,   _top(viewport.Top()) {
-    Assert(0 <= znear);
-    Assert(znear < zfar);
     Assert(_left < _right);
     Assert(_bottom < _top);
 }

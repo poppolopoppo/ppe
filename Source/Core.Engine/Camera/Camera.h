@@ -20,11 +20,14 @@ typedef RefPtr<const ICameraController> PCCameraController;
 //----------------------------------------------------------------------------
 class ICamera : public RefCountable {
 public:
-    ICamera();
+    ICamera(float znear, float zfar);
     virtual ~ICamera();
 
     ICamera(const ICamera& ) = delete;
     ICamera& operator =(const ICamera& ) = delete;
+
+    float ZNear() const { return _znear; }
+    float ZFar() const { return _zfar; }
 
     const CameraModel& Model() const { return _model; }
     const ICameraController *Controller() const { return _controller.get(); }
@@ -39,6 +42,9 @@ public:
 protected:
     virtual void UpdateImpl(float4x4 *projection, const Timeline& time) = 0;
     virtual void OnResizeImpl(const ViewportF& viewport) = 0;
+
+    float _znear;
+    float _zfar;
 
 private:
     float4x4 _projection;
@@ -59,9 +65,6 @@ public:
 
     float FOV() const { return _fov; }
 
-    float ZNear() const { return _znear; }
-    float ZFar() const { return _zfar; }
-
     float AspectRatio() const { return _aspectRatio; }
 
 protected:
@@ -70,8 +73,6 @@ protected:
 
 private:
     float _fov; // rad
-    float _znear;
-    float _zfar;
     float _aspectRatio;
 };
 //----------------------------------------------------------------------------
@@ -80,9 +81,6 @@ class OrthographicOffCenterCamera : public ICamera {
 public:
     OrthographicOffCenterCamera(float znear, float zfar, const ViewportF& viewport);
     virtual ~OrthographicOffCenterCamera();
-
-    float ZNear() const { return _znear; }
-    float ZFar() const { return _zfar; }
 
     float Left() const { return _left; }
     float Right() const { return _right; }
@@ -95,9 +93,6 @@ protected:
     virtual void OnResizeImpl(const ViewportF& viewport) override;
 
 private:
-    float _znear;
-    float _zfar;
-
     float _left;
     float _right;
 
