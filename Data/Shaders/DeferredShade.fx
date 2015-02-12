@@ -2,6 +2,7 @@
 #include "Lib/Platform/Config.fx"
 #include "Lib/Color/HDR.fx"
 #include "Lib/Color/SRGB.fx"
+#include "Lib/Color/Space.fx"
 #include "Lib/GBuffer/Depth.fx"
 #include "Lib/GBuffer/Layout.fx"
 #include "Lib/GBuffer/Reconstruction.fx"
@@ -14,7 +15,6 @@
 
 cbuffer PerFrame {
     float3      uniEyePosition;
-    float4x4    uniFarCorners;
     float2      uniNearFarZ;
     float4x4    uniInvertViewProjection;
 };
@@ -32,32 +32,23 @@ cbuffer Light {
 struct PixelIn {
     float4 HPOS         : SV_POSITION;
     float2 TexCoord     : TEXCOORD0;
-    float3 FarPos       : TEXCOORD1;
+    float3 ViewRay      : NORMAL0;
 };
 
 TEXTURECUBE(uniSRGB_uniLinearClamp_IrradianceMap);
 TEXTURECUBE(uniSRGB_uniLinearClamp_ReflectionMap);
-
-static float3 gFarCorners[4] = {
-    uniFarCorners._11_12_13,
-    uniFarCorners._21_22_23,
-    uniFarCorners._31_32_33,
-    uniFarCorners._41_42_43,
-};
-
-#include "Lib/Color/Ramp.fx"
 
 PixelIn vmain(AppIn appIn) {
 
     float3 position = AppIn_Get_Position0(appIn).xyz;
     float2 texCoord = AppIn_Get_TexCoord0(appIn).xy;
 
-    float4 clipPos = float4(position.xy, 0.5, 1.0);
+    float4 clipPos = float4(position.xy, 1.0, 1.0);
 
     PixelIn o;
     o.HPOS = clipPos;
     o.TexCoord = texCoord;
-    o.FarPos = gFarCorners[(int)position.z].xyz;
+    o.ViewRay = mul_dehomogenize(clipPos, uniInvertViewProjection);
 
     return o;
 }
@@ -67,14 +58,7 @@ float4 pmain(PixelIn pixelIn) : SV_Target {
     GBuffer::Layout layout = GBuffer::ReadLayout(pixelIn.TexCoord);
 
     float linearDepth = GBuffer::LinearizeDepth_Eye_FarPlane(depth, uniNearFarZ.x, uniNearFarZ.y);
-    float3 worldPos2 = lerp(uniEyePosition, pixelIn.FarPos, linearDepth);
-
-    float3 worldPos = GBuffer::TextureSpaceToWorldSpace(pixelIn.TexCoord, uniInvertViewProjection);
-
-    //return float4(linearDepth.xxx, 1);
-    //return float4(Ramp::Rainbow(linearDepth), 1);
-    return float4(Ramp::Rainbow(depth), 1);
-    return float4(abs(worldPos - worldPos2), 1);
+    float3 worldPos = lerp(uniEyePosition, pixelIn.ViewRay, linearDepth);
 
     Lighting::Geometry g;
     g.Eye = normalize(uniEyePosition - worldPos);
@@ -109,15 +93,15 @@ float4 pmain(PixelIn pixelIn) : SV_Target {
         p.Cutoff = 0.5;
         p.Intensity = 1;
         p.Position = GBuffer::TextureSpaceToWorldSpace(uniMousePosition.zw, uniInvertViewProjection);
-        p.Radius = 3;
+        p.Radius = 4;
 
-        //m.Albedo = shading;
-        //
-        shading = Lighting::Shade(g, m, e, p);
-        //shading.rgb = linearDepth;
+        e.AmbientIntensity = 0.0;
+        e.ReflectionIntensity = 0.0;
+
+        shading += Lighting::Shade(g, m, e, p);
     }
 
-    //shading = HDR::RomBinDaHouseToneMapping(shading);
+    shading = HDR::RomBinDaHouseToneMapping(shading);
 
     float4 result = float4(shading, 1);
     return result;
