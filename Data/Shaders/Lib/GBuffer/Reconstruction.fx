@@ -9,7 +9,7 @@ namespace GBuffer {
 //----------------------------------------------------------------------------
 float3 ClipSpaceToWorldSpace(float2 clipPos, float depth, float4x4 invertViewProjection) {
     float4 hpos = float4(clipPos, depth, 1);
-    float4 wpos = mul(invertViewProjection, hpos);
+    float4 wpos = mul(hpos, invertViewProjection);
     return wpos.xyz / wpos.w;
 }
 //----------------------------------------------------------------------------

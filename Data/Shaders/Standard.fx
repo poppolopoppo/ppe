@@ -53,9 +53,9 @@ struct PixelIn {
 
 PixelIn vmain(AppIn appIn) {
     float4 objectPos = float4(AppIn_Get_Position0(appIn), 1);
-    float4 worldPos = mul(uniOptional_World, objectPos);
-    float4 viewPos = mul(uniView, worldPos);
-    float4 clipPos = mul(uniProjection, viewPos);
+    float4 worldPos = mul(objectPos, uniOptional_World);
+    float4 viewPos = mul(worldPos, uniView);
+    float4 clipPos = mul(viewPos, uniProjection);
 
     PixelIn o;
     o.HPOS = clipPos.xyzw;

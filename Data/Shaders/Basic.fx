@@ -31,11 +31,11 @@ struct PixelIn {
 };
 
 PixelIn vmain(AppIn appIn) {
-    float4 worldPos = mul(World, float4(AppIn_Get_Position0(appIn), 1));
-    float4 viewPos = mul(uniView, worldPos);
-    float4 clipPos = mul(uniProjection, viewPos);
+    float4 worldPos = mul(float4(AppIn_Get_Position0(appIn), 1), World);
+    float4 viewPos = mul(worldPos, uniView);
+    float4 clipPos = mul(viewPos, uniProjection);
 
-    float3 normal = mul_dehomogenize(uniInvertTranspose_World, AppIn_Get_Normal0(appIn));
+    float3 normal = mul_dehomogenize(AppIn_Get_Normal0(appIn), uniInvertTranspose_World);
 
     float4 color = AppIn_Get_Color0(appIn);
     color *= uniSRGB_InstanceColor;
@@ -61,7 +61,7 @@ float4 pmain(PixelIn pixelIn) : SV_Target {
 
     float3 textureNormal = TEX2D(uniAnisotropicClamp_Bump, pixelIn.TexCoord).rgb;
     textureNormal = textureNormal * 2 - 1;
-    textureNormal = mul_dehomogenize(uniInvertTranspose_World, textureNormal);
+    textureNormal = mul_dehomogenize(textureNormal, uniInvertTranspose_World);
     textureNormal = normalize(textureNormal);
 
     normal = textureNormal;

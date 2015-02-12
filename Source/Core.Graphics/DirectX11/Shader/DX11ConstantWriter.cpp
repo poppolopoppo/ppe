@@ -64,15 +64,15 @@ static bool ExportFieldData_(void *dst, const void *src, ConstantFieldType type)
         *reinterpret_cast<float4 *>(dst) = *reinterpret_cast<const float4 *>(src);
         break;
 
-    // float matrices (no need to be transposed for DX11, same memory representation)
+    // float matrices (need to be transposed for DX11)
     case Core::Graphics::ConstantFieldType::Float3x3:
-        *reinterpret_cast<float3x3 *>(dst) = *reinterpret_cast<const float3x3 *>(src);
+        *reinterpret_cast<float3x3 *>(dst) = reinterpret_cast<const float3x3 *>(src)->Transpose();
         break;
     case Core::Graphics::ConstantFieldType::Float4x3:
-        *reinterpret_cast<float4x3 *>(dst) = *reinterpret_cast<const float4x3 *>(src);
+        *reinterpret_cast<float3x4 *>(dst) = reinterpret_cast<const float4x3 *>(src)->Transpose();
         break;
     case Core::Graphics::ConstantFieldType::Float4x4:
-        *reinterpret_cast<float4x4 *>(dst) = *reinterpret_cast<const float4x4 *>(src);
+        *reinterpret_cast<float4x4 *>(dst) = reinterpret_cast<const float4x4 *>(src)->Transpose();
         break;
 
     default:

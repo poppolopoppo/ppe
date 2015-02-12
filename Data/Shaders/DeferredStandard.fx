@@ -46,8 +46,8 @@ struct PixelIn {
 
 PixelIn vmain(AppIn appIn) {
     float4 objectPos = float4(AppIn_Get_Position0(appIn), 1);
-    float4 worldPos = mul(uniOptional_World, objectPos);
-    float4 clipPos = mul(uniViewProjection, worldPos);
+    float4 worldPos = mul(objectPos, uniOptional_World);
+    float4 clipPos = mul(worldPos, uniViewProjection);
 
     float3 normal = AppIn_Get_Normal0(appIn);
 #if WITH_BUMP_MAPPING
