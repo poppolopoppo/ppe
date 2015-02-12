@@ -44,14 +44,18 @@ float3 Shade(   Geometry g, Material m, Environment e,
     float3 lightingTerm = LightingTerm(albedoColor, specularColor, g.Normal, m.Roughness, lightColor, lightDir, g.Eye);
 
     float3 reflectVector = reflect(-g.Eye, g.Normal);
-    float3 envColor = Reflection(e, reflectVector, m.Roughness);
-    float3 irradiance = Irradiance(e, g.Normal);
+    float3 envColor = 0;
+    [branch] if (e.ReflectionIntensity > 0)
+        envColor = Reflection(e, reflectVector, m.Roughness);
+    float3 irradiance = 0;
+    [branch] if (e.AmbientIntensity > 0)
+        irradiance = Irradiance(e, g.Normal);
 
     float3 envFresnel = Specular::F_Roughness(specularColor, m.Roughness*m.Roughness, g.Normal, g.Eye);
 
-    return  lightAttenuation * lightIntensity * lightingTerm * 1 +
-            envFresnel * envColor * e.ReflectionIntensity * 1 +
-            albedoColor * irradiance * e.AmbientIntensity * 1;
+    return  lightAttenuation * lightIntensity * lightingTerm +
+            envFresnel * envColor * e.ReflectionIntensity +
+            albedoColor * irradiance * e.AmbientIntensity;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
