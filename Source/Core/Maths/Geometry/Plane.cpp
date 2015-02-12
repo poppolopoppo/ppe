@@ -138,9 +138,9 @@ void Plane::Transform(const MemoryView<Plane>& planes, const Matrix& transformat
 float3 Plane::Get3PlanesInterPoint(const Plane& p1, const Plane& p2, const Plane& p3) {
     //P = -d1 * N2xN3 / N1.N2xN3 - d2 * N3xN1 / N2.N3xN1 - d3 * N1xN2 / N3.N1xN2
     const float3 v =
-        - p1.D() * Cross(p2.Normal(), p3.Normal()) / Dot3(p1.Normal(), Cross(p2.Normal(), p3.Normal()))
-        - p2.D() * Cross(p3.Normal(), p1.Normal()) / Dot3(p2.Normal(), Cross(p3.Normal(), p1.Normal()))
-        - p3.D() * Cross(p1.Normal(), p2.Normal()) / Dot3(p3.Normal(), Cross(p1.Normal(), p2.Normal()));
+        -p1.D() * Cross(p2.Normal(), p3.Normal()) / Dot3(p1.Normal(), Cross(p2.Normal(), p3.Normal()))
+        -p2.D() * Cross(p3.Normal(), p1.Normal()) / Dot3(p2.Normal(), Cross(p3.Normal(), p1.Normal()))
+        -p3.D() * Cross(p1.Normal(), p2.Normal()) / Dot3(p3.Normal(), Cross(p1.Normal(), p2.Normal()));
 
     return v;
 }

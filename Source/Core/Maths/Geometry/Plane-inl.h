@@ -32,9 +32,18 @@ inline Plane& Plane::operator =(const Plane& other) {
     return *this;
 }
 //----------------------------------------------------------------------------
+inline float3 Plane::PointOnPlane() const {
+    return _normal * _d;
+}
+//----------------------------------------------------------------------------
 inline Plane Plane::Normalize() const {
-    const float inv = 1.0f / Length3(_normal);
-    return Plane(_normal * inv, _d * inv);
+    const float norm = Length3(_normal);
+    Assert(fabsf(norm) > F_Epsilon);
+    return Plane(_normal / norm, _d / norm);
+}
+//----------------------------------------------------------------------------
+inline float Plane::DistanceToPoint(const float3& point) const {
+    return Collision::DistancePlanePoint(*this, point);
 }
 //----------------------------------------------------------------------------
 inline PlaneIntersectionType Plane::Intersects(const float3& point) const {

@@ -139,7 +139,7 @@ float DistancePlanePoint(const Plane& plane, const float3& point) {
     //Reference: Page 127
 
     float dot = Dot3(plane.Normal(), point);
-    return dot - plane.D();
+    return dot + plane.D();
 }
 //----------------------------------------------------------------------------
 float DistanceBoxPoint(const AABB3f& box, const float3& point) {

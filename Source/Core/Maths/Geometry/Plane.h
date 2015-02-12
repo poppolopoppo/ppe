@@ -32,8 +32,11 @@ public:
     float& D() { return _d; }
     float D() const { return _d; }
 
+    float3 PointOnPlane() const;
+
     Plane Normalize() const;
 
+    float DistanceToPoint(const float3& point) const;
     PlaneIntersectionType Intersects(const float3& point) const;
 
     bool Intersects(const Ray& ray) const;
