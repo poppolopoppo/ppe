@@ -13,6 +13,7 @@ class ScalarMatrix;
     typedef ScalarMatrix<_Scalar, 2, 2> CONCAT(_ALIAS, 2x2); \
     typedef ScalarMatrix<_Scalar, 3, 3> CONCAT(_ALIAS, 3x3); \
     typedef ScalarMatrix<_Scalar, 4, 3> CONCAT(_ALIAS, 4x3); \
+    typedef ScalarMatrix<_Scalar, 3, 4> CONCAT(_ALIAS, 3x4); \
     typedef ScalarMatrix<_Scalar, 4, 4> CONCAT(_ALIAS, 4x4);
 #define DECL_SCALARMATRIX(_Scalar) DECL_SCALARMATRIX_ALIAS(_Scalar, _Scalar)
 //----------------------------------------------------------------------------
