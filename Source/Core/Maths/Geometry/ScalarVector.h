@@ -136,6 +136,15 @@ public:
     static ScalarVector Z() { ScalarVector r(0); r.get<2>() = 1; return r; }
     static ScalarVector W() { ScalarVector r(0); r.get<3>() = 1; return r; }
 
+    static ScalarVector Left() { STATIC_ASSERT(3 == _Dim); return ScalarVector(-1,0,0); }
+    static ScalarVector Right() { STATIC_ASSERT(3 == _Dim); return ScalarVector(1,0,0); }
+
+    static ScalarVector Up() { STATIC_ASSERT(3 == _Dim); return ScalarVector(0,1,0); }
+    static ScalarVector Down() { STATIC_ASSERT(3 == _Dim); return ScalarVector(0,-1,0); }
+
+    static ScalarVector Forward() { STATIC_ASSERT(3 == _Dim); return ScalarVector(0,0,1); }
+    static ScalarVector Backward() { STATIC_ASSERT(3 == _Dim); return ScalarVector(0,0,-1); }
+
     template <size_t _0, size_t _1>
     ScalarVector<T, 2> Shuffle2() const { return ScalarVector<T, 2>(get<_0>(), get<_1>()); }
     template <size_t _0, size_t _1, size_t _2>
