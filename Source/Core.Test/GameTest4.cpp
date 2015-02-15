@@ -407,6 +407,20 @@ void GameTest4::Update(const Timeline& time) {
         _context->EffectCompilerService()->EffectCompiler()->RegenerateEffects();
     }
 
+    // sunlight control
+    if (Keyboard().IsKeyPressed(KeyboardKey::Control)) {
+        const float angularSpeed = Units::Time::Seconds(time.Elapsed()).Value() * F_PI * 0.1;
+        const float3& sunDirection = _world->Lighting()->SunDirection();
+        if (Keyboard().IsKeyPressed(KeyboardKey::L))
+            _world->Lighting()->SetSunDirection(MakeAxisQuaternion(float3::Up(), angularSpeed).Transform(sunDirection));
+        if (Keyboard().IsKeyPressed(KeyboardKey::J))
+            _world->Lighting()->SetSunDirection(MakeAxisQuaternion(float3::Up(), -angularSpeed).Transform(sunDirection));
+        if (Keyboard().IsKeyPressed(KeyboardKey::I))
+            _world->Lighting()->SetSunDirection(MakeAxisQuaternion(float3::Right(), angularSpeed).Transform(sunDirection));
+        if (Keyboard().IsKeyPressed(KeyboardKey::K))
+            _world->Lighting()->SetSunDirection(MakeAxisQuaternion(float3::Right(), -angularSpeed).Transform(sunDirection));
+    }
+
     // wireframe
     if (Keyboard().IsKeyUp(KeyboardKey::F11))
         Effect::SwitchAutomaticFillMode();
