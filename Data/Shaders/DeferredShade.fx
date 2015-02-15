@@ -85,14 +85,14 @@ float4 pmain(PixelIn pixelIn) : SV_Target {
     float3 shading = Lighting::Shade(g, m, e, l);
 
     if (uniMouseButtons.x > 0) {
-        float2 mouseDxy = 1 - saturate(abs(uniMousePosition.xy - pixelIn.HPOS.xy)*0.5);
+        float2 mouseDxy = 1 - saturate(abs(uniMousePosition.xy - pixelIn.HPOS.xy));
         shading.rg += mouseDxy;
 
         Lighting::PointLight p;
-        p.Color = float3(1,0,0);
-        p.Cutoff = 0.5;
-        p.Intensity = 1;
-        p.Position = GBuffer::TextureSpaceToWorldSpace(uniMousePosition.zw, uniInvertViewProjection);
+        p.Color = float3(1,0.2,0.1);
+        p.Cutoff = 0.6;
+        p.Intensity = 2;
+        p.Position = GBuffer::TextureSpaceToWorldSpace(uniMousePosition.zw, uniInvertViewProjection) + g.Eye;
         p.Radius = 4;
 
         e.AmbientIntensity = 0.0;
@@ -101,7 +101,7 @@ float4 pmain(PixelIn pixelIn) : SV_Target {
         shading += Lighting::Shade(g, m, e, p);
     }
 
-    shading = HDR::RomBinDaHouseToneMapping(shading);
+    shading = HDR::WhitePreservingLumaBasedReinhardToneMapping(shading);
 
     float4 result = float4(shading, 1);
     return result;

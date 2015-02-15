@@ -20,6 +20,8 @@
 
 #include "Core.Engine/Input/Camera/KeyboardMouseCameraController.h"
 
+#include "Core.Engine/Lighting/LightingEnvironment.h"
+
 #include "Core.Engine/Material/Material.h"
 #include "Core.Engine/Material/MaterialConstNames.h"
 #include "Core.Engine/Material/MaterialContext.h"
@@ -258,7 +260,7 @@ void GameTest4::Initialize(const Timeline& time) {
     _world->Initialize();
 
     _cameraController = new KeyboardMouseCameraController(float3(0.0f, 3.0f, -6.0f), 0.0f, 0.5f*F_PIOver3, &Keyboard(), &Mouse());
-    _camera = new PerspectiveCamera(F_PIOver3, 1.0f, 100.0f, viewport);
+    _camera = new PerspectiveCamera(F_PIOver3, 1.0f, 1000.0f, viewport);
     _camera->SetController(_cameraController);
 
     // Main scene
@@ -358,6 +360,11 @@ void GameTest4::LoadContent() {
     _mainScene->MaterialDatabase()->BindTexture("IrradianceMap", L"GameData:/Textures/CubeMaps/Test/Irradiance.dds");
     _mainScene->MaterialDatabase()->BindTexture("ReflectionMap", L"GameData:/Textures/CubeMaps/Test/Reflection.dds");
 
+    //if (!LoadModel(_model, L"GameData:/Models/Sponza/sponza_light.obj"))
+    //if (!LoadModel(_model, L"GameData:/Models/Infinity/DesertArena/DesertArena.obj"))
+    //if (!LoadModel(_model, L"GameData:/Models/Infinity/BrokenTower/BrokenTower.obj"))
+    //    AssertNotReached();
+    
     _model = CreatePBRTestModel_();
     AssertRelease(_model);
 
