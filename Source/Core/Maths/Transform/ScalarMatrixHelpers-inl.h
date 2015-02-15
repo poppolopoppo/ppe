@@ -513,7 +513,7 @@ ScalarMatrix<T, 4, 4> Invert_AssumeHomogeneous(const ScalarMatrix<T, 4, 4>& m) {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
 ScalarMatrix<T, _Height, _Width> InvertTranspose(const ScalarMatrix<T, _Width, _Height>& m) {
-    return Invert(m).Transpose();
+    return Invert(m.Transpose());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

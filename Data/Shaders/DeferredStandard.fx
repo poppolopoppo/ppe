@@ -55,6 +55,12 @@ PixelIn vmain(AppIn appIn) {
     float3 tangent = AppIn_Get_Tangent0(appIn);
 #endif
 
+    normal = mul(float4(normal, 1), uniOptional_uniInvertTranspose_World).xyz;
+#if WITH_BUMP_MAPPING
+    binormal = mul(float4(binormal, 1), uniOptional_uniInvertTranspose_World).xyz;
+    tangent = mul(float4(tangent, 1), uniOptional_uniInvertTranspose_World).xyz;
+#endif
+
     PixelIn o;
     o.HPOS = clipPos.xyzw;
     o.TexCoord = AppIn_Get_TexCoord0(appIn);
