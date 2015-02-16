@@ -9,6 +9,8 @@
 #include "Core/IO/String.h"
 #include "Core/Memory/RefPtr.h"
 
+#include "Core.Engine/Effect/IEffectPasses.h"
+
 namespace Core {
 namespace Graphics {
 class BindName;
@@ -24,10 +26,10 @@ FWD_REFPTR(RenderState);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class EffectDescriptor : public RefCountable {
+class EffectDescriptor : public IEffectPasses {
 public:
     EffectDescriptor();
-    ~EffectDescriptor();
+    virtual ~EffectDescriptor();
 
     EffectDescriptor(   const char *name,
                         const Engine::RenderState *renderState,
@@ -77,11 +79,16 @@ public:
     const ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, PAbstractMaterialParameter)& Parameters() const { return _parameters; }
     const ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, Filename)& Textures() const { return _textures; }
 
+    size_t RenderLayerOffset() const { return _renderLayerOffset; }
+    void SetRenderLayerOffset(size_t value);
+
     void AddVertexDeclaration(const Graphics::VertexDeclaration *declaration);
     void AddDefine(const String& name, const String& value);
     void AddSubstitution(const Graphics::BindName& tag, const String& defines);
     void AddTexture(const Graphics::BindName& name, const Filename& filename);
     void AddParameter(const Graphics::BindName& name, AbstractMaterialParameter *parameter);
+
+    virtual size_t FillEffectPasses(const EffectDescriptor **pOutPasses, const size_t capacity) const override;
 
     SINGLETON_POOL_ALLOCATED_DECL(EffectDescriptor);
 
@@ -105,6 +112,8 @@ private:
     ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, String) _substitutions;
     ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, Filename) _textures;
     ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, PAbstractMaterialParameter) _parameters;
+
+    size_t _renderLayerOffset;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

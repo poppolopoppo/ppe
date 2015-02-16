@@ -36,6 +36,8 @@ struct RenderCommand {
     u32 PrimitiveType   : 4;
     mutable u32 Ready   : 1;
 
+    const RenderCommand *Next;
+
     bool operator ==(const RenderCommand& other) const;
     bool operator !=(const RenderCommand& other) const { return !operator ==(other); }
 
@@ -49,7 +51,7 @@ STATIC_ASSERT(std::is_pod<RenderCommand>::value);
 typedef UniquePtr<const RenderCommand> URenderCommand;
 //----------------------------------------------------------------------------
 bool AcquireRenderCommand(
-    URenderCommand& pcommand,
+    URenderCommand& pOutCommand,
     RenderTree *renderTree,
     const char *renderLayerName,
     const Material *material,

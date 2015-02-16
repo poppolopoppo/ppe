@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <CustomBuild Include="Camera\Camera.cpp">
@@ -49,10 +49,19 @@
     <CustomBuild Include="Effect\EffectProgram.h">
       <Filter>Effect</Filter>
     </CustomBuild>
+    <CustomBuild Include="Effect\IEffectPasses.h">
+      <Filter>Effect</Filter>
+    </CustomBuild>
     <CustomBuild Include="Effect\MaterialEffect.cpp">
       <Filter>Effect</Filter>
     </CustomBuild>
     <CustomBuild Include="Effect\MaterialEffect.h">
+      <Filter>Effect</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Effect\MultiPassEffectDescriptor.cpp">
+      <Filter>Effect</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Effect\MultiPassEffectDescriptor.h">
       <Filter>Effect</Filter>
     </CustomBuild>
     <CustomBuild Include="Input\Camera\KeyboardMouseCameraController.cpp">
@@ -137,6 +146,12 @@
       <Filter>Material\Parameters</Filter>
     </CustomBuild>
     <CustomBuild Include="Material\Parameters\MaterialParameterMemoizer.h">
+      <Filter>Material\Parameters</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\Parameters\MaterialParameterMouse.cpp">
+      <Filter>Material\Parameters</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\Parameters\MaterialParameterMouse.h">
       <Filter>Material\Parameters</Filter>
     </CustomBuild>
     <CustomBuild Include="Material\Parameters\MaterialParameterRandom.cpp">
@@ -400,6 +415,18 @@
     <CustomBuild Include="Service\IServiceProvider.h">
       <Filter>Service</Filter>
     </CustomBuild>
+    <CustomBuild Include="Service\KeyboardService.cpp">
+      <Filter>Service</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Service\KeyboardService.h">
+      <Filter>Service</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Service\MouseService.cpp">
+      <Filter>Service</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Service\MouseService.h">
+      <Filter>Service</Filter>
+    </CustomBuild>
     <CustomBuild Include="Service\RenderSurfaceService.cpp">
       <Filter>Service</Filter>
     </CustomBuild>
@@ -556,15 +583,5 @@
     <Filter Include="World">
       <UniqueIdentifier>{fbb63e47-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\..\..\%40Core\git\Source\Core.Engine\Material\Parameters\MaterialParameterMouse.h" />
-    <ClInclude Include="..\..\..\..\%40Core\git\Source\Core.Engine\Service\MouseService.h" />
-    <ClInclude Include="..\..\..\..\%40Core\git\Source\Core.Engine\Service\KeyboardService.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\..\..\%40Core\git\Source\Core.Engine\Material\Parameters\MaterialParameterMouse.cpp" />
-    <ClCompile Include="..\..\..\..\%40Core\git\Source\Core.Engine\Service\MouseService.cpp" />
-    <ClCompile Include="..\..\..\..\%40Core\git\Source\Core.Engine\Service\KeyboardService.cpp" />
   </ItemGroup>
 </Project>

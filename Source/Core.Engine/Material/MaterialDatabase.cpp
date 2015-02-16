@@ -108,7 +108,7 @@ bool MaterialDatabase::TryGetTexture(const Graphics::BindName& name, Filename *p
     return true;
 }
 //----------------------------------------------------------------------------
-void MaterialDatabase::BindEffect(const Graphics::BindName& name, EffectDescriptor *effect, bool allowOverride) {
+void MaterialDatabase::BindEffect(const Graphics::BindName& name, const IEffectPasses *effect, bool allowOverride /* = false */) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!name.empty());
     Assert(effect);
@@ -119,7 +119,7 @@ void MaterialDatabase::BindEffect(const Graphics::BindName& name, EffectDescript
     _effects[name] = effect;
 }
 //----------------------------------------------------------------------------
-void MaterialDatabase::UnbindEffect(const Graphics::BindName& name, const EffectDescriptor *effect) {
+void MaterialDatabase::UnbindEffect(const Graphics::BindName& name, const IEffectPasses *effect) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!name.empty());
     Assert(effect);
@@ -131,7 +131,7 @@ void MaterialDatabase::UnbindEffect(const Graphics::BindName& name, const Effect
     _effects.erase(it);
 }
 //----------------------------------------------------------------------------
-bool MaterialDatabase::TryGetEffect(const Graphics::BindName& name, EffectDescriptor **effect) const {
+bool MaterialDatabase::TryGetEffect(const Graphics::BindName& name, const IEffectPasses **effect) const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!name.empty());
     Assert(effect);
@@ -148,8 +148,8 @@ bool MaterialDatabase::TryGetEffect(const Graphics::BindName& name, EffectDescri
     return true;
 }
 //----------------------------------------------------------------------------
-bool MaterialDatabase::TryGetEffect(const Graphics::BindName& name, PEffectDescriptor& effect) const {
-    EffectDescriptor *e = nullptr;
+bool MaterialDatabase::TryGetEffect(const Graphics::BindName& name, PCEffectPasses& effect) const {
+    const IEffectPasses *e = nullptr;
     const bool result = TryGetEffect(name, &e);
 
     effect = e;

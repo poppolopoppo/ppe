@@ -11,6 +11,7 @@
 #include "Core.Graphics/Device/Shader/ShaderProgram.h"
 
 #include "Core/Allocator/PoolAllocator-impl.h"
+#include "Core/Memory/MemoryView.h"
 
 namespace Core {
 namespace Engine {
@@ -19,7 +20,8 @@ namespace Engine {
 //----------------------------------------------------------------------------
 SINGLETON_POOL_ALLOCATED_DEF(EffectDescriptor, );
 //----------------------------------------------------------------------------
-EffectDescriptor::EffectDescriptor() {}
+EffectDescriptor::EffectDescriptor() 
+:   _renderLayerOffset(0) {}
 //----------------------------------------------------------------------------
 EffectDescriptor::~EffectDescriptor() {}
 //----------------------------------------------------------------------------
@@ -50,7 +52,8 @@ EffectDescriptor::EffectDescriptor(
 ,   _defines(defines.begin(), defines.end())
 ,   _substitutions(substitutions.begin(), substitutions.end())
 ,   _parameters(parameters.begin(), parameters.end())
-,   _textures(textures.begin(), textures.end()) {
+,   _textures(textures.begin(), textures.end()) 
+,   _renderLayerOffset(0) {
     Assert(name);
     Assert( !hs.empty() ||
             !ds.empty() ||
@@ -117,6 +120,10 @@ void EffectDescriptor::SetProgramFilename(Graphics::ShaderProgramType programTyp
     }
 }
 //----------------------------------------------------------------------------
+void EffectDescriptor::SetRenderLayerOffset(size_t value) {
+    _renderLayerOffset = value;
+}
+//----------------------------------------------------------------------------
 void EffectDescriptor::AddVertexDeclaration(const Graphics::VertexDeclaration *declaration) {
     Assert(declaration);
 
@@ -152,6 +159,14 @@ void EffectDescriptor::AddParameter(const Graphics::BindName& name, AbstractMate
     Assert(parameter);
 
     _parameters.Insert_AssertUnique(name, parameter);
+}
+//----------------------------------------------------------------------------
+size_t EffectDescriptor::FillEffectPasses(const EffectDescriptor **pOutPasses, const size_t capacity) const {
+    Assert(pOutPasses);
+    Assert(capacity > 0);
+
+    *pOutPasses = this;
+    return 1;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

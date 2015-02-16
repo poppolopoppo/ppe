@@ -15,6 +15,7 @@
 #include "Effect/EffectCompiler.h"
 #include "Effect/EffectDescriptor.h"
 #include "Effect/MaterialEffect.h"
+#include "Effect/MultiPassEffectDescriptor.h"
 #include "Layers/AbstractRenderLayer.h"
 #include "Material/Material.h"
 #include "RenderTree.h"
@@ -59,8 +60,76 @@ bool RenderCommand::operator <(const RenderCommand& other) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+static RenderCommand *AcquireRenderCommandForOnePass_(
+    EffectCompiler *effectCompiler,
+    AbstractRenderLayer *baseRenderLayer, 
+    const Material *material,
+    const EffectDescriptor *effectDescriptor,
+    const Graphics::IndexBuffer *indices,
+    const Graphics::VertexBuffer *vertices,
+    Graphics::PrimitiveType primitiveType,
+    size_t baseVertex,
+    size_t startIndex,
+    size_t primitiveCount ) {
+    Assert(effectDescriptor);
+
+    const Graphics::VertexDeclaration *vertexDeclaration = vertices->VertexDeclaration();
+
+    const PMaterialEffect materialEffect = effectCompiler->CreateMaterialEffect(effectDescriptor, vertexDeclaration, material);
+
+    RenderCommand *const pcommand = new RenderCommand {
+        nullptr, // will be bet set by render batch
+        materialEffect,
+        indices, vertices,
+        checked_cast<u32>(baseVertex),
+        checked_cast<u32>(startIndex),
+        checked_cast<u32>(primitiveCount),
+        u32(primitiveType),
+        false /* not ready */,
+        nullptr /* next command */ };
+
+    // manually ref counting since this is a pod
+    AddRef(pcommand->MaterialEffect);
+    AddRef(pcommand->Indices);
+    AddRef(pcommand->Vertices);
+
+    AbstractRenderLayer *const renderLayer = baseRenderLayer->NextLayer(effectDescriptor->RenderLayerOffset());
+    AssertRelease(renderLayer);
+
+    RenderBatch *const renderBatch = renderLayer->RenderBatchIFP();
+    AssertRelease(renderBatch);
+
+    renderBatch->Add(pcommand);
+
+    return pcommand;
+}
+//----------------------------------------------------------------------------
+static void ReleaseRenderCommandForOnePass_(
+    const RenderCommand *pcommand,
+    Graphics::IDeviceAPIEncapsulator *device ) {
+    Assert(pcommand->Batch);
+
+    if (pcommand->Ready) {
+        pcommand->MaterialEffect->Destroy(device);
+        pcommand->Ready = false;
+    }
+
+    pcommand->Batch->Remove(pcommand);
+
+    // manually ref counting since this is a pod
+    RemoveRef(pcommand->MaterialEffect);
+    RemoveRef(pcommand->Indices);
+    RemoveRef(pcommand->Vertices);
+}
+//----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 bool AcquireRenderCommand(
-    UniquePtr<const RenderCommand>& pcommand,
+    UniquePtr<const RenderCommand>& pOutCommand,
     RenderTree *renderTree,
     const char *renderLayerName,
     const Material *material,
@@ -71,7 +140,7 @@ bool AcquireRenderCommand(
     size_t startIndex,
     size_t primitiveCount
     ) {
-    Assert(!pcommand); // client must control lifetime
+    Assert(!pOutCommand); // client must control lifetime
     Assert(renderTree);
     Assert(renderLayerName);
     Assert(material);
@@ -98,41 +167,47 @@ bool AcquireRenderCommand(
     if (!renderLayer->Enabled())
         return false;
 
-    RenderBatch *renderBatch = nullptr;
-    if (!(renderBatch = renderLayer->RenderBatchIFP()) ) {
-        AssertNotImplemented();
-        return false;
-    }
-
     const Scene *scene = renderTree->Scene();
     const MaterialDatabase *materialDatabase = scene->MaterialDatabase();
 
-    PEffectDescriptor effectDescriptor;
-    if (!materialDatabase->TryGetEffect(material->Name(), effectDescriptor)) {
+    PCEffectPasses effectPasses;
+    if (!materialDatabase->TryGetEffect(material->Name(), effectPasses)) {
         AssertNotImplemented();
         return false;
     }
+    Assert(effectPasses);
 
-    const PMaterialEffect materialEffect = renderTree->EffectCompiler()->CreateMaterialEffect(
-        effectDescriptor, vertices->VertexDeclaration(), material);
+    const EffectDescriptor *effectDescriptors[MultiPassEffectDescriptor::MaxPassCount];
+    const size_t effectDescriptorsCount = effectPasses->FillEffectPasses(effectDescriptors);
+    if (0 == effectDescriptorsCount) {
+        AssertNotReached();
+        return false;
+    }
 
-    pcommand.reset(new RenderCommand {
-        nullptr, // will be bet set by render batch
-        materialEffect,
-        indices, vertices,
-        checked_cast<u32>(baseVertex),
-        checked_cast<u32>(startIndex),
-        checked_cast<u32>(primitiveCount),
-        u32(primitiveType),
-        false /* not ready */});
+    RenderCommand *prevcmd = nullptr;
+    forrange(i, 0, effectDescriptorsCount) {
+        RenderCommand *const passcmd = AcquireRenderCommandForOnePass_(
+            renderTree->EffectCompiler(),
+            renderLayer,
+            material,
+            effectDescriptors[i],
+            indices,
+            vertices,
+            primitiveType,
+            baseVertex,
+            startIndex,
+            primitiveCount );
+        Assert(passcmd);
 
-    // manually ref counting since this is a pod
-    AddRef(pcommand->MaterialEffect);
-    AddRef(pcommand->Indices);
-    AddRef(pcommand->Vertices);
+        if (nullptr == prevcmd)
+            pOutCommand.reset(passcmd);
+        else
+            prevcmd->Next = passcmd;
 
-    renderBatch->Add(pcommand.get());
+        prevcmd = passcmd;
+    }
 
+    Assert(pOutCommand);
     return true;
 }
 //----------------------------------------------------------------------------
@@ -140,22 +215,18 @@ void ReleaseRenderCommand(
     UniquePtr<const RenderCommand>& pcommand,
     Graphics::IDeviceAPIEncapsulator *device ) {
     Assert(pcommand);
-    Assert(pcommand->Batch);
     Assert(1 == pcommand->MaterialEffect->RefCount());
     Assert(device);
 
-    if (pcommand->Ready) {
-        pcommand->MaterialEffect->Destroy(device);
-        pcommand->Ready = false;
+    const RenderCommand *nextcmd = pcommand->Next;
+    while (nextcmd) {
+        const RenderCommand *nextnextcmd = nextcmd->Next;
+        ReleaseRenderCommandForOnePass_(nextcmd, device);
+        delete nextcmd;
+        nextcmd = nextnextcmd;
     }
 
-    pcommand->Batch->Remove(pcommand.get());
-
-    // manually ref counting since this is a pod
-    RemoveRef(pcommand->MaterialEffect);
-    RemoveRef(pcommand->Indices);
-    RemoveRef(pcommand->Vertices);
-
+    ReleaseRenderCommandForOnePass_(pcommand.get(), device);
     pcommand.reset(nullptr);
 }
 //----------------------------------------------------------------------------

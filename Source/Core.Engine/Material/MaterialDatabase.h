@@ -2,6 +2,8 @@
 
 #include "Core.Engine/Engine.h"
 
+#include "Core.Engine/Effect/IEffectPasses.h"
+
 #include "Core/Container/HashMap.h"
 #include "Core/Meta/ThreadResource.h"
 
@@ -17,7 +19,6 @@ namespace Engine {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(AbstractMaterialParameter);
-FWD_REFPTR(EffectDescriptor);
 //----------------------------------------------------------------------------
 class MaterialDatabase : public Meta::ThreadResource {
 public:
@@ -35,10 +36,10 @@ public:
     void UnbindTexture(const Graphics::BindName& name, const Filename& path);
     bool TryGetTexture(const Graphics::BindName& name, Filename *path) const;
 
-    void BindEffect(const Graphics::BindName& name, EffectDescriptor *effect, bool allowOverride = false);
-    void UnbindEffect(const Graphics::BindName& name, const EffectDescriptor *effect);
-    bool TryGetEffect(const Graphics::BindName& name, EffectDescriptor **effect) const;
-    bool TryGetEffect(const Graphics::BindName& name, PEffectDescriptor& effect) const;
+    void BindEffect(const Graphics::BindName& name, const IEffectPasses *effect, bool allowOverride = false);
+    void UnbindEffect(const Graphics::BindName& name, const IEffectPasses *effect);
+    bool TryGetEffect(const Graphics::BindName& name, const IEffectPasses **effect) const;
+    bool TryGetEffect(const Graphics::BindName& name, PCEffectPasses& effect) const;
 
     void Clear();
 
@@ -47,7 +48,7 @@ private:
 
     HASHMAP(Material, Graphics::BindName, PAbstractMaterialParameter) _parameters;
     HASHMAP(Material, Graphics::BindName, Filename) _textures;
-    HASHMAP(Material, Graphics::BindName, PEffectDescriptor) _effects;
+    HASHMAP(Material, Graphics::BindName, PCEffectPasses) _effects;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
