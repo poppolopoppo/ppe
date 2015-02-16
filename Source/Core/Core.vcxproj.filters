@@ -646,6 +646,9 @@
     <CustomBuild Include="Meta\Delete.h">
       <Filter>Meta</Filter>
     </CustomBuild>
+    <CustomBuild Include="Meta\ForRange.h">
+      <Filter>Meta</Filter>
+    </CustomBuild>
     <CustomBuild Include="Meta\Guid.cpp">
       <Filter>Meta</Filter>
     </CustomBuild>

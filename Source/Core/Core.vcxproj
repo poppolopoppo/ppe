@@ -254,6 +254,7 @@
     <CustomBuild Include="Meta\Callback.h" />
     <CustomBuild Include="Meta\Cast.h" />
     <CustomBuild Include="Meta\Delete.h" />
+    <CustomBuild Include="Meta\ForRange.h" />
     <CustomBuild Include="Meta\Guid.cpp" />
     <CustomBuild Include="Meta\Guid.h" />
     <CustomBuild Include="Meta\NumericLimits.cpp" />

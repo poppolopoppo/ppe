@@ -180,6 +180,7 @@ namespace Core
 #include "Core/Meta/Assert.h"
 #include "Core/Meta/Cast.h"
 #include "Core/Meta/Delete.h"
+#include "Core/Meta/ForRange.h"
 #include "Core/Meta/NumericLimits.h"
 #include "Core/Meta/OneTimeInitialize.h"
 #include "Core/Meta/ThreadResource.h"
