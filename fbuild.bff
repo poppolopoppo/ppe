@@ -9,6 +9,7 @@
 #include "Source/Core.Serialize/fbuild.bff"
 #include "Source/Core.Graphics/fbuild.bff"
 #include "Source/Core.Engine/fbuild.bff"
+#include "Source/Core.Logic/fbuild.bff"
 #include "Source/Core.Application/fbuild.bff"
 #include "Source/Core.Test/fbuild.bff"
 
@@ -30,6 +31,7 @@ ForEach( .Config in .Configs )
       'Core.Serialize-$Platform$-$Config$',
       'Core.Graphics-$Platform$-$Config$',
       'Core.Engine-$Platform$-$Config$',
+      'Core.Logic-$Platform$-$Config$',
       'Core.Application-$Platform$-$Config$'
     }
   }
@@ -72,6 +74,7 @@ Alias( 'proj' )
                   'Core.Serialize-proj',
                   'Core.Graphics-proj',
                   'Core.Engine-proj',
+                  'Core.Logic-proj',
                   'Core.Application-proj',
                   'Core.Test-proj',
                 }

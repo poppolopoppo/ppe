@@ -1,0 +1,12 @@
+
+#once
+
+// Core
+//------------------------------------------------------------------------------
+{
+    .ProjectName        = 'Core.Logic'
+    .ProjectPath        = '$SourceBase$\Core.Logic'
+    .PCHName            = 'stdafx'
+
+    #include "../../Build/Cfg/library.bff"
+}

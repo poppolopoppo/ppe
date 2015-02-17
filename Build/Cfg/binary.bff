@@ -59,6 +59,7 @@ ForEach( .Config in .Configs_Windows_MSVC )
                                         'Core.Serialize-Lib-$Platform$-$Config$',
                                         'Core.Graphics-Lib-$Platform$-$Config$',
                                         'Core.Engine-Lib-$Platform$-$Config$',
+                                        'Core.Logic-Lib-$Platform$-$Config$',
                                         'Core.Application-Lib-$Platform$-$Config$',
                                         '$ProjectName$-Res',
                                         '$ProjectName$-Lib-$Platform$-$Config$' }
