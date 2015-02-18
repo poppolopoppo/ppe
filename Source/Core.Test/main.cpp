@@ -7,9 +7,10 @@
 #include "Core/Memory/UniquePtr.h"
 
 #include "Core.Application/ApplicationWindow.h"
-#include "Core.Serialize/Serialize.h"
 #include "Core.Engine/Engine.h"
 #include "Core.Graphics/Graphics.h"
+#include "Core.Logic/Logic.h"
+#include "Core.Serialize/Serialize.h"
 
 #include <iostream>
 
@@ -83,6 +84,7 @@ static int Bootstrap(void *applicationHandle, int nShowCmd, int argc, const wcha
     Serialize::SerializeStartup startupSerialize;
     Graphics::GraphicsStartup startupGraphics;
     Engine::EngineStartup startupEngine;
+    Logic::LogicStartup startupLogic;
 
 #if defined(OS_WINDOWS) && CORE_RESOURCES
     CurrentProcess::Instance().SetAppIcon(IDI_WINDOW_ICON);
