@@ -17,8 +17,8 @@ class IDeviceAPIEncapsulator;
 }
 
 namespace Engine {
-struct RenderCommand;
-typedef UniquePtr<const RenderCommand> URenderCommand;
+struct RenderCommandRegistration;
+typedef UniquePtr<const RenderCommandRegistration> URenderCommand;
 class RenderTree;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

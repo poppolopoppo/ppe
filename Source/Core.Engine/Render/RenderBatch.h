@@ -5,8 +5,6 @@
 #include "Core/Container/Vector.h"
 #include "Core/Memory/RefPtr.h"
 
-#include "Core.Engine/Render/RenderCommand.h"
-
 namespace Core {
 namespace Graphics {
 class IDeviceAPIEncapsulator;
@@ -14,6 +12,9 @@ class IDeviceAPIContextEncapsulator;
 }
 
 namespace Engine {
+struct RenderCommandCriteria;
+struct RenderCommandParams;
+struct RenderCommandRegistration;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -27,8 +28,10 @@ public:
     RenderBatch();
     ~RenderBatch();
 
-    void Add(const RenderCommand *pcommand);
-    void Remove(const RenderCommand *pcommand);
+    void Add(   RenderCommandRegistration *registration, 
+                const RenderCommandCriteria& criteria, 
+                const RenderCommandParams& params );
+    RenderCommandCriteria Remove(const RenderCommandRegistration *registration);
 
     void Prepare(   Graphics::IDeviceAPIEncapsulator *device,
                     MaterialDatabase *materialDatabase,
@@ -38,7 +41,12 @@ public:
     void Destroy(Graphics::IDeviceAPIEncapsulator *device);
 
 private:
-    VECTOR_THREAD_LOCAL(Shader, const RenderCommand *) _commands;
+    VECTOR_THREAD_LOCAL(Shader, RenderCommandCriteria) _criterias;
+    VECTOR_THREAD_LOCAL(Shader, RenderCommandParams) _params;
+
+    bool _needSort;
+
+    VECTOR_THREAD_LOCAL(Shader, const RenderCommandRegistration *) _registrations;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

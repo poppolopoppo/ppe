@@ -14,8 +14,8 @@ FWD_REFPTR(Model);
 FWD_REFPTR(ModelMesh);
 FWD_REFPTR(ModelMeshSubPart);
 //----------------------------------------------------------------------------
-struct RenderCommand;
-typedef UniquePtr<const RenderCommand> URenderCommand;
+struct RenderCommandRegistration;
+typedef UniquePtr<const RenderCommandRegistration> URenderCommand;
 //----------------------------------------------------------------------------
 struct ModelRenderCommand;
 typedef UniquePtr<const ModelRenderCommand> UModelRenderCommand;

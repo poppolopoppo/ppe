@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "RenderBatch.h"
+#include "RenderCommand.h"
 
 #include <algorithm>
 
@@ -18,51 +18,19 @@
 #include "Effect/MultiPassEffectDescriptor.h"
 #include "Layers/AbstractRenderLayer.h"
 #include "Material/Material.h"
-#include "RenderTree.h"
 #include "Scene/Scene.h"
+
+#include "RenderBatch.h"
+#include "RenderTree.h"
 
 namespace Core {
 namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(RenderCommand, );
-//----------------------------------------------------------------------------
-bool RenderCommand::operator ==(const RenderCommand& other) const {
-    return  BaseVertex == other.BaseVertex &&
-            StartIndex == other.StartIndex &&
-            PrimitiveCount == other.PrimitiveCount &&
-            PrimitiveType == other.PrimitiveType &&
-            Vertices == other.Vertices &&
-            Indices == other.Indices &&
-            MaterialEffect == other.MaterialEffect;
-}
-//----------------------------------------------------------------------------
-bool RenderCommand::operator <(const RenderCommand& other) const {
-#define RENDERCOMMAND_FIELDSORT(_GET) \
-    if ((_GET) < (other._GET)) \
-        return true; \
-    else if ((_GET) > (other._GET)) \
-        return false
-
-    RENDERCOMMAND_FIELDSORT(MaterialEffect->Effect());
-    RENDERCOMMAND_FIELDSORT(Vertices);
-    RENDERCOMMAND_FIELDSORT(Indices);
-    RENDERCOMMAND_FIELDSORT(MaterialEffect);
-    RENDERCOMMAND_FIELDSORT(BaseVertex);
-    RENDERCOMMAND_FIELDSORT(StartIndex);
-    RENDERCOMMAND_FIELDSORT(PrimitiveCount);
-
-    return size_t(PrimitiveType) < size_t(other.PrimitiveType);
-
-#undef RENDERCOMMAND_FIELDSORT
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static RenderCommand *AcquireRenderCommandForOnePass_(
+static RenderCommandRegistration *AcquireRenderCommandForOnePass_(
     EffectCompiler *effectCompiler,
     AbstractRenderLayer *baseRenderLayer, 
     const Material *material,
@@ -79,21 +47,26 @@ static RenderCommand *AcquireRenderCommandForOnePass_(
 
     const PMaterialEffect materialEffect = effectCompiler->CreateMaterialEffect(effectDescriptor, vertexDeclaration, material);
 
-    RenderCommand *const pcommand = new RenderCommand {
-        nullptr, // will be bet set by render batch
-        materialEffect,
-        indices, vertices,
-        checked_cast<u32>(baseVertex),
-        checked_cast<u32>(startIndex),
-        checked_cast<u32>(primitiveCount),
-        u32(primitiveType),
-        false /* not ready */,
-        nullptr /* next command */ };
+    AddRef(materialEffect);
+    AddRef(indices);
+    AddRef(vertices);
 
-    // manually ref counting since this is a pod
-    AddRef(pcommand->MaterialEffect);
-    AddRef(pcommand->Indices);
-    AddRef(pcommand->Vertices);
+    RenderCommandCriteria criteria;
+    criteria.SetMaterialEffect(materialEffect);
+    criteria.Indices = indices;
+    criteria.Vertices = vertices;
+    criteria.Effect = materialEffect->Effect();
+    Assert(!criteria.Ready());
+
+    RenderCommandParams params;
+    params.BaseVertex = checked_cast<u32>(baseVertex);
+    params.StartIndex = checked_cast<u32>(startIndex);
+    params.SetPrimitiveCount(checked_cast<u32>(primitiveCount));
+    params.SetPrimitiveType(primitiveType);
+
+    RenderCommandRegistration *const pcommand = new RenderCommandRegistration {
+        nullptr,    /* will be bet set by render batch */
+        nullptr     /* next command */ };
 
     AbstractRenderLayer *const renderLayer = baseRenderLayer->NextLayer(effectDescriptor->RenderLayerOffset());
     AssertRelease(renderLayer);
@@ -101,35 +74,35 @@ static RenderCommand *AcquireRenderCommandForOnePass_(
     RenderBatch *const renderBatch = renderLayer->RenderBatchIFP();
     AssertRelease(renderBatch);
 
-    renderBatch->Add(pcommand);
+    renderBatch->Add(pcommand, criteria, params);
 
     return pcommand;
 }
 //----------------------------------------------------------------------------
 static void ReleaseRenderCommandForOnePass_(
-    const RenderCommand *pcommand,
+    const RenderCommandRegistration *pcommand,
     Graphics::IDeviceAPIEncapsulator *device ) {
     Assert(pcommand->Batch);
 
-    if (pcommand->Ready) {
-        pcommand->MaterialEffect->Destroy(device);
-        pcommand->Ready = false;
-    }
+    const RenderCommandCriteria criteria = pcommand->Batch->Remove(pcommand);
+    Assert(1 == criteria.MaterialEffect()->RefCount());
 
-    pcommand->Batch->Remove(pcommand);
+    if (criteria.Ready())
+        criteria.MaterialEffect()->Destroy(device);
 
-    // manually ref counting since this is a pod
-    RemoveRef(pcommand->MaterialEffect);
-    RemoveRef(pcommand->Indices);
-    RemoveRef(pcommand->Vertices);
+    RemoveRef(criteria.Vertices);
+    RemoveRef(criteria.Indices);
+    RemoveRef(criteria.MaterialEffect());
 }
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+SINGLETON_POOL_ALLOCATED_DEF(RenderCommandRegistration, );
+//----------------------------------------------------------------------------
 bool AcquireRenderCommand(
-    UniquePtr<const RenderCommand>& pOutCommand,
+    URenderCommand& pOutCommand,
     RenderTree *renderTree,
     const char *renderLayerName,
     const Material *material,
@@ -138,8 +111,7 @@ bool AcquireRenderCommand(
     Graphics::PrimitiveType primitiveType,
     size_t baseVertex,
     size_t startIndex,
-    size_t primitiveCount
-    ) {
+    size_t primitiveCount ) {
     Assert(!pOutCommand); // client must control lifetime
     Assert(renderTree);
     Assert(renderLayerName);
@@ -184,9 +156,9 @@ bool AcquireRenderCommand(
         return false;
     }
 
-    RenderCommand *prevcmd = nullptr;
+    RenderCommandRegistration *prevcmd = nullptr;
     forrange(i, 0, effectDescriptorsCount) {
-        RenderCommand *const passcmd = AcquireRenderCommandForOnePass_(
+        RenderCommandRegistration *const passcmd = AcquireRenderCommandForOnePass_(
             renderTree->EffectCompiler(),
             renderLayer,
             material,
@@ -211,16 +183,14 @@ bool AcquireRenderCommand(
     return true;
 }
 //----------------------------------------------------------------------------
-void ReleaseRenderCommand(
-    UniquePtr<const RenderCommand>& pcommand,
-    Graphics::IDeviceAPIEncapsulator *device ) {
+void ReleaseRenderCommand(  URenderCommand& pcommand,
+                            Graphics::IDeviceAPIEncapsulator *device ) {
     Assert(pcommand);
-    Assert(1 == pcommand->MaterialEffect->RefCount());
     Assert(device);
 
-    const RenderCommand *nextcmd = pcommand->Next;
+    const RenderCommandRegistration *nextcmd = pcommand->Next;
     while (nextcmd) {
-        const RenderCommand *nextnextcmd = nextcmd->Next;
+        const RenderCommandRegistration *nextnextcmd = nextcmd->Next;
         ReleaseRenderCommandForOnePass_(nextcmd, device);
         delete nextcmd;
         nextcmd = nextnextcmd;
