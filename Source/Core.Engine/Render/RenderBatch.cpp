@@ -31,16 +31,20 @@ namespace Engine {
 namespace {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-static void Reindex(Vector<T, _Allocator>& v, const MemoryView<const u32>& indices) {
+static void Reindex_(Vector<T, _Allocator>& v, const MemoryView<const u32>& indices) {
     Assert(v.size() == indices.size());
     using std::swap;
 
+    const size_t count = indices.size();
     T *const pitem = &v[0];
     const u32 *const pindex = indices.Pointer();
 
-    forrange(i, 0, indices.size())
+    STACKLOCAL_POD_ARRAY(T, tmp, count);
+    memcpy(tmp.Pointer(), pitem, tmp.SizeInBytes());
+
+    forrange(i, 0, count)
         if (i != pindex[i])
-            swap(pitem[i], pitem[pindex[i]]);
+            pitem[i] = tmp[pindex[i]];
 }
 //----------------------------------------------------------------------------
 static void SortBatch_(
@@ -62,9 +66,9 @@ static void SortBatch_(
         return criterias[lhs] < criterias[rhs];
     });
 
-    Reindex(criterias, reindexation.Cast<const u32>());
-    Reindex(params, reindexation.Cast<const u32>());
-    Reindex(registrations, reindexation.Cast<const u32>());
+    Reindex_(criterias, reindexation.Cast<const u32>());
+    Reindex_(params, reindexation.Cast<const u32>());
+    Reindex_(registrations, reindexation.Cast<const u32>());
 }
 //----------------------------------------------------------------------------
 } //!namespace
