@@ -124,12 +124,13 @@ Compiler( 'Compiler-x86Clang' )
     .CompilerFinalOptimizations     = '$CompilerReleaseOptimizations$'
 
     .LibrarianDebugOptimizations    = ''
-    .LibrarianReleaseOptimizations  = ' /LTCG'
-    .LibrarianFinalOptimizations    = '$LibrarianReleaseOptimizations$'
+    .LibrarianReleaseOptimizations  = ''
+    .LibrarianFinalOptimizations    = ' /LTCG $LibrarianReleaseOptimizations$'
 
     .LinkerDebugOptimizations       = ' /DEBUG'
-    .LinkerReleaseOptimizations     = ' /DEBUG /LTCG /OPT:REF,ICF'      // std ICF iterations count in release (2 according to http://msdn.microsoft.com/en-us/library/bxwfs976.aspx)
-    .LinkerFinalOptimizations       = ' /DEBUG /LTCG /OPT:REF,ICF=4'    // more ICF iterations count in final to merge more duplicate code (measured, truly effective)
+    .LinkerReleaseOptimizations     = ' /DEBUG /INCREMENTAL /verbose:incr'  // incremental linker for relase
+    .LinkerFinalOptimizations       = ' /DEBUG /LTCG /OPT:REF,ICF=4'        // std ICF iterations count in release (2 according to http://msdn.microsoft.com/en-us/library/bxwfs976.aspx)
+                                                                            // more ICF iterations count in final to merge more duplicate code (measured, truly effective)
 
     .LinkerWindowsLibs              = ' /SUBSYSTEM:WINDOWS'
                                     + ' kernel32.lib'
