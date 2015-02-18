@@ -33,13 +33,17 @@ template <typename T, typename _Allocator>
 bool FindElementIndexIFP(size_t *pIndex, Vector<T, _Allocator>& v, const T& elt);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Insert_AssertUnique(Vector<T, _Allocator>& v, const T& elt);
+void Add_AssertUnique(Vector<T, _Allocator>& v, const T& elt);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Insert_AssertUnique(Vector<T, _Allocator>& v, T&& elt);
+void Add_AssertUnique(Vector<T, _Allocator>& v, T&& elt);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void Remove_AssertExists(Vector<T, _Allocator>& v, const T& elt);
+//----------------------------------------------------------------------------
+// Fast erase : swap last elem with elem to erase and pop_back() the vector
+template <typename T, typename _Allocator>
+void Remove_DontPreserveOrder(Vector<T, _Allocator>& v, const T& elt);
 //----------------------------------------------------------------------------
 // Fast erase : swap last elem with elem to erase and pop_back() the vector
 template <typename T, typename _Allocator>

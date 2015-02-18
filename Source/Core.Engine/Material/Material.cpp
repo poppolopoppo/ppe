@@ -37,7 +37,7 @@ Material::~Material() {}
 void Material::AddTag(const Graphics::BindName& name) {
     Assert(!name.empty());
 
-    Insert_AssertUnique(_tags, name);
+    Add_AssertUnique(_tags, name);
 }
 //----------------------------------------------------------------------------
 void Material::AddTexture(const Graphics::BindName& name, const Filename& filename) {

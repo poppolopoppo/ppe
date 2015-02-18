@@ -29,13 +29,13 @@ bool FindElementIndexIFP(size_t *pIndex, Vector<T, _Allocator>& v, const T& elt)
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Insert_AssertUnique(Vector<T, _Allocator>& v, const T& elt) {
+void Add_AssertUnique(Vector<T, _Allocator>& v, const T& elt) {
     Assert(!Contains(v, elt));
     v.emplace_back(elt);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Insert_AssertUnique(Vector<T, _Allocator>& v, T&& elt) {
+void Add_AssertUnique(Vector<T, _Allocator>& v, T&& elt) {
     Assert(!Contains(v, elt));
     v.emplace_back(std::move(elt));
 }
@@ -45,6 +45,14 @@ void Remove_AssertExists(Vector<T, _Allocator>& v, const T& elt) {
     auto it = std::find(v.begin(), v.end(), elt);
     Assert(it != v.end());
     v.erase(it);
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void Remove_DontPreserveOrder(Vector<T, _Allocator>& v, const T& elt) {
+    auto it = std::find(v.begin(), v.end(), elt);
+    Assert(it != v.end());
+    if (v.size() > 1) swap(*it, v.back());
+    v.pop_back();
 }
 //----------------------------------------------------------------------------
 // Fast erase : swap last elem with elem to erase and pop_back() the vector

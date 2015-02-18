@@ -198,7 +198,7 @@ void BasicWindow::RegisterMessageHandler(IWindowMessageHandler *handler) {
     Assert(handler);
     Assert(nullptr == handler->Window());
 
-    Insert_AssertUnique(_handlers, handler);
+    Add_AssertUnique(_handlers, handler);
 
     handler->SetWindow(this);
     handler->RegisterMessageDelegates(this);
