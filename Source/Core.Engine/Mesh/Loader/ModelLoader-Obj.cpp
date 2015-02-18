@@ -591,7 +591,7 @@ static bool LoadModel_Obj_(PModel& pModel, const Filename& filename, const Model
                         String name(pGroupMB->Name);
                         const size_t bone = pGroupMB->Bone;
                         pGroupMB = builder.OpenGroup(std::move(name));
-                        pGroupMB->Bone = bone;
+                        pGroupMB->Bone = checked_cast<u32>(bone);
                     }
                     Assert(UINT32_MAX == pGroupMB->Material);
                     pGroupMB->Material = selectedMaterial;
