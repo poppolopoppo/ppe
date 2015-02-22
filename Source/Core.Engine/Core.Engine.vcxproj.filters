@@ -100,6 +100,12 @@
     <CustomBuild Include="Input\InputState.h">
       <Filter>Input</Filter>
     </CustomBuild>
+    <CustomBuild Include="Lighting\DirectionalLight.cpp">
+      <Filter>Lighting</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Lighting\DirectionalLight.h">
+      <Filter>Lighting</Filter>
+    </CustomBuild>
     <CustomBuild Include="Lighting\LightingEnvironment.cpp">
       <Filter>Lighting</Filter>
     </CustomBuild>

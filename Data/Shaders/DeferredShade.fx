@@ -27,6 +27,7 @@ cbuffer Application {
 cbuffer Light {
     float3      uniSunDirection;
     float3      uniSRGB_uniSunColor;
+    float       uniSunIntensity;
 };
 
 struct PixelIn {
@@ -68,7 +69,7 @@ float4 pmain(PixelIn pixelIn) : SV_Target {
     Lighting::DirectionalLight l;
     l.Color = uniSRGB_uniSunColor;
     l.Direction = uniSunDirection;
-    l.Intensity = 1.5;
+    l.Intensity = uniSunIntensity;
 
     Lighting::Environment e;
     e.AmbientIntensity = 0.1;

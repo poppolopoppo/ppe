@@ -72,6 +72,8 @@
     <CustomBuild Include="Input\State\MouseInputHandler.h" />
     <CustomBuild Include="Input\InputState-inl.h" />
     <CustomBuild Include="Input\InputState.h" />
+    <CustomBuild Include="Lighting\DirectionalLight.cpp" />
+    <CustomBuild Include="Lighting\DirectionalLight.h" />
     <CustomBuild Include="Lighting\LightingEnvironment.cpp" />
     <CustomBuild Include="Lighting\LightingEnvironment.h" />
     <CustomBuild Include="Material\Parameters\AbstractMaterialParameter.cpp" />

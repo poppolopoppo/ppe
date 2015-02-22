@@ -2,7 +2,8 @@
 
 #include "Core.Engine/Engine.h"
 
-#include "Core/Maths/Geometry/ScalarVector.h"
+#include "Core.Engine/Lighting/DirectionalLight.h"
+
 #include "Core/Memory/RefPtr.h"
 
 namespace Core {
@@ -16,26 +17,21 @@ public:
     LightingEnvironment();
     ~LightingEnvironment();
 
-    const float3& SunColor() const { return _sunColor; }
-    void SetSunColor(const float3& value) { _sunColor = value; }
-
-    const float3& SunDirection() const { return _sunDirection; }
-    void SetSunDirection(const float3& value) { _sunDirection = value; }
-
     float Exposure() const { return _exposure; }
     void SetExposure(float value) { _exposure = value; }
 
     float WhitePoint() const { return _whitePoint; }
     void SetWhitePoint(float value) { _whitePoint = value; }
 
+    DirectionalLight& Sun() { return _sun; }
+    const DirectionalLight& Sun() const { return _sun; }
+
     void Update(const World *world);
 
 private:
-    float3 _sunColor;
-    float3 _sunDirection;
-
     float _exposure;
     float _whitePoint;
+    DirectionalLight _sun;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -28,6 +28,14 @@ protected:
     bool Memoize_ReturnIfChanged_(float3 *cached, const MaterialContext& context) override;
 };
 //----------------------------------------------------------------------------
+class MaterialParameterLighting_SunIntensity : public AbstractMaterialParameterMemoizer<float> {
+public:
+    MaterialParameterLighting_SunIntensity() : AbstractMaterialParameterMemoizer(MaterialVariability::World) {}
+    virtual ~MaterialParameterLighting_SunIntensity() {}
+protected:
+    bool Memoize_ReturnIfChanged_(float *cached, const MaterialContext& context) override;
+};
+//----------------------------------------------------------------------------
 class MaterialParameterLighting_Exposure : public AbstractMaterialParameterMemoizer<float> {
 public:
     MaterialParameterLighting_Exposure() : AbstractMaterialParameterMemoizer(MaterialVariability::World) {}
