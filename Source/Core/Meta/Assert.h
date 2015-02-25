@@ -15,7 +15,7 @@
 #   error "there is someone messing with the project configuration"
 #endif
 
-#define STATIC_ASSERT(_Expr) static_assert((_Expr), #_Expr)
+#define STATIC_ASSERT(...) static_assert((__VA_ARGS__), #__VA_ARGS__)
 
 namespace Core {
 //----------------------------------------------------------------------------

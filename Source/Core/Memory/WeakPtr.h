@@ -24,7 +24,7 @@ class WeakPtrBase;
 class WeakAndRefCountable : public RefCountable, public Meta::ThreadResource {
 public:
     WeakAndRefCountable();
-    virtual ~WeakAndRefCountable();
+    ~WeakAndRefCountable();
 
     WeakAndRefCountable(WeakAndRefCountable&& );
     WeakAndRefCountable& operator =(WeakAndRefCountable&& );
@@ -45,15 +45,15 @@ public:
     ~WeakPtrBase();
 
 protected:
-    WeakPtrBase(const WeakAndRefCountable *ptr = nullptr);
+    WeakPtrBase(void **pptr);
 
-    const WeakAndRefCountable *get_() const;
-    void set_(const WeakAndRefCountable *ptr);
+    template <typename T>
+    void set_(T *ptr);
 
 private:
     friend class WeakAndRefCountable;
 
-    const WeakAndRefCountable *_ptr;
+    void **_pptr;
     WeakPtrBase *_next, *_prev;
 };
 //----------------------------------------------------------------------------
@@ -85,19 +85,22 @@ public:
     template <typename U>
     WeakPtr& operator =(WeakPtr<U>&& rvalue);
 
-    T* get() const { return reinterpret_cast<T *>(WeakPtrBase::get_()); }
+    T* get() const { THREADRESOURCE_CHECKACCESS_IFN(_ptr); return _ptr; }
     void reset(T* ptr = nullptr);
 
     template <typename U>
-    U *as() const { return checked_cast<U*>(WeakPtrBase::_ptr); }
+    U *as() const { return checked_cast<U*>(get()); }
 
-    T& operator *() const { T *const ptr = reinterpret_cast<T *>(WeakPtrBase::get_()); Assert(ptr); return *ptr; }
-    T* operator ->() const { T *const ptr = reinterpret_cast<T *>(WeakPtrBase::get_()); Assert(ptr); return ptr; }
+    T& operator *() const  { T *const ptr = get(); Assert(ptr); return *ptr; }
+    T* operator ->() const { T *const ptr = get(); Assert(ptr); return  ptr; }
 
-    operator T* () const { return reinterpret_cast<T *>(WeakPtrBase::get_()); }
+    operator T* () const { return get(); }
 
     template <typename U>
     void Swap(WeakPtr<U>& other);
+
+private:
+    T *_ptr;
 };
 //----------------------------------------------------------------------------
 template <typename T>
