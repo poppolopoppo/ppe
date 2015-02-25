@@ -478,6 +478,7 @@ void TextureCache::ReloadAllTextures() {
         bool KeepData   : 1;
         bool UseSRGB    : 1;
     };
+
     STACKLOCAL_POD_ARRAY(TextureQuery, queries, textureCount);
 
     size_t i = 0;
@@ -502,6 +503,7 @@ void TextureCache::ReloadAllTextures() {
         TextureEntry *const pentry = LoadTexture_ASync_(query.Filename, query.UseSRGB, query.KeepData);
         Assert(pentry);
         TextureEntry_InsertMRU_(&_lru, &_mru, pentry);
+        query.Filename.~Filename();
     }
 }
 //----------------------------------------------------------------------------
