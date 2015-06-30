@@ -41,6 +41,35 @@ float3 TangentSpaceNormal(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Packing tangent space in a quaternion
+// https://dl.dropboxusercontent.com/u/16861957/gdc2015_rendering_the_world_of_far_cry_4.pdf
+//----------------------------------------------------------------------------
+float4 TangentSpaceToQuaternion(float3 tangent, float3 binormal, float3 normal) {
+    float4 quaternion;
+    quaternion.x = normal.y - binormal.z;
+    quaternion.y = tangent.z - normal.x;
+    quaternion.z = binormal.x - tangent.y;
+    quaternion.w = 1.0 + tangent.x + binormal.y + normal.z;
+    return normalize(quaternion);
+}
+//----------------------------------------------------------------------------
+void QuaternionToTangentSpace(  float4 quaternion,
+                                out float3 tangent,
+                                out float3 binormal,
+                                out float3 normal ) {
+    tangent     =   float3( 1.0, 0.0, 0.0)
+                +   float3(-2.0, 2.0, 2.0) * quaternion.y * quaternion.yxw
+                +   float3(-2.0,-2.0, 2.0) * quaternion.z * quaternion.zwx;
+    binormal    =   float3( 0.0, 1.0, 0.0)
+                +   float3( 2.0,-2.0, 2.0) * quaternion.z * quaternion.wzy
+                +   float3( 2.0,-2.0,-2.0) * quaternion.x * quaternion.yxw;
+    normal      =   float3( 0.0, 0.0, 1.0)
+                +   float3( 2.0, 2.0,-2.0) * quaternion.x * quaternion.zwx
+                +   float3(-2.0, 2.0,-2.0) * quaternion.y * quaternion.wzy;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Lighting
 
 #endif //!_LIB_LIGHTING_TANGENTSPACE_FX_INCLUDED
