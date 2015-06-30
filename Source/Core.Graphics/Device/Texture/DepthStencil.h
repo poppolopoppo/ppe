@@ -41,11 +41,11 @@ inline void DepthStencil::Create(IDeviceAPIEncapsulator *device) {
 //----------------------------------------------------------------------------
 class DeviceAPIDependantDepthStencil : public Graphics::DeviceAPIDependantTexture2D {
 public:
-    DeviceAPIDependantDepthStencil(IDeviceAPIEncapsulator *device, DepthStencil *owner, const MemoryView<const u8>& optionalData);
+    DeviceAPIDependantDepthStencil(IDeviceAPIEncapsulator *device, const DepthStencil *owner, const MemoryView<const u8>& optionalData);
     virtual ~DeviceAPIDependantDepthStencil();
 
-    const DepthStencil *Owner() const {
-        return checked_cast<const DepthStencil *>(DeviceAPIDependantTexture::Owner());
+    const DepthStencil *TypedResource() const {
+        return checked_cast<const DepthStencil *>(Resource());
     }
 };
 //----------------------------------------------------------------------------

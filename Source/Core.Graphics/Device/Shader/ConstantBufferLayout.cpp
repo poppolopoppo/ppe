@@ -10,7 +10,7 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(ConstantBufferLayout, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Graphics, ConstantBufferLayout, );
 //----------------------------------------------------------------------------
 ConstantBufferLayout::ConstantBufferLayout(size_t sizeInBytes /* = 0 */)
 :   _data(0) {
@@ -79,13 +79,19 @@ size_t ConstantBufferLayout::HashValue() const {
     const size_t h0 = hash_value_seq(&_names[0], &_names[count]);
     const size_t h1 = hash_value_seq(&_fields[0], &_fields[count]);
 
-    return Core::hash_value(h0, h1);
+    return Core::hash_value(_data, h0, h1);
 }
 //----------------------------------------------------------------------------
 bool ConstantBufferLayout::Equals(const ConstantBufferLayout& other) const {
-    bool result = (other._data == _data);
+    if (this == &other)
+        return true;
+
+    if (other._data != _data)
+        return false;
 
     const size_t count = Count();
+
+    bool result = true;
     for (size_t i = 0; result && i < count; ++i) {
         result &= (other._names[i] == _names[i]);
         result &= (other._fields[i] == _fields[i]);

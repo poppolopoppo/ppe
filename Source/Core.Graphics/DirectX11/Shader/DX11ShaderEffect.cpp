@@ -3,10 +3,10 @@
 #include "DX11ShaderEffect.h"
 
 #include "DX11ShaderProgram.h"
-#include "DirectX11/DX11DeviceEncapsulator.h"
+#include "DirectX11/DX11DeviceAPIEncapsulator.h"
 #include "DirectX11/Geometry/DX11VertexDeclaration.h"
 
-#include "Device/DeviceAPIEncapsulator.h"
+#include "Device/DeviceAPI.h"
 #include "Device/DeviceEncapsulatorException.h"
 
 #include "Core/Allocator/PoolAllocator-impl.h"
@@ -14,14 +14,13 @@
 
 namespace Core {
 namespace Graphics {
-namespace DX11 {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 static HRESULT CreateInputLayout_(
     ::ID3D11Device *device,
     ::ID3DBlob *vertexShaderBlob,
-    const VertexDeclaration *vertexDeclaration,
+    const DX11VertexDeclaration *vertexDeclaration,
     ComPtr<ID3D11InputLayout>& inputLayout) {
     const MemoryView<const ::D3D11_INPUT_ELEMENT_DESC> layout = vertexDeclaration->Layout();
 
@@ -36,21 +35,21 @@ static HRESULT CreateInputLayout_(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ShaderEffect::ShaderEffect(IDeviceAPIEncapsulator *device, Graphics::ShaderEffect *owner)
+DX11ShaderEffect::DX11ShaderEffect(IDeviceAPIEncapsulator *device, ShaderEffect *owner)
 :   DeviceAPIDependantShaderEffect(device, owner) {
-    const DeviceWrapper *wrapper = DX11DeviceWrapper(device);
+    const DX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
 
-    const Graphics::PCShaderProgram& vertexProgram = owner->StageProgram(ShaderProgramType::Vertex);
+    const PCShaderProgram& vertexProgram = owner->StageProgram(ShaderProgramType::Vertex);
     if (vertexProgram) {
         Assert(vertexProgram->Available());
         Assert(owner->VertexDeclaration());
         Assert(owner->VertexDeclaration()->Available());
 
-        const DX11::VertexDeclaration *dx11VertexDeclaration =
-            checked_cast<DX11::VertexDeclaration *>(owner->VertexDeclaration()->DeviceAPIDependantDeclaration().get());
+        const DX11VertexDeclaration *dx11VertexDeclaration =
+            checked_cast<DX11VertexDeclaration *>(owner->VertexDeclaration()->DeviceAPIDependantDeclaration().get());
 
-        const DX11::ShaderProgram *dx11ShaderProgram =
-            checked_cast<DX11::ShaderProgram *>(vertexProgram->DeviceAPIDependantProgram().get());
+        const DX11ShaderProgram *dx11ShaderProgram =
+            checked_cast<DX11ShaderProgram *>(vertexProgram->DeviceAPIDependantProgram().get());
 
         DX11_THROW_IF_FAILED(device, owner, (
             CreateInputLayout_( wrapper->Device(),
@@ -73,12 +72,12 @@ ShaderEffect::ShaderEffect(IDeviceAPIEncapsulator *device, Graphics::ShaderEffec
         DX11SetDeviceResourceNameIFP(_vertexShader, vertexProgram);
     }
 
-    const Graphics::PCShaderProgram& domainProgram = owner->StageProgram(ShaderProgramType::Domain);
+    const PCShaderProgram& domainProgram = owner->StageProgram(ShaderProgramType::Domain);
     if (domainProgram) {
         Assert(domainProgram->Available());
 
-        const DX11::ShaderProgram *dx11ShaderProgram =
-            checked_cast<DX11::ShaderProgram *>(domainProgram->DeviceAPIDependantProgram().get());
+        const DX11ShaderProgram *dx11ShaderProgram =
+            checked_cast<DX11ShaderProgram *>(domainProgram->DeviceAPIDependantProgram().get());
 
         DX11_THROW_IF_FAILED(device, owner, (
             wrapper->Device()->CreateDomainShader(
@@ -91,12 +90,12 @@ ShaderEffect::ShaderEffect(IDeviceAPIEncapsulator *device, Graphics::ShaderEffec
         DX11SetDeviceResourceNameIFP(_domainShader, domainProgram);
     }
 
-    const Graphics::PCShaderProgram& hullProgram = owner->StageProgram(ShaderProgramType::Hull);
+    const PCShaderProgram& hullProgram = owner->StageProgram(ShaderProgramType::Hull);
     if (hullProgram) {
         Assert(hullProgram->Available());
 
-        const DX11::ShaderProgram *dx11ShaderProgram =
-            checked_cast<DX11::ShaderProgram *>(hullProgram->DeviceAPIDependantProgram().get());
+        const DX11ShaderProgram *dx11ShaderProgram =
+            checked_cast<DX11ShaderProgram *>(hullProgram->DeviceAPIDependantProgram().get());
 
         DX11_THROW_IF_FAILED(device, owner, (
             wrapper->Device()->CreateHullShader(
@@ -109,12 +108,12 @@ ShaderEffect::ShaderEffect(IDeviceAPIEncapsulator *device, Graphics::ShaderEffec
         DX11SetDeviceResourceNameIFP(_hullShader, hullProgram);
     }
 
-    const Graphics::PCShaderProgram& geometryProgram = owner->StageProgram(ShaderProgramType::Geometry);
+    const PCShaderProgram& geometryProgram = owner->StageProgram(ShaderProgramType::Geometry);
     if (geometryProgram) {
         Assert(geometryProgram->Available());
 
-        const DX11::ShaderProgram *dx11ShaderProgram =
-            checked_cast<DX11::ShaderProgram *>(geometryProgram->DeviceAPIDependantProgram().get());
+        const DX11ShaderProgram *dx11ShaderProgram =
+            checked_cast<DX11ShaderProgram *>(geometryProgram->DeviceAPIDependantProgram().get());
 
         DX11_THROW_IF_FAILED(device, owner, (
             wrapper->Device()->CreateGeometryShader(
@@ -127,12 +126,12 @@ ShaderEffect::ShaderEffect(IDeviceAPIEncapsulator *device, Graphics::ShaderEffec
         DX11SetDeviceResourceNameIFP(_geometryShader, geometryProgram);
     }
 
-    const Graphics::PCShaderProgram& pixelProgram = owner->StageProgram(ShaderProgramType::Pixel);
+    const PCShaderProgram& pixelProgram = owner->StageProgram(ShaderProgramType::Pixel);
     if (pixelProgram) {
         Assert(pixelProgram->Available());
 
-        const DX11::ShaderProgram *dx11ShaderProgram =
-            checked_cast<DX11::ShaderProgram *>(pixelProgram->DeviceAPIDependantProgram().get());
+        const DX11ShaderProgram *dx11ShaderProgram =
+            checked_cast<DX11ShaderProgram *>(pixelProgram->DeviceAPIDependantProgram().get());
 
         DX11_THROW_IF_FAILED(device, owner, (
             wrapper->Device()->CreatePixelShader(
@@ -145,12 +144,12 @@ ShaderEffect::ShaderEffect(IDeviceAPIEncapsulator *device, Graphics::ShaderEffec
         DX11SetDeviceResourceNameIFP(_pixelShader, pixelProgram);
     }
 
-    const Graphics::PCShaderProgram& computeProgram = owner->StageProgram(ShaderProgramType::Compute);
+    const PCShaderProgram& computeProgram = owner->StageProgram(ShaderProgramType::Compute);
     if (computeProgram) {
         Assert(computeProgram->Available());
 
-        const DX11::ShaderProgram *dx11ShaderProgram =
-            checked_cast<DX11::ShaderProgram *>(computeProgram->DeviceAPIDependantProgram().get());
+        const DX11ShaderProgram *dx11ShaderProgram =
+            checked_cast<DX11ShaderProgram *>(computeProgram->DeviceAPIDependantProgram().get());
 
         DX11_THROW_IF_FAILED(device, owner, (
             wrapper->Device()->CreateComputeShader(
@@ -164,7 +163,7 @@ ShaderEffect::ShaderEffect(IDeviceAPIEncapsulator *device, Graphics::ShaderEffec
     }
 }
 //----------------------------------------------------------------------------
-ShaderEffect::~ShaderEffect() {
+DX11ShaderEffect::~DX11ShaderEffect() {
     ReleaseComRef(_inputLayout);
     ReleaseComRef(_vertexShader);
     ReleaseComRef(_domainShader);
@@ -175,10 +174,9 @@ ShaderEffect::~ShaderEffect() {
     ReleaseComRef(_computeShader);
 }
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(ShaderEffect, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Graphics, DX11ShaderEffect, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace DX11
 } //!namespace Graphics
 } //!namespace Core

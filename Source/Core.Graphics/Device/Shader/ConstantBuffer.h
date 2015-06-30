@@ -18,7 +18,7 @@ FWD_REFPTR(DeviceAPIDependantConstantWriter);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(ConstantBuffer);
-class ConstantBuffer : public TypedDeviceResource<DeviceResourceType::Constants> {
+class ConstantBuffer : public DeviceResource {
 public:
     explicit ConstantBuffer(const ConstantBufferLayout *layout);
     virtual ~ConstantBuffer();
@@ -61,6 +61,8 @@ public:
         const ConstantBuffer *resource,
         const MemoryView<const void *>& fieldsData,
         const MemoryView<u8>& output) const = 0;
+
+    virtual size_t VideoMemorySizeInBytes() const override;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

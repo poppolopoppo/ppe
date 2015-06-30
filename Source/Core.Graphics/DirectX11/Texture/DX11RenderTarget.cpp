@@ -2,12 +2,12 @@
 
 #include "DX11RenderTarget.h"
 
-#include "DirectX11/DX11DeviceEncapsulator.h"
+#include "DirectX11/DX11DeviceAPIEncapsulator.h"
 
 #include "DX11SurfaceFormat.h"
 #include "DirectX11/DX11ResourceBuffer.h"
 
-#include "Device/DeviceAPIEncapsulator.h"
+#include "Device/DeviceAPI.h"
 #include "Device/DeviceEncapsulatorException.h"
 #include "Device/Texture/SurfaceFormat.h"
 
@@ -15,14 +15,13 @@
 
 namespace Core {
 namespace Graphics {
-namespace DX11 {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-RenderTarget::RenderTarget(IDeviceAPIEncapsulator *device, Graphics::RenderTarget *owner, const MemoryView<const u8>& optionalData)
+DX11RenderTarget::DX11RenderTarget(IDeviceAPIEncapsulator *device, RenderTarget *owner, const MemoryView<const u8>& optionalData)
 :   DeviceAPIDependantRenderTarget(device, owner, optionalData)
-,   DX11::Texture2DContent(device, owner, optionalData, static_cast<::D3D11_BIND_FLAG>(D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET)) {
-    const DeviceWrapper *wrapper = DX11DeviceWrapper(device);
+,   DX11Texture2DContent(device, owner, optionalData, static_cast<::D3D11_BIND_FLAG>(D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET)) {
+    const DX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
     {
         ::D3D11_RENDER_TARGET_VIEW_DESC rTDesc;
         ::SecureZeroMemory(&rTDesc, sizeof(rTDesc));
@@ -41,31 +40,41 @@ RenderTarget::RenderTarget(IDeviceAPIEncapsulator *device, Graphics::RenderTarge
     DX11SetDeviceResourceNameIFP(_renderTargetView, owner);
 }
 //----------------------------------------------------------------------------
-RenderTarget::RenderTarget(
-    IDeviceAPIEncapsulator *device, Graphics::RenderTarget *owner,
+DX11RenderTarget::DX11RenderTarget(
+    IDeviceAPIEncapsulator *device, RenderTarget *owner,
     ::ID3D11Texture2D *texture, ::ID3D11ShaderResourceView *shaderView, ::ID3D11RenderTargetView *renderTargetView)
 :   DeviceAPIDependantRenderTarget(device, owner, MemoryView<const u8>())
-,   DX11::Texture2DContent(texture, shaderView)
+,   DX11Texture2DContent(texture, shaderView)
 ,   _renderTargetView(renderTargetView) {
     Assert(_renderTargetView);
 }
 //----------------------------------------------------------------------------
-RenderTarget::~RenderTarget() {
+DX11RenderTarget::~DX11RenderTarget() {
     ReleaseComRef(_renderTargetView);
 }
 //----------------------------------------------------------------------------
-void RenderTarget::GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) {
-    DX11::Texture2DContent::GetContent(device, Owner(), offset, dst, stride, count);
+void DX11RenderTarget::GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) {
+    DX11Texture2DContent::GetContent(device, offset, dst, stride, count, Mode(), Usage());
 }
 //----------------------------------------------------------------------------
-void RenderTarget::SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) {
-    DX11::Texture2DContent::SetContent(device, Owner(), offset, src, stride, count);
+void DX11RenderTarget::SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) {
+    DX11Texture2DContent::SetContent(device, offset, src, stride, count, Mode(), Usage());
 }
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(RenderTarget, );
+void DX11RenderTarget::CopyFrom(IDeviceAPIEncapsulator *device, const DeviceAPIDependantTexture2D *psource) {
+    DX11Texture2DContent::CopyFrom(device, psource);
+}
+//----------------------------------------------------------------------------
+void DX11RenderTarget::CopySubPart(
+    IDeviceAPIEncapsulator *device,
+    size_t dstLevel, const uint2& dstPos,
+    const DeviceAPIDependantTexture2D *psource, size_t srcLevel, const AABB2u& srcBox ) {
+    DX11Texture2DContent::CopySubPart(device, this, dstLevel, dstPos, psource, srcLevel, srcBox);
+}
+//----------------------------------------------------------------------------
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Graphics, DX11RenderTarget, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace DX11
 } //!namespace Graphics
 } //!namespace Core

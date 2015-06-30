@@ -14,7 +14,7 @@ class IDeviceAPIEncapsulator;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(IndexBuffer);
-class IndexBuffer : public TypedDeviceResource<DeviceResourceType::Indices> {
+class IndexBuffer : public DeviceResource {
 public:
     IndexBuffer(Graphics::IndexElementSize indexElementSize, size_t indexCount, BufferMode mode, BufferUsage usage);
     virtual ~IndexBuffer();

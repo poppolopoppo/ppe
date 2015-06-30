@@ -3,6 +3,7 @@
 #include "DeviceResourceBuffer.h"
 
 #include "DeviceEncapsulator.h"
+#include "DeviceResource.h"
 
 #include "Core/Memory/MemoryView.h"
 
@@ -52,8 +53,7 @@ void DeviceResourceBuffer::Resize(size_t count) {
     _count = checked_cast<u32>(count);
 }
 //----------------------------------------------------------------------------
-void DeviceResourceBuffer::Create(IDeviceAPIEncapsulator *device, const DeviceResource *resource, DeviceAPIDependantResourceBuffer *buffer) {
-    Assert(device);
+void DeviceResourceBuffer::Create(IDeviceAPIEncapsulator *device, const DeviceResource * /* resource */, DeviceAPIDependantResourceBuffer *buffer) {
     Assert(buffer);
     Assert(!_deviceAPIDependantBuffer);
     Assert(buffer->MatchDevice(device));
@@ -61,8 +61,7 @@ void DeviceResourceBuffer::Create(IDeviceAPIEncapsulator *device, const DeviceRe
     _deviceAPIDependantBuffer = buffer;
 }
 //----------------------------------------------------------------------------
-PDeviceAPIDependantResourceBuffer DeviceResourceBuffer::Destroy(IDeviceAPIEncapsulator *device, const DeviceResource *resource) {
-    Assert(device);
+PDeviceAPIDependantResourceBuffer DeviceResourceBuffer::Destroy(IDeviceAPIEncapsulator *device, const DeviceResource * /* resource */) {
     Assert(_deviceAPIDependantBuffer);
     Assert(_deviceAPIDependantBuffer->MatchDevice(device));
 
@@ -73,9 +72,7 @@ PDeviceAPIDependantResourceBuffer DeviceResourceBuffer::Destroy(IDeviceAPIEncaps
 }
 //----------------------------------------------------------------------------
 void DeviceResourceBuffer::GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) {
-    Assert(device);
     Assert(dst);
-    Assert(IS_ALIGNED(16, dst));
     Assert(stride == Stride());
     Assert(offset + count <= _count);
     Assert(_deviceAPIDependantBuffer);
@@ -85,9 +82,7 @@ void DeviceResourceBuffer::GetData(IDeviceAPIEncapsulator *device, size_t offset
 }
 //----------------------------------------------------------------------------
 void DeviceResourceBuffer::SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) {
-    Assert(device);
     Assert(src);
-    Assert(IS_ALIGNED(16, src));
     Assert(stride == Stride());
     Assert(offset + count <= _count);
     Assert(_deviceAPIDependantBuffer);
@@ -96,18 +91,41 @@ void DeviceResourceBuffer::SetData(IDeviceAPIEncapsulator *device, size_t offset
     _deviceAPIDependantBuffer->SetData(device, offset, src, stride, count);
 }
 //----------------------------------------------------------------------------
+void DeviceResourceBuffer::CopyFrom(IDeviceAPIEncapsulator *device, const DeviceResourceBuffer *psource) {
+    Assert(psource);
+    Assert(psource->Available());
+    Assert(psource->SizeInBytes() == SizeInBytes());
+
+    _deviceAPIDependantBuffer->CopyFrom(device, psource->DeviceAPIDependantBuffer());
+}
+//----------------------------------------------------------------------------
+void DeviceResourceBuffer::CopySubPart(
+    IDeviceAPIEncapsulator *device, size_t dstOffset, 
+    const DeviceResourceBuffer *psource, size_t srcOffset,
+    size_t length ) {
+    Assert(0 < length);
+    Assert(psource);
+    Assert(psource->Available());
+    Assert(psource->SizeInBytes() >= srcOffset + length);
+    Assert(SizeInBytes() >= dstOffset + length);
+
+    _deviceAPIDependantBuffer->CopySubPart(device, dstOffset, psource->DeviceAPIDependantBuffer(), srcOffset, length);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 DeviceAPIDependantResourceBuffer::DeviceAPIDependantResourceBuffer(
     IDeviceAPIEncapsulator *device,
-    DeviceResourceBuffer *owner,
     const DeviceResource *resource,
-    const MemoryView<const u8>& optionalData)
-:   DeviceAPIDependantEntity(device)
-,   _owner(owner)
-,   _resource(resource) {
-    Assert(owner);
-    Assert(resource);
+    const DeviceResourceBuffer *buffer,
+    const MemoryView<const u8>& /* optionalData */)
+:   DeviceAPIDependantEntity(device->APIEncapsulator(), resource)
+,   _count(checked_cast<u32>(buffer->Count()))
+,   _strideModeUsage(0)
+,   _resourceType(resource->ResourceType()) {
+    bitusage_type::InplaceSet(_strideModeUsage, u32(buffer->Usage()));
+    bitmode_type::InplaceSet(_strideModeUsage, u32(buffer->Mode()));
+    bitstride_type::InplaceSet(_strideModeUsage, checked_cast<u32>(buffer->Stride()));
 }
 //----------------------------------------------------------------------------
 DeviceAPIDependantResourceBuffer::~DeviceAPIDependantResourceBuffer() {}

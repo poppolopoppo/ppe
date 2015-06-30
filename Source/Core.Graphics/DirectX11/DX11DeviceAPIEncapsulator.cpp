@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "DX11DeviceEncapsulator.h"
+#include "DX11DeviceAPIEncapsulator.h"
 
 #include "Geometry/DX11PrimitiveType.h"
 #include "Geometry/DX11VertexDeclaration.h"
@@ -29,6 +29,8 @@
 #include "Device/Geometry/VertexBuffer.h"
 #include "Device/PresentationParameters.h"
 
+#include "Core/Color/Color.h"
+#include "Core/Maths/Geometry/ScalarRectangle.h"
 #include "Core/Memory/UniqueView.h"
 
 #ifdef WITH_DIRECTX11_DEBUG_LAYER
@@ -43,39 +45,39 @@
 
 namespace Core {
 namespace Graphics {
-namespace DX11 {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceEncapsulator::DeviceEncapsulator(Graphics::DeviceEncapsulator *owner, void *windowHandle, const PresentationParameters& pp)
+const DX11DeviceWrapper *DX11GetDeviceWrapper(const IDeviceAPIEncapsulator *device) {
+    return &checked_cast<const DX11DeviceAPIEncapsulator *>(device->APIEncapsulator())->Wrapper();
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+DX11DeviceAPIEncapsulator::DX11DeviceAPIEncapsulator(DeviceEncapsulator *owner, void *windowHandle, const PresentationParameters& pp)
 :   AbstractDeviceAPIEncapsulator(DeviceAPI::DirectX11, owner, pp) {
     _wrapper.Create(this, windowHandle, Parameters());
-    _writer = new ConstantWriter(this);
-
-    ChangeStatus(DeviceStatus::Normal, DeviceStatus::Invalid);
+    _writer = new DX11ConstantWriter(this);
 }
 //----------------------------------------------------------------------------
-DeviceEncapsulator::~DeviceEncapsulator() {
-    ChangeStatus(DeviceStatus::Destroy, DeviceStatus::Normal);
-
+DX11DeviceAPIEncapsulator::~DX11DeviceAPIEncapsulator() {
     _writer = nullptr;
     _wrapper.Destroy(this);
-
-    ChangeStatus(DeviceStatus::Invalid, DeviceStatus::Destroy);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::Reset(const PresentationParameters& pp) {
-    ChangeStatus(DeviceStatus::Reset, DeviceStatus::Normal);
+void DX11DeviceAPIEncapsulator::Reset(const PresentationParameters& pp) {
     // TODO
     AssertNotImplemented();
+
+    CHECK_DIRECTX11_ERROR();
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::Present() {
+void DX11DeviceAPIEncapsulator::Present() {
     const UINT syncInterval = UINT(Parameters().PresentationInterval());
     _wrapper.SwapChain()->Present(syncInterval, 0);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::ClearState() {
+void DX11DeviceAPIEncapsulator::ClearState() {
     _wrapper.ImmediateContext()->ClearState();
     _wrapper.ImmediateContext()->Flush();
 
@@ -84,7 +86,7 @@ void DeviceEncapsulator::ClearState() {
 //----------------------------------------------------------------------------
 // Alpha/Raster/Depth State
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetViewport(const ViewportF& viewport) {
+void DX11DeviceAPIEncapsulator::SetViewport(const ViewportF& viewport) {
     ::D3D11_VIEWPORT dx11Viewport;
 
     dx11Viewport.TopLeftX = viewport.Left();
@@ -101,7 +103,7 @@ void DeviceEncapsulator::SetViewport(const ViewportF& viewport) {
     CHECK_DIRECTX11_ERROR();
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetViewports(const MemoryView<const ViewportF>& viewports) {
+void DX11DeviceAPIEncapsulator::SetViewports(const MemoryView<const ViewportF>& viewports) {
     const UINT dx11NumViews = checked_cast<UINT>(viewports.size());
     const auto dx11Viewports = MALLOCA_VIEW(::D3D11_VIEWPORT, viewports.size());
 
@@ -124,13 +126,13 @@ void DeviceEncapsulator::SetViewports(const MemoryView<const ViewportF>& viewpor
     CHECK_DIRECTX11_ERROR();
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantBlendState *DeviceEncapsulator::CreateBlendState(Graphics::BlendState *state) {
-    return new DX11::BlendState(this, state);
+DeviceAPIDependantBlendState *DX11DeviceAPIEncapsulator::CreateBlendState(BlendState *state) {
+    return new DX11BlendState(this, state);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetBlendState(const Graphics::BlendState *state) {
+void DX11DeviceAPIEncapsulator::SetBlendState(const BlendState *state) {
     ::ID3D11BlendState *const dx11BlendState =
-        checked_cast<const DX11::BlendState *>(state->DeviceAPIDependantState().get())->Entity();
+        checked_cast<const DX11BlendState *>(state->DeviceAPIDependantState().get())->Entity();
 
     _wrapper.ImmediateContext()->OMSetBlendState(
         dx11BlendState,
@@ -141,34 +143,34 @@ void DeviceEncapsulator::SetBlendState(const Graphics::BlendState *state) {
     CHECK_DIRECTX11_ERROR();
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DestroyBlendState(Graphics::BlendState *state, PDeviceAPIDependantBlendState& entity) {
+void DX11DeviceAPIEncapsulator::DestroyBlendState(BlendState * /* state */, PDeviceAPIDependantBlendState& entity) {
     RemoveRef_AssertReachZero(entity);
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantRasterizerState *DeviceEncapsulator::CreateRasterizerState(Graphics::RasterizerState *state) {
-    return new DX11::RasterizerState(this, state);
+DeviceAPIDependantRasterizerState *DX11DeviceAPIEncapsulator::CreateRasterizerState(RasterizerState *state) {
+    return new DX11RasterizerState(this, state);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetRasterizerState(const Graphics::RasterizerState *state) {
+void DX11DeviceAPIEncapsulator::SetRasterizerState(const RasterizerState *state) {
     ::ID3D11RasterizerState *const dx11RasterizerState =
-        checked_cast<const DX11::RasterizerState *>(state->DeviceAPIDependantState().get())->Entity();
+        checked_cast<const DX11RasterizerState *>(state->DeviceAPIDependantState().get())->Entity();
 
     _wrapper.ImmediateContext()->RSSetState(dx11RasterizerState);
 
     CHECK_DIRECTX11_ERROR();
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DestroyRasterizerState(Graphics::RasterizerState *state, PDeviceAPIDependantRasterizerState& entity) {
+void DX11DeviceAPIEncapsulator::DestroyRasterizerState(RasterizerState * /* state */, PDeviceAPIDependantRasterizerState& entity) {
     RemoveRef_AssertReachZero(entity);
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantDepthStencilState *DeviceEncapsulator::CreateDepthStencilState(Graphics::DepthStencilState *state) {
-    return new DX11::DepthStencilState(this, state);
+DeviceAPIDependantDepthStencilState *DX11DeviceAPIEncapsulator::CreateDepthStencilState(DepthStencilState *state) {
+    return new DX11DepthStencilState(this, state);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetDepthStencilState(const Graphics::DepthStencilState *state) {
+void DX11DeviceAPIEncapsulator::SetDepthStencilState(const DepthStencilState *state) {
     ::ID3D11DepthStencilState *const dx11DepthStencilState =
-        checked_cast<const DX11::DepthStencilState *>(state->DeviceAPIDependantState().get())->Entity();
+        checked_cast<const DX11DepthStencilState *>(state->DeviceAPIDependantState().get())->Entity();
 
     _wrapper.ImmediateContext()->OMSetDepthStencilState(
         dx11DepthStencilState,
@@ -178,40 +180,40 @@ void DeviceEncapsulator::SetDepthStencilState(const Graphics::DepthStencilState 
     CHECK_DIRECTX11_ERROR();
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DestroyDepthStencilState(Graphics::DepthStencilState *state, PDeviceAPIDependantDepthStencilState& entity) {
+void DX11DeviceAPIEncapsulator::DestroyDepthStencilState(DepthStencilState * /* state */, PDeviceAPIDependantDepthStencilState& entity) {
     RemoveRef_AssertReachZero(entity);
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantSamplerState *DeviceEncapsulator::CreateSamplerState(Graphics::SamplerState *state) {
-    return new DX11::SamplerState(this, state);
+DeviceAPIDependantSamplerState *DX11DeviceAPIEncapsulator::CreateSamplerState(SamplerState *state) {
+    return new DX11SamplerState(this, state);
 }
 //---------------------------------------------------------------------------
-void DeviceEncapsulator::SetSamplerState(ShaderProgramType stage, size_t slot, const Graphics::SamplerState *state) {
+void DX11DeviceAPIEncapsulator::SetSamplerState(ShaderProgramType stage, size_t slot, const SamplerState *state) {
     ::ID3D11DeviceContext *const context = _wrapper.ImmediateContext();
 
     ::ID3D11SamplerState *const dx11SamplerState =
-        checked_cast<const DX11::SamplerState *>(state->DeviceAPIDependantState().get())->Entity();
+        checked_cast<const DX11SamplerState *>(state->DeviceAPIDependantState().get())->Entity();
 
     const UINT dx11Slot = checked_cast<UINT>(slot);
 
     switch (stage)
     {
-    case Core::Graphics::ShaderProgramType::Vertex:
+    case ShaderProgramType::Vertex:
         context->VSSetSamplers(dx11Slot, 1, &dx11SamplerState);
         break;
-    case Core::Graphics::ShaderProgramType::Hull:
+    case ShaderProgramType::Hull:
         context->HSSetSamplers(dx11Slot, 1, &dx11SamplerState);
         break;
-    case Core::Graphics::ShaderProgramType::Domain:
+    case ShaderProgramType::Domain:
         context->DSSetSamplers(dx11Slot, 1, &dx11SamplerState);
         break;
-    case Core::Graphics::ShaderProgramType::Pixel:
+    case ShaderProgramType::Pixel:
         context->PSSetSamplers(dx11Slot, 1, &dx11SamplerState);
         break;
-    case Core::Graphics::ShaderProgramType::Geometry:
+    case ShaderProgramType::Geometry:
         context->GSSetSamplers(dx11Slot, 1, &dx11SamplerState);
         break;
-    case Core::Graphics::ShaderProgramType::Compute:
+    case ShaderProgramType::Compute:
         context->CSSetSamplers(dx11Slot, 1, &dx11SamplerState);
         break;
     default:
@@ -220,30 +222,69 @@ void DeviceEncapsulator::SetSamplerState(ShaderProgramType stage, size_t slot, c
 
     CHECK_DIRECTX11_ERROR();
 }
+
 //---------------------------------------------------------------------------
-void DeviceEncapsulator::DestroySamplerState(Graphics::SamplerState *state, PDeviceAPIDependantSamplerState& entity) {
+void DX11DeviceAPIEncapsulator::SetSamplerStates(ShaderProgramType stage, const MemoryView<const SamplerState *>& states) {
+    ::ID3D11DeviceContext *const context = _wrapper.ImmediateContext();
+
+    ::ID3D11SamplerState *dx11SamplerStates[16];
+
+    forrange(i, 0, states.size())
+        dx11SamplerStates[i] = checked_cast<const DX11SamplerState *>(states[i]->DeviceAPIDependantState().get())->Entity();
+
+    const UINT dx11Slot = 0;
+    const UINT dx11NumBuffers = checked_cast<UINT>(states.size());
+
+    switch (stage)
+    {
+    case ShaderProgramType::Vertex:
+        context->VSSetSamplers(dx11Slot, dx11NumBuffers, dx11SamplerStates);
+        break;
+    case ShaderProgramType::Hull:
+        context->HSSetSamplers(dx11Slot, dx11NumBuffers, dx11SamplerStates);
+        break;
+    case ShaderProgramType::Domain:
+        context->DSSetSamplers(dx11Slot, dx11NumBuffers, dx11SamplerStates);
+        break;
+    case ShaderProgramType::Pixel:
+        context->PSSetSamplers(dx11Slot, dx11NumBuffers, dx11SamplerStates);
+        break;
+    case ShaderProgramType::Geometry:
+        context->GSSetSamplers(dx11Slot, dx11NumBuffers, dx11SamplerStates);
+        break;
+    case ShaderProgramType::Compute:
+        context->CSSetSamplers(dx11Slot, dx11NumBuffers, dx11SamplerStates);
+        break;
+    default:
+        AssertNotImplemented();
+    }
+
+    CHECK_DIRECTX11_ERROR();
+}
+//---------------------------------------------------------------------------
+void DX11DeviceAPIEncapsulator::DestroySamplerState(SamplerState * /* state */, PDeviceAPIDependantSamplerState& entity) {
     RemoveRef_AssertReachZero(entity);
 }
 //----------------------------------------------------------------------------
 // Index/Vertex Buffer
 //----------------------------------------------------------------------------
-DeviceAPIDependantVertexDeclaration *DeviceEncapsulator::CreateVertexDeclaration(Graphics::VertexDeclaration *declaration) {
-    return new DX11::VertexDeclaration(this, declaration);
+DeviceAPIDependantVertexDeclaration *DX11DeviceAPIEncapsulator::CreateVertexDeclaration(VertexDeclaration *declaration) {
+    return new DX11VertexDeclaration(this, declaration);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DestroyVertexDeclaration(Graphics::VertexDeclaration *declaration, PDeviceAPIDependantVertexDeclaration& entity) {
+void DX11DeviceAPIEncapsulator::DestroyVertexDeclaration(VertexDeclaration * /* declaration */, PDeviceAPIDependantVertexDeclaration& entity) {
     RemoveRef_AssertReachZero(entity);
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantResourceBuffer *DeviceEncapsulator::CreateIndexBuffer(Graphics::IndexBuffer *indexBuffer, DeviceResourceBuffer *resourceBuffer, const MemoryView<const u8>& optionalData) {
-    return new DX11::ResourceBuffer(this, resourceBuffer, indexBuffer, optionalData);
+DeviceAPIDependantResourceBuffer *DX11DeviceAPIEncapsulator::CreateIndexBuffer(IndexBuffer *indexBuffer, DeviceResourceBuffer *resourceBuffer, const MemoryView<const u8>& optionalData) {
+    return new DX11ResourceBuffer(this, indexBuffer, resourceBuffer, optionalData);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetIndexBuffer(const Graphics::IndexBuffer *indexBuffer) {
+void DX11DeviceAPIEncapsulator::SetIndexBuffer(const IndexBuffer *indexBuffer) {
     SetIndexBuffer(indexBuffer, 0);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetIndexBuffer(const Graphics::IndexBuffer *indexBuffer, size_t offset) {
+void DX11DeviceAPIEncapsulator::SetIndexBuffer(const IndexBuffer *indexBuffer, size_t offset) {
     ::ID3D11Buffer *const dx11Buffer = DX11DeviceBufferEntity(indexBuffer->Buffer());
 
     _wrapper.ImmediateContext()->IASetIndexBuffer(
@@ -256,15 +297,15 @@ void DeviceEncapsulator::SetIndexBuffer(const Graphics::IndexBuffer *indexBuffer
     CHECK_DIRECTX11_ERROR();
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DestroyIndexBuffer(Graphics::IndexBuffer *indexBuffer, PDeviceAPIDependantResourceBuffer& entity) {
+void DX11DeviceAPIEncapsulator::DestroyIndexBuffer(IndexBuffer * /* indexBuffer */, PDeviceAPIDependantResourceBuffer& entity) {
     RemoveRef_AssertReachZero(entity);
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantResourceBuffer *DeviceEncapsulator::CreateVertexBuffer(Graphics::VertexBuffer *vertexBuffer, DeviceResourceBuffer *resourceBuffer, const MemoryView<const u8>& optionalData) {
-    return new DX11::ResourceBuffer(this, resourceBuffer, vertexBuffer, optionalData);
+DeviceAPIDependantResourceBuffer *DX11DeviceAPIEncapsulator::CreateVertexBuffer(VertexBuffer *vertexBuffer, DeviceResourceBuffer *resourceBuffer, const MemoryView<const u8>& optionalData) {
+    return new DX11ResourceBuffer(this, vertexBuffer, resourceBuffer, optionalData);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetVertexBuffer(const Graphics::VertexBuffer *vertexBuffer) {
+void DX11DeviceAPIEncapsulator::SetVertexBuffer(const VertexBuffer *vertexBuffer) {
     ::ID3D11Buffer *const dx11Buffer = DX11DeviceBufferEntity(vertexBuffer->Buffer());
 
     const UINT stride = checked_cast<UINT>(vertexBuffer->VertexDeclaration()->SizeInBytes());
@@ -275,7 +316,7 @@ void DeviceEncapsulator::SetVertexBuffer(const Graphics::VertexBuffer *vertexBuf
     CHECK_DIRECTX11_ERROR();
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetVertexBuffer(const Graphics::VertexBuffer *vertexBuffer, u32 vertexOffset) {
+void DX11DeviceAPIEncapsulator::SetVertexBuffer(const VertexBuffer *vertexBuffer, u32 vertexOffset) {
     ::ID3D11Buffer *const dx11Buffer = DX11DeviceBufferEntity(vertexBuffer->Buffer());
 
     const UINT stride = checked_cast<UINT>(vertexBuffer->VertexDeclaration()->SizeInBytes());
@@ -286,7 +327,7 @@ void DeviceEncapsulator::SetVertexBuffer(const Graphics::VertexBuffer *vertexBuf
     CHECK_DIRECTX11_ERROR();
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetVertexBuffer(const MemoryView<const VertexBufferBinding>& bindings) {
+void DX11DeviceAPIEncapsulator::SetVertexBuffer(const MemoryView<const VertexBufferBinding>& bindings) {
     const size_t k = bindings.size();
 
     const auto dx11Buffers = MALLOCA_VIEW(::ID3D11Buffer *, k);
@@ -311,18 +352,18 @@ void DeviceEncapsulator::SetVertexBuffer(const MemoryView<const VertexBufferBind
     CHECK_DIRECTX11_ERROR();
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DestroyVertexBuffer(Graphics::VertexBuffer *buffer, PDeviceAPIDependantResourceBuffer& entity) {
+void DX11DeviceAPIEncapsulator::DestroyVertexBuffer(VertexBuffer * /* buffer */, PDeviceAPIDependantResourceBuffer& entity) {
     RemoveRef_AssertReachZero(entity);
 }
 //----------------------------------------------------------------------------
 // Shaders
 //----------------------------------------------------------------------------
-DeviceAPIDependantResourceBuffer *DeviceEncapsulator::CreateConstantBuffer(Graphics::ConstantBuffer *constantBuffer, DeviceResourceBuffer *resourceBuffer, PDeviceAPIDependantConstantWriter& writer) {
+DeviceAPIDependantResourceBuffer *DX11DeviceAPIEncapsulator::CreateConstantBuffer(ConstantBuffer *constantBuffer, DeviceResourceBuffer *resourceBuffer, PDeviceAPIDependantConstantWriter& writer) {
     writer = _writer;
-    return new DX11::ResourceBuffer(this, resourceBuffer, constantBuffer, MemoryView<const u8>());
+    return new DX11ResourceBuffer(this, constantBuffer, resourceBuffer, MemoryView<const u8>());
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetConstantBuffer(ShaderProgramType stage, size_t slot, const Graphics::ConstantBuffer *constantBuffer) {
+void DX11DeviceAPIEncapsulator::SetConstantBuffer(ShaderProgramType stage, size_t slot, const ConstantBuffer *constantBuffer) {
     ::ID3D11DeviceContext *const context = _wrapper.ImmediateContext();
 
     ::ID3D11Buffer *const dx11Buffer = DX11DeviceBufferEntity(constantBuffer->Buffer());
@@ -331,22 +372,22 @@ void DeviceEncapsulator::SetConstantBuffer(ShaderProgramType stage, size_t slot,
 
     switch (stage)
     {
-    case Core::Graphics::ShaderProgramType::Vertex:
+    case ShaderProgramType::Vertex:
         context->VSSetConstantBuffers(dx11Slot, 1, &dx11Buffer);
         break;
-    case Core::Graphics::ShaderProgramType::Hull:
+    case ShaderProgramType::Hull:
         context->HSSetConstantBuffers(dx11Slot, 1, &dx11Buffer);
         break;
-    case Core::Graphics::ShaderProgramType::Domain:
+    case ShaderProgramType::Domain:
         context->DSSetConstantBuffers(dx11Slot, 1, &dx11Buffer);
         break;
-    case Core::Graphics::ShaderProgramType::Pixel:
+    case ShaderProgramType::Pixel:
         context->PSSetConstantBuffers(dx11Slot, 1, &dx11Buffer);
         break;
-    case Core::Graphics::ShaderProgramType::Geometry:
+    case ShaderProgramType::Geometry:
         context->GSSetConstantBuffers(dx11Slot, 1, &dx11Buffer);
         break;
-    case Core::Graphics::ShaderProgramType::Compute:
+    case ShaderProgramType::Compute:
         context->CSSetConstantBuffers(dx11Slot, 1, &dx11Buffer);
         break;
     default:
@@ -356,48 +397,85 @@ void DeviceEncapsulator::SetConstantBuffer(ShaderProgramType stage, size_t slot,
     CHECK_DIRECTX11_ERROR();
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DestroyConstantBuffer(Graphics::ConstantBuffer *constantBuffer, PDeviceAPIDependantResourceBuffer& entity, PDeviceAPIDependantConstantWriter& writer) {
+void DX11DeviceAPIEncapsulator::SetConstantBuffers(ShaderProgramType stage, const MemoryView<const ConstantBuffer *>& constantBuffers) {
+    ::ID3D11DeviceContext *const context = _wrapper.ImmediateContext();
+
+    ::ID3D11Buffer *dx11Buffers[14];
+    AssertRelease(constantBuffers.size() <= lengthof(dx11Buffers));
+
+    forrange(i, 0, constantBuffers.size())
+        dx11Buffers[i] = DX11DeviceBufferEntity(constantBuffers[i]->Buffer());
+
+    const UINT dx11Slot = 0;
+    const UINT dx11NumBuffers = checked_cast<UINT>(constantBuffers.size());
+
+    switch (stage)
+    {
+    case ShaderProgramType::Vertex:
+        context->VSSetConstantBuffers(dx11Slot, dx11NumBuffers, dx11Buffers);
+        break;
+    case ShaderProgramType::Hull:
+        context->HSSetConstantBuffers(dx11Slot, dx11NumBuffers, dx11Buffers);
+        break;
+    case ShaderProgramType::Domain:
+        context->DSSetConstantBuffers(dx11Slot, dx11NumBuffers, dx11Buffers);
+        break;
+    case ShaderProgramType::Pixel:
+        context->PSSetConstantBuffers(dx11Slot, dx11NumBuffers, dx11Buffers);
+        break;
+    case ShaderProgramType::Geometry:
+        context->GSSetConstantBuffers(dx11Slot, dx11NumBuffers, dx11Buffers);
+        break;
+    case ShaderProgramType::Compute:
+        context->CSSetConstantBuffers(dx11Slot, dx11NumBuffers, dx11Buffers);
+        break;
+    default:
+        AssertNotImplemented();
+    }
+}
+//----------------------------------------------------------------------------
+void DX11DeviceAPIEncapsulator::DestroyConstantBuffer(ConstantBuffer * /* constantBuffer */, PDeviceAPIDependantResourceBuffer& entity, PDeviceAPIDependantConstantWriter& writer) {
     Assert(writer = _writer);
     writer = nullptr;
     RemoveRef_AssertReachZero(entity);
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantShaderProgram *DeviceEncapsulator::CreateShaderProgram(
-    Graphics::ShaderProgram *program,
+DeviceAPIDependantShaderProgram *DX11DeviceAPIEncapsulator::CreateShaderProgram(
+    ShaderProgram *program,
     const char *entryPoint,
-    Graphics::ShaderCompilerFlags flags,
-    const Graphics::ShaderSource *source,
-    const Graphics::VertexDeclaration *vertexDeclaration) {
-    return new DX11::ShaderProgram(this, program,  entryPoint, flags, source, vertexDeclaration);
+    ShaderCompilerFlags flags,
+    const ShaderSource *source,
+    const VertexDeclaration *vertexDeclaration) {
+    return new DX11ShaderProgram(this, program,  entryPoint, flags, source, vertexDeclaration);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DestroyShaderProgram(Graphics::ShaderProgram *program, PDeviceAPIDependantShaderProgram& entity) {
+void DX11DeviceAPIEncapsulator::DestroyShaderProgram(ShaderProgram * /* program */, PDeviceAPIDependantShaderProgram& entity) {
     RemoveRef_AssertReachZero(entity);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::PreprocessShaderProgram(
+void DX11DeviceAPIEncapsulator::PreprocessShaderProgram(
     RAWSTORAGE(Shader, char)& output,
-    const Graphics::ShaderProgram *program,
-    const Graphics::ShaderSource *source,
-    const Graphics::VertexDeclaration *vertexDeclaration) {
-    DX11::ShaderProgram::Preprocess(this, output, program, source, vertexDeclaration);
+    const ShaderProgram *program,
+    const ShaderSource *source,
+    const VertexDeclaration *vertexDeclaration) {
+    DX11ShaderProgram::Preprocess(this, output, program, source, vertexDeclaration);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::ReflectShaderProgram(
+void DX11DeviceAPIEncapsulator::ReflectShaderProgram(
     ASSOCIATIVE_VECTOR(Shader, BindName, PCConstantBufferLayout)& constants,
     VECTOR(Shader, ShaderProgramTexture)& textures,
-    const Graphics::ShaderProgram *program) {
-    DX11::ShaderProgram::Reflect(this, constants, textures, program);
+    const ShaderProgram *program) {
+    DX11ShaderProgram::Reflect(this, constants, textures, program);
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantShaderEffect *DeviceEncapsulator::CreateShaderEffect(Graphics::ShaderEffect *effect) {
-    return new DX11::ShaderEffect(this, effect);
+DeviceAPIDependantShaderEffect *DX11DeviceAPIEncapsulator::CreateShaderEffect(ShaderEffect *effect) {
+    return new DX11ShaderEffect(this, effect);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetShaderEffect(const Graphics::ShaderEffect *effect) {
+void DX11DeviceAPIEncapsulator::SetShaderEffect(const ShaderEffect *effect) {
     ::ID3D11DeviceContext *const context = _wrapper.ImmediateContext();
 
-    const DX11::ShaderEffect *dx11Effect = checked_cast<DX11::ShaderEffect *>(effect->DeviceAPIDependantEffect().get());
+    const DX11ShaderEffect *dx11Effect = checked_cast<DX11ShaderEffect *>(effect->DeviceAPIDependantEffect().get());
 
     context->IASetInputLayout(dx11Effect->InputLayout());
 
@@ -411,29 +489,29 @@ void DeviceEncapsulator::SetShaderEffect(const Graphics::ShaderEffect *effect) {
     CHECK_DIRECTX11_ERROR();
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DestroyShaderEffect(Graphics::ShaderEffect *effect, PDeviceAPIDependantShaderEffect& entity) {
+void DX11DeviceAPIEncapsulator::DestroyShaderEffect(ShaderEffect * /* effect */, PDeviceAPIDependantShaderEffect& entity) {
     RemoveRef_AssertReachZero(entity);
 }
 //----------------------------------------------------------------------------
 // Textures
 //---------------------------------------------------------------------------
-DeviceAPIDependantTexture2D *DeviceEncapsulator::CreateTexture2D(Graphics::Texture2D *texture, const MemoryView<const u8>& optionalData) {
-    return new DX11::Texture2D(this, texture, optionalData);
+DeviceAPIDependantTexture2D *DX11DeviceAPIEncapsulator::CreateTexture2D(Texture2D *texture, const MemoryView<const u8>& optionalData) {
+    return new DX11Texture2D(this, texture, optionalData);
 }
 //---------------------------------------------------------------------------
-void DeviceEncapsulator::DestroyTexture2D(Graphics::Texture2D *texture, PDeviceAPIDependantTexture2D& entity) {
+void DX11DeviceAPIEncapsulator::DestroyTexture2D(Texture2D * /* texture */, PDeviceAPIDependantTexture2D& entity) {
     RemoveRef_AssertReachZero(entity);
 }
 //---------------------------------------------------------------------------
-DeviceAPIDependantTextureCube *DeviceEncapsulator::CreateTextureCube(Graphics::TextureCube *texture, const MemoryView<const u8>& optionalData) {
-    return new DX11::TextureCube(this, texture, optionalData);
+DeviceAPIDependantTextureCube *DX11DeviceAPIEncapsulator::CreateTextureCube(TextureCube *texture, const MemoryView<const u8>& optionalData) {
+    return new DX11TextureCube(this, texture, optionalData);
 }
 //---------------------------------------------------------------------------
-void DeviceEncapsulator::DestroyTextureCube(Graphics::TextureCube *texture, PDeviceAPIDependantTextureCube& entity) {
+void DX11DeviceAPIEncapsulator::DestroyTextureCube(TextureCube * /* texture */, PDeviceAPIDependantTextureCube& entity) {
     RemoveRef_AssertReachZero(entity);
 }
 //---------------------------------------------------------------------------
-void DeviceEncapsulator::SetTexture(ShaderProgramType stage, size_t slot, const Graphics::Texture *texture) {
+void DX11DeviceAPIEncapsulator::SetTexture(ShaderProgramType stage, size_t slot, const Texture *texture) {
     ::ID3D11DeviceContext *const context = _wrapper.ImmediateContext();
 
     ::ID3D11ShaderResourceView *dx11ResourceView = nullptr;
@@ -442,11 +520,11 @@ void DeviceEncapsulator::SetTexture(ShaderProgramType stage, size_t slot, const 
         Assert(texture->Frozen());
         Assert(texture->Available());
 
-        const IDeviceAPIDependantAbstractTextureContent *content = texture->DeviceAPIDependantTexture()->Content();
+        const IDeviceAPIDependantAbstractTextureContent *content = texture->TextureEntity()->Content();
         if (!content)
             throw DeviceEncapsulatorException("DX11: empty texture content could not be set to device", this, texture);
 
-        const DX11::AbstractTextureContent *dx11Content = checked_cast<const DX11::AbstractTextureContent *>(content);
+        const DX11AbstractTextureContent *dx11Content = checked_cast<const DX11AbstractTextureContent *>(content);
 
         dx11ResourceView = dx11Content->ShaderView();
         AssertRelease(dx11ResourceView);
@@ -456,23 +534,78 @@ void DeviceEncapsulator::SetTexture(ShaderProgramType stage, size_t slot, const 
 
     switch (stage)
     {
-    case Core::Graphics::ShaderProgramType::Vertex:
+    case ShaderProgramType::Vertex:
         context->VSSetShaderResources(dx11Slot, 1, &dx11ResourceView);
         break;
-    case Core::Graphics::ShaderProgramType::Hull:
+    case ShaderProgramType::Hull:
         context->HSSetShaderResources(dx11Slot, 1, &dx11ResourceView);
         break;
-    case Core::Graphics::ShaderProgramType::Domain:
+    case ShaderProgramType::Domain:
         context->DSSetShaderResources(dx11Slot, 1, &dx11ResourceView);
         break;
-    case Core::Graphics::ShaderProgramType::Pixel:
+    case ShaderProgramType::Pixel:
         context->PSSetShaderResources(dx11Slot, 1, &dx11ResourceView);
         break;
-    case Core::Graphics::ShaderProgramType::Geometry:
+    case ShaderProgramType::Geometry:
         context->GSSetShaderResources(dx11Slot, 1, &dx11ResourceView);
         break;
-    case Core::Graphics::ShaderProgramType::Compute:
+    case ShaderProgramType::Compute:
         context->CSSetShaderResources(dx11Slot, 1, &dx11ResourceView);
+        break;
+    default:
+        AssertNotImplemented();
+    }
+
+    CHECK_DIRECTX11_ERROR();
+}
+//---------------------------------------------------------------------------
+void DX11DeviceAPIEncapsulator::SetTextures(ShaderProgramType stage, const MemoryView<const Texture *>& textures) {
+    ::ID3D11DeviceContext *const context = _wrapper.ImmediateContext();
+
+    ::ID3D11ShaderResourceView *dx11ResourceViews[16];
+    AssertRelease(textures.size() <= lengthof(dx11ResourceViews));
+
+    forrange(i, 0, textures.size()) {
+        const Texture *texture = textures[i];
+        if (texture) {
+            Assert(texture->Frozen());
+            Assert(texture->Available());
+
+            const IDeviceAPIDependantAbstractTextureContent *content = texture->TextureEntity()->Content();
+            if (!content)
+                throw DeviceEncapsulatorException("DX11: empty texture content could not be set to device", this, texture);
+
+            const DX11AbstractTextureContent *dx11Content = checked_cast<const DX11AbstractTextureContent *>(content);
+
+            dx11ResourceViews[i] = dx11Content->ShaderView();
+        }
+        else {
+            dx11ResourceViews[i] = nullptr;
+        }
+    }
+
+    const UINT dx11Slot = 0;
+    const UINT dx11NumBuffers = checked_cast<UINT>(textures.size());
+
+    switch (stage)
+    {
+    case ShaderProgramType::Vertex:
+        context->VSSetShaderResources(dx11Slot, dx11NumBuffers, dx11ResourceViews);
+        break;
+    case ShaderProgramType::Hull:
+        context->HSSetShaderResources(dx11Slot, dx11NumBuffers, dx11ResourceViews);
+        break;
+    case ShaderProgramType::Domain:
+        context->DSSetShaderResources(dx11Slot, dx11NumBuffers, dx11ResourceViews);
+        break;
+    case ShaderProgramType::Pixel:
+        context->PSSetShaderResources(dx11Slot, dx11NumBuffers, dx11ResourceViews);
+        break;
+    case ShaderProgramType::Geometry:
+        context->GSSetShaderResources(dx11Slot, dx11NumBuffers, dx11ResourceViews);
+        break;
+    case ShaderProgramType::Compute:
+        context->CSSetShaderResources(dx11Slot, dx11NumBuffers, dx11ResourceViews);
         break;
     default:
         AssertNotImplemented();
@@ -483,38 +616,38 @@ void DeviceEncapsulator::SetTexture(ShaderProgramType stage, size_t slot, const 
 //----------------------------------------------------------------------------
 // Render Targets
 //----------------------------------------------------------------------------
-Graphics::RenderTarget *DeviceEncapsulator::BackBufferRenderTarget() {
+RenderTarget *DX11DeviceAPIEncapsulator::BackBufferRenderTarget() {
     return _wrapper.BackBufferRenderTarget();
 }
 //----------------------------------------------------------------------------
-Graphics::DepthStencil *DeviceEncapsulator::BackBufferDepthStencil() {
+DepthStencil *DX11DeviceAPIEncapsulator::BackBufferDepthStencil() {
     return _wrapper.BackBufferDepthStencil();
 }
 //----------------------------------------------------------------------------
-const Graphics::RenderTarget *DeviceEncapsulator::BackBufferRenderTarget() const {
+const RenderTarget *DX11DeviceAPIEncapsulator::BackBufferRenderTarget() const {
     return _wrapper.BackBufferRenderTarget();
 }
 //----------------------------------------------------------------------------
-const Graphics::DepthStencil *DeviceEncapsulator::BackBufferDepthStencil() const {
+const DepthStencil *DX11DeviceAPIEncapsulator::BackBufferDepthStencil() const {
     return _wrapper.BackBufferDepthStencil();
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantRenderTarget *DeviceEncapsulator::CreateRenderTarget(Graphics::RenderTarget *renderTarget, const MemoryView<const u8>& optionalData) {
-    return new DX11::RenderTarget(this, renderTarget, optionalData);
+DeviceAPIDependantRenderTarget *DX11DeviceAPIEncapsulator::CreateRenderTarget(RenderTarget *renderTarget, const MemoryView<const u8>& optionalData) {
+    return new DX11RenderTarget(this, renderTarget, optionalData);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetRenderTarget(const Graphics::RenderTarget *renderTarget, const Graphics::DepthStencil *depthStencil) {
+void DX11DeviceAPIEncapsulator::SetRenderTarget(const RenderTarget *renderTarget, const DepthStencil *depthStencil) {
     ::ID3D11DeviceContext *const context = _wrapper.ImmediateContext();
 
     ::ID3D11RenderTargetView *dx11RenderTarget = nullptr;
     if (renderTarget) {
-        dx11RenderTarget = checked_cast<const DX11::RenderTarget *>(renderTarget->DeviceAPIDependantTexture2D().get())->RenderTargetView();
+        dx11RenderTarget = checked_cast<const DX11RenderTarget *>(renderTarget->DeviceAPIDependantTexture2D().get())->RenderTargetView();
         Assert(dx11RenderTarget);
     }
 
     ::ID3D11DepthStencilView *dx11DepthStencil = nullptr;
     if (depthStencil) {
-        dx11DepthStencil = checked_cast<const DX11::DepthStencil *>(depthStencil->DeviceAPIDependantTexture2D().get())->DepthStencilView();
+        dx11DepthStencil = checked_cast<const DX11DepthStencil *>(depthStencil->DeviceAPIDependantTexture2D().get())->DepthStencilView();
         Assert(dx11DepthStencil);
     }
 
@@ -523,7 +656,7 @@ void DeviceEncapsulator::SetRenderTarget(const Graphics::RenderTarget *renderTar
     CHECK_DIRECTX11_ERROR();
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetRenderTargets(const MemoryView<const RenderTargetBinding>& bindings, const Graphics::DepthStencil *depthStencil) {
+void DX11DeviceAPIEncapsulator::SetRenderTargets(const MemoryView<const RenderTargetBinding>& bindings, const DepthStencil *depthStencil) {
     ::ID3D11DeviceContext *const context = _wrapper.ImmediateContext();
 
     const auto dx11RenderTargets = MALLOCA_VIEW(::ID3D11RenderTargetView *, bindings.size());
@@ -531,12 +664,12 @@ void DeviceEncapsulator::SetRenderTargets(const MemoryView<const RenderTargetBin
 
     for (const RenderTargetBinding& binding : bindings) {
         Assert(!dx11RenderTargets[binding.Slot]);
-        dx11RenderTargets[binding.Slot] = checked_cast<const DX11::RenderTarget *>(binding.RT->DeviceAPIDependantTexture2D().get())->RenderTargetView();
+        dx11RenderTargets[binding.Slot] = checked_cast<const DX11RenderTarget *>(binding.RT->DeviceAPIDependantTexture2D().get())->RenderTargetView();
     }
 
     ::ID3D11DepthStencilView *dx11DepthStencil = nullptr;
     if (depthStencil) {
-        dx11DepthStencil = checked_cast<const DX11::DepthStencil *>(depthStencil->DeviceAPIDependantTexture2D().get())->DepthStencilView();
+        dx11DepthStencil = checked_cast<const DX11DepthStencil *>(depthStencil->DeviceAPIDependantTexture2D().get())->DepthStencilView();
         Assert(dx11DepthStencil);
     }
 
@@ -547,23 +680,23 @@ void DeviceEncapsulator::SetRenderTargets(const MemoryView<const RenderTargetBin
     CHECK_DIRECTX11_ERROR();
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DestroyRenderTarget(Graphics::RenderTarget *renderTarget, PDeviceAPIDependantRenderTarget& entity) {
+void DX11DeviceAPIEncapsulator::DestroyRenderTarget(RenderTarget * /* renderTarget */, PDeviceAPIDependantRenderTarget& entity) {
     RemoveRef_AssertReachZero(entity);
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantDepthStencil *DeviceEncapsulator::CreateDepthStencil(Graphics::DepthStencil *depthStencil, const MemoryView<const u8>& optionalData) {
-    return new DX11::DepthStencil(this, depthStencil, optionalData);
+DeviceAPIDependantDepthStencil *DX11DeviceAPIEncapsulator::CreateDepthStencil(DepthStencil *depthStencil, const MemoryView<const u8>& optionalData) {
+    return new DX11DepthStencil(this, depthStencil, optionalData);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DestroyDepthStencil(Graphics::DepthStencil *depthStencil, PDeviceAPIDependantDepthStencil& entity) {
+void DX11DeviceAPIEncapsulator::DestroyDepthStencil(DepthStencil * /* depthStencil */, PDeviceAPIDependantDepthStencil& entity) {
     RemoveRef_AssertReachZero(entity);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::Clear(const Graphics::RenderTarget *renderTarget, const ColorRGBAF& color) {
+void DX11DeviceAPIEncapsulator::Clear(const RenderTarget *renderTarget, const ColorRGBAF& color) {
     ::ID3D11DeviceContext *const context = _wrapper.ImmediateContext();
 
     ::ID3D11RenderTargetView *dx11RenderTarget =
-        checked_cast<const DX11::RenderTarget *>(renderTarget->DeviceAPIDependantTexture2D().get())->RenderTargetView();
+        checked_cast<const DX11RenderTarget *>(renderTarget->DeviceAPIDependantTexture2D().get())->RenderTargetView();
     Assert(dx11RenderTarget);
 
     const FLOAT dx11ColorRGBA[4] = {color.r(), color.g(), color.b(), color.a()};
@@ -573,17 +706,17 @@ void DeviceEncapsulator::Clear(const Graphics::RenderTarget *renderTarget, const
     CHECK_DIRECTX11_ERROR();
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::Clear(const Graphics::DepthStencil *depthStencil, ClearOptions opts, float depth, u8 stencil) {
+void DX11DeviceAPIEncapsulator::Clear(const DepthStencil *depthStencil, ClearOptions opts, float depth, u8 stencil) {
     ::ID3D11DeviceContext *const context = _wrapper.ImmediateContext();
 
     ::ID3D11DepthStencilView *dx11DepthStencil =
-        checked_cast<const DX11::DepthStencil *>(depthStencil->DeviceAPIDependantTexture2D().get())->DepthStencilView();
+        checked_cast<const DX11DepthStencil *>(depthStencil->DeviceAPIDependantTexture2D().get())->DepthStencilView();
     Assert(dx11DepthStencil);
 
     UINT dx11ClearFlags = 0;
-    if (size_t(opts) & size_t(ClearOptions::Depth) )
+    if (Meta::HasFlag(opts, ClearOptions::Depth) )
         dx11ClearFlags |= D3D11_CLEAR_DEPTH;
-    if (size_t(opts) & size_t(ClearOptions::Stencil) )
+    if (Meta::HasFlag(opts, ClearOptions::Stencil) )
         dx11ClearFlags |= D3D11_CLEAR_STENCIL;
 
     context->ClearDepthStencilView(dx11DepthStencil, dx11ClearFlags, depth, stencil);
@@ -593,7 +726,7 @@ void DeviceEncapsulator::Clear(const Graphics::DepthStencil *depthStencil, Clear
 //----------------------------------------------------------------------------
 // Draw
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DrawPrimitives(Graphics::PrimitiveType primitiveType, size_t startVertex, size_t primitiveCount) {
+void DX11DeviceAPIEncapsulator::DrawPrimitives(PrimitiveType primitiveType, size_t startVertex, size_t primitiveCount) {
     ::ID3D11DeviceContext *const context = _wrapper.ImmediateContext();
     ::D3D11_PRIMITIVE_TOPOLOGY dx11PrimitiveTopology = PrimitiveTypeToDX11PrimitiveTopology(primitiveType);
 
@@ -605,7 +738,7 @@ void DeviceEncapsulator::DrawPrimitives(Graphics::PrimitiveType primitiveType, s
     CHECK_DIRECTX11_ERROR();
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DrawIndexedPrimitives(PrimitiveType primitiveType, size_t baseVertex, size_t startIndex, size_t primitiveCount) {
+void DX11DeviceAPIEncapsulator::DrawIndexedPrimitives(PrimitiveType primitiveType, size_t baseVertex, size_t startIndex, size_t primitiveCount) {
     ::ID3D11DeviceContext *const context = _wrapper.ImmediateContext();
     ::D3D11_PRIMITIVE_TOPOLOGY dx11PrimitiveTopology = PrimitiveTypeToDX11PrimitiveTopology(primitiveType);
 
@@ -618,7 +751,7 @@ void DeviceEncapsulator::DrawIndexedPrimitives(PrimitiveType primitiveType, size
     CHECK_DIRECTX11_ERROR();
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DrawInstancedPrimitives(PrimitiveType primitiveType, size_t baseVertex, size_t startIndex, size_t primitiveCount, size_t startInstance, size_t instanceCount) {
+void DX11DeviceAPIEncapsulator::DrawInstancedPrimitives(PrimitiveType primitiveType, size_t baseVertex, size_t startIndex, size_t primitiveCount, size_t startInstance, size_t instanceCount) {
     ::ID3D11DeviceContext *const context = _wrapper.ImmediateContext();
     ::D3D11_PRIMITIVE_TOPOLOGY dx11PrimitiveTopology = PrimitiveTypeToDX11PrimitiveTopology(primitiveType);
 
@@ -637,7 +770,7 @@ void DeviceEncapsulator::DrawInstancedPrimitives(PrimitiveType primitiveType, si
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
 //----------------------------------------------------------------------------
-bool DeviceEncapsulator::IsProfilerAttached() const {
+bool DX11DeviceAPIEncapsulator::IsProfilerAttached() const {
 #ifdef WITH_DIRECTX11_DEBUG_MARKERS
     return  nullptr != _wrapper.UserDefinedAnnotation()/* &&
             _wrapper.UserDefinedAnnotation()->GetStatus() */;
@@ -646,19 +779,19 @@ bool DeviceEncapsulator::IsProfilerAttached() const {
 #endif
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::BeginEvent(const wchar_t *name) {
+void DX11DeviceAPIEncapsulator::BeginEvent(const wchar_t *name) {
     Assert(_wrapper.UserDefinedAnnotation());
 
     _wrapper.UserDefinedAnnotation()->BeginEvent(name);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::EndEvent() {
+void DX11DeviceAPIEncapsulator::EndEvent() {
     Assert(_wrapper.UserDefinedAnnotation());
 
     _wrapper.UserDefinedAnnotation()->EndEvent();
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetMarker(const wchar_t *name) {
+void DX11DeviceAPIEncapsulator::SetMarker(const wchar_t *name) {
     Assert(_wrapper.UserDefinedAnnotation());
 
     _wrapper.UserDefinedAnnotation()->SetMarker(name);
@@ -668,6 +801,5 @@ void DeviceEncapsulator::SetMarker(const wchar_t *name) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace DX11
 } //!namespace Graphics
 } //!namespace Core

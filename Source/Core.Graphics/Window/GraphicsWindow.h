@@ -23,6 +23,9 @@ public:
         BasicWindow *parent = nullptr);
     virtual ~GraphicsWindow();
 
+    bool FixedTimeStep() const { return _fixedTimeStep; }
+    void SetFixedTimeStep(bool value) { _fixedTimeStep = value; }
+
     void RenderLoop(DeviceEncapsulator *deviceEncapsulator);
 
     virtual void Initialize(const Timeline& time);
@@ -35,6 +38,9 @@ public:
     virtual void Draw(const Timeline& time);
 
     virtual void Present();
+
+private:
+    bool _fixedTimeStep;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

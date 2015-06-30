@@ -2,22 +2,21 @@
 
 #include "DX11SamplerState.h"
 
-#include "DirectX11/DX11DeviceEncapsulator.h"
+#include "DirectX11/DX11DeviceAPIEncapsulator.h"
 
-#include "Device/DeviceAPIEncapsulator.h"
+#include "Device/DeviceAPI.h"
 #include "Device/DeviceEncapsulatorException.h"
 
 #include "Core/Allocator/PoolAllocator-impl.h"
 
 namespace Core {
 namespace Graphics {
-namespace DX11 {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SamplerState::SamplerState(IDeviceAPIEncapsulator *device, Graphics::SamplerState *owner)
+DX11SamplerState::DX11SamplerState(IDeviceAPIEncapsulator *device, SamplerState *owner)
 :   DeviceAPIDependantSamplerState(device, owner) {
-    const DeviceWrapper *wrapper = DX11DeviceWrapper(device);
+    const DX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
 
     ::D3D11_SAMPLER_DESC samplerStateDesc;
     ::SecureZeroMemory(&samplerStateDesc, sizeof(samplerStateDesc));
@@ -43,15 +42,15 @@ SamplerState::SamplerState(IDeviceAPIEncapsulator *device, Graphics::SamplerStat
     DX11SetDeviceResourceNameIFP(_entity, owner);
 }
 //----------------------------------------------------------------------------
-SamplerState::~SamplerState() {
+DX11SamplerState::~DX11SamplerState() {
     ReleaseComRef(_entity);
 }
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(SamplerState, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Graphics, DX11SamplerState, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-D3D11_FILTER TextureFilterToDX11Filter(Graphics::TextureFilter value) {
+D3D11_FILTER TextureFilterToDX11Filter(TextureFilter value) {
     switch (value)
     {
     case Core::Graphics::TextureFilter::Linear:
@@ -77,7 +76,7 @@ D3D11_FILTER TextureFilterToDX11Filter(Graphics::TextureFilter value) {
     return static_cast<D3D11_FILTER>(-1);
 }
 //----------------------------------------------------------------------------
-Graphics::TextureFilter DX11FilterToTextureFilter(D3D11_FILTER value) {
+TextureFilter DX11FilterToTextureFilter(D3D11_FILTER value) {
     switch (value)
     {
     case D3D11_FILTER_MIN_MAG_MIP_LINEAR:
@@ -106,7 +105,7 @@ Graphics::TextureFilter DX11FilterToTextureFilter(D3D11_FILTER value) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-D3D11_TEXTURE_ADDRESS_MODE TextureAddressModeToDX11TextureAddressMode(Graphics::TextureAddressMode value) {
+D3D11_TEXTURE_ADDRESS_MODE TextureAddressModeToDX11TextureAddressMode(TextureAddressMode value) {
     switch (value)
     {
     case Core::Graphics::TextureAddressMode::Clamp:
@@ -121,7 +120,7 @@ D3D11_TEXTURE_ADDRESS_MODE TextureAddressModeToDX11TextureAddressMode(Graphics::
     return static_cast<D3D11_TEXTURE_ADDRESS_MODE>(-1);
 }
 //----------------------------------------------------------------------------
-Graphics::TextureAddressMode DX11TextureAddressModeToTextureAddressMode(D3D11_TEXTURE_ADDRESS_MODE value) {
+TextureAddressMode DX11TextureAddressModeToTextureAddressMode(D3D11_TEXTURE_ADDRESS_MODE value) {
     switch (value)
     {
     case D3D11_TEXTURE_ADDRESS_CLAMP:
@@ -138,6 +137,5 @@ Graphics::TextureAddressMode DX11TextureAddressModeToTextureAddressMode(D3D11_TE
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace DX11
 } //!namespace Graphics
 } //!namespace Core

@@ -4,6 +4,7 @@
 
 #include "Core.Graphics/Device/DeviceAPIDependantEntity.h"
 #include "Core.Graphics/Device/DeviceResource.h"
+#include "Core.Graphics/Device/IDeviceAPIEncapsulator.h"
 
 namespace Core {
 namespace Graphics {
@@ -16,9 +17,10 @@ FWD_REFPTR(DeviceAPIDependantTexture);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(Texture);
-class Texture : public TypedDeviceResource<DeviceResourceType::Texture> {
+FWD_WEAKPTR(Texture);
+class Texture : public DeviceResource {
 public:
-    Texture(const SurfaceFormat *format, BufferMode mode, BufferUsage usage);
+    Texture(DeviceResourceType textureType, const SurfaceFormat *format, BufferMode mode, BufferUsage usage);
     virtual ~Texture();
 
     const SurfaceFormat *Format() const { return _format; }
@@ -26,15 +28,19 @@ public:
     BufferMode Mode() const { return static_cast<BufferMode>(bitmode_type::Get(_usageAndMode)); }
     BufferUsage Usage() const { return static_cast<BufferUsage>(bitusage_type::Get(_usageAndMode)); }
 
-    virtual const Graphics::DeviceAPIDependantTexture *DeviceAPIDependantTexture() const = 0;
+    virtual Graphics::DeviceAPIDependantTexture *TextureEntity() const = 0;
+
     virtual size_t SizeInBytes() const = 0;
 
-    virtual bool Available() const override { return DeviceAPIDependantTexture() != nullptr; }
+    virtual bool Available() const override;
+    virtual DeviceAPIDependantEntity *TerminalEntity() const override;
 
     virtual void GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) = 0;
     virtual void SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) = 0;
 
     virtual void Destroy(IDeviceAPIEncapsulator *device) = 0;
+
+    virtual void CopyFrom(IDeviceAPIEncapsulator *device, const Texture *pother) = 0;
 
 private:
     typedef Meta::Bit<u32>::First<2>::type bitusage_type;
@@ -51,12 +57,14 @@ public:
     virtual ~IDeviceAPIDependantAbstractTextureContent() {}
 };
 //----------------------------------------------------------------------------
-class DeviceAPIDependantTexture : public DeviceAPIDependantEntity {
+class DeviceAPIDependantTexture : public TypedDeviceAPIDependantEntity<Texture> {
 public:
-    DeviceAPIDependantTexture(IDeviceAPIEncapsulator *device, Texture *owner);
+    DeviceAPIDependantTexture(IDeviceAPIEncapsulator *device, const Texture *resource);
     virtual ~DeviceAPIDependantTexture();
 
-    const Texture *Owner() const { return _owner; }
+    const SurfaceFormat *Format() const { return _format; }
+    BufferMode Mode() const { return _mode; }
+    BufferUsage Usage() const { return _usage; }
 
     virtual void GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) = 0;
     virtual void SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) = 0;
@@ -64,7 +72,9 @@ public:
     virtual const IDeviceAPIDependantAbstractTextureContent *Content() const = 0;
 
 private:
-    Texture *_owner;
+    const SurfaceFormat *_format;
+    BufferMode _mode;
+    BufferUsage _usage;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

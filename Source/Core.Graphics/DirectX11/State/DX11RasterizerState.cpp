@@ -2,21 +2,20 @@
 
 #include "DX11RasterizerState.h"
 
-#include "DirectX11/DX11DeviceEncapsulator.h"
+#include "DirectX11/DX11DeviceAPIEncapsulator.h"
 
-#include "Device/DeviceAPIEncapsulator.h"
+#include "Device/DeviceAPI.h"
 
 #include "Core/Allocator/PoolAllocator-impl.h"
 
 namespace Core {
 namespace Graphics {
-namespace DX11 {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-RasterizerState::RasterizerState(IDeviceAPIEncapsulator *device, Graphics::RasterizerState *owner)
+DX11RasterizerState::DX11RasterizerState(IDeviceAPIEncapsulator *device, RasterizerState *owner)
 :   DeviceAPIDependantRasterizerState(device, owner) {
-    const DeviceWrapper *wrapper = DX11DeviceWrapper(device);
+    const DX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
 
     ::D3D11_RASTERIZER_DESC rasterizerStateDesc;
     ::SecureZeroMemory(&rasterizerStateDesc, sizeof(rasterizerStateDesc));
@@ -46,15 +45,15 @@ RasterizerState::RasterizerState(IDeviceAPIEncapsulator *device, Graphics::Raste
     DX11SetDeviceResourceNameIFP(_entity, owner);
 }
 //----------------------------------------------------------------------------
-RasterizerState::~RasterizerState() {
+DX11RasterizerState::~DX11RasterizerState() {
     ReleaseComRef(_entity);
 }
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(RasterizerState, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Graphics, DX11RasterizerState, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-D3D11_CULL_MODE CullModeToDX11CullMode(Graphics::CullMode value) {
+D3D11_CULL_MODE CullModeToDX11CullMode(CullMode value) {
     switch (value)
     {
     case Core::Graphics::CullMode::CullClockwiseFace:
@@ -68,7 +67,7 @@ D3D11_CULL_MODE CullModeToDX11CullMode(Graphics::CullMode value) {
     return static_cast<D3D11_CULL_MODE>(-1);
 }
 //----------------------------------------------------------------------------
-Graphics::CullMode DX11CullModeToCullMode(D3D11_CULL_MODE value) {
+CullMode DX11CullModeToCullMode(D3D11_CULL_MODE value) {
     switch (value)
     {
     case D3D11_CULL_BACK:
@@ -84,7 +83,7 @@ Graphics::CullMode DX11CullModeToCullMode(D3D11_CULL_MODE value) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-D3D11_FILL_MODE FillModeToDX11FillMode(Graphics::FillMode value) {
+D3D11_FILL_MODE FillModeToDX11FillMode(FillMode value) {
     switch (value)
     {
     case Core::Graphics::FillMode::Solid:
@@ -96,7 +95,7 @@ D3D11_FILL_MODE FillModeToDX11FillMode(Graphics::FillMode value) {
     return static_cast<D3D11_FILL_MODE>(-1);
 }
 //----------------------------------------------------------------------------
-Graphics::FillMode DX11FillModeToFillMode(D3D11_FILL_MODE value) {
+FillMode DX11FillModeToFillMode(D3D11_FILL_MODE value) {
     switch (value)
     {
     case D3D11_FILL_SOLID:
@@ -110,6 +109,5 @@ Graphics::FillMode DX11FillModeToFillMode(D3D11_FILL_MODE value) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace DX11
 } //!namespace Graphics
 } //!namespace Core

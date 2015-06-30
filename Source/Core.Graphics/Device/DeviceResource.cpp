@@ -17,22 +17,22 @@ DeviceResource::~DeviceResource() {}
 //----------------------------------------------------------------------------
 void DeviceResource::OnDeviceCreate(DeviceEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
-    OnDeviceCreateImpl(device);
+    VirtualOnDeviceCreate(device);
 }
 //----------------------------------------------------------------------------
 void DeviceResource::OnDeviceReset(DeviceEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
-    OnDeviceResetImpl(device);
+    VirtualOnDeviceReset(device);
 }
 //----------------------------------------------------------------------------
 void DeviceResource::OnDeviceLost(DeviceEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
-    OnDeviceLostImpl(device);
+    VirtualOnDeviceLost(device);
 }
 //----------------------------------------------------------------------------
 void DeviceResource::OnDeviceDestroy(DeviceEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
-    OnDeviceDestroyImpl(device);
+    VirtualOnDeviceDestroy(device);
 }
 //----------------------------------------------------------------------------
 void DeviceResource::Freeze() {
@@ -74,35 +74,6 @@ void DeviceResource::SetResourceName(String&& name) {
     Assert(name.size());
     _resourceName = std::move(name);
 #endif
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-const char *ResourceTypeToCStr(DeviceResourceType type) {
-    switch (type)
-    {
-    case Core::Graphics::DeviceResourceType::Constants:
-        return "Constants";
-    case Core::Graphics::DeviceResourceType::Indices:
-        return "Indices";
-    case Core::Graphics::DeviceResourceType::RenderTarget:
-        return "RenderTarget";
-    case Core::Graphics::DeviceResourceType::ShaderEffect:
-        return "ShaderEffect";
-    case Core::Graphics::DeviceResourceType::ShaderProgram:
-        return "ShaderProgram";
-    case Core::Graphics::DeviceResourceType::State:
-        return "State";
-    case Core::Graphics::DeviceResourceType::Texture:
-        return "Texture";
-    case Core::Graphics::DeviceResourceType::VertexDeclaration:
-        return "VertexDeclaration";
-    case Core::Graphics::DeviceResourceType::Vertices:
-        return "Vertices";
-    }
-
-    AssertNotImplemented();
-    return nullptr;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

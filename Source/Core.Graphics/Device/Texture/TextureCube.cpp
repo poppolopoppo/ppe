@@ -2,7 +2,7 @@
 
 #include "TextureCube.h"
 
-#include "Device/DeviceAPIEncapsulator.h"
+#include "Device/DeviceAPI.h"
 #include "Device/DeviceResourceBuffer.h"
 #include "SurfaceFormat.h"
 
@@ -27,7 +27,7 @@ TextureCube::TextureCube(
     BufferMode mode,
     BufferUsage usage
     )
-:   Texture(format, mode, usage)
+:   Texture(DeviceResourceType::TextureCube, format, mode, usage)
 ,   _width(checked_cast<u32>(width))
 ,   _height(checked_cast<u32>(height))
 ,   _levelCount(checked_cast<u32>(levelCount)) {
@@ -56,38 +56,6 @@ float4 TextureCube::DuDvDimensions() const {
         );
 }
 //----------------------------------------------------------------------------
-void TextureCube::GetData(
-    IDeviceAPIEncapsulator *device,
-    Face face,
-    size_t level,
-    size_t x, size_t y,
-    size_t width, size_t height,
-    void *const dst, size_t stride, size_t count ) {
-    THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(Frozen());
-    Assert(device);
-    Assert(_deviceAPIDependantTextureCube);
-
-    // TODO
-    AssertNotImplemented();
-}
-//----------------------------------------------------------------------------
-void TextureCube::SetData(
-    IDeviceAPIEncapsulator *device,
-    Face face,
-    size_t level,
-    size_t x, size_t y,
-    size_t width, size_t height,
-    const void *src, size_t stride, size_t count ) {
-    THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(Frozen());
-    Assert(device);
-    Assert(_deviceAPIDependantTextureCube);
-
-    // TODO
-    AssertNotImplemented();
-}
-//----------------------------------------------------------------------------
 void TextureCube::Create_(IDeviceAPIEncapsulator *device, const MemoryView<const u8>& optionalRawData) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
@@ -111,7 +79,7 @@ void TextureCube::Destroy(IDeviceAPIEncapsulator *device) {
     Assert(!_deviceAPIDependantTextureCube);
 }
 //----------------------------------------------------------------------------
-const Graphics::DeviceAPIDependantTexture *TextureCube::DeviceAPIDependantTexture() const {
+Graphics::DeviceAPIDependantTexture *TextureCube::TextureEntity() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
 
@@ -150,12 +118,66 @@ void TextureCube::SetData(IDeviceAPIEncapsulator *device, size_t offset, const v
     _deviceAPIDependantTextureCube->SetData(device, offset, src, stride, count);
 }
 //----------------------------------------------------------------------------
+void TextureCube::CopyFrom(IDeviceAPIEncapsulator *device, const Texture *psource) {
+    Assert(psource);
+    CopyFrom(device, checked_cast<const TextureCube *>(psource));
+}
+//----------------------------------------------------------------------------
+void TextureCube::CopyFrom(IDeviceAPIEncapsulator *device, const TextureCube *psourceCube) {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(Frozen());
+    Assert(Available());
+    Assert(psourceCube);
+    Assert(u32(BufferMode::Write) == (u32(Mode()) & u32(BufferMode::Write)));
+    Assert(psourceCube->Frozen());
+    Assert(psourceCube->Available());
+    Assert(u32(BufferMode::Write) == (u32(psourceCube->Mode()) & u32(BufferMode::Read)));
+    Assert(psourceCube->SizeInBytes() == SizeInBytes());
+
+    _deviceAPIDependantTextureCube->CopyFrom(device, psourceCube->DeviceAPIDependantTextureCube());
+}
+//----------------------------------------------------------------------------
+void TextureCube::CopySubPart(
+    IDeviceAPIEncapsulator *device, 
+    Face dstFace, size_t dstLevel, const uint2& dstPos, 
+    const TextureCube *psourceCube, Face srcFace, size_t srcLevel, const AABB2u& srcBox ) {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(Frozen());
+    Assert(Available());
+    Assert(psourceCube);
+    Assert(u32(BufferMode::Write) == (u32(Mode()) & u32(BufferMode::Write)));
+    Assert(psourceCube->Frozen());
+    Assert(psourceCube->Available());
+    Assert(u32(BufferMode::Write) == (u32(psourceCube->Mode()) & u32(BufferMode::Read)));
+    Assert(dstLevel < _levelCount);
+    Assert( dstPos.x() < _width && 
+            dstPos.y() < _height );
+    Assert(srcLevel < psourceCube->_levelCount);
+    Assert(srcBox.HasPositiveExtentsStrict());
+    Assert( srcBox.Max().x() < psourceCube->_width && 
+            srcBox.Max().y() < psourceCube->_height );
+    Assert( psourceCube->Format()->SizeOfTexture2DInBytes(srcBox.Extents()) == 
+            Format()->SizeOfTexture2DInBytes(srcBox.Extents()) );
+
+    _deviceAPIDependantTextureCube->CopySubPart(
+        device, 
+        dstFace, dstLevel, dstPos, 
+        psourceCube->DeviceAPIDependantTextureCube(), srcFace, srcLevel, srcBox );
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceAPIDependantTextureCube::DeviceAPIDependantTextureCube(IDeviceAPIEncapsulator *device, TextureCube *owner, const MemoryView<const u8>& optionalData)
-:   DeviceAPIDependantTexture(device, owner) {}
+DeviceAPIDependantTextureCube::DeviceAPIDependantTextureCube(IDeviceAPIEncapsulator *device, const TextureCube *resource, const MemoryView<const u8>& /* optionalData */)
+:   DeviceAPIDependantTexture(device, resource)
+,   _width(checked_cast<u32>(resource->Width()))
+,   _height(checked_cast<u32>(resource->Height())) 
+,   _levelCount(checked_cast<u32>(resource->LevelCount())) {}
 //----------------------------------------------------------------------------
 DeviceAPIDependantTextureCube::~DeviceAPIDependantTextureCube() {}
+//----------------------------------------------------------------------------
+size_t DeviceAPIDependantTextureCube::VideoMemorySizeInBytes() const {
+    return Format()->SizeOfTexture2DInBytes(_width, _height, _levelCount);
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

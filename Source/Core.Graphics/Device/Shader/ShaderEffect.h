@@ -9,7 +9,7 @@
 namespace Core {
 namespace Graphics {
 class IDeviceAPIEncapsulator;
-class IDeviceAPIShaderCompilerEncapsulator;
+class IDeviceAPIShaderCompiler;
 FWD_REFPTR(DeviceAPIDependantShaderEffect);
 FWD_REFPTR(VertexDeclaration);
 
@@ -17,12 +17,14 @@ FWD_REFPTR(VertexDeclaration);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(ShaderEffect);
-class ShaderEffect : public TypedDeviceResource<DeviceResourceType::ShaderEffect> {
+class ShaderEffect : public DeviceResource {
 public:
     explicit ShaderEffect(const Graphics::VertexDeclaration *vertexDeclaration);
     virtual ~ShaderEffect();
 
-    virtual bool Available() const override { return nullptr != _deviceAPIDependantEffect; }
+    virtual bool Available() const override;
+    virtual DeviceAPIDependantEntity *TerminalEntity() const override;
+
     const PDeviceAPIDependantShaderEffect& DeviceAPIDependantEffect() const {
         Assert(Frozen()); return _deviceAPIDependantEffect;
     }
@@ -47,15 +49,12 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DeviceAPIDependantShaderEffect : public DeviceAPIDependantEntity {
+class DeviceAPIDependantShaderEffect : public TypedDeviceAPIDependantEntity<ShaderEffect> {
 public:
-    DeviceAPIDependantShaderEffect(IDeviceAPIEncapsulator *device, ShaderEffect *owner);
+    DeviceAPIDependantShaderEffect(IDeviceAPIEncapsulator *device, const ShaderEffect *resource);
     virtual ~DeviceAPIDependantShaderEffect();
 
-    const ShaderEffect *Owner() const { return _owner; }
-
-private:
-    ShaderEffect *_owner;
+    virtual size_t VideoMemorySizeInBytes() const override;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

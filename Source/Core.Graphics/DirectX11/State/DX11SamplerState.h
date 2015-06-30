@@ -10,23 +10,17 @@
 namespace Core {
 namespace Graphics {
 class IDeviceAPIEncapsulator;
-} //!namespace Graphics
-} //!namespace Core
-
-namespace Core {
-namespace Graphics {
-namespace DX11 {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class SamplerState : public DeviceAPIDependantSamplerState {
+class DX11SamplerState : public DeviceAPIDependantSamplerState {
 public:
-    SamplerState(IDeviceAPIEncapsulator *device, Graphics::SamplerState *owner);
-    virtual ~SamplerState();
+    DX11SamplerState(IDeviceAPIEncapsulator *device, SamplerState *owner);
+    virtual ~DX11SamplerState();
 
     ::ID3D11SamplerState *Entity() const { return _entity.Get(); }
 
-    SINGLETON_POOL_ALLOCATED_DECL(SamplerState);
+    SINGLETON_POOL_ALLOCATED_DECL(DX11SamplerState);
 
 private:
     ComPtr<::ID3D11SamplerState> _entity;
@@ -34,18 +28,17 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-D3D11_FILTER TextureFilterToDX11Filter(Graphics::TextureFilter value);
+D3D11_FILTER TextureFilterToDX11Filter(TextureFilter value);
 //----------------------------------------------------------------------------
-Graphics::TextureFilter DX11FilterToTextureFilter(D3D11_FILTER value);
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-D3D11_TEXTURE_ADDRESS_MODE TextureAddressModeToDX11TextureAddressMode(Graphics::TextureAddressMode value);
-//----------------------------------------------------------------------------
-Graphics::TextureAddressMode DX11TextureAddressModeToTextureAddressMode(D3D11_TEXTURE_ADDRESS_MODE value);
+TextureFilter DX11FilterToTextureFilter(D3D11_FILTER value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace DX11
+D3D11_TEXTURE_ADDRESS_MODE TextureAddressModeToDX11TextureAddressMode(TextureAddressMode value);
+//----------------------------------------------------------------------------
+TextureAddressMode DX11TextureAddressModeToTextureAddressMode(D3D11_TEXTURE_ADDRESS_MODE value);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Graphics
 } //!namespace Core

@@ -27,14 +27,16 @@ FWD_REFPTR(DeviceAPIDependantVertexDeclaration);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(VertexDeclaration);
-class VertexDeclaration : public TypedDeviceResource<DeviceResourceType::VertexDeclaration> {
+class VertexDeclaration : public DeviceResource {
 public:
     STATIC_CONST_INTEGRAL(u32, MaxSubPartCount, 6);
 
     VertexDeclaration();
     virtual ~VertexDeclaration();
 
-    virtual bool Available() const override { return nullptr != _deviceAPIDependantDeclaration; }
+    virtual bool Available() const override;
+    virtual DeviceAPIDependantEntity *TerminalEntity() const override;
+
     const PDeviceAPIDependantVertexDeclaration& DeviceAPIDependantDeclaration() const {
         Assert(Frozen()); return _deviceAPIDependantDeclaration;
     }
@@ -90,15 +92,12 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DeviceAPIDependantVertexDeclaration : public DeviceAPIDependantEntity {
+class DeviceAPIDependantVertexDeclaration : public TypedDeviceAPIDependantEntity<VertexDeclaration> {
 public:
-    DeviceAPIDependantVertexDeclaration(IDeviceAPIEncapsulator *device, VertexDeclaration *owner);
+    DeviceAPIDependantVertexDeclaration(IDeviceAPIEncapsulator *device, const VertexDeclaration *resource);
     virtual ~DeviceAPIDependantVertexDeclaration();
 
-    const VertexDeclaration *Owner() const { return _owner; }
-
-private:
-    VertexDeclaration *_owner;
+    virtual size_t VideoMemorySizeInBytes() const override { return 0; }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

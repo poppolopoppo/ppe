@@ -4,11 +4,10 @@
 
 namespace Core {
 namespace Graphics {
-namespace DX11 {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-D3D11_PRIMITIVE_TOPOLOGY PrimitiveTypeToDX11PrimitiveTopology(Graphics::PrimitiveType value) {
+D3D11_PRIMITIVE_TOPOLOGY PrimitiveTypeToDX11PrimitiveTopology(PrimitiveType value) {
     switch (value)
     {
     case Core::Graphics::PrimitiveType::LineList:
@@ -24,7 +23,7 @@ D3D11_PRIMITIVE_TOPOLOGY PrimitiveTypeToDX11PrimitiveTopology(Graphics::Primitiv
     return static_cast<D3D11_PRIMITIVE_TOPOLOGY>(-1);
 }
 //----------------------------------------------------------------------------
-Graphics::PrimitiveType DX11PrimitiveTopologyToPrimitiveType(D3D11_PRIMITIVE_TOPOLOGY value) {
+PrimitiveType DX11PrimitiveTopologyToPrimitiveType(D3D11_PRIMITIVE_TOPOLOGY value) {
     switch (value)
     {
     case D3D11_PRIMITIVE_TOPOLOGY_LINELIST:
@@ -43,6 +42,5 @@ Graphics::PrimitiveType DX11PrimitiveTopologyToPrimitiveType(D3D11_PRIMITIVE_TOP
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace DX11
 } //!namespace Graphics
 } //!namespace Core

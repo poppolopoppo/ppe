@@ -11,10 +11,22 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DepthStencilState::DepthStencilState() {}
+DepthStencilState::DepthStencilState() 
+:   DeviceResource(DeviceResourceType::DepthStencilState) {}
 //----------------------------------------------------------------------------
 DepthStencilState::~DepthStencilState() {
     Assert(!_deviceAPIDependantState);
+}
+//----------------------------------------------------------------------------
+bool DepthStencilState::Available() const {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    return nullptr != _deviceAPIDependantState;
+}
+//----------------------------------------------------------------------------
+DeviceAPIDependantEntity *DepthStencilState::TerminalEntity() const {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(Frozen());
+    return _deviceAPIDependantState.get();
 }
 //----------------------------------------------------------------------------
 void DepthStencilState::Create(IDeviceAPIEncapsulator *device) {
@@ -39,10 +51,9 @@ void DepthStencilState::Destroy(IDeviceAPIEncapsulator *device) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceAPIDependantDepthStencilState::DeviceAPIDependantDepthStencilState(IDeviceAPIEncapsulator *device, DepthStencilState *owner)
-:   DeviceAPIDependantEntity(device)
-,   _owner(owner) {
-    Assert(owner);
+DeviceAPIDependantDepthStencilState::DeviceAPIDependantDepthStencilState(IDeviceAPIEncapsulator *device, const DepthStencilState *resource)
+:   TypedDeviceAPIDependantEntity<DepthStencilState>(device->APIEncapsulator(), resource) {
+    Assert(resource);
 }
 //----------------------------------------------------------------------------
 DeviceAPIDependantDepthStencilState::~DeviceAPIDependantDepthStencilState() {}

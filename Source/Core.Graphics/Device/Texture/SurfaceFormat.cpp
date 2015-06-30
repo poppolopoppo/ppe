@@ -4,6 +4,7 @@
 
 #include "Device/DeviceEncapsulator.h"
 
+#include "Core/Maths/Geometry/ScalarVector.h"
 #include "Core/Memory/MemoryView.h"
 
 namespace Core {
@@ -88,6 +89,14 @@ size_t SurfaceFormat::SizeOfTexture2DInBytes(size_t width, size_t height, size_t
     return totalSizeInBytes;
 }
 //----------------------------------------------------------------------------
+size_t SurfaceFormat::SizeOfTexture2DInBytes(const uint2& widthHeight) const {
+    return SizeOfTexture2DInBytes(widthHeight.x(), widthHeight.y());
+}
+//----------------------------------------------------------------------------
+size_t SurfaceFormat::SizeOfTexture2DInBytes(const uint2& widthHeight, size_t levelCount) const {
+    return SizeOfTexture2DInBytes(widthHeight.x(), widthHeight.y(), levelCount);
+}
+//----------------------------------------------------------------------------
 bool SurfaceFormat::operator ==(const SurfaceFormat& other) const {
 #ifdef _DEBUG
     if (this != &other) {
@@ -108,12 +117,12 @@ bool SurfaceFormat::operator ==(const SurfaceFormat& other) const {
 #endif
 }
 //----------------------------------------------------------------------------
-void SurfaceFormat::CheckSupport(DeviceEncapsulator *device) const {
+void SurfaceFormat::CheckSupport(DeviceEncapsulator * /* device */) const {
     // TODO
     _support = SurfaceFormatSupport::All;
 }
 //----------------------------------------------------------------------------
-void SurfaceFormat::ClearSupport() const {
+void SurfaceFormat::ClearSupport(DeviceEncapsulator * /* device */) const {
     _support = SurfaceFormatSupport::All;
 }
 //----------------------------------------------------------------------------
@@ -121,7 +130,7 @@ void SurfaceFormat::ClearSupport() const {
 //----------------------------------------------------------------------------
 void SurfaceFormat::Start() {
     for (const SurfaceFormat& fmt : SurfaceFormat::AllFormats())
-        fmt.ClearSupport();
+        fmt.ClearSupport(nullptr);
 }
 //----------------------------------------------------------------------------
 void SurfaceFormat::Shutdown() {
@@ -136,7 +145,7 @@ void SurfaceFormat::OnDeviceCreate(DeviceEncapsulator *device) {
 //----------------------------------------------------------------------------
 void SurfaceFormat::OnDeviceDestroy(DeviceEncapsulator *device) {
     for (const SurfaceFormat& fmt : SurfaceFormat::AllFormats())
-        fmt.ClearSupport();
+        fmt.ClearSupport(device);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -244,7 +253,7 @@ namespace {
 #define SFMT_GammaSpace u32(SurfaceFormatFlags::GammaSpace)
 //----------------------------------------------------------------------------
 static const SurfaceFormat gAllSurfaceFormats[(u32)SurfaceFormatType::__COUNT] = {
-DEF_SURFACEFORMAT_INSTANCE(UNKNOWN,             1, -1,  0),
+DEF_SURFACEFORMAT_INSTANCE(UNKNOWN,             1,  0,  0),
 DEF_SURFACEFORMAT_INSTANCE(A8,                  1,  8,  SFMT_Alpha),
 DEF_SURFACEFORMAT_INSTANCE(D16,                 1, 16,  SFMT_Depth),
 DEF_SURFACEFORMAT_INSTANCE(D24S8,               1, 32,  SFMT_Depth|SFMT_Stencil),

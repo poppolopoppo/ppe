@@ -15,7 +15,7 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(ShaderSource, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Graphics, ShaderSource, );
 //----------------------------------------------------------------------------
 const char *ShaderSource::AppIn_SubstitutionName() { return "__AppIn_AutoSubstitutionHeader__"; }
 const char *ShaderSource::AppIn_VertexDefinitionName() { return "__AppIn_AutoVertexDefinition__"; }
@@ -51,7 +51,7 @@ ShaderSource::~ShaderSource() {}
 //----------------------------------------------------------------------------
 void ShaderSource::Preprocess(
     RAWSTORAGE_THREAD_LOCAL(Shader, char)& preprocessed,
-    const ShaderProgram *program,
+    const ShaderProgram * /* program */,
     const VertexDeclaration *vertexDeclaration) const {
     Assert(_sourceCode.size());
 
@@ -100,7 +100,7 @@ void ShaderSource::Preprocess(
     memcpy(outb, _sourceCode.Pointer(), _sourceCode.SizeInBytes());
     outb += _sourceCode.SizeInBytes();
 
-    Assert(outb - preprocessed.Pointer() == preprocessed.size());
+    Assert(outb - preprocessed.Pointer() == intptr_t(preprocessed.size()) );
 }
 //----------------------------------------------------------------------------
 void ShaderSource::FillSubstitutions(

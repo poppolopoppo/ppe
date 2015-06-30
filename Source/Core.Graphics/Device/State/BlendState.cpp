@@ -11,10 +11,23 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-BlendState::BlendState() : _blendEnabled(false), _blendFactor(0) {}
+BlendState::BlendState() 
+:   DeviceResource(DeviceResourceType::BlendState)
+,   _blendEnabled(false), _blendFactor(0) {}
 //----------------------------------------------------------------------------
 BlendState::~BlendState() {
     Assert(!_deviceAPIDependantState);
+}
+//----------------------------------------------------------------------------
+bool BlendState::Available() const {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    return nullptr != _deviceAPIDependantState;
+}
+//----------------------------------------------------------------------------
+DeviceAPIDependantEntity *BlendState::TerminalEntity() const {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(Frozen());
+    return _deviceAPIDependantState.get();
 }
 //----------------------------------------------------------------------------
 void BlendState::Create(IDeviceAPIEncapsulator *device) {
@@ -39,10 +52,9 @@ void BlendState::Destroy(IDeviceAPIEncapsulator *device) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceAPIDependantBlendState::DeviceAPIDependantBlendState(IDeviceAPIEncapsulator *device, BlendState *owner)
-:   DeviceAPIDependantEntity(device)
-,   _owner(owner) {
-    Assert(owner);
+DeviceAPIDependantBlendState::DeviceAPIDependantBlendState(IDeviceAPIEncapsulator *device, const BlendState *resource)
+:   TypedDeviceAPIDependantEntity<BlendState>(device->APIEncapsulator(), resource) {
+    Assert(resource);
 }
 //----------------------------------------------------------------------------
 DeviceAPIDependantBlendState::~DeviceAPIDependantBlendState() {}

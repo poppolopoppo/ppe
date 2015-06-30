@@ -10,23 +10,17 @@
 namespace Core {
 namespace Graphics {
 class IDeviceAPIEncapsulator;
-} //!namespace Graphics
-} //!namespace Core
-
-namespace Core {
-namespace Graphics {
-namespace DX11 {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class BlendState : public DeviceAPIDependantBlendState {
+class DX11BlendState : public DeviceAPIDependantBlendState {
 public:
-    BlendState(IDeviceAPIEncapsulator *device, Graphics::BlendState *owner);
-    virtual ~BlendState();
+    DX11BlendState(IDeviceAPIEncapsulator *device, BlendState *owner);
+    virtual ~DX11BlendState();
 
     ::ID3D11BlendState *Entity() const { return _entity.Get(); }
 
-    SINGLETON_POOL_ALLOCATED_DECL(BlendState);
+    SINGLETON_POOL_ALLOCATED_DECL(DX11BlendState);
 
 private:
     ComPtr<::ID3D11BlendState> _entity;
@@ -34,24 +28,23 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-D3D11_BLEND BlendToDX11Blend(Graphics::Blend value);
+::D3D11_BLEND BlendToDX11Blend(Blend value);
 //----------------------------------------------------------------------------
-Graphics::Blend DX11BlendToBlend(D3D11_BLEND value);
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-D3D11_BLEND_OP BlendFunctionToDX11BlendOp(Graphics::BlendFunction value);
-//----------------------------------------------------------------------------
-Graphics::BlendFunction DX11BlendOpToBlendFunction(D3D11_BLEND_OP value);
+Blend DX11BlendToBlend(::D3D11_BLEND value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-D3D11_COLOR_WRITE_ENABLE ColorChannelsToDX11ColorWriteEnable(Graphics::ColorChannels value);
+::D3D11_BLEND_OP BlendFunctionToDX11BlendOp(BlendFunction value);
 //----------------------------------------------------------------------------
-Graphics::ColorChannels DX11ColorWriteEnableToColorChannels(D3D11_COLOR_WRITE_ENABLE value);
+BlendFunction DX11BlendOpToBlendFunction(::D3D11_BLEND_OP value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace DX11
+::D3D11_COLOR_WRITE_ENABLE ColorChannelsToDX11ColorWriteEnable(ColorChannels value);
+//----------------------------------------------------------------------------
+ColorChannels DX11ColorWriteEnableToColorChannels(::D3D11_COLOR_WRITE_ENABLE value);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Graphics
 } //!namespace Core

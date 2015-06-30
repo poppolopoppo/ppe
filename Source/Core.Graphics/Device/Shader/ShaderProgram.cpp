@@ -22,7 +22,8 @@ namespace Graphics {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 ShaderProgram::ShaderProgram(ShaderProfileType profile, ShaderProgramType type)
-:   _data(0) {
+:   DeviceResource(DeviceResourceType::ShaderProgram)
+,   _data(0) {
     bitprofile_type::InplaceSet(_data, static_cast<size_t>(profile));
     bitprogram_type::InplaceSet(_data, static_cast<size_t>(type));
 }
@@ -31,8 +32,19 @@ ShaderProgram::~ShaderProgram() {
     Assert(!_deviceAPIDependantProgram);
 }
 //----------------------------------------------------------------------------
+bool ShaderProgram::Available() const {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    return nullptr != _deviceAPIDependantProgram;
+}
+//----------------------------------------------------------------------------
+DeviceAPIDependantEntity *ShaderProgram::TerminalEntity() const {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(Frozen());
+    return _deviceAPIDependantProgram.get();
+}
+//----------------------------------------------------------------------------
 void ShaderProgram::Create(
-    IDeviceAPIShaderCompilerEncapsulator *compiler,
+    IDeviceAPIShaderCompiler *compiler,
     const char *entryPoint,
     ShaderCompilerFlags flags,
     const ShaderSource *source,
@@ -47,7 +59,7 @@ void ShaderProgram::Create(
     Assert(_deviceAPIDependantProgram);
 }
 //----------------------------------------------------------------------------
-void ShaderProgram::Destroy(IDeviceAPIShaderCompilerEncapsulator *compiler) {
+void ShaderProgram::Destroy(IDeviceAPIShaderCompiler *compiler) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(compiler);
@@ -59,7 +71,7 @@ void ShaderProgram::Destroy(IDeviceAPIShaderCompilerEncapsulator *compiler) {
 }
 //----------------------------------------------------------------------------
 void ShaderProgram::Preprocess(
-    IDeviceAPIShaderCompilerEncapsulator *compiler,
+    IDeviceAPIShaderCompiler *compiler,
     RAWSTORAGE(Shader, char)& output,
     const ShaderSource *source,
     const VertexDeclaration *vertexDeclaration) const {
@@ -71,7 +83,7 @@ void ShaderProgram::Preprocess(
 }
 //----------------------------------------------------------------------------
 void ShaderProgram::Reflect(
-    IDeviceAPIShaderCompilerEncapsulator *compiler,
+    IDeviceAPIShaderCompiler *compiler,
     ASSOCIATIVE_VECTOR(Shader, BindName, PCConstantBufferLayout)& constants,
     VECTOR(Shader, ShaderProgramTexture)& textures ) const {
     THIS_THREADRESOURCE_CHECKACCESS();
@@ -85,14 +97,15 @@ void ShaderProgram::Reflect(
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 DeviceAPIDependantShaderProgram::DeviceAPIDependantShaderProgram(
-    IDeviceAPIShaderCompilerEncapsulator *compiler,
-    Graphics::ShaderProgram *owner,
-    const char *entryPoint,
-    ShaderCompilerFlags flags,
-    const ShaderSource *source,
-    const VertexDeclaration *vertexDeclaration)
-:   DeviceAPIDependantEntity(compiler->Encapsulator()->Device())
-,   _owner(owner) {}
+    IDeviceAPIShaderCompiler *compiler,
+    const ShaderProgram *resource,
+    const char * /* entryPoint */,
+    ShaderCompilerFlags /* flags */,
+    const ShaderSource * /* source */,
+    const VertexDeclaration * /* vertexDeclaration */)
+:   TypedDeviceAPIDependantEntity<ShaderProgram>(compiler->APIEncapsulator(), resource) {
+    Assert(resource);
+}
 //----------------------------------------------------------------------------
 DeviceAPIDependantShaderProgram::~DeviceAPIDependantShaderProgram() {}
 //----------------------------------------------------------------------------
@@ -101,7 +114,7 @@ DeviceAPIDependantShaderProgram::~DeviceAPIDependantShaderProgram() {}
 static bool TryCompileShaderProgram_(
     PShaderSource& source,
     WString *wwhatIfFailed,
-    IDeviceAPIShaderCompilerEncapsulator *compiler,
+    IDeviceAPIShaderCompiler *compiler,
     ShaderProgram *program,
     const char *entryPoint,
     ShaderCompilerFlags flags,
@@ -122,7 +135,7 @@ static bool TryCompileShaderProgram_(
 }
 //----------------------------------------------------------------------------
 void CompileShaderProgram(
-    IDeviceAPIShaderCompilerEncapsulator *compiler,
+    IDeviceAPIShaderCompiler *compiler,
     ShaderProgram *program,
     const char *entryPoint,
     ShaderCompilerFlags flags,
@@ -174,15 +187,15 @@ void CompileShaderProgram(
 //----------------------------------------------------------------------------
 void ShaderCompilerFlagsToCStr(char *cstr, size_t capacity, ShaderCompilerFlags flags) {
     BasicOCStrStream<char> oss(cstr, capacity);
-    if (size_t(flags) & size_t(ShaderCompilerFlags::Debug))
+    if (Meta::HasFlag(flags, ShaderCompilerFlags::Debug))
         oss << "Debug";
-    if (size_t(flags) & size_t(ShaderCompilerFlags::Optimize))
+    if (Meta::HasFlag(flags, ShaderCompilerFlags::Optimize))
         oss << "Optimize";
-    if (size_t(flags) & size_t(ShaderCompilerFlags::NoOptimize))
+    if (Meta::HasFlag(flags, ShaderCompilerFlags::NoOptimize))
         oss << "NoOptimize";
-    if (size_t(flags) & size_t(ShaderCompilerFlags::Pedantic))
+    if (Meta::HasFlag(flags, ShaderCompilerFlags::Pedantic))
         oss << "Pedantic";
-    if (size_t(flags) & size_t(ShaderCompilerFlags::WError))
+    if (Meta::HasFlag(flags, ShaderCompilerFlags::WError))
         oss << "WError";
 }
 //----------------------------------------------------------------------------

@@ -42,11 +42,11 @@ void RenderTarget::Create(IDeviceAPIEncapsulator *device, const MemoryView<const
 //----------------------------------------------------------------------------
 class DeviceAPIDependantRenderTarget : public Graphics::DeviceAPIDependantTexture2D {
 public:
-    DeviceAPIDependantRenderTarget(IDeviceAPIEncapsulator *device, RenderTarget *owner, const MemoryView<const u8>& optionalData);
+    DeviceAPIDependantRenderTarget(IDeviceAPIEncapsulator *device, const RenderTarget *resource, const MemoryView<const u8>& optionalData);
     virtual ~DeviceAPIDependantRenderTarget();
 
-    const RenderTarget *Owner() const {
-        return checked_cast<const RenderTarget *>(DeviceAPIDependantTexture::Owner());
+    const RenderTarget *TypedResource() const {
+        return checked_cast<const RenderTarget *>(Resource());
     }
 };
 //----------------------------------------------------------------------------

@@ -11,10 +11,22 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SamplerState::SamplerState() {}
+SamplerState::SamplerState()
+:   DeviceResource(DeviceResourceType::SamplerState) {}
 //----------------------------------------------------------------------------
 SamplerState::~SamplerState() {
     Assert(!_deviceAPIDependantState);
+}
+//----------------------------------------------------------------------------
+bool SamplerState::Available() const {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    return nullptr != _deviceAPIDependantState;
+}
+//----------------------------------------------------------------------------
+DeviceAPIDependantEntity *SamplerState::TerminalEntity() const {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(Frozen());
+    return _deviceAPIDependantState.get();
 }
 //----------------------------------------------------------------------------
 void SamplerState::Create(IDeviceAPIEncapsulator *device) {
@@ -39,10 +51,9 @@ void SamplerState::Destroy(IDeviceAPIEncapsulator *device) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceAPIDependantSamplerState::DeviceAPIDependantSamplerState(IDeviceAPIEncapsulator *device, SamplerState *owner)
-:   DeviceAPIDependantEntity(device)
-,   _owner(owner) {
-    Assert(owner);
+DeviceAPIDependantSamplerState::DeviceAPIDependantSamplerState(IDeviceAPIEncapsulator *device, const SamplerState *resource)
+:   TypedDeviceAPIDependantEntity<SamplerState>(device->APIEncapsulator(), resource) {
+    Assert(resource);
 }
 //----------------------------------------------------------------------------
 DeviceAPIDependantSamplerState::~DeviceAPIDependantSamplerState() {}

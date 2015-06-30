@@ -16,10 +16,21 @@ namespace Graphics {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 VertexDeclaration::VertexDeclaration()
-:   _sizeInBytes(0) {}
+:   DeviceResource(DeviceResourceType::VertexDeclaration)
+,   _sizeInBytes(0) {}
 //----------------------------------------------------------------------------
 VertexDeclaration::~VertexDeclaration() {
     Assert(!_deviceAPIDependantDeclaration);
+}
+//----------------------------------------------------------------------------
+bool VertexDeclaration::Available() const {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    return nullptr != _deviceAPIDependantDeclaration;
+}
+//----------------------------------------------------------------------------
+DeviceAPIDependantEntity *VertexDeclaration::TerminalEntity() const {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    return _deviceAPIDependantDeclaration.get();
 }
 //----------------------------------------------------------------------------
 MemoryView<const Pair<VertexSubPartKey, VertexSubPartPOD>> VertexDeclaration::SubParts() const {
@@ -36,7 +47,7 @@ Pair<const VertexSubPartKey *, const AbstractVertexSubPart *> VertexDeclaration:
 Pair<const VertexSubPartKey *, const AbstractVertexSubPart *> VertexDeclaration::SubPartBySemantic(const VertexSubPartSemantic semantic, size_t index) const {
     for (const vertexsubpartentry_type& it : _subParts) {
         if (it.first.Semantic() == semantic &&
-            it.first.Index() == index) {
+            it.first.Index() == index ) {
             return MakePair(&it.first, reinterpret_cast<const AbstractVertexSubPart *>(&it.second));
         }
     }
@@ -103,10 +114,9 @@ void VertexDeclaration::Destroy(IDeviceAPIEncapsulator *device) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceAPIDependantVertexDeclaration::DeviceAPIDependantVertexDeclaration(IDeviceAPIEncapsulator *device, VertexDeclaration *owner)
-:   DeviceAPIDependantEntity(device)
-,   _owner(owner) {
-    Assert(owner);
+DeviceAPIDependantVertexDeclaration::DeviceAPIDependantVertexDeclaration(IDeviceAPIEncapsulator *device, const VertexDeclaration *resource)
+:   TypedDeviceAPIDependantEntity<VertexDeclaration>(device->APIEncapsulator(), resource) {
+    Assert(resource);
 }
 //----------------------------------------------------------------------------
 DeviceAPIDependantVertexDeclaration::~DeviceAPIDependantVertexDeclaration() {}

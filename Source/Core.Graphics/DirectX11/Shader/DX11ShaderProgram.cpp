@@ -3,9 +3,9 @@
 #include "DX11ShaderProgram.h"
 
 #include "DirectX11/DX11CompilerIncludes.h"
-#include "DirectX11/DX11DeviceEncapsulator.h"
+#include "DirectX11/DX11DeviceAPIEncapsulator.h"
 
-#include "Device/DeviceAPIEncapsulator.h"
+#include "Device/DeviceAPI.h"
 #include "Device/DeviceEncapsulatorException.h"
 #include "Device/Geometry/VertexDeclaration.h"
 #include "Device/Shader/ShaderSource.h"
@@ -26,21 +26,20 @@
 
 namespace Core {
 namespace Graphics {
-namespace DX11 {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-class ShaderIncludeHandler_ : public ::ID3DInclude {
+class DX11ShaderIncludeHandler_ : public ::ID3DInclude {
 public:
-    ShaderIncludeHandler_(  const Dirpath& systemDir,
-                            const Graphics::ShaderSource *source,
-                            const Graphics::VertexDeclaration *vertexDeclaration);
-    ~ShaderIncludeHandler_();
+    DX11ShaderIncludeHandler_(  const Dirpath& systemDir,
+                                const ShaderSource *source,
+                                const VertexDeclaration *vertexDeclaration);
+    virtual ~DX11ShaderIncludeHandler_();
 
-    ShaderIncludeHandler_(const ShaderIncludeHandler_& ) = delete;
-    ShaderIncludeHandler_& operator =(const ShaderIncludeHandler_& ) = delete;
+    DX11ShaderIncludeHandler_(const DX11ShaderIncludeHandler_& ) = delete;
+    DX11ShaderIncludeHandler_& operator =(const DX11ShaderIncludeHandler_& ) = delete;
 
     HRESULT __stdcall Open(::D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID *ppData, UINT *pBytes) override;
     HRESULT __stdcall Close(LPCVOID pData) override;
@@ -53,14 +52,14 @@ private:
     static void Deallocate_(void *ptr) { GetThreadLocalHeap().free(ptr); }
 
     const Dirpath _systemDir;
-    const Graphics::ShaderSource *_source;
-    const Graphics::VertexDeclaration *_vertexDeclaration;
+    const ShaderSource *_source;
+    const VertexDeclaration *_vertexDeclaration;
 };
 //----------------------------------------------------------------------------
-ShaderIncludeHandler_::ShaderIncludeHandler_(
+DX11ShaderIncludeHandler_::DX11ShaderIncludeHandler_(
     const Dirpath& systemDir,
-    const Graphics::ShaderSource *source,
-    const Graphics::VertexDeclaration *vertexDeclaration )
+    const ShaderSource *source,
+    const VertexDeclaration *vertexDeclaration )
 :   _systemDir(systemDir)
 ,   _source(source)
 ,   _vertexDeclaration(vertexDeclaration) {
@@ -69,13 +68,13 @@ ShaderIncludeHandler_::ShaderIncludeHandler_(
     Assert(vertexDeclaration);
 }
 //----------------------------------------------------------------------------
-ShaderIncludeHandler_::~ShaderIncludeHandler_() {}
+DX11ShaderIncludeHandler_::~DX11ShaderIncludeHandler_() {}
 //----------------------------------------------------------------------------
-HRESULT __stdcall ShaderIncludeHandler_::Open(::D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID *ppData, UINT *pBytes) {
+HRESULT __stdcall DX11ShaderIncludeHandler_::Open(::D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID/* pParentData */, LPCVOID *ppData, UINT *pBytes) {
     *ppData = nullptr;
     *pBytes = 0;
 
-    if (0 == CompareI(pFileName, Graphics::ShaderSource::AppIn_SubstitutionName())) {
+    if (0 == CompareI(pFileName, ShaderSource::AppIn_SubstitutionName())) {
         GenerateAutomaticSubstitutions_(ppData, pBytes);
         return S_OK;
     }
@@ -104,14 +103,14 @@ HRESULT __stdcall ShaderIncludeHandler_::Open(::D3D_INCLUDE_TYPE IncludeType, LP
     return S_OK;
 }
 //----------------------------------------------------------------------------
-HRESULT __stdcall ShaderIncludeHandler_::Close(LPCVOID pData) {
+HRESULT __stdcall DX11ShaderIncludeHandler_::Close(LPCVOID pData) {
     if (pData)
         Deallocate_(const_cast<void *>(pData));
 
     return S_OK;
 }
 //----------------------------------------------------------------------------
-void ShaderIncludeHandler_::Open_(const Filename& filename, LPCVOID *ppData, UINT *pBytes) {
+void DX11ShaderIncludeHandler_::Open_(const Filename& filename, LPCVOID *ppData, UINT *pBytes) {
     const auto file = VirtualFileSystem::Instance().OpenReadable(filename, AccessPolicy::Mode(AccessPolicy::Ate|AccessPolicy::Binary) );
     AssertRelease(file);
 
@@ -125,7 +124,7 @@ void ShaderIncludeHandler_::Open_(const Filename& filename, LPCVOID *ppData, UIN
     *pBytes = checked_cast<UINT>(sizeInBytes);
 }
 //----------------------------------------------------------------------------
-void ShaderIncludeHandler_::GenerateAutomaticSubstitutions_(LPCVOID *ppData, UINT *pBytes) {
+void DX11ShaderIncludeHandler_::GenerateAutomaticSubstitutions_(LPCVOID *ppData, UINT *pBytes) {
     VECTOR_THREAD_LOCAL(Shader, Pair<String COMMA String>) substitutions;
     _source->FillSubstitutions(substitutions, _vertexDeclaration);
 
@@ -155,21 +154,97 @@ void ShaderIncludeHandler_::GenerateAutomaticSubstitutions_(LPCVOID *ppData, UIN
     *pBytes = checked_cast<UINT>(sizeInBytes);
 }
 //----------------------------------------------------------------------------
+template <typename T>
+static ConstantFieldType DX11VariableTypeToConstantFieldType_(const size_t rows, const size_t columns) {
+    switch (columns)
+    {
+    case 1:
+        switch (rows)
+        {
+        case 1: return ConstantFieldTraits< T >::Type;
+        case 2: return ConstantFieldTraits< ScalarVector<T, 2> >::Type;
+        case 3: return ConstantFieldTraits< ScalarVector<T, 3> >::Type;
+        case 4: return ConstantFieldTraits< ScalarVector<T, 4> >::Type;
+        }
+        break;
+
+    case 2:
+        switch (rows)
+        {
+        case 1: return ConstantFieldTraits< ScalarMatrix<T, 1, 2> >::Type;
+        case 2: return ConstantFieldTraits< ScalarMatrix<T, 2, 2> >::Type;
+        case 3: return ConstantFieldTraits< ScalarMatrix<T, 3, 2> >::Type;
+        case 4: return ConstantFieldTraits< ScalarMatrix<T, 4, 2> >::Type;
+        }
+        break;
+
+    case 3:
+        switch (rows)
+        {
+        case 1: return ConstantFieldTraits< ScalarMatrix<T, 1, 3> >::Type;
+        case 2: return ConstantFieldTraits< ScalarMatrix<T, 2, 3> >::Type;
+        case 3: return ConstantFieldTraits< ScalarMatrix<T, 3, 3> >::Type;
+        case 4: return ConstantFieldTraits< ScalarMatrix<T, 4, 3> >::Type;
+        }
+        break;
+
+    case 4:
+        switch (rows)
+        {
+        case 1: return ConstantFieldTraits< ScalarMatrix<T, 1, 4> >::Type;
+        case 2: return ConstantFieldTraits< ScalarMatrix<T, 2, 4> >::Type;
+        case 3: return ConstantFieldTraits< ScalarMatrix<T, 3, 4> >::Type;
+        case 4: return ConstantFieldTraits< ScalarMatrix<T, 4, 4> >::Type;
+        }
+        break;
+    }
+
+    AssertNotImplemented();
+    return ConstantFieldType::Unknown;
+}
+//----------------------------------------------------------------------------
+static ConstantFieldType DX11ShaderTypeToConstantFieldType_(const ::D3D11_SHADER_TYPE_DESC& desc) {
+    Assert(::D3D10_SVC_STRUCT != desc.Class);
+
+    const size_t rows = desc.Rows;
+    const size_t columns = desc.Columns;
+
+    switch (desc.Type)
+    {
+    case ::D3D10_SVT_FLOAT:
+        return DX11VariableTypeToConstantFieldType_<float>(rows, columns);
+    case ::D3D10_SVT_INT:
+        return DX11VariableTypeToConstantFieldType_<i32>(rows, columns);
+    case ::D3D10_SVT_UINT:
+        return DX11VariableTypeToConstantFieldType_<u32>(rows, columns);
+    case ::D3D10_SVT_UINT8:
+        return DX11VariableTypeToConstantFieldType_<u8>(rows, columns);
+    case ::D3D10_SVT_BOOL:
+        return DX11VariableTypeToConstantFieldType_<bool>(rows, columns);
+    default:
+        break;
+    }
+
+    AssertNotImplemented();
+    return ConstantFieldType::Unknown;
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ShaderProgram::ShaderProgram(   IDeviceAPIShaderCompilerEncapsulator *compiler,
-                                Graphics::ShaderProgram *owner,
-                                const char *entryPoint,
-                                ShaderCompilerFlags flags,
-                                const Graphics::ShaderSource *source,
-                                const Graphics::VertexDeclaration *vertexDeclaration)
-:   DeviceAPIDependantShaderProgram(compiler, owner, entryPoint, flags, source, vertexDeclaration) 
+DX11ShaderProgram::DX11ShaderProgram(
+    IDeviceAPIShaderCompiler *compiler,
+    ShaderProgram *owner,
+    const char *entryPoint,
+    ShaderCompilerFlags flags,
+    const ShaderSource *source,
+    const VertexDeclaration *vertexDeclaration)
+:   DeviceAPIDependantShaderProgram(compiler, owner, entryPoint, flags, source, vertexDeclaration)
 ,   _programHashCode(0) {
     const MemoryView<const char> sourceCode = source->SourceCode();
 
-    ShaderIncludeHandler_ dx11Include(ShaderSource::SystemDirpath(), source, vertexDeclaration);
+    DX11ShaderIncludeHandler_ dx11Include(ShaderSource::SystemDirpath(), source, vertexDeclaration);
     const ::D3D_SHADER_MACRO dx11Defines[] = {
         {"DIRECTX11", "1"},
         {nullptr, nullptr},
@@ -201,7 +276,7 @@ ShaderProgram::ShaderProgram(   IDeviceAPIShaderCompilerEncapsulator *compiler,
     }
     Assert(!errors);
 
-    if (size_t(flags) & size_t(ShaderCompilerFlags::NoOptimize) ) {
+    if (Meta::HasFlag(flags, ShaderCompilerFlags::NoOptimize) ) {
         // shader is not stripped when NoOptimize is set (debug)
         _entity = compiled;
     }
@@ -226,19 +301,19 @@ ShaderProgram::ShaderProgram(   IDeviceAPIShaderCompilerEncapsulator *compiler,
     _programHashCode = hash_value_as_memory(_entity->GetBufferPointer(), _entity->GetBufferSize());
 }
 //----------------------------------------------------------------------------
-ShaderProgram::~ShaderProgram() {
+DX11ShaderProgram::~DX11ShaderProgram() {
     ReleaseComRef(_entity);
 }
 //----------------------------------------------------------------------------
-void ShaderProgram::Preprocess(
-    IDeviceAPIShaderCompilerEncapsulator *compiler,
+void DX11ShaderProgram::Preprocess(
+    IDeviceAPIShaderCompiler *compiler,
     RAWSTORAGE(Shader, char)& output,
-    const Graphics::ShaderProgram *owner,
-    const Graphics::ShaderSource *source,
-    const Graphics::VertexDeclaration *vertexDeclaration) {
+    const ShaderProgram *owner,
+    const ShaderSource *source,
+    const VertexDeclaration *vertexDeclaration) {
     const MemoryView<const char> sourceCode = source->SourceCode();
 
-    ShaderIncludeHandler_ dx11Include(ShaderSource::SystemDirpath(), source, vertexDeclaration);
+    DX11ShaderIncludeHandler_ dx11Include(ShaderSource::SystemDirpath(), source, vertexDeclaration);
     const ::D3D_SHADER_MACRO dx11Defines[] = {
         {"DIRECTX11", "1"},
         {nullptr, nullptr},
@@ -268,12 +343,14 @@ void ShaderProgram::Preprocess(
     memcpy(output.Pointer(), preprocessed->GetBufferPointer(), output.SizeInBytes());
 }
 //----------------------------------------------------------------------------
-void ShaderProgram::Reflect(
-    IDeviceAPIShaderCompilerEncapsulator *compiler,
+void DX11ShaderProgram::Reflect(
+    IDeviceAPIShaderCompiler *compiler,
     ASSOCIATIVE_VECTOR(Shader, BindName, PCConstantBufferLayout)& constants,
     VECTOR(Shader, ShaderProgramTexture)& textures,
-    const Graphics::ShaderProgram *program) {
-    const DX11::ShaderProgram *const dx11Program = checked_cast<const DX11::ShaderProgram *>(
+    const ShaderProgram *program) {
+    AssertRelease(program->Available());
+
+    const DX11ShaderProgram *const dx11Program = checked_cast<const DX11ShaderProgram *>(
         program->DeviceAPIDependantProgram().get());
 
     ::ID3D11ShaderReflection *dx11Reflector = nullptr;
@@ -316,35 +393,12 @@ void ShaderProgram::Reflect(
 
             const bool inUse = (::D3D_SVF_USED & dx11VariableDesc.uFlags) == ::D3D_SVF_USED;
 
-            // TODO : handle integral data !
-            ConstantFieldType type;
-            switch (dx11VariableDesc.Size)
-            {
-            case sizeof(float)*1:
-                type = ConstantFieldType::Float;
-                break;
-            case sizeof(float)*2:
-                type = ConstantFieldType::Float2;
-                break;
-            case sizeof(float)*3:
-                type = ConstantFieldType::Float3;
-                break;
-            case sizeof(float)*4:
-                type = ConstantFieldType::Float4;
-                break;
-            case sizeof(float)*3*3:
-                type = ConstantFieldType::Float3x3;
-                break;
-            case sizeof(float)*4*3:
-                type = ConstantFieldType::Float4x3;
-                break;
-            case sizeof(float)*4*4:
-                type = ConstantFieldType::Float4x4;
-                break;
+            ::D3D11_SHADER_TYPE_DESC dx11TypeDesc;
+            if (FAILED(dx11Reflector_variable->GetType()->GetDesc(&dx11TypeDesc)))
+                AssertNotReached();
 
-            default: AssertNotImplemented();
-            }
-
+            const ConstantFieldType type = DX11ShaderTypeToConstantFieldType_(dx11TypeDesc);
+            
             layout->AddField(   dx11VariableDesc.Name,
                                 type,
                                 dx11VariableDesc.StartOffset,
@@ -377,21 +431,25 @@ void ShaderProgram::Reflect(
     }
 }
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(ShaderProgram, );
+size_t DX11ShaderProgram::VideoMemorySizeInBytes() const {
+    return _entity->GetBufferSize();
+}
+//----------------------------------------------------------------------------
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Graphics, DX11ShaderProgram, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 UINT ShaderCompilerFlagsToD3D11CompileFlags(ShaderCompilerFlags value) {
     UINT result = 0;
-    if (size_t(ShaderCompilerFlags::Debug) == (size_t(ShaderCompilerFlags::Debug) & size_t(value)) )
+    if (Meta::HasFlag(value, ShaderCompilerFlags::Debug) )
         result |= D3DCOMPILE_DEBUG;
-    if (size_t(ShaderCompilerFlags::Optimize) == (size_t(ShaderCompilerFlags::Optimize) & size_t(value)) )
+    if (Meta::HasFlag(value, ShaderCompilerFlags::Optimize) )
         result |= D3DCOMPILE_OPTIMIZATION_LEVEL3;
-    else if (size_t(ShaderCompilerFlags::NoOptimize) == (size_t(ShaderCompilerFlags::NoOptimize) & size_t(value)) )
+    else if (Meta::HasFlag(value, ShaderCompilerFlags::NoOptimize) )
         result |= D3DCOMPILE_SKIP_OPTIMIZATION;
-    if (size_t(ShaderCompilerFlags::Pedantic) == (size_t(ShaderCompilerFlags::Pedantic) & size_t(value)) )
+    if (Meta::HasFlag(value, ShaderCompilerFlags::Pedantic) )
         result |= D3DCOMPILE_ENABLE_STRICTNESS;
-    if (size_t(ShaderCompilerFlags::WError) == (size_t(ShaderCompilerFlags::WError) & size_t(value)) )
+    if (Meta::HasFlag(value, ShaderCompilerFlags::WError) )
         result |= D3DCOMPILE_WARNINGS_ARE_ERRORS;
     return result;
 }
@@ -484,6 +542,5 @@ LPCSTR ShaderProfileTypeToD3D11Target(ShaderProgramType program, ShaderProfileTy
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace DX11
 } //!namespace Graphics
 } //!namespace Core

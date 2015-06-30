@@ -12,7 +12,11 @@ namespace Graphics {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 enum class ConstantFieldType {
-    Int = 0,
+    Unknown = -1,
+
+    Bool = 0,
+
+    Int,
     Int2,
     Int3,
     Int4,
@@ -29,6 +33,7 @@ enum class ConstantFieldType {
 
     Float3x3,
     Float4x3,
+    Float3x4,
     Float4x4,
 };
 //----------------------------------------------------------------------------
@@ -73,13 +78,18 @@ inline size_t hash_value(const ConstantField& field) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-struct ConstantFieldTraits { enum : bool { Enabled = false }; };
+struct ConstantFieldTraits { 
+    enum : bool { Enabled = false }; 
+    static const ConstantFieldType Type = ConstantFieldType::Unknown;
+};
 //----------------------------------------------------------------------------
 #define DEF_CONSTANTFIELDTRAITS(_T, _FIELDTYPE) \
     template <> struct ConstantFieldTraits<_T> { \
         enum : bool { Enabled = false }; \
         static const ConstantFieldType Type = ConstantFieldType::_FIELDTYPE; \
     }
+//----------------------------------------------------------------------------
+DEF_CONSTANTFIELDTRAITS(bool, Bool);
 //----------------------------------------------------------------------------
 DEF_CONSTANTFIELDTRAITS(i32, Int);
 DEF_CONSTANTFIELDTRAITS(i322, Int2);
@@ -98,6 +108,7 @@ DEF_CONSTANTFIELDTRAITS(float4, Float4);
 //----------------------------------------------------------------------------
 DEF_CONSTANTFIELDTRAITS(float3x3, Float3x3);
 DEF_CONSTANTFIELDTRAITS(float4x3, Float4x3);
+DEF_CONSTANTFIELDTRAITS(float3x4, Float3x4);
 DEF_CONSTANTFIELDTRAITS(float4x4, Float4x4);
 //----------------------------------------------------------------------------
 #undef DEF_CONSTANTFIELDTRAITS
@@ -108,6 +119,7 @@ DEF_CONSTANTFIELDTRAITS(float4x4, Float4x4);
     _Prefix template class _Tpl<T _Args >
 //----------------------------------------------------------------------------
 #define CONSTANTFIELD_EXTERNALTEMPLATE_IMPL_SCALAR_(_Prefix, _Tpl, _Args) \
+    CONSTANTFIELD_EXTERNALTEMPLATE_IMPL_(_Prefix, _Tpl, _Args, bool); \
     CONSTANTFIELD_EXTERNALTEMPLATE_IMPL_(_Prefix, _Tpl, _Args, i32); \
     CONSTANTFIELD_EXTERNALTEMPLATE_IMPL_(_Prefix, _Tpl, _Args, u32); \
     CONSTANTFIELD_EXTERNALTEMPLATE_IMPL_(_Prefix, _Tpl, _Args, float)
@@ -128,6 +140,7 @@ DEF_CONSTANTFIELDTRAITS(float4x4, Float4x4);
 #define CONSTANTFIELD_EXTERNALTEMPLATE_IMPL_MATRIX_(_Prefix, _Tpl, _Args) \
     CONSTANTFIELD_EXTERNALTEMPLATE_IMPL_(_Prefix, _Tpl, _Args, float3x3); \
     CONSTANTFIELD_EXTERNALTEMPLATE_IMPL_(_Prefix, _Tpl, _Args, float4x3); \
+    CONSTANTFIELD_EXTERNALTEMPLATE_IMPL_(_Prefix, _Tpl, _Args, float3x4); \
     CONSTANTFIELD_EXTERNALTEMPLATE_IMPL_(_Prefix, _Tpl, _Args, float4x4)
 //----------------------------------------------------------------------------
 #define CONSTANTFIELD_EXTERNALTEMPLATE_DECL(_Tpl, _Args) \

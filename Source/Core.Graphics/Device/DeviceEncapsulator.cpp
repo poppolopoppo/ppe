@@ -2,9 +2,6 @@
 
 #include "DeviceEncapsulator.h"
 
-#include "Core/Diagnostic/Logger.h"
-#include "Core/Memory/ComPtr.h"
-
 #include "Geometry/IndexBuffer.h"
 #include "Geometry/PrimitiveType.h"
 #include "Geometry/VertexBuffer.h"
@@ -25,8 +22,11 @@
 #include "Texture/Texture2D.h"
 #include "Texture/TextureCube.h"
 
+#include "Core/Diagnostic/Logger.h"
+#include "Core/Memory/ComPtr.h"
+
 #ifdef OS_WINDOWS
-#   include "DirectX11/DX11DeviceEncapsulator.h"
+#   include "DirectX11/DX11DeviceAPIEncapsulator.h"
 #endif
 
 namespace Core {
@@ -34,129 +34,34 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-AbstractDeviceAPIEncapsulator::AbstractDeviceAPIEncapsulator(
-    DeviceAPI api,
-    DeviceEncapsulator *owner,
-    const PresentationParameters& pp)
-:   _owner(owner)
-,   _api(api)
-,   _status(DeviceStatus::Invalid)
-,   _parameters(pp) {
-    Assert(owner);
-}
-//----------------------------------------------------------------------------
-AbstractDeviceAPIEncapsulator::~AbstractDeviceAPIEncapsulator() {
-    AssertRelease(_resources.empty());
-}
-//----------------------------------------------------------------------------
-void AbstractDeviceAPIEncapsulator::RegisterResource(DeviceResource *resource) {
-    Assert(resource);
-    Assert(_resources.end() == std::find(_resources.begin(), _resources.end(), resource));
-
-    _resources.push_back(resource);
-}
-//----------------------------------------------------------------------------
-void AbstractDeviceAPIEncapsulator::UnregisterResource(DeviceResource *resource) {
-    Assert(resource);
-
-    const auto it = std::find(_resources.begin(), _resources.end(), resource);
-    Assert(it != _resources.end());
-
-    Erase_DontPreserveOrder(_resources, it);
-}
-//----------------------------------------------------------------------------
-void AbstractDeviceAPIEncapsulator::ChangeStatus(DeviceStatus status, DeviceStatus old) {
-    AssertRelease(old == _status);
-    switch (_status = status)
-    {
-    case Core::Graphics::DeviceStatus::Invalid:
-        Assert(DeviceStatus::Destroy == old);
-        break;
-    case Core::Graphics::DeviceStatus::Normal:
-        Assert(DeviceStatus::Invalid == old);
-        OnDeviceCreate();
-        break;
-    case Core::Graphics::DeviceStatus::Reset:
-        Assert(DeviceStatus::Normal == old);
-        OnDeviceReset();
-        break;
-    case Core::Graphics::DeviceStatus::Lost:
-        Assert(DeviceStatus::Normal == old);
-        OnDeviceLost();
-        break;
-    case Core::Graphics::DeviceStatus::Destroy:
-        Assert(DeviceStatus::Normal == old);
-        OnDeviceDestroy();
-        break;
-    default:
-        AssertNotImplemented();
-    };
-}
-//----------------------------------------------------------------------------
-void AbstractDeviceAPIEncapsulator::ChangePresentationParameters(const PresentationParameters& parameters) {
-    _parameters = parameters;
-}
-//----------------------------------------------------------------------------
-void AbstractDeviceAPIEncapsulator::OnDeviceCreate() {
-    Assert(DeviceStatus::Normal == _status);
-    for (DeviceResource *resource : _resources)
-        resource->OnDeviceCreate(_owner);
-}
-//----------------------------------------------------------------------------
-void AbstractDeviceAPIEncapsulator::OnDeviceReset() {
-    Assert(DeviceStatus::Reset == _status);
-    for (DeviceResource *resource : _resources)
-        resource->OnDeviceReset(_owner);
-}
-//----------------------------------------------------------------------------
-void AbstractDeviceAPIEncapsulator::OnDeviceLost() {
-    Assert(DeviceStatus::Lost == _status);
-    for (DeviceResource *resource : _resources)
-        resource->OnDeviceLost(_owner);
-}
-//----------------------------------------------------------------------------
-void AbstractDeviceAPIEncapsulator::OnDeviceDestroy() {
-    Assert(DeviceStatus::Destroy == _status);
-    for (DeviceResource *resource : _resources)
-        resource->OnDeviceDestroy(_owner);
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 DeviceEncapsulator::DeviceEncapsulator() {}
 //----------------------------------------------------------------------------
 DeviceEncapsulator::~DeviceEncapsulator() {
-    AssertRelease(!_deviceAPIDependantEncapsulator);
+    AssertRelease(!_deviceAPIEncapsulator);
 }
 //----------------------------------------------------------------------------
 DeviceAPI DeviceEncapsulator::API() const {
     THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(_deviceAPIDependantEncapsulator);
-    return _deviceAPIDependantEncapsulator->API();
-}
-//----------------------------------------------------------------------------
-DeviceStatus DeviceEncapsulator::Status() const {
-    THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(_deviceAPIDependantEncapsulator);
-    return _deviceAPIDependantEncapsulator->Status();
+    Assert(_deviceAPIEncapsulator);
+    return _deviceAPIEncapsulator->API();
 }
 //----------------------------------------------------------------------------
 const PresentationParameters& DeviceEncapsulator::Parameters() const {
     THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(_deviceAPIDependantEncapsulator);
-    return _deviceAPIDependantEncapsulator->Parameters();
+    Assert(_deviceAPIEncapsulator);
+    return _deviceAPIEncapsulator->Parameters();
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::Create(DeviceAPI api, void *windowHandle, const PresentationParameters& presentationParameters) {
     THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(!_deviceAPIDependantEncapsulator);
+    Assert(!_deviceAPIEncapsulator);
 
     LOG(Information, L"[DeviceEncapsulator] CreateDevice({0})", DeviceAPIToCStr(api));
 
     switch (api)
     {
     case Core::Graphics::DeviceAPI::DirectX11:
-        _deviceAPIDependantEncapsulator.reset(new DX11::DeviceEncapsulator(this, windowHandle, presentationParameters));
+        _deviceAPIEncapsulator.reset(new DX11DeviceAPIEncapsulator(this, windowHandle, presentationParameters));
         break;
 
     case Core::Graphics::DeviceAPI::OpenGL4:
@@ -164,53 +69,77 @@ void DeviceEncapsulator::Create(DeviceAPI api, void *windowHandle, const Present
         AssertNotImplemented();
     }
 
-    Assert(_deviceAPIDependantEncapsulator);
+    Assert(_deviceAPIEncapsulator);
 
     GraphicsStartup::OnDeviceCreate(this);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::Destroy() {
     THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(_deviceAPIDependantEncapsulator);
+    Assert(_deviceAPIEncapsulator);
 
-    LOG(Information, L"[DeviceEncapsulator] DestroyDevice({0})", DeviceAPIToCStr(_deviceAPIDependantEncapsulator->API()));
+    LOG(Information, L"[DeviceEncapsulator] DestroyDevice({0})", DeviceAPIToCStr(_deviceAPIEncapsulator->API()));
 
-     _deviceAPIDependantEncapsulator->ClearState();
+     _deviceAPIEncapsulator->ClearState();
 
     GraphicsStartup::OnDeviceDestroy(this);
 
-    _deviceAPIDependantEncapsulator.reset();
+    _deviceAPIEncapsulator.reset();
 
-    Assert(!_deviceAPIDependantEncapsulator);
+    Assert(!_deviceAPIEncapsulator);
 }
+//----------------------------------------------------------------------------
+IDeviceAPIEncapsulator *DeviceEncapsulator::Device() const { 
+    return const_cast<DeviceEncapsulator *>(this);
+}
+//----------------------------------------------------------------------------
+IDeviceAPIContext *DeviceEncapsulator::Immediate() const { 
+    return const_cast<DeviceEncapsulator *>(this);
+}
+//----------------------------------------------------------------------------
+IDeviceAPIShaderCompiler *DeviceEncapsulator::ShaderCompiler() const { 
+    return const_cast<DeviceEncapsulator *>(this);
+}
+//----------------------------------------------------------------------------
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
+IDeviceAPIDiagnostics *DeviceEncapsulator::Diagnostics() const { 
+    return const_cast<DeviceEncapsulator *>(this);
+}
+#endif
 //----------------------------------------------------------------------------
 // Status
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::Reset(const PresentationParameters& pp) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    _deviceAPIDependantEncapsulator->Reset(pp);
+    ++_revision.Value;
+
+    _deviceAPIEncapsulator->Reset(pp);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::Present() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    _deviceAPIDependantEncapsulator->Present();
+    ++_revision.Value;
+
+    _deviceAPIEncapsulator->Present();
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::ClearState() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    _deviceAPIDependantEncapsulator->ClearState();
+    ++_revision.Value;
+
+    _deviceAPIEncapsulator->ClearState();
 }
 //----------------------------------------------------------------------------
-// Alpha/Raster/Depth State
+// Viewport
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::SetViewport(const ViewportF& viewport) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(viewport.HasPositiveExtentsStrict());
 
-    _deviceAPIDependantEncapsulator->Context()->SetViewport(viewport);
+    _deviceAPIEncapsulator->Device()->SetViewport(viewport);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::SetViewports(const MemoryView<const ViewportF>& viewports) {
@@ -222,15 +151,17 @@ void DeviceEncapsulator::SetViewports(const MemoryView<const ViewportF>& viewpor
         Assert(viewport.HasPositiveExtentsStrict());
 #endif
 
-    _deviceAPIDependantEncapsulator->Context()->SetViewports(viewports);
+    _deviceAPIEncapsulator->Device()->SetViewports(viewports);
 }
+//----------------------------------------------------------------------------
+// Alpha/Raster/Depth State
 //----------------------------------------------------------------------------
 DeviceAPIDependantBlendState *DeviceEncapsulator::CreateBlendState(BlendState *state) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(state);
     Assert(state->Frozen());
 
-    return _deviceAPIDependantEncapsulator->Device()->CreateBlendState(state);
+    return _deviceAPIEncapsulator->Device()->CreateBlendState(state);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::SetBlendState(const BlendState *state) {
@@ -239,7 +170,7 @@ void DeviceEncapsulator::SetBlendState(const BlendState *state) {
     Assert(state->Frozen());
     Assert(state->Available());
 
-    _deviceAPIDependantEncapsulator->Context()->SetBlendState(state);
+    _deviceAPIEncapsulator->Immediate()->SetBlendState(state);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DestroyBlendState(BlendState *state, PDeviceAPIDependantBlendState& entity) {
@@ -249,7 +180,7 @@ void DeviceEncapsulator::DestroyBlendState(BlendState *state, PDeviceAPIDependan
     Assert(entity);
     Assert(&entity == &state->DeviceAPIDependantState());
 
-    _deviceAPIDependantEncapsulator->Device()->DestroyBlendState(state, entity);
+    _deviceAPIEncapsulator->Device()->DestroyBlendState(state, entity);
 }
 //----------------------------------------------------------------------------
 DeviceAPIDependantRasterizerState *DeviceEncapsulator::CreateRasterizerState(RasterizerState *state) {
@@ -257,7 +188,7 @@ DeviceAPIDependantRasterizerState *DeviceEncapsulator::CreateRasterizerState(Ras
     Assert(state);
     Assert(state->Frozen());
 
-    return _deviceAPIDependantEncapsulator->Device()->CreateRasterizerState(state);
+    return _deviceAPIEncapsulator->Device()->CreateRasterizerState(state);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::SetRasterizerState(const RasterizerState *state) {
@@ -266,7 +197,7 @@ void DeviceEncapsulator::SetRasterizerState(const RasterizerState *state) {
     Assert(state->Frozen());
     Assert(state->Available());
 
-    _deviceAPIDependantEncapsulator->Context()->SetRasterizerState(state);
+    _deviceAPIEncapsulator->Immediate()->SetRasterizerState(state);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DestroyRasterizerState(RasterizerState *state, PDeviceAPIDependantRasterizerState& entity) {
@@ -276,7 +207,7 @@ void DeviceEncapsulator::DestroyRasterizerState(RasterizerState *state, PDeviceA
     Assert(entity);
     Assert(&entity == &state->DeviceAPIDependantState());
 
-    _deviceAPIDependantEncapsulator->Device()->DestroyRasterizerState(state, entity);
+    _deviceAPIEncapsulator->Device()->DestroyRasterizerState(state, entity);
 }
 //----------------------------------------------------------------------------
 DeviceAPIDependantDepthStencilState *DeviceEncapsulator::CreateDepthStencilState(DepthStencilState *state) {
@@ -284,7 +215,7 @@ DeviceAPIDependantDepthStencilState *DeviceEncapsulator::CreateDepthStencilState
     Assert(state);
     Assert(state->Frozen());
 
-    return _deviceAPIDependantEncapsulator->Device()->CreateDepthStencilState(state);
+    return _deviceAPIEncapsulator->Device()->CreateDepthStencilState(state);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::SetDepthStencilState(const DepthStencilState *state) {
@@ -293,7 +224,7 @@ void DeviceEncapsulator::SetDepthStencilState(const DepthStencilState *state) {
     Assert(state->Frozen());
     Assert(state->Available());
 
-    _deviceAPIDependantEncapsulator->Context()->SetDepthStencilState(state);
+    _deviceAPIEncapsulator->Immediate()->SetDepthStencilState(state);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DestroyDepthStencilState(DepthStencilState *state, PDeviceAPIDependantDepthStencilState& entity) {
@@ -303,7 +234,7 @@ void DeviceEncapsulator::DestroyDepthStencilState(DepthStencilState *state, PDev
     Assert(entity);
     Assert(&entity == &state->DeviceAPIDependantState());
 
-    _deviceAPIDependantEncapsulator->Device()->DestroyDepthStencilState(state, entity);
+    _deviceAPIEncapsulator->Device()->DestroyDepthStencilState(state, entity);
 }
 //----------------------------------------------------------------------------
 DeviceAPIDependantSamplerState *DeviceEncapsulator::CreateSamplerState(SamplerState *state) {
@@ -311,7 +242,7 @@ DeviceAPIDependantSamplerState *DeviceEncapsulator::CreateSamplerState(SamplerSt
     Assert(state);
     Assert(state->Frozen());
 
-    return _deviceAPIDependantEncapsulator->Device()->CreateSamplerState(state);
+    return _deviceAPIEncapsulator->Device()->CreateSamplerState(state);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::SetSamplerState(ShaderProgramType stage, size_t slot, const SamplerState *state) {
@@ -320,7 +251,21 @@ void DeviceEncapsulator::SetSamplerState(ShaderProgramType stage, size_t slot, c
     Assert(state->Frozen());
     Assert(state->Available());
 
-    _deviceAPIDependantEncapsulator->Context()->SetSamplerState(stage, slot, state);
+    _deviceAPIEncapsulator->Immediate()->SetSamplerState(stage, slot, state);
+}
+
+//----------------------------------------------------------------------------
+void DeviceEncapsulator::SetSamplerStates(ShaderProgramType stage, const MemoryView<const SamplerState *>& states) {
+    THIS_THREADRESOURCE_CHECKACCESS();
+#ifdef WITH_CORE_ASSERT
+    for (const SamplerState *state : states) {
+        Assert(state);
+        Assert(state->Frozen());
+        Assert(state->Available());
+    }
+#endif
+
+    _deviceAPIEncapsulator->Immediate()->SetSamplerStates(stage, states);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DestroySamplerState(SamplerState *state, PDeviceAPIDependantSamplerState& entity) {
@@ -330,7 +275,7 @@ void DeviceEncapsulator::DestroySamplerState(SamplerState *state, PDeviceAPIDepe
     Assert(entity);
     Assert(&entity == &state->DeviceAPIDependantState());
 
-    _deviceAPIDependantEncapsulator->Device()->DestroySamplerState(state, entity);
+    _deviceAPIEncapsulator->Device()->DestroySamplerState(state, entity);
 }
 //----------------------------------------------------------------------------
 // Index/Vertex Buffer
@@ -340,7 +285,7 @@ DeviceAPIDependantVertexDeclaration *DeviceEncapsulator::CreateVertexDeclaration
     Assert(declaration);
     Assert(declaration->Frozen());
 
-    return _deviceAPIDependantEncapsulator->Device()->CreateVertexDeclaration(declaration);
+    return _deviceAPIEncapsulator->Device()->CreateVertexDeclaration(declaration);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DestroyVertexDeclaration(VertexDeclaration *declaration, PDeviceAPIDependantVertexDeclaration& entity) {
@@ -350,7 +295,7 @@ void DeviceEncapsulator::DestroyVertexDeclaration(VertexDeclaration *declaration
     Assert(entity);
     Assert(&entity == &declaration->DeviceAPIDependantDeclaration());
 
-    _deviceAPIDependantEncapsulator->Device()->DestroyVertexDeclaration(declaration, entity);
+    _deviceAPIEncapsulator->Device()->DestroyVertexDeclaration(declaration, entity);
 }
 //----------------------------------------------------------------------------
 DeviceAPIDependantResourceBuffer *DeviceEncapsulator::CreateIndexBuffer(IndexBuffer *indexBuffer, DeviceResourceBuffer *resourceBuffer, const MemoryView<const u8>& optionalData) {
@@ -359,8 +304,9 @@ DeviceAPIDependantResourceBuffer *DeviceEncapsulator::CreateIndexBuffer(IndexBuf
     Assert(indexBuffer->Frozen());
     Assert(resourceBuffer);
     Assert(&indexBuffer->Buffer() == resourceBuffer);
+    Assert(resourceBuffer->Usage() != BufferUsage::Immutable || optionalData.SizeInBytes() == resourceBuffer->SizeInBytes());
 
-    return _deviceAPIDependantEncapsulator->Device()->CreateIndexBuffer(indexBuffer, resourceBuffer, optionalData);
+    return _deviceAPIEncapsulator->Device()->CreateIndexBuffer(indexBuffer, resourceBuffer, optionalData);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::SetIndexBuffer(const IndexBuffer *indexBuffer) {
@@ -369,7 +315,7 @@ void DeviceEncapsulator::SetIndexBuffer(const IndexBuffer *indexBuffer) {
     Assert(indexBuffer->Frozen());
     Assert(indexBuffer->Available());
 
-    _deviceAPIDependantEncapsulator->Context()->SetIndexBuffer(indexBuffer);
+    _deviceAPIEncapsulator->Immediate()->SetIndexBuffer(indexBuffer);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::SetIndexBuffer(const IndexBuffer *indexBuffer, size_t offset) {
@@ -379,7 +325,7 @@ void DeviceEncapsulator::SetIndexBuffer(const IndexBuffer *indexBuffer, size_t o
     Assert(indexBuffer->Available());
     Assert(offset < indexBuffer->IndexCount());
 
-    _deviceAPIDependantEncapsulator->Context()->SetIndexBuffer(indexBuffer, offset);
+    _deviceAPIEncapsulator->Immediate()->SetIndexBuffer(indexBuffer, offset);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DestroyIndexBuffer(IndexBuffer *indexBuffer, PDeviceAPIDependantResourceBuffer& entity) {
@@ -389,7 +335,7 @@ void DeviceEncapsulator::DestroyIndexBuffer(IndexBuffer *indexBuffer, PDeviceAPI
     Assert(entity);
     //Assert(&entity == &indexBuffer->Buffer().DeviceAPIDependantBuffer());
 
-    _deviceAPIDependantEncapsulator->Device()->DestroyIndexBuffer(indexBuffer, entity);
+    _deviceAPIEncapsulator->Device()->DestroyIndexBuffer(indexBuffer, entity);
 }
 //----------------------------------------------------------------------------
 DeviceAPIDependantResourceBuffer *DeviceEncapsulator::CreateVertexBuffer(VertexBuffer *vertexBuffer, DeviceResourceBuffer *resourceBuffer, const MemoryView<const u8>& optionalData) {
@@ -398,8 +344,9 @@ DeviceAPIDependantResourceBuffer *DeviceEncapsulator::CreateVertexBuffer(VertexB
     Assert(vertexBuffer->Frozen());
     Assert(resourceBuffer);
     Assert(&vertexBuffer->Buffer() == resourceBuffer);
+    Assert(resourceBuffer->Usage() != BufferUsage::Immutable || optionalData.SizeInBytes() == resourceBuffer->SizeInBytes());
 
-    return _deviceAPIDependantEncapsulator->Device()->CreateVertexBuffer(vertexBuffer, resourceBuffer, optionalData);
+    return _deviceAPIEncapsulator->Device()->CreateVertexBuffer(vertexBuffer, resourceBuffer, optionalData);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::SetVertexBuffer(const VertexBuffer *vertexBuffer) {
@@ -408,7 +355,7 @@ void DeviceEncapsulator::SetVertexBuffer(const VertexBuffer *vertexBuffer) {
     Assert(vertexBuffer->Frozen());
     Assert(vertexBuffer->Available());
 
-    _deviceAPIDependantEncapsulator->Context()->SetVertexBuffer(vertexBuffer);
+    _deviceAPIEncapsulator->Immediate()->SetVertexBuffer(vertexBuffer);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::SetVertexBuffer(const VertexBuffer *vertexBuffer, u32 vertexOffset) {
@@ -418,7 +365,7 @@ void DeviceEncapsulator::SetVertexBuffer(const VertexBuffer *vertexBuffer, u32 v
     Assert(vertexBuffer->Available());
     Assert(vertexOffset < vertexBuffer->VertexCount());
 
-    _deviceAPIDependantEncapsulator->Context()->SetVertexBuffer(vertexBuffer, vertexOffset);
+    _deviceAPIEncapsulator->Immediate()->SetVertexBuffer(vertexBuffer, vertexOffset);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::SetVertexBuffer(const MemoryView<const VertexBufferBinding>& bindings) {
@@ -434,7 +381,7 @@ void DeviceEncapsulator::SetVertexBuffer(const MemoryView<const VertexBufferBind
     }
 #endif
 
-    _deviceAPIDependantEncapsulator->Context()->SetVertexBuffer(bindings);
+    _deviceAPIEncapsulator->Immediate()->SetVertexBuffer(bindings);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DestroyVertexBuffer(VertexBuffer *vertexBuffer, PDeviceAPIDependantResourceBuffer& entity) {
@@ -444,7 +391,7 @@ void DeviceEncapsulator::DestroyVertexBuffer(VertexBuffer *vertexBuffer, PDevice
     Assert(entity);
     //Assert(&entity == &vertexBuffer->Buffer().DeviceAPIDependantBuffer());
 
-    _deviceAPIDependantEncapsulator->Device()->DestroyVertexBuffer(vertexBuffer, entity);
+    _deviceAPIEncapsulator->Device()->DestroyVertexBuffer(vertexBuffer, entity);
 }
 //----------------------------------------------------------------------------
 // Shaders
@@ -458,7 +405,7 @@ DeviceAPIDependantResourceBuffer *DeviceEncapsulator::CreateConstantBuffer(Const
     Assert(!writer);
 
     DeviceAPIDependantResourceBuffer *const result =
-        _deviceAPIDependantEncapsulator->Device()->CreateConstantBuffer(constantBuffer, resourceBuffer, writer);
+        _deviceAPIEncapsulator->Device()->CreateConstantBuffer(constantBuffer, resourceBuffer, writer);
 
     Assert(writer);
     return result;
@@ -470,7 +417,20 @@ void DeviceEncapsulator::SetConstantBuffer(ShaderProgramType stage, size_t slot,
     Assert(constantBuffer->Frozen());
     Assert(constantBuffer->Available());
 
-    _deviceAPIDependantEncapsulator->Context()->SetConstantBuffer(stage, slot, constantBuffer);
+    _deviceAPIEncapsulator->Immediate()->SetConstantBuffer(stage, slot, constantBuffer);
+}
+//----------------------------------------------------------------------------
+void DeviceEncapsulator::SetConstantBuffers(ShaderProgramType stage, const MemoryView<const ConstantBuffer *>& constantBuffers) {
+    THIS_THREADRESOURCE_CHECKACCESS();
+#ifdef WITH_CORE_ASSERT
+    for (const ConstantBuffer *constantBuffer : constantBuffers) {
+        Assert(constantBuffer);
+        Assert(constantBuffer->Frozen());
+        Assert(constantBuffer->Available());
+    }
+#endif
+
+    _deviceAPIEncapsulator->Immediate()->SetConstantBuffers(stage, constantBuffers);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DestroyConstantBuffer(ConstantBuffer *constantBuffer, PDeviceAPIDependantResourceBuffer& entity, PDeviceAPIDependantConstantWriter& writer) {
@@ -481,7 +441,7 @@ void DeviceEncapsulator::DestroyConstantBuffer(ConstantBuffer *constantBuffer, P
     //Assert(&entity == &constantBuffer->Buffer().DeviceAPIDependantBuffer());
     Assert(writer);
 
-    _deviceAPIDependantEncapsulator->Device()->DestroyConstantBuffer(constantBuffer, entity, writer);
+    _deviceAPIEncapsulator->Device()->DestroyConstantBuffer(constantBuffer, entity, writer);
 }
 //----------------------------------------------------------------------------
 DeviceAPIDependantShaderProgram *DeviceEncapsulator::CreateShaderProgram(
@@ -497,7 +457,7 @@ DeviceAPIDependantShaderProgram *DeviceEncapsulator::CreateShaderProgram(
     Assert(source);
     Assert(vertexDeclaration);
 
-    return _deviceAPIDependantEncapsulator->Compiler()->CreateShaderProgram(program, entryPoint, flags, source, vertexDeclaration);
+    return _deviceAPIEncapsulator->ShaderCompiler()->CreateShaderProgram(program, entryPoint, flags, source, vertexDeclaration);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::PreprocessShaderProgram(
@@ -511,7 +471,7 @@ void DeviceEncapsulator::PreprocessShaderProgram(
     Assert(source);
     Assert(vertexDeclaration);
 
-    return _deviceAPIDependantEncapsulator->Compiler()->PreprocessShaderProgram(output, program, source, vertexDeclaration);
+    return _deviceAPIEncapsulator->ShaderCompiler()->PreprocessShaderProgram(output, program, source, vertexDeclaration);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::ReflectShaderProgram(
@@ -525,7 +485,7 @@ void DeviceEncapsulator::ReflectShaderProgram(
     Assert(constants.empty());
     Assert(textures.empty());
 
-    return _deviceAPIDependantEncapsulator->Compiler()->ReflectShaderProgram(constants, textures, program);
+    return _deviceAPIEncapsulator->ShaderCompiler()->ReflectShaderProgram(constants, textures, program);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DestroyShaderProgram(ShaderProgram *program, PDeviceAPIDependantShaderProgram& entity) {
@@ -535,7 +495,7 @@ void DeviceEncapsulator::DestroyShaderProgram(ShaderProgram *program, PDeviceAPI
     Assert(entity);
     Assert(&entity == &program->DeviceAPIDependantProgram());
 
-    _deviceAPIDependantEncapsulator->Compiler()->DestroyShaderProgram(program, entity);
+    _deviceAPIEncapsulator->ShaderCompiler()->DestroyShaderProgram(program, entity);
 }
 //----------------------------------------------------------------------------
 DeviceAPIDependantShaderEffect *DeviceEncapsulator::CreateShaderEffect(ShaderEffect *effect) {
@@ -543,7 +503,7 @@ DeviceAPIDependantShaderEffect *DeviceEncapsulator::CreateShaderEffect(ShaderEff
     Assert(effect);
     Assert(effect->Frozen());
 
-    return _deviceAPIDependantEncapsulator->Device()->CreateShaderEffect(effect);
+    return _deviceAPIEncapsulator->Device()->CreateShaderEffect(effect);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::SetShaderEffect(const ShaderEffect *effect) {
@@ -552,7 +512,7 @@ void DeviceEncapsulator::SetShaderEffect(const ShaderEffect *effect) {
     Assert(effect->Frozen());
     Assert(effect->Available());
 
-    _deviceAPIDependantEncapsulator->Context()->SetShaderEffect(effect);
+    _deviceAPIEncapsulator->Immediate()->SetShaderEffect(effect);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DestroyShaderEffect(ShaderEffect *effect, PDeviceAPIDependantShaderEffect& entity) {
@@ -562,7 +522,7 @@ void DeviceEncapsulator::DestroyShaderEffect(ShaderEffect *effect, PDeviceAPIDep
     Assert(entity);
     Assert(&entity == &effect->DeviceAPIDependantEffect());
 
-    _deviceAPIDependantEncapsulator->Device()->DestroyShaderEffect(effect, entity);
+    _deviceAPIEncapsulator->Device()->DestroyShaderEffect(effect, entity);
 }
 //----------------------------------------------------------------------------
 // Textures
@@ -571,8 +531,9 @@ DeviceAPIDependantTexture2D *DeviceEncapsulator::CreateTexture2D(Texture2D *text
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(texture);
     Assert(texture->Frozen());
+    Assert(texture->Usage() != BufferUsage::Immutable || optionalData.SizeInBytes() == texture->SizeInBytes());
 
-    return _deviceAPIDependantEncapsulator->Device()->CreateTexture2D(texture, optionalData);
+    return _deviceAPIEncapsulator->Device()->CreateTexture2D(texture, optionalData);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DestroyTexture2D(Texture2D *texture, PDeviceAPIDependantTexture2D& entity) {
@@ -582,15 +543,16 @@ void DeviceEncapsulator::DestroyTexture2D(Texture2D *texture, PDeviceAPIDependan
     Assert(entity);
     Assert(&entity == &texture->DeviceAPIDependantTexture2D());
 
-    _deviceAPIDependantEncapsulator->Device()->DestroyTexture2D(texture, entity);
+    _deviceAPIEncapsulator->Device()->DestroyTexture2D(texture, entity);
 }
 //----------------------------------------------------------------------------
 DeviceAPIDependantTextureCube *DeviceEncapsulator::CreateTextureCube(TextureCube *texture, const MemoryView<const u8>& optionalData) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(texture);
     Assert(texture->Frozen());
+    Assert(texture->Usage() != BufferUsage::Immutable || optionalData.SizeInBytes() == texture->SizeInBytes());
 
-    return _deviceAPIDependantEncapsulator->Device()->CreateTextureCube(texture, optionalData);
+    return _deviceAPIEncapsulator->Device()->CreateTextureCube(texture, optionalData);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DestroyTextureCube(TextureCube *texture, PDeviceAPIDependantTextureCube& entity) {
@@ -600,7 +562,7 @@ void DeviceEncapsulator::DestroyTextureCube(TextureCube *texture, PDeviceAPIDepe
     Assert(entity);
     Assert(&entity == &texture->DeviceAPIDependantTextureCube());
 
-    _deviceAPIDependantEncapsulator->Device()->DestroyTextureCube(texture, entity);
+    _deviceAPIEncapsulator->Device()->DestroyTextureCube(texture, entity);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::SetTexture(ShaderProgramType stage, size_t slot, const Texture *texture) {
@@ -608,7 +570,20 @@ void DeviceEncapsulator::SetTexture(ShaderProgramType stage, size_t slot, const 
     Assert(!texture || texture->Frozen());
     Assert(!texture || texture->Available());
 
-    _deviceAPIDependantEncapsulator->Context()->SetTexture(stage, slot, texture);
+    _deviceAPIEncapsulator->Immediate()->SetTexture(stage, slot, texture);
+}
+//----------------------------------------------------------------------------
+void DeviceEncapsulator::SetTextures(ShaderProgramType stage, const MemoryView<const Texture *>& textures) {
+    THIS_THREADRESOURCE_CHECKACCESS();
+#ifdef WITH_CORE_ASSERT
+    for (const Texture *texture : textures) {
+        if (!texture) continue;
+        Assert(texture->Frozen());
+        Assert(texture->Available());
+    }
+#endif
+
+    _deviceAPIEncapsulator->Immediate()->SetTextures(stage, textures);
 }
 //----------------------------------------------------------------------------
 // Render Targets
@@ -616,25 +591,25 @@ void DeviceEncapsulator::SetTexture(ShaderProgramType stage, size_t slot, const 
 RenderTarget *DeviceEncapsulator::BackBufferRenderTarget() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    return _deviceAPIDependantEncapsulator->Device()->BackBufferRenderTarget();
+    return _deviceAPIEncapsulator->Device()->BackBufferRenderTarget();
 }
 //----------------------------------------------------------------------------
 DepthStencil *DeviceEncapsulator::BackBufferDepthStencil() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    return _deviceAPIDependantEncapsulator->Device()->BackBufferDepthStencil();
+    return _deviceAPIEncapsulator->Device()->BackBufferDepthStencil();
 }
 //----------------------------------------------------------------------------
 const RenderTarget *DeviceEncapsulator::BackBufferRenderTarget() const {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    return _deviceAPIDependantEncapsulator->Device()->BackBufferRenderTarget();
+    return _deviceAPIEncapsulator->Device()->BackBufferRenderTarget();
 }
 //----------------------------------------------------------------------------
 const DepthStencil *DeviceEncapsulator::BackBufferDepthStencil() const {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    return _deviceAPIDependantEncapsulator->Device()->BackBufferDepthStencil();
+    return _deviceAPIEncapsulator->Device()->BackBufferDepthStencil();
 }
 //----------------------------------------------------------------------------
 DeviceAPIDependantRenderTarget *DeviceEncapsulator::CreateRenderTarget(RenderTarget *renderTarget, const MemoryView<const u8>& optionalData) {
@@ -642,14 +617,14 @@ DeviceAPIDependantRenderTarget *DeviceEncapsulator::CreateRenderTarget(RenderTar
     Assert(renderTarget);
     Assert(renderTarget->Frozen());
 
-    return _deviceAPIDependantEncapsulator->Device()->CreateRenderTarget(renderTarget, optionalData);
+    return _deviceAPIEncapsulator->Device()->CreateRenderTarget(renderTarget, optionalData);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::SetRenderTarget(const RenderTarget *renderTarget, const DepthStencil *depthStencil) {
     Assert(!renderTarget || (renderTarget->Frozen() && renderTarget->Available()));
     Assert(!depthStencil || (depthStencil->Frozen() && depthStencil->Available()));
 
-    _deviceAPIDependantEncapsulator->Context()->SetRenderTarget(renderTarget, depthStencil);
+    _deviceAPIEncapsulator->Device()->SetRenderTarget(renderTarget, depthStencil);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::SetRenderTargets(const MemoryView<const RenderTargetBinding>& bindings, const DepthStencil *depthStencil) {
@@ -665,7 +640,7 @@ void DeviceEncapsulator::SetRenderTargets(const MemoryView<const RenderTargetBin
     }
 #endif
 
-    _deviceAPIDependantEncapsulator->Context()->SetRenderTargets(bindings, depthStencil);
+    _deviceAPIEncapsulator->Device()->SetRenderTargets(bindings, depthStencil);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DestroyRenderTarget(RenderTarget *renderTarget, PDeviceAPIDependantRenderTarget& entity) {
@@ -674,7 +649,7 @@ void DeviceEncapsulator::DestroyRenderTarget(RenderTarget *renderTarget, PDevice
     Assert(renderTarget->Frozen());
     Assert(entity);
 
-    _deviceAPIDependantEncapsulator->Device()->DestroyRenderTarget(renderTarget, entity);
+    _deviceAPIEncapsulator->Device()->DestroyRenderTarget(renderTarget, entity);
 }
 //----------------------------------------------------------------------------
 DeviceAPIDependantDepthStencil *DeviceEncapsulator::CreateDepthStencil(DepthStencil *depthStencil, const MemoryView<const u8>& optionalData) {
@@ -682,7 +657,7 @@ DeviceAPIDependantDepthStencil *DeviceEncapsulator::CreateDepthStencil(DepthSten
     Assert(depthStencil);
     Assert(depthStencil->Frozen());
 
-    return _deviceAPIDependantEncapsulator->Device()->CreateDepthStencil(depthStencil, optionalData);
+    return _deviceAPIEncapsulator->Device()->CreateDepthStencil(depthStencil, optionalData);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DestroyDepthStencil(DepthStencil *depthStencil, PDeviceAPIDependantDepthStencil& entity) {
@@ -691,7 +666,7 @@ void DeviceEncapsulator::DestroyDepthStencil(DepthStencil *depthStencil, PDevice
     Assert(depthStencil->Frozen());
     Assert(entity);
 
-    _deviceAPIDependantEncapsulator->Device()->DestroyDepthStencil(depthStencil, entity);
+    _deviceAPIEncapsulator->Device()->DestroyDepthStencil(depthStencil, entity);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::Clear(const RenderTarget *renderTarget, const ColorRGBAF& color) {
@@ -700,7 +675,7 @@ void DeviceEncapsulator::Clear(const RenderTarget *renderTarget, const ColorRGBA
     Assert(renderTarget->Frozen());
     Assert(renderTarget->Available());
 
-    _deviceAPIDependantEncapsulator->Context()->Clear(renderTarget, color);
+    _deviceAPIEncapsulator->Device()->Clear(renderTarget, color);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::Clear(const Graphics::DepthStencil *depthStencil, ClearOptions opts, float depth, u8 stencil) {
@@ -709,7 +684,7 @@ void DeviceEncapsulator::Clear(const Graphics::DepthStencil *depthStencil, Clear
     Assert(depthStencil->Frozen());
     Assert(depthStencil->Available());
 
-    _deviceAPIDependantEncapsulator->Context()->Clear(depthStencil, opts, depth, stencil);
+    _deviceAPIEncapsulator->Device()->Clear(depthStencil, opts, depth, stencil);
 }
 //----------------------------------------------------------------------------
 // Draw
@@ -717,19 +692,19 @@ void DeviceEncapsulator::Clear(const Graphics::DepthStencil *depthStencil, Clear
 void DeviceEncapsulator::DrawPrimitives(PrimitiveType primitiveType, size_t startVertex, size_t primitiveCount) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    _deviceAPIDependantEncapsulator->Context()->DrawPrimitives(primitiveType, startVertex, primitiveCount);
+    _deviceAPIEncapsulator->Immediate()->DrawPrimitives(primitiveType, startVertex, primitiveCount);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DrawIndexedPrimitives(PrimitiveType primitiveType, size_t baseVertex, size_t startIndex, size_t primitiveCount) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    _deviceAPIDependantEncapsulator->Context()->DrawIndexedPrimitives(primitiveType, baseVertex, startIndex, primitiveCount);
+    _deviceAPIEncapsulator->Immediate()->DrawIndexedPrimitives(primitiveType, baseVertex, startIndex, primitiveCount);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DrawInstancedPrimitives(PrimitiveType primitiveType, size_t baseVertex, size_t startIndex, size_t primitiveCount, size_t startInstance, size_t instanceCount) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    _deviceAPIDependantEncapsulator->Context()->DrawInstancedPrimitives(primitiveType, baseVertex, startIndex, primitiveCount, startInstance, instanceCount);
+    _deviceAPIEncapsulator->Immediate()->DrawInstancedPrimitives(primitiveType, baseVertex, startIndex, primitiveCount, startInstance, instanceCount);
 }
 //----------------------------------------------------------------------------
 // Diagnostics
@@ -739,7 +714,7 @@ void DeviceEncapsulator::DrawInstancedPrimitives(PrimitiveType primitiveType, si
 bool DeviceEncapsulator::IsProfilerAttached() const {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    return _deviceAPIDependantEncapsulator->Diagnostics()->IsProfilerAttached();
+    return _deviceAPIEncapsulator->Diagnostics()->IsProfilerAttached();
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::BeginEvent(const wchar_t *name) {
@@ -747,14 +722,14 @@ void DeviceEncapsulator::BeginEvent(const wchar_t *name) {
     Assert(name);
     Assert(IsProfilerAttached());
 
-    return _deviceAPIDependantEncapsulator->Diagnostics()->BeginEvent(name);
+    return _deviceAPIEncapsulator->Diagnostics()->BeginEvent(name);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::EndEvent() {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(IsProfilerAttached());
 
-    return _deviceAPIDependantEncapsulator->Diagnostics()->EndEvent();
+    return _deviceAPIEncapsulator->Diagnostics()->EndEvent();
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::SetMarker(const wchar_t *name) {
@@ -762,20 +737,26 @@ void DeviceEncapsulator::SetMarker(const wchar_t *name) {
     Assert(name);
     Assert(IsProfilerAttached());
 
-    return _deviceAPIDependantEncapsulator->Diagnostics()->SetMarker(name);
+    return _deviceAPIEncapsulator->Diagnostics()->SetMarker(name);
 }
 //----------------------------------------------------------------------------
 #endif //!WITH_CORE_GRAPHICS_DIAGNOSTICS
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const char *DeviceAPIToCStr(DeviceAPI api) {
-    switch (api)
+const char *DeviceStatusToCStr(DeviceStatus status) {
+    switch (status)
     {
-    case Core::Graphics::DeviceAPI::DirectX11:
-        return "DirectX11";
-    case Core::Graphics::DeviceAPI::OpenGL4:
-        return "OpenGL4";
+    case Core::Graphics::DeviceStatus::Invalid:
+        return "Invalid";
+    case Core::Graphics::DeviceStatus::Normal:
+        return "Normal";
+    case Core::Graphics::DeviceStatus::Reset:
+        return "Reset";
+    case Core::Graphics::DeviceStatus::Lost:
+        return "Lost";
+    case Core::Graphics::DeviceStatus::Destroy:
+        return "Destroy";
     }
     AssertNotImplemented();
     return nullptr;

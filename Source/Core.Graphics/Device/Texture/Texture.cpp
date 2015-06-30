@@ -2,6 +2,7 @@
 
 #include "Texture.h"
 
+#include "Device/IDeviceAPIEncapsulator.h"
 #include "Device/DeviceResourceBuffer.h"
 #include "SurfaceFormat.h"
 
@@ -10,10 +11,14 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Texture::Texture(const SurfaceFormat *format, BufferMode mode, BufferUsage usage)
-:   _format(format), _usageAndMode(0) {
+Texture::Texture(DeviceResourceType textureType, const SurfaceFormat *format, BufferMode mode, BufferUsage usage)
+:   DeviceResource(textureType)
+,   _format(format)
+,   _usageAndMode(0) {
     Assert(format);
     Assert(format->SupportTexture());
+    Assert( DeviceResourceType::Texture2D == textureType ||
+            DeviceResourceType::TextureCube == textureType );
 
 #ifdef WITH_CORE_ASSERT_RELEASE
     switch (usage)
@@ -43,12 +48,23 @@ Texture::Texture(const SurfaceFormat *format, BufferMode mode, BufferUsage usage
 //----------------------------------------------------------------------------
 Texture::~Texture() {}
 //----------------------------------------------------------------------------
+bool Texture::Available() const {
+    return nullptr != TextureEntity();
+}
+//----------------------------------------------------------------------------
+DeviceAPIDependantEntity *Texture::TerminalEntity() const {
+    return TextureEntity();
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceAPIDependantTexture::DeviceAPIDependantTexture(IDeviceAPIEncapsulator *device, Texture *owner)
-:   DeviceAPIDependantEntity(device)
-,   _owner(owner) {
-    Assert(owner);
+DeviceAPIDependantTexture::DeviceAPIDependantTexture(IDeviceAPIEncapsulator *device, const Texture *resource)
+:   TypedDeviceAPIDependantEntity<Texture>(device->APIEncapsulator(), resource)
+,   _format(resource->Format())
+,   _mode(resource->Mode()) 
+,   _usage(resource->Usage()) {
+    Assert(resource);
+    Assert(_format);
 }
 //----------------------------------------------------------------------------
 DeviceAPIDependantTexture::~DeviceAPIDependantTexture() {}

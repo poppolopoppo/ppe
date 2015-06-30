@@ -24,7 +24,8 @@ void VertexBufferBinding::Set(  size_t instanceFrequency,
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 VertexBuffer::VertexBuffer(const Graphics::VertexDeclaration *vertexDeclaration, size_t vertexCount, BufferMode mode, BufferUsage usage)
-:   _vertexDeclaration(vertexDeclaration)
+:   DeviceResource(DeviceResourceType::Vertices)
+,   _vertexDeclaration(vertexDeclaration)
 ,   _buffer(vertexDeclaration->SizeInBytes(), vertexCount, mode, usage) {
     Assert(vertexDeclaration);
     Assert(vertexCount);
@@ -43,7 +44,7 @@ void VertexBuffer::Create(IDeviceAPIEncapsulator *device, const MemoryView<const
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(device);
-    Assert(optionalRawData.SizeInBytes() == _vertexDeclaration->SizeInBytes() * VertexCount());
+    Assert(optionalRawData.empty() || optionalRawData.SizeInBytes() == _vertexDeclaration->SizeInBytes() * VertexCount());
 
     DeviceAPIDependantResourceBuffer *const resourceBuffer = device->CreateVertexBuffer(this, &_buffer, optionalRawData);
     Assert(resourceBuffer);

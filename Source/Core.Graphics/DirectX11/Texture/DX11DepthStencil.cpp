@@ -2,12 +2,12 @@
 
 #include "DX11DepthStencil.h"
 
-#include "DirectX11/DX11DeviceEncapsulator.h"
-
 #include "DX11SurfaceFormat.h"
+
+#include "DirectX11/DX11DeviceAPIEncapsulator.h"
 #include "DirectX11/DX11ResourceBuffer.h"
 
-#include "Device/DeviceAPIEncapsulator.h"
+#include "Device/DeviceAPI.h"
 #include "Device/DeviceEncapsulatorException.h"
 #include "Device/Texture/SurfaceFormat.h"
 
@@ -15,14 +15,13 @@
 
 namespace Core {
 namespace Graphics {
-namespace DX11 {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DepthStencil::DepthStencil(IDeviceAPIEncapsulator *device, Graphics::DepthStencil *owner, const MemoryView<const u8>& optionalData)
+DX11DepthStencil::DX11DepthStencil(IDeviceAPIEncapsulator *device, DepthStencil *owner, const MemoryView<const u8>& optionalData)
 :   DeviceAPIDependantDepthStencil(device, owner, optionalData)
-,   DX11::Texture2DContent(device, owner, optionalData, static_cast<::D3D11_BIND_FLAG>(D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL)) {
-    const DeviceWrapper *wrapper = DX11DeviceWrapper(device);
+,   DX11Texture2DContent(device, owner, optionalData, static_cast<::D3D11_BIND_FLAG>(D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL)) {
+    const DX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
     {
         ::D3D11_DEPTH_STENCIL_VIEW_DESC dSDesc;
         ::SecureZeroMemory(&dSDesc, sizeof(dSDesc));
@@ -41,31 +40,41 @@ DepthStencil::DepthStencil(IDeviceAPIEncapsulator *device, Graphics::DepthStenci
     DX11SetDeviceResourceNameIFP(_depthStencilView, owner);
 }
 //----------------------------------------------------------------------------
-DepthStencil::DepthStencil(
-    IDeviceAPIEncapsulator *device, Graphics::DepthStencil *owner,
+DX11DepthStencil::DX11DepthStencil(
+    IDeviceAPIEncapsulator *device, DepthStencil *owner,
     ::ID3D11Texture2D *texture, ::ID3D11ShaderResourceView *shaderView, ::ID3D11DepthStencilView *depthStencilView)
 :   DeviceAPIDependantDepthStencil(device, owner, MemoryView<const u8>())
-,   DX11::Texture2DContent(texture, shaderView)
+,   DX11Texture2DContent(texture, shaderView)
 ,   _depthStencilView(depthStencilView) {
     Assert(depthStencilView);
 }
 //----------------------------------------------------------------------------
-DepthStencil::~DepthStencil() {
+DX11DepthStencil::~DX11DepthStencil() {
     ReleaseComRef(_depthStencilView);
 }
 //----------------------------------------------------------------------------
-void DepthStencil::GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) {
-    DX11::Texture2DContent::GetContent(device, Owner(), offset, dst, stride, count);
+void DX11DepthStencil::GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) {
+    DX11Texture2DContent::GetContent(device, offset, dst, stride, count, Mode(), Usage());
 }
 //----------------------------------------------------------------------------
-void DepthStencil::SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) {
-    DX11::Texture2DContent::SetContent(device, Owner(), offset, src, stride, count);
+void DX11DepthStencil::SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) {
+    DX11Texture2DContent::SetContent(device, offset, src, stride, count, Mode(), Usage());
 }
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(DepthStencil, );
+void DX11DepthStencil::CopyFrom(IDeviceAPIEncapsulator *device, const DeviceAPIDependantTexture2D *psource) {
+    DX11Texture2DContent::CopyFrom(device, psource);
+}
+//----------------------------------------------------------------------------
+void DX11DepthStencil::CopySubPart(
+    IDeviceAPIEncapsulator *device,
+    size_t dstLevel, const uint2& dstPos,
+    const DeviceAPIDependantTexture2D *psource, size_t srcLevel, const AABB2u& srcBox ) {
+    DX11Texture2DContent::CopySubPart(device, this, dstLevel, dstPos, psource, srcLevel, srcBox);
+}
+//----------------------------------------------------------------------------
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Graphics, DX11DepthStencil, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace DX11
 } //!namespace Graphics
 } //!namespace Core

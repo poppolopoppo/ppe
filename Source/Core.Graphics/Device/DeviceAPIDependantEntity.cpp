@@ -2,22 +2,48 @@
 
 #include "DeviceAPIDependantEntity.h"
 
-#include "DeviceEncapsulator.h"
+#include "AbstractDeviceAPIEncapsulator.h"
+#include "DeviceAPI.h"
+#include "DeviceResource.h"
 
 namespace Core {
 namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceAPIDependantEntity::DeviceAPIDependantEntity(IDeviceAPIEncapsulator *device)
-:   _deviceAPI(device->Encapsulator()->API()) {
+DeviceAPIDependantEntity::DeviceAPIDependantEntity(const AbstractDeviceAPIEncapsulator *encapsulator, const DeviceResource *resource)
+:   _apiAndResourceType(0), _resource(resource) {
+    bitdevicapi_type::InplaceSet(_apiAndResourceType, (u32)encapsulator->API() );
+    bitresourcetype_type::InplaceSet(_apiAndResourceType, (u32)resource->ResourceType() );
 }
 //----------------------------------------------------------------------------
 DeviceAPIDependantEntity::~DeviceAPIDependantEntity() {}
 //----------------------------------------------------------------------------
-bool DeviceAPIDependantEntity::MatchDevice(IDeviceAPIEncapsulator *device) const {
+bool DeviceAPIDependantEntity::MatchDevice(const IDeviceAPIEncapsulator *device) const {
     Assert(device);
-    return device->Encapsulator()->API() == _deviceAPI;
+    return device->APIEncapsulator()->API() == API();
+}
+//----------------------------------------------------------------------------
+void DeviceAPIDependantEntity::AttachResource(const DeviceResource *resource) {
+    Assert(nullptr != resource);
+    Assert(resource->Frozen());
+    Assert(!resource->Available());
+    Assert(nullptr == _resource);
+    Assert(!_resource->Available());
+    Assert(ResourceType() == resource->ResourceType());
+
+    _resource.reset(resource);
+}
+//----------------------------------------------------------------------------
+const DeviceResource *DeviceAPIDependantEntity::DetachResource() {
+    Assert(nullptr != _resource);
+    Assert(_resource->Frozen());
+    Assert(!_resource->Available());
+
+    const DeviceResource *resource = _resource.get();
+    _resource.reset(nullptr);
+
+    return resource;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

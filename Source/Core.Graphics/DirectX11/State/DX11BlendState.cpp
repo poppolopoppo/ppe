@@ -2,21 +2,20 @@
 
 #include "DX11BlendState.h"
 
-#include "DirectX11/DX11DeviceEncapsulator.h"
+#include "DirectX11/DX11DeviceAPIEncapsulator.h"
 
-#include "Device/DeviceAPIEncapsulator.h"
+#include "Device/DeviceAPI.h"
 
 #include "Core/Allocator/PoolAllocator-impl.h"
 
 namespace Core {
 namespace Graphics {
-namespace DX11 {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-BlendState::BlendState(IDeviceAPIEncapsulator *device, Graphics::BlendState *owner)
+DX11BlendState::DX11BlendState(IDeviceAPIEncapsulator *device, BlendState *owner)
 :   DeviceAPIDependantBlendState(device, owner) {
-    const DeviceWrapper *wrapper = DX11DeviceWrapper(device);
+    const DX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
 
     ::D3D11_BLEND_DESC blendStateDesc;
     ::SecureZeroMemory(&blendStateDesc, sizeof(blendStateDesc));
@@ -33,7 +32,7 @@ BlendState::BlendState(IDeviceAPIEncapsulator *device, Graphics::BlendState *own
     blendStateDesc.RenderTarget[0].SrcBlendAlpha = BlendToDX11Blend(owner->AlphaSourceBlend());
     blendStateDesc.RenderTarget[0].DestBlendAlpha = BlendToDX11Blend(owner->AlphaDestinationBlend());
     blendStateDesc.RenderTarget[0].BlendOpAlpha = BlendFunctionToDX11BlendOp(owner->AlphaBlendFunction());
-    blendStateDesc.RenderTarget[0].RenderTargetWriteMask = checked_cast<UINT8>(ColorChannelsToDX11ColorWriteEnable(owner->ColorWriteChannels()));
+    blendStateDesc.RenderTarget[0].RenderTargetWriteMask = (UINT8)ColorChannelsToDX11ColorWriteEnable(owner->ColorWriteChannels());
 
     DX11_THROW_IF_FAILED(device, owner, (
         wrapper->Device()->CreateBlendState(&blendStateDesc, _entity.GetAddressOf())
@@ -44,15 +43,15 @@ BlendState::BlendState(IDeviceAPIEncapsulator *device, Graphics::BlendState *own
     DX11SetDeviceResourceNameIFP(_entity, owner);
 }
 //----------------------------------------------------------------------------
-BlendState::~BlendState() {
+DX11BlendState::~DX11BlendState() {
     ReleaseComRef(_entity);
 }
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(BlendState, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Graphics, DX11BlendState, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-D3D11_BLEND BlendToDX11Blend(Graphics::Blend value) {
+::D3D11_BLEND BlendToDX11Blend(Blend value) {
     switch (value)
     {
     case Core::Graphics::Blend::Zero:
@@ -86,7 +85,7 @@ D3D11_BLEND BlendToDX11Blend(Graphics::Blend value) {
     return static_cast<D3D11_BLEND>(-1);
 }
 //----------------------------------------------------------------------------
-Graphics::Blend DX11BlendToBlend(D3D11_BLEND value) {
+Blend DX11BlendToBlend(::D3D11_BLEND value) {
     switch (value)
     {
     case D3D11_BLEND_ZERO:
@@ -118,12 +117,12 @@ Graphics::Blend DX11BlendToBlend(D3D11_BLEND value) {
     default:
         AssertNotImplemented();
     }
-    return static_cast<Graphics::Blend>(-1);
+    return static_cast<Blend>(-1);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-D3D11_BLEND_OP BlendFunctionToDX11BlendOp(Graphics::BlendFunction value) {
+::D3D11_BLEND_OP BlendFunctionToDX11BlendOp(BlendFunction value) {
     switch (value)
     {
     case Core::Graphics::BlendFunction::Add:
@@ -142,7 +141,7 @@ D3D11_BLEND_OP BlendFunctionToDX11BlendOp(Graphics::BlendFunction value) {
     return static_cast<D3D11_BLEND_OP>(-1);
 }
 //----------------------------------------------------------------------------
-Graphics::BlendFunction DX11BlendOpToBlendFunction(D3D11_BLEND_OP value) {
+BlendFunction DX11BlendOpToBlendFunction(::D3D11_BLEND_OP value) {
     switch (value)
     {
     case D3D11_BLEND_OP_ADD:
@@ -158,27 +157,26 @@ Graphics::BlendFunction DX11BlendOpToBlendFunction(D3D11_BLEND_OP value) {
     default:
         AssertNotImplemented();
     }
-    return static_cast<Graphics::BlendFunction>(-1);
+    return static_cast<BlendFunction>(-1);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-STATIC_ASSERT(size_t(D3D11_COLOR_WRITE_ENABLE_RED) == size_t(Graphics::ColorChannels::Red));
-STATIC_ASSERT(size_t(D3D11_COLOR_WRITE_ENABLE_GREEN) == size_t(Graphics::ColorChannels::Green));
-STATIC_ASSERT(size_t(D3D11_COLOR_WRITE_ENABLE_BLUE) == size_t(Graphics::ColorChannels::Blue));
-STATIC_ASSERT(size_t(D3D11_COLOR_WRITE_ENABLE_ALPHA) == size_t(Graphics::ColorChannels::Alpha));
-STATIC_ASSERT(size_t(D3D11_COLOR_WRITE_ENABLE_ALL) == size_t(Graphics::ColorChannels::All));
+STATIC_ASSERT(size_t(D3D11_COLOR_WRITE_ENABLE_RED)  == size_t(ColorChannels::Red));
+STATIC_ASSERT(size_t(D3D11_COLOR_WRITE_ENABLE_GREEN)== size_t(ColorChannels::Green));
+STATIC_ASSERT(size_t(D3D11_COLOR_WRITE_ENABLE_BLUE) == size_t(ColorChannels::Blue));
+STATIC_ASSERT(size_t(D3D11_COLOR_WRITE_ENABLE_ALPHA)== size_t(ColorChannels::Alpha));
+STATIC_ASSERT(size_t(D3D11_COLOR_WRITE_ENABLE_ALL)  == size_t(ColorChannels::All));
 //----------------------------------------------------------------------------
-D3D11_COLOR_WRITE_ENABLE ColorChannelsToDX11ColorWriteEnable(Graphics::ColorChannels value) {
-    return static_cast<D3D11_COLOR_WRITE_ENABLE>(value);
+::D3D11_COLOR_WRITE_ENABLE ColorChannelsToDX11ColorWriteEnable(ColorChannels value) {
+    return static_cast<::D3D11_COLOR_WRITE_ENABLE>(value);
 }
 //----------------------------------------------------------------------------
-Graphics::ColorChannels DX11ColorWriteEnableToColorChannels(D3D11_COLOR_WRITE_ENABLE value) {
-    return static_cast<Graphics::ColorChannels>(value);
+ColorChannels DX11ColorWriteEnableToColorChannels(::D3D11_COLOR_WRITE_ENABLE value) {
+    return static_cast<ColorChannels>(value);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace DX11
 } //!namespace Graphics
 } //!namespace Core

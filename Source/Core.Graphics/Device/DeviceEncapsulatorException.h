@@ -7,7 +7,7 @@
 namespace Core {
 namespace Graphics {
 class IDeviceAPIEncapsulator;
-class IDeviceAPIShaderCompilerEncapsulator;
+class IDeviceAPIShaderCompiler;
 FWD_REFPTR(DeviceResource);
 FWD_REFPTR(ShaderSource);
 FWD_REFPTR(ShaderProgram);
@@ -35,17 +35,17 @@ class ShaderCompilerEncapsulatorException : public std::exception {
 public:
     explicit ShaderCompilerEncapsulatorException(
         const char *what,
-        const IDeviceAPIShaderCompilerEncapsulator *encapsulator,
+        const IDeviceAPIShaderCompiler *encapsulator,
         const Graphics::ShaderProgram *shaderProgram,
         const Graphics::ShaderSource *shaderSource);
     ~ShaderCompilerEncapsulatorException();
 
-    const IDeviceAPIShaderCompilerEncapsulator *Encapsulator() const { return _encapsulator; }
+    const IDeviceAPIShaderCompiler *Encapsulator() const { return _encapsulator; }
     const Graphics::ShaderProgram *ShaderProgram() const { return _shaderProgram; }
     const Graphics::ShaderSource *ShaderSource() const { return _shaderSource; }
 
 private:
-    const IDeviceAPIShaderCompilerEncapsulator *_encapsulator;
+    const IDeviceAPIShaderCompiler *_encapsulator;
     PCShaderProgram _shaderProgram;
     PCShaderSource _shaderSource;
 };

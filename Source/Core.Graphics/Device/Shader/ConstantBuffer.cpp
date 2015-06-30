@@ -13,10 +13,20 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+STATIC_CONST_INTEGRAL(size_t, ConstantBufferStride, 4);
+//----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 ConstantBuffer::ConstantBuffer(const ConstantBufferLayout *layout)
-:   _buffer(1, layout->SizeInBytes(), BufferMode::None, BufferUsage::Default)
+:   DeviceResource(DeviceResourceType::Constants)
+,   _buffer(ConstantBufferStride, layout->SizeInBytes(), BufferMode::WriteDiscard, BufferUsage::Dynamic)
 ,   _layout(layout) {
     Assert(_layout);
+    Assert(0 == (_layout->SizeInBytes() % ConstantBufferStride));
 }
 //----------------------------------------------------------------------------
 ConstantBuffer::~ConstantBuffer() {
@@ -28,6 +38,7 @@ void ConstantBuffer::SetData(IDeviceAPIEncapsulator *device, const MemoryView<co
     Assert(Frozen());
 
     const auto deviceAPIDependantRawData = MALLOCA_VIEW(u8, _layout->SizeInBytes());
+    Assert(IS_ALIGNED(16, deviceAPIDependantRawData.Pointer()));
 
     _deviceAPIDependantWriter->SetData(device, this, rawData, deviceAPIDependantRawData);
     _buffer.SetData(device, 0, deviceAPIDependantRawData.Pointer(), deviceAPIDependantRawData.size());
@@ -38,6 +49,7 @@ void ConstantBuffer::SetData(IDeviceAPIEncapsulator *device, const MemoryView<co
     Assert(Frozen());
 
     const auto deviceAPIDependantRawData = MALLOCA_VIEW(u8, _layout->SizeInBytes());
+    Assert(IS_ALIGNED(16, deviceAPIDependantRawData.Pointer()));
 
     _deviceAPIDependantWriter->SetData(device, this, fieldsData, deviceAPIDependantRawData);
     _buffer.SetData(device, 0, deviceAPIDependantRawData.Pointer(), deviceAPIDependantRawData.size());
@@ -73,9 +85,13 @@ void ConstantBuffer::Destroy(IDeviceAPIEncapsulator *device) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 DeviceAPIDependantConstantWriter::DeviceAPIDependantConstantWriter(IDeviceAPIEncapsulator *device)
-:   DeviceAPIDependantEntity(device) {}
+:   DeviceAPIDependantEntity(device->APIEncapsulator(), nullptr) {}
 //----------------------------------------------------------------------------
 DeviceAPIDependantConstantWriter::~DeviceAPIDependantConstantWriter() {}
+//----------------------------------------------------------------------------
+size_t DeviceAPIDependantConstantWriter::VideoMemorySizeInBytes() const {
+    return 0;
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

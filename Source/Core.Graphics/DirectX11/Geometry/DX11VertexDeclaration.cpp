@@ -2,19 +2,18 @@
 
 #include "DX11VertexDeclaration.h"
 
-#include "DirectX11/DX11DeviceEncapsulator.h"
+#include "DirectX11/DX11DeviceAPIEncapsulator.h"
 
-#include "Device/DeviceAPIEncapsulator.h"
+#include "Device/DeviceAPI.h"
 
 #include "Core/Allocator/PoolAllocator-impl.h"
 
 namespace Core {
 namespace Graphics {
-namespace DX11 {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-VertexDeclaration::VertexDeclaration(IDeviceAPIEncapsulator *device, Graphics::VertexDeclaration *owner)
+DX11VertexDeclaration::DX11VertexDeclaration(IDeviceAPIEncapsulator *device, VertexDeclaration *owner)
 :   DeviceAPIDependantVertexDeclaration(device, owner) {
     const size_t count = owner->size();
     Assert(count < _layout.capacity());
@@ -23,7 +22,7 @@ VertexDeclaration::VertexDeclaration(IDeviceAPIEncapsulator *device, Graphics::V
     ::SecureZeroMemory(subPartDescs, sizeof(::D3D11_INPUT_ELEMENT_DESC) * count);
 
     for (size_t i = 0; i < count; ++i) {
-        const Pair<const Graphics::VertexSubPartKey *, const Graphics::AbstractVertexSubPart *>& subPart = owner->SubPartByIndex(i);
+        const Pair<const VertexSubPartKey *, const AbstractVertexSubPart *>& subPart = owner->SubPartByIndex(i);
 
         ::D3D11_INPUT_ELEMENT_DESC& subPartDesc = subPartDescs[i];
 
@@ -38,13 +37,13 @@ VertexDeclaration::VertexDeclaration(IDeviceAPIEncapsulator *device, Graphics::V
     }
 }
 //----------------------------------------------------------------------------
-VertexDeclaration::~VertexDeclaration() {}
+DX11VertexDeclaration::~DX11VertexDeclaration() {}
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(VertexDeclaration, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Graphics, DX11VertexDeclaration, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DXGI_FORMAT VertexSubPartFormatToDXGIFormat(Graphics::VertexSubPartFormat value) {
+DXGI_FORMAT VertexSubPartFormatToDXGIFormat(VertexSubPartFormat value) {
     switch (value)
     {
     case Core::Graphics::VertexSubPartFormat::Float:
@@ -124,7 +123,7 @@ DXGI_FORMAT VertexSubPartFormatToDXGIFormat(Graphics::VertexSubPartFormat value)
     return static_cast<DXGI_FORMAT>(-1);
 }
 //----------------------------------------------------------------------------
-Graphics::VertexSubPartFormat DXGIFormatToVertexSubPartFormat(DXGI_FORMAT value) {
+VertexSubPartFormat DXGIFormatToVertexSubPartFormat(DXGI_FORMAT value) {
     switch (value)
     {
     case DXGI_FORMAT_R32_FLOAT:
@@ -202,7 +201,7 @@ Graphics::VertexSubPartFormat DXGIFormatToVertexSubPartFormat(DXGI_FORMAT value)
     default:
         AssertNotImplemented();
     }
-    return static_cast<Graphics::VertexSubPartFormat>(-1);
+    return static_cast<VertexSubPartFormat>(-1);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -223,7 +222,7 @@ DEF_DX11SEMANTIC_NAME(BINORMAL);
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
-LPCSTR VertexSubPartSemanticToDX11SemanticName(Graphics::VertexSubPartSemantic value) {
+LPCSTR VertexSubPartSemanticToDX11SemanticName(VertexSubPartSemantic value) {
     switch (value)
     {
     case Core::Graphics::VertexSubPartSemantic::Position:
@@ -244,7 +243,7 @@ LPCSTR VertexSubPartSemanticToDX11SemanticName(Graphics::VertexSubPartSemantic v
     return nullptr;
 }
 //----------------------------------------------------------------------------
-Graphics::VertexSubPartSemantic DX11SemanticNameVertexSubPartSemantic(LPCSTR value) {
+VertexSubPartSemantic DX11SemanticNameVertexSubPartSemantic(LPCSTR value) {
     if (value == gDX11SemanticName_POSITION)
         return Core::Graphics::VertexSubPartSemantic::Position;
     if (value == gDX11SemanticName_TEXCOORD)
@@ -263,6 +262,5 @@ Graphics::VertexSubPartSemantic DX11SemanticNameVertexSubPartSemantic(LPCSTR val
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace DX11
 } //!namespace Graphics
 } //!namespace Core

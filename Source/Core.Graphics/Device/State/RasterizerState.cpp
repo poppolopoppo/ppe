@@ -11,10 +11,22 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-RasterizerState::RasterizerState() {}
+RasterizerState::RasterizerState() 
+:   DeviceResource(DeviceResourceType::RasterizerState) {}
 //----------------------------------------------------------------------------
 RasterizerState::~RasterizerState() {
     Assert(!_deviceAPIDependantState);
+}
+//----------------------------------------------------------------------------
+bool RasterizerState::Available() const {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    return nullptr != _deviceAPIDependantState;
+}
+//----------------------------------------------------------------------------
+DeviceAPIDependantEntity *RasterizerState::TerminalEntity() const {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(Frozen());
+    return _deviceAPIDependantState.get();
 }
 //----------------------------------------------------------------------------
 void RasterizerState::Create(IDeviceAPIEncapsulator *device) {
@@ -37,10 +49,9 @@ void RasterizerState::Destroy(IDeviceAPIEncapsulator *device) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceAPIDependantRasterizerState::DeviceAPIDependantRasterizerState(IDeviceAPIEncapsulator *device, RasterizerState *owner)
-:   DeviceAPIDependantEntity(device)
-,   _owner(owner) {
-    Assert(owner);
+DeviceAPIDependantRasterizerState::DeviceAPIDependantRasterizerState(IDeviceAPIEncapsulator *device, const RasterizerState *resource)
+:   TypedDeviceAPIDependantEntity<RasterizerState>(device->APIEncapsulator(), resource) {
+    Assert(resource);
 }
 //----------------------------------------------------------------------------
 DeviceAPIDependantRasterizerState::~DeviceAPIDependantRasterizerState() {}

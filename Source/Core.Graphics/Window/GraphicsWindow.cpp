@@ -19,7 +19,8 @@ GraphicsWindow::GraphicsWindow(
     int left, int top,
     size_t width, size_t height,
     BasicWindow *parent /* = nullptr */)
-:   BasicWindow(title, left, top, width, height, parent) {}
+:   BasicWindow(title, left, top, width, height, parent)
+,   _fixedTimeStep(false) {}
 //----------------------------------------------------------------------------
 GraphicsWindow::~GraphicsWindow() {}
 //----------------------------------------------------------------------------
@@ -34,9 +35,9 @@ void GraphicsWindow::RenderLoop(DeviceEncapsulator *deviceEncapsulator) {
 
     LOG(Information, L"[GraphicsWindow] Start render loop");
 
-    deviceEncapsulator->Context()->SetRenderTarget(
-        deviceEncapsulator->Device()->BackBufferRenderTarget(),
-        deviceEncapsulator->Device()->BackBufferDepthStencil() );
+    IDeviceAPIEncapsulator *const device = deviceEncapsulator->Device();
+    device->SetRenderTarget(device->BackBufferRenderTarget(),
+                            device->BackBufferDepthStencil() );
 
     Update_BeforeDispatch();
 
@@ -50,7 +51,13 @@ void GraphicsWindow::RenderLoop(DeviceEncapsulator *deviceEncapsulator) {
         }
 
         Timespan elapsed;
-        if (clock.Tick_Target60FPS(elapsed)) {
+        bool run = true;
+        if (_fixedTimeStep)
+            run = clock.Tick_Target60FPS(elapsed);
+        else
+            clock.Tick();
+
+        if (run) {
             realtime.Tick(clock);
 
             Update_AfterDispatch();
@@ -73,7 +80,7 @@ void GraphicsWindow::RenderLoop(DeviceEncapsulator *deviceEncapsulator) {
     Destroy();
 }
 //----------------------------------------------------------------------------
-void GraphicsWindow::Initialize(const Timeline& time) {
+void GraphicsWindow::Initialize(const Timeline&/* time */) {
     LOG(Information, L"[GraphicsWindow] Initialize()");
 }
 //----------------------------------------------------------------------------
@@ -89,9 +96,9 @@ void GraphicsWindow::UnloadContent() {
     LOG(Information, L"[GraphicsWindow] UnloadContent()");
 }
 //----------------------------------------------------------------------------
-void GraphicsWindow::Update(const Timeline& time) {}
+void GraphicsWindow::Update(const Timeline&/* time */) {}
 //----------------------------------------------------------------------------
-void GraphicsWindow::Draw(const Timeline& time) {}
+void GraphicsWindow::Draw(const Timeline&/* time */) {}
 //----------------------------------------------------------------------------
 void GraphicsWindow::Present() {}
 //----------------------------------------------------------------------------

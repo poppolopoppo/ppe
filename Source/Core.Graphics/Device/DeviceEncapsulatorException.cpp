@@ -2,7 +2,7 @@
 
 #include "DeviceEncapsulatorException.h"
 
-#include "DeviceAPIEncapsulator.h"
+#include "DeviceAPI.h"
 #include "DeviceResource.h"
 #include "Shader/ShaderProgram.h"
 #include "Shader/ShaderSource.h"
@@ -27,7 +27,7 @@ DeviceEncapsulatorException::~DeviceEncapsulatorException() {}
 //----------------------------------------------------------------------------
 ShaderCompilerEncapsulatorException::ShaderCompilerEncapsulatorException(
     const char *what,
-    const IDeviceAPIShaderCompilerEncapsulator *encapsulator,
+    const IDeviceAPIShaderCompiler *encapsulator,
     const Graphics::ShaderProgram *shaderProgram,
     const Graphics::ShaderSource *shaderSource)
 :   std::exception(what)

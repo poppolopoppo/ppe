@@ -2,21 +2,20 @@
 
 #include "DX11DepthStencilState.h"
 
-#include "DirectX11/DX11DeviceEncapsulator.h"
+#include "DirectX11/DX11DeviceAPIEncapsulator.h"
 
-#include "Device/DeviceAPIEncapsulator.h"
+#include "Device/DeviceAPI.h"
 
 #include "Core/Allocator/PoolAllocator-impl.h"
 
 namespace Core {
 namespace Graphics {
-namespace DX11 {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DepthStencilState::DepthStencilState(IDeviceAPIEncapsulator *device, Graphics::DepthStencilState *owner)
+DX11DepthStencilState::DX11DepthStencilState(IDeviceAPIEncapsulator *device, DepthStencilState *owner)
 :   DeviceAPIDependantDepthStencilState(device, owner) {
-    const DeviceWrapper *wrapper = DX11DeviceWrapper(device);
+    const DX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
 
     ::D3D11_DEPTH_STENCIL_DESC depthStencilStateDesc;
     ::SecureZeroMemory(&depthStencilStateDesc, sizeof(depthStencilStateDesc));
@@ -48,15 +47,15 @@ DepthStencilState::DepthStencilState(IDeviceAPIEncapsulator *device, Graphics::D
     DX11SetDeviceResourceNameIFP(_entity, owner);
 }
 //----------------------------------------------------------------------------
-DepthStencilState::~DepthStencilState() {
+DX11DepthStencilState::~DX11DepthStencilState() {
     ReleaseComRef(_entity);
 }
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(DepthStencilState, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Graphics, DX11DepthStencilState, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-D3D11_COMPARISON_FUNC CompareFunctionToDX11ComparisonFunc(Graphics::CompareFunction value) {
+D3D11_COMPARISON_FUNC CompareFunctionToDX11ComparisonFunc(CompareFunction value) {
     switch (value)
     {
     case Core::Graphics::CompareFunction::Always:
@@ -80,7 +79,7 @@ D3D11_COMPARISON_FUNC CompareFunctionToDX11ComparisonFunc(Graphics::CompareFunct
     return static_cast<D3D11_COMPARISON_FUNC>(-1);
 }
 //----------------------------------------------------------------------------
-Graphics::CompareFunction DX11ComparisonFuncToCompareFunction(D3D11_COMPARISON_FUNC value) {
+CompareFunction DX11ComparisonFuncToCompareFunction(D3D11_COMPARISON_FUNC value) {
     switch (value)
     {
     case D3D11_COMPARISON_ALWAYS:
@@ -106,7 +105,7 @@ Graphics::CompareFunction DX11ComparisonFuncToCompareFunction(D3D11_COMPARISON_F
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-D3D11_STENCIL_OP StencilOperationToDX11StencilOp(Graphics::StencilOperation value) {
+D3D11_STENCIL_OP StencilOperationToDX11StencilOp(StencilOperation value) {
     switch (value)
     {
     case Core::Graphics::StencilOperation::Decrement:
@@ -130,7 +129,7 @@ D3D11_STENCIL_OP StencilOperationToDX11StencilOp(Graphics::StencilOperation valu
     return static_cast<D3D11_STENCIL_OP>(-1);
 }
 //----------------------------------------------------------------------------
-Graphics::StencilOperation DX11StencilOpToStencilOperation(D3D11_STENCIL_OP value) {
+StencilOperation DX11StencilOpToStencilOperation(D3D11_STENCIL_OP value) {
     switch (value)
     {
     case D3D11_STENCIL_OP_DECR:
@@ -156,6 +155,5 @@ Graphics::StencilOperation DX11StencilOpToStencilOperation(D3D11_STENCIL_OP valu
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace DX11
 } //!namespace Graphics
 } //!namespace Core

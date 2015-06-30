@@ -10,6 +10,8 @@ namespace Graphics {
 size_t ConstantFieldTypeSizeInBytes(ConstantFieldType value) {
     switch (value)
     {
+    case Core::Graphics::ConstantFieldType::Bool:
+        return sizeof(bool);
     case Core::Graphics::ConstantFieldType::Int:
         return sizeof(i32);
     case Core::Graphics::ConstantFieldType::Int2:
@@ -38,8 +40,12 @@ size_t ConstantFieldTypeSizeInBytes(ConstantFieldType value) {
         return sizeof(float)*3*3;
     case Core::Graphics::ConstantFieldType::Float4x3:
         return sizeof(float)*4*3;
+    case Core::Graphics::ConstantFieldType::Float3x4:
+        return sizeof(float)*4*3;
     case Core::Graphics::ConstantFieldType::Float4x4:
         return sizeof(float)*4*4;
+    case Core::Graphics::ConstantFieldType::Unknown:
+        break;
     }
     AssertNotImplemented();
     return 0;
@@ -48,6 +54,8 @@ size_t ConstantFieldTypeSizeInBytes(ConstantFieldType value) {
 const char *ConstantFieldTypeToCStr(ConstantFieldType value) {
     switch (value)
     {
+    case Core::Graphics::ConstantFieldType::Bool:
+        return "Bool";
     case Core::Graphics::ConstantFieldType::Int:
         return "Int";
     case Core::Graphics::ConstantFieldType::Int2:
@@ -76,8 +84,12 @@ const char *ConstantFieldTypeToCStr(ConstantFieldType value) {
         return "Float3x3";
     case Core::Graphics::ConstantFieldType::Float4x3:
         return "Float4x3";
+    case Core::Graphics::ConstantFieldType::Float3x4:
+        return "Float4x3";
     case Core::Graphics::ConstantFieldType::Float4x4:
         return "Float4x4";
+    case Core::Graphics::ConstantFieldType::Unknown:
+        return "Unknown";
     }
     AssertNotImplemented();
     return nullptr;

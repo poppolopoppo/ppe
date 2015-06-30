@@ -10,42 +10,35 @@
 namespace Core {
 namespace Graphics {
 class DeviceEncapsulator;
-} //!namespace Graphics
-} //!namespace Core
-
-namespace Core {
-namespace Graphics {
-namespace DX11 {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class VertexDeclaration : public DeviceAPIDependantVertexDeclaration {
+class DX11VertexDeclaration : public DeviceAPIDependantVertexDeclaration {
 public:
-    VertexDeclaration(IDeviceAPIEncapsulator *device, Graphics::VertexDeclaration *owner);
-    virtual ~VertexDeclaration();
+    DX11VertexDeclaration(IDeviceAPIEncapsulator *device, VertexDeclaration *owner);
+    virtual ~DX11VertexDeclaration();
 
     MemoryView<const ::D3D11_INPUT_ELEMENT_DESC> Layout() const { return _layout.Cast<const ::D3D11_INPUT_ELEMENT_DESC>(); }
 
-    SINGLETON_POOL_ALLOCATED_DECL(VertexDeclaration);
+    SINGLETON_POOL_ALLOCATED_DECL(DX11VertexDeclaration);
 
 private:
-    StaticStack<::D3D11_INPUT_ELEMENT_DESC, Graphics::VertexDeclaration::MaxSubPartCount> _layout;
+    StaticStack<::D3D11_INPUT_ELEMENT_DESC, VertexDeclaration::MaxSubPartCount> _layout;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DXGI_FORMAT VertexSubPartFormatToDXGIFormat(Graphics::VertexSubPartFormat value);
+DXGI_FORMAT VertexSubPartFormatToDXGIFormat(VertexSubPartFormat value);
 //----------------------------------------------------------------------------
-Graphics::VertexSubPartFormat DXGIFormatToVertexSubPartFormat(DXGI_FORMAT value);
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-LPCSTR VertexSubPartSemanticToDX11SemanticName(Graphics::VertexSubPartSemantic value);
-//----------------------------------------------------------------------------
-Graphics::VertexSubPartSemantic DX11SemanticNameVertexSubPartSemantic(LPCSTR value);
+VertexSubPartFormat DXGIFormatToVertexSubPartFormat(DXGI_FORMAT value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace DX11
+LPCSTR VertexSubPartSemanticToDX11SemanticName(VertexSubPartSemantic value);
+//----------------------------------------------------------------------------
+VertexSubPartSemantic DX11SemanticNameVertexSubPartSemantic(LPCSTR value);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Graphics
 } //!namespace Core

@@ -130,11 +130,14 @@ public:
     size_t SizeOfTexture2DInBytes(size_t width, size_t height) const;
     size_t SizeOfTexture2DInBytes(size_t width, size_t height, size_t levelCount) const;
 
+    size_t SizeOfTexture2DInBytes(const uint2& widthHeight) const;
+    size_t SizeOfTexture2DInBytes(const uint2& widthHeight, size_t levelCount) const;
+
     bool operator ==(const SurfaceFormat& other) const;
     bool operator !=(const SurfaceFormat& other) const { return !operator ==(other); }
 
     void CheckSupport(DeviceEncapsulator *device) const;
-    void ClearSupport() const;
+    void ClearSupport(DeviceEncapsulator *device) const;
 
     static void Start();
     static void Shutdown();

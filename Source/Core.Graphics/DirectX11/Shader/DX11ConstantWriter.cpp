@@ -2,9 +2,9 @@
 
 #include "DX11ConstantWriter.h"
 
-#include "DirectX11/DX11DeviceEncapsulator.h"
+#include "DirectX11/DX11DeviceAPIEncapsulator.h"
 
-#include "Device/DeviceAPIEncapsulator.h"
+#include "Device/DeviceAPI.h"
 #include "Device/Shader/ConstantBufferLayout.h"
 #include "Device/Shader/ConstantField.h"
 
@@ -13,7 +13,6 @@
 
 namespace Core {
 namespace Graphics {
-namespace DX11 {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -22,6 +21,11 @@ namespace {
 static bool ExportFieldData_(void *dst, const void *src, ConstantFieldType type) {
     switch (type)
     {
+    // bool
+    case Core::Graphics::ConstantFieldType::Bool:
+        *reinterpret_cast<bool *>(dst) = *reinterpret_cast<const bool *>(src);
+        break;
+
     // int & int vectors
     case Core::Graphics::ConstantFieldType::Int:
         *reinterpret_cast<i32 *>(dst) = *reinterpret_cast<const i32 *>(src);
@@ -71,6 +75,9 @@ static bool ExportFieldData_(void *dst, const void *src, ConstantFieldType type)
     case Core::Graphics::ConstantFieldType::Float4x3:
         *reinterpret_cast<float3x4 *>(dst) = reinterpret_cast<const float4x3 *>(src)->Transpose();
         break;
+    case Core::Graphics::ConstantFieldType::Float3x4:
+        *reinterpret_cast<float4x3 *>(dst) = reinterpret_cast<const float3x4 *>(src)->Transpose();
+        break;
     case Core::Graphics::ConstantFieldType::Float4x4:
         *reinterpret_cast<float4x4 *>(dst) = reinterpret_cast<const float4x4 *>(src)->Transpose();
         break;
@@ -86,12 +93,12 @@ static bool ExportFieldData_(void *dst, const void *src, ConstantFieldType type)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ConstantWriter::ConstantWriter(IDeviceAPIEncapsulator *device)
+DX11ConstantWriter::DX11ConstantWriter(IDeviceAPIEncapsulator *device)
 :   DeviceAPIDependantConstantWriter(device) {}
 //----------------------------------------------------------------------------
-ConstantWriter::~ConstantWriter() {}
+DX11ConstantWriter::~DX11ConstantWriter() {}
 //----------------------------------------------------------------------------
-void ConstantWriter::SetData(
+void DX11ConstantWriter::SetData(
     IDeviceAPIEncapsulator *device,
     const ConstantBuffer *resource,
     const MemoryView<const u8>& rawData,
@@ -119,7 +126,7 @@ void ConstantWriter::SetData(
     }
 }
 //----------------------------------------------------------------------------
-void ConstantWriter::SetData(
+void DX11ConstantWriter::SetData(
     IDeviceAPIEncapsulator *device,
     const ConstantBuffer *resource,
     const MemoryView<const void *>& fieldsData,
@@ -147,6 +154,5 @@ void ConstantWriter::SetData(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace DX11
 } //!namespace Graphics
 } //!namespace Core

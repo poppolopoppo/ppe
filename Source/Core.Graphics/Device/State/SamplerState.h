@@ -34,12 +34,14 @@ enum class TextureFilter {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(SamplerState);
-class SamplerState : public TypedDeviceResource<DeviceResourceType::State> {
+class SamplerState : public DeviceResource {
 public:
     SamplerState();
     virtual ~SamplerState();
 
-    virtual bool Available() const override { return nullptr != _deviceAPIDependantState; }
+    virtual bool Available() const override;
+    virtual DeviceAPIDependantEntity *TerminalEntity() const override;
+
     const PDeviceAPIDependantSamplerState& DeviceAPIDependantState() const {
         Assert(Frozen()); return _deviceAPIDependantState;
     }
@@ -99,15 +101,12 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DeviceAPIDependantSamplerState : public DeviceAPIDependantEntity {
+class DeviceAPIDependantSamplerState : public TypedDeviceAPIDependantEntity<SamplerState> {
 public:
-    DeviceAPIDependantSamplerState(IDeviceAPIEncapsulator *device, SamplerState *owner);
+    DeviceAPIDependantSamplerState(IDeviceAPIEncapsulator *device, const SamplerState *resource);
     virtual ~DeviceAPIDependantSamplerState();
 
-    const SamplerState *Owner() const { return _owner; }
-
-private:
-    SamplerState *_owner;
+    virtual size_t VideoMemorySizeInBytes() const override { return 0; }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

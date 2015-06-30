@@ -10,7 +10,8 @@ namespace Graphics {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 IndexBuffer::IndexBuffer(Graphics::IndexElementSize indexElementSize, size_t indexCount, BufferMode mode, BufferUsage usage)
-:   _buffer(size_t(indexElementSize), indexCount, mode, usage) {
+:   DeviceResource(DeviceResourceType::Indices)
+,   _buffer(size_t(indexElementSize), indexCount, mode, usage) {
     Assert( sizeof(u16) == size_t(indexElementSize) ||
             sizeof(u32) == size_t(indexElementSize) );
     Assert(indexCount);

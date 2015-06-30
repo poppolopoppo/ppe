@@ -2,11 +2,10 @@
 
 #include "Core.Graphics/Graphics.h"
 
-#include "Core.Graphics/Device/DeviceAPIEncapsulator.h"
+#include "Core.Graphics/Device/AbstractDeviceAPIEncapsulator.h"
 #include "Core.Graphics/Device/DeviceEncapsulatorException.h"
 #include "Core.Graphics/Device/PresentationParameters.h"
 
-#include "Core/Container/Vector.h"
 #include "Core/Meta/ThreadResource.h"
 
 namespace Core {
@@ -22,78 +21,21 @@ enum class DeviceStatus {
     Destroy     = 5,
 };
 //----------------------------------------------------------------------------
-enum class DeviceAPI {
-    DirectX11   = 0,
-    OpenGL4     = 1,
-};
+const char *DeviceStatusToCStr(DeviceStatus status);
 //----------------------------------------------------------------------------
-const char *DeviceAPIToCStr(DeviceAPI api);
+CORE_STRONGLYTYPED_NUMERIC_DEF(u64, DeviceRevision);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DeviceEncapsulator;
-//----------------------------------------------------------------------------
-class AbstractDeviceAPIEncapsulator {
-public:
-    AbstractDeviceAPIEncapsulator(const AbstractDeviceAPIEncapsulator&) = delete;
-    AbstractDeviceAPIEncapsulator& operator =(const AbstractDeviceAPIEncapsulator&) = delete;
-
-    virtual ~AbstractDeviceAPIEncapsulator();
-
-    const DeviceEncapsulator *Owner() const { return _owner; }
-    DeviceAPI API() const { return _api; }
-    DeviceStatus Status() const { return _status; }
-    const PresentationParameters& Parameters() const { return _parameters; }
-
-    void RegisterResource(DeviceResource *resource);
-    void UnregisterResource(DeviceResource *resource);
-
-    virtual IDeviceAPIEncapsulator *Device() const = 0;
-    virtual IDeviceAPIContextEncapsulator *Context() const = 0;
-    virtual IDeviceAPIShaderCompilerEncapsulator *Compiler() const = 0;
+class DeviceEncapsulator 
+:   private Meta::ThreadResource 
+,   private IDeviceAPIContext
+,   private IDeviceAPIEncapsulator
+,   private IDeviceAPIShaderCompiler
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
-    virtual IDeviceAPIDiagnosticsEncapsulator *Diagnostics() const = 0;
+,   private IDeviceAPIDiagnostics
 #endif
-
-    virtual void Reset(const PresentationParameters& pp) = 0;
-    virtual void Present() = 0;
-    virtual void ClearState() = 0;
-
-protected:
-    AbstractDeviceAPIEncapsulator(
-        DeviceAPI api,
-        DeviceEncapsulator *owner,
-        const PresentationParameters& pp);
-
-    virtual void ChangeStatus(DeviceStatus status, DeviceStatus old);
-    virtual void ChangePresentationParameters(const PresentationParameters& parameters);
-
-    virtual void OnDeviceCreate();
-    virtual void OnDeviceReset();
-    virtual void OnDeviceLost();
-    virtual void OnDeviceDestroy();
-
-private:
-    DeviceEncapsulator *_owner;
-
-    DeviceAPI _api;
-    DeviceStatus _status;
-
-    PresentationParameters _parameters;
-
-    VECTOR_THREAD_LOCAL(Device, DeviceResource *) _resources;
-};
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-class DeviceEncapsulator :
-    private IDeviceAPIEncapsulator
-,   private IDeviceAPIContextEncapsulator
-,   private IDeviceAPIShaderCompilerEncapsulator
-#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
-,   private IDeviceAPIDiagnosticsEncapsulator
-#endif
-,   private Meta::ThreadResource {
+{
 public:
     using Meta::ThreadResource::CheckThreadId;
     using Meta::ThreadResource::OwnedByThisThread;
@@ -102,27 +44,40 @@ public:
     virtual ~DeviceEncapsulator();
 
     DeviceAPI API() const;
-    DeviceStatus Status() const;
-    bool Available() const { return _deviceAPIDependantEncapsulator && DeviceStatus::Normal == Status(); }
+    DeviceStatus Status() const { return _status; }
+    DeviceRevision Revision() const { return _revision; }
+
     const PresentationParameters& Parameters() const;
 
     void Create(DeviceAPI api, void *windowHandle, const PresentationParameters& presentationParameters);
     void Destroy();
 
-    IDeviceAPIEncapsulator *Device() const { return const_cast<DeviceEncapsulator *>(this); }
-    IDeviceAPIContextEncapsulator *Context() const { return const_cast<DeviceEncapsulator *>(this); }
-    IDeviceAPIShaderCompilerEncapsulator *Compiler() const { return const_cast<DeviceEncapsulator *>(this); }
+    IDeviceAPIEncapsulator *Device() const;
+    IDeviceAPIContext *Immediate() const;
+    IDeviceAPIShaderCompiler *ShaderCompiler() const;
+
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
-    IDeviceAPIDiagnosticsEncapsulator *Diagnostics() const { return const_cast<DeviceEncapsulator *>(this); }
+    IDeviceAPIDiagnostics *Diagnostics() const;
 #endif
 
     void Reset(const PresentationParameters& pp);
     void Present();
     void ClearState();
 
+private:
+    UniquePtr< AbstractDeviceAPIEncapsulator > _deviceAPIEncapsulator;
+    DeviceStatus _status;
+    DeviceRevision _revision;
+
+private:
+    virtual const AbstractDeviceAPIEncapsulator *APIEncapsulator() const override { return _deviceAPIEncapsulator.get(); }
+
 private: // IDeviceAPIEncapsulator impl
 
-    virtual const AbstractDeviceAPIEncapsulator *Encapsulator() const override { return _deviceAPIDependantEncapsulator.get(); }
+    // Viewport
+    
+    virtual void SetViewport(const ViewportF& viewport) override;
+    virtual void SetViewports(const MemoryView<const ViewportF>& viewports) override;
 
     // Alpha/Raster/Depth State
 
@@ -166,12 +121,18 @@ private: // IDeviceAPIEncapsulator impl
     virtual void DestroyTextureCube(TextureCube *texture, PDeviceAPIDependantTextureCube& entity) override;
 
     // Render target
-
+    
     virtual RenderTarget *BackBufferRenderTarget() override;
     virtual DepthStencil *BackBufferDepthStencil() override;
 
     virtual const RenderTarget *BackBufferRenderTarget() const override;
     virtual const DepthStencil *BackBufferDepthStencil() const override;
+
+    virtual void SetRenderTarget(const RenderTarget *renderTarget, const DepthStencil *depthStencil) override;
+    virtual void SetRenderTargets(const MemoryView<const RenderTargetBinding>& bindings, const DepthStencil *depthStencil) override;
+
+    virtual void Clear(const RenderTarget *renderTarget, const ColorRGBAF& color) override;
+    virtual void Clear(const DepthStencil *depthStencil, ClearOptions opts, float depth, u8 stencil) override;
 
     virtual DeviceAPIDependantRenderTarget *CreateRenderTarget(RenderTarget *renderTarget, const MemoryView<const u8>& optionalData) override;
     virtual void DestroyRenderTarget(RenderTarget *renderTarget, PDeviceAPIDependantRenderTarget& entity) override;
@@ -181,12 +142,7 @@ private: // IDeviceAPIEncapsulator impl
 
 private: // IDeviceAPIContextEncapsulator
 
-    //virtual const AbstractDeviceAPIEncapsulator *Encapsulator() const override { return _deviceAPIDependantEncapsulator.get(); }
-
     // Alpha/Raster/Depth State
-
-    virtual void SetViewport(const ViewportF& viewport) override;
-    virtual void SetViewports(const MemoryView<const ViewportF>& viewports) override;
 
     virtual void SetBlendState(const BlendState *state) override;
     virtual void SetRasterizerState(const RasterizerState *state) override;
@@ -204,17 +160,15 @@ private: // IDeviceAPIContextEncapsulator
     // Shaders
 
     virtual void SetShaderEffect(const ShaderEffect *effect) override;
+
     virtual void SetConstantBuffer(ShaderProgramType stage, size_t slot, const ConstantBuffer *constantBuffer) override;
+    virtual void SetConstantBuffers(ShaderProgramType stage, const MemoryView<const ConstantBuffer *>& constantBuffers) override;
+
     virtual void SetTexture(ShaderProgramType stage, size_t slot, const Texture *texture) override;
+    virtual void SetTextures(ShaderProgramType stage, const MemoryView<const Texture *>& textures) override;
+
     virtual void SetSamplerState(ShaderProgramType stage, size_t slot, const SamplerState *state) override;
-
-    // Render target
-
-    virtual void SetRenderTarget(const RenderTarget *renderTarget, const DepthStencil *depthStencil) override;
-    virtual void SetRenderTargets(const MemoryView<const RenderTargetBinding>& bindings, const DepthStencil *depthStencil) override;
-
-    virtual void Clear(const RenderTarget *renderTarget, const ColorRGBAF& color) override;
-    virtual void Clear(const DepthStencil *depthStencil, ClearOptions opts, float depth, u8 stencil) override;
+    virtual void SetSamplerStates(ShaderProgramType stage, const MemoryView<const SamplerState *>& states) override;
 
     // Draw
 
@@ -222,9 +176,7 @@ private: // IDeviceAPIContextEncapsulator
     virtual void DrawIndexedPrimitives(PrimitiveType primitiveType, size_t baseVertex, size_t startIndex, size_t primitiveCount) override;
     virtual void DrawInstancedPrimitives(PrimitiveType primitiveType, size_t baseVertex, size_t startIndex, size_t primitiveCount, size_t startInstance, size_t instanceCount) override;
 
-private: // IDeviceAPIShaderCompilerEncapsulator
-
-    //virtual const AbstractDeviceAPIEncapsulator *Encapsulator() const override { return _deviceAPIDependantEncapsulator.get(); }
+private: // IDeviceAPIShaderCompiler
 
     virtual DeviceAPIDependantShaderProgram *CreateShaderProgram(
         ShaderProgram *program,
@@ -248,18 +200,14 @@ private: // IDeviceAPIShaderCompilerEncapsulator
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
 private: // IDeviceAPIDiagnosticsEncapsulator() {}
 
-    //virtual const AbstractDeviceAPIEncapsulator *Encapsulator() const override { return _deviceAPIDependantEncapsulator.get(); }
-
     virtual bool IsProfilerAttached() const override;
 
     virtual void BeginEvent(const wchar_t *name) override;
     virtual void EndEvent() override;
 
     virtual void SetMarker(const wchar_t *name) override;
-#endif //!WITH_CORE_GRAPHICS_DIAGNOSTICS
 
-private:
-    UniquePtr<AbstractDeviceAPIEncapsulator> _deviceAPIDependantEncapsulator;
+#endif //!WITH_CORE_GRAPHICS_DIAGNOSTICS
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

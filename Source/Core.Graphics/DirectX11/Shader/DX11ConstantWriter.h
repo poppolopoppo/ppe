@@ -7,19 +7,13 @@
 namespace Core {
 namespace Graphics {
 class IDeviceAPIEncapsulator;
-} //!namespace Graphics
-} //!namespace Core
-
-namespace Core {
-namespace Graphics {
-namespace DX11 {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ConstantWriter : public DeviceAPIDependantConstantWriter {
+class DX11ConstantWriter : public DeviceAPIDependantConstantWriter {
 public:
-    ConstantWriter(IDeviceAPIEncapsulator *device);
-    virtual ~ConstantWriter();
+    DX11ConstantWriter(IDeviceAPIEncapsulator *device);
+    virtual ~DX11ConstantWriter();
 
     virtual void SetData(
         IDeviceAPIEncapsulator *device,
@@ -36,6 +30,5 @@ public:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace DX11
 } //!namespace Graphics
 } //!namespace Core

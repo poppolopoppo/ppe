@@ -10,19 +10,13 @@
 namespace Core {
 namespace Graphics {
 class IDeviceAPIEncapsulator;
-} //!namespace Graphics
-} //!namespace Core
-
-namespace Core {
-namespace Graphics {
-namespace DX11 {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ShaderEffect : public DeviceAPIDependantShaderEffect {
+class DX11ShaderEffect : public DeviceAPIDependantShaderEffect {
 public:
-    explicit ShaderEffect(IDeviceAPIEncapsulator *device, Graphics::ShaderEffect *owner);
-    virtual ~ShaderEffect();
+    explicit DX11ShaderEffect(IDeviceAPIEncapsulator *device, ShaderEffect *owner);
+    virtual ~DX11ShaderEffect();
 
     ::ID3D11InputLayout *InputLayout() const { return _inputLayout.Get(); }
 
@@ -33,7 +27,7 @@ public:
     ::ID3D11PixelShader *PixelShader() const { return _pixelShader.Get(); }
     ::ID3D11ComputeShader *ComputeShader() const { return _computeShader.Get(); }
 
-    SINGLETON_POOL_ALLOCATED_DECL(ShaderEffect);
+    SINGLETON_POOL_ALLOCATED_DECL(DX11ShaderEffect);
 
 private:
     ComPtr<::ID3D11InputLayout> _inputLayout;
@@ -48,6 +42,5 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace DX11
 } //!namespace Graphics
 } //!namespace Core

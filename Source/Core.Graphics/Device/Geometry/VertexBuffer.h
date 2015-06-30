@@ -26,7 +26,7 @@ struct VertexBufferBinding {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class VertexBuffer : public TypedDeviceResource<DeviceResourceType::Vertices> {
+class VertexBuffer : public DeviceResource {
 public:
     VertexBuffer(const Graphics::VertexDeclaration *vertexDeclaration, size_t vertexCount, BufferMode mode, BufferUsage usage);
     virtual ~VertexBuffer();
@@ -45,14 +45,12 @@ public:
     void Destroy(IDeviceAPIEncapsulator *device);
 
 private:
-
     PCVertexDeclaration _vertexDeclaration;
     DeviceResourceBuffer _buffer;
 };
 //----------------------------------------------------------------------------
 template <typename T>
 void VertexBuffer::Create(IDeviceAPIEncapsulator *device, const MemoryView<const T>& optionalData) {
-    Assert(optionalData.SizeInBytes() == _vertexDeclaration->SizeInBytes() * VertexCount());
     Create(device, optionalData.Cast<const u8>());
 }
 //----------------------------------------------------------------------------

@@ -10,23 +10,17 @@
 namespace Core {
 namespace Graphics {
 class IDeviceAPIEncapsulator;
-} //!namespace Graphics
-} //!namespace Core
-
-namespace Core {
-namespace Graphics {
-namespace DX11 {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DepthStencilState : public DeviceAPIDependantDepthStencilState {
+class DX11DepthStencilState : public DeviceAPIDependantDepthStencilState {
 public:
-    DepthStencilState(IDeviceAPIEncapsulator *device, Graphics::DepthStencilState *owner);
-    virtual ~DepthStencilState();
+    DX11DepthStencilState(IDeviceAPIEncapsulator *device, DepthStencilState *owner);
+    virtual ~DX11DepthStencilState();
 
     ::ID3D11DepthStencilState *Entity() const { return _entity.Get(); }
 
-    SINGLETON_POOL_ALLOCATED_DECL(DepthStencilState);
+    SINGLETON_POOL_ALLOCATED_DECL(DX11DepthStencilState);
 
 private:
     ComPtr<::ID3D11DepthStencilState> _entity;
@@ -34,18 +28,17 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-D3D11_COMPARISON_FUNC CompareFunctionToDX11ComparisonFunc(Graphics::CompareFunction value);
+D3D11_COMPARISON_FUNC CompareFunctionToDX11ComparisonFunc(CompareFunction value);
 //----------------------------------------------------------------------------
-Graphics::CompareFunction DX11ComparisonFuncToCompareFunction(D3D11_COMPARISON_FUNC value);
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-D3D11_STENCIL_OP StencilOperationToDX11StencilOp(Graphics::StencilOperation value);
-//----------------------------------------------------------------------------
-Graphics::StencilOperation DX11StencilOpToStencilOperation(D3D11_STENCIL_OP value);
+CompareFunction DX11ComparisonFuncToCompareFunction(D3D11_COMPARISON_FUNC value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace DX11
+D3D11_STENCIL_OP StencilOperationToDX11StencilOp(StencilOperation value);
+//----------------------------------------------------------------------------
+StencilOperation DX11StencilOpToStencilOperation(D3D11_STENCIL_OP value);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Graphics
 } //!namespace Core

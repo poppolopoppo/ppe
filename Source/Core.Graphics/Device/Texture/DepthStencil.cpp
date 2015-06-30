@@ -2,7 +2,7 @@
 
 #include "DepthStencil.h"
 
-#include "Device/DeviceAPIEncapsulator.h"
+#include "Device/DeviceAPI.h"
 #include "Device/DeviceResourceBuffer.h"
 #include "SurfaceFormat.h"
 
@@ -11,11 +11,7 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DepthStencil::DepthStencil(
-    size_t width,
-    size_t height,
-    const SurfaceFormat *format
-    )
+DepthStencil::DepthStencil(size_t width, size_t height, const SurfaceFormat *format)
 :   Texture2D(width, height, 1, format, BufferMode::None, BufferUsage::Default) {
     Assert(format->SupportDepthStencil());
 }
@@ -53,8 +49,8 @@ void DepthStencil::Destroy(IDeviceAPIEncapsulator *device) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceAPIDependantDepthStencil::DeviceAPIDependantDepthStencil(IDeviceAPIEncapsulator *device, DepthStencil *owner, const MemoryView<const u8>& optionalData)
-:   DeviceAPIDependantTexture2D(device, owner, optionalData) {}
+DeviceAPIDependantDepthStencil::DeviceAPIDependantDepthStencil(IDeviceAPIEncapsulator *device, const DepthStencil *resource, const MemoryView<const u8>& optionalData)
+:   DeviceAPIDependantTexture2D(device, resource, optionalData) {}
 //----------------------------------------------------------------------------
 DeviceAPIDependantDepthStencil::~DeviceAPIDependantDepthStencil() {}
 //----------------------------------------------------------------------------

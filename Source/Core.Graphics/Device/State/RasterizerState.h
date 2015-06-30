@@ -27,12 +27,14 @@ enum class FillMode {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(RasterizerState);
-class RasterizerState : public TypedDeviceResource<DeviceResourceType::State> {
+class RasterizerState : public DeviceResource {
 public:
     RasterizerState();
     virtual ~RasterizerState();
 
-    virtual bool Available() const override { return nullptr != _deviceAPIDependantState; }
+    virtual bool Available() const override;
+    virtual DeviceAPIDependantEntity *TerminalEntity() const override;
+
     const PDeviceAPIDependantRasterizerState& DeviceAPIDependantState() const {
         Assert(Frozen()); return _deviceAPIDependantState;
     }
@@ -84,15 +86,12 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DeviceAPIDependantRasterizerState : public DeviceAPIDependantEntity {
+class DeviceAPIDependantRasterizerState : public TypedDeviceAPIDependantEntity<RasterizerState> {
 public:
-    DeviceAPIDependantRasterizerState(IDeviceAPIEncapsulator *device, RasterizerState *owner);
+    DeviceAPIDependantRasterizerState(IDeviceAPIEncapsulator *device, const RasterizerState *resource);
     virtual ~DeviceAPIDependantRasterizerState();
 
-    const RasterizerState *Owner() const { return _owner; }
-
-private:
-    RasterizerState *_owner;
+    virtual size_t VideoMemorySizeInBytes() const override { return 0; }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

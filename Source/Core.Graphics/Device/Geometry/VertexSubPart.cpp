@@ -14,6 +14,11 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+STATIC_ASSERT(sizeof(AbstractVertexSubPart) == sizeof(TypedVertexSubPart<VertexSubPartFormat::Byte  >) );
+STATIC_ASSERT(sizeof(AbstractVertexSubPart) == sizeof(TypedVertexSubPart<VertexSubPartFormat::Short >) );
+STATIC_ASSERT(sizeof(AbstractVertexSubPart) == sizeof(TypedVertexSubPart<VertexSubPartFormat::Float3>) );
+STATIC_ASSERT(sizeof(AbstractVertexSubPart) == sizeof(TypedVertexSubPart<VertexSubPartFormat::Half4 >) );
+//----------------------------------------------------------------------------
 const char *VertexSubPartSemanticToCStr(VertexSubPartSemantic semantic) {
     switch (semantic)
     {

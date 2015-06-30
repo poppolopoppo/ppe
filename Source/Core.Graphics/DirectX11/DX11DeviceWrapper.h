@@ -17,19 +17,18 @@ class PresentationParameters;
 FWD_REFPTR(RenderTarget);
 FWD_REFPTR(DepthStencil);
 
-namespace DX11 {
-class DeviceEncapsulator;
+class DX11DeviceAPIEncapsulator;
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DeviceWrapper {
+class DX11DeviceWrapper {
 public:
-    DeviceWrapper();
-    ~DeviceWrapper();
+    DX11DeviceWrapper();
+    ~DX11DeviceWrapper();
 
-    DeviceWrapper(const DeviceWrapper& ) = delete;
-    DeviceWrapper& operator =(const DeviceWrapper& ) = delete;
+    DX11DeviceWrapper(const DX11DeviceWrapper& ) = delete;
+    DX11DeviceWrapper& operator =(const DX11DeviceWrapper& ) = delete;
 
     ::IDXGISwapChain *SwapChain() const { return _dx11SwapChain.Get(); }
     ::ID3D11Device *Device() const { return _dx11Device.Get(); }
@@ -40,21 +39,21 @@ public:
     ::ID3DUserDefinedAnnotation *UserDefinedAnnotation() const { return _dx11UserDefinedAnnotation.Get(); }
 #endif
 
-    const Graphics::PRenderTarget& BackBufferRenderTarget() const { return _backBufferRenderTarget; }
-    const Graphics::PDepthStencil& BackBufferDepthStencil() const { return _backBufferDepthStencil; }
+    const PRenderTarget& BackBufferRenderTarget() const { return _backBufferRenderTarget; }
+    const PDepthStencil& BackBufferDepthStencil() const { return _backBufferDepthStencil; }
 
-    void Create(DX11::DeviceEncapsulator *device, void *windowHandle, const PresentationParameters& presentationParameters);
-    void Destroy(DX11::DeviceEncapsulator *device);
+    void Create(DX11DeviceAPIEncapsulator *device, void *windowHandle, const PresentationParameters& presentationParameters);
+    void Destroy(DX11DeviceAPIEncapsulator *device);
 
-    void CheckDeviceErrors(const DX11::DeviceEncapsulator *encapsulator) const;
+    void CheckDeviceErrors(const DX11DeviceAPIEncapsulator *device) const;
 
 private:
     ComPtr<::ID3D11DeviceContext> _dx11ImmediateContext;
     ComPtr<::ID3D11Device> _dx11Device;
     ComPtr<::IDXGISwapChain> _dx11SwapChain;
 
-    Graphics::PRenderTarget _backBufferRenderTarget;
-    Graphics::PDepthStencil _backBufferDepthStencil;
+    PRenderTarget _backBufferRenderTarget;
+    PDepthStencil _backBufferDepthStencil;
 
     ::D3D_FEATURE_LEVEL _dx11FeatureLevel;
 
@@ -81,7 +80,7 @@ void DX11ThrowIfFailed(
 #define DX11_THROW_IF_FAILED(_ENCAPSULATOR, _OPTIONAL_RESOURCE, _CALL) { \
     const HRESULT CONCAT(dx11Result_, __LINE__) = _CALL; \
     if (FAILED(CONCAT(dx11Result_, __LINE__))) \
-        Core::Graphics::DX11::DX11ThrowIfFailed( \
+        Core::Graphics::DX11ThrowIfFailed( \
             _ENCAPSULATOR, CONCAT(dx11Result_, __LINE__), _OPTIONAL_RESOURCE, \
             STRINGIZE(_CALL), \
             __FILE__, __LINE__, __FUNCTION__ \
@@ -89,7 +88,7 @@ void DX11ThrowIfFailed(
     }
 //----------------------------------------------------------------------------
 void DX11SetDeviceResourceName(::ID3D11DeviceChild *deviceChild, const char *name, size_t length);
-void DX11SetDeviceResourceNameIFP(::ID3D11DeviceChild *deviceChild, const Graphics::DeviceResource *owner);
+void DX11SetDeviceResourceNameIFP(::ID3D11DeviceChild *deviceChild, const DeviceResource *owner);
 //----------------------------------------------------------------------------
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
 template <size_t _Dim>
@@ -104,6 +103,5 @@ void DX11SetDeviceResourceName(::ID3D11DeviceChild *, const char (&)[_Dim]) {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace DX11
 } //!namespace Graphics
 } //!namespace Core

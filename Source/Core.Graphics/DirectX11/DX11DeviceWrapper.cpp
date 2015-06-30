@@ -2,7 +2,7 @@
 
 #include "DX11DeviceWrapper.h"
 
-#include "DX11DeviceEncapsulator.h"
+#include "DX11DeviceAPIEncapsulator.h"
 #include "Texture/DX11DepthStencil.h"
 #include "Texture/DX11RenderTarget.h"
 #include "Texture/DX11SurfaceFormat.h"
@@ -26,7 +26,6 @@
 
 namespace Core {
 namespace Graphics {
-namespace DX11 {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -84,8 +83,10 @@ static bool CreateDX11DeviceAndSwapChainIFP_(
     sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     sd.OutputWindow = reinterpret_cast<HWND>(windowHandle);
 
-    sd.SampleDesc.Count = std::max(presentationParameters.MultiSampleCount(), u32(1));
-    sd.SampleDesc.Quality = presentationParameters.MultiSampleCount() ? 1 : 0;
+    // Back buffer should never multi-sampled :
+    AssertRelease(presentationParameters.MultiSampleCount() <= 1);
+    sd.SampleDesc.Count = 1;//std::max(presentationParameters.MultiSampleCount(), u32(1));
+    sd.SampleDesc.Quality = 0;//presentationParameters.MultiSampleCount() ? 1 : 0;
 
     sd.Windowed = presentationParameters.FullScreen() ? FALSE : TRUE;
     sd.SwapEffect = ::DXGI_SWAP_EFFECT_DISCARD;
@@ -149,11 +150,13 @@ static bool CreateDX11DebugLayerIFP_(
         (*dx11pInfoQueue)->SetBreakOnSeverity(::D3D11_MESSAGE_SEVERITY_CORRUPTION, true);
         (*dx11pInfoQueue)->SetBreakOnSeverity(::D3D11_MESSAGE_SEVERITY_ERROR, true);
     }
+
+    return true;
 }
 #endif //!WITH_DIRECTX11_DEBUG_LAYER
 //----------------------------------------------------------------------------
-static Graphics::RenderTarget *CreateDX11BackBufferRenderTarget_(
-    DX11::DeviceEncapsulator *device,
+static RenderTarget *CreateDX11BackBufferRenderTarget_(
+    DX11DeviceAPIEncapsulator *device,
     const ComPtr<::ID3D11Device>& dx11Device,
     const ComPtr<::IDXGISwapChain>& dx11SwapChain,
     const PresentationParameters& presentationParameters ) {
@@ -171,12 +174,12 @@ static Graphics::RenderTarget *CreateDX11BackBufferRenderTarget_(
 
     DX11SetDeviceResourceName(pBackBufferRenderTargetView, "BackBuffer");
 
-    Graphics::RenderTarget *const backBufferStorage = reinterpret_cast<Graphics::RenderTarget *>(operator new(sizeof(Graphics::RenderTarget)));
-    DX11::RenderTarget *const dx11RenderTarget = new DX11::RenderTarget(device->Device(), backBufferStorage, pBackBuffer.Get(), nullptr, pBackBufferRenderTargetView.Get());
+    RenderTarget *const backBufferStorage = reinterpret_cast<RenderTarget *>(operator new(sizeof(RenderTarget)));
+    DX11RenderTarget *const dx11RenderTarget = new DX11RenderTarget(device->Device(), backBufferStorage, pBackBuffer.Get(), nullptr, pBackBufferRenderTargetView.Get());
 
     DX11SetDeviceResourceName(dx11RenderTarget->RenderTargetView(), "BackBufferRenderTarget");
 
-    Graphics::RenderTarget *const backBufferRenderTarget = new ((void *)backBufferStorage) Graphics::RenderTarget(
+    RenderTarget *const backBufferRenderTarget = new ((void *)backBufferStorage) RenderTarget(
         presentationParameters.BackBufferWidth(),
         presentationParameters.BackBufferHeight(),
         presentationParameters.BackBufferFormat(),
@@ -192,9 +195,9 @@ static Graphics::RenderTarget *CreateDX11BackBufferRenderTarget_(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceWrapper::DeviceWrapper() {}
+DX11DeviceWrapper::DX11DeviceWrapper() {}
 //----------------------------------------------------------------------------
-DeviceWrapper::~DeviceWrapper() {
+DX11DeviceWrapper::~DX11DeviceWrapper() {
     Assert(!_dx11SwapChain);
     Assert(!_dx11Device);
     Assert(!_dx11ImmediateContext);
@@ -203,7 +206,7 @@ DeviceWrapper::~DeviceWrapper() {
     Assert(!_backBufferDepthStencil);
 }
 //----------------------------------------------------------------------------
-void DeviceWrapper::Create(DX11::DeviceEncapsulator *device, void *windowHandle, const PresentationParameters& presentationParameters) {
+void DX11DeviceWrapper::Create(DX11DeviceAPIEncapsulator *device, void *windowHandle, const PresentationParameters& presentationParameters) {
     Assert(!_dx11SwapChain);
     Assert(!_dx11Device);
     Assert(!_dx11ImmediateContext);
@@ -251,7 +254,7 @@ void DeviceWrapper::Create(DX11::DeviceEncapsulator *device, void *windowHandle,
     // create back buffer depth stencil IFN
 
     if (presentationParameters.DepthStencilFormat()) {
-        _backBufferDepthStencil = new Graphics::DepthStencil(_backBufferRenderTarget->Width(), _backBufferRenderTarget->Height(), presentationParameters.DepthStencilFormat());
+        _backBufferDepthStencil = new DepthStencil(_backBufferRenderTarget->Width(), _backBufferRenderTarget->Height(), presentationParameters.DepthStencilFormat());
         _backBufferDepthStencil->SetResourceName("BackBufferDepthStencil");
         _backBufferDepthStencil->Freeze();
         _backBufferDepthStencil->Create(device->Device());
@@ -269,7 +272,7 @@ void DeviceWrapper::Create(DX11::DeviceEncapsulator *device, void *windowHandle,
     CheckDeviceErrors(device);
 }
 //----------------------------------------------------------------------------
-void DeviceWrapper::Destroy(DX11::DeviceEncapsulator *device) {
+void DX11DeviceWrapper::Destroy(DX11DeviceAPIEncapsulator *device) {
     Assert(_dx11SwapChain);
     Assert(_dx11Device);
     Assert(_dx11ImmediateContext);
@@ -311,7 +314,7 @@ void DeviceWrapper::Destroy(DX11::DeviceEncapsulator *device) {
     ReleaseComRef(_dx11Device);
 }
 //----------------------------------------------------------------------------
-void DeviceWrapper::CheckDeviceErrors(const DX11::DeviceEncapsulator *encapsulator) const {
+void DX11DeviceWrapper::CheckDeviceErrors(const DX11DeviceAPIEncapsulator *encapsulator) const {
 #ifdef WITH_DIRECTX11_DEBUG_LAYER
 
     if(!_dx11InfoQueue)
@@ -416,7 +419,7 @@ void DX11SetDeviceResourceName(::ID3D11DeviceChild *deviceChild, const char *nam
 #endif
 }
 //----------------------------------------------------------------------------
-void DX11SetDeviceResourceNameIFP(::ID3D11DeviceChild *deviceChild, const Graphics::DeviceResource *owner) {
+void DX11SetDeviceResourceNameIFP(::ID3D11DeviceChild *deviceChild, const DeviceResource *owner) {
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
     Assert(owner);
     if (!deviceChild)
@@ -433,6 +436,5 @@ void DX11SetDeviceResourceNameIFP(::ID3D11DeviceChild *deviceChild, const Graphi
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace DX11
 } //!namespace Graphics
 } //!namespace Core

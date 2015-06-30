@@ -39,12 +39,14 @@ enum class StencilOperation {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(DepthStencilState);
-class DepthStencilState : public TypedDeviceResource<DeviceResourceType::State> {
+class DepthStencilState : public DeviceResource {
 public:
     DepthStencilState();
     virtual ~DepthStencilState();
 
-    virtual bool Available() const override { return nullptr != _deviceAPIDependantState; }
+    virtual bool Available() const override;
+    virtual DeviceAPIDependantEntity *TerminalEntity() const override;
+
     const PDeviceAPIDependantDepthStencilState& DeviceAPIDependantState() const {
         Assert(Frozen()); return _deviceAPIDependantState;
     }
@@ -134,15 +136,12 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DeviceAPIDependantDepthStencilState : public DeviceAPIDependantEntity {
+class DeviceAPIDependantDepthStencilState : public TypedDeviceAPIDependantEntity<DepthStencilState> {
 public:
-    DeviceAPIDependantDepthStencilState(IDeviceAPIEncapsulator *device, DepthStencilState *owner);
+    DeviceAPIDependantDepthStencilState(IDeviceAPIEncapsulator *device, const DepthStencilState *resource);
     virtual ~DeviceAPIDependantDepthStencilState();
 
-    const DepthStencilState *Owner() const { return _owner; }
-
-private:
-    DepthStencilState *_owner;
+    virtual size_t VideoMemorySizeInBytes() const override { return 0; }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

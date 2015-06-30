@@ -11,11 +11,23 @@ namespace Graphics {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 ShaderEffect::ShaderEffect(const Graphics::VertexDeclaration *vertexDeclaration)
-:   _vertexDeclaration(vertexDeclaration) {
+:   DeviceResource(DeviceResourceType::ShaderEffect)
+,   _vertexDeclaration(vertexDeclaration) {
     Assert(vertexDeclaration);
 }
 //----------------------------------------------------------------------------
 ShaderEffect::~ShaderEffect() {}
+//----------------------------------------------------------------------------
+bool ShaderEffect::Available() const {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    return nullptr != _deviceAPIDependantEffect;
+}
+//----------------------------------------------------------------------------
+DeviceAPIDependantEntity *ShaderEffect::TerminalEntity() const {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(Frozen());
+    return _deviceAPIDependantEffect.get();
+}
 //----------------------------------------------------------------------------
 void ShaderEffect::SetStageProgram(ShaderProgramType stage, PShaderProgram&& program) {
     THIS_THREADRESOURCE_CHECKACCESS();
@@ -53,33 +65,22 @@ void ShaderEffect::Destroy(IDeviceAPIEncapsulator *device) {
 
     device->DestroyShaderEffect(this, _deviceAPIDependantEffect);
 
-    for (size_t i = 0; i < size_t(ShaderProgramType::__Count); ++i) {
-        PShaderProgram& program = _stagePrograms[i];
-        if (!program)
-            continue;
-
-        if (program->RefCount() == 1) {
-            program->Destroy(device->Encapsulator()->Compiler());
-            RemoveRef_AssertReachZero(program);
-        }
-        else {
-            program = nullptr;
-        }
-    }
-
     Assert(!_deviceAPIDependantEffect);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 DeviceAPIDependantShaderEffect::DeviceAPIDependantShaderEffect(
-    IDeviceAPIEncapsulator *device, ShaderEffect *owner)
-:   DeviceAPIDependantEntity(device)
-,   _owner(owner) {
-    Assert(owner);
+    IDeviceAPIEncapsulator *device, const ShaderEffect *resource)
+:   TypedDeviceAPIDependantEntity<ShaderEffect>(device->APIEncapsulator(), resource) {
+    Assert(resource);
 }
 //----------------------------------------------------------------------------
 DeviceAPIDependantShaderEffect::~DeviceAPIDependantShaderEffect() {}
+//----------------------------------------------------------------------------
+size_t DeviceAPIDependantShaderEffect::VideoMemorySizeInBytes() const {
+    return 0; // TODO ?
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

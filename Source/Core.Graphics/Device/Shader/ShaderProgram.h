@@ -14,7 +14,7 @@
 namespace Core {
 namespace Graphics {
 FWD_REFPTR(ConstantBufferLayout);
-class IDeviceAPIShaderCompilerEncapsulator;
+class IDeviceAPIShaderCompiler;
 FWD_REFPTR(DeviceAPIDependantShaderProgram);
 class ShaderSource;
 class VertexDeclaration;
@@ -68,12 +68,14 @@ struct ShaderProgramTexture {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(ShaderProgram);
-class ShaderProgram : public TypedDeviceResource<DeviceResourceType::ShaderProgram> {
+class ShaderProgram : public DeviceResource {
 public:
     ShaderProgram(ShaderProfileType profile, ShaderProgramType type);
     virtual ~ShaderProgram();
 
-    virtual bool Available() const override { return nullptr != _deviceAPIDependantProgram; }
+    virtual bool Available() const override;
+    virtual DeviceAPIDependantEntity *TerminalEntity() const override;
+
     const PDeviceAPIDependantShaderProgram& DeviceAPIDependantProgram() const {
         Assert(Frozen()); return _deviceAPIDependantProgram;
     }
@@ -81,20 +83,20 @@ public:
     ShaderProfileType ProfileType() const { return static_cast<ShaderProfileType>(bitprofile_type::Get(_data)); }
     ShaderProgramType ProgramType() const { return static_cast<ShaderProgramType>(bitprogram_type::Get(_data)); }
 
-    virtual void Create(    IDeviceAPIShaderCompilerEncapsulator *compiler,
+    virtual void Create(    IDeviceAPIShaderCompiler *compiler,
                             const char *entryPoint,
                             ShaderCompilerFlags flags,
                             const ShaderSource *source,
                             const VertexDeclaration *vertexDeclaration);
 
-    virtual void Destroy(   IDeviceAPIShaderCompilerEncapsulator *compiler);
+    virtual void Destroy(   IDeviceAPIShaderCompiler *compiler);
 
-    void Preprocess(IDeviceAPIShaderCompilerEncapsulator *compiler,
+    void Preprocess(IDeviceAPIShaderCompiler *compiler,
                     RAWSTORAGE(Shader, char)& output,
                     const ShaderSource *source,
                     const VertexDeclaration *vertexDeclaration) const;
 
-    void Reflect(   IDeviceAPIShaderCompilerEncapsulator *compiler,
+    void Reflect(   IDeviceAPIShaderCompiler *compiler,
                     ASSOCIATIVE_VECTOR(Shader, BindName, PCConstantBufferLayout)& constants,
                     VECTOR(Shader, ShaderProgramTexture)& textures ) const;
 
@@ -111,29 +113,24 @@ class ShaderProgramMetaData : public RefCountable {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DeviceAPIDependantShaderProgram : public DeviceAPIDependantEntity {
+class DeviceAPIDependantShaderProgram : public TypedDeviceAPIDependantEntity<ShaderProgram> {
 public:
     DeviceAPIDependantShaderProgram(
-        IDeviceAPIShaderCompilerEncapsulator *device,
-        Graphics::ShaderProgram *owner,
+        IDeviceAPIShaderCompiler *device,
+        const Graphics::ShaderProgram *resource,
         const char *sourceName,
         ShaderCompilerFlags flags,
         const ShaderSource *source,
         const VertexDeclaration *vertexDeclaration);
     virtual ~DeviceAPIDependantShaderProgram();
 
-    const ShaderProgram *Owner() const { return _owner; }
-
     virtual size_t ProgramHashCode() const = 0;
-
-private:
-    ShaderProgram *_owner;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void CompileShaderProgram(
-    IDeviceAPIShaderCompilerEncapsulator *compiler,
+    IDeviceAPIShaderCompiler *compiler,
     ShaderProgram *program,
     const char *entryPoint,
     ShaderCompilerFlags flags,

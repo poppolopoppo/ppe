@@ -43,32 +43,23 @@ public:
 
     const PDeviceAPIDependantTextureCube& DeviceAPIDependantTextureCube() const { return _deviceAPIDependantTextureCube; }
 
-    void GetData(
-        IDeviceAPIEncapsulator *device,
-        Face face,
-        size_t level,
-        size_t x, size_t y,
-        size_t width, size_t height,
-        void *const dst, size_t stride, size_t count );
-
-    void SetData(
-        IDeviceAPIEncapsulator *device,
-        Face face,
-        size_t level,
-        size_t x, size_t y,
-        size_t width, size_t height,
-        const void *src, size_t stride, size_t count );
-
     template <typename T>
     void Create(IDeviceAPIEncapsulator *device, const MemoryView<const T>& optionalData);
     virtual void Destroy(IDeviceAPIEncapsulator *device) override;
 
-    virtual const Graphics::DeviceAPIDependantTexture *DeviceAPIDependantTexture() const override;
+    virtual Graphics::DeviceAPIDependantTexture *TextureEntity() const override;
 
     virtual size_t SizeInBytes() const override;
 
     virtual void GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) override;
     virtual void SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) override;
+
+    virtual void CopyFrom(IDeviceAPIEncapsulator *device, const Texture *psource) override;
+    void CopyFrom(IDeviceAPIEncapsulator *device, const TextureCube *psourceCube);
+
+    void CopySubPart(   IDeviceAPIEncapsulator *device, 
+                        Face dstFace, size_t dstLevel, const uint2& dstPos, 
+                        const TextureCube *psourceCube, Face srcFace, size_t srcLevel, const AABB2u& srcBox );
 
 private:
     void Create_(IDeviceAPIEncapsulator *device, const MemoryView<const u8>& optionalRawData);
@@ -89,12 +80,29 @@ void TextureCube::Create(IDeviceAPIEncapsulator *device, const MemoryView<const 
 //----------------------------------------------------------------------------
 class DeviceAPIDependantTextureCube : public Graphics::DeviceAPIDependantTexture {
 public:
-    DeviceAPIDependantTextureCube(IDeviceAPIEncapsulator *device, TextureCube *owner, const MemoryView<const u8>& optionalData);
+    DeviceAPIDependantTextureCube(IDeviceAPIEncapsulator *device, const TextureCube *resource, const MemoryView<const u8>& optionalData);
     virtual ~DeviceAPIDependantTextureCube();
 
-    const TextureCube *Owner() const {
-        return checked_cast<const TextureCube *>(DeviceAPIDependantTexture::Owner());
+    const TextureCube *TypedResource() const {
+        return checked_cast<const TextureCube *>(Resource());
     }
+    
+    size_t Width() const { return _width; }
+    size_t Height() const { return _height; }
+    size_t LevelCount() const { return _levelCount; }
+
+    virtual void CopyFrom(IDeviceAPIEncapsulator *device, const DeviceAPIDependantTextureCube *psource) = 0;
+
+    virtual void CopySubPart(   IDeviceAPIEncapsulator *device, 
+                                TextureCube::Face dstFace, size_t dstLevel, const uint2& dstPos,
+                                const DeviceAPIDependantTextureCube *psource, TextureCube::Face srcFace, size_t srcLevel, const AABB2u& srcBox ) = 0;
+
+    virtual size_t VideoMemorySizeInBytes() const override;
+
+private:
+    u32 _width;
+    u32 _height;
+    u32 _levelCount;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

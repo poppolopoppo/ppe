@@ -2,84 +2,35 @@
 
 #include "DX11AbstractTextureContent.h"
 
-#include "DirectX11/DX11DeviceEncapsulator.h"
+#include "DirectX11/DX11DeviceAPIEncapsulator.h"
 #include "DirectX11/DX11ResourceBuffer.h"
+#include "DirectX11/DX11ResourceHelpers.h"
 #include "DirectX11/Texture/DX11SurfaceFormat.h"
 
-#include "Device/DeviceAPIEncapsulator.h"
+#include "Device/DeviceAPI.h"
 #include "Device/DeviceEncapsulatorException.h"
+#include "Device/DeviceResourceBuffer.h"
 #include "Device/Texture/SurfaceFormat.h"
 #include "Device/Texture/Texture2D.h"
 #include "Device/Texture/TextureCube.h"
 
 namespace Core {
 namespace Graphics {
-namespace DX11 {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-AbstractTextureContent::AbstractTextureContent(::ID3D11ShaderResourceView *shaderView/* = nullptr */)
+DX11AbstractTextureContent::DX11AbstractTextureContent(::ID3D11ShaderResourceView *shaderView/* = nullptr */)
 :   _shaderView(shaderView) {}
 //----------------------------------------------------------------------------
-AbstractTextureContent::~AbstractTextureContent() {
+DX11AbstractTextureContent::~DX11AbstractTextureContent() {
     if (_shaderView) 
         ReleaseComRef(_shaderView);
 }
 //----------------------------------------------------------------------------
-void AbstractTextureContent::CreateTexture2D(
+void DX11AbstractTextureContent::CreateTexture(
     ComPtr<::ID3D11Texture2D>& pTexture2D,
     IDeviceAPIEncapsulator *device,
-    const Graphics::Texture2D *owner,
-    const MemoryView<const u8>& optionalData,
-    ::D3D11_BIND_FLAG bindFlags ) {
-    CreateTextureImpl_(pTexture2D, device, owner, owner->Width(), owner->Height(), owner->LevelCount(), optionalData, bindFlags, false);
-}
-//----------------------------------------------------------------------------
-void AbstractTextureContent::CreateTextureCube(
-    ComPtr<::ID3D11Texture2D>& pTexture2D,
-    IDeviceAPIEncapsulator *device,
-    const Graphics::TextureCube *owner,
-    const MemoryView<const u8>& optionalData,
-    ::D3D11_BIND_FLAG bindFlags ) {
-    CreateTextureImpl_(pTexture2D, device, owner, owner->Width(), owner->Height(), owner->LevelCount(), optionalData, bindFlags, true);
-}
-//----------------------------------------------------------------------------
-void AbstractTextureContent::GetContentTexture2D(
-    IDeviceAPIEncapsulator *device,
-    const Graphics::Texture2D *owner,
-    const ComPtr<::ID3D11Texture2D>& texture,
-    size_t offset, void *const dst, size_t stride, size_t count ) {
-    GetContentTextureImpl_(device, owner, texture, offset, dst, stride, count);
-}
-//----------------------------------------------------------------------------
-void AbstractTextureContent::GetContentTextureCube(
-    IDeviceAPIEncapsulator *device,
-    const Graphics::TextureCube *owner,
-    const ComPtr<::ID3D11Texture2D>& texture,
-    size_t offset, void *const dst, size_t stride, size_t count ) {
-    GetContentTextureImpl_(device, owner, texture, offset, dst, stride, count);
-}
-//----------------------------------------------------------------------------
-void AbstractTextureContent::SetContentTexture2D(
-    IDeviceAPIEncapsulator *device,
-    const Graphics::Texture2D *owner,
-    const ComPtr<::ID3D11Texture2D>& texture,
-    size_t offset, const void *src, size_t stride, size_t count ) {
-    SetContentTextureImpl_(device, owner, texture, offset, src, stride, count);
-}
-//----------------------------------------------------------------------------
-void AbstractTextureContent::SetContentTextureCube(
-    IDeviceAPIEncapsulator *device,
-    const Graphics::TextureCube *owner,
-    const ComPtr<::ID3D11Texture2D>& texture,
-    size_t offset, const void *src, size_t stride, size_t count ) {
-    SetContentTextureImpl_(device, owner, texture, offset, src, stride, count);
-}
-//----------------------------------------------------------------------------
-void AbstractTextureContent::CreateTextureImpl_(
-    ComPtr<::ID3D11Texture2D>& pTexture2D,
-    IDeviceAPIEncapsulator *device,
-    const Graphics::Texture *owner,
+    const Texture *owner,
     size_t width,
     size_t height,
     size_t levelCount,
@@ -89,7 +40,7 @@ void AbstractTextureContent::CreateTextureImpl_(
     Assert(owner);
     Assert(nullptr == pTexture2D.Get());
 
-    const DeviceWrapper *wrapper = DX11DeviceWrapper(device);
+    const DX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
     {
         ::D3D11_TEXTURE2D_DESC textureDesc;
         ::SecureZeroMemory(&textureDesc, sizeof(textureDesc));
@@ -101,7 +52,7 @@ void AbstractTextureContent::CreateTextureImpl_(
         textureDesc.Format = SurfaceFormatTypeToDXGIFormat(owner->Format()->Type());
         textureDesc.ArraySize = (isCubeMap ? 6 : 1);
 
-        // necessarry to bind the depth buffer to the device :
+        // necessary to bind the depth buffer to the device :
         switch (textureDesc.Format)
         {
         case DXGI_FORMAT_D16_UNORM:
@@ -176,7 +127,7 @@ void AbstractTextureContent::CreateTextureImpl_(
 
         viewDesc.Format = SurfaceFormatTypeToDXGIFormat(owner->Format()->Type());
 
-        // necessarry to bind the depth buffer to the device :
+        // necessary to bind the depth buffer to the device :
         switch (viewDesc.Format)
         {
         case DXGI_FORMAT_D16_UNORM:
@@ -218,59 +169,7 @@ void AbstractTextureContent::CreateTextureImpl_(
     DX11SetDeviceResourceNameIFP(_shaderView, owner);
 }
 //----------------------------------------------------------------------------
-void AbstractTextureContent::GetContentTextureImpl_(
-    IDeviceAPIEncapsulator *device,
-    const Graphics::Texture *owner,
-    const ComPtr<::ID3D11Texture2D>& texture,
-    size_t offset, void *const dst, size_t stride, size_t count) {
-    Assert(owner);
-    Assert(nullptr != texture.Get());
-    Assert(IS_ALIGNED(16, dst));
-
-    AssertRelease(owner->Usage() == BufferUsage::Staging);
-
-    const DeviceWrapper *wrapper = DX11DeviceWrapper(device);
-
-    if (!DX11MapRead(wrapper->ImmediateContext(), texture.Get(), offset, dst, stride, count))
-        throw DeviceEncapsulatorException("DX11: failed to map texture2D for reading", device);
-}
-//----------------------------------------------------------------------------
-void AbstractTextureContent::SetContentTextureImpl_(
-    IDeviceAPIEncapsulator *device,
-    const Graphics::Texture *owner,
-    const ComPtr<::ID3D11Texture2D>& texture,
-    size_t offset, const void *src, size_t stride, size_t count ) {
-    Assert(owner);
-    Assert(nullptr != texture.Get());
-    Assert(IS_ALIGNED(16, src));
-
-    const BufferUsage usage = owner->Usage();
-    const DeviceWrapper *wrapper = DX11DeviceWrapper(device);
-
-    switch (usage)
-    {
-    case Core::Graphics::BufferUsage::Default:
-        AssertRelease(stride * count == owner->SizeInBytes()); // <=> 0 == offset
-        if (!DX11UpdateResource(wrapper->ImmediateContext(), texture.Get(), src, stride, count))
-            throw DeviceEncapsulatorException("DX11: failed to update texture2D", device);
-        break;
-
-    case Core::Graphics::BufferUsage::Dynamic:
-    case Core::Graphics::BufferUsage::Staging:
-        if (!DX11MapWrite(wrapper->ImmediateContext(), texture.Get(), offset, src, stride, count, BufferUsage::Dynamic == usage))
-            throw DeviceEncapsulatorException("DX11: failed to map texture2D for writing", device);
-        break;
-
-    case Core::Graphics::BufferUsage::Immutable:
-        throw DeviceEncapsulatorException("DX11: immutable texture2D can't be muted", device, owner);
-
-    default:
-        AssertNotImplemented();
-    }
-}
-//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace DX11
 } //!namespace Graphics
 } //!namespace Core

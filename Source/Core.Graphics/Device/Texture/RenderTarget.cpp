@@ -2,7 +2,7 @@
 
 #include "RenderTarget.h"
 
-#include "Device/DeviceAPIEncapsulator.h"
+#include "Device/DeviceAPI.h"
 #include "Device/DeviceResourceBuffer.h"
 #include "SurfaceFormat.h"
 
@@ -53,8 +53,8 @@ void RenderTarget::Destroy(IDeviceAPIEncapsulator *device) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceAPIDependantRenderTarget::DeviceAPIDependantRenderTarget(IDeviceAPIEncapsulator *device, RenderTarget *owner, const MemoryView<const u8>& optionalData)
-:   DeviceAPIDependantTexture2D(device, owner, optionalData) {}
+DeviceAPIDependantRenderTarget::DeviceAPIDependantRenderTarget(IDeviceAPIEncapsulator *device, const RenderTarget *resource, const MemoryView<const u8>& optionalData)
+:   DeviceAPIDependantTexture2D(device, resource, optionalData) {}
 //----------------------------------------------------------------------------
 DeviceAPIDependantRenderTarget::~DeviceAPIDependantRenderTarget() {}
 //----------------------------------------------------------------------------

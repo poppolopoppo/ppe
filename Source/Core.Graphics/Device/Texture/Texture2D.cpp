@@ -2,7 +2,10 @@
 
 #include "Texture2D.h"
 
-#include "Device/DeviceAPIEncapsulator.h"
+#include "Core/Maths/Geometry/ScalarBoundingBox.h"
+#include "Core/Maths/Geometry/ScalarVector.h"
+
+#include "Device/DeviceAPI.h"
 #include "Device/DeviceResourceBuffer.h"
 #include "SurfaceFormat.h"
 
@@ -19,7 +22,7 @@ Texture2D::Texture2D(
     BufferMode mode,
     BufferUsage usage
     )
-:   Texture(format, mode, usage)
+:   Texture(DeviceResourceType::Texture2D, format, mode, usage)
 ,   _width(checked_cast<u32>(width))
 ,   _height(checked_cast<u32>(height))
 ,   _levelCount(checked_cast<u32>(levelCount)) {
@@ -61,36 +64,6 @@ float4 Texture2D::DuDvDimensions() const {
         );
 }
 //----------------------------------------------------------------------------
-void Texture2D::GetData(
-    IDeviceAPIEncapsulator *device,
-    size_t level,
-    size_t x, size_t y,
-    size_t width, size_t height,
-    void *const dst, size_t stride, size_t count ) {
-    THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(Frozen());
-    Assert(device);
-    Assert(_deviceAPIDependantTexture2D);
-
-    // TODO
-    AssertNotImplemented();
-}
-//----------------------------------------------------------------------------
-void Texture2D::SetData(
-    IDeviceAPIEncapsulator *device,
-    size_t level,
-    size_t x, size_t y,
-    size_t width, size_t height,
-    const void *src, size_t stride, size_t count ) {
-    THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(Frozen());
-    Assert(device);
-    Assert(_deviceAPIDependantTexture2D);
-
-    // TODO
-    AssertNotImplemented();
-}
-//----------------------------------------------------------------------------
 void Texture2D::Create_(IDeviceAPIEncapsulator *device, const MemoryView<const u8>& optionalRawData) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
@@ -114,7 +87,7 @@ void Texture2D::Destroy(IDeviceAPIEncapsulator *device) {
     Assert(!_deviceAPIDependantTexture2D);
 }
 //----------------------------------------------------------------------------
-const Graphics::DeviceAPIDependantTexture *Texture2D::DeviceAPIDependantTexture() const {
+Graphics::DeviceAPIDependantTexture *Texture2D::TextureEntity() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
 
@@ -128,7 +101,7 @@ size_t Texture2D::SizeInBytes() const {
 void Texture2D::GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
-    Assert(device);
+    Assert(Available());
     Assert(dst);
     Assert(stride);
     Assert(count);
@@ -142,7 +115,7 @@ void Texture2D::GetData(IDeviceAPIEncapsulator *device, size_t offset, void *con
 void Texture2D::SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
-    Assert(device);
+    Assert(Available());
     Assert(src);
     Assert(stride);
     Assert(count);
@@ -153,12 +126,63 @@ void Texture2D::SetData(IDeviceAPIEncapsulator *device, size_t offset, const voi
     _deviceAPIDependantTexture2D->SetData(device, offset, src, stride, count);
 }
 //----------------------------------------------------------------------------
+void Texture2D::CopyFrom(IDeviceAPIEncapsulator *device, const Texture *psource) {
+    Assert(psource);
+    CopyFrom(device, checked_cast<const Texture2D *>(psource));
+}
+//----------------------------------------------------------------------------
+void Texture2D::CopyFrom(IDeviceAPIEncapsulator *device, const Texture2D *psource2D) {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(Frozen());
+    Assert(Available());
+    Assert(psource2D);
+    Assert(u32(BufferMode::Write) == (u32(Mode()) & u32(BufferMode::Write)));
+    Assert(psource2D->Frozen());
+    Assert(psource2D->Available());
+    Assert(u32(BufferMode::Write) == (u32(psource2D->Mode()) & u32(BufferMode::Read)));
+    Assert(psource2D->SizeInBytes() == SizeInBytes());
+
+    _deviceAPIDependantTexture2D->CopyFrom(device, psource2D->DeviceAPIDependantTexture2D());
+}
+//----------------------------------------------------------------------------
+void Texture2D::CopySubPart(
+    IDeviceAPIEncapsulator *device,
+    size_t dstLevel, const uint2& dstPos,
+    const Texture2D *psource2D, size_t srcLevel, const AABB2u& srcBox ) {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(Frozen());
+    Assert(Available());
+    Assert(psource2D);
+    Assert(u32(BufferMode::Write) == (u32(Mode()) & u32(BufferMode::Write)));
+    Assert(psource2D->Frozen());
+    Assert(psource2D->Available());
+    Assert(u32(BufferMode::Write) == (u32(psource2D->Mode()) & u32(BufferMode::Read)));
+    Assert(dstLevel < _levelCount);
+    Assert( dstPos.x() < _width && 
+            dstPos.y() < _height );
+    Assert(srcLevel < psource2D->_levelCount);
+    Assert(srcBox.HasPositiveExtentsStrict());
+    Assert( srcBox.Max().x() < psource2D->_width && 
+            srcBox.Max().y() < psource2D->_height );
+    Assert( psource2D->Format()->SizeOfTexture2DInBytes(srcBox.Extents()) == 
+            Format()->SizeOfTexture2DInBytes(srcBox.Extents()) );
+
+    _deviceAPIDependantTexture2D->CopySubPart(device, dstLevel, dstPos, psource2D->DeviceAPIDependantTexture2D(), srcLevel, srcBox);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceAPIDependantTexture2D::DeviceAPIDependantTexture2D(IDeviceAPIEncapsulator *device, Texture2D *owner, const MemoryView<const u8>& optionalData)
-:   DeviceAPIDependantTexture(device, owner) {}
+DeviceAPIDependantTexture2D::DeviceAPIDependantTexture2D(IDeviceAPIEncapsulator *device, const Texture2D *resource, const MemoryView<const u8>& /* optionalData */)
+:   DeviceAPIDependantTexture(device, resource)
+,   _width(checked_cast<u32>(resource->Width()))
+,   _height(checked_cast<u32>(resource->Height())) 
+,   _levelCount(checked_cast<u32>(resource->LevelCount())) {}
 //----------------------------------------------------------------------------
 DeviceAPIDependantTexture2D::~DeviceAPIDependantTexture2D() {}
+//----------------------------------------------------------------------------
+size_t DeviceAPIDependantTexture2D::VideoMemorySizeInBytes() const { 
+    return Format()->SizeOfTexture2DInBytes(_width, _height, _levelCount);
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

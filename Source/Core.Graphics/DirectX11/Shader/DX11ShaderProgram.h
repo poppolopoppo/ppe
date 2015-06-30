@@ -9,46 +9,41 @@
 
 namespace Core {
 namespace Graphics {
-class IDeviceAPIShaderCompilerEncapsulator;
+class IDeviceAPIShaderCompiler;
 class VertexDeclaration;
-
 FWD_REFPTR(AnnotedConstantBuffer);
 struct AnnotedTextureSlot;
-} //!namespace Graphics
-} //!namespace Core
-
-namespace Core {
-namespace Graphics {
-namespace DX11 {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ShaderProgram : public DeviceAPIDependantShaderProgram {
+class DX11ShaderProgram : public DeviceAPIDependantShaderProgram {
 public:
-    ShaderProgram(  IDeviceAPIShaderCompilerEncapsulator *compiler,
-                    Graphics::ShaderProgram *owner,
-                    const char *entryPoint,
-                    ShaderCompilerFlags flags,
-                    const Graphics::ShaderSource *source,
-                    const Graphics::VertexDeclaration *vertexDeclaration);
-    virtual ~ShaderProgram();
+    DX11ShaderProgram(  IDeviceAPIShaderCompiler *compiler,
+                        ShaderProgram *owner,
+                        const char *entryPoint,
+                        ShaderCompilerFlags flags,
+                        const ShaderSource *source,
+                        const VertexDeclaration *vertexDeclaration);
+    virtual ~DX11ShaderProgram();
 
     ::ID3DBlob *Entity() const { return _entity.Get(); }
 
     virtual size_t ProgramHashCode() const override { return _programHashCode; }
 
-    SINGLETON_POOL_ALLOCATED_DECL(ShaderProgram);
+    virtual size_t VideoMemorySizeInBytes() const override;
 
-    static void Preprocess( IDeviceAPIShaderCompilerEncapsulator *compiler,
+    SINGLETON_POOL_ALLOCATED_DECL(DX11ShaderProgram);
+
+    static void Preprocess( IDeviceAPIShaderCompiler *compiler,
                             RAWSTORAGE(Shader, char)& output,
-                            const Graphics::ShaderProgram *owner,
-                            const Graphics::ShaderSource *source,
-                            const Graphics::VertexDeclaration *vertexDeclaration);
+                            const ShaderProgram *owner,
+                            const ShaderSource *source,
+                            const VertexDeclaration *vertexDeclaration);
 
-    static void Reflect(IDeviceAPIShaderCompilerEncapsulator *compiler,
+    static void Reflect(IDeviceAPIShaderCompiler *compiler,
                         ASSOCIATIVE_VECTOR(Shader, BindName, PCConstantBufferLayout)& constants,
                         VECTOR(Shader, ShaderProgramTexture)& textures,
-                        const Graphics::ShaderProgram *program);
+                        const ShaderProgram *program);
 
 private:
     ComPtr<::ID3DBlob> _entity;
@@ -67,6 +62,5 @@ LPCSTR ShaderProfileTypeToD3D11Target(ShaderProgramType program, ShaderProfileTy
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace DX11
 } //!namespace Graphics
 } //!namespace Core

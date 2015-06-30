@@ -52,12 +52,14 @@ enum class ColorChannels {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(BlendState);
-class BlendState : public TypedDeviceResource<DeviceResourceType::State> {
+class BlendState : public DeviceResource {
 public:
     BlendState();
     virtual ~BlendState();
 
-    virtual bool Available() const override { return nullptr != _deviceAPIDependantState; }
+    virtual bool Available() const override;
+    virtual DeviceAPIDependantEntity *TerminalEntity() const override;
+
     const PDeviceAPIDependantBlendState& DeviceAPIDependantState() const {
         Assert(Frozen()); return _deviceAPIDependantState;
     }
@@ -127,15 +129,12 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DeviceAPIDependantBlendState : public DeviceAPIDependantEntity {
+class DeviceAPIDependantBlendState : public TypedDeviceAPIDependantEntity<BlendState> {
 public:
-    DeviceAPIDependantBlendState(IDeviceAPIEncapsulator *device, BlendState *owner);
+    DeviceAPIDependantBlendState(IDeviceAPIEncapsulator *device, const BlendState *resource);
     virtual ~DeviceAPIDependantBlendState();
 
-    const BlendState *Owner() const { return _owner; }
-
-private:
-    BlendState *_owner;
+    virtual size_t VideoMemorySizeInBytes() const override { return 0; }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

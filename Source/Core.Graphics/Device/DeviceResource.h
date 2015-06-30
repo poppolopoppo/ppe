@@ -10,30 +10,17 @@
 #include "Core/Meta/BitField.h"
 #include "Core/Meta/ThreadResource.h"
 
+#include "Core.Graphics/Device/DeviceResourceType.h"
+
 #ifndef FINAL_RELEASE
 #   define WITH_GRAPHICS_DEVICERESOURCE_NAME
 #endif
 
 namespace Core {
 namespace Graphics {
+FWD_REFPTR(DeviceAPIDependantEntity);
 class DeviceEncapsulator;
 
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-enum class DeviceResourceType {
-    Constants = 0,
-    Indices,
-    RenderTarget,
-    ShaderEffect,
-    ShaderProgram,
-    State,
-    Texture,
-    VertexDeclaration,
-    Vertices,
-};
-//----------------------------------------------------------------------------
-const char *ResourceTypeToCStr(DeviceResourceType type);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -41,7 +28,10 @@ FWD_REFPTR(DeviceResource);
 FWD_WEAKPTR(DeviceResource);
 class DeviceResource : public WeakAndRefCountable {
 protected:
-    DeviceResource(DeviceResourceType resourceType);
+    explicit DeviceResource(DeviceResourceType resourceType);
+
+    DeviceResource(const DeviceResource& ) = delete;
+    DeviceResource& operator =(const DeviceResource& ) = delete;
 
 public:
     virtual ~DeviceResource();
@@ -54,6 +44,8 @@ public:
     }
 
     virtual bool Available() const = 0;
+
+    virtual DeviceAPIDependantEntity *TerminalEntity() const = 0;
 
     bool Frozen() const { return bitfrozen_type::Get(_frozenAndResourceType); }
     void Freeze();
@@ -72,10 +64,10 @@ protected:
     virtual void FreezeImpl() {}
     virtual void UnfreezeImpl() {}
 
-    virtual void OnDeviceCreateImpl(DeviceEncapsulator *device) {}
-    virtual void OnDeviceResetImpl(DeviceEncapsulator *device) {}
-    virtual void OnDeviceLostImpl(DeviceEncapsulator *device) {}
-    virtual void OnDeviceDestroyImpl(DeviceEncapsulator *device) {}
+    virtual void VirtualOnDeviceCreate(DeviceEncapsulator * /* device */) {}
+    virtual void VirtualOnDeviceReset(DeviceEncapsulator * /* device */) {}
+    virtual void VirtualOnDeviceLost(DeviceEncapsulator * /* device */) {}
+    virtual void VirtualOnDeviceDestroy(DeviceEncapsulator * /* device */) {}
 
 private:
     typedef Meta::Bit<u32>::First<1>::type bitfrozen_type;
@@ -86,15 +78,6 @@ private:
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
     String _resourceName;
 #endif
-};
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <DeviceResourceType _ResourceType>
-class TypedDeviceResource : public DeviceResource {
-public:
-    TypedDeviceResource() : DeviceResource(_ResourceType) {}
-    virtual ~TypedDeviceResource() {}
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
