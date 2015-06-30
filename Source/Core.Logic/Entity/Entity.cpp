@@ -1,24 +1,25 @@
-#pragma once
+#include "stdafx.h"
 
-#include "Core/Core.h"
+#include "Entity.h"
 
-#include "Core/Allocator/PoolAllocatorTag.h"
+#include "Component/IComponent.h"
+#include "Component/ComponentContainer.h"
+
+#include "Entity/EntityContainer.h"
+#include "Entity/EntityTag.h"
 
 namespace Core {
-POOLTAG_DEF(Logic);
-
 namespace Logic {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class LogicStartup {
-public:
-    static void Start();
-    static void Shutdown();
-
-    LogicStartup()  { Start(); }
-    ~LogicStartup() { Shutdown(); }
-};
+void Entity::Start() {
+    EntityTag::Start(64);
+}
+//----------------------------------------------------------------------------
+void Entity::Shutdown() {
+    EntityTag::Shutdown();
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -8,11 +8,9 @@
 #include "targetver.h"
 
 #include "Core/stdafx.h"
-#include "Core.Engine/stdafx.h"
 #include "Core.Graphics/stdafx.h"
 
 #include "Core/Core.h"
-#include "Core.Engine/Engine.h"
 #include "Core.Graphics/Graphics.h"
 
 #include "Core/Time/Timeline.h"

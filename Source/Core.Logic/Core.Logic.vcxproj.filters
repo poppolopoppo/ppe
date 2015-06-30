@@ -1,6 +1,102 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <CustomBuild Include="Component\ComponentContainer.cpp">
+      <Filter>Component</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Component\ComponentContainer.h">
+      <Filter>Component</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Component\ComponentMapper.h">
+      <Filter>Component</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Component\ComponentTag.h">
+      <Filter>Component</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Component\Component_fwd.h">
+      <Filter>Component</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Component\IComponent.h">
+      <Filter>Component</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Component\ITypedComponent.h">
+      <Filter>Component</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Entity\Entity.cpp">
+      <Filter>Entity</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Entity\Entity.h">
+      <Filter>Entity</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Entity\EntityContainer.cpp">
+      <Filter>Entity</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Entity\EntityContainer.h">
+      <Filter>Entity</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Entity\EntityTag.cpp">
+      <Filter>Entity</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Entity\EntityTag.h">
+      <Filter>Entity</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Entity\EntityTagContainer.cpp">
+      <Filter>Entity</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Entity\EntityTagContainer.h">
+      <Filter>Entity</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Entity\Entity_fwd.h">
+      <Filter>Entity</Filter>
+    </CustomBuild>
+    <CustomBuild Include="System\DelayedProcessingSystem.cpp">
+      <Filter>System</Filter>
+    </CustomBuild>
+    <CustomBuild Include="System\DelayedProcessingSystem.h">
+      <Filter>System</Filter>
+    </CustomBuild>
+    <CustomBuild Include="System\EntityProcessingSystem.cpp">
+      <Filter>System</Filter>
+    </CustomBuild>
+    <CustomBuild Include="System\EntityProcessingSystem.h">
+      <Filter>System</Filter>
+    </CustomBuild>
+    <CustomBuild Include="System\ISystem.h">
+      <Filter>System</Filter>
+    </CustomBuild>
+    <CustomBuild Include="System\QueueProcessingSystem.cpp">
+      <Filter>System</Filter>
+    </CustomBuild>
+    <CustomBuild Include="System\QueueProcessingSystem.h">
+      <Filter>System</Filter>
+    </CustomBuild>
+    <CustomBuild Include="System\SystemAspect.h">
+      <Filter>System</Filter>
+    </CustomBuild>
+    <CustomBuild Include="System\SystemContainer.cpp">
+      <Filter>System</Filter>
+    </CustomBuild>
+    <CustomBuild Include="System\SystemContainer.h">
+      <Filter>System</Filter>
+    </CustomBuild>
+    <CustomBuild Include="System\SystemHelpers.h">
+      <Filter>System</Filter>
+    </CustomBuild>
+    <CustomBuild Include="System\SystemLayer.cpp">
+      <Filter>System</Filter>
+    </CustomBuild>
+    <CustomBuild Include="System\SystemLayer.h">
+      <Filter>System</Filter>
+    </CustomBuild>
+    <CustomBuild Include="System\System_fwd.h">
+      <Filter>System</Filter>
+    </CustomBuild>
+    <CustomBuild Include="EntityManager-impl.h">
+    </CustomBuild>
+    <CustomBuild Include="EntityManager.cpp">
+    </CustomBuild>
+    <CustomBuild Include="EntityManager.h">
+    </CustomBuild>
     <CustomBuild Include="fbuild.bff">
     </CustomBuild>
     <CustomBuild Include="Logic.cpp">
@@ -13,5 +109,20 @@
     </CustomBuild>
     <CustomBuild Include="targetver.h">
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Component">
+      <UniqueIdentifier>{cb0f23f4-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Entity">
+      <UniqueIdentifier>{0984415e-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="System">
+      <UniqueIdentifier>{cee114bd-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

@@ -1,23 +1,19 @@
 #pragma once
 
-#include "Core/Core.h"
+#include "Core.Logic/Logic.h"
 
-#include "Core/Allocator/PoolAllocatorTag.h"
+#include "Core/Meta/TypeHash.h"
 
 namespace Core {
-POOLTAG_DEF(Logic);
-
 namespace Logic {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class LogicStartup {
-public:
-    static void Start();
-    static void Shutdown();
-
-    LogicStartup()  { Start(); }
-    ~LogicStartup() { Shutdown(); }
+// Gets a unique ID for T
+//----------------------------------------------------------------------------
+template <typename T>
+struct Component {
+    static ComponentTag Tag() { return ComponentTag(Meta::TypeHash<T>::value()); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

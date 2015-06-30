@@ -1,24 +1,22 @@
 #pragma once
 
-#include "Core/Core.h"
+#include "Core.Logic/Logic.h"
 
-#include "Core/Allocator/PoolAllocatorTag.h"
+#include "Core/Meta/StronglyTyped.h"
 
 namespace Core {
-POOLTAG_DEF(Logic);
-
 namespace Logic {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class LogicStartup {
-public:
-    static void Start();
-    static void Shutdown();
-
-    LogicStartup()  { Start(); }
-    ~LogicStartup() { Shutdown(); }
-};
+class Entity;
+class EntityContainer;
+class EntityManager;
+class EntityTag;
+class EntityTagManager;
+//----------------------------------------------------------------------------
+CORE_STRONGLYTYPED_NUMERIC_DEF(u32, EntityID);
+CORE_STRONGLYTYPED_NUMERIC_DEF(u64, EntityUID);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
