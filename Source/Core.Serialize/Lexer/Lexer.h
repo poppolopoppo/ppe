@@ -6,15 +6,18 @@
 #include "Core.Serialize/Lexer/Match.h"
 #include "Core/IO/String.h"
 
+#include <stdexcept>
+
 namespace Core {
 namespace Lexer {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class LexerException : public std::exception {
+class LexerException : public std::logic_error {
 public:
     LexerException(const char *what, Match&& match)
-        : std::exception(what), _match(std::move(match)) {}
+        :   std::logic_error(what)
+        ,   _match(std::move(match)) {}
 
     virtual ~LexerException() {}
 

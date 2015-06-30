@@ -40,7 +40,7 @@ void TextSerializer::Deserialize(VECTOR(Transaction, RTTI::PMetaAtom)& atoms, co
     }
 }
 //----------------------------------------------------------------------------
-void TextSerializer::Serialize(RAWSTORAGE(Serializer, u8)& output, const MemoryView<const RTTI::PCMetaAtom>& atoms) {
+void TextSerializer::Serialize(RAWSTORAGE(Serializer, u8)& /* output */, const MemoryView<const RTTI::PCMetaAtom>& atoms) {
     Assert(atoms.size());
 
     AssertNotImplemented();

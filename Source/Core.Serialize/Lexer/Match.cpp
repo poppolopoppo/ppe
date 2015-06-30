@@ -24,19 +24,6 @@ Match::Match(const symbol_type *symbol, const String& value, const Location& sit
     Assert(_symbol);
 }
 //----------------------------------------------------------------------------
-Match::Match(Match&& rvalue)
-:   _symbol(std::move(rvalue._symbol))
-,   _value(std::move(rvalue._value))
-,   _site(std::move(rvalue._site)) {
-}
-//----------------------------------------------------------------------------
-Match& Match::operator =(Match&& rvalue) {
-    _symbol = std::move(rvalue._symbol);
-    _value = std::move(rvalue._value);
-    _site = std::move(rvalue._site);
-    return *this;
-}
-//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Lexer

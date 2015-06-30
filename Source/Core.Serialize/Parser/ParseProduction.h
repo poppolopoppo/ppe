@@ -127,9 +127,9 @@ struct Production : public std::unary_function<ParseList&, ParseResult<T> >, _Al
         const Production& first = *this;
         return Production<T>{[first, other](ParseList& input) -> ParseResult<T> {
             ParseResult<T> result = first.TryParse(input);
-            return (result.Succeed())
-                ? result
-                : other(input);
+            if (!result.Succeed())
+                result = other(input);
+            return result;
         }};
     }
 

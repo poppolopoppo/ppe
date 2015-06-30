@@ -26,7 +26,7 @@ public:
 
     template <typename _ParseItemImpl>
     const _ParseItemImpl *As() const {
-        return dynamic_cast<const _ParseItemImpl *>(this); 
+        return checked_cast<const _ParseItemImpl *>(this); 
     }
 
 private:

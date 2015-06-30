@@ -5,6 +5,8 @@
 #include "Symbol.h"
 #include "SymbolTrie.h"
 
+#include "Core/IO/String.h"
+
 #include <algorithm>
 #include <locale>
 
@@ -58,36 +60,6 @@ static bool Until_(const char ch) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
-//----------------------------------------------------------------------------
-template <size_t _Base>
-static bool Atoi_(const String& str, int64_t& value) {
-    static_assert(1 < _Base && _Base <= 16, "invalid _Base");
-
-    if (str.empty())
-        return false;
-
-    int64_t v = 0;
-    int64_t unit = 1;
-
-    for (size_t i = str.size(); i; --i, unit *= _Base) {
-        const char ch = str[i - 1];
-
-        size_t d = 0;
-        if (ch >= '0' && ch <= '9')
-            d = ch - '0';
-        else if (_Base > 10 && ch >= 'a' && ch <= 'f')
-            d = ch - 'a' + 10;
-        else if (_Base > 10 && ch >= 'A' && ch <= 'F')
-            d = ch - 'A' + 10;
-        else
-            return false;
-
-        v += d * unit;
-    }
-
-    value = v;
-    return true;
-}
 //----------------------------------------------------------------------------
 template <size_t _Base>
 static void Itoa_(int64_t value, String& str) {
@@ -195,7 +167,7 @@ static bool Lex_Numeric_(LookAheadReader& reader, const Symbol **psymbol, String
                 throw LexerException("invalid hexadecimal int", Match(SymbolTrie::Int, std::move(value), reader.SourceSite()));
 
             int64_t numeric;
-            if (!Atoi_<16>(value, numeric)) {
+            if (!Atoi<16>(&numeric, value)) {
                 Assert(false);
                 return false;
             }
@@ -216,7 +188,7 @@ static bool Lex_Numeric_(LookAheadReader& reader, const Symbol **psymbol, String
                 throw LexerException("invalid octal int", Match(SymbolTrie::Int, std::move(value), reader.SourceSite()));
 
             int64_t numeric;
-            if (!Atoi_<8>(value, numeric)) {
+            if (!Atoi<8>(&numeric, value)) {
                 Assert(false);
                 return false;
             }

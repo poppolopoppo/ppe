@@ -17,6 +17,7 @@ namespace Lexer {
 class SymbolTrie : public Core::Trie<
     char,
     Symbol,
+    1,
     CharEqualTo<char, CaseSensitive::False>,
     ALLOCATOR(Lexer, Pair<char COMMA Symbol>)
 > {
@@ -24,6 +25,7 @@ public:
     typedef Core::Trie<
         char,
         Symbol,
+        1,
         CharEqualTo<char, CaseSensitive::False>,
         ALLOCATOR(Lexer, Pair<char COMMA Symbol>)
     >   parent_type;

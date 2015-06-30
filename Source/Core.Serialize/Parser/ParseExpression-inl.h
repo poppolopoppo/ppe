@@ -24,7 +24,7 @@ template <typename T>
 Literal<T>::~Literal() {}
 //----------------------------------------------------------------------------
 template <typename T>
-RTTI::MetaAtom *Literal<T>::Eval(ParseContext *context) const {
+RTTI::MetaAtom *Literal<T>::Eval(ParseContext * /* context */) const {
     Assert(_literal);
     return _literal.get();
 }

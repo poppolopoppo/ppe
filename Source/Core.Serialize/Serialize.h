@@ -2,7 +2,11 @@
 
 #include "Core/Core.h"
 
+#include "Core/Allocator/PoolAllocatorTag.h"
+
 namespace Core {
+POOLTAG_DEF(Serialize);
+
 namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

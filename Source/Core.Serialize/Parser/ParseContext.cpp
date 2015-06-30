@@ -80,7 +80,7 @@ RTTI::MetaAtom *ParseContext::GetAny(const RTTI::MetaObjectName& name) const {
     do {
         RTTI::MetaAtom *result;
 
-        if (result = ctx->GetLocal(name))
+        if (nullptr != (result = ctx->GetLocal(name)))
             return result;
 
         ctx = ctx->_parent;

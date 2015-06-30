@@ -26,9 +26,6 @@ public:
     Match(const symbol_type *symbol, String&& rvalue, const Location& site);
     Match(const symbol_type *symbol, const String& value, const Location& site);
 
-    Match(Match&& rvalue);
-    Match& operator =(Match&& rvalue);
-
     const symbol_type *Symbol() const { return _symbol; }
     const String& Value() const { return _value; }
     const Location& Site() const { return _site; }

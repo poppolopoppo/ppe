@@ -1,5 +1,10 @@
 #include "stdafx.h"
 
+/*
+// TODO: simplify ParseProduction ...
+//#pragma warning( push )
+#pragma warning( disable : 4503) // C4503 'XXX' : longueur du nom décoré dépassée, le nom a été tronqué
+
 #include "Grammar.h"
 
 #include "Lexer/Lexer.h"
@@ -1060,3 +1065,6 @@ Parser::PCParseItem Grammar_Parse(Parser::ParseList& input) {
 //----------------------------------------------------------------------------
 } //!namespace Serialize
 } //!namespace Core
+
+//#pragma warning( pop )
+*/
