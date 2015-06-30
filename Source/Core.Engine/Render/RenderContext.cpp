@@ -5,12 +5,13 @@
 #include "Core.Graphics/Device/DeviceEncapsulator.h"
 #include "Core/Maths/Units.h"
 
-#include "Material/Parameters/AbstractMaterialParameter.h"
+#include "Material/IMaterialParameter.h"
 #include "Scene/Scene.h"
 #include "Service/EffectCompilerService.h"
 #include "Service/IServiceProvider.h"
 #include "Service/RenderSurfaceService.h"
 #include "Service/Service_fwd.h"
+#include "Service/SharedConstantBufferFactoryService.h"
 #include "Service/TextureCacheService.h"
 #include "World/World.h"
 
@@ -22,8 +23,9 @@ namespace Engine {
 RenderContext::RenderContext(IServiceProvider *services, size_t textureCacheSizeInBytes)
 :   _services(services)
 ,   _renderSurfaceService(new DefaultRenderSurfaceService())
-,   _effectCompilerService(new DefaultEffectCompilerService())
-,   _textureCacheService(new DefaultTextureCacheService(textureCacheSizeInBytes)) {
+,   _textureCacheService(new DefaultTextureCacheService(textureCacheSizeInBytes))
+,   _sharedConstantBufferFactoryService(new DefaultSharedConstantBufferFactoryService())
+,   _effectCompilerService(new DefaultEffectCompilerService()) {
     Assert(services);
 
     for (size_t i = 0; i < VariabilitySeed::Count; ++i)
@@ -33,15 +35,18 @@ RenderContext::RenderContext(IServiceProvider *services, size_t textureCacheSize
 
     ENGINESERVICE_REGISTER(IRenderSurfaceService, _services, _renderSurfaceService.get());
     ENGINESERVICE_REGISTER(ITextureCacheService, _services, _textureCacheService.get());
+    ENGINESERVICE_REGISTER(ISharedConstantBufferFactoryService, _services, _sharedConstantBufferFactoryService.get());
     ENGINESERVICE_REGISTER(IEffectCompilerService, _services, _effectCompilerService.get());
 }
 //----------------------------------------------------------------------------
 RenderContext::~RenderContext() {
     ENGINESERVICE_UNREGISTER(IEffectCompilerService, _services, _effectCompilerService.get());
+    ENGINESERVICE_UNREGISTER(ISharedConstantBufferFactoryService, _services, _sharedConstantBufferFactoryService.get());
     ENGINESERVICE_UNREGISTER(ITextureCacheService, _services, _textureCacheService.get());
     ENGINESERVICE_UNREGISTER(IRenderSurfaceService, _services, _renderSurfaceService.get());
 
     RemoveRef_AssertReachZero(_effectCompilerService);
+    RemoveRef_AssertReachZero(_sharedConstantBufferFactoryService);
     RemoveRef_AssertReachZero(_textureCacheService);
     RemoveRef_AssertReachZero(_renderSurfaceService);
 }
@@ -79,8 +84,10 @@ void RenderContext::Render(
 //----------------------------------------------------------------------------
 void RenderContext::Clear() {
     _effectCompilerService->EffectCompiler()->Clear();
+    _sharedConstantBufferFactoryService->SharedConstantBufferFactory()->Clear();
     _textureCacheService->TextureCache()->Clear();
     _renderSurfaceService->Manager()->Clear();
+
     _materialDatabase.Clear();
 }
 //----------------------------------------------------------------------------

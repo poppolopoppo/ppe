@@ -2,7 +2,7 @@
 
 #include "RenderLayerDrawRect.h"
 
-#include "Core.Graphics/Device/DeviceAPIEncapsulator.h"
+#include "Core.Graphics/Device/DeviceAPI.h"
 #include "Core.Graphics/Device/Geometry/PrimitiveType.h"
 #include "Core.Graphics/Device/Geometry/VertexBuffer.h"
 #include "Core.Graphics/Device/Geometry/VertexDeclaration.h"
@@ -115,7 +115,7 @@ static void CreateRectVertices_(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(RenderLayerDrawRect, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, RenderLayerDrawRect, );
 //----------------------------------------------------------------------------
 RenderLayerDrawRect::RenderLayerDrawRect(Engine::MaterialEffect *materialEffect)
 :   RenderLayerDrawRect(materialEffect, RectangleF(-1.0f, -1.0f, 2.0f, 2.0f)) {}
@@ -170,7 +170,7 @@ void RenderLayerDrawRect::RenderImpl_(Graphics::IDeviceAPIContextEncapsulator *c
     context->DrawPrimitives(Graphics::PrimitiveType::TriangleStrip, 0, 2);
 }
 //----------------------------------------------------------------------------
-void RenderLayerDrawRect::DestroyImpl_(Graphics::IDeviceAPIEncapsulator *device, const RenderTree *renderTree) {
+void RenderLayerDrawRect::DestroyImpl_(Graphics::IDeviceAPIEncapsulator *device, const RenderTree * /* renderTree */) {
     Assert(_vertices);
 
     _vertices->Destroy(device);

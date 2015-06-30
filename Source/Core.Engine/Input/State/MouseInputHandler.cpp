@@ -17,6 +17,9 @@
 #   error "no support"
 #endif
 
+#pragma warning( push )
+#pragma warning( disable : 4100 ) // C4100 'XXX' : paramètre formel non référencé
+
 namespace Core {
 namespace Engine {
 //----------------------------------------------------------------------------
@@ -138,3 +141,5 @@ Graphics::MessageResult MouseInputHandler::OnMouseMButtonUp_(Graphics::IWindowMe
 //----------------------------------------------------------------------------
 } //!namespace Engine
 } //!namespace Core
+
+#pragma warning( pop )

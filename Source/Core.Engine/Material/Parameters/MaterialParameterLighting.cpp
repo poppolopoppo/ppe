@@ -3,7 +3,6 @@
 #include "MaterialParameterLighting.h"
 
 #include "Lighting/LightingEnvironment.h"
-#include "Material/MaterialContext.h"
 #include "Material/MaterialDatabase.h"
 #include "Scene/Scene.h"
 #include "World/World.h"
@@ -15,63 +14,59 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool MaterialParameterLighting_SunColor::Memoize_ReturnIfChanged_(float3 *cached, const MaterialContext& context) {
-    const ColorRGBA& color = context.Scene->World()->Lighting()->Sun().Color();
-    const float3 value = ColorRGBAF(color).Data().xyz();
+namespace MaterialParameterLighting {
+//----------------------------------------------------------------------------
+EACH_MATERIALPARAMETER_LIGHTING(MATERIALPARAMETER_FN_DEF)
+//----------------------------------------------------------------------------
+void RegisterMaterialParameters(MaterialDatabase *database) {
+    Assert(database);
 
-    const bool changed = (value != *cached);
-    *cached = value;
+#define BIND_MATERIALPARAMETER(_Variability, _Type, _Name) \
+    database->BindParameter("uni" STRINGIZE(_Name), new MATERIALPARAMETER_FN(_Variability, _Type, _Name)() );
 
-    return changed;
+    EACH_MATERIALPARAMETER_LIGHTING(BIND_MATERIALPARAMETER)
+
+#undef BIND_MATERIALPARAMETER
 }
 //----------------------------------------------------------------------------
-bool MaterialParameterLighting_SunDirection::Memoize_ReturnIfChanged_(float3 *cached, const MaterialContext& context) {
-    const float3& value = context.Scene->World()->Lighting()->Sun().Direction();
-
-    const bool changed = (value != *cached);
-    *cached = value;
-
-    return changed;
-}
-//----------------------------------------------------------------------------
-bool MaterialParameterLighting_SunIntensity::Memoize_ReturnIfChanged_(float *cached, const MaterialContext& context) {
-    const float value = context.Scene->World()->Lighting()->Sun().Intensity();
-
-    const bool changed = (value != *cached);
-    *cached = value;
-
-    return changed;
-}
-//----------------------------------------------------------------------------
-bool MaterialParameterLighting_Exposure::Memoize_ReturnIfChanged_(float *cached, const MaterialContext& context) {
-    const float value = context.Scene->World()->Lighting()->Exposure();
-
-    const bool changed = (value != *cached);
-    *cached = value;
-
-    return changed;
-}
-//----------------------------------------------------------------------------
-bool MaterialParameterLighting_WhitePoint::Memoize_ReturnIfChanged_(float *cached, const MaterialContext& context) {
-    const float value = context.Scene->World()->Lighting()->WhitePoint();
-
-    const bool changed = (value != *cached);
-    *cached = value;
-
-    return changed;
-}
+} //!MaterialParameterLighting
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void RegisterLightingMaterialParameters(MaterialDatabase *database) {
-    Assert(database);
-
-    database->BindParameter("uniSunColor",      new MaterialParameterLighting_SunColor());
-    database->BindParameter("uniSunDirection",  new MaterialParameterLighting_SunDirection());
-    database->BindParameter("uniSunIntensity",  new MaterialParameterLighting_SunIntensity());
-    database->BindParameter("uniExposure",      new MaterialParameterLighting_Exposure());
-    database->BindParameter("uniWhitePoint",    new MaterialParameterLighting_WhitePoint());
+namespace MaterialParameterLighting {
+//----------------------------------------------------------------------------
+// Sun
+//----------------------------------------------------------------------------
+void SunColor(const MaterialParameterContext& context, float3& dst) {
+    const ColorRGBA& color = context.Scene->World()->Lighting()->Sun().Color();
+    dst = ColorRGBAF(color).Data().xyz();
 }
+//----------------------------------------------------------------------------
+void SunDirection(const MaterialParameterContext& context, float3& dst) {
+    dst = context.Scene->World()->Lighting()->Sun().Direction();
+}
+//----------------------------------------------------------------------------
+void SunIntensity(const MaterialParameterContext& context, float& dst) {
+    dst = context.Scene->World()->Lighting()->Sun().Intensity();
+}
+//----------------------------------------------------------------------------
+} //!MaterialParameterLighting
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace MaterialParameterLighting {
+//----------------------------------------------------------------------------
+// Tone Mapping
+//----------------------------------------------------------------------------
+void Exposure(const MaterialParameterContext& context, float& dst) {
+    dst = context.Scene->World()->Lighting()->Exposure();
+}
+//----------------------------------------------------------------------------
+void WhitePoint(const MaterialParameterContext& context, float& dst) {
+    dst = context.Scene->World()->Lighting()->WhitePoint();
+}
+//----------------------------------------------------------------------------
+} //!MaterialParameterLighting
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

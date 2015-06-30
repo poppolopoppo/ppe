@@ -12,7 +12,7 @@
 #include "Scene/Scene.h"
 #include "Texture/TextureCache.h"
 
-#include "Core.Graphics/Device/DeviceAPIEncapsulator.h"
+#include "Core.Graphics/Device/DeviceAPI.h"
 #include "Core.Graphics/Device/DeviceDiagnostics.h"
 #include "Core.Graphics/Device/Geometry/IndexBuffer.h"
 #include "Core.Graphics/Device/Geometry/PrimitiveType.h"
@@ -166,8 +166,6 @@ void RenderBatch::Prepare(
 }
 //----------------------------------------------------------------------------
 void RenderBatch::Render(Graphics::IDeviceAPIContextEncapsulator *context) {
-    const Graphics::AbstractDeviceAPIEncapsulator *encapsulator = context->Encapsulator();
-
     const size_t count = _criterias.size();
 
     const RenderCommandCriteria *pred = nullptr;
@@ -175,25 +173,25 @@ void RenderBatch::Render(Graphics::IDeviceAPIContextEncapsulator *context) {
         const RenderCommandCriteria& criteria = _criterias[i];
         Assert(criteria.Ready());
 
-        GRAPHICS_DIAGNOSTICS_BEGINEVENT(encapsulator, criteria.MaterialEffect()->Material()->Name().cstr());
+        GRAPHICS_DIAGNOSTICS_BEGINEVENT(context->Diagnostics(), criteria.MaterialEffect()->Material()->Name().cstr());
 
         if (!pred || pred->Effect != criteria.Effect) {
-            GRAPHICS_DIAGNOSTICS_SETMARKER(encapsulator, criteria.Effect->ResourceName());
+            GRAPHICS_DIAGNOSTICS_SETMARKER(context->Diagnostics(), criteria.Effect->ResourceName());
             criteria.Effect->Set(context);
         }
 
         if (!pred || pred->Vertices != criteria.Vertices) {
-            GRAPHICS_DIAGNOSTICS_SETMARKER(encapsulator, criteria.Vertices->ResourceName());
+            GRAPHICS_DIAGNOSTICS_SETMARKER(context->Diagnostics(), criteria.Vertices->ResourceName());
             context->SetVertexBuffer(criteria.Vertices);
         }
 
         if (!pred || pred->Indices != criteria.Indices) {
-            GRAPHICS_DIAGNOSTICS_SETMARKER(encapsulator, criteria.Indices->ResourceName());
+            GRAPHICS_DIAGNOSTICS_SETMARKER(context->Diagnostics(), criteria.Indices->ResourceName());
             context->SetIndexBuffer(criteria.Indices);
         }
 
         if (!pred || pred->MaterialEffect() != criteria.MaterialEffect()) {
-            GRAPHICS_DIAGNOSTICS_SETMARKER(encapsulator, criteria.MaterialEffect()->Material()->Name().cstr());
+            GRAPHICS_DIAGNOSTICS_SETMARKER(context->Diagnostics(), criteria.MaterialEffect()->Material()->Name().cstr());
             criteria.MaterialEffect()->Set(context);
         }
 
@@ -204,7 +202,7 @@ void RenderBatch::Render(Graphics::IDeviceAPIContextEncapsulator *context) {
                                         params.StartIndex,
                                         params.PrimitiveCount() );
 
-        GRAPHICS_DIAGNOSTICS_ENDEVENT(encapsulator);
+        GRAPHICS_DIAGNOSTICS_ENDEVENT(context->Diagnostics());
 
         pred = &criteria;
     }

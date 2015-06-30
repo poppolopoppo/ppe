@@ -4,76 +4,63 @@
 
 #include <functional>
 
-#include "Core.Engine/Material/Parameters/AbstractMaterialParameter.h"
+#include "Core.Engine/Material/IMaterialParameter.h"
+#include "Core.Engine/Material/MaterialVariability.h"
 
-#include "Core/Allocator/Allocation.h"
-#include "Core/Maths/Geometry/ScalarVector.h"
-#include "Core/Maths/Transform/ScalarMatrix.h"
+#include "Core/Maths/Geometry/ScalarVector_fwd.h"
+#include "Core/Maths/Transform/ScalarMatrix_fwd.h"
+
+#include "Core/Allocator/PoolAllocator.h"
 
 namespace Core {
 namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T>
-class AbstractMaterialParameterMemoizer : public TypedMaterialParameter<T> {
+template <typename _Functor>
+class MaterialParameterMemoizer : public ITypedMaterialParameter<typename _Functor::value_type>, private _Functor {
 public:
-    explicit AbstractMaterialParameterMemoizer(MaterialVariability variability);
-    virtual ~AbstractMaterialParameterMemoizer();
+    typedef ITypedMaterialParameter<typename _Functor::value_type> parent_type;
+    typedef _Functor functor_type;
 
-    AbstractMaterialParameterMemoizer(const AbstractMaterialParameterMemoizer& ) = delete;
-    AbstractMaterialParameterMemoizer& operator =(const AbstractMaterialParameterMemoizer& ) = delete;
+    using functor_type::value_type;
+    using functor_type::Variability;
+    using functor_type::TypedEval;
 
-    const T& Cached() const { return _cached; }
+    template <typename... _Args>
+    MaterialParameterMemoizer(_Args&&... args) : functor_type(std::forward<_Args>(args)...) {}
+    virtual ~MaterialParameterMemoizer() {}
 
-protected:
-    virtual bool EvalIFN_ReturnIfChanged_(const MaterialContext& context) override;
-    virtual void CopyTo_AssumeEvaluated_(void *dst, size_t sizeInBytes) const override;
+    MaterialParameterMemoizer(_Functor&& functor) : functor_type(std::move(functor)) {}
+    MaterialParameterMemoizer(const _Functor& functor) : functor_type(functor) {}
 
-    virtual bool Memoize_ReturnIfChanged_(T *cached, const MaterialContext& context) = 0;
+    virtual MaterialParameterInfo Info() const override;
 
-private:
-    T _cached;
-    VariabilitySeed _seed;
+    virtual void Eval(const MaterialParameterContext& context, void *dst, size_t sizeInBytes) override;
+
+    SINGLETON_POOL_ALLOCATED_DECL(MaterialParameterMemoizer);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T>
-class MaterialParameterFunctionMemoizer : public AbstractMaterialParameterMemoizer<T> {
-public:
-    typedef bool (eval_type)(T *dst, const MaterialContext& context );
-
-    MaterialParameterFunctionMemoizer(MaterialVariability variability, eval_type eval);
-    MaterialParameterFunctionMemoizer(MaterialVariability variability, std::function<eval_type>&& eval);
-    virtual ~MaterialParameterFunctionMemoizer();
-
-    template <typename _Arg0, typename... _Args>
-    MaterialParameterFunctionMemoizer(
-        MaterialVariability variability,
-        bool (*func)(T *, const MaterialContext *, const _Arg0& , const _Args&... ),
-        _Arg0&& arg0, _Args&&... args)
-    :   MaterialParameterFunctionMemoizer(variability, std::bind(func, _1, _2, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...))
-    {}
-
-    template <typename _Object, typename _Arg0, typename... _Args>
-    MaterialParameterFunctionMemoizer(
-        MaterialVariability variability,
-        bool (_Object::* member)(T *, const MaterialContext *, const _Arg0& , const _Args&... ),
-        _Object *instance, _Arg0&& arg0, _Args&&... args)
-    :   MaterialParameterFunctionMemoizer(variability, std::bind(member, instance, _1, _2, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...))
-    {}
-
-    SINGLETON_POOL_ALLOCATED_DECL(MaterialParameterFunctionMemoizer);
-
-protected:
-    virtual bool Memoize_ReturnIfChanged_(T *cached, const MaterialContext& context) override;
-
-private:
-    std::function<eval_type> _eval;
+template <MaterialVariability _Variability, typename T, void (&_Fn)(const MaterialParameterContext& , T& )>
+struct MaterialFunctor {
+    typedef T value_type;
+    MaterialVariability Variability() const { return _Variability; }
+    void TypedEval(const MaterialParameterContext& context, T& dst) {
+        _Fn(context, dst);
+    }
 };
 //----------------------------------------------------------------------------
-CONSTANTFIELD_EXTERNALTEMPLATE_DECL(MaterialParameterFunctionMemoizer, );
+#define MATERIALPARAMETER_FN(_Variability, _Type, _Fn) \
+    Core::Engine::MaterialParameterMemoizer< Core::Engine::MaterialFunctor<_Variability, _Type, _Fn> >
+//----------------------------------------------------------------------------
+#define MATERIALPARAMETER_FN_DECL(_Variability, _Type, _Name) \
+    void _Name(const MaterialParameterContext& context, _Type& dst); \
+    extern template class MATERIALPARAMETER_FN(_Variability, _Type, _Name);
+//----------------------------------------------------------------------------
+#define MATERIALPARAMETER_FN_DEF(_Variability, _Type, _Name) \
+    template class MATERIALPARAMETER_FN(_Variability, _Type, _Name);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

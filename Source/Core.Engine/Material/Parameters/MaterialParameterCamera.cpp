@@ -3,174 +3,146 @@
 #include "MaterialParameterCamera.h"
 
 #include "Camera/Camera.h"
-#include "Material/MaterialContext.h"
 #include "Material/MaterialDatabase.h"
 #include "Scene/Scene.h"
 
 #include "Core.Graphics/Device/BindName.h"
+
+#include "Core/Maths/Geometry/ScalarVector.h"
+#include "Core/Maths/Transform/ScalarMatrix.h"
 
 namespace Core {
 namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool MaterialParameterCamera_EyePosition::Memoize_ReturnIfChanged_(float3 *cached, const MaterialContext& context) {
-    const float3 eyePosition = context.Scene->Camera()->Model().Parameters().Position;
+namespace MaterialParameterCamera {
+//----------------------------------------------------------------------------
+EACH_MATERIALPARAMETER_CAMERA(MATERIALPARAMETER_FN_DEF)
+//----------------------------------------------------------------------------
+void RegisterMaterialParameters(MaterialDatabase *database) {
+    Assert(database);
 
-    const bool changed = (eyePosition != *cached);
-    *cached = eyePosition;
+#define BIND_MATERIALPARAMETER(_Variability, _Type, _Name) \
+    database->BindParameter("uni" STRINGIZE(_Name), new MATERIALPARAMETER_FN(_Variability, _Type, _Name)() );
 
-    return changed;
+    EACH_MATERIALPARAMETER_CAMERA(BIND_MATERIALPARAMETER)
+
+#undef BIND_MATERIALPARAMETER
 }
 //----------------------------------------------------------------------------
-bool MaterialParameterCamera_EyeDirection::Memoize_ReturnIfChanged_(float3 *cached, const MaterialContext& context) {
-    const float3 eyeDirection = context.Scene->Camera()->Model().Parameters().LookAtDir;
-
-    const bool changed = (eyeDirection != *cached);
-    *cached = eyeDirection;
-
-    return changed;
-}
-//----------------------------------------------------------------------------
-bool MaterialParameterCamera_EyeUp::Memoize_ReturnIfChanged_(float3 *cached, const MaterialContext& context) {
-    const float3 eyeUp = context.Scene->Camera()->Model().Parameters().UpDir;
-
-    const bool changed = (eyeUp != *cached);
-    *cached = eyeUp;
-
-    return changed;
-}
-//----------------------------------------------------------------------------
-bool MaterialParameterCamera_View::Memoize_ReturnIfChanged_(float4x4 *cached, const MaterialContext& context) {
-    const float4x4& view = context.Scene->Camera()->Model().View();
-
-    const bool changed = (view != *cached);
-    *cached = view;
-
-    return changed;
-}
-//----------------------------------------------------------------------------
-bool MaterialParameterCamera_InvertView::Memoize_ReturnIfChanged_(float4x4 *cached, const MaterialContext& context) {
-    const float4x4& invertView = context.Scene->Camera()->Model().InvertView();
-
-    const bool changed = (invertView != *cached);
-    *cached = invertView;
-
-    return changed;
-}
-//----------------------------------------------------------------------------
-bool MaterialParameterCamera_Projection::Memoize_ReturnIfChanged_(float4x4 *cached, const MaterialContext& context) {
-    const float4x4& projection = context.Scene->Camera()->Model().Projection();
-
-    const bool changed = (projection != *cached);
-    *cached = projection;
-
-    return changed;
-}
-//----------------------------------------------------------------------------
-bool MaterialParameterCamera_InvertProjection::Memoize_ReturnIfChanged_(float4x4 *cached, const MaterialContext& context) {
-    const float4x4& invertProjection = context.Scene->Camera()->Model().InvertProjection();
-
-    const bool changed = (invertProjection != *cached);
-    *cached = invertProjection;
-
-    return changed;
-}
-//----------------------------------------------------------------------------
-bool MaterialParameterCamera_ViewProjection::Memoize_ReturnIfChanged_(float4x4 *cached, const MaterialContext& context) {
-    const float4x4& viewProjection = context.Scene->Camera()->Model().ViewProjection();
-
-    const bool changed = (viewProjection != *cached);
-    *cached = viewProjection;
-
-    return changed;
-}
-//----------------------------------------------------------------------------
-bool MaterialParameterCamera_InvertViewProjection::Memoize_ReturnIfChanged_(float4x4 *cached, const MaterialContext& context) {
-    const float4x4& invertViewProjection = context.Scene->Camera()->Model().InvertViewProjection();
-
-    const bool changed = (invertViewProjection != *cached);
-    *cached = invertViewProjection;
-
-    return changed;
-}
-//----------------------------------------------------------------------------
-bool MaterialParameterCamera_FrustumRays::Memoize_ReturnIfChanged_(float4x4 *cached, const MaterialContext& context) {
-    float3 cameraRays[4];
-    context.Scene->Camera()->Model().GetFrustumRays(cameraRays);
-
-    float4x4 raysAsMatrix(0.0f);
-    raysAsMatrix.SetRow(size_t(CameraRay::LeftTop),         cameraRays[size_t(CameraRay::LeftTop)].ZeroExtend());
-    raysAsMatrix.SetRow(size_t(CameraRay::LeftBottom),      cameraRays[size_t(CameraRay::LeftBottom)].ZeroExtend());
-    raysAsMatrix.SetRow(size_t(CameraRay::RightBottom),     cameraRays[size_t(CameraRay::RightBottom)].ZeroExtend());
-    raysAsMatrix.SetRow(size_t(CameraRay::RightTop),        cameraRays[size_t(CameraRay::RightTop)].ZeroExtend());
-
-    const bool changed = (raysAsMatrix != *cached);
-    *cached = raysAsMatrix;
-
-    return changed;
-}
-//----------------------------------------------------------------------------
-bool MaterialParameterCamera_NearFarZ::Memoize_ReturnIfChanged_(float2 *cached, const MaterialContext& context) {
-    const ICamera *const camera = context.Scene->Camera();
-
-    const float2 nearFarZ(camera->ZNear(), camera->ZFar());
-
-    const bool changed = (nearFarZ != *cached);
-    *cached = nearFarZ;
-
-    return changed;
-}
-//----------------------------------------------------------------------------
-bool MaterialParameterCamera_NearCorners::Memoize_ReturnIfChanged_(float4x4 *cached, const MaterialContext& context) {
-    const MemoryView<const float3> frustumCorners = context.Scene->Camera()->Model().FrustumCorners();
-
-    float4x4 pointsAsMatrix(0.0f);
-    pointsAsMatrix.SetRow(size_t(CameraRay::LeftTop),       frustumCorners[size_t(FrustumCorner::Near_LeftTop)].ZeroExtend());
-    pointsAsMatrix.SetRow(size_t(CameraRay::LeftBottom),    frustumCorners[size_t(FrustumCorner::Near_LeftBottom)].ZeroExtend());
-    pointsAsMatrix.SetRow(size_t(CameraRay::RightBottom),   frustumCorners[size_t(FrustumCorner::Near_RightBottom)].ZeroExtend());
-    pointsAsMatrix.SetRow(size_t(CameraRay::RightTop),      frustumCorners[size_t(FrustumCorner::Near_RightTop)].ZeroExtend());
-
-    const bool changed = (pointsAsMatrix != *cached);
-    *cached = pointsAsMatrix;
-
-    return changed;
-}
-//----------------------------------------------------------------------------
-bool MaterialParameterCamera_FarCorners::Memoize_ReturnIfChanged_(float4x4 *cached, const MaterialContext& context) {
-    const MemoryView<const float3> frustumCorners = context.Scene->Camera()->Model().FrustumCorners();
-
-    float4x4 pointsAsMatrix(0.0f);
-    pointsAsMatrix.SetRow(size_t(CameraRay::LeftTop),       frustumCorners[size_t(FrustumCorner::Far_LeftTop)].ZeroExtend());
-    pointsAsMatrix.SetRow(size_t(CameraRay::LeftBottom),    frustumCorners[size_t(FrustumCorner::Far_LeftBottom)].ZeroExtend());
-    pointsAsMatrix.SetRow(size_t(CameraRay::RightBottom),   frustumCorners[size_t(FrustumCorner::Far_RightBottom)].ZeroExtend());
-    pointsAsMatrix.SetRow(size_t(CameraRay::RightTop),      frustumCorners[size_t(FrustumCorner::Far_RightTop)].ZeroExtend());
-
-    const bool changed = (pointsAsMatrix != *cached);
-    *cached = pointsAsMatrix;
-
-    return changed;
-}
+} //!MaterialParameterCamera
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void RegisterCameraMaterialParameters(MaterialDatabase *database) {
-    Assert(database);
-
-    database->BindParameter("uniEyeDirection",          new MaterialParameterCamera_EyeDirection() );
-    database->BindParameter("uniEyePosition",           new MaterialParameterCamera_EyePosition() );
-    database->BindParameter("uniEyeUp",                 new MaterialParameterCamera_EyeUp() );
-    database->BindParameter("uniView",                  new MaterialParameterCamera_View() );
-    database->BindParameter("uniInvertView",            new MaterialParameterCamera_InvertView() );
-    database->BindParameter("uniProjection",            new MaterialParameterCamera_Projection() );
-    database->BindParameter("uniInvertProjection",      new MaterialParameterCamera_InvertProjection() );
-    database->BindParameter("uniViewProjection",        new MaterialParameterCamera_ViewProjection() );
-    database->BindParameter("uniInvertViewProjection",  new MaterialParameterCamera_InvertViewProjection() );
-    database->BindParameter("uniFrustumRays",           new MaterialParameterCamera_FrustumRays() );
-    database->BindParameter("uniNearFarZ",              new MaterialParameterCamera_NearFarZ() );
-    database->BindParameter("uniNearCorners",           new MaterialParameterCamera_NearCorners() );
-    database->BindParameter("uniFarCorners",            new MaterialParameterCamera_FarCorners() );
+namespace MaterialParameterCamera {
+//----------------------------------------------------------------------------
+// Camera Model
+//----------------------------------------------------------------------------
+void EyePosition(const MaterialParameterContext& context, float3& dst) {
+    dst = context.Scene->Camera()->Model().Parameters().Position;
 }
+//----------------------------------------------------------------------------
+void EyeDirection(const MaterialParameterContext& context, float3& dst) {
+    dst = context.Scene->Camera()->Model().Parameters().LookAtDir;
+}
+//----------------------------------------------------------------------------
+void EyeUp(const MaterialParameterContext& context, float3& dst) {
+    dst = context.Scene->Camera()->Model().Parameters().UpDir;
+}
+//----------------------------------------------------------------------------
+} //!MaterialParameterCamera
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace MaterialParameterCamera {
+//----------------------------------------------------------------------------
+// View
+//----------------------------------------------------------------------------
+void View(const MaterialParameterContext& context, float4x4& dst) {
+    dst = context.Scene->Camera()->Model().View();
+}
+//----------------------------------------------------------------------------
+void InvertView(const MaterialParameterContext& context, float4x4& dst) {
+    dst = context.Scene->Camera()->Model().InvertView();
+}
+//----------------------------------------------------------------------------
+} //!MaterialParameterCamera
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace MaterialParameterCamera {
+//----------------------------------------------------------------------------
+// Projection
+//----------------------------------------------------------------------------
+void Projection(const MaterialParameterContext& context, float4x4& dst) {
+    dst = context.Scene->Camera()->Model().Projection();
+}
+//----------------------------------------------------------------------------
+void InvertProjection(const MaterialParameterContext& context, float4x4& dst) {
+    dst = context.Scene->Camera()->Model().InvertProjection();
+}
+//----------------------------------------------------------------------------
+} //!MaterialParameterCamera
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace MaterialParameterCamera {
+//----------------------------------------------------------------------------
+// View Projection
+//----------------------------------------------------------------------------
+void ViewProjection(const MaterialParameterContext& context, float4x4& dst) {
+    dst = context.Scene->Camera()->Model().ViewProjection();
+}
+//----------------------------------------------------------------------------
+void InvertViewProjection(const MaterialParameterContext& context, float4x4& dst) {
+    dst = context.Scene->Camera()->Model().InvertViewProjection();
+}
+//----------------------------------------------------------------------------
+} //!MaterialParameterCamera
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace MaterialParameterCamera {
+//----------------------------------------------------------------------------
+// Frustum
+//----------------------------------------------------------------------------
+void FrustumRays(const MaterialParameterContext& context, float4x4& dst) {
+    float3 cameraRays[4];
+    context.Scene->Camera()->Model().GetFrustumRays(cameraRays);
+
+    dst.SetRow(size_t(CameraRay::LeftTop),     cameraRays[size_t(CameraRay::LeftTop)].ZeroExtend());
+    dst.SetRow(size_t(CameraRay::LeftBottom),  cameraRays[size_t(CameraRay::LeftBottom)].ZeroExtend());
+    dst.SetRow(size_t(CameraRay::RightBottom), cameraRays[size_t(CameraRay::RightBottom)].ZeroExtend());
+    dst.SetRow(size_t(CameraRay::RightTop),    cameraRays[size_t(CameraRay::RightTop)].ZeroExtend());
+}
+//----------------------------------------------------------------------------
+void FarCorners(const MaterialParameterContext& context, float4x4& dst) {
+    const MemoryView<const float3> frustumCorners = context.Scene->Camera()->Model().FrustumCorners();
+
+    dst.SetRow(size_t(CameraRay::LeftTop),     frustumCorners[size_t(FrustumCorner::Far_LeftTop)].ZeroExtend());
+    dst.SetRow(size_t(CameraRay::LeftBottom),  frustumCorners[size_t(FrustumCorner::Far_LeftBottom)].ZeroExtend());
+    dst.SetRow(size_t(CameraRay::RightBottom), frustumCorners[size_t(FrustumCorner::Far_RightBottom)].ZeroExtend());
+    dst.SetRow(size_t(CameraRay::RightTop),    frustumCorners[size_t(FrustumCorner::Far_RightTop)].ZeroExtend());
+}
+//----------------------------------------------------------------------------
+void NearCorners(const MaterialParameterContext& context, float4x4& dst) {
+    const MemoryView<const float3> frustumCorners = context.Scene->Camera()->Model().FrustumCorners();
+
+    dst.SetRow(size_t(CameraRay::LeftTop),     frustumCorners[size_t(FrustumCorner::Near_LeftTop)].ZeroExtend());
+    dst.SetRow(size_t(CameraRay::LeftBottom),  frustumCorners[size_t(FrustumCorner::Near_LeftBottom)].ZeroExtend());
+    dst.SetRow(size_t(CameraRay::RightBottom), frustumCorners[size_t(FrustumCorner::Near_RightBottom)].ZeroExtend());
+    dst.SetRow(size_t(CameraRay::RightTop),    frustumCorners[size_t(FrustumCorner::Near_RightTop)].ZeroExtend());
+}
+//----------------------------------------------------------------------------
+void NearFarZ(const MaterialParameterContext& context, float2& dst) {
+    const ICamera *const camera = context.Scene->Camera();
+
+    dst.x() = camera->ZNear();
+    dst.y() = camera->ZFar();
+}
+//----------------------------------------------------------------------------
+} //!MaterialParameterCamera
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -13,7 +13,7 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(RenderSurfaceRelative, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, RenderSurfaceRelative, );
 //----------------------------------------------------------------------------
 RenderSurfaceRelative::RenderSurfaceRelative(
     String&& name, const float2& ratio,

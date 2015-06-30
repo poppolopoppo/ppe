@@ -13,7 +13,7 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(RenderSurfaceBackBuffer, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, RenderSurfaceBackBuffer, );
 //----------------------------------------------------------------------------
 RenderSurfaceBackBuffer::RenderSurfaceBackBuffer(String&& name, Flags selected)
 :   AbstractRenderSurface(std::move(name))

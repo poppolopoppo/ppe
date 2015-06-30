@@ -5,12 +5,12 @@
 #include "Effect.h"
 #include "EffectConstantBuffer.h"
 #include "EffectProgram.h"
+#include "SharedConstantBuffer.h"
 
 #include "Material/Material.h"
-#include "Material/MaterialContext.h"
 #include "Material/MaterialDatabase.h"
 #include "Material/MaterialVariability.h"
-#include "Material/Parameters/AbstractMaterialParameter.h"
+#include "Material/IMaterialParameter.h"
 #include "Render/RenderSurfaceManager.h"
 #include "Render/Surfaces/AbstractRenderSurface.h"
 #include "Scene/Scene.h"
@@ -197,7 +197,7 @@ MaterialEffect::TextureSlot::TextureSlot(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(MaterialEffect, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, MaterialEffect, );
 //----------------------------------------------------------------------------
 MaterialEffect::MaterialEffect(const Engine::Effect *effect, const Engine::Material *material)
 :   _effect(effect)
@@ -210,7 +210,7 @@ MaterialEffect::MaterialEffect(const Engine::Effect *effect, const Engine::Mater
 //----------------------------------------------------------------------------
 MaterialEffect::~MaterialEffect() {}
 //----------------------------------------------------------------------------
-void MaterialEffect::BindParameter(const Graphics::BindName& name, AbstractMaterialParameter *parameter) {
+void MaterialEffect::BindParameter(const Graphics::BindName& name, IMaterialParameter *parameter) {
     Assert(!name.empty());
     Assert(parameter);
 
@@ -222,28 +222,12 @@ void MaterialEffect::Create(Graphics::IDeviceAPIEncapsulator *device, MaterialDa
     Assert(_textureSlots.empty());
     Assert(_textureBindings.empty());
 
+    // *** TEXTURES ***
+
     for (const Graphics::ShaderProgramType stage : Graphics::EachShaderProgramType()) {
         const EffectProgram *program = _effect->StageProgram(stage);
         if (!program)
             continue;
-
-        const auto layouts = program->Constants();
-
-        _constants.reserve(_constants.size() + program->Constants().size());
-        for (const Pair<Graphics::BindName, Graphics::PCConstantBufferLayout>& layout : layouts) {
-            PEffectConstantBuffer cbuffer;
-            // Tries to merge constant buffers inside the same effect
-            for (const PEffectConstantBuffer& c : _constants)
-                if (c->Match(layout.first, *layout.second))
-                    cbuffer = c;
-
-            if (!cbuffer) {
-                cbuffer = new EffectConstantBuffer(layout.first, layout.second);
-                cbuffer->Create(device);
-            }
-
-            _constants.emplace_back(cbuffer);
-        }
 
         _textureSlots.reserve(_textureSlots.size() + program->Textures().size());
         for (const Graphics::ShaderProgramTexture& texture : program->Textures())
@@ -262,20 +246,29 @@ void MaterialEffect::Create(Graphics::IDeviceAPIEncapsulator *device, MaterialDa
         PrepareTexture_(&_textureBindings[i].Filename, _textureSlots[i], _material, 
                         materialDatabase, textureCache, renderSurfaceManager );
 
-    for (const PEffectConstantBuffer& cbuffer : _constants)
-        cbuffer->Prepare(device, this, materialDatabase, scene);
+    // *** CONSTANT BUFFERS ***
+
+    const VECTOR(Effect, PSharedConstantBuffer)& sharedBuffers = _effect->SharedBuffers();
+    const MaterialParameterMutableContext paramContext{scene, this, materialDatabase};
+
+    _constants.resize(sharedBuffers.size());
+    forrange(i, 0, sharedBuffers.size()) {
+        PEffectConstantBuffer cbuffer = new EffectConstantBuffer(sharedBuffers[i].get());
+        cbuffer->Prepare(paramContext);
+        _constants[i] = std::move(cbuffer);
+    }
 }
 //----------------------------------------------------------------------------
 void MaterialEffect::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
-    for (PEffectConstantBuffer& cbuffer : _constants)
-        if (1 == cbuffer->RefCount()) {
-            cbuffer->Destroy(device);
-            RemoveRef_AssertReachZero(cbuffer);
-        }
-        else {
-            Assert(1 < cbuffer->RefCount());
-            cbuffer.reset(nullptr);
-        }
+
+    // *** CONSTANT BUFFERS ***
+
+    for (PEffectConstantBuffer& cbuffer : _constants) {
+        cbuffer->Clear();
+        RemoveRef_AssertReachZero(cbuffer);
+    }
+
+    // *** TEXTURES ***
 
     const size_t textureCount = _textureSlots.size();
     for (size_t i = 0; i < textureCount; ++i)
@@ -286,33 +279,42 @@ void MaterialEffect::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
     _textureBindings.clear();
 }
 //----------------------------------------------------------------------------
-void MaterialEffect::Prepare(Graphics::IDeviceAPIEncapsulator *device, const Scene *scene, const VariabilitySeed *seeds) {
+void MaterialEffect::Prepare(Graphics::IDeviceAPIEncapsulator *device, const Scene *scene, const VariabilitySeeds& seeds) {
     TextureCache *const textureCache = scene->RenderTree()->TextureCache();
     Assert(textureCache);
     RenderSurfaceManager *const renderSurfaceManager = scene->RenderTree()->RenderSurfaceManager();
     Assert(renderSurfaceManager);
 
+    // *** TEXTURES ***
+
     const size_t textureCount = _textureSlots.size();
     for (size_t i = 0; i < textureCount; ++i)
         FetchTexture_(_textureBindings[i], _textureSlots[i], textureCache, renderSurfaceManager, device);
 
-    const MaterialContext context = { scene, this, MemoryView<const VariabilitySeed>(seeds, VariabilitySeed::Count) };
+    // *** CONSTANT BUFFERS ***
+
+    const MaterialParameterContext context = { scene };
     for (const PEffectConstantBuffer& cbuffer : _constants)
-        cbuffer->Eval(device, context);
+        cbuffer->Eval(context);
 }
 //----------------------------------------------------------------------------
 void MaterialEffect::Set(Graphics::IDeviceAPIContextEncapsulator *deviceContext) {
-    size_t constantOffset = 0;
-    size_t textureOffset = 0;
 
+    // *** CONSTANT BUFFERS ***
+
+    for (const PEffectConstantBuffer& cbuffer : _constants)
+        cbuffer->SetDataIFN(deviceContext->Encapsulator()->Device());
+
+    // *** TEXTURES ***
+
+    const Graphics::Texture *stageTextures[16];
+    const Graphics::SamplerState *stageSamplers[16];
+
+    size_t textureOffset = 0;
     for (const Graphics::ShaderProgramType stage : Graphics::EachShaderProgramType()) {
         const EffectProgram *program = _effect->StageProgram(stage);
         if (!program)
             continue;
-
-        const size_t constantCount = program->Constants().size();
-        for (size_t i = 0; i < constantCount; ++i)
-            deviceContext->SetConstantBuffer(stage, i, _constants[constantOffset + i]);
 
         const size_t textureCount = program->Textures().size();
         for (size_t i = 0; i < textureCount; ++i) {
@@ -328,11 +330,15 @@ void MaterialEffect::Set(Graphics::IDeviceAPIContextEncapsulator *deviceContext)
                 binding.SurfaceLock->Bind(stage, i); // tracks usage of RTs as texture to unbind them before using them as RT
             }
 
-            deviceContext->SetTexture(stage, i, texture);
-            deviceContext->SetSamplerState(stage, i, slot.Sampler);
+            stageTextures[i] = texture;
+            stageSamplers[i] = slot.Sampler;
         }
 
-        constantOffset += constantCount;
+        if (textureCount) {
+            deviceContext->SetTextures(stage, MakeConstView(&stageTextures[0], &stageTextures[textureCount]));
+            deviceContext->SetSamplerStates(stage, MakeConstView(&stageSamplers[0], &stageSamplers[textureCount]));
+        }
+
         textureOffset += textureCount;
     }
 }

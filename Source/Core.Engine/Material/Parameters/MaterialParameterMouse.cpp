@@ -2,7 +2,6 @@
 
 #include "MaterialParameterMouse.h"
 
-#include "Material/MaterialContext.h"
 #include "Material/MaterialDatabase.h"
 #include "Scene/Scene.h"
 #include "Service/MouseService.h"
@@ -18,46 +17,46 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool MaterialParameterMouse_Position::Memoize_ReturnIfChanged_(float4 *cached, const MaterialContext& context) {
+namespace MaterialParameterMouse {
+//----------------------------------------------------------------------------
+EACH_MATERIALPARAMETER_MOUSE(MATERIALPARAMETER_FN_DEF)
+//----------------------------------------------------------------------------
+void RegisterMaterialParameters(MaterialDatabase *database) {
+    Assert(database);
 
-    ENGINESERVICE_PROVIDE(IMouseService, mouseService, context.Scene->World()->ServiceProvider());
+#define BIND_MATERIALPARAMETER(_Variability, _Type, _Name) \
+    database->BindParameter("uni" STRINGIZE(_Name), new MATERIALPARAMETER_FN(_Variability, _Type, _Name)() );
 
-    float4 value(0);
-    value.x() = float(mouseService->MouseInputHandler()->ClientX());
-    value.y() = float(mouseService->MouseInputHandler()->ClientY());
-    value.z() = mouseService->MouseInputHandler()->RelativeX();
-    value.w() = mouseService->MouseInputHandler()->RelativeY();
+    EACH_MATERIALPARAMETER_MOUSE(BIND_MATERIALPARAMETER)
 
-    const bool changed = (value != *cached);
-    *cached = value;
-
-    return changed;
+#undef BIND_MATERIALPARAMETER
 }
 //----------------------------------------------------------------------------
-bool MaterialParameterMouse_Buttons::Memoize_ReturnIfChanged_(float4 *cached, const MaterialContext& context) {
-    
-    ENGINESERVICE_PROVIDE(IMouseService, mouseService, context.Scene->World()->ServiceProvider());
-
-    float4 value(0);
-    value.x() = mouseService->MouseInputHandler()->IsButtonPressed(MouseButton::Button0) ? 1.0f : 0.0f;
-    value.y() = mouseService->MouseInputHandler()->IsButtonPressed(MouseButton::Button1) ? 1.0f : 0.0f;
-    value.z() = mouseService->MouseInputHandler()->IsButtonPressed(MouseButton::Button2) ? 1.0f : 0.0f;
-    value.w() = mouseService->MouseInputHandler()->IsButtonPressed(MouseButton::Wheel)   ? 1.0f : 0.0f;
-
-    const bool changed = (value != *cached);
-    *cached = value;
-
-    return changed;
-}
+} //!MaterialParameterMouse
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void RegisterMouseMaterialParameters(MaterialDatabase *database) {
-    Assert(database);
+namespace MaterialParameterMouse {
+//----------------------------------------------------------------------------
+void MousePosition(const MaterialParameterContext& context, float4& dst) {
+    ENGINESERVICE_PROVIDE(IMouseService, mouseService, context.Scene->World()->ServiceProvider());
 
-    database->BindParameter("uniMousePosition",   new MaterialParameterMouse_Position());
-    database->BindParameter("uniMouseButtons",    new MaterialParameterMouse_Buttons());
+    dst.x() = float(mouseService->MouseInputHandler()->ClientX());
+    dst.y() = float(mouseService->MouseInputHandler()->ClientY());
+    dst.z() = mouseService->MouseInputHandler()->RelativeX();
+    dst.w() = mouseService->MouseInputHandler()->RelativeY();
 }
+//----------------------------------------------------------------------------
+void MouseButtons(const MaterialParameterContext& context, float4& dst) {
+    ENGINESERVICE_PROVIDE(IMouseService, mouseService, context.Scene->World()->ServiceProvider());
+
+    dst.x() = mouseService->MouseInputHandler()->IsButtonPressed(MouseButton::Button0) ? 1.0f : 0.0f;
+    dst.y() = mouseService->MouseInputHandler()->IsButtonPressed(MouseButton::Button1) ? 1.0f : 0.0f;
+    dst.z() = mouseService->MouseInputHandler()->IsButtonPressed(MouseButton::Button2) ? 1.0f : 0.0f;
+    dst.w() = mouseService->MouseInputHandler()->IsButtonPressed(MouseButton::Wheel)   ? 1.0f : 0.0f;
+}
+//----------------------------------------------------------------------------
+} //!MaterialParameterMouse
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

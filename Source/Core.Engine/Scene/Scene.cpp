@@ -22,7 +22,7 @@ Scene::Scene(
     const Engine::MaterialDatabase *materialDatabase
     )
 :   _name(name)
-,   _status(SceneStatus::BeforeInitialize)
+,   _status(SceneStatus::Invalid)
 ,   _camera(camera)
 ,   _world(world)
 ,   _materialDatabase(materialDatabase)
@@ -34,9 +34,6 @@ Scene::Scene(
 //----------------------------------------------------------------------------
 Scene::~Scene() {
     THIS_THREADRESOURCE_CHECKACCESS();
-
-    Assert(SceneStatus::BeforeInitialize == _status);
-    Assert(_observers.empty());
 }
 //----------------------------------------------------------------------------
 void Scene::Initialize(Graphics::IDeviceAPIEncapsulator *device) {
@@ -44,19 +41,16 @@ void Scene::Initialize(Graphics::IDeviceAPIEncapsulator *device) {
 
     LOG(Information, L"[Scene] Initialize scene \"{0}\" ...", _name.c_str());
 
-    NotifyObservers(_observers, SceneEvent::BeforeInitialize, this);
-    Move_AssertEquals(&_status, SceneStatus::Initialize, SceneStatus::BeforeInitialize);
+    ChangeStatus_(SceneStatus::BeforeInitialize);
     {
+        ChangeStatus_(SceneStatus::Update);
         /**********************************************************************/
 
-        NOOP;
+        _sharedConstantBufferFactory.Start(device);
 
         /**********************************************************************/
     }
-    Move_AssertEquals(&_status, SceneStatus::AfterInitialize, SceneStatus::Initialize);
-    NotifyObservers(_observers, SceneEvent::AfterInitialize, this);
-
-    Move_AssertEquals(&_status, SceneStatus::BeforeUpdate, SceneStatus::AfterInitialize);
+    ChangeStatus_(SceneStatus::AfterInitialize);
 }
 //----------------------------------------------------------------------------
 void Scene::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
@@ -64,48 +58,41 @@ void Scene::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
 
     LOG(Information, L"[Scene] Destroy scene \"{0}\" ...", _name.c_str());
 
-    Move_AssertEquals(&_status, SceneStatus::BeforeDestroy, SceneStatus::BeforeUpdate);
-
-    NotifyObservers(_observers, SceneEvent::BeforeDestroy, this);
-    Move_AssertEquals(&_status, SceneStatus::Destroy, SceneStatus::BeforeDestroy);
+    ChangeStatus_(SceneStatus::BeforeDestroy);
     {
+        ChangeStatus_(SceneStatus::Destroy);
         /**********************************************************************/
 
         _renderTree.Destroy(device);
+        _sharedConstantBufferFactory.Shutdown(device);
 
         /**********************************************************************/
     }
-    Move_AssertEquals(&_status, SceneStatus::AfterDestroy, SceneStatus::Destroy);
-    NotifyObservers(_observers, SceneEvent::AfterDestroy, this);
-
-    Move_AssertEquals(&_status, SceneStatus::BeforeInitialize, SceneStatus::AfterDestroy);
+    ChangeStatus_(SceneStatus::AfterDestroy);
 }
 //----------------------------------------------------------------------------
 void Scene::Update(const Timeline& timeline) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    NotifyObservers(_observers, SceneEvent::BeforeUpdate, this);
-    Move_AssertEquals(&_status, SceneStatus::Update, SceneStatus::BeforeUpdate);
+    ChangeStatus_(SceneStatus::BeforeUpdate);
     {
+        ChangeStatus_(SceneStatus::Update);
         /**********************************************************************/
 
         _camera->Update(timeline);
 
         /**********************************************************************/
     }
-    Move_AssertEquals(&_status, SceneStatus::AfterUpdate, SceneStatus::Update);
-    NotifyObservers(_observers, SceneEvent::AfterUpdate, this);
-
-    Move_AssertEquals(&_status, SceneStatus::BeforePrepare, SceneStatus::AfterUpdate);
+    ChangeStatus_(SceneStatus::AfterUpdate);
 }
 //----------------------------------------------------------------------------
 void Scene::Prepare(Graphics::IDeviceAPIEncapsulator *device, VariabilitySeed *seeds) {
     Assert(device);
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    NotifyObservers(_observers, SceneEvent::BeforePrepare, this);
-    Move_AssertEquals(&_status, SceneStatus::Prepare, SceneStatus::BeforePrepare);
+    ChangeStatus_(SceneStatus::BeforePrepare);
     {
+        ChangeStatus_(SceneStatus::Prepare);
         /**********************************************************************/
 
         seeds[size_t(MaterialVariability::Scene)].Next();
@@ -114,41 +101,42 @@ void Scene::Prepare(Graphics::IDeviceAPIEncapsulator *device, VariabilitySeed *s
 
         /**********************************************************************/
     }
-    Move_AssertEquals(&_status, SceneStatus::AfterPrepare, SceneStatus::Prepare);
-    NotifyObservers(_observers, SceneEvent::AfterPrepare, this);
-
-    Move_AssertEquals(&_status, SceneStatus::BeforeRender, SceneStatus::AfterPrepare);
+    ChangeStatus_(SceneStatus::AfterPrepare);
 }
 //----------------------------------------------------------------------------
 void Scene::Render(Graphics::IDeviceAPIContextEncapsulator *context) {
     Assert(context);
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    NotifyObservers(_observers, SceneEvent::BeforeRender, this);
-    Move_AssertEquals(&_status, SceneStatus::Render, SceneStatus::BeforeRender);
+    ChangeStatus_(SceneStatus::BeforeRender);
     {
+        ChangeStatus_(SceneStatus::Render);
         /**********************************************************************/
 
         _renderTree.Render(context);
 
         /**********************************************************************/
     }
-    Move_AssertEquals(&_status, SceneStatus::AfterRender, SceneStatus::Render);
-    NotifyObservers(_observers, SceneEvent::AfterRender, this);
-
-    Move_AssertEquals(&_status, SceneStatus::BeforeUpdate, SceneStatus::AfterRender);
+    ChangeStatus_(SceneStatus::AfterRender);
 }
 //----------------------------------------------------------------------------
-void Scene::RegisterObserver(SceneEvent::Type eventFlags, const SceneObserver& observer) {
-    THIS_THREADRESOURCE_CHECKACCESS();
-
-    Core::RegisterObserver(_observers, observer, eventFlags);
-}
-//----------------------------------------------------------------------------
-void Scene::UnregisterObserver(SceneEvent::Type eventFlags, const SceneObserver& observer) {
-    THIS_THREADRESOURCE_CHECKACCESS();
-
-    Core::UnregisterObserver(_observers, observer, eventFlags);
+void Scene::ChangeStatus_(SceneStatus value) {
+    _status = value;
+    switch (value)
+    {
+    case SceneStatus::BeforeInitialize: _onBeforeInitialize(this); break;
+    case SceneStatus::AfterInitialize: _onAfterInitialize(this); break;
+    case SceneStatus::BeforeUpdate: _onBeforeUpdate(this); break;
+    case SceneStatus::AfterUpdate: _onAfterUpdate(this); break;
+    case SceneStatus::BeforePrepare: _onBeforePrepare(this); break;
+    case SceneStatus::AfterPrepare: _onAfterPrepare(this); break;
+    case SceneStatus::BeforeRender: _onBeforeRender(this); break;
+    case SceneStatus::AfterRender: _onAfterRender(this); break;
+    case SceneStatus::BeforeDestroy: _onBeforeDestroy(this); break;
+    case SceneStatus::AfterDestroy: _onAfterDestroy(this); break;
+    default:
+        break;
+    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

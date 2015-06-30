@@ -2,7 +2,7 @@
 
 #include "MeshLoader.h"
 
-#include "Core.Graphics/Device/DeviceAPIEncapsulator.h"
+#include "Core.Graphics/Device/DeviceAPI.h"
 
 #include "Core.Graphics/Device/Geometry/IndexBuffer.h"
 #include "Core.Graphics/Device/Geometry/VertexBuffer.h"

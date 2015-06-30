@@ -2,8 +2,8 @@
 
 #include "Core.Engine/Engine.h"
 
-#include "Core/Container/Observer.h"
-#include "Core/Container/Vector.h"
+#include "Core/Meta/Delegate.h"
+#include "Core/Meta/Event.h"
 
 namespace Core {
 namespace Engine {
@@ -11,19 +11,6 @@ namespace Engine {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class World;
-//----------------------------------------------------------------------------
-namespace WorldEvent {
-    enum Type           : size_t {
-    BeforeInitialize    = 1<<0,
-    AfterInitialize     = 1<<1,
-
-    BeforeUpdate        = 1<<2,
-    AfterUpdate         = 1<<3,
-
-    BeforeDestroy       = 1<<4,
-    AfterDestroy        = 1<<5,
-    };
-}
 //----------------------------------------------------------------------------
 enum class WorldStatus : size_t {
     BeforeInitialize    = 0,
@@ -37,9 +24,9 @@ enum class WorldStatus : size_t {
     AfterDestroy        ,
 };
 //----------------------------------------------------------------------------
-using WorldObserver = Observer<WorldEvent::Type, World *>;
+using WorldDelegate = Delegate<void (*)(World *)>;
 //----------------------------------------------------------------------------
-using WorldObserverContainer = OBSERVERCONTAINER(World, WorldEvent::Type, World *);
+using WorldEvent = Event<WorldDelegate>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -96,7 +96,7 @@ void ExportVertices(
         texCoords0, texCoords1, texCoords2,
         normals0, normals1, normals2,
         tangents0, tangents1, tangents2,
-        binormals0, binor<mals1, binormals2 );
+        binormals0, binormals1, binormals2 );
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>

@@ -6,61 +6,57 @@
 
 #include "Core.Graphics/Device/BindName.h"
 
-#include "Core/Allocator/PoolAllocator.h"
-#include "Core/Maths/Geometry/ScalarVector.h"
-#include "Core/Maths/Transform/ScalarMatrix.h"
-
 namespace Core {
 namespace Engine {
-FWD_REFPTR(Material);
-FWD_REFPTR(MaterialEffect);
-FWD_REFPTR(MaterialDatabase);
-class Scene;
+class MaterialDatabase;
+
+#define EACH_MATERIALPARAMETER_TEXTURE(_Macro) \
+    _Macro(MaterialVariability::Material, float4, RenderTargetDuDvDimensions)
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MaterialParameterTexture_DuDv : public AbstractMaterialParameterMemoizer<float2> {
-public:
-    MaterialParameterTexture_DuDv(const Graphics::BindName& textureName);
-    virtual ~MaterialParameterTexture_DuDv() {}
-    SINGLETON_POOL_ALLOCATED_DECL(MaterialParameterTexture_DuDv);
-protected:
-    bool Memoize_ReturnIfChanged_(float2 *cached, const MaterialContext& context) override;
-private:
-    const Graphics::BindName _textureName;
-};
+namespace MaterialParameterTexture {
 //----------------------------------------------------------------------------
-class MaterialParameterTexture_DuDvDimensions : public AbstractMaterialParameterMemoizer<float4> {
-public:
-    MaterialParameterTexture_DuDvDimensions(const Graphics::BindName& textureName);
-    virtual ~MaterialParameterTexture_DuDvDimensions() {}
-    SINGLETON_POOL_ALLOCATED_DECL(MaterialParameterTexture_DuDvDimensions);
-protected:
-    bool Memoize_ReturnIfChanged_(float4 *cached, const MaterialContext& context) override;
-private:
-    const Graphics::BindName _textureName;
-};
+EACH_MATERIALPARAMETER_TEXTURE(MATERIALPARAMETER_FN_DECL)
 //----------------------------------------------------------------------------
-class MaterialParameterTexture_RenderTargetDuDvDimensions : public AbstractMaterialParameterMemoizer<float4> {
-public:
-    MaterialParameterTexture_RenderTargetDuDvDimensions() : AbstractMaterialParameterMemoizer(MaterialVariability::Material) {}
-    virtual ~MaterialParameterTexture_RenderTargetDuDvDimensions() {}
-protected:
-    bool Memoize_ReturnIfChanged_(float4 *cached, const MaterialContext& context) override;
-};
+void RegisterMaterialParameters(MaterialDatabase *database);
+//----------------------------------------------------------------------------
+} //!MaterialParameterTexture
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void RegisterTextureMaterialParameters(MaterialDatabase *database);
+namespace MaterialParameterTexture {
 //----------------------------------------------------------------------------
-bool TryCreateTextureMaterialParameter(
-    AbstractMaterialParameter **param,
-    MaterialEffect *materialEffect,
-    MaterialDatabase *materialDatabase,
-    const Scene *scene,
+struct DuDv {
+    Graphics::BindName TextureName;
+    DuDv(const Graphics::BindName& textureName);
+
+    typedef float2 value_type;
+    MaterialVariability Variability() const { return MaterialVariability::Batch; }
+    void TypedEval(const MaterialParameterContext& context, float2& dst);
+};
+typedef MaterialParameterMemoizer<DuDv> Memoizer_DuDv;
+extern template class MaterialParameterMemoizer<DuDv>;
+//----------------------------------------------------------------------------
+struct DuDvDimensions {
+    Graphics::BindName TextureName;
+    DuDvDimensions(const Graphics::BindName& textureName);
+
+    typedef float4 value_type;
+    MaterialVariability Variability() const { return MaterialVariability::Batch; }
+    void TypedEval(const MaterialParameterContext& context, float4& dst);
+};
+typedef MaterialParameterMemoizer<DuDvDimensions> Memoizer_DuDvDimensions;
+extern template class MaterialParameterMemoizer<DuDvDimensions>;
+//----------------------------------------------------------------------------
+bool TryCreateMaterialParameter(
+    PMaterialParameter *param,
+    const MaterialParameterMutableContext& context,
     const Graphics::BindName& name,
     const Graphics::ConstantField& field );
+//----------------------------------------------------------------------------
+} //!MaterialParameterTexture
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

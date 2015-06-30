@@ -11,7 +11,7 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(MultiPassEffectDescriptor, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, MultiPassEffectDescriptor, );
 //----------------------------------------------------------------------------
 MultiPassEffectDescriptor::MultiPassEffectDescriptor()
 :   _size(0) {}

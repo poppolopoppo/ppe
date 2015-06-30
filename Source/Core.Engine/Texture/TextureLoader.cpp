@@ -2,7 +2,7 @@
 
 #include "TextureLoader.h"
 
-#include "Core.Graphics/Device/DeviceAPIEncapsulator.h"
+#include "Core.Graphics/Device/DeviceAPI.h"
 #include "Core.Graphics/Device/DeviceResourceBuffer.h"
 
 #include "Core.Graphics/Device/Texture/SurfaceFormat.h"

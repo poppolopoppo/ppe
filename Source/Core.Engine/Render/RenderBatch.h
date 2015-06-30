@@ -18,7 +18,7 @@ struct RenderCommandRegistration;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FWD_REFPTR(MaterialDatabase);
+class MaterialDatabase;
 FWD_REFPTR(MaterialEffect);
 class RenderTree;
 struct VariabilitySeed;

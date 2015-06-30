@@ -181,7 +181,7 @@ void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
     u32 *pIndex = &indices[0];
     u32 seedPos = 0;
 
-    while (1) {
+    for (;;) {
         u32 seedScore = 0;
         u32 seedTriangle = UINT32_MAX;
 
@@ -303,15 +303,15 @@ void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
 
                 for (size_t j = 0; j < entry.TrianglesLeft; ++j) {
                     const u32 index = entry.TriangleList[j];
-                    VertexCache::Triangle& triangle = triangles[index];
+                    VertexCache::Triangle& tri = triangles[index];
 
-                    Assert(triangle.Score != UINT32_MAX);
+                    Assert(tri.Score != UINT32_MAX);
 
                     u32 score = 0;
                     for (size_t k = 0; k < 3; ++k)
-                        score += entries[triangle.Indices[k]].Score;
+                        score += entries[tri.Indices[k]].Score;
 
-                    triangle.Score = score;
+                    tri.Score = score;
                     if (score > bestScore) {
                         bestScore = score;
                         bestTriangle = index;
@@ -319,7 +319,7 @@ void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
                 }
             }
         } //!while (bestTriangle != UINT32_MAX)
-    } //!while (1)
+    } //!for (;;)
 }
 //----------------------------------------------------------------------------
 void OptimizeVerticesOrder(GenericVertex& vertices, const MemoryView<u32>& indices) {

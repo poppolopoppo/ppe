@@ -4,7 +4,7 @@
 
 #include "Core.Engine/Render/Layers/AbstractRenderLayer.h"
 
-#include "Core.Graphics/Device/DeviceAPIEncapsulator.h"
+#include "Core.Graphics/Device/DeviceAPI.h"
 
 #include "Core/Allocator/PoolAllocator.h"
 

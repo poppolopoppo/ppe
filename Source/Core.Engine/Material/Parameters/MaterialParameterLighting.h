@@ -6,55 +6,27 @@
 
 namespace Core {
 namespace Engine {
-FWD_REFPTR(MaterialDatabase);
+class MaterialDatabase;
 FWD_REFPTR(LightingEnvironment);
+
+#define EACH_MATERIALPARAMETER_LIGHTING(_Macro) \
+    _Macro(MaterialVariability::World, float3,  SunColor) \
+    _Macro(MaterialVariability::World, float3,  SunDirection) \
+    _Macro(MaterialVariability::World, float,   SunIntensity) \
+    \
+    _Macro(MaterialVariability::World, float,   Exposure) \
+    _Macro(MaterialVariability::World, float,   WhitePoint)
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MaterialParameterLighting_SunColor : public AbstractMaterialParameterMemoizer<float3> {
-public:
-    MaterialParameterLighting_SunColor() : AbstractMaterialParameterMemoizer(MaterialVariability::World) {}
-    virtual ~MaterialParameterLighting_SunColor() {}
-protected:
-    bool Memoize_ReturnIfChanged_(float3 *cached, const MaterialContext& context) override;
-};
+namespace MaterialParameterLighting {
 //----------------------------------------------------------------------------
-class MaterialParameterLighting_SunDirection : public AbstractMaterialParameterMemoizer<float3> {
-public:
-    MaterialParameterLighting_SunDirection() : AbstractMaterialParameterMemoizer(MaterialVariability::World) {}
-    virtual ~MaterialParameterLighting_SunDirection() {}
-protected:
-    bool Memoize_ReturnIfChanged_(float3 *cached, const MaterialContext& context) override;
-};
+EACH_MATERIALPARAMETER_LIGHTING(MATERIALPARAMETER_FN_DECL)
 //----------------------------------------------------------------------------
-class MaterialParameterLighting_SunIntensity : public AbstractMaterialParameterMemoizer<float> {
-public:
-    MaterialParameterLighting_SunIntensity() : AbstractMaterialParameterMemoizer(MaterialVariability::World) {}
-    virtual ~MaterialParameterLighting_SunIntensity() {}
-protected:
-    bool Memoize_ReturnIfChanged_(float *cached, const MaterialContext& context) override;
-};
+void RegisterMaterialParameters(MaterialDatabase *database);
 //----------------------------------------------------------------------------
-class MaterialParameterLighting_Exposure : public AbstractMaterialParameterMemoizer<float> {
-public:
-    MaterialParameterLighting_Exposure() : AbstractMaterialParameterMemoizer(MaterialVariability::World) {}
-    virtual ~MaterialParameterLighting_Exposure() {}
-protected:
-    bool Memoize_ReturnIfChanged_(float *cached, const MaterialContext& context) override;
-};
-//----------------------------------------------------------------------------
-class MaterialParameterLighting_WhitePoint : public AbstractMaterialParameterMemoizer<float> {
-public:
-    MaterialParameterLighting_WhitePoint() : AbstractMaterialParameterMemoizer(MaterialVariability::World) {}
-    virtual ~MaterialParameterLighting_WhitePoint() {}
-protected:
-    bool Memoize_ReturnIfChanged_(float *cached, const MaterialContext& context) override;
-};
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-void RegisterLightingMaterialParameters(MaterialDatabase *database);
+} //!MaterialParameterLighting
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -10,12 +10,11 @@
 #include "Core/Container/RawStorage.h"
 #include "Core/Container/Vector.h"
 #include "Core/IO/FS/Filename.h"
+#include "Core/Memory/RefPtr.h"
 #include "Core/Memory/UniquePtr.h"
 #include "Core/Meta/PointerWFlags.h"
 #include "Core/Meta/ThreadResource.h"
-#include "Core/Thread/LockFreeCircularArray.h"
 #include "Core/Thread/Task/Task.h"
-#include "Core/Thread/Task/TaskCompletionPort.h"
 #include "Core/Thread/ThreadPool.h"
 
 #include "Core.Engine/Texture/TextureLoader.h"

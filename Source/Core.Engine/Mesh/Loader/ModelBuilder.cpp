@@ -11,7 +11,7 @@
 
 #include "Core.Engine/Material/Material.h"
 #include "Core.Engine/Material/MaterialConstNames.h"
-#include "Core.Engine/Material/Parameters/MaterialParameterBlock.h"
+#include "Core.Engine/Material/Parameters/MaterialParameterConstant.h"
 
 #include "Core.Engine/Mesh/Model.h"
 #include "Core.Engine/Mesh/ModelBone.h"
@@ -41,7 +41,7 @@ static PMaterial CreateMaterial_(const ModelBuilder::Material& materialMB) {
 
     VECTOR(Material, Graphics::BindName) tags;
     ASSOCIATIVE_VECTOR(Material, Graphics::BindName, Filename) textures;
-    ASSOCIATIVE_VECTOR(Material, Graphics::BindName, PAbstractMaterialParameter) parameters;
+    ASSOCIATIVE_VECTOR(Material, Graphics::BindName, PMaterialParameter) parameters;
 
     tags.reserve(Meta::BitSetsCount(materialMB.Mode));
     if (materialMB.HasFlag(ModelBuilder::Material::Ambient))
@@ -89,28 +89,24 @@ static PMaterial CreateMaterial_(const ModelBuilder::Material& materialMB) {
     if (!materialMB.SpecularPowerMap.empty())
         textures.Insert_AssertUnique(MaterialConstNames::SpecularPowerMap(), materialMB.SpecularPowerMap);
 
+    // TODO : MaterialParameterConstantFactory to merge constants by value
+
     parameters.reserve(4);
     if (materialMB.AmbientColor.a() >= 0)
-        parameters.Insert_AssertUnique(MaterialConstNames::AmbientColor(), new MaterialParameterBlock<float4>(materialMB.AmbientColor.Data()));
+        parameters.Insert_AssertUnique(MaterialConstNames::AmbientColor(), new MaterialParameterConstant<float4>(materialMB.AmbientColor.Data()));
     if (materialMB.DiffuseColor.a() >= 0)
-        parameters.Insert_AssertUnique(MaterialConstNames::DiffuseColor(), new MaterialParameterBlock<float4>(materialMB.DiffuseColor.Data()));
+        parameters.Insert_AssertUnique(MaterialConstNames::DiffuseColor(), new MaterialParameterConstant<float4>(materialMB.DiffuseColor.Data()));
     if (materialMB.EmissiveColor.a() >= 0)
-        parameters.Insert_AssertUnique(MaterialConstNames::EmissiveColor(), new MaterialParameterBlock<float4>(materialMB.EmissiveColor.Data()));
+        parameters.Insert_AssertUnique(MaterialConstNames::EmissiveColor(), new MaterialParameterConstant<float4>(materialMB.EmissiveColor.Data()));
     if (materialMB.SpecularColor.a() >= 0)
-        parameters.Insert_AssertUnique(MaterialConstNames::SpecularColor(), new MaterialParameterBlock<float4>(materialMB.SpecularColor.Data()));
+        parameters.Insert_AssertUnique(MaterialConstNames::SpecularColor(), new MaterialParameterConstant<float4>(materialMB.SpecularColor.Data()));
 
     if (materialMB.NormalDepth >= 0)
-        parameters.Insert_AssertUnique(MaterialConstNames::NormalDepth(), new MaterialParameterBlock<float>(materialMB.NormalDepth));
+        parameters.Insert_AssertUnique(MaterialConstNames::NormalDepth(), new MaterialParameterConstant<float>(materialMB.NormalDepth));
     if (materialMB.RefractiveIndex >= 0)
-        parameters.Insert_AssertUnique(MaterialConstNames::RefractiveIndex(), new MaterialParameterBlock<float>(materialMB.RefractiveIndex));
+        parameters.Insert_AssertUnique(MaterialConstNames::RefractiveIndex(), new MaterialParameterConstant<float>(materialMB.RefractiveIndex));
     if (materialMB.SpecularExponent >= 0)
-        parameters.Insert_AssertUnique(MaterialConstNames::SpecularExponent(), new MaterialParameterBlock<float>(materialMB.SpecularExponent));
-
-#if 1 // realloc vector ?
-    tags.shrink_to_fit();
-    textures.Vector().shrink_to_fit();
-    parameters.Vector().shrink_to_fit();
-#endif
+        parameters.Insert_AssertUnique(MaterialConstNames::SpecularExponent(), new MaterialParameterConstant<float>(materialMB.SpecularExponent));
 
     LOG(Information, L"[Model] Loaded material '{0}' with diffuse map '{1}'", materialMB.Name, materialMB.DiffuseMap);
 
@@ -600,8 +596,8 @@ PModel ModelBuilder::CreateModel() {
 
             u32 *const pIndex32 = reinterpret_cast<u32 *>(meshData.Indices.Pointer());
             u16 *const pIndex16 = reinterpret_cast<u16 *>(indices16bits.Pointer());
-            for (size_t i = 0; i < meshStat.IndexCount; ++i)
-                pIndex16[i] = checked_cast<u16>(pIndex32[i]);
+            for (size_t j = 0; j < meshStat.IndexCount; ++j)
+                pIndex16[j] = checked_cast<u16>(pIndex32[j]);
 
             meshData.Indices = std::move(indices16bits);
         }

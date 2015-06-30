@@ -5,6 +5,7 @@
 #include "Core/Meta/Guid.h"
 
 #include "DeviceEncapsulatorService.h"
+#include "SharedConstantBufferFactoryService.h"
 #include "IServiceProvider.h"
 
 namespace Core {
@@ -37,16 +38,20 @@ void DefaultEffectCompilerService::Start(IServiceProvider *provider, const Guid&
     IEffectCompilerService::Start(provider, guid);
 
     ENGINESERVICE_PROVIDE(IDeviceEncapsulatorService, deviceService, provider);
+    ENGINESERVICE_PROVIDE(ISharedConstantBufferFactoryService, sharedConstantBufferFactoryService, provider);
 
-    _effectCompiler.Start(deviceService->DeviceEncapsulator()->Device());
+    _effectCompiler.Start(  deviceService->DeviceEncapsulator()->Device(),
+                            sharedConstantBufferFactoryService->SharedConstantBufferFactory() );
 }
 //----------------------------------------------------------------------------
 void DefaultEffectCompilerService::Shutdown(IServiceProvider *provider, const Guid& guid) {
     IEffectCompilerService::Shutdown(provider, guid);
 
     ENGINESERVICE_PROVIDE(IDeviceEncapsulatorService, deviceService, provider);
+    ENGINESERVICE_PROVIDE(ISharedConstantBufferFactoryService, sharedConstantBufferFactoryService, provider);
 
-    _effectCompiler.Shutdown(deviceService->DeviceEncapsulator()->Device());
+    _effectCompiler.Shutdown(   deviceService->DeviceEncapsulator()->Device(),
+                                sharedConstantBufferFactoryService->SharedConstantBufferFactory() );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

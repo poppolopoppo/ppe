@@ -41,7 +41,7 @@ static const char *SelectRenderLayerName_(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(Model, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, Model, );
 //----------------------------------------------------------------------------
 Model::Model(
     const MeshName& name,
@@ -106,7 +106,7 @@ void Model::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(ModelRenderCommand, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, ModelRenderCommand, );
 //----------------------------------------------------------------------------
 bool AcquireModelRenderCommand( UModelRenderCommand& pModelCommand,
                                 Graphics::IDeviceAPIEncapsulator *device,

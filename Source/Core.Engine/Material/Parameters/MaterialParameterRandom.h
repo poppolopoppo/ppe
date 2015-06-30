@@ -4,78 +4,28 @@
 
 #include "Core.Engine/Material/Parameters/MaterialParameterMemoizer.h"
 
-#include "Core/Maths/RandomGenerator.h"
-
 namespace Core {
 namespace Engine {
-FWD_REFPTR(MaterialDatabase);
+class MaterialDatabase;
+
+#define EACH_MATERIALPARAMETER_RANDOM(_Macro) \
+    _Macro(MaterialVariability::Frame, float,   UnitRand) \
+    _Macro(MaterialVariability::Frame, float2,  UnitRand2) \
+    _Macro(MaterialVariability::Frame, float3,  UnitRand3) \
+    _Macro(MaterialVariability::Frame, float4,  UnitRand4) \
+    _Macro(MaterialVariability::Frame, float4,  UnitRand4) \
+    _Macro(MaterialVariability::Frame, float3,  HemisphereRand) \
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MaterialParameterRandom_Unit : public AbstractMaterialParameterMemoizer<float> {
-public:
-    MaterialParameterRandom_Unit()
-    :   AbstractMaterialParameterMemoizer(MaterialVariability::Frame)
-    ,   _rand(RandomGenerator::RandomSeedTag()) {}
-    virtual ~MaterialParameterRandom_Unit() {}
-protected:
-    bool Memoize_ReturnIfChanged_(float *cached, const MaterialContext& context) override;
-private:
-    RandomGenerator _rand;
-};
+namespace MaterialParameterRandom {
 //----------------------------------------------------------------------------
-class MaterialParameterRandom_Unit2 : public AbstractMaterialParameterMemoizer<float2> {
-public:
-    MaterialParameterRandom_Unit2()
-    :   AbstractMaterialParameterMemoizer(MaterialVariability::Frame)
-    ,   _rand(RandomGenerator::RandomSeedTag()) {}
-    virtual ~MaterialParameterRandom_Unit2() {}
-protected:
-    bool Memoize_ReturnIfChanged_(float2 *cached, const MaterialContext& context) override;
-private:
-    RandomGenerator _rand;
-};
+EACH_MATERIALPARAMETER_RANDOM(MATERIALPARAMETER_FN_DECL)
 //----------------------------------------------------------------------------
-class MaterialParameterRandom_Unit3 : public AbstractMaterialParameterMemoizer<float3> {
-public:
-    MaterialParameterRandom_Unit3()
-    :   AbstractMaterialParameterMemoizer(MaterialVariability::Frame)
-    ,   _rand(RandomGenerator::RandomSeedTag()) {}
-    virtual ~MaterialParameterRandom_Unit3() {}
-protected:
-    bool Memoize_ReturnIfChanged_(float3 *cached, const MaterialContext& context) override;
-private:
-    RandomGenerator _rand;
-};
+void RegisterMaterialParameters(MaterialDatabase *database);
 //----------------------------------------------------------------------------
-class MaterialParameterRandom_Unit4 : public AbstractMaterialParameterMemoizer<float4> {
-public:
-    MaterialParameterRandom_Unit4()
-    :   AbstractMaterialParameterMemoizer(MaterialVariability::Frame)
-    ,   _rand(RandomGenerator::RandomSeedTag()) {}
-    virtual ~MaterialParameterRandom_Unit4() {}
-protected:
-    bool Memoize_ReturnIfChanged_(float4 *cached, const MaterialContext& context) override;
-private:
-    RandomGenerator _rand;
-};
-//----------------------------------------------------------------------------
-class MaterialParameterRandom_Hemisphere : public AbstractMaterialParameterMemoizer<float3> {
-public:
-    MaterialParameterRandom_Hemisphere()
-    :   AbstractMaterialParameterMemoizer(MaterialVariability::Frame)
-    ,   _rand(RandomGenerator::RandomSeedTag()) {}
-    virtual ~MaterialParameterRandom_Hemisphere() {}
-protected:
-    bool Memoize_ReturnIfChanged_(float3 *cached, const MaterialContext& context) override;
-private:
-    RandomGenerator _rand;
-};
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-void RegisterRandomMaterialParameters(MaterialDatabase *database);
+} //!MaterialParameterRandom
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

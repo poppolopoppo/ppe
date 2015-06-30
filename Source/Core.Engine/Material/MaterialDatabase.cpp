@@ -3,7 +3,7 @@
 #include "MaterialDatabase.h"
 
 #include "Effect/EffectDescriptor.h"
-#include "Parameters/AbstractMaterialParameter.h"
+#include "IMaterialParameter.h"
 
 #include "Core.Graphics/Device/BindName.h"
 
@@ -19,7 +19,7 @@ MaterialDatabase::~MaterialDatabase() {
     THIS_THREADRESOURCE_CHECKACCESS();
 }
 //----------------------------------------------------------------------------
-void MaterialDatabase::BindParameter(const Graphics::BindName& name, AbstractMaterialParameter *parameter, bool allowOverride) {
+void MaterialDatabase::BindParameter(const Graphics::BindName& name, IMaterialParameter *parameter, bool allowOverride) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!name.empty());
     Assert(parameter);
@@ -30,7 +30,7 @@ void MaterialDatabase::BindParameter(const Graphics::BindName& name, AbstractMat
     _parameters[name] = parameter;
 }
 //----------------------------------------------------------------------------
-void MaterialDatabase::UnbindParameter(const Graphics::BindName& name, const AbstractMaterialParameter *parameter) {
+void MaterialDatabase::UnbindParameter(const Graphics::BindName& name, const IMaterialParameter *parameter) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!name.empty());
     Assert(parameter);
@@ -42,7 +42,7 @@ void MaterialDatabase::UnbindParameter(const Graphics::BindName& name, const Abs
     _parameters.erase(it);
 }
 //----------------------------------------------------------------------------
-bool MaterialDatabase::TryGetParameter(const Graphics::BindName& name, AbstractMaterialParameter **parameter) const {
+bool MaterialDatabase::TryGetParameter(const Graphics::BindName& name, IMaterialParameter **parameter) const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!name.empty());
     Assert(parameter);
@@ -59,8 +59,8 @@ bool MaterialDatabase::TryGetParameter(const Graphics::BindName& name, AbstractM
     return true;
 }
 //----------------------------------------------------------------------------
-bool MaterialDatabase::TryGetParameter(const Graphics::BindName& name, PAbstractMaterialParameter& parameter) const {
-    AbstractMaterialParameter *p = nullptr;
+bool MaterialDatabase::TryGetParameter(const Graphics::BindName& name, PMaterialParameter& parameter) const {
+    IMaterialParameter *p = nullptr;
     const bool result = TryGetParameter(name, &p);
 
     parameter = p;

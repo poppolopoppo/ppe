@@ -6,30 +6,22 @@
 
 namespace Core {
 namespace Engine {
-FWD_REFPTR(MaterialDatabase);
+class MaterialDatabase;
+
+#define EACH_MATERIALPARAMETER_MOUSE(_Macro) \
+    _Macro(MaterialVariability::Frame, float4,  MousePosition) \
+    _Macro(MaterialVariability::Frame, float4,  MouseButtons)
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MaterialParameterMouse_Position : public AbstractMaterialParameterMemoizer<float4> {
-public:
-    MaterialParameterMouse_Position() : AbstractMaterialParameterMemoizer(MaterialVariability::Frame) {}
-    virtual ~MaterialParameterMouse_Position() {}
-protected:
-    bool Memoize_ReturnIfChanged_(float4 *cached, const MaterialContext& context) override;
-};
+namespace MaterialParameterMouse {
 //----------------------------------------------------------------------------
-class MaterialParameterMouse_Buttons : public AbstractMaterialParameterMemoizer<float4> {
-public:
-    MaterialParameterMouse_Buttons() : AbstractMaterialParameterMemoizer(MaterialVariability::Frame) {}
-    virtual ~MaterialParameterMouse_Buttons() {}
-protected:
-    bool Memoize_ReturnIfChanged_(float4 *cached, const MaterialContext& context) override;
-};
+EACH_MATERIALPARAMETER_MOUSE(MATERIALPARAMETER_FN_DECL)
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
+void RegisterMaterialParameters(MaterialDatabase *database);
 //----------------------------------------------------------------------------
-void RegisterMouseMaterialParameters(MaterialDatabase *database);
+} //!MaterialParameterMouse
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

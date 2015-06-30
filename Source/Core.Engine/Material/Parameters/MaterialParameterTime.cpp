@@ -2,11 +2,9 @@
 
 #include "MaterialParameterTime.h"
 
-#include "Material/MaterialContext.h"
 #include "Material/MaterialDatabase.h"
 #include "Scene/Scene.h"
 #include "World/World.h"
-#include "World/WorldTime.h"
 
 #include "Core.Graphics/Device/BindName.h"
 
@@ -19,44 +17,53 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool MaterialParameterTime_WorldElapsedSeconds::Memoize_ReturnIfChanged_(float *cached, const MaterialContext& context) {
-    const Units::Time::Seconds t = context.Scene->World()->Time().Elapsed();
-    const float value = static_cast<float>(t.Value());
+namespace MaterialParameterTime {
+//----------------------------------------------------------------------------
+EACH_MATERIALPARAMETER_TIME(MATERIALPARAMETER_FN_DEF)
+//----------------------------------------------------------------------------
+void RegisterMaterialParameters(MaterialDatabase *database) {
+    Assert(database);
 
-    const bool changed = (value != *cached);
-    *cached = value;
+#define BIND_MATERIALPARAMETER(_Variability, _Type, _Name) \
+    database->BindParameter("uni" STRINGIZE(_Name), new MATERIALPARAMETER_FN(_Variability, _Type, _Name)() );
 
-    return changed;
+    EACH_MATERIALPARAMETER_TIME(BIND_MATERIALPARAMETER)
+
+#undef BIND_MATERIALPARAMETER
 }
 //----------------------------------------------------------------------------
-bool MaterialParameterTime_WorldTotalSeconds::Memoize_ReturnIfChanged_(float *cached, const MaterialContext& context) {
-    const Units::Time::Seconds t = context.Scene->World()->Time().Total();
-    const float value = static_cast<float>(t.Value());
-
-    const bool changed = (value != *cached);
-    *cached = value;
-
-    return changed;
-}
-//----------------------------------------------------------------------------
-bool MaterialParameterTime_ProcessTotalSeconds::Memoize_ReturnIfChanged_(float *cached, const MaterialContext& context) {
-    const Units::Time::Seconds t = ProcessTime::TotalSeconds();
-    const float value = static_cast<float>(t.Value());
-
-    *cached = value;
-
-    return true;
-}
+} //!MaterialParameterTime
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void RegisterTimeMaterialParameters(MaterialDatabase *database) {
-    Assert(database);
-
-    database->BindParameter("uniWorldElapsedSeconds",   new MaterialParameterTime_WorldElapsedSeconds());
-    database->BindParameter("uniWorldTotalSeconds",     new MaterialParameterTime_WorldTotalSeconds());
-    database->BindParameter("uniProcessTotalSeconds",   new MaterialParameterTime_ProcessTotalSeconds());
+namespace MaterialParameterTime {
+//----------------------------------------------------------------------------
+// World Time
+//----------------------------------------------------------------------------
+void WorldElapsedSeconds(const MaterialParameterContext& context, float& dst) {
+    const Units::Time::Seconds t = context.Scene->World()->Time().Elapsed();
+    dst = static_cast<float>(t.Value());
 }
+//----------------------------------------------------------------------------
+void WorldTotalSeconds(const MaterialParameterContext& context, float& dst) {
+    const Units::Time::Seconds t = context.Scene->World()->Time().Total();
+    dst = static_cast<float>(t.Value());
+}
+//----------------------------------------------------------------------------
+} //!MaterialParameterTime
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace MaterialParameterTime {
+//----------------------------------------------------------------------------
+// Process Time
+//----------------------------------------------------------------------------
+void ProcessTotalSeconds(const MaterialParameterContext& , float& dst) {
+    const Units::Time::Seconds t = ProcessTime::TotalSeconds();
+    dst = static_cast<float>(t.Value());
+}
+//----------------------------------------------------------------------------
+} //!MaterialParameterTime
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

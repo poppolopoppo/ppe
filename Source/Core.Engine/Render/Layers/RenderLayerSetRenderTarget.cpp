@@ -2,7 +2,7 @@
 
 #include "RenderLayerSetRenderTarget.h"
 
-#include "Core.Graphics/Device/DeviceAPIEncapsulator.h"
+#include "Core.Graphics/Device/DeviceAPI.h"
 #include "Core.Graphics/Device/Texture/DepthStencil.h"
 #include "Core.Graphics/Device/Texture/RenderTarget.h"
 
@@ -49,7 +49,7 @@ static String RenderLayerSetRenderTargetName_(const MemoryView<const PAbstractRe
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(RenderLayerSetRenderTarget, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, RenderLayerSetRenderTarget, );
 //----------------------------------------------------------------------------
 RenderLayerSetRenderTarget::RenderLayerSetRenderTarget(AbstractRenderSurface *surface)
 :   AbstractRenderLayer(RenderLayerSetRenderTargetName_(surface))
@@ -88,7 +88,11 @@ RenderLayerSetRenderTarget::RenderLayerSetRenderTarget(const MemoryView<const PA
 //----------------------------------------------------------------------------
 RenderLayerSetRenderTarget::~RenderLayerSetRenderTarget() {}
 //----------------------------------------------------------------------------
-void RenderLayerSetRenderTarget::PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, const RenderTree *renderTree, VariabilitySeed *seeds) {
+void RenderLayerSetRenderTarget::PrepareImpl_(
+    Graphics::IDeviceAPIEncapsulator *device,
+    MaterialDatabase * /* materialDatabase */,
+    const RenderTree * /* renderTree */,
+    VariabilitySeed  * /* seeds */) {
     for (size_t i = 0; i < _count; ++i)
         _surfaces[i]->Prepare(device, _surfaceLocks[i]);
 }
@@ -113,7 +117,7 @@ void RenderLayerSetRenderTarget::RenderImpl_(Graphics::IDeviceAPIContextEncapsul
         // Multiple Render Target (MRT)
         Assert(_count > 0);
 
-        MALLOCA_STACK(Graphics::RenderTargetBinding, actualRTs, _count);
+        STACKLOCAL_POD_STACK(Graphics::RenderTargetBinding, actualRTs, _count);
         const Graphics::DepthStencil *actualDS = nullptr;
 
         for (size_t i = 0; i < _count; ++i) {
@@ -138,7 +142,7 @@ void RenderLayerSetRenderTarget::RenderImpl_(Graphics::IDeviceAPIContextEncapsul
     }
 }
 //----------------------------------------------------------------------------
-void RenderLayerSetRenderTarget::DestroyImpl_(Graphics::IDeviceAPIEncapsulator *device, const RenderTree *renderTree) {
+void RenderLayerSetRenderTarget::DestroyImpl_(Graphics::IDeviceAPIEncapsulator *device, const RenderTree * /* renderTree */) {
     for (size_t i = 0; i < _count; ++i)
         _surfaces[i]->Destroy(device, _surfaceLocks[i]);
 }

@@ -22,6 +22,8 @@ class EffectProgram;
 struct MaterialContext;
 FWD_REFPTR(Effect);
 FWD_REFPTR(EffectDescriptor);
+FWD_REFPTR(SharedConstantBuffer);
+class SharedConstantBufferFactory;
 //----------------------------------------------------------------------------
 class Effect : public Graphics::ShaderEffect {
 public:
@@ -33,6 +35,7 @@ public:
     const PCEffectDescriptor& Descriptor() const { return _descriptor; }
 
     const VECTOR(Effect, Graphics::BindName)& Tags() const { return _tags; }
+    const VECTOR(Effect, PSharedConstantBuffer)& SharedBuffers() const { return _sharedBuffers; }
 
     const Graphics::BlendState *BlendState() const { return _blendState.get(); }
     const Graphics::DepthStencilState *DepthStencilState() const { return _depthStencilState.get(); }
@@ -43,6 +46,10 @@ public:
 
     virtual void Create(Graphics::IDeviceAPIEncapsulator *device) override;
     virtual void Destroy(Graphics::IDeviceAPIEncapsulator *device) override;
+
+    void LinkReflectedData( SharedConstantBufferFactory *sharedBufferFactory,
+                            Graphics::IDeviceAPIShaderCompiler *compiler);
+    void UnlinkReflectedData(SharedConstantBufferFactory *sharedBufferFactory);
 
     void Set(Graphics::IDeviceAPIContextEncapsulator *context) const;
 
@@ -60,6 +67,7 @@ private:
     PCEffectDescriptor _descriptor;
 
     VECTOR(Effect, Graphics::BindName) _tags;
+    VECTOR(Effect, PSharedConstantBuffer) _sharedBuffers;
 
     Graphics::PCBlendState _blendState;
     Graphics::PCDepthStencilState _depthStencilState;

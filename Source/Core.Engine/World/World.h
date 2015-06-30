@@ -4,12 +4,19 @@
 
 #include "Core/IO/String.h"
 #include "Core/Memory/RefPtr.h"
+#include "Core/Memory/UniquePtr.h"
 #include "Core/Meta/ThreadResource.h"
+#include "Core/Time/Timeline.h"
 
 #include "Core.Engine/World/WorldObserver.h"
-#include "Core.Engine/World/WorldTime.h"
 
 namespace Core {
+
+namespace Logic {
+class EntityManager;
+typedef UniquePtr<EntityManager> UEntityManager;
+}
+
 namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -24,16 +31,19 @@ public:
 
     const String& Name() const { THIS_THREADRESOURCE_CHECKACCESS(); return _name; }
 
-    WorldTime& Time() { THIS_THREADRESOURCE_CHECKACCESS(); return _time; }
-    const WorldTime& Time() const { THIS_THREADRESOURCE_CHECKACCESS(); return _time; }
-
     WorldStatus Status() const { THIS_THREADRESOURCE_CHECKACCESS(); return _status; }
+
+    size_t Revision() const { return _revision; }
+
+    float Speed() const { return _timespeed; }
+    const Timeline& Time() const { return _timeline; }
 
     LightingEnvironment *Lighting() { THIS_THREADRESOURCE_CHECKACCESS(); return _lighting.get(); }
     const LightingEnvironment *Lighting() const { THIS_THREADRESOURCE_CHECKACCESS(); return _lighting.get(); }
     void SetLighting(LightingEnvironment *lighting);
 
-    const WorldObserverContainer& Observers() const { THIS_THREADRESOURCE_CHECKACCESS(); return _observers; }
+    Logic::EntityManager& EntityManager() { THIS_THREADRESOURCE_CHECKACCESS(); return *_logic; }
+    const Logic::EntityManager& EntityManager() const { THIS_THREADRESOURCE_CHECKACCESS(); return *_logic; }
 
     IServiceProvider *ServiceProvider() const { return _serviceProvider; }
 
@@ -47,17 +57,36 @@ public:
 
     void Update(const Timeline& timeline);
 
-    void RegisterObserver(WorldEvent::Type eventFlags, const WorldObserver& observer);
-    void UnregisterObserver(WorldEvent::Type eventFlags, const WorldObserver& observer);
+    WorldEvent& OnBeforeInitialize() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onBeforeInitialize; }
+    WorldEvent& OnAfterInitialize() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onAfterInitialize; }
+    WorldEvent& OnBeforeUpdate() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onBeforeUpdate; }
+    WorldEvent& OnAfterUpdate() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onAfterUpdate; }
+    WorldEvent& OnBeforeDestroy() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onBeforeDestroy; }
+    WorldEvent& OnAfterDestroy() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onAfterDestroy; }
+
+    static void Start();
+    static void Shutdown();
 
 private:
-    String _name;
-    WorldTime _time;
-    WorldStatus _status;
+    void ChangeStatus_(WorldStatus value);
 
+    String _name;
+    WorldStatus _status;
+    size_t _revision;
+
+    float _timespeed;
+    Timeline _timeline;
+
+    Logic::UEntityManager _logic;
     PLightingEnvironment _lighting;
-    WorldObserverContainer _observers;
     IServiceProvider *const _serviceProvider;
+
+    mutable WorldEvent _onBeforeInitialize;
+    mutable WorldEvent _onAfterInitialize;
+    mutable WorldEvent _onBeforeUpdate;
+    mutable WorldEvent _onAfterUpdate;
+    mutable WorldEvent _onBeforeDestroy;
+    mutable WorldEvent _onAfterDestroy;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

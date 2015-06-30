@@ -13,7 +13,7 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(RenderSurfaceProxy, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, RenderSurfaceProxy, );
 //----------------------------------------------------------------------------
 RenderSurfaceProxy::RenderSurfaceProxy(
     String&& name,

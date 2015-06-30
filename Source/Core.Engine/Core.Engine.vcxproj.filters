@@ -64,6 +64,18 @@
     <CustomBuild Include="Effect\MultiPassEffectDescriptor.h">
       <Filter>Effect</Filter>
     </CustomBuild>
+    <CustomBuild Include="Effect\SharedConstantBuffer.cpp">
+      <Filter>Effect</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Effect\SharedConstantBuffer.h">
+      <Filter>Effect</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Effect\SharedConstantBufferFactory.cpp">
+      <Filter>Effect</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Effect\SharedConstantBufferFactory.h">
+      <Filter>Effect</Filter>
+    </CustomBuild>
     <CustomBuild Include="Input\Camera\KeyboardMouseCameraController.cpp">
       <Filter>Input\Camera</Filter>
     </CustomBuild>
@@ -112,16 +124,10 @@
     <CustomBuild Include="Lighting\LightingEnvironment.h">
       <Filter>Lighting</Filter>
     </CustomBuild>
-    <CustomBuild Include="Material\Parameters\AbstractMaterialParameter.cpp">
+    <CustomBuild Include="Material\Parameters\MaterialParameterBool.cpp">
       <Filter>Material\Parameters</Filter>
     </CustomBuild>
-    <CustomBuild Include="Material\Parameters\AbstractMaterialParameter.h">
-      <Filter>Material\Parameters</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Material\Parameters\MaterialParameterBlock.cpp">
-      <Filter>Material\Parameters</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Material\Parameters\MaterialParameterBlock.h">
+    <CustomBuild Include="Material\Parameters\MaterialParameterBool.h">
       <Filter>Material\Parameters</Filter>
     </CustomBuild>
     <CustomBuild Include="Material\Parameters\MaterialParameterCamera.cpp">
@@ -130,13 +136,16 @@
     <CustomBuild Include="Material\Parameters\MaterialParameterCamera.h">
       <Filter>Material\Parameters</Filter>
     </CustomBuild>
+    <CustomBuild Include="Material\Parameters\MaterialParameterConstant.cpp">
+      <Filter>Material\Parameters</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\Parameters\MaterialParameterConstant.h">
+      <Filter>Material\Parameters</Filter>
+    </CustomBuild>
     <CustomBuild Include="Material\Parameters\MaterialParameterLighting.cpp">
       <Filter>Material\Parameters</Filter>
     </CustomBuild>
     <CustomBuild Include="Material\Parameters\MaterialParameterLighting.h">
-      <Filter>Material\Parameters</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Material\Parameters\MaterialParameterMath-inl.h">
       <Filter>Material\Parameters</Filter>
     </CustomBuild>
     <CustomBuild Include="Material\Parameters\MaterialParameterMath.cpp">
@@ -146,9 +155,6 @@
       <Filter>Material\Parameters</Filter>
     </CustomBuild>
     <CustomBuild Include="Material\Parameters\MaterialParameterMemoizer-inl.h">
-      <Filter>Material\Parameters</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Material\Parameters\MaterialParameterMemoizer.cpp">
       <Filter>Material\Parameters</Filter>
     </CustomBuild>
     <CustomBuild Include="Material\Parameters\MaterialParameterMemoizer.h">
@@ -178,6 +184,18 @@
     <CustomBuild Include="Material\Parameters\MaterialParameterTime.h">
       <Filter>Material\Parameters</Filter>
     </CustomBuild>
+    <CustomBuild Include="Material\Parameters\MaterialParameterVariable.cpp">
+      <Filter>Material\Parameters</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\Parameters\MaterialParameterVariable.h">
+      <Filter>Material\Parameters</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\IMaterialParameter.cpp">
+      <Filter>Material</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\IMaterialParameter.h">
+      <Filter>Material</Filter>
+    </CustomBuild>
     <CustomBuild Include="Material\Material.cpp">
       <Filter>Material</Filter>
     </CustomBuild>
@@ -190,13 +208,16 @@
     <CustomBuild Include="Material\MaterialConstNames.h">
       <Filter>Material</Filter>
     </CustomBuild>
-    <CustomBuild Include="Material\MaterialContext.h">
-      <Filter>Material</Filter>
-    </CustomBuild>
     <CustomBuild Include="Material\MaterialDatabase.cpp">
       <Filter>Material</Filter>
     </CustomBuild>
     <CustomBuild Include="Material\MaterialDatabase.h">
+      <Filter>Material</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\MaterialParameter_fwd.h">
+      <Filter>Material</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Material\MaterialPot.h">
       <Filter>Material</Filter>
     </CustomBuild>
     <CustomBuild Include="Material\MaterialToken.cpp">
@@ -448,6 +469,12 @@
     <CustomBuild Include="Service\Service_fwd.h">
       <Filter>Service</Filter>
     </CustomBuild>
+    <CustomBuild Include="Service\SharedConstantBufferFactoryService.cpp">
+      <Filter>Service</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Service\SharedConstantBufferFactoryService.h">
+      <Filter>Service</Filter>
+    </CustomBuild>
     <CustomBuild Include="Service\TextureCacheService.cpp">
       <Filter>Service</Filter>
     </CustomBuild>
@@ -479,12 +506,6 @@
       <Filter>World</Filter>
     </CustomBuild>
     <CustomBuild Include="World\WorldObserver.h">
-      <Filter>World</Filter>
-    </CustomBuild>
-    <CustomBuild Include="World\WorldTime.cpp">
-      <Filter>World</Filter>
-    </CustomBuild>
-    <CustomBuild Include="World\WorldTime.h">
       <Filter>World</Filter>
     </CustomBuild>
     <CustomBuild Include="Engine.cpp">

@@ -9,8 +9,10 @@
 
 #include "Core/stdafx.h"
 #include "Core.Graphics/stdafx.h"
+#include "Core.Logic/stdafx.h"
 
 #include "Core/Core.h"
 #include "Core.Graphics/Graphics.h"
+#include "Core.Logic/Logic.h"
 
-#include "Core.Graphics/Device/DeviceAPIEncapsulator.h"
+#include "Core.Graphics/Device/DeviceAPI.h"

@@ -9,12 +9,14 @@ namespace Engine {
 //----------------------------------------------------------------------------
 enum class MaterialVariability {
     Always      = 0,
-    Batch       = 1,
-    Material    = 2,
-    Scene       = 3,
-    World       = 4,
-    Frame       = 5,
-    Once        = 6,
+    Batch       ,
+    Material    ,
+    Scene       ,
+    World       ,
+    Frame       ,
+    Once        ,
+
+    _Count,
 };
 //----------------------------------------------------------------------------
 inline bool SameOrMoreVariability(MaterialVariability lhs, MaterialVariability rhs) {
@@ -26,10 +28,7 @@ const char *MaterialVariabilityToCStr(MaterialVariability value);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct VariabilitySeed {
-    enum : size_t {
-        Invalid = 0,
-        Count   = 7
-    };
+    enum : size_t { Invalid = 0, Count = size_t(MaterialVariability::_Count) };
 
     size_t Value = VariabilitySeed::Invalid;
 
@@ -37,6 +36,8 @@ struct VariabilitySeed {
 
     void Next() { if (++Value == Invalid) ++Value; }
 };
+//----------------------------------------------------------------------------
+typedef VariabilitySeed VariabilitySeeds[VariabilitySeed::Count]; 
 //----------------------------------------------------------------------------
 inline bool operator ==(const VariabilitySeed& lhs, const VariabilitySeed& rhs) {
     return lhs.Value == rhs.Value;

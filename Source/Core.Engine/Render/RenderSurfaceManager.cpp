@@ -2,7 +2,7 @@
 
 #include "RenderSurfaceManager.h"
 
-#include "Core.Graphics/Device/DeviceAPIEncapsulator.h"
+#include "Core.Graphics/Device/DeviceAPI.h"
 
 #include "Core/Diagnostic/Logger.h"
 #include "Core/IO/FS/FileSystemTrie.h"

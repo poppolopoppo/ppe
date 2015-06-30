@@ -2,12 +2,13 @@
 
 #include "Core.Engine/Engine.h"
 
+#include "Core.Engine/Material/MaterialParameter_fwd.h"
 #include "Core.Engine/Material/MaterialVariability.h"
 
 #include "Core.Graphics/Device/BindName.h"
-#include "Core.Graphics/Device/Shader/ConstantBuffer.h"
 
 #include "Core/Allocator/PoolAllocator.h"
+#include "Core/Container/RawStorage.h"
 #include "Core/Container/Vector.h"
 
 namespace Core {
@@ -16,35 +17,38 @@ class IDeviceAPIEncapsulator;
 }
 
 namespace Engine {
+class MaterialDatabase;
+FWD_REFPTR(SharedConstantBuffer);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FWD_REFPTR(AbstractMaterialParameter);
-struct MaterialContext;
-FWD_REFPTR(MaterialDatabase);
-FWD_REFPTR(MaterialEffect);
-FWD_REFPTR(Scene);
-//----------------------------------------------------------------------------
-class EffectConstantBuffer : public Graphics::ConstantBuffer {
+FWD_REFPTR(EffectConstantBuffer);
+class EffectConstantBuffer : public RefCountable {
 public:
-    EffectConstantBuffer(   const Graphics::BindName& name,
-                            const Graphics::ConstantBufferLayout *layout);
+    explicit EffectConstantBuffer(SharedConstantBuffer *sharedBuffer);
     virtual ~EffectConstantBuffer();
 
-    const Graphics::BindName& Name() const { return _name; }
-    const MaterialVariabilitySeed& Variability() const { return _variability; }
-    const VECTOR(Effect, PAbstractMaterialParameter)& Parameters() const { return _parameters; }
+    const SharedConstantBuffer *SharedBuffer() const { return _sharedBuffer.get(); }
 
-    void Prepare(Graphics::IDeviceAPIEncapsulator *device, MaterialEffect *materialEffect, MaterialDatabase *materialDatabase, const Scene *scene);
-    void Eval(Graphics::IDeviceAPIEncapsulator *device, const MaterialContext& context);
-    bool Match(const Graphics::BindName& name, const Graphics::ConstantBufferLayout& layout) const;
+    const MaterialVariabilitySeed& Variability() const { return _variability; }
+    const VECTOR(Effect, PMaterialParameter)& Parameters() const { return _parameters; }
+
+    void Prepare(const MaterialParameterMutableContext& context);
+    void Eval(const MaterialParameterContext& context, const VariabilitySeeds& seeds);
+    void SetDataIFN(Graphics::IDeviceAPIEncapsulator *device) const;
+    void Clear();
 
     SINGLETON_POOL_ALLOCATED_DECL(EffectConstantBuffer);
 
 private:
-    Graphics::BindName _name;
+    PSharedConstantBuffer _sharedBuffer;
+
+    size_t _headerHashValue;
     MaterialVariabilitySeed _variability;
-    VECTOR(Effect, PAbstractMaterialParameter) _parameters;
+    VECTOR(Effect, PMaterialParameter) _parameters;
+
+    size_t _dataHashValue;
+    RAWSTORAGE_ALIGNED(Effect, u8, 16) _rawData;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

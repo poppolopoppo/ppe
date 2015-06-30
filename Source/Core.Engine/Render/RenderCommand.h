@@ -24,6 +24,9 @@ class RenderTree;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// TODO : better sorting
+// http://realtimecollisiondetection.net/blog/?p=86
+// http://aras-p.info/blog/2014/01/16/rough-sorting-by-depth/
 struct RenderCommandCriteria {
 
     size_t MaterialEffectAndReady;

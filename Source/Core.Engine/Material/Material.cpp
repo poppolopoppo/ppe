@@ -2,7 +2,7 @@
 
 #include "Material.h"
 
-#include "Parameters/AbstractMaterialParameter.h"
+#include "IMaterialParameter.h"
 
 #include "Core/Allocator/PoolAllocator-impl.h"
 
@@ -11,7 +11,7 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(Material, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, Material, );
 //----------------------------------------------------------------------------
 Material::Material(const Graphics::BindName& name)
 :   _name(name) {
@@ -23,7 +23,7 @@ Material::Material(
     const String& description,
     VECTOR(Material, Graphics::BindName)&& tags,
     ASSOCIATIVE_VECTOR(Material, Graphics::BindName, Filename)&& textures,
-    ASSOCIATIVE_VECTOR(Material, Graphics::BindName, PAbstractMaterialParameter)&& parameters )
+    ASSOCIATIVE_VECTOR(Material, Graphics::BindName, PMaterialParameter)&& parameters )
 :   _name(name)
 ,   _description(description)
 ,   _tags(std::move(tags))
@@ -47,7 +47,7 @@ void Material::AddTexture(const Graphics::BindName& name, const Filename& filena
     _textures.Insert_AssertUnique(name, filename);
 }
 //----------------------------------------------------------------------------
-void Material::AddParameter(const Graphics::BindName& name, const PAbstractMaterialParameter& parameter) {
+void Material::AddParameter(const Graphics::BindName& name, const PMaterialParameter& parameter) {
     Assert(!name.empty());
     Assert(parameter);
 
@@ -61,7 +61,7 @@ void Material::SetTexture(const Graphics::BindName& name, const Filename& filena
     _textures.Get(name) = filename;
 }
 //----------------------------------------------------------------------------
-void Material::SetParameter(const Graphics::BindName& name, const PAbstractMaterialParameter& parameter) {
+void Material::SetParameter(const Graphics::BindName& name, const PMaterialParameter& parameter) {
     Assert(!name.empty());
     Assert(parameter);
 

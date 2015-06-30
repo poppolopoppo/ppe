@@ -13,7 +13,7 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(RenderLayer, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, RenderLayer, );
 //----------------------------------------------------------------------------
 RenderLayer::RenderLayer(String&& name)
 :   AbstractRenderLayer(std::move(name), true/* enabled */, true/* exported */) {
@@ -25,7 +25,9 @@ RenderLayer::~RenderLayer() {
     Assert(_effectVariability.Value == VariabilitySeed::Invalid);
 }
 //----------------------------------------------------------------------------
-void RenderLayer::PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, const RenderTree *renderTree, VariabilitySeed *seeds) {
+void RenderLayer::PrepareImpl_(
+    Graphics::IDeviceAPIEncapsulator *device,
+    MaterialDatabase *materialDatabase, const RenderTree *renderTree, VariabilitySeed *seeds ) {
     const VariabilitySeed variability = renderTree->EffectCompiler()->Variability();
     if (variability != _effectVariability &&
         _effectVariability.Value != VariabilitySeed::Invalid ) {
@@ -46,7 +48,7 @@ void RenderLayer::RenderImpl_(Graphics::IDeviceAPIContextEncapsulator *context) 
     _batch.Render(context);
 }
 //----------------------------------------------------------------------------
-void RenderLayer::DestroyImpl_(Graphics::IDeviceAPIEncapsulator *device, const RenderTree *renderTree) {
+void RenderLayer::DestroyImpl_(Graphics::IDeviceAPIEncapsulator *device, const RenderTree * /* renderTree */) {
     _batch.Destroy(device);
     _effectVariability.Value = VariabilitySeed::Invalid;
 }

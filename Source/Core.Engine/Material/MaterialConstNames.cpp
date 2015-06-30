@@ -49,12 +49,16 @@ namespace Engine {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-#define DEF_MATERIALCONSTNAMES_STORAGE(_Name) \
-    static POD_STORAGE(Graphics::BindName) CONCAT(gPod_, _Name);
+namespace MaterialConstNamesID {
+    enum Type : size_t {
+#define DEF_MATERIALCONSTNAMES_ENUM(_Name) _Name,
+        FOREACH_MATERIALCONSTNAMES_NAME(DEF_MATERIALCONSTNAMES_ENUM)
+#undef DEF_MATERIALCONSTNAMES_ENUM
+        _Count,
+    };
+} //!MaterialConstNamesID
 //----------------------------------------------------------------------------
-FOREACH_MATERIALCONSTNAMES_NAME(DEF_MATERIALCONSTNAMES_STORAGE)
-//----------------------------------------------------------------------------
-#undef DEF_MATERIALCONSTNAMES_STORAGE
+static Graphics::BindName *gMaterialConstNamesArray = nullptr;
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
@@ -62,33 +66,29 @@ FOREACH_MATERIALCONSTNAMES_NAME(DEF_MATERIALCONSTNAMES_STORAGE)
 //----------------------------------------------------------------------------
 #define DEF_MATERIALCONSTNAMES_ACCESSOR(_Name) \
     const Graphics::BindName& MaterialConstNames::_Name() { \
-        return *reinterpret_cast<const Graphics::BindName *>(&CONCAT(gPod_, _Name)); \
+        return gMaterialConstNamesArray[MaterialConstNamesID::_Name]; \
     }
-//----------------------------------------------------------------------------
 FOREACH_MATERIALCONSTNAMES_NAME(DEF_MATERIALCONSTNAMES_ACCESSOR)
-//----------------------------------------------------------------------------
 #undef DEF_MATERIALCONSTNAMES_ACCESSOR
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void MaterialConstNames::Start() {
-#define DEF_MATERIALCONSTNAMES_STARTUP(_Name) \
-    new ((void *)&CONCAT(gPod_, _Name)) Graphics::BindName(STRINGIZE(_Name));
-
-    FOREACH_MATERIALCONSTNAMES_NAME(DEF_MATERIALCONSTNAMES_STARTUP)
-
+    AssertRelease(!gMaterialConstNamesArray);
+    gMaterialConstNamesArray = new Graphics::BindName[MaterialConstNamesID::_Count] {
+#define DEF_MATERIALCONSTNAMES_STARTUP(_Name) STRINGIZE(_Name),
+        FOREACH_MATERIALCONSTNAMES_NAME(DEF_MATERIALCONSTNAMES_STARTUP)
 #undef DEF_MATERIALCONSTNAMES_STARTUP
+    };
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void MaterialConstNames::Shutdown() {
-#define DEF_MATERIALCONSTNAMES_SHUTDOWN(_Name) \
-    reinterpret_cast<const Graphics::BindName *>(&CONCAT(gPod_, _Name))->~BindName();
+    AssertRelease(gMaterialConstNamesArray);
 
-    FOREACH_MATERIALCONSTNAMES_NAME(DEF_MATERIALCONSTNAMES_SHUTDOWN)
-
-#undef DEF_MATERIALCONSTNAMES_SHUTDOWN
+    delete[] gMaterialConstNamesArray;
+    gMaterialConstNamesArray = nullptr;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

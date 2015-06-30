@@ -27,6 +27,7 @@ class IServiceProvider;
 FWD_ENGINESERVICE(DeviceEncapsulatorService);
 FWD_ENGINESERVICE(RenderSurfaceService);
 FWD_ENGINESERVICE(TextureCacheService);
+FWD_ENGINESERVICE(SharedConstantBufferFactoryService);
 FWD_ENGINESERVICE(EffectCompilerService);
 FWD_ENGINESERVICE(KeyboardService);
 FWD_ENGINESERVICE(MouseService);

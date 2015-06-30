@@ -26,8 +26,6 @@ public:
     DirectionalLight& Sun() { return _sun; }
     const DirectionalLight& Sun() const { return _sun; }
 
-    void Update(const World *world);
-
 private:
     float _exposure;
     float _whitePoint;

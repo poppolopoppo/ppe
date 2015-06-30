@@ -21,7 +21,7 @@ namespace Engine {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(AbstractRenderLayer);
-FWD_REFPTR(MaterialDatabase);
+class MaterialDatabase;
 class RenderBatch;
 class RenderTree;
 struct VariabilitySeed;

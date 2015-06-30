@@ -19,7 +19,7 @@ namespace Engine {
 //----------------------------------------------------------------------------
 FWD_REFPTR(AbstractRenderLayer);
 class EffectCompiler;
-FWD_REFPTR(MaterialDatabase);
+class MaterialDatabase;
 class RenderSurfaceManager;
 FWD_REFPTR(Scene);
 class TextureCache;

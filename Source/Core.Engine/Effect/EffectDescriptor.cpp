@@ -2,7 +2,7 @@
 
 #include "EffectDescriptor.h"
 
-#include "Material/Parameters/AbstractMaterialParameter.h"
+#include "Material/IMaterialParameter.h"
 #include "Render/RenderState.h"
 
 #include "Core.Graphics/Device/BindName.h"
@@ -18,7 +18,7 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(EffectDescriptor, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, EffectDescriptor, );
 //----------------------------------------------------------------------------
 EffectDescriptor::EffectDescriptor() 
 :   _renderLayerOffset(0) {}
@@ -38,7 +38,7 @@ EffectDescriptor::EffectDescriptor(
     const Graphics::VertexDeclaration *vertexDeclaration,
     const MemoryView<const Pair<String, String>>& defines,
     const MemoryView<const Pair<Graphics::BindName, String>>& substitutions,
-    const MemoryView<const Pair<Graphics::BindName, PAbstractMaterialParameter>>& parameters,
+    const MemoryView<const Pair<Graphics::BindName, PMaterialParameter>>& parameters,
     const MemoryView<const Pair<Graphics::BindName, Filename>>& textures )
 :   _name(name)
 ,   _renderState(renderState)
@@ -154,7 +154,7 @@ void EffectDescriptor::AddTexture(const Graphics::BindName& name, const Filename
     _textures.Insert_AssertUnique(name, filename);
 }
 //----------------------------------------------------------------------------
-void EffectDescriptor::AddParameter(const Graphics::BindName& name, AbstractMaterialParameter *parameter) {
+void EffectDescriptor::AddParameter(const Graphics::BindName& name, IMaterialParameter *parameter) {
     Assert(!name.empty());
     Assert(parameter);
 

@@ -2,57 +2,46 @@
 
 #include "Core.Engine/Engine.h"
 
-#include "Core.Engine/Material/Parameters/AbstractMaterialParameter.h"
+#include "Core.Engine/Material/IMaterialParameter.h"
 
 #include "Core.Graphics/Device/Shader/ConstantField.h"
 
+#include "Core/Maths/Geometry/ScalarVector_fwd.h"
+#include "Core/Maths/Transform/ScalarMatrix_fwd.h"
+
 #include "Core/Allocator/PoolAllocator.h"
-#include "Core/Maths/Geometry/ScalarVector.h"
-#include "Core/Maths/Transform/ScalarMatrix.h"
 
 namespace Core {
 namespace Engine {
-struct MaterialContext;
-FWD_REFPTR(MaterialDatabase);
-FWD_REFPTR(MaterialEffect);
-class Scene;
-
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-class MaterialParameterBlock : public TypedMaterialParameter<T> {
+class MaterialParameterConstant : public ITypedMaterialParameter<T> {
 public:
-    MaterialParameterBlock();
-    virtual ~MaterialParameterBlock();
-
-    MaterialParameterBlock(T&& rvalue);
-    MaterialParameterBlock(const T& value);
+    explicit MaterialParameterConstant(T&& rvalue);
+    explicit MaterialParameterConstant(const T& value);
+    virtual ~MaterialParameterConstant();
 
     const T& Value() const { return _value; }
 
-    void SetValue(T&& value);
-    void SetValue(const T& value);
+    virtual MaterialParameterInfo Info() const override;
 
-    SINGLETON_POOL_ALLOCATED_DECL(MaterialParameterBlock);
+    virtual void Eval(const MaterialParameterContext& context, void *dst, size_t sizeInBytes) override;
 
-protected:
-    virtual bool EvalIFN_ReturnIfChanged_(const MaterialContext& context) override;
-    virtual void CopyTo_AssumeEvaluated_(void *dst, size_t sizeInBytes) const override;
+    SINGLETON_POOL_ALLOCATED_DECL(MaterialParameterConstant);
 
 private:
     T _value;
 };
 //----------------------------------------------------------------------------
-CONSTANTFIELD_EXTERNALTEMPLATE_DECL(MaterialParameterBlock, );
+CONSTANTFIELD_EXTERNALTEMPLATE_DECL(MaterialParameterConstant, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 bool TryCreateOptionalMaterialParameter(
-    AbstractMaterialParameter **param,
-    MaterialEffect *materialEffect,
-    MaterialDatabase *materialDatabase,
-    const Scene *scene,
+    PMaterialParameter *param,
+    const MaterialParameterMutableContext& context,
     const Graphics::BindName& name,
     const Graphics::ConstantField& field );
 //----------------------------------------------------------------------------

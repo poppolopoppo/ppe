@@ -2,7 +2,7 @@
 
 #include "MeshLoader.h"
 
-#include "Core.Graphics/Device/DeviceAPIEncapsulator.h"
+#include "Core.Graphics/Device/DeviceAPI.h"
 
 #include "Core.Graphics/Device/Geometry/IndexBuffer.h"
 #include "Core.Graphics/Device/Geometry/VertexDeclaration.h"
@@ -269,7 +269,7 @@ bool ReadMeshHeader(MeshHeader& header, IVirtualFileSystemIStream *stream) {
 
     header.VertexStride = 0;
     Property vertexProperties = Property(0);
-    do {
+    for (;;) {
         if (!ReadToken_SkipCommentIFN(&token, stream))
             return false;
 
@@ -344,7 +344,6 @@ bool ReadMeshHeader(MeshHeader& header, IVirtualFileSystemIStream *stream) {
         header.VertexStride += propertySize;
         vertexProperties = Property(u32(vertexProperties)|u32(propertySemantic));
     }
-    while (true);
 
     AssertRelease( (sizeof(Vertex_Position_Normal_Color) == header.VertexStride &&
                         Property::Position_Normal_Color == vertexProperties) ||

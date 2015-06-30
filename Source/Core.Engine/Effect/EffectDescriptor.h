@@ -10,6 +10,7 @@
 #include "Core/Memory/RefPtr.h"
 
 #include "Core.Engine/Effect/IEffectPasses.h"
+#include "Core.Engine/Material/MaterialParameter_fwd.h"
 
 namespace Core {
 namespace Graphics {
@@ -20,7 +21,6 @@ FWD_REFPTR(VertexDeclaration);
 }
 
 namespace Engine {
-FWD_REFPTR(AbstractMaterialParameter);
 FWD_REFPTR(RenderState);
 
 //----------------------------------------------------------------------------
@@ -43,7 +43,7 @@ public:
                         const Graphics::VertexDeclaration *vertexDeclaration,
                         const MemoryView<const Pair<String, String>>& defines,
                         const MemoryView<const Pair<Graphics::BindName, String>>& substitutions,
-                        const MemoryView<const Pair<Graphics::BindName, PAbstractMaterialParameter>>& parameters,
+                        const MemoryView<const Pair<Graphics::BindName, PMaterialParameter>>& parameters,
                         const MemoryView<const Pair<Graphics::BindName, Filename>>& textures );
 
     const Engine::RenderState *RenderState() const { return _renderState.get(); }
@@ -76,7 +76,7 @@ public:
 
     const ASSOCIATIVE_VECTOR(Effect, String, String)& Defines() const { return _defines; }
     const ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, String)& Substitutions() const { return _substitutions; }
-    const ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, PAbstractMaterialParameter)& Parameters() const { return _parameters; }
+    const ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, PMaterialParameter)& Parameters() const { return _parameters; }
     const ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, Filename)& Textures() const { return _textures; }
 
     size_t RenderLayerOffset() const { return _renderLayerOffset; }
@@ -86,7 +86,7 @@ public:
     void AddDefine(const String& name, const String& value);
     void AddSubstitution(const Graphics::BindName& tag, const String& defines);
     void AddTexture(const Graphics::BindName& name, const Filename& filename);
-    void AddParameter(const Graphics::BindName& name, AbstractMaterialParameter *parameter);
+    void AddParameter(const Graphics::BindName& name, IMaterialParameter *parameter);
 
     virtual size_t FillEffectPasses(const EffectDescriptor **pOutPasses, const size_t capacity) const override;
 
@@ -111,7 +111,7 @@ private:
     ASSOCIATIVE_VECTOR(Effect, String, String) _defines;
     ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, String) _substitutions;
     ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, Filename) _textures;
-    ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, PAbstractMaterialParameter) _parameters;
+    ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, PMaterialParameter) _parameters;
 
     size_t _renderLayerOffset;
 };

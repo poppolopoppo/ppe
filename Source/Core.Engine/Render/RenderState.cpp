@@ -17,7 +17,7 @@ RenderState::~RenderState() {}
 RenderState::RenderState(Blending blend, Culling cull, DepthTest depth, FillMode fill)
 :   _blend(blend), _cull(cull), _depth(depth), _fill(fill) {}
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(RenderState, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, RenderState, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

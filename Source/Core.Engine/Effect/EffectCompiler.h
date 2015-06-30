@@ -24,6 +24,7 @@ FWD_REFPTR(Effect);
 FWD_REFPTR(EffectDescriptor);
 FWD_REFPTR(Material);
 FWD_REFPTR(MaterialEffect);
+class SharedConstantBufferFactory;
 //----------------------------------------------------------------------------
 struct EffectCompilerKey;
 //----------------------------------------------------------------------------
@@ -45,13 +46,15 @@ public:
     void RegenerateEffects();
     void Clear();
 
-    void Start(Graphics::IDeviceAPIEncapsulator *device);
-    void Shutdown(Graphics::IDeviceAPIEncapsulator *device);
+    void Start(Graphics::IDeviceAPIEncapsulator *device, SharedConstantBufferFactory *sharedBufferFactory);
+    void Shutdown(Graphics::IDeviceAPIEncapsulator *device, SharedConstantBufferFactory *sharedBufferFactory);
 
 private:
     Graphics::IDeviceAPIEncapsulator *_device;
+    SharedConstantBufferFactory *_sharedBufferFactory;
 
     VariabilitySeed _variability;
+
     HASHMAP(Effect, EffectCompilerKey, PEffect) _effects;
 };
 //----------------------------------------------------------------------------

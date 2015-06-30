@@ -41,7 +41,7 @@ void FreeLookCameraController::LookAt(const float3& position, float heading, flo
     _pitch = std::fmod(pitch, F_2PI);
 }
 //----------------------------------------------------------------------------
-void FreeLookCameraController::UpdateImpl(float4x4 *view, const Timeline& time) {
+void FreeLookCameraController::UpdateImpl(float4x4 *view, const Timeline&/* time */) {
     Assert(view);
 
     const Quaternion rotation = MakeYawPitchRollQuaternion(_heading, _pitch, 0.0f);

@@ -2,7 +2,7 @@
 
 #include "RenderLayerClear.h"
 
-#include "Core.Graphics/Device/DeviceAPIEncapsulator.h"
+#include "Core.Graphics/Device/DeviceAPI.h"
 #include "Core.Graphics/Device/Texture/DepthStencil.h"
 #include "Core.Graphics/Device/Texture/RenderTarget.h"
 
@@ -32,7 +32,7 @@ static String RenderLayerClearName_(AbstractRenderSurface *surface) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(RenderLayerClear, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, RenderLayerClear, );
 //----------------------------------------------------------------------------
 RenderLayerClear::RenderLayerClear(
     AbstractRenderSurface *surface,
@@ -53,7 +53,11 @@ RenderLayerClear::~RenderLayerClear() {
     Assert(!_surfaceLock);
 }
 //----------------------------------------------------------------------------
-void RenderLayerClear::PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, const RenderTree *renderTree, VariabilitySeed *seeds) {
+void RenderLayerClear::PrepareImpl_(
+    Graphics::IDeviceAPIEncapsulator *device, 
+    MaterialDatabase * /* materialDatabase */, 
+    const RenderTree * /* renderTree */, 
+    VariabilitySeed * /* seeds */) {
     _surface->Prepare(device, _surfaceLock);
 }
 //----------------------------------------------------------------------------
@@ -64,14 +68,14 @@ void RenderLayerClear::RenderImpl_(Graphics::IDeviceAPIContextEncapsulator *cont
     const Graphics::DepthStencil *ds = nullptr;
     _surfaceLock->Acquire(&rt, &ds);
 
-    if (rt && !(size_t(Graphics::ClearOptions::NotRenderTarget) & size_t(_options)) )
+    if (rt && !Meta::HasFlag(_options, Graphics::ClearOptions::NotRenderTarget) )
         context->Clear(rt, _color);
 
     if (ds && Graphics::ClearOptions::None != _options)
         context->Clear(ds, _options, _depth, _stencil);
 }
 //----------------------------------------------------------------------------
-void RenderLayerClear::DestroyImpl_(Graphics::IDeviceAPIEncapsulator *device, const RenderTree *renderTree) {
+void RenderLayerClear::DestroyImpl_(Graphics::IDeviceAPIEncapsulator *device, const RenderTree * /* renderTree */) {
     Assert(_surfaceLock);
 
     _surface->Destroy(device, _surfaceLock);

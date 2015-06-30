@@ -11,7 +11,7 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(ModelMeshSubPart, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, ModelMeshSubPart, );
 //----------------------------------------------------------------------------
 ModelMeshSubPart::ModelMeshSubPart(
     const MeshName& name,

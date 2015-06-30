@@ -3,6 +3,7 @@
 #include "EffectCompiler.h"
 
 #include "Core.Graphics/Device/BindName.h"
+#include "Core.Graphics/Device/DeviceEncapsulator.h"
 #include "Core.Graphics/Device/Geometry/VertexDeclaration.h"
 
 #include "Core/Diagnostic/Logger.h"
@@ -11,6 +12,8 @@
 
 #include "Effect.h"
 #include "EffectDescriptor.h"
+#include "SharedConstantBuffer.h"
+#include "SharedConstantBufferFactory.h"
 #include "Material/Material.h"
 #include "MaterialEffect.h"
 
@@ -28,10 +31,11 @@ struct EffectCompilerKey {
     Graphics::PCVertexDeclaration VertexDeclaration;
 
     bool operator ==(const EffectCompilerKey& other) const { 
-        return  HashValue == other.HashValue && 
+        return  this == &other || (
+                HashValue == other.HashValue && 
                 Descriptor == other.Descriptor && 
                 VertexDeclaration == other.VertexDeclaration &&
-                std::equal(&Tags[0], &Tags[TagCapacity], other.Tags); // most expensive last
+                std::equal(&Tags[0], &Tags[TagCapacity], other.Tags) ); // most expensive last
     }
 
     bool operator !=(const EffectCompilerKey& other) const { return !operator ==(other); }
@@ -43,13 +47,16 @@ size_t hash_value(const EffectCompilerKey& key) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-EffectCompiler::EffectCompiler() : _device(nullptr) {
+EffectCompiler::EffectCompiler() 
+:   _device(nullptr)
+,   _sharedBufferFactory(nullptr) {
     Assert(_variability.Value == VariabilitySeed::Invalid);
 }
 //----------------------------------------------------------------------------
 EffectCompiler::~EffectCompiler() {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!_device);
+    Assert(!_sharedBufferFactory);
     Assert(_effects.empty());
     Assert(_variability.Value == VariabilitySeed::Invalid);
 }
@@ -63,22 +70,28 @@ Effect *EffectCompiler::GetOrCreateEffect(
     Assert(descriptor);
     Assert(vertexDeclaration);
     Assert(_device);
+    Assert(_sharedBufferFactory);
     Assert(_variability.Value != VariabilitySeed::Invalid);
 
     EffectCompilerKey key;
     key.Descriptor = descriptor;
     key.VertexDeclaration = vertexDeclaration;
-    for (size_t i = 0; i < tags.size(); ++i) key.Tags[i] = tags[i];
+    for (size_t i = 0; i < tags.size(); ++i) 
+        key.Tags[i] = tags[i];
+
     key.HashValue = hash_value(key.Descriptor, key.VertexDeclaration, key.Tags);
 
     PEffect& effect = _effects[key];
 
     if (!effect) {
+        Graphics::IDeviceAPIShaderCompiler *const compiler = _device->Encapsulator()->Compiler();
+
         LOG(Information, L"[EffectCompiler] Create effect for descriptor <{0}> and vertex declaration <{1}> ...",
             descriptor->Name().c_str(), vertexDeclaration->ResourceName() );
 
         effect = new Effect(descriptor, vertexDeclaration, tags);
         effect->Create(_device);
+        effect->LinkReflectedData(_sharedBufferFactory, compiler);
     }
 
     Assert(effect);
@@ -118,6 +131,8 @@ void EffectCompiler::RegenerateEffects() {
 
     const Units::Time::Seconds startedAt = ProcessTime::TotalSeconds();
 
+    Graphics::IDeviceAPIShaderCompiler *const compiler = _device->Encapsulator()->Compiler();
+
     for (const Pair<const EffectCompilerKey, PEffect>& effect : _effects) {
         Assert(effect.second->Available());
 
@@ -131,8 +146,11 @@ void EffectCompiler::RegenerateEffects() {
                 LOG(Information, L"[EffectCompiler] - With material tag <{0}>", tag);
 #endif
 
+        effect.second->UnlinkReflectedData(_sharedBufferFactory);
         effect.second->Destroy(_device);
+
         effect.second->Create(_device);
+        effect.second->LinkReflectedData(_sharedBufferFactory, compiler);
     }
 
     const Units::Time::Seconds stoppedAt = ProcessTime::TotalSeconds();
@@ -152,7 +170,9 @@ void EffectCompiler::Clear() {
     for (Pair<const EffectCompilerKey, PEffect>& effect : _effects) {
         Assert(effect.second->Available());
 
+        effect.second->UnlinkReflectedData(_sharedBufferFactory);
         effect.second->Destroy(_device);
+
         RemoveRef_AssertReachZero(effect.second);
     }
 
@@ -160,43 +180,36 @@ void EffectCompiler::Clear() {
     _variability.Next();
 }
 //----------------------------------------------------------------------------
-void EffectCompiler::Start(Graphics::IDeviceAPIEncapsulator *device) {
+void EffectCompiler::Start(Graphics::IDeviceAPIEncapsulator *device, SharedConstantBufferFactory *sharedBufferFactory) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!_device);
+    Assert(!_sharedBufferFactory);
     Assert(_effects.empty());
     Assert(_variability.Value == VariabilitySeed::Invalid);
 
-    LOG(Information, L"[EffectCompiler] Starting with device <{0}> ...",
-        device );
+    LOG(Information, L"[EffectCompiler] Starting with device <{0}> and shared buffer factory <{1}> ...",
+        device, sharedBufferFactory );
 
     _device = device;
+    _sharedBufferFactory = sharedBufferFactory;
     _variability.Reset();
 }
 //----------------------------------------------------------------------------
-void EffectCompiler::Shutdown(Graphics::IDeviceAPIEncapsulator *device) {
+void EffectCompiler::Shutdown(Graphics::IDeviceAPIEncapsulator *device, SharedConstantBufferFactory *sharedBufferFactory) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(device);
     Assert(device == _device);
+    Assert(sharedBufferFactory);
+    Assert(sharedBufferFactory == _sharedBufferFactory);
     Assert(_variability.Value != VariabilitySeed::Invalid);
 
-    LOG(Information, L"[EffectCompiler] Shutting down with device <{0}> ...",
-        device );
+    LOG(Information, L"[EffectCompiler] Shutting down with device <{0}> and shared buffer factory <{1}> ...",
+        device, sharedBufferFactory );
 
-    for (auto it : _effects) {
-        Assert(it.first.Descriptor);
-        Assert(it.first.VertexDeclaration);
-        Assert(it.second);
-        Assert(it.second->Descriptor() == it.first.Descriptor);
-        Assert(it.second->VertexDeclaration() == it.first.VertexDeclaration);
-
-        LOG(Information, L"[EffectCompiler] Destroy effect for descriptor <{0}> and vertex declaration <{1}> ...",
-            it.first.Descriptor->Name().c_str(), it.first.VertexDeclaration->ResourceName() );
-
-        it.second->Destroy(_device);
-        RemoveRef_AssertReachZero(it.second);
-    }
+    Clear();
 
     _device = nullptr;
+    _sharedBufferFactory = nullptr;
     _variability.Value = size_t(VariabilitySeed::Invalid);
 }
 //----------------------------------------------------------------------------

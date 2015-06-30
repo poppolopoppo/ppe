@@ -58,7 +58,7 @@ PerspectiveCamera::PerspectiveCamera(float fov, float znear, float zfar, const V
 //----------------------------------------------------------------------------
 PerspectiveCamera::~PerspectiveCamera() {}
 //----------------------------------------------------------------------------
-void PerspectiveCamera::UpdateImpl(float4x4 *projection, const Timeline& time) {
+void PerspectiveCamera::UpdateImpl(float4x4 *projection, const Timeline&/* time */) {
     Assert(projection);
 
     *projection = MakePerspectiveFovLHMatrix(_fov, _aspectRatio, _znear, _zfar);
@@ -83,7 +83,7 @@ OrthographicOffCenterCamera::OrthographicOffCenterCamera(float znear, float zfar
 //----------------------------------------------------------------------------
 OrthographicOffCenterCamera::~OrthographicOffCenterCamera() {}
 //----------------------------------------------------------------------------
-void OrthographicOffCenterCamera::UpdateImpl(float4x4 *projection, const Timeline& time) {
+void OrthographicOffCenterCamera::UpdateImpl(float4x4 *projection, const Timeline&/* time */) {
     Assert(projection);
 
     *projection = MakeOrthographicOffCenterLHMatrix(_left, _right, _bottom, _top, _znear, _zfar);

@@ -72,7 +72,7 @@ public:
     void Destroy(Graphics::IDeviceAPIEncapsulator *device, PRenderSurfaceLock& plock);
 
     // TODO : handle resizing of the screen ...
-    virtual void OnResize(Graphics::IDeviceAPIEncapsulator *device) {}
+    virtual void OnResize(Graphics::IDeviceAPIEncapsulator * /* device */) {}
 
 protected:
     virtual void CreateResources_(  Graphics::IDeviceAPIEncapsulator *device,

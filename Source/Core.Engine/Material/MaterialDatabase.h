@@ -3,6 +3,7 @@
 #include "Core.Engine/Engine.h"
 
 #include "Core.Engine/Effect/IEffectPasses.h"
+#include "Core.Engine/Material/MaterialParameter_fwd.h"
 
 #include "Core/Container/HashMap.h"
 #include "Core/Meta/ThreadResource.h"
@@ -18,8 +19,6 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FWD_REFPTR(AbstractMaterialParameter);
-//----------------------------------------------------------------------------
 class MaterialDatabase : public Meta::ThreadResource {
 public:
     explicit MaterialDatabase(const MaterialDatabase *parent = nullptr);
@@ -27,10 +26,10 @@ public:
 
     const MaterialDatabase *Parent() const { return _parent; }
 
-    void BindParameter(const Graphics::BindName& name, AbstractMaterialParameter *parameter, bool allowOverride = false);
-    void UnbindParameter(const Graphics::BindName& name, const AbstractMaterialParameter *parameter);
-    bool TryGetParameter(const Graphics::BindName& name, AbstractMaterialParameter **parameter) const;
-    bool TryGetParameter(const Graphics::BindName& name, PAbstractMaterialParameter& parameter) const;
+    void BindParameter(const Graphics::BindName& name, IMaterialParameter *parameter, bool allowOverride = false);
+    void UnbindParameter(const Graphics::BindName& name, const IMaterialParameter *parameter);
+    bool TryGetParameter(const Graphics::BindName& name, IMaterialParameter **parameter) const;
+    bool TryGetParameter(const Graphics::BindName& name, PMaterialParameter& parameter) const;
 
     void BindTexture(const Graphics::BindName& name, const Filename& path, bool allowOverride = false);
     void UnbindTexture(const Graphics::BindName& name, const Filename& path);
@@ -46,7 +45,7 @@ public:
 private:
     const MaterialDatabase *_parent;
 
-    HASHMAP(Material, Graphics::BindName, PAbstractMaterialParameter) _parameters;
+    HASHMAP(Material, Graphics::BindName, PMaterialParameter) _parameters;
     HASHMAP(Material, Graphics::BindName, Filename) _textures;
     HASHMAP(Material, Graphics::BindName, PCEffectPasses) _effects;
 };

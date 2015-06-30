@@ -16,7 +16,7 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(ModelMesh, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, ModelMesh, );
 //----------------------------------------------------------------------------
 ModelMesh::ModelMesh(
     u32 indexCount,
@@ -55,7 +55,7 @@ void ModelMesh::Create(Graphics::IDeviceAPIEncapsulator *device) {
     Assert(_indices.size());
     Assert(_vertices.size());
 
-    _indexBuffer = new Graphics::IndexBuffer(_indexType, _indexCount, Graphics::BufferMode::None, Graphics::BufferUsage::Default);
+    _indexBuffer = new Graphics::IndexBuffer(_indexType, _indexCount, Graphics::BufferMode::None, Graphics::BufferUsage::Immutable);
     _indexBuffer->Freeze();
     if (Graphics::IndexElementSize::ThirtyTwoBits == _indexType) {
         _indexBuffer->Create(device, _indices.MakeConstView().Cast<const u32>());
@@ -65,7 +65,7 @@ void ModelMesh::Create(Graphics::IDeviceAPIEncapsulator *device) {
         _indexBuffer->Create(device, _indices.MakeConstView().Cast<const u16>());
     }
 
-    _vertexBuffer = new Graphics::VertexBuffer(_vertexDeclaration.get(), _vertexCount, Graphics::BufferMode::None, Graphics::BufferUsage::Default);
+    _vertexBuffer = new Graphics::VertexBuffer(_vertexDeclaration.get(), _vertexCount, Graphics::BufferMode::None, Graphics::BufferUsage::Immutable);
     _vertexBuffer->Freeze();
     _vertexBuffer->Create(device, _vertices.MakeConstView());
 }

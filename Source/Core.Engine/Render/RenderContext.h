@@ -20,8 +20,9 @@ namespace Engine {
 //----------------------------------------------------------------------------
 class IServiceProvider;
 FWD_REFPTR(DefaultEffectCompilerService);
-FWD_REFPTR(DefaultTextureCacheService);
 FWD_REFPTR(DefaultRenderSurfaceService);
+FWD_REFPTR(DefaultSharedConstantBufferFactoryService);
+FWD_REFPTR(DefaultTextureCacheService);
 FWD_REFPTR(Scene);
 FWD_REFPTR(World);
 //----------------------------------------------------------------------------
@@ -33,14 +34,20 @@ public:
     Engine::MaterialDatabase *MaterialDatabase() { return &_materialDatabase; }
     const Engine::MaterialDatabase *MaterialDatabase() const { return &_materialDatabase; }
 
+
     DefaultRenderSurfaceService *RenderSurfaceService() { return _renderSurfaceService.get(); }
     const DefaultRenderSurfaceService *RenderSurfaceService() const { return _renderSurfaceService.get(); }
+    
+    DefaultTextureCacheService *TextureCacheService() { return _textureCacheService.get(); }
+    const DefaultTextureCacheService *TextureCacheService() const { return _textureCacheService.get(); }
+
+    DefaultSharedConstantBufferFactoryService *SharedConstantBufferFactoryService() { return _sharedConstantBufferFactoryService.get(); }
+    const DefaultSharedConstantBufferFactoryService *SharedConstantBufferFactoryService() const { return _sharedConstantBufferFactoryService.get(); }
 
     DefaultEffectCompilerService *EffectCompilerService() { return _effectCompilerService.get(); }
     const DefaultEffectCompilerService *EffectCompilerService() const { return _effectCompilerService.get(); }
 
-    DefaultTextureCacheService *TextureCacheService() { return _textureCacheService.get(); }
-    const DefaultTextureCacheService *TextureCacheService() const { return _textureCacheService.get(); }
+
 
     VariabilitySeed *VariabilitySeeds() { return _variabilitySeeds; }
     const VariabilitySeed *VariabilitySeeds() const { return _variabilitySeeds; }
@@ -63,8 +70,9 @@ private:
     Engine::MaterialDatabase _materialDatabase;
 
     PDefaultRenderSurfaceService _renderSurfaceService;
-    PDefaultEffectCompilerService _effectCompilerService;
     PDefaultTextureCacheService _textureCacheService;
+    PDefaultSharedConstantBufferFactoryService _sharedConstantBufferFactoryService;
+    PDefaultEffectCompilerService _effectCompilerService;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

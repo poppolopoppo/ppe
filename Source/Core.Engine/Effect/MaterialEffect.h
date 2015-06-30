@@ -12,6 +12,8 @@
 #include "Core/Memory/WeakPtr.h"
 #include "Core/Meta/PointerWFlags.h"
 
+#include "Core.Engine/Material/MaterialParameter_fwd.h"
+
 namespace Core {
 class Filename;
 
@@ -27,12 +29,10 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FWD_REFPTR(AbstractMaterialParameter);
 FWD_REFPTR(Effect);
 FWD_REFPTR(EffectConstantBuffer);
 FWD_REFPTR(Material);
-struct MaterialContext;
-FWD_REFPTR(MaterialDatabase);
+class MaterialDatabase;
 FWD_REFPTR(RenderSurfaceLock);
 FWD_REFPTR(Scene);
 struct VariabilitySeed;
@@ -69,9 +69,9 @@ public:
     const VECTOR(Effect, PEffectConstantBuffer)& Constants() const { return _constants; }
     const VECTOR(Effect, TextureSlot)& TextureSlots() const { return _textureSlots; }
     const VECTOR(Effect, TextureBinding)& TextureBindings() const { return _textureBindings; }
-    const ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, PAbstractMaterialParameter)& Parameters() const { return _parameters; }
+    const ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, PMaterialParameter)& Parameters() const { return _parameters; }
     
-    void BindParameter(const Graphics::BindName& name, AbstractMaterialParameter *parameter);
+    void BindParameter(const Graphics::BindName& name, IMaterialParameter *parameter);
 
     /* (1) link parameters and textures from database and material */
     void Create(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, const Scene *scene);
@@ -92,7 +92,7 @@ private:
     VECTOR(Effect, PEffectConstantBuffer) _constants;
     VECTOR(Effect, TextureSlot) _textureSlots;
     VECTOR(Effect, TextureBinding) _textureBindings;
-    ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, PAbstractMaterialParameter) _parameters;
+    ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, PMaterialParameter) _parameters;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

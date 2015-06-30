@@ -82,7 +82,7 @@ TextureCache::TextureData::TextureData(TextureCache *cache)
 //----------------------------------------------------------------------------
 TextureCache::TextureData::~TextureData() {}
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(TextureCache::TextureData, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, TextureCache::TextureData, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -124,7 +124,7 @@ void TextureCache::TextureEntry::SetTexture_(Graphics::Texture *texture) {
     _texture.reset(texture);
 }
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(TextureCache::TextureEntry, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, TextureCache::TextureEntry, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -161,7 +161,7 @@ void TextureCache::TextureEntryAsyncJob::Finalize_MainThread(Graphics::IDeviceAP
         _pentry->SetData_(nullptr);
 }
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(TextureCache::TextureEntryAsyncJob, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, TextureCache::TextureEntryAsyncJob, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

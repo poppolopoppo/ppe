@@ -6,6 +6,8 @@
 
 #include "Core/Diagnostic/Logger.h"
 
+#include "Core.Logic/EntityManager.h"
+
 namespace Core {
 namespace Engine {
 //----------------------------------------------------------------------------
@@ -14,28 +16,27 @@ namespace Engine {
 World::World(const char *name, IServiceProvider *serviceProvider)
 :   _name(name)
 ,   _status(WorldStatus::BeforeInitialize)
-,   _serviceProvider(serviceProvider) {
+,   _serviceProvider(serviceProvider)
+,   _revision(0)
+,   _timespeed(1.0f) {
     Assert(name);
     Assert(serviceProvider);
 }
 //----------------------------------------------------------------------------
 World::~World() {
     THIS_THREADRESOURCE_CHECKACCESS();
-
-    Assert(WorldStatus::BeforeInitialize == _status);
-    Assert(_observers.empty());
 }
 //----------------------------------------------------------------------------
 void World::Pause() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    _time.SetSpeed(0);
+    _timespeed = 0;
 }
 //----------------------------------------------------------------------------
 bool World::IsPaused() const {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    return _time.Speed() == 0;
+    return 0 == _timespeed;
 }
 //----------------------------------------------------------------------------
 void World::TogglePause() {
@@ -51,7 +52,7 @@ void World::SetSpeed(float value) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(value > 0 /* use Pause() for == 0 */);
 
-    _time.SetSpeed(value);
+    _timespeed = value;
 }
 //----------------------------------------------------------------------------
 void World::SetLighting(LightingEnvironment *lighting) {
@@ -66,20 +67,21 @@ void World::Initialize() {
 
     LOG(Information, L"[World] Initialize world \"{0}\" ...", _name.c_str());
 
-    Core::NotifyObservers(_observers, WorldEvent::BeforeInitialize, this);
-    Move_AssertEquals(&_status, WorldStatus::Initialize, WorldStatus::BeforeInitialize);
+    ChangeStatus_(WorldStatus::BeforeInitialize);
     {
+        ChangeStatus_(WorldStatus::Initialize);
         /**********************************************************************/
 
-        _time.Reset();
+        _timeline.Tick();
         _lighting = new LightingEnvironment();
+
+        Assert(!_logic);
+        _logic.reset(new Logic::EntityManager());
+        _logic->Initialize();
 
         /**********************************************************************/
     }
-    Move_AssertEquals(&_status, WorldStatus::AfterInitialize, WorldStatus::Initialize);
-    Core::NotifyObservers(_observers, WorldEvent::AfterInitialize, this);
-
-    Move_AssertEquals(&_status, WorldStatus::BeforeUpdate, WorldStatus::AfterInitialize);
+    ChangeStatus_(WorldStatus::AfterInitialize);
 }
 //----------------------------------------------------------------------------
 void World::Destroy() {
@@ -87,54 +89,63 @@ void World::Destroy() {
 
     LOG(Information, L"[World] Destroy world \"{0}\" ...", _name.c_str());
 
-    Move_AssertEquals(&_status, WorldStatus::BeforeDestroy, WorldStatus::BeforeUpdate);
-
-    Core::NotifyObservers(_observers, WorldEvent::BeforeDestroy, this);
-    Move_AssertEquals(&_status, WorldStatus::Destroy, WorldStatus::BeforeDestroy);
+    ChangeStatus_(WorldStatus::BeforeDestroy);
     {
+        ChangeStatus_(WorldStatus::Destroy);
         /**********************************************************************/
+
+        Assert(_logic);
+        _logic->Destroy();
+        _logic.reset();
 
         RemoveRef_AssertReachZero(_lighting);
 
         /**********************************************************************/
     }
-    Move_AssertEquals(&_status, WorldStatus::AfterDestroy, WorldStatus::Destroy);
-    Core::NotifyObservers(_observers, WorldEvent::AfterDestroy, this);
-
-    Move_AssertEquals(&_status, WorldStatus::BeforeInitialize, WorldStatus::AfterDestroy);
+    ChangeStatus_(WorldStatus::AfterDestroy);
 }
 //----------------------------------------------------------------------------
 void World::Update(const Timeline& timeline) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    Core::NotifyObservers(_observers, WorldEvent::BeforeUpdate, this);
-    Move_AssertEquals(&_status, WorldStatus::Update, WorldStatus::BeforeUpdate);
+    ChangeStatus_(WorldStatus::BeforeUpdate);
     {
+        ChangeStatus_(WorldStatus::Update);
         /**********************************************************************/
 
-        _time.Update(timeline);
+        ++_revision;
 
-        if (_lighting)
-            _lighting->Update(this);
+        _timeline.Tick(timeline, _timespeed);
+        _logic->Update(_timeline);
 
         /**********************************************************************/
     }
-    Move_AssertEquals(&_status, WorldStatus::AfterUpdate, WorldStatus::Update);
-    Core::NotifyObservers(_observers, WorldEvent::AfterUpdate, this);
-
-    Move_AssertEquals(&_status, WorldStatus::BeforeUpdate, WorldStatus::AfterUpdate);
+    ChangeStatus_(WorldStatus::AfterUpdate);
 }
 //----------------------------------------------------------------------------
-void World::RegisterObserver(WorldEvent::Type eventFlags, const WorldObserver& observer) {
-    THIS_THREADRESOURCE_CHECKACCESS();
-
-    Core::RegisterObserver(_observers, observer, eventFlags);
+void World::ChangeStatus_(WorldStatus value) {
+    _status = value;
+    switch (value)
+    {
+    case WorldStatus::BeforeInitialize: _onBeforeInitialize(this); break;
+    case WorldStatus::AfterInitialize: _onAfterInitialize(this); break;
+    case WorldStatus::BeforeUpdate: _onBeforeUpdate(this); break;
+    case WorldStatus::AfterUpdate: _onAfterUpdate(this); break;
+    case WorldStatus::BeforeDestroy: _onBeforeDestroy(this); break;
+    case WorldStatus::AfterDestroy: _onAfterDestroy(this); break;
+    default:
+        break;
+    } 
 }
 //----------------------------------------------------------------------------
-void World::UnregisterObserver(WorldEvent::Type eventFlags, const WorldObserver& observer) {
-    THIS_THREADRESOURCE_CHECKACCESS();
-
-    Core::UnregisterObserver(_observers, observer, eventFlags);
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+void World::Start() {
+    NOOP;
+}
+//----------------------------------------------------------------------------
+void World::Shutdown() {
+    NOOP;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

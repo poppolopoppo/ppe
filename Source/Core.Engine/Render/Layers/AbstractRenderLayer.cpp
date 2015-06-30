@@ -4,7 +4,7 @@
 
 #include "Scene/Scene.h"
 
-#include "Core.Graphics/Device/DeviceAPIEncapsulator.h"
+#include "Core.Graphics/Device/DeviceAPI.h"
 #include "Core.Graphics/Device/DeviceDiagnostics.h"
 
 namespace Core {
@@ -61,14 +61,14 @@ void AbstractRenderLayer::Prepare(Graphics::IDeviceAPIEncapsulator *device, Mate
 //----------------------------------------------------------------------------
 void AbstractRenderLayer::Render(Graphics::IDeviceAPIContextEncapsulator *context) {
     if (Enabled()) {
-        GRAPHICS_DIAGNOSTICS_BEGINEVENT(context->Encapsulator(), _name.c_str());
+        GRAPHICS_DIAGNOSTICS_BEGINEVENT(context->Diagnostics(), _name.c_str());
 
         RenderImpl_(context);
 
-        GRAPHICS_DIAGNOSTICS_ENDEVENT(context->Encapsulator());
+        GRAPHICS_DIAGNOSTICS_ENDEVENT(context->Diagnostics());
     }
     else {
-        GRAPHICS_DIAGNOSTICS_SETMARKER(context->Encapsulator(), _name.c_str());
+        GRAPHICS_DIAGNOSTICS_SETMARKER(context->Diagnostics(), _name.c_str());
     }
 }
 //----------------------------------------------------------------------------

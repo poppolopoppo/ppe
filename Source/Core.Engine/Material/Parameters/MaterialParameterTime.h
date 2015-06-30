@@ -6,38 +6,24 @@
 
 namespace Core {
 namespace Engine {
-FWD_REFPTR(MaterialDatabase);
+class MaterialDatabase;
+
+#define EACH_MATERIALPARAMETER_TIME(_Macro) \
+    _Macro(MaterialVariability::World, float,   WorldElapsedSeconds) \
+    _Macro(MaterialVariability::World, float,   WorldTotalSeconds) \
+    \
+    _Macro(MaterialVariability::Frame, float,   ProcessTotalSeconds)
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MaterialParameterTime_WorldElapsedSeconds : public AbstractMaterialParameterMemoizer<float> {
-public:
-    MaterialParameterTime_WorldElapsedSeconds() : AbstractMaterialParameterMemoizer(MaterialVariability::World) {}
-    virtual ~MaterialParameterTime_WorldElapsedSeconds() {}
-protected:
-    bool Memoize_ReturnIfChanged_(float *cached, const MaterialContext& context) override;
-};
+namespace MaterialParameterTime {
 //----------------------------------------------------------------------------
-class MaterialParameterTime_WorldTotalSeconds : public AbstractMaterialParameterMemoizer<float> {
-public:
-    MaterialParameterTime_WorldTotalSeconds() : AbstractMaterialParameterMemoizer(MaterialVariability::World) {}
-    virtual ~MaterialParameterTime_WorldTotalSeconds() {}
-protected:
-    bool Memoize_ReturnIfChanged_(float *cached, const MaterialContext& context) override;
-};
+EACH_MATERIALPARAMETER_TIME(MATERIALPARAMETER_FN_DECL)
 //----------------------------------------------------------------------------
-class MaterialParameterTime_ProcessTotalSeconds : public AbstractMaterialParameterMemoizer<float> {
-public:
-    MaterialParameterTime_ProcessTotalSeconds() : AbstractMaterialParameterMemoizer(MaterialVariability::Frame) {}
-    virtual ~MaterialParameterTime_ProcessTotalSeconds() {}
-protected:
-    bool Memoize_ReturnIfChanged_(float *cached, const MaterialContext& context) override;
-};
+void RegisterMaterialParameters(MaterialDatabase *database);
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-void RegisterTimeMaterialParameters(MaterialDatabase *database);
+} //!MaterialParameterTime
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

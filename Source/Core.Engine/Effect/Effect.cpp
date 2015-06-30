@@ -4,8 +4,9 @@
 
 #include "EffectDescriptor.h"
 #include "EffectProgram.h"
+#include "SharedConstantBuffer.h"
+#include "SharedConstantBufferFactory.h"
 #include "Material/Material.h"
-#include "Material/MaterialContext.h"
 #include "Material/MaterialVariability.h"
 #include "Render/RenderState.h"
 #include "Scene/Scene.h"
@@ -37,12 +38,13 @@ namespace {
 //----------------------------------------------------------------------------
 static void CreateEffectProgramIFN_(
     PEffectProgram *pprogram,
+    Effect *owner,
     Graphics::ShaderProgramType stage,
     const Graphics::PCVertexDeclaration& vertexDeclaration,
     const EffectDescriptor *effectDescriptor,
     Graphics::ShaderCompilerFlags compilerFlags,
     const MemoryView<const Pair<String, String>>& defines,
-    Graphics::IDeviceAPIShaderCompilerEncapsulator *compiler) {
+    Graphics::IDeviceAPIShaderCompiler *compiler) {
     Assert(pprogram);
     Assert(!*pprogram);
 
@@ -50,8 +52,10 @@ static void CreateEffectProgramIFN_(
     if (filename.empty())
         return;
 
-    *pprogram = new EffectProgram(effectDescriptor->ShaderProfile(), stage);
+    *pprogram = new EffectProgram(owner, effectDescriptor->ShaderProfile(), stage);
+#ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
     (*pprogram)->SetResourceName(StringFormat("{0}_{1}", effectDescriptor->Name(), ShaderProgramTypeToCStr(stage)));
+#endif
     (*pprogram)->Freeze();
 
     if (!Contains(effectDescriptor->VertexDeclarations(), vertexDeclaration))
@@ -165,7 +169,7 @@ static void AppendTagSubstitutions_(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(Effect, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, Effect, );
 //----------------------------------------------------------------------------
 const Graphics::RasterizerState *Effect::AutomaticRasterizerState = nullptr;
 const Graphics::RasterizerState *Effect::DefaultRasterizerState = nullptr;
@@ -179,7 +183,9 @@ Effect::Effect( const EffectDescriptor *descriptor,
 ,   _blendState(BlendStateFromRenderState_(descriptor->RenderState()) )
 ,   _depthStencilState(DepthStencilStateFromRenderState_(descriptor->RenderState()) )
 ,   _rasterizerState(RasterizerStateFromRenderState_(descriptor->RenderState()) ) {
+#ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
     SetResourceName(descriptor->Name().c_str());
+#endif // WITH_GRAPHICS_DEVICERESOURCE_NAME
     Freeze();
 }
 //----------------------------------------------------------------------------
@@ -205,7 +211,7 @@ void Effect::Create(Graphics::IDeviceAPIEncapsulator *device) {
 
     using namespace Graphics;
 
-    Graphics::IDeviceAPIShaderCompilerEncapsulator *const compiler = device->Encapsulator()->Compiler();
+    Graphics::IDeviceAPIShaderCompiler *const compiler = device->Encapsulator()->Compiler();
     const Graphics::ShaderCompilerFlags compilerFlags =
 #ifdef _DEBUG
         Graphics::ShaderCompilerFlags::DefaultForDebug
@@ -225,15 +231,13 @@ void Effect::Create(Graphics::IDeviceAPIEncapsulator *device) {
 
     for (ShaderProgramType stage : EachShaderProgramType()) {
         PEffectProgram program;
-        CreateEffectProgramIFN_(&program, stage, vertexDeclaration, _descriptor, compilerFlags, MakeConstView(defines), compiler);
+        CreateEffectProgramIFN_(&program, this, stage, vertexDeclaration, _descriptor, compilerFlags, MakeConstView(defines), compiler);
 
-        if (!program)
-            continue;
-
-        ShaderEffect::SetStageProgram(stage, std::move(program));
+        if (program)
+            ShaderEffect::SetStageProgram(stage, std::move(program));
     }
 
-    Freeze();
+    Freeze(); // disables ShaderEffect::SetStageProgram()
 
     ShaderEffect::Create(device);
 }
@@ -250,11 +254,51 @@ void Effect::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
         ShaderEffect::ResetStageProgram(stage);
 }
 //----------------------------------------------------------------------------
+void Effect::LinkReflectedData(
+    SharedConstantBufferFactory *sharedBufferFactory, 
+    Graphics::IDeviceAPIShaderCompiler *compiler) {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(_sharedBuffers.empty());
+
+    using namespace Graphics;
+
+    for (ShaderProgramType stage : EachShaderProgramType()) {
+        EffectProgram *const program = StageProgram(stage);
+        if (program)
+            program->LinkReflectedData(_sharedBuffers, sharedBufferFactory, compiler);
+    }
+}
+//----------------------------------------------------------------------------
+void Effect::UnlinkReflectedData(SharedConstantBufferFactory *sharedBufferFactory) {
+    THIS_THREADRESOURCE_CHECKACCESS();
+
+    using namespace Graphics;
+
+    for (ShaderProgramType stage : EachShaderProgramType()) {
+        EffectProgram *const program = StageProgram(stage);
+        if (program)
+            program->UnlinkReflectedData();
+    }
+
+    for (PSharedConstantBuffer& sharedBuffer : _sharedBuffers)
+        sharedBufferFactory->ReleaseDestroyIFN(sharedBuffer);
+
+    _sharedBuffers.clear();
+}
+//----------------------------------------------------------------------------
 void Effect::Set(Graphics::IDeviceAPIContextEncapsulator *context) const {
     context->SetBlendState(this->BlendState());
     context->SetDepthStencilState(this->DepthStencilState());
     context->SetRasterizerState(this->RasterizerState());
     context->SetShaderEffect(this);
+
+    using namespace Graphics;
+
+    for (ShaderProgramType stage : EachShaderProgramType()) {
+        const EffectProgram *const program = StageProgram(stage);
+        if (program)
+            program->Set(context, this);
+    }
 }
 //----------------------------------------------------------------------------
 void Effect::SwitchAutomaticFillMode() {

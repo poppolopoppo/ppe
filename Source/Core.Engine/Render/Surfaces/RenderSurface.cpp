@@ -13,7 +13,7 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(RenderSurface, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, RenderSurface, );
 //----------------------------------------------------------------------------
 RenderSurface::RenderSurface(
     String&& name, size_t width, size_t height,

@@ -263,7 +263,7 @@ void ComputeTangentSpace(GenericVertex& vertices, const MemoryView<const u32>& i
             binormal = -binormal;
 
         if (sp_packedTangents0) {
-            const float4 tangentWHandedness(tangent, leftHanded ? 1 : 0);
+            const float4 tangentWHandedness(tangent, leftHanded ? 1.0f : 0.0f);
             sp_packedTangents0.WriteValue(vertices, tangentWHandedness);
         }
         else {

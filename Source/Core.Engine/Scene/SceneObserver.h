@@ -2,8 +2,8 @@
 
 #include "Core.Engine/Engine.h"
 
-#include "Core/Container/Observer.h"
-#include "Core/Container/Vector.h"
+#include "Core/Meta/Delegate.h"
+#include "Core/Meta/Event.h"
 
 namespace Core {
 namespace Engine {
@@ -12,27 +12,9 @@ namespace Engine {
 //----------------------------------------------------------------------------
 class Scene;
 //----------------------------------------------------------------------------
-namespace SceneEvent {
-    enum Type           : size_t {
-    BeforeInitialize    = 1<<0,
-    AfterInitialize     = 1<<1,
-
-    BeforeUpdate        = 1<<2,
-    AfterUpdate         = 1<<3,
-
-    BeforePrepare       = 1<<4,
-    AfterPrepare        = 1<<5,
-
-    BeforeRender        = 1<<6,
-    AfterRender         = 1<<7,
-
-    BeforeDestroy       = 1<<8,
-    AfterDestroy        = 1<<9,
-    };
-}
-//----------------------------------------------------------------------------
 enum class SceneStatus : size_t {
-    BeforeInitialize    = 0,
+    Invalid             = 0,
+    BeforeInitialize    ,
     Initialize          ,
     AfterInitialize     ,
     BeforeUpdate        ,
@@ -49,9 +31,9 @@ enum class SceneStatus : size_t {
     AfterDestroy        ,
 };
 //----------------------------------------------------------------------------
-using SceneObserver = Observer<SceneEvent::Type, Scene *>;
+using SceneDelegate = Delegate<void (*)(Scene *)>;
 //----------------------------------------------------------------------------
-using SceneObserverContainer = OBSERVERCONTAINER(Scene, SceneEvent::Type, Scene *);
+using SceneEvent = Event<SceneDelegate>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -2,7 +2,7 @@
 
 #include "RenderTree.h"
 
-#include "Core.Graphics/Device/DeviceAPIEncapsulator.h"
+#include "Core.Graphics/Device/DeviceAPI.h"
 #include "Core.Graphics/Device/DeviceDiagnostics.h"
 
 #include "Layers/AbstractRenderLayer.h"
@@ -102,12 +102,12 @@ void RenderTree::Render(Graphics::IDeviceAPIContextEncapsulator *context) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(context);
 
-    GRAPHICS_DIAGNOSTICS_BEGINEVENT(context->Encapsulator(), _scene->Name().c_str());
+    GRAPHICS_DIAGNOSTICS_BEGINEVENT(context->Diagnostics(), _scene->Name().c_str());
 
     for (PAbstractRenderLayer& layer : _layers)
         layer->Render(context);
 
-    GRAPHICS_DIAGNOSTICS_ENDEVENT(context->Encapsulator());
+    GRAPHICS_DIAGNOSTICS_ENDEVENT(context->Diagnostics());
 }
 //----------------------------------------------------------------------------
 void RenderTree::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
