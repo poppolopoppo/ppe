@@ -5,7 +5,7 @@
 #include "Core/Memory/UniquePtr.h"
 #include "Core/Time/Timely.h"
 
-#include "Core.Graphics/Device/DeviceAPIEncapsulator.h"
+#include "Core.Graphics/Device/DeviceAPI.h"
 
 #include "Core.Engine/Material/MaterialVariability.h"
 

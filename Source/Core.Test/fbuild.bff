@@ -7,7 +7,7 @@
     .ProjectName        = 'Core.Test'
     .ProjectPath        = '$SourceBase$\Core.Test'
 
-    .AdditionalLibInclude  = '$DirectX11SDKPath$\Lib'
+    .AdditionalLibInclude  = '$DirectXSDKPath$\Lib'
 
     #include "../../Build/Cfg/binary.bff"
 }

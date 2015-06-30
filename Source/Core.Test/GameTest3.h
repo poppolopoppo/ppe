@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.Graphics/Device/DeviceAPIEncapsulator.h"
+#include "Core.Graphics/Device/DeviceAPI.h"
 
 #include "Core.Application/Application.h"
 #include "Core.Application/ApplicationWindow.h"

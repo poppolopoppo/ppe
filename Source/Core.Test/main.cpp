@@ -83,8 +83,8 @@ static int Bootstrap(void *applicationHandle, int nShowCmd, int argc, const wcha
     Core::CoreStartup startupCore{ applicationHandle, nShowCmd, size_t(argc), argv };
     Serialize::SerializeStartup startupSerialize;
     Graphics::GraphicsStartup startupGraphics;
-    Engine::EngineStartup startupEngine;
     Logic::LogicStartup startupLogic;
+    Engine::EngineStartup startupEngine;
 
 #if defined(OS_WINDOWS) && CORE_RESOURCES
     CurrentProcess::Instance().SetAppIcon(IDI_WINDOW_ICON);

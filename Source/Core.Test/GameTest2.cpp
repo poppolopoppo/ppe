@@ -447,9 +447,9 @@ void GameTest2::Update(const Timeline& time) {
 
     // world time speed
     if (Keyboard().IsKeyUp(KeyboardKey::Add))
-        _world->SetSpeed(std::max(1.0f, _world->Time().Speed() * 2));
+        _world->SetSpeed(std::max(1.0f, _world->Speed() * 2));
     if (Keyboard().IsKeyUp(KeyboardKey::Substract) && !_world->IsPaused() )
-        _world->SetSpeed(_world->Time().Speed() * 0.5f);
+        _world->SetSpeed(_world->Speed() * 0.5f);
     if (Keyboard().IsKeyUp(KeyboardKey::Multiply))
         _world->TogglePause();
 

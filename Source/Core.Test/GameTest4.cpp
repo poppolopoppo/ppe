@@ -360,12 +360,14 @@ void GameTest4::LoadContent() {
     _mainScene->MaterialDatabase()->BindTexture("IrradianceMap", L"GameData:/Textures/CubeMaps/Test/Irradiance.dds");
     _mainScene->MaterialDatabase()->BindTexture("ReflectionMap", L"GameData:/Textures/CubeMaps/Test/Reflection.dds");
 
+    if (!LoadModel(_model, L"GameData:/Models/Sponza/sponza.obj"))
     //if (!LoadModel(_model, L"GameData:/Models/Sponza/sponza_light.obj"))
     //if (!LoadModel(_model, L"GameData:/Models/Infinity/DesertArena/DesertArena.obj"))
     //if (!LoadModel(_model, L"GameData:/Models/Infinity/BrokenTower/BrokenTower.obj"))
-    //    AssertNotReached();
+    //if (!LoadModel(_model, L"GameData:/Models/Test/Cone.obj"))
+        AssertNotReached();
     
-    _model = CreatePBRTestModel_();
+    //_model = CreatePBRTestModel_();
     AssertRelease(_model);
 
     _model->Create(device);
@@ -417,15 +419,16 @@ void GameTest4::Update(const Timeline& time) {
     // sunlight control
     if (Keyboard().IsKeyPressed(KeyboardKey::Control)) {
         const float angularSpeed = Units::Time::Seconds(time.Elapsed()).Value() * F_PI * 0.1;
-        const float3& sunDirection = _world->Lighting()->SunDirection();
+        DirectionalLight& sun = _world->Lighting()->Sun();
+        const float3& sunDirection = sun.Direction();
         if (Keyboard().IsKeyPressed(KeyboardKey::L))
-            _world->Lighting()->SetSunDirection(MakeAxisQuaternion(float3::Up(), angularSpeed).Transform(sunDirection));
+            sun.SetDirection(MakeAxisQuaternion(float3::Up(), angularSpeed).Transform(sunDirection));
         if (Keyboard().IsKeyPressed(KeyboardKey::J))
-            _world->Lighting()->SetSunDirection(MakeAxisQuaternion(float3::Up(), -angularSpeed).Transform(sunDirection));
+            sun.SetDirection(MakeAxisQuaternion(float3::Up(), -angularSpeed).Transform(sunDirection));
         if (Keyboard().IsKeyPressed(KeyboardKey::I))
-            _world->Lighting()->SetSunDirection(MakeAxisQuaternion(float3::Right(), angularSpeed).Transform(sunDirection));
+            sun.SetDirection(MakeAxisQuaternion(float3::Right(), angularSpeed).Transform(sunDirection));
         if (Keyboard().IsKeyPressed(KeyboardKey::K))
-            _world->Lighting()->SetSunDirection(MakeAxisQuaternion(float3::Right(), -angularSpeed).Transform(sunDirection));
+            sun.SetDirection(MakeAxisQuaternion(float3::Right(), -angularSpeed).Transform(sunDirection));
     }
 
     // wireframe
@@ -434,9 +437,9 @@ void GameTest4::Update(const Timeline& time) {
 
     // world time speed
     if (Keyboard().IsKeyUp(KeyboardKey::Add))
-        _world->SetSpeed(std::max(1.0f, _world->Time().Speed() * 2));
+        _world->SetSpeed(std::max(1.0f, _world->Speed() * 2));
     if (Keyboard().IsKeyUp(KeyboardKey::Substract) && !_world->IsPaused() )
-        _world->SetSpeed(_world->Time().Speed() * 0.5f);
+        _world->SetSpeed(_world->Speed() * 0.5f);
     if (Keyboard().IsKeyUp(KeyboardKey::Multiply))
         _world->TogglePause();
 

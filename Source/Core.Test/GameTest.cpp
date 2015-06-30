@@ -2,7 +2,7 @@
 
 #include "GameTest.h"
 
-#include "Core.Graphics/Device/DeviceAPIEncapsulator.h"
+#include "Core.Graphics/Device/DeviceAPI.h"
 #include "Core.Graphics/Device/DeviceEncapsulator.h"
 
 #include "Core.Graphics/Device/Geometry/PrimitiveType.h"
@@ -60,7 +60,7 @@ namespace {
 //----------------------------------------------------------------------------
 static Graphics::ShaderEffect *CompileEffect_VS_PS_(
     Graphics::IDeviceAPIEncapsulator *device,
-    Graphics::IDeviceAPIShaderCompilerEncapsulator *compiler,
+    Graphics::IDeviceAPIShaderCompiler *compiler,
     const Graphics::VertexDeclaration *vertexDeclaration,
     const Filename& sourceName ) {
     using namespace Graphics;
@@ -153,7 +153,7 @@ void GameTest::LoadContent() {
     using namespace Graphics;
 
     IDeviceAPIEncapsulator *const device = DeviceEncapsulator().Device();
-    IDeviceAPIShaderCompilerEncapsulator *const compiler = DeviceEncapsulator().Compiler();
+    IDeviceAPIShaderCompiler *const compiler = DeviceEncapsulator().Compiler();
 
     const VertexDeclaration *vertexDeclaration = Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Float2__Normal0_UX10Y10Z10W2N::Declaration;
 

@@ -4,7 +4,7 @@
 #include "Core/Maths/Transform/ScalarMatrix.h"
 #include "Core/Time/Timely.h"
 
-#include "Core.Graphics/Device/DeviceAPIEncapsulator.h"
+#include "Core.Graphics/Device/DeviceAPI.h"
 
 #include "Core.Application/Application.h"
 #include "Core.Application/ApplicationWindow.h"

@@ -1225,7 +1225,7 @@ void Tests() {
 
         //Print(MemoryTrackingData::Global());
 
-        MALLOCA_STACK(uint8_t, memoryStack, 30000);
+        STACKLOCAL_POD_STACK(uint8_t, memoryStack, 30000);
         {
             typedef DECORATE_ALLOCATOR(Internal, StackAllocator<int>) allocator_type;
             std::vector<int, allocator_type> x(w.begin(), w.end(), allocator_type(memoryStack));
