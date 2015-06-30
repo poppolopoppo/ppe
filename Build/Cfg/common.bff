@@ -2,27 +2,38 @@
 #once
 
 // increment to force fbuild to regenerate its files
-// global version : 001
+// global version : 002
+
+// Master setting macros
+//------------------------------------------------------------------------------
+
+#define USE_FBUILD_CACHE    // un/comment to enable/disable completly cache features
+#define ENABLE_MSVC14       // un/comment to choose between Visual Studio 2015 and 2012
+;#define CROSS_COMPILE_X86_WITH_X64_COMPILER
 
 // Global options
 //------------------------------------------------------------------------------
+.EnvironmentPath        = ''
 
-.OutputBase = 'Output'
-.SourceBase = 'Source'
+.OutputBase             = 'Output'
+.SourceBase             = 'Source'
 
-.VSFBuildOptions      = ''
+.VSCommonFBuildOptions  =  ''
+                        ;+ ' -showcmds'
+                        ;+ ' -dist'
+
+.VSFBuildOptions        = ' $VSCommonFBuildOptions$'
+;#if USE_FBUILD_CACHE
                         + ' -cache'
-                    //    + ' -showcmds'
-                    //    + ' -dist'
+;#endif
+.VSFRebuildOptions      = ' $VSCommonFBuildOptions$'
 
-.VSFRebuildOptions    = ''
-
-.AdditionalInclude    = '.'
-.AdditionalLibInclude = '.'
+.AdditionalInclude      = '.'
+.AdditionalLibInclude   = '.'
 
 // Unity/Blob files (shared across configs)
 //------------------------------------------------------------------------------
-.UnityNumFiles        = 8
+.UnityNumFiles          = 8
 .UnityInputIsolateWritableFiles = true // disables unity build when true
 
 // Common configuration
@@ -30,3 +41,16 @@
 
 #include "compilers.bff"
 #include "visualstudio.bff"
+
+// Settings
+//------------------------------------------------------------------------------
+
+Settings
+{
+;#if USE_FBUILD_CACHE
+    .CachePath      = "C:\.fbuild.cache"
+;#endif
+    .Environment    = { "PATH=%PATH%;$EnvironmentPath$",
+                        "TMP=C:\Windows\Temp",
+                        "SystemRoot=C:\Windows" }
+}

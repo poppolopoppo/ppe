@@ -19,12 +19,12 @@ Unity( '$ProjectName$-UnityGenerate' )
 
 // Windows (MSVC)
 //--------------------------------------------------------------------------
-ForEach( .Config in .Configs_Windows_MSVC )
+ForEach( .CompileConfig in .Configs_Windows_MSVC )
 {
-    Using( .Config )
+    Using( .CompileConfig )
 
-    .OutputBase         + '\Intermediate\$Platform$-$Config$'
-    .IncludePath        = ' -I"$ProjectPath$" -I"$SourceBase$" -I"$AdditionalInclude$"'
+    .OutputBase             + '\Intermediate\$Platform$-$Config$'
+    .IncludePath            = ' -I"$ProjectPath$" -I"$SourceBase$" -I"$AdditionalInclude$"'
 
     // Static Library (Unity)
     Library( '$ProjectName$-Lib-$Platform$-$Config$' )
@@ -32,8 +32,9 @@ ForEach( .Config in .Configs_Windows_MSVC )
         // Precompiled Header Creation/Use
         .PCHInputFile               = '$ProjectPath$\$PCHName$.cpp'
         .PCHOutputFile              = '$OutputBase$\$ProjectName$\$PCHName$.pch'
-        .PCHOptions                 + ' /Yc"$PCHName$.h" /D_WINDOWS $IncludePath$'
-        .CompilerOptions            + ' /Yu"$PCHName$.h" /Fp"$PCHOutputFile$" /D_WINDOWS $IncludePath$'
+        .PCHOptions                 + ' /Yc"$PCHName$.h" $IncludePath$'
+        .CompilerOptions            + ' /Yu"$PCHName$.h" /Fp"$PCHOutputFile$" $IncludePath$'
+        .PreprocessorOptions        + ' $IncludePath$'
 
         // Input (Unity)
         .CompilerInputUnity         = '$ProjectName$-UnityGenerate'
@@ -48,9 +49,9 @@ ForEach( .Config in .Configs_Windows_MSVC )
 
 // Windows (Clang)
 //--------------------------------------------------------------------------
-ForEach( .Config in .Configs_Windows_Clang )
+ForEach( .CompileConfig in .Configs_Windows_Clang )
 {
-    Using( .Config )
+    Using( .CompileConfig )
 
     .OutputBase         + '\Intermediate\$Platform$-$Config$'
     .IncludePath        = ' -I"$ProjectPath$" -I"$SourceBase$" -I"$AdditionalInclude$"'
@@ -58,7 +59,8 @@ ForEach( .Config in .Configs_Windows_Clang )
     // Static Library
     Library( '$ProjectName$-Lib-$Platform$-$Config$' )
     {
-        .CompilerOptions            + ' -D_WINDOWS $IncludePath$'
+        .CompilerOptions            + ' $IncludePath$'
+        .PreprocessorOptions        + ' $IncludePath$'
 
         // Input (Unity)
         .CompilerInputUnity         = '$ProjectName$-UnityGenerate'

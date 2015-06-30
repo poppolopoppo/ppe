@@ -6,13 +6,14 @@
 //------------------------------------------------------------------------------
 .ProjectCommon =
 [
-    .PlatformToolset            = 'v120'
-    .IncludeSearchPath          = '^$(ProjectDir)..;.\;$DirectX11SDKPath$/Include;$AdditionalInclude$'
+    .PlatformToolset            = '$MSVCPlatformToolset$'
+    .IncludeSearchPath          = '^$(ProjectDir)..;.\;$AdditionalInclude$'
 
     .ProjectBuildCommand        = 'cd "^$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" $VSFBuildOptions$ -vs ^$(ProjectName)-^$(PlatformTarget)-^$(Configuration)'
     .ProjectRebuildCommand      = 'cd "^$(ProjectDir)..\..\" &amp; "Build\FBuild.exe" $VSFRebuildOptions$ -vs -clean ^$(ProjectName)-^$(PlatformTarget)-^$(Configuration)'
+    .ProjectCleanCommand        = 'rmdir /Q /S "^$(ProjectDir)..\..\$OutputBase$\Intermediate\^$(PlatformTarget)-^$(Configuration)\^$(ProjectName)"'
 
-    .OutputDirectory            = '^$(ProjectDir)..\..\$OutputBase$\^$(PlatformTarget)-^$(Configuration)\^$(ProjectName)'
+    .OutputDirectory            = '^$(ProjectDir)..\..\$OutputBase$\Binary'
     .IntermediateDirectory      = '^$(ProjectDir)..\..\$OutputBase$\Intermediate\^$(PlatformTarget)-^$(Configuration)\^$(ProjectName)'
 
     .X86Defines                 = 'ARCH_X86;WIN32_LEAN_AND_MEAN;_WIN32;__WINDOWS__;WIN32;UNICODE;_UNICODE;VC_EXTRALEAN;DBGHELP_TRANSLATE_TCHAR;NOMINMAX'
@@ -36,7 +37,7 @@
 [
     Using( .ProjectCommon )
 
-    .Platform                   = 'X64'
+    .Platform                   = 'x64'
     .PreprocessorDefinitions    = .X64Defines
 ]
 

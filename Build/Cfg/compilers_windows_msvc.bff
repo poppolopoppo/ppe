@@ -1,0 +1,507 @@
+#once
+
+//------------------------------------------------------------------------------
+// Compilers - MSVC2012
+//------------------------------------------------------------------------------
+Compiler( 'Compiler-MSVC120-x86' )
+{
+    .Root       = '$MSVC12BasePath$\VC\bin'
+    .Executable = '$Root$\cl.exe'
+    .ExtraFiles = { '$Root$\c1.dll'
+                    '$Root$\c1ast.dll',
+                    '$Root$\c1xx.dll',
+                    '$Root$\c1xxast.dll',
+                    '$Root$\c2.dll',
+                    '$Root$\1033\clui.dll'
+                    '$Root$\msobj120.dll'
+                    '$Root$\mspdb120.dll'
+                    '$Root$\mspdbsrv.exe'
+                    '$Root$\mspdbcore.dll'
+                    '$Root$\mspft120.dll'
+                    '$MSVC12BasePath$\VC\redist\x64\Microsoft.VC120.CRT\msvcp120.dll'
+                    '$MSVC12BasePath$\VC\redist\x64\Microsoft.VC120.CRT\msvcr120.dll'
+                    '$MSVC12BasePath$\VC\redist\x64\Microsoft.VC120.CRT\vccorlib120.dll'
+                  }
+}
+
+Compiler( 'Compiler-MSVC120-x86-cross-x64' )
+{
+    .Root       = '$MSVC12BasePath$\VC\bin\x86_amd64'
+    .Executable = '$Root$\cl.exe'
+    .ExtraFiles = { '$Root$\c1.dll'
+                    '$Root$\c1ast.dll',
+                    '$Root$\c1xx.dll',
+                    '$Root$\c1xxast.dll',
+                    '$Root$\c2.dll',
+                    '$Root$\1033\clui.dll'
+                    '$Root$\..\msobj120.dll'
+                    '$Root$\..\mspdb120.dll'
+                    '$Root$\..\mspdbsrv.exe'
+                    '$Root$\..\mspdbcore.dll'
+                    '$Root$\..\mspft120.dll'
+                    '$MSVC12BasePath$\VC\redist\x64\Microsoft.VC120.CRT\msvcp120.dll'
+                    '$MSVC12BasePath$\VC\redist\x64\Microsoft.VC120.CRT\msvcr120.dll'
+                    '$MSVC12BasePath$\VC\redist\x64\Microsoft.VC120.CRT\vccorlib120.dll'
+                  }
+}
+
+Compiler( 'Compiler-MSVC120-x64' )
+{
+    .Root       = '$MSVC12BasePath$\VC\bin\amd64'
+    .Executable = '$Root$\cl.exe'
+    .ExtraFiles = { '$Root$\c1.dll'
+                    '$Root$\c1ast.dll',
+                    '$Root$\c1xx.dll',
+                    '$Root$\c1xxast.dll',
+                    '$Root$\c2.dll',
+                    '$Root$\1033\clui.dll'
+                    '$Root$\msobj120.dll'
+                    '$Root$\mspdb120.dll'
+                    '$Root$\mspdbsrv.exe'
+                    '$Root$\mspdbcore.dll'
+                    '$Root$\mspft120.dll'
+                    '$MSVC12BasePath$\VC\redist\x64\Microsoft.VC120.CRT\msvcp120.dll'
+                    '$MSVC12BasePath$\VC\redist\x64\Microsoft.VC120.CRT\msvcr120.dll'
+                    '$MSVC12BasePath$\VC\redist\x64\Microsoft.VC120.CRT\vccorlib120.dll'
+                  }
+}
+
+Compiler( 'Compiler-MSVC120-x64-cross-x86' )
+{
+    .Root       = '$MSVC12BasePath$\VC\bin\amd64_x86'
+    .Executable = '$Root$\cl.exe'
+    .ExtraFiles = { '$Root$\c1.dll'
+                    '$Root$\c1ast.dll',
+                    '$Root$\c1xx.dll',
+                    '$Root$\c1xxast.dll',
+                    '$Root$\c2.dll',
+                    '$Root$\1033\clui.dll'
+                    '$Root$\..\amd64\msobj120.dll'
+                    '$Root$\..\amd64\mspdb120.dll'
+                    '$Root$\..\amd64\mspdbsrv.exe'
+                    '$Root$\..\amd64\mspdbcore.dll'
+                    '$Root$\..\amd64\mspft120.dll'
+                    '$MSVC12BasePath$\VC\redist\x64\Microsoft.VC120.CRT\msvcp120.dll'
+                    '$MSVC12BasePath$\VC\redist\x64\Microsoft.VC120.CRT\msvcr120.dll'
+                    '$MSVC12BasePath$\VC\redist\x64\Microsoft.VC120.CRT\vccorlib120.dll'
+                  }
+}
+
+//------------------------------------------------------------------------------
+// Compilers - MSVC2014
+//------------------------------------------------------------------------------
+
+Compiler( 'Compiler-MSVC140-x86' )
+{
+    .Root       = '$MSVC14BasePath$\VC\bin'
+    .Executable = '$Root$\cl.exe'
+    .ExtraFiles = { '$Root$\c1.dll'
+                    '$Root$\c1xx.dll',
+                    '$Root$\c2.dll',
+                    '$Root$\1036\clui.dll'
+                    '$Root$\msobj140.dll'
+                    '$Root$\mspdb140.dll'
+                    '$Root$\mspdbsrv.exe'
+                    '$Root$\mspdbcore.dll'
+                    '$Root$\mspft140.dll'
+                    '$MSVC14BasePath$\VC\redist\x86\Microsoft.VC140.CRT\concrt140.dll'
+                    '$MSVC14BasePath$\VC\redist\x86\Microsoft.VC140.CRT\msvcp140.dll'
+                    '$MSVC14BasePath$\VC\redist\x86\Microsoft.VC140.CRT\vccorlib140.dll'
+                    '$MSVC14BasePath$\VC\redist\x86\Microsoft.VC140.CRT\vcruntime140.dll'
+                  }
+}
+
+Compiler( 'Compiler-MSVC140-x86-cross-x64' )
+{
+    .Root       = '$MSVC14BasePath$\VC\bin\x86_amd64'
+    .Executable = '$Root$\cl.exe'
+    .ExtraFiles = { '$Root$\c1.dll'
+                    '$Root$\c1xx.dll',
+                    '$Root$\c2.dll',
+                    '$Root$\1036\clui.dll'
+                    '$Root$\..\msobj140.dll'
+                    '$Root$\..\mspdb140.dll'
+                    '$Root$\..\mspdbsrv.exe'
+                    '$Root$\..\mspdbcore.dll'
+                    '$Root$\..\mspft140.dll'
+                    '$MSVC14BasePath$\VC\redist\x86\Microsoft.VC140.CRT\concrt140.dll'
+                    '$MSVC14BasePath$\VC\redist\x86\Microsoft.VC140.CRT\msvcp140.dll'
+                    '$MSVC14BasePath$\VC\redist\x86\Microsoft.VC140.CRT\vccorlib140.dll'
+                    '$MSVC14BasePath$\VC\redist\x86\Microsoft.VC140.CRT\vcruntime140.dll'
+                  }
+}
+
+Compiler( 'Compiler-MSVC140-x64' )
+{
+    .Root       = '$MSVC14BasePath$\VC\bin\amd64'
+    .Executable = '$Root$\cl.exe'
+    .ExtraFiles = { '$Root$\c1.dll'
+                    '$Root$\c1xx.dll',
+                    '$Root$\c2.dll',
+                    '$Root$\1036\clui.dll'
+                    '$Root$\msobj140.dll'
+                    '$Root$\mspdb140.dll'
+                    '$Root$\mspdbsrv.exe'
+                    '$Root$\mspdbcore.dll'
+                    '$Root$\mspft140.dll'
+                    '$MSVC14BasePath$\VC\redist\x64\Microsoft.VC140.CRT\concrt140.dll'
+                    '$MSVC14BasePath$\VC\redist\x64\Microsoft.VC140.CRT\msvcp140.dll'
+                    '$MSVC14BasePath$\VC\redist\x64\Microsoft.VC140.CRT\vccorlib140.dll'
+                    '$MSVC14BasePath$\VC\redist\x64\Microsoft.VC140.CRT\vcruntime140.dll'
+                  }
+}
+
+Compiler( 'Compiler-MSVC140-x64-cross-x86' )
+{
+    .Root       = '$MSVC14BasePath$\VC\bin\amd64_x86'
+    .Executable = '$Root$\cl.exe'
+    .ExtraFiles = { '$Root$\c1.dll'
+                    '$Root$\c1xx.dll',
+                    '$Root$\c2.dll',
+                    '$Root$\1036\clui.dll'
+                    '$Root$\..\amd64\msobj140.dll'
+                    '$Root$\..\amd64\mspdb140.dll'
+                    '$Root$\..\amd64\mspdbsrv.exe'
+                    '$Root$\..\amd64\mspdbcore.dll'
+                    '$Root$\..\amd64\mspft140.dll'
+                    '$MSVC14BasePath$\VC\redist\x64\Microsoft.VC140.CRT\concrt140.dll'
+                    '$MSVC14BasePath$\VC\redist\x64\Microsoft.VC140.CRT\msvcp140.dll'
+                    '$MSVC14BasePath$\VC\redist\x64\Microsoft.VC140.CRT\vccorlib140.dll'
+                    '$MSVC14BasePath$\VC\redist\x64\Microsoft.VC140.CRT\vcruntime140.dll'
+                  }
+}
+
+
+//------------------------------------------------------------------------------
+// Compilers - CLANG (experimental)
+//------------------------------------------------------------------------------
+
+Compiler( 'Compiler-Clang-x86' )
+{
+    .Root       = '$ClangBasePath$\bin'
+    .Executable = '$Root$\clang++.exe'
+}
+
+//------------------------------------------------------------------------------
+// Configurations - MSVC
+//------------------------------------------------------------------------------
+
+.MSVCBaseConfig =
+[
+    .AdditionalWarnings     = ' /we4062' // enumerator 'identifier' in a switch of enum 'enumeration' is not handled
+                            + ' /we4263' // 'function' : member function does not override any base class virtual member function
+                            ;+ ' /we4265' // 'class': class has virtual functions, but destructor is not virtual
+                            + ' /we4296' // 'operator': expression is always false
+                            + ' /we4555' // expression has no effect; expected expression with side-effect
+                            + ' /we4619' // #pragma warning : there is no warning number 'number'
+                            + ' /we4640' // 'instance' : construction of local static object is not thread-safe
+                            + ' /we4826' // Conversion from 'type1 ' to 'type_2' is sign-extended. This may cause unexpected runtime behavior.
+                            + ' /we4836' // nonstandard extension used : 'type' : local types or unnamed types cannot be used as template arguments
+                            + ' /we4905' // wide string literal cast to 'LPSTR'
+                            + ' /we4906' // string literal cast to 'LPWSTR'
+
+    .Defines                = ' /D"WIN32_LEAN_AND_MEAN" /D"_WIN32" /D"__WINDOWS__" /D_WINDOWS'
+                            + ' /D"_UNICODE" /D"UNICODE"'
+                            + ' /D"VC_EXTRALEAN" /D"DBGHELP_TRANSLATE_TCHAR" /D"NOMINMAX"'
+
+    .CompilerOptions        = '"%1" /TP /bigobj /nologo /c /W4 /WX'
+                            + ' /Zc:inline'             // https://msdn.microsoft.com/fr-fr/library/dn642448.aspx
+                            + ' /Zc:wchar_t'            // http://msdn.microsoft.com/fr-fr/library/dh8che7s.aspx
+                            //+ ' /Zc:auto-'              // https://msdn.microsoft.com/fr-fr/library/dd293615.aspx
+                            + ' /Zc:rvalueCast'         // https://msdn.microsoft.com/fr-fr/library/dn449507.aspx
+                            + ' /EHsc'                  // C4530
+                            + ' /fp:fast'
+                            + ' /GA'                    // https://msdn.microsoft.com/fr-fr/library/yetwazx6.aspx
+                            + ' /GT'                    // https://msdn.microsoft.com/fr-fr/library/6e298fy4.aspx
+                            + ' /cgthreads7'            // https://msdn.microsoft.com/fr-fr/library/dn631956.aspx
+                            + ' /FS'                    // https://msdn.microsoft.com/fr-fr/library/dn502518.aspx
+                            + ' $Defines$'
+
+    .PCHOptions             = .CompilerOptions
+                            + ' /Fp"%2" /Fo"%3"'
+    .CompilerOptions        + ' /Fo"%2"'
+                            + .AdditionalWarnings
+
+    .LibrarianOptions       = ' /LARGEADDRESSAWARE /NOLOGO /OUT:"%2" "%1"'
+
+    .LinkerOptions          = ' /LARGEADDRESSAWARE /NOLOGO /OUT:"%2" "%1"'
+                            + ' /ENTRY:"wWinMainCRTStartup"'    // UNICODE entry point
+                            + ' /IGNORE:4001' ; don't complain about linking libs only
+
+    .LinkerWindowsLibs      = ' /SUBSYSTEM:WINDOWS'
+                            + ' kernel32.lib'
+                            + ' User32.lib'
+                            + ' Shell32.lib'
+                            + ' Comctl32.lib'
+                            + ' Gdi32.lib'
+
+    .LinkerConsoleLibs      = ' /SUBSYSTEM:CONSOLE'
+                            + ' kernel32.lib'
+                            + ' User32.lib'
+
+    .LinkerOptions          + .LinkerWindowsLibs
+
+    .PreprocessorOptions   = ' $Defines$'
+
+    .BaseIncludePaths       = ''
+]
+
+//------------------------------------------------------------------------------
+// Resource Compilers
+//------------------------------------------------------------------------------
+
+.MSVCBaseConfig_WindowsSDK81 =
+[
+    Using( .MSVCBaseConfig )
+
+    .BaseIncludePaths       + ' /I"$WindowsSDKBasePath81$\include\um"'
+                            + ' /I"$WindowsSDKBasePath81$\include\shared"'
+
+    .WindowsLibPaths        = '$WindowsSDKBasePath81$\lib\winv6.3\um'
+
+    .WindowsSDKBasePath     = '$WindowsSDKBasePath81$'
+]
+
+.MSVCBaseConfig_WindowsSDK10 =
+[
+    Using( .MSVCBaseConfig )
+
+    .WindowsKitVersion      = '10.0.10069.0'
+    ;.WindowsKitVersion      = '10.0.10056.0'
+
+    .BaseIncludePaths       + ' /I"$WindowsSDKBasePath10$\include\$WindowsKitVersion$\ucrt"'
+                            + ' /I"$WindowsSDKBasePath10$\include\$WindowsKitVersion$\um"'
+                            + ' /I"$WindowsSDKBasePath10$\include\$WindowsKitVersion$\shared"'
+
+    .WindowsLibPaths            = '$WindowsSDKBasePath10$\lib\$WindowsKitVersion$\ucrt'
+    .AdditionalWindowsLibPaths  = '$WindowsSDKBasePath10$\lib\$WindowsKitVersion$\um'
+
+    .WindowsSDKBasePath     = '$WindowsSDKBasePath10$'
+]
+
+.MSVC12BaseConfig =
+[
+    Using( .MSVCBaseConfig_WindowsSDK81 )
+
+    .VSBasePath             = '$MSVC12BasePath$'
+    .BaseIncludePaths       + ' /I"$VSBasePath$\VC\include"'
+    .CompilerOptions        + .BaseIncludePaths
+                            + ' /d2Zi+' ; https://msdn.microsoft.com/fr-fr/library/dn785163.aspx
+    .PCHOptions             + .BaseIncludePaths
+]
+
+.MSVC14BaseConfig =
+[
+    Using( .MSVCBaseConfig_WindowsSDK10 )
+
+    .VSBasePath             = '$MSVC14BasePath$'
+    .BaseIncludePaths       + ' /I"$VSBasePath$\VC\include"'
+    .CompilerOptions        + .BaseIncludePaths
+                            + ' /Zo' ; https://msdn.microsoft.com/fr-fr/library/dn785163.aspx
+    .PCHOptions             + .BaseIncludePaths
+]
+
+//------------------------------------------------------------------------------
+// Configurations: Debug / Release / Profile / Final
+//------------------------------------------------------------------------------
+
+; /Z7 enables fastbuild cache
+.MSVCXXCompilerOptions_WithCache    = ' /Z7' // https://msdn.microsoft.com/fr-fr/library/958x11bc.aspx
+.MSVCXXCompilerOptions_WithoutCache = ' /Zi' // https://msdn.microsoft.com/fr-fr/library/958x11bc.aspx
+
+;#if USE_FBUILD_CACHE
+.MSVCXXCompilerOptions_WithCacheIFP = .MSVCXXCompilerOptions_WithCache
+;#else
+;.MSVCXXCompilerOptions_WithCacheIFP = .MSVCXXCompilerOptions_WithoutCache
+;#endif
+
+.MSVCXXConfigDebug =
+[
+    .Config                 = 'Debug'
+    .CompilerDefines        = ' /D_DEBUG /DDEBUG /D"_SECURE_SCL=1" /D"_ITERATOR_DEBUG_LEVEL=2"'
+    .CompilerOptimizations  = ' /MDd /Od /sdl /RTC1 /Oy- /GR'
+                            ;+ ' /Gm' ; https://msdn.microsoft.com/fr-fr/library/kfz8ad09.aspx ; not usefull with fastbuild
+                            + ' /GS' ; https://msdn.microsoft.com/fr-fr/library/8dbf701c.aspx
+    .LibrarianOptions       = ''
+    .LinkerOptions          = ' MSVCRTD.LIB'
+                            + ' /DEBUG /INCREMENTAL /verbose:incr'
+    .CompileCacheOptions    = .MSVCXXCompilerOptions_WithCacheIFP
+    .CompilerOptions        = .CompilerDefines
+                            + .CompilerOptimizations
+                            + .CompileCacheOptions
+    .PCHOptions             = .CompilerDefines
+                            + .CompilerOptimizations
+                            + .CompileCacheOptions
+]
+.MSVCXXConfigRelease =
+[
+    .Config                 = 'Release'
+    .CompilerDefines        = ' /DNDEBUG /DRELEASE /D"_SECURE_SCL=0" /D"_ITERATOR_DEBUG_LEVEL=0"'
+    .CompilerOptimizations  = ' /MD /Ox /Oy /Oi /GF /GL /Gy /Gw /GR'
+                            ;+ ' /Gm' ; https://msdn.microsoft.com/fr-fr/library/kfz8ad09.aspx ; not usefull with fastbuild
+                            + ' /GS-'; https://msdn.microsoft.com/fr-fr/library/8dbf701c.aspx
+    .LibrarianOptions       = ''
+    .LinkerOptions          = ' MSVCRT.LIB'
+                            + ' /DEBUG /INCREMENTAL /verbose:incr'
+    .CompileCacheOptions    = .MSVCXXCompilerOptions_WithCacheIFP
+    .CompilerOptions        = .CompilerDefines
+                            + .CompilerOptimizations
+                            + .CompileCacheOptions
+    .PCHOptions             = .CompilerDefines
+                            + .CompilerOptimizations
+                            + .CompileCacheOptions
+]
+.MSVCXXConfigProfile =
+[
+    Using( .MSVCXXConfigRelease )
+    .Config                 = 'Profile'
+    .CompilerDefines        = ' /DPROFILING_ENABLED'
+    .CompilerOptions        + .CompilerDefines
+    .PCHOptions             + .CompilerDefines
+]
+.MSVCXXConfigFinal =
+[
+    .Config                 = 'Final'
+    .CompilerDefines        = ' /DNDEBUG /DRELEASE /DFINAL_RELEASE /D"_SECURE_SCL=0" /D"_ITERATOR_DEBUG_LEVEL=0"'
+    .CompilerOptimizations  = ' /MD /Ox /Oy /Oi /GF /GL /Gy /Gw /GR'
+                            + ' /GS-'; https://msdn.microsoft.com/fr-fr/library/8dbf701c.aspx
+                            + ' /Qvec-report:2' // http://msdn.microsoft.com/en-us/library/vstudio/jj614596.aspx
+    .LibrarianOptions       = ' /LTCG'
+    .LinkerOptions          = ' /DEBUG /LTCG /OPT:REF,ICF=4'// std ICF iterations count in release (2 according to http://msdn.microsoft.com/en-us/library/bxwfs976.aspx)
+                                                            // more ICF iterations count in final to merge more duplicate code (measured, truly effective)
+    .CompileCacheOptions    = .MSVCXXCompilerOptions_WithoutCache
+    .CompilerOptions        = .CompilerDefines
+                            + .CompilerOptimizations
+                            + .CompileCacheOptions
+    .PCHOptions             = .CompilerDefines
+                            + .CompilerOptimizations
+                            + .CompileCacheOptions
+]
+
+//------------------------------------------------------------------------------
+// MSVC2012 - X86
+//------------------------------------------------------------------------------
+
+.MSVC12BaseConfig_X86 =
+[
+    Using( .MSVC12BaseConfig )
+    .Platform               = 'x86'
+;#if CROSS_COMPILE_X86_WITH_X64_COMPILER
+;    .Compiler               = 'Compiler-MSVC120-x64-cross-x86'
+;    .ToolsBasePath          = '$VSBasePath$\VC\bin\amd64_x86'
+;#else
+    .Compiler               = 'Compiler-MSVC120-x86'
+    .ToolsBasePath          = '$VSBasePath$\VC\bin'
+;#endif
+    .Librarian              = '$ToolsBasePath$\lib.exe'
+    .Linker                 = '$ToolsBasePath$\link.exe'
+    .CompilerOptions        + ' /arch:SSE2'
+                            + ' /DWIN32 /DARCH_X86'
+                            + ' /favor:blend' ; https://msdn.microsoft.com/fr-fr/library/ms173505.aspx
+    .PCHOptions             + ' /arch:SSE2'
+                            + ' /DWIN32 /DARCH_X86'
+                            + ' /favor:blend' ; https://msdn.microsoft.com/fr-fr/library/ms173505.aspx
+    .LibrarianOptions       + ' /MACHINE:X86'
+    .LinkerOptions          + ' /MACHINE:X86'
+                            + ' /LIBPATH:"$WindowsLibPaths$\x86"'
+                            + ' /LIBPATH:"$VSBasePath$\VC\lib"'
+]
+
+.MSVC12DebugConfig_X86      = .MSVC12BaseConfig_X86 + .MSVCXXConfigDebug
+.MSVC12ReleaseConfig_X86    = .MSVC12BaseConfig_X86 + .MSVCXXConfigRelease
+.MSVC12ProfileConfig_X86    = .MSVC12BaseConfig_X86 + .MSVCXXConfigProfile
+.MSVC12FinalConfig_X86      = .MSVC12BaseConfig_X86 + .MSVCXXConfigFinal
+
+//------------------------------------------------------------------------------
+// MSVC2012 - X64
+//------------------------------------------------------------------------------
+
+.MSVC12BaseConfig_X64 =
+[
+    Using( .MSVC12BaseConfig )
+    .Platform               = 'x64'
+    .ToolsBasePath          = '$VSBasePath$\VC\bin\amd64'
+    .Compiler               = 'Compiler-MSVC120-x64'
+    .Librarian              = '$ToolsBasePath$\lib.exe'
+    .Linker                 = '$ToolsBasePath$\link.exe'
+    .CompilerOptions        + ' /DWIN64 /DARCH_X64'
+                            + ' /favor:AMD64' ; https://msdn.microsoft.com/fr-fr/library/ms173505.aspx
+    .PCHOptions             + ' /DWIN64 /DARCH_X64'
+                            + ' /favor:AMD64' ; https://msdn.microsoft.com/fr-fr/library/ms173505.aspx
+    .LibrarianOptions       + ' /MACHINE:X64'
+    .LinkerOptions          + ' /MACHINE:X64'
+                            + ' /LIBPATH:"$WindowsLibPaths$\x64"'
+                            + ' /LIBPATH:"$VSBasePath$\VC\lib\amd64"'
+]
+
+.MSVC12DebugConfig_X64      = .MSVC12BaseConfig_X64 + .MSVCXXConfigDebug
+.MSVC12ReleaseConfig_X64    = .MSVC12BaseConfig_X64 + .MSVCXXConfigRelease
+.MSVC12ProfileConfig_X64    = .MSVC12BaseConfig_X64 + .MSVCXXConfigProfile
+.MSVC12FinalConfig_X64      = .MSVC12BaseConfig_X64 + .MSVCXXConfigFinal
+
+//------------------------------------------------------------------------------
+// MSVC2014 - X86
+//------------------------------------------------------------------------------
+
+.MSVC14BaseConfig_X86 =
+[
+    Using( .MSVC14BaseConfig )
+    .Platform               = 'x86'
+;#if CROSS_COMPILE_X86_WITH_X64_COMPILER
+;    .Compiler               = 'Compiler-MSVC140-x64-cross-x86'
+;    .ToolsBasePath          = '$VSBasePath$\VC\bin\amd64_x86'
+;#else
+    .Compiler               = 'Compiler-MSVC140-x86'
+    .ToolsBasePath          = '$VSBasePath$\VC\bin'
+;#endif
+    .Librarian              = '$ToolsBasePath$\lib.exe'
+    .Linker                 = '$ToolsBasePath$\link.exe'
+    .CompilerOptions        + ' /arch:SSE2'
+                            + ' /DWIN32 /DARCH_X86'
+                            + ' /favor:blend' ; https://msdn.microsoft.com/fr-fr/library/ms173505.aspx
+    .PCHOptions             + ' /arch:SSE2'
+                            + ' /DWIN32 /DARCH_X86'
+                            + ' /favor:blend' ; https://msdn.microsoft.com/fr-fr/library/ms173505.aspx
+    .LibrarianOptions       + ' /MACHINE:X86'
+                            + ' /LTCG' ; https://www.visualstudio.com/en-us/news/vs2015-vs.aspx#C++
+    .LinkerOptions          + ' /MACHINE:X86'
+                            + ' /LTCG' ; https://www.visualstudio.com/en-us/news/vs2015-vs.aspx#C++
+                            + ' /LIBPATH:"$WindowsLibPaths$\x86"'
+                            + ' /LIBPATH:"$AdditionalWindowsLibPaths$\x86"'
+                            + ' /LIBPATH:"$VSBasePath$\VC\lib"'
+]
+
+.MSVC14DebugConfig_X86      = .MSVC14BaseConfig_X86 + .MSVCXXConfigDebug
+.MSVC14ReleaseConfig_X86    = .MSVC14BaseConfig_X86 + .MSVCXXConfigRelease
+.MSVC14ProfileConfig_X86    = .MSVC14BaseConfig_X86 + .MSVCXXConfigProfile
+.MSVC14FinalConfig_X86      = .MSVC14BaseConfig_X86 + .MSVCXXConfigFinal
+
+//------------------------------------------------------------------------------
+// MSVC2014 - X64
+//------------------------------------------------------------------------------
+
+.MSVC14BaseConfig_X64 =
+[
+    Using( .MSVC14BaseConfig )
+    .Platform               = 'x64'
+    .ToolsBasePath          = '$VSBasePath$\VC\bin\amd64'
+    .Compiler               = 'Compiler-MSVC140-x64'
+    .Librarian              = '$ToolsBasePath$\lib.exe'
+    .Linker                 = '$ToolsBasePath$\link.exe'
+    .CompilerOptions        + ' /DWIN64 /DARCH_X64'
+                            + ' /favor:AMD64' ; https://msdn.microsoft.com/fr-fr/library/ms173505.aspx
+    .PCHOptions             + ' /DWIN64 /DARCH_X64'
+                            + ' /favor:AMD64' ; https://msdn.microsoft.com/fr-fr/library/ms173505.aspx
+    .LibrarianOptions       + ' /MACHINE:X64'
+                            + ' /LTCG' ; https://www.visualstudio.com/en-us/news/vs2015-vs.aspx#C++
+    .LinkerOptions          + ' /MACHINE:X64'
+                            + ' /LTCG' ; https://www.visualstudio.com/en-us/news/vs2015-vs.aspx#C++
+                            + ' /LIBPATH:"$WindowsLibPaths$\x64"'
+                            + ' /LIBPATH:"$AdditionalWindowsLibPaths$\x64"'
+                            + ' /LIBPATH:"$VSBasePath$\VC\lib\amd64"'
+]
+
+.MSVC14DebugConfig_X64      = .MSVC14BaseConfig_X64 + .MSVCXXConfigDebug
+.MSVC14ReleaseConfig_X64    = .MSVC14BaseConfig_X64 + .MSVCXXConfigRelease
+.MSVC14ProfileConfig_X64    = .MSVC14BaseConfig_X64 + .MSVCXXConfigProfile
+.MSVC14FinalConfig_X64      = .MSVC14BaseConfig_X64 + .MSVCXXConfigFinal

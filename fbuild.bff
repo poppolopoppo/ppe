@@ -30,8 +30,8 @@ ForEach( .Config in .Configs )
       'Core-$Platform$-$Config$',
       'Core.Serialize-$Platform$-$Config$',
       'Core.Graphics-$Platform$-$Config$',
-      'Core.Engine-$Platform$-$Config$',
       'Core.Logic-$Platform$-$Config$',
+      'Core.Engine-$Platform$-$Config$',
       'Core.Application-$Platform$-$Config$'
     }
   }
@@ -73,8 +73,8 @@ Alias( 'proj' )
                   'Core-proj',
                   'Core.Serialize-proj',
                   'Core.Graphics-proj',
-                  'Core.Engine-proj',
                   'Core.Logic-proj',
+                  'Core.Engine-proj',
                   'Core.Application-proj',
                   'Core.Test-proj',
                 }

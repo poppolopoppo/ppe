@@ -32,9 +32,9 @@ Unity( '$ProjectName$-UnityGenerate' )
 // Windows (MSVC)
 //--------------------------------------------------------------------------
 // Lib
-ForEach( .Config in .Configs_Windows_MSVC )
+ForEach( .CompileConfig in .Configs_Windows_MSVC )
 {
-    Using( .Config )
+    Using( .CompileConfig )
 
     .OutputBinary       = '$OutputBase$\Binary'
     .OutputBase         + '\Intermediate\$Platform$-$Config$'
@@ -45,7 +45,8 @@ ForEach( .Config in .Configs_Windows_MSVC )
     {
         // Input (Unity)
         .CompilerInputUnity         = '$ProjectName$-UnityGenerate'
-        .CompilerOptions            + '$IncludePath$ -D_WINDOWS'
+        .CompilerOptions            + ' $IncludePath$'
+        .PreprocessorOptions        + ' $IncludePath$'
 
         // Output
         .CompilerOutputPath         = '$OutputBase$\$ProjectName$\'
@@ -58,8 +59,8 @@ ForEach( .Config in .Configs_Windows_MSVC )
         .Libraries                  = { 'Core-Lib-$Platform$-$Config$',
                                         'Core.Serialize-Lib-$Platform$-$Config$',
                                         'Core.Graphics-Lib-$Platform$-$Config$',
-                                        'Core.Engine-Lib-$Platform$-$Config$',
                                         'Core.Logic-Lib-$Platform$-$Config$',
+                                        'Core.Engine-Lib-$Platform$-$Config$',
                                         'Core.Application-Lib-$Platform$-$Config$',
                                         '$ProjectName$-Res',
                                         '$ProjectName$-Lib-$Platform$-$Config$' }
@@ -72,9 +73,9 @@ ForEach( .Config in .Configs_Windows_MSVC )
 
 // Windows (Clang)
 //--------------------------------------------------------------------------
-ForEach( .Config in .Configs_Windows_Clang )
+ForEach( .CompileConfig in .Configs_Windows_Clang )
 {
-    Using( .Config )
+    Using( .CompileConfig )
 
     .OutputBase         + '\Intermediate\$Platform$-$Config$'
     .IncludePath        = ' -I"$ProjectPath$" -I"$SourceBase$" -I"$AdditionalInclude$"'
@@ -84,7 +85,8 @@ ForEach( .Config in .Configs_Windows_Clang )
     {
         // Input (Unity)
         .CompilerInputUnity         = '$ProjectName$-UnityGenerate'
-        .CompilerOptions            + '$IncludePath$ -D_WINDOWS'
+        .CompilerOptions            + ' $IncludePath$'
+        .PreprocessorOptions        + ' $IncludePath$'
 
         // Output
         .CompilerOutputPath         = '$OutputBase$\$ProjectName$\'
@@ -109,5 +111,5 @@ Alias( '$ProjectName$-X86-Clang' )  { .Targets = { '$ProjectName$-X86-Clang-Debu
 // All
 Alias( '$ProjectName$' )
 {
-    .Targets = { '$ProjectName$-Debug', '$ProjectName$-Profile', '$ProjectName$-Release', '$ProjectName$-Final' }
+    .Targets = { '$ProjectName$-Debug', '$ProjectName$-Release', '$ProjectName$-Profile', '$ProjectName$-Final' }
 }

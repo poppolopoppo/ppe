@@ -1,0 +1,69 @@
+#once
+
+//------------------------------------------------------------------------------
+// CLANG - X86
+//------------------------------------------------------------------------------
+.ClangBaseConfig_X86 =
+[
+    .VSBasePath             = '$MSVC12BasePath$'
+    .WindowsSDKBasePath     = '$WindowsSDKBasePath81$'
+
+    .ToolsBasePath          = '$ClangBasePath$\bin'
+    .Compiler               = 'Compiler-Clang-x86'
+    .Librarian              = '$ToolsBasePath$\llvm-ar.exe'
+    .Linker                 = '$ToolsBasePath$\lld.exe'
+
+    .WindowsLibPaths        = '$WindowsSDKBasePath$/lib/winv6.3/um'
+
+    .CompilerOptions        = '-o"%2" "%1" -c -g'
+                            + ' -I"./"'
+                            + ' -I"$ClangBasePath$/lib/clang/3.6.0/include"'
+                            + ' -I"$VSBasePath$/VC/include"'
+                            + ' -I"$WindowsSDKBasePath$/include/um"'
+                            + ' -I"$WindowsSDKBasePath$/include/shared"'
+                            + ' -D"WIN32_LEAN_AND_MEAN" -D_WIN32 -D__WINDOWS__'
+                            + ' -DWIN32 -D_WIN32'
+                            + ' -DRELEASE'
+                            + ' -D"_X86_=1" -D_M_IX86'
+                            + ' -D"_INTEGRAL_MAX_BITS=64"'
+                            + ' -D"_MSC_VER=1500"'
+                            + ' -D"ARCH_X86"'
+                            + ' -m32'
+
+                            // MS compatibility
+                            + ' -fms-compatibility'
+                            + ' -fms-extensions'
+                            + ' -fmsc-version=1800'
+                            + ' -mms-bitfields'
+                            + ' -Wno-microsoft' // suppress "enumerator value is not representable in the underlying type 'int' [-Wmicrosoft]'"
+                            + ' -Wno-#pragma-messages'
+
+                            + ' -Werror'                    // warnings as errors
+                            + ' -fno-exceptions'
+                            + ' -fno-rtti'
+                            + ' -Wno-ignored-attributes' // ignore 'restrict, noalias' keyword
+                            ;+ ' -Wno-c++11-extensions'
+                            + ' -Wno-c++11-long-long' // don't want about use of "long long"
+                            + ' -Wno-deprecated-declarations'
+                            + ' -Wno-unused-value' // TODO: Need to re-enable this
+                            + ' -integrated-as' // use the built-in assembler (don't try to use gcc)
+
+                            + ' -fdata-sections'
+                            + ' -ffunction-sections'
+
+    .PCHOptions             = .CompilerOptions // TODO: Configure this properly
+
+    .LibrarianOptions       = 'rc "%2" "%1"' // NOTE: output must come first
+    .LinkerOptions          = '/NODEFAULTLIB /WX /NOLOGO /INCREMENTAL:NO /OUT:"%2" "%1" /DEBUG'
+                            + ' /IGNORE:4001' ; don't complain about linking libs only
+                            + ' /LIBPATH:"$ClangBasePath$/lib/clang/3.6.0/lib/windows"'
+                            + ' /LIBPATH:"$WindowsLibPaths$/x86" /LIBPATH:"$VSBasePath$/VC/lib"'
+                            + ' /MACHINE:X86'
+
+    .PreprocessorOptions    = ''
+
+    .Platform               = 'x86-Clang'
+    .Config                 = 'Debug'
+
+    .UseExceptions          = ' -fexceptions'
+]
