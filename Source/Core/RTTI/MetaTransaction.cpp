@@ -26,7 +26,7 @@ void MetaTransaction::Export(const MetaClassName& name, const MetaClass *metacla
     _classes.push_back(MetaClassBinding{ name, old, metaclass });
 }
 //----------------------------------------------------------------------------
-void MetaTransaction::Remove(const MetaClassName& name, const MetaClass *metaclass) {
+void MetaTransaction::Remove(const MetaClassName& name, const MetaClass * /* metaclass */) {
     const auto it = std::find_if(_classes.begin(), _classes.end(), [&name](const MetaClassBinding& binding) -> bool {
         return binding.Name == name;
     });
@@ -49,7 +49,7 @@ void MetaTransaction::Export(const MetaObjectName& name, MetaAtom *atom, bool al
     _atoms.push_back(MetaAtomBinding{ name, old, atom });
 }
 //----------------------------------------------------------------------------
-void MetaTransaction::Remove(const MetaObjectName& name, MetaAtom *atom) {
+void MetaTransaction::Remove(const MetaObjectName& name, MetaAtom * /* atom */) {
     const auto it = std::find_if(_atoms.begin(), _atoms.end(), [&name](const MetaAtomBinding& binding) -> bool {
         return binding.Name == name;
     });

@@ -20,11 +20,11 @@ void SizeInBytes::Format(char *buffer, size_t capacity) const {
 
     const Units::Storage::Bytes bytes(static_cast<double>(this->Value));
 
-    const Units::Storage::Petabytes pb(0.2);
-    const Units::Storage::Terabytes tb(0.2);
-    const Units::Storage::Gigabytes gb(0.2);
-    const Units::Storage::Megabytes mb(0.2);
-    const Units::Storage::Kilobytes kb(0.2);
+    const Units::Storage::Petabytes pb(0.8);
+    const Units::Storage::Terabytes tb(0.8);
+    const Units::Storage::Gigabytes gb(0.8);
+    const Units::Storage::Megabytes mb(0.8);
+    const Units::Storage::Kilobytes kb(0.8);
 
     if (bytes > pb)
         oss << Units::Storage::Petabytes(bytes) << " pb";
@@ -47,11 +47,11 @@ void SizeInBytes::Format(wchar_t *buffer, size_t capacity) const {
 
     const Units::Storage::Bytes bytes(static_cast<double>(this->Value));
 
-    const Units::Storage::Petabytes pb(0.2);
-    const Units::Storage::Terabytes tb(0.2);
-    const Units::Storage::Gigabytes gb(0.2);
-    const Units::Storage::Megabytes mb(0.2);
-    const Units::Storage::Kilobytes kb(0.2);
+    const Units::Storage::Petabytes pb(0.8);
+    const Units::Storage::Terabytes tb(0.8);
+    const Units::Storage::Gigabytes gb(0.8);
+    const Units::Storage::Megabytes mb(0.8);
+    const Units::Storage::Kilobytes kb(0.8);
 
     if (bytes > pb)
         oss << Units::Storage::Petabytes(bytes) << L" pb";

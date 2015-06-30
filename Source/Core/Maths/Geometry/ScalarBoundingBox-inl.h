@@ -137,6 +137,9 @@ void ScalarBoundingBox<T, _Dim>::GetCorners(vector_type (&points)[_Dim2]) const 
     return GetCorners(MakeView(points));
 }
 //----------------------------------------------------------------------------
+#pragma warning( push )
+#pragma warning( disable : 4127) // C4127: l'expression conditionnelle est une constante
+
 template <typename T, size_t _Dim>
 void ScalarBoundingBox<T, _Dim>::GetCorners(const MemoryView<vector_type>& points) const {
     if (_Dim == 1) {
@@ -196,6 +199,8 @@ void ScalarBoundingBox<T, _Dim>::GetCorners(const MemoryView<vector_type>& point
         AssertNotImplemented();
     }
 }
+
+#pragma warning( pop )
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 template <typename U>

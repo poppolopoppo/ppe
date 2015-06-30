@@ -30,12 +30,16 @@ static AutoSingletonManager *AutoSingletonManager_() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-AutoSingletonManager::AutoSingletonManager() {
+AutoSingletonBase::AutoSingletonBase() 
+:   _pnext(nullptr) {}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+AutoSingletonManager::AutoSingletonManager() 
+:   _pinstances(nullptr) {
     Assert(IsInMainThread());
     Assert(!gAutoSingletonCreated);
     ONLY_IF_ASSERT(gAutoSingletonCreated = true);
-
-    _instances.reserve(32);
 }
 //----------------------------------------------------------------------------
 AutoSingletonManager::~AutoSingletonManager() {
@@ -43,10 +47,13 @@ AutoSingletonManager::~AutoSingletonManager() {
     Assert(gAutoSingletonCreated);
     ONLY_IF_ASSERT(gAutoSingletonCreated = false);
 
-    for (AutoSingletonBase *singleton : _instances)
-        checked_delete(singleton);
-
-    _instances.clear();
+    std::lock_guard<std::mutex> scopelock(_lock);
+    {
+        for (AutoSingletonBase *p = _pinstances; p; p = p->_pnext)
+            checked_delete(p);
+    
+        _pinstances = nullptr;
+    }
 }
 //----------------------------------------------------------------------------
 void AutoSingletonManager::Start() {
@@ -57,14 +64,16 @@ void AutoSingletonManager::Shutdown() {
     AutoSingletonManager_()->~AutoSingletonManager();
 }
 //----------------------------------------------------------------------------
-void AutoSingletonManager::Register(AutoSingletonBase *instance) {
-    AssertRelease(instance);
+void AutoSingletonManager::Register(AutoSingletonBase *pinstance) {
+    AssertRelease(pinstance);
+    Assert(nullptr == pinstance->_pnext);
     Assert(gAutoSingletonCreated);
 
-    AutoSingletonManager *const manager = AutoSingletonManager_();
-    std::lock_guard<std::mutex> scopelock(manager->_lock);
+    AutoSingletonManager& manager = *AutoSingletonManager_();
+    std::lock_guard<std::mutex> scopelock(manager._lock);
     {
-        manager->_instances.emplace_back(instance);
+        pinstance->_pnext = manager._pinstances;
+        manager._pinstances = pinstance;
     }
 }
 //----------------------------------------------------------------------------

@@ -93,9 +93,9 @@ public:
     template <typename U>
     Mallocator(const Mallocator<U>&) throw() {}
 
-    Mallocator& operator=(const Mallocator& ) { return *this; }
+    Mallocator& operator =(const Mallocator& ) { return *this; }
     template <typename U>
-    Mallocator& operator=(const Mallocator<U>&) { return *this; }
+    Mallocator& operator =(const Mallocator<U>&) { return *this; }
 
     pointer allocate(size_type n);
     pointer allocate(size_type n, const void* /*hint*/) { return allocate(n); }
@@ -141,23 +141,13 @@ void Mallocator<T, 0>::deallocate(void* p, size_type ) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _Alignment>
-bool operator ==(const Mallocator<T, _Alignment>& lhs, const Mallocator<T, _Alignment>& rhs) {
-    return true;
+template <typename T, size_t A, typename U, size_t B>
+bool operator ==(const Mallocator<T, A>&/* lhs */, const Mallocator<U, B>&/* rhs */) {
+    return A == B;
 }
 //----------------------------------------------------------------------------
-template <typename T, size_t _Alignment>
-bool operator !=(const Mallocator<T, _Alignment>& lhs, const Mallocator<T, _Alignment>& rhs) {
-    return !operator ==(lhs, rhs);
-}
-//----------------------------------------------------------------------------
-template <typename T, size_t _Alignment, typename _Other >
-bool operator ==(const Mallocator<T, _Alignment>& lhs, const _Other& rhs) {
-    return false;
-}
-//----------------------------------------------------------------------------
-template <typename T, size_t _Alignment, typename _Other >
-bool operator !=(const Mallocator<T, _Alignment>& lhs, const _Other& rhs) {
+template <typename T, size_t A, typename U, size_t B>
+bool operator !=(const Mallocator<T, A>& lhs, const Mallocator<U, B>& rhs) {
     return !operator ==(lhs, rhs);
 }
 //----------------------------------------------------------------------------

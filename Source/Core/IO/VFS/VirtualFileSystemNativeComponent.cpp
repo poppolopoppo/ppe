@@ -35,7 +35,7 @@ static void SanitizeTarget_(WString& target) {
     Assert(target.size());
 
     const wchar_t *p = target.c_str();
-    while (p = StrChr(p, L'\\'))
+    while (nullptr != (p = StrChr(p, L'\\')) )
         *const_cast<wchar_t *>(p) = L'/';
 
     if (target.back() != L'/')
@@ -124,8 +124,10 @@ static size_t EnumerateFiles_Windows_(
         }
     } while (::FindNextFileW(hFind, &ffd));
 
+#ifdef WITH_CORE_ASSERT
     DWORD dwError = GetLastError();
     Assert(ERROR_NO_MORE_FILES == dwError);
+#endif
 
     ::FindClose(hFind);
     return total;
@@ -294,7 +296,7 @@ UniquePtr<IVirtualFileSystemOStream> VirtualFileSystemNativeComponent::OpenWrita
     return result;
 }
 //----------------------------------------------------------------------------
-UniquePtr<IVirtualFileSystemIOStream> VirtualFileSystemNativeComponent::OpenReadWritable(const Filename& filename, AccessPolicy::Mode policy) {
+UniquePtr<IVirtualFileSystemIOStream> VirtualFileSystemNativeComponent::OpenReadWritable(const Filename&/* filename */, AccessPolicy::Mode/* policy */) {
     Assert(ModeReadWritable & _mode);
 
     // TODO (12/13) : not supported

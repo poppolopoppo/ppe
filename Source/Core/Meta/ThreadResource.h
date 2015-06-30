@@ -28,7 +28,7 @@ public:
 private:
     std::thread::id _threadId;
 #else
-    explicit ThreadResource(std::thread::id threadId = std::thread::id()) {}
+    ThreadResource() {}
     ~ThreadResource() {}
     std::thread::id ThreadId() const { return std::thread::id(); }
     void CheckThreadId(std::thread::id) const {}

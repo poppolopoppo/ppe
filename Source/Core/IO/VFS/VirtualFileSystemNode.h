@@ -16,8 +16,8 @@ FWD_REFPTR(VirtualFileSystemNode);
 //----------------------------------------------------------------------------
 class VirtualFileSystemNode : public RefCountable {
 public:
-    typedef VECTOR(FileSystem, PVirtualFileSystemComponent) components_type;
-    typedef ASSOCIATIVE_VECTOR(FileSystem, Core::Dirname, PVirtualFileSystemNode) children_type;
+    typedef VECTORINSITU(FileSystem, PVirtualFileSystemComponent, 3) components_type;
+    typedef ASSOCIATIVE_VECTORINSITU(FileSystem, Core::Dirname, PVirtualFileSystemNode, 3) children_type;
 
     VirtualFileSystemNode();
     ~VirtualFileSystemNode();

@@ -294,7 +294,7 @@ void *BuddyHeap::Allocate(size_t sizeInBytes) {
 
     void *ptr = nullptr;
     for (BuddyChunk *chunk = _chunks; chunk; chunk = chunk->Sibling()) {
-        if ( !(ptr = chunk->Allocate(sizeInBytes)) )
+        if ( nullptr == (ptr = chunk->Allocate(sizeInBytes)) )
             continue;
 
         _consumedInBytes += sizeInBytes;

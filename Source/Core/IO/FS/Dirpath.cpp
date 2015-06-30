@@ -23,7 +23,7 @@ static const FileSystemNode *ParseDirpath_(const FileSystem::char_type *cstr, si
         return nullptr;
 
     static const FileSystem::char_type *sep = L"\\/";
-    MALLOCA_STACK(FileSystemToken, path, Dirpath::MaxDepth);
+    STACKLOCAL_POD_STACK(FileSystemToken, path, Dirpath::MaxDepth);
 
     BasicStringSlice<FileSystem::char_type> slice;
     while (Split(&cstr, &length, sep, slice)) {

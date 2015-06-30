@@ -74,7 +74,7 @@
 //----------------------------------------------------------------------------
 #define lengthof(_ARRAY) ((sizeof(_ARRAY))/(sizeof(_ARRAY[0])))
 //----------------------------------------------------------------------------
-#define STATIC_CONST_INTEGRAL(_TYPE, _NAME, _DEFAULT_VALUE) enum { _NAME = _DEFAULT_VALUE }
+#define STATIC_CONST_INTEGRAL(_TYPE, _NAME, _DEFAULT_VALUE) enum : _TYPE { _NAME = (_TYPE)(_DEFAULT_VALUE) }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -83,6 +83,7 @@
 #   define RESTRICT
 #else
 #   define NOALIAS      __declspec(noalias)
+#   define NOEXCEPT     __declspec(nothrow)
 #   define RESTRICT     __declspec(restrict)
 #endif
 #define THREAD_LOCAL    __declspec(thread)
@@ -101,12 +102,10 @@
 //----------------------------------------------------------------------------
 #ifdef CPP_VISUALSTUDIO
 //----------------------------------------------------------------------------
-//  warning C4100: 'XXX' : unreferenced formal parameter
+//  warning C4100: unreferenced formal parameter
 #   pragma warning( disable : 4100 )
-//  warning C4706 : assignment within conditional expression
-#   pragma warning( disable : 4706 )
-//  warning C4127 : conditional expression is constant
-#   pragma warning( disable : 4127 )
+//  warning C4714: fonction 'XXX' marquée comme __forceinline non inline
+#   pragma warning( disable : 4714 )
 //----------------------------------------------------------------------------
 #endif //!CPP_VISUALSTUDIO
 //----------------------------------------------------------------------------
@@ -135,7 +134,7 @@
 #   define CORE_RETURN_NOT_NULL         _Ret_notnull_ _Post_writable_byte_size_(size)
 #   define CORE_RETURN_MAYBE_NULL       _Ret_maybenull_ _Post_writable_byte_size_(size)
 #else
-#   define CORE_THROW_SPECIFIER(_Type) 
+#   define CORE_THROW_SPECIFIER(_Type)
 #   define CORE_RETURN_NOT_NULL
 #endif
 //----------------------------------------------------------------------------
@@ -180,6 +179,7 @@ namespace Core
 #include "Core/Meta/Assert.h"
 #include "Core/Meta/Cast.h"
 #include "Core/Meta/Delete.h"
+#include "Core/Meta/Enum.h"
 #include "Core/Meta/ForRange.h"
 #include "Core/Meta/NumericLimits.h"
 #include "Core/Meta/OneTimeInitialize.h"

@@ -131,6 +131,9 @@ private:
     const _Char* _p;
 };
 //----------------------------------------------------------------------------
+extern template class FormatParser< char, std::char_traits<char> >;
+extern template class FormatParser< wchar_t, std::char_traits<wchar_t> >;
+//----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
 FormatParser<_Char, _Traits>::FormatParser(const _Char* format)
 :   _p(format) {
@@ -290,12 +293,12 @@ auto FormatParser<_Char, _Traits>::Parse(_Char& outp, size_t& index, FormatPrope
 // not superb but does the trick
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
-static void AppendArg_(std::basic_ostream<_Char, _Traits>& oss, size_t index) {
+FORCE_INLINE static void AppendArg_(std::basic_ostream<_Char, _Traits>&/* oss */, size_t/* index */) {
     Assert(false); // index it out of bounds !
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits, typename _Arg0, typename... _Args>
-static void AppendArg_(std::basic_ostream<_Char, _Traits>& oss, size_t index, _Arg0&& arg0, _Args&&... args) {
+FORCE_INLINE static void AppendArg_(std::basic_ostream<_Char, _Traits>& oss, size_t index, _Arg0&& arg0, _Args&&... args) {
     if (index)
         AppendArg_(oss, index - 1, std::forward<_Args>(args)...);
     else

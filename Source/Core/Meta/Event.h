@@ -1,0 +1,97 @@
+#pragma once
+
+#include "Core/Core.h"
+
+#include "Core/Container/Vector.h"
+#include "Core/Meta/Delegate.h"
+
+#include <algorithm>
+
+namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename delegate_type>
+class Event {
+public:
+    Event() { static_assert(false, "Event<T> accepts only delegates"); }
+};
+//----------------------------------------------------------------------------
+template <typename _Ret, typename... _Args >
+class Event< Delegate<_Ret (*)(_Args... )> > {
+public:
+    typedef Delegate<_Ret (*)(_Args... )> delegate_type;
+    typedef VECTORINSITU(Event, delegate_type, 5) vector_type;
+
+    bool empty() const { return _delegates.empty(); }
+    size_t size() const { return _delegates.size(); }
+
+    operator const void *() const { return _delegates.empty() ? nullptr : this; }
+
+    const vector_type& Delegates() const { return _delegates; }
+
+    void Add(const delegate_type& d);
+    void Remove(const delegate_type& d);
+
+    template <typename _It>
+    void Add(_It begin, _It end);
+
+    void clear();
+    void reserve(size_t capacity);
+
+    Event& operator +=(const delegate_type& d) { Add(d); return *this; }
+    Event& operator -=(const delegate_type& d) { Remove(d); return *this; }
+
+    Event& operator <<(const delegate_type& d) { Add(d); return *this; }
+    Event& operator >>(const delegate_type& d) { Remove(d); return *this; }
+
+    void Invoke(_Args... args) const;
+    void operator ()(_Args... args) const { Invoke(std::forward<_Args>(args)...); }
+
+private:
+    vector_type _delegates;
+};
+//----------------------------------------------------------------------------
+template <typename _Ret, typename... _Args >
+void Core::Event< Delegate<_Ret (*)(_Args... )> >::Add(const delegate_type& d) {
+    Assert(_delegates.end() == std::find(_delegates.begin(), _delegates.end(), d));
+    _delegates.push_back(d);
+}
+//----------------------------------------------------------------------------
+template <typename _Ret, typename... _Args >
+void Core::Event< Delegate<_Ret (*)(_Args... )> >::Remove(const delegate_type& d) {
+    const auto it = std::find(_delegates.begin(), _delegates.end(), d);
+    Assert(_delegates.end() != it);
+    _delegates.erase(it);
+}
+//----------------------------------------------------------------------------
+template <typename _Ret, typename... _Args >
+template <typename _It>
+void Core::Event< Delegate<_Ret (*)(_Args... )> >::Add(_It begin, _It end) {
+#ifdef WITH_CORE_ASSERT
+    for (auto it = begin; it != end; ++it)
+        Add(*it); // will check for doubloons in debug
+#else
+    _delegates.insert(_delegates.end(), begin, end);
+#endif
+}
+//----------------------------------------------------------------------------
+template <typename _Ret, typename... _Args >
+void Core::Event< Delegate<_Ret (*)(_Args... )> >::clear() {
+    _delegates.clear();
+}
+//----------------------------------------------------------------------------
+template <typename _Ret, typename... _Args >
+void Core::Event< Delegate<_Ret (*)(_Args... )> >::reserve(size_t capacity) {
+    _delegates.reserve(capacity);
+}
+//----------------------------------------------------------------------------
+template <typename _Ret, typename... _Args >
+void Core::Event< Delegate<_Ret (*)(_Args... )> >::Invoke(_Args... args) const {
+    for (const delegate_type& d : _delegates)
+        d.Invoke(std::forward<_Args>(args)...);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace Core

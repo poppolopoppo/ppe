@@ -16,15 +16,29 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#define ASSOCIATIVE_VECTOR(_DOMAIN, _KEY, _VALUE) \
+    ::Core::AssociativeVector<_KEY, _VALUE, std::equal_to<_KEY>, VECTOR(_DOMAIN, ::Core::Pair<_KEY COMMA _VALUE>) >
+//----------------------------------------------------------------------------
+#define ASSOCIATIVE_VECTOR_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE) \
+    ::Core::AssociativeVector<_KEY, _VALUE, std::equal_to<_KEY>, VECTOR_THREAD_LOCAL(_DOMAIN, ::Core::Pair<_KEY COMMA _VALUE>) >
+//----------------------------------------------------------------------------
+#define ASSOCIATIVE_VECTORINSITU(_DOMAIN, _KEY, _VALUE, _InSituCount) \
+    ::Core::AssociativeVector<_KEY, _VALUE, std::equal_to<_KEY>, VECTORINSITU(_DOMAIN, ::Core::Pair<_KEY COMMA _VALUE>, _InSituCount) >
+//----------------------------------------------------------------------------
+#define ASSOCIATIVE_VECTORINSITU_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE, _InSituCount) \
+    ::Core::AssociativeVector<_KEY, _VALUE, std::equal_to<_KEY>, VECTORINSITU_THREAD_LOCAL(_DOMAIN, ::Core::Pair<_KEY COMMA _VALUE>, _InSituCount) >
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <
     typename _Key,
     typename _Value,
     typename _EqualTo = EqualTo<_Key>,
-    typename _Allocator = ALLOCATOR(Container, Pair<_Key COMMA _Value> )>
+    typename _Vector = Vector<Pair<_Key COMMA _Value>> >
 class AssociativeVector {
 public:
     typedef Pair<_Key, _Value> value_type;
-    typedef Vector<value_type, _Allocator> vector_type;
+    typedef _Vector vector_type;
 
     typedef typename vector_type::pointer pointer;
     typedef typename vector_type::const_pointer const_pointer;
@@ -95,6 +109,8 @@ public:
     void reserve(size_type capacity);
     void clear();
 
+    void Clear_ReleaseMemory();
+
     iterator Find(const _Key& key);
     const_iterator Find(const _Key& key) const;
 
@@ -119,6 +135,7 @@ public:
     void Erase(const const_iterator& it);
 
     void Remove_AssertExists(const _Key& key, const _Value& valueForDebug);
+    void Remove_AssertExists(const _Key& key);
 
     _Value& operator [](const _Key& key) { return Get(key); }
     const _Value& operator [](const _Key& key) const { return At(key); }
@@ -138,14 +155,8 @@ private:
     vector_type _vector;
 };
 //----------------------------------------------------------------------------
-#define ASSOCIATIVE_VECTOR(_DOMAIN, _KEY, _VALUE) \
-    ::Core::AssociativeVector< _KEY, _VALUE, std::equal_to<_KEY>, ALLOCATOR(_DOMAIN, ::Core::Pair<_KEY COMMA _VALUE>)>
-//----------------------------------------------------------------------------
-#define ASSOCIATIVE_VECTOR_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE) \
-    ::Core::AssociativeVector< _KEY, _VALUE, std::equal_to<_KEY>, THREAD_LOCAL_ALLOCATOR(_DOMAIN, ::Core::Pair<_KEY COMMA _VALUE>)>
-//----------------------------------------------------------------------------
-template <typename _Key, typename _Value, typename _EqualTo, typename _Allocator>
-size_t hash_value(const AssociativeVector<_Key, _Value, _EqualTo, _Allocator>& associativeVector) {
+template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+size_t hash_value(const AssociativeVector<_Key, _Value, _EqualTo, _Vector>& associativeVector) {
     return hash_value_seq(associativeVector.begin(), associativeVector.end());
 }
 //----------------------------------------------------------------------------
@@ -155,11 +166,11 @@ template <
     typename _Key,
     typename _Value,
     typename _EqualTo,
-    typename _Allocator,
+    typename _Vector,
     typename _Char,
     typename _Traits
 >
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const AssociativeVector<_Key, _Value, _EqualTo, _Allocator>& associativeVector) {
+std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const AssociativeVector<_Key, _Value, _EqualTo, _Vector>& associativeVector) {
     oss << "{ ";
     for (const auto& it : associativeVector)
         oss << '(' << it.first << ", " << it.second << "), ";

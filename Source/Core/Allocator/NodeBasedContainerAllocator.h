@@ -2,31 +2,19 @@
 
 #include "Core/Core.h"
 
+#include "Core/Allocator/SingletonPoolAllocator.h"
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class TaskEvaluator;
+POOLTAG_DEF(NodeBasedContainer);
 //----------------------------------------------------------------------------
-class TaskWorker {
-public:
-    TaskWorker(const char *name, TaskEvaluator *evaluator, size_t threadIndex);
-    ~TaskWorker();
-
-    TaskWorker(const TaskWorker& ) = delete;
-    TaskWorker& operator =(const TaskWorker& ) = delete;
-
-    const char *Name() const { return _name; }
-    TaskEvaluator *Evaluator() const { return _evaluator; }
-    size_t ThreadIndex() const { return _threadIndex; }
-
-    void Execute();
-
-private:
-    const char *_name;
-    TaskEvaluator *_evaluator;
-    size_t _threadIndex;
-};
+#define NODEBASED_CONTAINER_ALLOCATOR(_Domain, T) \
+    SINGLETON_POOL_ALLOCATOR(_Domain, T, NodeBasedContainer)
+//----------------------------------------------------------------------------
+#define THREAD_LOCAL_NODEBASED_CONTAINER_ALLOCATOR(_Domain, T) \
+    THREAD_LOCAL_SINGLETON_POOL_ALLOCATOR(_Domain, T, NodeBasedContainer)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

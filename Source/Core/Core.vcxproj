@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -17,21 +17,21 @@
       <Configuration>Final</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug|X64">
+    <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
-      <Platform>X64</Platform>
+      <Platform>x64</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Profile|X64">
+    <ProjectConfiguration Include="Profile|x64">
       <Configuration>Profile</Configuration>
-      <Platform>X64</Platform>
+      <Platform>x64</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|X64">
+    <ProjectConfiguration Include="Release|x64">
       <Configuration>Release</Configuration>
-      <Platform>X64</Platform>
+      <Platform>x64</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Final|X64">
+    <ProjectConfiguration Include="Final|x64">
       <Configuration>Final</Configuration>
-      <Platform>X64</Platform>
+      <Platform>x64</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Clang-Debug|Win32">
       <Configuration>Clang-Debug</Configuration>
@@ -53,8 +53,11 @@
     <CustomBuild Include="Allocator\Malloc.h" />
     <CustomBuild Include="Allocator\Mallocator.h" />
     <CustomBuild Include="Allocator\New.h" />
+    <CustomBuild Include="Allocator\NodeBasedContainerAllocator.h" />
     <CustomBuild Include="Allocator\PoolAllocator-impl.h" />
     <CustomBuild Include="Allocator\PoolAllocator.h" />
+    <CustomBuild Include="Allocator\PoolAllocatorTag.h" />
+    <CustomBuild Include="Allocator\SingletonPoolAllocator.h" />
     <CustomBuild Include="Allocator\StackAllocator.h" />
     <CustomBuild Include="Allocator\ThreadLocalAllocator.h" />
     <CustomBuild Include="Allocator\ThreadLocalHeap.cpp" />
@@ -70,8 +73,10 @@
     <CustomBuild Include="Container\Hash.h" />
     <CustomBuild Include="Container\HashMap.h" />
     <CustomBuild Include="Container\HashSet.h" />
-    <CustomBuild Include="Container\Observer-inl.h" />
-    <CustomBuild Include="Container\Observer.h" />
+    <CustomBuild Include="Container\List.h" />
+    <CustomBuild Include="Container\Map.h" />
+    <CustomBuild Include="Container\MultiHashMap.h" />
+    <CustomBuild Include="Container\MultiMap.h" />
     <CustomBuild Include="Container\Pair.h" />
     <CustomBuild Include="Container\RawStorage-inl.h" />
     <CustomBuild Include="Container\RawStorage.h" />
@@ -140,6 +145,7 @@
     <CustomBuild Include="IO\FileSystemConstNames.h" />
     <CustomBuild Include="IO\FileSystem_fwd.h" />
     <CustomBuild Include="IO\Format-inl.h" />
+    <CustomBuild Include="IO\Format.cpp" />
     <CustomBuild Include="IO\Format.h" />
     <CustomBuild Include="IO\FormatHelpers.cpp" />
     <CustomBuild Include="IO\FormatHelpers.h" />
@@ -203,6 +209,8 @@
     <CustomBuild Include="Maths\SphericalHarmonics\SHVector-inl.h" />
     <CustomBuild Include="Maths\SphericalHarmonics\SHVector.h" />
     <CustomBuild Include="Maths\SphericalHarmonics\SHVector_fwd.h" />
+    <CustomBuild Include="Maths\Transform\AffineTransform.cpp" />
+    <CustomBuild Include="Maths\Transform\AffineTransform.h" />
     <CustomBuild Include="Maths\Transform\Quaternion-inl.h" />
     <CustomBuild Include="Maths\Transform\Quaternion.cpp" />
     <CustomBuild Include="Maths\Transform\Quaternion.h" />
@@ -224,6 +232,8 @@
     <CustomBuild Include="Maths\Units.Definitions-inl.h" />
     <CustomBuild Include="Maths\Units.h" />
     <CustomBuild Include="Memory\AlignedStorage.h" />
+    <CustomBuild Include="Memory\BitSet.cpp" />
+    <CustomBuild Include="Memory\BitSet.h" />
     <CustomBuild Include="Memory\ComPtr-inl.h" />
     <CustomBuild Include="Memory\ComPtr.h" />
     <CustomBuild Include="Memory\MemoryDomain.cpp" />
@@ -239,6 +249,8 @@
     <CustomBuild Include="Memory\MemoryView.h" />
     <CustomBuild Include="Memory\RefPtr-inl.h" />
     <CustomBuild Include="Memory\RefPtr.h" />
+    <CustomBuild Include="Memory\SegregatedMemoryPool-inl.h" />
+    <CustomBuild Include="Memory\SegregatedMemoryPool.h" />
     <CustomBuild Include="Memory\UniquePtr.h" />
     <CustomBuild Include="Memory\UniqueView.h" />
     <CustomBuild Include="Memory\WeakPtr-inl.h" />
@@ -250,10 +262,14 @@
     <CustomBuild Include="Meta\Assert.h" />
     <CustomBuild Include="Meta\AutoSingleton.cpp" />
     <CustomBuild Include="Meta\AutoSingleton.h" />
+    <CustomBuild Include="Meta\BitCount.h" />
     <CustomBuild Include="Meta\BitField.h" />
-    <CustomBuild Include="Meta\Callback.h" />
     <CustomBuild Include="Meta\Cast.h" />
+    <CustomBuild Include="Meta\Delegate-inl.h" />
+    <CustomBuild Include="Meta\Delegate.h" />
     <CustomBuild Include="Meta\Delete.h" />
+    <CustomBuild Include="Meta\enum.h" />
+    <CustomBuild Include="Meta\Event.h" />
     <CustomBuild Include="Meta\ForRange.h" />
     <CustomBuild Include="Meta\Guid.cpp" />
     <CustomBuild Include="Meta\Guid.h" />
@@ -262,7 +278,9 @@
     <CustomBuild Include="Meta\OneTimeInitialize.h" />
     <CustomBuild Include="Meta\PointerWFlags.h" />
     <CustomBuild Include="Meta\Singleton.h" />
+    <CustomBuild Include="Meta\StronglyTyped.h" />
     <CustomBuild Include="Meta\ThreadResource.h" />
+    <CustomBuild Include="Meta\TypeHash.h" />
     <CustomBuild Include="Meta\TypeTraits.h" />
     <CustomBuild Include="RTTI\Atom\MetaAtom-inl.h" />
     <CustomBuild Include="RTTI\Atom\MetaAtom.h" />
@@ -307,20 +325,16 @@
     <CustomBuild Include="RTTI\RTTIProperties.cpp" />
     <CustomBuild Include="RTTI\RTTIProperties.h" />
     <CustomBuild Include="RTTI\RTTI_fwd.h" />
-    <CustomBuild Include="Thread\Task\Task.cpp" />
     <CustomBuild Include="Thread\Task\Task.h" />
-    <CustomBuild Include="Thread\Task\TaskCompletionPort.cpp" />
-    <CustomBuild Include="Thread\Task\TaskCompletionPort.h" />
-    <CustomBuild Include="Thread\Task\TaskContext.cpp" />
-    <CustomBuild Include="Thread\Task\TaskContext.h" />
-    <CustomBuild Include="Thread\Task\TaskEvaluator.cpp" />
-    <CustomBuild Include="Thread\Task\TaskEvaluator.h" />
-    <CustomBuild Include="Thread\Task\TaskWorker.cpp" />
-    <CustomBuild Include="Thread\Task\TaskWorker.h" />
+    <CustomBuild Include="Thread\Task\TaskPool.cpp" />
+    <CustomBuild Include="Thread\Task\TaskPool.h" />
+    <CustomBuild Include="Thread\Task\TaskPriorityQueue.h" />
     <CustomBuild Include="Thread\ConcurrentQueue-inl.h" />
     <CustomBuild Include="Thread\ConcurrentQueue.h" />
-    <CustomBuild Include="Thread\LockFreeCircularArray-inl.h" />
-    <CustomBuild Include="Thread\LockFreeCircularArray.h" />
+    <CustomBuild Include="Thread\Fiber.cpp" />
+    <CustomBuild Include="Thread\Fiber.h" />
+    <CustomBuild Include="Thread\MPMCBoundedQueue.h" />
+    <CustomBuild Include="Thread\MRUCache.h" />
     <CustomBuild Include="Thread\ThreadContext.cpp" />
     <CustomBuild Include="Thread\ThreadContext.h" />
     <CustomBuild Include="Thread\ThreadLocalSingleton.h" />
@@ -344,6 +358,7 @@
     <CustomBuild Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\..\%40Core\git\Source\Core\Color\Color_fwd.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{ab13febb-6c94-4f93-bc2a-7f5284b7d434}</ProjectGuid>
@@ -353,47 +368,47 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Final|Win32'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|X64'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|X64'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|X64'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Final|X64'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Final|x64'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Clang-Debug|Win32'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -410,16 +425,16 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Final|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|X64'">
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Profile|X64'">
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|X64'">
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Final|X64'">
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Final|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Clang-Debug|Win32'">
@@ -427,76 +442,85 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -cache -vs $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -vs -clean $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"   -cache -vs $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"   -vs -clean $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>rmdir /Q /S "$(ProjectDir)..\..\Output\Intermediate\$(PlatformTarget)-$(Configuration)\$(ProjectName)"</NMakeCleanCommandLine>
     <NMakePreprocessorDefinitions>ARCH_X86;WIN32_LEAN_AND_MEAN;_WIN32;__WINDOWS__;WIN32;UNICODE;_UNICODE;VC_EXTRALEAN;DBGHELP_TRANSLATE_TCHAR;NOMINMAX;_DEBUG;DEBUG</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;.</NMakeIncludeSearchPath>
     <IntDir>$(ProjectDir)..\..\Output\Intermediate\$(PlatformTarget)-$(Configuration)\$(ProjectName)</IntDir>
-    <OutDir>$(ProjectDir)..\..\Output\$(PlatformTarget)-$(Configuration)\$(ProjectName)</OutDir>
+    <OutDir>$(ProjectDir)..\..\Output\Binary</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">
-    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -cache -vs $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -vs -clean $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"   -cache -vs $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"   -vs -clean $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>rmdir /Q /S "$(ProjectDir)..\..\Output\Intermediate\$(PlatformTarget)-$(Configuration)\$(ProjectName)"</NMakeCleanCommandLine>
     <NMakePreprocessorDefinitions>ARCH_X86;WIN32_LEAN_AND_MEAN;_WIN32;__WINDOWS__;WIN32;UNICODE;_UNICODE;VC_EXTRALEAN;DBGHELP_TRANSLATE_TCHAR;NOMINMAX;NDEBUG;RELEASE;PROFILING_ENABLED</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;.</NMakeIncludeSearchPath>
     <IntDir>$(ProjectDir)..\..\Output\Intermediate\$(PlatformTarget)-$(Configuration)\$(ProjectName)</IntDir>
-    <OutDir>$(ProjectDir)..\..\Output\$(PlatformTarget)-$(Configuration)\$(ProjectName)</OutDir>
+    <OutDir>$(ProjectDir)..\..\Output\Binary</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -cache -vs $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -vs -clean $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"   -cache -vs $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"   -vs -clean $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>rmdir /Q /S "$(ProjectDir)..\..\Output\Intermediate\$(PlatformTarget)-$(Configuration)\$(ProjectName)"</NMakeCleanCommandLine>
     <NMakePreprocessorDefinitions>ARCH_X86;WIN32_LEAN_AND_MEAN;_WIN32;__WINDOWS__;WIN32;UNICODE;_UNICODE;VC_EXTRALEAN;DBGHELP_TRANSLATE_TCHAR;NOMINMAX;NDEBUG;RELEASE</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;.</NMakeIncludeSearchPath>
     <IntDir>$(ProjectDir)..\..\Output\Intermediate\$(PlatformTarget)-$(Configuration)\$(ProjectName)</IntDir>
-    <OutDir>$(ProjectDir)..\..\Output\$(PlatformTarget)-$(Configuration)\$(ProjectName)</OutDir>
+    <OutDir>$(ProjectDir)..\..\Output\Binary</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Final|Win32'">
-    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -cache -vs $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -vs -clean $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"   -cache -vs $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"   -vs -clean $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>rmdir /Q /S "$(ProjectDir)..\..\Output\Intermediate\$(PlatformTarget)-$(Configuration)\$(ProjectName)"</NMakeCleanCommandLine>
     <NMakePreprocessorDefinitions>ARCH_X86;WIN32_LEAN_AND_MEAN;_WIN32;__WINDOWS__;WIN32;UNICODE;_UNICODE;VC_EXTRALEAN;DBGHELP_TRANSLATE_TCHAR;NOMINMAX;NDEBUG;RELEASE;FINAL_RELEASE</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;.</NMakeIncludeSearchPath>
     <IntDir>$(ProjectDir)..\..\Output\Intermediate\$(PlatformTarget)-$(Configuration)\$(ProjectName)</IntDir>
-    <OutDir>$(ProjectDir)..\..\Output\$(PlatformTarget)-$(Configuration)\$(ProjectName)</OutDir>
+    <OutDir>$(ProjectDir)..\..\Output\Binary</OutDir>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|X64'">
-    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -cache -vs $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -vs -clean $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeReBuildCommandLine>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"   -cache -vs $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"   -vs -clean $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>rmdir /Q /S "$(ProjectDir)..\..\Output\Intermediate\$(PlatformTarget)-$(Configuration)\$(ProjectName)"</NMakeCleanCommandLine>
     <NMakePreprocessorDefinitions>ARCH_X64;WIN32_LEAN_AND_MEAN;_WIN32;__WINDOWS__;WIN64;UNICODE;_UNICODE;VC_EXTRALEAN;DBGHELP_TRANSLATE_TCHAR;NOMINMAX;_DEBUG;DEBUG</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;.</NMakeIncludeSearchPath>
     <IntDir>$(ProjectDir)..\..\Output\Intermediate\$(PlatformTarget)-$(Configuration)\$(ProjectName)</IntDir>
-    <OutDir>$(ProjectDir)..\..\Output\$(PlatformTarget)-$(Configuration)\$(ProjectName)</OutDir>
+    <OutDir>$(ProjectDir)..\..\Output\Binary</OutDir>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|X64'">
-    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -cache -vs $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -vs -clean $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeReBuildCommandLine>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
+    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"   -cache -vs $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"   -vs -clean $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>rmdir /Q /S "$(ProjectDir)..\..\Output\Intermediate\$(PlatformTarget)-$(Configuration)\$(ProjectName)"</NMakeCleanCommandLine>
     <NMakePreprocessorDefinitions>ARCH_X64;WIN32_LEAN_AND_MEAN;_WIN32;__WINDOWS__;WIN64;UNICODE;_UNICODE;VC_EXTRALEAN;DBGHELP_TRANSLATE_TCHAR;NOMINMAX;NDEBUG;RELEASE;PROFILING_ENABLED</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;.</NMakeIncludeSearchPath>
     <IntDir>$(ProjectDir)..\..\Output\Intermediate\$(PlatformTarget)-$(Configuration)\$(ProjectName)</IntDir>
-    <OutDir>$(ProjectDir)..\..\Output\$(PlatformTarget)-$(Configuration)\$(ProjectName)</OutDir>
+    <OutDir>$(ProjectDir)..\..\Output\Binary</OutDir>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|X64'">
-    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -cache -vs $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -vs -clean $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeReBuildCommandLine>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"   -cache -vs $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"   -vs -clean $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>rmdir /Q /S "$(ProjectDir)..\..\Output\Intermediate\$(PlatformTarget)-$(Configuration)\$(ProjectName)"</NMakeCleanCommandLine>
     <NMakePreprocessorDefinitions>ARCH_X64;WIN32_LEAN_AND_MEAN;_WIN32;__WINDOWS__;WIN64;UNICODE;_UNICODE;VC_EXTRALEAN;DBGHELP_TRANSLATE_TCHAR;NOMINMAX;NDEBUG;RELEASE</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;.</NMakeIncludeSearchPath>
     <IntDir>$(ProjectDir)..\..\Output\Intermediate\$(PlatformTarget)-$(Configuration)\$(ProjectName)</IntDir>
-    <OutDir>$(ProjectDir)..\..\Output\$(PlatformTarget)-$(Configuration)\$(ProjectName)</OutDir>
+    <OutDir>$(ProjectDir)..\..\Output\Binary</OutDir>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Final|X64'">
-    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -cache -vs $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -vs -clean $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeReBuildCommandLine>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Final|x64'">
+    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"   -cache -vs $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"   -vs -clean $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>rmdir /Q /S "$(ProjectDir)..\..\Output\Intermediate\$(PlatformTarget)-$(Configuration)\$(ProjectName)"</NMakeCleanCommandLine>
     <NMakePreprocessorDefinitions>ARCH_X64;WIN32_LEAN_AND_MEAN;_WIN32;__WINDOWS__;WIN64;UNICODE;_UNICODE;VC_EXTRALEAN;DBGHELP_TRANSLATE_TCHAR;NOMINMAX;NDEBUG;RELEASE;FINAL_RELEASE</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;.</NMakeIncludeSearchPath>
     <IntDir>$(ProjectDir)..\..\Output\Intermediate\$(PlatformTarget)-$(Configuration)\$(ProjectName)</IntDir>
-    <OutDir>$(ProjectDir)..\..\Output\$(PlatformTarget)-$(Configuration)\$(ProjectName)</OutDir>
+    <OutDir>$(ProjectDir)..\..\Output\Binary</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Clang-Debug|Win32'">
-    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -cache -vs $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"  -vs -clean $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"   -cache -vs $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(ProjectDir)..\..\" &amp; "Build\FBuild.exe"   -vs -clean $(ProjectName)-$(PlatformTarget)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>rmdir /Q /S "$(ProjectDir)..\..\Output\Intermediate\$(PlatformTarget)-$(Configuration)\$(ProjectName)"</NMakeCleanCommandLine>
     <NMakePreprocessorDefinitions>ARCH_X86;WIN32_LEAN_AND_MEAN;_WIN32;__WINDOWS__;WIN32;UNICODE;_UNICODE;VC_EXTRALEAN;DBGHELP_TRANSLATE_TCHAR;NOMINMAX;_DEBUG;DEBUG</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir)..;.\;.</NMakeIncludeSearchPath>
     <IntDir>$(ProjectDir)..\..\Output\Intermediate\$(PlatformTarget)-$(Configuration)\$(ProjectName)</IntDir>
-    <OutDir>$(ProjectDir)..\..\Output\$(PlatformTarget)-$(Configuration)\$(ProjectName)</OutDir>
+    <OutDir>$(ProjectDir)..\..\Output\Binary</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <BuildLog>
@@ -518,22 +542,22 @@
       <Path />
     </BuildLog>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|X64'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <BuildLog>
       <Path />
     </BuildLog>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|X64'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
     <BuildLog>
       <Path />
     </BuildLog>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|X64'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <BuildLog>
       <Path />
     </BuildLog>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Final|X64'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Final|x64'">
     <BuildLog>
       <Path />
     </BuildLog>

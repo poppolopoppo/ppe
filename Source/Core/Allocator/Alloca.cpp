@@ -32,7 +32,7 @@ public:
     ,   Boundary        = 16        /* 16 b     */
 
     // each allocation fallback on TLH when bigger than :
-    ,   MaxBlockSize    = 1<<10     /* 1 kb     */
+    ,   MaxBlockSize    = 4<<10     /* 4 kb     */
 
     // internal configuration :
 
@@ -201,7 +201,7 @@ void FreeAlloca(void *ptr) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void AllocaStartup::Start(bool mainThread) {
+void AllocaStartup::Start(bool/* mainThread */) {
     ThreadLocalAllocaStorage::Create();
 }
 //----------------------------------------------------------------------------

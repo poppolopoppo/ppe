@@ -6,6 +6,7 @@
 #include "Allocator/ThreadLocalHeap.h"
 #include "Diagnostic/Logger.h"
 #include "IO/String.h"
+#include "ThreadLocalSingleton.h"
 #include "ThreadLocalStorage.h"
 
 #ifdef _DEBUG
@@ -13,6 +14,31 @@
 #endif
 
 namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+class CurrentThreadContext : Meta::ThreadLocalSingleton<ThreadContext, CurrentThreadContext> {
+    typedef Meta::ThreadLocalSingleton<ThreadContext, CurrentThreadContext> parent_type;
+public:
+    using parent_type::HasInstance;
+    using parent_type::Instance;
+    using parent_type::Destroy;
+
+    static void Create(const char* name, size_t tag);
+    static void CreateMainThread();
+};
+//----------------------------------------------------------------------------
+inline void CurrentThreadContext::Create(const char* name, size_t tag) {
+    parent_type::Create("Core::CurrentThreadContext", name, tag, std::this_thread::get_id());
+}
+//----------------------------------------------------------------------------
+inline void CurrentThreadContext::CreateMainThread() {
+    CurrentThreadContext::Create("MainThread", MAIN_THREADTAG);
+}
+//----------------------------------------------------------------------------
+} //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -65,6 +91,13 @@ ThreadContext::ThreadContext(const char* name, size_t tag, std::thread::id id)
 //----------------------------------------------------------------------------
 ThreadContext::~ThreadContext() {
     LOG(Information, L"[Thread] Stop '{0}' with tag = {1} (id:{2})", _name, _tag, _id);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+const ThreadContext& ThisThreadContext()
+{
+    return CurrentThreadContext::Instance();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

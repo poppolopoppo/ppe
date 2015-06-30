@@ -10,6 +10,8 @@
 #include "IO/Stream.h"
 #include "IO/String.h"
 
+#include "Thread/ThreadContext.h"
+
 #include <iostream>
 
 namespace Core {
@@ -60,8 +62,8 @@ static MemoryTrackingData* gAllMemoryDomainTrackingData[] = {
 namespace {
 //----------------------------------------------------------------------------
 #ifdef USE_MEMORY_DOMAINS
-static size_t gAllAdditionalTrackingDataCount = 0;
-static MemoryTrackingData* gAllAdditionalTrackingData[1024] = {nullptr};
+static volatile size_t gAllAdditionalTrackingDataCount = 0;
+static volatile MemoryTrackingData* gAllAdditionalTrackingData[1024] = {nullptr};
 #endif
 //----------------------------------------------------------------------------
 } //!namespace
@@ -112,6 +114,12 @@ static void ReportTrackingData_(const char *name, const MemoryView<MemoryTrackin
     std::cout << Repeat<width>("-") << std::endl;
 }
 //----------------------------------------------------------------------------
+static bool LessTrackingData_(const MemoryTrackingData& lhs, const MemoryTrackingData& rhs) {
+    Assert(lhs.Name());
+    Assert(rhs.Name());
+    return (lhs.Name() != rhs.Name()) && CompareI(lhs.Name(), rhs.Name()) < 0;
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 #endif //!USE_MEMORY_DOMAINS
@@ -143,7 +151,8 @@ void RegisterAdditionalTrackingData(MemoryTrackingData& trackingData) {
 //----------------------------------------------------------------------------
 MemoryView<MemoryTrackingData *> EachAdditionalTrackingData() {
 #ifdef USE_MEMORY_DOMAINS
-    return MemoryView<MemoryTrackingData *>(&gAllAdditionalTrackingData[0], gAllAdditionalTrackingDataCount);
+    Assert(IsInMainThread());
+    return MemoryView<MemoryTrackingData *>((MemoryTrackingData **)&gAllAdditionalTrackingData[0], size_t(gAllAdditionalTrackingDataCount));
 #else
     return MemoryView<MemoryTrackingData *>();
 #endif
@@ -151,18 +160,19 @@ MemoryView<MemoryTrackingData *> EachAdditionalTrackingData() {
 //----------------------------------------------------------------------------
 void ReportAdditionalTrackingData() {
 #ifdef USE_MEMORY_DOMAINS
+    Assert(IsInMainThread());
     const MemoryView<MemoryTrackingData *> datas = EachAdditionalTrackingData();
     std::sort(datas.begin(), datas.end(), [](MemoryTrackingData *lhs, MemoryTrackingData *rhs) {
         MemoryTrackingData *lhsp = lhs->Parent();
         MemoryTrackingData *rhsp = rhs->Parent();
         if (lhsp && rhsp)
-            return (lhsp < rhsp || (lhsp == rhsp && lhs < rhs));
+            return (LessTrackingData_(*lhsp, *rhsp) || (lhsp->Name() == rhsp->Name() && LessTrackingData_(*lhs, *rhs)));
         else if (lhsp)
-            return (lhsp < rhs);
+            return LessTrackingData_(*lhsp, *rhs);
         else if (rhsp)
-            return (lhs <= rhsp);
+            return lhs->Name() == rhsp->Name() || LessTrackingData_(*lhs, *rhsp);
         else
-            return (lhs < rhs);
+            return LessTrackingData_(*lhs, *rhs);
     });
     ReportTrackingData_("Additional", EachAdditionalTrackingData());
 #endif

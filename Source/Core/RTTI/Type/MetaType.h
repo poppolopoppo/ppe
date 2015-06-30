@@ -56,7 +56,7 @@ using Dictionary = Core::AssociativeVector<
     _Key,
     _Value,
     EqualTo<_Key>,
-    ALLOCATOR(RTTI, RTTI::Pair<_Key COMMA _Value>)
+    RTTI::Vector<RTTI::Pair<_Key COMMA _Value> >
 >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -91,7 +91,7 @@ struct MetaType< RTTI::Pair<_First, _Second> > {
     static MetaTypeId Id() { return TypeId; }
     static MetaTypeFlags Flags() { return MetaTypeFlags::Pair; }
 
-    static const char *Name() {
+    NO_INLINE static const char *Name() {
         ONE_TIME_INITIALIZE(const CORE_RTTI_METATYPE_NAMETYPE, gName,
             "Pair<{0}, {1}>", first_meta_type::Name(), second_meta_type::Name() );
         return gName.c_str();
@@ -115,7 +115,7 @@ struct MetaType< RTTI::Vector<T> > {
     static MetaTypeId Id() { return TypeId; }
     static MetaTypeFlags Flags() { return MetaTypeFlags::Vector; }
 
-    static const char *Name() {
+    NO_INLINE static const char *Name() {
         ONE_TIME_INITIALIZE(const CORE_RTTI_METATYPE_NAMETYPE, gName,
             "Vector<{0}>", value_meta_type::Name() );
         return gName.c_str();
@@ -139,7 +139,7 @@ struct MetaType< RTTI::Dictionary<_Key, _Value> > {
     static MetaTypeId Id() { return TypeId; }
     static MetaTypeFlags Flags() { return MetaTypeFlags::Dictionary; }
 
-    static const char *Name() {
+    NO_INLINE static const char *Name() {
         ONE_TIME_INITIALIZE(const CORE_RTTI_METATYPE_NAMETYPE, gName,
             "Dictionary<{0}, {1}>", key_meta_type::Name(), value_meta_type::Name() );
         return gName.c_str();

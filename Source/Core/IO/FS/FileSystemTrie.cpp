@@ -165,7 +165,7 @@ void FileSystemTrie::Clear() {
 
     // we want to check ref count to prevent deleting nodes still referenced
 
-    MALLOCA_STACK(FileSystemNode *, queue, 128); {
+    STACKLOCAL_POD_STACK(FileSystemNode *, queue, 128); {
         FileSystemNode *const next = _root->_child.get();
         AddRef(next);
         _root->_child.reset();
@@ -176,7 +176,7 @@ void FileSystemTrie::Clear() {
     nodes.reserve(128);
 
     // first-pass : detach all nodes from each others
-    do {
+    for (;;) {
         FileSystemNode *node = nullptr;
         if (!queue.PopPOD(&node))
             break;
@@ -204,7 +204,6 @@ void FileSystemTrie::Clear() {
 
         RemoveRef(node);
     }
-    while (true);
 
     // second-pass : decrement ref count of each node and assert destruction
     for (PFileSystemNode& node : nodes)

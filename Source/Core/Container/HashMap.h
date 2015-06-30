@@ -37,7 +37,7 @@ size_t hash_value(const HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& ha
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
-bool TryGetValue(HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashmap, const _Key& key, _Value *value) {
+bool TryGetValue(const HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashmap, const _Key& key, _Value *value) {
     Assert(value);
 
     const auto it = hashmap.find(key);

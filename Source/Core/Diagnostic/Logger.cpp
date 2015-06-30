@@ -76,7 +76,7 @@ void LoggerFrontend::Log(LogCategory category, const wchar_t* text) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void OutputDebugLogger::Log(const LoggerFrontend& frontend, LogCategory category, const wchar_t* text, size_t length) {
+void OutputDebugLogger::Log(const LoggerFrontend& frontend, LogCategory category, const wchar_t* text, size_t/* length */) {
     if (!IsDebuggerPresent())
         return;
 
@@ -91,13 +91,14 @@ void OutputDebugLogger::Log(const LoggerFrontend& frontend, LogCategory category
 }
 //----------------------------------------------------------------------------
 void StdErrorLogger::Log(const LoggerFrontend& frontend, LogCategory category, const wchar_t* text, size_t length) {
+    const WStringSlice textSlice(text, length);
     if (LogCategory::Callstack != category) {
         wchar_t header[128];
         Format(header, L"[{0:12f}][{1}] ", frontend.Now(), category);
-        std::cerr << header << text << std::endl;
+        std::cerr << header << textSlice << std::endl;
     }
     else {
-        std::cerr << text << std::endl;
+        std::cerr << textSlice << std::endl;
     }
 }
 //----------------------------------------------------------------------------

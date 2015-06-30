@@ -15,6 +15,7 @@ public:
                         MemoryTrackingData* optionalParent = nullptr);
 
     const char* Name() const { return _name; }
+
     MemoryTrackingData* Parent() { return _parent; }
     const MemoryTrackingData* Parent() const { return _parent; }
 

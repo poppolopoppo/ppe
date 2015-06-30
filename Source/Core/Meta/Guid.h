@@ -32,6 +32,8 @@ ALIGN(16) struct Guid {
 
     bool empty() const;
 
+    u64 ToUID() const { return Data.as_u64[0] ^ Data.as_u64[1]; }
+
     static Guid Zero() { return Guid{0, 0}; }
 
     static Guid Generate();

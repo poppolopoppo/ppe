@@ -8,37 +8,37 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Key, typename _Value, typename _EqualTo, typename _Allocator>
-TrieNode<_Key, _Value, _EqualTo, _Allocator>::TrieNode() {}
+template <typename _Key, typename _Value, size_t _InSituCount, typename _EqualTo, typename _Allocator>
+TrieNode<_Key, _Value, _InSituCount, _EqualTo, _Allocator>::TrieNode() {}
 //----------------------------------------------------------------------------
-template <typename _Key, typename _Value, typename _EqualTo, typename _Allocator>
-TrieNode<_Key, _Value, _EqualTo, _Allocator>::~TrieNode() {
+template <typename _Key, typename _Value, size_t _InSituCount, typename _EqualTo, typename _Allocator>
+TrieNode<_Key, _Value, _InSituCount, _EqualTo, _Allocator>::~TrieNode() {
     Assert(_children.empty());
 }
 //----------------------------------------------------------------------------
-template <typename _Key, typename _Value, typename _EqualTo, typename _Allocator>
-bool TrieNode<_Key, _Value, _EqualTo, _Allocator>::Find(const _Key& key, TrieNode **node) {
+template <typename _Key, typename _Value, size_t _InSituCount, typename _EqualTo, typename _Allocator>
+bool TrieNode<_Key, _Value, _InSituCount, _EqualTo, _Allocator>::Find(const _Key& key, TrieNode **node) {
     return _children.Find(key, reinterpret_cast<void **>(node));
 }
 //----------------------------------------------------------------------------
-template <typename _Key, typename _Value, typename _EqualTo, typename _Allocator>
-bool TrieNode<_Key, _Value, _EqualTo, _Allocator>::Find(const _Key& key, const TrieNode **node) const {
+template <typename _Key, typename _Value, size_t _InSituCount, typename _EqualTo, typename _Allocator>
+bool TrieNode<_Key, _Value, _InSituCount, _EqualTo, _Allocator>::Find(const _Key& key, const TrieNode **node) const {
     return _children.Find(key, (void **)(node));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Key, typename _Value, typename _EqualTo, typename _Allocator>
-Trie<_Key, _Value, _EqualTo, _Allocator>::Trie()
+template <typename _Key, typename _Value, size_t _InSituCount, typename _EqualTo, typename _Allocator>
+Trie<_Key, _Value,  _InSituCount, _EqualTo, _Allocator>::Trie()
 :   _root(nullptr), _size(0) {}
 //----------------------------------------------------------------------------
-template <typename _Key, typename _Value, typename _EqualTo, typename _Allocator>
-Trie<_Key, _Value, _EqualTo, _Allocator>::~Trie() {
+template <typename _Key, typename _Value, size_t _InSituCount, typename _EqualTo, typename _Allocator>
+Trie<_Key, _Value,  _InSituCount, _EqualTo, _Allocator>::~Trie() {
     Clear();
 }
 //----------------------------------------------------------------------------
-template <typename _Key, typename _Value, typename _EqualTo, typename _Allocator>
-auto Trie<_Key, _Value, _EqualTo, _Allocator>::Insert_AssertUnique(const MemoryView<const _Key>& keys, _Value&& rvalue) -> const node_type * {
+template <typename _Key, typename _Value, size_t _InSituCount, typename _EqualTo, typename _Allocator>
+auto Trie<_Key, _Value,  _InSituCount, _EqualTo, _Allocator>::Insert_AssertUnique(const MemoryView<const _Key>& keys, _Value&& rvalue) -> const node_type * {
     node_type *const node = GetMatch_(keys);
     Assert(_Value() == node->_value);
     node->_value = std::move(rvalue);
@@ -46,8 +46,8 @@ auto Trie<_Key, _Value, _EqualTo, _Allocator>::Insert_AssertUnique(const MemoryV
     return node;
 }
 //----------------------------------------------------------------------------
-template <typename _Key, typename _Value, typename _EqualTo, typename _Allocator>
-auto Trie<_Key, _Value, _EqualTo, _Allocator>::Insert_AssertUnique(const MemoryView<const _Key>& keys, const _Value& value) -> const node_type * {
+template <typename _Key, typename _Value, size_t _InSituCount, typename _EqualTo, typename _Allocator>
+auto Trie<_Key, _Value,  _InSituCount, _EqualTo, _Allocator>::Insert_AssertUnique(const MemoryView<const _Key>& keys, const _Value& value) -> const node_type * {
     node_type *const node = GetMatch_(keys);
     Assert(_Value() == node->_value);
     node->_value = value;
@@ -55,8 +55,8 @@ auto Trie<_Key, _Value, _EqualTo, _Allocator>::Insert_AssertUnique(const MemoryV
     return node;
 }
 //----------------------------------------------------------------------------
-template <typename _Key, typename _Value, typename _EqualTo, typename _Allocator>
-auto Trie<_Key, _Value, _EqualTo, _Allocator>::GetMatch_(const MemoryView<const _Key>& keys) -> node_type * {
+template <typename _Key, typename _Value, size_t _InSituCount, typename _EqualTo, typename _Allocator>
+auto Trie<_Key, _Value,  _InSituCount, _EqualTo, _Allocator>::GetMatch_(const MemoryView<const _Key>& keys) -> node_type * {
     Assert(keys.size());
 
     if (nullptr == _root) {
@@ -80,14 +80,14 @@ auto Trie<_Key, _Value, _EqualTo, _Allocator>::GetMatch_(const MemoryView<const 
     return node;
 }
 //----------------------------------------------------------------------------
-template <typename _Key, typename _Value, typename _EqualTo, typename _Allocator>
-void Trie<_Key, _Value, _EqualTo, _Allocator>::Clear() {
+template <typename _Key, typename _Value, size_t _InSituCount, typename _EqualTo, typename _Allocator>
+void Trie<_Key, _Value,  _InSituCount, _EqualTo, _Allocator>::Clear() {
     if (nullptr == _root) {
         Assert(0 == _size);
         return;
     }
 
-    MALLOCA_STACK(node_type *, nodes, 32);
+    STACKLOCAL_POD_STACK(node_type *, nodes, 32);
 
     node_type *node = _root;
     do {

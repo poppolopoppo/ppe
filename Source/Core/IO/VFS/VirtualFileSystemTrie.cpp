@@ -97,7 +97,7 @@ VirtualFileSystemNode* VirtualFileSystemTrie::GetNodeIFP(const Dirpath& dirpath)
     Assert(result);
 
     for (size_t i = 0; i < k; ++i)
-        if (!(result = result->GetNodeIFP(path[i])))
+        if (nullptr == (result = result->GetNodeIFP(path[i])) )
             return nullptr;
 
     Assert(result);

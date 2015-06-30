@@ -34,10 +34,6 @@ using AllocaPtr = UniquePtr<T, AllocaDeleter<T> >;
 #define MALLOCA(T, _NAME, _COUNT) \
     const Core::AllocaPtr<T> _NAME{ Core::TypedAlloca<T>(_COUNT) }
 //----------------------------------------------------------------------------
-#define MALLOCA_STACK(T, _NAME, _COUNT) \
-    MALLOCA(T, CONCAT(CONCAT(_, _NAME), CONCAT(_Alloca, __LINE__)), _COUNT); \
-    MemoryStack<T> _NAME{ (CONCAT(CONCAT(_, _NAME), CONCAT(_Alloca, __LINE__))).get(), _COUNT }
-//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class AllocaStartup {

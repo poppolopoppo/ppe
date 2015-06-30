@@ -121,11 +121,11 @@ auto CrtAllocationCallstackLogger::Callstack(long requestNumber) const -> const 
 
     const TAllocation* result = nullptr;
     if (_freeAllocation > &_chunks->Allocations[0] &&
-        (result = FindRequestAllocation_(requestNumber, &_chunks->Allocations[0], _freeAllocation)))
+        nullptr != (result = FindRequestAllocation_(requestNumber, &_chunks->Allocations[0], _freeAllocation)) )
         return result;
 
     for (const TPoolChunk* chunk = _chunks->Next; chunk; chunk = chunk->Next)
-        if ((result = FindRequestAllocation_(requestNumber, &chunk->Allocations[0], &chunk->Allocations[TPoolChunk::ChunkSize])))
+        if (nullptr != (result = FindRequestAllocation_(requestNumber, &chunk->Allocations[0], &chunk->Allocations[TPoolChunk::ChunkSize])) )
             return result;
 
     return nullptr;
@@ -197,9 +197,11 @@ namespace {
 A hook function for dumping a Client block usually reports some
 or all of the contents of the block in question.
 */
+/*
 static void __cdecl DumpClientHook_(void *pUserData, size_t nBytes) {
     NOOP;
 }
+*/
 //----------------------------------------------------------------------------
 /* ALLOCATION HOOK FUNCTION
 //----------------------------------------------------------------------------
@@ -208,12 +210,12 @@ uses.
 */
 static int __cdecl AllocHook_(
     int nAllocType,
-    void* pvData,
-    size_t nSize,
+    void* /* pvData */,
+    size_t /* nSize */,
     int nBlockUse,
     long lRequest,
-    const unsigned char *szFileName,
-    int nLine) {
+    const unsigned char * /* szFileName */,
+    int /* nLine */) {
     if (nBlockUse == _CRT_BLOCK)
         return (TRUE);
 
@@ -425,7 +427,7 @@ bool CrtDumpMemoryStats(CrtMemoryStats* memoryStats, void* heapHandle/* = nullpt
         }
         totalOverheadSize += entry.cbOverhead;
     }
-    Assert(ERROR_NO_MORE_ITEMS == GetLastError());
+    //Assert(ERROR_NO_MORE_ITEMS == GetLastError());
 
     if (!HeapUnlock(heapHandle))
     {

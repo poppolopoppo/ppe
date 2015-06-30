@@ -174,13 +174,13 @@ WString Filename::ToWString() const {
 size_t Filename::ToCStr(char *dst, size_t capacity) const {
     OCStrStream oss(dst, capacity);
     oss << *this;
-    return oss.tellp();
+    return static_cast<size_t>(oss.tellp());
 }
 //----------------------------------------------------------------------------
 size_t Filename::ToWCStr(wchar_t *dst, size_t capacity) const {
     WOCStrStream oss(dst, capacity);
     oss << *this;
-    return oss.tellp();
+    return static_cast<size_t>(oss.tellp());
 }
 //----------------------------------------------------------------------------
 void Filename::Swap(Filename& other) {

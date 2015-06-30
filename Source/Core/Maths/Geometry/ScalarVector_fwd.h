@@ -29,6 +29,10 @@ DECL_SCALARVECTOR(double)
 DECL_SCALARVECTOR(i32);
 DECL_SCALARVECTOR(u32);
 //----------------------------------------------------------------------------
+typedef unsigned2 uint2;
+typedef unsigned3 uint3;
+typedef unsigned4 uint4;
+//----------------------------------------------------------------------------
 #undef DECL_SCALARVECTOR
 #undef DECL_SCALARVECTOR_ALIAS
 //----------------------------------------------------------------------------

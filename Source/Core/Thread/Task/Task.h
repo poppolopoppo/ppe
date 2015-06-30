@@ -1,50 +1,66 @@
 #pragma once
 
-#include "Core/Core.h"
-
-#include "Core/Memory/RefPtr.h"
-
-#include <functional>
+#include "Core/Memory/AlignedStorage.h"
+#include "Core/Meta/Delegate.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class TaskContext;
+class TaskPool;
 //----------------------------------------------------------------------------
-enum class TaskResult : bool {
-    Succeed = true,
-    Failed  = false
+typedef void (*TaskFuncWithPool_t)(const TaskPool& pool);
+typedef Delegate<TaskFuncWithPool_t> TaskWithPool;
+//----------------------------------------------------------------------------
+typedef void (*TaskFuncWithoutPool_t)();
+typedef Delegate<TaskFuncWithoutPool_t> TaskWithoutPool;
+//----------------------------------------------------------------------------
+STATIC_ASSERT(sizeof(TaskWithPool) == sizeof(TaskWithoutPool));
+//----------------------------------------------------------------------------
+struct Task {
+    POD_STORAGE(TaskWithPool) Data;
+
+    Task() {}
+    Task(const TaskWithPool& task) { operator =(task); }
+    Task(const TaskWithoutPool& task) { operator =(task); }
+
+    Task& operator =(const TaskWithPool& task) {
+        TaskWithPool *const _task = reinterpret_cast<TaskWithPool *>(&Data);
+        *_task = task;
+        _task->SetFlag0(false);
+        return *this;
+    }
+
+    Task& operator =(const TaskWithoutPool& task) {
+        TaskWithoutPool *const _task = reinterpret_cast<TaskWithoutPool *>(&Data);
+        *_task = task;
+        _task->SetFlag0(true);
+        return *this;
+    }
+
+    bool Valid() const { 
+        return reinterpret_cast<const TaskWithPool *>(&Data)->Valid();
+    }
+
+    void Invoke(const TaskPool& pool) const {
+        const TaskWithPool *const _taskWithPool = reinterpret_cast<const TaskWithPool *>(&Data);
+        if (_taskWithPool->Flag0())
+            reinterpret_cast<const TaskWithoutPool *>(&Data)->Invoke();
+        else
+            _taskWithPool->Invoke(pool);
+    }
+
+    FORCE_INLINE void operator ()(const TaskPool& pool) {
+        Invoke(pool);
+    }
 };
 //----------------------------------------------------------------------------
-class ITask: public RefCountable {
-public:
-    virtual ~ITask() {}
+enum class TaskPriority {
+    High = 0,
+    Normal,
+    Low,
 
-    virtual TaskResult Invoke(const TaskContext& ctx) = 0;
-};
-typedef RefPtr<ITask> PTask;
-typedef RefPtr<const ITask> PCTask;
-//----------------------------------------------------------------------------
-class LambdaTask : public ITask {
-public:
-    typedef std::function<TaskResult (const TaskContext& )> function_type;
-
-    explicit LambdaTask(function_type&& lambda);
-    virtual ~LambdaTask();
-
-    LambdaTask(const LambdaTask& ) = delete;
-    LambdaTask& operator =(const LambdaTask& ) = delete;
-
-    LambdaTask(LambdaTask&& rvalue);
-    LambdaTask& operator =(LambdaTask&& rvalue);
-
-    const function_type& Lambda() const { return _lambda; }
-
-    virtual TaskResult Invoke(const TaskContext& ctx) override;
-
-private:
-    function_type _lambda;
+    _Count
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

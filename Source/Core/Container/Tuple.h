@@ -51,15 +51,14 @@ struct TupleMerger {
     typedef TupleWrap< typename std::remove_reference<_Rhs>::type > rhs_tuple;
 
     typedef typename TupleMerged<
-            typename lhs_tuple::type,
-            typename rhs_tuple::type    >::type
-            type;
+        typename lhs_tuple::type,
+        typename rhs_tuple::type
+    >::type type;
 
     type operator ()(_Lhs&& lhs, _Rhs&& rhs) const {
         return std::tuple_cat(
             lhs_tuple()(std::move(lhs)),
-            rhs_tuple()(std::move(rhs))
-            );
+            rhs_tuple()(std::move(rhs)) );
     }
 };
 //----------------------------------------------------------------------------

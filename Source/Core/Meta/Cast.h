@@ -7,8 +7,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Dst, typename _Src>
-inline NOALIAS
-typename std::enable_if<
+inline NOALIAS typename std::enable_if<
     std::is_arithmetic<_Dst>::value &&
     std::is_arithmetic<_Src>::value &&
     !std::is_same<_Dst, _Src>::value,
@@ -24,8 +23,7 @@ typename std::enable_if<
 }
 //----------------------------------------------------------------------------
 template <typename _Dst, typename _Src>
-inline NOALIAS
-typename std::enable_if<
+inline NOALIAS typename std::enable_if<
     (std::is_pointer<_Dst>::value ^ std::is_pointer<_Src>::value) &&
     !std::is_same<_Dst, _Src>::value,
     _Dst>::type
@@ -40,8 +38,7 @@ typename std::enable_if<
 }
 //----------------------------------------------------------------------------
 template <typename _Dst, typename _Src>
-inline NOALIAS
-typename std::enable_if<
+inline NOALIAS typename std::enable_if<
     (std::is_pointer<_Dst>::value && std::is_pointer<_Src>::value) &&
     !std::is_same<_Dst, _Src>::value,
     _Dst>::type
@@ -58,8 +55,7 @@ typename std::enable_if<
 }
 //----------------------------------------------------------------------------
 template <typename _Dst>
-FORCE_INLINE NOALIAS
-const _Dst& checked_cast(const _Dst& value) {
+FORCE_INLINE NOALIAS const _Dst& checked_cast(const _Dst& value) {
     return value;
 }
 //----------------------------------------------------------------------------

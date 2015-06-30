@@ -15,16 +15,21 @@ FORCE_INLINE size_t hash_value(bool value)      { return value ? 1 : 0; }
 FORCE_INLINE size_t hash_value(int8_t value)    { return size_t(value); }
 FORCE_INLINE size_t hash_value(int16_t value)   { return size_t(value); }
 FORCE_INLINE size_t hash_value(int32_t value)   { return size_t(value); }
-FORCE_INLINE size_t hash_value(int64_t value)   { return size_t(value ^ (value >> 32)); }
 FORCE_INLINE size_t hash_value(uint8_t value)   { return size_t(value); }
 FORCE_INLINE size_t hash_value(uint16_t value)  { return size_t(value); }
 FORCE_INLINE size_t hash_value(uint32_t value)  { return size_t(value); }
+#ifdef ARCH_X64
+FORCE_INLINE size_t hash_value(int64_t value)   { return size_t(value); }
+FORCE_INLINE size_t hash_value(uint64_t value)  { return size_t(value); }
+#else
+FORCE_INLINE size_t hash_value(int64_t value)   { return size_t(value ^ (value >> 32)); }
 FORCE_INLINE size_t hash_value(uint64_t value)  { return size_t(value ^ (value >> 32)); }
+#endif
 FORCE_INLINE size_t hash_value(float value)     { return hash_value(float_bits(value)); }
 FORCE_INLINE size_t hash_value(double value)    { return hash_value(double_bits(value)); }
 FORCE_INLINE size_t hash_value(const void *ptr) { return hash_value(size_t(ptr)); }
 //----------------------------------------------------------------------------
-FORCE_INLINE size_t hash_value(const std::thread::id& id) { return id.hash(); }
+FORCE_INLINE size_t hash_value(const std::thread::id& id) { return std::hash<std::thread::id>()(id); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -56,7 +61,7 @@ FORCE_INLINE size_t hash_value(T (&staticArray)[_Dim]) { return hash_value_seq(&
 //----------------------------------------------------------------------------
 template <typename T>
 struct Hash : public std::unary_function<T, size_t> {
-    size_t operator ()(const T& value) {
+    size_t operator ()(const T& value) const {
         return hash_value(value);
     }
 };

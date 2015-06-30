@@ -11,6 +11,7 @@ MEMORY_DOMAIN_IMPL(Core,                    Global)
 //------------------------------------------------------------------------------
 MEMORY_DOMAIN_IMPL(Alloca,                  Core)
 MEMORY_DOMAIN_IMPL(Container,               Core)
+MEMORY_DOMAIN_IMPL(Event,                   Core)
 MEMORY_DOMAIN_IMPL(FileSystem,              Core)
 MEMORY_DOMAIN_IMPL(Internal,                Core)
 MEMORY_DOMAIN_IMPL(Maths,                   Core)
@@ -51,6 +52,12 @@ MEMORY_DOMAIN_IMPL(Render,                  Engine)
 MEMORY_DOMAIN_IMPL(Scene,                   Engine)
 MEMORY_DOMAIN_IMPL(Service,                 Engine)
 MEMORY_DOMAIN_IMPL(World,                   Engine)
+//------------------------------------------------------------------------------
+MEMORY_DOMAIN_IMPL(Logic,                   Core)
+//------------------------------------------------------------------------------
+MEMORY_DOMAIN_IMPL(Component,               Logic)
+MEMORY_DOMAIN_IMPL(Entity,                  Logic)
+MEMORY_DOMAIN_IMPL(System,                  Logic)
 //------------------------------------------------------------------------------
 MEMORY_DOMAIN_IMPL(Application,             Core)
 //------------------------------------------------------------------------------

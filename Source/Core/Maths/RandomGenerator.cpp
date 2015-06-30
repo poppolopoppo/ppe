@@ -14,7 +14,7 @@ RandomGenerator::RandomGenerator()
 :   RandomGenerator(0) {}
 //----------------------------------------------------------------------------
 RandomGenerator::RandomGenerator(RandomSeedTag)
-:   RandomGenerator(RandomSeed(reinterpret_cast<u32>(this))) {}
+:   RandomGenerator(RandomSeed(u32(hash_value((void *)this)))) {}
 //----------------------------------------------------------------------------
 RandomGenerator::RandomGenerator(u32 seed) {
     Reset(seed);

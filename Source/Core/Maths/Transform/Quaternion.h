@@ -13,6 +13,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 class Quaternion {
 public:
+    Quaternion();
     explicit Quaternion(float broadcast);
     explicit Quaternion(const float4& value);
     Quaternion(const float3& value, float w);
@@ -67,9 +68,9 @@ public:
     Quaternion& operator *=(const Quaternion& other);
     Quaternion operator *(const Quaternion& other) const;
 
-    static Quaternion Identity() { return Quaternion(0,0,0,1); }
-    static Quaternion One() { return Quaternion(1,1,1,1); }
-    static Quaternion Zero() { return Quaternion(0,0,0,0); }
+    FORCE_INLINE static Quaternion Identity() { return Quaternion(0,0,0,1); }
+    FORCE_INLINE static Quaternion One() { return Quaternion(1,1,1,1); }
+    FORCE_INLINE static Quaternion Zero() { return Quaternion(0,0,0,0); }
 
 private:
     float4 _value;

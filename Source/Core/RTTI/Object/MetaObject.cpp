@@ -42,11 +42,11 @@ void MetaObject::RTTI_Unexport() {
     Assert(_name.empty());
 }
 //----------------------------------------------------------------------------
-void MetaObject::RTTI_Load(MetaLoadContext *context) {
+void MetaObject::RTTI_Load(MetaLoadContext * /* context */) {
     Assert(0 == (_state & Loaded));
 }
 //----------------------------------------------------------------------------
-void MetaObject::RTTI_Unload(MetaUnloadContext *context) {
+void MetaObject::RTTI_Unload(MetaUnloadContext * /* context */) {
     Assert(0 == (_state & Unloaded));
 }
 //----------------------------------------------------------------------------

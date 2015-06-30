@@ -15,7 +15,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 #define RAWSTORAGE_THREAD_LOCAL(_DOMAIN, T) \
     ::Core::RawStorage<T, THREAD_LOCAL_ALLOCATOR(_DOMAIN, T)>
-    //----------------------------------------------------------------------------
+//----------------------------------------------------------------------------
 #define RAWSTORAGE_ALIGNED(_DOMAIN, T, _ALIGNMENT) \
     ::Core::RawStorage<T, ALIGNED_ALLOCATOR(_DOMAIN, T, _ALIGNMENT)>
 //----------------------------------------------------------------------------
@@ -29,8 +29,8 @@ public:
     typedef T value_type;
     typedef typename std::add_pointer<T>::type pointer;
     typedef typename std::add_pointer<const T>::type const_pointer;
-    typedef typename std::add_reference<T>::type reference;
-    typedef typename std::add_reference<const T>::type const_reference;
+    typedef typename std::add_lvalue_reference<T>::type reference;
+    typedef typename std::add_lvalue_reference<const T>::type const_reference;
 
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;

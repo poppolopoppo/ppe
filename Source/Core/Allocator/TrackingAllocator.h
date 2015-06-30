@@ -11,8 +11,28 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Allocator>
+class TrackingAllocator;
+//----------------------------------------------------------------------------
+namespace Meta {
+//----------------------------------------------------------------------------
+template <typename T>
+struct IsATrackingAllocator {
+    enum : bool { value = false };
+};
+template <typename _Allocator>
+struct IsATrackingAllocator< TrackingAllocator<_Allocator> > {
+    enum : bool { value = true };
+};
+//----------------------------------------------------------------------------
+} //!namespace Meta
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _Allocator>
 class TrackingAllocator : public _Allocator {
 public:
+    STATIC_ASSERT(!Meta::IsATrackingAllocator< _Allocator >::value);
+
     typedef _Allocator base_type;
 
     using typename base_type::size_type;
@@ -44,9 +64,9 @@ public:
     TrackingAllocator(const TrackingAllocator<U>& other) throw()
         : base_type(other), _trackingData(other.TrackingData()) {}
 
-    TrackingAllocator& operator=(const TrackingAllocator& other);
+    TrackingAllocator& operator =(const TrackingAllocator& other);
     template<typename U>
-    TrackingAllocator& operator=(const TrackingAllocator<U>& other);
+    TrackingAllocator& operator =(const TrackingAllocator<U>& other);
 
     size_type max_size() const { return base_type::max_size(); }
 
@@ -55,6 +75,17 @@ public:
     void deallocate(void* p, size_type n);
 
     MemoryTrackingData* TrackingData() const { return _trackingData; }
+    
+    template <typename U>
+    friend bool operator ==(const TrackingAllocator& lhs, const TrackingAllocator<U>& rhs) {
+        return  operator ==(static_cast<const base_type&>(lhs), static_cast<const typename TrackingAllocator<U>::base_type&>(rhs)) &&
+                lhs._trackingData == rhs._trackingData;
+    }
+
+    template <typename U>
+    friend bool operator !=(const TrackingAllocator& lhs, const TrackingAllocator<U>& rhs) {
+        return !operator ==(lhs, rhs);
+    }
 
 private:
     MemoryTrackingData* _trackingData;
@@ -89,26 +120,6 @@ void TrackingAllocator<_Allocator>::deallocate(void* p, size_type n) {
 
     if (_trackingData)
         _trackingData->Deallocate(n, sizeof(value_type));
-}
-//----------------------------------------------------------------------------
-template <typename _Allocator >
-bool operator ==(const TrackingAllocator<_Allocator>& lhs, const TrackingAllocator<_Allocator>& rhs) {
-    return operator ==(static_cast<const _Allocator&>(lhs), static_cast<const _Allocator&>(rhs));
-}
-//----------------------------------------------------------------------------
-template <typename _Allocator >
-bool operator !=(const TrackingAllocator<_Allocator>& lhs, const TrackingAllocator<_Allocator>& rhs) {
-    return !operator ==(lhs, rhs);
-}
-//----------------------------------------------------------------------------
-template <typename _Allocator, typename _Other >
-bool operator ==(const TrackingAllocator<_Allocator>& lhs, const _Other& rhs) {
-    return false;
-}
-//----------------------------------------------------------------------------
-template <typename _Allocator, typename _Other >
-bool operator !=(const TrackingAllocator<_Allocator>& lhs, const _Other& rhs) {
-    return !operator ==(lhs, rhs);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -146,37 +157,17 @@ public:
     TagTrackingAllocator(const TagTrackingAllocator<U, tag_type>& other) throw()
         : base_type(other, tag_type::TrackingData) {}
 
-    TagTrackingAllocator& operator=(const TagTrackingAllocator& other) {
+    TagTrackingAllocator& operator =(const TagTrackingAllocator& other) {
         base_type::operator =(other);
         return *this;
     }
 
     template<typename U>
-    TagTrackingAllocator& operator=(const TagTrackingAllocator<U, tag_type>& other) {
+    TagTrackingAllocator& operator =(const TagTrackingAllocator<U, tag_type>& other) {
         base_type::operator =(other);
         return *this;
     }
 };
-//----------------------------------------------------------------------------
-template <typename _Allocator, typename _Tag >
-bool operator ==(const TagTrackingAllocator<_Allocator, _Tag>& lhs, const TagTrackingAllocator<_Allocator, _Tag>& rhs) {
-    return operator ==(static_cast<const _Allocator&>(lhs), static_cast<const _Allocator&>(rhs));
-}
-//----------------------------------------------------------------------------
-template <typename _Allocator, typename _Tag >
-bool operator !=(const TagTrackingAllocator<_Allocator, _Tag>& lhs, const TagTrackingAllocator<_Allocator, _Tag>& rhs) {
-    return !operator ==(lhs, rhs);
-}
-//----------------------------------------------------------------------------
-template <typename _Allocator, typename _Tag, typename _Other >
-bool operator ==(const TagTrackingAllocator<_Allocator, _Tag>& lhs, const _Other& rhs) {
-    return false;
-}
-//----------------------------------------------------------------------------
-template <typename _Allocator, typename _Tag, typename _Other >
-bool operator !=(const TagTrackingAllocator<_Allocator, _Tag>& lhs, const _Other& rhs) {
-    return !operator ==(lhs, rhs);
-}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

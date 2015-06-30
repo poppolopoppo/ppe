@@ -130,7 +130,7 @@ auto TokenAllocator<_Char, _Allocator>::Allocate(size_t count) -> _Char * {
 
     Bucket* bucket = _buckets;
     while (bucket) {
-        if ((result = _buckets->Stack.Allocate(count)))
+        if (nullptr != (result = _buckets->Stack.Allocate(count)) )
             return result;
         bucket = bucket->Next;
     }
@@ -277,6 +277,9 @@ void TokenSet<_Char, _CaseSensitive, _Allocator>::Clear() {
         slot.Clear();
 }
 //----------------------------------------------------------------------------
+#pragma warning( push )
+#pragma warning( disable : 4127) // C4127: l'expression conditionnelle est une constante
+
 template <typename _Char, CaseSensitive _CaseSensitive, typename _Allocator>
 template <typename _TokenTraits>
 size_t TokenSet<_Char, _CaseSensitive, _Allocator>::SlotHash(const BasicStringSlice<_Char>& content) {
@@ -293,6 +296,8 @@ size_t TokenSet<_Char, _CaseSensitive, _Allocator>::SlotHash(const BasicStringSl
     }
     return (h & SlotMask);
 }
+
+#pragma warning( pop )
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

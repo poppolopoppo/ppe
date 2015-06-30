@@ -79,12 +79,12 @@ MetaObject *NewCopy(const MetaObject& src) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void DeepCopy(MetaObject& dst, const MetaObject& src) {
+void DeepCopy(MetaObject& /* dst */, const MetaObject& /* src */) {
     // TODO (01/14) : MetaPropertyVisitor
     Assert(false);
 }
 //----------------------------------------------------------------------------
-MetaObject *NewDeepCopy(const MetaObject& src) {
+MetaObject *NewDeepCopy(const MetaObject& /* src */) {
     // TODO (01/14) : MetaPropertyVisitor
     Assert(false);
     return nullptr;

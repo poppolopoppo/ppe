@@ -11,9 +11,6 @@ namespace Core {
 //----------------------------------------------------------------------------
 typedef MemoryStack<uint8_t> StackAllocatorMemory;
 //----------------------------------------------------------------------------
-#define MALLOCA_STACKALLOCATORMEMORY(_SIZE) \
-    MALLOCA_STACK(uint8_t, _SIZE)
-//----------------------------------------------------------------------------
 template <typename T>
 class StackAllocator : public AllocatorBase<T> {
 public:
@@ -49,6 +46,16 @@ public:
     void deallocate(void* p, size_type n);
 
     StackAllocatorMemory* MemoryStack() const { return _memoryStack; }
+
+    template <typename U>
+    friend bool operator ==(const StackAllocator& lhs, const StackAllocator<U>& rhs) {
+        return lhs._memoryStack == rhs._memoryStack;
+    }
+
+    template <typename U>
+    friend bool operator !=(const StackAllocator& lhs, const StackAllocator<U>& rhs) {
+        return !operator ==(lhs, rhs);
+    }
 
 private:
     StackAllocatorMemory* _memoryStack;
@@ -121,28 +128,6 @@ void StackAllocator<T>::deallocate(void* p, size_type n) {
     Assert(_memoryStack);
 
     _memoryStack->Deallocate(reinterpret_cast<typename StackAllocatorMemory::pointer>(p), n);
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename T>
-bool operator ==(const StackAllocator<T>& lhs, const StackAllocator<T>& rhs) {
-    return (lhs._memoryStack == rhs._memoryStack);
-}
-//----------------------------------------------------------------------------
-template <typename T>
-bool operator !=(const StackAllocator<T>& lhs, const StackAllocator<T>& rhs) {
-    return !operator ==(lhs, rhs);
-}
-//----------------------------------------------------------------------------
-template <typename T, typename _Other >
-bool operator ==(const StackAllocator<T>& lhs, const _Other& rhs) {
-    return false;
-}
-//----------------------------------------------------------------------------
-template <typename T, typename _Other >
-bool operator !=(const StackAllocator<T>& lhs, const _Other& rhs) {
-    return !operator ==(lhs, rhs);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

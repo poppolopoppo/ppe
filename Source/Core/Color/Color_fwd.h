@@ -1,29 +1,31 @@
-#include "stdafx.h"
+#pragma once
 
-#include "Task.h"
+#include "Core/Core.h"
 
-#include "TaskContext.h"
+#include "Core/Maths/Geometry/ScalarVector_fwd.h"
+#include "Core/Maths/Packing/PackingHelpers.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-LambdaTask::LambdaTask(function_type&& lambda)
-:   _lambda(std::move(lambda)) {}
+template <typename T>
+using BasicColorData = ScalarVector<T, 4>;
 //----------------------------------------------------------------------------
-LambdaTask::~LambdaTask() {}
+template <typename T, typename _Shuffle>
+class BasicColor;
 //----------------------------------------------------------------------------
-LambdaTask::LambdaTask(LambdaTask&& rvalue)
-:   _lambda(std::move(rvalue._lambda)) {}
+struct ColorShuffleRGBA;
+struct ColorShuffleBGRA;
 //----------------------------------------------------------------------------
-LambdaTask& LambdaTask::operator =(LambdaTask&& rvalue) {
-    _lambda = std::move(rvalue._lambda);
-    return *this;
-}
+typedef BasicColor< UNorm<u8>, ColorShuffleBGRA > ColorBGRA;
+typedef BasicColor< UNorm<u8>, ColorShuffleRGBA > ColorRGBA;
 //----------------------------------------------------------------------------
-TaskResult LambdaTask::Invoke(const TaskContext& ctx) {
-    return _lambda(ctx);
-}
+typedef BasicColor< UNorm<u16>, ColorShuffleBGRA > ColorBGRA16;
+typedef BasicColor< UNorm<u16>, ColorShuffleRGBA > ColorRGBA16;
+//----------------------------------------------------------------------------
+typedef BasicColor< float, ColorShuffleBGRA > ColorBGRAF;
+typedef BasicColor< float, ColorShuffleRGBA > ColorRGBAF;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

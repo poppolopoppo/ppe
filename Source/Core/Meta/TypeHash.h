@@ -1,22 +1,24 @@
-#include "stdafx.h"
-
-#include "TaskContext.h"
+#pragma once
 
 namespace Core {
+namespace Meta {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-TaskContext::TaskContext(TaskEvaluator *evaluator, TaskWorker *worker, TaskCompletionPort *completionPort)
-:   _evaluator(evaluator)
-,   _worker(worker)
-,   _completionPort(completionPort) {
-    Assert(evaluator);
-    Assert(worker);
-    Assert(completionPort);
-}
+// Gets a unique ID for T (different each run)
 //----------------------------------------------------------------------------
-TaskContext::~TaskContext() {}
+template <typename T>
+class TypeHash {
+public:
+    static size_t value() { return size_t(&sTag); }
+private:
+    static const size_t sTag;
+};
+//----------------------------------------------------------------------------
+template <typename T>
+size_t TypeHash<T>::sTag(0);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+} //!namespace Meta
 } //!namespace Core

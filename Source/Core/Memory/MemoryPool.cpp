@@ -9,16 +9,23 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-MemoryPoolChunk::MemoryPoolChunk(MemoryPoolChunk *nextChunk /* = nullptr */)
-: _blockUsed(0), _blockAdded(0), _blocks(nullptr), _nextChunk(nextChunk) {}
+MemoryPoolChunk::MemoryPoolChunk(size_t chunkSize, size_t blockCount, MemoryPoolChunk *nextChunk /* = nullptr */)
+:   _blocks(nullptr)
+,   _blockCount(checked_cast<u32>(blockCount))
+,   _blockUsed(0)
+,   _blockAdded(0)
+,   _chunkSize(chunkSize)
+,   _nextChunk(nextChunk) {
+    Assert(blockCount > 10);
+}
 //----------------------------------------------------------------------------
 MemoryPoolChunk::~MemoryPoolChunk() {
     AssertRelease(0 == _blockUsed);
 }
 //----------------------------------------------------------------------------
-void *MemoryPoolChunk::AllocateBlock(size_t blockSize, size_t blockCount) {
-    Assert(BlockAvailable(blockCount));
-    Assert(_blockUsed < blockCount);
+void *MemoryPoolChunk::AllocateBlock(size_t blockSize) {
+    Assert(BlockAvailable());
+    Assert(_blockUsed < _blockCount);
 
     void *block = nullptr;
 
@@ -27,7 +34,7 @@ void *MemoryPoolChunk::AllocateBlock(size_t blockSize, size_t blockCount) {
         _blocks = _blocks->Next;
     }
     else {
-        Assert(blockCount > _blockAdded);
+        Assert(_blockCount > _blockAdded);
         block = Storage() + _blockAdded++ * blockSize;
     }
 
@@ -37,10 +44,10 @@ void *MemoryPoolChunk::AllocateBlock(size_t blockSize, size_t blockCount) {
     return block;
 }
 //----------------------------------------------------------------------------
-void MemoryPoolChunk::ReleaseBlock(void *ptr, size_t blockSize, size_t blockCount) {
+void MemoryPoolChunk::ReleaseBlock(void *ptr, size_t blockSize) {
     Assert(ptr);
     Assert(!CompletelyFree());
-    Assert(Contains(ptr, blockSize, blockCount));
+    Assert(Contains(ptr, blockSize));
     Assert(_blockUsed);
 
     Block *const block = reinterpret_cast<Block *>(ptr);
@@ -53,24 +60,64 @@ void MemoryPoolChunk::ReleaseBlock(void *ptr, size_t blockSize, size_t blockCoun
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-MemoryPoolBase::MemoryPoolBase(size_t blockSize, size_t chunkSize)
-:   _blockSize(checked_cast<u32>(blockSize)),
-    _chunkSize(checked_cast<u32>(chunkSize)),
-    _chunks(nullptr) {
-    Assert(blockSize);
-    Assert(chunkSize);
-    Assert(BlockCountPerChunk() > 50); // sanity check
+MemoryPoolBase::MemoryPoolBase(size_t blockSize, size_t minChunkSize, size_t maxChunkSize)
+:   _chunks(nullptr)
+,   _currentChunksize(minChunkSize)
+,   _chunkCount(0)
+,   _blockSize(blockSize)
+,   _minChunkSize(minChunkSize)
+,   _maxChunkSize(maxChunkSize) {
     Assert(blockSize >= sizeof(MemoryPoolChunk::Block));
+    Assert(_maxChunkSize >= minChunkSize);
+    Assert(minChunkSize > blockSize*10);
 
-    LOG(Information, L"[POOL] New pool with block size = {0}, chunk size = {1}, blocks per chunk = {2}",
-        _blockSize, SizeInBytes{ _chunkSize }, BlockCountPerChunk());
+    LOG(Information, 
+        L"[POOL] New pool with block size = {0}\n"
+        L"    - min chunk size = {1}\n"
+        L"    - max chunk size = {2}\n"
+        L"    - current chunk size = {3}\n"
+        L"    - current blocks per chunk = {4}",
+        _blockSize, 
+        SizeInBytes{ _minChunkSize }, SizeInBytes{ _maxChunkSize }, SizeInBytes{ _currentChunksize },
+        BlockCountPerChunk(_currentChunksize) );
 }
 //----------------------------------------------------------------------------
 MemoryPoolBase::~MemoryPoolBase() {
     AssertRelease(nullptr == _chunks);
 
-    LOG(Information, L"[POOL] Delete pool with block size = {0}, chunk size = {1}, blocks per chunk = {2}",
-        _blockSize, SizeInBytes{ _chunkSize }, BlockCountPerChunk());
+    LOG(Information, 
+        L"[POOL] Delete pool with block size = {0}\n"
+        L"    - min chunk size = {1}\n"
+        L"    - max chunk size = {2}\n"
+        L"    - current chunk size = {3}\n"
+        L"    - current blocks per chunk = {4}",
+        _blockSize, 
+        SizeInBytes{ _minChunkSize }, SizeInBytes{ _maxChunkSize }, SizeInBytes{ _currentChunksize },
+        BlockCountPerChunk(_currentChunksize) );
+}
+//----------------------------------------------------------------------------
+void MemoryPoolBase::GrowChunkSizeIFP() {
+    const size_t nextChunkSize = _currentChunksize * 2;
+    if (nextChunkSize <= _maxChunkSize)
+    {
+        _currentChunksize = nextChunkSize;
+
+        LOG(Information, 
+            L"[POOL] Grow pool with block size = {0}\n"
+            L"    - min chunk size = {1}\n"
+            L"    - max chunk size = {2}\n"
+            L"    - current chunk size = {3}\n"
+            L"    - current blocks per chunk = {4}\n"
+            L"    - chunk count = {5}",
+            _blockSize, 
+            SizeInBytes{ _minChunkSize }, SizeInBytes{ _maxChunkSize }, SizeInBytes{ _currentChunksize },
+            BlockCountPerChunk(_currentChunksize),
+            _chunkCount );
+    }
+}
+//----------------------------------------------------------------------------
+void MemoryPoolBase::ResetChunkSize() {
+    _currentChunksize = _minChunkSize;
 }
 //----------------------------------------------------------------------------
 void MemoryPoolBase::AddChunk(MemoryPoolChunk *chunk) {
@@ -79,15 +126,15 @@ void MemoryPoolBase::AddChunk(MemoryPoolChunk *chunk) {
 
     chunk->SetNext(_chunks);
     _chunks = chunk;
+
+    ++_chunkCount;
 }
 //----------------------------------------------------------------------------
 void *MemoryPoolBase::TryAllocate_FailIfNoBlockAvailable() {
-    const size_t blockCount = BlockCountPerChunk();
-
     MemoryPoolChunk *chunk = _chunks;
     while (chunk)
-        if (chunk->BlockAvailable(blockCount))
-            return chunk->AllocateBlock(_blockSize, blockCount);
+        if (chunk->BlockAvailable())
+            return chunk->AllocateBlock(_blockSize);
         else
             chunk = chunk->Next();
 
@@ -97,13 +144,11 @@ void *MemoryPoolBase::TryAllocate_FailIfNoBlockAvailable() {
 MemoryPoolChunk *MemoryPoolBase::Deallocate_ReturnChunkToRelease(void *ptr) {
     Assert(_chunks);
 
-    const size_t blockCount = BlockCountPerChunk();
-
     MemoryPoolChunk *prev = nullptr;
     MemoryPoolChunk *chunk = _chunks;
     while (chunk) {
-        if (chunk->Contains(ptr, _blockSize, blockCount)) {
-            chunk->ReleaseBlock(ptr, _blockSize, blockCount);
+        if (chunk->Contains(ptr, _blockSize)) {
+            chunk->ReleaseBlock(ptr, _blockSize);
 
             if (!chunk->CompletelyFree())
                 return nullptr;
@@ -118,6 +163,9 @@ MemoryPoolChunk *MemoryPoolBase::Deallocate_ReturnChunkToRelease(void *ptr) {
 
             Assert(chunk->CompletelyFree());
             chunk->SetNext(nullptr); // more paranoid than anything
+
+            Assert(_chunkCount);
+            --_chunkCount;
 
             return chunk;
         }
@@ -139,6 +187,10 @@ MemoryPoolChunk *MemoryPoolBase::ClearOneChunk_AssertCompletelyFree() {
     Assert(nullptr == chunk->Next()); // logically ...
 
     _chunks = _chunks->Next();
+
+    Assert(_chunkCount);
+    --_chunkCount;
+
     return chunk;
 }
 //----------------------------------------------------------------------------
@@ -149,6 +201,10 @@ MemoryPoolChunk *MemoryPoolBase::ClearOneChunk_IgnoreLeaks() {
     MemoryPoolChunk *const chunk = _chunks;
 
     _chunks = _chunks->Next();
+
+    Assert(_chunkCount);
+    --_chunkCount;
+
     return chunk;
 }
 //----------------------------------------------------------------------------
@@ -164,8 +220,11 @@ MemoryPoolChunk *MemoryPoolBase::ClearOneChunk_UnusedMemory() {
         chunk = chunk->Next();
     }
 
-    if (prev && chunk)
+    if (prev && chunk) {
+        Assert(_chunkCount);
+        --_chunkCount;
         prev->SetNext(chunk->Next());
+    }
 
     return chunk;
 }

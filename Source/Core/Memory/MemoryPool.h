@@ -5,16 +5,22 @@
 #include "Core/Allocator/Allocation.h"
 #include "Core/Meta/ThreadResource.h"
 
+// Uncomment to disable pool allocation (useful for memory debugging) :
+//#define WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC //%__NOCOMMIT%
+
 namespace Core {
 class MemoryTrackingData;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MemoryPoolChunk {
+#pragma warning(push)
+#pragma warning(disable: 4324) // warning C4324: 'Core::MemoryPoolChunk' : structure was padded due to __declspec(align())
+//----------------------------------------------------------------------------
+ALIGN(16) class MemoryPoolChunk {
 public:
     struct Block { Block *Next; };
 
-    explicit MemoryPoolChunk(MemoryPoolChunk *nextChunk = nullptr);
+    explicit MemoryPoolChunk(size_t chunkSize, size_t blockCount, MemoryPoolChunk *nextChunk = nullptr);
     ~MemoryPoolChunk();
 
     MemoryPoolChunk(MemoryPoolChunk&&) = delete;
@@ -22,6 +28,9 @@ public:
 
     MemoryPoolChunk(const MemoryPoolChunk&) = delete;
     MemoryPoolChunk& operator =(const MemoryPoolChunk&) = delete;
+
+    size_t ChunkSize() const { return _chunkSize; }
+    size_t BlockCount() const { return _blockCount; }
 
     MemoryPoolChunk *Next() const { return _nextChunk; }
     void SetNext(MemoryPoolChunk *next) { _nextChunk = next; }
@@ -32,27 +41,35 @@ public:
     const char *Storage() const { return reinterpret_cast<const char *>(&this[1]); }
 
     bool CompletelyFree() const { return (0 == _blockUsed); }
-    bool BlockAvailable(size_t blockCount) const { return (blockCount > _blockUsed); }
+    bool BlockAvailable() const { return (_blockCount > _blockUsed); }
 
-    bool Contains(void *block, size_t blockSize, size_t blockCount) const {
-        return (Storage() <= block) && (Storage() + blockSize*blockCount > block);
+    bool Contains(void *block, size_t blockSize) const {
+        return (Storage() <= block) && (Storage() + blockSize*_blockCount > block);
     }
 
-    void *AllocateBlock(size_t blockSize, size_t blockCount);
-    void ReleaseBlock(void *ptr, size_t blockSize, size_t blockCount);
+    void *AllocateBlock(size_t blockSize);
+    void ReleaseBlock(void *ptr, size_t blockSize);
 
 private:
+    Block *_blocks;
+
+    u32 _blockCount;
     u32 _blockUsed;
     u32 _blockAdded;
-    Block *_blocks;
+
+    const size_t _chunkSize;
     MemoryPoolChunk *_nextChunk;
 };
+//----------------------------------------------------------------------------
+STATIC_ASSERT(IS_ALIGNED(16, sizeof(MemoryPoolChunk)));
+//----------------------------------------------------------------------------
+#pragma warning(pop)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class MemoryPoolBase {
 public:
-    MemoryPoolBase(size_t blockSize, size_t chunkSize);
+    MemoryPoolBase(size_t blockSize, size_t minChunkSize, size_t maxChunkSize);
     virtual ~MemoryPoolBase();
 
     MemoryPoolBase(MemoryPoolBase&&) = delete;
@@ -62,18 +79,24 @@ public:
     MemoryPoolBase& operator =(const MemoryPoolBase&) = delete;
 
     size_t BlockSize() const { return _blockSize; }
-    size_t ChunkSize() const { return _chunkSize; }
-
-    size_t BlockCountPerChunk() const { return (_chunkSize - sizeof(MemoryPoolChunk)) / _blockSize; }
+    size_t MinChunkSize() const { return _minChunkSize; }
+    size_t MaxChunksize() const { return _maxChunkSize; }
+    size_t CurrentChunkSize() const { return _currentChunksize; }
+    size_t ChunkCount() const { return _chunkCount; }
 
     MemoryPoolChunk *Chunks() { return _chunks; }
     const MemoryPoolChunk *Chunks() const { return _chunks; }
+
+    size_t BlockCountPerChunk(size_t chunkSize) const { return (chunkSize - sizeof(MemoryPoolChunk)) / _blockSize; }
 
     virtual void Clear_AssertCompletelyFree() = 0;
     virtual void Clear_IgnoreLeaks() = 0;
     virtual void Clear_UnusedMemory() = 0;
 
 protected:
+    void GrowChunkSizeIFP();
+    void ResetChunkSize();
+
     void AddChunk(MemoryPoolChunk *chunk);
 
     void *TryAllocate_FailIfNoBlockAvailable();
@@ -84,9 +107,13 @@ protected:
     MemoryPoolChunk *ClearOneChunk_UnusedMemory();
 
 private:
-    u32 _blockSize;
-    u32 _chunkSize;
     MemoryPoolChunk *_chunks;
+    size_t _currentChunksize;
+    size_t _chunkCount;
+
+    const size_t _blockSize;
+    const size_t _minChunkSize;
+    const size_t _maxChunkSize;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -99,14 +126,15 @@ public:
 
     enum : bool { IsLocked = _Lock };
 
-    MemoryPool(size_t blockSize, size_t chunkSize);
-    MemoryPool(size_t blockSize, size_t chunkSize, allocator_type&& allocator);
-    MemoryPool(size_t blockSize, size_t chunkSize, const allocator_type& allocator);
+    MemoryPool(size_t blockSize, size_t minChunkSize, size_t maxChunkSize);
+    MemoryPool(size_t blockSize, size_t minChunkSize, size_t maxChunkSize, allocator_type&& allocator);
+    MemoryPool(size_t blockSize, size_t minChunkSize, size_t maxChunkSize, const allocator_type& allocator);
     virtual ~MemoryPool();
 
     using MemoryPoolBase::BlockSize;
-    using MemoryPoolBase::ChunkSize;
+    using MemoryPoolBase::CurrentChunkSize;
     using MemoryPoolBase::BlockCountPerChunk;
+    using MemoryPoolBase::ResetChunkSize;
 
     void *Allocate(MemoryTrackingData *trackingData = nullptr);
     void Deallocate(void *ptr, MemoryTrackingData *trackingData = nullptr);

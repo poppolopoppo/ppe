@@ -37,6 +37,16 @@ public:
     pointer allocate(size_type n, const void* /*hint*/) { return allocate(n); }
     void deallocate(void* p, size_type );
 
+    template <typename U>
+    friend bool operator ==(const BuddyAllocator& lhs, const BuddyAllocator<U, _BuddyHeap>& rhs) {
+        return lhs._heap == rhs._heap;
+    }
+    
+    template <typename U>
+    friend bool operator !=(const BuddyAllocator& lhs, const BuddyAllocator<U, _BuddyHeap>& rhs) {
+        return !operator ==(lhs, rhs);
+    }
+
 private:
     _BuddyHeap *_heap;
 };
@@ -76,28 +86,6 @@ void BuddyAllocator<T, _BuddyHeap>::deallocate(void* p, size_type) {
 
     // BuddyAllocator wraps BuddyHeap.
     _heap->Deallocate(p);
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename T, typename _BuddyHeap>
-bool operator ==(const BuddyAllocator<T, _BuddyHeap>& lhs, const BuddyAllocator<T, _BuddyHeap>& rhs) {
-    return true;
-}
-//----------------------------------------------------------------------------
-template <typename T, typename _BuddyHeap>
-bool operator !=(const BuddyAllocator<T, _BuddyHeap>& lhs, const BuddyAllocator<T, _BuddyHeap>& rhs) {
-    return !operator ==(lhs, rhs);
-}
-//----------------------------------------------------------------------------
-template <typename T, typename _BuddyHeap, typename _Other >
-bool operator ==(const BuddyAllocator<T, _BuddyHeap>& lhs, const _Other& rhs) {
-    return false;
-}
-//----------------------------------------------------------------------------
-template <typename T, typename _BuddyHeap, typename _Other >
-bool operator !=(const BuddyAllocator<T, _BuddyHeap>& lhs, const _Other& rhs) {
-    return !operator ==(lhs, rhs);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

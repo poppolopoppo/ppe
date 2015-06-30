@@ -17,7 +17,7 @@ namespace Core {
 Guid Guid::Generate() {
     Guid result;
 #ifdef OS_WINDOWS
-    CoCreateGuid(reinterpret_cast<::GUID *>(&result));
+    ::CoCreateGuid(reinterpret_cast<::GUID *>(&result));
 #else
     AssertNotImplemented();
 #endif

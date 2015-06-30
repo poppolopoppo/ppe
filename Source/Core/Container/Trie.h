@@ -3,6 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/Allocator/Allocation.h"
+#include "Core/Allocator/NodeBasedContainerAllocator.h"
 #include "Core/Container/AssociativeVector.h"
 #include "Core/Container/Pair.h"
 #include "Core/Memory/MemoryView.h"
@@ -11,24 +12,25 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Key, typename _Value, typename _EqualTo, typename _Allocator>
+template <typename _Key, typename _Value, size_t _InSituCount, typename _EqualTo, typename _Allocator>
 class Trie;
 //----------------------------------------------------------------------------
 template <
     typename _Key,
     typename _Value,
+    size_t   _InSituCount,
     typename _EqualTo = EqualTo<_Key>,
     typename _Allocator = ALLOCATOR(Container, Pair<_Key COMMA _Value>)
 >   class TrieNode {
 public:
-    friend class Trie<_Key, _Value, _EqualTo, _Allocator>;
+    friend class Trie<_Key, _Value, _InSituCount, _EqualTo, _Allocator>;
 
     typedef AssociativeVector<
-        _Key,
-        void *,
-        _EqualTo,
-        typename _Allocator::template rebind< Pair<_Key, void *> >::other
-    >   node_index_dictionary;
+        _Key
+    ,   void *
+    ,   _EqualTo
+    ,   VectorInSitu< Pair<_Key, void *>, _InSituCount, _Allocator > 
+    >   node_index_map;
 
     TrieNode();
     ~TrieNode();
@@ -39,25 +41,26 @@ public:
     _Value& Value() { return _value; }
     const _Value& Value() const { return _value; }
 
-    const node_index_dictionary& Children() const { return _children; }
+    const node_index_map& Children() const { return _children; }
 
     bool Find(const _Key& key, TrieNode **node);
     bool Find(const _Key& key, const TrieNode **node) const;
 
 private:
     _Value _value;
-    node_index_dictionary _children;
+    node_index_map _children;
 };
 //----------------------------------------------------------------------------
 template <
     typename _Key,
     typename _Value,
+    size_t   _InSituCount = 3,
     typename _EqualTo = EqualTo<_Key>,
     typename _Allocator = ALLOCATOR(Container, Pair<_Key COMMA _Value>)
->   class Trie : _Allocator::template rebind< TrieNode<_Key, _Value, _EqualTo, _Allocator> >::other {
+>   class Trie : NODEBASED_CONTAINER_ALLOCATOR(Container, TrieNode<_Key COMMA _Value COMMA _InSituCount COMMA _EqualTo COMMA _Allocator>) {
 public:
-    typedef TrieNode<_Key, _Value, _EqualTo, _Allocator> node_type;
-    typedef typename _Allocator::template rebind< node_type >::other allocator_type;
+    typedef TrieNode<_Key, _Value, _InSituCount, _EqualTo, _Allocator> node_type;
+    typedef NODEBASED_CONTAINER_ALLOCATOR(Container, node_type) allocator_type;
 
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;

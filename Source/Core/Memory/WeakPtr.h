@@ -85,16 +85,10 @@ public:
     template <typename U>
     WeakPtr& operator =(WeakPtr<U>&& rvalue);
 
-    T* get() const { THREADRESOURCE_CHECKACCESS_IFN(_ptr); return _ptr; }
     void reset(T* ptr = nullptr);
 
     template <typename U>
-    U *as() const { return checked_cast<U*>(get()); }
-
-    T& operator *() const  { T *const ptr = get(); Assert(ptr); return *ptr; }
-    T* operator ->() const { T *const ptr = get(); Assert(ptr); return  ptr; }
-
-    operator T* () const { return get(); }
+    bool TryLock(RefPtr<U> *pLocked) const;
 
     template <typename U>
     void Swap(WeakPtr<U>& other);

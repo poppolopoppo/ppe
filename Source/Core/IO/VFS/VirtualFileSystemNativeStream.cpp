@@ -8,10 +8,12 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
+#ifdef WITH_CORE_ASSERT
 static bool IsValidFileHandle_(FILE *handle) {
     return  handle &&
             0 == ferror(handle);
 }
+#endif
 //----------------------------------------------------------------------------
 static bool OpenFileHandle_(FILE **handle, const wchar_t *filename, bool readIfFalseElseWrite, AccessPolicy::Mode policy) {
     Assert(filename);

@@ -40,12 +40,16 @@ inline RefCountable::RefCountable(const RefCountable& )
 inline RefCountable& RefCountable::operator =(const RefCountable& ) { return *this; }
 //----------------------------------------------------------------------------
 inline void RefCountable::IncRefCount() const {
-    ++_refCount;
+    std::atomic_fetch_add_explicit(&_refCount, 1u, std::memory_order_relaxed);
 }
 //----------------------------------------------------------------------------
 inline bool RefCountable::DecRefCount_ReturnIfReachZero() const {
     Assert(_refCount);
-    return (0 == --_refCount);
+    if (std::atomic_fetch_sub_explicit(&_refCount, 1u, std::memory_order_release) == 1 ) {
+        std::atomic_thread_fence(std::memory_order_acquire);
+        return true;
+    }
+    return false;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -317,7 +321,7 @@ FORCE_INLINE void SafePtr<T>::IncRefCountIFP() const {
     static_assert(std::is_base_of<RefCountable, T>::value, "T must be derived from RefCountable");
 #ifdef WITH_CORE_SAFEPTR
     if (_ptr) {
-        ++_ptr->_safeRefCount;
+        _ptr->_safeRefCount.fetch_sub(1u, std::memory_order_seq_cst);
     }
 #endif
 }
@@ -328,7 +332,7 @@ FORCE_INLINE void SafePtr<T>::DecRefCountIFP() const {
 #ifdef WITH_CORE_SAFEPTR
     if (_ptr) {
         Assert(_ptr->_safeRefCount);
-        --_ptr->_safeRefCount;
+        _ptr->_safeRefCount.fetch_sub(1u, std::memory_order_seq_cst);
     }
 #endif
 }

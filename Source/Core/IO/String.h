@@ -34,6 +34,9 @@ using BasicString = std::basic_string<_Char, _Traits, _Allocator>;
 using String = BasicString<char>;
 using WString = BasicString<wchar_t>;
 //----------------------------------------------------------------------------
+extern template std::basic_string<char, std::char_traits<char>, ALLOCATOR(String, char)>;
+extern template std::basic_string<wchar_t, std::char_traits<wchar_t>, ALLOCATOR(String, wchar_t)>;
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 inline size_t Length(const char* string) { return ::strlen(string); }
@@ -106,6 +109,12 @@ inline const wchar_t *StrRChr(const wchar_t* wcstr, wchar_t wch) { return wcsrch
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+inline const char *StrStr(const char* cstr, const char* firstOccurence) { return strstr(cstr, firstOccurence); }
+//----------------------------------------------------------------------------
+inline const wchar_t *StrStr(const wchar_t* wcstr, const wchar_t* firstOccurence) { return wcsstr(wcstr, firstOccurence); }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 inline bool StartsWith(const char* cstr, const char *other) { return 0 == strncmp(cstr, other, Length(other)); }
 //----------------------------------------------------------------------------
 template <size_t _Capacity>
@@ -115,6 +124,16 @@ inline bool StartsWith(const wchar_t* wcstr, const wchar_t *other) { return 0 ==
 //----------------------------------------------------------------------------
 template <size_t _Capacity>
 bool StartsWith(const wchar_t* wcstr, const wchar_t (&other)[_Capacity]) { return 0 == wcsncmp(wcstr, other, _Capacity); }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+bool WildMatch(const char *pattern, const char *cstr);
+//----------------------------------------------------------------------------
+bool WildMatch(const wchar_t *wpattern, const wchar_t *wcstr);
+//----------------------------------------------------------------------------
+bool WildMatchI(const char *pattern, const char *cstr);
+//----------------------------------------------------------------------------
+bool WildMatchI(const wchar_t *wpattern, const wchar_t *wcstr);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -130,6 +149,23 @@ bool Atoi(T *dst, const String& str);
 template <size_t _Base, typename T>
 bool Atoi(T *dst, const MemoryView<const char>& strview);
 //----------------------------------------------------------------------------
+#define CORE_ATOIBASE_DECL(_Base) \
+    extern template bool Atoi<_Base, int>(int *, const char *, size_t ); \
+    extern template bool Atoi<_Base, unsigned>(unsigned *, const char *, size_t ); \
+    extern template bool Atoi<_Base, i8> (i8  *, const char *, size_t ); \
+    extern template bool Atoi<_Base, i16>(i16 *, const char *, size_t ); \
+    extern template bool Atoi<_Base, i32>(i32 *, const char *, size_t ); \
+    extern template bool Atoi<_Base, i64>(i64 *, const char *, size_t ); \
+    extern template bool Atoi<_Base, u8> (u8  *, const char *, size_t ); \
+    extern template bool Atoi<_Base, u16>(u16 *, const char *, size_t ); \
+    extern template bool Atoi<_Base, u32>(u32 *, const char *, size_t ); \
+    extern template bool Atoi<_Base, u64>(u64 *, const char *, size_t )
+CORE_ATOIBASE_DECL(2);
+CORE_ATOIBASE_DECL(8);
+CORE_ATOIBASE_DECL(10);
+CORE_ATOIBASE_DECL(16);
+#undef CORE_ATOIBASE_DECL
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
@@ -143,6 +179,9 @@ bool Atof(T *dst, const String& str);
 //----------------------------------------------------------------------------
 template <typename T>
 bool Atof(T *dst, const MemoryView<const char>& strview);
+//----------------------------------------------------------------------------
+extern template bool Atof<float>(float *, const char *, size_t );
+extern template bool Atof<double>(double *, const char *, size_t );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -180,29 +219,28 @@ struct StringHasher<_Char, CaseSensitive::False> : public std::unary_function<co
 //----------------------------------------------------------------------------
 template <typename _Char, CaseSensitive _CaseSensitive>
 struct CharEqualTo : public std::binary_function<const _Char, const _Char, bool> {
-    bool operator ()(const _Char& lhs, const _Char& rhs) {
+    bool operator ()(const _Char& lhs, const _Char& rhs) const {
         return lhs == rhs;
     }
 };
 //----------------------------------------------------------------------------
 template <typename _Char>
 struct CharEqualTo<_Char, CaseSensitive::False> : public std::binary_function<const _Char, const _Char, bool> {
-    bool operator ()(const _Char& lhs, const _Char& rhs) {
-        const std::locale& locale = std::locale::classic();
-        return std::tolower(lhs, locale) == std::tolower(rhs, locale);
+    bool operator ()(const _Char& lhs, const _Char& rhs) const {
+        return ::tolower(lhs) == ::tolower(rhs);
     }
 };
 //----------------------------------------------------------------------------
 template <typename _Char, CaseSensitive _CaseSensitive>
 struct CharLess : public std::binary_function<const _Char, const _Char, bool> {
-    bool operator ()(const _Char& lhs, const _Char& rhs) {
+    bool operator ()(const _Char& lhs, const _Char& rhs) const {
         return lhs < rhs;
     }
 };
 //----------------------------------------------------------------------------
 template <typename _Char>
 struct CharLess<_Char, CaseSensitive::False> : public std::binary_function<const _Char, const _Char, bool>{
-    bool operator ()(const _Char& lhs, const _Char& rhs) {
+    bool operator ()(const _Char& lhs, const _Char& rhs) const {
         const std::locale& locale = std::locale::classic();
         return std::tolower(lhs, locale) < std::tolower(rhs, locale);
     }

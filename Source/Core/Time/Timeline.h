@@ -30,7 +30,11 @@ public:
 
     void Tick();
     void Tick(const Timeline& other);
+    void Tick(const Timeline& other, float speed);
+
     bool Tick_Every(const Timespan& target, Timespan& elapsed);
+    bool Tick_Every(const Timeline& other, const Timespan& target, Timespan& elapsed);
+    bool Tick_Every(const Timepoint& now, const Timespan& target, Timespan& elapsed);
 
     FORCE_INLINE bool Tick_Target60FPS(Timespan& elapsed) {
         return Tick_Every(16666.66666666666666666666666667 /* tick duration in µs (1000000.0/60) */, elapsed); }

@@ -148,6 +148,15 @@ void WeakPtr<T>::reset(T* ptr/* = nullptr */) {
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
+bool WeakPtr<T>::TryLock(RefPtr<U> *pLocked) const {
+    Assert(pLocked);
+    __assume(pLocked);
+    pLocked->reset(_ptr);
+    return nullptr != pLocked->get();
+}
+//----------------------------------------------------------------------------
+template <typename T>
+template <typename U>
 void WeakPtr<T>::Swap(WeakPtr<U>& other) {
     T *const lhs = get();
     U *const rhs = get();

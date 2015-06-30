@@ -250,6 +250,9 @@ ScalarMatrix<T, 3, 2> Make2DTransformMatrix(const ScalarVector<T, 2>& translate,
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
+ScalarMatrix<T, 4, 4> Make3DRotationMatrix(const ScalarVector<T, 3>& axis);
+//----------------------------------------------------------------------------
+template <typename T>
 ScalarMatrix<T, 4, 4> Make3DRotationMatrix(const ScalarVector<T, 3>& axis, T radians);
 //----------------------------------------------------------------------------
 template <typename T>

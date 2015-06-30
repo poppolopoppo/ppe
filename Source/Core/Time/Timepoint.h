@@ -36,15 +36,18 @@ public:
     Timepoint operator +(const Timespan& duration) { return operator +(Ticks(duration)); }
     Timepoint operator -(const Timespan& duration) { return operator -(Ticks(duration)); }
 
+    bool operator ==(const Timepoint& other) const { return _value == other._value; }
+    bool operator !=(const Timepoint& other) const { return _value != other._value; }
+
+    bool operator <(const Timepoint& other) const  { return _value <  other._value; }
+    bool operator >=(const Timepoint& other) const { return _value >= other._value; }
+
+    bool operator >(const Timepoint& other) const  { return _value >  other._value; }
+    bool operator <=(const Timepoint& other) const { return _value <= other._value; }
+
     static Timepoint Now();
     static value_type Ticks(const Timespan& duration);
     static Timespan Duration(const Timepoint& start, const Timepoint& stop);
-
-    bool operator ==(const Timepoint& other) const { return _value == other._value; }
-    bool operator !=(const Timepoint& other) const { return !operator ==(other); }
-
-    bool operator <(const Timepoint& other) const { return _value < other._value; }
-    bool operator >=(const Timepoint& other) const { return !operator <(other); }
 
 private:
     value_type _value;

@@ -45,7 +45,7 @@ static void MatchingComponents_DepthLast_(
         for (VirtualFileSystemComponent *component : node->Components())
             components.PushPOD(component);
 
-        if (!(node = node->GetNodeIFP(dirnames[i])) )
+        if (nullptr == (node = node->GetNodeIFP(dirnames[i])) )
             break;
     }
 }
@@ -61,7 +61,7 @@ VirtualFileSystemRoot::~VirtualFileSystemRoot() {}
 bool VirtualFileSystemRoot::EachComponent(
     const Dirpath& dirpath,
     const std::function<bool(VirtualFileSystemComponent* component)>& foreach) const {
-    MALLOCA_STACK(VirtualFileSystemComponent*, components, CORE_VIRTUALFILESYSTEM_STACKSIZE);
+    STACKLOCAL_POD_STACK(VirtualFileSystemComponent*, components, CORE_VIRTUALFILESYSTEM_STACKSIZE);
     {
         std::lock_guard<std::mutex> scopeLock(_barrier);
         MatchingComponents_DepthLast_(components, &_trie, dirpath);
@@ -76,7 +76,7 @@ bool VirtualFileSystemRoot::EachComponent(
 }
 //----------------------------------------------------------------------------
 bool VirtualFileSystemRoot::DirectoryExists(const Dirpath& dirpath, ExistPolicy::Mode policy) const {
-    MALLOCA_STACK(VirtualFileSystemComponent*, components, CORE_VIRTUALFILESYSTEM_STACKSIZE);
+    STACKLOCAL_POD_STACK(VirtualFileSystemComponent*, components, CORE_VIRTUALFILESYSTEM_STACKSIZE);
     {
         std::lock_guard<std::mutex> scopeLock(_barrier);
         MatchingComponents_DepthLast_(components, &_trie, dirpath);
@@ -93,7 +93,7 @@ bool VirtualFileSystemRoot::DirectoryExists(const Dirpath& dirpath, ExistPolicy:
 }
 //----------------------------------------------------------------------------
 bool VirtualFileSystemRoot::FileExists(const Filename& filename, ExistPolicy::Mode policy) const {
-    MALLOCA_STACK(VirtualFileSystemComponent*, components, CORE_VIRTUALFILESYSTEM_STACKSIZE);
+    STACKLOCAL_POD_STACK(VirtualFileSystemComponent*, components, CORE_VIRTUALFILESYSTEM_STACKSIZE);
     {
         std::lock_guard<std::mutex> scopeLock(_barrier);
         MatchingComponents_DepthLast_(components, &_trie, filename.Dirpath());
@@ -110,7 +110,7 @@ bool VirtualFileSystemRoot::FileExists(const Filename& filename, ExistPolicy::Mo
 }
 //----------------------------------------------------------------------------
 size_t VirtualFileSystemRoot::EnumerateFiles(const Dirpath& dirpath, bool recursive, const std::function<void(const Filename&)>& foreach) const {
-    MALLOCA_STACK(VirtualFileSystemComponent*, components, CORE_VIRTUALFILESYSTEM_STACKSIZE);
+    STACKLOCAL_POD_STACK(VirtualFileSystemComponent*, components, CORE_VIRTUALFILESYSTEM_STACKSIZE);
     {
         std::lock_guard<std::mutex> scopeLock(_barrier);
         MatchingComponents_DepthLast_(components, &_trie, dirpath);
@@ -129,7 +129,7 @@ size_t VirtualFileSystemRoot::EnumerateFiles(const Dirpath& dirpath, bool recurs
 }
 //----------------------------------------------------------------------------
 bool VirtualFileSystemRoot::TryCreateDirectory(const Dirpath& dirpath) const {
-    MALLOCA_STACK(VirtualFileSystemComponent*, components, CORE_VIRTUALFILESYSTEM_STACKSIZE);
+    STACKLOCAL_POD_STACK(VirtualFileSystemComponent*, components, CORE_VIRTUALFILESYSTEM_STACKSIZE);
     {
         std::lock_guard<std::mutex> scopeLock(_barrier);
         MatchingComponents_DepthLast_(components, &_trie, dirpath);
@@ -146,7 +146,7 @@ bool VirtualFileSystemRoot::TryCreateDirectory(const Dirpath& dirpath) const {
 }
 //----------------------------------------------------------------------------
 UniquePtr<IVirtualFileSystemIStream> VirtualFileSystemRoot::OpenReadable(const Filename& filename, AccessPolicy::Mode policy) const {
-    MALLOCA_STACK(VirtualFileSystemComponent*, components, CORE_VIRTUALFILESYSTEM_STACKSIZE);
+    STACKLOCAL_POD_STACK(VirtualFileSystemComponent*, components, CORE_VIRTUALFILESYSTEM_STACKSIZE);
     {
         std::lock_guard<std::mutex> scopeLock(_barrier);
         MatchingComponents_DepthLast_(components, &_trie, filename.Dirpath());
@@ -165,7 +165,7 @@ UniquePtr<IVirtualFileSystemIStream> VirtualFileSystemRoot::OpenReadable(const F
 }
 //----------------------------------------------------------------------------
 UniquePtr<IVirtualFileSystemOStream> VirtualFileSystemRoot::OpenWritable(const Filename& filename, AccessPolicy::Mode policy) const {
-    MALLOCA_STACK(VirtualFileSystemComponent*, components, CORE_VIRTUALFILESYSTEM_STACKSIZE);
+    STACKLOCAL_POD_STACK(VirtualFileSystemComponent*, components, CORE_VIRTUALFILESYSTEM_STACKSIZE);
     {
         std::lock_guard<std::mutex> scopeLock(_barrier);
         MatchingComponents_DepthLast_(components, &_trie, filename.Dirpath());
@@ -184,7 +184,7 @@ UniquePtr<IVirtualFileSystemOStream> VirtualFileSystemRoot::OpenWritable(const F
 }
 //----------------------------------------------------------------------------
 UniquePtr<IVirtualFileSystemIOStream> VirtualFileSystemRoot::OpenReadWritable(const Filename& filename, AccessPolicy::Mode policy) const {
-    MALLOCA_STACK(VirtualFileSystemComponent*, components, CORE_VIRTUALFILESYSTEM_STACKSIZE);
+    STACKLOCAL_POD_STACK(VirtualFileSystemComponent*, components, CORE_VIRTUALFILESYSTEM_STACKSIZE);
     {
         std::lock_guard<std::mutex> scopeLock(_barrier);
         MatchingComponents_DepthLast_(components, &_trie, filename.Dirpath());
@@ -203,7 +203,7 @@ UniquePtr<IVirtualFileSystemIOStream> VirtualFileSystemRoot::OpenReadWritable(co
 }
 //----------------------------------------------------------------------------
 WString VirtualFileSystemRoot::Unalias(const Filename& aliased) const {
-    MALLOCA_STACK(VirtualFileSystemComponent*, components, CORE_VIRTUALFILESYSTEM_STACKSIZE);
+    STACKLOCAL_POD_STACK(VirtualFileSystemComponent*, components, CORE_VIRTUALFILESYSTEM_STACKSIZE);
     {
         std::lock_guard<std::mutex> scopeLock(_barrier);
         MatchingComponents_DepthLast_(components, &_trie, aliased.Dirpath());

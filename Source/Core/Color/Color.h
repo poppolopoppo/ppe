@@ -2,6 +2,8 @@
 
 #include "Core/Core.h"
 
+#include "Core/Color/Color_fwd.h"
+
 #include "Core/Maths/Geometry/ScalarVector.h"
 #include "Core/Maths/Geometry/ScalarVectorHelpers.h"
 #include "Core/Maths/Packing/PackingHelpers.h"
@@ -12,9 +14,6 @@ class MemoryView;
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename T>
-using BasicColorData = ScalarVector<T, 4>;
 //----------------------------------------------------------------------------
 struct ColorShuffleRGBA { enum : size_t { R = 0, G = 1, B = 2, A = 3 }; };
 //----------------------------------------------------------------------------
@@ -80,21 +79,12 @@ private:
 //----------------------------------------------------------------------------
 extern template class BasicColor< UNorm<u8>, ColorShuffleBGRA >;
 extern template class BasicColor< UNorm<u8>, ColorShuffleRGBA >;
-
-typedef BasicColor< UNorm<u8>, ColorShuffleBGRA > ColorBGRA;
-typedef BasicColor< UNorm<u8>, ColorShuffleRGBA > ColorRGBA;
 //----------------------------------------------------------------------------
 extern template class BasicColor< UNorm<u16>, ColorShuffleBGRA >;
 extern template class BasicColor< UNorm<u16>, ColorShuffleRGBA >;
-
-typedef BasicColor< UNorm<u16>, ColorShuffleBGRA > ColorBGRA16;
-typedef BasicColor< UNorm<u16>, ColorShuffleRGBA > ColorRGBA16;
 //----------------------------------------------------------------------------
 extern template class BasicColor< float, ColorShuffleBGRA >;
 extern template class BasicColor< float, ColorShuffleRGBA >;
-
-typedef BasicColor< float, ColorShuffleBGRA > ColorBGRAF;
-typedef BasicColor< float, ColorShuffleRGBA > ColorRGBAF;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

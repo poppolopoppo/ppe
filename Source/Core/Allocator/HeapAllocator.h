@@ -32,13 +32,23 @@ public:
     template <typename U>
     HeapAllocator(const HeapAllocator<U, _HeapSingleton>&) throw() {}
 
-    HeapAllocator& operator=(const HeapAllocator&) { return *this; }
+    HeapAllocator& operator =(const HeapAllocator&) { return *this; }
     template <typename U>
-    HeapAllocator& operator=(const HeapAllocator<U, _HeapSingleton>&) { return *this; }
+    HeapAllocator& operator =(const HeapAllocator<U, _HeapSingleton>&) { return *this; }
 
     pointer allocate(size_type n);
     pointer allocate(size_type n, const void* /*hint*/) { return allocate(n); }
     void deallocate(void* p, size_type );
+
+    template <typename U>
+    friend bool operator ==(const HeapAllocator&/* lhs */, const HeapAllocator<U, _HeapSingleton>&/* rhs */) {
+        return true;
+    }
+    
+    template <typename U>
+    friend bool operator !=(const HeapAllocator& lhs, const HeapAllocator<U, _HeapSingleton>& rhs) {
+        return !operator ==(lhs, rhs);
+    }
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _HeapSingleton >
@@ -76,28 +86,6 @@ void HeapAllocator<T, _HeapSingleton>::deallocate(void* p, size_type) {
 
     // HeapAllocator wraps Heap.
     HeapInstance().free<Alignment>(p);
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename T, typename _HeapSingleton >
-bool operator ==(const HeapAllocator<T, _HeapSingleton>& lhs, const HeapAllocator<T, _HeapSingleton>& rhs) {
-    return true;
-}
-//----------------------------------------------------------------------------
-template <typename T, typename _HeapSingleton >
-bool operator !=(const HeapAllocator<T, _HeapSingleton>& lhs, const HeapAllocator<T, _HeapSingleton>& rhs) {
-    return !operator ==(lhs, rhs);
-}
-//----------------------------------------------------------------------------
-template <typename T, typename _HeapSingleton, typename _Other >
-bool operator ==(const HeapAllocator<T, _HeapSingleton>& lhs, const _Other& rhs) {
-    return false;
-}
-//----------------------------------------------------------------------------
-template <typename T, typename _HeapSingleton, typename _Other >
-bool operator !=(const HeapAllocator<T, _HeapSingleton>& lhs, const _Other& rhs) {
-    return !operator ==(lhs, rhs);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

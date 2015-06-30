@@ -6,6 +6,103 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+Quaternion Lerp(const Quaternion& v0, const Quaternion& v1, float f) {
+    float inverse = 1.0f - f;
+
+    float4 result;
+
+    if (Dot(v0, v1) >= 0.0f) {
+        result.x() = (inverse * v0.x()) + (f * v1.x());
+        result.y() = (inverse * v0.y()) + (f * v1.y());
+        result.z() = (inverse * v0.z()) + (f * v1.z());
+        result.w() = (inverse * v0.w()) + (f * v1.w());
+    }
+    else {
+        result.x() = (inverse * v0.x()) - (f * v1.x());
+        result.y() = (inverse * v0.y()) - (f * v1.y());
+        result.z() = (inverse * v0.z()) - (f * v1.z());
+        result.w() = (inverse * v0.w()) - (f * v1.w());
+    }
+
+    return Quaternion(Normalize4(result));
+}
+//----------------------------------------------------------------------------
+Quaternion SLerp(const Quaternion& v0, const Quaternion& v1, float f) {
+    float opposite;
+    float inverse;
+    float dot = Dot(v0, v1);
+
+    if (std::abs(dot) > 1.0f - F_Epsilon) {
+        inverse = 1.0f - f;
+        opposite = f * (dot < 0 ? -1 : 1);
+    }
+    else {
+        float facos = std::acos(std::abs(dot));
+        float invSin = (1.0f / std::sin(facos));
+
+        inverse = std::sin((1.0f - f) * facos) * invSin;
+        opposite = std::sin(f * facos) * invSin * (dot < 0 ? -1 : 1);
+    }
+
+    float4 result;
+    result.x() = (inverse * v0.x()) + (opposite * v1.x());
+    result.y() = (inverse * v0.y()) + (opposite * v1.y());
+    result.z() = (inverse * v0.z()) + (opposite * v1.z());
+    result.w() = (inverse * v0.w()) + (opposite * v1.w());
+
+    return Quaternion(result);
+}
+//----------------------------------------------------------------------------
+Quaternion SQuad(const Quaternion& v0, const Quaternion& v1, const Quaternion& v2, const Quaternion& v3, float f) {
+    const Quaternion start = SLerp(v0, v3, f);
+    const Quaternion end = SLerp(v1, v2, f);
+    return SLerp(start, end, (2*f) * (1-f));
+}
+//----------------------------------------------------------------------------
+void SQuadSetup(Quaternion *p0, Quaternion *p1, Quaternion *p2,
+                const Quaternion& v0, const Quaternion& v1, const Quaternion& v2, const Quaternion& v3 ) {
+    Assert(p0);
+    Assert(p1);
+    Assert(p2);
+
+    Quaternion q0((v0 + v1).LengthSq() < (v0 - v1).LengthSq() ? -v0.Value() : v0.Value());
+    Quaternion q2((v1 + v2).LengthSq() < (v1 - v2).LengthSq() ? -v2.Value() : v2.Value());
+    Quaternion q3((v2 + v3).LengthSq() < (v2 - v3).LengthSq() ? -v3.Value() : v3.Value());
+    Quaternion q1 = v1;
+
+    const Quaternion q1Exp = q1.Exponential();
+    const Quaternion q2Exp = q2.Exponential();
+
+    *p0 = q1 * (-0.25f * ((q1Exp * q2).Logarithm() + (q1Exp * q0).Logarithm() )).Exponential();
+    *p1 = q2 * (-0.25f * ((q2Exp * q3).Logarithm() + (q2Exp * q1).Logarithm() )).Exponential();
+    *p2 = q2;
+}
+//----------------------------------------------------------------------------
+void Extract3AxisFromQuaternion(float3 *paxisx, float3 *paxisy, float3 *paxisz,
+                                const Quaternion& quaternion ) {
+    Assert(paxisx);
+    Assert(paxisy);
+    Assert(paxisz);
+
+    const float4& q = quaternion.Value();
+
+    *paxisx     =   float3( 1.0f, 0.0f, 0.0f)
+                +   float3(-2.0f, 2.0f, 2.0f) * q.y() * q.yxw()
+                +   float3(-2.0f,-2.0f, 2.0f) * q.z() * q.zwx();
+    *paxisy     =   float3( 0.0f, 1.0f, 0.0f)
+                +   float3( 2.0f,-2.0f, 2.0f) * q.z() * q.wzy()
+                +   float3( 2.0f,-2.0f,-2.0f) * q.x() * q.yxw();
+    *paxisz     =   float3( 0.0f, 0.0f, 1.0f)
+                +   float3( 2.0f, 2.0f,-2.0f) * q.x() * q.zwx()
+                +   float3(-2.0f, 2.0f,-2.0f) * q.y() * q.wzy();
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+Quaternion MakeAxisQuaternion(const float3& axis) {
+    return MakeAxisQuaternion(axis, 0.0f, 1.0f); // SinCos(0)
+}
+//----------------------------------------------------------------------------
 Quaternion MakeAxisQuaternion(const float3& axis, float radians) {
     float fsin, fcos;
     SinCos(radians, &fsin, &fcos);
@@ -48,8 +145,8 @@ Quaternion MakeQuaternionFromRotationMatrix(const float4x4& matrix) {
         result.y() = (matrix._12() + matrix._21()) * half;
         result.z() = (matrix._13() + matrix._31()) * half;
         result.w() = (matrix._23() - matrix._32()) * half;
-    } else if (matrix._22() > matrix._33())
-    {
+    }
+    else if (matrix._22() > matrix._33()) {
         sqrt = std::sqrt(1.0f + matrix._22() - matrix._11() - matrix._33());
         half = 0.5f / sqrt;
 
@@ -58,7 +155,7 @@ Quaternion MakeQuaternionFromRotationMatrix(const float4x4& matrix) {
         result.z() = (matrix._32() + matrix._23()) * half;
         result.w() = (matrix._31() - matrix._13()) * half;
     }
-    else{
+    else {
         sqrt = std::sqrt(1.0f + matrix._33() - matrix._11() - matrix._22());
         half = 0.5f / sqrt;
 
@@ -92,6 +189,15 @@ Quaternion MakeYawPitchRollQuaternion(float yaw, float pitch, float roll) {
     result.w() = (cosYaw * cosPitch * cosRoll) + (sinYaw * sinPitch * sinRoll);
 
     return Quaternion(result);
+}
+//----------------------------------------------------------------------------
+Quaternion Make3AxisQuaterion(const float3& axisx, const float3& axisy, const float3& axisz) {
+    Quaternion quaternion;
+    quaternion.x() = axisz.y() - axisy.z();
+    quaternion.y() = axisx.z() - axisz.x();
+    quaternion.z() = axisy.x() - axisx.y();
+    quaternion.w() = 1.0f + axisx.x() + axisy.y() + axisz.z();
+    return quaternion.Normalize();
 }
 //----------------------------------------------------------------------------
 Quaternion MakeBarycentricQuaternion(

@@ -15,8 +15,8 @@ public:
     typedef ptrdiff_t difference_type;
     typedef typename std::add_pointer<T>::type pointer;
     typedef typename std::add_pointer<const T>::type const_pointer;
-    typedef typename std::add_reference<T>::type reference;
-    typedef typename std::add_reference<const T>::type const_reference;
+    typedef typename std::add_lvalue_reference<T>::type reference;
+    typedef typename std::add_lvalue_reference<const T>::type const_reference;
     typedef T value_type;
 
     template<typename U>
@@ -38,11 +38,15 @@ public:
     pointer address(reference x) const { return std::addressof(x); }
     const_pointer address(const_reference x) const { return std::addressof(x); }
 
-    void construct(pointer p, const T& val) { ::new ((void**)p) T(val); }
+    void construct(pointer p, T&& rvalue) { ::new ((void**)p) T(std::forward<T>(rvalue)); }
     template<typename U, typename... _Args>
     void construct(U* p, _Args&&... args) { ::new((void*)p) U(std::forward<_Args>(args)...); }
 
+#pragma warning( push )
+#pragma warning( disable : 4100) // C4100 'p' : paramètre formel non référencé
     void destroy(pointer p) {
+        Assert(p);
+        __assume(p);
         typedef char type_must_be_complete[sizeof(T) ? 1 : -1];
         (void) sizeof(type_must_be_complete);
         p->~T();
@@ -50,10 +54,13 @@ public:
 
     template<typename U>
     void destroy(U* p) {
+        Assert(p);
+        __assume(p);
         typedef char type_must_be_complete[sizeof(U) ? 1 : -1];
         (void) sizeof(type_must_be_complete);
         p->~U();
     }
+#pragma warning( pop )
 
     size_type max_size() const
     {

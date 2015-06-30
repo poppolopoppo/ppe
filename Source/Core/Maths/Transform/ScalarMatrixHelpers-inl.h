@@ -877,6 +877,11 @@ ScalarMatrix<T, 3, 2> Make2DTransformMatrix(const ScalarVector<T, 2>& translate,
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
+ScalarMatrix<T, 4, 4> Make3DRotationMatrix(const ScalarVector<T, 3>& axis) {
+    return Make3DRotationMatrix(axis, T(0), T(1)); // SinCos(0)
+}
+//----------------------------------------------------------------------------
+template <typename T>
 ScalarMatrix<T, 4, 4> Make3DRotationMatrix(const ScalarVector<T, 3>& axis, T radians) {
     float fsin, fcos;
     SinCos(radians, &fsin, &fcos);

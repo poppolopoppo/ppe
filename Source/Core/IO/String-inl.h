@@ -6,6 +6,9 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#pragma warning( push )
+#pragma warning( disable : 4127) // C4127: l'expression conditionnelle est une constante
+
 template <size_t _Base, typename T>
 bool Atoi(T *dst, const char *cstr, size_t length) {
     static_assert(std::is_integral<T>::value, "T must be an integral type");
@@ -40,6 +43,8 @@ bool Atoi(T *dst, const char *cstr, size_t length) {
     *dst = checked_cast<T>(neg ? -v : v);
     return true;
 }
+
+#pragma warning( pop )
 //----------------------------------------------------------------------------
 template <size_t _Base, typename T, size_t _Capacity>
 bool Atoi(T *dst, const char (&cstr)[_Capacity]) {
@@ -138,7 +143,7 @@ std::basic_ostream<char, _Traits>& operator <<(
     std::basic_ostream<char, _Traits>& oss,
     const wchar_t* wstr) {
     size_t len = 0;
-    if (wstr && (len = Length(wstr)))
+    if (wstr && 0 != (len = Length(wstr)))
     {
         MALLOCA(char, str, len + 1);
         wcstombs_s(nullptr, str.get(), len + 1, wstr, len + 1);
