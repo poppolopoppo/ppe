@@ -1,0 +1,26 @@
+#once
+
+#include "SharedArch.bff"
+
+//------------------------------------------------------------------------------
+// Shared Base Platform
+//------------------------------------------------------------------------------
+.SharedBasePlatform =
+[
+    .PlatformDefines = {}
+]
+
+.AllSharedPlatforms = {}
+
+//------------------------------------------------------------------------------
+// Platforms Enumeration
+//------------------------------------------------------------------------------
+#if __WINDOWS__
+#   include "Platforms/Windows.bff"
+#endif
+#if __LINUX__
+#   include "Platforms/Linux.bff"
+#endif
+#if __OSX__
+#   include "Platforms/Mac.bff"
+#endif

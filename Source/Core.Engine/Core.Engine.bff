@@ -1,0 +1,6 @@
+#once
+{
+    .ProjectName = 'Core.Engine'
+    .ProjectPath = '$SourceDiretory$/Core.Engine'
+    #include "../../Build/Templates/Library.bff"
+}

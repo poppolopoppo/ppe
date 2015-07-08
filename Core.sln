@@ -1,12 +1,7 @@
-﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.22823.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "All", "All.vcxproj", "{73202180-6C94-4F93-BC2A-7F5284B7D434}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Core", "Source\Core\Core.vcxproj", "{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Core.Application", "Source\Core.Application\Core.Application.vcxproj", "{AB401413-6C94-4F93-BC2A-7F5284B7D434}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Core.Engine", "Source\Core.Engine\Core.Engine.vcxproj", "{A859B141-6C94-4F93-BC2A-7F5284B7D434}"
@@ -18,6 +13,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Core.Serialize", "Source\Core.Serialize\Core.Serialize.vcxproj", "{1DA7B718-6C94-4F93-BC2A-7F5284B7D434}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Core.Test", "Source\Core.Test\Core.Test.vcxproj", "{4086D486-6C94-4F93-BC2A-7F5284B7D434}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Core", "Source\Core\Core.vcxproj", "{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,44 +30,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{73202180-6C94-4F93-BC2A-7F5284B7D434}.Clang-Debug|x64.ActiveCfg = Clang-Debug|Win32
-		{73202180-6C94-4F93-BC2A-7F5284B7D434}.Clang-Debug|x86.ActiveCfg = Clang-Debug|Win32
-		{73202180-6C94-4F93-BC2A-7F5284B7D434}.Clang-Debug|x86.Build.0 = Clang-Debug|Win32
-		{73202180-6C94-4F93-BC2A-7F5284B7D434}.Debug|x64.ActiveCfg = Debug|x64
-		{73202180-6C94-4F93-BC2A-7F5284B7D434}.Debug|x64.Build.0 = Debug|x64
-		{73202180-6C94-4F93-BC2A-7F5284B7D434}.Debug|x86.ActiveCfg = Debug|Win32
-		{73202180-6C94-4F93-BC2A-7F5284B7D434}.Debug|x86.Build.0 = Debug|Win32
-		{73202180-6C94-4F93-BC2A-7F5284B7D434}.Final|x64.ActiveCfg = Final|x64
-		{73202180-6C94-4F93-BC2A-7F5284B7D434}.Final|x64.Build.0 = Final|x64
-		{73202180-6C94-4F93-BC2A-7F5284B7D434}.Final|x86.ActiveCfg = Final|Win32
-		{73202180-6C94-4F93-BC2A-7F5284B7D434}.Final|x86.Build.0 = Final|Win32
-		{73202180-6C94-4F93-BC2A-7F5284B7D434}.Profile|x64.ActiveCfg = Profile|x64
-		{73202180-6C94-4F93-BC2A-7F5284B7D434}.Profile|x64.Build.0 = Profile|x64
-		{73202180-6C94-4F93-BC2A-7F5284B7D434}.Profile|x86.ActiveCfg = Profile|Win32
-		{73202180-6C94-4F93-BC2A-7F5284B7D434}.Profile|x86.Build.0 = Profile|Win32
-		{73202180-6C94-4F93-BC2A-7F5284B7D434}.Release|x64.ActiveCfg = Release|x64
-		{73202180-6C94-4F93-BC2A-7F5284B7D434}.Release|x64.Build.0 = Release|x64
-		{73202180-6C94-4F93-BC2A-7F5284B7D434}.Release|x86.ActiveCfg = Release|Win32
-		{73202180-6C94-4F93-BC2A-7F5284B7D434}.Release|x86.Build.0 = Release|Win32
-		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Clang-Debug|x64.ActiveCfg = Clang-Debug|Win32
-		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Clang-Debug|x86.ActiveCfg = Clang-Debug|Win32
-		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Clang-Debug|x86.Build.0 = Clang-Debug|Win32
-		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Debug|x64.ActiveCfg = Debug|x64
-		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Debug|x64.Build.0 = Debug|x64
-		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Debug|x86.ActiveCfg = Debug|Win32
-		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Debug|x86.Build.0 = Debug|Win32
-		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Final|x64.ActiveCfg = Final|x64
-		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Final|x64.Build.0 = Final|x64
-		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Final|x86.ActiveCfg = Final|Win32
-		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Final|x86.Build.0 = Final|Win32
-		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Profile|x64.ActiveCfg = Profile|x64
-		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Profile|x64.Build.0 = Profile|x64
-		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Profile|x86.ActiveCfg = Profile|Win32
-		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Profile|x86.Build.0 = Profile|Win32
-		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Release|x64.ActiveCfg = Release|x64
-		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Release|x64.Build.0 = Release|x64
-		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Release|x86.ActiveCfg = Release|Win32
-		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Release|x86.Build.0 = Release|Win32
 		{AB401413-6C94-4F93-BC2A-7F5284B7D434}.Clang-Debug|x64.ActiveCfg = Clang-Debug|Win32
 		{AB401413-6C94-4F93-BC2A-7F5284B7D434}.Clang-Debug|x86.ActiveCfg = Clang-Debug|Win32
 		{AB401413-6C94-4F93-BC2A-7F5284B7D434}.Clang-Debug|x86.Build.0 = Clang-Debug|Win32
@@ -185,6 +144,25 @@ Global
 		{4086D486-6C94-4F93-BC2A-7F5284B7D434}.Release|x64.Build.0 = Release|x64
 		{4086D486-6C94-4F93-BC2A-7F5284B7D434}.Release|x86.ActiveCfg = Release|Win32
 		{4086D486-6C94-4F93-BC2A-7F5284B7D434}.Release|x86.Build.0 = Release|Win32
+		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Clang-Debug|x64.ActiveCfg = Clang-Debug|Win32
+		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Clang-Debug|x86.ActiveCfg = Clang-Debug|Win32
+		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Clang-Debug|x86.Build.0 = Clang-Debug|Win32
+		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Debug|x64.ActiveCfg = Debug|x64
+		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Debug|x64.Build.0 = Debug|x64
+		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Debug|x86.ActiveCfg = Debug|Win32
+		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Debug|x86.Build.0 = Debug|Win32
+		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Final|x64.ActiveCfg = Final|x64
+		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Final|x64.Build.0 = Final|x64
+		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Final|x86.ActiveCfg = Final|Win32
+		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Final|x86.Build.0 = Final|Win32
+		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Profile|x64.ActiveCfg = Profile|x64
+		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Profile|x64.Build.0 = Profile|x64
+		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Profile|x86.ActiveCfg = Profile|Win32
+		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Profile|x86.Build.0 = Profile|Win32
+		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Release|x64.ActiveCfg = Release|x64
+		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Release|x64.Build.0 = Release|x64
+		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Release|x86.ActiveCfg = Release|Win32
+		{AB13FEBB-6C94-4F93-BC2A-7F5284B7D434}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

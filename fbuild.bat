@@ -1,11 +1,35 @@
 @ECHO OFF
-@REM launch build of project through fast build
 
-CD "%~d0\%~p0"
+:SETUP
 
-IF NOT EXIST "%~d0\%~p0\Build\local_config.bff" (
-    ECHO No local configuration detected, running first run setup ...
-    CMD /C "%~d0\%~p0\Build\local_config.bat" >"%~d0\%~p0\Build\local_config.bff"
-)
+SET SOLUTIONROOT=%~dp0
+CD %SOLUTIONROOT%
 
-"%~d0\%~p0\Build\FBuild.exe" %*
+SET FBUILDROOT=%CD%\Build
+SET FBUILDCMD=%FBUILDROOT%\FBuild.exe
+SET SOLUTIONPATHFILE=%FBUILDROOT%\_solution_path.bff
+
+IF EXIST "%FBUILDCMD%" GOTO CHECKFILE
+
+ECHO FBuild was not found in "%FBUILDROOT%"! Stopping execution.
+ECHO It can be downloaded on http://fastbuild.org/docs/download.html.
+SET ERRORLEVEL=127
+GOTO END
+
+:CHECKFILE
+IF EXIST "%SOLUTIONPATHFILE%" GOTO RUN
+
+:CREATEFILE
+ECHO Creating "%SOLUTIONPATHFILE%" ...
+ECHO ; Fichier généré par fbuild.bat> "%SOLUTIONPATHFILE%"
+ECHO .SolutionPath = '%CD%'>> "%SOLUTIONPATHFILE%"
+ECHO Done.
+
+:RUN
+CALL "%FBUILDCMD%" %*
+GOTO END
+
+:END
+IF %ERRORLEVEL% NEQ 0 EXIT /b %ERRORLEVEL%
+
+@ECHO ON

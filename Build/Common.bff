@@ -1,0 +1,64 @@
+#once
+
+// increment to force regeneration
+// global version : 001
+
+#include "_solution_path.bff" ; généré par fbuild.bat, permet d'avoir le rep du sln
+
+//------------------------------------------------------------------------------
+// Default Directories
+//------------------------------------------------------------------------------
+.OutputDirectory        = '$SolutionPath$/Output'
+.SourceDiretory         = '$SolutionPath$/Source'
+.TemplateDirectory      = '$SolutionPath$/Build/Templates'
+
+.BinaryDirectory        = '$OutputDirectory$/Bin'
+.IntermediateDirectory  = '$OutputDirectory$/Intermediate'
+.ResourceDirectory      = '$OutputDirectory$/Resources'
+.UnityDirectory         = '$OutputDirectory$/Unity'
+
+//------------------------------------------------------------------------------
+// Default Unity Options
+//------------------------------------------------------------------------------
+.UnityNumFiles = 1 ; peut être override par projet
+.UnityInputIsolateWritableFiles = false ; passer à true désactive l'utilisation des unity builds
+
+//------------------------------------------------------------------------------
+// Default Visual Options
+//------------------------------------------------------------------------------
+.VSBuildOptions = ''
+;+ ' -dist'      ; active la compilation distribuée
++ ' -cache'     ; utilisation du cache depuis Visual
++ ' -showcmds'  ; affiche les commandes de compile, pratique pour debug
++ ' -summary'   ; affiche un rapport à la fin de la compilation
+
+//------------------------------------------------------------------------------
+// Default Parameters for Templates
+//------------------------------------------------------------------------------
+.PCHName = 'stdafx'
+.ProjectDefines = {}
+.ProjectDependencies = {}
+.ProjectExcludedFiles = {}
+.ProjectIncludes = {}
+.ProjectLibraries = {}
+.ProjectPostBuild = {}
+.ProjectPreBuild = {}
+
+//------------------------------------------------------------------------------
+// Project registrations
+//------------------------------------------------------------------------------
+.ProjectList = {}
+
+//------------------------------------------------------------------------------
+// FBuild Settings
+//------------------------------------------------------------------------------
+.PATH = ''
+#if __WINDOWS__
+.CachePath = "C:\.fbuild.cache"
+#endif
+#if __LINUX__
+.CachePath = "/dev/shm/.fbuild.cache" ; TODO
+#endif
+#if __OSX__
+.CachePath = "/var/tmp/.fbuild.cache" ; TODO
+#endif

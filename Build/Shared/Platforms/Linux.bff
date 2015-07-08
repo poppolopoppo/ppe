@@ -1,0 +1,37 @@
+#once
+
+//------------------------------------------------------------------------------
+// Shared Base Linux Platform
+//------------------------------------------------------------------------------
+.SharedPlatformLinuxBase =
+[
+    Using( .SharedBasePlatform )
+
+    .PlatformDefines + { 'PLATFORM_POSIX', 'PLATFORM_LINUX', 'PLATFORM_PC' }
+]
+
+//------------------------------------------------------------------------------
+// Shared Linux Platform (32 bits)
+//------------------------------------------------------------------------------
+.SharedPlatformLinux32 =
+[
+    Using( .SharedPlatformLinuxBase )
+    Using( .SharedArchX86 )
+
+    .Platform = 'Linux32'
+    .PlatformDefines + .ArchDefines
+]
+.AllSharedPlatforms = { .SharedPlatformLinux32 }
+
+//------------------------------------------------------------------------------
+// Shared Linux Platform (64 bits)
+//------------------------------------------------------------------------------
+.SharedPlatformLinux =
+[
+    Using( .SharedPlatformLinuxBase )
+    Using( .SharedArchX64 )
+
+    .Platform = 'Linux64'
+    .PlatformDefines + .ArchDefines
+]
+.AllSharedPlatforms + .SharedPlatformLinux

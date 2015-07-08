@@ -1,0 +1,87 @@
+#once
+
+//------------------------------------------------------------------------------
+// Solution Generation (.sln) and 'all' aliases
+//------------------------------------------------------------------------------
+; Inputs :
+;   <SolutionName>          name of the solution
+;   <SolutionPath>          path that will contain the .sln
+;   [SolutionBuildProject]  master project to build in the solution
+;   TODO:[SolutionFolders]       array of structs containing each the path and projects
+//------------------------------------------------------------------------------
+
+Alias( 'all' )
+{
+    .Targets = .ProjectList
+}
+
+// Per platform aliases
+//------------------------------------------------------------------------------
+ForEach( .SharedPlatform in .AllSharedPlatforms )
+{
+    Using( .SharedPlatform )
+
+    Alias( 'all-$Platform$' )
+    {
+        .Targets = {}
+        ForEach( .SharedConfig in .AllSharedConfigs )
+        {
+            Using( .SharedConfig )
+
+            ForEach( .ProjectName in .ProjectList )
+            {
+                .Targets + { '$ProjectName$-$Platform$-$Config$' }
+                Export( .Targets )
+            }
+        }
+    }
+}
+
+// Per config aliases
+//------------------------------------------------------------------------------
+ForEach( .SharedConfig in .AllSharedConfigs )
+{
+    Using( .SharedConfig )
+
+    Alias( 'all-$Config$' )
+    {
+        .Targets = {}
+        ForEach( .SharedPlatform in .AllSharedPlatforms )
+        {
+            Using( .SharedPlatform )
+
+            ForEach( .ProjectName in .ProjectList )
+            {
+                .Targets + { '$ProjectName$-$Platform$-$Config$' }
+                Export( .Targets )
+            }
+        }
+    }
+}
+
+// VCXProj Generation
+//------------------------------------------------------------------------------
+Alias( 'proj' )
+{
+    .Targets = {}
+    ForEach( .ProjectName in .ProjectList )
+    {
+        .Targets + { '$ProjectName$-Proj' }
+        Export( .Targets )
+    }
+}
+
+// SLN : sln (all projects)
+//------------------------------------------------------------------------------
+SLN( 'sln' )
+{
+    .SolutionOutput = '$SolutionPath$/$SolutionName$.sln'
+    .SolutionConfigs = .AllCompileConfigs
+    .SolutionProjects = {}
+
+    ForEach( .ProjectName in .ProjectList )
+    {
+        .SolutionProjects + '$ProjectName$-proj'
+        Export( .SolutionProjects )
+    }
+}

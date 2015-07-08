@@ -1,101 +1,31 @@
-
 #once
 
-#include "Build/Cfg/common.bff"
+.SolutionName = 'Core'
+
+#include "Build/Common.bff"
+#include "Build/Compilers.bff"
+#include "Build/VisualStudio.bff"
 
 // All projects
 //------------------------------------------------------------------------------
-#include "Source/Core/fbuild.bff"
-#include "Source/Core.Serialize/fbuild.bff"
-#include "Source/Core.Graphics/fbuild.bff"
-#include "Source/Core.Engine/fbuild.bff"
-#include "Source/Core.Logic/fbuild.bff"
-#include "Source/Core.Application/fbuild.bff"
-#include "Source/Core.Test/fbuild.bff"
+#include "Source/Core/Core.bff"
+#include "Source/Core.Graphics/Core.Graphics.bff"
+#include "Source/Core.Logic/Core.Logic.bff"
+#include "Source/Core.Serialize/Core.Serialize.bff"
+#include "Source/Core.Engine/Core.Engine.bff"
+#include "Source/Core.Application/Core.Application.bff"
+#include "Source/Core.Test/Core.Test.bff"
 
-// Aliases : All-$Platform$-$Config$
-//------------------------------------------------------------------------------
-ForEach( .Config in .Configs )
-{
-  Using( .Config )
+.SolutionBuildProject = 'Core.Test-proj'
 
-  Alias( 'All-$Platform$-$Config$' )
-  {
-    .Targets    =
-    {
-      // executables
-      'Core.Test-$Platform$-$Config$',
-
-      // Clang doesn't link at the moment, so we need list all the libs manually
-      'Core-$Platform$-$Config$',
-      'Core.Serialize-$Platform$-$Config$',
-      'Core.Graphics-$Platform$-$Config$',
-      'Core.Logic-$Platform$-$Config$',
-      'Core.Engine-$Platform$-$Config$',
-      'Core.Application-$Platform$-$Config$'
-    }
-  }
-}
-
-// Aliases : All-$Platform$
-//------------------------------------------------------------------------------
-.Platforms = { 'x86', 'x64' }
-ForEach( .Platform in .Platforms )
-{
-  Alias( 'All-$Platform$' )
-  {
-    .Targets    = { 'All-$Platform$-Debug',
-                    'All-$Platform$-Profile',
-                    'All-$Platform$-Release',
-                    'All-$Platform$-Final' }
-  }
-}
-Alias( 'All-x86-Clang' )
-{
-  .Targets      = { 'All-x86-Clang-Debug' }
-}
-
-// Aliases : All
-//------------------------------------------------------------------------------
-Alias( 'All' )
-{
-  .Targets    = { 'All-x86',
-                  'All-x64',
-                  //'All-x86Clang', // CLANG is excluded since it does not compile for the moment (waiting for better windows support)
-                }
-}
-
-// Aliases : proj (all projects)
-//------------------------------------------------------------------------------
-Alias( 'proj' )
-{
-  .Targets    = { 'All-proj',
-                  'Core-proj',
-                  'Core.Serialize-proj',
-                  'Core.Graphics-proj',
-                  'Core.Logic-proj',
-                  'Core.Engine-proj',
-                  'Core.Application-proj',
-                  'Core.Test-proj',
-                }
-}
-
-// Aliases : Clang
-//------------------------------------------------------------------------------
-Alias( 'Clang' )
-{
-  .Targets    = { 'All-x86-Clang', // CLANG is excluded since it does not compile for the moment (waiting for better windows support)
-                }
-}
+#include "Build/Templates/Solution.bff"
 
 // Global distribution clean-up (deletes all intermediates and binaries)
 //------------------------------------------------------------------------------
 
 Exec( 'dist-clean' )
 {
-  .ExecExecutable = '$OutputBase$/dist_clean.bat'
-  .ExecInput      = '$OutputBase$/dist_clean.bat'
-  .ExecOutput     = '$OutputBase$/dist_clean.log'
+    .ExecExecutable = '$OutputDirectory$/dist_clean.bat'
+    .ExecInput      = '$OutputDirectory$/dist_clean.bat'
+    .ExecOutput     = '$OutputDirectory$/dist_clean.log'
 }
-
-//------------------------------------------------------------------------------

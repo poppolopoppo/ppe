@@ -1,0 +1,181 @@
+#once
+
+; __      ___                 _   ___   ___  __ ___
+; \ \    / (_)               | | |__ \ / _ \/_ |__ \
+;  \ \  / / _ ___ _   _  __ _| |    ) | | | || |  ) |
+;   \ \/ / | / __| | | |/ _` | |   / /| | | || | / /
+;    \  /  | \__ \ |_| | (_| | |  / /_| |_| || |/ /_
+;     \/   |_|___/\__,_|\__,_|_| |____|\___/ |_|____|
+;
+
+#include "MSVCBase.bff"
+
+//------------------------------------------------------------------------------
+// Global Properties
+//------------------------------------------------------------------------------
+
+.MSVC2012PlatformToolset = 'v110'
+
+#import VS110COMNTOOLS
+.PATH   = "$VS110COMNTOOLS$..\IDE;"
+        + "$VS110COMNTOOLS$..\..\VC\Bin;"
+        + "$VS110COMNTOOLS$..\..\VC\Bin\amd64;"
+        + .PATH
+
+.MSVC2012BasePath =
+[
+    .LocalisationUID    = '1033' ; code zone pour le language (messages std FR)
+    .VSBasePath         = '$VS110COMNTOOLS$..\..'
+    .WindowsSDKBasePath = 'C:\Program Files (x86)\Windows Kits\8.0'
+]
+
+//------------------------------------------------------------------------------
+// Microsoft Visual Studio 2012 (x86)
+//------------------------------------------------------------------------------
+Compiler( 'Compiler-MSVC2012-x86' )
+{
+    Using( .MSVC2012BasePath )
+
+    .Root       = '$VSBasePath$\VC\bin'
+    .Executable = '$Root$\cl.exe'
+    .ExtraFiles =
+    {
+        '$Root$/$LocalisationUID$/clui.dll',
+        '$Root$/c1.dll',
+        '$Root$/c1ast.dll',
+        '$Root$/c1xx.dll',
+        '$Root$/c1xxast.dll',
+        '$Root$/c2.dll',
+        '$Root$/mspft110.dll',
+        '$VSBasePath$/Common7/IDE/msobj110.dll',
+        '$VSBasePath$/Common7/IDE/mspdb110.dll',
+        '$VSBasePath$/Common7/IDE/mspdbcore.dll',
+        '$VSBasePath$/Common7/IDE/mspdbsrv.exe',
+        '$VSBasePath$/VC/redist/x86/Microsoft.VC110.CRT/msvcp110.dll',
+        '$VSBasePath$/VC/redist/x86/Microsoft.VC110.CRT/msvcr110.dll',
+        '$VSBasePath$/VC/redist/x86/Microsoft.VC110.CRT/vccorlib110.dll'
+    }
+}
+
+//------------------------------------------------------------------------------
+// Microsoft Visual Studio 2012 (x64)
+//------------------------------------------------------------------------------
+Compiler( 'Compiler-MSVC2012-x64' )
+{
+    Using( .MSVC2012BasePath )
+
+    .Root       = '$VSBasePath$\VC\bin\amd64'
+    .Executable = '$Root$\cl.exe'
+    .ExtraFiles =
+    {
+        '$Root$/$LocalisationUID$/clui.dll',
+        '$Root$/c1.dll',
+        '$Root$/c1ast.dll',
+        '$Root$/c1xx.dll',
+        '$Root$/c1xxast.dll',
+        '$Root$/c2.dll',
+        '$Root$/msobj110.dll',
+        '$Root$/mspdb110.dll',
+        '$Root$/mspdbcore.dll',
+        '$Root$/mspdbsrv.exe',
+        '$Root$/mspft110.dll',
+        '$VSBasePath$/VC/redist/x64/Microsoft.VC110.CRT/msvcp110.dll',
+        '$VSBasePath$/VC/redist/x64/Microsoft.VC110.CRT/msvcr110.dll',
+        '$VSBasePath$/VC/redist/x64/Microsoft.VC110.CRT/vccorlib110.dll'
+    }
+}
+
+//------------------------------------------------------------------------------
+// Resource Compiler
+//------------------------------------------------------------------------------
+.MSVC2012ResourceCompiler =
+[
+    Using( .MSVC2012BasePath )
+
+    .Compiler                   = '$WindowsSDKBasePath$\Bin\x86\RC.exe'
+    .CompilerOutputExtension    = '.res'
+    .CompilerOptions            = '/nologo /fo"%2" %1'
+]
+
+//------------------------------------------------------------------------------
+// Base Config
+//------------------------------------------------------------------------------
+.MSVC2012BaseConfig =
+[
+    Using( .MSVC2012BasePath )
+
+    .Defines = {}
+    .CompilerOptions = ''
+    + ' /arch:SSE2'     ; active le support SSE2
+    + ' /d2Zi+'         ; https://randomascii.wordpress.com/2013/09/11/debugging-optimized-codenew-in-visual-studio-2012/
+
+    .IncludePaths =
+    {
+        '$VSBasePath$/VC/Include',
+        '$WindowsSDKBasePath$/Include/um',
+        '$WindowsSDKBasePath$/Include/shared',
+        '$WindowsSDKBasePath$/Include',
+    }
+]
+
+//------------------------------------------------------------------------------
+// Platforms
+//------------------------------------------------------------------------------
+.MSVC2012PlatformWin32 =
+[
+    Using( .MSVC2012BaseConfig )
+
+    .Compiler           = 'Compiler-MSVC2012-x86'
+    .ToolsBasePath      = '$VSBasePath$/VC/bin'
+    .Librarian          = '$ToolsBasePath$/lib.exe'
+    .Linker             = '$ToolsBasePath$/link.exe'
+    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/win8/um/x86"'
+                        + ' /LIBPATH:"$VSBasePath$/VC/lib"'
+]
+.MSVC2012PlatformWin32 + .MSVCBasePlatformWin32
+
+.MSVC2012PlatformX64 =
+[
+    Using( .MSVC2012BaseConfig )
+
+    .Compiler           = 'Compiler-MSVC2012-x64'
+    .ToolsBasePath      = '$VSBasePath$/VC/bin/amd64'
+    .Librarian          = '$ToolsBasePath$/lib.exe'
+    .Linker             = '$ToolsBasePath$/link.exe'
+    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/win8/um/x64"'
+                        + ' /LIBPATH:"$VSBasePath$/VC/lib/amd64"'
+]
+.MSVC2012PlatformX64 + .MSVCBasePlatformX64
+
+//------------------------------------------------------------------------------
+// Configurations
+//------------------------------------------------------------------------------
+
+.MSVC2012_Win32Debug         = .MSVC2012PlatformWin32   + .MSVCBaseDebugConfig
+.MSVC2012_Win32FastDebug     = .MSVC2012PlatformWin32   + .MSVCBaseFastDebugConfig
+.MSVC2012_Win32Release       = .MSVC2012PlatformWin32   + .MSVCBaseReleaseConfig
+.MSVC2012_Win32Profiling     = .MSVC2012PlatformWin32   + .MSVCBaseProfilingConfig
+.MSVC2012_Win32Final         = .MSVC2012PlatformWin32   + .MSVCBaseFinalConfig
+
+.MSVC2012_X64Debug           = .MSVC2012PlatformX64     + .MSVCBaseDebugConfig
+.MSVC2012_X64FastDebug       = .MSVC2012PlatformX64     + .MSVCBaseFastDebugConfig
+.MSVC2012_X64Release         = .MSVC2012PlatformX64     + .MSVCBaseReleaseConfig
+.MSVC2012_X64Profiling       = .MSVC2012PlatformX64     + .MSVCBaseProfilingConfig
+.MSVC2012_X64Final           = .MSVC2012PlatformX64     + .MSVCBaseFinalConfig
+
+.MSVC2012CompileConfigs =
+{
+    // Win32
+    .MSVC2012_Win32Debug,
+    .MSVC2012_Win32FastDebug,
+    .MSVC2012_Win32Release,
+    .MSVC2012_Win32Profiling,
+    .MSVC2012_Win32Final,
+
+    // X64
+    .MSVC2012_X64Debug,
+    .MSVC2012_X64FastDebug,
+    .MSVC2012_X64Release,
+    .MSVC2012_X64Profiling,
+    .MSVC2012_X64Final,
+}

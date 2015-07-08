@@ -1,0 +1,244 @@
+#once
+
+; __      ___                 _   ___   ___  __ _____
+; \ \    / (_)               | | |__ \ / _ \/_ | ____|
+;  \ \  / / _ ___ _   _  __ _| |    ) | | | || | |__
+;   \ \/ / | / __| | | |/ _` | |   / /| | | || |___ \
+;    \  /  | \__ \ |_| | (_| | |  / /_| |_| || |___) |
+;     \/   |_|___/\__,_|\__,_|_| |____|\___/ |_|____/
+;
+
+#include "MSVCBase.bff"
+
+; Speeding up the Incremental Developer Build Scenario
+; http://blogs.msdn.com/b/vcblog/archive/2014/11/12/speeding-up-the-incremental-developer-scenario-with-visual-studio-2015.aspx
+
+//------------------------------------------------------------------------------
+// Global Properties
+//------------------------------------------------------------------------------
+
+#define USE_VISUAL2015_NATIVE_ENVIRONMENT   ; utilise la toolchain 64 bits pour compiler en 32
+#define USE_VISUAL2015_DEBUG_FASTLINK       ; 2X Faster Links, mais TODO: les versions ne doivent pas utiliser ça
+
+.MSVC2015PlatformToolset = 'v140'
+
+#import VS140COMNTOOLS
+.PATH   = "$VS140COMNTOOLS$..\IDE;"
+        + "$VS140COMNTOOLS$..\..\VC\Bin;"
+        + "$VS140COMNTOOLS$..\..\VC\Bin\amd64;"
+#if USE_VISUAL2015_NATIVE_ENVIRONMENT
+        + "$VS140COMNTOOLS$..\..\VC\Bin\amd64_x86;"
+#endif
+        + .PATH
+
+.MSVC2015BasePath =
+[
+    .LocalisationUID    = '1036' ; code zone pour le language (messages std US car c'est une RC) ; TODO: Visual 2015 RC
+    .VSBasePath         = '$VS140COMNTOOLS$..\..'
+    .WindowsSDKBasePath = 'C:\Program Files (x86)\Windows Kits\10'
+    .WindowsSDKVersion  = '10.0.10069.0' ;'10.0.10056.0' ; TODO: Visual 2015 RC
+]
+
+//------------------------------------------------------------------------------
+// Microsoft Visual Studio 2015 (x86)
+//------------------------------------------------------------------------------
+Compiler( 'Compiler-MSVC2015-x86' )
+{
+    Using( .MSVC2015BasePath )
+
+    .Root       = '$VSBasePath$\VC\bin'
+    .Executable = '$Root$\cl.exe'
+    .ExtraFiles =
+    {
+        '$Root$\$LocalisationUID$\clui.dll'
+        '$Root$\c1.dll'
+        '$Root$\c1xx.dll',
+        '$Root$\c2.dll',
+        '$Root$\msobj140.dll'
+        '$Root$\mspdb140.dll'
+        '$Root$\mspdbcore.dll'
+        '$Root$\mspdbsrv.exe'
+        '$Root$\mspft140.dll'
+        '$VSBasePath$\VC\redist\x86\Microsoft.VC140.CRT\concrt140.dll'
+        '$VSBasePath$\VC\redist\x86\Microsoft.VC140.CRT\msvcp140.dll'
+        '$VSBasePath$\VC\redist\x86\Microsoft.VC140.CRT\vccorlib140.dll'
+        '$VSBasePath$\VC\redist\x86\Microsoft.VC140.CRT\vcruntime140.dll'
+    }
+}
+
+//------------------------------------------------------------------------------
+// Microsoft Visual Studio 2015 (x64)
+//------------------------------------------------------------------------------
+Compiler( 'Compiler-MSVC2015-x64' )
+{
+    Using( .MSVC2015BasePath )
+
+    .Root       = '$VSBasePath$\VC\bin\amd64'
+    .Executable = '$Root$\cl.exe'
+    .ExtraFiles =
+    {
+        '$Root$\$LocalisationUID$\clui.dll'
+        '$Root$\c1.dll'
+        '$Root$\c1xx.dll',
+        '$Root$\c2.dll',
+        '$Root$\msobj140.dll'
+        '$Root$\mspdb140.dll'
+        '$Root$\mspdbcore.dll'
+        '$Root$\mspdbsrv.exe'
+        '$Root$\mspft140.dll'
+        '$VSBasePath$\VC\redist\x64\Microsoft.VC140.CRT\concrt140.dll'
+        '$VSBasePath$\VC\redist\x64\Microsoft.VC140.CRT\msvcp140.dll'
+        '$VSBasePath$\VC\redist\x64\Microsoft.VC140.CRT\vccorlib140.dll'
+        '$VSBasePath$\VC\redist\x64\Microsoft.VC140.CRT\vcruntime140.dll'
+    }
+}
+
+#if USE_VISUAL2015_NATIVE_ENVIRONMENT
+//------------------------------------------------------------------------------
+// Microsoft Visual Studio 2015 (x64 cross compiler for x86)
+//------------------------------------------------------------------------------
+Compiler( 'Compiler-MSVC2015-x64_x86' )
+{
+    Using( .MSVC2015BasePath )
+
+    .Root       = '$VSBasePath$\VC\bin\amd64_x86'
+    .Executable = '$Root$\cl.exe'
+    .ExtraFiles =
+    {
+        '$Root$\$LocalisationUID$\clui.dll'
+        '$Root$\c1.dll'
+        '$Root$\c1xx.dll',
+        '$Root$\c2.dll',
+        '$Root$\msobj140.dll'
+        '$Root$\mspdb140.dll'
+        '$Root$\mspdbcore.dll'
+        '$Root$\mspdbsrv.exe'
+        '$Root$\mspft140.dll'
+        '$VSBasePath$\VC\redist\x86\Microsoft.VC140.CRT\concrt140.dll'
+        '$VSBasePath$\VC\redist\x86\Microsoft.VC140.CRT\msvcp140.dll'
+        '$VSBasePath$\VC\redist\x86\Microsoft.VC140.CRT\vccorlib140.dll'
+        '$VSBasePath$\VC\redist\x86\Microsoft.VC140.CRT\vcruntime140.dll'
+    }
+}
+#endif
+
+//------------------------------------------------------------------------------
+// Resource Compiler
+//------------------------------------------------------------------------------
+.MSVC2015ResourceCompiler =
+[
+    Using( .MSVC2015BasePath )
+
+    .Compiler                   = '$WindowsSDKBasePath$\Bin\x86\RC.exe'
+    .CompilerOutputExtension    = '.res'
+    .CompilerOptions            = '/nologo /fo"%2" %1'
+]
+
+//------------------------------------------------------------------------------
+// Base Config
+//------------------------------------------------------------------------------
+.MSVC2015BaseConfig =
+[
+    Using( .MSVC2015BasePath )
+
+    .Defines = {}
+    .CompilerOptions = ''
+    + ' /Zo'                ; https://msdn.microsoft.com/fr-fr/library/dn785163.aspx
+    + ' /Zc:inline'         ; https://msdn.microsoft.com/fr-fr/library/dn642448.aspx
+    + ' /Zc:rvalueCast'     ; https://msdn.microsoft.com/fr-fr/library/dn449507.aspx
+    //+ ' /cgthreads7'        ; https://msdn.microsoft.com/fr-fr/library/dn631956.aspx
+
+    .IncludePaths =
+    {
+        '$VSBasePath$/VC/Include',
+        '$WindowsSDKBasePath$/Include/$WindowsSDKVersion$/ucrt',
+        '$WindowsSDKBasePath$/Include/$WindowsSDKVersion$/um',
+        '$WindowsSDKBasePath$/Include/$WindowsSDKVersion$/shared',
+        '$WindowsSDKBasePath$/Include/$WindowsSDKVersion$/',
+    }
+]
+
+.MSVC2015DebugFastLink =
+[
+#if USE_VISUAL2015_DEBUG_FASTLINK
+    ; utilise un lien symbolique vers les obj plutot que de les copier dans le pdb
+    .LinkerOptions      = ' /debug:FASTLINK'
+#endif
+]
+
+.MSVC2015LinkTimeCodeGenerationIncremental =
+[
+    ; Link Time Code Generation (LTCG) incrémental pour accélérer les builds en FINAL
+    .LinkerOptions      = ' /LTCG:incremental'
+    .LibrarianOptions   = ' /LTCG'
+]
+
+//------------------------------------------------------------------------------
+// Platforms
+//------------------------------------------------------------------------------
+.MSVC2015PlatformWin32 =
+[
+    Using( .MSVC2015BaseConfig )
+
+    .Compiler           = 'Compiler-MSVC2015-x86'
+    .ToolsBasePath      = '$VSBasePath$/VC/bin'
+
+#if USE_VISUAL2015_NATIVE_ENVIRONMENT
+    .Compiler           = 'Compiler-MSVC2015-x64_x86'
+    .ToolsBasePath      = '$VSBasePath$/VC/bin/amd64_x86'
+#endif
+
+    .Librarian          = '$ToolsBasePath$/lib.exe'
+    .Linker             = '$ToolsBasePath$/link.exe'
+    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/ucrt/x86"'
+                        + ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/um/x86"'
+                        + ' /LIBPATH:"$VSBasePath$/VC/lib"'
+]
+.MSVC2015PlatformWin32 + .MSVCBasePlatformWin32
+
+.MSVC2015PlatformX64 =
+[
+    Using( .MSVC2015BaseConfig )
+
+    .Compiler           = 'Compiler-MSVC2015-x64'
+    .ToolsBasePath      = '$VSBasePath$/VC/bin/amd64'
+    .Librarian          = '$ToolsBasePath$/lib.exe'
+    .Linker             = '$ToolsBasePath$/link.exe'
+    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/ucrt/x64"'
+                        + ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/um/x64"'
+                        + ' /LIBPATH:"$VSBasePath$/VC/lib/amd64"'
+]
+.MSVC2015PlatformX64 + .MSVCBasePlatformX64
+
+//------------------------------------------------------------------------------
+// Configurations
+//------------------------------------------------------------------------------
+
+.MSVC2015_Win32Debug         = .MSVC2015PlatformWin32   + .MSVCBaseDebugConfig          + .MSVC2015DebugFastLink
+.MSVC2015_Win32FastDebug     = .MSVC2015PlatformWin32   + .MSVCBaseFastDebugConfig      + .MSVC2015DebugFastLink
+.MSVC2015_Win32Release       = .MSVC2015PlatformWin32   + .MSVCBaseReleaseConfig        + .MSVC2015DebugFastLink
+.MSVC2015_Win32Profiling     = .MSVC2015PlatformWin32   + .MSVCBaseProfilingConfig      + .MSVC2015DebugFastLink
+.MSVC2015_Win32Final         = .MSVC2015PlatformWin32   + .MSVCBaseFinalConfig          + .MSVC2015LinkTimeCodeGenerationIncremental
+
+.MSVC2015_X64Debug           = .MSVC2015PlatformX64     + .MSVCBaseDebugConfig          + .MSVC2015DebugFastLink
+.MSVC2015_X64FastDebug       = .MSVC2015PlatformX64     + .MSVCBaseFastDebugConfig      + .MSVC2015DebugFastLink
+.MSVC2015_X64Release         = .MSVC2015PlatformX64     + .MSVCBaseReleaseConfig        + .MSVC2015DebugFastLink
+.MSVC2015_X64Profiling       = .MSVC2015PlatformX64     + .MSVCBaseProfilingConfig      + .MSVC2015DebugFastLink
+.MSVC2015_X64Final           = .MSVC2015PlatformX64     + .MSVCBaseFinalConfig          + .MSVC2015LinkTimeCodeGenerationIncremental
+
+.MSVC2015CompileConfigs =
+{
+    // Win32
+    .MSVC2015_Win32Debug,
+    .MSVC2015_Win32FastDebug,
+    .MSVC2015_Win32Release,
+    .MSVC2015_Win32Profiling,
+    .MSVC2015_Win32Final,
+
+    // X64
+    .MSVC2015_X64Debug,
+    .MSVC2015_X64FastDebug,
+    .MSVC2015_X64Release,
+    .MSVC2015_X64Profiling,
+    .MSVC2015_X64Final,
+}

@@ -1,0 +1,67 @@
+#once
+
+#include "Common.bff"
+
+#include "Shared/SharedArch.bff"
+#include "Shared/SharedConfig.bff"
+#include "Shared/SharedPlatform.bff"
+
+#if __WINDOWS__
+//------------------------------------------------------------------------------
+// Windows Compilers
+//------------------------------------------------------------------------------
+;#define USE_VISUALSTUDIO_2012
+;#define USE_VISUALSTUDIO_2013
+#define USE_VISUALSTUDIO_2015
+
+#if USE_VISUALSTUDIO_2012
+#   include "Compilers/MSVC2012.bff"
+    .MSVC20XXCompileConfigs = .MSVC2012CompileConfigs
+    .PlatformToolset        = .MSVC2012PlatformToolset
+    .ResourceCompiler       = .MSVC2012ResourceCompiler
+#endif
+#if USE_VISUALSTUDIO_2013
+#   include "Compilers/MSVC2013.bff"
+    .MSVC20XXCompileConfigs = .MSVC2013CompileConfigs
+    .PlatformToolset        = .MSVC2013PlatformToolset
+    .ResourceCompiler       = .MSVC2013ResourceCompiler
+#endif
+#if USE_VISUALSTUDIO_2015
+#   include "Compilers/MSVC2015.bff" ; TODO: Release Candidate
+    .MSVC20XXCompileConfigs = .MSVC2015CompileConfigs
+    .PlatformToolset        = .MSVC2015PlatformToolset
+    .ResourceCompiler       = .MSVC2015ResourceCompiler
+#endif
+    .AllCompileConfigs      = .MSVC20XXCompileConfigs
+#endif
+
+#if __LINUX__
+//------------------------------------------------------------------------------
+// Linux Compilers (TODO)
+//------------------------------------------------------------------------------
+#   include "Compilers/ClangLinux.bff" ; TODO
+    .AllCompileConfigs      = .ClangLinuxCompileConfigs
+#endif
+
+#if __OSX__
+//------------------------------------------------------------------------------
+// MacOSX Compilers (TODO)
+//------------------------------------------------------------------------------
+#   include "Compilers/ClangOSX.bff" ; TODO
+    .AllCompileConfigs      = .ClangOSXCompileConfigs
+#endif
+
+//------------------------------------------------------------------------------
+// Environment Settings
+//------------------------------------------------------------------------------
+Settings
+{
+    .Environment = { "PATH=$PATH$;%PATH%" }
+#if __WINDOWS__
+    .Environment +
+    {
+        "SystemRoot=C:\Windows",
+        "TMP=C:\Windows\Temp",
+    }
+#endif
+}

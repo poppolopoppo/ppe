@@ -1,0 +1,15 @@
+#once
+{
+    .BinaryPrefix = 'Test'
+    .ProjectName = 'Core.Test'
+    .ProjectPath = '$SourceDiretory$/Core.Test'
+    .ProjectDependencies =
+    {
+        'Core',
+        'Core.Graphics',
+        'Core.Logic',
+        'Core.Serialize',
+        'Core.Engine',
+    }
+    #include "../../Build/Templates/Executable.bff"
+}

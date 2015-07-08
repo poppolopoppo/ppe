@@ -1,0 +1,6 @@
+#once
+{
+    .ProjectName = 'Core.Serialize'
+    .ProjectPath = '$SourceDiretory$/Core.Serialize'
+    #include "../../Build/Templates/Library.bff"
+}

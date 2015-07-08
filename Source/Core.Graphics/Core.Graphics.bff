@@ -1,0 +1,6 @@
+#once
+{
+    .ProjectName = 'Core.Graphics'
+    .ProjectPath = '$SourceDiretory$/Core.Graphics'
+    #include "../../Build/Templates/Library.bff"
+}

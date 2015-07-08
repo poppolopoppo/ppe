@@ -1,0 +1,37 @@
+#once
+
+//------------------------------------------------------------------------------
+// Shared PC Platform
+//------------------------------------------------------------------------------
+.SharedPlatformWindowsBase =
+[
+    Using( .SharedBasePlatform )
+
+    .PlatformDefines + { 'PLATFORM_PC', 'PLATFORM_WIN', 'WIN32', '__WINDOWS__' }
+]
+
+//------------------------------------------------------------------------------
+// Shared Win32 Platform
+//------------------------------------------------------------------------------
+.SharedPlatformWin32 =
+[
+    Using( .SharedPlatformWindowsBase )
+    Using( .SharedArchX86 )
+
+    .Platform = 'Win32'
+    .PlatformDefines + { '_WIN32' } + .ArchDefines
+]
+.AllSharedPlatforms = { .SharedPlatformWin32 }
+
+//------------------------------------------------------------------------------
+// Shared X64 Platform
+//------------------------------------------------------------------------------
+.SharedPlatformX64 =
+[
+    Using( .SharedPlatformWindowsBase )
+    Using( .SharedArchX64 )
+
+    .Platform = 'x64'
+    .PlatformDefines + { '_WIN64' } + .ArchDefines
+]
+.AllSharedPlatforms + .SharedPlatformX64

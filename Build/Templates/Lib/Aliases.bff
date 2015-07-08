@@ -1,0 +1,65 @@
+
+//------------------------------------------------------------------------------
+// Create aliases for platforms and configurations (.lib)
+//------------------------------------------------------------------------------
+; Inputs :
+;   <ProjectName>       name of the project
+;   <ProjectPath>       path containing the source files
+//------------------------------------------------------------------------------
+
+// Per platform aliases
+//------------------------------------------------------------------------------
+ForEach( .SharedPlatform in .AllSharedPlatforms )
+{
+    Using( .SharedPlatform )
+
+    Alias( '$ProjectName$-$Platform$' )
+    {
+        .Targets = {}
+        ForEach( .SharedConfig in .AllSharedConfigs )
+        {
+            Using( .SharedConfig )
+
+            .Targets + { '$ProjectName$-$Platform$-$Config$' }
+            Export( .Targets )
+        }
+    }
+}
+
+// Per config aliases
+//------------------------------------------------------------------------------
+ForEach( .SharedConfig in .AllSharedConfigs )
+{
+    Using( .SharedConfig )
+
+    Alias( '$ProjectName$-$Config$' )
+    {
+        .Targets = {}
+        ForEach( .SharedPlatform in .AllSharedPlatforms )
+        {
+            Using( .SharedPlatform )
+
+            .Targets + { '$ProjectName$-$Platform$-$Config$' }
+            Export( .Targets )
+        }
+    }
+}
+
+// Global alias, builds all configurations
+//------------------------------------------------------------------------------
+Alias( '$ProjectName$' )
+{
+    .Targets = {}
+    ForEach( .SharedPlatform in .AllSharedPlatforms )
+    {
+        Using( .SharedPlatform )
+
+        ForEach( .SharedConfig in .AllSharedConfigs )
+        {
+            Using( .SharedConfig )
+
+            .Targets + { '$ProjectName$-$Platform$-$Config$' }
+            Export( .Targets )
+        }
+    }
+}

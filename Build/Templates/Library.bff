@@ -1,0 +1,33 @@
+
+//------------------------------------------------------------------------------
+// Library Generation (.lib or .dll)
+//------------------------------------------------------------------------------
+; Inputs :
+;   <ProjectName>           name of the project
+;   <ProjectPath>           path containing the source files
+;   [PCHName]               precompiled header name (default value in Common.bff)
+;   [ProjectDefines]        project specific defines (default value in Common.bff)
+;   [ProjectDependencies]   project specific dependencies (default value in Common.bff)
+;   [ProjectExcludedFiles]  project specific excluded files (default value in Common.bff)
+;   [ProjectIncludes]       project specific includes (default value in Common.bff)
+;   [ProjectLibraries]      project specific libraries (default value in Common.bff)
+;   [ProjectPostBuild]      project specific post-build (default value in Common.bff)
+;   [ProjectPreBuild]       project specific pre-build (default value in Common.bff)
+//------------------------------------------------------------------------------
+
+#include "Lib/LibraryHelpers.bff"
+
+ForEach( .CompileConfig in .AllCompileConfigs )
+{
+    Using( .CompileConfig )
+
+    Alias( '$ProjectName$-$Platform$-$Config$' )
+    {
+        .Targets    = .ProjectPreBuild
+                    + { '$ProjectName$-$ConfigLinkType$-$Platform$-$Config$' }
+                    + .ProjectPostBuild
+    }
+}
+
+#include "Lib/Aliases.bff"
+#include "Lib/RegisterProject.bff"
