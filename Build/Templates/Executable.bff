@@ -59,6 +59,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
     Executable( '$ProjectName$-Exe-$Platform$-$Config$' )
     {
         .LinkerOutput = '$BinaryDirectory$\$BinaryPrefix$.$Config$.$Platform$.exe'
+        .LinkerOptions + .ExecutableOptions
 
         .Libraries = {}
         ForEach( .ProjectDependency in .ProjectDependencies )
