@@ -6,9 +6,10 @@
 
 // Master setting macros
 //------------------------------------------------------------------------------
-
-#define USE_FBUILD_CACHE    // un/comment to enable/disable completly cache features
-#define ENABLE_MSVC14       // un/comment to choose between Visual Studio 2015 and 2012
+; un/comment to enable/disable completly cache features
+#define USE_FBUILD_CACHE
+; un/comment to choose between Visual Studio 2015 and 2012
+#define ENABLE_MSVC14
 ;#define CROSS_COMPILE_X86_WITH_X64_COMPILER
 
 // Global options

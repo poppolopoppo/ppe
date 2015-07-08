@@ -14,7 +14,8 @@
 // Global Properties
 //------------------------------------------------------------------------------
 
-#define USE_VISUAL2013_NATIVE_ENVIRONMENT ; utilise la toolchain 64 bits pour compiler en 32
+; utilise la toolchain 64 bits pour compiler en 32
+#define USE_VISUAL2013_NATIVE_ENVIRONMENT
 
 .MSVC2013PlatformToolset = 'v120'
 

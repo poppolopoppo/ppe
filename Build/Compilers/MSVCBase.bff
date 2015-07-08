@@ -10,6 +10,7 @@
 
 .DirectXSDKBasePath = '$DXSDK_DIR$'
 
+; set les bonnes options pour tirer parti du cache
 #define USE_FASTBUILD_CACHE
 
 //------------------------------------------------------------------------------

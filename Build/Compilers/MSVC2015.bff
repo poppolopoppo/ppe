@@ -17,8 +17,10 @@
 // Global Properties
 //------------------------------------------------------------------------------
 
-#define USE_VISUAL2015_NATIVE_ENVIRONMENT   ; utilise la toolchain 64 bits pour compiler en 32
-#define USE_VISUAL2015_DEBUG_FASTLINK       ; 2X Faster Links, mais TODO: les versions ne doivent pas utiliser ça
+; utilise la toolchain 64 bits pour compiler en 32
+#define USE_VISUAL2015_NATIVE_ENVIRONMENT
+; 2X Faster Links, mais TODO: les versions ne doivent pas utiliser ça
+#define USE_VISUAL2015_DEBUG_FASTLINK
 
 .MSVC2015PlatformToolset = 'v140'
 
