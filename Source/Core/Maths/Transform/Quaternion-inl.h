@@ -75,6 +75,10 @@ inline Quaternion Quaternion::operator *(float scale) const {
     return Quaternion(_value * scale);
 }
 //----------------------------------------------------------------------------
+inline Quaternion operator *(float scale, const Quaternion& quaternion) {
+    return quaternion * scale;
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Core
