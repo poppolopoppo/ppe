@@ -87,7 +87,6 @@
     + ' /LARGEADDRESSAWARE' ; l'application gère les adresses de taille supérieure à 2 gigaoctets
     + ' /TLBID:1'           ; https://msdn.microsoft.com/fr-fr/library/b1kw34cb.aspx
     + ' /DEBUG'             ; genère les infos de debug pour le binaire
-    + ' /SAFESEH'           ; image dotée de gestionnaires d'exceptions sécurisés
     + ' /IGNORE:4001'       ; https://msdn.microsoft.com/en-us/library/aa234697(v=vs.60).aspx
     + ' /DYNAMICBASE:NO'    ; pas de randomisation des adresses
     + ' /NXCOMPAT:NO'       ; indique que le programme n'est pas compatible avec Data Execution Prevention
@@ -185,6 +184,7 @@
 
     .LibrarianOptions   = ' /MACHINE:X86'
     .LinkerOptions      = ' /MACHINE:X86'
+    + ' /SAFESEH'           ; image dotée de gestionnaires d'exceptions sécurisés
     + ' /LIBPATH:"$SolutionPath$/../Bin/DLL_X86"'
     + ' /LIBPATH:"$DirectXSDKBasePath$/Lib/x86"'
 ]
