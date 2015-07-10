@@ -23,8 +23,89 @@ Unity( '$ProjectName$-Unity' )
     .UnityPCH = '$PCHName$.h'
     .UnityInputPath = '$ProjectPath$'
     .UnityOutputPath = '$UnityDirectory$\$ProjectName$'
-    .UnityInputPattern = '*.cpp'
+    .UnityInputPattern = '*.cpp|*.c'
     .UnityInputExcludedFiles = .ProjectExcludedFiles
+}
+
+.ProjectConfigs = { .VisualStudioDummyProjectConfig } ; TODO: à virer
+
+ForEach( .CompileConfig in .AllCompileConfigs )
+{
+    .ProjectConfig = // Visual project config
+    [
+        Using( .CompileConfig )
+
+        // Project directories
+        .IntermediateDirectory  + '\$Platform$\$Config$\$ProjectName$'
+        .OutputDirectory        + '\$Platform$\$Config$'
+
+        // Project defines
+        .CommandLineDefines = ''
+        .PreprocessorDefinitions = ''
+        .Defines + .ProjectDefines
+        ForEach( .define in .Defines )
+        {
+            .CommandLineDefines + ' $CompilerDefineFlag$"$define$"'
+            Export( .CommandLineDefines )
+            .PreprocessorDefinitions + ';$define$'
+            Export( .PreprocessorDefinitions )
+        }
+
+        // Project includes
+        .CommandLineIncludes = ''
+        .IncludeSearchPath = ''
+        .IncludePaths + .ProjectIncludes
+        ForEach( .path in .IncludePaths )
+        {
+            .CommandLineIncludes + ' $CompilerIncludeFlag$"$path$"'
+            Export( .CommandLineIncludes )
+            .IncludeSearchPath + ';$path$'
+            Export( .IncludeSearchPath )
+        }
+
+        .CommandLineOptions = .CommandLineDefines + .CommandLineIncludes
+
+        // Static library
+        Library( '$ProjectName$-Lib-$Platform$-$Config$' )
+        {
+            .CompilerOutputPath = .IntermediateDirectory
+
+            // Preprocessor
+            .PreprocessorOptions+ .CommandLineOptions
+
+            // Precompiled header
+            .PCHOptions         + ' /Yc"$PCHName$.h"'
+                                + .CommandLineOptions
+            .PCHInputFile       = '$ProjectPath$\$PCHName$.cpp'
+            .PCHOutputFile      = '$CompilerOutputPath$\$PCHName$.pch'
+
+            // Compiler
+            .CompilerInputUnity = '$ProjectName$-Unity'
+            .CompilerOptions    + ' /Yu"$PCHName$.h" /Fp"$PCHOutputFile$"'
+                                + .CommandLineOptions
+
+            // Librarian
+            .LibrarianOutput    = '$CompilerOutputPath$\$ProjectName$.lib'
+        }
+
+        // Dynamic library
+        DLL( '$ProjectName$-Dll-$Platform$-$Config$' )
+        {
+            .LinkerOutput       = '$BinaryDirectory$\$ProjectName$.$Config$.$Platform$.dll'
+            .LinkerOptions      = "$DllOptions$ $LinkerOptions$"
+            .Libraries          = { '$ProjectName$-Lib-$Platform$-$Config$' }
+                                + .ProjectLibraries
+
+            ForEach( .ProjectDependency in .ProjectDependencies )
+            {
+                .Libraries  + { '$ProjectDependency$-Lib-$Platform$-$Config$' }
+                Export( .Libraries )
+            }
+        }
+    ]
+
+    .ProjectConfigs + .ProjectConfig
+    Export( .ProjectConfigs )
 }
 
 VCXProject( '$ProjectName$-Proj' )
@@ -34,71 +115,4 @@ VCXProject( '$ProjectName$-Proj' )
     .ProjectBasePath    = .ProjectPath
     .ProjectInputPaths  = .ProjectPath
     .ProjectOutput      = '$ProjectPath$/$ProjectName$.vcxproj'
-}
-
-ForEach( .CompileConfig in .AllCompileConfigs )
-{
-    Using( .CompileConfig )
-
-    // Project directories
-    .IntermediateDirectory  + '\$Platform$\$Config$'
-    .OutputDirectory        + '\$Platform$\$Config$'
-
-    // Project defines
-    .CommandLineDefines = ''
-    .Defines + .ProjectDefines
-    ForEach( .define in .Defines )
-    {
-        .CommandLineDefines + ' $CompilerDefineFlag$"$define$"'
-        Export( .CommandLineDefines )
-    }
-
-    // Project includes
-    .CommandLineIncludes = ''
-    .IncludePaths + .ProjectIncludes
-    ForEach( .path in .IncludePaths )
-    {
-        .CommandLineIncludes + ' $CompilerIncludeFlag$"$path$"'
-        Export( .CommandLineIncludes )
-    }
-
-    .CommandLineOptions = .CommandLineDefines + .CommandLineIncludes
-
-    // Static library
-    Library( '$ProjectName$-Lib-$Platform$-$Config$' )
-    {
-        .CompilerOutputPath = '$IntermediateDirectory$\$ProjectName$'
-
-        // Preprocessor
-        .PreprocessorOptions+ .CommandLineOptions
-
-        // Precompiled header
-        .PCHOptions         + ' /Yc"$PCHName$.h"'
-                            + .CommandLineOptions
-        .PCHInputFile       = '$ProjectPath$\$PCHName$.cpp'
-        .PCHOutputFile      = '$CompilerOutputPath$\$PCHName$.pch'
-
-        // Compiler
-        .CompilerInputUnity = '$ProjectName$-Unity'
-        .CompilerOptions    + ' /Yu"$PCHName$.h" /Fp"$PCHOutputFile$"'
-                            + .CommandLineOptions
-
-        // Librarian
-        .LibrarianOutput    = '$CompilerOutputPath$\$ProjectName$.lib'
-    }
-
-    // Dynamic library
-    DLL( '$ProjectName$-Dll-$Platform$-$Config$' )
-    {
-        .LinkerOutput       = '$BinaryDirectory$\$ProjectName$.$Config$.$Platform$.dll'
-        .LinkerOptions      = "$DllOptions$ $LinkerOptions$"
-        .Libraries          = { '$ProjectName$-Lib-$Platform$-$Config$' }
-                            + .ProjectLibraries
-
-        ForEach( .ProjectDependency in .ProjectDependencies )
-        {
-            .Libraries  + { '$ProjectDependency$-Lib-$Platform$-$Config$' }
-            Export( .Libraries )
-        }
-    }
 }

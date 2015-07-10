@@ -11,44 +11,14 @@
     .Platform = "Win32"
 ]
 
-.VisualStudioProjectConfigs = { .VisualStudioDummyProjectConfig }
-ForEach( .CompileConfig in .AllCompileConfigs )
-{
-    .ProjectConfig =
-    [
-        Using( .CompileConfig )
-
-        .PreprocessorDefinitions = ''
-        ForEach( .define in .Defines )
-        {
-            .PreprocessorDefinitions + '$define$;'
-            Export( .PreprocessorDefinitions )
-        }
-
-        .IncludeSearchPath = ''
-        ForEach( .path in .IncludePaths )
-        {
-            .IncludeSearchPath + '$path$;'
-            Export( .IncludeSearchPath )
-        }
-    ]
-
-    .VisualStudioProjectConfigs + .ProjectConfig
-    Export( .VisualStudioProjectConfigs )
-}
-
 .VisualStudioBaseConfig =
 [
     .FBuildCommand          = 'cd "$SolutionPath$" &amp; "$SolutionPath$\fbuild.bat" -config "$SolutionPath$\fbuild.bff" -vs $VSBuildOptions$'
     .FBuildTarget           = '^$(ProjectName)-^$(Platform)-^$(Configuration)'
 
-    .ProjectConfigs         = .VisualStudioProjectConfigs
-
     .ProjectBuildCommand    = '$FBuildCommand$ $FBuildTarget$'
     .ProjectRebuildCommand  = '$FBuildCommand$ -clean $FBuildTarget$'
     .ProjectCleanCommand    = '$FBuildCommand$ -clean $FBuildTarget$-Purge'
-
-    .IncludeSearchPath      = '^$(SolutionDir)..\..;^$(ProjectDir);^$(ProjectDir)\..;.\'
 
     .OutputDirectory        = '$BinaryDirectory$'
     .IntermediateDirectory  = '$IntermediateDirectory$\$SolutionName$\^$(Platform)\^$(Configuration)\^$(ProjectName)'
