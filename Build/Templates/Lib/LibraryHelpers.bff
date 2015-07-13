@@ -80,7 +80,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
             .PreprocessorOptions+ .CommandLineOptions
 
             // Precompiled header
-            .PCHOptions         + ' /Yc"$PCHName$.h"'
+            .PCHOptions         + ' $CompilerPCHFlag$"$PCHName$.h"'
                                 + .CommandLineOptions
             .PCHInputFile       = '$ProjectPath$\$PCHName$.cpp'
             .PCHOutputFile      = '$CompilerOutputPath$\$PCHName$.pch'

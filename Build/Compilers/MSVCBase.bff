@@ -16,7 +16,7 @@
 //------------------------------------------------------------------------------
 // Common MSVC Configuration
 //------------------------------------------------------------------------------
-.MSVCBaseConfig =
+.MSVCBasePlatorm =
 [
     .AdditionalWarnings = ''
     + ' /we4062' // enumerator 'identifier' in a switch of enum 'enumeration' is not handled
@@ -105,6 +105,62 @@
     .ExecutableOptions = ''
     + ' /ENTRY:"wWinMainCRTStartup"'
 
+    ; utilisés pour généraliser les templates :
+    .CompilerDefineFlag         = ' /D'
+    .CompilerIncludeFlag        = ' /I'
+    .CompilerPCHFlag            = ' /Yc'
+    .CompilerPreprocessorFlag   = ' /P /Fi"%2"'
+    .CompilerBinaryExtension    = 'exe'
+    .CompilerDllExtension       = 'dll'
+]
+
+//------------------------------------------------------------------------------
+// MSVC Base Platforms
+//------------------------------------------------------------------------------
+.MSVCBasePlatformWin32 =
+[
+    Using( .SharedPlatformWin32 )
+    Using( .MSVCBasePlatorm )
+
+    .Defines            + .PlatformDefines
+
+    .PlatformOptions    = ' /favor:blend'   ; https://msdn.microsoft.com/fr-fr/library/ms173505(v=vs.110).aspx
+                        + ' /Zm500'         ; precompiled header size limit
+
+    .CompilerOptions    + .PlatformOptions
+    .PCHOptions         + .PlatformOptions
+
+    .LibrarianOptions   + ' /MACHINE:X86'
+    .LinkerOptions      + ' /MACHINE:X86'
+    + ' /SAFESEH'                           ; image dotée de gestionnaires d'exceptions sécurisés
+    + ' /LIBPATH:"$SolutionPath$/../Bin/DLL_X86"'
+    + ' /LIBPATH:"$DirectXSDKBasePath$/Lib/x86"'
+]
+
+.MSVCBasePlatformX64 =
+[
+    Using( .SharedPlatformX64 )
+    Using( .MSVCBasePlatorm )
+
+    .Defines            = .PlatformDefines
+
+    .PlatformOptions    = ' /favor:AMD64'   ; https://msdn.microsoft.com/fr-fr/library/ms173505(v=vs.110).aspx
+                        + ' /Zm1000'        ; precompiled header size limit
+
+    .CompilerOptions    + .PlatformOptions
+    .PCHOptions         + .PlatformOptions
+
+    .LibrarianOptions   + ' /MACHINE:X64'
+    .LinkerOptions      + ' /MACHINE:X64'
+    + ' /LIBPATH:"$SolutionPath$/../Bin/DLL_X64"'
+    + ' /LIBPATH:"$DirectXSDKBasePath$/Lib/x64"'
+]
+
+//------------------------------------------------------------------------------
+// MSVC Config Dependent Flags
+//------------------------------------------------------------------------------
+.MSVCBaseConfig =
+[
     .DebugDefines =
     {
         "_SECURE_SCL=1",                 ; https://msdn.microsoft.com/fr-fr/library/aa985896.aspx
@@ -159,51 +215,13 @@
     ; FastBuild n'utilise le cache qu'en Z7
     .CompilerWithoutCache       = ' /Zi' ; produit une base de données de programme (PDB)
     .CompilerWithCache          = .CompilerWithoutCache
+
+#ifndef USE_CLANG_WINDOWS
 #if USE_FASTBUILD_CACHE
     Print( "Using FBuild cache : compiling with /Z7 instead of /Zi" )
     .CompilerWithCache          = ' /Z7' ; Produit un fichier .obj contenant des informations de débogage complètes
 #endif
-
-    ; utilisés pour généraliser les templates :
-    .CompilerDefineFlag         = ' /D'
-    .CompilerIncludeFlag        = ' /I'
-    .CompilerPreprocessorFlag   = ' /P /Fi"%2"'
-]
-
-//------------------------------------------------------------------------------
-// MSVC Base Platforms
-//------------------------------------------------------------------------------
-.MSVCBasePlatformWin32 =
-[
-    Using( .SharedPlatformWin32 )
-
-    .Defines            = .PlatformDefines
-
-    .CompilerOptions    = ' /favor:blend'   ; https://msdn.microsoft.com/fr-fr/library/ms173505(v=vs.110).aspx
-                        + ' /Zm500'         ; precompiled header size limit
-    .PCHOptions         = .CompilerOptions
-
-    .LibrarianOptions   = ' /MACHINE:X86'
-    .LinkerOptions      = ' /MACHINE:X86'
-    + ' /SAFESEH'           ; image dotée de gestionnaires d'exceptions sécurisés
-    + ' /LIBPATH:"$SolutionPath$/../Bin/DLL_X86"'
-    + ' /LIBPATH:"$DirectXSDKBasePath$/Lib/x86"'
-]
-
-.MSVCBasePlatformX64 =
-[
-    Using( .SharedPlatformX64 )
-
-    .Defines            = .PlatformDefines
-
-    .CompilerOptions    = ' /favor:AMD64'   ; https://msdn.microsoft.com/fr-fr/library/ms173505(v=vs.110).aspx
-                        + ' /Zm1000'        ; precompiled header size limit
-    .PCHOptions         = .CompilerOptions
-
-    .LibrarianOptions   = ' /MACHINE:X64'
-    .LinkerOptions      = ' /MACHINE:X64'
-    + ' /LIBPATH:"$SolutionPath$/../Bin/DLL_X64"'
-    + ' /LIBPATH:"$DirectXSDKBasePath$/Lib/x64"'
+#endif
 ]
 
 //------------------------------------------------------------------------------
@@ -211,21 +229,20 @@
 //------------------------------------------------------------------------------
 .MSVCBaseDebugConfig =
 [
-    Using( .MSVCBaseConfig )
     Using( .SharedDebugConfig )
+    Using( .MSVCBaseConfig )
 
     .ConfigOptions      = .DebugOptimisations
                         + .CompilerWithCache
 
-    .Defines            + .ConfigDefines
+    .Defines            = .ConfigDefines
                         + .DebugDefines
 
-    .CompilerOptions    + .ConfigOptions
-    .PCHOptions         + .ConfigOptions
+    .CompilerOptions    = .ConfigOptions
+    .PCHOptions         = .ConfigOptions
 
-    .LinkerOptions
-    + ' /INCREMENTAL'       ; active le linker incrémental
-    + ' MSVCRTD.LIB'        ; crt debug
+    .LinkerOptions      = ' /INCREMENTAL'   ; active le linker incrémental
+                        + ' MSVCRTD.LIB'    ; crt debug
 ]
 
 //------------------------------------------------------------------------------
@@ -233,21 +250,20 @@
 //------------------------------------------------------------------------------
 .MSVCBaseFastDebugConfig =
 [
-    Using( .MSVCBaseConfig )
     Using( .SharedFastDebugConfig )
+    Using( .MSVCBaseConfig )
 
     .ConfigOptions      = .FastDebugOptimisations
                         + .CompilerWithCache
 
-    .Defines            + .ConfigDefines
+    .Defines            = .ConfigDefines
                         + .DebugDefines
 
-    .CompilerOptions    + .ConfigOptions
-    .PCHOptions         + .ConfigOptions
+    .CompilerOptions    = .ConfigOptions
+    .PCHOptions         = .ConfigOptions
 
-    .LinkerOptions
-    + ' /INCREMENTAL'   ; active le linker incrémental
-    + ' MSVCRTD.LIB'    ; crt debug
+    .LinkerOptions      = ' /INCREMENTAL'   ; active le linker incrémental
+                        + ' MSVCRTD.LIB'    ; crt debug
 ]
 
 //------------------------------------------------------------------------------
@@ -255,21 +271,20 @@
 //------------------------------------------------------------------------------
 .MSVCBaseReleaseConfig =
 [
-    Using( .MSVCBaseConfig )
     Using( .SharedReleaseConfig )
+    Using( .MSVCBaseConfig )
 
     .ConfigOptions      = .ReleaseOptimisations
                         + .CompilerWithCache
 
-    .Defines            + .ConfigDefines
+    .Defines            = .ConfigDefines
                         + .ReleaseDefines
 
-    .CompilerOptions    + .ConfigOptions
-    .PCHOptions         + .ConfigOptions
+    .CompilerOptions    = .ConfigOptions
+    .PCHOptions         = .ConfigOptions
 
-    .LinkerOptions
-    + ' /INCREMENTAL'   ; active le linker incrémental
-    + ' MSVCRT.LIB'     ; crt non debug
+    .LinkerOptions      = ' /INCREMENTAL'   ; active le linker incrémental
+                        + ' MSVCRT.LIB'     ; crt non debug
 ]
 
 //------------------------------------------------------------------------------
@@ -277,26 +292,24 @@
 //------------------------------------------------------------------------------
 .MSVCBaseProfilingConfig =
 [
-    Using( .MSVCBaseConfig )
     Using( .SharedProfilingConfig )
+    Using( .MSVCBaseConfig )
 
     .ConfigOptions      = .FinalOptimisations
                         + .CompilerWithCache
 
-    .Defines            + .ConfigDefines
+    .Defines            = .ConfigDefines
                         + .ReleaseDefines
 
-    .CompilerOptions    + .ConfigOptions
-    .PCHOptions         + .ConfigOptions
+    .CompilerOptions    = .ConfigOptions
+    .PCHOptions         = .ConfigOptions
 
-    .LibrarianOptions
-    + ' /LTCG'          ; link time code generation
+    .LibrarianOptions   = ' /LTCG'          ; link time code generation
 
-    .LinkerOptions
-    + ' /LTCG'          ; link time code generation
-    + ' /OPT:REF'       ; supprime le code non référencé
-    + ' /OPT:ICF'       ; COMDAT folding
-    + ' MSVCRT.LIB'     ; crt non debug
+    .LinkerOptions      = ' /LTCG'          ; link time code generation
+                        + ' /OPT:REF'       ; supprime le code non référencé
+                        + ' /OPT:ICF'       ; COMDAT folding
+                        + ' MSVCRT.LIB'     ; crt non debug
 ]
 
 //------------------------------------------------------------------------------
@@ -304,24 +317,22 @@
 //------------------------------------------------------------------------------
 .MSVCBaseFinalConfig =
 [
-    Using( .MSVCBaseConfig )
     Using( .SharedFinalConfig )
+    Using( .MSVCBaseConfig )
 
     .ConfigOptions      = .FinalOptimisations
                         + .CompilerWithoutCache
 
-    .Defines            + .ConfigDefines
+    .Defines            = .ConfigDefines
                         + .ReleaseDefines
 
-    .CompilerOptions    + .FinalOptimisations
-    .PCHOptions         + .FinalOptimisations
+    .CompilerOptions    = .FinalOptimisations
+    .PCHOptions         = .FinalOptimisations
 
-    .LibrarianOptions
-    + ' /LTCG'          ; link time code generation
+    .LibrarianOptions   = ' /LTCG'          ; link time code generation
 
-    .LinkerOptions
-    + ' /LTCG'          ; link time code generation
-    + ' /OPT:REF'       ; supprime le code non référencé
-    + ' /OPT:ICF=4'     ; COMDAT folding (4 itérations)
-    + ' MSVCRT.LIB'     ; crt non debug
+    .LinkerOptions      = ' /LTCG'          ; link time code generation
+                        + ' /OPT:REF'       ; supprime le code non référencé
+                        + ' /OPT:ICF=4'     ; COMDAT folding (4 itérations)
+                        + ' MSVCRT.LIB'     ; crt non debug
 ]
