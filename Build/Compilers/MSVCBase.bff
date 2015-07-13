@@ -21,7 +21,7 @@
     .AdditionalWarnings = ''
     + ' /we4062' // enumerator 'identifier' in a switch of enum 'enumeration' is not handled
     + ' /we4263' // 'function' : member function does not override any base class virtual member function
-    + ' /we4265' // 'class': class has virtual functions, but destructor is not virtual // not handler by boost and stl
+    ;+ ' /we4265' // 'class': class has virtual functions, but destructor is not virtual // not handler by boost and stl
     + ' /we4296' // 'operator': expression is always false
     + ' /we4555' // expression has no effect; expected expression with side-effect
     + ' /we4619' // #pragma warning : there is no warning number 'number'
