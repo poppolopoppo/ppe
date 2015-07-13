@@ -27,6 +27,12 @@ Unity( '$ProjectName$-Unity' )
     .UnityInputExcludedFiles = .ProjectExcludedFiles
 }
 
+RemoveDir( '$ProjectName$-Unity-Purge' )
+{
+    .Paths          = '$UnityDirectory$\$ProjectName$'
+    .PathsPattern   = 'Unity*.cpp'
+}
+
 .ProjectConfigs = { .VisualStudioDummyProjectConfig } ; TODO: à virer
 
 ForEach( .CompileConfig in .AllCompileConfigs )
@@ -88,6 +94,11 @@ ForEach( .CompileConfig in .AllCompileConfigs )
             .LibrarianOutput    = '$CompilerOutputPath$\$ProjectName$.lib'
         }
 
+        RemoveDir( '$ProjectName$-Lib-$Platform$-$Config$-Purge' )
+        {
+            .Paths              = .IntermediateDirectory
+        }
+
         // Dynamic library
         DLL( '$ProjectName$-Dll-$Platform$-$Config$' )
         {
@@ -101,6 +112,13 @@ ForEach( .CompileConfig in .AllCompileConfigs )
                 .Libraries  + { '$ProjectDependency$-Lib-$Platform$-$Config$' }
                 Export( .Libraries )
             }
+        }
+
+        RemoveDir( '$ProjectName$-Dll-$Platform$-$Config$-Purge' )
+        {
+            .Paths              = .BinaryDirectory
+            .PathsPattern       = "$ProjectName$.$Config$.$Platform$.*"
+            .PreBuildDependencies = { '$ProjectName$-Lib-$Platform$-$Config$-Purge' }
         }
     ]
 

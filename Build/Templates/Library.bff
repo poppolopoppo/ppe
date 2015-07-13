@@ -27,6 +27,11 @@ ForEach( .CompileConfig in .AllCompileConfigs )
                     + { '$ProjectName$-$ConfigLinkType$-$Platform$-$Config$' }
                     + .ProjectPostBuild
     }
+
+    Alias( '$ProjectName$-$Platform$-$Config$-Purge' )
+    {
+        .Targets    = { '$ProjectName$-$ConfigLinkType$-$Platform$-$Config$-Purge' }
+    }
 }
 
 #include "Lib/Aliases.bff"

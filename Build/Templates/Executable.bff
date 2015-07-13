@@ -77,6 +77,13 @@ ForEach( .CompileConfig in .AllCompileConfigs )
                     + { '$ProjectName$-Exe-$Platform$-$Config$' }
                     + .ProjectPostBuild
     }
+
+    RemoveDir( '$ProjectName$-$Platform$-$Config$-Purge' )
+    {
+        .Paths          = .BinaryDirectory
+        .PathsPattern   = "$BinaryPrefix$.$Config$.$Platform$.*"
+        .PreBuildDependencies = { '$ProjectName$-Lib-$Platform$-$Config$-Purge' }
+    }
 }
 
 #include "Lib/Aliases.bff"
