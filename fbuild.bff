@@ -2,9 +2,7 @@
 
 .SolutionName = 'Core'
 
-#include "Build/Common.bff"
-#include "Build/Compilers.bff"
-#include "Build/VisualStudio.bff"
+#include "Build/Build.bff"
 
 // All projects
 //------------------------------------------------------------------------------
@@ -19,13 +17,3 @@
 .SolutionBuildProject = 'Core.Test-proj'
 
 #include "Build/Templates/Solution.bff"
-
-// Global distribution clean-up (deletes all intermediates and binaries)
-//------------------------------------------------------------------------------
-
-Exec( 'dist-clean' )
-{
-    .ExecExecutable = '$OutputDirectory$/dist_clean.bat'
-    .ExecInput      = '$OutputDirectory$/dist_clean.bat'
-    .ExecOutput     = '$OutputDirectory$/dist_clean.log'
-}
