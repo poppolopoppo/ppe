@@ -25,12 +25,6 @@ ForEach( .CompileConfig in .AllCompileConfigs )
 {
     Using( .CompileConfig )
 
-#if __WINDOWS__
-;    .LinkerOptions ; TODO : compiler specific
-;    + ' /LIBPATH:"$OutputDirectory$/Eugen/$Platform$/$Config$"'
-;    + ' /LIBPATH:"$OutputDirectory$/External/$Platform$/$Config$"'
-#endif
-
     // Project directories
     .IntermediateDirectory  + '\$Platform$\$Config$'
     .OutputDirectory        + '\$Platform$\$Config$'

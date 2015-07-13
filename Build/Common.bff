@@ -32,6 +32,20 @@
 + ' -summary'   ; affiche un rapport à la fin de la compilation
 
 //------------------------------------------------------------------------------
+// FBuild Settings
+//------------------------------------------------------------------------------
+.PATH = ''
+#if __WINDOWS__
+.CachePath = "C:\.fbuild.cache"
+#endif
+#if __LINUX__
+.CachePath = "/dev/shm/.fbuild.cache" ; TODO
+#endif
+#if __OSX__
+.CachePath = "/var/tmp/.fbuild.cache" ; TODO
+#endif
+
+//------------------------------------------------------------------------------
 // Default Parameters for Templates
 //------------------------------------------------------------------------------
 .PCHName = 'stdafx'
@@ -47,17 +61,3 @@
 // Project registrations
 //------------------------------------------------------------------------------
 .ProjectList = {}
-
-//------------------------------------------------------------------------------
-// FBuild Settings
-//------------------------------------------------------------------------------
-.PATH = ''
-#if __WINDOWS__
-.CachePath = "C:\.fbuild.cache"
-#endif
-#if __LINUX__
-.CachePath = "/dev/shm/.fbuild.cache" ; TODO
-#endif
-#if __OSX__
-.CachePath = "/var/tmp/.fbuild.cache" ; TODO
-#endif

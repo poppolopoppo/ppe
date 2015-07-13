@@ -4,11 +4,10 @@
 // Visual Studio Base Config
 //------------------------------------------------------------------------------
 
-.VisualStudioDummyProjectConfig = ; TODO: a virer qd il n'y aura plus le pb de
-                                  ; typage des arrays vides
+.VisualStudioDummyProjectConfig = ; TODO : à virer
 [
-    .Config = "Dummy"
-    .Platform = "Win32"
+    .Platform   = 'Win32'
+    .Config     = 'Dummy'
 ]
 
 .VisualStudioBaseConfig =
