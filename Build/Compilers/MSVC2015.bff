@@ -41,6 +41,8 @@
     .WindowsSDKVersion  = '10.0.10069.0' ;'10.0.10056.0' ; TODO: Visual 2015 RC
 ]
 
+Print( "Using Visual 2015 with platform toolset $MSVC2015PlatformToolset$" )
+
 //------------------------------------------------------------------------------
 // Microsoft Visual Studio 2015 (x86)
 //------------------------------------------------------------------------------
@@ -164,6 +166,7 @@ Compiler( 'Compiler-MSVC2015-x64_x86' )
 .MSVC2015DebugFastLink =
 [
 #if USE_VISUAL2015_DEBUG_FASTLINK
+    Print( "Using Visual 2015 debug fast link : pdb references built objs" )
     ; utilise un lien symbolique vers les obj plutot que de les copier dans le pdb
     .LinkerOptions      = ' /debug:FASTLINK'
 #endif
@@ -187,6 +190,7 @@ Compiler( 'Compiler-MSVC2015-x64_x86' )
     .ToolsBasePath      = '$VSBasePath$/VC/bin'
 
 #if USE_VISUAL2015_NATIVE_ENVIRONMENT
+    Print( "Using Visual 2015 native environment : cross compile x86 from x64" )
     .Compiler           = 'Compiler-MSVC2015-x64_x86'
     .ToolsBasePath      = '$VSBasePath$/VC/bin/amd64_x86'
 #endif

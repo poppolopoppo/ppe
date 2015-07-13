@@ -29,6 +29,8 @@
     .WindowsSDKBasePath = 'C:\Program Files (x86)\Windows Kits\8.0'
 ]
 
+Print( "Using Visual 2012 with platform toolset $MSVC2012PlatformToolset$" )
+
 //------------------------------------------------------------------------------
 // Microsoft Visual Studio 2012 (x86)
 //------------------------------------------------------------------------------

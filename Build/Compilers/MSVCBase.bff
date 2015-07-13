@@ -160,6 +160,7 @@
     .CompilerWithoutCache       = ' /Zi' ; produit une base de données de programme (PDB)
     .CompilerWithCache          = .CompilerWithoutCache
 #if USE_FASTBUILD_CACHE
+    Print( "Using FBuild cache : compiling with /Z7 instead of /Zi" )
     .CompilerWithCache          = ' /Z7' ; Produit un fichier .obj contenant des informations de débogage complètes
 #endif
 
