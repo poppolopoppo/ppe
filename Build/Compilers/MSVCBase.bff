@@ -142,7 +142,7 @@
     Using( .SharedPlatformX64 )
     Using( .MSVCBasePlatorm )
 
-    .Defines            = .PlatformDefines
+    .Defines            + .PlatformDefines
 
     .PlatformOptions    = ' /favor:AMD64'   ; https://msdn.microsoft.com/fr-fr/library/ms173505(v=vs.110).aspx
                         + ' /Zm1000'        ; precompiled header size limit
