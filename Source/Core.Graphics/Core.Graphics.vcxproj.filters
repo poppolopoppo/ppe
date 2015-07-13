@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <CustomBuild Include="Device\Geometry\IndexBuffer.cpp">
@@ -148,16 +148,28 @@
     <CustomBuild Include="Device\Texture\TextureCube.h">
       <Filter>Device\Texture</Filter>
     </CustomBuild>
+    <CustomBuild Include="Device\AbstractDeviceAPIEncapsulator.cpp">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\AbstractDeviceAPIEncapsulator.h">
+      <Filter>Device</Filter>
+    </CustomBuild>
     <CustomBuild Include="Device\BindName.cpp">
       <Filter>Device</Filter>
     </CustomBuild>
     <CustomBuild Include="Device\BindName.h">
       <Filter>Device</Filter>
     </CustomBuild>
+    <CustomBuild Include="Device\DeviceAPI.h">
+      <Filter>Device</Filter>
+    </CustomBuild>
     <CustomBuild Include="Device\DeviceAPIDependantEntity.cpp">
       <Filter>Device</Filter>
     </CustomBuild>
     <CustomBuild Include="Device\DeviceAPIDependantEntity.h">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\DeviceAPI_fwd.h">
       <Filter>Device</Filter>
     </CustomBuild>
     <CustomBuild Include="Device\DeviceDiagnostics.cpp">
@@ -176,6 +188,18 @@
       <Filter>Device</Filter>
     </CustomBuild>
     <CustomBuild Include="Device\DeviceEncapsulatorException.h">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\DeviceEncapsulator_Context.cpp">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\DeviceEncapsulator_Device.cpp">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\DeviceEncapsulator_Diagnostics.cpp">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\DeviceEncapsulator_ShaderCompiler.cpp">
       <Filter>Device</Filter>
     </CustomBuild>
     <CustomBuild Include="Device\DeviceResource.cpp">
@@ -205,7 +229,22 @@
     <CustomBuild Include="Device\DeviceSharedEntityKey.h">
       <Filter>Device</Filter>
     </CustomBuild>
+    <CustomBuild Include="Device\DeviceSharedEntityPool.cpp">
+      <Filter>Device</Filter>
+    </CustomBuild>
     <CustomBuild Include="Device\DeviceSharedEntityPool.h">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\IDeviceAPIContext.h">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\IDeviceAPIDiagnostics.h">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\IDeviceAPIEncapsulator.h">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\IDeviceAPIShaderCompiler.h">
       <Filter>Device</Filter>
     </CustomBuild>
     <CustomBuild Include="Device\PresentationParameters.cpp">
@@ -307,6 +346,12 @@
     <CustomBuild Include="DirectX11\DX11CompilerIncludes.h">
       <Filter>DirectX11</Filter>
     </CustomBuild>
+    <CustomBuild Include="DirectX11\DX11DeviceAPIEncapsulator.cpp">
+      <Filter>DirectX11</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\DX11DeviceAPIEncapsulator.h">
+      <Filter>DirectX11</Filter>
+    </CustomBuild>
     <CustomBuild Include="DirectX11\DX11DeviceWrapper.cpp">
       <Filter>DirectX11</Filter>
     </CustomBuild>
@@ -352,7 +397,7 @@
     <CustomBuild Include="Window\WindowMessageHandler.h">
       <Filter>Window</Filter>
     </CustomBuild>
-    <CustomBuild Include="fbuild.bff">
+    <CustomBuild Include="Core.Graphics.bff">
     </CustomBuild>
     <CustomBuild Include="Graphics.cpp">
     </CustomBuild>
@@ -363,15 +408,6 @@
     <CustomBuild Include="stdafx.h">
     </CustomBuild>
     <CustomBuild Include="targetver.h">
-    </CustomBuild>
-    <CustomBuild Include="Device\IDeviceAPIEncapsulator.h">
-      <Filter>Device</Filter>
-    </CustomBuild>
-    <CustomBuild Include="DirectX11\DX11DeviceAPIEncapsulator.h">
-      <Filter>DirectX11</Filter>
-    </CustomBuild>
-    <CustomBuild Include="DirectX11\DX11DeviceAPIEncapsulator.cpp">
-      <Filter>DirectX11</Filter>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
@@ -428,17 +464,5 @@
     <Filter Include="Window">
       <UniqueIdentifier>{8c48fceb-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Device\DeviceAPI_fwd.h" />
-    <ClInclude Include="Device\IDeviceAPIShaderCompiler.h" />
-    <ClInclude Include="Device\IDeviceAPIDiagnostics.h" />
-    <ClInclude Include="Device\IDeviceAPIContext.h" />
-    <ClInclude Include="Device\DeviceAPI.h" />
-    <ClInclude Include="Device\AbstractDeviceAPIEncapsulator.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="Device\AbstractDeviceAPIEncapsulator.cpp" />
-    <ClCompile Include="..\..\..\..\%40Core\git\Source\Core.Graphics\Device\DeviceSharedEntityPool.cpp" />
   </ItemGroup>
 </Project>

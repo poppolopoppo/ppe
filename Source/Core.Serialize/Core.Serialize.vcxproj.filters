@@ -91,7 +91,7 @@
     <CustomBuild Include="Text\TextSerializer.h">
       <Filter>Text</Filter>
     </CustomBuild>
-    <CustomBuild Include="fbuild.bff">
+    <CustomBuild Include="Core.Serialize.bff">
     </CustomBuild>
     <CustomBuild Include="ISerializer.cpp">
     </CustomBuild>

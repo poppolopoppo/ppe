@@ -17,7 +17,7 @@
     </CustomBuild>
     <CustomBuild Include="ApplicationWindow.h">
     </CustomBuild>
-    <CustomBuild Include="fbuild.bff">
+    <CustomBuild Include="Core.Application.bff">
     </CustomBuild>
     <CustomBuild Include="stdafx.cpp">
     </CustomBuild>

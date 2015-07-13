@@ -508,11 +508,11 @@
     <CustomBuild Include="World\WorldObserver.h">
       <Filter>World</Filter>
     </CustomBuild>
+    <CustomBuild Include="Core.Engine.bff">
+    </CustomBuild>
     <CustomBuild Include="Engine.cpp">
     </CustomBuild>
     <CustomBuild Include="Engine.h">
-    </CustomBuild>
-    <CustomBuild Include="fbuild.bff">
     </CustomBuild>
     <CustomBuild Include="stdafx.cpp">
     </CustomBuild>

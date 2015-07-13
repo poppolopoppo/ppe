@@ -91,13 +91,13 @@
     <CustomBuild Include="System\System_fwd.h">
       <Filter>System</Filter>
     </CustomBuild>
+    <CustomBuild Include="Core.Logic.bff">
+    </CustomBuild>
     <CustomBuild Include="EntityManager-impl.h">
     </CustomBuild>
     <CustomBuild Include="EntityManager.cpp">
     </CustomBuild>
     <CustomBuild Include="EntityManager.h">
-    </CustomBuild>
-    <CustomBuild Include="fbuild.bff">
     </CustomBuild>
     <CustomBuild Include="Logic.cpp">
     </CustomBuild>
