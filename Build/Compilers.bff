@@ -13,26 +13,33 @@
 ;#define USE_VISUALSTUDIO_2012
 ;#define USE_VISUALSTUDIO_2013
 #define USE_VISUALSTUDIO_2015
+;#define USE_CLANG_37
 
 #if USE_VISUALSTUDIO_2012
 #   include "Compilers/MSVC2012.bff"
-    .MSVC20XXCompileConfigs = .MSVC2012CompileConfigs
+    .WindowsCompileConfigs  = .MSVC2012CompileConfigs
     .PlatformToolset        = .MSVC2012PlatformToolset
     .ResourceCompiler       = .MSVC2012ResourceCompiler
 #endif
 #if USE_VISUALSTUDIO_2013
 #   include "Compilers/MSVC2013.bff"
-    .MSVC20XXCompileConfigs = .MSVC2013CompileConfigs
+    .WindowsCompileConfigs  = .MSVC2013CompileConfigs
     .PlatformToolset        = .MSVC2013PlatformToolset
     .ResourceCompiler       = .MSVC2013ResourceCompiler
 #endif
 #if USE_VISUALSTUDIO_2015
 #   include "Compilers/MSVC2015.bff" ; TODO: Release Candidate
-    .MSVC20XXCompileConfigs = .MSVC2015CompileConfigs
+    .WindowsCompileConfigs  = .MSVC2015CompileConfigs
     .PlatformToolset        = .MSVC2015PlatformToolset
     .ResourceCompiler       = .MSVC2015ResourceCompiler
 #endif
-    .AllCompileConfigs      = .MSVC20XXCompileConfigs
+#if USE_CLANG_37
+#   include "Compilers/CLangWindows37.bff" ; TODO: Experimental
+    .WindowsCompileConfigs  = .CLangWindows37CompileConfigs
+    .PlatformToolset        = .CLangWindows37PlatformToolset
+    .ResourceCompiler       = .CLangWindows37ResourceCompiler
+#endif
+    .AllCompileConfigs      = .WindowsCompileConfigs
 #endif
 
 #if __LINUX__
