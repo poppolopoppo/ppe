@@ -43,7 +43,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
 
         // Project directories
         .IntermediateDirectory  + '\$Platform$\$Config$\$ProjectName$'
-        .OutputDirectory        + '\$Platform$\$Config$'
+        .OutputDirectory        = .BinaryDirectory
 
         // Project defines
         .CommandLineDefines = ''
