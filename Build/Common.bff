@@ -14,7 +14,6 @@
 
 .BinaryDirectory        = '$OutputDirectory$/Bin'
 .IntermediateDirectory  = '$OutputDirectory$/Intermediate'
-.ResourceDirectory      = '$OutputDirectory$/Resources'
 .UnityDirectory         = '$OutputDirectory$/Unity'
 
 //------------------------------------------------------------------------------

@@ -18,19 +18,6 @@
 
 #include "Lib/LibraryHelpers.bff"
 
-#if __WINDOWS__
-//------------------------------------------------------------------------------
-// Executable Resource File
-//------------------------------------------------------------------------------
-ObjectList( '$ProjectName$-Res' )
-{
-    Using( .ResourceCompiler )
-
-    .CompilerInputFiles     = '$ProjectPath$\$ProjectName$.rc'
-    .CompilerOutputPath     = '$ResourceDirectory$\$ProjectName$'
-}
-#endif
-
 //------------------------------------------------------------------------------
 // Executable Configurations
 //------------------------------------------------------------------------------
@@ -55,6 +42,16 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         Export( .LinkerOptions )
     }
 
+#if __WINDOWS__
+    ObjectList( '$ProjectName$-$Platform$-$Config$-Res' )
+    {
+        Using( .ResourceCompiler )
+
+        .CompilerInputFiles     = '$ProjectPath$\$ProjectName$.rc'
+        .CompilerOutputPath     = '$IntermediateDirectory$\$ProjectName$'
+    }
+#endif
+
     // Binary executable
     Executable( '$ProjectName$-Exe-$Platform$-$Config$' )
     {
@@ -70,7 +67,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
 
         .Libraries + '$ProjectName$-Lib-$Platform$-$Config$'
 #if __WINDOWS__
-        .Libraries + '$ProjectName$-Res'
+        .Libraries + '$ProjectName$-$Platform$-$Config$-Res'
 #endif
     }
 
