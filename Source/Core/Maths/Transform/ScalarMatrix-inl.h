@@ -344,7 +344,7 @@ auto ScalarMatrix<T, _Width, _Height>::operator -(const ScalarMatrix& other) con
 //----------------------------------------------------------------------------
 #define DEF_SCALARMATRIX_SCALAR_OP_LHS(_Op) \
     template <typename T, size_t _Width, size_t _Height> \
-    auto ScalarMatrix<T, _Width, _Height>::operator _Op=(T scalar) -> ScalarMatrix& { \
+    auto ScalarMatrix<T, _Width, _Height>::operator _Op##=(T scalar) -> ScalarMatrix& { \
         for (size_t i = 0; i < Dim; ++i) \
             _data.raw[i] _Op= scalar; \
         return *this; \

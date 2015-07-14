@@ -185,7 +185,7 @@ public:
 #undef DECL_SCALARMATRIX_SCALAR_ACCESSOR
 
 #define DECL_SCALARMATRIX_SCALAR_OP_LHS(_Op) \
-    ScalarMatrix&   operator _Op=(T scalar); \
+    ScalarMatrix&   operator _Op##=(T scalar); \
     ScalarMatrix    operator _Op(T scalar) const;
 
     DECL_SCALARMATRIX_SCALAR_OP_LHS(+)
