@@ -34,7 +34,7 @@ void *MemoryPool<_Lock, _Allocator>::Allocate(MemoryTrackingData *trackingData =
     return Core::aligned_malloc(BlockSize(), 16);
 
 #else
-    threadlock_type::ScopeLock lock(*this);
+    typename threadlock_type::ScopeLock lock(*this);
 
     void *ptr;
     if (nullptr == (ptr = TryAllocate_FailIfNoBlockAvailable())) {
@@ -74,7 +74,7 @@ void MemoryPool<_Lock, _Allocator>::Deallocate(void *ptr, MemoryTrackingData *tr
 #else
     Assert(ptr);
 
-    threadlock_type::ScopeLock lock(*this);
+    typename threadlock_type::ScopeLock lock(*this);
 
 #ifdef USE_MEMORY_DOMAINS
     if (trackingData)
@@ -101,7 +101,7 @@ void MemoryPool<_Lock, _Allocator>::Clear_AssertCompletelyFree() {
     AssertRelease(nullptr == Chunks());
 
 #else
-    threadlock_type::ScopeLock lock(*this);
+    typename threadlock_type::ScopeLock lock(*this);
 
     MemoryPoolChunk *chunk;
     while (nullptr != (chunk = ClearOneChunk_AssertCompletelyFree())) {
@@ -117,7 +117,7 @@ void MemoryPool<_Lock, _Allocator>::Clear_IgnoreLeaks() {
     AssertRelease(nullptr == Chunks());
 
 #else
-    threadlock_type::ScopeLock lock(*this);
+    typename threadlock_type::ScopeLock lock(*this);
 
     MemoryPoolChunk *chunk;
     while (nullptr != (chunk = ClearOneChunk_IgnoreLeaks())) {
@@ -133,7 +133,7 @@ void MemoryPool<_Lock, _Allocator>::Clear_UnusedMemory() {
     AssertRelease(nullptr == Chunks());
 
 #else
-    threadlock_type::ScopeLock lock(*this);
+    typename threadlock_type::ScopeLock lock(*this);
 
     MemoryPoolChunk *chunk;
     while (nullptr != (chunk = ClearOneChunk_UnusedMemory())) {
@@ -151,7 +151,7 @@ MemoryPoolChunk *MemoryPool<_Lock, _Allocator>::AllocateChunk_() {
 #else
     const size_t currentChunkSize = CurrentChunkSize();
     const size_t currentBlockCount = BlockCountPerChunk(currentChunkSize);
-    return new (allocator_type::allocate(currentChunkSize / sizeof(allocator_type::value_type))) MemoryPoolChunk(currentChunkSize, currentBlockCount);
+    return new (allocator_type::allocate(currentChunkSize / sizeof(typename allocator_type::value_type))) MemoryPoolChunk(currentChunkSize, currentBlockCount);
 
 #endif
 }
@@ -168,7 +168,7 @@ void MemoryPool<_Lock, _Allocator>::DeallocateChunk_(MemoryPoolChunk *chunk) {
 
     chunk->~MemoryPoolChunk();
 
-    allocator_type::deallocate(chunk, chunkSize / sizeof(allocator_type::value_type));
+    allocator_type::deallocate(chunk, chunkSize / sizeof(typename allocator_type::value_type));
 
 #endif
 }
