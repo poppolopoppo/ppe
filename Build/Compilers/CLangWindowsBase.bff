@@ -7,7 +7,7 @@
 //------------------------------------------------------------------------------
 // Common CLang Configuration
 //------------------------------------------------------------------------------
-.CLangBasePlatform =
+.CLangWindowsBase =
 [
     ; Tout ça est désactivé pour compiler CRT sans chouiner
     .AdditionalWarnings = ''
@@ -26,6 +26,9 @@
     + ' -Wno-delete-incomplete'
     + ' -Wno-implicit-exception-spec-mismatch'
     + ' -Wno-unused-value'
+    + ' -Wno-constant-logical-operand'
+    + ' -Wno-int-to-void-pointer-cast'
+    + ' -Wno-dangling-else'
 
     .Defines =
     {
@@ -53,6 +56,7 @@
     + ' /GF'                ; fusion des chaînes de caractères identiques (string pooling)
     + ' /EHsc'              ; active le support des exceptions
     + ' /c "%1" /TP'
+    + ' -Xclang -std=c++11'
     + .AdditionalWarnings
 
     .PreprocessorOptions = ''
@@ -100,10 +104,10 @@
 //------------------------------------------------------------------------------
 // CLang Base Platforms
 //------------------------------------------------------------------------------
-.CLangBasePlatformWin32 =
+.CLangWindowsBasePlatformWin32 =
 [
     Using( .SharedPlatformWin32 )
-    Using( .CLangBasePlatform )
+    Using( .CLangWindowsBase )
 
     .Defines            + .PlatformDefines
 
@@ -116,10 +120,10 @@
     + ' /LIBPATH:"$DirectXSDKBasePath$/Lib/x86"'
 ]
 
-.CLangBasePlatformX64 =
+.CLangWindowsBasePlatformX64 =
 [
     Using( .SharedPlatformX64 )
-    Using( .CLangBasePlatform )
+    Using( .CLangWindowsBase )
 
     .Defines            + .PlatformDefines
 
@@ -134,8 +138,8 @@
 //------------------------------------------------------------------------------
 // Configurations
 //------------------------------------------------------------------------------
-.CLangBaseDebugConfig       = .MSVCBaseDebugConfig
-.CLangBaseFastDebugConfig   = .MSVCBaseFastDebugConfig
-.CLangBaseReleaseConfig     = .MSVCBaseReleaseConfig
-.CLangBaseProfilingConfig   = .MSVCBaseProfilingConfig
-.CLangBaseFinalConfig       = .MSVCBaseFinalConfig
+.CLangWindowsBaseDebugConfig       = .MSVCBaseDebugConfig
+.CLangWindowsBaseFastDebugConfig   = .MSVCBaseFastDebugConfig
+.CLangWindowsBaseReleaseConfig     = .MSVCBaseReleaseConfig
+.CLangWindowsBaseProfilingConfig   = .MSVCBaseProfilingConfig
+.CLangWindowsBaseFinalConfig       = .MSVCBaseFinalConfig

@@ -98,7 +98,7 @@ Compiler( 'Compiler-CLangWindows37-x86' )
     .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/win8/um/x86"'
                         + ' /LIBPATH:"$VSBasePath$/VC/lib"'
 ]
-.CLangWindows37PlatformWin32 + .CLangBasePlatformWin32
+.CLangWindows37PlatformWin32 + .CLangWindowsBasePlatformWin32
 
 .CLangWindows37PlatformX64 =
 [
@@ -107,23 +107,23 @@ Compiler( 'Compiler-CLangWindows37-x86' )
     .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/win8/um/x64"'
                         + ' /LIBPATH:"$VSBasePath$/VC/lib/amd64"'
 ]
-.CLangWindows37PlatformX64 + .CLangBasePlatformX64
+.CLangWindows37PlatformX64 + .CLangWindowsBasePlatformX64
 
 //------------------------------------------------------------------------------
 // Configurations
 //------------------------------------------------------------------------------
 
-.CLangWindows37_Win32Debug         = .CLangWindows37PlatformWin32   + .CLangBaseDebugConfig
-.CLangWindows37_Win32FastDebug     = .CLangWindows37PlatformWin32   + .CLangBaseFastDebugConfig
-.CLangWindows37_Win32Release       = .CLangWindows37PlatformWin32   + .CLangBaseReleaseConfig
-.CLangWindows37_Win32Profiling     = .CLangWindows37PlatformWin32   + .CLangBaseProfilingConfig
-.CLangWindows37_Win32Final         = .CLangWindows37PlatformWin32   + .CLangBaseFinalConfig
+.CLangWindows37_Win32Debug         = .CLangWindows37PlatformWin32   + .CLangWindowsBaseDebugConfig
+.CLangWindows37_Win32FastDebug     = .CLangWindows37PlatformWin32   + .CLangWindowsBaseFastDebugConfig
+.CLangWindows37_Win32Release       = .CLangWindows37PlatformWin32   + .CLangWindowsBaseReleaseConfig
+.CLangWindows37_Win32Profiling     = .CLangWindows37PlatformWin32   + .CLangWindowsBaseProfilingConfig
+.CLangWindows37_Win32Final         = .CLangWindows37PlatformWin32   + .CLangWindowsBaseFinalConfig
 
-.CLangWindows37_X64Debug           = .CLangWindows37PlatformX64     + .CLangBaseDebugConfig
-.CLangWindows37_X64FastDebug       = .CLangWindows37PlatformX64     + .CLangBaseFastDebugConfig
-.CLangWindows37_X64Release         = .CLangWindows37PlatformX64     + .CLangBaseReleaseConfig
-.CLangWindows37_X64Profiling       = .CLangWindows37PlatformX64     + .CLangBaseProfilingConfig
-.CLangWindows37_X64Final           = .CLangWindows37PlatformX64     + .CLangBaseFinalConfig
+.CLangWindows37_X64Debug           = .CLangWindows37PlatformX64     + .CLangWindowsBaseDebugConfig
+.CLangWindows37_X64FastDebug       = .CLangWindows37PlatformX64     + .CLangWindowsBaseFastDebugConfig
+.CLangWindows37_X64Release         = .CLangWindows37PlatformX64     + .CLangWindowsBaseReleaseConfig
+.CLangWindows37_X64Profiling       = .CLangWindows37PlatformX64     + .CLangWindowsBaseProfilingConfig
+.CLangWindows37_X64Final           = .CLangWindows37PlatformX64     + .CLangWindowsBaseFinalConfig
 
 .CLangWindows37CompileConfigs =
 {

@@ -16,7 +16,7 @@
 //------------------------------------------------------------------------------
 // Common MSVC Configuration
 //------------------------------------------------------------------------------
-.MSVCBasePlatorm =
+.MSVCBase =
 [
     .AdditionalWarnings = ''
     + ' /we4062' // enumerator 'identifier' in a switch of enum 'enumeration' is not handled
@@ -120,7 +120,7 @@
 .MSVCBasePlatformWin32 =
 [
     Using( .SharedPlatformWin32 )
-    Using( .MSVCBasePlatorm )
+    Using( .MSVCBase )
 
     .Defines            + .PlatformDefines
 
@@ -140,7 +140,7 @@
 .MSVCBasePlatformX64 =
 [
     Using( .SharedPlatformX64 )
-    Using( .MSVCBasePlatorm )
+    Using( .MSVCBase )
 
     .Defines            + .PlatformDefines
 
