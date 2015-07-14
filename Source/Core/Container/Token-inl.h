@@ -29,21 +29,21 @@ Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::~Token() {}
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
 Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::Token(const _Char* cstr)
-:   _data(factory_type::Instance().GetOrCreate<_TokenTraits>(cstr)) {}
+:   _data(factory_type::Instance().template GetOrCreate<_TokenTraits>(cstr)) {}
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
 auto Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::operator =(const _Char* cstr) -> Token& {
-    _data = factory_type::Instance().GetOrCreate<_TokenTraits>(cstr);
+    _data = factory_type::Instance().template GetOrCreate<_TokenTraits>(cstr);
     return *this;
 }
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
 Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::Token(const BasicStringSlice<_Char>& content)
-:   _data(factory_type::Instance().GetOrCreate<_TokenTraits>(content)) {}
+:   _data(factory_type::Instance().template GetOrCreate<_TokenTraits>(content)) {}
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
 Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::Token(const _Char* cstr, size_t length)
-:   _data(factory_type::Instance().GetOrCreate<_TokenTraits>(cstr, length)) {}
+:   _data(factory_type::Instance().template GetOrCreate<_TokenTraits>(cstr, length)) {}
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
 Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::Token(const Token& other)
@@ -253,7 +253,7 @@ auto TokenSet<_Char, _CaseSensitive, _Allocator>::GetOrCreate(const BasicStringS
     Assert(h < lengthof(_slots));
 
     token_set_slot_type& slot = _slots[h];
-    return slot.GetOrCreate<_TokenTraits>(content);
+    return slot.template GetOrCreate<_TokenTraits>(content);
 }
 //----------------------------------------------------------------------------
 template <typename _Char, CaseSensitive _CaseSensitive, typename _Allocator>
