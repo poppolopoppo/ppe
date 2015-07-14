@@ -28,6 +28,7 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 class TokenTraits {
 public:
+    TokenTraits() {}
     const std::locale& Locale() const { return std::locale::classic(); }
     bool IsAllowedChar(char ch) const;
 };
