@@ -211,7 +211,7 @@ void TaskPoolImpl::Start() {
 
     for (size_t i = 0; i < _workerCount; ++i) {
         Assert(!_threads[i].joinable());
-        _threads[i] = std::move(std::thread(&TaskThreadLaunchpad_, ppool, i));
+        _threads[i] = std::thread(&TaskThreadLaunchpad_, ppool, i);
     }
 }
 //----------------------------------------------------------------------------

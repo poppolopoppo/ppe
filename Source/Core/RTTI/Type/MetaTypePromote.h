@@ -33,7 +33,7 @@ template <typename _From, typename _To>
 void PromoteMove(_To& dst, _From&& src) {
     typedef MetaTypePromote<_From, _To> promote_type;
     static_assert(promote_type::enabled::value, "invalid meta promotion");
-    dst = std::move(promote_type()(std::move(src)));
+    dst = promote_type()(std::move(src));
 }
 //----------------------------------------------------------------------------
 template <typename _From, typename _To>
