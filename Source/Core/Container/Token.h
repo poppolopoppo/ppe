@@ -90,7 +90,7 @@ public:
     typedef _Allocator allocator_type;
     typedef TokenFactory<Token> factory_type;
 
-    enum { Sensitiveness = _CaseSensitive };
+    enum { Sensitiveness = size_t(_CaseSensitive) };
 
     Token();
     ~Token();
