@@ -62,7 +62,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static std::atomic<AssertionHandler *> gAssertionHandler = nullptr;
+static volatile AssertionHandler *gAssertionHandler = nullptr;
 static THREAD_LOCAL bool gIsInAssertion = false;
 //----------------------------------------------------------------------------
 } //!namespace
@@ -90,7 +90,9 @@ void AssertionFailed(const char *msg, const wchar_t *file, unsigned line) {
 
     LOG(Assertion, L"error: '{0}' failed !\n\t{1}({2})", msg, file, line);
 
-    AssertionHandler const* handler = gAssertionHandler.load();
+    AssertionHandler const* handler = (AssertionHandler const*)gAssertionHandler;
+    std::atomic_thread_fence(std::memory_order_acq_rel);
+
     if (handler) {
         failure = (*handler)(msg, file, line);
     }
@@ -121,7 +123,8 @@ void AssertionFailed(const char *msg, const wchar_t *file, unsigned line) {
 }
 //----------------------------------------------------------------------------
 void SetAssertionHandler(AssertionHandler *handler) {
-    gAssertionHandler.store(handler);
+    gAssertionHandler = handler;
+    std::atomic_thread_fence(std::memory_order_acq_rel);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -136,7 +139,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static std::atomic<AssertionReleaseHandler *> gAssertionReleaseHandler = nullptr;
+static volatile AssertionReleaseHandler *gAssertionReleaseHandler = nullptr;
 static THREAD_LOCAL bool gIsInAssertionRelease = false;
 //----------------------------------------------------------------------------
 } //!namespace
@@ -164,7 +167,9 @@ void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line)
 
     LOG(Assertion, L"error: '{0}' failed !\n\t{1}({2})", msg, file, line);
 
-    AssertionReleaseHandler const* handler = gAssertionReleaseHandler.load();
+    AssertionReleaseHandler const* handler = (AssertionReleaseHandler const*)gAssertionReleaseHandler;
+    std::atomic_thread_fence(std::memory_order_acq_rel);
+
     if (handler) {
         failure = (*handler)(msg, file, line);
     }
@@ -195,7 +200,8 @@ void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line)
 }
 //----------------------------------------------------------------------------
 void SetAssertionReleaseHandler(AssertionReleaseHandler *handler) {
-    gAssertionReleaseHandler.store(handler);
+    gAssertionReleaseHandler = handler;
+    std::atomic_thread_fence(std::memory_order_acq_rel);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
