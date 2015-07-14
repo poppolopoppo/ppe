@@ -7,12 +7,16 @@ namespace Units {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define UNITS_DECL(NAME, TAG, RATIO, SMALLER) \
-    template class Core::Units::Unit< Core::Units::UnitTraits<TAG, RATIO, SMALLER> >
+#define UNITS_BEGIN(NAME)
+#define UNITS_END()
+#define UNITS_DECL(TAG, NAME, RATIO, SMALLER) \
+    template class Core::Units::Unit< Core::Units::UnitTraits<Core::Units::TAG::_Tag, RATIO, SMALLER> >;
 //----------------------------------------------------------------------------
 #include "Units.Definitions-inl.h"
 //----------------------------------------------------------------------------
 #undef UNITS_DECL
+#undef UNITS_END
+#undef UNITS_BEGIN
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
