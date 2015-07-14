@@ -54,7 +54,7 @@ public:
     size_t ChunkCount() const { return _chunkCount; }
     SizeInBytes TotalSizeInBytes() const { return SizeInBytes{ _chunkCount * sizeof(TPoolChunk) }; }
 
-    static _declspec(dllexport) CrtAllocationCallstackLogger* Instance;
+    static CrtAllocationCallstackLogger* Instance;
 
 protected:
     bool NeedNewPoolChunk_() const;
