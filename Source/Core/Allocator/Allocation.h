@@ -33,21 +33,21 @@ using Allocator = DecorateAllocator< DEFAULT_ALLOCATOR<T>, _Tag >;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define ALLOCATOR(_Domain, T) \
-    ::Core::Allocator<T, MEMORY_DOMAIN_TAG(_Domain) >
+    ::Core::Allocator<COMMA_PROTECT(T), MEMORY_DOMAIN_TAG(_Domain) >
 //----------------------------------------------------------------------------
 #define DECORATE_ALLOCATOR(_Domain, _Allocator) \
-    ::Core::DecorateAllocator< _Allocator, MEMORY_DOMAIN_TAG(_Domain) >
+    ::Core::DecorateAllocator< COMMA_PROTECT(_Allocator), MEMORY_DOMAIN_TAG(_Domain) >
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define ALIGNED_ALLOCATOR(_Domain, T, _Alignment) \
-    DECORATE_ALLOCATOR(_Domain, ::Core::Mallocator<T COMMA _Alignment>)
+    DECORATE_ALLOCATOR(_Domain, ::Core::Mallocator<COMMA_PROTECT(T) COMMA _Alignment>)
 //----------------------------------------------------------------------------
 #define BUDDY_ALLOCATOR(_Domain, T) \
-    DECORATE_ALLOCATOR(_Domain, ::Core::BuddyAllocator<T>)
+    DECORATE_ALLOCATOR(_Domain, ::Core::BuddyAllocator<COMMA_PROTECT(T)>)
 //----------------------------------------------------------------------------
 #define THREAD_LOCAL_ALLOCATOR(_Domain, T) \
-    DECORATE_ALLOCATOR(_Domain, ::Core::ThreadLocalAllocator<T>)
+    DECORATE_ALLOCATOR(_Domain, ::Core::ThreadLocalAllocator<COMMA_PROTECT(T)>)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

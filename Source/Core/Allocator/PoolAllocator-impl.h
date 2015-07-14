@@ -35,20 +35,20 @@
 // _Tag enables user to control segregation
 //----------------------------------------------------------------------------
 #define SINGLETON_POOL_ALLOCATED_TAGGED_DEF(_Tag, _Type, _Prefix) \
-    SINGLETON_POOL_ALLOCATED_DEF_IMPL_(_Type, _Prefix, Core::TypedSegregatedMemoryPool<POOLTAG(_Tag) COMMA _Type COMMA false>)
+    SINGLETON_POOL_ALLOCATED_DEF_IMPL_(COMMA_PROTECT(_Type), COMMA_PROTECT(_Prefix), Core::TypedSegregatedMemoryPool<POOLTAG(_Tag) COMMA COMMA_PROTECT(_Type) COMMA false>)
 //----------------------------------------------------------------------------
 #define THREAD_LOCAL_SINGLETON_POOL_ALLOCATED_TAGGED_DEF(_Tag, _Type, _Prefix) \
-    SINGLETON_POOL_ALLOCATED_DEF_IMPL_(_Type, _Prefix, Core::TypedSegregatedMemoryPool<POOLTAG(_Tag) COMMA _Type COMMA true>)
+    SINGLETON_POOL_ALLOCATED_DEF_IMPL_(COMMA_PROTECT(_Type), COMMA_PROTECT(_Prefix), Core::TypedSegregatedMemoryPool<POOLTAG(_Tag) COMMA COMMA_PROTECT(_Type) COMMA true>)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // PoolTag::Default regroups all default pool allocated instances
 //----------------------------------------------------------------------------
 #define SINGLETON_POOL_ALLOCATED_DEF(_Type, _Prefix) \
-    SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Default, _Type, _Prefix)
+    SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Default, COMMA_PROTECT(_Type), COMMA_PROTECT(_Prefix))
 //----------------------------------------------------------------------------
 #define THREAD_LOCAL_SINGLETON_POOL_ALLOCATED_DEF(_Type, _Prefix) \
-    THREAD_LOCAL_SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Default, _Type, _Prefix)
+    THREAD_LOCAL_SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Default, COMMA_PROTECT(_Type), COMMA_PROTECT(_Prefix))
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

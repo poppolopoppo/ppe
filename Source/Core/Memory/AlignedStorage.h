@@ -9,7 +9,7 @@ namespace Core {
 #define ALIGNED_STORAGE(_SIZE_IN_BYTES, _ALIGNMENT) \
     std::aligned_storage<(_SIZE_IN_BYTES), (_ALIGNMENT)>::type
 //----------------------------------------------------------------------------
-#define POD_STORAGE(T) ALIGNED_STORAGE(sizeof(T), std::alignment_of<T>::value)
+#define POD_STORAGE(T) ALIGNED_STORAGE(sizeof(COMMA_PROTECT(T)), std::alignment_of<COMMA_PROTECT(T)>::value)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

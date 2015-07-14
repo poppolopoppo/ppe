@@ -16,16 +16,16 @@ template <typename T, typename _Allocator = ALLOCATOR(Container, T)>
 using Vector = std::vector<T, _Allocator>;
 //----------------------------------------------------------------------------
 #define VECTOR(_DOMAIN, T) \
-    ::Core::Vector<T, ALLOCATOR(_DOMAIN, T) >
+    ::Core::Vector<COMMA_PROTECT(T), ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
 //----------------------------------------------------------------------------
 #define VECTOR_THREAD_LOCAL(_DOMAIN, T) \
-    ::Core::Vector<T, THREAD_LOCAL_ALLOCATOR(_DOMAIN, T) >
+    ::Core::Vector<COMMA_PROTECT(T), THREAD_LOCAL_ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
 //----------------------------------------------------------------------------
 #define VECTORINSITU(_DOMAIN, T, _InSituCount) \
-    ::Core::VectorInSitu<T, _InSituCount, ALLOCATOR(_DOMAIN, T) >
+    ::Core::VectorInSitu<COMMA_PROTECT(T), _InSituCount, ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
 //----------------------------------------------------------------------------
 #define VECTORINSITU_THREAD_LOCAL(_DOMAIN, T, _InSituCount) \
-    ::Core::VectorInSitu<T, _InSituCount, THREAD_LOCAL_ALLOCATOR(_DOMAIN, T) >
+    ::Core::VectorInSitu<COMMA_PROTECT(T), _InSituCount, THREAD_LOCAL_ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

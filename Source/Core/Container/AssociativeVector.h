@@ -17,16 +17,16 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define ASSOCIATIVE_VECTOR(_DOMAIN, _KEY, _VALUE) \
-    ::Core::AssociativeVector<_KEY, _VALUE, std::equal_to<_KEY>, VECTOR(_DOMAIN, ::Core::Pair<_KEY COMMA _VALUE>) >
+    ::Core::AssociativeVector<_KEY, _VALUE, std::equal_to<_KEY>, VECTOR(_DOMAIN, ::Core::Pair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>) >
 //----------------------------------------------------------------------------
 #define ASSOCIATIVE_VECTOR_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE) \
-    ::Core::AssociativeVector<_KEY, _VALUE, std::equal_to<_KEY>, VECTOR_THREAD_LOCAL(_DOMAIN, ::Core::Pair<_KEY COMMA _VALUE>) >
+    ::Core::AssociativeVector<_KEY, _VALUE, std::equal_to<_KEY>, VECTOR_THREAD_LOCAL(_DOMAIN, ::Core::Pair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>) >
 //----------------------------------------------------------------------------
 #define ASSOCIATIVE_VECTORINSITU(_DOMAIN, _KEY, _VALUE, _InSituCount) \
-    ::Core::AssociativeVector<_KEY, _VALUE, std::equal_to<_KEY>, VECTORINSITU(_DOMAIN, ::Core::Pair<_KEY COMMA _VALUE>, _InSituCount) >
+    ::Core::AssociativeVector<_KEY, _VALUE, std::equal_to<_KEY>, VECTORINSITU(_DOMAIN, ::Core::Pair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>, _InSituCount) >
 //----------------------------------------------------------------------------
 #define ASSOCIATIVE_VECTORINSITU_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE, _InSituCount) \
-    ::Core::AssociativeVector<_KEY, _VALUE, std::equal_to<_KEY>, VECTORINSITU_THREAD_LOCAL(_DOMAIN, ::Core::Pair<_KEY COMMA _VALUE>, _InSituCount) >
+    ::Core::AssociativeVector<_KEY, _VALUE, std::equal_to<_KEY>, VECTORINSITU_THREAD_LOCAL(_DOMAIN, ::Core::Pair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>, _InSituCount) >
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
