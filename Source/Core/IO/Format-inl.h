@@ -11,8 +11,6 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-namespace {
-//----------------------------------------------------------------------------
 template <typename _Char>
 struct FormatTraits {};
 template <>
@@ -114,7 +112,7 @@ template <typename _Char, typename _Traits>
 class FormatParser : public FormatTraits<_Char> {
 public:
     typedef FormatTraits<_Char> format_traits;
-    using format_traits::Flags;
+    using typename format_traits::Flags;
 
     FormatParser(const _Char* format);
     ~FormatParser();
@@ -130,9 +128,6 @@ public:
 private:
     const _Char* _p;
 };
-//----------------------------------------------------------------------------
-extern template class FormatParser< char, std::char_traits<char> >;
-extern template class FormatParser< wchar_t, std::char_traits<wchar_t> >;
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
 FormatParser<_Char, _Traits>::FormatParser(const _Char* format)
@@ -290,6 +285,9 @@ auto FormatParser<_Char, _Traits>::Parse(_Char& outp, size_t& index, FormatPrope
     return parse_outp;
 }
 //----------------------------------------------------------------------------
+extern template class FormatParser< char, std::char_traits<char> >;
+extern template class FormatParser< wchar_t, std::char_traits<wchar_t> >;
+//----------------------------------------------------------------------------
 // not superb but does the trick
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
@@ -305,7 +303,7 @@ FORCE_INLINE static void AppendArg_(std::basic_ostream<_Char, _Traits>& oss, siz
         oss << arg0;
 }
 //----------------------------------------------------------------------------
-} //!namespace
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits, typename _Arg0, typename... _Args>
 void Format(std::basic_ostream<_Char, _Traits>& oss, const _Char* format, _Arg0&& arg0, _Args&&... args) {
@@ -318,7 +316,7 @@ void Format(std::basic_ostream<_Char, _Traits>& oss, const _Char* format, _Arg0&
 
     _Char outp;
     size_t index;
-    format_parser::Result parseResult;
+    typename format_parser::Result parseResult;
 
     format_parser parser(format);
     while (format_parser::parse_eof != (parseResult = parser.Parse(outp, index, props)) ) {

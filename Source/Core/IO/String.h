@@ -13,6 +13,9 @@
 #include <wchar.h>
 #include <xhash>
 
+extern template std::basic_string<char, std::char_traits<char>, ALLOCATOR(String, char)>;
+extern template std::basic_string<wchar_t, std::char_traits<wchar_t>, ALLOCATOR(String, wchar_t)>;
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -33,9 +36,6 @@ using BasicString = std::basic_string<_Char, _Traits, _Allocator>;
 //----------------------------------------------------------------------------
 using String = BasicString<char>;
 using WString = BasicString<wchar_t>;
-//----------------------------------------------------------------------------
-extern template std::basic_string<char, std::char_traits<char>, ALLOCATOR(String, char)>;
-extern template std::basic_string<wchar_t, std::char_traits<wchar_t>, ALLOCATOR(String, wchar_t)>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
