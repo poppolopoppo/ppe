@@ -65,7 +65,6 @@
     + ' /Zc:wchar_t'        ; active le support de wchar_t comme type natif
     + ' /Zc:forScope'       ; interdit d'acceder à l'iterateur d'un for en dehors de son scope (comportement std)
     + ' /errorreport:prompt'; affiche une boite de dialogue en cas de crash du compilo
-    + ' /IGNORE:4221'       ;
     + ' /c "%1" /TP'
 
     .PreprocessorOptions = ''
@@ -79,6 +78,7 @@
     + ' /nologo'            ; pas de message de copyright lors de la compilation
     + ' /errorreport:prompt'; affiche une boite de dialogue en cas de crash du compilo
     + ' /SUBSYSTEM:WINDOWS'
+    + ' /IGNORE:4221'
     + ' /OUT:"%2" "%1"'
 
     .LinkerOptions = ''
