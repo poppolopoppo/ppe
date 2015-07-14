@@ -14,7 +14,7 @@ MemoryTrackingData *TypedSegregatedMemoryPool<_Tag, T, _ThreadLocal>::TrackingDa
 template <typename _Tag, typename T, bool _ThreadLocal >
 void *TypedSegregatedMemoryPool<_Tag, T, _ThreadLocal>::Allocate() {
 #ifdef USE_MEMORY_DOMAINS
-    ONE_TIME_INITIALIZE(PoolTracking<T COMMA _ThreadLocal>, sTracking, typeid(T).name(), segregatedpool_type::Instance().TrackingData(), &TrackingData);
+    ONE_TIME_INITIALIZE_TPL(PoolTracking<T COMMA _ThreadLocal>, sTracking, typeid(T).name(), segregatedpool_type::Instance().TrackingData(), &TrackingData);
     return segregatedpool_type::Instance().Allocate(&sTracking.TrackingData);
 #else
     return segregatedpool_type::Instance().Allocate();

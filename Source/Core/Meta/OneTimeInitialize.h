@@ -29,14 +29,14 @@
 #define _ONE_TIME_INITIALIZE_INIT_CREATING  1
 #define _ONE_TIME_INITIALIZE_INIT_READY     2
 
-#define _ONE_TIME_INITIALIZE_IMPL_(_Type, _Name, _Initializer, _ThreadLocal) \
-    static _ThreadLocal POD_STORAGE(COMMA_PROTECT(_Type))  _Name##_OneTimeStorage; \
+#define _ONE_TIME_INITIALIZE_IMPL_(_Type, _Name, _Initializer, _ThreadLocal, _TypenameIfInTemplate) \
+    static _ThreadLocal _TypenameIfInTemplate POD_STORAGE(COMMA_PROTECT(_Type))  _Name##_OneTimeStorage; \
     static _ThreadLocal _Type* volatile     _Name##_OneTimePData = nullptr; \
     static _ThreadLocal volatile u32        _Name##_OneTimeState = _ONE_TIME_INITIALIZE_INIT_INVALID;\
     \
     if(_Name##_OneTimeState != _ONE_TIME_INITIALIZE_INIT_READY) { \
         if (CORE_INTERLOCKEDCOMPAREEXCHANGE_32(_Name##_OneTimeState, _ONE_TIME_INITIALIZE_INIT_CREATING, _ONE_TIME_INITIALIZE_INIT_INVALID) == _ONE_TIME_INITIALIZE_INIT_INVALID) { \
-            std::remove_const<_Type>::type *const _onetime_pdata = new (reinterpret_cast<void *>(&_Name##_OneTimeStorage)) std::remove_const<_Type>::type _Initializer; \
+            auto *const _onetime_pdata = new (reinterpret_cast<void *>(&_Name##_OneTimeStorage)) _TypenameIfInTemplate std::remove_const<_Type>::type _Initializer; \
             CORE_INTERLOCKEDEXCHANGE_PTR(_Name##_OneTimePData, _onetime_pdata); \
             CORE_INTERLOCKEDEXCHANGE_32(_Name##_OneTimeState, _ONE_TIME_INITIALIZE_INIT_READY); \
         } \
@@ -47,14 +47,24 @@
     } \
     \
     _Type& _Name = *(_Name##_OneTimePData); \
-    Assert(&(_Name)) // removes unused variable warning
+    Assert((_Name##_OneTimePData) != nullptr) // removes unused variable warning
 
 #define ONE_TIME_INITIALIZE(_Type, _Name, ...) \
-    _ONE_TIME_INITIALIZE_IMPL_(COMMA_PROTECT(_Type), _Name, (__VA_ARGS__), )
+    _ONE_TIME_INITIALIZE_IMPL_(COMMA_PROTECT(_Type), _Name, (__VA_ARGS__), , )
 #define ONE_TIME_DEFAULT_INITIALIZE(_Type, _Name) \
-    _ONE_TIME_INITIALIZE_IMPL_(COMMA_PROTECT(_Type), _Name, (), )
+    _ONE_TIME_INITIALIZE_IMPL_(COMMA_PROTECT(_Type), _Name, (), , )
 
 #define ONE_TIME_INITIALIZE_THREAD_LOCAL(_Type, _Name, ...) \
-    _ONE_TIME_INITIALIZE_IMPL_(COMMA_PROTECT(_Type), _Name, (__VA_ARGS__), THREAD_LOCAL)
+    _ONE_TIME_INITIALIZE_IMPL_(COMMA_PROTECT(_Type), _Name, (__VA_ARGS__), THREAD_LOCAL, )
 #define ONE_TIME_DEFAULT_INITIALIZE_THREAD_LOCAL(_Type, _Name) \
-    _ONE_TIME_INITIALIZE_IMPL_(COMMA_PROTECT(_Type), _Name, (), THREAD_LOCAL)
+    _ONE_TIME_INITIALIZE_IMPL_(COMMA_PROTECT(_Type), _Name, (), THREAD_LOCAL, )
+
+#define ONE_TIME_INITIALIZE_TPL(_Type, _Name, ...) \
+    _ONE_TIME_INITIALIZE_IMPL_(COMMA_PROTECT(_Type), _Name, (__VA_ARGS__), , typename )
+#define ONE_TIME_DEFAULT_INITIALIZE_TPL(_Type, _Name) \
+    _ONE_TIME_INITIALIZE_IMPL_(COMMA_PROTECT(_Type), _Name, (), , typename )
+
+#define ONE_TIME_INITIALIZE_THREAD_LOCAL_TPL(_Type, _Name, ...) \
+    _ONE_TIME_INITIALIZE_IMPL_(COMMA_PROTECT(_Type), _Name, (__VA_ARGS__), THREAD_LOCAL, typename )
+#define ONE_TIME_DEFAULT_INITIALIZE_THREAD_LOCAL_TPL(_Type, _Name) \
+    _ONE_TIME_INITIALIZE_IMPL_(COMMA_PROTECT(_Type), _Name, (), THREAD_LOCAL, typename )
