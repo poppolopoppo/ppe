@@ -17,21 +17,17 @@ DeviceSharedEntityPool::~DeviceSharedEntityPool() {
     Assert(_entities.empty());
 }
 //----------------------------------------------------------------------------
-size_t DeviceSharedEntityPool::EntityCount() const {
-    return _entities.size();
-}
-//----------------------------------------------------------------------------
-bool DeviceSharedEntityPool::Acquire(PDeviceAPIDependantEntity *pEntity, const DeviceResourceSharable *resource) {
-    Assert(resource->Frozen());
-    Assert(resource->Sharable());
+bool DeviceSharedEntityPool::Acquire(PDeviceAPIDependantEntity *pEntity, const DeviceResourceSharable& resource) {
+    Assert(resource.Frozen());
+    Assert(resource.Sharable());
 
-    const auto range = _entities.equal_range( resource->SharedKey() );
+    const auto range = _entities.equal_range( resource.SharedKey() );
 
     for (auto it = range.first; it != range.second; ++it)
-        if (resource->MatchTerminalEntity(it->second.get()) ) {
+        if (resource.MatchTerminalEntity(it->second.get()) ) {
             Assert(it->second->IsAttachedToResource() == false);
             
-            *pEntity = it->second;
+            *pEntity = std::move(it->second);
             _entities.erase(it);
 
             return true;
@@ -40,10 +36,12 @@ bool DeviceSharedEntityPool::Acquire(PDeviceAPIDependantEntity *pEntity, const D
     return false;
 }
 //----------------------------------------------------------------------------
-void DeviceSharedEntityPool::Release(const DeviceSharedEntityKey& key, DeviceAPIDependantEntity *entity) {;
+void DeviceSharedEntityPool::Release(const DeviceSharedEntityKey& key, PDeviceAPIDependantEntity& entity) {;
     Assert(entity->IsAttachedToResource() == false);
 
-    _entities.emplace(key, entity);
+    _entities.emplace(key, std::move(entity));
+
+    Assert(entity.get() == nullptr);
 }
 //----------------------------------------------------------------------------
 void DeviceSharedEntityPool::Clear() {

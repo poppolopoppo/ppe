@@ -20,10 +20,11 @@ public:
     DeviceSharedEntityPool();
     ~DeviceSharedEntityPool();
 
-    size_t EntityCount() const;
+    size_t EntityCount() const { return _entities.size(); }
+    bool empty() const { return _entities.empty(); }
 
-    bool Acquire(PDeviceAPIDependantEntity *pEntity, const DeviceResourceSharable *resource);
-    void Release(const DeviceSharedEntityKey& key, DeviceAPIDependantEntity *entity);
+    bool Acquire(PDeviceAPIDependantEntity *pEntity, const DeviceResourceSharable& resource);
+    void Release(const DeviceSharedEntityKey& key, PDeviceAPIDependantEntity& entity);
 
     void Clear();
 
