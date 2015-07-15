@@ -285,7 +285,7 @@ DX11ShaderProgram::DX11ShaderProgram(
         if ( FAILED(::D3DStripShader(
                         compiled->GetBufferPointer(),
                         compiled->GetBufferSize(),
-                        //::D3DCOMPILER_STRIP_REFLECTION_DATA | // disables further ::D3DReflect() calls obviously
+                        //::D3DCOMPILER_STRIP_REFLECTION_DATA | // disables further ::D3DReflect() calls obviously // TODO : strip reflection data after Reflect()
                         ::D3DCOMPILER_STRIP_DEBUG_INFO |
                         ::D3DCOMPILER_STRIP_PRIVATE_DATA |
                         ::D3DCOMPILER_STRIP_TEST_BLOBS,
