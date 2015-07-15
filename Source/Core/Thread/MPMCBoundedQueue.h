@@ -135,9 +135,9 @@ public:
 //----------------------------------------------------------------------------
 template <typename T>
 MPMCBoundedQueue<T>::MPMCBoundedQueue(size_t bufferSize)
-:   MPMCBoundedQueueView(
-    reinterpret_cast<cell_t *>(aligned_malloc(bufferSize * sizeof(cell_t), CACHELINE_SIZE)),
-    bufferSize ) {
+:   MPMCBoundedQueueView<T>(reinterpret_cast<cell_t *>(aligned_malloc(bufferSize * sizeof(cell_t), CACHELINE_SIZE)),
+                            bufferSize )
+{
     Assert(capacity() == bufferSize);
 }
 //----------------------------------------------------------------------------
