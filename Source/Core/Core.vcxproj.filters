@@ -40,6 +40,9 @@
     <CustomBuild Include="Allocator\Mallocator.h">
       <Filter>Allocator</Filter>
     </CustomBuild>
+    <CustomBuild Include="Allocator\New.cpp">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
     <CustomBuild Include="Allocator\New.h">
       <Filter>Allocator</Filter>
     </CustomBuild>
