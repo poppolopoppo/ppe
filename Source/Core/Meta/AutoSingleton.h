@@ -72,17 +72,6 @@ class AutoSingleton : public AutoSingletonBase {
 private:
     AutoSingleton() {}
 
-    struct AutoCreate_ {
-        T *pInstance;
-        AutoCreate_() : pInstance(new T()) {}
-
-        AutoCreate_(AutoCreate_&&) = delete;
-        AutoCreate_& operator =(AutoCreate_&&) = delete;
-
-        AutoCreate_(const AutoCreate_&) = delete;
-        AutoCreate_& operator =(const AutoCreate_&) = delete;
-    };
-
 protected:
     explicit AutoSingleton(T *pinstance) { 
         AssertRelease(this == pinstance);
@@ -93,8 +82,8 @@ public:
     virtual ~AutoSingleton() {}
 
     static T& Instance() {
-        ONE_TIME_DEFAULT_INITIALIZE(AutoCreate_, autocreate);
-        return *autocreate.pInstance;
+        ONE_TIME_INITIALIZE_TPL(T *, sInstance, new T() );
+        return *sInstance;
     }
 };
 //----------------------------------------------------------------------------
@@ -102,10 +91,6 @@ template <typename T>
 class AutoSingletonThreadLocal : public AutoSingletonBase {
 private:
     AutoSingletonThreadLocal() {}
-
-    struct AutoCreate_ {
-        AutoCreate_(T **ppinstance) { *ppinstance = new T(); }
-    };
 
 protected:
     explicit AutoSingletonThreadLocal(T *pinstance) { 
@@ -117,9 +102,8 @@ public:
     virtual ~AutoSingletonThreadLocal() {}
 
     static T& Instance() {
-        static THREAD_LOCAL T *spInstance = nullptr;
-        ONE_TIME_INITIALIZE_THREAD_LOCAL(AutoCreate_, autocreate, &spInstance);
-        return *spInstance;
+        ONE_TIME_INITIALIZE_THREAD_LOCAL_TPL(T *, sInstanceTLS, new T() );
+        return *sInstanceTLS;
     }
 };
 //----------------------------------------------------------------------------
