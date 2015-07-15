@@ -10,9 +10,12 @@
 #include <stdio.h>
 #include <tchar.h>
 
-#include <algorithm>
 #include <iomanip>
+#include <iosfwd>
 #include <iostream>
+
+#include <algorithm>
+#include <exception>
 #include <type_traits>
 
 #include <locale>
