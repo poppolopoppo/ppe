@@ -2,14 +2,14 @@
 
 #include "Core.Graphics/Graphics.h"
 
-#include "Core.Graphics/Device/AbstractDeviceAPIEncapsulator.h"
-#include "Core.Graphics/Device/DeviceEncapsulatorException.h"
-#include "Core.Graphics/Device/PresentationParameters.h"
+#include "Core.Graphics/Device/DeviceAPI.h"
 
 #include "Core/Meta/ThreadResource.h"
 
 namespace Core {
 namespace Graphics {
+class AbstractDeviceAPIEncapsulator;
+class PresentationParameters;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -49,9 +49,6 @@ public:
 
     const PresentationParameters& Parameters() const;
 
-    void Create(DeviceAPI api, void *windowHandle, const PresentationParameters& presentationParameters);
-    void Destroy();
-
     IDeviceAPIEncapsulator *Device() const;
     IDeviceAPIContext *Immediate() const;
     IDeviceAPIShaderCompiler *ShaderCompiler() const;
@@ -59,6 +56,9 @@ public:
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
     IDeviceAPIDiagnostics *Diagnostics() const;
 #endif
+
+    void Create(DeviceAPI api, void *windowHandle, const PresentationParameters& presentationParameters);
+    void Destroy();
 
     void Reset(const PresentationParameters& pp);
     void Present();
@@ -70,7 +70,7 @@ private:
     DeviceRevision _revision;
 
 private:
-    virtual const AbstractDeviceAPIEncapsulator *APIEncapsulator() const override { return _deviceAPIEncapsulator.get(); }
+    virtual const AbstractDeviceAPIEncapsulator *APIEncapsulator() const override;
 
 private: // IDeviceAPIEncapsulator impl
 

@@ -5,6 +5,7 @@
 #include "DirectX11/DX11DeviceAPIEncapsulator.h"
 
 #include "Device/DeviceAPI.h"
+#include "Device/DeviceEncapsulatorException.h"
 #include "Device/Shader/ConstantBufferLayout.h"
 #include "Device/Shader/ConstantField.h"
 

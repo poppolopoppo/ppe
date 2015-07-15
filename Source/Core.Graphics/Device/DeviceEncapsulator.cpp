@@ -2,6 +2,9 @@
 
 #include "DeviceEncapsulator.h"
 
+#include "DeviceEncapsulatorException.h"
+#include "PresentationParameters.h"
+
 #include "Geometry/IndexBuffer.h"
 #include "Geometry/PrimitiveType.h"
 #include "Geometry/VertexBuffer.h"
@@ -52,6 +55,24 @@ const PresentationParameters& DeviceEncapsulator::Parameters() const {
     return _deviceAPIEncapsulator->Parameters();
 }
 //----------------------------------------------------------------------------
+IDeviceAPIEncapsulator *DeviceEncapsulator::Device() const { 
+    return const_cast<DeviceEncapsulator *>(this);
+}
+//----------------------------------------------------------------------------
+IDeviceAPIContext *DeviceEncapsulator::Immediate() const { 
+    return const_cast<DeviceEncapsulator *>(this);
+}
+//----------------------------------------------------------------------------
+IDeviceAPIShaderCompiler *DeviceEncapsulator::ShaderCompiler() const { 
+    return const_cast<DeviceEncapsulator *>(this);
+}
+//----------------------------------------------------------------------------
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
+IDeviceAPIDiagnostics *DeviceEncapsulator::Diagnostics() const { 
+    return const_cast<DeviceEncapsulator *>(this);
+}
+#endif
+//----------------------------------------------------------------------------
 void DeviceEncapsulator::Create(DeviceAPI api, void *windowHandle, const PresentationParameters& presentationParameters) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!_deviceAPIEncapsulator);
@@ -89,26 +110,6 @@ void DeviceEncapsulator::Destroy() {
     Assert(!_deviceAPIEncapsulator);
 }
 //----------------------------------------------------------------------------
-IDeviceAPIEncapsulator *DeviceEncapsulator::Device() const { 
-    return const_cast<DeviceEncapsulator *>(this);
-}
-//----------------------------------------------------------------------------
-IDeviceAPIContext *DeviceEncapsulator::Immediate() const { 
-    return const_cast<DeviceEncapsulator *>(this);
-}
-//----------------------------------------------------------------------------
-IDeviceAPIShaderCompiler *DeviceEncapsulator::ShaderCompiler() const { 
-    return const_cast<DeviceEncapsulator *>(this);
-}
-//----------------------------------------------------------------------------
-#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
-IDeviceAPIDiagnostics *DeviceEncapsulator::Diagnostics() const { 
-    return const_cast<DeviceEncapsulator *>(this);
-}
-#endif
-//----------------------------------------------------------------------------
-// Status
-//----------------------------------------------------------------------------
 void DeviceEncapsulator::Reset(const PresentationParameters& pp) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
@@ -128,9 +129,14 @@ void DeviceEncapsulator::Present() {
 void DeviceEncapsulator::ClearState() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    ++_revision.Value;
-
     _deviceAPIEncapsulator->ClearState();
+}
+//----------------------------------------------------------------------------
+const AbstractDeviceAPIEncapsulator *DeviceEncapsulator::APIEncapsulator() const {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(_deviceAPIEncapsulator);
+
+    return _deviceAPIEncapsulator.get();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

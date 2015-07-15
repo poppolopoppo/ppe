@@ -3,11 +3,13 @@
 #include "DX11DeviceWrapper.h"
 
 #include "DX11DeviceAPIEncapsulator.h"
+
 #include "Texture/DX11DepthStencil.h"
 #include "Texture/DX11RenderTarget.h"
 #include "Texture/DX11SurfaceFormat.h"
 
 #include "Device/DeviceEncapsulator.h"
+#include "Device/DeviceEncapsulatorException.h"
 #include "Device/PresentationParameters.h"
 #include "Device/Texture/SurfaceFormat.h"
 

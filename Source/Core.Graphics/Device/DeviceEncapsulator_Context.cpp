@@ -2,6 +2,8 @@
 
 #include "DeviceEncapsulator.h"
 
+#include "AbstractDeviceAPIEncapsulator.h"
+
 #include "Geometry/IndexBuffer.h"
 #include "Geometry/PrimitiveType.h"
 #include "Geometry/VertexBuffer.h"

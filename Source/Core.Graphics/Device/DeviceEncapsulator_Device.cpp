@@ -2,6 +2,8 @@
 
 #include "DeviceEncapsulator.h"
 
+#include "AbstractDeviceAPIEncapsulator.h"
+
 #include "Geometry/IndexBuffer.h"
 #include "Geometry/PrimitiveType.h"
 #include "Geometry/VertexBuffer.h"
@@ -315,6 +317,31 @@ const DepthStencil *DeviceEncapsulator::BackBufferDepthStencil() const {
 }
 //----------------------------------------------------------------------------
 // Render Target
+//----------------------------------------------------------------------------
+void DeviceEncapsulator::SetRenderTarget(const RenderTarget *renderTarget, const DepthStencil *depthStencil) {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(!renderTarget || (renderTarget->Frozen() && renderTarget->Available()));
+    Assert(!depthStencil || (depthStencil->Frozen() && depthStencil->Available()));
+
+    _deviceAPIEncapsulator->Device()->SetRenderTarget(renderTarget, depthStencil);
+}
+//----------------------------------------------------------------------------
+void DeviceEncapsulator::SetRenderTargets(const MemoryView<const RenderTargetBinding>& bindings, const DepthStencil *depthStencil) {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(!depthStencil || (depthStencil->Frozen() && depthStencil->Available()));
+
+#ifdef WITH_CORE_ASSERT
+    Assert(bindings.size());
+    for (const RenderTargetBinding& b : bindings) {
+        Assert(b.RT);
+        Assert(b.RT->Frozen());
+        Assert(b.RT->Available());
+        Assert(b.Slot < bindings.size());
+    }
+#endif
+
+    _deviceAPIEncapsulator->Device()->SetRenderTargets(bindings, depthStencil);
+}
 //----------------------------------------------------------------------------
 DeviceAPIDependantRenderTarget *DeviceEncapsulator::CreateRenderTarget(RenderTarget *renderTarget, const MemoryView<const u8>& optionalData) {
     THIS_THREADRESOURCE_CHECKACCESS();

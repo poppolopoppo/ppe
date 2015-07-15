@@ -2,6 +2,9 @@
 
 #include "DX11DeviceAPIEncapsulator.h"
 
+#include "DX11DeviceWrapper.h"
+#include "DX11ResourceBuffer.h"
+
 #include "Geometry/DX11PrimitiveType.h"
 #include "Geometry/DX11VertexDeclaration.h"
 
@@ -22,9 +25,7 @@
 #include "Texture/DX11Texture2D.h"
 #include "Texture/DX11TextureCube.h"
 
-#include "DX11DeviceWrapper.h"
-#include "DX11ResourceBuffer.h"
-
+#include "Device/DeviceEncapsulatorException.h"
 #include "Device/Geometry/IndexBuffer.h"
 #include "Device/Geometry/VertexBuffer.h"
 #include "Device/PresentationParameters.h"
