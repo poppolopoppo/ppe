@@ -3,6 +3,7 @@
 #include "MemoryTracking.h"
 
 #include "Diagnostic/Callstack.h"
+#include "Meta/OneTimeInitialize.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -116,9 +117,8 @@ void MemoryTrackingData::Append(const MemoryTrackingData& other) {
         _parent->Append(other);
 }
 //----------------------------------------------------------------------------
-// TODO: not DLL safe
-static MemoryTrackingData gGlobalMemoryTrackingData{ "$" };
 MemoryTrackingData& MemoryTrackingData::Global() {
+    ONE_TIME_INITIALIZE(MemoryTrackingData, gGlobalMemoryTrackingData, "$");
     return gGlobalMemoryTrackingData;
 }
 //----------------------------------------------------------------------------
