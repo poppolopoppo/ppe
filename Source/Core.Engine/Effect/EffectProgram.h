@@ -34,7 +34,7 @@ public:
 
     void UnlinkReflectedData();
 
-    void Set(Graphics::IDeviceAPIContextEncapsulator *context, const Effect *effect) const;
+    void Set(Graphics::IDeviceAPIContext *context, const Effect *effect) const;
 
     const ASSOCIATIVE_VECTOR(Shader, Graphics::BindName, EffectSharedBufferIndex)& Constants() const { return _constants; }
     const VECTOR(Shader, Graphics::ShaderProgramTexture)& Textures() const { return _textures; }

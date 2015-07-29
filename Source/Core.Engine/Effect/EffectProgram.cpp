@@ -64,7 +64,7 @@ void EffectProgram::UnlinkReflectedData() {
     _constants.clear();
 }
 //----------------------------------------------------------------------------
-void EffectProgram::Set(Graphics::IDeviceAPIContextEncapsulator *context, const Effect *effect) const {
+void EffectProgram::Set(Graphics::IDeviceAPIContext *context, const Effect *effect) const {
     const Graphics::ShaderProgramType stage = ShaderProgram::ProgramType();
 
     const Graphics::ConstantBuffer *stagePrograms[14];

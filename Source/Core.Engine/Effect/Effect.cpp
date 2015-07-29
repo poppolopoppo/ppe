@@ -286,7 +286,7 @@ void Effect::UnlinkReflectedData(SharedConstantBufferFactory *sharedBufferFactor
     _sharedBuffers.clear();
 }
 //----------------------------------------------------------------------------
-void Effect::Set(Graphics::IDeviceAPIContextEncapsulator *context) const {
+void Effect::Set(Graphics::IDeviceAPIContext *context) const {
     context->SetBlendState(this->BlendState());
     context->SetDepthStencilState(this->DepthStencilState());
     context->SetRasterizerState(this->RasterizerState());

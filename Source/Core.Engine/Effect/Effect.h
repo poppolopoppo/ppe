@@ -51,7 +51,7 @@ public:
                             Graphics::IDeviceAPIShaderCompiler *compiler);
     void UnlinkReflectedData(SharedConstantBufferFactory *sharedBufferFactory);
 
-    void Set(Graphics::IDeviceAPIContextEncapsulator *context) const;
+    void Set(Graphics::IDeviceAPIContext *context) const;
 
     static const Graphics::RasterizerState *AutomaticRasterizerState;
     static const Graphics::RasterizerState *DefaultRasterizerState;
