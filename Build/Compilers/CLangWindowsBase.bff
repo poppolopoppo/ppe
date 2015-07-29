@@ -9,8 +9,11 @@
 //------------------------------------------------------------------------------
 .CLangWindowsBase =
 [
-    ; Tout ça est désactivé pour compiler CRT sans chouiner
     .AdditionalWarnings = ''
+    + ' -Wshadow'                       ; extra warnings
+
+    ; Tout ça est désactivé pour compiler CRT sans chouiner
+    .DisabledWarnings
     + ' -Wno-microsoft'                 ; suppress "enumerator value is not representable in the underlying type 'int' [-Wmicrosoft]'"
     + ' -Wno-#pragma-messages'
     + ' -Wno-ignored-attributes'        ; ignore 'restrict, noalias' keyword
@@ -58,6 +61,7 @@
     + ' /c "%1" /TP'
     + ' -Xclang -std=c++11'
     + .AdditionalWarnings
+    + .DisabledWarnings
 
     .PreprocessorOptions = ''
     .PCHOptions = .CompilerOptions 
