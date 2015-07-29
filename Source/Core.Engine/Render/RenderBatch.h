@@ -8,7 +8,7 @@
 namespace Core {
 namespace Graphics {
 class IDeviceAPIEncapsulator;
-class IDeviceAPIContextEncapsulator;
+class IDeviceAPIContext;
 }
 
 namespace Engine {
@@ -37,7 +37,7 @@ public:
                     MaterialDatabase *materialDatabase,
                     const RenderTree *renderTree,
                     VariabilitySeed *seeds);
-    void Render(Graphics::IDeviceAPIContextEncapsulator *context);
+    void Render(Graphics::IDeviceAPIContext *context);
     void Destroy(Graphics::IDeviceAPIEncapsulator *device);
 
 private:

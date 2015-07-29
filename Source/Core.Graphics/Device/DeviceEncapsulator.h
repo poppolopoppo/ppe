@@ -148,7 +148,7 @@ private: // IDeviceAPIEncapsulator impl
     virtual DeviceAPIDependantDepthStencil *CreateDepthStencil(DepthStencil *depthStencil, const MemoryView<const u8>& optionalData) override;
     virtual void DestroyDepthStencil(DepthStencil *depthStencil, PDeviceAPIDependantDepthStencil& entity) override;
 
-private: // IDeviceAPIContextEncapsulator
+private: // IDeviceAPIContext
 
     // Alpha/Raster/Depth State
 

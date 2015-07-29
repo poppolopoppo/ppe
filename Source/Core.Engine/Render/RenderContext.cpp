@@ -74,7 +74,7 @@ void RenderContext::UpdateAndPrepare(
 }
 //----------------------------------------------------------------------------
 void RenderContext::Render(
-    Graphics::IDeviceAPIContextEncapsulator *context,
+    Graphics::IDeviceAPIContext *context,
     const MemoryView<Scene *const>& scenes ) {
     Assert(context);
 

@@ -137,7 +137,7 @@ void RenderLayerDrawRect::PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device,
     const VariabilitySeed variability = renderTree->EffectCompiler()->Variability();
 
     if (!_vertices) {
-        CreateRectVertices_(_vertices, device, _materialEffect, _viewport);
+        CreateRectVertices_(_vertices, device, _materialEffect.get(), _viewport);
         _materialEffect->Create(device, materialDatabase, renderTree->Scene());
 
         _effectVariability = variability;
@@ -160,7 +160,7 @@ void RenderLayerDrawRect::PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device,
     _materialEffect->Prepare(device, renderTree->Scene(), seeds);
 }
 //----------------------------------------------------------------------------
-void RenderLayerDrawRect::RenderImpl_(Graphics::IDeviceAPIContextEncapsulator *context) {
+void RenderLayerDrawRect::RenderImpl_(Graphics::IDeviceAPIContext *context) {
     Assert(_vertices);
 
     _materialEffect->Effect()->Set(context);

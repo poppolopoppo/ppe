@@ -298,7 +298,7 @@ void MaterialEffect::Prepare(Graphics::IDeviceAPIEncapsulator *device, const Sce
         cbuffer->Eval(context);
 }
 //----------------------------------------------------------------------------
-void MaterialEffect::Set(Graphics::IDeviceAPIContextEncapsulator *deviceContext) {
+void MaterialEffect::Set(Graphics::IDeviceAPIContext *deviceContext) {
 
     // *** CONSTANT BUFFERS ***
 

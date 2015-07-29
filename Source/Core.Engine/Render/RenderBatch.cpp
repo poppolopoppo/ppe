@@ -165,7 +165,7 @@ void RenderBatch::Prepare(
     }
 }
 //----------------------------------------------------------------------------
-void RenderBatch::Render(Graphics::IDeviceAPIContextEncapsulator *context) {
+void RenderBatch::Render(Graphics::IDeviceAPIContext *context) {
     const size_t count = _criterias.size();
 
     const RenderCommandCriteria *pred = nullptr;

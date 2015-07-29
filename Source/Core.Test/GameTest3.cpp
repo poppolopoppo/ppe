@@ -521,7 +521,7 @@ void GameTest3::Update(const Timeline& time) {
     const Graphics::DeviceEncapsulator& encapsulator = DeviceEncapsulator();
 
     IDeviceAPIEncapsulator *const device = encapsulator.Device();
-    IDeviceAPIContextEncapsulator *const context = encapsulator.Context();
+    IDeviceAPIContext *const context = encapsulator.Context();
 
     // texture reloading
     if (Keyboard().IsKeyPressed(KeyboardKey::Control) &&
@@ -559,7 +559,7 @@ void GameTest3::Draw(const Timeline& time) {
     const Graphics::DeviceEncapsulator& encapsulator = DeviceEncapsulator();
 
     IDeviceAPIEncapsulator *const device = encapsulator.Device();
-    IDeviceAPIContextEncapsulator *const context = encapsulator.Context();
+    IDeviceAPIContext *const context = encapsulator.Context();
 
     _context->FrameTick();
 

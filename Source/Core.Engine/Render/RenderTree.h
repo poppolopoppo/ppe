@@ -10,7 +10,7 @@
 namespace Core {
 namespace Graphics {
 class IDeviceAPIEncapsulator;
-class IDeviceAPIContextEncapsulator;
+class IDeviceAPIContext;
 }
 
 namespace Engine {
@@ -44,7 +44,7 @@ public:
     // (1) create the resources and sort if necessary
     void Prepare(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, VariabilitySeed *seeds);
     // (2) change device context and execute draw calls
-    void Render(Graphics::IDeviceAPIContextEncapsulator *context);
+    void Render(Graphics::IDeviceAPIContext *context);
     // (3) called before death or disabling to destroy possibly created resources
     void Destroy(Graphics::IDeviceAPIEncapsulator *device);
 

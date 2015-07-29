@@ -104,7 +104,7 @@ void Scene::Prepare(Graphics::IDeviceAPIEncapsulator *device, VariabilitySeed *s
     ChangeStatus_(SceneStatus::AfterPrepare);
 }
 //----------------------------------------------------------------------------
-void Scene::Render(Graphics::IDeviceAPIContextEncapsulator *context) {
+void Scene::Render(Graphics::IDeviceAPIContext *context) {
     Assert(context);
     THIS_THREADRESOURCE_CHECKACCESS();
 

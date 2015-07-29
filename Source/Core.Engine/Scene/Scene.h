@@ -17,7 +17,7 @@ class Timeline;
 
 namespace Graphics {
 class IDeviceAPIEncapsulator;
-class IDeviceAPIContextEncapsulator;
+class IDeviceAPIContext;
 }
 
 namespace Engine {
@@ -57,7 +57,7 @@ public:
 
     void Update(const Timeline& timeline);
     void Prepare(Graphics::IDeviceAPIEncapsulator *device, VariabilitySeed *seeds);
-    void Render(Graphics::IDeviceAPIContextEncapsulator *context);
+    void Render(Graphics::IDeviceAPIContext *context);
     
     SceneEvent& OnBeforeInitialize() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onBeforeInitialize; }
     SceneEvent& OnAfterInitialize() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onAfterInitialize; }

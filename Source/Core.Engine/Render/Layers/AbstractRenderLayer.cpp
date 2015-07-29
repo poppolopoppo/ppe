@@ -59,7 +59,7 @@ void AbstractRenderLayer::Prepare(Graphics::IDeviceAPIEncapsulator *device, Mate
     PrepareImpl_(device, materialDatabase, renderTree, seeds);
 }
 //----------------------------------------------------------------------------
-void AbstractRenderLayer::Render(Graphics::IDeviceAPIContextEncapsulator *context) {
+void AbstractRenderLayer::Render(Graphics::IDeviceAPIContext *context) {
     if (Enabled()) {
         GRAPHICS_DIAGNOSTICS_BEGINEVENT(context->Diagnostics(), _name.c_str());
 

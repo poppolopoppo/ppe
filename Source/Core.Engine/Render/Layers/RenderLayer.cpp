@@ -44,7 +44,7 @@ void RenderLayer::PrepareImpl_(
     _effectVariability = variability;
 }
 //----------------------------------------------------------------------------
-void RenderLayer::RenderImpl_(Graphics::IDeviceAPIContextEncapsulator *context) {
+void RenderLayer::RenderImpl_(Graphics::IDeviceAPIContext *context) {
     _batch.Render(context);
 }
 //----------------------------------------------------------------------------

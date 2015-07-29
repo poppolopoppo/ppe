@@ -19,7 +19,7 @@ class Filename;
 
 namespace Graphics {
 class BindName;
-class IDeviceAPIContextEncapsulator;
+class IDeviceAPIContext;
 class IDeviceAPIEncapsulator;
 FWD_REFPTR(SamplerState);
 FWD_WEAKPTR(Texture);
@@ -81,7 +81,7 @@ public:
     /* (2) eval linked parameters and update constant buffers IFN, retrieves texture resources */
     void Prepare(Graphics::IDeviceAPIEncapsulator *device, const Scene *scene, const VariabilitySeed *seeds);
     /* (3) setup constant buffers and textures (with sampler states) on the device */
-    void Set(Graphics::IDeviceAPIContextEncapsulator *deviceContext);
+    void Set(Graphics::IDeviceAPIContext *deviceContext);
 
     SINGLETON_POOL_ALLOCATED_DECL(MaterialEffect);
 

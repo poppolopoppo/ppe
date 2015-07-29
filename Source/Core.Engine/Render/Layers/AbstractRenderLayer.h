@@ -13,7 +13,7 @@
 namespace Core {
 namespace Graphics {
 class IDeviceAPIEncapsulator;
-class IDeviceAPIContextEncapsulator;
+class IDeviceAPIContext;
 }
 
 namespace Engine {
@@ -52,7 +52,7 @@ public:
     const RenderBatch *RenderBatchIFP() const;
 
     void Prepare(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, const RenderTree *renderTree, VariabilitySeed *seeds);
-    void Render(Graphics::IDeviceAPIContextEncapsulator *context);
+    void Render(Graphics::IDeviceAPIContext *context);
     void Destroy(Graphics::IDeviceAPIEncapsulator *device, const RenderTree *renderTree);
 
 protected:
@@ -60,7 +60,7 @@ protected:
     virtual const RenderBatch *RenderBatchIFPImpl_() const { return nullptr; }
 
     virtual void PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, const RenderTree *renderTree, VariabilitySeed *seeds) = 0;
-    virtual void RenderImpl_(Graphics::IDeviceAPIContextEncapsulator *context) = 0;
+    virtual void RenderImpl_(Graphics::IDeviceAPIContext *context) = 0;
     virtual void DestroyImpl_(Graphics::IDeviceAPIEncapsulator *device, const RenderTree *renderTree) = 0;
 
 private:

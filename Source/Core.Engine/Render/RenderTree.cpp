@@ -98,7 +98,7 @@ void RenderTree::Prepare(Graphics::IDeviceAPIEncapsulator *device, MaterialDatab
     TextureCache()->Update();
 }
 //----------------------------------------------------------------------------
-void RenderTree::Render(Graphics::IDeviceAPIContextEncapsulator *context) {
+void RenderTree::Render(Graphics::IDeviceAPIContext *context) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(context);
 

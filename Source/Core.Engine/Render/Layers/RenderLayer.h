@@ -13,7 +13,7 @@
 namespace Core {
 namespace Graphics {
 class IDeviceAPIEncapsulator;
-class IDeviceAPIContextEncapsulator;
+class IDeviceAPIContext;
 FWD_REFPTR(IndexBuffer);
 FWD_REFPTR(VertexBuffer);
 enum class PrimitiveType;
@@ -40,7 +40,7 @@ protected:
     virtual const RenderBatch *RenderBatchIFPImpl_() const override { return &_batch; }
 
     virtual void PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, const RenderTree *renderTree, VariabilitySeed *seeds) override;
-    virtual void RenderImpl_(Graphics::IDeviceAPIContextEncapsulator *context) override;
+    virtual void RenderImpl_(Graphics::IDeviceAPIContext *context) override;
     virtual void DestroyImpl_(Graphics::IDeviceAPIEncapsulator *device, const RenderTree *renderTree) override;
 
 private:

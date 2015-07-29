@@ -58,7 +58,7 @@ public:
     GenericVertex(const Graphics::VertexDeclaration *vertexDeclaration);
     ~GenericVertex();
 
-    const Graphics::PCVertexDeclaration& VertexDeclaration() const { return _vertexDeclaration; }
+    const Graphics::VertexDeclaration *VertexDeclaration() const { return _vertexDeclaration; }
     const MemoryView<u8>& Destination() const { return _destination; }
     size_t VertexOffset() const { return _vertexOffset; }
 
@@ -71,7 +71,6 @@ public:
 
     void SeekVertex(size_t vertexIndex);
     bool NextVertex(); // advance to next offset, return if storage available
-    void PopVertex(); // delete last vertex
 
     void ZeroMemory_CurrentVertex() const;
     void CopyVertex(size_t dst, size_t src) const;

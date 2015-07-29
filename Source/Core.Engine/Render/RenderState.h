@@ -7,7 +7,7 @@
 
 namespace Core {
 namespace Graphics {
-class IDeviceAPIContextEncapsulator;
+class IDeviceAPIContext;
 }
 
 namespace Engine {

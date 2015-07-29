@@ -97,7 +97,7 @@ void RenderLayerSetRenderTarget::PrepareImpl_(
         _surfaces[i]->Prepare(device, _surfaceLocks[i]);
 }
 //----------------------------------------------------------------------------
-void RenderLayerSetRenderTarget::RenderImpl_(Graphics::IDeviceAPIContextEncapsulator *context) {
+void RenderLayerSetRenderTarget::RenderImpl_(Graphics::IDeviceAPIContext *context) {
     if (1 == _count) {
         // only one render target
 

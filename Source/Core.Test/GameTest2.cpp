@@ -433,7 +433,7 @@ void GameTest2::Update(const Timeline& time) {
     const Graphics::DeviceEncapsulator& encapsulator = DeviceEncapsulator();
 
     IDeviceAPIEncapsulator *const device = encapsulator.Device();
-    IDeviceAPIContextEncapsulator *const context = encapsulator.Context();
+    IDeviceAPIContext *const context = encapsulator.Context();
 
     // shader compilation
     if (Keyboard().IsKeyPressed(KeyboardKey::Control) &&
@@ -473,7 +473,7 @@ void GameTest2::Draw(const Timeline& time) {
     const Graphics::DeviceEncapsulator& encapsulator = DeviceEncapsulator();
 
     IDeviceAPIEncapsulator *const device = encapsulator.Device();
-    IDeviceAPIContextEncapsulator *const context = encapsulator.Context();
+    IDeviceAPIContext *const context = encapsulator.Context();
 
     _context->FrameTick();
 

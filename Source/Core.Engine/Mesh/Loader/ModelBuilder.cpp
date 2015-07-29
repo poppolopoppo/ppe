@@ -517,7 +517,7 @@ PModel ModelBuilder::CreateModel() {
                                 boundingBox, 
                                 meshData.Indices, meshData.Vertices, 
                                 *this, groupMB, 
-                                vertexDeclarations[meshIndex] );
+                                vertexDeclarations[meshIndex].get() );
 
         boneAABBs[groupMB.Bone].Add(boundingBox);
     }
@@ -530,7 +530,7 @@ PModel ModelBuilder::CreateModel() {
 
         const MemoryView<u32> indices = meshData.Indices.MakeView().Cast<u32>();
 
-        GenericVertex genericVertex(vertexDeclarations[i]);
+        GenericVertex genericVertex(vertexDeclarations[i].get());
         genericVertex.SetDestination(meshData.Vertices.MakeView());
         genericVertex.SeekVertex(meshStat.VertexCount);
 

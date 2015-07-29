@@ -50,7 +50,7 @@ void RenderSurfaceLock::Bind(Graphics::ShaderProgramType stage, size_t slot) {
     slots_field::InplaceBitOr(_state, 1 << size_t(slot));
 }
 //----------------------------------------------------------------------------
-void RenderSurfaceLock::Unbind(Graphics::IDeviceAPIContextEncapsulator *context) {
+void RenderSurfaceLock::Unbind(Graphics::IDeviceAPIContext *context) {
     if (0 == _state)
         return;
 

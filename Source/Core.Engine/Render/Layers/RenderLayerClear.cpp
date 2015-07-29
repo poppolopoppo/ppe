@@ -61,7 +61,7 @@ void RenderLayerClear::PrepareImpl_(
     _surface->Prepare(device, _surfaceLock);
 }
 //----------------------------------------------------------------------------
-void RenderLayerClear::RenderImpl_(Graphics::IDeviceAPIContextEncapsulator *context) {
+void RenderLayerClear::RenderImpl_(Graphics::IDeviceAPIContext *context) {
     Assert(_surfaceLock);
 
     const Graphics::RenderTarget *rt = nullptr;

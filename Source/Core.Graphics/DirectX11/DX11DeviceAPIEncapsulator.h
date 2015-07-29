@@ -129,7 +129,7 @@ private: // IDeviceAPIEncapsulator impl
     virtual void Clear(const RenderTarget *renderTarget, const ColorRGBAF& color) override;
     virtual void Clear(const DepthStencil *depthStencil, ClearOptions opts, float depth, u8 stencil) override;
 
-private: // IDeviceAPIContextEncapsulator
+private: // IDeviceAPIContext
 
     // Alpha/Raster/Depth State
 

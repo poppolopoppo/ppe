@@ -45,7 +45,7 @@ public:
                     PRenderSurfaceLock& plockSelf);
 
     void Bind(Graphics::ShaderProgramType stage, size_t slot);
-    void Unbind(Graphics::IDeviceAPIContextEncapsulator *context);
+    void Unbind(Graphics::IDeviceAPIContext *context);
 
 private:
     typedef Meta::Bit<size_t>::First<8>::type stage_field;

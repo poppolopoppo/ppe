@@ -59,7 +59,7 @@ public:
                             World *const world,
                             const MemoryView<Scene *const>& scenes );
 
-    void Render(Graphics::IDeviceAPIContextEncapsulator *context,
+    void Render(Graphics::IDeviceAPIContext *context,
                 const MemoryView<Scene *const>& scenes );
 
     void Clear();
