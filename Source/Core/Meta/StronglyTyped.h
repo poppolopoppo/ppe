@@ -24,6 +24,10 @@ struct Numeric {
 
     bool operator < (const Numeric& other) const { return Value < other.Value; }
     bool operator >=(const Numeric& other) const { return !operator < (other); }
+
+    static Numeric MinusOne() { return Numeric(-1); }
+    static Numeric One() { return Numeric(1); }
+    static Numeric Zero() { return Numeric(0); }
 };
 //----------------------------------------------------------------------------
 } //!namespace StronglyTyped
