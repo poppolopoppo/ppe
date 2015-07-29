@@ -97,67 +97,67 @@
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <LocalDebuggerCommand>D:\Code\Core\git/Output/Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>$(SolutionDir)\Output\Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <LocalDebuggerCommand>D:\Code\Core\git/Output/Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>$(SolutionDir)\Output\Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='FastDebug|Win32'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <LocalDebuggerCommand>D:\Code\Core\git/Output/Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>$(SolutionDir)\Output\Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <LocalDebuggerCommand>D:\Code\Core\git/Output/Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>$(SolutionDir)\Output\Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profiling|Win32'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <LocalDebuggerCommand>D:\Code\Core\git/Output/Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>$(SolutionDir)\Output\Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Final|Win32'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <LocalDebuggerCommand>D:\Code\Core\git/Output/Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>$(SolutionDir)\Output\Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <LocalDebuggerCommand>D:\Code\Core\git/Output/Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>$(SolutionDir)\Output\Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='FastDebug|x64'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <LocalDebuggerCommand>D:\Code\Core\git/Output/Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>$(SolutionDir)\Output\Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <LocalDebuggerCommand>D:\Code\Core\git/Output/Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>$(SolutionDir)\Output\Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profiling|x64'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <LocalDebuggerCommand>D:\Code\Core\git/Output/Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>$(SolutionDir)\Output\Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Final|x64'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <LocalDebuggerCommand>D:\Code\Core\git/Output/Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>$(SolutionDir)\Output\Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -197,112 +197,112 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dummy|Win32'">
-    <NMakeBuildCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
-    <LocalDebuggerWorkingDirectory>D:\Code\Core\git/Output/Bin</LocalDebuggerWorkingDirectory>
-    <IntDir>D:\Code\Core\git/Output/Intermediate\Core\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
-    <OutDir>D:\Code\Core\git/Output/Bin</OutDir>
+    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Bin</LocalDebuggerWorkingDirectory>
+    <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
+    <OutDir>$(SolutionDir)\Output\Bin</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <NMakeBuildCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN32;ARCH_X86;ARCH_32BIT;DEBUG;_DEBUG;_SECURE_SCL=1;_ITERATOR_DEBUG_LEVEL=2;_HAS_ITERATOR_DEBUGGING=1</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/;D:\Code\Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;D:\Code\Core\git/Source/Core.Serialize</NMakeIncludeSearchPath>
-    <LocalDebuggerWorkingDirectory>D:\Code\Core\git/Output/Bin</LocalDebuggerWorkingDirectory>
-    <IntDir>D:\Code\Core\git/Output/Intermediate\Win32\Debug\Core.Serialize</IntDir>
-    <OutDir>D:\Code\Core\git/Output/Bin</OutDir>
+    <NMakeIncludeSearchPath>;D:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/;X:\Code\@Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;X:\Code\@Core\git/Source/Core.Serialize</NMakeIncludeSearchPath>
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Bin</LocalDebuggerWorkingDirectory>
+    <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
+    <OutDir>$(SolutionDir)\Output\Bin</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='FastDebug|Win32'">
-    <NMakeBuildCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN32;ARCH_X86;ARCH_32BIT;FASTDEBUG;_DEBUG;DEBUG;_SECURE_SCL=1;_ITERATOR_DEBUG_LEVEL=2;_HAS_ITERATOR_DEBUGGING=1</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/;D:\Code\Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;D:\Code\Core\git/Source/Core.Serialize</NMakeIncludeSearchPath>
-    <LocalDebuggerWorkingDirectory>D:\Code\Core\git/Output/Bin</LocalDebuggerWorkingDirectory>
-    <IntDir>D:\Code\Core\git/Output/Intermediate\Win32\FastDebug\Core.Serialize</IntDir>
-    <OutDir>D:\Code\Core\git/Output/Bin</OutDir>
+    <NMakeIncludeSearchPath>;D:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/;X:\Code\@Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;X:\Code\@Core\git/Source/Core.Serialize</NMakeIncludeSearchPath>
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Bin</LocalDebuggerWorkingDirectory>
+    <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
+    <OutDir>$(SolutionDir)\Output\Bin</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <NMakeBuildCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN32;ARCH_X86;ARCH_32BIT;RELEASE;NDEBUG;_SECURE_SCL=0;_ITERATOR_DEBUG_LEVEL=0;_HAS_ITERATOR_DEBUGGING=0</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/;D:\Code\Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;D:\Code\Core\git/Source/Core.Serialize</NMakeIncludeSearchPath>
-    <LocalDebuggerWorkingDirectory>D:\Code\Core\git/Output/Bin</LocalDebuggerWorkingDirectory>
-    <IntDir>D:\Code\Core\git/Output/Intermediate\Win32\Release\Core.Serialize</IntDir>
-    <OutDir>D:\Code\Core\git/Output/Bin</OutDir>
+    <NMakeIncludeSearchPath>;D:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/;X:\Code\@Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;X:\Code\@Core\git/Source/Core.Serialize</NMakeIncludeSearchPath>
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Bin</LocalDebuggerWorkingDirectory>
+    <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
+    <OutDir>$(SolutionDir)\Output\Bin</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profiling|Win32'">
-    <NMakeBuildCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN32;ARCH_X86;ARCH_32BIT;RELEASE;NDEBUG;PROFILING_ENABLED;_SECURE_SCL=0;_ITERATOR_DEBUG_LEVEL=0;_HAS_ITERATOR_DEBUGGING=0</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/;D:\Code\Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;D:\Code\Core\git/Source/Core.Serialize</NMakeIncludeSearchPath>
-    <LocalDebuggerWorkingDirectory>D:\Code\Core\git/Output/Bin</LocalDebuggerWorkingDirectory>
-    <IntDir>D:\Code\Core\git/Output/Intermediate\Win32\Profiling\Core.Serialize</IntDir>
-    <OutDir>D:\Code\Core\git/Output/Bin</OutDir>
+    <NMakeIncludeSearchPath>;D:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/;X:\Code\@Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;X:\Code\@Core\git/Source/Core.Serialize</NMakeIncludeSearchPath>
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Bin</LocalDebuggerWorkingDirectory>
+    <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
+    <OutDir>$(SolutionDir)\Output\Bin</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Final|Win32'">
-    <NMakeBuildCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN32;ARCH_X86;ARCH_32BIT;FINAL_RELEASE;RELEASE;NDEBUG;_SECURE_SCL=0;_ITERATOR_DEBUG_LEVEL=0;_HAS_ITERATOR_DEBUGGING=0</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/;D:\Code\Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;D:\Code\Core\git/Source/Core.Serialize</NMakeIncludeSearchPath>
-    <LocalDebuggerWorkingDirectory>D:\Code\Core\git/Output/Bin</LocalDebuggerWorkingDirectory>
-    <IntDir>D:\Code\Core\git/Output/Intermediate\Win32\Final\Core.Serialize</IntDir>
-    <OutDir>D:\Code\Core\git/Output/Bin</OutDir>
+    <NMakeIncludeSearchPath>;D:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/;X:\Code\@Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;X:\Code\@Core\git/Source/Core.Serialize</NMakeIncludeSearchPath>
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Bin</LocalDebuggerWorkingDirectory>
+    <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
+    <OutDir>$(SolutionDir)\Output\Bin</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <NMakeBuildCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN64;ARCH_X64;ARCH_64BIT;DEBUG;_DEBUG;_SECURE_SCL=1;_ITERATOR_DEBUG_LEVEL=2;_HAS_ITERATOR_DEBUGGING=1</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/;D:\Code\Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;D:\Code\Core\git/Source/Core.Serialize</NMakeIncludeSearchPath>
-    <LocalDebuggerWorkingDirectory>D:\Code\Core\git/Output/Bin</LocalDebuggerWorkingDirectory>
-    <IntDir>D:\Code\Core\git/Output/Intermediate\x64\Debug\Core.Serialize</IntDir>
-    <OutDir>D:\Code\Core\git/Output/Bin</OutDir>
+    <NMakeIncludeSearchPath>;D:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/;X:\Code\@Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;X:\Code\@Core\git/Source/Core.Serialize</NMakeIncludeSearchPath>
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Bin</LocalDebuggerWorkingDirectory>
+    <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
+    <OutDir>$(SolutionDir)\Output\Bin</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='FastDebug|x64'">
-    <NMakeBuildCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN64;ARCH_X64;ARCH_64BIT;FASTDEBUG;_DEBUG;DEBUG;_SECURE_SCL=1;_ITERATOR_DEBUG_LEVEL=2;_HAS_ITERATOR_DEBUGGING=1</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/;D:\Code\Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;D:\Code\Core\git/Source/Core.Serialize</NMakeIncludeSearchPath>
-    <LocalDebuggerWorkingDirectory>D:\Code\Core\git/Output/Bin</LocalDebuggerWorkingDirectory>
-    <IntDir>D:\Code\Core\git/Output/Intermediate\x64\FastDebug\Core.Serialize</IntDir>
-    <OutDir>D:\Code\Core\git/Output/Bin</OutDir>
+    <NMakeIncludeSearchPath>;D:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/;X:\Code\@Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;X:\Code\@Core\git/Source/Core.Serialize</NMakeIncludeSearchPath>
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Bin</LocalDebuggerWorkingDirectory>
+    <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
+    <OutDir>$(SolutionDir)\Output\Bin</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <NMakeBuildCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN64;ARCH_X64;ARCH_64BIT;RELEASE;NDEBUG;_SECURE_SCL=0;_ITERATOR_DEBUG_LEVEL=0;_HAS_ITERATOR_DEBUGGING=0</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/;D:\Code\Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;D:\Code\Core\git/Source/Core.Serialize</NMakeIncludeSearchPath>
-    <LocalDebuggerWorkingDirectory>D:\Code\Core\git/Output/Bin</LocalDebuggerWorkingDirectory>
-    <IntDir>D:\Code\Core\git/Output/Intermediate\x64\Release\Core.Serialize</IntDir>
-    <OutDir>D:\Code\Core\git/Output/Bin</OutDir>
+    <NMakeIncludeSearchPath>;D:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/;X:\Code\@Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;X:\Code\@Core\git/Source/Core.Serialize</NMakeIncludeSearchPath>
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Bin</LocalDebuggerWorkingDirectory>
+    <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
+    <OutDir>$(SolutionDir)\Output\Bin</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profiling|x64'">
-    <NMakeBuildCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN64;ARCH_X64;ARCH_64BIT;RELEASE;NDEBUG;PROFILING_ENABLED;_SECURE_SCL=0;_ITERATOR_DEBUG_LEVEL=0;_HAS_ITERATOR_DEBUGGING=0</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/;D:\Code\Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;D:\Code\Core\git/Source/Core.Serialize</NMakeIncludeSearchPath>
-    <LocalDebuggerWorkingDirectory>D:\Code\Core\git/Output/Bin</LocalDebuggerWorkingDirectory>
-    <IntDir>D:\Code\Core\git/Output/Intermediate\x64\Profiling\Core.Serialize</IntDir>
-    <OutDir>D:\Code\Core\git/Output/Bin</OutDir>
+    <NMakeIncludeSearchPath>;D:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/;X:\Code\@Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;X:\Code\@Core\git/Source/Core.Serialize</NMakeIncludeSearchPath>
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Bin</LocalDebuggerWorkingDirectory>
+    <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
+    <OutDir>$(SolutionDir)\Output\Bin</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Final|x64'">
-    <NMakeBuildCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine>cd "D:\Code\Core\git" &amp; "D:\Code\Core\git\fbuild.bat" -config "D:\Code\Core\git\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN64;ARCH_X64;ARCH_64BIT;FINAL_RELEASE;RELEASE;NDEBUG;_SECURE_SCL=0;_ITERATOR_DEBUG_LEVEL=0;_HAS_ITERATOR_DEBUGGING=0</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/;D:\Code\Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;D:\Code\Core\git/Source/Core.Serialize</NMakeIncludeSearchPath>
-    <LocalDebuggerWorkingDirectory>D:\Code\Core\git/Output/Bin</LocalDebuggerWorkingDirectory>
-    <IntDir>D:\Code\Core\git/Output/Intermediate\x64\Final\Core.Serialize</IntDir>
-    <OutDir>D:\Code\Core\git/Output/Bin</OutDir>
+    <NMakeIncludeSearchPath>;D:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10069.0/;X:\Code\@Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;X:\Code\@Core\git/Source/Core.Serialize</NMakeIncludeSearchPath>
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Bin</LocalDebuggerWorkingDirectory>
+    <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
+    <OutDir>$(SolutionDir)\Output\Bin</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Dummy|Win32'">
     <BuildLog>
