@@ -142,7 +142,7 @@ void Texture2D::CopyFrom(IDeviceAPIEncapsulator *device, const Texture2D *psourc
     Assert(u32(BufferMode::Write) == (u32(psource2D->Mode()) & u32(BufferMode::Read)));
     Assert(psource2D->SizeInBytes() == SizeInBytes());
 
-    _deviceAPIDependantTexture2D->CopyFrom(device, psource2D->DeviceAPIDependantTexture2D());
+    _deviceAPIDependantTexture2D->CopyFrom(device, psource2D->DeviceAPIDependantTexture2D().get());
 }
 //----------------------------------------------------------------------------
 void Texture2D::CopySubPart(
@@ -167,7 +167,7 @@ void Texture2D::CopySubPart(
     Assert( psource2D->Format()->SizeOfTexture2DInBytes(srcBox.Extents()) == 
             Format()->SizeOfTexture2DInBytes(srcBox.Extents()) );
 
-    _deviceAPIDependantTexture2D->CopySubPart(device, dstLevel, dstPos, psource2D->DeviceAPIDependantTexture2D(), srcLevel, srcBox);
+    _deviceAPIDependantTexture2D->CopySubPart(device, dstLevel, dstPos, psource2D->DeviceAPIDependantTexture2D().get(), srcLevel, srcBox);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

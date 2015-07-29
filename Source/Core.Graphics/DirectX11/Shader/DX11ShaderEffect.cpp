@@ -59,7 +59,7 @@ DX11ShaderEffect::DX11ShaderEffect(IDeviceAPIEncapsulator *device, ShaderEffect 
             ));
 
         Assert(_inputLayout);
-        DX11SetDeviceResourceNameIFP(_inputLayout, owner->VertexDeclaration());
+        DX11SetDeviceResourceNameIFP(_inputLayout, owner->VertexDeclaration().get());
 
         DX11_THROW_IF_FAILED(device, owner, (
             wrapper->Device()->CreateVertexShader(
@@ -69,7 +69,7 @@ DX11ShaderEffect::DX11ShaderEffect(IDeviceAPIEncapsulator *device, ShaderEffect 
                 _vertexShader.GetAddressOf())
             ));
 
-        DX11SetDeviceResourceNameIFP(_vertexShader, vertexProgram);
+        DX11SetDeviceResourceNameIFP(_vertexShader, vertexProgram.get());
     }
 
     const PCShaderProgram& domainProgram = owner->StageProgram(ShaderProgramType::Domain);
@@ -87,7 +87,7 @@ DX11ShaderEffect::DX11ShaderEffect(IDeviceAPIEncapsulator *device, ShaderEffect 
                 _domainShader.GetAddressOf())
             ));
 
-        DX11SetDeviceResourceNameIFP(_domainShader, domainProgram);
+        DX11SetDeviceResourceNameIFP(_domainShader, domainProgram.get());
     }
 
     const PCShaderProgram& hullProgram = owner->StageProgram(ShaderProgramType::Hull);
@@ -105,7 +105,7 @@ DX11ShaderEffect::DX11ShaderEffect(IDeviceAPIEncapsulator *device, ShaderEffect 
                 _hullShader.GetAddressOf())
             ));
 
-        DX11SetDeviceResourceNameIFP(_hullShader, hullProgram);
+        DX11SetDeviceResourceNameIFP(_hullShader, hullProgram.get());
     }
 
     const PCShaderProgram& geometryProgram = owner->StageProgram(ShaderProgramType::Geometry);
@@ -123,7 +123,7 @@ DX11ShaderEffect::DX11ShaderEffect(IDeviceAPIEncapsulator *device, ShaderEffect 
                 _geometryShader.GetAddressOf())
             ));
 
-        DX11SetDeviceResourceNameIFP(_geometryShader, geometryProgram);
+        DX11SetDeviceResourceNameIFP(_geometryShader, geometryProgram.get());
     }
 
     const PCShaderProgram& pixelProgram = owner->StageProgram(ShaderProgramType::Pixel);
@@ -141,7 +141,7 @@ DX11ShaderEffect::DX11ShaderEffect(IDeviceAPIEncapsulator *device, ShaderEffect 
                 _pixelShader.GetAddressOf())
             ));
 
-        DX11SetDeviceResourceNameIFP(_pixelShader, pixelProgram);
+        DX11SetDeviceResourceNameIFP(_pixelShader, pixelProgram.get());
     }
 
     const PCShaderProgram& computeProgram = owner->StageProgram(ShaderProgramType::Compute);
@@ -159,7 +159,7 @@ DX11ShaderEffect::DX11ShaderEffect(IDeviceAPIEncapsulator *device, ShaderEffect 
                 _computeShader.GetAddressOf())
             ));
 
-        DX11SetDeviceResourceNameIFP(_computeShader, computeProgram);
+        DX11SetDeviceResourceNameIFP(_computeShader, computeProgram.get());
     }
 }
 //----------------------------------------------------------------------------

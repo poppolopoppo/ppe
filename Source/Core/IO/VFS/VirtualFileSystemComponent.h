@@ -82,7 +82,7 @@ public:
     static void Shutdown(VirtualFileSystemComponent *component);
 
     VirtualFileSystemComponentStartup(VirtualFileSystemComponent *component) : _component(component) { Start(component); }
-    ~VirtualFileSystemComponentStartup() { Shutdown(_component); }
+    ~VirtualFileSystemComponentStartup() { Shutdown(_component.get()); }
 
 private:
     PVirtualFileSystemComponent _component;

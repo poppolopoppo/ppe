@@ -134,7 +134,7 @@ void TextureCube::CopyFrom(IDeviceAPIEncapsulator *device, const TextureCube *ps
     Assert(u32(BufferMode::Write) == (u32(psourceCube->Mode()) & u32(BufferMode::Read)));
     Assert(psourceCube->SizeInBytes() == SizeInBytes());
 
-    _deviceAPIDependantTextureCube->CopyFrom(device, psourceCube->DeviceAPIDependantTextureCube());
+    _deviceAPIDependantTextureCube->CopyFrom(device, psourceCube->DeviceAPIDependantTextureCube().get());
 }
 //----------------------------------------------------------------------------
 void TextureCube::CopySubPart(
@@ -162,7 +162,7 @@ void TextureCube::CopySubPart(
     _deviceAPIDependantTextureCube->CopySubPart(
         device, 
         dstFace, dstLevel, dstPos, 
-        psourceCube->DeviceAPIDependantTextureCube(), srcFace, srcLevel, srcBox );
+        psourceCube->DeviceAPIDependantTextureCube().get(), srcFace, srcLevel, srcBox );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

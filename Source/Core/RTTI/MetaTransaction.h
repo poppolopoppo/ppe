@@ -34,20 +34,20 @@ public:
     void Clear();
 
 private:
+	struct MetaAtomBinding {
+		MetaObjectName  Name;
+		PMetaAtom       Old;
+		PMetaAtom       New;
+	};
+
     struct MetaClassBinding {
         MetaClassName   Name;
         const MetaClass *Old;
         const MetaClass *New;
     };
 
-    struct MetaAtomBinding {
-        MetaObjectName  Name;
-        PMetaAtom       Old;
-        PMetaAtom       New;
-    };
-
+	VECTOR(RTTI, MetaAtomBinding) _atoms;
     VECTOR(RTTI, MetaClassBinding) _classes;
-    VECTOR(RTTI, MetaAtomBinding) _atoms;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

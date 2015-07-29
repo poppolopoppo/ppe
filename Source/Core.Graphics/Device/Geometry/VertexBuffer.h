@@ -34,7 +34,7 @@ public:
     virtual bool Available() const override { return _buffer.Available(); }
 
     size_t VertexCount() const { return _buffer.Count(); }
-    const Graphics::VertexDeclaration *VertexDeclaration() const { return _vertexDeclaration; }
+    const PCVertexDeclaration& VertexDeclaration() const { return _vertexDeclaration; }
     const DeviceResourceBuffer& Buffer() const { return _buffer; }
 
     void SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count);

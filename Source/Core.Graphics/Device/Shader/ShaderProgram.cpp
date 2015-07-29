@@ -169,7 +169,7 @@ void CompileShaderProgram(
         case DialogBox::Result::Ignore:
             {
                 RAWSTORAGE(Shader, char) preprocess;
-                program->Preprocess(compiler, preprocess, source, vertexDeclaration);
+                program->Preprocess(compiler, preprocess, source.get(), vertexDeclaration);
                 BREAKPOINT();
             }
         case DialogBox::Result::Retry:
@@ -178,7 +178,7 @@ void CompileShaderProgram(
             continue;
 
         default:
-            throw ShaderCompilerEncapsulatorException("abort compilation", compiler, program, source);
+            throw ShaderCompilerEncapsulatorException("abort compilation", compiler, program, source.get());
         }
     }
 }

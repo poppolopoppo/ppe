@@ -79,7 +79,7 @@ MetaAtom *MetaAtomHashMap::GetIFP(const MetaObjectName& name) const {
 
     const auto it = _objects.find(name);
 
-    return (_objects.end() == it) ? nullptr : it->second;
+    return (_objects.end() == it) ? nullptr : it->second.get();
 }
 //----------------------------------------------------------------------------
 void MetaAtomHashMap::Clear() {

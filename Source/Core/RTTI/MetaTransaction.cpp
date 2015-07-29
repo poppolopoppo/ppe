@@ -31,7 +31,7 @@ void MetaTransaction::Remove(const MetaClassName& name, const MetaClass * /* met
         return binding.Name == name;
     });
 
-    Assert(_classes.end() == it);
+    Assert(_classes.end() != it);
 
     MetaClassHashMap& classes = MetaClassDatabase::Instance();
     if (it->Old)
@@ -54,13 +54,13 @@ void MetaTransaction::Remove(const MetaObjectName& name, MetaAtom * /* atom */) 
         return binding.Name == name;
     });
 
-    Assert(_atoms.end() == it);
+    Assert(_atoms.end() != it);
 
     MetaAtomHashMap& atoms = MetaAtomDatabase::Instance();
     if (it->Old)
-        atoms.Add(it->Name, it->Old, true);
+        atoms.Add(it->Name, it->Old.get(), true);
     else
-        atoms.Remove(it->Name, it->New);
+        atoms.Remove(it->Name, it->New.get());
 
     _atoms.erase(it);
 }
@@ -69,9 +69,9 @@ void MetaTransaction::Clear() {
     MetaAtomHashMap& atoms = MetaAtomDatabase::Instance();
     for (auto it = _atoms.rbegin(); _atoms.rend() != it; ++it) {
         if (it->Old)
-            atoms.Add(it->Name, it->Old, true);
+            atoms.Add(it->Name, it->Old.get(), true);
         else
-            atoms.Remove(it->Name, it->New);
+            atoms.Remove(it->Name, it->New.get());
     }
     _atoms.clear();
 

@@ -24,7 +24,7 @@ public:
     ~DeviceEncapsulatorException();
 
     const IDeviceAPIEncapsulator *Encapsulator() const { return _encapsulator; }
-    const DeviceResource *OptionalResource() const { return _optionalResource; }
+    const PCDeviceResource& OptionalResource() const { return _optionalResource; }
 
 private:
     const IDeviceAPIEncapsulator *_encapsulator;
@@ -41,8 +41,8 @@ public:
     ~ShaderCompilerEncapsulatorException();
 
     const IDeviceAPIShaderCompiler *Encapsulator() const { return _encapsulator; }
-    const Graphics::ShaderProgram *ShaderProgram() const { return _shaderProgram; }
-    const Graphics::ShaderSource *ShaderSource() const { return _shaderSource; }
+    const PCShaderProgram& ShaderProgram() const { return _shaderProgram; }
+    const PCShaderSource& ShaderSource() const { return _shaderSource; }
 
 private:
     const IDeviceAPIShaderCompiler *_encapsulator;

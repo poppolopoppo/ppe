@@ -38,12 +38,12 @@ static void MatchingComponents_DepthLast_(
     if (!node)
         return;
 
-    for (VirtualFileSystemComponent *component : node->Components())
-        components.PushPOD(component);
+    for (const PVirtualFileSystemComponent& component : node->Components())
+        components.PushPOD(component.get());
 
     for (size_t i = 0; i < k; ++i) {
-        for (VirtualFileSystemComponent *component : node->Components())
-            components.PushPOD(component);
+        for (const PVirtualFileSystemComponent& component : node->Components())
+            components.PushPOD(component.get());
 
         if (nullptr == (node = node->GetNodeIFP(dirnames[i])) )
             break;

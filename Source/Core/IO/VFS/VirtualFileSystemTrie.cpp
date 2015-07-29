@@ -20,8 +20,8 @@ static bool EachComponent_(
     const std::function<bool(VirtualFileSystemComponent*)>& foreach) {
     Assert(node);
 
-    for (VirtualFileSystemComponent* component : node->Components())
-        if (foreach(component))
+    for (const PVirtualFileSystemComponent& component : node->Components())
+        if (foreach(component.get()) )
             return true;
 
     for (const Pair<Dirname, PVirtualFileSystemNode>& child : node->Children())

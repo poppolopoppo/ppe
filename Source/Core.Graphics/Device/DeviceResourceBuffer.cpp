@@ -96,7 +96,7 @@ void DeviceResourceBuffer::CopyFrom(IDeviceAPIEncapsulator *device, const Device
     Assert(psource->Available());
     Assert(psource->SizeInBytes() == SizeInBytes());
 
-    _deviceAPIDependantBuffer->CopyFrom(device, psource->DeviceAPIDependantBuffer());
+    _deviceAPIDependantBuffer->CopyFrom(device, psource->DeviceAPIDependantBuffer().get());
 }
 //----------------------------------------------------------------------------
 void DeviceResourceBuffer::CopySubPart(
@@ -109,7 +109,7 @@ void DeviceResourceBuffer::CopySubPart(
     Assert(psource->SizeInBytes() >= srcOffset + length);
     Assert(SizeInBytes() >= dstOffset + length);
 
-    _deviceAPIDependantBuffer->CopySubPart(device, dstOffset, psource->DeviceAPIDependantBuffer(), srcOffset, length);
+    _deviceAPIDependantBuffer->CopySubPart(device, dstOffset, psource->DeviceAPIDependantBuffer().get(), srcOffset, length);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

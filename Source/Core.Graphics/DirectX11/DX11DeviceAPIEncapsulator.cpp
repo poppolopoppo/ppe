@@ -618,19 +618,19 @@ void DX11DeviceAPIEncapsulator::SetTextures(ShaderProgramType stage, const Memor
 // Render Targets
 //----------------------------------------------------------------------------
 RenderTarget *DX11DeviceAPIEncapsulator::BackBufferRenderTarget() {
-    return _wrapper.BackBufferRenderTarget();
+    return _wrapper.BackBufferRenderTarget().get();
 }
 //----------------------------------------------------------------------------
 DepthStencil *DX11DeviceAPIEncapsulator::BackBufferDepthStencil() {
-    return _wrapper.BackBufferDepthStencil();
+    return _wrapper.BackBufferDepthStencil().get();
 }
 //----------------------------------------------------------------------------
 const RenderTarget *DX11DeviceAPIEncapsulator::BackBufferRenderTarget() const {
-    return _wrapper.BackBufferRenderTarget();
+    return _wrapper.BackBufferRenderTarget().get();
 }
 //----------------------------------------------------------------------------
 const DepthStencil *DX11DeviceAPIEncapsulator::BackBufferDepthStencil() const {
-    return _wrapper.BackBufferDepthStencil();
+    return _wrapper.BackBufferDepthStencil().get();
 }
 //----------------------------------------------------------------------------
 DeviceAPIDependantRenderTarget *DX11DeviceAPIEncapsulator::CreateRenderTarget(RenderTarget *renderTarget, const MemoryView<const u8>& optionalData) {

@@ -128,7 +128,8 @@ public:
     T& operator *() const { Assert(_ptr); return *_ptr; }
     T* operator ->() const { Assert(_ptr); return _ptr; }
 
-    operator T* () const { return _ptr; }
+    //operator T* () const { return _ptr; } // better to let the user know what he/she is doing
+    operator const void *() const { return _ptr; }
 
     template <typename U>
     void Swap(RefPtr<U>& other);

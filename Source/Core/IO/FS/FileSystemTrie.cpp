@@ -222,7 +222,7 @@ size_t FileSystemTrie::Expand(FileSystemToken *ptokens, size_t capacity, const F
     // should be ok without lock ... (nodes are not muted after their creation)
     //std::lock_guard<std::mutex> scopeLock(_barrier);
 
-    return ExpandFileSystemNode_(ptokens, capacity, pnode, _root);
+    return ExpandFileSystemNode_(ptokens, capacity, pnode, _root.get() );
 }
 //----------------------------------------------------------------------------
 size_t FileSystemTrie::Expand(FileSystemToken *ptokens, size_t capacity, const FileSystemNode *pbegin, const FileSystemNode *pend) const {
