@@ -10,21 +10,12 @@ namespace Meta {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PointerWFlagsTraits {
-    typedef Bit<size_t>::First<2>::type                     field_Flag01;
-    typedef Bit<size_t>::First<1>::type                     field_Flag0;
-    typedef Bit<size_t>::After<field_Flag0>::Field<1>::type field_Flag1;
-    typedef Bit<size_t>::After<field_Flag1>::Remain::type   field_Pointer;
-};
-//----------------------------------------------------------------------------
-template <typename T>
-struct PointerWFlags {
-    typedef typename PointerWFlagsTraits::field_Flag01      field_Flag01;
-    typedef typename PointerWFlagsTraits::field_Flag0       field_Flag0;
-    typedef typename PointerWFlagsTraits::field_Flag1       field_Flag1;
-    typedef typename PointerWFlagsTraits::field_Pointer     field_Pointer;
-
+struct BasePointerWFlags {
     size_t  _pFlags;
+
+    typedef Bit<size_t>::First<2>::type field_Flag01;
+    typedef Bit<size_t>::First<1>::type field_Flag0;
+    typedef Bit<size_t>::After<field_Flag0>::Field<1>::type field_Flag1;
 
     size_t Flag01() const { return field_Flag01::Get(_pFlags); }
     void SetFlag01(size_t value) { field_Flag01::InplaceSet(_pFlags, value); }
@@ -35,13 +26,20 @@ struct PointerWFlags {
     bool Flag1() const { return field_Flag1::Get(_pFlags); }
     void SetFlag1(bool value) { field_Flag1::InplaceSet(_pFlags, value); }
 
-    T *Get() const {
-        return reinterpret_cast<T*>(field_Pointer::Get(_pFlags));
+    void *RawPointer() const { 
+        return reinterpret_cast<void *>(_pFlags & size_t(field_Flag01::NotMask)); 
     }
 
-    void Set(T *ptr) {
-        field_Pointer::InplaceSet(_pFlags, ptr);
+    void SetRawPointer(const void *ptr) {
+        Assert((size_t(ptr) & field_Flag01::Mask) == 0);
+        _pFlags = (_pFlags & field_Flag01::Mask) | size_t(ptr);
     }
+};
+//----------------------------------------------------------------------------
+template <typename T>
+struct PointerWFlags : public BasePointerWFlags {
+    FORCE_INLINE T *Get() const { return reinterpret_cast<T*>(RawPointer()); }
+    FORCE_INLINE void Set(T *ptr) { SetRawPointer(ptr); }
 
     T& Reference() const {
         T* ptr = Get();
@@ -53,13 +51,13 @@ struct PointerWFlags {
         _pFlags = 0;
         field_Flag0::InplaceSet(_pFlags, flag0);
         field_Flag1::InplaceSet(_pFlags, flag1);
-        field_Pointer::InplaceSet(_pFlags, p);
+        SetRawPointer(p);
     }
 
     void Reset(T* p, size_t flag01) {
         _pFlags = 0;
         field_Flag01::InplaceSet(_pFlags, flag01);
-        field_Pointer::InplaceSet(_pFlags, p);
+        SetRawPointer(p);
     }
 
     T* operator ->() const { return Get(); }
@@ -68,30 +66,9 @@ struct PointerWFlags {
 
 //----------------------------------------------------------------------------
 template <typename T>
-struct PointerWFlags<T *> {
-    typedef typename PointerWFlagsTraits::field_Flag01      field_Flag01;
-    typedef typename PointerWFlagsTraits::field_Flag0       field_Flag0;
-    typedef typename PointerWFlagsTraits::field_Flag1       field_Flag1;
-    typedef typename PointerWFlagsTraits::field_Pointer     field_Pointer;
-
-    size_t  _pFlags;
-
-    size_t Flag01() const { return field_Flag01::Get(_pFlags); }
-    void SetFlag01(size_t value) { field_Flag01::InplaceSet(_pFlags, value); }
-
-    bool Flag0() const { return field_Flag0::Get(_pFlags); }
-    void SetFlag0(bool value) { field_Flag0::InplaceSet(_pFlags, value); }
-
-    bool Flag1() const { return field_Flag1::Get(_pFlags); }
-    void SetFlag1(bool value) { field_Flag1::InplaceSet(_pFlags, value); }
-
-    T *Get() const {
-        return reinterpret_cast<T*>(field_Pointer::Get(_pFlags));
-    }
-
-    void Set(T *ptr) {
-        field_Pointer::InplaceSet(_pFlags, ptr);
-    }
+struct PointerWFlags<T *> : public BasePointerWFlags {
+    FORCE_INLINE T *Get() const { return reinterpret_cast<T*>(RawPointer()); }
+    FORCE_INLINE void Set(T *ptr) { SetRawPointer(ptr); }
 
     T& Reference() const {
         T* ptr = Get();
@@ -103,13 +80,13 @@ struct PointerWFlags<T *> {
         _pFlags = 0;
         field_Flag0::InplaceSet(_pFlags, flag0);
         field_Flag1::InplaceSet(_pFlags, flag1);
-        field_Pointer::InplaceSet(_pFlags, p);
+        SetRawPointer(p);
     }
 
     void Reset(T* p, size_t flag01) {
         _pFlags = 0;
         field_Flag01::InplaceSet(_pFlags, flag01);
-        field_Pointer::InplaceSet(_pFlags, p);
+        SetRawPointer(p);
     }
 
     T* operator ->() const { return Get(); }
@@ -117,42 +94,21 @@ struct PointerWFlags<T *> {
 };
 //----------------------------------------------------------------------------
 template <>
-struct PointerWFlags<void> {
-    typedef PointerWFlagsTraits::field_Flag01 field_Flag01;
-    typedef PointerWFlagsTraits::field_Flag0 field_Flag0;
-    typedef PointerWFlagsTraits::field_Flag1 field_Flag1;
-    typedef PointerWFlagsTraits::field_Pointer field_Pointer;
-
-    size_t  _pFlags;
-
-    size_t Flag01() const { return field_Flag01::Get(_pFlags); }
-    void SetFlag01(size_t value) { field_Flag01::InplaceSet(_pFlags, value); }
-
-    bool Flag0() const { return field_Flag0::Get(_pFlags); }
-    void SetFlag0(bool value) { field_Flag0::InplaceSet(_pFlags, value); }
-
-    bool Flag1() const { return field_Flag1::Get(_pFlags); }
-    void SetFlag1(bool value) { field_Flag1::InplaceSet(_pFlags, value); }
-
-    void *Get() const {
-        return reinterpret_cast<void *>(field_Pointer::Get(_pFlags));
-    }
-    
-    void Set(void *ptr) {
-        field_Pointer::InplaceSet(_pFlags, ptr);
-    }
+struct PointerWFlags<void> : public BasePointerWFlags {
+    FORCE_INLINE void *Get() const { return RawPointer(); }
+    FORCE_INLINE void Set(void *ptr) { SetRawPointer(ptr); }
 
     void Reset(void *p, bool flag0 = false, bool flag1 = false) {
         _pFlags = 0;
         field_Flag0::InplaceSet(_pFlags, flag0);
         field_Flag1::InplaceSet(_pFlags, flag1);
-        field_Pointer::InplaceSet(_pFlags, p);
+        SetRawPointer(p);
     }
 
     void Reset(void *p, size_t flag01) {
         _pFlags = 0;
         field_Flag01::InplaceSet(_pFlags, flag01);
-        field_Pointer::InplaceSet(_pFlags, p);
+        SetRawPointer(p);
     }
 };
 //----------------------------------------------------------------------------
