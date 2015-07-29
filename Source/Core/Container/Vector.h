@@ -67,6 +67,9 @@ template <typename T, typename _Allocator>
 void Erase_DontPreserveOrder(Vector<T, _Allocator>& v, const typename Vector<T, _Allocator>::const_iterator& it);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
+void Clear_ReleaseMemory(Vector<T, _Allocator>& v);
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
 size_t hash_value(const Vector<T, _Allocator>& vector);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

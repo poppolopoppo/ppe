@@ -109,6 +109,12 @@ void Erase_DontPreserveOrder(Vector<T, _Allocator>& v, const typename Vector<T, 
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
+void Clear_ReleaseMemory(Vector<T, _Allocator>& v) {
+    v.clear();
+    v.shrink_to_fit();
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
 size_t hash_value(const Vector<T, _Allocator>& vector) {
     return hash_value_seq(vector.begin(), vector.end());
 }
