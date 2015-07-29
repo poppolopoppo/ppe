@@ -24,7 +24,7 @@ public:
         const Graphics::VertexSubPartKey *Key;
         const Graphics::AbstractVertexSubPart *Value;
 
-        operator bool () const { return (nullptr != Key); }
+        operator const void * () const { return Key; }
 
         static SubPart Null() { return SubPart{nullptr, nullptr}; }
 
