@@ -10,18 +10,21 @@
     .Config     = 'Dummy'
 ]
 
+.VisualStudioOutputDirectory        = '^$(SolutionDir)\Output\Bin'
+.VisualStudioIntermediateDirectory  = '^$(SolutionDir)\Output\Intermediate\^$(Platform)\^$(Configuration)\^$(ProjectName)'
+
+.VisualStudioFBuildCommand          = 'cd "^$(SolutionDir)" &amp; "^$(SolutionDir)\fbuild.bat" -config "^$(SolutionDir)\fbuild.bff" -vs $VSBuildOptions$'
+.VisualStudioFBuildTarget           = '^$(ProjectName)-^$(Platform)-^$(Configuration)'
+
 .VisualStudioBaseConfig =
 [
-    .FBuildCommand          = 'cd "$SolutionPath$" &amp; "$SolutionPath$\fbuild.bat" -config "$SolutionPath$\fbuild.bff" -vs $VSBuildOptions$'
-    .FBuildTarget           = '^$(ProjectName)-^$(Platform)-^$(Configuration)'
+    .ProjectBuildCommand    = '$VisualStudioFBuildCommand$ $VisualStudioFBuildTarget$'
+    .ProjectRebuildCommand  = '$VisualStudioFBuildCommand$ -clean $VisualStudioFBuildTarget$'
+    .ProjectCleanCommand    = '$VisualStudioFBuildCommand$ -clean $VisualStudioFBuildTarget$-Purge'
 
-    .ProjectBuildCommand    = '$FBuildCommand$ $FBuildTarget$'
-    .ProjectRebuildCommand  = '$FBuildCommand$ -clean $FBuildTarget$'
-    .ProjectCleanCommand    = '$FBuildCommand$ -clean $FBuildTarget$-Purge'
+    .OutputDirectory        = .VisualStudioOutputDirectory
+    .IntermediateDirectory  = .VisualStudioIntermediateDirectory
 
-    .OutputDirectory        = '$BinaryDirectory$'
-    .IntermediateDirectory  = '$IntermediateDirectory$\$SolutionName$\^$(Platform)\^$(Configuration)\^$(ProjectName)'
-
-    .LocalDebuggerCommand   = '$BinaryDirectory$\^$(ProjectName).^$(Configuration).^$(Platform).exe'
-    .LocalDebuggerWorkingDirectory = '$BinaryDirectory$'
+    .LocalDebuggerCommand   = '$VisualStudioOutputDirectory$\^$(ProjectName).^$(Configuration).^$(Platform).exe'
+    .LocalDebuggerWorkingDirectory = .VisualStudioOutputDirectory
 ]

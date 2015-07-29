@@ -120,6 +120,10 @@ ForEach( .CompileConfig in .AllCompileConfigs )
             .PathsPattern       = "$ProjectName$.$Config$.$Platform$.*"
             .PreBuildDependencies = { '$ProjectName$-Lib-$Platform$-$Config$-Purge' }
         }
+
+        // Override project directories for visual studio ONLY
+        .OutputDirectory        = .VisualStudioOutputDirectory
+        .IntermediateDirectory  = .VisualStudioIntermediateDirectory
     ]
 
     .ProjectConfigs + .ProjectConfig
