@@ -99,7 +99,7 @@ public:
     SubPart Binormal4f(size_t index) const;
 
 private:
-    Graphics::PCVertexDeclaration _vertexDeclaration;
+    Graphics::SCVertexDeclaration _vertexDeclaration;
     MemoryView<u8> _destination;
     size_t _vertexOffset;
 };
