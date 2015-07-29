@@ -721,6 +721,9 @@
     <CustomBuild Include="Meta\PointerWFlags.h">
       <Filter>Meta</Filter>
     </CustomBuild>
+    <CustomBuild Include="Meta\SafeBool.h">
+      <Filter>Meta</Filter>
+    </CustomBuild>
     <CustomBuild Include="Meta\Singleton.h">
       <Filter>Meta</Filter>
     </CustomBuild>
