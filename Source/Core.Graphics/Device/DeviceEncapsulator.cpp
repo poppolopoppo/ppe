@@ -55,20 +55,20 @@ const PresentationParameters& DeviceEncapsulator::Parameters() const {
     return _deviceAPIEncapsulator->Parameters();
 }
 //----------------------------------------------------------------------------
-IDeviceAPIEncapsulator *DeviceEncapsulator::Device() const { 
+IDeviceAPIEncapsulator *DeviceEncapsulator::Device() const {
     return const_cast<DeviceEncapsulator *>(this);
 }
 //----------------------------------------------------------------------------
-IDeviceAPIContext *DeviceEncapsulator::Immediate() const { 
+IDeviceAPIContext *DeviceEncapsulator::Immediate() const {
     return const_cast<DeviceEncapsulator *>(this);
 }
 //----------------------------------------------------------------------------
-IDeviceAPIShaderCompiler *DeviceEncapsulator::ShaderCompiler() const { 
+IDeviceAPIShaderCompiler *DeviceEncapsulator::ShaderCompiler() const {
     return const_cast<DeviceEncapsulator *>(this);
 }
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
-IDeviceAPIDiagnostics *DeviceEncapsulator::Diagnostics() const { 
+IDeviceAPIDiagnostics *DeviceEncapsulator::Diagnostics() const {
     return const_cast<DeviceEncapsulator *>(this);
 }
 #endif
@@ -137,6 +137,23 @@ const AbstractDeviceAPIEncapsulator *DeviceEncapsulator::APIEncapsulator() const
     Assert(_deviceAPIEncapsulator);
 
     return _deviceAPIEncapsulator.get();
+}
+//----------------------------------------------------------------------------
+void DeviceEncapsulator::OnCreateEntity(const DeviceResource *resource, DeviceAPIDependantEntity *entity) {
+    Assert(entity);
+
+    entity->AttachResource(resource);
+
+    const size_t sizeInBytes = entity->VideoMemorySizeInBytes();
+    _videoMemory.Allocate(1, sizeInBytes);
+}
+//----------------------------------------------------------------------------
+void DeviceEncapsulator::OnDestroyEntity(const DeviceResource *resource, DeviceAPIDependantEntity *entity) {
+    Assert(entity);
+
+    const size_t sizeInBytes = entity->VideoMemorySizeInBytes();
+    _videoMemory.Deallocate(1, sizeInBytes);
+    entity->DetachResource(resource);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -32,12 +32,12 @@ public:
     DeviceResourceType ResourceType() const { return static_cast<DeviceResourceType>(bitresourcetype_type::Get(_apiAndResourceType)); }
 
     bool MatchDevice(const IDeviceAPIEncapsulator *device) const;
-    
+
     const DeviceResource *Resource() const { return _resource.get(); }
     bool IsAttachedToResource() const { return nullptr != _resource; }
 
     void AttachResource(const DeviceResource *resource);
-    const DeviceResource *DetachResource();
+    void DetachResource(const DeviceResource *resource);
 
     virtual size_t VideoMemorySizeInBytes() const = 0;
 

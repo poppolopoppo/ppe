@@ -4,11 +4,13 @@
 
 #include "Core.Graphics/Device/DeviceAPI.h"
 
+#include "Core/Memory/MemoryTracking.h"
 #include "Core/Meta/ThreadResource.h"
 
 namespace Core {
 namespace Graphics {
 class AbstractDeviceAPIEncapsulator;
+class DeviceAPIDependantEntity;
 class PresentationParameters;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -27,8 +29,8 @@ CORE_STRONGLYTYPED_NUMERIC_DEF(u64, DeviceRevision);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DeviceEncapsulator 
-:   private Meta::ThreadResource 
+class DeviceEncapsulator
+:   private Meta::ThreadResource
 ,   private IDeviceAPIContext
 ,   private IDeviceAPIEncapsulator
 ,   private IDeviceAPIShaderCompiler
@@ -48,6 +50,7 @@ public:
     DeviceRevision Revision() const { return _revision; }
 
     const PresentationParameters& Parameters() const;
+    const MemoryTrackingData& VideoMemory() const { return _videoMemory; }
 
     IDeviceAPIEncapsulator *Device() const;
     IDeviceAPIContext *Immediate() const;
@@ -65,9 +68,14 @@ public:
     void ClearState();
 
 private:
+    void OnCreateEntity(const DeviceResource *resource, DeviceAPIDependantEntity *entity);
+    void OnDestroyEntity(const DeviceResource *resource, DeviceAPIDependantEntity *entity);
+
     UniquePtr< AbstractDeviceAPIEncapsulator > _deviceAPIEncapsulator;
     DeviceStatus _status;
     DeviceRevision _revision;
+
+    MemoryTrackingData _videoMemory;
 
 private:
     virtual const AbstractDeviceAPIEncapsulator *APIEncapsulator() const override;
@@ -75,7 +83,7 @@ private:
 private: // IDeviceAPIEncapsulator impl
 
     // Viewport
-    
+
     virtual void SetViewport(const ViewportF& viewport) override;
     virtual void SetViewports(const MemoryView<const ViewportF>& viewports) override;
 
@@ -121,7 +129,7 @@ private: // IDeviceAPIEncapsulator impl
     virtual void DestroyTextureCube(TextureCube *texture, PDeviceAPIDependantTextureCube& entity) override;
 
     // Render target
-    
+
     virtual RenderTarget *BackBufferRenderTarget() override;
     virtual DepthStencil *BackBufferDepthStencil() override;
 

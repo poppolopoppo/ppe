@@ -61,7 +61,10 @@ DeviceAPIDependantBlendState *DeviceEncapsulator::CreateBlendState(BlendState *s
     Assert(state);
     Assert(state->Frozen());
 
-    return _deviceAPIEncapsulator->Device()->CreateBlendState(state);
+    DeviceAPIDependantBlendState *const entity = _deviceAPIEncapsulator->Device()->CreateBlendState(state);
+    OnCreateEntity(state, entity);
+
+    return entity;
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DestroyBlendState(BlendState *state, PDeviceAPIDependantBlendState& entity) {
@@ -71,6 +74,7 @@ void DeviceEncapsulator::DestroyBlendState(BlendState *state, PDeviceAPIDependan
     Assert(entity);
     Assert(&entity == &state->DeviceAPIDependantState());
 
+    OnDestroyEntity(state, entity.get());
     _deviceAPIEncapsulator->Device()->DestroyBlendState(state, entity);
 }
 //----------------------------------------------------------------------------
@@ -81,7 +85,10 @@ DeviceAPIDependantRasterizerState *DeviceEncapsulator::CreateRasterizerState(Ras
     Assert(state);
     Assert(state->Frozen());
 
-    return _deviceAPIEncapsulator->Device()->CreateRasterizerState(state);
+    DeviceAPIDependantRasterizerState *const entity = _deviceAPIEncapsulator->Device()->CreateRasterizerState(state);
+    OnCreateEntity(state, entity);
+
+    return entity;
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DestroyRasterizerState(RasterizerState *state, PDeviceAPIDependantRasterizerState& entity) {
@@ -91,6 +98,7 @@ void DeviceEncapsulator::DestroyRasterizerState(RasterizerState *state, PDeviceA
     Assert(entity);
     Assert(&entity == &state->DeviceAPIDependantState());
 
+    OnDestroyEntity(state, entity.get());
     _deviceAPIEncapsulator->Device()->DestroyRasterizerState(state, entity);
 }
 //----------------------------------------------------------------------------
@@ -101,7 +109,10 @@ DeviceAPIDependantDepthStencilState *DeviceEncapsulator::CreateDepthStencilState
     Assert(state);
     Assert(state->Frozen());
 
-    return _deviceAPIEncapsulator->Device()->CreateDepthStencilState(state);
+    DeviceAPIDependantDepthStencilState *const entity = _deviceAPIEncapsulator->Device()->CreateDepthStencilState(state);
+    OnCreateEntity(state, entity);
+
+    return entity;
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DestroyDepthStencilState(DepthStencilState *state, PDeviceAPIDependantDepthStencilState& entity) {
@@ -111,6 +122,7 @@ void DeviceEncapsulator::DestroyDepthStencilState(DepthStencilState *state, PDev
     Assert(entity);
     Assert(&entity == &state->DeviceAPIDependantState());
 
+    OnDestroyEntity(state, entity.get());
     _deviceAPIEncapsulator->Device()->DestroyDepthStencilState(state, entity);
 }
 //----------------------------------------------------------------------------
@@ -121,7 +133,10 @@ DeviceAPIDependantSamplerState *DeviceEncapsulator::CreateSamplerState(SamplerSt
     Assert(state);
     Assert(state->Frozen());
 
-    return _deviceAPIEncapsulator->Device()->CreateSamplerState(state);
+    DeviceAPIDependantSamplerState *const entity = _deviceAPIEncapsulator->Device()->CreateSamplerState(state);
+    OnCreateEntity(state, entity);
+
+    return entity;
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DestroySamplerState(SamplerState *state, PDeviceAPIDependantSamplerState& entity) {
@@ -131,6 +146,7 @@ void DeviceEncapsulator::DestroySamplerState(SamplerState *state, PDeviceAPIDepe
     Assert(entity);
     Assert(&entity == &state->DeviceAPIDependantState());
 
+    OnDestroyEntity(state, entity.get());
     _deviceAPIEncapsulator->Device()->DestroySamplerState(state, entity);
 }
 //----------------------------------------------------------------------------
@@ -141,7 +157,10 @@ DeviceAPIDependantVertexDeclaration *DeviceEncapsulator::CreateVertexDeclaration
     Assert(declaration);
     Assert(declaration->Frozen());
 
-    return _deviceAPIEncapsulator->Device()->CreateVertexDeclaration(declaration);
+    DeviceAPIDependantVertexDeclaration *const entity = _deviceAPIEncapsulator->Device()->CreateVertexDeclaration(declaration);
+    OnCreateEntity(declaration, entity);
+
+    return entity;
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DestroyVertexDeclaration(VertexDeclaration *declaration, PDeviceAPIDependantVertexDeclaration& entity) {
@@ -151,6 +170,7 @@ void DeviceEncapsulator::DestroyVertexDeclaration(VertexDeclaration *declaration
     Assert(entity);
     Assert(&entity == &declaration->DeviceAPIDependantDeclaration());
 
+    OnDestroyEntity(declaration, entity.get());
     _deviceAPIEncapsulator->Device()->DestroyVertexDeclaration(declaration, entity);
 }
 //----------------------------------------------------------------------------
@@ -164,7 +184,11 @@ DeviceAPIDependantResourceBuffer *DeviceEncapsulator::CreateIndexBuffer(IndexBuf
     Assert(&indexBuffer->Buffer() == resourceBuffer);
     Assert(resourceBuffer->Usage() != BufferUsage::Immutable || optionalData.SizeInBytes() == resourceBuffer->SizeInBytes());
 
-    return _deviceAPIEncapsulator->Device()->CreateIndexBuffer(indexBuffer, resourceBuffer, optionalData);
+    DeviceAPIDependantResourceBuffer *const entity =
+        _deviceAPIEncapsulator->Device()->CreateIndexBuffer(indexBuffer, resourceBuffer, optionalData);
+    OnCreateEntity(indexBuffer, entity);
+
+    return entity;
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DestroyIndexBuffer(IndexBuffer *indexBuffer, PDeviceAPIDependantResourceBuffer& entity) {
@@ -174,9 +198,10 @@ void DeviceEncapsulator::DestroyIndexBuffer(IndexBuffer *indexBuffer, PDeviceAPI
     Assert(entity);
     //Assert(&entity == &indexBuffer->Buffer().DeviceAPIDependantBuffer());
 
+    OnDestroyEntity(indexBuffer, entity.get());
     _deviceAPIEncapsulator->Device()->DestroyIndexBuffer(indexBuffer, entity);
 }
-//----------------------------------------------------------------------------
+//---------------------------------------------------------------------------
 // VertexBuffer
 //----------------------------------------------------------------------------
 DeviceAPIDependantResourceBuffer *DeviceEncapsulator::CreateVertexBuffer(VertexBuffer *vertexBuffer, DeviceResourceBuffer *resourceBuffer, const MemoryView<const u8>& optionalData) {
@@ -187,7 +212,11 @@ DeviceAPIDependantResourceBuffer *DeviceEncapsulator::CreateVertexBuffer(VertexB
     Assert(&vertexBuffer->Buffer() == resourceBuffer);
     Assert(resourceBuffer->Usage() != BufferUsage::Immutable || optionalData.SizeInBytes() == resourceBuffer->SizeInBytes());
 
-    return _deviceAPIEncapsulator->Device()->CreateVertexBuffer(vertexBuffer, resourceBuffer, optionalData);
+    DeviceAPIDependantResourceBuffer *const entity =
+        _deviceAPIEncapsulator->Device()->CreateVertexBuffer(vertexBuffer, resourceBuffer, optionalData);
+    OnCreateEntity(vertexBuffer, entity);
+
+    return entity;
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DestroyVertexBuffer(VertexBuffer *vertexBuffer, PDeviceAPIDependantResourceBuffer& entity) {
@@ -197,6 +226,7 @@ void DeviceEncapsulator::DestroyVertexBuffer(VertexBuffer *vertexBuffer, PDevice
     Assert(entity);
     //Assert(&entity == &vertexBuffer->Buffer().DeviceAPIDependantBuffer());
 
+    OnDestroyEntity(vertexBuffer, entity.get());
     _deviceAPIEncapsulator->Device()->DestroyVertexBuffer(vertexBuffer, entity);
 }
 //----------------------------------------------------------------------------
@@ -210,11 +240,12 @@ DeviceAPIDependantResourceBuffer *DeviceEncapsulator::CreateConstantBuffer(Const
     Assert(&constantBuffer->Buffer() == resourceBuffer);
     Assert(!writer);
 
-    DeviceAPIDependantResourceBuffer *const result =
+    DeviceAPIDependantResourceBuffer *const entity =
         _deviceAPIEncapsulator->Device()->CreateConstantBuffer(constantBuffer, resourceBuffer, writer);
+    OnCreateEntity(constantBuffer, entity);
 
     Assert(writer);
-    return result;
+    return entity;
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DestroyConstantBuffer(ConstantBuffer *constantBuffer, PDeviceAPIDependantResourceBuffer& entity, PDeviceAPIDependantConstantWriter& writer) {
@@ -225,6 +256,7 @@ void DeviceEncapsulator::DestroyConstantBuffer(ConstantBuffer *constantBuffer, P
     //Assert(&entity == &constantBuffer->Buffer().DeviceAPIDependantBuffer());
     Assert(writer);
 
+    OnDestroyEntity(constantBuffer, entity.get());
     _deviceAPIEncapsulator->Device()->DestroyConstantBuffer(constantBuffer, entity, writer);
 }
 //----------------------------------------------------------------------------
@@ -235,7 +267,10 @@ DeviceAPIDependantShaderEffect *DeviceEncapsulator::CreateShaderEffect(ShaderEff
     Assert(effect);
     Assert(effect->Frozen());
 
-    return _deviceAPIEncapsulator->Device()->CreateShaderEffect(effect);
+    DeviceAPIDependantShaderEffect *const entity = _deviceAPIEncapsulator->Device()->CreateShaderEffect(effect);
+    OnCreateEntity(effect, entity);
+
+    return entity;
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DestroyShaderEffect(ShaderEffect *effect, PDeviceAPIDependantShaderEffect& entity) {
@@ -245,6 +280,7 @@ void DeviceEncapsulator::DestroyShaderEffect(ShaderEffect *effect, PDeviceAPIDep
     Assert(entity);
     Assert(&entity == &effect->DeviceAPIDependantEffect());
 
+    OnDestroyEntity(effect, entity.get());
     _deviceAPIEncapsulator->Device()->DestroyShaderEffect(effect, entity);
 }
 //----------------------------------------------------------------------------
@@ -256,7 +292,10 @@ DeviceAPIDependantTexture2D *DeviceEncapsulator::CreateTexture2D(Texture2D *text
     Assert(texture->Frozen());
     Assert(texture->Usage() != BufferUsage::Immutable || optionalData.SizeInBytes() == texture->SizeInBytes());
 
-    return _deviceAPIEncapsulator->Device()->CreateTexture2D(texture, optionalData);
+    DeviceAPIDependantTexture2D *const entity =_deviceAPIEncapsulator->Device()->CreateTexture2D(texture, optionalData);
+    OnCreateEntity(texture, entity);
+
+    return entity;
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DestroyTexture2D(Texture2D *texture, PDeviceAPIDependantTexture2D& entity) {
@@ -266,6 +305,7 @@ void DeviceEncapsulator::DestroyTexture2D(Texture2D *texture, PDeviceAPIDependan
     Assert(entity);
     Assert(&entity == &texture->DeviceAPIDependantTexture2D());
 
+    OnDestroyEntity(texture, entity.get());
     _deviceAPIEncapsulator->Device()->DestroyTexture2D(texture, entity);
 }
 //----------------------------------------------------------------------------
@@ -277,7 +317,10 @@ DeviceAPIDependantTextureCube *DeviceEncapsulator::CreateTextureCube(TextureCube
     Assert(texture->Frozen());
     Assert(texture->Usage() != BufferUsage::Immutable || optionalData.SizeInBytes() == texture->SizeInBytes());
 
-    return _deviceAPIEncapsulator->Device()->CreateTextureCube(texture, optionalData);
+    DeviceAPIDependantTextureCube *const entity = _deviceAPIEncapsulator->Device()->CreateTextureCube(texture, optionalData);
+    OnCreateEntity(texture, entity);
+
+    return entity;
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DestroyTextureCube(TextureCube *texture, PDeviceAPIDependantTextureCube& entity) {
@@ -287,6 +330,7 @@ void DeviceEncapsulator::DestroyTextureCube(TextureCube *texture, PDeviceAPIDepe
     Assert(entity);
     Assert(&entity == &texture->DeviceAPIDependantTextureCube());
 
+    OnDestroyEntity(texture, entity.get());
     _deviceAPIEncapsulator->Device()->DestroyTextureCube(texture, entity);
 }
 //----------------------------------------------------------------------------
@@ -348,7 +392,10 @@ DeviceAPIDependantRenderTarget *DeviceEncapsulator::CreateRenderTarget(RenderTar
     Assert(renderTarget);
     Assert(renderTarget->Frozen());
 
-    return _deviceAPIEncapsulator->Device()->CreateRenderTarget(renderTarget, optionalData);
+    DeviceAPIDependantRenderTarget *const entity = _deviceAPIEncapsulator->Device()->CreateRenderTarget(renderTarget, optionalData);
+    OnCreateEntity(renderTarget, entity);
+
+    return entity;
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DestroyRenderTarget(RenderTarget *renderTarget, PDeviceAPIDependantRenderTarget& entity) {
@@ -357,6 +404,7 @@ void DeviceEncapsulator::DestroyRenderTarget(RenderTarget *renderTarget, PDevice
     Assert(renderTarget->Frozen());
     Assert(entity);
 
+    OnDestroyEntity(renderTarget, entity.get());
     _deviceAPIEncapsulator->Device()->DestroyRenderTarget(renderTarget, entity);
 }
 //----------------------------------------------------------------------------
@@ -367,7 +415,10 @@ DeviceAPIDependantDepthStencil *DeviceEncapsulator::CreateDepthStencil(DepthSten
     Assert(depthStencil);
     Assert(depthStencil->Frozen());
 
-    return _deviceAPIEncapsulator->Device()->CreateDepthStencil(depthStencil, optionalData);
+    DeviceAPIDependantDepthStencil *const entity = _deviceAPIEncapsulator->Device()->CreateDepthStencil(depthStencil, optionalData);
+    OnCreateEntity(depthStencil, entity);
+
+    return entity;
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::DestroyDepthStencil(DepthStencil *depthStencil, PDeviceAPIDependantDepthStencil& entity) {
@@ -376,6 +427,7 @@ void DeviceEncapsulator::DestroyDepthStencil(DepthStencil *depthStencil, PDevice
     Assert(depthStencil->Frozen());
     Assert(entity);
 
+    OnDestroyEntity(depthStencil, entity.get());
     _deviceAPIEncapsulator->Device()->DestroyDepthStencil(depthStencil, entity);
 }
 //----------------------------------------------------------------------------

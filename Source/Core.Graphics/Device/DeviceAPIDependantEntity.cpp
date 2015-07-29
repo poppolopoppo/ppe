@@ -35,15 +35,13 @@ void DeviceAPIDependantEntity::AttachResource(const DeviceResource *resource) {
     _resource.reset(resource);
 }
 //----------------------------------------------------------------------------
-const DeviceResource *DeviceAPIDependantEntity::DetachResource() {
-    Assert(nullptr != _resource);
+void DeviceAPIDependantEntity::DetachResource(const DeviceResource *resource) {
+    Assert(nullptr != resource);
+    Assert(resource == _resource);
     Assert(_resource->Frozen());
-    Assert(!_resource->Available());
+    Assert(_resource->Available());
 
-    const DeviceResource *resource = _resource.get();
     _resource.reset(nullptr);
-
-    return resource;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
