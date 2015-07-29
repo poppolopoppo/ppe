@@ -35,8 +35,8 @@ public:
     bool operator ==(const SystemAspect& other) const { return _all == other._all && _any == other._any && _none == other._none; }
     bool operator !=(const SystemAspect& other) const { return !operator ==(other); }
 
-    static SystemAspect Everything() { return SystemAspect(0, ComponentFlag(ComponentFlag::value_type(-1)), 0); }
-    static SystemAspect Nothing()    { return SystemAspect(0, 0, ComponentFlag(ComponentFlag::value_type(-1))); }
+    static SystemAspect Everything() { return SystemAspect(ComponentFlag(0), ComponentFlag(ComponentFlag::value_type(-1)), ComponentFlag(0)); }
+    static SystemAspect Nothing()    { return SystemAspect(ComponentFlag(0), ComponentFlag(0), ComponentFlag(ComponentFlag::value_type(-1))); }
 
     template <typename T0, typename... TN>
     static SystemAspect MatchAll(const ComponentContainer& components, ComponentFlag any = 0, ComponentFlag none = 0);
