@@ -53,13 +53,13 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename _Ret, typename... _Args >
-void Core::Event< Delegate<_Ret (*)(_Args... )> >::Add(const delegate_type& d) {
+void Event< Delegate<_Ret (*)(_Args... )> >::Add(const delegate_type& d) {
     Assert(_delegates.end() == std::find(_delegates.begin(), _delegates.end(), d));
     _delegates.push_back(d);
 }
 //----------------------------------------------------------------------------
 template <typename _Ret, typename... _Args >
-void Core::Event< Delegate<_Ret (*)(_Args... )> >::Remove(const delegate_type& d) {
+void Event< Delegate<_Ret (*)(_Args... )> >::Remove(const delegate_type& d) {
     const auto it = std::find(_delegates.begin(), _delegates.end(), d);
     Assert(_delegates.end() != it);
     _delegates.erase(it);
@@ -67,7 +67,7 @@ void Core::Event< Delegate<_Ret (*)(_Args... )> >::Remove(const delegate_type& d
 //----------------------------------------------------------------------------
 template <typename _Ret, typename... _Args >
 template <typename _It>
-void Core::Event< Delegate<_Ret (*)(_Args... )> >::Add(_It begin, _It end) {
+void Event< Delegate<_Ret (*)(_Args... )> >::Add(_It begin, _It end) {
 #ifdef WITH_CORE_ASSERT
     for (auto it = begin; it != end; ++it)
         Add(*it); // will check for doubloons in debug
@@ -77,17 +77,17 @@ void Core::Event< Delegate<_Ret (*)(_Args... )> >::Add(_It begin, _It end) {
 }
 //----------------------------------------------------------------------------
 template <typename _Ret, typename... _Args >
-void Core::Event< Delegate<_Ret (*)(_Args... )> >::clear() {
+void Event< Delegate<_Ret (*)(_Args... )> >::clear() {
     _delegates.clear();
 }
 //----------------------------------------------------------------------------
 template <typename _Ret, typename... _Args >
-void Core::Event< Delegate<_Ret (*)(_Args... )> >::reserve(size_t capacity) {
+void Event< Delegate<_Ret (*)(_Args... )> >::reserve(size_t capacity) {
     _delegates.reserve(capacity);
 }
 //----------------------------------------------------------------------------
 template <typename _Ret, typename... _Args >
-void Core::Event< Delegate<_Ret (*)(_Args... )> >::Invoke(_Args... args) const {
+void Event< Delegate<_Ret (*)(_Args... )> >::Invoke(_Args... args) const {
     for (const delegate_type& d : _delegates)
         d.Invoke(std::forward<_Args>(args)...);
 }
