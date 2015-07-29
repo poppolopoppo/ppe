@@ -166,7 +166,7 @@ void RenderLayerDrawRect::RenderImpl_(Graphics::IDeviceAPIContext *context) {
     _materialEffect->Effect()->Set(context);
     _materialEffect->Set(context);
 
-    context->SetVertexBuffer(_vertices);
+    context->SetVertexBuffer(_vertices.get());
     context->DrawPrimitives(Graphics::PrimitiveType::TriangleStrip, 0, 2);
 }
 //----------------------------------------------------------------------------
