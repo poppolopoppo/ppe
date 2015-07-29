@@ -152,7 +152,7 @@ Alias( 'proj' )
 
 // SLN : sln (all projects)
 //------------------------------------------------------------------------------
-SLN( 'sln' )
+VSSolution( 'sln' )
 {
     .SolutionOutput = '$SolutionPath$/$SolutionName$.sln'
     .SolutionConfigs = .AllCompileConfigs
