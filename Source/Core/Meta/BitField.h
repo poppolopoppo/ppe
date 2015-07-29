@@ -21,9 +21,10 @@ struct BitField {
         End = _Index + _Count,
         MaxValue = ((T(1) << _Count) - 1),
         Mask = (MaxValue << _Index),
+        NotMask = ~T(Mask),
     };
 
-    FORCE_INLINE static T Clear(T value) { return (value & ~Mask); }
+    FORCE_INLINE static T Clear(T value) { return (value & NotMask); }
     FORCE_INLINE static T Format(T value) { return ((value << Index) & Mask); }
 
     static T Set(T flags, T value);
@@ -77,9 +78,10 @@ struct BitField<T, _Index, 1> {
         End = _Index + 1,
         MaxValue = 1,
         Mask = (MaxValue << _Index),
+        NotMask = ~T(Mask),
     };
 
-    FORCE_INLINE static T Clear(T value) { return (value & ~Mask); }
+    FORCE_INLINE static T Clear(T value) { return (value & NotMask); }
     FORCE_INLINE static T Format(bool value) { return ((T)value & 1) << Index; }
 
     static T Set(T flags, bool value);
@@ -88,10 +90,10 @@ struct BitField<T, _Index, 1> {
     FORCE_INLINE static void InplaceSet(T& flags, bool value) { flags = Set(flags, value); }
 
     FORCE_INLINE static T True(T flags) { return flags | Mask; }
-    FORCE_INLINE static T False(T flags) { return flags & ~Mask; }
+    FORCE_INLINE static T False(T flags) { return flags & NotMask; }
 
     FORCE_INLINE static void InplaceTrue(T& flags) { flags |= Mask; }
-    FORCE_INLINE static void InplaceFalse(T& flags) { flags &= ~Mask; }
+    FORCE_INLINE static void InplaceFalse(T& flags) { flags &= NotMask; }
 };
 //----------------------------------------------------------------------------
 template <typename T, size_t _Index>
