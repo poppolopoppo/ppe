@@ -26,11 +26,11 @@ void ComponentContainer::Register(IComponent *component) {
     const ComponentTag tag = component->Tag();
     Assert(IComponent::InvalidTag != tag);
 
-    ComponentID freeID = u32(-1);
+    ComponentID freeID(-1);
     forrange(i, 0, u32(ComponentCapacity))
         if (0 == (_reservedFlags & (1<<i))) {
-            _reservedFlags = _reservedFlags | (1<<i);
-            freeID = i;
+            _reservedFlags.Value = _reservedFlags | (1<<i);
+            freeID.Value = i;
             break;
         }
     AssertRelease(u32(freeID) < ComponentCapacity);
@@ -53,7 +53,7 @@ void ComponentContainer::Unregister(IComponent *component) {
     RemoveRef_AssertReachZero(_components[it->second]);
     _tagToID.erase(it);
 
-    _reservedFlags = _reservedFlags & ~(1<<it->second);
+    _reservedFlags.Value = _reservedFlags.Value & ~(1<<it->second);
 }
 //----------------------------------------------------------------------------
 ComponentID ComponentContainer::ID(ComponentTag tag) const {
@@ -68,7 +68,7 @@ ComponentID ComponentContainer::ID(ComponentTag tag) const {
 IComponent *ComponentContainer::GetByTag(ComponentTag tag) {
     Assert(IComponent::InvalidTag != tag);
 
-    ComponentID id = u32(-1);
+    ComponentID id(-1);
     if (!TryGetValue(_tagToID, tag, &id)) {
         AssertNotReached();
         return nullptr;
@@ -77,7 +77,7 @@ IComponent *ComponentContainer::GetByTag(ComponentTag tag) {
     Assert(0 != (_reservedFlags & (1<<id)));
     Assert(nullptr != _components[id]);
 
-    return _components[id];
+    return _components[id].get();
 }
 //----------------------------------------------------------------------------
 IComponent *ComponentContainer::GetByID(ComponentID id) {
@@ -86,7 +86,7 @@ IComponent *ComponentContainer::GetByID(ComponentID id) {
     Assert(0 != (_reservedFlags & (1<<id)));
     Assert(nullptr != _components[id]);
 
-    return _components[id];
+    return _components[id].get();
 }
 //----------------------------------------------------------------------------
 void ComponentContainer::RemoveEntity(const Entity& entity) {
@@ -102,9 +102,10 @@ void ComponentContainer::RemoveEntity(const Entity& entity) {
 }
 //----------------------------------------------------------------------------
 void ComponentContainer::Clear() {
-    for (const PComponent& component : _components)
+    for (const PComponent& component : _components) {
         if (component)
             component->Clear();
+    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

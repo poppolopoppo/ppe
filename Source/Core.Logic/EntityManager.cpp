@@ -71,7 +71,7 @@ void EntityManager::RemoveComponent(ComponentID componentID, EntityID entityID) 
     Assert(0 != (entity._componentFlags & (1<<componentID)) );
 
     const ComponentFlag previousComponents = entity._componentFlags;
-    entity._componentFlags = entity._componentFlags & (~(1<<componentID));
+    entity._componentFlags = ComponentFlag(entity._componentFlags & (~(1<<componentID)) );
 
     Refresh(entityID, previousComponents);
 }

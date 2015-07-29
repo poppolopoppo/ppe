@@ -22,9 +22,9 @@ public:
     ,   _enabled(true), _deleting(false), _refreshing(false)
     ,   _componentFlags(0)
     ,   _uid(uid) {}
-    Entity() : Entity(InvalidID, InvalidUID) {}
+    Entity() : Entity(EntityID(InvalidID), EntityUID(InvalidUID)) {}
 
-    EntityID ID() const { return _id; }
+    EntityID ID() const { return EntityID(_id); }
     EntityUID UID() const { return _uid; }
 
     bool Enabled() const { return _enabled; }

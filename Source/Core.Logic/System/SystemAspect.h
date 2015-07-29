@@ -16,7 +16,7 @@ class SystemAspect {
 public:
     SystemAspect(ComponentFlag all, ComponentFlag any, ComponentFlag none) 
     :   _all(all), _any(any), _none(none) {}
-    SystemAspect() : SystemAspect(0, 0, 0) {}
+    SystemAspect() : SystemAspect(ComponentFlag(0), ComponentFlag(0), ComponentFlag(0) ) {}
 
     ComponentFlag All() const { return _all; }
     ComponentFlag Any() const { return _any; }

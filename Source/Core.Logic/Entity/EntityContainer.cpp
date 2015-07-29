@@ -27,26 +27,24 @@ EntityContainer::~EntityContainer() {}
 EntityID EntityContainer::CreateEntity(const EntityUID *optionalUID/* = nullptr */) {
     if (_freeIDs.empty()) {
         const EntityID oldAvailableID = _nextAvailableID;
-        _nextAvailableID = 1 + _nextAvailableID * 2;
+        _nextAvailableID.Value = 1 + _nextAvailableID * 2;
         AssertRelease(oldAvailableID < _nextAvailableID);
 
         _entities.resize(_nextAvailableID);
         _freeIDs.reserve(_freeIDs.size() + _nextAvailableID - oldAvailableID);
 
         reverseforrange(id, u32(oldAvailableID), u32(_nextAvailableID))
-            _freeIDs.push_back(id);
+            _freeIDs.push_back(EntityID(id));
 
         _usedIDs.reserve(_freeIDs.capacity());
         _uidToId.reserve(_usedIDs.capacity());
     }
 
     Assert(!_freeIDs.empty());
-    EntityID const id = _freeIDs.back();
+    const EntityID id = _freeIDs.back();
     _freeIDs.pop_back();
 
-    EntityUID const uid = optionalUID 
-        ? *optionalUID 
-        : Guid::Generate().ToUID();
+    const EntityUID uid(optionalUID ? *optionalUID : Guid::Generate().ToUID() );
     Insert_AssertUnique(_uidToId, uid, id);
 
     _entities[id] = Entity(id, uid);
@@ -82,7 +80,7 @@ EntityID EntityContainer::IDFromUID(EntityUID uid) const {
     EntityID id;
     if (!TryGetValue(_uidToId, uid, &id)) {
         AssertNotReached();
-        return Entity::InvalidID;
+        return EntityID(Entity::InvalidID);
     }
 
     Assert(Entity::InvalidID != id);
@@ -90,21 +88,18 @@ EntityID EntityContainer::IDFromUID(EntityUID uid) const {
 }
 //----------------------------------------------------------------------------
 void EntityContainer::Clear() {
-    _entities.clear();
-    _entities.shrink_to_fit();
-    _freeIDs.clear();
-    _freeIDs.shrink_to_fit();
-    _usedIDs.clear();
-    _usedIDs.shrink_to_fit();
+    Clear_ReleaseMemory(_entities);
+    Clear_ReleaseMemory(_freeIDs);
+    Clear_ReleaseMemory(_usedIDs);
     _uidToId.clear();
-    _nextAvailableID = 0;
+    _nextAvailableID.Value = 0;
 }
 //----------------------------------------------------------------------------
 void EntityContainer::ShrinkToFit() {
     const auto max_it = std::max_element(_usedIDs.begin(), _usedIDs.end());
     Assert(_usedIDs.end() != max_it);
 
-    const EntityID shrinkAvailableID = *max_it + 1;
+    const EntityID shrinkAvailableID(*max_it + 1);
 
     if (shrinkAvailableID >= _nextAvailableID) {
         Assert(shrinkAvailableID == _nextAvailableID);
