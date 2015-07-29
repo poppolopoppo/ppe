@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Core/Core.h"
-
 namespace Core {
 namespace Meta {
 //----------------------------------------------------------------------------
@@ -23,7 +21,7 @@ struct Activator {
 
     template<typename U, typename... _Args>
     static void Construct(U* p, _Args&&... args) {
-        ::new((void*)p) U(std::forward<_Args>(args)...);
+        ::new ((void*)p) U(std::forward<_Args>(args)...);
     }
 
     static void Destroy(pointer p) {
