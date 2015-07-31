@@ -64,8 +64,12 @@ struct PoolTracking {
                     Core::MemoryTrackingData **dst = nullptr )
     :   TrackingData(Name, parent) {
         Format(Name, "{0}<{1},{2}>", tagname, _ThreadLocal, _Size);
-        Core::RegisterAdditionalTrackingData(TrackingData);
+        RegisterAdditionalTrackingData(&TrackingData);
         if (dst) *dst = &TrackingData;
+    }
+
+    ~PoolTracking() {
+        UnregisterAdditionalTrackingData(&TrackingData);
     }
 };
 //----------------------------------------------------------------------------

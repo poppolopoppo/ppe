@@ -39,48 +39,52 @@ void CoreStartup::Start(void *applicationHandle, int nShowCmd, size_t argc, cons
 #endif
     // 3 - current process
     CurrentProcess::Create(applicationHandle, nShowCmd, argc, argv);
-    // 4 - callstack symbols
+    // 4 - call stack symbols
     Callstack::Start();
-    // 5 - memory guards
+    // 5 - memory domains
+    MemoryDomainStartup::Start();
+    // 6 - memory guards
     GLOBAL_CHECK_MEMORY_LEAKS(true);
-    // 6 - thread local storage
+    // 7 - thread local storage
     ThreadLocalManager::Create();
-    // 7 - main thread context
+    // 8 - main thread context
     ThreadContextStartup::Start_MainThread();
-    // 8 - heap allocators
+    // 9 - heap allocators
     Heaps::Process::Create(Heap::current_process_t());
-    // 9 - auto singleton manager
+    //10 - auto singleton manager
     Meta::AutoSingletonManager::Start();
-    //10 - thread pool
+    //11 - thread pool
     ThreadPoolStartup::Start();
-    //11 - filesystem
+    //12 - file system
     FileSystemStartup::Start();
-    //12 - virtual filesystem
+    //13 - virtual file system
     VirtualFileSystemStartup::Start();
-    //13 - RTTI
+    //14 - RTTI
     RTTI::RTTIStartup::Start();
 }
 //----------------------------------------------------------------------------
 void CoreStartup::Shutdown() {
-    //13 - RTTI
+    //14 - RTTI
     RTTI::RTTIStartup::Shutdown();
-    //12 - virtual filesystem
+    //13 - virtual file system
     VirtualFileSystemStartup::Shutdown();
-    //11 - filesystem
+    //12 - file system
     FileSystemStartup::Shutdown();
-    //10 - thread pool
+    //11 - thread pool
     ThreadPoolStartup::Shutdown();
-    // 9 - auto singleton manager
+    //10 - auto singleton manager
     Meta::AutoSingletonManager::Shutdown();
-    // 8 - heap allocators
+    // 9 - heap allocators
     Heaps::Process::Destroy();
-    // 7 - main thread context
+    // 8 - main thread context
     ThreadContextStartup::Shutdown();
-    // 6 - thread local storage
+    // 7 - thread local storage
     ThreadLocalManager::Destroy();
-    // 5 - memory guards
+    // 6 - memory guards
     GLOBAL_CHECK_MEMORY_LEAKS(false);
-    // 4 - callstack symbols
+    // 5 - memory domains
+    MemoryDomainStartup::Shutdown();
+    // 4 - call stack symbols
     Callstack::Shutdown();
     // 3 - current process
     CurrentProcess::Destroy();

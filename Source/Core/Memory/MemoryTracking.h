@@ -5,7 +5,11 @@
 #include "Core/IO/FormatHelpers.h"
 #include "Core/Meta/TypeTraits.h"
 
+#include <iosfwd>
+
 namespace Core {
+template <typename T>
+class MemoryView;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -52,6 +56,10 @@ private:
     std::atomic<size_t> _maxAllocationCount;
     std::atomic<size_t> _maxTotalSizeInBytes;
 };
+//----------------------------------------------------------------------------
+void ReportTrackingDatas(   std::basic_ostream<char>& oss, 
+                            const char *header,
+                            const MemoryView<const MemoryTrackingData *>& datas );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

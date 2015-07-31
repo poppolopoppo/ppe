@@ -46,9 +46,8 @@ void ReportDomainTrackingData();
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void RegisterAdditionalTrackingData(MemoryTrackingData& trackingData);
-//----------------------------------------------------------------------------
-MemoryView<MemoryTrackingData *> EachAdditionalTrackingData();
+void RegisterAdditionalTrackingData(MemoryTrackingData *pTrackingData);
+void UnregisterAdditionalTrackingData(MemoryTrackingData *pTrackingData);
 //----------------------------------------------------------------------------
 void ReportAdditionalTrackingData();
 //----------------------------------------------------------------------------
@@ -58,6 +57,17 @@ inline void ReportAllTrackingData() {
     ReportDomainTrackingData();
     ReportAdditionalTrackingData();
 }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+class MemoryDomainStartup {
+public:
+    static void Start();
+    static void Shutdown();
+
+    MemoryDomainStartup() { Start(); }
+    ~MemoryDomainStartup() { Shutdown(); }
+};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

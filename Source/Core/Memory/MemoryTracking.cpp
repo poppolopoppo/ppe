@@ -3,6 +3,11 @@
 #include "MemoryTracking.h"
 
 #include "Diagnostic/Callstack.h"
+#include "IO/Format.h"
+#include "IO/FormatHelpers.h"
+#include "IO/Stream.h"
+#include "IO/String.h"
+#include "Memory/UniqueView.h"
 #include "Meta/OneTimeInitialize.h"
 
 namespace Core {
@@ -120,6 +125,75 @@ void MemoryTrackingData::Append(const MemoryTrackingData& other) {
 MemoryTrackingData& MemoryTrackingData::Global() {
     ONE_TIME_INITIALIZE(MemoryTrackingData, gGlobalMemoryTrackingData, "$");
     return gGlobalMemoryTrackingData;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+static void TrackingDataAbsoluteName_(OCStrStream *pOss, const MemoryTrackingData& trackingData) {
+    if (trackingData.Parent()) {
+        TrackingDataAbsoluteName_(pOss, *trackingData.Parent());
+        *pOss << "::";
+    }
+    *pOss << trackingData.Name();
+    pOss->PutEOS();
+}
+//----------------------------------------------------------------------------
+static bool LessTrackingData_(const MemoryTrackingData& lhs, const MemoryTrackingData& rhs) {
+    Assert(lhs.Name());
+    Assert(rhs.Name());
+    return (lhs.Name() != rhs.Name()) && CompareI(lhs.Name(), rhs.Name()) < 0;
+}
+//----------------------------------------------------------------------------
+void ReportTrackingDatas(   std::basic_ostream<char>& oss, 
+                            const char *header, 
+                            const MemoryView<const MemoryTrackingData *>& datas ) {
+    Assert(header);
+
+    STACKLOCAL_POD_ARRAY(const MemoryTrackingData *, sortedDatas, datas.size());
+    memcpy(sortedDatas.Pointer(), datas.Pointer(), datas.SizeInBytes());
+
+    std::stable_sort(sortedDatas.begin(), sortedDatas.end(), [](const MemoryTrackingData *lhs, const MemoryTrackingData *rhs) {
+        const MemoryTrackingData *lhsp = lhs->Parent();
+        const MemoryTrackingData *rhsp = rhs->Parent();
+        if (lhsp && rhsp)
+            return (LessTrackingData_(*lhsp, *rhsp) || (lhsp->Name() == rhsp->Name() && LessTrackingData_(*lhs, *rhs)));
+        else if (lhsp)
+            return LessTrackingData_(*lhsp, *rhs);
+        else if (rhsp)
+            return lhs->Name() == rhsp->Name() || LessTrackingData_(*lhs, *rhsp);
+        else
+            return LessTrackingData_(*lhs, *rhs);
+    });
+    
+    const size_t width = 139;
+    const char *fmt = " {0:-73}|{1:10} {2:10} |{3:7} {4:7} |{5:11} {6:11}\n";
+
+    oss << Repeat<width>("-") << std::endl
+        << "    " << header << " (" << datas.size() << " elements)" << std::endl
+        << Repeat<width>("-") << std::endl;
+
+    Format(oss, fmt,    "Tracking Data Name",
+                        "Block", "Max",
+                        "Alloc", "Max",
+                        "Total", "Max" );
+
+    oss << Repeat<width>("-") << std::endl;
+
+    char absoluteName[1024];
+    for (const MemoryTrackingData *data : datas) {
+        Assert(data);
+        OCStrStream tmp(absoluteName);
+        TrackingDataAbsoluteName_(&tmp, *data);
+        Format(oss, fmt,    absoluteName,
+                            data->BlockCount(),
+                            data->MaxBlockCount(),
+                            data->AllocationCount(),
+                            data->MaxAllocationCount(),
+                            data->TotalSizeInBytes(),
+                            data->MaxTotalSizeInBytes() );
+    }
+
+    oss << Repeat<width>("-") << std::endl;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
