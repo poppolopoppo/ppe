@@ -50,7 +50,8 @@ public:
     std::streamsize capacity() const { return _capacity; }
     std::streamsize size() const { return parent_type::pptr() - _storage; }
 
-    virtual int_type overflow(int_type ch) override;
+    void PutEOS();
+    void Reset();
 
     void swap(BasicOCStrStreamBuffer& other);
 
@@ -90,6 +91,9 @@ public:
     const _Char* storage() const { return _buffer.storage(); }
     std::streamsize capacity() const { return _buffer.capacity(); }
     std::streamsize size() const { return _buffer.size(); }
+
+    void PutEOS();
+    void Reset();
 
     void swap(BasicOCStrStream& other);
 

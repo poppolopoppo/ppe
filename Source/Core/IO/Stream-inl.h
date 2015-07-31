@@ -9,9 +9,7 @@ namespace Core {
 template <typename _Char, typename _Traits >
 BasicOCStrStreamBuffer<_Char, _Traits>::BasicOCStrStreamBuffer(_Char* storage, std::streamsize capacity)
 :   _storage(storage), _capacity(capacity) {
-    Assert(storage);
-    Assert(capacity);
-    parent_type::setp(storage, storage + capacity - 1);
+    Reset();
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits >
@@ -32,20 +30,33 @@ auto BasicOCStrStreamBuffer<_Char, _Traits>::operator =(BasicOCStrStreamBuffer&&
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits >
 BasicOCStrStreamBuffer<_Char, _Traits>::~BasicOCStrStreamBuffer() {
-    // null terminate the string
-    *parent_type::pptr() = traits_type::to_char_type(0);
+    PutEOS();
+
+    // checks that final buffer is non empty or null
+    Assert( parent_type::pbase() == nullptr ||
+            parent_type::pbase() <  parent_type::pptr() );
+
+    // checks that final buffer is null terminated or null
+    Assert( parent_type::pbase() == nullptr ||
+            parent_type::pptr()[-1] == traits_type::to_char_type(0) );
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits >
-auto BasicOCStrStreamBuffer<_Char, _Traits>::overflow(int_type ch) -> int_type {
-    if (traits_type::eof() == ch)
-        return traits_type::eof();
+void BasicOCStrStreamBuffer<_Char, _Traits>::PutEOS() {
+    const _Char eos = traits_type::to_char_type(0); // End Of String
 
-    Assert(parent_type::pptr() <= parent_type::epptr());
-    *parent_type::pptr() = traits_type::to_char_type(ch);
-    parent_type::pbump(1);
+    if (nullptr == parent_type::pbase() || 
+        (parent_type::pptr() > parent_type::pbase() && eos == parent_type::pptr()[-1]) )
+        return; // skip if the string is already null terminated (or write buffer null)
 
-    return ch;
+    // null terminate the string
+    parent_type::sputc(eos);
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits >
+void BasicOCStrStreamBuffer<_Char, _Traits>::Reset() {
+    Assert(nullptr != _storage || 0 == _capacity);
+    parent_type::setp(_storage, _storage + _capacity);
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits >
@@ -77,6 +88,16 @@ auto BasicOCStrStream<_Char, _Traits>::operator =(BasicOCStrStream&& rvalue) -> 
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits >
 BasicOCStrStream<_Char, _Traits>::~BasicOCStrStream() {}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits >
+void BasicOCStrStream<_Char, _Traits>::PutEOS() {
+    _buffer.PutEOS();
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits >
+void BasicOCStrStream<_Char, _Traits>::Reset() {
+    _buffer.Reset();
+}
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits >
 void BasicOCStrStream<_Char, _Traits>::swap(BasicOCStrStream& other){
