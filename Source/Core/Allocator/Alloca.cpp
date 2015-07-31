@@ -21,9 +21,9 @@ public:
     enum : u32 {
     // memory reserved per thread for alloca
 #if defined(ARCH_X64)
-        Capacity        = 64<<10    /* 64 kb    */
+        Capacity        =128<<10    /* 128 kb   */
 #elif defined(ARCH_X86)
-        Capacity        = 32<<10    /* 32 kb    */
+        Capacity        = 64<<10    /* 64 kb    */
 #else
 #   error "no support"
 #endif
@@ -32,7 +32,7 @@ public:
     ,   Boundary        = 16        /* 16 b     */
 
     // each allocation fallback on TLH when bigger than :
-    ,   MaxBlockSize    = 4<<10     /* 4 kb     */
+    ,   MaxBlockSize    = 16<<10    /* 16 kb    */
 
     // internal configuration :
 
@@ -186,7 +186,7 @@ void ThreadLocalAllocaStorage::Create() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void *Alloca(size_t sizeInBytes) {
-    if (!sizeInBytes)
+    if (0 == sizeInBytes)
         return nullptr;
 
     return ThreadLocalAllocaStorage::Instance().Push(sizeInBytes);
