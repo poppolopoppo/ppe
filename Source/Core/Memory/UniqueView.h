@@ -10,7 +10,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Deleter = checked_deleter<T> >
-class UniqueView : public MemoryView<T> {
+class UniqueView : public MemoryView<T>, private _Deleter {
 public:
     typedef MemoryView<T> base_type;
 
@@ -53,7 +53,7 @@ UniqueView<T, _Deleter>::UniqueView(pointer storage, size_type capacity)
 template <typename T, typename _Deleter >
 UniqueView<T, _Deleter>::~UniqueView() {
     if (_storage)
-        _Deleter()(_storage);
+        _Deleter::operator ()(_storage);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Deleter >
@@ -63,7 +63,7 @@ UniqueView<T, _Deleter>::UniqueView(UniqueView&& rvalue)
 template <typename T, typename _Deleter >
 auto UniqueView<T, _Deleter>::operator =(UniqueView&& rvalue) -> UniqueView& {
     if (_storage)
-        _Deleter()(_storage);
+        _Deleter::operator ()(_storage);
 
     base_type::operator =(std::move(rvalue));
     return (*this);
