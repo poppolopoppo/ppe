@@ -3,6 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/Allocator/Allocation.h"
+#include "Core/Memory/UniqueView.h"
 
 #include <iosfwd>
 #include <streambuf>
@@ -51,6 +52,7 @@ public:
     std::streamsize size() const { return parent_type::pptr() - _storage; }
 
     void PutEOS();
+    void RemoveEOS();
     void Reset();
 
     void swap(BasicOCStrStreamBuffer& other);
@@ -78,6 +80,9 @@ public:
     BasicOCStrStream(_Char* storage, std::streamsize capacity);
     virtual ~BasicOCStrStream();
 
+    explicit BasicOCStrStream(const MemoryView<_Char>& view) 
+        : BasicOCStrStream(view.Pointer(), view.size()) {}
+
     template <size_t _Capacity>
     explicit BasicOCStrStream(_Char(&staticArray)[_Capacity])
         : BasicOCStrStream(staticArray, _Capacity) {}
@@ -91,9 +96,16 @@ public:
     const _Char* storage() const { return _buffer.storage(); }
     std::streamsize capacity() const { return _buffer.capacity(); }
     std::streamsize size() const { return _buffer.size(); }
+    
+    const _Char *begin() const { return _buffer.storage(); } 
+    const _Char *end() const { return _buffer.storage() + _buffer.size(); } 
 
     void PutEOS();
+    void RemoveEOS();
     void Reset();
+
+    const _Char *NullTerminatedStr();
+    MemoryView<const _Char> MakeView() const;
 
     void swap(BasicOCStrStream& other);
 
@@ -108,6 +120,15 @@ void swap(BasicOCStrStream<_Char, _Traits>& lhs, BasicOCStrStream<_Char, _Traits
 //----------------------------------------------------------------------------
 using OCStrStream = BasicOCStrStream<char, std::char_traits<char> >;
 using WOCStrStream = BasicOCStrStream<wchar_t, std::char_traits<wchar_t> >;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+#define _STACKLOCAL_BASICOCSTRSTREAM_IMPL(_CHAR, _NAME, _COUNT) \
+    STACKLOCAL_POD_ARRAY(_CHAR, CONCAT(_NAME, _storage), _COUNT); \
+    BasicOCStrStream<_CHAR, std::char_traits<_CHAR> > _NAME( CONCAT(_NAME, _storage) )
+//----------------------------------------------------------------------------
+#define STACKLOCAL_OCSTRSTREAM(_NAME, _COUNT) _STACKLOCAL_BASICOCSTRSTREAM_IMPL(char, _NAME, _COUNT)
+#define STACKLOCAL_WOCSTRSTREAM(_NAME, _COUNT) _STACKLOCAL_BASICOCSTRSTREAM_IMPL(wchar_t, _NAME, _COUNT)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -54,6 +54,19 @@ void BasicOCStrStreamBuffer<_Char, _Traits>::PutEOS() {
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits >
+void BasicOCStrStreamBuffer<_Char, _Traits>::RemoveEOS() {
+    const _Char eos = traits_type::to_char_type(0); // End Of String
+
+    if (nullptr == parent_type::pbase() || 
+        (parent_type::pptr() > parent_type::pbase() && eos != parent_type::pptr()[-1]) )
+        return; // skip if the string is not null terminated (or write buffer null)
+
+    // remove null terminator
+    parent_type::pbump(-1);
+    Assert(*parent_type::pptr() == eos);
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits >
 void BasicOCStrStreamBuffer<_Char, _Traits>::Reset() {
     Assert(nullptr != _storage || 0 == _capacity);
     parent_type::setp(_storage, _storage + _capacity);
@@ -95,8 +108,32 @@ void BasicOCStrStream<_Char, _Traits>::PutEOS() {
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits >
+void BasicOCStrStream<_Char, _Traits>::RemoveEOS() {
+    _buffer.RemoveEOS();
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits >
 void BasicOCStrStream<_Char, _Traits>::Reset() {
     _buffer.Reset();
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits >
+const _Char *BasicOCStrStream<_Char, _Traits>::NullTerminatedStr() {
+    _buffer.PutEOS();
+    return _buffer.storage();
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits >
+MemoryView<const _Char> BasicOCStrStream<_Char, _Traits>::MakeView() const {
+    const _Char eos = _Traits::to_char_type(0); // ignores null char IFN
+
+    const _Char *ptr = _buffer.storage();
+    size_t length = _buffer.size();
+    Assert(nullptr != ptr || 0 == length);
+    if (length && ptr[length - 1] == eos)
+        --length;
+
+    return MemoryView<const _Char>(ptr, length); 
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits >
