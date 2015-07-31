@@ -15,7 +15,7 @@ template <
     typename T,
     typename _Allocator = NODEBASED_CONTAINER_ALLOCATOR(Container, T)
 >
-using List = std::list<_Key, _Value, _Predicate, _Allocator >;
+using List = std::list< T, _Allocator >;
 //----------------------------------------------------------------------------
 #define LIST(_DOMAIN, T) \
     ::Core::List<T, NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, T) >
