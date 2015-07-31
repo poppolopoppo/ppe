@@ -261,11 +261,15 @@ size_t ToWCStr(wchar_t *dst, size_t capacity, const String& str);
 String ToString(const wchar_t *wcstr, size_t length);
 String ToString(const wchar_t *wcstr);
 String ToString(const WString& wstr);
+inline const String& ToString(const String& str) { return str; }
+inline String ToString(const MemoryView<const char>& strview) { return String(strview.Pointer(), strview.size()); }
 inline String ToString(const MemoryView<const wchar_t>& strview) { return ToString(strview.Pointer(), strview.size()); }
 //----------------------------------------------------------------------------
 WString ToWString(const char *cstr, size_t length);
 WString ToWString(const char *cstr);
 WString ToWString(const String& str);
+inline const WString& ToWString(const WString& wstr) { return wstr; }
+inline WString ToWString(const MemoryView<const wchar_t>& strview) { return WString(strview.Pointer(), strview.size()); }
 inline WString ToWString(const MemoryView<const char>& strview) { return ToWString(strview.Pointer(), strview.size()); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
