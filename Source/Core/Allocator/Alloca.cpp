@@ -71,21 +71,19 @@ AllocaStorage::~AllocaStorage() {
     Assert(0 == _offset); // Check that all used memory has been released
 
     if (_storage)
-        GetThreadLocalHeap().aligned_free(_storage,
-            MEMORY_DOMAIN_TRACKING_DATA(Alloca));
+        GetThreadLocalHeap().aligned_free(_storage, MEMORY_DOMAIN_TRACKING_DATA(Alloca));
 }
 //----------------------------------------------------------------------------
 void *AllocaStorage::Push(size_t sizeInBytes) {
-    Assert(sizeInBytes);
+    Assert(sizeInBytes > 0);
 
-    if (sizeInBytes <= MaxBlockSize &&
-        sizeInBytes + _offset <= Capacity) {
+    const size_t alignedSizeInBytes = ROUND_TO_NEXT_16(sizeInBytes);
+
+    if (alignedSizeInBytes <= MaxBlockSize &&
+        alignedSizeInBytes + _offset <= Capacity) {
         if (!_storage) {
             Assert(0  == _offset);
-            _storage = GetThreadLocalHeap().aligned_malloc(
-                Capacity,
-                Boundary,
-                MEMORY_DOMAIN_TRACKING_DATA(Alloca));
+            _storage = GetThreadLocalHeap().aligned_malloc(Capacity, Boundary, MEMORY_DOMAIN_TRACKING_DATA(Alloca));
             Assert(_storage);
         }
 
@@ -93,7 +91,7 @@ void *AllocaStorage::Push(size_t sizeInBytes) {
 
         void *const block = reinterpret_cast<u8 *>(_storage) + _offset;
 
-        const u32 blockSize = checked_cast<u32>(ROUND_TO_NEXT_16(sizeInBytes) + PayloadSize);
+        const u32 blockSize = checked_cast<u32>(alignedSizeInBytes + PayloadSize);
 
         u32 *const header = reinterpret_cast<u32 *>(block);
         void *const userBlock = reinterpret_cast<u8 *>(block) + HeaderSize;
@@ -127,7 +125,7 @@ void *AllocaStorage::Push(size_t sizeInBytes) {
 }
 //----------------------------------------------------------------------------
 void AllocaStorage::Pop(void *ptr) {
-    Assert(ptr);
+    Assert(size_t(ptr) > HeaderSize);
 
     void *const block = reinterpret_cast<u8 *>(ptr) - HeaderSize;
 
@@ -165,6 +163,12 @@ void AllocaStorage::Pop(void *ptr) {
         GetThreadLocalHeap().aligned_free(ptr, MEMORY_DOMAIN_TRACKING_DATA(Alloca));
     }
 }
+//----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
 //----------------------------------------------------------------------------
 class ThreadLocalAllocaStorage : Meta::ThreadLocalSingleton<AllocaStorage, ThreadLocalAllocaStorage> {
     typedef Meta::ThreadLocalSingleton<AllocaStorage, ThreadLocalAllocaStorage> parent_type;
