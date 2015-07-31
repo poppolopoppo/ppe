@@ -21,6 +21,8 @@ enum class DeviceResourceType {
     TextureCube,
     VertexDeclaration,
     Vertices,
+
+    _Count
 };
 //----------------------------------------------------------------------------
 const char *ResourceTypeToCStr(DeviceResourceType type);

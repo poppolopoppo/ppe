@@ -8,9 +8,9 @@ namespace Graphics {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 DeviceResource::DeviceResource(DeviceResourceType resourceType)
-:   _frozenAndResourceType(0) {
-    bitfrozen_type::InplaceFalse(_frozenAndResourceType);
-    bitresourcetype_type::InplaceSet(_frozenAndResourceType, static_cast<u32>(resourceType));
+:   _flagsAndResourceType(0) {
+    bitfrozen_type::InplaceFalse(_flagsAndResourceType);
+    bitresourcetype_type::InplaceSet(_flagsAndResourceType, static_cast<u32>(resourceType));
 }
 //----------------------------------------------------------------------------
 DeviceResource::~DeviceResource() {}
@@ -38,14 +38,14 @@ void DeviceResource::OnDeviceDestroy(DeviceEncapsulator *device) {
 void DeviceResource::Freeze() {
     Assert(!Frozen());
     THIS_THREADRESOURCE_CHECKACCESS();
-    bitfrozen_type::InplaceTrue(_frozenAndResourceType);
+    bitfrozen_type::InplaceTrue(_flagsAndResourceType);
     FreezeImpl();
 }
 //----------------------------------------------------------------------------
 void DeviceResource::Unfreeze() {
     Assert(Frozen());
     THIS_THREADRESOURCE_CHECKACCESS();
-    bitfrozen_type::InplaceFalse(_frozenAndResourceType);
+    bitfrozen_type::InplaceFalse(_flagsAndResourceType);
     UnfreezeImpl();
 }
 //----------------------------------------------------------------------------

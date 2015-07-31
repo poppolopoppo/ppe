@@ -20,7 +20,6 @@ namespace Core {
 namespace Graphics {
 FWD_REFPTR(DeviceAPIDependantEntity);
 class DeviceEncapsulator;
-
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -40,14 +39,14 @@ public:
     using Meta::ThreadResource::OwnedByThisThread;
 
     DeviceResourceType ResourceType() const {
-        return static_cast<DeviceResourceType>(bitresourcetype_type::Get(_frozenAndResourceType));
+        return static_cast<DeviceResourceType>(bitresourcetype_type::Get(_flagsAndResourceType));
     }
 
     virtual bool Available() const = 0;
 
     virtual DeviceAPIDependantEntity *TerminalEntity() const = 0;
 
-    bool Frozen() const { return bitfrozen_type::Get(_frozenAndResourceType); }
+    bool Frozen() const { return bitfrozen_type::Get(_flagsAndResourceType); }
     void Freeze();
     void Unfreeze();
 
@@ -61,6 +60,9 @@ public:
     void SetResourceName(String&& name);
 
 protected:
+    bool Sharable_() const { return bitsharable_type::Get(_flagsAndResourceType); }
+    void SetSharable_(bool value) { bitsharable_type::InplaceSet(_flagsAndResourceType, value); }
+
     virtual void FreezeImpl() {}
     virtual void UnfreezeImpl() {}
 
@@ -71,9 +73,10 @@ protected:
 
 private:
     typedef Meta::Bit<u32>::First<1>::type bitfrozen_type;
-    typedef Meta::Bit<u32>::After<bitfrozen_type>::Remain::type bitresourcetype_type;
+    typedef Meta::Bit<u32>::After<bitfrozen_type>::Field<1>::type bitsharable_type; // here to save some space
+    typedef Meta::Bit<u32>::After<bitsharable_type>::Remain::type bitresourcetype_type;
 
-    u32 _frozenAndResourceType;
+    u32 _flagsAndResourceType;
 
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
     String _resourceName;
