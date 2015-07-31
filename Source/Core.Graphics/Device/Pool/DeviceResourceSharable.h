@@ -3,30 +3,33 @@
 #include "Core.Graphics/Graphics.h"
 
 #include "Core.Graphics/Device/DeviceResource.h"
+#include "Core.Graphics/Device/Pool/DeviceSharedEntityKey.h"
 
 namespace Core {
 namespace Graphics {
-struct DeviceSharedEntityKey;
-FWD_REFPTR(DeviceAPIDependantEntity);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(DeviceResourceSharable);
+FWD_WEAKPTR(DeviceResourceSharable);
 class DeviceResourceSharable : public DeviceResource {
 public:
-    bool Sharable() const { return _sharable; }
+    bool Sharable() const { return DeviceResource::Sharable_(); }
 
-    virtual DeviceSharedEntityKey SharedKey() const = 0;
-
+    const DeviceSharedEntityKey& SharedKey() const;
     bool MatchTerminalEntity(const DeviceAPIDependantEntity *entity) const;
 
 protected:
     DeviceResourceSharable(DeviceResourceType resourceType, bool sharable);
 
+    virtual void FreezeImpl() override;
+    virtual void UnfreezeImpl() override;
+
+    virtual size_t VirtualSharedKeyHashValue() const = 0;
     virtual bool VirtualMatchTerminalEntity(const DeviceAPIDependantEntity *entity) const = 0;
 
 private:
-    bool _sharable;
+    DeviceSharedEntityKey _sharedKey;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
