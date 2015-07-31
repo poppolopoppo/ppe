@@ -6,6 +6,7 @@
 
 #include "Container/Hash.h"
 #include "IO/Stream.h"
+#include "IO/String.h"
 #include "Memory/UniqueView.h"
 
 namespace Core {
@@ -154,21 +155,15 @@ size_t Filename::HashValue() const {
 }
 //----------------------------------------------------------------------------
 String Filename::ToString() const {
-    char cstr[1024];
-    {
-        OCStrStream oss(cstr);
-        oss << *this;
-    }
-    return String(cstr);
+    STACKLOCAL_OCSTRSTREAM(oss, 1024);
+    oss << *this;
+    return Core::ToString(oss.MakeView());
 }
 //----------------------------------------------------------------------------
 WString Filename::ToWString() const {
-    wchar_t wcstr[1024];
-    {
-        WOCStrStream oss(wcstr);
-        oss << *this;
-    }
-    return WString(wcstr);
+    STACKLOCAL_WOCSTRSTREAM(oss, 1024);
+    oss << *this;
+    return Core::ToWString(oss.MakeView());
 }
 //----------------------------------------------------------------------------
 size_t Filename::ToCStr(char *dst, size_t capacity) const {

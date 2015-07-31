@@ -12,6 +12,15 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#define STACKLOCAL_BASICOCSTRSTREAM(_CHAR, _NAME, _COUNT) \
+    MALLOCA(_CHAR, CONCAT(CONCAT(_, _NAME), CONCAT(_Alloca, __LINE__)), _COUNT); \
+    BasicOCStrStream<_CHAR, std::char_traits<_CHAR> > _NAME( CONCAT(CONCAT(_, _NAME), CONCAT(_Alloca, __LINE__)).get(), _COUNT )
+//----------------------------------------------------------------------------
+#define STACKLOCAL_OCSTRSTREAM(_NAME, _COUNT) STACKLOCAL_BASICOCSTRSTREAM(char, _NAME, _COUNT)
+#define STACKLOCAL_WOCSTRSTREAM(_NAME, _COUNT) STACKLOCAL_BASICOCSTRSTREAM(wchar_t, _NAME, _COUNT)
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 using BasicIStream = std::basic_istream<char, std::char_traits<char> >;
 using BasicWIStream = std::basic_istream<wchar_t, std::char_traits<wchar_t> >;
 //----------------------------------------------------------------------------
@@ -120,15 +129,6 @@ void swap(BasicOCStrStream<_Char, _Traits>& lhs, BasicOCStrStream<_Char, _Traits
 //----------------------------------------------------------------------------
 using OCStrStream = BasicOCStrStream<char, std::char_traits<char> >;
 using WOCStrStream = BasicOCStrStream<wchar_t, std::char_traits<wchar_t> >;
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-#define _STACKLOCAL_BASICOCSTRSTREAM_IMPL(_CHAR, _NAME, _COUNT) \
-    STACKLOCAL_POD_ARRAY(_CHAR, CONCAT(_NAME, _storage), _COUNT); \
-    BasicOCStrStream<_CHAR, std::char_traits<_CHAR> > _NAME( CONCAT(_NAME, _storage) )
-//----------------------------------------------------------------------------
-#define STACKLOCAL_OCSTRSTREAM(_NAME, _COUNT) _STACKLOCAL_BASICOCSTRSTREAM_IMPL(char, _NAME, _COUNT)
-#define STACKLOCAL_WOCSTRSTREAM(_NAME, _COUNT) _STACKLOCAL_BASICOCSTRSTREAM_IMPL(wchar_t, _NAME, _COUNT)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

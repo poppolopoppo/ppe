@@ -129,13 +129,12 @@ MemoryTrackingData& MemoryTrackingData::Global() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-static void TrackingDataAbsoluteName_(OCStrStream *pOss, const MemoryTrackingData& trackingData) {
+static void TrackingDataAbsoluteName_(OCStrStream& oss, const MemoryTrackingData& trackingData) {
     if (trackingData.Parent()) {
-        TrackingDataAbsoluteName_(pOss, *trackingData.Parent());
-        *pOss << "::";
+        TrackingDataAbsoluteName_(oss, *trackingData.Parent());
+        oss << "::";
     }
-    *pOss << trackingData.Name();
-    pOss->PutEOS();
+    oss << trackingData.Name();
 }
 //----------------------------------------------------------------------------
 static bool LessTrackingData_(const MemoryTrackingData& lhs, const MemoryTrackingData& rhs) {
@@ -179,12 +178,12 @@ void ReportTrackingDatas(   std::basic_ostream<char>& oss,
 
     oss << Repeat<width>("-") << std::endl;
 
-    char absoluteName[1024];
+    STACKLOCAL_OCSTRSTREAM(tmp, 256);
     for (const MemoryTrackingData *data : datas) {
         Assert(data);
-        OCStrStream tmp(absoluteName);
-        TrackingDataAbsoluteName_(&tmp, *data);
-        Format(oss, fmt,    absoluteName,
+        tmp.Reset();
+        TrackingDataAbsoluteName_(tmp, *data);
+        Format(oss, fmt,    tmp.NullTerminatedStr(),
                             data->BlockCount(),
                             data->MaxBlockCount(),
                             data->AllocationCount(),

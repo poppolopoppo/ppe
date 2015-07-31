@@ -7,7 +7,7 @@
 #include "Core.Graphics/Device/Texture/RenderTarget.h"
 
 #include "Core/Allocator/Alloca.h"
-#include "Core/Allocator/PoolAllocator.h"
+#include "Core/Allocator/PoolAllocator-impl.h"
 #include "Core/IO/Format.h"
 #include "Core/IO/Stream.h"
 #include "Core/IO/String.h"
@@ -32,14 +32,11 @@ static String RenderLayerSetRenderTargetName_(AbstractRenderSurface *surface) {
 //----------------------------------------------------------------------------
 static String RenderLayerSetRenderTargetName_(const MemoryView<const PAbstractRenderSurface>& surfaces) {
 #ifdef WITH_CORE_ENGINE_RENDERLAYER_DEBUGNAME
-    char buffer[2048];
-    {
-        OCStrStream oss(buffer);
-        oss << "SetRenderTargets";
-        for (const PAbstractRenderSurface& surface : surfaces)
-            oss << "_" << surface->Name();
-    }
-    return String(buffer);
+    STACKLOCAL_OCSTRSTREAM(oss, 2048);
+    oss << "SetRenderTargets";
+    for (const PAbstractRenderSurface& surface : surfaces)
+        oss << "_" << surface->Name();
+    return ToString(oss.MakeView());
 #else
     return String();
 #endif

@@ -363,28 +363,16 @@ void Format(BasicString<_Char, _Traits>& result, const _Char* format, _Arg0&& ar
 //----------------------------------------------------------------------------
 template <typename _Arg>
 String ToString(_Arg&& arg) {
-    String result;
-    result.resize(256);
-    OCStrStream oss{ &result[0], checked_cast<std::streamsize>(result.size()) };
+    STACKLOCAL_OCSTRSTREAM(oss, 256);
     oss << arg;
-    result.resize(checked_cast<size_t>(oss.size()));
-    return result;
+    return ToString(oss.MakeView());
 }
 //----------------------------------------------------------------------------
 template <typename _Arg>
 WString ToWString(_Arg&& arg) {
-    WString result;
-    result.resize(256);
-    WOCStrStream oss{ &result[0], checked_cast<std::streamsize>(result.size()) };
+    STACKLOCAL_WOCSTRSTREAM(oss, 256);
     oss << arg;
-    result.resize(checked_cast<size_t>(oss.size()));
-    return result;
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-inline String ToString(const String& str) {
-    return str;
+    return ToWString(oss.MakeView());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

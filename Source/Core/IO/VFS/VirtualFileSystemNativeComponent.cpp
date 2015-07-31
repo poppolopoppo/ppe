@@ -262,24 +262,22 @@ UniquePtr<IVirtualFileSystemIStream> VirtualFileSystemNativeComponent::OpenReada
 bool VirtualFileSystemNativeComponent::TryCreateDirectory(const Dirpath& dirpath) {
     Assert(ModeWritable & _mode);
 
-    wchar_t nativeDirpath[NATIVE_ENTITYNAME_MAXSIZE];
-
     bool result = false;
 
-    WOCStrStream oss(nativeDirpath);
+    STACKLOCAL_POD_ARRAY(FileSystemToken, subpath, Dirpath::MaxDepth);
+
+    STACKLOCAL_WOCSTRSTREAM(oss, NATIVE_ENTITYNAME_MAXSIZE);
     oss << _target;
-    nativeDirpath[oss.size()] = L'\0';
-    result |= TryCreateDirectory_(nativeDirpath);
+    result |= TryCreateDirectory_(oss.NullTerminatedStr());
 
     Assert(dirpath.PathNode());
 
-    const auto subpath = MALLOCA_VIEW(FileSystemToken, Dirpath::MaxDepth);
     const size_t k = FileSystemPath::Instance().Expand(subpath.Pointer(), subpath.size(), _alias.PathNode(), dirpath.PathNode());
 
     for (size_t i = 0; i < k; ++i) {
-        oss << subpath[i] << wchar_t(FileSystem::Separator);
-        nativeDirpath[oss.size()] = L'\0';
-        result |= TryCreateDirectory_(nativeDirpath);
+        oss.RemoveEOS();
+        oss << subpath[i] << std::char_traits<wchar_t>::to_char_type(FileSystem::Separator);
+        result |= TryCreateDirectory_(oss.NullTerminatedStr());
     }
 
     return result;

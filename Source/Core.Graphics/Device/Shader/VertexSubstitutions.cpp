@@ -20,56 +20,54 @@ void FillVertexSubstitutions(   VECTOR_THREAD_LOCAL(Shader, Pair<String COMMA St
 
     defines.reserve(defines.size() + subParts.size() + 1 /* auto vertex definition */);
 
-    char autoVertexDefinition[1024];
-    {
-        OCStrStream oss(autoVertexDefinition);
-        oss << "struct {";
+    STACKLOCAL_OCSTRSTREAM(oss, 1024);
 
-        const VertexSubPartKey *pNormalKey = nullptr;
-        const VertexSubPartKey *pTangentKey = nullptr;
-        const VertexSubPartKey *pBinormalKey = nullptr;
+    oss << "struct {";
+
+    const VertexSubPartKey *pNormalKey = nullptr;
+    const VertexSubPartKey *pTangentKey = nullptr;
+    const VertexSubPartKey *pBinormalKey = nullptr;
         
-        for (const Pair<VertexSubPartKey, VertexSubPartPOD>& keyedSubPart : declaration->SubParts()) {
-            const size_t index = keyedSubPart.first.Index();
-            const VertexSubPartFormat format = keyedSubPart.first.Format();
-            const VertexSubPartSemantic semantic = keyedSubPart.first.Semantic();
+    for (const Pair<VertexSubPartKey, VertexSubPartPOD>& keyedSubPart : declaration->SubParts()) {
+        const size_t index = keyedSubPart.first.Index();
+        const VertexSubPartFormat format = keyedSubPart.first.Format();
+        const VertexSubPartSemantic semantic = keyedSubPart.first.Semantic();
 
-            switch (semantic)
-            {
-            case VertexSubPartSemantic::Normal: pNormalKey = &keyedSubPart.first; break;
-            case VertexSubPartSemantic::Tangent: pTangentKey = &keyedSubPart.first; break;
-            case VertexSubPartSemantic::Binormal: pBinormalKey = &keyedSubPart.first; break;
-            default: break;
-            }
-
-            const char *nameWithoutIndex = VertexSubPartSemanticToCStr(semantic);
-            const char *formatCStr = VertexSubPartFormatToCStr(format);
-
-            oss << " " << VertexSubPartFormatToShaderFormat(format)
-                << " " << nameWithoutIndex << index
-                << " : " << VertexSubPartSemanticToShaderSemantic(semantic) << index
-                << ";";
-
-            defines.emplace_back(
-                StringFormat("AppIn_Get_{0}{1}(_AppIn)", nameWithoutIndex, index),
-                StringFormat("AppIn_Get_{0}X_{2}((_AppIn).{0}{1})", nameWithoutIndex, index, formatCStr) );
+        switch (semantic)
+        {
+        case VertexSubPartSemantic::Normal: pNormalKey = &keyedSubPart.first; break;
+        case VertexSubPartSemantic::Tangent: pTangentKey = &keyedSubPart.first; break;
+        case VertexSubPartSemantic::Binormal: pBinormalKey = &keyedSubPart.first; break;
+        default: break;
         }
 
-        // need tangent space without binormals ?
-        if (pNormalKey && pTangentKey && !pBinormalKey) {
-            // maybe binormal winding is packed in tangent.w ?
-            if (VertexSubPartFormat::UX10Y10Z10W2N == pTangentKey->Format()) {
-                Assert(pNormalKey->Index() == pTangentKey->Index());
-                defines.emplace_back(
-                    StringFormat("AppIn_Get_Binormal{0}(_AppIn)", pTangentKey->Index()),
-                    StringFormat("AppIn_Get_BinormalX_PackedInTangentW(AppIn_Get_Normal{0}(_AppIn), AppIn_Get_Tangent{1}(_AppIn), ((_AppIn).Tangent{1}).w)", pNormalKey->Index(), pTangentKey->Index()) );
-            }
-        }
+        const char *nameWithoutIndex = VertexSubPartSemanticToCStr(semantic);
+        const char *formatCStr = VertexSubPartFormatToCStr(format);
 
-        oss << " }";
+        oss << " " << VertexSubPartFormatToShaderFormat(format)
+            << " " << nameWithoutIndex << index
+            << " : " << VertexSubPartSemanticToShaderSemantic(semantic) << index
+            << ";";
+
+        defines.emplace_back(
+            StringFormat("AppIn_Get_{0}{1}(_AppIn)", nameWithoutIndex, index),
+            StringFormat("AppIn_Get_{0}X_{2}((_AppIn).{0}{1})", nameWithoutIndex, index, formatCStr) );
     }
 
-    defines.emplace_back(ShaderSource::AppIn_VertexDefinitionName(), autoVertexDefinition);
+    // need tangent space without binormals ?
+    if (pNormalKey && pTangentKey && !pBinormalKey) {
+        // maybe binormal winding is packed in tangent.w ?
+        if (VertexSubPartFormat::UX10Y10Z10W2N == pTangentKey->Format()) {
+            Assert(pNormalKey->Index() == pTangentKey->Index());
+            defines.emplace_back(
+                StringFormat("AppIn_Get_Binormal{0}(_AppIn)", pTangentKey->Index()),
+                StringFormat("AppIn_Get_BinormalX_PackedInTangentW(AppIn_Get_Normal{0}(_AppIn), AppIn_Get_Tangent{1}(_AppIn), ((_AppIn).Tangent{1}).w)", pNormalKey->Index(), pTangentKey->Index()) );
+        }
+    }
+
+    oss << " }";
+
+    defines.emplace_back(ShaderSource::AppIn_VertexDefinitionName(), oss.NullTerminatedStr());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

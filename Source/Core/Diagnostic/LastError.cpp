@@ -21,14 +21,7 @@ namespace Core {
 String GetLastErrorToString(long errorCode) {
 #ifdef OS_WINDOWS
     _com_error com(errorCode);
-
-    char tmp[2048];
-    {
-        OCStrStream oss(tmp);
-        oss << com.ErrorMessage();
-    }
-
-    return tmp;
+    return ToString(com.ErrorMessage());
 
 #else
     return String();
