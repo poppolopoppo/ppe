@@ -2,7 +2,9 @@
 
 #include "Core/Core.h"
 
+#include "Core/Allocator/Allocation.h"
 #include "Core/Allocator/NodeBasedContainerAllocator.h"
+#include "Core/Container/Pair.h"
 
 #include <map>
 
