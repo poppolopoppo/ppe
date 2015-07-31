@@ -32,6 +32,7 @@ public:
     virtual ~VertexBuffer();
 
     virtual bool Available() const override { return _buffer.Available(); }
+    virtual DeviceAPIDependantEntity *TerminalEntity() const override { return _buffer.DeviceAPIDependantBuffer().get(); }
 
     size_t VertexCount() const { return _buffer.Count(); }
     const PCVertexDeclaration& VertexDeclaration() const { return _vertexDeclaration; }

@@ -20,6 +20,7 @@ public:
     virtual ~IndexBuffer();
 
     virtual bool Available() const override { return _buffer.Available(); }
+    virtual DeviceAPIDependantEntity *TerminalEntity() const override { return _buffer.DeviceAPIDependantBuffer().get(); }
 
     size_t IndexCount() const { return _buffer.Count(); }
     Graphics::IndexElementSize IndexElementSize() const { return static_cast<Graphics::IndexElementSize>(_buffer.Stride()); }

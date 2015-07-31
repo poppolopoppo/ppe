@@ -24,6 +24,8 @@ public:
     virtual ~ConstantBuffer();
 
     virtual bool Available() const override { return _buffer.Available(); }
+    virtual DeviceAPIDependantEntity *TerminalEntity() const override { return _buffer.DeviceAPIDependantBuffer().get(); }
+
     const PDeviceAPIDependantConstantWriter& DeviceAPIDependantWriter() const {
         Assert(Frozen()); return _deviceAPIDependantWriter;
     }
