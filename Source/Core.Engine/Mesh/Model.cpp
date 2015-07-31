@@ -149,7 +149,7 @@ bool AcquireModelRenderCommand( UModelRenderCommand& pModelCommand,
                                         modelMeshSubPart->FirstIndex(),
                                         primitiveCount) ) {
                 Assert(result->RenderCommands.empty());
-                delete result;
+                checked_delete(result);
                 return false;
             }
             Assert(pCommand);

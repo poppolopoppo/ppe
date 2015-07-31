@@ -192,7 +192,7 @@ void ReleaseRenderCommand(  URenderCommand& pcommand,
     while (nextcmd) {
         const RenderCommandRegistration *nextnextcmd = nextcmd->Next;
         ReleaseRenderCommandForOnePass_(nextcmd, device);
-        delete nextcmd;
+        checked_delete(nextcmd);
         nextcmd = nextnextcmd;
     }
 

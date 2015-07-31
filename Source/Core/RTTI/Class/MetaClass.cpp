@@ -20,7 +20,7 @@ MetaClass::MetaClass(const MetaClassName& name, Flags attributes, const MetaClas
 //----------------------------------------------------------------------------
 MetaClass::~MetaClass() {
     for (const auto& it : _properties)
-        delete(it.second);
+        checked_delete(it.second);
 }
 //----------------------------------------------------------------------------
 const MetaProperty *MetaClass::PropertyIFP(const char *name, size_t attributes /* = 0 */, bool inherited /* = true */) const {

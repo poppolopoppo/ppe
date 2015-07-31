@@ -133,7 +133,7 @@ void MemoryDomainStartup::Start() {
 void MemoryDomainStartup::Shutdown() {
 #ifdef USE_MEMORY_DOMAINS
     Assert(nullptr != gAllAdditionalTrackingData);
-    delete gAllAdditionalTrackingData;
+    checked_delete(gAllAdditionalTrackingData);
     gAllAdditionalTrackingData = nullptr;
 #endif
 }

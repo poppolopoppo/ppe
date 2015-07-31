@@ -230,10 +230,10 @@ void TaskPoolImpl::Shutdown() {
     Assert(_queue.empty());
     Assert(_pwaiting->empty());
 
-    delete[](_threads);
+    checked_array_delete(_threads);
     _threads = nullptr;
 
-    delete(_pwaiting);
+    checked_delete(_pwaiting);
     _pwaiting = nullptr;
 
     TaskPool *const ppool = reinterpret_cast<TaskPool *>(_fibers.Arg());
@@ -284,7 +284,7 @@ static void TaskContextShutdown_(TaskThreadContext& ctx, TaskPool *ppool) {
         TaskCounter *counter = nullptr;
         while (!ctx.MRUCountersTLS.Get_ReturnIfEmpty(&counter)) {
             Assert(counter);
-            delete(counter);
+            checked_delete(counter);
             counter = nullptr;
         }
         ctx.MRUCountersTLS.Clear_AssumeCacheDestroyed();
@@ -521,13 +521,13 @@ void TaskPool::WaitFor(TaskCounter **pcounter) const {
     {
         TaskThreadContext& ctx = CurrentTaskThreadContext();
         if (ctx.MRUCountersTLS.Release_ReturnIfFull(pcounter)) {
-            delete(*pcounter);
+            checked_delete(*pcounter);
             *pcounter = nullptr;
         }
     }
 #else
     {
-        delete(*pcounter);
+        checked_delete(*pcounter);
         *pcounter = nullptr;
     }
 #endif
