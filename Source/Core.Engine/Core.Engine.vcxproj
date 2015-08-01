@@ -209,7 +209,7 @@
     <CustomBuild Include="Service\TextureCacheService.h" />
     <CustomBuild Include="Texture\TextureCache.cpp" />
     <CustomBuild Include="Texture\TextureCache.h" />
-    <CustomBuild Include="Texture\TextureLoader-DDS.cpp" />
+    <CustomBuild Include="Texture\textureloader-dds.cpp" />
     <CustomBuild Include="Texture\TextureLoader-inl.h" />
     <CustomBuild Include="Texture\TextureLoader.cpp" />
     <CustomBuild Include="Texture\TextureLoader.h" />
