@@ -2,6 +2,8 @@
 
 #include "Graphics.h"
 
+#include "GlobalVideoMemory.h"
+
 #include "Device/BindName.h"
 
 #include "Window/BasicWindow.h"
@@ -276,35 +278,39 @@ void GraphicsStartup::Start() {
     MathUnitTests_();
 #endif
 
-    // 1 - Register basic window class
+    // 1 - Global video memory
+    GlobalVideoMemory::Create();
+    // 2 - Register basic window class
     BasicWindow::Start();
-    // 2 - Surface format builtin-types
+    // 3 - Surface format builtin-types
     SurfaceFormat::Start();
-    // 3 - Vertex declaration builtin-types
+    // 4 - Vertex declaration builtin-types
     VertexDeclaration::Start();
-    // 4 - Device states
+    // 5 - Device states
     BlendState::Start();
     DepthStencilState::Start();
     RasterizerState::Start();
     SamplerState::Start();
-    // 5 - Bind names
+    // 6 - Bind names
     BindName::Start(256);
 }
 //----------------------------------------------------------------------------
 void GraphicsStartup::Shutdown() {
-    // 1 - Bind names
+    // 6 - Bind names
     BindName::Shutdown();
-    // 4 - Device states
+    // 5 - Device states
     SamplerState::Shutdown();
     RasterizerState::Shutdown();
     DepthStencilState::Shutdown();
     BlendState::Shutdown();
-    // 3 - Vertex declaration builtin-types
+    // 4 - Vertex declaration builtin-types
     VertexDeclaration::Shutdown();
-    // 2 - Surface format builtin-types
+    // 3 - Surface format builtin-types
     SurfaceFormat::Shutdown();
-    // 1 - Unregister basic window class
+    // 2 - Unregister basic window class
     BasicWindow::Shutdown();
+    // 1 - Global video memory
+    GlobalVideoMemory::Destroy();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -11,16 +11,18 @@ namespace Core {
 namespace Graphics {
 class AbstractDeviceAPIEncapsulator;
 class DeviceAPIDependantEntity;
+class DeviceSharedEntityPool;
 class PresentationParameters;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 enum class DeviceStatus {
     Invalid     = 0,
-    Normal      = 1,
-    Reset       = 3,
-    Lost        = 4,
-    Destroy     = 5,
+    Normal      ,
+    Create      ,
+    Destroy     ,
+    Reset       ,
+    Lost        ,
 };
 //----------------------------------------------------------------------------
 const char *DeviceStatusToCStr(DeviceStatus status);
@@ -50,6 +52,7 @@ public:
     DeviceRevision Revision() const { return _revision; }
 
     const PresentationParameters& Parameters() const;
+
     const MemoryTrackingData& VideoMemory() const { return _videoMemory; }
 
     IDeviceAPIEncapsulator *Device() const;
@@ -68,10 +71,9 @@ public:
     void ClearState();
 
 private:
-    void OnCreateEntity(const DeviceResource *resource, DeviceAPIDependantEntity *entity);
-    void OnDestroyEntity(const DeviceResource *resource, DeviceAPIDependantEntity *entity);
-
     UniquePtr< AbstractDeviceAPIEncapsulator > _deviceAPIEncapsulator;
+    UniquePtr< DeviceSharedEntityPool > _deviceSharedEntityPool;
+
     DeviceStatus _status;
     DeviceRevision _revision;
 
@@ -114,8 +116,10 @@ private: // IDeviceAPIEncapsulator impl
 
     // Shaders
 
-    virtual DeviceAPIDependantResourceBuffer *CreateConstantBuffer(ConstantBuffer *constantBuffer, DeviceResourceBuffer *resourceBuffer, PDeviceAPIDependantConstantWriter& writer) override;
-    virtual void DestroyConstantBuffer(ConstantBuffer *constantBuffer, PDeviceAPIDependantResourceBuffer& entity, PDeviceAPIDependantConstantWriter& writer) override;
+    virtual const DeviceAPIDependantConstantWriter *ConstantWriter() const override;
+
+    virtual DeviceAPIDependantResourceBuffer *CreateConstantBuffer(ConstantBuffer *constantBuffer, DeviceResourceBuffer *resourceBuffer) override;
+    virtual void DestroyConstantBuffer(ConstantBuffer *constantBuffer, PDeviceAPIDependantResourceBuffer& entity) override;
 
     virtual DeviceAPIDependantShaderEffect *CreateShaderEffect(ShaderEffect *effect) override;
     virtual void DestroyShaderEffect(ShaderEffect *effect, PDeviceAPIDependantShaderEffect& entity) override;

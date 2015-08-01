@@ -2,6 +2,7 @@
 
 #include "DeviceEncapsulator.h"
 
+#include "GlobalVideoMemory.h"
 #include "DeviceEncapsulatorException.h"
 #include "PresentationParameters.h"
 
@@ -25,6 +26,8 @@
 #include "Texture/Texture2D.h"
 #include "Texture/TextureCube.h"
 
+#include "Pool/DeviceSharedEntityPool.h"
+
 #include "Core/Diagnostic/Logger.h"
 #include "Core/Memory/ComPtr.h"
 
@@ -37,9 +40,13 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceEncapsulator::DeviceEncapsulator() {}
+DeviceEncapsulator::DeviceEncapsulator() 
+:   _status(DeviceStatus::Invalid)
+,   _revision(0)
+,   _videoMemory("DeviceEncapsulator", &GlobalVideoMemory::Instance()) {}
 //----------------------------------------------------------------------------
 DeviceEncapsulator::~DeviceEncapsulator() {
+    Assert(DeviceStatus::Invalid == _status);
     AssertRelease(!_deviceAPIEncapsulator);
 }
 //----------------------------------------------------------------------------
@@ -56,14 +63,17 @@ const PresentationParameters& DeviceEncapsulator::Parameters() const {
 }
 //----------------------------------------------------------------------------
 IDeviceAPIEncapsulator *DeviceEncapsulator::Device() const {
+    THIS_THREADRESOURCE_CHECKACCESS();
     return const_cast<DeviceEncapsulator *>(this);
 }
 //----------------------------------------------------------------------------
 IDeviceAPIContext *DeviceEncapsulator::Immediate() const {
+    THIS_THREADRESOURCE_CHECKACCESS();
     return const_cast<DeviceEncapsulator *>(this);
 }
 //----------------------------------------------------------------------------
 IDeviceAPIShaderCompiler *DeviceEncapsulator::ShaderCompiler() const {
+    THIS_THREADRESOURCE_CHECKACCESS();
     return const_cast<DeviceEncapsulator *>(this);
 }
 //----------------------------------------------------------------------------
@@ -79,6 +89,9 @@ void DeviceEncapsulator::Create(DeviceAPI api, void *windowHandle, const Present
 
     LOG(Information, L"[DeviceEncapsulator] CreateDevice({0})", DeviceAPIToCStr(api));
 
+    Assert(DeviceStatus::Invalid == _status);
+    _status = DeviceStatus::Create;
+
     switch (api)
     {
     case Core::Graphics::DeviceAPI::DirectX11:
@@ -90,9 +103,14 @@ void DeviceEncapsulator::Create(DeviceAPI api, void *windowHandle, const Present
         AssertNotImplemented();
     }
 
-    Assert(_deviceAPIEncapsulator);
+    Assert(nullptr == _deviceSharedEntityPool);
+    _deviceSharedEntityPool.reset(new DeviceSharedEntityPool(&_videoMemory));
 
+    Assert(_deviceAPIEncapsulator);
     GraphicsStartup::OnDeviceCreate(this);
+
+    Assert(DeviceStatus::Create == _status);
+    _status = DeviceStatus::Normal;
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::Destroy() {
@@ -101,29 +119,43 @@ void DeviceEncapsulator::Destroy() {
 
     LOG(Information, L"[DeviceEncapsulator] DestroyDevice({0})", DeviceAPIToCStr(_deviceAPIEncapsulator->API()));
 
-     _deviceAPIEncapsulator->ClearState();
+    Assert(DeviceStatus::Normal == _status);
+    _status = DeviceStatus::Destroy;
+
+    _deviceAPIEncapsulator->ClearState();
+
+    Assert(nullptr != _deviceSharedEntityPool);
+    _deviceSharedEntityPool->ReleaseAll();
+    _deviceSharedEntityPool.reset();
 
     GraphicsStartup::OnDeviceDestroy(this);
 
     _deviceAPIEncapsulator.reset();
+
+    Assert(DeviceStatus::Destroy == _status);
+    _status = DeviceStatus::Invalid;
 
     Assert(!_deviceAPIEncapsulator);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::Reset(const PresentationParameters& pp) {
     THIS_THREADRESOURCE_CHECKACCESS();
+    
+    Assert(DeviceStatus::Normal == _status);
+    _status = DeviceStatus::Reset;
 
-    ++_revision.Value;
-
+    _revision.Value = 0;
     _deviceAPIEncapsulator->Reset(pp);
+    
+    Assert(DeviceStatus::Reset == _status);
+    _status = DeviceStatus::Invalid;
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::Present() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    ++_revision.Value;
-
     _deviceAPIEncapsulator->Present();
+    ++_revision.Value;
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::ClearState() {
@@ -139,23 +171,6 @@ const AbstractDeviceAPIEncapsulator *DeviceEncapsulator::APIEncapsulator() const
     return _deviceAPIEncapsulator.get();
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::OnCreateEntity(const DeviceResource *resource, DeviceAPIDependantEntity *entity) {
-    Assert(entity);
-
-    entity->AttachResource(resource);
-
-    const size_t sizeInBytes = entity->VideoMemorySizeInBytes();
-    _videoMemory.Allocate(1, sizeInBytes);
-}
-//----------------------------------------------------------------------------
-void DeviceEncapsulator::OnDestroyEntity(const DeviceResource *resource, DeviceAPIDependantEntity *entity) {
-    Assert(entity);
-
-    const size_t sizeInBytes = entity->VideoMemorySizeInBytes();
-    _videoMemory.Deallocate(1, sizeInBytes);
-    entity->DetachResource(resource);
-}
-//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 const char *DeviceStatusToCStr(DeviceStatus status) {
@@ -165,12 +180,14 @@ const char *DeviceStatusToCStr(DeviceStatus status) {
         return "Invalid";
     case Core::Graphics::DeviceStatus::Normal:
         return "Normal";
+    case Core::Graphics::DeviceStatus::Create:
+        return "Create";
+    case Core::Graphics::DeviceStatus::Destroy:
+        return "Destroy";
     case Core::Graphics::DeviceStatus::Reset:
         return "Reset";
     case Core::Graphics::DeviceStatus::Lost:
         return "Lost";
-    case Core::Graphics::DeviceStatus::Destroy:
-        return "Destroy";
     }
     AssertNotImplemented();
     return nullptr;

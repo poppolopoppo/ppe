@@ -5,9 +5,13 @@
 #include "Core.Graphics/Device/DeviceAPI.h"
 #include "Core.Graphics/Device/PresentationParameters.h"
 
+#include "Core/Memory/MemoryTracking.h"
+
 namespace Core {
 namespace Graphics {
+class DeviceAPIDependantEntity;
 class DeviceEncapsulator;
+class DeviceResource;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -34,6 +38,9 @@ public:
     virtual void Present() = 0;
     virtual void ClearState() = 0;
 
+    virtual void OnCreateEntity(const DeviceResource *resource, DeviceAPIDependantEntity *entity);
+    virtual void OnDestroyEntity(const DeviceResource *resource, DeviceAPIDependantEntity *entity);
+
 protected:
     AbstractDeviceAPIEncapsulator(DeviceAPI api, DeviceEncapsulator *owner, const PresentationParameters& pp);
 
@@ -41,6 +48,8 @@ private:
     DeviceAPI _api;
     DeviceEncapsulator *_owner;
     PresentationParameters _parameters;
+
+    MemoryTrackingData _usedMemory;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
