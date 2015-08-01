@@ -90,6 +90,26 @@ void RemoveRef_AssertReachZero(RefPtr<T>& ptr) {
     ptr.reset();
 }
 //----------------------------------------------------------------------------
+template <typename T>
+void RemoveRef_AssertGreaterThanZero(RefPtr<T>& ptr) {
+    static_assert(std::is_base_of<RefCountable, T>::value, "T must be derived from RefCountable");
+    Assert(ptr);
+    Assert(1 < ptr->RefCount());
+    ptr.reset();
+}
+//----------------------------------------------------------------------------
+template <typename T>
+T *RemoveRef_AssertReachZero_KeepAlive(RefPtr<T>& ptr) {
+    Assert(ptr);
+    Assert(1 == ptr->RefCount());
+    T *const result = ptr.get();
+    result->IncRefCount();
+    ptr.reset();
+    result->DecRefCount_ReturnIfReachZero();
+    Assert(0 == result->RefCount());
+    return result;
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>

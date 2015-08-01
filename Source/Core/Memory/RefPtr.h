@@ -59,7 +59,11 @@ protected:
     template <typename T>
     friend void RemoveRef_AssertReachZero_NoDelete(T *& ptr);
     template <typename T>
-    friend void RemoveRef_AssertReachZero(T* ptr);
+    friend void RemoveRef_AssertReachZero(RefPtr<T>& ptr);
+    template <typename T>
+    friend void RemoveRef_AssertGreaterThanZero(RefPtr<T>& ptr);
+    template <typename T>
+    friend T *RemoveRef_AssertReachZero_KeepAlive(RefPtr<T>& ptr);
 
 private:
     void IncRefCount() const;
@@ -74,22 +78,6 @@ private:
     mutable std::atomic<size_t> _safeRefCount;
 #endif
 };
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-void AddRef(const RefCountable* ptr);
-//----------------------------------------------------------------------------
-template <typename T>
-void RemoveRef(T* ptr);
-//----------------------------------------------------------------------------
-template <typename T>
-void OnRefCountReachZero(T* ptr);
-//----------------------------------------------------------------------------
-template <typename T>
-void RemoveRef_AssertReachZero_NoDelete(T *& ptr);
-//----------------------------------------------------------------------------
-template <typename T>
-void RemoveRef_AssertReachZero(RefPtr<T>& ptr);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
