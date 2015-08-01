@@ -2,7 +2,7 @@
 
 #include <exception>
 
-#ifdef _DEBUG
+#ifdef _DEBUG // TODO: debug without asserts
 #   define WITH_CORE_ASSERT
 #endif
 
