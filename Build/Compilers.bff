@@ -14,6 +14,7 @@
 ;#define USE_VISUALSTUDIO_2013
 #define USE_VISUALSTUDIO_2015
 ;#define USE_CLANG_37
+;#define USE_CLANG_38
 
 #if USE_VISUALSTUDIO_2012
 #   include "Compilers/MSVC2012.bff"
@@ -38,6 +39,12 @@
     .WindowsCompileConfigs  = .CLangWindows37CompileConfigs
     .PlatformToolset        = .CLangWindows37PlatformToolset
     .ResourceCompiler       = .CLangWindows37ResourceCompiler
+#endif
+#if USE_CLANG_38
+#   include "Compilers/CLangWindows38.bff" ; TODO: Experimental
+    .WindowsCompileConfigs  = .CLangWindows38CompileConfigs
+    .PlatformToolset        = .CLangWindows38PlatformToolset
+    .ResourceCompiler       = .CLangWindows38ResourceCompiler
 #endif
     .AllCompileConfigs      = .WindowsCompileConfigs
 #endif
