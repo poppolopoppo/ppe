@@ -46,6 +46,21 @@
     <CustomBuild Include="Device\Geometry\VertexTypes.h">
       <Filter>Device\Geometry</Filter>
     </CustomBuild>
+    <CustomBuild Include="Device\Pool\DeviceResourceSharable.cpp">
+      <Filter>Device\Pool</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Pool\DeviceResourceSharable.h">
+      <Filter>Device\Pool</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Pool\DeviceSharedEntityKey.h">
+      <Filter>Device\Pool</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Pool\DeviceSharedEntityPool.cpp">
+      <Filter>Device\Pool</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Pool\DeviceSharedEntityPool.h">
+      <Filter>Device\Pool</Filter>
+    </CustomBuild>
     <CustomBuild Include="Device\Shader\ConstantBuffer.cpp">
       <Filter>Device\Shader</Filter>
     </CustomBuild>
@@ -214,25 +229,10 @@
     <CustomBuild Include="Device\DeviceResourceBuffer.h">
       <Filter>Device</Filter>
     </CustomBuild>
-    <CustomBuild Include="Device\DeviceResourceSharable.cpp">
-      <Filter>Device</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Device\DeviceResourceSharable.h">
-      <Filter>Device</Filter>
-    </CustomBuild>
     <CustomBuild Include="Device\DeviceResourceType.cpp">
       <Filter>Device</Filter>
     </CustomBuild>
     <CustomBuild Include="Device\DeviceResourceType.h">
-      <Filter>Device</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Device\DeviceSharedEntityKey.h">
-      <Filter>Device</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Device\DeviceSharedEntityPool.cpp">
-      <Filter>Device</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Device\DeviceSharedEntityPool.h">
       <Filter>Device</Filter>
     </CustomBuild>
     <CustomBuild Include="Device\IDeviceAPIContext.h">
@@ -399,6 +399,8 @@
     </CustomBuild>
     <CustomBuild Include="Core.Graphics.bff">
     </CustomBuild>
+    <CustomBuild Include="GlobalVideoMemory.h">
+    </CustomBuild>
     <CustomBuild Include="Graphics.cpp">
     </CustomBuild>
     <CustomBuild Include="Graphics.h">
@@ -418,6 +420,11 @@
   <ItemGroup>
     <Filter Include="Device">
       <UniqueIdentifier>{0e83b3b8-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Device\Pool">
+      <UniqueIdentifier>{47a62685-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

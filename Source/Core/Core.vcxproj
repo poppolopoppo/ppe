@@ -82,10 +82,10 @@
     <CustomBuild Include="Container\Hash.cpp" />
     <CustomBuild Include="Container\Hash.h" />
     <CustomBuild Include="Container\HashMap.h" />
+    <CustomBuild Include="Container\HashMultiMap.h" />
     <CustomBuild Include="Container\HashSet.h" />
     <CustomBuild Include="Container\List.h" />
     <CustomBuild Include="Container\Map.h" />
-    <CustomBuild Include="Container\MultiHashMap.h" />
     <CustomBuild Include="Container\MultiMap.h" />
     <CustomBuild Include="Container\Pair.h" />
     <CustomBuild Include="Container\RawStorage-inl.h" />

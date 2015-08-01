@@ -62,6 +62,11 @@
     <CustomBuild Include="Device\Geometry\VertexSubPart.h" />
     <CustomBuild Include="Device\Geometry\VertexTypes.cpp" />
     <CustomBuild Include="Device\Geometry\VertexTypes.h" />
+    <CustomBuild Include="Device\Pool\DeviceResourceSharable.cpp" />
+    <CustomBuild Include="Device\Pool\DeviceResourceSharable.h" />
+    <CustomBuild Include="Device\Pool\DeviceSharedEntityKey.h" />
+    <CustomBuild Include="Device\Pool\DeviceSharedEntityPool.cpp" />
+    <CustomBuild Include="Device\Pool\DeviceSharedEntityPool.h" />
     <CustomBuild Include="Device\Shader\ConstantBuffer.cpp" />
     <CustomBuild Include="Device\Shader\ConstantBuffer.h" />
     <CustomBuild Include="Device\Shader\ConstantBufferLayout.cpp" />
@@ -118,13 +123,8 @@
     <CustomBuild Include="Device\DeviceResource.h" />
     <CustomBuild Include="Device\DeviceResourceBuffer.cpp" />
     <CustomBuild Include="Device\DeviceResourceBuffer.h" />
-    <CustomBuild Include="Device\DeviceResourceSharable.cpp" />
-    <CustomBuild Include="Device\DeviceResourceSharable.h" />
     <CustomBuild Include="Device\DeviceResourceType.cpp" />
     <CustomBuild Include="Device\DeviceResourceType.h" />
-    <CustomBuild Include="Device\DeviceSharedEntityKey.h" />
-    <CustomBuild Include="Device\DeviceSharedEntityPool.cpp" />
-    <CustomBuild Include="Device\DeviceSharedEntityPool.h" />
     <CustomBuild Include="Device\IDeviceAPIContext.h" />
     <CustomBuild Include="Device\IDeviceAPIDiagnostics.h" />
     <CustomBuild Include="Device\IDeviceAPIEncapsulator.h" />
@@ -180,6 +180,7 @@
     <CustomBuild Include="Window\WindowMessageHandler.cpp" />
     <CustomBuild Include="Window\WindowMessageHandler.h" />
     <CustomBuild Include="Core.Graphics.bff" />
+    <CustomBuild Include="GlobalVideoMemory.h" />
     <CustomBuild Include="Graphics.cpp" />
     <CustomBuild Include="Graphics.h" />
     <CustomBuild Include="stdafx.cpp" />

@@ -106,6 +106,9 @@
     <CustomBuild Include="Container\HashMap.h">
       <Filter>Container</Filter>
     </CustomBuild>
+    <CustomBuild Include="Container\HashMultiMap.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
     <CustomBuild Include="Container\HashSet.h">
       <Filter>Container</Filter>
     </CustomBuild>
@@ -113,9 +116,6 @@
       <Filter>Container</Filter>
     </CustomBuild>
     <CustomBuild Include="Container\Map.h">
-      <Filter>Container</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Container\MultiHashMap.h">
       <Filter>Container</Filter>
     </CustomBuild>
     <CustomBuild Include="Container\MultiMap.h">
