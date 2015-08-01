@@ -62,7 +62,7 @@ static void CreateRectVertices_(
         { 1, 0, 0, 0 },
     };
 
-    const Graphics::VertexDeclaration *vertexDeclaration = material->Effect()->VertexDeclaration();
+    const Graphics::VertexDeclaration *vertexDeclaration = material->Effect()->VertexDeclaration().get();
     vertices = new Graphics::VertexBuffer(
         vertexDeclaration,
         vertexCount,
