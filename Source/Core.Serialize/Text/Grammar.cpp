@@ -1,8 +1,6 @@
 #include "stdafx.h"
 
-/*
-// TODO: simplify ParseProduction ...
-//#pragma warning( push )
+#pragma warning( push )
 #pragma warning( disable : 4503) // C4503 'XXX' : longueur du nom décoré dépassée, le nom a été tronqué
 
 #include "Grammar.h"
@@ -330,33 +328,31 @@ struct BinaryOp {
                 _Op< ParseString >()(lhs, lhs_value->Cast<ParseString>()->Wrapper(), rhs_value->Cast<ParseString>()->Wrapper())
                 );
 
-        char cstr[256];
-        {
-            OCStrStream oss(cstr);
-            if (rhs_type_id == PARSEID_BOOL)
-                oss << rhs_value->Cast<ParseBool>()->Wrapper();
-            else if (rhs_type_id == PARSEID_INT)
-                oss << rhs_value->Cast<ParseInt>()->Wrapper();
-            else if (rhs_type_id == PARSEID_FLOAT)
-                oss << rhs_value->Cast<ParseFloat>()->Wrapper();
-            else {
-                ParseInt integer;
-                ParseFloat fp;
-                ParseBool boolean;
+        STACKLOCAL_OCSTRSTREAM(oss, 256);
+        
+        if (rhs_type_id == PARSEID_BOOL)
+            oss << rhs_value->Cast<ParseBool>()->Wrapper();
+        else if (rhs_type_id == PARSEID_INT)
+            oss << rhs_value->Cast<ParseInt>()->Wrapper();
+        else if (rhs_type_id == PARSEID_FLOAT)
+            oss << rhs_value->Cast<ParseFloat>()->Wrapper();
+        else {
+            ParseInt integer;
+            ParseFloat fp;
+            ParseBool boolean;
 
-                if (RTTI::AssignCopy(&boolean, rhs_value))
-                    oss << boolean;
-                else if (RTTI::AssignCopy(&integer, rhs_value))
-                    oss << integer;
-                else if (RTTI::AssignCopy(&fp, rhs_value))
-                    oss << fp;
-                else
-                    throw Parser::ParserException("could not convert to string", rhs);
-            }
+            if (RTTI::AssignCopy(&boolean, rhs_value))
+                oss << boolean;
+            else if (RTTI::AssignCopy(&integer, rhs_value))
+                oss << integer;
+            else if (RTTI::AssignCopy(&fp, rhs_value))
+                oss << fp;
+            else
+                throw Parser::ParserException("could not convert to string", rhs);
         }
 
         return RTTI::MakeAtom(
-            _Op< ParseString >()(lhs, lhs_value->Cast<ParseString>()->Wrapper(), cstr)
+            _Op< ParseString >()(lhs, lhs_value->Cast<ParseString>()->Wrapper(), oss.NullTerminatedStr())
             );
     }
 
@@ -515,23 +511,21 @@ GrammarImpl::GrammarImpl()
             const Lexer::Match *root = std::get<0>(args);
             const Parser::Enumerable<Tuple<const Lexer::Match *, const Lexer::Match *> >& path = std::get<1>(args);
 
-            char name[512]; {
-                OCStrStream oss(name);
+            STACKLOCAL_OCSTRSTREAM(oss, 256);
+            
+            if (Lexer::Symbol::Dollar == root->Symbol()->Type())
+                oss << '$';
+            else if (Lexer::Symbol::Complement == root->Symbol()->Type())
+                oss << '~'; // TODO : namespace name
+            else
+                Assert(false);
 
-                if (Lexer::Symbol::Dollar == root->Symbol()->Type())
-                    oss << '$';
-                else if (Lexer::Symbol::Complement == root->Symbol()->Type())
-                    oss << '~'; // TODO : namespace name
-                else
-                    Assert(false);
-
-                for (const auto& it : path) {
-                    Assert(Lexer::Symbol::Div == std::get<0>(it)->Symbol()->Type());
-                    oss << '/' << std::get<1>(it)->Value();
-                }
+            for (const auto& it : path) {
+                Assert(Lexer::Symbol::Div == std::get<0>(it)->Symbol()->Type());
+                oss << '/' << std::get<1>(it)->Value();
             }
 
-            return Parser::MakeVariableReference(name, root->Site());
+            return Parser::MakeVariableReference(oss.NullTerminatedStr(), root->Site());
         })
     ))
 
@@ -1052,7 +1046,7 @@ void Grammar_Create() {
 //----------------------------------------------------------------------------
 void Grammar_Destroy() {
     AssertRelease(nullptr != sGrammarImpl);
-    delete sGrammarImpl;
+    checked_delete(sGrammarImpl);
     sGrammarImpl = nullptr;
 }
 //----------------------------------------------------------------------------
@@ -1066,5 +1060,4 @@ Parser::PCParseItem Grammar_Parse(Parser::ParseList& input) {
 } //!namespace Serialize
 } //!namespace Core
 
-//#pragma warning( pop )
-*/
+#pragma warning( pop )
