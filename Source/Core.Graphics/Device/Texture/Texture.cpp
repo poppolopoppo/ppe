@@ -6,13 +6,15 @@
 #include "Device/DeviceResourceBuffer.h"
 #include "SurfaceFormat.h"
 
+#include "Core/Container/Hash.h"
+
 namespace Core {
 namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Texture::Texture(DeviceResourceType textureType, const SurfaceFormat *format, BufferMode mode, BufferUsage usage)
-:   DeviceResource(textureType)
+Texture::Texture(DeviceResourceType textureType, const SurfaceFormat *format, BufferMode mode, BufferUsage usage, bool sharable)
+:   DeviceResourceSharable(textureType, sharable)
 ,   _format(format)
 ,   _usageAndMode(0) {
     Assert(format);
@@ -54,6 +56,16 @@ bool Texture::Available() const {
 //----------------------------------------------------------------------------
 DeviceAPIDependantEntity *Texture::TerminalEntity() const {
     return TextureEntity();
+}
+//----------------------------------------------------------------------------
+size_t Texture::HashValue_() const {
+    return Core::hash_value(_usageAndMode, _format);
+}
+//----------------------------------------------------------------------------
+bool Texture::Match_(const DeviceAPIDependantTexture& texture) const {
+    return  texture.Mode() == Mode() &&
+            texture.Usage() == Usage() &&
+            texture.Format() == Format();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

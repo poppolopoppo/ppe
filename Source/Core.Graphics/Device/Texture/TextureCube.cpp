@@ -6,6 +6,8 @@
 #include "Device/DeviceResourceBuffer.h"
 #include "SurfaceFormat.h"
 
+#include "Core/Container/Hash.h"
+
 namespace Core {
 namespace Graphics {
 //----------------------------------------------------------------------------
@@ -20,14 +22,11 @@ STATIC_CONST_INTEGRAL(size_t, CubeMapFaceCount, 6);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 TextureCube::TextureCube(
-    size_t width,
-    size_t height,
-    size_t levelCount,
+    size_t width, size_t height, size_t levelCount,
     const SurfaceFormat *format,
-    BufferMode mode,
-    BufferUsage usage
-    )
-:   Texture(DeviceResourceType::TextureCube, format, mode, usage)
+    BufferMode mode, BufferUsage usage,
+    bool sharable )
+:   Texture(DeviceResourceType::TextureCube, format, mode, usage, sharable)
 ,   _width(checked_cast<u32>(width))
 ,   _height(checked_cast<u32>(height))
 ,   _levelCount(checked_cast<u32>(levelCount)) {
@@ -163,6 +162,19 @@ void TextureCube::CopySubPart(
         device, 
         dstFace, dstLevel, dstPos, 
         psourceCube->DeviceAPIDependantTextureCube().get(), srcFace, srcLevel, srcBox );
+}
+//----------------------------------------------------------------------------
+size_t TextureCube::VirtualSharedKeyHashValue() const {
+    return Core::hash_value(Texture::HashValue_(), _width, _height, _levelCount);
+}
+//----------------------------------------------------------------------------
+bool TextureCube::VirtualMatchTerminalEntity(const DeviceAPIDependantEntity *entity) const {
+    const Graphics::DeviceAPIDependantTextureCube *textureCube = 
+        checked_cast<const Graphics::DeviceAPIDependantTextureCube *>(entity);
+    return  Texture::Match_(*textureCube) &&
+            textureCube->Width() == _width &&
+            textureCube->Height() == _height &&
+            textureCube->LevelCount() == _levelCount;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

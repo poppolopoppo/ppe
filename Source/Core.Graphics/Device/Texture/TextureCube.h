@@ -27,12 +27,10 @@ public:
     };
 
     TextureCube(
-        size_t width,
-        size_t height,
-        size_t levelCount,
+        size_t width, size_t height, size_t levelCount,
         const SurfaceFormat *format,
-        BufferMode mode,
-        BufferUsage usage);
+        BufferMode mode, BufferUsage usage,
+        bool sharable );
     virtual ~TextureCube();
 
     size_t Width() const { return _width; }
@@ -60,6 +58,11 @@ public:
     void CopySubPart(   IDeviceAPIEncapsulator *device, 
                         Face dstFace, size_t dstLevel, const uint2& dstPos, 
                         const TextureCube *psourceCube, Face srcFace, size_t srcLevel, const AABB2u& srcBox );
+
+
+protected:
+    virtual size_t VirtualSharedKeyHashValue() const override;
+    virtual bool VirtualMatchTerminalEntity(const DeviceAPIDependantEntity *entity) const override;
 
 private:
     void Create_(IDeviceAPIEncapsulator *device, const MemoryView<const u8>& optionalRawData);

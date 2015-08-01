@@ -5,6 +5,7 @@
 #include "DeviceEncapsulator.h"
 #include "DeviceResource.h"
 
+#include "Core/Container/Hash.h"
 #include "Core/Memory/MemoryView.h"
 
 namespace Core {
@@ -110,6 +111,18 @@ void DeviceResourceBuffer::CopySubPart(
     Assert(SizeInBytes() >= dstOffset + length);
 
     _deviceAPIDependantBuffer->CopySubPart(device, dstOffset, psource->DeviceAPIDependantBuffer().get(), srcOffset, length);
+}
+//----------------------------------------------------------------------------
+size_t DeviceResourceBuffer::HashValue() const {
+    return hash_value(_count, _strideModeUsage);
+}
+//----------------------------------------------------------------------------
+bool DeviceResourceBuffer::Match(const DeviceAPIDependantResourceBuffer& entity) const {
+    return  entity.Count() == Count() &&
+            entity.Stride() == Stride() &&
+            entity.SizeInBytes() == SizeInBytes() &&
+            entity.Mode() == Mode() &&
+            entity.Usage() == Usage();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

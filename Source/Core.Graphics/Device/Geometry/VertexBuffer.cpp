@@ -23,8 +23,8 @@ void VertexBufferBinding::Set(  size_t instanceFrequency,
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-VertexBuffer::VertexBuffer(const Graphics::VertexDeclaration *vertexDeclaration, size_t vertexCount, BufferMode mode, BufferUsage usage)
-:   DeviceResource(DeviceResourceType::Vertices)
+VertexBuffer::VertexBuffer(const Graphics::VertexDeclaration *vertexDeclaration, size_t vertexCount, BufferMode mode, BufferUsage usage, bool sharable)
+:   DeviceResourceSharable(DeviceResourceType::Vertices, sharable)
 ,   _vertexDeclaration(vertexDeclaration)
 ,   _buffer(vertexDeclaration->SizeInBytes(), vertexCount, mode, usage) {
     Assert(vertexDeclaration);
@@ -61,6 +61,17 @@ void VertexBuffer::Destroy(IDeviceAPIEncapsulator *device) {
     Assert(resourceBuffer);
 
     device->DestroyVertexBuffer(this, resourceBuffer);
+}
+//----------------------------------------------------------------------------
+size_t VertexBuffer::VirtualSharedKeyHashValue() const {
+    return _buffer.HashValue();
+}
+//----------------------------------------------------------------------------
+bool VertexBuffer::VirtualMatchTerminalEntity(const DeviceAPIDependantEntity *entity) const {
+    const DeviceAPIDependantResourceBuffer *resourceBuffer = 
+        checked_cast<const DeviceAPIDependantResourceBuffer *>(entity);
+    // no restriction on _vertexDeclaration :
+    return _buffer.Match(*resourceBuffer);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

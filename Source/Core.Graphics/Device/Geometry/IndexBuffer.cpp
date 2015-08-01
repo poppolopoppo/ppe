@@ -9,8 +9,8 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-IndexBuffer::IndexBuffer(Graphics::IndexElementSize indexElementSize, size_t indexCount, BufferMode mode, BufferUsage usage)
-:   DeviceResource(DeviceResourceType::Indices)
+IndexBuffer::IndexBuffer(Graphics::IndexElementSize indexElementSize, size_t indexCount, BufferMode mode, BufferUsage usage, bool sharable)
+:   DeviceResourceSharable(DeviceResourceType::Indices, sharable)
 ,   _buffer(size_t(indexElementSize), indexCount, mode, usage) {
     Assert( sizeof(u16) == size_t(indexElementSize) ||
             sizeof(u32) == size_t(indexElementSize) );
@@ -24,6 +24,16 @@ void IndexBuffer::SetData_(IDeviceAPIEncapsulator *device, size_t offset, const 
     Assert(Frozen());
 
     _buffer.SetData(device, offset, src, stride, count);
+}
+//----------------------------------------------------------------------------
+size_t IndexBuffer::VirtualSharedKeyHashValue() const {
+    return _buffer.HashValue();
+}
+//----------------------------------------------------------------------------
+bool IndexBuffer::VirtualMatchTerminalEntity(const DeviceAPIDependantEntity *entity) const {
+    const DeviceAPIDependantResourceBuffer *resourceBuffer = 
+        checked_cast<const DeviceAPIDependantResourceBuffer *>(entity);
+    return _buffer.Match(*resourceBuffer);
 }
 //----------------------------------------------------------------------------
 void IndexBuffer::Create_(IDeviceAPIEncapsulator *device, const MemoryView<const u8>& optionalRawData) {

@@ -3,8 +3,8 @@
 #include "Core.Graphics/Graphics.h"
 
 #include "Core.Graphics/Device/DeviceAPIDependantEntity.h"
-#include "Core.Graphics/Device/DeviceResource.h"
 #include "Core.Graphics/Device/IDeviceAPIEncapsulator.h"
+#include "Core.Graphics/Device/Pool/DeviceResourceSharable.h"
 
 namespace Core {
 namespace Graphics {
@@ -18,9 +18,9 @@ FWD_REFPTR(DeviceAPIDependantTexture);
 //----------------------------------------------------------------------------
 FWD_REFPTR(Texture);
 FWD_WEAKPTR(Texture);
-class Texture : public DeviceResource {
+class Texture : public DeviceResourceSharable {
 public:
-    Texture(DeviceResourceType textureType, const SurfaceFormat *format, BufferMode mode, BufferUsage usage);
+    Texture(DeviceResourceType textureType, const SurfaceFormat *format, BufferMode mode, BufferUsage usage, bool sharable);
     virtual ~Texture();
 
     const SurfaceFormat *Format() const { return _format; }
@@ -42,6 +42,10 @@ public:
 
     virtual void CopyFrom(IDeviceAPIEncapsulator *device, const Texture *pother) = 0;
 
+protected:
+    size_t HashValue_() const;
+    bool Match_(const DeviceAPIDependantTexture& texture) const;
+    
 private:
     typedef Meta::Bit<u32>::First<2>::type bitusage_type;
     typedef Meta::Bit<u32>::After<bitusage_type>::Field<2>::type bitmode_type;

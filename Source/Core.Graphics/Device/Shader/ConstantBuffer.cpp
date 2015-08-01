@@ -21,8 +21,8 @@ STATIC_CONST_INTEGRAL(size_t, ConstantBufferStride, 4);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ConstantBuffer::ConstantBuffer(const ConstantBufferLayout *layout)
-:   DeviceResource(DeviceResourceType::Constants)
+ConstantBuffer::ConstantBuffer(const ConstantBufferLayout *layout, bool sharable)
+:   DeviceResourceSharable(DeviceResourceType::Constants, sharable)
 ,   _buffer(ConstantBufferStride, layout->SizeInBytes(), BufferMode::WriteDiscard, BufferUsage::Dynamic)
 ,   _layout(layout) {
     Assert(_layout);
@@ -61,8 +61,11 @@ void ConstantBuffer::Create(IDeviceAPIEncapsulator *device) {
     Assert(device);
     Assert(!_deviceAPIDependantWriter);
 
-    DeviceAPIDependantResourceBuffer *const resourceBuffer = device->CreateConstantBuffer(this, &_buffer, _deviceAPIDependantWriter);
+    DeviceAPIDependantResourceBuffer *const resourceBuffer = device->CreateConstantBuffer(this, &_buffer);
     Assert(resourceBuffer);
+    Assert(_deviceAPIDependantWriter);
+
+    _deviceAPIDependantWriter = device->ConstantWriter();
     Assert(_deviceAPIDependantWriter);
 
     _buffer.Create(device, this, resourceBuffer);
@@ -77,9 +80,20 @@ void ConstantBuffer::Destroy(IDeviceAPIEncapsulator *device) {
     PDeviceAPIDependantResourceBuffer resourceBuffer = _buffer.Destroy(device, this);
     Assert(resourceBuffer);
 
-    device->DestroyConstantBuffer(this, resourceBuffer, _deviceAPIDependantWriter);
+    device->DestroyConstantBuffer(this, resourceBuffer);
 
     Assert(!_deviceAPIDependantWriter);
+}
+//----------------------------------------------------------------------------
+size_t ConstantBuffer::VirtualSharedKeyHashValue() const {
+    return _buffer.HashValue();
+}
+//----------------------------------------------------------------------------
+bool ConstantBuffer::VirtualMatchTerminalEntity(const DeviceAPIDependantEntity *entity) const {
+    const DeviceAPIDependantResourceBuffer *resourceBuffer = 
+        checked_cast<const DeviceAPIDependantResourceBuffer *>(entity);
+    // no restriction on _layout or _deviceAPIDependantWriter :
+    return _buffer.Match(*resourceBuffer);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

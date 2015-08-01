@@ -2,12 +2,13 @@
 
 #include "Texture2D.h"
 
-#include "Core/Maths/Geometry/ScalarBoundingBox.h"
-#include "Core/Maths/Geometry/ScalarVector.h"
-
 #include "Device/DeviceAPI.h"
 #include "Device/DeviceResourceBuffer.h"
 #include "SurfaceFormat.h"
+
+#include "Core/Container/Hash.h"
+#include "Core/Maths/Geometry/ScalarBoundingBox.h"
+#include "Core/Maths/Geometry/ScalarVector.h"
 
 namespace Core {
 namespace Graphics {
@@ -15,14 +16,11 @@ namespace Graphics {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 Texture2D::Texture2D(
-    size_t width,
-    size_t height,
-    size_t levelCount,
+    size_t width, size_t height, size_t levelCount,
     const SurfaceFormat *format,
-    BufferMode mode,
-    BufferUsage usage
-    )
-:   Texture(DeviceResourceType::Texture2D, format, mode, usage)
+    BufferMode mode, BufferUsage usage,
+    bool sharable )
+:   Texture(DeviceResourceType::Texture2D, format, mode, usage, sharable)
 ,   _width(checked_cast<u32>(width))
 ,   _height(checked_cast<u32>(height))
 ,   _levelCount(checked_cast<u32>(levelCount)) {
@@ -35,14 +33,12 @@ Texture2D::Texture2D(
 }
 //----------------------------------------------------------------------------
 Texture2D::Texture2D(
-    size_t width,
-    size_t height,
-    size_t levelCount,
+    size_t width, size_t height, size_t levelCount,
     const SurfaceFormat *format,
-    BufferMode mode,
-    BufferUsage usage,
+    BufferMode mode, BufferUsage usage,
+    bool sharable,
     Graphics::DeviceAPIDependantTexture2D *deviceAPIDependantTexture2D)
-:   Texture2D(width, height, levelCount, format, mode, usage) {
+:   Texture2D(width, height, levelCount, format, mode, usage, sharable) {
     Assert(deviceAPIDependantTexture2D);
     _deviceAPIDependantTexture2D = deviceAPIDependantTexture2D;
 }
@@ -168,6 +164,19 @@ void Texture2D::CopySubPart(
             Format()->SizeOfTexture2DInBytes(srcBox.Extents()) );
 
     _deviceAPIDependantTexture2D->CopySubPart(device, dstLevel, dstPos, psource2D->DeviceAPIDependantTexture2D().get(), srcLevel, srcBox);
+}
+//----------------------------------------------------------------------------
+size_t Texture2D::VirtualSharedKeyHashValue() const {
+    return Core::hash_value(Texture::HashValue_(), _width, _height, _levelCount);
+}
+//----------------------------------------------------------------------------
+bool Texture2D::VirtualMatchTerminalEntity(const DeviceAPIDependantEntity *entity) const {
+    const Graphics::DeviceAPIDependantTexture2D *texture2D = 
+        checked_cast<const Graphics::DeviceAPIDependantTexture2D *>(entity);
+    return  Texture::Match_(*texture2D) &&
+            texture2D->Width() == _width &&
+            texture2D->Height() == _height &&
+            texture2D->LevelCount() == _levelCount;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

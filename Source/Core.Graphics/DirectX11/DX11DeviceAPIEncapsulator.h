@@ -93,8 +93,10 @@ private: // IDeviceAPIEncapsulator impl
 
     // Shaders
 
-    virtual DeviceAPIDependantResourceBuffer *CreateConstantBuffer(ConstantBuffer *constantBuffer, DeviceResourceBuffer *resourceBuffer, PDeviceAPIDependantConstantWriter& writer) override;
-    virtual void DestroyConstantBuffer(ConstantBuffer *constantBuffer, PDeviceAPIDependantResourceBuffer& entity, PDeviceAPIDependantConstantWriter& writer) override;
+    virtual const DeviceAPIDependantConstantWriter *ConstantWriter() const override;
+
+    virtual DeviceAPIDependantResourceBuffer *CreateConstantBuffer(ConstantBuffer *constantBuffer, DeviceResourceBuffer *resourceBuffer) override;
+    virtual void DestroyConstantBuffer(ConstantBuffer *constantBuffer, PDeviceAPIDependantResourceBuffer& entity) override;
 
     virtual DeviceAPIDependantShaderEffect *CreateShaderEffect(ShaderEffect *effect) override;
     virtual void DestroyShaderEffect(ShaderEffect *effect, PDeviceAPIDependantShaderEffect& entity) override;

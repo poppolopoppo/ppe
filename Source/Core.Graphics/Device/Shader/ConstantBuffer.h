@@ -3,8 +3,8 @@
 #include "Core.Graphics/Graphics.h"
 
 #include "Core.Graphics/Device/DeviceAPIDependantEntity.h"
-#include "Core.Graphics/Device/DeviceResource.h"
 #include "Core.Graphics/Device/DeviceResourceBuffer.h"
+#include "Core.Graphics/Device/Pool/DeviceResourceSharable.h"
 
 #include "Core/Memory/MemoryStack.h"
 
@@ -18,16 +18,16 @@ FWD_REFPTR(DeviceAPIDependantConstantWriter);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(ConstantBuffer);
-class ConstantBuffer : public DeviceResource {
+class ConstantBuffer : public DeviceResourceSharable {
 public:
-    explicit ConstantBuffer(const ConstantBufferLayout *layout);
+    ConstantBuffer(const ConstantBufferLayout *layout, bool sharable);
     virtual ~ConstantBuffer();
 
     virtual bool Available() const override { return _buffer.Available(); }
     virtual DeviceAPIDependantEntity *TerminalEntity() const override { return _buffer.DeviceAPIDependantBuffer().get(); }
 
-    const PDeviceAPIDependantConstantWriter& DeviceAPIDependantWriter() const {
-        Assert(Frozen()); return _deviceAPIDependantWriter;
+    const DeviceAPIDependantConstantWriter *DeviceAPIDependantWriter() const {
+        Assert(Available()); return _deviceAPIDependantWriter.get();
     }
 
     const DeviceResourceBuffer& Buffer() const { return _buffer; }
@@ -39,10 +39,14 @@ public:
     void Create(IDeviceAPIEncapsulator *device);
     void Destroy(IDeviceAPIEncapsulator *device);
 
+protected:
+    virtual size_t VirtualSharedKeyHashValue() const override;
+    virtual bool VirtualMatchTerminalEntity(const DeviceAPIDependantEntity *entity) const override;
+
 private:
     DeviceResourceBuffer _buffer;
     PCConstantBufferLayout _layout;
-    PDeviceAPIDependantConstantWriter _deviceAPIDependantWriter;
+    PCDeviceAPIDependantConstantWriter _deviceAPIDependantWriter;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

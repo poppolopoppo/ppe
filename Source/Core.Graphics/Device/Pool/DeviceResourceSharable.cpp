@@ -29,6 +29,7 @@ bool DeviceResourceSharable::MatchTerminalEntity(const DeviceAPIDependantEntity 
     Assert(Frozen());
     Assert(!Available());
     Assert(Sharable());
+    Assert(entity);
     Assert(!entity->IsAttachedToResource());
 
     return (entity->ResourceType() == ResourceType())

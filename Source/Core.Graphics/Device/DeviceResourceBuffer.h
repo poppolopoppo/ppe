@@ -88,9 +88,12 @@ public:
                         const DeviceResourceBuffer *psource, size_t srcOffset,
                         size_t length );
 
+    size_t HashValue() const;
+    bool Match(const DeviceAPIDependantResourceBuffer& entity) const;
+
 private:
     typedef Meta::Bit<u32>::First<2>::type bitusage_type;
-    typedef Meta::Bit<u32>::After<bitusage_type>::Field<2>::type bitmode_type;
+    typedef Meta::Bit<u32>::After<bitusage_type>::Field<4>::type bitmode_type;
     typedef Meta::Bit<u32>::After<bitmode_type>::Remain::type bitstride_type;
 
     u32 _count;

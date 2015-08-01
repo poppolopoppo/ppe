@@ -11,17 +11,13 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-RenderTarget::RenderTarget(
-    size_t width,
-    size_t height,
-    const SurfaceFormat *format
-    )
-:   Texture2D(width, height, 1, format, BufferMode::None, BufferUsage::Default) {
+RenderTarget::RenderTarget(size_t width, size_t height, const SurfaceFormat *format, bool sharable)
+:   Texture2D(width, height, 1, format, BufferMode::None, BufferUsage::Default, sharable) {
     Assert(format->SupportRenderTarget());
 }
 //----------------------------------------------------------------------------
-RenderTarget::RenderTarget(size_t width, size_t height, const SurfaceFormat *format, Graphics::DeviceAPIDependantRenderTarget *deviceAPIDependantRenderTarget)
-:   Texture2D(width, height, 1, format, BufferMode::None, BufferUsage::Default, deviceAPIDependantRenderTarget) {}
+RenderTarget::RenderTarget(size_t width, size_t height, const SurfaceFormat *format, bool sharable, Graphics::DeviceAPIDependantRenderTarget *deviceAPIDependantRenderTarget)
+:   Texture2D(width, height, 1, format, BufferMode::None, BufferUsage::Default, sharable, deviceAPIDependantRenderTarget) {}
 //----------------------------------------------------------------------------
 RenderTarget::~RenderTarget() {}
 //----------------------------------------------------------------------------

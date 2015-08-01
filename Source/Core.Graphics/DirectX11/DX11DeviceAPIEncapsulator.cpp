@@ -359,8 +359,11 @@ void DX11DeviceAPIEncapsulator::DestroyVertexBuffer(VertexBuffer * /* buffer */,
 //----------------------------------------------------------------------------
 // Shaders
 //----------------------------------------------------------------------------
-DeviceAPIDependantResourceBuffer *DX11DeviceAPIEncapsulator::CreateConstantBuffer(ConstantBuffer *constantBuffer, DeviceResourceBuffer *resourceBuffer, PDeviceAPIDependantConstantWriter& writer) {
-    writer = _writer;
+const DeviceAPIDependantConstantWriter *DX11DeviceAPIEncapsulator::ConstantWriter() const {
+    return _writer.get();
+}
+//----------------------------------------------------------------------------
+DeviceAPIDependantResourceBuffer *DX11DeviceAPIEncapsulator::CreateConstantBuffer(ConstantBuffer *constantBuffer, DeviceResourceBuffer *resourceBuffer) {
     return new DX11ResourceBuffer(this, constantBuffer, resourceBuffer, MemoryView<const u8>());
 }
 //----------------------------------------------------------------------------
@@ -435,9 +438,7 @@ void DX11DeviceAPIEncapsulator::SetConstantBuffers(ShaderProgramType stage, cons
     }
 }
 //----------------------------------------------------------------------------
-void DX11DeviceAPIEncapsulator::DestroyConstantBuffer(ConstantBuffer * /* constantBuffer */, PDeviceAPIDependantResourceBuffer& entity, PDeviceAPIDependantConstantWriter& writer) {
-    Assert(writer = _writer);
-    writer = nullptr;
+void DX11DeviceAPIEncapsulator::DestroyConstantBuffer(ConstantBuffer * /* constantBuffer */, PDeviceAPIDependantResourceBuffer& entity) {
     RemoveRef_AssertReachZero(entity);
 }
 //----------------------------------------------------------------------------

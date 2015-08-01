@@ -65,8 +65,10 @@ public:
 
     // Shaders
 
-    virtual DeviceAPIDependantResourceBuffer *CreateConstantBuffer(ConstantBuffer *constantBuffer, DeviceResourceBuffer *resourceBuffer, PDeviceAPIDependantConstantWriter& writer) = 0;
-    virtual void DestroyConstantBuffer(ConstantBuffer *constantBuffer, PDeviceAPIDependantResourceBuffer& entity, PDeviceAPIDependantConstantWriter& writer) = 0;
+    virtual const DeviceAPIDependantConstantWriter *ConstantWriter() const = 0;
+
+    virtual DeviceAPIDependantResourceBuffer *CreateConstantBuffer(ConstantBuffer *constantBuffer, DeviceResourceBuffer *resourceBuffer) = 0;
+    virtual void DestroyConstantBuffer(ConstantBuffer *constantBuffer, PDeviceAPIDependantResourceBuffer& entity) = 0;
 
     virtual DeviceAPIDependantShaderEffect *CreateShaderEffect(ShaderEffect *effect) = 0;
     virtual void DestroyShaderEffect(ShaderEffect *effect, PDeviceAPIDependantShaderEffect& entity) = 0;

@@ -2,15 +2,14 @@
 
 #include "Core.Graphics/Graphics.h"
 
-#include "Core.Graphics/Device/DeviceResource.h"
 #include "Core.Graphics/Device/DeviceResourceBuffer.h"
+#include "Core.Graphics/Device/Pool/DeviceResourceSharable.h"
 
 namespace Core {
 namespace Graphics {
 class IDeviceAPIEncapsulator;
 FWD_REFPTR(VertexBuffer);
 FWD_REFPTR(VertexDeclaration);
-
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -26,9 +25,11 @@ struct VertexBufferBinding {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class VertexBuffer : public DeviceResource {
+class VertexBuffer : public DeviceResourceSharable {
 public:
-    VertexBuffer(const Graphics::VertexDeclaration *vertexDeclaration, size_t vertexCount, BufferMode mode, BufferUsage usage);
+    VertexBuffer(   const Graphics::VertexDeclaration *vertexDeclaration, size_t vertexCount,
+                    BufferMode mode, BufferUsage usage,
+                    bool sharable );
     virtual ~VertexBuffer();
 
     virtual bool Available() const override { return _buffer.Available(); }
@@ -44,6 +45,10 @@ public:
     void Create(IDeviceAPIEncapsulator *device, const MemoryView<const T>& optionalData);
     void Create(IDeviceAPIEncapsulator *device, const MemoryView<const u8>& optionalRawData);
     void Destroy(IDeviceAPIEncapsulator *device);
+
+protected:
+    virtual size_t VirtualSharedKeyHashValue() const override;
+    virtual bool VirtualMatchTerminalEntity(const DeviceAPIDependantEntity *entity) const override;
 
 private:
     PCVertexDeclaration _vertexDeclaration;

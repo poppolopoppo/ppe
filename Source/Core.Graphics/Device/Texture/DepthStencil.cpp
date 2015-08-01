@@ -11,13 +11,13 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DepthStencil::DepthStencil(size_t width, size_t height, const SurfaceFormat *format)
-:   Texture2D(width, height, 1, format, BufferMode::None, BufferUsage::Default) {
+DepthStencil::DepthStencil(size_t width, size_t height, const SurfaceFormat *format, bool sharable)
+:   Texture2D(width, height, 1, format, BufferMode::None, BufferUsage::Default, sharable) {
     Assert(format->SupportDepthStencil());
 }
 //----------------------------------------------------------------------------
-DepthStencil::DepthStencil(size_t width, size_t height, const SurfaceFormat *format, DeviceAPIDependantDepthStencil *deviceAPIDependantDepthStencil)
-:   Texture2D(width, height, 1, format, BufferMode::None, BufferUsage::Default, deviceAPIDependantDepthStencil) {}
+DepthStencil::DepthStencil(size_t width, size_t height, const SurfaceFormat *format, bool sharable, DeviceAPIDependantDepthStencil *deviceAPIDependantDepthStencil)
+:   Texture2D(width, height, 1, format, BufferMode::None, BufferUsage::Default, sharable, deviceAPIDependantDepthStencil) {}
 //----------------------------------------------------------------------------
 DepthStencil::~DepthStencil() {}
 //----------------------------------------------------------------------------

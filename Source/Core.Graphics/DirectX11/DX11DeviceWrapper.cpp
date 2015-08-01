@@ -185,6 +185,7 @@ static RenderTarget *CreateDX11BackBufferRenderTarget_(
         presentationParameters.BackBufferWidth(),
         presentationParameters.BackBufferHeight(),
         presentationParameters.BackBufferFormat(),
+        false,
         dx11RenderTarget);
 
     backBufferRenderTarget->SetResourceName("BackBufferRenderTarget");
@@ -256,7 +257,7 @@ void DX11DeviceWrapper::Create(DX11DeviceAPIEncapsulator *device, void *windowHa
     // create back buffer depth stencil IFN
 
     if (presentationParameters.DepthStencilFormat()) {
-        _backBufferDepthStencil = new DepthStencil(_backBufferRenderTarget->Width(), _backBufferRenderTarget->Height(), presentationParameters.DepthStencilFormat());
+        _backBufferDepthStencil = new DepthStencil(_backBufferRenderTarget->Width(), _backBufferRenderTarget->Height(), presentationParameters.DepthStencilFormat(), false);
         _backBufferDepthStencil->SetResourceName("BackBufferDepthStencil");
         _backBufferDepthStencil->Freeze();
         _backBufferDepthStencil->Create(device->Device());

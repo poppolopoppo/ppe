@@ -51,25 +51,25 @@ static void LRUList_Remove_(DeviceSharedEntityPool::SharedEntity **pHead,
     DeviceSharedEntityPool::LRUNode& node = entity->*_Member;
 
     if (node.Prev) {
-        Assert(node.Prev->*_Member.Next == entity);
-        node.Prev->*_Member.Next = node.Next;
+        Assert((node.Prev->*_Member).Next == entity);
+        (node.Prev->*_Member).Next = node.Next;
     }
 
     if (node.Next) {
-        Assert(node.Next->*_Member.Prev == entity);
-        node.Next->*_Member.Prev = node.Prev;
+        Assert((node.Next->*_Member).Prev == entity);
+        (node.Next->*_Member).Prev = node.Prev;
     }
 
     if (*pHead == entity) {
         Assert(nullptr == node.Prev);
         *pHead = node.Next;
-        Assert(nullptr == *pHead || nullptr == (*pHead)->*_Member.Prev);
+        Assert(nullptr == *pHead || nullptr == ((*pHead)->*_Member).Prev);
     }
 
     if (pTail && *pTail == entity) {
         Assert(nullptr == node.Next);
         *pTail = node.Prev;
-        Assert(nullptr == *pTail || nullptr == (*pTail)->*_Member.Next);
+        Assert(nullptr == *pTail || nullptr == ((*pTail)->*_Member).Next);
     }
 }
 //----------------------------------------------------------------------------
@@ -117,7 +117,9 @@ bool DeviceSharedEntityPool::Acquire(PDeviceAPIDependantEntity *pEntity, const D
     if (nullptr == it->second)
         _map.erase(it);
 
-    _usedMemory.Deallocate(1, shared->Entity->VideoMemorySizeInBytes());
+    const size_t sizeInBytes = shared->Entity->VideoMemorySizeInBytes();
+    Assert(sizeInBytes);
+    _usedMemory.Deallocate(1, sizeInBytes);
 
     Assert(key == shared->Key);
     *pEntity = std::move(shared->Entity);
@@ -133,7 +135,9 @@ void DeviceSharedEntityPool::Release(const DeviceSharedEntityKey& key, PDeviceAP
     LRUList_Push_<&SharedEntity::Global>(&_mru, &_lru, mru);
     LRUList_Push_<&SharedEntity::Global>(&shared, nullptr, mru);
 
-    _usedMemory.Allocate(1, entity->VideoMemorySizeInBytes());
+    const size_t sizeInBytes = shared->Entity->VideoMemorySizeInBytes();
+    Assert(sizeInBytes);
+    _usedMemory.Allocate(1, sizeInBytes);
 
     mru->Key = key;
     mru->Entity = std::move(entity);
@@ -146,10 +150,45 @@ void DeviceSharedEntityPool::ReleaseAll() {
     while (p) {
         SharedEntity *const next = p->Global.Next;
         Assert(nullptr != next || _lru == p);
+
         _usedMemory.Deallocate(1, p->Entity->VideoMemorySizeInBytes());
+
         RemoveRef_AssertReachZero(p->Entity);
         checked_delete(p);
+
         p = next;
+    }
+
+    _mru = _lru = nullptr;
+    _map.clear();
+}
+//----------------------------------------------------------------------------
+void DeviceSharedEntityPool::ReleaseLRU(size_t targetSizeInBytes) {
+    if (0 == targetSizeInBytes)
+    {
+        ReleaseAll();
+        return;
+    }
+
+    SharedEntity *p = _lru;
+    while (p && targetSizeInBytes < _usedMemory.TotalSizeInBytes().Value) {
+        SharedEntity *const prev = p->Global.Next;
+        Assert(nullptr != prev || _mru == p);
+        
+        const map_type::iterator it = _map.find(p->Key);
+        Assert(_map.end() != it);
+
+        LRUList_Remove_<&SharedEntity::Global>(&_mru, &_lru, p);
+        LRUList_Remove_<&SharedEntity::Local>(&it->second, nullptr, p);
+
+        const size_t sizeInBytes = p->Entity->VideoMemorySizeInBytes();
+        Assert(sizeInBytes);
+        _usedMemory.Deallocate(1, sizeInBytes);
+
+        RemoveRef_AssertReachZero(p->Entity);
+        checked_delete(p);
+
+        p = prev;
     }
 
     _mru = _lru = nullptr;

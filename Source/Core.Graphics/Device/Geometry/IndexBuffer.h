@@ -2,9 +2,9 @@
 
 #include "Core.Graphics/Graphics.h"
 
-#include "Core.Graphics/Device/DeviceResource.h"
 #include "Core.Graphics/Device/DeviceResourceBuffer.h"
 #include "Core.Graphics/Device/Geometry/IndexElementSize.h"
+#include "Core.Graphics/Device/Pool/DeviceResourceSharable.h"
 
 namespace Core {
 namespace Graphics {
@@ -14,9 +14,11 @@ class IDeviceAPIEncapsulator;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(IndexBuffer);
-class IndexBuffer : public DeviceResource {
+class IndexBuffer : public DeviceResourceSharable {
 public:
-    IndexBuffer(Graphics::IndexElementSize indexElementSize, size_t indexCount, BufferMode mode, BufferUsage usage);
+    IndexBuffer(Graphics::IndexElementSize indexElementSize, size_t indexCount,
+                BufferMode mode, BufferUsage usage,
+                bool sharable );
     virtual ~IndexBuffer();
 
     virtual bool Available() const override { return _buffer.Available(); }
@@ -32,6 +34,10 @@ public:
     void Create(IDeviceAPIEncapsulator *device, const MemoryView<const u16>& optionalData);
     void Create(IDeviceAPIEncapsulator *device, const MemoryView<const u32>& optionalData);
     void Destroy(IDeviceAPIEncapsulator *device);
+
+protected:
+    virtual size_t VirtualSharedKeyHashValue() const override;
+    virtual bool VirtualMatchTerminalEntity(const DeviceAPIDependantEntity *entity) const override;
 
 private:
     void Create_(IDeviceAPIEncapsulator *device, const MemoryView<const u8>& optionalRawData);

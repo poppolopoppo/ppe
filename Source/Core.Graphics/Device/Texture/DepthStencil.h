@@ -15,8 +15,8 @@ FWD_REFPTR(DeviceAPIDependantDepthStencil);
 FWD_REFPTR(DepthStencil);
 class DepthStencil : public Texture2D {
 public:
-    DepthStencil(size_t width, size_t height, const SurfaceFormat *format);
-    DepthStencil(size_t width, size_t height, const SurfaceFormat *format, DeviceAPIDependantDepthStencil *deviceAPIDependantDepthStencil);
+    DepthStencil(size_t width, size_t height, const SurfaceFormat *format, bool sharable);
+    DepthStencil(size_t width, size_t height, const SurfaceFormat *format, bool sharable, DeviceAPIDependantDepthStencil *deviceAPIDependantDepthStencil);
     virtual ~DepthStencil();
 
     template <typename T>

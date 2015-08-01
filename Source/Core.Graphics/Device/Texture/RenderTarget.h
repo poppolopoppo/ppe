@@ -15,8 +15,8 @@ FWD_REFPTR(DeviceAPIDependantRenderTarget);
 FWD_REFPTR(RenderTarget);
 class RenderTarget : public Texture2D {
 public:
-    RenderTarget(size_t width, size_t height, const SurfaceFormat *format);
-    RenderTarget(size_t width, size_t height, const SurfaceFormat *format, DeviceAPIDependantRenderTarget *deviceAPIDependantRenderTarget);
+    RenderTarget(size_t width, size_t height, const SurfaceFormat *format, bool sharable);
+    RenderTarget(size_t width, size_t height, const SurfaceFormat *format, bool sharable, DeviceAPIDependantRenderTarget *deviceAPIDependantRenderTarget);
     virtual ~RenderTarget();
 
     const Graphics::DeviceAPIDependantRenderTarget *DeviceAPIDependantRenderTarget() const {
