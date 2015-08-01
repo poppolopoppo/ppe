@@ -11,6 +11,7 @@ namespace DelegateHelper {
 //----------------------------------------------------------------------------
 template <typename T, typename _Ret, typename... _Args >
 struct Bind<T *, _Ret (T::*)(_Args... )> {
+    typedef Delegate<_Ret (*)(_Args... )> type;
 
     template <_Ret (T::*_Member)(_Args... )>
     static Delegate<_Ret (*)(_Args... )> get(T *pcallee);
@@ -39,6 +40,7 @@ _Ret Bind<T *, _Ret (T::*)(_Args... )>::Wrapper_(void *pcallee, _Args... args ) 
 //----------------------------------------------------------------------------
 template <typename T, typename _Ret, typename... _Args >
 struct Bind<T *, _Ret (T::*)(_Args... ) const> {
+    typedef Delegate<_Ret (*)(_Args... )> type;
 
     template <_Ret (T::*_Member)(_Args... ) const>
     static Delegate<_Ret (*)(_Args... )> get(T *pcallee);
@@ -67,6 +69,7 @@ _Ret Bind<T *, _Ret (T::*)(_Args... ) const>::Wrapper_(void *pcallee, _Args... a
 //----------------------------------------------------------------------------
 template <typename _Arg0, typename _Ret, typename... _Args >
 struct Bind<_Arg0, _Ret (*)(_Arg0, _Args... )> {
+    typedef Delegate<_Ret (*)(_Args... )> type;
 
     static_assert(  sizeof(_Arg0) <= sizeof(void *),
                     "_Arg0 is too big to fit in a void *" );
@@ -101,6 +104,7 @@ _Ret Bind<_Arg0, _Ret (*)(_Arg0, _Args... )>::Wrapper_(void *pcallee, _Args... a
 //----------------------------------------------------------------------------
 template <typename _Ret, typename... _Args >
 struct Bind<decltype(nullptr), _Ret (*)(_Args... )> {
+    typedef Delegate<_Ret (*)(_Args... )> type;
 
     template <_Ret (*_Func)(_Args... )>
     static Delegate<_Ret (*)(_Args... )> get(void *);

@@ -100,3 +100,9 @@ struct Bind {};
             decltype( _pCalleeOrArg0 ) \
         ,   decltype( _pMemberOrFunc ) \
         >::get< _pMemberOrFunc >( _pCalleeOrArg0 )
+
+#define DelegateType(_pMemberOrFunc, _pCalleeOrArg0) \
+    ::Core::DelegateHelper::Bind< \
+            decltype( _pCalleeOrArg0 ) \
+        ,   decltype( _pMemberOrFunc ) \
+        >::type
