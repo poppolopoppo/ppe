@@ -12,21 +12,25 @@
 #ifdef WITH_CORE_POOL_ALLOCATOR
 //----------------------------------------------------------------------------
 #define SINGLETON_POOL_ALLOCATED_DEF_IMPL_(_Type, _Prefix, _Pool) \
-    _Prefix NO_INLINE void _Type::Pool_ReleaseMemory() { \
-        _Pool::Clear_UnusedMemory(); \
-    } \
-    _Prefix NO_INLINE void *_Type::operator new(size_t size) { \
+    _Prefix void *_Type::operator new(size_t size) { \
         Assert(sizeof(_Type) == size); \
         return _Pool::Allocate(); \
     } \
-    _Prefix NO_INLINE void _Type::operator delete(void *ptr) { \
+    _Prefix void _Type::operator delete(void *ptr) { \
         if (ptr) _Pool::Deallocate(ptr); \
+    } \
+    _Prefix void _Type::Pool_ReleaseMemory() { \
+        _Pool::Clear_UnusedMemory(); \
+    } \
+    _Prefix const MemoryTrackingData *_Type::Pool_TrackingData() { \
+        return _Pool::TrackingData(); \
     }
 //----------------------------------------------------------------------------
 #else
 //----------------------------------------------------------------------------
 #define SINGLETON_POOL_ALLOCATED_DEF_IMPL_(_Type, _Prefix, _Pool) \
-    _Prefix NO_INLINE void _Type::Pool_ReleaseMemory() {}
+    _Prefix void _Type::Pool_ReleaseMemory() {} \
+    _Prefix const MemoryTrackingData *_Type::Pool_TrackingData() { return nullptr; }
 //----------------------------------------------------------------------------
 #endif //!WITH_CORE_POOL_ALLOCATOR
 //----------------------------------------------------------------------------

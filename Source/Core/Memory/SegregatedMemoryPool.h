@@ -143,7 +143,14 @@ public:
     static void Clear_UnusedMemory();
 
 #ifdef USE_MEMORY_DOMAINS
-    static MemoryTrackingData *TrackingData;
+    static const MemoryTrackingData *TrackingData() { return _pTrackingData; }
+#else
+    static const MemoryTrackingData *TrackingData() { return nullptr; }
+#endif
+
+private:
+#ifdef USE_MEMORY_DOMAINS
+    static MemoryTrackingData *_pTrackingData;
 #endif
 };
 //----------------------------------------------------------------------------
