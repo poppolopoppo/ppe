@@ -1,5 +1,5 @@
 #once
-                           |___/
+
 ;   _____ _                         ____   ___
 ;  / ____| |                       |___ \ / _ \
 ; | |    | |     __ _ _ __   __ _    __) | (_) |
@@ -40,7 +40,7 @@
 Print( "Using CLang 3.8 with platform toolset $CLangWindows38PlatformToolset$" )
 
 //------------------------------------------------------------------------------
-// LLVM CLang v3.7 Compiler (x86 only)
+// LLVM CLang v3.8 Compiler (x86 only)
 //------------------------------------------------------------------------------
 Compiler( 'Compiler-CLangWindows38-x86' )
 {
@@ -94,7 +94,7 @@ Compiler( 'Compiler-CLangWindows38-x86' )
     .Librarian          = '$ToolsBasePath$\llvm-ar.exe'
     .Linker             = '$ToolsBasePath$\lld.exe'
 
-    .CompilerOptions    = ' -fmsc-version=1800'
+    .CompilerOptions    = '';' -fmsc-version=1800'
 ]
 
 .CLangWindows38PlatformWin32 =

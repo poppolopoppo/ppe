@@ -26,8 +26,8 @@
 // Default Visual Options
 //------------------------------------------------------------------------------
 .VSBuildOptions = ''
-;+ ' -dist'      ; active la compilation distribuée
 + ' -cache'     ; utilisation du cache depuis Visual
+;+ ' -dist'      ; active la compilation distribuée
 ;+ ' -showcmds'  ; affiche les commandes de compile, pratique pour debug
 ;+ ' -summary'   ; affiche un rapport à la fin de la compilation
 

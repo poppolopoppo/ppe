@@ -29,7 +29,7 @@
     .ResourceCompiler       = .MSVC2013ResourceCompiler
 #endif
 #if USE_VISUALSTUDIO_2015
-#   include "Compilers/MSVC2015.bff" ; TODO: Release Candidate
+#   include "Compilers/MSVC2015.bff"
     .WindowsCompileConfigs  = .MSVC2015CompileConfigs
     .PlatformToolset        = .MSVC2015PlatformToolset
     .ResourceCompiler       = .MSVC2015ResourceCompiler

@@ -10,10 +10,10 @@
 .CLangWindowsBase =
 [
     .AdditionalWarnings = ''
-    + ' -Wshadow'                       ; extra warnings
+    ;+ ' -Wshadow'                       ; extra warnings
 
     ; Tout ça est désactivé pour compiler CRT sans chouiner
-    .DisabledWarnings
+    .DisabledWarnings = ''
     + ' -Wno-microsoft'                 ; suppress "enumerator value is not representable in the underlying type 'int' [-Wmicrosoft]'"
     + ' -Wno-#pragma-messages'
     + ' -Wno-ignored-attributes'        ; ignore 'restrict, noalias' keyword
@@ -54,12 +54,14 @@
     }
 
     .CompilerOptions = ''
-    + ' /W3 /WX-'           ; warning level 3, les warnings ne génèrent pas d'erreurs
+    + ' /W2 /WX-'           ; warning level 2, les warnings ne génèrent pas d'erreurs
     + ' /GR'                ; active le support des RTTI std de C++ (RunTime Type Information, nécessaire pour dynamic_cast<> par ex)
     + ' /GF'                ; fusion des chaînes de caractères identiques (string pooling)
     + ' /EHsc'              ; active le support des exceptions
     + ' /c "%1" /TP'
     + ' -Xclang -std=c++11'
+    + ' -Xclang -fexceptions'
+    + ' -Xclang -fcxx-exceptions'
     + .AdditionalWarnings
     + .DisabledWarnings
 
