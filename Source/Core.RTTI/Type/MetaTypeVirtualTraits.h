@@ -2,7 +2,7 @@
 
 #include "Core/Core.h"
 
-#include "Core/RTTI/Type/MetaType.h"
+#include "Core.RTTI/Type/MetaType.h"
 
 namespace Core {
 namespace RTTI {
@@ -97,4 +97,4 @@ bool AssignCopy(_Dst *dst, const _Src *src);
 } //!namespace RTTI
 } //!namespace Core
 
-#include "Core/RTTI/Type/MetaTypeVirtualTraits-inl.h"
+#include "Core.RTTI/Type/MetaTypeVirtualTraits-inl.h"

@@ -3,9 +3,9 @@
 #include "MetaAtomDatabase.h"
 
 #include "MetaAtom.h"
-#include "RTTI/Object/MetaObject.h"
+#include "Object/MetaObject.h"
 
-#include "IO/Format.h"
+#include "Core/IO/Format.h"
 
 namespace Core {
 namespace RTTI {

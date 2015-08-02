@@ -110,4 +110,4 @@ MetaFunctionAccessor<T, _Class> MakeFunctionAccessor(
 } //!namespace RTTI
 } //!namespace Core
 
-#include "Core/RTTI/Property/MetaPropertyAccessor-inl.h"
+#include "Core.RTTI/Property/MetaPropertyAccessor-inl.h"

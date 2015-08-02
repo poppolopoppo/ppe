@@ -2,7 +2,7 @@
 
 #include "MetaProperty.h"
 
-#include "RTTI/Object/MetaObject.h"
+#include "Object/MetaObject.h"
 
 namespace Core {
 namespace RTTI {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/RTTI/Type/MetaTypePromote.h"
+#include "Core.RTTI/Type/MetaTypePromote.h"
 
 #include "Core/IO/Stream.h"
 #include "Core/IO/String.h"

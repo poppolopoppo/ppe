@@ -2,7 +2,7 @@
 
 #include "Core/Core.h"
 
-#include "Core/RTTI/Object/MetaObject.h"
+#include "Core.RTTI/Object/MetaObject.h"
 
 namespace Core {
 namespace RTTI {

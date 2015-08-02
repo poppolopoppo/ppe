@@ -10,7 +10,6 @@
 #include "IO/FileSystem.h"
 #include "IO/VirtualFileSystem.h"
 #include "Meta/AutoSingleton.h"
-#include "RTTI/RTTI.h"
 #include "Thread/ThreadContext.h"
 #include "Thread/ThreadLocalStorage.h"
 #include "Thread/ThreadPool.h"
@@ -59,13 +58,9 @@ void CoreStartup::Start(void *applicationHandle, int nShowCmd, size_t argc, cons
     FileSystemStartup::Start();
     //13 - virtual file system
     VirtualFileSystemStartup::Start();
-    //14 - RTTI
-    RTTI::RTTIStartup::Start();
 }
 //----------------------------------------------------------------------------
 void CoreStartup::Shutdown() {
-    //14 - RTTI
-    RTTI::RTTIStartup::Shutdown();
     //13 - virtual file system
     VirtualFileSystemStartup::Shutdown();
     //12 - file system

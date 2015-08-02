@@ -6,8 +6,8 @@
 #include "Core/Container/Vector.h"
 #include "Core/Memory/RefPtr.h"
 
-#include "Core/RTTI/Class/MetaClassName.h"
-#include "Core/RTTI/Object/MetaObjectName.h"
+#include "Core.RTTI/Class/MetaClassName.h"
+#include "Core.RTTI/Object/MetaObjectName.h"
 
 namespace Core {
 namespace RTTI {

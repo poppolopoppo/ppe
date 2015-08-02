@@ -2,17 +2,17 @@
 
 #include "MetaObject.h"
 
-#include "RTTI/Atom/MetaAtom.h"
-#include "RTTI/Atom/MetaAtomDatabase.h"
-#include "RTTI/Class/MetaClass.h"
-#include "RTTI/Property/MetaProperty.h"
+#include "Atom/MetaAtom.h"
+#include "Atom/MetaAtomDatabase.h"
+#include "Class/MetaClass.h"
+#include "Property/MetaProperty.h"
 
-#include "Container/Hash.h"
-#include "Container/HashMap.h"
-#include "Container/Token.h"
-#include "Container/Vector.h"
+#include "Core/Container/Hash.h"
+#include "Core/Container/HashMap.h"
+#include "Core/Container/Token.h"
+#include "Core/Container/Vector.h"
 
-#include "IO/Format.h"
+#include "Core/IO/Format.h"
 
 namespace Core {
 namespace RTTI {

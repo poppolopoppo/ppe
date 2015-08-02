@@ -7,9 +7,10 @@
 // All projects
 //------------------------------------------------------------------------------
 #include "Source/Core/Core.bff"
+#include "Source/Core.RTTI/Core.RTTI.bff"
+#include "Source/Core.Serialize/Core.Serialize.bff"
 #include "Source/Core.Graphics/Core.Graphics.bff"
 #include "Source/Core.Logic/Core.Logic.bff"
-#include "Source/Core.Serialize/Core.Serialize.bff"
 #include "Source/Core.Engine/Core.Engine.bff"
 #include "Source/Core.Application/Core.Application.bff"
 #include "Source/Core.Test/Core.Test.bff"

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Core/RTTI/Property/MetaProperty.h"
+#include "Core.RTTI/Property/MetaProperty.h"
 
 #include "Core/Allocator/PoolAllocator-impl.h"
-#include "Core/RTTI/Type/MetaTypePromote.h"
+#include "Core.RTTI/Type/MetaTypePromote.h"
 
 namespace Core {
 namespace RTTI {

@@ -2,7 +2,7 @@
 
 #include "Core/Core.h"
 
-#include "Core/RTTI/Object/MetaObjectName.h"
+#include "Core.RTTI/Object/MetaObjectName.h"
 
 #include "Core/Memory/RefPtr.h"
 

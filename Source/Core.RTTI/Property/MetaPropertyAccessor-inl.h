@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/RTTI/Property/MetaPropertyAccessor.h"
+#include "Core.RTTI/Property/MetaPropertyAccessor.h"
 
 namespace Core {
 namespace RTTI {

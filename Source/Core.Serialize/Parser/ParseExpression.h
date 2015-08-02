@@ -2,11 +2,11 @@
 
 #include "Core/Core.h"
 
-#include "Core/RTTI/Atom/MetaAtom.h"
-#include "Core/RTTI/Class/MetaClassName.h"
-#include "Core/RTTI/Object/MetaObjectName.h"
-#include "Core/RTTI/Property/MetaPropertyName.h"
-#include "Core/RTTI/Type/MetaType.h"
+#include "Core.RTTI/Atom/MetaAtom.h"
+#include "Core.RTTI/Class/MetaClassName.h"
+#include "Core.RTTI/Object/MetaObjectName.h"
+#include "Core.RTTI/Property/MetaPropertyName.h"
+#include "Core.RTTI/Type/MetaType.h"
 
 #include "Core.Serialize/Parser/ParseItem.h"
 

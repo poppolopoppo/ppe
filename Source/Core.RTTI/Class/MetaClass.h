@@ -5,8 +5,8 @@
 #include "Core/Container/AssociativeVector.h"
 #include "Core/Meta/PointerWFlags.h"
 
-#include "Core/RTTI/Class/MetaClassName.h"
-#include "Core/RTTI/Property/MetaPropertyName.h"
+#include "Core.RTTI/Class/MetaClassName.h"
+#include "Core.RTTI/Property/MetaPropertyName.h"
 
 namespace Core {
 namespace RTTI {

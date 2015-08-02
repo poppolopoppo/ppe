@@ -5,7 +5,7 @@
 #include "Core/Container/RawStorage.h"
 #include "Core/Container/Vector.h"
 #include "Core/Memory/MemoryView.h"
-#include "Core/RTTI/RTTI_fwd.h"
+#include "Core.RTTI/RTTI_fwd.h"
 
 namespace Core {
 class IVirtualFileSystemIStream;

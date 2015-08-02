@@ -70,7 +70,7 @@ using Dictionary = Core::AssociativeVector<
         static T DefaultValue(); \
     };
 //----------------------------------------------------------------------------
-#include "Core/RTTI/Type/MetaType.Definitions-inl.h"
+#include "Core.RTTI/Type/MetaType.Definitions-inl.h"
 //----------------------------------------------------------------------------
 #undef DEF_METATYPE_SCALAR
 //----------------------------------------------------------------------------

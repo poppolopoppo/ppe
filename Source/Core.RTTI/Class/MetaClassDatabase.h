@@ -2,7 +2,7 @@
 
 #include "Core/Core.h"
 
-#include "Core/RTTI/Class/MetaClassName.h"
+#include "Core.RTTI/Class/MetaClassName.h"
 
 #include "Core/Container/HashMap.h"
 #include "Core/Meta/Singleton.h"

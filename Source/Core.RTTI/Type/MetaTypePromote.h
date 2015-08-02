@@ -2,7 +2,7 @@
 
 #include "Core/Core.h"
 
-#include "Core/RTTI/Type/MetaType.h"
+#include "Core.RTTI/Type/MetaType.h"
 
 #include <type_traits>
 
@@ -85,4 +85,4 @@ bool PromoteCopy(T *dst, const MetaAtom *src) {
 } //!namespace RTTI
 } //!namespace Core
 
-#include "Core/RTTI/Type/MetaTypePromote-inl.h"
+#include "Core.RTTI/Type/MetaTypePromote-inl.h"

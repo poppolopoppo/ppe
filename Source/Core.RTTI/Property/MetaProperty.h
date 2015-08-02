@@ -2,13 +2,13 @@
 
 #include "Core/Core.h"
 
-#include "Core/RTTI/Property/MetaPropertyAccessor.h"
-#include "Core/RTTI/Property/MetaPropertyName.h"
+#include "Core.RTTI/Property/MetaPropertyAccessor.h"
+#include "Core.RTTI/Property/MetaPropertyName.h"
 
-#include "Core/RTTI/Atom/MetaAtom.h"
-#include "Core/RTTI/Type/MetaType.h"
-#include "Core/RTTI/Type/MetaTypeTraits.h"
-#include "Core/RTTI/Type/MetaTypeVirtualTraits.h"
+#include "Core.RTTI/Atom/MetaAtom.h"
+#include "Core.RTTI/Type/MetaType.h"
+#include "Core.RTTI/Type/MetaTypeTraits.h"
+#include "Core.RTTI/Type/MetaTypeVirtualTraits.h"
 
 #include "Core/Allocator/PoolAllocator.h"
 
@@ -193,4 +193,4 @@ MetaWrappedProperty<T, MetaFunctionAccessor<T, _Class> > *MakeProperty(
 } //!namespace RTTI
 } //!namespace Core
 
-#include "Core/RTTI/Property/MetaProperty-inl.h"
+#include "Core.RTTI/Property/MetaProperty-inl.h"

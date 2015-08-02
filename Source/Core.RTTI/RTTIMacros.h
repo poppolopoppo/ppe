@@ -2,9 +2,9 @@
 
 #include "Core/Core.h"
 
-#include "Core/RTTI/RTTI_fwd.h"
-#include "Core/RTTI/Class/MetaClass.h"
-#include "Core/RTTI/Object/MetaObject.h"
+#include "Core.RTTI/RTTI_fwd.h"
+#include "Core.RTTI/Class/MetaClass.h"
+#include "Core.RTTI/Object/MetaObject.h"
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -39,15 +39,15 @@
 #include "Core/IO/VFS/VirtualFileSystemNativeComponent.h"
 #include "Core/IO/VirtualFileSystem.h"
 
-#include "Core/RTTI/Class/MetaClassName.h"
-#include "Core/RTTI/MetaTransaction.h"
-#include "Core/RTTI/Object/MetaObject.h"
-#include "Core/RTTI/Type/MetaType.h"
-#include "Core/RTTI/Type/MetaTypeTraits.h"
+#include "Core.RTTI/Class/MetaClassName.h"
+#include "Core.RTTI/MetaTransaction.h"
+#include "Core.RTTI/Object/MetaObject.h"
+#include "Core.RTTI/Type/MetaType.h"
+#include "Core.RTTI/Type/MetaTypeTraits.h"
 
-#include "Core/RTTI/RTTI.h"
-#include "Core/RTTI/RTTIMacros-impl.h"
-#include "Core/RTTI/RTTIMacros.h"
+#include "Core.RTTI/RTTI.h"
+#include "Core.RTTI/RTTIMacros-impl.h"
+#include "Core.RTTI/RTTIMacros.h"
 
 #include "Core.Serialize/Lexer/Lexer.h"
 #include "Core.Serialize/Lexer/SymbolTrie.h"

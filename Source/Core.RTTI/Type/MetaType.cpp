@@ -2,8 +2,8 @@
 
 #include "MetaType.h"
 
-#include "RTTI/Atom/MetaAtom.h"
-#include "RTTI/Object/MetaObject.h"
+#include "Atom/MetaAtom.h"
+#include "Object/MetaObject.h"
 
 namespace Core {
 namespace RTTI {

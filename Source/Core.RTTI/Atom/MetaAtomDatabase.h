@@ -6,7 +6,7 @@
 #include "Core/Memory/RefPtr.h"
 #include "Core/Meta/Singleton.h"
 
-#include "Core/RTTI/Object/MetaObjectName.h"
+#include "Core.RTTI/Object/MetaObjectName.h"
 
 #include <mutex>
 

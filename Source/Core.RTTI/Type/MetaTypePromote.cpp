@@ -2,9 +2,9 @@
 
 #include "MetaTypePromote.h"
 
-#include "RTTI/Atom/MetaAtom.h"
-#include "RTTI/Object/MetaObject.h"
-#include "RTTI/Property/MetaProperty.h"
+#include "Atom/MetaAtom.h"
+#include "Object/MetaObject.h"
+#include "Property/MetaProperty.h"
 
 namespace Core {
 namespace RTTI {

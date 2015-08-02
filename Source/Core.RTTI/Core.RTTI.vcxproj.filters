@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="Atom\MetaAtom-inl.h">
+      <Filter>Atom</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Atom\MetaAtom.h">
+      <Filter>Atom</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Atom\MetaAtomDatabase.cpp">
+      <Filter>Atom</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Atom\MetaAtomDatabase.h">
+      <Filter>Atom</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Class\MetaClass.cpp">
+      <Filter>Class</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Class\MetaClass.h">
+      <Filter>Class</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Class\MetaClassDatabase.cpp">
+      <Filter>Class</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Class\MetaClassDatabase.h">
+      <Filter>Class</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Class\MetaClassName.cpp">
+      <Filter>Class</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Class\MetaClassName.h">
+      <Filter>Class</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Object\MetaObject.cpp">
+      <Filter>Object</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Object\MetaObject.h">
+      <Filter>Object</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Object\MetaObjectHelpers.cpp">
+      <Filter>Object</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Object\MetaObjectHelpers.h">
+      <Filter>Object</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Object\MetaObjectName.cpp">
+      <Filter>Object</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Object\MetaObjectName.h">
+      <Filter>Object</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Property\MetaProperty-inl.h">
+      <Filter>Property</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Property\MetaProperty.cpp">
+      <Filter>Property</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Property\MetaProperty.h">
+      <Filter>Property</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Property\MetaPropertyAccessor-inl.h">
+      <Filter>Property</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Property\MetaPropertyAccessor.h">
+      <Filter>Property</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Property\MetaPropertyName.cpp">
+      <Filter>Property</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Property\MetaPropertyName.h">
+      <Filter>Property</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Type\MetaType.cpp">
+      <Filter>Type</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Type\MetaType.Definitions-inl.h">
+      <Filter>Type</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Type\MetaType.h">
+      <Filter>Type</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Type\MetaTypePromote-inl.h">
+      <Filter>Type</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Type\MetaTypePromote.cpp">
+      <Filter>Type</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Type\MetaTypePromote.h">
+      <Filter>Type</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Type\MetaTypeTraits-inl.h">
+      <Filter>Type</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Type\MetaTypeTraits.h">
+      <Filter>Type</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Type\MetaTypeVirtualTraits-inl.h">
+      <Filter>Type</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Type\MetaTypeVirtualTraits.cpp">
+      <Filter>Type</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Type\MetaTypeVirtualTraits.h">
+      <Filter>Type</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Core.RTTI.bff">
+    </CustomBuild>
+    <CustomBuild Include="MetaTransaction.cpp">
+    </CustomBuild>
+    <CustomBuild Include="MetaTransaction.h">
+    </CustomBuild>
+    <CustomBuild Include="RTTI.cpp">
+    </CustomBuild>
+    <CustomBuild Include="RTTI.h">
+    </CustomBuild>
+    <CustomBuild Include="RTTIMacros-impl.h">
+    </CustomBuild>
+    <CustomBuild Include="RTTIMacros.h">
+    </CustomBuild>
+    <CustomBuild Include="RTTIProperties.cpp">
+    </CustomBuild>
+    <CustomBuild Include="RTTIProperties.h">
+    </CustomBuild>
+    <CustomBuild Include="RTTI_fwd.h">
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Atom">
+      <UniqueIdentifier>{80724a45-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Class">
+      <UniqueIdentifier>{2c8a369b-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Object">
+      <UniqueIdentifier>{af01aeda-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Property">
+      <UniqueIdentifier>{72847e88-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Type">
+      <UniqueIdentifier>{2cecf817-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

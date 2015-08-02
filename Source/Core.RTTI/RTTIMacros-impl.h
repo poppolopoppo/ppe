@@ -3,22 +3,22 @@
 #include "Core/Core.h"
 #include "Core/Meta/Singleton.h"
 
-#include "Core/RTTI/RTTIMacros.h"
+#include "Core.RTTI/RTTIMacros.h"
 
-#include "Core/RTTI/Type/MetaTypePromote.h"
+#include "Core.RTTI/Type/MetaTypePromote.h"
 
-#include "Core/RTTI/Atom/MetaAtom.h"
-#include "Core/RTTI/Atom/MetaAtomDatabase.h"
+#include "Core.RTTI/Atom/MetaAtom.h"
+#include "Core.RTTI/Atom/MetaAtomDatabase.h"
 
-#include "Core/RTTI/Class/MetaClass.h"
-#include "Core/RTTI/Class/MetaClassDatabase.h"
-#include "Core/RTTI/Class/MetaClassName.h"
+#include "Core.RTTI/Class/MetaClass.h"
+#include "Core.RTTI/Class/MetaClassDatabase.h"
+#include "Core.RTTI/Class/MetaClassName.h"
 
-#include "Core/RTTI/Object/MetaObject.h"
-#include "Core/RTTI/Object/MetaObjectName.h"
+#include "Core.RTTI/Object/MetaObject.h"
+#include "Core.RTTI/Object/MetaObjectName.h"
 
-#include "Core/RTTI/Property/MetaProperty.h"
-#include "Core/RTTI/Property/MetaPropertyName.h"
+#include "Core.RTTI/Property/MetaProperty.h"
+#include "Core.RTTI/Property/MetaPropertyName.h"
 
 #include <type_traits>
 

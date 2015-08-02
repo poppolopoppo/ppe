@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Core/RTTI/Atom/MetaAtom.h"
+#include "Core.RTTI/Atom/MetaAtom.h"
 
-#include "Core/RTTI/Type/MetaTypePromote.h"
+#include "Core.RTTI/Type/MetaTypePromote.h"
 
 #include "Core/Allocator/PoolAllocator-impl.h"
 

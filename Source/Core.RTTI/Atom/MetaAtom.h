@@ -4,9 +4,9 @@
 
 #include "Core/Memory/RefPtr.h"
 
-#include "Core/RTTI/Type/MetaType.h"
-#include "Core/RTTI/Type/MetaTypeTraits.h"
-#include "Core/RTTI/Type/MetaTypeVirtualTraits.h"
+#include "Core.RTTI/Type/MetaType.h"
+#include "Core.RTTI/Type/MetaTypeTraits.h"
+#include "Core.RTTI/Type/MetaTypeVirtualTraits.h"
 
 #include "Core/Allocator/PoolAllocator.h"
 
@@ -463,4 +463,4 @@ std::basic_ostream<_Char, _Traits>& operator <<(
 } //!namespace RTTI
 } //!namespace Core
 
-#include "Core/RTTI/Atom/MetaAtom-inl.h"
+#include "Core.RTTI/Atom/MetaAtom-inl.h"

@@ -11,8 +11,8 @@
 #include "Core/IO/Format.h"
 #include "Core/IO/Stream.h"
 
-#include "Core/RTTI/Object/MetaObject.h"
-#include "Core/RTTI/Type/MetaTypePromote.h"
+#include "Core.RTTI/Object/MetaObject.h"
+#include "Core.RTTI/Type/MetaTypePromote.h"
 
 namespace Core {
 namespace Serialize {

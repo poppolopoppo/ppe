@@ -1,0 +1,6 @@
+#once
+{
+    .ProjectName = 'Core.RTTI'
+    .ProjectPath = '$SourceDiretory$/Core.RTTI'
+    #include "../../Build/Templates/Library.bff"
+}

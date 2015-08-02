@@ -2,8 +2,8 @@
 
 #include "Core/Core.h"
 
-#include "Core/RTTI/Type/MetaType.h"
-#include "Core/RTTI/Type/MetaTypeVirtualTraits.h"
+#include "Core.RTTI/Type/MetaType.h"
+#include "Core.RTTI/Type/MetaTypeVirtualTraits.h"
 
 #include "Core/Container/HashMap.h"
 
@@ -199,4 +199,4 @@ struct MetaTypeTraits : MetaTypeTraitsImpl< typename std::decay<T>::type > {
 } //!namespace RTTI
 } //!namespace Core
 
-#include "Core/RTTI/Type/MetaTypeTraits-inl.h"
+#include "Core.RTTI/Type/MetaTypeTraits-inl.h"

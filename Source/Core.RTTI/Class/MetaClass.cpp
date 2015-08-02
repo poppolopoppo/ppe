@@ -4,9 +4,9 @@
 
 #include "MetaClassDatabase.h"
 
-#include "RTTI/Property/MetaProperty.h"
+#include "Property/MetaProperty.h"
 
-#include "IO/String.h"
+#include "Core/IO/String.h"
 
 namespace Core {
 namespace RTTI {

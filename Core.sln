@@ -11,6 +11,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Core.Graphics", "Source\Cor
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Core.Logic", "Source\Core.Logic\Core.Logic.vcxproj", "{B5ABEDF3-6C94-4F93-BC2A-7F5284B7D434}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Core.RTTI", "Source\Core.RTTI\Core.RTTI.vcxproj", "{34A0DA96-6C94-4F93-BC2A-7F5284B7D434}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Core.Serialize", "Source\Core.Serialize\Core.Serialize.vcxproj", "{1DA7B718-6C94-4F93-BC2A-7F5284B7D434}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Core.Test", "Source\Core.Test\Core.Test.vcxproj", "{4086D486-6C94-4F93-BC2A-7F5284B7D434}"
@@ -71,6 +73,16 @@ Global
 		{B5ABEDF3-6C94-4F93-BC2A-7F5284B7D434}.Profiling|x86.ActiveCfg = Profiling|Win32
 		{B5ABEDF3-6C94-4F93-BC2A-7F5284B7D434}.Release|x64.ActiveCfg = Release|x64
 		{B5ABEDF3-6C94-4F93-BC2A-7F5284B7D434}.Release|x86.ActiveCfg = Release|Win32
+		{34A0DA96-6C94-4F93-BC2A-7F5284B7D434}.Debug|x64.ActiveCfg = Debug|x64
+		{34A0DA96-6C94-4F93-BC2A-7F5284B7D434}.Debug|x86.ActiveCfg = Debug|Win32
+		{34A0DA96-6C94-4F93-BC2A-7F5284B7D434}.FastDebug|x64.ActiveCfg = FastDebug|x64
+		{34A0DA96-6C94-4F93-BC2A-7F5284B7D434}.FastDebug|x86.ActiveCfg = FastDebug|Win32
+		{34A0DA96-6C94-4F93-BC2A-7F5284B7D434}.Final|x64.ActiveCfg = Final|x64
+		{34A0DA96-6C94-4F93-BC2A-7F5284B7D434}.Final|x86.ActiveCfg = Final|Win32
+		{34A0DA96-6C94-4F93-BC2A-7F5284B7D434}.Profiling|x64.ActiveCfg = Profiling|x64
+		{34A0DA96-6C94-4F93-BC2A-7F5284B7D434}.Profiling|x86.ActiveCfg = Profiling|Win32
+		{34A0DA96-6C94-4F93-BC2A-7F5284B7D434}.Release|x64.ActiveCfg = Release|x64
+		{34A0DA96-6C94-4F93-BC2A-7F5284B7D434}.Release|x86.ActiveCfg = Release|Win32
 		{1DA7B718-6C94-4F93-BC2A-7F5284B7D434}.Debug|x64.ActiveCfg = Debug|x64
 		{1DA7B718-6C94-4F93-BC2A-7F5284B7D434}.Debug|x86.ActiveCfg = Debug|Win32
 		{1DA7B718-6C94-4F93-BC2A-7F5284B7D434}.FastDebug|x64.ActiveCfg = FastDebug|x64

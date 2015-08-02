@@ -2,8 +2,8 @@
 
 #include "TextSerializer.h"
 
-#include "Core/RTTI/Atom/MetaAtom.h"
-#include "Core/RTTI/MetaTransaction.h"
+#include "Core.RTTI/Atom/MetaAtom.h"
+#include "Core.RTTI/MetaTransaction.h"
 
 #include "Lexer/Lexer.h"
 

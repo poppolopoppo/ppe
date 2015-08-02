@@ -3,10 +3,10 @@
 #include "MetaTypeVirtualTraits.h"
 
 #include "MetaTypePromote.h"
-#include "RTTI/Atom/MetaAtom.h"
-#include "RTTI/Property/MetaProperty.h"
+#include "Atom/MetaAtom.h"
+#include "Property/MetaProperty.h"
 
-#include "Meta/OneTimeInitialize.h"
+#include "Core/Meta/OneTimeInitialize.h"
 
 namespace Core {
 namespace RTTI {

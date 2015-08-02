@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/RTTI/Type/MetaTypeVirtualTraits.h"
+#include "Core.RTTI/Type/MetaTypeVirtualTraits.h"
 
 namespace Core {
 namespace RTTI {

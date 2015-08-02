@@ -3,7 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/Container/Token.h"
-#include "Core/RTTI/RTTIProperties.h"
+#include "Core.RTTI/RTTIProperties.h"
 
 namespace Core {
 namespace RTTI {
