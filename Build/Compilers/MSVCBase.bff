@@ -133,7 +133,7 @@
     .LibrarianOptions   + ' /MACHINE:X86'
     .LinkerOptions      + ' /MACHINE:X86'
     + ' /SAFESEH'                           ; image dotée de gestionnaires d'exceptions sécurisés
-    + ' /LIBPATH:"$SolutionPath$/../Bin/DLL_X86"'
+    + ' /LIBPATH:"$BinaryPath$"'
     + ' /LIBPATH:"$DirectXSDKBasePath$/Lib/x86"'
 ]
 
@@ -152,7 +152,7 @@
 
     .LibrarianOptions   + ' /MACHINE:X64'
     .LinkerOptions      + ' /MACHINE:X64'
-    + ' /LIBPATH:"$SolutionPath$/../Bin/DLL_X64"'
+    + ' /LIBPATH:"$BinaryPath$"'
     + ' /LIBPATH:"$DirectXSDKBasePath$/Lib/x64"'
 ]
 
