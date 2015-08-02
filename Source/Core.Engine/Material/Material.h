@@ -49,7 +49,7 @@ public:
     bool operator ==(const Material& other) const { return Equals(other); }
     bool operator !=(const Material& other) const { return !operator ==(other); }
 
-    SINGLETON_POOL_ALLOCATED_DECL(Material);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     Graphics::BindName _name;

@@ -29,7 +29,7 @@ public:
 
     virtual void Eval(const MaterialParameterContext& context, void *dst, size_t sizeInBytes) override;
 
-    SINGLETON_POOL_ALLOCATED_DECL(MaterialParameterConstant);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     T _value;

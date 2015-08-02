@@ -49,7 +49,7 @@ public:
         const TextureHeader& Header() const { return _header; }
         const TexturePixels& Pixels() const { return _pixels; }
 
-        SINGLETON_POOL_ALLOCATED_DECL(TextureData);
+        SINGLETON_POOL_ALLOCATED_DECL();
 
     private:
         TextureHeader _header;
@@ -89,7 +89,7 @@ public:
         const Graphics::Texture2D *AsTexture2D() const;
         const Graphics::TextureCube *AsTextureCube() const;
 
-        SINGLETON_POOL_ALLOCATED_DECL(TextureEntry);
+        SINGLETON_POOL_ALLOCATED_DECL();
 
     private:
         void SetData_(const TextureData *data);
@@ -115,7 +115,7 @@ public:
         virtual TaskResult Invoke(const TaskContext& ctx) override;
         void Finalize_MainThread(Graphics::IDeviceAPIEncapsulator *device) const;
 
-        SINGLETON_POOL_ALLOCATED_DECL(TextureEntryAsyncJob);
+        SINGLETON_POOL_ALLOCATED_DECL();
 
     private:
         TextureCache *_cache;

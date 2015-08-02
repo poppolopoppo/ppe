@@ -90,7 +90,7 @@ public:
 
     virtual size_t FillEffectPasses(const EffectDescriptor **pOutPasses, const size_t capacity) const override;
 
-    SINGLETON_POOL_ALLOCATED_DECL(EffectDescriptor);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     String _name;

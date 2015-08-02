@@ -83,7 +83,7 @@ public:
     /* (3) setup constant buffers and textures (with sampler states) on the device */
     void Set(Graphics::IDeviceAPIContext *deviceContext);
 
-    SINGLETON_POOL_ALLOCATED_DECL(MaterialEffect);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     PCEffect _effect;

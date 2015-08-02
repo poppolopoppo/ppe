@@ -38,7 +38,7 @@ public:
     void SetDataIFN(Graphics::IDeviceAPIEncapsulator *device) const;
     void Clear();
 
-    SINGLETON_POOL_ALLOCATED_DECL(EffectConstantBuffer);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     PSharedConstantBuffer _sharedBuffer;

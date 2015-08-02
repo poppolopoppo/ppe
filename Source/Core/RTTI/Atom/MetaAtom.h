@@ -390,7 +390,7 @@ public:
 
     virtual const IMetaTypeVirtualTraits *Traits() const override { return meta_type_traits::VirtualTraits(); }
 
-    SINGLETON_POOL_ALLOCATED_DECL(MetaWrappedAtom)
+    SINGLETON_POOL_ALLOCATED_DECL();
 };
 //----------------------------------------------------------------------------
 template <typename T>
@@ -427,7 +427,7 @@ public:
 
     virtual const IMetaTypeVirtualTraits *Traits() const override { return meta_type_traits::VirtualTraits(); }
 
-    SINGLETON_POOL_ALLOCATED_DECL(MetaWrappedAtom)
+    SINGLETON_POOL_ALLOCATED_DECL();
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

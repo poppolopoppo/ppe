@@ -20,7 +20,7 @@ public:
 
     MemoryView<const ::D3D11_INPUT_ELEMENT_DESC> Layout() const { return _layout.Cast<const ::D3D11_INPUT_ELEMENT_DESC>(); }
 
-    SINGLETON_POOL_ALLOCATED_DECL(DX11VertexDeclaration);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     StaticStack<::D3D11_INPUT_ELEMENT_DESC, VertexDeclaration::MaxSubPartCount> _layout;

@@ -37,7 +37,7 @@ public:
 
     virtual const IDeviceAPIDependantAbstractTextureContent *Content() const override { return this; }
 
-    SINGLETON_POOL_ALLOCATED_DECL(DX11DepthStencil);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     ComPtr<::ID3D11DepthStencilView> _depthStencilView;

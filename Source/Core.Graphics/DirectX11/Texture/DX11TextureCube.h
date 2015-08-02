@@ -59,7 +59,7 @@ public:
 
     virtual const IDeviceAPIDependantAbstractTextureContent *Content() const override { return this; }
 
-    SINGLETON_POOL_ALLOCATED_DECL(DX11TextureCube);
+    SINGLETON_POOL_ALLOCATED_DECL();
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -20,7 +20,7 @@ public:
 
     ::ID3D11BlendState *Entity() const { return _entity.Get(); }
 
-    SINGLETON_POOL_ALLOCATED_DECL(DX11BlendState);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     ComPtr<::ID3D11BlendState> _entity;

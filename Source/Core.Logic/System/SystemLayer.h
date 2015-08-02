@@ -50,7 +50,7 @@ public:
     void RefreshEntity(const Entity& entity, ComponentFlag components);
     void RemoveEntity(const Entity& entity);
 
-    SINGLETON_POOL_ALLOCATED_DECL(SystemLayer);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     VECTOR(System, PSystem) _asynchronous;

@@ -38,7 +38,7 @@ public:
 
     virtual void Execute(ParseContext *context) const override;
 
-    SINGLETON_POOL_ALLOCATED_DECL(EvalExpr)
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     Parser::PCParseExpression _expr;
@@ -61,7 +61,7 @@ public:
     virtual void Execute(ParseContext *context) const override;
     virtual String ToString() const override;
 
-    SINGLETON_POOL_ALLOCATED_DECL(PropertyAssignment)
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     RTTI::MetaPropertyName _name;

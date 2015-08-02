@@ -60,7 +60,7 @@ public:
 
     void ReleaseCpuMemory();
 
-    SINGLETON_POOL_ALLOCATED_DECL(ModelMesh);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     u32 _indexCount;

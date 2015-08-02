@@ -39,7 +39,7 @@ public:
     const ASSOCIATIVE_VECTOR(Shader, Graphics::BindName, EffectSharedBufferIndex)& Constants() const { return _constants; }
     const VECTOR(Shader, Graphics::ShaderProgramTexture)& Textures() const { return _textures; }
 
-    SINGLETON_POOL_ALLOCATED_DECL(EffectProgram);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     ASSOCIATIVE_VECTOR(Shader, Graphics::BindName, EffectSharedBufferIndex) _constants;

@@ -22,7 +22,7 @@ public:
     RenderLayerSetRenderTarget(const MemoryView<const PAbstractRenderSurface>& surfaces, const PAbstractRenderSurface& depthStencil);
     virtual ~RenderLayerSetRenderTarget();
 
-    SINGLETON_POOL_ALLOCATED_DECL(RenderLayerSetRenderTarget);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 protected:
     virtual void PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, const RenderTree *renderTree, VariabilitySeed *seeds) override;

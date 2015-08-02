@@ -41,7 +41,7 @@ public:
 
     const PCMaterial& Material() const { return _material; }
 
-    SINGLETON_POOL_ALLOCATED_DECL(ModelMeshSubPart);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     MeshName _name;

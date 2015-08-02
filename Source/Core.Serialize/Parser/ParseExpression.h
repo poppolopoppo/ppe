@@ -48,7 +48,7 @@ public:
     virtual RTTI::MetaAtom *Eval(ParseContext *context) const override;
     virtual String ToString() const override;
 
-    SINGLETON_POOL_ALLOCATED_DECL(Literal)
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     RefPtr< atom_type > _literal;
@@ -75,7 +75,7 @@ public:
     virtual RTTI::MetaAtom *Eval(ParseContext *context) const override;
     virtual String ToString() const override;
 
-    SINGLETON_POOL_ALLOCATED_DECL(VariableExport)
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     RTTI::MetaObjectName _name;
@@ -97,7 +97,7 @@ public:
     virtual RTTI::MetaAtom *Eval(ParseContext *context) const override;
     virtual String ToString() const override;
 
-    SINGLETON_POOL_ALLOCATED_DECL(VariableReference)
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     RTTI::MetaObjectName _name;
@@ -117,7 +117,7 @@ public:
 
     virtual RTTI::MetaAtom *Eval(ParseContext *context) const override;
 
-    SINGLETON_POOL_ALLOCATED_DECL(UnaryFunction)
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     _Functor _functor;
@@ -139,7 +139,7 @@ public:
 
     virtual RTTI::MetaAtom *Eval(ParseContext *context) const override;
 
-    SINGLETON_POOL_ALLOCATED_DECL(BinaryFunction)
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     _Functor _functor;
@@ -162,7 +162,7 @@ public:
 
     virtual RTTI::MetaAtom *Eval(ParseContext *context) const override;
 
-    SINGLETON_POOL_ALLOCATED_DECL(Ternary)
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     _Test _test;
@@ -193,7 +193,7 @@ public:
     virtual RTTI::MetaAtom *Eval(ParseContext *context) const override;
     virtual String ToString() const override;
 
-    SINGLETON_POOL_ALLOCATED_DECL(ObjectDefinition)
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     RTTI::MetaClassName _name;
@@ -220,7 +220,7 @@ public:
     virtual RTTI::MetaAtom *Eval(ParseContext *context) const override;
     virtual String ToString() const override;
 
-    SINGLETON_POOL_ALLOCATED_DECL(PropertyReference)
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     PCParseExpression _object;
@@ -244,7 +244,7 @@ public:
     virtual RTTI::MetaAtom *Eval(ParseContext *context) const override;
     virtual String ToString() const override;
 
-    SINGLETON_POOL_ALLOCATED_DECL(Pair)
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     PCParseExpression _lhs;
@@ -274,7 +274,7 @@ public:
     virtual RTTI::MetaAtom *Eval(ParseContext *context) const override;
     virtual String ToString() const override;
 
-    SINGLETON_POOL_ALLOCATED_DECL(Array)
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     VECTOR_THREAD_LOCAL(Parser, PCParseExpression) _items;
@@ -302,7 +302,7 @@ public:
     virtual RTTI::MetaAtom *Eval(ParseContext *context) const override;
     virtual String ToString() const override;
 
-    SINGLETON_POOL_ALLOCATED_DECL(Dictionary)
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     ASSOCIATIVE_VECTOR_THREAD_LOCAL(Parser, PCParseExpression, PCParseExpression) _items;

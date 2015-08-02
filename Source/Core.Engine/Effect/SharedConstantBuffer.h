@@ -48,7 +48,7 @@ public:
     bool Mergeable( const Graphics::BindName& name,
                     const Graphics::ConstantBufferLayout *layout ) const;
 
-    SINGLETON_POOL_ALLOCATED_DECL(SharedConstantBuffer);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     SharedConstantBufferKey _sharedKey;

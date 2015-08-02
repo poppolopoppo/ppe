@@ -38,7 +38,7 @@ public:
                                 const DeviceAPIDependantResourceBuffer *psource, size_t srcOffset, 
                                 size_t length ) override;
 
-    SINGLETON_POOL_ALLOCATED_DECL(DX11ResourceBuffer);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     ComPtr<::ID3D11Buffer> _entity;

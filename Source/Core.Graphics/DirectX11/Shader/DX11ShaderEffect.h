@@ -27,7 +27,7 @@ public:
     ::ID3D11PixelShader *PixelShader() const { return _pixelShader.Get(); }
     ::ID3D11ComputeShader *ComputeShader() const { return _computeShader.Get(); }
 
-    SINGLETON_POOL_ALLOCATED_DECL(DX11ShaderEffect);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     ComPtr<::ID3D11InputLayout> _inputLayout;

@@ -45,7 +45,7 @@ public:
     size_t HashValue() const;
     bool Equals(const ConstantBufferLayout& other) const;
 
-    SINGLETON_POOL_ALLOCATED_DECL(ConstantBufferLayout);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     typedef Meta::Bit<size_t>::First<1>::type bitfrozen_type;

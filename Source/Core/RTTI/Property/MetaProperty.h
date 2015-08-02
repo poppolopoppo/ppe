@@ -163,7 +163,7 @@ public:
 
     virtual size_t HashValue(const MetaObject *object) const override;
 
-    SINGLETON_POOL_ALLOCATED_DECL(MetaWrappedProperty)
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     accessor_type _accessor;

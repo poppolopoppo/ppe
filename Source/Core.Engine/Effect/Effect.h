@@ -61,7 +61,7 @@ public:
     static void Start();
     static void Shutdown();
 
-    SINGLETON_POOL_ALLOCATED_DECL(Effect);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     PCEffectDescriptor _descriptor;

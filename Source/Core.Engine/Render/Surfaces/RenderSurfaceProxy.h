@@ -24,7 +24,7 @@ public:
     const AbstractRenderSurface *RenderTargetSurface() const { return _renderTargetSurface; }
     const AbstractRenderSurface *DepthStencilSurface() const { return _depthStencilSurface; }
 
-    SINGLETON_POOL_ALLOCATED_DECL(RenderSurfaceProxy);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 protected:
     virtual void CreateResources_(  Graphics::IDeviceAPIEncapsulator *device,

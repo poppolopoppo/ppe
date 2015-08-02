@@ -20,7 +20,7 @@ public:
 
     ::ID3D11RasterizerState *Entity() const { return _entity.Get(); }
 
-    SINGLETON_POOL_ALLOCATED_DECL(DX11RasterizerState);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     ComPtr<::ID3D11RasterizerState> _entity;

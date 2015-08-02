@@ -35,7 +35,7 @@ public:
 
     bool IsChildOf(const FileSystemNode *parent) const;
 
-    SINGLETON_POOL_ALLOCATED_DECL(FileSystemNode);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     SCFileSystemNode _parent;

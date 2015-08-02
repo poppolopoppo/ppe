@@ -13,7 +13,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_POOL_ALLOCATOR
 //----------------------------------------------------------------------------
-#define SINGLETON_POOL_ALLOCATED_DECL(T) \
+#define SINGLETON_POOL_ALLOCATED_DECL() \
 public: \
     static void Pool_ReleaseMemory(); \
     \
@@ -30,10 +30,8 @@ public: \
 //----------------------------------------------------------------------------
 #else
 //----------------------------------------------------------------------------
-#define SINGLETON_POOL_ALLOCATED_DECL(T) \
+#define SINGLETON_POOL_ALLOCATED_DECL() \
 public: \
-    POOL_ALLOCATED_TYPE_DEBUG(T) \
-    \
     static void Pool_ReleaseMemory()
 //----------------------------------------------------------------------------
 #endif //!WITH_CORE_POOL_ALLOCATOR

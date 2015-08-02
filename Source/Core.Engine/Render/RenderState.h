@@ -52,7 +52,7 @@ public:
     DepthTest Depth() const { return _depth; }
     FillMode Fill() const { return _fill; }
 
-    SINGLETON_POOL_ALLOCATED_DECL(RenderState);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     Blending _blend;

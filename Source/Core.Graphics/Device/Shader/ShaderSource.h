@@ -52,7 +52,7 @@ public:
     static ShaderSource *LoadFromFile(  const Core::Filename& filename,
                                         const MemoryView<const Pair<String, String>>& defines);
 
-    SINGLETON_POOL_ALLOCATED_DECL(ShaderSource);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
     static const char *AppIn_SubstitutionName();
     static const char *AppIn_VertexDefinitionName();

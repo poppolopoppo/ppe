@@ -33,7 +33,7 @@ public:
     float Depth() const { return _depth; }
     u8 Stencil() const { return _stencil; }
 
-    SINGLETON_POOL_ALLOCATED_DECL(RenderLayerClear);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 protected:
     virtual void PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, const RenderTree *renderTree, VariabilitySeed *seeds) override;

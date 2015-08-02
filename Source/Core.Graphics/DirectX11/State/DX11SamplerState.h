@@ -20,7 +20,7 @@ public:
 
     ::ID3D11SamplerState *Entity() const { return _entity.Get(); }
 
-    SINGLETON_POOL_ALLOCATED_DECL(DX11SamplerState);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     ComPtr<::ID3D11SamplerState> _entity;

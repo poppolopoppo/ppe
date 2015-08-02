@@ -47,7 +47,7 @@ public:
 
     void Reset(size_t count);
 
-    SINGLETON_POOL_ALLOCATED_DECL(TaskCounter);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     std::atomic<int> _count;

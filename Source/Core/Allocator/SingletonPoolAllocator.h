@@ -46,7 +46,7 @@ public:
     friend bool operator ==(const SingletonPoolAllocator&/* lhs */, const SingletonPoolAllocator<U, _ThreadLocal, _PoolTag>&/* rhs */) {
         return true;
     }
-    
+
     template <typename U>
     friend bool operator !=(const SingletonPoolAllocator& lhs, const SingletonPoolAllocator<U, _ThreadLocal, _PoolTag>& rhs) {
         return !operator ==(lhs, rhs);

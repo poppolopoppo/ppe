@@ -33,7 +33,7 @@ public:
     const Engine::MaterialEffect *MaterialEffect() const { return _materialEffect.get(); }
     const RectangleF& Viewport() const { return _viewport; }
 
-    SINGLETON_POOL_ALLOCATED_DECL(RenderLayerDrawRect);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 protected:
     virtual void PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, const RenderTree *renderTree, VariabilitySeed *seeds) override;

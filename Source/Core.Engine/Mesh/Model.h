@@ -49,7 +49,7 @@ public:
     void Create(Graphics::IDeviceAPIEncapsulator *device);
     void Destroy(Graphics::IDeviceAPIEncapsulator *device);
 
-    SINGLETON_POOL_ALLOCATED_DECL(Model);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     MeshName _name;
@@ -63,7 +63,7 @@ private:
 struct ModelRenderCommand {
     SCModel Model;
     VECTOR(Mesh, URenderCommand) RenderCommands;
-    SINGLETON_POOL_ALLOCATED_DECL(ModelRenderCommand);
+    SINGLETON_POOL_ALLOCATED_DECL();
 };
 //----------------------------------------------------------------------------
 typedef UniquePtr<const ModelRenderCommand> UModelRenderCommand;

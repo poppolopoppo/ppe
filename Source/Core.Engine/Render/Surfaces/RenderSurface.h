@@ -28,7 +28,7 @@ public:
     const Graphics::SurfaceFormat *RenderTargetFormat() const { return _renderTargetFormat; }
     const Graphics::SurfaceFormat *DepthStencilFormat() const { return _depthStencilFormat; }
 
-    SINGLETON_POOL_ALLOCATED_DECL(RenderSurface);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 protected:
     virtual void CreateResources_(  Graphics::IDeviceAPIEncapsulator *device,

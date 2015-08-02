@@ -30,7 +30,7 @@ public:
     const float4x4& Transform() const { return _transform; }
     const AABB3f& BoundingBox() const { return _boundingBox; }
 
-    SINGLETON_POOL_ALLOCATED_DECL(ModelBone);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     MeshName _name;

@@ -30,7 +30,7 @@ public:
         PDeviceAPIDependantEntity Entity;
         LRUNode Global;
         LRUNode Local;
-        SINGLETON_POOL_ALLOCATED_DECL(SharedEntity);
+        SINGLETON_POOL_ALLOCATED_DECL();
     };
 
     explicit DeviceSharedEntityPool(MemoryTrackingData *globalVideoMemory);

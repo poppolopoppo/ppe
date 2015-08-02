@@ -32,7 +32,7 @@ public:
 
     virtual size_t VideoMemorySizeInBytes() const override;
 
-    SINGLETON_POOL_ALLOCATED_DECL(DX11ShaderProgram);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
     static void Preprocess( IDeviceAPIShaderCompiler *compiler,
                             RAWSTORAGE(Shader, char)& output,

@@ -33,7 +33,7 @@ public:
 
     const RenderBatch& Batch() const { return _batch; }
 
-    SINGLETON_POOL_ALLOCATED_DECL(RenderLayer);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 protected:
     virtual RenderBatch *RenderBatchIFPImpl_() override { return &_batch; }

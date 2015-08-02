@@ -27,7 +27,7 @@ public:
 
     Flags Selected() const { return _selected; }
 
-    SINGLETON_POOL_ALLOCATED_DECL(RenderSurfaceBackBuffer);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 protected:
     virtual void CreateResources_(  Graphics::IDeviceAPIEncapsulator *device,

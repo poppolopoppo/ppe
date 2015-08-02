@@ -20,7 +20,7 @@ public:
 
     ::ID3D11DepthStencilState *Entity() const { return _entity.Get(); }
 
-    SINGLETON_POOL_ALLOCATED_DECL(DX11DepthStencilState);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     ComPtr<::ID3D11DepthStencilState> _entity;

@@ -105,7 +105,7 @@ struct RenderCommandRegistration {
     RenderBatch *Batch; // to remove from batch before dying
     const RenderCommandRegistration *Next;
 
-    SINGLETON_POOL_ALLOCATED_DECL(RenderCommandRegistration);
+    SINGLETON_POOL_ALLOCATED_DECL();
 };
 STATIC_ASSERT(std::is_pod<RenderCommandRegistration>::value);
 //----------------------------------------------------------------------------
