@@ -8,7 +8,6 @@
 #include "Core/Color/Color_fwd.h"
 #include "Core/Maths/Geometry/ScalarRectangle_fwd.h"
 #include "Core/Maths/Geometry/ScalarVector_fwd.h"
-#include "Core/Meta/StronglyTyped.h"
 
 namespace Core {
 namespace Graphics {

@@ -3,6 +3,8 @@
 #include "Core.Graphics/Graphics.h"
 
 #include "Core.Graphics/Device/DeviceAPI.h"
+#include "Core.Graphics/Device/DeviceRevision.h"
+#include "Core.Graphics/Device/DeviceStatus.h"
 
 #include "Core/Memory/MemoryTracking.h"
 #include "Core/Meta/ThreadResource.h"
@@ -13,21 +15,6 @@ class AbstractDeviceAPIEncapsulator;
 class DeviceAPIDependantEntity;
 class DeviceSharedEntityPool;
 class PresentationParameters;
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-enum class DeviceStatus {
-    Invalid     = 0,
-    Normal      ,
-    Create      ,
-    Destroy     ,
-    Reset       ,
-    Lost        ,
-};
-//----------------------------------------------------------------------------
-const char *DeviceStatusToCStr(DeviceStatus status);
-//----------------------------------------------------------------------------
-CORE_STRONGLYTYPED_NUMERIC_DEF(u64, DeviceRevision);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

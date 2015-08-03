@@ -2,6 +2,8 @@
 
 #include "Core.Graphics/Graphics.h"
 
+#include "Core.Graphics/Device/DeviceRevision.h"
+
 #include "Core/Memory/RefPtr.h"
 #include "Core/Meta/BitField.h"
 
@@ -39,6 +41,12 @@ public:
     void AttachResource(const DeviceResource *resource);
     void DetachResource(const DeviceResource *resource);
 
+    DeviceRevision CreatedAt() const { return _createdAt; }
+    DeviceRevision LastUsed() const { return _lastUsed; }
+
+    void SetCreatedAt(DeviceRevision revision);
+    void SetLastUsed(DeviceRevision revision);
+
     virtual size_t VideoMemorySizeInBytes() const = 0;
 
 private:
@@ -47,6 +55,9 @@ private:
 
     u32 _apiAndResourceType;
     SCDeviceResource _resource;
+
+    DeviceRevision _createdAt;
+    DeviceRevision _lastUsed;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

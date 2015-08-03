@@ -40,9 +40,9 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceEncapsulator::DeviceEncapsulator() 
+DeviceEncapsulator::DeviceEncapsulator()
 :   _status(DeviceStatus::Invalid)
-,   _revision(0)
+,   _revision(InvalidDeviceRevision())
 ,   _videoMemory("DeviceEncapsulator", &GlobalVideoMemory::Instance()) {}
 //----------------------------------------------------------------------------
 DeviceEncapsulator::~DeviceEncapsulator() {
@@ -91,6 +91,7 @@ void DeviceEncapsulator::Create(DeviceAPI api, void *windowHandle, const Present
 
     Assert(DeviceStatus::Invalid == _status);
     _status = DeviceStatus::Create;
+    _revision.Value = 0;
 
     switch (api)
     {
@@ -140,13 +141,13 @@ void DeviceEncapsulator::Destroy() {
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::Reset(const PresentationParameters& pp) {
     THIS_THREADRESOURCE_CHECKACCESS();
-    
+
     Assert(DeviceStatus::Normal == _status);
     _status = DeviceStatus::Reset;
 
     _revision.Value = 0;
     _deviceAPIEncapsulator->Reset(pp);
-    
+
     Assert(DeviceStatus::Reset == _status);
     _status = DeviceStatus::Invalid;
 }
@@ -169,28 +170,6 @@ const AbstractDeviceAPIEncapsulator *DeviceEncapsulator::APIEncapsulator() const
     Assert(_deviceAPIEncapsulator);
 
     return _deviceAPIEncapsulator.get();
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-const char *DeviceStatusToCStr(DeviceStatus status) {
-    switch (status)
-    {
-    case Core::Graphics::DeviceStatus::Invalid:
-        return "Invalid";
-    case Core::Graphics::DeviceStatus::Normal:
-        return "Normal";
-    case Core::Graphics::DeviceStatus::Create:
-        return "Create";
-    case Core::Graphics::DeviceStatus::Destroy:
-        return "Destroy";
-    case Core::Graphics::DeviceStatus::Reset:
-        return "Reset";
-    case Core::Graphics::DeviceStatus::Lost:
-        return "Lost";
-    }
-    AssertNotImplemented();
-    return nullptr;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

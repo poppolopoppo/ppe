@@ -41,6 +41,7 @@ void DeviceEncapsulator::SetBlendState(const BlendState *state) {
     Assert(state->Frozen());
     Assert(state->Available());
 
+    state->TerminalEntity()->SetLastUsed(_revision);
     _deviceAPIEncapsulator->Immediate()->SetBlendState(state);
 }
 //----------------------------------------------------------------------------
@@ -50,6 +51,7 @@ void DeviceEncapsulator::SetRasterizerState(const RasterizerState *state) {
     Assert(state->Frozen());
     Assert(state->Available());
 
+    state->TerminalEntity()->SetLastUsed(_revision);
     _deviceAPIEncapsulator->Immediate()->SetRasterizerState(state);
 }
 //----------------------------------------------------------------------------
@@ -59,6 +61,7 @@ void DeviceEncapsulator::SetDepthStencilState(const DepthStencilState *state) {
     Assert(state->Frozen());
     Assert(state->Available());
 
+    state->TerminalEntity()->SetLastUsed(_revision);
     _deviceAPIEncapsulator->Immediate()->SetDepthStencilState(state);
 }
 //----------------------------------------------------------------------------
@@ -70,19 +73,20 @@ void DeviceEncapsulator::SetSamplerState(ShaderProgramType stage, size_t slot, c
     Assert(state->Frozen());
     Assert(state->Available());
 
+    state->TerminalEntity()->SetLastUsed(_revision);
     _deviceAPIEncapsulator->Immediate()->SetSamplerState(stage, slot, state);
 }
 
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::SetSamplerStates(ShaderProgramType stage, const MemoryView<const SamplerState *>& states) {
     THIS_THREADRESOURCE_CHECKACCESS();
-#ifdef WITH_CORE_ASSERT
+
     for (const SamplerState *state : states) {
         Assert(state);
         Assert(state->Frozen());
         Assert(state->Available());
+        state->TerminalEntity()->SetLastUsed(_revision);
     }
-#endif
 
     _deviceAPIEncapsulator->Immediate()->SetSamplerStates(stage, states);
 }
@@ -95,6 +99,7 @@ void DeviceEncapsulator::SetIndexBuffer(const IndexBuffer *indexBuffer) {
     Assert(indexBuffer->Frozen());
     Assert(indexBuffer->Available());
 
+    indexBuffer->TerminalEntity()->SetLastUsed(_revision);
     _deviceAPIEncapsulator->Immediate()->SetIndexBuffer(indexBuffer);
 }
 //----------------------------------------------------------------------------
@@ -105,6 +110,7 @@ void DeviceEncapsulator::SetIndexBuffer(const IndexBuffer *indexBuffer, size_t o
     Assert(indexBuffer->Available());
     Assert(offset < indexBuffer->IndexCount());
 
+    indexBuffer->TerminalEntity()->SetLastUsed(_revision);
     _deviceAPIEncapsulator->Immediate()->SetIndexBuffer(indexBuffer, offset);
 }
 //----------------------------------------------------------------------------
@@ -116,6 +122,7 @@ void DeviceEncapsulator::SetVertexBuffer(const VertexBuffer *vertexBuffer) {
     Assert(vertexBuffer->Frozen());
     Assert(vertexBuffer->Available());
 
+    vertexBuffer->TerminalEntity()->SetLastUsed(_revision);
     _deviceAPIEncapsulator->Immediate()->SetVertexBuffer(vertexBuffer);
 }
 //----------------------------------------------------------------------------
@@ -126,6 +133,7 @@ void DeviceEncapsulator::SetVertexBuffer(const VertexBuffer *vertexBuffer, u32 v
     Assert(vertexBuffer->Available());
     Assert(vertexOffset < vertexBuffer->VertexCount());
 
+    vertexBuffer->TerminalEntity()->SetLastUsed(_revision);
     _deviceAPIEncapsulator->Immediate()->SetVertexBuffer(vertexBuffer, vertexOffset);
 }
 //----------------------------------------------------------------------------
@@ -133,14 +141,13 @@ void DeviceEncapsulator::SetVertexBuffer(const MemoryView<const VertexBufferBind
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(bindings.size());
 
-#ifdef WITH_CORE_ASSERT
     for (const VertexBufferBinding& b : bindings) {
         Assert(b.VertexBuffer);
         Assert(b.VertexBuffer->Frozen());
         Assert(b.VertexBuffer->Available());
         Assert(b.VertexOffset < b.VertexBuffer->VertexCount());
+        b.VertexBuffer->TerminalEntity()->SetLastUsed(_revision);
     }
-#endif
 
     _deviceAPIEncapsulator->Immediate()->SetVertexBuffer(bindings);
 }
@@ -153,18 +160,19 @@ void DeviceEncapsulator::SetConstantBuffer(ShaderProgramType stage, size_t slot,
     Assert(constantBuffer->Frozen());
     Assert(constantBuffer->Available());
 
+    constantBuffer->TerminalEntity()->SetLastUsed(_revision);
     _deviceAPIEncapsulator->Immediate()->SetConstantBuffer(stage, slot, constantBuffer);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::SetConstantBuffers(ShaderProgramType stage, const MemoryView<const ConstantBuffer *>& constantBuffers) {
     THIS_THREADRESOURCE_CHECKACCESS();
-#ifdef WITH_CORE_ASSERT
+
     for (const ConstantBuffer *constantBuffer : constantBuffers) {
         Assert(constantBuffer);
         Assert(constantBuffer->Frozen());
         Assert(constantBuffer->Available());
+        constantBuffer->TerminalEntity()->SetLastUsed(_revision);
     }
-#endif
 
     _deviceAPIEncapsulator->Immediate()->SetConstantBuffers(stage, constantBuffers);
 }
@@ -175,6 +183,7 @@ void DeviceEncapsulator::SetShaderEffect(const ShaderEffect *effect) {
     Assert(effect->Frozen());
     Assert(effect->Available());
 
+    effect->TerminalEntity()->SetLastUsed(_revision);
     _deviceAPIEncapsulator->Immediate()->SetShaderEffect(effect);
 }
 //----------------------------------------------------------------------------
@@ -185,18 +194,19 @@ void DeviceEncapsulator::SetTexture(ShaderProgramType stage, size_t slot, const 
     Assert(!texture || texture->Frozen());
     Assert(!texture || texture->Available());
 
+    texture->TerminalEntity()->SetLastUsed(_revision);
     _deviceAPIEncapsulator->Immediate()->SetTexture(stage, slot, texture);
 }
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::SetTextures(ShaderProgramType stage, const MemoryView<const Texture *>& textures) {
     THIS_THREADRESOURCE_CHECKACCESS();
-#ifdef WITH_CORE_ASSERT
+
     for (const Texture *texture : textures) {
         if (!texture) continue;
         Assert(texture->Frozen());
         Assert(texture->Available());
+        texture->TerminalEntity()->SetLastUsed(_revision);
     }
-#endif
 
     _deviceAPIEncapsulator->Immediate()->SetTextures(stage, textures);
 }

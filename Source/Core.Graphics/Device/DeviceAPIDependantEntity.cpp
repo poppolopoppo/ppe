@@ -12,7 +12,10 @@ namespace Graphics {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 DeviceAPIDependantEntity::DeviceAPIDependantEntity(const AbstractDeviceAPIEncapsulator *encapsulator, const DeviceResource *resource)
-:   _apiAndResourceType(0), _resource(resource) {
+:   _apiAndResourceType(0)
+,   _resource(resource)
+,   _createdAt(InvalidDeviceRevision())
+,   _lastUsed(InvalidDeviceRevision()) {
     bitdevicapi_type::InplaceSet(_apiAndResourceType, (u32)encapsulator->API() );
     bitresourcetype_type::InplaceSet(_apiAndResourceType, (u32)resource->ResourceType() );
 }
@@ -42,6 +45,18 @@ void DeviceAPIDependantEntity::DetachResource(const DeviceResource *resource) {
     Assert(_resource->Available());
 
     _resource.reset(nullptr);
+}
+//----------------------------------------------------------------------------
+void DeviceAPIDependantEntity::SetCreatedAt(DeviceRevision revision) {
+    Assert(_resource);
+
+    _createdAt = revision;
+}
+//----------------------------------------------------------------------------
+void DeviceAPIDependantEntity::SetLastUsed(DeviceRevision revision) {
+    Assert(_resource);
+
+    _lastUsed = revision;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -12,7 +12,7 @@ struct Numeric {
     typedef _Tag tag_type;
 
     T Value;
-    
+
     explicit Numeric(T value = T()) : Value(value) {}
     operator T () const { return Value; }
 
@@ -25,9 +25,9 @@ struct Numeric {
     bool operator < (const Numeric& other) const { return Value < other.Value; }
     bool operator >=(const Numeric& other) const { return !operator < (other); }
 
-    static Numeric MinusOne() { return Numeric(-1); }
-    static Numeric One() { return Numeric(1); }
-    static Numeric Zero() { return Numeric(0); }
+    static Numeric MinusOne() { return Numeric(T(-1)); }
+    static Numeric One() { return Numeric(T(1)); }
+    static Numeric Zero() { return Numeric(T(0)); }
 };
 //----------------------------------------------------------------------------
 } //!namespace StronglyTyped

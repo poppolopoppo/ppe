@@ -27,6 +27,7 @@ void AbstractDeviceAPIEncapsulator::OnCreateEntity(const DeviceResource *resourc
     Assert(entity);
 
     entity->AttachResource(resource);
+    entity->SetCreatedAt(_owner->Revision());
 
     const size_t sizeInBytes = entity->VideoMemorySizeInBytes();
     _usedMemory.Allocate(1, sizeInBytes);
