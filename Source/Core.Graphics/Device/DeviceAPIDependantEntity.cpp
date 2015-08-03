@@ -49,12 +49,14 @@ void DeviceAPIDependantEntity::DetachResource(const DeviceResource *resource) {
 //----------------------------------------------------------------------------
 void DeviceAPIDependantEntity::SetCreatedAt(DeviceRevision revision) {
     Assert(_resource);
+    Assert(revision != InvalidDeviceRevision());
 
     _createdAt = revision;
 }
 //----------------------------------------------------------------------------
 void DeviceAPIDependantEntity::SetLastUsed(DeviceRevision revision) {
     Assert(_resource);
+    Assert(revision != InvalidDeviceRevision());
 
     _lastUsed = revision;
 }

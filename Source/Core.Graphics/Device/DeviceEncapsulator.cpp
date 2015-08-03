@@ -133,6 +133,8 @@ void DeviceEncapsulator::Destroy() {
 
     _deviceAPIEncapsulator.reset();
 
+    _revision = InvalidDeviceRevision();
+
     Assert(DeviceStatus::Destroy == _status);
     _status = DeviceStatus::Invalid;
 
@@ -145,8 +147,9 @@ void DeviceEncapsulator::Reset(const PresentationParameters& pp) {
     Assert(DeviceStatus::Normal == _status);
     _status = DeviceStatus::Reset;
 
-    _revision.Value = 0;
+    _deviceSharedEntityPool->ReleaseAll();
     _deviceAPIEncapsulator->Reset(pp);
+    _revision.Value = 0;
 
     Assert(DeviceStatus::Reset == _status);
     _status = DeviceStatus::Invalid;
