@@ -235,6 +235,15 @@
     <CustomBuild Include="Device\DeviceResourceType.h">
       <Filter>Device</Filter>
     </CustomBuild>
+    <CustomBuild Include="Device\DeviceRevision.h">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\DeviceStatus.cpp">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\DeviceStatus.h">
+      <Filter>Device</Filter>
+    </CustomBuild>
     <CustomBuild Include="Device\IDeviceAPIContext.h">
       <Filter>Device</Filter>
     </CustomBuild>

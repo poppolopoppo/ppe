@@ -123,6 +123,12 @@
     </CustomBuild>
     <CustomBuild Include="RTTI_fwd.h">
     </CustomBuild>
+    <CustomBuild Include="stdafx.cpp">
+    </CustomBuild>
+    <CustomBuild Include="stdafx.h">
+    </CustomBuild>
+    <CustomBuild Include="targetver.h">
+    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Atom">
