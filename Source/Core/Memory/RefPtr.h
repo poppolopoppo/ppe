@@ -21,6 +21,13 @@
     typedef Core::SafePtr<T> CONCAT(S, T); \
     typedef Core::SafePtr<const T> CONCAT(SC, T)
 
+#define FWD_INTERFACE_REFPTR(T_WITHOUT_I) \
+    class CONCAT(I, T_WITHOUT_I); \
+    typedef Core::RefPtr<CONCAT(I, T_WITHOUT_I)> CONCAT(P, T); \
+    typedef Core::RefPtr<const CONCAT(I, T_WITHOUT_I)> CONCAT(PC, T); \
+    typedef Core::SafePtr<CONCAT(I, T_WITHOUT_I)> CONCAT(S, T); \
+    typedef Core::SafePtr<const CONCAT(I, T_WITHOUT_I)> CONCAT(SC, T)
+
 #ifdef SAFEPTR
 #   undef SAFEPTR
 #endif
