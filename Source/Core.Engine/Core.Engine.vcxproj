@@ -47,12 +47,18 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <CustomBuild Include="Camera\Projection\OrthographicProjection.cpp" />
+    <CustomBuild Include="Camera\Projection\OrthographicProjection.h" />
+    <CustomBuild Include="Camera\Projection\PerspectiveProjection.cpp" />
+    <CustomBuild Include="Camera\Projection\PerspectiveProjection.h" />
+    <CustomBuild Include="Camera\View\FreeLookView.cpp" />
+    <CustomBuild Include="Camera\View\FreeLookView.h" />
     <CustomBuild Include="Camera\Camera.cpp" />
     <CustomBuild Include="Camera\Camera.h" />
-    <CustomBuild Include="Camera\CameraController.cpp" />
-    <CustomBuild Include="Camera\CameraController.h" />
     <CustomBuild Include="Camera\CameraModel.cpp" />
     <CustomBuild Include="Camera\CameraModel.h" />
+    <CustomBuild Include="Camera\ICameraProjection.h" />
+    <CustomBuild Include="Camera\ICameraView.h" />
     <CustomBuild Include="Effect\Effect.cpp" />
     <CustomBuild Include="Effect\Effect.h" />
     <CustomBuild Include="Effect\EffectCompiler.cpp" />

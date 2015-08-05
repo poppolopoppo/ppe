@@ -11,93 +11,46 @@ namespace Core {
 class Timeline;
 
 namespace Engine {
-class ICameraController;
-typedef RefPtr<ICameraController> PCameraController;
-typedef RefPtr<const ICameraController> PCCameraController;
-
+FWD_INTERFACE_REFPTR(CameraProjection);
+FWD_INTERFACE_REFPTR(CameraView);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ICamera : public RefCountable {
+FWD_REFPTR(Camera);
+class Camera : public RefCountable {
 public:
-    ICamera(float znear, float zfar);
-    virtual ~ICamera();
+    Camera(float znear, float zfar);
 
-    ICamera(const ICamera& ) = delete;
-    ICamera& operator =(const ICamera& ) = delete;
+    Camera(const ICamera& ) = delete;
+    Camera& operator =(const ICamera& ) = delete;
+
+    const CameraModel& CurrentState() const { return _currentState; }
+    const CameraModel& PreviousState() const { return _previousState; }
 
     float ZNear() const { return _znear; }
     float ZFar() const { return _zfar; }
 
-    const CameraModel& Model() const { return _model; }
-    const ICameraController *Controller() const { return _controller.get(); }
+    const ICameraView *View() const { return _view.get(); }
+    const ICameraProjection *Projection() const { return _projection.get(); }
 
-    void SetController(ICameraController *controller);
+    void SetZNear(float value);
+    void SetZFar(float value);
 
-    void CurrentProjection(float4x4 *projection) const;
+    void SetView(ICameraView *view);
+    void SetProjection(ICameraProjection *projection);
 
-    void Update(const Timeline& time);
-    void OnResize(const ViewportF& viewport);
+    void Update(const Timeline& time, const ViewportF& viewport);
 
-protected:
-    virtual void UpdateImpl(float4x4 *projection, const Timeline& time) = 0;
-    virtual void OnResizeImpl(const ViewportF& viewport) = 0;
+private:
+    CameraModel _currentState;
 
     float _znear;
     float _zfar;
 
-private:
-    float4x4 _projection;
-    CameraModel _model;
-    PCameraController _controller;
-};
-//----------------------------------------------------------------------------
-typedef RefPtr<ICamera> PCamera;
-typedef RefPtr<const ICamera> PCCamera;
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-FWD_REFPTR(PerspectiveCamera);
-class PerspectiveCamera : public ICamera {
-public:
-    PerspectiveCamera(float fov/* rad */, float znear, float zfar, const ViewportF& viewport);
-    virtual ~PerspectiveCamera();
+    PCameraView _view;
+    PCameraProjection _projection;
 
-    float FOV() const { return _fov; }
-
-    float AspectRatio() const { return _aspectRatio; }
-
-protected:
-    virtual void UpdateImpl(float4x4 *projection, const Timeline& time) override;
-    virtual void OnResizeImpl(const ViewportF& viewport) override;
-
-private:
-    float _fov; // rad
-    float _aspectRatio;
-};
-//----------------------------------------------------------------------------
-FWD_REFPTR(OrthographicOffCenterCamera);
-class OrthographicOffCenterCamera : public ICamera {
-public:
-    OrthographicOffCenterCamera(float znear, float zfar, const ViewportF& viewport);
-    virtual ~OrthographicOffCenterCamera();
-
-    float Left() const { return _left; }
-    float Right() const { return _right; }
-
-    float Bottom() const { return _bottom; }
-    float Top() const { return _top; }
-
-protected:
-    virtual void UpdateImpl(float4x4 *projection, const Timeline& time) override;
-    virtual void OnResizeImpl(const ViewportF& viewport) override;
-
-private:
-    float _left;
-    float _right;
-
-    float _bottom;
-    float _top;
+    CameraModel _previousState;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

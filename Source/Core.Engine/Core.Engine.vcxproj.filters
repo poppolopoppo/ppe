@@ -1,22 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <CustomBuild Include="Camera\Projection\OrthographicProjection.cpp">
+      <Filter>Camera\Projection</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Camera\Projection\OrthographicProjection.h">
+      <Filter>Camera\Projection</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Camera\Projection\PerspectiveProjection.cpp">
+      <Filter>Camera\Projection</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Camera\Projection\PerspectiveProjection.h">
+      <Filter>Camera\Projection</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Camera\View\FreeLookView.cpp">
+      <Filter>Camera\View</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Camera\View\FreeLookView.h">
+      <Filter>Camera\View</Filter>
+    </CustomBuild>
     <CustomBuild Include="Camera\Camera.cpp">
       <Filter>Camera</Filter>
     </CustomBuild>
     <CustomBuild Include="Camera\Camera.h">
       <Filter>Camera</Filter>
     </CustomBuild>
-    <CustomBuild Include="Camera\CameraController.cpp">
-      <Filter>Camera</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Camera\CameraController.h">
-      <Filter>Camera</Filter>
-    </CustomBuild>
     <CustomBuild Include="Camera\CameraModel.cpp">
       <Filter>Camera</Filter>
     </CustomBuild>
     <CustomBuild Include="Camera\CameraModel.h">
+      <Filter>Camera</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Camera\ICameraProjection.h">
+      <Filter>Camera</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Camera\ICameraView.h">
       <Filter>Camera</Filter>
     </CustomBuild>
     <CustomBuild Include="Effect\Effect.cpp">
@@ -522,8 +540,18 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <Filter Include="Camera\Projection">
+      <UniqueIdentifier>{d17c00bb-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
     <Filter Include="Camera">
       <UniqueIdentifier>{3cb0eb33-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Camera\View">
+      <UniqueIdentifier>{15188dfb-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

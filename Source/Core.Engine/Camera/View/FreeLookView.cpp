@@ -1,49 +1,30 @@
 #include "stdafx.h"
 
-#include "CameraController.h"
+#include "FreeLookView.h"
 
 #include "Core/Maths/MathHelpers.h"
 #include "Core/Maths/Transform/Quaternion.h"
 #include "Core/Maths/Transform/QuaternionHelpers.h"
 #include "Core/Maths/Transform/ScalarMatrixHelpers.h"
-#include "Core/Time/Timeline.h"
 
 namespace Core {
 namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ICameraController::ICameraController()
-:   _view(float4x4::Identity()) {}
-//----------------------------------------------------------------------------
-ICameraController::~ICameraController() {}
-//----------------------------------------------------------------------------
-void ICameraController::CurrentView(float4x4 *view) const {
-    Assert(view);
-    *view = _view;
-}
-//----------------------------------------------------------------------------
-void ICameraController::Update(const Timeline& time) {
-    UpdateImpl(&_view, time);
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-FreeLookCameraController::FreeLookCameraController(const float3& position, float heading, float pitch) {
+FreeLookView::FreeLookView(const float3& position, float heading, float pitch) {
     LookAt(position, heading, pitch);
 }
 //----------------------------------------------------------------------------
-FreeLookCameraController::~FreeLookCameraController() {}
+FreeLookView::~FreeLookView() {}
 //----------------------------------------------------------------------------
-void FreeLookCameraController::LookAt(const float3& position, float heading, float pitch) {
+void FreeLookView::LookAt(const float3& position, float heading, float pitch) {
     _position = position;
     _heading = std::fmod(heading, F_2PI);
     _pitch = std::fmod(pitch, F_2PI);
 }
 //----------------------------------------------------------------------------
-void FreeLookCameraController::UpdateImpl(float4x4 *view, const Timeline&/* time */) {
-    Assert(view);
-
+virtual float4x4 FreeLookView::ViewMatrix(const Timeline& ) override;
     const Quaternion rotation = MakeYawPitchRollQuaternion(_heading, _pitch, 0.0f);
 
     const float3 dU(0.0f, 1.0f, 0.0f);
@@ -53,7 +34,7 @@ void FreeLookCameraController::UpdateImpl(float4x4 *view, const Timeline&/* time
     _forward = Normalize3(rotation.Transform(dV));
     _right = Normalize3(Cross(_up, _forward));
 
-    *view = MakeLookAtLHMatrix(_position, _position + _forward, _up);
+    return MakeLookAtLHMatrix(_position, _position + _forward, _up);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

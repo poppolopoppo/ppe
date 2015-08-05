@@ -15,7 +15,6 @@ namespace Engine {
 CameraModel::CameraModel() {
     _view = _projection = _viewProjection = float4x4::Identity();
     _invertView = _invertProjection = _invertViewProjection = float4x4::Identity();
-
     _frustum.GetCorners(_frustumCorners);
     _frustum.GetCameraParams(_parameters);
 }
@@ -31,13 +30,9 @@ void CameraModel::GetFrustumRays(const MemoryView<float3>& rays) const {
     rays[size_t(CameraRay::RightTop)]       = _frustumCorners[size_t(FrustumCorner::Far_RightTop)]      - _frustumCorners[size_t(FrustumCorner::Near_RightTop)];
 }
 //----------------------------------------------------------------------------
-void CameraModel::Update(const ICamera *camera, const ICameraController *controller) {
-    Assert(camera);
-    Assert(controller);
-
-    controller->CurrentView(&_view);
-    camera->CurrentProjection(&_projection);
-
+void CameraModel::Update(const float4x4& view, const float4x4& projection) {
+    _view = view;
+    _projection = projection;
     _viewProjection = _view.Multiply(_projection);
 
     _invertView = Invert(_view);
@@ -65,6 +60,21 @@ void CameraModel::CopyTo(CameraModel *dst) const {
         dst->_frustumCorners[i] = _frustumCorners[i];
 
     dst->_parameters = _parameters;
+}
+//----------------------------------------------------------------------------
+bool CameraModel::Equals(const CameraModel& other) const {
+    const bool result = _view == other->_view &&
+                        _projection == other->_projection;
+#ifdef WITH_CORE_ASSERT
+    if (result) {
+        Assert(_viewProjection == other->_viewProjection);
+        Assert(_invertView == other->_invertView);
+        Assert(_invertProjection == other->_invertProjection);
+        Assert(_invertViewProjection == other->_invertViewProjection);
+        Assert(_frustum == other._frustum);
+    }
+#endif
+    return result;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

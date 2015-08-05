@@ -45,8 +45,9 @@ public:
     void GetFrustumRays(float3 (&rays)[4]) const { return GetFrustumRays(MakeView(rays)); }
     void GetFrustumRays(const MemoryView<float3>& rays) const;
 
-    void Update(const ICamera *camera, const ICameraController *controller);
+    void Update(const float4x4& view, const float4x4& projection);
     void CopyTo(CameraModel *dst) const;
+    bool Equals(const CameraModel& other) const;
 
 private:
     float4x4 _view;
