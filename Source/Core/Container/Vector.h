@@ -3,6 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/Allocator/Allocation.h"
+#include "Core/Allocator/InSituAllocator.h"
 #include "Core/Container/Hash.h"
 
 #include <utility>
@@ -74,18 +75,12 @@ size_t hash_value(const Vector<T, _Allocator>& vector);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <size_t _SizeInBytes>
-struct VectorInSituStorage;
-//----------------------------------------------------------------------------
-template <typename T, size_t _SizeInBytes, typename _Allocator>
-class VectorInSituAllocator;
-//----------------------------------------------------------------------------
 template <typename T, size_t _InSituCount, typename _Allocator = ALLOCATOR(Container, T) >
-class VectorInSitu : public std::vector<T, VectorInSituAllocator<T, sizeof(T) * _InSituCount, _Allocator> > {
+class VectorInSitu : public std::vector<T, InSituAllocator<T, sizeof(T) * _InSituCount, _Allocator> > {
 public:
     enum : size_t { InSituSizeInBytes = sizeof(T) * _InSituCount };
-    typedef VectorInSituStorage<InSituSizeInBytes> storage_type;
-    typedef VectorInSituAllocator<T, InSituSizeInBytes, _Allocator> allocator_type;
+    typedef InSituAllocator<T, InSituSizeInBytes, _Allocator> allocator_type;
+    typedef typename allocator_type::storage_type storage_type;
     typedef std::vector<T, allocator_type> vector_type;
 
     using vector_type::operator [];
@@ -105,7 +100,7 @@ public:
 
     VectorInSitu(VectorInSitu&& rvalue) : VectorInSitu() { operator =(std::move(rvalue)); }
     VectorInSitu& operator =(VectorInSitu&& rvalue);
-    
+
 private:
     storage_type _inSituData;
 };

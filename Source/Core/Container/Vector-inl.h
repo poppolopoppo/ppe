@@ -62,7 +62,7 @@ void Remove_DontPreserveOrder(Vector<T, _Allocator>& v, const T& elt) {
     using std::swap;
     auto it = std::find(v.begin(), v.end(), elt);
     Assert(it != v.end());
-    if (v.size() > 1) 
+    if (v.size() > 1)
         swap(*it, v.back());
     v.pop_back();
 }
@@ -74,7 +74,7 @@ bool Remove_ReturnIfExists_DontPreserveOrder(Vector<T, _Allocator>& v, const T& 
     if (v.end() == it)
         return false;
 
-    if (v.size() > 1) 
+    if (v.size() > 1)
         swap(*it, v.back());
     v.pop_back();
 
@@ -117,91 +117,6 @@ void Clear_ReleaseMemory(Vector<T, _Allocator>& v) {
 template <typename T, typename _Allocator>
 size_t hash_value(const Vector<T, _Allocator>& vector) {
     return hash_value_seq(vector.begin(), vector.end());
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <size_t _SizeInBytes>
-struct VectorInSituStorage {
-    typedef typename std::aligned_storage< _SizeInBytes, 16 >::type
-        storage_type;
-
-    VectorInSituStorage() {}
-
-    VectorInSituStorage(const VectorInSituStorage& ) = delete;
-    VectorInSituStorage& operator =(const VectorInSituStorage& ) = delete;
-
-    void *get() { return &_storage; }
-    const void *get() const { return &_storage; }
-
-    storage_type _storage;
-};
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename T, size_t _SizeInBytes, typename _Allocator>
-class VectorInSituAllocator : public _Allocator {
-public:
-    template <typename, size_t, typename>
-    friend class VectorInSituAllocator;
-
-    typedef _Allocator fallback_type;
-
-    typedef T *pointer;
-    typedef std::size_t size_type;
-
-    typedef VectorInSituStorage<_SizeInBytes> storage_type;
-        
-    template<typename U>
-    struct rebind
-    {
-        typedef VectorInSituAllocator<
-            U, _SizeInBytes, 
-            typename _Allocator::template rebind<U>::other
-        >   other;
-    };
-
-    VectorInSituAllocator(storage_type& insitu) throw() : _pinsitu(&insitu) {}
-
-    template <typename U, typename A>
-    VectorInSituAllocator(const VectorInSituAllocator<U, _SizeInBytes, A>& other)
-        : _pinsitu(other._pinsitu) {}
-
-    VectorInSituAllocator& operator =(const VectorInSituAllocator& ) { return *this; }
-
-    pointer allocate(size_type n);
-    pointer allocate(size_type n, const void* /*hint*/) { return allocate(n); }
-    void deallocate(pointer p, size_type n);
-
-    template <typename U, typename A>
-    friend bool operator ==(const VectorInSituAllocator& lhs, const VectorInSituAllocator<U, _SizeInBytes, A>& rhs) {
-        return lhs._pinsitu == rhs._pinsitu;
-    }
-
-    template <typename U, typename A>
-    friend bool operator !=(const VectorInSituAllocator& lhs, const VectorInSituAllocator<U, _SizeInBytes, A>& rhs) {
-        return !operator ==(lhs, rhs);
-    }
-
-private:
-    storage_type *_pinsitu;
-};
-//----------------------------------------------------------------------------
-template <typename T, size_t _SizeInBytes, typename _Allocator>
-auto VectorInSituAllocator<T, _SizeInBytes, _Allocator>::allocate(size_type n) -> pointer {
-    if (n * sizeof(T) == _SizeInBytes) {
-        Assert(_pinsitu);
-        return reinterpret_cast<T *>(_pinsitu->get());
-    }
-    else {
-        return fallback_type::allocate(n);
-    }
-}
-//----------------------------------------------------------------------------
-template <typename T, size_t _SizeInBytes, typename _Allocator>
-void VectorInSituAllocator<T, _SizeInBytes, _Allocator>::deallocate(pointer p, size_type n) {
-    if (p != _pinsitu->get())
-        fallback_type::deallocate(p, n);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

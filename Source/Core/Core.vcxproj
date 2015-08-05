@@ -57,6 +57,7 @@
     <CustomBuild Include="Allocator\Heap.cpp" />
     <CustomBuild Include="Allocator\Heap.h" />
     <CustomBuild Include="Allocator\HeapAllocator.h" />
+    <CustomBuild Include="Allocator\InSituAllocator.h" />
     <CustomBuild Include="Allocator\Malloc.cpp" />
     <CustomBuild Include="Allocator\Malloc.h" />
     <CustomBuild Include="Allocator\Mallocator.h" />

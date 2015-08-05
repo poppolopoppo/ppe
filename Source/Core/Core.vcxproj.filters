@@ -31,6 +31,9 @@
     <CustomBuild Include="Allocator\HeapAllocator.h">
       <Filter>Allocator</Filter>
     </CustomBuild>
+    <CustomBuild Include="Allocator\InSituAllocator.h">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
     <CustomBuild Include="Allocator\Malloc.cpp">
       <Filter>Allocator</Filter>
     </CustomBuild>
