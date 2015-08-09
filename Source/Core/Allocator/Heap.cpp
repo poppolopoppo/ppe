@@ -2,8 +2,12 @@
 
 #include "Heap.h"
 
-#include <windows.h>
-#include <HeapApi.h>
+#ifdef OS_WINDOWS
+#   include <windows.h>
+#   include <HeapApi.h>
+#else
+#   error "no support"
+#endif
 
 namespace Core {
 //----------------------------------------------------------------------------
