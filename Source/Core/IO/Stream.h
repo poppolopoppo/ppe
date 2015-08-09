@@ -102,12 +102,15 @@ public:
     BasicOCStrStream(const BasicOCStrStream&) = delete;
     BasicOCStrStream& operator =(const BasicOCStrStream&) = delete;
 
-    const _Char* storage() const { return _buffer.storage(); }
+    const _Char *storage() const { return _buffer.storage(); }
     std::streamsize capacity() const { return _buffer.capacity(); }
     std::streamsize size() const { return _buffer.size(); }
 
     const _Char *begin() const { return _buffer.storage(); }
     const _Char *end() const { return _buffer.storage() + _buffer.size(); }
+
+    const _Char *Pointer() const { return _buffer.storage(); }
+    size_t SizeInBytes() const { return checked_cast<size_t>(_buffer.size() * sizeof(_Char)); }
 
     void PutEOS();
     void RemoveEOS();
