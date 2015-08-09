@@ -2,6 +2,7 @@
 
 #include "Core/Core.h"
 
+#include "Core/Allocator/PoolAllocatorTag.h"
 #include "Core/Allocator/SingletonPoolAllocator.h"
 
 namespace Core {
