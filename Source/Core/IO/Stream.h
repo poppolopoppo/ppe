@@ -89,7 +89,7 @@ public:
     BasicOCStrStream(_Char* storage, std::streamsize capacity);
     virtual ~BasicOCStrStream();
 
-    explicit BasicOCStrStream(const MemoryView<_Char>& view) 
+    explicit BasicOCStrStream(const MemoryView<_Char>& view)
         : BasicOCStrStream(view.Pointer(), view.size()) {}
 
     template <size_t _Capacity>
@@ -105,9 +105,9 @@ public:
     const _Char* storage() const { return _buffer.storage(); }
     std::streamsize capacity() const { return _buffer.capacity(); }
     std::streamsize size() const { return _buffer.size(); }
-    
-    const _Char *begin() const { return _buffer.storage(); } 
-    const _Char *end() const { return _buffer.storage() + _buffer.size(); } 
+
+    const _Char *begin() const { return _buffer.storage(); }
+    const _Char *end() const { return _buffer.storage() + _buffer.size(); }
 
     void PutEOS();
     void RemoveEOS();
