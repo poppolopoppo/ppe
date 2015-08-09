@@ -3,6 +3,7 @@
 #include "Core/Diagnostic/Logger.h"
 
 #include "Core/IO/Format.h"
+#include "Core/IO/Stream.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -20,10 +21,10 @@ void LoggerFrontend::LogFormat(LogCategory category, const wchar_t* format, _Arg
     if (!_impl)
         return;
 
-    wchar_t msg[4096];
-    const size_t length = Format(msg, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+    STACKLOCAL_WOCSTRSTREAM(oss, 4096);
+    const size_t length = Format(oss, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
 
-    _impl->Log(*this, category, msg, length);
+    _impl->Log(*this, category, oss.Pointer(), length);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
