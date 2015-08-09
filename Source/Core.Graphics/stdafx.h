@@ -41,7 +41,5 @@
 #include "Core/Diagnostic/Logger.h"
 
 #include "Core/Thread/ThreadContext.h"
-#include "Core/Thread/ThreadLocalStorage.h"
-#include "Core/Thread/ThreadPool.h"
 
 #include "Core.Graphics/Graphics.h"

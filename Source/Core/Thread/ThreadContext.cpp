@@ -6,8 +6,7 @@
 #include "Allocator/ThreadLocalHeap.h"
 #include "Diagnostic/Logger.h"
 #include "IO/String.h"
-#include "ThreadLocalSingleton.h"
-#include "ThreadLocalStorage.h"
+#include "Meta/AutoSingleton.h"
 
 #ifdef _DEBUG
 #include <Windows.h>
@@ -103,14 +102,14 @@ const ThreadContext& ThisThreadContext()
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void ThreadContextStartup::Start(const char* name, size_t tag) {
-    ThreadLocalManager::Instance().CreateThreadLocalStorage();
     CurrentThreadContext::Create(name, tag);
     ThreadLocalHeapStartup::Start(false);
+    Meta::ThreadLocalAutoSingletonManager::Start();
     AllocaStartup::Start(false);
 }
 //----------------------------------------------------------------------------
 void ThreadContextStartup::Start_MainThread() {
-    ThreadLocalManager::Instance().CreateThreadLocalStorage();
+    Meta::ThreadLocalAutoSingletonManager::Start();
     CurrentThreadContext::CreateMainThread();
     ThreadLocalHeapStartup::Start(true);
     AllocaStartup::Start(true);
@@ -120,7 +119,7 @@ void ThreadContextStartup::Shutdown() {
     AllocaStartup::Shutdown();
     ThreadLocalHeapStartup::Shutdown();
     CurrentThreadContext::Destroy();
-    ThreadLocalManager::Instance().DestroyThreadLocalStorage();
+    Meta::ThreadLocalAutoSingletonManager::Shutdown();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
