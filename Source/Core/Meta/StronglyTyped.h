@@ -20,10 +20,13 @@ struct Numeric {
     Numeric& operator =(const Numeric& other) { Value =other.Value; return *this; }
 
     bool operator ==(const Numeric& other) const { return Value == other.Value; }
-    bool operator !=(const Numeric& other) const { return !operator ==(other); }
+    bool operator !=(const Numeric& other) const { return Value != other.Value; }
 
-    bool operator < (const Numeric& other) const { return Value < other.Value; }
-    bool operator >=(const Numeric& other) const { return !operator < (other); }
+    bool operator < (const Numeric& other) const { return Value <  other.Value; }
+    bool operator >=(const Numeric& other) const { return Value >= other.Value; }
+
+    bool operator <=(const Numeric& other) const { return Value <= other.Value; }
+    bool operator > (const Numeric& other) const { return Value >  other.Value; }
 
     static Numeric MinusOne() { return Numeric(T(-1)); }
     static Numeric One() { return Numeric(T(1)); }
