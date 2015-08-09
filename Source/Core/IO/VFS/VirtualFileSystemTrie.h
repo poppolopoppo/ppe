@@ -18,7 +18,7 @@ FWD_REFPTR(VirtualFileSystemComponent);
 //----------------------------------------------------------------------------
 class VirtualFileSystemTrie {
 public:
-    typedef ASSOCIATIVE_VECTOR(FileSystem, MountingPoint, PVirtualFileSystemNode) nodes_type;
+    typedef ASSOCIATIVE_VECTORINSITU(FileSystem, MountingPoint, PVirtualFileSystemNode, 8) nodes_type;
 
     VirtualFileSystemTrie();
     ~VirtualFileSystemTrie();

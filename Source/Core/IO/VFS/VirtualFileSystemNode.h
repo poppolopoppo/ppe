@@ -2,6 +2,7 @@
 
 #include "Core/Core.h"
 
+#include "Core/Allocator/PoolAllocator.h"
 #include "Core/Container/AssociativeVector.h"
 #include "Core/Container/Vector.h"
 #include "Core/IO/FS/Dirname.h"
@@ -38,6 +39,8 @@ public:
     VirtualFileSystemNode* GetNodeIFP(const Core::Dirname& dirname) const;
 
     void Clear();
+
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     components_type _components;

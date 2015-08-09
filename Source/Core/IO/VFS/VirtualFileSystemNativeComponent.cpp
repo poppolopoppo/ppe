@@ -4,6 +4,7 @@
 
 #include "VirtualFileSystemNativeStream.h"
 
+#include "Allocator/PoolAllocator-impl.h"
 #include "Container/Vector.h"
 #include "Diagnostic/Logger.h"
 #include "IO/FS/FileSystemToken.h"
@@ -25,6 +26,10 @@
 #define NATIVE_ENTITYNAME_MAXSIZE 1024
 
 namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+SINGLETON_POOL_ALLOCATED_DEF(VirtualFileSystemNativeComponent, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

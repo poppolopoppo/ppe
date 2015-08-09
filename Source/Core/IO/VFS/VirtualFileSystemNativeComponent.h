@@ -5,6 +5,8 @@
 #include "Core/IO/FS/Dirpath.h"
 #include "Core/IO/VFS/VirtualFileSystemComponent.h"
 
+#include "Core/Allocator/PoolAllocator.h"
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -32,6 +34,8 @@ public:
     virtual IVirtualFileSystemComponentReadWritable* ReadWritable() override;
 
     virtual WString Unalias(const Filename& aliased) const override;
+
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     // IVirtualFileSystemComponentReadable

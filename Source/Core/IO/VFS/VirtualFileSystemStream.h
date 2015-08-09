@@ -56,6 +56,9 @@ public:
     std::streamsize ReadLine(char *storage, std::streamsize capacity);
     std::streamsize ReadWord(char *storage, std::streamsize capacity);
 
+    std::streamsize ReadLine(const MemoryView<char>& storage) { return ReadLine(storage.Pointer(), storage.size()); }
+    std::streamsize ReadWord(const MemoryView<char>& storage) { return ReadWord(storage.Pointer(), storage.size()); }
+
     template <size_t _Capacity>
     std::streamsize ReadLine(char (&storage)[_Capacity]) { return ReadLine(storage, _Capacity); }
     template <size_t _Capacity>

@@ -3,12 +3,15 @@
 #include "VirtualFileSystemNode.h"
 
 #include "VirtualFileSystemComponent.h"
+#include "Allocator/PoolAllocator-impl.h"
 
 #include <algorithm>
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+SINGLETON_POOL_ALLOCATED_DEF(VirtualFileSystemNode, );
 //----------------------------------------------------------------------------
 VirtualFileSystemNode::VirtualFileSystemNode() {}
 //----------------------------------------------------------------------------

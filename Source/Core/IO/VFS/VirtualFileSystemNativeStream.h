@@ -9,6 +9,8 @@
 #include "Core/IO/VFS/VirtualFileSystemPolicies.h"
 #include "Core/IO/VFS/VirtualFileSystemStream.h"
 
+#include "Core/Allocator/PoolAllocator.h"
+
 #include <cstdio>
 
 namespace Core {
@@ -33,6 +35,8 @@ public:
     virtual bool Eof() const override;
     virtual std::streamsize Size() const override;
 
+    SINGLETON_POOL_ALLOCATED_DECL();
+
 private:
     FILE *_handle;
     Filename _filename;
@@ -48,6 +52,8 @@ public:
     virtual std::streamoff TellO() override;
     virtual void SeekO(std::streamoff offset) override;
     virtual void Write(const void* storage, std::streamsize count) override;
+
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     FILE *_handle;
