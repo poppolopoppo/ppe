@@ -82,8 +82,8 @@ size_t hash_valueI(const char* cstr, size_t length);
 //----------------------------------------------------------------------------
 size_t hash_valueI(const wchar_t* wcstr, size_t length);
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-size_t hash_value(const std::basic_string<_Char, _Traits>& str) {
+template <typename _Char, typename _Traits, typename _Allocator>
+size_t hash_value(const std::basic_string<_Char, _Traits, _Allocator>& str) {
     return hash_value(str.c_str(), str.size());
 }
 //----------------------------------------------------------------------------
@@ -297,7 +297,7 @@ std::basic_ostream<char, _Traits>& operator <<(
     std::basic_ostream<char, _Traits>& oss,
     const std::basic_string<wchar_t, _TraitsW, _Allocator>& wstr);
 //----------------------------------------------------------------------------
-template <  typename _Char, typename _Traits, 
+template <  typename _Char, typename _Traits,
             typename _Char2, typename _Traits2,
             typename _Allocator >
 std::basic_ostream<_Char, _Traits>& operator <<(
