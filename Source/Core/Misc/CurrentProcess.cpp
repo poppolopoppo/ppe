@@ -2,7 +2,7 @@
 
 #include "CurrentProcess.h"
 
-#include "Logger.h"
+#include "Diagnostic/Logger.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
