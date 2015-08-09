@@ -44,6 +44,7 @@ SingletonHelpers<T, _Impl>::~SingletonHelpers() {
 template <typename T, typename _Impl>
 T& SingletonHelpers<T, _Impl>::Instance() {
     Assert(_Impl::_gInstancePtr);
+    __assume(_Impl::_gInstancePtr);
     return *_Impl::_gInstancePtr;
 }
 //----------------------------------------------------------------------------
