@@ -2,79 +2,125 @@
 
 #include "AutoSingleton.h"
 
-#include <type_traits>
-
-#include "Diagnostic/Logger.h"
 #include "Singleton.h"
-#include "Thread/ThreadContext.h"
+
+#include <mutex>
+#include <type_traits>
 
 namespace Core {
 namespace Meta {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-namespace {
-//----------------------------------------------------------------------------
-typedef POD_STORAGE(AutoSingletonManager) AutoSingletonManagerPod;
-//----------------------------------------------------------------------------
-#ifdef WITH_CORE_ASSERT
-static bool gAutoSingletonCreated = false;
-#endif
-static AutoSingletonManagerPod gAutoSingletonPOD;
-//----------------------------------------------------------------------------
-static AutoSingletonManager *AutoSingletonManager_() {
-    return reinterpret_cast<AutoSingletonManager *>(&gAutoSingletonPOD);
-}
-//----------------------------------------------------------------------------
-} //!namespace
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-AutoSingletonBase::AutoSingletonBase() 
-:   _pnext(nullptr) {}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-AutoSingletonManager::AutoSingletonManager() 
-:   _pinstances(nullptr) {
-    Assert(IsInMainThread());
-    Assert(!gAutoSingletonCreated);
-    ONLY_IF_ASSERT(gAutoSingletonCreated = true);
-}
-//----------------------------------------------------------------------------
-AutoSingletonManager::~AutoSingletonManager() {
-    Assert(IsInMainThread());
-    Assert(gAutoSingletonCreated);
-    ONLY_IF_ASSERT(gAutoSingletonCreated = false);
+class AutoSingletonManagerImpl {
+public:
+    AutoSingletonManagerImpl();
+    ~AutoSingletonManagerImpl();
 
-    std::lock_guard<std::mutex> scopelock(_lock);
-    {
-        for (AutoSingletonBase *p = _pinstances; p; p = p->_pnext)
-            checked_delete(p);
-    
-        _pinstances = nullptr;
+    void Start();
+    void Shutdown();
+    void Register(AbstractAutoSingleton *singleton);
+
+private:
+    AbstractAutoSingleton *_head;
+    ONLY_IF_ASSERT(bool _isStarted = false;)
+};
+//----------------------------------------------------------------------------
+AutoSingletonManagerImpl::AutoSingletonManagerImpl()
+:   _head(nullptr) {}
+//----------------------------------------------------------------------------
+AutoSingletonManagerImpl::~AutoSingletonManagerImpl() {
+    Assert(nullptr == _head);
+}
+//----------------------------------------------------------------------------
+void AutoSingletonManagerImpl::Start() {
+    Assert(!_isStarted);
+    ONLY_IF_ASSERT(_isStarted = true;);
+    Assert(nullptr == _head);
+}
+//----------------------------------------------------------------------------
+void AutoSingletonManagerImpl::Shutdown() {
+    Assert(_isStarted);
+    ONLY_IF_ASSERT(_isStarted = false;);
+
+    while (_head) {
+        AbstractAutoSingleton *const node = _head;
+        _head = _head->_pnext;
     }
+}
+//----------------------------------------------------------------------------
+void AutoSingletonManagerImpl::Register(AbstractAutoSingleton *singleton) {
+    Assert(singleton);
+    Assert(nullptr == singleton->_pnext);
+
+    singleton->_pnext = _head;
+    _head = singleton;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+class AutoSingletonManagerImplThreadSafe : public AutoSingletonManagerImpl {
+public:
+    void Start();
+    void Shutdown();
+
+    void Register(AbstractAutoSingleton *singleton);
+
+private:
+    std::mutex _barrier;
+};
+//----------------------------------------------------------------------------
+void AutoSingletonManagerImplThreadSafe::Start() {
+    std::lock_guard<std::mutex> scopeLock(_barrier);
+    AutoSingletonManagerImpl::Start();
+}
+//----------------------------------------------------------------------------
+void AutoSingletonManagerImplThreadSafe::Shutdown() {
+    std::lock_guard<std::mutex> scopeLock(_barrier);
+    AutoSingletonManagerImpl::Shutdown();
+}
+//----------------------------------------------------------------------------
+void AutoSingletonManagerImplThreadSafe::Register(AbstractAutoSingleton *singleton) {
+    std::lock_guard<std::mutex> scopeLock(_barrier);
+    AutoSingletonManagerImpl::Register(singleton);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+static AutoSingletonManagerImpl& AutoSingletonManager_() {
+    ONE_TIME_DEFAULT_INITIALIZE(AutoSingletonManagerImplThreadSafe, sInstance);
+    return sInstance;
 }
 //----------------------------------------------------------------------------
 void AutoSingletonManager::Start() {
-    new (AutoSingletonManager_()) AutoSingletonManager();
+    AutoSingletonManager_().Start();
 }
 //----------------------------------------------------------------------------
 void AutoSingletonManager::Shutdown() {
-    AutoSingletonManager_()->~AutoSingletonManager();
+    AutoSingletonManager_().Shutdown();
 }
 //----------------------------------------------------------------------------
-void AutoSingletonManager::Register(AutoSingletonBase *pinstance) {
-    AssertRelease(pinstance);
-    Assert(nullptr == pinstance->_pnext);
-    Assert(gAutoSingletonCreated);
-
-    AutoSingletonManager& manager = *AutoSingletonManager_();
-    std::lock_guard<std::mutex> scopelock(manager._lock);
-    {
-        pinstance->_pnext = manager._pinstances;
-        manager._pinstances = pinstance;
-    }
+void AutoSingletonManager::Register(AbstractAutoSingleton *pinstance) {
+    AutoSingletonManager_().Register(pinstance);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+static AutoSingletonManagerImpl& ThreadLocalAutoSingletonManager_() {
+    ONE_TIME_DEFAULT_INITIALIZE_THREAD_LOCAL(AutoSingletonManagerImpl, sTlsInstance);
+    return sTlsInstance;
+}
+//----------------------------------------------------------------------------
+void ThreadLocalAutoSingletonManager::Start() {
+    ThreadLocalAutoSingletonManager_().Start();
+}
+//----------------------------------------------------------------------------
+void ThreadLocalAutoSingletonManager::Shutdown() {
+    ThreadLocalAutoSingletonManager_().Shutdown();
+}
+//----------------------------------------------------------------------------
+void ThreadLocalAutoSingletonManager::Register(AbstractAutoSingleton *pinstance) {
+    ThreadLocalAutoSingletonManager_().Register(pinstance);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

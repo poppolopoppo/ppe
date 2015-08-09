@@ -12,9 +12,6 @@
 //
 */
 
-#include <mutex>
-
-#include "Core/Memory/MemoryDomain.h"
 #include "Core/Meta/OneTimeInitialize.h"
 
 namespace Core {
@@ -22,65 +19,47 @@ namespace Meta {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class AutoSingletonManager;
-//----------------------------------------------------------------------------
-class AutoSingletonBase {
+class AbstractAutoSingleton {
 protected:
-    AutoSingletonBase();
-
-private:
-    friend class AutoSingletonManager;
-    AutoSingletonBase *_pnext;
+    AbstractAutoSingleton() : _pnext(nullptr) {}
 
 public:
-    virtual ~AutoSingletonBase() {}
+    virtual ~AbstractAutoSingleton() {} // must be virtual to allow delete()
 
-    AutoSingletonBase(AutoSingletonBase&&) = delete;
-    AutoSingletonBase& operator =(AutoSingletonBase&&) = delete;
+    AbstractAutoSingleton(AbstractAutoSingleton&&) = delete;
+    AbstractAutoSingleton& operator =(AbstractAutoSingleton&&) = delete;
 
-    AutoSingletonBase(const AutoSingletonBase&) = delete;
-    AutoSingletonBase& operator =(const AutoSingletonBase&) = delete;
+    AbstractAutoSingleton(const AbstractAutoSingleton&) = delete;
+    AbstractAutoSingleton& operator =(const AbstractAutoSingleton&) = delete;
+
+private:
+    friend class AutoSingletonManagerImpl;
+    AbstractAutoSingleton *_pnext;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class AutoSingletonManager {
-private:
-    AutoSingletonManager();
-    ~AutoSingletonManager();
-
-    std::mutex _lock;
-    AutoSingletonBase *_pinstances;
-
 public:
-    AutoSingletonManager(AutoSingletonManager&&) = delete;
-    AutoSingletonManager& operator =(AutoSingletonManager&&) = delete;
-
-    AutoSingletonManager(const AutoSingletonManager&) = delete;
-    AutoSingletonManager& operator =(const AutoSingletonManager&) = delete;
-
     static void Start();
     static void Shutdown();
-
-    static void Register(AutoSingletonBase *pinstance);
+    static void Register(AbstractAutoSingleton *pinstance);
+};
+//----------------------------------------------------------------------------
+class ThreadLocalAutoSingletonManager {
+public:
+    static void Start();
+    static void Shutdown();
+    static void Register(AbstractAutoSingleton *pinstance);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-class AutoSingleton : public AutoSingletonBase {
+class AutoSingleton : public AbstractAutoSingleton {
 private:
-    AutoSingleton() {}
-
-protected:
-    explicit AutoSingleton(T *pinstance) { 
-        AssertRelease(this == pinstance);
-        AutoSingletonManager::Register(pinstance);
-    }
-
+    AutoSingleton() { AutoSingletonManager::Register(this); }
 public:
-    virtual ~AutoSingleton() {}
-
     static T& Instance() {
         ONE_TIME_INITIALIZE_TPL(T *, sInstance, new T() );
         return *sInstance;
@@ -88,22 +67,13 @@ public:
 };
 //----------------------------------------------------------------------------
 template <typename T>
-class AutoSingletonThreadLocal : public AutoSingletonBase {
+class ThreadLocalAutoSingleton : public AbstractAutoSingleton {
 private:
-    AutoSingletonThreadLocal() {}
-
-protected:
-    explicit AutoSingletonThreadLocal(T *pinstance) { 
-        AssertRelease(this == pinstance);
-        AutoSingletonManager::Register(pinstance);
-    }
-
+    ThreadLocalAutoSingleton() { ThreadLocalAutoSingletonManager::Register(this); }
 public:
-    virtual ~AutoSingletonThreadLocal() {}
-
     static T& Instance() {
-        ONE_TIME_INITIALIZE_THREAD_LOCAL_TPL(T *, sInstanceTLS, new T() );
-        return *sInstanceTLS;
+        ONE_TIME_INITIALIZE_THREAD_LOCAL_TPL(T *, sTlsInstance, new T() );
+        return *sTlsInstance;
     }
 };
 //----------------------------------------------------------------------------
