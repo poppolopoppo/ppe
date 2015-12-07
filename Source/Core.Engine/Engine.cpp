@@ -7,12 +7,17 @@
 #include "Mesh/MeshName.h"
 #include "World/World.h"
 
+#include "Core/Allocator/PoolAllocator-impl.h"
+
 namespace Core {
 namespace Engine {
+POOLTAG_DEF(Engine);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void EngineStartup::Start() {
+    // 0 - Pool allocator tag
+    POOLTAG(Engine)::Start();
     // 1 - Effect
     Effect::Start();
     // 2 - Material
@@ -32,6 +37,12 @@ void EngineStartup::Shutdown() {
     MaterialConstNames::Shutdown();
     // 1 - Effect
     Effect::Shutdown();
+    // 0 - Pool allocator tag
+    POOLTAG(Engine)::Shutdown();
+}
+//----------------------------------------------------------------------------
+void EngineStartup::ClearAll_UnusedMemory() {
+    POOLTAG(Engine)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

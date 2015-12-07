@@ -42,7 +42,7 @@ static bool ReadLine_Obj_ReturnEOF_(LineTokens_Obj_ *pTokens, const ModelStream&
 
     size_t tokenStart = offset;
     while (modelStream.SizeInBytes() > offset && '\n' != modelStream[offset])
-        if (std::isspace(modelStream[offset])) {
+        if (IsSpace(modelStream[offset])) {
             if (!comment && tokenStart != offset) {
                 Assert(offset - tokenStart > 0);
                 Assert(pTokens->Count < LineTokens_Obj_::Capacity);
@@ -90,7 +90,7 @@ static size_t ParseU323_Obj_ReturnDim_(u323 *pValues, const MemoryView<const cha
 
     const char *cstr = token.Pointer();
     size_t length = token.size();
-    
+
     while (Split(&cstr, &length, '/', slice)) {
         Assert(index < 3);
 
@@ -385,7 +385,7 @@ static bool LoadModel_Obj_(PModel& pModel, const Filename& filename, const Model
 
     ModelBuilder builder;
     {
-        String name = ToString(filename.BasenameNoExt().cstr());
+        String name = ToString(filename.BasenameNoExt().c_str());
         builder.SetName(std::move(name));
         builder.AddBone("noname", float4x4::Identity()); // obj file format does not support animations
     }
@@ -407,7 +407,7 @@ static bool LoadModel_Obj_(PModel& pModel, const Filename& filename, const Model
         const MemoryView<const char>& firstToken = tokens.Slices[0];
 
         if (1 == firstToken.size()) {
-            const char ch = char(std::tolower(firstToken[0]));
+            const char ch = ToLower(firstToken[0]);
             if ('v' == ch) {
                 float4 pos(0,0,0,1);
                 if (ParseFloat4_Obj_ReturnDim_(&pos, tokens) < 3)
@@ -493,7 +493,7 @@ static bool LoadModel_Obj_(PModel& pModel, const Filename& filename, const Model
                     else
                         return false;
                 }
-                
+
             }
             else if ('o' == ch) {
                 if (tokens.Count != 2  || tokens.Slices[1].empty())
@@ -532,10 +532,10 @@ static bool LoadModel_Obj_(PModel& pModel, const Filename& filename, const Model
             }
         }
         else if (2 == firstToken.size()) {
-            if ('v' != std::tolower(firstToken[0]) )
+            if ('v' != ToLower(firstToken[0]) )
                 return false;
 
-            const char ch = char(std::tolower(firstToken[1]));
+            const char ch = ToLower(firstToken[1]);
 
             if ('p' == ch) {
                 AssertNotImplemented(); // parametrized surfaces are not handled

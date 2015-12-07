@@ -45,6 +45,8 @@ public:
     ScalarMatrix(const ScalarMatrix<T, _Width - 1, _Height>& other, const column_type& column);
     ScalarMatrix(const ScalarMatrix<T, _Width, _Height - 1>& other, const row_type& row);
 
+    ScalarMatrix(const MemoryView<const T>& data);
+
     FORCE_INLINE ScalarMatrix(const ScalarMatrix& other) { operator =(other); }
     ScalarMatrix& operator =(const ScalarMatrix& other);
 
@@ -119,7 +121,9 @@ public:
 
     void Swap(ScalarMatrix& other);
 
-    MemoryView<const T> MakeView() const { return Core::MakeView(_data); }
+    MemoryView<const T> MakeView() const { return Core::MakeView(_data.raw); }
+
+    friend hash_t hash_value(const ScalarMatrix& m) { return hash_as_pod_array(m._data.raw); }
 
     template <typename U>
     ScalarMatrix<U, _Width, _Height> Cast() const;
@@ -159,11 +163,11 @@ private:
 public:
     // HLSL-like scalar accessors :
 #define DECL_SCALARMATRIX_SCALAR_ACCESSOR(_X, _Y, _Col, _Row) \
-    FORCE_INLINE T& m ## _X ## _Y() { return at<_X, _Y>(); } \
-    FORCE_INLINE const T& m ## _X ## _Y() const { return at<_X, _Y>(); } \
+    FORCE_INLINE T& m ## _X ## _Y() { return _data.m[_X][_Y]; } \
+    FORCE_INLINE const T& m ## _X ## _Y() const { return _data.m[_X][_Y]; } \
     \
-    FORCE_INLINE T& _ ## _Col ## _Row() { return at<_X, _Y>(); } \
-    FORCE_INLINE const T& _ ## _Col ## _Row() const { return at<_X, _Y>(); }
+    FORCE_INLINE T& _ ## _Col ## _Row() { return _data.m[_X][_Y]; } \
+    FORCE_INLINE const T& _ ## _Col ## _Row() const { return _data.m[_X][_Y]; }
 
     DECL_SCALARMATRIX_SCALAR_ACCESSOR(0, 0, 1, 1)
     DECL_SCALARMATRIX_SCALAR_ACCESSOR(0, 1, 1, 2)

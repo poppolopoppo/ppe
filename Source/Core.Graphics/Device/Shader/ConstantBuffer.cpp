@@ -37,7 +37,7 @@ void ConstantBuffer::SetData(IDeviceAPIEncapsulator *device, const MemoryView<co
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
 
-    const auto deviceAPIDependantRawData = MALLOCA_VIEW(u8, _layout->SizeInBytes());
+    STACKLOCAL_POD_ARRAY(u8, deviceAPIDependantRawData, _layout->SizeInBytes());
     Assert(IS_ALIGNED(16, deviceAPIDependantRawData.Pointer()));
 
     _deviceAPIDependantWriter->SetData(device, this, rawData, deviceAPIDependantRawData);
@@ -48,7 +48,7 @@ void ConstantBuffer::SetData(IDeviceAPIEncapsulator *device, const MemoryView<co
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
 
-    const auto deviceAPIDependantRawData = MALLOCA_VIEW(u8, _layout->SizeInBytes());
+    STACKLOCAL_POD_ARRAY(u8, deviceAPIDependantRawData, _layout->SizeInBytes());
     Assert(IS_ALIGNED(16, deviceAPIDependantRawData.Pointer()));
 
     _deviceAPIDependantWriter->SetData(device, this, fieldsData, deviceAPIDependantRawData);
@@ -90,7 +90,7 @@ size_t ConstantBuffer::VirtualSharedKeyHashValue() const {
 }
 //----------------------------------------------------------------------------
 bool ConstantBuffer::VirtualMatchTerminalEntity(const DeviceAPIDependantEntity *entity) const {
-    const DeviceAPIDependantResourceBuffer *resourceBuffer = 
+    const DeviceAPIDependantResourceBuffer *resourceBuffer =
         checked_cast<const DeviceAPIDependantResourceBuffer *>(entity);
     // no restriction on _layout or _deviceAPIDependantWriter :
     return _buffer.Match(*resourceBuffer);
@@ -99,7 +99,7 @@ bool ConstantBuffer::VirtualMatchTerminalEntity(const DeviceAPIDependantEntity *
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 DeviceAPIDependantConstantWriter::DeviceAPIDependantConstantWriter(IDeviceAPIEncapsulator *device)
-:   DeviceAPIDependantEntity(device->APIEncapsulator(), nullptr) {}
+:   DeviceAPIDependantEntity(device->APIEncapsulator(), DeviceResourceType::Constants) {}
 //----------------------------------------------------------------------------
 DeviceAPIDependantConstantWriter::~DeviceAPIDependantConstantWriter() {}
 //----------------------------------------------------------------------------

@@ -2,7 +2,8 @@
 
 #include "TextSerializer.h"
 
-#include "Core.RTTI/Atom/MetaAtom.h"
+#include "Core.RTTI/MetaAtom.h"
+#include "Core.RTTI/MetaObject.h"
 #include "Core.RTTI/MetaTransaction.h"
 
 #include "Lexer/Lexer.h"
@@ -25,24 +26,30 @@ TextSerializer::TextSerializer(RTTI::MetaTransaction *transaction)
 //----------------------------------------------------------------------------
 TextSerializer::~TextSerializer() {}
 //----------------------------------------------------------------------------
-void TextSerializer::Deserialize(VECTOR(Transaction, RTTI::PMetaAtom)& atoms, const RAWSTORAGE(Serializer, u8)& input, const char *sourceName /* = nullptr */) {
+void TextSerializer::Deserialize(VECTOR(Transaction, RTTI::PMetaObject)& objects, const MemoryView<const u8>& input, const wchar_t *sourceName /* = nullptr */) {
     Assert(input.SizeInBytes());
 
-    Lexer::Lexer lexer(input.MakeConstView().Cast<const char>(), sourceName);
+    Lexer::Lexer lexer(input.Cast<const char>(), sourceName);
 
     Parser::ParseList parseList(&lexer);
     Parser::ParseContext parseContext(_transaction.get());
 
     while (Parser::PCParseItem result = Grammar_Parse(parseList)) {
         const Parser::ParseExpression *expr = result->As<Parser::ParseExpression>();
-        if (expr)
-            atoms.push_back(expr->Eval(&parseContext));
+        if (expr) {
+            const RTTI::PMetaAtom atom = expr->Eval(&parseContext);
+            const auto* object = atom->As<RTTI::PMetaObject>();
+            AssertRelease(object);
+            objects.emplace_back(object->Wrapper());
+        }
     }
 }
 //----------------------------------------------------------------------------
-void TextSerializer::Serialize(RAWSTORAGE(Serializer, u8)& /* output */, const MemoryView<const RTTI::PCMetaAtom>& atoms) {
-    Assert(atoms.size());
-
+void TextSerializer::Serialize(IStreamWriter* output, const MemoryView<const RTTI::PMetaObject>& objects) {
+    Assert(output);
+    UNUSED(output);
+    UNUSED(objects);
+    // TODO: reverse grammar.cpp + MetaAtomWrapCopyVisitor
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------

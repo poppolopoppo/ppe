@@ -55,8 +55,8 @@ public:
     virtual void CopyFrom(IDeviceAPIEncapsulator *device, const Texture *psource) override;
     void CopyFrom(IDeviceAPIEncapsulator *device, const TextureCube *psourceCube);
 
-    void CopySubPart(   IDeviceAPIEncapsulator *device, 
-                        Face dstFace, size_t dstLevel, const uint2& dstPos, 
+    void CopySubPart(   IDeviceAPIEncapsulator *device,
+                        Face dstFace, size_t dstLevel, const uint2& dstPos,
                         const TextureCube *psourceCube, Face srcFace, size_t srcLevel, const AABB2u& srcBox );
 
 
@@ -86,17 +86,17 @@ public:
     DeviceAPIDependantTextureCube(IDeviceAPIEncapsulator *device, const TextureCube *resource, const MemoryView<const u8>& optionalData);
     virtual ~DeviceAPIDependantTextureCube();
 
-    const TextureCube *TypedResource() const {
+    /*const TextureCube *TypedResource() const {
         return checked_cast<const TextureCube *>(Resource());
-    }
-    
+    }*/
+
     size_t Width() const { return _width; }
     size_t Height() const { return _height; }
     size_t LevelCount() const { return _levelCount; }
 
     virtual void CopyFrom(IDeviceAPIEncapsulator *device, const DeviceAPIDependantTextureCube *psource) = 0;
 
-    virtual void CopySubPart(   IDeviceAPIEncapsulator *device, 
+    virtual void CopySubPart(   IDeviceAPIEncapsulator *device,
                                 TextureCube::Face dstFace, size_t dstLevel, const uint2& dstPos,
                                 const DeviceAPIDependantTextureCube *psource, TextureCube::Face srcFace, size_t srcLevel, const AABB2u& srcBox ) = 0;
 

@@ -3,15 +3,19 @@
 #include "Core.h"
 
 #include "Allocator/Allocation.h"
+#include "Allocator/PoolAllocatorTag.h"
+#include "Allocator/PoolAllocatorTag-impl.h"
+#include "Allocator/NodeBasedContainerAllocator.h"
 #include "Diagnostic/Callstack.h"
 #include "Diagnostic/CrtDebug.h"
-#include "Diagnostic/CurrentProcess.h"
 #include "Diagnostic/Logger.h"
+#include "Diagnostic/MiniDump.h"
 #include "IO/FileSystem.h"
 #include "IO/VirtualFileSystem.h"
 #include "Meta/AutoSingleton.h"
+#include "Misc/CurrentProcess.h"
+#include "Thread/Task/TaskPool.h"
 #include "Thread/ThreadContext.h"
-#include "Thread/ThreadLocalStorage.h"
 #include "Thread/ThreadPool.h"
 #include "Time/ProcessTime.h"
 
@@ -44,12 +48,14 @@ void CoreStartup::Start(void *applicationHandle, int nShowCmd, size_t argc, cons
     MemoryDomainStartup::Start();
     // 6 - memory guards
     GLOBAL_CHECK_MEMORY_LEAKS(true);
-    // 7 - thread local storage
-    ThreadLocalManager::Create();
-    // 8 - main thread context
+    // 7 - main thread context
     ThreadContextStartup::Start_MainThread();
-    // 9 - heap allocators
+    // 8 - heap allocators
     Heaps::Process::Create(Heap::current_process_t());
+    // 9 - pool allocators
+    POOLTAG(Default)::Start();
+    POOLTAG(NodeBasedContainer)::Start();
+    POOLTAG(TaskPool)::Start();
     //10 - auto singleton manager
     Meta::AutoSingletonManager::Start();
     //11 - thread pool
@@ -58,9 +64,13 @@ void CoreStartup::Start(void *applicationHandle, int nShowCmd, size_t argc, cons
     FileSystemStartup::Start();
     //13 - virtual file system
     VirtualFileSystemStartup::Start();
+    //14 - minidump writer
+    MiniDump::Start();
 }
 //----------------------------------------------------------------------------
 void CoreStartup::Shutdown() {
+    //14 - minidump writer
+    MiniDump::Shutdown();
     //13 - virtual file system
     VirtualFileSystemStartup::Shutdown();
     //12 - file system
@@ -69,12 +79,14 @@ void CoreStartup::Shutdown() {
     ThreadPoolStartup::Shutdown();
     //10 - auto singleton manager
     Meta::AutoSingletonManager::Shutdown();
-    // 9 - heap allocators
+    // 9 - pool allocators
+    POOLTAG(TaskPool)::Shutdown();
+    POOLTAG(NodeBasedContainer)::Shutdown();
+    POOLTAG(Default)::Shutdown();
+    // 8 - heap allocators
     Heaps::Process::Destroy();
-    // 8 - main thread context
+    // 7 - main thread context
     ThreadContextStartup::Shutdown();
-    // 7 - thread local storage
-    ThreadLocalManager::Destroy();
     // 6 - memory guards
     GLOBAL_CHECK_MEMORY_LEAKS(false);
     // 5 - memory domains
@@ -89,6 +101,14 @@ void CoreStartup::Shutdown() {
 #endif
     // 1 - process time
     ProcessTime::Shutdown();
+}
+//----------------------------------------------------------------------------
+void CoreStartup::ClearAll_UnusedMemory() {
+    POOLTAG(VirtualFileSystem)::ClearAll_UnusedMemory();
+    POOLTAG(FileSystem)::ClearAll_UnusedMemory();
+    POOLTAG(TaskPool)::ClearAll_UnusedMemory();
+    POOLTAG(NodeBasedContainer)::ClearAll_UnusedMemory();
+    POOLTAG(Default)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

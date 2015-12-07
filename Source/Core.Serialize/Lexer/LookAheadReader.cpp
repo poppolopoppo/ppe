@@ -11,7 +11,7 @@ namespace Lexer {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-LookAheadReader::LookAheadReader(const StringSlice& input, const char *sourceFileName)
+LookAheadReader::LookAheadReader(const StringSlice& input, const wchar_t *sourceFileName)
 :   _sourceFileName(sourceFileName)
 ,   _sourceLine(0)
 ,   _sourceColumn(0)
@@ -48,14 +48,13 @@ char LookAheadReader::Read() {
 char LookAheadReader::Peek(size_t n) const {
     const size_t offset = _bufferOffset + n;
 
-    return (offset >= _buffer.SizeInBytes()) 
+    return (offset >= _buffer.SizeInBytes())
         ? '\0'
         : _buffer[offset];
 }
 //----------------------------------------------------------------------------
 void LookAheadReader::EatWhiteSpaces() {
-    const std::locale& locale = std::locale::classic();
-    while (std::isspace(Peek(0), locale))
+    while (IsSpace(Peek(0)))
         Read();
 }
 //----------------------------------------------------------------------------

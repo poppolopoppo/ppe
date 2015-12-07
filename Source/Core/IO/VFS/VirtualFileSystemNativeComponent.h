@@ -12,6 +12,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class Filename;
+class FileStat;
 //----------------------------------------------------------------------------
 class VirtualFileSystemNativeComponent : public VirtualFileSystemComponent, IVirtualFileSystemComponentReadWritable {
 public:
@@ -41,8 +42,10 @@ private:
     // IVirtualFileSystemComponentReadable
     virtual bool DirectoryExists(const Dirpath& dirpath, ExistPolicy::Mode policy) override;
     virtual bool FileExists(const Filename& filename, ExistPolicy::Mode policy) override;
+    virtual bool FileStats(FileStat* pstat, const Filename& filename) override;
 
     virtual size_t EnumerateFiles(const Dirpath& dirpath, bool recursive, const std::function<void(const Filename&)>& foreach) override;
+    virtual size_t GlobFiles(const Dirpath& dirpath, const WStringSlice& pattern, bool recursive, const std::function<void(const Filename&)>& foreach) override;
 
     virtual UniquePtr<IVirtualFileSystemIStream> OpenReadable(const Filename& filename, AccessPolicy::Mode policy) override;
 
@@ -55,8 +58,8 @@ private:
     virtual UniquePtr<IVirtualFileSystemIOStream> OpenReadWritable(const Filename& filename, AccessPolicy::Mode policy) override;
 
 private:
-    OpenMode _mode;
-    WString _target;
+    const OpenMode _mode;
+    const WString _target;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

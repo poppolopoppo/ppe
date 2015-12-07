@@ -2,7 +2,8 @@
 
 #include "Core/Container/Trie.h"
 
-#include "Core/Memory/MemoryStack.h"
+#include "Core/Container/RingBuffer.h"
+#include "Core/Container/Stack.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -39,7 +40,7 @@ Trie<_Key, _Value,  _InSituCount, _EqualTo, _Allocator>::~Trie() {
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, size_t _InSituCount, typename _EqualTo, typename _Allocator>
 auto Trie<_Key, _Value,  _InSituCount, _EqualTo, _Allocator>::Insert_AssertUnique(const MemoryView<const _Key>& keys, _Value&& rvalue) -> const node_type * {
-    node_type *const node = GetMatch_(keys);
+    node_type *const node = CreatePathIFN_(keys);
     Assert(_Value() == node->_value);
     node->_value = std::move(rvalue);
     ++_size;
@@ -48,7 +49,7 @@ auto Trie<_Key, _Value,  _InSituCount, _EqualTo, _Allocator>::Insert_AssertUniqu
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, size_t _InSituCount, typename _EqualTo, typename _Allocator>
 auto Trie<_Key, _Value,  _InSituCount, _EqualTo, _Allocator>::Insert_AssertUnique(const MemoryView<const _Key>& keys, const _Value& value) -> const node_type * {
-    node_type *const node = GetMatch_(keys);
+    node_type *const node = CreatePathIFN_(keys);
     Assert(_Value() == node->_value);
     node->_value = value;
     ++_size;
@@ -56,7 +57,70 @@ auto Trie<_Key, _Value,  _InSituCount, _EqualTo, _Allocator>::Insert_AssertUniqu
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, size_t _InSituCount, typename _EqualTo, typename _Allocator>
-auto Trie<_Key, _Value,  _InSituCount, _EqualTo, _Allocator>::GetMatch_(const MemoryView<const _Key>& keys) -> node_type * {
+auto Trie<_Key, _Value, _InSituCount, _EqualTo, _Allocator>::Insert_OverwriteIFN(const MemoryView<const _Key>& keys, _Value&& rvalue) -> const node_type *{
+    node_type *const node = CreatePathIFN_(keys);
+    node->_value = std::move(rvalue);
+    ++_size;
+    return node;
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, size_t _InSituCount, typename _EqualTo, typename _Allocator>
+auto Trie<_Key, _Value, _InSituCount, _EqualTo, _Allocator>::Insert_OverwriteIFN(const MemoryView<const _Key>& keys, const _Value& value) -> const node_type *{
+    node_type *const node = CreatePathIFN_(keys);
+    node->_value = value;
+    ++_size;
+    return node;
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, size_t _InSituCount, typename _EqualTo, typename _Allocator>
+size_t Trie<_Key, _Value, _InSituCount, _EqualTo, _Allocator>::Follow_ReturnDepth(const node_type **pLastNode, const MemoryView<const _Key>& keys) const {
+    Assert(pLastNode);
+
+    if (keys.empty() || nullptr == _root) {
+        *pLastNode = nullptr;
+        return 0;
+    }
+
+    size_t depth = 0;
+    node_type *node = _root;
+    for (const _Key& key : keys) {
+        node_type *child = nullptr;
+        if (!node->Find(key, &child))
+            return depth;
+
+        Assert(child);
+        node = child;
+        ++depth;
+    }
+
+    *pLastNode = node;
+    return depth;
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, size_t _InSituCount, typename _EqualTo, typename _Allocator>
+void Trie<_Key, _Value,  _InSituCount, _EqualTo, _Allocator>::Clear() {
+    if (nullptr == _root) {
+        Assert(0 == _size);
+        return;
+    }
+
+    STACKLOCAL_POD_STACK(node_type *, nodes, 32);
+
+    node_type *node = _root;
+    do {
+        Assert(node);
+        for (const Pair<_Key, void *>& it : node->_children)
+            nodes.Push(reinterpret_cast<node_type *>(it.second));
+
+        allocator_type::destroy(node);
+        allocator_type::deallocate(node, 1);
+    } while (nodes.Pop(&node));
+
+    _size = 0;
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, size_t _InSituCount, typename _EqualTo, typename _Allocator>
+auto Trie<_Key, _Value, _InSituCount, _EqualTo, _Allocator>::CreatePathIFN_(const MemoryView<const _Key>& keys) -> node_type * {
     Assert(keys.size());
 
     if (nullptr == _root) {
@@ -81,27 +145,53 @@ auto Trie<_Key, _Value,  _InSituCount, _EqualTo, _Allocator>::GetMatch_(const Me
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, size_t _InSituCount, typename _EqualTo, typename _Allocator>
-void Trie<_Key, _Value,  _InSituCount, _EqualTo, _Allocator>::Clear() {
-    if (nullptr == _root) {
-        Assert(0 == _size);
-        return;
+template <typename _Functor>
+size_t Trie<_Key, _Value, _InSituCount, _EqualTo, _Allocator>::EachNode_BreadthFirst(_Functor&& functor) const {
+    if (nullptr == _root)
+        return 0;
+
+    size_t count = 0;
+
+    STACKLOCAL_POD_STACK(const node_type *, stack, 32);
+    stack.Push(_root);
+
+    node_type *node = nullptr;
+    while (stack.Pop(&node)) {
+        Assert(node);
+        if (functor(node))
+            continue;
+
+        ++count;
+        reverseforeachitem(it, node->_children)
+            stack.Push(it->second);
     }
 
-    STACKLOCAL_POD_STACK(node_type *, nodes, 32);
+    return count;
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, size_t _InSituCount, typename _EqualTo, typename _Allocator>
+template <typename _Functor>
+size_t Trie<_Key, _Value, _InSituCount, _EqualTo, _Allocator>::EachNode_DepthFirst(_Functor&& functor) const {
+    if (nullptr == _root)
+        return 0;
 
-    node_type *node = _root;
-    do {
+    size_t count = 0;
+
+    STACKLOCAL_POD_RINGBUFFER(const node_type *, queue, 64);
+    queue.Queue(_root);
+
+    node_type *node = nullptr;
+    while (queue.Dequeue(&node)) {
         Assert(node);
-        for (const Pair<_Key, void *>& it : node->_children)
-            nodes.PushPOD(reinterpret_cast<node_type *>(it.second));
+        if (!functor(node))
+            continue;
 
-        node->_children.clear();
+        ++count;
+        foreachitem(it, node->_children)
+            queue.Queue(it->second);
+    }
 
-        allocator_type::destroy(node);
-        allocator_type::deallocate(node, 1);
-    } while (nodes.PopPOD(&node));
-
-    _size = 0;
+    return count;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

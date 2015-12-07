@@ -109,7 +109,7 @@ inline bool operator !=(const Symbol& lhs, const Symbol& rhs) {
     return !operator ==(lhs, rhs);
 }
 //----------------------------------------------------------------------------
-inline size_t hash_value(const Symbol& symbol) {
+inline hash_t hash_value(const Symbol& symbol) {
     return Core::hash_value(u64(symbol.Type()) );
 }
 //----------------------------------------------------------------------------

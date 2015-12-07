@@ -30,7 +30,7 @@ using HashMultiMap = std::unordered_multimap<_Key, _Value, _Hasher, _EqualTo, _A
     ::Core::HashMultiMap<_KEY, _VALUE, ::Core::Hash<_KEY>, ::Core::EqualTo<_KEY>, THREAD_LOCAL_ALLOCATOR(_DOMAIN, ::Core::Pair<_KEY COMMA _VALUE>)>
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
-size_t hash_value(const HashMultiMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashMultiMap) {
+hash_t hash_value(const HashMultiMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashMultiMap) {
     return hash_value_seq(hashMultiMap.begin(), hashMultiMap.end());
 }
 //----------------------------------------------------------------------------

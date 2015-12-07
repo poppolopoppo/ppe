@@ -52,7 +52,7 @@ inline void swap(EntityTag& lhs, EntityTag& rhs) {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
-inline size_t hash_value(const EntityTag& token) {
+inline hash_t hash_value(const EntityTag& token) {
     return token.HashValue();
 }
 //----------------------------------------------------------------------------

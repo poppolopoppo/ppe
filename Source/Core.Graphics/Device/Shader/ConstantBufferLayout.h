@@ -6,7 +6,7 @@
 #include "Core.Graphics/Device/Shader/ConstantField.h"
 
 #include "Core/Allocator/PoolAllocator.h"
-#include "Core/Memory/MemoryStack.h"
+#include "Core/Container/Stack.h"
 #include "Core/Memory/RefPtr.h"
 #include "Core/Meta/BitField.h"
 
@@ -23,7 +23,7 @@ public:
     explicit ConstantBufferLayout(size_t sizeInBytes = 0);
     ~ConstantBufferLayout();
 
-    ConstantBufferLayout(const ConstantBufferLayout& other);
+    ConstantBufferLayout(const ConstantBufferLayout& other) { operator =(other); }
     ConstantBufferLayout& operator =(const ConstantBufferLayout& other);
 
     bool Frozen() const { return bitfrozen_type::Get(_data); }
@@ -57,7 +57,7 @@ private:
     ConstantField _fields[MaxFieldCount];
 };
 //----------------------------------------------------------------------------
-inline size_t hash_value(const ConstantBufferLayout& layout) {
+inline hash_t hash_value(const ConstantBufferLayout& layout) {
     return layout.HashValue();
 }
 //----------------------------------------------------------------------------

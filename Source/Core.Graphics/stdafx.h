@@ -21,14 +21,13 @@
 #include "Core/Memory/UniquePtr.h"
 #include "Core/Memory/WeakPtr.h"
 
-#include "Core/IO/FileSystem.h"
+#include "Core/IO/FileSystem_fwd.h"
 #include "Core/IO/Format.h"
 #include "Core/IO/Stream.h"
 #include "Core/IO/String.h"
 #include "Core/IO/StringSlice.h"
 #include "Core/IO/VirtualFileSystem_fwd.h"
 
-#include "Core/Maths/MathHelpers.h"
 #include "Core/Maths/Geometry/ScalarVector_fwd.h"
 #include "Core/Maths/Geometry/ScalarBoundingBox_fwd.h"
 #include "Core/Maths/Transform/ScalarMatrix_fwd.h"
@@ -37,7 +36,6 @@
 #include "Core/Container/Token.h"
 #include "Core/Container/Vector.h"
 
-#include "Core/Diagnostic/CurrentProcess.h"
 #include "Core/Diagnostic/Logger.h"
 
 #include "Core/Thread/ThreadContext.h"

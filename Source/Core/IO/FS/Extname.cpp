@@ -31,12 +31,12 @@ Extname& Extname::operator =(const Extname& other) {
 //----------------------------------------------------------------------------
 Extname::Extname(const FileSystemToken& token)
 :   parent_type(token) {
-    Assert(token.empty() || L':' == *token.cstr());
+    Assert(token.empty() || L':' == *token.c_str());
 }
 //----------------------------------------------------------------------------
 Extname& Extname::operator =(const FileSystemToken& token) {
     parent_type::operator =(token);
-    Assert(token.empty() || L':' == *token.cstr());
+    Assert(token.empty() || L':' == *token.c_str());
     return *this;
 }
 //----------------------------------------------------------------------------

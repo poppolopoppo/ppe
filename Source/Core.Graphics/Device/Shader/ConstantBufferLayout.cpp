@@ -10,7 +10,7 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Graphics, ConstantBufferLayout, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, ConstantBufferLayout, );
 //----------------------------------------------------------------------------
 ConstantBufferLayout::ConstantBufferLayout(size_t sizeInBytes /* = 0 */)
 :   _data(0) {
@@ -19,8 +19,8 @@ ConstantBufferLayout::ConstantBufferLayout(size_t sizeInBytes /* = 0 */)
 //----------------------------------------------------------------------------
 ConstantBufferLayout::~ConstantBufferLayout() {}
 //----------------------------------------------------------------------------
-ConstantBufferLayout::ConstantBufferLayout(const ConstantBufferLayout& other)
-:   _data(0) {
+ConstantBufferLayout& ConstantBufferLayout::operator =(const ConstantBufferLayout& other) {
+    _data = 0;
     const size_t count = other.Count();
     bitcount_type::InplaceSet(_data, count);
     bitsizeinbytes_type::InplaceSet(_data, other.SizeInBytes());
@@ -30,6 +30,8 @@ ConstantBufferLayout::ConstantBufferLayout(const ConstantBufferLayout& other)
         _names[i] = other._names[i];
         _fields[i] = other._fields[i];
     }
+
+    return *this;
 }
 //----------------------------------------------------------------------------
 void ConstantBufferLayout::AddField(const BindName& name, ConstantFieldType type) {
@@ -76,10 +78,10 @@ void ConstantBufferLayout::AddField(const BindName& name, ConstantFieldType type
 size_t ConstantBufferLayout::HashValue() const {
     const size_t count = Count();
 
-    const size_t h0 = hash_value_seq(&_names[0], &_names[count]);
-    const size_t h1 = hash_value_seq(&_fields[0], &_fields[count]);
+    const size_t h0 = hash_range(&_names[0], count);
+    const size_t h1 = hash_range(&_fields[0], count);
 
-    return Core::hash_value(_data, h0, h1);
+    return hash_tuple(_data, h0, h1);
 }
 //----------------------------------------------------------------------------
 bool ConstantBufferLayout::Equals(const ConstantBufferLayout& other) const {

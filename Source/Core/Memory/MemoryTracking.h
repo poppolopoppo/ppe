@@ -57,8 +57,8 @@ private:
     std::atomic<size_t> _maxTotalSizeInBytes;
 };
 //----------------------------------------------------------------------------
-void ReportTrackingDatas(   std::basic_ostream<char>& oss, 
-                            const char *header,
+void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
+                            const wchar_t *header,
                             const MemoryView<const MemoryTrackingData *>& datas );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

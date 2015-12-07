@@ -137,8 +137,8 @@ void TextureCube::CopyFrom(IDeviceAPIEncapsulator *device, const TextureCube *ps
 }
 //----------------------------------------------------------------------------
 void TextureCube::CopySubPart(
-    IDeviceAPIEncapsulator *device, 
-    Face dstFace, size_t dstLevel, const uint2& dstPos, 
+    IDeviceAPIEncapsulator *device,
+    Face dstFace, size_t dstLevel, const uint2& dstPos,
     const TextureCube *psourceCube, Face srcFace, size_t srcLevel, const AABB2u& srcBox ) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
@@ -149,27 +149,27 @@ void TextureCube::CopySubPart(
     Assert(psourceCube->Available());
     Assert(u32(BufferMode::Write) == (u32(psourceCube->Mode()) & u32(BufferMode::Read)));
     Assert(dstLevel < _levelCount);
-    Assert( dstPos.x() < _width && 
+    Assert( dstPos.x() < _width &&
             dstPos.y() < _height );
     Assert(srcLevel < psourceCube->_levelCount);
     Assert(srcBox.HasPositiveExtentsStrict());
-    Assert( srcBox.Max().x() < psourceCube->_width && 
+    Assert( srcBox.Max().x() < psourceCube->_width &&
             srcBox.Max().y() < psourceCube->_height );
-    Assert( psourceCube->Format()->SizeOfTexture2DInBytes(srcBox.Extents()) == 
+    Assert( psourceCube->Format()->SizeOfTexture2DInBytes(srcBox.Extents()) ==
             Format()->SizeOfTexture2DInBytes(srcBox.Extents()) );
 
     _deviceAPIDependantTextureCube->CopySubPart(
-        device, 
-        dstFace, dstLevel, dstPos, 
+        device,
+        dstFace, dstLevel, dstPos,
         psourceCube->DeviceAPIDependantTextureCube().get(), srcFace, srcLevel, srcBox );
 }
 //----------------------------------------------------------------------------
 size_t TextureCube::VirtualSharedKeyHashValue() const {
-    return Core::hash_value(Texture::HashValue_(), _width, _height, _levelCount);
+    return hash_tuple(Texture::HashValue_(), _width, _height, _levelCount);
 }
 //----------------------------------------------------------------------------
 bool TextureCube::VirtualMatchTerminalEntity(const DeviceAPIDependantEntity *entity) const {
-    const Graphics::DeviceAPIDependantTextureCube *textureCube = 
+    const Graphics::DeviceAPIDependantTextureCube *textureCube =
         checked_cast<const Graphics::DeviceAPIDependantTextureCube *>(entity);
     return  Texture::Match_(*textureCube) &&
             textureCube->Width() == _width &&
@@ -182,7 +182,7 @@ bool TextureCube::VirtualMatchTerminalEntity(const DeviceAPIDependantEntity *ent
 DeviceAPIDependantTextureCube::DeviceAPIDependantTextureCube(IDeviceAPIEncapsulator *device, const TextureCube *resource, const MemoryView<const u8>& /* optionalData */)
 :   DeviceAPIDependantTexture(device, resource)
 ,   _width(checked_cast<u32>(resource->Width()))
-,   _height(checked_cast<u32>(resource->Height())) 
+,   _height(checked_cast<u32>(resource->Height()))
 ,   _levelCount(checked_cast<u32>(resource->LevelCount())) {}
 //----------------------------------------------------------------------------
 DeviceAPIDependantTextureCube::~DeviceAPIDependantTextureCube() {}

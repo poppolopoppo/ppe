@@ -50,7 +50,7 @@ private:
     void* _frames[MaxDeph];
 };
 //----------------------------------------------------------------------------
-inline size_t hash_value(const Callstack& callstack) {
+inline hash_t hash_value(const Callstack& callstack) {
     return callstack.Hash();
 }
 //----------------------------------------------------------------------------

@@ -12,10 +12,10 @@
 #include "Device/State/DepthStencilState.h"
 #include "Device/State/RasterizerState.h"
 #include "Device/State/SamplerState.h"
-
 #include "Device/Texture/SurfaceFormat.h"
-
 #include "Device/Geometry/VertexDeclaration.h"
+
+#include "Core/Allocator/PoolAllocatorTag-impl.h"
 
 #if defined(_DEBUG) && defined(OS_WINDOWS)
 #   define WITH_CORE_MATHS_UNITTESTS
@@ -30,6 +30,7 @@
 
 namespace Core {
 namespace Graphics {
+POOLTAG_DEF(Graphics);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -277,7 +278,8 @@ void GraphicsStartup::Start() {
 #ifdef WITH_CORE_MATHS_UNITTESTS
     MathUnitTests_();
 #endif
-
+    // 0 - pool allocator tag
+    POOLTAG(Graphics)::Start();
     // 1 - Global video memory
     GlobalVideoMemory::Create();
     // 2 - Register basic window class
@@ -311,6 +313,12 @@ void GraphicsStartup::Shutdown() {
     BasicWindow::Shutdown();
     // 1 - Global video memory
     GlobalVideoMemory::Destroy();
+    // 0 - pool allocator tag
+    POOLTAG(Graphics)::Shutdown();
+}
+//----------------------------------------------------------------------------
+void GraphicsStartup::ClearAll_UnusedMemory() {
+    POOLTAG(Graphics)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

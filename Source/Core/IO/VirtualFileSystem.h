@@ -2,9 +2,11 @@
 
 #include "Core/Core.h"
 
+#include "Core/IO/VirtualFileSystem_fwd.h"
 #include "Core/IO/VFS/VirtualFileSystemComponent.h"
 #include "Core/IO/VFS/VirtualFileSystemTrie.h"
 
+#include "Core/Allocator/PoolAllocatorTag.h"
 #include "Core/Memory/UniquePtr.h"
 #include "Core/Meta/Singleton.h"
 
@@ -13,7 +15,7 @@
 namespace Core {
 template <typename T, typename _Allocator>
 class RawStorage;
-
+POOLTAG_DECL(VirtualFileSystem);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -30,8 +32,10 @@ public:
 
     bool DirectoryExists(const Dirpath& dirpath, ExistPolicy::Mode policy = ExistPolicy::Exists) const;
     bool FileExists(const Filename& filename, ExistPolicy::Mode policy = ExistPolicy::Exists) const;
+    bool FileStats(FileStat* pstat, const Filename& filename) const;
 
     size_t EnumerateFiles(const Dirpath& dirpath, bool recursive, const std::function<void(const Filename&)>& foreach) const;
+    size_t GlobFiles(const Dirpath& dirpath, const WStringSlice& pattern, bool recursive, const std::function<void(const Filename&)>& foreach) const;
 
     bool TryCreateDirectory(const Dirpath& dirpath) const;
 
@@ -56,6 +60,7 @@ public:
     bool ReadAll(const Filename& filename, RawStorage<T, _Allocator>& storage, AccessPolicy::Mode policy = AccessPolicy::None);
     template <typename T, typename _Allocator>
     bool WriteAll(const Filename& filename, const RawStorage<T, _Allocator>& storage, AccessPolicy::Mode policy = AccessPolicy::None);
+    bool WriteAll(const Filename& filename, const MemoryView<const u8>& storage, AccessPolicy::Mode policy = AccessPolicy::None);
 
 private:
     mutable std::mutex _barrier;

@@ -5,8 +5,6 @@
 // Here goes the list of all the domains
 
 //------------------------------------------------------------------------------
-MEMORY_DOMAIN_IMPL(NoDomain,                Global)
-//------------------------------------------------------------------------------
 MEMORY_DOMAIN_IMPL(Core,                    Global)
 //------------------------------------------------------------------------------
 MEMORY_DOMAIN_IMPL(Alloca,                  Core)
@@ -18,6 +16,7 @@ MEMORY_DOMAIN_IMPL(Maths,                   Core)
 MEMORY_DOMAIN_IMPL(Pool,                    Core)
 MEMORY_DOMAIN_IMPL(RTTI,                    Core)
 MEMORY_DOMAIN_IMPL(Singleton,               Core)
+MEMORY_DOMAIN_IMPL(Stream,                  Core)
 MEMORY_DOMAIN_IMPL(String,                  Core)
 MEMORY_DOMAIN_IMPL(Task,                    Core)
 MEMORY_DOMAIN_IMPL(ThreadLocal,             Core)
@@ -40,6 +39,10 @@ MEMORY_DOMAIN_IMPL(Resource,                Graphics)
 MEMORY_DOMAIN_IMPL(Shader,                  Graphics)
 MEMORY_DOMAIN_IMPL(Texture,                 Graphics)
 MEMORY_DOMAIN_IMPL(Vertex,                  Graphics)
+//------------------------------------------------------------------------------
+MEMORY_DOMAIN_IMPL(ContentPipeline,         Core)
+MEMORY_DOMAIN_IMPL(Generation,              ContentPipeline)
+//------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 MEMORY_DOMAIN_IMPL(Engine,                  Core)
 //------------------------------------------------------------------------------

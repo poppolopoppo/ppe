@@ -25,13 +25,13 @@ struct PresentationParametersData {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 PresentationParameters::PresentationParameters()
-:   PresentationParameters(0, 0, nullptr, nullptr, false, false, 0, PresentInterval::Default) {}
+:   PresentationParameters(0, 0, SurfaceFormatType::UNKNOWN, SurfaceFormatType::UNKNOWN, false, false, 0, PresentInterval::Immediate) {}
 //----------------------------------------------------------------------------
 PresentationParameters::PresentationParameters(
     u32 backBufferWidth,
     u32 backBufferHeight,
-    const SurfaceFormat *backBufferFormat,
-    const SurfaceFormat *depthStencilFormat,
+    SurfaceFormatType backBufferFormat,
+    SurfaceFormatType depthStencilFormat,
     bool fullscreen,
     bool tripleBuffer,
     u32 multiSampleCount,
@@ -42,8 +42,8 @@ PresentationParameters::PresentationParameters(
 PresentationParameters::PresentationParameters(
     u32 backBufferWidth,
     u32 backBufferHeight,
-    const SurfaceFormat *backBufferFormat,
-    const SurfaceFormat *depthStencilFormat,
+    SurfaceFormatType backBufferFormat,
+    SurfaceFormatType depthStencilFormat,
     bool fullscreen,
     bool tripleBuffer,
     u32 multiSampleCount,
@@ -55,14 +55,6 @@ PresentationParameters::PresentationParameters(
 ,   _depthStencilFormat(depthStencilFormat)
 ,   _data(0)
 ,   _viewport(viewport) {
-    AssertRelease(backBufferFormat);
-    AssertRelease(  backBufferFormat->IsRGB() &&
-                    backBufferFormat->SupportRenderTarget());
-
-    AssertRelease(depthStencilFormat);
-    AssertRelease(  depthStencilFormat->IsDepth() &&
-                    depthStencilFormat->SupportRenderTarget());
-
     PresentationParametersData::bitfullscreen_type::InplaceSet(_data, fullscreen);
     PresentationParametersData::bittriplebuffer_type::InplaceSet(_data, tripleBuffer);
     PresentationParametersData::bitpresentinterval_type::InplaceSet(_data, static_cast<u32>(presentationInterval));

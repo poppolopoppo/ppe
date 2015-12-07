@@ -45,15 +45,13 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // By default std allocations are already aligned on size_t (pointer size).
-// Aligned allocations induce overhead (decuded it from beeing obliged to call _mm_free or aligned_free),
-// so this will prevent us from calling it systematically.
-// NB: enable_if is used with overloading instead of return type to avoid confusing the compiler with __declspec(restrict).
+// Aligned allocations induce overhead so this will prevent us from calling it systematically.
 template <size_t _Alignment>
 struct IsNaturalyAligned {
     // Power of 2 assertion guarantees <= test correctness :
     // if aligned on 8, also aligned on 4, 2 & 1
     static_assert(_Alignment && 0 == (_Alignment & (_Alignment - 1)), "_Alignment must be a power of 2");
-    enum { value = (_Alignment <= sizeof(size_t)) };
+    enum { value = (_Alignment <= sizeof(ptrdiff_t)) };
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

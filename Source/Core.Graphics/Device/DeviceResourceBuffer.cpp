@@ -101,7 +101,7 @@ void DeviceResourceBuffer::CopyFrom(IDeviceAPIEncapsulator *device, const Device
 }
 //----------------------------------------------------------------------------
 void DeviceResourceBuffer::CopySubPart(
-    IDeviceAPIEncapsulator *device, size_t dstOffset, 
+    IDeviceAPIEncapsulator *device, size_t dstOffset,
     const DeviceResourceBuffer *psource, size_t srcOffset,
     size_t length ) {
     Assert(0 < length);
@@ -114,7 +114,7 @@ void DeviceResourceBuffer::CopySubPart(
 }
 //----------------------------------------------------------------------------
 size_t DeviceResourceBuffer::HashValue() const {
-    return hash_value(_count, _strideModeUsage);
+    return hash_tuple(_count, _strideModeUsage);
 }
 //----------------------------------------------------------------------------
 bool DeviceResourceBuffer::Match(const DeviceAPIDependantResourceBuffer& entity) const {

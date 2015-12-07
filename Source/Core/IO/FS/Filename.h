@@ -69,6 +69,8 @@ public:
     size_t ToCStr(char *dst, size_t capacity) const;
     size_t ToWCStr(wchar_t *dst, size_t capacity) const;
 
+    inline size_t ToWCStr(const MemoryView<wchar_t>& dst) const { return ToWCStr(dst.Pointer(), dst.SizeInBytes()); }
+
     template <size_t _Dim>
     size_t ToCStr(char (&dst)[_Dim]) const { return ToCStr(dst, _Dim); }
     template <size_t _Dim>
@@ -111,7 +113,7 @@ inline void swap(Filename& lhs, Filename& rhs) {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
-inline size_t hash_value(const Filename& filename) {
+inline hash_t hash_value(const Filename& filename) {
     return filename.HashValue();
 }
 //----------------------------------------------------------------------------

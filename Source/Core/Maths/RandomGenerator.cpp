@@ -7,38 +7,67 @@
 #include <chrono> // seed salt
 
 namespace Core {
+namespace Random {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-RandomGenerator::RandomGenerator()
-:   RandomGenerator(0) {}
-//----------------------------------------------------------------------------
-RandomGenerator::RandomGenerator(RandomSeedTag)
-:   RandomGenerator(RandomSeed(u32(hash_value((void *)this)))) {}
-//----------------------------------------------------------------------------
-RandomGenerator::RandomGenerator(u32 seed) {
-    Reset(seed);
+void XorShift64Star::Reset(size_t seed) {
+    X = u64(seed);
 }
 //----------------------------------------------------------------------------
-RandomGenerator::~RandomGenerator() {}
-//----------------------------------------------------------------------------
-void RandomGenerator::Reset(u32 seed) {
-    _seed = seed;
-
-    _state[0] = NextSeed_(seed);
-    _state[1] = NextSeed_(_state[0]);
-    _state[2] = NextSeed_(_state[1]);
-    _state[3] = NextSeed_(_state[2]);
-
-    // warm-up, else return _seed on first 4 call :
-    NextU32(); NextU32(); NextU32(); NextU32();
-}
-//----------------------------------------------------------------------------
-u32 RandomGenerator::RandomSeed(u32 salt/* = 0 */) {
-   const i64 t = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-   return static_cast<u32>(hash_value(t, salt));
+u64 XorShift64Star::NextU64() {
+    X ^= X >> 12; // a
+    X ^= X << 25; // b
+    X ^= X >> 27; // c
+    return X * 2685821657736338717LL;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+void XorShift128Plus::Reset(size_t seed) {
+    XorShift64Star rng;
+    rng.Reset(seed);
+    States[0] = rng.NextU64();
+    States[1] = rng.NextU64();
+}
+//----------------------------------------------------------------------------
+u64 XorShift128Plus::NextU64() {
+    u64 s1 = States[ 0 ];
+    const u64 s0 = States[ 1 ];
+    States[ 0 ] = s0;
+    s1 ^= s1 << 23; // a
+    return ( States[ 1 ] = ( s1 ^ s0 ^ ( s1 >> 17 ) ^ ( s0 >> 26 ) ) ) + s0; // b, c
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+void XorShift1024Star::Reset(size_t seed) {
+    XorShift64Star rng;
+    rng.Reset(seed);
+    N = (rng.NextU64() & 15);
+    for (u64& s : States)
+        s = rng.NextU64();
+}
+//----------------------------------------------------------------------------
+u64 XorShift1024Star::NextU64() {
+    u64 s0 = States[ N ];
+    u64 s1 = States[ N = (( N + 1 ) & 15) ];
+    s1 ^= s1 << 31; // a
+    s1 ^= s1 >> 11; // b
+    s0 ^= s0 >> 30; // c
+    return ( States[ N ] = s0 ^ s1 ) * 1181783497276652981LL;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+u64 MakeSeed(u64 salt/* = 0 */) {
+    u64 seed[2];
+    seed[0] = salt;
+    seed[1] = u64(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+    return hash_mem64(seed, sizeof(seed));
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace Random
 } //!namespace Core

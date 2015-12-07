@@ -118,14 +118,22 @@ void* Heap::calloc(size_t nmemb, size_t size, MemoryTrackingData& trackingData) 
 //----------------------------------------------------------------------------
 void* Heap::realloc(void *ptr, size_t size, MemoryTrackingData& trackingData) {
 #ifdef USE_MEMORY_DOMAINS
-    const size_t blockCount = ptr ? 1 : 0;
-    const size_t oldSize = HeapSize(_handle, 0, ptr);
-    _trackingData.Deallocate(blockCount, oldSize);
-    trackingData.Deallocate(blockCount, oldSize);
-    _trackingData.Allocate(1, size);
-    trackingData.Allocate(1, size);
+    if (ptr) {
+        const size_t oldSize = HeapSize(_handle, 0, ptr);
+        _trackingData.Deallocate(1, oldSize);
+        trackingData.Deallocate(1, oldSize);
+    }
+    if (size) {
+        _trackingData.Allocate(1, size);
+        trackingData.Allocate(1, size);
+    }
 #endif
-    return ::HeapReAlloc(_handle, 0, ptr, size);
+    if (ptr)
+        return ::HeapReAlloc(_handle, 0, ptr, size);
+    else if (size)
+        return ::HeapAlloc(_handle, 0, size);
+    else
+        return nullptr;
 }
 //----------------------------------------------------------------------------
 void* Heap::aligned_malloc(size_t size, size_t alignment, MemoryTrackingData& trackingData) {

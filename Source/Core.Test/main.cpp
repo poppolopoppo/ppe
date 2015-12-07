@@ -48,22 +48,8 @@ typedef Core::GameTest4 application_type;
 #endif
 
 static void PrintMemStats(const Core::CrtMemoryStats& memoryStats) {
-#ifdef OS_WINDOWS
-    char buffer[4096];
-    {
-        Core::OCStrStream oss(buffer);
-        oss     << "Memory statistics :" << std::endl
-                << " - Total free size          = " << memoryStats.TotalFreeSize << std::endl
-                << " - Largest free block       = " << memoryStats.LargestFreeBlockSize << std::endl
-                << " - Total used size          = " << memoryStats.TotalUsedSize << std::endl
-                << " - Largest used block       = " << memoryStats.LargestUsedBlockSize << std::endl
-                << " - Total overhead size      = " << memoryStats.TotalOverheadSize << std::endl
-                << " - Total comitted size      = " << Core::SizeInBytes{ memoryStats.TotalOverheadSize.Value + memoryStats.TotalFreeSize.Value + memoryStats.TotalUsedSize.Value } << std::endl
-                << " - External fragmentation   = " << (memoryStats.ExternalFragmentation() * 100) << "%" << std::endl;
-    }
-    ::OutputDebugStringA(buffer);
-#else
-    std::cerr << "Memory statistics :" << std::endl
+    STACKLOCAL_OCSTRSTREAM(4096, oss);
+    oss << "Memory statistics :" << std::endl
         << " - Total free size          = " << memoryStats.TotalFreeSize << std::endl
         << " - Largest free block       = " << memoryStats.LargestFreeBlockSize << std::endl
         << " - Total used size          = " << memoryStats.TotalUsedSize << std::endl
@@ -71,6 +57,10 @@ static void PrintMemStats(const Core::CrtMemoryStats& memoryStats) {
         << " - Total overhead size      = " << memoryStats.TotalOverheadSize << std::endl
         << " - Total comitted size      = " << Core::SizeInBytes{ memoryStats.TotalOverheadSize.Value + memoryStats.TotalFreeSize.Value + memoryStats.TotalUsedSize.Value } << std::endl
         << " - External fragmentation   = " << (memoryStats.ExternalFragmentation() * 100) << "%" << std::endl;
+#ifdef OS_WINDOWS
+    ::OutputDebugStringA(oss.NullTerminatedStr());
+#else
+    std::cerr << oss.NullTerminatedStr();
 #endif
 }
 

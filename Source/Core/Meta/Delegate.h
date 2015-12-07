@@ -41,7 +41,7 @@ public:
     Delegate& operator =(const Delegate& other) {
         _pcallee = other._pcallee;
         _pcallback = other._pcallback;
-        return *this; 
+        return *this;
     }
 
     bool Valid() const { return (nullptr != _pcallback.Get()); }
@@ -60,18 +60,18 @@ public:
         return (*_pcallback.Get())(_pcallee, std::forward<_Args>(args)... );
     }
 
-    FORCE_INLINE _Ret operator ()(_Args... args) const { 
-        return Invoke(std::forward<_Args>(args)... ); 
+    FORCE_INLINE _Ret operator ()(_Args... args) const {
+        return Invoke(std::forward<_Args>(args)... );
     }
 
     friend bool operator ==(const Delegate<_Ret (*)(_Args... )>& lhs,
-                            const Delegate<_Ret (*)(_Args... )>& rhs ) { 
-        return  lhs._pcallback == rhs._pcallback && 
-                lhs._pcallee == rhs._pcallee; 
+                            const Delegate<_Ret (*)(_Args... )>& rhs ) {
+        return  lhs._pcallback == rhs._pcallback &&
+                lhs._pcallee == rhs._pcallee;
     }
 
     friend bool operator !=(const Delegate<_Ret (*)(_Args... )>& lhs,
-                            const Delegate<_Ret (*)(_Args... )>& rhs ) { 
+                            const Delegate<_Ret (*)(_Args... )>& rhs ) {
         return ! operator ==(lhs, rhs);
     }
 
@@ -82,12 +82,12 @@ protected:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-namespace DelegateHelper {
+namespace details {
 //----------------------------------------------------------------------------
 template <typename _Callee, typename _Bind >
-struct Bind {};
+struct BindDelegate {};
 //----------------------------------------------------------------------------
-} //!namespace DelegateHelper
+} //!namespace details
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -96,13 +96,13 @@ struct Bind {};
 #include "Delegate-inl.h"
 
 #define Delegate(_pMemberOrFunc, _pCalleeOrArg0) \
-    ::Core::DelegateHelper::Bind< \
+    ::Core::details::BindDelegate< \
             decltype( _pCalleeOrArg0 ) \
         ,   decltype( _pMemberOrFunc ) \
         >::get< _pMemberOrFunc >( _pCalleeOrArg0 )
 
 #define DelegateType(_pMemberOrFunc, _pCalleeOrArg0) \
-    ::Core::DelegateHelper::Bind< \
+    ::Core::details::BindDelegate< \
             decltype( _pCalleeOrArg0 ) \
         ,   decltype( _pMemberOrFunc ) \
         >::type

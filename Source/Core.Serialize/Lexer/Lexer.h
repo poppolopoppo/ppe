@@ -2,8 +2,10 @@
 
 #include "Core/Core.h"
 
+#include "Core.Serialize/Exceptions.h"
 #include "Core.Serialize/Lexer/LookAheadReader.h"
 #include "Core.Serialize/Lexer/Match.h"
+
 #include "Core/IO/String.h"
 
 #include <stdexcept>
@@ -13,10 +15,12 @@ namespace Lexer {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class LexerException : public std::logic_error {
+class LexerException : public Core::Serialize::SerializeException {
 public:
+    typedef Core::Serialize::SerializeException parent_type;
+
     LexerException(const char *what, Match&& match)
-        :   std::logic_error(what)
+        :   parent_type(what)
         ,   _match(std::move(match)) {}
 
     virtual ~LexerException() {}
@@ -31,18 +35,18 @@ private:
 //----------------------------------------------------------------------------
 class Lexer {
 public:
-    Lexer(const StringSlice& input, const char *sourceFileName);
+    Lexer(const StringSlice& input, const wchar_t *sourceFileName);
     ~Lexer();
 
     const Match *Peek();
     bool Read(Match& match);
 
-    const String& SourceFileName() { return _sourceFileName; }
+    const WString& SourceFileName() { return _sourceFileName; }
 
 private:
     bool NextMatch_(Match& match);
 
-    String _sourceFileName;
+    WString _sourceFileName;
     LookAheadReader _reader;
 
     String _lexing;

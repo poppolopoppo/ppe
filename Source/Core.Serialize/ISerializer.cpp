@@ -3,32 +3,21 @@
 #include "ISerializer.h"
 
 #include "Core/Container/RawStorage.h"
-#include "Core/IO/VFS/VirtualFileSystemStream.h"
+#include "Core/IO/FS/Filename.h"
+#include "Core/IO/StreamProvider.h"
 
 namespace Core {
 namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void ISerializer::Deserialize(VECTOR(Transaction, RTTI::PMetaAtom)& atoms, IVirtualFileSystemIStream *iss) {
+void ISerializer::Deserialize(VECTOR(Transaction, RTTI::PMetaObject)& objects, IStreamReader* iss, const wchar_t *sourceName/* = nullptr */) {
     Assert(iss);
 
-    RAWSTORAGE(Serializer, u8) storage;
+    RAWSTORAGE_THREAD_LOCAL(Serializer, u8) storage;
     iss->ReadAll(storage);
 
-    char sourceName[MAX_PATH];
-    iss->SourceFilename().ToCStr(sourceName);
-
-    Deserialize(atoms, storage, sourceName);
-}
-//----------------------------------------------------------------------------
-void ISerializer::Serialize(IVirtualFileSystemOStream *oss, const MemoryView<const RTTI::PCMetaAtom>& atoms) {
-    Assert(oss);
-
-    RAWSTORAGE(Serializer, u8) storage;
-    Serialize(storage, atoms);
-
-    oss->Write(storage.Pointer(), storage.SizeInBytes());
+    Deserialize(objects, storage.MakeConstView(), sourceName);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

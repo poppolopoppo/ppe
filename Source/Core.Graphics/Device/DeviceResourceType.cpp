@@ -36,9 +36,9 @@ const char *ResourceTypeToCStr(DeviceResourceType type) {
         return "VertexDeclaration";
     case Core::Graphics::DeviceResourceType::Vertices:
         return "Vertices";
+    default:
+        AssertNotImplemented();
     }
-
-    AssertNotImplemented();
     return nullptr;
 }
 //----------------------------------------------------------------------------

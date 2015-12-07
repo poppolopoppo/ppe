@@ -13,7 +13,7 @@ void GlobalThreadPool::Create() {
 }
 //----------------------------------------------------------------------------
 void IOThreadPool::Create() {
-    parent_type::Create("IOThreadPool", 1 /* IO should be operated in 1 thread to prevent slow seeks */);
+    parent_type::Create("IOThreadPool", 1ul /* IO should be operated in 1 thread to prevent slow seeks */);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -1,0 +1,6 @@
+#once
+{
+    .ProjectName = 'Core.ContentPipeline'
+    .ProjectPath = '$SourceDiretory$/Core.ContentPipeline'
+    #include "../../Build/Templates/Library.bff"
+}

@@ -11,6 +11,9 @@ Desktop.ini
 # Recycle Bin used on file shares
 $RECYCLE.BIN/
 
+# CTAGS
+.tags*
+
 # Windows Installer files
 *.cab
 *.msi
@@ -89,6 +92,7 @@ ipch/
 *.opensdf
 *.sdf
 *.cachefile
+*.VC.opendb
 
 # Visual Studio profiler
 *.psess

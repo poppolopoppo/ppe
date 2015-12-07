@@ -71,7 +71,7 @@ inline bool operator !=(const ConstantField& lhs, const ConstantField& rhs) {
     return !operator ==(lhs, rhs);
 }
 //----------------------------------------------------------------------------
-inline size_t hash_value(const ConstantField& field) {
+inline hash_t hash_value(const ConstantField& field) {
     return field.HashValue();
 }
 //----------------------------------------------------------------------------

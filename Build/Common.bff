@@ -12,14 +12,14 @@
 .SourceDiretory         = '$SolutionPath$/Source'
 .TemplateDirectory      = '$SolutionPath$/Build/Templates'
 
-.BinaryDirectory        = '$OutputDirectory$/Bin'
+.BinaryDirectory        = '$OutputDirectory$/Binary'
 .IntermediateDirectory  = '$OutputDirectory$/Intermediate'
 .UnityDirectory         = '$OutputDirectory$/Unity'
 
 //------------------------------------------------------------------------------
 // Default Unity Options
 //------------------------------------------------------------------------------
-.UnityNumFiles = 1 ; peut être override par projet
+.UnityNumFiles = 4 ; peut être override par projet
 .UnityInputIsolateWritableFiles = false ; passer à true désactive l'utilisation des unity builds
 
 //------------------------------------------------------------------------------
@@ -28,7 +28,7 @@
 .VSBuildOptions = ''
 + ' -cache'     ; utilisation du cache depuis Visual
 ;+ ' -dist'      ; active la compilation distribuée
-;+ ' -showcmds'  ; affiche les commandes de compile, pratique pour debug
++ ' -showcmds'  ; affiche les commandes de compile, pratique pour debug
 ;+ ' -summary'   ; affiche un rapport à la fin de la compilation
 
 //------------------------------------------------------------------------------

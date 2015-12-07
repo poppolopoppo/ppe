@@ -113,7 +113,7 @@ bool TryCreateOptionalMaterialParameter(
     Assert(context.Database);
     Assert(!name.empty());
 
-    const char *cstr = name.cstr();
+    const char *cstr = name.c_str();
 
     const char uniOptional[] = "uniOptional_";
 

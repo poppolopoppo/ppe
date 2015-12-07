@@ -16,9 +16,6 @@ RenderTarget::RenderTarget(size_t width, size_t height, const SurfaceFormat *for
     Assert(format->SupportRenderTarget());
 }
 //----------------------------------------------------------------------------
-RenderTarget::RenderTarget(size_t width, size_t height, const SurfaceFormat *format, bool sharable, Graphics::DeviceAPIDependantRenderTarget *deviceAPIDependantRenderTarget)
-:   Texture2D(width, height, 1, format, BufferMode::None, BufferUsage::Default, sharable, deviceAPIDependantRenderTarget) {}
-//----------------------------------------------------------------------------
 RenderTarget::~RenderTarget() {}
 //----------------------------------------------------------------------------
 void RenderTarget::Create_(IDeviceAPIEncapsulator *device, const MemoryView<const u8>& optionalRawData) {
@@ -45,6 +42,15 @@ void RenderTarget::Destroy(IDeviceAPIEncapsulator *device) {
     device->DestroyRenderTarget(this, rt);
 
     Assert(!rt);
+}
+//----------------------------------------------------------------------------
+void RenderTarget::StealRenderTarget(Graphics::DeviceAPIDependantRenderTarget* rt) {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(Frozen());
+    Assert(rt);
+    Assert(!_deviceAPIDependantTexture2D);
+
+    _deviceAPIDependantTexture2D.reset(rt);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

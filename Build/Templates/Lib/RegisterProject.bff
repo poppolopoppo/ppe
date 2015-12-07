@@ -6,7 +6,6 @@
 ;   <ProjectName>           name of the project
 //------------------------------------------------------------------------------
 
-.ProjectList + .ProjectName
-Export( .ProjectList )
+^ProjectList + .ProjectName
 
 Print( "Registered project <$ProjectName$>" )

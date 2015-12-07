@@ -11,54 +11,28 @@ namespace Core {
 namespace Graphics {
 class IDeviceAPIShaderCompiler;
 class VertexDeclaration;
-FWD_REFPTR(AnnotedConstantBuffer);
-struct AnnotedTextureSlot;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class DX11ShaderProgram : public DeviceAPIDependantShaderProgram {
 public:
-    DX11ShaderProgram(  IDeviceAPIShaderCompiler *compiler,
-                        ShaderProgram *owner,
-                        const char *entryPoint,
-                        ShaderCompilerFlags flags,
-                        const ShaderSource *source,
-                        const VertexDeclaration *vertexDeclaration);
+    DX11ShaderProgram(IDeviceAPIEncapsulator* device, const ShaderProgram* resource);
     virtual ~DX11ShaderProgram();
 
-    ::ID3DBlob *Entity() const { return _entity.Get(); }
-
-    virtual size_t ProgramHashCode() const override { return _programHashCode; }
+    ::ID3D11VertexShader*   VertexShader()  const { Assert(ShaderProgramType::Vertex   == ProgramType()); return static_cast<::ID3D11VertexShader*>(_abstractShader.Get()); }
+    ::ID3D11DomainShader*   DomainShader()  const { Assert(ShaderProgramType::Domain   == ProgramType()); return static_cast<::ID3D11DomainShader*>(_abstractShader.Get()); }
+    ::ID3D11HullShader*     HullShader()    const { Assert(ShaderProgramType::Hull     == ProgramType()); return static_cast<::ID3D11HullShader*>(_abstractShader.Get()); }
+    ::ID3D11GeometryShader* GeometryShader()const { Assert(ShaderProgramType::Geometry == ProgramType()); return static_cast<::ID3D11GeometryShader*>(_abstractShader.Get()); }
+    ::ID3D11PixelShader*    PixelShader()   const { Assert(ShaderProgramType::Pixel    == ProgramType()); return static_cast<::ID3D11PixelShader*>(_abstractShader.Get()); }
+    ::ID3D11ComputeShader*  ComputeShader() const { Assert(ShaderProgramType::Compute  == ProgramType()); return static_cast<::ID3D11ComputeShader*>(_abstractShader.Get()); }
 
     virtual size_t VideoMemorySizeInBytes() const override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
-    static void Preprocess( IDeviceAPIShaderCompiler *compiler,
-                            RAWSTORAGE(Shader, char)& output,
-                            const ShaderProgram *owner,
-                            const ShaderSource *source,
-                            const VertexDeclaration *vertexDeclaration);
-
-    static void Reflect(IDeviceAPIShaderCompiler *compiler,
-                        ASSOCIATIVE_VECTOR(Shader, BindName, PCConstantBufferLayout)& constants,
-                        VECTOR(Shader, ShaderProgramTexture)& textures,
-                        const ShaderProgram *program);
-
 private:
-    ComPtr<::ID3DBlob> _entity;
-    size_t _programHashCode;
+    ComPtr<::ID3D11DeviceChild> _abstractShader;
 };
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-UINT ShaderCompilerFlagsToD3D11CompileFlags(ShaderCompilerFlags value);
-//----------------------------------------------------------------------------
-ShaderCompilerFlags D3D11CompileFlagsToShaderCompilerFlags(UINT  value);
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-LPCSTR ShaderProfileTypeToD3D11Target(ShaderProgramType program, ShaderProfileType profile);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

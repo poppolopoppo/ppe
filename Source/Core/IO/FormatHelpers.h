@@ -2,43 +2,41 @@
 
 #include "Core/Core.h"
 
+#include "Core/Meta/StronglyTyped.h"
+
 #include <iosfwd>
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct SizeInBytes {
-    uint64_t Value;
-
-    void Format(char *buffer, size_t capacity) const;
-    void Format(wchar_t *buffer, size_t capacity) const;
-};
+CORE_STRONGLYTYPED_NUMERIC_DEF(uint64_t, SizeInBytes);
+//----------------------------------------------------------------------------
+void Format(char *buffer, size_t capacity, SizeInBytes value);
+void Format(wchar_t *buffer, size_t capacity, SizeInBytes value);
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
-    const SizeInBytes& sizeInBytes) {
+    const SizeInBytes& size) {
     _Char buffer[32];
-    sizeInBytes.Format(buffer, lengthof(buffer));
+    Format(buffer, lengthof(buffer), size);
     return oss << buffer;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct CountOfElements {
-    uint64_t Value;
-
-    void Format(char *buffer, size_t capacity) const;
-    void Format(wchar_t *buffer, size_t capacity) const;
-};
+CORE_STRONGLYTYPED_NUMERIC_DEF(uint64_t, CountOfElements);
+//----------------------------------------------------------------------------
+void Format(char *buffer, size_t capacity, CountOfElements count);
+void Format(wchar_t *buffer, size_t capacity, CountOfElements count);
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
-    const CountOfElements& countOfElements) {
+    const CountOfElements& count) {
     _Char buffer[32];
-    countOfElements.Format(buffer, lengthof(buffer));
+    Format(buffer, lengthof(buffer), count);
     return oss << buffer;
 }
 //----------------------------------------------------------------------------

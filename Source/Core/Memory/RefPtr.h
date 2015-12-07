@@ -139,7 +139,7 @@ private:
 STATIC_ASSERT(sizeof(RefPtr<RefCountable>) == sizeof(RefCountable*));
 //----------------------------------------------------------------------------
 template <typename T>
-size_t hash_value(const RefPtr<T>& refPtr) {
+hash_t hash_value(const RefPtr<T>& refPtr) {
     return hash_value(refPtr.get());
 }
 //----------------------------------------------------------------------------
@@ -150,7 +150,7 @@ void swap(const RefPtr<_Lhs>& lhs, const RefPtr<_Rhs>& rhs) {
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs>
 bool operator ==(const RefPtr<_Lhs>& lhs, const RefPtr<_Rhs>& rhs) {
-    return (lhs.get() == reinterpret_cast<_Lhs*>(rhs.get()) );
+    return (lhs.get() == static_cast<const _Lhs*>(rhs.get()) );
 }
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs>
@@ -160,7 +160,7 @@ bool operator !=(const RefPtr<_Lhs>& lhs, const RefPtr<_Rhs>& rhs) {
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs>
 bool operator <(const RefPtr<_Lhs>& lhs, const RefPtr<_Rhs>& rhs) {
-    return (lhs.get() < reinterpret_cast<_Lhs*>(rhs.get()) );
+    return (lhs.get() < static_cast<const _Lhs*>(rhs.get()) );
 }
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs>
@@ -219,7 +219,7 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename T>
-size_t hash_value(const SafePtr<T>& SafePtr) {
+hash_t hash_value(const SafePtr<T>& SafePtr) {
     return hash_value(SafePtr.get());
 }
 //----------------------------------------------------------------------------

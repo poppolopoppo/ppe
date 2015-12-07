@@ -28,7 +28,6 @@ public:
 
     virtual IDeviceAPIEncapsulator *Device() const = 0;
     virtual IDeviceAPIContext *Immediate() const = 0;
-    virtual IDeviceAPIShaderCompiler *ShaderCompiler() const = 0;
 
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
     virtual IDeviceAPIDiagnostics *Diagnostics() const = 0;
@@ -46,6 +45,7 @@ protected:
 
 private:
     DeviceAPI _api;
+
     DeviceEncapsulator *_owner;
     PresentationParameters _parameters;
 

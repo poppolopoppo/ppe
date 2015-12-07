@@ -2,9 +2,12 @@
 
 #include "BasicWindow.h"
 
-#include "Core/Diagnostic/CurrentProcess.h"
 #include "Core/Diagnostic/LastError.h"
 #include "Core/Diagnostic/Logger.h"
+
+#include "Core/Misc/CurrentProcess.h"
+
+#include <sstream>
 
 #ifdef OS_WINDOWS
 #   include <Windows.h>
@@ -291,6 +294,18 @@ bool BasicWindow::PumpMessage(WindowMessage& msg, MessageLParam& lparam, Message
     return false;
 }
 //----------------------------------------------------------------------------
+bool BasicWindow::PumpAllMessages_ReturnIfQuit() {
+    bool quit = false;
+
+    WindowMessage msg;
+    MessageLParam lparam;
+    MessageWParam wparam;
+    while (PumpMessage(msg, lparam, wparam))
+        quit |= (msg == WindowMessage::Quit);
+
+    return quit;
+}
+//----------------------------------------------------------------------------
 void BasicWindow::Start() {
     CreateBasicWindowClass_();
 }
@@ -329,7 +344,7 @@ void BasicWindow::RegisterMessageDelegate_(WindowMessage msg, IWindowMessageHand
 
     LOG(Information, L"[Window] Register {1} message handler for window '{0}'", _title, msg);
 
-    _dispatch.Insert_AssertUnique(msg, MakePair(handler, member));
+    _dispatch.Insert_AssertUnique(std::forward<WindowMessage>(msg), MakePair(handler, member));
 }
 //----------------------------------------------------------------------------
 void BasicWindow::UnregisterMessageDelegate_(WindowMessage msg, IWindowMessageHandler *handler, IWindowMessageHandler::Delegate member) {

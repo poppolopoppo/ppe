@@ -9,7 +9,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _Alignment = 0>
+template <typename T, size_t _Alignment = sizeof(ptrdiff_t) >
 class Mallocator : public AllocatorBase<T> {
 public:
     typedef AllocatorBase<T> base_type;
@@ -20,7 +20,7 @@ public:
     template<typename U>
     struct rebind
     {
-        typedef Mallocator<U, _Alignment> other;
+        typedef Mallocator<U> other;
     };
 
     Mallocator() throw() {}
@@ -36,6 +36,9 @@ public:
     pointer allocate(size_type n);
     pointer allocate(size_type n, const void* /*hint*/) { return allocate(n); }
     void deallocate(void* p, size_type n);
+
+    // see AllocatorRealloc()
+    void* rellocate(void* p, size_type newSize, size_type oldSize);
 };
 //----------------------------------------------------------------------------
 template <typename T, size_t _Alignment>
@@ -66,77 +69,22 @@ auto Mallocator<T, _Alignment>::allocate(size_type n) -> pointer {
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Alignment>
-void Mallocator<T, _Alignment>::deallocate(void* p, size_type ) {
+void Mallocator<T, _Alignment>::deallocate(void* p, size_type n) {
+    UNUSED(n);
     // Mallocator wraps malloc().
     free<_Alignment>(p);
 }
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename T>
-class Mallocator<T, 0> : public AllocatorBase<T> {
-public:
-    typedef AllocatorBase<T> base_type;
+template <typename T, size_t _Alignment>
+void* Mallocator<T, _Alignment>::rellocate(void* p, size_type newSize, size_type oldSize) {
+    UNUSED(oldSize);
 
-    typedef typename base_type::pointer pointer;
-    typedef typename base_type::size_type size_type;
-
-    template<typename U>
-    struct rebind
-    {
-        typedef Mallocator<U, 0> other;
-    };
-
-    Mallocator() throw() {}
-
-    Mallocator(const Mallocator& ) throw() {}
-    template <typename U>
-    Mallocator(const Mallocator<U>&) throw() {}
-
-    Mallocator& operator =(const Mallocator& ) { return *this; }
-    template <typename U>
-    Mallocator& operator =(const Mallocator<U>&) { return *this; }
-
-    pointer allocate(size_type n);
-    pointer allocate(size_type n, const void* /*hint*/) { return allocate(n); }
-    void deallocate(void* p, size_type n);
-};
-//----------------------------------------------------------------------------
-template <typename T>
-auto Mallocator<T, 0>::allocate(size_type n) -> pointer {
-    enum { Alignment = std::alignment_of<T>::value };
-
-    // The return value of allocate(0) is unspecified.
-    // Mallocator returns NULL in order to avoid depending
-    // on malloc(0)'s implementation-defined behavior
-    // (the implementation can define malloc(0) to return NULL,
-    // in which case the bad_alloc check below would fire).
-    // All allocators can return NULL in this case.
-    if (n == 0)
-        return nullptr;
-
-    // All allocators should contain an integer overflow check.
-    // The Standardization Committee recommends that std::length_error
-    // be thrown in the case of integer overflow.
-    if (n > base_type::max_size())
-        throw std::length_error("Mallocator<T>::allocate() - Integer overflow.");
-
-    // Mallocator wraps malloc().
-    void * const pv = malloc<Alignment>(n * sizeof(T));
-
-    // Allocators should throw std::bad_alloc in the case of memory allocation failure.
-    if (pv == nullptr)
+    // Mallocator wraps malloc()
+    void* const newp = realloc<_Alignment>(p, newSize);
+    if (nullptr == newp && newSize)
         throw std::bad_alloc();
 
-    return static_cast<T *>(pv);
-}
-//----------------------------------------------------------------------------
-template <typename T>
-void Mallocator<T, 0>::deallocate(void* p, size_type ) {
-    enum { Alignment = std::alignment_of<T>::value };
-
-    // Mallocator wraps malloc().
-    free<Alignment>(p);
+    return newp;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

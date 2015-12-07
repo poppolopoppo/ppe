@@ -43,10 +43,6 @@ class DeviceAPIDependantDepthStencil : public Graphics::DeviceAPIDependantTextur
 public:
     DeviceAPIDependantDepthStencil(IDeviceAPIEncapsulator *device, const DepthStencil *owner, const MemoryView<const u8>& optionalData);
     virtual ~DeviceAPIDependantDepthStencil();
-
-    const DepthStencil *TypedResource() const {
-        return checked_cast<const DepthStencil *>(Resource());
-    }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

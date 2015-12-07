@@ -31,33 +31,33 @@ void* Heap::calloc(size_t nmemb, size_t size, MemoryTrackingData& trackingData, 
 template <size_t _Alignment>
 FORCE_INLINE
 void* Heap::realloc(void *ptr, size_t size, MemoryTrackingData& trackingData, typename std::enable_if< IsNaturalyAligned<_Alignment>::value >::type*) {
-    void* const ptr = this->realloc(ptr, size, trackingData);
-    Assert(IS_ALIGNED(_Alignment, ptr));
-    return ptr;
+    void* const newp = this->realloc(ptr, size, trackingData);
+    Assert(IS_ALIGNED(_Alignment, newp));
+    return newp;
 }
 //----------------------------------------------------------------------------
 template <size_t _Alignment>
 FORCE_INLINE
 void* Heap::malloc(size_t size, MemoryTrackingData& trackingData, typename std::enable_if< !IsNaturalyAligned<_Alignment>::value >::type*) {
-    return aligned_malloc(size, _Alignment, trackingData);
+    return this->aligned_malloc(size, _Alignment, trackingData);
 }
 //----------------------------------------------------------------------------
 template <size_t _Alignment>
 FORCE_INLINE
 void Heap::free(void *ptr, MemoryTrackingData& trackingData, typename std::enable_if< !IsNaturalyAligned<_Alignment>::value >::type*) {
-    aligned_free(ptr, trackingData);
+    this->aligned_free(ptr, trackingData);
 }
 //----------------------------------------------------------------------------
 template <size_t _Alignment>
 FORCE_INLINE
 void* Heap::calloc(size_t nmemb, size_t size, MemoryTrackingData& trackingData, typename std::enable_if< !IsNaturalyAligned<_Alignment>::value >::type*) {
-    return aligned_calloc(nmemb, size, _Alignment, trackingData);
+    return this->aligned_calloc(nmemb, size, _Alignment, trackingData);
 }
 //----------------------------------------------------------------------------
 template <size_t _Alignment>
 FORCE_INLINE
 void* Heap::realloc(void *ptr, size_t size, MemoryTrackingData& trackingData, typename std::enable_if< !IsNaturalyAligned<_Alignment>::value >::type*) {
-    return aligned_realloc(ptr, size, trackingData);
+    return this->aligned_realloc(ptr, size, trackingData);
 }
 //----------------------------------------------------------------------------
 inline void Heap::Swap(Heap& other) {

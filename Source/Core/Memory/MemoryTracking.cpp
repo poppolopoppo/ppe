@@ -129,7 +129,7 @@ MemoryTrackingData& MemoryTrackingData::Global() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-static void TrackingDataAbsoluteName_(OCStrStream& oss, const MemoryTrackingData& trackingData) {
+static void TrackingDataAbsoluteName_(BasicOCStrStream<char>& oss, const MemoryTrackingData& trackingData) {
     if (trackingData.Parent()) {
         TrackingDataAbsoluteName_(oss, *trackingData.Parent());
         oss << "::";
@@ -143,10 +143,12 @@ static bool LessTrackingData_(const MemoryTrackingData& lhs, const MemoryTrackin
     return (lhs.Name() != rhs.Name()) && CompareI(lhs.Name(), rhs.Name()) < 0;
 }
 //----------------------------------------------------------------------------
-void ReportTrackingDatas(   std::basic_ostream<char>& oss, 
-                            const char *header, 
+void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
+                            const wchar_t *header,
                             const MemoryView<const MemoryTrackingData *>& datas ) {
     Assert(header);
+
+    oss << L"Reporting trackings data :" << std::endl;
 
     STACKLOCAL_POD_ARRAY(const MemoryTrackingData *, sortedDatas, datas.size());
     memcpy(sortedDatas.Pointer(), datas.Pointer(), datas.SizeInBytes());
@@ -163,20 +165,20 @@ void ReportTrackingDatas(   std::basic_ostream<char>& oss,
         else
             return LessTrackingData_(*lhs, *rhs);
     });
-    
+
     const size_t width = 139;
-    const char *fmt = " {0:-73}|{1:10} {2:10} |{3:7} {4:7} |{5:11} {6:11}\n";
+    const wchar_t *fmt = L" {0:-73}|{1:10} {2:10} |{3:7} {4:7} |{5:11} {6:11}\n";
 
-    oss << Repeat<width>("-") << std::endl
-        << "    " << header << " (" << datas.size() << " elements)" << std::endl
-        << Repeat<width>("-") << std::endl;
+    oss << Repeat<width>(L"-") << std::endl
+        << "    " << header << L" (" << datas.size() << L" elements)" << std::endl
+        << Repeat<width>(L"-") << std::endl;
 
-    Format(oss, fmt,    "Tracking Data Name",
-                        "Block", "Max",
-                        "Alloc", "Max",
-                        "Total", "Max" );
+    Format(oss, fmt,    L"Tracking Data Name",
+                        L"Block", "Max",
+                        L"Alloc", "Max",
+                        L"Total", "Max" );
 
-    oss << Repeat<width>("-") << std::endl;
+    oss << Repeat<width>(L"-") << std::endl;
 
     STACKLOCAL_OCSTRSTREAM(tmp, 256);
     for (const MemoryTrackingData *data : datas) {
@@ -192,7 +194,7 @@ void ReportTrackingDatas(   std::basic_ostream<char>& oss,
                             data->MaxTotalSizeInBytes() );
     }
 
-    oss << Repeat<width>("-") << std::endl;
+    oss << Repeat<width>(L"-") << std::endl;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -14,9 +14,10 @@ template <typename T, typename _Impl>
 class SingletonHelpers {
 protected:
     SingletonHelpers();
-    ~SingletonHelpers();
 
 public:
+    ~SingletonHelpers();
+
     SingletonHelpers(SingletonHelpers&& ) = delete;
     SingletonHelpers& operator =(SingletonHelpers&& ) = delete;
 
@@ -56,13 +57,13 @@ bool SingletonHelpers<T, _Impl>::HasInstance() {
 template <typename T, typename _Impl>
 template <typename... _Args>
 void SingletonHelpers<T, _Impl>::Create(_Args&&... args) {
-    AssertRelease(!_Impl::_gInstancePtr);
-    _Impl::_gInstancePtr = ::new (_Impl::&_gStorage) T{ std::forward<_Args>(args)... };
+    AssertRelease(nullptr == _Impl::_gInstancePtr);
+    _Impl::_gInstancePtr = ::new (&_Impl::_gStorage) T(std::forward<_Args>(args)... );
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Impl>
 void SingletonHelpers<T, _Impl>::Destroy() {
-    AssertRelease(_Impl::_gInstancePtr);
+    AssertRelease(nullptr != _Impl::_gInstancePtr);
     _Impl::_gInstancePtr->~T();
     _Impl::_gInstancePtr = nullptr;
 }
@@ -71,9 +72,12 @@ void SingletonHelpers<T, _Impl>::Destroy() {
 //----------------------------------------------------------------------------
 template <typename T, typename _Tag>
 class Singleton : SingletonHelpers<T, Singleton<T, _Tag> > {
+protected:
+    Singleton() {}
+
 public:
+    friend class SingletonHelpers<T, Singleton<T, _Tag> >;
     typedef SingletonHelpers<T, Singleton<T, _Tag> > parent_type;
-    friend class parent_type;
 
     using parent_type::Instance;
     using parent_type::HasInstance;
@@ -81,26 +85,26 @@ public:
     using parent_type::Destroy;
 
 private:
-    Singleton() {}
-    ~Singleton() {}
-
+    static T *_gInstancePtr;
     static typename POD_STORAGE(T) _gStorage;
-    static T *_gInstancePtr = nullptr;
 };
 //----------------------------------------------------------------------------
-template <typename T, typename _Impl>
-typename POD_STORAGE(T) SingletonHelpers<T, _Tag>::_gStorage;
+template <typename T, typename _Tag>
+typename POD_STORAGE(T) Singleton<T, _Tag>::_gStorage;
 //----------------------------------------------------------------------------
-template <typename T, typename _Impl>
-T *SingletonHelpers<T, _Tag>::_gInstancePtr = nullptr;
+template <typename T, typename _Tag>
+T *Singleton<T, _Tag>::_gInstancePtr = nullptr;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Tag>
 class ThreadLocalSingleton : SingletonHelpers<T, ThreadLocalSingleton<T, _Tag> > {
+protected:
+    ThreadLocalSingleton() {}
+
 public:
+    friend class SingletonHelpers<T, ThreadLocalSingleton<T, _Tag> >;
     typedef SingletonHelpers<T, ThreadLocalSingleton<T, _Tag> > parent_type;
-    friend class parent_type;
 
     using parent_type::Instance;
     using parent_type::HasInstance;
@@ -108,17 +112,14 @@ public:
     using parent_type::Destroy;
 
 private:
-    ThreadLocalSingleton() {}
-    ~ThreadLocalSingleton() {}
-
+    static THREAD_LOCAL T *_gInstancePtr;
     static THREAD_LOCAL typename POD_STORAGE(T) _gStorage;
-    static THREAD_LOCAL T *_gInstancePtr = nullptr;
 };
 //----------------------------------------------------------------------------
-template <typename T, typename _Impl>
+template <typename T, typename _Tag>
 THREAD_LOCAL typename POD_STORAGE(T) ThreadLocalSingleton<T, _Tag>::_gStorage;
 //----------------------------------------------------------------------------
-template <typename T, typename _Impl>
+template <typename T, typename _Tag>
 THREAD_LOCAL T *ThreadLocalSingleton<T, _Tag>::_gInstancePtr = nullptr;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

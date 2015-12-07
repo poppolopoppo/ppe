@@ -13,12 +13,12 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void SizeInBytes::Format(char *buffer, size_t capacity) const {
+void Format(char *buffer, size_t capacity, SizeInBytes size) {
     BasicOCStrStream<char> oss(buffer, capacity);
     oss.precision(2);
     oss.flags(std::ios_base::fixed);
 
-    const Units::Storage::Bytes bytes(static_cast<double>(this->Value));
+    const Units::Storage::Bytes bytes(static_cast<double>(size));
 
     const Units::Storage::Petabytes pb(0.8);
     const Units::Storage::Terabytes tb(0.8);
@@ -40,12 +40,12 @@ void SizeInBytes::Format(char *buffer, size_t capacity) const {
         oss << bytes << " b";
 }
 //----------------------------------------------------------------------------
-void SizeInBytes::Format(wchar_t *buffer, size_t capacity) const {
+void Format(wchar_t *buffer, size_t capacity, SizeInBytes size) {
     BasicOCStrStream<wchar_t> oss(buffer, capacity);
     oss.precision(2);
     oss.flags(std::ios_base::fixed);
 
-    const Units::Storage::Bytes bytes(static_cast<double>(this->Value));
+    const Units::Storage::Bytes bytes(static_cast<double>(size));
 
     const Units::Storage::Petabytes pb(0.8);
     const Units::Storage::Terabytes tb(0.8);
@@ -69,30 +69,30 @@ void SizeInBytes::Format(wchar_t *buffer, size_t capacity) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void CountOfElements::Format(char *buffer, size_t capacity) const {
+void Format(char *buffer, size_t capacity, CountOfElements count) {
     BasicOCStrStream<char> oss(buffer, capacity);
     oss.precision(2);
     oss.flags(std::ios_base::fixed);
 
-    if (this->Value > 9e5f)
-        oss << (this->Value / 1e6f) << " M";
-    else if (this->Value > 9e2f)
-        oss << (this->Value / 1e3f) << " K";
+    if (count > 9e5f)
+        oss << (count / 1e6f) << " M";
+    else if (count > 9e2f)
+        oss << (count / 1e3f) << " K";
     else
-        oss << this->Value;
+        oss << count.Value;
 }
 //----------------------------------------------------------------------------
-void CountOfElements::Format(wchar_t *buffer, size_t capacity) const {
+void Format(wchar_t *buffer, size_t capacity, CountOfElements count) {
     BasicOCStrStream<wchar_t> oss(buffer, capacity);
     oss.precision(2);
     oss.flags(std::ios_base::fixed);
 
-    if (this->Value > 9e5f)
-        oss << (this->Value / 1e6f) << L" M";
-    else if (this->Value > 9e2f)
-        oss << (this->Value / 1e3f) << L" K";
+    if (count > 9e5f)
+        oss << (count / 1e6f) << L" M";
+    else if (count > 9e2f)
+        oss << (count / 1e3f) << L" K";
     else
-        oss << this->Value;
+        oss << count.Value;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

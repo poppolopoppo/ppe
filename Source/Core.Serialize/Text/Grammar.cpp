@@ -11,8 +11,8 @@
 #include "Core/IO/Format.h"
 #include "Core/IO/Stream.h"
 
-#include "Core.RTTI/Object/MetaObject.h"
-#include "Core.RTTI/Type/MetaTypePromote.h"
+#include "Core.RTTI/MetaObject.h"
+#include "Core.RTTI/MetaTypePromote.h"
 
 namespace Core {
 namespace Serialize {
@@ -329,7 +329,7 @@ struct BinaryOp {
                 );
 
         STACKLOCAL_OCSTRSTREAM(oss, 256);
-        
+
         if (rhs_type_id == PARSEID_BOOL)
             oss << rhs_value->Cast<ParseBool>()->Wrapper();
         else if (rhs_type_id == PARSEID_INT)
@@ -512,7 +512,7 @@ GrammarImpl::GrammarImpl()
             const Parser::Enumerable<Tuple<const Lexer::Match *, const Lexer::Match *> >& path = std::get<1>(args);
 
             STACKLOCAL_OCSTRSTREAM(oss, 256);
-            
+
             if (Lexer::Symbol::Dollar == root->Symbol()->Type())
                 oss << '$';
             else if (Lexer::Symbol::Complement == root->Symbol()->Type())

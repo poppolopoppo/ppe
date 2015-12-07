@@ -4,11 +4,13 @@
 
 #include "Core/IO/String.h"
 
+#include <iosfwd>
+
 /*
 // Format() usage samples :
 // -------------------------
 //
-//  ex1:
+//ex1:
 //      wchar_t buffer[1024];
 //      size_t length = Format(buffer, L"string = {2}, decimal = {0}, float = {1}\n", "test", 42, 0.123456f);
 //      std::cout << buffer;
@@ -66,6 +68,9 @@ String ToString(_Arg&& arg);
 //----------------------------------------------------------------------------
 template <typename _Arg>
 WString ToWString(_Arg&& arg);
+//----------------------------------------------------------------------------
+inline String ToString(bool b) { return (b ? "true" : "false"); }
+inline WString ToWString(bool b) { return (b ? L"true" : L"false"); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

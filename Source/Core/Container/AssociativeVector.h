@@ -151,13 +151,22 @@ public:
 #endif
     }
 
+    size_t HashValue() const { return hash_value(_vector); }
+
+    MemoryView<value_type> MakeView() { return MakeView(_vector); }
+    MemoryView<const value_type> MakeView() const { return MakeConstView(_vector); }
+
+    friend void swap(AssociativeVector& lhs, AssociativeVector& rhs) {
+        swap(lhs._vector, rhs._vector);
+    }
+
 private:
     vector_type _vector;
 };
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-size_t hash_value(const AssociativeVector<_Key, _Value, _EqualTo, _Vector>& associativeVector) {
-    return hash_value_seq(associativeVector.begin(), associativeVector.end());
+hash_t hash_value(const AssociativeVector<_Key, _Value, _EqualTo, _Vector>& associativeVector) {
+    return associativeVector.HashValue();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

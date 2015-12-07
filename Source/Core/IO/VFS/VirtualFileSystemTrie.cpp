@@ -68,18 +68,20 @@ void VirtualFileSystemTrie::RemoveComponent(VirtualFileSystemComponent* componen
 //----------------------------------------------------------------------------
 VirtualFileSystemNode* VirtualFileSystemTrie::GetNode(const Dirpath& dirpath) {
     MountingPoint mountingPoint;
-    const auto path = MALLOCA_VIEW(Dirname, Dirpath::MaxDepth);
-    const size_t k = dirpath.ExpandPath(mountingPoint, path);
+    STACKLOCAL_POD_ARRAY(Dirname, dirnames, dirpath.Depth());
+    const size_t k = dirpath.ExpandPath(mountingPoint, dirnames);
 
     Assert(!mountingPoint.empty());
 
-    PVirtualFileSystemNode& node = _nodes.Get(mountingPoint);
-    if (!node)
-        node.reset(new VirtualFileSystemNode());
+    PVirtualFileSystemNode root;
+    if (false == _nodes.TryGet(mountingPoint, &root)) {
+        root.reset(new VirtualFileSystemNode());
+        _nodes.Vector().emplace_back(mountingPoint, root);
+    }
 
-    VirtualFileSystemNode* result = node.get();
+    VirtualFileSystemNode* result = root.get();
     for (size_t i = 0; i < k; ++i)
-        result = result->GetNode(path[i]);
+        result = result->GetNode(dirnames[i]);
 
     Assert(result);
     return result;
@@ -87,8 +89,8 @@ VirtualFileSystemNode* VirtualFileSystemTrie::GetNode(const Dirpath& dirpath) {
 //----------------------------------------------------------------------------
 VirtualFileSystemNode* VirtualFileSystemTrie::GetNodeIFP(const Dirpath& dirpath) const {
     MountingPoint mountingPoint;
-    const auto path = MALLOCA_VIEW(Dirname, Dirpath::MaxDepth);
-    const size_t k = dirpath.ExpandPath(mountingPoint, path);
+    STACKLOCAL_POD_ARRAY(Dirname, dirnames, dirpath.Depth());
+    const size_t k = dirpath.ExpandPath(mountingPoint, dirnames);
 
     if (mountingPoint.empty())
         return nullptr;
@@ -97,7 +99,7 @@ VirtualFileSystemNode* VirtualFileSystemTrie::GetNodeIFP(const Dirpath& dirpath)
     Assert(result);
 
     for (size_t i = 0; i < k; ++i)
-        if (nullptr == (result = result->GetNodeIFP(path[i])) )
+        if (nullptr == (result = result->GetNodeIFP(dirnames[i])) )
             return nullptr;
 
     Assert(result);

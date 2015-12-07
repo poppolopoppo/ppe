@@ -71,7 +71,7 @@ SymbolTrie::SymbolTrie() {
     SymbolTrie::GreaterOrEqual = Insert_(Symbol::GreaterOrEqual, ">=");
     SymbolTrie::DotDot = Insert_(Symbol::DotDot, "..");
 
-    Root()->Value() = Symbol(Symbol::Invalid, StringSlice());
+    Root()->Emplace(Symbol::Invalid, StringSlice());
     SymbolTrie::Invalid = &Root()->Value();
 
     SymbolTrie::Eof = new Symbol(Symbol::Eof, MakeStringSlice("Eof"));

@@ -5,11 +5,9 @@
 #include "Core/Allocator/PoolAllocatorTag.h"
 
 namespace Core {
-POOLTAG_DEF(Graphics);
-
 namespace Graphics {
 class DeviceEncapsulator;
-
+POOLTAG_DECL(Graphics);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -20,6 +18,8 @@ class GraphicsStartup {
 public:
     static void Start();
     static void Shutdown();
+
+    static void ClearAll_UnusedMemory();
 
     // necessary for static graphics resources (fail ?)
     static void OnDeviceCreate(DeviceEncapsulator *device);

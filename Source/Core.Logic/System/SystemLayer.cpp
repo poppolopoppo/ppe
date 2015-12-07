@@ -7,7 +7,7 @@
 
 #include "Core/Allocator/PoolAllocator-impl.h"
 
-#include "Core/Memory/BitSet.h"
+#include "Core/Container/BitSet.h"
 #include "Core/Thread/ThreadPool.h"
 
 #include <algorithm>
@@ -31,7 +31,7 @@ struct AsyncSystemUpdater_ {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Logic, SystemLayer, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Logic, SystemLayer, );
 //----------------------------------------------------------------------------
 SystemLayer::SystemLayer() {}
 //----------------------------------------------------------------------------
@@ -103,7 +103,7 @@ void SystemLayer::Process(SystemContainer& container, const Timeline& timeline) 
                 tasks[queuedTask] = Delegate(&AsyncSystemUpdater_::Update, &updaters[queuedTask]);
                 ++queuedTask;
             }
-        
+
         GlobalThreadPool::Instance().Run(tasks.SubRange(0, queuedTask), &pcounter);
     }
     // synchronous part :
@@ -140,7 +140,7 @@ void SystemLayer::RefreshEntity(const Entity& entity, ComponentFlag components) 
 }
 //----------------------------------------------------------------------------
 void SystemLayer::RemoveEntity(const Entity& entity) {
-    
+
     for (const PSystem& system : _asynchronous)
         system->OnEntityDeleted(entity);
 

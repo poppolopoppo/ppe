@@ -166,21 +166,23 @@ auto CrtAllocationCallstackLogger::FindRequestAllocation_(
     const TAllocation* begin,
     const TAllocation* end
     ) -> const TAllocation* {
+    Assert(begin <= end);
+
     if (begin->RequestNumber > requestNumber ||
         (end - 1)->RequestNumber < requestNumber)
         return nullptr;
 
-    do {
-        const TAllocation* pivot = begin + (end - begin) / 2;
-        if (pivot->RequestNumber == requestNumber)
-            return pivot;
-        else if (pivot->RequestNumber > requestNumber)
-            end = pivot;
+     while (begin + 1 < end) {
+        const TAllocation* pivot = begin + ((end - begin - 1) >> 1);
+        Assert(pivot < end);
+        if (pivot->RequestNumber < requestNumber)
+            begin = pivot + 1;
         else
-            begin = pivot;
-    } while (begin < end);
+            end = pivot + 1;
+    }
 
-    return nullptr;
+    return ((begin + 1 == end) && (begin->RequestNumber == requestNumber))
+        ? begin : nullptr;
 }
 //----------------------------------------------------------------------------
 } //!namespace

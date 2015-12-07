@@ -5,9 +5,8 @@
 #include "Core/Allocator/PoolAllocatorTag.h"
 
 namespace Core {
-POOLTAG_DEF(Serialize);
-
 namespace Serialize {
+POOLTAG_DECL(Serialize);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -18,6 +17,8 @@ class SerializeStartup {
 public:
     static void Start();
     static void Shutdown();
+
+    static void ClearAll_UnusedMemory();
 
     SerializeStartup()  { Start(); }
     ~SerializeStartup() { Shutdown(); }

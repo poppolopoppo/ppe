@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Core.h"
+#include "Core.RTTI/RTTI.h"
 
 #include "Core/Allocator/Allocation.h"
 #include "Core/IO/String.h"

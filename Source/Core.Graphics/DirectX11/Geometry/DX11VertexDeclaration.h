@@ -5,7 +5,7 @@
 #include "Core.Graphics/Device/Geometry/VertexDeclaration.h"
 
 #include "Core/Allocator/PoolAllocator.h"
-#include "Core/Memory/MemoryStack.h"
+#include "Core/Container/Stack.h"
 
 namespace Core {
 namespace Graphics {
@@ -18,12 +18,12 @@ public:
     DX11VertexDeclaration(IDeviceAPIEncapsulator *device, VertexDeclaration *owner);
     virtual ~DX11VertexDeclaration();
 
-    MemoryView<const ::D3D11_INPUT_ELEMENT_DESC> Layout() const { return _layout.Cast<const ::D3D11_INPUT_ELEMENT_DESC>(); }
+    MemoryView<const ::D3D11_INPUT_ELEMENT_DESC> Layout() const { return _layout.MakeView().Cast<const ::D3D11_INPUT_ELEMENT_DESC>(); }
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    StaticStack<::D3D11_INPUT_ELEMENT_DESC, VertexDeclaration::MaxSubPartCount> _layout;
+    FixedSizeStack<::D3D11_INPUT_ELEMENT_DESC, VertexDeclaration::MaxSubPartCount> _layout;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

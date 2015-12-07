@@ -23,6 +23,7 @@ FWD_REFPTR(DeviceAPIDependantEntity);
 class DeviceAPIDependantEntity : public RefCountable {
 protected:
     DeviceAPIDependantEntity(const AbstractDeviceAPIEncapsulator *encapsulator, const DeviceResource *resource);
+    DeviceAPIDependantEntity(const AbstractDeviceAPIEncapsulator *encapsulator, DeviceResourceType resourceType);
 
 public:
     virtual ~DeviceAPIDependantEntity();
@@ -35,7 +36,7 @@ public:
 
     bool MatchDevice(const IDeviceAPIEncapsulator *device) const;
 
-    const DeviceResource *Resource() const { return _resource.get(); }
+    //const DeviceResource *Resource() const { return _resource.get(); }
     bool IsAttachedToResource() const { return nullptr != _resource; }
 
     void AttachResource(const DeviceResource *resource);

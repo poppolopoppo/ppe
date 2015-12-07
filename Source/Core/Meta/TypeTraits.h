@@ -7,7 +7,7 @@ namespace Meta {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Very interesting, but did not worlk everywhere :'(
+// Very interesting, but did not work everywhere :'(
 // http://stackoverflow.com/questions/10711952/how-to-detect-existence-of-a-class-using-sfinae
 //----------------------------------------------------------------------------
 template <typename T>
@@ -45,15 +45,19 @@ using IsDefined = has_destructor<T>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Arg0, typename... _Args>
-struct CountOfVariadicArgs {
-    STATIC_CONST_INTEGRAL(size_t, value, 1 + CountOfVariadicArgs<_Args...>::value);
-};
-//----------------------------------------------------------------------------
-template <typename _Arg0>
-struct CountOfVariadicArgs<_Arg0> {
-    STATIC_CONST_INTEGRAL(size_t, value, 1);
-};
+#define INSTANTIATE_CLASS_TYPEDEF(_NAME, ...) \
+    class _NAME : public __VA_ARGS__ { \
+        typedef __VA_ARGS__ parent_type; \
+        STATIC_ASSERT(Core::Meta::IsDefined<parent_type>::value); \
+    public: \
+        using parent_type::parent_type; \
+        using parent_type::operator =; \
+        \
+        _NAME() = default; \
+        \
+        _NAME(parent_type&& rvalue) : parent_type(std::move(rvalue)) {} \
+        _NAME& operator =(parent_type&& rvalue) { parent_type::operator =(std::move(rvalue)); return *this; } \
+    }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

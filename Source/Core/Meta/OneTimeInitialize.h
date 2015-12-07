@@ -30,7 +30,7 @@
 #define _ONE_TIME_INITIALIZE_INIT_READY     2
 
 #define _ONE_TIME_INITIALIZE_IMPL_(_Type, _Name, _Initializer, _ThreadLocal, _TypenameIfInTemplate) \
-    static _ThreadLocal _TypenameIfInTemplate POD_STORAGE(COMMA_PROTECT(_Type))  _Name##_OneTimeStorage; \
+    static _ThreadLocal _TypenameIfInTemplate POD_STORAGE(COMMA_PROTECT(_Type)) _Name##_OneTimeStorage; \
     static _ThreadLocal _Type* volatile     _Name##_OneTimePData = nullptr; \
     static _ThreadLocal volatile u32        _Name##_OneTimeState = _ONE_TIME_INITIALIZE_INIT_INVALID;\
     \

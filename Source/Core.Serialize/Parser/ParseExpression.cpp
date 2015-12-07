@@ -4,10 +4,10 @@
 
 #include "ParseExpression.h"
 
-#include "Core.RTTI/Class/MetaClass.h"
-#include "Core.RTTI/Class/MetaClassDatabase.h"
-#include "Core.RTTI/Object/MetaObject.h"
-#include "Core.RTTI/Property/MetaProperty.h"
+#include "Core.RTTI/MetaClass.h"
+#include "Core.RTTI/MetaClassDatabase.h"
+#include "Core.RTTI/MetaObject.h"
+#include "Core.RTTI/MetaProperty.h"
 
 #include "Core/Allocator/PoolAllocator-impl.h"
 #include "Core/IO/Format.h"
@@ -61,7 +61,7 @@ RTTI::MetaAtom *VariableExport::Eval(ParseContext *context) const {
 }
 //----------------------------------------------------------------------------
 String VariableExport::ToString() const {
-    return _name.cstr();
+    return _name.c_str();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -87,7 +87,7 @@ RTTI::MetaAtom *VariableReference::Eval(ParseContext *context) const {
 }
 //----------------------------------------------------------------------------
 String VariableReference::ToString() const {
-    return _name.cstr();
+    return _name.c_str();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -130,7 +130,7 @@ RTTI::MetaAtom *ObjectDefinition::Eval(ParseContext *context) const {
 }
 //----------------------------------------------------------------------------
 String ObjectDefinition::ToString() const {
-    return _name.cstr();
+    return _name.c_str();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -176,7 +176,7 @@ RTTI::MetaAtom *PropertyReference::Eval(ParseContext *context) const {
 }
 //----------------------------------------------------------------------------
 String PropertyReference::ToString() const {
-    return StringFormat("{0}::{1}", _object->ToString(), _member.cstr());
+    return StringFormat("{0}::{1}", _object->ToString(), _member.c_str());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

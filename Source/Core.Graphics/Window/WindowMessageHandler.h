@@ -32,6 +32,7 @@ public:
         MessageLParam lparam,
         MessageWParam wparam );
 
+protected:
     void RegisterMessageDelegate(BasicWindow *wnd, WindowMessage msg, Delegate member);
     void UnregisterMessageDelegate(BasicWindow *wnd, WindowMessage msg, Delegate member);
 

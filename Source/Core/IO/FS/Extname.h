@@ -41,7 +41,7 @@ inline void swap(Extname& lhs, Extname& rhs) {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
-inline size_t hash_value(const Extname& token) {
+inline hash_t hash_value(const Extname& token) {
     return token.HashValue();
 }
 //----------------------------------------------------------------------------

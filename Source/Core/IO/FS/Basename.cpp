@@ -2,6 +2,7 @@
 
 #include "Basename.h"
 
+#include "Container/Hash.h"
 #include "IO/String.h"
 
 namespace Core {
@@ -37,7 +38,7 @@ static bool ParseBasename_(
     }
     else if (L'.' == *b && (L'\0' == b[1] ||
             (L'.' == b[1] && L'\0' == b[2])) ) {
-        // '.' and '..' are forbiden
+        // '.' and '..' are forbidden
         return false;
     }
     else {
@@ -84,9 +85,38 @@ Basename::Basename(const BasicStringSlice<FileSystem::char_type>& content) {
     ParseBasename_(content.begin(), content.size(), _basenameNoExt, _extname);
 }
 //----------------------------------------------------------------------------
+String Basename::ToString() const {
+    STACKLOCAL_OCSTRSTREAM(oss, 1024);
+    oss << *this;
+    return Core::ToString(oss.MakeView());
+}
+//----------------------------------------------------------------------------
+WString Basename::ToWString() const {
+    STACKLOCAL_WOCSTRSTREAM(oss, 1024);
+    oss << *this;
+    return Core::ToWString(oss.MakeView());
+}
+//----------------------------------------------------------------------------
+size_t Basename::ToCStr(char *dst, size_t capacity) const {
+    OCStrStream oss(dst, capacity);
+    oss << *this;
+    return static_cast<size_t>(oss.tellp());
+}
+//----------------------------------------------------------------------------
+size_t Basename::ToWCStr(wchar_t *dst, size_t capacity) const {
+    WOCStrStream oss(dst, capacity);
+    oss << *this;
+    return static_cast<size_t>(oss.tellp());
+}
+//----------------------------------------------------------------------------
 void Basename::Swap(Basename& other) {
     swap(other._basenameNoExt, _basenameNoExt);
     swap(other._extname, _extname);
+}
+//----------------------------------------------------------------------------
+size_t Basename::HashValue() const {
+    return hash_tuple(  size_t(_basenameNoExt.c_str()),
+                        size_t(_extname.c_str()) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

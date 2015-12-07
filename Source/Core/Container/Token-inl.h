@@ -11,7 +11,7 @@ bool ValidateToken(const BasicStringSlice<_Char>& content) {
     if (content.empty())
         return false;
 
-    const _TokenTraits traits;
+    const _TokenTraits traits = {};
     for (const _Char *p = content.begin(); *p; ++p)
     if (!traits.IsAllowedChar(*p))
         return false;
@@ -22,10 +22,7 @@ bool ValidateToken(const BasicStringSlice<_Char>& content) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::Token() {}
-//----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::~Token() {}
+Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::Token() : _data{nullptr} {}
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
 Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::Token(const _Char* cstr)
@@ -57,14 +54,7 @@ auto Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::operator =(co
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
 size_t Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::HashValue() const {
-    size_t h = size_t(_data.Ptr);
-#ifdef ARCH_X64
-    static_assert(sizeof(size_t) == 8, "This code is for 64-bit size_t.");
-    h ^= h >> 32;
-#else
-    static_assert(sizeof(size_t) == 4, "This code is for 32-bit size_t.");
-#endif
-    return h;
+    return hash_as_pod(intptr_t(_data.Ptr));
 }
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
@@ -179,12 +169,17 @@ auto TokenSetSlot<_Char, _CaseSensitive, _Allocator>::GetOrCreate(const BasicStr
         if (it == _set.end()) {
             const size_t length = content.size();
 
-            _Char* newToken = parent_type::Allocate(length + 2);
-            newToken[0] = checked_cast<u8>(length); // size of cstr is packed in cstr[-1]
-            memcpy(newToken + 1, content.begin(), length * sizeof(_Char));
-            newToken[length + 1] = _Char(0);
+            _Char* newToken = parent_type::Allocate(
+                  1/* one char to store length */
+                + length
+                + 1/* null terminated */ );
+
+            newToken[0] = checked_cast<_Char>(length); // size of cstr is packed in cstr[-1]
+            memcpy(&newToken[1], content.Pointer(), sizeof(_Char)*(length + 1));
+            newToken[1 + length] = _Char(0);
 
             result.Ptr = &newToken[1];
+            Assert(Length(result.Ptr) == length);
 
             _set.insert(result.MakeView());
         }
@@ -290,9 +285,8 @@ size_t TokenSet<_Char, _CaseSensitive, _Allocator>::SlotHash(const BasicStringSl
             h += size_t(ch);
     }
     else {
-        const std::locale& locale = _TokenTraits().Locale();
         for (const _Char ch : content)
-            h += size_t(std::tolower(ch, locale));
+            h += size_t(ToLower(ch));
     }
     return (h & SlotMask);
 }

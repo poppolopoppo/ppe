@@ -51,7 +51,7 @@ DX11DepthStencilState::~DX11DepthStencilState() {
     ReleaseComRef(_entity);
 }
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Graphics, DX11DepthStencilState, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, DX11DepthStencilState, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

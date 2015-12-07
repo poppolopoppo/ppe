@@ -8,6 +8,10 @@ namespace Meta {
 template <typename T>
 struct BitCount {
     enum : size_t { value = (sizeof(T) << 3) };
+
+    static constexpr size_t Words(size_t bits) {
+        return (bits+value-1)/value;
+    }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

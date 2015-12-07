@@ -3,13 +3,16 @@
 #include "VirtualFileSystemNativeComponent.h"
 
 #include "VirtualFileSystemNativeStream.h"
+#include "VirtualFileSystemTrie.h"
 
 #include "Allocator/PoolAllocator-impl.h"
 #include "Container/Vector.h"
 #include "Diagnostic/Logger.h"
+#include "IO/FS/FileStat.h"
 #include "IO/FS/FileSystemToken.h"
 #include "IO/FS/FileSystemTrie.h"
 #include "IO/FileSystem.h"
+#include "IO/VirtualFileSystem.h"
 #include "IO/Stream.h"
 
 // _waccess()
@@ -29,13 +32,13 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(VirtualFileSystemNativeComponent, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(VirtualFileSystem, VirtualFileSystemNativeComponent, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static void SanitizeTarget_(WString& target) {
+static WString SanitizeTarget_(WString&& target) {
     static_assert(FileSystem::Separator == L'/', "invalid FileSystem::Separator");
     Assert(target.size());
 
@@ -45,6 +48,13 @@ static void SanitizeTarget_(WString& target) {
 
     if (target.back() != L'/')
         target.insert(target.end(), L'/');
+
+    return std::move(target);
+}
+//----------------------------------------------------------------------------
+static WString SanitizeTarget_(const WString& target) {
+    WString result = target;
+    return SanitizeTarget_(std::move(result));
 }
 //----------------------------------------------------------------------------
 static void Unalias_(
@@ -59,7 +69,8 @@ static void Unalias_(
     if (aliased.PathNode() == alias.PathNode())
         return;
 
-    const auto subpath = MALLOCA_VIEW(FileSystemToken, Dirpath::MaxDepth);
+    const size_t maxLength = 1 + alias.PathNode()->Depth() + aliased.PathNode()->Depth();
+    STACKLOCAL_POD_ARRAY(FileSystemToken, subpath, maxLength);
     const size_t k = FileSystemPath::Instance().Expand(subpath.Pointer(), subpath.size(), alias.PathNode(), aliased.PathNode());
 
     for (size_t i = 0; i < k; ++i)
@@ -86,17 +97,18 @@ static void Unalias_(
     oss << aliased.Basename();
 }
 //----------------------------------------------------------------------------
-static size_t EnumerateFiles_Windows_(
+static size_t GlobFiles_Windows_(
     const Dirpath& aliased,
     const Dirpath& alias, const WString& target,
     const std::function<void(const Filename&)>& foreach,
     VECTOR_THREAD_LOCAL(FileSystem, Dirpath)& subDirectories,
+    const wchar_t *pattern,
     bool recursive
     ) {
     WIN32_FIND_DATAW ffd;
 
     wchar_t nativeGlob[NATIVE_ENTITYNAME_MAXSIZE];
-    Unalias_(nativeGlob, lengthof(nativeGlob), aliased, alias, target, L"*");
+    Unalias_(nativeGlob, lengthof(nativeGlob), aliased, alias, target, pattern);
 
     HANDLE hFind = ::FindFirstFileExW(  nativeGlob,
                                         FindExInfoBasic,
@@ -138,10 +150,11 @@ static size_t EnumerateFiles_Windows_(
     return total;
 }
 //----------------------------------------------------------------------------
-static size_t EnumerateFiles_(
+static size_t GlobFiles_(
     const Dirpath& aliased,
     const Dirpath& alias, const WString& destination,
     const std::function<void(const Filename&)>& foreach,
+    const WStringSlice& pattern,
     bool recursive
     ) {
     VECTOR_THREAD_LOCAL(FileSystem, Dirpath) subDirectories;
@@ -157,11 +170,13 @@ static size_t EnumerateFiles_(
         subDirectories.pop_back();
 
 #ifdef OS_WINDOWS
-        total += EnumerateFiles_Windows_(
+        total += GlobFiles_Windows_(
             dirpath,
             alias, destination,
             foreach,
-            subDirectories, recursive );
+            subDirectories,
+            pattern.Pointer(),
+            recursive );
 #else
         // TODO (12/13) : no uniform support
 #   error "TODO"
@@ -198,16 +213,14 @@ static bool TryCreateDirectory_(const wchar_t *nativeDirpath) {
 //----------------------------------------------------------------------------
 VirtualFileSystemNativeComponent::VirtualFileSystemNativeComponent(const Dirpath& alias, WString&& target, OpenMode mode /* = Mode::ReadWritable */)
 :   VirtualFileSystemComponent(alias)
-,   _mode(mode), _target(std::move(target)) {
+,   _mode(mode), _target(SanitizeTarget_(std::move(target)) ) {
     Assert(!_target.empty());
-    SanitizeTarget_(_target);
 }
 //----------------------------------------------------------------------------
 VirtualFileSystemNativeComponent::VirtualFileSystemNativeComponent(const Dirpath& alias, const WString& target, OpenMode mode /* = Mode::ReadWritable */)
 :   VirtualFileSystemComponent(alias)
-,   _mode(mode), _target(target) {
+,   _mode(mode), _target(SanitizeTarget_(target)) {
     Assert(!_target.empty());
-    SanitizeTarget_(_target);
 }
 //----------------------------------------------------------------------------
 VirtualFileSystemNativeComponent::~VirtualFileSystemNativeComponent() {}
@@ -248,9 +261,21 @@ bool VirtualFileSystemNativeComponent::FileExists(const Filename& filename, Exis
     return EntityExists_(nativeFilename, policy);
 }
 //----------------------------------------------------------------------------
+bool VirtualFileSystemNativeComponent::FileStats(FileStat* pstat, const Filename& filename) {
+    wchar_t nativeFilename[NATIVE_ENTITYNAME_MAXSIZE];
+    Unalias_(nativeFilename, lengthof(nativeFilename), filename, _alias, _target);
+    return FileStat::FromNativePath(pstat, nativeFilename);
+}
+//----------------------------------------------------------------------------
 size_t VirtualFileSystemNativeComponent::EnumerateFiles(const Dirpath& dirpath, bool recursive, const std::function<void(const Filename&)>& foreach) {
     Assert(ModeReadable & _mode);
-    return EnumerateFiles_(dirpath, _alias, _target, foreach, recursive);
+    return GlobFiles_(dirpath, _alias, _target, foreach, L"*", recursive);
+}
+//----------------------------------------------------------------------------
+size_t VirtualFileSystemNativeComponent::GlobFiles(const Dirpath& dirpath, const WStringSlice& pattern, bool recursive, const std::function<void(const Filename&)>& foreach) {
+    Assert(ModeReadable & _mode);
+    Assert(pattern.size());
+    return GlobFiles_(dirpath, _alias, _target, foreach, pattern, recursive);
 }
 //----------------------------------------------------------------------------
 UniquePtr<IVirtualFileSystemIStream> VirtualFileSystemNativeComponent::OpenReadable(const Filename& filename, AccessPolicy::Mode policy) {
@@ -269,13 +294,13 @@ bool VirtualFileSystemNativeComponent::TryCreateDirectory(const Dirpath& dirpath
 
     bool result = false;
 
-    STACKLOCAL_POD_ARRAY(FileSystemToken, subpath, Dirpath::MaxDepth);
-
     STACKLOCAL_WOCSTRSTREAM(oss, NATIVE_ENTITYNAME_MAXSIZE);
     oss << _target;
     result |= TryCreateDirectory_(oss.NullTerminatedStr());
 
     Assert(dirpath.PathNode());
+
+    STACKLOCAL_POD_ARRAY(FileSystemToken, subpath, Dirpath::MaxDepth);
 
     const size_t k = FileSystemPath::Instance().Expand(subpath.Pointer(), subpath.size(), _alias.PathNode(), dirpath.PathNode());
 

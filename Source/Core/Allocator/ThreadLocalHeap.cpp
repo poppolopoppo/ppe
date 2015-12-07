@@ -2,7 +2,7 @@
 
 #include "ThreadLocalHeap.h"
 
-#include "Thread/ThreadLocalSingleton.h"
+#include "Meta/Singleton.h"
 
 namespace Core
 {
@@ -23,13 +23,11 @@ public:
 };
 //----------------------------------------------------------------------------
 void ThreadLocalHeap::Create() {
-    static const char* key = "ThreadLocalHeap";
-    parent_type::Create(key, key, false /* not locked since accessed by only one thread */);
+    parent_type::Create("ThreadLocalHeap", false /* not locked since accessed by only one thread */);
 }
 //----------------------------------------------------------------------------
 void ThreadLocalHeap::CreateMainThread() {
-    static const char* key = "ThreadLocalHeap";
-    parent_type::Create(key, Heap::current_process_t() /* thread local in main thread <=> process heap */);
+    parent_type::Create(Heap::current_process_t() /* thread local in main thread <=> process heap */);
 }
 //----------------------------------------------------------------------------
 } //!namespace

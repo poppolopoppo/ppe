@@ -5,9 +5,8 @@
 #include "Core/Allocator/PoolAllocatorTag.h"
 
 namespace Core {
-POOLTAG_DEF(Engine);
-
 namespace Engine {
+POOLTAG_DECL(Engine);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -15,6 +14,8 @@ class EngineStartup {
 public:
     static void Start();
     static void Shutdown();
+
+    static void ClearAll_UnusedMemory();
 
     EngineStartup()  { Start(); }
     ~EngineStartup() { Shutdown(); }

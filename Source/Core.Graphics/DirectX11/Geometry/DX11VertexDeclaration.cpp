@@ -18,7 +18,7 @@ DX11VertexDeclaration::DX11VertexDeclaration(IDeviceAPIEncapsulator *device, Ver
     const size_t count = owner->size();
     Assert(count < _layout.capacity());
 
-    ::D3D11_INPUT_ELEMENT_DESC *const subPartDescs = _layout.Push(count);
+    ::D3D11_INPUT_ELEMENT_DESC *const subPartDescs = _layout.Allocate(count);
     ::SecureZeroMemory(subPartDescs, sizeof(::D3D11_INPUT_ELEMENT_DESC) * count);
 
     for (size_t i = 0; i < count; ++i) {
@@ -39,7 +39,7 @@ DX11VertexDeclaration::DX11VertexDeclaration(IDeviceAPIEncapsulator *device, Ver
 //----------------------------------------------------------------------------
 DX11VertexDeclaration::~DX11VertexDeclaration() {}
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Graphics, DX11VertexDeclaration, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, DX11VertexDeclaration, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -6,6 +6,9 @@
 #include "Allocator/PoolAllocator-impl.h"
 #include "Container/Hash.h"
 #include "Container/Vector.h"
+#include "IO/FileSystem.h"
+
+#include <algorithm>
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -13,33 +16,40 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static size_t ExpandFileSystemNode_(FileSystemToken *ptokens, size_t capacity, const FileSystemNode *node, const FileSystemNode *root) {
-    Assert(node);
-    Assert(!node->Token().empty());
+static size_t ExpandFileSystemNode_(FileSystemToken *ptokens, size_t capacity, const FileSystemNode *pnode, const FileSystemNode *root) {
+    if (nullptr == pnode)
+        return 0;
 
-    size_t depth = 0;
-    Assert(node->Parent());
-    if (node->Parent() != root)
-        depth = ExpandFileSystemNode_(ptokens, capacity, node->Parent(), root);
+    size_t count = 0;
+    for (; pnode->Parent(); pnode = pnode->Parent()) {
+        Assert(count < capacity);
+        ptokens[count++] = pnode->Token();
+    }
+    Assert(pnode->Token().empty());
+    Assert(capacity == count);
 
-    Assert(depth < capacity);
-    ptokens[depth] = node->Token();
+    std::reverse(ptokens, ptokens + count);
 
-    return depth + 1;
+    return count;
 }
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(FileSystemNode, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(FileSystem, FileSystemNode, );
 //----------------------------------------------------------------------------
 FileSystemNode::FileSystemNode(const FileSystemNode *parent, const FileSystemToken& token)
 :   _parent(parent)
 ,   _token(token) {
-    _hashValue = (_parent)
-        ? hash_value(_parent->Token().HashValue(), _token.HashValue())
-        : _token.HashValue();
+    if (_parent) {
+        _depth = _parent->_depth + 1;
+        _hashValue = hash_tuple(_parent->Token().HashValue(), _token.HashValue() );
+    }
+    else {
+        _depth = 0;
+        _hashValue = _token.HashValue();
+    }
 }
 //----------------------------------------------------------------------------
 FileSystemNode::~FileSystemNode() {}
@@ -169,7 +179,7 @@ void FileSystemTrie::Clear() {
         FileSystemNode *const next = _root->_child.get();
         AddRef(next);
         _root->_child.reset();
-        queue.PushPOD(next);
+        queue.Push(next);
     }
 
     VECTOR_THREAD_LOCAL(FileSystem, PFileSystemNode) nodes;
@@ -178,7 +188,7 @@ void FileSystemTrie::Clear() {
     // first-pass : detach all nodes from each others
     for (;;) {
         FileSystemNode *node = nullptr;
-        if (!queue.PopPOD(&node))
+        if (!queue.Pop(&node))
             break;
         Assert(node);
         Assert(node->_parent);
@@ -188,7 +198,7 @@ void FileSystemTrie::Clear() {
             FileSystemNode *const next = node->_sibbling.get();
             AddRef(next);
             node->_sibbling.reset();
-            queue.PushPOD(next);
+            queue.Push(next);
         }
 
         if (node->_child) {
@@ -196,7 +206,7 @@ void FileSystemTrie::Clear() {
             FileSystemNode *const next = node->_child.get();
             AddRef(next);
             node->_child.reset();
-            queue.PushPOD(next);
+            queue.Push(next);
         }
 
         node->_parent.reset();
@@ -210,6 +220,22 @@ void FileSystemTrie::Clear() {
         RemoveRef_AssertReachZero(node);
 
     nodes.clear();
+}
+//----------------------------------------------------------------------------
+const FileSystemNode* FileSystemTrie::RootNode(const FileSystemNode *pnode) const {
+    if (nullptr == pnode)
+        return nullptr;
+
+    // should be ok without lock ... (nodes are not muted after their creation)
+    //std::lock_guard<std::mutex> scopeLock(_barrier);
+
+    for (   const FileSystemNode* pparent = pnode->Parent();
+            pparent;
+            pnode = pparent, pparent = pnode->Parent() );
+
+    Assert(pnode);
+    Assert(nullptr == pnode->Parent());
+    return pnode;
 }
 //----------------------------------------------------------------------------
 size_t FileSystemTrie::Expand(FileSystemToken *ptokens, size_t capacity, const FileSystemNode *pnode) const {

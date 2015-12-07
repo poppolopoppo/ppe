@@ -145,6 +145,8 @@ public:
     static void OnDeviceCreate(DeviceEncapsulator *device);
     static void OnDeviceDestroy(DeviceEncapsulator *device);
 
+    static const SurfaceFormat* FromType(SurfaceFormatType type);
+
 private:
     const char *_name;
 

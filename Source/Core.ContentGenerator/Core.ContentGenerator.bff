@@ -1,0 +1,16 @@
+#once
+{
+    .BinaryPrefix = 'Core.ContentGenerator'
+    .ProjectName  = 'Core.ContentGenerator'
+    .ProjectPath  = '$SourceDiretory$/Core.ContentGenerator'
+    .ProjectDependencies =
+    {
+        'Core',
+        'Core.RTTI',
+        'Core.Serialize',
+        'Core.Graphics',
+        'Core.ContentPipeline',
+        'Core.Application',
+    }
+    #include "../../Build/Templates/Executable.bff"
+}

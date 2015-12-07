@@ -1,6 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <CustomBuild Include="Input\InputState-inl.h">
+      <Filter>Input</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Input\InputState.h">
+      <Filter>Input</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Input\KeyboardInputHandler.cpp">
+      <Filter>Input</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Input\KeyboardInputHandler.h">
+      <Filter>Input</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Input\KeyboardKey.cpp">
+      <Filter>Input</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Input\KeyboardKey.h">
+      <Filter>Input</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Input\KeyboardState.h">
+      <Filter>Input</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Input\MouseButton.cpp">
+      <Filter>Input</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Input\MouseButton.h">
+      <Filter>Input</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Input\MouseInputHandler.cpp">
+      <Filter>Input</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Input\MouseInputHandler.h">
+      <Filter>Input</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Input\MouseState.h">
+      <Filter>Input</Filter>
+    </CustomBuild>
     <CustomBuild Include="Application.cpp">
     </CustomBuild>
     <CustomBuild Include="Application.h">
@@ -12,6 +48,12 @@
     <CustomBuild Include="ApplicationConsole.cpp">
     </CustomBuild>
     <CustomBuild Include="ApplicationConsole.h">
+    </CustomBuild>
+    <CustomBuild Include="ApplicationGraphics.cpp">
+    </CustomBuild>
+    <CustomBuild Include="ApplicationGraphics.h">
+    </CustomBuild>
+    <CustomBuild Include="ApplicationService.h">
     </CustomBuild>
     <CustomBuild Include="ApplicationWindow.cpp">
     </CustomBuild>
@@ -25,5 +67,10 @@
     </CustomBuild>
     <CustomBuild Include="targetver.h">
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Input">
+      <UniqueIdentifier>{19e91dd3-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

@@ -4,8 +4,8 @@
 
 #include "Core/Allocator/Allocation.h"
 #include "Core/Container/HashSet.h"
+#include "Core/Container/Stack.h"
 #include "Core/IO/StringSlice.h"
-#include "Core/Memory/MemoryStack.h"
 
 #include <iosfwd>
 #include <mutex>
@@ -14,11 +14,34 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#define BASICTOKEN_CLASS_DEF(_NAME, _CHAR, _CASESENSITIVE, _TRAITS) \
+    class _NAME : public Core::Token< \
+        _NAME, \
+        _CHAR, \
+        _CASESENSITIVE, \
+        _TRAITS, \
+        ALLOCATOR(Token, _CHAR) \
+    > { \
+    public: \
+        typedef Core::Token< \
+            _NAME, \
+            _CHAR, \
+            _CASESENSITIVE, \
+            _TRAITS, \
+            ALLOCATOR(Token, _CHAR) \
+        >   parent_type; \
+        \
+        using parent_type::parent_type; \
+        using parent_type::operator =; \
+    }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename _Char>
 class TokenTraits {
 public:
     const std::locale& Locale() const {  return std::locale::classic(); }
-    bool IsAllowedChar(_Char ch) const { return std::isgraph(ch, Locale()); }
+    bool IsAllowedChar(_Char ch) const { return std::isprint(ch, Locale()); }
 };
 //----------------------------------------------------------------------------
 template <typename _Char, typename _TokenTraits = TokenTraits<_Char> >
@@ -30,9 +53,7 @@ template <typename _Char>
 struct TokenData {
     const _Char *Ptr;
 
-    TokenData() : Ptr(nullptr) {}
-
-    const _Char *cstr() const { return Ptr; }
+    const _Char *c_str() const { return Ptr; }
     size_t size() const { return Ptr ? Ptr[-1] : 0; }
     bool empty() const { return Ptr == nullptr; }
 
@@ -93,7 +114,6 @@ public:
     enum { Sensitiveness = size_t(_CaseSensitive) };
 
     Token();
-    ~Token();
 
     Token(const _Char* content);
     Token& operator =(const _Char* content);
@@ -111,7 +131,7 @@ public:
     size_t size() const { return _data.size(); }
     bool empty() const { return _data.empty(); }
 
-    const _Char* cstr() const { return _data.cstr(); }
+    const _Char* c_str() const { return _data.c_str(); }
     BasicStringSlice<_Char> MakeView() const { return _data.MakeView(); }
 
     size_t HashValue() const;
@@ -129,6 +149,28 @@ public:
         return Equals(MakeStringSlice(array));
     }
 
+    friend void swap(Token& lhs, Token& rhs) { lhs.Swap(rhs); }
+    friend hash_t hash_value(const Token& token) { return token.HashValue(); }
+    friend BasicStringSlice<const _Char> MakeStringSlice(const Token& token) { return token.MakeView(); }
+
+    friend bool operator ==(const Token& lhs, const Token& rhs) { return lhs.Equals(rhs); }
+    friend bool operator !=(const Token& lhs, const Token& rhs) { return !operator ==(lhs, rhs); }
+
+    friend bool operator < (const Token& lhs, const Token& rhs) { return lhs.Less(rhs); }
+    friend bool operator >=(const Token& lhs, const Token& rhs) { return !operator < (lhs, rhs); }
+
+    friend bool operator ==(const Token& lhs, const _Char* rhs) { return lhs.Equals(rhs); }
+    friend bool operator !=(const Token& lhs, const _Char* rhs) { return !operator ==(lhs, rhs); }
+
+    friend bool operator ==(const _Char* lhs, const Token& rhs) { return rhs.Equals(lhs); }
+    friend bool operator !=(const _Char* lhs, const Token& rhs) { return !operator ==(lhs, rhs); }
+
+    friend bool operator ==(const Token& lhs, const BasicStringSlice<_Char>& rhs) { return lhs.Equals(rhs); }
+    friend bool operator !=(const Token& lhs, const BasicStringSlice<_Char>& rhs) { return !operator ==(lhs, rhs); }
+
+    friend bool operator ==(const BasicStringSlice<_Char>& lhs, const Token& rhs) { return rhs.Equals(lhs); }
+    friend bool operator !=(const BasicStringSlice<_Char>& lhs, const Token& rhs) { return !operator ==(lhs, rhs); }
+
     static void Start(size_t capacity);
     static void Clear();
     static void Shutdown();
@@ -145,89 +187,6 @@ private:
     TokenData<_Char> _data;
 };
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-bool operator ==(   const Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>& lhs,
-                    const Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>& rhs) {
-    return lhs.Equals(rhs);
-}
-//----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-bool operator !=(   const Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>& lhs,
-                    const Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>& rhs) {
-    return !operator ==(lhs, rhs);
-}
-//----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-bool operator <(const Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>& lhs,
-                const Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>& rhs) {
-    return lhs.Less(rhs);
-}
-//----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-bool operator >=(   const Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>& lhs,
-                    const Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>& rhs) {
-    return !operator <(lhs, rhs);
-}
-//----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-bool operator ==(   const Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>& lhs,
-                    const _Char *rhs) {
-    return lhs.Equals(rhs);
-}
-//----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-bool operator !=(   const Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>& lhs,
-                    const _Char *rhs) {
-    return !operator ==(lhs, rhs);
-}
-//----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-bool operator ==(   const _Char *lhs,
-                    const Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>& rhs ) {
-    return rhs.Equals(lhs);
-}
-//----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-bool operator !=(   const _Char *lhs,
-                    const Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>& rhs) {
-    return !operator ==(lhs, rhs);
-}
-//----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-bool operator ==(   const Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>& lhs,
-                    const BasicStringSlice<_Char>& rhs) {
-    return lhs.Equals(rhs);
-}
-//----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-bool operator !=(   const Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>& lhs,
-                    const BasicStringSlice<_Char>& rhs) {
-    return !operator ==(lhs, rhs);
-}
-//----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-bool operator ==(   const BasicStringSlice<_Char>& lhs,
-                    const Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>& rhs ) {
-    return rhs.Equals(lhs);
-}
-//----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-bool operator !=(   const BasicStringSlice<_Char>& lhs,
-                    const Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>& rhs) {
-    return !operator ==(lhs, rhs);
-}
-//----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-size_t hash_value(const Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>& token) {
-    return token.HashValue();
-}
-//----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-void swap(Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>& lhs,
-    Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>& rhs) {
-    lhs.Swap(rhs);
-}
-//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define CORE_TOKEN_BUCKET_SIZE (4 * PAGE_SIZE)
@@ -235,8 +194,8 @@ void swap(Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>& lhs,
 template <typename _Char>
 struct TokenBucket {
     TokenBucket* Next;
-    enum { Size = (CORE_TOKEN_BUCKET_SIZE - sizeof(TokenBucket*)-sizeof(MemoryStack<_Char>)) / sizeof(_Char) };
-    StaticStack<_Char, Size> Stack;
+    enum { Size = (CORE_TOKEN_BUCKET_SIZE - sizeof(TokenBucket*)-sizeof(Stack<_Char>)) / sizeof(_Char) - 1 };
+    FixedSizeStack<_Char, Size> Stack;
 };
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Allocator = ALLOCATOR(Token, TokenBucket<_Char>) >
@@ -343,9 +302,9 @@ private:
 template <typename _Token>
 class TokenFactory : Meta::Singleton<
     TokenSet<
-    typename _Token::char_type,
-    CaseSensitive(_Token::Sensitiveness),
-    typename _Token::allocator_type
+        typename _Token::char_type,
+        CaseSensitive(_Token::Sensitiveness),
+        typename _Token::allocator_type
     >,
     TokenFactory<_Token>
 > {
@@ -381,7 +340,7 @@ std::basic_ostream<_StreamChar, _StreamTraits>& operator <<(
     std::basic_ostream<_StreamChar, _StreamTraits>& oss,
     const Token<_Tag, _TokenChar, _CaseSensitive, _TokenTraits, _Allocator>& token) {
     if (!token.empty())
-        oss << token.cstr();
+        oss << token.MakeView();
     return oss;
 }
 //----------------------------------------------------------------------------

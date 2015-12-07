@@ -106,7 +106,7 @@ bool Atof(T *dst, const char *cstr, size_t length) {
         fractional = fractional * 10 + d;
     }
 
-    const double result = integral + double(fractional)/unit;
+    const double result = integral + fractional/double(unit);
     *dst = T(neg ? -result : result);
 
     return true;
@@ -145,9 +145,9 @@ std::basic_ostream<char, _Traits>& operator <<(
     size_t len = 0;
     if (wstr && 0 != (len = Length(wstr)))
     {
-        MALLOCA(char, str, len + 1);
-        wcstombs_s(nullptr, str.get(), len + 1, wstr, len + 1);
-        oss << str.get();
+        STACKLOCAL_POD_ARRAY(char, str, len + 1 );
+        wcstombs_s(nullptr, str.Pointer(), len + 1, wstr, len + 1);
+        oss << str.Pointer();
     }
     return oss;
 }
@@ -159,9 +159,9 @@ std::basic_ostream<char, _Traits>& operator <<(
     const size_t len = wstr.size();
     if (len)
     {
-        MALLOCA(char, str, len + 1);
-        wcstombs_s(nullptr, str.get(), len + 1, wstr.c_str(), len + 1);
-        oss << str.get();
+        STACKLOCAL_POD_ARRAY(char, str, len + 1 );
+        wcstombs_s(nullptr, str.Pointer(), len + 1, wstr.c_str(), len + 1);
+        oss << str.Pointer();
     }
     return oss;
 }

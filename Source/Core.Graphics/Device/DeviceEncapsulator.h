@@ -7,6 +7,7 @@
 #include "Core.Graphics/Device/DeviceStatus.h"
 
 #include "Core/Memory/MemoryTracking.h"
+#include "Core/Meta/Event.h"
 #include "Core/Meta/ThreadResource.h"
 
 namespace Core {
@@ -22,7 +23,6 @@ class DeviceEncapsulator
 :   private Meta::ThreadResource
 ,   private IDeviceAPIContext
 ,   private IDeviceAPIEncapsulator
-,   private IDeviceAPIShaderCompiler
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
 ,   private IDeviceAPIDiagnostics
 #endif
@@ -30,6 +30,8 @@ class DeviceEncapsulator
 public:
     using Meta::ThreadResource::CheckThreadId;
     using Meta::ThreadResource::OwnedByThisThread;
+
+    typedef Delegate<void (*)(DeviceEncapsulator* )> event_t;
 
     DeviceEncapsulator();
     virtual ~DeviceEncapsulator();
@@ -44,7 +46,6 @@ public:
 
     IDeviceAPIEncapsulator *Device() const;
     IDeviceAPIContext *Immediate() const;
-    IDeviceAPIShaderCompiler *ShaderCompiler() const;
 
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
     IDeviceAPIDiagnostics *Diagnostics() const;
@@ -57,6 +58,11 @@ public:
     void Present();
     void ClearState();
 
+    PublicEvent<event_t> OnDeviceCreate()   { return _onDeviceCreate; }
+    PublicEvent<event_t> OnDeviceDestroy()  { return _onDeviceDestroy; }
+    PublicEvent<event_t> OnDeviceReset()    { return _onDeviceReset; }
+    PublicEvent<event_t> OnDevicePresent()  { return _onDevicePresent; }
+
 private:
     UniquePtr< AbstractDeviceAPIEncapsulator > _deviceAPIEncapsulator;
     UniquePtr< DeviceSharedEntityPool > _deviceSharedEntityPool;
@@ -65,6 +71,11 @@ private:
     DeviceRevision _revision;
 
     MemoryTrackingData _videoMemory;
+
+    Event<event_t> _onDeviceCreate;
+    Event<event_t> _onDeviceDestroy;
+    Event<event_t> _onDeviceReset;
+    Event<event_t> _onDevicePresent;
 
 private:
     virtual const AbstractDeviceAPIEncapsulator *APIEncapsulator() const override;
@@ -108,6 +119,9 @@ private: // IDeviceAPIEncapsulator impl
     virtual DeviceAPIDependantResourceBuffer *CreateConstantBuffer(ConstantBuffer *constantBuffer, DeviceResourceBuffer *resourceBuffer) override;
     virtual void DestroyConstantBuffer(ConstantBuffer *constantBuffer, PDeviceAPIDependantResourceBuffer& entity) override;
 
+    virtual DeviceAPIDependantShaderProgram* CreateShaderProgram(ShaderProgram* program) override;
+    virtual void DestroyShaderProgram(ShaderProgram* program, PDeviceAPIDependantShaderProgram& entity) override;
+
     virtual DeviceAPIDependantShaderEffect *CreateShaderEffect(ShaderEffect *effect) override;
     virtual void DestroyShaderEffect(ShaderEffect *effect, PDeviceAPIDependantShaderEffect& entity) override;
 
@@ -138,6 +152,12 @@ private: // IDeviceAPIEncapsulator impl
 
     virtual DeviceAPIDependantDepthStencil *CreateDepthStencil(DepthStencil *depthStencil, const MemoryView<const u8>& optionalData) override;
     virtual void DestroyDepthStencil(DepthStencil *depthStencil, PDeviceAPIDependantDepthStencil& entity) override;
+
+    // diagnostics
+
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
+    virtual IDeviceAPIDiagnostics *DeviceDiagnostics() const override { return Diagnostics(); }
+#endif
 
 private: // IDeviceAPIContext
 
@@ -174,27 +194,6 @@ private: // IDeviceAPIContext
     virtual void DrawPrimitives(PrimitiveType primitiveType, size_t startVertex, size_t primitiveCount) override;
     virtual void DrawIndexedPrimitives(PrimitiveType primitiveType, size_t baseVertex, size_t startIndex, size_t primitiveCount) override;
     virtual void DrawInstancedPrimitives(PrimitiveType primitiveType, size_t baseVertex, size_t startIndex, size_t primitiveCount, size_t startInstance, size_t instanceCount) override;
-
-private: // IDeviceAPIShaderCompiler
-
-    virtual DeviceAPIDependantShaderProgram *CreateShaderProgram(
-        ShaderProgram *program,
-        const char *entryPoint,
-        ShaderCompilerFlags flags,
-        const ShaderSource *source,
-        const VertexDeclaration *vertexDeclaration) override;
-    virtual void DestroyShaderProgram(ShaderProgram *program, PDeviceAPIDependantShaderProgram& entity) override;
-
-    virtual void PreprocessShaderProgram(
-        RAWSTORAGE(Shader, char)& output,
-        const ShaderProgram *program,
-        const ShaderSource *source,
-        const VertexDeclaration *vertexDeclaration) override;
-
-    virtual void ReflectShaderProgram(
-        ASSOCIATIVE_VECTOR(Shader, BindName, PCConstantBufferLayout)& constants,
-        VECTOR(Shader, ShaderProgramTexture)& textures,
-        const ShaderProgram *program) override;
 
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
 private: // IDeviceAPIDiagnosticsEncapsulator() {}

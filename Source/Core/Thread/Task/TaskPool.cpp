@@ -10,6 +10,7 @@
 #include "Thread/ThreadContext.h"
 
 #include "Allocator/PoolAllocator.h"
+#include "Allocator/PoolAllocatorTag-impl.h"
 #include "Allocator/PoolAllocator-impl.h"
 #include "Diagnostic/Logger.h"
 #include "IO/Format.h"
@@ -30,6 +31,7 @@
 #define WITH_CORE_TASKPOOL_MRU_COUNTER_CACHE_TLS    1
 
 namespace Core {
+POOLTAG_DEF(TaskPool);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -51,8 +53,8 @@ public:
 
 private:
     std::atomic<int> _count;
-}; 
-SINGLETON_POOL_ALLOCATED_DEF(TaskCounter, );
+};
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(TaskPool, TaskCounter, inline);
 //----------------------------------------------------------------------------
 TaskCounter::TaskCounter(size_t count)
 :   _count(int(count)) {
@@ -122,16 +124,16 @@ static void TaskThreadShutdown_(TaskPool *ppool);
 struct TaskThreadScope : Fiber::ThreadScope, TaskThreadContext {
     TaskPool *Pool;
 
-    NO_INLINE TaskThreadScope(TaskPool *pool, size_t workerIndex) : Pool(pool) { 
-        Assert(!gTaskThreadContextTLS);
+    NO_INLINE TaskThreadScope(TaskPool *pool, size_t workerIndex) : Pool(pool) {
+        Assert(nullptr == gTaskThreadContextTLS);
         gTaskThreadContextTLS = this;
         TaskContextStartup_(*gTaskThreadContextTLS, Pool);
-        TaskThreadStartup_(Pool, workerIndex); 
+        TaskThreadStartup_(Pool, workerIndex);
     }
 
-    NO_INLINE ~TaskThreadScope() { 
+    NO_INLINE ~TaskThreadScope() {
         Assert(this == gTaskThreadContextTLS);
-        TaskThreadShutdown_(Pool); 
+        TaskThreadShutdown_(Pool);
         TaskContextShutdown_(*gTaskThreadContextTLS, Pool);
         gTaskThreadContextTLS = nullptr;
     }
@@ -143,7 +145,7 @@ static void TaskThreadLaunchpad_(TaskPool *ppool, size_t workerIndex) {
     char workerName[256];
     Format(workerName, "{0}_Worker#{1}", ppool->Name(), workerIndex);
     const ThreadContextStartup context(workerName, WORKER_THREADTAG);
-    
+
     const TaskThreadScope taskThreadScope(ppool, workerIndex);
 }
 //----------------------------------------------------------------------------
@@ -179,8 +181,8 @@ private:
     size_t _workerCount;
 };
 //----------------------------------------------------------------------------
-TaskPoolImpl::TaskPoolImpl(TaskPool *pool, size_t queueCapacity, size_t workerCount) 
-:   _signalExit(true) 
+TaskPoolImpl::TaskPoolImpl(TaskPool *pool, size_t queueCapacity, size_t workerCount)
+:   _signalExit(true)
 ,   _queue(queueCapacity)
 ,   _pwaiting(nullptr)
 ,   _fibers(&TaskFiberLoop_, pool)
@@ -204,10 +206,6 @@ void TaskPoolImpl::Start() {
 
     _threads = new std::thread[_workerCount];
     TaskPool *const ppool = reinterpret_cast<TaskPool *>(_fibers.Arg());
-
-    Assert(nullptr == gTaskThreadContextTLS);
-    gTaskThreadContextTLS = this;
-    TaskContextStartup_(*gTaskThreadContextTLS, ppool);
 
     for (size_t i = 0; i < _workerCount; ++i) {
         Assert(!_threads[i].joinable());
@@ -237,10 +235,7 @@ void TaskPoolImpl::Shutdown() {
     _pwaiting = nullptr;
 
     TaskPool *const ppool = reinterpret_cast<TaskPool *>(_fibers.Arg());
-
-    Assert(this == gTaskThreadContextTLS);
-    TaskContextShutdown_(*gTaskThreadContextTLS, ppool);
-    gTaskThreadContextTLS = nullptr;
+    UNUSED(ppool);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -321,20 +316,20 @@ static void TaskThreadShutdown_(TaskPool *ppool) {
     ppool->Pimpl()->Fibers().Release(toRelease);
 }
 //----------------------------------------------------------------------------
-static bool EnqueueCurrentThreadWaitingFiberIFN_(TaskPoolImpl *pimpl) {
+static bool EnqueueCurrentThreadWaitingFiberIFN_(TaskPool *ppool, TaskPoolImpl *pimpl) {
     TaskThreadContext& ctx = CurrentTaskThreadContext();
     if (ctx.WaitingForPFiber) {
         FiberQueued *const waitingFor = ctx.WaitingForPFiber;
         ctx.WaitingForPFiber = nullptr;
         if (!pimpl->Waiting().Enqueue(waitingFor))
-            throw std::exception("waiting queue not big enough");
+            throw TaskException("waiting queue not big enough", ppool);
         return true;
     }
     return false;
 }
 //----------------------------------------------------------------------------
-static void EnqueueCurrentThreadWaitingFiber_(TaskPoolImpl *pimpl) {
-    if (!EnqueueCurrentThreadWaitingFiberIFN_(pimpl))
+static void EnqueueCurrentThreadWaitingFiber_(TaskPool *ppool, TaskPoolImpl *pimpl) {
+    if (!EnqueueCurrentThreadWaitingFiberIFN_(ppool, pimpl))
         Assert(false);
 }
 //----------------------------------------------------------------------------
@@ -346,7 +341,7 @@ static void __stdcall TaskFiberLoop_(void *arg) {
     TaskPriorityQueue& queue = pimpl->Queue();
     WaitingFibers& waiting = pimpl->Waiting();
 
-    EnqueueCurrentThreadWaitingFiberIFN_(pimpl);
+    EnqueueCurrentThreadWaitingFiberIFN_(ppool, pimpl);
 
     TaskQueued toRun;
     FiberQueued *toResume = nullptr;
@@ -382,14 +377,14 @@ static void __stdcall TaskFiberLoop_(void *arg) {
                 }
 
 #if WITH_CORE_TASKPOOL_MRU_FIBER_CACHE_TLS
-                EnqueueCurrentThreadWaitingFiber_(pimpl);
+                EnqueueCurrentThreadWaitingFiber_(ppool, pimpl);
 #else
                 Assert(false);
 #endif
             }
             else {
                 if (!waiting.Enqueue(toResume))
-                    throw std::exception("waiting queue not big enough");
+                    throw TaskException("waiting queue not big enough", ppool);
             }
 
             nothingDone = false;
@@ -457,7 +452,7 @@ void TaskPool::Run(const Task *ptasks, size_t count, TaskCounter **pcounter/* = 
         const TaskQueued taskQueued { ptasks[i], counter };
         Assert(taskQueued.Task.Valid());
         if (!queue.Enqueue(taskQueued, priority))
-            throw std::exception("task queue not big enough");
+            throw TaskException("task queue not big enough", this);
     }
 }
 //----------------------------------------------------------------------------
@@ -542,7 +537,7 @@ void TaskPool::RunAndWaitFor(const Task *ptasks, size_t count, TaskPriority prio
 //----------------------------------------------------------------------------
 void TaskPool::Start() {
     Assert(!_pimpl);
-    
+
     LOG(Information, L"[Tasks] Starting task pool \"{0}\" with {1} workers ...",
         _name, _workerCount );
 

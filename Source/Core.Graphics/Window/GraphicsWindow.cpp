@@ -6,8 +6,8 @@
 #include "Device/PresentationParameters.h"
 #include "Device/Texture/SurfaceFormat.h"
 
-#include "Core/Diagnostic/CurrentProcess.h"
 #include "Core/Diagnostic/Logger.h"
+#include "Core/Misc/CurrentProcess.h"
 
 namespace Core {
 namespace Graphics {
@@ -41,15 +41,7 @@ void GraphicsWindow::RenderLoop(DeviceEncapsulator *deviceEncapsulator) {
 
     Update_BeforeDispatch();
 
-    bool keepLooping = true;
-    do {
-        WindowMessage msg;
-        MessageLParam lparam;
-        MessageWParam wparam;
-        while (PumpMessage(msg, lparam, wparam)) {
-            keepLooping = (msg != WindowMessage::Quit);
-        }
-
+    while (false == PumpAllMessages_ReturnIfQuit()) {
         Timespan elapsed;
         bool run = true;
         if (_fixedTimeStep)
@@ -70,7 +62,6 @@ void GraphicsWindow::RenderLoop(DeviceEncapsulator *deviceEncapsulator) {
             deviceEncapsulator->Present();
         }
     }
-    while (keepLooping);
 
     Update_AfterDispatch();
 

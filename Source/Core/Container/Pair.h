@@ -20,8 +20,9 @@ FORCE_INLINE Pair< typename std::remove_reference<_Key>::type, typename std::rem
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
-FORCE_INLINE size_t hash_value(const Pair<_Key, _Value>& pair) {
-    return hash_value(pair.first, pair.second);
+FORCE_INLINE hash_t hash_value(const Pair<_Key, _Value>& pair) {
+    using Core::hash_value;
+    return hash_tuple(hash_value(pair.first), hash_value(pair.second));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -6,6 +6,7 @@
 
 #include "Core/Allocator/PoolAllocator.h"
 #include "Core/Memory/MemoryView.h"
+#include "Core/Memory/RefPtr.h"
 
 namespace Core {
 namespace Engine {

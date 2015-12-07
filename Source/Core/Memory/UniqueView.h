@@ -72,17 +72,6 @@ auto UniqueView<T, _Deleter>::operator =(UniqueView&& rvalue) -> UniqueView& {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-using AllocaView = UniqueView<T, Core::AllocaDeleter<T> >;
-//----------------------------------------------------------------------------
-#define MALLOCA_VIEW(T, _COUNT) \
-    Core::AllocaView<T>( Core::TypedAlloca<T>(_COUNT), _COUNT )
-//----------------------------------------------------------------------------
-#define STACKLOCAL_POD_ARRAY(T, _NAME, _COUNT) \
-    const auto _NAME = MALLOCA_VIEW(T, _COUNT)
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename T>
 using UniqueArray = UniqueView<T, checked_deleter<T[]> >;
 //----------------------------------------------------------------------------
 template <typename T>

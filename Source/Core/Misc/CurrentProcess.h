@@ -14,6 +14,9 @@ class CurrentProcess;
 //----------------------------------------------------------------------------
 class CurrentProcessData {
 public:
+    CurrentProcessData(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t **argv);
+    ~CurrentProcessData();
+
     CurrentProcessData(const CurrentProcessData&) = delete;
     CurrentProcessData& operator =(const CurrentProcessData&) = delete;
 
@@ -32,8 +35,6 @@ public:
 
 private:
     friend struct Meta::Activator<CurrentProcessData>;
-    CurrentProcessData(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t **argv);
-    ~CurrentProcessData();
 
     WString _fileName;
     WString _directory;

@@ -2,6 +2,7 @@
 
 #include "VertexDeclaration.h"
 
+#include "Core/Allocator/PoolAllocator-impl.h"
 #include "Core/IO/Format.h"
 #include "Core/IO/Stream.h"
 #include "Core/Memory/AlignedStorage.h"
@@ -10,10 +11,14 @@
 #include "Device/DeviceEncapsulator.h"
 #include "VertexTypes.h"
 
+#include <sstream>
+
 namespace Core {
 namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, VertexDeclaration, );
 //----------------------------------------------------------------------------
 VertexDeclaration::VertexDeclaration()
 :   DeviceResource(DeviceResourceType::VertexDeclaration)
@@ -34,13 +39,13 @@ DeviceAPIDependantEntity *VertexDeclaration::TerminalEntity() const {
 }
 //----------------------------------------------------------------------------
 MemoryView<const Pair<VertexSubPartKey, VertexSubPartPOD>> VertexDeclaration::SubParts() const {
-    return _subParts.Cast<const vertexsubpartentry_type>();
+    return _subParts.MakeView().Cast<const vertexsubpartentry_type>();
 }
 //----------------------------------------------------------------------------
 Pair<const VertexSubPartKey *, const AbstractVertexSubPart *> VertexDeclaration::SubPartByIndex(size_t index) const {
     Assert(index < _subParts.size());
 
-    const vertexsubpartentry_type& it = _subParts.at(index);
+    const vertexsubpartentry_type& it = _subParts[index];
     return MakePair(&it.first, reinterpret_cast<const AbstractVertexSubPart *>(&it.second));
 }
 //----------------------------------------------------------------------------
@@ -81,7 +86,6 @@ void VertexDeclaration::CopyVertex(void *const dst, const void *src, size_t size
 //----------------------------------------------------------------------------
 String VertexDeclaration::ToString() const {
     OStringStream oss;
-
     oss << "Vertex";
     for (const vertexsubpartentry_type& subPart : _subParts)
         Format( oss, "__{0}{1}_{2}",

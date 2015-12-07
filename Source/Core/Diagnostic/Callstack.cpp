@@ -30,7 +30,6 @@ static void GetSymbolsPath_(wchar_t* out_symbol_path, size_t max_length) {
         L"_NT_SYMBOL_PATH",
         L"_NT_ALTERNATE_SYMBOL_PATH"
     };
-    static const wchar_t* kUnknownSymbol = L"??????????????????????";
 
     WOCStrStream oss{ out_symbol_path, checked_cast<std::streamsize>(max_length) };
     oss << L".;";
@@ -175,6 +174,8 @@ void Callstack::Decode(DecodedCallstack* decoded) const {
 void Callstack::Decode(DecodedCallstack* decoded, size_t hash, const MemoryView<void* const>& frames) {
     Assert(decoded);
 
+    static const wchar_t* kUnknown = L"??????????????????????";
+
     decoded->_hash = hash;
     decoded->_depth = frames.size();
 
@@ -203,7 +204,7 @@ void Callstack::Decode(DecodedCallstack* decoded, size_t hash, const MemoryView<
                 symbol = pSymbol->Name;
             }
             else {
-                symbol = L"unknown symbol";
+                symbol = kUnknown;
             }
         }
         {
@@ -213,7 +214,7 @@ void Callstack::Decode(DecodedCallstack* decoded, size_t hash, const MemoryView<
                 line = line64.LineNumber;
             }
             else {
-                filename = L"unkown site";
+                filename = kUnknown;
                 line = static_cast<size_t>(-1ll);
             }
         }

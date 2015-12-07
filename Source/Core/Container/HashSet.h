@@ -29,7 +29,7 @@ using HashSet = std::unordered_set<T, _Hasher, _EqualTo, _Allocator>;
     ::Core::HashSet<T, Hash<T>, EqualTo<T>, THREAD_LOCAL_ALLOCATOR(_DOMAIN, T)>
 //----------------------------------------------------------------------------
 template <typename T, typename _Hasher, typename _EqualTo, typename _Allocator>
-size_t hash_value(const HashSet<T, _Hasher, _EqualTo, _Allocator>& hashSet) {
+hash_t hash_value(const HashSet<T, _Hasher, _EqualTo, _Allocator>& hashSet) {
     return hash_value_seq(hashSet.begin(), hashSet.end());
 }
 //----------------------------------------------------------------------------

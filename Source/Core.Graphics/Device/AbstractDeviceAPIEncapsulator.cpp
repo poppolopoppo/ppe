@@ -51,8 +51,13 @@ const char *DeviceAPIToCStr(DeviceAPI api) {
         return "DirectX11";
     case Core::Graphics::DeviceAPI::OpenGL4:
         return "OpenGL4";
+    case Core::Graphics::DeviceAPI::Unknown:
+        AssertNotReached();
+        break;
+    default:
+        AssertNotImplemented();
+        break;
     }
-    AssertNotImplemented();
     return nullptr;
 }
 //----------------------------------------------------------------------------

@@ -43,6 +43,7 @@ struct NumericLimits< UX10Y10Z10W2N > {
     static const UX10Y10Z10W2N MinValue;
     static const UX10Y10Z10W2N Nan;
     static const UX10Y10Z10W2N Default;
+    static const UX10Y10Z10W2N Zero;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

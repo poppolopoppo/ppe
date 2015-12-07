@@ -16,7 +16,6 @@ FWD_REFPTR(RenderTarget);
 class RenderTarget : public Texture2D {
 public:
     RenderTarget(size_t width, size_t height, const SurfaceFormat *format, bool sharable);
-    RenderTarget(size_t width, size_t height, const SurfaceFormat *format, bool sharable, DeviceAPIDependantRenderTarget *deviceAPIDependantRenderTarget);
     virtual ~RenderTarget();
 
     const Graphics::DeviceAPIDependantRenderTarget *DeviceAPIDependantRenderTarget() const {
@@ -28,6 +27,8 @@ public:
     void Create(IDeviceAPIEncapsulator *device) { Create_(device, MemoryView<const u8>()); }
 
     void Destroy(IDeviceAPIEncapsulator *device);
+
+    void StealRenderTarget(Graphics::DeviceAPIDependantRenderTarget* rt);
 
 private:
     void Create_(IDeviceAPIEncapsulator *device, const MemoryView<const u8>& optionalRawData);
@@ -44,10 +45,6 @@ class DeviceAPIDependantRenderTarget : public Graphics::DeviceAPIDependantTextur
 public:
     DeviceAPIDependantRenderTarget(IDeviceAPIEncapsulator *device, const RenderTarget *resource, const MemoryView<const u8>& optionalData);
     virtual ~DeviceAPIDependantRenderTarget();
-
-    const RenderTarget *TypedResource() const {
-        return checked_cast<const RenderTarget *>(Resource());
-    }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

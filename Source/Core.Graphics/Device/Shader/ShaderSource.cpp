@@ -15,7 +15,7 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Graphics, ShaderSource, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, ShaderSource, );
 //----------------------------------------------------------------------------
 const char *ShaderSource::AppIn_SubstitutionName() { return "__AppIn_AutoSubstitutionHeader__"; }
 const char *ShaderSource::AppIn_VertexDefinitionName() { return "__AppIn_AutoVertexDefinition__"; }
@@ -113,12 +113,13 @@ void ShaderSource::FillSubstitutions(
     FillVertexSubstitutions(substitutions, vertexDeclaration);
 }
 //----------------------------------------------------------------------------
-ShaderSource *ShaderSource::LoadFromFile(   const Core::Filename& filename,
+ShaderSource *ShaderSource::LoadFromFileIFP(const Core::Filename& filename,
                                             const MemoryView<const Pair<String, String>>& defines) {
     Assert(!filename.empty());
 
     RAWSTORAGE_THREAD_LOCAL(Shader, char) sourceCode;
-    VirtualFileSystem::Instance().ReadAll(filename, sourceCode);
+    if (false == VirtualFileSystem::Instance().ReadAll(filename, sourceCode))
+        return nullptr;
 
     ASSOCIATIVE_VECTOR_THREAD_LOCAL(Shader, String, String) sourceDefines(defines.size());
     sourceDefines.insert(defines.begin(), defines.end());

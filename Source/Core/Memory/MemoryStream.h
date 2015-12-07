@@ -2,240 +2,284 @@
 
 #include "Core/Core.h"
 
-#include "Core/Allocator/Allocation.h"
-#include "Core/Memory/MemoryView.h"
+#include "Core/Container/RawStorage.h"
+#include "Core/IO/StreamProvider.h"
+#include "Core/Memory/RefPtr.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, typename _Allocator = ALLOCATOR(Container, T)>
-class MemoryStream : _Allocator {
+#define MEMORYSTREAM(_DOMAIN) \
+    ::Core::MemoryStream<ALLOCATOR(_DOMAIN, u8) >
+//----------------------------------------------------------------------------
+#define MEMORYSTREAM_THREAD_LOCAL(_DOMAIN) \
+    ::Core::MemoryStream<THREAD_LOCAL_ALLOCATOR(_DOMAIN, u8) >
+//----------------------------------------------------------------------------
+#define MEMORYSTREAM_ALIGNED(_DOMAIN, _ALIGNMENT) \
+    ::Core::MemoryStream<ALIGNED_ALLOCATOR(_DOMAIN, u8, _ALIGNMENT)>
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _Allocator = ALLOCATOR(Stream, u8)>
+class MemoryStream : public IStreamReader, public IStreamWriter  {
 public:
-    typedef T value_type;
-    typedef typename std::add_pointer<T>::type pointer;
-    typedef typename std::add_pointer<const T>::type const_pointer;
-    typedef typename std::add_lvalue_reference<T>::type reference;
-    typedef typename std::add_lvalue_reference<const T>::type const_reference;
+    typedef RawStorage<u8, _Allocator> storage_type;
 
-    typedef size_t size_type;
-    typedef ptrdiff_t difference_type;
+    MemoryStream();
+    explicit MemoryStream(storage_type&& storage);
 
-    typedef _Allocator allocator_type;
-
-    STATIC_CONST_INTEGRAL(size_type, BookKeepingOverhead, (size_type)std::ceil((0.5f + sizeof(T *))/sizeof(T)) );
-    STATIC_CONST_INTEGRAL(size_type, DefaultBlockSize, 4096 - BookKeepingOverhead);
-
-    explicit MemoryStream(size_type blockSize = DefaultBlockSize);
-    MemoryStream(size_type blockSize, allocator_type&& alloc);
-    MemoryStream(size_type blockSize, const allocator_type& alloc);
-    ~MemoryStream();
-
-    MemoryStream(const MemoryStream& other) = delete;
-    MemoryStream& operator =(const MemoryStream& other) = delete;
-
-    MemoryStream(MemoryStream&& rvalue);
-    MemoryStream& operator =(MemoryStream&& rvalue);
-
-    size_type BlockSize() const { return _blockSize; }
-    size_type BlockCount() const;
-
-    size_type size() const { return _size; }
+    size_t size() const { return _size; }
+    size_t capacity() const { return _storage.size(); }
     bool empty() const { return 0 == _size; }
-    size_type capacity() const { return BlockCount() * _blockSize; }
 
-    void push_back(T&& rvalue);
-    void push_back(const T& value);
-    template <typename... _Args>
-    void emplace_back(const _Args& args...);
+    void resize(size_t count);
+    void reserve(size_t count);
+    void shrink_to_fit();
     void clear();
 
-    MemoryView<T> FirstBlock();
-    MemoryView<T> NextBlock(const MemoryView<T>& block) const;
+    void Clear_ReleaseMemory();
+    void Clear_StealMemory(storage_type& storage);
 
-    MemoryView<const T> FirstBlock() const { return FirstBlock().Cast<const T>(); }
-    MemoryView<const T> NextBlock(const MemoryView<const T>& block) const { return NextBlock(MemoryView<T>(const_cast<T *>(block.Pointer()), block.size())).Cast<const T>(); }
+    const storage_type& Storage() const { return _storage; }
+
+    u8* Pointer() { return _storage.Pointer(); }
+    const u8* Pointer() const { return _storage.Pointer(); }
+
+    MemoryView<const u8> MakeView() const { return MemoryView<const u8>(_storage.Pointer(), _size); }
+    MemoryView<const u8> MakeView(size_t offset, size_t count) const {
+        Assert(offset + count < _size);
+        return MemoryView<const u8>(&_storage[offset], count);
+    }
+
+public: // IStreamReader
+    virtual bool Eof() const override;
+
+    virtual std::streamoff TellI() const override;
+    virtual bool SeekI(std::streamoff offset, SeekOrigin origin = SeekOrigin::Begin) override;
+
+    virtual std::streamsize SizeInBytes() const override;
+
+    virtual bool Read(void* storage, std::streamsize sizeInBytes) override;
+    virtual std::streamsize ReadSome(void* storage, size_t eltsize, std::streamsize count) override;
+
+    virtual char PeekChar() override;
+    virtual wchar_t PeekCharW() override;
+
+public: // IStreamWriter
+    virtual std::streamoff TellO() const override;
+    virtual bool SeekO(std::streamoff offset, SeekOrigin policy = SeekOrigin::Begin) override;
+
+    virtual bool Write(const void* storage, std::streamsize sizeInBytes) override;
+    virtual bool WriteSome(const void* storage, size_t eltsize, std::streamsize count) override;
 
 private:
-    void GrowOneIFN_();
+    size_t _size;
 
-    size_type _blockSize;
-    size_type _size;
-    T *_lastBlock;
-    T *_firstBlock;
+    size_t _offsetI;
+    size_t _offsetO;
+
+    storage_type _storage;
 };
 //----------------------------------------------------------------------------
-template <typename T, typename _Allocator>
-MemoryStream<T, _Allocator>::MemoryStream(size_type blockSize /* = 4096 - 1 */)
-:   _blockSize(blockSize)
-,   _size(0)
-,   _lastBlock(nullptr)
-,   _firstBlock(nullptr) {
-    Assert(blockSize > 1);
+template <typename _Allocator>
+MemoryStream<_Allocator>::MemoryStream()
+    : _size(0), _offsetI(0), _offsetO(0) {}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+MemoryStream<_Allocator>::MemoryStream(storage_type&& storage)
+    : _size(0), _offsetI(0), _offsetO(0)
+    , _storage(std::move(storage)) {}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+void MemoryStream<_Allocator>::resize(size_t count) {
+    reserve(count);
+
+    _size = count;
+
+    if (_offsetI > _size)
+        _offsetI = _size;
+
+    if (_offsetO > _size)
+        _offsetO = _size;
 }
 //----------------------------------------------------------------------------
-template <typename T, typename _Allocator>
-MemoryStream<T, _Allocator>::MemoryStream(size_type blockSize, allocator_type&& alloc)
-:   allocator_type(std::move(alloc))
-,   _blockSize(blockSize)
-,   _size(0)
-,   _lastBlock(nullptr)
-,   _firstBlock(nullptr) {
-    Assert(blockSize > 1);
+template <typename _Allocator>
+void MemoryStream<_Allocator>::reserve(size_t count) {
+    if (count > _storage.size()) // can only grow, except in shrink_to_fit() or Clear_ReleaseMemory()
+        _storage.Resize_KeepData(count);
 }
 //----------------------------------------------------------------------------
-template <typename T, typename _Allocator>
-MemoryStream<T, _Allocator>::MemoryStream(size_type blockSize, const allocator_type& alloc)
-:   allocator_type(alloc)
-,   _blockSize(blockSize)
-,   _size(0)
-,   _lastBlock(nullptr)
-,   _firstBlock(nullptr) {
-    Assert(blockSize > 1);
-}
-//----------------------------------------------------------------------------
-template <typename T, typename _Allocator>
-MemoryStream<T, _Allocator>::~MemoryStream() {
-    clear();
-}
-//----------------------------------------------------------------------------
-template <typename T, typename _Allocator>
-MemoryStream<T, _Allocator>::MemoryStream(MemoryStream&& rvalue)
-:   _blockSize(rvalue._blockSize)
-,   _size(rvalue._size)
-,   _lastBlock(rvalue._lastBlock)
-,   _firstBlock(rvalue._firstBlock){
-    rvalue._size = 0;
-    rvalue._firstBlock = rvalue._lastBlock = nullptr;
-}
-//----------------------------------------------------------------------------
-template <typename T, typename _Allocator>
-auto MemoryStream<T, _Allocator>::operator =(MemoryStream&& rvalue) -> MemoryStream& {
-    _blockSize = rvalue._blockSize;
-    _size = rvalue._size;
-    _lastBlock = rvalue._lastBlock;
-    _firstBlock = rvalue._firstBlock;
-
-    rvalue._size = 0;
-    rvalue._firstBlock = rvalue._lastBlock = nullptr;
-    return *this;
-}
-//----------------------------------------------------------------------------
-template <typename T, typename _Allocator>
-auto MemoryStream<T, _Allocator>::BlockCount() const -> size_type {
-    size_type result = 0;
-    for (const T *pBlock = _firstBlock; pBlock; pBlock = pBlock = *reinterpret_cast<const T**>(pBlock) )
-        ++result;
-    return result;
-}
-//----------------------------------------------------------------------------
-template <typename T, typename _Allocator>
-void MemoryStream<T, _Allocator>::push_back(T&& rvalue) {
-    GrowOneIFN_();
-
-    Assert(_lastBlock);
-
-    ++_size;
-    new ((void *)&(_lastBlock + BookKeepingOverhead + (_size % _blockSize))) T(std::move(rvalue));
-}
-//----------------------------------------------------------------------------
-template <typename T, typename _Allocator>
-void MemoryStream<T, _Allocator>::push_back(const T& value) {
-    GrowOneIFN_();
-
-    Assert(_lastBlock);
-
-    ++_size;
-    new ((void *)&(_lastBlock + BookKeepingOverhead + (_size % _blockSize))) T(value);
-}
-//----------------------------------------------------------------------------
-template <typename T, typename _Allocator>
-template <typename... _Args>
-void MemoryStream<T, _Allocator>::emplace_back(const _Args& args...) {
-    GrowOneIFN_();
-
-    Assert(_lastBlock);
-
-    ++_size;
-    new ((void *)&(_lastBlock + BookKeepingOverhead + (_size % _blockSize))) T(std::forward(args));
-}
-//----------------------------------------------------------------------------
-template <typename T, typename _Allocator>
-void MemoryStream<T, _Allocator>::clear() {
-
-    const T *pBlock = _firstBlock;
-    Assert(pBlock || nullptr == _lastBlock);
-
-    while (pBlock) {
-        const T *nextBlock = *reinterpret_cast<const T **>(pBlock);
-        Assert(nextBlock || pBlock == _lastBlock);
-
-        if (!std::is_pod<T>::value) {
-            T *firstElt = const_cast<T *>(pBlock + BookKeepingOverhead);
-            for (size_t i = 0; i < _blockSize; ++i)
-                firstElt[i]->~T();
-        }
-
-        allocator_type::deallocate(pBlock, _blockSize + BookKeepingOverhead);
-        pBlock = nextBlock;
-    }
-
-    _size = 0;
-    _firstBlock = _lastBlock = nullptr;
-}
-//----------------------------------------------------------------------------
-template <typename T, typename _Allocator>
-MemoryView<T> MemoryStream<T, _Allocator>::FirstBlock() {
-    if (0 == _size) {
-        Assert(nullptr == _firstBlock);
-        Assert(nullptr == _lastBlock);
-        return MemoryView<T>();
-    }
-    else {
-        Assert(_firstBlock);
-        Assert(_lastBlock);
-        return MemoryView<T>(_firstBlock + BookKeepingOverhead, std::min(_size, _blockSize));
+template <typename _Allocator>
+void MemoryStream<_Allocator>::shrink_to_fit() {
+    if (_size != _storage.size()) {
+        Assert(_storage.size() > _size); // capacity cannot be smaller than size
+        _storage.Resize_KeepData(_size);
     }
 }
 //----------------------------------------------------------------------------
-template <typename T, typename _Allocator>
-MemoryView<T> MemoryStream<T, _Allocator>::NextBlock(const MemoryView<T>& block) {
-    Assert(block.Pointer()); // else should not call this method
-    Assert(_size);
-    Assert(_firstBlock);
-    Assert(_lastBlock);
-
-    T *const nextBlock = *reinterpret_cast<T **>(block.Pointer() - BookKeepingOverhead);
-    Assert(nextBlock || _lastBlock == block.Pointer() - BookKeepingOverhead);
-
-    if (!nextBlock)
-        return MemoryView<T>();
-
-    const nextBlockSize = nextBlock == _lastBlock ? _size % _blockSize : _blockSize;
-    return MemoryView<T>(nextBlock + BookKeepingOverhead, nextBlockSize);
+template <typename _Allocator>
+void MemoryStream<_Allocator>::clear() {
+    _size = _offsetI = _offsetO = 0;
 }
 //----------------------------------------------------------------------------
-template <typename T, typename _Allocator>
-void MemoryStream<T, _Allocator>::GrowOneIFN_() {
-    if (nullptr == _lastBlock) {
-        Assert(0 == _size);
-        Assert(nullptr == _lastBlock);
-
-        _firstBlock = _lastBlock = allocator_type::allocate(_blockSize + BookKeepingOverhead);
-        *reinterpret_cast<T **>(_firstBlock) = nullptr;
+template <typename _Allocator>
+void MemoryStream<_Allocator>::Clear_ReleaseMemory() {
+    _size = _offsetI = _offsetO = 0;
+    _storage.Clear_ReleaseMemory();
+}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+void MemoryStream<_Allocator>::Clear_StealMemory(storage_type& storage) {
+    storage = std::move(_storage);
+    Clear_ReleaseMemory();
+}
+//----------------------------------------------------------------------------
+// IStreamReader
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+bool MemoryStream<_Allocator>::Eof() const {
+    Assert(_offsetI <= _size);
+    return (_size == _offsetI);
+}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+std::streamoff MemoryStream<_Allocator>::TellI() const {
+    Assert(_offsetI <= _size);
+    return checked_cast<std::streamoff>(_offsetI);
+}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+bool MemoryStream<_Allocator>::SeekI(std::streamoff offset, SeekOrigin origin/* = SeekOrigin::Begin */) {
+    switch (origin)
+    {
+    case SeekOrigin::Begin:
+        if (offset > checked_cast<std::streamoff>(_size))
+            return false;
+        _offsetI = checked_cast<size_t>(offset);
+        break;
+    case SeekOrigin::Relative:
+        if (checked_cast<std::streamoff>(_offsetI) + offset < 0 ||
+            checked_cast<std::streamoff>(_offsetI) + offset > checked_cast<std::streamoff>(_size) )
+            return false;
+        _offsetI = checked_cast<size_t>(_offsetI + offset);
+        break;
+    case SeekOrigin::End:
+        if (checked_cast<std::streamoff>(_size) + offset < 0 ||
+            checked_cast<std::streamoff>(_size) + offset > checked_cast<std::streamoff>(_size) )
+            return false;
+        _offsetI = checked_cast<size_t>(_size + offset);
+        break;
+    default:
+        AssertNotImplemented();
+        return false;
     }
-    else if (0 == (_size + 1) % _blockSize) {
-        Assert(_size > 1);
-        Assert(_firstBlock);
-        Assert(_lastBlock);
+    return true;
+}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+std::streamsize MemoryStream<_Allocator>::SizeInBytes() const {
+    return checked_cast<std::streamsize>(_size);
+}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+bool MemoryStream<_Allocator>::Read(void* storage, std::streamsize sizeInBytes) {
+    const size_t sizeT = checked_cast<size_t>(sizeInBytes);
+    if (_offsetI + sizeT > _size)
+        return false;
 
-        T *const nextBlock = allocator_type::allocate(_blockSize + BookKeepingOverhead);
+    Assert(storage);
+    memcpy(storage, _storage.Pointer() + _offsetI, sizeT);
 
-        *reinterpret_cast<T **>(nextBlock) = nullptr;
-        *reinterpret_cast<T **>(_lastBlock) = nextBlock;
+    _offsetI += sizeT;
+    return true;
+}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+std::streamsize MemoryStream<_Allocator>::ReadSome(void* storage, size_t eltsize, std::streamsize count) {
+    Assert(_size >= _offsetI);
+    Assert(eltsize > 0);
+    const std::streamsize remaining = checked_cast<std::streamsize>(_size - _offsetI);
+    const std::streamsize wantedsize = eltsize*count;
+    const std::streamsize realsize = remaining < wantedsize ? remaining : wantedsize;
+    return (MemoryStream::Read(storage, eltsize * count) ) ? realsize : 0;
+}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+char MemoryStream<_Allocator>::PeekChar() {
+    Assert(_offsetI <= _size);
+    if (_offsetI == _size)
+        return '\0';
 
-        _lastBlock = nextBlock;
+    return checked_cast<char>(_storage[_offsetI]);
+}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+wchar_t MemoryStream<_Allocator>::PeekCharW() {
+    Assert(_offsetI <= _size);
+    if (_offsetI + sizeof(wchar_t) > _size)
+        return L'\0';
+
+    return *reinterpret_cast<const wchar_t*>(&_storage[_offsetI]);
+}
+//----------------------------------------------------------------------------
+// IStreamWriter
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+std::streamoff MemoryStream<_Allocator>::TellO() const {
+    Assert(_offsetO <= _size);
+    return checked_cast<std::streamoff>(_offsetO);
+}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+bool MemoryStream<_Allocator>::SeekO(std::streamoff offset, SeekOrigin policy /* = SeekOrigin::Begin */) {
+    switch (policy)
+    {
+    case SeekOrigin::Begin:
+        if (offset > checked_cast<std::streamoff>(_size))
+            return false;
+        _offsetO = checked_cast<size_t>(offset);
+        break;
+    case SeekOrigin::Relative:
+        if (checked_cast<std::streamoff>(_offsetO) + offset < 0 ||
+            checked_cast<std::streamoff>(_offsetO) + offset > checked_cast<std::streamoff>(_size) )
+            return false;
+        _offsetO = checked_cast<size_t>(_offsetO + offset);
+        break;
+    case SeekOrigin::End:
+        if (checked_cast<std::streamoff>(_size) + offset < 0 ||
+            checked_cast<std::streamoff>(_size) + offset > checked_cast<std::streamoff>(_size) )
+            return false;
+        _offsetO = checked_cast<size_t>(_size + offset);
+        break;
+    default:
+        AssertNotImplemented();
+        return false;
     }
+    return true;
+}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+bool MemoryStream<_Allocator>::Write(const void* storage, std::streamsize sizeInBytes) {
+    const size_t sizeT = checked_cast<size_t>(sizeInBytes);
+    _size = std::max(sizeT + _offsetO, _size);
+
+    if (_size > _storage.size()) { // doubles the storage size if there is not enough space
+        size_t newCapacity = std::max(_size, (_storage.size() + 1) * 2 );
+        newCapacity = ROUND_TO_NEXT_128(newCapacity);
+        _storage.Resize_KeepData(newCapacity);
+    }
+
+    Assert(_storage.size() >= _size);
+    memcpy(_storage.Pointer() + _offsetO, storage, sizeT);
+
+    _offsetO += sizeT;
+    return true;
+}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+bool MemoryStream<_Allocator>::WriteSome(const void* storage, size_t eltsize, std::streamsize count) {
+    return MemoryStream::Write(storage, eltsize * count);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -62,7 +62,7 @@ bool VertexSubPart<T>::Equals(const void *lhs, const void *rhs, size_t size) con
 //----------------------------------------------------------------------------
 template <typename T>
 void VertexSubPart<T>::Clear(void *const vertex) const {
-    TypedSet(vertex, NumericLimits<T>::Default);
+    TypedSet(vertex, NumericLimits<T>::Default );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -76,7 +76,7 @@ void VertexSubPart<T>::Clear(void *const vertex) const {
     template <> \
     struct VertexSubPartFormatReverseTraits<_Type> { \
         typedef std::true_type enabled; \
-        enum { Format = VertexSubPartFormat::_Format }; \
+        static constexpr VertexSubPartFormat Format = VertexSubPartFormat::_Format; \
     }
 //----------------------------------------------------------------------------
 DEF_VERTEXSUBPARTFORMAT_TRAITS(Float, float);

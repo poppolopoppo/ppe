@@ -93,13 +93,13 @@ Filename::Filename(Core::Dirpath&& dirpath, Core::Basename&& basename)
 Filename::Filename(const Core::Dirpath& dirpath, const Core::Basename& basename)
 :   _dirpath(dirpath), _basename(basename) {}
 //----------------------------------------------------------------------------
-Filename::Filename(const Core::Dirpath& dirpath, const FileSystem::char_type *relfilename) 
+Filename::Filename(const Core::Dirpath& dirpath, const FileSystem::char_type *relfilename)
 :   Filename(dirpath, MemoryView<const FileSystem::char_type>(relfilename, Length(relfilename)) ) {}
 //----------------------------------------------------------------------------
-Filename::Filename(const Core::Dirpath& dirpath, const FileSystem::char_type *relfilename, size_t length) 
+Filename::Filename(const Core::Dirpath& dirpath, const FileSystem::char_type *relfilename, size_t length)
 :   Filename(dirpath, MemoryView<const FileSystem::char_type>(relfilename, length) ) {}
 //----------------------------------------------------------------------------
-Filename::Filename(const Core::Dirpath& dirpath, const MemoryView<const FileSystem::char_type>& relfilename) 
+Filename::Filename(const Core::Dirpath& dirpath, const MemoryView<const FileSystem::char_type>& relfilename)
 :   _dirpath(dirpath) {
     if (!AppendRelname_(_dirpath, _basename, relfilename))
         AssertNotReached();
@@ -151,7 +151,7 @@ Filename::Filename(const BasicStringSlice<FileSystem::char_type>& content) {
 }
 //----------------------------------------------------------------------------
 size_t Filename::HashValue() const {
-    return hash_value(_dirpath, _basename);
+    return hash_tuple(_dirpath.HashValue(), _basename.HashValue());
 }
 //----------------------------------------------------------------------------
 String Filename::ToString() const {

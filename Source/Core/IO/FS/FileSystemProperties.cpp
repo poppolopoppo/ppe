@@ -15,8 +15,7 @@ namespace FileSystem {
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
 bool TokenTraits::IsAllowedChar(wchar_t ch) const {
-    return  std::isalnum(ch, Locale()) ||
-            ch == L'_' || ch == L'-' || ch == L':' || ch == L'.';
+    return  IsAlnum(ch) || ch == L'_' || ch == L'-' || ch == L':' || ch == L'.';
 }
 //----------------------------------------------------------------------------
 size_t SystemTemporaryDirectory(char_type *path, size_t capacity) {

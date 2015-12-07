@@ -2,54 +2,19 @@
 
 #include "String.h"
 
+#include "Memory/HashFunctions.h"
 #include "Memory/UniqueView.h"
 
 #include <string.h>
 
-template std::basic_string<char, std::char_traits<char>, ALLOCATOR(String, char)>;
-template std::basic_string<wchar_t, std::char_traits<wchar_t>, ALLOCATOR(String, wchar_t)>;
+//template std::basic_string<char, std::char_traits<char>, ALLOCATOR(String, char)>;
+//template std::basic_string<wchar_t, std::char_traits<wchar_t>, ALLOCATOR(String, wchar_t)>;
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
-//----------------------------------------------------------------------------
-// thank you M$ STL ...
-template <CaseSensitive caseSensitive, typename _Char>
-static size_t hash_value_Cstr_(const _Char *cstr, size_t length, const std::locale& locale) {
-    // FNV-1a hash function for bytes in [_First, _First+_Count)
-#if defined(_M_X64) || defined(_LP64) || defined(__x86_64) || defined(_WIN64)
-    static_assert(sizeof(size_t) == 8, "This code is for 64-bit size_t.");
-    const size_t _FNV_offset_basis = 14695981039346656037ULL;
-    const size_t _FNV_prime = 1099511628211ULL;
-
-#else /* defined(_M_X64), etc. */
-    static_assert(sizeof(size_t) == 4, "This code is for 32-bit size_t.");
-    const size_t _FNV_offset_basis = 2166136261U;
-    const size_t _FNV_prime = 16777619U;
-#endif /* defined(_M_X64), etc. */
-
-    size_t _Val = _FNV_offset_basis;
-    for (size_t _Next = 0; _Next < length; ++_Next)
-    {    // fold in another byte
-        _Val ^= (size_t)((CaseSensitive::False == caseSensitive)
-            ? std::tolower(cstr[_Next], locale)
-            : cstr[_Next]
-            );
-        _Val *= _FNV_prime;
-    }
-
-#if defined(_M_X64) || defined(_LP64) || defined(__x86_64) || defined(_WIN64)
-    static_assert(sizeof(size_t) == 8, "This code is for 64-bit size_t.");
-    _Val ^= _Val >> 32;
-
-#else /* defined(_M_X64), etc. */
-    static_assert(sizeof(size_t) == 4, "This code is for 32-bit size_t.");
-#endif /* defined(_M_X64), etc. */
-
-    return (_Val);
-}
 //----------------------------------------------------------------------------
 template <typename _Char>
 struct WildChars_ {};
@@ -72,10 +37,10 @@ struct WildChars_< wchar_t > {
     };
 };
 
-template <typename CaseSensitive caseSensitive, typename _Char>
+template <CaseSensitive caseSensitive, typename _Char>
 static bool WildMatch_(const _Char *pat, const _Char *str)
 {
-    const CharEqualTo<_Char, caseSensitive> equalto;
+    CharEqualTo<_Char, caseSensitive> equalto;
     typedef WildChars_<_Char> chars;
 
     // Wildcard matching algorithms
@@ -112,24 +77,35 @@ starCheck:
    goto loopStart;
 }
 //----------------------------------------------------------------------------
+template <CaseSensitive _Sensitive, typename _Char>
+static typename std::enable_if< CaseSensitive::True == _Sensitive, size_t >::type
+    hash_string_(const _Char* cstr, size_t length) {
+    return hash_mem(cstr, length*sizeof(_Char));
+}
+//----------------------------------------------------------------------------
+template <CaseSensitive _Sensitive, typename _Char>
+static typename std::enable_if< CaseSensitive::False == _Sensitive, size_t >::type
+    hash_string_(const _Char* cstr, size_t length) {
+    STACKLOCAL_POD_ARRAY(_Char, lower_cstr, length);
+    forrange(i, 0, length)
+        lower_cstr[i] = ToLower(cstr[i]);
+    return hash_mem(lower_cstr, length*sizeof(_Char));
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-size_t hash_value(const char* cstr, size_t length) {
-    return hash_value_Cstr_<CaseSensitive::True>(cstr, length, std::locale::classic());
+hash_t hash_string(const char* cstr, size_t length, CaseSensitive sensitive/* = CaseSensitive::True */) {
+    return (CaseSensitive::True == sensitive)
+        ? hash_string_<CaseSensitive::True>(cstr, length)
+        : hash_string_<CaseSensitive::False>(cstr, length);
 }
 //----------------------------------------------------------------------------
-size_t hash_value(const wchar_t* wcstr, size_t length) {
-    return hash_value_Cstr_<CaseSensitive::True>(wcstr, length, std::locale::classic());
-}
-//----------------------------------------------------------------------------
-size_t hash_valueI(const char* cstr, size_t length) {
-    return hash_value_Cstr_<CaseSensitive::False>(cstr, length, std::locale::classic());
-}
-//----------------------------------------------------------------------------
-size_t hash_valueI(const wchar_t* wcstr, size_t length) {
-    return hash_value_Cstr_<CaseSensitive::False>(wcstr, length, std::locale::classic());
+hash_t hash_string(const wchar_t* wcstr, size_t length, CaseSensitive sensitive/* = CaseSensitive::True */) {
+    return (CaseSensitive::True == sensitive)
+        ? hash_string_<CaseSensitive::True>(wcstr, length)
+        : hash_string_<CaseSensitive::False>(wcstr, length);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -211,7 +187,7 @@ String ToString(const wchar_t *wcstr, size_t length) {
         return String();
 
     Assert(wcstr);
-    const auto buffer = MALLOCA_VIEW(char, length * 2);
+    STACKLOCAL_POD_ARRAY(char, buffer, (length * 3)/2);
 
     size_t written;
     if (0 != ::wcstombs_s(&written, buffer.Pointer(), buffer.SizeInBytes(), wcstr, buffer.SizeInBytes() - sizeof(char)) )
@@ -235,7 +211,7 @@ WString ToWString(const char *cstr, size_t length) {
         return WString();
 
     Assert(cstr);
-    const auto buffer = MALLOCA_VIEW(wchar_t, length * 2);
+    STACKLOCAL_POD_ARRAY(wchar_t, buffer, (length * 3)/2);
 
     size_t written;
     if (0 != ::mbstowcs_s(&written, buffer.Pointer(), buffer.size(), cstr, buffer.size() - 1) )

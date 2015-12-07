@@ -19,11 +19,15 @@ public:
 
     void Start();
     void Shutdown();
+
     void Register(AbstractAutoSingleton *singleton);
+    void Unregister(AbstractAutoSingleton *singleton);
 
 private:
     AbstractAutoSingleton *_head;
-    ONLY_IF_ASSERT(bool _isStarted = false;)
+#ifdef WITH_CORE_ASSERT
+    bool _isStarted = false;
+#endif
 };
 //----------------------------------------------------------------------------
 AutoSingletonManagerImpl::AutoSingletonManagerImpl()
@@ -43,18 +47,37 @@ void AutoSingletonManagerImpl::Shutdown() {
     Assert(_isStarted);
     ONLY_IF_ASSERT(_isStarted = false;);
 
-    while (_head) {
-        AbstractAutoSingleton *const node = _head;
-        _head = _head->_pnext;
-    }
+    while (_head)
+        checked_delete(_head);
 }
 //----------------------------------------------------------------------------
 void AutoSingletonManagerImpl::Register(AbstractAutoSingleton *singleton) {
     Assert(singleton);
     Assert(nullptr == singleton->_pnext);
+    Assert(nullptr == singleton->_pprev);
 
     singleton->_pnext = _head;
+    if (_head)
+        _head->_pprev = singleton;
+
     _head = singleton;
+}
+//----------------------------------------------------------------------------
+void AutoSingletonManagerImpl::Unregister(AbstractAutoSingleton *singleton) {
+    Assert(singleton);
+    Assert(_head);
+
+    if (singleton->_pnext)
+        singleton->_pnext->_pprev = singleton->_pprev;
+    if (singleton->_pprev)
+        singleton->_pprev->_pnext = singleton->_pnext;
+
+    if (singleton == _head) {
+        Assert(nullptr == singleton->_pprev);
+        _head = singleton->_pnext;
+    }
+
+    singleton->_pnext = singleton->_pprev = nullptr;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -65,6 +88,7 @@ public:
     void Shutdown();
 
     void Register(AbstractAutoSingleton *singleton);
+    void Unregister(AbstractAutoSingleton *singleton);
 
 private:
     std::mutex _barrier;
@@ -83,6 +107,11 @@ void AutoSingletonManagerImplThreadSafe::Shutdown() {
 void AutoSingletonManagerImplThreadSafe::Register(AbstractAutoSingleton *singleton) {
     std::lock_guard<std::mutex> scopeLock(_barrier);
     AutoSingletonManagerImpl::Register(singleton);
+}
+//----------------------------------------------------------------------------
+void AutoSingletonManagerImplThreadSafe::Unregister(AbstractAutoSingleton *singleton) {
+    std::lock_guard<std::mutex> scopeLock(_barrier);
+    AutoSingletonManagerImpl::Unregister(singleton);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -104,6 +133,10 @@ void AutoSingletonManager::Register(AbstractAutoSingleton *pinstance) {
     AutoSingletonManager_().Register(pinstance);
 }
 //----------------------------------------------------------------------------
+void AutoSingletonManager::Unregister(AbstractAutoSingleton *pinstance) {
+    AutoSingletonManager_().Unregister(pinstance);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 static AutoSingletonManagerImpl& ThreadLocalAutoSingletonManager_() {
@@ -121,6 +154,10 @@ void ThreadLocalAutoSingletonManager::Shutdown() {
 //----------------------------------------------------------------------------
 void ThreadLocalAutoSingletonManager::Register(AbstractAutoSingleton *pinstance) {
     ThreadLocalAutoSingletonManager_().Register(pinstance);
+}
+//----------------------------------------------------------------------------
+void ThreadLocalAutoSingletonManager::Unregister(AbstractAutoSingleton *pinstance) {
+    ThreadLocalAutoSingletonManager_().Unregister(pinstance);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -173,10 +173,8 @@ static bool ReadToken(Token *token, IVirtualFileSystemIStream *stream) {
     if (0 == length || length + 1 >= lengthof(cstr))
         return false;
 
-    const std::locale& locale = std::locale::classic();
-
     for (size_t i = 0; i + 1 < length; ++i)
-        cstr[i] = std::tolower(cstr[i], locale);
+        cstr[i] = ToLower(cstr[i]);
 
     for (size_t i = 0; i < lengthof(gTokenToCStr); ++i)
         if (0 == CompareNI(cstr, gTokenToCStr[i], length - 1)) {

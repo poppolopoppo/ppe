@@ -59,7 +59,7 @@ DeviceAPIDependantEntity *Texture::TerminalEntity() const {
 }
 //----------------------------------------------------------------------------
 size_t Texture::HashValue_() const {
-    return Core::hash_value(_usageAndMode, _format);
+    return hash_tuple(_usageAndMode, _format);
 }
 //----------------------------------------------------------------------------
 bool Texture::Match_(const DeviceAPIDependantTexture& texture) const {
@@ -73,7 +73,7 @@ bool Texture::Match_(const DeviceAPIDependantTexture& texture) const {
 DeviceAPIDependantTexture::DeviceAPIDependantTexture(IDeviceAPIEncapsulator *device, const Texture *resource)
 :   TypedDeviceAPIDependantEntity<Texture>(device->APIEncapsulator(), resource)
 ,   _format(resource->Format())
-,   _mode(resource->Mode()) 
+,   _mode(resource->Mode())
 ,   _usage(resource->Usage()) {
     Assert(resource);
     Assert(_format);

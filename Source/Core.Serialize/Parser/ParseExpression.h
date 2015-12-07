@@ -2,11 +2,11 @@
 
 #include "Core/Core.h"
 
-#include "Core.RTTI/Atom/MetaAtom.h"
-#include "Core.RTTI/Class/MetaClassName.h"
-#include "Core.RTTI/Object/MetaObjectName.h"
-#include "Core.RTTI/Property/MetaPropertyName.h"
-#include "Core.RTTI/Type/MetaType.h"
+#include "Core.RTTI/MetaAtom.h"
+#include "Core.RTTI/MetaClassName.h"
+#include "Core.RTTI/MetaObjectName.h"
+#include "Core.RTTI/MetaPropertyName.h"
+#include "Core.RTTI/MetaType.h"
 
 #include "Core.Serialize/Parser/ParseItem.h"
 
@@ -40,7 +40,7 @@ public:
 template <typename T>
 class Literal : public ParseExpression {
 public:
-    typedef RTTI::MetaWrappedAtom< typename std::decay<T>::type > atom_type;
+    typedef typename RTTI::wrap_atom< T >::type atom_type;
 
     explicit Literal(T&& rvalue, const Lexer::Location& site);
     virtual ~Literal();

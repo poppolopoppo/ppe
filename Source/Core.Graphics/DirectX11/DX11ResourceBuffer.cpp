@@ -72,7 +72,7 @@ void DX11ResourceBuffer::GetData(IDeviceAPIEncapsulator *device, size_t offset, 
 }
 //----------------------------------------------------------------------------
 void DX11ResourceBuffer::SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) {
-    
+
     DX11ResourceSetData(device, _entity.Get(), 0, offset, src, stride, count, Mode(), Usage());
 }
 //----------------------------------------------------------------------------
@@ -84,19 +84,19 @@ void DX11ResourceBuffer::CopyFrom(IDeviceAPIEncapsulator *device, const DeviceAP
 }
 //----------------------------------------------------------------------------
 void DX11ResourceBuffer::CopySubPart(
-    IDeviceAPIEncapsulator *device, size_t dstOffset, 
+    IDeviceAPIEncapsulator *device, size_t dstOffset,
     const DeviceAPIDependantResourceBuffer *psource, size_t srcOffset, size_t length ) {
-    
+
     const DX11ResourceBuffer *psourceDX11 = checked_cast<const DX11ResourceBuffer *>(psource);
 
     const uint3 dstPos(checked_cast<u32>(dstOffset), 0, 0);
-    const AABB3u srcBox(uint3(checked_cast<u32>(srcOffset), 0, 0), 
+    const AABB3u srcBox(uint3(checked_cast<u32>(srcOffset), 0, 0),
                         uint3(checked_cast<u32>(srcOffset + length), 0, 1) );
-    
+
     DX11CopyResourceSubRegion(device, _entity.Get(), 0, dstPos, psourceDX11->Entity(), 0, srcBox);
 }
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Graphics, DX11ResourceBuffer, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, DX11ResourceBuffer, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

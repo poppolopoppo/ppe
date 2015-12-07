@@ -4,7 +4,7 @@
 
 #include "Entity.h"
 
-#include "Core/Meta/Guid.h"
+#include "Core/Misc/Guid.h"
 
 #include <algorithm>
 

@@ -2,7 +2,7 @@
 
 #include "Core.Graphics/Graphics.h"
 
-#include <exception>
+#include "Core/Diagnostic/Exception.h"
 
 namespace Core {
 namespace Graphics {
@@ -15,7 +15,12 @@ FWD_REFPTR(ShaderProgram);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DeviceEncapsulatorException : public std::exception {
+class GraphicsException : public Exception {
+public:
+    GraphicsException(const char* what) : Exception(what) {}
+};
+//----------------------------------------------------------------------------
+class DeviceEncapsulatorException : public GraphicsException {
 public:
     explicit DeviceEncapsulatorException(
         const char *what,
@@ -31,22 +36,19 @@ private:
     PCDeviceResource _optionalResource;
 };
 //----------------------------------------------------------------------------
-class ShaderCompilerEncapsulatorException : public std::exception {
+class ShaderCompilerException : public GraphicsException {
 public:
-    explicit ShaderCompilerEncapsulatorException(
+    explicit ShaderCompilerException(
         const char *what,
         const IDeviceAPIShaderCompiler *encapsulator,
-        const Graphics::ShaderProgram *shaderProgram,
         const Graphics::ShaderSource *shaderSource);
-    ~ShaderCompilerEncapsulatorException();
+    ~ShaderCompilerException();
 
     const IDeviceAPIShaderCompiler *Encapsulator() const { return _encapsulator; }
-    const PCShaderProgram& ShaderProgram() const { return _shaderProgram; }
     const PCShaderSource& ShaderSource() const { return _shaderSource; }
 
 private:
     const IDeviceAPIShaderCompiler *_encapsulator;
-    PCShaderProgram _shaderProgram;
     PCShaderSource _shaderSource;
 };
 //----------------------------------------------------------------------------

@@ -4,6 +4,7 @@
 
 #include "Core/Container/Vector.h"
 #include "Core/Meta/Delegate.h"
+#include "Core/Meta/ThreadResource.h"
 
 #include <algorithm>
 
@@ -11,17 +12,17 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename delegate_type>
+template <typename _Delegate>
 class Event {
 public:
     Event() { static_assert(false, "Event<T> accepts only delegates"); }
 };
 //----------------------------------------------------------------------------
 template <typename _Ret, typename... _Args >
-class Event< Delegate<_Ret (*)(_Args... )> > {
+class Event< Delegate<_Ret (*)(_Args... )> > : public Meta::ThreadResource {
 public:
     typedef Delegate<_Ret (*)(_Args... )> delegate_type;
-    typedef VECTORINSITU(Event, delegate_type, 5) vector_type;
+    typedef VECTORINSITU(Event, delegate_type, 3) vector_type;
 
     bool empty() const { return _delegates.empty(); }
     size_t size() const { return _delegates.size(); }
@@ -54,12 +55,14 @@ private:
 //----------------------------------------------------------------------------
 template <typename _Ret, typename... _Args >
 void Event< Delegate<_Ret (*)(_Args... )> >::Add(const delegate_type& d) {
+    THIS_THREADRESOURCE_CHECKACCESS();
     Assert(_delegates.end() == std::find(_delegates.begin(), _delegates.end(), d));
     _delegates.push_back(d);
 }
 //----------------------------------------------------------------------------
 template <typename _Ret, typename... _Args >
 void Event< Delegate<_Ret (*)(_Args... )> >::Remove(const delegate_type& d) {
+    THIS_THREADRESOURCE_CHECKACCESS();
     const auto it = std::find(_delegates.begin(), _delegates.end(), d);
     Assert(_delegates.end() != it);
     _delegates.erase(it);
@@ -68,6 +71,7 @@ void Event< Delegate<_Ret (*)(_Args... )> >::Remove(const delegate_type& d) {
 template <typename _Ret, typename... _Args >
 template <typename _It>
 void Event< Delegate<_Ret (*)(_Args... )> >::Add(_It begin, _It end) {
+    THIS_THREADRESOURCE_CHECKACCESS();
 #ifdef WITH_CORE_ASSERT
     for (auto it = begin; it != end; ++it)
         Add(*it); // will check for doubloons in debug
@@ -78,19 +82,47 @@ void Event< Delegate<_Ret (*)(_Args... )> >::Add(_It begin, _It end) {
 //----------------------------------------------------------------------------
 template <typename _Ret, typename... _Args >
 void Event< Delegate<_Ret (*)(_Args... )> >::clear() {
+    THIS_THREADRESOURCE_CHECKACCESS();
     _delegates.clear();
 }
 //----------------------------------------------------------------------------
 template <typename _Ret, typename... _Args >
 void Event< Delegate<_Ret (*)(_Args... )> >::reserve(size_t capacity) {
+    THIS_THREADRESOURCE_CHECKACCESS();
     _delegates.reserve(capacity);
 }
 //----------------------------------------------------------------------------
 template <typename _Ret, typename... _Args >
 void Event< Delegate<_Ret (*)(_Args... )> >::Invoke(_Args... args) const {
+    THIS_THREADRESOURCE_CHECKACCESS();
     for (const delegate_type& d : _delegates)
         d.Invoke(std::forward<_Args>(args)...);
 }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Public interface of event, hides owner-only methods
+// ex :
+//      PublicEvent<Delegate> Event() { return _event; }
+//      Event<Delegate> _event;
+//----------------------------------------------------------------------------
+template <typename _Delegate>
+class PublicEvent {
+public:
+    typedef _Delegate delegate_type;
+    typedef Event<_Delegate> event_type;
+
+    PublicEvent(event_type& owner) : _owner(owner) {}
+
+    void Add(const delegate_type& d) { _owner.Add(d); }
+    void Remove(const delegate_type& d) { _owner.Remove(d); }
+
+    template <typename _It>
+    void Add(_It begin, _It end) { Add(std::forward<_It>(begin), std::forward<_It>(end)); }
+
+private:
+    event_type& _owner;
+};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

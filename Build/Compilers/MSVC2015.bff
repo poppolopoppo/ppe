@@ -13,6 +13,9 @@
 ; Speeding up the Incremental Developer Build Scenario
 ; http://blogs.msdn.com/b/vcblog/archive/2014/11/12/speeding-up-the-incremental-developer-scenario-with-visual-studio-2015.aspx
 
+; /Debug:FASTLINK for VS2015 Update 1
+; http://blogs.msdn.com/b/vcblog/archive/2015/10/19/10648353.aspx?PageIndex=2
+
 //------------------------------------------------------------------------------
 // Global Properties
 //------------------------------------------------------------------------------
@@ -20,7 +23,7 @@
 ; utilise la toolchain 64 bits pour compiler en 32
 #define USE_VISUAL2015_NATIVE_ENVIRONMENT
 ; 2X Faster Links, mais TODO: les versions ne doivent pas utiliser ça
-#define USE_VISUAL2015_DEBUG_FASTLINK
+;#define USE_VISUAL2015_DEBUG_FASTLINK
 ; indique quelle version du SDK il faut utiliser
 ;#define USE_VISUAL2015_RELEASE_CANDIDATE
 
@@ -37,14 +40,15 @@
 
 .MSVC2015BasePath =
 [
-    .LocalisationUID    = '1036' ; code zone pour le language (EN)
+    .LocalisationUID    = '$VS140CLUID$' ; code zone pour le language (EN)
+    Print( "Using Visual 2015 with localisation uid $LocalisationUID$" )
     .VSBasePath         = '$VS140COMNTOOLS$..\..'
-    .WindowsSDKBasePath = 'C:\Program Files (x86)\Windows Kits\10'
-    .WindowsSDKVersion  = '10.0.10240.0' ; Visual 2015 final
-#if USE_VISUAL2015_RELEASE_CANDIDATE
-    .WindowsSDKVersion  = '10.0.10069.0' ;'10.0.10056.0' ; TODO: Visual 2015 RC
-    Print( "Using Visual 2015 Release Candidate with SDK $WindowsSDKVersion$" )
-#endif
+    .WindowsSDKBasePath81 = 'C:\Program Files (x86)\Windows Kits\8.1'
+    .WindowsSDKVersion81  = 'winv6.3'
+    Print( "Using Visual 2015 with Windows 8.1 SDK $WindowsSDKVersion81$" )
+    .WindowsSDKBasePath10 = 'C:\Program Files (x86)\Windows Kits\10'
+    .WindowsSDKVersion10  = '10.0.10150.0' ; Visual 2015 final
+    Print( "Using Visual 2015 with Windows 10 SDK $WindowsSDKVersion10$" )
 ]
 
 Print( "Using Visual 2015 with platform toolset $MSVC2015PlatformToolset$" )
@@ -140,7 +144,7 @@ Compiler( 'Compiler-MSVC2015-x64_x86' )
 [
     Using( .MSVC2015BasePath )
 
-    .Compiler                   = '$WindowsSDKBasePath$\Bin\x86\RC.exe'
+    .Compiler                   = '$WindowsSDKBasePath81$\Bin\x86\RC.exe'
     .CompilerOutputExtension    = '.res'
     .CompilerOptions            = '/nologo /fo"%2" %1'
 ]
@@ -162,10 +166,11 @@ Compiler( 'Compiler-MSVC2015-x64_x86' )
     .IncludePaths =
     {
         '$VSBasePath$/VC/Include',
-        '$WindowsSDKBasePath$/Include/$WindowsSDKVersion$/ucrt',
-        '$WindowsSDKBasePath$/Include/$WindowsSDKVersion$/um',
-        '$WindowsSDKBasePath$/Include/$WindowsSDKVersion$/shared',
-        '$WindowsSDKBasePath$/Include/$WindowsSDKVersion$/',
+        '$WindowsSDKBasePath10$/Include/$WindowsSDKVersion10$/ucrt',
+        '$WindowsSDKBasePath81$/Include/um',
+        '$WindowsSDKBasePath81$/Include/shared',
+    ;'$WindowsSDKBasePath81$/Include/winrt',
+        '$DirectXSDKBasePath$/Include',
     }
 ]
 
@@ -174,6 +179,7 @@ Compiler( 'Compiler-MSVC2015-x64_x86' )
 #if USE_VISUAL2015_DEBUG_FASTLINK
     Print( "Using Visual 2015 debug fast link : pdb references built objs" )
     ; utilise un lien symbolique vers les obj plutot que de les copier dans le pdb
+    ; TODO: pour l'instant je n'arrive pas a debug correctement quand c'est activé
     .LinkerOptions      = ' /debug:FASTLINK'
 #endif
 ]
@@ -203,9 +209,10 @@ Compiler( 'Compiler-MSVC2015-x64_x86' )
 
     .Librarian          = '$ToolsBasePath$/lib.exe'
     .Linker             = '$ToolsBasePath$/link.exe'
-    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/ucrt/x86"'
-                        + ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/um/x86"'
+    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath10$/Lib/$WindowsSDKVersion10$/ucrt/x86"'
+                        + ' /LIBPATH:"$WindowsSDKBasePath81$/Lib/$WindowsSDKVersion81$/um/x86"'
                         + ' /LIBPATH:"$VSBasePath$/VC/lib"'
+                        + ' /LIBPATH:"$DirectXSDKBasePath$/Lib/x86"'
 ]
 .MSVC2015PlatformWin32 + .MSVCBasePlatformWin32
 
@@ -217,9 +224,10 @@ Compiler( 'Compiler-MSVC2015-x64_x86' )
     .ToolsBasePath      = '$VSBasePath$/VC/bin/amd64'
     .Librarian          = '$ToolsBasePath$/lib.exe'
     .Linker             = '$ToolsBasePath$/link.exe'
-    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/ucrt/x64"'
-                        + ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/um/x64"'
+    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath10$/Lib/$WindowsSDKVersion10$/ucrt/x64"'
+                        + ' /LIBPATH:"$WindowsSDKBasePath81$/Lib/$WindowsSDKVersion81$/um/x64"'
                         + ' /LIBPATH:"$VSBasePath$/VC/lib/amd64"'
+                        + ' /LIBPATH:"$DirectXSDKBasePath$/Lib/x64"'
 ]
 .MSVC2015PlatformX64 + .MSVCBasePlatformX64
 
@@ -230,13 +238,13 @@ Compiler( 'Compiler-MSVC2015-x64_x86' )
 .MSVC2015_Win32Debug         = .MSVC2015PlatformWin32   + .MSVCBaseDebugConfig          + .MSVC2015DebugFastLink
 .MSVC2015_Win32FastDebug     = .MSVC2015PlatformWin32   + .MSVCBaseFastDebugConfig      + .MSVC2015DebugFastLink
 .MSVC2015_Win32Release       = .MSVC2015PlatformWin32   + .MSVCBaseReleaseConfig        + .MSVC2015DebugFastLink
-.MSVC2015_Win32Profiling     = .MSVC2015PlatformWin32   + .MSVCBaseProfilingConfig      + .MSVC2015DebugFastLink
+.MSVC2015_Win32Profiling     = .MSVC2015PlatformWin32   + .MSVCBaseProfilingConfig      + .MSVC2015LinkTimeCodeGenerationIncremental
 .MSVC2015_Win32Final         = .MSVC2015PlatformWin32   + .MSVCBaseFinalConfig          + .MSVC2015LinkTimeCodeGenerationIncremental
 
 .MSVC2015_X64Debug           = .MSVC2015PlatformX64     + .MSVCBaseDebugConfig          + .MSVC2015DebugFastLink
 .MSVC2015_X64FastDebug       = .MSVC2015PlatformX64     + .MSVCBaseFastDebugConfig      + .MSVC2015DebugFastLink
 .MSVC2015_X64Release         = .MSVC2015PlatformX64     + .MSVCBaseReleaseConfig        + .MSVC2015DebugFastLink
-.MSVC2015_X64Profiling       = .MSVC2015PlatformX64     + .MSVCBaseProfilingConfig      + .MSVC2015DebugFastLink
+.MSVC2015_X64Profiling       = .MSVC2015PlatformX64     + .MSVCBaseProfilingConfig      + .MSVC2015LinkTimeCodeGenerationIncremental
 .MSVC2015_X64Final           = .MSVC2015PlatformX64     + .MSVCBaseFinalConfig          + .MSVC2015LinkTimeCodeGenerationIncremental
 
 .MSVC2015CompileConfigs =

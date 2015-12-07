@@ -42,7 +42,8 @@ RawStorage<T, _Allocator>::~RawStorage() {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 RawStorage<T, _Allocator>::RawStorage(RawStorage&& rvalue)
-:   _storage(std::move(rvalue._storage))
+:   allocator_type(std::move(rvalue))
+,   _storage(std::move(rvalue._storage))
 ,   _size(std::move(rvalue._size)) {
     rvalue._storage = nullptr;
     rvalue._size = 0;
@@ -51,6 +52,7 @@ RawStorage<T, _Allocator>::RawStorage(RawStorage&& rvalue)
 template <typename T, typename _Allocator>
 RawStorage<T, _Allocator>& RawStorage<T, _Allocator>::operator =(RawStorage&& rvalue) {
     Clear_ReleaseMemory();
+    allocator_type::operator =(std::move(rvalue));
     _storage = std::move(rvalue._storage);
     _size = std::move(rvalue._size);
     rvalue._storage = nullptr;
@@ -60,11 +62,14 @@ RawStorage<T, _Allocator>& RawStorage<T, _Allocator>::operator =(RawStorage&& rv
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 RawStorage<T, _Allocator>::RawStorage(const RawStorage& other)
-:   RawStorage(other.begin(), other.end() ) {}
+:   RawStorage(other.begin(), other.end() ) {
+    allocator_type::operator =(other);
+}
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 RawStorage<T, _Allocator>& RawStorage<T, _Allocator>::operator =(const RawStorage& other) {
     Clear_ReleaseMemory();
+    allocator_type::operator =(other);
     insert(end(), other.begin(), other.end());
     return (*this);
 }
@@ -100,18 +105,15 @@ void RawStorage<T, _Allocator>::Resize(size_type size, bool keepData) {
             allocator_type::deallocate(storage, _size);
     }
     else if (keepData) {
-        _storage = allocator_type::allocate(size);
-        const size_type newSize = size < _size ? size : _size;
-        memcpy(_storage, storage, newSize * sizeof(T));
-
-        if (storage)
-            allocator_type::deallocate(storage, _size);
+        _storage = AllocatorRealloc_AssumePod(static_cast<allocator_type&>(*this), storage, size, _size);
+        AssertRelease(_storage);
     }
     else {
         if (storage)
             allocator_type::deallocate(storage, _size);
 
         _storage = allocator_type::allocate(size);
+        AssertRelease(_storage);
     }
 
     _size = size;

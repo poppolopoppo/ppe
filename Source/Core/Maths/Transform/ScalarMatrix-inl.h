@@ -72,6 +72,12 @@ ScalarMatrix<T, _Width, _Height>::ScalarMatrix(const ScalarMatrix<T, _Width, _He
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
+ScalarMatrix<T, _Width, _Height>::ScalarMatrix(const MemoryView<const T>& data) {
+    Assert(data.size() == lengthof(_data.raw));
+    memcpy(_data.raw, data.Pointer(), lengthof(_data.raw)*sizeof(T));
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Width, size_t _Height>
 auto ScalarMatrix<T, _Width, _Height>::operator =(const ScalarMatrix<T, _Width, _Height>& other) -> ScalarMatrix& {
     for (size_t i = 0; i < Dim; ++i)
         _data.raw[i] = other._data.raw[i];
@@ -265,11 +271,10 @@ ScalarMatrix<T, _Height, _Width> ScalarMatrix<T, _Width, _Height>::Transpose() c
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
 void ScalarMatrix<T, _Width, _Height>::Swap(ScalarMatrix& other) {
-    for (size_t i = 0; i < Dim; ++i) {
-        const T tmp = _data[i];
-        _data[i] = other._data[i];
-        other._data[i] = tmp;
-    }
+    using std::swap;
+    using Core::swap;
+    for (size_t i = 0; i < Dim; ++i)
+        swap(_data.raw[i], other._data.raw[i]);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
@@ -277,7 +282,7 @@ template <typename U>
 ScalarMatrix<U, _Width, _Height> ScalarMatrix<T, _Width, _Height>::Cast() const {
     ScalarMatrix<U, _Width, _Height> result;
     for (size_t i = 0; i < Dim; ++i)
-        result._data[i] = static_cast<U>(_data[i]);
+        result._data.raw[i] = static_cast<U>(_data.raw[i]);
     return result;
 }
 //----------------------------------------------------------------------------

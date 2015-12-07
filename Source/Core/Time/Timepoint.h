@@ -4,6 +4,8 @@
 
 #include "Core/Maths/Units.h"
 
+// Use Timepoint only to measure durations, if you want a true date use Timestamp/DateTime instead
+
 // - /!\ -
 // Chrono has no real high precision clock on VS2013 (and since VS2010)
 // Then I am rolling my own simple time helpers
@@ -18,11 +20,10 @@ typedef Units::Time::Microseconds Timespan;
 //----------------------------------------------------------------------------
 class Timepoint {
 public:
-    typedef u64 value_type;
+    typedef i64 value_type;
 
     Timepoint() : _value(0) {}
     Timepoint(value_type value) : _value(value) {}
-    ~Timepoint() {}
 
     Timepoint(const Timepoint& other) : _value(other._value) {}
     Timepoint& operator =(const Timepoint& other) { _value = other._value; return *this; }

@@ -14,7 +14,7 @@ class MemoryView;
 //----------------------------------------------------------------------------
 class MemoryTrackingData;
 //----------------------------------------------------------------------------
-#define MEMORY_DOMAIN_NAME(_Name) CONCAT(_, CONCAT(_Name, Tag))
+#define MEMORY_DOMAIN_NAME(_Name) CONCAT(_, _Name)
 #define MEMORY_DOMAIN_TAG(_Name) Core::Domain::MEMORY_DOMAIN_NAME(_Name)
 #define MEMORY_DOMAIN_TRACKING_DATA(_Name) MEMORY_DOMAIN_TAG(_Name)::TrackingData
 //----------------------------------------------------------------------------
@@ -40,18 +40,33 @@ namespace Domain {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename T, typename _Domain>
+class MemoryTracking {
+public:
+    MemoryTracking();
+    ~MemoryTracking();
+};
+//----------------------------------------------------------------------------
+template <typename T, typename _Domain>
+MemoryTracking<T, _Domain>::MemoryTracking() {
+    _Domain::TrackingData.Allocate(1, sizeof(T));
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Domain>
+MemoryTracking<T, _Domain>::~MemoryTracking() {
+    _Domain::TrackingData.Deallocate(1, sizeof(T));
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 MemoryView<MemoryTrackingData *> EachDomainTrackingData();
 //----------------------------------------------------------------------------
 void ReportDomainTrackingData();
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void RegisterAdditionalTrackingData(MemoryTrackingData *pTrackingData);
 void UnregisterAdditionalTrackingData(MemoryTrackingData *pTrackingData);
 //----------------------------------------------------------------------------
 void ReportAdditionalTrackingData();
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 inline void ReportAllTrackingData() {
     ReportDomainTrackingData();

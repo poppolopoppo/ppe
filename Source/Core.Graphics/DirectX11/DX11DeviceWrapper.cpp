@@ -19,9 +19,9 @@
 #include "Core/IO/String.h"
 
 #ifdef OS_WINDOWS
-#   include <DxErr.h>
+//#   include <DxErr.h>
+//#   pragma comment(lib, "DxErr.lib")
 #   include <DXGIDebug.h>
-#   pragma comment(lib, "DxErr.lib")
 #else
 #   error "no support"
 #endif
@@ -78,7 +78,7 @@ static bool CreateDX11DeviceAndSwapChainIFP_(
 
     sd.BufferDesc.Width = presentationParameters.BackBufferWidth();
     sd.BufferDesc.Height = presentationParameters.BackBufferHeight();
-    sd.BufferDesc.Format = SurfaceFormatTypeToDXGIFormat(presentationParameters.BackBufferFormat()->Type());
+    sd.BufferDesc.Format = SurfaceFormatTypeToDXGIFormat(presentationParameters.BackBufferFormat());
     sd.BufferDesc.RefreshRate.Numerator = 60;
     sd.BufferDesc.RefreshRate.Denominator = refreshRateDenominator;
 
@@ -176,20 +176,18 @@ static RenderTarget *CreateDX11BackBufferRenderTarget_(
 
     DX11SetDeviceResourceName(pBackBufferRenderTargetView, "BackBuffer");
 
-    RenderTarget *const backBufferStorage = reinterpret_cast<RenderTarget *>(operator new(sizeof(RenderTarget)));
-    DX11RenderTarget *const dx11RenderTarget = new DX11RenderTarget(device->Device(), backBufferStorage, pBackBuffer.Get(), nullptr, pBackBufferRenderTargetView.Get());
-
-    DX11SetDeviceResourceName(dx11RenderTarget->RenderTargetView(), "BackBufferRenderTarget");
-
-    RenderTarget *const backBufferRenderTarget = new ((void *)backBufferStorage) RenderTarget(
+    RenderTarget *const backBufferRenderTarget = new RenderTarget(
         presentationParameters.BackBufferWidth(),
         presentationParameters.BackBufferHeight(),
-        presentationParameters.BackBufferFormat(),
-        false,
-        dx11RenderTarget);
-
+        SurfaceFormat::FromType(presentationParameters.BackBufferFormat()),
+        false );
     backBufferRenderTarget->SetResourceName("BackBufferRenderTarget");
     backBufferRenderTarget->Freeze();
+
+    DX11RenderTarget *dx11RenderTarget = new DX11RenderTarget(device->Device(), backBufferRenderTarget, pBackBuffer.Get(), nullptr, pBackBufferRenderTargetView.Get());
+    DX11SetDeviceResourceName(dx11RenderTarget->RenderTargetView(), "BackBufferRenderTarget");
+
+    backBufferRenderTarget->StealRenderTarget(dx11RenderTarget);
 
     return backBufferRenderTarget;
 }
@@ -220,8 +218,9 @@ void DX11DeviceWrapper::Create(DX11DeviceAPIEncapsulator *device, void *windowHa
     Assert(device);
     Assert(windowHandle);
 
-    if (!CreateDX11DeviceAndSwapChainIFP_( _dx11ImmediateContext, _dx11Device, _dx11SwapChain, &_dx11FeatureLevel,
-                                                windowHandle, presentationParameters)) {
+    if (false == CreateDX11DeviceAndSwapChainIFP_(  _dx11ImmediateContext, _dx11Device, _dx11SwapChain,
+                                                    &_dx11FeatureLevel,
+                                                    windowHandle, presentationParameters) ) {
         CheckDeviceErrors(device);
     }
 
@@ -256,8 +255,11 @@ void DX11DeviceWrapper::Create(DX11DeviceAPIEncapsulator *device, void *windowHa
 
     // create back buffer depth stencil IFN
 
-    if (presentationParameters.DepthStencilFormat()) {
-        _backBufferDepthStencil = new DepthStencil(_backBufferRenderTarget->Width(), _backBufferRenderTarget->Height(), presentationParameters.DepthStencilFormat(), false);
+    if (presentationParameters.DepthStencilFormat() != SurfaceFormatType::UNKNOWN) {
+        _backBufferDepthStencil = new DepthStencil(
+            _backBufferRenderTarget->Width(), _backBufferRenderTarget->Height(),
+            SurfaceFormat::FromType(presentationParameters.DepthStencilFormat()),
+            false );
         _backBufferDepthStencil->SetResourceName("BackBufferDepthStencil");
         _backBufferDepthStencil->Freeze();
         _backBufferDepthStencil->Create(device->Device());
@@ -270,7 +272,7 @@ void DX11DeviceWrapper::Create(DX11DeviceAPIEncapsulator *device, void *windowHa
     Assert(_dx11ImmediateContext);
 
     Assert(_backBufferRenderTarget);
-    Assert(!presentationParameters.BackBufferFormat() || _backBufferDepthStencil);
+    Assert(SurfaceFormatType::UNKNOWN == presentationParameters.BackBufferFormat() || _backBufferDepthStencil);
 
     CheckDeviceErrors(device);
 }
@@ -390,17 +392,15 @@ void DX11ThrowIfFailed(
     Assert(file);
     Assert(func);
 
-    const char *dx11Message = DXGetErrorStringA(result);
-    const char *dx11Description = DXGetErrorDescriptionA(result);
+    const String dx11Message = GetLastErrorToString((long)result);
 
     char formatedMessage[1024];
     Format(formatedMessage,
         "{0}\n"
-        "{1}\n"
-        "   Call  = {2}\n"
-        "   At    = {3}({4})\n"
-        "   In    = {5}()",
-        dx11Message, dx11Description,
+        "   Call  = {1}\n"
+        "   At    = {2}({3})\n"
+        "   In    = {4}()",
+        dx11Message,
         call,
         file, line,
         func

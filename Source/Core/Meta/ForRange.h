@@ -19,10 +19,10 @@ namespace Meta {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define foreach(_Variable, _ContainerLike) \
+#define foreachitem(_Variable, _ContainerLike) \
     forrange(_Variable, std::begin(_ContainerLike), std::end(_ContainerLike))
 //----------------------------------------------------------------------------
-#define reverseforeach(_Variable, _ContainerLike) \
+#define reverseforeachitem(_Variable, _ContainerLike) \
     forrange(_Variable, std::rbegin(_ContainerLike), std::rend(_ContainerLike))
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

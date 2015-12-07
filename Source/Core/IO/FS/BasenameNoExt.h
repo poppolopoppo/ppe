@@ -41,7 +41,7 @@ inline void swap(BasenameNoExt& lhs, BasenameNoExt& rhs) {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
-inline size_t hash_value(const BasenameNoExt& token) {
+inline hash_t hash_value(const BasenameNoExt& token) {
     return token.HashValue();
 }
 //----------------------------------------------------------------------------

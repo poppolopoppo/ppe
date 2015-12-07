@@ -3,7 +3,9 @@
 #include "Core/Core.h"
 
 #include "Core/Allocator/Allocation.h"
+#include "Core/Container/IntrusiveList.h"
 #include "Core/Meta/ThreadResource.h"
+#include "Core/Thread/AtomicSpinLock.h"
 
 // Uncomment to disable pool allocation (useful for memory debugging) :
 //#define WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC //%__NOCOMMIT%
@@ -69,6 +71,8 @@ STATIC_ASSERT(IS_ALIGNED(16, sizeof(MemoryPoolChunk)));
 //----------------------------------------------------------------------------
 class MemoryPoolBase {
 public:
+    friend class MemoryPoolBaseList;
+
     MemoryPoolBase(size_t blockSize, size_t minChunkSize, size_t maxChunkSize);
     virtual ~MemoryPoolBase();
 
@@ -93,6 +97,8 @@ public:
     virtual void Clear_IgnoreLeaks() = 0;
     virtual void Clear_UnusedMemory() = 0;
 
+    const IntrusiveListNode<MemoryPoolBase>& Node() const { return _node; }
+
 protected:
     void GrowChunkSizeIFP();
     void ResetChunkSize();
@@ -114,6 +120,30 @@ private:
     const size_t _blockSize;
     const size_t _minChunkSize;
     const size_t _maxChunkSize;
+
+    IntrusiveListNode<MemoryPoolBase> _node;
+};
+//----------------------------------------------------------------------------
+class MemoryPoolBaseList {
+public:
+    MemoryPoolBaseList();
+    ~MemoryPoolBaseList();
+
+    MemoryPoolBaseList(const MemoryPoolBaseList& ) = delete;
+    MemoryPoolBaseList& operator =(const MemoryPoolBaseList& ) = delete;
+
+    void Insert(MemoryPoolBase* ppool);
+    void Remove(MemoryPoolBase* ppool);
+
+    void ClearAll_AssertCompletelyFree();
+    void ClearAll_IgnoreLeaks();
+    void ClearAll_UnusedMemory();
+
+private:
+    typedef INTRUSIVELIST(&MemoryPoolBase::_node) list_type;
+
+    AtomicSpinLock _barrier;
+    MemoryPoolBase* _head;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -142,6 +172,8 @@ public:
     virtual void Clear_AssertCompletelyFree() override;
     virtual void Clear_IgnoreLeaks() override;
     virtual void Clear_UnusedMemory() override;
+
+    friend MemoryPoolBase* _MemoryPoolBase(MemoryPool* ppool) { return ppool; }
 
 private:
     MemoryPoolChunk *AllocateChunk_();

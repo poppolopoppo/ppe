@@ -52,7 +52,7 @@ inline void swap(MeshName& lhs, MeshName& rhs) {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
-inline size_t hash_value(const MeshName& token) {
+inline hash_t hash_value(const MeshName& token) {
     return token.HashValue();
 }
 //----------------------------------------------------------------------------

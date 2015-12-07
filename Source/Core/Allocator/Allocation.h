@@ -29,15 +29,13 @@ using DecorateAllocator = _Allocator;
 template <typename T, typename _Tag = MEMORY_DOMAIN_TAG(Global)>
 using Allocator = DecorateAllocator< DEFAULT_ALLOCATOR<T>, _Tag >;
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-#define ALLOCATOR(_Domain, T) \
-    ::Core::Allocator<COMMA_PROTECT(T), MEMORY_DOMAIN_TAG(_Domain) >
-//----------------------------------------------------------------------------
 #define DECORATE_ALLOCATOR(_Domain, _Allocator) \
     ::Core::DecorateAllocator< COMMA_PROTECT(_Allocator), MEMORY_DOMAIN_TAG(_Domain) >
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+#define ALLOCATOR(_Domain, T) \
+    ::Core::Allocator<COMMA_PROTECT(T), MEMORY_DOMAIN_TAG(_Domain) >
 //----------------------------------------------------------------------------
 #define ALIGNED_ALLOCATOR(_Domain, T, _Alignment) \
     DECORATE_ALLOCATOR(_Domain, ::Core::Mallocator<COMMA_PROTECT(T) COMMA _Alignment>)

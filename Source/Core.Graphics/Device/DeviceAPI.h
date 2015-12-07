@@ -6,7 +6,6 @@
 #include "Core.Graphics/Device/IDeviceAPIContext.h"
 #include "Core.Graphics/Device/IDeviceAPIEncapsulator.h"
 #include "Core.Graphics/Device/IDeviceAPIDiagnostics.h"
-#include "Core.Graphics/Device/IDeviceAPIShaderCompiler.h"
 
 namespace Core {
 namespace Graphics {
@@ -16,6 +15,8 @@ namespace Graphics {
 enum class DeviceAPI {
     DirectX11   = 0,
     OpenGL4     = 1,
+
+    Unknown,
 };
 //----------------------------------------------------------------------------
 const char *DeviceAPIToCStr(DeviceAPI api);

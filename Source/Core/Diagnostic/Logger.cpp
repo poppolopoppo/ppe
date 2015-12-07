@@ -8,6 +8,7 @@
 #include "IO/StringSlice.h"
 
 #include <iostream>
+#include <sstream>
 
 #ifdef CPP_VISUALSTUDIO
 #   include <Windows.h>
@@ -21,8 +22,10 @@ STATIC_ASSERT(0 == size_t(LogCategory::Information));
 STATIC_ASSERT(1 == size_t(LogCategory::Warning));
 STATIC_ASSERT(2 == size_t(LogCategory::Error));
 STATIC_ASSERT(3 == size_t(LogCategory::Exception));
-STATIC_ASSERT(4 == size_t(LogCategory::Assertion));
-STATIC_ASSERT(5 == size_t(LogCategory::Profiling));
+STATIC_ASSERT(4 == size_t(LogCategory::Debug));
+STATIC_ASSERT(5 == size_t(LogCategory::Assertion));
+STATIC_ASSERT(6 == size_t(LogCategory::Profiling));
+STATIC_ASSERT(7 == size_t(LogCategory::Callstack));
 //----------------------------------------------------------------------------
 namespace {
     static const LogCategory sCategories[] = {
@@ -30,8 +33,10 @@ namespace {
         LogCategory::Warning,
         LogCategory::Error,
         LogCategory::Exception,
+        LogCategory::Debug,
         LogCategory::Assertion,
         LogCategory::Profiling,
+        LogCategory::Callstack,
     };
 
     static const wchar_t* sCategoriesWCStr[] = {
@@ -39,9 +44,14 @@ namespace {
         L"Warning",
         L"Error",
         L"Exception",
+        L"Debug",
         L"Assertion",
         L"Profiling",
+        L"Callstack",
     };
+
+    STATIC_ASSERT(lengthof(sCategoriesWCStr) == lengthof(sCategories));
+    STATIC_ASSERT(8 == lengthof(sCategories));
 }
 //----------------------------------------------------------------------------
 MemoryView<const LogCategory> EachLogCategory() {

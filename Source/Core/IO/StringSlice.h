@@ -13,13 +13,13 @@ namespace Core {
 template <typename _Char>
 using BasicStringSlice = MemoryView<typename std::add_const<_Char>::type>;
 //----------------------------------------------------------------------------
-using StringSlice = BasicStringSlice<char>;
-using WStringSlice = BasicStringSlice<wchar_t>;
+typedef BasicStringSlice<char>      StringSlice;
+typedef BasicStringSlice<wchar_t>   WStringSlice;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits = std::char_traits<_Char> >
-BasicStringSlice<_Char> MakeStringSlice(const std::basic_string<_Char, _Traits>& str) {
+template <typename _Char, typename _Traits = std::char_traits<_Char>, typename _Allocator >
+BasicStringSlice<_Char> MakeStringSlice(const std::basic_string<_Char, _Traits, _Allocator>& str) {
     return BasicStringSlice<_Char>(str.c_str(), str.size());
 }
 //----------------------------------------------------------------------------
@@ -32,19 +32,17 @@ BasicStringSlice<_Char> MakeStringSlice(const _Char(&cstr)[_Dim]) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char>
-bool Split(const _Char **reentrantCstr, _Char separator, BasicStringSlice<_Char>& slice);
+bool Split(const char **reentrantCstr, char separator, BasicStringSlice<char>& slice);
+bool Split(const wchar_t **reentrantCstr, wchar_t separator, BasicStringSlice<wchar_t>& slice);
 //----------------------------------------------------------------------------
-template <typename _Char>
-bool Split(const _Char **reentrantCstr, const _Char* separators, BasicStringSlice<_Char>& slice);
+bool Split(const char **reentrantCstr, const char* separators, BasicStringSlice<char>& slice);
+bool Split(const wchar_t **reentrantCstr, const wchar_t* separators, BasicStringSlice<wchar_t>& slice);
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
+bool Split(const char **reentrantCstr, size_t *reentrantLength, char separator, BasicStringSlice<char>& slice);
+bool Split(const wchar_t **reentrantCstr, size_t *reentrantLength, wchar_t separator, BasicStringSlice<wchar_t>& slice);
 //----------------------------------------------------------------------------
-template <typename _Char>
-bool Split(const _Char **reentrantCstr, size_t *reentrantLength, _Char separator, BasicStringSlice<_Char>& slice);
-//----------------------------------------------------------------------------
-template <typename _Char>
-bool Split(const _Char **reentrantCstr, size_t *reentrantLength, const _Char* separators, BasicStringSlice<_Char>& slice);
+bool Split(const char **reentrantCstr, size_t *reentrantLength, const char* separators, BasicStringSlice<char>& slice);
+bool Split(const wchar_t **reentrantCstr, size_t *reentrantLength, const wchar_t* separators, BasicStringSlice<wchar_t>& slice);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -91,26 +89,23 @@ struct StringSliceLess<_Char, CaseSensitive::False> {
 template <typename _Char, CaseSensitive _CaseSensitive>
 struct StringSliceHasher {
     size_t operator ()(const BasicStringSlice<_Char>& cstr) const {
-        return hash_value(cstr.begin(), cstr.size());
+        return hash_string(cstr.begin(), cstr.size(), CaseSensitive::False);
     }
 };
 //----------------------------------------------------------------------------
 template <typename _Char>
 struct StringSliceHasher<_Char, CaseSensitive::False> {
     size_t operator ()(const BasicStringSlice<_Char>& cstr) const {
-        return hash_valueI(cstr.begin(), cstr.size());
+        return hash_string(cstr.begin(), cstr.size(), CaseSensitive::False);
     }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
-    const BasicStringSlice<_Char>& slice);
+std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const StringSlice& slice);
+//----------------------------------------------------------------------------
+std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const WStringSlice& wslice);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Core
-
-#include "Core/IO/StringSlice-inl.h"

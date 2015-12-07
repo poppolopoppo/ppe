@@ -42,10 +42,25 @@ BasicOCStrStreamBuffer<_Char, _Traits>::~BasicOCStrStreamBuffer() {
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits >
+void BasicOCStrStreamBuffer<_Char, _Traits>::ForceEOS() {
+    const _Char eos = traits_type::to_char_type(0); // End Of String
+
+    if (nullptr == parent_type::pbase() ||
+        (parent_type::pptr() > parent_type::pbase() && eos == parent_type::pptr()[-1]) )
+        return; // skip if the string is already null terminated (or write buffer null)
+
+    // null terminate the string
+    if (parent_type::pptr() == parent_type::epptr())
+        _storage[_capacity - 1] = eos;
+    else
+        parent_type::sputc(eos);
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits >
 void BasicOCStrStreamBuffer<_Char, _Traits>::PutEOS() {
     const _Char eos = traits_type::to_char_type(0); // End Of String
 
-    if (nullptr == parent_type::pbase() || 
+    if (nullptr == parent_type::pbase() ||
         (parent_type::pptr() > parent_type::pbase() && eos == parent_type::pptr()[-1]) )
         return; // skip if the string is already null terminated (or write buffer null)
 
@@ -57,7 +72,7 @@ template <typename _Char, typename _Traits >
 void BasicOCStrStreamBuffer<_Char, _Traits>::RemoveEOS() {
     const _Char eos = traits_type::to_char_type(0); // End Of String
 
-    if (nullptr == parent_type::pbase() || 
+    if (nullptr == parent_type::pbase() ||
         (parent_type::pptr() > parent_type::pbase() && eos != parent_type::pptr()[-1]) )
         return; // skip if the string is not null terminated (or write buffer null)
 
@@ -103,6 +118,11 @@ template <typename _Char, typename _Traits >
 BasicOCStrStream<_Char, _Traits>::~BasicOCStrStream() {}
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits >
+void BasicOCStrStream<_Char, _Traits>::ForceEOS() {
+    _buffer.ForceEOS();
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits >
 void BasicOCStrStream<_Char, _Traits>::PutEOS() {
     _buffer.PutEOS();
 }
@@ -133,7 +153,7 @@ MemoryView<const _Char> BasicOCStrStream<_Char, _Traits>::MakeView() const {
     if (length && ptr[length - 1] == eos)
         --length;
 
-    return MemoryView<const _Char>(ptr, length); 
+    return MemoryView<const _Char>(ptr, length);
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits >

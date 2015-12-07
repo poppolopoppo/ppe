@@ -3,7 +3,10 @@
 #include "VirtualFileSystemNode.h"
 
 #include "VirtualFileSystemComponent.h"
+#include "VirtualFileSystemTrie.h"
+
 #include "Allocator/PoolAllocator-impl.h"
+#include "IO/VirtualFileSystem.h"
 
 #include <algorithm>
 
@@ -11,7 +14,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(VirtualFileSystemNode, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(VirtualFileSystem, VirtualFileSystemNode, );
 //----------------------------------------------------------------------------
 VirtualFileSystemNode::VirtualFileSystemNode() {}
 //----------------------------------------------------------------------------

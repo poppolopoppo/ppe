@@ -98,7 +98,7 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename T>
-size_t hash_value(const WeakPtr<T>& weakPtr) {
+hash_t hash_value(const WeakPtr<T>& weakPtr) {
     return hash_value(weakPtr.get());
 }
 //----------------------------------------------------------------------------

@@ -7,9 +7,10 @@
 #include "Core.Graphics/Device/Geometry/VertexSubPart.h"
 #include "Core.Graphics/Device/Geometry/VertexTypes.h"
 
+#include "Core/Allocator/PoolAllocator.h"
 #include "Core/Container/Pair.h"
+#include "Core/Container/Stack.h"
 #include "Core/IO/String.h"
-#include "Core/Memory/MemoryStack.h"
 #include "Core/Memory/RefPtr.h"
 
 namespace Core {
@@ -81,11 +82,13 @@ public:
     static void OnDeviceCreate(DeviceEncapsulator *device);
     static void OnDeviceDestroy(DeviceEncapsulator *device);
 
+    SINGLETON_POOL_ALLOCATED_DECL();
+
 private:
     size_t _sizeInBytes;
 
     typedef std::pair<VertexSubPartKey, VertexSubPartPOD> vertexsubpartentry_type;
-    StaticStack<vertexsubpartentry_type, MaxSubPartCount> _subParts;
+    FixedSizeStack<vertexsubpartentry_type, MaxSubPartCount> _subParts;
 
     PDeviceAPIDependantVertexDeclaration _deviceAPIDependantDeclaration;
 };

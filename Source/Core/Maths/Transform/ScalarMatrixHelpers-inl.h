@@ -1069,37 +1069,37 @@ ScalarMatrix<T, 4, 4> Make3DTransformMatrixAroundZ(const ScalarVector<T, 3>& tra
 //----------------------------------------------------------------------------
 template <typename T>
 ScalarVector<T, 3> Transform3(const ScalarMatrix<T, 3, 3>& m, const ScalarVector<T, 3>& v) {
-    const float fX = (m.at<0, 0>()*v.get<0>())+(m.at<1, 0>()*v.get<1>())+(m.at<2, 0>()*v.get<2>());
-    const float fY = (m.at<0, 1>()*v.get<0>())+(m.at<1, 1>()*v.get<1>())+(m.at<2, 1>()*v.get<2>());
-    const float fZ = (m.at<0, 2>()*v.get<0>())+(m.at<1, 2>()*v.get<1>())+(m.at<2, 2>()*v.get<2>());
+    const float fX = (m.m00()*v.x())+(m.m10()*v.y())+(m.m20()*v.z());
+    const float fY = (m.m01()*v.x())+(m.m11()*v.y())+(m.m21()*v.z());
+    const float fZ = (m.m02()*v.x())+(m.m12()*v.y())+(m.m22()*v.z());
     return ScalarVector<T, 3>(fX, fY, fZ);
 }
 //----------------------------------------------------------------------------
 template <typename T>
 ScalarVector<T, 4> Transform3_OneExtend(const ScalarMatrix<T, 4, 4>& m, const ScalarVector<T, 3>& v) {
-    const float fX = (m.at<0, 0>()*v.get<0>())+(m.at<1, 0>()*v.get<1>())+(m.at<2, 0>()*v.get<2>())+(m.at<3, 0>());
-    const float fY = (m.at<0, 1>()*v.get<0>())+(m.at<1, 1>()*v.get<1>())+(m.at<2, 1>()*v.get<2>())+(m.at<3, 1>());
-    const float fZ = (m.at<0, 2>()*v.get<0>())+(m.at<1, 2>()*v.get<1>())+(m.at<2, 2>()*v.get<2>())+(m.at<3, 2>());
-    const float fW = (m.at<0, 3>()*v.get<0>())+(m.at<1, 3>()*v.get<1>())+(m.at<2, 3>()*v.get<2>())+(m.at<3, 3>());
-    return ScalarVector<T, 4>(fX, fY, fZ, fW);
+    return ScalarVector<T, 4>(
+        (m.m00()*v.x()) + (m.m10()*v.y()) + (m.m20()*v.z()) + (m.m30()),
+        (m.m01()*v.x()) + (m.m11()*v.y()) + (m.m21()*v.z()) + (m.m31()),
+        (m.m02()*v.x()) + (m.m12()*v.y()) + (m.m22()*v.z()) + (m.m32()),
+        (m.m03()*v.x()) + (m.m13()*v.y()) + (m.m23()*v.z()) + (m.m33()) );
 }
 //----------------------------------------------------------------------------
 template <typename T>
 ScalarVector<T, 4> Transform3_ZeroExtend(const ScalarMatrix<T, 4, 4>& m, const ScalarVector<T, 3>& v) {
-    const float fX = (m.at<0, 0>()*v.get<0>())+(m.at<1, 0>()*v.get<1>())+(m.at<2, 0>()*v.get<2>());
-    const float fY = (m.at<0, 1>()*v.get<0>())+(m.at<1, 1>()*v.get<1>())+(m.at<2, 1>()*v.get<2>());
-    const float fZ = (m.at<0, 2>()*v.get<0>())+(m.at<1, 2>()*v.get<1>())+(m.at<2, 2>()*v.get<2>());
-    const float fW = (m.at<0, 3>()*v.get<0>())+(m.at<1, 3>()*v.get<1>())+(m.at<2, 3>()*v.get<2>());
-    return ScalarVector<T, 4>(fX, fY, fZ, fW);
+    return ScalarVector<T, 4>(
+        (m.m00()*v.x()) + (m.m10()*v.y()) + (m.m20()*v.z()),
+        (m.m01()*v.x()) + (m.m11()*v.y()) + (m.m21()*v.z()),
+        (m.m02()*v.x()) + (m.m12()*v.y()) + (m.m22()*v.z()),
+        (m.m03()*v.x()) + (m.m13()*v.y()) + (m.m23()*v.z()) )
 }
 //----------------------------------------------------------------------------
 template <typename T>
 ScalarVector<T, 4> Transform4(const ScalarMatrix<T, 4, 4>& m, const ScalarVector<T, 4>& v) {
-    const float fX = (m.at<0, 0>()*v.get<0>())+(m.at<1, 0>()*v.get<1>())+(m.at<2, 0>()*v.get<2>())+(m.at<3, 0>()*v.get<3>());
-    const float fY = (m.at<0, 1>()*v.get<0>())+(m.at<1, 1>()*v.get<1>())+(m.at<2, 1>()*v.get<2>())+(m.at<3, 1>()*v.get<3>());
-    const float fZ = (m.at<0, 2>()*v.get<0>())+(m.at<1, 2>()*v.get<1>())+(m.at<2, 2>()*v.get<2>())+(m.at<3, 2>()*v.get<3>());
-    const float fW = (m.at<0, 3>()*v.get<0>())+(m.at<1, 3>()*v.get<1>())+(m.at<2, 3>()*v.get<2>())+(m.at<3, 3>()*v.get<3>());
-    return ScalarVector<T, 4>(fX, fY, fZ, fW);
+    return ScalarVector<T, 4>(
+        (m.m00()*v.x()) + (m.m10()*v.y()) + (m.m20()*v.z()) + (m.m30()*v.w()),
+        (m.m01()*v.x()) + (m.m11()*v.y()) + (m.m21()*v.z()) + (m.m31()*v.w()),
+        (m.m02()*v.x()) + (m.m12()*v.y()) + (m.m22()*v.z()) + (m.m32()*v.w()),
+        (m.m03()*v.x()) + (m.m13()*v.y()) + (m.m23()*v.z()) + (m.m33()*v.w()) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

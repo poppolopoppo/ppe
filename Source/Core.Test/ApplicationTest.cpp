@@ -293,7 +293,7 @@ void TestFileSystem_() {
 
     Extname e{ WString(L".Jpg") };
     AssertRelease(e == ext);
-    AssertRelease(e.cstr() == ext.cstr());
+    AssertRelease(e.c_str() == ext.c_str());
     std::cout << e << " (" << hash_value(e) << ")" << std::endl;
 
     std::cout

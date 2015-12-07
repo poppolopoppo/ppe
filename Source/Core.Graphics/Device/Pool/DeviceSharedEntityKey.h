@@ -43,7 +43,7 @@ struct DeviceSharedEntityKey {
     }
 };
 //----------------------------------------------------------------------------
-FORCE_INLINE size_t hash_value(const DeviceSharedEntityKey& key) {
+FORCE_INLINE hash_t hash_value(const DeviceSharedEntityKey& key) {
     return key.Data;
 }
 //----------------------------------------------------------------------------

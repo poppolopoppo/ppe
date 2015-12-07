@@ -12,6 +12,7 @@
 #include <iosfwd>
 #include <initializer_list>
 #include <limits>
+#include <type_traits>
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -39,6 +40,8 @@ public:
 
     ScalarVector(T extend, const ScalarVector<T, _Dim - 1>& other);
     ScalarVector(const ScalarVector<T, _Dim - 1>& other, T extend);
+
+    ScalarVector(const MemoryView<const T>& data);
 
     ScalarVector(const ScalarVector& other);
     ScalarVector& operator =(const ScalarVector& other);
@@ -103,10 +106,11 @@ public:
     void Broadcast(T scalar);
 
     void Swap(ScalarVector& other);
-    FORCE_INLINE size_t HashValue() const { return hash_value(_data); }
 
     MemoryView<T> MakeView() { return Core::MakeView(_data); }
     MemoryView<const T> MakeView() const { return Core::MakeView(_data); }
+
+    friend hash_t hash_value(const ScalarVector& v) { return hash_as_pod_array(v._data); }
 
     ScalarVector<T, _Dim - 1> Dehomogenize() const;
     ScalarVector<T, _Dim + 1> Extend(T value) const;
@@ -201,11 +205,6 @@ std::basic_ostream<_Char, _Traits>& operator <<(
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-size_t hash_value(const ScalarVector<T, _Dim>& v) {
-    return v.HashValue();
-}
-//----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
 void swap(ScalarVector<T, _Dim>& lhs, ScalarVector<T, _Dim>& rhs) {
     lhs.Swap(rhs);
 }
@@ -218,19 +217,23 @@ struct NumericLimits< ScalarVector<T, _Dim> > {
     static const ScalarVector<T, _Dim> MinValue;
     static const ScalarVector<T, _Dim> Nan;
     static const ScalarVector<T, _Dim> Default;
+    static const ScalarVector<T, _Dim> Zero;
 };
+//----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-const ScalarVector<T, _Dim> NumericLimits< ScalarVector<T, _Dim> >::Epsilon(NumericLimits<T>::Epsilon);
+const ScalarVector<T, _Dim> NumericLimits< ScalarVector<T, _Dim> >::Epsilon( NumericLimits<T>::Epsilon );
 template <typename T, size_t _Dim>
-const ScalarVector<T, _Dim> NumericLimits< ScalarVector<T, _Dim> >::Inf(NumericLimits<T>::Inf);
+const ScalarVector<T, _Dim> NumericLimits< ScalarVector<T, _Dim> >::Inf( NumericLimits<T>::Inf );
 template <typename T, size_t _Dim>
-const ScalarVector<T, _Dim> NumericLimits< ScalarVector<T, _Dim> >::MaxValue(NumericLimits<T>::MaxValue);
+const ScalarVector<T, _Dim> NumericLimits< ScalarVector<T, _Dim> >::MaxValue( NumericLimits<T>::MaxValue );
 template <typename T, size_t _Dim>
-const ScalarVector<T, _Dim> NumericLimits< ScalarVector<T, _Dim> >::MinValue(NumericLimits<T>::MinValue);
+const ScalarVector<T, _Dim> NumericLimits< ScalarVector<T, _Dim> >::MinValue( NumericLimits<T>::MinValue );
 template <typename T, size_t _Dim>
-const ScalarVector<T, _Dim> NumericLimits< ScalarVector<T, _Dim> >::Nan(NumericLimits<T>::Nan);
+const ScalarVector<T, _Dim> NumericLimits< ScalarVector<T, _Dim> >::Nan( NumericLimits<T>::Nan );
 template <typename T, size_t _Dim>
-const ScalarVector<T, _Dim> NumericLimits< ScalarVector<T, _Dim> >::Default(NumericLimits<T>::Default);
+const ScalarVector<T, _Dim> NumericLimits< ScalarVector<T, _Dim> >::Default( NumericLimits<T>::Default );
+template <typename T, size_t _Dim>
+const ScalarVector<T, _Dim> NumericLimits< ScalarVector<T, _Dim> >::Zero( NumericLimits<T>::Zero );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

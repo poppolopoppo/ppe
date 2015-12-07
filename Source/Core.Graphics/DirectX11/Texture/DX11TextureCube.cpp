@@ -92,7 +92,7 @@ void DX11TextureCube::CopySubPart(
     DX11TextureCubeContent::CopySubPart(device, this, dstFace, dstLevel, dstPos, psource, srcFace, srcLevel, srcBox);
 }
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Graphics, DX11TextureCube, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, DX11TextureCube, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

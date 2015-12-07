@@ -2,11 +2,9 @@
 
 #include "ApplicationWindow.h"
 
-#include "Core.Engine/Service/DeviceEncapsulatorService.h"
-#include "Core.Engine/Service/KeyboardService.h"
-#include "Core.Engine/Service/MouseService.h"
+#include "Input/KeyboardInputHandler.h"
+#include "Input/MouseInputHandler.h"
 
-#include "Core.Graphics/Device/Texture/SurfaceFormat.h"
 #include "Core.Graphics/Window/WindowMessage.h"
 
 #include "Core/Diagnostic/Logger.h"
@@ -18,84 +16,44 @@ namespace Application {
 //----------------------------------------------------------------------------
 ApplicationWindow::ApplicationWindow(
     const wchar_t *appname,
-    const Graphics::DeviceAPI deviceAPI,
-    const Graphics::PresentationParameters& presentationParameters,
-    int left, int top)
+    int left, int top,
+    size_t width, size_t height )
 :   ApplicationBase(appname)
-,   GraphicsWindow(appname, left, top, presentationParameters.BackBufferWidth(), presentationParameters.BackBufferHeight())
-,   _keyboardService(new Engine::DefaultKeyboardService(this))
-,   _mouseService(new Engine::DefaultMouseService(this))
-,   _deviceService(new Engine::DefaultDeviceEncapsulatorService(deviceAPI, this, presentationParameters)) {
-
-    ENGINESERVICE_REGISTER(Engine::IKeyboardService, Services(), _keyboardService.get());
-    ENGINESERVICE_REGISTER(Engine::IMouseService, Services(), _mouseService.get());
-    ENGINESERVICE_REGISTER(Engine::IDeviceEncapsulatorService, Services(), _deviceService.get());
-}
+,   BasicWindow(appname, left, top, width, height)
+{}
 //----------------------------------------------------------------------------
-ApplicationWindow::~ApplicationWindow() {
-    
-    ENGINESERVICE_UNREGISTER(Engine::IDeviceEncapsulatorService, Services(), _deviceService.get());
-    ENGINESERVICE_UNREGISTER(Engine::IMouseService, Services(), _mouseService.get());
-    ENGINESERVICE_UNREGISTER(Engine::IKeyboardService, Services(), _keyboardService.get());
-}
-//----------------------------------------------------------------------------
-const Engine::KeyboardInputHandler& ApplicationWindow::Keyboard() const {
-    Assert(_keyboardService->ServiceAvailable());
-    const Engine::KeyboardInputHandler *pkeyboard = _keyboardService->KeyboardInputHandler();
-    Assert(pkeyboard);
-    return *pkeyboard;
-}
-//----------------------------------------------------------------------------
-const Engine::MouseInputHandler& ApplicationWindow::Mouse() const {
-    Assert(_mouseService->ServiceAvailable());
-    const Engine::MouseInputHandler *pmouse = _mouseService->MouseInputHandler();
-    Assert(pmouse);
-    return *pmouse;
-}
-//----------------------------------------------------------------------------
-const Graphics::DeviceEncapsulator& ApplicationWindow::DeviceEncapsulator() const {
-    Assert(_deviceService->ServiceAvailable());
-    const Graphics::DeviceEncapsulator *pdevice = _deviceService->DeviceEncapsulator();
-    Assert(pdevice);
-    return *pdevice;
-}
+ApplicationWindow::~ApplicationWindow() {}
 //----------------------------------------------------------------------------
 void ApplicationWindow::Start() {
-    GraphicsWindow::Show();
+    ApplicationBase::Start();
 
-    ApplicationBase::Start(); // creates engine services, including this device service
+    BasicWindow::Show();
 
-    GraphicsWindow::RenderLoop(_deviceService->DeviceEncapsulator());
+    Assert(nullptr == _keyboard);
+    _keyboard.reset(new KeyboardInputHandler());
+    RegisterMessageHandler(_keyboard.get());
+    Services().Add<IKeyboardService>(*_keyboard);
+
+    Assert(nullptr == _mouse);
+    _mouse.reset(new MouseInputHandler());
+    RegisterMessageHandler(_mouse.get());
+    Services().Add<IMouseService>(*_mouse);
 }
 //----------------------------------------------------------------------------
 void ApplicationWindow::Shutdown() {
     ApplicationBase::Shutdown(); // destroys engine services, including this device service
 
-    GraphicsWindow::Close();
-}
-//----------------------------------------------------------------------------
-void ApplicationWindow::LoadContent() {
-    GraphicsWindow::LoadContent();
-}
-//----------------------------------------------------------------------------
-void ApplicationWindow::UnloadContent() {
-    GraphicsWindow::UnloadContent();
-}
-//----------------------------------------------------------------------------
-void ApplicationWindow::Update(const Timeline& time) {
-    GraphicsWindow::Update(time);
-}
-//----------------------------------------------------------------------------
-void ApplicationWindow::Draw(const Timeline& time) {
-    GraphicsWindow::Draw(time);
-}
-//----------------------------------------------------------------------------
-void ApplicationWindow::Present() {
-    GraphicsWindow::Present();
-}
-//----------------------------------------------------------------------------
-void ApplicationWindow::OnLoseFocus() {
-    GraphicsWindow::OnLoseFocus();
+    Assert(nullptr != _mouse);
+    Services().Remove<IMouseService>(*_mouse);
+    UnregisterMessageHandler(_mouse.get());
+    _mouse.reset();
+
+    Assert(nullptr != _keyboard);
+    Services().Remove<IKeyboardService>(*_keyboard);
+    UnregisterMessageHandler(_keyboard.get());
+    _keyboard.reset();
+
+    BasicWindow::Close();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

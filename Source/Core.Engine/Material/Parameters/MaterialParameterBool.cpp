@@ -101,7 +101,7 @@ bool TryCreateMaterialParameter(
     Assert(context.Scene);
     Assert(!name.empty());
 
-    const char *cstr = name.cstr();
+    const char *cstr = name.c_str();
 
     static const char uniNot[] = "uniNot_";
 

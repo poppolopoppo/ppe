@@ -5,7 +5,10 @@
 #include "Device/DeviceEncapsulator.h"
 #include "VertexDeclaration.h"
 
+#include "Core/Container/StringHashMap.h"
+#include "Core/IO/StringSlice.h"
 #include "Core/Memory/AlignedStorage.h"
+#include "Core/Meta/Singleton.h"
 
 #define EACH_VERTEXDECL_BUILTINTYPE(_Foreach) \
     _Foreach(Position0_UByte4) \
@@ -37,7 +40,29 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-namespace { 
+namespace {
+//----------------------------------------------------------------------------
+typedef STRINGSLICE_HASHMAP(Vertex, SCVertexDeclaration, CaseSensitive::True) stringslice_to_vdecl_type;
+class VertexDeclarationDico_ : Meta::Singleton<stringslice_to_vdecl_type, VertexDeclarationDico_> {
+    typedef Meta::Singleton<stringslice_to_vdecl_type, VertexDeclarationDico_> parent_type;
+public:
+    using parent_type::HasInstance;
+    using parent_type::Destroy;
+
+    static void Create(stringslice_to_vdecl_type&& dico) {
+        parent_type::Create(std::move(dico));
+    }
+
+    static const stringslice_to_vdecl_type& Instance() {
+        return parent_type::Instance();
+    }
+};
+//----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
 //----------------------------------------------------------------------------
 #define DEF_VERTEXDECL_BUILTINTYPE_STATICPOD(_Name) \
     static POD_STORAGE(VertexDeclaration) CONCAT(gVertexDeclarationPOD_, _Name);
@@ -50,7 +75,7 @@ EACH_VERTEXDECL_BUILTINTYPE(DEF_VERTEXDECL_BUILTINTYPE_STATICPOD)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-namespace Vertex { 
+namespace Vertex {
 //----------------------------------------------------------------------------
 #define DEF_VERTEXDECL_BUILTINTYPE_STATICPTR(_Name) \
     const VertexDeclaration *_Name::Declaration = nullptr;
@@ -64,6 +89,8 @@ EACH_VERTEXDECL_BUILTINTYPE(DEF_VERTEXDECL_BUILTINTYPE_STATICPTR)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void VertexTypes_Start() {
+    stringslice_to_vdecl_type dico;
+    dico.reserve(128);
 
     #define CREATE_VERTEXDECL_BUILTINTYPE(_Name) \
         Assert(nullptr == Vertex::_Name::Declaration); \
@@ -71,7 +98,9 @@ void VertexTypes_Start() {
         Vertex::_Name::Declaration = ::new (pod) VertexDeclaration(); \
         AddRef(Vertex::_Name::Declaration); \
         VertexDeclarator< Vertex::_Name > vdecl(const_cast<VertexDeclaration *>(Vertex::_Name::Declaration)); \
-        vdecl.SetResourceName(STRINGIZE(_Name));
+        vdecl.SetResourceName(STRINGIZE(_Name)); \
+        const StringSlice key = MakeStringSlice(STRINGIZE(_Name)); \
+        Insert_AssertUnique(dico, key, SCVertexDeclaration(Vertex::_Name::Declaration))
 
     {
         CREATE_VERTEXDECL_BUILTINTYPE(Position0_UByte4);
@@ -205,9 +234,13 @@ void VertexTypes_Start() {
     }
 
 #undef CREATE_VERTEXDECL_BUILTINTYPE
+
+    VertexDeclarationDico_::Create(std::move(dico));
 }
 //----------------------------------------------------------------------------
 void VertexTypes_Shutdown() {
+
+    VertexDeclarationDico_::Destroy();
 
 #define DESTROY_VERTEXDECL_BUILTINTYPE(_Name) \
     Assert(Vertex::_Name::Declaration); \
@@ -238,6 +271,14 @@ void VertexTypes_OnDeviceDestroy(DeviceEncapsulator *device) {
     EACH_VERTEXDECL_BUILTINTYPE(DESTROYWDEVICE_VERTEXDECL_BUILTINTYPE)
 
 #undef DESTROYWDEVICE_VERTEXDECL_BUILTINTYPE
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+const VertexDeclaration* VertexTypeByName(const StringSlice& name) {
+    SCVertexDeclaration vdecl(nullptr);
+    TryGetValue(VertexDeclarationDico_::Instance(), name, &vdecl);
+    return vdecl;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -19,6 +19,8 @@ void VertexTypes_Shutdown();
 void VertexTypes_OnDeviceCreate(DeviceEncapsulator *device);
 void VertexTypes_OnDeviceDestroy(DeviceEncapsulator *device);
 //----------------------------------------------------------------------------
+const VertexDeclaration* VertexTypeByName(const StringSlice& name);
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace Vertex {

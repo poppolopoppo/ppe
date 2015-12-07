@@ -8,7 +8,7 @@
 #include "targetver.h"
 #include "Core/stdafx.h"
 
-#include "Core/Core.h"
+#include "Core.RTTI/RTTI.h"
 
 #include "Core/Allocator/Allocation.h"
 #include "Core/Allocator/Heap.h"
@@ -23,11 +23,8 @@
 #include "Core/Container/Token.h"
 #include "Core/Container/Vector.h"
 
-#include "Core/Diagnostic/CurrentProcess.h"
 #include "Core/Diagnostic/Logger.h"
 
 #include "Core/Thread/ThreadContext.h"
-#include "Core/Thread/ThreadLocalStorage.h"
-#include "Core/Thread/ThreadPool.h"
 
 #include "Core.RTTI/RTTI.h"

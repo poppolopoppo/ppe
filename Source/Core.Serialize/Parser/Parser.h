@@ -2,6 +2,7 @@
 
 #include "Core/Core.h"
 
+#include "Core.Serialize/Exceptions.h"
 #include "Core.Serialize/Parser/ParseContext.h"
 #include "Core.Serialize/Parser/ParseExpression.h"
 #include "Core.Serialize/Parser/ParseItem.h"
@@ -15,16 +16,18 @@ namespace Parser {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ParserException : public std::exception {
+class ParserException : public Core::Serialize::SerializeException {
 public:
+    typedef Core::Serialize::SerializeException parent_type;
+
     ParserException(const char *what, Lexer::Location site)
-        : std::exception(what), _site(site), _item(nullptr) {}
+        : parent_type(what), _site(site), _item(nullptr) {}
 
     ParserException(const char *what, const ParseItem *item)
-        : std::exception(what), _site(item->Site()), _item(item) {}
+        : parent_type(what), _site(item->Site()), _item(item) {}
 
     ParserException(const char *what, Lexer::Location site, const ParseItem *item)
-        : std::exception(what), _site(site), _item(item) {}
+        : parent_type(what), _site(site), _item(item) {}
 
     virtual ~ParserException() {}
 

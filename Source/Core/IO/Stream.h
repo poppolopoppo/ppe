@@ -5,7 +5,8 @@
 #include "Core/Allocator/Allocation.h"
 #include "Core/Memory/UniqueView.h"
 
-#include <iosfwd>
+#include <iostream>
+#include <sstream>
 #include <streambuf>
 
 namespace Core {
@@ -13,27 +14,27 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define STACKLOCAL_BASICOCSTRSTREAM(_CHAR, _NAME, _COUNT) \
-    MALLOCA(_CHAR, CONCAT(CONCAT(_, _NAME), CONCAT(_Alloca, __LINE__)), _COUNT); \
-    BasicOCStrStream<_CHAR, std::char_traits<_CHAR> > _NAME( CONCAT(CONCAT(_, _NAME), CONCAT(_Alloca, __LINE__)).get(), _COUNT )
+    MALLOCA(_CHAR, CONCAT(_Alloca_, _NAME), _COUNT); \
+    Core::BasicOCStrStream<_CHAR, std::char_traits<_CHAR> > _NAME( CONCAT(_Alloca_, _NAME).MakeView() )
 //----------------------------------------------------------------------------
 #define STACKLOCAL_OCSTRSTREAM(_NAME, _COUNT) STACKLOCAL_BASICOCSTRSTREAM(char, _NAME, _COUNT)
 #define STACKLOCAL_WOCSTRSTREAM(_NAME, _COUNT) STACKLOCAL_BASICOCSTRSTREAM(wchar_t, _NAME, _COUNT)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-using BasicIStream = std::basic_istream<char, std::char_traits<char> >;
-using BasicWIStream = std::basic_istream<wchar_t, std::char_traits<wchar_t> >;
+INSTANTIATE_CLASS_TYPEDEF(IStream,   std::basic_istream<char, std::char_traits<char> >);
+INSTANTIATE_CLASS_TYPEDEF(WIStream,  std::basic_istream<wchar_t, std::char_traits<wchar_t> >);
 //----------------------------------------------------------------------------
-using BasicOStream = std::basic_ostream<char, std::char_traits<char> >;
-using BasicWOStream = std::basic_ostream<wchar_t, std::char_traits<wchar_t> >;
+INSTANTIATE_CLASS_TYPEDEF(OStream,   std::basic_ostream<char, std::char_traits<char> >);
+INSTANTIATE_CLASS_TYPEDEF(WOStream,  std::basic_ostream<wchar_t, std::char_traits<wchar_t> >);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-using IFStream = std::basic_ifstream<char, std::char_traits<char> >;
-using WIFStream = std::basic_ifstream<wchar_t, std::char_traits<wchar_t> >;
+typedef std::basic_ifstream<char, std::char_traits<char> > IFStream;
+typedef std::basic_ifstream<wchar_t, std::char_traits<wchar_t> > WIFStream;
 //----------------------------------------------------------------------------
-using OFStream = std::basic_ofstream<char, std::char_traits<char> >;
-using WOFStream = std::basic_ofstream<wchar_t, std::char_traits<wchar_t> >;
+typedef std::basic_ofstream<char, std::char_traits<char> > OFStream;
+typedef std::basic_ofstream<wchar_t, std::char_traits<wchar_t> > WOFStream;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -60,6 +61,7 @@ public:
     std::streamsize capacity() const { return _capacity; }
     std::streamsize size() const { return parent_type::pptr() - _storage; }
 
+    void ForceEOS();
     void PutEOS();
     void RemoveEOS();
     void Reset();
@@ -76,8 +78,8 @@ void swap(BasicOCStrStreamBuffer<_Char, _Traits>& lhs, BasicOCStrStreamBuffer<_C
     lhs.swap(rhs);
 }
 //----------------------------------------------------------------------------
-using OCStrStreamBuffer = BasicOCStrStreamBuffer<char, std::char_traits<char> >;
-using WOCStrStreamBuffer = BasicOCStrStreamBuffer<wchar_t, std::char_traits<wchar_t> >;
+INSTANTIATE_CLASS_TYPEDEF(OCStrStreamBuffer,    BasicOCStrStreamBuffer<char, std::char_traits<char> >);
+INSTANTIATE_CLASS_TYPEDEF(WOCStrStreamBuffer,   BasicOCStrStreamBuffer<wchar_t, std::char_traits<wchar_t> >);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -112,6 +114,7 @@ public:
     const _Char *Pointer() const { return _buffer.storage(); }
     size_t SizeInBytes() const { return checked_cast<size_t>(_buffer.size() * sizeof(_Char)); }
 
+    void ForceEOS();
     void PutEOS();
     void RemoveEOS();
     void Reset();
@@ -130,8 +133,8 @@ void swap(BasicOCStrStream<_Char, _Traits>& lhs, BasicOCStrStream<_Char, _Traits
     lhs.swap(rhs);
 }
 //----------------------------------------------------------------------------
-using OCStrStream = BasicOCStrStream<char, std::char_traits<char> >;
-using WOCStrStream = BasicOCStrStream<wchar_t, std::char_traits<wchar_t> >;
+INSTANTIATE_CLASS_TYPEDEF(OCStrStream,  BasicOCStrStream<char, std::char_traits<char> >);
+INSTANTIATE_CLASS_TYPEDEF(WOCStrStream, BasicOCStrStream<wchar_t, std::char_traits<wchar_t> >);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -140,17 +143,17 @@ using BasicIStringStream = std::basic_istringstream<_Char, _Traits, _Allocator>;
 template <typename _Char, typename _Allocator = ALLOCATOR(String, _Char), typename _Traits = std::char_traits<_Char> >
 using BasicOStringStream = std::basic_ostringstream<_Char, _Traits, _Allocator>;
 //----------------------------------------------------------------------------
-using IStringStream = BasicIStringStream<char>;
-using WIStringStream = BasicIStringStream<wchar_t>;
+INSTANTIATE_CLASS_TYPEDEF(IStringStream,    BasicIStringStream<char>);
+INSTANTIATE_CLASS_TYPEDEF(WIStringStream,   BasicIStringStream<wchar_t>);
 //----------------------------------------------------------------------------
-using OStringStream = BasicOStringStream<char>;
-using WOStringStream = BasicOStringStream<wchar_t>;
+INSTANTIATE_CLASS_TYPEDEF(OStringStream,    BasicOStringStream<char>);
+INSTANTIATE_CLASS_TYPEDEF(WOStringStream,   BasicOStringStream<wchar_t>);
 //----------------------------------------------------------------------------
-using ThreadLocalIStringStream = BasicIStringStream<char, THREAD_LOCAL_ALLOCATOR(String, char)>;
-using ThreadLocalWIStringStream = BasicIStringStream<wchar_t, THREAD_LOCAL_ALLOCATOR(String, wchar_t)>;
+INSTANTIATE_CLASS_TYPEDEF(ThreadLocalIStringStream,     BasicIStringStream<char, THREAD_LOCAL_ALLOCATOR(String, char)>);
+INSTANTIATE_CLASS_TYPEDEF(ThreadLocalWIStringStream,    BasicIStringStream<wchar_t, THREAD_LOCAL_ALLOCATOR(String, wchar_t)>);
 //----------------------------------------------------------------------------
-using ThreadLocalOStringStream = BasicOStringStream<char, THREAD_LOCAL_ALLOCATOR(String, char)>;
-using ThreadLocalWOStringStream = BasicOStringStream<wchar_t, THREAD_LOCAL_ALLOCATOR(String, wchar_t)>;
+INSTANTIATE_CLASS_TYPEDEF(ThreadLocalOStringStream,     BasicOStringStream<char, THREAD_LOCAL_ALLOCATOR(String, char)>);
+INSTANTIATE_CLASS_TYPEDEF(ThreadLocalWOStringStream,    BasicOStringStream<wchar_t, THREAD_LOCAL_ALLOCATOR(String, wchar_t)>);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

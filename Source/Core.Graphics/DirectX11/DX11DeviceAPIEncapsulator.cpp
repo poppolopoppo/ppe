@@ -57,12 +57,14 @@ const DX11DeviceWrapper *DX11GetDeviceWrapper(const IDeviceAPIEncapsulator *devi
 //----------------------------------------------------------------------------
 DX11DeviceAPIEncapsulator::DX11DeviceAPIEncapsulator(DeviceEncapsulator *owner, void *windowHandle, const PresentationParameters& pp)
 :   AbstractDeviceAPIEncapsulator(DeviceAPI::DirectX11, owner, pp) {
+
     _wrapper.Create(this, windowHandle, Parameters());
     _writer = new DX11ConstantWriter(this);
 }
 //----------------------------------------------------------------------------
 DX11DeviceAPIEncapsulator::~DX11DeviceAPIEncapsulator() {
     _writer = nullptr;
+
     _wrapper.Destroy(this);
 }
 //----------------------------------------------------------------------------
@@ -106,7 +108,7 @@ void DX11DeviceAPIEncapsulator::SetViewport(const ViewportF& viewport) {
 //----------------------------------------------------------------------------
 void DX11DeviceAPIEncapsulator::SetViewports(const MemoryView<const ViewportF>& viewports) {
     const UINT dx11NumViews = checked_cast<UINT>(viewports.size());
-    const auto dx11Viewports = MALLOCA_VIEW(::D3D11_VIEWPORT, viewports.size());
+    STACKLOCAL_POD_ARRAY(::D3D11_VIEWPORT, dx11Viewports, viewports.size());
 
     for (size_t i = 0; i < dx11NumViews; ++i) {
         const ViewportF& viewport = viewports[i];
@@ -331,8 +333,8 @@ void DX11DeviceAPIEncapsulator::SetVertexBuffer(const VertexBuffer *vertexBuffer
 void DX11DeviceAPIEncapsulator::SetVertexBuffer(const MemoryView<const VertexBufferBinding>& bindings) {
     const size_t k = bindings.size();
 
-    const auto dx11Buffers = MALLOCA_VIEW(::ID3D11Buffer *, k);
-    const auto strideAndOffset = MALLOCA_VIEW(UINT, k*2);
+    STACKLOCAL_POD_ARRAY(::ID3D11Buffer*, dx11Buffers, k);
+    STACKLOCAL_POD_ARRAY(UINT, strideAndOffset, k*2);
 
     for (size_t i = 0; i < k; ++i) {
         const VertexBufferBinding& binding = bindings[i];
@@ -442,32 +444,12 @@ void DX11DeviceAPIEncapsulator::DestroyConstantBuffer(ConstantBuffer * /* consta
     RemoveRef_AssertReachZero(entity);
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantShaderProgram *DX11DeviceAPIEncapsulator::CreateShaderProgram(
-    ShaderProgram *program,
-    const char *entryPoint,
-    ShaderCompilerFlags flags,
-    const ShaderSource *source,
-    const VertexDeclaration *vertexDeclaration) {
-    return new DX11ShaderProgram(this, program,  entryPoint, flags, source, vertexDeclaration);
+DeviceAPIDependantShaderProgram* DX11DeviceAPIEncapsulator::CreateShaderProgram(ShaderProgram* program) {
+    return new DX11ShaderProgram(this, program);
 }
 //----------------------------------------------------------------------------
-void DX11DeviceAPIEncapsulator::DestroyShaderProgram(ShaderProgram * /* program */, PDeviceAPIDependantShaderProgram& entity) {
+void DX11DeviceAPIEncapsulator::DestroyShaderProgram(ShaderProgram* /* program */, PDeviceAPIDependantShaderProgram& entity) {
     RemoveRef_AssertReachZero(entity);
-}
-//----------------------------------------------------------------------------
-void DX11DeviceAPIEncapsulator::PreprocessShaderProgram(
-    RAWSTORAGE(Shader, char)& output,
-    const ShaderProgram *program,
-    const ShaderSource *source,
-    const VertexDeclaration *vertexDeclaration) {
-    DX11ShaderProgram::Preprocess(this, output, program, source, vertexDeclaration);
-}
-//----------------------------------------------------------------------------
-void DX11DeviceAPIEncapsulator::ReflectShaderProgram(
-    ASSOCIATIVE_VECTOR(Shader, BindName, PCConstantBufferLayout)& constants,
-    VECTOR(Shader, ShaderProgramTexture)& textures,
-    const ShaderProgram *program) {
-    DX11ShaderProgram::Reflect(this, constants, textures, program);
 }
 //----------------------------------------------------------------------------
 DeviceAPIDependantShaderEffect *DX11DeviceAPIEncapsulator::CreateShaderEffect(ShaderEffect *effect) {
@@ -661,7 +643,7 @@ void DX11DeviceAPIEncapsulator::SetRenderTarget(const RenderTarget *renderTarget
 void DX11DeviceAPIEncapsulator::SetRenderTargets(const MemoryView<const RenderTargetBinding>& bindings, const DepthStencil *depthStencil) {
     ::ID3D11DeviceContext *const context = _wrapper.ImmediateContext();
 
-    const auto dx11RenderTargets = MALLOCA_VIEW(::ID3D11RenderTargetView *, bindings.size());
+    STACKLOCAL_POD_ARRAY(::ID3D11RenderTargetView*, dx11RenderTargets, bindings.size());
     ::SecureZeroMemory(dx11RenderTargets.Pointer(), dx11RenderTargets.SizeInBytes());
 
     for (const RenderTargetBinding& binding : bindings) {

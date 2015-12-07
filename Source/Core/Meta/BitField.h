@@ -21,7 +21,7 @@ struct BitField {
         End = _Index + _Count,
         MaxValue = ((T(1) << _Count) - 1),
         Mask = (MaxValue << _Index),
-        NotMask = ~T(Mask),
+        NotMask = T(~T(Mask)),
     };
 
     FORCE_INLINE static T Clear(T value) { return (value & NotMask); }
@@ -78,7 +78,7 @@ struct BitField<T, _Index, 1> {
         End = _Index + 1,
         MaxValue = 1,
         Mask = (MaxValue << _Index),
-        NotMask = ~T(Mask),
+        NotMask = T(~T(Mask)),
     };
 
     FORCE_INLINE static T Clear(T value) { return (value & NotMask); }

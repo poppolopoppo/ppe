@@ -12,7 +12,10 @@
 #include "Core/IO/FS/Filename.h"
 #include "Core/IO/FS/MountingPoint.h"
 
+#include "Core/Allocator/PoolAllocatorTag.h"
+
 namespace Core {
+POOLTAG_DECL(FileSystem);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -1,11 +1,15 @@
 #pragma once
 
-#include "Core/Core.h"
+#include "Core.RTTI/RTTI.h"
 
+#include "Core/Allocator/PoolAllocatorTag.h"
 #include "Core/Memory/RefPtr.h"
+
+#include "Core.RTTI/MetaObjectHelpers.h"
 
 namespace Core {
 namespace RTTI {
+POOLTAG_DECL(RTTI);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -15,6 +19,8 @@ class MetaTypedAtom;
 class IMetaAtomPair;
 class IMetaAtomVector;
 class IMetaAtomDictionary;
+class IMetaAtomVisitor;
+class IMetaAtomConstVisitor;
 //----------------------------------------------------------------------------
 class MetaClass;
 class MetaClassHashMap;
@@ -36,10 +42,10 @@ struct MetaTypePromote;
 template <typename T>
 struct MetaTypeTraits;
 class IMetaTypeVirtualTraits;
-class MetaTypeScalarTraits;
-class MetaTypePairTraits;
-class MetaTypeVectorTraits;
-class MetaTypeDictionaryTraits;
+class AbstractMetaTypeScalarTraits;
+class AbstractMetaTypePairTraits;
+class AbstractMetaTypeVectorTraits;
+class AbstractMetaTypeDictionaryTraits;
 //----------------------------------------------------------------------------
 FWD_REFPTR(MetaTransaction);
 //----------------------------------------------------------------------------

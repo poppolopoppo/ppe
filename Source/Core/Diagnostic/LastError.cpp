@@ -35,7 +35,7 @@ LastErrorException::LastErrorException()
 :   LastErrorException(GetLastError()) {}
 //----------------------------------------------------------------------------
 LastErrorException::LastErrorException(long errorCode)
-:   std::exception(GetLastErrorToString(errorCode).c_str())
+:   Exception(GetLastErrorToString(errorCode).c_str())
 ,   _errorCode(errorCode) {}
 //----------------------------------------------------------------------------
 LastErrorException::~LastErrorException() {}

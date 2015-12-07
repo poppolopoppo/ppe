@@ -30,7 +30,8 @@
 
 .MSVC2013BasePath =
 [
-    .LocalisationUID    = '1033' ; code zone pour le language (messages std FR)
+    .LocalisationUID    = '$VS120CLUID$' ; code zone pour le language (messages std FR)
+    Print( "Using Visual 2013 with localisation uid $LocalisationUID$" )
     .VSBasePath         = '$VS120COMNTOOLS$..\..'
     .WindowsSDKBasePath = 'C:\Program Files (x86)\Windows Kits\8.1'
     .WindowsSDKVersion  = 'winv6.3'
@@ -155,7 +156,7 @@ Compiler( 'Compiler-MSVC2013-x64_x86' )
         '$VSBasePath$/VC/Include',
         '$WindowsSDKBasePath$/Include/um',
         '$WindowsSDKBasePath$/Include/shared',
-        '$WindowsSDKBasePath$/Include',
+        '$DirectXSDKBasePath$/Include',
     }
 ]
 
@@ -179,6 +180,7 @@ Compiler( 'Compiler-MSVC2013-x64_x86' )
     .Linker             = '$ToolsBasePath$/link.exe'
     .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/um/x86"'
                         + ' /LIBPATH:"$VSBasePath$/VC/lib"'
+                        + ' /LIBPATH:"$DirectXSDKBasePath$/Lib/x86"'
 ]
 .MSVC2013PlatformWin32 + .MSVCBasePlatformWin32
 
@@ -192,6 +194,7 @@ Compiler( 'Compiler-MSVC2013-x64_x86' )
     .Linker             = '$ToolsBasePath$/link.exe'
     .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/um/x64"'
                         + ' /LIBPATH:"$VSBasePath$/VC/lib/amd64"'
+                        + ' /LIBPATH:"$DirectXSDKBasePath$/Lib/x64"'
 ]
 .MSVC2013PlatformX64 + .MSVCBasePlatformX64
 

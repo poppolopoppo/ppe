@@ -92,7 +92,7 @@ void DX11Texture2D::CopySubPart(
     DX11Texture2DContent::CopySubPart(device, this, dstLevel, dstPos, psource, srcLevel, srcBox);
 }
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Graphics, DX11Texture2D, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, DX11Texture2D, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

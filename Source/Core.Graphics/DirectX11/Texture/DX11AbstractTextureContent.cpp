@@ -23,7 +23,7 @@ DX11AbstractTextureContent::DX11AbstractTextureContent(::ID3D11ShaderResourceVie
 :   _shaderView(shaderView) {}
 //----------------------------------------------------------------------------
 DX11AbstractTextureContent::~DX11AbstractTextureContent() {
-    if (_shaderView) 
+    if (_shaderView)
         ReleaseComRef(_shaderView);
 }
 //----------------------------------------------------------------------------
@@ -88,7 +88,7 @@ void DX11AbstractTextureContent::CreateTexture(
             AssertRelease(optionalData.SizeInBytes() == owner->SizeInBytes()); // <=> 0 == offset
             Assert(IS_ALIGNED(16, optionalData.Pointer()));
 
-            const auto initDatas = MALLOCA_VIEW(::D3D11_SUBRESOURCE_DATA, textureDesc.ArraySize * textureDesc.MipLevels);
+            STACKLOCAL_POD_ARRAY(::D3D11_SUBRESOURCE_DATA, initDatas, textureDesc.ArraySize * textureDesc.MipLevels);
 
             size_t dataOffset = 0;
             for (size_t face = 0; face < textureDesc.ArraySize; ++face) {

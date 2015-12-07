@@ -42,7 +42,7 @@ namespace {
 static MaterialEffect::TextureSlot TextureSlot_(const Graphics::BindName& name, bool isCubeMap) {
     Assert(!name.empty());
 
-    const char *cstr = name.cstr();
+    const char *cstr = name.c_str();
     Assert(cstr);
 
     static const char AnisotropicClamp[] = "uniAnisotropicClamp_";

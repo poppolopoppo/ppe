@@ -27,7 +27,7 @@ using MultiMap = std::multimap<_Key, _Value, _Predicate, _Allocator >;
     ::Core::MultiMap<_KEY, _VALUE, std::less<_KEY>, THREAD_LOCAL_NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, ::Core::Pair<_KEY COMMA _VALUE>) >
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Pred, typename _Allocator>
-size_t hash_value(const MultiMap<_Key, _Value, _Pred, _Allocator>& multiMap) {
+hash_t hash_value(const MultiMap<_Key, _Value, _Pred, _Allocator>& multiMap) {
     return hash_value_seq(multiMap.begin(), multiMap.end());
 }
 //----------------------------------------------------------------------------

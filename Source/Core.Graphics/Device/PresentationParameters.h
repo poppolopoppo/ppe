@@ -9,7 +9,7 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class SurfaceFormat;
+enum class SurfaceFormatType : u32;
 //----------------------------------------------------------------------------
 enum class PresentInterval {
     Immediate   = 0,
@@ -27,8 +27,8 @@ public:
     PresentationParameters(
         u32 backBufferWidth,
         u32 backBufferHeight,
-        const SurfaceFormat *backBufferFormat,
-        const SurfaceFormat *depthStencilFormat,
+        SurfaceFormatType backBufferFormat,
+        SurfaceFormatType depthStencilFormat,
         bool fullscreen,
         bool tripleBuffer,
         u32 multiSampleCount,
@@ -37,8 +37,8 @@ public:
     PresentationParameters(
         u32 backBufferWidth,
         u32 backBufferHeight,
-        const SurfaceFormat *backBufferFormat,
-        const SurfaceFormat *depthStencilFormat,
+        SurfaceFormatType backBufferFormat,
+        SurfaceFormatType depthStencilFormat,
         bool fullscreen,
         bool tripleBuffer,
         u32 multiSampleCount,
@@ -50,8 +50,8 @@ public:
     u32 BackBufferWidth() const { return _backBufferWidth; }
     u32 BackBufferHeight() const { return _backBufferHeight; }
 
-    const SurfaceFormat *BackBufferFormat() const { return _backBufferFormat; }
-    const SurfaceFormat *DepthStencilFormat() const { return _depthStencilFormat; }
+    SurfaceFormatType BackBufferFormat() const { return _backBufferFormat; }
+    SurfaceFormatType DepthStencilFormat() const { return _depthStencilFormat; }
 
     bool FullScreen() const;
     bool TripleBuffer() const;
@@ -65,8 +65,8 @@ private:
     u32 _backBufferWidth;
     u32 _backBufferHeight;
 
-    const SurfaceFormat *_backBufferFormat;
-    const SurfaceFormat *_depthStencilFormat;
+    SurfaceFormatType _backBufferFormat;
+    SurfaceFormatType _depthStencilFormat;
 
     u32 _data; // fullscreen + present + multisample
 

@@ -27,33 +27,33 @@ public:
     template <typename U>
     ScalarRectangle& operator =(const ScalarRectangle<U, _Dim>& other);
 
-    T Left() const { return aabb_type::Min().get<0>(); }
-    T Right() const { return aabb_type::Max().get<0>(); }
+    T Left()    const { return aabb_type::Min().x(); }
+    T Right()   const { return aabb_type::Max().x(); }
 
-    T Top() const { return aabb_type::Min().get<1>(); }
-    T Bottom() const { return aabb_type::Max().get<1>(); }
+    T Top()     const { return aabb_type::Min().y(); }
+    T Bottom()  const { return aabb_type::Max().y(); }
 
-    T Near() const { return aabb_type::Min().get<2>(); }
-    T Far() const { return aabb_type::Max().get<2>(); }
+    T Near()    const { return aabb_type::Min().z(); }
+    T Far()     const { return aabb_type::Max().z(); }
 
-    T Width() const { return Right() - Left(); }
-    T Height() const { return Bottom() - Top(); }
-    T Depth() const { return Far() - Near(); }
+    T Width()   const { return Right() - Left(); }
+    T Height()  const { return Bottom() - Top(); }
+    T Depth()   const { return Far() - Near(); }
 
     float AspectRatio() const { return float(Width()) / Height(); }
 
-    void SetLeft(T value) { aabb_type::Min().get<0>() = value; }
-    void SetRight(T value) { aabb_type::Max().get<0>() = value; }
+    void SetLeft(T value) { aabb_type::Min().x() = value; }
+    void SetRight(T value) { aabb_type::Max().x() = value; }
 
-    void SetTop(T value) { aabb_type::Min().get<1>() = value; }
-    void SetBottom(T value) { aabb_type::Max().get<1>() = value; }
+    void SetTop(T value) { aabb_type::Min().y() = value; }
+    void SetBottom(T value) { aabb_type::Max().y() = value; }
 
-    void SetNear(T value) { aabb_type::Min().get<2>() = value; }
-    void SetFar(T value) { aabb_type::Max().get<2>() = value; }
+    void SetNear(T value) { aabb_type::Min().z() = value; }
+    void SetFar(T value) { aabb_type::Max().z() = value; }
 
-    void SetWidth(T value) { Assert(value >= 0); aabb_type::Max().get<0>() = aabb_type::Min().get<0>() + value; }
-    void SetHeight(T value) { Assert(value >= 0); aabb_type::Max().get<1>() = aabb_type::Min().get<1>() + value; }
-    void SetDepth(T value) { Assert(value >= 0); aabb_type::Max().get<2>() = aabb_type::Min().get<2>() + value; }
+    void SetWidth(T value) { Assert(value >= 0); aabb_type::Max().x() = aabb_type::Min().x() + value; }
+    void SetHeight(T value) { Assert(value >= 0); aabb_type::Max().y() = aabb_type::Min().y() + value; }
+    void SetDepth(T value) { Assert(value >= 0); aabb_type::Max().z() = aabb_type::Min().z() + value; }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

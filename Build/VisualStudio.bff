@@ -10,7 +10,7 @@
     .Config     = 'Dummy'
 ]
 
-.VisualStudioOutputDirectory        = '^$(SolutionDir)\Output\Bin'
+.VisualStudioOutputDirectory        = '^$(SolutionDir)\Output\Binary'
 .VisualStudioIntermediateDirectory  = '^$(SolutionDir)\Output\Intermediate\^$(Platform)\^$(Configuration)\^$(ProjectName)'
 
 .VisualStudioFBuildCommand          = 'cd "^$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs $VSBuildOptions$'

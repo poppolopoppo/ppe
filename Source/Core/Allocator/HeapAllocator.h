@@ -40,11 +40,14 @@ public:
     pointer allocate(size_type n, const void* /*hint*/) { return allocate(n); }
     void deallocate(void* p, size_type );
 
+    // see AllocatorRealloc()
+    void* rellocate(void* p, size_type newSize, size_type oldSize);
+
     template <typename U>
     friend bool operator ==(const HeapAllocator&/* lhs */, const HeapAllocator<U, _HeapSingleton>&/* rhs */) {
         return true;
     }
-    
+
     template <typename U>
     friend bool operator !=(const HeapAllocator& lhs, const HeapAllocator<U, _HeapSingleton>& rhs) {
         return !operator ==(lhs, rhs);
@@ -81,11 +84,25 @@ auto HeapAllocator<T, _HeapSingleton>::allocate(size_type n) -> pointer {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _HeapSingleton >
-void HeapAllocator<T, _HeapSingleton>::deallocate(void* p, size_type) {
+void HeapAllocator<T, _HeapSingleton>::deallocate(void* p, size_type n) {
     enum { Alignment = std::alignment_of<T>::value };
+    UNUSED(n);
 
     // HeapAllocator wraps Heap.
     HeapInstance().free<Alignment>(p);
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _HeapSingleton >
+void* HeapAllocator<T, _HeapSingleton>::rellocate(void* p, size_type newSize, size_type oldSize) {
+    enum { Alignment = std::alignment_of<T>::value };
+    UNUSED(oldSize);
+
+    // HeapAllocator wraps Heap.
+    void* const newp = HeapInstance().realloc<Alignment>(p, newSize);
+    if (nullptr == newp && newSize)
+        throw std::bad_alloc();
+
+    return static_cast<T*>(newp);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

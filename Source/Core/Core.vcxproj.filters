@@ -22,6 +22,9 @@
     <CustomBuild Include="Allocator\BuddyHeap.h">
       <Filter>Allocator</Filter>
     </CustomBuild>
+    <CustomBuild Include="Allocator\Heap-inl.h">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
     <CustomBuild Include="Allocator\Heap.cpp">
       <Filter>Allocator</Filter>
     </CustomBuild>
@@ -49,6 +52,9 @@
     <CustomBuild Include="Allocator\New.h">
       <Filter>Allocator</Filter>
     </CustomBuild>
+    <CustomBuild Include="Allocator\NodeBasedContainerAllocator.cpp">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
     <CustomBuild Include="Allocator\NodeBasedContainerAllocator.h">
       <Filter>Allocator</Filter>
     </CustomBuild>
@@ -58,13 +64,16 @@
     <CustomBuild Include="Allocator\PoolAllocator.h">
       <Filter>Allocator</Filter>
     </CustomBuild>
+    <CustomBuild Include="Allocator\PoolAllocatorTag-impl.h">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Allocator\PoolAllocatorTag.cpp">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
     <CustomBuild Include="Allocator\PoolAllocatorTag.h">
       <Filter>Allocator</Filter>
     </CustomBuild>
     <CustomBuild Include="Allocator\SingletonPoolAllocator.h">
-      <Filter>Allocator</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Allocator\StackAllocator.h">
       <Filter>Allocator</Filter>
     </CustomBuild>
     <CustomBuild Include="Allocator\ThreadLocalAllocator.h">
@@ -97,6 +106,15 @@
     <CustomBuild Include="Container\AssociativeVector.h">
       <Filter>Container</Filter>
     </CustomBuild>
+    <CustomBuild Include="Container\BitSet.cpp">
+      <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Container\BitSet.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Container\Deque.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
     <CustomBuild Include="Container\Hash-inl.h">
       <Filter>Container</Filter>
     </CustomBuild>
@@ -113,6 +131,9 @@
       <Filter>Container</Filter>
     </CustomBuild>
     <CustomBuild Include="Container\HashSet.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Container\IntrusiveList.h">
       <Filter>Container</Filter>
     </CustomBuild>
     <CustomBuild Include="Container\List.h">
@@ -134,6 +155,12 @@
       <Filter>Container</Filter>
     </CustomBuild>
     <CustomBuild Include="Container\RingBuffer.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Container\Stack.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Container\StringHashMap.h">
       <Filter>Container</Filter>
     </CustomBuild>
     <CustomBuild Include="Container\Token-inl.h">
@@ -169,12 +196,6 @@
     <CustomBuild Include="Diagnostic\CrtDebug.h">
       <Filter>Diagnostic</Filter>
     </CustomBuild>
-    <CustomBuild Include="Diagnostic\CurrentProcess.cpp">
-      <Filter>Diagnostic</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Diagnostic\CurrentProcess.h">
-      <Filter>Diagnostic</Filter>
-    </CustomBuild>
     <CustomBuild Include="Diagnostic\DecodedCallstack.cpp">
       <Filter>Diagnostic</Filter>
     </CustomBuild>
@@ -185,6 +206,12 @@
       <Filter>Diagnostic</Filter>
     </CustomBuild>
     <CustomBuild Include="Diagnostic\DialogBox.h">
+      <Filter>Diagnostic</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Diagnostic\Exception.cpp">
+      <Filter>Diagnostic</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Diagnostic\Exception.h">
       <Filter>Diagnostic</Filter>
     </CustomBuild>
     <CustomBuild Include="Diagnostic\LastError.cpp">
@@ -200,6 +227,12 @@
       <Filter>Diagnostic</Filter>
     </CustomBuild>
     <CustomBuild Include="Diagnostic\Logger.h">
+      <Filter>Diagnostic</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Diagnostic\MiniDump.cpp">
+      <Filter>Diagnostic</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Diagnostic\MiniDump.h">
       <Filter>Diagnostic</Filter>
     </CustomBuild>
     <CustomBuild Include="IO\FS\Basename.cpp">
@@ -236,6 +269,12 @@
       <Filter>IO\FS</Filter>
     </CustomBuild>
     <CustomBuild Include="IO\FS\Filename.h">
+      <Filter>IO\FS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\FS\FileStat.cpp">
+      <Filter>IO\FS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\FS\FileStat.h">
       <Filter>IO\FS</Filter>
     </CustomBuild>
     <CustomBuild Include="IO\FS\FileSystemProperties.cpp">
@@ -289,12 +328,6 @@
     <CustomBuild Include="IO\VFS\VirtualFileSystemPolicies.h">
       <Filter>IO\VFS</Filter>
     </CustomBuild>
-    <CustomBuild Include="IO\VFS\VirtualFileSystemStream-inl.h">
-      <Filter>IO\VFS</Filter>
-    </CustomBuild>
-    <CustomBuild Include="IO\VFS\VirtualFileSystemStream.cpp">
-      <Filter>IO\VFS</Filter>
-    </CustomBuild>
     <CustomBuild Include="IO\VFS\VirtualFileSystemStream.h">
       <Filter>IO\VFS</Filter>
     </CustomBuild>
@@ -303,12 +336,6 @@
     </CustomBuild>
     <CustomBuild Include="IO\VFS\VirtualFileSystemTrie.h">
       <Filter>IO\VFS</Filter>
-    </CustomBuild>
-    <CustomBuild Include="IO\CRC64.cpp">
-      <Filter>IO</Filter>
-    </CustomBuild>
-    <CustomBuild Include="IO\CRC64.h">
-      <Filter>IO</Filter>
     </CustomBuild>
     <CustomBuild Include="IO\FileSystem.cpp">
       <Filter>IO</Filter>
@@ -340,13 +367,31 @@
     <CustomBuild Include="IO\FormatHelpers.h">
       <Filter>IO</Filter>
     </CustomBuild>
+    <CustomBuild Include="IO\LZJB.cpp">
+      <Filter>IO</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\LZJB.h">
+      <Filter>IO</Filter>
+    </CustomBuild>
     <CustomBuild Include="IO\regexp.h">
+      <Filter>IO</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\SimpleFileVerification.h">
       <Filter>IO</Filter>
     </CustomBuild>
     <CustomBuild Include="IO\Stream-inl.h">
       <Filter>IO</Filter>
     </CustomBuild>
     <CustomBuild Include="IO\Stream.h">
+      <Filter>IO</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\StreamProvider-inl.h">
+      <Filter>IO</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\StreamProvider.cpp">
+      <Filter>IO</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\StreamProvider.h">
       <Filter>IO</Filter>
     </CustomBuild>
     <CustomBuild Include="IO\String-inl.h">
@@ -358,7 +403,7 @@
     <CustomBuild Include="IO\String.h">
       <Filter>IO</Filter>
     </CustomBuild>
-    <CustomBuild Include="IO\StringSlice-inl.h">
+    <CustomBuild Include="IO\StringSlice.cpp">
       <Filter>IO</Filter>
     </CustomBuild>
     <CustomBuild Include="IO\StringSlice.h">
@@ -565,6 +610,9 @@
     <CustomBuild Include="Maths\MathHelpers.h">
       <Filter>Maths</Filter>
     </CustomBuild>
+    <CustomBuild Include="Maths\Maths.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
     <CustomBuild Include="Maths\RandomGenerator-inl.h">
       <Filter>Maths</Filter>
     </CustomBuild>
@@ -589,16 +637,28 @@
     <CustomBuild Include="Memory\AlignedStorage.h">
       <Filter>Memory</Filter>
     </CustomBuild>
-    <CustomBuild Include="Memory\BitSet.cpp">
-      <Filter>Memory</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Memory\BitSet.h">
-      <Filter>Memory</Filter>
-    </CustomBuild>
     <CustomBuild Include="Memory\ComPtr-inl.h">
       <Filter>Memory</Filter>
     </CustomBuild>
     <CustomBuild Include="Memory\ComPtr.h">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\farmhash-inl.h">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\farmhash.cpp">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\farmhash.h">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\HashFunctions-inl.h">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\HashFunctions.cpp">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\HashFunctions.h">
       <Filter>Memory</Filter>
     </CustomBuild>
     <CustomBuild Include="Memory\MemoryDomain.cpp">
@@ -619,9 +679,6 @@
     <CustomBuild Include="Memory\MemoryPool.h">
       <Filter>Memory</Filter>
     </CustomBuild>
-    <CustomBuild Include="Memory\MemoryStack.h">
-      <Filter>Memory</Filter>
-    </CustomBuild>
     <CustomBuild Include="Memory\MemoryStream.h">
       <Filter>Memory</Filter>
     </CustomBuild>
@@ -632,6 +689,12 @@
       <Filter>Memory</Filter>
     </CustomBuild>
     <CustomBuild Include="Memory\MemoryView.h">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\MemoryViewReader.cpp">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\MemoryViewReader.h">
       <Filter>Memory</Filter>
     </CustomBuild>
     <CustomBuild Include="Memory\RefPtr-inl.h">
@@ -662,6 +725,9 @@
       <Filter>Memory</Filter>
     </CustomBuild>
     <CustomBuild Include="Meta\Activator.h">
+      <Filter>Meta</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Meta\Aliases.h">
       <Filter>Meta</Filter>
     </CustomBuild>
     <CustomBuild Include="Meta\Alignment.h">
@@ -706,10 +772,7 @@
     <CustomBuild Include="Meta\ForRange.h">
       <Filter>Meta</Filter>
     </CustomBuild>
-    <CustomBuild Include="Meta\Guid.cpp">
-      <Filter>Meta</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Meta\Guid.h">
+    <CustomBuild Include="Meta\Hash_fwd.h">
       <Filter>Meta</Filter>
     </CustomBuild>
     <CustomBuild Include="Meta\NumericLimits.cpp">
@@ -742,6 +805,45 @@
     <CustomBuild Include="Meta\TypeTraits.h">
       <Filter>Meta</Filter>
     </CustomBuild>
+    <CustomBuild Include="Misc\CRC.cpp">
+      <Filter>Misc</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Misc\CRC.h">
+      <Filter>Misc</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Misc\CurrentProcess.cpp">
+      <Filter>Misc</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Misc\CurrentProcess.h">
+      <Filter>Misc</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Misc\farmhash.cc">
+      <Filter>Misc</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Misc\farmhash.h">
+      <Filter>Misc</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Misc\FourCC.h">
+      <Filter>Misc</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Misc\Guid.cpp">
+      <Filter>Misc</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Misc\Guid.h">
+      <Filter>Misc</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Misc\MurmurHash3.cpp">
+      <Filter>Misc</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Misc\MurmurHash3.h">
+      <Filter>Misc</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Misc\PMurHash.cpp">
+      <Filter>Misc</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Misc\PMurHash.h">
+      <Filter>Misc</Filter>
+    </CustomBuild>
     <CustomBuild Include="Thread\Task\Task.h">
       <Filter>Thread\Task</Filter>
     </CustomBuild>
@@ -754,6 +856,9 @@
     <CustomBuild Include="Thread\Task\TaskPriorityQueue.h">
       <Filter>Thread\Task</Filter>
     </CustomBuild>
+    <CustomBuild Include="Thread\AtomicSpinLock.h">
+      <Filter>Thread</Filter>
+    </CustomBuild>
     <CustomBuild Include="Thread\ConcurrentQueue-inl.h">
       <Filter>Thread</Filter>
     </CustomBuild>
@@ -764,6 +869,9 @@
       <Filter>Thread</Filter>
     </CustomBuild>
     <CustomBuild Include="Thread\Fiber.h">
+      <Filter>Thread</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Thread\Future.h">
       <Filter>Thread</Filter>
     </CustomBuild>
     <CustomBuild Include="Thread\MPMCBoundedQueue.h">
@@ -778,20 +886,17 @@
     <CustomBuild Include="Thread\ThreadContext.h">
       <Filter>Thread</Filter>
     </CustomBuild>
-    <CustomBuild Include="Thread\ThreadLocalSingleton.h">
-      <Filter>Thread</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Thread\ThreadLocalStorage.cpp">
-      <Filter>Thread</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Thread\ThreadLocalStorage.h">
-      <Filter>Thread</Filter>
-    </CustomBuild>
     <CustomBuild Include="Thread\ThreadPool.cpp">
       <Filter>Thread</Filter>
     </CustomBuild>
     <CustomBuild Include="Thread\ThreadPool.h">
       <Filter>Thread</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Time\DateTime.cpp">
+      <Filter>Time</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Time\DateTime.h">
+      <Filter>Time</Filter>
     </CustomBuild>
     <CustomBuild Include="Time\ProcessTime.cpp">
       <Filter>Time</Filter>
@@ -815,6 +920,12 @@
       <Filter>Time</Filter>
     </CustomBuild>
     <CustomBuild Include="Time\Timepoint.h">
+      <Filter>Time</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Time\Timestamp.cpp">
+      <Filter>Time</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Time\Timestamp.h">
       <Filter>Time</Filter>
     </CustomBuild>
     <CustomBuild Include="Core.bff">
@@ -898,6 +1009,11 @@
   <ItemGroup>
     <Filter Include="Meta">
       <UniqueIdentifier>{77c0bb0b-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Misc">
+      <UniqueIdentifier>{df95b584-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

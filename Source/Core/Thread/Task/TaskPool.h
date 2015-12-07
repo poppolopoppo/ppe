@@ -2,17 +2,31 @@
 
 #include "Core/Core.h"
 
+#include "Core/Allocator/PoolAllocatorTag.h"
+#include "Core/Diagnostic/Exception.h"
 #include "Core/Memory/MemoryView.h"
 #include "Core/Thread/Task/Task.h"
 
 #include <memory>
 
 namespace Core {
+POOLTAG_DECL(TaskPool);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class TaskCounter;
+class TaskPool;
 class TaskPoolImpl;
+//----------------------------------------------------------------------------
+class TaskException : public Exception {
+public:
+    TaskException(const char* what, const TaskPool* pool) : Exception(what), _pool(pool) {}
+
+    const TaskPool* Pool() const { return _pool; }
+
+private:
+    const TaskPool* _pool;
+};
 //----------------------------------------------------------------------------
 class TaskPool {
 public:

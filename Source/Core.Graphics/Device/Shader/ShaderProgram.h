@@ -4,73 +4,27 @@
 
 #include "Core.Graphics/Device/BindName.h"
 #include "Core.Graphics/Device/DeviceAPIDependantEntity.h"
-#include "Core.Graphics/Device/DeviceResource.h"
 #include "Core.Graphics/Device/DeviceResourceBuffer.h"
+#include "Core.Graphics/Device/Pool/DeviceResourceSharable.h"
 
-#include "Core/Container/AssociativeVector.h"
-#include "Core/Container/RawStorage.h"
-#include "Core/Meta/BitField.h"
+#include "Core.Graphics/Device/Shader/ShaderProfile.h"
 
 namespace Core {
 namespace Graphics {
-FWD_REFPTR(ConstantBufferLayout);
-class IDeviceAPIShaderCompiler;
 FWD_REFPTR(DeviceAPIDependantShaderProgram);
-class ShaderSource;
-class VertexDeclaration;
-
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-enum class ShaderCompilerFlags {
-    None        = 0,
-    Debug       = 1 << 0,
-    Optimize    = 1 << 1,
-    NoOptimize  = 1 << 2,
-    Pedantic    = 1 << 3,
-    WError      = 1 << 4,
-
-    Default = Optimize|Pedantic|WError,
-    DefaultForDebug = Debug|NoOptimize|Pedantic|WError,
-};
-//----------------------------------------------------------------------------
-void ShaderCompilerFlagsToCStr(char *cstr, size_t capacity, ShaderCompilerFlags flags);
-//----------------------------------------------------------------------------
-enum class ShaderProfileType {
-    ShaderModel5 = 0,
-    ShaderModel4_1,
-    ShaderModel4,
-    ShaderModel3,
-};
-//----------------------------------------------------------------------------
-const char *ShaderProfileTypeToCStr(ShaderProfileType profile);
-//----------------------------------------------------------------------------
-enum class ShaderProgramType {
-    Vertex = 0,
-    Hull,
-    Domain,
-    Pixel,
-    Geometry,
-    Compute,
-
-    __Count,
-};
-//----------------------------------------------------------------------------
-MemoryView<const ShaderProgramType> EachShaderProgramType();
-const char *ShaderProgramTypeToCStr(ShaderProgramType program);
-const char *ShaderProgramTypeToEntryPoint(ShaderProgramType program);
-//----------------------------------------------------------------------------
-struct ShaderProgramTexture {
-    Graphics::BindName Name;
-    bool IsCubeMap;
-};
+FWD_REFPTR(ShaderCompiled);
+FWD_REFPTR(VertexDeclaration);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(ShaderProgram);
-class ShaderProgram : public DeviceResource {
+class ShaderProgram : public DeviceResourceSharable {
 public:
-    ShaderProgram(ShaderProfileType profile, ShaderProgramType type);
+    ShaderProgram(  const Graphics::VertexDeclaration* vertexDeclaration,
+                    ShaderProgramType programType,
+                    ShaderProfileType profileType,
+                    const ShaderCompiled* compiled,
+                    bool sharable );
     virtual ~ShaderProgram();
 
     virtual bool Available() const override;
@@ -80,63 +34,52 @@ public:
         Assert(Frozen()); return _deviceAPIDependantProgram;
     }
 
-    ShaderProfileType ProfileType() const { return static_cast<ShaderProfileType>(bitprofile_type::Get(_data)); }
+    const Graphics::VertexDeclaration* VertexDeclaration() const { return _vertexDeclaration; }
+
     ShaderProgramType ProgramType() const { return static_cast<ShaderProgramType>(bitprogram_type::Get(_data)); }
+    ShaderProfileType ProfileType() const { return static_cast<ShaderProfileType>(bitprofile_type::Get(_data)); }
 
-    virtual void Create(    IDeviceAPIShaderCompiler *compiler,
-                            const char *entryPoint,
-                            ShaderCompilerFlags flags,
-                            const ShaderSource *source,
-                            const VertexDeclaration *vertexDeclaration);
+    const ShaderCompiled* Compiled() const { return _compiled; }
 
-    virtual void Destroy(   IDeviceAPIShaderCompiler *compiler);
+    virtual void Create(IDeviceAPIEncapsulator *device);
+    virtual void Destroy(IDeviceAPIEncapsulator *device);
 
-    void Preprocess(IDeviceAPIShaderCompiler *compiler,
-                    RAWSTORAGE(Shader, char)& output,
-                    const ShaderSource *source,
-                    const VertexDeclaration *vertexDeclaration) const;
-
-    void Reflect(   IDeviceAPIShaderCompiler *compiler,
-                    ASSOCIATIVE_VECTOR(Shader, BindName, PCConstantBufferLayout)& constants,
-                    VECTOR(Shader, ShaderProgramTexture)& textures ) const;
+protected:
+    virtual size_t VirtualSharedKeyHashValue() const override;
+    virtual bool VirtualMatchTerminalEntity(const DeviceAPIDependantEntity *entity) const override;
 
 private:
-    typedef Meta::Bit<size_t>::First<2>::type bitprofile_type;
-    typedef Meta::Bit<size_t>::After<bitprofile_type>::Remain::type bitprogram_type;
+    typedef Meta::Bit<size_t>::First<2>::type bitprogram_type;
+    typedef Meta::Bit<size_t>::After<bitprogram_type>::Remain::type bitprofile_type;
 
     size_t _data;
+    SCVertexDeclaration _vertexDeclaration;
     PDeviceAPIDependantShaderProgram _deviceAPIDependantProgram;
-};
-//----------------------------------------------------------------------------
-class ShaderProgramMetaData : public RefCountable {
+    SCShaderCompiled _compiled;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class DeviceAPIDependantShaderProgram : public TypedDeviceAPIDependantEntity<ShaderProgram> {
 public:
-    DeviceAPIDependantShaderProgram(
-        IDeviceAPIShaderCompiler *device,
-        const Graphics::ShaderProgram *resource,
-        const char *sourceName,
-        ShaderCompilerFlags flags,
-        const ShaderSource *source,
-        const VertexDeclaration *vertexDeclaration);
+    DeviceAPIDependantShaderProgram(IDeviceAPIEncapsulator *device, const ShaderProgram *resource);
     virtual ~DeviceAPIDependantShaderProgram();
 
-    virtual size_t ProgramHashCode() const = 0;
+    const Graphics::VertexDeclaration* VertexDeclaration() const { return _vertexDeclaration; }
+
+    ShaderProgramType ProgramType() const { return static_cast<ShaderProgramType>(bitprogram_type::Get(_data)); }
+    ShaderProfileType ProfileType() const { return static_cast<ShaderProfileType>(bitprofile_type::Get(_data)); }
+
+    const ShaderCompiled* Compiled() const { return _compiled; }
+
+private:
+    typedef Meta::Bit<size_t>::First<2>::type bitprogram_type;
+    typedef Meta::Bit<size_t>::After<bitprogram_type>::Remain::type bitprofile_type;
+
+    size_t _data;
+    SCShaderCompiled _compiled;
+    SCVertexDeclaration _vertexDeclaration;
 };
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-void CompileShaderProgram(
-    IDeviceAPIShaderCompiler *compiler,
-    ShaderProgram *program,
-    const char *entryPoint,
-    ShaderCompilerFlags flags,
-    const Filename& filename,
-    const VertexDeclaration *vertexDeclaration,
-    const MemoryView<const Pair<String, String>>& defines );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

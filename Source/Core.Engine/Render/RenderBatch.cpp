@@ -173,7 +173,7 @@ void RenderBatch::Render(Graphics::IDeviceAPIContext *context) {
         const RenderCommandCriteria& criteria = _criterias[i];
         Assert(criteria.Ready());
 
-        GRAPHICS_DIAGNOSTICS_BEGINEVENT(context->Diagnostics(), criteria.MaterialEffect()->Material()->Name().cstr());
+        GRAPHICS_DIAGNOSTICS_BEGINEVENT(context->Diagnostics(), criteria.MaterialEffect()->Material()->Name().c_str());
 
         if (!pred || pred->Effect != criteria.Effect) {
             GRAPHICS_DIAGNOSTICS_SETMARKER(context->Diagnostics(), criteria.Effect->ResourceName());
@@ -191,7 +191,7 @@ void RenderBatch::Render(Graphics::IDeviceAPIContext *context) {
         }
 
         if (!pred || pred->MaterialEffect() != criteria.MaterialEffect()) {
-            GRAPHICS_DIAGNOSTICS_SETMARKER(context->Diagnostics(), criteria.MaterialEffect()->Material()->Name().cstr());
+            GRAPHICS_DIAGNOSTICS_SETMARKER(context->Diagnostics(), criteria.MaterialEffect()->Material()->Name().c_str());
             criteria.MaterialEffect()->Set(context);
         }
 

@@ -39,13 +39,13 @@ void VertexDeclaration::AddTypedSubPart(T _Class:: *member, size_t index) {
     VertexSubPartKey key;
     key.Reset(static_cast<VertexSubPartFormat>(type_traits::Format), _Semantic, index);
 
-    const size_t offset = (size_t)&(reinterpret_cast<_Class *>(nullptr)->*member);
+    const size_t offset = (size_t)&(((_Class *)nullptr)->*member);
     Assert(0 == offset % sizeof(u32));
 
     Assert(!SubPartIFP<T>(key));
 
     // in place new the vtable
-    vertexsubpartentry_type *const subPartEntry = _subParts.Push(1);
+    vertexsubpartentry_type *const subPartEntry = _subParts.Allocate(1);
     subPartEntry->first = key;
     const VertexSubPart<T> *subPart = new (&subPartEntry->second) VertexSubPart<T>(offset);
 

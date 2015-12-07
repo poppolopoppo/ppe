@@ -55,7 +55,6 @@ public:
     class ScopeLock {
     public:
         ScopeLock(ThreadLock&) {}
-        ~ScopeLock() {}
     };
 
     ThreadLock() {}

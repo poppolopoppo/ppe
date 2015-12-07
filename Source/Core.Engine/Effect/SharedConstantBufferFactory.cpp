@@ -38,7 +38,7 @@ SharedConstantBuffer *SharedConstantBufferFactory::GetOrCreate(
     if (!buffer) {
         buffer = new SharedConstantBuffer(sharedKey);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
-        buffer->SetResourceName(name.cstr());
+        buffer->SetResourceName(name.c_str());
 #endif
         buffer->Freeze();
         buffer->Create(_device);

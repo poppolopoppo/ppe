@@ -28,12 +28,42 @@ struct IsATrackingAllocator< TrackingAllocator<_Allocator> > {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+namespace details {
+// See AllocatorRealloc()
+template <typename _Allocator, bool = allocator_has_realloc<_Allocator>::value >
+class fwd_realloc_tracking_semantic : public _Allocator {
+public:
+    using _Allocator::_Allocator;
+};
 template <typename _Allocator>
-class TrackingAllocator : public _Allocator {
+class fwd_realloc_tracking_semantic <_Allocator, true> : public _Allocator {
+public:
+    using _Allocator::_Allocator;
+    using typename _Allocator::size_type;
+    using typename _Allocator::value_type;
+    void* rellocate(void* p, size_type newSize, size_type oldSize) {
+        auto pself = static_cast<TrackingAllocator<_Allocator>* >(this);
+
+        if (p && pself->_trackingData)
+            pself->_trackingData->Deallocate(oldSize, sizeof(value_type));
+
+        void* const newp = _Allocator::rellocate(p, newSize, oldSize);
+
+        if (newp && pself->_trackingData)
+            pself->_trackingData->Allocate(newSize, sizeof(value_type));
+
+        return newp;
+    }
+};
+} //!details
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+class TrackingAllocator : public details::fwd_realloc_tracking_semantic<_Allocator> {
 public:
     STATIC_ASSERT(!Meta::IsATrackingAllocator< _Allocator >::value);
 
-    typedef _Allocator base_type;
+    friend class details::fwd_realloc_tracking_semantic<_Allocator>;
+    typedef details::fwd_realloc_tracking_semantic<_Allocator> base_type;
 
     using typename base_type::size_type;
     using typename base_type::difference_type;
@@ -44,8 +74,7 @@ public:
     using typename base_type::value_type;
 
     template<typename U>
-    struct rebind
-    {
+    struct rebind {
         typedef TrackingAllocator<typename base_type::template rebind<U>::other > other;
     };
 
@@ -75,7 +104,7 @@ public:
     void deallocate(void* p, size_type n);
 
     MemoryTrackingData* TrackingData() const { return _trackingData; }
-    
+
     template <typename U>
     friend bool operator ==(const TrackingAllocator& lhs, const TrackingAllocator<U>& rhs) {
         return  operator ==(static_cast<const base_type&>(lhs), static_cast<const typename TrackingAllocator<U>::base_type&>(rhs)) &&

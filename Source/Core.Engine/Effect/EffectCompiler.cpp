@@ -41,7 +41,7 @@ struct EffectCompilerKey {
     bool operator !=(const EffectCompilerKey& other) const { return !operator ==(other); }
 };
 //----------------------------------------------------------------------------
-size_t hash_value(const EffectCompilerKey& key) {
+hash_t hash_value(const EffectCompilerKey& key) {
     return key.HashValue;
 }
 //----------------------------------------------------------------------------

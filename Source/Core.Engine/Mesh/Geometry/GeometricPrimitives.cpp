@@ -44,7 +44,7 @@ void swap(Edge_& lhs, Edge_& rhs) {
     std::swap(reinterpret_cast<u64&>(lhs), reinterpret_cast<u64&>(rhs));
 }
 //----------------------------------------------------------------------------
-size_t hash_value(const Edge_& value) {
+hash_t hash_value(const Edge_& value) {
     return Core::hash_value(reinterpret_cast<const u64&>(value));
 }
 //----------------------------------------------------------------------------

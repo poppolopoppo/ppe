@@ -23,14 +23,14 @@ Unity( '$ProjectName$-Unity' )
     .UnityPCH = '$PCHName$.h'
     .UnityInputPath = '$ProjectPath$'
     .UnityOutputPath = '$UnityDirectory$\$ProjectName$'
-    .UnityInputPattern = '*.cpp|*.c'
+    .UnityInputPattern = '*.cpp' // TODO: { '*.cpp', '*.c' }
     .UnityInputExcludedFiles = .ProjectExcludedFiles
 }
 
 RemoveDir( '$ProjectName$-Unity-Purge' )
 {
-    .Paths          = '$UnityDirectory$\$ProjectName$'
-    .PathsPattern   = 'Unity*.cpp'
+    .RemovePaths          = '$UnityDirectory$\$ProjectName$'
+    .RemovePathsPattern   = 'Unity*.cpp'
 }
 
 .ProjectConfigs = { .VisualStudioDummyProjectConfig } ; TODO: à virer
@@ -51,10 +51,8 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         .Defines + .ProjectDefines
         ForEach( .define in .Defines )
         {
-            .CommandLineDefines + ' $CompilerDefineFlag$"$define$"'
-            Export( .CommandLineDefines )
-            .PreprocessorDefinitions + ';$define$'
-            Export( .PreprocessorDefinitions )
+            ^CommandLineDefines + ' $CompilerDefineFlag$"$define$"'
+            ^PreprocessorDefinitions + ';$define$'
         }
 
         // Project includes
@@ -63,10 +61,8 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         .IncludePaths + .ProjectIncludes + '.' // current dir
         ForEach( .path in .IncludePaths )
         {
-            .CommandLineIncludes + ' $CompilerIncludeFlag$"$path$"'
-            Export( .CommandLineIncludes )
-            .IncludeSearchPath + ';$path$'
-            Export( .IncludeSearchPath )
+            ^CommandLineIncludes + ' $CompilerIncludeFlag$"$path$"'
+            ^IncludeSearchPath + ';$path$'
         }
 
         .CommandLineOptions = .CommandLineDefines + .CommandLineIncludes
@@ -80,23 +76,23 @@ ForEach( .CompileConfig in .AllCompileConfigs )
             .PreprocessorOptions+ .CommandLineOptions
 
             // Precompiled header
-            .PCHOptions         + ' $CompilerPCHFlag$"$PCHName$.h"'
+            .PCHOptions         + ' $CompilerCreatePCHFlag$"$PCHName$.h"'
                                 + .CommandLineOptions
             .PCHInputFile       = '$ProjectPath$\$PCHName$.cpp'
             .PCHOutputFile      = '$CompilerOutputPath$\$PCHName$.pch'
 
             // Compiler
             .CompilerInputUnity = '$ProjectName$-Unity'
-            .CompilerOptions    + ' /Yu"$PCHName$.h" /Fp"$PCHOutputFile$"'
+            .CompilerOptions    + ' $CompilerUsePCHFlag$"$PCHName$.h" $CompilerOutputPCHFlag$"$PCHOutputFile$"'
                                 + .CommandLineOptions
 
             // Librarian
-            .LibrarianOutput    = '$CompilerOutputPath$\$ProjectName$.lib'
+            .LibrarianOutput    = '$CompilerOutputPath$\$ProjectName$.$CompilerLibraryExtension$'
         }
 
         RemoveDir( '$ProjectName$-Lib-$Platform$-$Config$-Purge' )
         {
-            .Paths              = .IntermediateDirectory
+            .RemovePaths        = .IntermediateDirectory
         }
 
         // Dynamic library
@@ -109,25 +105,24 @@ ForEach( .CompileConfig in .AllCompileConfigs )
 
             ForEach( .ProjectDependency in .ProjectDependencies )
             {
-                .Libraries  + { '$ProjectDependency$-Lib-$Platform$-$Config$' }
-                Export( .Libraries )
+                ^Libraries + { '$ProjectDependency$-Lib-$Platform$-$Config$' }
             }
         }
 
         RemoveDir( '$ProjectName$-Dll-$Platform$-$Config$-Purge' )
         {
-            .Paths              = .BinaryDirectory
-            .PathsPattern       = "$ProjectName$.$Config$.$Platform$.*"
+            .RemovePaths          = .BinaryDirectory
+            .RemovePathsPattern   = "$ProjectName$.$Config$.$Platform$.*"
             .PreBuildDependencies = { '$ProjectName$-Lib-$Platform$-$Config$-Purge' }
         }
 
         // Override project directories for visual studio ONLY
+        .Output                 = "$VisualStudioOutputDirectory$\$ProjectName$.$Config$.$Platform$.exe"
         .OutputDirectory        = .VisualStudioOutputDirectory
         .IntermediateDirectory  = .VisualStudioIntermediateDirectory
     ]
 
-    .ProjectConfigs + .ProjectConfig
-    Export( .ProjectConfigs )
+    ^ProjectConfigs + .ProjectConfig
 }
 
 VCXProject( '$ProjectName$-Proj' )

@@ -22,7 +22,7 @@ struct SharedConstantBufferKey {
     Graphics::SCConstantBufferLayout Layout;
 };
 //----------------------------------------------------------------------------
-size_t hash_value(const SharedConstantBufferKey& key);
+hash_t hash_value(const SharedConstantBufferKey& key);
 //----------------------------------------------------------------------------
 bool operator ==(const SharedConstantBufferKey& lhs, const SharedConstantBufferKey& rhs);
 bool operator !=(const SharedConstantBufferKey& lhs, const SharedConstantBufferKey& rhs);

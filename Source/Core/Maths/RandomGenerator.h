@@ -2,68 +2,98 @@
 
 #include "Core/Core.h"
 
-#include "Core/Maths/Geometry/ScalarVector_fwd.h"
-
 // Pseudo-Random Number Generator
+// http://xorshift.di.unimi.it/
+
+namespace Core {
+namespace Random {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+struct XorShift64Star {
+
+    u64 X;
+
+    void Reset(size_t seed);
+    u64  NextU64();
+};
+//----------------------------------------------------------------------------
+struct XorShift128Plus {
+
+    u64 States[2];
+
+    void Reset(size_t seed);
+    u64  NextU64();
+};
+//----------------------------------------------------------------------------
+struct XorShift1024Star {
+
+    u64 N;
+    u64 States[16];
+
+    void Reset(size_t seed);
+    u64  NextU64();
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _Generator>
+class Rng {
+public:
+    typedef _Generator generator_type;
+
+    Rng();
+    Rng(u64 seed);
+
+    void Reset(u64 seed);
+
+    u64 NextU64();
+    u64 NextU64(u64 vmax);
+    u64 NextU64(u64 vmin, u64 vmax);
+
+    u32 NextU32();
+    u32 NextU32(u32 vmax);
+    u32 NextU32(u32 vmin, u32 vmax);
+
+#ifdef ARCH_X64
+    size_t Next() { return NextU64(); }
+    size_t Next(size_t vmax) { return NextU64(vmax); }
+    size_t Next(size_t vmin, size_t vmax) { return NextU64(vmin, vmax); }
+#else
+    size_t Next() { return NextU32(); }
+    size_t Next(size_t vmax) { return NextU32(vmax); }
+    size_t Next(size_t vmin, size_t vmax) { return NextU32(vmin, vmax); }
+#endif
+
+    float NextFloat01();
+    float NextFloatM11();
+
+    template <typename T, class = typename std::enable_if< std::is_integral<T>::value >::type >
+    void Randomize(T& i) { i = static_cast<T>(Next()); }
+    void Randomize(bool& b) { b = (1 == (Next() & 1)); }
+    void Randomize(float& f) { f = NextFloatM11(); }
+    void Randomize(double& d) { d = static_cast<double>(NextFloatM11()); }
+
+private:
+    generator_type _generator;
+};
+//----------------------------------------------------------------------------
+typedef Rng< XorShift1024Star > StableRng;
+typedef Rng< XorShift128Plus >  FastRng;
+//----------------------------------------------------------------------------
+u64 MakeSeed(u64 salt = 0);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace Random
+} //!namespace Core
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class RandomGenerator{
-public:
-    static u32 RandomSeed(u32 salt/* = 0 */);
-    struct RandomSeedTag {};
-
-    RandomGenerator();
-    RandomGenerator(RandomSeedTag);
-    RandomGenerator(u32 seed);
-    ~RandomGenerator();
-
-    u32 Seed() const { return _seed; }
-
-    void Reset(u32 seed);
-
-    FORCE_INLINE u32 NextU32();
-    FORCE_INLINE u32 NextU32(u32 vmax);
-    FORCE_INLINE u32 NextU32(u32 vmin, u32 vmax);
-
-    FORCE_INLINE float NextFloat01();
-    FORCE_INLINE float NextFloatM11();
-
-private:
-    FORCE_INLINE static u32 NextSeed_(u32 seed);
-    FORCE_INLINE static u32 NextState_(u32 state);
-
-    u32 _state[4];
-    u32 _seed;
-};
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
-class ScalarVector;
-//----------------------------------------------------------------------------
-template <size_t _Dim>
-ScalarVector<u32, _Dim> NextRandU32(RandomGenerator& rand);
-//----------------------------------------------------------------------------
-template <size_t _Dim>
-ScalarVector<u32, _Dim> NextRandU32(RandomGenerator& rand, u32 vmax);
-//----------------------------------------------------------------------------
-template <size_t _Dim>
-ScalarVector<u32, _Dim> NextRandU32(RandomGenerator& rand, const ScalarVector<u32, _Dim>& vmax);
-//----------------------------------------------------------------------------
-template <size_t _Dim>
-ScalarVector<u32, _Dim> NextRandU32(RandomGenerator& rand, u32 vmin, u32 vmax);
-//----------------------------------------------------------------------------
-template <size_t _Dim>
-ScalarVector<u32, _Dim> NextRandU32(RandomGenerator& rand, const ScalarVector<u32, _Dim>& vmin, const ScalarVector<u32, _Dim>& vmax);
-//----------------------------------------------------------------------------
-template <size_t _Dim>
-ScalarVector<float, _Dim> NextRandFloat01(RandomGenerator& rand);
-//----------------------------------------------------------------------------
-template <size_t _Dim>
-ScalarVector<float, _Dim> NextRandFloatM11(RandomGenerator& rand);
+// using a struct instead of typedef to be able to fwd declare RandomGenerator
+INSTANTIATE_CLASS_TYPEDEF(RandomGenerator, ::Core::Random::StableRng);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

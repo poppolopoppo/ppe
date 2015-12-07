@@ -6,7 +6,7 @@
 
 #include "Core/Allocator/PoolAllocator.h"
 #include "Core/Container/HashMap.h"
-#include "Core/Container/List.h"
+#include "Core/Container/IntrusiveList.h"
 #include "Core/Memory/RefPtr.h"
 #include "Core/Memory/MemoryTracking.h"
 
@@ -19,30 +19,31 @@ FWD_REFPTR(DeviceAPIDependantEntity);
 //----------------------------------------------------------------------------
 class DeviceSharedEntityPool {
 public:
-    struct SharedEntity;
-    struct LRUNode {
-        SharedEntity *Next;
-        SharedEntity *Prev;
-    };
-
     struct SharedEntity {
         DeviceSharedEntityKey Key;
         PDeviceAPIDependantEntity Entity;
-        LRUNode Global;
-        LRUNode Local;
+        IntrusiveListNode<SharedEntity> Global;
+        IntrusiveListNode<SharedEntity> Local;
+        u32 LockCount;
         SINGLETON_POOL_ALLOCATED_DECL();
     };
+
+    typedef INTRUSIVELIST(&SharedEntity::Global) global_lru_type;
+    typedef INTRUSIVELIST(&SharedEntity::Local)  local_lru_type;
 
     explicit DeviceSharedEntityPool(MemoryTrackingData *globalVideoMemory);
     ~DeviceSharedEntityPool();
 
     const MemoryTrackingData& UsedMemory() const { return _usedMemory; }
 
-    bool Acquire(PDeviceAPIDependantEntity *pEntity, const DeviceResourceSharable& resource);
-    void Release(const DeviceSharedEntityKey& key, PDeviceAPIDependantEntity& entity);
+    bool Acquire_Cooperative(PCDeviceAPIDependantEntity *pEntity, const DeviceResourceSharable& resource);
+    void Release_Cooperative(const DeviceSharedEntityKey& key, PCDeviceAPIDependantEntity& entity);
 
-    void ReleaseLRU(size_t targetSizeInBytes);
-    void ReleaseAll();
+    bool Acquire_Exclusive(PDeviceAPIDependantEntity *pEntity, const DeviceResourceSharable& resource);
+    void Release_Exclusive(const DeviceSharedEntityKey& key, PDeviceAPIDependantEntity& entity);
+
+    size_t ReleaseLRU_ReturnRealSize(size_t targetSizeInBytes);
+    size_t ReleaseAll_ReturnRealSize() { return ReleaseLRU_ReturnRealSize(0); }
 
 private:
     typedef HASHMAP(Graphics, DeviceSharedEntityKey, SharedEntity *) map_type;

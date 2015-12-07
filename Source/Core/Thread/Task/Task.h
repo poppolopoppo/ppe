@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Core/Core.h"
+
 #include "Core/Memory/AlignedStorage.h"
 #include "Core/Meta/Delegate.h"
 
@@ -16,6 +18,14 @@ typedef void (*TaskFuncWithoutPool_t)();
 typedef Delegate<TaskFuncWithoutPool_t> TaskWithoutPool;
 //----------------------------------------------------------------------------
 STATIC_ASSERT(sizeof(TaskWithPool) == sizeof(TaskWithoutPool));
+//----------------------------------------------------------------------------
+enum class TaskPriority {
+    High = 0,
+    Normal,
+    Low,
+
+    _Count
+};
 //----------------------------------------------------------------------------
 struct Task {
     POD_STORAGE(TaskWithPool) Data;
@@ -38,7 +48,7 @@ struct Task {
         return *this;
     }
 
-    bool Valid() const { 
+    bool Valid() const {
         return reinterpret_cast<const TaskWithPool *>(&Data)->Valid();
     }
 
@@ -53,14 +63,6 @@ struct Task {
     FORCE_INLINE void operator ()(const TaskPool& pool) {
         Invoke(pool);
     }
-};
-//----------------------------------------------------------------------------
-enum class TaskPriority {
-    High = 0,
-    Normal,
-    Low,
-
-    _Count
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

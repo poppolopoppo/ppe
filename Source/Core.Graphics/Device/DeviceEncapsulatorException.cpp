@@ -16,7 +16,7 @@ DeviceEncapsulatorException::DeviceEncapsulatorException(
     const char *what,
     const IDeviceAPIEncapsulator *encapsulator,
     const DeviceResource *optionalResource/* = nullptr */)
-:   std::exception(what)
+:   GraphicsException(what)
 ,   _encapsulator(encapsulator)
 ,   _optionalResource(optionalResource)
 {}
@@ -25,18 +25,16 @@ DeviceEncapsulatorException::~DeviceEncapsulatorException() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ShaderCompilerEncapsulatorException::ShaderCompilerEncapsulatorException(
+ShaderCompilerException::ShaderCompilerException(
     const char *what,
     const IDeviceAPIShaderCompiler *encapsulator,
-    const Graphics::ShaderProgram *shaderProgram,
     const Graphics::ShaderSource *shaderSource)
-:   std::exception(what)
+:   GraphicsException(what)
 ,   _encapsulator(encapsulator)
-,   _shaderProgram(shaderProgram)
 ,   _shaderSource(shaderSource)
 {}
 //----------------------------------------------------------------------------
-ShaderCompilerEncapsulatorException::~ShaderCompilerEncapsulatorException() {}
+ShaderCompilerException::~ShaderCompilerException() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

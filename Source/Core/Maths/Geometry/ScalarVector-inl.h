@@ -65,6 +65,13 @@ ScalarVector<T, _Dim>::ScalarVector(const ScalarVector<T, _Dim - 1>& other, T ex
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
+ScalarVector<T, _Dim>::ScalarVector(const MemoryView<const T>& data) {
+    Assert(data.size() == _Dim);
+    for (size_t i = 0; i < _Dim; ++i)
+        _data[i] = data[i];
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
 ScalarVector<T, _Dim>::ScalarVector(const ScalarVector& other) {
     for (size_t i = 0; i < _Dim; ++i)
         _data[i] = other._data[i];
@@ -245,6 +252,8 @@ void ScalarVector<T, _Dim>::Broadcast(T scalar) {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 void ScalarVector<T, _Dim>::Swap(ScalarVector& other) {
+    using std::swap;
+    using Core::swap;
     for (size_t i = 0; i < _Dim; ++i)
         swap(other._data[i], _data[i]);
 }

@@ -6,7 +6,7 @@
 #include "Core.Graphics/Device/DeviceResourceBuffer.h"
 #include "Core.Graphics/Device/Pool/DeviceResourceSharable.h"
 
-#include "Core/Memory/MemoryStack.h"
+#include "Core/Container/Stack.h"
 
 namespace Core {
 namespace Graphics {

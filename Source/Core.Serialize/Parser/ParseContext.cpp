@@ -2,13 +2,13 @@
 
 #include "ParseContext.h"
 
-#include "Core.RTTI/Atom/MetaAtom.h"
-#include "Core.RTTI/Atom/MetaAtomDatabase.h"
-#include "Core.RTTI/Class/MetaClass.h"
-#include "Core.RTTI/Class/MetaClassName.h"
+#include "Core.RTTI/MetaAtom.h"
+#include "Core.RTTI/MetaAtomDatabase.h"
+#include "Core.RTTI/MetaClass.h"
+#include "Core.RTTI/MetaClassName.h"
+#include "Core.RTTI/MetaObject.h"
+#include "Core.RTTI/MetaObjectName.h"
 #include "Core.RTTI/MetaTransaction.h"
-#include "Core.RTTI/Object/MetaObject.h"
-#include "Core.RTTI/Object/MetaObjectName.h"
 
 namespace Core {
 namespace Parser {

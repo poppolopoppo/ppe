@@ -16,8 +16,18 @@ DeviceAPIDependantEntity::DeviceAPIDependantEntity(const AbstractDeviceAPIEncaps
 ,   _resource(resource)
 ,   _createdAt(InvalidDeviceRevision())
 ,   _lastUsed(InvalidDeviceRevision()) {
+    Assert(_resource);
     bitdevicapi_type::InplaceSet(_apiAndResourceType, (u32)encapsulator->API() );
-    bitresourcetype_type::InplaceSet(_apiAndResourceType, (u32)resource->ResourceType() );
+    bitresourcetype_type::InplaceSet(_apiAndResourceType, (u32)_resource->ResourceType() );
+}
+//----------------------------------------------------------------------------
+DeviceAPIDependantEntity::DeviceAPIDependantEntity(const AbstractDeviceAPIEncapsulator *encapsulator, DeviceResourceType resourceType)
+:   _apiAndResourceType(0)
+,   _resource(nullptr)
+,   _createdAt(InvalidDeviceRevision())
+,   _lastUsed(InvalidDeviceRevision()) {
+    bitdevicapi_type::InplaceSet(_apiAndResourceType, (u32)encapsulator->API() );
+    bitresourcetype_type::InplaceSet(_apiAndResourceType, (u32)resourceType );
 }
 //----------------------------------------------------------------------------
 DeviceAPIDependantEntity::~DeviceAPIDependantEntity() {}
@@ -31,7 +41,8 @@ void DeviceAPIDependantEntity::AttachResource(const DeviceResource *resource) {
     Assert(nullptr != resource);
     Assert(resource->Frozen());
     Assert(!resource->Available());
-    Assert(nullptr == _resource);
+    Assert( nullptr == _resource ||
+            resource == _resource );
     Assert(!_resource->Available());
     Assert(ResourceType() == resource->ResourceType());
 

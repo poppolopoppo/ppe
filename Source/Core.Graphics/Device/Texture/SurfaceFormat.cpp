@@ -24,7 +24,6 @@ SurfaceFormat::SurfaceFormat(
     _type(type), _flags(flags), _support(support) {
     Assert(name);
     Assert(blockSize);
-    Assert(macroBlockBitCount);
     Assert(1 == blockSize || 4*4 == blockSize);
 }
 //----------------------------------------------------------------------------
@@ -146,6 +145,85 @@ void SurfaceFormat::OnDeviceCreate(DeviceEncapsulator *device) {
 void SurfaceFormat::OnDeviceDestroy(DeviceEncapsulator *device) {
     for (const SurfaceFormat& fmt : SurfaceFormat::AllFormats())
         fmt.ClearSupport(device);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+const SurfaceFormat* SurfaceFormat::FromType(SurfaceFormatType type) {
+    switch (type)
+    {
+    case Core::Graphics::SurfaceFormatType::UNKNOWN:
+        return SurfaceFormat::UNKNOWN;
+    case Core::Graphics::SurfaceFormatType::A8:
+        return SurfaceFormat::A8;
+    case Core::Graphics::SurfaceFormatType::D16:
+        return SurfaceFormat::D16;
+    case Core::Graphics::SurfaceFormatType::D24S8:
+        return SurfaceFormat::D24S8;
+    case Core::Graphics::SurfaceFormatType::D32:
+        return SurfaceFormat::D32;
+    case Core::Graphics::SurfaceFormatType::DXN0:
+        return SurfaceFormat::DXN0;
+    case Core::Graphics::SurfaceFormatType::DXT1:
+        return SurfaceFormat::DXT1;
+    case Core::Graphics::SurfaceFormatType::DXT1_SRGB:
+        return SurfaceFormat::DXT1_SRGB;
+    case Core::Graphics::SurfaceFormatType::DXT3:
+        return SurfaceFormat::DXT3;
+    case Core::Graphics::SurfaceFormatType::DXT3_SRGB:
+        return SurfaceFormat::DXT3_SRGB;
+    case Core::Graphics::SurfaceFormatType::DXT5:
+        return SurfaceFormat::DXT5;
+    case Core::Graphics::SurfaceFormatType::DXT5_SRGB:
+        return SurfaceFormat::DXT5_SRGB;
+    case Core::Graphics::SurfaceFormatType::R5G5B5A1:
+        return SurfaceFormat::R5G5B5A1;
+    case Core::Graphics::SurfaceFormatType::R5G6B5:
+        return SurfaceFormat::R5G6B5;
+    case Core::Graphics::SurfaceFormatType::R8:
+        return SurfaceFormat::R8;
+    case Core::Graphics::SurfaceFormatType::R8G8:
+        return SurfaceFormat::R8G8;
+    case Core::Graphics::SurfaceFormatType::R8G8B8A8:
+        return SurfaceFormat::R8G8B8A8;
+    case Core::Graphics::SurfaceFormatType::R8G8B8A8_SRGB:
+        return SurfaceFormat::R8G8B8A8_SRGB;
+    case Core::Graphics::SurfaceFormatType::B8G8R8A8:
+        return SurfaceFormat::B8G8R8A8;
+    case Core::Graphics::SurfaceFormatType::B8G8R8A8_SRGB:
+        return SurfaceFormat::B8G8R8A8_SRGB;
+    case Core::Graphics::SurfaceFormatType::R10G10B10A2:
+        return SurfaceFormat::R10G10B10A2;
+    case Core::Graphics::SurfaceFormatType::R11G11B10:
+        return SurfaceFormat::R11G11B10;
+    case Core::Graphics::SurfaceFormatType::R16:
+        return SurfaceFormat::R16;
+    case Core::Graphics::SurfaceFormatType::R16G16:
+        return SurfaceFormat::R16G16;
+    case Core::Graphics::SurfaceFormatType::R16G16B16A16:
+        return SurfaceFormat::R16G16B16A16;
+    case Core::Graphics::SurfaceFormatType::R16G16B16A16_F:
+        return SurfaceFormat::R16G16B16A16_F;
+    case Core::Graphics::SurfaceFormatType::R16G16_F:
+        return SurfaceFormat::R16G16_F;
+    case Core::Graphics::SurfaceFormatType::R16_F:
+        return SurfaceFormat::R16_F;
+    case Core::Graphics::SurfaceFormatType::R32:
+        return SurfaceFormat::R32;
+    case Core::Graphics::SurfaceFormatType::R32G32:
+        return SurfaceFormat::R32G32;
+    case Core::Graphics::SurfaceFormatType::R32G32B32A32:
+        return SurfaceFormat::R32G32B32A32;
+    case Core::Graphics::SurfaceFormatType::R32G32B32A32_F:
+        return SurfaceFormat::R32G32B32A32_F;
+    case Core::Graphics::SurfaceFormatType::R32G32_F:
+        return SurfaceFormat::R32G32_F;
+    case Core::Graphics::SurfaceFormatType::R32_F:
+        return SurfaceFormat::R32_F;
+    default:
+        AssertNotImplemented();
+    }
+    return nullptr;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -10,10 +10,10 @@ namespace Lexer {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct Location {
-    Location(const char *fileName, size_t line, size_t column)
+    Location(const wchar_t *fileName, size_t line, size_t column)
         : FileName(fileName), Line(line), Column(column) {}
 
-    const char *FileName;
+    const wchar_t *FileName;
     size_t Line;
     size_t Column;
 

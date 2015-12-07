@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Core.h"
+#include "Core.RTTI/RTTI.h"
 
 #include "Core.RTTI/RTTIProperties.h"
 
@@ -15,6 +15,7 @@ public:
     static void Shutdown();
 
     static void Clear();
+    void ClearAll_UnusedMemory();
 
     RTTIStartup() { Start(); }
     ~RTTIStartup() { Shutdown(); }

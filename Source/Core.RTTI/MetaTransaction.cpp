@@ -2,11 +2,13 @@
 
 #include "MetaTransaction.h"
 
-#include "Atom/MetaAtom.h"
-#include "Atom/MetaAtomDatabase.h"
-#include "Class/MetaClass.h"
-#include "Class/MetaClassDatabase.h"
-#include "Object/MetaObject.h"
+#include "MetaAtom.h"
+#include "MetaAtomDatabase.h"
+#include "MetaClass.h"
+#include "MetaClassName.h"
+#include "MetaClassDatabase.h"
+#include "MetaObject.h"
+#include "MetaObjectName.h"
 
 namespace Core {
 namespace RTTI {
@@ -20,69 +22,72 @@ MetaTransaction::~MetaTransaction() {
 }
 //----------------------------------------------------------------------------
 void MetaTransaction::Export(const MetaClassName& name, const MetaClass *metaclass, bool allowOverride) {
+    Assert(metaclass);
     const MetaClass *old = MetaClassDatabase::Instance().GetIFP(name);
     MetaClassDatabase::Instance().Add(name, metaclass, allowOverride);
-
-    _classes.push_back(MetaClassBinding{ name, old, metaclass });
+    Insert_AssertUnique(_classes, name, MetaClassBinding{ old, metaclass });
 }
 //----------------------------------------------------------------------------
-void MetaTransaction::Remove(const MetaClassName& name, const MetaClass * /* metaclass */) {
-    const auto it = std::find_if(_classes.begin(), _classes.end(), [&name](const MetaClassBinding& binding) -> bool {
-        return binding.Name == name;
-    });
-
-    Assert(_classes.end() != it);
-
-    MetaClassHashMap& classes = MetaClassDatabase::Instance();
-    if (it->Old)
-        classes.Add(it->Name, it->Old, true);
-    else
-        classes.Remove(it->Name, it->New);
-
-    _classes.erase(it);
+const MetaClass* MetaTransaction::GetIFP(const MetaClassName& name) const {
+    const auto it = _classes.find(name);
+    return (_classes.end() != it) ? it->second.New : nullptr;
+}
+//----------------------------------------------------------------------------
+void MetaTransaction::Remove(const MetaClassName& name, const MetaClass* metaclass) {
+    Assert(metaclass);
+    const MetaClassBinding binding = Remove_ReturnValue(_classes, name);
+    Assert(metaclass == binding.New);
+    RevertBinding_(MetaClassDatabase::Instance(), name, binding);
 }
 //----------------------------------------------------------------------------
 void MetaTransaction::Export(const MetaObjectName& name, MetaAtom *atom, bool allowOverride) {
+    Assert(atom);
     const PMetaAtom old = MetaAtomDatabase::Instance().GetIFP(name);
     MetaAtomDatabase::Instance().Add(name, atom, allowOverride);
-
-    _atoms.push_back(MetaAtomBinding{ name, old, atom });
+    Insert_AssertUnique(_atoms, name, MetaAtomBinding{ old, atom });
 }
 //----------------------------------------------------------------------------
-void MetaTransaction::Remove(const MetaObjectName& name, MetaAtom * /* atom */) {
-    const auto it = std::find_if(_atoms.begin(), _atoms.end(), [&name](const MetaAtomBinding& binding) -> bool {
-        return binding.Name == name;
-    });
-
-    Assert(_atoms.end() != it);
-
-    MetaAtomHashMap& atoms = MetaAtomDatabase::Instance();
-    if (it->Old)
-        atoms.Add(it->Name, it->Old.get(), true);
-    else
-        atoms.Remove(it->Name, it->New.get());
-
-    _atoms.erase(it);
+void MetaTransaction::Export(const MetaObjectName& name, MetaObject* object, bool allowOverride) {
+    const PMetaAtom atom = MakeAtom(PMetaObject(object));
+    Export(name, atom.get(), allowOverride);
+}
+//----------------------------------------------------------------------------
+const MetaAtom* MetaTransaction::GetIFP(const MetaObjectName& name) const {
+    const auto it = _atoms.find(name);
+    return (_atoms.end() != it) ? it->second.New.get() : nullptr;
+}
+//----------------------------------------------------------------------------
+void MetaTransaction::Remove(const MetaObjectName& name, MetaAtom* atom) {
+    Assert(atom);
+    const MetaAtomBinding binding = Remove_ReturnValue(_atoms, name);
+    Assert(atom == binding.New);
+    RevertBinding_(MetaAtomDatabase::Instance(), name, binding);
 }
 //----------------------------------------------------------------------------
 void MetaTransaction::Clear() {
-    MetaAtomHashMap& atoms = MetaAtomDatabase::Instance();
-    for (auto it = _atoms.rbegin(); _atoms.rend() != it; ++it) {
-        if (it->Old)
-            atoms.Add(it->Name, it->Old.get(), true);
-        else
-            atoms.Remove(it->Name, it->New.get());
-    }
+    MetaAtomHashMap& atomDB = MetaAtomDatabase::Instance();
+    foreachitem(it, _atoms)
+        RevertBinding_(atomDB, it->first, it->second);
     _atoms.clear();
 
-    MetaClassHashMap& classes = MetaClassDatabase::Instance();
-    for (auto it = _classes.rbegin(); _classes.rend() != it; ++it) {
-        if (it->Old)
-            classes.Add(it->Name, it->Old, true);
-        else
-            classes.Remove(it->Name, it->New);
-    }
+    MetaClassHashMap& classDB = MetaClassDatabase::Instance();
+    foreachitem(it, _classes)
+        RevertBinding_(classDB, it->first, it->second);
     _classes.clear();
+}
+//----------------------------------------------------------------------------
+void MetaTransaction::RevertBinding_(MetaAtomHashMap& atoms, const MetaObjectName& name, const MetaAtomBinding& binding) {
+    if (binding.Old)
+        atoms.Add(name, binding.Old.get(), true);
+    else
+        atoms.Remove(name, binding.New.get());
+}
+//----------------------------------------------------------------------------
+void MetaTransaction::RevertBinding_(MetaClassHashMap& instances, const MetaClassName& name, const MetaClassBinding& binding) {
+    if (binding.Old)
+        instances.Add(name, binding.Old, true);
+    else
+        instances.Remove(name, binding.New);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

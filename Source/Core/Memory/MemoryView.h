@@ -31,6 +31,9 @@ public:
     MemoryView(pointer storage, size_type size);
     ~MemoryView();
 
+    template <size_t _Dim> // enables type promotion between T[] and MemoryView<T>
+    MemoryView(value_type (&staticArray)[_Dim]) : MemoryView(staticArray, _Dim) {}
+
     MemoryView(MemoryView&& rvalue);
     MemoryView& operator =(MemoryView&& rvalue);
 
@@ -60,8 +63,11 @@ public:
     MemoryView<T> SubRange(size_t offset, size_t count) const;
     MemoryView< typename std::add_const<T>::type > SubRangeConst(size_t offset, size_t count) const;
 
-    MemoryView<T> Pop() const { Assert(_size > 0); return MemoryView<T>(_storage, _size - 1); }
-    MemoryView<T> Shift() const { Assert(_size > 0); return MemoryView<T>(_storage + 1, _size - 1); }
+    MemoryView<T> ShiftBack() const { Assert(_size > 0); return MemoryView<T>(_storage, _size - 1); }
+    MemoryView<T> ShiftFront() const { Assert(_size > 0); return MemoryView<T>(_storage + 1, _size - 1); }
+
+    MemoryView<T> GrowBack() const { Assert(_size > 0); return MemoryView<T>(_storage, _size + 1); }
+    MemoryView<T> GrowFront() const { Assert(_size > 0); return MemoryView<T>(_storage - 1, _size + 1); }
 
     void Swap(MemoryView& other);
 
@@ -228,13 +234,6 @@ template <typename T>
 MemoryView<typename std::add_const<T>::type > MakeConstView(T* pbegin, T* pend) {
     Assert(pend >= pbegin);
     return MemoryView<typename std::add_const<T>::type >(pbegin, std::distance(pbegin, pend));
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename T>
-size_t hash_value(const MemoryView<T>& view) {
-    return hash_value_seq(view.begin(), view.end());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

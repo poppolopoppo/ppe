@@ -15,9 +15,9 @@ class MemoryView;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct ColorShuffleRGBA { enum : size_t { R = 0, G = 1, B = 2, A = 3 }; };
+struct ColorShuffleRGBA { static constexpr size_t R = 0, G = 1, B = 2, A = 3; };
 //----------------------------------------------------------------------------
-struct ColorShuffleBGRA { enum : size_t { B = 0, G = 1, R = 2, A = 3 }; };
+struct ColorShuffleBGRA { static constexpr size_t B = 0, G = 1, R = 2, A = 3; };
 //----------------------------------------------------------------------------
 template <typename T, typename _Shuffle>
 class BasicColor {
@@ -47,17 +47,17 @@ public:
     T *Pointer() { return _data._data; }
     const T *Pointer() const { return _data._data; }
 
-    T& r() { return _data.get<_Shuffle::R>(); }
-    T& g() { return _data.get<_Shuffle::G>(); }
-    T& b() { return _data.get<_Shuffle::B>(); }
-    T& a() { return _data.get<_Shuffle::A>(); }
+    T& r() { return _data._data[_Shuffle::R]; }
+    T& g() { return _data._data[_Shuffle::G]; }
+    T& b() { return _data._data[_Shuffle::B]; }
+    T& a() { return _data._data[_Shuffle::A]; }
 
-    T r() const { return _data.get<_Shuffle::R>(); }
-    T g() const { return _data.get<_Shuffle::G>(); }
-    T b() const { return _data.get<_Shuffle::B>(); }
-    T a() const { return _data.get<_Shuffle::A>(); }
+    T r() const { return _data._data[_Shuffle::R]; }
+    T g() const { return _data._data[_Shuffle::G]; }
+    T b() const { return _data._data[_Shuffle::B]; }
+    T a() const { return _data._data[_Shuffle::A]; }
 
-    ScalarVector<T, 3> rgb() const { return _data.Shuffle3<_Shuffle::R, _Shuffle::G, _Shuffle::B>(); }
+    ScalarVector<T, 3> rgb() const {  return ScalarVector<T, 3>(r(), g(), b()); }
 
     T& operator [](size_t i) { return _data[i]; }
     T operator [](size_t i) const { return _data[i]; }

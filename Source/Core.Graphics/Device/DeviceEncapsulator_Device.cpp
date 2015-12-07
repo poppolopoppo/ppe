@@ -10,6 +10,7 @@
 #include "Geometry/VertexDeclaration.h"
 
 #include "Shader/ConstantBuffer.h"
+#include "Shader/ShaderCompiled.h"
 #include "Shader/ShaderEffect.h"
 #include "Shader/ShaderProgram.h"
 
@@ -40,16 +41,59 @@ namespace Graphics {
 namespace {
 //----------------------------------------------------------------------------
 template <typename _Entity>
-static bool TryPoolAllocate_(   RefPtr<_Entity>& dst,
-                                const DeviceResourceSharable& resource, 
-                                DeviceSharedEntityPool& pool ) {
+static bool TryPoolAllocate_Cooperative_(
+    RefPtr<const _Entity>& dst,
+    const DeviceResourceSharable& resource,
+    DeviceSharedEntityPool& pool ) {
+    Assert(!dst);
+
+    if (resource.Sharable() == false)
+        return false;
+
+    PCDeviceAPIDependantEntity entity;
+    if (pool.Acquire_Cooperative(&entity, resource) == false)
+        return false;
+
+    dst.reset(checked_cast<const _Entity *>(entity.get()) );
+    Assert(dst);
+    return true;
+}
+//----------------------------------------------------------------------------
+template <typename _Entity>
+static bool TryPoolDeallocate_Cooperative_(
+    RefPtr<const _Entity>& dst,
+    const DeviceResourceSharable& resource,
+    DeviceSharedEntityPool& pool ) {
+    Assert(dst);
+
+    if (resource.Sharable() == false)
+        return false;
+
+    PCDeviceAPIDependantEntity entity(dst.get());
+    pool.Release_Cooperative(resource.SharedKey(), entity);
+
+    RemoveRef_AssertGreaterThanZero(dst);
+    return true;
+}
+//----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+template <typename _Entity>
+static bool TryPoolAllocate_Exclusive_(
+    RefPtr<_Entity>& dst,
+    const DeviceResourceSharable& resource,
+    DeviceSharedEntityPool& pool ) {
     Assert(!dst);
 
     if (resource.Sharable() == false)
         return false;
 
     PDeviceAPIDependantEntity entity;
-    if (pool.Acquire(&entity, resource) == false)
+    if (pool.Acquire_Exclusive(&entity, resource) == false)
         return false;
 
     dst.reset(checked_cast<_Entity *>(entity.get()) );
@@ -58,16 +102,17 @@ static bool TryPoolAllocate_(   RefPtr<_Entity>& dst,
 }
 //----------------------------------------------------------------------------
 template <typename _Entity>
-static bool TryPoolDeallocate_( RefPtr<_Entity>& dst,
-                                const DeviceResourceSharable& resource, 
-                                DeviceSharedEntityPool& pool ) {
+static bool TryPoolDeallocate_Exclusive_(
+    RefPtr<_Entity>& dst,
+    const DeviceResourceSharable& resource,
+    DeviceSharedEntityPool& pool ) {
     Assert(dst);
 
     if (resource.Sharable() == false)
         return false;
 
     PDeviceAPIDependantEntity entity(dst.get());
-    pool.Release(resource.SharedKey(), entity);
+    pool.Release_Exclusive(resource.SharedKey(), entity);
 
     RemoveRef_AssertGreaterThanZero(dst);
     return true;
@@ -229,7 +274,7 @@ DeviceAPIDependantResourceBuffer *DeviceEncapsulator::CreateIndexBuffer(IndexBuf
     Assert(resourceBuffer->Usage() != BufferUsage::Immutable || optionalData.SizeInBytes() == resourceBuffer->SizeInBytes());
 
     PDeviceAPIDependantResourceBuffer entity;
-    if (false == TryPoolAllocate_(entity, *indexBuffer, *_deviceSharedEntityPool))
+    if (false == TryPoolAllocate_Exclusive_(entity, *indexBuffer, *_deviceSharedEntityPool))
         entity = _deviceAPIEncapsulator->Device()->CreateIndexBuffer(indexBuffer, resourceBuffer, optionalData);
 
     Assert(entity);
@@ -247,7 +292,7 @@ void DeviceEncapsulator::DestroyIndexBuffer(IndexBuffer *indexBuffer, PDeviceAPI
 
     _deviceAPIEncapsulator->OnDestroyEntity(indexBuffer, entity.get());
 
-    if (false == TryPoolDeallocate_(entity, *indexBuffer, *_deviceSharedEntityPool))
+    if (false == TryPoolDeallocate_Exclusive_(entity, *indexBuffer, *_deviceSharedEntityPool))
         _deviceAPIEncapsulator->Device()->DestroyIndexBuffer(indexBuffer, entity);
 }
 //---------------------------------------------------------------------------
@@ -262,7 +307,7 @@ DeviceAPIDependantResourceBuffer *DeviceEncapsulator::CreateVertexBuffer(VertexB
     Assert(resourceBuffer->Usage() != BufferUsage::Immutable || optionalData.SizeInBytes() == resourceBuffer->SizeInBytes());
 
     PDeviceAPIDependantResourceBuffer entity;
-    if (false == TryPoolAllocate_(entity, *vertexBuffer, *_deviceSharedEntityPool))
+    if (false == TryPoolAllocate_Exclusive_(entity, *vertexBuffer, *_deviceSharedEntityPool))
         entity = _deviceAPIEncapsulator->Device()->CreateVertexBuffer(vertexBuffer, resourceBuffer, optionalData);
 
     Assert(entity);
@@ -280,7 +325,7 @@ void DeviceEncapsulator::DestroyVertexBuffer(VertexBuffer *vertexBuffer, PDevice
 
     _deviceAPIEncapsulator->OnDestroyEntity(vertexBuffer, entity.get());
 
-    if (false == TryPoolDeallocate_(entity, *vertexBuffer, *_deviceSharedEntityPool))
+    if (false == TryPoolDeallocate_Exclusive_(entity, *vertexBuffer, *_deviceSharedEntityPool))
         _deviceAPIEncapsulator->Device()->DestroyVertexBuffer(vertexBuffer, entity);
 }
 //----------------------------------------------------------------------------
@@ -300,7 +345,7 @@ DeviceAPIDependantResourceBuffer *DeviceEncapsulator::CreateConstantBuffer(Const
     Assert(&constantBuffer->Buffer() == resourceBuffer);
 
     PDeviceAPIDependantResourceBuffer entity;
-    if (false == TryPoolAllocate_(entity, *constantBuffer, *_deviceSharedEntityPool))
+    if (false == TryPoolAllocate_Exclusive_(entity, *constantBuffer, *_deviceSharedEntityPool))
         entity = _deviceAPIEncapsulator->Device()->CreateConstantBuffer(constantBuffer, resourceBuffer);
 
     Assert(entity);
@@ -318,8 +363,38 @@ void DeviceEncapsulator::DestroyConstantBuffer(ConstantBuffer *constantBuffer, P
 
     _deviceAPIEncapsulator->OnDestroyEntity(constantBuffer, entity.get());
 
-    if (false == TryPoolDeallocate_(entity, *constantBuffer, *_deviceSharedEntityPool))
+    if (false == TryPoolDeallocate_Exclusive_(entity, *constantBuffer, *_deviceSharedEntityPool))
         _deviceAPIEncapsulator->Device()->DestroyConstantBuffer(constantBuffer, entity);
+}
+//----------------------------------------------------------------------------
+// ShaderProgram
+//----------------------------------------------------------------------------
+DeviceAPIDependantShaderProgram* DeviceEncapsulator::CreateShaderProgram(ShaderProgram* program) {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(program);
+    Assert(program->Frozen());
+
+    PDeviceAPIDependantShaderProgram entity;
+    if (false == TryPoolAllocate_Exclusive_(entity, *program, *_deviceSharedEntityPool))
+        entity = _deviceAPIEncapsulator->Device()->CreateShaderProgram(program);
+
+    Assert(entity);
+    _deviceAPIEncapsulator->OnCreateEntity(program, entity.get());
+
+    return RemoveRef_AssertReachZero_KeepAlive(entity);
+}
+//----------------------------------------------------------------------------
+void DeviceEncapsulator::DestroyShaderProgram(ShaderProgram* program, PDeviceAPIDependantShaderProgram& entity) {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(program);
+    Assert(program->Frozen());
+    Assert(entity);
+    Assert(&entity == &program->DeviceAPIDependantProgram());
+
+    _deviceAPIEncapsulator->OnDestroyEntity(program, entity.get());
+
+    if (false == TryPoolDeallocate_Exclusive_(entity, *program, *_deviceSharedEntityPool))
+        _deviceAPIEncapsulator->Device()->DestroyShaderProgram(program, entity);
 }
 //----------------------------------------------------------------------------
 // ShaderEffect
@@ -355,7 +430,7 @@ DeviceAPIDependantTexture2D *DeviceEncapsulator::CreateTexture2D(Texture2D *text
     Assert(texture->Usage() != BufferUsage::Immutable || optionalData.SizeInBytes() == texture->SizeInBytes());
 
     PDeviceAPIDependantTexture2D entity;
-    if (false == TryPoolAllocate_(entity, *texture, *_deviceSharedEntityPool))
+    if (false == TryPoolAllocate_Exclusive_(entity, *texture, *_deviceSharedEntityPool))
         entity = _deviceAPIEncapsulator->Device()->CreateTexture2D(texture, optionalData);
 
     Assert(entity);
@@ -373,7 +448,7 @@ void DeviceEncapsulator::DestroyTexture2D(Texture2D *texture, PDeviceAPIDependan
 
     _deviceAPIEncapsulator->OnDestroyEntity(texture, entity.get());
 
-    if (false == TryPoolDeallocate_(entity, *texture, *_deviceSharedEntityPool))
+    if (false == TryPoolDeallocate_Exclusive_(entity, *texture, *_deviceSharedEntityPool))
         _deviceAPIEncapsulator->Device()->DestroyTexture2D(texture, entity);
 }
 //----------------------------------------------------------------------------
@@ -386,7 +461,7 @@ DeviceAPIDependantTextureCube *DeviceEncapsulator::CreateTextureCube(TextureCube
     Assert(texture->Usage() != BufferUsage::Immutable || optionalData.SizeInBytes() == texture->SizeInBytes());
 
     PDeviceAPIDependantTextureCube entity;
-    if (false == TryPoolAllocate_(entity, *texture, *_deviceSharedEntityPool))
+    if (false == TryPoolAllocate_Exclusive_(entity, *texture, *_deviceSharedEntityPool))
         entity = _deviceAPIEncapsulator->Device()->CreateTextureCube(texture, optionalData);
 
     Assert(entity);
@@ -404,7 +479,7 @@ void DeviceEncapsulator::DestroyTextureCube(TextureCube *texture, PDeviceAPIDepe
 
     _deviceAPIEncapsulator->OnDestroyEntity(texture, entity.get());
 
-    if (false == TryPoolDeallocate_(entity, *texture, *_deviceSharedEntityPool))
+    if (false == TryPoolDeallocate_Exclusive_(entity, *texture, *_deviceSharedEntityPool))
         _deviceAPIEncapsulator->Device()->DestroyTextureCube(texture, entity);
 }
 //----------------------------------------------------------------------------
@@ -467,7 +542,7 @@ DeviceAPIDependantRenderTarget *DeviceEncapsulator::CreateRenderTarget(RenderTar
     Assert(renderTarget->Frozen());
 
     PDeviceAPIDependantRenderTarget entity;
-    if (false == TryPoolAllocate_(entity, *renderTarget, *_deviceSharedEntityPool))
+    if (false == TryPoolAllocate_Exclusive_(entity, *renderTarget, *_deviceSharedEntityPool))
         entity = _deviceAPIEncapsulator->Device()->CreateRenderTarget(renderTarget, optionalData);
 
     Assert(entity);
@@ -484,7 +559,7 @@ void DeviceEncapsulator::DestroyRenderTarget(RenderTarget *renderTarget, PDevice
 
     _deviceAPIEncapsulator->OnDestroyEntity(renderTarget, entity.get());
 
-    if (false == TryPoolDeallocate_(entity, *renderTarget, *_deviceSharedEntityPool))
+    if (false == TryPoolDeallocate_Exclusive_(entity, *renderTarget, *_deviceSharedEntityPool))
         _deviceAPIEncapsulator->Device()->DestroyRenderTarget(renderTarget, entity);
 }
 //----------------------------------------------------------------------------
@@ -496,7 +571,7 @@ DeviceAPIDependantDepthStencil *DeviceEncapsulator::CreateDepthStencil(DepthSten
     Assert(depthStencil->Frozen());
 
     PDeviceAPIDependantDepthStencil entity;
-    if (false == TryPoolAllocate_(entity, *depthStencil, *_deviceSharedEntityPool))
+    if (false == TryPoolAllocate_Exclusive_(entity, *depthStencil, *_deviceSharedEntityPool))
         entity = _deviceAPIEncapsulator->Device()->CreateDepthStencil(depthStencil, optionalData);
 
     Assert(entity);
@@ -513,7 +588,7 @@ void DeviceEncapsulator::DestroyDepthStencil(DepthStencil *depthStencil, PDevice
 
     _deviceAPIEncapsulator->OnDestroyEntity(depthStencil, entity.get());
 
-    if (false == TryPoolDeallocate_(entity, *depthStencil, *_deviceSharedEntityPool))
+    if (false == TryPoolDeallocate_Exclusive_(entity, *depthStencil, *_deviceSharedEntityPool))
         _deviceAPIEncapsulator->Device()->DestroyDepthStencil(depthStencil, entity);
 }
 //----------------------------------------------------------------------------

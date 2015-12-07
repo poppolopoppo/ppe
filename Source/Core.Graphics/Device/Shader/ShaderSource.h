@@ -49,8 +49,8 @@ public:
     void FillSubstitutions( VECTOR_THREAD_LOCAL(Shader, Pair<String COMMA String>)& substitutions,
                             const VertexDeclaration *vertexDeclaration) const;
 
-    static ShaderSource *LoadFromFile(  const Core::Filename& filename,
-                                        const MemoryView<const Pair<String, String>>& defines);
+    static ShaderSource *LoadFromFileIFP(   const Core::Filename& filename,
+                                            const MemoryView<const Pair<String, String>>& defines);
 
     SINGLETON_POOL_ALLOCATED_DECL();
 

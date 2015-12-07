@@ -89,11 +89,11 @@ void SingletonPoolAllocator<T, _ThreadLocal, _PoolTag>::deallocate(void* p, size
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define SINGLETON_POOL_ALLOCATOR(_Domain, T, _Tag) \
-    DECORATE_ALLOCATOR(_Domain, ::Core::SingletonPoolAllocator<T COMMA false COMMA POOLTAG(_Tag) >)
+#define SINGLETON_POOL_ALLOCATOR(_Domain, T, _PoolTag) \
+    DECORATE_ALLOCATOR(_Domain, ::Core::SingletonPoolAllocator<COMMA_PROTECT(T) COMMA false COMMA _PoolTag >)
 //----------------------------------------------------------------------------
 #define THREAD_LOCAL_SINGLETON_POOL_ALLOCATOR(_Domain, T, _PoolTag) \
-    DECORATE_ALLOCATOR(_Domain, ::Core::SingletonPoolAllocator<T COMMA true  COMMA POOLTAG(_Tag) >)
+    DECORATE_ALLOCATOR(_Domain, ::Core::SingletonPoolAllocator<COMMA_PROTECT(T) COMMA true  COMMA _PoolTag >)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

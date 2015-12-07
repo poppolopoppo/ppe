@@ -2,7 +2,7 @@
 
 #include "Core.Application/Application.h"
 
-#include "Core.Engine/Service/ServiceContainer.h"
+#include "Core.Application/ApplicationService.h"
 
 #include "Core/IO/String.h"
 
@@ -25,15 +25,15 @@ public:
 
     const WString& AppName() const { return _appname; }
 
-    Engine::IServiceProvider *Services() { return &_services; }
-    const Engine::IServiceProvider *Services() const { return &_services; }
+    ApplicationServiceContainer& Services() { return _services; }
+    const ApplicationServiceContainer& Services() const { return _services; }
 
     virtual void Start();
     virtual void Shutdown();
 
 private:
     WString _appname;
-    Engine::ServiceContainer _services;
+    ApplicationServiceContainer _services;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

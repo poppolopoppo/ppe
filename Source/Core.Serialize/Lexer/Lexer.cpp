@@ -47,7 +47,7 @@ static bool Float_(const char ch) {
 }
 //----------------------------------------------------------------------------
 static bool Identifier_(const char ch) {
-    return std::isalnum(ch, std::locale::classic()) || (ch == '_');
+    return IsAlnum(ch) || (ch == '_');
 }
 //----------------------------------------------------------------------------
 template <char _Ch>
@@ -68,6 +68,9 @@ static void Itoa_(int64_t value, String& str) {
 
     static const char BASE_FMT[16+1] = "0123456789ABCDEF";
 
+    const bool neg = (value < 0);
+    value = std::abs(value);
+
     do {
         const int64_t d = value % _Base;
         const char ch = BASE_FMT[d];
@@ -77,7 +80,7 @@ static void Itoa_(int64_t value, String& str) {
         value /= _Base;
     } while (value);
 
-    if (value < 0)
+    if (neg)
         str += '-';
 
     std::reverse(str.begin(), str.end());
@@ -146,13 +149,11 @@ static bool Lex_Numeric_(LookAheadReader& reader, const Symbol **psymbol, String
     Assert(psymbol);
     Assert(value.empty());
 
-    const std::locale& locale = std::locale::classic();
-
     char ch = reader.Peek(0);
 
     if ('0' == ch)
     {
-        if ('x' == std::tolower(reader.Peek(1), locale))
+        if ('x' == ToLower(reader.Peek(1)) )
         {
             // hexadecimal
             ch = reader.Read();
@@ -176,7 +177,7 @@ static bool Lex_Numeric_(LookAheadReader& reader, const Symbol **psymbol, String
             Itoa_<10>(numeric, value);
             return true;
         }
-        else if (std::isdigit(reader.Peek(1), locale))
+        else if (IsDigit(reader.Peek(1)) )
         {
             // octal
             ch = reader.Read();
@@ -251,8 +252,6 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
 
         *psymbol = SymbolTrie::String;
 
-        const std::locale& locale = std::locale::classic();
-
         bool inQuote = true;
         bool escaped = false;
         do
@@ -266,7 +265,7 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
                 char d0, d1;
 
                 // http://en.wikipedia.org/wiki/Escape_sequences_in_C
-                switch (std::tolower(ch, locale))
+                switch (ToLower(ch))
                 {
                 case '0': value += '\0'; break;
 
@@ -282,8 +281,8 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
                 case '\\': value += '\\'; break;
 
                 case 'o':
-                    d0 = std::tolower(reader.Read(), locale);
-                    d1 = std::tolower(reader.Read(), locale);
+                    d0 = ToLower(reader.Read());
+                    d1 = ToLower(reader.Read());
 
                     if (!(Octal_(d0) && Octal_(d1)))
                         throw LexerException("invalid octal character escaping", Match(SymbolTrie::String, std::move(value), reader.SourceSite()));
@@ -295,8 +294,8 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
                     break;
 
                 case 'x':
-                    d0 = std::tolower(reader.Read(), locale);
-                    d1 = std::tolower(reader.Read(), locale);
+                    d0 = ToLower(reader.Read());
+                    d1 = ToLower(reader.Read());
 
                     if (!(Hexadecimal_(d0) && Hexadecimal_(d1)))
                         throw LexerException("invalid hexadecimal character escaping", Match(SymbolTrie::String, std::move(value), reader.SourceSite()));
@@ -346,11 +345,9 @@ static bool Lex_Identifier_(LookAheadReader& reader, const Symbol **psymbol, Str
     Assert(psymbol);
     Assert(value.empty());
 
-    const std::locale& locale = std::locale::classic();
-
     char ch = reader.Peek(0);
 
-    if (std::isalpha(ch, locale) || ('_' == ch))
+    if (IsAlpha(ch) || ('_' == ch))
     {
         *psymbol = SymbolTrie::Identifier;
         return ReadCharset_(Identifier_, reader, value);
@@ -366,7 +363,7 @@ static bool Lex_Identifier_(LookAheadReader& reader, const Symbol **psymbol, Str
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Lexer::Lexer(const StringSlice& input, const char *sourceFileName)
+Lexer::Lexer(const StringSlice& input, const wchar_t *sourceFileName)
 :   _sourceFileName(sourceFileName)
 ,   _reader(input, _sourceFileName.c_str())
 ,   _peeking(false) {

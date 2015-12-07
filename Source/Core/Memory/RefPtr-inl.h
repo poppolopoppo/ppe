@@ -341,7 +341,7 @@ FORCE_INLINE void SafePtr<T>::IncRefCountIFP() const {
     static_assert(std::is_base_of<RefCountable, T>::value, "T must be derived from RefCountable");
 #ifdef WITH_CORE_SAFEPTR
     if (_ptr) {
-        _ptr->_safeRefCount.fetch_sub(1u, std::memory_order_seq_cst);
+        _ptr->_safeRefCount.fetch_add(1u, std::memory_order_seq_cst);
     }
 #endif
 }

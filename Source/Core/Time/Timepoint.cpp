@@ -18,7 +18,6 @@ namespace {
     struct QueryPerformanceCounterContext {
         QueryPerformanceCounterContext();
         LARGE_INTEGER Frequency;
-
         STATIC_ASSERT(sizeof(LARGE_INTEGER) == sizeof(Timepoint));
     };
 

@@ -19,9 +19,7 @@ ForEach( .SharedPlatform in .AllSharedPlatforms )
         ForEach( .SharedConfig in .AllSharedConfigs )
         {
             Using( .SharedConfig )
-
-            .Targets + { '$ProjectName$-$Platform$-$Config$' }
-            Export( .Targets )
+            ^Targets + { '$ProjectName$-$Platform$-$Config$' }
         }
     }
 
@@ -31,9 +29,7 @@ ForEach( .SharedPlatform in .AllSharedPlatforms )
         ForEach( .SharedConfig in .AllSharedConfigs )
         {
             Using( .SharedConfig )
-
-            .Targets + { '$ProjectName$-$Platform$-$Config$-Purge' }
-            Export( .Targets )
+            ^Targets + { '$ProjectName$-$Platform$-$Config$-Purge' }
         }
     }
 }
@@ -50,9 +46,7 @@ ForEach( .SharedConfig in .AllSharedConfigs )
         ForEach( .SharedPlatform in .AllSharedPlatforms )
         {
             Using( .SharedPlatform )
-
-            .Targets + { '$ProjectName$-$Platform$-$Config$' }
-            Export( .Targets )
+            ^Targets + { '$ProjectName$-$Platform$-$Config$' }
         }
     }
 
@@ -62,9 +56,7 @@ ForEach( .SharedConfig in .AllSharedConfigs )
         ForEach( .SharedPlatform in .AllSharedPlatforms )
         {
             Using( .SharedPlatform )
-
-            .Targets + { '$ProjectName$-$Platform$-$Config$-Purge' }
-            Export( .Targets )
+            ^Targets + { '$ProjectName$-$Platform$-$Config$-Purge' }
         }
     }
 }
@@ -77,13 +69,10 @@ Alias( '$ProjectName$' )
     ForEach( .SharedPlatform in .AllSharedPlatforms )
     {
         Using( .SharedPlatform )
-
         ForEach( .SharedConfig in .AllSharedConfigs )
         {
             Using( .SharedConfig )
-
-            .Targets + { '$ProjectName$-$Platform$-$Config$' }
-            Export( .Targets )
+            ^Targets + { '$ProjectName$-$Platform$-$Config$' }
         }
     }
 }
@@ -94,13 +83,10 @@ Alias( '$ProjectName$-Purge' )
     ForEach( .SharedPlatform in .AllSharedPlatforms )
     {
         Using( .SharedPlatform )
-
         ForEach( .SharedConfig in .AllSharedConfigs )
         {
             Using( .SharedConfig )
-
-            .Targets + { '$ProjectName$-$Platform$-$Config$-Purge' }
-            Export( .Targets )
+            ^Targets + { '$ProjectName$-$Platform$-$Config$-Purge' }
         }
     }
 }

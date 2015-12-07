@@ -27,7 +27,7 @@ void FillVertexSubstitutions(   VECTOR_THREAD_LOCAL(Shader, Pair<String COMMA St
     const VertexSubPartKey *pNormalKey = nullptr;
     const VertexSubPartKey *pTangentKey = nullptr;
     const VertexSubPartKey *pBinormalKey = nullptr;
-        
+
     for (const Pair<VertexSubPartKey, VertexSubPartPOD>& keyedSubPart : declaration->SubParts()) {
         const size_t index = keyedSubPart.first.Index();
         const VertexSubPartFormat format = keyedSubPart.first.Format();

@@ -30,7 +30,7 @@ public:
 };
 //----------------------------------------------------------------------------
 inline void CurrentThreadContext::Create(const char* name, size_t tag) {
-    parent_type::Create("Core::CurrentThreadContext", name, tag, std::this_thread::get_id());
+    parent_type::Create(name, tag, std::this_thread::get_id());
 }
 //----------------------------------------------------------------------------
 inline void CurrentThreadContext::CreateMainThread() {

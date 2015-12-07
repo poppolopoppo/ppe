@@ -53,7 +53,7 @@ bool InputState<T, _Capacity>::Add_KeepExisting(T&& value) {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Capacity>
 void InputState<T, _Capacity>::Add_AssertUnique(T&& value) {
-    Assert(_size < _Capacity);
+    AssertRelease(_size < _Capacity);
     Assert(!Contains(std::forward<T>(value)));
 
     _events[_size++] = std::forward<T>(value);
@@ -76,17 +76,8 @@ bool InputState<T, _Capacity>::Remove_ReturnIfExists(const T& value) {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Capacity>
 void InputState<T, _Capacity>::Remove_AssertExists(const T& value) {
-    Assert(_size < _Capacity);
-
-    for (size_t i = 0; i < _size; ++i)
-        if (_events[i] == value) {
-            if (i + 1 != _size)
-                _events[i] = _events[_size - 1];
-            --_size;
-            return;
-        }
-
-    AssertNotReached();
+    if (false == Remove_ReturnIfExists(value))
+        AssertNotReached();
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Capacity>

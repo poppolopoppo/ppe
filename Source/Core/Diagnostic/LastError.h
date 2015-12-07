@@ -2,9 +2,8 @@
 
 #include "Core/Core.h"
 
+#include "Core/Diagnostic/Exception.h"
 #include "Core/IO/String.h"
-
-#include <exception>
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -12,7 +11,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 String GetLastErrorToString(long errorCode);
 //----------------------------------------------------------------------------
-class LastErrorException : public std::exception {
+class LastErrorException : public Exception {
 public:
     LastErrorException();
     LastErrorException(long errorCode);

@@ -5,6 +5,8 @@
 #include "MemoryTracking.h"
 #include "MemoryView.h"
 
+#include "Diagnostic/Logger.h"
+
 #ifdef USE_MEMORY_DOMAINS
 #   include <algorithm>
 #   include <iostream>
@@ -63,7 +65,7 @@ namespace {
 #ifdef USE_MEMORY_DOMAINS
 struct AdditionalTrackingData {
     std::mutex Barrier;
-    std::vector<MemoryTrackingData *> Datas;
+    Vector<MemoryTrackingData *, std::allocator<MemoryTrackingData *>> Datas;
 };
 static AdditionalTrackingData *gAllAdditionalTrackingData = nullptr;
 #endif
@@ -84,7 +86,8 @@ void ReportDomainTrackingData() {
 #ifdef USE_MEMORY_DOMAINS
     const MemoryTrackingData **ptr = (const MemoryTrackingData **)&gAllMemoryDomainTrackingData[0];
     const MemoryView<const MemoryTrackingData *> datas(ptr, lengthof(gAllMemoryDomainTrackingData));
-    ReportTrackingDatas(std::cout, "Memory Domains", datas);
+    LoggerStream log(LogCategory::Debug);
+    ReportTrackingDatas(log, L"Memory Domains", datas);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -117,7 +120,8 @@ void ReportAdditionalTrackingData() {
     std::unique_lock<std::mutex> scopeLock(gAllAdditionalTrackingData->Barrier);
     const MemoryTrackingData **ptr = (const MemoryTrackingData **)&gAllAdditionalTrackingData->Datas[0];
     const MemoryView<const MemoryTrackingData *> datas(ptr, gAllAdditionalTrackingData->Datas.size());
-    ReportTrackingDatas(std::cout, "Additional", datas);
+    LoggerStream log(LogCategory::Debug);
+    ReportTrackingDatas(log, L"Additional", datas);
 #endif
 }
 //----------------------------------------------------------------------------

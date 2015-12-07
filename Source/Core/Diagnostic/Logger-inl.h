@@ -21,10 +21,11 @@ void LoggerFrontend::LogFormat(LogCategory category, const wchar_t* format, _Arg
     if (!_impl)
         return;
 
-    STACKLOCAL_WOCSTRSTREAM(oss, 4096);
-    const size_t length = Format(oss, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+    wchar_t buffer[4096];
+    WOCStrStream oss(buffer);
+    Format(oss, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
 
-    _impl->Log(*this, category, oss.Pointer(), length);
+    _impl->Log(*this, category, oss.NullTerminatedStr(), checked_cast<size_t>(oss.size()) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

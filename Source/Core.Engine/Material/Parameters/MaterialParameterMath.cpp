@@ -256,7 +256,7 @@ bool TryCreateMaterialParameter(
     Assert(context.Scene);
     Assert(!name.empty());
 
-    const char *cstr = name.cstr();
+    const char *cstr = name.c_str();
 
     static const char uniInvertTranspose[] = "uniInvertTranspose_";
     static const char uniInvert[] = "uniInvert_";

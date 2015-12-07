@@ -80,12 +80,17 @@ public:
 
     void Swap(ScalarBoundingBox& other);
 
+    friend hash_t hash_value(const ScalarBoundingBox& b) { return hash_tuple(b._min, b._max); }
+
     template <typename U>
     ScalarBoundingBox<U, _Dim> Cast() const;
 
-    static ScalarBoundingBox<T, _Dim> MinMax() { return ScalarBoundingBox(vector_type::MinValue(), vector_type::MaxValue()); }
-    static ScalarBoundingBox<T, _Dim> MinusOneOne() { return ScalarBoundingBox(vector_type::MinusOne(), vector_type::One()); }
-    static ScalarBoundingBox<T, _Dim> ZeroOne() { return ScalarBoundingBox(vector_type::Zero(), vector_type::One()); }
+    static ScalarBoundingBox<T, _Dim> MaxMinValue() { return ScalarBoundingBox(vector_type::MaxValue(), vector_type::MinValue()); }
+    static ScalarBoundingBox<T, _Dim> MinMaxValue() { return ScalarBoundingBox(vector_type::MinValue(), vector_type::MaxValue()); }
+    static ScalarBoundingBox<T, _Dim> MinusOneOneValue() { return ScalarBoundingBox(vector_type::MinusOne(), vector_type::One()); }
+    static ScalarBoundingBox<T, _Dim> ZeroOneValue() { return ScalarBoundingBox(vector_type::Zero(), vector_type::One()); }
+
+    static ScalarBoundingBox<T, _Dim> DefaultValue() { return MaxMinValue(); }
 
     template <size_t _0, size_t _1>
     ScalarBoundingBox<T, 2> Shuffle2() const { return ScalarBoundingBox<T, 2>(_min.Shuffle2<_0, _1>(), _max.Shuffle2<_0, _1>()); }

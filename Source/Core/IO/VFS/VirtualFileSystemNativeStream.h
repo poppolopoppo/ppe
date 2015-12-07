@@ -17,47 +17,50 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class VirtualFileSystemNativeFileIStream : public IVirtualFileSystemIStream {
+class VirtualFileSystemNativeFileIStream : public IVirtualFileSystemIStream, public Meta::ThreadResource {
 public:
     VirtualFileSystemNativeFileIStream(const Filename& filename, const wchar_t* native, AccessPolicy::Mode policy);
     virtual ~VirtualFileSystemNativeFileIStream();
 
     virtual const Filename& SourceFilename() const override { return _filename; }
 
-    virtual std::streamoff TellI() override;
-    virtual void SeekI(std::streamoff offset) override;
+    virtual std::streamoff TellI() const override;
+    virtual bool SeekI(std::streamoff offset, SeekOrigin policy) override;
 
-    virtual void Read(void* storage, std::streamsize count) override;
-    virtual std::streamsize ReadSome(void* storage, std::streamsize count) override;
+    virtual bool Read(void* storage, std::streamsize sizeInBytes) override;
+    virtual std::streamsize ReadSome(void* storage, size_t eltsize, std::streamsize count) override;
 
     virtual char PeekChar() override;
+    virtual wchar_t PeekCharW() override;
 
     virtual bool Eof() const override;
-    virtual std::streamsize Size() const override;
+    virtual std::streamsize SizeInBytes() const override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    FILE *_handle;
-    Filename _filename;
+    FILE *const _handle;
+    const Filename _filename;
 };
 //----------------------------------------------------------------------------
-class VirtualFileSystemNativeFileOStream : public IVirtualFileSystemOStream {
+class VirtualFileSystemNativeFileOStream : public IVirtualFileSystemOStream, public Meta::ThreadResource {
 public:
     VirtualFileSystemNativeFileOStream(const Filename& filename, const wchar_t* native, AccessPolicy::Mode policy);
     virtual ~VirtualFileSystemNativeFileOStream();
 
     virtual const Filename& SourceFilename() const override { return _filename; }
 
-    virtual std::streamoff TellO() override;
-    virtual void SeekO(std::streamoff offset) override;
-    virtual void Write(const void* storage, std::streamsize count) override;
+    virtual std::streamoff TellO() const override;
+    virtual bool SeekO(std::streamoff offset, SeekOrigin policy) override;
+
+    virtual bool Write(const void* storage, std::streamsize sizeInBytes) override;
+    virtual bool WriteSome(const void* storage, size_t eltsize, std::streamsize count) override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    FILE *_handle;
-    Filename _filename;
+    FILE *const _handle;
+    const Filename _filename;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

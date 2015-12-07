@@ -6,6 +6,8 @@
 #include "Core/IO/Stream.h"
 #include "Core/Memory/MemoryView.h"
 
+#include <cctype>
+#include <cwctype>
 #include <locale>
 #include <iosfwd>
 #include <string>
@@ -13,19 +15,17 @@
 #include <wchar.h>
 #include <xhash>
 
-extern template std::basic_string<char, std::char_traits<char>, ALLOCATOR(String, char)>;
-extern template std::basic_string<wchar_t, std::char_traits<wchar_t>, ALLOCATOR(String, wchar_t)>;
+//extern template std::basic_string<char, std::char_traits<char>, ALLOCATOR(String, char)>;
+//extern template std::basic_string<wchar_t, std::char_traits<wchar_t>, ALLOCATOR(String, wchar_t)>;
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 enum class CaseSensitive : bool {
-    True = true,
-    False = false,
+    True    = true,
+    False   = false,
 };
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <
     typename _Char,
@@ -34,8 +34,25 @@ template <
 >
 using BasicString = std::basic_string<_Char, _Traits, _Allocator>;
 //----------------------------------------------------------------------------
-using String = BasicString<char>;
-using WString = BasicString<wchar_t>;
+INSTANTIATE_CLASS_TYPEDEF(String,   BasicString<char>);
+INSTANTIATE_CLASS_TYPEDEF(WString,  BasicString<wchar_t>);
+//----------------------------------------------------------------------------
+template <typename _Char> struct DefaultString {};
+template <> struct DefaultString<char> { typedef String type; };
+template <> struct DefaultString<wchar_t> { typedef WString type; };
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+hash_t hash_string(const char* cstr, size_t length, CaseSensitive sensitive = CaseSensitive::True);
+hash_t hash_string(const wchar_t* wcstr, size_t length, CaseSensitive sensitive = CaseSensitive::True);
+//----------------------------------------------------------------------------
+inline hash_t hash_value(const String& str) { return hash_string(str.c_str(), str.size()); }
+inline hash_t hash_value(const WString& wstr) { return hash_string(wstr.c_str(), wstr.size()); }
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits, typename _Allocator>
+hash_t hash_value(const std::basic_string<_Char, _Traits, _Allocator>& str) {
+    return hash_string(str.c_str(), str.size());
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -71,31 +88,6 @@ inline int CompareN(const wchar_t* lhs, const wchar_t* rhs, size_t length) { ret
 inline int CompareNI(const char* lhs, const char* rhs, size_t length) { return ::_strnicmp(lhs, rhs, length); }
 //----------------------------------------------------------------------------
 inline int CompareNI(const wchar_t* lhs, const wchar_t* rhs, size_t length) { return ::_wcsnicmp(lhs, rhs, length); }
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-size_t hash_value(const char* cstr, size_t length);
-//----------------------------------------------------------------------------
-size_t hash_value(const wchar_t* wcstr, size_t length);
-//----------------------------------------------------------------------------
-size_t hash_valueI(const char* cstr, size_t length);
-//----------------------------------------------------------------------------
-size_t hash_valueI(const wchar_t* wcstr, size_t length);
-//----------------------------------------------------------------------------
-template <typename _Char, typename _Traits, typename _Allocator>
-size_t hash_value(const std::basic_string<_Char, _Traits, _Allocator>& str) {
-    return hash_value(str.c_str(), str.size());
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-inline size_t hash_value(const char* cstr) { return hash_value(cstr, Length(cstr)); }
-//----------------------------------------------------------------------------
-inline size_t hash_value(const wchar_t* wcstr) { return hash_value(wcstr, Length(wcstr)); }
-//----------------------------------------------------------------------------
-inline size_t hash_valueI(const char* cstr) { return hash_valueI(cstr, Length(cstr)); }
-//----------------------------------------------------------------------------
-inline size_t hash_valueI(const wchar_t* wcstr) { return hash_valueI(wcstr, Length(wcstr)); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -185,6 +177,37 @@ extern template bool Atof<double>(double *, const char *, size_t );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+inline char ToLower(char ch) { return ( ( ch >= 'A' ) && ( ch <= 'Z' ) ) ? 'a' + ( ch - 'A' ) : ch; }
+inline char ToUpper(char ch) { return ( ( ch >= 'a' ) && ( ch <= 'z' ) ) ? 'A' + ( ch - 'a' ) : ch; }
+//----------------------------------------------------------------------------
+inline wchar_t ToLower(wchar_t wch) { return std::towlower(wch); }
+inline wchar_t ToUpper(wchar_t wch) { return std::towupper(wch); }
+//----------------------------------------------------------------------------
+template <typename _Char> void InplaceToLower(_Char& ch) { ch = ToLower(ch); }
+template <typename _Char> void InplaceToUpper(_Char& ch) { ch = ToUpper(ch); }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+inline bool IsAlpha(char ch) { return ( ( ch >= 'a' ) && ( ch <= 'z' ) ) || ( ( ch >= 'A' ) && ( ch <= 'Z' ) ); }
+inline bool IsAlpha(wchar_t wch) { return 0 != std::iswalpha(wch); }
+//----------------------------------------------------------------------------
+inline bool IsDigit(char ch) { return ( ( ch >= '0' ) && ( ch <= '9' ) ); }
+inline bool IsDigit(wchar_t wch) { return 0 != std::iswdigit(wch); }
+//----------------------------------------------------------------------------
+inline bool IsXDigit(char ch) { return IsDigit(ch) || ( ch >= 'a' && ch <= 'f' ) || ( ch >= 'A' && ch <= 'F' ); }
+inline bool IsXDigit(wchar_t wch) { return 0 != std::iswxdigit(wch); }
+//----------------------------------------------------------------------------
+inline bool IsAlnum(char ch) { return IsAlpha(ch) || IsDigit(ch); }
+inline bool IsAlnum(wchar_t wch) { return 0 != std::iswalnum(wch); }
+//----------------------------------------------------------------------------
+inline bool IsPrint(char ch) { return 0 != std::isprint(ch); }
+inline bool IsPrint(wchar_t wch) { return 0 != std::iswprint(wch); }
+//----------------------------------------------------------------------------
+inline bool IsSpace(char ch) { return ( ch == ' ' || ch == '\f' || ch == '\n' || ch == '\r' || ch == '\t' || ch == '\v' ); }
+inline bool IsSpace(wchar_t wch) { return 0 != std::iswdigit(wch); }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename _Char, CaseSensitive _CaseSensitive>
 struct StringEqualTo : public std::binary_function<const _Char*, const _Char*, bool> {
     bool operator ()(const _Char* lhs, const _Char* rhs) const { return 0 == Compare(lhs, rhs); }
@@ -219,31 +242,22 @@ struct StringHasher<_Char, CaseSensitive::False> : public std::unary_function<co
 //----------------------------------------------------------------------------
 template <typename _Char, CaseSensitive _CaseSensitive>
 struct CharEqualTo : public std::binary_function<const _Char, const _Char, bool> {
-    bool operator ()(const _Char& lhs, const _Char& rhs) const {
-        return lhs == rhs;
-    }
+    bool operator ()(const _Char& lhs, const _Char& rhs) const { return lhs == rhs; }
 };
 //----------------------------------------------------------------------------
 template <typename _Char>
 struct CharEqualTo<_Char, CaseSensitive::False> : public std::binary_function<const _Char, const _Char, bool> {
-    bool operator ()(const _Char& lhs, const _Char& rhs) const {
-        return ::tolower(lhs) == ::tolower(rhs);
-    }
+    bool operator ()(const _Char& lhs, const _Char& rhs) const { return ToLower(lhs) == ToLower(rhs); }
 };
 //----------------------------------------------------------------------------
 template <typename _Char, CaseSensitive _CaseSensitive>
 struct CharLess : public std::binary_function<const _Char, const _Char, bool> {
-    bool operator ()(const _Char& lhs, const _Char& rhs) const {
-        return lhs < rhs;
-    }
+    bool operator ()(const _Char& lhs, const _Char& rhs) const { return lhs < rhs; }
 };
 //----------------------------------------------------------------------------
 template <typename _Char>
 struct CharLess<_Char, CaseSensitive::False> : public std::binary_function<const _Char, const _Char, bool>{
-    bool operator ()(const _Char& lhs, const _Char& rhs) const {
-        const std::locale& locale = std::locale::classic();
-        return std::tolower(lhs, locale) < std::tolower(rhs, locale);
-    }
+    bool operator ()(const _Char& lhs, const _Char& rhs) const { return ToLower(lhs) < ToLower(rhs); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

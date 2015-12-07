@@ -9,6 +9,21 @@
 
 namespace Core {
 namespace Graphics {
+FWD_REFPTR(ShaderSource);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+enum class ShaderCompilerFlags {
+    None        = 0,
+    Debug       = 1 << 0,
+    Optimize    = 1 << 1,
+    NoOptimize  = 1 << 2,
+    Pedantic    = 1 << 3,
+    WError      = 1 << 4,
+
+    Default = Optimize|Pedantic|WError,
+    DefaultForDebug = Debug|NoOptimize|Pedantic|WError,
+};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -16,26 +31,18 @@ class IDeviceAPIShaderCompiler {
 public:
     virtual ~IDeviceAPIShaderCompiler() {}
 
-    virtual const AbstractDeviceAPIEncapsulator *APIEncapsulator() const = 0;
-
-    virtual DeviceAPIDependantShaderProgram *CreateShaderProgram(
-        ShaderProgram *program,
-        const char *entryPoint,
+    virtual ShaderCompiled* CompileShaderSource(
+        const ShaderSource* source,
+        const VertexDeclaration* vertexDeclaration,
+        ShaderProgramType programType,
+        ShaderProfileType profileType,
         ShaderCompilerFlags flags,
-        const ShaderSource *source,
-        const VertexDeclaration *vertexDeclaration) = 0;
-    virtual void DestroyShaderProgram(ShaderProgram *program, PDeviceAPIDependantShaderProgram& entity) = 0;
+        const char* entryPoint ) = 0;
 
-    virtual void PreprocessShaderProgram(
+    virtual void PreprocessShaderSource(
         RAWSTORAGE(Shader, char)& output,
-        const ShaderProgram *program,
-        const ShaderSource *source,
-        const VertexDeclaration *vertexDeclaration) = 0;
-
-    virtual void ReflectShaderProgram(
-        ASSOCIATIVE_VECTOR(Shader, BindName, PCConstantBufferLayout)& constants,
-        VECTOR(Shader, ShaderProgramTexture)& textures,
-        const ShaderProgram *program) = 0;
+        const ShaderSource* source,
+        const VertexDeclaration* vertexDeclaration) = 0;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -1,22 +1,21 @@
 #pragma once
 
+#include "Core/Meta/Hash_fwd.h"
+
 namespace Core {
 namespace Meta {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Gets a unique ID for T (different each run)
+// Gets a unique ID for T
+// /!\ INVALIDATED EACH BUILD/RUN /!\
 //----------------------------------------------------------------------------
 template <typename T>
-class TypeHash {
-public:
-    static size_t value() { return size_t(&sTag); }
-private:
-    static const size_t sTag;
+struct TypeHash {
+    static constexpr size_t value() {
+        return hash_size_t_constexpr(size_t(&value));
+    }
 };
-//----------------------------------------------------------------------------
-template <typename T>
-size_t TypeHash<T>::sTag(0);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

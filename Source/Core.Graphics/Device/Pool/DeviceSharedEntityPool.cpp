@@ -13,72 +13,14 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Graphics, DeviceSharedEntityPool::SharedEntity, );
-//----------------------------------------------------------------------------
-template <DeviceSharedEntityPool::LRUNode DeviceSharedEntityPool::SharedEntity::*_Member>
-static void LRUList_Push_(  DeviceSharedEntityPool::SharedEntity **pHead,
-                            DeviceSharedEntityPool::SharedEntity **pTail,
-                            DeviceSharedEntityPool::SharedEntity *entity) {
-    Assert(pHead);
-    Assert(entity);
-
-    DeviceSharedEntityPool::LRUNode& node = entity->*_Member;
-    node.Prev = nullptr;
-    node.Next = *pHead;
-
-    if (nullptr != *pHead) {
-        DeviceSharedEntityPool::LRUNode& head = (*pHead)->*_Member;
-        Assert(nullptr == head.Prev);
-        head.Prev = entity;
-    }
-    else if (pTail) {
-        Assert(nullptr == *pTail);
-        *pTail = entity;
-    }
-
-    *pHead = entity;
-}
-//----------------------------------------------------------------------------
-template <DeviceSharedEntityPool::LRUNode DeviceSharedEntityPool::SharedEntity::*_Member>
-static void LRUList_Remove_(DeviceSharedEntityPool::SharedEntity **pHead,
-                            DeviceSharedEntityPool::SharedEntity **pTail,
-                            DeviceSharedEntityPool::SharedEntity *entity) {
-    Assert(pHead);
-    Assert(entity);
-    Assert(*pHead);
-    Assert(nullptr == pTail || *pTail);
-
-    DeviceSharedEntityPool::LRUNode& node = entity->*_Member;
-
-    if (node.Prev) {
-        Assert((node.Prev->*_Member).Next == entity);
-        (node.Prev->*_Member).Next = node.Next;
-    }
-
-    if (node.Next) {
-        Assert((node.Next->*_Member).Prev == entity);
-        (node.Next->*_Member).Prev = node.Prev;
-    }
-
-    if (*pHead == entity) {
-        Assert(nullptr == node.Prev);
-        *pHead = node.Next;
-        Assert(nullptr == *pHead || nullptr == ((*pHead)->*_Member).Prev);
-    }
-
-    if (pTail && *pTail == entity) {
-        Assert(nullptr == node.Next);
-        *pTail = node.Prev;
-        Assert(nullptr == *pTail || nullptr == ((*pTail)->*_Member).Next);
-    }
-}
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, DeviceSharedEntityPool::SharedEntity, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceSharedEntityPool::DeviceSharedEntityPool(MemoryTrackingData *globalVideoMemory) 
+DeviceSharedEntityPool::DeviceSharedEntityPool(MemoryTrackingData *globalVideoMemory)
 :   _mru(nullptr)
 ,   _lru(nullptr)
-,   _map(32)
+,   _map(128)
 ,   _usedMemory("EntityPool", globalVideoMemory) {}
 //----------------------------------------------------------------------------
 DeviceSharedEntityPool::~DeviceSharedEntityPool() {
@@ -87,7 +29,58 @@ DeviceSharedEntityPool::~DeviceSharedEntityPool() {
     Assert(_map.empty());
 }
 //----------------------------------------------------------------------------
-bool DeviceSharedEntityPool::Acquire(PDeviceAPIDependantEntity *pEntity, const DeviceResourceSharable& resource) {
+bool DeviceSharedEntityPool::Acquire_Cooperative(PCDeviceAPIDependantEntity *pEntity, const DeviceResourceSharable& resource) {
+    Assert(resource.Frozen());
+    Assert(resource.Sharable());
+
+    const DeviceSharedEntityKey key = resource.SharedKey();
+    const map_type::iterator it = _map.find(key);
+    if (_map.end() == it)
+        return false;
+
+    SharedEntity*& shared = it->second;
+    Assert(shared);
+
+    SharedEntity* p = shared;
+    while (p && false == resource.MatchTerminalEntity(p->Entity.get()) ) {
+        Assert(p->Key == key);
+        p = p->Local.Next;
+    }
+
+    if (nullptr == p)
+        return false;
+
+    p->LockCount++;
+
+    global_lru_type::Poke(&_mru, &_lru, p);
+
+    Assert(key == p->Key);
+    *pEntity = p->Entity;
+    return true;
+}
+//----------------------------------------------------------------------------
+void DeviceSharedEntityPool::Release_Cooperative(const DeviceSharedEntityKey& key, PCDeviceAPIDependantEntity& entity) {;
+    Assert(entity->IsAttachedToResource() == false);
+
+    SharedEntity *& shared = _map[key];
+    Assert(shared);
+
+    SharedEntity* p = shared;
+    while (p && p->Entity != entity)
+        p = p->Local.Next;
+
+    AssertRelease(p);
+    Assert(entity == p->Entity);
+    Assert(p->LockCount);
+    p->LockCount--;
+
+    global_lru_type::Poke(&_mru, &_lru, p);
+
+    entity.reset();
+    Assert(entity.get() == nullptr);
+}
+//----------------------------------------------------------------------------
+bool DeviceSharedEntityPool::Acquire_Exclusive(PDeviceAPIDependantEntity *pEntity, const DeviceResourceSharable& resource) {
     Assert(resource.Frozen());
     Assert(resource.Sharable());
 
@@ -99,7 +92,7 @@ bool DeviceSharedEntityPool::Acquire(PDeviceAPIDependantEntity *pEntity, const D
     SharedEntity *p = it->second;
     Assert(p);
 
-    while (p && false == resource.MatchTerminalEntity(p->Entity.get()) ) {
+    while (p && false == (0 == p->LockCount && resource.MatchTerminalEntity(p->Entity.get())) ) {
         Assert(p->Key == key);
         p = p->Local.Next;
     }
@@ -109,10 +102,11 @@ bool DeviceSharedEntityPool::Acquire(PDeviceAPIDependantEntity *pEntity, const D
 
     const UniquePtr<SharedEntity> shared(p);
     Assert(shared->Entity);
+    Assert(0 == shared->LockCount);
     Assert(nullptr == shared->Local.Prev);
 
-    LRUList_Remove_<&SharedEntity::Global>(&_mru, &_lru, shared.get());
-    LRUList_Remove_<&SharedEntity::Local>(&it->second, nullptr, shared.get());
+    global_lru_type::Deque(&_mru, &_lru, p);
+    local_lru_type::Deque(&it->second, nullptr, p);
 
     if (nullptr == it->second)
         _map.erase(it);
@@ -126,14 +120,15 @@ bool DeviceSharedEntityPool::Acquire(PDeviceAPIDependantEntity *pEntity, const D
     return true;
 }
 //----------------------------------------------------------------------------
-void DeviceSharedEntityPool::Release(const DeviceSharedEntityKey& key, PDeviceAPIDependantEntity& entity) {;
+void DeviceSharedEntityPool::Release_Exclusive(const DeviceSharedEntityKey& key, PDeviceAPIDependantEntity& entity) {;
     Assert(entity->IsAttachedToResource() == false);
 
     SharedEntity *& shared = _map[key];
     SharedEntity *const mru = new SharedEntity;
+    mru->LockCount = 0;
 
-    LRUList_Push_<&SharedEntity::Global>(&_mru, &_lru, mru);
-    LRUList_Push_<&SharedEntity::Global>(&shared, nullptr, mru);
+    global_lru_type::Queue(&_mru, &_lru, mru);
+    local_lru_type::Queue(&shared, nullptr, mru);
 
     const size_t sizeInBytes = shared->Entity->VideoMemorySizeInBytes();
     Assert(sizeInBytes);
@@ -144,55 +139,43 @@ void DeviceSharedEntityPool::Release(const DeviceSharedEntityKey& key, PDeviceAP
     Assert(entity.get() == nullptr);
 }
 //----------------------------------------------------------------------------
-void DeviceSharedEntityPool::ReleaseAll() {
+size_t DeviceSharedEntityPool::ReleaseLRU_ReturnRealSize(size_t targetSizeInBytes) {
 
-    SharedEntity *p = _mru;
-    while (p) {
-        SharedEntity *const next = p->Global.Next;
-        Assert(nullptr != next || _lru == p);
+#ifdef WITH_CORE_ASSERT
+    size_t totalSizeInBytes = 0;
+#endif
 
-        _usedMemory.Deallocate(1, p->Entity->VideoMemorySizeInBytes());
+    SharedEntity* p = _lru;
+    while (p && _usedMemory.TotalSizeInBytes() > targetSizeInBytes) {
+        SharedEntity *const prev = p->Global.Prev;
 
-        RemoveRef_AssertReachZero(p->Entity);
-        checked_delete(p);
+        if (0 == p->LockCount) {
 
-        p = next;
-    }
+            const map_type::iterator it = _map.find(p->Key);
+            Assert(_map.end() != it);
 
-    _mru = _lru = nullptr;
-    _map.clear();
-}
-//----------------------------------------------------------------------------
-void DeviceSharedEntityPool::ReleaseLRU(size_t targetSizeInBytes) {
-    if (0 == targetSizeInBytes)
-    {
-        ReleaseAll();
-        return;
-    }
+            global_lru_type::Deque(&_mru, &_lru, p);
+            local_lru_type::Deque(&it->second, nullptr, p);
 
-    SharedEntity *p = _lru;
-    while (p && targetSizeInBytes < _usedMemory.TotalSizeInBytes().Value) {
-        SharedEntity *const prev = p->Global.Next;
-        Assert(nullptr != prev || _mru == p);
-        
-        const map_type::iterator it = _map.find(p->Key);
-        Assert(_map.end() != it);
+            if (nullptr == it->second)
+                _map.erase(it);
 
-        LRUList_Remove_<&SharedEntity::Global>(&_mru, &_lru, p);
-        LRUList_Remove_<&SharedEntity::Local>(&it->second, nullptr, p);
+            _usedMemory.Deallocate(1, p->Entity->VideoMemorySizeInBytes());
 
-        const size_t sizeInBytes = p->Entity->VideoMemorySizeInBytes();
-        Assert(sizeInBytes);
-        _usedMemory.Deallocate(1, sizeInBytes);
-
-        RemoveRef_AssertReachZero(p->Entity);
-        checked_delete(p);
+            RemoveRef_AssertReachZero(p->Entity);
+            checked_delete(p);
+        }
+#ifdef WITH_CORE_ASSERT
+        else {
+            totalSizeInBytes += p->Entity->VideoMemorySizeInBytes();
+        }
+#endif
 
         p = prev;
     }
 
-    _mru = _lru = nullptr;
-    _map.clear();
+    Assert(_usedMemory.TotalSizeInBytes() == totalSizeInBytes);
+    return _usedMemory.TotalSizeInBytes();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

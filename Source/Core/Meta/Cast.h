@@ -12,7 +12,7 @@ inline NOALIAS typename std::enable_if<
     std::is_arithmetic<_Src>::value &&
     !std::is_same<_Dst, _Src>::value,
     _Dst>::type
-    checked_cast(const _Src value) {
+    checked_cast(const _Src value) noexcept {
 #ifdef _DEBUG
     const _Dst result = static_cast<_Dst>(value);
     Assert(static_cast<_Src>(result) == value);
@@ -27,7 +27,7 @@ inline NOALIAS typename std::enable_if<
     (std::is_pointer<_Dst>::value ^ std::is_pointer<_Src>::value) &&
     !std::is_same<_Dst, _Src>::value,
     _Dst>::type
-    checked_cast(const _Src value) {
+    checked_cast(const _Src value) noexcept {
 #ifdef _DEBUG
     const _Dst result = reinterpret_cast<_Dst>(value);
     Assert(reinterpret_cast<_Src>(result) == value);
@@ -55,7 +55,7 @@ inline NOALIAS typename std::enable_if<
 }
 //----------------------------------------------------------------------------
 template <typename _Dst>
-FORCE_INLINE NOALIAS const _Dst& checked_cast(const _Dst& value) {
+FORCE_INLINE NOALIAS const _Dst& checked_cast(const _Dst& value) noexcept {
     return value;
 }
 //----------------------------------------------------------------------------

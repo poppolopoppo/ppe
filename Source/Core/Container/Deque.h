@@ -1,0 +1,24 @@
+#pragma once
+
+#include "Core/Core.h"
+
+#include "Core/Allocator/Allocation.h"
+
+#include <deque>
+
+namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator = ALLOCATOR(Container, T)>
+using Deque = std::deque<T, _Allocator>;
+//----------------------------------------------------------------------------
+#define DEQUE(_DOMAIN, T) \
+    ::Core::Deque<COMMA_PROTECT(T), ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
+//----------------------------------------------------------------------------
+#define DEQUE_THREAD_LOCAL(_DOMAIN, T) \
+    ::Core::Deque<COMMA_PROTECT(T), THREAD_LOCAL_ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace Core

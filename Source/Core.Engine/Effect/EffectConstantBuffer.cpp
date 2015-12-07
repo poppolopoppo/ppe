@@ -93,7 +93,7 @@ void EffectConstantBuffer::Prepare(const MaterialParameterMutableContext& contex
 
             DialogBox::Show(L"Material parameter not found", DialogBox::Type::Ok, DialogBox::Icon::Aterisk,
                 L"Failed to retrieve parameter '{0}' in constant buffer '{1}' from material effect <{2}> !",
-                name.cstr(), sharedKey.Name.cstr(), material->Name().cstr() );
+                name.c_str(), sharedKey.Name.c_str(), material->Name().c_str() );
 
             AssertNotImplemented(); // TODO : throw an exception to retry
         }

@@ -14,10 +14,10 @@ namespace Lexer {
 //----------------------------------------------------------------------------
 class LookAheadReader {
 public:
-    LookAheadReader(const StringSlice& input, const char *sourceFileName);
+    LookAheadReader(const StringSlice& input, const wchar_t *sourceFileName);
     ~LookAheadReader();
 
-    const char *SourceFileName() const { return _sourceFileName; }
+    const wchar_t *SourceFileName() const { return _sourceFileName; }
     size_t SourceLine() const { return _sourceLine; }
     size_t SourceColumn() const { return _sourceColumn; }
 
@@ -31,7 +31,7 @@ public:
     void EatWhiteSpaces();
 
 private:
-    const char *_sourceFileName;
+    const wchar_t *_sourceFileName;
     size_t _sourceLine;
     size_t _sourceColumn;
 

@@ -6,14 +6,14 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#ifdef USE_MEMORY_DOMAINS
+#ifdef WITH_CORE_POOL_ALLOCATOR_TRACKING
 template <typename _Tag, typename T, bool _ThreadLocal >
 MemoryTrackingData *TypedSegregatedMemoryPool<_Tag, T, _ThreadLocal>::_pTrackingData = nullptr;
 #endif
 //----------------------------------------------------------------------------
 template <typename _Tag, typename T, bool _ThreadLocal >
 void *TypedSegregatedMemoryPool<_Tag, T, _ThreadLocal>::Allocate() {
-#ifdef USE_MEMORY_DOMAINS
+#ifdef WITH_CORE_POOL_ALLOCATOR_TRACKING
     ONE_TIME_INITIALIZE_TPL(PoolTracking<T COMMA _ThreadLocal>,
                             sTracking,
                             typeid(T).name(), segregatedpool_type::Instance().TrackingData(), &_pTrackingData );
@@ -25,7 +25,7 @@ void *TypedSegregatedMemoryPool<_Tag, T, _ThreadLocal>::Allocate() {
 //----------------------------------------------------------------------------
 template <typename _Tag, typename T, bool _ThreadLocal >
 void TypedSegregatedMemoryPool<_Tag, T, _ThreadLocal>::Deallocate(void *ptr) {
-#ifdef USE_MEMORY_DOMAINS
+#ifdef WITH_CORE_POOL_ALLOCATOR_TRACKING
     segregatedpool_type::Instance().Deallocate(ptr, _pTrackingData);
 #else
     segregatedpool_type::Instance().Deallocate(ptr);

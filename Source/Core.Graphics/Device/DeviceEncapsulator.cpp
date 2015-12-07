@@ -72,13 +72,9 @@ IDeviceAPIContext *DeviceEncapsulator::Immediate() const {
     return const_cast<DeviceEncapsulator *>(this);
 }
 //----------------------------------------------------------------------------
-IDeviceAPIShaderCompiler *DeviceEncapsulator::ShaderCompiler() const {
-    THIS_THREADRESOURCE_CHECKACCESS();
-    return const_cast<DeviceEncapsulator *>(this);
-}
-//----------------------------------------------------------------------------
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
 IDeviceAPIDiagnostics *DeviceEncapsulator::Diagnostics() const {
+    THIS_THREADRESOURCE_CHECKACCESS();
     return const_cast<DeviceEncapsulator *>(this);
 }
 #endif
@@ -109,6 +105,7 @@ void DeviceEncapsulator::Create(DeviceAPI api, void *windowHandle, const Present
 
     Assert(_deviceAPIEncapsulator);
     GraphicsStartup::OnDeviceCreate(this);
+    _onDeviceCreate.Invoke(this);
 
     Assert(DeviceStatus::Create == _status);
     _status = DeviceStatus::Normal;
@@ -123,10 +120,16 @@ void DeviceEncapsulator::Destroy() {
     Assert(DeviceStatus::Normal == _status);
     _status = DeviceStatus::Destroy;
 
+    _onDeviceDestroy.Invoke(this);
+
     _deviceAPIEncapsulator->ClearState();
 
     Assert(nullptr != _deviceSharedEntityPool);
-    _deviceSharedEntityPool->ReleaseAll();
+    const size_t poolSizeInBytes = _deviceSharedEntityPool->ReleaseAll_ReturnRealSize();
+    if (0 != poolSizeInBytes) {
+        LOG(Error, L"[DeviceSharedEntityPool] There is still {0} used in the pool !", SizeInBytes(poolSizeInBytes));
+        AssertNotReached();
+    }
     _deviceSharedEntityPool.reset();
 
     GraphicsStartup::OnDeviceDestroy(this);
@@ -147,7 +150,9 @@ void DeviceEncapsulator::Reset(const PresentationParameters& pp) {
     Assert(DeviceStatus::Normal == _status);
     _status = DeviceStatus::Reset;
 
-    _deviceSharedEntityPool->ReleaseAll();
+    _onDeviceReset.Invoke(this);
+
+    _deviceSharedEntityPool->ReleaseAll_ReturnRealSize();
     _deviceAPIEncapsulator->Reset(pp);
     _revision.Value = 0;
 
@@ -157,6 +162,8 @@ void DeviceEncapsulator::Reset(const PresentationParameters& pp) {
 //----------------------------------------------------------------------------
 void DeviceEncapsulator::Present() {
     THIS_THREADRESOURCE_CHECKACCESS();
+
+    _onDevicePresent.Invoke(this);
 
     _deviceAPIEncapsulator->Present();
     ++_revision.Value;

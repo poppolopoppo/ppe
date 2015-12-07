@@ -3,7 +3,7 @@
 #include "Alloca.h"
 
 #include "Memory/MemoryTracking.h"
-#include "Thread/ThreadLocalSingleton.h"
+#include "Meta/Singleton.h"
 #include "ThreadLocalHeap.h"
 
 #ifdef WITH_CORE_ASSERT
@@ -21,9 +21,9 @@ public:
     enum : u32 {
     // memory reserved per thread for alloca
 #if defined(ARCH_X64)
-        Capacity        =128<<10    /* 128 kb   */
+        Capacity        =128<<10    /* 256 kb   */
 #elif defined(ARCH_X86)
-        Capacity        = 64<<10    /* 64 kb    */
+        Capacity        = 64<<10    /* 128 kb   */
 #else
 #   error "no support"
 #endif
@@ -177,13 +177,8 @@ public:
     using parent_type::HasInstance;
     using parent_type::Destroy;
 
-    static void Create();
+    static void Create() { parent_type::Create(); }
 };
-//----------------------------------------------------------------------------
-void ThreadLocalAllocaStorage::Create() {
-    static const char* key = "ThreadLocalAlloca";
-    parent_type::Create(key);
-}
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------

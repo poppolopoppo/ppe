@@ -24,7 +24,8 @@
 
 .MSVC2012BasePath =
 [
-    .LocalisationUID    = '1033' ; code zone pour le language (messages std FR)
+    .LocalisationUID    = '$VS110CLUID$' ; code zone pour le language (messages std FR)
+    Print( "Using Visual 2012 with localisation uid $LocalisationUID$" )
     .VSBasePath         = '$VS110COMNTOOLS$..\..'
     .WindowsSDKBasePath = 'C:\Program Files (x86)\Windows Kits\8.0'
 ]
@@ -117,6 +118,7 @@ Compiler( 'Compiler-MSVC2012-x64' )
         '$WindowsSDKBasePath$/Include/um',
         '$WindowsSDKBasePath$/Include/shared',
         '$WindowsSDKBasePath$/Include',
+        '$DirectXSDKBasePath$/Include',
     }
 ]
 
@@ -133,6 +135,7 @@ Compiler( 'Compiler-MSVC2012-x64' )
     .Linker             = '$ToolsBasePath$/link.exe'
     .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/win8/um/x86"'
                         + ' /LIBPATH:"$VSBasePath$/VC/lib"'
+                        + ' /LIBPATH:"$DirectXSDKBasePath$/Lib/x86"'
 ]
 .MSVC2012PlatformWin32 + .MSVCBasePlatformWin32
 
@@ -146,6 +149,7 @@ Compiler( 'Compiler-MSVC2012-x64' )
     .Linker             = '$ToolsBasePath$/link.exe'
     .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/win8/um/x64"'
                         + ' /LIBPATH:"$VSBasePath$/VC/lib/amd64"'
+                        + ' /LIBPATH:"$DirectXSDKBasePath$/Lib/x64"'
 ]
 .MSVC2012PlatformX64 + .MSVCBasePlatformX64
 

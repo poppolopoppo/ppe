@@ -154,24 +154,24 @@ void Texture2D::CopySubPart(
     Assert(psource2D->Available());
     Assert(u32(BufferMode::Write) == (u32(psource2D->Mode()) & u32(BufferMode::Read)));
     Assert(dstLevel < _levelCount);
-    Assert( dstPos.x() < _width && 
+    Assert( dstPos.x() < _width &&
             dstPos.y() < _height );
     Assert(srcLevel < psource2D->_levelCount);
     Assert(srcBox.HasPositiveExtentsStrict());
-    Assert( srcBox.Max().x() < psource2D->_width && 
+    Assert( srcBox.Max().x() < psource2D->_width &&
             srcBox.Max().y() < psource2D->_height );
-    Assert( psource2D->Format()->SizeOfTexture2DInBytes(srcBox.Extents()) == 
+    Assert( psource2D->Format()->SizeOfTexture2DInBytes(srcBox.Extents()) ==
             Format()->SizeOfTexture2DInBytes(srcBox.Extents()) );
 
     _deviceAPIDependantTexture2D->CopySubPart(device, dstLevel, dstPos, psource2D->DeviceAPIDependantTexture2D().get(), srcLevel, srcBox);
 }
 //----------------------------------------------------------------------------
 size_t Texture2D::VirtualSharedKeyHashValue() const {
-    return Core::hash_value(Texture::HashValue_(), _width, _height, _levelCount);
+    return hash_tuple(Texture::HashValue_(), _width, _height, _levelCount);
 }
 //----------------------------------------------------------------------------
 bool Texture2D::VirtualMatchTerminalEntity(const DeviceAPIDependantEntity *entity) const {
-    const Graphics::DeviceAPIDependantTexture2D *texture2D = 
+    const Graphics::DeviceAPIDependantTexture2D *texture2D =
         checked_cast<const Graphics::DeviceAPIDependantTexture2D *>(entity);
     return  Texture::Match_(*texture2D) &&
             texture2D->Width() == _width &&
@@ -184,12 +184,12 @@ bool Texture2D::VirtualMatchTerminalEntity(const DeviceAPIDependantEntity *entit
 DeviceAPIDependantTexture2D::DeviceAPIDependantTexture2D(IDeviceAPIEncapsulator *device, const Texture2D *resource, const MemoryView<const u8>& /* optionalData */)
 :   DeviceAPIDependantTexture(device, resource)
 ,   _width(checked_cast<u32>(resource->Width()))
-,   _height(checked_cast<u32>(resource->Height())) 
+,   _height(checked_cast<u32>(resource->Height()))
 ,   _levelCount(checked_cast<u32>(resource->LevelCount())) {}
 //----------------------------------------------------------------------------
 DeviceAPIDependantTexture2D::~DeviceAPIDependantTexture2D() {}
 //----------------------------------------------------------------------------
-size_t DeviceAPIDependantTexture2D::VideoMemorySizeInBytes() const { 
+size_t DeviceAPIDependantTexture2D::VideoMemorySizeInBytes() const {
     return Format()->SizeOfTexture2DInBytes(_width, _height, _levelCount);
 }
 //----------------------------------------------------------------------------

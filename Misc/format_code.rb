@@ -6,6 +6,7 @@ require 'pp'
 require 'progressbar'
 
 WORKER_COUNT = 8
+TARGET = ARGV[0]
 
 require './codingstyle.rb'
 
@@ -20,7 +21,10 @@ def scan_files(dir, filters, &block)
 end
 
 SOURCEFILES = Queue.new
-def all_sources(&block) scan_files(SOURCEDIR, /.*\.(h|cpp)$/i, &block) end
+def all_sources(&block) TARGET.nil? ? 
+    scan_files(SOURCEDIR, /.*\.(h|cpp)$/i, &block) :
+    block.call(TARGET)
+end
 all_sources {|filename| SOURCEFILES << filename}
 SOURCEFILES_COUNT = SOURCEFILES.length
 EXIT_CODE = 0

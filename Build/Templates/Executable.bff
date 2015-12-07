@@ -26,23 +26,22 @@ ForEach( .CompileConfig in .AllCompileConfigs )
     Using( .CompileConfig )
 
     // Project directories
-    .IntermediateDirectory  + '\$Platform$\$Config$'
-    .OutputDirectory        + '\$Platform$\$Config$'
+    .IntermediateDirectory  + '\$Platform$\$Config$\$ProjectName$'
+    .OutputDirectory        = .BinaryDirectory
 
     // Project Libraries
     ForEach( .Lib in .ProjectLibraries )
     {
-        .LinkerOptions + ' "$Lib$"'
-        Export( .LinkerOptions )
+        ^LinkerOptions + ' "$Lib$"'
     }
 
 #if __WINDOWS__
-    ObjectList( '$ProjectName$-$Platform$-$Config$-Res' )
+    ObjectList( '$ProjectName$-Res-$Platform$-$Config$' )
     {
         Using( .ResourceCompiler )
 
         .CompilerInputFiles     = '$ProjectPath$\$ProjectName$.rc'
-        .CompilerOutputPath     = '$IntermediateDirectory$\$ProjectName$'
+        .CompilerOutputPath     = .IntermediateDirectory
     }
 #endif
 
@@ -55,13 +54,12 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         .Libraries = {}
         ForEach( .ProjectDependency in .ProjectDependencies )
         {
-            .Libraries + { '$ProjectDependency$-Lib-$Platform$-$Config$' }
-            Export( .Libraries )
+            ^Libraries + { '$ProjectDependency$-Lib-$Platform$-$Config$' }
         }
 
         .Libraries + '$ProjectName$-Lib-$Platform$-$Config$'
 #if __WINDOWS__
-        .Libraries + '$ProjectName$-$Platform$-$Config$-Res'
+        .Libraries + '$ProjectName$-Res-$Platform$-$Config$'
 #endif
     }
 
@@ -74,8 +72,8 @@ ForEach( .CompileConfig in .AllCompileConfigs )
 
     RemoveDir( '$ProjectName$-$Platform$-$Config$-Purge' )
     {
-        .Paths          = .BinaryDirectory
-        .PathsPattern   = "$BinaryPrefix$.$Config$.$Platform$.*"
+        .RemovePaths          = .BinaryDirectory
+        .RemovePathsPattern   = "$BinaryPrefix$.$Config$.$Platform$.*"
         .PreBuildDependencies = { '$ProjectName$-Lib-$Platform$-$Config$-Purge' }
     }
 }

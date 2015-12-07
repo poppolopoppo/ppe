@@ -1,6 +1,6 @@
 #pragma once
 
-#include <exception>
+#include "Core/Diagnostic/Exception.h"
 
 #ifdef _DEBUG // TODO: debug without asserts
 #   define WITH_CORE_ASSERT
@@ -25,7 +25,7 @@ typedef bool (*AssertionHandler)(const char *msg, const wchar_t *file, unsigned 
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_ASSERT
 //----------------------------------------------------------------------------
-class AssertException : public std::exception {
+class AssertException : public Exception {
 public:
     AssertException(const char *msg, const wchar_t *file, unsigned line);
     virtual ~AssertException();
@@ -39,15 +39,15 @@ private:
 };
 //----------------------------------------------------------------------------
 void AssertionFailed(const char *msg, const wchar_t *file, unsigned line);
-void SetAssertionHandler(AssertionHandler *handler);
+void SetAssertionHandler(AssertionHandler handler);
 //----------------------------------------------------------------------------
 #   define AssertMessage(_Expression, _Message) \
-    (void)( (!!(_Expression)) || (Core::AssertionFailed(_Message, _CRT_WIDE(__FILE__), __LINE__), 0) )
+    (void)( (!!(_Expression)) || (Core::AssertionFailed(_Message, WIDESTRING(__FILE__), __LINE__), 0) )
 //----------------------------------------------------------------------------
 #else
 //----------------------------------------------------------------------------
 inline void AssertionFailed(const wchar_t *, const wchar_t *, unsigned ) {}
-inline void SetAssertionHandler(AssertionHandler *) {}
+inline void SetAssertionHandler(AssertionHandler ) {}
 //----------------------------------------------------------------------------
 #   define AssertMessage(_Expression, _Message)  NOOP
 //----------------------------------------------------------------------------
@@ -67,7 +67,7 @@ typedef bool (*AssertionReleaseHandler)(const char *msg, const wchar_t *file, un
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_ASSERT_RELEASE
 //----------------------------------------------------------------------------
-class AssertReleaseException : public std::exception {
+class AssertReleaseException : public Exception {
 public:
     AssertReleaseException(const char *msg, const wchar_t *file, unsigned line);
     virtual ~AssertReleaseException();
@@ -81,15 +81,15 @@ private:
 };
 //----------------------------------------------------------------------------
 void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line);
-void SetAssertionReleaseHandler(AssertionReleaseHandler *handler);
+void SetAssertionReleaseHandler(AssertionReleaseHandler handler);
 //----------------------------------------------------------------------------
 #   define AssertReleaseMessage(_Expression, _Message) \
-    (void)( (!!(_Expression)) || (Core::AssertionReleaseFailed(_Message, _CRT_WIDE(__FILE__), __LINE__), 0) )
+    (void)( (!!(_Expression)) || (Core::AssertionReleaseFailed(_Message, WIDESTRING(__FILE__), __LINE__), 0) )
 //----------------------------------------------------------------------------
 #else
 //----------------------------------------------------------------------------
 inline void AssertionReleaseFailed(const char *, const wchar_t *, unsigned ) {}
-inline void SetAssertionReleaseHandler(AssertionReleaseHandler *) {}
+inline void SetAssertionReleaseHandler(AssertionReleaseHandler ) {}
 //----------------------------------------------------------------------------
 #   define AssertReleaseMessage(_Expression, _Message)  NOOP
 //----------------------------------------------------------------------------

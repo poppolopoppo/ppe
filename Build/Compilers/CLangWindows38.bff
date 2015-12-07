@@ -18,7 +18,7 @@
 .CLangWindows38PlatformToolset = 'v120'
 
 ; utilise la version 64 bits de CLANG
-#define USE_CLANGWINDOWS38_X64
+;#define USE_CLANGWINDOWS38_X64
 
 #import VS120COMNTOOLS
 .PATH   = "$VS120COMNTOOLS$..\IDE;"
@@ -35,6 +35,7 @@
 #endif
     .VSBasePath         = '$VS120COMNTOOLS$..\..'
     .WindowsSDKBasePath = 'C:\Program Files (x86)\Windows Kits\8.1'
+    .WindowsSDKVersion  = 'winv6.3'
 ]
 
 Print( "Using CLang 3.8 with platform toolset $CLangWindows38PlatformToolset$" )
@@ -91,8 +92,8 @@ Compiler( 'Compiler-CLangWindows38-x86' )
     ; TODO : pas be build x64 dispo mais a priori compilable...
     .Compiler           = 'Compiler-CLangWindows38-x86'
     .ToolsBasePath      = '$LLVMBasePath$\bin'
-    .Librarian          = '$ToolsBasePath$\llvm-ar.exe'
-    .Linker             = '$ToolsBasePath$\lld.exe'
+    .Librarian          = '$ToolsBasePath$\llvm-lib.exe'
+    .Linker             = '$ToolsBasePath$\lld-link.exe'
 
     .CompilerOptions    = '';' -fmsc-version=1800'
 ]
@@ -101,8 +102,9 @@ Compiler( 'Compiler-CLangWindows38-x86' )
 [
     Using( .CLangWindows38BasePlatform )
 
-    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/win8/um/x86"'
+    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/um/x86"'
                         + ' /LIBPATH:"$VSBasePath$/VC/lib"'
+                        + ' /LIBPATH:"$DirectXSDKBasePath$/Lib/x86"'
 ]
 .CLangWindows38PlatformWin32 + .CLangWindowsBasePlatformWin32
 
@@ -110,8 +112,9 @@ Compiler( 'Compiler-CLangWindows38-x86' )
 [
     Using( .CLangWindows38BasePlatform )
 
-    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/win8/um/x64"'
+    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/um/x64"'
                         + ' /LIBPATH:"$VSBasePath$/VC/lib/amd64"'
+                        + ' /LIBPATH:"$DirectXSDKBasePath$/Lib/x64"'
 ]
 .CLangWindows38PlatformX64 + .CLangWindowsBasePlatformX64
 

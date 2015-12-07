@@ -18,8 +18,9 @@ template <typename _ComInterface>
 class ComPtr : private Meta::ThreadResource {
 public:
     ComPtr();
-    ComPtr(_ComInterface* comObject);
     ~ComPtr();
+
+    ComPtr(_ComInterface* comObject);
 
     ComPtr(ComPtr&& rvalue);
     ComPtr& operator =(ComPtr&& rvalue);

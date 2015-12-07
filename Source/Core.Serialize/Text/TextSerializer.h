@@ -9,6 +9,11 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+class TextSerializerException : public SerializeException {
+public:
+    TextSerializerException(const char* what) : SerializeException(what) {}
+};
+//----------------------------------------------------------------------------
 class TextSerializer : public ISerializer {
 public:
     TextSerializer(RTTI::MetaTransaction *transaction);
@@ -16,11 +21,14 @@ public:
 
     virtual RTTI::MetaTransaction *Transaction() const override { return _transaction.get(); }
 
-    virtual void Deserialize(VECTOR(Transaction, RTTI::PMetaAtom)& atoms, const RAWSTORAGE(Serializer, u8)& input, const char *sourceName = nullptr) override;
-    virtual void Serialize(RAWSTORAGE(Serializer, u8)& output, const MemoryView<const RTTI::PCMetaAtom>& atoms) override;
+    using ISerializer::Deserialize;
+    using ISerializer::Serialize;
+
+    virtual void Deserialize(VECTOR(Transaction, RTTI::PMetaObject)& objects, const MemoryView<const u8>& input, const wchar_t *sourceName = nullptr) override;
+    virtual void Serialize(IStreamWriter* output, const MemoryView<const RTTI::PMetaObject>& objects) override;
 
 private:
-    RTTI::PMetaTransaction _transaction;
+    RTTI::SMetaTransaction _transaction;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

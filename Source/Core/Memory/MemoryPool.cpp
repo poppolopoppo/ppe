@@ -69,47 +69,52 @@ MemoryPoolBase::MemoryPoolBase(size_t blockSize, size_t minChunkSize, size_t max
 ,   _maxChunkSize(maxChunkSize) {
     Assert(blockSize >= sizeof(MemoryPoolChunk::Block));
     Assert(_maxChunkSize >= minChunkSize);
-    Assert(minChunkSize > blockSize*10);
 
-    LOG(Information, 
-        L"[POOL] New pool with block size = {0}\n"
-        L"    - min chunk size = {1}\n"
-        L"    - max chunk size = {2}\n"
-        L"    - current chunk size = {3}\n"
-        L"    - current blocks per chunk = {4}",
-        _blockSize, 
+    _currentChunksize = _minChunkSize;
+    while (10*_blockSize > _currentChunksize)
+        _currentChunksize *= 2;
+    AssertRelease(_currentChunksize <= _maxChunkSize);
+
+    LOG(Information,
+        L"[Pool] New pool with block size = {0}\n"
+        L" - Min chunk size = {1}\n"
+        L" - Max chunk size = {2}\n"
+        L" - Current chunk size = {3}\n"
+        L" - Current blocks per chunk = {4}",
+        _blockSize,
         SizeInBytes{ _minChunkSize }, SizeInBytes{ _maxChunkSize }, SizeInBytes{ _currentChunksize },
         BlockCountPerChunk(_currentChunksize) );
 }
 //----------------------------------------------------------------------------
 MemoryPoolBase::~MemoryPoolBase() {
     AssertRelease(nullptr == _chunks);
+    Assert(nullptr == _node.Next);
+    Assert(nullptr == _node.Prev);
 
-    LOG(Information, 
-        L"[POOL] Delete pool with block size = {0}\n"
-        L"    - min chunk size = {1}\n"
-        L"    - max chunk size = {2}\n"
-        L"    - current chunk size = {3}\n"
-        L"    - current blocks per chunk = {4}",
-        _blockSize, 
+    LOG(Information,
+        L"[Pool] Delete pool with block size = {0}\n"
+        L" - Min chunk size = {1}\n"
+        L" - Max chunk size = {2}\n"
+        L" - Current chunk size = {3}\n"
+        L" - Current blocks per chunk = {4}",
+        _blockSize,
         SizeInBytes{ _minChunkSize }, SizeInBytes{ _maxChunkSize }, SizeInBytes{ _currentChunksize },
         BlockCountPerChunk(_currentChunksize) );
 }
 //----------------------------------------------------------------------------
 void MemoryPoolBase::GrowChunkSizeIFP() {
     const size_t nextChunkSize = _currentChunksize * 2;
-    if (nextChunkSize <= _maxChunkSize)
-    {
+    if (nextChunkSize <= _maxChunkSize) {
         _currentChunksize = nextChunkSize;
 
-        LOG(Information, 
-            L"[POOL] Grow pool with block size = {0}\n"
-            L"    - min chunk size = {1}\n"
-            L"    - max chunk size = {2}\n"
-            L"    - current chunk size = {3}\n"
-            L"    - current blocks per chunk = {4}\n"
-            L"    - chunk count = {5}",
-            _blockSize, 
+        LOG(Information,
+            L"[Pool] Grow pool with block size = {0}\n"
+            L" - Min chunk size = {1}\n"
+            L" - Max chunk size = {2}\n"
+            L" - Current chunk size = {3}\n"
+            L" - Current blocks per chunk = {4}\n"
+            L" - Chunk count = {5}",
+            _blockSize,
             SizeInBytes{ _minChunkSize }, SizeInBytes{ _maxChunkSize }, SizeInBytes{ _currentChunksize },
             BlockCountPerChunk(_currentChunksize),
             _chunkCount );
@@ -150,7 +155,7 @@ MemoryPoolChunk *MemoryPoolBase::Deallocate_ReturnChunkToRelease(void *ptr) {
         if (chunk->Contains(ptr, _blockSize)) {
             chunk->ReleaseBlock(ptr, _blockSize);
 
-            if (!chunk->CompletelyFree())
+            if (false == chunk->CompletelyFree())
                 return nullptr;
 
             if (nullptr == prev && nullptr == chunk->Next())
@@ -227,6 +232,43 @@ MemoryPoolChunk *MemoryPoolBase::ClearOneChunk_UnusedMemory() {
     }
 
     return chunk;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+MemoryPoolBaseList::MemoryPoolBaseList() : _head(nullptr) {}
+//----------------------------------------------------------------------------
+MemoryPoolBaseList::~MemoryPoolBaseList() {
+    while (_head)
+        checked_delete(_head);
+}
+//----------------------------------------------------------------------------
+void MemoryPoolBaseList::Insert(MemoryPoolBase* ppool) {
+    const AtomicSpinLock::Scope scopeLock(_barrier);
+    list_type::Queue(&_head, nullptr, ppool);
+}
+//----------------------------------------------------------------------------
+void MemoryPoolBaseList::Remove(MemoryPoolBase* ppool) {
+    const AtomicSpinLock::Scope scopeLock(_barrier);
+    list_type::Deque(&_head, nullptr, ppool);
+}
+//----------------------------------------------------------------------------
+void MemoryPoolBaseList::ClearAll_AssertCompletelyFree() {
+    const AtomicSpinLock::Scope scopeLock(_barrier);
+    for (MemoryPoolBase* phead = _head; phead; phead = phead->Node().Next)
+        phead->Clear_AssertCompletelyFree();
+}
+//----------------------------------------------------------------------------
+void MemoryPoolBaseList::ClearAll_IgnoreLeaks() {
+    const AtomicSpinLock::Scope scopeLock(_barrier);
+    for (MemoryPoolBase* phead = _head; phead; phead = phead->Node().Next)
+        phead->Clear_IgnoreLeaks();
+}
+//----------------------------------------------------------------------------
+void MemoryPoolBaseList::ClearAll_UnusedMemory() {
+    const AtomicSpinLock::Scope scopeLock(_barrier);
+    for (MemoryPoolBase* phead = _head; phead; phead = phead->Node().Next)
+        phead->Clear_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

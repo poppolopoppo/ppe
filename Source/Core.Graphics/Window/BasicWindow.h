@@ -44,6 +44,7 @@ public:
     void Close();
 
     bool PumpMessage(WindowMessage& msg, MessageLParam& lparam, MessageWParam& wparam);
+    bool PumpAllMessages_ReturnIfQuit();
 
     void ScreenToClient(int *screenX, int *screenY) const;
     void ClientToScreen(int *clientX, int *clientY) const;

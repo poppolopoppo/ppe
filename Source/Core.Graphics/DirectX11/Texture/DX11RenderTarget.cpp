@@ -72,7 +72,7 @@ void DX11RenderTarget::CopySubPart(
     DX11Texture2DContent::CopySubPart(device, this, dstLevel, dstPos, psource, srcLevel, srcBox);
 }
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Graphics, DX11RenderTarget, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, DX11RenderTarget, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

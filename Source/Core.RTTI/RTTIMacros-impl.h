@@ -1,31 +1,29 @@
 #pragma once
 
-#include "Core/Core.h"
-#include "Core/Meta/Singleton.h"
+#include "Core.RTTI/RTTI.h"
 
 #include "Core.RTTI/RTTIMacros.h"
 
-#include "Core.RTTI/Type/MetaTypePromote.h"
+#include "Core.RTTI/MetaTypePromote.h"
+#include "Core.RTTI/MetaAtom.h"
+#include "Core.RTTI/MetaAtomDatabase.h"
+#include "Core.RTTI/MetaClass.h"
+#include "Core.RTTI/MetaClassDatabase.h"
+#include "Core.RTTI/MetaClassName.h"
+#include "Core.RTTI/MetaObject.h"
+#include "Core.RTTI/MetaObjectName.h"
+#include "Core.RTTI/MetaProperty.h"
+#include "Core.RTTI/MetaPropertyName.h"
 
-#include "Core.RTTI/Atom/MetaAtom.h"
-#include "Core.RTTI/Atom/MetaAtomDatabase.h"
-
-#include "Core.RTTI/Class/MetaClass.h"
-#include "Core.RTTI/Class/MetaClassDatabase.h"
-#include "Core.RTTI/Class/MetaClassName.h"
-
-#include "Core.RTTI/Object/MetaObject.h"
-#include "Core.RTTI/Object/MetaObjectName.h"
-
-#include "Core.RTTI/Property/MetaProperty.h"
-#include "Core.RTTI/Property/MetaPropertyName.h"
+#include "Core/Memory/SegregatedMemoryPool.h"
+#include "Core/Meta/Singleton.h"
 
 #include <type_traits>
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define RTTI_CLASS_SINGLETON(_Name) \
+#define _RTTI_CLASS_SINGLETON(_Name) \
     void _Name::MetaClass::Create() { \
         Core::RTTI::MetaClassSingleton< _Name >::Create(); \
     } \
@@ -39,20 +37,20 @@
         return &Core::RTTI::MetaClassSingleton< _Name >::Instance(); \
     }
 //----------------------------------------------------------------------------
-#define RTTI_CLASS_CREATE_INSTANCE(_Name) \
-    Core::RTTI::MetaObject *_Name::MetaClass::CreateInstance() const { \
+#define _RTTI_CLASS_CREATE_INSTANCE(_Name) \
+    Core::RTTI::MetaObject *_Name::MetaClass::VirtualCreateInstance() const { \
         return new _Name(); \
     }
 //----------------------------------------------------------------------------
-#define RTTI_CLASS_DESTRUCTOR(_Name) \
+#define _RTTI_CLASS_DESTRUCTOR(_Name) \
     _Name::MetaClass::~MetaClass() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define RTTI_CLASS_BEGIN(_Name, _Attributes) \
-    RTTI_CLASS_SINGLETON(_Name) \
-    RTTI_CLASS_CREATE_INSTANCE(_Name) \
-    RTTI_CLASS_DESTRUCTOR(_Name) \
+    _RTTI_CLASS_SINGLETON(_Name) \
+    _RTTI_CLASS_CREATE_INSTANCE(_Name) \
+    _RTTI_CLASS_DESTRUCTOR(_Name) \
     _Name::MetaClass::MetaClass() \
     :   Core::RTTI::MetaClass(  STRINGIZE(_Name), \
                                 Core::RTTI::MetaClass::_Attributes, \
@@ -62,30 +60,44 @@
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define RTTI_PROPERTY_FIELD_ALIAS_IMPL(_Name, _Alias, _Flags) { \
-        const Core::RTTI::MetaProperty *prop = MakeProperty(\
-            STRINGIZE(_Alias), \
-            _Flags, \
-            &object_type::_Name )  \
-        ; \
-        _properties.Insert_AssertUnique(prop->Name(), prop); \
+// internal helper
+#define _RTTI_PROPERTY_IMPL(_Name, _Flags, _Args) { \
+        const Core::RTTI::MetaProperty* const prop = Core::RTTI::MakeProperty(_Name, _Flags, _Args ); \
+        _properties.Insert_AssertUnique(prop->Name(), prop ); \
     }
 //----------------------------------------------------------------------------
+// Add a public property "Alias" from a private field "_someName"
 #define RTTI_PROPERTY_FIELD_ALIAS(_Name, _Alias) \
-    RTTI_PROPERTY_FIELD_ALIAS_IMPL(_Name, _Alias, Core::RTTI::MetaProperty::Private)
+    _RTTI_PROPERTY_IMPL(STRINGIZE(_Alias), Core::RTTI::MetaProperty::Public, &object_type::_Name )
 //----------------------------------------------------------------------------
-#define RTTI_PROPERTY_FIELD(_Name) \
-    RTTI_PROPERTY_FIELD_ALIAS_IMPL(_Name, _Name, Core::RTTI::MetaProperty::Private)
+// Add a private property "SomeName" from a private field "_someName"
+#define RTTI_PROPERTY_PRIVATE_FIELD(_Name) { \
+        char propName[] = STRINGIZE(_Name); \
+        STATIC_ASSERT(sizeof(propName) > 1); \
+        InplaceToUpper(propName[1]); \
+        _RTTI_PROPERTY_IMPL(&propName[1], Core::RTTI::MetaProperty::Private, &object_type::_Name ) \
+    }
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
+// Add a public property "SomeName" from 3 delegates or 3 std::function : a getter, a mover & a setter
+#define RTTI_PROPERTY_GETMOVESET_FLAGS(_Name, _Flags, _Get, _Move, _Set) \
+    _RTTI_PROPERTY_IMPL(STRINGIZE(_Name), _Flags, COMMA_PROTECT(std::move(_Get), std::move(_Move), std::move(_Set)) )
 //----------------------------------------------------------------------------
-#define RTTI_PROPERTY_FUNCTION(_Name, _Get, _Move, _Set) { \
-        const Core::RTTI::MetaProperty *prop = MakeProperty( \
-            STRINGIZE(_Name), \
-            Core::RTTI::MetaProperty::Public, \
-            std::move(_Get), std::move(_Move), std::move(_Set) ) \
-        ; \
-        _properties.Insert_AssertUnique(prop->Name(), prop); \
+// Add a property "SomeName" from 3 delegates or 3 std::function : a getter, a mover & a setter
+#define RTTI_PROPERTY_GETMOVESET(_Name, _Get, _Move, _Set) \
+    RTTI_PROPERTY_GETMOVESET_FLAGS(_Name, Core::RTTI::MetaProperty::Public, _Get, _Move, _Set )
+//----------------------------------------------------------------------------
+// Add a property "SomeName" from 3 member functions : GetSomeName(), MoveSomeName() & SetSomeName()
+#define RTTI_PROPERTY_MEMBER(_Name) \
+    RTTI_PROPERTY_GETMOVESET(_Name, \
+        &object_type::CONCAT(Get,  _Name), \
+        &object_type::CONCAT(Move, _Name), \
+        &object_type::CONCAT(Set,  _Name)  )
+//----------------------------------------------------------------------------
+// Add a deprecated property "SomeName" of type T, these are write-only : you can't read from them
+#define RTTI_PROPERTY_DEPRECATED(_Type, _Name) { \
+        const Core::RTTI::MetaProperty* const prop = Core::RTTI::MakeDeprecatedProperty<_Type, object_type>( \
+            STRINGIZE(_Name), Core::RTTI::MetaProperty::Private); \
+        _properties.Insert_AssertUnique(prop->Name(), prop ); \
     }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -114,13 +126,13 @@ public:
     }
 };
 //----------------------------------------------------------------------------
-template <typename T>
+template <typename T> // valid RTTI parent
 static const RTTI::MetaClass *GetMetaClass(typename std::enable_if< std::is_base_of<RTTI::MetaObject, T>::value >::type* = 0) {
     return &MetaClassSingleton<T>::Instance();
 }
 //----------------------------------------------------------------------------
-template <typename T>
-static const RTTI::MetaClass *GetMetaClass(typename std::enable_if< !std::is_base_of<RTTI::MetaObject, T>::value >::type* = 0) {
+template <typename T> // no parent
+static const RTTI::MetaClass *GetMetaClass(typename std::enable_if< std::is_void<T>::value >::type* = 0) {
     return nullptr;
 }
 //----------------------------------------------------------------------------

@@ -55,8 +55,8 @@ public:
     virtual void CopyFrom(IDeviceAPIEncapsulator *device, const Texture *psource) override;
     void CopyFrom(IDeviceAPIEncapsulator *device, const Texture2D *psource2D);
 
-    void CopySubPart(   IDeviceAPIEncapsulator *device, 
-                        size_t dstLevel, const uint2& dstPos, 
+    void CopySubPart(   IDeviceAPIEncapsulator *device,
+                        size_t dstLevel, const uint2& dstPos,
                         const Texture2D *psource2D, size_t srcLevel, const AABB2u& srcBox );
 
 protected:
@@ -85,18 +85,14 @@ public:
     DeviceAPIDependantTexture2D(IDeviceAPIEncapsulator *device, const Texture2D *owner, const MemoryView<const u8>& optionalData);
     virtual ~DeviceAPIDependantTexture2D();
 
-    const Texture2D *TypedResource() const {
-        return checked_cast<const Texture2D *>(Resource());
-    }
-
     size_t Width() const { return _width; }
     size_t Height() const { return _height; }
     size_t LevelCount() const { return _levelCount; }
 
     virtual void CopyFrom(IDeviceAPIEncapsulator *device, const DeviceAPIDependantTexture2D *psource) = 0;
 
-    virtual void CopySubPart(   IDeviceAPIEncapsulator *device, 
-                                size_t dstLevel, const uint2& dstPos, 
+    virtual void CopySubPart(   IDeviceAPIEncapsulator *device,
+                                size_t dstLevel, const uint2& dstPos,
                                 const DeviceAPIDependantTexture2D *psource, size_t srcLevel, const AABB2u& srcBox ) = 0;
 
     virtual size_t VideoMemorySizeInBytes() const override;

@@ -13,7 +13,9 @@ namespace Logic {
 //----------------------------------------------------------------------------
 template <typename T>
 struct Component {
-    static ComponentTag Tag() { return ComponentTag(Meta::TypeHash<T>::value()); }
+    static constexpr ComponentTag Tag() {
+        return ComponentTag( Meta::TypeHash<T>::value() );
+    }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

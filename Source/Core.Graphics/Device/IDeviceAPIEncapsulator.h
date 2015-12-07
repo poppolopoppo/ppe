@@ -69,6 +69,9 @@ public:
     virtual DeviceAPIDependantResourceBuffer *CreateConstantBuffer(ConstantBuffer *constantBuffer, DeviceResourceBuffer *resourceBuffer) = 0;
     virtual void DestroyConstantBuffer(ConstantBuffer *constantBuffer, PDeviceAPIDependantResourceBuffer& entity) = 0;
 
+    virtual DeviceAPIDependantShaderProgram* CreateShaderProgram(ShaderProgram* program) = 0;
+    virtual void DestroyShaderProgram(ShaderProgram* program, PDeviceAPIDependantShaderProgram& entity) = 0;
+
     virtual DeviceAPIDependantShaderEffect *CreateShaderEffect(ShaderEffect *effect) = 0;
     virtual void DestroyShaderEffect(ShaderEffect *effect, PDeviceAPIDependantShaderEffect& entity) = 0;
 
@@ -101,7 +104,7 @@ public:
     virtual void DestroyDepthStencil(DepthStencil *depthStencil, PDeviceAPIDependantDepthStencil& entity) = 0;
 
     // Diagnostics
-    
+
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
     virtual IDeviceAPIDiagnostics *DeviceDiagnostics() const = 0;
 #endif

@@ -40,10 +40,14 @@
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// mouhahaha VS2013 is still not C++11 compliant ...
+// VS2013 and VS2015 are still not C++-11 compliant ...
 //static_assert(__cplusplus > 199711L, "Program requires C++11 capable compiler");
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+#ifndef not
+#   define not !
+#endif
 //----------------------------------------------------------------------------
 #define COMMA ,
 #define COMMA_PROTECT(...) __VA_ARGS__
@@ -64,7 +68,8 @@
 #define CONCAT_OO(_ARGS) CONCAT_I ## _ARGS
 #define CONCAT(_X, _Y) CONCAT_I(_X, _Y) //CONCAT_OO((_X, _Y))
 //----------------------------------------------------------------------------
-#define NOOP (void)0
+#define NOOP        (void)0
+#define UNUSED(x)   (void)(x)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -114,14 +119,14 @@
 #    define CORE_THROW_IT(_EX)          throw _EX
 #    define CORE_THROW_VOID()           throw
 #    define CORE_TRY                    try
-#    define CORE_CATCH_BLOCK(_CODE)     _CODE
+#    define CORE_CATCH_BLOCK(...)       __VA_ARGS__
 #    define CORE_CATCH(_SPEC)           catch(_SPEC)
 #else
 #    define CORE_THROW()
 #    define CORE_THROW_IT(_EX)          CORE_ABORT(STRINGIZE(_EX))
 #    define CORE_THROW_VOID()           CORE_ABORT("throw")
 #    define CORE_TRY                    if (true)
-#    define CORE_CATCH_BLOCK(CODE)
+#    define CORE_CATCH_BLOCK(...)
 #    define CORE_CATCH(spec)            if (false)
 #endif
 //----------------------------------------------------------------------------
@@ -136,49 +141,19 @@
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-typedef uint8_t     u8;
-typedef uint16_t    u16;
-typedef uint32_t    u32;
-typedef uint64_t    u64;
-//----------------------------------------------------------------------------
-typedef int8_t      i8;
-typedef int16_t     i16;
-typedef int32_t     i32;
-typedef int64_t     i64;
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-namespace Core
-{
-    typedef i8 byte;
-    typedef u8 ubyte;
 
-    //typedef i16 short;
-    typedef u16 ushort;
-
-    typedef i32 word;
-    typedef u32 uword;
-
-    template <typename T>
-    FORCE_INLINE
-    T Max(const T& lhs, const T& rhs) { return lhs < rhs ? rhs : lhs; }
-
-    template <typename T>
-    FORCE_INLINE
-    T Min(const T& lhs, const T& rhs) { return lhs < rhs ? lhs : rhs; }
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-
+#include "Core/Meta/Aliases.h"
 #include "Core/Meta/Alignment.h"
 #include "Core/Meta/Assert.h"
+#include "Core/Meta/BitCount.h"
 #include "Core/Meta/Cast.h"
 #include "Core/Meta/Delete.h"
 #include "Core/Meta/Enum.h"
 #include "Core/Meta/ForRange.h"
+#include "Core/Meta/Hash_fwd.h"
 #include "Core/Meta/NumericLimits.h"
 #include "Core/Meta/OneTimeInitialize.h"
+#include "Core/Meta/StronglyTyped.h"
 #include "Core/Meta/ThreadResource.h"
 #include "Core/Meta/TypeTraits.h"
 
@@ -193,6 +168,8 @@ class CoreStartup {
 public:
     static void Start(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t** argv);
     static void Shutdown();
+
+    static void ClearAll_UnusedMemory();
 
     CoreStartup(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t** argv) {
         Start(applicationHandle, nShowCmd, argc, argv);

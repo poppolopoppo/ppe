@@ -7,6 +7,11 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
+void Append(Vector<T, _Allocator>& v, const MemoryView<const T>& elts) {
+    v.insert(v.end(), elts.begin(), elts.end());
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
 typename Vector<T, _Allocator>::const_iterator FindFirstOf(const Vector<T, _Allocator>& v, const T& elt) {
     return std::find(v.begin(), v.end(), elt);
 }
@@ -100,7 +105,7 @@ void Erase_DontPreserveOrder(Vector<T, _Allocator>& v, const typename Vector<T, 
     using std::swap;
     const size_t k = checked_cast<size_t>(v.size());
     Assert(k);
-    const typename Vector<T, _Allocator>::const_iterator begin = v.begin();
+    const typename vector_type::const_iterator begin = v.begin();
     const size_t i = std::distance(begin, it);
     Assert(i < k);
     if (k > 1 && i != k - 1)
@@ -115,29 +120,82 @@ void Clear_ReleaseMemory(Vector<T, _Allocator>& v) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-size_t hash_value(const Vector<T, _Allocator>& vector) {
-    return hash_value_seq(vector.begin(), vector.end());
+hash_t hash_value(const Vector<T, _Allocator>& vector) {
+    hash_t h(CORE_HASH_VALUE_SEED);
+    for (const T& it : vector)
+        hash_combine(h, hash_value(it));
+    return h;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _InSituCount, typename _Allocator >
+auto VectorInSitu<T, _InSituCount, _Allocator>::operator =(const VectorInSitu& other) -> VectorInSitu& {
+    vector_type::clear();
+    vector_type::reserve(_InSituCount);
+    vector_type::insert(vector_type::end(), other.begin(), other.end());
+    Assert(UseInSitu() || false == other.UseInSitu());
+    return *this;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _InSituCount, typename _Allocator >
 auto VectorInSitu<T, _InSituCount, _Allocator>::operator =(VectorInSitu&& rvalue) -> VectorInSitu& {
     const size_t count = rvalue.size();
-    if (count && &rvalue.front() == rvalue._inSituData.get()) {
+    if (count && rvalue.UseInSitu() ) {
         vector_type::resize(count);
-        T *psrc = &rvalue.front();
-        T *const pend = &rvalue.back();
-        for (T *pdst = &vector_type::front(); psrc != pend; ++pdst, ++psrc)
-            *pdst = std::move(*psrc);
+        std::move(rvalue.begin(), rvalue.end(), vector_type::begin());
         rvalue.clear();
     }
     else {
         vector_type::operator =(std::move(rvalue));
-        rvalue.reserve(_InSituCount); // to keep its insitu data
     }
-    Assert(rvalue.capacity() == _InSituCount);
+    rvalue.reserve(_InSituCount); // to keep its insitu data
+    Assert(rvalue.capacity() >= _InSituCount);
     return *this;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _InSituCount, typename _Allocator >
+void swap(VectorInSitu<T, _InSituCount, _Allocator>& lhs, VectorInSitu<T, _InSituCount, _Allocator>& rhs) {
+    typedef typename VectorInSitu<T, _InSituCount, _Allocator>::storage_type    storage_type;
+    typedef typename VectorInSitu<T, _InSituCount, _Allocator>::vector_type     vector_type;
+
+    const bool lhsInSitu = lhs.UseInSitu();
+    const bool rhsInSitu = rhs.UseInSitu();
+
+    if (false == (lhsInSitu || rhsInSitu)) {
+        Assert(static_cast<storage_type&>(lhs).InSituEmpty());
+        Assert(static_cast<storage_type&>(rhs).InSituEmpty());
+
+        std::swap(  static_cast<vector_type&>(lhs),
+                    static_cast<vector_type&>(rhs) );
+    }
+    else {
+        Assert(lhsInSitu || rhsInSitu);
+
+        VectorInSitu<T, _InSituCount, _Allocator>* v0, *v1;
+        if (lhsInSitu) { v0 = &lhs; v1 = &rhs; }
+        else { v0 = &rhs; v1 = &lhs; }
+
+        VectorInSitu<T, _InSituCount, _Allocator> tmp(std::move(*v0));
+        *v0 = std::move(*v1);
+        *v1 = std::move(tmp);
+
+        if (lhsInSitu) {
+            Assert(rhs.UseInSitu());
+            rhs.reserve(_InSituCount);
+        }
+        else {
+            Assert(static_cast<storage_type&>(rhs).InSituEmpty());
+        }
+
+        if (rhsInSitu) {
+            Assert(lhs.UseInSitu());
+            lhs.reserve(_InSituCount);
+        }
+        else {
+            Assert(static_cast<storage_type&>(lhs).InSituEmpty());
+        }
+    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -79,10 +79,22 @@
     <CustomBuild Include="Device\Shader\ConstantField.h">
       <Filter>Device\Shader</Filter>
     </CustomBuild>
+    <CustomBuild Include="Device\Shader\ShaderCompiled.cpp">
+      <Filter>Device\Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Shader\ShaderCompiled.h">
+      <Filter>Device\Shader</Filter>
+    </CustomBuild>
     <CustomBuild Include="Device\Shader\ShaderEffect.cpp">
       <Filter>Device\Shader</Filter>
     </CustomBuild>
     <CustomBuild Include="Device\Shader\ShaderEffect.h">
+      <Filter>Device\Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Shader\ShaderProfile.cpp">
+      <Filter>Device\Shader</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\Shader\ShaderProfile.h">
       <Filter>Device\Shader</Filter>
     </CustomBuild>
     <CustomBuild Include="Device\Shader\ShaderProgram.cpp">
@@ -214,9 +226,6 @@
     <CustomBuild Include="Device\DeviceEncapsulator_Diagnostics.cpp">
       <Filter>Device</Filter>
     </CustomBuild>
-    <CustomBuild Include="Device\DeviceEncapsulator_ShaderCompiler.cpp">
-      <Filter>Device</Filter>
-    </CustomBuild>
     <CustomBuild Include="Device\DeviceResource.cpp">
       <Filter>Device</Filter>
     </CustomBuild>
@@ -260,6 +269,12 @@
       <Filter>Device</Filter>
     </CustomBuild>
     <CustomBuild Include="Device\PresentationParameters.h">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\ShaderCompilerEncapsulator.cpp">
+      <Filter>Device</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Device\ShaderCompilerEncapsulator.h">
       <Filter>Device</Filter>
     </CustomBuild>
     <CustomBuild Include="DirectX11\Geometry\DX11PrimitiveType.cpp">
@@ -380,6 +395,12 @@
       <Filter>DirectX11</Filter>
     </CustomBuild>
     <CustomBuild Include="DirectX11\DX11ResourceHelpers.h">
+      <Filter>DirectX11</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\DX11ShaderCompiler.cpp">
+      <Filter>DirectX11</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DirectX11\DX11ShaderCompiler.h">
       <Filter>DirectX11</Filter>
     </CustomBuild>
     <CustomBuild Include="Window\BasicWindow.cpp">

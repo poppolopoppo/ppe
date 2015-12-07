@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Core/Core.h"
+#include "Core.RTTI/RTTI.h"
 
-#include "Core.RTTI/RTTI_fwd.h"
-#include "Core.RTTI/Class/MetaClass.h"
-#include "Core.RTTI/Object/MetaObject.h"
+#include "Core.RTTI/RTTI_extern.h"
+#include "Core.RTTI/MetaClass.h"
+#include "Core.RTTI/MetaObject.h"
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -23,14 +23,17 @@ public: \
         MetaClass(); \
         virtual ~MetaClass(); \
         \
-        virtual Core::RTTI::MetaObject *CreateInstance() const override; \
-        \
         static void Create(); \
         static void Destroy(); \
         \
         static bool HasInstance(); \
         static const MetaClass *Instance(); \
+        \
+    protected: \
+        virtual Core::RTTI::MetaObject *VirtualCreateInstance() const override; \
     }
+//----------------------------------------------------------------------------
+#define RTTI_CLASS_HEADER_NOPARENT(_Name) RTTI_CLASS_HEADER(_Name, void)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

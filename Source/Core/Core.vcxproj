@@ -54,6 +54,7 @@
     <CustomBuild Include="Allocator\BuddyAllocator.h" />
     <CustomBuild Include="Allocator\BuddyHeap.cpp" />
     <CustomBuild Include="Allocator\BuddyHeap.h" />
+    <CustomBuild Include="Allocator\Heap-inl.h" />
     <CustomBuild Include="Allocator\Heap.cpp" />
     <CustomBuild Include="Allocator\Heap.h" />
     <CustomBuild Include="Allocator\HeapAllocator.h" />
@@ -63,12 +64,14 @@
     <CustomBuild Include="Allocator\Mallocator.h" />
     <CustomBuild Include="Allocator\New.cpp" />
     <CustomBuild Include="Allocator\New.h" />
+    <CustomBuild Include="Allocator\NodeBasedContainerAllocator.cpp" />
     <CustomBuild Include="Allocator\NodeBasedContainerAllocator.h" />
     <CustomBuild Include="Allocator\PoolAllocator-impl.h" />
     <CustomBuild Include="Allocator\PoolAllocator.h" />
+    <CustomBuild Include="Allocator\PoolAllocatorTag-impl.h" />
+    <CustomBuild Include="Allocator\PoolAllocatorTag.cpp" />
     <CustomBuild Include="Allocator\PoolAllocatorTag.h" />
     <CustomBuild Include="Allocator\SingletonPoolAllocator.h" />
-    <CustomBuild Include="Allocator\StackAllocator.h" />
     <CustomBuild Include="Allocator\ThreadLocalAllocator.h" />
     <CustomBuild Include="Allocator\ThreadLocalHeap.cpp" />
     <CustomBuild Include="Allocator\ThreadLocalHeap.h" />
@@ -79,12 +82,16 @@
     <CustomBuild Include="Color\Color_fwd.h" />
     <CustomBuild Include="Container\AssociativeVector-inl.h" />
     <CustomBuild Include="Container\AssociativeVector.h" />
+    <CustomBuild Include="Container\BitSet.cpp" />
+    <CustomBuild Include="Container\BitSet.h" />
+    <CustomBuild Include="Container\Deque.h" />
     <CustomBuild Include="Container\Hash-inl.h" />
     <CustomBuild Include="Container\Hash.cpp" />
     <CustomBuild Include="Container\Hash.h" />
     <CustomBuild Include="Container\HashMap.h" />
     <CustomBuild Include="Container\HashMultiMap.h" />
     <CustomBuild Include="Container\HashSet.h" />
+    <CustomBuild Include="Container\IntrusiveList.h" />
     <CustomBuild Include="Container\List.h" />
     <CustomBuild Include="Container\Map.h" />
     <CustomBuild Include="Container\MultiMap.h" />
@@ -92,6 +99,8 @@
     <CustomBuild Include="Container\RawStorage-inl.h" />
     <CustomBuild Include="Container\RawStorage.h" />
     <CustomBuild Include="Container\RingBuffer.h" />
+    <CustomBuild Include="Container\Stack.h" />
+    <CustomBuild Include="Container\StringHashMap.h" />
     <CustomBuild Include="Container\Token-inl.h" />
     <CustomBuild Include="Container\Token.h" />
     <CustomBuild Include="Container\Trie-inl.h" />
@@ -103,17 +112,19 @@
     <CustomBuild Include="Diagnostic\Callstack.h" />
     <CustomBuild Include="Diagnostic\CrtDebug.cpp" />
     <CustomBuild Include="Diagnostic\CrtDebug.h" />
-    <CustomBuild Include="Diagnostic\CurrentProcess.cpp" />
-    <CustomBuild Include="Diagnostic\CurrentProcess.h" />
     <CustomBuild Include="Diagnostic\DecodedCallstack.cpp" />
     <CustomBuild Include="Diagnostic\DecodedCallstack.h" />
     <CustomBuild Include="Diagnostic\DialogBox.cpp" />
     <CustomBuild Include="Diagnostic\DialogBox.h" />
+    <CustomBuild Include="Diagnostic\Exception.cpp" />
+    <CustomBuild Include="Diagnostic\Exception.h" />
     <CustomBuild Include="Diagnostic\LastError.cpp" />
     <CustomBuild Include="Diagnostic\LastError.h" />
     <CustomBuild Include="Diagnostic\Logger-inl.h" />
     <CustomBuild Include="Diagnostic\Logger.cpp" />
     <CustomBuild Include="Diagnostic\Logger.h" />
+    <CustomBuild Include="Diagnostic\MiniDump.cpp" />
+    <CustomBuild Include="Diagnostic\MiniDump.h" />
     <CustomBuild Include="IO\FS\Basename.cpp" />
     <CustomBuild Include="IO\FS\Basename.h" />
     <CustomBuild Include="IO\FS\BasenameNoExt.cpp" />
@@ -126,6 +137,8 @@
     <CustomBuild Include="IO\FS\Extname.h" />
     <CustomBuild Include="IO\FS\Filename.cpp" />
     <CustomBuild Include="IO\FS\Filename.h" />
+    <CustomBuild Include="IO\FS\FileStat.cpp" />
+    <CustomBuild Include="IO\FS\FileStat.h" />
     <CustomBuild Include="IO\FS\FileSystemProperties.cpp" />
     <CustomBuild Include="IO\FS\FileSystemProperties.h" />
     <CustomBuild Include="IO\FS\FileSystemToken.h" />
@@ -143,13 +156,9 @@
     <CustomBuild Include="IO\VFS\VirtualFileSystemNode.cpp" />
     <CustomBuild Include="IO\VFS\VirtualFileSystemNode.h" />
     <CustomBuild Include="IO\VFS\VirtualFileSystemPolicies.h" />
-    <CustomBuild Include="IO\VFS\VirtualFileSystemStream-inl.h" />
-    <CustomBuild Include="IO\VFS\VirtualFileSystemStream.cpp" />
     <CustomBuild Include="IO\VFS\VirtualFileSystemStream.h" />
     <CustomBuild Include="IO\VFS\VirtualFileSystemTrie.cpp" />
     <CustomBuild Include="IO\VFS\VirtualFileSystemTrie.h" />
-    <CustomBuild Include="IO\CRC64.cpp" />
-    <CustomBuild Include="IO\CRC64.h" />
     <CustomBuild Include="IO\FileSystem.cpp" />
     <CustomBuild Include="IO\FileSystem.h" />
     <CustomBuild Include="IO\FileSystemConstNames.cpp" />
@@ -160,13 +169,19 @@
     <CustomBuild Include="IO\Format.h" />
     <CustomBuild Include="IO\FormatHelpers.cpp" />
     <CustomBuild Include="IO\FormatHelpers.h" />
+    <CustomBuild Include="IO\LZJB.cpp" />
+    <CustomBuild Include="IO\LZJB.h" />
     <CustomBuild Include="IO\regexp.h" />
+    <CustomBuild Include="IO\SimpleFileVerification.h" />
     <CustomBuild Include="IO\Stream-inl.h" />
     <CustomBuild Include="IO\Stream.h" />
+    <CustomBuild Include="IO\StreamProvider-inl.h" />
+    <CustomBuild Include="IO\StreamProvider.cpp" />
+    <CustomBuild Include="IO\StreamProvider.h" />
     <CustomBuild Include="IO\String-inl.h" />
     <CustomBuild Include="IO\String.cpp" />
     <CustomBuild Include="IO\String.h" />
-    <CustomBuild Include="IO\StringSlice-inl.h" />
+    <CustomBuild Include="IO\StringSlice.cpp" />
     <CustomBuild Include="IO\StringSlice.h" />
     <CustomBuild Include="IO\VirtualFileSystem-inl.h" />
     <CustomBuild Include="IO\VirtualFileSystem.cpp" />
@@ -235,6 +250,7 @@
     <CustomBuild Include="Maths\Transform\ScalarMatrix_fwd.h" />
     <CustomBuild Include="Maths\MathHelpers-inl.h" />
     <CustomBuild Include="Maths\MathHelpers.h" />
+    <CustomBuild Include="Maths\Maths.h" />
     <CustomBuild Include="Maths\RandomGenerator-inl.h" />
     <CustomBuild Include="Maths\RandomGenerator.cpp" />
     <CustomBuild Include="Maths\RandomGenerator.h" />
@@ -243,21 +259,26 @@
     <CustomBuild Include="Maths\Units.Definitions-inl.h" />
     <CustomBuild Include="Maths\Units.h" />
     <CustomBuild Include="Memory\AlignedStorage.h" />
-    <CustomBuild Include="Memory\BitSet.cpp" />
-    <CustomBuild Include="Memory\BitSet.h" />
     <CustomBuild Include="Memory\ComPtr-inl.h" />
     <CustomBuild Include="Memory\ComPtr.h" />
+    <CustomBuild Include="Memory\farmhash-inl.h" />
+    <CustomBuild Include="Memory\farmhash.cpp" />
+    <CustomBuild Include="Memory\farmhash.h" />
+    <CustomBuild Include="Memory\HashFunctions-inl.h" />
+    <CustomBuild Include="Memory\HashFunctions.cpp" />
+    <CustomBuild Include="Memory\HashFunctions.h" />
     <CustomBuild Include="Memory\MemoryDomain.cpp" />
     <CustomBuild Include="Memory\MemoryDomain.Definitions-inl.h" />
     <CustomBuild Include="Memory\MemoryDomain.h" />
     <CustomBuild Include="Memory\MemoryPool-inl.h" />
     <CustomBuild Include="Memory\MemoryPool.cpp" />
     <CustomBuild Include="Memory\MemoryPool.h" />
-    <CustomBuild Include="Memory\MemoryStack.h" />
     <CustomBuild Include="Memory\MemoryStream.h" />
     <CustomBuild Include="Memory\MemoryTracking.cpp" />
     <CustomBuild Include="Memory\MemoryTracking.h" />
     <CustomBuild Include="Memory\MemoryView.h" />
+    <CustomBuild Include="Memory\MemoryViewReader.cpp" />
+    <CustomBuild Include="Memory\MemoryViewReader.h" />
     <CustomBuild Include="Memory\RefPtr-inl.h" />
     <CustomBuild Include="Memory\RefPtr.h" />
     <CustomBuild Include="Memory\SegregatedMemoryPool-inl.h" />
@@ -268,6 +289,7 @@
     <CustomBuild Include="Memory\WeakPtr.cpp" />
     <CustomBuild Include="Memory\WeakPtr.h" />
     <CustomBuild Include="Meta\Activator.h" />
+    <CustomBuild Include="Meta\Aliases.h" />
     <CustomBuild Include="Meta\Alignment.h" />
     <CustomBuild Include="Meta\Assert.cpp" />
     <CustomBuild Include="Meta\Assert.h" />
@@ -282,8 +304,7 @@
     <CustomBuild Include="Meta\enum.h" />
     <CustomBuild Include="Meta\Event.h" />
     <CustomBuild Include="Meta\ForRange.h" />
-    <CustomBuild Include="Meta\Guid.cpp" />
-    <CustomBuild Include="Meta\Guid.h" />
+    <CustomBuild Include="Meta\Hash_fwd.h" />
     <CustomBuild Include="Meta\NumericLimits.cpp" />
     <CustomBuild Include="Meta\NumericLimits.h" />
     <CustomBuild Include="Meta\OneTimeInitialize.h" />
@@ -294,23 +315,37 @@
     <CustomBuild Include="Meta\ThreadResource.h" />
     <CustomBuild Include="Meta\TypeHash.h" />
     <CustomBuild Include="Meta\TypeTraits.h" />
+    <CustomBuild Include="Misc\CRC.cpp" />
+    <CustomBuild Include="Misc\CRC.h" />
+    <CustomBuild Include="Misc\CurrentProcess.cpp" />
+    <CustomBuild Include="Misc\CurrentProcess.h" />
+    <CustomBuild Include="Misc\farmhash.cc" />
+    <CustomBuild Include="Misc\farmhash.h" />
+    <CustomBuild Include="Misc\FourCC.h" />
+    <CustomBuild Include="Misc\Guid.cpp" />
+    <CustomBuild Include="Misc\Guid.h" />
+    <CustomBuild Include="Misc\MurmurHash3.cpp" />
+    <CustomBuild Include="Misc\MurmurHash3.h" />
+    <CustomBuild Include="Misc\PMurHash.cpp" />
+    <CustomBuild Include="Misc\PMurHash.h" />
     <CustomBuild Include="Thread\Task\Task.h" />
     <CustomBuild Include="Thread\Task\TaskPool.cpp" />
     <CustomBuild Include="Thread\Task\TaskPool.h" />
     <CustomBuild Include="Thread\Task\TaskPriorityQueue.h" />
+    <CustomBuild Include="Thread\AtomicSpinLock.h" />
     <CustomBuild Include="Thread\ConcurrentQueue-inl.h" />
     <CustomBuild Include="Thread\ConcurrentQueue.h" />
     <CustomBuild Include="Thread\Fiber.cpp" />
     <CustomBuild Include="Thread\Fiber.h" />
+    <CustomBuild Include="Thread\Future.h" />
     <CustomBuild Include="Thread\MPMCBoundedQueue.h" />
     <CustomBuild Include="Thread\MRUCache.h" />
     <CustomBuild Include="Thread\ThreadContext.cpp" />
     <CustomBuild Include="Thread\ThreadContext.h" />
-    <CustomBuild Include="Thread\ThreadLocalSingleton.h" />
-    <CustomBuild Include="Thread\ThreadLocalStorage.cpp" />
-    <CustomBuild Include="Thread\ThreadLocalStorage.h" />
     <CustomBuild Include="Thread\ThreadPool.cpp" />
     <CustomBuild Include="Thread\ThreadPool.h" />
+    <CustomBuild Include="Time\DateTime.cpp" />
+    <CustomBuild Include="Time\DateTime.h" />
     <CustomBuild Include="Time\ProcessTime.cpp" />
     <CustomBuild Include="Time\ProcessTime.h" />
     <CustomBuild Include="Time\Timeline.cpp" />
@@ -319,6 +354,8 @@
     <CustomBuild Include="Time\Timely.h" />
     <CustomBuild Include="Time\Timepoint.cpp" />
     <CustomBuild Include="Time\Timepoint.h" />
+    <CustomBuild Include="Time\Timestamp.cpp" />
+    <CustomBuild Include="Time\Timestamp.h" />
     <CustomBuild Include="Core.bff" />
     <CustomBuild Include="Core.cpp" />
     <CustomBuild Include="Core.h" />
@@ -337,67 +374,67 @@
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <LocalDebuggerCommand>$(SolutionDir)\Output\Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>$(SolutionDir)\Output\Binary\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <LocalDebuggerCommand>$(SolutionDir)\Output\Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>$(SolutionDir)\Output\Binary\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='FastDebug|Win32'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <LocalDebuggerCommand>$(SolutionDir)\Output\Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>$(SolutionDir)\Output\Binary\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <LocalDebuggerCommand>$(SolutionDir)\Output\Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>$(SolutionDir)\Output\Binary\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profiling|Win32'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <LocalDebuggerCommand>$(SolutionDir)\Output\Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>$(SolutionDir)\Output\Binary\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Final|Win32'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <LocalDebuggerCommand>$(SolutionDir)\Output\Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>$(SolutionDir)\Output\Binary\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <LocalDebuggerCommand>$(SolutionDir)\Output\Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>$(SolutionDir)\Output\Binary\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='FastDebug|x64'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <LocalDebuggerCommand>$(SolutionDir)\Output\Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>$(SolutionDir)\Output\Binary\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <LocalDebuggerCommand>$(SolutionDir)\Output\Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>$(SolutionDir)\Output\Binary\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profiling|x64'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <LocalDebuggerCommand>$(SolutionDir)\Output\Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>$(SolutionDir)\Output\Binary\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Final|x64'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <LocalDebuggerCommand>$(SolutionDir)\Output\Bin\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>$(SolutionDir)\Output\Binary\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -437,112 +474,122 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dummy|Win32'">
-    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
-    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Bin</LocalDebuggerWorkingDirectory>
+    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
-    <OutDir>$(SolutionDir)\Output\Bin</OutDir>
+    <OutDir>$(SolutionDir)\Output\Binary</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeOutput>$(SolutionDir)\Output\Binary\Core.Debug.Win32.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN32;ARCH_X86;ARCH_32BIT;DEBUG;_DEBUG;_SECURE_SCL=1;_ITERATOR_DEBUG_LEVEL=2;_HAS_ITERATOR_DEBUGGING=1</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;D:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/;X:\Code\@Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;X:\Code\@Core\git/Source/Core;.</NMakeIncludeSearchPath>
-    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Bin</LocalDebuggerWorkingDirectory>
+    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;d:\Code\Core/Source/Core;.</NMakeIncludeSearchPath>
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
-    <OutDir>$(SolutionDir)\Output\Bin</OutDir>
+    <OutDir>$(SolutionDir)\Output\Binary</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='FastDebug|Win32'">
-    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeOutput>$(SolutionDir)\Output\Binary\Core.FastDebug.Win32.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN32;ARCH_X86;ARCH_32BIT;FASTDEBUG;_DEBUG;DEBUG;_SECURE_SCL=1;_ITERATOR_DEBUG_LEVEL=2;_HAS_ITERATOR_DEBUGGING=1</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;D:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/;X:\Code\@Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;X:\Code\@Core\git/Source/Core;.</NMakeIncludeSearchPath>
-    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Bin</LocalDebuggerWorkingDirectory>
+    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;d:\Code\Core/Source/Core;.</NMakeIncludeSearchPath>
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
-    <OutDir>$(SolutionDir)\Output\Bin</OutDir>
+    <OutDir>$(SolutionDir)\Output\Binary</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeOutput>$(SolutionDir)\Output\Binary\Core.Release.Win32.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN32;ARCH_X86;ARCH_32BIT;RELEASE;NDEBUG;_SECURE_SCL=0;_ITERATOR_DEBUG_LEVEL=0;_HAS_ITERATOR_DEBUGGING=0</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;D:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/;X:\Code\@Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;X:\Code\@Core\git/Source/Core;.</NMakeIncludeSearchPath>
-    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Bin</LocalDebuggerWorkingDirectory>
+    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;d:\Code\Core/Source/Core;.</NMakeIncludeSearchPath>
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
-    <OutDir>$(SolutionDir)\Output\Bin</OutDir>
+    <OutDir>$(SolutionDir)\Output\Binary</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profiling|Win32'">
-    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeOutput>$(SolutionDir)\Output\Binary\Core.Profiling.Win32.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN32;ARCH_X86;ARCH_32BIT;RELEASE;NDEBUG;PROFILING_ENABLED;_SECURE_SCL=0;_ITERATOR_DEBUG_LEVEL=0;_HAS_ITERATOR_DEBUGGING=0</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;D:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/;X:\Code\@Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;X:\Code\@Core\git/Source/Core;.</NMakeIncludeSearchPath>
-    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Bin</LocalDebuggerWorkingDirectory>
+    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;d:\Code\Core/Source/Core;.</NMakeIncludeSearchPath>
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
-    <OutDir>$(SolutionDir)\Output\Bin</OutDir>
+    <OutDir>$(SolutionDir)\Output\Binary</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Final|Win32'">
-    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeOutput>$(SolutionDir)\Output\Binary\Core.Final.Win32.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN32;ARCH_X86;ARCH_32BIT;FINAL_RELEASE;RELEASE;NDEBUG;_SECURE_SCL=0;_ITERATOR_DEBUG_LEVEL=0;_HAS_ITERATOR_DEBUGGING=0</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;D:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/;X:\Code\@Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;X:\Code\@Core\git/Source/Core;.</NMakeIncludeSearchPath>
-    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Bin</LocalDebuggerWorkingDirectory>
+    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;d:\Code\Core/Source/Core;.</NMakeIncludeSearchPath>
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
-    <OutDir>$(SolutionDir)\Output\Bin</OutDir>
+    <OutDir>$(SolutionDir)\Output\Binary</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeOutput>$(SolutionDir)\Output\Binary\Core.Debug.x64.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN64;ARCH_X64;ARCH_64BIT;DEBUG;_DEBUG;_SECURE_SCL=1;_ITERATOR_DEBUG_LEVEL=2;_HAS_ITERATOR_DEBUGGING=1</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;D:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/;X:\Code\@Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;X:\Code\@Core\git/Source/Core;.</NMakeIncludeSearchPath>
-    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Bin</LocalDebuggerWorkingDirectory>
+    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;d:\Code\Core/Source/Core;.</NMakeIncludeSearchPath>
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
-    <OutDir>$(SolutionDir)\Output\Bin</OutDir>
+    <OutDir>$(SolutionDir)\Output\Binary</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='FastDebug|x64'">
-    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeOutput>$(SolutionDir)\Output\Binary\Core.FastDebug.x64.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN64;ARCH_X64;ARCH_64BIT;FASTDEBUG;_DEBUG;DEBUG;_SECURE_SCL=1;_ITERATOR_DEBUG_LEVEL=2;_HAS_ITERATOR_DEBUGGING=1</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;D:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/;X:\Code\@Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;X:\Code\@Core\git/Source/Core;.</NMakeIncludeSearchPath>
-    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Bin</LocalDebuggerWorkingDirectory>
+    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;d:\Code\Core/Source/Core;.</NMakeIncludeSearchPath>
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
-    <OutDir>$(SolutionDir)\Output\Bin</OutDir>
+    <OutDir>$(SolutionDir)\Output\Binary</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeOutput>$(SolutionDir)\Output\Binary\Core.Release.x64.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN64;ARCH_X64;ARCH_64BIT;RELEASE;NDEBUG;_SECURE_SCL=0;_ITERATOR_DEBUG_LEVEL=0;_HAS_ITERATOR_DEBUGGING=0</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;D:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/;X:\Code\@Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;X:\Code\@Core\git/Source/Core;.</NMakeIncludeSearchPath>
-    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Bin</LocalDebuggerWorkingDirectory>
+    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;d:\Code\Core/Source/Core;.</NMakeIncludeSearchPath>
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
-    <OutDir>$(SolutionDir)\Output\Bin</OutDir>
+    <OutDir>$(SolutionDir)\Output\Binary</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profiling|x64'">
-    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeOutput>$(SolutionDir)\Output\Binary\Core.Profiling.x64.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN64;ARCH_X64;ARCH_64BIT;RELEASE;NDEBUG;PROFILING_ENABLED;_SECURE_SCL=0;_ITERATOR_DEBUG_LEVEL=0;_HAS_ITERATOR_DEBUGGING=0</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;D:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/;X:\Code\@Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;X:\Code\@Core\git/Source/Core;.</NMakeIncludeSearchPath>
-    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Bin</LocalDebuggerWorkingDirectory>
+    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;d:\Code\Core/Source/Core;.</NMakeIncludeSearchPath>
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
-    <OutDir>$(SolutionDir)\Output\Bin</OutDir>
+    <OutDir>$(SolutionDir)\Output\Binary</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Final|x64'">
-    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; "$(SolutionDir)\fbuild.bat" -config "$(SolutionDir)\fbuild.bff" -vs  -cache -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -cache -showcmds -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
+    <NMakeOutput>$(SolutionDir)\Output\Binary\Core.Final.x64.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN64;ARCH_X64;ARCH_64BIT;FINAL_RELEASE;RELEASE;NDEBUG;_SECURE_SCL=0;_ITERATOR_DEBUG_LEVEL=0;_HAS_ITERATOR_DEBUGGING=0</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;D:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/ucrt;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/um;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/shared;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10240.0/;X:\Code\@Core\git\Source;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;X:\Code\@Core\git/Source/Core;.</NMakeIncludeSearchPath>
-    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Bin</LocalDebuggerWorkingDirectory>
+    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;d:\Code\Core/Source/Core;.</NMakeIncludeSearchPath>
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
-    <OutDir>$(SolutionDir)\Output\Bin</OutDir>
+    <OutDir>$(SolutionDir)\Output\Binary</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Dummy|Win32'">
     <BuildLog>

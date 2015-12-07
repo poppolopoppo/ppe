@@ -40,14 +40,15 @@ class BindName;
 class ConstantBuffer;
 FWD_REFPTR(ConstantBufferLayout);
 FWD_REFPTR(DeviceAPIDependantConstantWriter);
-enum class ShaderCompilerFlags;
+enum class ShaderProfileType;
 class ShaderProgram;
 struct ShaderProgramTexture;
+enum class ShaderTextureDimension;
 enum class ShaderProgramType;
 FWD_REFPTR(DeviceAPIDependantShaderProgram);
 class ShaderEffect;
 FWD_REFPTR(DeviceAPIDependantShaderEffect);
-class ShaderSource;
+FWD_REFPTR(ShaderCompiled);
 //----------------------------------------------------------------------------
 class SurfaceFormat;
 //----------------------------------------------------------------------------
@@ -66,7 +67,6 @@ struct RenderTargetBinding;
 class IDeviceAPIEncapsulator;
 class IDeviceAPIDiagnostics;
 class IDeviceAPIContext;
-class IDeviceAPIShaderCompiler;
 //----------------------------------------------------------------------------
 class AbstractDeviceAPIEncapsulator;
 //----------------------------------------------------------------------------

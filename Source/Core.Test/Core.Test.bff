@@ -6,9 +6,11 @@
     .ProjectDependencies =
     {
         'Core',
-        'Core.Graphics',
-        'Core.Logic',
+        'Core.RTTI',
         'Core.Serialize',
+        'Core.Graphics',
+        'Core.ContentPipeline',
+        'Core.Logic',
         'Core.Engine',
         'Core.Application',
     }

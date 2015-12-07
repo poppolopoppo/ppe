@@ -9,6 +9,7 @@
 #ifdef USE_LOGGER
 
 #include "Core/IO/FormatHelpers.h"
+#include "Core/IO/Stream.h"
 #include "Core/Memory/MemoryView.h"
 #include "Core/Memory/UniquePtr.h"
 #include "Core/Meta/Singleton.h"
@@ -17,6 +18,7 @@
 #include <iosfwd>
 #include <memory>
 #include <mutex>
+#include <sstream>
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -27,6 +29,7 @@ enum class LogCategory {
     Warning,
     Error,
     Exception,
+    Debug,
     Assertion,
     Profiling,
     Callstack,
@@ -88,6 +91,17 @@ void Log(LogCategory category, const wchar_t* text);
 //----------------------------------------------------------------------------
 template <typename _Arg0, typename... _Args>
 void Log(LogCategory category, const wchar_t* format, _Arg0&& arg0, _Args&&... args);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+class LoggerStream : public ThreadLocalWOStringStream {
+public:
+    LoggerStream(LogCategory category) : _category(category) {}
+    ~LoggerStream() { Logger::Instance().Log(_category, str().c_str()); }
+
+private:
+    LogCategory _category;
+};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

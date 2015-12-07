@@ -92,7 +92,7 @@ private:
 
     TextureFilter _filter = TextureFilter::Linear;
 
-    u32 _maxAnisotropy = 4;
+    u32 _maxAnisotropy = 16;
     u32 _maxMipLevel = 32;
     float _mipMapLODBias = 0;
 

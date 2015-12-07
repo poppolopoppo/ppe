@@ -41,7 +41,7 @@ inline void swap(Dirname& lhs, Dirname& rhs) {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
-inline size_t hash_value(const Dirname& token) {
+inline hash_t hash_value(const Dirname& token) {
     return token.HashValue();
 }
 //----------------------------------------------------------------------------

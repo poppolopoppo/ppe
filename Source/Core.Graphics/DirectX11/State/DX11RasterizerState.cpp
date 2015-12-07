@@ -49,7 +49,7 @@ DX11RasterizerState::~DX11RasterizerState() {
     ReleaseComRef(_entity);
 }
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Graphics, DX11RasterizerState, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, DX11RasterizerState, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

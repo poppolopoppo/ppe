@@ -31,6 +31,9 @@ public:
     const FileSystemNode *Sibbling() const { return _sibbling.get(); }
 
     const FileSystemToken& Token() const { return _token; }
+
+    size_t Depth() const { return _depth; }
+
     size_t HashValue() const { return _hashValue; }
 
     bool IsChildOf(const FileSystemNode *parent) const;
@@ -42,6 +45,7 @@ private:
     PFileSystemNode _child;
     PFileSystemNode _sibbling;
     FileSystemToken _token;
+    size_t _depth;
     size_t _hashValue;
 };
 //----------------------------------------------------------------------------
@@ -58,6 +62,7 @@ public:
     const FileSystemNode *Concat(const FileSystemNode *basedir, const MemoryView<const FileSystemToken>& path);
     const FileSystemNode *GetOrCreate(const MemoryView<const FileSystemToken>& path) { return Concat(nullptr, path); }
 
+    const FileSystemNode* RootNode(const FileSystemNode *pnode) const;
     size_t Expand(FileSystemToken *ptokens, size_t capacity, const FileSystemNode *pnode) const; // returns actual tokens count
     size_t Expand(FileSystemToken *ptokens, size_t capacity, const FileSystemNode *pbegin, const FileSystemNode *pend) const; // returns actual tokens count
 

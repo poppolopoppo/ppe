@@ -34,8 +34,6 @@ public:
     Basename(const std::basic_string<FileSystem::char_type, _CharTraits, _Allocator>& content)
         : Basename(content.c_str(), content.size()) {}
 
-    void Swap(Basename& other);
-
     const Core::BasenameNoExt& BasenameNoExt() const { return _basenameNoExt; }
     const Core::Extname& Extname() const { return _extname; }
 
@@ -46,7 +44,15 @@ public:
     bool Equals(const Basename& other) const;
     bool Less(const Basename& other) const;
 
-    size_t HashValue() const { return hash_value(_basenameNoExt, _extname); }
+    String ToString() const;
+    WString ToWString() const;
+
+    size_t ToCStr(char *dst, size_t capacity) const;
+    size_t ToWCStr(wchar_t *dst, size_t capacity) const;
+
+    void Swap(Basename& other);
+
+    size_t HashValue() const;
 
 private:
     Core::BasenameNoExt _basenameNoExt;
@@ -85,7 +91,7 @@ inline void swap(Basename& lhs, Basename& rhs) {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
-inline size_t hash_value(const Basename& token) {
+inline hash_t hash_value(const Basename& token) {
     return token.HashValue();
 }
 //----------------------------------------------------------------------------

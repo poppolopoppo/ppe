@@ -8,7 +8,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 ScalarBoundingBox<T, _Dim>::ScalarBoundingBox()
-:   ScalarBoundingBox(vector_type::MaxValue(), vector_type::MinValue()) {}
+:   ScalarBoundingBox(ScalarBoundingBox::DefaultValue()) {}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 ScalarBoundingBox<T, _Dim>::ScalarBoundingBox(const vector_type& min, const vector_type& max)

@@ -54,6 +54,7 @@ public:
     Dirpath(const std::basic_string<FileSystem::char_type, _CharTraits, _Allocator>& str)
         : Dirpath(str.c_str(), str.size()) {}
 
+    size_t Depth() const;
     Core::MountingPoint MountingPoint() const;
     Core::Dirname LastDirname() const;
     size_t ExpandPath(Core::MountingPoint& mountingPoint, const MemoryView<Dirname>& dirnames) const; // returns dirnames size
@@ -66,6 +67,12 @@ public:
     void Concat(const MemoryView<const Dirname>& path);
     void Concat(const FileSystem::char_type *cstr);
     void Concat(const MemoryView<const FileSystem::char_type>& strview);
+
+    String ToString() const;
+    WString ToWString() const;
+
+    size_t ToCStr(char *dst, size_t capacity) const;
+    size_t ToWCStr(wchar_t *dst, size_t capacity) const;
 
     void Swap(Dirpath& other);
 
@@ -100,7 +107,7 @@ inline void swap(Dirpath& lhs, Dirpath& rhs) {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
-inline size_t hash_value(const Dirpath& dirpath) {
+inline hash_t hash_value(const Dirpath& dirpath) {
     return dirpath.HashValue();
 }
 //----------------------------------------------------------------------------
@@ -110,13 +117,16 @@ template <typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
     const Core::Dirpath& dirpath) {
-    Core::MountingPoint mp;
-    const auto dirs = MALLOCA_VIEW(Dirname, Dirpath::MaxDepth);
-    const size_t k = dirpath.ExpandPath(mp, dirs);
-    if (!mp.empty())
-        oss << mp << wchar_t(FileSystem::Separator);
+
+    Core::MountingPoint mountingPoint;
+    STACKLOCAL_POD_ARRAY(Dirname, dirnames, dirpath.Depth());
+    const size_t k = dirpath.ExpandPath(mountingPoint, dirnames);
+
+    if (false == mountingPoint.empty())
+        oss << mountingPoint << wchar_t(FileSystem::Separator);
     for (size_t i = 0; i < k; ++i)
-        oss << dirs[i] << wchar_t(FileSystem::Separator);
+        oss << dirnames[i] << wchar_t(FileSystem::Separator);
+
     return oss;
 }
 //----------------------------------------------------------------------------

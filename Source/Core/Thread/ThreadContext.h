@@ -15,16 +15,14 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class ThreadContext {
-protected:
-    friend struct Meta::Activator<ThreadContext>;
-    ThreadContext(const char* name, size_t tag, std::thread::id id);
+public:
+    ThreadContext(const char *name, size_t tag, std::thread::id id);
     ~ThreadContext();
 
-public:
     ThreadContext(const ThreadContext&) = delete;
     ThreadContext& operator =(const ThreadContext&) = delete;
 
-    const char* Name() const { return _name; }
+    const char *Name() const { return _name; }
     size_t Tag() const { return _tag; }
     std::thread::id Id() const { return _id; }
 
@@ -41,6 +39,8 @@ const ThreadContext& ThisThreadContext();
 inline bool IsInMainThread() {
     return (MAIN_THREADTAG == ThisThreadContext().Tag());
 }
+//----------------------------------------------------------------------------
+#define AssertIsMainThread() Assert(Core::IsInMainThread())
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -5,14 +5,32 @@
 #include "Core/Allocator/PoolAllocatorTag.h"
 
 namespace Core {
-POOLTAG_DEF(Application);
-
 namespace Application {
+POOLTAG_DECL(Application);
+class ApplicationBase;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ApplicationBase;
-void LaunchApplication(ApplicationBase *app);
+class ApplicationStartup {
+public:
+    static void Start();
+    static void Shutdown();
+
+    static void ClearAll_UnusedMemory();
+
+    ApplicationStartup() { Start(); }
+    ~ApplicationStartup() { Shutdown(); }
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+class ApplicationContext {
+public:
+    ApplicationContext();
+    ~ApplicationContext();
+};
+//----------------------------------------------------------------------------
+int LaunchApplication(const ApplicationContext& context, ApplicationBase* app);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
