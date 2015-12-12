@@ -11,6 +11,7 @@
 ;   [ProjectExcludedFiles]  project specific excluded files (default value in Common.bff)
 ;   [ProjectIncludes]       project specific includes (default value in Common.bff)
 ;   [ProjectLibraries]      project specific libraries (default value in Common.bff)
+;   [ProjectIsolatedFiles]  project files not included in unity builds but still compiled (default value in Common.bff)
 //------------------------------------------------------------------------------
 
 .ProjectIncludes +
@@ -24,7 +25,15 @@ Unity( '$ProjectName$-Unity' )
     .UnityInputPath = '$ProjectPath$'
     .UnityOutputPath = '$UnityDirectory$\$ProjectName$'
     .UnityInputPattern = '*.cpp' // TODO: { '*.cpp', '*.c' }
-    .UnityInputExcludedFiles = .ProjectExcludedFiles
+    .UnityInputExcludedFiles = {}
+    ForEach( .Filename in .ProjectExcludedFiles )
+    {
+        ^UnityInputExcludedFiles + "$ProjectPath$/$Filename$"
+    }
+    ForEach( .Filename in .ProjectIsolatedFiles )
+    {
+        ^UnityInputExcludedFiles + "$ProjectPath$/$Filename$"
+    }
 }
 
 RemoveDir( '$ProjectName$-Unity-Purge' )
@@ -82,6 +91,11 @@ ForEach( .CompileConfig in .AllCompileConfigs )
             .PCHOutputFile      = '$CompilerOutputPath$\$PCHName$.pch'
 
             // Compiler
+            .CompilerInputFiles = {}
+            ForEach( .Filename in .ProjectIsolatedFiles )
+            {
+                ^CompilerInputFiles + "$ProjectPath$/$Filename$"
+            }
             .CompilerInputUnity = '$ProjectName$-Unity'
             .CompilerOptions    + ' $CompilerUsePCHFlag$"$PCHName$.h" $CompilerOutputPCHFlag$"$PCHOutputFile$"'
                                 + .CommandLineOptions

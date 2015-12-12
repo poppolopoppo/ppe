@@ -91,6 +91,16 @@
 #define FORCE_INLINE    __forceinline
 #define NO_INLINE       __declspec(noinline)
 //----------------------------------------------------------------------------
+#ifdef _MSC_VER
+#   define Assume(expr)    __assume((expr))
+#elif ((__GNUC__ * 100 + __GNUC_MINOR__) >= 302) || (__INTEL_COMPILER >= 800) || defined(__clang__)
+#   define Assume(expr)    (__builtin_expect ((expr),1) )
+#else
+#   error "unsupported compiler"
+#endif
+#define Likely(expr)     Assume((expr))
+#define Unlikely(expr)   Assume(!(expr))
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #ifdef _DEBUG

@@ -37,7 +37,7 @@ ServiceContainer::~ServiceContainer() {
     Assert(!_started);
 
     for (Pair<Guid, PService>& service : _services) {
-        LOG(Information, L"[Service] Removing reference for unregistered service <{0}> with guid {1} ...",
+        LOG(Info, L"[Service] Removing reference for unregistered service <{0}> with guid {1} ...",
             service.second->ServiceName(), service.first );
 
         if (service.second->RefCount() > 1)
@@ -59,7 +59,7 @@ void ServiceContainer::RegisterService(const Guid& guid, IService *service) {
 #ifdef WITH_CORE_ENGINE_SERVICE_DEBUG
     Assert(!_started);
 
-    LOG(Information, L"[Service] Register service <{0}> with guid {1} ...",
+    LOG(Info, L"[Service] Register service <{0}> with guid {1} ...",
         service->ServiceName(), guid );
 #endif
 
@@ -74,7 +74,7 @@ void ServiceContainer::UnregisterService(const Guid& guid, IService *service) {
 #ifdef WITH_CORE_ENGINE_SERVICE_DEBUG
     Assert(!_started);
 
-    LOG(Information, L"[Service] Unregister service <{0}> with guid {1} ...",
+    LOG(Info, L"[Service] Unregister service <{0}> with guid {1} ...",
         service->ServiceName(), guid );
 #endif
 

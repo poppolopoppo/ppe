@@ -303,7 +303,7 @@ void Effect::Set(Graphics::IDeviceAPIContext *context) const {
 //----------------------------------------------------------------------------
 void Effect::SwitchAutomaticFillMode() {
     const bool wireframe = (AutomaticRasterizerState == DefaultRasterizerState);
-    LOG(Information, L"[Effect] Toggle {0} fill mode for automatic rasterizer state ...",
+    LOG(Info, L"[Effect] Toggle {0} fill mode for automatic rasterizer state ...",
         wireframe ? "wireframe" : "solid");
 
     AutomaticRasterizerState = (wireframe)

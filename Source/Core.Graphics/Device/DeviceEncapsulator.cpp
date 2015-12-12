@@ -83,7 +83,7 @@ void DeviceEncapsulator::Create(DeviceAPI api, void *windowHandle, const Present
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!_deviceAPIEncapsulator);
 
-    LOG(Information, L"[DeviceEncapsulator] CreateDevice({0})", DeviceAPIToCStr(api));
+    LOG(Info, L"[DeviceEncapsulator] CreateDevice({0})", DeviceAPIToCStr(api));
 
     Assert(DeviceStatus::Invalid == _status);
     _status = DeviceStatus::Create;
@@ -115,7 +115,7 @@ void DeviceEncapsulator::Destroy() {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(_deviceAPIEncapsulator);
 
-    LOG(Information, L"[DeviceEncapsulator] DestroyDevice({0})", DeviceAPIToCStr(_deviceAPIEncapsulator->API()));
+    LOG(Info, L"[DeviceEncapsulator] DestroyDevice({0})", DeviceAPIToCStr(_deviceAPIEncapsulator->API()));
 
     Assert(DeviceStatus::Normal == _status);
     _status = DeviceStatus::Destroy;

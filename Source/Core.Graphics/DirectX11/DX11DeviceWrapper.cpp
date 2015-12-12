@@ -356,7 +356,7 @@ void DX11DeviceWrapper::CheckDeviceErrors(const DX11DeviceAPIEncapsulator *encap
         {
         case ::D3D11_MESSAGE_SEVERITY_MESSAGE:
         case ::D3D11_MESSAGE_SEVERITY_INFO:
-            LOG(Information, L"[D3D11] {0}", message->pDescription);
+            LOG(Info, L"[D3D11] {0}", message->pDescription);
             break;
 
         case ::D3D11_MESSAGE_SEVERITY_WARNING:

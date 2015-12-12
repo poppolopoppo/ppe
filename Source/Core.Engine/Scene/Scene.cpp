@@ -39,7 +39,7 @@ Scene::~Scene() {
 void Scene::Initialize(Graphics::IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    LOG(Information, L"[Scene] Initialize scene \"{0}\" ...", _name.c_str());
+    LOG(Info, L"[Scene] Initialize scene \"{0}\" ...", _name.c_str());
 
     ChangeStatus_(SceneStatus::BeforeInitialize);
     {
@@ -56,7 +56,7 @@ void Scene::Initialize(Graphics::IDeviceAPIEncapsulator *device) {
 void Scene::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    LOG(Information, L"[Scene] Destroy scene \"{0}\" ...", _name.c_str());
+    LOG(Info, L"[Scene] Destroy scene \"{0}\" ...", _name.c_str());
 
     ChangeStatus_(SceneStatus::BeforeDestroy);
     {

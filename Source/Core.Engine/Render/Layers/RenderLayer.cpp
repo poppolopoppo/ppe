@@ -31,7 +31,7 @@ void RenderLayer::PrepareImpl_(
     const VariabilitySeed variability = renderTree->EffectCompiler()->Variability();
     if (variability != _effectVariability &&
         _effectVariability.Value != VariabilitySeed::Invalid ) {
-        LOG(Information, L"[RenderLayer] Invalidate render batch in layer \"{0}\" ({1}>{2})",
+        LOG(Info, L"[RenderLayer] Invalidate render batch in layer \"{0}\" ({1}>{2})",
             Name().c_str(), _effectVariability.Value, variability.Value );
 
         _batch.Destroy(device);

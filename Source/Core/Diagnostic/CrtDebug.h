@@ -6,7 +6,7 @@
 #include "Core/Memory/UniquePtr.h"
 
 #if defined(OS_WINDOWS) && defined(_DEBUG)
-#   define USE_CRT_DEBUG
+//#   define USE_CRT_DEBUG %_NOCOMMIT%
 #endif
 
 namespace Core {

@@ -85,11 +85,11 @@ ThreadContext::ThreadContext(const char* name, size_t tag, std::thread::id id)
     Assert(name);
     Copy(_name, name);
     SetWin32ThreadName_(_name);
-    LOG(Information, L"[Thread] Start '{0}' with tag = {1} (id:{2})", _name, _tag, _id);
+    LOG(Info, L"[Thread] Start '{0}' with tag = {1} (id:{2})", _name, _tag, _id);
 }
 //----------------------------------------------------------------------------
 ThreadContext::~ThreadContext() {
-    LOG(Information, L"[Thread] Stop '{0}' with tag = {1} (id:{2})", _name, _tag, _id);
+    LOG(Info, L"[Thread] Stop '{0}' with tag = {1} (id:{2})", _name, _tag, _id);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

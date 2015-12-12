@@ -14,7 +14,6 @@ namespace Graphics {
 class IDeviceAPIDiagnostics {
 public:
     virtual ~IDeviceAPIDiagnostics() {}
-
     virtual bool IsProfilerAttached() const = 0;
 
     virtual void BeginEvent(const wchar_t *name) = 0;

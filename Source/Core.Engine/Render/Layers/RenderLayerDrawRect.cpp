@@ -145,7 +145,7 @@ void RenderLayerDrawRect::PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device,
 
     if (variability != _effectVariability &&
         _effectVariability.Value != VariabilitySeed::Invalid ) {
-        LOG(Information, L"[RenderLayerDrawRect] Invalidate render rect in layer \"{0}\" ({1}>{2})",
+        LOG(Info, L"[RenderLayerDrawRect] Invalidate render rect in layer \"{0}\" ({1}>{2})",
             Name().c_str(), _effectVariability.Value, variability.Value );
 
         _materialEffect->Destroy(device);

@@ -1,10 +1,12 @@
 #include "stdafx.h"
 
-#include "RTTI_extern.h"
-
 #include "MetaAtom.h"
+#include "MetaClass.h"
+#include "MetaObject.h"
 #include "MetaProperty.h"
 #include "MetaTypeTraits.h"
+
+#include "RTTI_extern.h"
 
 namespace Core {
 namespace RTTI {

@@ -27,16 +27,16 @@ CurrentProcessData::CurrentProcessData(void *applicationHandle, int nShowCmd, si
     _nShowCmd = nShowCmd;
 
 #ifdef USE_LOGGER
-    LOG(Information, L"[Process] Started '{0}' with {1} parameters.", _fileName, _args.size());
-    LOG(Information, L"[Process] Directory = '{0}'.", _directory);
-    LOG(Information, L"[Process] Application Handle = '{0}', nShowCmd = '{1}'.", _applicationHandle, _nShowCmd);
+    LOG(Info, L"[Process] Started '{0}' with {1} parameters.", _fileName, _args.size());
+    LOG(Info, L"[Process] Directory = '{0}'.", _directory);
+    LOG(Info, L"[Process] Application Handle = '{0}', nShowCmd = '{1}'.", _applicationHandle, _nShowCmd);
     for (size_t i = 0; i < _args.size(); ++i)
-        LOG(Information, L"- [{0:2}] '{1}'", i, _args[i]);
+        LOG(Info, L"- [{0:2}] '{1}'", i, _args[i]);
 #endif
 }
 //----------------------------------------------------------------------------
 CurrentProcessData::~CurrentProcessData() {
-    LOG(Information, L"[Process] Exit with code = {0}.", _exitCode);
+    LOG(Info, L"[Process] Exit with code = {0}.", _exitCode);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

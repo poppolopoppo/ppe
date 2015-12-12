@@ -2,7 +2,7 @@
 
 #include "HashFunctions.h"
 
-#include "farmhash.h"
+#include "External/farmhash.h"
 
 #define WITH_CORE_FARMHASH 1
 

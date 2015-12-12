@@ -108,7 +108,7 @@ static PMaterial CreateMaterial_(const ModelBuilder::Material& materialMB) {
     if (materialMB.SpecularExponent >= 0)
         parameters.Insert_AssertUnique(MaterialConstNames::SpecularExponent(), new MaterialParameterConstant<float>(materialMB.SpecularExponent));
 
-    LOG(Information, L"[Model] Loaded material '{0}' with diffuse map '{1}'", materialMB.Name, materialMB.DiffuseMap);
+    LOG(Info, L"[Model] Loaded material '{0}' with diffuse map '{1}'", materialMB.Name, materialMB.DiffuseMap);
 
     return new Material("Standard", materialMB.Name, std::move(tags), std::move(textures), std::move(parameters));
 }
@@ -566,7 +566,7 @@ PModel ModelBuilder::CreateModel() {
 
             const PMaterial& material = materials[groupMB.Material];
 
-            LOG(Information, L"[Model] {0}/{1}: material = '{2}'", _name, groupMB.Name, material->Description() );
+            LOG(Info, L"[Model] {0}/{1}: material = '{2}'", _name, groupMB.Name, material->Description() );
 
             subParts.emplace_back(new ModelMeshSubPart(
                 MeshName(groupMB.Name),

@@ -10,14 +10,14 @@ namespace ContentPipeline {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ContentImporterAttribute;
-class ContentImporterContext;
+FWD_REFPTR(ContentImporterDescriptor);
 //----------------------------------------------------------------------------
 class IContentImporter : public RefCountable {
 public:
     virtual ~IContentImporter() {}
 
-    virtual const ContentImporterAttribute& Attribute() const = 0;
+    virtual const ContentImporterDescriptor* Descriptor() const = 0;
+
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

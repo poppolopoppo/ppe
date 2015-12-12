@@ -2,5 +2,13 @@
 {
     .ProjectName = 'Core'
     .ProjectPath = '$SourceDiretory$/Core'
+    .ProjectIsolatedFiles =
+    {
+        'External/farmhash.cpp',
+        'External/lz4.cpp',
+        'External/lz4hc.cpp',
+        'External/MurmurHash3.cpp',
+        'External/PMurHash.cpp',
+    }
     #include "../../Build/Templates/Library.bff"
 }

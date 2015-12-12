@@ -294,7 +294,7 @@ static void TaskThreadStartup_(TaskPool *ppool, size_t workerIndex) {
     TaskThreadContext& ctx = CurrentTaskThreadContext();
     ctx.WorkerIndex = workerIndex;
 
-    LOG(Information, L"[Tasks] Starting task worker with index #{0} from pool \"{1}\" ...",
+    LOG(Info, L"[Tasks] Starting task worker with index #{0} from pool \"{1}\" ...",
         workerIndex, ppool->Name() );
 
     Fiber newFiber = ppool->Pimpl()->Fibers().Create();
@@ -307,7 +307,7 @@ static void TaskThreadShutdown_(TaskPool *ppool) {
 
     TaskThreadContext& ctx = CurrentTaskThreadContext();
 
-    LOG(Information, L"[Tasks] Stopping task worker with index #{0} from pool \"{1}\" ...",
+    LOG(Info, L"[Tasks] Stopping task worker with index #{0} from pool \"{1}\" ...",
         ctx.WorkerIndex, ppool->Name() );
 
     Assert(nullptr != ctx.FiberToReleaseBeforeExit);
@@ -538,7 +538,7 @@ void TaskPool::RunAndWaitFor(const Task *ptasks, size_t count, TaskPriority prio
 void TaskPool::Start() {
     Assert(!_pimpl);
 
-    LOG(Information, L"[Tasks] Starting task pool \"{0}\" with {1} workers ...",
+    LOG(Info, L"[Tasks] Starting task pool \"{0}\" with {1} workers ...",
         _name, _workerCount );
 
     _pimpl.reset(new TaskPoolImpl(this, CORE_TASKPOOL_QUEUE_CAPACITY, _workerCount));
@@ -548,7 +548,7 @@ void TaskPool::Start() {
 void TaskPool::Shutdown() {
     Assert(_pimpl);
 
-    LOG(Information, L"[Tasks] Stopping task pool \"{0}\" with {1} workers ...",
+    LOG(Info, L"[Tasks] Stopping task pool \"{0}\" with {1} workers ...",
         _name, _workerCount );
 
     _pimpl->Shutdown();

@@ -63,16 +63,31 @@ public:
     MemoryView<T> SubRange(size_t offset, size_t count) const;
     MemoryView< typename std::add_const<T>::type > SubRangeConst(size_t offset, size_t count) const;
 
+    MemoryView<T> RemainingAfter(size_t offset) const { return SubRange(offset, _size - offset); }
+    MemoryView< typename std::add_const<T>::type > RemainingAfterConst(size_t offset) const { return SubRange(offset, _size - offset); }
+
     MemoryView<T> ShiftBack() const { Assert(_size > 0); return MemoryView<T>(_storage, _size - 1); }
     MemoryView<T> ShiftFront() const { Assert(_size > 0); return MemoryView<T>(_storage + 1, _size - 1); }
 
     MemoryView<T> GrowBack() const { Assert(_size > 0); return MemoryView<T>(_storage, _size + 1); }
     MemoryView<T> GrowFront() const { Assert(_size > 0); return MemoryView<T>(_storage - 1, _size + 1); }
 
-    void Swap(MemoryView& other);
-
     template <typename U>
     MemoryView<U> Cast() const;
+
+    friend void swap(MemoryView& lhs, MemoryView& rhs) {
+        std::swap(lhs._storage, rhs._storage);
+        std::swap(lhs._size, rhs._size);
+    }
+
+    friend bool operator ==(const MemoryView& lhs, const MemoryView& rhs) {
+        return  lhs._storage == rhs._storage &&
+                lhs._size == rhs._size;
+    }
+
+    friend bool operator !=(const MemoryView& lhs, const MemoryView& rhs) {
+        return false == operator ==(lhs, rhs);
+    }
 
 protected:
     pointer _storage;
@@ -141,20 +156,16 @@ auto MemoryView<T>::at(size_type index) const -> reference {
 //----------------------------------------------------------------------------
 template <typename T>
 MemoryView<T> MemoryView<T>::SubRange(size_t offset, size_t count) const {
+    Assert(offset <= _size);
     Assert(offset + count <= _size);
     return MemoryView(_storage + offset, count);
 }
 //----------------------------------------------------------------------------
 template <typename T>
 MemoryView< typename std::add_const<T>::type > MemoryView<T>::SubRangeConst(size_t offset, size_t count) const {
+    Assert(offset <= _size);
     Assert(offset + count <= _size);
     return MemoryView< typename std::add_const<T>::type >(_storage + offset, count);
-}
-//----------------------------------------------------------------------------
-template <typename T>
-void MemoryView<T>::Swap(MemoryView& other) {
-    std::swap(other._storage, _storage);
-    std::swap(other._size, _size);
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -164,21 +175,6 @@ MemoryView<U> MemoryView<T>::Cast() const {
                     (0 == (sizeof(U) % sizeof(T)) ) );
 
     return MemoryView<U>(reinterpret_cast<U *>(_storage), (_size * sizeof(T)) / sizeof(U));
-}
-//----------------------------------------------------------------------------
-template <typename T>
-void swap(MemoryView<T>& lhs, MemoryView<T>& rhs) {
-    lhs.Swap(rhs);
-}
-//----------------------------------------------------------------------------
-template <typename T>
-bool operator ==(const MemoryView<T>& lhs, const MemoryView<T>& rhs) {
-    return lhs.Pointer() == rhs.Pointer() && lhs.SizeInBytes() == rhs.SizeInBytes();
-}
-//----------------------------------------------------------------------------
-template <typename T>
-bool operator !=(const MemoryView<T>& lhs, const MemoryView<T>& rhs) {
-    return !operator ==(lhs, rhs);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

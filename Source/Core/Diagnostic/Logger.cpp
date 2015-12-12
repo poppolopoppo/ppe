@@ -18,7 +18,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-STATIC_ASSERT(0 == size_t(LogCategory::Information));
+STATIC_ASSERT(0 == size_t(LogCategory::Info));
 STATIC_ASSERT(1 == size_t(LogCategory::Warning));
 STATIC_ASSERT(2 == size_t(LogCategory::Error));
 STATIC_ASSERT(3 == size_t(LogCategory::Exception));
@@ -29,7 +29,7 @@ STATIC_ASSERT(7 == size_t(LogCategory::Callstack));
 //----------------------------------------------------------------------------
 namespace {
     static const LogCategory sCategories[] = {
-        LogCategory::Information,
+        LogCategory::Info,
         LogCategory::Warning,
         LogCategory::Error,
         LogCategory::Exception,
@@ -40,7 +40,7 @@ namespace {
     };
 
     static const wchar_t* sCategoriesWCStr[] = {
-        L"Information",
+        L"Info",
         L"Warning",
         L"Error",
         L"Exception",
@@ -74,30 +74,30 @@ LoggerFrontend::LoggerFrontend(ILogger* impl)
 LoggerFrontend::~LoggerFrontend() {}
 //----------------------------------------------------------------------------
 void LoggerFrontend::SetImpl(ILogger* impl) {
-    std::lock_guard <std::mutex> scopelock(_lock);
+    std::lock_guard<std::mutex> scopelock(_lock);
     _impl.reset(impl);
 }
 //----------------------------------------------------------------------------
 void LoggerFrontend::Log(LogCategory category, const wchar_t* text) {
-    std::lock_guard <std::mutex> scopelock(_lock);
+    std::lock_guard<std::mutex> scopelock(_lock);
     if (_impl)
         _impl->Log(*this, category, text, Length(text));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+static wchar_t sOutputDebugBuffer[4096];
+//----------------------------------------------------------------------------
 void OutputDebugLogger::Log(const LoggerFrontend& frontend, LogCategory category, const wchar_t* text, size_t/* length */) {
     if (!IsDebuggerPresent())
         return;
 
-    if (LogCategory::Callstack != category) {
-        wchar_t header[128];
-        Format(header, L"[{0:12f}][{1}] ", frontend.Now(), category);
-        OutputDebugStringW(header);
-    }
+    if (LogCategory::Callstack != category)
+        Format(sOutputDebugBuffer, L"[{0:12f7}][{1}] {2}\n", frontend.Now(), category, text);
+    else
+        Format(sOutputDebugBuffer, L"{0}\n", text);
 
-    OutputDebugStringW(text);
-    OutputDebugStringW(L"\n");
+    OutputDebugStringW(sOutputDebugBuffer);
 }
 //----------------------------------------------------------------------------
 void StdErrorLogger::Log(const LoggerFrontend& frontend, LogCategory category, const wchar_t* text, size_t length) {

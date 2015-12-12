@@ -18,7 +18,6 @@ public:
     virtual ~LastErrorException();
 
     long ErrorCode() const { return _errorCode; }
-
 private:
     long _errorCode;
 };

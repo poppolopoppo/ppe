@@ -38,7 +38,7 @@ void RenderSurfaceManager::Register(AbstractRenderSurface *renderSurface) {
 
     const Dirname virtualDirname(ToWString(renderSurface->Name()));
 
-    LOG(Information, L"[RenderSurfaceManager] Register render surface with alias \"{0}\" ...",
+    LOG(Info, L"[RenderSurfaceManager] Register render surface with alias \"{0}\" ...",
         Dirpath(_virtualDir, virtualDirname) );
 
     PAbstractRenderSurface& it = _surfaces[virtualDirname];
@@ -55,7 +55,7 @@ void RenderSurfaceManager::Unregister(AbstractRenderSurface *renderSurface) {
 
     const Dirname virtualDirname(ToWString(renderSurface->Name()));
 
-    LOG(Information, L"[RenderSurfaceManager] Unregister render surface with alias \"{0}\" ...",
+    LOG(Info, L"[RenderSurfaceManager] Unregister render surface with alias \"{0}\" ...",
         Dirpath(_virtualDir, virtualDirname) );
 
     Assert(!renderSurface->InUse());
@@ -120,7 +120,7 @@ void RenderSurfaceManager::Start(Graphics::IDeviceAPIEncapsulator *device) {
     Assert(!_renderTargetName.empty());
     Assert(!_depthStencilName.empty());
 
-    LOG(Information, L"[RenderSurfaceManager] Starting with device <{0}> ...",
+    LOG(Info, L"[RenderSurfaceManager] Starting with device <{0}> ...",
         device );
 }
 //----------------------------------------------------------------------------
@@ -131,7 +131,7 @@ void RenderSurfaceManager::Shutdown(Graphics::IDeviceAPIEncapsulator *device) {
     Assert(!_renderTargetName.empty());
     Assert(!_depthStencilName.empty());
 
-    LOG(Information, L"[RenderSurfaceManager] Shutting down with device <{0}> ...",
+    LOG(Info, L"[RenderSurfaceManager] Shutting down with device <{0}> ...",
         device );
 
     for (Pair<const Dirname, PAbstractRenderSurface>& it : _surfaces) {
@@ -139,7 +139,7 @@ void RenderSurfaceManager::Shutdown(Graphics::IDeviceAPIEncapsulator *device) {
         Assert(it.second);
         Assert(!it.second->InUse());
 
-        LOG(Information, L"[RenderSurfaceManager] Destroy render surface with alias \"{0}\" ...",
+        LOG(Info, L"[RenderSurfaceManager] Destroy render surface with alias \"{0}\" ...",
             it.first );
 
         RemoveRef_AssertReachZero(it.second);

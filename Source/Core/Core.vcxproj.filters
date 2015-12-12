@@ -235,6 +235,39 @@
     <CustomBuild Include="Diagnostic\MiniDump.h">
       <Filter>Diagnostic</Filter>
     </CustomBuild>
+    <CustomBuild Include="External\farmhash-inl.h">
+      <Filter>External</Filter>
+    </CustomBuild>
+    <CustomBuild Include="External\farmhash.cpp">
+      <Filter>External</Filter>
+    </CustomBuild>
+    <CustomBuild Include="External\farmhash.h">
+      <Filter>External</Filter>
+    </CustomBuild>
+    <CustomBuild Include="External\lz4.cpp">
+      <Filter>External</Filter>
+    </CustomBuild>
+    <CustomBuild Include="External\lz4.h">
+      <Filter>External</Filter>
+    </CustomBuild>
+    <CustomBuild Include="External\lz4hc.cpp">
+      <Filter>External</Filter>
+    </CustomBuild>
+    <CustomBuild Include="External\lz4hc.h">
+      <Filter>External</Filter>
+    </CustomBuild>
+    <CustomBuild Include="External\MurmurHash3.cpp">
+      <Filter>External</Filter>
+    </CustomBuild>
+    <CustomBuild Include="External\MurmurHash3.h">
+      <Filter>External</Filter>
+    </CustomBuild>
+    <CustomBuild Include="External\PMurHash.cpp">
+      <Filter>External</Filter>
+    </CustomBuild>
+    <CustomBuild Include="External\PMurHash.h">
+      <Filter>External</Filter>
+    </CustomBuild>
     <CustomBuild Include="IO\FS\Basename.cpp">
       <Filter>IO\FS</Filter>
     </CustomBuild>
@@ -637,19 +670,16 @@
     <CustomBuild Include="Memory\AlignedStorage.h">
       <Filter>Memory</Filter>
     </CustomBuild>
+    <CustomBuild Include="Memory\Compression.cpp">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\Compression.h">
+      <Filter>Memory</Filter>
+    </CustomBuild>
     <CustomBuild Include="Memory\ComPtr-inl.h">
       <Filter>Memory</Filter>
     </CustomBuild>
     <CustomBuild Include="Memory\ComPtr.h">
-      <Filter>Memory</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Memory\farmhash-inl.h">
-      <Filter>Memory</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Memory\farmhash.cpp">
-      <Filter>Memory</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Memory\farmhash.h">
       <Filter>Memory</Filter>
     </CustomBuild>
     <CustomBuild Include="Memory\HashFunctions-inl.h">
@@ -817,12 +847,6 @@
     <CustomBuild Include="Misc\CurrentProcess.h">
       <Filter>Misc</Filter>
     </CustomBuild>
-    <CustomBuild Include="Misc\farmhash.cc">
-      <Filter>Misc</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Misc\farmhash.h">
-      <Filter>Misc</Filter>
-    </CustomBuild>
     <CustomBuild Include="Misc\FourCC.h">
       <Filter>Misc</Filter>
     </CustomBuild>
@@ -830,18 +854,6 @@
       <Filter>Misc</Filter>
     </CustomBuild>
     <CustomBuild Include="Misc\Guid.h">
-      <Filter>Misc</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Misc\MurmurHash3.cpp">
-      <Filter>Misc</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Misc\MurmurHash3.h">
-      <Filter>Misc</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Misc\PMurHash.cpp">
-      <Filter>Misc</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Misc\PMurHash.h">
       <Filter>Misc</Filter>
     </CustomBuild>
     <CustomBuild Include="Thread\Task\Task.h">
@@ -959,6 +971,11 @@
   <ItemGroup>
     <Filter Include="Diagnostic">
       <UniqueIdentifier>{b5218b59-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="External">
+      <UniqueIdentifier>{a124c3ee-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

@@ -44,7 +44,7 @@ public:
 
     void destroy(pointer p) {
         Assert(p);
-        __assume(p);
+        Likely(p);
         typedef char type_must_be_complete[sizeof(T) ? 1 : -1];
         (void) sizeof(type_must_be_complete);
         p->~T();
@@ -53,7 +53,7 @@ public:
     template<typename U>
     void destroy(U* p) {
         Assert(p);
-        __assume(p);
+        Likely(p);
         typedef char type_must_be_complete[sizeof(U) ? 1 : -1];
         (void) sizeof(type_must_be_complete);
         p->~U();

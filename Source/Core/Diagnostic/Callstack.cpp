@@ -127,7 +127,7 @@ static void LoadModules_() {
             0);
 #pragma warning( pop )
 
-        LOG(Information, L"[Symbols] {0} for \"{1}\"",
+        LOG(Info, L"[Symbols] {0} for \"{1}\"",
             succeed ? L"Loaded" : L"Failed to load",
             module_entry.szExePath);
 
@@ -280,7 +280,7 @@ void Callstack::Start() {
     HANDLE process = GetCurrentProcess();
     BOOL succeed = SymInitializeW(process, symbol_path, FALSE);
 
-    LOG(Information, L"[Symbols] Path = '{0}' -> {1}", symbol_path, (FALSE == succeed) ? L"Failed" : L"Succeed");
+    LOG(Info, L"[Symbols] Path = '{0}' -> {1}", symbol_path, (FALSE == succeed) ? L"Failed" : L"Succeed");
 
     std::free(symbol_path);
 

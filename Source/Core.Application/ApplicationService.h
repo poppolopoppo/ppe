@@ -26,7 +26,7 @@ class ApplicationServiceContainer : Meta::ThreadResource {
 public:
     template <typename _Interface, typename _Concrete>
     void Add(_Concrete& service) {
-        LOG(Information, L"[Application][Service] Start <{0}> with <{1}>", typeid(_Interface).name(), typeid(_Concrete).name());
+        LOG(Info, L"[Application][Service] Start <{0}> with <{1}>", typeid(_Interface).name(), typeid(_Concrete).name());
         //STATIC_ASSERT(std::is_assignable<_Interface*, _Concrete*>::value);
         THIS_THREADRESOURCE_CHECKACCESS();
         provider_type provider(new ApplicationServiceProvider_<_Interface>(service));
@@ -37,7 +37,7 @@ public:
 
     template <typename _Interface, typename _Concrete>
     void Remove(_Concrete& service) {
-        LOG(Information, L"[Application][Service] Shutdown <{0}> with <{1}>", typeid(_Interface).name(), typeid(_Concrete).name());
+        LOG(Info, L"[Application][Service] Shutdown <{0}> with <{1}>", typeid(_Interface).name(), typeid(_Concrete).name());
         THIS_THREADRESOURCE_CHECKACCESS();
         const ServiceId serviceId(ApplicationServiceProvider_<_Interface>::Id());
         const auto it = std::find_if(_providers.begin(), _providers.end(), [=](const provider_type& p) { return serviceId == p->ServiceId(); });

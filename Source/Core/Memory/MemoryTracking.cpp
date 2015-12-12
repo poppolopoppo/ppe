@@ -167,7 +167,7 @@ void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
     });
 
     const size_t width = 139;
-    const wchar_t *fmt = L" {0:-73}|{1:10} {2:10} |{3:7} {4:7} |{5:11} {6:11}\n";
+    const wchar_t *fmt = L" {0:-70}|{1:8} {2:10} |{3:8} {4:11} |{5:11} {6:11}\n";
 
     oss << Repeat<width>(L"-") << std::endl
         << "    " << header << L" (" << datas.size() << L" elements)" << std::endl

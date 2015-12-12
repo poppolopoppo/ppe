@@ -157,13 +157,13 @@ PShaderCompiled CompileShaderSource(
     Assert(false == filename.empty());
 
 #ifdef USE_LOGGER
-    LOG(Information, L"[Shader] Compiling {0} program with profile {1} from '{2}':{3}()",
+    LOG(Info, L"[Shader] Compiling {0} program with profile {1} from '{2}':{3}()",
         ShaderProgramTypeToCStr(programType),
         ShaderProfileTypeToCStr(profileType),
         filename, entryPoint );
 
     for (const Pair<String, String>& define : defines)
-        LOG(Information, L"[Shader] #define {0} {1}", define.first, define.second);
+        LOG(Info, L"[Shader] #define {0} {1}", define.first, define.second);
 #endif
 
     IDeviceAPIShaderCompiler* const deviceAPIShaderCompiler = encapsulator->Compiler();

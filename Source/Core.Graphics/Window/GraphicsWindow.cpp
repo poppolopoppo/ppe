@@ -33,7 +33,7 @@ void GraphicsWindow::RenderLoop(DeviceEncapsulator *deviceEncapsulator) {
     Initialize(clock);
     LoadContent();
 
-    LOG(Information, L"[GraphicsWindow] Start render loop");
+    LOG(Info, L"[GraphicsWindow] Start render loop");
 
     IDeviceAPIEncapsulator *const device = deviceEncapsulator->Device();
     device->SetRenderTarget(device->BackBufferRenderTarget(),
@@ -65,26 +65,26 @@ void GraphicsWindow::RenderLoop(DeviceEncapsulator *deviceEncapsulator) {
 
     Update_AfterDispatch();
 
-    LOG(Information, L"[GraphicsWindow] Stop render loop");
+    LOG(Info, L"[GraphicsWindow] Stop render loop");
 
     UnloadContent();
     Destroy();
 }
 //----------------------------------------------------------------------------
 void GraphicsWindow::Initialize(const Timeline&/* time */) {
-    LOG(Information, L"[GraphicsWindow] Initialize()");
+    LOG(Info, L"[GraphicsWindow] Initialize()");
 }
 //----------------------------------------------------------------------------
 void GraphicsWindow::Destroy() {
-    LOG(Information, L"[GraphicsWindow] Destroy()");
+    LOG(Info, L"[GraphicsWindow] Destroy()");
 }
 //----------------------------------------------------------------------------
 void GraphicsWindow::LoadContent() {
-    LOG(Information, L"[GraphicsWindow] LoadContent()");
+    LOG(Info, L"[GraphicsWindow] LoadContent()");
 }
 //----------------------------------------------------------------------------
 void GraphicsWindow::UnloadContent() {
-    LOG(Information, L"[GraphicsWindow] UnloadContent()");
+    LOG(Info, L"[GraphicsWindow] UnloadContent()");
 }
 //----------------------------------------------------------------------------
 void GraphicsWindow::Update(const Timeline&/* time */) {}

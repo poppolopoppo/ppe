@@ -5,11 +5,11 @@
 #include "Core/Container/RawStorage.h"
 #include "Core/Container/Vector.h"
 #include "Core/IO/FileSystem.h"
-#include "Core/IO/LZJB.h"
 #include "Core/IO/VirtualFileSystem.h"
 #include "Core/Color/Color.h"
 #include "Core/Maths/Maths.h"
 #include "Core/Maths/RandomGenerator.h"
+#include "Core/Memory/Compression.h"
 #include "Core/Memory/MemoryStream.h"
 
 #include "Core.Graphics/Device/DeviceAPI.h"
@@ -196,6 +196,8 @@ private:
     const size_t _maxDim;
     RandomGenerator _rand;
 
+    HASHMAP_THREAD_LOCAL(RTTI, RTTI::MetaTypeId, RTTI::PMetaAtom) _atomCache;
+
     size_t NextRandomDim_() { return (_rand.Next() % _maxDim); }
 
     template <typename T>
@@ -231,7 +233,11 @@ private:
 void RTTIAtomRandomizer_::Randomize(RTTI::MetaObject* pobject) {
     Assert(pobject);
     for (const auto& it : pobject->RTTI_MetaClass()->Properties()) {
-        RTTI::PMetaAtom atom = it.second->WrapMove(pobject);
+        RTTI::PMetaAtom& atom = _atomCache[it.second->TypeInfo().Id];
+        if (atom)
+            it.second->MoveTo(pobject, atom.get());
+        else
+            atom = it.second->WrapMove(pobject);
         parent_type::Append(atom.get());
         it.second->UnwrapMove(pobject, atom.get());
     }
@@ -260,7 +266,7 @@ void RobotApp::Start() {
     parent_type::Start();
 
     typedef RTTITest_ test_type;
-    static const size_t test_count = 32;
+    static const size_t test_count = 1024;
 
     ContentIdentity::MetaClass::Create();
     RTTITest_::MetaClass::Create();
@@ -287,11 +293,11 @@ void RobotApp::Start() {
             auto compressed = VFS_OpenBinaryWritable(filename, AccessPolicy::Truncate);
             LZJB::Compress(compressed.get(), uncompressed.MakeView());
 #else
-            MEMORYSTREAM_THREAD_LOCAL(Serialize) compressed;
-            LZJB::Compress(&compressed, uncompressed.MakeView());
+            RAWSTORAGE_THREAD_LOCAL(Serialize, u8) compressed;
+            Compression::Compress(compressed, uncompressed.MakeView(), Compression::HighCompression);
 
             RAWSTORAGE_THREAD_LOCAL(Stream, u8) decompressed;
-            LZJB::Decompress(&decompressed, compressed.MakeView());
+            Compression::Decompress(decompressed, compressed.MakeView());
 
             Assert(uncompressed.SizeInBytes() == decompressed.SizeInBytes());
             const size_t k = decompressed.SizeInBytes();
@@ -316,7 +322,7 @@ void RobotApp::Start() {
             RAWSTORAGE_THREAD_LOCAL(FileSystem, u8) compressed;
             VFS_ReadAll(&compressed, filename, AccessPolicy::Binary);
             RAWSTORAGE_THREAD_LOCAL(Stream, u8) decompressed;
-            LZJB::Decompress(&decompressed, compressed.MakeConstView());
+            Compression::Decompress(decompressed, compressed.MakeConstView());
 
             Assert(uncompressed.SizeInBytes() == decompressed.SizeInBytes());
             const size_t k = decompressed.SizeInBytes();

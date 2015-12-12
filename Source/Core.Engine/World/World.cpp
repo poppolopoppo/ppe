@@ -65,7 +65,7 @@ void World::SetLighting(LightingEnvironment *lighting) {
 void World::Initialize() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    LOG(Information, L"[World] Initialize world \"{0}\" ...", _name.c_str());
+    LOG(Info, L"[World] Initialize world \"{0}\" ...", _name.c_str());
 
     ChangeStatus_(WorldStatus::BeforeInitialize);
     {
@@ -87,7 +87,7 @@ void World::Initialize() {
 void World::Destroy() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    LOG(Information, L"[World] Destroy world \"{0}\" ...", _name.c_str());
+    LOG(Info, L"[World] Destroy world \"{0}\" ...", _name.c_str());
 
     ChangeStatus_(WorldStatus::BeforeDestroy);
     {

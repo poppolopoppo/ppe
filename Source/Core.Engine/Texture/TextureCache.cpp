@@ -91,7 +91,7 @@ TextureCache::TextureEntry::TextureEntry(const Core::Filename& filename, bool us
 ,   _prev(nullptr) {
     _nextWFlags.Reset(nullptr, useSRGB, keepData);
 
-    LOG(Information, L"[TextureCache] Loading texture '{0}', SRGB = {1:A}, Keep data = {2:A} ...",
+    LOG(Info, L"[TextureCache] Loading texture '{0}', SRGB = {1:A}, Keep data = {2:A} ...",
         _filename, UseSRGB(), KeepData() );
 }
 //----------------------------------------------------------------------------
@@ -99,7 +99,7 @@ TextureCache::TextureEntry::~TextureEntry() {
     if (_texture)
         RemoveRef_AssertReachZero(_texture);
 
-    LOG(Information, L"[TextureCache] Unloading texture '{0}' ...",
+    LOG(Info, L"[TextureCache] Unloading texture '{0}' ...",
         _filename, UseSRGB(), KeepData() );
 }
 //----------------------------------------------------------------------------
@@ -471,7 +471,7 @@ void TextureCache::ReloadAllTextures() {
 
     const size_t textureCount = _textures.size();
 
-    LOG(Information, L"[TextureCache] Reloading {0} textures ...", textureCount);
+    LOG(Info, L"[TextureCache] Reloading {0} textures ...", textureCount);
 
     struct TextureQuery {
         Core::Filename Filename;
@@ -512,7 +512,7 @@ void TextureCache::Start(Graphics::IDeviceAPIEncapsulator *device) {
     Assert(device);
     Assert(!_device);
 
-    LOG(Information, L"[TextureCache] Starting with device <{0}> ...",
+    LOG(Info, L"[TextureCache] Starting with device <{0}> ...",
         device );
 
     _device = device;
@@ -524,7 +524,7 @@ void TextureCache::Shutdown(Graphics::IDeviceAPIEncapsulator *device) {
     Assert(device);
     Assert(device == _device);
 
-    LOG(Information, L"[TextureCache] Shutting down with device <{0}> ...",
+    LOG(Info, L"[TextureCache] Shutting down with device <{0}> ...",
         device );
 
     _completionPort.WaitAll();

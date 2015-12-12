@@ -75,7 +75,7 @@ MemoryPoolBase::MemoryPoolBase(size_t blockSize, size_t minChunkSize, size_t max
         _currentChunksize *= 2;
     AssertRelease(_currentChunksize <= _maxChunkSize);
 
-    LOG(Information,
+    LOG(Info,
         L"[Pool] New pool with block size = {0}\n"
         L" - Min chunk size = {1}\n"
         L" - Max chunk size = {2}\n"
@@ -91,7 +91,7 @@ MemoryPoolBase::~MemoryPoolBase() {
     Assert(nullptr == _node.Next);
     Assert(nullptr == _node.Prev);
 
-    LOG(Information,
+    LOG(Info,
         L"[Pool] Delete pool with block size = {0}\n"
         L" - Min chunk size = {1}\n"
         L" - Max chunk size = {2}\n"
@@ -107,7 +107,7 @@ void MemoryPoolBase::GrowChunkSizeIFP() {
     if (nextChunkSize <= _maxChunkSize) {
         _currentChunksize = nextChunkSize;
 
-        LOG(Information,
+        LOG(Info,
             L"[Pool] Grow pool with block size = {0}\n"
             L" - Min chunk size = {1}\n"
             L" - Max chunk size = {2}\n"

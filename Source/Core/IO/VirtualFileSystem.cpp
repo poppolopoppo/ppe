@@ -212,7 +212,7 @@ void VirtualFileSystemRoot::Clear() {
 void VirtualFileSystemRoot::Mount(VirtualFileSystemComponent* component) {
     Assert(component);
 
-    LOG(Information, L"[VFS] Mount component '{0}'", component->Alias());
+    LOG(Info, L"[VFS] Mount component '{0}'", component->Alias());
 
     std::lock_guard<std::mutex> scopeLock(_barrier);
     _trie.AddComponent(component);
@@ -221,7 +221,7 @@ void VirtualFileSystemRoot::Mount(VirtualFileSystemComponent* component) {
 void VirtualFileSystemRoot::Unmount(VirtualFileSystemComponent* component) {
     Assert(component);
 
-    LOG(Information, L"[VFS] Unmount component '{0}'", component->Alias());
+    LOG(Info, L"[VFS] Unmount component '{0}'", component->Alias());
 
     std::lock_guard<std::mutex> scopeLock(_barrier);
     _trie.RemoveComponent(component);

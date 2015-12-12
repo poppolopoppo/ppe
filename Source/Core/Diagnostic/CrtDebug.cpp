@@ -338,8 +338,8 @@ CrtCheckMemoryLeaksImpl::~CrtCheckMemoryLeaksImpl() {
     Assert(CrtAllocationCallstackLogger::Instance == &_log);
     CrtAllocationCallstackLogger::Instance = nullptr;
 
-    LOG(Information, L"Allocation logger overhead = {0} ({1})", _log.TotalSizeInBytes(), _log.ChunkCount());
-    LOG(Information, L"Total allocation count = {0}", _log.AllocationCount());
+    LOG(Info, L"Allocation logger overhead = {0} ({1})", _log.TotalSizeInBytes(), _log.ChunkCount());
+    LOG(Info, L"Total allocation count = {0}", _log.AllocationCount());
 
     _CrtMemDumpStatistics(&memDiff);
     _CrtCheckMemory();

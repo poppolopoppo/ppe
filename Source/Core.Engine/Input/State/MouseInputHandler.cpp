@@ -76,7 +76,7 @@ void MouseInputHandler::UpdateBeforeDispatch(Graphics::BasicWindow *wnd) {
 void MouseInputHandler::UpdateAfterDispatch(Graphics::BasicWindow *wnd) {
     for (MouseButton btn : _state._buttonsUp.MakeView()) {
 #ifdef WITH_MOUSESTATE_VERBOSE
-        LOG(Information, L"[Mouse] button {0} up", u32(btn));
+        LOG(Info, L"[Mouse] button {0} up", u32(btn));
 #endif
         _state._buttonsPressed.Remove_ReturnIfExists/*Remove_AssertExists echec cuisant... emulation? */(btn);
         _state._buttonsDown.Remove_ReturnIfExists(btn);
@@ -84,7 +84,7 @@ void MouseInputHandler::UpdateAfterDispatch(Graphics::BasicWindow *wnd) {
 
     for (MouseButton btn : _state._buttonsDown.MakeView()) {
 #ifdef WITH_MOUSESTATE_VERBOSE
-        LOG(Information, L"[Mouse] button {0} down", u32(btn));
+        LOG(Info, L"[Mouse] button {0} down", u32(btn));
 #endif
         _state._buttonsPressed.Add_KeepExisting(std::move(btn));
     }

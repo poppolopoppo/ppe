@@ -32,7 +32,7 @@ auto BindDelegate<T *, _Ret (T::*)(_Args... )>::get(T *pcallee) -> type {
 template <typename T, typename _Ret, typename... _Args >
 template <_Ret (T::*_Member)(_Args... )>
 _Ret BindDelegate<T *, _Ret (T::*)(_Args... )>::Wrapper_(void *pcallee, _Args... args ) {
-    __assume(pcallee);
+    Likely(pcallee);
     T *const p = static_cast<T *>(pcallee);
     return (p->*_Member)(std::forward<_Args>(args)... );
 }
@@ -61,7 +61,7 @@ auto BindDelegate<T *, _Ret (T::*)(_Args... ) const>::get(T *pcallee) -> type {
 template <typename T, typename _Ret, typename... _Args >
 template <_Ret (T::*_Member)(_Args... ) const>
 _Ret BindDelegate<T *, _Ret (T::*)(_Args... ) const>::Wrapper_(void *pcallee, _Args... args ) {
-    __assume(pcallee);
+    Likely(pcallee);
     const T *p = static_cast<const T *>(pcallee);
     return (p->*_Member)(std::forward<_Args>(args)... );
 }

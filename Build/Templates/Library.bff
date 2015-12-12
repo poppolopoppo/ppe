@@ -10,6 +10,7 @@
 ;   [ProjectDependencies]   project specific dependencies (default value in Common.bff)
 ;   [ProjectExcludedFiles]  project specific excluded files (default value in Common.bff)
 ;   [ProjectIncludes]       project specific includes (default value in Common.bff)
+;   [ProjectIsolatedFiles]  project files not included in unity builds but still compiled (default value in Common.bff)
 ;   [ProjectLibraries]      project specific libraries (default value in Common.bff)
 ;   [ProjectPostBuild]      project specific post-build (default value in Common.bff)
 ;   [ProjectPreBuild]       project specific pre-build (default value in Common.bff)

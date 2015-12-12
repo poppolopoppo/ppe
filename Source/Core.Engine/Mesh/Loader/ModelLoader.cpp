@@ -22,7 +22,7 @@ extern bool LoadModel_Obj(PModel& pModel, const Filename& filename, const ModelS
 bool LoadModel(PModel& pModel, const Filename& filename) {
     Assert(!filename.empty());
 
-    LOG(Information, L"Model: loading model from '{0}' ...", filename);
+    LOG(Info, L"Model: loading model from '{0}' ...", filename);
 
     if (!filename.HasExtension())
         AssertNotReached();

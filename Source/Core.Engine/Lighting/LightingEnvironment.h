@@ -19,13 +19,10 @@ public:
 
     float Exposure() const { return _exposure; }
     void SetExposure(float value) { _exposure = value; }
-
     float WhitePoint() const { return _whitePoint; }
     void SetWhitePoint(float value) { _whitePoint = value; }
-
     DirectionalLight& Sun() { return _sun; }
     const DirectionalLight& Sun() const { return _sun; }
-
 private:
     float _exposure;
     float _whitePoint;

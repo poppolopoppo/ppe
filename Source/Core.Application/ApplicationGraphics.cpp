@@ -71,7 +71,7 @@ void ApplicationGraphics::RenderLoop() {
 
     LoadContent();
 
-    LOG(Information, L"[Application][Graphics] Start render loop");
+    LOG(Info, L"[Application][Graphics] Start render loop");
 
     Graphics::IDeviceAPIEncapsulator *const device = _deviceEncapsulator->Device();
     device->SetRenderTarget(device->BackBufferRenderTarget(),
@@ -103,17 +103,17 @@ void ApplicationGraphics::RenderLoop() {
 
     Update_AfterDispatch();
 
-    LOG(Information, L"[Application][Graphics] Stop render loop");
+    LOG(Info, L"[Application][Graphics] Stop render loop");
 
     UnloadContent();
 }
 //----------------------------------------------------------------------------
 void ApplicationGraphics::LoadContent() {
-    LOG(Information, L"[Application][Graphics] LoadContent()");
+    LOG(Info, L"[Application][Graphics] LoadContent()");
 }
 //----------------------------------------------------------------------------
 void ApplicationGraphics::UnloadContent() {
-    LOG(Information, L"[Application][Graphics] UnloadContent()");
+    LOG(Info, L"[Application][Graphics] UnloadContent()");
 }
 //----------------------------------------------------------------------------
 void ApplicationGraphics::Update(const Timeline&/* time */) {}

@@ -51,7 +51,6 @@ public:
     Culling Cull() const { return _cull; }
     DepthTest Depth() const { return _depth; }
     FillMode Fill() const { return _fill; }
-
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:

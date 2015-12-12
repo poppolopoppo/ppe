@@ -19,7 +19,7 @@ public: \
     void* operator new(size_t size); \
     void* operator new(size_t, void* ptr) { \
         Assert(ptr); \
-        __assume(ptr); \
+        Likely(ptr); \
         return ptr; \
     } \
     \

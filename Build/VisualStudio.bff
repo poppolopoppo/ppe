@@ -13,14 +13,14 @@
 .VisualStudioOutputDirectory        = '^$(SolutionDir)\Output\Binary'
 .VisualStudioIntermediateDirectory  = '^$(SolutionDir)\Output\Intermediate\^$(Platform)\^$(Configuration)\^$(ProjectName)'
 
-.VisualStudioFBuildCommand          = 'cd "^$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs $VSBuildOptions$'
+.VisualStudioFBuildCommand          = 'cd "^$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs'
 .VisualStudioFBuildTarget           = '^$(ProjectName)-^$(Platform)-^$(Configuration)'
 
 .VisualStudioBaseConfig =
 [
-    .ProjectBuildCommand    = '$VisualStudioFBuildCommand$ $VisualStudioFBuildTarget$'
-    .ProjectRebuildCommand  = '$VisualStudioFBuildCommand$ -clean $VisualStudioFBuildTarget$'
-    .ProjectCleanCommand    = '$VisualStudioFBuildCommand$ -clean $VisualStudioFBuildTarget$-Purge'
+    .ProjectBuildCommand    = '$VisualStudioFBuildCommand$ $VSBuildOptions$ $VisualStudioFBuildTarget$'
+    .ProjectRebuildCommand  = '$VisualStudioFBuildCommand$ $VSRebuildOptions$ -clean $VisualStudioFBuildTarget$'
+    .ProjectCleanCommand    = '$VisualStudioFBuildCommand$ $VSCleanOptions$ -clean $VisualStudioFBuildTarget$-Purge'
 
     .OutputDirectory        = .VisualStudioOutputDirectory
     .IntermediateDirectory  = .VisualStudioIntermediateDirectory

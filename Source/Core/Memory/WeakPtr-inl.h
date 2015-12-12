@@ -24,7 +24,7 @@ inline WeakAndRefCountable& WeakAndRefCountable::operator =(const WeakAndRefCoun
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline WeakPtrBase::WeakPtrBase(void **pptr) 
+inline WeakPtrBase::WeakPtrBase(void **pptr)
 :   _pptr(pptr)
 ,   _next(nullptr)
 ,   _prev(nullptr) {
@@ -43,7 +43,7 @@ void WeakPtrBase::set_(T *ptr) {
     if (*_pptr) {
         T *const pptrAsT = (T *)*_pptr;
         THREADRESOURCE_CHECKACCESS(pptrAsT);
-        
+
         if (_prev) _prev->_next = _next;
         if (_next) _next->_prev = _prev;
 
@@ -55,7 +55,7 @@ void WeakPtrBase::set_(T *ptr) {
         _prev = _next = nullptr;
         *_pptr = nullptr;
     }
-    
+
     Assert(nullptr == *_pptr);
     Assert(nullptr == _next);
     Assert(nullptr == _prev);
@@ -75,7 +75,7 @@ void WeakPtrBase::set_(T *ptr) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-WeakPtr<T>::WeakPtr() 
+WeakPtr<T>::WeakPtr()
 :   WeakPtrBase((void **)&_ptr)
 ,   _ptr(nullptr) {}
 //----------------------------------------------------------------------------
@@ -105,7 +105,7 @@ auto WeakPtr<T>::operator =(WeakPtr&& rvalue) -> WeakPtr& {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-WeakPtr<T>::WeakPtr(const WeakPtr& other) 
+WeakPtr<T>::WeakPtr(const WeakPtr& other)
 :   WeakPtr(other._ptr) {}
 //----------------------------------------------------------------------------
 template <typename T>
@@ -150,7 +150,7 @@ template <typename T>
 template <typename U>
 bool WeakPtr<T>::TryLock(RefPtr<U> *pLocked) const {
     Assert(pLocked);
-    __assume(pLocked);
+    Likely(pLocked);
     pLocked->reset(_ptr);
     return nullptr != pLocked->get();
 }

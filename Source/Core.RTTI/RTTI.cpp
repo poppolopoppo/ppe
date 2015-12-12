@@ -234,9 +234,9 @@ static void TestRTTI_() {
     t = new Titi();
     const RTTI::MetaClass *metaClass = t->RTTI_MetaClass();
 
-    LOG(Information, L"[RTTI] MetaClass<{0}> : {1}", metaClass->Name(), metaClass->Attributes());
+    LOG(Info, L"[RTTI] MetaClass<{0}> : {1}", metaClass->Name(), metaClass->Attributes());
     for (const auto& it : metaClass->Properties())
-        LOG(Information, L"[RTTI]   - {0} : {1} -> {2}", it.first, it.second->Attributes(), it.second->TypeInfo());
+        LOG(Info, L"[RTTI]   - {0} : {1} -> {2}", it.first, it.second->Attributes(), it.second->TypeInfo());
 
     const RTTI::MetaProperty *prop = metaClass->PropertyIFP("Count");
 
@@ -254,7 +254,7 @@ static void TestRTTI_() {
     RTTI::PMetaAtom atom = prop->WrapCopy(t.get());
     RTTI::PMetaAtom defaultAtom = atom->Traits()->CreateDefaultValue();
     Assert(defaultAtom->IsDefaultValue());
-    LOG(Information, L"[RTTI] {0} ({1})", *atom->Cast<int>(), atom->HashValue());
+    LOG(Info, L"[RTTI] {0} ({1})", *atom->Cast<int>(), atom->HashValue());
 
     prop = metaClass->PropertyIFP("Dict");
     defaultAtom = prop->Traits()->CreateDefaultValue();

@@ -16,7 +16,7 @@ ParseList::ParseList(Lexer::Lexer *lexer)
 
     Lexer::Match match;
     while (lexer->Read(match)) {
-        //LOG(Information, L"[Parser] match : <{0}> = '{1}'", match.Symbol()->CStr().Pointer(), match.Value().c_str());
+        //LOG(Info, L"[Parser] match : <{0}> = '{1}'", match.Symbol()->CStr().Pointer(), match.Value().c_str());
         _matches.emplace_back(std::move(match));
     }
 

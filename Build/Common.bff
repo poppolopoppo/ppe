@@ -19,17 +19,20 @@
 //------------------------------------------------------------------------------
 // Default Unity Options
 //------------------------------------------------------------------------------
-.UnityNumFiles = 4 ; peut être override par projet
+.UnityNumFiles = 8 ; peut être override par projet
 .UnityInputIsolateWritableFiles = false ; passer à true désactive l'utilisation des unity builds
 
 //------------------------------------------------------------------------------
 // Default Visual Options
 //------------------------------------------------------------------------------
-.VSBuildOptions = ''
-+ ' -cache'     ; utilisation du cache depuis Visual
-;+ ' -dist'      ; active la compilation distribuée
-+ ' -showcmds'  ; affiche les commandes de compile, pratique pour debug
-;+ ' -summary'   ; affiche un rapport à la fin de la compilation
+.VSBaseOptions = ''
+;+ ' -dist'         ; active la compilation distribuée
+;+ ' -showcmds'     ; affiche les commandes de compile, pratique pour debug
++ ' -summary'       ; affiche un rapport à la fin de la compilation
+.VSBuildOptions     = .VSBaseOptions
++ ' -cache'         ; utilisation du cache depuis Visual
+.VSRebuildOptions   = .VSBaseOptions
+.VSCleanOptions     = .VSBaseOptions
 
 //------------------------------------------------------------------------------
 // FBuild Settings
@@ -53,6 +56,7 @@
 .ProjectDependencies = {}
 .ProjectExcludedFiles = {}
 .ProjectIncludes = {}
+.ProjectIsolatedFiles = {}
 .ProjectLibraries = {}
 .ProjectPostBuild = {}
 .ProjectPreBuild = {}

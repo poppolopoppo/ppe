@@ -233,7 +233,7 @@ void Compress(IStreamWriter* dst, const MemoryView<const u8>& src) {
         }
     }
 
-    LOG(Information, L"[LZJB] Compression ratio : {0} -> {1} = {2:f2}%",
+    LOG(Info, L"[LZJB] Compression ratio : {0} -> {1} = {2:f2}%",
         SizeInBytes(src.SizeInBytes()), SizeInBytes(writer.TellO()), writer.TellO()*100.0f/src.SizeInBytes() );
 }
 //----------------------------------------------------------------------------

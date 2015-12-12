@@ -329,7 +329,7 @@ void KeyboardInputHandler::UpdateBeforeDispatch(Graphics::BasicWindow *wnd) {
 void KeyboardInputHandler::UpdateAfterDispatch(Graphics::BasicWindow *wnd) {
     for (KeyboardKey key : _state._keysUp.MakeView()) {
 #ifdef WITH_KEYBOARDSTATE_VERBOSE
-        LOG(Information, L"[Keyboard] key {0} up", KeyboardKeyToCStr(key));
+        LOG(Info, L"[Keyboard] key {0} up", KeyboardKeyToCStr(key));
 #endif
         _state._keysPressed.Remove_ReturnIfExists/*Remove_AssertExists echec cuisant... emulation? */(key);
         _state._keysDown.Remove_ReturnIfExists(key);
@@ -337,7 +337,7 @@ void KeyboardInputHandler::UpdateAfterDispatch(Graphics::BasicWindow *wnd) {
 
     for (KeyboardKey key : _state._keysDown.MakeView()) {
 #ifdef WITH_KEYBOARDSTATE_VERBOSE
-        LOG(Information, L"[Keyboard] key {0} down", KeyboardKeyToCStr(key));
+        LOG(Info, L"[Keyboard] key {0} down", KeyboardKeyToCStr(key));
 #endif
         _state._keysPressed.Add_KeepExisting(std::move(key));
     }

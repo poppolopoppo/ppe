@@ -37,6 +37,9 @@
 #   else
 #       define BINARYSERIALIZER_DATALOG(...) NOOP
 #   endif
+#else
+#   define BINARYSERIALIZER_LOG(...) NOOP
+#   define BINARYSERIALIZER_DATALOG(...) NOOP
 #endif
 
 namespace Core {
@@ -275,7 +278,7 @@ private:
         using parent_type::Visit;
 
         virtual void Inspect(RTTI::IMetaAtomPair* ppair, RTTI::Pair<RTTI::PMetaAtom, RTTI::PMetaAtom>& pair) override {
-            BINARYSERIALIZER_LOG(Information, L"[Serialize] Deserialize RTTI::Pair<{0}, {1}>",
+            BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize RTTI::Pair<{0}, {1}>",
                 ppair->FirstTypeInfo().Name, ppair->SecondTypeInfo().Name );
 
             if (false == _reader->ExpectPOD(TAG_ATOM_PAIR_) ||
@@ -289,7 +292,7 @@ private:
         }
 
         virtual void Inspect(RTTI::IMetaAtomVector* pvector, RTTI::Vector<RTTI::PMetaAtom>& vector) override {
-            BINARYSERIALIZER_LOG(Information, L"[Serialize] Deserialize RTTI::Vector<{0}>",
+            BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize RTTI::Vector<{0}>",
                 pvector->ValueTypeInfo().Name );
 
             u32 count;
@@ -308,7 +311,7 @@ private:
         }
 
         virtual void Inspect(RTTI::IMetaAtomDictionary* pdictionary, RTTI::Dictionary<RTTI::PMetaAtom, RTTI::PMetaAtom>& dictionary) override {
-            BINARYSERIALIZER_LOG(Information, L"[Serialize] Deserialize RTTI::Dictionary<{0}, {1}>",
+            BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize RTTI::Dictionary<{0}, {1}>",
                 pdictionary->KeyTypeInfo().Name, pdictionary->ValueTypeInfo().Name );
 
             u32 count;
@@ -337,7 +340,7 @@ private:
                 false == _reader->ExpectPOD(scalar->TypeInfo().Id) || \
                 false == ReadValue_(scalar->Wrapper()) ) \
                 throw BinarySerializerException("failed to deserialize a RTTI " #T ); \
-            BINARYSERIALIZER_LOG(Information, L"[Serialize] Deserialize scalar {0} = [{1}]", \
+            BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize scalar {0} = [{1}]", \
                 scalar->TypeInfo().Name, scalar->Wrapper() ); \
             BINARYSERIALIZER_DATALOG(L"@{2:#8X} : <{0}> = [{1}]", \
                 scalar->TypeInfo().Name, scalar->Wrapper(), dataoff ); \
@@ -588,7 +591,7 @@ RTTI::MetaObject* BinaryDeserialize_::CreateObjectFromHeader_(const SerializedOb
         Assert(UINT32_MAX == header.NameIndex);
         Assert(UINT32_MAX == header.DataOffset);
 
-        BINARYSERIALIZER_LOG(Information, L"[Serialize] Deserialize null object");
+        BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize null object");
 
         return nullptr;
     }
@@ -599,7 +602,7 @@ RTTI::MetaObject* BinaryDeserialize_::CreateObjectFromHeader_(const SerializedOb
 
         const RTTI::MetaClass* metaClass = _metaClasses[header.MetaClassIndex];
 
-        BINARYSERIALIZER_LOG(Information, L"[Serialize] Deserialize private object <{0}>", metaClass->Name());
+        BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize private object <{0}>", metaClass->Name());
 
         return metaClass->CreateInstance();
     }
@@ -613,14 +616,14 @@ RTTI::MetaObject* BinaryDeserialize_::CreateObjectFromHeader_(const SerializedOb
 
         if (TAG_OBJECT_EXPORT_ == header.Type) {
 
-            BINARYSERIALIZER_LOG(Information, L"[Serialize] Deserialize exported object <{0}> '{1}'", metaClass->Name(), name);
+            BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize exported object <{0}> '{1}'", metaClass->Name(), name);
 
             return metaClass->CreateInstance();
         }
         else {
             Assert(TAG_OBJECT_IMPORT_ == header.Type);
 
-            BINARYSERIALIZER_LOG(Information, L"[Serialize] Deserialize imported object <{0}> '{1}'", metaClass->Name(), name);
+            BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize imported object <{0}> '{1}'", metaClass->Name(), name);
 
             const RTTI::MetaAtom* patom = RTTI::MetaAtomDatabase::Instance().GetIFP(name);
             if (nullptr == patom ||
@@ -638,7 +641,7 @@ void BinaryDeserialize_::DeserializeObjectData_(MemoryViewReader& reader, RTTI::
         false == reader.ReadPOD(&metaClassCount) )
         throw BinarySerializerException("failed to read RTTI object header");
 
-    BINARYSERIALIZER_LOG(Information, L"[Serialize] Deserialize object data for @{0}", reader.TellI());
+    BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize object data for @{0}", reader.TellI());
 
     AtomReader_ atomReader(this, &reader);
 
@@ -659,7 +662,7 @@ void BinaryDeserialize_::DeserializeObjectData_(MemoryViewReader& reader, RTTI::
         const RTTI::MetaClass* metaClass = _metaClasses[class_i];
         const properties_type& properties = _properties[class_i];
 
-        BINARYSERIALIZER_LOG(Information, L"[Serialize] Deserialize metaclass data <{0}>", metaClass->Name());
+        BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize metaclass data <{0}>", metaClass->Name());
 
         forrange(j, 0, propertyCount) {
             index_t prop_i;
@@ -669,7 +672,7 @@ void BinaryDeserialize_::DeserializeObjectData_(MemoryViewReader& reader, RTTI::
 
             const RTTI::MetaProperty* metaProperty = properties[prop_i];
 
-            BINARYSERIALIZER_LOG(Information, L"[Serialize] Deserialize property data <{0}> '{1}'",
+            BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize property data <{0}> '{1}'",
                 metaProperty->TypeInfo().Name, metaProperty->Name());
 
             const RTTI::PMetaAtom atom = metaProperty->Traits()->CreateDefaultValue();
@@ -735,7 +738,7 @@ private:
         void WritePOD(const T& pod) { _owner->_objectStream.WritePOD(pod); }
 
         virtual void Inspect(const RTTI::IMetaAtomPair* ppair, const RTTI::Pair<RTTI::PMetaAtom, RTTI::PMetaAtom>& pair) override {
-            BINARYSERIALIZER_LOG(Information, L"[Serialize] Serialize RTTI::Pair<{0}, {1}>",
+            BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize RTTI::Pair<{0}, {1}>",
                 ppair->FirstTypeInfo().Name, ppair->SecondTypeInfo().Name );
 
             WritePOD(TAG_ATOM_PAIR_);
@@ -744,7 +747,7 @@ private:
         }
 
         virtual void Inspect(const RTTI::IMetaAtomVector* pvector, const RTTI::Vector<RTTI::PMetaAtom>& vector) override {
-            BINARYSERIALIZER_LOG(Information, L"[Serialize] Serialize RTTI::Vector<{0}>",
+            BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize RTTI::Vector<{0}>",
                 pvector->ValueTypeInfo().Name );
 
             WritePOD(TAG_ATOM_VECTOR_);
@@ -754,7 +757,7 @@ private:
         }
 
         virtual void Inspect(const RTTI::IMetaAtomDictionary* pdictionary, const RTTI::Dictionary<RTTI::PMetaAtom, RTTI::PMetaAtom>& dictionary) override {
-            BINARYSERIALIZER_LOG(Information, L"[Serialize] Serialize RTTI::Dictionary<{0}, {1}>",
+            BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize RTTI::Dictionary<{0}, {1}>",
                 pdictionary->KeyTypeInfo().Name, pdictionary->ValueTypeInfo().Name );
 
             WritePOD(TAG_ATOM_DICTIONARY_);
@@ -766,7 +769,7 @@ private:
 #define DEF_METATYPE_SCALAR(_Name, T, _TypeId) \
         virtual void Visit(const RTTI::MetaTypedAtom<T>* scalar) override { \
             Assert(_TypeId == scalar->TypeInfo().Id); \
-            BINARYSERIALIZER_LOG(Information, L"[Serialize] Serialize scalar {0} = [{1}]", \
+            BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize scalar {0} = [{1}]", \
                 scalar->TypeInfo().Name, scalar->Wrapper() ); \
             BINARYSERIALIZER_DATALOG(L"@{2:#8X} : <{0}> = [{1}]", \
                 scalar->TypeInfo().Name, scalar->Wrapper(), _owner->_objectStream.TellO() ); \
@@ -989,7 +992,7 @@ void BinarySerialize_::ProcessQueue_() {
         header.DataOffset = UINT32_MAX;
 
         if (nullptr == object) {
-            BINARYSERIALIZER_LOG(Information, L"[Serialize] Serialize null object");
+            BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize null object");
             header.Type = TAG_OBJECT_NULL_;
         }
         else {
@@ -1007,14 +1010,14 @@ void BinarySerialize_::ProcessQueue_() {
 
                 const bool exported = (nullptr != transaction->GetIFP(metaName));
                 if (exported) {
-                    BINARYSERIALIZER_LOG(Information, L"[Serialize] Serialize exported object <{0}> '{1}'", metaClass->Name(), metaName);
+                    BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize exported object <{0}> '{1}'", metaClass->Name(), metaName);
                     header.Type = TAG_OBJECT_EXPORT_;
                     header.NameIndex = name_i;
                     Insert_AssertUnique(_namesToExport, name_i, object_i);
                     Assert(_namesToImport.end() == _namesToImport.find(name_i));
                 }
                 else {
-                    BINARYSERIALIZER_LOG(Information, L"[Serialize] Serialize imported object <{0}> '{1}'", metaClass->Name(), metaName);
+                    BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize imported object <{0}> '{1}'", metaClass->Name(), metaName);
                     header.Type = TAG_OBJECT_IMPORT_;
                     header.NameIndex = name_i;
                     Insert_AssertUnique(_namesToImport, name_i, object_i);
@@ -1023,7 +1026,7 @@ void BinarySerialize_::ProcessQueue_() {
                 }
             }
             else {
-                BINARYSERIALIZER_LOG(Information, L"[Serialize] Serialize private object <{0}>", object->RTTI_MetaClass()->Name());
+                BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize private object <{0}>", object->RTTI_MetaClass()->Name());
                 header.Type = TAG_OBJECT_PRIVATE_;
             }
 
@@ -1040,7 +1043,7 @@ void BinarySerialize_::WriteObject_(AtomWriter_& atomWriter, const RTTI::MetaObj
     Assert(object);
     Assert(object->RTTI_MetaClass() == metaClass);
 
-    BINARYSERIALIZER_LOG(Information, L"[Serialize] Serialize object data for @{0}", _objectStream.TellI());
+    BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize object data for @{0}", _objectStream.TellI());
 
     _objectStream.WritePOD(TAG_OBJECT_START_);
 
@@ -1049,7 +1052,7 @@ void BinarySerialize_::WriteObject_(AtomWriter_& atomWriter, const RTTI::MetaObj
     _objectStream.WritePOD(metaClassCount); // will be overwritten at the end of function
 
     while (metaClass) {
-        BINARYSERIALIZER_LOG(Information, L"[Serialize] Serialize metaclass data <{0}>", metaClass->Name());
+        BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize metaclass data <{0}>", metaClass->Name());
 
         const std::streamoff metaClassTagOffset = _objectStream.TellO();
         _objectStream.WritePOD(TAG_OBJECT_METACLASS_);
@@ -1068,7 +1071,7 @@ void BinarySerialize_::WriteObject_(AtomWriter_& atomWriter, const RTTI::MetaObj
             if (prop->IsDefaultValue(object))
                 continue;
 
-            BINARYSERIALIZER_LOG(Information, L"[Serialize] Serialize property data <{0}> '{1}'",
+            BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize property data <{0}> '{1}'",
                 it.second->TypeInfo().Name, it.second->Name());
 
             ++propertyCount;

@@ -185,14 +185,14 @@ BasicWindow::BasicWindow(
 
     _handle = CreateBasicWindowHandle_(this, title, left, top, width, height, _parent);
 
-    LOG(Information, L"[Window] Create window \"{0}\", RECT[{1}, {2}, {3}, {4}] = {5}",
+    LOG(Info, L"[Window] Create window \"{0}\", RECT[{1}, {2}, {3}, {4}] = {5}",
         title, left, top, width, height, _handle);
 }
 //----------------------------------------------------------------------------
 BasicWindow::~BasicWindow() {
     Assert(_handle);
 
-    LOG(Information, L"[Window] Destroy window {0}", _handle);
+    LOG(Info, L"[Window] Destroy window {0}", _handle);
 
     ::DestroyWindow(reinterpret_cast<HWND>(_handle));
 }
@@ -241,7 +241,7 @@ bool BasicWindow::DispatchMessageIFP(WindowMessage msg, MessageLParam lparam, Me
 
     WindowMessageHandlerDelegate handlerDelegate;
     if (_dispatch.Find(msg, &handlerDelegate)) {
-        /*LOG(Information, L"[Window] Dispatch message <{1}> for handle {0} (lparam = {2}, wparam = {3})",
+        /*LOG(Info, L"[Window] Dispatch message <{1}> for handle {0} (lparam = {2}, wparam = {3})",
             _handle, msg, lparam, wparam);*/
 
         *result = (*handlerDelegate.second)(handlerDelegate.first, this, msg, lparam, wparam);
@@ -256,7 +256,7 @@ bool BasicWindow::DispatchMessageIFP(WindowMessage msg, MessageLParam lparam, Me
 void BasicWindow::Show() {
     Assert(_handle);
 
-    LOG(Information, L"[Window] Show window {0}", _handle);
+    LOG(Info, L"[Window] Show window {0}", _handle);
 
     ::ShowWindow(reinterpret_cast<HWND>(_handle), CurrentProcess::Instance().nShowCmd());
 }
@@ -264,7 +264,7 @@ void BasicWindow::Show() {
 void BasicWindow::Close() {
     Assert(_handle);
 
-    LOG(Information, L"[Window] Close window {0}", _handle);
+    LOG(Info, L"[Window] Close window {0}", _handle);
 
     ::CloseWindow(reinterpret_cast<HWND>(_handle));
 }
@@ -284,7 +284,7 @@ bool BasicWindow::PumpMessage(WindowMessage& msg, MessageLParam& lparam, Message
         wparam = windowMsg.wParam;
 
         /*
-        LOG(Information, L"[BasicWindow] Received window message #{0} <{1}>",
+        LOG(Info, L"[BasicWindow] Received window message #{0} <{1}>",
             size_t(msg), WindowMessageToCStr(msg));
             */
 
@@ -316,20 +316,20 @@ void BasicWindow::Shutdown() {
 //----------------------------------------------------------------------------
 void BasicWindow::OnSetFocus() {
     Assert(true == _wantFocus);
-    LOG(Information, L"[Window] Window {0} set focus", _handle);
+    LOG(Info, L"[Window] Window {0} set focus", _handle);
 
     _hasFocus = true;
 }
 //----------------------------------------------------------------------------
 void BasicWindow::OnLoseFocus() {
     Assert(false == _wantFocus);
-    LOG(Information, L"[Window] Window {0} lose focus", _handle);
+    LOG(Info, L"[Window] Window {0} lose focus", _handle);
 
     _hasFocus = false;
 }
 //----------------------------------------------------------------------------
 void BasicWindow::OnResize(size_t width, size_t height) {
-    LOG(Information, L"[Window] Window {0} resize from {1}x{2} -> {3}x{4}", _handle, _width, _height, width, height);
+    LOG(Info, L"[Window] Window {0} resize from {1}x{2} -> {3}x{4}", _handle, _width, _height, width, height);
 
     // overwrites _wantedWidth/Height to enable child impl to pass a different size
     _width = _wantedWidth = width;
@@ -342,7 +342,7 @@ void BasicWindow::RegisterMessageDelegate_(WindowMessage msg, IWindowMessageHand
     Assert(Contains(_handlers, handler));
     Assert(this == handler->Window());
 
-    LOG(Information, L"[Window] Register {1} message handler for window '{0}'", _title, msg);
+    LOG(Info, L"[Window] Register {1} message handler for window '{0}'", _title, msg);
 
     _dispatch.Insert_AssertUnique(std::forward<WindowMessage>(msg), MakePair(handler, member));
 }
@@ -353,7 +353,7 @@ void BasicWindow::UnregisterMessageDelegate_(WindowMessage msg, IWindowMessageHa
     Assert(Contains(_handlers, handler));
     Assert(this == handler->Window());
 
-    LOG(Information, L"[Window] Unregister {1} message handler for window '{0}'", _title, msg);
+    LOG(Info, L"[Window] Unregister {1} message handler for window '{0}'", _title, msg);
 
     const auto it = _dispatch.Find(msg);
     AssertRelease(it != _dispatch.end());

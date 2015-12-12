@@ -86,7 +86,7 @@ Effect *EffectCompiler::GetOrCreateEffect(
     if (!effect) {
         Graphics::IDeviceAPIShaderCompiler *const compiler = _device->Encapsulator()->Compiler();
 
-        LOG(Information, L"[EffectCompiler] Create effect for descriptor <{0}> and vertex declaration <{1}> ...",
+        LOG(Info, L"[EffectCompiler] Create effect for descriptor <{0}> and vertex declaration <{1}> ...",
             descriptor->Name().c_str(), vertexDeclaration->ResourceName() );
 
         effect = new Effect(descriptor, vertexDeclaration, tags);
@@ -108,7 +108,7 @@ MaterialEffect *EffectCompiler::CreateMaterialEffect(
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(material);
 
-    LOG(Information, L"[EffectCompiler] Create material effect '{0}' for material <{1}> descriptor <{2}> and vertex declaration <{3}> ...",
+    LOG(Info, L"[EffectCompiler] Create material effect '{0}' for material <{1}> descriptor <{2}> and vertex declaration <{3}> ...",
         material->Description(), material->Name(), descriptor->Name().c_str(), vertexDeclaration->ResourceName() );
 
     STACKLOCAL_POD_ARRAY(Graphics::BindName, activeTags, descriptor->Substitutions().size());
@@ -126,7 +126,7 @@ void EffectCompiler::RegenerateEffects() {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(_variability.Value != VariabilitySeed::Invalid);
 
-    LOG(Information, L"[EffectCompiler] Regenerating {0} effects ...",
+    LOG(Info, L"[EffectCompiler] Regenerating {0} effects ...",
         _effects.size() );
 
     const Units::Time::Seconds startedAt = ProcessTime::TotalSeconds();
@@ -137,13 +137,13 @@ void EffectCompiler::RegenerateEffects() {
         Assert(effect.second->Available());
 
 #ifdef USE_LOGGER
-        LOG(Information, L"[EffectCompiler] Regenerate effect named \"{0}\" with vertex declaration <{1}> ...",
+        LOG(Info, L"[EffectCompiler] Regenerate effect named \"{0}\" with vertex declaration <{1}> ...",
             effect.first.Descriptor->Name().c_str(),
             effect.first.VertexDeclaration->ResourceName() );
 
         for (const Graphics::BindName& tag : effect.first.Tags)
             if (!tag.empty())
-                LOG(Information, L"[EffectCompiler] - With material tag <{0}>", tag);
+                LOG(Info, L"[EffectCompiler] - With material tag <{0}>", tag);
 #endif
 
         effect.second->UnlinkReflectedData(_sharedBufferFactory);
@@ -156,7 +156,7 @@ void EffectCompiler::RegenerateEffects() {
     const Units::Time::Seconds stoppedAt = ProcessTime::TotalSeconds();
     const double totalDuration = stoppedAt.Value() - startedAt.Value();
 
-    LOG(Information, L"[EffectCompiler] Regenerated {0} effects in {1:f4} seconds.",
+    LOG(Info, L"[EffectCompiler] Regenerated {0} effects in {1:f4} seconds.",
         _effects.size(), totalDuration );
 
     _variability.Next();
@@ -187,7 +187,7 @@ void EffectCompiler::Start(Graphics::IDeviceAPIEncapsulator *device, SharedConst
     Assert(_effects.empty());
     Assert(_variability.Value == VariabilitySeed::Invalid);
 
-    LOG(Information, L"[EffectCompiler] Starting with device <{0}> and shared buffer factory <{1}> ...",
+    LOG(Info, L"[EffectCompiler] Starting with device <{0}> and shared buffer factory <{1}> ...",
         device, sharedBufferFactory );
 
     _device = device;
@@ -203,7 +203,7 @@ void EffectCompiler::Shutdown(Graphics::IDeviceAPIEncapsulator *device, SharedCo
     Assert(sharedBufferFactory == _sharedBufferFactory);
     Assert(_variability.Value != VariabilitySeed::Invalid);
 
-    LOG(Information, L"[EffectCompiler] Shutting down with device <{0}> and shared buffer factory <{1}> ...",
+    LOG(Info, L"[EffectCompiler] Shutting down with device <{0}> and shared buffer factory <{1}> ...",
         device, sharedBufferFactory );
 
     Clear();

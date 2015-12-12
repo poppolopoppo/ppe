@@ -60,7 +60,7 @@
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// internal helper
+// Internal helper
 #define _RTTI_PROPERTY_IMPL(_Name, _Flags, _Args) { \
         const Core::RTTI::MetaProperty* const prop = Core::RTTI::MakeProperty(_Name, _Flags, _Args ); \
         _properties.Insert_AssertUnique(prop->Name(), prop ); \

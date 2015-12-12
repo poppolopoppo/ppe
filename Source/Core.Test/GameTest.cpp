@@ -378,7 +378,7 @@ void GameTest::Update(const Timeline& time) {
 
     if (Keyboard().IsKeyPressed(KeyboardKey::Control) &&
         Keyboard().IsKeyUp(KeyboardKey::F8)) {
-        LOG(Information, L"[Shaders] recompile effect ...");
+        LOG(Info, L"[Shaders] recompile effect ...");
 
         Assert(_shaderEffect);
         _shaderEffect->Destroy(device);
@@ -398,7 +398,7 @@ void GameTest::Update(const Timeline& time) {
     }
 
     if (Keyboard().IsKeyUp(KeyboardKey::F11)) {
-        LOG(Information, L"[Shaders] toggle wireframe {0:A} -> {1:A}", _wireframe, !_wireframe);
+        LOG(Info, L"[Shaders] toggle wireframe {0:A} -> {1:A}", _wireframe, !_wireframe);
         _wireframe = !_wireframe;
     }
 
