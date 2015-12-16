@@ -266,7 +266,7 @@ void RobotApp::Start() {
     parent_type::Start();
 
     typedef RTTITest_ test_type;
-    static const size_t test_count = 1024;
+    static const size_t test_count = 32;
 
     ContentIdentity::MetaClass::Create();
     RTTITest_::MetaClass::Create();
@@ -291,13 +291,13 @@ void RobotApp::Start() {
             serializer.Serialize(&uncompressed, input);
 #if 0
             auto compressed = VFS_OpenBinaryWritable(filename, AccessPolicy::Truncate);
-            LZJB::Compress(compressed.get(), uncompressed.MakeView());
+            LZJB::CompressMemory(compressed.get(), uncompressed.MakeView());
 #else
             RAWSTORAGE_THREAD_LOCAL(Serialize, u8) compressed;
-            Compression::Compress(compressed, uncompressed.MakeView(), Compression::HighCompression);
+            Compression::CompressMemory(compressed, uncompressed.MakeView(), Compression::HighCompression);
 
             RAWSTORAGE_THREAD_LOCAL(Stream, u8) decompressed;
-            Compression::Decompress(decompressed, compressed.MakeView());
+            Compression::DecompressMemory(decompressed, compressed.MakeView());
 
             Assert(uncompressed.SizeInBytes() == decompressed.SizeInBytes());
             const size_t k = decompressed.SizeInBytes();
@@ -322,7 +322,7 @@ void RobotApp::Start() {
             RAWSTORAGE_THREAD_LOCAL(FileSystem, u8) compressed;
             VFS_ReadAll(&compressed, filename, AccessPolicy::Binary);
             RAWSTORAGE_THREAD_LOCAL(Stream, u8) decompressed;
-            Compression::Decompress(decompressed, compressed.MakeConstView());
+            Compression::DecompressMemory(decompressed, compressed.MakeConstView());
 
             Assert(uncompressed.SizeInBytes() == decompressed.SizeInBytes());
             const size_t k = decompressed.SizeInBytes();

@@ -62,6 +62,20 @@ bool Insert_ReturnIfExists(HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>&
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
+bool Insert_ReturnIfExistsAndCopyValue(HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashmap, const _Key& key, _Value* pvalue) {
+    Assert(pvalue);
+    const auto it = hashmap.find(key);
+    if (hashmap.end() == it) {
+        hashmap.emplace_hint(it, key, *pvalue);
+        return false;
+    }
+    else {
+        *pvalue = it->second;
+        return true;
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
 void Insert_AssertUnique(HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashmap, const _Key& key, const _Value& value) {
 #ifdef WITH_CORE_ASSERT
     const auto it = hashmap.find(key);

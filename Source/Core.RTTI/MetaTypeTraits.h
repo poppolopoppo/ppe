@@ -13,6 +13,7 @@
 #include "Core/Maths/Geometry/ScalarVector_fwd.h"
 #include "Core/Maths/Transform/ScalarMatrix_fwd.h"
 #include "Core/Time/DateTime.h"
+#include "Core/Time/Timestamp.h"
 
 #include <type_traits>
 
@@ -71,6 +72,28 @@ struct MetaTypeTraitsImpl< T, typename std::enable_if< std::is_arithmetic<T>::va
 
     template <typename _Dst> static void UnwrapMove(_Dst& dst, wrapper_type src) { dst = src; }
     template <typename _Dst> static void UnwrapCopy(_Dst& dst, wrapper_type src) { dst = src; }
+};
+//----------------------------------------------------------------------------
+// Strongly typed numeric:
+//----------------------------------------------------------------------------
+template <typename T, typename _Tag, T _DefaultValue >
+struct MetaTypeTraitsImpl< StronglyTyped::Numeric<T, _Tag, _DefaultValue> > {
+    typedef StronglyTyped::Numeric<T, _Tag, _DefaultValue> wrapped_type;
+    typedef T wrapper_type;
+
+    typedef MetaType< wrapper_type > meta_type;
+
+    static const MetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
+        return MetaTypeScalarTraits< wrapper_type >::Instance();
+    }
+
+    static bool IsDefaultValue(const wrapped_type& value) { return meta_type::IsDefaultValue(value.Value); }
+
+    static void WrapMove(wrapper_type& dst, wrapped_type&& src) { dst = src.Value; }
+    static void WrapCopy(wrapper_type& dst, const wrapped_type& src) { dst = src.Value; }
+
+    static void UnwrapMove(wrapped_type& dst, wrapper_type&& src) { dst.Value = src; }
+    static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src) { dst.Value = src; }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -460,6 +483,28 @@ struct MetaTypeTraitsImpl< fake_bool > {
     static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src) { dst = src; }
 };
 //----------------------------------------------------------------------------
+// u128 :
+//----------------------------------------------------------------------------
+template <>
+struct MetaTypeTraitsImpl< u128 > {
+    typedef u128 wrapped_type;
+    typedef Pair<u64, u64> wrapper_type;
+
+    typedef MetaType< wrapper_type > meta_type;
+
+    static const MetaTypePairTraits< u64, u64 > *VirtualTraits() {
+        return MetaTypePairTraits< u64, u64 >::Instance();
+    }
+
+    static bool IsDefaultValue(const wrapped_type& value) { return 0 == value.lo && 0 == value.hi; }
+
+    static void WrapMove(wrapper_type& dst, wrapped_type&& src) { dst.first = src.lo; dst.second = src.hi; }
+    static void WrapCopy(wrapper_type& dst, const wrapped_type& src) { dst.first = src.lo; dst.second = src.hi; }
+
+    static void UnwrapMove(wrapped_type& dst, wrapper_type&& src) { dst.lo = src.first; dst.hi = src.second; }
+    static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src) { dst.lo = src.first; dst.hi = src.second; }
+};
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // FileSystem :
@@ -546,6 +591,26 @@ struct MetaTypeTraitsImpl< DateTime > {
 
     static void UnwrapMove(wrapped_type& dst, wrapper_type&& src) { dst = DateTime(src); }
     static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src) { dst = DateTime(src); }
+};
+//----------------------------------------------------------------------------
+template <>
+struct MetaTypeTraitsImpl< Timestamp > {
+    typedef Timestamp wrapped_type;
+    typedef i64 wrapper_type;
+
+    typedef MetaType< wrapper_type > meta_type;
+
+    static const MetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
+        return MetaTypeScalarTraits< wrapper_type >::Instance();
+    }
+
+    static bool IsDefaultValue(const wrapped_type& value) { return 0 == value.Value(); }
+
+    static void WrapMove(wrapper_type& dst, wrapped_type&& src) { dst = src.Value(); }
+    static void WrapCopy(wrapper_type& dst, const wrapped_type& src) { dst = src.Value(); }
+
+    static void UnwrapMove(wrapped_type& dst, wrapper_type&& src) { dst.SetValue(src); }
+    static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src) { dst.SetValue(src); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

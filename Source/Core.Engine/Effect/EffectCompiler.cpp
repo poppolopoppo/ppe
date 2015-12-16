@@ -136,7 +136,7 @@ void EffectCompiler::RegenerateEffects() {
     for (const Pair<const EffectCompilerKey, PEffect>& effect : _effects) {
         Assert(effect.second->Available());
 
-#ifdef USE_LOGGER
+#ifdef USE_DEBUG_LOGGER
         LOG(Info, L"[EffectCompiler] Regenerate effect named \"{0}\" with vertex declaration <{1}> ...",
             effect.first.Descriptor->Name().c_str(),
             effect.first.VertexDeclaration->ResourceName() );

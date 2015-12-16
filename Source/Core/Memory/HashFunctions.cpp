@@ -10,23 +10,25 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const u64 _FNV_offset_basis_64 = 14695981039346656037ULL;
-const u64 _FNV_prime_64 = 1099511628211ULL;
+constexpr u64 _FNV_offset_basis_64 = 14695981039346656037ULL;
+constexpr u64 _FNV_prime_64 = 1099511628211ULL;
 //----------------------------------------------------------------------------
-const u32 _FNV_offset_basis_32 = 2166136261U;
-const u32 _FNV_prime_32 = 16777619U;
+constexpr u32 _FNV_offset_basis_32 = 2166136261U;
+constexpr u32 _FNV_prime_32 = 16777619U;
 //----------------------------------------------------------------------------
 #if defined(ARCH_X64)
 static_assert(sizeof(size_t) == 8, "This code is for 64-bit size_t.");
-const size_t _FNV_offset_basis = _FNV_offset_basis_64;
-const size_t _FNV_prime = _FNV_prime_64;
+constexpr size_t _FNV_offset_basis = _FNV_offset_basis_64;
+constexpr size_t _FNV_prime = _FNV_prime_64;
  #else
 static_assert(sizeof(size_t) == 4, "This code is for 32-bit size_t.");
-const size_t _FNV_offset_basis = _FNV_offset_basis_32;
-const size_t _FNV_prime = _FNV_prime_32;
+constexpr size_t _FNV_offset_basis = _FNV_offset_basis_32;
+constexpr size_t _FNV_prime = _FNV_prime_32;
 #endif
 //----------------------------------------------------------------------------
-u32 hash_mem_fnv1a32(const void *ptr, size_t sizeInBytes, u32 seed = _FNV_offset_basis_32) {
+#if !WITH_CORE_FARMHASH
+//----------------------------------------------------------------------------
+static u32 hash_mem_fnv1a32(const void *ptr, size_t sizeInBytes, u32 seed = _FNV_offset_basis_32) {
     const unsigned char *_First = (const unsigned char *)ptr;
     const size_t _Count = sizeInBytes;
 
@@ -40,7 +42,7 @@ u32 hash_mem_fnv1a32(const void *ptr, size_t sizeInBytes, u32 seed = _FNV_offset
     return (_Val);
 }
 //----------------------------------------------------------------------------
-u64 hash_mem_fnv1a64(const void *ptr, size_t sizeInBytes, u64 seed = _FNV_offset_basis_64) {
+static u64 hash_mem_fnv1a64(const void *ptr, size_t sizeInBytes, u64 seed = _FNV_offset_basis_64) {
     const unsigned char *_First = (const unsigned char *)ptr;
     const size_t _Count = sizeInBytes;
 
@@ -53,6 +55,8 @@ u64 hash_mem_fnv1a64(const void *ptr, size_t sizeInBytes, u64 seed = _FNV_offset
 
     return (_Val);
 }
+//----------------------------------------------------------------------------
+#endif //!WITH_CORE_FARMHASH
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

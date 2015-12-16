@@ -23,15 +23,15 @@ public:
         typedef Mallocator<U> other;
     };
 
-    Mallocator() throw() {}
+    Mallocator() noexcept {}
 
-    Mallocator(const Mallocator& ) throw() {}
+    Mallocator(const Mallocator& ) noexcept {}
     template <typename U>
-    Mallocator(const Mallocator<U>&) throw() {}
+    Mallocator(const Mallocator<U>&) noexcept {}
 
-    Mallocator& operator=(const Mallocator& ) { return *this; }
+    Mallocator& operator=(const Mallocator& ) noexcept { return *this; }
     template <typename U>
-    Mallocator& operator=(const Mallocator<U>&) { return *this; }
+    Mallocator& operator=(const Mallocator<U>&) noexcept { return *this; }
 
     pointer allocate(size_type n);
     pointer allocate(size_type n, const void* /*hint*/) { return allocate(n); }

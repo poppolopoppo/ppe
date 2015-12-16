@@ -13,9 +13,9 @@ class MemoryView;
 //----------------------------------------------------------------------------
 namespace LZJB {
 //----------------------------------------------------------------------------
-void Compress(IStreamWriter* dst, const MemoryView<const u8>& src);
-bool Decompress(RAWSTORAGE(Stream, u8)* dst, const MemoryView<const u8>& src);
-bool Decompress(RAWSTORAGE_THREAD_LOCAL(Stream, u8)* dst, const MemoryView<const u8>& src);
+void CompressMemory(IStreamWriter* dst, const MemoryView<const u8>& src);
+bool DecompressMemory(RAWSTORAGE(Stream, u8)* dst, const MemoryView<const u8>& src);
+bool DecompressMemory(RAWSTORAGE_THREAD_LOCAL(Stream, u8)* dst, const MemoryView<const u8>& src);
 //----------------------------------------------------------------------------
 } //!LZJB
 //----------------------------------------------------------------------------

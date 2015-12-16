@@ -11,6 +11,8 @@ class MetaAtomHashMap;
 class MetaClassHashMap;
 class MetaClassName;
 class MetaObjectName;
+class MetaLoadContext;
+class MetaUnloadContext;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -26,33 +28,20 @@ public:
     MetaTransaction(const MetaTransaction&) = delete;
     MetaTransaction& operator =(const MetaTransaction&) = delete;
 
-    void Export(const MetaClassName& name, const MetaClass *metaclass, bool allowOverride);
-    const MetaClass* GetIFP(const MetaClassName& name) const;
-    void Remove(const MetaClassName& name, const MetaClass *metaclass);
+    bool IsLoaded() const { return _loaded; }
+    bool IsUnloaded() const { return _unloaded; }
 
-    void Export(const MetaObjectName& name, MetaAtom *atom, bool allowOverride);
-    void Export(const MetaObjectName& name, MetaObject *object, bool allowOverride);
-    const MetaAtom* GetIFP(const MetaObjectName& name) const;
-    void Remove(const MetaObjectName& name, MetaAtom *atom);
+    void Add(MetaObject* object);
+    bool Contains(const MetaObject* object) const;
 
-    void Clear();
+    void Load(MetaLoadContext* context);
+    void Unload(MetaUnloadContext* context);
 
 private:
-    struct MetaAtomBinding {
-        PMetaAtom       Old;
-        PMetaAtom       New;
-    };
+    VECTOR(RTTI, PMetaObject) _objects;
 
-    struct MetaClassBinding {
-        const MetaClass *Old;
-        const MetaClass *New;
-    };
-
-    static void RevertBinding_(MetaAtomHashMap& instances, const MetaObjectName& name, const MetaAtomBinding& binding);
-    static void RevertBinding_(MetaClassHashMap& instances, const MetaClassName& name, const MetaClassBinding& binding);
-
-    HASHMAP(RTTI, MetaObjectName, MetaAtomBinding) _atoms;
-    HASHMAP(RTTI, MetaClassName, MetaClassBinding) _classes;
+    bool _loaded : 1;
+    bool _unloaded : 1;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

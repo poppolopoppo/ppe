@@ -34,12 +34,15 @@ public:
     Basename(const std::basic_string<FileSystem::char_type, _CharTraits, _Allocator>& content)
         : Basename(content.c_str(), content.size()) {}
 
+    bool empty() const { return _basenameNoExt.empty() && _extname.empty(); }
+
     const Core::BasenameNoExt& BasenameNoExt() const { return _basenameNoExt; }
     const Core::Extname& Extname() const { return _extname; }
 
-    bool empty() const { return _basenameNoExt.empty() && _extname.empty(); }
+    void SetBasenameNoExt(const Core::BasenameNoExt& basenameNoExt) { _basenameNoExt = basenameNoExt; }
+    void SetExtname(const Core::Extname& extName) { _extname = extName; }
 
-    bool HasExtension() const { return !_extname.empty(); }
+    bool HasExtname() const { return !_extname.empty(); }
 
     bool Equals(const Basename& other) const;
     bool Less(const Basename& other) const;

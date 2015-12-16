@@ -34,6 +34,7 @@ namespace Graphics {
 namespace {
 //----------------------------------------------------------------------------
 static bool CreateDX11DeviceAndSwapChainIFP_(
+    const DX11DeviceAPIEncapsulator *encapsulator,
     ComPtr<::ID3D11DeviceContext>& dx11ImmediateContext,
     ComPtr<::ID3D11Device>& dx11Device,
     ComPtr<::IDXGISwapChain>& dx11SwapChain,
@@ -106,7 +107,12 @@ static bool CreateDX11DeviceAndSwapChainIFP_(
         dx11pFeatureLevel,
         dx11ImmediateContext.GetAddressOf() );
 
-    return SUCCEEDED(result);
+    switch (result) {
+    case DXGI_ERROR_SDK_COMPONENT_MISSING:
+        throw DeviceEncapsulatorException("Windows SDK is not at the correct version", encapsulator->Device());
+    default:
+        return SUCCEEDED(result);
+    }
 }
 //----------------------------------------------------------------------------
 #ifdef WITH_DIRECTX11_DEBUG_LAYER
@@ -218,7 +224,8 @@ void DX11DeviceWrapper::Create(DX11DeviceAPIEncapsulator *device, void *windowHa
     Assert(device);
     Assert(windowHandle);
 
-    if (false == CreateDX11DeviceAndSwapChainIFP_(  _dx11ImmediateContext, _dx11Device, _dx11SwapChain,
+    if (false == CreateDX11DeviceAndSwapChainIFP_(  device,
+                                                    _dx11ImmediateContext, _dx11Device, _dx11SwapChain,
                                                     &_dx11FeatureLevel,
                                                     windowHandle, presentationParameters) ) {
         CheckDeviceErrors(device);

@@ -9,6 +9,7 @@
 #include "Core/Memory/MemoryView.h"
 #include "Core/Memory/RefPtr.h"
 #include "Core/Meta/Singleton.h"
+#include "Core/Thread/ReadWriteLock.h"
 
 #include <mutex>
 
@@ -69,7 +70,7 @@ public:
     void Clear();
 
 private:
-    mutable std::mutex _barrier;
+    ReadWriteLock _barrier;
     PFileSystemNode _root;
 };
 //----------------------------------------------------------------------------

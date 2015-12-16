@@ -148,7 +148,7 @@ MemoryView<const _Char> BasicOCStrStream<_Char, _Traits>::MakeView() const {
     const _Char eos = _Traits::to_char_type(0); // ignores null char IFN
 
     const _Char *ptr = _buffer.storage();
-    size_t length = _buffer.size();
+    size_t length = checked_cast<size_t>(_buffer.size());
     Assert(nullptr != ptr || 0 == length);
     if (length && ptr[length - 1] == eos)
         --length;

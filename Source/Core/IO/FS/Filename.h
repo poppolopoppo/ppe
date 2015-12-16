@@ -46,16 +46,20 @@ public:
     void Swap(Filename& other);
 
     const Core::Dirpath& Dirpath() const { return _dirpath; }
+
+    Core::Basename& Basename() { return _basename; }
     const Core::Basename& Basename() const { return _basename; }
 
     Core::MountingPoint MountingPoint() const { return _dirpath.MountingPoint(); }
+    void SetMountingPoint(const Core::MountingPoint& mountingPoint);
+
     size_t ExpandPath(Core::MountingPoint& mountingPoint, MemoryView<Dirname>& dirnames) const { return _dirpath.ExpandPath(mountingPoint, dirnames); }
     const Core::BasenameNoExt& BasenameNoExt() const { return _basename.BasenameNoExt(); }
     const Core::Extname& Extname() const { return _basename.Extname(); }
 
     bool empty() const { return _dirpath.empty() && _basename.empty(); }
 
-    bool HasExtension() const { return _basename.HasExtension(); }
+    bool HasExtname() const { return _basename.HasExtname(); }
     bool HasMountingPoint() const { return _dirpath.HasMountingPoint(); }
 
     bool Equals(const Filename& other) const;

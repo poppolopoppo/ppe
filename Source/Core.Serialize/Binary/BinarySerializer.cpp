@@ -22,7 +22,7 @@
 #include "Core.RTTI/MetaTransaction.h"
 #include "Core.RTTI/MetaType.h"
 
-#ifdef USE_LOGGER
+#ifdef USE_DEBUG_LOGGER
 #   define WITH_RTTI_BINARYSERIALIZER_LOG       0 //%_NOCOMMIT%
 #   define WITH_RTTI_BINARYSERIALIZER_DATALOG   0 //%_NOCOMMIT%
 
@@ -551,10 +551,15 @@ void BinaryDeserialize_::Finalize(VECTOR(Transaction, RTTI::PMetaObject)& object
         const RTTI::MetaObjectName& name = _names[it.first];
         const RTTI::PMetaObject& object = _objects[it.second];
 
-        transaction->Export(name, object.get(), allowOverride);
+        object->RTTI_Export(name);
     }
 
     Assert(_topObjects.size() || 0 == _objects.size());
+
+    for (const RTTI::PMetaObject& object : _objects) {
+        if (object)
+            transaction->Add(object.get());
+    }
 
     objects.reserve(objects.size() + _topObjects.size());
     for (const object_index_t& object_i : _topObjects)
@@ -1008,7 +1013,7 @@ void BinarySerialize_::ProcessQueue_() {
 
                 const name_index_t name_i = _nameIndices.IndexOf(metaName);
 
-                const bool exported = (nullptr != transaction->GetIFP(metaName));
+                const bool exported = transaction->Contains(object);
                 if (exported) {
                     BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize exported object <{0}> '{1}'", metaClass->Name(), metaName);
                     header.Type = TAG_OBJECT_EXPORT_;

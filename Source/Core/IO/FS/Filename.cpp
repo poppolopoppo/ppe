@@ -150,6 +150,14 @@ Filename::Filename(const BasicStringSlice<FileSystem::char_type>& content) {
         AssertNotReached();
 }
 //----------------------------------------------------------------------------
+void Filename::SetMountingPoint(const Core::MountingPoint& mountingPoint) {
+    Core::MountingPoint oldMountingPoint;
+    STACKLOCAL_POD_ARRAY(Dirname, dirnames, _dirpath.Depth());
+    const size_t k = _dirpath.ExpandPath(oldMountingPoint, dirnames);
+    Assert(_dirpath.Depth() == k);
+    _dirpath = Core::Dirpath(mountingPoint, dirnames);
+}
+//----------------------------------------------------------------------------
 size_t Filename::HashValue() const {
     return hash_tuple(_dirpath.HashValue(), _basename.HashValue());
 }

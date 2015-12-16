@@ -1,5 +1,7 @@
 #pragma once
 
+#include <type_traits>
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -8,6 +10,8 @@ namespace StronglyTyped {
 //----------------------------------------------------------------------------
 template <typename T, typename _Tag, T _DefaultValue = T() >
 struct Numeric {
+    static_assert(std::is_arithmetic<T>::value, "T must be an arithmetic type");
+
     typedef T value_type;
     typedef _Tag tag_type;
 

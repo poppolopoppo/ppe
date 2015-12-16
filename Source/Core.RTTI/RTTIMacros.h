@@ -2,7 +2,7 @@
 
 #include "Core.RTTI/RTTI.h"
 
-#include "Core.RTTI/RTTI_extern.h"
+#include "Core.RTTI/RTTI_fwd.h"
 #include "Core.RTTI/MetaClass.h"
 #include "Core.RTTI/MetaObject.h"
 
@@ -32,8 +32,6 @@ public: \
     protected: \
         virtual Core::RTTI::MetaObject *VirtualCreateInstance() const override; \
     }
-//----------------------------------------------------------------------------
-#define RTTI_CLASS_HEADER_NOPARENT(_Name) RTTI_CLASS_HEADER(_Name, void)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

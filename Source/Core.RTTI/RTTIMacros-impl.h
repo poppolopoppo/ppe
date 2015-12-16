@@ -15,6 +15,8 @@
 #include "Core.RTTI/MetaProperty.h"
 #include "Core.RTTI/MetaPropertyName.h"
 
+#include "Core.RTTI/RTTI_extern.h"
+
 #include "Core/Memory/SegregatedMemoryPool.h"
 #include "Core/Meta/Singleton.h"
 

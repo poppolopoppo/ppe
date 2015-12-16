@@ -5,6 +5,7 @@
 #include "Core/Container/HashMap.h"
 #include "Core/Memory/RefPtr.h"
 #include "Core/Meta/Singleton.h"
+#include "Core/Thread/ReadWriteLock.h"
 
 #include "Core.RTTI/MetaObjectName.h"
 
@@ -37,7 +38,7 @@ public:
     void Clear();
 
 private:
-    mutable std::mutex _barrier;
+    ReadWriteLock _barrier;
     HASHMAP(RTTI, MetaObjectName, PMetaAtom) _objects;
 };
 //----------------------------------------------------------------------------

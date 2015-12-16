@@ -27,16 +27,16 @@ static const FourCC FILE_VERSION_   ("1.00");
 struct FileHeader_ {
     FourCC  Magic;
     FourCC  Version;
-    u32     Fingerpint;
     u32     SizeInBytes;
+    u32     Fingerpint;
 };
 STATIC_ASSERT(sizeof(FileHeader_) == 16);
 //----------------------------------------------------------------------------
-u32 FileFingerprint_(const MemoryView<const u8>& src) {
+static u32 StreamFingerprint_(const MemoryView<const u8>& src) {
 #if WITH_CORE_COMPRESSION_FINGERPRINT
     return Fingerprint32(src);
 #else
-    return u32(-1);
+    return 0xBAADF00Dul;
 #endif
 }
 //----------------------------------------------------------------------------
@@ -44,20 +44,20 @@ u32 FileFingerprint_(const MemoryView<const u8>& src) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-size_t CompressedMaxSize(size_t sizeInBytes) {
+size_t CompressedSizeUpperBound(size_t sizeInBytes) {
     return checked_cast<size_t>(::LZ4_compressBound(checked_cast<int>(sizeInBytes)))
         + sizeof(FileHeader_);
 }
 //----------------------------------------------------------------------------
-size_t Compress(MemoryView<u8>& dst, const MemoryView<const u8>& src, Method method /* = Default */) {
+size_t CompressMemory(MemoryView<u8>& dst, const MemoryView<const u8>& src, CompressMethod method /* = Default */) {
     Assert(dst.Pointer());
-    Assert(dst.size() >= CompressedMaxSize(src.SizeInBytes()));
+    Assert(dst.size() >= CompressedSizeUpperBound(src.SizeInBytes()));
 
     FileHeader_* const pheader = reinterpret_cast<FileHeader_*>(dst.Pointer());
     pheader->Magic = FILE_MAGIC_;
     pheader->Version = FILE_VERSION_;
-    pheader->Fingerpint = FileFingerprint_(src);
     pheader->SizeInBytes = checked_cast<u32>(src.SizeInBytes());
+    pheader->Fingerpint = StreamFingerprint_(src);
 
     size_t compressedSizeInBytes = sizeof(FileHeader_);
     if (src.empty())
@@ -87,7 +87,7 @@ size_t Compress(MemoryView<u8>& dst, const MemoryView<const u8>& src, Method met
         break;
 
     case Core::Compression::HighCompression:
-        STATIC_CONST_INTEGRAL(int, CompressionLevel, 0/* LZ4 default */);
+        STATIC_CONST_INTEGRAL(int, CompressionLevel, 9/* LZ4 default */);
         compressedSizeInBytes += checked_cast<int>(::LZ4_compress_HC(
             (char*)src.Pointer(),
             (char*)datas.Pointer(),
@@ -117,7 +117,7 @@ size_t DecompressedSize(const MemoryView<const u8>& src) {
     return pheader->SizeInBytes;
 }
 //----------------------------------------------------------------------------
-bool Decompress(MemoryView<u8>& dst, const MemoryView<const u8>& src) {
+bool DecompressMemory(MemoryView<u8>& dst, const MemoryView<const u8>& src) {
     Assert(dst.Pointer());
     Assert(dst.SizeInBytes() == DecompressedSize(src));
 
@@ -127,19 +127,21 @@ bool Decompress(MemoryView<u8>& dst, const MemoryView<const u8>& src) {
         FILE_VERSION_ != pheader->Version )
         return false;
 
-    const size_t compressedSizeInBytes = checked_cast<size_t>(::LZ4_decompress_fast(
+    const size_t dataSizeInBytes = checked_cast<size_t>(::LZ4_decompress_fast(
         (const char*)&pheader[1],
         (char*)dst.Pointer(),
         pheader->SizeInBytes ));
-    Assert(compressedSizeInBytes + sizeof(FileHeader_) <= src.SizeInBytes());
+
+    const size_t compressedSizeInBytes = dataSizeInBytes + sizeof(FileHeader_);
+    Assert(compressedSizeInBytes <= src.SizeInBytes());
 
 #if WITH_CORE_COMPRESSION_FINGERPRINT
-    const u32 readFingerprint = FileFingerprint_(dst);
+    const u32 readFingerprint = StreamFingerprint_(dst);
     AssertRelease(readFingerprint == pheader->Fingerpint);
 #endif
 
     LOG(Info, L"[Compression] Decompress ratio : {0} -> {1} = {2:f2}%",
-        SizeInBytes(compressedSizeInBytes + sizeof(FileHeader_)), SizeInBytes(pheader->SizeInBytes), compressedSizeInBytes*100.0f/src.SizeInBytes() );
+        SizeInBytes(compressedSizeInBytes), SizeInBytes(pheader->SizeInBytes), compressedSizeInBytes*100.0f/src.SizeInBytes() );
 
     return true;
 }

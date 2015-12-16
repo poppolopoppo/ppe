@@ -7,16 +7,17 @@ namespace Units {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+namespace details {
 template <typename _Smaller>
 struct NextUnitIndex {
     typedef typename _Smaller::traits_type smaller_traits_type;
     enum : u64 { Value = smaller_traits_type::Index + 1 };
 };
-//----------------------------------------------------------------------------
 template <>
 struct NextUnitIndex<void> {
     enum : u64 { Value = 0 };
 };
+} //!details
 //----------------------------------------------------------------------------
 template <typename _Tag, u64 _Ratio, typename _Smaller>
 struct UnitTraits {
@@ -25,11 +26,13 @@ struct UnitTraits {
     typedef typename tag_type::value_type value_type;
     enum : u64 {
         Ratio = _Ratio,
-        Index = NextUnitIndex<smaller_type>::Value
+        Index = details::NextUnitIndex<smaller_type>::Value
     };
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace details {
 //----------------------------------------------------------------------------
 template <typename _To, typename _From>
 struct ConvertionRatio_LargerToSmaller {
@@ -49,7 +52,11 @@ struct ConvertionRatio_LargerToSmaller<_ToFrom, _ToFrom> {
     enum : u64 { Value = 1 };
 };
 //----------------------------------------------------------------------------
+} //!details
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace details {
 //----------------------------------------------------------------------------
 template <typename _To, typename _From>
 struct ConvertionRatio {
@@ -77,7 +84,11 @@ struct ConvertionRatio<_ToFrom, _ToFrom> {
     enum : size_t { Value = 1 };
 };
 //----------------------------------------------------------------------------
+} //!details
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace details {
 //----------------------------------------------------------------------------
 template <
     typename _To, typename _From
@@ -85,8 +96,8 @@ template <
 struct Converter {
     typedef typename _To::traits_type from_traits_type;
     typedef typename from_traits_type::value_type value_type;
-    value_type operator ()(value_type from) const {
-        return checked_cast<value_type>(ConvertionRatio<_To, _From>::Value * from);
+    static constexpr value_type Convert(value_type from) {
+        return value_type(ConvertionRatio<_To, _From>::Value * from);
     }
 };
 //----------------------------------------------------------------------------
@@ -94,28 +105,37 @@ template <typename _To, typename _From>
 struct Converter<_To, _From, false> {
     typedef typename _To::traits_type from_traits_type;
     typedef typename from_traits_type::value_type value_type;
-    value_type operator ()(value_type from) const {
-        return checked_cast<value_type>(from / ConvertionRatio<_To, _From>::Value);
+    static constexpr value_type Convert(value_type from) {
+        return value_type(from / ConvertionRatio<_To, _From>::Value);
     }
 };
 //----------------------------------------------------------------------------
 template <typename _To, typename _From>
-typename Converter<_To, _From>::value_type ConvertValue(typename Converter<_To, _From>::value_type value) {
-    return Converter<_To, _From>()(value);
+constexpr typename Converter<_To, _From>::value_type ConvertValue(typename Converter<_To, _From>::value_type value) {
+    return Converter<_To, _From>::Convert(value);
 }
+//----------------------------------------------------------------------------
+} //!details
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Traits>
 template <typename _OtherTraits>
 Unit<_Traits>::Unit(const Unit<_OtherTraits>& other)
-:   _value(ConvertValue<self_type, Unit<_OtherTraits> >(other._value)) {}
+:   _value(details::ConvertValue<self_type, Unit<_OtherTraits> >(other._value)) {}
 //----------------------------------------------------------------------------
 template <typename _Traits>
 template <typename _OtherTraits>
 Unit<_Traits>& Unit<_Traits>::operator =(const Unit<_OtherTraits>& other) {
-    _value = ConvertValue<self_type, Unit<_OtherTraits> >(other._value);
+    _value = details::ConvertValue<self_type, Unit<_OtherTraits> >(other._value);
     return *this;
+}
+//----------------------------------------------------------------------------
+template <typename _To, typename _From>
+constexpr typename _To::value_type ConvertValue(typename _From::value_type value) {
+    STATIC_ASSERT(std::is_same<typename _To::tag_type, typename _From::tag_type>::value);
+    STATIC_ASSERT(std::is_same<typename _To::value_type, typename _From::value_type>::value);
+    return details::ConvertValue<_To, _From>(value);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

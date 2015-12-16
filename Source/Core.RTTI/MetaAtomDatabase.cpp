@@ -24,7 +24,7 @@ void MetaAtomHashMap::Add(const MetaObjectName& name, MetaAtom *metaAtom, bool a
     Assert(!name.empty());
     Assert(metaAtom);
 
-    std::lock_guard<std::mutex> scopeLock(_barrier);
+    WRITESCOPELOCK(_barrier);
     PMetaAtom& slot = _objects[name];
 
     if (slot)
@@ -37,7 +37,7 @@ void MetaAtomHashMap::Remove(const MetaObjectName& name, MetaAtom *metaAtom) {
     Assert(!name.empty());
     Assert(metaAtom);
 
-    std::lock_guard<std::mutex> scopeLock(_barrier);
+    WRITESCOPELOCK(_barrier);
 
     const auto it = _objects.find(name);
     Assert(_objects.end() != it);
@@ -48,22 +48,24 @@ void MetaAtomHashMap::Remove(const MetaObjectName& name, MetaAtom *metaAtom) {
 //----------------------------------------------------------------------------
 void MetaAtomHashMap::Add(MetaObject *metaObject) {
     Assert(metaObject);
+    Assert(metaObject->RTTI_IsExported());
 
     const MetaObjectName& name = metaObject->RTTI_Name();
     Assert(!name.empty());
 
-    std::lock_guard<std::mutex> scopeLock(_barrier);
+    WRITESCOPELOCK(_barrier);
 
     _objects[name] = MakeAtom(PMetaObject(metaObject));
 }
 //----------------------------------------------------------------------------
 void MetaAtomHashMap::Remove(MetaObject *metaObject) {
     Assert(metaObject);
+    Assert(metaObject->RTTI_IsExported());
 
     const MetaObjectName& name = metaObject->RTTI_Name();
     Assert(!name.empty());
 
-    std::lock_guard<std::mutex> scopeLock(_barrier);
+    WRITESCOPELOCK(_barrier);
 
     const auto it = _objects.find(name);
     Assert(_objects.end() != it);
@@ -75,7 +77,7 @@ void MetaAtomHashMap::Remove(MetaObject *metaObject) {
 MetaAtom *MetaAtomHashMap::GetIFP(const MetaObjectName& name) const {
     Assert(!name.empty());
 
-    std::lock_guard<std::mutex> scopeLock(_barrier);
+    READSCOPELOCK(_barrier);
 
     const auto it = _objects.find(name);
 
@@ -83,7 +85,7 @@ MetaAtom *MetaAtomHashMap::GetIFP(const MetaObjectName& name) const {
 }
 //----------------------------------------------------------------------------
 void MetaAtomHashMap::Clear() {
-    std::lock_guard<std::mutex> scopeLock(_barrier);
+    WRITESCOPELOCK(_barrier);
 
     _objects.clear();
 }

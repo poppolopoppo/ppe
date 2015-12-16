@@ -16,7 +16,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-typedef Units::Time::Microseconds Timespan;
+typedef Units::Time::Milliseconds Timespan;
 //----------------------------------------------------------------------------
 class Timepoint {
 public:
@@ -49,10 +49,15 @@ public:
     static Timepoint Now();
     static value_type Ticks(const Timespan& duration);
     static Timespan Duration(const Timepoint& start, const Timepoint& stop);
+    static Timespan ElapsedSince(const Timepoint& t) { return Duration(t, Now()); }
 
 private:
     value_type _value;
 };
+//----------------------------------------------------------------------------
+constexpr Timespan::value_type Timespan_60hz() { return Units::ConvertValue<Timespan, Units::Time::Seconds>( 1.0/60 ); }
+constexpr Timespan::value_type Timespan_30hz() { return Units::ConvertValue<Timespan, Units::Time::Seconds>( 1.0/30 ); }
+constexpr Timespan::value_type Timespan_15hz() { return Units::ConvertValue<Timespan, Units::Time::Seconds>( 1.0/15 ); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

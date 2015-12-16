@@ -5,6 +5,7 @@
 #include "Core/IO/String.h"
 #include "Core/Memory/UniqueView.h"
 #include "Core/Meta/Singleton.h"
+#include "Core/Time/Timepoint.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -33,6 +34,8 @@ public:
     size_t AppIcon() const { return _appIcon; }
     void SetAppIcon(size_t value) { _appIcon = value; }
 
+    const Timepoint& StartedAt() const { return _startedAt; }
+
 private:
     friend struct Meta::Activator<CurrentProcessData>;
 
@@ -46,6 +49,8 @@ private:
     std::atomic<int> _exitCode;
 
     size_t _appIcon;
+
+    Timepoint _startedAt;
 };
 //----------------------------------------------------------------------------
 class CurrentProcess : Meta::Singleton<CurrentProcessData, CurrentProcess> {
@@ -58,6 +63,12 @@ public:
 
     static void Create(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t **argv) {
         parent_type::Create(applicationHandle, nShowCmd, argc, argv);
+    }
+
+    static Units::Time::Seconds ElapsedSeconds() {
+        return HasInstance()
+            ? Timepoint::ElapsedSince(Instance().StartedAt())
+            : Units::Time::Seconds(0);
     }
 };
 //----------------------------------------------------------------------------

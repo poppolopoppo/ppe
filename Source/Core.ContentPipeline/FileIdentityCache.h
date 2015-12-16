@@ -1,24 +1,30 @@
 #pragma once
 
-#include "Core/Core.h"
+#include "Core.ContentPipeline/ContentPipeline.h"
 
-#include "Core/Maths/Units.h"
+#include "Core.ContentPipeline/FileIdentity.h"
+
+#include "Core.RTTI/RTTIMacros.h"
 
 namespace Core {
-class Timepoint;
-
+namespace ContentPipeline {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ProcessTime {
+class FileIdentityCache : public RTTI::MetaObject {
 public:
-    static const Timepoint& StartedAt();
-    static Units::Time::Seconds TotalSeconds();
+    FileIdentityCache();
+    ~FileIdentityCache();
 
-    static void Start();
-    static void Shutdown();
+    FileIdentityCache(const FileIdentityCache&) = delete;
+    FileIdentityCache& operator =(const FileIdentityCache&) = delete;
+
+    RTTI_CLASS_HEADER(FileIdentityCache, RTTI::MetaObject);
+
+private:
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+} //!namespace ContentPipeline
 } //!namespace Core

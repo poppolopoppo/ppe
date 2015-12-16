@@ -21,7 +21,7 @@ void MetaClassHashMap::Add(const MetaClassName& name, const MetaClass *metaClass
     Assert(!metaClass->Name().empty());
     Assert(MetaObject::MetaClass::Instance()->IsAssignableFrom(metaClass));
 
-    std::lock_guard<std::mutex> scopeLock(_barrier);
+    WRITESCOPELOCK(_barrier);
     const MetaClass *& slot = _classes[name];
 
     if (slot)
@@ -34,7 +34,7 @@ void MetaClassHashMap::Remove(const MetaClassName& name, const MetaClass *metaCl
     Assert(metaClass);
     Assert(!metaClass->Name().empty());
 
-    std::lock_guard<std::mutex> scopeLock(_barrier);
+    WRITESCOPELOCK(_barrier);
     const auto it = _classes.find(name);
 
     Assert(_classes.end() != it);
@@ -58,13 +58,15 @@ void MetaClassHashMap::Remove(const MetaClass *metaClass) {
 const MetaClass *MetaClassHashMap::GetIFP(const MetaClassName& name) const {
     Assert(!name.empty());
 
-    std::lock_guard<std::mutex> scopeLock(_barrier);
+    READSCOPELOCK(_barrier);
+
     const auto it = _classes.find(name);
     return (_classes.end() == it) ? nullptr : it->second;
 }
 //----------------------------------------------------------------------------
 void MetaClassHashMap::Clear() {
-    std::lock_guard<std::mutex> scopeLock(_barrier);
+    WRITESCOPELOCK(_barrier);
+
     _classes.clear();
 }
 //----------------------------------------------------------------------------

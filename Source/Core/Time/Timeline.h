@@ -36,12 +36,9 @@ public:
     bool Tick_Every(const Timeline& other, const Timespan& target, Timespan& elapsed);
     bool Tick_Every(const Timepoint& now, const Timespan& target, Timespan& elapsed);
 
-    FORCE_INLINE bool Tick_Target60FPS(Timespan& elapsed) {
-        return Tick_Every(16666.66666666666666666666666667 /* tick duration in µs (1000000.0/60) */, elapsed); }
-    FORCE_INLINE bool Tick_Target30FPS(Timespan& elapsed) {
-        return Tick_Every(33333.33333333333333333333333333 /* tick duration in µs (1000000.0/30) */, elapsed); }
-    FORCE_INLINE bool Tick_Target15FPS(Timespan& elapsed) {
-        return Tick_Every(66666.66666666666666666666666667 /* tick duration in µs (1000000.0/15) */, elapsed); }
+    FORCE_INLINE bool Tick_Target60FPS(Timespan& elapsed) { return Tick_Every(Timespan_60hz(), elapsed); }
+    FORCE_INLINE bool Tick_Target30FPS(Timespan& elapsed) { return Tick_Every(Timespan_30hz(), elapsed); }
+    FORCE_INLINE bool Tick_Target15FPS(Timespan& elapsed) { return Tick_Every(Timespan_15hz(), elapsed); }
 
 private:
     Timepoint _now;

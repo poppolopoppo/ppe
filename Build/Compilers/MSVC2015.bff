@@ -23,7 +23,7 @@
 ; utilise la toolchain 64 bits pour compiler en 32
 #define USE_VISUAL2015_NATIVE_ENVIRONMENT
 ; 2X Faster Links, mais TODO: les versions ne doivent pas utiliser ça
-;#define USE_VISUAL2015_DEBUG_FASTLINK
+#define USE_VISUAL2015_DEBUG_FASTLINK
 ; indique quelle version du SDK il faut utiliser
 ;#define USE_VISUAL2015_RELEASE_CANDIDATE
 
@@ -180,7 +180,7 @@ Compiler( 'Compiler-MSVC2015-x64_x86' )
     Print( "Using Visual 2015 debug fast link : pdb references built objs" )
     ; utilise un lien symbolique vers les obj plutot que de les copier dans le pdb
     ; TODO: pour l'instant je n'arrive pas a debug correctement quand c'est activé
-    .LinkerOptions      = ' /debug:FASTLINK'
+    .LinkerOptions      = ' /DEBUG:FASTLINK'
 #endif
 ]
 

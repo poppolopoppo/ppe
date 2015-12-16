@@ -89,6 +89,7 @@
     + ' /IGNORE:4001'       ; https://msdn.microsoft.com/en-us/library/aa234697(v=vs.60).aspx
     + ' /DYNAMICBASE:NO'    ; pas de randomisation des adresses
     + ' /NXCOMPAT:NO'       ; indique que le programme n'est pas compatible avec Data Execution Prevention
+    + ' /STACK:4194304'     ; augmente la taille de la stack de chaque thread à 4mo
     + ' /LIBPATH:"$BinaryDirectory$"'
     + ' /SUBSYSTEM:WINDOWS'
     + ' /OUT:"%2" "%1"'
@@ -182,7 +183,7 @@
     + ' /Oy-'               ; n'empêche pas la création des pointeurs de frame sur la pile des appels
     + ' /GS'                ; vérification de la sécurité de la mémoire tampon
     + ' /sdl'               ; Security Development Lifecycle checks (https://msdn.microsoft.com/fr-fr/library/jj161081(v=vs.140).aspx)
-    //+ ' /RTC1'              ; vérifications des erreurs au moment de l'exécution (https://msdn.microsoft.com/fr-fr/library/8wtf2dfz.aspx) ; coute trop cher
+    + ' /RTC1'              ; vérifications des erreurs au moment de l'exécution (https://msdn.microsoft.com/fr-fr/library/8wtf2dfz.aspx) ; coute trop cher
     + ' /Gw-'               ; pas d'optimisations des données globales
 
     .FastDebugOptimisations = ''

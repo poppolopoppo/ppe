@@ -24,6 +24,8 @@ public:
         Dynamic     = 1<<1,
         Mergeable   = 1<<2,
         Deprecated  = 1<<3,
+
+        Default     = Concrete
     };
 
     MetaClass(const MetaClassName& name, Flags attributes, const MetaClass *parent);

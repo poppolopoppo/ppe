@@ -32,6 +32,7 @@
 .VSBuildOptions     = .VSBaseOptions
 + ' -cache'         ; utilisation du cache depuis Visual
 .VSRebuildOptions   = .VSBaseOptions
++ ' -cache'         ; utilisation du cache depuis Visual
 .VSCleanOptions     = .VSBaseOptions
 
 //------------------------------------------------------------------------------

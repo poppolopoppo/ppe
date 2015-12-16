@@ -221,7 +221,7 @@ namespace MiniDump { namespace
             context.MemoryCallbackCalled = true;
             if ( context.MemoryBegin != context.MemoryEnd )
             {
-                pOutput->MemoryBase = checked_cast<ULONG64>(context.MemoryBegin->MemoryBase);
+                pOutput->MemoryBase = checked_cast<ULONG64>(uintptr_t(context.MemoryBegin->MemoryBase));
                 pOutput->MemorySize = checked_cast<ULONG>(context.MemoryBegin->MemorySize);
                 context.MemoryBegin++;
                 return TRUE;

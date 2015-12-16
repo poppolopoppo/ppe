@@ -81,7 +81,7 @@ const FileSystemNode *FileSystemTrie::GetIFP(const MemoryView<const FileSystemTo
     const FileSystemToken *bpath = path.begin();
     const FileSystemToken *epath = path.end();
 
-    std::lock_guard<std::mutex> scopeLock(_barrier);
+    READSCOPELOCK(_barrier);
 
     const FileSystemNode *node = _root->_child.get();
     while (node) {
@@ -113,7 +113,7 @@ const FileSystemNode *FileSystemTrie::Concat(const FileSystemNode *basedir, cons
     const FileSystemToken *epath = path.end();
     Assert(!bpath->empty());
 
-    std::lock_guard<std::mutex> scopeLock(_barrier);
+    WRITESCOPELOCK(_barrier);
 
     FileSystemNode *node = nullptr;
     FileSystemNode *parent = nullptr;
@@ -166,7 +166,7 @@ const FileSystemNode *FileSystemTrie::Concat(const FileSystemNode *basedir, cons
 void FileSystemTrie::Clear() {
     Assert(_root);
 
-    std::lock_guard<std::mutex> scopeLock(_barrier);
+    WRITESCOPELOCK(_barrier);
 
     Assert(!_root->_sibbling);
 
@@ -226,8 +226,7 @@ const FileSystemNode* FileSystemTrie::RootNode(const FileSystemNode *pnode) cons
     if (nullptr == pnode)
         return nullptr;
 
-    // should be ok without lock ... (nodes are not muted after their creation)
-    //std::lock_guard<std::mutex> scopeLock(_barrier);
+    READSCOPELOCK(_barrier);
 
     for (   const FileSystemNode* pparent = pnode->Parent();
             pparent;
@@ -245,8 +244,7 @@ size_t FileSystemTrie::Expand(FileSystemToken *ptokens, size_t capacity, const F
     if (nullptr == pnode)
         return 0;
 
-    // should be ok without lock ... (nodes are not muted after their creation)
-    //std::lock_guard<std::mutex> scopeLock(_barrier);
+    READSCOPELOCK(_barrier);
 
     return ExpandFileSystemNode_(ptokens, capacity, pnode, _root.get() );
 }
@@ -260,8 +258,7 @@ size_t FileSystemTrie::Expand(FileSystemToken *ptokens, size_t capacity, const F
     if (pbegin == pend)
         return 0;
 
-    // should be ok without lock ... (nodes are not muted after their creation)
-    //std::lock_guard<std::mutex> scopeLock(_barrier);
+    READSCOPELOCK(_barrier);
 
     return ExpandFileSystemNode_(ptokens, capacity, pend, pbegin);
 }

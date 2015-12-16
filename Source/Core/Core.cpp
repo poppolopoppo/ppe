@@ -17,7 +17,6 @@
 #include "Thread/Task/TaskPool.h"
 #include "Thread/ThreadContext.h"
 #include "Thread/ThreadPool.h"
-#include "Time/ProcessTime.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -34,73 +33,69 @@ static_assert(sizeof(size_t) == sizeof(uint32_t), "incoherent define");
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void CoreStartup::Start(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t** argv) {
-    // 1 - process time
-    ProcessTime::Start();
-    // 2 - logger
-#ifdef USE_LOGGER
+    // 1 - logger
+#ifdef USE_DEBUG_LOGGER
     LoggerStartup::Start();
 #endif
-    // 3 - current process
+    // 2 - current process
     CurrentProcess::Create(applicationHandle, nShowCmd, argc, argv);
-    // 4 - call stack symbols
+    // 3 - call stack symbols
     Callstack::Start();
-    // 5 - memory domains
+    // 4 - memory domains
     MemoryDomainStartup::Start();
-    // 6 - memory guards
+    // 5 - memory guards
     GLOBAL_CHECK_MEMORY_LEAKS(true);
-    // 7 - main thread context
+    // 6 - main thread context
     ThreadContextStartup::Start_MainThread();
-    // 8 - heap allocators
+    // 7 - heap allocators
     Heaps::Process::Create(Heap::current_process_t());
-    // 9 - pool allocators
+    // 8 - pool allocators
     POOLTAG(Default)::Start();
     POOLTAG(NodeBasedContainer)::Start();
     POOLTAG(TaskPool)::Start();
-    //10 - auto singleton manager
+    // 9 - auto singleton manager
     Meta::AutoSingletonManager::Start();
-    //11 - thread pool
+    //10 - thread pool
     ThreadPoolStartup::Start();
-    //12 - file system
+    //11 - file system
     FileSystemStartup::Start();
-    //13 - virtual file system
+    //12 - virtual file system
     VirtualFileSystemStartup::Start();
-    //14 - minidump writer
+    //13 - minidump writer
     MiniDump::Start();
 }
 //----------------------------------------------------------------------------
 void CoreStartup::Shutdown() {
-    //14 - minidump writer
+    //13 - minidump writer
     MiniDump::Shutdown();
-    //13 - virtual file system
+    //12 - virtual file system
     VirtualFileSystemStartup::Shutdown();
-    //12 - file system
+    //11 - file system
     FileSystemStartup::Shutdown();
-    //11 - thread pool
+    //10 - thread pool
     ThreadPoolStartup::Shutdown();
-    //10 - auto singleton manager
+    // 9 - auto singleton manager
     Meta::AutoSingletonManager::Shutdown();
-    // 9 - pool allocators
+    // 8 - pool allocators
     POOLTAG(TaskPool)::Shutdown();
     POOLTAG(NodeBasedContainer)::Shutdown();
     POOLTAG(Default)::Shutdown();
-    // 8 - heap allocators
+    // 7 - heap allocators
     Heaps::Process::Destroy();
-    // 7 - main thread context
+    // 6 - main thread context
     ThreadContextStartup::Shutdown();
-    // 6 - memory guards
+    // 5 - memory guards
     GLOBAL_CHECK_MEMORY_LEAKS(false);
-    // 5 - memory domains
+    // 4 - memory domains
     MemoryDomainStartup::Shutdown();
-    // 4 - call stack symbols
+    // 3 - call stack symbols
     Callstack::Shutdown();
-    // 3 - current process
+    // 2 - current process
     CurrentProcess::Destroy();
-    // 2 - logger
-#ifdef USE_LOGGER
+    // 1 - logger
+#ifdef USE_DEBUG_LOGGER
     LoggerStartup::Shutdown();
 #endif
-    // 1 - process time
-    ProcessTime::Shutdown();
 }
 //----------------------------------------------------------------------------
 void CoreStartup::ClearAll_UnusedMemory() {

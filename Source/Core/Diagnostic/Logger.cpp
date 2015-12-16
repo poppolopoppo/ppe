@@ -2,10 +2,11 @@
 
 #include "Logger.h"
 
-#ifdef USE_LOGGER
+#ifdef USE_DEBUG_LOGGER
 
 #include "IO/String.h"
 #include "IO/StringSlice.h"
+#include "Misc/CurrentProcess.h"
 
 #include <iostream>
 #include <sstream>
@@ -69,7 +70,7 @@ LoggerFrontend::LoggerFrontend()
 :   LoggerFrontend(nullptr) {}
 //----------------------------------------------------------------------------
 LoggerFrontend::LoggerFrontend(ILogger* impl)
-:   _impl(impl), _startedAt(clock_type::now()) {}
+:   _impl(impl) {}
 //----------------------------------------------------------------------------
 LoggerFrontend::~LoggerFrontend() {}
 //----------------------------------------------------------------------------
@@ -81,41 +82,42 @@ void LoggerFrontend::SetImpl(ILogger* impl) {
 void LoggerFrontend::Log(LogCategory category, const wchar_t* text) {
     std::lock_guard<std::mutex> scopelock(_lock);
     if (_impl)
-        _impl->Log(*this, category, text, Length(text));
+        _impl->Log(category, text);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-static wchar_t sOutputDebugBuffer[4096];
-//----------------------------------------------------------------------------
-void OutputDebugLogger::Log(const LoggerFrontend& frontend, LogCategory category, const wchar_t* text, size_t/* length */) {
+void OutputDebugLogger::Log(LogCategory category, const wchar_t* text) {
     if (!IsDebuggerPresent())
         return;
 
-    if (LogCategory::Callstack != category)
-        Format(sOutputDebugBuffer, L"[{0:12f7}][{1}] {2}\n", frontend.Now(), category, text);
-    else
-        Format(sOutputDebugBuffer, L"{0}\n", text);
-
-    OutputDebugStringW(sOutputDebugBuffer);
-}
-//----------------------------------------------------------------------------
-void StdErrorLogger::Log(const LoggerFrontend& frontend, LogCategory category, const wchar_t* text, size_t length) {
-    const WStringSlice textSlice(text, length);
+#if 0
     if (LogCategory::Callstack != category) {
-        wchar_t header[128];
-        Format(header, L"[{0:12f}][{1}] ", frontend.Now(), category);
-        std::cerr << header << textSlice << std::endl;
+        wchar_t header[64];
+        Format(header, L"[{0:12f7}][{1}] ", CurrentProcess::ElapsedSeconds(), category);
+        OutputDebugStringW(header);
     }
-    else {
-        std::cerr << textSlice << std::endl;
+#else
+    if (LogCategory::Callstack != category &&
+        LogCategory::Info != category ) {
+        wchar_t header[32];
+        Format(header, L"[{0}] ", category);
+        OutputDebugStringW(header);
     }
+#endif
+
+    OutputDebugStringW(text);
+    OutputDebugStringW(L"\n");
 }
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-void Log(LogCategory category, const wchar_t* text) {
-    Logger::Instance().Log(category, text);
+void StdErrorLogger::Log(LogCategory category, const wchar_t* text) {
+    if (LogCategory::Callstack != category) {
+        wchar_t header[64];
+        Format(header, L"[{0:12f}][{1}] ", CurrentProcess::ElapsedSeconds(), category);
+        std::cerr << header;
+    }
+
+    std::cerr << text << std::endl;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -132,4 +134,4 @@ void LoggerStartup::Shutdown() {
 //----------------------------------------------------------------------------
 } //!namespace Core
 
-#endif //!USE_LOGGER
+#endif //!USE_DEBUG_LOGGER

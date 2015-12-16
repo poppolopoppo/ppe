@@ -1,38 +1,33 @@
 #include "stdafx.h"
 
-#include "ProcessTime.h"
+#include "FileIdentityCache.h"
 
-#include "Timepoint.h"
+#include "Exceptions.h"
+
+#include "Core.RTTI/RTTIMacros-impl.h"
 
 namespace Core {
+namespace ContentPipeline {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static Timepoint gProcessTime_StartedAt_;
+
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const Timepoint& ProcessTime::StartedAt() {
-    return gProcessTime_StartedAt_;
-}
+RTTI_CLASS_BEGIN(FileIdentityCache, Default)
+
+RTTI_CLASS_END()
 //----------------------------------------------------------------------------
-Units::Time::Seconds ProcessTime::TotalSeconds() {
-    const Timespan t = Timepoint::Duration(gProcessTime_StartedAt_, Timepoint::Now());
-    return Units::Time::Seconds(t);
-}
+FileIdentityCache::FileIdentityCache() {}
 //----------------------------------------------------------------------------
-void ProcessTime::Start() {
-    gProcessTime_StartedAt_ = Timepoint::Now();
-}
-//----------------------------------------------------------------------------
-void ProcessTime::Shutdown() {
-    NOOP;
-}
+FileIdentityCache::~FileIdentityCache() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+} //!namespace ContentPipeline
 } //!namespace Core

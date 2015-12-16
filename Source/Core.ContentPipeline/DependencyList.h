@@ -2,22 +2,25 @@
 
 #include "Core.ContentPipeline/ContentPipeline.h"
 
-#include "Core/IO/String.h"
-#include "Core/Memory/RefPtr.h"
+#include "Core/Container/HashSet.h"
+#include "Core.RTTI/RTTIMacros.h"
 
 namespace Core {
 namespace ContentPipeline {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FWD_REFPTR(ContentImporterDescriptor);
-//----------------------------------------------------------------------------
-class IContentImporter : public RefCountable {
+class DependencyList : public RTTI::MetaObject {
 public:
-    virtual ~IContentImporter() {}
+    DependencyList();
+    ~DependencyList();
 
-    virtual const ContentImporterDescriptor* Descriptor() const = 0;
+    DependencyList(const DependencyList&) = delete;
+    DependencyList& operator =(const DependencyList&) = delete;
 
+    RTTI_CLASS_HEADER(DependencyList, RTTI::MetaObject);
+
+private:
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

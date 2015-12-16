@@ -33,7 +33,7 @@ POOLTAG_DEF(Application);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 static void PrintMemStats_(const Core::CrtMemoryStats& memoryStats) {
-#ifdef USE_LOGGER
+#ifdef USE_DEBUG_LOGGER
     OutputDebugStream()
 #else
     std::cerr

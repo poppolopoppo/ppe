@@ -156,7 +156,7 @@ PShaderCompiled CompileShaderSource(
     Assert(encapsulator);
     Assert(false == filename.empty());
 
-#ifdef USE_LOGGER
+#ifdef USE_DEBUG_LOGGER
     LOG(Info, L"[Shader] Compiling {0} program with profile {1} from '{2}':{3}()",
         ShaderProgramTypeToCStr(programType),
         ShaderProfileTypeToCStr(profileType),

@@ -13,8 +13,8 @@
 
 #include "Core/Allocator/PoolAllocatorTag-impl.h"
 
-#ifndef FINAL_RELEASE
-//#   define WITH_RTTI_UNITTESTS %_NOCOMMIT%
+#if !(defined(FINAL_RELEASE) || defined(PROFILING_ENABLED))
+#   define WITH_RTTI_UNITTESTS %_NOCOMMIT%
 #endif
 
 namespace Core {
@@ -23,7 +23,7 @@ POOLTAG_DEF(RTTI);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#ifndef WITH_RTTI_UNITTESTS
+#ifdef WITH_RTTI_UNITTESTS
 static void RTTI_UnitTests();
 #endif
 void RTTIStartup::Start() {
@@ -38,7 +38,7 @@ void RTTIStartup::Start() {
 
     MetaObject::MetaClass::Create();
 
-#ifndef WITH_RTTI_UNITTESTS
+#ifdef WITH_RTTI_UNITTESTS
     RTTI_UnitTests();
 #endif
 }
@@ -76,7 +76,7 @@ void RTTIStartup::ClearAll_UnusedMemory() {
 } //!namespace RTTI
 } //!namespace Core
 
-#ifndef WITH_RTTI_UNITTESTS
+#ifdef WITH_RTTI_UNITTESTS
 
 #include "RTTI_fwd.h"
 #include "MetaAtom.h"
@@ -274,6 +274,11 @@ static void TestRTTI_() {
     //auto wrongAtom = atom->Cast< int >();
     auto wrongAtom2 = atom->As< int >();
     AssertRelease(!wrongAtom2);
+
+#if 0
+    const int v = wrongAtom2->Wrapper(); // crash !
+    LOG(Info, L"[RTTI] wrong atom = {0}", v);
+#endif
 
     RTTI::MetaClassSingleton<Titi>::Destroy();
 }

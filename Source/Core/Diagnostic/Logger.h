@@ -2,23 +2,13 @@
 
 #include "Core/Core.h"
 
-#ifndef FINAL_RELEASE
-#   define USE_LOGGER
-#endif
-
-#ifdef USE_LOGGER
-
-#include "Core/IO/FormatHelpers.h"
-#include "Core/IO/Stream.h"
 #include "Core/Memory/MemoryView.h"
-#include "Core/Memory/UniquePtr.h"
-#include "Core/Meta/Singleton.h"
 
-#include <chrono>
 #include <iosfwd>
-#include <memory>
-#include <mutex>
-#include <sstream>
+
+#ifndef FINAL_RELEASE
+#   define USE_DEBUG_LOGGER
+#endif
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -43,7 +33,34 @@ std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Trait
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ILogger;
+class ILogger {
+public:
+    virtual ~ILogger() {}
+
+    virtual void Log(LogCategory category, const wchar_t* text) = 0;
+
+    template <typename _Arg0, typename... _Args>
+    void Log(LogCategory category, const wchar_t* format, _Arg0&& arg0, _Args&&... args);
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace Core
+
+#ifdef USE_DEBUG_LOGGER
+
+#include "Core/IO/FormatHelpers.h"
+#include "Core/IO/Stream.h"
+#include "Core/Memory/UniquePtr.h"
+#include "Core/Meta/Singleton.h"
+
+#include <memory>
+#include <mutex>
+#include <sstream>
+
+namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class LoggerFrontend {
 public:
@@ -56,20 +73,13 @@ public:
     ILogger* Impl() const { return _impl.get(); }
     void SetImpl(ILogger* impl);
 
-    const clock_type::time_point& StartedAt() const { return _startedAt; }
-
-    double Now() const {
-        return std::chrono::duration_cast<std::chrono::duration<double>>(clock_type::now() - _startedAt).count();
-    }
-
     void Log(LogCategory category, const wchar_t* text);
 
     template <typename _Arg0, typename... _Args>
-    void LogFormat(LogCategory category, const wchar_t* format, _Arg0&& arg0, _Args&&... args);
+    void Log(LogCategory category, const wchar_t* format, _Arg0&& arg0, _Args&&... args);
 
 private:
     mutable std::mutex _lock;
-    clock_type::time_point _startedAt;
     UniquePtr<ILogger> _impl;
 };
 //----------------------------------------------------------------------------
@@ -87,10 +97,8 @@ public:
     }
 };
 //----------------------------------------------------------------------------
-void Log(LogCategory category, const wchar_t* text);
-//----------------------------------------------------------------------------
-template <typename _Arg0, typename... _Args>
-void Log(LogCategory category, const wchar_t* format, _Arg0&& arg0, _Args&&... args);
+template <typename... _Args>
+void Log(LogCategory category, const wchar_t* format, _Args&&... args);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -105,22 +113,16 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ILogger {
-public:
-    virtual ~ILogger() {}
-    virtual void Log(const LoggerFrontend& frontend, LogCategory category, const wchar_t* text, size_t length) = 0;
-};
-//----------------------------------------------------------------------------
 class OutputDebugLogger : public ILogger {
 public:
     virtual ~OutputDebugLogger() {}
-    virtual void Log(const LoggerFrontend& frontend, LogCategory category, const wchar_t* text, size_t length) override;
+    virtual void Log(LogCategory category, const wchar_t* text) override;
 };
 //----------------------------------------------------------------------------
 class StdErrorLogger : public ILogger {
 public:
     virtual ~StdErrorLogger() {}
-    virtual void Log(const LoggerFrontend& frontend, LogCategory category, const wchar_t* text, size_t length) override;
+    virtual void Log(LogCategory category, const wchar_t* text) override;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -146,4 +148,4 @@ public:
 
 #define LOG(_Category, ...) NOOP
 
-#endif //!#ifdef USE_LOGGER
+#endif //!#ifdef USE_DEBUG_LOGGER

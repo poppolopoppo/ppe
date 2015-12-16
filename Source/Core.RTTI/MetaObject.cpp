@@ -3,7 +3,6 @@
 #include "MetaObject.h"
 
 #include "MetaAtom.h"
-#include "MetaAtomDatabase.h"
 #include "MetaClass.h"
 #include "MetaProperty.h"
 
@@ -36,15 +35,11 @@ void MetaObject::RTTI_Export(const MetaObjectName& name) {
 
     _name = name;
     _state = Flags(_state | Exported);
-
-    MetaAtomDatabase::Instance().Add(this);
 }
 //----------------------------------------------------------------------------
 void MetaObject::RTTI_Unexport() {
     Assert(!_name.empty());
     Assert(Exported == (_state & Exported));
-
-    MetaAtomDatabase::Instance().Remove(this);
 
     _name = MetaObjectName();
     _state = Flags(_state & ~Exported);

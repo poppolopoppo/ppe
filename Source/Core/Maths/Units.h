@@ -35,11 +35,11 @@ public:
     typedef typename tag_type::value_type value_type;
     typedef typename tag_type::largest_type largest_type;
 
-    Unit() : _value(0) {}
-    Unit(value_type value) : _value(value) {}
+    FORCE_INLINE Unit() : _value(0) {}
+    FORCE_INLINE Unit(value_type value) : _value(value) {}
 
-    Unit(const Unit& other) : _value(other._value) {}
-    Unit& operator =(const Unit& other) {
+    FORCE_INLINE Unit(const Unit& other) : _value(other._value) {}
+    FORCE_INLINE Unit& operator =(const Unit& other) {
         _value = other._value;
         return *this;
     }
@@ -124,6 +124,11 @@ namespace Storage {
         typedef Petabytes largest_type;
     };
 }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _To, typename _From>
+constexpr typename _To::value_type ConvertValue(typename _From::value_type value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

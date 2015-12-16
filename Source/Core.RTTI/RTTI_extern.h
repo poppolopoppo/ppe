@@ -3,7 +3,10 @@
 #include "Core.RTTI/RTTI.h"
 
 #include "Core.RTTI/RTTI_fwd.h"
+#include "Core.RTTI/MetaAtom.h"
+#include "Core.RTTI/MetaProperty.h"
 #include "Core.RTTI/MetaType.h"
+#include "Core.RTTI/MetaTypeTraits.h"
 
 namespace Core {
 namespace RTTI {

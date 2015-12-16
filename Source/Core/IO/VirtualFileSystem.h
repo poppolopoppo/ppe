@@ -9,6 +9,7 @@
 #include "Core/Allocator/PoolAllocatorTag.h"
 #include "Core/Memory/UniquePtr.h"
 #include "Core/Meta/Singleton.h"
+#include "Core/Thread/ReadWriteLock.h"
 
 #include <mutex>
 
@@ -63,7 +64,7 @@ public:
     bool WriteAll(const Filename& filename, const MemoryView<const u8>& storage, AccessPolicy::Mode policy = AccessPolicy::None);
 
 private:
-    mutable std::mutex _barrier;
+    ReadWriteLock _barrier;
     VirtualFileSystemTrie _trie;
 };
 //----------------------------------------------------------------------------

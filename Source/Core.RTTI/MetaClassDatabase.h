@@ -6,6 +6,7 @@
 
 #include "Core/Container/HashMap.h"
 #include "Core/Meta/Singleton.h"
+#include "Core/Thread/ReadWriteLock.h"
 
 #include <mutex>
 
@@ -35,7 +36,7 @@ public:
     void Clear();
 
 private:
-    mutable std::mutex _barrier;
+    ReadWriteLock _barrier;
     HASHMAP(RTTI, MetaClassName, const MetaClass *) _classes;
 };
 //----------------------------------------------------------------------------

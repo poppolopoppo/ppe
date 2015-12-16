@@ -179,7 +179,7 @@ struct Header {
     u32     SizeInBytes;
 };
 //----------------------------------------------------------------------------
-void Compress(IStreamWriter* dst, const MemoryView<const u8>& src) {
+void CompressMemory(IStreamWriter* dst, const MemoryView<const u8>& src) {
     const Header header = {
         FILE_MAGIC_,
         FILE_VERSION_,
@@ -238,7 +238,7 @@ void Compress(IStreamWriter* dst, const MemoryView<const u8>& src) {
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-static bool Decompress_(RawStorage<u8, _Allocator>* dst, const MemoryView<const u8>& src) {
+static bool DecompressMemory_(RawStorage<u8, _Allocator>* dst, const MemoryView<const u8>& src) {
     Assert(dst);
 
     const Header& header = *reinterpret_cast<const Header*>(src.Pointer());
@@ -278,12 +278,12 @@ static bool Decompress_(RawStorage<u8, _Allocator>* dst, const MemoryView<const 
     return true;
 }
 //----------------------------------------------------------------------------
-bool Decompress(RAWSTORAGE(Stream, u8)* dst, const MemoryView<const u8>& src) {
-    return Decompress_(dst, src);
+bool DecompressMemory(RAWSTORAGE(Stream, u8)* dst, const MemoryView<const u8>& src) {
+    return DecompressMemory_(dst, src);
 }
 //----------------------------------------------------------------------------
-bool Decompress(RAWSTORAGE_THREAD_LOCAL(Stream, u8)* dst, const MemoryView<const u8>& src) {
-    return Decompress_(dst, src);
+bool DecompressMemory(RAWSTORAGE_THREAD_LOCAL(Stream, u8)* dst, const MemoryView<const u8>& src) {
+    return DecompressMemory_(dst, src);
 }
 //----------------------------------------------------------------------------
 } //!namespace LZW

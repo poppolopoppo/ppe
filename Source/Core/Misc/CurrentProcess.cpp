@@ -9,7 +9,8 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 CurrentProcessData::CurrentProcessData(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t **argv)
-:   _args(NewArray<WString>(argc - 1)), _exitCode(0), _appIcon(0) {
+:   _args(NewArray<WString>(argc - 1)), _exitCode(0), _appIcon(0)
+,   _startedAt(Timepoint::Now()) {
     Assert(argc); // current process name at least
 
     for (size_t i = 1; i < argc; ++i) {
@@ -26,7 +27,7 @@ CurrentProcessData::CurrentProcessData(void *applicationHandle, int nShowCmd, si
     _applicationHandle = applicationHandle;
     _nShowCmd = nShowCmd;
 
-#ifdef USE_LOGGER
+#ifdef USE_DEBUG_LOGGER
     LOG(Info, L"[Process] Started '{0}' with {1} parameters.", _fileName, _args.size());
     LOG(Info, L"[Process] Directory = '{0}'.", _directory);
     LOG(Info, L"[Process] Application Handle = '{0}', nShowCmd = '{1}'.", _applicationHandle, _nShowCmd);

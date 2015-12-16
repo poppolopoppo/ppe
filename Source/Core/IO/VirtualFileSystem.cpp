@@ -57,7 +57,7 @@ static void MatchingComponents_DepthLast_(
 //----------------------------------------------------------------------------
 #define STACKLOCAL_MATCHINGCOMPONENTS(_NAME, _DIRPATH) \
     STACKLOCAL_POD_STACK(VirtualFileSystemComponent*, _NAME, (_DIRPATH).Depth()); { \
-        std::lock_guard<std::mutex> scopeLock(_barrier); \
+        READSCOPELOCK(_barrier); \
         MatchingComponents_DepthLast_((_NAME), &_trie, (_DIRPATH)); \
     }
 //----------------------------------------------------------------------------
@@ -205,7 +205,7 @@ WString VirtualFileSystemRoot::Unalias(const Filename& aliased) const {
 }
 //----------------------------------------------------------------------------
 void VirtualFileSystemRoot::Clear() {
-    std::lock_guard<std::mutex> scopeLock(_barrier);
+    WRITESCOPELOCK(_barrier);
     _trie.Clear();
 }
 //----------------------------------------------------------------------------
@@ -214,7 +214,7 @@ void VirtualFileSystemRoot::Mount(VirtualFileSystemComponent* component) {
 
     LOG(Info, L"[VFS] Mount component '{0}'", component->Alias());
 
-    std::lock_guard<std::mutex> scopeLock(_barrier);
+    WRITESCOPELOCK(_barrier);
     _trie.AddComponent(component);
 }
 //----------------------------------------------------------------------------
@@ -223,7 +223,7 @@ void VirtualFileSystemRoot::Unmount(VirtualFileSystemComponent* component) {
 
     LOG(Info, L"[VFS] Unmount component '{0}'", component->Alias());
 
-    std::lock_guard<std::mutex> scopeLock(_barrier);
+    WRITESCOPELOCK(_barrier);
     _trie.RemoveComponent(component);
 }
 //----------------------------------------------------------------------------

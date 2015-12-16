@@ -13,12 +13,13 @@
 #include "IO/String.h"
 #include "IO/StringSlice.h"
 
+#include "Thread/ReadWriteLock.h"
+
 #include <iostream>
 #include <crtdbg.h>
 #include <Windows.h>
 
 #include <thread>
-#include <mutex>
 #include <unordered_map>
 
 namespace Core {
@@ -69,7 +70,7 @@ protected:
         );
 
 private:
-    mutable std::mutex _barrier;
+    ReadWriteLock _barrier;
     std::atomic<bool> _enabled;
     size_t _chunkCount;
     size_t _allocationCount;
@@ -96,7 +97,7 @@ void CrtAllocationCallstackLogger::Allocate(long requestNumber) {
         return;
 
     _enabled = false;
-    std::lock_guard<std::mutex> scope_lock(_barrier);
+    WRITESCOPELOCK(_barrier);
 
     if (NeedNewPoolChunk_())
         AllocatePoolChunk_();
@@ -115,7 +116,7 @@ void CrtAllocationCallstackLogger::Allocate(long requestNumber) {
 }
 //----------------------------------------------------------------------------
 auto CrtAllocationCallstackLogger::Callstack(long requestNumber) const -> const TAllocation*{
-    std::lock_guard<std::mutex> scope_lock(_barrier);
+    READSCOPELOCK(_barrier);
 
     if (nullptr == _chunks)
         return nullptr;

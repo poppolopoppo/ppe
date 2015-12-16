@@ -14,13 +14,13 @@ namespace ContentPipeline {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FileIdentifier {
+class FileIdentity {
 public:
-    FileIdentifier() : _sizeInBytes(0), _fingerprint{0,0} {}
-    FileIdentifier(u64 sizeInbytes, const Timestamp& lastModified, const u128& fingerprint);
+    FileIdentity() : _sizeInBytes(0), _fingerprint{0,0} {}
+    FileIdentity(u64 sizeInbytes, const Timestamp& lastModified, const u128& fingerprint);
 
-    FileIdentifier(const FileIdentifier& other) { operator =(other); }
-    FileIdentifier& FileIdentifier::operator =(const FileIdentifier& other) {
+    FileIdentity(const FileIdentity& other) { operator =(other); }
+    FileIdentity& FileIdentity::operator =(const FileIdentity& other) {
         _sizeInBytes  = other._sizeInBytes;
         _lastModified = other._lastModified;
         _fingerprint  = other._fingerprint;
@@ -31,21 +31,21 @@ public:
     const Timestamp& LastModified() const { return _lastModified; }
     const u128& Fingerprint() const { return _fingerprint; }
 
-    bool operator ==(const FileIdentifier& other) const {
+    bool operator ==(const FileIdentity& other) const {
         return  _sizeInBytes  == other._sizeInBytes &&
                 _lastModified == other._lastModified &&
                 _fingerprint  == other._fingerprint;
     }
-    bool operator !=(const FileIdentifier& other) const { return operator ==(other); }
+    bool operator !=(const FileIdentity& other) const { return operator ==(other); }
 
-    static bool CreateFromFile(FileIdentifier *pidentifier, const Filename& sourceFile);
+    static bool CreateFromFile(FileIdentity *pidentifier, const Filename& sourceFile);
 
 private:
     u64 _sizeInBytes;
     Timestamp _lastModified;
     u128 _fingerprint;
 };
-STATIC_ASSERT(sizeof(u64)+sizeof(Timestamp)+sizeof(u128) == sizeof(FileIdentifier));
+STATIC_ASSERT(sizeof(u64)+sizeof(Timestamp)+sizeof(u128) == sizeof(FileIdentity));
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

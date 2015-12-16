@@ -59,14 +59,18 @@ void ParseContext::AddGlobal(const RTTI::MetaObjectName& name, RTTI::MetaAtom *v
     Assert(!name.empty());
     Assert(value);
 
-    _transaction->Export(name, value, true);
+    AssertNotImplemented(); // TODO: _globalScope like _localScope
+    RTTI::MetaAtomDatabase::Instance().Add(name, value, false);
+    //_transaction->Remove(name, value);
 }
 //----------------------------------------------------------------------------
 void ParseContext::RemoveGlobal(const RTTI::MetaObjectName& name, RTTI::MetaAtom *value) {
     Assert(!name.empty());
     Assert(value);
 
-    _transaction->Remove(name, value);
+    AssertNotImplemented(); // see AddGlobal()
+    RTTI::MetaAtomDatabase::Instance().Remove(name, value);
+    //_transaction->Remove(name, value);
 }
 //----------------------------------------------------------------------------
 RTTI::MetaAtom *ParseContext::GetGlobal(const RTTI::MetaObjectName& name) const {
