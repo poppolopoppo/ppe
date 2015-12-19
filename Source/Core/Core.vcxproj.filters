@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <CustomBuild Include="Allocator\Alloca.cpp">
@@ -892,6 +892,9 @@
     <CustomBuild Include="Thread\MRUCache.h">
       <Filter>Thread</Filter>
     </CustomBuild>
+    <CustomBuild Include="Thread\ReadWriteLock.h">
+      <Filter>Thread</Filter>
+    </CustomBuild>
     <CustomBuild Include="Thread\ThreadContext.cpp">
       <Filter>Thread</Filter>
     </CustomBuild>
@@ -1041,8 +1044,5 @@
     <Filter Include="Time">
       <UniqueIdentifier>{cfa6377b-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Thread\ReadWriteLock.h" />
   </ItemGroup>
 </Project>
