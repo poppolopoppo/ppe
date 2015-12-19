@@ -9,6 +9,9 @@
 #include "Core/IO/Format.h"
 #include "Core/IO/String.h"
 
+#include "Core/Maths/Geometry/ScalarVector_fwd.h"
+#include "Core/Maths/Transform/ScalarMatrix_fwd.h"
+
 #include "Core/Memory/RefPtr.h"
 
 #include "Core/Meta/OneTimeInitialize.h"

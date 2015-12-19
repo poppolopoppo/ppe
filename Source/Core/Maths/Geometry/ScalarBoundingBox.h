@@ -22,6 +22,7 @@ public:
     friend class ScalarBoundingBox;
 
     ScalarBoundingBox();
+    explicit ScalarBoundingBox(Meta::noinit_tag);
     ScalarBoundingBox(const vector_type& min, const vector_type& max);
     ~ScalarBoundingBox();
 

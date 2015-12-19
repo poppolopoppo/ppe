@@ -357,6 +357,26 @@ private:
             return _reader->ReadPOD(&value);
         }
 
+        template <typename T, size_t _Dim>
+        bool ReadValue_(ScalarVector<T, _Dim>& value) {
+            STATIC_ASSERT(std::is_pod<T>::value);
+            for (size_t i = 0; i < _Dim; ++i)
+                if (false == _reader->ReadPOD(&value[i]))
+                    return false;
+            return true;
+        }
+
+        template <typename T, size_t _Width, size_t _Height>
+        bool ReadValue_(ScalarMatrix<T, _Width, _Height>& value) {
+            STATIC_ASSERT(std::is_pod<T>::value);
+            ScalarMatrixData<T, _Width, _Height>& data = value.data_();
+            const size_t dim = _Width * _Height;
+            for (size_t i = 0; i < dim; ++i)
+                if (false == _reader->ReadPOD(&data.raw[i]))
+                    return false;
+            return true;
+        }
+
         bool ReadValue_(String& str) {
             index_t string_i;
             if (false == _reader->ReadPOD(&string_i))
@@ -792,6 +812,21 @@ private:
         void WriteValue_(const T& value) {
             STATIC_ASSERT(std::is_pod<T>::value);
             WritePOD(value);
+        }
+
+        template <typename T, size_t _Dim>
+        void WriteValue_(const ScalarVector<T, _Dim>& value) {
+            STATIC_ASSERT(std::is_pod<T>::value);
+            for (size_t i = 0; i < _Dim; ++i)
+                WritePOD(value[i]);
+        }
+
+        template <typename T, size_t _Width, size_t _Height>
+        void WriteValue_(const ScalarMatrix<T, _Width, _Height>& value) {
+            STATIC_ASSERT(std::is_pod<T>::value);
+            const MemoryView<const T> data = value.MakeView();
+            for (const T& pod : data)
+                WritePOD(pod);
         }
 
         void WriteValue_(const String& str) {

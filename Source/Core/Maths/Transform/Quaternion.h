@@ -14,6 +14,7 @@ namespace Core {
 class Quaternion {
 public:
     Quaternion();
+    explicit Quaternion(Meta::noinit_tag);
     explicit Quaternion(float broadcast);
     explicit Quaternion(const float4& value);
     Quaternion(const float3& value, float w);

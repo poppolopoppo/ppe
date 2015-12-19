@@ -30,8 +30,8 @@ typedef RTTI::PMetaObject   ParseObject;
 STATIC_ASSERT(RTTI::MetaType<ParseBool    >::TypeId == 1 );
 STATIC_ASSERT(RTTI::MetaType<ParseInt     >::TypeId == 5 );
 STATIC_ASSERT(RTTI::MetaType<ParseFloat   >::TypeId == 11);
-STATIC_ASSERT(RTTI::MetaType<ParseString  >::TypeId == 12);
-STATIC_ASSERT(RTTI::MetaType<ParseObject  >::TypeId == 15);
+STATIC_ASSERT(RTTI::MetaType<ParseString  >::TypeId == 32);
+STATIC_ASSERT(RTTI::MetaType<ParseObject  >::TypeId == 35);
 //----------------------------------------------------------------------------
 enum ParseTypeId : RTTI::MetaTypeId {
     PARSEID_BOOL    = RTTI::MetaType<ParseBool  >::TypeId,

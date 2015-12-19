@@ -7,7 +7,10 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
-ScalarMatrix<T, _Width, _Height>::ScalarMatrix() {}
+ScalarMatrix<T, _Width, _Height>::ScalarMatrix() : ScalarMatrix(0) {}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Width, size_t _Height>
+ScalarMatrix<T, _Width, _Height>::ScalarMatrix(Meta::noinit_tag) {}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
 ScalarMatrix<T, _Width, _Height>::~ScalarMatrix() {}

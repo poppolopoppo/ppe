@@ -67,7 +67,7 @@ static bool Equals_(const XMVECTOR& lhs, const ScalarVector<T, _Dim>& rhs) {
     memcpy(rhs_d, &rhs, sizeof(rhs_d));
 
     for (size_t i = 0; i < _Dim; ++i)
-        if (!NearlyEquals(lhs_d[i], rhs_d[i]))
+        if (false == NearlyEquals(lhs_d[i], rhs_d[i]))
             return false;
 
     return true;
@@ -75,8 +75,10 @@ static bool Equals_(const XMVECTOR& lhs, const ScalarVector<T, _Dim>& rhs) {
 
 template <typename T, size_t _Width, size_t _Height>
 static bool Equals_(const ScalarMatrix<T, _Width, _Height>& lhs, const ScalarMatrix<T, _Width, _Height>& rhs) {
+    const ScalarMatrixData<T, _Width, _Height>& lhsData = lhs.data_();
+    const ScalarMatrixData<T, _Width, _Height>& rhsData = rhs.data_();
     for (size_t i = 0; i < _Width*_Height; ++i)
-        if (!NearlyEquals(lhs.data_()[i], rhs.data_()[i]))
+        if (false == NearlyEquals(lhsData.raw[i], rhsData.raw[i]))
             return false;
 
     return true;
@@ -103,7 +105,7 @@ static bool Equals_(const XMMATRIX& lhs, const float4x4& rhs) {
     Assert(NearlyEquals(rhs_d.data._34, rhs.m23()));
 
     for (size_t i = 0; i < 16; ++i)
-        if (!NearlyEquals(lhs_d.data.raw[i], rhs_d.data.raw[i]))
+        if (false == NearlyEquals(lhs_d.data.raw[i], rhs_d.data.raw[i]))
             return false;
 
     return true;

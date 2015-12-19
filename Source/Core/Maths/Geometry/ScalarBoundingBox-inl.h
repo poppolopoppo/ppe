@@ -11,6 +11,9 @@ ScalarBoundingBox<T, _Dim>::ScalarBoundingBox()
 :   ScalarBoundingBox(ScalarBoundingBox::DefaultValue()) {}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
+ScalarBoundingBox<T, _Dim>::ScalarBoundingBox(Meta::noinit_tag) {}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
 ScalarBoundingBox<T, _Dim>::ScalarBoundingBox(const vector_type& min, const vector_type& max)
 :   _min(min), _max(max) {}
 //----------------------------------------------------------------------------

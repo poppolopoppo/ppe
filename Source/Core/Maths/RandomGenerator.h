@@ -2,6 +2,8 @@
 
 #include "Core/Core.h"
 
+#include "Core/Maths/Geometry/ScalarVector_fwd.h"
+
 // Pseudo-Random Number Generator
 // http://xorshift.di.unimi.it/
 
@@ -73,6 +75,12 @@ public:
     void Randomize(bool& b) { b = (1 == (Next() & 1)); }
     void Randomize(float& f) { f = NextFloatM11(); }
     void Randomize(double& d) { d = static_cast<double>(NextFloatM11()); }
+
+    template <typename T, size_t _Dim>
+    void Randomize(ScalarVector<T, _Dim>& v) {
+        for (size_t i = 0; i < _Dim; ++i)
+            Randomize(v[i]);
+    }
 
 private:
     generator_type _generator;

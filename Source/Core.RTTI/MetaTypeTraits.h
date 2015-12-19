@@ -10,8 +10,6 @@
 #include "Core/IO/FS/Dirpath.h"
 #include "Core/IO/FS/Filename.h"
 #include "Core/Maths/Geometry/ScalarBoundingBox_fwd.h"
-#include "Core/Maths/Geometry/ScalarVector_fwd.h"
-#include "Core/Maths/Transform/ScalarMatrix_fwd.h"
 #include "Core/Time/DateTime.h"
 #include "Core/Time/Timestamp.h"
 
@@ -312,85 +310,6 @@ struct MetaTypeTraitsImpl< Core::HashMap<_Key, _Value, _Hasher, _EqualTo, _Alloc
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Maths :
-//----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
-struct MetaTypeTraitsImpl< Core::ScalarVector<T, _Dim> > {
-    STATIC_ASSERT(_Dim > 0 && _Dim <= 4);
-    typedef Core::ScalarVector<T, _Dim> wrapped_type;
-
-    typedef MetaTypeTraits<T> value_traits;
-    typedef typename value_traits::wrapper_type value_wrapper_type;
-
-    typedef RTTI::Vector<value_wrapper_type> wrapper_type;
-    typedef MetaType< wrapper_type > meta_type;
-
-    static const MetaTypeVectorTraits< value_wrapper_type > *VirtualTraits() {
-        return MetaTypeVectorTraits< value_wrapper_type >::Instance();
-    }
-
-    static bool IsDefaultValue(const wrapped_type& value) { return (wrapped_type::Zero() == value); }
-
-    static void WrapMove(wrapper_type& dst, wrapped_type&& src) { Wrap_(dst, src); }
-    static void WrapCopy(wrapper_type& dst, const wrapped_type& src) { Wrap_(dst, src); }
-
-    static void UnwrapMove(wrapped_type& dst, wrapper_type&& src) { Unwrap_(dst, src); }
-    static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src) { Unwrap_(dst, src); }
-
-    static void Wrap_(wrapper_type& dst, const wrapped_type& src) {
-        dst.clear();
-        Append(dst, src.MakeView());
-    }
-
-    static void Unwrap_(wrapped_type& dst, const wrapper_type& src) {
-        Assert(src.size() == _Dim);
-        dst = MakeConstView(src);
-    }
-};
-//----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
-struct MetaTypeTraitsImpl< Core::ScalarMatrix<T, _Width, _Height> > {
-    STATIC_ASSERT(_Width > 0 && _Width <= 4);
-    STATIC_ASSERT(_Height > 0 && _Height <= 4);
-    typedef Core::ScalarMatrix<T, _Width, _Height> wrapped_type;
-
-    typedef typename wrapped_type::row_type value_type;
-    typedef MetaTypeTraits<value_type> value_traits;
-    typedef typename value_traits::wrapper_type value_wrapper_type;
-
-    typedef RTTI::Vector<value_wrapper_type> wrapper_type;
-    typedef MetaType< wrapper_type > meta_type;
-
-    static const MetaTypeVectorTraits< value_wrapper_type > *VirtualTraits() {
-        return MetaTypeVectorTraits< value_wrapper_type >::Instance();
-    }
-
-    static bool IsDefaultValue(const wrapped_type& value) { return (wrapped_type::Zero() == value); }
-
-    static void WrapMove(wrapper_type& dst, wrapped_type&& src) { Wrap_(dst, src); }
-    static void WrapCopy(wrapper_type& dst, const wrapped_type& src) { Wrap_(dst, src); }
-
-    static void UnwrapMove(wrapped_type& dst, wrapper_type&& src) { Unwrap_(dst, src); }
-    static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src) { Unwrap_(dst, src); }
-
-    static void Wrap_(wrapper_type& dst, const wrapped_type& src) {
-        dst.clear();
-        dst.reserve(_Height);
-        for (size_t i = 0; i < _Height; ++i) {
-            value_wrapper_type w;
-            value_traits::WrapCopy(w, src.Row(i));
-            dst.emplace_back(std::move(w));
-        }
-    }
-
-    static void Unwrap_(wrapped_type& dst, const wrapper_type& src) {
-        AssertRelease(src.size() == _Height);
-        for (size_t i = 0; i < _Height; ++i) {
-            value_type v;
-            value_traits::UnwrapCopy(v, src[i]);
-            dst.SetRow(i, v);
-        }
-    }
-};
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 struct MetaTypeTraitsImpl< Core::ScalarBoundingBox<T, _Dim> > {

@@ -5,6 +5,9 @@
 #include "MetaAtom.h"
 #include "MetaObject.h"
 
+#include "Core/Maths/Geometry/ScalarVector.h"
+#include "Core/Maths/Transform/ScalarMatrix.h"
+
 namespace Core {
 namespace RTTI {
 //----------------------------------------------------------------------------

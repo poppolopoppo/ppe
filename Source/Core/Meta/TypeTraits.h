@@ -7,11 +7,12 @@ namespace Meta {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+struct noinit_tag {}; // special tag used on constructors to skip object default initialization
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 // Very interesting, but did not work everywhere :'(
 // http://stackoverflow.com/questions/10711952/how-to-detect-existence-of-a-class-using-sfinae
-//----------------------------------------------------------------------------
-template <typename T>
-typename std::add_rvalue_reference<T>::type declval();
 //----------------------------------------------------------------------------
 /*! The template `has_destructor<T>` exports a
 boolean constant `value that is true iff `T` has
@@ -24,7 +25,7 @@ struct has_destructor
 {
     /* Has destructor :) */
     template <typename A>
-    static std::true_type test(decltype(declval<A>().~A()) *) {
+    static std::true_type test(decltype(std::declval<A>().~A()) *) {
         return std::true_type();
     }
 
@@ -37,7 +38,7 @@ struct has_destructor
     /* This will be either `std::true_type` or `std::false_type` */
     typedef decltype(test<T>(0)) type;
 
-    static const bool value = type::value; /* Which is it? */
+    static constexpr bool value = type::value; /* Which is it? */
 };
 //----------------------------------------------------------------------------
 template <typename T>

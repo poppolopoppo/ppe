@@ -27,6 +27,7 @@ public:
     friend class ScalarMatrix;
 
     ScalarVector();
+    explicit ScalarVector(Meta::noinit_tag);
     ~ScalarVector();
 
     ScalarVector(T broadcast);
@@ -110,7 +111,7 @@ public:
     MemoryView<T> MakeView() { return Core::MakeView(_data); }
     MemoryView<const T> MakeView() const { return Core::MakeView(_data); }
 
-    friend hash_t hash_value(const ScalarVector& v) { return hash_as_pod_array(v._data); }
+    friend hash_t hash_value(const ScalarVector& v) { return hash_as_pod(v._data); }
 
     ScalarVector<T, _Dim - 1> Dehomogenize() const;
     ScalarVector<T, _Dim + 1> Extend(T value) const;

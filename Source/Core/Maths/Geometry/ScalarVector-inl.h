@@ -7,7 +7,10 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarVector<T, _Dim>::ScalarVector() {}
+ScalarVector<T, _Dim>::ScalarVector() : ScalarVector(T(0)) {}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+ScalarVector<T, _Dim>::ScalarVector(Meta::noinit_tag) {}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 ScalarVector<T, _Dim>::~ScalarVector() {}
