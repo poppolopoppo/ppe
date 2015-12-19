@@ -56,27 +56,25 @@ class RTTITest_ : public RTTI::MetaObject {
 public:
     RTTI_CLASS_HEADER(RTTITest_, RTTI::MetaObject);
 
-    RTTITest_() : _dummy(0), _position(0), _direction(0), _transform(0)
+    RTTITest_() : _dummy(0)
 #define DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId) \
     ,   _ ## _Name(RTTI::MetaTypeTraits<T>::meta_type::DefaultValue()) \
     ,   _ ## _Name ## Pair(RTTI::MetaTypeTraits<T>::meta_type::DefaultValue(), RTTI::MetaTypeTraits<T>::meta_type::DefaultValue())
 
 #define DEF_METATYPE_SCALAR_ARITH(_Name, T, _TypeId) DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId)
+#define DEF_METATYPE_SCALAR_VECTOR_ARITH(_Name, T, _TypeId) DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId)
 #define DEF_METATYPE_SCALAR_STRING(_Name, T, _TypeId) DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId)
 #define DEF_METATYPE_SCALAR_OBJECT(_Name, T, _TypeId) DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId)
 
 #include "Core.RTTI/MetaType.Definitions-inl.h"
 
 #undef DEF_METATYPE_SCALAR_STRING
+#undef DEF_METATYPE_SCALAR_VECTOR_ARITH
 #undef DEF_METATYPE_SCALAR_ARITH
 #undef DEF_METATYPE_SCALAR_OBJECT
 #undef DEF_METATYPE_SCALAR_IMPL_
 #undef DEF_METATYPE_SCALAR
     {}
-
-    float3 _position;
-    int3 _direction;
-    float4x4 _transform;
 
     bool _dummy;
 
@@ -97,6 +95,7 @@ public:
     //yolo_type<T> _ ## _Name ## Yolo;
 
 #define DEF_METATYPE_SCALAR_ARITH(_Name, T, _TypeId) DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId)
+#define DEF_METATYPE_SCALAR_VECTOR_ARITH(_Name, T, _TypeId) DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId)
 #define DEF_METATYPE_SCALAR_STRING(_Name, T, _TypeId) DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId)
 #define DEF_METATYPE_SCALAR_OBJECT(_Name, T, _TypeId) DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId)
 
@@ -104,13 +103,11 @@ public:
 
 #undef DEF_METATYPE_SCALAR_STRING
 #undef DEF_METATYPE_SCALAR_ARITH
+#undef DEF_METATYPE_SCALAR_VECTOR_ARITH
 #undef DEF_METATYPE_SCALAR_OBJECT
 #undef DEF_METATYPE_SCALAR_IMPL_
 };
 RTTI_CLASS_BEGIN(RTTITest_, Concrete)
-    //RTTI_PROPERTY_PRIVATE_FIELD(_position)
-    //RTTI_PROPERTY_PRIVATE_FIELD(_direction)
-    //RTTI_PROPERTY_PRIVATE_FIELD(_transform)
 #define DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId) \
     RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name) \
     RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Vec) \
@@ -119,12 +116,14 @@ RTTI_CLASS_BEGIN(RTTITest_, Concrete)
     //RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Yolo)
 
 #define DEF_METATYPE_SCALAR_ARITH(_Name, T, _TypeId) DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId)
+#define DEF_METATYPE_SCALAR_VECTOR_ARITH(_Name, T, _TypeId) DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId)
 #define DEF_METATYPE_SCALAR_STRING(_Name, T, _TypeId) DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId)
 #define DEF_METATYPE_SCALAR_OBJECT(_Name, T, _TypeId) DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId)
 
 #include "Core.RTTI/MetaType.Definitions-inl.h"
 
 #undef DEF_METATYPE_SCALAR_STRING
+#undef DEF_METATYPE_SCALAR_VECTOR_ARITH
 #undef DEF_METATYPE_SCALAR_ARITH
 #undef DEF_METATYPE_SCALAR_OBJECT
 #undef DEF_METATYPE_SCALAR_IMPL_
@@ -203,6 +202,14 @@ private:
     template <typename T>
     void Randomize_(T& value) {
         _rand.Randomize(value);
+    }
+
+    template <typename T, size_t _Width, size_t _Height>
+    void Randomize_(ScalarMatrix<T, _Width, _Height>& value) {
+        ScalarMatrixData<T, _Width, _Height>& data = value.data_();
+        const size_t dim = _Width*_Height;
+        for (size_t i = 0; i < dim; ++i)
+            _rand.Randomize(data.raw[i]);
     }
 
     void Randomize_(String& str) {
