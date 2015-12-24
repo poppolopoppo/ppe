@@ -22,6 +22,8 @@
 #include "Core.RTTI/MetaTransaction.h"
 #include "Core.RTTI/MetaType.h"
 
+#include "Core.RTTI/MetaType.Definitions-inl.h"
+
 #ifdef USE_DEBUG_LOGGER
 #   define WITH_RTTI_BINARYSERIALIZER_LOG       0 //%_NOCOMMIT%
 #   define WITH_RTTI_BINARYSERIALIZER_DATALOG   0 //%_NOCOMMIT%
@@ -332,7 +334,7 @@ private:
             parent_type::Inspect(pdictionary, dictionary);
         }
 
-#define DEF_METATYPE_SCALAR(_Name, T, _TypeId) \
+#define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
         virtual void Visit(RTTI::MetaTypedAtom<T>* scalar) override { \
             Assert(_TypeId == scalar->TypeInfo().Id); \
             const std::streamoff dataoff = _reader->TellI(); \
@@ -347,7 +349,8 @@ private:
             /*parent_type::Visit(scalar);*/ \
         }
 
-#include "Core.RTTI/MetaType.Definitions-inl.h"
+        FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
+
 #undef DEF_METATYPE_SCALAR
 
     private:
@@ -409,13 +412,13 @@ private:
                 if (false == _reader->ReadPOD(&typeId))
                     return false;
                 switch (typeId) {
-#define DEF_METATYPE_SCALAR(_Name, T, _TypeId) \
+#define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
                 case _TypeId: \
                     atom = new RTTI::wrap_atom< T >::type(); \
                     Assert(atom->IsDefaultValue()); \
                     atom->Accept(this); \
                     break;
-#include "Core.RTTI/MetaType.Definitions-inl.h"
+                FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
 #undef DEF_METATYPE_SCALAR
                 default:
                     throw BinarySerializerException("no support for abstract RTTI atoms deserialization");
@@ -791,7 +794,7 @@ private:
             parent_type::Inspect(pdictionary, dictionary);
         }
 
-#define DEF_METATYPE_SCALAR(_Name, T, _TypeId) \
+#define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
         virtual void Visit(const RTTI::MetaTypedAtom<T>* scalar) override { \
             Assert(_TypeId == scalar->TypeInfo().Id); \
             BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize scalar {0} = [{1}]", \
@@ -803,8 +806,7 @@ private:
             WriteValue_(scalar->Wrapper()); \
             /*parent_type::Visit(scalar);*/ \
         }
-
-#include "Core.RTTI/MetaType.Definitions-inl.h"
+        FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
 #undef DEF_METATYPE_SCALAR
 
     private:
@@ -844,8 +846,8 @@ private:
                 const RTTI::MetaTypeId typeId = atom->TypeInfo().Id;
                 switch(typeId)
                 {
-#define DEF_METATYPE_SCALAR(_Name, T, _TypeId) case _TypeId:
-#include "Core.RTTI/MetaType.Definitions-inl.h"
+#define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) case _TypeId:
+                FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
 #undef DEF_METATYPE_SCALAR
                     WritePOD(TAG_ATOM_ATOM_);
                     WritePOD(typeId);

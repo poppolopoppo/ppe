@@ -2,18 +2,21 @@
 
 #include "Core/Core.h"
 
+#include "Core/Color/Color_fwd.h"
+#include "Core/Maths/Geometry/ScalarVector_extern.h"
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
-class ScalarRectangle;
+extern template class BasicColor< UNorm<u8>, ColorShuffleBGRA >;
+extern template class BasicColor< UNorm<u8>, ColorShuffleRGBA >;
 //----------------------------------------------------------------------------
-typedef ScalarRectangle<float, 2> RectangleF;
-typedef ScalarRectangle<int, 2> RectangleI;
+extern template class BasicColor< UNorm<u16>, ColorShuffleBGRA >;
+extern template class BasicColor< UNorm<u16>, ColorShuffleRGBA >;
 //----------------------------------------------------------------------------
-typedef ScalarRectangle<float, 3> ViewportF;
-typedef ScalarRectangle<int, 3> ViewportI;
+extern template class BasicColor< float, ColorShuffleBGRA >;
+extern template class BasicColor< float, ColorShuffleRGBA >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

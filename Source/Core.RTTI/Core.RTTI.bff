@@ -2,5 +2,9 @@
 {
     .ProjectName = 'Core.RTTI'
     .ProjectPath = '$SourceDiretory$/Core.RTTI'
+    .ProjectIsolatedFiles =
+    {
+        'RTTI_extern.cpp',
+    }
     #include "../../Build/Templates/Library.bff"
 }

@@ -2,6 +2,7 @@
 
 #include "Core.Serialize/Serialize.h"
 
+#include "Core.Serialize/Exceptions.h"
 #include "Core.Serialize/ISerializer.h"
 
 namespace Core {

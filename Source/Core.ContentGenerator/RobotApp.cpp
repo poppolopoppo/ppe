@@ -23,6 +23,8 @@
 #include "Core.RTTI/MetaTransaction.h"
 #include "Core.Serialize/Binary/BinarySerializer.h"
 
+#include "Core.RTTI/MetaType.Definitions-inl.h"
+
 namespace Core {
 namespace ContentGenerator {
 //----------------------------------------------------------------------------
@@ -57,23 +59,11 @@ public:
     RTTI_CLASS_HEADER(RTTITest_, RTTI::MetaObject);
 
     RTTITest_() : _dummy(0)
-#define DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId) \
+#define DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId, _Unused) \
     ,   _ ## _Name(RTTI::MetaTypeTraits<T>::meta_type::DefaultValue()) \
     ,   _ ## _Name ## Pair(RTTI::MetaTypeTraits<T>::meta_type::DefaultValue(), RTTI::MetaTypeTraits<T>::meta_type::DefaultValue())
-
-#define DEF_METATYPE_SCALAR_ARITH(_Name, T, _TypeId) DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId)
-#define DEF_METATYPE_SCALAR_VECTOR_ARITH(_Name, T, _TypeId) DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId)
-#define DEF_METATYPE_SCALAR_STRING(_Name, T, _TypeId) DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId)
-#define DEF_METATYPE_SCALAR_OBJECT(_Name, T, _TypeId) DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId)
-
-#include "Core.RTTI/MetaType.Definitions-inl.h"
-
-#undef DEF_METATYPE_SCALAR_STRING
-#undef DEF_METATYPE_SCALAR_VECTOR_ARITH
-#undef DEF_METATYPE_SCALAR_ARITH
-#undef DEF_METATYPE_SCALAR_OBJECT
+    FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR_IMPL_)
 #undef DEF_METATYPE_SCALAR_IMPL_
-#undef DEF_METATYPE_SCALAR
     {}
 
     bool _dummy;
@@ -87,47 +77,24 @@ public:
     template <typename T>
     using yolo_type = HASHMAP_THREAD_LOCAL(Container, yolo_pair_type<T>, yolo_vect_type<T>);
 
-#define DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId) \
+#define DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId, _Unused) \
     T _ ## _Name; \
     VECTOR_THREAD_LOCAL(Container, T) _ ## _Name ## Vec; \
     Pair<T, T> _ ## _Name ## Pair; \
     HASHMAP_THREAD_LOCAL(Container, T, T) _ ## _Name ## Dico; \
     //yolo_type<T> _ ## _Name ## Yolo;
-
-#define DEF_METATYPE_SCALAR_ARITH(_Name, T, _TypeId) DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId)
-#define DEF_METATYPE_SCALAR_VECTOR_ARITH(_Name, T, _TypeId) DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId)
-#define DEF_METATYPE_SCALAR_STRING(_Name, T, _TypeId) DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId)
-#define DEF_METATYPE_SCALAR_OBJECT(_Name, T, _TypeId) DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId)
-
-#include "Core.RTTI/MetaType.Definitions-inl.h"
-
-#undef DEF_METATYPE_SCALAR_STRING
-#undef DEF_METATYPE_SCALAR_ARITH
-#undef DEF_METATYPE_SCALAR_VECTOR_ARITH
-#undef DEF_METATYPE_SCALAR_OBJECT
+    FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR_IMPL_)
 #undef DEF_METATYPE_SCALAR_IMPL_
 };
 RTTI_CLASS_BEGIN(RTTITest_, Concrete)
-#define DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId) \
+#define DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId, _Unused) \
     RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name) \
     RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Vec) \
     RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Pair) \
     RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Dico) \
     //RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Yolo)
-
-#define DEF_METATYPE_SCALAR_ARITH(_Name, T, _TypeId) DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId)
-#define DEF_METATYPE_SCALAR_VECTOR_ARITH(_Name, T, _TypeId) DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId)
-#define DEF_METATYPE_SCALAR_STRING(_Name, T, _TypeId) DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId)
-#define DEF_METATYPE_SCALAR_OBJECT(_Name, T, _TypeId) DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId)
-
-#include "Core.RTTI/MetaType.Definitions-inl.h"
-
-#undef DEF_METATYPE_SCALAR_STRING
-#undef DEF_METATYPE_SCALAR_VECTOR_ARITH
-#undef DEF_METATYPE_SCALAR_ARITH
-#undef DEF_METATYPE_SCALAR_OBJECT
+    FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR_IMPL_)
 #undef DEF_METATYPE_SCALAR_IMPL_
-#undef DEF_METATYPE_SCALAR
 
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------
@@ -180,15 +147,13 @@ protected:
         parent_type::Inspect(pdictionary, dictionary);
     }
 
-#define DEF_METATYPE_SCALAR(_Name, T, _TypeId) \
+#define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
     virtual void Visit(RTTI::MetaTypedAtom<T>* scalar) override { \
         Assert(_TypeId == scalar->TypeInfo().Id); \
         Randomize_(scalar->Wrapper()); \
         /*parent_type::Visit(scalar);*/ \
     }
-
-#include "Core.RTTI/MetaType.Definitions-inl.h"
-
+    FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
 #undef DEF_METATYPE_SCALAR
 
 private:

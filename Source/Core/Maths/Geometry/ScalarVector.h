@@ -3,6 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/Maths/Geometry/ScalarVector_fwd.h"
+#include "Core/Maths/Geometry/ScalarVector.Shuffle-inl.h"
 
 #include "Core/Container/Hash.h"
 #include "Core/Memory/MemoryView.h"
@@ -18,13 +19,122 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+namespace details {
 template <typename T, size_t _Dim>
-class ScalarVector {
+class ScalarVectorBase {};
+template <typename T>
+class ScalarVectorBase<T, 1> {
 public:
+    ScalarVectorBase() = default;
+    ScalarVectorBase(T x);
+    const T& x() const;
+    T& x();
+};
+template <typename T>
+class ScalarVectorBase<T, 2> : public ScalarVectorBase<T, 1> {
+public:
+    ScalarVectorBase() = default;
+    ScalarVectorBase(T x, T y);
+    const T& y() const;
+    T& y();
+    template <size_t _0, size_t _1>
+    ScalarVector<T, 2> Shuffle2() const;
+#define DECL_SCALARVECTOR_SHUFFLE2(_Name, _0, _1, _Unused) \
+    ScalarVector<T, 2> _Name() const { return Shuffle2<_0, _1>(); }
+    FOREACH_CORE_SCALARVECTOR_SHUFFLE2(DECL_SCALARVECTOR_SHUFFLE2)
+#undef DECL_SCALARVECTOR_SHUFFLE2
+};
+template <typename T>
+class ScalarVectorBase<T, 3> : public ScalarVectorBase<T, 2> {
+public:
+    ScalarVectorBase() = default;
+    ScalarVectorBase(T x, T y, T z);
+    ScalarVectorBase(const ScalarVector<T, 2>& xy, T z);
+    ScalarVectorBase(T x, const ScalarVector<T, 2>& yz);
+    const T& z() const;
+    T& z();
+    template <size_t _0, size_t _1, size_t _2>
+    ScalarVector<T, 3> Shuffle3() const;
+#define DECL_SCALARVECTOR_SHUFFLE3(_Name, _0, _1, _2, _Unused) \
+    ScalarVector<T, 3> _Name() const { return Shuffle3<_0, _1, _2>(); }
+    FOREACH_CORE_SCALARVECTOR_SHUFFLE3(DECL_SCALARVECTOR_SHUFFLE3)
+#undef DECL_SCALARVECTOR_SHUFFLE3
+};
+template <typename T>
+class ScalarVectorBase<T, 4> : public ScalarVectorBase<T, 3> {
+public:
+    ScalarVectorBase() = default;
+    ScalarVectorBase(T x, T y, T z, T w);
+    ScalarVectorBase(const ScalarVector<T, 3>& xyz, T w);
+    ScalarVectorBase(T x, const ScalarVector<T, 3>& yzw);
+    const T& w() const;
+    T& w();
+    ScalarVector<T, 3> Dehomogenize() const;
+    template <size_t _0, size_t _1, size_t _2, size_t _3>
+    ScalarVector<T, 4> Shuffle4() const;
+#define DECL_SCALARVECTOR_SHUFFLE4(_Name, _0, _1, _2, _3, _Unused) \
+    ScalarVector<T, 4> _Name() const { return Shuffle4<_0, _1, _2, _3>(); }
+    FOREACH_CORE_SCALARVECTOR_SHUFFLE4(DECL_SCALARVECTOR_SHUFFLE4)
+#undef DECL_SCALARVECTOR_SHUFFLE4
+};
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+class ScalarVectorConstants {};
+template <typename T>
+class ScalarVectorConstants<T, 2> {
+public:
+    static ScalarVector<T, 2> UnitX()   { return ScalarVector<T, 2>(1,0); }
+    static ScalarVector<T, 2> UnitY()   { return ScalarVector<T, 2>(0,1); }
+    static ScalarVector<T, 2> Left()    { return ScalarVector<T, 2>(-1,0); }
+    static ScalarVector<T, 2> Right()   { return ScalarVector<T, 2>(1,0); }
+    static ScalarVector<T, 2> Up()      { return ScalarVector<T, 2>(0,1); }
+    static ScalarVector<T, 2> Down()    { return ScalarVector<T, 2>(0,-1); }
+};
+template <typename T>
+class ScalarVectorConstants<T, 3> {
+public:
+    static ScalarVector<T, 3> UnitX()   { return ScalarVector<T, 3>(1,0,0); }
+    static ScalarVector<T, 3> UnitY()   { return ScalarVector<T, 3>(0,1,0); }
+    static ScalarVector<T, 3> UnitZ()   { return ScalarVector<T, 3>(0,0,1); }
+    static ScalarVector<T, 3> Left()    { return ScalarVector<T, 3>(-1,0,0); }
+    static ScalarVector<T, 3> Right()   { return ScalarVector<T, 3>(1,0,0); }
+    static ScalarVector<T, 3> Up()      { return ScalarVector<T, 3>(0,1,0); }
+    static ScalarVector<T, 3> Down()    { return ScalarVector<T, 3>(0,-1,0); }
+    static ScalarVector<T, 3> Forward() { return ScalarVector<T, 3>(0,0,1); }
+    static ScalarVector<T, 3> Backward(){ return ScalarVector<T, 3>(0,0,-1); }
+};
+template <typename T>
+class ScalarVectorConstants<T, 4> {
+public:
+    static ScalarVector<T, 4> UnitX()   { return ScalarVector<T, 4>(1,0,0,0); }
+    static ScalarVector<T, 4> UnitY()   { return ScalarVector<T, 4>(0,1,0,0); }
+    static ScalarVector<T, 4> UnitZ()   { return ScalarVector<T, 4>(0,0,1,0); }
+    static ScalarVector<T, 4> UnitW()   { return ScalarVector<T, 4>(0,0,0,1); }
+    static ScalarVector<T, 4> Left()    { return ScalarVector<T, 4>(-1,0,0,0); }
+    static ScalarVector<T, 4> Right()   { return ScalarVector<T, 4>(1,0,0,0); }
+    static ScalarVector<T, 4> Up()      { return ScalarVector<T, 4>(0,1,0,0); }
+    static ScalarVector<T, 4> Down()    { return ScalarVector<T, 4>(0,-1,0,0); }
+    static ScalarVector<T, 4> Forward() { return ScalarVector<T, 4>(0,0,1,0); }
+    static ScalarVector<T, 4> Backward(){ return ScalarVector<T, 4>(0,0,-1,0); }
+};
+//----------------------------------------------------------------------------
+} //!details
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+class ScalarVector
+:   public details::ScalarVectorBase<T, _Dim>
+,   public details::ScalarVectorConstants<T, _Dim> {
+public:
+    template <typename U, size_t _Dim2>
+    friend class ScalarVectorBase;
     template <typename U, size_t _Dim2>
     friend class ScalarVector;
     template <typename U, size_t _Width, size_t _Height>
     friend class ScalarMatrix;
+
+    using details::ScalarVectorBase<T, _Dim>::ScalarVectorBase;
 
     ScalarVector();
     explicit ScalarVector(Meta::noinit_tag);
@@ -34,13 +144,6 @@ public:
     template <typename U>
     ScalarVector(U broadcast) : ScalarVector(checked_cast<T>(broadcast)) {}
     ScalarVector(std::initializer_list<T> values);
-
-    FORCE_INLINE ScalarVector(T v0, T v1);
-    FORCE_INLINE ScalarVector(T v0, T v1, T v2);
-    FORCE_INLINE ScalarVector(T v0, T v1, T v2, T v3);
-
-    ScalarVector(T extend, const ScalarVector<T, _Dim - 1>& other);
-    ScalarVector(const ScalarVector<T, _Dim - 1>& other, T extend);
 
     ScalarVector(const MemoryView<const T>& data);
 
@@ -56,16 +159,6 @@ public:
     FORCE_INLINE const T& get() const { STATIC_ASSERT(_Idx < _Dim); return _data[_Idx]; }
     template <size_t _Idx>
     FORCE_INLINE T& get() { STATIC_ASSERT(_Idx < _Dim); return _data[_Idx]; }
-
-    FORCE_INLINE const T& x() const { return get<0>(); };
-    FORCE_INLINE const T& y() const { return get<1>(); };
-    FORCE_INLINE const T& z() const { return get<2>(); };
-    FORCE_INLINE const T& w() const { return get<3>(); };
-
-    FORCE_INLINE T& x() { return get<0>(); };
-    FORCE_INLINE T& y() { return get<1>(); };
-    FORCE_INLINE T& z() { return get<2>(); };
-    FORCE_INLINE T& w() { return get<3>(); };
 
     FORCE_INLINE const T& operator [](size_t i) const;
     FORCE_INLINE T& operator [](size_t i);
@@ -86,17 +179,13 @@ public:
     DECL_SCALARVECTOR_OP_SELF_LHS(-=)
     DECL_SCALARVECTOR_OP_SELF_LHS(*=)
     DECL_SCALARVECTOR_OP_SELF_LHS(/=)
-    DECL_SCALARVECTOR_OP_SELF_LHS(^=)
-    DECL_SCALARVECTOR_OP_SELF_LHS(%=)
 
     DECL_SCALARVECTOR_OP_LHS(+)
     DECL_SCALARVECTOR_OP_LHS(-)
     DECL_SCALARVECTOR_OP_LHS(*)
     DECL_SCALARVECTOR_OP_LHS(/)
-    DECL_SCALARVECTOR_OP_LHS(^)
-    DECL_SCALARVECTOR_OP_LHS(%)
 
-    ScalarVector    operator -() const;
+    ScalarVector operator -() const;
 
 #undef DECL_SCALARVECTOR_OP_SELF_LHS
 #undef DECL_SCALARVECTOR_OP_LHS
@@ -113,7 +202,6 @@ public:
 
     friend hash_t hash_value(const ScalarVector& v) { return hash_as_pod(v._data); }
 
-    ScalarVector<T, _Dim - 1> Dehomogenize() const;
     ScalarVector<T, _Dim + 1> Extend(T value) const;
 
     FORCE_INLINE ScalarVector<T, _Dim + 1> OneExtend() const { return Extend(T(1)); }
@@ -130,53 +218,14 @@ public:
     static ScalarVector MinusOne() { return ScalarVector(T(-1)); }
     static ScalarVector One() { return ScalarVector(T(1)); }
     static ScalarVector Zero() { return ScalarVector(T(0)); }
-
     static ScalarVector MaxValue() { return ScalarVector(NumericLimits<T>::MaxValue); }
     static ScalarVector MinValue() { return ScalarVector(NumericLimits<T>::MinValue); }
-
     static ScalarVector Homogeneous() { ScalarVector r(0); r._data[_Dim - 1] = 1; return r; }
-
-    static ScalarVector X() { ScalarVector r(0); r.get<0>() = 1; return r; }
-    static ScalarVector Y() { ScalarVector r(0); r.get<1>() = 1; return r; }
-    static ScalarVector Z() { ScalarVector r(0); r.get<2>() = 1; return r; }
-    static ScalarVector W() { ScalarVector r(0); r.get<3>() = 1; return r; }
-
-    static ScalarVector Left() { STATIC_ASSERT(3 == _Dim); return ScalarVector(-1,0,0); }
-    static ScalarVector Right() { STATIC_ASSERT(3 == _Dim); return ScalarVector(1,0,0); }
-
-    static ScalarVector Up() { STATIC_ASSERT(3 == _Dim); return ScalarVector(0,1,0); }
-    static ScalarVector Down() { STATIC_ASSERT(3 == _Dim); return ScalarVector(0,-1,0); }
-
-    static ScalarVector Forward() { STATIC_ASSERT(3 == _Dim); return ScalarVector(0,0,1); }
-    static ScalarVector Backward() { STATIC_ASSERT(3 == _Dim); return ScalarVector(0,0,-1); }
-
-    template <size_t _0, size_t _1>
-    ScalarVector<T, 2> Shuffle2() const { return ScalarVector<T, 2>(get<_0>(), get<_1>()); }
-    template <size_t _0, size_t _1, size_t _2>
-    ScalarVector<T, 3> Shuffle3() const { return ScalarVector<T, 3>(get<_0>(), get<_1>(), get<_2>()); }
-    template <size_t _0, size_t _1, size_t _2, size_t _3>
-    ScalarVector<T, 4> Shuffle4() const { return ScalarVector<T, 4>(get<_0>(), get<_1>(), get<_2>(), get<_3>()); }
 
 public:
     STATIC_CONST_INTEGRAL(size_t, Dim, _Dim);
     STATIC_ASSERT(0 < _Dim);
     T _data[_Dim];
-
-public:
-    // All shuffle specializations :
-
-#define DEF_SCALARVECTOR_SHUFFLE2(_Name, _0, _1) \
-    ScalarVector<T, 2> _Name() const { return Shuffle2<_0, _1>(); }
-#define DEF_SCALARVECTOR_SHUFFLE3(_Name, _0, _1, _2) \
-    ScalarVector<T, 3> _Name() const { return Shuffle3<_0, _1, _2>(); }
-#define DEF_SCALARVECTOR_SHUFFLE4(_Name, _0, _1, _2, _3) \
-    ScalarVector<T, 4> _Name() const { return Shuffle4<_0, _1, _2, _3>(); }
-
-#   include "Core/Maths/Geometry/ScalarVector.Shuffle-inl.h"
-
-#undef DEF_SCALARVECTOR_SHUFFLE2
-#undef DEF_SCALARVECTOR_SHUFFLE3
-#undef DEF_SCALARVECTOR_SHUFFLE4
 };
 //----------------------------------------------------------------------------
 #define DECL_SCALARVECTOR_OP_RHS(_Op) \
@@ -241,3 +290,7 @@ const ScalarVector<T, _Dim> NumericLimits< ScalarVector<T, _Dim> >::Zero( Numeri
 } //!namespace Core
 
 #include "Core/Maths/Geometry/ScalarVector-inl.h"
+
+#undef FOREACH_CORE_SCALARVECTOR_SHUFFLE2
+#undef FOREACH_CORE_SCALARVECTOR_SHUFFLE3
+#undef FOREACH_CORE_SCALARVECTOR_SHUFFLE4

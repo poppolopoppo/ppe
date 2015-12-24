@@ -4,6 +4,8 @@
 
 #include "Core.RTTI/MetaType.h"
 
+#include "Core.RTTI/MetaType.Definitions-inl.h"
+
 namespace Core {
 namespace RTTI {
 FWD_REFPTR(MetaAtom);
@@ -25,10 +27,8 @@ public:
     virtual void Visit(IMetaAtomVector* pvector) = 0;
     virtual void Visit(IMetaAtomDictionary* pdictionary) = 0;
 
-#define DEF_METATYPE_SCALAR(_Name, T, _TypeId) \
-    virtual void Visit(MetaTypedAtom<T>* scalar) = 0;
-
-#include "Core.RTTI/MetaType.Definitions-inl.h"
+#define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) virtual void Visit(MetaTypedAtom<T>* scalar) = 0;
+    FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
 #undef DEF_METATYPE_SCALAR
 };
 //----------------------------------------------------------------------------
@@ -40,10 +40,8 @@ public:
     virtual void Visit(const IMetaAtomVector* pvector) = 0;
     virtual void Visit(const IMetaAtomDictionary* pdictionary) = 0;
 
-#define DEF_METATYPE_SCALAR(_Name, T, _TypeId) \
-    virtual void Visit(const MetaTypedAtom<T>* scalar) = 0;
-
-#include "Core.RTTI/MetaType.Definitions-inl.h"
+#define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) virtual void Visit(const MetaTypedAtom<T>* scalar) = 0;
+    FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
 #undef DEF_METATYPE_SCALAR
 };
 //----------------------------------------------------------------------------

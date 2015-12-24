@@ -97,6 +97,12 @@
     <CustomBuild Include="Color\Color.h">
       <Filter>Color</Filter>
     </CustomBuild>
+    <CustomBuild Include="Color\Color_extern.cpp">
+      <Filter>Color</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Color\Color_extern.h">
+      <Filter>Color</Filter>
+    </CustomBuild>
     <CustomBuild Include="Color\Color_fwd.h">
       <Filter>Color</Filter>
     </CustomBuild>
@@ -505,6 +511,12 @@
     <CustomBuild Include="Maths\Geometry\ScalarBoundingBoxHelpers.h">
       <Filter>Maths\Geometry</Filter>
     </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\ScalarBoundingBox_extern.cpp">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\ScalarBoundingBox_extern.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
     <CustomBuild Include="Maths\Geometry\ScalarBoundingBox_fwd.h">
       <Filter>Maths\Geometry</Filter>
     </CustomBuild>
@@ -512,6 +524,12 @@
       <Filter>Maths\Geometry</Filter>
     </CustomBuild>
     <CustomBuild Include="Maths\Geometry\ScalarRectangle.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\ScalarRectangle_extern.cpp">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\ScalarRectangle_extern.h">
       <Filter>Maths\Geometry</Filter>
     </CustomBuild>
     <CustomBuild Include="Maths\Geometry\ScalarRectangle_fwd.h">
@@ -533,6 +551,12 @@
       <Filter>Maths\Geometry</Filter>
     </CustomBuild>
     <CustomBuild Include="Maths\Geometry\ScalarVectorHelpers.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\ScalarVector_extern.cpp">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\ScalarVector_extern.h">
       <Filter>Maths\Geometry</Filter>
     </CustomBuild>
     <CustomBuild Include="Maths\Geometry\ScalarVector_fwd.h">
@@ -595,6 +619,12 @@
     <CustomBuild Include="Maths\SphericalHarmonics\SHVector.h">
       <Filter>Maths\SphericalHarmonics</Filter>
     </CustomBuild>
+    <CustomBuild Include="Maths\SphericalHarmonics\SHVector_extern.cpp">
+      <Filter>Maths\SphericalHarmonics</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\SphericalHarmonics\SHVector_extern.h">
+      <Filter>Maths\SphericalHarmonics</Filter>
+    </CustomBuild>
     <CustomBuild Include="Maths\SphericalHarmonics\SHVector_fwd.h">
       <Filter>Maths\SphericalHarmonics</Filter>
     </CustomBuild>
@@ -634,6 +664,12 @@
     <CustomBuild Include="Maths\Transform\ScalarMatrixHelpers.h">
       <Filter>Maths\Transform</Filter>
     </CustomBuild>
+    <CustomBuild Include="Maths\Transform\ScalarMatrix_extern.cpp">
+      <Filter>Maths\Transform</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Transform\ScalarMatrix_extern.h">
+      <Filter>Maths\Transform</Filter>
+    </CustomBuild>
     <CustomBuild Include="Maths\Transform\ScalarMatrix_fwd.h">
       <Filter>Maths\Transform</Filter>
     </CustomBuild>
@@ -644,6 +680,9 @@
       <Filter>Maths</Filter>
     </CustomBuild>
     <CustomBuild Include="Maths\Maths.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Maths_extern.h">
       <Filter>Maths</Filter>
     </CustomBuild>
     <CustomBuild Include="Maths\RandomGenerator-inl.h">
@@ -942,6 +981,8 @@
     <CustomBuild Include="Core.cpp">
     </CustomBuild>
     <CustomBuild Include="Core.h">
+    </CustomBuild>
+    <CustomBuild Include="Core_extern.h">
     </CustomBuild>
     <CustomBuild Include="stdafx.cpp">
     </CustomBuild>

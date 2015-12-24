@@ -2,8 +2,8 @@
 
 #include "Core.Graphics/Graphics.h"
 
-#include "Core/Maths/Geometry/ScalarVector_fwd.h"
-#include "Core/Maths/Transform/ScalarMatrix_fwd.h"
+#include "Core/Maths/Geometry/ScalarVector_extern.h"
+#include "Core/Maths/Transform/ScalarMatrix_extern.h"
 #include "Core/Meta/BitField.h"
 
 namespace Core {
@@ -78,8 +78,8 @@ inline hash_t hash_value(const ConstantField& field) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-struct ConstantFieldTraits { 
-    enum : bool { Enabled = false }; 
+struct ConstantFieldTraits {
+    enum : bool { Enabled = false };
     static const ConstantFieldType Type = ConstantFieldType::Unknown;
 };
 //----------------------------------------------------------------------------

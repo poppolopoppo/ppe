@@ -4,7 +4,7 @@
 
 #include "Core.Graphics/Device/Texture/Texture.h"
 
-#include "Core/Maths/Geometry/ScalarVector_fwd.h"
+#include "Core/Maths/Geometry/ScalarVector_extern.h"
 
 namespace Core {
 namespace Graphics {

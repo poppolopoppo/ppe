@@ -6,6 +6,101 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+namespace details {
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+T ScalarMatrixSquare<T, _Dim, _Dim>::Trace() const {
+    T result = 0;
+    const auto* const pself = static_cast<const ScalarMatrix<T, _Dim, _Dim>*>(this);
+    for (size_t i = 0; i < _Dim; ++i)
+        result += pself->at_(i, i);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+ScalarVector<T, _Dim> ScalarMatrixSquare<T, _Dim, _Dim>::Diagonal() const {
+    ScalarVector<T, _Dim> result(Meta::noinit_tag());
+    const auto* const pself = static_cast<const ScalarMatrix<T, _Dim, _Dim>*>(this);
+    for (size_t i = 0; i < _Dim; ++i)
+        result._data[i] = pself->at_(i, i);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+void ScalarMatrixSquare<T, _Dim, _Dim>::SetDiagonal(const ScalarVector<T, _Dim>& v) {
+    const auto* const pself = static_cast<const ScalarMatrix<T, _Dim, _Dim>*>(this);
+    for (size_t i = 0; i < _Dim; ++i)
+        pself->at_(i, i) = v._data[i];
+}
+//----------------------------------------------------------------------------
+#define DEF_SCALARMATRIX_SCALAR_COLUMN(_Width, _Alias) \
+    template <typename T, size_t _Height> \
+    FORCE_INLINE auto ScalarMatrixColumn<T, _Width, _Height>::Column_ ## _Alias() const -> column_type { \
+        return static_cast<const ScalarMatrix<T, _Width, _Height>*>(this)->Column<_Width-1>(); \
+    } \
+    template <typename T, size_t _Height> \
+    FORCE_INLINE void ScalarMatrixColumn<T, _Width, _Height>::SetColumn_ ## _Alias(const column_type& value) { \
+        static_cast<ScalarMatrix<T, _Width, _Height>*>(this)->SetColumn(_Width-1, value); \
+    }
+#define DEF_SCALARMATRIX_SCALAR_ROW(_Height, _Alias) \
+    template <typename T, size_t _Width> \
+    FORCE_INLINE auto ScalarMatrixRow<T, _Width, _Height>::Row_ ## _Alias() const -> row_type { \
+        return static_cast<const ScalarMatrix<T, _Width, _Height>*>(this)->Column<_Height-1>(); \
+    } \
+    template <typename T, size_t _Width> \
+    FORCE_INLINE void ScalarMatrixRow<T, _Width, _Height>::SetRow_ ## _Alias(const row_type& value) { \
+        static_cast<ScalarMatrix<T, _Width, _Height>*>(this)->SetRow(_Height-1, value); \
+    }
+#define DEF_SCALARMATRIX_SCALAR_COLUMN_ROW(_Dim, _Alias) \
+    DEF_SCALARMATRIX_SCALAR_COLUMN(_Dim, _Alias) \
+    DEF_SCALARMATRIX_SCALAR_ROW(_Dim, _Alias)
+DEF_SCALARMATRIX_SCALAR_COLUMN_ROW(1, x)
+DEF_SCALARMATRIX_SCALAR_COLUMN_ROW(2, y)
+DEF_SCALARMATRIX_SCALAR_COLUMN_ROW(3, z)
+DEF_SCALARMATRIX_SCALAR_COLUMN_ROW(4, w)
+#undef DEF_SCALARMATRIX_SCALAR_COLUMN_ROW
+#undef DEF_SCALARMATRIX_SCALAR_COLUMN
+#undef DEF_SCALARMATRIX_SCALAR_ROW
+//----------------------------------------------------------------------------
+#define DEF_SCALARMATRIX_SCALAR_ACCESSOR(_X, _Y, _Col, _Row) \
+    template <typename T> \
+    FORCE_INLINE T& ScalarMatrixAccessorImpl<T, _Col, _Row>::m ## _X ## _Y() { \
+        return static_cast<ScalarMatrix<T, _Col, _Row>*>(this)->_data.m[_X][_Y]; \
+    } \
+    template <typename T> \
+    FORCE_INLINE const T& ScalarMatrixAccessorImpl<T, _Col, _Row>::m ## _X ## _Y() const { \
+        return static_cast<const ScalarMatrix<T, _Col, _Row>*>(this)->_data.m[_X][_Y]; \
+    } \
+    template <typename T> \
+    FORCE_INLINE T& ScalarMatrixAccessorImpl<T, _Col, _Row>::_ ## _Col ## _Row() { \
+        return static_cast<ScalarMatrix<T, _Col, _Row>*>(this)->_data.m[_X][_Y]; \
+    } \
+    template <typename T> \
+    FORCE_INLINE const T& ScalarMatrixAccessorImpl<T, _Col, _Row>::_ ## _Col ## _Row() const { \
+        return static_cast<const ScalarMatrix<T, _Col, _Row>*>(this)->_data.m[_X][_Y]; \
+    }
+DEF_SCALARMATRIX_SCALAR_ACCESSOR(0, 0, 1, 1)
+DEF_SCALARMATRIX_SCALAR_ACCESSOR(0, 1, 1, 2)
+DEF_SCALARMATRIX_SCALAR_ACCESSOR(0, 2, 1, 3)
+DEF_SCALARMATRIX_SCALAR_ACCESSOR(0, 3, 1, 4)
+DEF_SCALARMATRIX_SCALAR_ACCESSOR(1, 0, 2, 1)
+DEF_SCALARMATRIX_SCALAR_ACCESSOR(1, 1, 2, 2)
+DEF_SCALARMATRIX_SCALAR_ACCESSOR(1, 2, 2, 3)
+DEF_SCALARMATRIX_SCALAR_ACCESSOR(1, 3, 2, 4)
+DEF_SCALARMATRIX_SCALAR_ACCESSOR(2, 0, 3, 1)
+DEF_SCALARMATRIX_SCALAR_ACCESSOR(2, 1, 3, 2)
+DEF_SCALARMATRIX_SCALAR_ACCESSOR(2, 2, 3, 3)
+DEF_SCALARMATRIX_SCALAR_ACCESSOR(2, 3, 3, 4)
+DEF_SCALARMATRIX_SCALAR_ACCESSOR(3, 0, 4, 1)
+DEF_SCALARMATRIX_SCALAR_ACCESSOR(3, 1, 4, 2)
+DEF_SCALARMATRIX_SCALAR_ACCESSOR(3, 2, 4, 3)
+DEF_SCALARMATRIX_SCALAR_ACCESSOR(3, 3, 4, 4)
+#undef DEF_SCALARMATRIX_SCALAR_ACCESSOR
+//----------------------------------------------------------------------------
+} //!details
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
 ScalarMatrix<T, _Width, _Height>::ScalarMatrix() : ScalarMatrix(0) {}
 //----------------------------------------------------------------------------
@@ -26,38 +121,14 @@ ScalarMatrix<T, _Width, _Height>::ScalarMatrix(std::initializer_list<T> values) 
     AssertRelease(values.size() == Dim);
     T *data = _data.raw;
     for (const T& it : values)
-        *(data++) == it;
+        *(data++) = it;
     Assert(&_data.raw[Dim] == data);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
-ScalarMatrix<T, _Width, _Height>::ScalarMatrix(const column_type& x) {
-    STATIC_ASSERT(1 == _Width);
-    SetColumn(0, x);
-}
-//----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
-ScalarMatrix<T, _Width, _Height>::ScalarMatrix(const column_type& x, const column_type& y) {
-    STATIC_ASSERT(2 == _Width);
-    SetColumn(0, x);
-    SetColumn(1, y);
-}
-//----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
-ScalarMatrix<T, _Width, _Height>::ScalarMatrix(const column_type& x, const column_type& y, const column_type& z) {
-    STATIC_ASSERT(3 == _Width);
-    SetColumn(0, x);
-    SetColumn(1, y);
-    SetColumn(2, z);
-}
-//----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
-ScalarMatrix<T, _Width, _Height>::ScalarMatrix(const column_type& x, const column_type& y, const column_type& z, const column_type& w) {
-    STATIC_ASSERT(4 == _Width);
-    SetColumn(0, x);
-    SetColumn(1, y);
-    SetColumn(2, z);
-    SetColumn(3, w);
+ScalarMatrix<T, _Width, _Height>::ScalarMatrix(const column_type (&columns)[_Width]) {
+    for (size_t i = 0; i < _Width; ++i)
+        SetColumn(i, columns[i]);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
@@ -99,7 +170,7 @@ template <typename T, size_t _Width, size_t _Height>
 template <size_t _Idx>
 auto ScalarMatrix<T, _Width, _Height>::Column() const -> column_type {
     STATIC_ASSERT(_Idx < _Width);
-    column_type result;
+    column_type result(Meta::noinit_tag{});
     for (size_t j = 0; j < _Height; ++j)
         result._data[j] = at_(_Idx, j);
     return result;
@@ -108,7 +179,7 @@ auto ScalarMatrix<T, _Width, _Height>::Column() const -> column_type {
 template <typename T, size_t _Width, size_t _Height>
 auto ScalarMatrix<T, _Width, _Height>::Column(size_t i) const -> column_type {
     Assert(i < _Width);
-    column_type result;
+    column_type result(Meta::noinit_tag{});
     for (size_t j = 0; j < _Height; ++j)
         result._data[j] = at_(i, j);
     return result;
@@ -125,7 +196,7 @@ template <typename T, size_t _Width, size_t _Height>
 template <size_t _Idx>
 auto ScalarMatrix<T, _Width, _Height>::Row() const -> row_type {
     STATIC_ASSERT(_Idx < _Height);
-    row_type result;
+    row_type result(Meta::noinit_tag{});
     for (size_t i = 0; i < _Width; ++i)
         result._data[i] = at_(i, _Idx);
     return result;
@@ -134,7 +205,7 @@ auto ScalarMatrix<T, _Width, _Height>::Row() const -> row_type {
 template <typename T, size_t _Width, size_t _Height>
 auto ScalarMatrix<T, _Width, _Height>::Row(size_t j) const -> row_type {
     Assert(j < _Height);
-    row_type result;
+    row_type result(Meta::noinit_tag{});
     for (size_t i = 0; i < _Width; ++i)
         result._data[i] = at_(i, j);
     return result;
@@ -148,22 +219,6 @@ void ScalarMatrix<T, _Width, _Height>::SetRow(size_t j, const row_type& v) {
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
-ScalarVector<T, _Width> ScalarMatrix<T, _Width, _Height>::Diagonal() const {
-    STATIC_ASSERT(_Width == _Height);
-    ScalarVector<T, _Width> result;
-    for (size_t i = 0; i < _Width; ++i)
-        result._data[i] = at_(i, i);
-    return result;
-}
-//----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
-void ScalarMatrix<T, _Width, _Height>::SetDiagonal(const ScalarVector<T, _Width>& v) {
-    STATIC_ASSERT(_Width == _Height);
-    for (size_t i = 0; i < _Width; ++i)
-        at_(i, i) = v._data[i];
-}
-//----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
 void ScalarMatrix<T, _Width, _Height>::SetBroadcast(T broadcast) {
     for (size_t i = 0; i < Dim; ++i)
         _data.raw[i] = broadcast;
@@ -174,7 +229,7 @@ template <size_t _Idx>
 ScalarVector<T, 3> ScalarMatrix<T, _Width, _Height>::Axis() const {
     STATIC_ASSERT(_Idx < _Width);
     STATIC_ASSERT(3 <= _Height);
-    ScalarVector<T, 3> result;
+    ScalarVector<T, 3> result(Meta::noinit_tag{});
     for (size_t j = 0; j < 3; ++j)
         result._data[j] = at_(_Idx, j);
     return result;
@@ -230,10 +285,9 @@ bool ScalarMatrix<T, _Width, _Height>::operator ==(const ScalarMatrix& other) co
 template <typename T, size_t _Width, size_t _Height>
 template <size_t _NWidth>
 ScalarMatrix<T, _NWidth, _Height> ScalarMatrix<T, _Width, _Height>::Multiply(const ScalarMatrix<T, _NWidth, _Width>& other) const {
-    ScalarMatrix<T, _NWidth, _Height> result;
+    ScalarMatrix<T, _NWidth, _Height> result(Meta::noinit_tag{});
     for (size_t i = 0; i < _NWidth; ++i)
-        for (size_t j = 0; j < _Height; ++j)
-        {
+        for (size_t j = 0; j < _Height; ++j) {
             T val = 0;
             for (size_t k = 0; k < _Width; ++k)
                 val += at_(j, k) * other.at_(k, i);
@@ -244,10 +298,9 @@ ScalarMatrix<T, _NWidth, _Height> ScalarMatrix<T, _Width, _Height>::Multiply(con
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
 ScalarVector<T, _Height> ScalarMatrix<T, _Width, _Height>::Multiply(const ScalarVector<T, _Width>& v) const {
-    ScalarVector<T, _Height> result;
+    ScalarVector<T, _Height> result(Meta::noinit_tag{});
     for (size_t j = 0; j < _Height; ++j) {
-        T& x = result._data[j];
-        x = 0;
+        T& x = result._data[j] = 0;
         for (size_t i = 0; i < _Width; ++i)
             x += v._data[i] * at_(j, i);
     }
@@ -255,17 +308,33 @@ ScalarVector<T, _Height> ScalarMatrix<T, _Width, _Height>::Multiply(const Scalar
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
-T ScalarMatrix<T, _Width, _Height>::Trace() const {
-    STATIC_ASSERT(_Width == _Height);
-    T result = 0;
-    for (size_t i = 0; i < _Width; ++i)
-        result += at_(i, i);
+ScalarVector<T, _Height> ScalarMatrix<T, _Width, _Height>::Multiply_OneExtend(const ScalarVector<T, _Width - 1>& v) const {
+    STATIC_ASSERT(_Width > 1);
+    ScalarVector<T, _Height> result(Meta::noinit_tag{});
+    for (size_t j = 0; j < _Height; ++j) {
+        T& x = result._data[j] = 0;
+        for (size_t i = 0; i < _Width-1; ++i)
+            x += v._data[i] * at_(j, i);
+    }
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Width, size_t _Height>
+ScalarVector<T, _Height-1> ScalarMatrix<T, _Width, _Height>::Multiply_ZeroExtend(const ScalarVector<T, _Width - 1>& v) const {
+    STATIC_ASSERT(_Height-1 <= _Width);
+    //STATIC_ASSERT(_Width == _Height);
+    ScalarVector<T, _Height-1> result(Meta::noinit_tag{});
+    for (size_t j = 0; j < _Height-1; ++j) {
+        T& x = result._data[j] = 0;
+        for (size_t i = 0; i < _Width-1; ++i)
+            x += v._data[i] * at_(j, i);
+    }
     return result;
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
 ScalarMatrix<T, _Height, _Width> ScalarMatrix<T, _Width, _Height>::Transpose() const {
-    ScalarMatrix<T, _Height, _Width> result;
+    ScalarMatrix<T, _Height, _Width> result(Meta::noinit_tag{});
     for (size_t row = 0; row < _Height; ++row)
         for (size_t col = 0; col < _Width; ++col)
             result.at_(row, col) = at_(col, row);
@@ -283,7 +352,7 @@ void ScalarMatrix<T, _Width, _Height>::Swap(ScalarMatrix& other) {
 template <typename T, size_t _Width, size_t _Height>
 template <typename U>
 ScalarMatrix<U, _Width, _Height> ScalarMatrix<T, _Width, _Height>::Cast() const {
-    ScalarMatrix<U, _Width, _Height> result;
+    ScalarMatrix<U, _Width, _Height> result(Meta::noinit_tag{});
     for (size_t i = 0; i < Dim; ++i)
         result._data.raw[i] = static_cast<U>(_data.raw[i]);
     return result;
@@ -294,7 +363,7 @@ template <size_t _NWidth, size_t _NHeight>
 ScalarMatrix<T, _NWidth, _NHeight> ScalarMatrix<T, _Width, _Height>::Crop() const {
     STATIC_ASSERT(_NWidth <= _Width);
     STATIC_ASSERT(_NHeight <= _Height);
-    ScalarMatrix<T, _NWidth, _NHeight> result;
+    ScalarMatrix<T, _NWidth, _NHeight> result(Meta::noinit_tag{});
     for (size_t col = 0; col < _NWidth; ++col)
         for (size_t row = 0; row < _NHeight; ++row)
             result.at_(col, row) = at_(col, row);
@@ -303,7 +372,7 @@ ScalarMatrix<T, _NWidth, _NHeight> ScalarMatrix<T, _Width, _Height>::Crop() cons
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
 ScalarMatrix<T, _Width, _Height> ScalarMatrix<T, _Width, _Height>::Identity() {
-    ScalarMatrix result;
+    ScalarMatrix result(Meta::noinit_tag{});
     for (size_t col = 0; col < _Width; ++col)
         for (size_t row = 0; row < _Height; ++row)
             result.at_(col, row) = (col == row) ? T(1) : T(0);
@@ -314,7 +383,7 @@ ScalarMatrix<T, _Width, _Height> ScalarMatrix<T, _Width, _Height>::Identity() {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
 auto ScalarMatrix<T, _Width, _Height>::operator -() const -> ScalarMatrix {
-    ScalarMatrix result;
+    ScalarMatrix result(Meta::noinit_tag{});
     for (size_t i = 0; i < Dim; ++i)
         result._data.raw[i] = -_data.raw[i];
     return result;
@@ -324,17 +393,19 @@ template <typename T, size_t _Width, size_t _Height>
 auto ScalarMatrix<T, _Width, _Height>::operator +=(const ScalarMatrix& other) -> ScalarMatrix& {
     for (size_t i = 0; i < Dim; ++i)
         _data.raw[i] += other._data.raw[i];
+    return *this;
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
 auto ScalarMatrix<T, _Width, _Height>::operator -=(const ScalarMatrix& other) -> ScalarMatrix& {
     for (size_t i = 0; i < Dim; ++i)
         _data.raw[i] -= other._data.raw[i];
+    return *this;
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
 auto ScalarMatrix<T, _Width, _Height>::operator +(const ScalarMatrix& other) const -> ScalarMatrix {
-    ScalarMatrix result;
+    ScalarMatrix result(Meta::noinit_tag{});
     for (size_t i = 0; i < Dim; ++i)
         result._data.raw[i] = _data.raw[i] + other._data.raw[i];
     return result;
@@ -342,7 +413,7 @@ auto ScalarMatrix<T, _Width, _Height>::operator +(const ScalarMatrix& other) con
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
 auto ScalarMatrix<T, _Width, _Height>::operator -(const ScalarMatrix& other) const -> ScalarMatrix {
-    ScalarMatrix result;
+    ScalarMatrix result(Meta::noinit_tag{});
     for (size_t i = 0; i < Dim; ++i)
         result._data.raw[i] = _data.raw[i] - other._data.raw[i];
     return result;
@@ -359,7 +430,7 @@ auto ScalarMatrix<T, _Width, _Height>::operator -(const ScalarMatrix& other) con
     } \
     template <typename T, size_t _Width, size_t _Height> \
     auto ScalarMatrix<T, _Width, _Height>::operator _Op(T scalar) const -> ScalarMatrix { \
-        ScalarMatrix result; \
+        ScalarMatrix result(Meta::noinit_tag{}); \
         for (size_t i = 0; i < Dim; ++i) \
             result._data.raw[i] = _data.raw[i] _Op scalar; \
         return *this; \
@@ -369,8 +440,6 @@ DEF_SCALARMATRIX_SCALAR_OP_LHS(+)
 DEF_SCALARMATRIX_SCALAR_OP_LHS(-)
 DEF_SCALARMATRIX_SCALAR_OP_LHS(*)
 DEF_SCALARMATRIX_SCALAR_OP_LHS(/)
-DEF_SCALARMATRIX_SCALAR_OP_LHS(^)
-DEF_SCALARMATRIX_SCALAR_OP_LHS(%)
 //----------------------------------------------------------------------------
 #undef DEF_SCALARMATRIX_SCALAR_OP_LHS
 //----------------------------------------------------------------------------

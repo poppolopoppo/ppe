@@ -1,19 +1,16 @@
-#pragma once
+#include "stdafx.h"
 
-#include "Core/Core.h"
+#include "SHVector.h"
+#include "SHVector_extern.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
-class ScalarRectangle;
-//----------------------------------------------------------------------------
-typedef ScalarRectangle<float, 2> RectangleF;
-typedef ScalarRectangle<int, 2> RectangleI;
-//----------------------------------------------------------------------------
-typedef ScalarRectangle<float, 3> ViewportF;
-typedef ScalarRectangle<int, 3> ViewportI;
+template class SHVector<1>;
+template class SHVector<2>;
+template class SHVector<3>;
+template class SHVector<4>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

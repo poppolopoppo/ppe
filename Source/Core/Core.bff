@@ -4,6 +4,12 @@
     .ProjectPath = '$SourceDiretory$/Core'
     .ProjectIsolatedFiles =
     {
+        'Color/Color_extern.cpp',
+        'Maths/Geometry/ScalarBoundingBox_extern.cpp',
+        'Maths/Geometry/ScalarRectangle_extern.cpp',
+        'Maths/Geometry/ScalarVector_extern.cpp',
+        'Maths/SphericalHarmonics/SHVector_extern.cpp',
+        'Maths/Transform/ScalarMatrix_extern.cpp',
         'External/farmhash.cpp',
         'External/lz4.cpp',
         'External/lz4hc.cpp',

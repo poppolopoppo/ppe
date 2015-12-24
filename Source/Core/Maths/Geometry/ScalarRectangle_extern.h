@@ -2,18 +2,17 @@
 
 #include "Core/Core.h"
 
+#include "Core/Maths/Geometry/ScalarRectangle_fwd.h"
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
-class ScalarRectangle;
+extern template class ScalarRectangle<float, 2>;
+extern template class ScalarRectangle<int, 2>;
 //----------------------------------------------------------------------------
-typedef ScalarRectangle<float, 2> RectangleF;
-typedef ScalarRectangle<int, 2> RectangleI;
-//----------------------------------------------------------------------------
-typedef ScalarRectangle<float, 3> ViewportF;
-typedef ScalarRectangle<int, 3> ViewportI;
+extern template class ScalarRectangle<float, 3>;
+extern template class ScalarRectangle<int, 3>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -2,18 +2,16 @@
 
 #include "Core/Core.h"
 
+#include "Core/Maths/SphericalHarmonics/SHVector_fwd.h"
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
-class ScalarRectangle;
-//----------------------------------------------------------------------------
-typedef ScalarRectangle<float, 2> RectangleF;
-typedef ScalarRectangle<int, 2> RectangleI;
-//----------------------------------------------------------------------------
-typedef ScalarRectangle<float, 3> ViewportF;
-typedef ScalarRectangle<int, 3> ViewportI;
+extern template class SHVector<1>;
+extern template class SHVector<2>;
+extern template class SHVector<3>;
+extern template class SHVector<4>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

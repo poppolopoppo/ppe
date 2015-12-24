@@ -20,11 +20,11 @@ public:
     ContentImporterContext( ILogger* logger,
                             const Dirname& intermediateDirectory,
                             const Dirname& outputDirectory );
+    ~ContentImporterContext();
 
+    ILogger* Logger() const { return _logger; }
     const Dirname& IntermediateDirectory() const { return _intermediateDirectory; }
     const Dirname& OutputDirectory() const { return _outputDirectory; }
-
-    
 
     void AddDependency(const Filename& fileanme);
 
@@ -41,14 +41,14 @@ public:
     virtual const ContentImporterDescriptor* Descriptor() const = 0;
 };
 //----------------------------------------------------------------------------
-template <typename _Import>
+template <typename T>
 class ContentImporter : public IContentImporter {
 public:
-    typedef _Import import_type;
+    typedef T import_type;
 
     virtual ~ContentImporter() {}
 
-    virtual bool Import(const ContentImporterContext& ctx, const Filename& filename, import_type* presult) = 0;
+    virtual bool Import(const ContentImporterContext& ctx, const Filename& filename, ) = 0;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

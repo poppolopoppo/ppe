@@ -10,15 +10,13 @@
 #include "Core.RTTI/MetaClass.h"
 #include "Core.RTTI/MetaClassDatabase.h"
 #include "Core.RTTI/MetaClassName.h"
+#include "Core.RTTI/MetaClassSingleton.h"
 #include "Core.RTTI/MetaObject.h"
 #include "Core.RTTI/MetaObjectName.h"
 #include "Core.RTTI/MetaProperty.h"
 #include "Core.RTTI/MetaPropertyName.h"
 
 #include "Core.RTTI/RTTI_extern.h"
-
-#include "Core/Memory/SegregatedMemoryPool.h"
-#include "Core/Meta/Singleton.h"
 
 #include <type_traits>
 
@@ -104,41 +102,3 @@
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-
-namespace Core {
-namespace RTTI {
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename T>
-class MetaClassSingleton : Meta::Singleton<typename T::MetaClass, typename T::MetaClass> {
-    typedef Meta::Singleton<typename T::MetaClass, typename T::MetaClass> parent_type;
-public:
-    using parent_type::HasInstance;
-    using parent_type::Instance;
-
-    static void Create() {
-        parent_type::Create();
-        parent_type::Instance().Register(MetaClassDatabase::Instance());
-    }
-
-    static void Destroy() {
-        parent_type::Instance().Unregister(MetaClassDatabase::Instance());
-        parent_type::Destroy();
-    }
-};
-//----------------------------------------------------------------------------
-template <typename T> // valid RTTI parent
-static const RTTI::MetaClass *GetMetaClass(typename std::enable_if< std::is_base_of<RTTI::MetaObject, T>::value >::type* = 0) {
-    return &MetaClassSingleton<T>::Instance();
-}
-//----------------------------------------------------------------------------
-template <typename T> // no parent
-static const RTTI::MetaClass *GetMetaClass(typename std::enable_if< std::is_void<T>::value >::type* = 0) {
-    return nullptr;
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-} //!namespace RTTI
-} //!namespace Core

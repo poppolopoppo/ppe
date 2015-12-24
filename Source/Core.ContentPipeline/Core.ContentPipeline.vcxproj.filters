@@ -1,6 +1,10 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <CustomBuild Include="ContentIdentity.cpp">
+    </CustomBuild>
+    <CustomBuild Include="ContentIdentity.h">
+    </CustomBuild>
     <CustomBuild Include="ContentImporter.h">
     </CustomBuild>
     <CustomBuild Include="ContentPipeline.cpp">
@@ -11,7 +15,19 @@
     </CustomBuild>
     <CustomBuild Include="Core.ContentPipeline.bff">
     </CustomBuild>
+    <CustomBuild Include="DependencyList.cpp">
+    </CustomBuild>
+    <CustomBuild Include="DependencyList.h">
+    </CustomBuild>
     <CustomBuild Include="Exceptions.h">
+    </CustomBuild>
+    <CustomBuild Include="FileIdentity.cpp">
+    </CustomBuild>
+    <CustomBuild Include="FileIdentity.h">
+    </CustomBuild>
+    <CustomBuild Include="FileIdentityCache.cpp">
+    </CustomBuild>
+    <CustomBuild Include="FileIdentityCache.h">
     </CustomBuild>
     <CustomBuild Include="stdafx.cpp">
     </CustomBuild>
@@ -19,15 +35,5 @@
     </CustomBuild>
     <CustomBuild Include="targetver.h">
     </CustomBuild>
-    <CustomBuild Include="FileIdentity.cpp" />
-    <CustomBuild Include="FileIdentity.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="FileIdentityCache.h" />
-    <ClInclude Include="DependencyList.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="FileIdentityCache.cpp" />
-    <ClCompile Include="DependencyList.cpp" />
   </ItemGroup>
 </Project>

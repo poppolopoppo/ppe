@@ -1,19 +1,17 @@
-#pragma once
+#include "stdafx.h"
 
-#include "Core/Core.h"
+#include "ScalarRectangle.h"
+#include "ScalarRectangle_extern.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
-class ScalarRectangle;
+template class ScalarRectangle<float, 2>;
+template class ScalarRectangle<int, 2>;
 //----------------------------------------------------------------------------
-typedef ScalarRectangle<float, 2> RectangleF;
-typedef ScalarRectangle<int, 2> RectangleI;
-//----------------------------------------------------------------------------
-typedef ScalarRectangle<float, 3> ViewportF;
-typedef ScalarRectangle<int, 3> ViewportI;
+template class ScalarRectangle<float, 3>;
+template class ScalarRectangle<int, 3>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

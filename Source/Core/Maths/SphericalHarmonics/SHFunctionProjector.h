@@ -11,6 +11,9 @@ class SHSampleCollection;
 // Spherical Harmonic Lighting: The Gritty Details
 // http://www.research.scea.com/gdc2003/spherical-harmonic-lighting.html
 
+// Spherical Harmonics Examples
+// https://www.shadertoy.com/view/Xds3Rl
+
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -2,8 +2,8 @@
 
 #include "Core.Graphics/DirectX11/DX11Includes.h"
 
-#include "Core/Maths/Geometry/ScalarVector_fwd.h"
-#include "Core/Maths/Geometry/ScalarRectangle_fwd.h"
+#include "Core/Maths/Geometry/ScalarVector_extern.h"
+#include "Core/Maths/Geometry/ScalarRectangle_extern.h"
 
 namespace Core {
 namespace Graphics {

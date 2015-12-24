@@ -79,6 +79,8 @@
     <CustomBuild Include="Color\Color-inl.h" />
     <CustomBuild Include="Color\Color.cpp" />
     <CustomBuild Include="Color\Color.h" />
+    <CustomBuild Include="Color\Color_extern.cpp" />
+    <CustomBuild Include="Color\Color_extern.h" />
     <CustomBuild Include="Color\Color_fwd.h" />
     <CustomBuild Include="Container\AssociativeVector-inl.h" />
     <CustomBuild Include="Container\AssociativeVector.h" />
@@ -215,9 +217,13 @@
     <CustomBuild Include="Maths\Geometry\ScalarBoundingBox.Shuffle-inl.h" />
     <CustomBuild Include="Maths\Geometry\ScalarBoundingBoxHelpers-inl.h" />
     <CustomBuild Include="Maths\Geometry\ScalarBoundingBoxHelpers.h" />
+    <CustomBuild Include="Maths\Geometry\ScalarBoundingBox_extern.cpp" />
+    <CustomBuild Include="Maths\Geometry\ScalarBoundingBox_extern.h" />
     <CustomBuild Include="Maths\Geometry\ScalarBoundingBox_fwd.h" />
     <CustomBuild Include="Maths\Geometry\ScalarRectangle-inl.h" />
     <CustomBuild Include="Maths\Geometry\ScalarRectangle.h" />
+    <CustomBuild Include="Maths\Geometry\ScalarRectangle_extern.cpp" />
+    <CustomBuild Include="Maths\Geometry\ScalarRectangle_extern.h" />
     <CustomBuild Include="Maths\Geometry\ScalarRectangle_fwd.h" />
     <CustomBuild Include="Maths\Geometry\ScalarVector-inl.h" />
     <CustomBuild Include="Maths\Geometry\ScalarVector.cpp" />
@@ -225,6 +231,8 @@
     <CustomBuild Include="Maths\Geometry\ScalarVector.Shuffle-inl.h" />
     <CustomBuild Include="Maths\Geometry\ScalarVectorHelpers-inl.h" />
     <CustomBuild Include="Maths\Geometry\ScalarVectorHelpers.h" />
+    <CustomBuild Include="Maths\Geometry\ScalarVector_extern.cpp" />
+    <CustomBuild Include="Maths\Geometry\ScalarVector_extern.h" />
     <CustomBuild Include="Maths\Geometry\ScalarVector_fwd.h" />
     <CustomBuild Include="Maths\Geometry\Sphere-inl.h" />
     <CustomBuild Include="Maths\Geometry\Sphere.cpp" />
@@ -245,6 +253,8 @@
     <CustomBuild Include="Maths\SphericalHarmonics\SHSampleCollection.h" />
     <CustomBuild Include="Maths\SphericalHarmonics\SHVector-inl.h" />
     <CustomBuild Include="Maths\SphericalHarmonics\SHVector.h" />
+    <CustomBuild Include="Maths\SphericalHarmonics\SHVector_extern.cpp" />
+    <CustomBuild Include="Maths\SphericalHarmonics\SHVector_extern.h" />
     <CustomBuild Include="Maths\SphericalHarmonics\SHVector_fwd.h" />
     <CustomBuild Include="Maths\Transform\AffineTransform.cpp" />
     <CustomBuild Include="Maths\Transform\AffineTransform.h" />
@@ -258,10 +268,13 @@
     <CustomBuild Include="Maths\Transform\ScalarMatrix.h" />
     <CustomBuild Include="Maths\Transform\ScalarMatrixHelpers-inl.h" />
     <CustomBuild Include="Maths\Transform\ScalarMatrixHelpers.h" />
+    <CustomBuild Include="Maths\Transform\ScalarMatrix_extern.cpp" />
+    <CustomBuild Include="Maths\Transform\ScalarMatrix_extern.h" />
     <CustomBuild Include="Maths\Transform\ScalarMatrix_fwd.h" />
     <CustomBuild Include="Maths\MathHelpers-inl.h" />
     <CustomBuild Include="Maths\MathHelpers.h" />
     <CustomBuild Include="Maths\Maths.h" />
+    <CustomBuild Include="Maths\Maths_extern.h" />
     <CustomBuild Include="Maths\RandomGenerator-inl.h" />
     <CustomBuild Include="Maths\RandomGenerator.cpp" />
     <CustomBuild Include="Maths\RandomGenerator.h" />
@@ -362,6 +375,7 @@
     <CustomBuild Include="Core.bff" />
     <CustomBuild Include="Core.cpp" />
     <CustomBuild Include="Core.h" />
+    <CustomBuild Include="Core_extern.h" />
     <CustomBuild Include="stdafx.cpp" />
     <CustomBuild Include="stdafx.h" />
     <CustomBuild Include="targetver.h" />

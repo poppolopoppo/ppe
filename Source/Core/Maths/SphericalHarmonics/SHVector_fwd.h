@@ -14,10 +14,10 @@ using SHCoefficient = ScalarVector<SHScalar, _Dim>;
 template <size_t _Dim>
 class SHVector;
 //----------------------------------------------------------------------------
-using SHVector1 = SHVector<1>;
-using SHVector2 = SHVector<2>;
-using SHVector3 = SHVector<3>;
-using SHVector4 = SHVector<4>;
+typedef SHVector<1> SHVector1;
+typedef SHVector<2> SHVector2;
+typedef SHVector<3> SHVector3;
+typedef SHVector<4> SHVector4;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

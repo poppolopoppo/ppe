@@ -1,19 +1,21 @@
-#pragma once
+#include "stdafx.h"
 
-#include "Core/Core.h"
+#include "Color.h"
+
+#include "Color_extern.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
-class ScalarRectangle;
+template class BasicColor< UNorm<u8>, ColorShuffleBGRA >;
+template class BasicColor< UNorm<u8>, ColorShuffleRGBA >;
 //----------------------------------------------------------------------------
-typedef ScalarRectangle<float, 2> RectangleF;
-typedef ScalarRectangle<int, 2> RectangleI;
+template class BasicColor< UNorm<u16>, ColorShuffleBGRA >;
+template class BasicColor< UNorm<u16>, ColorShuffleRGBA >;
 //----------------------------------------------------------------------------
-typedef ScalarRectangle<float, 3> ViewportF;
-typedef ScalarRectangle<int, 3> ViewportI;
+template class BasicColor< float, ColorShuffleBGRA >;
+template class BasicColor< float, ColorShuffleRGBA >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

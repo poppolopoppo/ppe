@@ -62,6 +62,7 @@
     <CustomBuild Include="MetaClassDatabase.h" />
     <CustomBuild Include="MetaClassName.cpp" />
     <CustomBuild Include="MetaClassName.h" />
+    <CustomBuild Include="MetaClassSingleton.h" />
     <CustomBuild Include="MetaObject.cpp" />
     <CustomBuild Include="MetaObject.h" />
     <CustomBuild Include="MetaObjectHelpers.cpp" />

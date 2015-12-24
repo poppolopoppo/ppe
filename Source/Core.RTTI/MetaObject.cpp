@@ -4,9 +4,9 @@
 
 #include "MetaAtom.h"
 #include "MetaClass.h"
+#include "MetaClassDatabase.h"
+#include "MetaClassSingleton.h"
 #include "MetaProperty.h"
-
-#include "RTTIMacros-impl.h"
 
 #include "Core/Container/Hash.h"
 #include "Core/Container/HashMap.h"
@@ -20,8 +20,33 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-RTTI_CLASS_BEGIN(MetaObject, Abstract)
-RTTI_CLASS_END()
+MetaObject::MetaClass::MetaClass()
+:   RTTI::MetaClass("MetaObject", RTTI::MetaClass::Abstract, nullptr)
+{}
+//----------------------------------------------------------------------------
+MetaObject::MetaClass::~MetaClass() {}
+//----------------------------------------------------------------------------
+void MetaObject::MetaClass::Create() {
+    Core::RTTI::MetaClassSingleton< MetaObject >::Create();
+}
+//----------------------------------------------------------------------------
+void MetaObject::MetaClass::Destroy() {
+    Core::RTTI::MetaClassSingleton< MetaObject >::Destroy();
+}
+//----------------------------------------------------------------------------
+bool MetaObject::MetaClass::HasInstance() {
+    return Core::RTTI::MetaClassSingleton< MetaObject >::HasInstance();
+}
+//----------------------------------------------------------------------------
+const MetaObject::MetaClass *MetaObject::MetaClass::Instance() {
+    return &Core::RTTI::MetaClassSingleton< MetaObject >::Instance();
+}
+//----------------------------------------------------------------------------
+Core::RTTI::MetaObject *MetaObject::MetaClass::VirtualCreateInstance() const {
+    return new MetaObject();
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 MetaObject::MetaObject()
 :   _state(None) {}

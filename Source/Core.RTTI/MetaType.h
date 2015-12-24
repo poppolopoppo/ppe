@@ -20,6 +20,8 @@
 
 #define CORE_RTTI_METATYPE_NAME_CAPACITY 128
 
+#include "Core.RTTI/MetaType.Definitions-inl.h"
+
 #pragma warning( push )
 // TODO: see constexpr hash_MetaTypeId_constexpr(), is it dangerous ?
 #pragma warning( disable : 4307 ) // C4100 'XXX': dépassement de constante intégrale
@@ -49,7 +51,7 @@ struct MetaType {
     static const char *Name() = delete;
     static T DefaultValue() = delete;
     static bool IsDefaultValue(const T& value) = delete;
-    static size_t HashValue(const T& value) = delete;
+    static hash_t HashValue(const T& value) = delete;
 };
 //----------------------------------------------------------------------------
 template <typename... _Args>
@@ -76,7 +78,7 @@ using Dictionary = Core::AssociativeVector<
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define DEF_METATYPE_SCALAR(_Name, T, _TypeId) \
+#define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
     template <> struct MetaType< T > { \
         enum : MetaTypeId { TypeId = _TypeId }; \
         static MetaTypeId Id(); \
@@ -84,10 +86,10 @@ using Dictionary = Core::AssociativeVector<
         static const char *Name(); \
         static T DefaultValue(); \
         static bool IsDefaultValue(const T& value); \
-        static size_t HashValue(const T& value); \
+        static hash_t HashValue(const T& value); \
     };
 //----------------------------------------------------------------------------
-#include "Core.RTTI/MetaType.Definitions-inl.h"
+FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
 //----------------------------------------------------------------------------
 #undef DEF_METATYPE_SCALAR
 //----------------------------------------------------------------------------
@@ -122,8 +124,8 @@ struct MetaType< RTTI::Pair<_First, _Second> > {
                 second_meta_type::IsDefaultValue(pair.second);
     }
 
-    static size_t HashValue(const RTTI::Pair<_First, _Second>& pair) {
-        return hash_tuple(MetaTypeId(TypeId), first_meta_type::HashValue(pair.first), first_meta_type::HashValue(pair.second));
+    static hash_t HashValue(const RTTI::Pair<_First, _Second>& pair) {
+        return hash_tuple(hash_t(TypeId), first_meta_type::HashValue(pair.first), first_meta_type::HashValue(pair.second));
     }
 };
 //----------------------------------------------------------------------------
@@ -151,6 +153,13 @@ struct MetaType< RTTI::Vector<T> > {
     static bool IsDefaultValue(const RTTI::Vector<T>& vector)  {
         return vector.empty();
     }
+
+    static hash_t HashValue(const RTTI::Vector<T>& vector) {
+        hash_t result = hash_t(TypeId);
+        for (const T& value : vector)
+            hash_combine(result, value_meta_type::HashValue(value));
+        return result;
+    }
 };
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
@@ -177,6 +186,13 @@ struct MetaType< RTTI::Dictionary<_Key, _Value> > {
 
     static bool IsDefaultValue(const RTTI::Dictionary<_Key, _Value>& dico)  {
         return dico.empty();
+    }
+
+    static hash_t HashValue(const RTTI::Dictionary<_Key, _Value>& dico) {
+        hash_t result = hash_t(TypeId);
+        for (const auto& it : dico)
+            result = hash_tuple(result, key_meta_type::HashValue(it.first), key_meta_type::HashValue(it.second));
+        return result;
     }
 };
 //----------------------------------------------------------------------------

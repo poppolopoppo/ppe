@@ -6,7 +6,9 @@
 #pragma once
 
 #include "targetver.h"
+
 #include "Core/stdafx.h"
+#include "Core/Core_extern.h"
 
 #include "Core.RTTI/RTTI.h"
 

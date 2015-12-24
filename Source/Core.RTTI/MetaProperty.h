@@ -182,7 +182,7 @@ public:
 
 };
 //----------------------------------------------------------------------------
-template <typename _Class, typename T>
+template <typename T, typename _Class>
 MetaWrappedProperty<T, MetaFieldAccessor<T> > *MakeProperty(
     const MetaPropertyName& name, MetaProperty::Flags attributes, T _Class::* field) {
     return new MetaWrappedProperty<T, MetaFieldAccessor<T> >(

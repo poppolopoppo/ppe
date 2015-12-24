@@ -10,6 +10,7 @@
 #include "Core/stdafx.h"
 
 #include "Core/Core.h"
+#include "Core/Core_extern.h"
 
 #include "Core/Allocator/Allocation.h"
 #include "Core/Allocator/PoolAllocator.h"

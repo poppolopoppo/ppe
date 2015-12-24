@@ -6,6 +6,99 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+namespace details {
+//----------------------------------------------------------------------------
+template <typename T, _Impl>
+template <size_t _0, size_t _1>
+ScalarBoundingBox<T, 2> ScalarBoundingBoxBase<T, 2, _Impl>::Shuffle2() const {
+    const auto* const pself = static_cast<const _Impl*>(this);
+    return ScalarBoundingBox<T, 2>(pself->_min.Shuffle2<_0, _1>(), pself->_max.Shuffle2<_0, _1>());
+}
+//----------------------------------------------------------------------------
+template <typename T, _Impl>
+template <size_t _0, size_t _1, size_t _2>
+ScalarBoundingBox<T, 3> ScalarBoundingBoxBase<T, 3, _Impl>::Shuffle3() const {
+    const auto* const pself = static_cast<const _Impl*>(this);
+    return ScalarBoundingBox<T, 3>(pself->_min.Shuffle3<_0, _1, _2>(), pself->_max.Shuffle3<_0, _1, _2>());
+}
+//----------------------------------------------------------------------------
+template <typename T, _Impl>
+template <size_t _0, size_t _1, size_t _2, size_t _2>
+ScalarBoundingBox<T, 4> ScalarBoundingBoxBase<T, 4, _Impl>::Shuffle4() const {
+    const auto* const pself = static_cast<const _Impl*>(this);
+    return ScalarBoundingBox<T, 4>(pself->_min.Shuffle4<_0, _1, _2, _3>(), pself->_max.Shuffle4<_0, _1, _2, _3>());
+}
+//----------------------------------------------------------------------------
+} //!details
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace details {
+//----------------------------------------------------------------------------
+template <typename T>
+void ScalarBoundingBoxCorners<T, 2>::GetCorners(ScalarVector<T, 2> (&points)[2]) const {
+    const auto* const pself = static_cast<const ScalarBoundingBox<T, 2>*>(this);
+
+    points[0].x() = pself->_min.x();
+    points[1].x() = pself->_max.x();
+}
+template <typename T>
+void ScalarBoundingBoxCorners<T, 3>::GetCorners(ScalarVector<T, 3> (&points)[4]) const {
+    const auto* const pself = static_cast<const ScalarBoundingBox<T, 3>*>(this);
+
+    points[0].x() = pself->_min.x();
+    points[0].y() = pself->_min.y();
+
+    points[1].x() = pself->_max.x();
+    points[1].y() = pself->_min.y();
+
+    points[2].x() = pself->_max.x();
+    points[2].y() = pself->_max.y();
+
+    points[3].x() = pself->_min.x();
+    points[3].y() = pself->_max.y();
+}
+template <typename T>
+void ScalarBoundingBoxCorners<T, 4>::GetCorners(ScalarVector<T, 4> (&points)[8]) const {
+    const auto* const pself = static_cast<const ScalarBoundingBox<T, 4>*>(this);
+
+    points[0].x() = pself->_min.x();
+    points[0].y() = pself->_min.y();
+    points[0].z() = pself->_min.z();
+
+    points[1].x() = pself->_min.x();
+    points[1].y() = pself->_min.y();
+    points[1].z() = pself->_max.z();
+
+    points[2].x() = pself->_min.x();
+    points[2].y() = pself->_max.y();
+    points[2].z() = pself->_max.z();
+
+    points[3].x() = pself->_min.x();
+    points[3].y() = pself->_max.y();
+    points[3].z() = pself->_min.z();
+
+    points[4].x() = pself->_max.x();
+    points[4].y() = pself->_min.y();
+    points[4].z() = pself->_max.z();
+
+    points[5].x() = pself->_max.x();
+    points[5].y() = pself->_max.y();
+    points[5].z() = pself->_max.z();
+
+    points[6].x() = pself->_max.x();
+    points[6].y() = pself->_max.y();
+    points[6].z() = pself->_min.z();
+
+    points[7].x() = pself->_max.x();
+    points[7].y() = pself->_max.y();
+    points[7].z() = pself->_max.z();
+}
+//----------------------------------------------------------------------------
+} //!details
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 ScalarBoundingBox<T, _Dim>::ScalarBoundingBox()
 :   ScalarBoundingBox(ScalarBoundingBox::DefaultValue()) {}
@@ -133,77 +226,6 @@ bool ScalarBoundingBox<T, _Dim>::Intersects(const ScalarBoundingBox& other, bool
 
     return intersects;
 }
-//----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
-template <size_t _Dim2>
-void ScalarBoundingBox<T, _Dim>::GetCorners(vector_type (&points)[_Dim2]) const {
-    return GetCorners(MakeView(points));
-}
-//----------------------------------------------------------------------------
-#pragma warning( push )
-#pragma warning( disable : 4127) // C4127: l'expression conditionnelle est une constante
-
-template <typename T, size_t _Dim>
-void ScalarBoundingBox<T, _Dim>::GetCorners(const MemoryView<vector_type>& points) const {
-    if (_Dim == 1) {
-        Assert(points.size() == 2);
-        points[0].x() = _min.x();
-        points[1].x() = _max.x();
-    }
-    else if (_Dim == 2) {
-        Assert(points.size() == 2);
-        points[0].x() = _min.x();
-        points[0].y() = _min.y();
-
-        points[1].x() = _max.x();
-        points[1].y() = _min.y();
-
-        points[2].x() = _max.x();
-        points[2].y() = _max.y();
-
-        points[3].x() = _min.x();
-        points[3].y() = _max.y();
-    }
-    else if (_Dim == 3) {
-        Assert(points.size() == 8);
-        points[0].x() = _min.x();
-        points[0].y() = _min.y();
-        points[0].z() = _min.z();
-
-        points[1].x() = _min.x();
-        points[1].y() = _min.y();
-        points[1].z() = _max.z();
-
-        points[2].x() = _min.x();
-        points[2].y() = _max.y();
-        points[2].z() = _max.z();
-
-        points[3].x() = _min.x();
-        points[3].y() = _max.y();
-        points[3].z() = _min.z();
-
-        points[4].x() = _max.x();
-        points[4].y() = _min.y();
-        points[4].z() = _max.z();
-
-        points[5].x() = _max.x();
-        points[5].y() = _max.y();
-        points[5].z() = _max.z();
-
-        points[6].x() = _max.x();
-        points[6].y() = _max.y();
-        points[6].z() = _min.z();
-
-        points[7].x() = _max.x();
-        points[7].y() = _max.y();
-        points[7].z() = _max.z();
-    }
-    else {
-        AssertNotImplemented();
-    }
-}
-
-#pragma warning( pop )
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 template <typename U>

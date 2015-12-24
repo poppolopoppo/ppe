@@ -14,7 +14,7 @@
 #include "Core/Allocator/PoolAllocatorTag-impl.h"
 
 #if !(defined(FINAL_RELEASE) || defined(PROFILING_ENABLED))
-#   define WITH_RTTI_UNITTESTS %_NOCOMMIT%
+//#   define WITH_RTTI_UNITTESTS %_NOCOMMIT%
 #endif
 
 namespace Core {

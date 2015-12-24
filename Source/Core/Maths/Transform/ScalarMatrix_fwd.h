@@ -18,22 +18,16 @@ class ScalarMatrix;
 #define DECL_SCALARMATRIX(_Scalar) DECL_SCALARMATRIX_ALIAS(_Scalar, _Scalar)
 //----------------------------------------------------------------------------
 DECL_SCALARMATRIX(byte);
-DECL_SCALARMATRIX(ubyte);
 DECL_SCALARMATRIX_ALIAS(i16, short);
-DECL_SCALARMATRIX(ushort);
 DECL_SCALARMATRIX(word);
-DECL_SCALARMATRIX(uword);
-DECL_SCALARMATRIX(int)
-DECL_SCALARMATRIX(unsigned)
+DECL_SCALARMATRIX_ALIAS(i32, int)
 DECL_SCALARMATRIX(float)
 DECL_SCALARMATRIX(double)
 //----------------------------------------------------------------------------
+typedef float4x4 Matrix;
+//----------------------------------------------------------------------------
 #undef DECL_SCALARMATRIX
 #undef DECL_SCALARMATRIX_ALIAS
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-typedef float4x4 Matrix;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

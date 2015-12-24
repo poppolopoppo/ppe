@@ -8,24 +8,34 @@
 #include "Core.RTTI/MetaType.h"
 #include "Core.RTTI/MetaTypeTraits.h"
 
+#include "Core.RTTI/MetaType.Definitions-inl.h"
+
 namespace Core {
 namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define DEF_METATYPE_SCALAR(_Name, T, _TypeId) \
+#define _DEF_METATYPE_SCALAR_EXTERN_TEMPLATE(T) \
     extern template struct  MetaType<T>; \
     extern template struct  MetaTypeTraits<T>; \
+    extern template class   MetaTypeScalarTraits<T>; \
+    extern template class   MetaTypePairTraits<T, T>; \
+    extern template class   MetaTypeVectorTraits<T>; \
+    extern template class   MetaTypeDictionaryTraits<T, T>; \
     extern template class   MetaTypedAtom<T>; \
+    extern template class   MetaWrappedAtom<T, false>; \
     extern template class   MetaTypedProperty<T>; \
-    extern template struct  MetaType< RTTI::Vector<T> >; \
-    extern template struct  MetaTypeTraits< RTTI::Vector<T> >; \
-    extern template class   MetaTypedAtom< RTTI::Vector<T> >; \
-    extern template class   MetaTypedProperty< RTTI::Vector<T> >;
+    extern template class   MetaFieldAccessor<T>; \
+    extern template class   MetaWrappedProperty<T, MetaFieldAccessor<T> >;
+
+#define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
+    _DEF_METATYPE_SCALAR_EXTERN_TEMPLATE(T) \
+    _DEF_METATYPE_SCALAR_EXTERN_TEMPLATE(RTTI::Vector<T>)
 //----------------------------------------------------------------------------
-#include "MetaType.Definitions-inl.h"
+FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
 //----------------------------------------------------------------------------
 #undef DEF_METATYPE_SCALAR
+#undef _DEF_METATYPE_SCALAR_EXTERN_TEMPLATE
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -16,6 +16,8 @@ POOLTAG_DECL(RTTI);
 FWD_REFPTR(MetaAtom);
 template <typename T>
 class MetaTypedAtom;
+template <typename T, bool _Wrapping>
+class MetaWrappedAtom;
 class IMetaAtomPair;
 class IMetaAtomVector;
 class IMetaAtomDictionary;
@@ -33,6 +35,10 @@ class MetaProperty;
 class MetaPropertyName;
 template <typename T>
 class MetaTypedProperty;
+template <typename T>
+class MetaFieldAccessor;
+template <typename T, typename _Accessor >
+class MetaWrappedProperty;
 //----------------------------------------------------------------------------
 template <typename T>
 struct MetaType;
@@ -43,9 +49,17 @@ template <typename T>
 struct MetaTypeTraits;
 class IMetaTypeVirtualTraits;
 class AbstractMetaTypeScalarTraits;
+template <typename T>
+class MetaTypeScalarTraits;
 class AbstractMetaTypePairTraits;
+template <typename _First, typename _Second>
+class MetaTypePairTraits;
 class AbstractMetaTypeVectorTraits;
+template <typename T>
+class MetaTypeVectorTraits;
 class AbstractMetaTypeDictionaryTraits;
+template <typename _Key, typename _Value>
+class MetaTypeDictionaryTraits;
 //----------------------------------------------------------------------------
 FWD_REFPTR(MetaTransaction);
 //----------------------------------------------------------------------------

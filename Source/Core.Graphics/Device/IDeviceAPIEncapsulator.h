@@ -5,9 +5,9 @@
 #include "Core.Graphics/Device/DeviceAPI_fwd.h"
 #include "Core.Graphics/Device/IDeviceAPIDiagnostics.h"
 
-#include "Core/Color/Color_fwd.h"
-#include "Core/Maths/Geometry/ScalarRectangle_fwd.h"
-#include "Core/Maths/Geometry/ScalarVector_fwd.h"
+#include "Core/Color/Color_extern.h"
+#include "Core/Maths/Geometry/ScalarRectangle_extern.h"
+#include "Core/Maths/Geometry/ScalarVector_extern.h"
 
 namespace Core {
 namespace Graphics {
