@@ -47,7 +47,7 @@
     } \
     \
     _Type& _Name = *(_Name##_OneTimePData); \
-    Assert((_Name##_OneTimePData) != nullptr) // removes unused variable warning
+    UNUSED(_Name##_OneTimePData)
 
 #define ONE_TIME_INITIALIZE(_Type, _Name, ...) \
     _ONE_TIME_INITIALIZE_IMPL_(COMMA_PROTECT(_Type), _Name, (__VA_ARGS__), , )

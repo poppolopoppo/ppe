@@ -39,9 +39,6 @@ namespace {
 #ifdef WITH_CORE_MATHS_UNITTESTS
 using namespace DirectX;
 //----------------------------------------------------------------------------
-#pragma warning( push )
-#pragma warning( disable : 4201) // warning C4201: extension non standard utilisée : struct/union sans nom
-
 struct RawMatrix {
     union
     {
@@ -56,9 +53,7 @@ struct RawMatrix {
         float raw[16];
     }   data;
 };
-
-#pragma warning( pop )
-
+//----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 static bool Equals_(const XMVECTOR& lhs, const ScalarVector<T, _Dim>& rhs) {
     float lhs_d[_Dim];
@@ -85,6 +80,9 @@ static bool Equals_(const ScalarMatrix<T, _Width, _Height>& lhs, const ScalarMat
 }
 
 static bool Equals_(const XMMATRIX& lhs, const float4x4& rhs) {
+    STATIC_ASSERT(sizeof(lhs) == sizeof(rhs));
+    STATIC_ASSERT(sizeof(RawMatrix) == sizeof(lhs));
+
     RawMatrix lhs_d;
     memcpy(&lhs_d, &lhs, sizeof(lhs_d));
     RawMatrix rhs_d;

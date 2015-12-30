@@ -113,8 +113,6 @@
 //----------------------------------------------------------------------------
 #ifdef CPP_VISUALSTUDIO
 //----------------------------------------------------------------------------
-//  warning C4100: unreferenced formal parameter
-#   pragma warning( disable : 4100 )
 //  warning C4714: fonction 'XXX' marquée comme __forceinline non inline
 #   pragma warning( disable : 4714 )
 //----------------------------------------------------------------------------

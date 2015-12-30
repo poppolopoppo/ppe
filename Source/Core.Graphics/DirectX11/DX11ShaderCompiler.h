@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Core.Graphics/DirectX11/DX11Includes.h"
-
 #include "Core.Graphics/Device/IDeviceAPIShaderCompiler.h"
 #include "Core.Graphics/DirectX11/Shader/DX11ShaderProgram.h"
+
+#include "Core.Graphics/DirectX11/DX11Includes.h"
 
 namespace Core {
 namespace Graphics {

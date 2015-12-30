@@ -2,7 +2,7 @@
 
 #include "Core/Core.h"
 
-#include "Core/Color/Color_fwd.h"
+#include "Core/Color/Color.h"
 #include "Core/Maths/Geometry/ScalarVector_extern.h"
 
 namespace Core {

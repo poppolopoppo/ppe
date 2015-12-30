@@ -7,12 +7,12 @@
 #include "Shader/ShaderProgram.h"
 #include "Shader/ShaderSource.h"
 
-#include "DirectX11/DX11ShaderCompiler.h"
-
 #include "Core/Diagnostic/CrtDebug.h"
 #include "Core/Diagnostic/DialogBox.h"
 #include "Core/Diagnostic/Logger.h"
 #include "Core/IO/FileSystem.h"
+
+#include "DirectX11/DX11ShaderCompiler.h"
 
 namespace Core {
 namespace Graphics {
