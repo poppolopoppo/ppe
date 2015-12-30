@@ -2,7 +2,7 @@
 
 #include "Core/Core.h"
 
-#include "Core/Maths/Transform/ScalarMatrix_fwd.h"
+#include "Core/Maths/Transform/ScalarMatrix.h"
 
 namespace Core {
 //----------------------------------------------------------------------------

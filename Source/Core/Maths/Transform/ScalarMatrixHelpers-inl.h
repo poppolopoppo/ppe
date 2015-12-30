@@ -832,7 +832,7 @@ ScalarMatrix<T, _N + 1, _N + 1> MakeScalingMatrix(const ScalarVector<T, _N>& sca
 template <typename T, size_t _N>
 ScalarMatrix<T, _N + 1, _N + 1> MakeTranslationMatrix(const ScalarVector<T, _N>& translate) {
     ScalarMatrix<T, _N + 1, _N + 1> result = ScalarMatrix<T, _N + 1, _N + 1>::Identity();
-    result.SetAxisT(translate);
+    result.SetAxis<3>(translate);
     return result;
 }
 //----------------------------------------------------------------------------

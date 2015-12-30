@@ -2,7 +2,8 @@
 
 #include "Core/Core.h"
 
-#include "Core/Maths/Geometry/ScalarBoundingBox_fwd.h"
+#include "Core/Maths/Geometry/ScalarBoundingBox.h"
+#include "Core/Maths/Geometry/ScalarVector_extern.h"
 
 namespace Core {
 //----------------------------------------------------------------------------

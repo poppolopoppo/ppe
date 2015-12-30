@@ -20,68 +20,75 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace details {
-template <typename T, size_t _Dim>
-class ScalarVectorBase {};
-template <typename T>
-class ScalarVectorBase<T, 1> {
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim, typename _Impl>
+class ScalarVectorAccessor {};
+template <typename T, typename _Impl>
+class ScalarVectorAccessor<T, 1, _Impl> {
 public:
-    ScalarVectorBase() = default;
-    ScalarVectorBase(T x);
+    ScalarVectorAccessor() {}
+    ScalarVectorAccessor(T x);
     const T& x() const;
     T& x();
-};
-template <typename T>
-class ScalarVectorBase<T, 2> : public ScalarVectorBase<T, 1> {
-public:
-    ScalarVectorBase() = default;
-    ScalarVectorBase(T x, T y);
-    const T& y() const;
-    T& y();
+
     template <size_t _0, size_t _1>
     ScalarVector<T, 2> Shuffle2() const;
-#define DECL_SCALARVECTOR_SHUFFLE2(_Name, _0, _1, _Unused) \
-    ScalarVector<T, 2> _Name() const { return Shuffle2<_0, _1>(); }
+    template <size_t _0, size_t _1, size_t _2>
+    ScalarVector<T, 3> Shuffle3() const;
+    template <size_t _0, size_t _1, size_t _2, size_t _3>
+    ScalarVector<T, 4> Shuffle4() const;
+
+#define DECL_SCALARVECTOR_SHUFFLE1(_Dim, _Name, ...) \
+    ScalarVector<T, _Dim> _Name() const { return Shuffle ## _Dim <__VA_ARGS__>(); }
+    FOREACH_CORE_SCALARVECTOR_SHUFFLE1(DECL_SCALARVECTOR_SHUFFLE1)
+#undef DECL_SCALARVECTOR_SHUFFLE1
+};
+template <typename T, typename _Impl>
+class ScalarVectorAccessor<T, 2, _Impl> : public ScalarVectorAccessor<T, 1, _Impl> {
+public:
+    ScalarVectorAccessor() = default;
+    ScalarVectorAccessor(T x, T y);
+    const T& y() const;
+    T& y();
+#define DECL_SCALARVECTOR_SHUFFLE2(_Dim, _Name, ...) \
+    ScalarVector<T, _Dim> _Name() const { return Shuffle ## _Dim <__VA_ARGS__>(); }
     FOREACH_CORE_SCALARVECTOR_SHUFFLE2(DECL_SCALARVECTOR_SHUFFLE2)
 #undef DECL_SCALARVECTOR_SHUFFLE2
 };
-template <typename T>
-class ScalarVectorBase<T, 3> : public ScalarVectorBase<T, 2> {
+template <typename T, typename _Impl>
+class ScalarVectorAccessor<T, 3, _Impl> : public ScalarVectorAccessor<T, 2, _Impl> {
 public:
-    ScalarVectorBase() = default;
-    ScalarVectorBase(T x, T y, T z);
-    ScalarVectorBase(const ScalarVector<T, 2>& xy, T z);
-    ScalarVectorBase(T x, const ScalarVector<T, 2>& yz);
+    ScalarVectorAccessor() = default;
+    ScalarVectorAccessor(T x, T y, T z);
+    ScalarVectorAccessor(const ScalarVector<T, 2>& xy, T z);
+    ScalarVectorAccessor(T x, const ScalarVector<T, 2>& yz);
     const T& z() const;
     T& z();
-    template <size_t _0, size_t _1, size_t _2>
-    ScalarVector<T, 3> Shuffle3() const;
-#define DECL_SCALARVECTOR_SHUFFLE3(_Name, _0, _1, _2, _Unused) \
-    ScalarVector<T, 3> _Name() const { return Shuffle3<_0, _1, _2>(); }
+#define DECL_SCALARVECTOR_SHUFFLE3(_Dim, _Name, ...) \
+    ScalarVector<T, _Dim> _Name() const { return Shuffle ## _Dim <__VA_ARGS__>(); }
     FOREACH_CORE_SCALARVECTOR_SHUFFLE3(DECL_SCALARVECTOR_SHUFFLE3)
 #undef DECL_SCALARVECTOR_SHUFFLE3
 };
-template <typename T>
-class ScalarVectorBase<T, 4> : public ScalarVectorBase<T, 3> {
+template <typename T, typename _Impl>
+class ScalarVectorAccessor<T, 4, _Impl> : public ScalarVectorAccessor<T, 3, _Impl> {
 public:
-    ScalarVectorBase() = default;
-    ScalarVectorBase(T x, T y, T z, T w);
-    ScalarVectorBase(const ScalarVector<T, 3>& xyz, T w);
-    ScalarVectorBase(T x, const ScalarVector<T, 3>& yzw);
+    ScalarVectorAccessor() = default;
+    ScalarVectorAccessor(T x, T y, T z, T w);
+    ScalarVectorAccessor(const ScalarVector<T, 3>& xyz, T w);
+    ScalarVectorAccessor(T x, const ScalarVector<T, 3>& yzw);
     const T& w() const;
     T& w();
     ScalarVector<T, 3> Dehomogenize() const;
-    template <size_t _0, size_t _1, size_t _2, size_t _3>
-    ScalarVector<T, 4> Shuffle4() const;
-#define DECL_SCALARVECTOR_SHUFFLE4(_Name, _0, _1, _2, _3, _Unused) \
-    ScalarVector<T, 4> _Name() const { return Shuffle4<_0, _1, _2, _3>(); }
+#define DECL_SCALARVECTOR_SHUFFLE4(_Dim, _Name, ...) \
+    ScalarVector<T, _Dim> _Name() const { return Shuffle ## _Dim <__VA_ARGS__>(); }
     FOREACH_CORE_SCALARVECTOR_SHUFFLE4(DECL_SCALARVECTOR_SHUFFLE4)
 #undef DECL_SCALARVECTOR_SHUFFLE4
 };
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-class ScalarVectorConstants {};
+class ScalarVectorBase : public ScalarVectorAccessor<T, _Dim, ScalarVector<T, _Dim>> {};
 template <typename T>
-class ScalarVectorConstants<T, 2> {
+class ScalarVectorBase<T, 2> : public ScalarVectorAccessor<T, 2, ScalarVector<T, 2>> {
 public:
     static ScalarVector<T, 2> UnitX()   { return ScalarVector<T, 2>(1,0); }
     static ScalarVector<T, 2> UnitY()   { return ScalarVector<T, 2>(0,1); }
@@ -91,7 +98,7 @@ public:
     static ScalarVector<T, 2> Down()    { return ScalarVector<T, 2>(0,-1); }
 };
 template <typename T>
-class ScalarVectorConstants<T, 3> {
+class ScalarVectorBase<T, 3> : public ScalarVectorAccessor<T, 3, ScalarVector<T, 3>> {
 public:
     static ScalarVector<T, 3> UnitX()   { return ScalarVector<T, 3>(1,0,0); }
     static ScalarVector<T, 3> UnitY()   { return ScalarVector<T, 3>(0,1,0); }
@@ -104,7 +111,7 @@ public:
     static ScalarVector<T, 3> Backward(){ return ScalarVector<T, 3>(0,0,-1); }
 };
 template <typename T>
-class ScalarVectorConstants<T, 4> {
+class ScalarVectorBase<T, 4> : public ScalarVectorAccessor<T, 4, ScalarVector<T, 4>> {
 public:
     static ScalarVector<T, 4> UnitX()   { return ScalarVector<T, 4>(1,0,0,0); }
     static ScalarVector<T, 4> UnitY()   { return ScalarVector<T, 4>(0,1,0,0); }
@@ -123,18 +130,16 @@ public:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-class ScalarVector
-:   public details::ScalarVectorBase<T, _Dim>
-,   public details::ScalarVectorConstants<T, _Dim> {
+class ScalarVector : public details::ScalarVectorBase<T, _Dim> {
 public:
-    template <typename U, size_t _Dim2>
-    friend class ScalarVectorBase;
+    template <typename U, size_t _Dim2, typename _Impl>
+    friend class ScalarVectorAccessor;
     template <typename U, size_t _Dim2>
     friend class ScalarVector;
     template <typename U, size_t _Width, size_t _Height>
     friend class ScalarMatrix;
 
-    using details::ScalarVectorBase<T, _Dim>::ScalarVectorBase;
+    using details::ScalarVectorAccessor<T, _Dim, ScalarVector<T, _Dim>>::ScalarVectorAccessor;
 
     ScalarVector();
     explicit ScalarVector(Meta::noinit_tag);

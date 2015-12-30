@@ -3,6 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/Maths/Geometry/ScalarBoundingBox.h"
+#include "Core/Maths/Geometry/ScalarRectangle_fwd.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -39,7 +40,7 @@ template <typename T>
 class ScalarRectangleBase<T, 3> : public ScalarRectangleBase<T, 2> {
 public:
     ScalarRectangleBase() = default;
-    ScalarRectangleBase(T left, T top, T width, T height, T near, T far);
+    ScalarRectangleBase(T left, T top, T width, T height, T fnear, T ffar);
     T Near() const;
     T Far() const;
     void SetNear(T value);

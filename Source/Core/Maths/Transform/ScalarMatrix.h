@@ -3,8 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/Maths/Transform/ScalarMatrix_fwd.h"
-
-#include "Core/Maths/Geometry/ScalarVector.h"
+#include "Core/Maths/Geometry/ScalarVector_extern.h"
 
 #include <iosfwd>
 #include <initializer_list>

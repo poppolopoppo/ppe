@@ -8,23 +8,23 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace details {
 //----------------------------------------------------------------------------
-template <typename T, _Impl>
+template <typename T, typename _Impl>
 template <size_t _0, size_t _1>
-ScalarBoundingBox<T, 2> ScalarBoundingBoxBase<T, 2, _Impl>::Shuffle2() const {
+ScalarBoundingBox<T, 2> ScalarBoundingBoxBase<T, 1, _Impl>::Shuffle2() const {
     const auto* const pself = static_cast<const _Impl*>(this);
     return ScalarBoundingBox<T, 2>(pself->_min.Shuffle2<_0, _1>(), pself->_max.Shuffle2<_0, _1>());
 }
 //----------------------------------------------------------------------------
-template <typename T, _Impl>
+template <typename T, typename _Impl>
 template <size_t _0, size_t _1, size_t _2>
-ScalarBoundingBox<T, 3> ScalarBoundingBoxBase<T, 3, _Impl>::Shuffle3() const {
+ScalarBoundingBox<T, 3> ScalarBoundingBoxBase<T, 1, _Impl>::Shuffle3() const {
     const auto* const pself = static_cast<const _Impl*>(this);
     return ScalarBoundingBox<T, 3>(pself->_min.Shuffle3<_0, _1, _2>(), pself->_max.Shuffle3<_0, _1, _2>());
 }
 //----------------------------------------------------------------------------
-template <typename T, _Impl>
-template <size_t _0, size_t _1, size_t _2, size_t _2>
-ScalarBoundingBox<T, 4> ScalarBoundingBoxBase<T, 4, _Impl>::Shuffle4() const {
+template <typename T, typename _Impl>
+template <size_t _0, size_t _1, size_t _2, size_t _3>
+ScalarBoundingBox<T, 4> ScalarBoundingBoxBase<T, 1, _Impl>::Shuffle4() const {
     const auto* const pself = static_cast<const _Impl*>(this);
     return ScalarBoundingBox<T, 4>(pself->_min.Shuffle4<_0, _1, _2, _3>(), pself->_max.Shuffle4<_0, _1, _2, _3>());
 }
@@ -36,15 +36,15 @@ ScalarBoundingBox<T, 4> ScalarBoundingBoxBase<T, 4, _Impl>::Shuffle4() const {
 namespace details {
 //----------------------------------------------------------------------------
 template <typename T>
-void ScalarBoundingBoxCorners<T, 2>::GetCorners(ScalarVector<T, 2> (&points)[2]) const {
-    const auto* const pself = static_cast<const ScalarBoundingBox<T, 2>*>(this);
+void ScalarBoundingBoxCorners<T, 1>::GetCorners(ScalarVector<T, 1> (&points)[2]) const {
+    const auto* const pself = static_cast<const ScalarBoundingBox<T, 1>*>(this);
 
     points[0].x() = pself->_min.x();
     points[1].x() = pself->_max.x();
 }
 template <typename T>
-void ScalarBoundingBoxCorners<T, 3>::GetCorners(ScalarVector<T, 3> (&points)[4]) const {
-    const auto* const pself = static_cast<const ScalarBoundingBox<T, 3>*>(this);
+void ScalarBoundingBoxCorners<T, 2>::GetCorners(ScalarVector<T, 2> (&points)[4]) const {
+    const auto* const pself = static_cast<const ScalarBoundingBox<T, 2>*>(this);
 
     points[0].x() = pself->_min.x();
     points[0].y() = pself->_min.y();
@@ -59,8 +59,8 @@ void ScalarBoundingBoxCorners<T, 3>::GetCorners(ScalarVector<T, 3> (&points)[4])
     points[3].y() = pself->_max.y();
 }
 template <typename T>
-void ScalarBoundingBoxCorners<T, 4>::GetCorners(ScalarVector<T, 4> (&points)[8]) const {
-    const auto* const pself = static_cast<const ScalarBoundingBox<T, 4>*>(this);
+void ScalarBoundingBoxCorners<T, 3>::GetCorners(ScalarVector<T, 3> (&points)[8]) const {
+    const auto* const pself = static_cast<const ScalarBoundingBox<T, 3>*>(this);
 
     points[0].x() = pself->_min.x();
     points[0].y() = pself->_min.y();
@@ -101,7 +101,9 @@ void ScalarBoundingBoxCorners<T, 4>::GetCorners(ScalarVector<T, 4> (&points)[8])
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 ScalarBoundingBox<T, _Dim>::ScalarBoundingBox()
-:   ScalarBoundingBox(ScalarBoundingBox::DefaultValue()) {}
+:   ScalarBoundingBox(ScalarBoundingBox::DefaultValue()) {
+    STATIC_ASSERT(sizeof(*this) == _Dim*sizeof(T)*2);
+}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 ScalarBoundingBox<T, _Dim>::ScalarBoundingBox(Meta::noinit_tag) {}

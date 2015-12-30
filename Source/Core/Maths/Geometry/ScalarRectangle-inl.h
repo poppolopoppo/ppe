@@ -82,14 +82,13 @@ FORCE_INLINE void ScalarRectangleBase<T, 2>::SetHeight(T value) {
 namespace details {
 //----------------------------------------------------------------------------
 template <typename T>
-ScalarRectangleBase<T, 3>::ScalarRectangleBase(T left, T top, T width, T height, T near, T far) {
+ScalarRectangleBase<T, 3>::ScalarRectangleBase(T left, T top, T width, T height, T fnear, T ffar) {
     auto* const pself = static_cast<ScalarRectangle<T, 3>*>(this);
-    pself->_min.x() = left;
-    pself->_min.y() = top;
-    pself->_min.z() = near;
-    pself->_max.x() = left + width;
-    pself->_max.y() = top + height;
-    pself->_max.z() = far;
+    Assert(left+width >= left);
+    Assert(top+height >= top);
+    Assert(ffar >= fnear);
+    pself->_min = ScalarVector<T, 3>(left, top, fnear);
+    pself->_max = ScalarVector<T, 3>(left+width, top+height, ffar);
 }
 //----------------------------------------------------------------------------
 template <typename T>

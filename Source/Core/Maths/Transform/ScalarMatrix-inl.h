@@ -102,7 +102,9 @@ DEF_SCALARMATRIX_SCALAR_ACCESSOR(3, 3, 4, 4)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
-ScalarMatrix<T, _Width, _Height>::ScalarMatrix() : ScalarMatrix(0) {}
+ScalarMatrix<T, _Width, _Height>::ScalarMatrix() : ScalarMatrix(0) {
+    STATIC_ASSERT(sizeof(*this) == _Width*_Height*sizeof(T));
+}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
 ScalarMatrix<T, _Width, _Height>::ScalarMatrix(Meta::noinit_tag) {}

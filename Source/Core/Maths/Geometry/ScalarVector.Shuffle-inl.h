@@ -1,347 +1,350 @@
 
 // Contains every shuffle combinaitions for dimension 2, 3 & 4
+//  FOREACH_CORE_SCALARVECTOR_SHUFFLE1()
 //  FOREACH_CORE_SCALARVECTOR_SHUFFLE2()
 //  FOREACH_CORE_SCALARVECTOR_SHUFFLE3()
 //  FOREACH_CORE_SCALARVECTOR_SHUFFLE4()
 
-#define FOREACH_CORE_SCALARVECTOR_SHUFFLE2(_Macro, ...) \
-    COMMA_PROTECT(_Macro(ww,   3, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wx,   3, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wy,   3, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wz,   3, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xw,   0, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xx,   0, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xy,   0, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xz,   0, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yw,   1, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yx,   1, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yy,   1, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yz,   1, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zw,   2, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zx,   2, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zy,   2, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zz,   2, 2, ##__VA_ARGS__))
+#define FOREACH_CORE_SCALARVECTOR_SHUFFLE1(_Macro) \
+  _Macro(2, xx, 0, 0) \
+  _Macro(3, xxx, 0, 0, 0) \
+  _Macro(4, xxxx, 0, 0, 0, 0)
 
-#define FOREACH_CORE_SCALARVECTOR_SHUFFLE3(_Macro, ...) \
-    COMMA_PROTECT(_Macro(www,  3, 3, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wwx,  3, 3, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wwy,  3, 3, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wwz,  3, 3, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wxw,  3, 0, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wxx,  3, 0, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wxy,  3, 0, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wxz,  3, 0, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wyw,  3, 1, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wyx,  3, 1, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wyy,  3, 1, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wyz,  3, 1, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wzw,  3, 2, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wzx,  3, 2, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wzy,  3, 2, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wzz,  3, 2, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xww,  0, 3, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xwx,  0, 3, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xwy,  0, 3, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xwz,  0, 3, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xxw,  0, 0, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xxx,  0, 0, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xxy,  0, 0, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xxz,  0, 0, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xyw,  0, 1, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xyx,  0, 1, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xyy,  0, 1, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xyz,  0, 1, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xzw,  0, 2, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xzx,  0, 2, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xzy,  0, 2, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xzz,  0, 2, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yww,  1, 3, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(ywx,  1, 3, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(ywy,  1, 3, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(ywz,  1, 3, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yxw,  1, 0, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yxx,  1, 0, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yxy,  1, 0, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yxz,  1, 0, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yyw,  1, 1, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yyx,  1, 1, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yyy,  1, 1, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yyz,  1, 1, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yzw,  1, 2, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yzx,  1, 2, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yzy,  1, 2, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yzz,  1, 2, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zww,  2, 3, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zwx,  2, 3, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zwy,  2, 3, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zwz,  2, 3, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zxw,  2, 0, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zxx,  2, 0, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zxy,  2, 0, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zxz,  2, 0, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zyw,  2, 1, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zyx,  2, 1, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zyy,  2, 1, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zyz,  2, 1, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zzw,  2, 2, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zzx,  2, 2, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zzy,  2, 2, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zzz,  2, 2, 2, ##__VA_ARGS__))
+#define FOREACH_CORE_SCALARVECTOR_SHUFFLE2(_Macro) \
+  _Macro(2, xy, 0, 1) \
+  _Macro(2, yx, 1, 0) \
+  _Macro(2, yy, 1, 1) \
+  _Macro(3, xxy, 0, 0, 1) \
+  _Macro(3, xyx, 0, 1, 0) \
+  _Macro(3, xyy, 0, 1, 1) \
+  _Macro(3, yxx, 1, 0, 0) \
+  _Macro(3, yxy, 1, 0, 1) \
+  _Macro(3, yyx, 1, 1, 0) \
+  _Macro(3, yyy, 1, 1, 1) \
+  _Macro(4, xxxy, 0, 0, 0, 1) \
+  _Macro(4, xxyx, 0, 0, 1, 0) \
+  _Macro(4, xxyy, 0, 0, 1, 1) \
+  _Macro(4, xyxx, 0, 1, 0, 0) \
+  _Macro(4, xyxy, 0, 1, 0, 1) \
+  _Macro(4, xyyx, 0, 1, 1, 0) \
+  _Macro(4, xyyy, 0, 1, 1, 1) \
+  _Macro(4, yxxx, 1, 0, 0, 0) \
+  _Macro(4, yxxy, 1, 0, 0, 1) \
+  _Macro(4, yxyx, 1, 0, 1, 0) \
+  _Macro(4, yxyy, 1, 0, 1, 1) \
+  _Macro(4, yyxx, 1, 1, 0, 0) \
+  _Macro(4, yyxy, 1, 1, 0, 1) \
+  _Macro(4, yyyx, 1, 1, 1, 0) \
+  _Macro(4, yyyy, 1, 1, 1, 1)
 
-#define FOREACH_CORE_SCALARVECTOR_SHUFFLE4(_Macro, ...) \
-    COMMA_PROTECT(_Macro(wwww, 3, 3, 3, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wwwx, 3, 3, 3, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wwwy, 3, 3, 3, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wwwz, 3, 3, 3, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wwxw, 3, 3, 0, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wwxx, 3, 3, 0, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wwxy, 3, 3, 0, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wwxz, 3, 3, 0, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wwyw, 3, 3, 1, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wwyx, 3, 3, 1, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wwyy, 3, 3, 1, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wwyz, 3, 3, 1, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wwzw, 3, 3, 2, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wwzx, 3, 3, 2, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wwzy, 3, 3, 2, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wwzz, 3, 3, 2, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wxww, 3, 0, 3, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wxwx, 3, 0, 3, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wxwy, 3, 0, 3, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wxwz, 3, 0, 3, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wxxw, 3, 0, 0, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wxxx, 3, 0, 0, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wxxy, 3, 0, 0, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wxxz, 3, 0, 0, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wxyw, 3, 0, 1, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wxyx, 3, 0, 1, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wxyy, 3, 0, 1, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wxyz, 3, 0, 1, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wxzw, 3, 0, 2, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wxzx, 3, 0, 2, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wxzy, 3, 0, 2, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wxzz, 3, 0, 2, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wyww, 3, 1, 3, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wywx, 3, 1, 3, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wywy, 3, 1, 3, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wywz, 3, 1, 3, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wyxw, 3, 1, 0, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wyxx, 3, 1, 0, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wyxy, 3, 1, 0, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wyxz, 3, 1, 0, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wyyw, 3, 1, 1, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wyyx, 3, 1, 1, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wyyy, 3, 1, 1, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wyyz, 3, 1, 1, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wyzw, 3, 1, 2, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wyzx, 3, 1, 2, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wyzy, 3, 1, 2, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wyzz, 3, 1, 2, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wzww, 3, 2, 3, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wzwx, 3, 2, 3, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wzwy, 3, 2, 3, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wzwz, 3, 2, 3, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wzxw, 3, 2, 0, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wzxx, 3, 2, 0, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wzxy, 3, 2, 0, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wzxz, 3, 2, 0, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wzyw, 3, 2, 1, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wzyx, 3, 2, 1, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wzyy, 3, 2, 1, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wzyz, 3, 2, 1, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wzzw, 3, 2, 2, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wzzx, 3, 2, 2, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wzzy, 3, 2, 2, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(wzzz, 3, 2, 2, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xwww, 0, 3, 3, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xwwx, 0, 3, 3, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xwwy, 0, 3, 3, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xwwz, 0, 3, 3, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xwxw, 0, 3, 0, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xwxx, 0, 3, 0, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xwxy, 0, 3, 0, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xwxz, 0, 3, 0, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xwyw, 0, 3, 1, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xwyx, 0, 3, 1, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xwyy, 0, 3, 1, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xwyz, 0, 3, 1, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xwzw, 0, 3, 2, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xwzx, 0, 3, 2, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xwzy, 0, 3, 2, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xwzz, 0, 3, 2, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xxww, 0, 0, 3, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xxwx, 0, 0, 3, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xxwy, 0, 0, 3, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xxwz, 0, 0, 3, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xxxw, 0, 0, 0, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xxxx, 0, 0, 0, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xxxy, 0, 0, 0, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xxxz, 0, 0, 0, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xxyw, 0, 0, 1, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xxyx, 0, 0, 1, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xxyy, 0, 0, 1, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xxyz, 0, 0, 1, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xxzw, 0, 0, 2, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xxzx, 0, 0, 2, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xxzy, 0, 0, 2, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xxzz, 0, 0, 2, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xyww, 0, 1, 3, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xywx, 0, 1, 3, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xywy, 0, 1, 3, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xywz, 0, 1, 3, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xyxw, 0, 1, 0, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xyxx, 0, 1, 0, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xyxy, 0, 1, 0, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xyxz, 0, 1, 0, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xyyw, 0, 1, 1, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xyyx, 0, 1, 1, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xyyy, 0, 1, 1, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xyyz, 0, 1, 1, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xyzw, 0, 1, 2, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xyzx, 0, 1, 2, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xyzy, 0, 1, 2, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xyzz, 0, 1, 2, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xzww, 0, 2, 3, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xzwx, 0, 2, 3, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xzwy, 0, 2, 3, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xzwz, 0, 2, 3, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xzxw, 0, 2, 0, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xzxx, 0, 2, 0, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xzxy, 0, 2, 0, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xzxz, 0, 2, 0, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xzyw, 0, 2, 1, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xzyx, 0, 2, 1, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xzyy, 0, 2, 1, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xzyz, 0, 2, 1, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xzzw, 0, 2, 2, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xzzx, 0, 2, 2, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xzzy, 0, 2, 2, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(xzzz, 0, 2, 2, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(ywww, 1, 3, 3, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(ywwx, 1, 3, 3, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(ywwy, 1, 3, 3, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(ywwz, 1, 3, 3, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(ywxw, 1, 3, 0, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(ywxx, 1, 3, 0, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(ywxy, 1, 3, 0, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(ywxz, 1, 3, 0, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(ywyw, 1, 3, 1, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(ywyx, 1, 3, 1, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(ywyy, 1, 3, 1, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(ywyz, 1, 3, 1, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(ywzw, 1, 3, 2, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(ywzx, 1, 3, 2, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(ywzy, 1, 3, 2, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(ywzz, 1, 3, 2, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yxww, 1, 0, 3, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yxwx, 1, 0, 3, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yxwy, 1, 0, 3, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yxwz, 1, 0, 3, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yxxw, 1, 0, 0, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yxxx, 1, 0, 0, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yxxy, 1, 0, 0, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yxxz, 1, 0, 0, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yxyw, 1, 0, 1, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yxyx, 1, 0, 1, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yxyy, 1, 0, 1, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yxyz, 1, 0, 1, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yxzw, 1, 0, 2, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yxzx, 1, 0, 2, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yxzy, 1, 0, 2, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yxzz, 1, 0, 2, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yyww, 1, 1, 3, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yywx, 1, 1, 3, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yywy, 1, 1, 3, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yywz, 1, 1, 3, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yyxw, 1, 1, 0, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yyxx, 1, 1, 0, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yyxy, 1, 1, 0, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yyxz, 1, 1, 0, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yyyw, 1, 1, 1, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yyyx, 1, 1, 1, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yyyy, 1, 1, 1, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yyyz, 1, 1, 1, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yyzw, 1, 1, 2, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yyzx, 1, 1, 2, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yyzy, 1, 1, 2, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yyzz, 1, 1, 2, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yzww, 1, 2, 3, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yzwx, 1, 2, 3, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yzwy, 1, 2, 3, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yzwz, 1, 2, 3, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yzxw, 1, 2, 0, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yzxx, 1, 2, 0, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yzxy, 1, 2, 0, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yzxz, 1, 2, 0, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yzyw, 1, 2, 1, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yzyx, 1, 2, 1, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yzyy, 1, 2, 1, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yzyz, 1, 2, 1, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yzzw, 1, 2, 2, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yzzx, 1, 2, 2, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yzzy, 1, 2, 2, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(yzzz, 1, 2, 2, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zwww, 2, 3, 3, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zwwx, 2, 3, 3, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zwwy, 2, 3, 3, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zwwz, 2, 3, 3, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zwxw, 2, 3, 0, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zwxx, 2, 3, 0, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zwxy, 2, 3, 0, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zwxz, 2, 3, 0, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zwyw, 2, 3, 1, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zwyx, 2, 3, 1, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zwyy, 2, 3, 1, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zwyz, 2, 3, 1, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zwzw, 2, 3, 2, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zwzx, 2, 3, 2, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zwzy, 2, 3, 2, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zwzz, 2, 3, 2, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zxww, 2, 0, 3, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zxwx, 2, 0, 3, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zxwy, 2, 0, 3, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zxwz, 2, 0, 3, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zxxw, 2, 0, 0, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zxxx, 2, 0, 0, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zxxy, 2, 0, 0, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zxxz, 2, 0, 0, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zxyw, 2, 0, 1, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zxyx, 2, 0, 1, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zxyy, 2, 0, 1, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zxyz, 2, 0, 1, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zxzw, 2, 0, 2, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zxzx, 2, 0, 2, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zxzy, 2, 0, 2, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zxzz, 2, 0, 2, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zyww, 2, 1, 3, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zywx, 2, 1, 3, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zywy, 2, 1, 3, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zywz, 2, 1, 3, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zyxw, 2, 1, 0, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zyxx, 2, 1, 0, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zyxy, 2, 1, 0, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zyxz, 2, 1, 0, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zyyw, 2, 1, 1, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zyyx, 2, 1, 1, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zyyy, 2, 1, 1, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zyyz, 2, 1, 1, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zyzw, 2, 1, 2, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zyzx, 2, 1, 2, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zyzy, 2, 1, 2, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zyzz, 2, 1, 2, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zzww, 2, 2, 3, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zzwx, 2, 2, 3, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zzwy, 2, 2, 3, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zzwz, 2, 2, 3, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zzxw, 2, 2, 0, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zzxx, 2, 2, 0, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zzxy, 2, 2, 0, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zzxz, 2, 2, 0, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zzyw, 2, 2, 1, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zzyx, 2, 2, 1, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zzyy, 2, 2, 1, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zzyz, 2, 2, 1, 2, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zzzw, 2, 2, 2, 3, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zzzx, 2, 2, 2, 0, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zzzy, 2, 2, 2, 1, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(zzzz, 2, 2, 2, 2, ##__VA_ARGS__))
+#define FOREACH_CORE_SCALARVECTOR_SHUFFLE3(_Macro) \
+  _Macro(2, xz, 0, 2) \
+  _Macro(2, yz, 1, 2) \
+  _Macro(2, zx, 2, 0) \
+  _Macro(2, zy, 2, 1) \
+  _Macro(2, zz, 2, 2) \
+  _Macro(3, xxz, 0, 0, 2) \
+  _Macro(3, xyz, 0, 1, 2) \
+  _Macro(3, xzx, 0, 2, 0) \
+  _Macro(3, xzy, 0, 2, 1) \
+  _Macro(3, xzz, 0, 2, 2) \
+  _Macro(3, yxz, 1, 0, 2) \
+  _Macro(3, yyz, 1, 1, 2) \
+  _Macro(3, yzx, 1, 2, 0) \
+  _Macro(3, yzy, 1, 2, 1) \
+  _Macro(3, yzz, 1, 2, 2) \
+  _Macro(3, zxx, 2, 0, 0) \
+  _Macro(3, zxy, 2, 0, 1) \
+  _Macro(3, zxz, 2, 0, 2) \
+  _Macro(3, zyx, 2, 1, 0) \
+  _Macro(3, zyy, 2, 1, 1) \
+  _Macro(3, zyz, 2, 1, 2) \
+  _Macro(3, zzx, 2, 2, 0) \
+  _Macro(3, zzy, 2, 2, 1) \
+  _Macro(3, zzz, 2, 2, 2) \
+  _Macro(4, xxxz, 0, 0, 0, 2) \
+  _Macro(4, xxyz, 0, 0, 1, 2) \
+  _Macro(4, xxzx, 0, 0, 2, 0) \
+  _Macro(4, xxzy, 0, 0, 2, 1) \
+  _Macro(4, xxzz, 0, 0, 2, 2) \
+  _Macro(4, xyxz, 0, 1, 0, 2) \
+  _Macro(4, xyyz, 0, 1, 1, 2) \
+  _Macro(4, xyzx, 0, 1, 2, 0) \
+  _Macro(4, xyzy, 0, 1, 2, 1) \
+  _Macro(4, xyzz, 0, 1, 2, 2) \
+  _Macro(4, xzxx, 0, 2, 0, 0) \
+  _Macro(4, xzxy, 0, 2, 0, 1) \
+  _Macro(4, xzxz, 0, 2, 0, 2) \
+  _Macro(4, xzyx, 0, 2, 1, 0) \
+  _Macro(4, xzyy, 0, 2, 1, 1) \
+  _Macro(4, xzyz, 0, 2, 1, 2) \
+  _Macro(4, xzzx, 0, 2, 2, 0) \
+  _Macro(4, xzzy, 0, 2, 2, 1) \
+  _Macro(4, xzzz, 0, 2, 2, 2) \
+  _Macro(4, yxxz, 1, 0, 0, 2) \
+  _Macro(4, yxyz, 1, 0, 1, 2) \
+  _Macro(4, yxzx, 1, 0, 2, 0) \
+  _Macro(4, yxzy, 1, 0, 2, 1) \
+  _Macro(4, yxzz, 1, 0, 2, 2) \
+  _Macro(4, yyxz, 1, 1, 0, 2) \
+  _Macro(4, yyyz, 1, 1, 1, 2) \
+  _Macro(4, yyzx, 1, 1, 2, 0) \
+  _Macro(4, yyzy, 1, 1, 2, 1) \
+  _Macro(4, yyzz, 1, 1, 2, 2) \
+  _Macro(4, yzxx, 1, 2, 0, 0) \
+  _Macro(4, yzxy, 1, 2, 0, 1) \
+  _Macro(4, yzxz, 1, 2, 0, 2) \
+  _Macro(4, yzyx, 1, 2, 1, 0) \
+  _Macro(4, yzyy, 1, 2, 1, 1) \
+  _Macro(4, yzyz, 1, 2, 1, 2) \
+  _Macro(4, yzzx, 1, 2, 2, 0) \
+  _Macro(4, yzzy, 1, 2, 2, 1) \
+  _Macro(4, yzzz, 1, 2, 2, 2) \
+  _Macro(4, zxxx, 2, 0, 0, 0) \
+  _Macro(4, zxxy, 2, 0, 0, 1) \
+  _Macro(4, zxxz, 2, 0, 0, 2) \
+  _Macro(4, zxyx, 2, 0, 1, 0) \
+  _Macro(4, zxyy, 2, 0, 1, 1) \
+  _Macro(4, zxyz, 2, 0, 1, 2) \
+  _Macro(4, zxzx, 2, 0, 2, 0) \
+  _Macro(4, zxzy, 2, 0, 2, 1) \
+  _Macro(4, zxzz, 2, 0, 2, 2) \
+  _Macro(4, zyxx, 2, 1, 0, 0) \
+  _Macro(4, zyxy, 2, 1, 0, 1) \
+  _Macro(4, zyxz, 2, 1, 0, 2) \
+  _Macro(4, zyyx, 2, 1, 1, 0) \
+  _Macro(4, zyyy, 2, 1, 1, 1) \
+  _Macro(4, zyyz, 2, 1, 1, 2) \
+  _Macro(4, zyzx, 2, 1, 2, 0) \
+  _Macro(4, zyzy, 2, 1, 2, 1) \
+  _Macro(4, zyzz, 2, 1, 2, 2) \
+  _Macro(4, zzxx, 2, 2, 0, 0) \
+  _Macro(4, zzxy, 2, 2, 0, 1) \
+  _Macro(4, zzxz, 2, 2, 0, 2) \
+  _Macro(4, zzyx, 2, 2, 1, 0) \
+  _Macro(4, zzyy, 2, 2, 1, 1) \
+  _Macro(4, zzyz, 2, 2, 1, 2) \
+  _Macro(4, zzzx, 2, 2, 2, 0) \
+  _Macro(4, zzzy, 2, 2, 2, 1) \
+  _Macro(4, zzzz, 2, 2, 2, 2)
+
+#define FOREACH_CORE_SCALARVECTOR_SHUFFLE4(_Macro) \
+  _Macro(2, xw, 0, 3) \
+  _Macro(2, yw, 1, 3) \
+  _Macro(2, zw, 2, 3) \
+  _Macro(2, wx, 3, 0) \
+  _Macro(2, wy, 3, 1) \
+  _Macro(2, wz, 3, 2) \
+  _Macro(2, ww, 3, 3) \
+  _Macro(3, xxw, 0, 0, 3) \
+  _Macro(3, xyw, 0, 1, 3) \
+  _Macro(3, xzw, 0, 2, 3) \
+  _Macro(3, xwx, 0, 3, 0) \
+  _Macro(3, xwy, 0, 3, 1) \
+  _Macro(3, xwz, 0, 3, 2) \
+  _Macro(3, xww, 0, 3, 3) \
+  _Macro(3, yxw, 1, 0, 3) \
+  _Macro(3, yyw, 1, 1, 3) \
+  _Macro(3, yzw, 1, 2, 3) \
+  _Macro(3, ywx, 1, 3, 0) \
+  _Macro(3, ywy, 1, 3, 1) \
+  _Macro(3, ywz, 1, 3, 2) \
+  _Macro(3, yww, 1, 3, 3) \
+  _Macro(3, zxw, 2, 0, 3) \
+  _Macro(3, zyw, 2, 1, 3) \
+  _Macro(3, zzw, 2, 2, 3) \
+  _Macro(3, zwx, 2, 3, 0) \
+  _Macro(3, zwy, 2, 3, 1) \
+  _Macro(3, zwz, 2, 3, 2) \
+  _Macro(3, zww, 2, 3, 3) \
+  _Macro(3, wxx, 3, 0, 0) \
+  _Macro(3, wxy, 3, 0, 1) \
+  _Macro(3, wxz, 3, 0, 2) \
+  _Macro(3, wxw, 3, 0, 3) \
+  _Macro(3, wyx, 3, 1, 0) \
+  _Macro(3, wyy, 3, 1, 1) \
+  _Macro(3, wyz, 3, 1, 2) \
+  _Macro(3, wyw, 3, 1, 3) \
+  _Macro(3, wzx, 3, 2, 0) \
+  _Macro(3, wzy, 3, 2, 1) \
+  _Macro(3, wzz, 3, 2, 2) \
+  _Macro(3, wzw, 3, 2, 3) \
+  _Macro(3, wwx, 3, 3, 0) \
+  _Macro(3, wwy, 3, 3, 1) \
+  _Macro(3, wwz, 3, 3, 2) \
+  _Macro(3, www, 3, 3, 3) \
+  _Macro(4, xxxw, 0, 0, 0, 3) \
+  _Macro(4, xxyw, 0, 0, 1, 3) \
+  _Macro(4, xxzw, 0, 0, 2, 3) \
+  _Macro(4, xxwx, 0, 0, 3, 0) \
+  _Macro(4, xxwy, 0, 0, 3, 1) \
+  _Macro(4, xxwz, 0, 0, 3, 2) \
+  _Macro(4, xxww, 0, 0, 3, 3) \
+  _Macro(4, xyxw, 0, 1, 0, 3) \
+  _Macro(4, xyyw, 0, 1, 1, 3) \
+  _Macro(4, xyzw, 0, 1, 2, 3) \
+  _Macro(4, xywx, 0, 1, 3, 0) \
+  _Macro(4, xywy, 0, 1, 3, 1) \
+  _Macro(4, xywz, 0, 1, 3, 2) \
+  _Macro(4, xyww, 0, 1, 3, 3) \
+  _Macro(4, xzxw, 0, 2, 0, 3) \
+  _Macro(4, xzyw, 0, 2, 1, 3) \
+  _Macro(4, xzzw, 0, 2, 2, 3) \
+  _Macro(4, xzwx, 0, 2, 3, 0) \
+  _Macro(4, xzwy, 0, 2, 3, 1) \
+  _Macro(4, xzwz, 0, 2, 3, 2) \
+  _Macro(4, xzww, 0, 2, 3, 3) \
+  _Macro(4, xwxx, 0, 3, 0, 0) \
+  _Macro(4, xwxy, 0, 3, 0, 1) \
+  _Macro(4, xwxz, 0, 3, 0, 2) \
+  _Macro(4, xwxw, 0, 3, 0, 3) \
+  _Macro(4, xwyx, 0, 3, 1, 0) \
+  _Macro(4, xwyy, 0, 3, 1, 1) \
+  _Macro(4, xwyz, 0, 3, 1, 2) \
+  _Macro(4, xwyw, 0, 3, 1, 3) \
+  _Macro(4, xwzx, 0, 3, 2, 0) \
+  _Macro(4, xwzy, 0, 3, 2, 1) \
+  _Macro(4, xwzz, 0, 3, 2, 2) \
+  _Macro(4, xwzw, 0, 3, 2, 3) \
+  _Macro(4, xwwx, 0, 3, 3, 0) \
+  _Macro(4, xwwy, 0, 3, 3, 1) \
+  _Macro(4, xwwz, 0, 3, 3, 2) \
+  _Macro(4, xwww, 0, 3, 3, 3) \
+  _Macro(4, yxxw, 1, 0, 0, 3) \
+  _Macro(4, yxyw, 1, 0, 1, 3) \
+  _Macro(4, yxzw, 1, 0, 2, 3) \
+  _Macro(4, yxwx, 1, 0, 3, 0) \
+  _Macro(4, yxwy, 1, 0, 3, 1) \
+  _Macro(4, yxwz, 1, 0, 3, 2) \
+  _Macro(4, yxww, 1, 0, 3, 3) \
+  _Macro(4, yyxw, 1, 1, 0, 3) \
+  _Macro(4, yyyw, 1, 1, 1, 3) \
+  _Macro(4, yyzw, 1, 1, 2, 3) \
+  _Macro(4, yywx, 1, 1, 3, 0) \
+  _Macro(4, yywy, 1, 1, 3, 1) \
+  _Macro(4, yywz, 1, 1, 3, 2) \
+  _Macro(4, yyww, 1, 1, 3, 3) \
+  _Macro(4, yzxw, 1, 2, 0, 3) \
+  _Macro(4, yzyw, 1, 2, 1, 3) \
+  _Macro(4, yzzw, 1, 2, 2, 3) \
+  _Macro(4, yzwx, 1, 2, 3, 0) \
+  _Macro(4, yzwy, 1, 2, 3, 1) \
+  _Macro(4, yzwz, 1, 2, 3, 2) \
+  _Macro(4, yzww, 1, 2, 3, 3) \
+  _Macro(4, ywxx, 1, 3, 0, 0) \
+  _Macro(4, ywxy, 1, 3, 0, 1) \
+  _Macro(4, ywxz, 1, 3, 0, 2) \
+  _Macro(4, ywxw, 1, 3, 0, 3) \
+  _Macro(4, ywyx, 1, 3, 1, 0) \
+  _Macro(4, ywyy, 1, 3, 1, 1) \
+  _Macro(4, ywyz, 1, 3, 1, 2) \
+  _Macro(4, ywyw, 1, 3, 1, 3) \
+  _Macro(4, ywzx, 1, 3, 2, 0) \
+  _Macro(4, ywzy, 1, 3, 2, 1) \
+  _Macro(4, ywzz, 1, 3, 2, 2) \
+  _Macro(4, ywzw, 1, 3, 2, 3) \
+  _Macro(4, ywwx, 1, 3, 3, 0) \
+  _Macro(4, ywwy, 1, 3, 3, 1) \
+  _Macro(4, ywwz, 1, 3, 3, 2) \
+  _Macro(4, ywww, 1, 3, 3, 3) \
+  _Macro(4, zxxw, 2, 0, 0, 3) \
+  _Macro(4, zxyw, 2, 0, 1, 3) \
+  _Macro(4, zxzw, 2, 0, 2, 3) \
+  _Macro(4, zxwx, 2, 0, 3, 0) \
+  _Macro(4, zxwy, 2, 0, 3, 1) \
+  _Macro(4, zxwz, 2, 0, 3, 2) \
+  _Macro(4, zxww, 2, 0, 3, 3) \
+  _Macro(4, zyxw, 2, 1, 0, 3) \
+  _Macro(4, zyyw, 2, 1, 1, 3) \
+  _Macro(4, zyzw, 2, 1, 2, 3) \
+  _Macro(4, zywx, 2, 1, 3, 0) \
+  _Macro(4, zywy, 2, 1, 3, 1) \
+  _Macro(4, zywz, 2, 1, 3, 2) \
+  _Macro(4, zyww, 2, 1, 3, 3) \
+  _Macro(4, zzxw, 2, 2, 0, 3) \
+  _Macro(4, zzyw, 2, 2, 1, 3) \
+  _Macro(4, zzzw, 2, 2, 2, 3) \
+  _Macro(4, zzwx, 2, 2, 3, 0) \
+  _Macro(4, zzwy, 2, 2, 3, 1) \
+  _Macro(4, zzwz, 2, 2, 3, 2) \
+  _Macro(4, zzww, 2, 2, 3, 3) \
+  _Macro(4, zwxx, 2, 3, 0, 0) \
+  _Macro(4, zwxy, 2, 3, 0, 1) \
+  _Macro(4, zwxz, 2, 3, 0, 2) \
+  _Macro(4, zwxw, 2, 3, 0, 3) \
+  _Macro(4, zwyx, 2, 3, 1, 0) \
+  _Macro(4, zwyy, 2, 3, 1, 1) \
+  _Macro(4, zwyz, 2, 3, 1, 2) \
+  _Macro(4, zwyw, 2, 3, 1, 3) \
+  _Macro(4, zwzx, 2, 3, 2, 0) \
+  _Macro(4, zwzy, 2, 3, 2, 1) \
+  _Macro(4, zwzz, 2, 3, 2, 2) \
+  _Macro(4, zwzw, 2, 3, 2, 3) \
+  _Macro(4, zwwx, 2, 3, 3, 0) \
+  _Macro(4, zwwy, 2, 3, 3, 1) \
+  _Macro(4, zwwz, 2, 3, 3, 2) \
+  _Macro(4, zwww, 2, 3, 3, 3) \
+  _Macro(4, wxxx, 3, 0, 0, 0) \
+  _Macro(4, wxxy, 3, 0, 0, 1) \
+  _Macro(4, wxxz, 3, 0, 0, 2) \
+  _Macro(4, wxxw, 3, 0, 0, 3) \
+  _Macro(4, wxyx, 3, 0, 1, 0) \
+  _Macro(4, wxyy, 3, 0, 1, 1) \
+  _Macro(4, wxyz, 3, 0, 1, 2) \
+  _Macro(4, wxyw, 3, 0, 1, 3) \
+  _Macro(4, wxzx, 3, 0, 2, 0) \
+  _Macro(4, wxzy, 3, 0, 2, 1) \
+  _Macro(4, wxzz, 3, 0, 2, 2) \
+  _Macro(4, wxzw, 3, 0, 2, 3) \
+  _Macro(4, wxwx, 3, 0, 3, 0) \
+  _Macro(4, wxwy, 3, 0, 3, 1) \
+  _Macro(4, wxwz, 3, 0, 3, 2) \
+  _Macro(4, wxww, 3, 0, 3, 3) \
+  _Macro(4, wyxx, 3, 1, 0, 0) \
+  _Macro(4, wyxy, 3, 1, 0, 1) \
+  _Macro(4, wyxz, 3, 1, 0, 2) \
+  _Macro(4, wyxw, 3, 1, 0, 3) \
+  _Macro(4, wyyx, 3, 1, 1, 0) \
+  _Macro(4, wyyy, 3, 1, 1, 1) \
+  _Macro(4, wyyz, 3, 1, 1, 2) \
+  _Macro(4, wyyw, 3, 1, 1, 3) \
+  _Macro(4, wyzx, 3, 1, 2, 0) \
+  _Macro(4, wyzy, 3, 1, 2, 1) \
+  _Macro(4, wyzz, 3, 1, 2, 2) \
+  _Macro(4, wyzw, 3, 1, 2, 3) \
+  _Macro(4, wywx, 3, 1, 3, 0) \
+  _Macro(4, wywy, 3, 1, 3, 1) \
+  _Macro(4, wywz, 3, 1, 3, 2) \
+  _Macro(4, wyww, 3, 1, 3, 3) \
+  _Macro(4, wzxx, 3, 2, 0, 0) \
+  _Macro(4, wzxy, 3, 2, 0, 1) \
+  _Macro(4, wzxz, 3, 2, 0, 2) \
+  _Macro(4, wzxw, 3, 2, 0, 3) \
+  _Macro(4, wzyx, 3, 2, 1, 0) \
+  _Macro(4, wzyy, 3, 2, 1, 1) \
+  _Macro(4, wzyz, 3, 2, 1, 2) \
+  _Macro(4, wzyw, 3, 2, 1, 3) \
+  _Macro(4, wzzx, 3, 2, 2, 0) \
+  _Macro(4, wzzy, 3, 2, 2, 1) \
+  _Macro(4, wzzz, 3, 2, 2, 2) \
+  _Macro(4, wzzw, 3, 2, 2, 3) \
+  _Macro(4, wzwx, 3, 2, 3, 0) \
+  _Macro(4, wzwy, 3, 2, 3, 1) \
+  _Macro(4, wzwz, 3, 2, 3, 2) \
+  _Macro(4, wzww, 3, 2, 3, 3) \
+  _Macro(4, wwxx, 3, 3, 0, 0) \
+  _Macro(4, wwxy, 3, 3, 0, 1) \
+  _Macro(4, wwxz, 3, 3, 0, 2) \
+  _Macro(4, wwxw, 3, 3, 0, 3) \
+  _Macro(4, wwyx, 3, 3, 1, 0) \
+  _Macro(4, wwyy, 3, 3, 1, 1) \
+  _Macro(4, wwyz, 3, 3, 1, 2) \
+  _Macro(4, wwyw, 3, 3, 1, 3) \
+  _Macro(4, wwzx, 3, 3, 2, 0) \
+  _Macro(4, wwzy, 3, 3, 2, 1) \
+  _Macro(4, wwzz, 3, 3, 2, 2) \
+  _Macro(4, wwzw, 3, 3, 2, 3) \
+  _Macro(4, wwwx, 3, 3, 3, 0) \
+  _Macro(4, wwwy, 3, 3, 3, 1) \
+  _Macro(4, wwwz, 3, 3, 3, 2) \
+  _Macro(4, wwww, 3, 3, 3, 3)
