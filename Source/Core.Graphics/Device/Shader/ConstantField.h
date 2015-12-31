@@ -2,8 +2,8 @@
 
 #include "Core.Graphics/Graphics.h"
 
-#include "Core/Maths/Geometry/ScalarVector_extern.h"
-#include "Core/Maths/Transform/ScalarMatrix_extern.h"
+#include "Core/Maths/Geometry/ScalarVector_fwd.h"
+#include "Core/Maths/Transform/ScalarMatrix_fwd.h"
 #include "Core/Meta/BitField.h"
 
 namespace Core {

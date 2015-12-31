@@ -511,12 +511,6 @@
     <CustomBuild Include="Maths\Geometry\ScalarBoundingBoxHelpers.h">
       <Filter>Maths\Geometry</Filter>
     </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\ScalarBoundingBox_extern.cpp">
-      <Filter>Maths\Geometry</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\ScalarBoundingBox_extern.h">
-      <Filter>Maths\Geometry</Filter>
-    </CustomBuild>
     <CustomBuild Include="Maths\Geometry\ScalarBoundingBox_fwd.h">
       <Filter>Maths\Geometry</Filter>
     </CustomBuild>
@@ -524,12 +518,6 @@
       <Filter>Maths\Geometry</Filter>
     </CustomBuild>
     <CustomBuild Include="Maths\Geometry\ScalarRectangle.h">
-      <Filter>Maths\Geometry</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\ScalarRectangle_extern.cpp">
-      <Filter>Maths\Geometry</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\ScalarRectangle_extern.h">
       <Filter>Maths\Geometry</Filter>
     </CustomBuild>
     <CustomBuild Include="Maths\Geometry\ScalarRectangle_fwd.h">
@@ -551,12 +539,6 @@
       <Filter>Maths\Geometry</Filter>
     </CustomBuild>
     <CustomBuild Include="Maths\Geometry\ScalarVectorHelpers.h">
-      <Filter>Maths\Geometry</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\ScalarVector_extern.cpp">
-      <Filter>Maths\Geometry</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\ScalarVector_extern.h">
       <Filter>Maths\Geometry</Filter>
     </CustomBuild>
     <CustomBuild Include="Maths\Geometry\ScalarVector_fwd.h">
@@ -662,12 +644,6 @@
       <Filter>Maths\Transform</Filter>
     </CustomBuild>
     <CustomBuild Include="Maths\Transform\ScalarMatrixHelpers.h">
-      <Filter>Maths\Transform</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Transform\ScalarMatrix_extern.cpp">
-      <Filter>Maths\Transform</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Transform\ScalarMatrix_extern.h">
       <Filter>Maths\Transform</Filter>
     </CustomBuild>
     <CustomBuild Include="Maths\Transform\ScalarMatrix_fwd.h">

@@ -3,7 +3,8 @@
 #include "Core/Core.h"
 
 #include "Core/Maths/Transform/ScalarMatrix_fwd.h"
-#include "Core/Maths/Geometry/ScalarVector_extern.h"
+
+#include "Core/Maths/Geometry/ScalarVector.h"
 
 #include <iosfwd>
 #include <initializer_list>
@@ -18,118 +19,14 @@ union ScalarMatrixData {
     T raw[_Width * _Height];
 };
 //----------------------------------------------------------------------------
-namespace details {
 template <typename T, size_t _Width, size_t _Height>
-class ScalarMatrixSquare {};
-template <typename T, size_t _Dim>
-class ScalarMatrixSquare<T, _Dim, _Dim> {
-public:
-    T Trace() const;
-    ScalarVector<T, _Dim> Diagonal() const;
-    void SetDiagonal(const ScalarVector<T, _Dim>& v);
-};
-} //!details
-//----------------------------------------------------------------------------
-namespace details {
-template <typename T, size_t _Width, size_t _Height>
-class ScalarMatrixColumn {
-public:
-    typedef ScalarVector<T, _Height> column_type;
-};
-#define DECL_SCALARMATRIX_SCALAR_COLUMN(_Width, _Alias) \
-    template <typename T, size_t _Height> \
-    class ScalarMatrixColumn<T, _Width, _Height> : public ScalarMatrixColumn<T, _Width-1, _Height> { \
-    public: \
-        column_type Column_ ## _Alias() const; \
-        void SetColumn_ ## _Alias(const column_type& value); \
-    };
-template <typename T, size_t _Width, size_t _Height>
-class ScalarMatrixRow {
-public:
-    typedef ScalarVector<T, _Width> row_type;
-};
-#define DECL_SCALARMATRIX_SCALAR_ROW(_Height, _Alias) \
-    template <typename T, size_t _Width> \
-    class ScalarMatrixRow<T, _Width, _Height> : public ScalarMatrixRow<T, _Width, _Height-1> { \
-    public: \
-        row_type Row_ ## _Alias() const; \
-        void SetRow_ ## _Alias(const row_type& value); \
-    };
-#define DECL_SCALARMATRIX_SCALAR_COLUMN_ROW(_Dim, _Alias) \
-    DECL_SCALARMATRIX_SCALAR_COLUMN(_Dim, _Alias) \
-    DECL_SCALARMATRIX_SCALAR_ROW(_Dim, _Alias)
-DECL_SCALARMATRIX_SCALAR_COLUMN_ROW(1, x)
-DECL_SCALARMATRIX_SCALAR_COLUMN_ROW(2, y)
-DECL_SCALARMATRIX_SCALAR_COLUMN_ROW(3, z)
-DECL_SCALARMATRIX_SCALAR_COLUMN_ROW(4, w)
-#undef DECL_SCALARMATRIX_SCALAR_COLUMN_ROW
-#undef DECL_SCALARMATRIX_SCALAR_COLUMN
-#undef DECL_SCALARMATRIX_SCALAR_ROW
-} //!details
-//----------------------------------------------------------------------------
-namespace details {
-template <typename T, size_t _Width, size_t _Height>
-class ScalarMatrixAccessorImpl {}; // HLSL-like scalar accessors
-#define DECL_SCALARMATRIX_SCALAR_ACCESSOR(_X, _Y, _Col, _Row) \
-    template <typename T> \
-    class ScalarMatrixAccessorImpl<T, _Col, _Row> { \
-    public: \
-        T& m ## _X ## _Y(); \
-        const T& m ## _X ## _Y() const; \
-    \
-        T& _ ## _Col ## _Row(); \
-        const T& _ ## _Col ## _Row() const; \
-    };
-DECL_SCALARMATRIX_SCALAR_ACCESSOR(0, 0, 1, 1)
-DECL_SCALARMATRIX_SCALAR_ACCESSOR(0, 1, 1, 2)
-DECL_SCALARMATRIX_SCALAR_ACCESSOR(0, 2, 1, 3)
-DECL_SCALARMATRIX_SCALAR_ACCESSOR(0, 3, 1, 4)
-DECL_SCALARMATRIX_SCALAR_ACCESSOR(1, 0, 2, 1)
-DECL_SCALARMATRIX_SCALAR_ACCESSOR(1, 1, 2, 2)
-DECL_SCALARMATRIX_SCALAR_ACCESSOR(1, 2, 2, 3)
-DECL_SCALARMATRIX_SCALAR_ACCESSOR(1, 3, 2, 4)
-DECL_SCALARMATRIX_SCALAR_ACCESSOR(2, 0, 3, 1)
-DECL_SCALARMATRIX_SCALAR_ACCESSOR(2, 1, 3, 2)
-DECL_SCALARMATRIX_SCALAR_ACCESSOR(2, 2, 3, 3)
-DECL_SCALARMATRIX_SCALAR_ACCESSOR(2, 3, 3, 4)
-DECL_SCALARMATRIX_SCALAR_ACCESSOR(3, 0, 4, 1)
-DECL_SCALARMATRIX_SCALAR_ACCESSOR(3, 1, 4, 2)
-DECL_SCALARMATRIX_SCALAR_ACCESSOR(3, 2, 4, 3)
-DECL_SCALARMATRIX_SCALAR_ACCESSOR(3, 3, 4, 4)
-#undef DECL_SCALARMATRIX_SCALAR_ACCESSOR
-template <typename T, size_t _Width, size_t _Height>
-class ScalarMatrixAccessorEachRow
-:   public ScalarMatrixAccessorEachRow<T, _Width, _Height-1>
-,   public ScalarMatrixAccessorImpl<T, _Width, _Height> {};
-template <typename T, size_t _Width>
-class ScalarMatrixAccessorEachRow<T, _Width, 0> {};
-template <typename T, size_t _Width, size_t _Height>
-class ScalarMatrixAccessorEachColumn
-:   public ScalarMatrixAccessorEachColumn<T, _Width-1, _Height>
-,   public ScalarMatrixAccessorEachRow<T, _Width, _Height> {};
-template <typename T, size_t _Height>
-class ScalarMatrixAccessorEachColumn<T, 0, _Height> {};
-template <typename T, size_t _Width, size_t _Height>
-using ScalarMatrixAccessor = ScalarMatrixAccessorEachColumn<T, _Width, _Height>;
-} //!details
-//----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
-class ScalarMatrix
-:   public details::ScalarMatrixSquare<T, _Width, _Height>
-,   public details::ScalarMatrixColumn<T, _Width, _Height>
-,   public details::ScalarMatrixRow<T, _Width, _Height>
-,   public details::ScalarMatrixAccessor<T, _Width, _Height> {
+class ScalarMatrix {
 public:
     template <typename U, size_t _Width2, size_t _Height2>
     friend class ScalarMatrix;
-    template <typename U, size_t _Width2, size_t _Height2>
-    friend class details::ScalarMatrixAccessorImpl;
 
     STATIC_CONST_INTEGRAL(size_t, Width, _Width);
     STATIC_CONST_INTEGRAL(size_t, Height, _Height);
-
-    STATIC_ASSERT(_Width >= 1 && _Width <= 4);
-    STATIC_ASSERT(_Height >= 1 && _Height <= 4);
 
     typedef ScalarVector<T, _Width> row_type;
     typedef ScalarVector<T, _Height> column_type;
@@ -141,7 +38,10 @@ public:
     ScalarMatrix(T broadcast);
     ScalarMatrix(std::initializer_list<T> values);
 
-    ScalarMatrix(const column_type (&columns)[_Width]);
+    ScalarMatrix(const column_type& x);
+    ScalarMatrix(const column_type& x, const column_type& y);
+    ScalarMatrix(const column_type& x, const column_type& y, const column_type& z);
+    ScalarMatrix(const column_type& x, const column_type& y, const column_type& z, const column_type& w);
 
     ScalarMatrix(const ScalarMatrix<T, _Width - 1, _Height>& other, const column_type& column);
     ScalarMatrix(const ScalarMatrix<T, _Width, _Height - 1>& other, const row_type& row);
@@ -161,15 +61,48 @@ public:
     column_type Column(size_t i) const;
     void SetColumn(size_t i, const column_type& v);
 
+    FORCE_INLINE column_type Column_x() const { return Column<0>(); }
+    FORCE_INLINE column_type Column_y() const { return Column<1>(); }
+    FORCE_INLINE column_type Column_z() const { return Column<2>(); }
+    FORCE_INLINE column_type Column_w() const { return Column<3>(); }
+
+    FORCE_INLINE void SetColumn_x(const column_type& value) { return SetColumn(0, value); }
+    FORCE_INLINE void SetColumn_y(const column_type& value) { return SetColumn(1, value); }
+    FORCE_INLINE void SetColumn_z(const column_type& value) { return SetColumn(2, value); }
+    FORCE_INLINE void SetColumn_w(const column_type& value) { return SetColumn(3, value); }
+
     template <size_t _Idx>
     FORCE_INLINE row_type Row() const;
     row_type Row(size_t i) const;
     void SetRow(size_t i, const row_type& v);
 
+    FORCE_INLINE row_type Row_x() const { return Row<0>(); }
+    FORCE_INLINE row_type Row_y() const { return Row<1>(); }
+    FORCE_INLINE row_type Row_z() const { return Row<2>(); }
+    FORCE_INLINE row_type Row_w() const { return Row<3>(); }
+
+    FORCE_INLINE void SetRow_x(const row_type& value) { return SetRow(0, value); }
+    FORCE_INLINE void SetRow_y(const row_type& value) { return SetRow(1, value); }
+    FORCE_INLINE void SetRow_z(const row_type& value) { return SetRow(2, value); }
+    FORCE_INLINE void SetRow_w(const row_type& value) { return SetRow(3, value); }
+
     template <size_t _Idx>
     ScalarVector<T, 3> Axis() const;
     template <size_t _Idx>
     void SetAxis(const ScalarVector<T, 3>& v);
+
+    FORCE_INLINE ScalarVector<T, 3> AxisX() const { return Axis<0>(); }
+    FORCE_INLINE ScalarVector<T, 3> AxisY() const { return Axis<1>(); }
+    FORCE_INLINE ScalarVector<T, 3> AxisZ() const { return Axis<2>(); }
+    FORCE_INLINE ScalarVector<T, 3> AxisT() const { return Axis<3>(); }
+
+    FORCE_INLINE void SetAxisX(const ScalarVector<T, 3>& v) { SetAxis<0>(v); }
+    FORCE_INLINE void SetAxisY(const ScalarVector<T, 3>& v) { SetAxis<1>(v); }
+    FORCE_INLINE void SetAxisZ(const ScalarVector<T, 3>& v) { SetAxis<2>(v); }
+    FORCE_INLINE void SetAxisT(const ScalarVector<T, 3>& v) { SetAxis<3>(v); }
+
+    ScalarVector<T, _Width> Diagonal() const;
+    void SetDiagonal(const ScalarVector<T, _Width>& v);
 
     void SetBroadcast(T broadcast);
 
@@ -181,7 +114,9 @@ public:
 
     ScalarVector<T, _Height> Multiply(const ScalarVector<T, _Width>& v) const;
     ScalarVector<T, _Height> Multiply_OneExtend(const ScalarVector<T, _Width - 1>& v) const;
-    ScalarVector<T, _Height-1> Multiply_ZeroExtend(const ScalarVector<T, _Width - 1>& v) const;
+    ScalarVector<T, _Height - 1> Multiply_ZeroExtend(const ScalarVector<T, _Width - 1>& v) const;
+
+    T Trace() const;
 
     ScalarMatrix<T, _Height, _Width> Transpose() const;
 
@@ -227,6 +162,33 @@ private:
     ScalarMatrixData<T, _Width, _Height> _data;
 
 public:
+    // HLSL-like scalar accessors :
+#define DECL_SCALARMATRIX_SCALAR_ACCESSOR(_X, _Y, _Col, _Row) \
+    FORCE_INLINE T& m ## _X ## _Y() { return _data.m[_X][_Y]; } \
+    FORCE_INLINE const T& m ## _X ## _Y() const { return _data.m[_X][_Y]; } \
+    \
+    FORCE_INLINE T& _ ## _Col ## _Row() { return _data.m[_X][_Y]; } \
+    FORCE_INLINE const T& _ ## _Col ## _Row() const { return _data.m[_X][_Y]; }
+
+    DECL_SCALARMATRIX_SCALAR_ACCESSOR(0, 0, 1, 1)
+    DECL_SCALARMATRIX_SCALAR_ACCESSOR(0, 1, 1, 2)
+    DECL_SCALARMATRIX_SCALAR_ACCESSOR(0, 2, 1, 3)
+    DECL_SCALARMATRIX_SCALAR_ACCESSOR(0, 3, 1, 4)
+    DECL_SCALARMATRIX_SCALAR_ACCESSOR(1, 0, 2, 1)
+    DECL_SCALARMATRIX_SCALAR_ACCESSOR(1, 1, 2, 2)
+    DECL_SCALARMATRIX_SCALAR_ACCESSOR(1, 2, 2, 3)
+    DECL_SCALARMATRIX_SCALAR_ACCESSOR(1, 3, 2, 4)
+    DECL_SCALARMATRIX_SCALAR_ACCESSOR(2, 0, 3, 1)
+    DECL_SCALARMATRIX_SCALAR_ACCESSOR(2, 1, 3, 2)
+    DECL_SCALARMATRIX_SCALAR_ACCESSOR(2, 2, 3, 3)
+    DECL_SCALARMATRIX_SCALAR_ACCESSOR(2, 3, 3, 4)
+    DECL_SCALARMATRIX_SCALAR_ACCESSOR(3, 0, 4, 1)
+    DECL_SCALARMATRIX_SCALAR_ACCESSOR(3, 1, 4, 2)
+    DECL_SCALARMATRIX_SCALAR_ACCESSOR(3, 2, 4, 3)
+    DECL_SCALARMATRIX_SCALAR_ACCESSOR(3, 3, 4, 4)
+
+#undef DECL_SCALARMATRIX_SCALAR_ACCESSOR
+
 #define DECL_SCALARMATRIX_SCALAR_OP_LHS(_Op) \
     ScalarMatrix&   operator _Op##=(T scalar); \
     ScalarMatrix    operator _Op(T scalar) const;
@@ -235,6 +197,8 @@ public:
     DECL_SCALARMATRIX_SCALAR_OP_LHS(-)
     DECL_SCALARMATRIX_SCALAR_OP_LHS(*)
     DECL_SCALARMATRIX_SCALAR_OP_LHS(/)
+    DECL_SCALARMATRIX_SCALAR_OP_LHS(^)
+    DECL_SCALARMATRIX_SCALAR_OP_LHS(%)
 
 #undef DECL_SCALARMATRIX_SCALAR_OP_LHS
 
@@ -248,6 +212,8 @@ public:
     DECL_SCALARMATRIX_SCALAR_OP_RHS(-)
     DECL_SCALARMATRIX_SCALAR_OP_RHS(*)
     DECL_SCALARMATRIX_SCALAR_OP_RHS(/)
+    DECL_SCALARMATRIX_SCALAR_OP_RHS(^)
+    DECL_SCALARMATRIX_SCALAR_OP_RHS(%)
 
 #undef DECL_SCALARMATRIX_SCALAR_OP_RHS
 

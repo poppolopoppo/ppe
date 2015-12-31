@@ -21,8 +21,8 @@ DECL_SCALARVECTOR_ALIAS(i16, short);
 DECL_SCALARVECTOR(ushort);
 DECL_SCALARVECTOR(word);
 DECL_SCALARVECTOR(uword);
-DECL_SCALARVECTOR_ALIAS(i32, int)
-DECL_SCALARVECTOR_ALIAS(u32, unsigned)
+DECL_SCALARVECTOR(int)
+DECL_SCALARVECTOR(unsigned)
 DECL_SCALARVECTOR(float)
 DECL_SCALARVECTOR(double)
 //----------------------------------------------------------------------------
@@ -37,11 +37,12 @@ typedef unsigned2 uint2;
 typedef unsigned3 uint3;
 typedef unsigned4 uint4;
 //----------------------------------------------------------------------------
-typedef float3 PointF;
-typedef int3 PointI;
-//----------------------------------------------------------------------------
 #undef DECL_SCALARVECTOR
 #undef DECL_SCALARVECTOR_ALIAS
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+typedef float3 Point;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
