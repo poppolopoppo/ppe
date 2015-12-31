@@ -210,6 +210,7 @@ void RTTIAtomRandomizer_::Randomize(RTTI::MetaObject* pobject) {
             it.second->MoveTo(pobject, atom.get());
         else
             atom = it.second->WrapMove(pobject);
+        Assert(atom);
         parent_type::Append(atom.get());
         it.second->UnwrapMove(pobject, atom.get());
     }
