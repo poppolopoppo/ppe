@@ -97,12 +97,6 @@
     <CustomBuild Include="Color\Color.h">
       <Filter>Color</Filter>
     </CustomBuild>
-    <CustomBuild Include="Color\Color_extern.cpp">
-      <Filter>Color</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Color\Color_extern.h">
-      <Filter>Color</Filter>
-    </CustomBuild>
     <CustomBuild Include="Color\Color_fwd.h">
       <Filter>Color</Filter>
     </CustomBuild>
@@ -746,9 +740,6 @@
       <Filter>Memory</Filter>
     </CustomBuild>
     <CustomBuild Include="Memory\RefPtr.h">
-      <Filter>Memory</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Memory\SegregatedMemoryPool-inl.h">
       <Filter>Memory</Filter>
     </CustomBuild>
     <CustomBuild Include="Memory\SegregatedMemoryPool.h">

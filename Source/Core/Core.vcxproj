@@ -79,8 +79,6 @@
     <CustomBuild Include="Color\Color-inl.h" />
     <CustomBuild Include="Color\Color.cpp" />
     <CustomBuild Include="Color\Color.h" />
-    <CustomBuild Include="Color\Color_extern.cpp" />
-    <CustomBuild Include="Color\Color_extern.h" />
     <CustomBuild Include="Color\Color_fwd.h" />
     <CustomBuild Include="Container\AssociativeVector-inl.h" />
     <CustomBuild Include="Container\AssociativeVector.h" />
@@ -296,7 +294,6 @@
     <CustomBuild Include="Memory\MemoryViewReader.h" />
     <CustomBuild Include="Memory\RefPtr-inl.h" />
     <CustomBuild Include="Memory\RefPtr.h" />
-    <CustomBuild Include="Memory\SegregatedMemoryPool-inl.h" />
     <CustomBuild Include="Memory\SegregatedMemoryPool.h" />
     <CustomBuild Include="Memory\UniquePtr.h" />
     <CustomBuild Include="Memory\UniqueView.h" />
