@@ -40,7 +40,7 @@ public:
 template <typename T>
 class Literal : public ParseExpression {
 public:
-    typedef typename RTTI::wrap_atom< T >::type atom_type;
+    typedef typename RTTI::MetaAtomWrapper< T >::type atom_type;
 
     explicit Literal(T&& rvalue, const Lexer::Location& site);
     virtual ~Literal();

@@ -23,14 +23,12 @@ namespace RTTI {
     extern template class   MetaTypeVectorTraits<T>; \
     extern template class   MetaTypeDictionaryTraits<T, T>; \
     extern template class   MetaTypedAtom<T>; \
-    extern template class   MetaWrappedAtom<T, false>; \
     extern template class   MetaTypedProperty<T>; \
     extern template class   MetaFieldAccessor<T>; \
     extern template class   MetaWrappedProperty<T, MetaFieldAccessor<T> >;
 
 #define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
-    _DEF_METATYPE_SCALAR_EXTERN_TEMPLATE(T) \
-    _DEF_METATYPE_SCALAR_EXTERN_TEMPLATE(RTTI::Vector<T>)
+    _DEF_METATYPE_SCALAR_EXTERN_TEMPLATE(T)
 //----------------------------------------------------------------------------
 FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
 //----------------------------------------------------------------------------

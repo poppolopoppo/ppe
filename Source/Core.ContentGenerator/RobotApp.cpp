@@ -79,9 +79,9 @@ public:
 
 #define DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId, _Unused) \
     T _ ## _Name; \
-    VECTOR_THREAD_LOCAL(Container, T) _ ## _Name ## Vec; \
-    Pair<T, T> _ ## _Name ## Pair; \
-    HASHMAP_THREAD_LOCAL(Container, T, T) _ ## _Name ## Dico; \
+    RTTI::Vector<T> _ ## _Name ## Vec; \
+    RTTI::Pair<T, T> _ ## _Name ## Pair; \
+    RTTI::Dictionary<T, T> _ ## _Name ## Dico; \
     //yolo_type<T> _ ## _Name ## Yolo;
     FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR_IMPL_)
 #undef DEF_METATYPE_SCALAR_IMPL_

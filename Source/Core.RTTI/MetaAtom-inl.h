@@ -86,6 +86,11 @@ MetaTypeInfo MetaTypedAtomImpl<T>::TypeInfo() const {
 }
 //----------------------------------------------------------------------------
 template <typename T>
+const IMetaTypeVirtualTraits *MetaTypedAtomImpl<T>::Traits() const {
+    return MetaTypeTraits<T>::VirtualTraits();
+}
+//----------------------------------------------------------------------------
+template <typename T>
 bool MetaTypedAtomImpl<T>::IsDefaultValue() const {
     return MetaType< T >::IsDefaultValue(_wrapper);
 }
@@ -161,6 +166,12 @@ void MetaTypedAtomImpl<T>::Swap(T& wrapper) {
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(RTTI, MetaTypedAtom< T >, template <typename T>)
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(RTTI, MetaTypedAtom< RTTI::Pair<_First COMMA _Second> >, template <typename _First COMMA typename _Second>)
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
 void MetaTypedAtom< RTTI::Pair<_First, _Second> >::MoveTo(RTTI::Pair<PMetaAtom, PMetaAtom>& pair) {
@@ -262,6 +273,8 @@ bool MetaTypedAtom< RTTI::Pair<_First, _Second> >::Equals(const RTTI::Pair<PMeta
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(RTTI, MetaTypedAtom< RTTI::Vector<T> >, template <typename T>)
 //----------------------------------------------------------------------------
 template <typename T>
 void MetaTypedAtom< RTTI::Vector<T> >::MoveTo(RTTI::Vector<PMetaAtom>& vector) {
@@ -416,6 +429,8 @@ bool MetaTypedAtom< RTTI::Vector<T> >::Equals(const RTTI::Vector<PMetaAtom>& vec
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(RTTI, MetaTypedAtom< RTTI::Dictionary<_Key COMMA _Value> >, template <typename _Key COMMA typename _Value>)
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
 void MetaTypedAtom< RTTI::Dictionary<_Key, _Value> >::MoveTo(RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) {
@@ -601,125 +616,29 @@ bool MetaTypedAtom< RTTI::Dictionary<_Key, _Value> >::Equals(const RTTI::Diction
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, bool _Wrapping>
-MetaWrappedAtom<T, _Wrapping>::MetaWrappedAtom() {}
-//----------------------------------------------------------------------------
-template <typename T, bool _Wrapping>
-MetaWrappedAtom<T, _Wrapping>::~MetaWrappedAtom() {}
-//----------------------------------------------------------------------------
-template <typename T, bool _Wrapping>
-MetaWrappedAtom<T, _Wrapping>::MetaWrappedAtom(MetaWrappedAtom&& rvalue)
-:   typed_atom_type(std::move(rvalue)) {}
-//----------------------------------------------------------------------------
-template <typename T, bool _Wrapping>
-auto MetaWrappedAtom<T, _Wrapping>::operator =(MetaWrappedAtom&& rvalue) -> MetaWrappedAtom& {
-    typed_atom_type::operator =(std::move(rvalue));
-    return *this;
-}
-//----------------------------------------------------------------------------
-template <typename T, bool _Wrapping>
-MetaWrappedAtom<T, _Wrapping>::MetaWrappedAtom(const MetaWrappedAtom& other)
-:   typed_atom_type(other) {}
-//----------------------------------------------------------------------------
-template <typename T, bool _Wrapping>
-auto MetaWrappedAtom<T, _Wrapping>::operator =(const MetaWrappedAtom& other) -> MetaWrappedAtom& {
-    typed_atom_type::operator =(other);
-    return *this;
-}
-//----------------------------------------------------------------------------
-template <typename T, bool _Wrapping>
-MetaWrappedAtom<T, _Wrapping>::MetaWrappedAtom(wrapper_type&& wrapper)
-:   typed_atom_type(std::move(wrapper)) {}
-//----------------------------------------------------------------------------
-template <typename T, bool _Wrapping>
-auto MetaWrappedAtom<T, _Wrapping>::operator =(wrapper_type&& wrapper) -> MetaWrappedAtom& {
-    typed_atom_type::operator=(std::move(wrapper));
-    return *this;
-}
-//----------------------------------------------------------------------------
-template <typename T, bool _Wrapping>
-MetaWrappedAtom<T, _Wrapping>::MetaWrappedAtom(const wrapper_type& wrapper)
-:   typed_atom_type(wrapper) {}
-//----------------------------------------------------------------------------
-template <typename T, bool _Wrapping>
-auto MetaWrappedAtom<T, _Wrapping>::operator =(const wrapper_type& wrapper) -> MetaWrappedAtom& {
-    typed_atom_type::operator =(wrapper);
-    return *this;
-}
-//----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(RTTI, MetaWrappedAtom<T COMMA _Wrapping>, template <typename T COMMA bool _Wrapping>)
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 template <typename T>
-MetaWrappedAtom<T, true>::MetaWrappedAtom() {}
-//----------------------------------------------------------------------------
-template <typename T>
-MetaWrappedAtom<T, true>::~MetaWrappedAtom() {}
-//----------------------------------------------------------------------------
-template <typename T>
-MetaWrappedAtom<T, true>::MetaWrappedAtom(MetaWrappedAtom&& rvalue)
-:   typed_atom_type(std::move(rvalue)) {}
-//----------------------------------------------------------------------------
-template <typename T>
-auto MetaWrappedAtom<T, true>::operator =(MetaWrappedAtom&& rvalue) -> MetaWrappedAtom& {
-    typed_atom_type::operator =(std::move(rvalue));
-    return *this;
+typename MetaAtomWrapper<T>::type *MakeAtom(T&& rvalue, typename std::enable_if< MetaAtomWrapper<T>::need_wrapper::value >::type* /* = 0 */) {
+    typedef MetaTypeTraits<T> traits_type;
+    typedef typename MetaAtomWrapper<T>::type atom_type;
+    typename traits_type::wrapper_type wrapper;
+    traits_type::WrapMove(wrapper, std::move(rvalue));
+    return new atom_type(std::move(wrapper));
 }
 //----------------------------------------------------------------------------
 template <typename T>
-MetaWrappedAtom<T, true>::MetaWrappedAtom(const MetaWrappedAtom& other)
-:   typed_atom_type(other) {}
-//----------------------------------------------------------------------------
-template <typename T>
-auto MetaWrappedAtom<T, true>::operator =(const MetaWrappedAtom& other) -> MetaWrappedAtom& {
-    typed_atom_type::operator =(other);
-    return *this;
+typename MetaAtomWrapper<T>::type *MakeAtom(const T& value, typename std::enable_if< MetaAtomWrapper<T>::need_wrapper::value >::type* /* = 0 */) {
+    typedef MetaTypeTraits<T> traits_type;
+    typedef typename MetaAtomWrapper<T>::type atom_type;
+    typename traits_type::wrapper_type wrapper;
+    traits_type::WrapCopy(wrapper, value);
+    return new atom_type(std::move(wrapper));
 }
 //----------------------------------------------------------------------------
 template <typename T>
-MetaWrappedAtom<T, true>::MetaWrappedAtom(wrapper_type&& wrapper)
-:   typed_atom_type(std::move(wrapper)) {}
-//----------------------------------------------------------------------------
-template <typename T>
-auto MetaWrappedAtom<T, true>::operator =(wrapper_type&& wrapper) -> MetaWrappedAtom& {
-    typed_atom_type::operator=(std::move(wrapper));
-    return *this;
+typename MetaAtomWrapper<T>::type *MakeAtom(T&& rvalue, typename std::enable_if< MetaAtomWrapper<T>::dont_need_wrapper::value >::type* /* = 0 */) {
+    typedef typename MetaAtomWrapper<T>::type atom_type;
+    return new atom_type(std::forward<T>(rvalue));
 }
-//----------------------------------------------------------------------------
-template <typename T>
-MetaWrappedAtom<T, true>::MetaWrappedAtom(const wrapper_type& wrapper)
-:   typed_atom_type(wrapper) {}
-//----------------------------------------------------------------------------
-template <typename T>
-auto MetaWrappedAtom<T, true>::operator =(const wrapper_type& wrapper) -> MetaWrappedAtom& {
-    typed_atom_type::operator =(wrapper);
-    return *this;
-}
-//----------------------------------------------------------------------------
-template <typename T>
-MetaWrappedAtom<T, true>::MetaWrappedAtom(wrapped_type&& wrapped) {
-    meta_type_traits::WrapMove(_wrapper, std::move(wrapped));
-}
-//----------------------------------------------------------------------------
-template <typename T>
-auto MetaWrappedAtom<T, true>::operator =(wrapped_type&& wrapped) -> MetaWrappedAtom& {
-    meta_type_traits::WrapMove(_wrapper, std::move(wrapped));
-    return *this;
-}
-//----------------------------------------------------------------------------
-template <typename T>
-MetaWrappedAtom<T, true>::MetaWrappedAtom(const wrapped_type& wrapped) {
-    meta_type_traits::WrapCopy(_wrapper, wrapped);
-}
-//----------------------------------------------------------------------------
-template <typename T>
-auto MetaWrappedAtom<T, true>::operator =(const wrapped_type& wrapped) -> MetaWrappedAtom& {
-    meta_type_traits::WrapCopy(_wrapper, wrapped);
-    return *this;
-}
-//----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(RTTI, MetaWrappedAtom<T COMMA true>, template <typename T>)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

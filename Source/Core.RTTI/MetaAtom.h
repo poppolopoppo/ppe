@@ -200,6 +200,7 @@ public:
     const T& Wrapper() const { return _wrapper; }
 
     virtual MetaTypeInfo TypeInfo() const override;
+    virtual const IMetaTypeVirtualTraits *Traits() const override;
 
     virtual bool IsDefaultValue() const override;
 
@@ -254,6 +255,11 @@ public:
 
     virtual IMetaAtomDictionary *AsDictionary() override { return nullptr; }
     virtual const IMetaAtomDictionary *AsDictionary() const override { return nullptr; }
+
+    virtual void Accept(IMetaAtomVisitor* visitor) override { visitor->Visit(this); }
+    virtual void Accept(IMetaAtomConstVisitor* visitor) const override { visitor->Visit(this); }
+
+    SINGLETON_POOL_ALLOCATED_DECL();
 };
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
@@ -294,6 +300,11 @@ public:
     using impl_type::MoveFrom;
     using impl_type::CopyFrom;
     using impl_type::Equals;
+
+    virtual void Accept(IMetaAtomVisitor* visitor) override { visitor->Visit(this); }
+    virtual void Accept(IMetaAtomConstVisitor* visitor) const override { visitor->Visit(this); }
+
+    SINGLETON_POOL_ALLOCATED_DECL();
 
     // IMetaAtomPair interface
 
@@ -360,6 +371,11 @@ public:
     using impl_type::CopyFrom;
     using impl_type::Equals;
 
+    virtual void Accept(IMetaAtomVisitor* visitor) override { visitor->Visit(this); }
+    virtual void Accept(IMetaAtomConstVisitor* visitor) const override { visitor->Visit(this); }
+
+    SINGLETON_POOL_ALLOCATED_DECL();
+
     // IMetaAtomVector interface
 
 private:
@@ -422,6 +438,11 @@ public:
     using impl_type::CopyFrom;
     using impl_type::Equals;
 
+    virtual void Accept(IMetaAtomVisitor* visitor) override { visitor->Visit(this); }
+    virtual void Accept(IMetaAtomConstVisitor* visitor) const override { visitor->Visit(this); }
+
+    SINGLETON_POOL_ALLOCATED_DECL();
+
     // IMetaAtomDictionary interface
 
 private:
@@ -450,93 +471,29 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, bool _Wrapping = MetaTypeTraits<T>::Wrapping >
-class MetaWrappedAtom : public MetaTypedAtom< typename MetaTypeTraits<T>::wrapper_type > {
-public:
-    typedef MetaTypeTraits<T> meta_type_traits;
-
-    typedef typename meta_type_traits::meta_type meta_type;
-    typedef typename meta_type_traits::wrapped_type wrapped_type;
-    typedef typename meta_type_traits::wrapper_type wrapper_type;
-
-    typedef MetaTypedAtom< wrapper_type > typed_atom_type;
-
-    MetaWrappedAtom();
-    virtual ~MetaWrappedAtom();
-
-    MetaWrappedAtom(MetaWrappedAtom&& rvalue);
-    MetaWrappedAtom& operator =(MetaWrappedAtom&& rvalue);
-
-    MetaWrappedAtom(const MetaWrappedAtom& rvalue);
-    MetaWrappedAtom& operator =(const MetaWrappedAtom& rvalue);
-
-    MetaWrappedAtom(wrapper_type&& wrapper);
-    MetaWrappedAtom& operator =(wrapper_type&& wrapper);
-
-    MetaWrappedAtom(const wrapper_type& wrapper);
-    MetaWrappedAtom& operator =(const wrapper_type& wrapper);
-
-    virtual const IMetaTypeVirtualTraits *Traits() const override { return meta_type_traits::VirtualTraits(); }
-
-    virtual void Accept(IMetaAtomVisitor* visitor) override { visitor->Visit(this); }
-    virtual void Accept(IMetaAtomConstVisitor* visitor) const override { visitor->Visit(this); }
-
-    SINGLETON_POOL_ALLOCATED_DECL();
-};
-//----------------------------------------------------------------------------
 template <typename T>
-class MetaWrappedAtom<T, true> : public MetaTypedAtom< typename MetaTypeTraits<T>::wrapper_type > {
-public:
-    typedef MetaTypeTraits<T> meta_type_traits;
-
-    typedef typename meta_type_traits::meta_type meta_type;
-    typedef typename meta_type_traits::wrapped_type wrapped_type;
-    typedef typename meta_type_traits::wrapper_type wrapper_type;
-
-    typedef MetaTypedAtom< wrapper_type > typed_atom_type;
-
-    MetaWrappedAtom();
-    virtual ~MetaWrappedAtom();
-
-    MetaWrappedAtom(MetaWrappedAtom&& rvalue);
-    MetaWrappedAtom& operator =(MetaWrappedAtom&& rvalue);
-
-    MetaWrappedAtom(const MetaWrappedAtom& rvalue);
-    MetaWrappedAtom& operator =(const MetaWrappedAtom& rvalue);
-
-    MetaWrappedAtom(wrapper_type&& wrapper);
-    MetaWrappedAtom& operator =(wrapper_type&& wrapper);
-
-    MetaWrappedAtom(const wrapper_type& wrapper);
-    MetaWrappedAtom& operator =(const wrapper_type& wrapper);
-
-    MetaWrappedAtom(wrapped_type&& wrapped);
-    MetaWrappedAtom& operator =(wrapped_type&& wrapped);
-
-    MetaWrappedAtom(const wrapped_type& wrapped);
-    MetaWrappedAtom& operator =(const wrapped_type& wrapped);
-
-    virtual const IMetaTypeVirtualTraits *Traits() const override { return meta_type_traits::VirtualTraits(); }
-
-    virtual void Accept(IMetaAtomVisitor* visitor) override { visitor->Visit(this); }
-    virtual void Accept(IMetaAtomConstVisitor* visitor) const override { visitor->Visit(this); }
-
-    SINGLETON_POOL_ALLOCATED_DECL();
+struct MetaAtomWrapper {
+    typedef MetaTypeTraits< typename std::decay<T>::type > trais_type;
+    typedef typename std::is_same<
+        typename trais_type::wrapper_type,
+        typename trais_type::wrapped_type
+    >::type dont_need_wrapper;
+    typedef std::integral_constant<bool, false == dont_need_wrapper::value> need_wrapper;
+    typedef MetaTypedAtom< typename trais_type::wrapper_type > type;
 };
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FORCE_INLINE MetaAtom *MakeAtom(PMetaAtom&& atom) { return atom.get(); }
 FORCE_INLINE MetaAtom *MakeAtom(const PMetaAtom& atom) { return atom.get(); }
 FORCE_INLINE const MetaAtom *MakeAtom(const PCMetaAtom& atom) { return atom.get(); }
 //----------------------------------------------------------------------------
 template <typename T>
-struct wrap_atom { typedef MetaWrappedAtom< typename std::decay<T>::type > type; };
+typename MetaAtomWrapper<T>::type *MakeAtom(T&& rvalue, typename std::enable_if< MetaAtomWrapper<T>::need_wrapper::value >::type* = 0 );
 //----------------------------------------------------------------------------
-template <typename T, class = typename MetaTypeTraits<T>::meta_type >
-typename wrap_atom<T>::type *MakeAtom(T&& rvalue) {
-    return new typename wrap_atom<T>::type(std::forward<T>(rvalue));
-}
+template <typename T>
+typename MetaAtomWrapper<T>::type *MakeAtom(const T& value, typename std::enable_if< MetaAtomWrapper<T>::need_wrapper::value >::type* = 0 );
+//----------------------------------------------------------------------------
+template <typename T>
+typename MetaAtomWrapper<T>::type *MakeAtom(T&& rvalue, typename std::enable_if< MetaAtomWrapper<T>::dont_need_wrapper::value >::type* = 0 );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

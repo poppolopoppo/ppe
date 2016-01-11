@@ -37,7 +37,7 @@ template <size_t _SizeInBytes>
 void* InSituStorage<_SizeInBytes>::AllocateIFP(size_t sizeInBytes) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Contains(_ptr));
-    if (_data + _SizeInBytes - _ptr >= sizeInBytes) {
+    if (checked_cast<size_t>(_data + _SizeInBytes - _ptr) >= sizeInBytes) {
         u8* const r = _ptr;
         _ptr += sizeInBytes;
         return r;

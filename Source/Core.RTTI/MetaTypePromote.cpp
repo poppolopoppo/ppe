@@ -45,7 +45,7 @@ namespace {
     template <template <typename, typename> class _Impl>
     struct PromoteTest_ {
         template <typename... _Args>
-        bool operator ()(const MetaTypeId srcTypeId, const MetaTypeId dstTypeId, _Args&&... args) {
+        NO_INLINE bool operator ()(const MetaTypeId srcTypeId, const MetaTypeId dstTypeId, _Args&&... args) {
             switch (srcTypeId)
             {
                 METATYPE_PROMOTE_BEGIN_FROM(int8_t)

@@ -414,7 +414,7 @@ private:
                 switch (typeId) {
 #define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
                 case _TypeId: \
-                    atom = new RTTI::wrap_atom< T >::type(); \
+                    atom = new RTTI::MetaAtomWrapper< T >::type(); \
                     Assert(atom->IsDefaultValue()); \
                     atom->Accept(this); \
                     break;

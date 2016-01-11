@@ -46,6 +46,10 @@
 #   define WITH_CORE_POOL_ALLOCATOR_TRACKING //%__NOCOMMIT%
 #endif
 
+#if defined(WITH_CORE_POOL_ALLOCATOR_TRACKING)
+//#   define WITH_CORE_POOL_ALLOCATOR_TRACKING_DETAILS //%__NOCOMMIT%
+#endif
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -59,14 +63,10 @@ struct PoolTracking {
     Core::MemoryTrackingData TrackingData;
     char Name[128];
 
-    PoolTracking(   const char *tagname,
-                    Core::MemoryTrackingData *parent = nullptr,
-                    Core::MemoryTrackingData **dst = nullptr )
-    :   TrackingData(Name, parent) {
+    PoolTracking(const char* tagname, MemoryTrackingData* parent = nullptr)
+    :   TrackingData(&Name[0], parent) {
         Format(Name, "{0}<{1},{2}>", tagname, _ThreadLocal, _Size);
         RegisterAdditionalTrackingData(&TrackingData);
-        if (dst)
-            *dst = &TrackingData;
     }
 
     ~PoolTracking() {
@@ -83,8 +83,8 @@ template <  typename _Tag
 ,           typename _MemoryPool = MemoryPool<true>
 ,           template <class > class _AutoSingleton = Meta::AutoSingleton >
 class SegregatedMemoryPool :
-    public _MemoryPool
-,   public _AutoSingleton<SegregatedMemoryPool<_Tag, _BlockSize, _MemoryPool, _AutoSingleton> > {
+    private _MemoryPool
+,   private _AutoSingleton<SegregatedMemoryPool<_Tag, _BlockSize, _MemoryPool, _AutoSingleton> > {
 public:
     typedef SegregatedMemoryPool<_Tag, _BlockSize, _MemoryPool, _AutoSingleton> self_type;
     typedef _AutoSingleton<self_type> singleton_type;
@@ -108,9 +108,9 @@ public:
 private:
     PoolTracking<_Tag, (false == memorypool_type::IsLocked), _BlockSize> _poolTracking;
 public:
-    MemoryTrackingData *TrackingData() { return &_poolTracking.TrackingData; }
+    MemoryTrackingData* TrackingData() { return &_poolTracking.TrackingData; }
 #else
-    MemoryTrackingData *TrackingData() const { return nullptr; }
+    MemoryTrackingData* TrackingData() const { return nullptr; }
 #endif
 
 private:
@@ -120,11 +120,11 @@ private:
     ,   _poolTracking(_Tag::Name())
 #endif
     {
-        _Tag::Register(_MemoryPoolBase(this));
+        _Tag::Register(this);
     }
 
     ~SegregatedMemoryPool() {
-        _Tag::Unregister(_MemoryPoolBase(this));
+        _Tag::Unregister(this);
     }
 };
 //----------------------------------------------------------------------------
@@ -145,24 +145,23 @@ public:
         SegregatedMemoryPool<_Tag, BlockSize, MemoryPool<true , ALLOCATOR(Pool, size_t)              >, Meta::AutoSingleton >
     >::type     segregatedpool_type;
 
-    static void *Allocate();
-    static void Deallocate(void *ptr);
-    static void Clear_UnusedMemory();
+    FORCE_INLINE static void* Allocate() { return segregatedpool_type::Instance().Allocate(TrackingData()); }
+    FORCE_INLINE static void Deallocate(void* ptr) { segregatedpool_type::Instance().Deallocate(TrackingData()); }
+    FORCE_INLINE static void Clear_UnusedMemory() { segregatedpool_type::Instance().Clear_UnusedMemory(); }
 
-#ifdef WITH_CORE_POOL_ALLOCATOR_TRACKING
-    static const MemoryTrackingData *TrackingData() { return _pTrackingData; }
+#if defined(WITH_CORE_POOL_ALLOCATOR_TRACKING_DETAILS)
+    static MemoryTrackingData* TrackingData() {
+        ONE_TIME_INITIALIZE_TPL(PoolTracking<T COMMA _ThreadLocal>, sPoolTracking,
+            typeid(T).name(), segregatedpool_type::Instance().TrackingData());
+        return &sPoolTracking.TrackingData;
+    }
+#elif defined(WITH_CORE_POOL_ALLOCATOR_TRACKING)
+    static MemoryTrackingData* TrackingData() { return segregatedpool_type::Instance().TrackingData(); }
 #else
-    static const MemoryTrackingData *TrackingData() { return nullptr; }
-#endif
-
-private:
-#ifdef WITH_CORE_POOL_ALLOCATOR_TRACKING
-    static MemoryTrackingData *_pTrackingData;
+    static constexpr MemoryTrackingData* TrackingData() { return nullptr; }
 #endif
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Core
-
-#include "Core/Memory/SegregatedMemoryPool-inl.h"

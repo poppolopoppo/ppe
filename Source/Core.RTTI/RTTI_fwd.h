@@ -16,8 +16,6 @@ POOLTAG_DECL(RTTI);
 FWD_REFPTR(MetaAtom);
 template <typename T>
 class MetaTypedAtom;
-template <typename T, bool _Wrapping>
-class MetaWrappedAtom;
 class IMetaAtomPair;
 class IMetaAtomVector;
 class IMetaAtomDictionary;

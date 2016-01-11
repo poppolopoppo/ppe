@@ -380,19 +380,19 @@ struct BinaryOp {
         default:
             // now try to cast, ie not the current type but accessible through meta cast
             {
-                RTTI::MetaWrappedAtom< ParseBool > metaCasted;
+                RTTI::MetaTypedAtom< ParseBool > metaCasted;
                 if (RTTI::AssignCopy(&metaCasted.Wrapper(), lhs_value.get()))
                     return BooleanOp_(lhs, rhs, &metaCasted, rhs_value.get());
             }{
-                RTTI::MetaWrappedAtom< ParseInt > metaCasted;
+                RTTI::MetaTypedAtom< ParseInt > metaCasted;
                 if (RTTI::AssignCopy(&metaCasted.Wrapper(), lhs_value.get()))
                     return IntegerOp_(lhs, rhs, &metaCasted, rhs_value.get());
             }{
-                RTTI::MetaWrappedAtom< ParseFloat > metaCasted;
+                RTTI::MetaTypedAtom< ParseFloat > metaCasted;
                 if (RTTI::AssignCopy(&metaCasted.Wrapper(), lhs_value.get()))
                     return FloatOp_(lhs, rhs, &metaCasted, rhs_value.get());
             }{
-                RTTI::MetaWrappedAtom< ParseString > metaCasted;
+                RTTI::MetaTypedAtom< ParseString > metaCasted;
                 if (RTTI::AssignCopy(&metaCasted.Wrapper(), lhs_value.get()))
                     return StringOp_(lhs, rhs, &metaCasted, rhs_value.get());
             }

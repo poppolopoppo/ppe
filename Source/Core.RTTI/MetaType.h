@@ -63,7 +63,7 @@ constexpr MetaTypeId hash_MetaTypeId_constexpr(_Args... args) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-using Vector = VECTORINSITU(RTTI, T, 4);
+using Vector = VECTORINSITU(Container, T, 4);
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
 using Pair = Core::Pair<_Key, _Value>;

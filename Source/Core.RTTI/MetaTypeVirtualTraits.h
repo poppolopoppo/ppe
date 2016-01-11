@@ -41,10 +41,10 @@ public:
     STATIC_ASSERT(false == MetaTypeTraits< T >::Wrapping);
 
     virtual MetaAtom* CreateDefaultValue() const override {
-        MetaAtom* const result = new MetaWrappedAtom< T >(
+        typedef typename MetaAtomWrapper<T>::type atom_type;
+        MetaAtom* const result = new atom_type(
             std::move(MetaTypeTraits<T>::meta_type::DefaultValue())
         );
-        Assert(result->Traits() == this);
         Assert(result->IsDefaultValue());
         return result;
     }
@@ -70,8 +70,8 @@ public:
     STATIC_ASSERT(false == MetaTypeTraits< _Second >::Wrapping);
 
     virtual MetaAtom* CreateDefaultValue() const override {
-        MetaAtom* const result = new MetaWrappedAtom< RTTI::Pair<_First, _Second> >();
-        Assert(result->Traits() == this);
+        typedef typename MetaAtomWrapper< RTTI::Pair<_First, _Second> >::type atom_type;
+        MetaAtom* const result = new atom_type();
         Assert(result->IsDefaultValue());
         return result;
     }
@@ -96,8 +96,8 @@ public:
     STATIC_ASSERT(false == MetaTypeTraits< T >::Wrapping);
 
     virtual MetaAtom* CreateDefaultValue() const override {
-        MetaAtom* const result = new MetaWrappedAtom< RTTI::Vector<T> >();
-        Assert(result->Traits() == this);
+        typedef typename MetaAtomWrapper< RTTI::Vector<T> >::type atom_type;
+        MetaAtom* const result = new atom_type();
         Assert(result->IsDefaultValue());
         return result;
     }
@@ -123,8 +123,8 @@ public:
     STATIC_ASSERT(false == MetaTypeTraits< _Value >::Wrapping);
 
     virtual MetaAtom* CreateDefaultValue() const override {
-        MetaAtom* const result = new MetaWrappedAtom< RTTI::Dictionary<_Key, _Value> >();
-        Assert(result->Traits() == this);
+        typedef typename MetaAtomWrapper< RTTI::Dictionary<_Key, _Value> >::type atom_type;
+        MetaAtom* const result = new atom_type();
         Assert(result->IsDefaultValue());
         return result;
     }

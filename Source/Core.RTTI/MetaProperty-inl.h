@@ -105,8 +105,8 @@ bool MetaWrappedProperty<T, _Accessor>::UnwrapMove(MetaObject *dst, MetaAtom *sr
     Assert(dst);
     Assert(src);
 
-    MetaWrappedAtom<T> tmp;
-    if (false == tmp.Traits()->AssignMove(&tmp, src))
+    typename MetaAtomWrapper<T>::type tmp;
+    if (false == Traits()->AssignMove(&tmp, src))
         return false;
 
     T wrapped;
@@ -121,8 +121,8 @@ bool MetaWrappedProperty<T, _Accessor>::UnwrapCopy(MetaObject *dst, const MetaAt
     Assert(dst);
     Assert(src);
 
-    MetaWrappedAtom<T> tmp;
-    if (false == tmp.Traits()->AssignCopy(&tmp, src))
+    typename MetaAtomWrapper<T>::type tmp;
+    if (false == Traits()->AssignCopy(&tmp, src))
         return false;
 
     T wrapped;

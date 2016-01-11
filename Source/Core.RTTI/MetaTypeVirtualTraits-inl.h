@@ -14,7 +14,7 @@ bool AssignMove(T *dst, MetaAtom *src) {
 
     typedef typename std::decay< T >::type dst_type;
 
-    MetaWrappedAtom< dst_type > tmp;
+    typename MetaAtomWrapper< dst_type >::type tmp;
     if (!MetaTypeTraits< dst_type >::VirtualTraits()->AssignMove(&tmp, src))
         return false;
 
@@ -29,7 +29,7 @@ bool AssignCopy(T *dst, const MetaAtom *src) {
 
     typedef typename std::decay< T >::type dst_type;
 
-    MetaWrappedAtom< dst_type > tmp;
+    typename MetaAtomWrapper< dst_type >::type tmp;
     if (!MetaTypeTraits< dst_type >::VirtualTraits()->AssignCopy(&tmp, src))
         return false;
 
@@ -46,7 +46,7 @@ bool AssignMove(MetaAtom *dst, T *src) {
 
     typedef typename std::decay< T >::type src_type;
 
-    MetaWrappedAtom< src_type > tmp;
+    typename MetaAtomWrapper< src_type >::type tmp;
     MetaTypeTraits< src_type >::WrapMove(tmp.Wrapper(), std::move(*src));
 
     if (dst->Traits()->AssignMove(dst, &tmp))
@@ -63,7 +63,7 @@ bool AssignCopy(MetaAtom *dst, const T *src) {
 
     typedef typename std::decay< T >::type src_type;
 
-    MetaWrappedAtom< src_type > tmp;
+    typename MetaAtomWrapper< src_type >::type tmp;
     MetaTypeTraits< src_type >::WrapCopy(tmp.Wrapper(), *src);
 
     return dst->Traits()->AssignMove(dst, &tmp);
@@ -99,10 +99,10 @@ bool AssignMove(_Dst *dst, _Src *src) {
     typedef typename std::decay< _Dst >::type dst_type;
     typedef typename std::decay< _Src >::type src_type;
 
-    MetaWrappedAtom< src_type > tmp_src;
+    typename MetaAtomWrapper< src_type >::type tmp_src;
     MetaTypeTraits< src_type >::WrapMove(tmp_src.Wrapper(), std::move(*src));
 
-    MetaTypeTraits< dst_type > tmp_dst;
+    typename MetaAtomWrapper< dst_type >::type tmp_dst;
     if (MetaTypeTraits< dst_type >::VirtualTraits()->AssignMove(&tmp_dst, &tmp_src)) {
         MetaTypeTraits< dst_type >::UnwrapMove(*dst, std::move(tmp_dst.Wrapper()));
         return true;
@@ -121,10 +121,10 @@ bool AssignCopy(_Dst *dst, const _Src *src) {
     typedef typename std::decay< _Dst >::type dst_type;
     typedef typename std::decay< _Src >::type src_type;
 
-    MetaWrappedAtom< src_type > tmp_src;
+    typename MetaAtomWrapper< src_type >::type tmp_src;
     MetaTypeTraits< src_type >::WrapCopy(tmp_src.Wrapper(), *src);
 
-    MetaTypeTraits< dst_type > tmp_dst;
+    typename MetaAtomWrapper< dst_type >::type tmp_dst;
     if (!MetaTypeTraits< dst_type >::VirtualTraits()->AssignMove(&tmp_dst, &tmp_src))
         return false;
 

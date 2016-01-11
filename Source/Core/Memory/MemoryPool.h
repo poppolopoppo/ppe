@@ -149,7 +149,7 @@ private:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <bool _Lock, typename _Allocator = ALLOCATOR(Pool, u64) >
-class MemoryPool : private MemoryPoolBase, private _Allocator, private Meta::ThreadLock<_Lock> {
+class MemoryPool : protected MemoryPoolBase, private _Allocator, private Meta::ThreadLock<_Lock> {
 public:
     typedef Meta::ThreadLock<_Lock> threadlock_type;
     typedef _Allocator allocator_type;
@@ -172,8 +172,6 @@ public:
     virtual void Clear_AssertCompletelyFree() override;
     virtual void Clear_IgnoreLeaks() override;
     virtual void Clear_UnusedMemory() override;
-
-    friend MemoryPoolBase* _MemoryPoolBase(MemoryPool* ppool) { return ppool; }
 
 private:
     MemoryPoolChunk *AllocateChunk_();
