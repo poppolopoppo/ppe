@@ -53,6 +53,20 @@ RTTI_PROPERTY_PRIVATE_FIELD(_sourceFile)
 RTTI_PROPERTY_PRIVATE_FIELD(_lastModified)
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------
+FWD_REFPTR(RTTITest2_);
+class RTTITest2_ : public RTTI::MetaObject {
+public:
+    RTTI_CLASS_HEADER(RTTITest2_, RTTI::MetaObject);
+
+    RTTITest2_() {}
+
+private:
+    RTTI::Vector<RTTI::PMetaAtom> _atomVector;
+};
+RTTI_CLASS_BEGIN(RTTITest2_, Concrete)
+    RTTI_PROPERTY_PRIVATE_FIELD(_atomVector)
+RTTI_CLASS_END()
+//----------------------------------------------------------------------------
 FWD_REFPTR(RTTITest_);
 class RTTITest_ : public RTTI::MetaObject {
 public:
@@ -118,8 +132,14 @@ protected:
     using parent_type::Visit;
 
     virtual void Inspect(RTTI::IMetaAtomPair* ppair, RTTI::Pair<RTTI::PMetaAtom, RTTI::PMetaAtom>& pair) override {
-        pair.first = ppair->FirstTraits()->CreateDefaultValue();
-        pair.second = ppair->SecondTraits()->CreateDefaultValue();
+        if (nullptr == pair.first)
+            pair.first = ppair->FirstTraits()->CreateDefaultValue();
+
+        if (nullptr == pair.second)
+            pair.second = ppair->SecondTraits()->CreateDefaultValue();
+
+        Assert(pair.first);
+        Assert(pair.second);
 
         parent_type::Inspect(ppair, pair);
     }
@@ -192,8 +212,17 @@ private:
     }
 
     void Randomize_(Core::RTTI::PMetaAtom& atom) {
+        const float f = _rand.NextFloatM11();
+        if (f < -0.5f)
+            atom = RTTI::MakeAtom(_rand.NextU64());
+        else if (f < 0.0f)
+            atom = RTTI::MakeAtom(_rand.NextFloatM11());
+        else if (f < 0.5f)
+            atom = RTTI::MakeAtom(float3(_rand.NextFloat01(), _rand.NextFloat01(), _rand.NextFloat01()));
+        else
+            atom = RTTI::MakeAtom(double(f));
         Assert(atom);
-        AssertNotImplemented();
+        atom = RTTI::MakeAtom(atom);
     }
 
     void Randomize_(Core::RTTI::PMetaObject& object) {
@@ -210,7 +239,8 @@ void RTTIAtomRandomizer_::Randomize(RTTI::MetaObject* pobject) {
             it.second->MoveTo(pobject, atom.get());
         else
             atom = it.second->WrapMove(pobject);
-        Assert(atom);
+
+        AssertRelease(nullptr != atom);
         parent_type::Append(atom.get());
         it.second->UnwrapMove(pobject, atom.get());
     }
@@ -239,10 +269,11 @@ void RobotApp::Start() {
     parent_type::Start();
 
     typedef RTTITest_ test_type;
-    static const size_t test_count = 32;
+    static const size_t test_count = 1024;
 
     ContentIdentity::MetaClass::Create();
     RTTITest_::MetaClass::Create();
+    RTTITest2_::MetaClass::Create();
     {
         const wchar_t* filename = L"Temp:/robotapp.bin";
 
@@ -267,25 +298,27 @@ void RobotApp::Start() {
             LZJB::CompressMemory(compressed.get(), uncompressed.MakeView());
 #else
             RAWSTORAGE_THREAD_LOCAL(Serialize, u8) compressed;
-            Compression::CompressMemory(compressed, uncompressed.MakeView(), Compression::HighCompression);
+            const size_t compressedSizeInBytes = Compression::CompressMemory(compressed, uncompressed.MakeView(), Compression::HighCompression);
+            Assert(compressedSizeInBytes <= compressed.SizeInBytes());
+            const MemoryView<const u8> compressedView = compressed.MakeView().SubRange(0, compressedSizeInBytes);
 
             RAWSTORAGE_THREAD_LOCAL(Stream, u8) decompressed;
-            Compression::DecompressMemory(decompressed, compressed.MakeView());
+            Compression::DecompressMemory(decompressed, compressedView);
 
             Assert(uncompressed.SizeInBytes() == decompressed.SizeInBytes());
             const size_t k = decompressed.SizeInBytes();
             for (size_t i = 0; i < k; ++i)
                 Assert(uncompressed.Pointer()[i] == decompressed.Pointer()[i]);
 
-            VFS_WriteAll(filename, compressed.MakeView(), AccessPolicy::Truncate_Binary);
+            VFS_WriteAll(filename, compressedView, AccessPolicy::Truncate_Binary);
 
             RAWSTORAGE_THREAD_LOCAL(FileSystem, u8) stored;
             VFS_ReadAll(&stored, filename, AccessPolicy::Binary);
 
-            Assert(stored.SizeInBytes() == compressed.SizeInBytes());
-            const size_t n = compressed.SizeInBytes();
+            Assert(stored.SizeInBytes() == compressedSizeInBytes);
+            const size_t n = compressedSizeInBytes;
             for (size_t i = 0; i < n; ++i)
-                Assert(stored.Pointer()[i] == compressed.Pointer()[i]);
+                Assert(stored.Pointer()[i] == compressedView.Pointer()[i]);
 #endif
         }
 
@@ -309,6 +342,7 @@ void RobotApp::Start() {
         for (size_t i = 0; i < output.size(); ++i)
             AssertRelease(RTTI::Equals(*input[i], *output[i]));
     }
+    RTTITest2_::MetaClass::Destroy();
     RTTITest_::MetaClass::Destroy();
     ContentIdentity::MetaClass::Destroy();
 
