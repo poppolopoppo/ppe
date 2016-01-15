@@ -134,7 +134,6 @@ auto VectorInSitu<T, _InSituCount, _Allocator>::operator =(const VectorInSitu& o
     vector_type::clear();
     vector_type::reserve(_InSituCount);
     vector_type::insert(vector_type::end(), other.begin(), other.end());
-    Assert(UseInSitu() || false == other.UseInSitu());
     return *this;
 }
 //----------------------------------------------------------------------------
