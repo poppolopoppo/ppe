@@ -14,8 +14,8 @@ FOR %%D IN (Binary Intermediate Resources Unity ..\Doc\Doxygen) DO (
     rmdir /S /Q "%~dp0\%%D" >> "%~dp0\dist_clean.log"
 )
 
-echo Deleting local config '%~dp0\..\Build\local_config.bff' >> "%~dp0\dist_clean.log"
-del "%~dp0\..\Build\local_config.bff" >> "%~dp0\dist_clean.log"
+echo Deleting local config '%~dp0\..\Build\_solution_path.bff' >> "%~dp0\dist_clean.log"
+del "%~dp0\..\Build\_solution_path.bff" >> "%~dp0\dist_clean.log"
 
 cd %~d0%~p0.. && FOR /F %%F IN ('dir /b/s *.suo *.sdf *.fdb') DO (
     echo Deleting file '%%F' >> "%~dp0\dist_clean.log"
