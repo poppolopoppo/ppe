@@ -131,8 +131,8 @@ public:
     static ScalarVector One() { return ScalarVector(T(1)); }
     static ScalarVector Zero() { return ScalarVector(T(0)); }
 
-    static ScalarVector MaxValue() { return ScalarVector(NumericLimits<T>::MaxValue); }
-    static ScalarVector MinValue() { return ScalarVector(NumericLimits<T>::MinValue); }
+    static ScalarVector MaxValue() { return ScalarVector(NumericLimits<T>::MaxValue()); }
+    static ScalarVector MinValue() { return ScalarVector(NumericLimits<T>::MinValue()); }
 
     static ScalarVector Homogeneous() { ScalarVector r(0); r._data[_Dim - 1] = 1; return r; }
 
@@ -212,29 +212,21 @@ void swap(ScalarVector<T, _Dim>& lhs, ScalarVector<T, _Dim>& rhs) {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 struct NumericLimits< ScalarVector<T, _Dim> > {
-    static const ScalarVector<T, _Dim> Epsilon;
-    static const ScalarVector<T, _Dim> Inf;
-    static const ScalarVector<T, _Dim> MaxValue;
-    static const ScalarVector<T, _Dim> MinValue;
-    static const ScalarVector<T, _Dim> Nan;
-    static const ScalarVector<T, _Dim> Default;
-    static const ScalarVector<T, _Dim> Zero;
+    typedef ScalarVector<T, _Dim> value_type;
+    typedef typename NumericLimits<T> scalar_type;
+
+    STATIC_CONST_INTEGRAL(bool, is_integer, scalar_type::is_integer);
+    STATIC_CONST_INTEGRAL(bool, is_modulo,  scalar_type::is_modulo);
+    STATIC_CONST_INTEGRAL(bool, is_signed,  scalar_type::is_signed);
+
+    static constexpr value_type DefaultValue() { return value_type{ scalar_type::DefaultValue() }; }
+    static constexpr value_type Epsilon() { return value_type{ scalar_type::Epsilon() }; }
+    static constexpr value_type Inf() { return value_type{ scalar_type::Inf() }; }
+    static constexpr value_type MaxValue() { return value_type{ scalar_type::MaxValue() }; }
+    static constexpr value_type MinValue() { return value_type{ scalar_type::MinValue() }; }
+    static constexpr value_type Nan() { return value_type{ scalar_type::Nan() }; }
+    static constexpr value_type Zero() { return value_type{ scalar_type::Zero() }; }
 };
-//----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
-const ScalarVector<T, _Dim> NumericLimits< ScalarVector<T, _Dim> >::Epsilon( NumericLimits<T>::Epsilon );
-template <typename T, size_t _Dim>
-const ScalarVector<T, _Dim> NumericLimits< ScalarVector<T, _Dim> >::Inf( NumericLimits<T>::Inf );
-template <typename T, size_t _Dim>
-const ScalarVector<T, _Dim> NumericLimits< ScalarVector<T, _Dim> >::MaxValue( NumericLimits<T>::MaxValue );
-template <typename T, size_t _Dim>
-const ScalarVector<T, _Dim> NumericLimits< ScalarVector<T, _Dim> >::MinValue( NumericLimits<T>::MinValue );
-template <typename T, size_t _Dim>
-const ScalarVector<T, _Dim> NumericLimits< ScalarVector<T, _Dim> >::Nan( NumericLimits<T>::Nan );
-template <typename T, size_t _Dim>
-const ScalarVector<T, _Dim> NumericLimits< ScalarVector<T, _Dim> >::Default( NumericLimits<T>::Default );
-template <typename T, size_t _Dim>
-const ScalarVector<T, _Dim> NumericLimits< ScalarVector<T, _Dim> >::Zero( NumericLimits<T>::Zero );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

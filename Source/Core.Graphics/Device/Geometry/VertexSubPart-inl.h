@@ -62,7 +62,7 @@ bool VertexSubPart<T>::Equals(const void *lhs, const void *rhs, size_t size) con
 //----------------------------------------------------------------------------
 template <typename T>
 void VertexSubPart<T>::Clear(void *const vertex) const {
-    TypedSet(vertex, NumericLimits<T>::Default );
+    TypedSet(vertex, NumericLimits<T>::DefaultValue() );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

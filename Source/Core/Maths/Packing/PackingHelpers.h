@@ -65,17 +65,17 @@ struct HalfFloat {
     FORCE_INLINE bool operator <(const HalfFloat& other) const { return Unpack() < other.Unpack(); }
     FORCE_INLINE bool operator >=(const HalfFloat& other) const { return !operator <(other); }
 
-    static const HalfFloat Epsilon;
-    static const HalfFloat MaxValue;
-    static const HalfFloat MinValue;
-    static const HalfFloat Nan;
-    static const HalfFloat NegativeInf;
-    static const HalfFloat PositiveInf;
-    static const HalfFloat Default;
+    static HalfFloat DefaultValue() { return HalfFloat(u16(0)); }
+    static HalfFloat Epsilon() { return HalfFloat(u16(0x0001)); }
+    static HalfFloat MaxValue() { return HalfFloat(u16(0x7bff)); }
+    static HalfFloat MinValue() { return HalfFloat(u16(0xfbff)); }
+    static HalfFloat Nan() { return HalfFloat(u16(0xfe00)); }
+    static HalfFloat NegativeInf() { return HalfFloat(u16(0xfc00)); }
+    static HalfFloat PositiveInf() { return HalfFloat(u16(0x7c00)); }
 
-    static const HalfFloat One;
-    static const HalfFloat MinusOne;
-    static const HalfFloat Zero;
+    static HalfFloat One() { return HalfFloat(u16(0x3c00)); }
+    static HalfFloat MinusOne() { return HalfFloat(u16(0x0)); }
+    static HalfFloat Zero() { return HalfFloat(u16(0xbc00)); }
 
     static bool IsConvertible(float value);
 };
@@ -83,13 +83,18 @@ struct HalfFloat {
 typedef HalfFloat half;
 //----------------------------------------------------------------------------
 template <>
-struct NumericLimits<HalfFloat> {
-    static const HalfFloat Epsilon;
-    static const HalfFloat Inf;
-    static const HalfFloat MaxValue;
-    static const HalfFloat MinValue;
-    static const HalfFloat Nan;
-    static const HalfFloat Default;
+struct NumericLimits< HalfFloat > {
+    STATIC_CONST_INTEGRAL(bool, is_integer, false);
+    STATIC_CONST_INTEGRAL(bool, is_modulo,  false);
+    STATIC_CONST_INTEGRAL(bool, is_signed,  true);
+
+    static HalfFloat DefaultValue() { return HalfFloat::DefaultValue(); }
+    static HalfFloat Epsilon() { return HalfFloat::Epsilon(); }
+    static HalfFloat Inf() { return HalfFloat::PositiveInf(); }
+    static HalfFloat MaxValue() { return HalfFloat::MaxValue(); }
+    static HalfFloat MinValue() { return HalfFloat::MinValue(); }
+    static HalfFloat Nan() { return HalfFloat::Nan(); }
+    static HalfFloat Zero() { return HalfFloat::Zero(); }
 };
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
@@ -183,25 +188,21 @@ struct BasicNorm {
 //----------------------------------------------------------------------------
 template <typename T, typename _Traits>
 struct NumericLimits< BasicNorm<T, _Traits> > {
-    static const BasicNorm<T, _Traits> Epsilon;
-    static const BasicNorm<T, _Traits> Inf;
-    static const BasicNorm<T, _Traits> MaxValue;
-    static const BasicNorm<T, _Traits> MinValue;
-    static const BasicNorm<T, _Traits> Nan;
-    static const BasicNorm<T, _Traits> Default;
+    typedef BasicNorm<T, _Traits> value_type;
+    typedef typename NumericLimits<T> scalar_type;
+
+    STATIC_CONST_INTEGRAL(bool, is_integer, scalar_type::is_integer);
+    STATIC_CONST_INTEGRAL(bool, is_modulo,  scalar_type::is_modulo);
+    STATIC_CONST_INTEGRAL(bool, is_signed,  scalar_type::is_signed);
+
+    static const value_type DefaultValue() { return value_type{ scalar_type::DefaultValue() }; }
+    static const value_type Epsilon() { return value_type{ scalar_type::Epsilon() }; }
+    static const value_type Inf() { return value_type{ scalar_type::Inf() }; }
+    static const value_type MaxValue() { return value_type{ scalar_type::MaxValue() }; }
+    static const value_type MinValue() { return value_type{ scalar_type::MinValue() }; }
+    static const value_type Nan() { return value_type{ scalar_type::Nan() }; }
+    static const value_type Zero() { return value_type{ scalar_type::Zero() }; }
 };
-template <typename T, typename _Traits>
-const BasicNorm<T, _Traits> NumericLimits< BasicNorm<T, _Traits> >::Epsilon(NumericLimits<T>::Epsilon);
-template <typename T, typename _Traits>
-const BasicNorm<T, _Traits> NumericLimits< BasicNorm<T, _Traits> >::Inf(NumericLimits<T>::Inf);
-template <typename T, typename _Traits>
-const BasicNorm<T, _Traits> NumericLimits< BasicNorm<T, _Traits> >::MaxValue(NumericLimits<T>::MaxValue);
-template <typename T, typename _Traits>
-const BasicNorm<T, _Traits> NumericLimits< BasicNorm<T, _Traits> >::MinValue(NumericLimits<T>::MinValue);
-template <typename T, typename _Traits>
-const BasicNorm<T, _Traits> NumericLimits< BasicNorm<T, _Traits> >::Nan(NumericLimits<T>::Nan);
-template <typename T, typename _Traits>
-const BasicNorm<T, _Traits> NumericLimits< BasicNorm<T, _Traits> >::Default(NumericLimits<T>::Default);
 //----------------------------------------------------------------------------
 template <typename T>
 using UNorm = BasicNorm<T, UNormTraits<T> >;

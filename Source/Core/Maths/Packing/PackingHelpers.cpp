@@ -139,30 +139,11 @@ FORCE_INLINE static __m128i FP32_to_FP16_SSE2_(__m128  value) {
 }
 #endif
 //----------------------------------------------------------------------------
-const HalfFloat HalfFloat::MaxValue = {static_cast<u16>(0x7bff)};
-const HalfFloat HalfFloat::MinValue = {static_cast<u16>(0xfbff)};
-const HalfFloat HalfFloat::Epsilon = {static_cast<u16>(0x0001)};
-const HalfFloat HalfFloat::Nan = {static_cast<u16>(0xfe00)};
-const HalfFloat HalfFloat::NegativeInf = {static_cast<u16>(0xfc00)};
-const HalfFloat HalfFloat::PositiveInf = {static_cast<u16>(0x7c00)};
-const HalfFloat HalfFloat::Default = {static_cast<u16>(0)};
-//----------------------------------------------------------------------------
-const HalfFloat HalfFloat::One(1.0f);
-const HalfFloat HalfFloat::MinusOne(-1.0f);
-const HalfFloat HalfFloat::Zero(0.0f);
-//----------------------------------------------------------------------------
 bool HalfFloat::IsConvertible(float value) {
     Assert(std::isfinite(value));
-    return  MinValue.Unpack() <= value &&
-            MaxValue.Unpack() >= value;
+    return  MinValue().Unpack() <= value &&
+            MaxValue().Unpack() >= value;
 }
-//----------------------------------------------------------------------------
-const HalfFloat NumericLimits<HalfFloat>::Epsilon = HalfFloat::Epsilon;
-const HalfFloat NumericLimits<HalfFloat>::Inf = HalfFloat::NegativeInf;
-const HalfFloat NumericLimits<HalfFloat>::MaxValue = HalfFloat::MaxValue;
-const HalfFloat NumericLimits<HalfFloat>::MinValue = HalfFloat::MinValue;
-const HalfFloat NumericLimits<HalfFloat>::Nan = HalfFloat::Nan;
-const HalfFloat NumericLimits<HalfFloat>::Default = HalfFloat::Default;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -37,13 +37,20 @@ UX10Y10Z10W2N FloatM11_to_UX10Y10Z10W2N(float x, float y, float z, u8 w);
 //----------------------------------------------------------------------------
 template <>
 struct NumericLimits< UX10Y10Z10W2N > {
-    static const UX10Y10Z10W2N Epsilon;
-    static const UX10Y10Z10W2N Inf;
-    static const UX10Y10Z10W2N MaxValue;
-    static const UX10Y10Z10W2N MinValue;
-    static const UX10Y10Z10W2N Nan;
-    static const UX10Y10Z10W2N Default;
-    static const UX10Y10Z10W2N Zero;
+    typedef UX10Y10Z10W2N value_type;
+    typedef typename NumericLimits<float> scalar_type;
+
+    STATIC_CONST_INTEGRAL(bool, is_integer, scalar_type::is_integer);
+    STATIC_CONST_INTEGRAL(bool, is_modulo,  scalar_type::is_modulo);
+    STATIC_CONST_INTEGRAL(bool, is_signed,  scalar_type::is_signed);
+
+    static value_type DefaultValue() { return FloatM11_to_UX10Y10Z10W2N(0.0f,0.0f,0.0f,0); }
+    static value_type Epsilon() { return FloatM11_to_UX10Y10Z10W2N(1.0f/1024,1.0f/1024,1.0f/1024,0); }
+    static value_type Inf() { return FloatM11_to_UX10Y10Z10W2N(1.0f,1.0f,1.0f,0); }
+    static value_type MaxValue() { return FloatM11_to_UX10Y10Z10W2N(1.0f,1.0f,1.0f,2); }
+    static value_type MinValue() { return FloatM11_to_UX10Y10Z10W2N(-1.0f,-1.0f,-1.0f,0); }
+    static value_type Nan() { return FloatM11_to_UX10Y10Z10W2N(1.0f,1.0f,1.0f,0); }
+    static value_type Zero() { return FloatM11_to_UX10Y10Z10W2N(0.0f,0.0f,0.0f,0); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

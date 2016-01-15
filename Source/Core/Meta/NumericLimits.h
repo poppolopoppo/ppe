@@ -15,59 +15,52 @@ struct NumericLimits {
     STATIC_ASSERT(std::is_arithmetic<T>::value);
     typedef typename std::numeric_limits<T> limits_type;
 
-    static const T Epsilon;
-    static const T Inf;
-    static const T MaxValue;
-    static const T MinValue;
-    static const T Nan;
-    static const T Default;
-    static const T Zero;
+    STATIC_CONST_INTEGRAL(bool, is_integer, limits_type::is_integer);
+    STATIC_CONST_INTEGRAL(bool, is_modulo,  limits_type::is_modulo);
+    STATIC_CONST_INTEGRAL(bool, is_signed,  limits_type::is_signed);
+
+    static constexpr T DefaultValue() { return T(); }
+    static constexpr T Epsilon() { return limits_type::epsilon(); }
+    static constexpr T Inf() { return limits_type::infinity(); }
+    static constexpr T MaxValue() { return limits_type::max(); }
+    static constexpr T MinValue() { return limits_type::min(); }
+    static constexpr T Nan() { return limits_type::signaling_NaN(); }
+    static constexpr T Zero() { return T(0); }
 };
-template <typename T> const T NumericLimits<T>::Epsilon = limits_type::epsilon();
-template <typename T> const T NumericLimits<T>::Inf = limits_type::infinity();
-template <typename T> const T NumericLimits<T>::MaxValue = limits_type::max();
-template <typename T> const T NumericLimits<T>::MinValue = limits_type::min();
-template <typename T> const T NumericLimits<T>::Nan = limits_type::signaling_NaN();
-template <typename T> const T NumericLimits<T>::Default = T();
-template <typename T> const T NumericLimits<T>::Zero = T(0);
 //----------------------------------------------------------------------------
 template <>
 struct NumericLimits<u128> {
-    typedef NumericLimits<u64> limits_type;
+    typedef typename NumericLimits<uint64_t> limits_type;
 
-    static const u128 Epsilon;
-    static const u128 Inf;
-    static const u128 MaxValue;
-    static const u128 MinValue;
-    static const u128 Nan;
-    static const u128 Default;
-    static const u128 Zero;
+    STATIC_CONST_INTEGRAL(bool, is_integer, limits_type::is_integer);
+    STATIC_CONST_INTEGRAL(bool, is_modulo,  limits_type::is_modulo);
+    STATIC_CONST_INTEGRAL(bool, is_signed,  limits_type::is_signed);
+
+    static constexpr u128 DefaultValue() { return u128{ limits_type::DefaultValue(), limits_type::DefaultValue() }; }
+    static constexpr u128 Epsilon() { return u128{ limits_type::Epsilon(), limits_type::Epsilon() }; }
+    static constexpr u128 Inf() { return u128{ limits_type::Inf(), limits_type::Inf() }; }
+    static constexpr u128 MaxValue() { return u128{ limits_type::MaxValue(), limits_type::MaxValue() }; }
+    static constexpr u128 MinValue() { return u128{ limits_type::MinValue(), limits_type::MinValue() }; }
+    static constexpr u128 Nan() { return u128{ limits_type::Nan(), limits_type::Nan() }; }
+    static constexpr u128 Zero() { return u128{ limits_type::Zero(), limits_type::Zero() }; }
 };
 //----------------------------------------------------------------------------
 template <>
 struct NumericLimits<u256> {
-    typedef NumericLimits<u128> limits_type;
+    typedef typename NumericLimits<u128> limits_type;
 
-    static const u256 Epsilon;
-    static const u256 Inf;
-    static const u256 MaxValue;
-    static const u256 MinValue;
-    static const u256 Nan;
-    static const u256 Default;
-    static const u256 Zero;
+    STATIC_CONST_INTEGRAL(bool, is_integer, limits_type::is_integer);
+    STATIC_CONST_INTEGRAL(bool, is_modulo,  limits_type::is_modulo);
+    STATIC_CONST_INTEGRAL(bool, is_signed,  limits_type::is_signed);
+
+    static constexpr u256 DefaultValue() { return u256{ limits_type::DefaultValue(), limits_type::DefaultValue() }; }
+    static constexpr u256 Epsilon() { return u256{ limits_type::Epsilon(), limits_type::Epsilon() }; }
+    static constexpr u256 Inf() { return u256{ limits_type::Inf(), limits_type::Inf() }; }
+    static constexpr u256 MaxValue() { return u256{ limits_type::MaxValue(), limits_type::MaxValue() }; }
+    static constexpr u256 MinValue() { return u256{ limits_type::MinValue(), limits_type::MinValue() }; }
+    static constexpr u256 Nan() { return u256{ limits_type::Nan(), limits_type::Nan() }; }
+    static constexpr u256 Zero() { return u256{ limits_type::Zero(), limits_type::Zero() }; }
 };
-//----------------------------------------------------------------------------
-extern template struct NumericLimits<bool>;
-extern template struct NumericLimits<i8>;
-extern template struct NumericLimits<i16>;
-extern template struct NumericLimits<i32>;
-extern template struct NumericLimits<i64>;
-extern template struct NumericLimits<u8>;
-extern template struct NumericLimits<u16>;
-extern template struct NumericLimits<u32>;
-extern template struct NumericLimits<u64>;
-extern template struct NumericLimits<float>;
-extern template struct NumericLimits<double>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
