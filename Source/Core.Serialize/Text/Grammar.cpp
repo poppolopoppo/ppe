@@ -25,12 +25,14 @@ typedef bool                ParseBool;
 typedef int64_t             ParseInt;
 typedef double              ParseFloat;
 typedef Core::String        ParseString; // TODO - WString, change Lexer to wchar_t
+typedef RTTI::PMetaAtom     ParseAtom;
 typedef RTTI::PMetaObject   ParseObject;
 //----------------------------------------------------------------------------
 STATIC_ASSERT(RTTI::MetaType<ParseBool    >::TypeId == 1 );
 STATIC_ASSERT(RTTI::MetaType<ParseInt     >::TypeId == 5 );
 STATIC_ASSERT(RTTI::MetaType<ParseFloat   >::TypeId == 11);
 STATIC_ASSERT(RTTI::MetaType<ParseString  >::TypeId == 32);
+STATIC_ASSERT(RTTI::MetaType<ParseAtom    >::TypeId == 34);
 STATIC_ASSERT(RTTI::MetaType<ParseObject  >::TypeId == 35);
 //----------------------------------------------------------------------------
 enum ParseTypeId : RTTI::MetaTypeId {

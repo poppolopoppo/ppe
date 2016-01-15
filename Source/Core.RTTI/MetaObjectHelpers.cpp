@@ -38,6 +38,12 @@ bool Equals(const MetaObject& lhs, const MetaObject& rhs) {
     return true;
 }
 //----------------------------------------------------------------------------
+bool DeepEquals(const MetaObject& lhs, const MetaObject& rhs) {
+    // TODO (01/16) : MetaPropertyVisitor
+    AssertNotImplemented();
+    return Equals(lhs, rhs);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 hash_t hash_value(const MetaObject& object) {
@@ -93,12 +99,12 @@ MetaObject *NewCopy(const MetaObject& src) {
 //----------------------------------------------------------------------------
 void DeepCopy(MetaObject& /* dst */, const MetaObject& /* src */) {
     // TODO (01/14) : MetaPropertyVisitor
-    Assert(false);
+    AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
 MetaObject *NewDeepCopy(const MetaObject& /* src */) {
     // TODO (01/14) : MetaPropertyVisitor
-    Assert(false);
+    AssertNotImplemented();
     return nullptr;
 }
 //----------------------------------------------------------------------------

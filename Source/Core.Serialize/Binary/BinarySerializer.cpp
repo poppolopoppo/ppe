@@ -336,24 +336,36 @@ private:
 
 #define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
         virtual void Visit(RTTI::MetaTypedAtom<T>* scalar) override { \
+            Assert(scalar); \
             Assert(_TypeId == scalar->TypeInfo().Id); \
-            const std::streamoff dataoff = _reader->TellI(); \
-            if (false == _reader->ExpectPOD(TAG_ATOM_SCALAR_) || \
-                false == _reader->ExpectPOD(scalar->TypeInfo().Id) || \
-                false == ReadValue_(scalar->Wrapper()) ) \
+            if (false == Visit_(scalar)) \
                 throw BinarySerializerException("failed to deserialize a RTTI " #T ); \
-            BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize scalar {0} = [{1}]", \
-                scalar->TypeInfo().Name, scalar->Wrapper() ); \
-            BINARYSERIALIZER_DATALOG(L"@{2:#8X} : <{0}> = [{1}]", \
-                scalar->TypeInfo().Name, scalar->Wrapper(), dataoff ); \
             /*parent_type::Visit(scalar);*/ \
         }
-
         FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
-
 #undef DEF_METATYPE_SCALAR
 
     private:
+        template <typename T>
+        bool Visit_(RTTI::MetaTypedAtom<T>* scalar) {
+            const std::streamoff dataoff = _reader->TellI();
+
+            if (false == _reader->ExpectPOD(TAG_ATOM_SCALAR_))
+                return false;
+            if (false == _reader->ExpectPOD(scalar->TypeInfo().Id))
+                return false;
+            if (false == ReadValue_(scalar->Wrapper()))
+                return false;
+
+            BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize scalar {0} = [{1}]",
+                scalar->TypeInfo().Name, scalar->Wrapper() );
+            BINARYSERIALIZER_DATALOG(L"@{2:#8X} : <{0}> = [{1}]",
+                scalar->TypeInfo().Name, scalar->Wrapper(), dataoff );
+
+            return true;
+        }
+
+
         template <typename T>
         bool ReadValue_(T& value) {
             STATIC_ASSERT(std::is_pod<T>::value);
@@ -414,7 +426,7 @@ private:
                 switch (typeId) {
 #define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
                 case _TypeId: \
-                    atom = new RTTI::MetaAtomWrapper< T >::type(); \
+                    atom = new RTTI::MetaAtomWrapper< T >::type( std::move(RTTI::MetaType< T >::DefaultValue()) ); \
                     Assert(atom->IsDefaultValue()); \
                     atom->Accept(this); \
                     break;
@@ -796,20 +808,27 @@ private:
 
 #define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
         virtual void Visit(const RTTI::MetaTypedAtom<T>* scalar) override { \
+            Assert(scalar); \
             Assert(_TypeId == scalar->TypeInfo().Id); \
-            BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize scalar {0} = [{1}]", \
-                scalar->TypeInfo().Name, scalar->Wrapper() ); \
-            BINARYSERIALIZER_DATALOG(L"@{2:#8X} : <{0}> = [{1}]", \
-                scalar->TypeInfo().Name, scalar->Wrapper(), _owner->_objectStream.TellO() ); \
-            WritePOD(TAG_ATOM_SCALAR_); \
-            WritePOD(scalar->TypeInfo().Id); \
-            WriteValue_(scalar->Wrapper()); \
+            Visit_(scalar); \
             /*parent_type::Visit(scalar);*/ \
         }
         FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
 #undef DEF_METATYPE_SCALAR
 
     private:
+        template <typename T>
+        void Visit_(const RTTI::MetaTypedAtom<T>* scalar) {
+            BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize scalar {0} = [{1}]",
+                scalar->TypeInfo().Name, scalar->Wrapper() );
+            BINARYSERIALIZER_DATALOG(L"@{2:#8X} : <{0}> = [{1}]",
+                scalar->TypeInfo().Name, scalar->Wrapper(), _owner->_objectStream.TellO() );
+
+            WritePOD(TAG_ATOM_SCALAR_);
+            WritePOD(scalar->TypeInfo().Id);
+            WriteValue_(scalar->Wrapper());
+        }
+
         template <typename T>
         void WriteValue_(const T& value) {
             STATIC_ASSERT(std::is_pod<T>::value);

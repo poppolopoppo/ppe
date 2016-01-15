@@ -482,10 +482,6 @@ struct MetaAtomWrapper {
     typedef MetaTypedAtom< typename trais_type::wrapper_type > type;
 };
 //----------------------------------------------------------------------------
-FORCE_INLINE MetaAtom *MakeAtom(PMetaAtom&& atom) { return atom.get(); }
-FORCE_INLINE MetaAtom *MakeAtom(const PMetaAtom& atom) { return atom.get(); }
-FORCE_INLINE const MetaAtom *MakeAtom(const PCMetaAtom& atom) { return atom.get(); }
-//----------------------------------------------------------------------------
 template <typename T>
 typename MetaAtomWrapper<T>::type *MakeAtom(T&& rvalue, typename std::enable_if< MetaAtomWrapper<T>::need_wrapper::value >::type* = 0 );
 //----------------------------------------------------------------------------

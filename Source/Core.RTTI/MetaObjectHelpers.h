@@ -10,9 +10,13 @@ FWD_REFPTR(MetaObject);
 //----------------------------------------------------------------------------
 bool Equals(const MetaObject& lhs, const MetaObject& rhs);
 //----------------------------------------------------------------------------
-inline bool NotEquals(const MetaObject& lhs, const MetaObject& rhs) {
-    return !Equals(lhs, rhs);
-}
+inline bool NotEquals(const MetaObject& lhs, const MetaObject& rhs) { return !Equals(lhs, rhs); }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+bool DeepEquals(const MetaObject& lhs, const MetaObject& rhs);
+//----------------------------------------------------------------------------
+inline bool NotDeepEquals(const MetaObject& lhs, const MetaObject& rhs) { return !DeepEquals(lhs, rhs); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
