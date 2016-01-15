@@ -23,7 +23,7 @@
 ; utilise la toolchain 64 bits pour compiler en 32
 #define USE_VISUAL2015_NATIVE_ENVIRONMENT
 ; 2X Faster Links, mais TODO: les versions ne doivent pas utiliser ça
-#define USE_VISUAL2015_DEBUG_FASTLINK
+;#define USE_VISUAL2015_DEBUG_FASTLINK %TODO%
 ; indique quelle version du SDK il faut utiliser
 ;#define USE_VISUAL2015_RELEASE_CANDIDATE
 
