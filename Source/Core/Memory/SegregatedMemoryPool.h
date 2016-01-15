@@ -146,7 +146,7 @@ public:
     >::type     segregatedpool_type;
 
     FORCE_INLINE static void* Allocate() { return segregatedpool_type::Instance().Allocate(TrackingData()); }
-    FORCE_INLINE static void Deallocate(void* ptr) { segregatedpool_type::Instance().Deallocate(TrackingData()); }
+    FORCE_INLINE static void Deallocate(void* ptr) { segregatedpool_type::Instance().Deallocate(ptr, TrackingData()); }
     FORCE_INLINE static void Clear_UnusedMemory() { segregatedpool_type::Instance().Clear_UnusedMemory(); }
 
 #if defined(WITH_CORE_POOL_ALLOCATOR_TRACKING_DETAILS)

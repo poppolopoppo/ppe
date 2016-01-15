@@ -41,6 +41,7 @@ void *MemoryPoolChunk::AllocateBlock(size_t blockSize) {
     Assert(block);
     ++_blockUsed;
 
+    Assert(Contains(block, blockSize));
     return block;
 }
 //----------------------------------------------------------------------------
