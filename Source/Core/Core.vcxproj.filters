@@ -811,9 +811,6 @@
     <CustomBuild Include="Meta\Hash_fwd.h">
       <Filter>Meta</Filter>
     </CustomBuild>
-    <CustomBuild Include="Meta\NumericLimits.cpp">
-      <Filter>Meta</Filter>
-    </CustomBuild>
     <CustomBuild Include="Meta\NumericLimits.h">
       <Filter>Meta</Filter>
     </CustomBuild>

@@ -317,7 +317,6 @@
     <CustomBuild Include="Meta\Event.h" />
     <CustomBuild Include="Meta\ForRange.h" />
     <CustomBuild Include="Meta\Hash_fwd.h" />
-    <CustomBuild Include="Meta\NumericLimits.cpp" />
     <CustomBuild Include="Meta\NumericLimits.h" />
     <CustomBuild Include="Meta\OneTimeInitialize.h" />
     <CustomBuild Include="Meta\PointerWFlags.h" />
