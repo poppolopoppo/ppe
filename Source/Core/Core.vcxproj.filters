@@ -112,6 +112,9 @@
     <CustomBuild Include="Container\BitSet.h">
       <Filter>Container</Filter>
     </CustomBuild>
+    <CustomBuild Include="Container\BurstTrie.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
     <CustomBuild Include="Container\Deque.h">
       <Filter>Container</Filter>
     </CustomBuild>
@@ -163,16 +166,16 @@
     <CustomBuild Include="Container\StringHashMap.h">
       <Filter>Container</Filter>
     </CustomBuild>
+    <CustomBuild Include="Container\TernarySearchTree-inl.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Container\TernarySearchTree.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
     <CustomBuild Include="Container\Token-inl.h">
       <Filter>Container</Filter>
     </CustomBuild>
     <CustomBuild Include="Container\Token.h">
-      <Filter>Container</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Container\Trie-inl.h">
-      <Filter>Container</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Container\Trie.h">
       <Filter>Container</Filter>
     </CustomBuild>
     <CustomBuild Include="Container\Tuple.h">
@@ -350,12 +353,6 @@
       <Filter>IO\VFS</Filter>
     </CustomBuild>
     <CustomBuild Include="IO\VFS\VirtualFileSystemNativeStream.h">
-      <Filter>IO\VFS</Filter>
-    </CustomBuild>
-    <CustomBuild Include="IO\VFS\VirtualFileSystemNode.cpp">
-      <Filter>IO\VFS</Filter>
-    </CustomBuild>
-    <CustomBuild Include="IO\VFS\VirtualFileSystemNode.h">
       <Filter>IO\VFS</Filter>
     </CustomBuild>
     <CustomBuild Include="IO\VFS\VirtualFileSystemPolicies.h">

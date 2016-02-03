@@ -84,6 +84,7 @@
     <CustomBuild Include="Container\AssociativeVector.h" />
     <CustomBuild Include="Container\BitSet.cpp" />
     <CustomBuild Include="Container\BitSet.h" />
+    <CustomBuild Include="Container\BurstTrie.h" />
     <CustomBuild Include="Container\Deque.h" />
     <CustomBuild Include="Container\Hash-inl.h" />
     <CustomBuild Include="Container\Hash.cpp" />
@@ -101,10 +102,10 @@
     <CustomBuild Include="Container\RingBuffer.h" />
     <CustomBuild Include="Container\Stack.h" />
     <CustomBuild Include="Container\StringHashMap.h" />
+    <CustomBuild Include="Container\TernarySearchTree-inl.h" />
+    <CustomBuild Include="Container\TernarySearchTree.h" />
     <CustomBuild Include="Container\Token-inl.h" />
     <CustomBuild Include="Container\Token.h" />
-    <CustomBuild Include="Container\Trie-inl.h" />
-    <CustomBuild Include="Container\Trie.h" />
     <CustomBuild Include="Container\Tuple.h" />
     <CustomBuild Include="Container\Vector-inl.h" />
     <CustomBuild Include="Container\Vector.h" />
@@ -164,8 +165,6 @@
     <CustomBuild Include="IO\VFS\VirtualFileSystemNativeComponent.h" />
     <CustomBuild Include="IO\VFS\VirtualFileSystemNativeStream.cpp" />
     <CustomBuild Include="IO\VFS\VirtualFileSystemNativeStream.h" />
-    <CustomBuild Include="IO\VFS\VirtualFileSystemNode.cpp" />
-    <CustomBuild Include="IO\VFS\VirtualFileSystemNode.h" />
     <CustomBuild Include="IO\VFS\VirtualFileSystemPolicies.h" />
     <CustomBuild Include="IO\VFS\VirtualFileSystemStream.h" />
     <CustomBuild Include="IO\VFS\VirtualFileSystemTrie.cpp" />
