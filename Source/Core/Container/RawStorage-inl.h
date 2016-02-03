@@ -146,6 +146,21 @@ void RawStorage<T, _Allocator>::Clear_ReleaseMemory() {
     _size = 0;
 }
 //----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+bool RawStorage<T, _Allocator>::Equals(const RawStorage& other) const {
+    if (_size != other._size)
+        return false;
+    else if (_storage == other._storage)
+        return true;
+
+    Assert(_size == other._size);
+    forrange(i, 0, _size)
+        if (_storage[i] != other._storage[i])
+            return false;
+
+    return true;
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Core

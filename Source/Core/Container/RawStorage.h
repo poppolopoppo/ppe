@@ -59,6 +59,7 @@ public:
     pointer Pointer() const { return _storage; }
     size_t SizeInBytes() const { return _size * sizeof(T); }
 
+    pointer data() const { return _storage; }
     size_type size() const { return _size; }
     bool empty() const { return 0 == _size; }
 
@@ -91,9 +92,11 @@ public:
     template <typename _It>
     void insert(iterator after, _It&& begin, _It&& end);
 
-    MemoryView<T> MakeView() { return MemoryView<T>(Pointer(), size()); }
-    MemoryView<const T> MakeView() const { return MemoryView<const T>(Pointer(), size()); }
-    MemoryView<const T> MakeConstView() const { return MemoryView<const T>(Pointer(), size()); }
+    bool Equals(const RawStorage& other) const;
+
+    MemoryView<T> MakeView() { return MemoryView<T>(data(), size()); }
+    MemoryView<const T> MakeView() const { return MemoryView<const T>(data(), size()); }
+    MemoryView<const T> MakeConstView() const { return MemoryView<const T>(data(), size()); }
 
 protected:
     pointer _storage;
