@@ -62,16 +62,16 @@ UniquePtr<IVirtualFileSystemOStream> VFS_OpenTextWritable(const Filename& filena
 //----------------------------------------------------------------------------
 STATIC_ASSERT(std::is_same<RAWSTORAGE(FileSystem, u8), RawStorage<u8, ALLOCATOR(FileSystem, u8)> >::value);
 bool VFS_ReadAll(RawStorage<u8, ALLOCATOR(FileSystem, u8)> *pcontent, const Filename& filename, AccessPolicy::Mode policy/* = AccessPolicy::None */) {
-    return VirtualFileSystem::Instance().ReadAll(filename, *pcontent, policy);
+    return VirtualFileSystem::ReadAll(filename, *pcontent, policy);
 }
 //----------------------------------------------------------------------------
 STATIC_ASSERT(std::is_same<RAWSTORAGE_THREAD_LOCAL(FileSystem, u8), RawStorage<u8, THREAD_LOCAL_ALLOCATOR(FileSystem, u8)> >::value);
 bool VFS_ReadAll(RawStorage<u8, THREAD_LOCAL_ALLOCATOR(FileSystem, u8)> *pcontent, const Filename& filename, AccessPolicy::Mode policy/* = AccessPolicy::None */) {
-    return VirtualFileSystem::Instance().ReadAll(filename, *pcontent, policy);
+    return VirtualFileSystem::ReadAll(filename, *pcontent, policy);
 }
 //----------------------------------------------------------------------------
 bool VFS_WriteAll(const Filename& filename, const MemoryView<const u8>& content, AccessPolicy::Mode policy/* = AccessPolicy::None */) {
-    return VirtualFileSystem::Instance().WriteAll(filename, content, policy);
+    return VirtualFileSystem::WriteAll(filename, content, policy);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

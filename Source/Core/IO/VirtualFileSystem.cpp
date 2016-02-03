@@ -11,7 +11,6 @@
 
 #include "VFS/VirtualFileSystemComponent.h"
 #include "VFS/VirtualFileSystemNativeComponent.h"
-#include "VFS/VirtualFileSystemNode.h"
 #include "VFS/VirtualFileSystemTrie.h"
 
 #include <chrono>
@@ -26,229 +25,7 @@ POOLTAG_DEF(VirtualFileSystem);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-namespace {
-//----------------------------------------------------------------------------
-// inverse depth first search : components are pseudo-sorted decreasingly
-// by the number of token matching dirpath.
-static void MatchingComponents_DepthLast_(
-    Stack<VirtualFileSystemComponent *>& components,
-    const VirtualFileSystemTrie *trie,
-    const Dirpath& dirpath ) {
-
-    MountingPoint mountingPoint;
-    STACKLOCAL_POD_ARRAY(Dirname, dirnames, dirpath.Depth());
-    const size_t k = dirpath.ExpandPath(mountingPoint, dirnames);
-
-    VirtualFileSystemNode* node = trie->GetNodeIFP(mountingPoint);
-    if (!node)
-        return;
-
-    for (const PVirtualFileSystemComponent& component : node->Components())
-        components.Push(component.get());
-
-    for (size_t i = 0; i < k; ++i) {
-        for (const PVirtualFileSystemComponent& component : node->Components())
-            components.Push(component.get());
-
-        if (nullptr == (node = node->GetNodeIFP(dirnames[i])) )
-            break;
-    }
-}
-//----------------------------------------------------------------------------
-#define STACKLOCAL_MATCHINGCOMPONENTS(_NAME, _DIRPATH) \
-    STACKLOCAL_POD_STACK(VirtualFileSystemComponent*, _NAME, (_DIRPATH).Depth()); { \
-        READSCOPELOCK(_barrier); \
-        MatchingComponents_DepthLast_((_NAME), &_trie, (_DIRPATH)); \
-    }
-//----------------------------------------------------------------------------
-} //!namespace
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-VirtualFileSystemRoot::VirtualFileSystemRoot() {}
-//----------------------------------------------------------------------------
-VirtualFileSystemRoot::~VirtualFileSystemRoot() {}
-//----------------------------------------------------------------------------
-bool VirtualFileSystemRoot::EachComponent(
-    const Dirpath& dirpath,
-    const std::function<bool(VirtualFileSystemComponent* component)>& foreach) const {
-    STACKLOCAL_MATCHINGCOMPONENTS(components, dirpath);
-    VirtualFileSystemComponent* component = nullptr;
-    while (components.Pop(&component))
-        if (foreach(component))
-            return true;
-
-    return false;
-}
-//----------------------------------------------------------------------------
-bool VirtualFileSystemRoot::DirectoryExists(const Dirpath& dirpath, ExistPolicy::Mode policy) const {
-    STACKLOCAL_MATCHINGCOMPONENTS(components, dirpath);
-    VirtualFileSystemComponent* component = nullptr;
-    while (components.Pop(&component)) {
-        IVirtualFileSystemComponentReadable* const readable = component->Readable();
-        if (readable && readable->DirectoryExists(dirpath, policy) )
-            return true;
-    }
-
-    return false;
-}
-//----------------------------------------------------------------------------
-bool VirtualFileSystemRoot::FileExists(const Filename& filename, ExistPolicy::Mode policy) const {
-    STACKLOCAL_MATCHINGCOMPONENTS(components, filename.Dirpath());
-    VirtualFileSystemComponent* component = nullptr;
-    while (components.Pop(&component)) {
-        IVirtualFileSystemComponentReadable* const readable = component->Readable();
-        if (readable && readable->FileExists(filename, policy) )
-            return true;
-    }
-
-    return false;
-}
-//----------------------------------------------------------------------------
-bool VirtualFileSystemRoot::FileStats(FileStat* pstat, const Filename& filename) const {
-    STACKLOCAL_MATCHINGCOMPONENTS(components, filename.Dirpath());
-    VirtualFileSystemComponent* component = nullptr;
-    while (components.Pop(&component)) {
-        IVirtualFileSystemComponentReadable* const readable = component->Readable();
-        if (readable && readable->FileStats(pstat, filename) )
-            return true;
-    }
-
-    return false;
-}
-//----------------------------------------------------------------------------
-size_t VirtualFileSystemRoot::EnumerateFiles(const Dirpath& dirpath, bool recursive, const std::function<void(const Filename&)>& foreach) const {
-    STACKLOCAL_MATCHINGCOMPONENTS(components, dirpath);
-    size_t total = 0;
-    VirtualFileSystemComponent* component = nullptr;
-    while (components.Pop(&component)) {
-        IVirtualFileSystemComponentReadable* const readable = component->Readable();
-        if (readable)
-            total += readable->EnumerateFiles(dirpath, recursive, foreach);
-    }
-
-    return total;
-}
-//----------------------------------------------------------------------------
-size_t VirtualFileSystemRoot::GlobFiles(const Dirpath& dirpath, const WStringSlice& pattern, bool recursive, const std::function<void(const Filename&)>& foreach) const {
-    STACKLOCAL_MATCHINGCOMPONENTS(components, dirpath);
-    size_t total = 0;
-    VirtualFileSystemComponent* component = nullptr;
-    while (components.Pop(&component)) {
-        IVirtualFileSystemComponentReadable* const readable = component->Readable();
-        if (readable)
-            total += readable->GlobFiles(dirpath, pattern, recursive, foreach);
-    }
-
-    return total;
-}
-//----------------------------------------------------------------------------
-bool VirtualFileSystemRoot::TryCreateDirectory(const Dirpath& dirpath) const {
-    STACKLOCAL_MATCHINGCOMPONENTS(components, dirpath);
-    VirtualFileSystemComponent* component = nullptr;
-    while (components.Pop(&component)) {
-        IVirtualFileSystemComponentWritable* const writable = component->Writable();
-        if (writable && writable->TryCreateDirectory(dirpath) )
-            return true;
-    }
-
-    return false;
-}
-//----------------------------------------------------------------------------
-UniquePtr<IVirtualFileSystemIStream> VirtualFileSystemRoot::OpenReadable(const Filename& filename, AccessPolicy::Mode policy) const {
-    STACKLOCAL_MATCHINGCOMPONENTS(components, filename.Dirpath());
-    UniquePtr<IVirtualFileSystemIStream> result;
-    VirtualFileSystemComponent* component = nullptr;
-    while (components.Pop(&component)) {
-        IVirtualFileSystemComponentReadable* const readable = component->Readable();
-        if (readable && (result = readable->OpenReadable(filename, policy)) )
-            return result;
-    }
-
-    return result;
-}
-//----------------------------------------------------------------------------
-UniquePtr<IVirtualFileSystemOStream> VirtualFileSystemRoot::OpenWritable(const Filename& filename, AccessPolicy::Mode policy) const {
-    STACKLOCAL_MATCHINGCOMPONENTS(components, filename.Dirpath());
-    UniquePtr<IVirtualFileSystemOStream> result;
-    VirtualFileSystemComponent* component = nullptr;
-    while (components.Pop(&component)) {
-        IVirtualFileSystemComponentWritable* const writable = component->Writable();
-        if (writable && (result = writable->OpenWritable(filename, policy)) )
-            return result;
-    }
-
-    return result;
-}
-//----------------------------------------------------------------------------
-UniquePtr<IVirtualFileSystemIOStream> VirtualFileSystemRoot::OpenReadWritable(const Filename& filename, AccessPolicy::Mode policy) const {
-    STACKLOCAL_MATCHINGCOMPONENTS(components, filename.Dirpath());
-    UniquePtr<IVirtualFileSystemIOStream> result;
-    VirtualFileSystemComponent* component = nullptr;
-    while (components.Pop(&component)) {
-        IVirtualFileSystemComponentReadWritable* const readWritable = component->ReadWritable();
-        if (readWritable && (result = readWritable->OpenReadWritable(filename, policy)) )
-            return result;
-    }
-
-    return result;
-}
-//----------------------------------------------------------------------------
-WString VirtualFileSystemRoot::Unalias(const Filename& aliased) const {
-    STACKLOCAL_MATCHINGCOMPONENTS(components, aliased.Dirpath());
-    VirtualFileSystemComponent* component = nullptr;
-    while (components.Pop(&component)) {
-        return component->Unalias(aliased);
-    }
-
-    return WString();
-}
-//----------------------------------------------------------------------------
-void VirtualFileSystemRoot::Clear() {
-    WRITESCOPELOCK(_barrier);
-    _trie.Clear();
-}
-//----------------------------------------------------------------------------
-void VirtualFileSystemRoot::Mount(VirtualFileSystemComponent* component) {
-    Assert(component);
-
-    LOG(Info, L"[VFS] Mount component '{0}'", component->Alias());
-
-    WRITESCOPELOCK(_barrier);
-    _trie.AddComponent(component);
-}
-//----------------------------------------------------------------------------
-void VirtualFileSystemRoot::Unmount(VirtualFileSystemComponent* component) {
-    Assert(component);
-
-    LOG(Info, L"[VFS] Unmount component '{0}'", component->Alias());
-
-    WRITESCOPELOCK(_barrier);
-    _trie.RemoveComponent(component);
-}
-//----------------------------------------------------------------------------
-VirtualFileSystemComponent *VirtualFileSystemRoot::MountNativePath(const Dirpath& alias, const wchar_t *nativepPath) {
-    Assert(nativepPath);
-    VirtualFileSystemComponent *component = new VirtualFileSystemNativeComponent(alias, nativepPath);
-    Mount(component);
-    return component;
-}
-//----------------------------------------------------------------------------
-VirtualFileSystemComponent *VirtualFileSystemRoot::MountNativePath(const Dirpath& alias, WString&& nativepPath) {
-    Assert(nativepPath.size());
-    VirtualFileSystemComponent *component = new VirtualFileSystemNativeComponent(alias, std::move(nativepPath));
-    Mount(component);
-    return component;
-}
-//----------------------------------------------------------------------------
-VirtualFileSystemComponent *VirtualFileSystemRoot::MountNativePath(const Dirpath& alias, const WString& nativepPath) {
-    Assert(nativepPath.size());
-    VirtualFileSystemComponent *component = new VirtualFileSystemNativeComponent(alias, nativepPath);
-    Mount(component);
-    return component;
-}
-//----------------------------------------------------------------------------
-Filename VirtualFileSystemRoot::TemporaryFilename(const wchar_t *prefix, const wchar_t *ext) const {
+Filename VirtualFileSystem::TemporaryFilename(const wchar_t *prefix, const wchar_t *ext) {
     Assert(prefix);
     Assert(ext);
 
@@ -273,8 +50,8 @@ Filename VirtualFileSystemRoot::TemporaryFilename(const wchar_t *prefix, const w
     return Filename(buffer, length);
 }
 //----------------------------------------------------------------------------
-bool VirtualFileSystemRoot::WriteAll(const Filename& filename, const MemoryView<const u8>& storage, AccessPolicy::Mode policy /* = AccessPolicy::None */) {
-    const UniquePtr<IVirtualFileSystemOStream> ostream = OpenWritable(filename, policy);
+bool VirtualFileSystem::WriteAll(const Filename& filename, const MemoryView<const u8>& storage, AccessPolicy::Mode policy /* = AccessPolicy::None */) {
+    const UniquePtr<IVirtualFileSystemOStream> ostream = Instance().OpenWritable(filename, policy);
     if (ostream) {
         ostream->Write(storage.Pointer(), storage.SizeInBytes());
         return true;
@@ -299,7 +76,7 @@ void VirtualFileSystemStartup::Start() {
         if (!FileSystem::SystemTemporaryDirectory(tmpPath, lengthof(tmpPath)) )
             AssertNotReached();
 
-        VirtualFileSystem::Instance().MountNativePath(L"Temp:/", tmpPath);
+        VirtualFileSystem::Instance().MountNativePath(L"Tmp:/", tmpPath);
     }
     // user profile path
     {
