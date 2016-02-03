@@ -2,6 +2,15 @@
 
 #include <type_traits>
 
+#if 0 != _SECURE_SCL
+#   include <iterator>
+#   define CORE_CHECKED_ARRAY_ITERATOR(_Type, _Ptr, _Count) \
+        stdext::checked_array_iterator<_Type>((_Ptr), (_Count))
+#else
+#   define CORE_CHECKED_ARRAY_ITERATOR(_Type, _Ptr, _Count) \
+        static_cast<_Type>(_Ptr)
+#endif
+
 namespace Core {
 namespace Meta {
 //----------------------------------------------------------------------------
@@ -59,6 +68,26 @@ using IsDefined = has_destructor<T>;
         _NAME(parent_type&& rvalue) : parent_type(std::move(rvalue)) {} \
         _NAME& operator =(parent_type&& rvalue) { parent_type::operator =(std::move(rvalue)); return *this; } \
     }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template<typename T, typename = void>
+struct is_iterator {
+   static constexpr bool value = false;
+};
+//----------------------------------------------------------------------------
+template<typename T>
+struct is_iterator<T, typename std::enable_if<!std::is_same<typename std::iterator_traits<T>::value_type, void>::value>::type > {
+   static constexpr bool value = true;
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T>
+using Less = std::less<T>;
+//----------------------------------------------------------------------------
+template <typename T>
+using EqualTo = std::equal_to<T>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
