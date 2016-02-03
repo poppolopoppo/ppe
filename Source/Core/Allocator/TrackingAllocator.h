@@ -6,6 +6,8 @@
 #include "Core/Memory/MemoryDomain.h"
 #include "Core/Memory/MemoryTracking.h"
 
+#include <memory>
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -65,17 +67,26 @@ public:
     friend class details::fwd_realloc_tracking_semantic<_Allocator>;
     typedef details::fwd_realloc_tracking_semantic<_Allocator> base_type;
 
-    using typename base_type::size_type;
-    using typename base_type::difference_type;
-    using typename base_type::pointer;
-    using typename base_type::const_pointer;
+    using typename base_type::value_type;
     using typename base_type::reference;
     using typename base_type::const_reference;
-    using typename base_type::value_type;
+
+    typedef std::allocator_traits<_Allocator> traits_type;
+
+    typedef typename traits_type::difference_type difference_type;
+    typedef typename traits_type::size_type size_type;
+
+    typedef typename traits_type::pointer pointer;
+    typedef typename traits_type::const_pointer const_pointer;
+
+    typedef typename traits_type::propagate_on_container_copy_assignment propagate_on_container_copy_assignment;
+    typedef typename traits_type::propagate_on_container_move_assignment propagate_on_container_move_assignment;
+    typedef typename traits_type::propagate_on_container_swap propagate_on_container_swap;
+    typedef typename traits_type::is_always_equal is_always_equal;
 
     template<typename U>
     struct rebind {
-        typedef TrackingAllocator<typename base_type::template rebind<U>::other > other;
+        typedef TrackingAllocator<typename traits_type::template rebind_alloc<U> > other;
     };
 
     TrackingAllocator() throw()
@@ -140,12 +151,12 @@ auto TrackingAllocator<_Allocator>::allocate(size_type n) -> pointer {
     if (_trackingData)
         _trackingData->Allocate(n, sizeof(value_type));
 
-    return base_type::allocate(n);
+    return traits_type::allocate(*this, n);
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 void TrackingAllocator<_Allocator>::deallocate(void* p, size_type n) {
-    base_type::deallocate(p, n);
+    traits_type::deallocate(*this, pointer(p), n);
 
     if (_trackingData)
         _trackingData->Deallocate(n, sizeof(value_type));
@@ -159,18 +170,21 @@ public:
     typedef TrackingAllocator<_Allocator> base_type;
     typedef _Tag tag_type;
 
-    using typename base_type::size_type;
-    using typename base_type::difference_type;
-    using typename base_type::pointer;
-    using typename base_type::const_pointer;
+    using typename base_type::traits_type;
+
+    using typename base_type::value_type;
     using typename base_type::reference;
     using typename base_type::const_reference;
-    using typename base_type::value_type;
+
+    using typename base_type::pointer;
+    using typename base_type::const_pointer;
+
+    using typename base_type::size_type;
+    using typename base_type::difference_type;
 
     template<typename U>
-    struct rebind
-    {
-        typedef TagTrackingAllocator<typename _Allocator::template rebind<U>::other, tag_type > other;
+    struct rebind {
+        typedef TagTrackingAllocator<typename traits_type::template rebind_alloc<U>, _Tag > other;
     };
 
     TagTrackingAllocator() throw()
