@@ -21,6 +21,7 @@ protected:
 public:
     virtual ~IVirtualFileSystemBaseStream() {}
 
+    virtual bool Bad() const = 0;
     virtual const Filename& SourceFilename() const = 0;
 };
 //----------------------------------------------------------------------------

@@ -22,7 +22,12 @@ public:
     VirtualFileSystemNativeFileIStream(const Filename& filename, const wchar_t* native, AccessPolicy::Mode policy);
     virtual ~VirtualFileSystemNativeFileIStream();
 
+    VirtualFileSystemNativeFileIStream(VirtualFileSystemNativeFileIStream&& rvalue);
+    VirtualFileSystemNativeFileIStream& operator =(VirtualFileSystemNativeFileIStream&& rvalue) = delete;
+
     virtual const Filename& SourceFilename() const override { return _filename; }
+
+    virtual bool Bad() const override;
 
     virtual std::streamoff TellI() const override;
     virtual bool SeekI(std::streamoff offset, SeekOrigin policy) override;
@@ -39,7 +44,7 @@ public:
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    FILE *const _handle;
+    FILE *_handle;
     const Filename _filename;
 };
 //----------------------------------------------------------------------------
@@ -48,7 +53,12 @@ public:
     VirtualFileSystemNativeFileOStream(const Filename& filename, const wchar_t* native, AccessPolicy::Mode policy);
     virtual ~VirtualFileSystemNativeFileOStream();
 
+    VirtualFileSystemNativeFileOStream(VirtualFileSystemNativeFileOStream&& rvalue);
+    VirtualFileSystemNativeFileOStream& operator =(VirtualFileSystemNativeFileOStream&& rvalue) = delete;
+
     virtual const Filename& SourceFilename() const override { return _filename; }
+
+    virtual bool Bad() const override;
 
     virtual std::streamoff TellO() const override;
     virtual bool SeekO(std::streamoff offset, SeekOrigin policy) override;
@@ -59,7 +69,7 @@ public:
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    FILE *const _handle;
+    FILE *_handle;
     const Filename _filename;
 };
 //----------------------------------------------------------------------------

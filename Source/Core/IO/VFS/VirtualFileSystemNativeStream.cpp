@@ -18,12 +18,10 @@ SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(VirtualFileSystem, VirtualFileSystemNati
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-#ifdef WITH_CORE_ASSERT
 static bool IsValidFileHandle_(FILE *handle) {
     return  handle &&
             0 == ferror(handle);
 }
-#endif
 //----------------------------------------------------------------------------
 static FILE* OpenFileHandle_(const wchar_t *filename, bool readIfFalseElseWrite, AccessPolicy::Mode policy) {
     Assert(filename);
@@ -82,12 +80,26 @@ static void CloseFileHandle_(FILE* phandle) {
 //----------------------------------------------------------------------------
 VirtualFileSystemNativeFileIStream::VirtualFileSystemNativeFileIStream(const Filename& filename, const wchar_t* native, AccessPolicy::Mode policy)
 :   _handle(OpenFileHandle_(native, false, policy))
-,   _filename(filename) {
-    AssertRelease(_handle);
-}
+,   _filename(filename) {}
 //----------------------------------------------------------------------------
 VirtualFileSystemNativeFileIStream::~VirtualFileSystemNativeFileIStream() {
-    CloseFileHandle_(_handle);
+    if (false == Bad()) {
+        Assert(IsValidFileHandle_(_handle));
+        CloseFileHandle_(_handle);
+    }
+    else {
+        Assert(false == IsValidFileHandle_(_handle));
+    }
+}
+//----------------------------------------------------------------------------
+VirtualFileSystemNativeFileIStream::VirtualFileSystemNativeFileIStream(VirtualFileSystemNativeFileIStream&& rvalue)
+:   _handle(rvalue._handle)
+,   _filename(std::move(rvalue._filename)) {
+    rvalue._handle = nullptr;
+}
+//----------------------------------------------------------------------------
+bool VirtualFileSystemNativeFileIStream::Bad() const {
+    return (false == IsValidFileHandle_(_handle));
 }
 //----------------------------------------------------------------------------
 std::streamoff VirtualFileSystemNativeFileIStream::TellI() const {
@@ -185,12 +197,26 @@ std::streamsize VirtualFileSystemNativeFileIStream::SizeInBytes() const {
 //----------------------------------------------------------------------------
 VirtualFileSystemNativeFileOStream::VirtualFileSystemNativeFileOStream(const Filename& filename, const wchar_t* native, AccessPolicy::Mode policy)
 :   _handle(OpenFileHandle_(native, true, policy))
-,   _filename(filename) {
-    AssertRelease(_handle);
-}
+,   _filename(filename) {}
 //----------------------------------------------------------------------------
 VirtualFileSystemNativeFileOStream::~VirtualFileSystemNativeFileOStream() {
-    CloseFileHandle_(_handle);
+    if (false == Bad()) {
+        Assert(IsValidFileHandle_(_handle));
+        CloseFileHandle_(_handle);
+    }
+    else {
+        Assert(false == IsValidFileHandle_(_handle));
+    }
+}
+//----------------------------------------------------------------------------
+VirtualFileSystemNativeFileOStream::VirtualFileSystemNativeFileOStream(VirtualFileSystemNativeFileOStream&& rvalue)
+:   _handle(rvalue._handle)
+,   _filename(std::move(rvalue._filename)) {
+    rvalue._handle = nullptr;
+}
+//----------------------------------------------------------------------------
+bool VirtualFileSystemNativeFileOStream::Bad() const {
+    return (false == IsValidFileHandle_(_handle));
 }
 //----------------------------------------------------------------------------
 std::streamoff VirtualFileSystemNativeFileOStream::TellO() const {
