@@ -61,10 +61,12 @@ u64 XorShift1024Star::NextU64() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 u64 MakeSeed(u64 salt/* = 0 */) {
-    u64 seed[2];
+    u64 seed[4];
     seed[0] = salt;
     seed[1] = u64(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
-    return hash_mem64(seed, sizeof(seed));
+    seed[2] = hash_value(seed[0]);
+    seed[3] = hash_value(seed[1]);
+    return Fingerprint64(&seed, sizeof(seed));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
