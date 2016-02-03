@@ -48,6 +48,7 @@ public:
     virtual void CopyFrom(const MetaAtom *atom) = 0;
 
     virtual bool Equals(const MetaAtom *atom) const = 0;
+    virtual bool DeepEquals(const MetaAtom *atom) const = 0;
 
     virtual size_t HashValue() const = 0;
     virtual String ToString() const = 0;
@@ -214,6 +215,7 @@ public:
     virtual void CopyFrom(const MetaAtom *atom) override;
 
     virtual bool Equals(const MetaAtom *atom) const override;
+    virtual bool DeepEquals(const MetaAtom *atom) const override;
 
     virtual size_t HashValue() const override;
     virtual String ToString() const override;

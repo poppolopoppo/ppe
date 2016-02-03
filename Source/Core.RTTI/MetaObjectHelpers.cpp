@@ -6,6 +6,7 @@
 
 #include "MetaAtom.h"
 #include "MetaAtomDatabase.h"
+#include "MetaAtomVisitor.h"
 #include "MetaClass.h"
 #include "MetaProperty.h"
 
@@ -32,16 +33,27 @@ bool Equals(const MetaObject& lhs, const MetaObject& rhs) {
         return false;
 
     for (const Pair<MetaPropertyName, const MetaProperty *>& prop : metaClass->Properties())
-        if (!prop.second->Equals(&lhs, &rhs))
+        if (false == prop.second->Equals(&lhs, &rhs))
             return false;
 
     return true;
 }
 //----------------------------------------------------------------------------
 bool DeepEquals(const MetaObject& lhs, const MetaObject& rhs) {
-    // TODO (01/16) : MetaPropertyVisitor
-    AssertNotImplemented();
-    return Equals(lhs, rhs);
+    if (&lhs == &rhs)
+        return true;
+
+    const MetaClass *metaClass = lhs.RTTI_MetaClass();
+    Assert(metaClass);
+
+    if (rhs.RTTI_MetaClass() != metaClass)
+        return false;
+
+    for (const Pair<MetaPropertyName, const MetaProperty *>& prop : metaClass->Properties())
+        if (false == prop.second->DeepEquals(&lhs, &rhs))
+            return false;
+
+    return true;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -102,10 +114,14 @@ void DeepCopy(MetaObject& /* dst */, const MetaObject& /* src */) {
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-MetaObject *NewDeepCopy(const MetaObject& /* src */) {
-    // TODO (01/14) : MetaPropertyVisitor
-    AssertNotImplemented();
-    return nullptr;
+MetaObject *NewDeepCopy(const MetaObject& src) {
+    const MetaClass* const metaClass = src.RTTI_MetaClass();
+    Assert(metaClass);
+    AssertRelease(false == metaClass->IsAbstract());
+    MetaObject* const dst = metaClass->CreateInstance();
+    Assert(dst);
+    DeepCopy(*dst, src);
+    return dst;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

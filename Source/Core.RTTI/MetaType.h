@@ -21,6 +21,7 @@
 #define CORE_RTTI_METATYPE_NAME_CAPACITY 128
 
 #include "Core.RTTI/MetaType.Definitions-inl.h"
+#include "Core.RTTI/MetaTypeVirtualTraits.h"
 
 #pragma warning( push )
 // TODO: see constexpr hash_MetaTypeId_constexpr(), is it dangerous ?
@@ -46,12 +47,14 @@ enum class MetaTypeFlags : u32 {
 template <typename T>
 struct MetaType {
     enum : MetaTypeId { TypeId = 0 };
+    static constexpr bool Enabled = false;
     static MetaTypeId Id() = delete;
     static MetaTypeFlags Flags() = delete;
     static const char *Name() = delete;
     static T DefaultValue() = delete;
     static bool IsDefaultValue(const T& value) = delete;
     static hash_t HashValue(const T& value) = delete;
+    static bool DeepEquals(const T& lhs, const T& rhs) = delete;
 };
 //----------------------------------------------------------------------------
 template <typename... _Args>
@@ -63,7 +66,7 @@ constexpr MetaTypeId hash_MetaTypeId_constexpr(_Args... args) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-using Vector = VECTORINSITU(Container, T, 4);
+using Vector = VECTORINSITU(Container, T, 3);
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
 using Pair = Core::Pair<_Key, _Value>;
@@ -72,7 +75,7 @@ template <typename _Key, typename _Value>
 using Dictionary = Core::AssociativeVector<
     _Key,
     _Value,
-    EqualTo<_Key>,
+    Meta::EqualTo<_Key>,
     RTTI::Vector<RTTI::Pair<_Key COMMA _Value> >
 >;
 //----------------------------------------------------------------------------
@@ -81,12 +84,15 @@ using Dictionary = Core::AssociativeVector<
 #define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
     template <> struct MetaType< T > { \
         enum : MetaTypeId { TypeId = _TypeId }; \
+        static constexpr bool Enabled = true; \
         static MetaTypeId Id(); \
         static MetaTypeFlags Flags() { return MetaTypeFlags::Scalar; } \
         static const char *Name(); \
         static T DefaultValue(); \
         static bool IsDefaultValue(const T& value); \
         static hash_t HashValue(const T& value); \
+        static bool DeepEquals(const T& lhs, const T& rhs); \
+        static const MetaTypeScalarTraits< T >* VirtualTraits(); \
     };
 //----------------------------------------------------------------------------
 FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
@@ -105,6 +111,8 @@ struct MetaType< RTTI::Pair<_First, _Second> > {
     enum : MetaTypeId {
         TypeId = hash_MetaTypeId_constexpr(MetaTypeFlags::Pair, first_meta_type::TypeId, second_meta_type::TypeId)
     };
+
+    static constexpr bool Enabled = first_meta_type::Enabled && second_meta_type::Enabled;
 
     static MetaTypeId Id() { return TypeId; }
     static MetaTypeFlags Flags() { return MetaTypeFlags::Pair; }
@@ -127,6 +135,15 @@ struct MetaType< RTTI::Pair<_First, _Second> > {
     static hash_t HashValue(const RTTI::Pair<_First, _Second>& pair) {
         return hash_tuple(hash_t(TypeId), first_meta_type::HashValue(pair.first), first_meta_type::HashValue(pair.second));
     }
+
+    static bool DeepEquals(const RTTI::Pair<_First, _Second>& lhs, const RTTI::Pair<_First, _Second>& rhs) {
+        return  first_meta_type::DeepEquals(lhs.first, rhs.first) &&
+                second_meta_type::DeepEquals(lhs.second, rhs.second);
+    }
+
+    static const MetaTypePairTraits< _First, _Second >* VirtualTraits() {
+        return MetaTypePairTraits< _First, _Second >::Instance();
+    }
 };
 //----------------------------------------------------------------------------
 template <typename T>
@@ -136,6 +153,8 @@ struct MetaType< RTTI::Vector<T> > {
     enum : MetaTypeId {
         TypeId = hash_MetaTypeId_constexpr(MetaTypeFlags::Vector, value_meta_type::TypeId)
     };
+
+    static constexpr bool Enabled = value_meta_type::Enabled;
 
     static MetaTypeId Id() { return TypeId; }
     static MetaTypeFlags Flags() { return MetaTypeFlags::Vector; }
@@ -160,6 +179,20 @@ struct MetaType< RTTI::Vector<T> > {
             hash_combine(result, value_meta_type::HashValue(value));
         return result;
     }
+
+    static bool DeepEquals(const RTTI::Vector<T>& lhs, const RTTI::Vector<T>& rhs) {
+        if (lhs.size() != rhs.size())
+            return false;
+        const size_t k = lhs.size();
+        for (size_t i = 0; i < k; ++i)
+            if (false == value_meta_type::DeepEquals(lhs[i], rhs[i]))
+                return false;
+        return true;
+    }
+
+    static const MetaTypeVectorTraits< T >* VirtualTraits() {
+        return MetaTypeVectorTraits< T >::Instance();
+    }
 };
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
@@ -170,6 +203,8 @@ struct MetaType< RTTI::Dictionary<_Key, _Value> > {
     enum : MetaTypeId {
         TypeId = hash_MetaTypeId_constexpr(MetaTypeFlags::Dictionary, key_meta_type::TypeId, value_meta_type::TypeId)
     };
+
+    static constexpr bool Enabled = key_meta_type::Enabled && value_meta_type::Enabled;
 
     static MetaTypeId Id() { return TypeId; }
     static MetaTypeFlags Flags() { return MetaTypeFlags::Dictionary; }
@@ -193,6 +228,23 @@ struct MetaType< RTTI::Dictionary<_Key, _Value> > {
         for (const auto& it : dico)
             result = hash_tuple(result, key_meta_type::HashValue(it.first), key_meta_type::HashValue(it.second));
         return result;
+    }
+
+    static bool DeepEquals(const RTTI::Dictionary<_Key, _Value>& lhs, const RTTI::Dictionary<_Key, _Value>& rhs) {
+        if (lhs.size() != rhs.size())
+            return false;
+        const size_t k = lhs.size();
+        const auto& lhs_vector = lhs.Vector();
+        const auto& rhs_vector = rhs.Vector();
+        for (size_t i = 0; i < k; ++i)
+            if (false == key_meta_type::DeepEquals(lhs_vector[i].first, rhs_vector[i].first) ||
+                false == value_meta_type::DeepEquals(lhs_vector[i].second, rhs_vector[i].second) )
+                return false;
+        return true;
+    }
+
+    static const MetaTypeDictionaryTraits< _Key, _Value >* VirtualTraits() {
+        return MetaTypeDictionaryTraits< _Key, _Value >::Instance();
     }
 };
 //----------------------------------------------------------------------------

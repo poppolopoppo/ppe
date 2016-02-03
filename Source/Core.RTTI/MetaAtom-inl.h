@@ -149,6 +149,15 @@ bool MetaTypedAtomImpl<T>::Equals(const MetaAtom *atom) const {
 }
 //----------------------------------------------------------------------------
 template <typename T>
+bool MetaTypedAtomImpl<T>::DeepEquals(const MetaAtom *atom) const {
+    Assert(atom);
+    if (atom->TypeInfo().Id != meta_type::TypeId)
+        return false;
+
+    return meta_type::DeepEquals(atom->Cast<T>()->Wrapper(), _wrapper);
+}
+//----------------------------------------------------------------------------
+template <typename T>
 size_t MetaTypedAtomImpl<T>::HashValue() const {
     using Core::hash_value;
     return hash_tuple(u64(meta_type::TypeId), _wrapper);
@@ -468,64 +477,72 @@ void MetaTypedAtom< RTTI::Dictionary<_Key, _Value> >::CopyTo(RTTI::Dictionary<PM
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
 void MetaTypedAtom< RTTI::Dictionary<_Key, _Value> >::WrapMoveTo(RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) {
-    dict.Vector().resize(_wrapper.Vector().size());
-
     const size_t n = _wrapper.size();
+    dict.Vector().reserve(n);
+
     for (size_t i = 0; i < n; ++i) {
         Pair<_Key, _Value>& src = _wrapper.Vector()[i];
-        Pair<PMetaAtom, PMetaAtom>& dst = dict.Vector()[i];
+        Pair<PMetaAtom, PMetaAtom>& dst = dict.Vector().push_back_Default();;
 
         dst.first = MakeAtom(std::move(src.first));
         dst.second = MakeAtom(std::move(src.second));
     }
+
+    Assert(dict.size() == n);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
 void MetaTypedAtom< RTTI::Dictionary<_Key, _Value> >::WrapCopyTo(RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) const {
-    dict.Vector().resize(_wrapper.Vector().size());
-
     const size_t n = _wrapper.size();
+    dict.Vector().reserve(n);
+
     for (size_t i = 0; i < n; ++i) {
         const Pair<_Key, _Value>& src = _wrapper.Vector()[i];
-        Pair<PMetaAtom, PMetaAtom>& dst = dict.Vector()[i];
+        Pair<PMetaAtom, PMetaAtom>& dst = dict.Vector().push_back_Default();
 
         dst.first = MakeAtom(src.first);
         dst.second = MakeAtom(src.second);
     }
+
+    Assert(dict.size() == n);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
 void MetaTypedAtom< RTTI::Dictionary<_Key, _Value> >::MoveFrom(const RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) {
-    _wrapper.Vector().resize(dict.size());
-
     const size_t n = dict.size();
+    _wrapper.Vector().reserve(n);
+
     for (size_t i = 0; i < n; ++i) {
         const Pair<PMetaAtom, PMetaAtom>& src = dict.Vector()[i];
-        Pair<_Key, _Value>& dst = _wrapper.Vector()[i];
 
         Assert(src.first && src.first->TypeInfo().Id == MetaType<_Key>::TypeId);
         Assert(src.second && src.second->TypeInfo().Id == MetaType<_Value>::TypeId);
 
-        dst.first = std::move(src.first->Cast<_Key>()->Wrapper());
-        dst.second = std::move(src.second->Cast<_Value>()->Wrapper());
+        _wrapper.Vector().emplace_back(
+            std::move(src.first->Cast<_Key>()->Wrapper()),
+            std::move(src.second->Cast<_Value>()->Wrapper()) );
     }
+
+    Assert(_wrapper.size() == n);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
 void MetaTypedAtom< RTTI::Dictionary<_Key, _Value> >::CopyFrom(const RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) {
-    _wrapper.Vector().resize(dict.size());
-
     const size_t n = dict.size();
+    _wrapper.Vector().reserve(n);
+
     for (size_t i = 0; i < n; ++i) {
         const Pair<PMetaAtom, PMetaAtom>& src = dict.Vector()[i];
-        Pair<_Key, _Value>& dst = _wrapper.Vector()[i];
 
         Assert(src.first && src.first->TypeInfo().Id == MetaType<_Key>::TypeId);
         Assert(src.second && src.second->TypeInfo().Id == MetaType<_Value>::TypeId);
 
-        dst.first = src.first->Cast<_Key>()->Wrapper();
-        dst.second = src.second->Cast<_Value>()->Wrapper();
+        _wrapper.Vector().emplace_back(
+            src.first->Cast<_Key>()->Wrapper(),
+            src.second->Cast<_Value>()->Wrapper() );
     }
+
+    Assert(_wrapper.size() == n);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
@@ -554,6 +571,7 @@ bool MetaTypedAtom< RTTI::Dictionary<_Key, _Value> >::UnwrapMoveFrom(const RTTI:
         _wrapper.Vector().emplace_back(std::move(dst));
     }
 
+    Assert(_wrapper.size() == n);
     return true;
 }
 //----------------------------------------------------------------------------

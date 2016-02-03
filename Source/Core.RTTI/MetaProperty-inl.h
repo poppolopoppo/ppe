@@ -231,6 +231,17 @@ bool MetaWrappedProperty<T, _Accessor>::Equals(const MetaObject *lhs, const Meta
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Accessor>
+bool MetaWrappedProperty<T, _Accessor>::DeepEquals(const MetaObject *lhs, const MetaObject *rhs) const {
+    Assert(lhs);
+    Assert(rhs);
+
+    const T& plhs = accessor_type::GetReference(lhs);
+    const T& prhs = accessor_type::GetReference(rhs);
+
+    return meta_type_traits::DeepEquals(plhs, prhs);
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Accessor>
 void *MetaWrappedProperty<T, _Accessor>::RawPtr(MetaObject *obj) const {
     Assert(obj);
 

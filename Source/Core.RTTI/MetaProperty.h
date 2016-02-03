@@ -72,6 +72,7 @@ public:
     virtual void Swap(MetaObject *lhs, MetaObject *rhs) const = 0;
 
     virtual bool Equals(const MetaObject *lhs, const MetaObject *rhs) const = 0;
+    virtual bool DeepEquals(const MetaObject *lhs, const MetaObject *rhs) const = 0;
 
     virtual void *RawPtr(MetaObject *obj) const = 0;
     virtual const void *RawPtr(const MetaObject *obj) const = 0;
@@ -172,6 +173,7 @@ public:
     virtual void Swap(MetaObject *lhs, MetaObject *rhs) const override;
 
     virtual bool Equals(const MetaObject *lhs, const MetaObject *rhs) const override;
+    virtual bool DeepEquals(const MetaObject *lhs, const MetaObject *rhs) const override;
 
     virtual void *RawPtr(MetaObject *obj) const override;
     virtual const void *RawPtr(const MetaObject *obj) const override;
