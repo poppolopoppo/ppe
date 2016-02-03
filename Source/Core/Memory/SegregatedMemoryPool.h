@@ -17,11 +17,11 @@
 #include <type_traits>
 
 #ifdef ARCH_X64
-#   define POOL_MAX_CHUNKSIZE (128ul << 10ul) /* 128k */
-#   define POOL_MIN_CHUNKSIZE (  8ul << 10ul) /*   8k */
+#   define POOL_MAX_CHUNKSIZE (2048ul << 10ul) /*2048k */
+#   define POOL_MIN_CHUNKSIZE (  16ul << 10ul) /*  16k */
 #else
-#   define POOL_MAX_CHUNKSIZE ( 64ul << 10ul) /*  64k */
-#   define POOL_MIN_CHUNKSIZE (  4ul << 10ul) /*   4k */
+#   define POOL_MAX_CHUNKSIZE (1024ul << 10ul) /*1024k */
+#   define POOL_MIN_CHUNKSIZE (   4ul << 10ul) /*   4k */
 #endif
 
 #ifdef _DEBUG
@@ -34,10 +34,8 @@
 #ifdef WITH_CORE_POOL_ALLOCATOR_SNAPPING
 #   define SNAP_SIZE_FOR_POOL_SEGREGATION(_Type) \
     (sizeof(_Type) >= 128 \
-        ? ((sizeof(_Type)) + 31 & ~31) \
-        : (sizeof(_Type) >= 16 \
-            ? ((sizeof(_Type)) + 15 & ~15) \
-            : ((sizeof(_Type)) +  7 &  ~7)) )
+        ? ROUND_TO_NEXT_32(sizeof(_Type)) \
+        : ROUND_TO_NEXT_16(sizeof(_Type)) )
 #else
 #   define SNAP_SIZE_FOR_POOL_SEGREGATION(_Type) sizeof(_Type)
 #endif
