@@ -93,7 +93,65 @@ public: // helpers
     void WriteCStr(const char (&cstr)[_Dim]);
     template <size_t _Dim>
     void WriteCStr(const wchar_t (&wcstr)[_Dim]);
+
+    template <typename T>
+    void WriteView(const MemoryView<const T>& data);
 };
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits = std::char_traits<_Char> >
+class BasicStreamReader : public IStreamReader {
+public:
+    typedef std::basic_istream<_Char, _Traits> stream_type;
+
+    explicit BasicStreamReader(stream_type& iss) : _iss(iss) {}
+    virtual ~BasicStreamReader() {}
+
+    virtual bool Eof() const override { return _iss.eof(); }
+
+    virtual std::streamoff TellI() const override { Assert(!_iss.bad()); return _iss.tellg(); }
+    virtual bool SeekI(std::streamoff offset, SeekOrigin origin = SeekOrigin::Begin) override { Assert(!_iss.bad()); _iss.seekg(offset, int(origin)); return true; }
+
+    virtual std::streamsize SizeInBytes() const override {
+        Assert(!_iss.bad());
+        const std::streamoff off = _iss.tellg();
+        _iss.seekg(0, int(SeekOrigin::End));
+        const std::streamsize sz(_iss.tellg());
+        _iss.seekg(off, int(SeekOrigin::Begin));
+        return sz;
+    }
+
+    virtual bool Read(void* storage, std::streamsize sizeInBytes) override { Assert(!_iss.bad()); _iss.read((_Char*)storage, sizeInBytes/(sizeof(_Char))); return (false == _iss.bad()); }
+    virtual std::streamsize ReadSome(void* storage, size_t eltsize, std::streamsize count) override { Assert(!_iss.bad()); return _iss.readsome((_Char*)storage, (count*eltsize)/(sizeof(_Char))); }
+
+    virtual char PeekChar() override { Assert(!_iss.bad()); return _iss.peek(); }
+    virtual wchar_t PeekCharW() override { AssertNotReached(); return _iss.peek(); }
+
+private:
+    stream_type& _iss;
+};
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits = std::char_traits<_Char> >
+class BasicStreamWriter : public IStreamWriter {
+public:
+    typedef std::basic_ostream<_Char, _Traits> stream_type;
+
+    explicit BasicStreamWriter(stream_type& oss) : _oss(oss) {}
+    virtual ~BasicStreamWriter() {}
+
+    virtual std::streamoff TellO() const override { Assert(!_oss.bad()); return _oss.tellp(); }
+    virtual bool SeekO(std::streamoff offset, SeekOrigin policy = SeekOrigin::Begin) override { Assert(!_oss.bad()); _oss.seekp(offset, int(policy)); return true; }
+
+    virtual bool Write(const void* storage, std::streamsize sizeInBytes) override { Assert(!_oss.bad()); _oss.write((const _Char*)storage, (sizeInBytes)/(sizeof(_Char))); return false == _oss.bad(); }
+    virtual bool WriteSome(const void* storage, size_t eltsize, std::streamsize count) { Assert(!_oss.bad()); _oss.write((const _Char*)storage, (eltsize*count)/(sizeof(_Char))); return false == _oss.bad(); }
+
+private:
+    stream_type& _oss;
+};
+//----------------------------------------------------------------------------
+inline BasicStreamReader<char> StdinReader() { return BasicStreamReader<char>(std::cin); }
+inline BasicStreamWriter<char> StdoutWriter() { return BasicStreamWriter<char>(std::cout); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
