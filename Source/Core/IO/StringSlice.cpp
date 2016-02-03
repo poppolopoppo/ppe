@@ -193,6 +193,22 @@ bool Split(const wchar_t **reentrantCstr, size_t *reentrantLength, const wchar_t
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+StringSlice Chomp(const StringSlice& line) {
+    forrange(p, line.begin(), line.end())
+        if (*p == '\r' || *p == '\n')
+            return StringSlice(line.begin(), std::distance(line.begin(), p));
+    return line;
+}
+//----------------------------------------------------------------------------
+WStringSlice Chomp(const WStringSlice& line) {
+    forrange(p, line.begin(), line.end())
+        if (*p == L'\r' || *p == L'\n')
+            return WStringSlice(line.begin(), std::distance(line.begin(), p));
+    return line;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const StringSlice& slice) {
     return oss.write(slice.begin(), slice.size());
 }

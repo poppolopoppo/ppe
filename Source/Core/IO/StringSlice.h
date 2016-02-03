@@ -30,6 +30,14 @@ BasicStringSlice<_Char> MakeStringSlice(const _Char(&cstr)[_Dim]) {
     return BasicStringSlice<_Char>(cstr, _Dim - 1 /* assume null terminated string */);
 }
 //----------------------------------------------------------------------------
+inline String MakeString(const StringSlice& slice) { return String(slice.data(), slice.size()); }
+inline WString MakeString(const WStringSlice& slice) { return WString(slice.data(), slice.size()); }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+StringSlice Chomp(const StringSlice& line);
+WStringSlice Chomp(const WStringSlice& line);
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 bool Split(const char **reentrantCstr, char separator, BasicStringSlice<char>& slice);
