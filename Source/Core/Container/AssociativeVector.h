@@ -7,33 +7,28 @@
 #include "Core/Container/Pair.h"
 #include "Core/Container/Vector.h"
 
-#include <initializer_list>
-#include <vector>
-
-#include <iosfwd>
-
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define ASSOCIATIVE_VECTOR(_DOMAIN, _KEY, _VALUE) \
-    ::Core::AssociativeVector<_KEY, _VALUE, std::equal_to<_KEY>, VECTOR(_DOMAIN, ::Core::Pair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>) >
+    ::Core::AssociativeVector<_KEY, _VALUE, ::Core::Meta::EqualTo<_KEY>, VECTOR(_DOMAIN, ::Core::Pair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>) >
 //----------------------------------------------------------------------------
 #define ASSOCIATIVE_VECTOR_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE) \
-    ::Core::AssociativeVector<_KEY, _VALUE, std::equal_to<_KEY>, VECTOR_THREAD_LOCAL(_DOMAIN, ::Core::Pair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>) >
+    ::Core::AssociativeVector<_KEY, _VALUE, ::Core::Meta::EqualTo<_KEY>, VECTOR_THREAD_LOCAL(_DOMAIN, ::Core::Pair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>) >
 //----------------------------------------------------------------------------
 #define ASSOCIATIVE_VECTORINSITU(_DOMAIN, _KEY, _VALUE, _InSituCount) \
-    ::Core::AssociativeVector<_KEY, _VALUE, std::equal_to<_KEY>, VECTORINSITU(_DOMAIN, ::Core::Pair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>, _InSituCount) >
+    ::Core::AssociativeVector<_KEY, _VALUE, ::Core::Meta::EqualTo<_KEY>, VECTORINSITU(_DOMAIN, ::Core::Pair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>, _InSituCount) >
 //----------------------------------------------------------------------------
 #define ASSOCIATIVE_VECTORINSITU_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE, _InSituCount) \
-    ::Core::AssociativeVector<_KEY, _VALUE, std::equal_to<_KEY>, VECTORINSITU_THREAD_LOCAL(_DOMAIN, ::Core::Pair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>, _InSituCount) >
+    ::Core::AssociativeVector<_KEY, _VALUE, ::Core::Meta::EqualTo<_KEY>, VECTORINSITU_THREAD_LOCAL(_DOMAIN, ::Core::Pair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>, _InSituCount) >
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <
     typename _Key,
     typename _Value,
-    typename _EqualTo = EqualTo<_Key>,
+    typename _EqualTo = Meta::EqualTo<_Key>,
     typename _Vector = Vector<Pair<_Key COMMA _Value>> >
 class AssociativeVector {
 public:

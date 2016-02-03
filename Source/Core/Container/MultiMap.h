@@ -15,16 +15,16 @@ namespace Core {
 template <
     typename _Key,
     typename _Value,
-    typename _Predicate = std::less<_Key>,
+    typename _Predicate = Meta::Less<_Key>,
     typename _Allocator = NODEBASED_CONTAINER_ALLOCATOR(Container, Pair<_Key COMMA _Value>)
 >
 using MultiMap = std::multimap<_Key, _Value, _Predicate, _Allocator >;
 //----------------------------------------------------------------------------
 #define MULTIMAP(_DOMAIN, _KEY, _VALUE) \
-    ::Core::MultiMap<_KEY, _VALUE, std::less<_KEY>, NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, ::Core::Pair<_KEY COMMA _VALUE>) >
+    ::Core::MultiMap<_KEY, _VALUE, ::Core::Meta::Less<_KEY>, NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, ::Core::Pair<_KEY COMMA _VALUE>) >
 //----------------------------------------------------------------------------
 #define MULTIMAP_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE) \
-    ::Core::MultiMap<_KEY, _VALUE, std::less<_KEY>, THREAD_LOCAL_NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, ::Core::Pair<_KEY COMMA _VALUE>) >
+    ::Core::MultiMap<_KEY, _VALUE, ::Core::Meta::Less<_KEY>, THREAD_LOCAL_NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, ::Core::Pair<_KEY COMMA _VALUE>) >
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Pred, typename _Allocator>
 hash_t hash_value(const MultiMap<_Key, _Value, _Pred, _Allocator>& multiMap) {

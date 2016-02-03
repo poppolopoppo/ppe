@@ -18,16 +18,16 @@ template <
     typename _Key,
     typename _Value,
     typename _Hasher = Hash<_Key>,
-    typename _EqualTo = EqualTo<_Key>,
+    typename _EqualTo = Meta::EqualTo<_Key>,
     typename _Allocator = ALLOCATOR(Container, Pair<_Key COMMA _Value>)
 >
 using HashMap = std::unordered_map<_Key, _Value, _Hasher, _EqualTo, _Allocator>;
 //----------------------------------------------------------------------------
 #define HASHMAP(_DOMAIN, _KEY, _VALUE) \
-    ::Core::HashMap<_KEY, _VALUE, ::Core::Hash<_KEY>, ::Core::EqualTo<_KEY>, ALLOCATOR(_DOMAIN, ::Core::Pair<_KEY COMMA _VALUE>)>
+    ::Core::HashMap<_KEY, _VALUE, ::Core::Hash<_KEY>, ::Core::Meta::EqualTo<_KEY>, ALLOCATOR(_DOMAIN, ::Core::Pair<_KEY COMMA _VALUE>)>
 //----------------------------------------------------------------------------
 #define HASHMAP_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE) \
-    ::Core::HashMap<_KEY, _VALUE, ::Core::Hash<_KEY>, ::Core::EqualTo<_KEY>, THREAD_LOCAL_ALLOCATOR(_DOMAIN, ::Core::Pair<_KEY COMMA _VALUE>)>
+    ::Core::HashMap<_KEY, _VALUE, ::Core::Hash<_KEY>, ::Core::Meta::EqualTo<_KEY>, THREAD_LOCAL_ALLOCATOR(_DOMAIN, ::Core::Pair<_KEY COMMA _VALUE>)>
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
 hash_t hash_value(const HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashMap) {
@@ -50,39 +50,39 @@ bool TryGetValue(const HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& has
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
 bool Insert_ReturnIfExists(HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashmap, const _Key& key, const _Value& value) {
-    const auto it = hashmap.find(key);
-    if (hashmap.end() == it) {
-        hashmap.emplace_hint(it, key, value);
-        return false;
-    }
-    else {
+    const auto it = hashmap.lower_bound(key);
+    if (it != hashmap.end() && !(hashmap.key_comp()(key, it->first)) ) {
         Assert(it->second == value);
         return true;
+    }
+    else {
+        hashmap.insert(it, MakePair(key, value));
+        return false;
     }
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
 bool Insert_ReturnIfExistsAndCopyValue(HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashmap, const _Key& key, _Value* pvalue) {
     Assert(pvalue);
-    const auto it = hashmap.find(key);
-    if (hashmap.end() == it) {
-        hashmap.emplace_hint(it, key, *pvalue);
-        return false;
-    }
-    else {
+    const auto it = hashmap.lower_bound(key);
+    if (it != hashmap.end() && !(hashmap.key_comp()(key, it->first)) ) {
         *pvalue = it->second;
         return true;
+    }
+    else {
+        hashmap.insert(it, MakePair(key, value));
+        return false;
     }
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
 void Insert_AssertUnique(HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashmap, const _Key& key, const _Value& value) {
 #ifdef WITH_CORE_ASSERT
-    const auto it = hashmap.find(key);
-    if (hashmap.end() == it)
-        hashmap.emplace_hint(it, key, value);
-    else
+    const auto it = hashmap.lower_bound(key);
+    if (it != hashmap.end() && !(hashmap.key_comp()(key, it->first)) )
         AssertNotReached();
+    else
+        hashmap.insert(it, MakePair(key, value));
 #else
     hashmap[key] = value;
 #endif

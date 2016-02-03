@@ -18,16 +18,16 @@ template <
     typename _Key,
     typename _Value,
     typename _Hasher = Hash<_Key>,
-    typename _EqualTo = EqualTo<_Key>,
+    typename _EqualTo = Meta::EqualTo<_Key>,
     typename _Allocator = ALLOCATOR(Container, Pair<_Key COMMA _Value>)
 >
 using HashMultiMap = std::unordered_multimap<_Key, _Value, _Hasher, _EqualTo, _Allocator>;
 //----------------------------------------------------------------------------
 #define HASHMULTIMAP(_DOMAIN, _KEY, _VALUE) \
-    ::Core::HashMultiMap<_KEY, _VALUE, ::Core::Hash<_KEY>, ::Core::EqualTo<_KEY>, ALLOCATOR(_DOMAIN, ::Core::Pair<_KEY COMMA _VALUE>)>
+    ::Core::HashMultiMap<_KEY, _VALUE, ::Core::Hash<_KEY>, ::Core::Meta::EqualTo<_KEY>, ALLOCATOR(_DOMAIN, ::Core::Pair<_KEY COMMA _VALUE>)>
 //----------------------------------------------------------------------------
 #define HASHMULTIMAP_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE) \
-    ::Core::HashMultiMap<_KEY, _VALUE, ::Core::Hash<_KEY>, ::Core::EqualTo<_KEY>, THREAD_LOCAL_ALLOCATOR(_DOMAIN, ::Core::Pair<_KEY COMMA _VALUE>)>
+    ::Core::HashMultiMap<_KEY, _VALUE, ::Core::Hash<_KEY>, ::Core::Meta::EqualTo<_KEY>, THREAD_LOCAL_ALLOCATOR(_DOMAIN, ::Core::Pair<_KEY COMMA _VALUE>)>
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
 hash_t hash_value(const HashMultiMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashMultiMap) {
