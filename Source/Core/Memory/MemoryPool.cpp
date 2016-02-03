@@ -72,7 +72,7 @@ MemoryPoolBase::MemoryPoolBase(size_t blockSize, size_t minChunkSize, size_t max
     Assert(_maxChunkSize >= minChunkSize);
 
     _currentChunksize = _minChunkSize;
-    while (10*_blockSize > _currentChunksize)
+    while (11*_blockSize > _currentChunksize)
         _currentChunksize *= 2;
     AssertRelease(_currentChunksize <= _maxChunkSize);
 

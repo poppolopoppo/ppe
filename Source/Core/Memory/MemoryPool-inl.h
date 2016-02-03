@@ -147,12 +147,11 @@ template <bool _Lock, typename _Allocator>
 MemoryPoolChunk *MemoryPool<_Lock, _Allocator>::AllocateChunk_() {
 #ifdef WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
     AssertNotReached();
-
 #else
     const size_t currentChunkSize = CurrentChunkSize();
     const size_t currentBlockCount = BlockCountPerChunk(currentChunkSize);
-    return new (allocator_type::allocate(currentChunkSize / sizeof(typename allocator_type::value_type))) MemoryPoolChunk(currentChunkSize, currentBlockCount);
-
+    void* const storage = allocator_type::allocate(currentChunkSize / sizeof(typename allocator_type::value_type));
+    return new (storage) MemoryPoolChunk(currentChunkSize, currentBlockCount);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -163,13 +162,9 @@ void MemoryPool<_Lock, _Allocator>::DeallocateChunk_(MemoryPoolChunk *chunk) {
 
 #else
     Assert(chunk);
-
     const size_t chunkSize = chunk->ChunkSize();
-
     chunk->~MemoryPoolChunk();
-
     allocator_type::deallocate(chunk, chunkSize / sizeof(typename allocator_type::value_type));
-
 #endif
 }
 //----------------------------------------------------------------------------
