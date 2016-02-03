@@ -116,33 +116,33 @@ static void Lex_Comments_(LookAheadReader& reader) {
 //----------------------------------------------------------------------------
 static bool Lex_Symbol_(LookAheadReader& reader, const Symbol **psymbol) {
     Assert(psymbol);
+    Assert(SymbolTrie::Invalid == *psymbol);
 
-    int offset = 0;
-    int toss = 0;
+    size_t offset = 0;
+    size_t toss = 0;
 
-    char ch = reader.Peek(0);
-
-    const SymbolTrie::node_type *node = SymbolTrie::Instance().Root();
-    Assert(node);
-    Assert(Symbol::Invalid == node->Value().Type());
-
-    *psymbol = &node->Value();
-
-    while (nullptr != node && node->Find(ch, &node))
-    {
-        ch = reader.Peek(++offset);
-        ++toss;
-
-        if (Symbol::Invalid != node->Value().Type())
-        {
-            *psymbol = &node->Value();
-            reader.SeekForward(toss);
-            toss = 0;
+    SymbolTrie::query_t result;
+    do {
+        const char ch = reader.Peek(offset++);
+        result = SymbolTrie::IsPrefix(ch, result);
+        if (result.Node && result.Node->HasValue()) {
+            *psymbol = &result.Node->Value();
+            Assert((*psymbol)->Type() != Symbol::Invalid);
+            toss = offset;
         }
     }
+    while (nullptr != result.Node);
 
-    Assert(*psymbol);
-    return (Symbol::Invalid != (*psymbol)->Type());
+    if (0 != toss) {
+        Assert(*psymbol);
+        Assert((*psymbol)->Type() != Symbol::Invalid);
+        reader.SeekForward(toss);
+        return true;
+    }
+    else {
+        Assert(SymbolTrie::Invalid == *psymbol);
+        return false;
+    }
 }
 //----------------------------------------------------------------------------
 static bool Lex_Numeric_(LookAheadReader& reader, const Symbol **psymbol, String& value) {

@@ -2,8 +2,6 @@
 
 #include "SymbolTrie.h"
 
-#include "Core/Meta/Singleton.h"
-
 namespace Core {
 namespace Lexer {
 //----------------------------------------------------------------------------
@@ -11,68 +9,90 @@ namespace Lexer {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-class SymbolTrieSingleton : Meta::Singleton<SymbolTrie, SymbolTrieSingleton> {
-public:
-    typedef Meta::Singleton<SymbolTrie, SymbolTrieSingleton> parent_type;
-
-    using parent_type::Instance;
-    using parent_type::HasInstance;
-    using parent_type::Destroy;
-
-    static void Create() {
-        parent_type::Create();
-    }
-};
+const Symbol *Insert_(
+        SymbolMap& symbols,
+        Symbol::TypeId type, const char *cstr, size_t size) {
+    const StringSlice cstr_slice(cstr, size);
+    SymbolMap::node_type* node = symbols.Insert_AssertUnique(cstr_slice);
+    Assert(Symbol::Invalid == node->Value().Type());
+    node->SetValue(Symbol(type, cstr_slice));
+    return &node->Value();
+}
+//----------------------------------------------------------------------------
+template <size_t _Dim>
+const Symbol *Insert_(SymbolMap& symbols, Symbol::TypeId type, const char (&cstr)[_Dim]) {
+    return Insert_(symbols, type, cstr, _Dim - 1);
+}
+//----------------------------------------------------------------------------
+void CheckSymbol_(const SymbolMap& symbols, const Symbol* symbol) {
+    Assert(symbol);
+    const SymbolMap::node_type* node = symbols.Find(symbol->CStr());
+    Assert(node);
+    Assert(node->HasValue());
+    Assert(node->Value() == *symbol);
+}
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SymbolTrie::SymbolTrie() {
-    SymbolTrie::True = Insert_(Symbol::True, "true");
-    SymbolTrie::False = Insert_(Symbol::False, "false");
-    SymbolTrie::Nil = Insert_(Symbol::Nil, "nil");
-    SymbolTrie::Is = Insert_(Symbol::Is, "is");
-    SymbolTrie::Extern = Insert_(Symbol::Extern, "extern");
-    SymbolTrie::Export = Insert_(Symbol::Export, "export");
-    SymbolTrie::LBrace = Insert_(Symbol::LBrace, "{");
-    SymbolTrie::RBrace = Insert_(Symbol::RBrace, "}");
-    SymbolTrie::LBracket = Insert_(Symbol::LBracket, "[");
-    SymbolTrie::RBracket = Insert_(Symbol::RBracket, "]");
-    SymbolTrie::LParenthese = Insert_(Symbol::LParenthese, "(");
-    SymbolTrie::RParenthese = Insert_(Symbol::RParenthese, ")");
-    SymbolTrie::Comma = Insert_(Symbol::Comma, ",");
-    SymbolTrie::Colon = Insert_(Symbol::Colon, ":");
-    SymbolTrie::SemiColon = Insert_(Symbol::SemiColon, ";");
-    SymbolTrie::Dot = Insert_(Symbol::Dot, ".");
-    SymbolTrie::Dollar = Insert_(Symbol::Dollar, "$");
-    SymbolTrie::Question = Insert_(Symbol::Question, "?");
-    SymbolTrie::Add = Insert_(Symbol::Add, "+");
-    SymbolTrie::Sub = Insert_(Symbol::Sub, "-");
-    SymbolTrie::Mul = Insert_(Symbol::Mul, "*");
-    SymbolTrie::Div = Insert_(Symbol::Div, "/");
-    SymbolTrie::Mod = Insert_(Symbol::Mod, "%");
-    SymbolTrie::Pow = Insert_(Symbol::Pow, "**");
-    SymbolTrie::Increment = Insert_(Symbol::Increment, "++");
-    SymbolTrie::Decrement = Insert_(Symbol::Decrement, "--");
-    SymbolTrie::LShift = Insert_(Symbol::LShift, "<<");
-    SymbolTrie::RShift = Insert_(Symbol::RShift, ">>");
-    SymbolTrie::And = Insert_(Symbol::And, "&");
-    SymbolTrie::Or = Insert_(Symbol::Or, "|");
-    SymbolTrie::Not = Insert_(Symbol::Not, "!");
-    SymbolTrie::Xor = Insert_(Symbol::Xor, "^");
-    SymbolTrie::Complement = Insert_(Symbol::Complement, "~");
-    SymbolTrie::Assignment = Insert_(Symbol::Assignment, "=");
-    SymbolTrie::Equals = Insert_(Symbol::Equals, "==");
-    SymbolTrie::NotEquals = Insert_(Symbol::NotEquals, "!=");
-    SymbolTrie::Less = Insert_(Symbol::Less, "<");
-    SymbolTrie::LessOrEqual = Insert_(Symbol::LessOrEqual, "<=");
-    SymbolTrie::Greater = Insert_(Symbol::Greater, ">");
-    SymbolTrie::GreaterOrEqual = Insert_(Symbol::GreaterOrEqual, ">=");
-    SymbolTrie::DotDot = Insert_(Symbol::DotDot, "..");
+auto SymbolTrie::IsPrefix(const StringSlice& cstr, const query_t& hint /* = nullptr */) -> query_t {
+    Assert(!cstr.empty());
 
-    Root()->Emplace(Symbol::Invalid, StringSlice());
-    SymbolTrie::Invalid = &Root()->Value();
+    const SymbolMap& symbols = singleton_type::Instance().Map();
+    SymbolMap::query_t result = symbols.Find(cstr, hint.Node ? &hint : nullptr);
+
+    return result;
+}
+//----------------------------------------------------------------------------
+void SymbolTrie::Create() {
+    singleton_type::Create();
+
+    SymbolMap& symbols = singleton_type::Instance().Map();
+
+    SymbolTrie::True = Insert_(symbols, Symbol::True, "true");
+    SymbolTrie::False = Insert_(symbols, Symbol::False, "false");
+    SymbolTrie::Nil = Insert_(symbols, Symbol::Nil, "nil");
+    SymbolTrie::Is = Insert_(symbols, Symbol::Is, "is");
+    SymbolTrie::Extern = Insert_(symbols, Symbol::Extern, "extern");
+    SymbolTrie::Export = Insert_(symbols, Symbol::Export, "export");
+    SymbolTrie::LBrace = Insert_(symbols, Symbol::LBrace, "{");
+    SymbolTrie::RBrace = Insert_(symbols, Symbol::RBrace, "}");
+    SymbolTrie::LBracket = Insert_(symbols, Symbol::LBracket, "[");
+    SymbolTrie::RBracket = Insert_(symbols, Symbol::RBracket, "]");
+    SymbolTrie::LParenthese = Insert_(symbols, Symbol::LParenthese, "(");
+    SymbolTrie::RParenthese = Insert_(symbols, Symbol::RParenthese, ")");
+    SymbolTrie::Comma = Insert_(symbols, Symbol::Comma, ",");
+    SymbolTrie::Colon = Insert_(symbols, Symbol::Colon, ":");
+    SymbolTrie::SemiColon = Insert_(symbols, Symbol::SemiColon, ";");
+    SymbolTrie::Dot = Insert_(symbols, Symbol::Dot, ".");
+    SymbolTrie::Dollar = Insert_(symbols, Symbol::Dollar, "$");
+    SymbolTrie::Question = Insert_(symbols, Symbol::Question, "?");
+    SymbolTrie::Add = Insert_(symbols, Symbol::Add, "+");
+    SymbolTrie::Sub = Insert_(symbols, Symbol::Sub, "-");
+    SymbolTrie::Mul = Insert_(symbols, Symbol::Mul, "*");
+    SymbolTrie::Div = Insert_(symbols, Symbol::Div, "/");
+    SymbolTrie::Mod = Insert_(symbols, Symbol::Mod, "%");
+    SymbolTrie::Pow = Insert_(symbols, Symbol::Pow, "**");
+    SymbolTrie::Increment = Insert_(symbols, Symbol::Increment, "++");
+    SymbolTrie::Decrement = Insert_(symbols, Symbol::Decrement, "--");
+    SymbolTrie::LShift = Insert_(symbols, Symbol::LShift, "<<");
+    SymbolTrie::RShift = Insert_(symbols, Symbol::RShift, ">>");
+    SymbolTrie::And = Insert_(symbols, Symbol::And, "&");
+    SymbolTrie::Or = Insert_(symbols, Symbol::Or, "|");
+    SymbolTrie::Not = Insert_(symbols, Symbol::Not, "!");
+    SymbolTrie::Xor = Insert_(symbols, Symbol::Xor, "^");
+    SymbolTrie::Complement = Insert_(symbols, Symbol::Complement, "~");
+    SymbolTrie::Assignment = Insert_(symbols, Symbol::Assignment, "=");
+    SymbolTrie::Equals = Insert_(symbols, Symbol::Equals, "==");
+    SymbolTrie::NotEquals = Insert_(symbols, Symbol::NotEquals, "!=");
+    SymbolTrie::Less = Insert_(symbols, Symbol::Less, "<");
+    SymbolTrie::LessOrEqual = Insert_(symbols, Symbol::LessOrEqual, "<=");
+    SymbolTrie::Greater = Insert_(symbols, Symbol::Greater, ">");
+    SymbolTrie::GreaterOrEqual = Insert_(symbols, Symbol::GreaterOrEqual, ">=");
+    SymbolTrie::DotDot = Insert_(symbols, Symbol::DotDot, "..");
+
+    SymbolTrie::Invalid = new Symbol(Symbol::Invalid, "%invalid%");
 
     SymbolTrie::Eof = new Symbol(Symbol::Eof, MakeStringSlice("Eof"));
 
@@ -80,9 +100,54 @@ SymbolTrie::SymbolTrie() {
     SymbolTrie::Float = new Symbol(Symbol::Float, MakeStringSlice("Float"));
     SymbolTrie::String = new Symbol(Symbol::String, MakeStringSlice("String"));
     SymbolTrie::Identifier = new Symbol(Symbol::Identifier, MakeStringSlice("Identifier"));
+
+#ifdef WITH_CORE_ASSERT
+    CheckSymbol_(symbols, SymbolTrie::True);
+    CheckSymbol_(symbols, SymbolTrie::False);
+    CheckSymbol_(symbols, SymbolTrie::Nil);
+    CheckSymbol_(symbols, SymbolTrie::Is);
+    CheckSymbol_(symbols, SymbolTrie::Extern);
+    CheckSymbol_(symbols, SymbolTrie::Export);
+    CheckSymbol_(symbols, SymbolTrie::LBrace);
+    CheckSymbol_(symbols, SymbolTrie::RBrace);
+    CheckSymbol_(symbols, SymbolTrie::LBracket);
+    CheckSymbol_(symbols, SymbolTrie::RBracket);
+    CheckSymbol_(symbols, SymbolTrie::LParenthese);
+    CheckSymbol_(symbols, SymbolTrie::RParenthese);
+    CheckSymbol_(symbols, SymbolTrie::Comma);
+    CheckSymbol_(symbols, SymbolTrie::Colon);
+    CheckSymbol_(symbols, SymbolTrie::SemiColon);
+    CheckSymbol_(symbols, SymbolTrie::Dot);
+    CheckSymbol_(symbols, SymbolTrie::Dollar);
+    CheckSymbol_(symbols, SymbolTrie::Question);
+    CheckSymbol_(symbols, SymbolTrie::Add);
+    CheckSymbol_(symbols, SymbolTrie::Sub);
+    CheckSymbol_(symbols, SymbolTrie::Mul);
+    CheckSymbol_(symbols, SymbolTrie::Div);
+    CheckSymbol_(symbols, SymbolTrie::Mod);
+    CheckSymbol_(symbols, SymbolTrie::Pow);
+    CheckSymbol_(symbols, SymbolTrie::Increment);
+    CheckSymbol_(symbols, SymbolTrie::Decrement);
+    CheckSymbol_(symbols, SymbolTrie::LShift);
+    CheckSymbol_(symbols, SymbolTrie::RShift);
+    CheckSymbol_(symbols, SymbolTrie::And);
+    CheckSymbol_(symbols, SymbolTrie::Or);
+    CheckSymbol_(symbols, SymbolTrie::Not);
+    CheckSymbol_(symbols, SymbolTrie::Xor);
+    CheckSymbol_(symbols, SymbolTrie::Complement);
+    CheckSymbol_(symbols, SymbolTrie::Assignment);
+    CheckSymbol_(symbols, SymbolTrie::Equals);
+    CheckSymbol_(symbols, SymbolTrie::NotEquals);
+    CheckSymbol_(symbols, SymbolTrie::Less);
+    CheckSymbol_(symbols, SymbolTrie::LessOrEqual);
+    CheckSymbol_(symbols, SymbolTrie::Greater);
+    CheckSymbol_(symbols, SymbolTrie::GreaterOrEqual);
+    CheckSymbol_(symbols, SymbolTrie::DotDot);
+#endif
 }
 //----------------------------------------------------------------------------
-SymbolTrie::~SymbolTrie() {
+void SymbolTrie::Destroy() {
+
     SymbolTrie::True = nullptr;
     SymbolTrie::False = nullptr;
     SymbolTrie::Nil = nullptr;
@@ -125,6 +190,7 @@ SymbolTrie::~SymbolTrie() {
     SymbolTrie::GreaterOrEqual = nullptr;
     SymbolTrie::DotDot = nullptr;
 
+    checked_delete(SymbolTrie::Invalid);
     SymbolTrie::Invalid = nullptr;
 
     checked_delete(SymbolTrie::Eof);
@@ -139,27 +205,8 @@ SymbolTrie::~SymbolTrie() {
     SymbolTrie::Float = nullptr;
     SymbolTrie::String = nullptr;
     SymbolTrie::Identifier = nullptr;
-}
-//----------------------------------------------------------------------------
-const Symbol *SymbolTrie::Insert_(Symbol::TypeId type, const char *cstr, size_t size) {
-    const StringSlice cstr_slice(cstr, size);
-    return &parent_type::Insert_AssertUnique(cstr_slice, Symbol(type, cstr_slice))->Value();
-}
-//----------------------------------------------------------------------------
-void SymbolTrie::Create() {
-    SymbolTrieSingleton::Create();
-}
-//----------------------------------------------------------------------------
-void SymbolTrie::Destroy() {
-    SymbolTrieSingleton::Destroy();
-}
-//----------------------------------------------------------------------------
-bool SymbolTrie::HasInstance() {
-    return SymbolTrieSingleton::HasInstance();
-}
-//----------------------------------------------------------------------------
-const SymbolTrie& SymbolTrie::Instance() {
-    return SymbolTrieSingleton::Instance();
+
+    singleton_type::Destroy();
 }
 //----------------------------------------------------------------------------
 const Symbol *SymbolTrie::Invalid = nullptr;

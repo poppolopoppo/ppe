@@ -3,9 +3,9 @@
 #include "Core/Core.h"
 
 #include "Core/Allocator/Allocation.h"
-#include "Core/Container/Pair.h"
-#include "Core/Container/Trie.h"
+#include "Core/Container/BurstTrie.h"
 #include "Core/IO/String.h"
+#include "Core/Meta/Singleton.h"
 
 #include "Core.Serialize/Lexer/Symbol.h"
 
@@ -14,30 +14,27 @@ namespace Lexer {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class SymbolTrie : public Core::Trie<
-    char,
-    Symbol,
-    1,
-    CharEqualTo<char, CaseSensitive::False>,
-    ALLOCATOR(Lexer, Pair<char COMMA Symbol>)
-> {
+typedef STRINGTRIE_MAP(Lexer, Symbol, CaseSensitive::False, 32) SymbolMap;
+class SymbolRoot : Meta::ThreadResource {
 public:
-    typedef Core::Trie<
-        char,
-        Symbol,
-        1,
-        CharEqualTo<char, CaseSensitive::False>,
-        ALLOCATOR(Lexer, Pair<char COMMA Symbol>)
-    >   parent_type;
+    SymbolMap& Map() { THIS_THREADRESOURCE_CHECKACCESS(); return _map; }
+private:
+    SymbolMap _map;
+};
+//----------------------------------------------------------------------------
+class SymbolTrie : Meta::Singleton<SymbolRoot, SymbolTrie> {
+public:
+    typedef Meta::Singleton<SymbolRoot, SymbolTrie> singleton_type;
+    typedef SymbolMap::query_t query_t;
 
-    SymbolTrie();
-    ~SymbolTrie();
+    SymbolTrie() = delete;
+    ~SymbolTrie() = delete;
 
     static void Create();
     static void Destroy();
 
-    static const SymbolTrie& Instance();
-    static bool HasInstance();
+    static query_t IsPrefix(const StringSlice& cstr, const query_t& hint);
+    static query_t IsPrefix(char ch, const query_t& hint) { return IsPrefix(StringSlice(&ch, 1), hint); }
 
     static const Symbol *Invalid;
 
@@ -89,16 +86,6 @@ public:
     static const Symbol *Greater;
     static const Symbol *GreaterOrEqual;
     static const Symbol *DotDot;
-
-private:
-    const Symbol *Insert_(Symbol::TypeId type, const char *cstr, size_t size);
-
-    template <size_t _Dim>
-    const Symbol *Insert_(Symbol::TypeId type, const char(&staticArray)[_Dim]) {
-        static_assert(_Dim, "invalid string");
-        Assert(!staticArray[_Dim - 1]);
-        return Insert_(type, staticArray, _Dim - 1 /* assume null terminated string */);
-    }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
