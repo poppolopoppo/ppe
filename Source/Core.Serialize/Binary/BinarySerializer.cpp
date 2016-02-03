@@ -202,15 +202,18 @@ bool DeserializePODs_(MemoryViewReader& reader, VECTOR_THREAD_LOCAL(Serialize, T
 
     Assert(UINT32_MAX > arraySize);
     results.clear();
-    results.resize(arraySize);
 
-    MemoryView<const u8> eaten;
-    if (false == reader.EatIFP(&eaten, sizeof(T)*arraySize) )
-        return false;
+    if (arraySize) {
+        MemoryView<const u8> eaten;
+        if (false == reader.EatIFP(&eaten, sizeof(T)*arraySize) )
+            return false;
 
-    Assert(eaten.SizeInBytes() == sizeof(T)*arraySize);
-    const MemoryView<const T> src = eaten.Cast<const T>();
-    std::copy(src.begin(), src.end(), results.begin());
+        Assert(eaten.SizeInBytes() == sizeof(T)*arraySize);
+        const MemoryView<const T> src = eaten.Cast<const T>();
+        Assert(src.size() == arraySize);
+
+        results.assign(src.begin(), src.end());
+    }
 
     Assert(results.size() == arraySize);
     return true;
