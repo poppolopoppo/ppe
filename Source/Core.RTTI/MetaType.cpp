@@ -4,6 +4,7 @@
 
 #include "MetaAtom.h"
 #include "MetaObject.h"
+#include "MetaObjectHelpers.h"
 
 #include "Core/Container/Hash.h"
 #include "Core/Maths/Geometry/ScalarVector.h"
@@ -25,10 +26,39 @@ static bool IsDefaultValue_(const PMetaAtom& atom) {
     return (nullptr == atom || atom->IsDefaultValue() );
 }
 //----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
 template <typename T>
 static hash_t HashValue_(const T& value) {
     using Core::hash_value;
     return hash_value(value);
+}
+//----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+template <typename T>
+static bool DeepEquals_(const T& lhs, const T& rhs) {
+    return (lhs == rhs);
+}
+//----------------------------------------------------------------------------
+static bool DeepEquals_(const PMetaAtom& lhs, const PMetaAtom& rhs) {
+    return (lhs != nullptr && rhs != nullptr)
+        ? lhs->DeepEquals(rhs.get())
+        : lhs == rhs;
+}
+//----------------------------------------------------------------------------
+static bool DeepEquals_(const PMetaObject& lhs, const PMetaObject& rhs) {
+    return (lhs != nullptr && rhs != nullptr)
+        ? DeepEquals(*lhs, *rhs)
+        : lhs == rhs;
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -41,6 +71,8 @@ static hash_t HashValue_(const T& value) {
     T MetaType< T >::DefaultValue() { return T(); } \
     bool MetaType< T >::IsDefaultValue(const T& value) { return IsDefaultValue_(value); } \
     hash_t MetaType< T >::HashValue(const T& value) { return HashValue_(value); } \
+    bool MetaType< T >::DeepEquals(const T& lhs, const T& rhs) { return DeepEquals_(lhs, rhs); } \
+    const MetaTypeScalarTraits< T >* MetaType< T >::VirtualTraits() { return MetaTypeScalarTraits< T >::Instance(); }
 //----------------------------------------------------------------------------
 FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
 //----------------------------------------------------------------------------

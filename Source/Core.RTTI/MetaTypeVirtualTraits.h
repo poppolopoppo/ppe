@@ -2,8 +2,6 @@
 
 #include "Core.RTTI/RTTI.h"
 
-#include "Core.RTTI/MetaType.h"
-
 #include "Core/Meta/OneTimeInitialize.h"
 
 namespace Core {

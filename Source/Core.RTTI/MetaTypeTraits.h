@@ -2,6 +2,7 @@
 
 #include "Core.RTTI/RTTI.h"
 
+#include "Core.RTTI/MetaObjectHelpers.h"
 #include "Core.RTTI/MetaType.h"
 #include "Core.RTTI/MetaTypeVirtualTraits.h"
 
@@ -32,13 +33,34 @@ struct MetaTypeTraitsImpl {
     typedef T wrapper_type;
 
     typedef MetaType<T> meta_type;
-    static_assert(meta_type::TypeId, "T is not supported by RTTI");
+    static_assert(meta_type::Enabled, "T is not supported by RTTI");
 
-    static const MetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
-        return MetaTypeScalarTraits< wrapper_type >::Instance();
-    }
+    static const auto* VirtualTraits() = delete;
 
-    static bool IsDefaultValue(const wrapped_type& value) { return MetaType< wrapper_type >::IsDefaultValue(value); }
+    static bool IsDefaultValue(const wrapped_type& value) = delete;
+
+    static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) = delete;
+
+    static void WrapMove(wrapper_type& dst, wrapped_type&& src) = delete;
+    static void WrapCopy(wrapper_type& dst, const wrapped_type& src) = delete;
+
+    static void UnwrapMove(wrapped_type& dst, wrapper_type&& src) = delete;
+    static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src) = delete;
+};
+//----------------------------------------------------------------------------
+template <typename T>
+struct MetaTypeTraitsDefault {
+    typedef T wrapped_type;
+    typedef T wrapper_type;
+
+    typedef MetaType<T> meta_type;
+    static_assert(meta_type::Enabled, "T is not supported by RTTI");
+
+    static const auto* VirtualTraits() { return meta_type::VirtualTraits(); }
+
+    static bool IsDefaultValue(const wrapped_type& value) { return meta_type::IsDefaultValue(value); }
+
+    static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) { return meta_type::DeepEquals(lhs, rhs); }
 
     static void WrapMove(wrapper_type& dst, wrapped_type&& src) { dst = std::move(src); }
     static void WrapCopy(wrapper_type& dst, const wrapped_type& src) { dst = src; }
@@ -48,29 +70,6 @@ struct MetaTypeTraitsImpl {
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// Arithmetic types :
-//----------------------------------------------------------------------------
-template <typename T>
-struct MetaTypeTraitsImpl< T, typename std::enable_if< std::is_arithmetic<T>::value >::type > {
-    typedef T wrapped_type;
-    typedef T wrapper_type;
-
-    typedef MetaType< wrapper_type > meta_type;
-    static_assert(meta_type::TypeId, "T is not supported by RTTI");
-
-    static const MetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
-        return MetaTypeScalarTraits< wrapper_type >::Instance();
-    }
-
-    static bool IsDefaultValue(wrapped_type value) { return MetaType< wrapper_type >::IsDefaultValue(value); }
-
-    template <typename _Dst> static void WrapMove(_Dst& dst, wrapped_type src) { dst = src; }
-    template <typename _Dst> static void WrapCopy(_Dst& dst, wrapped_type src) { dst = src; }
-
-    template <typename _Dst> static void UnwrapMove(_Dst& dst, wrapper_type src) { dst = src; }
-    template <typename _Dst> static void UnwrapCopy(_Dst& dst, wrapper_type src) { dst = src; }
-};
 //----------------------------------------------------------------------------
 // Strongly typed numeric:
 //----------------------------------------------------------------------------
@@ -86,6 +85,8 @@ struct MetaTypeTraitsImpl< StronglyTyped::Numeric<T, _Tag, _DefaultValue> > {
     }
 
     static bool IsDefaultValue(const wrapped_type& value) { return meta_type::IsDefaultValue(value.Value); }
+
+    static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) { return lhs == rhs; }
 
     static void WrapMove(wrapper_type& dst, wrapped_type&& src) { dst = src.Value; }
     static void WrapCopy(wrapper_type& dst, const wrapped_type& src) { dst = src.Value; }
@@ -111,6 +112,10 @@ struct MetaTypeTraitsImpl< Core::RefPtr<T>, typename std::enable_if< std::is_bas
 
     static bool IsDefaultValue(const wrapped_type& value) { return (nullptr == value.get()); }
 
+    static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) {
+        return (lhs && rhs) ? RTTI::DeepEquals(*lhs, *rhs) : lhs == rhs;
+    }
+
     static void WrapMove(wrapper_type& dst, wrapped_type&& src);
     static void WrapCopy(wrapper_type& dst, const wrapped_type& src);
 
@@ -135,6 +140,8 @@ struct MetaTypeTraitsImpl< std::basic_string<_Char, _Traits, _Allocator> > {
 
     static bool IsDefaultValue(const wrapped_type& value) { return value.empty(); }
 
+    static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) { return lhs == rhs; }
+
     static void WrapMove(wrapper_type& dst, wrapped_type&& src);
     static void WrapCopy(wrapper_type& dst, const wrapped_type& src);
 
@@ -149,11 +156,13 @@ struct MetaTypeTraitsImpl< Core::Token<_Tag, _Char, _CaseSensitive, _TokenTraits
 
     typedef MetaType< wrapper_type > meta_type;
 
-    static const MetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
+    static const MetaTypeScalarTraits< wrapper_type >*VirtualTraits() {
         return MetaTypeScalarTraits< wrapper_type >::Instance();
     }
 
     static bool IsDefaultValue(const wrapped_type& value) { return value.empty(); }
+
+    static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) { return lhs == rhs; }
 
     static void WrapMove(wrapper_type& dst, wrapped_type&& src);
     static void WrapCopy(wrapper_type& dst, const wrapped_type& src);
@@ -183,6 +192,8 @@ struct MetaTypeTraitsImpl< Core::Vector<T, _Allocator> > {
 
     static bool IsDefaultValue(const wrapped_type& value) { return value.empty(); }
 
+    static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs);
+
     static void WrapMove(wrapper_type& dst, wrapped_type&& src);
     static void WrapCopy(wrapper_type& dst, const wrapped_type& src);
 
@@ -206,6 +217,8 @@ struct MetaTypeTraitsImpl< Core::VectorInSitu<T, _InSituCount, _Allocator> > {
     }
 
     static bool IsDefaultValue(const wrapped_type& value) { return value.empty(); }
+
+    static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs);
 
     static void WrapMove(wrapper_type& dst, wrapped_type&& src);
     static void WrapCopy(wrapper_type& dst, const wrapped_type& src);
@@ -241,6 +254,11 @@ struct MetaTypeTraitsImpl< Core::Pair<_First, _Second> > {
                 second_traits::IsDefaultValue(value.second);
     }
 
+    static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) {
+        return  first_traits::DeepEquals(lhs.first, rhs.first) &&
+                second_traits::DeepEquals(lhs.second, rhs.second);
+    }
+
     static void WrapMove(wrapper_type& dst, wrapped_type&& src);
     static void WrapCopy(wrapper_type& dst, const wrapped_type& src);
 
@@ -272,6 +290,8 @@ struct MetaTypeTraitsImpl< Core::AssociativeVector<_Key, _Value, _EqualTo, _Vect
 
     static bool IsDefaultValue(const wrapped_type& value) { return value.empty(); }
 
+    static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs);
+
     static void WrapMove(wrapper_type& dst, wrapped_type&& src);
     static void WrapCopy(wrapper_type& dst, const wrapped_type& src);
 
@@ -299,6 +319,8 @@ struct MetaTypeTraitsImpl< Core::HashMap<_Key, _Value, _Hasher, _EqualTo, _Alloc
     }
 
     static bool IsDefaultValue(const wrapped_type& value) { return value.empty(); }
+
+    static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs);
 
     static void WrapMove(wrapper_type& dst, wrapped_type&& src);
     static void WrapCopy(wrapper_type& dst, const wrapped_type& src);
@@ -329,6 +351,8 @@ struct MetaTypeTraitsImpl< Core::ScalarBoundingBox<T, _Dim> > {
 
     static bool IsDefaultValue(const wrapped_type& value) { return (wrapped_type::DefaultValue() == value); }
 
+    static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) { return lhs == rhs; }
+
     static void WrapMove(wrapper_type& dst, wrapped_type&& src) { Wrap_(dst, src); }
     static void WrapCopy(wrapper_type& dst, const wrapped_type& src) { Wrap_(dst, src); }
 
@@ -358,9 +382,16 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+namespace details {
+template <typename T, typename _Enabled = void>
+struct bind_traits_ { typedef MetaTypeTraitsImpl< typename std::decay<T>::type > type; };
+template <typename T >
+struct bind_traits_<T, typename std::enable_if< MetaType< typename std::decay<T>::type >::Enabled >::type> { typedef MetaTypeTraitsDefault< typename std::decay<T>::type > type; };
+} //!details
+//----------------------------------------------------------------------------
 template <typename T>
-struct MetaTypeTraits : MetaTypeTraitsImpl< typename std::decay<T>::type > {
-    typedef MetaTypeTraitsImpl<typename std::decay<T>::type> impl_type;
+struct MetaTypeTraits : details::bind_traits_<T>::type {
+    typedef typename details::bind_traits_<T>::type impl_type;
 
     using typename impl_type::wrapped_type;
     using typename impl_type::wrapper_type;
@@ -395,6 +426,8 @@ struct MetaTypeTraitsImpl< fake_bool > {
 
     static bool IsDefaultValue(const wrapped_type& value) { return fake_bool() == value; }
 
+    static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) { return lhs == rhs; }
+
     static void WrapMove(wrapper_type& dst, wrapped_type&& src) { dst = src; }
     static void WrapCopy(wrapper_type& dst, const wrapped_type& src) { dst = src; }
 
@@ -416,6 +449,8 @@ struct MetaTypeTraitsImpl< u128 > {
     }
 
     static bool IsDefaultValue(const wrapped_type& value) { return 0 == value.lo && 0 == value.hi; }
+
+    static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) { return lhs == rhs; }
 
     static void WrapMove(wrapper_type& dst, wrapped_type&& src) { dst.first = src.lo; dst.second = src.hi; }
     static void WrapCopy(wrapper_type& dst, const wrapped_type& src) { dst.first = src.lo; dst.second = src.hi; }
@@ -441,6 +476,8 @@ struct MetaTypeTraitsImpl< Basename > {
 
     static bool IsDefaultValue(const wrapped_type& value) { return value.empty(); }
 
+    static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) { return lhs == rhs; }
+
     static void WrapMove(wrapper_type& dst, wrapped_type&& src) { dst = src.ToWString(); }
     static void WrapCopy(wrapper_type& dst, const wrapped_type& src) { dst = src.ToWString(); }
 
@@ -461,6 +498,8 @@ struct MetaTypeTraitsImpl< Dirpath > {
 
     static bool IsDefaultValue(const wrapped_type& value) { return value.empty(); }
 
+    static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) { return lhs == rhs; }
+
     static void WrapMove(wrapper_type& dst, wrapped_type&& src) { dst = src.ToWString(); }
     static void WrapCopy(wrapper_type& dst, const wrapped_type& src) { dst = src.ToWString(); }
 
@@ -480,6 +519,8 @@ struct MetaTypeTraitsImpl< Filename > {
     }
 
     static bool IsDefaultValue(const wrapped_type& value) { return value.empty(); }
+
+    static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) { return lhs == rhs; }
 
     static void WrapMove(wrapper_type& dst, wrapped_type&& src) { dst = src.ToWString(); }
     static void WrapCopy(wrapper_type& dst, const wrapped_type& src) { dst = src.ToWString(); }
@@ -505,6 +546,8 @@ struct MetaTypeTraitsImpl< DateTime > {
 
     static bool IsDefaultValue(const wrapped_type& value) { return 0 == value.Ord(); }
 
+    static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) { return lhs == rhs; }
+
     static void WrapMove(wrapper_type& dst, wrapped_type&& src) { dst = src.Ord(); }
     static void WrapCopy(wrapper_type& dst, const wrapped_type& src) { dst = src.Ord(); }
 
@@ -524,6 +567,8 @@ struct MetaTypeTraitsImpl< Timestamp > {
     }
 
     static bool IsDefaultValue(const wrapped_type& value) { return 0 == value.Value(); }
+
+    static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) { return lhs == rhs; }
 
     static void WrapMove(wrapper_type& dst, wrapped_type&& src) { dst = src.Value(); }
     static void WrapCopy(wrapper_type& dst, const wrapped_type& src) { dst = src.Value(); }

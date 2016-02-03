@@ -36,6 +36,18 @@ void MetaTransaction::Add(MetaObject* object) {
     Add_AssertUnique(_objects, std::move(o));
 }
 //----------------------------------------------------------------------------
+void MetaTransaction::Remove(MetaObject* object) {
+    Assert(false == _loaded);
+    Assert(true == _unloaded);
+
+    Assert(object);
+    Assert(false == object->RTTI_IsLoaded());
+    Assert(false == object->RTTI_IsUnloaded());
+
+    RTTI::PMetaObject o(object);
+    Remove_AssertExists(_objects, o);
+}
+//----------------------------------------------------------------------------
 bool MetaTransaction::Contains(const MetaObject* object) const {
     Assert(object);
     for (const PMetaObject& o : _objects)

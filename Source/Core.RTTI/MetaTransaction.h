@@ -32,6 +32,7 @@ public:
     bool IsUnloaded() const { return _unloaded; }
 
     void Add(MetaObject* object);
+    void Remove(MetaObject* object);
     bool Contains(const MetaObject* object) const;
 
     void Load(MetaLoadContext* context);
