@@ -141,7 +141,7 @@ bool DecompressMemory(MemoryView<u8>& dst, const MemoryView<const u8>& src) {
 #endif
 
     LOG(Info, L"[Compression] Decompress ratio : {0} -> {1} = {2:f2}%",
-        SizeInBytes(compressedSizeInBytes), SizeInBytes(pheader->SizeInBytes), compressedSizeInBytes*100.0f/src.SizeInBytes() );
+        SizeInBytes(compressedSizeInBytes), SizeInBytes(pheader->SizeInBytes), compressedSizeInBytes*100.0f/dst.SizeInBytes() );
 
     return true;
 }
