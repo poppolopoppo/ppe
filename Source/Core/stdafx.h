@@ -28,6 +28,5 @@
 
 #include <unordered_map>
 #include <type_traits>
-#include <vector>
 
 #include "Core/Core.h"
