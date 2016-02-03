@@ -200,8 +200,10 @@ template <typename _Char, typename _Traits, typename T, size_t _Dim >
 std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
     const ScalarVector<T, _Dim>& v) {
-    for (const auto& s : v.MakeView())
-        oss << ' ' << s << ',';
+    oss << '[' << v._data[0];
+    forrange(i, 1, _Dim)
+        oss << ", " << v._data[i];
+    oss << ']';
     return oss;
 }
 //----------------------------------------------------------------------------
