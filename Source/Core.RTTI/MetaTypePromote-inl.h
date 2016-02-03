@@ -126,6 +126,38 @@ template <> struct MetaTypePromote<WString, String> : public std::unary_function
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+struct MetaTypePromote<RTTI::Vector<PMetaAtom>, ScalarVector<T, _Dim> > :
+    public std::unary_function<const RTTI::Vector<PMetaAtom>&, ScalarVector<T, _Dim> > {
+    typedef std::true_type enabled;
+    ScalarVector<T, _Dim> operator ()(const RTTI::Vector<PMetaAtom>& value) const {
+        AssertRelease(value.size() == _Dim);
+        ScalarVector<T, _Dim> result;
+        forrange(i, 0, _Dim) {
+            Assert(value.size());
+            PromoteCopy(&result._data[i], value[i].get());
+        }
+        return result;
+    }
+};
+//----------------------------------------------------------------------------
+template <typename T, size_t _Width, size_t _Height>
+struct MetaTypePromote<RTTI::Vector<PMetaAtom>, ScalarMatrix<T, _Width, _Height> > :
+    public std::unary_function<const RTTI::Vector<PMetaAtom>&, ScalarMatrix<T, _Width, _Height> > {
+    typedef std::true_type enabled;
+    ScalarMatrix<T, _Width, _Height> operator ()(const RTTI::Vector<PMetaAtom>& value) const {
+        AssertRelease(value.size() == _Width * _Height);
+        ScalarMatrix<T, _Width, _Height> result;
+        forrange(i, 0, _Width * _Height) {
+            Assert(value.size());
+            PromoteCopy(&result.data().raw[i], value[i].get());
+        }
+        return result;
+    }
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 #define METATYPE_STRINGIZE_PROMOTE_IMPL(_From, _Char) \
     template <> struct MetaTypePromote<_From, DefaultString<_Char>::type > : public std::unary_function<_From&&, DefaultString<_Char>::type > { \
         typedef std::true_type enabled; \

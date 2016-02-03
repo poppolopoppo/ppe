@@ -6,6 +6,9 @@
 #include "MetaObject.h"
 #include "MetaProperty.h"
 
+#include "Core/Maths/Geometry/ScalarVector.h"
+#include "Core/Maths/Transform/ScalarMatrix.h"
+
 namespace Core {
 namespace RTTI {
 //----------------------------------------------------------------------------
@@ -27,7 +30,7 @@ namespace RTTI {
             return true; \
         }
 //----------------------------------------------------------------------------
-#define METATYPE_PROMOTE_TO_NUMERIC() \
+#define METATYPE_PROMOTE_TO_INTEGRAL() \
     METATYPE_PROMOTE_TO(int8_t) \
     METATYPE_PROMOTE_TO(int16_t) \
     METATYPE_PROMOTE_TO(int32_t) \
@@ -104,6 +107,28 @@ namespace {
 
                 METATYPE_PROMOTE_BEGIN_FROM(bool)
                 METATYPE_PROMOTE_TO_STRING()
+                METATYPE_PROMOTE_END_FROM()
+
+                METATYPE_PROMOTE_BEGIN_FROM(RTTI::Vector<PMetaAtom>)
+                METATYPE_PROMOTE_TO(byte2)
+                METATYPE_PROMOTE_TO(byte4)
+                METATYPE_PROMOTE_TO(ubyte2)
+                METATYPE_PROMOTE_TO(ubyte4)
+                METATYPE_PROMOTE_TO(short2)
+                METATYPE_PROMOTE_TO(short4)
+                METATYPE_PROMOTE_TO(ushort2)
+                METATYPE_PROMOTE_TO(ushort4)
+                METATYPE_PROMOTE_TO(word2)
+                METATYPE_PROMOTE_TO(word4)
+                METATYPE_PROMOTE_TO(uword2)
+                METATYPE_PROMOTE_TO(uword4)
+                METATYPE_PROMOTE_TO(float2)
+                METATYPE_PROMOTE_TO(float3)
+                METATYPE_PROMOTE_TO(float4)
+                METATYPE_PROMOTE_TO(float2x2)
+                METATYPE_PROMOTE_TO(float3x3)
+                METATYPE_PROMOTE_TO(float4x3)
+                METATYPE_PROMOTE_TO(float4x4)
                 METATYPE_PROMOTE_END_FROM()
             }
 
