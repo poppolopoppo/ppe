@@ -1042,6 +1042,8 @@ Parser::PCParseItem GrammarImpl::Parse(Parser::ParseList& input) const {
 static GrammarImpl *sGrammarImpl = nullptr;
 //----------------------------------------------------------------------------
 void Grammar_Create() {
+    Lexer::LexerStartup::Start();
+    Parser::ParserStartup::Start();
     AssertRelease(nullptr == sGrammarImpl);
     sGrammarImpl = new GrammarImpl();
 }
@@ -1050,6 +1052,8 @@ void Grammar_Destroy() {
     AssertRelease(nullptr != sGrammarImpl);
     checked_delete(sGrammarImpl);
     sGrammarImpl = nullptr;
+    Parser::ParserStartup::Shutdown();
+    Lexer::LexerStartup::Shutdown();
 }
 //----------------------------------------------------------------------------
 Parser::PCParseItem Grammar_Parse(Parser::ParseList& input) {
