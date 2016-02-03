@@ -66,7 +66,6 @@ bool FileSystemNode::IsChildOf(const FileSystemNode *parent) const {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FileSystemTrie::FileSystemTrie()
-
 :   _root(new FileSystemNode(nullptr, FileSystemToken()))
 {}
 //----------------------------------------------------------------------------
@@ -229,11 +228,11 @@ const FileSystemNode* FileSystemTrie::RootNode(const FileSystemNode *pnode) cons
     READSCOPELOCK(_barrier);
 
     for (   const FileSystemNode* pparent = pnode->Parent();
-            pparent;
+            pparent && pparent != _root;
             pnode = pparent, pparent = pnode->Parent() );
 
     Assert(pnode);
-    Assert(nullptr == pnode->Parent());
+    Assert(pnode->Parent() == _root);
     return pnode;
 }
 //----------------------------------------------------------------------------

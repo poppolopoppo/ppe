@@ -68,10 +68,9 @@ inline bool Basename::Equals(const Basename& other) const {
 }
 //----------------------------------------------------------------------------
 inline bool Basename::Less(const Basename& other) const {
-    if (_basenameNoExt == other._basenameNoExt)
-        return _extname < other._extname;
-    else
-        return _basenameNoExt < other._basenameNoExt;
+    return (_basenameNoExt == other._basenameNoExt)
+        ? _extname < other._extname
+        : _basenameNoExt < other._basenameNoExt;
 }
 //----------------------------------------------------------------------------
 inline bool operator ==(const Basename& lhs, const Basename& rhs) {

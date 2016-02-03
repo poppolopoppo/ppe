@@ -137,6 +137,7 @@ Core::MountingPoint Dirpath::MountingPoint() const {
 
     const FileSystemNode* pparent = FileSystemPath::Instance().RootNode(_path);
     Assert(pparent);
+    Assert(false == pparent->Token().empty());
 
     if (L':' != pparent->Token().MakeView().back())
         return Core::MountingPoint();
