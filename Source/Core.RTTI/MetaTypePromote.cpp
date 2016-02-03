@@ -25,10 +25,8 @@ namespace RTTI {
     break;
 //----------------------------------------------------------------------------
 #define METATYPE_PROMOTE_TO(_Dst) \
-        case MetaType<_Dst>::TypeId: { \
-            _Impl<src_type, _Dst>()(std::forward<_Args>(args)...); \
-            return true; \
-        }
+        case MetaType<_Dst>::TypeId: \
+            return _Impl<src_type, _Dst>()(std::forward<_Args>(args)...);
 //----------------------------------------------------------------------------
 #define METATYPE_PROMOTE_TO_INTEGRAL() \
     METATYPE_PROMOTE_TO(int8_t) \
@@ -148,35 +146,35 @@ namespace {
 namespace {
     template <typename _From, typename _To>
     struct PromoteMoveImpl_ {
-        void operator ()(MetaAtom *dst, MetaAtom *src) const {
-            PromoteMove<_From, _To>(dst->Cast<_To>()->Wrapper(), std::move(src->Cast<_From>()->Wrapper()) );
+        bool operator ()(MetaAtom *dst, MetaAtom *src) const {
+            return PromoteMove<_From, _To>(dst->Cast<_To>()->Wrapper(), std::move(src->Cast<_From>()->Wrapper()) );
         }
 
-        void operator ()(MetaAtom *dst, void *src, MetaTypeId srcTypeId) const {
+        bool operator ()(MetaAtom *dst, void *src, MetaTypeId srcTypeId) const {
             Assert(srcTypeId == MetaType<_From>::TypeId);
-            PromoteMove<_From, _To>(dst->Cast<_To>()->Wrapper(), std::move(*reinterpret_cast<_From *>(src)));
+            return PromoteMove<_From, _To>(dst->Cast<_To>()->Wrapper(), std::move(*reinterpret_cast<_From *>(src)));
         }
 
-        void operator ()(MetaTypeId dstTypeId, void *dst, MetaAtom *src) const {
+        bool operator ()(MetaTypeId dstTypeId, void *dst, MetaAtom *src) const {
             Assert(dstTypeId == MetaType<_To>::TypeId);
-            PromoteMove<_From, _To>(*reinterpret_cast<_To *>(dst), std::move(src->Cast<_From>()->Wrapper()));
+            return PromoteMove<_From, _To>(*reinterpret_cast<_To *>(dst), std::move(src->Cast<_From>()->Wrapper()));
         }
     };
 
     template <typename _From, typename _To>
     struct PromoteCopyImpl_ {
-        void operator ()(MetaAtom *dst, const MetaAtom *src) const {
-            PromoteCopy<_From, _To>(dst->Cast<_To>()->Wrapper(), src->Cast<_From>()->Wrapper());
+        bool operator ()(MetaAtom *dst, const MetaAtom *src) const {
+            return PromoteCopy<_From, _To>(dst->Cast<_To>()->Wrapper(), src->Cast<_From>()->Wrapper());
         }
 
-        void operator ()(MetaAtom *dst, const void *src, MetaTypeId srcTypeId) const {
+        bool operator ()(MetaAtom *dst, const void *src, MetaTypeId srcTypeId) const {
             Assert(srcTypeId == MetaType<_From>::TypeId);
-            PromoteCopy<_From, _To>(dst->Cast<_To>()->Wrapper(), *reinterpret_cast<const _From *>(src));
+            return PromoteCopy<_From, _To>(dst->Cast<_To>()->Wrapper(), *reinterpret_cast<const _From *>(src));
         }
 
-        void operator ()(MetaTypeId dstTypeId, void *dst, const MetaAtom *src) const {
+        bool operator ()(MetaTypeId dstTypeId, void *dst, const MetaAtom *src) const {
             Assert(dstTypeId == MetaType<_To>::TypeId);
-            PromoteCopy<_From, _To>(*reinterpret_cast<_To *>(dst), src->Cast<_From>()->Wrapper());
+            return PromoteCopy<_From, _To>(*reinterpret_cast<_To *>(dst), src->Cast<_From>()->Wrapper());
         }
     };
 }

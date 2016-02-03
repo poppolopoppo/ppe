@@ -21,26 +21,26 @@ struct MetaTypePromote {
 };
 //----------------------------------------------------------------------------
 template <typename T>
-struct MetaTypePromote<T, T> : public std::unary_function<T&&, T>{
+struct MetaTypePromote<T, T> {
     typedef std::true_type enabled;
-    T&& operator ()(T&& rvalue) const { return std::move(rvalue); }
-    const T& operator ()(const T& value) const { return value; }
+    bool operator ()(T* dst, T&& rvalue) const { *dst = std::move(rvalue); return true; }
+    bool operator ()(T* dst, const T& value) const { *dst = value; return true; }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _From, typename _To>
-void PromoteMove(_To& dst, _From&& src) {
+bool PromoteMove(_To& dst, _From&& src) {
     typedef MetaTypePromote<_From, _To> promote_type;
     static_assert(promote_type::enabled::value, "invalid meta promotion");
-    dst = promote_type()(std::move(src));
+    return promote_type()(&dst, std::move(src));
 }
 //----------------------------------------------------------------------------
 template <typename _From, typename _To>
-void PromoteCopy(_To& dst, const _From& src) {
+bool PromoteCopy(_To& dst, const _From& src) {
     typedef MetaTypePromote<_From, _To> promote_type;
     static_assert(promote_type::enabled::value, "invalid meta promotion");
-    dst = promote_type()(src);
+    return promote_type()(&dst, src);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

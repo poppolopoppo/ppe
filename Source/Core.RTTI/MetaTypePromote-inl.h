@@ -11,10 +11,11 @@ namespace RTTI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define METATYPE_NUMERIC_INT_PROMOTE(_From, _To) \
-    template <> struct MetaTypePromote<_From, _To> : public std::unary_function<_From&&, _To> { \
+    template <> struct MetaTypePromote<_From, _To> {\
         typedef std::true_type enabled; \
-        _To operator ()(const _From& value) const { \
-            return checked_cast<_To>(value); \
+        bool operator ()(_To* dst, const _From& value) const { \
+            *dst = checked_cast<_To>(value); \
+            return true; \
         } \
     }
 //----------------------------------------------------------------------------
@@ -96,12 +97,13 @@ METATYPE_NUMERIC_INT_PROMOTE(uint64_t, uint64_t);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define METATYPE_NUMERIC_FP_PROMOTE(_From, _To) \
-    template <> struct MetaTypePromote<_From, _To> : public std::unary_function<_From&&, _To> { \
+    template <> struct MetaTypePromote<_From, _To> { \
         typedef std::true_type enabled; \
-        _To operator ()(const _From& value) const { \
-        return static_cast<_To>(value); \
-    } \
-}
+        bool operator ()(_To* dst, const _From& value) const { \
+            *dst = static_cast<_To>(value); \
+            return true; \
+        } \
+    }
 //----------------------------------------------------------------------------
 METATYPE_NUMERIC_FP_PROMOTE(float, double);
 METATYPE_NUMERIC_FP_PROMOTE(double, float);
@@ -110,34 +112,38 @@ METATYPE_NUMERIC_FP_PROMOTE(double, float);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <> struct MetaTypePromote<String, WString> : public std::unary_function<const String&, WString> {
+template <> struct MetaTypePromote<String, WString> {
     typedef std::true_type enabled;
-    WString operator ()(const String& value) const {
-        return ToWString(value);
+    bool operator ()(WString* dst, const String& value) const {
+        *dst = ToWString(value);
+        return true;
     }
 };
 //----------------------------------------------------------------------------
-template <> struct MetaTypePromote<WString, String> : public std::unary_function<const WString&, String>{
+template <> struct MetaTypePromote<WString, String> {
     typedef std::true_type enabled;
-    String operator ()(const WString& value) const {
-        return ToString(value);
+    bool operator ()(String* dst, const WString& value) const {
+        *dst = ToString(value);
+        return true;
     }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-struct MetaTypePromote<RTTI::Vector<PMetaAtom>, ScalarVector<T, _Dim> > :
-    public std::unary_function<const RTTI::Vector<PMetaAtom>&, ScalarVector<T, _Dim> > {
+struct MetaTypePromote<RTTI::Vector<PMetaAtom>, ScalarVector<T, _Dim> > {
     typedef std::true_type enabled;
-    ScalarVector<T, _Dim> operator ()(const RTTI::Vector<PMetaAtom>& value) const {
-        AssertRelease(value.size() == _Dim);
-        ScalarVector<T, _Dim> result;
+    bool operator ()(ScalarVector<T, _Dim>* dst, const RTTI::Vector<PMetaAtom>& value) const {
+        if (value.size() != _Dim)
+            return false;
+
         forrange(i, 0, _Dim) {
-            Assert(value.size());
-            PromoteCopy(&result._data[i], value[i].get());
+            if (nullptr == value[i] ||
+                false == PromoteCopy(&dst->_data[i], value[i].get()))
+                return false;
         }
-        return result;
+
+        return true;
     }
 };
 //----------------------------------------------------------------------------
@@ -145,27 +151,31 @@ template <typename T, size_t _Width, size_t _Height>
 struct MetaTypePromote<RTTI::Vector<PMetaAtom>, ScalarMatrix<T, _Width, _Height> > :
     public std::unary_function<const RTTI::Vector<PMetaAtom>&, ScalarMatrix<T, _Width, _Height> > {
     typedef std::true_type enabled;
-    ScalarMatrix<T, _Width, _Height> operator ()(const RTTI::Vector<PMetaAtom>& value) const {
-        AssertRelease(value.size() == _Width * _Height);
-        ScalarMatrix<T, _Width, _Height> result;
-        forrange(i, 0, _Width * _Height) {
-            Assert(value.size());
-            PromoteCopy(&result.data().raw[i], value[i].get());
+    bool operator ()(ScalarMatrix<T, _Width, _Height>* dst, const RTTI::Vector<PMetaAtom>& value) const {
+        if (value.size() != _Width * _Height)
+            return false;
+
+        forrange(i, 0, _Width*_Height) {
+            if (nullptr == value[i] ||
+                false == PromoteCopy(&dst->data().raw[i], value[i].get()))
+                return false;
         }
-        return result;
+
+        return true;
     }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define METATYPE_STRINGIZE_PROMOTE_IMPL(_From, _Char) \
-    template <> struct MetaTypePromote<_From, DefaultString<_Char>::type > : public std::unary_function<_From&&, DefaultString<_Char>::type > { \
+    template <> struct MetaTypePromote<_From, DefaultString<_Char>::type > { \
         typedef std::true_type enabled; \
-        DefaultString<_Char>::type operator ()(const _From& rvalue) const { \
+        bool operator ()(DefaultString<_Char>::type* dst, const _From& rvalue) const { \
             _Char buffer[sizeof(size_t)<<3]; \
             BasicOCStrStream<_Char> oss(buffer); \
             oss << rvalue; \
-            return oss.NullTerminatedStr(); \
+            *dst = oss.NullTerminatedStr(); \
+            return true; \
         } \
     }
 #define METATYPE_STRINGIZE_PROMOTE(_From) \
