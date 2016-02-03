@@ -28,6 +28,7 @@ public:
 
     MemoryStream();
     explicit MemoryStream(storage_type&& storage);
+    MemoryStream(storage_type&& storage, std::streamsize size);
 
     size_t size() const { return _size; }
     size_t capacity() const { return _storage.size(); }
@@ -90,6 +91,13 @@ template <typename _Allocator>
 MemoryStream<_Allocator>::MemoryStream(storage_type&& storage)
     : _size(0), _offsetI(0), _offsetO(0)
     , _storage(std::move(storage)) {}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+MemoryStream<_Allocator>::MemoryStream(storage_type&& storage, std::streamsize size)
+    : _size(checked_cast<size_t>(size)), _offsetI(0), _offsetO(0)
+    , _storage(std::move(storage)) {
+    Assert(_size <= _storage.size());
+}
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 void MemoryStream<_Allocator>::resize(size_t count) {
