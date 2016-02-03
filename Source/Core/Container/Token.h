@@ -58,7 +58,9 @@ struct TokenData {
     bool empty() const { return Ptr == nullptr; }
 
     BasicStringSlice<_Char> MakeView() const {
-        return BasicStringSlice<_Char>(Ptr, Ptr[-1]);
+        return (nullptr != Ptr)
+            ? BasicStringSlice<_Char>(Ptr, Ptr[-1])
+            : BasicStringSlice<_Char>();
     }
 };
 //----------------------------------------------------------------------------
