@@ -158,6 +158,12 @@ void Filename::SetMountingPoint(const Core::MountingPoint& mountingPoint) {
     _dirpath = Core::Dirpath(mountingPoint, dirnames);
 }
 //----------------------------------------------------------------------------
+Filename Filename::WithReplacedExtension(const Core::Extname& ext) const {
+    Filename cpy(*this);
+    cpy.ReplaceExtension(ext);
+    return cpy;
+}
+//----------------------------------------------------------------------------
 size_t Filename::HashValue() const {
     return hash_tuple(_dirpath.HashValue(), _basename.HashValue());
 }

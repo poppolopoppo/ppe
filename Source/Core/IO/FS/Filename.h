@@ -62,6 +62,9 @@ public:
     bool HasExtname() const { return _basename.HasExtname(); }
     bool HasMountingPoint() const { return _dirpath.HasMountingPoint(); }
 
+    void ReplaceExtension(const Core::Extname& ext);
+    Filename WithReplacedExtension(const Core::Extname& ext) const;
+
     bool Equals(const Filename& other) const;
     bool Less(const Filename& other) const;
 
@@ -85,16 +88,19 @@ private:
     Core::Basename _basename;
 };
 //----------------------------------------------------------------------------
+inline void Filename::ReplaceExtension(const Core::Extname& ext) {
+    _basename.SetExtname(ext);
+}
+//----------------------------------------------------------------------------
 inline bool Filename::Equals(const Filename& other) const {
     return  _basename == other._basename &&
             _dirpath == other._dirpath;
 }
 //----------------------------------------------------------------------------
 inline bool Filename::Less(const Filename& other) const {
-    if (_dirpath == other._dirpath)
-        return _basename < other._basename;
-    else
-        return _dirpath < other._dirpath;
+    return (_dirpath == other._dirpath)
+        ? _basename < other._basename
+        : _dirpath < other._dirpath;
 }
 //----------------------------------------------------------------------------
 inline bool operator ==(const Filename& lhs, const Filename& rhs) {
