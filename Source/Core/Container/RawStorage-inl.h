@@ -105,7 +105,7 @@ void RawStorage<T, _Allocator>::Resize(size_type size, bool keepData) {
             allocator_type::deallocate(storage, _size);
     }
     else if (keepData) {
-        _storage = AllocatorRealloc_AssumePod(static_cast<allocator_type&>(*this), storage, size, _size);
+        _storage = Relocate_AssumePod(static_cast<allocator_type&>(*this), MemoryView<T>(storage, _size), size, _size);
         AssertRelease(_storage);
     }
     else {

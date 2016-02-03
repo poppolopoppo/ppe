@@ -41,13 +41,13 @@ public:
     using _Allocator::_Allocator;
     using typename _Allocator::size_type;
     using typename _Allocator::value_type;
-    void* rellocate(void* p, size_type newSize, size_type oldSize) {
+    void* relocate(void* p, size_type newSize, size_type oldSize) {
         auto pself = static_cast<TrackingAllocator<_Allocator>* >(this);
 
         if (p && pself->_trackingData)
             pself->_trackingData->Deallocate(oldSize, sizeof(value_type));
 
-        void* const newp = _Allocator::rellocate(p, newSize, oldSize);
+        void* const newp = _Allocator::relocate(p, newSize, oldSize);
 
         if (newp && pself->_trackingData)
             pself->_trackingData->Allocate(newSize, sizeof(value_type));

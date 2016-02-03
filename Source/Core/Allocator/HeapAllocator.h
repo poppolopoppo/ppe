@@ -41,7 +41,7 @@ public:
     void deallocate(void* p, size_type );
 
     // see AllocatorRealloc()
-    void* rellocate(void* p, size_type newSize, size_type oldSize);
+    void* relocate(void* p, size_type newSize, size_type oldSize);
 
     template <typename U>
     friend bool operator ==(const HeapAllocator&/* lhs */, const HeapAllocator<U, _HeapSingleton>&/* rhs */) {
@@ -93,12 +93,12 @@ void HeapAllocator<T, _HeapSingleton>::deallocate(void* p, size_type n) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _HeapSingleton >
-void* HeapAllocator<T, _HeapSingleton>::rellocate(void* p, size_type newSize, size_type oldSize) {
+void* HeapAllocator<T, _HeapSingleton>::relocate(void* p, size_type newSize, size_type oldSize) {
     enum { Alignment = std::alignment_of<T>::value };
     UNUSED(oldSize);
 
     // HeapAllocator wraps Heap.
-    void* const newp = HeapInstance().realloc<Alignment>(p, newSize);
+    void* const newp = HeapInstance().realloc<Alignment>(p, newSize * sizeof(T));
     if (nullptr == newp && newSize)
         throw std::bad_alloc();
 

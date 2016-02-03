@@ -70,7 +70,7 @@ public:
     //void deallocate(void* p, size_type n) {}
 
     // AllocatorRealloc()
-    //void* rellocate(void* p, size_type newSize, size_type oldSize) {}
+    //void* relocate(void* p, size_type newSize, size_type oldSize) {}
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -92,10 +92,10 @@ using AllocatorPtr = UniquePtr<T, AllocatorDeleter<T, _Allocator> >;
 // Realloc semantic for allocators
 //----------------------------------------------------------------------------
 namespace details {
-// Uses SFINAE to determine if an allocator implements rellocate()
+// Uses SFINAE to determine if an allocator implements relocate()
 template<
     class _Allocator,
-    class = decltype(std::declval<_Allocator>().rellocate( std::declval<void*>(), std::declval<size_t>(), std::declval<size_t>() ))
+    class = decltype(std::declval<_Allocator>().relocate( std::declval<void*>(), std::declval<size_t>(), std::declval<size_t>() ))
 >   std::true_type  _allocator_has_realloc(_Allocator&& );
     std::false_type _allocator_has_realloc(...);
 } //!details
@@ -103,61 +103,81 @@ template<
 template <typename _Allocator>
 struct allocator_has_realloc : decltype(details::_allocator_has_realloc( std::declval<_Allocator>() )) {};
 //----------------------------------------------------------------------------
+template <typename _Allocator>
+typename std::enable_if<
+    true  == std::is_pod<typename _Allocator::value_type>::value,
+    typename _Allocator::pointer
+>::type Relocate_AssumeNoRealloc(_Allocator& allocator, const MemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
+    typedef std::allocator_traits<_Allocator> allocator_traits;
+    typedef typename allocator_traits::pointer pointer;
+    Assert(0 == oldSize || nullptr != data.Pointer());
+    pointer const p = data.Pointer();
+    pointer const newp = newSize ? allocator.allocate(newSize) : nullptr;
+    const size_t copyRange = (newSize < data.size()) ? newSize : data.size();
+    if (copyRange) {
+        Assert(p);
+        Assert(newp);
+        std::copy(p, p + copyRange, CORE_CHECKED_ARRAY_ITERATOR(pointer, newp, newSize));
+    }
+    if (data.Pointer()) {
+        Assert(0 < oldSize);
+        allocator_traits::deallocate(allocator, p, oldSize);
+    }
+    return newp;
+}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+typename std::enable_if<
+    false  == std::is_pod<typename _Allocator::value_type>::value,
+    typename _Allocator::pointer
+>::type Relocate_AssumeNoRealloc(_Allocator& allocator, const MemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
+    STATIC_ASSERT(std::is_default_constructible<typename _Allocator::value_type>::value);
+    STATIC_ASSERT(std::is_move_constructible<typename _Allocator::value_type>::value);
+    typedef std::allocator_traits<_Allocator> allocator_traits;
+    typedef typename allocator_traits::pointer pointer;
+    Assert(0 == oldSize || nullptr != data.Pointer());
+    pointer const p = data.Pointer();
+    pointer const newp = newSize ? allocator.allocate(newSize) : nullptr;
+    const size_t moveRange = (newSize < data.size()) ? newSize : data.size();
+    Assert((newp && p) || 0 == moveRange);
+    forrange(i, 0, moveRange)
+        allocator_traits::construct(allocator, newp + i, std::move(p[i]));
+    forrange(i, 0, data.size())
+        allocator_traits::destroy(allocator, p + i);
+    if (data.Pointer()) {
+        Assert(p);
+        allocator_traits::deallocate(allocator, p, oldSize);
+    }
+    return newp;
+}
+//----------------------------------------------------------------------------
 // Best case : T is a pod and _Allocator supports reallocate()
 template <typename _Allocator>
 typename std::enable_if<
     true  == allocator_has_realloc<_Allocator>::value &&
     true  == std::is_pod<typename _Allocator::value_type>::value,
     typename _Allocator::pointer
->::type AllocatorRealloc(_Allocator& allocator, typename _Allocator::pointer p, size_t newSize, size_t oldSize) {
-    return static_cast<typename _Allocator::pointer>(allocator.rellocate(p, newSize, oldSize));
+>::type Relocate(_Allocator& allocator, const MemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
+    return static_cast<typename _Allocator::pointer>(allocator.relocate(data.Pointer(), newSize, oldSize));
 }
 //----------------------------------------------------------------------------
-// Worst case : T is a pod but _Allocator does not support rellocate()
+// Worst case : T is a pod but _Allocator does not support relocate()
 template <typename _Allocator>
 typename std::enable_if<
     false == allocator_has_realloc<_Allocator>::value &&
     true  == std::is_pod<typename _Allocator::value_type>::value,
     typename _Allocator::pointer
->::type AllocatorRealloc(_Allocator& allocator, typename _Allocator::pointer p, size_t newSize, size_t oldSize) {
-    STATIC_ASSERT(false); // should be handled by all allocators, this is a warning
-    typename _Allocator::pointer const newp = newSize ? allocator.allocate(newSize) : nullptr;
-    const size_t copyRange = (newSize < oldSize) ? newSize : oldSize;
-    if (copyRange) {
-        Assert(p);
-        Assert(newp);
-        std::copy(p, p + copyRange, newp);
-    }
-    if (oldSize) {
-        Assert(p);
-        allocator.deallocate(p, oldSize);
-    }
-    return newp;
+>::type Relocate(_Allocator& allocator, const MemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
+    return Relocate_AssumeNoRealloc(allocator, data, newSize, oldSize);
 }
 //----------------------------------------------------------------------------
-// Common case : T is not a pod, wheter _Allocator supports rellocate() or not
+// Common case : T is not a pod, wheter _Allocator supports relocate() or not
 template <typename _Allocator>
 typename std::enable_if<
     false == std::is_pod<typename _Allocator::value_type>::value,
     typename _Allocator::pointer
->::type AllocatorRealloc(_Allocator& allocator, typename _Allocator::pointer p, size_t newSize, size_t oldSize) {
-    STATIC_ASSERT(std::is_default_constructible<typename _Allocator::value_type>::value);
-    STATIC_ASSERT(std::is_move_constructible<typename _Allocator::value_type>::value);
-    typename _Allocator::pointer const newp = newSize ? allocator.allocate(newSize) : nullptr;
-    const size_t moveRange = (newSize < oldSize) ? newSize : oldSize;
-    Assert((newp && p) || 0 == moveRange);
-    forrange(i, 0, moveRange) {
-        allocator.construct(newp + i, std::move(p[i]));
-        allocator.destroy(p + i);
-    }
-    forrange(i, moveRange, newSize) {
-        allocator.construct(newp + i);
-    }
-    if (oldSize) {
-        Assert(p);
-        allocator.deallocate(p, oldSize);
-    }
-    return newp;
+>::type Relocate(_Allocator& allocator, const MemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
+    return Relocate_AssumeNoRealloc(allocator, data, newSize, oldSize);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -168,16 +188,16 @@ template <typename _Allocator>
 typename std::enable_if<
     true  == allocator_has_realloc<_Allocator>::value,
     typename _Allocator::pointer
->::type AllocatorRealloc_AssumePod(_Allocator& allocator, typename _Allocator::pointer p, size_t newSize, size_t oldSize) {
-    return static_cast<typename _Allocator::pointer>(allocator.rellocate(p, newSize, oldSize));
+>::type Relocate_AssumePod(_Allocator& allocator, const MemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
+    return static_cast<typename _Allocator::pointer>(allocator.relocate(data.Pointer(), newSize, oldSize));
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 typename std::enable_if<
     false == allocator_has_realloc<_Allocator>::value,
     typename _Allocator::pointer
->::type AllocatorRealloc_AssumePod(_Allocator& allocator, typename _Allocator::pointer p, size_t newSize, size_t oldSize) {
-    return AllocatorRealloc(allocator, p, newSize, oldSize);
+>::type Relocate_AssumePod(_Allocator& allocator, const MemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
+    return Relocate(allocator, data, newSize, oldSize);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

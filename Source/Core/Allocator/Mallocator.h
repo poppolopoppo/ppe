@@ -38,7 +38,7 @@ public:
     void deallocate(void* p, size_type n);
 
     // see AllocatorRealloc()
-    void* rellocate(void* p, size_type newSize, size_type oldSize);
+    void* relocate(void* p, size_type newSize, size_type oldSize);
 };
 //----------------------------------------------------------------------------
 template <typename T, size_t _Alignment>
@@ -76,11 +76,11 @@ void Mallocator<T, _Alignment>::deallocate(void* p, size_type n) {
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Alignment>
-void* Mallocator<T, _Alignment>::rellocate(void* p, size_type newSize, size_type oldSize) {
+void* Mallocator<T, _Alignment>::relocate(void* p, size_type newSize, size_type oldSize) {
     UNUSED(oldSize);
 
     // Mallocator wraps malloc()
-    void* const newp = realloc<_Alignment>(p, newSize);
+    void* const newp = realloc<_Alignment>(p, newSize * sizeof(T));
     if (nullptr == newp && newSize)
         throw std::bad_alloc();
 
