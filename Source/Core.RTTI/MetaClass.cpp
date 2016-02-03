@@ -41,7 +41,7 @@ const MetaProperty *MetaClass::PropertyIFP(const MetaPropertyName& name, size_t 
     Assert(name.size());
 
     const auto it = _properties.Find(name);
-    if ((it != _properties.end()) ||
+    if ((it != _properties.end()) &&
         (it->second->Attributes() & attributes) == attributes)
         return it->second;
 
