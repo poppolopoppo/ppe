@@ -19,9 +19,9 @@ namespace RTTI {
     /*extern*/ template struct  MetaType<T>; \
     /*extern*/ template struct  MetaTypeTraits<T>; \
     /*extern*/ template class   MetaTypeScalarTraits<T>; \
-    /*extern*/ template class   MetaTypePairTraits<T, T>; \
+    /*extern*//* template class   MetaTypePairTraits<T, T>; */ \
     /*extern*/ template class   MetaTypeVectorTraits<T>; \
-    /*extern*/ template class   MetaTypeDictionaryTraits<T, T>; \
+    /*extern*//* template class   MetaTypeDictionaryTraits<T, T>; */ \
     /*extern*/ template class   MetaTypedAtom<T>; \
     /*extern*/ template class   MetaTypedProperty<T>; \
     /*extern*/ template class   MetaFieldAccessor<T>; \
