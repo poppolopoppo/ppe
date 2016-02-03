@@ -30,11 +30,15 @@ std::streamsize StreamLookup_(  IStreamReader& iss,
         if (ask > 0)
             read = iss.ReadSome(storage, sizeof(_Char), ask);
 
+        if (read == 0)
+            break;
+
         _Char* const p = storage + written;
         forrange(i, 0, read)
             if (true == pred(p[i]) ) {
-                iss.SeekI(i - read, SeekOrigin::Relative);
-                p[i] = _Char(0);
+                iss.SeekI(i - read + 1, SeekOrigin::Relative);
+                Assert(i + 1 < capacity);
+                p[i + 1] = _Char(0);
                 return written + i;
             }
 
