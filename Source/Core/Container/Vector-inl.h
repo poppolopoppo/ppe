@@ -655,10 +655,15 @@ template <
     typename _Traits
 >
 std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const Core::Vector<T, _Allocator>& vector) {
-    oss << "[ ";
-    for (const auto& it : vector)
-        oss << it << ", ";
-    return oss << ']';
+    if (vector.empty()) {
+        return oss << "[]";
+    }
+    else {
+        oss << "[ ";
+        for (const auto& it : vector)
+            oss << it << ", ";
+        return oss << ']';
+    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
