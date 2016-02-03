@@ -5,6 +5,7 @@
 #include "Core/Container/RawStorage.h"
 #include "Core/Container/Vector.h"
 #include "Core/IO/FileSystem.h"
+#include "Core/IO/StringSlice.h"
 #include "Core/IO/VirtualFileSystem.h"
 #include "Core/Color/Color.h"
 #include "Core/Maths/Maths.h"
@@ -21,7 +22,14 @@
 #include "Core.RTTI/RTTIMacros-impl.h"
 #include "Core.RTTI/MetaAtomVisitor.h"
 #include "Core.RTTI/MetaTransaction.h"
+
 #include "Core.Serialize/Binary/BinarySerializer.h"
+#include "Core.Serialize/Text/Grammar.h"
+#include "Core.Serialize/Lexer/Lexer.h"
+#include "Core.Serialize/Parser/Parser.h"
+
+#include "Core.Application/ApplicationConsole.h"
+#include "Core/Container/BurstTrie.h"
 
 #include "Core.RTTI/MetaType.Definitions-inl.h"
 
@@ -67,6 +75,7 @@ RTTI_CLASS_BEGIN(RTTITest2_, Concrete)
     RTTI_PROPERTY_PRIVATE_FIELD(_atomVector)
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------
+/*
 FWD_REFPTR(RTTITest_);
 class RTTITest_ : public RTTI::MetaObject {
 public:
@@ -96,7 +105,7 @@ public:
     RTTI::Vector<T> _ ## _Name ## Vec; \
     RTTI::Pair<T, T> _ ## _Name ## Pair; \
     RTTI::Dictionary<T, T> _ ## _Name ## Dico; \
-    //yolo_type<T> _ ## _Name ## Yolo;
+    yolo_type<T> _ ## _Name ## Yolo;
     FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR_IMPL_)
 #undef DEF_METATYPE_SCALAR_IMPL_
 };
@@ -106,11 +115,12 @@ RTTI_CLASS_BEGIN(RTTITest_, Concrete)
     RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Vec) \
     RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Pair) \
     RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Dico) \
-    //RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Yolo)
+    RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Yolo)
     FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR_IMPL_)
 #undef DEF_METATYPE_SCALAR_IMPL_
 
 RTTI_CLASS_END()
+*/
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
@@ -180,8 +190,6 @@ private:
     const size_t _maxDim;
     RandomGenerator _rand;
 
-    HASHMAP_THREAD_LOCAL(RTTI, RTTI::MetaTypeId, RTTI::PMetaAtom) _atomCache;
-
     size_t NextRandomDim_() { return (_rand.Next() % _maxDim); }
 
     template <typename T>
@@ -234,15 +242,10 @@ private:
 void RTTIAtomRandomizer_::Randomize(RTTI::MetaObject* pobject) {
     Assert(pobject);
     for (const auto& it : pobject->RTTI_MetaClass()->Properties()) {
-        RTTI::PMetaAtom& atom = _atomCache[it.second->TypeInfo().Id];
-        if (atom)
-            it.second->MoveTo(pobject, atom.get());
-        else
-            atom = it.second->WrapMove(pobject);
-
+        RTTI::PMetaAtom atom = it.second->WrapMove(pobject);
         AssertRelease(nullptr != atom);
         parent_type::Append(atom.get());
-        it.second->UnwrapMove(pobject, atom.get());
+        it.second->MoveFrom(pobject, atom.get());
     }
 }
 //----------------------------------------------------------------------------
@@ -263,19 +266,16 @@ RobotApp::RobotApp()
         Graphics::PresentInterval::Default ),
     Graphics::DeviceAPI::DirectX11,
     true ) {
-}
-//----------------------------------------------------------------------------
-void RobotApp::Start() {
-    parent_type::Start();
 
-    typedef RTTITest_ test_type;
+//typedef RTTITest_ test_type;
+    typedef RTTITest2_ test_type;
     static const size_t test_count = 1024;
 
     ContentIdentity::MetaClass::Create();
-    RTTITest_::MetaClass::Create();
-    RTTITest2_::MetaClass::Create();
+    test_type::MetaClass::Create();
     {
-        const wchar_t* filename = L"Temp:/robotapp.bin";
+        const Filename filename = L"Tmp:/robotapp.bin";
+        const Filename filename2 = L"Tmp:/robotapp.raw";
 
         VECTOR_THREAD_LOCAL(RTTI, RefPtr<test_type>) input;
         {
@@ -303,17 +303,22 @@ void RobotApp::Start() {
             const MemoryView<const u8> compressedView = compressed.MakeView().SubRange(0, compressedSizeInBytes);
 
             RAWSTORAGE_THREAD_LOCAL(Stream, u8) decompressed;
-            Compression::DecompressMemory(decompressed, compressedView);
+            if (false == Compression::DecompressMemory(decompressed, compressedView))
+                AssertNotReached();
 
             Assert(uncompressed.SizeInBytes() == decompressed.SizeInBytes());
             const size_t k = decompressed.SizeInBytes();
             for (size_t i = 0; i < k; ++i)
                 Assert(uncompressed.Pointer()[i] == decompressed.Pointer()[i]);
 
-            VFS_WriteAll(filename, compressedView, AccessPolicy::Truncate_Binary);
+            if (false == VFS_WriteAll(filename, compressedView, AccessPolicy::Truncate_Binary))
+                AssertNotReached();
+            if (false == VFS_WriteAll(filename2, decompressed.MakeView(), AccessPolicy::Truncate_Binary))
+                AssertNotReached();
 
             RAWSTORAGE_THREAD_LOCAL(FileSystem, u8) stored;
-            VFS_ReadAll(&stored, filename, AccessPolicy::Binary);
+            if (false == VFS_ReadAll(&stored, filename, AccessPolicy::Binary))
+                AssertNotReached();
 
             Assert(stored.SizeInBytes() == compressedSizeInBytes);
             const size_t n = compressedSizeInBytes;
@@ -326,9 +331,12 @@ void RobotApp::Start() {
 
         {
             RAWSTORAGE_THREAD_LOCAL(FileSystem, u8) compressed;
-            VFS_ReadAll(&compressed, filename, AccessPolicy::Binary);
+            if (false == VFS_ReadAll(&compressed, filename, AccessPolicy::Binary))
+                AssertNotReached();
+
             RAWSTORAGE_THREAD_LOCAL(Stream, u8) decompressed;
-            Compression::DecompressMemory(decompressed, compressed.MakeConstView());
+            if (false == Compression::DecompressMemory(decompressed, compressed.MakeConstView()))
+                AssertNotReached();;
 
             Assert(uncompressed.SizeInBytes() == decompressed.SizeInBytes());
             const size_t k = decompressed.SizeInBytes();
@@ -340,11 +348,81 @@ void RobotApp::Start() {
 
         AssertRelease(input.size() == output.size());
         for (size_t i = 0; i < output.size(); ++i)
-            AssertRelease(RTTI::Equals(*input[i], *output[i]));
+            AssertRelease(RTTI::DeepEquals(*input[i], *output[i]));
     }
-    RTTITest2_::MetaClass::Destroy();
-    RTTITest_::MetaClass::Destroy();
+    {
+        const Filename filename = L"Process:/dico.txt";
+
+
+
+        VECTOR_THREAD_LOCAL(Container, String) words;
+        {
+            RAWSTORAGE_THREAD_LOCAL(FileSystem, u8) read;
+            if (false == VFS_ReadAll(&read, filename, AccessPolicy::Binary))
+                AssertNotReached();
+
+            MEMORYSTREAM_THREAD_LOCAL(FileSystem) iss(std::move(read), read.size());
+            char buffer[2048];
+            std::streamsize len = 0;
+            while (0 < (len = iss.ReadLine(buffer))) {
+                const StringSlice line(buffer, len);
+                const StringSlice word = Chomp(line);
+                words.emplace_back(MakeString(word));
+            }
+        }
+
+        STRINGTRIE_SET(Container, CaseSensitive::True, 16) set;
+
+        std::random_shuffle(words.begin(), words.end());
+
+        for (const String& word : words)
+            set.Insert_AssertUnique(MakeStringSlice(word));
+
+        std::random_shuffle(words.begin(), words.end());
+
+        for (const String& word : words)
+            if (false == set.Find(MakeStringSlice(word)))
+                AssertNotReached();
+    }
+    {
+        Application::ApplicationConsole::RedirectIOToConsole();
+        Parser::ParseContext globalContext(new RTTI::MetaTransaction());
+        do
+        {
+            std::cout << "$ ";
+
+            char line[1024];
+            std::cin.getline(line, lengthof(line));
+
+            if (0 == CompareNI("exit", line, 5))
+                break;
+
+            try {
+                Lexer::Lexer lexer(StringSlice(&line[0], Length(line)), L"@in_memory");
+                Parser::ParseList input(&lexer);
+
+                Parser::PCParseItem item = Serialize::Grammar_Parse(input);
+                AssertRelease(item);
+
+                item->Invoke(&globalContext);
+            }
+            catch (const Parser::ParserException& e) {
+                if (e.Item())
+                    Format(std::cerr, "parser error : <{0}> {1}, {2}.\n", e.Item()->ToString(), e.what(), e.Site());
+                else
+                    Format(std::cerr, "parser error : {0}, {1}.\n", e.what(), e.Site());
+            }
+            catch (const Lexer::LexerException& e) {
+                Format(std::cerr, "lexer error : <{0}>: {1}, {2}.\n", e.Match().Symbol()->CStr(), e.what(), e.Match().Site());
+            }
+        } while (true);
+    }
+    test_type::MetaClass::Destroy();
     ContentIdentity::MetaClass::Destroy();
+}
+//----------------------------------------------------------------------------
+void RobotApp::Start() {
+    parent_type::Start();
 
     RenderLoop();
 }
