@@ -118,7 +118,7 @@ ShaderSource *ShaderSource::LoadFromFileIFP(const Core::Filename& filename,
     Assert(!filename.empty());
 
     RAWSTORAGE_THREAD_LOCAL(Shader, char) sourceCode;
-    if (false == VirtualFileSystem::Instance().ReadAll(filename, sourceCode))
+    if (false == VirtualFileSystem::ReadAll(filename, sourceCode))
         return nullptr;
 
     ASSOCIATIVE_VECTOR_THREAD_LOCAL(Shader, String, String) sourceDefines(defines.size());
