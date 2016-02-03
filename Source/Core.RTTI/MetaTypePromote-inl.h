@@ -53,6 +53,9 @@ METATYPE_NUMERIC_INT_PROMOTE(int64_t,  uint16_t);
 METATYPE_NUMERIC_INT_PROMOTE(int64_t,  uint32_t);
 METATYPE_NUMERIC_INT_PROMOTE(int64_t,  uint64_t);
 //----------------------------------------------------------------------------
+METATYPE_NUMERIC_INT_PROMOTE(int64_t,  float);
+METATYPE_NUMERIC_INT_PROMOTE(int64_t,  double);
+//----------------------------------------------------------------------------
 METATYPE_NUMERIC_INT_PROMOTE(uint8_t,  int8_t);
 METATYPE_NUMERIC_INT_PROMOTE(uint8_t,  int16_t);
 METATYPE_NUMERIC_INT_PROMOTE(uint8_t,  int32_t);

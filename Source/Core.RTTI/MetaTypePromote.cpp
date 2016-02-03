@@ -37,6 +37,10 @@ namespace RTTI {
     METATYPE_PROMOTE_TO(uint32_t) \
     METATYPE_PROMOTE_TO(uint64_t)
 //----------------------------------------------------------------------------
+#define METATYPE_PROMOTE_TO_FLOATING_POINT() \
+    METATYPE_PROMOTE_TO(float) \
+    METATYPE_PROMOTE_TO(double)
+//----------------------------------------------------------------------------
 #define METATYPE_PROMOTE_TO_STRING() \
     METATYPE_PROMOTE_TO(String) \
     METATYPE_PROMOTE_TO(WString)
@@ -49,47 +53,47 @@ namespace {
             switch (srcTypeId)
             {
                 METATYPE_PROMOTE_BEGIN_FROM(int8_t)
-                METATYPE_PROMOTE_TO_NUMERIC()
+                METATYPE_PROMOTE_TO_INTEGRAL()
                 METATYPE_PROMOTE_TO_STRING()
                 METATYPE_PROMOTE_END_FROM()
 
                 METATYPE_PROMOTE_BEGIN_FROM(int16_t)
-                METATYPE_PROMOTE_TO_NUMERIC()
+                METATYPE_PROMOTE_TO_INTEGRAL()
                 METATYPE_PROMOTE_TO_STRING()
                 METATYPE_PROMOTE_END_FROM()
 
                 METATYPE_PROMOTE_BEGIN_FROM(int32_t)
-                METATYPE_PROMOTE_TO_NUMERIC()
+                METATYPE_PROMOTE_TO_INTEGRAL()
                 METATYPE_PROMOTE_TO_STRING()
                 METATYPE_PROMOTE_END_FROM()
 
                 METATYPE_PROMOTE_BEGIN_FROM(int64_t)
-                METATYPE_PROMOTE_TO_NUMERIC()
+                METATYPE_PROMOTE_TO_INTEGRAL()
                 METATYPE_PROMOTE_TO_STRING()
+                METATYPE_PROMOTE_TO_FLOATING_POINT()
                 METATYPE_PROMOTE_END_FROM()
 
                 METATYPE_PROMOTE_BEGIN_FROM(uint8_t)
-                METATYPE_PROMOTE_TO_NUMERIC()
+                METATYPE_PROMOTE_TO_INTEGRAL()
                 METATYPE_PROMOTE_TO_STRING()
                 METATYPE_PROMOTE_END_FROM()
 
                 METATYPE_PROMOTE_BEGIN_FROM(uint16_t)
-                METATYPE_PROMOTE_TO_NUMERIC()
+                METATYPE_PROMOTE_TO_INTEGRAL()
                 METATYPE_PROMOTE_TO_STRING()
                 METATYPE_PROMOTE_END_FROM()
 
                 METATYPE_PROMOTE_BEGIN_FROM(uint32_t)
-                METATYPE_PROMOTE_TO_NUMERIC()
+                METATYPE_PROMOTE_TO_INTEGRAL()
                 METATYPE_PROMOTE_TO_STRING()
                 METATYPE_PROMOTE_END_FROM()
 
                 METATYPE_PROMOTE_BEGIN_FROM(uint64_t)
-                METATYPE_PROMOTE_TO_NUMERIC()
+                METATYPE_PROMOTE_TO_INTEGRAL()
                 METATYPE_PROMOTE_TO_STRING()
                 METATYPE_PROMOTE_END_FROM()
 
                 METATYPE_PROMOTE_BEGIN_FROM(float)
-                METATYPE_PROMOTE_TO(double)
                 METATYPE_PROMOTE_TO_STRING()
                 METATYPE_PROMOTE_END_FROM()
 
@@ -109,7 +113,7 @@ namespace {
 }
 //----------------------------------------------------------------------------
 #undef METATYPE_PROMOTE_TO_STRING
-#undef METATYPE_PROMOTE_TO_NUMERIC
+#undef METATYPE_PROMOTE_TO_INTEGRAL
 #undef METATYPE_PROMOTE_TO
 #undef METATYPE_PROMOTE_END_FROM
 #undef METATYPE_PROMOTE_BEGIN_FROM
