@@ -83,6 +83,8 @@ public:
         GreaterOrEqual  = 1ull<<44,   // >=
 
         DotDot          = 1ull<<45,   // ..
+
+        Typename        = 1ull<<46,   // float2,byte4,etc...
     };
 
     Symbol();

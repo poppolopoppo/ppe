@@ -86,6 +86,8 @@ public:
     static const Symbol *Greater;
     static const Symbol *GreaterOrEqual;
     static const Symbol *DotDot;
+
+    static const Symbol *Typename;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

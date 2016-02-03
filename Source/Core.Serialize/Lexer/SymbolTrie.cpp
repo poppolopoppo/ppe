@@ -2,6 +2,8 @@
 
 #include "SymbolTrie.h"
 
+#include "Core.RTTI/MetaType.Definitions-inl.h"
+
 namespace Core {
 namespace Lexer {
 //----------------------------------------------------------------------------
@@ -9,7 +11,7 @@ namespace Lexer {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-const Symbol *Insert_(
+static const Symbol *Insert_(
         SymbolMap& symbols,
         Symbol::TypeId type, const char *cstr, size_t size) {
     const StringSlice cstr_slice(cstr, size);
@@ -20,16 +22,23 @@ const Symbol *Insert_(
 }
 //----------------------------------------------------------------------------
 template <size_t _Dim>
-const Symbol *Insert_(SymbolMap& symbols, Symbol::TypeId type, const char (&cstr)[_Dim]) {
+static const Symbol *Insert_(SymbolMap& symbols, Symbol::TypeId type, const char (&cstr)[_Dim]) {
     return Insert_(symbols, type, cstr, _Dim - 1);
 }
 //----------------------------------------------------------------------------
-void CheckSymbol_(const SymbolMap& symbols, const Symbol* symbol) {
+static void CheckSymbol_(const SymbolMap& symbols, const Symbol* symbol) {
     Assert(symbol);
     const SymbolMap::node_type* node = symbols.Find(symbol->CStr());
     Assert(node);
     Assert(node->HasValue());
     Assert(node->Value() == *symbol);
+}
+//----------------------------------------------------------------------------
+static void RTTI_InsertTypenames_(SymbolMap& symbols) {
+#define RTTI_INSERT_TYPENAME(_Name, T, _TypeId, _Unused) \
+    Insert_(symbols, Symbol::Typename, STRINGIZE(_Name));
+    FOREACH_CORE_RTTI_NATIVE_TYPES(RTTI_INSERT_TYPENAME)
+#undef RTTI_INSERT_TYPENAME
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -100,6 +109,10 @@ void SymbolTrie::Create() {
     SymbolTrie::Float = new Symbol(Symbol::Float, MakeStringSlice("Float"));
     SymbolTrie::String = new Symbol(Symbol::String, MakeStringSlice("String"));
     SymbolTrie::Identifier = new Symbol(Symbol::Identifier, MakeStringSlice("Identifier"));
+
+    SymbolTrie::Typename = new Symbol(Symbol::Typename, MakeStringSlice("Typename"));
+
+    RTTI_InsertTypenames_(symbols);
 
 #ifdef WITH_CORE_ASSERT
     CheckSymbol_(symbols, SymbolTrie::True);
@@ -200,11 +213,13 @@ void SymbolTrie::Destroy() {
     checked_delete(SymbolTrie::Float);
     checked_delete(SymbolTrie::String);
     checked_delete(SymbolTrie::Identifier);
+    checked_delete(SymbolTrie::Typename);
 
     SymbolTrie::Int = nullptr;
     SymbolTrie::Float = nullptr;
     SymbolTrie::String = nullptr;
     SymbolTrie::Identifier = nullptr;
+    SymbolTrie::Typename = nullptr;
 
     singleton_type::Destroy();
 }
@@ -259,6 +274,8 @@ const Symbol *SymbolTrie::LessOrEqual = nullptr;
 const Symbol *SymbolTrie::Greater = nullptr;
 const Symbol *SymbolTrie::GreaterOrEqual = nullptr;
 const Symbol *SymbolTrie::DotDot = nullptr;
+
+const Symbol *SymbolTrie::Typename = nullptr;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
