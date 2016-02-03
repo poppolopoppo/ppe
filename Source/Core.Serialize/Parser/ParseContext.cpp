@@ -2,6 +2,8 @@
 
 #include "ParseContext.h"
 
+#include "Parser.h"
+
 #include "Core.RTTI/MetaAtom.h"
 #include "Core.RTTI/MetaAtomDatabase.h"
 #include "Core.RTTI/MetaClass.h"
@@ -35,48 +37,100 @@ RTTI::MetaAtom *ParseContext::GetLocal(const RTTI::MetaObjectName& name) const {
     return (_localScope.end() == it) ? nullptr : it->second.get();
 }
 //----------------------------------------------------------------------------
-void ParseContext::AddLocal(const RTTI::MetaObjectName& name, RTTI::MetaAtom *value) {
+void ParseContext::AddLocal(const ParseExpression* expr, const RTTI::MetaObjectName& name, RTTI::MetaAtom *value) {
     Assert(!name.empty());
     Assert(value);
 
     RTTI::PMetaAtom& local = _localScope[name];
 
+    if (local)
+        throw ParserException("failed to overwrite local variable", expr);
+
     local = value;
 }
 //----------------------------------------------------------------------------
-void ParseContext::RemoveLocal(const RTTI::MetaObjectName& name, RTTI::MetaAtom *value) {
+void ParseContext::RemoveLocal(const ParseExpression* expr, const RTTI::MetaObjectName& name, RTTI::MetaAtom *value) {
     Assert(!name.empty());
     Assert(value);
 
     const auto it = _localScope.find(name);
-    Assert(_localScope.end() != it);
-    Assert(it->second == value);
+
+    if (_localScope.end() == it)
+        throw ParserException("failed to remove unknown local variable", expr);
+
+    if (it->second != value)
+        throw ParserException("failed to remove local variable with wrong value", expr);
 
     _localScope.erase(it);
 }
 //----------------------------------------------------------------------------
-void ParseContext::AddGlobal(const RTTI::MetaObjectName& name, RTTI::MetaAtom *value) {
+void ParseContext::AddGlobal(const ParseExpression* expr, const RTTI::MetaObjectName& name, RTTI::MetaAtom* value) {
     Assert(!name.empty());
     Assert(value);
 
-    AssertNotImplemented(); // TODO: _globalScope like _localScope
-    RTTI::MetaAtomDatabase::Instance().Add(name, value, false);
-    //_transaction->Remove(name, value);
+    const ParseContext* ctx = this;
+    while (ctx->_parent)
+        ctx = ctx->_parent;
+    Assert(ctx);
+
+    RTTI::PMetaAtom& global = ctx->_globalScope[name];
+
+    if (global)
+        throw ParserException("failed to overwrite global variable", expr);
+
+    const auto* atom = value->As<RTTI::PMetaObject>();
+
+    if (nullptr == atom)
+        throw ParserException("exported atom is not an object", expr);
+
+    global = value;
+    const RTTI::PMetaObject& obj = atom->Wrapper();
+
+    if (obj)
+        _transaction->Add(obj.get());
 }
 //----------------------------------------------------------------------------
-void ParseContext::RemoveGlobal(const RTTI::MetaObjectName& name, RTTI::MetaAtom *value) {
+void ParseContext::RemoveGlobal(const ParseExpression* expr, const RTTI::MetaObjectName& name, RTTI::MetaAtom* value) {
     Assert(!name.empty());
     Assert(value);
 
-    AssertNotImplemented(); // see AddGlobal()
-    RTTI::MetaAtomDatabase::Instance().Remove(name, value);
-    //_transaction->Remove(name, value);
+    const ParseContext* ctx = this;
+    while (ctx->_parent)
+        ctx = ctx->_parent;
+    Assert(ctx);
+
+    const auto it = ctx->_globalScope.find(name);
+
+    if (ctx->_globalScope.end() == it)
+        throw ParserException("failed to remove unknown global variable", expr);
+
+    if (it->second != value)
+        throw ParserException("failed to remove global variable with wrong value", expr);
+
+    const auto* atom = it->second->As<RTTI::PMetaObject>();
+
+    if (nullptr == atom)
+        throw ParserException("exported atom is not an object", expr);
+
+    RTTI::PMetaObject obj = atom->Wrapper();
+
+    ctx->_globalScope.erase(it);
+
+    if (obj)
+        _transaction->Remove(obj.get());
 }
 //----------------------------------------------------------------------------
 RTTI::MetaAtom *ParseContext::GetGlobal(const RTTI::MetaObjectName& name) const {
     Assert(!name.empty());
 
-    return RTTI::MetaAtomDatabase::Instance().GetIFP(name);
+    const ParseContext* ctx = this;
+    while (ctx->_parent)
+        ctx = ctx->_parent;
+    Assert(ctx);
+
+    const auto it = ctx->_globalScope.find(name);
+
+    return (ctx->_globalScope.end() == it) ? nullptr : it->second.get();
 }
 //----------------------------------------------------------------------------
 RTTI::MetaAtom *ParseContext::GetAny(const RTTI::MetaObjectName& name) const {

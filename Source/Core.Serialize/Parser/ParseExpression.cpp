@@ -45,11 +45,11 @@ RTTI::MetaAtom *VariableExport::Eval(ParseContext *context) const {
     switch (_scope)
     {
     case VariableExport::Public:
-        context->AddLocal(_name, atom.get());
+        context->AddLocal(this, _name, atom.get());
         break;
 
     case VariableExport::Global:
-        context->AddGlobal(_name, atom.get());
+        context->AddGlobal(this, _name, atom.get());
         break;
 
     default:

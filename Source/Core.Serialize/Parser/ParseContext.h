@@ -15,6 +15,7 @@ namespace RTTI {
 
 namespace Core {
 namespace Parser {
+FWD_REFPTR(ParseExpression);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -32,13 +33,13 @@ public:
 
     RTTI::MetaAtom *GetLocal(const RTTI::MetaObjectName& name) const;
 
-    void AddLocal(const RTTI::MetaObjectName& name, RTTI::MetaAtom *value);
-    void RemoveLocal(const RTTI::MetaObjectName& name, RTTI::MetaAtom *value);
+    void AddLocal(const ParseExpression* expr, const RTTI::MetaObjectName& name, RTTI::MetaAtom *value);
+    void RemoveLocal(const ParseExpression* expr, const RTTI::MetaObjectName& name, RTTI::MetaAtom *value);
 
     RTTI::MetaAtom *GetGlobal(const RTTI::MetaObjectName& name) const;
 
-    void AddGlobal(const RTTI::MetaObjectName& name, RTTI::MetaAtom *value);
-    void RemoveGlobal(const RTTI::MetaObjectName& name, RTTI::MetaAtom *value);
+    void AddGlobal(const ParseExpression* expr, const RTTI::MetaObjectName& name, RTTI::MetaAtom *value);
+    void RemoveGlobal(const ParseExpression* expr, const RTTI::MetaObjectName& name, RTTI::MetaAtom *value);
 
     RTTI::MetaAtom *GetAny(const RTTI::MetaObjectName& name) const;
 
@@ -47,6 +48,7 @@ private:
     RTTI::PMetaObject _scopeObject;
     RTTI::PMetaTransaction _transaction;
     HASHMAP_THREAD_LOCAL(Parser, RTTI::MetaObjectName, RTTI::PMetaAtom) _localScope;
+    mutable HASHMAP_THREAD_LOCAL(Parser, RTTI::MetaObjectName, RTTI::PMetaAtom) _globalScope;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
