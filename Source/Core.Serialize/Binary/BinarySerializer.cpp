@@ -387,7 +387,7 @@ private:
         template <typename T, size_t _Width, size_t _Height>
         bool ReadValue_(ScalarMatrix<T, _Width, _Height>& value) {
             STATIC_ASSERT(std::is_pod<T>::value);
-            ScalarMatrixData<T, _Width, _Height>& data = value.data_();
+            ScalarMatrixData<T, _Width, _Height>& data = value.data();
             const size_t dim = _Width * _Height;
             for (size_t i = 0; i < dim; ++i)
                 if (false == _reader->ReadPOD(&data.raw[i]))

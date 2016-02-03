@@ -149,8 +149,8 @@ public:
     FORCE_INLINE T& operator ()(size_t col, size_t row) { return at(col, row); }
     FORCE_INLINE const T& operator ()(size_t col, size_t row) const { return at(col, row); }
 
-    FORCE_INLINE ScalarMatrixData<T, _Width, _Height>& data_() { return _data; }
-    FORCE_INLINE const ScalarMatrixData<T, _Width, _Height>& data_() const { return _data; }
+    FORCE_INLINE ScalarMatrixData<T, _Width, _Height>& data() { return _data; }
+    FORCE_INLINE const ScalarMatrixData<T, _Width, _Height>& data() const { return _data; }
 
     FORCE_INLINE T& at_(size_t col, size_t row) { return _data.m[col][row]; }
     FORCE_INLINE const T& at_(size_t col, size_t row) const { return _data.m[col][row]; }

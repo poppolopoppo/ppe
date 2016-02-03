@@ -70,8 +70,8 @@ static bool Equals_(const XMVECTOR& lhs, const ScalarVector<T, _Dim>& rhs) {
 
 template <typename T, size_t _Width, size_t _Height>
 static bool Equals_(const ScalarMatrix<T, _Width, _Height>& lhs, const ScalarMatrix<T, _Width, _Height>& rhs) {
-    const ScalarMatrixData<T, _Width, _Height>& lhsData = lhs.data_();
-    const ScalarMatrixData<T, _Width, _Height>& rhsData = rhs.data_();
+    const ScalarMatrixData<T, _Width, _Height>& lhsData = lhs.data();
+    const ScalarMatrixData<T, _Width, _Height>& rhsData = rhs.data();
     for (size_t i = 0; i < _Width*_Height; ++i)
         if (false == NearlyEquals(lhsData.raw[i], rhsData.raw[i]))
             return false;
