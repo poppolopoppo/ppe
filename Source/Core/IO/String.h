@@ -260,6 +260,16 @@ struct CharLess<_Char, CaseSensitive::False> : public std::binary_function<const
     bool operator ()(const _Char& lhs, const _Char& rhs) const { return ToLower(lhs) < ToLower(rhs); }
 };
 //----------------------------------------------------------------------------
+template <typename _Char, CaseSensitive _CaseSensitive>
+struct CharCase : public std::unary_function<const _Char, _Char> {
+    _Char operator ()(const _Char& ch) const { return ch; }
+};
+//----------------------------------------------------------------------------
+template <typename _Char>
+struct CharCase<_Char, CaseSensitive::False> : public std::unary_function<const _Char, _Char> {
+    _Char operator ()(const _Char& ch) const { return ToLower(ch); }
+};
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 size_t ToCStr(char *dst, size_t capacity, const wchar_t *wcstr, size_t length);
