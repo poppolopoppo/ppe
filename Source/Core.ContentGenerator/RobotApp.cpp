@@ -24,6 +24,7 @@
 #include "Core.RTTI/MetaTransaction.h"
 
 #include "Core.Serialize/Binary/BinarySerializer.h"
+#include "Core.Serialize/Text/TextSerializer.h"
 #include "Core.Serialize/Text/Grammar.h"
 #include "Core.Serialize/Lexer/Lexer.h"
 #include "Core.Serialize/Parser/Parser.h"
@@ -69,13 +70,14 @@ public:
     RTTITest2_() {}
 
 private:
+    float3 _position;
     RTTI::Vector<RTTI::PMetaAtom> _atomVector;
 };
 RTTI_CLASS_BEGIN(RTTITest2_, Concrete)
+    RTTI_PROPERTY_PRIVATE_FIELD(_position)
     RTTI_PROPERTY_PRIVATE_FIELD(_atomVector)
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------
-/*
 FWD_REFPTR(RTTITest_);
 class RTTITest_ : public RTTI::MetaObject {
 public:
@@ -97,15 +99,15 @@ public:
     using yolo_dict_type = HASHMAP_THREAD_LOCAL(Container, T, T);
     template <typename T>
     using yolo_vect_type = VECTOR_THREAD_LOCAL(Container, yolo_dict_type<T>);
-    template <typename T>
-    using yolo_type = HASHMAP_THREAD_LOCAL(Container, yolo_pair_type<T>, yolo_vect_type<T>);
+    /*template <typename T>
+    using yolo_type = HASHMAP_THREAD_LOCAL(Container, yolo_pair_type<T>, yolo_vect_type<T>);*/
 
 #define DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId, _Unused) \
     T _ ## _Name; \
     RTTI::Vector<T> _ ## _Name ## Vec; \
     RTTI::Pair<T, T> _ ## _Name ## Pair; \
     RTTI::Dictionary<T, T> _ ## _Name ## Dico; \
-    yolo_type<T> _ ## _Name ## Yolo;
+    //yolo_type<T> _ ## _Name ## Yolo;
     FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR_IMPL_)
 #undef DEF_METATYPE_SCALAR_IMPL_
 };
@@ -115,12 +117,11 @@ RTTI_CLASS_BEGIN(RTTITest_, Concrete)
     RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Vec) \
     RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Pair) \
     RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Dico) \
-    RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Yolo)
+    //RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Yolo)
     FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR_IMPL_)
 #undef DEF_METATYPE_SCALAR_IMPL_
 
 RTTI_CLASS_END()
-*/
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
@@ -199,7 +200,7 @@ private:
 
     template <typename T, size_t _Width, size_t _Height>
     void Randomize_(ScalarMatrix<T, _Width, _Height>& value) {
-        ScalarMatrixData<T, _Width, _Height>& data = value.data_();
+        ScalarMatrixData<T, _Width, _Height>& data = value.data();
         const size_t dim = _Width*_Height;
         for (size_t i = 0; i < dim; ++i)
             _rand.Randomize(data.raw[i]);
@@ -267,9 +268,11 @@ RobotApp::RobotApp()
     Graphics::DeviceAPI::DirectX11,
     true ) {
 
-//typedef RTTITest_ test_type;
-    typedef RTTITest2_ test_type;
-    static const size_t test_count = 1024;
+    typedef RTTITest_ test_type;
+//typedef RTTITest2_ test_type;
+    static const size_t test_count = 16;
+
+    Application::ApplicationConsole::RedirectIOToConsole();
 
     ContentIdentity::MetaClass::Create();
     test_type::MetaClass::Create();
@@ -279,12 +282,19 @@ RobotApp::RobotApp()
 
         VECTOR_THREAD_LOCAL(RTTI, RefPtr<test_type>) input;
         {
-            RTTIAtomRandomizer_ rand(8, 0xabadcafeull);
+            RTTIAtomRandomizer_ rand(4, 0xabadcafeull);
             forrange(i, 0, test_count) {
                 RefPtr<test_type> t = new test_type();
                 rand.Randomize(t.get());
                 input.emplace_back(t);
             }
+        }
+
+        {
+            RTTI::MetaTransaction t;
+            Serialize::TextSerializer s(&t);
+            auto oss = StdoutWriter();
+            s.Serialize(&oss, input);
         }
 
         RTTI::MetaTransaction transaction;
@@ -385,7 +395,6 @@ RobotApp::RobotApp()
                 AssertNotReached();
     }
     {
-        Application::ApplicationConsole::RedirectIOToConsole();
         Parser::ParseContext globalContext(new RTTI::MetaTransaction());
         do
         {
