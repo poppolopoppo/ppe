@@ -117,7 +117,7 @@ private:
     MemoryPoolChunk* ReleaseChunk_();
 
     MemoryPoolChunk *_chunks;
-    MemoryPoolChunk *_spare;
+    MemoryPoolChunk *_spares;
 
     size_t _chunkCount;
     size_t _usedSize;
