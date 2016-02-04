@@ -80,5 +80,37 @@ FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+const AbstractMetaTypeScalarTraits* ScalarTraitsFromTypeId(MetaTypeId typeId) {
+    switch (typeId) {
+#define CASE_METATYPE_ID(_Name, T, _TypeId, _Unused) \
+    case _TypeId: return MetaType< T >::VirtualTraits();
+FOREACH_CORE_RTTI_NATIVE_TYPES(CASE_METATYPE_ID)
+#undef CASE_METATYPE_ID
+
+    default:
+        break;
+    }
+    AssertNotReached(); // typeId is not a native scalar !
+    return nullptr;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+MetaTypeInfo ScalarTypeInfoFromTypeId(MetaTypeId typeId) {
+    switch (typeId) {
+#define CASE_METATYPE_ID(_Name, T, _TypeId, _Unused) \
+    case _TypeId: return TypeInfo< T >();
+FOREACH_CORE_RTTI_NATIVE_TYPES(CASE_METATYPE_ID)
+#undef CASE_METATYPE_ID
+
+    default:
+        break;
+    }
+    AssertNotReached(); // typeId is not a native scalar !
+    return MetaTypeInfo();
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace RTTI
 } //!namespace Core

@@ -101,6 +101,10 @@ FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+const AbstractMetaTypeScalarTraits* ScalarTraitsFromTypeId(MetaTypeId typeId);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 #define CORE_RTTI_METATYPE_NAMETYPE StaticFormat<char, CORE_RTTI_METATYPE_NAME_CAPACITY>
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
@@ -262,6 +266,8 @@ struct MetaTypeInfo {
         return static_cast<size_t>(typeInfo.Id);
     }
 };
+//----------------------------------------------------------------------------
+MetaTypeInfo ScalarTypeInfoFromTypeId(MetaTypeId typeId);
 //----------------------------------------------------------------------------
 template <typename T>
 MetaTypeInfo TypeInfo() {
