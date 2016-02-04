@@ -11,7 +11,7 @@ namespace Parser {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(Literal<T>, template <typename T>)
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, Literal<T>, template <typename T>)
 //----------------------------------------------------------------------------
 template <typename T>
 Literal<T>::Literal(T&& rvalue, const Lexer::Location& site)
@@ -37,7 +37,7 @@ String Literal<T>::ToString() const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(UnaryFunction<_Functor>, template <typename _Functor>)
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, UnaryFunction<_Functor>, template <typename _Functor>)
 //----------------------------------------------------------------------------
 template <typename _Functor>
 UnaryFunction<_Functor>::UnaryFunction(_Functor&& functor, const ParseExpression *expr, const Lexer::Location& site)
@@ -58,7 +58,7 @@ RTTI::MetaAtom *UnaryFunction<_Functor>::Eval(ParseContext *context) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(BinaryFunction<_Functor>, template <typename _Functor>)
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, BinaryFunction<_Functor>, template <typename _Functor>)
 //----------------------------------------------------------------------------
 template <typename _Functor>
 BinaryFunction<_Functor>::BinaryFunction(_Functor&& functor, const ParseExpression *lhs, const ParseExpression *rhs, const Lexer::Location& site)
@@ -81,7 +81,7 @@ RTTI::MetaAtom *BinaryFunction<_Functor>::Eval(ParseContext *context) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(Ternary<_Test>, template <typename _Test>)
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, Ternary<_Test>, template <typename _Test>)
 //----------------------------------------------------------------------------
 template <typename _Test>
 Ternary<_Test>::Ternary(_Test&& test, const ParseExpression *pif, const ParseExpression *ptrue, const ParseExpression *pfalse, const Lexer::Location& site)

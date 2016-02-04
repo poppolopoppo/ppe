@@ -27,7 +27,7 @@ ParseStatement::~ParseStatement() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(EvalExpr, )
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, EvalExpr, )
 //----------------------------------------------------------------------------
 EvalExpr::EvalExpr(const Parser::PCParseExpression& expr)
 :   ParseStatement(expr->Site())
@@ -45,7 +45,7 @@ void EvalExpr::Execute(ParseContext *context) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(PropertyAssignment, )
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, PropertyAssignment, )
 //----------------------------------------------------------------------------
 PropertyAssignment::PropertyAssignment(
     const RTTI::MetaPropertyName& name,

@@ -26,7 +26,7 @@ ParseExpression::~ParseExpression() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(VariableExport, )
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, VariableExport, )
 //----------------------------------------------------------------------------
 VariableExport::VariableExport(const RTTI::MetaObjectName& name, const PCParseExpression& value, const Flags scope, const Lexer::Location& site)
 :   ParseExpression(site)
@@ -66,7 +66,7 @@ String VariableExport::ToString() const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(VariableReference, )
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, VariableReference, )
 //----------------------------------------------------------------------------
 VariableReference::VariableReference(const RTTI::MetaObjectName& name, const Lexer::Location& site)
 :   ParseExpression(site)
@@ -92,7 +92,7 @@ String VariableReference::ToString() const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(ObjectDefinition, )
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, ObjectDefinition, )
 //----------------------------------------------------------------------------
 ObjectDefinition::ObjectDefinition(const RTTI::MetaClassName& name, const Lexer::Location& site)
 :   ParseExpression(site)
@@ -126,7 +126,7 @@ RTTI::MetaAtom *ObjectDefinition::Eval(ParseContext *context) const {
 
     context->SetScopeObject(parent.get());
 
-    return MakeAtom(obj);
+    return RTTI::MakeAtom(obj);
 }
 //----------------------------------------------------------------------------
 String ObjectDefinition::ToString() const {
@@ -135,7 +135,7 @@ String ObjectDefinition::ToString() const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(PropertyReference, )
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, PropertyReference, )
 //----------------------------------------------------------------------------
 PropertyReference::PropertyReference(
     const PCParseExpression& object,
@@ -181,7 +181,7 @@ String PropertyReference::ToString() const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(Pair, )
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, Pair, )
 //----------------------------------------------------------------------------
 Pair::Pair(
     const PCParseExpression& lhs,
@@ -214,7 +214,7 @@ String Pair::ToString() const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(Array, )
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, Array, )
 //----------------------------------------------------------------------------
 Array::Array(const Lexer::Location& site)
 :   ParseExpression(site) {}
@@ -251,7 +251,7 @@ String Array::ToString() const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(Dictionary, )
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, Dictionary, )
 //----------------------------------------------------------------------------
 Dictionary::Dictionary(const Lexer::Location& site)
 :   ParseExpression(site) {}

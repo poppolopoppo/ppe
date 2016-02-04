@@ -2,6 +2,8 @@
 
 #include "Core/Core.h"
 
+#include "Core/Allocator/PoolAllocatorTag.h"
+
 #include "Core.Serialize/Exceptions.h"
 #include "Core.Serialize/Parser/ParseContext.h"
 #include "Core.Serialize/Parser/ParseExpression.h"
@@ -13,6 +15,7 @@
 
 namespace Core {
 namespace Parser {
+POOLTAG_DECL(Parser);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -44,6 +47,7 @@ private:
 struct ParserStartup {
     static void Start();
     static void Shutdown();
+    static void ClearAll_UnusedMemory();
 
     ParserStartup() { Start(); }
     ~ParserStartup() { Shutdown(); }
