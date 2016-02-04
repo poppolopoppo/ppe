@@ -12,12 +12,12 @@ template <size_t _SizeInBytes>
 class InSituStorage : Meta::ThreadResource {
 public:
     InSituStorage() noexcept
-        : _ptr(_data), _count(0) {}
+        : _insituPtr(_insituData), _insituCount(0) {}
 
     ~InSituStorage() {
-        Assert(0 == _count);
+        Assert(0 == _insituCount);
         Assert(InSituEmpty());
-        _ptr = nullptr;
+        _insituPtr = nullptr;
     }
 
     InSituStorage(const InSituStorage& ) = delete;
@@ -31,31 +31,31 @@ public:
     void* ReallocateIFP(void* ptr, size_t newSizeInBytes, size_t oldSizeInBytes);
 
     bool InSituEmpty() const noexcept {
-        Assert((_data == _ptr) == (0 == _count));
-        return (_data == _ptr);
+        Assert((_insituData == _insituPtr) == (0 == _insituCount));
+        return (_insituData == _insituPtr);
     }
 
     bool Contains(const void* ptr) const noexcept {
         THIS_THREADRESOURCE_CHECKACCESS();
         const u8* const p = reinterpret_cast<const u8*>(ptr);
-        return _data <= p && p <= _data + _SizeInBytes;
+        return _insituData <= p && p <= _insituData + _SizeInBytes;
     }
 
 private:
-    size_t _count;
-    u8* _ptr;
-    ALIGN(16) u8 _data[_SizeInBytes];
+    ALIGN(16) u8 _insituData[_SizeInBytes];
+    u8* _insituPtr;
+    size_t _insituCount;
 };
 //----------------------------------------------------------------------------
 template <size_t _SizeInBytes>
 void* InSituStorage<_SizeInBytes>::AllocateIFP(size_t sizeInBytes) {
     THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(Contains(_ptr));
-    if (Contains(_ptr + sizeInBytes)) {
-        Assert(0 != _count || _data == _ptr);
-        ++_count;
-        u8* const p = _ptr;
-        _ptr += sizeInBytes;
+    Assert(Contains(_insituPtr));
+    if (Contains(_insituPtr + sizeInBytes)) {
+        Assert(0 != _insituCount || _insituData == _insituPtr);
+        ++_insituCount;
+        u8* const p = _insituPtr;
+        _insituPtr += sizeInBytes;
         return p;
     }
     else {
@@ -66,21 +66,21 @@ void* InSituStorage<_SizeInBytes>::AllocateIFP(size_t sizeInBytes) {
 template <size_t _SizeInBytes>
 bool InSituStorage<_SizeInBytes>::DeallocateIFP(void* ptr, size_t sizeInBytes) noexcept {
     THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(Contains(_ptr));
+    Assert(Contains(_insituPtr));
     u8* p = reinterpret_cast<u8*>(ptr);
     if (Contains(p)) {
-        Assert(0 < _count);
-        --_count;
+        Assert(0 < _insituCount);
+        --_insituCount;
         Assert(Contains(p + sizeInBytes));
-        if (0 == _count) {
-            Assert(p + sizeInBytes == _ptr);
-            _ptr = _data;
+        if (0 == _insituCount) {
+            Assert(p + sizeInBytes == _insituPtr);
+            _insituPtr = _insituData;
         }
-        else if (p + sizeInBytes == _ptr) {
-            _ptr = p;
+        else if (p + sizeInBytes == _insituPtr) {
+            _insituPtr = p;
         }
         else {
-            Assert(0 < _count);
+            Assert(0 < _insituCount);
         }
         return true;
     }
@@ -92,13 +92,13 @@ bool InSituStorage<_SizeInBytes>::DeallocateIFP(void* ptr, size_t sizeInBytes) n
 template <size_t _SizeInBytes>
 void* InSituStorage<_SizeInBytes>::ReallocateIFP(void* ptr, size_t newSizeInBytes, size_t oldSizeInBytes) {
     THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(Contains(_ptr));
+    Assert(Contains(_insituPtr));
     u8* p = reinterpret_cast<u8*>(ptr);
     if (Contains(p)) {
         Assert(Contains(p + oldSizeInBytes));
-        Assert(0 < _count);
-        if (p + oldSizeInBytes == _ptr && Contains(p + newSizeInBytes)) {
-            _ptr = p + newSizeInBytes;
+        Assert(0 < _insituCount);
+        if (p + oldSizeInBytes == _insituPtr && Contains(p + newSizeInBytes)) {
+            _insituPtr = p + newSizeInBytes;
             return p;
         }
         else {
