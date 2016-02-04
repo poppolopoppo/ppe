@@ -13,17 +13,19 @@ namespace {
 //----------------------------------------------------------------------------
 static const Symbol *Insert_(
         SymbolMap& symbols,
-        Symbol::TypeId type, const char *cstr, size_t size) {
+        Symbol::TypeId type,
+        const char *cstr, size_t size,
+        u64 ord ) {
     const StringSlice cstr_slice(cstr, size);
     SymbolMap::node_type* node = symbols.Insert_AssertUnique(cstr_slice);
     Assert(Symbol::Invalid == node->Value().Type());
-    node->SetValue(Symbol(type, cstr_slice));
+    node->SetValue(Symbol(type, cstr_slice, ord));
     return &node->Value();
 }
 //----------------------------------------------------------------------------
 template <size_t _Dim>
-static const Symbol *Insert_(SymbolMap& symbols, Symbol::TypeId type, const char (&cstr)[_Dim]) {
-    return Insert_(symbols, type, cstr, _Dim - 1);
+static const Symbol *Insert_(SymbolMap& symbols, Symbol::TypeId type, const char (&cstr)[_Dim], u64 ord = 0) {
+    return Insert_(symbols, type, cstr, _Dim - 1, ord);
 }
 //----------------------------------------------------------------------------
 static void CheckSymbol_(const SymbolMap& symbols, const Symbol* symbol) {
@@ -36,7 +38,7 @@ static void CheckSymbol_(const SymbolMap& symbols, const Symbol* symbol) {
 //----------------------------------------------------------------------------
 static void RTTI_InsertTypenames_(SymbolMap& symbols) {
 #define RTTI_INSERT_TYPENAME(_Name, T, _TypeId, _Unused) \
-    Insert_(symbols, Symbol::Typename, STRINGIZE(_Name));
+    Insert_(symbols, Symbol::Typename, STRINGIZE(_Name), _TypeId);
     FOREACH_CORE_RTTI_NATIVE_TYPES(RTTI_INSERT_TYPENAME)
 #undef RTTI_INSERT_TYPENAME
 }

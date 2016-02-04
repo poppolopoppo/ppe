@@ -14,7 +14,7 @@ namespace Lexer {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-typedef STRINGTRIE_MAP(Lexer, Symbol, CaseSensitive::False, 32) SymbolMap;
+typedef STRINGTRIE_MAP(Lexer, Symbol, CaseSensitive::True, 32) SymbolMap;
 class SymbolRoot : Meta::ThreadResource {
 public:
     SymbolMap& Map() { THIS_THREADRESOURCE_CHECKACCESS(); return _map; }

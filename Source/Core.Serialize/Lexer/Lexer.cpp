@@ -136,8 +136,18 @@ static bool Lex_Symbol_(LookAheadReader& reader, const Symbol **psymbol) {
     if (0 != toss) {
         Assert(*psymbol);
         Assert((*psymbol)->Type() != Symbol::Invalid);
-        reader.SeekForward(toss);
-        return true;
+
+        const char ch0 = reader.Peek(toss - 1);
+        const char ch1 = reader.Peek(toss);
+        if (IsAlnum(ch0) && IsAlnum(ch1)) {
+            // incomplete token
+            *psymbol = SymbolTrie::Invalid;
+            return false;
+        }
+        else {
+            reader.SeekForward(toss);
+            return true;
+        }
     }
     else {
         Assert(SymbolTrie::Invalid == *psymbol);
