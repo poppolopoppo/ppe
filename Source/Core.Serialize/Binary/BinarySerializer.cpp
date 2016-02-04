@@ -429,7 +429,7 @@ private:
                 switch (typeId) {
 #define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
                 case _TypeId: \
-                    atom = new RTTI::MetaAtomWrapper< T >::type( std::move(RTTI::MetaType< T >::DefaultValue()) ); \
+                    atom = RTTI::MakeAtom( std::move(RTTI::MetaType< T >::DefaultValue()) ); \
                     Assert(atom->IsDefaultValue()); \
                     atom->Accept(this); \
                     break;
