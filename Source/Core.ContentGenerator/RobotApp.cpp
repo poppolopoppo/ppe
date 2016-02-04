@@ -132,8 +132,8 @@ namespace {
 class RTTIAtomRandomizer_ : protected RTTI::MetaAtomWrapMoveVisitor {
     typedef RTTI::MetaAtomWrapMoveVisitor parent_type;
 public:
-    RTTIAtomRandomizer_(size_t maxDim, u64 seed) : _maxDim(maxDim), _rand(seed) {
-        AssertRelease(IS_POW2(_maxDim));
+    RTTIAtomRandomizer_(size_t maxDim, u64 seed) : _maxDim(maxDim), _depth(0), _rand(seed) {
+        AssertRelease(_maxDim > 0);
     }
 
     void Randomize(RTTI::MetaObject* pobject);
@@ -189,6 +189,7 @@ protected:
 
 private:
     const size_t _maxDim;
+    size_t _depth;
     RandomGenerator _rand;
 
     size_t NextRandomDim_() { return (_rand.Next() % _maxDim); }
@@ -235,19 +236,30 @@ private:
     }
 
     void Randomize_(Core::RTTI::PMetaObject& object) {
-        if (object)
-            Randomize(object.get());
+        const float d = ((float)_depth)/_maxDim;
+        const float r = _rand.NextFloat01() - d;
+        if (r - 0.5f < 0)
+            return;
+        if (nullptr == object)
+            object = new RTTITest_();
+        Randomize(object.get());
     }
 };
 //----------------------------------------------------------------------------
 void RTTIAtomRandomizer_::Randomize(RTTI::MetaObject* pobject) {
     Assert(pobject);
+
+    ++_depth;
+
     for (const auto& it : pobject->RTTI_MetaClass()->Properties()) {
         RTTI::PMetaAtom atom = it.second->WrapMove(pobject);
         AssertRelease(nullptr != atom);
         parent_type::Append(atom.get());
         it.second->MoveFrom(pobject, atom.get());
     }
+
+    Assert(0 < _depth);
+    --_depth;
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -269,8 +281,8 @@ RobotApp::RobotApp()
     true ) {
 
     typedef RTTITest_ test_type;
-//typedef RTTITest2_ test_type;
-    static const size_t test_count = 16;
+    //typedef RTTITest2_ test_type;
+    static const size_t test_count = 4;
 
     Application::ApplicationConsole::RedirectIOToConsole();
 
@@ -282,7 +294,7 @@ RobotApp::RobotApp()
 
         VECTOR_THREAD_LOCAL(RTTI, RefPtr<test_type>) input;
         {
-            RTTIAtomRandomizer_ rand(4, 0xabadcafeull);
+            RTTIAtomRandomizer_ rand(4, Random::MakeSeed(0xabadcafeull));
             forrange(i, 0, test_count) {
                 RefPtr<test_type> t = new test_type();
                 rand.Randomize(t.get());
@@ -360,6 +372,7 @@ RobotApp::RobotApp()
         for (size_t i = 0; i < output.size(); ++i)
             AssertRelease(RTTI::DeepEquals(*input[i], *output[i]));
     }
+    /*
     {
         const Filename filename = L"Process:/dico.txt";
 
@@ -393,7 +406,7 @@ RobotApp::RobotApp()
         for (const String& word : words)
             if (false == set.Find(MakeStringSlice(word)))
                 AssertNotReached();
-    }
+    }*/
     {
         Parser::ParseContext globalContext(new RTTI::MetaTransaction());
         do
