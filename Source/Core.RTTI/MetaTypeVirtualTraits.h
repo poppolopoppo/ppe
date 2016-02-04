@@ -40,9 +40,7 @@ public:
 
     virtual MetaAtom* CreateDefaultValue() const override {
         typedef typename MetaAtomWrapper<T>::type atom_type;
-        MetaAtom* const result = new atom_type(
-            std::move(MetaTypeTraits<T>::meta_type::DefaultValue())
-        );
+        MetaAtom* const result = MakeAtom(std::move(MetaTypeTraits<T>::meta_type::DefaultValue()));
         Assert(result->IsDefaultValue());
         return result;
     }
