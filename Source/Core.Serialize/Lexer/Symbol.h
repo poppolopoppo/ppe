@@ -87,20 +87,17 @@ public:
         Typename        = 1ull<<46,   // float2,byte4,etc...
     };
 
-    Symbol();
-    ~Symbol();
-
-    Symbol(const Symbol& other);
-    Symbol& operator =(const Symbol& other);
-
-    Symbol(TypeId type, const StringSlice& cstr);
+    Symbol() : _type(Invalid), _ord(0) {}
+    Symbol(TypeId type, const StringSlice& cstr, u64 ord = 0) : _type(type), _cstr(cstr), _ord(ord) {}
 
     TypeId Type() const { return _type; }
     const StringSlice& CStr() const { return _cstr; }
+    u64 Ord() const { return _ord; }
 
 private:
     TypeId _type;
     StringSlice _cstr;
+    u64 _ord;
 };
 //----------------------------------------------------------------------------
 inline bool operator ==(const Symbol& lhs, const Symbol& rhs) {

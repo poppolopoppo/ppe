@@ -291,5 +291,42 @@ String Dictionary::ToString() const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, CastExpr, )
+//----------------------------------------------------------------------------
+CastExpr::CastExpr(RTTI::MetaTypeId typeId, const ParseExpression* expr, const Lexer::Location& site)
+:   ParseExpression(site)
+,   _typeId(typeId)
+,   _expr(expr) {
+    Assert(_typeId);
+    Assert(_expr);
+}
+//----------------------------------------------------------------------------
+CastExpr::~CastExpr() {}
+//----------------------------------------------------------------------------
+RTTI::MetaAtom *CastExpr::Eval(ParseContext *context) const {
+    Assert(context);
+
+    RTTI::PMetaAtom atom = _expr->Eval(context);
+    if (nullptr == atom)
+        return nullptr;
+
+    RTTI::PMetaAtom cast = RTTI::ScalarTraitsFromTypeId(_typeId)->CreateDefaultValue();
+    Assert(cast);
+
+    if (false == cast->Traits()->AssignMove(cast.get(), atom.get()))
+        throw ParserException("invalid cast", this);
+
+    return RemoveRef_AssertReachZero_KeepAlive(cast);
+}
+//----------------------------------------------------------------------------
+String CastExpr::ToString() const {
+    OStringStream oss;
+    oss << RTTI::ScalarTypeInfoFromTypeId(_typeId).Name << ": ";
+    oss << _expr->ToString();
+    return oss.str();
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Parser
 } //!namespace Core

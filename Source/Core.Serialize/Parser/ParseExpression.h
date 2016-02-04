@@ -316,6 +316,27 @@ inline Parser::Dictionary *MakeDictionary(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+class CastExpr : public ParseExpression {
+public:
+    CastExpr(RTTI::MetaTypeId typeId, const ParseExpression* expr, const Lexer::Location& site);
+    virtual ~CastExpr();
+
+    virtual RTTI::MetaAtom *Eval(ParseContext *context) const override;
+    virtual String ToString() const override;
+
+    SINGLETON_POOL_ALLOCATED_DECL();
+
+private:
+    RTTI::MetaTypeId _typeId;
+    PCParseExpression _expr;
+};
+//----------------------------------------------------------------------------
+inline CastExpr *MakeCastExpr(RTTI::MetaTypeId typeId, const ParseExpression* expr, const Lexer::Location& site) {
+    return new CastExpr(typeId, expr, site);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Parser
 } //!namespace Core
 

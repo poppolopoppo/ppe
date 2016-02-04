@@ -461,6 +461,7 @@ private:
     Parser::Production< Parser::PCParseExpression > _pair;
     Parser::Production< Parser::PCParseExpression > _array;
     Parser::Production< Parser::PCParseExpression > _dictionary;
+    Parser::Production< Parser::PCParseExpression > _cast;
 
     Parser::Production< Parser::PCParseExpression > _export;
     Parser::Production< Parser::PCParseExpression > _expr;
@@ -983,11 +984,26 @@ GrammarImpl::GrammarImpl()
     })
     ))
 
+,   _cast(
+            Parser::Expect(Lexer::Symbol::Typename)
+    .And(   Parser::Expect(Lexer::Symbol::Colon))
+    .And(   _pair.Ref().Or(_array.Ref()).Or(_dictionary.Ref()).Or(_ternary.Ref()))
+        .Select<Parser::PCParseExpression>([](const Tuple<const Lexer::Match *, const Lexer::Match *, Parser::PCParseExpression>& args) -> Parser::PCParseExpression {
+            const Lexer::Match *typename_ = std::get<0>(args);
+            const Parser::PCParseExpression& value = std::get<2>(args);
+
+            Assert(typename_);
+            Assert(value);
+
+            return Parser::MakeCastExpr(typename_->Symbol()->Ord(), value.get(), typename_->Site());
+        })
+    )
+
 ,   _export(
             Parser::Optional(Lexer::Symbol::Export)
     .And(   Parser::Expect(Lexer::Symbol::Identifier))
     .And(   Parser::Expect(Lexer::Symbol::Is))
-    .And(   _pair.Ref().Or(_array.Ref()).Or(_dictionary.Ref()).Or(_ternary.Ref()))
+    .And(   _cast.Ref().Or(_pair.Ref()).Or(_array.Ref()).Or(_dictionary.Ref()).Or(_ternary.Ref()))
         .Select<Parser::PCParseExpression>([](const Tuple<const Lexer::Match *, const Lexer::Match *, const Lexer::Match *, Parser::PCParseExpression>& args) -> Parser::PCParseExpression {
             const Lexer::Match *exportIFP = std::get<0>(args);
             const Lexer::Match *name = std::get<1>(args);
@@ -1005,7 +1021,7 @@ GrammarImpl::GrammarImpl()
     )
 
 ,   _expr(
-        _export.Ref().Or(_pair.Ref()).Or(_array.Ref()).Or(_dictionary.Ref()).Or(_ternary.Ref())
+        _export.Ref().Or(_cast.Ref()).Or(_pair.Ref()).Or(_array.Ref()).Or(_dictionary.Ref()).Or(_ternary.Ref())
         )
 
 ,   _property(
