@@ -2,6 +2,8 @@
 
 #include "Core/Core.h"
 
+#include "Core/Allocator/PoolAllocatorTag.h"
+
 #include "Core.Serialize/Exceptions.h"
 #include "Core.Serialize/Lexer/LookAheadReader.h"
 #include "Core.Serialize/Lexer/Match.h"
@@ -12,6 +14,7 @@
 
 namespace Core {
 namespace Lexer {
+POOLTAG_DECL(Lexer);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -59,6 +62,7 @@ private:
 struct LexerStartup {
     static void Start();
     static void Shutdown();
+    static void ClearAll_UnusedMemory();
 
     LexerStartup() { Start(); }
     ~LexerStartup() { Shutdown(); }

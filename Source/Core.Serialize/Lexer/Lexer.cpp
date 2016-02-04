@@ -5,6 +5,7 @@
 #include "Symbol.h"
 #include "SymbolTrie.h"
 
+#include "Core/Allocator/PoolAllocatorTag-impl.h"
 #include "Core/IO/String.h"
 
 #include <algorithm>
@@ -12,6 +13,7 @@
 
 namespace Core {
 namespace Lexer {
+POOLTAG_DEF(Lexer);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -446,11 +448,17 @@ bool Lexer::NextMatch_(Match& match) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void LexerStartup::Start() {
+    POOLTAG(Lexer)::Start();
     SymbolTrie::Create();
 }
 //----------------------------------------------------------------------------
 void LexerStartup::Shutdown() {
     SymbolTrie::Destroy();
+    POOLTAG(Lexer)::Shutdown();
+}
+//----------------------------------------------------------------------------
+void LexerStartup::ClearAll_UnusedMemory() {
+    POOLTAG(Lexer)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
