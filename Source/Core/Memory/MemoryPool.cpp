@@ -63,8 +63,11 @@ void MemoryPoolChunk::ReleaseBlock(void *ptr, size_t blockSize) {
 //----------------------------------------------------------------------------
 MemoryPoolBase::MemoryPoolBase(size_t blockSize, size_t minChunkSize, size_t maxChunkSize)
 :   _chunks(nullptr)
-,   _currentChunksize(minChunkSize)
+,   _spare(nullptr)
 ,   _chunkCount(0)
+,   _usedSize(0)
+,   _totalSize(0)
+,   _currentChunksize(minChunkSize)
 ,   _blockSize(blockSize)
 ,   _minChunkSize(minChunkSize)
 ,   _maxChunkSize(maxChunkSize) {
@@ -77,29 +80,24 @@ MemoryPoolBase::MemoryPoolBase(size_t blockSize, size_t minChunkSize, size_t max
     AssertRelease(_currentChunksize <= _maxChunkSize);
 
     LOG(Info,
-        L"[Pool] New pool with block size = {0}\n"
-        L" - Min chunk size = {1}\n"
-        L" - Max chunk size = {2}\n"
-        L" - Current chunk size = {3}\n"
-        L" - Current blocks per chunk = {4}",
+        L"[Pool] New pool with block size = {0}, {1} = {2} per chunk",
         _blockSize,
-        SizeInBytes{ _minChunkSize }, SizeInBytes{ _maxChunkSize }, SizeInBytes{ _currentChunksize },
+        SizeInBytes{ _currentChunksize },
         BlockCountPerChunk(_currentChunksize) );
 }
 //----------------------------------------------------------------------------
 MemoryPoolBase::~MemoryPoolBase() {
     AssertRelease(nullptr == _chunks);
+    Assert(nullptr == _spare);
+    Assert(0 == _usedSize);
+    Assert(0 == _totalSize);
     Assert(nullptr == _node.Next);
     Assert(nullptr == _node.Prev);
 
     LOG(Info,
-        L"[Pool] Delete pool with block size = {0}\n"
-        L" - Min chunk size = {1}\n"
-        L" - Max chunk size = {2}\n"
-        L" - Current chunk size = {3}\n"
-        L" - Current blocks per chunk = {4}",
+        L"[Pool] Delete pool with block size = {0}, {1} = {2} per chunk",
         _blockSize,
-        SizeInBytes{ _minChunkSize }, SizeInBytes{ _maxChunkSize }, SizeInBytes{ _currentChunksize },
+        SizeInBytes{ _currentChunksize },
         BlockCountPerChunk(_currentChunksize) );
 }
 //----------------------------------------------------------------------------
@@ -109,16 +107,13 @@ void MemoryPoolBase::GrowChunkSizeIFP() {
         _currentChunksize = nextChunkSize;
 
         LOG(Info,
-            L"[Pool] Grow pool with block size = {0}\n"
-            L" - Min chunk size = {1}\n"
-            L" - Max chunk size = {2}\n"
-            L" - Current chunk size = {3}\n"
-            L" - Current blocks per chunk = {4}\n"
-            L" - Chunk count = {5}",
+            L"[Pool] Grow pool with block size = {0}, {3} used pages, {1} = {2} per chunk ({4}/{5})",
             _blockSize,
-            SizeInBytes{ _minChunkSize }, SizeInBytes{ _maxChunkSize }, SizeInBytes{ _currentChunksize },
+            SizeInBytes{ _currentChunksize },
             BlockCountPerChunk(_currentChunksize),
-            _chunkCount );
+            _chunkCount,
+            SizeInBytes{ _usedSize },
+            SizeInBytes{ _totalSize });
     }
 }
 //----------------------------------------------------------------------------
@@ -128,10 +123,12 @@ void MemoryPoolBase::ResetChunkSize() {
 //----------------------------------------------------------------------------
 void MemoryPoolBase::AddChunk(MemoryPoolChunk *chunk) {
     Assert(chunk);
+    Assert(nullptr == _spare);
     Assert(nullptr == chunk->Next());
 
     chunk->SetNext(_chunks);
     _chunks = chunk;
+    _totalSize += chunk->ChunkSize();
 
     ++_chunkCount;
 }
@@ -139,10 +136,14 @@ void MemoryPoolBase::AddChunk(MemoryPoolChunk *chunk) {
 void *MemoryPoolBase::TryAllocate_FailIfNoBlockAvailable() {
     MemoryPoolChunk *chunk = _chunks;
     while (chunk)
-        if (chunk->BlockAvailable())
+        if (chunk->BlockAvailable()) {
+            _usedSize += _blockSize;
+            Assert(_totalSize >= _usedSize);
             return chunk->AllocateBlock(_blockSize);
-        else
+        }
+        else {
             chunk = chunk->Next();
+        }
 
     return nullptr;
 }
@@ -154,26 +155,21 @@ MemoryPoolChunk *MemoryPoolBase::Deallocate_ReturnChunkToRelease(void *ptr) {
     MemoryPoolChunk *chunk = _chunks;
     while (chunk) {
         if (chunk->Contains(ptr, _blockSize)) {
+            Assert(_usedSize >= _blockSize);
+            _usedSize -= _blockSize;
+
             chunk->ReleaseBlock(ptr, _blockSize);
 
-            if (false == chunk->CompletelyFree())
-                return nullptr;
-
-            if (nullptr == prev && nullptr == chunk->Next())
-                return nullptr; // keep at least one chunk alive (if not manually cleared)
-
-            if (nullptr == prev)
-                _chunks = chunk->Next();
-            else
+            if (prev && chunk->CompletelyFree()) {
                 prev->SetNext(chunk->Next());
+                chunk->SetNext(nullptr);
+                SpareChunk_(chunk);
+            }
 
-            Assert(chunk->CompletelyFree());
-            chunk->SetNext(nullptr); // more paranoid than anything
-
-            Assert(_chunkCount);
-            --_chunkCount;
-
-            return chunk;
+            // size heuristic to decide if we give up on the empty chunk :
+            return ((nullptr != _spare) && (_totalSize - _spare->ChunkSize()) >= 2*_usedSize)
+                ? ReleaseChunk_()
+                : nullptr;
         }
 
         prev = chunk;
@@ -186,53 +182,106 @@ MemoryPoolChunk *MemoryPoolBase::Deallocate_ReturnChunkToRelease(void *ptr) {
 //----------------------------------------------------------------------------
 MemoryPoolChunk *MemoryPoolBase::ClearOneChunk_AssertCompletelyFree() {
     if (nullptr == _chunks)
-        return nullptr;
+        return ReleaseChunk_();
 
     MemoryPoolChunk *const chunk = _chunks;
     AssertRelease(chunk->CompletelyFree());
-    Assert(nullptr == chunk->Next()); // logically ...
 
-    _chunks = _chunks->Next();
+    _chunks = chunk->Next();
 
-    Assert(_chunkCount);
-    --_chunkCount;
+    chunk->SetNext(nullptr);
+    SpareChunk_(chunk);
 
-    return chunk;
+    MemoryPoolChunk *const release = ReleaseChunk_();
+    Assert(release);
+    Assert(release->CompletelyFree());
+
+    return release;
 }
 //----------------------------------------------------------------------------
 MemoryPoolChunk *MemoryPoolBase::ClearOneChunk_IgnoreLeaks() {
     if (nullptr == _chunks)
-        return nullptr;
+        return ReleaseChunk_();
 
     MemoryPoolChunk *const chunk = _chunks;
+    Assert(_usedSize >= chunk->BlockUsed() * _blockSize);
+    _usedSize -= chunk->BlockUsed() * _blockSize;
 
-    _chunks = _chunks->Next();
+    _chunks = chunk->Next();
 
-    Assert(_chunkCount);
-    --_chunkCount;
+    chunk->SetNext(nullptr);
+    SpareChunk_(chunk);
 
-    return chunk;
+    MemoryPoolChunk *const release = ReleaseChunk_();
+    Assert(release);
+
+    return release;
 }
 //----------------------------------------------------------------------------
 MemoryPoolChunk *MemoryPoolBase::ClearOneChunk_UnusedMemory() {
-    if (nullptr == _chunks)
+    return ReleaseChunk_();
+}
+//----------------------------------------------------------------------------
+void MemoryPoolBase::SpareChunk_(MemoryPoolChunk *chunk) {
+    Assert(chunk);
+    Assert(nullptr == chunk->Next());
+
+    const size_t chunkSize = chunk->ChunkSize();
+    Assert(_totalSize >= chunkSize);
+    Assert(_usedSize <= _totalSize);
+
+    MemoryPoolChunk* prv = nullptr;
+    MemoryPoolChunk* cur = _spare;
+    while (cur && cur->ChunkSize() < chunkSize) {
+        prv = cur;
+        cur = cur->Next();
+    }
+
+    if (prv) {
+        Assert(prv->ChunkSize() <= chunkSize);
+        prv->SetNext(chunk);
+        chunk->SetNext(cur);
+    }
+    else if (cur) {
+        Assert(cur->ChunkSize() >= chunkSize);
+        Assert(cur == _spare);
+        _spare = chunk;
+        chunk->SetNext(cur);
+    }
+    else {
+        Assert(nullptr == _spare);
+        _spare = chunk;
+    }
+}
+//----------------------------------------------------------------------------
+MemoryPoolChunk *MemoryPoolBase::ReleaseChunk_() {
+    if (nullptr == _spare)
         return nullptr;
 
-    MemoryPoolChunk *prev = nullptr;
-    MemoryPoolChunk *chunk = _chunks;
+    MemoryPoolChunk* release = _spare;
+    _spare = _spare->Next();
 
-    while (chunk && !chunk->CompletelyFree()) {
-        prev = chunk;
-        chunk = chunk->Next();
-    }
+    Assert(0 < _chunkCount);
+    --_chunkCount;
 
-    if (prev && chunk) {
-        Assert(_chunkCount);
-        --_chunkCount;
-        prev->SetNext(chunk->Next());
-    }
+    Assert(_totalSize >= release->ChunkSize());
+    _totalSize -= release->ChunkSize();
+    Assert(_usedSize <= _totalSize);
 
-    return chunk;
+
+
+    LOG(Info,
+        L"[Pool] Release chunk with block size = {0}, {4} blocs, {3} remaining pages, {1} = {2} per chunk ({5}/{6})",
+        _blockSize,
+        SizeInBytes{ _currentChunksize },
+        BlockCountPerChunk(_currentChunksize),
+        _chunkCount,
+        release->ChunkSize(),
+        SizeInBytes{ _usedSize },
+        SizeInBytes{ _totalSize });
+
+    Assert(nullptr == _spare || _spare->ChunkSize() >= release->ChunkSize());
+    return release;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -113,9 +113,17 @@ protected:
     MemoryPoolChunk *ClearOneChunk_UnusedMemory();
 
 private:
+    void SpareChunk_(MemoryPoolChunk *chunk);
+    MemoryPoolChunk* ReleaseChunk_();
+
     MemoryPoolChunk *_chunks;
-    size_t _currentChunksize;
+    MemoryPoolChunk *_spare;
+
     size_t _chunkCount;
+    size_t _usedSize;
+    size_t _totalSize;
+
+    size_t _currentChunksize;
 
     const size_t _blockSize;
     const size_t _minChunkSize;

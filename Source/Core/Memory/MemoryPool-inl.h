@@ -36,22 +36,23 @@ void *MemoryPool<_Lock, _Allocator>::Allocate(MemoryTrackingData *trackingData =
 #else
     typename threadlock_type::ScopeLock lock(*this);
 
-    void *ptr;
-    if (nullptr == (ptr = TryAllocate_FailIfNoBlockAvailable())) {
+    void *ptr = TryAllocate_FailIfNoBlockAvailable();
+    if (nullptr == ptr) {
 
         if (MemoryPoolBase::Chunks())
             MemoryPoolBase::GrowChunkSizeIFP();
 
         MemoryPoolChunk *const newChunk = AllocateChunk_();
-        ptr = newChunk->AllocateBlock(BlockSize());
         AddChunk(newChunk);
+
+        ptr = TryAllocate_FailIfNoBlockAvailable();
+        Assert(ptr);
 
 #ifdef USE_MEMORY_DOMAINS
         if (trackingData && trackingData->Parent())
             trackingData->Parent()->Pool_AllocateOneChunk(newChunk->ChunkSize());
 #endif
     }
-    Assert(ptr);
 
 #ifdef USE_MEMORY_DOMAINS
     if (trackingData)
