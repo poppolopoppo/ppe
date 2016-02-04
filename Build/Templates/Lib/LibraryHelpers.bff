@@ -119,7 +119,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
 
             ForEach( .ProjectDependency in .ProjectDependencies )
             {
-                ^Libraries + { '$ProjectDependency$-Lib-$Platform$-$Config$' }
+                ^Libraries + { '$ProjectDependency$-Dll-$Platform$-$Config$' }
             }
         }
 
