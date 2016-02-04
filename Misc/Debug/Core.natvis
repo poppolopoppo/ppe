@@ -48,6 +48,66 @@
     <Item Name="[size]">_size</Item>
     <ArrayItems>
       <Size>_size</Size>
+      <ValuePointer>_data</ValuePointer>
+    </ArrayItems>
+  </Expand>
+</Type>
+
+<Type Name="Core::VectorInSitu&lt;*, *, *&gt;">
+  <DisplayString>{{ size={_size}, capacity={_capacity}, insitu={_insituPtr - _insituData} }}</DisplayString>
+  <Expand>
+    <Item Name="[size]">_size</Item>
+    <Item Name="[capacity]">_capacity</Item>
+    <Item Name="[insitu]">_insituPtr - _insituData</Item>
+    <ArrayItems>
+      <Size>_size</Size>
+      <ValuePointer>_data</ValuePointer>
+    </ArrayItems>
+  </Expand>
+</Type>
+<Type Name="Core::Vector&lt;*, *&gt;">
+  <DisplayString>{{ size={_size}, capacity={_capacity} }}</DisplayString>
+  <Expand>
+    <Item Name="[size]">_size</Item>
+    <Item Name="[capacity]">_capacity</Item>
+    <ArrayItems>
+      <Size>_size</Size>
+      <ValuePointer>_data</ValuePointer>
+    </ArrayItems>
+  </Expand>
+</Type>
+
+<Type Name="Core::RawStorage&lt;*, *&gt;">
+  <DisplayString>{{ size={_size} }}</DisplayString>
+  <Expand>
+    <Item Name="[size]">_size</Item>
+    <ArrayItems>
+      <Size>_size</Size>
+      <ValuePointer>_storage</ValuePointer>
+    </ArrayItems>
+  </Expand>
+</Type>
+
+<Type Name="Core::RingBuffer&lt;*, *&gt;">
+  <DisplayString>{{ begin={_begin}, size={_size}, capacity={_capacity} }}</DisplayString>
+  <Expand>
+    <Item Name="[begin]">_begin</Item>
+    <Item Name="[size]">_size</Item>
+    <Item Name="[capacity]">_capacity</Item>
+    <ArrayItems>
+      <Size>_capacity</Size>
+      <ValuePointer>_storage</ValuePointer>
+    </ArrayItems>
+  </Expand>
+</Type>
+
+<Type Name="Core::Stack&lt;*, *&gt;">
+  <DisplayString>{{ size={_size}, capacity={_capacity} }}</DisplayString>
+  <Expand>
+    <Item Name="[size]">_size</Item>
+    <Item Name="[capacity]">_capacity</Item>
+    <ArrayItems>
+      <Size>_size</Size>
       <ValuePointer>_storage</ValuePointer>
     </ArrayItems>
   </Expand>
@@ -101,6 +161,17 @@
 <Type Name="Core::Token&lt;*, wchar_t, *, *, * &gt;">
   <DisplayString>[{(int)_data.Ptr[-1]}] {_data.Ptr,[_data.Ptr[-1]]su}</DisplayString>
   <StringView>_data.Ptr,[_data.Ptr[-1]]su</StringView>
+</Type>
+
+<Type Name="Core::RTTI::MetaTypeAtom&lt;* &gt;">
+  <DisplayString>{{ wrapper={_wrapper} }}</DisplayString>
+  <Expand>
+    <Item Name="[wrapper]">_wrapper</Item>
+    <ArrayItems>
+      <Size>_size</Size>
+      <ValuePointer>_storage</ValuePointer>
+    </ArrayItems>
+  </Expand>
 </Type>
 
 </AutoVisualizer>
