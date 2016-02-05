@@ -995,7 +995,7 @@ GrammarImpl::GrammarImpl()
             Assert(typename_);
             Assert(value);
 
-            return Parser::MakeCastExpr(typename_->Symbol()->Ord(), value.get(), typename_->Site());
+            return Parser::MakeCastExpr(RTTI::MetaTypeId(typename_->Symbol()->Ord()), value.get(), typename_->Site());
         })
     )
 

@@ -292,29 +292,29 @@ RobotApp::RobotApp()
         const Filename filename = L"Tmp:/robotapp.bin";
         const Filename filename2 = L"Tmp:/robotapp.raw";
 
-        VECTOR_THREAD_LOCAL(RTTI, RefPtr<test_type>) input;
+        RTTI::MetaTransaction input;
         {
             RTTIAtomRandomizer_ rand(4, Random::MakeSeed(0xabadcafeull));
             forrange(i, 0, test_count) {
                 RefPtr<test_type> t = new test_type();
                 rand.Randomize(t.get());
-                input.emplace_back(t);
+                input.Add(t.get());
             }
         }
 
         {
-            RTTI::MetaTransaction t;
-            Serialize::TextSerializer s(&t);
+
+            Serialize::TextSerializer s;
             auto oss = StdoutWriter();
-            s.Serialize(&oss, input);
+            s.Serialize(&oss, &input);
         }
 
         RTTI::MetaTransaction transaction;
-        Serialize::BinarySerializer serializer(&transaction);
+        Serialize::BinarySerializer serializer;
 
         MEMORYSTREAM_THREAD_LOCAL(Serialize) uncompressed;
         {
-            serializer.Serialize(&uncompressed, input);
+            serializer.Serialize(&uncompressed, &input);
 #if 0
             auto compressed = VFS_OpenBinaryWritable(filename, AccessPolicy::Truncate);
             LZJB::CompressMemory(compressed.get(), uncompressed.MakeView());
@@ -349,7 +349,7 @@ RobotApp::RobotApp()
 #endif
         }
 
-        VECTOR_THREAD_LOCAL(RTTI, RefPtr<test_type>) output;
+        RTTI::MetaTransaction output;
 
         {
             RAWSTORAGE_THREAD_LOCAL(FileSystem, u8) compressed;
@@ -365,14 +365,13 @@ RobotApp::RobotApp()
             for (size_t i = 0; i < k; ++i)
                 Assert(uncompressed.Pointer()[i] == decompressed.Pointer()[i]);
 
-            serializer.Deserialize(output, decompressed.MakeConstView());
+            serializer.Deserialize(&output, decompressed.MakeConstView());
         }
 
         AssertRelease(input.size() == output.size());
-        for (size_t i = 0; i < output.size(); ++i)
-            AssertRelease(RTTI::DeepEquals(*input[i], *output[i]));
+        if (false == input.DeepEquals(output))
+            AssertNotReached();
     }
-    /*
     {
         const Filename filename = L"Process:/dico.txt";
 
@@ -406,9 +405,9 @@ RobotApp::RobotApp()
         for (const String& word : words)
             if (false == set.Find(MakeStringSlice(word)))
                 AssertNotReached();
-    }*/
+    }
     {
-        Parser::ParseContext globalContext(new RTTI::MetaTransaction());
+        Parser::ParseContext globalContext;
         do
         {
             std::cout << "$ ";

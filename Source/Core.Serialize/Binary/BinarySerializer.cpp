@@ -264,7 +264,7 @@ public:
     BinaryDeserialize_& operator =(const BinaryDeserialize_& ) = delete;
 
     void Read(MemoryViewReader& reader);
-    void Finalize(VECTOR(Transaction, RTTI::PMetaObject)& objects, bool allowOverride);
+    void Finalize(RTTI::MetaTransaction* transaction, bool allowOverride);
 
 private:
     static const RTTI::MetaClass* RetrieveMetaClass_(const StringSlice& str);
@@ -577,8 +577,7 @@ void BinaryDeserialize_::Read(MemoryViewReader& reader) {
         throw BinarySerializerException("expected end section");
 }
 //----------------------------------------------------------------------------
-void BinaryDeserialize_::Finalize(VECTOR(Transaction, RTTI::PMetaObject)& objects, bool allowOverride) {
-    RTTI::MetaTransaction* transaction = _owner->Transaction();
+void BinaryDeserialize_::Finalize(RTTI::MetaTransaction* transaction, bool allowOverride) {
     Assert(transaction);
 
     for (const Pair<name_index_t, object_index_t>& it : _objectsToExport) {
@@ -594,14 +593,9 @@ void BinaryDeserialize_::Finalize(VECTOR(Transaction, RTTI::PMetaObject)& object
 
     Assert(_topObjects.size() || 0 == _objects.size());
 
-    for (const RTTI::PMetaObject& object : _objects) {
-        if (object)
-            transaction->Add(object.get());
-    }
-
-    objects.reserve(objects.size() + _topObjects.size());
+    transaction->reserve(transaction->size() + _topObjects.size());
     for (const object_index_t& object_i : _topObjects)
-        objects.push_back(_objects[object_i]);
+        transaction->Add(_objects[object_i].get());
 }
 //----------------------------------------------------------------------------
 const RTTI::MetaClass* BinaryDeserialize_::RetrieveMetaClass_(const StringSlice& str) {
@@ -758,7 +752,11 @@ public:
     typedef wstring_indices_type::index_t wstring_index_t;
     typedef name_indices_type::index_t name_index_t;
 
-    BinarySerialize_(const BinarySerializer* owner) : _owner(owner) { Assert(owner); }
+    BinarySerialize_(const BinarySerializer* owner, const RTTI::MetaTransaction* transaction)
+        : _owner(owner), _transaction(transaction) {
+        Assert(owner);
+        Assert(transaction);
+    }
 
     BinarySerialize_(const BinarySerialize_& ) = delete;
     BinarySerialize_& operator =(const BinarySerialize_& ) = delete;
@@ -902,6 +900,7 @@ private:
     void WriteObject_(AtomWriter_& atomWriter, const RTTI::MetaObject* object, const RTTI::MetaClass* metaClass);
 
     const BinarySerializer* _owner;
+    const RTTI::MetaTransaction* _transaction;
 
     MEMORYSTREAM_THREAD_LOCAL(Serialize) _objectStream;
     DEQUE_THREAD_LOCAL(Serialize, RTTI::SCMetaObject) _objectQueue;
@@ -1033,9 +1032,6 @@ auto BinarySerialize_::AddObject_(const RTTI::MetaObject* object) -> object_inde
 }
 //----------------------------------------------------------------------------
 void BinarySerialize_::ProcessQueue_() {
-    const RTTI::MetaTransaction* transaction = _owner->Transaction();
-    Assert(transaction);
-
     AtomWriter_ atomWriter(this);
 
     _objectsStreamed.reserve(_objectIndices.size());
@@ -1072,7 +1068,7 @@ void BinarySerialize_::ProcessQueue_() {
 
                 const name_index_t name_i = _nameIndices.IndexOf(metaName);
 
-                const bool exported = transaction->Contains(object);
+                const bool exported = _transaction->Contains(object);
                 if (exported) {
                     BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize exported object <{0}> '{1}'", metaClass->Name(), metaName);
                     header.Type = TAG_OBJECT_EXPORT_;
@@ -1175,26 +1171,26 @@ void BinarySerialize_::WriteObject_(AtomWriter_& atomWriter, const RTTI::MetaObj
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-BinarySerializer::BinarySerializer(RTTI::MetaTransaction *transaction)
-    : _transaction(transaction) {}
+BinarySerializer::BinarySerializer() {}
 //----------------------------------------------------------------------------
 BinarySerializer::~BinarySerializer() {}
 //----------------------------------------------------------------------------
-void BinarySerializer::Deserialize(VECTOR(Transaction, RTTI::PMetaObject)& objects, const MemoryView<const u8>& input, const wchar_t *sourceName/* = nullptr */) {
+void BinarySerializer::Deserialize(RTTI::MetaTransaction* transaction, const MemoryView<const u8>& input, const wchar_t *sourceName/* = nullptr */) {
     if (input.empty())
         return;
 
     MemoryViewReader reader(input);
     BinaryDeserialize_ deserialize(this);
     deserialize.Read(reader);
-    deserialize.Finalize(objects, true);
+    deserialize.Finalize(transaction, true);
 }
 //----------------------------------------------------------------------------
-void BinarySerializer::Serialize(IStreamWriter* output, const MemoryView<const RTTI::PMetaObject>& objects) {
+void BinarySerializer::Serialize(IStreamWriter* output, const RTTI::MetaTransaction* transaction) {
     Assert(output);
+    Assert(transaction);
 
-    BinarySerialize_ serialize(this);
-    serialize.Append(objects);
+    BinarySerialize_ serialize(this, transaction);
+    serialize.Append(transaction->MakeView());
     serialize.Finalize(output);
 }
 //----------------------------------------------------------------------------

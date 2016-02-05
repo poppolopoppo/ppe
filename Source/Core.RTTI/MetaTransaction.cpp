@@ -8,6 +8,7 @@
 #include "MetaClassName.h"
 #include "MetaClassDatabase.h"
 #include "MetaObject.h"
+#include "MetaObjectHelpers.h"
 #include "MetaObjectName.h"
 
 namespace Core {
@@ -17,6 +18,11 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 MetaTransaction::MetaTransaction()
 :   _loaded(false)
+,   _unloaded(true) {}
+//----------------------------------------------------------------------------
+MetaTransaction::MetaTransaction(VECTOR(RTTI, PMetaObject)&& objects)
+:   _objects(std::move(objects))
+,   _loaded(false)
 ,   _unloaded(true) {}
 //----------------------------------------------------------------------------
 MetaTransaction::~MetaTransaction() {
@@ -90,6 +96,27 @@ void MetaTransaction::Unload(MetaUnloadContext *context) {
     }
 
     _unloaded = true;
+}
+//----------------------------------------------------------------------------
+bool MetaTransaction::Equals(const MetaTransaction& other) const {
+    return (_objects == other._objects);
+}
+//----------------------------------------------------------------------------
+bool MetaTransaction::DeepEquals(const MetaTransaction& other) const {
+    if (_objects.size() != other._objects.size())
+        return false;
+
+    forrange(i, 0, _objects.size()) {
+        const RTTI::PMetaObject& lhs = _objects[i];
+        const RTTI::PMetaObject& rhs = other._objects[i];
+        if (nullptr == lhs || nullptr == rhs) {
+            if ((nullptr == lhs) != (nullptr == rhs))
+                return false;
+        }
+        else if (false == RTTI::DeepEquals(*lhs, *rhs))
+            return false;
+    }
+    return true;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

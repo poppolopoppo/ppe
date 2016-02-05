@@ -340,20 +340,18 @@ void TextSerialize_::Puts(const StringSlice& str) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-TextSerializer::TextSerializer(RTTI::MetaTransaction *transaction)
-:   _transaction(transaction) {
-    Assert(_transaction);
-}
+TextSerializer::TextSerializer() {}
 //----------------------------------------------------------------------------
 TextSerializer::~TextSerializer() {}
 //----------------------------------------------------------------------------
-void TextSerializer::Deserialize(VECTOR(Transaction, RTTI::PMetaObject)& objects, const MemoryView<const u8>& input, const wchar_t *sourceName /* = nullptr */) {
+void TextSerializer::Deserialize(RTTI::MetaTransaction* transaction, const MemoryView<const u8>& input, const wchar_t *sourceName /* = nullptr */) {
+    Assert(transaction);
     Assert(input.SizeInBytes());
 
     Lexer::Lexer lexer(input.Cast<const char>(), sourceName);
 
     Parser::ParseList parseList(&lexer);
-    Parser::ParseContext parseContext(_transaction.get());
+    Parser::ParseContext parseContext;
 
     while (Parser::PCParseItem result = Grammar_Parse(parseList)) {
         const Parser::ParseExpression *expr = result->As<Parser::ParseExpression>();
@@ -361,16 +359,19 @@ void TextSerializer::Deserialize(VECTOR(Transaction, RTTI::PMetaObject)& objects
             const RTTI::PMetaAtom atom = expr->Eval(&parseContext);
             const auto* object = atom->As<RTTI::PMetaObject>();
             AssertRelease(object);
-            objects.emplace_back(object->Wrapper());
+
+            if (object->Wrapper())
+                transaction->Add(object->Wrapper().get());
         }
     }
 }
 //----------------------------------------------------------------------------
-void TextSerializer::Serialize(IStreamWriter* output, const MemoryView<const RTTI::PMetaObject>& objects) {
+void TextSerializer::Serialize(IStreamWriter* output, const RTTI::MetaTransaction* transaction) {
     Assert(output);
+    Assert(transaction);
 
     TextSerialize_ serialize(this);
-    serialize.Append(objects);
+    serialize.Append(transaction->MakeView());
     serialize.Finalize(output);
 }
 //----------------------------------------------------------------------------

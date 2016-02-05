@@ -17,9 +17,9 @@ namespace Parser {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ParseContext::ParseContext(RTTI::MetaTransaction *transaction, const ParseContext *parent /* = nullptr */)
-:   _parent(parent), _transaction(transaction){
-    _localScope.reserve(32);
+ParseContext::ParseContext(const ParseContext *parent /* = nullptr */)
+:   _parent(parent) {
+    _localScope.reserve(8);
 }
 //----------------------------------------------------------------------------
 ParseContext::~ParseContext() {}
@@ -85,9 +85,8 @@ void ParseContext::AddGlobal(const ParseExpression* expr, const RTTI::MetaObject
 
     global = value;
     const RTTI::PMetaObject& obj = atom->Wrapper();
-
     if (obj)
-        _transaction->Add(obj.get());
+        obj->RTTI_Export(name);
 }
 //----------------------------------------------------------------------------
 void ParseContext::RemoveGlobal(const ParseExpression* expr, const RTTI::MetaObjectName& name, RTTI::MetaAtom* value) {
@@ -117,7 +116,7 @@ void ParseContext::RemoveGlobal(const ParseExpression* expr, const RTTI::MetaObj
     ctx->_globalScope.erase(it);
 
     if (obj)
-        _transaction->Remove(obj.get());
+        obj->RTTI_Unexport();
 }
 //----------------------------------------------------------------------------
 RTTI::MetaAtom *ParseContext::GetGlobal(const RTTI::MetaObjectName& name) const {

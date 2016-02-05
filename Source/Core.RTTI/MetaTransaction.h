@@ -23,6 +23,7 @@ class MetaClass;
 class MetaTransaction : public RefCountable {
 public:
     MetaTransaction();
+    explicit MetaTransaction(VECTOR(RTTI, PMetaObject)&& objects);
     ~MetaTransaction();
 
     MetaTransaction(const MetaTransaction&) = delete;
@@ -37,6 +38,16 @@ public:
 
     void Load(MetaLoadContext* context);
     void Unload(MetaUnloadContext* context);
+
+    bool empty() const { return _objects.empty(); }
+    size_t size() const { return _objects.size(); }
+    size_t capacity() const { return _objects.capacity(); }
+    void reserve(size_t count) { _objects.reserve(count); }
+
+    MemoryView<const PMetaObject> MakeView() const { return Core::MakeView(_objects); }
+
+    bool Equals(const MetaTransaction& other) const;
+    bool DeepEquals(const MetaTransaction& other) const;
 
 private:
     VECTOR(RTTI, PMetaObject) _objects;

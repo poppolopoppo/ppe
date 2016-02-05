@@ -11,13 +11,13 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void ISerializer::Deserialize(VECTOR(Transaction, RTTI::PMetaObject)& objects, IStreamReader* iss, const wchar_t *sourceName/* = nullptr */) {
+void ISerializer::Deserialize(RTTI::MetaTransaction* transaction, IStreamReader* iss, const wchar_t *sourceName/* = nullptr */) {
     Assert(iss);
 
     RAWSTORAGE_THREAD_LOCAL(Serializer, u8) storage;
     iss->ReadAll(storage);
 
-    Deserialize(objects, storage.MakeConstView(), sourceName);
+    Deserialize(transaction, storage.MakeConstView(), sourceName);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

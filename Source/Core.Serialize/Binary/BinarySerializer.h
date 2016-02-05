@@ -19,19 +19,14 @@ public:
 //----------------------------------------------------------------------------
 class BinarySerializer : public ISerializer {
 public:
-    BinarySerializer(RTTI::MetaTransaction *transaction);
+    BinarySerializer();
     virtual ~BinarySerializer();
-
-    virtual RTTI::MetaTransaction *Transaction() const override { return _transaction.get(); }
 
     using ISerializer::Deserialize;
     using ISerializer::Serialize;
 
-    virtual void Deserialize(VECTOR(Transaction, RTTI::PMetaObject)& objects, const MemoryView<const u8>& input, const wchar_t *sourceName = nullptr) override;
-    virtual void Serialize(IStreamWriter* output, const MemoryView<const RTTI::PMetaObject>& objects) override;
-
-private:
-    RTTI::SMetaTransaction _transaction;
+    virtual void Deserialize(RTTI::MetaTransaction* transaction, const MemoryView<const u8>& input, const wchar_t *sourceName = nullptr) override;
+    virtual void Serialize(IStreamWriter* output, const RTTI::MetaTransaction* transaction) override;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

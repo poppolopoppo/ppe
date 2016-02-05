@@ -21,15 +21,13 @@ FWD_REFPTR(ParseExpression);
 //----------------------------------------------------------------------------
 class ParseContext {
 public:
-    explicit ParseContext(RTTI::MetaTransaction *transaction, const ParseContext *parent = nullptr);
+    explicit ParseContext(const ParseContext *parent = nullptr);
     virtual ~ParseContext();
 
     const ParseContext *Parent() const { return _parent; }
 
     RTTI::MetaObject *ScopeObject() const { return _scopeObject.get(); }
     void SetScopeObject(RTTI::MetaObject *object);
-
-    RTTI::MetaTransaction *Transaction() const { return _transaction.get(); }
 
     RTTI::MetaAtom *GetLocal(const RTTI::MetaObjectName& name) const;
 
@@ -46,7 +44,6 @@ public:
 private:
     const ParseContext *_parent;
     RTTI::PMetaObject _scopeObject;
-    RTTI::PMetaTransaction _transaction;
     HASHMAP_THREAD_LOCAL(Parser, RTTI::MetaObjectName, RTTI::PMetaAtom) _localScope;
     mutable HASHMAP_THREAD_LOCAL(Parser, RTTI::MetaObjectName, RTTI::PMetaAtom) _globalScope;
 };
