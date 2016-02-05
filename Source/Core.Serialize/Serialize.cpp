@@ -14,15 +14,16 @@ POOLTAG_DEF(Serialize);
 //----------------------------------------------------------------------------
 void SerializeStartup::Start() {
     POOLTAG(Serialize)::Start();
-    Grammar_Create();
+    GrammarStartup::Start();
 }
 //----------------------------------------------------------------------------
 void SerializeStartup::Shutdown() {
-    Grammar_Destroy();
+    GrammarStartup::Shutdown();
     POOLTAG(Serialize)::Shutdown();
 }
 //----------------------------------------------------------------------------
 void SerializeStartup::ClearAll_UnusedMemory() {
+    GrammarStartup::ClearAll_UnusedMemory();
     POOLTAG(Serialize)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------

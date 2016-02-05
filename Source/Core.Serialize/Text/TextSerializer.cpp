@@ -352,7 +352,7 @@ void TextSerializer::Deserialize(RTTI::MetaTransaction* transaction, const Memor
     Parser::ParseList parseList(&lexer);
     Parser::ParseContext parseContext;
 
-    while (Parser::PCParseItem result = Grammar_Parse(parseList)) {
+    while (Parser::PCParseItem result = GrammarStartup::Parse(parseList)) {
         const Parser::ParseExpression *expr = result->As<Parser::ParseExpression>();
         if (expr) {
             const RTTI::PMetaAtom atom = expr->Eval(&parseContext);

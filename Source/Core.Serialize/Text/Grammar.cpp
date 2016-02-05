@@ -1055,16 +1055,18 @@ Parser::PCParseItem GrammarImpl::Parse(Parser::ParseList& input) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-static GrammarImpl *sGrammarImpl = nullptr;
+static const GrammarImpl *sGrammarImpl = nullptr;
 //----------------------------------------------------------------------------
-void Grammar_Create() {
+void GrammarStartup::Start() {
+    AssertIsMainThread();
     Lexer::LexerStartup::Start();
     Parser::ParserStartup::Start();
     AssertRelease(nullptr == sGrammarImpl);
     sGrammarImpl = new GrammarImpl();
 }
 //----------------------------------------------------------------------------
-void Grammar_Destroy() {
+void GrammarStartup::Shutdown() {
+    AssertIsMainThread();
     AssertRelease(nullptr != sGrammarImpl);
     checked_delete(sGrammarImpl);
     sGrammarImpl = nullptr;
@@ -1072,7 +1074,12 @@ void Grammar_Destroy() {
     Lexer::LexerStartup::Shutdown();
 }
 //----------------------------------------------------------------------------
-Parser::PCParseItem Grammar_Parse(Parser::ParseList& input) {
+void GrammarStartup::ClearAll_UnusedMemory() {
+    Lexer::LexerStartup::ClearAll_UnusedMemory();
+    Parser::ParserStartup::ClearAll_UnusedMemory();
+}
+//----------------------------------------------------------------------------
+Parser::PCParseItem GrammarStartup::Parse(Parser::ParseList& input) {
     Assert(sGrammarImpl);
     return sGrammarImpl->Parse(input);
 }
