@@ -11,11 +11,11 @@ namespace details {
 template <typename _Smaller>
 struct NextUnitIndex {
     typedef typename _Smaller::traits_type smaller_traits_type;
-    enum : u64 { Value = smaller_traits_type::Index + 1 };
+    static constexpr u64 Value = smaller_traits_type::Index + 1;
 };
 template <>
 struct NextUnitIndex<void> {
-    enum : u64 { Value = 0 };
+    static constexpr u64 Value = 0;
 };
 } //!details
 //----------------------------------------------------------------------------
@@ -24,10 +24,8 @@ struct UnitTraits {
     typedef _Tag tag_type;
     typedef _Smaller smaller_type;
     typedef typename tag_type::value_type value_type;
-    enum : u64 {
-        Ratio = _Ratio,
-        Index = details::NextUnitIndex<smaller_type>::Value
-    };
+    static constexpr u64 Ratio = _Ratio;
+    static constexpr u64 Index = details::NextUnitIndex<smaller_type>::Value;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -44,12 +42,12 @@ struct ConvertionRatio_LargerToSmaller {
     typedef typename from_traits_type::smaller_type from_smaller_type;
     typedef typename from_smaller_type::traits_type from_smaller_traits_type;
 
-    enum : u64 { Value = from_smaller_traits_type::Ratio * ConvertionRatio_LargerToSmaller<_To, from_smaller_type>::Value };
+    static constexpr u64 Value = from_smaller_traits_type::Ratio * ConvertionRatio_LargerToSmaller<_To, from_smaller_type>::Value;
 };
 //----------------------------------------------------------------------------
 template <typename _ToFrom>
 struct ConvertionRatio_LargerToSmaller<_ToFrom, _ToFrom> {
-    enum : u64 { Value = 1 };
+    static constexpr u64 Value = 1;
 };
 //----------------------------------------------------------------------------
 } //!details
@@ -67,7 +65,7 @@ struct ConvertionRatio {
                                 typename from_traits_type::tag_type>::value,
                     "convertion between different units");
 
-    enum : bool { LargerToSmaller = (to_traits_type::Index <= from_traits_type::Index) };
+    static constexpr bool LargerToSmaller = (to_traits_type::Index <= from_traits_type::Index);
 
     typedef typename to_traits_type::value_type value_type;
     typedef typename std::conditional<
@@ -76,12 +74,12 @@ struct ConvertionRatio {
         ConvertionRatio_LargerToSmaller<_From, _To>
     >::type convertionratio_type;
 
-    enum : u64 { Value = convertionratio_type::Value };
+    static constexpr u64 Value = convertionratio_type::Value;
 };
 //----------------------------------------------------------------------------
 template <typename _ToFrom>
 struct ConvertionRatio<_ToFrom, _ToFrom> {
-    enum : size_t { Value = 1 };
+    static constexpr u64 Value = 1;
 };
 //----------------------------------------------------------------------------
 } //!details

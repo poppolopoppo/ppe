@@ -75,7 +75,11 @@
 //----------------------------------------------------------------------------
 #define lengthof(_ARRAY) ((sizeof(_ARRAY))/(sizeof(_ARRAY[0])))
 //----------------------------------------------------------------------------
+#if 1
+#define STATIC_CONST_INTEGRAL(_TYPE, _NAME, _DEFAULT_VALUE) static constexpr _TYPE _NAME = (_TYPE)(_DEFAULT_VALUE)
+#else
 #define STATIC_CONST_INTEGRAL(_TYPE, _NAME, _DEFAULT_VALUE) enum : _TYPE { _NAME = (_TYPE)(_DEFAULT_VALUE) }
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

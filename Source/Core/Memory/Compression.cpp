@@ -66,6 +66,9 @@ size_t CompressMemory(MemoryView<u8>& dst, const MemoryView<const u8>& src, Comp
 
     const MemoryView<u8> datas = dst.RemainingAfter(compressedSizeInBytes);
 
+    STATIC_CONST_INTEGRAL(int, FastAccelerator,  7/* ~21% faster */);
+    STATIC_CONST_INTEGRAL(int, CompressionLevel, 9/* LZ4 default */);
+
     switch (method)
     {
     case Core::Compression::Default:
@@ -77,7 +80,6 @@ size_t CompressMemory(MemoryView<u8>& dst, const MemoryView<const u8>& src, Comp
         break;
 
     case Core::Compression::Fast:
-        STATIC_CONST_INTEGRAL(int, FastAccelerator, 7/* ~21% faster */);
         compressedSizeInBytes += checked_cast<int>(::LZ4_compress_fast(
             (char*)src.Pointer(),
             (char*)datas.Pointer(),
@@ -87,7 +89,6 @@ size_t CompressMemory(MemoryView<u8>& dst, const MemoryView<const u8>& src, Comp
         break;
 
     case Core::Compression::HighCompression:
-        STATIC_CONST_INTEGRAL(int, CompressionLevel, 9/* LZ4 default */);
         compressedSizeInBytes += checked_cast<int>(::LZ4_compress_HC(
             (char*)src.Pointer(),
             (char*)datas.Pointer(),
