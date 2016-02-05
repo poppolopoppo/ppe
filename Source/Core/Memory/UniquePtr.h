@@ -6,6 +6,11 @@
 
 #include <memory.h>
 
+#define FWD_UNIQUEPTR(T) \
+    class T; \
+    typedef Core::UniquePtr<T> CONCAT(U, T); \
+    typedef Core::UniquePtr<const T> CONCAT(UC, T);
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

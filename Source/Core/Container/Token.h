@@ -134,6 +134,7 @@ public:
     bool empty() const { return _data.empty(); }
 
     const _Char* c_str() const { return _data.c_str(); }
+    const _Char* data() const { return _data.c_str(); }
     BasicStringSlice<_Char> MakeView() const { return _data.MakeView(); }
 
     size_t HashValue() const;
