@@ -15,7 +15,7 @@ public:
     static void Shutdown();
 
     static void Clear();
-    void ClearAll_UnusedMemory();
+    static void ClearAll_UnusedMemory();
 
     RTTIStartup() { Start(); }
     ~RTTIStartup() { Shutdown(); }
