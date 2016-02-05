@@ -15,7 +15,7 @@ public: \
         return _Name::MetaClass::Instance(); \
     } \
     \
-    class MetaClass : public Core::RTTI::MetaClass { \
+    class MetaClass : public Core::RTTI::DefaultMetaClass<_Name> { \
     public: \
         typedef _Name object_type; \
         typedef _Parent parent_type; \
@@ -28,9 +28,6 @@ public: \
         \
         static bool HasInstance(); \
         static const MetaClass *Instance(); \
-        \
-    protected: \
-        virtual Core::RTTI::MetaObject *VirtualCreateInstance() const override; \
     }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

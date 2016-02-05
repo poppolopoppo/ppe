@@ -1126,8 +1126,7 @@ void BinarySerialize_::WriteObject_(AtomWriter_& atomWriter, const RTTI::MetaObj
 
         property_indices_type& propertyIndices = _propertiesByClassIndex[class_i];
 
-        for (const Pair<RTTI::MetaPropertyName, const RTTI::MetaProperty *>& it : metaClass->Properties()) {
-            const RTTI::MetaProperty *prop = it.second;
+        for (const RTTI::UCMetaProperty& prop : metaClass->Properties()) {
             if (prop->IsDefaultValue(object))
                 continue;
 
@@ -1136,7 +1135,7 @@ void BinarySerialize_::WriteObject_(AtomWriter_& atomWriter, const RTTI::MetaObj
 
             ++propertyCount;
 
-            const property_index_t prop_i = propertyIndices.IndexOf(prop);
+            const property_index_t prop_i = propertyIndices.IndexOf(prop.get());
             _objectStream.WritePOD(prop_i);
 
             const RTTI::PMetaAtom atom = prop->WrapCopy(object);

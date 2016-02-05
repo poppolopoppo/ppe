@@ -37,11 +37,6 @@
         return &Core::RTTI::MetaClassSingleton< _Name >::Instance(); \
     }
 //----------------------------------------------------------------------------
-#define _RTTI_CLASS_CREATE_INSTANCE(_Name) \
-    Core::RTTI::MetaObject *_Name::MetaClass::VirtualCreateInstance() const { \
-        return new _Name(); \
-    }
-//----------------------------------------------------------------------------
 #define _RTTI_CLASS_DESTRUCTOR(_Name) \
     _Name::MetaClass::~MetaClass() {}
 //----------------------------------------------------------------------------
@@ -49,12 +44,12 @@
 //----------------------------------------------------------------------------
 #define RTTI_CLASS_BEGIN(_Name, _Attributes) \
     _RTTI_CLASS_SINGLETON(_Name) \
-    _RTTI_CLASS_CREATE_INSTANCE(_Name) \
     _RTTI_CLASS_DESTRUCTOR(_Name) \
     _Name::MetaClass::MetaClass() \
-    :   Core::RTTI::MetaClass(  STRINGIZE(_Name), \
-                                Core::RTTI::MetaClass::_Attributes, \
-                                Core::RTTI::GetMetaClass<parent_type>()) {
+    :   Core::RTTI::DefaultMetaClass<_Name>( \
+            STRINGIZE(_Name), \
+            Core::RTTI::MetaClass::_Attributes, \
+            Core::RTTI::GetMetaClass<parent_type>() ) {
 //----------------------------------------------------------------------------
 #define RTTI_CLASS_END() }
 //----------------------------------------------------------------------------
@@ -62,8 +57,8 @@
 //----------------------------------------------------------------------------
 // Internal helper
 #define _RTTI_PROPERTY_IMPL(_Name, _Flags, _Args) { \
-        const Core::RTTI::MetaProperty* const prop = Core::RTTI::MakeProperty(_Name, _Flags, _Args ); \
-        _properties.Insert_AssertUnique(prop->Name(), prop ); \
+        Core::RTTI::UCMetaProperty prop(Core::RTTI::MakeProperty(_Name, _Flags, _Args )); \
+        RegisterProperty(std::move(prop)); \
     }
 //----------------------------------------------------------------------------
 // Add a public property "Alias" from a private field "_someName"
@@ -95,9 +90,9 @@
 //----------------------------------------------------------------------------
 // Add a deprecated property "SomeName" of type T, these are write-only : you can't read from them
 #define RTTI_PROPERTY_DEPRECATED(_Type, _Name) { \
-        const Core::RTTI::MetaProperty* const prop = Core::RTTI::MakeDeprecatedProperty<_Type, object_type>( \
-            STRINGIZE(_Name), Core::RTTI::MetaProperty::Private); \
-        _properties.Insert_AssertUnique(prop->Name(), prop ); \
+        Core::RTTI::UCMetaProperty prop = Core::RTTI::MakeDeprecatedProperty<_Type, object_type>( \
+            STRINGIZE(_Name), Core::RTTI::MetaProperty::Private ); \
+        RegisterProperty(std::move(prop)); \
     }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

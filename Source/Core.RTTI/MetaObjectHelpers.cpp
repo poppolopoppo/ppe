@@ -32,8 +32,8 @@ bool Equals(const MetaObject& lhs, const MetaObject& rhs) {
     if (rhs.RTTI_MetaClass() != metaClass)
         return false;
 
-    for (const Pair<MetaPropertyName, const MetaProperty *>& prop : metaClass->Properties())
-        if (false == prop.second->Equals(&lhs, &rhs))
+    for (const UCMetaProperty& prop : metaClass->Properties())
+        if (false == prop->Equals(&lhs, &rhs))
             return false;
 
     return true;
@@ -49,8 +49,8 @@ bool DeepEquals(const MetaObject& lhs, const MetaObject& rhs) {
     if (rhs.RTTI_MetaClass() != metaClass)
         return false;
 
-    for (const Pair<MetaPropertyName, const MetaProperty *>& prop : metaClass->Properties())
-        if (false == prop.second->DeepEquals(&lhs, &rhs))
+    for (const UCMetaProperty& prop : metaClass->Properties())
+        if (false == prop->DeepEquals(&lhs, &rhs))
             return false;
 
     return true;
@@ -63,8 +63,8 @@ hash_t hash_value(const MetaObject& object) {
     Assert(metaClass);
 
     hash_t h(CORE_HASH_VALUE_SEED);
-    for (const Pair<MetaPropertyName, const MetaProperty *>& prop : metaClass->Properties())
-        hash_combine(h, hash_t(prop.second->HashValue(&object)));
+    for (const UCMetaProperty& prop : metaClass->Properties())
+        hash_combine(h, hash_t(prop->HashValue(&object)));
 
     return h;
 }
@@ -76,9 +76,9 @@ void Move(MetaObject& dst, MetaObject& src) {
     Assert(metaClass);
     Assert(dst.RTTI_MetaClass() == metaClass);
 
-    for (const Pair<MetaPropertyName, const MetaProperty *>& prop : metaClass->Properties())
-        if (prop.second->IsWritable())
-            prop.second->Move(&dst, &src);
+    for (const UCMetaProperty& prop : metaClass->Properties())
+        if (prop->IsWritable())
+            prop->Move(&dst, &src);
 }
 //----------------------------------------------------------------------------
 void Copy(MetaObject& dst, const MetaObject& src) {
@@ -86,9 +86,9 @@ void Copy(MetaObject& dst, const MetaObject& src) {
     Assert(metaClass);
     Assert(dst.RTTI_MetaClass() == metaClass);
 
-    for (const Pair<MetaPropertyName, const MetaProperty *>& prop : metaClass->Properties())
-        if (prop.second->IsWritable())
-            prop.second->Copy(&dst, &src);
+    for (const UCMetaProperty& prop : metaClass->Properties())
+        if (prop->IsWritable())
+            prop->Copy(&dst, &src);
 }
 //----------------------------------------------------------------------------
 void Swap(MetaObject& lhs, MetaObject& rhs) {
@@ -96,9 +96,9 @@ void Swap(MetaObject& lhs, MetaObject& rhs) {
     Assert(metaClass);
     Assert(rhs.RTTI_MetaClass() == metaClass);
 
-    for (const Pair<MetaPropertyName, const MetaProperty *>& prop : metaClass->Properties())
-        if (prop.second->IsWritable())
-            prop.second->Swap(&lhs, &rhs);
+    for (const UCMetaProperty& prop : metaClass->Properties())
+        if (prop->IsWritable())
+            prop->Swap(&lhs, &rhs);
 }
 //----------------------------------------------------------------------------
 MetaObject *NewCopy(const MetaObject& src) {

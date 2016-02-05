@@ -19,36 +19,7 @@ MetaClass::MetaClass(const MetaClassName& name, Flags attributes, const MetaClas
 ,   _parent(parent)
 ,   _attributes(attributes) {}
 //----------------------------------------------------------------------------
-MetaClass::~MetaClass() {
-    for (const auto& it : _properties)
-        checked_delete(it.second);
-}
-//----------------------------------------------------------------------------
-const MetaProperty *MetaClass::PropertyIFP(const char *name, size_t attributes /* = 0 */, bool inherited /* = true */) const {
-    Assert(name);
-
-    for (const auto& p : _properties)
-        if ((p.second->Attributes() & attributes) == attributes &&
-            (0 == CompareN(p.first.c_str(), name, p.first.size())) )
-            return p.second;
-
-    return (inherited && _parent)
-        ? _parent->PropertyIFP(name, attributes, true)
-        : nullptr;
-}
-//----------------------------------------------------------------------------
-const MetaProperty *MetaClass::PropertyIFP(const MetaPropertyName& name, size_t attributes /* = 0 */, bool inherited /* = true */) const {
-    Assert(name.size());
-
-    const auto it = _properties.Find(name);
-    if ((it != _properties.end()) &&
-        (it->second->Attributes() & attributes) == attributes)
-        return it->second;
-
-    return (inherited && _parent)
-        ? _parent->PropertyIFP(name, attributes, true)
-        : nullptr;
-}
+MetaClass::~MetaClass() {}
 //----------------------------------------------------------------------------
 bool MetaClass::InheritsFrom(const MetaClass *parent) const {
     Assert(parent);
@@ -74,9 +45,81 @@ void MetaClass::Unregister(MetaClassHashMap& database) const {
     database.Remove(this);
 }
 //----------------------------------------------------------------------------
+MemoryView<const UCMetaProperty> MetaClass::Properties() const {
+    return VirtualProperties();
+}
+//----------------------------------------------------------------------------
+const MetaProperty *MetaClass::PropertyIFP(const char *name, size_t attributes /* = 0 */, bool inherited /* = true */) const {
+    Assert(name);
+
+    const MetaProperty* result = VirtualPropertyIFP(name, attributes);
+    if (result)
+        return result;
+
+    return (inherited && Parent())
+        ? Parent()->PropertyIFP(name, attributes, true)
+        : nullptr;
+}
+//----------------------------------------------------------------------------
+const MetaProperty *MetaClass::PropertyIFP(const MetaPropertyName& name, size_t attributes /* = 0 */, bool inherited /* = true */) const {
+    Assert(name.size());
+
+    const MetaProperty* result = VirtualPropertyIFP(name, attributes);
+    if (result)
+        return result;
+
+    return (inherited && Parent())
+        ? Parent()->PropertyIFP(name, attributes, true)
+        : nullptr;
+}
+//----------------------------------------------------------------------------
 MetaObject* MetaClass::CreateInstance() const {
-    Assert(!IsAbstract());
+    Assert(not IsAbstract());
     return VirtualCreateInstance();
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+InScopeMetaClass::InScopeMetaClass(const MetaClassName& name, Flags attributes, const MetaClass *parent)
+:   MetaClass(name, attributes, parent) {}
+//----------------------------------------------------------------------------
+InScopeMetaClass::~InScopeMetaClass() {}
+//----------------------------------------------------------------------------
+MemoryView<const UCMetaProperty> InScopeMetaClass::VirtualProperties() const {
+    return MakeView(_properties);
+}
+//----------------------------------------------------------------------------
+const MetaProperty *InScopeMetaClass::VirtualPropertyIFP(const char *name, size_t attributes) const {
+    for (const UCMetaProperty& p : _properties)
+        if ((p->Attributes() & attributes) == attributes &&
+            (0 == CompareN(p->Name().c_str(), name, p->Name().size())) )
+            return p.get();
+
+    return nullptr;
+}
+//----------------------------------------------------------------------------
+const MetaProperty *InScopeMetaClass::VirtualPropertyIFP(const MetaPropertyName& name, size_t attributes) const {
+    for (const UCMetaProperty& p : _properties)
+        if ((p->Attributes() & attributes) == attributes &&
+            (p->Name() == name) )
+            return p.get();
+
+    return nullptr;
+}
+//----------------------------------------------------------------------------
+void InScopeMetaClass::RegisterProperty(UCMetaProperty&& prop) {
+    Assert(prop);
+    Assert(not prop->Name().empty());
+
+#ifdef WITH_CORE_ASSERT
+    {
+        const MetaPropertyName name = prop->Name();
+        for (const UCMetaProperty& p : _properties)
+            Assert(p->Name() != name);
+    }
+#endif
+
+    _properties.emplace_back(std::move(prop));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

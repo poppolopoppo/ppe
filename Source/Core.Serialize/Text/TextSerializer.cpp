@@ -283,8 +283,7 @@ void TextSerialize_::WriteObject_(AtomWriter_& writer, const RTTI::MetaObject* o
         Puts("(");
         IncIndent();
 
-        for (const Pair<RTTI::MetaPropertyName, const RTTI::MetaProperty *>& it : metaClass->Properties()) {
-            const RTTI::MetaProperty *prop = it.second;
+        for (const RTTI::UCMetaProperty& prop : metaClass->Properties()) {
             if (prop->IsDefaultValue(object))
                 continue;
 

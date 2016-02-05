@@ -21,7 +21,7 @@ namespace RTTI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 MetaObject::MetaClass::MetaClass()
-:   RTTI::MetaClass("MetaObject", RTTI::MetaClass::Abstract, nullptr)
+:   RTTI::DefaultMetaClass<MetaObject>("MetaObject", RTTI::MetaClass::Abstract, nullptr)
 {}
 //----------------------------------------------------------------------------
 MetaObject::MetaClass::~MetaClass() {}
@@ -40,10 +40,6 @@ bool MetaObject::MetaClass::HasInstance() {
 //----------------------------------------------------------------------------
 const MetaObject::MetaClass *MetaObject::MetaClass::Instance() {
     return &Core::RTTI::MetaClassSingleton< MetaObject >::Instance();
-}
-//----------------------------------------------------------------------------
-Core::RTTI::MetaObject *MetaObject::MetaClass::VirtualCreateInstance() const {
-    return new MetaObject();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -11,23 +11,38 @@ FWD_REFPTR(MetaObject);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T>
-class MetaClassSingleton : Meta::Singleton<typename T::MetaClass, typename T::MetaClass> {
-    typedef Meta::Singleton<typename T::MetaClass, typename T::MetaClass> parent_type;
+template <typename T, typename = std::enable_if< std::is_base_of<RTTI::MetaObject, T>::value >::type >
+class MetaClassSingleton {
 public:
-    using parent_type::HasInstance;
-    using parent_type::Instance;
+    typedef T object_type;
+    typedef typename T::MetaClass metaclass_type;
+    STATIC_ASSERT(std::is_base_of<RTTI::MetaClass, metaclass_type>::value);
+
+    static bool HasInstance() { return (nullptr != _gInstance); }
+    static const metaclass_type& Instance() { Assert(_gInstance); return *_gInstance; }
 
     static void Create() {
-        parent_type::Create();
-        parent_type::Instance().Register(MetaClassDatabase::Instance());
+        AssertIsMainThread();
+        Assert(nullptr == _gInstance);
+        _gInstance.reset(new metaclass_type());
+        _gInstance->Register(MetaClassDatabase::Instance());
     }
 
     static void Destroy() {
-        parent_type::Instance().Unregister(MetaClassDatabase::Instance());
-        parent_type::Destroy();
+        AssertIsMainThread();
+        Assert(nullptr != _gInstance);
+        _gInstance->Unregister(MetaClassDatabase::Instance());
+        _gInstance.reset(nullptr);
     }
+
+private:
+    static UniquePtr<const metaclass_type> _gInstance;
 };
+//----------------------------------------------------------------------------
+template <typename T, typename _Enabled >
+UniquePtr<const typename T::MetaClass> MetaClassSingleton<T, _Enabled>::_gInstance = nullptr;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T> // valid RTTI parent
 static const RTTI::MetaClass *GetMetaClass(typename std::enable_if< std::is_base_of<RTTI::MetaObject, T>::value >::type* = 0) {

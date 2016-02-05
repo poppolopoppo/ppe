@@ -26,9 +26,8 @@ public:
         Exported    = 1<<2,
     };
 
-protected:
-    MetaObject();
 public:
+    MetaObject();
     virtual ~MetaObject();
 
     MetaObject(const MetaObject&) = delete;
@@ -49,7 +48,7 @@ public:
     void RTTI_CallLoadIFN(MetaLoadContext *context);
     void RTTI_CallUnloadIFN(MetaUnloadContext *context);
 
-    class MetaClass : public Core::RTTI::MetaClass {
+    class MetaClass : public DefaultMetaClass<MetaObject> {
     public:
         typedef MetaObject object_type;
         typedef void parent_type;
@@ -62,9 +61,6 @@ public:
 
         static bool HasInstance();
         static const MetaClass *Instance();
-
-    protected:
-        virtual Core::RTTI::MetaObject *VirtualCreateInstance() const override;
     };
 
     virtual const RTTI::MetaClass *RTTI_MetaClass() const {
