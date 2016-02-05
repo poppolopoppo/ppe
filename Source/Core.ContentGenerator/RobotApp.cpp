@@ -251,11 +251,11 @@ void RTTIAtomRandomizer_::Randomize(RTTI::MetaObject* pobject) {
 
     ++_depth;
 
-    for (const auto& it : pobject->RTTI_MetaClass()->Properties()) {
-        RTTI::PMetaAtom atom = it.second->WrapMove(pobject);
+    for (const RTTI::UCMetaProperty& prop : pobject->RTTI_MetaClass()->Properties()) {
+        RTTI::PMetaAtom atom = prop->WrapMove(pobject);
         AssertRelease(nullptr != atom);
         parent_type::Append(atom.get());
-        it.second->MoveFrom(pobject, atom.get());
+        prop->MoveFrom(pobject, atom.get());
     }
 
     Assert(0 < _depth);
@@ -389,11 +389,11 @@ RobotApp::RobotApp()
             while (0 < (len = iss.ReadLine(buffer))) {
                 const StringSlice line(buffer, len);
                 const StringSlice word = Chomp(line);
-                words.emplace_back(MakeString(word));
+                words.emplace_back(ToString(word));
             }
         }
 
-        STRINGTRIE_SET(Container, CaseSensitive::True, 16) set;
+        STRINGTRIE_SET(Container, CaseSensitive::True, 17) set;
 
         std::random_shuffle(words.begin(), words.end());
 
@@ -422,7 +422,7 @@ RobotApp::RobotApp()
                 Lexer::Lexer lexer(StringSlice(&line[0], Length(line)), L"@in_memory");
                 Parser::ParseList input(&lexer);
 
-                Parser::PCParseItem item = Serialize::Grammar_Parse(input);
+                Parser::PCParseItem item = Serialize::GrammarStartup::Parse(input);
                 AssertRelease(item);
 
                 item->Invoke(&globalContext);
@@ -440,6 +440,10 @@ RobotApp::RobotApp()
     }
     test_type::MetaClass::Destroy();
     ContentIdentity::MetaClass::Destroy();
+
+    Serialize::SerializeStartup::ClearAll_UnusedMemory();
+    RTTI::RTTIStartup::ClearAll_UnusedMemory();
+    Core::CoreStartup::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 void RobotApp::Start() {
