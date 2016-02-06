@@ -20,6 +20,8 @@ class MemoryTrackingData;
 //----------------------------------------------------------------------------
 ALIGN(16) class MemoryPoolChunk {
 public:
+    friend class MemoryPoolBase;
+
     struct Block { Block *Next; };
 
     explicit MemoryPoolChunk(size_t chunkSize, size_t blockCount, MemoryPoolChunk *nextChunk = nullptr);
@@ -34,8 +36,7 @@ public:
     size_t ChunkSize() const { return _chunkSize; }
     size_t BlockCount() const { return _blockCount; }
 
-    MemoryPoolChunk *Next() const { return _nextChunk; }
-    void SetNext(MemoryPoolChunk *next) { _nextChunk = next; }
+    IntrusiveListNode<MemoryPoolChunk>& Node() { return _node; }
 
     size_t BlockUsed() const { return _blockUsed; }
 
@@ -60,7 +61,8 @@ private:
     u32 _blockAdded;
 
     const size_t _chunkSize;
-    MemoryPoolChunk *_nextChunk;
+
+    IntrusiveListNode<MemoryPoolChunk> _node;
 };
 //----------------------------------------------------------------------------
 STATIC_ASSERT(IS_ALIGNED(16, sizeof(MemoryPoolChunk)));
@@ -88,8 +90,8 @@ public:
     size_t CurrentChunkSize() const { return _currentChunksize; }
     size_t ChunkCount() const { return _chunkCount; }
 
-    MemoryPoolChunk *Chunks() { return _chunks; }
-    const MemoryPoolChunk *Chunks() const { return _chunks; }
+    MemoryPoolChunk *Chunks() { return _chunks.Head(); }
+    const MemoryPoolChunk *Chunks() const { return _chunks.Head(); }
 
     size_t BlockCountPerChunk(size_t chunkSize) const { return (chunkSize - sizeof(MemoryPoolChunk)) / _blockSize; }
 
@@ -114,10 +116,13 @@ protected:
 
 private:
     void SpareChunk_(MemoryPoolChunk *chunk);
+    MemoryPoolChunk* ReviveChunk_();
     MemoryPoolChunk* ReleaseChunk_();
 
-    MemoryPoolChunk *_chunks;
-    MemoryPoolChunk *_spares;
+    typedef INTRUSIVELIST(&MemoryPoolChunk::_node) list_type;
+
+    list_type _chunks;
+    list_type _spares;
 
     size_t _chunkCount;
     size_t _usedSize;
@@ -151,7 +156,7 @@ private:
     typedef INTRUSIVELIST(&MemoryPoolBase::_node) list_type;
 
     AtomicSpinLock _barrier;
-    MemoryPoolBase* _head;
+    list_type _pools;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

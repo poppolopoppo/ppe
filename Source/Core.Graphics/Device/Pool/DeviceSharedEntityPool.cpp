@@ -105,8 +105,8 @@ bool DeviceSharedEntityPool::Acquire_Exclusive(PDeviceAPIDependantEntity *pEntit
     Assert(0 == shared->LockCount);
     Assert(nullptr == shared->Local.Prev);
 
-    global_lru_type::Deque(&_mru, &_lru, p);
-    local_lru_type::Deque(&it->second, nullptr, p);
+    global_lru_type::Erase(&_mru, &_lru, p);
+    local_lru_type::Erase(&it->second, nullptr, p);
 
     if (nullptr == it->second)
         _map.erase(it);
@@ -127,8 +127,8 @@ void DeviceSharedEntityPool::Release_Exclusive(const DeviceSharedEntityKey& key,
     SharedEntity *const mru = new SharedEntity;
     mru->LockCount = 0;
 
-    global_lru_type::Queue(&_mru, &_lru, mru);
-    local_lru_type::Queue(&shared, nullptr, mru);
+    global_lru_type::PushFront(&_mru, &_lru, mru);
+    local_lru_type::PushFront(&shared, nullptr, mru);
 
     const size_t sizeInBytes = shared->Entity->VideoMemorySizeInBytes();
     Assert(sizeInBytes);
@@ -154,8 +154,8 @@ size_t DeviceSharedEntityPool::ReleaseLRU_ReturnRealSize(size_t targetSizeInByte
             const map_type::iterator it = _map.find(p->Key);
             Assert(_map.end() != it);
 
-            global_lru_type::Deque(&_mru, &_lru, p);
-            local_lru_type::Deque(&it->second, nullptr, p);
+            global_lru_type::Erase(&_mru, &_lru, p);
+            local_lru_type::Erase(&it->second, nullptr, p);
 
             if (nullptr == it->second)
                 _map.erase(it);

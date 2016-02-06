@@ -28,8 +28,8 @@ public:
         SINGLETON_POOL_ALLOCATED_DECL();
     };
 
-    typedef INTRUSIVELIST(&SharedEntity::Global) global_lru_type;
-    typedef INTRUSIVELIST(&SharedEntity::Local)  local_lru_type;
+    typedef INTRUSIVELIST_ACCESSOR(&SharedEntity::Global) global_lru_type;
+    typedef INTRUSIVELIST_ACCESSOR(&SharedEntity::Local)  local_lru_type;
 
     explicit DeviceSharedEntityPool(MemoryTrackingData *globalVideoMemory);
     ~DeviceSharedEntityPool();
