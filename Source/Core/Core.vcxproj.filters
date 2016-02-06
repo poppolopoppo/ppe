@@ -856,6 +856,12 @@
     <CustomBuild Include="Misc\Guid.h">
       <Filter>Misc</Filter>
     </CustomBuild>
+    <CustomBuild Include="Misc\TargetPlatform.cpp">
+      <Filter>Misc</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Misc\TargetPlatform.h">
+      <Filter>Misc</Filter>
+    </CustomBuild>
     <CustomBuild Include="Thread\Task\Task.h">
       <Filter>Thread\Task</Filter>
     </CustomBuild>
