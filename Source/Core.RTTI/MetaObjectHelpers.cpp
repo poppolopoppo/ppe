@@ -126,17 +126,27 @@ MetaObject *NewDeepCopy(const MetaObject& src) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-String ToString(const MetaObject& object) {
-    const MetaClass *metaclass = object.RTTI_MetaClass();
+} //!namespace RTTI
+} //!namespace Core
+
+namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+String ToString(const RTTI::MetaObject& object) {
+    const RTTI::MetaClass *metaclass = object.RTTI_MetaClass();
     Assert(metaclass);
     return StringFormat("@{0} : {1} = \"{2}\"", &object, metaclass->Name(), object.RTTI_Name());
 }
 //----------------------------------------------------------------------------
-String ToString(const PCMetaObject& pobject) {
+String ToString(const RTTI::PMetaObject& pobject) {
+    return (pobject) ? ToString(*pobject) : String();
+}
+//----------------------------------------------------------------------------
+String ToString(const RTTI::PCMetaObject& pobject) {
     return (pobject) ? ToString(*pobject) : String();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace RTTI
 } //!namespace Core

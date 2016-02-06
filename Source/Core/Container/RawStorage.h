@@ -98,6 +98,9 @@ public:
     MemoryView<const T> MakeView() const { return MemoryView<const T>(data(), size()); }
     MemoryView<const T> MakeConstView() const { return MemoryView<const T>(data(), size()); }
 
+    friend bool operator ==(const RawStorage& lhs, const RawStorage& rhs) { return lhs.Equals(rhs); }
+    friend bool operator !=(const RawStorage& lhs, const RawStorage& rhs) { return not lhs.Equals(rhs); }
+
 protected:
     pointer _storage;
     size_type _size;

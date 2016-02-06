@@ -36,4 +36,5 @@
     COMMA_PROTECT(_Macro(String,     Core::String,                  32, ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(WString,    Core::WString,                 33, ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(MetaAtom,   Core::RTTI::PMetaAtom,         34, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(MetaObject, Core::RTTI::PMetaObject,       35, ##__VA_ARGS__))
+    COMMA_PROTECT(_Macro(MetaObject, Core::RTTI::PMetaObject,       35, ##__VA_ARGS__)) \
+    COMMA_PROTECT(_Macro(BinaryData, Core::RTTI::BinaryData,        36, ##__VA_ARGS__))

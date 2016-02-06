@@ -154,9 +154,28 @@ private:
             WriteValue_(str);
         }
 
+        void WriteValue_(const RTTI::BinaryData& rawdata) {
+            if (rawdata.empty()) {
+                _owner->Print("BinaryData:\"\"");
+            }
+            else {
+                STACKLOCAL_OCSTRSTREAM(fmt, 32);
+                fmt << std::hex << std::setfill('0');
+                _owner->Print("BinaryData:\"");
+                for (const u8& b : rawdata) {
+                    fmt << "\\x"  << std::setw(2) << unsigned(b);
+                    _owner->Print(fmt.MakeView());
+                    fmt.Reset();
+                }
+                _owner->Print("\"");
+            }
+        }
+
         template <typename T, size_t _Dim>
         void WriteValue_(const ScalarVector<T, _Dim>& v) {
-            _owner->Print("[");
+            const RTTI::MetaTypeInfo type = RTTI::TypeInfo<ScalarVector<T, _Dim>>();
+            _owner->Print(type.Name);
+            _owner->Print(":[");
             _owner->PrintFormat(Numeric_(v._data[0]));
             forrange(i, 1, _Dim) {
                 _owner->Print(", ");
@@ -167,7 +186,9 @@ private:
 
         template <typename T, size_t _Width, size_t _Height>
         void WriteValue_(const ScalarMatrix<T, _Width, _Height>& v) {
-            _owner->Print("[");
+            const RTTI::MetaTypeInfo type = RTTI::TypeInfo<ScalarMatrix<T, _Width, _Height>>();
+            _owner->Print(type.Name);
+            _owner->Print(":[");
             _owner->PrintFormat(Numeric_(v.data().raw[0]));
             forrange(i, 1, _Width*_Height) {
                 _owner->Print(", ");

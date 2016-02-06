@@ -463,6 +463,22 @@ private:
             }
         }
 
+        bool ReadValue_(RTTI::BinaryData& rawdata) {
+            u64 rawsize;
+            if (_reader->ReadPOD(&rawsize)) {
+                if (0 == rawsize) {
+                    return true;
+                }
+                else {
+                    rawdata.Resize_DiscardData(rawsize);
+                    return _reader->Read(rawdata.data(), rawsize);
+                }
+            }
+            else {
+                return false;
+            }
+        }
+
         BinaryDeserialize_* _owner;
         MemoryViewReader* _reader;
         std::streamoff _dataoff;
@@ -889,6 +905,12 @@ private:
             }
             else
                 WritePOD(TAG_OBJECT_NULL_);
+        }
+
+        void WriteValue_(const RTTI::BinaryData& rawdata) {
+            WritePOD(checked_cast<u64>(rawdata.size()));
+            if (rawdata.size())
+                _owner->_objectStream.Write(rawdata.data(), rawdata.SizeInBytes());
         }
 
         BinarySerialize_* _owner;

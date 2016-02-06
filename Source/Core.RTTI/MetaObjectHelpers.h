@@ -40,11 +40,38 @@ MetaObject *NewDeepCopy(const MetaObject& src);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-String ToString(const MetaObject& object);
-//----------------------------------------------------------------------------
-String ToString(const PCMetaObject& pobject);
+} //!namespace RTTI
+} //!namespace Core
+
+namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace RTTI
+String ToString(const RTTI::MetaObject& object);
+String ToString(const RTTI::PMetaObject& pobject);
+String ToString(const RTTI::PCMetaObject& pobject);
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits>
+std::basic_ostream<_Char, _Traits>& operator <<(
+    std::basic_ostream<_Char, _Traits>& oss,
+    const RTTI::MetaObject& object) {
+    return oss << ToString(object);
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits>
+std::basic_ostream<_Char, _Traits>& operator <<(
+    std::basic_ostream<_Char, _Traits>& oss,
+    const RTTI::PMetaObject& pobject) {
+    return oss << ToString(pobject);
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits>
+std::basic_ostream<_Char, _Traits>& operator <<(
+    std::basic_ostream<_Char, _Traits>& oss,
+    const RTTI::PCMetaObject& pobject) {
+    return oss << ToString(pobject);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Core

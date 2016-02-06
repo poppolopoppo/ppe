@@ -145,7 +145,7 @@ bool MetaTypedAtomImpl<T>::Equals(const MetaAtom *atom) const {
     if (atom->TypeInfo().Id != meta_type::TypeId)
         return false;
 
-    return atom->Cast<T>()->Wrapper() == _wrapper;
+    return (atom->Cast<T>()->Wrapper() == _wrapper);
 }
 //----------------------------------------------------------------------------
 template <typename T>

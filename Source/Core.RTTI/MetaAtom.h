@@ -503,24 +503,30 @@ typename MetaAtomWrapper<T>::type *MakeAtom(T&& rvalue, typename std::enable_if<
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+} //!namespace RTTI
+} //!namespace Core
+
+namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename T, typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
-    const MetaTypedAtom<T>& typedAtom) {
+    const RTTI::MetaTypedAtom<T>& typedAtom) {
     return oss << typedAtom.Wrapper();
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
-    const MetaAtom *atom) {
+    const RTTI::MetaAtom *atom) {
     Assert(atom);
     return oss << atom->ToString();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace RTTI
 } //!namespace Core
 
 #include "Core.RTTI/MetaAtom-inl.h"

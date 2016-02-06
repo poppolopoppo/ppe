@@ -4,6 +4,7 @@
 
 #include "Core/Container/AssociativeVector.h"
 #include "Core/Container/Pair.h"
+#include "Core/Container/RawStorage.h"
 #include "Core/Container/Vector.h"
 
 #include "Core/IO/Format.h"
@@ -78,6 +79,8 @@ using Dictionary = Core::AssociativeVector<
     Meta::EqualTo<_Key>,
     RTTI::Vector<RTTI::Pair<_Key COMMA _Value> >
 >;
+//----------------------------------------------------------------------------
+INSTANTIATE_CLASS_TYPEDEF(BinaryData, RAWSTORAGE_ALIGNED(RTTI, u8, 16));
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -275,16 +278,35 @@ MetaTypeInfo TypeInfo() {
     return MetaTypeInfo{ meta_type::Id(), meta_type::Flags(), meta_type::Name() };
 }
 //----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace RTTI
+} //!namespace Core
+
+namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+hash_t hash_value(const RTTI::BinaryData& rawdata);
+//----------------------------------------------------------------------------
+String ToString(const RTTI::BinaryData& rawdata);
+//----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
-    const MetaTypeInfo& typeInfo) {
+    const RTTI::BinaryData& rawdata) {
+    return oss << ToString(rawdata);
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits>
+std::basic_ostream<_Char, _Traits>& operator <<(
+    std::basic_ostream<_Char, _Traits>& oss,
+    const RTTI::MetaTypeInfo& typeInfo) {
     return oss << typeInfo.Name;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace RTTI
 } //!namespace Core
 
 #pragma warning( pop )

@@ -128,6 +128,10 @@ namespace {
                 METATYPE_PROMOTE_TO(float4x3)
                 METATYPE_PROMOTE_TO(float4x4)
                 METATYPE_PROMOTE_END_FROM()
+
+                METATYPE_PROMOTE_BEGIN_FROM(String)
+                METATYPE_PROMOTE_TO(BinaryData)
+                METATYPE_PROMOTE_END_FROM()
             }
 
             return false;

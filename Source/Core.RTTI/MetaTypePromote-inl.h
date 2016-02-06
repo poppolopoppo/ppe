@@ -167,6 +167,19 @@ struct MetaTypePromote<RTTI::Vector<PMetaAtom>, ScalarMatrix<T, _Width, _Height>
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <>
+struct MetaTypePromote<String, RTTI::BinaryData> {
+    typedef std::true_type enabled;
+    bool operator ()(RTTI::BinaryData* dst, const String& value) const {
+        dst->Resize_DiscardData(value.size());
+        Assert(dst->SizeInBytes() == value.size());
+        memcpy(dst->data(), value.c_str(), dst->SizeInBytes());
+        return true;
+    }
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 #define METATYPE_STRINGIZE_PROMOTE_IMPL(_From, _Char) \
     template <> struct MetaTypePromote<_From, DefaultString<_Char>::type > { \
         typedef std::true_type enabled; \
