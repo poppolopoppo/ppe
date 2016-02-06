@@ -77,9 +77,11 @@ inline WString ToWString(bool b) { return (b ? L"true" : L"false"); }
 template <typename _Char, size_t _Capacity = 64>
 class StaticFormat {
 public:
+    STATIC_ASSERT(std::is_pod<_Char>::value);
+
     template <typename _Arg0, typename... _Args>
     StaticFormat(const _Char* format, _Arg0&& arg0, _Args&&... args) {
-        Format(_c_str, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+        _length = Format(_c_str, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
     }
 
     StaticFormat(const StaticFormat& ) = delete;
@@ -88,10 +90,11 @@ public:
     StaticFormat(StaticFormat&& ) = delete;
     StaticFormat& operator =(StaticFormat&& ) = delete;
 
-    const char *c_str() const { return _c_str; }
+    MemoryView<const _Char> MakeView() const { return MemoryView<const _Char>(_c_str, _length); }
 
 private:
-    char _c_str[_Capacity];
+    size_t _length;
+    _Char _c_str[_Capacity];
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

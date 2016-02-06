@@ -51,7 +51,7 @@ struct MetaType {
     static constexpr bool Enabled = false;
     static MetaTypeId Id() = delete;
     static MetaTypeFlags Flags() = delete;
-    static const char *Name() = delete;
+    static StringSlice Name() = delete;
     static T DefaultValue() = delete;
     static bool IsDefaultValue(const T& value) = delete;
     static hash_t HashValue(const T& value) = delete;
@@ -90,7 +90,7 @@ INSTANTIATE_CLASS_TYPEDEF(BinaryData, RAWSTORAGE_ALIGNED(RTTI, u8, 16));
         static constexpr bool Enabled = true; \
         static MetaTypeId Id(); \
         static MetaTypeFlags Flags() { return MetaTypeFlags::Scalar; } \
-        static const char *Name(); \
+        static StringSlice Name(); \
         static T DefaultValue(); \
         static bool IsDefaultValue(const T& value); \
         static hash_t HashValue(const T& value); \
@@ -124,10 +124,10 @@ struct MetaType< RTTI::Pair<_First, _Second> > {
     static MetaTypeId Id() { return TypeId; }
     static MetaTypeFlags Flags() { return MetaTypeFlags::Pair; }
 
-    NO_INLINE static const char *Name() {
+    NO_INLINE static StringSlice Name() {
         ONE_TIME_INITIALIZE(const CORE_RTTI_METATYPE_NAMETYPE, gName,
             "Pair<{0}, {1}>", first_meta_type::Name(), second_meta_type::Name() );
-        return gName.c_str();
+        return gName.MakeView();
     }
 
     static RTTI::Pair<_First, _Second> DefaultValue() {
@@ -166,10 +166,10 @@ struct MetaType< RTTI::Vector<T> > {
     static MetaTypeId Id() { return TypeId; }
     static MetaTypeFlags Flags() { return MetaTypeFlags::Vector; }
 
-    NO_INLINE static const char *Name() {
+    NO_INLINE static StringSlice Name() {
         ONE_TIME_INITIALIZE(const CORE_RTTI_METATYPE_NAMETYPE, gName,
             "Vector<{0}>", value_meta_type::Name() );
-        return gName.c_str();
+        return gName.MakeView();
     }
 
     static RTTI::Vector<T> DefaultValue() {
@@ -216,10 +216,10 @@ struct MetaType< RTTI::Dictionary<_Key, _Value> > {
     static MetaTypeId Id() { return TypeId; }
     static MetaTypeFlags Flags() { return MetaTypeFlags::Dictionary; }
 
-    NO_INLINE static const char *Name() {
+    NO_INLINE static StringSlice Name() {
         ONE_TIME_INITIALIZE(const CORE_RTTI_METATYPE_NAMETYPE, gName,
             "Dictionary<{0}, {1}>", key_meta_type::Name(), value_meta_type::Name() );
-        return gName.c_str();
+        return gName.MakeView();
     }
 
     static RTTI::Dictionary<_Key, _Value> DefaultValue() {
@@ -258,9 +258,9 @@ struct MetaType< RTTI::Dictionary<_Key, _Value> > {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct MetaTypeInfo {
-    MetaTypeId      Id;
-    MetaTypeFlags   Flags;
-    const char *    Name;
+    MetaTypeId Id;
+    MetaTypeFlags Flags;
+    StringSlice Name;
 
     bool operator ==(const MetaTypeInfo& other) const { return Id == other.Id; }
     bool operator !=(const MetaTypeInfo& other) const { return Id != other.Id; }
