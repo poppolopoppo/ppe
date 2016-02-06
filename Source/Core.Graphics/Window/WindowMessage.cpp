@@ -52,27 +52,27 @@ STATIC_ASSERT(std::is_same<MessageResult COMMA LRESULT>::value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const char *WindowMessageToCStr(WindowMessage msg) {
+StringSlice WindowMessageToCStr(WindowMessage msg) {
     switch (msg)
     {
-    case WindowMessage::Show: return "Show";
-    case WindowMessage::KeyDown: return "KeyDown";
-    case WindowMessage::KeyUp: return "KeyUp";
-    case WindowMessage::MouseMove: return "MouseMove";
-    case WindowMessage::LButtonDown: return "LButtonDown";
-    case WindowMessage::LButtonUp: return "LButtonUp";
-    case WindowMessage::LButtonDblClick: return "LButtonDblClick";
-    case WindowMessage::RButtonDown: return "RButtonDown";
-    case WindowMessage::RButtonUp: return "RButtonUp";
-    case WindowMessage::RButtonDblClick: return "RButtonDblClick";
-    case WindowMessage::MButtonDown: return "MButtonDown";
-    case WindowMessage::MButtonUp: return "MButtonUp";
-    case WindowMessage::MButtonDblClick: return "MButtonDblClick";
-    case WindowMessage::MouseWheel: return "MouseWheel";
-    case WindowMessage::MouseHover: return "MouseHover";
-    case WindowMessage::MouseLeave: return "MouseLeave";
+    case WindowMessage::Show: return MakeStringSlice("Show");
+    case WindowMessage::KeyDown: return MakeStringSlice("KeyDown");
+    case WindowMessage::KeyUp: return MakeStringSlice("KeyUp");
+    case WindowMessage::MouseMove: return MakeStringSlice("MouseMove");
+    case WindowMessage::LButtonDown: return MakeStringSlice("LButtonDown");
+    case WindowMessage::LButtonUp: return MakeStringSlice("LButtonUp");
+    case WindowMessage::LButtonDblClick: return MakeStringSlice("LButtonDblClick");
+    case WindowMessage::RButtonDown: return MakeStringSlice("RButtonDown");
+    case WindowMessage::RButtonUp: return MakeStringSlice("RButtonUp");
+    case WindowMessage::RButtonDblClick: return MakeStringSlice("RButtonDblClick");
+    case WindowMessage::MButtonDown: return MakeStringSlice("MButtonDown");
+    case WindowMessage::MButtonUp: return MakeStringSlice("MButtonUp");
+    case WindowMessage::MButtonDblClick: return MakeStringSlice("MButtonDblClick");
+    case WindowMessage::MouseWheel: return MakeStringSlice("MouseWheel");
+    case WindowMessage::MouseHover: return MakeStringSlice("MouseHover");
+    case WindowMessage::MouseLeave: return MakeStringSlice("MouseLeave");
     default:
-        return "@Unknown";
+        return MakeStringSlice("@Unknown");
     }
 }
 //----------------------------------------------------------------------------

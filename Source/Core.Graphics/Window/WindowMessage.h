@@ -53,14 +53,16 @@ typedef long    MessageResult;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const char *WindowMessageToCStr(WindowMessage msg);
+StringSlice WindowMessageToCStr(WindowMessage msg);
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
     WindowMessage msg) {
-    const char *cstr = WindowMessageToCStr(msg);
-    return (cstr ? oss << cstr : oss << "0x" << std::hex << (unsigned int)msg);
+    const StringSlice cstr = WindowMessageToCStr(msg);
+    return (nullptr == cstr.data())
+        ? oss << "0x" << std::hex << (unsigned int)msg
+        : oss << cstr;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

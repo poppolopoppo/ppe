@@ -21,7 +21,7 @@ enum class VertexSubPartSemantic {
     Binormal,
 };
 //----------------------------------------------------------------------------
-const char *VertexSubPartSemanticToCStr(VertexSubPartSemantic semantic);
+StringSlice VertexSubPartSemanticToCStr(VertexSubPartSemantic semantic);
 //----------------------------------------------------------------------------
 enum class VertexSubPartFormat {
     Float = 0,
@@ -72,7 +72,7 @@ enum class VertexSubPartFormat {
     UX10Y10Z10W2N,
 };
 //----------------------------------------------------------------------------
-const char *VertexSubPartFormatToCStr(VertexSubPartFormat format);
+StringSlice VertexSubPartFormatToCStr(VertexSubPartFormat format);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

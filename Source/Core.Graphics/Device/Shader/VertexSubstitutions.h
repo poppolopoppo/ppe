@@ -15,9 +15,9 @@ enum class VertexSubPartSemantic;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const char *VertexSubPartFormatToShaderFormat(VertexSubPartFormat format);
+StringSlice VertexSubPartFormatToShaderFormat(VertexSubPartFormat format);
 //----------------------------------------------------------------------------
-const char *VertexSubPartSemanticToShaderSemantic(VertexSubPartSemantic semantic);
+StringSlice VertexSubPartSemanticToShaderSemantic(VertexSubPartSemantic semantic);
 //----------------------------------------------------------------------------
 void FillVertexSubstitutions(   VECTOR_THREAD_LOCAL(Shader, Pair<String COMMA String>)& defines,
                                 const VertexDeclaration *declaration );

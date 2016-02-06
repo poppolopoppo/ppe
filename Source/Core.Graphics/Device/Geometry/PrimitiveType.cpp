@@ -7,21 +7,21 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const char *PrimitiveTypeToCStr(PrimitiveType primitiveType) {
+StringSlice PrimitiveTypeToCStr(PrimitiveType primitiveType) {
     switch (primitiveType)
     {
     case Core::Graphics::PrimitiveType::LineList:
-        return "LineList";
+        return MakeStringSlice("LineList");
     case Core::Graphics::PrimitiveType::LineStrip:
-        return "LineStrip";
+        return MakeStringSlice("LineStrip");
     case Core::Graphics::PrimitiveType::TriangleList:
-        return "TriangleList";
+        return MakeStringSlice("TriangleList");
     case Core::Graphics::PrimitiveType::TriangleStrip:
-        return "TriangleStrip";
+        return MakeStringSlice("TriangleStrip");
     }
 
     AssertNotImplemented();
-    return nullptr;
+    return StringSlice();
 }
 //----------------------------------------------------------------------------
 size_t PrimitiveCount(PrimitiveType primitiveType, size_t indexCount) {

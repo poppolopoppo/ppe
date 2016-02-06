@@ -15,7 +15,7 @@ enum class PrimitiveType {
     TriangleStrip,
 };
 //----------------------------------------------------------------------------
-const char *PrimitiveTypeToCStr(PrimitiveType primitiveType);
+StringSlice PrimitiveTypeToCStr(PrimitiveType primitiveType);
 //----------------------------------------------------------------------------
 size_t PrimitiveCount(PrimitiveType primitiveType, size_t indexCount);
 //----------------------------------------------------------------------------

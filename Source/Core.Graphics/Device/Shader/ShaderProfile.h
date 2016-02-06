@@ -14,7 +14,7 @@ enum class ShaderProfileType {
     ShaderModel3,
 };
 //----------------------------------------------------------------------------
-const char *ShaderProfileTypeToCStr(ShaderProfileType profile);
+StringSlice ShaderProfileTypeToCStr(ShaderProfileType profile);
 //----------------------------------------------------------------------------
 enum class ShaderProgramType {
     Vertex = 0,
@@ -28,8 +28,8 @@ enum class ShaderProgramType {
 };
 //----------------------------------------------------------------------------
 MemoryView<const ShaderProgramType> EachShaderProgramType();
-const char *ShaderProgramTypeToCStr(ShaderProgramType program);
-const char *ShaderProgramTypeToEntryPoint(ShaderProgramType program);
+StringSlice ShaderProgramTypeToCStr(ShaderProgramType program);
+StringSlice ShaderProgramTypeToEntryPoint(ShaderProgramType program);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

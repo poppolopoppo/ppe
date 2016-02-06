@@ -41,8 +41,8 @@ void FillVertexSubstitutions(   VECTOR_THREAD_LOCAL(Shader, Pair<String COMMA St
         default: break;
         }
 
-        const char *nameWithoutIndex = VertexSubPartSemanticToCStr(semantic);
-        const char *formatCStr = VertexSubPartFormatToCStr(format);
+        const StringSlice nameWithoutIndex = VertexSubPartSemanticToCStr(semantic);
+        const StringSlice formatCStr = VertexSubPartFormatToCStr(format);
 
         oss << " " << VertexSubPartFormatToShaderFormat(format)
             << " " << nameWithoutIndex << index
@@ -72,104 +72,104 @@ void FillVertexSubstitutions(   VECTOR_THREAD_LOCAL(Shader, Pair<String COMMA St
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const char *VertexSubPartFormatToShaderFormat(VertexSubPartFormat format) {
+StringSlice VertexSubPartFormatToShaderFormat(VertexSubPartFormat format) {
     switch (format)
     {
     case Core::Graphics::VertexSubPartFormat::Float:
-        return "float";
+        return MakeStringSlice("float");
     case Core::Graphics::VertexSubPartFormat::Float2:
-        return "float2";
+        return MakeStringSlice("float2");
     case Core::Graphics::VertexSubPartFormat::Float3:
-        return "float3";
+        return MakeStringSlice("float3");
     case Core::Graphics::VertexSubPartFormat::Float4:
-        return "float4";
+        return MakeStringSlice("float4");
     case Core::Graphics::VertexSubPartFormat::Byte:
-        return "byte";
+        return MakeStringSlice("byte");
     case Core::Graphics::VertexSubPartFormat::Byte2:
-        return "byte2";
+        return MakeStringSlice("byte2");
     case Core::Graphics::VertexSubPartFormat::Byte4:
-        return "byte4";
+        return MakeStringSlice("byte4");
     case Core::Graphics::VertexSubPartFormat::UByte:
-        return "ubyte";
+        return MakeStringSlice("ubyte");
     case Core::Graphics::VertexSubPartFormat::UByte2:
-        return "ubyte2";
+        return MakeStringSlice("ubyte2");
     case Core::Graphics::VertexSubPartFormat::UByte4:
-        return "ubyte4";
+        return MakeStringSlice("ubyte4");
     case Core::Graphics::VertexSubPartFormat::Short:
-        return "short";
+        return MakeStringSlice("short");
     case Core::Graphics::VertexSubPartFormat::Short2:
-        return "short2";
+        return MakeStringSlice("short2");
     case Core::Graphics::VertexSubPartFormat::Short4:
-        return "short4";
+        return MakeStringSlice("short4");
     case Core::Graphics::VertexSubPartFormat::UShort:
-        return "ushort";
+        return MakeStringSlice("ushort");
     case Core::Graphics::VertexSubPartFormat::UShort2:
-        return "ushort2";
+        return MakeStringSlice("ushort2");
     case Core::Graphics::VertexSubPartFormat::UShort4:
-        return "ushort4";
+        return MakeStringSlice("ushort4");
     case Core::Graphics::VertexSubPartFormat::Word:
-        return "word";
+        return MakeStringSlice("word");
     case Core::Graphics::VertexSubPartFormat::Word2:
-        return "word2";
+        return MakeStringSlice("word2");
     case Core::Graphics::VertexSubPartFormat::Word3:
-        return "word3";
+        return MakeStringSlice("word3");
     case Core::Graphics::VertexSubPartFormat::Word4:
-        return "word4";
+        return MakeStringSlice("word4");
     case Core::Graphics::VertexSubPartFormat::UWord:
-        return "uword";
+        return MakeStringSlice("uword");
     case Core::Graphics::VertexSubPartFormat::UWord2:
-        return "uword2";
+        return MakeStringSlice("uword2");
     case Core::Graphics::VertexSubPartFormat::UWord3:
-        return "uword3";
+        return MakeStringSlice("uword3");
     case Core::Graphics::VertexSubPartFormat::UWord4:
-        return "uword4";
+        return MakeStringSlice("uword4");
     case Core::Graphics::VertexSubPartFormat::Half:
-        return "half";
+        return MakeStringSlice("half");
     case Core::Graphics::VertexSubPartFormat::Half2:
-        return "half2";
+        return MakeStringSlice("half2");
     case Core::Graphics::VertexSubPartFormat::Half4:
-        return "half4";
+        return MakeStringSlice("half4");
     case Core::Graphics::VertexSubPartFormat::Byte2N:
-        return "float2";
+        return MakeStringSlice("float2");
     case Core::Graphics::VertexSubPartFormat::Byte4N:
-        return "float4";
+        return MakeStringSlice("float4");
     case Core::Graphics::VertexSubPartFormat::UByte2N:
-        return "float2";
+        return MakeStringSlice("float2");
     case Core::Graphics::VertexSubPartFormat::UByte4N:
-        return "float4";
+        return MakeStringSlice("float4");
     case Core::Graphics::VertexSubPartFormat::Short2N:
-        return "float2";
+        return MakeStringSlice("float2");
     case Core::Graphics::VertexSubPartFormat::Short4N:
-        return "float4";
+        return MakeStringSlice("float4");
     case Core::Graphics::VertexSubPartFormat::UShort2N:
-        return "float2";
+        return MakeStringSlice("float2");
     case Core::Graphics::VertexSubPartFormat::UShort4N:
-        return "float4";
+        return MakeStringSlice("float4");
     case Core::Graphics::VertexSubPartFormat::UX10Y10Z10W2N:
-        return "float4";
+        return MakeStringSlice("float4");
     }
     AssertNotImplemented();
-    return nullptr;
+    return StringSlice();
 }
 //----------------------------------------------------------------------------
-const char *VertexSubPartSemanticToShaderSemantic(VertexSubPartSemantic semantic) {
+StringSlice VertexSubPartSemanticToShaderSemantic(VertexSubPartSemantic semantic) {
     switch (semantic)
     {
     case Core::Graphics::VertexSubPartSemantic::Position:
-        return "POSITION";
+        return MakeStringSlice("POSITION");
     case Core::Graphics::VertexSubPartSemantic::TexCoord:
-        return "TEXCOORD";
+        return MakeStringSlice("TEXCOORD");
     case Core::Graphics::VertexSubPartSemantic::Color:
-        return "COLOR";
+        return MakeStringSlice("COLOR");
     case Core::Graphics::VertexSubPartSemantic::Normal:
-        return "NORMAL";
+        return MakeStringSlice("NORMAL");
     case Core::Graphics::VertexSubPartSemantic::Tangent:
-        return "TANGENT";
+        return MakeStringSlice("TANGENT");
     case Core::Graphics::VertexSubPartSemantic::Binormal:
-        return "BINORMAL";
+        return MakeStringSlice("BINORMAL");
     }
     AssertNotImplemented();
-    return nullptr;
+    return StringSlice();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

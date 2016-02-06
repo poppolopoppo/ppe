@@ -51,48 +51,48 @@ size_t ConstantFieldTypeSizeInBytes(ConstantFieldType value) {
     return 0;
 }
 //----------------------------------------------------------------------------
-const char *ConstantFieldTypeToCStr(ConstantFieldType value) {
+StringSlice ConstantFieldTypeToCStr(ConstantFieldType value) {
     switch (value)
     {
     case Core::Graphics::ConstantFieldType::Bool:
-        return "Bool";
+        return MakeStringSlice("Bool");
     case Core::Graphics::ConstantFieldType::Int:
-        return "Int";
+        return MakeStringSlice("Int");
     case Core::Graphics::ConstantFieldType::Int2:
-        return "Int2";
+        return MakeStringSlice("Int2");
     case Core::Graphics::ConstantFieldType::Int3:
-        return "Int3";
+        return MakeStringSlice("Int3");
     case Core::Graphics::ConstantFieldType::Int4:
-        return "Int4";
+        return MakeStringSlice("Int4");
     case Core::Graphics::ConstantFieldType::UInt:
-        return "UInt";
+        return MakeStringSlice("UInt");
     case Core::Graphics::ConstantFieldType::UInt2:
-        return "UInt2";
+        return MakeStringSlice("UInt2");
     case Core::Graphics::ConstantFieldType::UInt3:
-        return "UInt3";
+        return MakeStringSlice("UInt3");
     case Core::Graphics::ConstantFieldType::UInt4:
-        return "UInt4";
+        return MakeStringSlice("UInt4");
     case Core::Graphics::ConstantFieldType::Float:
-        return "Float";
+        return MakeStringSlice("Float");
     case Core::Graphics::ConstantFieldType::Float2:
-        return "Float2";
+        return MakeStringSlice("Float2");
     case Core::Graphics::ConstantFieldType::Float3:
-        return "Float3";
+        return MakeStringSlice("Float3");
     case Core::Graphics::ConstantFieldType::Float4:
-        return "Float4";
+        return MakeStringSlice("Float4");
     case Core::Graphics::ConstantFieldType::Float3x3:
-        return "Float3x3";
+        return MakeStringSlice("Float3x3");
     case Core::Graphics::ConstantFieldType::Float4x3:
-        return "Float4x3";
+        return MakeStringSlice("Float4x3");
     case Core::Graphics::ConstantFieldType::Float3x4:
-        return "Float4x3";
+        return MakeStringSlice("Float4x3");
     case Core::Graphics::ConstantFieldType::Float4x4:
-        return "Float4x4";
+        return MakeStringSlice("Float4x4");
     case Core::Graphics::ConstantFieldType::Unknown:
-        return "Unknown";
+        return MakeStringSlice("Unknown");
     }
     AssertNotImplemented();
-    return nullptr;
+    return StringSlice();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

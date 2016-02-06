@@ -39,7 +39,7 @@ enum class ConstantFieldType {
 //----------------------------------------------------------------------------
 size_t ConstantFieldTypeSizeInBytes(ConstantFieldType value);
 //----------------------------------------------------------------------------
-const char *ConstantFieldTypeToCStr(ConstantFieldType value);
+StringSlice ConstantFieldTypeToCStr(ConstantFieldType value);
 //----------------------------------------------------------------------------
 struct ConstantField {
     typedef Meta::Bit<u16>::First<1>::type bitinuse_type;

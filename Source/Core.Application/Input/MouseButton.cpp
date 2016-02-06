@@ -7,24 +7,24 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const char *MouseButtonToCStr(MouseButton value) {
+StringSlice MouseButtonToCStr(MouseButton value) {
     switch (value)
     {
     case Core::Application::MouseButton::Button0:
-        return "Button0";
+        return MakeStringSlice("Button0");
     case Core::Application::MouseButton::Button1:
-        return "Button1";
+        return MakeStringSlice("Button1");
     case Core::Application::MouseButton::Button2:
-        return "Button2";
+        return MakeStringSlice("Button2");
     case Core::Application::MouseButton::Wheel:
-        return "Wheel";
+        return MakeStringSlice("Wheel");
     case Core::Application::MouseButton::Thumb0:
-        return "Thumb0";
+        return MakeStringSlice("Thumb0");
     case Core::Application::MouseButton::Thumb1:
-        return "Thumb1";
+        return MakeStringSlice("Thumb1");
     }
     AssertNotImplemented();
-    return nullptr;
+    return StringSlice();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

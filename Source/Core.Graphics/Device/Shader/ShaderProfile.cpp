@@ -7,20 +7,20 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const char *ShaderProfileTypeToCStr(ShaderProfileType profile) {
+StringSlice ShaderProfileTypeToCStr(ShaderProfileType profile) {
     switch (profile)
     {
     case Core::Graphics::ShaderProfileType::ShaderModel5:
-        return "ShaderModel5";
+        return MakeStringSlice("ShaderModel5");
     case Core::Graphics::ShaderProfileType::ShaderModel4_1:
-        return "ShaderModel4_1";
+        return MakeStringSlice("ShaderModel4_1");
     case Core::Graphics::ShaderProfileType::ShaderModel4:
-        return "ShaderModel4";
+        return MakeStringSlice("ShaderModel4");
     case Core::Graphics::ShaderProfileType::ShaderModel3:
-        return "ShaderModel3";
+        return MakeStringSlice("ShaderModel3");
     }
     AssertNotImplemented();
-    return nullptr;
+    return StringSlice();
 }
 //----------------------------------------------------------------------------
 namespace {
@@ -37,46 +37,46 @@ MemoryView<const ShaderProgramType> EachShaderProgramType() {
     return MakeView(gShaderProgramTypes);
 }
 //----------------------------------------------------------------------------
-const char *ShaderProgramTypeToCStr(ShaderProgramType program) {
+StringSlice ShaderProgramTypeToCStr(ShaderProgramType program) {
     switch (program)
     {
     case Core::Graphics::ShaderProgramType::Vertex:
-        return "Vertex";
+        return MakeStringSlice("Vertex");
     case Core::Graphics::ShaderProgramType::Hull:
-        return "Hull";
+        return MakeStringSlice("Hull");
     case Core::Graphics::ShaderProgramType::Domain:
-        return "Domain";
+        return MakeStringSlice("Domain");
     case Core::Graphics::ShaderProgramType::Pixel:
-        return "Pixel";
+        return MakeStringSlice("Pixel");
     case Core::Graphics::ShaderProgramType::Geometry:
-        return "Geometry";
+        return MakeStringSlice("Geometry");
     case Core::Graphics::ShaderProgramType::Compute:
-        return "Compute";
+        return MakeStringSlice("Compute");
     default:
         AssertNotImplemented();
     }
-    return nullptr;
+    return StringSlice();
 }
 //----------------------------------------------------------------------------
-const char *ShaderProgramTypeToEntryPoint(ShaderProgramType program) {
+StringSlice ShaderProgramTypeToEntryPoint(ShaderProgramType program) {
     switch (program)
     {
     case Core::Graphics::ShaderProgramType::Vertex:
-        return "vmain";
+        return MakeStringSlice("vmain");
     case Core::Graphics::ShaderProgramType::Hull:
-        return "hmain";
+        return MakeStringSlice("hmain");
     case Core::Graphics::ShaderProgramType::Domain:
-        return "dmain";
+        return MakeStringSlice("dmain");
     case Core::Graphics::ShaderProgramType::Pixel:
-        return "pmain";
+        return MakeStringSlice("pmain");
     case Core::Graphics::ShaderProgramType::Geometry:
-        return "gmain";
+        return MakeStringSlice("gmain");
     case Core::Graphics::ShaderProgramType::Compute:
-        return "cmain";
+        return MakeStringSlice("cmain");
     default:
         AssertNotImplemented();
     }
-    return nullptr;
+    return StringSlice();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -7,24 +7,24 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const char *DeviceStatusToCStr(DeviceStatus status) {
+StringSlice DeviceStatusToCStr(DeviceStatus status) {
     switch (status)
     {
     case Core::Graphics::DeviceStatus::Invalid:
-        return "Invalid";
+        return MakeStringSlice("Invalid");
     case Core::Graphics::DeviceStatus::Normal:
-        return "Normal";
+        return MakeStringSlice("Normal");
     case Core::Graphics::DeviceStatus::Create:
-        return "Create";
+        return MakeStringSlice("Create");
     case Core::Graphics::DeviceStatus::Destroy:
-        return "Destroy";
+        return MakeStringSlice("Destroy");
     case Core::Graphics::DeviceStatus::Reset:
-        return "Reset";
+        return MakeStringSlice("Reset");
     case Core::Graphics::DeviceStatus::Lost:
-        return "Lost";
+        return MakeStringSlice("Lost");
     }
     AssertNotImplemented();
-    return nullptr;
+    return StringSlice();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

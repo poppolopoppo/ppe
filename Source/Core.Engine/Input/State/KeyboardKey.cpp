@@ -125,177 +125,177 @@ static const KeyboardKey gEachKeyboardKeys[] = {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const char *KeyboardKeyToCStr(KeyboardKey value) {
+StringSlice KeyboardKeyToCStr(KeyboardKey value) {
     switch (value)
     {
     case Core::Engine::KeyboardKey::_0:
-        return "0";
+        return MakeStringSlice("0");
     case Core::Engine::KeyboardKey::_1:
-        return "1";
+        return MakeStringSlice("1");
     case Core::Engine::KeyboardKey::_2:
-        return "2";
+        return MakeStringSlice("2");
     case Core::Engine::KeyboardKey::_3:
-        return "3";
+        return MakeStringSlice("3");
     case Core::Engine::KeyboardKey::_4:
-        return "4";
+        return MakeStringSlice("4");
     case Core::Engine::KeyboardKey::_5:
-        return "5";
+        return MakeStringSlice("5");
     case Core::Engine::KeyboardKey::_6:
-        return "6";
+        return MakeStringSlice("6");
     case Core::Engine::KeyboardKey::_7:
-        return "7";
+        return MakeStringSlice("7");
     case Core::Engine::KeyboardKey::_8:
-        return "8";
+        return MakeStringSlice("8");
     case Core::Engine::KeyboardKey::_9:
-        return "9";
+        return MakeStringSlice("9");
     case Core::Engine::KeyboardKey::A:
-        return "A";
+        return MakeStringSlice("A");
     case Core::Engine::KeyboardKey::B:
-        return "B";
+        return MakeStringSlice("B");
     case Core::Engine::KeyboardKey::C:
-        return "C";
+        return MakeStringSlice("C");
     case Core::Engine::KeyboardKey::D:
-        return "D";
+        return MakeStringSlice("D");
     case Core::Engine::KeyboardKey::E:
-        return "E";
+        return MakeStringSlice("E");
     case Core::Engine::KeyboardKey::F:
-        return "F";
+        return MakeStringSlice("F");
     case Core::Engine::KeyboardKey::G:
-        return "G";
+        return MakeStringSlice("G");
     case Core::Engine::KeyboardKey::H:
-        return "H";
+        return MakeStringSlice("H");
     case Core::Engine::KeyboardKey::I:
-        return "I";
+        return MakeStringSlice("I");
     case Core::Engine::KeyboardKey::J:
-        return "J";
+        return MakeStringSlice("J");
     case Core::Engine::KeyboardKey::K:
-        return "K";
+        return MakeStringSlice("K");
     case Core::Engine::KeyboardKey::L:
-        return "L";
+        return MakeStringSlice("L");
     case Core::Engine::KeyboardKey::M:
-        return "M";
+        return MakeStringSlice("M");
     case Core::Engine::KeyboardKey::N:
-        return "N";
+        return MakeStringSlice("N");
     case Core::Engine::KeyboardKey::O:
-        return "O";
+        return MakeStringSlice("O");
     case Core::Engine::KeyboardKey::P:
-        return "P";
+        return MakeStringSlice("P");
     case Core::Engine::KeyboardKey::Q:
-        return "Q";
+        return MakeStringSlice("Q");
     case Core::Engine::KeyboardKey::R:
-        return "R";
+        return MakeStringSlice("R");
     case Core::Engine::KeyboardKey::S:
-        return "S";
+        return MakeStringSlice("S");
     case Core::Engine::KeyboardKey::T:
-        return "T";
+        return MakeStringSlice("T");
     case Core::Engine::KeyboardKey::U:
-        return "U";
+        return MakeStringSlice("U");
     case Core::Engine::KeyboardKey::V:
-        return "V";
+        return MakeStringSlice("V");
     case Core::Engine::KeyboardKey::W:
-        return "W";
+        return MakeStringSlice("W");
     case Core::Engine::KeyboardKey::X:
-        return "X";
+        return MakeStringSlice("X");
     case Core::Engine::KeyboardKey::Y:
-        return "Y";
+        return MakeStringSlice("Y");
     case Core::Engine::KeyboardKey::Z:
-        return "Z";
+        return MakeStringSlice("Z");
     case Core::Engine::KeyboardKey::Numpad0:
-        return "Numpad0";
+        return MakeStringSlice("Numpad0");
     case Core::Engine::KeyboardKey::Numpad1:
-        return "Numpad1";
+        return MakeStringSlice("Numpad1");
     case Core::Engine::KeyboardKey::Numpad2:
-        return "Numpad2";
+        return MakeStringSlice("Numpad2");
     case Core::Engine::KeyboardKey::Numpad3:
-        return "Numpad3";
+        return MakeStringSlice("Numpad3");
     case Core::Engine::KeyboardKey::Numpad4:
-        return "Numpad4";
+        return MakeStringSlice("Numpad4");
     case Core::Engine::KeyboardKey::Numpad5:
-        return "Numpad5";
+        return MakeStringSlice("Numpad5");
     case Core::Engine::KeyboardKey::Numpad6:
-        return "Numpad6";
+        return MakeStringSlice("Numpad6");
     case Core::Engine::KeyboardKey::Numpad7:
-        return "Numpad7";
+        return MakeStringSlice("Numpad7");
     case Core::Engine::KeyboardKey::Numpad8:
-        return "Numpad8";
+        return MakeStringSlice("Numpad8");
     case Core::Engine::KeyboardKey::Numpad9:
-        return "Numpad9";
+        return MakeStringSlice("Numpad9");
     case Core::Engine::KeyboardKey::Add:
-        return "Add";
+        return MakeStringSlice("Add");
     case Core::Engine::KeyboardKey::Substract:
-        return "Substract";
+        return MakeStringSlice("Substract");
     case Core::Engine::KeyboardKey::Multiply:
-        return "Multiply";
+        return MakeStringSlice("Multiply");
     case Core::Engine::KeyboardKey::Divide:
-        return "Divide";
+        return MakeStringSlice("Divide");
     case Core::Engine::KeyboardKey::F1:
-        return "F1";
+        return MakeStringSlice("F1");
     case Core::Engine::KeyboardKey::F2:
-        return "F2";
+        return MakeStringSlice("F2");
     case Core::Engine::KeyboardKey::F3:
-        return "F3";
+        return MakeStringSlice("F3");
     case Core::Engine::KeyboardKey::F4:
-        return "F4";
+        return MakeStringSlice("F4");
     case Core::Engine::KeyboardKey::F5:
-        return "F5";
+        return MakeStringSlice("F5");
     case Core::Engine::KeyboardKey::F6:
-        return "F6";
+        return MakeStringSlice("F6");
     case Core::Engine::KeyboardKey::F7:
-        return "F7";
+        return MakeStringSlice("F7");
     case Core::Engine::KeyboardKey::F8:
-        return "F8";
+        return MakeStringSlice("F8");
     case Core::Engine::KeyboardKey::F9:
-        return "F9";
+        return MakeStringSlice("F9");
     case Core::Engine::KeyboardKey::F10:
-        return "F10";
+        return MakeStringSlice("F10");
     case Core::Engine::KeyboardKey::F11:
-        return "F11";
+        return MakeStringSlice("F11");
     case Core::Engine::KeyboardKey::F12:
-        return "F12";
+        return MakeStringSlice("F12");
     case Core::Engine::KeyboardKey::Up:
-        return "Up";
+        return MakeStringSlice("Up");
     case Core::Engine::KeyboardKey::Down:
-        return "Down";
+        return MakeStringSlice("Down");
     case Core::Engine::KeyboardKey::Left:
-        return "Left";
+        return MakeStringSlice("Left");
     case Core::Engine::KeyboardKey::Right:
-        return "Right";
+        return MakeStringSlice("Right");
     case Core::Engine::KeyboardKey::Escape:
-        return "Escape";
+        return MakeStringSlice("Escape");
     case Core::Engine::KeyboardKey::Space:
-        return "Space";
+        return MakeStringSlice("Space");
     case Core::Engine::KeyboardKey::Pause:
-        return "Pause";
+        return MakeStringSlice("Pause");
     case Core::Engine::KeyboardKey::PrintScreen:
-        return "PrintScreen";
+        return MakeStringSlice("PrintScreen");
     case Core::Engine::KeyboardKey::ScrollLock:
-        return "ScrollLock";
+        return MakeStringSlice("ScrollLock");
     case Core::Engine::KeyboardKey::Backspace:
-        return "Backspace";
+        return MakeStringSlice("Backspace");
     case Core::Engine::KeyboardKey::Enter:
-        return "Enter";
+        return MakeStringSlice("Enter");
     case Core::Engine::KeyboardKey::Tab:
-        return "Tab";
+        return MakeStringSlice("Tab");
     case Core::Engine::KeyboardKey::Home:
-        return "Home";
+        return MakeStringSlice("Home");
     case Core::Engine::KeyboardKey::End:
-        return "End";
+        return MakeStringSlice("End");
     case Core::Engine::KeyboardKey::Insert:
-        return "Insert";
+        return MakeStringSlice("Insert");
     case Core::Engine::KeyboardKey::Delete:
-        return "Delete";
+        return MakeStringSlice("Delete");
     case Core::Engine::KeyboardKey::PageUp:
-        return "PageUp";
+        return MakeStringSlice("PageUp");
     case Core::Engine::KeyboardKey::PageDown:
-        return "PageDown";
+        return MakeStringSlice("PageDown");
     case Core::Engine::KeyboardKey::Alt:
-        return "Alt";
+        return MakeStringSlice("Alt");
     case Core::Engine::KeyboardKey::Menu:
-        return "Menu";
+        return MakeStringSlice("Menu");
     case Core::Engine::KeyboardKey::Control:
-        return "Control";
+        return MakeStringSlice("Control");
     case Core::Engine::KeyboardKey::Shift:
-        return "Shift";
+        return MakeStringSlice("Shift");
     }
     AssertNotImplemented();
     return nullptr;
