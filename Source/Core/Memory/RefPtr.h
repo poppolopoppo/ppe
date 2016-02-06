@@ -23,10 +23,10 @@
 
 #define FWD_INTERFACE_REFPTR(T_WITHOUT_I) \
     class CONCAT(I, T_WITHOUT_I); \
-    typedef Core::RefPtr<CONCAT(I, T_WITHOUT_I)> CONCAT(P, T); \
-    typedef Core::RefPtr<const CONCAT(I, T_WITHOUT_I)> CONCAT(PC, T); \
-    typedef Core::SafePtr<CONCAT(I, T_WITHOUT_I)> CONCAT(S, T); \
-    typedef Core::SafePtr<const CONCAT(I, T_WITHOUT_I)> CONCAT(SC, T)
+    typedef Core::RefPtr<CONCAT(I, T_WITHOUT_I)> CONCAT(P, T_WITHOUT_I); \
+    typedef Core::RefPtr<const CONCAT(I, T_WITHOUT_I)> CONCAT(PC, T_WITHOUT_I); \
+    typedef Core::SafePtr<CONCAT(I, T_WITHOUT_I)> CONCAT(S, T_WITHOUT_I); \
+    typedef Core::SafePtr<const CONCAT(I, T_WITHOUT_I)> CONCAT(SC, T_WITHOUT_I)
 
 #ifdef SAFEPTR
 #   undef SAFEPTR
