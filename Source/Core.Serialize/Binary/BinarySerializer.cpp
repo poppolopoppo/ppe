@@ -75,11 +75,6 @@ static const FourCC TAG_OBJECT_START_           ("OSTA");
 static const FourCC TAG_OBJECT_METACLASS_       ("OMTC");
 static const FourCC TAG_OBJECT_END_             ("OEND");
 //----------------------------------------------------------------------------
-static const FourCC TAG_ATOM_SCALAR_            ("ASCR");
-static const FourCC TAG_ATOM_PAIR_              ("APAR");
-static const FourCC TAG_ATOM_VECTOR_            ("AVEC");
-static const FourCC TAG_ATOM_DICTIONARY_        ("ADIC");
-static const FourCC TAG_ATOM_ATOM_              ("ATOM");
 static const FourCC TAG_ATOM_NULL_              ("ANUL");
 //----------------------------------------------------------------------------
 } //!namespace
@@ -286,8 +281,7 @@ private:
             BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize RTTI::Pair<{0}, {1}>",
                 ppair->FirstTypeInfo().Name, ppair->SecondTypeInfo().Name );
 
-            if (false == _reader->ExpectPOD(TAG_ATOM_PAIR_) ||
-                false == _reader->ExpectPOD(ppair->Atom()->TypeInfo().Id) )
+            if (false == _reader->ExpectPOD(ppair->Atom()->TypeInfo().Id) )
                 throw BinarySerializerException("failed to deserialize a PAIR vector");
 
             pair.first = ppair->FirstTraits()->CreateDefaultValue();
@@ -301,8 +295,7 @@ private:
                 pvector->ValueTypeInfo().Name );
 
             u32 count;
-            if (false == _reader->ExpectPOD(TAG_ATOM_VECTOR_) ||
-                false == _reader->ExpectPOD(pvector->Atom()->TypeInfo().Id) ||
+            if (false == _reader->ExpectPOD(pvector->Atom()->TypeInfo().Id) ||
                 false == _reader->ReadPOD(&count) )
                 throw BinarySerializerException("failed to deserialize a RTTI vector");
 
@@ -320,8 +313,7 @@ private:
                 pdictionary->KeyTypeInfo().Name, pdictionary->ValueTypeInfo().Name );
 
             u32 count;
-            if (false == _reader->ExpectPOD(TAG_ATOM_DICTIONARY_) ||
-                false == _reader->ExpectPOD(pdictionary->Atom()->TypeInfo().Id) ||
+            if (false == _reader->ExpectPOD(pdictionary->Atom()->TypeInfo().Id) ||
                 false == _reader->ReadPOD(&count) )
                 throw BinarySerializerException("failed to deserialize a RTTI dictionary");
 
@@ -353,8 +345,6 @@ private:
         bool Visit_(RTTI::MetaTypedAtom<T>* scalar) {
             const std::streamoff dataoff = _reader->TellI();
 
-            if (false == _reader->ExpectPOD(TAG_ATOM_SCALAR_))
-                return false;
             if (false == _reader->ExpectPOD(scalar->TypeInfo().Id))
                 return false;
             if (false == ReadValue_(scalar->Wrapper()))
@@ -422,7 +412,11 @@ private:
         }
 
         bool ReadValue_(RTTI::PMetaAtom& atom) {
-            if (_reader->ExpectPOD(TAG_ATOM_ATOM_)) {
+            if (_reader->ExpectPOD(TAG_ATOM_NULL_)) {
+                Assert(nullptr == atom);
+                return nullptr;
+            }
+            else {
                 RTTI::MetaTypeId typeId;
                 if (false == _reader->ReadPOD(&typeId))
                     return false;
@@ -439,9 +433,6 @@ private:
                     throw BinarySerializerException("no support for abstract RTTI atoms deserialization");
                 }
                 return true;
-            }
-            else {
-                return _reader->ExpectPOD(TAG_ATOM_NULL_);
             }
         }
 
@@ -798,7 +789,6 @@ private:
             BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize RTTI::Pair<{0}, {1}>",
                 ppair->FirstTypeInfo().Name, ppair->SecondTypeInfo().Name );
 
-            WritePOD(TAG_ATOM_PAIR_);
             WritePOD(ppair->Atom()->TypeInfo().Id);
             parent_type::Inspect(ppair, pair);
         }
@@ -807,7 +797,6 @@ private:
             BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize RTTI::Vector<{0}>",
                 pvector->ValueTypeInfo().Name );
 
-            WritePOD(TAG_ATOM_VECTOR_);
             WritePOD(pvector->Atom()->TypeInfo().Id);
             WritePOD(checked_cast<u32>(vector.size()));
             parent_type::Inspect(pvector, vector);
@@ -817,7 +806,6 @@ private:
             BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize RTTI::Dictionary<{0}, {1}>",
                 pdictionary->KeyTypeInfo().Name, pdictionary->ValueTypeInfo().Name );
 
-            WritePOD(TAG_ATOM_DICTIONARY_);
             WritePOD(pdictionary->Atom()->TypeInfo().Id);
             WritePOD(checked_cast<u32>(dictionary.size()));
             parent_type::Inspect(pdictionary, dictionary);
@@ -841,7 +829,6 @@ private:
             BINARYSERIALIZER_DATALOG(L"@{2:#8X} : <{0}> = [{1}]",
                 scalar->TypeInfo().Name, scalar->Wrapper(), _owner->_objectStream.TellO() );
 
-            WritePOD(TAG_ATOM_SCALAR_);
             WritePOD(scalar->TypeInfo().Id);
             WriteValue_(scalar->Wrapper());
         }
@@ -885,7 +872,6 @@ private:
 #define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) case _TypeId:
                 FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
 #undef DEF_METATYPE_SCALAR
-                    WritePOD(TAG_ATOM_ATOM_);
                     WritePOD(typeId);
                     atom->Accept(this);
                     break;
