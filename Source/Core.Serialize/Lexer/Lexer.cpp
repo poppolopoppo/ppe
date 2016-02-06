@@ -6,6 +6,7 @@
 #include "SymbolTrie.h"
 
 #include "Core/Allocator/PoolAllocatorTag-impl.h"
+#include "Core/IO/Stream.h"
 #include "Core/IO/String.h"
 
 #include <algorithm>
@@ -258,6 +259,8 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
     }
     else if ('"' == ch)
     {
+        OStringStream oss;
+
         // weak quoting
         ch = reader.Read();
         Assert('"' == ch);
@@ -279,18 +282,18 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
                 // http://en.wikipedia.org/wiki/Escape_sequences_in_C
                 switch (ToLower(ch))
                 {
-                case '0': value += '\0'; break;
+                case '0': oss.put('\0'); break;
 
-                case 'a': value += '\a'; break;
-                case 'b': value += '\b'; break;
-                case 'f': value += '\f'; break;
-                case 'n': value += '\n'; break;
-                case 'r': value += '\r'; break;
-                case 't': value += '\t'; break;
+                case 'a': oss.put('\a'); break;
+                case 'b': oss.put('\b'); break;
+                case 'f': oss.put('\f'); break;
+                case 'n': oss.put('\n'); break;
+                case 'r': oss.put('\r'); break;
+                case 't': oss.put('\t'); break;
 
-                case '"': value += '"'; break;
-                case '\'': value += '\''; break;
-                case '\\': value += '\\'; break;
+                case '"': oss.put('"'); break;
+                case '\'': oss.put('\''); break;
+                case '\\': oss.put('\\'); break;
 
                 case 'o':
                     d0 = ToLower(reader.Read());
@@ -301,7 +304,7 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
 
                     ch = (char)((d0 - '0') * 8 + (d1 - '0') );
 
-                    value += ch;
+                    oss.put(ch);
 
                     break;
 
@@ -315,7 +318,7 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
                     ch = (char)((d0 <= '9' ? d0 - '0' : d0 - 'a') * 16 +
                                 (d1 <= '9' ? d1 - '0' : d1 - 'a') );
 
-                    value += ch;
+                    oss.put(ch);
 
                     break;
 
@@ -337,13 +340,15 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
                     throw LexerException("unterminated weak quoted string", Match(SymbolTrie::String, std::move(value), reader.SourceSite()));
 
                 default:
-                    value += ch;
+                    oss.put(ch);
                     break;
                 }
             }
         } while (inQuote);
 
+        value = oss.str();
         Assert(value.size());
+
         return true;
     }
 
