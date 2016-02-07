@@ -262,6 +262,10 @@ static void MatrixUnitTests_() {
     AssertRelease(Equals_(x_hpos, c_hpos));
     float4 c_hpos2 = Transform3_OneExtend(c_viewproj, c_wpos.xyz());
     AssertRelease(Equals_(x_hpos, c_hpos2));
+    float4 c_hpos3 = c_viewproj.Multiply(c_wpos);
+    AssertRelease(Equals_(x_hpos, c_hpos3));
+    float4 c_hpos4 = c_viewproj.Multiply_OneExtend(c_wpos.xyz());
+    AssertRelease(Equals_(x_hpos, c_hpos4));
 }
 //----------------------------------------------------------------------------
 static void MathUnitTests_() {

@@ -114,7 +114,7 @@ public:
 
     ScalarVector<T, _Height> Multiply(const ScalarVector<T, _Width>& v) const;
     ScalarVector<T, _Height> Multiply_OneExtend(const ScalarVector<T, _Width - 1>& v) const;
-    ScalarVector<T, _Height - 1> Multiply_ZeroExtend(const ScalarVector<T, _Width - 1>& v) const;
+    ScalarVector<T, _Height> Multiply_ZeroExtend(const ScalarVector<T, _Width - 1>& v) const;
 
     T Trace() const;
 
