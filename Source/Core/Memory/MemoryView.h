@@ -73,6 +73,9 @@ public:
     MemoryView<T> GrowBack() const { Assert(_size > 0); return MemoryView<T>(_storage, _size + 1); }
     MemoryView<T> GrowFront() const { Assert(_size > 0); return MemoryView<T>(_storage - 1, _size + 1); }
 
+    template <typename _Pred>
+    iterator find_if(const _Pred& pred) const { return std::find_if(begin(), end(), pred); }
+
     template <typename U>
     MemoryView<U> Cast() const;
 
