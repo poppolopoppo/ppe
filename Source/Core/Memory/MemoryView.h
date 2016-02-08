@@ -3,6 +3,7 @@
 #include "Core/Core.h"
 
 #include <iosfwd>
+#include <iterator>
 #include <type_traits>
 
 namespace Core {
@@ -193,11 +194,15 @@ MemoryView<typename std::add_const<T>::type > MakeConstView(T(&staticArray)[_Dim
     return MemoryView<typename std::add_const<T>::type >(&staticArray[0], _Dim);
 }
 //----------------------------------------------------------------------------
-template <typename _Category, typename _Ty>
-MemoryView<_Ty> MakeView(
-    std::iterator<_Category, _Ty, ptrdiff_t>&& ibegin,
-    std::iterator<_Category, _Ty, ptrdiff_t>&& iend) {
-    return MemoryView<_Ty>(&*ibegin, std::distance(ibegin, iend));
+template <typename _It>
+typename std::enable_if<
+    Meta::is_iterator<_It>::value,
+    MemoryView< typename std::iterator_traits<_It>::value_type >
+>::type MakeView(_It first, _It last) {
+    typedef std::iterator_traits<_It> traits_type;
+    typedef MemoryView< typename traits_type::value_type > view_type;
+    STATIC_ASSERT(std::is_same<typename traits_type::iterator_category, std::random_access_iterator_tag>::value);
+    return view_type(std::addressof(*first), std::distance(first, last));
 }
 //----------------------------------------------------------------------------
 template <typename _VectorLike>
