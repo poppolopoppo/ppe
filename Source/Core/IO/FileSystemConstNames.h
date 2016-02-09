@@ -13,6 +13,9 @@ private:
     FileSystemConstNames();
 
 public:
+    // Tokens :
+    static const Dirname& DotDot();
+
     // Extnames :
     static const Extname& DdsExt();
     static const Extname& FxExt();
