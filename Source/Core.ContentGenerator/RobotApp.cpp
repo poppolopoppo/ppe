@@ -221,6 +221,13 @@ private:
             wstr[i] = (wchar_t)(_rand.Next(L'a'+0, L'z'+1));
     }
 
+    void Randomize_(RTTI::BinaryData& rawdata) {
+        const size_t count = NextRandomDim_()*10;
+        rawdata.Resize_DiscardData(count);
+        forrange(i, 0, count)
+            rawdata[i] = u8(_rand.Next());
+    }
+
     void Randomize_(Core::RTTI::PMetaAtom& atom) {
         const float f = _rand.NextFloatM11();
         if (f < -0.5f)
@@ -289,12 +296,81 @@ RobotApp::RobotApp()
     ContentIdentity::MetaClass::Create();
     test_type::MetaClass::Create();
     {
+        float4x4 m = Make3DTransformMatrix(float3(1,2,3), 10.0f, float3::Z(), Radians(33.0f));
+        float4 p = float4::W();
+        float4 ws = m.Multiply(p);
+        float4 ss = Transform4(m, p);
+    }
+    {
+        const Filename filename = L"Tmp:/koala/a/Test/../robocop/4/../3/2/1/../a/b/c/../robotapp.bin";
+        const Filename filename2 = L"Tmp:/Test/toto/../chimpanzee/../../koala/a/b/../c/1/../2/3/robotapp.raw";
+
+        std::cout << filename << std::endl;
+        std::cout << filename2 << std::endl;
+
+        Filename normalized = filename.Normalized();
+        Filename normalized2 = filename2.Normalized();
+
+        std::cout << normalized << std::endl;
+        std::cout << normalized2 << std::endl;
+
+        Filename relative = filename.Relative(filename2.Dirpath());
+        Filename relative2 = filename2.Relative(filename.Dirpath());
+
+        std::cout << relative << std::endl;
+        std::cout << relative2 << std::endl;
+
+        Filename absolute = relative.Absolute(filename2.Dirpath());
+        Filename absolute2 = relative2.Absolute(filename.Dirpath());
+
+        std::cout << absolute << std::endl;
+        std::cout << absolute2 << std::endl;
+
+        Assert(absolute == normalized);
+        Assert(absolute2 == normalized2);
+    }
+    {
+        const Filename filename = L"Process:/dico.txt";
+
+        VECTOR_THREAD_LOCAL(Container, String) words;
+        {
+            RAWSTORAGE_THREAD_LOCAL(FileSystem, u8) read;
+            if (false == VFS_ReadAll(&read, filename, AccessPolicy::Binary))
+                AssertNotReached();
+
+            MEMORYSTREAM_THREAD_LOCAL(FileSystem) iss(std::move(read), read.size());
+            char buffer[2048];
+            std::streamsize len = 0;
+            while (0 < (len = iss.ReadLine(buffer))) {
+                const StringSlice line(buffer, len);
+                const StringSlice word = Chomp(line);
+                words.emplace_back(ToString(word));
+            }
+        }
+
+        STRINGTRIE_SET(Container, CaseSensitive::True, 17) set;
+
+        std::random_shuffle(words.begin(), words.end());
+
+        for (const String& word : words)
+            set.Insert_AssertUnique(MakeStringSlice(word));
+
+        std::random_shuffle(words.begin(), words.end());
+
+        for (const String& word : words)
+            if (not set.Contains(MakeStringSlice(word)))
+                AssertNotReached();
+
+        const auto* const node = set.Find(MakeStringSlice(words.front()));
+        Assert(nullptr != node);
+    }
+    {
         const Filename filename = L"Tmp:/robotapp.bin";
         const Filename filename2 = L"Tmp:/robotapp.raw";
 
         RTTI::MetaTransaction input;
         {
-            RTTIAtomRandomizer_ rand(4, Random::MakeSeed(0xabadcafeull));
+            RTTIAtomRandomizer_ rand(4, 0xabadcafedeadbeefull);
             forrange(i, 0, test_count) {
                 RefPtr<test_type> t = new test_type();
                 rand.Randomize(t.get());
@@ -371,40 +447,6 @@ RobotApp::RobotApp()
         AssertRelease(input.size() == output.size());
         if (false == input.DeepEquals(output))
             AssertNotReached();
-    }
-    {
-        const Filename filename = L"Process:/dico.txt";
-
-
-
-        VECTOR_THREAD_LOCAL(Container, String) words;
-        {
-            RAWSTORAGE_THREAD_LOCAL(FileSystem, u8) read;
-            if (false == VFS_ReadAll(&read, filename, AccessPolicy::Binary))
-                AssertNotReached();
-
-            MEMORYSTREAM_THREAD_LOCAL(FileSystem) iss(std::move(read), read.size());
-            char buffer[2048];
-            std::streamsize len = 0;
-            while (0 < (len = iss.ReadLine(buffer))) {
-                const StringSlice line(buffer, len);
-                const StringSlice word = Chomp(line);
-                words.emplace_back(ToString(word));
-            }
-        }
-
-        STRINGTRIE_SET(Container, CaseSensitive::True, 17) set;
-
-        std::random_shuffle(words.begin(), words.end());
-
-        for (const String& word : words)
-            set.Insert_AssertUnique(MakeStringSlice(word));
-
-        std::random_shuffle(words.begin(), words.end());
-
-        for (const String& word : words)
-            if (false == set.Find(MakeStringSlice(word)))
-                AssertNotReached();
     }
     {
         Parser::ParseContext globalContext;
