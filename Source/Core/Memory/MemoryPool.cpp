@@ -271,14 +271,14 @@ MemoryPoolChunk *MemoryPoolBase::ReleaseChunk_() {
         _totalSize -= release->ChunkSize();
 
         LOG(Info,
-            L"[Pool] Release chunk with block size = {0}, {4} blocs, {3} remaining pages, {1} = {2} per chunk ({5}/{6})",
+            L"[Pool] Release chunk with block size = {0}, page size = {4} ({5} blocs), {3} remaining pages, {1} = {2} per chunk ({6:f2}%)",
             _blockSize,
             SizeInBytes{ _currentChunksize },
             BlockCountPerChunk(_currentChunksize),
             _chunkCount,
-            release->ChunkSize(),
-            SizeInBytes{ _usedSize },
-            SizeInBytes{ _totalSize });
+            SizeInBytes{ release->ChunkSize() },
+            BlockCountPerChunk(release->ChunkSize()),
+            (100.0f*_usedSize)/_totalSize );
 
         return release;
     }
