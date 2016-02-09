@@ -46,8 +46,11 @@ template <> struct DefaultString<wchar_t> { typedef WString type; };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-hash_t hash_string(const char* cstr, size_t length, CaseSensitive sensitive = CaseSensitive::True);
-hash_t hash_string(const wchar_t* wcstr, size_t length, CaseSensitive sensitive = CaseSensitive::True);
+hash_t hash_string(const char* cstr, size_t length);
+hash_t hash_string(const wchar_t* wcstr, size_t length);
+//----------------------------------------------------------------------------
+hash_t hash_stringI(const char* cstr, size_t length);
+hash_t hash_stringI(const wchar_t* wcstr, size_t length);
 //----------------------------------------------------------------------------
 inline hash_t hash_value(const String& str) { return hash_string(str.c_str(), str.size()); }
 inline hash_t hash_value(const WString& wstr) { return hash_string(wstr.c_str(), wstr.size()); }

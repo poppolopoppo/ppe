@@ -80,35 +80,32 @@ starCheck:
    goto loopStart;
 }
 //----------------------------------------------------------------------------
-template <CaseSensitive _Sensitive, typename _Char>
-static typename std::enable_if< CaseSensitive::True == _Sensitive, size_t >::type
-    hash_string_(const _Char* cstr, size_t length) {
-    return hash_mem(cstr, length*sizeof(_Char));
-}
-//----------------------------------------------------------------------------
-template <CaseSensitive _Sensitive, typename _Char>
-static typename std::enable_if< CaseSensitive::False == _Sensitive, size_t >::type
-    hash_string_(const _Char* cstr, size_t length) {
+template <typename _Char>
+hash_t hash_stringI_(const _Char* cstr, size_t length) {
     STACKLOCAL_POD_ARRAY(_Char, lower_cstr, length);
     forrange(i, 0, length)
         lower_cstr[i] = ToLower(cstr[i]);
-    return hash_mem(lower_cstr, length*sizeof(_Char));
+    return hash_mem(lower_cstr);
 }
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-hash_t hash_string(const char* cstr, size_t length, CaseSensitive sensitive/* = CaseSensitive::True */) {
-    return (CaseSensitive::True == sensitive)
-        ? hash_string_<CaseSensitive::True>(cstr, length)
-        : hash_string_<CaseSensitive::False>(cstr, length);
+hash_t hash_string(const char* cstr, size_t length) {
+    return hash_mem(cstr, length*sizeof(char));
 }
 //----------------------------------------------------------------------------
-hash_t hash_string(const wchar_t* wcstr, size_t length, CaseSensitive sensitive/* = CaseSensitive::True */) {
-    return (CaseSensitive::True == sensitive)
-        ? hash_string_<CaseSensitive::True>(wcstr, length)
-        : hash_string_<CaseSensitive::False>(wcstr, length);
+hash_t hash_strin(const wchar_t* wcstr, size_t length) {
+    return hash_mem(wcstr, length*sizeof(wchar_t));
+}
+//----------------------------------------------------------------------------
+hash_t hash_stringI(const char* cstr, size_t length) {
+    return hash_stringI_(cstr, length);
+}
+//----------------------------------------------------------------------------
+hash_t hash_string(const wchar_t* wcstr, size_t length) {
+    return hash_stringI_(wcstr, length);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
