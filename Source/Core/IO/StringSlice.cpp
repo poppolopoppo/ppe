@@ -155,6 +155,18 @@ bool Split_(const _Char **reentrantCstr, size_t *reentrantLength, const _Char* s
     }
 }
 //----------------------------------------------------------------------------
+template <typename _Char>
+typename MemoryView<const _Char>::iterator FindCharIf_(
+    const MemoryView<const _Char>& str,
+    bool (*pred)(_Char) ) {
+    return str.find_if(pred);
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+bool FindCharIf_ReturnIfNot_(const MemoryView<const _Char>& str, bool (*pred)(_Char) ) {
+    return (str.end() == FindCharIf_(str, pred));
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -194,17 +206,59 @@ bool Split(const wchar_t **reentrantCstr, size_t *reentrantLength, const wchar_t
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 StringSlice Chomp(const StringSlice& line) {
-    forrange(p, line.begin(), line.end())
-        if (*p == '\r' || *p == '\n')
-            return StringSlice(line.begin(), std::distance(line.begin(), p));
-    return line;
+    return MakeView(line.begin(), FindCharIf_(line, &IsEndLine));
 }
 //----------------------------------------------------------------------------
 WStringSlice Chomp(const WStringSlice& line) {
-    forrange(p, line.begin(), line.end())
-        if (*p == L'\r' || *p == L'\n')
-            return WStringSlice(line.begin(), std::distance(line.begin(), p));
-    return line;
+    return MakeView(line.begin(), FindCharIf_(line, &IsEndLine));
+}
+//----------------------------------------------------------------------------
+bool IsAlnum(const StringSlice& str) {
+    return FindCharIf_ReturnIfNot_(str, &IsAlnum);
+}
+//----------------------------------------------------------------------------
+bool IsAlnum(const WStringSlice& wstr) {
+    return FindCharIf_ReturnIfNot_(wstr, &IsAlnum);
+}
+//----------------------------------------------------------------------------
+bool IsAlpha(const StringSlice& str) {
+    return FindCharIf_ReturnIfNot_(str, &IsAlpha);
+}
+//----------------------------------------------------------------------------
+bool IsAlpha(const WStringSlice& wstr) {
+    return FindCharIf_ReturnIfNot_(wstr, &IsAlpha);
+}
+//----------------------------------------------------------------------------
+bool IsDigit(const StringSlice& str) {
+    return FindCharIf_ReturnIfNot_(str, &IsDigit);
+}
+//----------------------------------------------------------------------------
+bool IsDigit(const WStringSlice& wstr) {
+    return FindCharIf_ReturnIfNot_(wstr, &IsDigit);
+}
+//----------------------------------------------------------------------------
+bool IsXDigit(const StringSlice& str) {
+    return FindCharIf_ReturnIfNot_(str, &IsXDigit);
+}
+//----------------------------------------------------------------------------
+bool IsXDigit(const WStringSlice& wstr) {
+    return FindCharIf_ReturnIfNot_(wstr, &IsXDigit);
+}
+//----------------------------------------------------------------------------
+bool IsPrint(const StringSlice& str) {
+    return FindCharIf_ReturnIfNot_(str, &IsPrint);
+}
+//----------------------------------------------------------------------------
+bool IsPrint(const WStringSlice& wstr) {
+    return FindCharIf_ReturnIfNot_(wstr, &IsPrint);
+}
+//----------------------------------------------------------------------------
+bool IsSpace(const StringSlice& str) {
+    return FindCharIf_ReturnIfNot_(str, &IsSpace);
+}
+//----------------------------------------------------------------------------
+bool IsSpace(const WStringSlice& wstr) {
+    return FindCharIf_ReturnIfNot_(wstr, &IsSpace);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -35,6 +35,24 @@ BasicStringSlice<_Char> MakeStringSlice(const _Char(&cstr)[_Dim]) {
 StringSlice Chomp(const StringSlice& line);
 WStringSlice Chomp(const WStringSlice& line);
 //----------------------------------------------------------------------------
+bool IsAlnum(const StringSlice& str);
+bool IsAlnum(const WStringSlice& wstr);
+//----------------------------------------------------------------------------
+bool IsAlpha(const StringSlice& str);
+bool IsAlpha(const WStringSlice& wstr);
+//----------------------------------------------------------------------------
+bool IsDigit(const StringSlice& str);
+bool IsDigit(const WStringSlice& wstr);
+//----------------------------------------------------------------------------
+bool IsXDigit(const StringSlice& str);
+bool IsXDigit(const WStringSlice& wstr);
+//----------------------------------------------------------------------------
+bool IsPrint(const StringSlice& str);
+bool IsPrint(const WStringSlice& wstr);
+//----------------------------------------------------------------------------
+bool IsSpace(const StringSlice& str);
+bool IsSpace(const WStringSlice& wstr);
+//----------------------------------------------------------------------------
 bool Split(const char **reentrantCstr, char separator, BasicStringSlice<char>& slice);
 bool Split(const wchar_t **reentrantCstr, wchar_t separator, BasicStringSlice<wchar_t>& slice);
 //----------------------------------------------------------------------------

@@ -192,6 +192,9 @@ inline wchar_t ToUpper(wchar_t wch) { return std::towupper(wch); }
 template <typename _Char> void InplaceToLower(_Char& ch) { ch = ToLower(ch); }
 template <typename _Char> void InplaceToUpper(_Char& ch) { ch = ToUpper(ch); }
 //----------------------------------------------------------------------------
+template <typename _Char> void InplaceToLower(const MemoryView<_Char>& str) { for (_Char& ch : str) InplaceToLower(ch); }
+template <typename _Char> void InplaceToUpper(const MemoryView<_Char>& str) { for (_Char& ch : str) InplaceToUpper(ch); }
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 inline bool IsAlpha(char ch) { return ( ( ch >= 'a' ) && ( ch <= 'z' ) ) || ( ( ch >= 'A' ) && ( ch <= 'Z' ) ); }
@@ -199,6 +202,9 @@ inline bool IsAlpha(wchar_t wch) { return 0 != std::iswalpha(wch); }
 //----------------------------------------------------------------------------
 inline bool IsDigit(char ch) { return ( ( ch >= '0' ) && ( ch <= '9' ) ); }
 inline bool IsDigit(wchar_t wch) { return 0 != std::iswdigit(wch); }
+//----------------------------------------------------------------------------
+inline bool IsEndLine(char ch) { return ( ( ch == '\r' ) && ( ch <= '\n' ) ); }
+inline bool IsEndLine(wchar_t wch) { return ( ( wch == L'\r' ) && ( wch <= L'\n' ) ); }
 //----------------------------------------------------------------------------
 inline bool IsXDigit(char ch) { return IsDigit(ch) || ( ch >= 'a' && ch <= 'f' ) || ( ch >= 'A' && ch <= 'F' ); }
 inline bool IsXDigit(wchar_t wch) { return 0 != std::iswxdigit(wch); }
@@ -208,6 +214,9 @@ inline bool IsAlnum(wchar_t wch) { return 0 != std::iswalnum(wch); }
 //----------------------------------------------------------------------------
 inline bool IsPrint(char ch) { return 0 != std::isprint(ch); }
 inline bool IsPrint(wchar_t wch) { return 0 != std::iswprint(wch); }
+//----------------------------------------------------------------------------
+inline bool IsPunct(char ch) { return 0 != std::ispunct(ch); }
+inline bool IsPunct(wchar_t wch) { return 0 != std::iswpunct(wch); }
 //----------------------------------------------------------------------------
 inline bool IsSpace(char ch) { return ( ch == ' ' || ch == '\f' || ch == '\n' || ch == '\r' || ch == '\t' || ch == '\v' ); }
 inline bool IsSpace(wchar_t wch) { return 0 != std::iswdigit(wch); }
