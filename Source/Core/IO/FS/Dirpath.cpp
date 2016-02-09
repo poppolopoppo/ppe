@@ -3,11 +3,13 @@
 #include "Dirpath.h"
 
 #include "Dirname.h"
+#include "Filename.h"
 #include "FileSystemTrie.h"
 #include "MountingPoint.h"
 
 #include "Allocator/Alloca.h"
 #include "Container/Token.h"
+#include "IO/FileSystemConstNames.h"
 #include "Memory/UniqueView.h"
 
 #include <algorithm>
@@ -17,6 +19,27 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
+//----------------------------------------------------------------------------
+static bool NormalizePath_(size_t* plength, const MemoryView<Dirname>& dirnames) {
+    Assert(plength);
+
+    const Dirname dotdot = FileSystemConstNames::DotDot();
+    if (dirnames.front() == dotdot)
+        return false;
+
+    size_t insert = 0;
+    forrange(i, 0, dirnames.size()) {
+        if (dirnames[i] != dotdot)
+            dirnames[insert++] = dirnames[i];
+        else if (0 < insert)
+            --insert;
+        else
+            return false; // invalid path, too many /../../../..
+    }
+
+    *plength = insert;
+    return true;
+}
 //----------------------------------------------------------------------------
 static const FileSystemNode *ParseDirpath_(const FileSystem::char_type *cstr, size_t length) {
     Assert(0 == length || cstr);
@@ -267,6 +290,103 @@ bool Dirpath::Less(const Dirpath& other) const {
 //----------------------------------------------------------------------------
 size_t Dirpath::HashValue() const {
     return (_path) ? _path->HashValue() : 0;
+}
+//----------------------------------------------------------------------------
+bool Dirpath::Absolute(Dirpath* absolute, const Dirpath& origin, const Dirpath& relative) {
+    Assert(absolute);
+    Assert(origin.HasMountingPoint());
+    Assert(not relative.HasMountingPoint());
+
+    STACKLOCAL_POD_ARRAY(Dirname, dirnames, origin.Depth()+relative.Depth());
+
+    Core::MountingPoint origin_mp, relative_mp;
+    const size_t origin_s = origin.ExpandPath(origin_mp, dirnames.SubRange(0, origin.Depth()));
+    const size_t relative_s = relative.ExpandPath(relative_mp, dirnames.SubRange(origin_s, relative.Depth()));
+
+    Assert(origin.Depth() >= origin_s);
+    Assert(relative.Depth() >= relative_s);
+
+    size_t length = 0;
+    if (not NormalizePath_(&length, dirnames.SubRange(0, origin_s+relative_s)))
+        return false;
+
+    Assert((origin_s+relative_s) >= length);
+    *absolute = Dirpath(origin_mp, dirnames.SubRange(0, length));
+    return true;
+}
+//----------------------------------------------------------------------------
+bool Dirpath::Normalize(Dirpath* normalized, const Dirpath& path) {
+    Assert(normalized);
+
+    if (path.empty()) {
+        *normalized = path;
+        return true;
+    }
+
+    Core::MountingPoint mountingPoint;
+    STACKLOCAL_POD_ARRAY(Dirname, dirnames, path.Depth());
+    const size_t n = path.ExpandPath(mountingPoint, dirnames);
+    Assert(path.Depth() >= n);
+
+    size_t length = 0;
+    if (not NormalizePath_(&length, dirnames.SubRange(0, n)))
+        return false;
+
+    Assert(length <= n);
+    *normalized = Dirpath(mountingPoint, dirnames.SubRangeConst(0, length));
+    return true;
+}
+//----------------------------------------------------------------------------
+bool Dirpath::Relative(Dirpath* relative, const Dirpath& origin, const Dirpath& other) {
+    Assert(relative);
+    Assert(origin.HasMountingPoint());
+    Assert(other.HasMountingPoint());
+
+    if (origin.MountingPoint() != other.MountingPoint())
+        return false;
+
+    if (0 == origin.Depth() || 0 == other.Depth()) {
+        *relative = (0 == origin.Depth() ? other : origin);
+        return true;
+    }
+
+    STACKLOCAL_POD_ARRAY(Dirname, dirnames, origin.Depth()+other.Depth());
+    MemoryView<Dirname> origin_dirs = dirnames.SubRange(0, origin.Depth());
+    MemoryView<Dirname> other_dirs = dirnames.SubRange(origin.Depth(), other.Depth());
+
+    Core::MountingPoint origin_mp, other_mp;
+    size_t origin_s = origin.ExpandPath(origin_mp, origin_dirs);
+    size_t other_s = other.ExpandPath(other_mp, other_dirs);
+
+    if (false == NormalizePath_(&origin_s, origin_dirs.SubRange(0, origin_s)) ||
+        false == NormalizePath_(&other_s, other_dirs.SubRange(0, other_s)) )
+        return false;
+
+    Assert(origin.Depth() >= origin_s);
+    Assert(other.Depth() >= other_s);
+
+    origin_dirs = origin_dirs.SubRange(0, origin_s);
+    other_dirs = other_dirs.SubRange(0, other_s);
+
+    size_t begin = 0;
+    while ( begin < origin_s &&
+            begin < other_s &&
+            origin_dirs[begin] == other_dirs[begin] )
+        begin++;
+
+    const Dirname dotdot = FileSystemConstNames::DotDot();
+    STACKLOCAL_POD_STACK(Dirname, relative_dirs, (origin_s-begin)+(other_s-begin));
+
+    forrange(i, begin, origin_s)
+        relative_dirs.Push(dotdot);
+
+    forrange(i, begin, other_s)
+        relative_dirs.Push(other_dirs[i]);
+
+    Assert(relative_dirs.size() == relative_dirs.capacity());
+
+    *relative = Dirpath(Core::MountingPoint(), relative_dirs.MakeView());
+    return true;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

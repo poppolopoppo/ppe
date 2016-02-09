@@ -65,6 +65,14 @@ public:
     void ReplaceExtension(const Core::Extname& ext);
     Filename WithReplacedExtension(const Core::Extname& ext) const;
 
+    bool Absolute(Filename* absolute, const Core::Dirpath& origin) const;
+    bool Normalize(Filename* normalized) const;
+    bool Relative(Filename* relative, const Core::Dirpath& origin) const;
+
+    Filename Absolute(const Core::Dirpath& origin) const;
+    Filename Normalized() const;
+    Filename Relative(const Core::Dirpath& origin) const;
+
     bool Equals(const Filename& other) const;
     bool Less(const Filename& other) const;
 

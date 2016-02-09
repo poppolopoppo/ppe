@@ -15,6 +15,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class Dirname;
+class Filename;
 FWD_REFPTR(FileSystemNode);
 class MountingPoint;
 //----------------------------------------------------------------------------
@@ -82,6 +83,10 @@ public:
     size_t HashValue() const;
 
     const FileSystemNode *PathNode() const { return _path.get(); }
+
+    static bool Absolute(Dirpath* absolute, const Dirpath& origin, const Dirpath& relative);
+    static bool Normalize(Dirpath* normalized, const Dirpath& path);
+    static bool Relative(Dirpath* relative, const Dirpath& origin, const Dirpath& other);
 
 private:
     SCFileSystemNode _path;

@@ -164,6 +164,54 @@ Filename Filename::WithReplacedExtension(const Core::Extname& ext) const {
     return cpy;
 }
 //----------------------------------------------------------------------------
+bool Filename::Absolute(Filename* absolute, const Core::Dirpath& origin) const {
+    Assert(absolute);
+    Core::Dirpath dirpath;
+    if (false == Core::Dirpath::Absolute(&dirpath, origin, _dirpath))
+        return false;
+    *absolute = Filename(dirpath, _basename);
+    return true;
+}
+//----------------------------------------------------------------------------
+Filename Filename::Absolute(const Core::Dirpath& origin) const {
+    Filename result;
+    if (not Absolute(&result, origin))
+        AssertNotReached();
+    return result;
+}
+//----------------------------------------------------------------------------
+bool Filename::Normalize(Filename* normalized) const {
+    Assert(normalized);
+    Core::Dirpath dirpath;
+    if (false == Core::Dirpath::Normalize(&dirpath, _dirpath))
+        return false;
+    *normalized = Filename(dirpath, _basename);
+    return true;
+}
+//----------------------------------------------------------------------------
+Filename Filename::Normalized() const {
+    Filename result;
+    if (not Normalize(&result))
+        AssertNotReached();
+    return result;
+}
+//----------------------------------------------------------------------------
+bool Filename::Relative(Filename* relative, const Core::Dirpath& origin) const {
+    Assert(relative);
+    Core::Dirpath dirpath;
+    if (false == Core::Dirpath::Relative(&dirpath, origin, _dirpath))
+        return false;
+    *relative = Filename(dirpath, _basename);
+    return true;
+}
+//----------------------------------------------------------------------------
+Filename Filename::Relative(const Core::Dirpath& origin) const {
+    Filename result;
+    if (not Relative(&result, origin))
+        AssertNotReached();
+    return result;
+}
+//----------------------------------------------------------------------------
 size_t Filename::HashValue() const {
     return hash_tuple(_dirpath.HashValue(), _basename.HashValue());
 }
