@@ -75,11 +75,13 @@ struct AllocaBlock {
 #endif
 //----------------------------------------------------------------------------
 #define MALLOCA(T, _NAME, _COUNT) \
-    const Core::AllocaBlock<T> _NAME( static_cast< T* >(SYSALLOCA_IFP(sizeof(T) * _COUNT)), _COUNT )
+    const size_t CONCAT(_Count_, _NAME) = (_COUNT); \
+    const Core::AllocaBlock<T> _NAME( static_cast< T* >( \
+        SYSALLOCA_IFP(sizeof(T) * CONCAT(_Count_, _NAME))), \
+        CONCAT(_Count_, _NAME) )
 //----------------------------------------------------------------------------
 #define STACKLOCAL_POD_ARRAY(T, _NAME, _COUNT) \
-    const size_t CONCAT(_SizeInBytes_, _NAME) = (_COUNT); \
-    MALLOCA(T, CONCAT(_Alloca_, _NAME), CONCAT(_SizeInBytes_, _NAME) ); \
+    MALLOCA(T, CONCAT(_Alloca_, _NAME), _COUNT ); \
     const Core::MemoryView< T > _NAME( CONCAT(_Alloca_, _NAME).MakeView() )
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
