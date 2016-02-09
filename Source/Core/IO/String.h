@@ -15,8 +15,11 @@
 #include <wchar.h>
 #include <xhash>
 
-//extern template std::basic_string<char, std::char_traits<char>, ALLOCATOR(String, char)>;
-//extern template std::basic_string<wchar_t, std::char_traits<wchar_t>, ALLOCATOR(String, wchar_t)>;
+extern template class std::basic_string<char, std::char_traits<char>, std::allocator<char>>;
+extern template class std::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<char>>;
+
+extern template class std::basic_string<char, std::char_traits<char>, ALLOCATOR(String, char)>;
+extern template class std::basic_string<wchar_t, std::char_traits<wchar_t>, ALLOCATOR(String, wchar_t)>;
 
 namespace Core {
 //----------------------------------------------------------------------------
