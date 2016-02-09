@@ -100,10 +100,23 @@ public:
     }
 
 private:
-    virtual MetaObject* VirtualCreateInstance() const override {
-        MetaObject* const obj = new T();
+    template <typename U>
+    static MetaObject* CreateInstance_(std::true_type) {
+        STATIC_ASSERT(std::is_same<T, U>::value);
+        MetaObject* const obj = new U();
         Assert(obj);
         return obj;
+    }
+
+    template <typename U>
+    static MetaObject* CreateInstance_(std::false_type) {
+        AssertNotReached(); // abstract class
+        return nullptr;
+    }
+
+    virtual MetaObject* VirtualCreateInstance() const override {
+        typedef typename std::is_default_constructible<T>::type constructible_type;
+        return CreateInstance_<T>(constructible_type());
     }
 };
 //----------------------------------------------------------------------------
