@@ -48,7 +48,8 @@ Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::Token(const Token&
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
 auto Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::operator =(const Token& other) -> Token& {
-    _data = other._data;
+    if (this != &other)
+        _data = other._data;
     return *this;
 }
 //----------------------------------------------------------------------------
