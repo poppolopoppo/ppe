@@ -212,38 +212,6 @@ inline bool IsSpace(wchar_t wch) { return 0 != std::iswdigit(wch); }
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char, CaseSensitive _CaseSensitive>
-struct StringEqualTo : public std::binary_function<const _Char*, const _Char*, bool> {
-    bool operator ()(const _Char* lhs, const _Char* rhs) const { return 0 == Compare(lhs, rhs); }
-};
-//----------------------------------------------------------------------------
-template <typename _Char>
-struct StringEqualTo<_Char, CaseSensitive::False> : public std::binary_function<const _Char*, const _Char*, bool>{
-    bool operator ()(const _Char* lhs, const _Char* rhs) const { return 0 == CompareI(lhs, rhs); }
-};
-//----------------------------------------------------------------------------
-template <typename _Char, CaseSensitive _CaseSensitive>
-struct StringLess : public std::binary_function<const _Char*, const _Char*, bool> {
-    bool operator ()(const _Char* lhs, const _Char* rhs) const { return Compare(lhs, rhs) < 0; }
-};
-//----------------------------------------------------------------------------
-template <typename _Char>
-struct StringLess<_Char, CaseSensitive::False> : public std::binary_function<const _Char*, const _Char*, bool>{
-    bool operator ()(const _Char* lhs, const _Char* rhs) const { return CompareI(lhs, rhs) < 0; }
-};
-//----------------------------------------------------------------------------
-template <typename _Char, CaseSensitive _CaseSensitive>
-struct StringHasher : public std::unary_function<const _Char*, size_t> {
-    size_t operator ()(const _Char* cstr) const { return hash_value(cstr); }
-};
-//----------------------------------------------------------------------------
-template <typename _Char>
-struct StringHasher<_Char, CaseSensitive::False> : public std::unary_function<const _Char*, size_t> {
-    size_t operator ()(const _Char* cstr) const { return hash_valueI(cstr); }
-};
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename _Char, CaseSensitive _CaseSensitive>
 struct CharEqualTo : public std::binary_function<const _Char, const _Char, bool> {
     bool operator ()(const _Char& lhs, const _Char& rhs) const { return lhs == rhs; }
 };
