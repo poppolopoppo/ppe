@@ -159,13 +159,18 @@ private:
                 _owner->Print("BinaryData:\"\"");
             }
             else {
-                STACKLOCAL_OCSTRSTREAM(fmt, 32);
-                fmt << std::hex << std::setfill('0');
+                static const char hexdigit[17] = "0123456789abcdef";
+                char hexbyte[4] = {'\\','x','0','0'};
                 _owner->Print("BinaryData:\"");
                 for (const u8& b : rawdata) {
-                    fmt << "\\x"  << std::setw(2) << unsigned(b);
-                    _owner->Print(fmt.MakeView());
-                    fmt.Reset();
+                    if (IsAlnum((char)b)) {
+                        _owner->_oss.WritePOD((char)b);
+                    }
+                    else {
+                        hexbyte[2] = hexdigit[b>>4];
+                        hexbyte[3] = hexdigit[b&15];
+                        _owner->_oss.WritePOD(hexbyte);
+                    }
                 }
                 _owner->Print("\"");
             }
