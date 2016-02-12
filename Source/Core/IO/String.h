@@ -203,8 +203,8 @@ inline bool IsAlpha(wchar_t wch) { return 0 != std::iswalpha(wch); }
 inline bool IsDigit(char ch) { return ( ( ch >= '0' ) && ( ch <= '9' ) ); }
 inline bool IsDigit(wchar_t wch) { return 0 != std::iswdigit(wch); }
 //----------------------------------------------------------------------------
-inline bool IsEndLine(char ch) { return ( ( ch == '\r' ) && ( ch <= '\n' ) ); }
-inline bool IsEndLine(wchar_t wch) { return ( ( wch == L'\r' ) && ( wch <= L'\n' ) ); }
+inline bool IsEndLine(char ch) { return ( ( ch == '\r' ) || ( ch == '\n' ) ); }
+inline bool IsEndLine(wchar_t wch) { return ( ( wch == L'\r' ) || ( wch == L'\n' ) ); }
 //----------------------------------------------------------------------------
 inline bool IsXDigit(char ch) { return IsDigit(ch) || ( ch >= 'a' && ch <= 'f' ) || ( ch >= 'A' && ch <= 'F' ); }
 inline bool IsXDigit(wchar_t wch) { return 0 != std::iswxdigit(wch); }
