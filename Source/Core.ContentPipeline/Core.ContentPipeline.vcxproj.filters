@@ -5,29 +5,25 @@
     </CustomBuild>
     <CustomBuild Include="ContentIdentity.h">
     </CustomBuild>
+    <CustomBuild Include="ContentImporter.cpp">
+    </CustomBuild>
     <CustomBuild Include="ContentImporter.h">
     </CustomBuild>
     <CustomBuild Include="ContentPipeline.cpp">
     </CustomBuild>
     <CustomBuild Include="ContentPipeline.h">
     </CustomBuild>
+    <CustomBuild Include="ContentProcessor.cpp">
+    </CustomBuild>
     <CustomBuild Include="ContentProcessor.h">
     </CustomBuild>
     <CustomBuild Include="Core.ContentPipeline.bff">
     </CustomBuild>
-    <CustomBuild Include="DependencyList.cpp">
-    </CustomBuild>
-    <CustomBuild Include="DependencyList.h">
+    <CustomBuild Include="Exceptions.cpp">
     </CustomBuild>
     <CustomBuild Include="Exceptions.h">
     </CustomBuild>
-    <CustomBuild Include="FileIdentity.cpp">
-    </CustomBuild>
-    <CustomBuild Include="FileIdentity.h">
-    </CustomBuild>
-    <CustomBuild Include="FileIdentityCache.cpp">
-    </CustomBuild>
-    <CustomBuild Include="FileIdentityCache.h">
+    <CustomBuild Include="ExternalReference.h">
     </CustomBuild>
     <CustomBuild Include="stdafx.cpp">
     </CustomBuild>

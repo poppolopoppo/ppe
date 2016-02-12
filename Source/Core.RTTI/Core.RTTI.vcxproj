@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Dummy|Win32">
-      <Configuration>Dummy</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
@@ -48,6 +44,8 @@
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Core.RTTI.bff" />
+    <CustomBuild Include="DynamicObject.cpp" />
+    <CustomBuild Include="DynamicObject.h" />
     <CustomBuild Include="Exceptions.h" />
     <CustomBuild Include="MetaAtom-inl.h" />
     <CustomBuild Include="MetaAtom.cpp" />
@@ -109,12 +107,6 @@
     <Keyword>MakeFileProj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dummy|Win32'" Label="Configuration">
-    <ConfigurationType>Makefile</ConfigurationType>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
-    <LocalDebuggerCommand>$(SolutionDir)\Output\Binary\$(ProjectName).$(Configuration).$(Platform).exe</LocalDebuggerCommand>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
@@ -178,9 +170,6 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Dummy|Win32'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
@@ -212,21 +201,13 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dummy|Win32'">
-    <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -summary -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -summary -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -summary -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
-    <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
-    <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
-    <OutDir>$(SolutionDir)\Output\Binary</OutDir>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <NMakeBuildCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -summary -cache $(ProjectName)-$(Platform)-$(Configuration)</NMakeBuildCommandLine>
     <NMakeReBuildCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -summary -cache -clean $(ProjectName)-$(Platform)-$(Configuration)</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -summary -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakeOutput>$(SolutionDir)\Output\Binary\Core.RTTI.Debug.Win32.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN32;ARCH_X86;ARCH_32BIT;DEBUG;_DEBUG;_SECURE_SCL=1;_ITERATOR_DEBUG_LEVEL=2;_HAS_ITERATOR_DEBUGGING=1</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;d:\Code\Core/Source/Core.RTTI;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir);C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\PerfSDK;.</NMakeIncludeSearchPath>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
     <OutDir>$(SolutionDir)\Output\Binary</OutDir>
@@ -237,7 +218,7 @@
     <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -summary -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakeOutput>$(SolutionDir)\Output\Binary\Core.RTTI.FastDebug.Win32.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN32;ARCH_X86;ARCH_32BIT;FASTDEBUG;_DEBUG;DEBUG;_SECURE_SCL=1;_ITERATOR_DEBUG_LEVEL=2;_HAS_ITERATOR_DEBUGGING=1</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;d:\Code\Core/Source/Core.RTTI;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir);C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\PerfSDK;.</NMakeIncludeSearchPath>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
     <OutDir>$(SolutionDir)\Output\Binary</OutDir>
@@ -248,7 +229,7 @@
     <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -summary -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakeOutput>$(SolutionDir)\Output\Binary\Core.RTTI.Release.Win32.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN32;ARCH_X86;ARCH_32BIT;RELEASE;NDEBUG;_SECURE_SCL=0;_ITERATOR_DEBUG_LEVEL=0;_HAS_ITERATOR_DEBUGGING=0</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;d:\Code\Core/Source/Core.RTTI;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir);C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\PerfSDK;.</NMakeIncludeSearchPath>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
     <OutDir>$(SolutionDir)\Output\Binary</OutDir>
@@ -259,7 +240,7 @@
     <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -summary -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakeOutput>$(SolutionDir)\Output\Binary\Core.RTTI.Profiling.Win32.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN32;ARCH_X86;ARCH_32BIT;RELEASE;NDEBUG;PROFILING_ENABLED;_SECURE_SCL=0;_ITERATOR_DEBUG_LEVEL=0;_HAS_ITERATOR_DEBUGGING=0</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;d:\Code\Core/Source/Core.RTTI;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir);C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\PerfSDK;.</NMakeIncludeSearchPath>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
     <OutDir>$(SolutionDir)\Output\Binary</OutDir>
@@ -270,7 +251,7 @@
     <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -summary -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakeOutput>$(SolutionDir)\Output\Binary\Core.RTTI.Final.Win32.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN32;ARCH_X86;ARCH_32BIT;FINAL_RELEASE;RELEASE;NDEBUG;_SECURE_SCL=0;_ITERATOR_DEBUG_LEVEL=0;_HAS_ITERATOR_DEBUGGING=0</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;d:\Code\Core/Source/Core.RTTI;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir);C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\PerfSDK;.</NMakeIncludeSearchPath>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
     <OutDir>$(SolutionDir)\Output\Binary</OutDir>
@@ -281,7 +262,7 @@
     <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -summary -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakeOutput>$(SolutionDir)\Output\Binary\Core.RTTI.Debug.x64.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN64;ARCH_X64;ARCH_64BIT;DEBUG;_DEBUG;_SECURE_SCL=1;_ITERATOR_DEBUG_LEVEL=2;_HAS_ITERATOR_DEBUGGING=1</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;d:\Code\Core/Source/Core.RTTI;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir);C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\x64\PerfSDK;.</NMakeIncludeSearchPath>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
     <OutDir>$(SolutionDir)\Output\Binary</OutDir>
@@ -292,7 +273,7 @@
     <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -summary -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakeOutput>$(SolutionDir)\Output\Binary\Core.RTTI.FastDebug.x64.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN64;ARCH_X64;ARCH_64BIT;FASTDEBUG;_DEBUG;DEBUG;_SECURE_SCL=1;_ITERATOR_DEBUG_LEVEL=2;_HAS_ITERATOR_DEBUGGING=1</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;d:\Code\Core/Source/Core.RTTI;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir);C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\x64\PerfSDK;.</NMakeIncludeSearchPath>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
     <OutDir>$(SolutionDir)\Output\Binary</OutDir>
@@ -303,7 +284,7 @@
     <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -summary -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakeOutput>$(SolutionDir)\Output\Binary\Core.RTTI.Release.x64.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN64;ARCH_X64;ARCH_64BIT;RELEASE;NDEBUG;_SECURE_SCL=0;_ITERATOR_DEBUG_LEVEL=0;_HAS_ITERATOR_DEBUGGING=0</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;d:\Code\Core/Source/Core.RTTI;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir);C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\x64\PerfSDK;.</NMakeIncludeSearchPath>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
     <OutDir>$(SolutionDir)\Output\Binary</OutDir>
@@ -314,7 +295,7 @@
     <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -summary -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakeOutput>$(SolutionDir)\Output\Binary\Core.RTTI.Profiling.x64.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN64;ARCH_X64;ARCH_64BIT;RELEASE;NDEBUG;PROFILING_ENABLED;_SECURE_SCL=0;_ITERATOR_DEBUG_LEVEL=0;_HAS_ITERATOR_DEBUGGING=0</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;d:\Code\Core/Source/Core.RTTI;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir);C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\x64\PerfSDK;.</NMakeIncludeSearchPath>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
     <OutDir>$(SolutionDir)\Output\Binary</OutDir>
@@ -325,16 +306,11 @@
     <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs  -summary -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakeOutput>$(SolutionDir)\Output\Binary\Core.RTTI.Final.x64.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN64;ARCH_X64;ARCH_64BIT;FINAL_RELEASE;RELEASE;NDEBUG;_SECURE_SCL=0;_ITERATOR_DEBUG_LEVEL=0;_HAS_ITERATOR_DEBUGGING=0</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;d:\Code\Core/Source/Core.RTTI;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir);C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\../VC/Include;C:\Program Files (x86)\Windows Kits\10/Include/10.0.10150.0/ucrt;C:\Program Files (x86)\Windows Kits\8.1/Include/um;C:\Program Files (x86)\Windows Kits\8.1/Include/shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\/Include;d:\Code\Core/Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\x64\PerfSDK;.</NMakeIncludeSearchPath>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
     <OutDir>$(SolutionDir)\Output\Binary</OutDir>
   </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Dummy|Win32'">
-    <BuildLog>
-      <Path />
-    </BuildLog>
-  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <BuildLog>
       <Path />

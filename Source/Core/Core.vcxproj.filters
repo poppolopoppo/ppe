@@ -238,6 +238,12 @@
     <CustomBuild Include="Diagnostic\MiniDump.h">
       <Filter>Diagnostic</Filter>
     </CustomBuild>
+    <CustomBuild Include="Diagnostic\Profiling.cpp">
+      <Filter>Diagnostic</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Diagnostic\Profiling.h">
+      <Filter>Diagnostic</Filter>
+    </CustomBuild>
     <CustomBuild Include="External\farmhash-inl.h">
       <Filter>External</Filter>
     </CustomBuild>
@@ -917,6 +923,9 @@
       <Filter>Time</Filter>
     </CustomBuild>
     <CustomBuild Include="Time\DateTime.h">
+      <Filter>Time</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Time\TimedScope.h">
       <Filter>Time</Filter>
     </CustomBuild>
     <CustomBuild Include="Time\Timeline.cpp">

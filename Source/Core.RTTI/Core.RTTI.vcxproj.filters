@@ -3,6 +3,10 @@
   <ItemGroup>
     <CustomBuild Include="Core.RTTI.bff">
     </CustomBuild>
+    <CustomBuild Include="DynamicObject.cpp">
+    </CustomBuild>
+    <CustomBuild Include="DynamicObject.h">
+    </CustomBuild>
     <CustomBuild Include="Exceptions.h">
     </CustomBuild>
     <CustomBuild Include="MetaAtom-inl.h">
