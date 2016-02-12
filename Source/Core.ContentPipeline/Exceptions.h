@@ -2,21 +2,42 @@
 
 #include "Core.ContentPipeline/ContentPipeline.h"
 
+#include "Core.ContentPipeline/ContentIdentity.h"
+
 #include "Core/Diagnostic/Exception.h"
-#include "Core/IO/FS/Filename.h"
 
 namespace Core {
 namespace ContentPipeline {
+FWD_INTERFACE_REFPTR(ContentImporter);
+FWD_INTERFACE_REFPTR(ContentProcessor);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class ContentPipelineException : public Exception {
 public:
-    ContentPipelineException(const char* what, const Filename& sourceFile)
-        : Exception(what), _sourceFile(sourceFile) {}
-    const Filename& SourceFile() const { return _sourceFile; }
+    ContentPipelineException(const char* what, const ContentIdentity& source);
+    ~ContentPipelineException();
+    const ContentIdentity& Source() const { return _source; }
 private:
-    Filename _sourceFile;
+    ContentIdentity _source;
+};
+//----------------------------------------------------------------------------
+class ContentImporterException : public ContentPipelineException {
+public:
+    ContentImporterException(const char* what, const ContentIdentity& source, const IContentImporter* importer);
+    ~ContentImporterException();
+    const IContentImporter* Importer() const { return _importer.get(); }
+private:
+    PCContentImporter _importer;
+};
+//----------------------------------------------------------------------------
+class ContentProcessorException : public ContentPipelineException {
+public:
+    ContentProcessorException(const char* what, const ContentIdentity& source, const IContentProcessor* processor);
+    ~ContentProcessorException();
+    const IContentProcessor* Processor() const { return _processor.get(); }
+private:
+    PCContentProcessor _processor;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -2,53 +2,77 @@
 
 #include "Core.ContentPipeline/ContentPipeline.h"
 
+#include "Core.ContentPipeline/ContentIdentity.h"
+
 #include "Core/Diagnostic/Logger.h"
 #include "Core/IO/FS/Dirname.h"
 #include "Core/IO/String.h"
-#include "Core/Memory/RefPtr.h"
+
+#include "Core.RTTI/RTTIMacros.h"
 
 namespace Core {
 namespace ContentPipeline {
+FWD_INTERFACE_REFPTR(ContentImporter);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FWD_REFPTR(ContentImporterDescriptor);
-FWD_INTERFACE_REFPTR(ContentImporter);
-//----------------------------------------------------------------------------
 class ContentImporterContext {
 public:
-    ContentImporterContext( ILogger* logger,
-                            const Dirname& intermediateDirectory,
-                            const Dirname& outputDirectory );
-    ~ContentImporterContext();
+    explicit ContentImporterContext(const Filename& filename) : _source(filename) {}
+    virtual ~ContentImporterContext() {}
 
-    ILogger* Logger() const { return _logger; }
-    const Dirname& IntermediateDirectory() const { return _intermediateDirectory; }
-    const Dirname& OutputDirectory() const { return _outputDirectory; }
+    ContentImporterContext(const ContentImporterContext&) = delete;
+    ContentImporterContext& operator=(const ContentImporterContext&) = delete;
 
-    void AddDependency(const Filename& fileanme);
+    ContentIdentity& Source() { return _source; }
+    const ContentIdentity& Source() const { return _source; }
+
+    virtual ILogger* Logger() const = 0;
+
+    virtual const Dirname& IntermediateDir() const = 0;
+    virtual const Dirname& OutputDir() const = 0;
+
+    virtual void AddDependency(const Filename& filename) = 0;
 
 private:
-    ILogger* _logger;
-    Dirname _intermediateDirectory;
-    Dirname _outputDirectory;
+    ContentIdentity _source;
 };
 //----------------------------------------------------------------------------
-class IContentImporter : public RefCountable {
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _Import>
+class ContentImporter;
+//----------------------------------------------------------------------------
+class IContentImporter : public RTTI::MetaObject {
 public:
     virtual ~IContentImporter() {}
 
-    virtual const ContentImporterDescriptor* Descriptor() const = 0;
+    IContentImporter(const IContentImporter&) = delete;
+    IContentImporter& operator=(const IContentImporter&) = delete;
+
+    virtual const String& Name() const = 0;
+    virtual u128 Fingerprint() const = 0;
+
+    template <typename _Import>
+    bool Import(ContentImporterContext& ctx, _Import& dst) const {
+        const ContentImporter<_Import>* const importer = dynamic_cast<const ContentImporter<_Import>*>(this);
+        if (nullptr == importer)
+            throw ContentImporterException("invalid importer type", ctx.Identity(), this);
+        else
+            return importer->Import(ctx, dst);
+    }
+
+    RTTI_CLASS_HEADER(IContentImporter, RTTI::MetaObject);
 };
 //----------------------------------------------------------------------------
-template <typename T>
+template <typename _Import>
 class ContentImporter : public IContentImporter {
 public:
-    typedef T import_type;
+    typedef _Import import_type;
 
     virtual ~ContentImporter() {}
 
-    virtual bool Import(const ContentImporterContext& ctx, const Filename& filename, ) = 0;
+    virtual bool Import(ContentImporterContext& ctx, import_type& dst) const = 0;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -2,25 +2,26 @@
 
 #include "Core.ContentPipeline/ContentPipeline.h"
 
-#include "Core/Container/HashSet.h"
-#include "Core.RTTI/RTTIMacros.h"
-
 namespace Core {
 namespace ContentPipeline {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DependencyList : public RTTI::MetaObject {
+template <typename _Asset>
+class ExternalReference {
 public:
-    DependencyList();
-    ~DependencyList();
+    typedef _Asset asset_type;
 
-    DependencyList(const DependencyList&) = delete;
-    DependencyList& operator =(const DependencyList&) = delete;
+    ExternalReference() {}
+    explicit ExternalReference(const Filename& target) : _target(target) { Assert(not target.empty()); }
+    ExternalReference(const Filename& absolute, const ContentIdentity& source)
+        : ExternalReference(absolute.Relative(source.SourceFilename().Dirpath())) {}
 
-    RTTI_CLASS_HEADER(DependencyList, RTTI::MetaObject);
+    Filename& Target() {return _target; }
+    const Filename& Target() const {return _target; }
 
 private:
+    Filename _target;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

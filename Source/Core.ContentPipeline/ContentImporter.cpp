@@ -1,28 +1,16 @@
-#pragma once
+#include "stdafx.h"
 
-#include "Core.ContentPipeline/ContentPipeline.h"
+#include "ContentImporter.h"
 
-#include "Core.ContentPipeline/FileIdentity.h"
-
-#include "Core.RTTI/RTTIMacros.h"
+#include "Core.RTTI/RTTIMacros-impl.h"
 
 namespace Core {
 namespace ContentPipeline {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FileIdentityCache : public RTTI::MetaObject {
-public:
-    FileIdentityCache();
-    ~FileIdentityCache();
-
-    FileIdentityCache(const FileIdentityCache&) = delete;
-    FileIdentityCache& operator =(const FileIdentityCache&) = delete;
-
-    RTTI_CLASS_HEADER(FileIdentityCache, RTTI::MetaObject);
-
-private:
-};
+RTTI_CLASS_BEGIN(IContentImporter, Abstract)
+RTTI_CLASS_END()
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

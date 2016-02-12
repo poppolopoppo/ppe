@@ -1,16 +1,16 @@
 #include "stdafx.h"
 
-#include "ContentIdentity.h"
+#include "ContentProcessor.h"
+
+#include "Core.RTTI/RTTIMacros-impl.h"
 
 namespace Core {
 namespace ContentPipeline {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ContentIdentity::ContentIdentity(const Filename& sourceFilename)
-:   _sourceFilename(sourceFilename) {}
-//----------------------------------------------------------------------------
-ContentIdentity::~ContentIdentity() {}
+RTTI_CLASS_BEGIN(IContentProcessor, Abstract)
+RTTI_CLASS_END()
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
