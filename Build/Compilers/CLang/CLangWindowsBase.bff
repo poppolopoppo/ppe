@@ -2,7 +2,7 @@
 
 #define USE_CLANG_WINDOWS
 
-#include "MSVCBase.bff"
+#include "../MSVC/MSVCBase.bff"
 
 //------------------------------------------------------------------------------
 // Common CLang Configuration

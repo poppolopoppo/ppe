@@ -1,0 +1,31 @@
+#once
+
+;     _____ _                        __   ____   __
+;    / ____| |                       \ \ / /\ \ / /
+;   | |    | |     __ _ _ __   __ _   \ V /  \ V /
+;   | |    | |    / _` | '_ \ / _` |   > <    > <
+;   | |____| |___| (_| | | | | (_| |  / . \  / . \
+;    \_____|______\__,_|_| |_|\__, | /_/ \_\/_/ \_\
+;                              __/ |
+;                             |___/
+
+;#define USE_CLANG_38
+#define USE_CLANG_38
+
+//------------------------------------------------------------------------------
+// CLang Windows XX
+//------------------------------------------------------------------------------
+
+#if USE_CLANG_37
+#   include "CLang/CLangWindows37.bff" ; TODO: Experimental
+    .CLangWindowsXXCompileConfigs   = .CLangWindows37CompileConfigs
+    .CLangWindowsXXPlatformToolset  = .CLangWindows37PlatformToolset
+    .CLangWindowsXXResourceCompiler = .CLangWindows37ResourceCompiler
+#endif //!USE_CLANG_37
+
+#if USE_CLANG_38
+#   include "CLang/CLangWindows38.bff" ; TODO: Experimental
+    .CLangWindowsXXCompileConfigs   = .CLangWindows38CompileConfigs
+    .CLangWindowsXXPlatformToolset  = .CLangWindows38PlatformToolset
+    .CLangWindowsXXResourceCompiler = .CLangWindows38ResourceCompiler
+#endif //!USE_CLANG_38

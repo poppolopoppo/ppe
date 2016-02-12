@@ -1,0 +1,38 @@
+#once
+
+;   __      ___                 _   ___   _____   ____   __
+;   \ \    / (_)               | | |__ \ / _ \ \ / /\ \ / /
+;    \ \  / / _ ___ _   _  __ _| |    ) | | | \ V /  \ V /
+;     \ \/ / | / __| | | |/ _` | |   / /| | | |> <    > <
+;      \  /  | \__ \ |_| | (_| | |  / /_| |_| / . \  / . \
+;       \/   |_|___/\__,_|\__,_|_| |____|\___/_/ \_\/_/ \_\
+;
+
+;#define USE_VISUALSTUDIO_2012
+;#define USE_VISUALSTUDIO_2013
+#define USE_VISUALSTUDIO_2015
+
+//------------------------------------------------------------------------------
+// Visual Studio 20XX
+//------------------------------------------------------------------------------
+
+#if USE_VISUALSTUDIO_2012
+#   include "MSVC/MSVC2012.bff"
+    .MSVC20XXPlatformToolset    = .MSVC2012PlatformToolset
+    .MSVC20XXResourceCompiler   = .MSVC2012ResourceCompiler
+    .MSVC20XXCompileConfigs     = .MSVC2012CompileConfigs
+#endif //!USE_VISUALSTUDIO_2012
+
+#if USE_VISUALSTUDIO_2013
+#   include "MSVC/MSVC2013.bff"
+    .MSVC20XXPlatformToolset    = .MSVC2013PlatformToolset
+    .MSVC20XXResourceCompiler   = .MSVC2013ResourceCompiler
+    .MSVC20XXCompileConfigs     = .MSVC2013CompileConfigs
+#endif //!USE_VISUALSTUDIO_2013
+
+#if USE_VISUALSTUDIO_2015
+#   include "MSVC/MSVC2015.bff"
+    .MSVC20XXPlatformToolset    = .MSVC2015PlatformToolset
+    .MSVC20XXResourceCompiler   = .MSVC2015ResourceCompiler
+    .MSVC20XXCompileConfigs     = .MSVC2015CompileConfigs
+#endif //!USE_VISUALSTUDIO_2015

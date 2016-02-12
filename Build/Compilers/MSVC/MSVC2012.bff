@@ -28,6 +28,7 @@
     Print( "Using Visual 2012 with localisation uid $LocalisationUID$" )
     .VSBasePath         = '$VS110COMNTOOLS$..\..'
     .WindowsSDKBasePath = 'C:\Program Files (x86)\Windows Kits\8.0'
+    .PerfSDKBasePath    = '$VSBasePath$\Team Tools\Performance Tools'
 ]
 
 Print( "Using Visual 2012 with platform toolset $MSVC2012PlatformToolset$" )
@@ -136,6 +137,13 @@ Compiler( 'Compiler-MSVC2012-x64' )
     .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/win8/um/x86"'
                         + ' /LIBPATH:"$VSBasePath$/VC/lib"'
                         + ' /LIBPATH:"$DirectXSDKBasePath$/Lib/x86"'
+
+#if USE_MSVC_PERFORMANCE_TOOLS
+    .PerfSDKPath        = '$PerfSDKBasePath$/PerfSDK'
+    .IncludePaths       + '$PerfSDKPath$'
+    .LinkerOptions      + ' /LIBPATH:"$PerfSDKPath$"'
+    Print( "Using Visual 2012 with Performance Tools SDK '$PerfSDKPath$' for Win32" )
+#endif
 ]
 .MSVC2012PlatformWin32 + .MSVCBasePlatformWin32
 
@@ -150,6 +158,14 @@ Compiler( 'Compiler-MSVC2012-x64' )
     .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/win8/um/x64"'
                         + ' /LIBPATH:"$VSBasePath$/VC/lib/amd64"'
                         + ' /LIBPATH:"$DirectXSDKBasePath$/Lib/x64"'
+                        + ' /LIBPATH:"$PerfSDKPath$"'
+
+#if USE_MSVC_PERFORMANCE_TOOLS
+    .PerfSDKPath        = '$PerfSDKBasePath$/x64/PerfSDK'
+    .IncludePaths       + '$PerfSDKPath$'
+    .LinkerOptions      + ' /LIBPATH:"$PerfSDKPath$"'
+    Print( "Using Visual 2012 with Performance Tools SDK '$PerfSDKPath$' for X64" )
+#endif
 ]
 .MSVC2012PlatformX64 + .MSVCBasePlatformX64
 

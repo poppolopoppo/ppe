@@ -10,44 +10,26 @@
 //------------------------------------------------------------------------------
 // Windows Compilers
 //------------------------------------------------------------------------------
-;#define USE_VISUALSTUDIO_2012
-;#define USE_VISUALSTUDIO_2013
-#define USE_VISUALSTUDIO_2015
-;#define USE_CLANG_37
-;#define USE_CLANG_38
+#   define USE_VISUALSTUDIO
+;#  define USE_CLANG_WINDOWS
 
-#if USE_VISUALSTUDIO_2012
-#   include "Compilers/MSVC2012.bff"
-    .WindowsCompileConfigs  = .MSVC2012CompileConfigs
-    .PlatformToolset        = .MSVC2012PlatformToolset
-    .ResourceCompiler       = .MSVC2012ResourceCompiler
-#endif
-#if USE_VISUALSTUDIO_2013
-#   include "Compilers/MSVC2013.bff"
-    .WindowsCompileConfigs  = .MSVC2013CompileConfigs
-    .PlatformToolset        = .MSVC2013PlatformToolset
-    .ResourceCompiler       = .MSVC2013ResourceCompiler
-#endif
-#if USE_VISUALSTUDIO_2015
-#   include "Compilers/MSVC2015.bff"
-    .WindowsCompileConfigs  = .MSVC2015CompileConfigs
-    .PlatformToolset        = .MSVC2015PlatformToolset
-    .ResourceCompiler       = .MSVC2015ResourceCompiler
-#endif
-#if USE_CLANG_37
-#   include "Compilers/CLangWindows37.bff" ; TODO: Experimental
-    .WindowsCompileConfigs  = .CLangWindows37CompileConfigs
-    .PlatformToolset        = .CLangWindows37PlatformToolset
-    .ResourceCompiler       = .CLangWindows37ResourceCompiler
-#endif
-#if USE_CLANG_38
-#   include "Compilers/CLangWindows38.bff" ; TODO: Experimental
-    .WindowsCompileConfigs  = .CLangWindows38CompileConfigs
-    .PlatformToolset        = .CLangWindows38PlatformToolset
-    .ResourceCompiler       = .CLangWindows38ResourceCompiler
-#endif
+#   if USE_VISUALSTUDIO
+#       include "Compilers/MSVC20XX.bff"
+    .WindowsCompileConfigs  = .MSVC20XXCompileConfigs
+    .PlatformToolset        = .MSVC20XXPlatformToolset
+    .ResourceCompiler       = .MSVC20XXResourceCompiler
+#   endif //!USE_VISUALSTUDIO
+
+#   if USE_CLANG_WINDOWS
+#       include "Compilers/CLangWindowsXX.bff"
+    .WindowsCompileConfigs  = .CLangWindowsXXCompileConfigs
+    .PlatformToolset        = .CLangWindowsXXPlatformToolset
+    .ResourceCompiler       = .CLangWindowsXXResourceCompiler
+#   endif //!USE_CLANG_WINDOWS
+
     .AllCompileConfigs      = .WindowsCompileConfigs
-#endif
+
+#endif //!__WINDOWS__
 
 #if __LINUX__
 //------------------------------------------------------------------------------
@@ -64,18 +46,3 @@
 #   include "Compilers/ClangOSX.bff" ; TODO
     .AllCompileConfigs      = .ClangOSXCompileConfigs
 #endif
-
-//------------------------------------------------------------------------------
-// Environment Settings
-//------------------------------------------------------------------------------
-Settings
-{
-    .Environment = { "PATH=$PATH$;%PATH%" }
-#if __WINDOWS__
-    .Environment +
-    {
-        "SystemRoot=C:\Windows",
-        "TMP=C:\Windows\Temp",
-    }
-#endif
-}
