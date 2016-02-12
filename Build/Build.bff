@@ -4,4 +4,5 @@
 //------------------------------------------------------------------------------
 #include "Common.bff"
 #include "Compilers.bff"
+#include "Externals.bff"
 #include "VisualStudio.bff"
