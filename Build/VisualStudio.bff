@@ -4,12 +4,6 @@
 // Visual Studio Base Config
 //------------------------------------------------------------------------------
 
-.VisualStudioDummyProjectConfig = ; TODO : à virer
-[
-    .Platform   = 'Win32'
-    .Config     = 'Dummy'
-]
-
 .VisualStudioOutputDirectory        = '^$(SolutionDir)\Output\Binary'
 .VisualStudioIntermediateDirectory  = '^$(SolutionDir)\Output\Intermediate\^$(Platform)\^$(Configuration)\^$(ProjectName)'
 

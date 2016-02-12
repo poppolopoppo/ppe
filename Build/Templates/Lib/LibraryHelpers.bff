@@ -42,7 +42,7 @@ RemoveDir( '$ProjectName$-Unity-Purge' )
     .RemovePathsPattern   = 'Unity*.cpp'
 }
 
-.ProjectConfigs = { .VisualStudioDummyProjectConfig } ; TODO: à virer
+.ProjectConfigs = {}
 
 ForEach( .CompileConfig in .AllCompileConfigs )
 {
