@@ -31,6 +31,7 @@ public:
         Private      = 1<<2,
         ReadOnly     = 1<<3,
         Deprecated   = 1<<4,
+        Dynamic      = 1<<5,
     };
 
     MetaProperty(const MetaPropertyName& name, Flags attributes);
@@ -47,6 +48,7 @@ public:
     bool IsPrivate()    const { return Meta::HasFlag(_attributes, Private); }
     bool IsReadOnly()   const { return Meta::HasFlag(_attributes, ReadOnly); }
     bool IsDeprecated() const { return Meta::HasFlag(_attributes, Deprecated); }
+    bool IsDynamic() const { return Meta::HasFlag(_attributes, Dynamic); }
     bool IsWritable()   const { return false == (IsReadOnly() || IsDeprecated()); }
 
     virtual MetaTypeInfo TypeInfo() const = 0;
