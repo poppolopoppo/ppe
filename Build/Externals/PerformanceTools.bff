@@ -24,7 +24,7 @@
     ]
     .PerfSDK_x64 =
     [
-        .PerfSDKRelativePath    = 'Team Tools\Performance Tools\PerfSDK\x64'
+        .PerfSDKRelativePath    = 'Team Tools\Performance Tools\x64\PerfSDK'
     ]
 
     .ExternalCompileConfigs = {}
