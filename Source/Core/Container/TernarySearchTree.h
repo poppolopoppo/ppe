@@ -6,9 +6,13 @@
 #include "Core/Container/Stack.h"
 #include "Core/Memory/AlignedStorage.h"
 #include "Core/Memory/MemoryView.h"
+#include "Core/Meta/PointerWFlags.h"
 
 #include <algorithm>
 #include <type_traits>
+
+// String storage
+// https://en.wikipedia.org/wiki/Ternary_search_tree
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -50,21 +54,24 @@ public:
     TernarySearchNodeBase(const TernarySearchNodeBase& other) = delete;
     TernarySearchNodeBase& operator=(const TernarySearchNodeBase& other) = delete;
 
-    bool HasValue() const { return _has_value; }
+    const _Key& Key() const { return _key; }
+    bool HasValue() const { return _parent_hasvalue.Flag0(); }
 
-    const node_type* Left() const { return Left_(); }
-    const node_type* Center() const { return Center_(); }
-    const node_type* Right() const { return Right_(); }
+    const node_type* Left() const { return _left; }
+    const node_type* Center() const { return _center; }
+    const node_type* Right() const { return _right; }
+    const node_type* Parent() const { return _parent_hasvalue.Get(); }
 
 protected:
-    void SetHasValue_(bool value) { Assert(value); _has_value = value; }
+    void SetParent_(node_type* parent) { _parent_hasvalue.Set(parent); }
+    void SetHasValue_(bool value) { Assert(value); _parent_hasvalue.SetFlag0(value); }
 
 private:
     _Key _key;
-    bool _has_value;
     node_type* _left;
     node_type* _center;
     node_type* _right;
+    Meta::PointerWFlags<node_type> _parent_hasvalue;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -110,6 +117,9 @@ public:
     typedef _Allocator allocator_type;
     typedef std::allocator_traits<allocator_type> allocator_traits;
 
+    typedef _Key key_type;
+    typedef _Value value_type;
+
     typedef TernarySearchNode<_Key, _Value> node_type;
     typedef MemoryView<const _Key> sequence_type;
 
@@ -134,6 +144,9 @@ public:
     size_type size() const { return _size; }
     size_type max_size() const { return std::numeric_limits<size_type>::max(); }
     bool empty() const { return (0 == _size); }
+
+    node_type* Root() { return _root; }
+    const node_type* Root() const { return _root; }
 
     bool Insert_ReturnIfExists(node_type** pnode, const sequence_type& keys);
     node_type* Insert_AssertUnique(const sequence_type& keys);

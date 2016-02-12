@@ -9,14 +9,16 @@ namespace Core {
 template <typename _Key, typename _Value>
 TernarySearchNodeBase<_Key, _Value>::TernarySearchNodeBase(_Key&& rkey)
     : _key(std::move(rkey))
-    , _has_value(false)
-    , _left(nullptr), _center(nullptr), _right(nullptr) {}
+    , _left(nullptr), _center(nullptr), _right(nullptr) {
+    _parent_hasvalue.Reset(nullptr, false);
+}
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
 TernarySearchNodeBase<_Key, _Value>::TernarySearchNodeBase(const _Key& key)
     : _key(key)
-    , _has_value(false)
-    , _left(nullptr), _center(nullptr), _right(nullptr) {}
+    , _left(nullptr), _center(nullptr), _right(nullptr) {
+    _parent_hasvalue.Reset(nullptr, false);
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -41,6 +43,8 @@ bool TernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::Insert_Return
     Assert(false == keys.empty());
 
     const size_type n = keys.size();
+
+    node_type* parent = _root;
     node_type** it = &_root;
 
     forrange(i, 0, n) {
@@ -50,11 +54,12 @@ bool TernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::Insert_Return
                 *it = allocator_traits::allocate(*this, 1);
                 Assert(nullptr != *it);
                 allocator_traits::construct(*this, *it, key);
+                (*it)->SetParent_(parent);
             }
 
             if (equal_to_functor()(key, (*it)->_key)) {
-                if (i + 1 < n)
-                    it = &(*it)->_center;
+                parent = *it;
+                it = &(*it)->_center;
                 break;
             }
             else if (less_functor()(key, (*it)->_key)) {
@@ -67,15 +72,16 @@ bool TernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::Insert_Return
         while (true);
     }
 
-    Assert(*it);
-    *pnode = *it;
+    Assert(parent);
+    Assert(parent->_key == keys.back());
+    *pnode = parent;
 
-    if ((*it)->HasValue()) {
+    if (parent->HasValue()) {
         return true;
     }
     else {
         ++_size;
-        (*it)->SetHasValue_(true);
+        parent->SetHasValue_(true);
         return false;
     }
 }
@@ -96,13 +102,14 @@ auto TernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::Find(const se
 
     const size_type n = keys.size();
     const node_type* it = (nullptr == hint ? _root : hint->_center);
+    const node_type* parent = nullptr;
 
     forrange(i, 0, n) {
         const _Key& key = keys[i];
         while (nullptr != it) {
             if (equal_to_functor()(key, it->_key)) {
-                if (i + 1 < n)
-                    it = it->_center;
+                parent = it;
+                it = it->_center;
                 break;
             }
             else if (less_functor()(key, it->_key)) {
@@ -114,13 +121,15 @@ auto TernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::Find(const se
         }
     }
 
-    return it;
+    return parent;
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Less, typename _EqualTo, typename _Allocator>
 bool TernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::Contains(const sequence_type& keys) const {
     const node_type* node = Find(keys);
-    return (nullptr != node && node->HasValue());
+    return (nullptr != node &&
+            node->HasValue() &&
+            equal_to_functor()(node->_key, keys.back()) );
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Less, typename _EqualTo, typename _Allocator>
