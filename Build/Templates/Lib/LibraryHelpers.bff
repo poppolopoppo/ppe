@@ -14,11 +14,6 @@
 ;   [ProjectIsolatedFiles]  project files not included in unity builds but still compiled (default value in Common.bff)
 //------------------------------------------------------------------------------
 
-.ProjectIncludes +
-{
-    '$ProjectPath$',
-}
-
 Unity( '$ProjectName$-Unity' )
 {
     .UnityPCH = '$PCHName$.h'
@@ -65,8 +60,8 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         }
 
         // Project includes
-        .CommandLineIncludes = ''
-        .IncludeSearchPath = ''
+        .CommandLineIncludes = ' $CompilerIncludeFlag$"$ProjectPath$"'
+        .IncludeSearchPath = '^$(ProjectDir)'
         .IncludePaths + .ProjectIncludes + '.' // current dir
         ForEach( .path in .IncludePaths )
         {
