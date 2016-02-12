@@ -86,7 +86,7 @@ namespace Units {
 //----------------------------------------------------------------------------
 #define UNITS_BEGIN(NAME) namespace NAME {
 #define UNITS_END() }
-#define UNITS_DECL(TAG, NAME, RATIO, SMALLER) \
+#define UNITS_DECL(TAG, SYMBOL, NAME, RATIO, SMALLER) \
     typedef Core::Units::Unit< Core::Units::UnitTraits<Core::Units::TAG::_Tag, RATIO, SMALLER> > NAME;
 //----------------------------------------------------------------------------
 #include "Core/Maths/Units.Definitions-inl.h"
@@ -125,17 +125,34 @@ namespace Storage {
     };
 }
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 template <typename _To, typename _From>
 constexpr typename _To::value_type ConvertValue(typename _From::value_type value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+} //!namespace Units
+} //!namespace Core
+
+namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 #define UNITS_BEGIN(NAME)
 #define UNITS_END()
-#define UNITS_DECL(TAG, NAME, RATIO, SMALLER) \
-    extern template class Core::Units::Unit< Core::Units::UnitTraits<Core::Units::TAG::_Tag, RATIO, SMALLER> >;
+#define UNITS_DECL(TAG, SYMBOL, NAME, RATIO, SMALLER) \
+    extern template class Core::Units::Unit< Core::Units::UnitTraits<Core::Units::TAG::_Tag, RATIO, SMALLER> >; \
+    template <typename _Traits> \
+    std::basic_ostream<char, _Traits>& operator <<( \
+        std::basic_ostream<char, _Traits>& oss, \
+        const Core::Units::Unit< Core::Units::UnitTraits<Core::Units::TAG::_Tag, RATIO, SMALLER> >& unit ) { \
+        return oss << unit.Value() << " " STRINGIZE(SYMBOL); \
+    } \
+    template <typename _Traits> \
+    std::basic_ostream<wchar_t, _Traits>& operator <<( \
+        std::basic_ostream<wchar_t, _Traits>& oss, \
+        const Core::Units::Unit< Core::Units::UnitTraits<Core::Units::TAG::_Tag, RATIO, SMALLER> >& unit ) { \
+        return oss << unit.Value() << L" " WSTRINGIZE(SYMBOL); \
+    }
 //----------------------------------------------------------------------------
 #include "Core/Maths/Units.Definitions-inl.h"
 //----------------------------------------------------------------------------
@@ -145,5 +162,4 @@ constexpr typename _To::value_type ConvertValue(typename _From::value_type value
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace Units
 } //!namespace Core

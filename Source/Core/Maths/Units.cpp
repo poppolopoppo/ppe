@@ -3,13 +3,12 @@
 #include "Units.h"
 
 namespace Core {
-namespace Units {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define UNITS_BEGIN(NAME)
 #define UNITS_END()
-#define UNITS_DECL(TAG, NAME, RATIO, SMALLER) \
+#define UNITS_DECL(TAG, SYMBOL, NAME, RATIO, SMALLER) \
     template class Core::Units::Unit< Core::Units::UnitTraits<Core::Units::TAG::_Tag, RATIO, SMALLER> >;
 //----------------------------------------------------------------------------
 #include "Units.Definitions-inl.h"
@@ -20,5 +19,4 @@ namespace Units {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace Units
 } //!namespace Core
