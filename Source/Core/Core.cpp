@@ -10,6 +10,7 @@
 #include "Diagnostic/CrtDebug.h"
 #include "Diagnostic/Logger.h"
 #include "Diagnostic/MiniDump.h"
+#include "Diagnostic/Profiling.h"
 #include "IO/FileSystem.h"
 #include "IO/VirtualFileSystem.h"
 #include "Meta/AutoSingleton.h"
@@ -63,9 +64,17 @@ void CoreStartup::Start(void *applicationHandle, int nShowCmd, size_t argc, cons
     VirtualFileSystemStartup::Start();
     //13 - minidump writer
     MiniDump::Start();
+#ifdef WITH_CORE_PROFILING
+    //14 - profiling
+    Profiler::Startup();
+#endif
 }
 //----------------------------------------------------------------------------
 void CoreStartup::Shutdown() {
+#ifdef WITH_CORE_PROFILING
+    //14 - profiling
+    Profiler::Shutdown();
+#endif
     //13 - minidump writer
     MiniDump::Shutdown();
     //12 - virtual file system
