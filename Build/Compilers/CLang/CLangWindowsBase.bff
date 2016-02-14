@@ -53,11 +53,7 @@
         "_UNICODE", "UNICODE"           ; https://msdn.microsoft.com/fr-fr/library/dybsewaf.aspx
     }
 
-    .IncludePaths =
-    {
-        '$SolutionPath$\Source',
-        '$DirectXSDKBasePath$\Include'
-    }
+    .IncludePaths = {}
 
     .CompilerOptions = ''
     + ' /W2 /WX-'           ; warning level 2, les warnings ne génèrent pas d'erreurs

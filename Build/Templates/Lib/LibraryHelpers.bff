@@ -60,9 +60,9 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         }
 
         // Project includes
-        .CommandLineIncludes = ' $CompilerIncludeFlag$"$ProjectPath$"'
-        .IncludeSearchPath = '^$(ProjectDir)'
         .IncludePaths + .ProjectIncludes + '.' // current dir
+        .CommandLineIncludes = ' $CompilerIncludeFlag$"$ProjectPath$" $CompilerIncludeFlag$"$SourceDiretory$"'
+        .IncludeSearchPath = '^$(ProjectDir);^$(SolutionDir)\Source'
         ForEach( .path in .IncludePaths )
         {
             ^CommandLineIncludes + ' $CompilerIncludeFlag$"$path$"'

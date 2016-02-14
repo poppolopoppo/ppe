@@ -49,10 +49,7 @@
         "_UNICODE", "UNICODE"           ; https://msdn.microsoft.com/fr-fr/library/dybsewaf.aspx
     }
 
-    .IncludePaths =
-    {
-        '$SolutionPath$/Source',
-    }
+    .IncludePaths = {}
 
     .CompilerOptions = ''
     + ' /nologo'            ; pas de message de copyright lors de la compilation
