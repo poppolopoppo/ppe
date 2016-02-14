@@ -7,7 +7,7 @@
 .VisualStudioOutputDirectory        = '^$(SolutionDir)\Output\Binary'
 .VisualStudioIntermediateDirectory  = '^$(SolutionDir)\Output\Intermediate\^$(Platform)\^$(Configuration)\^$(ProjectName)'
 
-.VisualStudioFBuildCommand          = 'cd "^$(SolutionDir)" &amp; fbuild.bat -config fbuild.bff -vs'
+.VisualStudioFBuildCommand          = 'cd "^$(SolutionDir)" &amp; fbuild.rb -config fbuild.bff -vs'
 .VisualStudioFBuildTarget           = '^$(ProjectName)-^$(Platform)-^$(Configuration)'
 
 .VisualStudioBaseConfig =
