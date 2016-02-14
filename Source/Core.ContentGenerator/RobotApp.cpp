@@ -311,7 +311,6 @@ template <
 ,   size_t _BucketCount = 11
 ,   typename _Less = Meta::Less<_Key>
 ,   typename _Equal = Meta::EqualTo<_Key>
-,   typename _Hasher = Hash<_Key>
 ,   typename _Allocator = ALLOCATOR(Container, BulkTrieNode<_Key COMMA _Value COMMA _BulkSize>)
 >   class BulkTrie : _Allocator {
 public:
@@ -319,7 +318,6 @@ public:
     typedef _Value value_type;
     typedef _Less less_functor;
     typedef _Equal equal_to_functor;
-    typedef _Hasher hash_functor;
     typedef _Allocator allocator_type;
 
     typedef std::allocator_traits<allocator_type> allocator_traits;
@@ -371,6 +369,8 @@ public:
                 node_type* node = nullptr;
                 if (current != bucket.Count) {
                     node = bucket.Node(&rel, current);
+
+                    const index_type previous = current;
 
                     const _Key& other = node->Keys[rel];
                     if (equal_to_functor()(key, other)) {
@@ -520,7 +520,7 @@ public:
 
 private:
     static index_type BucketIndex_(const sequence_type& keys) {
-        return (hash_functor()(keys.front()) % BucketCount);
+        return ((keys.front()) % BucketCount);
     }
 
     struct Bucket {
@@ -620,24 +620,36 @@ RobotApp::RobotApp()
             }
         }
 
-        VECTOR_THREAD_LOCAL(Container, String) shuffled(words);
-        std::random_shuffle(shuffled.begin(), shuffled.end());
+        VECTOR_THREAD_LOCAL(Container, StringSlice) input;
+        input.reserve(words.size());
+        for (const String& word : words)
+            input.emplace_back(MakeStringSlice(word));
+        std::random_shuffle(input.begin(), input.end());
+
+        VECTOR_THREAD_LOCAL(Container, StringSlice) search(input);
+        std::random_shuffle(search.begin(), search.end());
+
+#ifdef WITH_CORE_ASSERT
+        static const size_t loops = 10;
+#else
+        static const size_t loops = 200;
+#endif
 
         {
             const BenchmarkScope bench("BurstTrie");
 
-            STRINGTRIE_SET(Container, CaseSensitive::True, 13) set;
+            STRINGTRIE_SET(Container, CaseSensitive::True, 26) set;
             {
                 PROFILING_SCOPE(Global, 4, "BurstTrie construction");
-                for (const String& word : shuffled)
-                    set.Insert_AssertUnique(MakeStringSlice(word));
+                for (const StringSlice& word : input)
+                    set.Insert_AssertUnique(word);
             }
 
             {
                 PROFILING_SCOPE(Global, 4, "BurstTrie search");
-                forrange(i, 0, 200) {
-                    for (const String& word : words)
-                        if (not set.Contains(MakeStringSlice(word)))
+                forrange(i, 0, loops) {
+                    for (const StringSlice& word : search)
+                        if (not set.Contains(word))
                             AssertNotReached();
                 }
             }
@@ -645,18 +657,18 @@ RobotApp::RobotApp()
         {
             const BenchmarkScope bench("BulkTrie");
 
-            BulkTrie<char, void, 8192, 13> set;
+            BulkTrie<char, void, 8192, 26> set;
             {
                 PROFILING_SCOPE(Global, 3, "BulkTrie construction");
-                for (const String& word : shuffled)
-                    set.Insert_AssertUnique(MakeStringSlice(word));
+                for (const StringSlice& word : input)
+                    set.Insert_AssertUnique(word);
             }
 
             {
                 PROFILING_SCOPE(Global, 4, "BulkTrie search");
-                forrange(i, 0, 200) {
-                    for (const String& word : words)
-                        if (not set.Contains(MakeStringSlice(word)))
+                forrange(i, 0, loops) {
+                    for (const StringSlice& word : search)
+                        if (not set.Contains(word))
                             AssertNotReached();
                     }
             }
