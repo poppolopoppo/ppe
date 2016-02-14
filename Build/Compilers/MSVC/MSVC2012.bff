@@ -28,7 +28,6 @@
     Print( "Using Visual 2012 with localisation uid $LocalisationUID$" )
     .VSBasePath         = '$VS110COMNTOOLS$..\..'
     .WindowsSDKBasePath = 'C:\Program Files (x86)\Windows Kits\8.0'
-    .PerfSDKBasePath    = '$VSBasePath$\Team Tools\Performance Tools'
 ]
 
 Print( "Using Visual 2012 with platform toolset $MSVC2012PlatformToolset$" )
@@ -44,20 +43,20 @@ Compiler( 'Compiler-MSVC2012-x86' )
     .Executable = '$Root$\cl.exe'
     .ExtraFiles =
     {
-        '$Root$/$LocalisationUID$/clui.dll',
-        '$Root$/c1.dll',
-        '$Root$/c1ast.dll',
-        '$Root$/c1xx.dll',
-        '$Root$/c1xxast.dll',
-        '$Root$/c2.dll',
-        '$Root$/mspft110.dll',
-        '$VSBasePath$/Common7/IDE/msobj110.dll',
-        '$VSBasePath$/Common7/IDE/mspdb110.dll',
-        '$VSBasePath$/Common7/IDE/mspdbcore.dll',
-        '$VSBasePath$/Common7/IDE/mspdbsrv.exe',
-        '$VSBasePath$/VC/redist/x86/Microsoft.VC110.CRT/msvcp110.dll',
-        '$VSBasePath$/VC/redist/x86/Microsoft.VC110.CRT/msvcr110.dll',
-        '$VSBasePath$/VC/redist/x86/Microsoft.VC110.CRT/vccorlib110.dll'
+        '$Root$\$LocalisationUID$\clui.dll',
+        '$Root$\c1.dll',
+        '$Root$\c1ast.dll',
+        '$Root$\c1xx.dll',
+        '$Root$\c1xxast.dll',
+        '$Root$\c2.dll',
+        '$Root$\mspft110.dll',
+        '$VSBasePath$\Common7\IDE\msobj110.dll',
+        '$VSBasePath$\Common7\IDE\mspdb110.dll',
+        '$VSBasePath$\Common7\IDE\mspdbcore.dll',
+        '$VSBasePath$\Common7\IDE\mspdbsrv.exe',
+        '$VSBasePath$\VC\redist\x86\Microsoft.VC110.CRT\msvcp110.dll',
+        '$VSBasePath$\VC\redist\x86\Microsoft.VC110.CRT\msvcr110.dll',
+        '$VSBasePath$\VC\redist\x86\Microsoft.VC110.CRT\vccorlib110.dll'
     }
 }
 
@@ -72,20 +71,20 @@ Compiler( 'Compiler-MSVC2012-x64' )
     .Executable = '$Root$\cl.exe'
     .ExtraFiles =
     {
-        '$Root$/$LocalisationUID$/clui.dll',
-        '$Root$/c1.dll',
-        '$Root$/c1ast.dll',
-        '$Root$/c1xx.dll',
-        '$Root$/c1xxast.dll',
-        '$Root$/c2.dll',
-        '$Root$/msobj110.dll',
-        '$Root$/mspdb110.dll',
-        '$Root$/mspdbcore.dll',
-        '$Root$/mspdbsrv.exe',
-        '$Root$/mspft110.dll',
-        '$VSBasePath$/VC/redist/x64/Microsoft.VC110.CRT/msvcp110.dll',
-        '$VSBasePath$/VC/redist/x64/Microsoft.VC110.CRT/msvcr110.dll',
-        '$VSBasePath$/VC/redist/x64/Microsoft.VC110.CRT/vccorlib110.dll'
+        '$Root$\$LocalisationUID$\clui.dll',
+        '$Root$\c1.dll',
+        '$Root$\c1ast.dll',
+        '$Root$\c1xx.dll',
+        '$Root$\c1xxast.dll',
+        '$Root$\c2.dll',
+        '$Root$\msobj110.dll',
+        '$Root$\mspdb110.dll',
+        '$Root$\mspdbcore.dll',
+        '$Root$\mspdbsrv.exe',
+        '$Root$\mspft110.dll',
+        '$VSBasePath$\VC\redist\x64\Microsoft.VC110.CRT\msvcp110.dll',
+        '$VSBasePath$\VC\redist\x64\Microsoft.VC110.CRT\msvcr110.dll',
+        '$VSBasePath$\VC\redist\x64\Microsoft.VC110.CRT\vccorlib110.dll'
     }
 }
 
@@ -115,11 +114,10 @@ Compiler( 'Compiler-MSVC2012-x64' )
 
     .IncludePaths =
     {
-        '$VSBasePath$/VC/Include',
-        '$WindowsSDKBasePath$/Include/um',
-        '$WindowsSDKBasePath$/Include/shared',
-        '$WindowsSDKBasePath$/Include',
-        '$DirectXSDKBasePath$/Include',
+        '$VSBasePath$\VC\Include',
+        '$WindowsSDKBasePath$\Include\um',
+        '$WindowsSDKBasePath$\Include\shared',
+        '$WindowsSDKBasePath$\Include',
     }
 ]
 
@@ -131,19 +129,11 @@ Compiler( 'Compiler-MSVC2012-x64' )
     Using( .MSVC2012BaseConfig )
 
     .Compiler           = 'Compiler-MSVC2012-x86'
-    .ToolsBasePath      = '$VSBasePath$/VC/bin'
-    .Librarian          = '$ToolsBasePath$/lib.exe'
-    .Linker             = '$ToolsBasePath$/link.exe'
-    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/win8/um/x86"'
-                        + ' /LIBPATH:"$VSBasePath$/VC/lib"'
-                        + ' /LIBPATH:"$DirectXSDKBasePath$/Lib/x86"'
-
-#if USE_MSVC_PERFORMANCE_TOOLS
-    .PerfSDKPath        = '$PerfSDKBasePath$/PerfSDK'
-    .IncludePaths       + '$PerfSDKPath$'
-    .LinkerOptions      + ' /LIBPATH:"$PerfSDKPath$"'
-    Print( "Using Visual 2012 with Performance Tools SDK '$PerfSDKPath$' for Win32" )
-#endif
+    .ToolsBasePath      = '$VSBasePath$\VC\bin'
+    .Librarian          = '$ToolsBasePath$\lib.exe'
+    .Linker             = '$ToolsBasePath$\link.exe'
+    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$\Lib\win8\um\x86"'
+                        + ' /LIBPATH:"$VSBasePath$\VC\lib"'
 ]
 .MSVC2012PlatformWin32 + .MSVCBasePlatformWin32
 
@@ -152,20 +142,12 @@ Compiler( 'Compiler-MSVC2012-x64' )
     Using( .MSVC2012BaseConfig )
 
     .Compiler           = 'Compiler-MSVC2012-x64'
-    .ToolsBasePath      = '$VSBasePath$/VC/bin/amd64'
-    .Librarian          = '$ToolsBasePath$/lib.exe'
-    .Linker             = '$ToolsBasePath$/link.exe'
-    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/win8/um/x64"'
-                        + ' /LIBPATH:"$VSBasePath$/VC/lib/amd64"'
-                        + ' /LIBPATH:"$DirectXSDKBasePath$/Lib/x64"'
+    .ToolsBasePath      = '$VSBasePath$\VC\bin\amd64'
+    .Librarian          = '$ToolsBasePath$\lib.exe'
+    .Linker             = '$ToolsBasePath$\link.exe'
+    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$\Lib\win8\um\x64"'
+                        + ' /LIBPATH:"$VSBasePath$\VC\lib\amd64"'
                         + ' /LIBPATH:"$PerfSDKPath$"'
-
-#if USE_MSVC_PERFORMANCE_TOOLS
-    .PerfSDKPath        = '$PerfSDKBasePath$/x64/PerfSDK'
-    .IncludePaths       + '$PerfSDKPath$'
-    .LinkerOptions      + ' /LIBPATH:"$PerfSDKPath$"'
-    Print( "Using Visual 2012 with Performance Tools SDK '$PerfSDKPath$' for X64" )
-#endif
 ]
 .MSVC2012PlatformX64 + .MSVCBasePlatformX64
 

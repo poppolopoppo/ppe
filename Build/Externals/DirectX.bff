@@ -1,0 +1,35 @@
+#once
+
+;    _____  _               _  __   __
+;   |  __ \(_)             | | \ \ / /
+;   | |  | |_ _ __ ___  ___| |_ \ V /
+;   | |  | | | '__/ _ \/ __| __| > <
+;   | |__| | | | |  __/ (__| |_ / . \
+;   |_____/|_|_|  \___|\___|\__/_/ \_\
+;
+
+//------------------------------------------------------------------------------
+// Microsoft DirectX SDK
+//------------------------------------------------------------------------------
+{
+    #import DXSDK_DIR
+
+    .DirectXSDKPath = '$DXSDK_DIR$'
+
+    Print( "Using DirectX SDK from '$DirectXSDKPath$'" )
+
+    .ExternalCompileConfigs = {}
+    ForEach( .CompileConfig in .AllCompileConfigs )
+    {
+        .ExternalConfig =
+        [
+            Using( .CompileConfig )
+
+            .IncludePaths       + '$DirectXSDKPath$\Include'
+            .LinkerOptions      + ' /LIBPATH:"$DirectXSDKPath$\Lib\$Arch$"'
+        ]
+        ^ExternalCompileConfigs + .ExternalConfig
+    }
+
+    ^AllCompileConfigs = .ExternalCompileConfigs
+}

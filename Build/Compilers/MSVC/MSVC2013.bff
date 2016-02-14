@@ -153,10 +153,9 @@ Compiler( 'Compiler-MSVC2013-x64_x86' )
 
     .IncludePaths =
     {
-        '$VSBasePath$/VC/Include',
-        '$WindowsSDKBasePath$/Include/um',
-        '$WindowsSDKBasePath$/Include/shared',
-        '$DirectXSDKBasePath$/Include',
+        '$VSBasePath$\VC\Include',
+        '$WindowsSDKBasePath$\Include\um',
+        '$WindowsSDKBasePath$\Include\shared',
     }
 ]
 
@@ -168,19 +167,18 @@ Compiler( 'Compiler-MSVC2013-x64_x86' )
     Using( .MSVC2013BaseConfig )
 
     .Compiler           = 'Compiler-MSVC2013-x86'
-    .ToolsBasePath      = '$VSBasePath$/VC/bin'
+    .ToolsBasePath      = '$VSBasePath$\VC\bin'
 
 #if USE_VISUAL2013_NATIVE_ENVIRONMENT
     Print( "Using Visual 2013 native environment : cross compile x86 from x64" )
     .Compiler           = 'Compiler-MSVC2013-x64_x86'
-    .ToolsBasePath      = '$VSBasePath$/VC/bin/amd64_x86'
+    .ToolsBasePath      = '$VSBasePath$\VC\bin\amd64_x86'
 #endif
 
-    .Librarian          = '$ToolsBasePath$/lib.exe'
-    .Linker             = '$ToolsBasePath$/link.exe'
-    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/um/x86"'
-                        + ' /LIBPATH:"$VSBasePath$/VC/lib"'
-                        + ' /LIBPATH:"$DirectXSDKBasePath$/Lib/x86"'
+    .Librarian          = '$ToolsBasePath$\lib.exe'
+    .Linker             = '$ToolsBasePath$\link.exe'
+    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x86"'
+                        + ' /LIBPATH:"$VSBasePath$\VC\lib"'
 ]
 .MSVC2013PlatformWin32 + .MSVCBasePlatformWin32
 
@@ -189,12 +187,11 @@ Compiler( 'Compiler-MSVC2013-x64_x86' )
     Using( .MSVC2013BaseConfig )
 
     .Compiler           = 'Compiler-MSVC2013-x64'
-    .ToolsBasePath      = '$VSBasePath$/VC/bin/amd64'
-    .Librarian          = '$ToolsBasePath$/lib.exe'
-    .Linker             = '$ToolsBasePath$/link.exe'
-    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/um/x64"'
-                        + ' /LIBPATH:"$VSBasePath$/VC/lib/amd64"'
-                        + ' /LIBPATH:"$DirectXSDKBasePath$/Lib/x64"'
+    .ToolsBasePath      = '$VSBasePath$\VC\bin\amd64'
+    .Librarian          = '$ToolsBasePath$\lib.exe'
+    .Linker             = '$ToolsBasePath$\link.exe'
+    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x64"'
+                        + ' /LIBPATH:"$VSBasePath$\VC\lib\amd64"'
 ]
 .MSVC2013PlatformX64 + .MSVCBasePlatformX64
 

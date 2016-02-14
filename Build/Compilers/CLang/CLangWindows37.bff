@@ -68,10 +68,10 @@ Compiler( 'Compiler-CLangWindows37-x86' )
 
     .IncludePaths =
     {
-        '$VSBasePath$/VC/Include',
-        '$WindowsSDKBasePath$/Include/um',
-        '$WindowsSDKBasePath$/Include/shared',
-        '$WindowsSDKBasePath$/Include',
+        '$VSBasePath$\VC\Include',
+        '$WindowsSDKBasePath$\Include\um',
+        '$WindowsSDKBasePath$\Include\shared',
+        '$WindowsSDKBasePath$\Include',
     }
 ]
 
@@ -95,8 +95,8 @@ Compiler( 'Compiler-CLangWindows37-x86' )
 [
     Using( .CLangWindows37BasePlatform )
 
-    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/win8/um/x86"'
-                        + ' /LIBPATH:"$VSBasePath$/VC/lib"'
+    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$\Lib\win8\um\x86"'
+                        + ' /LIBPATH:"$VSBasePath$\VC\lib"'
 ]
 .CLangWindows37PlatformWin32 + .CLangWindowsBasePlatformWin32
 
@@ -104,8 +104,8 @@ Compiler( 'Compiler-CLangWindows37-x86' )
 [
     Using( .CLangWindows37BasePlatform )
 
-    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/win8/um/x64"'
-                        + ' /LIBPATH:"$VSBasePath$/VC/lib/amd64"'
+    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$\Lib\win8\um\x64"'
+                        + ' /LIBPATH:"$VSBasePath$\VC\lib\amd64"'
 ]
 .CLangWindows37PlatformX64 + .CLangWindowsBasePlatformX64
 

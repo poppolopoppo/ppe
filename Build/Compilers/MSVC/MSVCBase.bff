@@ -3,13 +3,6 @@
 ; The Visual C++ Linker best practices: Developer Iteration
 ; http://blogs.msdn.com/b/vcblog/archive/2015/10/30/the-visual-c-linker-best-practices-developer-iteration.aspx
 
-//------------------------------------------------------------------------------
-// Environment Variables
-//------------------------------------------------------------------------------
-#import DXSDK_DIR
-
-.DirectXSDKBasePath = '$DXSDK_DIR$'
-
 ; set les bonnes options pour tirer parti du cache
 #define USE_FASTBUILD_CACHE
 ; active le debugging des iterator pour les containers de la STL
@@ -319,8 +312,7 @@
     .LibrarianOptions   = ' /LTCG'          ; link time code generation
 
     .LinkerOptions      = ' /LTCG'          ; link time code generation
-                        + ' /OPT:REF'       ; supprime le code non référencé
-                        + ' /OPT:ICF'       ; COMDAT folding
+                        + ' /PROFILE'       ; Produit un fichier de sortie utilisable avec le profileur Outils d'analyse des performances.
                         + ' MSVCRT.LIB'     ; crt non debug
 ]
 
