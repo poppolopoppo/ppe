@@ -50,7 +50,7 @@ public:
     typedef typename tree_type::sequence_type sequence_type;
     typedef typename tree_type::size_type size_type;
 
-    STATIC_ASSERT(IS_POW2(_Capacity));
+    //STATIC_ASSERT(IS_POW2(_Capacity));
     static constexpr size_type Capacity = _Capacity;
 
     struct query_t {
@@ -77,7 +77,7 @@ public:
     void Clear();
 
 private:
-    size_type Hash_(const _Char key) const { return size_type(case_functor()(key)) & (Capacity - 1); }
+    size_type Hash_(const _Char key) const { return size_type(case_functor()(key)) % Capacity; }
 
     tree_type& Tree_(size_type hash) {
         Assert(hash < Capacity);
@@ -132,7 +132,7 @@ auto BurstTrie<_Char, _Value, _CaseSensitive, _Capacity, _Allocator>::Find(const
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Value, CaseSensitive _CaseSensitive, size_t _Capacity, typename _Allocator>
 bool BurstTrie<_Char, _Value, _CaseSensitive, _Capacity, _Allocator>::Contains(const sequence_type& keys) const {
-    return Tree_(keys.front()).Contains(keys);
+    return Tree_(Hash_(keys.front())).Contains(keys);
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Value, CaseSensitive _CaseSensitive, size_t _Capacity, typename _Allocator>
