@@ -6,3 +6,18 @@
 #include "Compilers.bff"
 #include "Externals.bff"
 #include "VisualStudio.bff"
+
+//------------------------------------------------------------------------------
+// Environment Settings
+//------------------------------------------------------------------------------
+Settings
+{
+    .Environment = { "PATH=$PATH$;%PATH%" }
+#if __WINDOWS__
+    .Environment +
+    {
+        "SystemRoot=C:\Windows",
+        "TMP=C:\Windows\Temp",
+    }
+#endif
+}
