@@ -129,11 +129,11 @@ Dirpath::Dirpath(const FileSystem::char_type* content, size_t length) {
 }
 //----------------------------------------------------------------------------
 Dirpath::Dirpath(const BasicStringSlice<FileSystem::char_type>& slice) {
-    _path = ParseDirpath_(slice.begin(), slice.size());
+    _path = ParseDirpath_(slice.data(), slice.size());
 }
 //----------------------------------------------------------------------------
 Dirpath& Dirpath::operator =(const BasicStringSlice<FileSystem::char_type>& slice) {
-    _path = ParseDirpath_(slice.begin(), slice.size());
+    _path = ParseDirpath_(slice.data(), slice.size());
     return *this;
 }
 //----------------------------------------------------------------------------

@@ -191,7 +191,7 @@ void Callstack::Decode(DecodedCallstack* decoded, size_t hash, const MemoryView<
 
 #pragma warning( push )
 #pragma warning( disable : 4826 ) // warning C4826: La conversion de 'unsigned char *const ' en 'DWORD64' est de type signe étendu.
-    void* const* address = frames.begin();
+    void* const* address = frames.data();
     auto frame = reinterpret_cast<DecodedCallstack::Frame *>(&decoded->_frames);
     for (size_t i = 0; i < frames.size(); ++i, ++frame, ++address) {
         const wchar_t *symbol = NULL;
@@ -253,7 +253,7 @@ size_t Callstack::Capture(
     const WORD rtlDepth = RtlCaptureStackBackTrace(
         checked_cast<DWORD>(framesToSkip),
         checked_cast<DWORD>(framesToCapture),
-        frames.begin(),
+        frames.data(),
         backtraceHash ? &rtlHash : nullptr
         );
 

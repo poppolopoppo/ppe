@@ -124,7 +124,7 @@ void Vector<T, _Allocator>::assign_(_It first, _It last, _ItCat ) {
             allocator_traits::destroy(*this, _data + i);
 
         if (0 < count)
-            std::copy(first, last, CORE_CHECKED_ARRAY_ITERATOR(pointer, _data, count));
+            std::copy(first, last, MakeCheckedIterator(_data, _size, 0));
     }
     else {
         if (_capacity < count)
@@ -132,8 +132,8 @@ void Vector<T, _Allocator>::assign_(_It first, _It last, _ItCat ) {
 
         _It pivot = first;
         std::advance(pivot, _size);
-        std::copy(first, pivot, CORE_CHECKED_ARRAY_ITERATOR(pointer, _data, _size));
-        std::uninitialized_copy(pivot, last, CORE_CHECKED_ARRAY_ITERATOR(pointer, _data + _size, count - _size));
+        std::copy(first, pivot, MakeCheckedIterator(_data, count, 0));
+        std::uninitialized_copy(pivot, last, MakeCheckedIterator(_data, count, _size));
     }
     _size = count;
 }
@@ -145,13 +145,13 @@ void Vector<T, _Allocator>::assign(size_type count, const T& value) {
         for (size_type i = _size; i < count; ++i)
             allocator_traits::destroy(*this, _data + i);
         if (0 < count)
-            std::fill_n(CORE_CHECKED_ARRAY_ITERATOR(pointer, _data, count), count, value);
+            std::fill_n(MakeCheckedIterator(_data, _size, 0), count, value);
     }
     else {
         if (_capacity < count)
             reserve_Exactly(count);
-        std::fill_n(CORE_CHECKED_ARRAY_ITERATOR(pointer, _data, _size), _size, value);
-        std::uninitialized_fill_n(CORE_CHECKED_ARRAY_ITERATOR(pointer, _data + _size, count - _size), count - _size, value);
+        std::fill_n(MakeCheckedIterator(_data, count, 0), _size, value);
+        std::uninitialized_fill_n(MakeCheckedIterator(_data, count, _size), count - _size, value);
     }
     _size = count;
 }
@@ -281,7 +281,7 @@ auto Vector<T, _Allocator>::insert_(const_iterator pos, _It first, _It last, _It
     Assert(p <= count);
     if (0 < count) {
         reserve_Additional(count);
-        std::uninitialized_copy(first, last, CORE_CHECKED_ARRAY_ITERATOR(pointer, _data + _size, _capacity - _size));
+        std::uninitialized_copy(first, last, MakeCheckedIterator(_data, _capacity, _size));
         std::rotate(begin() + p, begin() + _size, begin() + (_size + count));
         _size += count;
         Assert(_capacity >= _size);
@@ -294,7 +294,7 @@ auto Vector<T, _Allocator>::insert(const_iterator pos, size_type count, const T&
     Assert(pos.AliasesToContainer(*this));
     reserve_Additional(count);
     const size_type p = std::distance<const_iterator>(begin(), pos);
-    std::uninitialized_fill_n(CORE_CHECKED_ARRAY_ITERATOR(pointer, _data + _size, _capacity - _size), count, value);
+    std::uninitialized_fill_n(MakeCheckedIterator(_data, _capacity, _size), count, value);
     std::rotate(begin() + p, begin() + (p + count), begin() + (_size + count));
     _size += count;
     Assert(_capacity >= _size);
@@ -418,7 +418,7 @@ void Vector<T, _Allocator>::resize(size_type count, const_reference value) {
             allocator_traits::destroy(*this, &_data[i]);
     }
     else {
-        std::uninitialized_fill_n(CORE_CHECKED_ARRAY_ITERATOR(pointer, _data + _size, _capacity - _size), _capacity - _size, value);
+        std::uninitialized_fill_n(MakeCheckedIterator(_data, _capacity, _size), _capacity - _size, value);
     }
     _size = count;
     Assert(_size <= _capacity);
@@ -439,7 +439,7 @@ void Vector<T, _Allocator>::resize_AssumeEmpty(size_type count, const_reference 
     reserve_AssumeEmpty(count);
     Assert(0 == _size);
     Assert(count <= _capacity);
-    std::uninitialized_fill_n(CORE_CHECKED_ARRAY_ITERATOR(pointer, _data, _capacity), count, value);
+    std::uninitialized_fill_n(MakeCheckedIterator(_data, _capacity, 0), count, value);
     _size = count;
 }
 //----------------------------------------------------------------------------
@@ -473,7 +473,7 @@ void Vector<T, _Allocator>::swap_(Vector& other, std::false_type ) {
         prhs = this;
     }
 
-    std::swap_ranges(plhs->begin(), plhs->end(), CORE_CHECKED_ARRAY_ITERATOR(pointer, prhs->_data, prhs->_capacity));
+    std::swap_ranges(plhs->begin(), plhs->end(), MakeCheckedIterator(prhs->_data, prhs->_capacity, 0));
 
     const size_type n = prhs->_size;
     for (size_type i = plhs->_size; i < n; ++i) {
@@ -502,7 +502,7 @@ template <typename T, typename _Allocator>
 bool operator==(const Vector<T, _Allocator>& lhs, const Vector<T, _Allocator>& rhs) {
     typedef typename Vector<T, _Allocator>::const_pointer const_pointer;
     return (lhs.size() == rhs.size())
-        ? std::equal(lhs.begin(), lhs.end(), CORE_CHECKED_ARRAY_ITERATOR(const_pointer, rhs.data(), rhs.size()))
+        ? std::equal(lhs.begin(), lhs.end(), MakeCheckedIterator(rhs.data(), rhs.size(), 0))
         : false;
 }
 //----------------------------------------------------------------------------

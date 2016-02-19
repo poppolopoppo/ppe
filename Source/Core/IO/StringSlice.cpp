@@ -20,7 +20,7 @@ bool Split_(const _Char **reentrantCstr, _Char separator, BasicStringSlice<_Char
     }
     else if (separator == *begin && !begin[1]) {
         slice = BasicStringSlice<_Char>(begin + 1, 0);
-        *reentrantCstr = slice.begin();
+        *reentrantCstr = slice.data();
 
         return true;
     }
@@ -52,7 +52,7 @@ bool Split_(const _Char **reentrantCstr, const _Char* separators, BasicStringSli
     }
     else if (StrChr(separators, *begin) && !begin[1]) {
         slice = BasicStringSlice<_Char>(begin + 1, 0);
-        *reentrantCstr = slice.begin();
+        *reentrantCstr = slice.data();
 
         return true;
     }
@@ -91,7 +91,7 @@ bool Split_(const _Char **reentrantCstr, size_t *reentrantLength, _Char separato
     else if (separator == *begin && 1 == *reentrantLength) {
         slice = BasicStringSlice<_Char>(begin + 1, 0);
 
-        *reentrantCstr = slice.begin();
+        *reentrantCstr = slice.data();
         *reentrantLength = 0;
 
         return true;
@@ -129,7 +129,7 @@ bool Split_(const _Char **reentrantCstr, size_t *reentrantLength, const _Char* s
     else if (StrChr(separators, *begin) && 1 == *reentrantLength) {
         slice = BasicStringSlice<_Char>(begin + 1, 0);
 
-        *reentrantCstr = slice.begin();
+        *reentrantCstr = slice.data();
         *reentrantLength = 0;
 
         return true;
@@ -165,6 +165,11 @@ typename MemoryView<const _Char>::iterator FindCharIf_(
 template <typename _Char>
 bool FindCharIf_ReturnIfNot_(const MemoryView<const _Char>& str, bool (*pred)(_Char) ) {
     return (str.end() == FindCharIf_(str, pred));
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+size_t FindCharIf_ReturnIndex_(const MemoryView<const _Char>& str, bool (*pred)(_Char) ) {
+    return std::distance(str.begin(), FindCharIf_(str, pred));
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -206,11 +211,11 @@ bool Split(const wchar_t **reentrantCstr, size_t *reentrantLength, const wchar_t
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 StringSlice Chomp(const StringSlice& line) {
-    return MakeView(line.begin(), FindCharIf_(line, &IsEndLine));
+    return StringSlice(line.data(), FindCharIf_ReturnIndex_(line, &IsEndLine));
 }
 //----------------------------------------------------------------------------
 WStringSlice Chomp(const WStringSlice& line) {
-    return MakeView(line.begin(), FindCharIf_(line, &IsEndLine));
+    return WStringSlice(line.data(), FindCharIf_ReturnIndex_(line, &IsEndLine));
 }
 //----------------------------------------------------------------------------
 bool IsAlnum(const StringSlice& str) {
@@ -264,11 +269,11 @@ bool IsSpace(const WStringSlice& wstr) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const StringSlice& slice) {
-    return oss.write(slice.begin(), slice.size());
+    return oss.write(slice.data(), slice.size());
 }
 //----------------------------------------------------------------------------
 std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const WStringSlice& wslice) {
-    return oss.write(wslice.begin(), wslice.size());
+    return oss.write(wslice.data(), wslice.size());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -70,14 +70,14 @@ bool Split(const wchar_t **reentrantCstr, size_t *reentrantLength, const wchar_t
 template <typename _Char, CaseSensitive _CaseSensitive>
 struct StringSliceEqualTo {
     bool operator ()(const BasicStringSlice<_Char>& lhs, const BasicStringSlice<_Char>& rhs) const {
-        return (lhs == rhs) || ((lhs.size() == rhs.size()) && (0 == CompareN(lhs.begin(), rhs.begin(), lhs.size())));
+        return (lhs == rhs) || ((lhs.size() == rhs.size()) && (0 == CompareN(lhs.data(), rhs.data(), lhs.size())));
     }
 };
 //----------------------------------------------------------------------------
 template <typename _Char>
 struct StringSliceEqualTo<_Char, CaseSensitive::False> {
     bool operator ()(const BasicStringSlice<_Char>& lhs, const BasicStringSlice<_Char>& rhs) const {
-        return (lhs == rhs) || ((lhs.size() == rhs.size()) && (0 == CompareNI(lhs.begin(), rhs.begin(), lhs.size())));
+        return (lhs == rhs) || ((lhs.size() == rhs.size()) && (0 == CompareNI(lhs.data(), rhs.data(), lhs.size())));
     }
 };
 //----------------------------------------------------------------------------
@@ -88,7 +88,7 @@ struct StringSliceLess {
             return false;
         const size_t l = lhs.size() < rhs.size() ? lhs.size() : rhs.size();
         int cmp;
-        if (0 == (cmp = CompareN(lhs.begin(), rhs.begin(), l)))
+        if (0 == (cmp = CompareN(lhs.data(), rhs.data(), l)))
             return lhs.size() < rhs.size();
         else
             return cmp < 0;
@@ -100,7 +100,7 @@ struct StringSliceLess<_Char, CaseSensitive::False> {
     bool operator ()(const BasicStringSlice<_Char>& lhs, const BasicStringSlice<_Char>& rhs) const {
         const size_t l = lhs.size() < rhs.size() ? lhs.size() : rhs.size();
         int cmp;
-        if (0 == (cmp = CompareNI(lhs.begin(), rhs.begin(), l)))
+        if (0 == (cmp = CompareNI(lhs.data(), rhs.data(), l)))
             return lhs.size() < rhs.size();
         else
             return cmp < 0;
@@ -110,14 +110,14 @@ struct StringSliceLess<_Char, CaseSensitive::False> {
 template <typename _Char, CaseSensitive _CaseSensitive>
 struct StringSliceHasher {
     size_t operator ()(const BasicStringSlice<_Char>& cstr) const {
-        return hash_stringI(cstr.begin(), cstr.size());
+        return hash_stringI(cstr.data(), cstr.size());
     }
 };
 //----------------------------------------------------------------------------
 template <typename _Char>
 struct StringSliceHasher<_Char, CaseSensitive::False> {
     size_t operator ()(const BasicStringSlice<_Char>& cstr) const {
-        return hash_string(cstr.begin(), cstr.size());
+        return hash_string(cstr.data(), cstr.size());
     }
 };
 //----------------------------------------------------------------------------

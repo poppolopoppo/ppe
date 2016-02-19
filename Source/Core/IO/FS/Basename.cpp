@@ -81,8 +81,8 @@ Basename::Basename(const FileSystem::char_type* content, size_t length) {
 }
 //----------------------------------------------------------------------------
 Basename::Basename(const BasicStringSlice<FileSystem::char_type>& content) {
-    Assert(content.begin());
-    ParseBasename_(content.begin(), content.size(), _basenameNoExt, _extname);
+    Assert(content.data());
+    ParseBasename_(content.data(), content.size(), _basenameNoExt, _extname);
 }
 //----------------------------------------------------------------------------
 String Basename::ToString() const {

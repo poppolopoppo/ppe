@@ -117,7 +117,7 @@ typename std::enable_if<
     if (copyRange) {
         Assert(p);
         Assert(newp);
-        std::copy(p, p + copyRange, CORE_CHECKED_ARRAY_ITERATOR(pointer, newp, newSize));
+        std::copy(p, p + copyRange, MakeCheckedIterator(newp, newSize, 0));
     }
     if (data.Pointer()) {
         Assert(0 < oldSize);

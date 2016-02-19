@@ -77,8 +77,10 @@ FileSystemTrie::~FileSystemTrie() {
 const FileSystemNode *FileSystemTrie::GetIFP(const MemoryView<const FileSystemToken>& path) const {
     Assert(!path.empty());
 
-    const FileSystemToken *bpath = path.begin();
-    const FileSystemToken *epath = path.end();
+    typedef MemoryView<const FileSystemToken>::iterator iterator;
+
+    iterator bpath = path.begin();
+    const iterator epath = path.end();
 
     READSCOPELOCK(_barrier);
 
@@ -108,8 +110,10 @@ const FileSystemNode *FileSystemTrie::Concat(const FileSystemNode *basedir, cons
 
     Assert(!path.empty());
 
-    const FileSystemToken *bpath = path.begin();
-    const FileSystemToken *epath = path.end();
+    typedef MemoryView<const FileSystemToken>::iterator iterator;
+
+    iterator bpath = path.begin();
+    const iterator epath = path.end();
     Assert(!bpath->empty());
 
     WRITESCOPELOCK(_barrier);

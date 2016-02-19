@@ -36,8 +36,8 @@ public:
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;
 
-    typedef pointer iterator;
-    typedef const_pointer const_iterator;
+    typedef CheckedArrayIterator<T> iterator;
+    typedef CheckedArrayIterator<typename std::add_const<T>::type> const_iterator;
 
     typedef std::reverse_iterator<iterator> reverse_iterator;
     typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
@@ -53,11 +53,11 @@ public:
     size_type size() const { return _size; }
     bool empty() const { return 0 == _size; }
 
-    iterator begin() { return _storage; }
-    iterator end() { return _storage + _size; }
+    iterator begin() { return MakeCheckedIterator(_storage, _size, 0); }
+    iterator end() { return MakeCheckedIterator(_storage, _size, _size); }
 
-    const_iterator begin() const { return _storage; }
-    const_iterator end() const { return _storage + _size; }
+    const_iterator begin() const { return MakeCheckedIterator(const_pointer(_storage), _size, 0); }
+    const_iterator end() const { return MakeCheckedIterator(const_pointer(_storage), _size, _size); }
 
     reverse_iterator rbegin() { return reverse_iterator(begin()); }
     reverse_iterator rend() { return reverse_iterator(end()); }

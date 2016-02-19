@@ -64,7 +64,7 @@ size_t CompressMemory(MemoryView<u8>& dst, const MemoryView<const u8>& src, Comp
         return compressedSizeInBytes;
     Assert(src.Pointer());
 
-    const MemoryView<u8> datas = dst.RemainingAfter(compressedSizeInBytes);
+    const MemoryView<u8> datas = dst.CutStartingAt(compressedSizeInBytes);
 
     STATIC_CONST_INTEGRAL(int, FastAccelerator,  7/* ~21% faster */);
     STATIC_CONST_INTEGRAL(int, CompressionLevel, 9/* LZ4 default */);

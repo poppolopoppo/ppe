@@ -25,7 +25,7 @@ public:
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;
 
-    typedef pointer iterator;
+    typedef CheckedArrayIterator<value_type> iterator;
     typedef std::random_access_iterator_tag iterator_category;
 
     MemoryView();
@@ -53,8 +53,8 @@ public:
     size_type size() const { return _size; }
     bool empty() const { return 0 == _size; }
 
-    iterator begin() const { return _storage; }
-    iterator end() const { return _storage + _size; }
+    iterator begin() const { return MakeCheckedIterator(_storage, _size, 0); }
+    iterator end() const { return MakeCheckedIterator(_storage, _size, _size); }
 
     reference at(size_type index) const;
     reference operator [](size_type index) const { return at(index); }
@@ -65,8 +65,11 @@ public:
     MemoryView<T> SubRange(size_t offset, size_t count) const;
     MemoryView< typename std::add_const<T>::type > SubRangeConst(size_t offset, size_t count) const;
 
-    MemoryView<T> RemainingAfter(size_t offset) const { return SubRange(offset, _size - offset); }
-    MemoryView< typename std::add_const<T>::type > RemainingAfterConst(size_t offset) const { return SubRange(offset, _size - offset); }
+    MemoryView<T> CutStartingAt(size_t offset) const { return SubRange(offset, _size - offset); }
+    MemoryView< typename std::add_const<T>::type > CutStartingAtConst(size_t offset) const { return SubRangeConst(offset, _size - offset); }
+
+    MemoryView<T> CutBefore(size_t offset) const { return SubRange(0, offset); }
+    MemoryView< typename std::add_const<T>::type > CutBeforeConst(size_t offset) const { return SubRangeConst(0, offset); }
 
     MemoryView<T> ShiftBack() const { Assert(_size > 0); return MemoryView<T>(_storage, _size - 1); }
     MemoryView<T> ShiftFront() const { Assert(_size > 0); return MemoryView<T>(_storage + 1, _size - 1); }
@@ -239,6 +242,20 @@ template <typename T>
 MemoryView<typename std::add_const<T>::type > MakeConstView(T* pbegin, T* pend) {
     Assert(pend >= pbegin);
     return MemoryView<typename std::add_const<T>::type >(pbegin, std::distance(pbegin, pend));
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T>
+void Copy(const MemoryView<T>& dst, const MemoryView<const T>& src) {
+    Assert(dst.size() == src.size());
+    std::copy(src.begin(), src.end(), dst.begin());
+}
+//----------------------------------------------------------------------------
+template <typename T>
+void Move(const MemoryView<T>& dst, const MemoryView<T>& src) {
+    Assert(dst.size() == src.size());
+    std::move(src.begin(), src.end(), dst.begin());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

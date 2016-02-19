@@ -12,9 +12,9 @@ bool ValidateToken(const BasicStringSlice<_Char>& content) {
         return false;
 
     const _TokenTraits traits = {};
-    for (const _Char *p = content.begin(); *p; ++p)
-    if (!traits.IsAllowedChar(*p))
-        return false;
+    for (const _Char& ch : content)
+        if (!traits.IsAllowedChar(ch))
+            return false;
 
     return true;
 }
@@ -185,7 +185,7 @@ auto TokenSetSlot<_Char, _CaseSensitive, _Allocator>::GetOrCreate(const BasicStr
             _set.insert(result.MakeView());
         }
         else {
-            result.Ptr = it->begin();
+            result.Ptr = it->data();
         }
         Assert(result.size() == content.size());
     }
@@ -241,7 +241,7 @@ size_t TokenSet<_Char, _CaseSensitive, _Allocator>::size() const {
 template <typename _Char, CaseSensitive _CaseSensitive, typename _Allocator>
 template <typename _TokenTraits>
 auto TokenSet<_Char, _CaseSensitive, _Allocator>::GetOrCreate(const BasicStringSlice<_Char>& content) -> TokenData<_Char> {
-    Assert(content.begin());
+    Assert(content.data());
     if (content.empty())
         return TokenData<_Char>();
 

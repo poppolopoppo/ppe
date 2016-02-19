@@ -145,8 +145,8 @@ Filename::Filename(const FileSystem::char_type* content, size_t length) {
 }
 //----------------------------------------------------------------------------
 Filename::Filename(const BasicStringSlice<FileSystem::char_type>& content) {
-    Assert(content.begin());
-    if (!ParseFilename_(content.begin(), content.size(), _dirpath, _basename))
+    Assert(content.data());
+    if (!ParseFilename_(content.data(), content.size(), _dirpath, _basename))
         AssertNotReached();
 }
 //----------------------------------------------------------------------------
