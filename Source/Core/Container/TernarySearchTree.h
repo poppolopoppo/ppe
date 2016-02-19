@@ -132,6 +132,8 @@ public:
     typedef typename allocator_traits::size_type size_type;
     typedef typename allocator_traits::difference_type difference_type;
 
+    typedef const node_type* iterator;
+
     TernarySearchTree() : _root(nullptr), _size(0) {}
     ~TernarySearchTree();
 
