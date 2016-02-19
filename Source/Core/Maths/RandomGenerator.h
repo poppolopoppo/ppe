@@ -16,7 +16,7 @@ struct XorShift64Star {
 
     u64 X;
 
-    void Reset(size_t seed);
+    void Reset(u64 seed);
     u64  NextU64();
 };
 //----------------------------------------------------------------------------
@@ -24,7 +24,7 @@ struct XorShift128Plus {
 
     u64 States[2];
 
-    void Reset(size_t seed);
+    void Reset(u64 seed);
     u64  NextU64();
 };
 //----------------------------------------------------------------------------
@@ -33,7 +33,7 @@ struct XorShift1024Star {
     u64 N;
     u64 States[16];
 
-    void Reset(size_t seed);
+    void Reset(u64 seed);
     u64  NextU64();
 };
 //----------------------------------------------------------------------------
