@@ -3,39 +3,40 @@
 #include "Core/Core.h"
 
 #include "Core/Allocator/Allocation.h"
-#include "Core/Container/BurstTrie.h"
-#include "Core/IO/String.h"
+#include "Core/Container/StringHashMap.h"
 #include "Core/Meta/Singleton.h"
-
-#include "Core.Serialize/Lexer/Symbol.h"
 
 namespace Core {
 namespace Lexer {
+class Symbol;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-typedef STRINGTRIE_MAP(Lexer, Symbol, CaseSensitive::True, 32) SymbolMap;
-class SymbolRoot : Meta::ThreadResource {
+class Symbols : Meta::Singleton<Symbols>, Meta::ThreadResource {
 public:
-    SymbolMap& Map() { THIS_THREADRESOURCE_CHECKACCESS(); return _map; }
+    STATIC_CONST_INTEGRAL(size_t, MaxLength, 32);
+    typedef STRINGSLICE_HASHMAP(Lexer, Symbol, CaseSensitive::True) hashmap_type;
 private:
-    SymbolMap _map;
-};
-//----------------------------------------------------------------------------
-class SymbolTrie : Meta::Singleton<SymbolRoot, SymbolTrie> {
+    typedef Meta::Singleton<Symbols> singleton_type;
+    friend class Meta::SingletonHelpers<Symbols, singleton_type>;
+
+    hashmap_type _symbols;
+
+    Symbols();
 public:
-    typedef Meta::Singleton<SymbolRoot, SymbolTrie> singleton_type;
-    typedef SymbolMap::query_t query_t;
+    ~Symbols();
 
-    SymbolTrie() = delete;
-    ~SymbolTrie() = delete;
+    using singleton_type::HasInstance;
+    using singleton_type::Destroy;
 
-    static void Create();
-    static void Destroy();
+    static void Create() { singleton_type::Create(); }
+    static const Symbols& Instance() { return singleton_type::Instance(); }
 
-    static query_t IsPrefix(const StringSlice& cstr, const query_t& hint);
-    static query_t IsPrefix(char ch, const query_t& hint) { return IsPrefix(StringSlice(&ch, 1), hint); }
+    const hashmap_type& All() const { THIS_THREADRESOURCE_CHECKACCESS(); return _symbols; }
 
+    bool IsPrefix(const Symbol** psymbol, const StringSlice& cstr) const;
+
+public:
     static const Symbol *Invalid;
 
     static const Symbol *Eof;

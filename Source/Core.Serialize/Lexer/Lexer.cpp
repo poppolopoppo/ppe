@@ -3,7 +3,7 @@
 #include "Lexer.h"
 
 #include "Symbol.h"
-#include "SymbolTrie.h"
+#include "Symbols.h"
 
 #include "Core/Allocator/PoolAllocatorTag-impl.h"
 #include "Core/IO/Stream.h"
@@ -119,22 +119,34 @@ static void Lex_Comments_(LookAheadReader& reader) {
 //----------------------------------------------------------------------------
 static bool Lex_Symbol_(LookAheadReader& reader, const Symbol **psymbol) {
     Assert(psymbol);
-    Assert(SymbolTrie::Invalid == *psymbol);
+    Assert(Symbols::Invalid == *psymbol);
 
     size_t offset = 0;
     size_t toss = 0;
 
-    SymbolTrie::query_t result;
+    const Symbols& symbols = Symbols::Instance();
+
+    STACKLOCAL_POD_STACK(char, poken, Symbols::MaxLength);
+
+    const Symbol* result = nullptr;
     do {
-        const char ch = reader.Peek(offset++);
-        result = SymbolTrie::IsPrefix(ch, result);
-        if (result.Node && result.Node->HasValue()) {
-            *psymbol = &result.Node->Value();
-            Assert((*psymbol)->Type() != Symbol::Invalid);
-            toss = offset;
+        poken.Push(reader.Peek(offset++));
+        if (symbols.IsPrefix(&result, MakeConstView(poken))) {
+            Assert(result);
+            Assert(Symbol::Invalid != result->Type());
+            if (result->IsValid()) {
+                *psymbol = result;
+                toss = offset;
+            }
+            else {
+                Assert(result->IsPrefix());
+            }
+        }
+        else {
+            Assert(nullptr == result);
         }
     }
-    while (nullptr != result.Node);
+    while (result);
 
     if (0 != toss) {
         Assert(*psymbol);
@@ -144,7 +156,7 @@ static bool Lex_Symbol_(LookAheadReader& reader, const Symbol **psymbol) {
         const char ch1 = reader.Peek(toss);
         if (IsAlnum(ch0) && IsAlnum(ch1)) {
             // incomplete token
-            *psymbol = SymbolTrie::Invalid;
+            *psymbol = Symbols::Invalid;
             return false;
         }
         else {
@@ -153,7 +165,7 @@ static bool Lex_Symbol_(LookAheadReader& reader, const Symbol **psymbol) {
         }
     }
     else {
-        Assert(SymbolTrie::Invalid == *psymbol);
+        Assert(Symbols::Invalid == *psymbol);
         return false;
     }
 }
@@ -175,10 +187,10 @@ static bool Lex_Numeric_(LookAheadReader& reader, const Symbol **psymbol, String
             ch = reader.Read();
             Assert('x' == ch);
 
-            *psymbol = SymbolTrie::Int;
+            *psymbol = Symbols::Int;
 
             if (!ReadCharset_(Hexadecimal_, reader, value))
-                throw LexerException("invalid hexadecimal int", Match(SymbolTrie::Int, std::move(value), reader.SourceSite()));
+                throw LexerException("invalid hexadecimal int", Match(Symbols::Int, std::move(value), reader.SourceSite()));
 
             int64_t numeric;
             if (!Atoi<16>(&numeric, value)) {
@@ -196,10 +208,10 @@ static bool Lex_Numeric_(LookAheadReader& reader, const Symbol **psymbol, String
             ch = reader.Read();
             Assert('0' == ch);
 
-            *psymbol = SymbolTrie::Int;
+            *psymbol = Symbols::Int;
 
             if (!ReadCharset_(Octal_, reader, value))
-                throw LexerException("invalid octal int", Match(SymbolTrie::Int, std::move(value), reader.SourceSite()));
+                throw LexerException("invalid octal int", Match(Symbols::Int, std::move(value), reader.SourceSite()));
 
             int64_t numeric;
             if (!Atoi<8>(&numeric, value)) {
@@ -217,20 +229,20 @@ static bool Lex_Numeric_(LookAheadReader& reader, const Symbol **psymbol, String
     {
         // decimal or float
         if (!ReadCharset_(Float_, reader, value))
-            throw LexerException("invalid float", Match(SymbolTrie::Float, std::move(value), reader.SourceSite()));
+            throw LexerException("invalid float", Match(Symbols::Float, std::move(value), reader.SourceSite()));
 
         Assert(value.size());
 
         // if '.' found then it is a float
         const size_t n = value.find_first_of('.');
         *psymbol = (n < value.size())
-            ? SymbolTrie::Float
-            : SymbolTrie::Int;
+            ? Symbols::Float
+            : Symbols::Int;
 
         return true;
     }
 
-    *psymbol = SymbolTrie::Invalid;
+    *psymbol = Symbols::Invalid;
     Assert(value.empty());
 
     return false;
@@ -248,12 +260,12 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
         ch = reader.Read();
         Assert('\'' == ch);
 
-        *psymbol = SymbolTrie::String;
+        *psymbol = Symbols::String;
 
         ReadCharset_(Until_<'\''>, reader, value);
 
         if ('\'' != (ch = reader.Read()))
-            throw LexerException("unterminated strong quoted string", Match(SymbolTrie::String, std::move(value), reader.SourceSite()));
+            throw LexerException("unterminated strong quoted string", Match(Symbols::String, std::move(value), reader.SourceSite()));
 
         return true;
     }
@@ -265,7 +277,7 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
         ch = reader.Read();
         Assert('"' == ch);
 
-        *psymbol = SymbolTrie::String;
+        *psymbol = Symbols::String;
 
         bool inQuote = true;
         bool escaped = false;
@@ -300,7 +312,7 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
                     d1 = ToLower(reader.Read());
 
                     if (!(Octal_(d0) && Octal_(d1)))
-                        throw LexerException("invalid octal character escaping", Match(SymbolTrie::String, std::move(value), reader.SourceSite()));
+                        throw LexerException("invalid octal character escaping", Match(Symbols::String, std::move(value), reader.SourceSite()));
 
                     ch = (char)((d0 - '0') * 8 + (d1 - '0') );
 
@@ -313,7 +325,7 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
                     d1 = ToLower(reader.Read());
 
                     if (!(Hexadecimal_(d0) && Hexadecimal_(d1)))
-                        throw LexerException("invalid hexadecimal character escaping", Match(SymbolTrie::String, std::move(value), reader.SourceSite()));
+                        throw LexerException("invalid hexadecimal character escaping", Match(Symbols::String, std::move(value), reader.SourceSite()));
 
                     ch = (char)((d0 <= '9' ? d0 - '0' : d0 - 'a') * 16 +
                                 (d1 <= '9' ? d1 - '0' : d1 - 'a') );
@@ -323,10 +335,10 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
                     break;
 
                 case '\0':
-                    throw LexerException("unterminated weak quoted string", Match(SymbolTrie::String, std::move(value), reader.SourceSite()));
+                    throw LexerException("unterminated weak quoted string", Match(Symbols::String, std::move(value), reader.SourceSite()));
 
                 default:
-                    throw LexerException("invalid character escaping", Match(SymbolTrie::String, std::move(value), reader.SourceSite()));
+                    throw LexerException("invalid character escaping", Match(Symbols::String, std::move(value), reader.SourceSite()));
                 }
             }
             else
@@ -337,7 +349,7 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
                 case '\\': escaped = true; break;
 
                 case '\0':
-                    throw LexerException("unterminated weak quoted string", Match(SymbolTrie::String, std::move(value), reader.SourceSite()));
+                    throw LexerException("unterminated weak quoted string", Match(Symbols::String, std::move(value), reader.SourceSite()));
 
                 default:
                     oss.put(ch);
@@ -352,7 +364,7 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
         return true;
     }
 
-    *psymbol = SymbolTrie::Invalid;
+    *psymbol = Symbols::Invalid;
     Assert(value.empty());
 
     return false;
@@ -366,11 +378,11 @@ static bool Lex_Identifier_(LookAheadReader& reader, const Symbol **psymbol, Str
 
     if (IsAlpha(ch) || ('_' == ch))
     {
-        *psymbol = SymbolTrie::Identifier;
+        *psymbol = Symbols::Identifier;
         return ReadCharset_(Identifier_, reader, value);
     }
 
-    *psymbol = SymbolTrie::Invalid;
+    *psymbol = Symbols::Invalid;
     Assert(value.empty());
 
     return false;
@@ -411,7 +423,7 @@ bool Lexer::NextMatch_(Match& match) {
     _reader.EatWhiteSpaces();
 
     if ('\0' == _reader.Peek(0)) {
-        match._symbol = SymbolTrie::Eof;
+        match._symbol = Symbols::Eof;
         match._value.clear();
         match._site = _reader.SourceSite();
         return false;
@@ -442,7 +454,7 @@ bool Lexer::NextMatch_(Match& match) {
         return true;
     }
 
-    match._symbol = SymbolTrie::Invalid;
+    match._symbol = Symbols::Invalid;
     match._value.clear();
 
     _lexing.clear();
@@ -454,11 +466,11 @@ bool Lexer::NextMatch_(Match& match) {
 //----------------------------------------------------------------------------
 void LexerStartup::Start() {
     POOLTAG(Lexer)::Start();
-    SymbolTrie::Create();
+    Symbols::Create();
 }
 //----------------------------------------------------------------------------
 void LexerStartup::Shutdown() {
-    SymbolTrie::Destroy();
+    Symbols::Destroy();
     POOLTAG(Lexer)::Shutdown();
 }
 //----------------------------------------------------------------------------

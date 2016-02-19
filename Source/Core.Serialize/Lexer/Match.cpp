@@ -2,7 +2,7 @@
 
 #include "Match.h"
 
-#include "SymbolTrie.h"
+#include "Symbols.h"
 
 namespace Core {
 namespace Lexer {
@@ -10,7 +10,7 @@ namespace Lexer {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 Match::Match()
-:   _symbol(SymbolTrie::Invalid), _site(nullptr, 0, 0) {}
+:   _symbol(Symbols::Invalid), _site(nullptr, 0, 0) {}
 //----------------------------------------------------------------------------
 Match::~Match() {}
 //----------------------------------------------------------------------------

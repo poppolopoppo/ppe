@@ -85,10 +85,15 @@ public:
         DotDot          = 1ull<<45,   // ..
 
         Typename        = 1ull<<46,   // float2,byte4,etc...
+
+        Prefix          = 1ull<<63,   // for Symbols class
     };
 
     Symbol() : _type(Invalid), _ord(0) {}
     Symbol(TypeId type, const StringSlice& cstr, u64 ord = 0) : _type(type), _cstr(cstr), _ord(ord) {}
+
+    bool IsValid() const { return (Meta::CountBitsSet(uint64_t(_type)) == 1); }
+    bool IsPrefix() const { return Meta::HasFlag(_type, Prefix); }
 
     TypeId Type() const { return _type; }
     const StringSlice& CStr() const { return _cstr; }

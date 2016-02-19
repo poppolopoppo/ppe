@@ -50,7 +50,7 @@
 #include "Core.RTTI/RTTIMacros.h"
 
 #include "Core.Serialize/Lexer/Lexer.h"
-#include "Core.Serialize/Lexer/SymbolTrie.h"
+#include "Core.Serialize/Lexer/Symbols.h"
 #include "Core.Serialize/Parser/Parser.h"
 
 #include "Core/Container/Tuple.h"
