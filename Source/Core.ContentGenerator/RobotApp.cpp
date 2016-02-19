@@ -31,8 +31,9 @@
 #include "Core.Serialize/Parser/Parser.h"
 
 #include "Core.Application/ApplicationConsole.h"
-#include "Core/Container/BurstTrie.h"
 
+#include "Core/Container/BurstTrie.h"
+#include "Core/Container/StringHashSet.h"
 #include "Core.RTTI/MetaType.Definitions-inl.h"
 
 #include "Core/Diagnostic/Profiling.h"
@@ -614,7 +615,7 @@ RobotApp::RobotApp()
             char buffer[2048];
             std::streamsize len = 0;
             while (0 < (len = iss.ReadLine(buffer))) {
-                const StringSlice line(buffer, len);
+                const StringSlice line(buffer, checked_cast<size_t>(len));
                 const StringSlice word = Chomp(line);
                 words.emplace_back(ToString(word));
             }
@@ -632,21 +633,27 @@ RobotApp::RobotApp()
 #ifdef WITH_CORE_ASSERT
         static const size_t loops = 10;
 #else
-        static const size_t loops = 200;
+        static const size_t loops = 100;
 #endif
 
         {
             const BenchmarkScope bench("BurstTrie");
 
-            STRINGTRIE_SET(Container, CaseSensitive::True, 26) set;
+            STRINGTRIE_SET(Container, CaseSensitive::True, 31) set;
             {
-                PROFILING_SCOPE(Global, 4, "BurstTrie construction");
+                const BenchmarkScope bench("BurstTrie construction");
+                PROFILING_SCOPE(Global, 1, "BurstTrie construction");
                 for (const StringSlice& word : input)
                     set.Insert_AssertUnique(word);
             }
-
             {
-                PROFILING_SCOPE(Global, 4, "BurstTrie search");
+                const BenchmarkScope bench("BurstTrie optimization");
+                PROFILING_SCOPE(Global, 1, "BurstTrie optimization");
+                set.Optimize();
+            }
+            {
+                const BenchmarkScope bench("BurstTrie search");
+                PROFILING_SCOPE(Global, 2, "BurstTrie search");
                 forrange(i, 0, loops) {
                     for (const StringSlice& word : search)
                         if (not set.Contains(word))
@@ -657,18 +664,42 @@ RobotApp::RobotApp()
         {
             const BenchmarkScope bench("BulkTrie");
 
-            BulkTrie<char, void, 8192, 26> set;
+            BulkTrie<char, void, 8192, 31> set;
             {
+                const BenchmarkScope bench("BulkTrie construction");
                 PROFILING_SCOPE(Global, 3, "BulkTrie construction");
                 for (const StringSlice& word : input)
                     set.Insert_AssertUnique(word);
             }
 
             {
+                const BenchmarkScope bench("BulkTrie search");
                 PROFILING_SCOPE(Global, 4, "BulkTrie search");
                 forrange(i, 0, loops) {
                     for (const StringSlice& word : search)
                         if (not set.Contains(word))
+                            AssertNotReached();
+                    }
+            }
+        }
+        {
+            const BenchmarkScope bench("HashSet");
+
+            STRINGSLICE_HASHSET(Container, CaseSensitive::True) set;
+            {
+                const BenchmarkScope bench("HashSet construction");
+                PROFILING_SCOPE(Global, 3, "HashSet construction");
+                set.reserve(input.size());
+                for (const StringSlice& word : input)
+                    set.insert(word);
+            }
+
+            {
+                const BenchmarkScope bench("HashSet search");
+                PROFILING_SCOPE(Global, 4, "HashSet search");
+                forrange(i, 0, loops) {
+                    for (const StringSlice& word : search)
+                        if (set.end() == set.find(word))
                             AssertNotReached();
                     }
             }
@@ -770,8 +801,10 @@ RobotApp::RobotApp()
             if (0 == CompareNI("exit", line, 5))
                 break;
 
+            const wchar_t filename[] = L"@in_memory";
+
             try {
-                Lexer::Lexer lexer(StringSlice(&line[0], Length(line)), L"@in_memory");
+                Lexer::Lexer lexer(StringSlice(&line[0], Length(line)), filename);
                 Parser::ParseList input(&lexer);
 
                 Parser::PCParseItem item = Serialize::GrammarStartup::Parse(input);
