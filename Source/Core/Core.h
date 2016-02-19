@@ -163,6 +163,7 @@
 #include "Core/Meta/Enum.h"
 #include "Core/Meta/ForRange.h"
 #include "Core/Meta/Hash_fwd.h"
+#include "Core/Meta/Iterator.h"
 #include "Core/Meta/NumericLimits.h"
 #include "Core/Meta/OneTimeInitialize.h"
 #include "Core/Meta/StronglyTyped.h"
