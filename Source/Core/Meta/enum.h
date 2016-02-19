@@ -10,7 +10,7 @@ namespace Meta {
 // helpers to ease manipulations of enum classes
 //----------------------------------------------------------------------------
 template <class T, class = typename std::enable_if< std::is_enum<T>::value >::type >
-FORCE_INLINE bool HasFlag(T value, T flag) {
+inline constexpr bool HasFlag(T value, T flag) {
     return size_t(flag) == (size_t(value) & size_t(flag));
 }
 //----------------------------------------------------------------------------
