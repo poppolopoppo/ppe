@@ -12,49 +12,20 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::MemoryView&lt;char&gt;">
-    <DisplayString>[_size] {_storage,[_size]s}</DisplayString>
-    <Expand>
-      <Item Name="Size">_size</Item>
-      <ArrayItems>
-        <Size>_size</Size>
-        <ValuePointer>_storage</ValuePointer>
-      </ArrayItems>
-    </Expand>
-  </Type>
-  <Type Name="Core::MemoryView&lt;const char&gt;">
-    <DisplayString>[_size] {_storage,[_size]s}</DisplayString>
-    <Expand>
-      <Item Name="Size">_size</Item>
-      <ArrayItems>
-        <Size>_size</Size>
-        <ValuePointer>_storage</ValuePointer>
-      </ArrayItems>
-    </Expand>
-  </Type>
-  <Type Name="Core::MemoryView&lt;wchar_t&gt;">
-    <DisplayString>[_size] {_storage,[_size]su}</DisplayString>
-    <Expand>
-      <Item Name="Size">_size</Item>
-      <ArrayItems>
-        <Size>_size</Size>
-        <ValuePointer>_storage</ValuePointer>
-      </ArrayItems>
-    </Expand>
-  </Type>
-  <Type Name="Core::MemoryView&lt;const wchar_t&gt;">
-    <DisplayString>[_size] {_storage,[_size]su}</DisplayString>
-    <Expand>
-      <Item Name="Size">_size</Item>
-      <ArrayItems>
-        <Size>_size</Size>
-        <ValuePointer>_storage</ValuePointer>
-      </ArrayItems>
-    </Expand>
-  </Type>
-
   <Type Name="Core::MemoryView&lt;*&gt;">
-    <DisplayString>{{ size={_size} }}</DisplayString>
+    <DisplayString Condition="_size == 0">empty</DisplayString>
+    <DisplayString>{_storage,[_size]su} [{_size}]</DisplayString>
+    <Expand>
+      <Item Name="Size">_size</Item>
+      <ArrayItems>
+        <Size>_size</Size>
+        <ValuePointer>_storage</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+  <Type Name="Core::MemoryView&lt;*&gt;">
+    <DisplayString Condition="_size == 0">empty</DisplayString>
+    <DisplayString>{_storage,[_size]s} [{_size}]</DisplayString>
     <Expand>
       <Item Name="Size">_size</Item>
       <ArrayItems>
@@ -218,13 +189,9 @@
   </Type>
 
   <Type Name="Core::RTTI::MetaTypeAtom&lt;* &gt;">
-    <DisplayString>{{ wrapper={_wrapper} }}</DisplayString>
+    <DisplayString>{_wrapper}</DisplayString>
     <Expand>
       <Item Name="Wrapper">_wrapper</Item>
-      <ArrayItems>
-        <Size>_size</Size>
-        <ValuePointer>_storage</ValuePointer>
-      </ArrayItems>
     </Expand>
   </Type>
 
