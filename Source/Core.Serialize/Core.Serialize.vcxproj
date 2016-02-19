@@ -54,8 +54,8 @@
     <CustomBuild Include="Lexer\Match.h" />
     <CustomBuild Include="Lexer\Symbol.cpp" />
     <CustomBuild Include="Lexer\Symbol.h" />
-    <CustomBuild Include="Lexer\SymbolTrie.cpp" />
-    <CustomBuild Include="Lexer\SymbolTrie.h" />
+    <CustomBuild Include="Lexer\Symbols.cpp" />
+    <CustomBuild Include="Lexer\Symbols.h" />
     <CustomBuild Include="Parser\ParseContext.cpp" />
     <CustomBuild Include="Parser\ParseContext.h" />
     <CustomBuild Include="Parser\ParseExpression-inl.h" />

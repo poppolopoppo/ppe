@@ -34,10 +34,10 @@
     <CustomBuild Include="Lexer\Symbol.h">
       <Filter>Lexer</Filter>
     </CustomBuild>
-    <CustomBuild Include="Lexer\SymbolTrie.cpp">
+    <CustomBuild Include="Lexer\Symbols.cpp">
       <Filter>Lexer</Filter>
     </CustomBuild>
-    <CustomBuild Include="Lexer\SymbolTrie.h">
+    <CustomBuild Include="Lexer\Symbols.h">
       <Filter>Lexer</Filter>
     </CustomBuild>
     <CustomBuild Include="Parser\ParseContext.cpp">

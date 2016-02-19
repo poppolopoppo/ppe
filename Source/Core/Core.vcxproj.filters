@@ -151,6 +151,12 @@
     <CustomBuild Include="Container\Pair.h">
       <Filter>Container</Filter>
     </CustomBuild>
+    <CustomBuild Include="Container\PatriciaTrie-inl.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Container\PatriciaTrie.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
     <CustomBuild Include="Container\RawStorage-inl.h">
       <Filter>Container</Filter>
     </CustomBuild>
@@ -164,6 +170,9 @@
       <Filter>Container</Filter>
     </CustomBuild>
     <CustomBuild Include="Container\StringHashMap.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Container\StringHashSet.h">
       <Filter>Container</Filter>
     </CustomBuild>
     <CustomBuild Include="Container\TernarySearchTree-inl.h">
@@ -812,6 +821,9 @@
       <Filter>Meta</Filter>
     </CustomBuild>
     <CustomBuild Include="Meta\Hash_fwd.h">
+      <Filter>Meta</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Meta\Iterator.h">
       <Filter>Meta</Filter>
     </CustomBuild>
     <CustomBuild Include="Meta\NumericLimits.h">

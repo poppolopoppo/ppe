@@ -93,11 +93,14 @@
     <CustomBuild Include="Container\Map.h" />
     <CustomBuild Include="Container\MultiMap.h" />
     <CustomBuild Include="Container\Pair.h" />
+    <CustomBuild Include="Container\PatriciaTrie-inl.h" />
+    <CustomBuild Include="Container\PatriciaTrie.h" />
     <CustomBuild Include="Container\RawStorage-inl.h" />
     <CustomBuild Include="Container\RawStorage.h" />
     <CustomBuild Include="Container\RingBuffer.h" />
     <CustomBuild Include="Container\Stack.h" />
     <CustomBuild Include="Container\StringHashMap.h" />
+    <CustomBuild Include="Container\StringHashSet.h" />
     <CustomBuild Include="Container\TernarySearchTree-inl.h" />
     <CustomBuild Include="Container\TernarySearchTree.h" />
     <CustomBuild Include="Container\Token-inl.h" />
@@ -314,6 +317,7 @@
     <CustomBuild Include="Meta\Event.h" />
     <CustomBuild Include="Meta\ForRange.h" />
     <CustomBuild Include="Meta\Hash_fwd.h" />
+    <CustomBuild Include="Meta\Iterator.h" />
     <CustomBuild Include="Meta\NumericLimits.h" />
     <CustomBuild Include="Meta\OneTimeInitialize.h" />
     <CustomBuild Include="Meta\PointerWFlags.h" />
