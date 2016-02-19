@@ -455,13 +455,13 @@ private:
         }
 
         bool ReadValue_(RTTI::BinaryData& rawdata) {
-            u64 rawsize;
+            u32 rawsize;
             if (_reader->ReadPOD(&rawsize)) {
                 if (0 == rawsize) {
                     return true;
                 }
                 else {
-                    rawdata.Resize_DiscardData(rawsize);
+                    rawdata.Resize_DiscardData(checked_cast<size_t>(rawsize));
                     return _reader->Read(rawdata.data(), rawsize);
                 }
             }
@@ -894,7 +894,7 @@ private:
         }
 
         void WriteValue_(const RTTI::BinaryData& rawdata) {
-            WritePOD(checked_cast<u64>(rawdata.size()));
+            WritePOD(checked_cast<u32>(rawdata.size()));
             if (rawdata.size())
                 _owner->_objectStream.Write(rawdata.data(), rawdata.SizeInBytes());
         }
