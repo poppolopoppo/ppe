@@ -27,17 +27,17 @@ void Format(char *buffer, size_t capacity, SizeInBytes size) {
     const Units::Storage::Kilobytes kb(0.8);
 
     if (bytes > pb)
-        oss << Units::Storage::Petabytes(bytes) << " pb";
+        oss << Units::Storage::Petabytes(bytes);
     else if (bytes > tb)
-        oss << Units::Storage::Terabytes(bytes) << " tb";
+        oss << Units::Storage::Terabytes(bytes);
     else if (bytes > gb)
-        oss << Units::Storage::Gigabytes(bytes) << " gb";
+        oss << Units::Storage::Gigabytes(bytes);
     else if (bytes > mb)
-        oss << Units::Storage::Megabytes(bytes) << " mb";
+        oss << Units::Storage::Megabytes(bytes);
     else if (bytes > kb)
-        oss << Units::Storage::Kilobytes(bytes) << " kb";
+        oss << Units::Storage::Kilobytes(bytes);
     else
-        oss << bytes << " b";
+        oss << bytes;
 }
 //----------------------------------------------------------------------------
 void Format(wchar_t *buffer, size_t capacity, SizeInBytes size) {
@@ -54,17 +54,17 @@ void Format(wchar_t *buffer, size_t capacity, SizeInBytes size) {
     const Units::Storage::Kilobytes kb(0.8);
 
     if (bytes > pb)
-        oss << Units::Storage::Petabytes(bytes) << L" pb";
+        oss << Units::Storage::Petabytes(bytes);
     else if (bytes > tb)
-        oss << Units::Storage::Terabytes(bytes) << L" tb";
+        oss << Units::Storage::Terabytes(bytes);
     else if (bytes > gb)
-        oss << Units::Storage::Gigabytes(bytes) << L" gb";
+        oss << Units::Storage::Gigabytes(bytes);
     else if (bytes > mb)
-        oss << Units::Storage::Megabytes(bytes) << L" mb";
+        oss << Units::Storage::Megabytes(bytes);
     else if (bytes > kb)
-        oss << Units::Storage::Kilobytes(bytes) << L" kb";
+        oss << Units::Storage::Kilobytes(bytes);
     else
-        oss << bytes << L" b";
+        oss << bytes;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
