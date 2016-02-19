@@ -10,6 +10,12 @@
 
 #include <iosfwd>
 
+// http://codecapsule.com/2013/11/17/robin-hood-hashing-backward-shift-deletion/
+// https://github.com/goossaert/hashmap/blob/master/backshift_hashmap.cc
+// http://codecapsule.com/2013/08/11/hopscotch-hashing/
+// http://www.sebastiansylvan.com/post/robin-hood-hashing-should-be-your-default-hash-table-implementation/
+// http://stackoverflow.com/questions/245878/how-do-i-choose-between-a-hash-table-and-a-trie-prefix-tree
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
