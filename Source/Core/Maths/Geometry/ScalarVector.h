@@ -221,13 +221,13 @@ struct NumericLimits< ScalarVector<T, _Dim> > {
     STATIC_CONST_INTEGRAL(bool, is_modulo,  scalar_type::is_modulo);
     STATIC_CONST_INTEGRAL(bool, is_signed,  scalar_type::is_signed);
 
-    static constexpr value_type DefaultValue() { return value_type{ scalar_type::DefaultValue() }; }
-    static constexpr value_type Epsilon() { return value_type{ scalar_type::Epsilon() }; }
-    static constexpr value_type Inf() { return value_type{ scalar_type::Inf() }; }
-    static constexpr value_type MaxValue() { return value_type{ scalar_type::MaxValue() }; }
-    static constexpr value_type MinValue() { return value_type{ scalar_type::MinValue() }; }
-    static constexpr value_type Nan() { return value_type{ scalar_type::Nan() }; }
-    static constexpr value_type Zero() { return value_type{ scalar_type::Zero() }; }
+    static constexpr value_type DefaultValue() { return value_type( scalar_type::DefaultValue() ); }
+    static constexpr value_type Epsilon() { return value_type( scalar_type::Epsilon() ); }
+    static constexpr value_type Inf() { return value_type( scalar_type::Inf() ); }
+    static constexpr value_type MaxValue() { return value_type( scalar_type::MaxValue() ); }
+    static constexpr value_type MinValue() { return value_type( scalar_type::MinValue() ); }
+    static constexpr value_type Nan() { return value_type( scalar_type::Nan() ); }
+    static constexpr value_type Zero() { return value_type( scalar_type::Zero() ); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

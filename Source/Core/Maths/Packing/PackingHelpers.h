@@ -2,6 +2,8 @@
 
 #include "Core/Core.h"
 
+#include "Core/Memory/HashFunctions.h"
+
 #include <iosfwd>
 
 namespace Core {
@@ -49,7 +51,7 @@ struct HalfFloat {
     ~HalfFloat() {}
 
     FORCE_INLINE operator u16 () const { return _data; }
-    FORCE_INLINE HalfFloat(u16 data) : _data(data) {}
+    FORCE_INLINE explicit HalfFloat(u16 data) : _data(data) {}
     FORCE_INLINE HalfFloat& operator =(u16 data) { _data = data; return *this; }
 
     FORCE_INLINE operator float () const { return Unpack(); }
@@ -78,6 +80,8 @@ struct HalfFloat {
     static HalfFloat Zero() { return HalfFloat(u16(0xbc00)); }
 
     static bool IsConvertible(float value);
+
+    inline friend hash_t hash_value(const HalfFloat& h) { return hash_as_pod(h._data); }
 };
 //----------------------------------------------------------------------------
 typedef HalfFloat half;
@@ -176,6 +180,8 @@ struct BasicNorm {
     float Normalized() const { return traits_type::Normalize(_data); }
     void SetNormalized(float value) { _data = traits_type::Denormalize(value); }
 
+    static BasicNorm DefaultValue() { return BasicNorm(T(0)); }
+
     FORCE_INLINE bool operator ==(const BasicNorm& other) const { return _data == other._data; }
     FORCE_INLINE bool operator !=(const BasicNorm& other) const { return !operator ==(other); }
 
@@ -184,6 +190,8 @@ struct BasicNorm {
 
     FORCE_INLINE bool operator >(const BasicNorm& other) const { return _data > other._data; }
     FORCE_INLINE bool operator <=(const BasicNorm& other) const { return !operator >(other); }
+
+    inline friend hash_t hash_value(const BasicNorm& n) { return hash_as_pod(n._data); }
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Traits>

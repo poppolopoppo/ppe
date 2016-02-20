@@ -16,6 +16,20 @@ inline void UX10Y10Z10W2N::Pack_Float01(const ScalarVector<float, 3>& xyz, u8 w)
         |   (static_cast<u32>(xyz.y() * 1023.0f) << 10)
         |   (static_cast<u32>(xyz.z() * 1023.0f) << 20)
         |   (w << 30);
+
+#ifdef WITH_CORE_ASSERT
+    ScalarVector<float, 3> tmp;
+    tmp.x() = static_cast<float>(_data & 1023) / 1023.0f;
+    tmp.y() = static_cast<float>((_data >> 10) & 1023) / 1023.0f;
+    tmp.z() = static_cast<float>((_data >> 20) & 1023) / 1023.0f;
+
+    const u32 data2 =    static_cast<u32>(tmp.x() * 1023.0f)
+                    |   (static_cast<u32>(tmp.y() * 1023.0f) << 10)
+                    |   (static_cast<u32>(tmp.z() * 1023.0f) << 20)
+                    |   (w << 30);
+
+    Assert(data2 == _data);
+#endif
 }
 //----------------------------------------------------------------------------
 inline void UX10Y10Z10W2N::Unpack_Float01(ScalarVector<float, 3>& xyz) const {
@@ -30,26 +44,29 @@ inline void UX10Y10Z10W2N::Unpack_Float01(ScalarVector<float, 3>& xyz, u8& w) co
 }
 //----------------------------------------------------------------------------
 inline void UX10Y10Z10W2N::Pack_FloatM11(const ScalarVector<float, 3>& xyz, u8 w) {
-    Assert(-1 <= xyz.x() && 1 >= xyz.x());
-    Assert(-1 <= xyz.y() && 1 >= xyz.y());
-    Assert(-1 <= xyz.z() && 1 >= xyz.z());
-    Assert(w < 4u);
-
-    _data =  static_cast<u32>((xyz.x() + 1) * 511.0f)
-        |   (static_cast<u32>((xyz.y() + 1) * 511.0f) << 10)
-        |   (static_cast<u32>((xyz.z() + 1) * 511.0f) << 20)
-        |   (w << 30);
+    Pack_Float01(xyz * 0.5f + 0.5f, w);
 }
 //----------------------------------------------------------------------------
 inline void UX10Y10Z10W2N::Unpack_FloatM11(ScalarVector<float, 3>& xyz) const {
-    xyz.x() = (static_cast<float>(_data & 1023) - 511.0f) / 511.0f;
-    xyz.y() = (static_cast<float>((_data >> 10) & 1023) - 511.0f) / 511.0f;
-    xyz.z() = (static_cast<float>((_data >> 20) & 1023) - 511.0f) / 511.0f;
+    Unpack_Float01(xyz);
+    xyz = xyz * 2.f - 1.f;
 }
 //----------------------------------------------------------------------------
 inline void UX10Y10Z10W2N::Unpack_FloatM11(ScalarVector<float, 3>& xyz, u8& w) const {
     Unpack_FloatM11(xyz);
     w = static_cast<u8>((_data >> 30) & 3);
+}
+//----------------------------------------------------------------------------
+inline void UX10Y10Z10W2N::Pack(const ScalarVector<float, 4>& v) {
+    const u8 w = u8((v.w() * 0.5f + 0.5f)*3);
+    Pack_FloatM11(v.xyz(), w);
+}
+//----------------------------------------------------------------------------
+inline ScalarVector<float, 4> UX10Y10Z10W2N::Unpack() const {
+    ScalarVector<float, 3> xyz;
+    u8 w;
+    Unpack_FloatM11(xyz, w);
+    return ScalarVector<float, 4>(xyz, w/1.5f - 1.f);
 }
 //----------------------------------------------------------------------------
 inline UX10Y10Z10W2N Float01_to_UX10Y10Z10W2N(const ScalarVector<float, 3>& xyz, u8 w) {

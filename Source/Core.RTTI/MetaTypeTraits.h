@@ -11,6 +11,8 @@
 #include "Core/IO/FS/Dirpath.h"
 #include "Core/IO/FS/Filename.h"
 #include "Core/Maths/Geometry/ScalarBoundingBox_fwd.h"
+#include "Core/Maths/Packing/PackedVectors.h"
+#include "Core/Maths/Packing/PackingHelpers.h"
 #include "Core/Time/DateTime.h"
 #include "Core/Time/Timestamp.h"
 
@@ -93,6 +95,31 @@ struct MetaTypeTraitsImpl< StronglyTyped::Numeric<T, _Tag, _DefaultValue> > {
 
     static void UnwrapMove(wrapped_type& dst, wrapper_type&& src) { dst.Value = src; }
     static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src) { dst.Value = src; }
+};
+//----------------------------------------------------------------------------
+// Quantized float
+//----------------------------------------------------------------------------
+template <typename T, typename _Traits>
+struct MetaTypeTraitsImpl< BasicNorm<T, _Traits> > {
+    typedef BasicNorm<T, _Traits> wrapped_type;
+    typedef T wrapper_type;
+
+    typedef MetaType< wrapper_type > meta_type;
+    STATIC_ASSERT(MetaType< wrapper_type >::Enabled);
+
+    static const MetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
+        return MetaTypeScalarTraits< wrapper_type >::Instance();
+    }
+
+    static bool IsDefaultValue(const wrapped_type& value) { return wrapped_type::DefaultValue() == value; }
+
+    static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) { return lhs == rhs; }
+
+    static void WrapMove(wrapper_type& dst, wrapped_type&& src) { dst = src._data; }
+    static void WrapCopy(wrapper_type& dst, const wrapped_type& src) { dst = src._data; }
+
+    static void UnwrapMove(wrapped_type& dst, wrapper_type&& src) { dst._data = src; }
+    static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src) { dst._data = src; }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -334,6 +361,44 @@ struct MetaTypeTraitsImpl< Core::HashMap<_Key, _Value, _Hasher, _EqualTo, _Alloc
 // Maths :
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
+struct MetaTypeTraitsImpl< Core::ScalarVector<T, _Dim>, typename std::enable_if< not MetaType<Core::ScalarVector<T, _Dim>>::Enabled >::type > {
+    STATIC_ASSERT(_Dim > 1 && _Dim <= 4);
+    typedef Core::ScalarVector<T, _Dim> wrapped_type;
+
+    typedef T value_type;
+    typedef MetaTypeTraits<value_type> value_traits;
+    typedef typename value_traits::wrapper_type value_wrapper_type;
+
+    typedef ScalarVector<value_wrapper_type, _Dim> wrapper_type;
+    typedef MetaType< wrapper_type > meta_type;
+    STATIC_ASSERT(meta_type::Enabled);
+
+    static const MetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
+        return MetaTypeScalarTraits< wrapper_type >::Instance();
+    }
+
+    static bool IsDefaultValue(const wrapped_type& value) { return (NumericLimits<wrapped_type>::DefaultValue() == value); }
+
+    static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) { return lhs == rhs; }
+
+    static void WrapMove(wrapper_type& dst, wrapped_type&& src) { Wrap_(dst, src); }
+    static void WrapCopy(wrapper_type& dst, const wrapped_type& src) { Wrap_(dst, src); }
+
+    static void UnwrapMove(wrapped_type& dst, wrapper_type&& src) { Unwrap_(dst, src); }
+    static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src) { Unwrap_(dst, src); }
+
+    static void Wrap_(wrapper_type& dst, const wrapped_type& src) {
+        forrange(i, 0, _Dim)
+            value_traits::WrapCopy(dst[i], src[i]);
+    }
+
+    static void Unwrap_(wrapped_type& dst, const wrapper_type& src) {
+        forrange(i, 0, _Dim)
+            value_traits::UnwrapCopy(dst[i], src[i]);
+    }
+};
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
 struct MetaTypeTraitsImpl< Core::ScalarBoundingBox<T, _Dim> > {
     STATIC_ASSERT(_Dim > 1 && _Dim <= 4);
     typedef Core::ScalarBoundingBox<T, _Dim> wrapped_type;
@@ -457,6 +522,54 @@ struct MetaTypeTraitsImpl< u128 > {
 
     static void UnwrapMove(wrapped_type& dst, wrapper_type&& src) { dst.lo = src.first; dst.hi = src.second; }
     static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src) { dst.lo = src.first; dst.hi = src.second; }
+};
+//----------------------------------------------------------------------------
+// HalfFloat
+//----------------------------------------------------------------------------
+template <>
+struct MetaTypeTraitsImpl< HalfFloat > {
+    typedef HalfFloat wrapped_type;
+    typedef float wrapper_type;
+
+    typedef MetaType< wrapper_type > meta_type;
+
+    static const MetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
+        return MetaTypeScalarTraits< wrapper_type >::Instance();
+    }
+
+    static bool IsDefaultValue(const wrapped_type& value) { return HalfFloat::DefaultValue() == value; }
+
+    static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) { return lhs == rhs; }
+
+    static void WrapMove(wrapper_type& dst, wrapped_type&& src) { dst = src.Unpack(); }
+    static void WrapCopy(wrapper_type& dst, const wrapped_type& src) { dst = src.Unpack(); }
+
+    static void UnwrapMove(wrapped_type& dst, wrapper_type&& src) { dst.Pack(src); }
+    static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src) { dst.Pack(src); }
+};
+//----------------------------------------------------------------------------
+// UX10Y10Z10W2N
+//----------------------------------------------------------------------------
+template <>
+struct MetaTypeTraitsImpl< UX10Y10Z10W2N > {
+    typedef UX10Y10Z10W2N wrapped_type;
+    typedef float4 wrapper_type;
+
+    typedef MetaType< wrapper_type > meta_type;
+
+    static const MetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
+        return MetaTypeScalarTraits< wrapper_type >::Instance();
+    }
+
+    static bool IsDefaultValue(const wrapped_type& value) { return UX10Y10Z10W2N::DefaultValue() == value; }
+
+    static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) { return lhs == rhs; }
+
+    static void WrapMove(wrapper_type& dst, wrapped_type&& src) { dst = src.Unpack(); }
+    static void WrapCopy(wrapper_type& dst, const wrapped_type& src) { dst = src.Unpack(); }
+
+    static void UnwrapMove(wrapped_type& dst, wrapper_type&& src) { dst.Pack(src); }
+    static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src) { dst.Pack(src); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

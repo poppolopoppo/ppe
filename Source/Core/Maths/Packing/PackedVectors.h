@@ -25,8 +25,15 @@ struct UX10Y10Z10W2N {
     FORCE_INLINE void Unpack_FloatM11(ScalarVector<float, 3>& xyz) const;
     FORCE_INLINE void Unpack_FloatM11(ScalarVector<float, 3>& xyz, u8& w) const;
 
+    void Pack(const ScalarVector<float, 4>& v);
+    ScalarVector<float, 4> Unpack() const;
+
+    static UX10Y10Z10W2N DefaultValue() { return UX10Y10Z10W2N(u32(0)); }
+
     FORCE_INLINE bool operator ==(const UX10Y10Z10W2N& other) const { return _data == other._data; }
     FORCE_INLINE bool operator !=(const UX10Y10Z10W2N& other) const { return !operator ==(other); }
+
+    inline friend hash_t hash_value(const UX10Y10Z10W2N& v) { return hash_as_pod(v._data); }
 };
 //----------------------------------------------------------------------------
 UX10Y10Z10W2N Float01_to_UX10Y10Z10W2N(const ScalarVector<float, 3>& xyz, u8 w);
