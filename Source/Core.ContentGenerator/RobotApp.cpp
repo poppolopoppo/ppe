@@ -89,7 +89,10 @@ class RTTITest_ : public RTTI::MetaObject {
 public:
     RTTI_CLASS_HEADER(RTTITest_, RTTI::MetaObject);
 
-    RTTITest_() : _dummy(0)
+    RTTITest_()
+    :   _dummy(0)
+    ,   _half(0.0f)
+    ,   _UX10Y10Z10W2N(0)
 #define DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId, _Unused) \
     ,   _ ## _Name(RTTI::MetaTypeTraits<T>::meta_type::DefaultValue()) \
     ,   _ ## _Name ## Pair(RTTI::MetaTypeTraits<T>::meta_type::DefaultValue(), RTTI::MetaTypeTraits<T>::meta_type::DefaultValue())
@@ -98,6 +101,12 @@ public:
     {}
 
     bool _dummy;
+
+    half _half;
+    byte4n _byte4n;
+    ushort2n _ushort2n;
+    half2 _half2;
+    UX10Y10Z10W2N _UX10Y10Z10W2N;
 
     template <typename T>
     using yolo_pair_type = Pair<T, T>;
@@ -118,6 +127,12 @@ public:
 #undef DEF_METATYPE_SCALAR_IMPL_
 };
 RTTI_CLASS_BEGIN(RTTITest_, Concrete)
+    RTTI_PROPERTY_PRIVATE_FIELD(_dummy)
+    RTTI_PROPERTY_PRIVATE_FIELD(_half)
+    RTTI_PROPERTY_PRIVATE_FIELD(_byte4n)
+    RTTI_PROPERTY_PRIVATE_FIELD(_ushort2n)
+    RTTI_PROPERTY_PRIVATE_FIELD(_half2)
+    //RTTI_PROPERTY_PRIVATE_FIELD(_UX10Y10Z10W2N)
 #define DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId, _Unused) \
     RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name) \
     RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Vec) \
