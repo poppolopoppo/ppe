@@ -2,9 +2,10 @@
 
 #include "Core/Core.h"
 
-#include "Core/Allocator/Allocation.h"
+#include "Core/Allocator/SingletonPoolAllocator.h"
 #include "Core/Container/Tuple.h"
 
+#include "Core.Serialize/Parser/Parser.h"
 #include "Core.Serialize/Parser/ParseList.h"
 #include "Core.Serialize/Parser/ParseResult.h"
 
@@ -13,21 +14,32 @@
 
 namespace Core {
 namespace Parser {
+POOLTAG_FWD(Parser);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
 using Enumerable = VECTOR_THREAD_LOCAL(Parser, T);
 //----------------------------------------------------------------------------
-template <typename T, typename _Allocator = THREAD_LOCAL_ALLOCATOR(Parser, int) >
-struct Production : public std::unary_function<ParseList&, ParseResult<T> >, _Allocator {
+template <typename T>
+struct Production : public std::unary_function<ParseList&, ParseResult<T> > {
     typedef T value_type;
+
+    typedef SINGLETON_POOL_ALLOCATOR(Parser, int, POOLTAG(Parser)) allocator_type;
     typedef std::function< ParseResult<T>(ParseList&) > lambda_type;
 
     lambda_type Lambda;
-    Production(lambda_type&& lambda) {
-        Lambda.assign(std::move(lambda), *this);
+
+    template <typename _Func>
+    explicit Production(_Func&& lambda) {
+        Lambda.assign(std::move(lambda), allocator_type());
     }
+
+    Production(const Production& other) { operator =(other); }
+    Production& operator =(const Production& other) { Lambda.assign(other.Lambda, allocator_type()); return *this; }
+
+    Production(Production&& rvalue) : Lambda(std::move(rvalue.Lambda)) {}
+    Production& operator =(Production&& rvalue) { Lambda = std::move(rvalue.Lambda); return *this; }
 
     ParseResult<T> operator ()(ParseList& input) const {
         return Lambda(input);

@@ -37,6 +37,8 @@ class MemoryPoolBase;
 #   define POOLTAG_DECL(_Name) _POOLTAG_DECL_IMPL(_Name, "")
 #endif
 //----------------------------------------------------------------------------
+#define POOLTAG_FWD(_Name) namespace PoolTag { struct _Name; }
+//----------------------------------------------------------------------------
 #define POOLTAG(_Name) PoolTag::_Name
 //----------------------------------------------------------------------------
 POOLTAG_DECL(Default) // Default tag for Pool segregation
