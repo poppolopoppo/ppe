@@ -64,7 +64,6 @@ namespace Core {
 namespace {
 //----------------------------------------------------------------------------
 static std::atomic<AssertionHandler> gAssertionHandler = { nullptr };
-static THREAD_LOCAL bool gIsInAssertion = false;
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
@@ -78,8 +77,10 @@ AssertException::~AssertException() {}
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void AssertionFailed(const char *msg, const wchar_t *file, unsigned line) {
-    static bool gDotNotBugMeAgain = false;
-    if (gDotNotBugMeAgain)
+    static THREAD_LOCAL bool gIsInAssertion = false;
+    static THREAD_LOCAL bool gIgnoreAssertsInThisThread = false;
+    static std::atomic<bool> gIgnoreAllAsserts = false;
+    if (gIgnoreAllAsserts || gIgnoreAssertsInThisThread)
         return;
 
     if (gIsInAssertion)
@@ -139,7 +140,6 @@ namespace Core {
 namespace {
 //----------------------------------------------------------------------------
 static std::atomic<AssertionReleaseHandler> gAssertionReleaseHandler = { nullptr };
-static THREAD_LOCAL bool gIsInAssertionRelease = false;
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
@@ -153,14 +153,16 @@ AssertReleaseException::~AssertReleaseException() {}
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line) {
-    static bool gDotNotBugMeAgain = false;
-    if (gDotNotBugMeAgain)
+    static THREAD_LOCAL bool gIsInAssertion = false;
+    static THREAD_LOCAL bool gIgnoreAssertsInThisThread = false;
+    static std::atomic<bool> gIgnoreAllAsserts = false;
+    if (gIgnoreAllAsserts || gIgnoreAssertsInThisThread)
         return;
 
-    if (gIsInAssertionRelease)
+    if (gIsInAssertion)
         throw AssertReleaseException("Assert release reentrancy !", WIDESTRING(__FILE__), __LINE__);
 
-    gIsInAssertionRelease = true;
+    gIsInAssertion = true;
 
     bool failure = false;
 
@@ -191,7 +193,7 @@ void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line)
         }
     }
 
-    gIsInAssertionRelease = false;
+    gIsInAssertion = false;
 
     if (failure)
         throw AssertReleaseException(msg, file, line);
