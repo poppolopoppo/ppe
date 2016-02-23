@@ -94,7 +94,7 @@ public:
     ,   _half(0.0f)
     ,   _UX10Y10Z10W2N(0)
 #define DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId, _Unused) \
-    ,   _ ## _Name(RTTI::MetaTypeTraits<T>::meta_type::DefaultValue()) \
+    ,   _ ## _Name ## Scalar(RTTI::MetaTypeTraits<T>::meta_type::DefaultValue()) \
     ,   _ ## _Name ## Pair(RTTI::MetaTypeTraits<T>::meta_type::DefaultValue(), RTTI::MetaTypeTraits<T>::meta_type::DefaultValue())
     FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR_IMPL_)
 #undef DEF_METATYPE_SCALAR_IMPL_
@@ -118,7 +118,7 @@ public:
     using yolo_type = HASHMAP_THREAD_LOCAL(Container, yolo_pair_type<T>, yolo_vect_type<T>);*/
 
 #define DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId, _Unused) \
-    T _ ## _Name; \
+    T _ ## _Name ## Scalar; \
     RTTI::Vector<T> _ ## _Name ## Vec; \
     RTTI::Pair<T, T> _ ## _Name ## Pair; \
     RTTI::Dictionary<T, T> _ ## _Name ## Dico; \
@@ -134,7 +134,7 @@ RTTI_CLASS_BEGIN(RTTITest_, Concrete)
     RTTI_PROPERTY_PRIVATE_FIELD(_half2)
     //RTTI_PROPERTY_PRIVATE_FIELD(_UX10Y10Z10W2N)
 #define DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId, _Unused) \
-    RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name) \
+    RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Scalar) \
     RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Vec) \
     RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Pair) \
     RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Dico) \
