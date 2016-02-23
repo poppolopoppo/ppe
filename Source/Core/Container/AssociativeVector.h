@@ -175,10 +175,17 @@ template <
     typename _Traits
 >
 std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const AssociativeVector<_Key, _Value, _EqualTo, _Vector>& associativeVector) {
-    oss << "{ ";
-    for (const auto& it : associativeVector)
-        oss << '(' << it.first << ", " << it.second << "), ";
-    return oss << '}';
+    if (associativeVector.empty()) {
+        return oss << "{}";
+    }
+    else {
+        auto it = associativeVector.begin();
+        oss << "{(" << it->first << ", " << it->second << ')';
+        ++it;
+        for (const auto end = associativeVector.end(); it != end; ++it)
+            oss << ",(" << it->first << ", " << it->second << ')';
+        return oss << '}';
+    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

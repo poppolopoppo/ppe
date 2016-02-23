@@ -659,9 +659,11 @@ std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Trait
         return oss << "[]";
     }
     else {
-        oss << "[ ";
-        for (const auto& it : vector)
-            oss << it << ", ";
+        auto it = vector.begin();
+        oss << '[' << *it;
+        ++it;
+        for (const auto end = vector.end(); it != end; ++it)
+            oss << ", " << *it;
         return oss << ']';
     }
 }
