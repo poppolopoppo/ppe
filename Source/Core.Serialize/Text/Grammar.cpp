@@ -987,7 +987,7 @@ GrammarImpl::GrammarImpl()
 ,   _cast(
             Parser::Expect(Lexer::Symbol::Typename)
     .And(   Parser::Expect(Lexer::Symbol::Colon))
-    .And(   _pair.Ref().Or(_array.Ref()).Or(_dictionary.Ref()).Or(_ternary.Ref()))
+    .And(   _pair.Ref().Or(_array.Ref()).Or(_dictionary.Ref()).Or(_ternary.Ref()).Or(_cast.Ref()) )
         .Select<Parser::PCParseExpression>([](const Tuple<const Lexer::Match *, const Lexer::Match *, Parser::PCParseExpression>& args) -> Parser::PCParseExpression {
             const Lexer::Match *typename_ = std::get<0>(args);
             const Parser::PCParseExpression& value = std::get<2>(args);
