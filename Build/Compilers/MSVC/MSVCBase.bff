@@ -9,6 +9,8 @@
 #define USE_STL_ITERATOR_DEBUGGING
 ; active l'utilisation des guardes de securité au runtime
 #define USE_MSVC_RUNTIME_CHECKS
+; actile l'inlining simple en debug (/ob1)
+#define USE_INLINING_IN_DEBUG
 
 //------------------------------------------------------------------------------
 // Common MSVC Configuration
@@ -180,14 +182,19 @@
     .DebugOptimisations = ''
     + ' /MDd'               ; MultiThreaded Debug dll
     + ' /Od'                ; désactive les optimisations (debug)
-    //+ ' /Ob1'               ; active l'inlinling pour garder des perfs correctes et linker plus vite
     + ' /Oy-'               ; n'empêche pas la création des pointeurs de frame sur la pile des appels
     + ' /Gw-'               ; pas d'optimisations des données globales
 #if USE_MSVC_RUNTIME_CHECKS
+    .DebugOptimisations
     + ' /GS'                ; vérification de la sécurité de la mémoire tampon
     + ' /sdl'               ; Security Development Lifecycle checks (https://msdn.microsoft.com/fr-fr/library/jj161081(v=vs.140).aspx)
     + ' /RTC1'              ; vérifications des erreurs au moment de l'exécution (https://msdn.microsoft.com/fr-fr/library/8wtf2dfz.aspx) ; coute trop cher
     Print( "Using MSVC runtime security checks : /GS, /sdl, /RTC1" )
+#endif
+#if USE_INLINING_IN_DEBUG
+    .DebugOptimisations
+    + ' /Ob1'               ; active l'inlinling pour garder des perfs correctes et linker plus vite
+    Print( "Using inlining in debug : /Ob1" )
 #endif
 
     .FastDebugOptimisations = ''
