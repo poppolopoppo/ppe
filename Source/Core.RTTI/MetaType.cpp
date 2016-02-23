@@ -70,7 +70,6 @@ static bool DeepEquals_(const PMetaObject& lhs, const PMetaObject& rhs) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
-    MetaTypeId MetaType< T >::Id() { STATIC_ASSERT(_TypeId == TypeId); return TypeId; } \
     StringSlice MetaType< T >::Name() { return MakeStringSlice(STRINGIZE(_Name)); } \
     T MetaType< T >::DefaultValue() { return T(); } \
     bool MetaType< T >::IsDefaultValue(const T& value) { return IsDefaultValue_(value); } \

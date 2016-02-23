@@ -48,7 +48,7 @@ public:
     bool IsPrivate()    const { return Meta::HasFlag(_attributes, Private); }
     bool IsReadOnly()   const { return Meta::HasFlag(_attributes, ReadOnly); }
     bool IsDeprecated() const { return Meta::HasFlag(_attributes, Deprecated); }
-    bool IsDynamic() const { return Meta::HasFlag(_attributes, Dynamic); }
+    bool IsDynamic()    const { return Meta::HasFlag(_attributes, Dynamic); }
     bool IsWritable()   const { return false == (IsReadOnly() || IsDeprecated()); }
 
     virtual MetaTypeInfo TypeInfo() const = 0;

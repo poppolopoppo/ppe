@@ -27,20 +27,10 @@ struct MetaTypePromote<T, T> {
     bool operator ()(T* dst, const T& value) const { *dst = value; return true; }
 };
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 template <typename _From, typename _To>
-bool PromoteMove(_To& dst, _From&& src) {
-    typedef MetaTypePromote<_From, _To> promote_type;
-    static_assert(promote_type::enabled::value, "invalid meta promotion");
-    return promote_type()(&dst, std::move(src));
-}
-//----------------------------------------------------------------------------
-template <typename _From, typename _To>
-bool PromoteCopy(_To& dst, const _From& src) {
-    typedef MetaTypePromote<_From, _To> promote_type;
-    static_assert(promote_type::enabled::value, "invalid meta promotion");
-    return promote_type()(&dst, src);
+constexpr bool PromotionAvailable() {
+    typedef typename MetaTypePromote<_From, _To>::enabled enabled_type;
+    return enabled_type::value;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -57,28 +47,16 @@ bool PromoteCopy(MetaTypeId dstTypeId, void *dst, const MetaAtom *src);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-bool PromoteMove(MetaAtom *dst, T *src) {
-    static_assert(MetaType<T>::TypeId, "T is not a valid rtti type");
-    return PromoteMove(dst, src, MetaType<T>::TypeId);
-}
+bool PromoteMove(MetaAtom *dst, T *src);
 //----------------------------------------------------------------------------
 template <typename T>
-bool PromoteCopy(MetaAtom *dst, const T *src) {
-    static_assert(MetaType<T>::TypeId, "T is not a valid rtti type");
-    return PromoteCopy(dst, src, MetaType<T>::TypeId);
-}
+bool PromoteCopy(MetaAtom *dst, const T *src);
 //----------------------------------------------------------------------------
 template <typename T>
-bool PromoteCopy(T *dst, MetaAtom *src) {
-    static_assert(MetaType<T>::TypeId, "T is not a valid rtti type");
-    return PromoteCopy(MetaType<T>::TypeId, dst, src);
-}
+bool PromoteMove(T *dst, MetaAtom *src);
 //----------------------------------------------------------------------------
 template <typename T>
-bool PromoteCopy(T *dst, const MetaAtom *src) {
-    static_assert(MetaType<T>::TypeId, "T is not a valid rtti type");
-    return PromoteCopy(MetaType<T>::TypeId, dst, src);
-}
+bool PromoteCopy(T *dst, const MetaAtom *src);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -86,3 +64,29 @@ bool PromoteCopy(T *dst, const MetaAtom *src) {
 } //!namespace Core
 
 #include "Core.RTTI/MetaTypePromote-inl.h"
+
+namespace Core {
+namespace RTTI {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _To, typename _From>
+typename std::enable_if<
+    PromotionAvailable<_From, _To>(),
+    bool
+>::type PromoteMove(_To& dst, _From&& src) {
+    return MetaTypePromote<_From, _To>()(&dst, std::move(src));
+}
+//----------------------------------------------------------------------------
+template <typename _To, typename _From>
+typename std::enable_if<
+    PromotionAvailable<_From, _To>(),
+    bool
+>::type PromoteCopy(_To& dst, const _From& src) {
+    return MetaTypePromote<_From, _To>()(&dst, src);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace RTTI
+} //!namespace Core

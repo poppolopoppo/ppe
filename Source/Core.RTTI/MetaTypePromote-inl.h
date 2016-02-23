@@ -130,6 +130,21 @@ template <> struct MetaTypePromote<WString, String> {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename U, typename V, size_t _Dim>
+struct MetaTypePromote<RTTI::Vector<U>, ScalarVector<V, _Dim> > {
+    typedef typename MetaTypePromote<U, V>::enabled enabled;
+    bool operator ()(ScalarVector<V, _Dim>* dst, const RTTI::Vector<U>& value) const {
+        if (value.size() != _Dim)
+            return false;
+
+        forrange(i, 0, _Dim)
+            if (not MetaTypePromote<U, V>()(&dst->_data[i], value[i]))
+                return false;
+
+        return true;
+    }
+};
+//----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 struct MetaTypePromote<RTTI::Vector<PMetaAtom>, ScalarVector<T, _Dim> > {
     typedef std::true_type enabled;
@@ -147,17 +162,35 @@ struct MetaTypePromote<RTTI::Vector<PMetaAtom>, ScalarVector<T, _Dim> > {
     }
 };
 //----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename U, typename V, size_t _Width, size_t _Height>
+struct MetaTypePromote<RTTI::Vector<U>, ScalarMatrix<V, _Width, _Height> >  {
+    typedef typename MetaTypePromote<U, V>::enabled enabled;
+    bool operator ()(ScalarMatrix<V, _Width, _Height>* dst, const RTTI::Vector<U>& value) const {
+        if (value.size() != _Width * _Height)
+            return false;
+
+        ScalarMatrixData<V, _Width, _Height>& data = dst->data();
+        forrange(i, 0, _Width*_Height)
+            if (not MetaTypePromote<U, V>()(&data.raw[i], value[i]))
+                return false;
+
+        return true;
+    }
+};
+//----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
-struct MetaTypePromote<RTTI::Vector<PMetaAtom>, ScalarMatrix<T, _Width, _Height> > :
-    public std::unary_function<const RTTI::Vector<PMetaAtom>&, ScalarMatrix<T, _Width, _Height> > {
+struct MetaTypePromote<RTTI::Vector<PMetaAtom>, ScalarMatrix<T, _Width, _Height> > {
     typedef std::true_type enabled;
     bool operator ()(ScalarMatrix<T, _Width, _Height>* dst, const RTTI::Vector<PMetaAtom>& value) const {
         if (value.size() != _Width * _Height)
             return false;
 
+        ScalarMatrixData<T, _Width, _Height>& data = dst->data();
         forrange(i, 0, _Width*_Height) {
             if (nullptr == value[i] ||
-                false == PromoteCopy(&dst->data().raw[i], value[i].get()))
+                false == PromoteCopy(&data.raw[i], value[i].get()))
                 return false;
         }
 
@@ -209,6 +242,108 @@ METATYPE_STRINGIZE_PROMOTE(double);
 //----------------------------------------------------------------------------
 #undef METATYPE_STRINGIZE_PROMOTE
 #undef METATYPE_STRINGIZE_PROMOTE_IMPL
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T>
+bool PromoteMove(MetaAtom *dst, T *src) {
+    static_assert(MetaType<T>::Enabled, "T is not a valid rtti type");
+
+    const MetaTypeId dstTypeId = dst->TypeInfo().Id;
+    constexpr MetaTypeId srcTypeId = MetaType<T>::TypeId;
+
+    if (dstTypeId == srcTypeId) {
+        dst->Cast<T>()->Wrapper() = std::move(*src);
+        return true;
+    }
+    else if (dstTypeId == MetaType<PMetaAtom>::TypeId) {
+        dst->Cast<PMetaAtom>()->Wrapper() = MakeAtom(std::move(*src));
+        return true;
+    }
+    else if (srcTypeId == MetaType<PMetaAtom>::TypeId) {
+        Assert(std::is_same<T, PMetaAtom>::value);
+        const PMetaAtom& srcAtom = *reinterpret_cast<PMetaAtom*>(src);
+        return (srcAtom ? PromoteMove(dst, srcAtom.get()) : false);
+    }
+    else {
+        return PromoteMove(dst, src, MetaType<T>::TypeId);
+    }
+}
+//----------------------------------------------------------------------------
+template <typename T>
+bool PromoteCopy(MetaAtom *dst, const T *src) {
+    static_assert(MetaType<T>::Enabled, "T is not a valid rtti type");
+
+    const MetaTypeId dstTypeId = dst->TypeInfo().Id;
+    constexpr MetaTypeId srcTypeId = MetaType<T>::TypeId;
+
+    if (dstTypeId == srcTypeId) {
+        dst->Cast<T>()->Wrapper() = *src;
+        return true;
+    }
+    else if (dstTypeId == MetaType<PMetaAtom>::TypeId) {
+        dst->Cast<PMetaAtom>()->Wrapper() = MakeAtom(*src);
+        return true;
+    }
+    else if (srcTypeId == MetaType<PMetaAtom>::TypeId) {
+        Assert(std::is_same<T, PMetaAtom>::value);
+        const PMetaAtom& srcAtom = *reinterpret_cast<PMetaAtom*>(src);
+        return (srcAtom ? PromoteCopy(dst, srcAtom.get()) : false);
+    }
+    else {
+        return PromoteCopy(dst, src, MetaType<T>::TypeId);
+    }
+}
+//----------------------------------------------------------------------------
+template <typename T>
+bool PromoteMove(T *dst, MetaAtom *src) {
+    static_assert(MetaType<T>::Enabled, "T is not a valid rtti type");
+
+    constexpr MetaTypeId dstTypeId = MetaType<T>::TypeId;
+    const MetaTypeId srcTypeId = src->TypeInfo().Id;
+
+    if (dstTypeId == srcTypeId) {
+        *dst = std::move(src->Cast<T>()->Wrapper());
+        return true;
+    }
+    else if (dstTypeId == MetaType<PMetaAtom>::TypeId) {
+        Assert(std::is_same<T, PMetaAtom>::value);
+        const PMetaAtom& dstAtom = *reinterpret_cast<PMetaAtom*>(dst);
+        return (dstAtom ? PromoteMove(dstAtom.get(), src) : false);
+    }
+    else if (srcTypeId == MetaType<PMetaAtom>::TypeId) {
+        const PMetaAtom& srcAtom = src->Cast<PMetaAtom>()->Wrapper()
+        return (srcAtom ? PromoteMove(dst, srcAtom.get()) : false);
+    }
+    else {
+        return PromoteMove(MetaType<T>::TypeId, dst, src);
+    }
+}
+//----------------------------------------------------------------------------
+template <typename T>
+bool PromoteCopy(T *dst, const MetaAtom *src) {
+    static_assert(MetaType<T>::Enabled, "T is not a valid rtti type");
+
+    constexpr MetaTypeId dstTypeId = MetaType<T>::TypeId;
+    const MetaTypeId srcTypeId = src->TypeInfo().Id;
+
+    if (dstTypeId == srcTypeId) {
+        *dst = src->Cast<T>()->Wrapper();
+        return true;
+    }
+    else if (dstTypeId == MetaType<PMetaAtom>::TypeId) {
+        Assert(std::is_same<T, PMetaAtom>::value);
+        const PMetaAtom& dstAtom = *reinterpret_cast<PMetaAtom*>(dst);
+        return (dstAtom ? PromoteCopy(dstAtom.get(), src) : false);
+    }
+    else if (srcTypeId == MetaType<PMetaAtom>::TypeId) {
+        const PMetaAtom& srcAtom = src->Cast<PMetaAtom>()->Wrapper();
+        return (srcAtom ? PromoteCopy(dst, srcAtom.get()) : false);
+    }
+    else {
+        return PromoteCopy(MetaType<T>::TypeId, dst, src);
+    }
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

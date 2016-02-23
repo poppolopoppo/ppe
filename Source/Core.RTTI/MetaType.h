@@ -49,8 +49,8 @@ template <typename T>
 struct MetaType {
     enum : MetaTypeId { TypeId = 0 };
     static constexpr bool Enabled = false;
-    static MetaTypeId Id() = delete;
-    static MetaTypeFlags Flags() = delete;
+    static constexpr MetaTypeId Id() = delete;
+    static constexpr MetaTypeFlags Flags() = delete;
     static StringSlice Name() = delete;
     static T DefaultValue() = delete;
     static bool IsDefaultValue(const T& value) = delete;
@@ -67,7 +67,7 @@ constexpr MetaTypeId hash_MetaTypeId_constexpr(_Args... args) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-using Vector = VECTORINSITU(Container, T, 3);
+using Vector = VECTORINSITU(Container, T, 4);
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
 using Pair = Core::Pair<_Key, _Value>;
@@ -88,8 +88,8 @@ INSTANTIATE_CLASS_TYPEDEF(BinaryData, RAWSTORAGE_ALIGNED(RTTI, u8, 16));
     template <> struct MetaType< T > { \
         enum : MetaTypeId { TypeId = _TypeId }; \
         static constexpr bool Enabled = true; \
-        static MetaTypeId Id(); \
-        static MetaTypeFlags Flags() { return MetaTypeFlags::Scalar; } \
+        static constexpr MetaTypeId Id() { return _TypeId; } \
+        static constexpr MetaTypeFlags Flags() { return MetaTypeFlags::Scalar; } \
         static StringSlice Name(); \
         static T DefaultValue(); \
         static bool IsDefaultValue(const T& value); \
@@ -121,8 +121,8 @@ struct MetaType< RTTI::Pair<_First, _Second> > {
 
     static constexpr bool Enabled = first_meta_type::Enabled && second_meta_type::Enabled;
 
-    static MetaTypeId Id() { return TypeId; }
-    static MetaTypeFlags Flags() { return MetaTypeFlags::Pair; }
+    static constexpr MetaTypeId Id() { return TypeId; }
+    static constexpr MetaTypeFlags Flags() { return MetaTypeFlags::Pair; }
 
     NO_INLINE static StringSlice Name() {
         ONE_TIME_INITIALIZE(const CORE_RTTI_METATYPE_NAMETYPE, gName,
@@ -163,8 +163,8 @@ struct MetaType< RTTI::Vector<T> > {
 
     static constexpr bool Enabled = value_meta_type::Enabled;
 
-    static MetaTypeId Id() { return TypeId; }
-    static MetaTypeFlags Flags() { return MetaTypeFlags::Vector; }
+    static constexpr MetaTypeId Id() { return TypeId; }
+    static constexpr MetaTypeFlags Flags() { return MetaTypeFlags::Vector; }
 
     NO_INLINE static StringSlice Name() {
         ONE_TIME_INITIALIZE(const CORE_RTTI_METATYPE_NAMETYPE, gName,
@@ -213,8 +213,8 @@ struct MetaType< RTTI::Dictionary<_Key, _Value> > {
 
     static constexpr bool Enabled = key_meta_type::Enabled && value_meta_type::Enabled;
 
-    static MetaTypeId Id() { return TypeId; }
-    static MetaTypeFlags Flags() { return MetaTypeFlags::Dictionary; }
+    static constexpr MetaTypeId Id() { return TypeId; }
+    static constexpr MetaTypeFlags Flags() { return MetaTypeFlags::Dictionary; }
 
     NO_INLINE static StringSlice Name() {
         ONE_TIME_INITIALIZE(const CORE_RTTI_METATYPE_NAMETYPE, gName,
