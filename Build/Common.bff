@@ -19,7 +19,7 @@
 //------------------------------------------------------------------------------
 // Default Unity Options
 //------------------------------------------------------------------------------
-.UnityNumFiles = 8 ; peut être override par projet
+.UnityNumFiles = 4 ; peut être override par projet
 .UnityInputIsolateWritableFiles = false ; passer à true désactive l'utilisation des unity builds
 
 //------------------------------------------------------------------------------
@@ -48,21 +48,3 @@
 #if __OSX__
 .CachePath = "/var/tmp/.fbuild.cache" ; TODO
 #endif
-
-//------------------------------------------------------------------------------
-// Default Parameters for Templates
-//------------------------------------------------------------------------------
-.PCHName = 'stdafx'
-.ProjectDefines = {}
-.ProjectDependencies = {}
-.ProjectExcludedFiles = {}
-.ProjectIncludes = {}
-.ProjectIsolatedFiles = {}
-.ProjectLibraries = {}
-.ProjectPostBuild = {}
-.ProjectPreBuild = {}
-
-//------------------------------------------------------------------------------
-// Project registrations
-//------------------------------------------------------------------------------
-.ProjectList = {}

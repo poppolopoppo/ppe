@@ -54,7 +54,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         .Libraries = {}
         ForEach( .ProjectDependency in .ProjectDependencies )
         {
-            ^Libraries + { '$ProjectDependency$-$ConfigLinkType$-$Platform$-$Config$' }
+            ^Libraries + { '$ProjectDependency$-$Platform$-$Config$' }
         }
         .Libraries + '$ProjectName$-Lib-$Platform$-$Config$'
 
