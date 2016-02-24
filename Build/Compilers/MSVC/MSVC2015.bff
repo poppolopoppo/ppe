@@ -8,6 +8,15 @@
 ;     \/   |_|___/\__,_|\__,_|_| |____|\___/ |_|____/
 ;
 
+; utilise la toolchain 64 bits pour compiler en 32
+#define USE_VISUAL2015_NATIVE_ENVIRONMENT
+; 2X Faster Links, mais TODO: les versions ne doivent pas utiliser ça
+#define USE_VISUAL2015_DEBUG_FASTLINK
+; active l'utilisation des Pre-Compiled Headers (/Yu, /Yc)
+#define USE_PRECOMPILED_HEADERS
+; utilise les .obj plutôt que les .lib comme input du linker
+#define USE_LIBRARY_DEPENDENCY_INPUT
+
 #include "MSVCBase.bff"
 
 ; Speeding up the Incremental Developer Build Scenario
@@ -19,13 +28,6 @@
 //------------------------------------------------------------------------------
 // Global Properties
 //------------------------------------------------------------------------------
-
-; utilise la toolchain 64 bits pour compiler en 32
-#define USE_VISUAL2015_NATIVE_ENVIRONMENT
-; 2X Faster Links, mais TODO: les versions ne doivent pas utiliser ça
-;#define USE_VISUAL2015_DEBUG_FASTLINK %TODO%
-; indique quelle version du SDK il faut utiliser
-;#define USE_VISUAL2015_RELEASE_CANDIDATE
 
 .MSVC2015PlatformToolset = 'v140'
 

@@ -16,7 +16,9 @@
 
 Unity( '$ProjectName$-Unity' )
 {
+#if USE_PRECOMPILED_HEADERS
     .UnityPCH = '$PCHName$.h'
+#endif
     .UnityInputPath = '$ProjectPath$'
     .UnityOutputPath = '$UnityDirectory$\$ProjectName$'
     .UnityInputPattern = '*.cpp' // TODO: { '*.cpp', '*.c' }
@@ -71,19 +73,13 @@ ForEach( .CompileConfig in .AllCompileConfigs )
 
         .CommandLineOptions = .CommandLineDefines + .CommandLineIncludes
 
-        // Static library
-        Library( '$ProjectName$-Lib-$Platform$-$Config$' )
+        // Object list
+        ObjectList( '$ProjectName$-Obj-$Platform$-$Config$' )
         {
             .CompilerOutputPath = .IntermediateDirectory
 
             // Preprocessor
             .PreprocessorOptions+ .CommandLineOptions
-
-            // Precompiled header
-            .PCHOptions         + ' $CompilerCreatePCHFlag$"$PCHName$.h"'
-                                + .CommandLineOptions
-            .PCHInputFile       = '$ProjectPath$\$PCHName$.cpp'
-            .PCHOutputFile      = '$CompilerOutputPath$\$PCHName$.pch'
 
             // Compiler
             .CompilerInputFiles = {}
@@ -92,11 +88,32 @@ ForEach( .CompileConfig in .AllCompileConfigs )
                 ^CompilerInputFiles + "$ProjectPath$/$Filename$"
             }
             .CompilerInputUnity = '$ProjectName$-Unity'
-            .CompilerOptions    + ' $CompilerUsePCHFlag$"$PCHName$.h" $CompilerOutputPCHFlag$"$PCHOutputFile$"'
+            .CompilerOptions    + .CommandLineOptions
+
+            // Precompiled header
+#if USE_PRECOMPILED_HEADERS
+            .PCHOptions         + ' $CompilerCreatePCHFlag$"$PCHName$.h"'
                                 + .CommandLineOptions
 
-            // Librarian
+            .PCHInputFile       = '$ProjectPath$\$PCHName$.cpp'
+            .PCHOutputFile      = '$CompilerOutputPath$\$PCHName$.pch'
+
+            .CompilerOptions    + ' $CompilerUsePCHFlag$"$PCHName$.h" $CompilerOutputPCHFlag$"$PCHOutputFile$"'
+#endif
+        }
+
+        RemoveDir( '$ProjectName$-Obj-$Platform$-$Config$-Purge' )
+        {
+            .RemovePaths        = .IntermediateDirectory
+        }
+
+        // Static library
+        Library( '$ProjectName$-Lib-$Platform$-$Config$' )
+        {
+            .CompilerOutputPath = .IntermediateDirectory
+
             .LibrarianOutput    = '$CompilerOutputPath$\$ProjectName$.$CompilerLibraryExtension$'
+            .LibrarianAdditionalInputs = { '$ProjectName$-Obj-$Platform$-$Config$' }
         }
 
         RemoveDir( '$ProjectName$-Lib-$Platform$-$Config$-Purge' )
@@ -109,8 +126,12 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         {
             .LinkerOutput       = '$BinaryDirectory$\$ProjectName$.$Config$.$Platform$.dll'
             .LinkerOptions      = "$DllOptions$ $LinkerOptions$"
+
             .Libraries          = { '$ProjectName$-Lib-$Platform$-$Config$' }
-                                + .ProjectLibraries
+#if USE_LIBRARY_DEPENDENCY_INPUT
+            .Libraries          = { '$ProjectName$-Obj-$Platform$-$Config$' }
+#endif
+            .Libraries          + .ProjectLibraries
 
             ForEach( .ProjectDependency in .ProjectDependencies )
             {
@@ -123,6 +144,9 @@ ForEach( .CompileConfig in .AllCompileConfigs )
             .RemovePaths          = .BinaryDirectory
             .RemovePathsPattern   = "$ProjectName$.$Config$.$Platform$.*"
             .PreBuildDependencies = { '$ProjectName$-Lib-$Platform$-$Config$-Purge' }
+#if USE_LIBRARY_DEPENDENCY_INPUT
+            .PreBuildDependencies = { '$ProjectName$-Obj-$Platform$-$Config$-Purge' }
+#endif
         }
 
         // Override project directories for visual studio ONLY

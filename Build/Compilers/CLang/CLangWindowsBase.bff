@@ -104,13 +104,16 @@
     ; utilisés pour généraliser les templates :
     .CompilerDefineFlag         = ' -D '
     .CompilerIncludeFlag        = ' -I'
-    .CompilerCreatePCHFlag      = ' /Yc'
-    .CompilerUsePCHFlag         = ' /Yu'
-    .CompilerOutputPCHFlag      = ' /Fp'
     .CompilerPreprocessorFlag   = ' /P /Fi"%2"'
     .CompilerBinaryExtension    = 'exe'
     .CompilerDllExtension       = 'dll'
     .CompilerLibraryExtension   = 'lib'
+
+#if USE_PRECOMPILED_HEADERS
+    .CompilerCreatePCHFlag      = ' /Yc'
+    .CompilerUsePCHFlag         = ' /Yu'
+    .CompilerOutputPCHFlag      = ' /Fp'
+#endif
 ]
 
 //------------------------------------------------------------------------------

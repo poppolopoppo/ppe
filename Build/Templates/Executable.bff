@@ -54,10 +54,14 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         .Libraries = {}
         ForEach( .ProjectDependency in .ProjectDependencies )
         {
-            ^Libraries + { '$ProjectDependency$-Lib-$Platform$-$Config$' }
+            ^Libraries + { '$ProjectDependency$-$ConfigLinkType$-$Platform$-$Config$' }
         }
-
         .Libraries + '$ProjectName$-Lib-$Platform$-$Config$'
+
+#if USE_LIBRARY_DEPENDENCY_INPUT
+        .LinkerLinkObjects = true
+#endif
+
 #if __WINDOWS__
         .Libraries + '$ProjectName$-Res-$Platform$-$Config$'
 #endif

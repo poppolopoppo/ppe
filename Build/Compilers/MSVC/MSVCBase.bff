@@ -9,7 +9,7 @@
 #define USE_STL_ITERATOR_DEBUGGING
 ; active l'utilisation des guardes de securité au runtime
 #define USE_MSVC_RUNTIME_CHECKS
-; actile l'inlining simple en debug (/ob1)
+; active l'inlining simple en debug (/Ob1)
 #define USE_INLINING_IN_DEBUG
 
 //------------------------------------------------------------------------------
@@ -104,13 +104,17 @@
     ; utilisés pour généraliser les templates :
     .CompilerDefineFlag         = ' /D'
     .CompilerIncludeFlag        = ' /I'
-    .CompilerCreatePCHFlag      = ' /Yc'
-    .CompilerUsePCHFlag         = ' /Yu'
-    .CompilerOutputPCHFlag      = ' /Fp'
     .CompilerPreprocessorFlag   = ' /P /Fi"%2"'
     .CompilerBinaryExtension    = 'exe'
     .CompilerDllExtension       = 'dll'
     .CompilerLibraryExtension   = 'lib'
+
+#if USE_PRECOMPILED_HEADERS
+    .CompilerCreatePCHFlag      = ' /Yc'
+    .CompilerUsePCHFlag         = ' /Yu'
+    .CompilerOutputPCHFlag      = ' /Fp'
+    Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
+#endif
 ]
 
 //------------------------------------------------------------------------------
@@ -234,6 +238,12 @@
     .CompilerWithCache          = ' /Z7' ; Produit un fichier .obj contenant des informations de débogage complètes
 #endif
 #endif
+
+    .LibraryLinkType = 'Lib'
+#if USE_LIBRARY_DEPENDENCY_INPUT
+    .LibraryLinkType = 'Obj'
+    Print( "Using library dependency input" )
+#endif
 ]
 
 //------------------------------------------------------------------------------
@@ -243,6 +253,8 @@
 [
     Using( .SharedDebugConfig )
     Using( .MSVCBaseConfig )
+
+    .ConfigLinkType     = .LibraryLinkType
 
     .ConfigOptions      = .DebugOptimisations
                         + .CompilerWithCache
@@ -286,6 +298,8 @@
     Using( .SharedReleaseConfig )
     Using( .MSVCBaseConfig )
 
+    .ConfigLinkType     = .LibraryLinkType
+
     .ConfigOptions      = .ReleaseOptimisations
                         + .CompilerWithCache
 
@@ -306,6 +320,8 @@
 [
     Using( .SharedProfilingConfig )
     Using( .MSVCBaseConfig )
+
+    .ConfigLinkType     = .LibraryLinkType
 
     .ConfigOptions      = .FinalOptimisations
                         + .CompilerWithCache
@@ -330,6 +346,8 @@
 [
     Using( .SharedFinalConfig )
     Using( .MSVCBaseConfig )
+
+    .ConfigLinkType     = .LibraryLinkType
 
     .ConfigOptions      = .FinalOptimisations
                         + .CompilerWithoutCache

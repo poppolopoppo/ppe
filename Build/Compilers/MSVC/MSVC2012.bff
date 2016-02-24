@@ -8,6 +8,11 @@
 ;     \/   |_|___/\__,_|\__,_|_| |____|\___/ |_|____|
 ;
 
+; active l'utilisation des Pre-Compiled Headers (/Yu, /Yc)
+;#define USE_PRECOMPILED_HEADERS
+; utilise les .obj plutôt que les .lib comme input du linker
+#define USE_LIBRARY_DEPENDENCY_INPUT
+
 #include "MSVCBase.bff"
 
 //------------------------------------------------------------------------------
