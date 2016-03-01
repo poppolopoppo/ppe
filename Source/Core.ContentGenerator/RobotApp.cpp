@@ -33,6 +33,7 @@
 #include "Core.Application/ApplicationConsole.h"
 
 #include "Core/Container/BurstTrie.h"
+#include "Core/Container/HashTable.h"
 #include "Core/Container/StringHashSet.h"
 #include "Core.RTTI/MetaType.Definitions-inl.h"
 
@@ -651,7 +652,7 @@ RobotApp::RobotApp()
         static const size_t loops = 100;
 #endif
 
-        {
+        /*{
             const BenchmarkScope bench("BurstTrie");
 
             STRINGTRIE_SET(Container, CaseSensitive::True, 31) set;
@@ -696,7 +697,7 @@ RobotApp::RobotApp()
                             AssertNotReached();
                     }
             }
-        }
+        }*/
         {
             const BenchmarkScope bench("HashSet");
 
@@ -719,7 +720,45 @@ RobotApp::RobotApp()
                     }
             }
         }
+        {
+            const BenchmarkScope bench("HashTable");
+
+            typedef HashTable<
+                StringSlice, void,
+                StringSliceHasher<char, CaseSensitive::True>,
+                StringSliceEqualTo<char, CaseSensitive::True>
+            >   hashtable_type;
+
+
+            hashtable_type set;
+            {
+                const BenchmarkScope bench("HashTable construction");
+                PROFILING_SCOPE(Global, 3, "HashTable construction");
+                set.reserve(input.size());
+                for (const StringSlice& word : input)
+                    set.insert(word);
+            }
+
+            HashTableStats stats = set.ProbingStats();
+            LOG(Info,   L"[HASHTABLE] Probing stats =\n"
+                        L"    Min : {0}\n"
+                        L"    Max : {1}\n"
+                        L"    Mean: {2}\n"
+                        L"    Dev : {3}\n",
+                stats.MinProbe, stats.MaxProbe, stats.MeanProbe, stats.DevProbe );
+
+            {
+                const BenchmarkScope bench("HashTable search");
+                PROFILING_SCOPE(Global, 4, "HashTable search");
+                forrange(i, 0, loops) {
+                    for (const StringSlice& word : search)
+                        if (set.end() == set.find(word))
+                            AssertNotReached();
+                    }
+            }
+        }
     }
+    /*
     {
         const Filename filename = L"Tmp:/robotapp.bin";
         const Filename filename2 = L"Tmp:/robotapp.raw";
@@ -837,7 +876,8 @@ RobotApp::RobotApp()
                 Format(std::cerr, "lexer error : <{0}>: {1}, {2}.\n", e.Match().Symbol()->CStr(), e.what(), e.Match().Site());
             }
         } while (true);
-    }
+
+    }*/
     test_type::MetaClass::Destroy();
     ContentIdentity::MetaClass::Destroy();
 
