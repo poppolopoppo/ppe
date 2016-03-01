@@ -31,6 +31,21 @@ static_assert(sizeof(size_t) == sizeof(uint32_t), "incoherent define");
 #   error "unknown architecture !"
 #endif
 //----------------------------------------------------------------------------
+STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, Mallocator<int>)>::propagate_on_container_copy_assignment::value);
+STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, Mallocator<int>)>::propagate_on_container_move_assignment::value);
+STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, Mallocator<int>)>::propagate_on_container_swap::value);
+STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, Mallocator<int>)>::is_always_equal::value);
+//----------------------------------------------------------------------------
+STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, HeapAllocator<int>)>::propagate_on_container_copy_assignment::value);
+STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, HeapAllocator<int>)>::propagate_on_container_move_assignment::value);
+STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, HeapAllocator<int>)>::propagate_on_container_swap::value);
+STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, HeapAllocator<int>)>::is_always_equal::value);
+//----------------------------------------------------------------------------
+STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, SingletonPoolAllocator<int>)>::propagate_on_container_copy_assignment::value);
+STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, SingletonPoolAllocator<int>)>::propagate_on_container_move_assignment::value);
+STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, SingletonPoolAllocator<int>)>::propagate_on_container_swap::value);
+STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, SingletonPoolAllocator<int>)>::is_always_equal::value);
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void CoreStartup::Start(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t** argv) {

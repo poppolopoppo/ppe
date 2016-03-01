@@ -182,6 +182,11 @@ public:
     using typename base_type::size_type;
     using typename base_type::difference_type;
 
+    using typename base_type::propagate_on_container_copy_assignment;
+    using typename base_type::propagate_on_container_move_assignment;
+    using typename base_type::propagate_on_container_swap;
+    using typename base_type::is_always_equal;
+
     template<typename U>
     struct rebind {
         typedef TagTrackingAllocator<typename traits_type::template rebind_alloc<U>, _Tag > other;
