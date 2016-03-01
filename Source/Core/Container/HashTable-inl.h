@@ -1,0 +1,533 @@
+#pragma once
+
+#include "Core/Container/HashTable.h"
+
+namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value>
+size_t HashTableBase<_Key, _Value>::GrowIFN_ReturnAllocationCount_(size_type atleast) {
+    STATIC_ASSERT(load_factor() <= 100);
+    const size_type input = atleast;
+    atleast += ((100 - load_factor()) * atleast) / 100;
+    Assert(atleast >= input);
+    size_type capacityLog2Plus1 = _size_capacityLog2Plus1&MaskCapacityLog2Plus1;
+    if (atleast <= ((1ul<<capacityLog2Plus1)>>1)) {
+        return 0;
+    }
+    else {
+        do { capacityLog2Plus1++; } while (atleast > ((1ul<<capacityLog2Plus1)>>1));
+        Assert((capacityLog2Plus1&MaskCapacityLog2Plus1) == capacityLog2Plus1);
+        _size_capacityLog2Plus1 = (_size_capacityLog2Plus1&MaskSize)|capacityLog2Plus1;
+        return AllocationCountWIndicesFor_(capacity());
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value>
+size_t HashTableBase<_Key, _Value>::ShrinkToFitIFN_ReturnAllocationCount_(size_type atleast) {
+    STATIC_ASSERT(load_factor() <= 100);
+    const size_type input = atleast;
+    atleast += ((100 - load_factor()) * atleast) / 100;
+    Assert(atleast >= input);
+    const size_type minCapacityPow2 = Meta::RoundToNextHigherPow2(checked_cast<u32>(atleast));
+    Assert(IS_POW2(minCapacityPow2));
+    size_type capacityLog2Plus1 = _size_capacityLog2Plus1&MaskCapacityLog2Plus1;
+    if (minCapacityPow2 >= ((1ul<<capacityLog2Plus1)>>1)) {
+        Assert(minCapacityPow2 == ((1ul<<capacityLog2Plus1)>>1));
+        return 0;
+    }
+    else {
+        do { capacityLog2Plus1++; } while (minCapacityPow2 > ((1ul<<capacityLog2Plus1)>>1));
+        Assert(minCapacityPow2 == ((1ul<<capacityLog2Plus1)>>1));
+        Assert((capacityLog2Plus1&MaskCapacityLog2Plus1) == capacityLog2Plus1);
+        _size_capacityLog2Plus1 = (_size_capacityLog2Plus1&MaskSize)|capacityLog2Plus1;
+        return AllocationCountWIndicesFor_(capacity());
+    }
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+auto HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::operator=(const HashTable& other) -> HashTable& {
+    if (this == &other)
+        return *this;
+
+    typedef typename allocator_traits::propagate_on_container_copy_assignment propagate_type;
+    allocator_copy_(other, propagate_type());
+
+    assign(other.begin(), other.end());
+    return *this;
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+auto HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::operator=(HashTable&& rvalue) noexcept -> HashTable& {
+    if (this == &rvalue)
+        return *this;
+
+    typedef typename allocator_traits::propagate_on_container_move_assignment propagate_type;
+    allocator_move_(std::move(rvalue), propagate_type());
+
+    assign(std::move(rvalue));
+    return *this;
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+void HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::allocator_copy_(const allocator_type& other, std::true_type ) {
+    if (allocator_() != other) {
+        clear_ReleaseMemory();
+        Assert(0 == _size_capacityLog2Plus1);
+        Assert(nullptr == _values_hashIndices);
+        allocator_type::operator=(other);
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+void HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::allocator_move_(allocator_type&& rvalue, std::true_type ) {
+    if (allocator_() != rvalue) {
+        clear_ReleaseMemory();
+        Assert(0 == _size_capacityLog2Plus1);
+        Assert(nullptr == _values_hashIndices);
+        allocator_type::operator=(std::move(rvalue));
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+void HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::assign(HashTable&& rvalue) {
+    typedef typename allocator_traits::propagate_on_container_move_assignment propagate_type;
+    assign_rvalue_(std::move(rvalue), propagate_type());
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+void HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::assign_rvalue_(HashTable&& rvalue, std::true_type ) {
+    clear_ReleaseMemory();
+    Assert(0 == _size_capacityLog2Plus1);
+    Assert(nullptr == _values_hashIndices);
+
+    std::swap(_size_capacityLog2Plus1, rvalue._size_capacityLog2Plus1);
+    std::swap(_values_hashIndices, rvalue._values_hashIndices);
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+void HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::assign_rvalue_(HashTable&& rvalue, std::false_type ) {
+    if (allocator_() == rvalue.allocator_())
+        assign_rvalue_(std::move(rvalue), std::true_type());
+    else
+        assign(std::make_move_iterator(rvalue._values_hashIndices), std::make_move_iterator(rvalue._values_hashIndices + rvalue.size()));
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+bool HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::CheckInvariants() const {
+#ifndef NDEBUG
+    const details::HashTableProbe_ probe = MakeProbe_();
+    if (0 > probe.Capacity && false == IS_POW2(probe.Capacity))
+        return false;
+    if (nullptr == _values_hashIndices && (probe.Size || probe.Capacity))
+        return false;
+    if (nullptr != _values_hashIndices && 0 == probe.Capacity)
+        return false;
+    if (probe.Size > probe.Capacity)
+        return false;
+#endif
+    return true;
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+auto HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::insert(const value_type& value) -> Pair<iterator, bool> {
+    size_type dataIndex;
+    if (Insert_ReturnIfExists_(table_traits::Key(value), &dataIndex)) {
+        return MakePair(begin() + dataIndex, false);
+    }
+    else {
+        Assert(dataIndex < size());
+        allocator_traits::construct(*this, _values_hashIndices+dataIndex, value);
+        return MakePair(begin() + dataIndex, true);
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+auto HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::insert(value_type&& rvalue) -> Pair<iterator, bool> {
+    size_type dataIndex;
+    if (Insert_ReturnIfExists_(table_traits::Key(rvalue), &dataIndex)) {
+        return MakePair(begin() + dataIndex, false);
+    }
+    else {
+        Assert(dataIndex < size());
+        allocator_traits::construct(*this, _values_hashIndices+dataIndex, std::move(rvalue));
+        return MakePair(begin() + dataIndex, true);
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+auto HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::insert_or_assign(const value_type& value) -> Pair<iterator, bool> {
+    size_type dataIndex;
+    if (Insert_ReturnIfExists_(table_traits::Key(value), &dataIndex)) {
+        _values_hashIndices[dataIndex] = value;
+        return MakePair(begin() + dataIndex, false);
+    }
+    else {
+        Assert(dataIndex < size());
+        allocator_traits::construct(*this, _values_hashIndices+dataIndex, value);
+        return MakePair(begin() + dataIndex, true);
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+auto HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::insert_or_assign(value_type&& rvalue) -> Pair<iterator, bool> {
+    size_type dataIndex;
+    if (Insert_ReturnIfExists_(table_traits::Key(rvalue), &dataIndex)) {
+        _values_hashIndices[dataIndex] = std::move(rvalue);
+        return MakePair(begin() + dataIndex, false);
+    }
+    else {
+        Assert(dataIndex < size());
+        allocator_traits::construct(*this, _values_hashIndices+dataIndex, std::move(rvalue));
+        return MakePair(begin() + dataIndex, true);
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+template <typename... _Args>
+auto HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::try_emplace(const key_type& key, _Args&&... args) -> Pair<iterator, bool> {
+    size_type dataIndex;
+    if (Insert_ReturnIfExists_(key, &dataIndex)) {
+        return MakePair(begin() + dataIndex, false);
+    }
+    else {
+        Assert(dataIndex < size());
+        value_type tmp = table_traits::Make(key, std::forward<_Args>(args)...);
+        allocator_traits::construct(*this, _values_hashIndices+dataIndex, std::move(tmp));
+        return MakePair(begin() + dataIndex, true);
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+template <typename... _Args>
+auto HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::try_emplace(key_type&& rkey, _Args&&... args) -> Pair<iterator, bool> {
+    size_type dataIndex;
+    if (Insert_ReturnIfExists_(rkey, &dataIndex)) {
+        return MakePair(begin() + dataIndex, false);
+    }
+    else {
+        Assert(dataIndex < size());
+        value_type tmp = table_traits::Make(std::move(rkey), std::forward<_Args>(args)...);
+        allocator_traits::construct(*this, _values_hashIndices+dataIndex, std::move(tmp));
+        return MakePair(begin() + dataIndex, true);
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+bool HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::erase(const key_type& key, value_type* pValueIFP) {
+    const details::HashTableProbe_ probe = MakeProbe_();
+    Assert(0 < probe.Size);
+
+    const size_type hashValue = KeyHash_(key);
+
+    size_type dataIndex;
+    Pair<size_type, bool> it(size_type(-1), false);
+
+    do {
+        it = probe.LookupBucket(hashValue, &dataIndex, it.first);
+
+        if (it.second && KeyEqual_(key, _values_hashIndices[dataIndex])) {
+            Assert(dataIndex < probe.Size);
+
+            if (dataIndex + 1 != probe.Size) {
+                const value_type& backValue = _values_hashIndices[probe.Size - 1];
+
+                size_t backBucket, backDataIndex;
+                if (not FindUsingProbe_(probe, table_traits::Key(backValue), &backBucket, &backDataIndex))
+                    AssertNotReached();
+                Assert(backDataIndex + 1 == probe.Size);
+
+                probe.SwapDataIndex(it.first, backBucket);
+                std::swap(_values_hashIndices[dataIndex], _values_hashIndices[backDataIndex]);
+
+                dataIndex = backDataIndex;
+            }
+
+            probe.EraseBucket(it.first, hashValue);
+
+            Assert(dataIndex + 1 == probe.Size);
+            if (pValueIFP)
+                *pValueIFP = std::move(_values_hashIndices[dataIndex]);
+
+            allocator_traits::destroy(*this, _values_hashIndices+dataIndex);
+
+            DecSize_();
+            Assert(CheckInvariants());
+
+            return true;
+        }
+    }
+    while (it.second);
+
+
+    return false;
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+void HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::clear() {
+    const details::HashTableProbe_ probe = MakeProbe_();
+    if (probe.Size) {
+        probe.ClearBuckets();
+
+        forrange(i, 0, probe.Size)
+            allocator_traits::destroy(*this, _values_hashIndices+i);
+
+        SetSize_(0);
+    }
+    Assert(CheckInvariants());
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+void HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::clear_ReleaseMemory() {
+    if (_values_hashIndices) {
+        Assert(size());
+        Assert(capacity());
+
+        forrange(i, 0, size())
+            allocator_traits::destroy(*this, _values_hashIndices+i);
+
+        allocator_traits::deallocate(*this, _values_hashIndices, AllocationCountWIndicesFor_(capacity()));
+
+        _size_capacityLog2Plus1 = 0;
+        _values_hashIndices = nullptr;
+    }
+    Assert(0 == _size_capacityLog2Plus1);
+    Assert(nullptr == _values_hashIndices);
+    Assert(CheckInvariants());
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+bool HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::FindUsingProbe_(const details::HashTableProbe_& probe, const key_type& key, size_type* pSlotIndex, size_type* pDataIndex) const {
+    Assert(AliasesToContainer_(probe));
+    Assert(pDataIndex);
+
+    const size_type hashValue = KeyHash_(key);
+
+    Pair<size_type, bool> it(size_type(-1), false);
+    do {
+        it = probe.LookupBucket(hashValue, pDataIndex, it.first);
+        if (it.second && KeyEqual_(key, _values_hashIndices[*pDataIndex])) {
+            *pSlotIndex = it.first;
+            return true;
+        }
+    } while (it.second);
+
+    return false;
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+bool HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::InsertUsingProbe_AssumeEnoughCapacity_(details::HashTableProbe_& probe, const key_type& key, size_type* pDataIndex) {
+    Assert(AliasesToContainer_(probe));
+    Assert(pDataIndex);
+    Assert(probe.Size < probe.Capacity);
+    const size_type hashValue = KeyHash_(key);
+
+    *pDataIndex = checked_cast<size_type>(probe.Size);
+
+    Pair<size_type, bool> it(size_type(-1), false);
+    do {
+        it = probe.InsertBucket(hashValue, pDataIndex, it.first);
+        if (it.second) {
+            if (KeyEqual_(key, _values_hashIndices[*pDataIndex]))
+                return true;
+            else
+                break;
+        }
+    } while (it.second);
+
+    Assert(*pDataIndex == probe.Size);
+    IncSize_();
+    probe.Size++;
+    Assert(size() == probe.Size);
+    Assert(CheckInvariants());
+
+    return false;
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+bool HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::Insert_ReturnIfExists_(const key_type& key, size_type* pDataIndex) {
+    reserve_Additional(1);
+    const bool exists = InsertUsingProbe_AssumeEnoughCapacity_(MakeProbe_(), key, pDataIndex);
+    Assert(exists || size() == *pDataIndex + 1);
+    return exists;
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+template <typename _It>
+void HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::InsertRange_(_It first, _It last, std::input_iterator_tag ) {
+    for (; first != last; ++first) {
+        value_type tmp(*first);
+        insert(std::move(tmp));
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+template <typename _It, typename _ItCat>
+void HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::InsertRange_(_It first, _It last, _ItCat ) {
+    const size_type count = checked_cast<size_type>(std::distance(first, first));
+    reserve(size() + count);
+
+    details::HashTableProbe_ probe = MakeProbe_();
+    for (; first != last; ++first) {
+        value_type tmp(*first);
+        size_type dataIndex;
+        if (not InsertUsingProbe_AssumeEnoughCapacity_(probe, table_traits::Key(tmp), &dataIndex)) {
+            Assert(probe.Size == dataIndex + 1);
+            allocator_traits::construct(*this, _values_hashIndices+dataIndex, std::move(tmp));
+        }
+    }
+    Assert(CheckInvariants());
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+void HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::shrink_to_fit() {
+    if (empty()) {
+        clear_ReleaseMemory();
+    }
+    else {
+        const size_type oldCapacity = capacity();
+        if (size_type allocationCount = ShrinkToFitIFN_ReturnAllocationCount_(size()))
+            RelocateAndRehash_(oldCapacity, allocationCount);
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+void HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::reserve(size_type count) {
+    const size_type oldCapacity = capacity();
+    if (size_type allocationCount = GrowIFN_ReturnAllocationCount_(count))
+        RelocateAndRehash_(oldCapacity, allocationCount);
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+void HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::Reserve_AssumeEmpty_(size_type count) {
+    Assert(empty());
+    Assert(nullptr == _values_hashIndices);
+    if (size_type allocationCount = GrowIFN_ReturnAllocationCount_(count)) {
+        _values_hashIndices = allocator_traits::allocate(*this, allocationCount);
+        Assert(_values_hashIndices);
+    }
+    Assert(empty());
+    Assert(capacity() >= count);
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+void HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::RelocateAndRehash_(size_type oldCapacity, size_type allocationCount) {
+    // HashTable<> doesn't use Relocate() because of hashWIndices packing
+    pointer const oldData = _values_hashIndices;
+
+    _values_hashIndices = (allocationCount
+        ? allocator_traits::allocate(*this, allocationCount)
+        : nullptr );
+
+    const details::HashTableProbe_ probe = MakeProbe_();
+    Assert(0 == probe.Size || nullptr != _values_hashIndices);
+    Assert(0 == probe.Size || nullptr != oldData);
+    Assert(0 == probe.Size || 0 != allocationCount);
+
+    forrange(i, 0, probe.Size) {
+        allocator_traits::construct(*this, _values_hashIndices+i, std::move(oldData[i]));
+        allocator_traits::destroy(*this, oldData+i);
+    }
+
+    if (oldData)
+        allocator_traits::deallocate(*this, oldData, AllocationCountWIndicesFor_(oldCapacity));
+
+    RehashUsingProbe_(probe);
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+void HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::RehashUsingProbe_(const details::HashTableProbe_& probe) {
+    Assert(AliasesToContainer_(probe));
+
+    probe.ClearBuckets();
+
+    forrange(i, 0, probe.Size) {
+        size_t dataIndex = i;
+        const size_type hashValue = KeyHash_(_values_hashIndices[i]);
+        const auto it = probe.InsertBucket(hashValue, &dataIndex);
+        Assert(false == it.second);
+        Assert(dataIndex == i);
+    }
+
+    Assert(CheckInvariants());
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+void HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::swap(HashTable& other) {
+    typedef typename allocator_traits::propagate_on_container_swap propagate_type;
+    if (this != &other)
+        swap_(other, propagate_type());
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+void HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::swap_(HashTable& other, std::true_type ) {
+    std::swap(_size_capacityLog2Plus1, other._size_capacityLog2Plus1);
+    std::swap(_values_hashIndices, other._values_hashIndices);
+    std::swap(static_cast<allocator_type&>(*this), static_cast<allocator_type&>(other));
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+void HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::swap_(HashTable& other, std::false_type ) {
+    HashTable* plhs = nullptr;
+    HashTable* prhs = nullptr;
+    if (size() < other.size()) {
+        plhs = this;
+        prhs = &other;
+    }
+    else {
+        plhs = &other;
+        prhs = this;
+    }
+
+    Assert(plhs->size() <= prhs->size());
+    Assert(plhs->capacity() <= prhs->capacity());
+    std::swap_ranges(
+        plhs->_values_hashIndices,
+        plhs->_values_hashIndices + plhs->size(),
+        MakeCheckedIterator(prhs->_values_hashIndices, prhs->size(), 0) );
+
+    if (plhs->capacity() != prhs->capacity()) {
+        Assert(plhs->size() < prhs->size());
+        Assert(plhs->capacity() < prhs->capacity());
+
+        pointer const oldData = plhs->_values_hashIndices;
+        plhs->_values_hashIndices = allocator_traits::allocate(*this, AllocationCountWIndicesFor_(prhs->capacity()));
+        Assert(plhs->_values_hashIndices);
+
+        forrange(i, 0, plhs->size()) {
+            allocator_traits::construct(*this, plhs->_values_hashIndices+i, std::move(oldData[i]));
+            allocator_traits::destroy(*this, oldData+i);
+        }
+
+        allocator_traits::deallocate(*this, oldData, AllocationCountWIndicesFor_(plhs->capacity()));
+
+        forrange(i, plhs->size(), prhs->size()) {
+            allocator_traits::construct(*this, plhs->_values_hashIndices+i, std::move(prhs->_values_hashIndices[i]));
+            allocator_traits::destroy(*this, prhs->_values_hashIndices+i);
+        }
+
+        std::swap(plhs->_size_capacityLog2Plus1, prhs->_size_capacityLog2Plus1);
+
+        plhs->RehashUsingProbe_(plhs->MakeProbe_());
+        prhs->RehashUsingProbe_(prhs->MakeProbe_());
+    }
+    else {
+        std::swap(plhs->_size_capacityLog2Plus1, prhs->_size_capacityLog2Plus1);
+
+        const details::HashTableProbe_& lhs_probe = plhs->MakeProbe_();
+        const details::HashTableProbe_& rhs_probe = prhs->MakeProbe_();
+        Assert(lhs_probe.UseHashIndices64 == rhs_probe.UseHashIndices64);
+
+        if (lhs_probe.UseHashIndices64)
+            std::swap_ranges(lhs_probe.HashIndices64().begin(), lhs_probe.HashIndices64().end(), rhs_probe.HashIndices64().begin());
+        else
+            std::swap_ranges(lhs_probe.HashIndices32().begin(), lhs_probe.HashIndices32().end(), rhs_probe.HashIndices32().begin());
+    }
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace Core
