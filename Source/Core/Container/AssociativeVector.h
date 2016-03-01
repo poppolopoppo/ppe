@@ -32,7 +32,10 @@ template <
     typename _Vector = Vector<Pair<_Key COMMA _Value>> >
 class AssociativeVector {
 public:
+    typedef _Key key_type;
+    typedef _Value mapped_type;
     typedef Pair<_Key, _Value> value_type;
+    typedef _EqualTo key_equal;
     typedef _Vector vector_type;
 
     typedef typename vector_type::pointer pointer;

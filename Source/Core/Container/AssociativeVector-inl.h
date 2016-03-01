@@ -79,7 +79,7 @@ template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 auto AssociativeVector<_Key, _Value, _EqualTo, _Vector>::Find(const _Key& key) -> iterator {
     const iterator end = _vector.end();
     for (iterator it = _vector.begin(); it != end; ++it)
-        if (it->first == key)
+        if (key_equal()(it->first, key))
             return it;
     return end;
 }
@@ -88,7 +88,7 @@ template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 auto AssociativeVector<_Key, _Value, _EqualTo, _Vector>::Find(const _Key& key) const -> const_iterator {
     const const_iterator end = _vector.end();
     for (const_iterator it = _vector.begin(); it != end; ++it)
-        if (it->first == key)
+        if (key_equal()(it->first, key))
             return it;
     return end;
 }
@@ -97,7 +97,7 @@ template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 auto AssociativeVector<_Key, _Value, _EqualTo, _Vector>::FindAfter(const _Key& key, const iterator& after) -> iterator {
     const iterator end = _vector.end();
     for (iterator it = (after == end ? end : after + 1); it != end; ++it)
-        if (it->first == key)
+        if (key_equal()(it->first, key))
             return it;
     return end;
 }
@@ -106,7 +106,7 @@ template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 auto AssociativeVector<_Key, _Value, _EqualTo, _Vector>::FindAfter(const _Key& key, const const_iterator& after) const -> const_iterator {
     const const_iterator end = _vector.end();
     for (const_iterator it = (after == end ? end : after + 1); it != end; ++it)
-        if (it->first == key)
+        if (key_equal()(it->first, key))
             return it;
     return end;
 }
