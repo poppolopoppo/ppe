@@ -27,6 +27,7 @@ public:
 
     typedef CheckedArrayIterator<value_type> iterator;
     typedef std::random_access_iterator_tag iterator_category;
+    typedef std::reverse_iterator<iterator> reverse_iterator;
 
     MemoryView();
     MemoryView(pointer storage, size_type size);
@@ -56,6 +57,12 @@ public:
     iterator begin() const { return MakeCheckedIterator(_storage, _size, 0); }
     iterator end() const { return MakeCheckedIterator(_storage, _size, _size); }
 
+    iterator cbegin() const { return begin(); }
+    iterator cend() const { return end(); }
+
+    reverse_iterator rbegin() const { return reverse_iterator(begin()); }
+    reverse_iterator rend() const { return reverse_iterator(end()); }
+
     reference at(size_type index) const;
     reference operator [](size_type index) const { return at(index); }
 
@@ -79,6 +86,8 @@ public:
 
     template <typename _Pred>
     iterator find_if(const _Pred& pred) const { return std::find_if(begin(), end(), pred); }
+
+    bool AliasesToContainer(iterator it) const { return (_storage <= &*it && _storage + _size > &*it); }
 
     template <typename U>
     MemoryView<U> Cast() const;
