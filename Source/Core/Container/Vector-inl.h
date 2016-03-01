@@ -446,7 +446,8 @@ void Vector<T, _Allocator>::resize_AssumeEmpty(size_type count, const_reference 
 template <typename T, typename _Allocator>
 void Vector<T, _Allocator>::swap(Vector& other) {
     typedef typename allocator_traits::propagate_on_container_swap propagate_type;
-    swap_(other, propagate_type());
+    if (this != &other)
+        swap_(other, propagate_type());
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
@@ -459,9 +460,6 @@ void Vector<T, _Allocator>::swap_(Vector& other, std::true_type ) {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void Vector<T, _Allocator>::swap_(Vector& other, std::false_type ) {
-    reserve(other._size);
-    other.reserve(_size);
-
     Vector* plhs = nullptr;
     Vector* prhs = nullptr;
     if (_size < other._size) {
@@ -473,16 +471,22 @@ void Vector<T, _Allocator>::swap_(Vector& other, std::false_type ) {
         prhs = this;
     }
 
+    Assert(plhs->_size <= prhs->_size);
+    Assert(plhs->_capacity <= prhs->_capacity);
     std::swap_ranges(plhs->begin(), plhs->end(), MakeCheckedIterator(prhs->_data, prhs->_capacity, 0));
 
-    const size_type n = prhs->_size;
-    for (size_type i = plhs->_size; i < n; ++i) {
-        allocator_traits::construct(*this, plhs->_data + i);
-        std::swap(plhs->_data[i], prhs->_data[i]);
-        allocator_traits::destroy(*this, prhs->_data + i);
-    }
+    if (plhs->_size != prhs->_size) {
+        Assert(plhs->_size < prhs->_size);
+        plhs->reserve(prhs->_size);
 
-    std::swap(plhs->_size, prhs->_size);
+        const size_type n = prhs->_size;
+        for (size_type i = plhs->_size; i < n; ++i) {
+            allocator_traits::construct(*this, plhs->_data + i, std::move(prhs->_data[i]));
+            allocator_traits::destroy(*this, prhs->_data + i);
+        }
+
+        std::swap(plhs->_size, prhs->_size);
+    }
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
