@@ -96,7 +96,7 @@ hash_t hash_string(const char* cstr, size_t length) {
     return hash_mem(cstr, length*sizeof(char));
 }
 //----------------------------------------------------------------------------
-hash_t hash_strin(const wchar_t* wcstr, size_t length) {
+hash_t hash_string(const wchar_t* wcstr, size_t length) {
     return hash_mem(wcstr, length*sizeof(wchar_t));
 }
 //----------------------------------------------------------------------------
@@ -104,7 +104,7 @@ hash_t hash_stringI(const char* cstr, size_t length) {
     return hash_stringI_(cstr, length);
 }
 //----------------------------------------------------------------------------
-hash_t hash_string(const wchar_t* wcstr, size_t length) {
+hash_t hash_stringI(const wchar_t* wcstr, size_t length) {
     return hash_stringI_(wcstr, length);
 }
 //----------------------------------------------------------------------------

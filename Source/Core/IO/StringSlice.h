@@ -110,14 +110,14 @@ struct StringSliceLess<_Char, CaseSensitive::False> {
 template <typename _Char, CaseSensitive _CaseSensitive>
 struct StringSliceHasher {
     size_t operator ()(const BasicStringSlice<_Char>& cstr) const {
-        return hash_stringI(cstr.data(), cstr.size());
+        return hash_string(cstr.data(), cstr.size());
     }
 };
 //----------------------------------------------------------------------------
 template <typename _Char>
 struct StringSliceHasher<_Char, CaseSensitive::False> {
     size_t operator ()(const BasicStringSlice<_Char>& cstr) const {
-        return hash_string(cstr.data(), cstr.size());
+        return hash_stringI(cstr.data(), cstr.size());
     }
 };
 //----------------------------------------------------------------------------
