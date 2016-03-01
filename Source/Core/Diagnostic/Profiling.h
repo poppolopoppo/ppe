@@ -2,7 +2,7 @@
 
 #include "Core/Core.h"
 
-#ifndef FINAL_RELEASE
+#if not defined(FINAL_RELEASE) && 0
 #   define WITH_CORE_PROFILING
 #endif
 
