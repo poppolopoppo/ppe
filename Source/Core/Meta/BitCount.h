@@ -1,5 +1,6 @@
 #pragma once
 
+#include <intrin.h>
 #include <limits.h>
 
 namespace Core {
@@ -29,6 +30,40 @@ typename std::enable_if<std::is_integral<T>::value, size_t>::type CountBitsSet(T
     return BitCount<T>::Set(value);
 }
 //----------------------------------------------------------------------------
+inline u32 Log2i(u32 v) {
+#ifdef _MSC_VER
+    unsigned long result;
+    ::_BitScanReverse(&result, v);
+    return u32(result);
+#elif defined(__GNUC__)
+    return 31 - __builtin_clz(parNum);
+#else
+    AssertNotImplemented();
+#endif
+}
+//----------------------------------------------------------------------------
+inline u64 Log2i(u64 v) {
+#ifdef _MSC_VER
+    unsigned long result;
+    ::_BitScanReverse64(&result, v);
+    return u64(result);
+#elif defined(__GNUC__)
+    return 63 - __builtin_clz(parNum);
+#else
+    AssertNotImplemented();
+#endif
+}
+//----------------------------------------------------------------------------
+inline size_t CountLeadingZeros(size_t v) { return Log2i(v); }
+//----------------------------------------------------------------------------
+#if 1
+inline size_t RoundToNextHigherPow2_AssumeNotZero(size_t v) {
+    return (size_t(1)<<CountLeadingZeros(v-1+v));
+}
+inline size_t RoundToNextHigherPow2(size_t v) {
+    return (0 == v ? 1 : RoundToNextHigherPow2_AssumeNotZero(v));
+}
+#else
 inline u32 RoundToNextHigherPow2(u32 v) {
     v--;
     v |= v >> 1;
@@ -39,6 +74,7 @@ inline u32 RoundToNextHigherPow2(u32 v) {
     v++;
     return v;
 }
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
