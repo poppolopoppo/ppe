@@ -17,9 +17,11 @@ namespace Core {
 #ifdef ARCH_X64
 #   define CORE_HASH_VALUE_SEED (0xdeadbeefabadcafeULL)
 #   define CORE_HASH_VALUE_32_TO_64_IFP(_VALUE) (size_t(_VALUE)*GOLDEN_RATIO_PRIME_64)
+#   define GOLDEN_RATIO_PRIME_SIZE_T GOLDEN_RATIO_PRIME_64
 #else
 #   define CORE_HASH_VALUE_SEED (0xdeadbeefUL)
 #   define CORE_HASH_VALUE_32_TO_64_IFP(_VALUE) (size_t(_VALUE)*GOLDEN_RATIO_PRIME_32)
+#   define GOLDEN_RATIO_PRIME_SIZE_T GOLDEN_RATIO_PRIME_32
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
