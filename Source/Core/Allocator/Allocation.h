@@ -20,7 +20,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 #ifdef USE_MEMORY_DOMAINS
 template <typename _Allocator, typename _Tag>
-using DecorateAllocator = TagTrackingAllocator< _Allocator, _Tag >;
+using DecorateAllocator = TrackingAllocator< _Tag, _Allocator >;
 #else
 template <typename _Allocator, typename _Tag>
 using DecorateAllocator = _Allocator;
