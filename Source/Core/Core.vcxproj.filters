@@ -136,6 +136,15 @@
     <CustomBuild Include="Container\HashSet.h">
       <Filter>Container</Filter>
     </CustomBuild>
+    <CustomBuild Include="Container\HashTable-inl.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Container\HashTable.cpp">
+      <Filter>Container</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Container\HashTable.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
     <CustomBuild Include="Container\IntrusiveList.h">
       <Filter>Container</Filter>
     </CustomBuild>
@@ -830,6 +839,9 @@
       <Filter>Meta</Filter>
     </CustomBuild>
     <CustomBuild Include="Meta\OneTimeInitialize.h">
+      <Filter>Meta</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Meta\PackedSizeAndCapacity.h">
       <Filter>Meta</Filter>
     </CustomBuild>
     <CustomBuild Include="Meta\PointerWFlags.h">
