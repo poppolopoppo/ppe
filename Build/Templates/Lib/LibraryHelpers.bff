@@ -15,6 +15,17 @@
 ;   [ProjectPCHConfig]      project Pre-Compiled Headers configuration to enable/disable PCH (default value in Defaults.bff)
 //------------------------------------------------------------------------------
 
+.EvalParameters = {
+    "ProjectPCHName",
+    "ProjectDefines",
+    "ProjectDependencies",
+    "ProjectExcludedFiles",
+    "ProjectIncludes",
+    "ProjectLibraries",
+    "ProjectIsolatedFiles",
+    "ProjectPCHConfig",
+}
+
 .ProjectConfigs = {}
 
 ForEach( .CompileConfig in .AllCompileConfigs )
@@ -22,6 +33,9 @@ ForEach( .CompileConfig in .AllCompileConfigs )
     .ProjectConfig = // Visual project config
     [
         Using( .CompileConfig )
+
+        // Evaluate parameters for this configuration
+        #include "EvalParameters.bff"
 
         // Project directories
         .IntermediateDirectory  + '\$Platform$\$Config$\$ProjectName$'
