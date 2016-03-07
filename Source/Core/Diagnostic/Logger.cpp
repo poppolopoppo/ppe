@@ -88,9 +88,6 @@ void LoggerFrontend::Log(LogCategory category, const wchar_t* text) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void OutputDebugLogger::Log(LogCategory category, const wchar_t* text) {
-    if (!IsDebuggerPresent())
-        return;
-
 #if 0
     if (LogCategory::Callstack != category) {
         wchar_t header[64];
