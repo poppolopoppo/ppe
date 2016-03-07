@@ -84,6 +84,12 @@ public:
     MemoryView<T> GrowBack() const { Assert(_size > 0); return MemoryView<T>(_storage, _size + 1); }
     MemoryView<T> GrowFront() const { Assert(_size > 0); return MemoryView<T>(_storage - 1, _size + 1); }
 
+    template <typename U>
+    bool IsSubRangeOf(const MemoryView<U>& parent) const {
+        return ((void*)parent.data() <= (void*)_storage &&
+                (void*)(parent.data()+parent.size()) >= (void*)(_storage+_size));
+    }
+
     template <typename _Pred>
     iterator find_if(const _Pred& pred) const { return std::find_if(begin(), end(), pred); }
 
