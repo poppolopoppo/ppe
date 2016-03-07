@@ -110,14 +110,24 @@ void OutputDebugLogger::Log(LogCategory category, const wchar_t* text) {
     OutputDebugStringW(L"\n");
 }
 //----------------------------------------------------------------------------
-void StdErrorLogger::Log(LogCategory category, const wchar_t* text) {
+void StdcoutLogger::Log(LogCategory category, const wchar_t* text) {
     if (LogCategory::Callstack != category) {
         wchar_t header[64];
         Format(header, L"[{0:12f}][{1}] ", CurrentProcess::ElapsedSeconds(), category);
-        std::cerr << header;
+        std::wcout << header;
     }
 
-    std::cerr << text << std::endl;
+    std::wcout << text << std::endl;
+}
+//----------------------------------------------------------------------------
+void StderrLogger::Log(LogCategory category, const wchar_t* text) {
+    if (LogCategory::Callstack != category) {
+        wchar_t header[64];
+        Format(header, L"[{0:12f}][{1}] ", CurrentProcess::ElapsedSeconds(), category);
+        std::wcerr << header;
+    }
+
+    std::wcerr << text << std::endl;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

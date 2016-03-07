@@ -119,9 +119,15 @@ public:
     virtual void Log(LogCategory category, const wchar_t* text) override;
 };
 //----------------------------------------------------------------------------
-class StdErrorLogger : public ILogger {
+class StdcoutLogger : public ILogger {
 public:
-    virtual ~StdErrorLogger() {}
+    virtual ~StdcoutLogger() {}
+    virtual void Log(LogCategory category, const wchar_t* text) override;
+};
+//----------------------------------------------------------------------------
+class StderrLogger : public ILogger {
+public:
+    virtual ~StderrLogger() {}
     virtual void Log(LogCategory category, const wchar_t* text) override;
 };
 //----------------------------------------------------------------------------
