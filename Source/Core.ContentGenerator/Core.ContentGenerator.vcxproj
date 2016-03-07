@@ -52,6 +52,8 @@
     <CustomBuild Include="stdafx.cpp" />
     <CustomBuild Include="stdafx.h" />
     <CustomBuild Include="targetver.h" />
+    <CustomBuild Include="Test_Containers.cpp" />
+    <CustomBuild Include="Test_RTTI.cpp" />
   </ItemGroup>
   <ItemGroup>
   </ItemGroup>

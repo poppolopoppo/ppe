@@ -12,5 +12,10 @@
         'Core.ContentPipeline',
         'Core.Application',
     }
+    .ProjectIsolatedFiles =
+    {
+        'Test_Containers.cpp',
+        'Test_RTTI.cpp',
+    }
     #include "../../Build/Templates/Executable.bff"
 }
