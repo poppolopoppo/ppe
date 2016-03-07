@@ -42,17 +42,20 @@ inline u32 Log2i(u32 v) {
 #endif
 }
 //----------------------------------------------------------------------------
+#ifdef ARCH_X64
 inline u64 Log2i(u64 v) {
-#ifdef _MSC_VER
+#   ifdef _MSC_VER
     unsigned long result;
     ::_BitScanReverse64(&result, v);
     return u64(result);
-#elif defined(__GNUC__)
+#   elif defined(__GNUC__)
+    AssertNotImplemented(); // check __builtin_clz() compat with 64 bits numbers
     return 63 - __builtin_clz(parNum);
-#else
+#   else
     AssertNotImplemented();
-#endif
+#   endif
 }
+#endif
 //----------------------------------------------------------------------------
 inline size_t CountLeadingZeros(size_t v) { return Log2i(v); }
 //----------------------------------------------------------------------------
