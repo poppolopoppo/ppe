@@ -57,6 +57,13 @@ Compiler( 'Compiler-CLangWindows37-x86' )
 ]
 
 //------------------------------------------------------------------------------
+// Pre-Compiled Headers Configurations
+//------------------------------------------------------------------------------
+
+.CLangWindows37PCHEnabled     = .CLangWindowsBasePCHEnabled
+.CLangWindows37PCHDisabled    = .CLangWindowsBasePCHDisabled
+
+//------------------------------------------------------------------------------
 // Base Config
 //------------------------------------------------------------------------------
 .CLangWindows37BaseConfig =

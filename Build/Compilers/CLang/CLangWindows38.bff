@@ -64,6 +64,13 @@ Compiler( 'Compiler-CLangWindows38-x86' )
 ]
 
 //------------------------------------------------------------------------------
+// Pre-Compiled Headers Configurations
+//------------------------------------------------------------------------------
+
+.CLangWindows38PCHEnabled     = .CLangWindowsBasePCHEnabled
+.CLangWindows38PCHDisabled    = .CLangWindowsBasePCHDisabled
+
+//------------------------------------------------------------------------------
 // Base Config
 //------------------------------------------------------------------------------
 .CLangWindows38BaseConfig =

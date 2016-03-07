@@ -69,10 +69,6 @@
     + .DisabledWarnings
 
     .PreprocessorOptions = ''
-    .PCHOptions = .CompilerOptions
-    + ' /Fo"%2"'; + ' /Fp"%2" /Fo"%3"' ; TODO
-
-    .CompilerOptions + ' /Fo"%2"'
 
     .LibrarianOptions = ''
     ;+ ' /WX'                ; considère les avertissements comme des erreurs
@@ -115,6 +111,13 @@
     .CompilerOutputPCHFlag      = ' /Fp'
 #endif
 ]
+
+//------------------------------------------------------------------------------
+// Pre-Compiled Headers Configurations
+//------------------------------------------------------------------------------
+
+.CLangWindowsBasePCHEnabled     = .MSVCBasePCHEnabled
+.CLangWindowsBasePCHDisabled    = .MSVCBasePCHDisabled
 
 //------------------------------------------------------------------------------
 // CLang Base Platforms

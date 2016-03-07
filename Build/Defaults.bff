@@ -3,7 +3,8 @@
 //------------------------------------------------------------------------------
 // Default Parameters for Templates
 //------------------------------------------------------------------------------
-.PCHName = 'stdafx'
+.ProjectPCHName = 'stdafx'
+.ProjectPCHConfig = .PCHEnabled
 .ProjectDefines = {}
 .ProjectDependencies = {}
 .ProjectExcludedFiles = {}

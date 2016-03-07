@@ -63,10 +63,8 @@
     + ' /c "%1" /TP'
 
     .PreprocessorOptions = ''
-    .PCHOptions = .CompilerOptions + ' /Fp"%2" /Fo"%3"'
 
     .CompilerOptions + .AdditionalWarnings
-    .CompilerOptions + ' /Fo"%2"'
 
     .LibrarianOptions = ''
     + ' /WX'                ; considère les avertissements comme des erreurs
@@ -108,14 +106,32 @@
     .CompilerBinaryExtension    = 'exe'
     .CompilerDllExtension       = 'dll'
     .CompilerLibraryExtension   = 'lib'
+]
+
+//------------------------------------------------------------------------------
+// MSVC Base Pre-Compiled Headers Configurations
+//------------------------------------------------------------------------------
+
+.MSVCBasePCHDisabled    =
+[
+    .CompilerOptions    = ' /Fo"%2"'
+]
+.MSVCBasePCHEnabled     = .MSVCBasePCHDisabled
 
 #if USE_PRECOMPILED_HEADERS
-    .CompilerCreatePCHFlag      = ' /Yc'
-    .CompilerUsePCHFlag         = ' /Yu'
-    .CompilerOutputPCHFlag      = ' /Fp'
-    Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
-#endif
+Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
+.MSVCBasePCHEnabled =
+[
+    .UnityPCH           = '^$ProjectPCHName^$.h'
+    .PCHOptions         = ' /Fp"%2" /Fo"%3"'
+                        + ' /Yc"^$ProjectPCHName^$.h"'
+                        + '^$CompilerOptions^$'
+    .PCHInputFile       = '^$ProjectPath^$\^$ProjectPCHName^$.cpp'
+    .PCHOutputFile      = '^$IntermediateDirectory^$\^$ProjectPCHName^$.pch'
+    .CompilerOptions    = ' /Yu"^$ProjectPCHName^$.h" /Fp"$PCHOutputFile$"'
+                        + ' /Fo"%2"'
 ]
+#endif
 
 //------------------------------------------------------------------------------
 // MSVC Base Platforms
@@ -131,7 +147,6 @@
                         + ' /Zm500'         ; precompiled header size limit
 
     .CompilerOptions    + .PlatformOptions
-    .PCHOptions         + .PlatformOptions
 
     .LibrarianOptions   + ' /MACHINE:X86'
     .LinkerOptions      + ' /MACHINE:X86'
@@ -150,7 +165,6 @@
                         + ' /Zm1000'        ; precompiled header size limit
 
     .CompilerOptions    + .PlatformOptions
-    .PCHOptions         + .PlatformOptions
 
     .LibrarianOptions   + ' /MACHINE:X64'
     .LinkerOptions      + ' /MACHINE:X64'
@@ -263,10 +277,8 @@
                         + .DebugDefines
 
     .CompilerOptions    = .ConfigOptions
-    .PCHOptions         = .ConfigOptions
 
     .LinkerOptions      = ' /INCREMENTAL'   ; active le linker incrémental
-                        + ' MSVCRTD.LIB'    ; crt debug
 ]
 
 //------------------------------------------------------------------------------
@@ -284,10 +296,8 @@
                         + .DebugDefines
 
     .CompilerOptions    = .ConfigOptions
-    .PCHOptions         = .ConfigOptions
 
     .LinkerOptions      = ' /INCREMENTAL'   ; active le linker incrémental
-                        + ' MSVCRTD.LIB'    ; crt debug
 ]
 
 //------------------------------------------------------------------------------
@@ -307,10 +317,8 @@
                         + .ReleaseDefines
 
     .CompilerOptions    = .ConfigOptions
-    .PCHOptions         = .ConfigOptions
 
     .LinkerOptions      = ' /INCREMENTAL'   ; active le linker incrémental
-                        + ' MSVCRT.LIB'     ; crt non debug
 ]
 
 //------------------------------------------------------------------------------
@@ -330,13 +338,11 @@
                         + .ReleaseDefines
 
     .CompilerOptions    = .ConfigOptions
-    .PCHOptions         = .ConfigOptions
 
     .LibrarianOptions   = ' /LTCG'          ; link time code generation
 
     .LinkerOptions      = ' /LTCG'          ; link time code generation
                         + ' /PROFILE'       ; Produit un fichier de sortie utilisable avec le profileur Outils d'analyse des performances.
-                        + ' MSVCRT.LIB'     ; crt non debug
 ]
 
 //------------------------------------------------------------------------------
@@ -356,12 +362,10 @@
                         + .ReleaseDefines
 
     .CompilerOptions    = .FinalOptimisations
-    .PCHOptions         = .FinalOptimisations
 
     .LibrarianOptions   = ' /LTCG'          ; link time code generation
 
     .LinkerOptions      = ' /LTCG'          ; link time code generation
                         + ' /OPT:REF'       ; supprime le code non référencé
                         + ' /OPT:ICF=4'     ; COMDAT folding (4 itérations)
-                        + ' MSVCRT.LIB'     ; crt non debug
 ]

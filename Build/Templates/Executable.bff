@@ -6,14 +6,15 @@
 ;   <BinaryPrefix>          prefix of the binary
 ;   <ProjectName>           name of the project
 ;   <ProjectPath>           path containing the source files
-;   [PCHName]               precompiled header name (default value in Common.bff)
-;   [ProjectDefines]        project specific defines (default value in Common.bff)
-;   [ProjectDependencies]   project specific dependencies (default value in Common.bff)
-;   [ProjectExcludedFiles]  project specific excluded files (default value in Common.bff)
-;   [ProjectIncludes]       project specific includes (default value in Common.bff)
-;   [ProjectLibraries]      project specific libraries (default value in Common.bff)
-;   [ProjectPostBuild]      project specific post-build (default value in Common.bff)
-;   [ProjectPreBuild]       project specific pre-build (default value in Common.bff)
+;   [ProjectPCHName]        precompiled header name (default value in Defaults.bff)
+;   [ProjectDefines]        project specific defines (default value in Defaults.bff)
+;   [ProjectDependencies]   project specific dependencies (default value in Defaults.bff)
+;   [ProjectExcludedFiles]  project specific excluded files (default value in Defaults.bff)
+;   [ProjectIncludes]       project specific includes (default value in Defaults.bff)
+;   [ProjectLibraries]      project specific libraries (default value in Defaults.bff)
+;   [ProjectPostBuild]      project specific post-build (default value in Defaults.bff)
+;   [ProjectPreBuild]       project specific pre-build (default value in Defaults.bff)
+;   [ProjectPCHConfig]      project Pre-Compiled Headers configuration to enable/disable PCH (default value in Defaults.bff)
 //------------------------------------------------------------------------------
 
 #include "Lib/LibraryHelpers.bff"
@@ -35,6 +36,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         ^LinkerOptions + ' "$Lib$"'
     }
 
+    // Windows resources compiler (.res)
 #if __WINDOWS__
     ObjectList( '$ProjectName$-Res-$Platform$-$Config$' )
     {
@@ -78,7 +80,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
     {
         .RemovePaths          = .BinaryDirectory
         .RemovePathsPattern   = "$BinaryPrefix$.$Config$.$Platform$.*"
-        .PreBuildDependencies = { '$ProjectName$-Lib-$Platform$-$Config$-Purge' }
+        .PreBuildDependencies = { '$ProjectName$-Purge-$Platform$-$Config$' }
     }
 }
 

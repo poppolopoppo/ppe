@@ -21,6 +21,8 @@
     .CLangWindowsXXCompileConfigs   = .CLangWindows37CompileConfigs
     .CLangWindowsXXPlatformToolset  = .CLangWindows37PlatformToolset
     .CLangWindowsXXResourceCompiler = .CLangWindows37ResourceCompiler
+    .CLangWindowsXXPCHEnabled       = .CLangWindows37PCHEnabled
+    .CLangWindowsXXPCHDisabled      = .CLangWindows37PCHDisabled
 #endif //!USE_CLANG_37
 
 #if USE_CLANG_38
@@ -28,4 +30,6 @@
     .CLangWindowsXXCompileConfigs   = .CLangWindows38CompileConfigs
     .CLangWindowsXXPlatformToolset  = .CLangWindows38PlatformToolset
     .CLangWindowsXXResourceCompiler = .CLangWindows38ResourceCompiler
+    .CLangWindowsXXPCHEnabled       = .CLangWindows38PCHEnabled
+    .CLangWindowsXXPCHDisabled      = .CLangWindows38PCHDisabled
 #endif //!USE_CLANG_38
