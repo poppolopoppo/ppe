@@ -17,8 +17,8 @@ public:
     STATIC_CONST_INTEGRAL(size_t, MaxLength, 32);
     typedef STRINGSLICE_HASHMAP(Lexer, Symbol, CaseSensitive::True) hashmap_type;
 private:
+    friend class Meta::Singleton<Symbols>;
     typedef Meta::Singleton<Symbols> singleton_type;
-    friend class Meta::SingletonHelpers<Symbols, singleton_type>;
 
     hashmap_type _symbols;
 
