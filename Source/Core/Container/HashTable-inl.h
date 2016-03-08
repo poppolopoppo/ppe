@@ -319,35 +319,19 @@ bool HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::FindUsingProbe_(const d
 
     while(true) {
         Assert(distance < probe.HashCapacity);
-        const _HashWIndices it = hashWIndices[bucket];
+        const _HashWIndices& it = hashWIndices[bucket];
 
-        if (it.empty() ||
-            distance > probe.ProbeDistance(it.hash_value, bucket)) {
+        if (it.empty() || distance > probe.ProbeDistance(it.hash_value, bucket)) {
+            Assert(it.hash_value != hashValue);
             break;
         }
-        else if (it.hash_value == hashValue &&
-                 KeyEqual_(key, _values_hashIndices[it.data_index]) ) {
+        else if (it.hash_value == hashValue && KeyEqual_(key, _values_hashIndices[it.data_index])) {
+            Assert(it.data_index < probe.Size);
+            Assert(probe.ProbeDistance(it.hash_value, bucket) == distance);
             *pSlotIndex = bucket;
             *pDataIndex = it.data_index;
             return true;
         }
-
-        /*
-        if ((it.hash_value == hashValue) | it.empty()) {
-            if (it.empty()) {
-                break;
-            }
-            else if (KeyEqual_(key, _values_hashIndices[it.data_index])) {
-                Assert(it.data_index < probe.Size);
-                Assert(probe.ProbeDistance(it.hash_value, bucket) == distance);
-                *pSlotIndex = bucket;
-                *pDataIndex = it.data_index;
-                return true;
-            }
-        }
-        else if (distance > probe.ProbeDistance(it.hash_value, bucket)) {
-            break;
-        }*/
 
         bucket = ++bucket & probe.HashCapacityMask;
         distance++;
@@ -392,6 +376,7 @@ bool HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::InsertUsingProbe_Assume
 
         const size_type it_distance = probe.ProbeDistance(it.hash_value, bucket);
         if (it_distance < distance) {
+            Assert(it.hash_value != idx.hash_value);
             std::swap(it, idx);
             distance = it_distance;
         }

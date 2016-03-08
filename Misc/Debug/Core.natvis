@@ -59,6 +59,18 @@
     </Expand>
   </Type>
 
+  <Type Name="Core::HashTable&lt;*, *, *, *, *&gt;">
+    <DisplayString>{{ size={_size_capacityLog2Plus1>>5}, capacity={(1ul&lt;&lt;(_size_capacityLog2Plus1&amp;((1ul&lt;&lt;5)-1)))&gt;&gt;1}</DisplayString>
+    <Expand>
+      <Item Name="Size">_size_capacityLog2Plus1>>5</Item>
+      <Item Name="Capacity">(1ul&lt;&lt;(_size_capacityLog2Plus1&amp;((1ul&lt;&lt;5)-1)))&gt;&gt;1</Item>
+      <ArrayItems>
+        <Size>_size_capacityLog2Plus1>>5</Size>
+        <ValuePointer>_values_hashIndices</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
   <Type Name="Core::RawStorage&lt;*, *&gt;">
     <DisplayString>{{ size={_size} }}</DisplayString>
     <Expand>

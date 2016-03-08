@@ -349,14 +349,6 @@ void Test_Containers() {
         VECTOR_THREAD_LOCAL(Container, StringSlice) search(input);
         std::random_shuffle(search.begin(), search.end());
 
-        {
-            std::ofstream oss("hash_values.txt");
-            for (const StringSlice& slice : input) {
-                oss << std::hex << StringSliceHasher<char, CaseSensitive::True>()(slice)
-                    << ' ' << slice << std::endl;
-            }
-        }
-
 #ifdef WITH_CORE_ASSERT
         static const size_t loops = 10;
 #else
