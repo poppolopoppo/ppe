@@ -47,14 +47,12 @@ namespace Meta {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template<typename T, typename = void>
-struct is_iterator {
-   static constexpr bool value = false;
-};
+struct is_iterator : public std::false_type {};
 //----------------------------------------------------------------------------
 template<typename T>
-struct is_iterator<T, typename std::enable_if<not std::is_same<typename std::iterator_traits<T>::value_type, void>::value>::type > {
-   static constexpr bool value = true;
-};
+struct is_iterator<T,
+    typename std::enable_if<not std::is_same<typename std::iterator_traits<T>::value_type, void>::value>::type
+> : public std::true_type {};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
