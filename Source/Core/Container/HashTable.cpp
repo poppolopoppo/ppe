@@ -9,98 +9,6 @@ namespace Core {
 namespace {
 //----------------------------------------------------------------------------
 template <typename _HashWIndex>
-NO_INLINE static Pair<size_t, bool> InsertBucketUsingProbe_(
-    const details::HashTableProbe_ probe,
-    const MemoryView<_HashWIndex> hashWIndices,
-    size_t hashValue, size_t* pDataIndex,
-    size_t hint ) {
-    Assert(pDataIndex);
-
-    typedef typename _HashWIndex::size_type size_type;
-    Assert(probe.Size == *pDataIndex);
-
-    _HashWIndex idx = _HashWIndex::Make(hashValue, *pDataIndex);
-
-    size_t bucket = (size_t(-1) == hint)
-        ? probe.DesiredPos(idx.hash_value)
-        : probe.DesiredPos(hint+1);
-
-    const size_t baseBucket = bucket;
-
-    size_t distance = probe.ProbeDistance(size_type(hashValue), bucket);
-    size_t it_distance = 0;
-    for (;;) {
-        Assert(distance <= probe.HashCapacity);
-
-        _HashWIndex& it = hashWIndices[bucket];
-
-        if (it.empty()) {
-            hashWIndices[bucket] = idx;
-            return MakePair(bucket, false);
-        }
-        else if (it.hash_value == hashValue) {
-            bool existed = (it.hash_value == size_type(hashValue));
-            *pDataIndex = it.data_index;
-            return MakePair(bucket, existed);
-        }
-        else if ((it_distance = probe.ProbeDistance(it.hash_value, bucket)) < distance) {
-            if (it.deleted()) {
-                hashWIndices[bucket] = idx;
-                return MakePair(bucket, false);
-            }
-            std::swap(it, idx);
-            distance = it_distance;
-        }
-
-        distance++;
-        bucket = probe.DesiredPos(bucket+1);
-
-#ifdef WITH_CORE_ASSERT
-        const size_t distanceForDebug = probe.ProbeDistance(idx.hash_value, bucket);
-        Assert(distanceForDebug == distance);
-#endif
-    }
-
-    AssertNotReached();
-    return Pair<size_t, bool>();
-}
-//----------------------------------------------------------------------------
-template <typename _HashWIndex>
-NO_INLINE static Pair<size_t, bool> LookupBucketUsingProbe_(
-    const details::HashTableProbe_ probe,
-    const MemoryView<_HashWIndex> hashWIndices,
-    size_t hashValue, size_t* pDataIndex,
-    size_t hint ) noexcept {
-    Assert(pDataIndex);
-
-    typedef typename _HashWIndex::size_type size_type;
-
-    size_t bucket = (size_t(-1) == hint)
-        ? probe.DesiredPos(hashValue)
-        : probe.DesiredPos(hint+1);
-
-    size_t distance = probe.ProbeDistance(size_type(hashValue), bucket);
-    for (;;) {
-        Assert(distance <= probe.HashCapacity);
-
-        const _HashWIndex& it = hashWIndices[bucket];
-
-        if (it.empty() || distance > probe.ProbeDistance(it.hash_value, bucket) ) {
-            break;
-        }
-        else if (it.hash_value == size_type(hashValue)) {
-            *pDataIndex = it.data_index;
-            return MakePair(bucket, true);
-        }
-
-        distance++;
-        bucket = probe.DesiredPos(bucket+1);
-    }
-
-    return MakePair(bucket, false);
-}
-//----------------------------------------------------------------------------
-template <typename _HashWIndex>
 static void EraseBucketUsingProbe_(
     const details::HashTableProbe_ probe,
     const MemoryView<_HashWIndex> hashWIndices,
@@ -115,6 +23,8 @@ static void EraseBucketUsingProbe_(
     Assert(not it.deleted());
 
     it.MarkAsDeleted();
+
+    AssertNotImplemented(); // TODO: bubble down instead of tombstones !
 }
 //----------------------------------------------------------------------------
 template <typename _HashWIndex>
@@ -197,18 +107,6 @@ STATIC_ASSERT(sizeof(u64) == sizeof(HashValueWIndex64_));
 //----------------------------------------------------------------------------
 STATIC_ASSERT(std::is_pod<HashValueWIndex32_>::value);
 STATIC_ASSERT(std::is_pod<HashValueWIndex64_>::value);
-//----------------------------------------------------------------------------
-Pair<size_t, bool> HashTableProbe_::InsertBucket(size_t hashValue, size_t* pDataIndex, size_t hint /* = size_t(-1) */) const {
-    return (UseHashIndices64
-        ? InsertBucketUsingProbe_(*this, HashIndices64(), hashValue, pDataIndex, hint)
-        : InsertBucketUsingProbe_(*this, HashIndices32(), hashValue, pDataIndex, hint) );
-}
-//----------------------------------------------------------------------------
-Pair<size_t, bool> HashTableProbe_::LookupBucket(size_t hashValue, size_t* pDataIndex, size_t hint /* = size_t(-1) */) const {
-    return (UseHashIndices64
-        ? LookupBucketUsingProbe_(*this, HashIndices64(), hashValue, pDataIndex, hint)
-        : LookupBucketUsingProbe_(*this, HashIndices32(), hashValue, pDataIndex, hint) );
-}
 //----------------------------------------------------------------------------
 void HashTableProbe_::EraseBucket(size_t bucket, size_t hashValue) const {
     (UseHashIndices64

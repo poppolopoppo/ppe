@@ -215,13 +215,14 @@ bool HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::erase(const key_type& k
     const details::HashTableProbe_ probe = MakeProbe_();
     Assert(0 < probe.Size);
 
+    /*
     const size_type hashValue = KeyHash_(key);
 
     size_type dataIndex;
     Pair<size_type, bool> it(size_type(-1), false);
 
     do {
-        it = probe.LookupBucket(hashValue, &dataIndex, it.first);
+        it = FindUsingProbe_(probe, key, &dataIndex, it.first);
 
         if (it.second && KeyEqual_(key, _values_hashIndices[dataIndex])) {
             Assert(dataIndex < probe.Size);
@@ -256,7 +257,9 @@ bool HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::erase(const key_type& k
     }
     while (it.second);
 
+    */
 
+    AssertNotImplemented(); // TODO: bubble down instead of tombstones
     return false;
 }
 //----------------------------------------------------------------------------
@@ -301,21 +304,6 @@ bool HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::FindUsingProbe_(const d
     return (probe.UseHashIndices64
         ? FindUsingProbe_(probe, probe.HashIndices64(), key, pSlotIndex, pDataIndex)
         : FindUsingProbe_(probe, probe.HashIndices32(), key, pSlotIndex, pDataIndex) );
-
-    /*
-    const size_type hashValue = KeyHash_(key);
-
-    Pair<size_type, bool> it(size_type(-1), false);
-    do {
-        it = probe.LookupBucket(hashValue, pDataIndex, it.first);
-        if (it.second && KeyEqual_(key, _values_hashIndices[*pDataIndex])) {
-            *pSlotIndex = it.first;
-            return true;
-        }
-    } while (it.second);
-
-    return false;
-    */
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
@@ -378,32 +366,6 @@ bool HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::InsertUsingProbe_Assume
     return (probe.UseHashIndices64
         ? InsertUsingProbe_AssumeEnoughCapacity_(probe, probe.HashIndices64(), key, pDataIndex)
         : InsertUsingProbe_AssumeEnoughCapacity_(probe, probe.HashIndices32(), key, pDataIndex) );
-
-    /*
-
-    const size_type hashValue = KeyHash_(key);
-
-    *pDataIndex = checked_cast<size_type>(probe.Size);
-
-    Pair<size_type, bool> it(size_type(-1), false);
-    do {
-        it = probe.InsertBucket(hashValue, pDataIndex, it.first);
-        if (it.second) {
-            if (KeyEqual_(key, _values_hashIndices[*pDataIndex]))
-                return true;
-            else
-                break;
-        }
-    } while (it.second);
-
-    Assert(*pDataIndex == probe.Size);
-    IncSize_();
-    probe.Size++;
-    Assert(size() == probe.Size);
-    Assert(CheckInvariants());
-
-    return false;
-    */
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
@@ -526,7 +488,7 @@ void HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::RelocateAndRehash_(size
         ? allocator_traits::allocate(*this, allocationCount)
         : nullptr );
 
-    const details::HashTableProbe_ probe = MakeProbe_();
+    details::HashTableProbe_ probe = MakeProbe_();
     Assert(0 == probe.Size || nullptr != _values_hashIndices);
     Assert(0 == probe.Size || nullptr != oldData);
     Assert(0 == probe.Size || 0 != allocationCount);
@@ -543,19 +505,24 @@ void HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::RelocateAndRehash_(size
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
-void HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::RehashUsingProbe_(const details::HashTableProbe_& probe) {
+void HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::RehashUsingProbe_(details::HashTableProbe_& probe) {
     Assert(AliasesToContainer_(probe));
 
+    const size_type n = probe.Size;
+
+    SetSize_(0);
+    probe.Size = 0;
     probe.ClearBuckets();
 
     forrange(i, 0, probe.Size) {
         size_t dataIndex = i;
-        const size_type hashValue = KeyHash_(_values_hashIndices[i]);
-        const auto it = probe.InsertBucket(hashValue, &dataIndex);
-        Assert(false == it.second);
+        if (InsertUsingProbe_AssumeEnoughCapacity_(probe, table_traits::Key(_values_hashIndices[i]), &dataIndex))
+            AssertNotReached();
         Assert(dataIndex == i);
     }
 
+    Assert(n == size());
+    Assert(n == probe.Size);
     Assert(CheckInvariants());
 }
 //----------------------------------------------------------------------------

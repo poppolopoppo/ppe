@@ -123,8 +123,6 @@ struct HashTableProbe_ {
     size_t ProbeDistance(size_t hashValue, size_t bucket) const { return (((bucket + HashCapacity) - DesiredPos(hashValue)) & HashCapacityMask); }
     MemoryView<HashValueWIndex32_> HashIndices32() const { Assert(not UseHashIndices64); return MemoryView<HashValueWIndex32_>(reinterpret_cast<HashValueWIndex32_*>(HashIndicesRaw), HashCapacity); }
     MemoryView<HashValueWIndex64_> HashIndices64() const { Assert(UseHashIndices64); return MemoryView<HashValueWIndex64_>(reinterpret_cast<HashValueWIndex64_*>(HashIndicesRaw), HashCapacity); }
-    Pair<size_t, bool> InsertBucket(size_t hashValue, size_t* pDataIndex, size_t hint = size_t(-1)) const;
-    Pair<size_t, bool> LookupBucket(size_t hashValue, size_t* pDataIndex, size_t hint = size_t(-1)) const;
     void EraseBucket(size_t bucket, size_t hashValue) const;
     void SwapDataIndex(size_t bucket0, size_t bucket1) const;
     void ClearBuckets() const;
@@ -519,7 +517,7 @@ private:
 
     void Reserve_AssumeEmpty_(size_type count);
     void RelocateAndRehash_(size_type oldCapacity, size_type allocationCount);
-    void RehashUsingProbe_(const details::HashTableProbe_& probe);
+    void RehashUsingProbe_(details::HashTableProbe_& probe);
 
     void swap_(HashTable& other, std::true_type );
     void swap_(HashTable& other, std::false_type );
