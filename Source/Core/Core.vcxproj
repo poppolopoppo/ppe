@@ -303,7 +303,6 @@
     <CustomBuild Include="Memory\WeakPtr-inl.h" />
     <CustomBuild Include="Memory\WeakPtr.cpp" />
     <CustomBuild Include="Memory\WeakPtr.h" />
-    <CustomBuild Include="Meta\Activator.h" />
     <CustomBuild Include="Meta\Aliases.h" />
     <CustomBuild Include="Meta\Alignment.h" />
     <CustomBuild Include="Meta\Assert.cpp" />
@@ -323,7 +322,6 @@
     <CustomBuild Include="Meta\Iterator.h" />
     <CustomBuild Include="Meta\NumericLimits.h" />
     <CustomBuild Include="Meta\OneTimeInitialize.h" />
-    <CustomBuild Include="Meta\PackedSizeAndCapacity.h" />
     <CustomBuild Include="Meta\PointerWFlags.h" />
     <CustomBuild Include="Meta\SafeBool.h" />
     <CustomBuild Include="Meta\Singleton.h" />

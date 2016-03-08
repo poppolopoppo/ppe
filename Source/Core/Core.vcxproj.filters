@@ -781,9 +781,6 @@
     <CustomBuild Include="Memory\WeakPtr.h">
       <Filter>Memory</Filter>
     </CustomBuild>
-    <CustomBuild Include="Meta\Activator.h">
-      <Filter>Meta</Filter>
-    </CustomBuild>
     <CustomBuild Include="Meta\Aliases.h">
       <Filter>Meta</Filter>
     </CustomBuild>
@@ -839,9 +836,6 @@
       <Filter>Meta</Filter>
     </CustomBuild>
     <CustomBuild Include="Meta\OneTimeInitialize.h">
-      <Filter>Meta</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Meta\PackedSizeAndCapacity.h">
       <Filter>Meta</Filter>
     </CustomBuild>
     <CustomBuild Include="Meta\PointerWFlags.h">
