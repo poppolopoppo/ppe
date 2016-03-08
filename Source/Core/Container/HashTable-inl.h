@@ -8,40 +8,32 @@ namespace Core {
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
 size_t HashTableBase<_Key, _Value>::GrowIFN_ReturnAllocationCount_(size_type atleast) {
-    STATIC_ASSERT(load_factor() <= 100);
-    const size_type input = atleast;
-    atleast += ((100 - load_factor()) * atleast) / 100;
-    Assert(atleast >= input);
     size_type capacityLog2Plus1 = _size_capacityLog2Plus1&MaskCapacityLog2Plus1;
     if (atleast <= ((1ul<<capacityLog2Plus1)>>1)) {
         return 0;
     }
     else {
-        do { capacityLog2Plus1++; } while (atleast > ((1ul<<capacityLog2Plus1)>>1));
+        Assert(0 < atleast);
+        capacityLog2Plus1 = Meta::Log2i(atleast-1+atleast) + 1;
         Assert((capacityLog2Plus1&MaskCapacityLog2Plus1) == capacityLog2Plus1);
         _size_capacityLog2Plus1 = (_size_capacityLog2Plus1&MaskSize)|capacityLog2Plus1;
+        Assert(capacity() >= atleast);
         return AllocationCountWIndicesFor_(capacity());
     }
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
 size_t HashTableBase<_Key, _Value>::ShrinkToFitIFN_ReturnAllocationCount_(size_type atleast) {
-    STATIC_ASSERT(load_factor() <= 100);
-    const size_type input = atleast;
-    atleast += ((100 - load_factor()) * atleast) / 100;
-    Assert(atleast >= input);
-    const size_type minCapacityPow2 = Meta::RoundToNextHigherPow2(checked_cast<u32>(atleast));
-    Assert(IS_POW2(minCapacityPow2));
-    size_type capacityLog2Plus1 = _size_capacityLog2Plus1&MaskCapacityLog2Plus1;
-    if (minCapacityPow2 >= ((1ul<<capacityLog2Plus1)>>1)) {
-        Assert(minCapacityPow2 == ((1ul<<capacityLog2Plus1)>>1));
+    const size_type minCapacityLog2Plus1 = (0 == atleast ? 1 : Meta::Log2i(atleast-1+atleast) + 1);
+    const size_type capacityLog2Plus1 = _size_capacityLog2Plus1&MaskCapacityLog2Plus1;
+    if (minCapacityLog2Plus1 >= capacityLog2Plus1) {
+        Assert(minCapacityLog2Plus1 == ((1ul<<capacityLog2Plus1)>>1));
         return 0;
     }
     else {
-        do { capacityLog2Plus1++; } while (minCapacityPow2 > ((1ul<<capacityLog2Plus1)>>1));
-        Assert(minCapacityPow2 == ((1ul<<capacityLog2Plus1)>>1));
         Assert((capacityLog2Plus1&MaskCapacityLog2Plus1) == capacityLog2Plus1);
-        _size_capacityLog2Plus1 = (_size_capacityLog2Plus1&MaskSize)|capacityLog2Plus1;
+        _size_capacityLog2Plus1 = (_size_capacityLog2Plus1&MaskSize)|minCapacityLog2Plus1;
+        Assert(capacity() >= size());
         return AllocationCountWIndicesFor_(capacity());
     }
 }
@@ -120,13 +112,15 @@ template <typename _Key, typename _Value, typename _Hash, typename _Equal, typen
 bool HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::CheckInvariants() const {
 #ifndef NDEBUG
     const details::HashTableProbe_ probe = MakeProbe_();
-    if (0 > probe.Capacity && false == IS_POW2(probe.Capacity))
+    if (0 > probe.ValuesCapacity && false == IS_POW2(probe.ValuesCapacity))
         return false;
-    if (nullptr == _values_hashIndices && (probe.Size || probe.Capacity))
+    if (nullptr == _values_hashIndices && (probe.Size || probe.ValuesCapacity))
         return false;
-    if (nullptr != _values_hashIndices && 0 == probe.Capacity)
+    if (nullptr != _values_hashIndices && 0 == probe.ValuesCapacity)
         return false;
-    if (probe.Size > probe.Capacity)
+    if (probe.Size > probe.ValuesCapacity)
+        return false;
+    if (probe.HashCapacity < probe.ValuesCapacity)
         return false;
 #endif
     return true;
@@ -304,6 +298,11 @@ bool HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::FindUsingProbe_(const d
     Assert(AliasesToContainer_(probe));
     Assert(pDataIndex);
 
+    return (probe.UseHashIndices64
+        ? FindUsingProbe_(probe, probe.HashIndices64(), key, pSlotIndex, pDataIndex)
+        : FindUsingProbe_(probe, probe.HashIndices32(), key, pSlotIndex, pDataIndex) );
+
+    /*
     const size_type hashValue = KeyHash_(key);
 
     Pair<size_type, bool> it(size_type(-1), false);
@@ -316,13 +315,72 @@ bool HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::FindUsingProbe_(const d
     } while (it.second);
 
     return false;
+    */
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+template <typename _HashWIndices>
+//NO_INLINE
+bool HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::FindUsingProbe_(const details::HashTableProbe_& probe, const MemoryView<_HashWIndices>& hashWIndices, const key_type& key, size_type* pSlotIndex, size_type* pDataIndex) const {
+
+    typedef typename _HashWIndices::size_type hash_type;
+    const hash_type hashValue = hash_type(KeyHash_(key));
+
+    size_type bucket = probe.DesiredPos(hashValue);
+    size_type distance = 0;
+
+    while(true) {
+        Assert(distance < probe.HashCapacity);
+        const _HashWIndices it = hashWIndices[bucket];
+
+        if (it.empty() ||
+            distance > probe.ProbeDistance(it.hash_value, bucket)) {
+            break;
+        }
+        else if (it.hash_value == hashValue &&
+                 KeyEqual_(key, _values_hashIndices[it.data_index]) ) {
+            *pSlotIndex = bucket;
+            *pDataIndex = it.data_index;
+            return true;
+        }
+
+        /*
+        if ((it.hash_value == hashValue) | it.empty()) {
+            if (it.empty()) {
+                break;
+            }
+            else if (KeyEqual_(key, _values_hashIndices[it.data_index])) {
+                Assert(it.data_index < probe.Size);
+                Assert(probe.ProbeDistance(it.hash_value, bucket) == distance);
+                *pSlotIndex = bucket;
+                *pDataIndex = it.data_index;
+                return true;
+            }
+        }
+        else if (distance > probe.ProbeDistance(it.hash_value, bucket)) {
+            break;
+        }*/
+
+        bucket = ++bucket & probe.HashCapacityMask;
+        distance++;
+    }
+
+    Assert(CheckInvariants());
+    return false;
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
 bool HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::InsertUsingProbe_AssumeEnoughCapacity_(details::HashTableProbe_& probe, const key_type& key, size_type* pDataIndex) {
     Assert(AliasesToContainer_(probe));
     Assert(pDataIndex);
-    Assert(probe.Size < probe.Capacity);
+    Assert(probe.Size < probe.ValuesCapacity);
+
+    return (probe.UseHashIndices64
+        ? InsertUsingProbe_AssumeEnoughCapacity_(probe, probe.HashIndices64(), key, pDataIndex)
+        : InsertUsingProbe_AssumeEnoughCapacity_(probe, probe.HashIndices32(), key, pDataIndex) );
+
+    /*
+
     const size_type hashValue = KeyHash_(key);
 
     *pDataIndex = checked_cast<size_type>(probe.Size);
@@ -344,6 +402,52 @@ bool HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::InsertUsingProbe_Assume
     Assert(size() == probe.Size);
     Assert(CheckInvariants());
 
+    return false;
+    */
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+template <typename _HashWIndices>
+bool HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::InsertUsingProbe_AssumeEnoughCapacity_(details::HashTableProbe_& probe, const MemoryView<_HashWIndices>& hashWIndices, const key_type& key, size_type* pDataIndex) {
+    Assert(probe.Size < probe.ValuesCapacity);
+
+    _HashWIndices idx = _HashWIndices::Make(KeyHash_(key), probe.Size);
+    *pDataIndex = idx.data_index;
+
+    size_type bucket = probe.DesiredPos(idx.hash_value);
+    size_type distance = 0;
+
+    for (;;) {
+        Assert(distance < probe.HashCapacity);
+        _HashWIndices& it = hashWIndices[bucket];
+
+        if (it.empty()) {
+            it = idx;
+            break;
+        }
+
+        Assert(it.data_index < probe.Size);
+
+        const size_type it_distance = probe.ProbeDistance(it.hash_value, bucket);
+        if (it_distance < distance) {
+            std::swap(it, idx);
+            distance = it_distance;
+        }
+        else if (it.hash_value == idx.hash_value && KeyEqual_(key, _values_hashIndices[it.data_index])) {
+            *pDataIndex = it.data_index;
+            return true;
+        }
+
+        bucket = (bucket+1) & probe.HashCapacityMask;
+        distance++;
+    }
+
+    IncSize_();
+    probe.Size++;
+
+    Assert(size() == probe.Size);
+    Assert(*pDataIndex + 1 == probe.Size);
+    Assert(CheckInvariants());
     return false;
 }
 //----------------------------------------------------------------------------
