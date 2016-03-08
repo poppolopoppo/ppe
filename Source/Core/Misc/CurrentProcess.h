@@ -11,15 +11,11 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class CurrentProcess;
-//----------------------------------------------------------------------------
-class CurrentProcessData {
+class CurrentProcess : Meta::Singleton<CurrentProcess> {
 public:
-    CurrentProcessData(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t **argv);
-    ~CurrentProcessData();
+    typedef Meta::Singleton<CurrentProcess> parent_type;
 
-    CurrentProcessData(const CurrentProcessData&) = delete;
-    CurrentProcessData& operator =(const CurrentProcessData&) = delete;
+    ~CurrentProcess();
 
     const WString& FileName() const { return _fileName; }
     const WString& Directory() const { return _directory; }
@@ -36,27 +32,6 @@ public:
 
     const Timepoint& StartedAt() const { return _startedAt; }
 
-private:
-    friend struct Meta::Activator<CurrentProcessData>;
-
-    WString _fileName;
-    WString _directory;
-    UniqueArray<WString> _args;
-
-    void *_applicationHandle;
-    int _nShowCmd;
-
-    std::atomic<int> _exitCode;
-
-    size_t _appIcon;
-
-    Timepoint _startedAt;
-};
-//----------------------------------------------------------------------------
-class CurrentProcess : Meta::Singleton<CurrentProcessData, CurrentProcess> {
-public:
-    typedef Meta::Singleton<CurrentProcessData, CurrentProcess> parent_type;
-
     using parent_type::Instance;
     using parent_type::HasInstance;
     using parent_type::Destroy;
@@ -70,6 +45,23 @@ public:
             ? Timepoint::ElapsedSince(Instance().StartedAt())
             : Units::Time::Seconds(0);
     }
+
+private:
+    friend class Meta::Singleton<CurrentProcess>;
+    CurrentProcess(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t **argv);
+
+    WString _fileName;
+    WString _directory;
+    UniqueArray<WString> _args;
+
+    void *_applicationHandle;
+    int _nShowCmd;
+
+    std::atomic<int> _exitCode;
+
+    size_t _appIcon;
+
+    Timepoint _startedAt;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

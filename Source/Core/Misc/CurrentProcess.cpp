@@ -8,7 +8,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-CurrentProcessData::CurrentProcessData(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t **argv)
+CurrentProcess::CurrentProcess(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t **argv)
 :   _args(NewArray<WString>(argc - 1)), _exitCode(0), _appIcon(0)
 ,   _startedAt(Timepoint::Now()) {
     Assert(argc); // current process name at least
@@ -36,7 +36,7 @@ CurrentProcessData::CurrentProcessData(void *applicationHandle, int nShowCmd, si
 #endif
 }
 //----------------------------------------------------------------------------
-CurrentProcessData::~CurrentProcessData() {
+CurrentProcess::~CurrentProcess() {
     LOG(Info, L"[Process] Exit with code = {0}.", _exitCode);
 }
 //----------------------------------------------------------------------------

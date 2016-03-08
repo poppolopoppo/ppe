@@ -2,8 +2,6 @@
 
 #include "Core/Core.h"
 
-#include "Core/Meta/Activator.h"
-
 #include <thread>
 
 // macro enable extension outside Core::
