@@ -71,32 +71,36 @@
 #define NOOP        (void)0
 #define UNUSED(x)   (void)(x)
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 #define lengthof(_ARRAY) ((sizeof(_ARRAY))/(sizeof(_ARRAY[0])))
-//----------------------------------------------------------------------------
-#if 1
-#define STATIC_CONST_INTEGRAL(_TYPE, _NAME, _DEFAULT_VALUE) static constexpr _TYPE _NAME = (_TYPE)(_DEFAULT_VALUE)
-#else
-#define STATIC_CONST_INTEGRAL(_TYPE, _NAME, _DEFAULT_VALUE) enum : _TYPE { _NAME = (_TYPE)(_DEFAULT_VALUE) }
-#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #if defined(__clang__)
 #   define NOALIAS
-#   define RESTRICT
-#else
+#   define NOEXCEPT     noexcept
+#   define RESTRICT     __declspec(restrict)
+#   define THREAD_LOCAL thread_local
+#   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, _DEFAULT_VALUE) static constexpr _TYPE _NAME = (_TYPE)(_DEFAULT_VALUE)
+#elif defined(_MSC_VER) && _MSC_VER >= 1900
+#   define NOALIAS      __declspec(noalias)
+#   define NOEXCEPT     noexcept
+#   define RESTRICT     __declspec(restrict)
+#   define THREAD_LOCAL thread_local
+#   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, _DEFAULT_VALUE) static constexpr _TYPE _NAME = (_TYPE)(_DEFAULT_VALUE)
+#elif defined (_MSC_VER)
 #   define NOALIAS      __declspec(noalias)
 #   define NOEXCEPT     __declspec(nothrow)
 #   define RESTRICT     __declspec(restrict)
+#   define THREAD_LOCAL __declspec(thread)
+#   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, _DEFAULT_VALUE) enum : _TYPE { _NAME = (_TYPE)(_DEFAULT_VALUE) }
+#else
+#   error "unsupported compiler"
 #endif
-#define THREAD_LOCAL    __declspec(thread)
 #define FORCE_INLINE    __forceinline
 #define NO_INLINE       __declspec(noinline)
 //----------------------------------------------------------------------------
 #ifdef _MSC_VER
-#   define Assume(expr)    __assume((expr))
+#   define Assume(expr) __assume((expr))
 #elif ((__GNUC__ * 100 + __GNUC_MINOR__) >= 302) || (__INTEL_COMPILER >= 800) || defined(__clang__)
 #   define Assume(expr)    (__builtin_expect ((expr),1) )
 #else
@@ -104,14 +108,6 @@
 #endif
 #define Likely(expr)     Assume((expr))
 #define Unlikely(expr)   Assume(!(expr))
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-#ifdef _DEBUG
-#    define IF_DEBUG(_CODE) _CODE
-#else
-#    define IF_DEBUG(_CODE) NOOP
-#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -187,7 +183,10 @@ public:
     CoreStartup(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t** argv) {
         Start(applicationHandle, nShowCmd, argc, argv);
     }
-    ~CoreStartup() { Shutdown(); }
+
+    ~CoreStartup() {
+        Shutdown();
+    }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
