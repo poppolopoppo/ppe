@@ -7,7 +7,7 @@
 
 #include "Allocator/PoolAllocatorTag-impl.h"
 #include "Diagnostic/Logger.h"
-#include "Misc/CurrentProcess.h"
+#include "Diagnostic/CurrentProcess.h"
 
 #include "VFS/VirtualFileSystemComponent.h"
 #include "VFS/VirtualFileSystemNativeComponent.h"

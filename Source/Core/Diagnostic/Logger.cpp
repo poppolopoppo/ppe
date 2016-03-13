@@ -4,9 +4,10 @@
 
 #ifdef USE_DEBUG_LOGGER
 
+#include "Diagnostic/CurrentProcess.h"
+
 #include "IO/String.h"
 #include "IO/StringSlice.h"
-#include "Misc/CurrentProcess.h"
 
 #include <iostream>
 #include <sstream>

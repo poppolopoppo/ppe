@@ -6,10 +6,10 @@
 
 #include "Core/Allocator/PoolAllocatorTag-impl.h"
 #include "Core/Diagnostic/CrtDebug.h"
+#include "Core/Diagnostic/CurrentProcess.h"
 #include "Core/Diagnostic/DialogBox.h"
 #include "Core/Diagnostic/Logger.h"
 #include "Core/IO/Stream.h"
-#include "Core/Misc/CurrentProcess.h"
 
 #ifdef OS_WINDOWS
 #   include <sstream>

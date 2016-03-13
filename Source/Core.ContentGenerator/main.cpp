@@ -24,7 +24,7 @@ typedef Core::ContentGenerator::RobotApp application_type;
 #   include "resource.h"
 #endif
 
-#include "Core/Misc/CurrentProcess.h"
+#include "Core/Diagnostic/CurrentProcess.h"
 
 template <typename _Application>
 static int Bootstrap(void *appHandle, int nShowCmd, int argc, const wchar_t**argv) {

@@ -6,8 +6,8 @@
 #include "Device/PresentationParameters.h"
 #include "Device/Texture/SurfaceFormat.h"
 
+#include "Core/Diagnostic/CurrentProcess.h"
 #include "Core/Diagnostic/Logger.h"
-#include "Core/Misc/CurrentProcess.h"
 
 namespace Core {
 namespace Graphics {

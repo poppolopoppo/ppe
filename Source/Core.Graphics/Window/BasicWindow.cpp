@@ -2,10 +2,9 @@
 
 #include "BasicWindow.h"
 
+#include "Core/Diagnostic/CurrentProcess.h"
 #include "Core/Diagnostic/LastError.h"
 #include "Core/Diagnostic/Logger.h"
-
-#include "Core/Misc/CurrentProcess.h"
 
 #include <sstream>
 
