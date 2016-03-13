@@ -170,6 +170,11 @@ Compiler( 'Compiler-MSVC2013-x64_x86' )
     }
 ]
 
+.MSVC2013GenerateProfilingInfos =
+[
+    .LinkerOptions = ' /PROFILE' ; Produit un fichier de sortie utilisable avec le profileur Outils d'analyse des performances.
+]
+
 //------------------------------------------------------------------------------
 // Platforms
 //------------------------------------------------------------------------------
@@ -213,13 +218,13 @@ Compiler( 'Compiler-MSVC2013-x64_x86' )
 .MSVC2013_Win32Debug         = .MSVC2013PlatformWin32   + .MSVCBaseDebugConfig
 .MSVC2013_Win32FastDebug     = .MSVC2013PlatformWin32   + .MSVCBaseFastDebugConfig
 .MSVC2013_Win32Release       = .MSVC2013PlatformWin32   + .MSVCBaseReleaseConfig
-.MSVC2013_Win32Profiling     = .MSVC2013PlatformWin32   + .MSVCBaseProfilingConfig
+.MSVC2013_Win32Profiling     = .MSVC2013PlatformWin32   + .MSVCBaseProfilingConfig + .MSVC2013GenerateProfilingInfos
 .MSVC2013_Win32Final         = .MSVC2013PlatformWin32   + .MSVCBaseFinalConfig
 
 .MSVC2013_X64Debug           = .MSVC2013PlatformX64     + .MSVCBaseDebugConfig
 .MSVC2013_X64FastDebug       = .MSVC2013PlatformX64     + .MSVCBaseFastDebugConfig
 .MSVC2013_X64Release         = .MSVC2013PlatformX64     + .MSVCBaseReleaseConfig
-.MSVC2013_X64Profiling       = .MSVC2013PlatformX64     + .MSVCBaseProfilingConfig
+.MSVC2013_X64Profiling       = .MSVC2013PlatformX64     + .MSVCBaseProfilingConfig + .MSVC2013GenerateProfilingInfos
 .MSVC2013_X64Final           = .MSVC2013PlatformX64     + .MSVCBaseFinalConfig
 
 .MSVC2013CompileConfigs =

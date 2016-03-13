@@ -16,6 +16,8 @@
 #define USE_PRECOMPILED_HEADERS
 ; utilise les .obj plutôt que les .lib comme input du linker
 #define USE_LIBRARY_DEPENDENCY_INPUT
+; utilise le linker incremental en profiling
+#define USE_LTCG_INCREMENTAL_LINKER_IN_PROFILING
 
 #include "MSVCBase.bff"
 
@@ -200,6 +202,16 @@ Compiler( 'Compiler-MSVC2015-x64_x86' )
     .LibrarianOptions   = ' /LTCG'
 ]
 
+.MSVC2015GenerateProfilingInfos =
+[
+    .LinkerOptions      = ' /PROFILE'
+]
+
+#if USE_LTCG_INCREMENTAL_LINKER_IN_PROFILING
+Print( "Using Visual 2015 incremental LTCG for profiling : no profiling informations" )
+.MSVC2015GenerateProfilingInfos = [] ; /PROFILE silently disable the incremental linker
+#endif
+
 //------------------------------------------------------------------------------
 // Platforms
 //------------------------------------------------------------------------------
@@ -245,13 +257,13 @@ Compiler( 'Compiler-MSVC2015-x64_x86' )
 .MSVC2015_Win32Debug         = .MSVC2015PlatformWin32   + .MSVCBaseDebugConfig          + .MSVC2015DebugFastLink
 .MSVC2015_Win32FastDebug     = .MSVC2015PlatformWin32   + .MSVCBaseFastDebugConfig      + .MSVC2015DebugFastLink
 .MSVC2015_Win32Release       = .MSVC2015PlatformWin32   + .MSVCBaseReleaseConfig        + .MSVC2015DebugFastLink
-.MSVC2015_Win32Profiling     = .MSVC2015PlatformWin32   + .MSVCBaseProfilingConfig      + .MSVC2015LinkTimeCodeGenerationIncremental
+.MSVC2015_Win32Profiling     = .MSVC2015PlatformWin32   + .MSVCBaseProfilingConfig      + .MSVC2015LinkTimeCodeGenerationIncremental + .MSVC2015GenerateProfilingInfos
 .MSVC2015_Win32Final         = .MSVC2015PlatformWin32   + .MSVCBaseFinalConfig          + .MSVC2015LinkTimeCodeGenerationIncremental
 
 .MSVC2015_X64Debug           = .MSVC2015PlatformX64     + .MSVCBaseDebugConfig          + .MSVC2015DebugFastLink
 .MSVC2015_X64FastDebug       = .MSVC2015PlatformX64     + .MSVCBaseFastDebugConfig      + .MSVC2015DebugFastLink
 .MSVC2015_X64Release         = .MSVC2015PlatformX64     + .MSVCBaseReleaseConfig        + .MSVC2015DebugFastLink
-.MSVC2015_X64Profiling       = .MSVC2015PlatformX64     + .MSVCBaseProfilingConfig      + .MSVC2015LinkTimeCodeGenerationIncremental
+.MSVC2015_X64Profiling       = .MSVC2015PlatformX64     + .MSVCBaseProfilingConfig      + .MSVC2015LinkTimeCodeGenerationIncremental + .MSVC2015GenerateProfilingInfos
 .MSVC2015_X64Final           = .MSVC2015PlatformX64     + .MSVCBaseFinalConfig          + .MSVC2015LinkTimeCodeGenerationIncremental
 
 .MSVC2015CompileConfigs =

@@ -342,7 +342,6 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .LibrarianOptions   = ' /LTCG'          ; link time code generation
 
     .LinkerOptions      = ' /LTCG'          ; link time code generation
-                        + ' /PROFILE'       ; Produit un fichier de sortie utilisable avec le profileur Outils d'analyse des performances.
 ]
 
 //------------------------------------------------------------------------------
