@@ -5,6 +5,7 @@
 #include "Core/Allocator/Allocation.h"
 #include "Core/Allocator/InSituAllocator.h"
 #include "Core/Container/Hash.h"
+#include "Core/Memory/MemoryView.h"
 
 #include <algorithm>
 #include <initializer_list>
@@ -142,6 +143,13 @@ public:
     Vector(std::initializer_list<value_type> ilist, const allocator_type& alloc) : Vector(alloc) { assign(ilist.begin(), ilist.end()); }
     Vector& operator=(std::initializer_list<value_type> ilist) { assign(ilist.begin(), ilist.end()); return *this; }
 
+    template <typename U>
+    explicit Vector(const MemoryView<U>& view) : Vector() { assign(view); }
+    template <typename U>
+    Vector(const MemoryView<U>& view, const allocator_type& alloc) : Vector(alloc) { assign(view); }
+    template <typename U>
+    Vector& operator=(const MemoryView<U>& view) { assign(view); return *this; }
+
     template <typename _It>
     Vector(_It first, _It last) : Vector() { assign(first, last); }
     template <typename _It>
@@ -194,6 +202,11 @@ public:
     void assign(std::initializer_list<T> ilist) { assign(ilist.begin(), ilist.end()); }
     void assign(Vector&& rvalue);
 
+    template <typename U>
+    void assign(const MemoryView<U>& view) { assign(view.begin(), view.end()); }
+    void assign(const MemoryView<value_type>& view) { assign(std::make_move_iterator(view.begin()), std::make_move_iterator(view.end())); }
+    void assign(const MemoryView<const value_type>& view) { assign(view.begin(), view.end()); }
+
     template <class... _Args>
     iterator emplace(const_iterator pos, _Args&&... args);
     template <class... _Args>
@@ -234,6 +247,9 @@ public:
 
     void swap(Vector& other);
     friend void swap(Vector& lhs, Vector& rhs) { lhs.swap(rhs); }
+
+    MemoryView<value_type> MakeView() const { return MemoryView<value_type>(_data, _size); }
+    MemoryView<typename std::add_const<value_type>::type> MakeConstView() const { return MemoryView<typename std::add_const<value_type>::type>(_data, _size); }
 
     bool CheckInvariants() const;
     bool AliasesToContainer(const_pointer p) const { return ((p >= _data) && (p <= _data + _size)); }
