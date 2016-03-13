@@ -23,9 +23,10 @@ namespace MiniDump
 
 #else
 
-#include <windows.h>
+#include "DbghelpWrapper.h"
+
+#include <Windows.h>
 #include <winnt.h>
-#include <DbgHelp.h>
 #include <time.h>
 
 #ifndef ARCH_X64
@@ -35,35 +36,8 @@ namespace MiniDump
 namespace Core {
 namespace MiniDump { namespace
 {
-    typedef BOOL (WINAPI *MiniDumpWriteDump_t)(
-        HANDLE hProcess,
-        DWORD ProcessId,
-        HANDLE hFile,
-        MINIDUMP_TYPE DumpType,
-        PMINIDUMP_EXCEPTION_INFORMATION ExceptionParam,
-        PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam,
-        PMINIDUMP_CALLBACK_INFORMATION CallbackParam
-        );
-
     static AtomicSpinLock gMiniDumpBarrier;
     static AtomicSpinLock gMiniDumpWritten;
-    static volatile MiniDumpWriteDump_t gMiniDumpWriteDump = nullptr;
-
-    bool RetrieveDbgHelp_()
-    {
-        if (nullptr != gMiniDumpWriteDump)
-            return true;
-
-        HMODULE hModule = ::LoadLibraryA("DbgHelp.dll");
-        if ( NULL == hModule )
-            return false;
-
-        gMiniDumpWriteDump = ( MiniDumpWriteDump_t )GetProcAddress(hModule, "MiniDumpWriteDump");
-        if ( NULL == gMiniDumpWriteDump )
-            return false;
-
-        return true;
-    }
 
     // this allocator is not thread safe but exclusive access is guaranteed through the critical section
     static size_t   gFailsafeUsedSize = 0;
@@ -274,7 +248,7 @@ namespace MiniDump
 
         const AtomicSpinLock::Scope scopeLock(gMiniDumpBarrier);
 
-        if ( false == RetrieveDbgHelp_() )
+        if ( false == DbghelpWrapper::HasInstance() )
             return Result::NoDbgHelpDLL;
 
         // Try to open the file
@@ -366,8 +340,8 @@ namespace MiniDump
         // Create the minidump
         HANDLE currentProcess = ::GetCurrentProcess();
         DWORD currentProcessId = ::GetCurrentProcessId();
-        BOOL rv = gMiniDumpWriteDump(currentProcess, currentProcessId,
-                                     hFile, miniDumpType, &mdei, &musi, &mci );
+        BOOL rv = DbghelpWrapper::Instance().Lock().MiniDumpWriteDump()(
+            currentProcess, currentProcessId, hFile, miniDumpType, &mdei, &musi, &mci );
 
         Result res = ( TRUE == rv ) ? Result::Success : Result::DumpFailed;
 
@@ -457,7 +431,7 @@ namespace MiniDump
 
     void Start()
     {
-        if (!RetrieveDbgHelp_())
+        if (not DbghelpWrapper::HasInstance())
             return;
 
 #ifdef HANDLE_VECTORED_EXCEPTION
@@ -469,12 +443,13 @@ namespace MiniDump
 
     void Shutdown()
     {
-        if (nullptr != gPreviousUnhandledExceptionFilter)
-            ::SetUnhandledExceptionFilter(gPreviousUnhandledExceptionFilter);
+        if (not DbghelpWrapper::HasInstance())
+            return;
+
+        ::SetUnhandledExceptionFilter(gPreviousUnhandledExceptionFilter);
 
 #ifdef HANDLE_VECTORED_EXCEPTION
-        if (nullptr != gHandleVectoredExceptionHandler)
-            ::RemoveVectoredExceptionHandler(gHandleVectoredExceptionHandler);
+        ::RemoveVectoredExceptionHandler(gHandleVectoredExceptionHandler);
 #endif
     }
 }//!namespace MiniDump
