@@ -284,6 +284,130 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <
+    typename _Key
+,   typename _Hash = Hash<_Key>
+,   typename _EqualTo = Meta::EqualTo<_Key>
+,   typename _Allocator = ALLOCATOR(Container, _Key)
+>   class CompactHashSet : _Allocator {
+public:
+    typedef _Key value_type;
+
+    typedef _Hash hasher;
+    typedef _EqualTo key_equal;
+
+    typedef _Allocator allocator_type;
+    typedef std::allocator_traits<_Allocator> allocator_traits;
+
+    typedef value_type& reference;
+    typedef const value_type& const_reference;
+    typedef typename std::add_pointer<value_type>::type pointer;
+    typedef typename std::add_pointer<const value_type>::type const_pointer;
+
+    typedef size_t size_type;
+    typedef ptrdiff_t difference_type;
+
+    static constexpr size_type MaxLoadFactor = 50;
+
+    CompactHashSet() : _values(nullptr), _capacity(0), _size(0) {}
+    ~CompactHashSet() { clear(); }
+
+    size_type size() const { return _size; }
+    bool empty() const { return 0 == _size; }
+    size_type capacity() const { return _capacity; }
+
+    void resize(size_type atleast) {
+        atleast = atleast + ((100-MaxLoadFactor)*atleast)/100;
+        if (atleast > _capacity) {
+            Assert(atleast <= Primes_[31]);
+            const size_type oldcapacity = _capacity;
+            forrange(i, 0, 32)
+                if (atleast <= Primes_[i]) {
+                    _capacity = Primes_[i];
+                    break;
+                }
+            Assert(_capacity >= atleast);
+            if (oldcapacity) {
+                Assert(_values);
+                forrange(i, 0, oldcapacity)
+                    allocator_traits::destroy(*this, _values+i);
+                allocator_traits::deallocate(*this, _values, oldcapacity);
+            }
+            _values = allocator_traits::allocate(*this, _capacity);
+            forrange(i, 0, _capacity)
+                allocator_traits::construct(*this, _values+i);
+        }
+    }
+
+    bool insert(const_reference value) {
+        Assert(0 < _capacity);
+        Assert(_size < _capacity);
+
+        const size_t h = hasher()(value);
+
+        size_type bucket = size_type(h % _capacity);
+        size_type inc = size_type(1 + (h>>16) % (_capacity - 1));
+
+        const value_type empty_key;
+
+        while (not key_equal()(_values[bucket], empty_key) &&
+               not key_equal()(_values[bucket], value) )
+            bucket = (bucket + inc < _capacity ? bucket + inc : (bucket + inc) - _capacity);
+
+        if (key_equal()(_values[bucket], empty_key)) {
+            _values[bucket] = value;
+            _size++;
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+
+    pointer find(const_reference value) const {
+        Assert(0 < _capacity);
+        Assert(_size < _capacity);
+        const size_t h = hasher()(value);
+
+        size_type bucket = h % _capacity;
+        size_type inc = 1 + (h>>16) % (_capacity - 1);
+
+        const value_type empty_key;
+
+        while (not key_equal()(_values[bucket], empty_key) &&
+               not key_equal()(_values[bucket], value) )
+            bucket = (bucket + inc < _capacity ? bucket + inc : (bucket + inc) - _capacity);
+
+        return (not key_equal()(_values[bucket], empty_key) ? _values + bucket : nullptr);
+    }
+
+    void clear() {
+        Assert(_values);
+        if (_capacity) {
+            forrange(i, 0, _capacity)
+                allocator_traits::destroy(*this, _values+i);
+            allocator_traits::deallocate(*this, _values, _capacity);
+            _values = nullptr;
+            _capacity = _size = 0;
+        }
+    }
+
+private:
+    static constexpr size_type Primes_[32] = {
+       0x00000000,0x00000003,0x0000000b,0x00000017,0x00000035,0x00000061,0x000000c1,0x00000185,
+       0x00000301,0x00000607,0x00000c07,0x00001807,0x00003001,0x00006011,0x0000c005,0x0001800d,
+       0x00030005,0x00060019,0x000c0001,0x00180005,0x0030000b,0x0060000d,0x00c00005,0x01800013,
+       0x03000005,0x06000017,0x0c000013,0x18000005,0x30000059,0x60000005,0xc0000001,0xfffffffb,
+    };
+
+    pointer _values;
+
+    size_type _capacity;
+    size_type _size;
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 void Test_Containers() {
     {
         float4x4 m = Make3DTransformMatrix(float3(1,2,3), 10.0f, float3::Z(), Radians(33.0f));
@@ -340,11 +464,16 @@ void Test_Containers() {
 
         //words.resize((UINT16_MAX*80)/100);
 
-        VECTOR_THREAD_LOCAL(Container, StringSlice) input;
-        input.reserve(words.size());
+        VECTOR_THREAD_LOCAL(Container, StringSlice) all;
+        all.reserve(words.size());
         for (const String& word : words)
-            input.emplace_back(MakeStringSlice(word));
-        std::random_shuffle(input.begin(), input.end());
+            all.emplace_back(MakeStringSlice(word));
+        std::random_shuffle(all.begin(), all.end());
+
+        const size_t k = (all.size() * 80) / 100;
+
+        const auto input = all.MakeConstView().CutBefore(k);
+        const auto negative = all.MakeConstView().CutStartingAt(k);
 
         VECTOR_THREAD_LOCAL(Container, StringSlice) search(input);
         std::random_shuffle(search.begin(), search.end());
@@ -402,6 +531,44 @@ void Test_Containers() {
             }
         }*/
         {
+            const BenchmarkScope bench("CompactHashSet");
+
+            typedef CompactHashSet<
+                StringSlice,
+                StringSliceHasher<char, CaseSensitive::True>,
+                StringSliceEqualTo<char, CaseSensitive::True>
+            >   hashtable_type;
+
+
+            hashtable_type set;
+            {
+                const BenchmarkScope bench("CompactHashSet construction");
+                PROFILING_SCOPE(Global, 3, "CompactHashSet construction");
+                set.resize(input.size());
+                for (const StringSlice& word : input)
+                    set.insert(word);
+            }
+            Assert(set.size() == input.size());
+            {
+                const BenchmarkScope bench("CompactHashSet search");
+                PROFILING_SCOPE(Global, 4, "CompactHashSet search");
+                forrange(i, 0, loops) {
+                    for (const StringSlice& word : search)
+                        if (nullptr == set.find(word))
+                            AssertNotReached();
+                    }
+            }
+            {
+                const BenchmarkScope bench("CompactHashSet negative search");
+                PROFILING_SCOPE(Global, 4, "CompactHashSet negative search");
+                forrange(i, 0, loops) {
+                    for (const StringSlice& word : negative)
+                        if (nullptr != set.find(word))
+                            AssertNotReached();
+                    }
+            }
+        }
+        {
             const BenchmarkScope bench("HashTable");
 
             typedef HashTable<
@@ -423,7 +590,7 @@ void Test_Containers() {
                     Assert(set.size() == count);
                 }
             }
-
+            Assert(set.size() == input.size());
             HashTableStats stats = set.ProbingStats();
             LOG(Info,   L"[HASHTABLE] Probing stats =\n"
                         L"    Min : {0}\n"
@@ -441,6 +608,15 @@ void Test_Containers() {
                             AssertNotReached();
                     }
             }
+            {
+                const BenchmarkScope bench("HashTable negative search");
+                PROFILING_SCOPE(Global, 4, "HashTable negative search");
+                forrange(i, 0, loops) {
+                    for (const StringSlice& word : negative)
+                        if (set.end() != set.find(word))
+                            AssertNotReached();
+                    }
+            }
         }
         {
             const BenchmarkScope bench("HashSet");
@@ -453,13 +629,22 @@ void Test_Containers() {
                 for (const StringSlice& word : input)
                     set.insert(word);
             }
-
+            Assert(set.size() == input.size());
             {
                 const BenchmarkScope bench("HashSet search");
                 PROFILING_SCOPE(Global, 4, "HashSet search");
                 forrange(i, 0, loops) {
                     for (const StringSlice& word : search)
                         if (set.end() == set.find(word))
+                            AssertNotReached();
+                    }
+            }
+            {
+                const BenchmarkScope bench("HashSet negative search");
+                PROFILING_SCOPE(Global, 4, "HashSet negative search");
+                forrange(i, 0, loops) {
+                    for (const StringSlice& word : negative)
+                        if (set.end() != set.find(word))
                             AssertNotReached();
                     }
             }
