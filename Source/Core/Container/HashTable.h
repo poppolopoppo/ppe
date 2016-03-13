@@ -98,29 +98,53 @@ struct HashValueWIndex64_ {
         return HashValueWIndex64_{ u32(hashValue), checked_cast<u32>(dataIndex)};
     }
 };
+static constexpr size_t HashTableCapacityForHash_[32] = {
+   0x00000000,0x00000003,0x0000000b,0x00000017,0x00000035,0x00000061,0x000000c1,0x00000185,
+   0x00000301,0x00000607,0x00000c07,0x00001807,0x00003001,0x00006011,0x0000c005,0x0001800d,
+   0x00030005,0x00060019,0x000c0001,0x00180005,0x0030000b,0x0060000d,0x00c00005,0x01800013,
+   0x03000005,0x06000017,0x0c000013,0x18000005,0x30000059,0x60000005,0xc0000001,0xfffffffb,
+};
+static constexpr size_t HashTableCapacityForValue_[32] = {
+   0x00000000,0x00000003,0x00000009,0x00000012,0x00000029,0x0000004b,0x00000095,0x0000012c,
+   0x00000250,0x000004a4,0x00000943,0x00001281,0x000024f7,0x000049f9,0x000093db,0x000127b8,
+   0x00024f60,0x00049ecc,0x00093d72,0x00127ae5,0x0024f5cb,0x0049eb8f,0x0093d70e,0x0127ae23,
+   0x024f5c2d,0x049eb864,0x093d70b3,0x127ae14c,0x24f5c2d4,0x49eb8523,0x93d70a3e,0xc51eb84e,
+};
 struct HashTableProbe_ {
-    HashTableProbe_(size_t size, size_t capacity, size_t sparsity, void* hashIndicesRaw, bool useHashIndices64)
+    static constexpr size_t ShiftSize = 5;
+    static constexpr size_t MaskCapacityIndex = (1ul<<ShiftSize)-1;
+    static constexpr size_t MaskSize = ~MaskCapacityIndex;
+    static constexpr size_t MaxCapacityIndex = MaskCapacityIndex;
+    HashTableProbe_(size_t size, size_t capacityIndex, void* hashIndicesRaw, bool useHashIndices64)
         : Size(size)
-        , HashCapacity(capacity*sparsity)
-        , HashCapacityMask(capacity ? capacity*sparsity-1 : 0)
-        , ValuesCapacity(capacity)
+        , HashCapacity(HashTableCapacityForHash_[capacityIndex])
+        , ValuesCapacity(HashTableCapacityForValue_[capacityIndex])
         , HashIndicesRaw(hashIndicesRaw)
         , UseHashIndices64(useHashIndices64) {
-        Assert(2 == sparsity); // more to checks parameters ordering
-        Assert(0 == ValuesCapacity || IS_POW2(ValuesCapacity));
-        Assert(0 == HashCapacity || IS_POW2(HashCapacity));
+        STATIC_ASSERT(MaxCapacityIndex+1 == lengthof(HashTableCapacityForHash_));
+        STATIC_ASSERT(sizeof(HashTableCapacityForHash_) == sizeof(HashTableCapacityForValue_));
+        Assert(capacityIndex <= MaxCapacityIndex);
         Assert(0 == ValuesCapacity || HashIndicesRaw);
         Assert(Size <= ValuesCapacity);
+        Assert(ValuesCapacity <= HashCapacity);
         Assert(IS_ALIGNED(sizeof(size_t), HashIndicesRaw));
     }
     size_t Size;
     size_t HashCapacity;
-    size_t HashCapacityMask;
     size_t ValuesCapacity;
     void* HashIndicesRaw;
     bool UseHashIndices64;
-    size_t DesiredPos(size_t hashValue) const { return (hashValue & HashCapacityMask); }
-    size_t ProbeDistance(size_t hashValue, size_t bucket) const { return (((bucket + HashCapacity) - DesiredPos(hashValue)) & HashCapacityMask); }
+    size_t DesiredPos(size_t hashValue) const { return (hashValue % HashCapacity); }
+    size_t DesiredInc(size_t hashValue) const { return (1 + hashValue % (HashCapacity - 1)); }
+    size_t NextBucket(size_t bucket, size_t inc) const { return (bucket + inc >= HashCapacity ? (bucket + inc) - HashCapacity : bucket + inc); }
+    //size_t ProbeDistance(size_t hashValue, size_t bucket) const { return (((bucket + HashCapacity) - DesiredPos(hashValue)) % HashCapacity); }
+    FORCE_INLINE size_t ProbeDistance(size_t hashValue, size_t bucket) const {
+        size_t b = DesiredPos(hashValue);
+        size_t inc = DesiredInc(hashValue);
+        size_t distance = 0;
+        for (; bucket != b; b = NextBucket(b, inc), ++distance);
+        return distance;
+    }
     MemoryView<HashValueWIndex32_> HashIndices32() const { Assert(not UseHashIndices64); return MemoryView<HashValueWIndex32_>(reinterpret_cast<HashValueWIndex32_*>(HashIndicesRaw), HashCapacity); }
     MemoryView<HashValueWIndex64_> HashIndices64() const { Assert(UseHashIndices64); return MemoryView<HashValueWIndex64_>(reinterpret_cast<HashValueWIndex64_*>(HashIndicesRaw), HashCapacity); }
     void EraseBucket(size_t bucket, size_t hashValue) const;
@@ -160,12 +184,12 @@ public:
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;
 
-    size_type size() const { return (_size_capacityLog2Plus1>>ShiftSize); }
-    bool empty() const { return (0 == (_size_capacityLog2Plus1&MaskSize)); }
-    size_type capacity() const { return ((1ul<<(_size_capacityLog2Plus1&MaskCapacityLog2Plus1))>>1); }
+    size_type size() const { return checked_cast<size_type>(_size_capacityIndex>>probe_type::ShiftSize); }
+    bool empty() const { return (0 == (_size_capacityIndex&probe_type::MaskSize)); }
+    size_type capacity() const { return details::HashTableCapacityForValue_[_size_capacityIndex&probe_type::MaskCapacityIndex]; }
 
-    size_type bucket_count() const { return capacity()*sparsity(); }
-    size_type max_bucket_count() const { return MaxCapacity*sparsity(); }
+    size_type bucket_count() const { return details::HashTableCapacityForHash_[_size_capacityIndex&probe_type::MaskCapacityIndex]; }
+    size_type max_bucket_count() const { return details::HashTableCapacityForHash_[probe_type::MaxCapacityIndex]; }
 
     iterator begin() { return MakeView().begin(); }
     iterator end() { return MakeView().end(); }
@@ -194,86 +218,79 @@ public:
 
     float load_factor() const { return size() * 1.0f / bucket_count(); }
 
-    static constexpr size_type sparsity() { return 2; } // 2x more hwindices than values
-
 protected:
-    HashTableBase() noexcept : _size_capacityLog2Plus1(0), _values_hashIndices(nullptr) {}
+    typedef details::HashTableProbe_ probe_type;
+
+    HashTableBase() noexcept : _size_capacityIndex(0), _values_hashIndices(nullptr) {}
 
     size_t GrowIFN_ReturnAllocationCount_(size_type atleast);
     size_t ShrinkToFitIFN_ReturnAllocationCount_(size_type atleast);
 
     size_type DecSize_(size_type count = 1) {
         Assert((_size_capacityLog2Plus1>>ShiftSize) >= count);
-        const size_type newSize = (_size_capacityLog2Plus1>>ShiftSize) - count;
+        const size_type newSize = (_size_capacityIndex>>probe_type::ShiftSize) - count;
         SetSize_(newSize);
         return newSize;
     }
     size_type IncSize_(size_type count = 1) {
-        const size_type newSize = (_size_capacityLog2Plus1>>ShiftSize) + count;
+        const size_type newSize = (_size_capacityIndex>>probe_type::ShiftSize) + count;
         SetSize_(newSize);
         return newSize;
     }
 
     void SetSize_(size_type newSize = 1) {
         Assert(capacity() >= newSize);
-        Assert(((newSize<<ShiftSize)>>ShiftSize) == newSize);
-        _size_capacityLog2Plus1 = (_size_capacityLog2Plus1&MaskCapacityLog2Plus1)|(newSize<<ShiftSize);
+        Assert(((newSize<<probe_type::ShiftSize)>>probe_type::ShiftSize) == newSize);
+        _size_capacityIndex = (_size_capacityIndex&probe_type::MaskCapacityIndex)|(newSize<<probe_type::ShiftSize);
     }
 
-    static bool UseHashIndices64Helper_(size_t capacityUnpacked) { return (capacityUnpacked>(UINT16_MAX+1)); }
+    static bool UseHashIndices64Helper_(size_t capacityForValues) { return (capacityForValues>UINT16_MAX); }
 
-#ifdef WITH_CORE_ASSERT
-    bool UseHashIndices64_() const {
-        const bool result = 17<(_size_capacityLog2Plus1&MaskCapacityLog2Plus1);
-        Assert(UseHashIndices64Helper_(capacity()) == result);
-        return result;
-    }
-#else
-    bool UseHashIndices64_() const { return (_size_capacityLog2Plus1&MaskCapacityLog2Plus1)>17; }
-#endif
+    bool UseHashIndices64_() const { return UseHashIndices64Helper_(capacity()); }
 
 #ifdef ARCH_X64
     STATIC_ASSERT(8 == sizeof(size_type));
-    static void* HashIndicesRaw_(const void* data, size_type capacityUnpacked) {
-        return (void*)ROUND_TO_NEXT_8((capacityUnpacked*sizeof(value_type))+size_type(data));
+    static void* HashIndicesRaw_(const void* data, size_type capacityForValues) {
+        return (void*)ROUND_TO_NEXT_8((capacityForValues*sizeof(value_type))+size_type(data));
     }
 #else
     STATIC_ASSERT(4 == sizeof(size_type));
-    static void* HashIndicesRaw_(const void* data, size_type capacityUnpacked) {
-        return (void*)ROUND_TO_NEXT_4((capacityUnpacked*sizeof(value_type))+size_type(data));
+    static void* HashIndicesRaw_(const void* data, size_type capacityForValues) {
+        return (void*)ROUND_TO_NEXT_4((capacityForValues*sizeof(value_type))+size_type(data));
     }
 #endif
 
-    static size_type AllocationCountWIndicesFor_(size_type count) {
-        Assert(IS_POW2(count));
-        const size_type indexsize = UseHashIndices64Helper_(count)
+    static size_type AllocationCountWIndicesFor_(size_type capacityIndex) {
+        Assert(capacityIndex <= probe_type::MaxCapacityIndex);
+        const size_type hashesCount = details::HashTableCapacityForHash_[capacityIndex];
+        const size_type valuesCount = details::HashTableCapacityForValue_[capacityIndex];
+        const size_type indexsize = UseHashIndices64Helper_(valuesCount)
             ? sizeof(details::HashValueWIndex64_)
             : sizeof(details::HashValueWIndex32_);
-        const size_type ioffset = (size_type)HashIndicesRaw_(nullptr, count);
-        const size_type iend = ioffset + indexsize*count*sparsity();
+        const size_type ioffset = (size_type)HashIndicesRaw_(nullptr, valuesCount);
+        const size_type iend = ioffset + indexsize*hashesCount;
         return (iend+sizeof(value_type)-1)/sizeof(value_type);
     }
 
     details::HashTableProbe_ MakeProbe_() const {
-        return details::HashTableProbe_(size(), capacity(), sparsity(), HashIndicesRaw_(_values_hashIndices, capacity()), UseHashIndices64_());
+        return details::HashTableProbe_(
+            (_size_capacityIndex>>probe_type::ShiftSize),
+            (_size_capacityIndex&probe_type::MaskCapacityIndex),
+            HashIndicesRaw_(_values_hashIndices, capacity()),
+            UseHashIndices64_() );
     }
 
     bool AliasesToContainer_(const details::HashTableProbe_& probe) const {
         Assert(size() == probe.Size);
         Assert(capacity() == probe.ValuesCapacity);
         Assert((void*)_values_hashIndices <= (void*)HashIndicesRaw_(_values_hashIndices, capacity()));
-        const MemoryView<const value_type> this_data_windices(_values_hashIndices, AllocationCountWIndicesFor_(capacity()));
+        const MemoryView<const value_type> this_data_windices(_values_hashIndices, AllocationCountWIndicesFor_(_size_capacityIndex&probe_type::MaskCapacityIndex));
         return (probe.UseHashIndices64
             ? probe.HashIndices64().IsSubRangeOf(this_data_windices)
             : probe.HashIndices32().IsSubRangeOf(this_data_windices) );
     }
 
-    static constexpr size_type ShiftSize = 5;
-    static constexpr size_type MaskCapacityLog2Plus1 = (1ul<<ShiftSize)-1;
-    static constexpr size_type MaskSize = ~MaskCapacityLog2Plus1;
-    static constexpr size_type MaxCapacity = MaskCapacityLog2Plus1;
-
-    size_type _size_capacityLog2Plus1;
+    size_type _size_capacityIndex;
     pointer _values_hashIndices;
 };
 //----------------------------------------------------------------------------
