@@ -159,8 +159,7 @@ struct Template_DialogContext_ {
     MemoryView<const WString> CallstackFrames;
 };
 //----------------------------------------------------------------------------
-static LRESULT CALLBACK Template_StackProc_(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
+static LRESULT CALLBACK Template_StackProc_(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
     UNUSED(wParam);
     UNUSED(lParam);
     switch (message)
@@ -169,8 +168,7 @@ static LRESULT CALLBACK Template_StackProc_(HWND hwndDlg, UINT message, WPARAM w
             {
                 HWND window = ::GetParent(hwndDlg);
                 LRESULT index = ::SendDlgItemMessage(window, ID_STACK, LB_GETCURSEL, 0, 0);
-                if(index != LB_ERR)
-                {
+                if (index != LB_ERR) {
                     const Template_DialogContext_* ctx = reinterpret_cast<const Template_DialogContext_*>(::GetWindowLongPtr(window, GWLP_USERDATA));
                     Assert(ctx);
 
@@ -219,7 +217,7 @@ static LRESULT CALLBACK Template_DialogProc_(HWND hwndDlg, UINT message, WPARAM 
             for (const WString& str : ctx->CallstackFrames)
                 ::SendMessageW(stack, LB_ADDSTRING, 0, (LPARAM)str.c_str());
             ::SendMessage(stack, LB_SETHORIZONTALEXTENT, 4096, 0);
-            ::WNDPROC prevStackProc = (WNDPROC)::SetWindowLongPtr(stack, GWLP_WNDPROC, (LPARAM)Template_StackProc_);
+            ::WNDPROC prevStackProc = (::WNDPROC)::SetWindowLongPtr(stack, GWLP_WNDPROC, (LPARAM)Template_StackProc_);
             Assert(prevStackProc);
             ::SetWindowLongPtr(stack, GWLP_USERDATA, (LONG_PTR)prevStackProc);
 
@@ -444,7 +442,11 @@ DialogBox::Result Show(const WStringSlice& text, const WStringSlice& caption, Di
 {
     Assert(not text.empty());
     Assert(not caption.empty());
+#ifdef OS_WINDOWS
     return Template_CreateDialogBox_(iconType, dialogType, text, caption);
+#else
+    AssertNotImplemented();
+#endif
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
