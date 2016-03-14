@@ -60,14 +60,21 @@ DecodedCallstack::DecodedCallstack(DecodedCallstack&& rvalue)
 }
 //----------------------------------------------------------------------------
 DecodedCallstack& DecodedCallstack::operator = (DecodedCallstack&& rvalue) {
+    // manually call the destructor since it's a raw storage
+    Frame* p = reinterpret_cast<Frame *>(&_frames);
+    for (size_t i = 0; i < _depth; ++i, ++p)
+        p->~Frame();
+
     _hash = rvalue._hash;
     _depth = rvalue._depth;
 
     // manually move the objects since it's a raw storage
     Frame* dst = reinterpret_cast<Frame *>(&_frames);
     Frame* src = reinterpret_cast<Frame *>(&rvalue._frames);
-    for (size_t i = 0; i < _depth; ++i, ++dst, ++src)
-        *dst = std::move(*src);
+    for (size_t i = 0; i < _depth; ++i, ++dst, ++src) {
+        new ((void*)dst) Frame(std::move(*src));
+        src->~Frame();
+    }
 
     rvalue._hash = 0;
     rvalue._depth = 0;
