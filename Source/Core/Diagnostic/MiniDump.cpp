@@ -5,15 +5,20 @@
 #include "Thread/AtomicSpinLock.h"
 
 /*
-// EFFECTIVE MINIDUMPS
 // http://www.debuginfo.com/articles/effminidumps2.html
+// http://blog.aaronballman.com/2011/05/generating-a-minidump/
 */
 
 #ifndef _MSC_VER
 
 namespace MiniDump
 {
-    Result Write(const char *, void *exception_ptrs, const UserData *, size_t ) { return Result::NotAvailable; }
+    Result Write(const wchar_t *filename, void *exception_ptrs, Level level) {
+        UNUSED(filename);
+        UNUSED(exception_ptrs);
+        UNUSED(level);
+        return Result::NotAvailable;
+    }
 
     void Startup() {}
     void Shutdown() {}
@@ -28,328 +33,273 @@ namespace MiniDump
 #include <Windows.h>
 #include <winnt.h>
 #include <time.h>
+#include <TlHelp32.h>
 
 #ifndef ARCH_X64
 #   define HANDLE_VECTORED_EXCEPTION
 #endif
 
 namespace Core {
-namespace MiniDump { namespace
-{
-    static AtomicSpinLock gMiniDumpBarrier;
-    static AtomicSpinLock gMiniDumpWritten;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+static AtomicSpinLock gMinidumpBarrier_;
+//----------------------------------------------------------------------------
+struct MinidumpParams_ {
+    const wchar_t* Filename;
+    const void* ExceptionPtrs;
+    MiniDump::InfoLevel Level;
+};
+//----------------------------------------------------------------------------
+// We use this structure as a way to pass some information to our static
+// callback.  It's only used for transport.
+struct MinidumpCallbackParam_ {
+    DWORD ThreadId;
+    const wchar_t* ProcessName;
+    const MinidumpParams_* Params;
+};
+//----------------------------------------------------------------------------
+static bool IsDataSegmentNeeded_(const wchar_t* processName, const wchar_t *inPath) {
+    if (!inPath)
+        return false;
 
-    // this allocator is not thread safe but exclusive access is guaranteed through the critical section
-    static size_t   gFailsafeUsedSize = 0;
-    static uint8_t  gFailsafePage[16*1024]; // 16 Kbytes reserved to dodge dynamic and stack allocations
+    // Get the name of the module we're trying to query.  We
+    // only want to allow the data segments for the bare minimum
+    // number of modules.  That includes the kernel, and the process
+    // itself.  However, we may want to extend this in the future
+    // to allow the application to register modules it cares about too.
+    wchar_t fileName[MAX_PATH] = { 0 };
+    ::_wsplitpath_s(inPath, NULL, 0, NULL, 0, fileName, MAX_PATH, NULL, 0 );
 
-    template <typename T>
-    struct FailsafeAlloca_
-    {
-        size_t  size;
-        T       *ptr;
-
-        operator T * () const { return ptr; }
-
-        explicit FailsafeAlloca_(size_t size) : size(size), ptr(nullptr)
-        {
-            const size_t sizeInBytes = size*sizeof(T);
-            if ( gFailsafeUsedSize + sizeInBytes <= ARRAYSIZE(gFailsafePage) )
-            {
-                ptr = reinterpret_cast<T *>(&gFailsafePage[gFailsafeUsedSize]);
-                gFailsafeUsedSize += sizeInBytes;
-            }
-        }
-
-        ~FailsafeAlloca_()
-        {
-            const size_t sizeInBytes = size*sizeof(T);
-            if ( nullptr != ptr && reinterpret_cast<uint8_t *>(ptr) == &gFailsafePage[gFailsafeUsedSize - sizeInBytes] )
-            {
-                gFailsafeUsedSize -= sizeInBytes;
-            }
-        }
-    };
-
-    void OutputDebugFormatA_(const char *fmt, ...)
-    {
-        const FailsafeAlloca_<char> buffer(2048);
-        va_list args;
-        va_start(args, fmt);
-        if ( 0 < sprintf_s(buffer.ptr, buffer.size, fmt, args) )
-            ::OutputDebugStringA(buffer.ptr);
-        va_end(args);
-
-    }
-
-    void OutputDebugFormatW_(const wchar_t *fmt, ...)
-    {
-        const FailsafeAlloca_<wchar_t> buffer(2048);
-        va_list args;
-        va_start(args, fmt);
-        if ( 0 < vswprintf(buffer.ptr, buffer.size, fmt, args) )
-            ::OutputDebugStringW(buffer.ptr);
-        va_end(args);
-    }
-
-    static const char *gIgnoredModules[] =
-    {
-        "ADVAPI32.dll",
-        "bcryptPrimitives.dll",
-        "CRYPTBASE.dll",
-        "dbgcore.DLL",
-        "DbgHelp.dll",
-        "RPCRT4.dll",
-        "sechost.dll",
-        "SspiCli.dll",
-    };
-
-    bool IsModuleIncluded_(HMODULE module)
-    {
-        // Test is the module belongs to current process
-        const HMODULE currentModule = ::GetModuleHandle( NULL );
-        if ( module == currentModule )
-            return true;
-
-        // Retrieve module basename
-        FailsafeAlloca_<char> filename(2048);
-        if ( 0 == ::GetModuleFileNameA(module, filename.ptr, checked_cast<DWORD>(filename.size) ) )
-            return false;
-
-        const char *basename = strrchr(filename, '\\');
-        basename = ( nullptr == basename ) ? filename : basename+1;
-
-        // Check if the module has been whitelisted
-        for(size_t i = 0; i < ARRAYSIZE(gIgnoredModules); ++i)
-            if ( 0 == _stricmp(gIgnoredModules[i], basename) )
-            {
-                OutputDebugFormatA_("%s: ignore module for minidump\n", filename.ptr);
-                return false;
-            }
-
+    if (::_wcsicmp(fileName, processName) == 0 ||
+        ::_wcsicmp(fileName, L"kernel32" ) == 0 ||
+        ::_wcsicmp(fileName, L"ntdll" ) == 0) {
         return true;
     }
+    return false;
+}
+//----------------------------------------------------------------------------
+BOOL CALLBACK MinidumpFilter_(PVOID inParam, const PMINIDUMP_CALLBACK_INPUT inInput, PMINIDUMP_CALLBACK_OUTPUT outOutput )
+{
+    if (!inInput || !outOutput || !inParam)
+        return FALSE;
 
-    struct FilterCallbackContext_
-    {
-        const MemoryLocation    *MemoryBegin;
-        const MemoryLocation    *MemoryEnd;
-        bool                    MemoryCallbackCalled;
-    };
+    // Most of the time, we're going to let the minidump writer do whatever
+    // it needs to do.  However, when trying to limit information for things
+    // like smaller dumps, we want to filter out various things.  So this callback
+    // is used as a way to filter out information that the user has said they
+    // don't want.
+    //
+    // If we were so inclined, we could use a delegate class to allow the user
+    // to customize the dump files even further.  But for right now, this is
+    // close enough.
+    const MinidumpCallbackParam_ *const p = (MinidumpCallbackParam_ *)inParam;
+    const MiniDump::InfoLevel infoLevel = p->Params->Level;
 
-    BOOL CALLBACK FilterCallback_(PVOID pParam, const PMINIDUMP_CALLBACK_INPUT pInput, PMINIDUMP_CALLBACK_OUTPUT pOutput)
-    {
-        BOOL bResult = FALSE;
-
-        FilterCallbackContext_& context = *reinterpret_cast<FilterCallbackContext_ *>(pParam);
-
-        switch ( pInput->CallbackType )
-        {
+    switch (inInput->CallbackType) {
         case IncludeModuleCallback:
-            // enable/disable entirely a module
-            bResult = IsModuleIncluded_((HMODULE)pInput->IncludeModule.BaseOfImage ) ? TRUE : FALSE;
-            break;
-
-        case IncludeThreadCallback:
-            // enable/disable entirely a thread
-            bResult = TRUE;
-            break;
-
-        case ModuleCallback:
-            // enable/disable specific data on enabled modules
-            if ( ::GetModuleHandle( NULL ) == (HMODULE)pInput->Module.BaseOfImage || // current process ?
-                 nullptr != ::wcsstr(pInput->Module.FullPath, L"ntdll.dll")          // ntdll ?
-                )
-            {
-                OutputDebugFormatW_(L"%s: full module informations\n", pInput->Module.FullPath);
-                pOutput->ModuleWriteFlags = ModuleWriteModule
-                                          | ModuleWriteMiscRecord
-                                          | ModuleWriteCvRecord
-                                          | ModuleWriteDataSeg
-                                          | ModuleWriteTlsData
-                                          | ModuleReferencedByMemory;
-            }
-            else // or included module
-            {
-                OutputDebugFormatW_(L"%s: partial module informations\n", pInput->Module.FullPath);
-                pOutput->ModuleWriteFlags = ModuleWriteModule
-                                          | ModuleWriteMiscRecord
-                                          | ModuleWriteCvRecord
-                                          | ModuleReferencedByMemory;
-            }
-            bResult = TRUE;
-            break;
-
         case ThreadCallback:
-            // Include all available information
-            bResult = TRUE;
-            break;
-
         case ThreadExCallback:
-            // Include all available information
-            bResult = TRUE;
-            break;
-
-        case MemoryCallback:
-            // Include user defined memory locations
-            context.MemoryCallbackCalled = true;
-            if ( context.MemoryBegin != context.MemoryEnd )
-            {
-                pOutput->MemoryBase = checked_cast<ULONG64>(uintptr_t(context.MemoryBegin->MemoryBase));
-                pOutput->MemorySize = checked_cast<ULONG>(context.MemoryBegin->MemorySize);
-                context.MemoryBegin++;
-                return TRUE;
-            }
-            else
-            {
-                bResult = FALSE; // None added
-            }
-            break;
-
+            return TRUE;
         case CancelCallback:
-            if( !context.MemoryCallbackCalled )
-            {
-                // Continue receiving CancelCallback callbacks
-                pOutput->Cancel       = FALSE;
-                pOutput->CheckCancel  = TRUE;
-            }
-            else
-            {
-                // No cancel callbacks anymore
-                pOutput->Cancel       = FALSE;
-                pOutput->CheckCancel  = FALSE;
-            }
-            bResult = TRUE;
-            break;
+            return FALSE;
 
-        default:
-            // unhandled
-            bResult = FALSE;
-            break;
-        }
+        case IncludeThreadCallback: {
+            // We don't want to include information about the minidump writing
+            // thread, as that's not of interest to the caller
+            if (inInput->IncludeThread.ThreadId == p->ThreadId)
+                return FALSE;
+            return TRUE;
+        } break;
 
-        return bResult;
+        case MemoryCallback: {
+            // Small and medium sized dumps don't need full memory access
+            if (MiniDump::InfoLevel::Small == infoLevel ||
+                MiniDump::InfoLevel::Medium == infoLevel)
+                return FALSE;
+            return TRUE;
+        } break;
+
+        case ModuleCallback: {
+            if (MiniDump::InfoLevel::Small == infoLevel) {
+                // When creating a small dump file, we filter out any modules that
+                // aren't being directly referenced.
+                if (!(outOutput->ModuleWriteFlags & ModuleReferencedByMemory)) {
+                    outOutput->ModuleWriteFlags &= ~ModuleWriteModule;
+                }
+            } else if (MiniDump::InfoLevel::Medium == infoLevel) {
+                // When creating a medium-sized dump file, we filter out any module
+                // data segments if they're not part of our core module list.  This
+                // helps reduce the size of the dump file by quite a bit.
+                if (outOutput->ModuleWriteFlags & ModuleWriteDataSeg) {
+                    if (!IsDataSegmentNeeded_(p->ProcessName, inInput->Module.FullPath)) {
+                        outOutput->ModuleWriteFlags &= ~ModuleWriteDataSeg;
+                    }
+                }
+            }
+
+            return TRUE;
+        } break;
     }
 
+    return FALSE;
+}
+//----------------------------------------------------------------------------
+DWORD CALLBACK MinidumpWriter_(LPVOID inParam) {
+    const MinidumpParams_ *const p = (const MinidumpParams_ *)inParam;
+
+    // We need to keep track of the name of the process, sans extension, so that it can
+    // be used if we're filtering module data segments.  So we calculate that up front.
+    wchar_t processName[MAX_PATH] = { 0 };
+    ::GetModuleFileNameW(NULL, processName, MAX_PATH );
+    ::_wsplitpath_s(processName, NULL, 0, NULL, 0, processName, MAX_PATH, NULL, 0 );
+
+    // First, attempt to create the file that the minidump will be written to
+    HANDLE hFile = ::CreateFileW(p->Filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
+    if (INVALID_HANDLE_VALUE != hFile) {
+        // Determine what information we want the minidumper to pass along for our
+        // callback to filter out.  Generally speaking, the more things we include,
+        // the larger our file will be.
+        int type = MiniDumpNormal;
+        switch (p->Level) {
+            case MiniDump::InfoLevel::Small: {
+                type |= MiniDumpWithIndirectlyReferencedMemory |
+                        MiniDumpScanMemory;
+            } break;
+            case MiniDump::InfoLevel::Medium: {
+                type |= MiniDumpWithDataSegs |
+                        MiniDumpWithPrivateReadWriteMemory |
+                        MiniDumpWithHandleData |
+                        MiniDumpWithFullMemoryInfo |
+                        MiniDumpWithThreadInfo |
+                        MiniDumpWithUnloadedModules;
+            } break;
+            case MiniDump::InfoLevel::Large: {
+                type |= MiniDumpWithDataSegs |
+                        MiniDumpWithPrivateReadWriteMemory |
+                        MiniDumpWithHandleData |
+                        MiniDumpWithFullMemory |
+                        MiniDumpWithFullMemoryInfo |
+                        MiniDumpWithThreadInfo |
+                        MiniDumpWithUnloadedModules |
+                        MiniDumpWithProcessThreadData;
+            } break;
+        }
+
+        // Set up the callback to be called by the minidump writer.  This allows us to
+        // filter out information that we may not care about.
+        ::MINIDUMP_CALLBACK_INFORMATION callback = { 0 };
+
+        const MinidumpCallbackParam_ info = { ::GetCurrentThreadId(), processName, p };
+        callback.CallbackParam = (PVOID)&info;
+        callback.CallbackRoutine = MinidumpFilter_;
+
+        // After all that, we can write out the minidump
+        BOOL bRet = DbghelpWrapper::Instance().Lock().MiniDumpWriteDump()(
+            ::GetCurrentProcess(),
+            ::GetCurrentProcessId(),
+            hFile,
+            (MINIDUMP_TYPE)type, NULL, NULL, &callback );
+
+        if (FALSE == ::CloseHandle( hFile ))
+            return DWORD(MiniDump::Result::FailedToCloseHandle);
+
+        return DWORD(bRet ? MiniDump::Result::Success : MiniDump::Result::DumpFailed);
+    }
+
+    return DWORD(MiniDump::Result::CantCreateFile);
+}
+//----------------------------------------------------------------------------
+static void EnumerateThreads_(DWORD (WINAPI *inCallback)( HANDLE ), DWORD inExceptThisOne)
+{
+    // Create a snapshot of all the threads in the process, and walk over
+    // them, calling the callback function on each of them, except for
+    // the thread identified by the inExceptThisOne parameter.
+    HANDLE hSnapshot = ::CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0 );
+    if (INVALID_HANDLE_VALUE != hSnapshot) {
+        THREADENTRY32 thread;
+        thread.dwSize = sizeof( thread );
+        if (::Thread32First( hSnapshot, &thread )) {
+            do {
+                if (thread.th32OwnerProcessID == ::GetCurrentProcessId() &&
+                    thread.th32ThreadID != inExceptThisOne &&
+                    thread.th32ThreadID != ::GetCurrentThreadId()) {
+                    // We're making a big assumption that this call will only
+                    // be used to suspend or resume a thread, and so we know
+                    // that we only require the THREAD_SUSPEND_RESUME access right.
+                    HANDLE hThread = ::OpenThread( THREAD_SUSPEND_RESUME, FALSE, thread.th32ThreadID );
+                    if (hThread) {
+                        inCallback( hThread );
+                        ::CloseHandle( hThread );
+                    }
+                }
+            } while (::Thread32Next( hSnapshot, &thread ) );
+        }
+
+        ::CloseHandle( hSnapshot );
+    }
+}
+//----------------------------------------------------------------------------
 } //!namespace
-} //!namespace MiniDump
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Core
 
 
 namespace Core {
 namespace MiniDump
 {
-    Result Write(   const char *filename, void *exception_ptrs,
-                    const UserData *pdata, size_t dataCount,
-                    const MemoryLocation *pmemory, size_t memoryCount )
+    Result Write(const wchar_t *filename, InfoLevel level,
+        const void *exception_ptrs /* = nullptr */,
+        bool inSuspendOtherThreads /* = false */)
     {
         if ( nullptr == filename )
             return Result::InvalidFilename;
 
-        const AtomicSpinLock::Scope scopeLock(gMiniDumpBarrier);
-
         if ( false == DbghelpWrapper::HasInstance() )
             return Result::NoDbgHelpDLL;
 
-        // Try to open the file
-        HANDLE hFile = ::CreateFileA(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
-        if( ( hFile == NULL ) || ( hFile == INVALID_HANDLE_VALUE ) )
-            return Result::CantCreateFile;
+        const MinidumpParams_ params = { filename, exception_ptrs, level };
 
-        // Minidump type
-        MINIDUMP_TYPE miniDumpType = (MINIDUMP_TYPE)(
-                MiniDumpNormal // default datas (always included)
-            |   MiniDumpWithFullMemoryInfo // virtual memory layout of the process (!vadump, !vprot)
-            |   MiniDumpWithThreadInfo // user/kernel time for each thread (.ttime)
-            |   MiniDumpWithIndirectlyReferencedMemory // 1024 bytes around each referenced pointer (256 bytes before and 768 bytes after)
-            |   MiniDumpWithHandleData // all handles in the process handle table at the moment of failure
-            |   MiniDumpWithDataSegs // infos about globals vars (filtered)
-            |   MiniDumpWithPrivateReadWriteMemory // stack, heap, TLS, PEB & TEBs (filtered)
-            );
+        DWORD threadId = 0;
+        HANDLE hThread = ::CreateThread(NULL, 0, MinidumpWriter_, (PVOID)&params, CREATE_SUSPENDED, &threadId );
 
-        // Exception information
-        MINIDUMP_EXCEPTION_INFORMATION mdei;
-        memset( &mdei, 0, sizeof(mdei) );
-
-        CONTEXT ctx; // used when exception_ptrs is null,
-        EXCEPTION_POINTERS ep; // will contain information about the current thread
-
-        if (nullptr == exception_ptrs)
-        {
-            DWORD dwThreadId = ::GetCurrentThreadId();
-
-            memset( &ctx, 0, sizeof(ctx) );
-            ctx.ContextFlags = CONTEXT_FULL;
-
-            /*
-            HANDLE hThread = OpenThread( THREAD_ALL_ACCESS, FALSE, dwThreadId );
-            UNUSED(hThread);
-            */
-
-            memset( &ep, 0, sizeof(ep) );
-            ep.ContextRecord = &ctx;
-            ep.ExceptionRecord = NULL; // no exception
-
-            mdei.ThreadId           = dwThreadId;
-            mdei.ExceptionPointers  = &ep;
-            mdei.ClientPointers     = FALSE;
-        }
-        else
-        {
-            mdei.ThreadId           = ::GetCurrentThreadId();
-            mdei.ExceptionPointers  = (PEXCEPTION_POINTERS)exception_ptrs;
-            mdei.ClientPointers     = FALSE;
-        }
-
-        // User datas (only first 8)
-        MINIDUMP_USER_STREAM userStreamArray[8];
-        memset( &userStreamArray, 0, sizeof(userStreamArray) );
-
-        ULONG userStreamCount = 0;
-        if (nullptr != pdata)
-        {
-            while ( userStreamCount < ARRAYSIZE(userStreamArray) && userStreamCount < dataCount )
-            {
-                const UserData& src = pdata[userStreamCount];
-                ::MINIDUMP_USER_STREAM& dst = userStreamArray[userStreamCount];
-
-                dst.Type        = checked_cast<ULONG32>(src.Type);
-                dst.BufferSize  = checked_cast<ULONG>(src.BufferSize);
-                dst.Buffer      = src.Buffer;
-
-                userStreamCount++;
+        if (hThread) {
+            // Having created the thread successfully, we need to put all of the other
+            // threads in the process into a suspended state, making sure not to suspend
+            // our newly-created thread.  We do this because we want this function to
+            // behave as a snapshot, and that means other threads should not continue
+            // to perform work while we're creating the minidump.
+            if (inSuspendOtherThreads) {
+                EnumerateThreads_(::SuspendThread, threadId );
             }
+
+            // Now we can resume our worker thread
+            ::ResumeThread(hThread );
+
+            // Wait for the thread to finish working, without allowing the current
+            // thread to continue working.  This ensures that the current thread won't
+            // do anything interesting while we're writing the debug information out.
+            // This also means that the minidump will show this as the current callstack.
+            ::WaitForSingleObject(hThread, INFINITE );
+
+            // The thread exit code tells us whether we were able to create the minidump
+            DWORD code = 0;
+            ::GetExitCodeThread(hThread, &code );
+            ::CloseHandle(hThread );
+
+            // If we suspended other threads, now is the time to wake them up
+            if (inSuspendOtherThreads) {
+                EnumerateThreads_(::ResumeThread, threadId );
+            }
+
+            return MiniDump::Result(code);
         }
 
-        MINIDUMP_USER_STREAM_INFORMATION musi;
-        memset( &musi, 0, sizeof(musi) );
-        musi.UserStreamArray    = userStreamArray;
-        musi.UserStreamCount    = userStreamCount;
-
-        // Minidump filter callback
-        FilterCallbackContext_ context;
-        context.MemoryBegin     = pmemory;
-        context.MemoryEnd       = pmemory + memoryCount;
-        context.MemoryCallbackCalled = false;
-
-        MINIDUMP_CALLBACK_INFORMATION mci;
-        memset( &mci, 0, sizeof(mci) );
-        mci.CallbackRoutine     = (MINIDUMP_CALLBACK_ROUTINE)&FilterCallback_;
-        mci.CallbackParam       = &context;
-
-        // Create the minidump
-        HANDLE currentProcess = ::GetCurrentProcess();
-        DWORD currentProcessId = ::GetCurrentProcessId();
-        BOOL rv = DbghelpWrapper::Instance().Lock().MiniDumpWriteDump()(
-            currentProcess, currentProcessId, hFile, miniDumpType, &mdei, &musi, &mci );
-
-        Result res = ( TRUE == rv ) ? Result::Success : Result::DumpFailed;
-
-        // Try to close the file
-        if ( FALSE == ::CloseHandle(hFile) )
-            res = ( Result::Success == res ) ? Result::FailedToCloseHandle : res;
-
-        return res;
+        return MiniDump::Result::NotAvailable;
     }
 
     void Write(PEXCEPTION_POINTERS pExceptionInfo)
@@ -358,60 +308,30 @@ namespace MiniDump
         struct tm pTm;
         localtime_s( &pTm, &tNow );
 
-        FailsafeAlloca_<char> filename(2048);
+        wchar_t filename[MAX_PATH];
         {
-            FailsafeAlloca_<char> modulePath(2048);
-            if (0 == ::GetModuleFileNameA(NULL, modulePath.ptr, checked_cast<DWORD>(modulePath.size)) )
+            wchar_t modulePath[MAX_PATH];
+            if (0 == ::GetModuleFileNameW(NULL, modulePath, MAX_PATH) )
                 return;
 
-            sprintf_s(filename.ptr, filename.size,
-                "%s.%02d%02d%04d_%02d%02d%02d.dmp",
-                modulePath.ptr,
+            swprintf_s(filename, MAX_PATH,
+                L"%s.%02d%02d%04d_%02d%02d%02d.dmp",
+                modulePath,
                 pTm.tm_year, pTm.tm_mon, pTm.tm_mday,
                 pTm.tm_hour, pTm.tm_min, pTm.tm_sec);
         }
 
-        MiniDump::Result result = MiniDump::Write(filename, pExceptionInfo, nullptr, 0, nullptr, 0);
-    }
-
-    struct ThreadToFiber_
-    {
-        LPVOID pCallee;
-        PEXCEPTION_POINTERS pExceptionInfo;
-    };
-
-    VOID WINAPI OnUnhandledExceptionFiber_(LPVOID lpFiberParameter)
-    {
-        const ThreadToFiber_ *pThreadToFiber = (const ThreadToFiber_ *)lpFiberParameter;
-        if (nullptr == pThreadToFiber)
-            exit(42); // should never ever be called, but handled
-
-        Write(pThreadToFiber->pExceptionInfo);
-
-        ::SwitchToFiber(pThreadToFiber->pCallee);
+        MiniDump::Write(filename, InfoLevel::Large, pExceptionInfo, true);
     }
 
     static volatile LPTOP_LEVEL_EXCEPTION_FILTER gPreviousUnhandledExceptionFilter = nullptr;
     LONG WINAPI OnUnhandledException_(PEXCEPTION_POINTERS pExceptionInfo)
     {
         // no reentrancy (needed by ::MiniDumpWriteDump !)
-        if (false == gMiniDumpWritten.TryLock())
-            return EXCEPTION_EXECUTE_HANDLER;
+        const AtomicSpinLock::TryScope scopeLock(gMinidumpBarrier_);
 
-        ThreadToFiber_ threadToFiber;
-        threadToFiber.pExceptionInfo = pExceptionInfo;
-        threadToFiber.pCallee = ::ConvertThreadToFiber( NULL );
-        if (nullptr == threadToFiber.pCallee)
-            return EXCEPTION_CONTINUE_SEARCH;
-
-        // we'll use a fiber to write the minidump, since the current stack might be overrun (lighter than thread)
-        LPVOID fiber = ::CreateFiber(512, &OnUnhandledExceptionFiber_, &threadToFiber);
-        if (nullptr == fiber)
-            return EXCEPTION_CONTINUE_SEARCH;
-
-        ::SwitchToFiber(fiber);
-        // here jump to forth and back in OnUnhandledExceptionFiber_
-        ::ConvertFiberToThread();
+        if (scopeLock.Locked())
+            Write(pExceptionInfo);
 
         return EXCEPTION_EXECUTE_HANDLER;
     }
@@ -421,10 +341,11 @@ namespace MiniDump
     LONG WINAPI OnVectoredHandler_(PEXCEPTION_POINTERS pExceptionInfo)
     {
         // no reentrancy (needed by ::MiniDumpWriteDump !)
-        if (false == gMiniDumpWritten.TryLock())
-            return EXCEPTION_EXECUTE_HANDLER;
+        const AtomicSpinLock::TryScope scopeLock(gMinidumpBarrier_);
 
-        Write(pExceptionInfo);
+        if (scopeLock.Locked())
+            Write(pExceptionInfo);
+
         return EXCEPTION_EXECUTE_HANDLER;
     }
 #endif

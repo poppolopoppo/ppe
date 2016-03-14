@@ -3,22 +3,10 @@
 #include "Core/Core.h"
 
 namespace Core {
-namespace MiniDump {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct UserData
-{
-    uint32_t Type;
-    size_t BufferSize;
-    void * Buffer;
-};
-//----------------------------------------------------------------------------
-struct MemoryLocation
-{
-    size_t MemorySize;
-    void * MemoryBase;
-};
+namespace MiniDump {
 //----------------------------------------------------------------------------
 enum class Result
 {
@@ -31,16 +19,23 @@ enum class Result
     NotAvailable,
 };
 //----------------------------------------------------------------------------
+enum class InfoLevel {
+    Small = 0,
+    Medium,
+    Large,
+};
+//----------------------------------------------------------------------------
 void Start();
 void Shutdown();
 //----------------------------------------------------------------------------
-Result Write(   const char *filename, void *exception_ptrs,
-                const UserData *pdata, size_t dataCount,
-                const MemoryLocation *pmemory, size_t memoryCount );
+Result Write(const wchar_t *filename, InfoLevel level,
+    const void *exception_ptrs = nullptr,
+    bool inSuspendOtherThreads = false );
 //----------------------------------------------------------------------------
 const char *ResultMessage(Result code);
 //----------------------------------------------------------------------------
+} //!namespace MiniDump
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace MiniDump
 } //!namespace Core
