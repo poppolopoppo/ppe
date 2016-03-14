@@ -7,7 +7,7 @@
 #include "Core/Container/Vector.h"
 #include "Core/Diagnostic/Logger.h"
 #include "Core/Memory/MemoryStream.h"
-#include "Core/Memory/MemoryViewReader.h"
+#include "Core/Memory/MemoryProvider.h"
 #include "Core/Misc/FourCC.h"
 #include "Core/Meta/StronglyTyped.h"
 

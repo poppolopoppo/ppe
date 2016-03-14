@@ -152,6 +152,11 @@ private:
 //----------------------------------------------------------------------------
 inline BasicStreamReader<char> StdinReader() { return BasicStreamReader<char>(std::cin); }
 inline BasicStreamWriter<char> StdoutWriter() { return BasicStreamWriter<char>(std::cout); }
+inline BasicStreamWriter<char> StderrWriter() { return BasicStreamWriter<char>(std::cerr); }
+//----------------------------------------------------------------------------
+inline BasicStreamReader<wchar_t> WStdinReader() { return BasicStreamReader<wchar_t>(std::wcin); }
+inline BasicStreamWriter<wchar_t> WStdoutWriter() { return BasicStreamWriter<wchar_t>(std::wcout); }
+inline BasicStreamWriter<wchar_t> WStderrWriter() { return BasicStreamWriter<wchar_t>(std::wcerr); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
