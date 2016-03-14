@@ -8,12 +8,13 @@
 #   include <windows.h>
 #endif
 
-#include "Diagnostic/Callstack.h"
 #include "Diagnostic/CrtDebug.h"
-#include "Diagnostic/DecodedCallstack.h"
-#include "Diagnostic/DialogBox.h"
 #include "Diagnostic/Exception.h"
 #include "Diagnostic/Logger.h"
+#include "Diagnostic/DialogBox.h"
+
+#include "IO/Stream.h"
+#include "IO/StringSlice.h"
 
 #include <atomic>
 
@@ -21,25 +22,14 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-static DialogBox::Result AssertAbortRetryIgnore_(const char *msg, const wchar_t *file, unsigned line) {
-    Callstack callstack;
-    Callstack::Capture(&callstack, 3, Callstack::MaxDeph);
+static DialogBox::Result AssertAbortRetryIgnore_(const WStringSlice& title, const char *msg, const wchar_t *file, unsigned line) {
+    ThreadLocalWOStringStream oss;
 
-    DecodedCallstack decodedCallstack;
-    callstack.Decode(&decodedCallstack);
+    oss << title << L"\r\n"
+        << L"----------------------------------------------------------------\r\n"
+        << file << L'(' << line << L"): " << msg;
 
-    wchar_t text[4096];
-    Format(
-        text,
-        L"{0}\n"
-        L"  at: {1}({2})\n"
-        L"\n"
-        L"Callstack :\n{3}",
-        msg,
-        file, line,
-        decodedCallstack);
-
-    return DialogBox::AbortRetryIgnore(text, L"Assert failed !", DialogBox::Icon::Exclamation);
+    return DialogBox::AbortRetryIgnore(MakeStringSlice(oss.str()), title);
 }
 //----------------------------------------------------------------------------
 static bool IsDebuggerAttached_() {
@@ -101,7 +91,7 @@ void AssertionFailed(const char *msg, const wchar_t *file, unsigned line) {
         BREAKPOINT();
     }
     else {
-        switch (AssertAbortRetryIgnore_(msg, file, line)) {
+        switch (AssertAbortRetryIgnore_(MakeStringSlice(L"Assert debug failed !"), msg, file, line)) {
         case DialogBox::Result::Abort:
             failure = true;
             break;
@@ -164,7 +154,7 @@ void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line)
 
     gIsInAssertion = true;
 
-    bool failure = false;
+    bool failure = true; // AssertRelease() fails by default
 
     LOG(Assertion, L"error: '{0}' failed !\n\t{1}({2})", msg, file, line);
 
@@ -177,7 +167,7 @@ void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line)
         BREAKPOINT();
     }
     else {
-        switch (AssertAbortRetryIgnore_(msg, file, line)) {
+        switch (AssertAbortRetryIgnore_(MakeStringSlice(L"Assert release failed !"), msg, file, line)) {
         case DialogBox::Result::Abort:
             failure = true;
             break;

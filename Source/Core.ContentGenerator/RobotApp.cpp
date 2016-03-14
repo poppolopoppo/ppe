@@ -3,6 +3,7 @@
 #include "RobotApp.h"
 
 #include "Core/Color/Color.h"
+#include "Core/Diagnostic/DialogBox.h"
 #include "Core/Maths/Maths.h"
 
 #include "Core.Graphics/Device/DeviceAPI.h"
