@@ -11,6 +11,8 @@ namespace Core {
 //----------------------------------------------------------------------------
 String GetLastErrorToString(long errorCode);
 //----------------------------------------------------------------------------
+WString GetLastErrorToWString(long errorCode);
+//----------------------------------------------------------------------------
 class LastErrorException : public Exception {
 public:
     LastErrorException();

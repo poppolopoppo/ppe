@@ -29,6 +29,17 @@ String GetLastErrorToString(long errorCode) {
 #endif
 }
 //----------------------------------------------------------------------------
+WString GetLastErrorToWString(long errorCode) {
+#ifdef OS_WINDOWS
+    _com_error com(errorCode);
+    return ToWString(com.ErrorMessage());
+
+#else
+    return WString();
+
+#endif
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 LastErrorException::LastErrorException()
