@@ -217,10 +217,28 @@
     <CustomBuild Include="Diagnostic\CrtDebug.h">
       <Filter>Diagnostic</Filter>
     </CustomBuild>
+    <CustomBuild Include="Diagnostic\CurrentProcess.cpp">
+      <Filter>Diagnostic</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Diagnostic\CurrentProcess.h">
+      <Filter>Diagnostic</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Diagnostic\DbgHelpWrapper.cpp">
+      <Filter>Diagnostic</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Diagnostic\DbgHelpWrapper.h">
+      <Filter>Diagnostic</Filter>
+    </CustomBuild>
     <CustomBuild Include="Diagnostic\DecodedCallstack.cpp">
       <Filter>Diagnostic</Filter>
     </CustomBuild>
     <CustomBuild Include="Diagnostic\DecodedCallstack.h">
+      <Filter>Diagnostic</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Diagnostic\Diagnostics.cpp">
+      <Filter>Diagnostic</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Diagnostic\Diagnostics.h">
       <Filter>Diagnostic</Filter>
     </CustomBuild>
     <CustomBuild Include="Diagnostic\DialogBox.cpp">
@@ -739,6 +757,12 @@
     <CustomBuild Include="Memory\MemoryPool.h">
       <Filter>Memory</Filter>
     </CustomBuild>
+    <CustomBuild Include="Memory\MemoryProvider.cpp">
+      <Filter>Memory</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Memory\MemoryProvider.h">
+      <Filter>Memory</Filter>
+    </CustomBuild>
     <CustomBuild Include="Memory\MemoryStream.h">
       <Filter>Memory</Filter>
     </CustomBuild>
@@ -749,12 +773,6 @@
       <Filter>Memory</Filter>
     </CustomBuild>
     <CustomBuild Include="Memory\MemoryView.h">
-      <Filter>Memory</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Memory\MemoryViewReader.cpp">
-      <Filter>Memory</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Memory\MemoryViewReader.h">
       <Filter>Memory</Filter>
     </CustomBuild>
     <CustomBuild Include="Memory\RefPtr-inl.h">
@@ -863,12 +881,6 @@
       <Filter>Misc</Filter>
     </CustomBuild>
     <CustomBuild Include="Misc\CRC.h">
-      <Filter>Misc</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Misc\CurrentProcess.cpp">
-      <Filter>Misc</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Misc\CurrentProcess.h">
       <Filter>Misc</Filter>
     </CustomBuild>
     <CustomBuild Include="Misc\FourCC.h">
