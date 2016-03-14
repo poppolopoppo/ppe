@@ -9,6 +9,7 @@ MEMORY_DOMAIN_IMPL(Core,                    Global)
 //------------------------------------------------------------------------------
 MEMORY_DOMAIN_IMPL(Alloca,                  Core)
 MEMORY_DOMAIN_IMPL(Container,               Core)
+MEMORY_DOMAIN_IMPL(Diagnostic,              Core)
 MEMORY_DOMAIN_IMPL(Event,                   Core)
 MEMORY_DOMAIN_IMPL(FileSystem,              Core)
 MEMORY_DOMAIN_IMPL(Internal,                Core)
