@@ -40,6 +40,20 @@ public:
         AtomicSpinLock& _lock;
     };
 
+    struct TryScope {
+        TryScope(AtomicSpinLock& lock) : _lock(lock), _locked(lock.TryLock()) {}
+        ~TryScope() { if (_locked) _lock.Unlock(); }
+
+        TryScope(const TryScope& ) = delete;
+        TryScope& operator =(const TryScope& ) = delete;
+
+        bool Locked() const { return _locked; }
+
+    private:
+        AtomicSpinLock& _lock;
+        bool _locked;
+    };
+
 private:
     std::atomic_flag _state;
 };
