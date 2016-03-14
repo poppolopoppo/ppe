@@ -29,6 +29,7 @@ public:
 
     static void Create() { parent_type::Create(); }
 
+    static Basename TemporaryBasename(const wchar_t *prefix, const wchar_t *ext);
     static Filename TemporaryFilename(const wchar_t *prefix, const wchar_t *ext);
 
     template <typename T, typename _Allocator>

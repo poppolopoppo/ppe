@@ -25,6 +25,32 @@ POOLTAG_DEF(VirtualFileSystem);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+Basename VirtualFileSystem::TemporaryBasename(const wchar_t *prefix, const wchar_t *ext) {
+    Assert(prefix);
+    Assert(ext);
+
+    const auto now = std::chrono::system_clock::now();
+    const time_t tt = std::chrono::system_clock::to_time_t(now);
+
+    tm local_tm;
+    localtime_s(&local_tm, &tt);
+
+    wchar_t buffer[2048];
+    const size_t length = Format(buffer, L"{0}_{1:#4}{2:#2}{3:#2}{4:#2}{5:#2}{6:#2}{7}{8}",
+        prefix,
+        local_tm.tm_year,
+        local_tm.tm_mon,
+        local_tm.tm_mday,
+        local_tm.tm_hour,
+        local_tm.tm_min,
+        local_tm.tm_sec,
+        tt,
+        ext );
+
+    Assert(length > 0);
+    return Basename(buffer, length - 1);
+}
+//----------------------------------------------------------------------------
 Filename VirtualFileSystem::TemporaryFilename(const wchar_t *prefix, const wchar_t *ext) {
     Assert(prefix);
     Assert(ext);
@@ -47,7 +73,8 @@ Filename VirtualFileSystem::TemporaryFilename(const wchar_t *prefix, const wchar
         tt,
         ext );
 
-    return Filename(buffer, length);
+    Assert(length > 0);
+    return Filename(buffer, length - 1);
 }
 //----------------------------------------------------------------------------
 bool VirtualFileSystem::WriteAll(const Filename& filename, const MemoryView<const u8>& storage, AccessPolicy::Mode policy /* = AccessPolicy::None */) {
