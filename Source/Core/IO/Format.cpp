@@ -132,189 +132,218 @@ std::basic_ostream<_Char, _Traits>& operator <<(
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-static bool FormatParser_(const _Char **pformat, _Char *outp, size_t *index, FormatProperties_& props) {
-    Assert(pformat);
-    Assert(*pformat);
-
+static bool FormatParser_(BasicStringSlice<_Char>& format, BasicStringSlice<_Char> *outp, size_t *index, FormatProperties_& props) {
     typedef typename FormatTraits_<_Char>::Flags format_traits;
 
-    if (format_traits::null == **pformat)
+    if (format.empty())
         return false;
 
-    bool fixed = false;
+    *outp = format.CutBefore(format.begin());
+    *index = size_t(-1);
 
-    if (format_traits::lbrace == **pformat && IsDigit(*(*pformat + 1)) ) {
-        const _Char* d = *pformat + 1;
-        for (; IsDigit(*(d + 1)); ++d);
+    do {
+        bool fixed = false;
 
-        size_t i = 0;
-        for (size_t n = d - *pformat, base = 1; n > 0; --n, base *= 10)
-            i += ((*pformat)[n] - format_traits::zero) * base;
+        if (format_traits::lbrace != format.front() || not IsDigit(format[1]) ) {
+            *outp = outp->GrowBack();
+            format = format.ShiftFront();
+        }
+        else {
+            const BasicStringSlice<_Char> formatBeforeParse = format;
 
-        ++d;
+            Assert(format_traits::lbrace == format.front());
+            format = format.ShiftFront(); // eat '{'
 
-        if (format_traits::colon == *d)
-        {
-            ++d;
-            while (format_traits::null != *d &&
-                format_traits::rbrace != *d) {
-                switch (*d)
+            intptr_t parsedIndex = 0;
+            {
+                const BasicStringSlice<_Char> digits = EatDigits(format);
+                Assert(digits.data() + digits.size() == format.data());
+
+                if (not Atoi(&parsedIndex, digits, 10))
+                    AssertNotReached();
+            }
+
+            if (format_traits::colon == format.front()){
+                format = format.ShiftFront();
+                do {
+                    Assert(format_traits::null != format.front());
+
+                    switch (format.front()) {
+                    case format_traits::fmt_ALPHA:
+                        props.Flags |= std::ios_base::uppercase;
+                    case format_traits::fmt_alpha:
+                        props.Flags |= std::ios_base::boolalpha;
+                        format = format.ShiftFront();
+                        continue;
+
+                    case format_traits::fmt_DEC:
+                    case format_traits::fmt_dec:
+                        props.Flags = (props.Flags & ~std::ios_base::basefield) | (std::ios_base::dec & std::ios_base::basefield);
+                        format = format.ShiftFront();
+                        continue;
+
+                    case format_traits::fmt_HEX:
+                        props.Flags |= std::ios_base::uppercase;
+                    case format_traits::fmt_hex:
+                        props.Flags = (props.Flags & ~std::ios_base::basefield) | (std::ios_base::hex & std::ios_base::basefield);
+                        format = format.ShiftFront();
+                        continue;
+
+                    case format_traits::fmt_OCT:
+                    case format_traits::fmt_oct:
+                        props.Flags = (props.Flags & ~std::ios_base::basefield) | (std::ios_base::oct & std::ios_base::basefield);
+                        format = format.ShiftFront();
+                        continue;
+
+                    case format_traits::fmt_FIXED:
+                    case format_traits::fmt_fixed:
+                        props.Flags = (props.Flags & ~std::ios_base::floatfield) | (std::ios_base::fixed & std::ios_base::floatfield);
+                        format = format.ShiftFront();
+                        fixed = true;
+                        continue;
+
+                    case format_traits::fmt_SCIENT:
+                        props.Flags |= std::ios_base::uppercase;
+                    case format_traits::fmt_scient:
+                        props.Flags = (props.Flags & ~std::ios_base::floatfield) | (std::ios_base::scientific & std::ios_base::floatfield);
+                        format = format.ShiftFront();
+                        continue;
+
+                    case format_traits::fmt_UPPER:
+                    case format_traits::fmt_upper:
+                        props.Flags |= std::ios_base::uppercase;
+                        format = format.ShiftFront();
+                        continue;
+
+                    case format_traits::fmt_BASE:
+                    case format_traits::fmt_base:
+                        props.Flags |= std::ios_base::showbase;
+                        format = format.ShiftFront();
+                        continue;
+
+                    case format_traits::fmt_point:
+                        props.Flags |= std::ios_base::showpoint;
+                        format = format.ShiftFront();
+                        continue;
+
+                    case format_traits::fmt_sharp:
+                        props.Fill = format_traits::zero;
+                        format = format.ShiftFront();
+                        continue;
+                    }
+
+                    int sign = 1;
+                    if (format_traits::fmt_minus == format.front()) {
+                        format = format.ShiftFront();
+                        sign = -1;
+                    }
+
+                    if (not IsDigit(format.front())) {
+                        AssertRelease(sign > 0); // invalid format : minus without digits
+                        break;
+                    }
+
+                    intptr_t parsedScalar = 0;
+                    {
+                        const BasicStringSlice<_Char> digits = EatDigits(format);
+                        Assert(digits.data() + digits.size() == format.data());
+
+                        if (not Atoi(&parsedScalar, digits, 10))
+                            AssertNotReached();
+                    }
+
+                    if (fixed) {
+                        AssertRelease(sign > 0); // invalid format : negative precision is not supported
+                        props.Precision = checked_cast<std::streamsize>(parsedScalar);
+                    }
+                    else {
+                        props.Width = checked_cast<std::streamsize>(parsedScalar);
+
+                        if (sign < 0) {
+                            props.Flags &= ~std::ios_base::right;
+                            props.Flags |= std::ios_base::left;
+                        }
+                        else {
+                            props.Flags &= ~std::ios_base::left;
+                            props.Flags |= std::ios_base::right;
+                        }
+                    }
+                }
+                while (format.size() && format_traits::rbrace != format.front());
+            }
+
+            props.Repeat = 1;
+            if (format_traits::multiply == format.front())
+            {
+                format = format.ShiftFront();
+                AssertRelease(IsDigit(format.front())); // invalid format : * must be followed by a digit
+
+                intptr_t parsedRepeat = 0;
                 {
-                case format_traits::fmt_ALPHA:
-                    props.Flags |= std::ios_base::uppercase;
-                case format_traits::fmt_alpha:
-                    props.Flags |= std::ios_base::boolalpha;
-                    ++d;
-                    continue;
+                    const BasicStringSlice<_Char> digits = EatDigits(format);
+                    Assert(digits.data() + digits.size() == format.data());
 
-                case format_traits::fmt_DEC:
-                case format_traits::fmt_dec:
-                    props.Flags = (props.Flags & ~std::ios_base::basefield) | (std::ios_base::dec & std::ios_base::basefield);
-                    ++d;
-                    continue;
-
-                case format_traits::fmt_HEX:
-                    props.Flags |= std::ios_base::uppercase;
-                case format_traits::fmt_hex:
-                    props.Flags = (props.Flags & ~std::ios_base::basefield) | (std::ios_base::hex & std::ios_base::basefield);
-                    ++d;
-                    continue;
-
-                case format_traits::fmt_OCT:
-                case format_traits::fmt_oct:
-                    props.Flags = (props.Flags & ~std::ios_base::basefield) | (std::ios_base::oct & std::ios_base::basefield);
-                    ++d;
-                    continue;
-
-                case format_traits::fmt_FIXED:
-                case format_traits::fmt_fixed:
-                    props.Flags = (props.Flags & ~std::ios_base::floatfield) | (std::ios_base::fixed & std::ios_base::floatfield);
-                    ++d;
-                    fixed = true;
-                    continue;
-
-                case format_traits::fmt_SCIENT:
-                case format_traits::fmt_scient:
-                    props.Flags = (props.Flags & ~std::ios_base::floatfield) | (std::ios_base::scientific & std::ios_base::floatfield);
-                    ++d;
-                    continue;
-
-                case format_traits::fmt_UPPER:
-                case format_traits::fmt_upper:
-                    props.Flags |= std::ios_base::uppercase;
-                    ++d;
-                    continue;
-
-                case format_traits::fmt_BASE:
-                case format_traits::fmt_base:
-                    props.Flags |= std::ios_base::showbase;
-                    ++d;
-                    continue;
-
-                case format_traits::fmt_point:
-                    props.Flags |= std::ios_base::showpoint;
-                    ++d;
-                    continue;
-
-                case format_traits::fmt_sharp:
-                    props.Fill = format_traits::zero;
-                    ++d;
-                    continue;
+                    if (not Atoi(&parsedRepeat, digits, 10))
+                        AssertNotReached();
                 }
 
-                int sign = 1;
-                if (format_traits::fmt_minus == *d) {
-                    ++d;
-                    sign = -1;
-                }
-
-                if (false == IsDigit(*d))
-                    break;
-
-                const _Char* b = d;
-                for (; IsDigit(*d); ++d);
-
-                std::streamsize s = 0;
-                for (size_t n = d - b, base = 1; n > 0; --n, base *= 10)
-                    s += (b[n - 1] - format_traits::zero) * base;
-
-                if (fixed)
-                    props.Precision = s;
-                else
-                    props.Width = s;
-
-                props.Flags |= (sign < 0) ? std::ios_base::left : std::ios_base::right;
+                Assert(parsedRepeat > 0);
+                props.Repeat = checked_cast<size_t>(parsedRepeat);
             }
-        }
 
-        props.Repeat = 1;
-        if (format_traits::multiply == *d)
-        {
-            ++d;
+            if (format_traits::rbrace == format.front())
+            {
+                format = format.ShiftFront();
+                *index = checked_cast<size_t>(parsedIndex);
 
-            if (IsDigit(*d)) {
-                const _Char* b = d;
-                for (; IsDigit(*d); ++d);
-
-                std::streamsize s = 0;
-                for (size_t n = d - b, base = 1; n > 0; --n, base *= 10)
-                    s += (b[n - 1] - format_traits::zero) * base;
-
-                Assert(s);
-                props.Repeat = checked_cast<size_t>(s);
+                return true;
             }
-        }
+            else
+            {
+                // bad string format, missing '}'
+                // but handled :
 
-        if (format_traits::rbrace == *d)
-        {
-            *outp = _Char(0);
-            *index = i;
-            *pformat = d + 1;
-
-            return true;
-        }
-        else
-        {
-            AssertNotImplemented(); // bad string format
-            // but the string will still be printed :
+                *outp = formatBeforeParse;
+                return true;
+            }
         }
     }
+    while (format.size());
 
-    *outp = **pformat;
-    *pformat = *pformat + 1;
-    Assert(*outp != _Char());
-
+    Assert(not outp->empty());
     return true;
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
 static void FormatArgs_(
     std::basic_ostream<_Char, _Traits>& oss,
-    const _Char *format,
-    const details::_FormatFunctor<_Char, _Traits> *args, size_t count ) {
-    Assert(format);
+    const BasicStringSlice<_Char>& format,
+    const MemoryView<const details::_FormatFunctor<_Char, _Traits>>& args ) {
+    Assert(format.Pointer());
 
     FormatProperties_ original;
     original.From(oss); // backups original state
 
     FormatProperties_ props = original;
+    BasicStringSlice<_Char> formatIt = format;
+    BasicStringSlice<_Char> outp;
 
-    _Char outp(0);
-    size_t index(0);
-    while (FormatParser_(&format, &outp, &index, props)) {
-        if (outp != _Char(0)) {
-            oss.put(outp);
-        }
-        else {
-            AssertRelease(index < count); // detects invalid user input
+    size_t index = size_t(-1);
+    while (FormatParser_(formatIt, &outp, &index, props)) {
+        if (outp.size())
+            oss.write(outp.Pointer(), outp.size());
+
+        if (size_t(-1) != index) {
+            AssertRelease(index < args.size()); // detects invalid user input
 
             for (size_t n = 0; n < props.Repeat; ++n) {
                 props.To(oss);
                 oss << args[index];
             }
-
-            props = original.To(oss); // restores original state
         }
+
+        original.To(oss); // restores original state
+        props = original;
     }
 }
 //----------------------------------------------------------------------------
@@ -324,12 +353,12 @@ static void FormatArgs_(
 //----------------------------------------------------------------------------
 namespace details {
 //----------------------------------------------------------------------------
-void _FormatArgs(std::basic_ostream<char>& oss, const char *format, const _FormatFunctor<char> *args, size_t count) {
-    FormatArgs_(oss, format, args, count);
+void _FormatArgs(std::basic_ostream<char>& oss, const StringSlice& format, const MemoryView<const _FormatFunctor<char>>& args) {
+    FormatArgs_(oss, format, args);
 }
 //----------------------------------------------------------------------------
-void _FormatArgs(std::basic_ostream<wchar_t>& oss, const wchar_t *format, const _FormatFunctor<wchar_t> *args, size_t count) {
-    FormatArgs_(oss, format, args, count);
+void _FormatArgs(std::basic_ostream<wchar_t>& oss, const WStringSlice& format, const MemoryView<const _FormatFunctor<wchar_t>>& args) {
+    FormatArgs_(oss, format, args);
 }
 //----------------------------------------------------------------------------
 } //!namespace details

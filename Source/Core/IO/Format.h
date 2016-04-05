@@ -3,6 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/IO/String.h"
+#include "Core/IO/StringSlice.h"
 
 #include <iosfwd>
 
@@ -37,27 +38,54 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits = std::char_traits<_Char>, typename _Arg0, typename... _Args>
-void Format(std::basic_ostream<_Char, _Traits>& oss, const _Char* format, _Arg0&& arg0, _Args&&... args);
+void Format(std::basic_ostream<_Char, _Traits>& oss, const BasicStringSlice<_Char>& format, _Arg0&& arg0, _Args&&... args);
+//----------------------------------------------------------------------------
+template <typename _Char, size_t _Dim, typename _Traits = std::char_traits<_Char>, typename _Arg0, typename... _Args>
+void Format(std::basic_ostream<_Char, _Traits>& oss, const _Char (&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
+    Format(oss, MakeStringSlice(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Arg0, typename... _Args>
-size_t Format(_Char* result, size_t capacity, const _Char* format, _Arg0&& arg0, _Args&&... args);
+size_t Format(_Char* result, size_t capacity, const BasicStringSlice<_Char>& format, _Arg0&& arg0, _Args&&... args);
+//----------------------------------------------------------------------------
+template <typename _Char, size_t _Dim, typename _Arg0, typename... _Args>
+size_t Format(_Char* result, size_t capacity, const _Char (&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
+    return Format(result, capacity, MakeStringSlice(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+}
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits = std::char_traits<_Char>, typename _Arg0, typename... _Args>
-void Format(BasicString<_Char, _Traits>& result, const _Char* format, _Arg0&& arg0, _Args&&... args);
+void Format(BasicString<_Char, _Traits>& result, const BasicStringSlice<_Char>& format, _Arg0&& arg0, _Args&&... args);
+//----------------------------------------------------------------------------
+template <typename _Char, size_t _Dim, typename _Traits = std::char_traits<_Char>, typename _Arg0, typename... _Args>
+void Format(BasicString<_Char, _Traits>& result, const _Char (&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
+    Format(result, MakeStringSlice(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char, size_t _Dim, typename _Arg0, typename... _Args>
-size_t Format(_Char(&staticArray)[_Dim], const _Char* format, _Arg0&& arg0, _Args&&... args) {
+size_t Format(_Char(&staticArray)[_Dim], const BasicStringSlice<_Char>& format, _Arg0&& arg0, _Args&&... args) {
     return Format(&staticArray[0], _Dim, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
+template <typename _Char, size_t _Dim, size_t _Dim2, typename _Arg0, typename... _Args>
+size_t Format(_Char(&staticArray)[_Dim], const _Char (&format)[_Dim2], _Arg0&& arg0, _Args&&... args) {
+    return Format(&staticArray[0], _Dim, MakeStringSlice(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+}
+//----------------------------------------------------------------------------
 template <typename _Char, typename _Traits = std::char_traits<_Char>, typename _Arg0, typename... _Args>
-BasicString<_Char, _Traits> StringFormat(const _Char* format, _Arg0&& arg0, _Args&&... args) {
+BasicString<_Char, _Traits> StringFormat(const BasicStringSlice<_Char>& format, _Arg0&& arg0, _Args&&... args) {
     BasicString<_Char, _Traits> result;
     Format(result, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename _Char, size_t _Dim, typename _Traits = std::char_traits<_Char>, typename _Arg0, typename... _Args>
+BasicString<_Char, _Traits> StringFormat(const _Char (&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
+    BasicString<_Char, _Traits> result;
+    Format(result, MakeStringSlice(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
     return result;
 }
 //----------------------------------------------------------------------------
@@ -80,8 +108,13 @@ public:
     STATIC_ASSERT(std::is_pod<_Char>::value);
 
     template <typename _Arg0, typename... _Args>
-    StaticFormat(const _Char* format, _Arg0&& arg0, _Args&&... args) {
+    StaticFormat(const BasicStringSlice<_Char>& format, _Arg0&& arg0, _Args&&... args) {
         _length = Format(_c_str, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+    }
+
+    template <size_t _Dim, typename _Arg0, typename... _Args>
+    StaticFormat(const _Char (&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
+        _length = Format(_c_str, MakeStringSlice(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
     }
 
     StaticFormat(const StaticFormat& ) = delete;
