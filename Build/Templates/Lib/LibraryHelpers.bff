@@ -79,8 +79,8 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         {
             .UnityInputPath             = '$ProjectPath$'
             .UnityOutputPath            = .UnityDirectory
-            .UnityOutputPattern         = 'Unity*.cpp'
             .UnityInputPattern          = { '*.cpp', '*.c' }
+            .UnityOutputPattern         = 'Unity_*_of_$UnityNumFiles$.cpp'
             .UnityInputExcludedFiles    = {}
             ForEach( .Filename in .ProjectExcludedFiles )
             {
@@ -92,14 +92,12 @@ ForEach( .CompileConfig in .AllCompileConfigs )
             }
 
             // Pre-Compiled Headers
-#if USE_PRECOMPILED_HEADERS
             .ProjectPCHOptions = []
             {
                 Eval( .ProjectPCHConfig )
                 ^ProjectPCHOptions = .ProjectCompileConfig + .ProjectPCHConfig
             }
             Using( .ProjectPCHOptions )
-#endif
         }
 
         RemoveDir( '$ProjectName$-Unity-$Platform$-$Config$-Purge' )
@@ -124,14 +122,12 @@ ForEach( .CompileConfig in .AllCompileConfigs )
             .CompilerInputUnity = '$ProjectName$-Unity-$Platform$-$Config$'
 
             // Pre-Compiled Headers
-#if USE_PRECOMPILED_HEADERS
             .ProjectPCHOptions = []
             {
                 Eval( .ProjectPCHConfig )
                 ^ProjectPCHOptions = .ProjectCompileConfig + .ProjectPCHConfig
             }
             Using( .ProjectPCHOptions )
-#endif
         }
 
         RemoveDir( '$ProjectName$-Obj-$Platform$-$Config$-Purge' )
