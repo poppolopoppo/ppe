@@ -41,20 +41,19 @@ static bool NormalizePath_(size_t* plength, const MemoryView<Dirname>& dirnames)
     return true;
 }
 //----------------------------------------------------------------------------
-static const FileSystemNode *ParseDirpath_(const FileSystem::char_type *cstr, size_t length) {
-    Assert(0 == length || cstr);
-    if (nullptr == cstr || 0 == length)
+static const FileSystemNode *ParseDirpath_(const FileSystem::StringSlice& str) {
+    if (str.empty())
         return nullptr;
 
-    static const FileSystem::char_type *sep = L"\\/";
     STACKLOCAL_POD_STACK(FileSystemToken, path, Dirpath::MaxDepth);
 
-    BasicStringSlice<FileSystem::char_type> slice;
-    while (Split(&cstr, &length, sep, slice)) {
-        if (slice.empty()) // ex: "toto//file.ext" -> 1 empty slice at "//"
-            continue;
+    const FileSystem::StringSlice separators = FileSystem::Separators();
 
-        path.Push(slice);
+    FileSystem::StringSlice src = str;
+    FileSystem::StringSlice slice;
+    while (Split(src, separators, slice)) {
+        if (not slice.empty()) // ex: "toto//file.ext" -> 1 empty slice at "//"
+            path.Push(slice);
     }
 
     return FileSystemPath::Instance().GetOrCreate(path.MakeView());
@@ -115,25 +114,12 @@ Dirpath::Dirpath(const Dirpath& other, const MemoryView<const Dirname>& append) 
     _path = FileSystemPath::Instance().Concat(other._path, append.Cast<const FileSystemToken>());
 }
 //----------------------------------------------------------------------------
-Dirpath::Dirpath(const FileSystem::char_type *content) {
-    _path = ParseDirpath_(content, Length(content));
+Dirpath::Dirpath(const FileSystem::StringSlice& content) {
+    _path = ParseDirpath_(content);
 }
 //----------------------------------------------------------------------------
-Dirpath& Dirpath::operator =(const FileSystem::char_type *content) {
-    _path = ParseDirpath_(content, Length(content));
-    return *this;
-}
-//----------------------------------------------------------------------------
-Dirpath::Dirpath(const FileSystem::char_type* content, size_t length) {
-    _path = ParseDirpath_(content, length);
-}
-//----------------------------------------------------------------------------
-Dirpath::Dirpath(const BasicStringSlice<FileSystem::char_type>& slice) {
-    _path = ParseDirpath_(slice.data(), slice.size());
-}
-//----------------------------------------------------------------------------
-Dirpath& Dirpath::operator =(const BasicStringSlice<FileSystem::char_type>& slice) {
-    _path = ParseDirpath_(slice.data(), slice.size());
+Dirpath& Dirpath::operator =(const FileSystem::StringSlice& content) {
+    _path = ParseDirpath_(content);
     return *this;
 }
 //----------------------------------------------------------------------------
@@ -184,7 +170,7 @@ size_t Dirpath::ExpandPath(Core::MountingPoint& mountingPoint, const MemoryView<
         return 0;
 
     STACKLOCAL_POD_ARRAY(FileSystemToken, tokens, _path->Depth());
-    const size_t k = FileSystemPath::Instance().Expand(tokens.Pointer(), tokens.size(), _path);
+    const size_t k = FileSystemPath::Instance().Expand(tokens, _path);
     if (0 == k)
         return 0;
     Assert(_path->Depth() == k);
@@ -222,14 +208,13 @@ void Dirpath::Concat(const FileSystem::char_type *cstr) {
 void Dirpath::Concat(const MemoryView<const FileSystem::char_type>& strview) {
     Assert(strview.Pointer());
 
-    const FileSystem::char_type *separators = FileSystem::Separators();
-
-    size_t length = strview.size();
-    const FileSystem::char_type *cstr = strview.Pointer();
-
     FileSystemTrie& trie = FileSystemPath::Instance();
-    MemoryView<const FileSystem::char_type> slice;
-    while (Split(&cstr, &length, separators, slice))
+
+    const BasicStringSlice<FileSystem::char_type> separators = FileSystem::Separators();
+
+    BasicStringSlice<FileSystem::char_type> src(strview);
+    BasicStringSlice<FileSystem::char_type> slice;
+    while (Split(src, separators, slice))
         _path = trie.Concat(_path, FileSystemToken(slice) );
 }
 //----------------------------------------------------------------------------
@@ -270,11 +255,11 @@ bool Dirpath::Less(const Dirpath& other) const {
     const auto& fsp = FileSystemPath::Instance();
 
     STACKLOCAL_POD_ARRAY(FileSystemToken, p0, _path->Depth() );
-    const size_t k0 = fsp.Expand(p0.Pointer(), p0.size(), _path);
+    const size_t k0 = fsp.Expand(p0, _path);
     Assert(_path->Depth() == k0 );
 
     STACKLOCAL_POD_ARRAY(FileSystemToken, p1, other._path->Depth() );
-    const size_t k1 = fsp.Expand(p1.Pointer(), p1.size(), other._path);
+    const size_t k1 = fsp.Expand(p1, other._path);
     Assert(other._path->Depth() == k1 );
 
     const size_t k = (k0 < k1) ? k0 : k1;

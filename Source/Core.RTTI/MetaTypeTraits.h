@@ -19,7 +19,7 @@
 #include <type_traits>
 
 namespace Core {
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator>
+template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator>
 class Token;
 
 namespace RTTI {
@@ -157,7 +157,7 @@ struct MetaTypeTraitsImpl< Core::RefPtr<T>, typename std::enable_if< std::is_bas
 template <typename _Char, typename _Traits, typename _Allocator>
 struct MetaTypeTraitsImpl< std::basic_string<_Char, _Traits, _Allocator> > {
     typedef std::basic_string<_Char, _Traits, _Allocator> wrapped_type;
-    typedef typename DefaultString<_Char>::type wrapper_type;
+    typedef BasicString<_Char> wrapper_type;
 
     typedef MetaType< wrapper_type > meta_type;
 
@@ -176,10 +176,10 @@ struct MetaTypeTraitsImpl< std::basic_string<_Char, _Traits, _Allocator> > {
     static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src);
 };
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator>
-struct MetaTypeTraitsImpl< Core::Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator> > {
-    typedef Core::Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator> wrapped_type;
-    typedef typename DefaultString<_Char>::type wrapper_type;
+template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator>
+struct MetaTypeTraitsImpl< Core::Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> > {
+    typedef Core::Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> wrapped_type;
+    typedef BasicString<_Char> wrapper_type;
 
     typedef MetaType< wrapper_type > meta_type;
 
@@ -579,7 +579,7 @@ struct MetaTypeTraitsImpl< UX10Y10Z10W2N > {
 template <>
 struct MetaTypeTraitsImpl< Basename > {
     typedef Basename wrapped_type;
-    typedef DefaultString<typename FileSystem::char_type>::type wrapper_type;
+    typedef BasicString<typename FileSystem::char_type> wrapper_type;
 
     typedef MetaType< wrapper_type > meta_type;
 
@@ -601,7 +601,7 @@ struct MetaTypeTraitsImpl< Basename > {
 template <>
 struct MetaTypeTraitsImpl< Dirpath > {
     typedef Dirpath wrapped_type;
-    typedef DefaultString<FileSystem::char_type>::type wrapper_type;
+    typedef BasicString<FileSystem::char_type> wrapper_type;
 
     typedef MetaType< wrapper_type > meta_type;
 
@@ -623,7 +623,7 @@ struct MetaTypeTraitsImpl< Dirpath > {
 template <>
 struct MetaTypeTraitsImpl< Filename > {
     typedef Filename wrapped_type;
-    typedef DefaultString<FileSystem::char_type>::type wrapper_type;
+    typedef BasicString<FileSystem::char_type> wrapper_type;
 
     typedef MetaType< wrapper_type > meta_type;
 

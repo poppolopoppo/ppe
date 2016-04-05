@@ -35,6 +35,7 @@ struct Numeric {
     friend bool operator <=(const Numeric& lhs, const Numeric& rhs) { return lhs.Value <= rhs.Value; }
 
     friend void swap(Numeric& lhs, Numeric& rhs) { std::swap(lhs.Value, rhs.Value); }
+    friend inline hash_t hash_value(const Numeric& value) { return hash_as_pod(value.Value); }
 
     static Numeric MinusOne() { return Numeric(T(-1)); }
     static Numeric One() { return Numeric(T(1)); }

@@ -59,11 +59,11 @@ public:
     const_iterator begin() const { return MakeCheckedIterator(const_pointer(_storage), _size, 0); }
     const_iterator end() const { return MakeCheckedIterator(const_pointer(_storage), _size, _size); }
 
-    reverse_iterator rbegin() { return reverse_iterator(begin()); }
-    reverse_iterator rend() { return reverse_iterator(end()); }
+    reverse_iterator rbegin() { return reverse_iterator(end()); }
+    reverse_iterator rend() { return reverse_iterator(begin()); }
 
-    const_reverse_iterator rbegin() const { return const_reverse_iterator(begin()); }
-    const_reverse_iterator rend() const { return const_reverse_iterator(end()); }
+    const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
+    const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
 
     reference at(size_type index) { Assert(index < _size); return _storage[index]; }
     const_reference at(size_type index) const { Assert(index < _size); return _storage[index]; }

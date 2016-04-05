@@ -41,9 +41,17 @@ void ApplicationConsole::RedirectIOToConsole() {
     LOG(Info, L"[Application] RedirectIOToConsole()");
 
     ::AllocConsole();
-    freopen("conin$","r",stdin);
-    freopen("conout$","w",stdout);
-    freopen("conout$","w",stderr);
+
+    FILE* fp = nullptr;
+
+    fp = freopen("conin$","r",stdin);
+    Assert(fp);
+
+    fp = freopen("conout$","w",stdout);
+    Assert(fp);
+
+    fp = freopen("conout$","w",stderr);
+    Assert(fp);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

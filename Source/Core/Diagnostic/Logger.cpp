@@ -80,7 +80,7 @@ void LoggerFrontend::SetImpl(ILogger* impl) {
     _impl.reset(impl);
 }
 //----------------------------------------------------------------------------
-void LoggerFrontend::Log(LogCategory category, const wchar_t* text) {
+void LoggerFrontend::Log(LogCategory category, const WStringSlice& text) {
     std::lock_guard<std::mutex> scopelock(_lock);
     if (_impl)
         _impl->Log(category, text);
@@ -88,7 +88,7 @@ void LoggerFrontend::Log(LogCategory category, const wchar_t* text) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void OutputDebugLogger::Log(LogCategory category, const wchar_t* text) {
+void OutputDebugLogger::Log(LogCategory category, const WStringSlice& text) {
 #if 0
     if (LogCategory::Callstack != category) {
         wchar_t header[64];
@@ -104,11 +104,13 @@ void OutputDebugLogger::Log(LogCategory category, const wchar_t* text) {
     }
 #endif
 
-    OutputDebugStringW(text);
+    Assert('\0' == text.data()[text.size()]); // text must be null terminated !
+
+    OutputDebugStringW(text.data());
     OutputDebugStringW(L"\n");
 }
 //----------------------------------------------------------------------------
-void StdcoutLogger::Log(LogCategory category, const wchar_t* text) {
+void StdcoutLogger::Log(LogCategory category, const WStringSlice& text) {
     if (LogCategory::Callstack != category) {
         wchar_t header[64];
         Format(header, L"[{0:12f}][{1}] ", CurrentProcess::ElapsedSeconds(), category);
@@ -118,7 +120,7 @@ void StdcoutLogger::Log(LogCategory category, const wchar_t* text) {
     std::wcout << text << std::endl;
 }
 //----------------------------------------------------------------------------
-void StderrLogger::Log(LogCategory category, const wchar_t* text) {
+void StderrLogger::Log(LogCategory category, const WStringSlice& text) {
     if (LogCategory::Callstack != category) {
         wchar_t header[64];
         Format(header, L"[{0:12f}][{1}] ", CurrentProcess::ElapsedSeconds(), category);

@@ -15,6 +15,7 @@
 namespace Core {
 namespace ContentGenerator {
 
+extern void Test_Format();
 extern void Test_Containers();
 extern void Test_RTTI();
 
@@ -37,6 +38,7 @@ RobotApp::RobotApp()
 
     Application::ApplicationConsole::RedirectIOToConsole();
 
+    Test_Format();
     Test_Containers();
     Test_RTTI();
 }

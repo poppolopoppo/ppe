@@ -21,6 +21,7 @@ MetaAtomHashMap::~MetaAtomHashMap() {
 }
 //----------------------------------------------------------------------------
 void MetaAtomHashMap::Add(const MetaObjectName& name, MetaAtom *metaAtom, bool allowOverride) {
+    UNUSED(allowOverride);
     Assert(!name.empty());
     Assert(metaAtom);
 
@@ -34,6 +35,7 @@ void MetaAtomHashMap::Add(const MetaObjectName& name, MetaAtom *metaAtom, bool a
 }
 //----------------------------------------------------------------------------
 void MetaAtomHashMap::Remove(const MetaObjectName& name, MetaAtom *metaAtom) {
+    UNUSED(metaAtom);
     Assert(!name.empty());
     Assert(metaAtom);
 

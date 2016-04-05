@@ -16,19 +16,21 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static size_t ExpandFileSystemNode_(FileSystemToken *ptokens, size_t capacity, const FileSystemNode *pnode, const FileSystemNode *root) {
+static size_t ExpandFileSystemNode_(
+    MemoryView<FileSystemToken> tokens,
+    const FileSystemNode *pnode,
+    const FileSystemNode *proot ) {
     if (nullptr == pnode)
         return 0;
 
     size_t count = 0;
-    for (; pnode->Parent(); pnode = pnode->Parent()) {
-        Assert(count < capacity);
-        ptokens[count++] = pnode->Token();
-    }
-    Assert(pnode->Token().empty());
-    Assert(capacity == count);
+    for (; proot != pnode; pnode = pnode->Parent())
+        tokens[count++] = pnode->Token();
 
-    std::reverse(ptokens, ptokens + count);
+    Assert(pnode->Token().empty());
+    Assert(tokens.size() == count);
+
+    std::reverse(tokens.begin(), tokens.begin() + count);
 
     return count;
 }
@@ -240,21 +242,19 @@ const FileSystemNode* FileSystemTrie::RootNode(const FileSystemNode *pnode) cons
     return pnode;
 }
 //----------------------------------------------------------------------------
-size_t FileSystemTrie::Expand(FileSystemToken *ptokens, size_t capacity, const FileSystemNode *pnode) const {
-    Assert(ptokens);
-    Assert(capacity > 0);
+size_t FileSystemTrie::Expand(const MemoryView<FileSystemToken>& tokens, const FileSystemNode *pnode) const {
+    Assert(tokens.size() > 0);
 
     if (nullptr == pnode)
         return 0;
 
     READSCOPELOCK(_barrier);
 
-    return ExpandFileSystemNode_(ptokens, capacity, pnode, _root.get() );
+    return ExpandFileSystemNode_(tokens, pnode, _root.get() );
 }
 //----------------------------------------------------------------------------
-size_t FileSystemTrie::Expand(FileSystemToken *ptokens, size_t capacity, const FileSystemNode *pbegin, const FileSystemNode *pend) const {
-    Assert(ptokens);
-    Assert(capacity > 0);
+size_t FileSystemTrie::Expand(const MemoryView<FileSystemToken>& tokens, const FileSystemNode *pbegin, const FileSystemNode *pend) const {
+    Assert(tokens.size() > 0);
     Assert(pbegin);
     Assert(pend);
 
@@ -263,7 +263,7 @@ size_t FileSystemTrie::Expand(FileSystemToken *ptokens, size_t capacity, const F
 
     READSCOPELOCK(_barrier);
 
-    return ExpandFileSystemNode_(ptokens, capacity, pend, pbegin);
+    return ExpandFileSystemNode_(tokens, pend, pbegin);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

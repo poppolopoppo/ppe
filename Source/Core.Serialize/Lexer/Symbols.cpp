@@ -53,12 +53,15 @@ static void RegisterRTTITypenames_(Symbols::hashmap_type& symbols) {
 #undef RTTI_INSERT_TYPENAME
 }
 //----------------------------------------------------------------------------
+#ifdef WITH_CORE_ASSERT
 static const Symbol* FindSymbol_(const Symbols::hashmap_type& symbols, const StringSlice& cstr) {
     const auto it = symbols.find(cstr);
     return (symbols.end() != it ? &it->second : nullptr);
 }
+#endif
 //----------------------------------------------------------------------------
 static void UnregisterSymbol_(const Symbols::hashmap_type& symbols, const Symbol** psymbol) {
+    UNUSED(symbols);
     Assert(nullptr != *psymbol);
     Assert(*psymbol == FindSymbol_(symbols, (*psymbol)->CStr()));
     *psymbol = nullptr;

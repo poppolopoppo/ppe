@@ -64,6 +64,8 @@ void DeviceResource::SetResourceName(const char *name) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(name);
     _resourceName = name;
+#else
+    UNUSED(name);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -73,6 +75,8 @@ void DeviceResource::SetResourceName(String&& name) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(name.size());
     _resourceName = std::move(name);
+#else
+    UNUSED(name);
 #endif
 }
 //----------------------------------------------------------------------------

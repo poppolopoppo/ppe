@@ -51,11 +51,15 @@ void MouseInputHandler::UnregisterMessageDelegates(Graphics::BasicWindow *wnd) {
 }
 //----------------------------------------------------------------------------
 void MouseInputHandler::UpdateBeforeDispatch(Graphics::BasicWindow *wnd) {
+    UNUSED(wnd);
+
     _state._buttonsDown.Clear();
     _state._buttonsUp.Clear();
 }
 //----------------------------------------------------------------------------
 void MouseInputHandler::UpdateAfterDispatch(Graphics::BasicWindow *wnd) {
+    UNUSED(wnd);
+
     for (MouseButton btn : _state._buttonsUp.MakeView()) {
 #ifdef WITH_MOUSESTATE_VERBOSE
         LOG(Info, L"[Mouse] button {0} up", u32(btn));
@@ -73,6 +77,9 @@ void MouseInputHandler::UpdateAfterDispatch(Graphics::BasicWindow *wnd) {
 }
 //----------------------------------------------------------------------------
 Graphics::MessageResult MouseInputHandler::OnMouseMove_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
+    UNUSED(msg);
+    UNUSED(wparam);
+
     MouseInputHandler *const mouse = checked_cast<MouseInputHandler *>(handler);
     mouse->_state._clientX = checked_cast<int>(LOWORD(lparam));
     mouse->_state._clientY = checked_cast<int>(HIWORD(lparam));
@@ -84,36 +91,66 @@ Graphics::MessageResult MouseInputHandler::OnMouseMove_(Graphics::IWindowMessage
 }
 //----------------------------------------------------------------------------
 Graphics::MessageResult MouseInputHandler::OnMouseLButtonDown_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
+    UNUSED(wnd);
+    UNUSED(msg);
+    UNUSED(lparam);
+    UNUSED(wparam);
+
     MouseInputHandler *const mouse = checked_cast<MouseInputHandler *>(handler);
     mouse->_state._buttonsDown.Add_AssertUnique(MouseButton::Button0);
     return 0;
 }
 //----------------------------------------------------------------------------
 Graphics::MessageResult MouseInputHandler::OnMouseLButtonUp_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
+    UNUSED(wnd);
+    UNUSED(msg);
+    UNUSED(lparam);
+    UNUSED(wparam);
+
     MouseInputHandler *const mouse = checked_cast<MouseInputHandler *>(handler);
     mouse->_state._buttonsUp.Add_AssertUnique(MouseButton::Button0);
     return 0;
 }
 //----------------------------------------------------------------------------
 Graphics::MessageResult MouseInputHandler::OnMouseRButtonDown_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
+    UNUSED(wnd);
+    UNUSED(msg);
+    UNUSED(lparam);
+    UNUSED(wparam);
+
     MouseInputHandler *const mouse = checked_cast<MouseInputHandler *>(handler);
     mouse->_state._buttonsDown.Add_AssertUnique(MouseButton::Button1);
     return 0;
 }
 //----------------------------------------------------------------------------
 Graphics::MessageResult MouseInputHandler::OnMouseRButtonUp_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
+    UNUSED(wnd);
+    UNUSED(msg);
+    UNUSED(lparam);
+    UNUSED(wparam);
+
     MouseInputHandler *const mouse = checked_cast<MouseInputHandler *>(handler);
     mouse->_state._buttonsUp.Add_AssertUnique(MouseButton::Button1);
     return 0;
 }
 //----------------------------------------------------------------------------
 Graphics::MessageResult MouseInputHandler::OnMouseMButtonDown_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
+    UNUSED(wnd);
+    UNUSED(msg);
+    UNUSED(lparam);
+    UNUSED(wparam);
+
     MouseInputHandler *const mouse = checked_cast<MouseInputHandler *>(handler);
     mouse->_state._buttonsDown.Add_AssertUnique(MouseButton::Button2);
     return 0;
 }
 //----------------------------------------------------------------------------
 Graphics::MessageResult MouseInputHandler::OnMouseMButtonUp_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
+    UNUSED(wnd);
+    UNUSED(msg);
+    UNUSED(lparam);
+    UNUSED(wparam);
+
     MouseInputHandler *const mouse = checked_cast<MouseInputHandler *>(handler);
     mouse->_state._buttonsUp.Add_AssertUnique(MouseButton::Button2);
     return 0;

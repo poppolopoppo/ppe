@@ -48,12 +48,12 @@ static SHScalar SHFactorial_(int x) {
         SHScalar(120.0), SHScalar(720.0), SHScalar(5040.0), SHScalar(40320.0), SHScalar(362880.0),
         SHScalar(3628800.0), SHScalar(39916800.0), SHScalar(479001600.0), SHScalar(6227020800.0), SHScalar(87178291200.0), SHScalar(1307674368000.0) };
 
-    if (x < lengthof(gPrecomputedFactorial))
+    if (x < int(lengthof(gPrecomputedFactorial)))
         return gPrecomputedFactorial[x];    //return precomputed value
 
     //return non precomputed value starting using the last precomputed value in the array
     SHScalar result = gPrecomputedFactorial[lengthof(gPrecomputedFactorial)-1];
-    for (int i = lengthof(gPrecomputedFactorial); i <= x; ++i)
+    for (int i = int(lengthof(gPrecomputedFactorial)); i <= x; ++i)
         result = result *= i;
 
     return result;

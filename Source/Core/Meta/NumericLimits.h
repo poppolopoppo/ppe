@@ -30,7 +30,7 @@ struct NumericLimits {
 //----------------------------------------------------------------------------
 template <>
 struct NumericLimits<u128> {
-    typedef typename NumericLimits<uint64_t> limits_type;
+    typedef NumericLimits<uint64_t> limits_type;
 
     STATIC_CONST_INTEGRAL(bool, is_integer, limits_type::is_integer);
     STATIC_CONST_INTEGRAL(bool, is_modulo,  limits_type::is_modulo);
@@ -47,7 +47,7 @@ struct NumericLimits<u128> {
 //----------------------------------------------------------------------------
 template <>
 struct NumericLimits<u256> {
-    typedef typename NumericLimits<u128> limits_type;
+    typedef NumericLimits<u128> limits_type;
 
     STATIC_CONST_INTEGRAL(bool, is_integer, limits_type::is_integer);
     STATIC_CONST_INTEGRAL(bool, is_modulo,  limits_type::is_modulo);

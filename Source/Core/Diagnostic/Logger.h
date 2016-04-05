@@ -2,11 +2,11 @@
 
 #include "Core/Core.h"
 
-#include "Core/Memory/MemoryView.h"
+#include "Core/IO/StringSlice.h"
 
 #include <iosfwd>
 
-#ifndef FINAL_RELEASE
+#if !defined(FINAL_RELEASE) && !defined(PROFILING_ENABLED)
 #   define USE_DEBUG_LOGGER
 #endif
 
@@ -37,10 +37,7 @@ class ILogger {
 public:
     virtual ~ILogger() {}
 
-    virtual void Log(LogCategory category, const wchar_t* text) = 0;
-
-    template <typename _Arg0, typename... _Args>
-    void Log(LogCategory category, const wchar_t* format, _Arg0&& arg0, _Args&&... args);
+    virtual void Log(LogCategory category, const WStringSlice& text) = 0;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -73,10 +70,10 @@ public:
     ILogger* Impl() const { return _impl.get(); }
     void SetImpl(ILogger* impl);
 
-    void Log(LogCategory category, const wchar_t* text);
+    void Log(LogCategory category, const WStringSlice& text);
 
-    template <typename _Arg0, typename... _Args>
-    void Log(LogCategory category, const wchar_t* format, _Arg0&& arg0, _Args&&... args);
+    template <typename... _Args>
+    void Log(LogCategory category, const WStringSlice& format, _Args&&... args);
 
 private:
     mutable std::mutex _lock;
@@ -98,14 +95,17 @@ public:
 };
 //----------------------------------------------------------------------------
 template <typename... _Args>
-void Log(LogCategory category, const wchar_t* format, _Args&&... args);
+void Log(LogCategory category, const WStringSlice& format, _Args&&... args);
+//----------------------------------------------------------------------------
+template <size_t _Dim, typename... _Args>
+void Log(LogCategory category, const wchar_t (&format)[_Dim], _Args&&... args);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class LoggerStream : public ThreadLocalWOStringStream {
 public:
     LoggerStream(LogCategory category) : _category(category) {}
-    ~LoggerStream() { Logger::Instance().Log(_category, str().c_str()); }
+    ~LoggerStream() { Logger::Instance().Log(_category, MakeStringSlice(str())); }
 
 private:
     LogCategory _category;
@@ -116,19 +116,19 @@ private:
 class OutputDebugLogger : public ILogger {
 public:
     virtual ~OutputDebugLogger() {}
-    virtual void Log(LogCategory category, const wchar_t* text) override;
+    virtual void Log(LogCategory category, const WStringSlice& text) override;
 };
 //----------------------------------------------------------------------------
 class StdcoutLogger : public ILogger {
 public:
     virtual ~StdcoutLogger() {}
-    virtual void Log(LogCategory category, const wchar_t* text) override;
+    virtual void Log(LogCategory category, const WStringSlice& text) override;
 };
 //----------------------------------------------------------------------------
 class StderrLogger : public ILogger {
 public:
     virtual ~StderrLogger() {}
-    virtual void Log(LogCategory category, const wchar_t* text) override;
+    virtual void Log(LogCategory category, const WStringSlice& text) override;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -148,7 +148,8 @@ public:
 
 #include "Core/Diagnostic/Logger-inl.h"
 
-#define LOG(_Category, ...) Core::Log(Core::LogCategory::_Category, __VA_ARGS__)
+#define LOG(_Category, ...) \
+    Core::Log(Core::LogCategory::_Category, __VA_ARGS__)
 
 #else
 

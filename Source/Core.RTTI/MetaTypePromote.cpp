@@ -224,11 +224,13 @@ struct PromoteMoveImpl_ {
     }
 
     bool operator ()(MetaAtom *dst, void *src, MetaTypeId srcTypeId) const {
+        UNUSED(srcTypeId);
         Assert(srcTypeId == MetaType<_From>::TypeId);
         return PromoteMove(dst->Cast<_To>()->Wrapper(), std::move(*reinterpret_cast<_From *>(src)));
     }
 
     bool operator ()(MetaTypeId dstTypeId, void *dst, MetaAtom *src) const {
+        UNUSED(dstTypeId);
         Assert(dstTypeId == MetaType<_To>::TypeId);
         return PromoteMove(*reinterpret_cast<_To *>(dst), std::move(src->Cast<_From>()->Wrapper()));
     }
@@ -241,11 +243,13 @@ struct PromoteCopyImpl_ {
     }
 
     bool operator ()(MetaAtom *dst, const void *src, MetaTypeId srcTypeId) const {
+        UNUSED(srcTypeId);
         Assert(srcTypeId == MetaType<_From>::TypeId);
         return PromoteCopy(dst->Cast<_To>()->Wrapper(), *reinterpret_cast<const _From *>(src));
     }
 
     bool operator ()(MetaTypeId dstTypeId, void *dst, const MetaAtom *src) const {
+        UNUSED(dstTypeId);
         Assert(dstTypeId == MetaType<_To>::TypeId);
         return PromoteCopy(*reinterpret_cast<_To *>(dst), src->Cast<_From>()->Wrapper());
     }

@@ -88,8 +88,6 @@ public:
     typedef _AutoSingleton<self_type> singleton_type;
     typedef _MemoryPool memorypool_type;
 
-    friend class singleton_type;
-
     enum : size_t {
         PoolBlockSize       = _BlockSize,
         PoolMinChunkSize    = POOL_MIN_CHUNKSIZE,
@@ -111,7 +109,7 @@ public:
     MemoryTrackingData* TrackingData() const { return nullptr; }
 #endif
 
-private:
+public:
     SegregatedMemoryPool()
     :   memorypool_type(PoolBlockSize, PoolMinChunkSize, PoolMaxChunkSize)
 #ifdef WITH_CORE_POOL_ALLOCATOR_TRACKING

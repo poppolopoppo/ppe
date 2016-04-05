@@ -15,7 +15,7 @@ class Symbol;
 class Symbols : Meta::Singleton<Symbols>, Meta::ThreadResource {
 public:
     STATIC_CONST_INTEGRAL(size_t, MaxLength, 32);
-    typedef STRINGSLICE_HASHMAP(Lexer, Symbol, CaseSensitive::True) hashmap_type;
+    typedef STRINGSLICE_HASHMAP(Lexer, Symbol, Case::Sensitive) hashmap_type;
 private:
     friend class Meta::Singleton<Symbols>;
     typedef Meta::Singleton<Symbols> singleton_type;

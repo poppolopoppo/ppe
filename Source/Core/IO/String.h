@@ -6,54 +6,51 @@
 #include "Core/IO/Stream.h"
 #include "Core/Memory/MemoryView.h"
 
-#include <cctype>
-#include <cwctype>
-#include <locale>
-#include <iosfwd>
-#include <string>
-#include <string.h>
-#include <wchar.h>
-#include <xhash>
-
 extern template class std::basic_string<char, std::char_traits<char>, std::allocator<char>>;
 extern template class std::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<char>>;
 
 extern template class std::basic_string<char, std::char_traits<char>, ALLOCATOR(String, char)>;
 extern template class std::basic_string<wchar_t, std::char_traits<wchar_t>, ALLOCATOR(String, wchar_t)>;
 
+extern template class std::basic_string<char, std::char_traits<char>, THREAD_LOCAL_ALLOCATOR(String, char)>;
+extern template class std::basic_string<wchar_t, std::char_traits<wchar_t>, THREAD_LOCAL_ALLOCATOR(String, wchar_t)>;
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-enum class CaseSensitive : bool {
-    True    = true,
-    False   = false,
-};
 //----------------------------------------------------------------------------
 template <
     typename _Char,
     typename _Traits = std::char_traits<_Char>,
     typename _Allocator = ALLOCATOR(String, _Char)
 >
-using BasicString = std::basic_string<_Char, _Traits, _Allocator>;
+class BasicString : public std::basic_string<_Char, _Traits, _Allocator> {
+public:
+    typedef std::basic_string<_Char, _Traits, _Allocator> parent_type;
+
+    using parent_type::parent_type;
+    using parent_type::operator=;
+
+    BasicString() = default;
+
+    BasicString(const BasicString& other) = default;
+    BasicString& operator =(const BasicString& other) = default;
+
+    BasicString(BasicString&& rvalue) = default;
+    BasicString& operator =(BasicString&& rvalue) = default;
+
+    BasicString(const parent_type& other) : parent_type(other) {}
+    BasicString& operator =(const parent_type& other) { parent_type::operator =(other); return *this; }
+
+    BasicString(parent_type&& rvalue) : parent_type(std::move(rvalue)) {}
+    BasicString& operator =(parent_type&& rvalue) { parent_type::operator =(std::move(rvalue)); return *this; }
+};
 //----------------------------------------------------------------------------
-INSTANTIATE_CLASS_TYPEDEF(String,   BasicString<char>);
-INSTANTIATE_CLASS_TYPEDEF(WString,  BasicString<wchar_t>);
+typedef BasicString<char> String;
+typedef BasicString<wchar_t> WString;
 //----------------------------------------------------------------------------
-template <typename _Char> struct DefaultString {};
-template <> struct DefaultString<char> { typedef String type; };
-template <> struct DefaultString<wchar_t> { typedef WString type; };
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-hash_t hash_string(const char* cstr, size_t length);
-hash_t hash_string(const wchar_t* wcstr, size_t length);
-//----------------------------------------------------------------------------
-hash_t hash_stringI(const char* cstr, size_t length);
-hash_t hash_stringI(const wchar_t* wcstr, size_t length);
-//----------------------------------------------------------------------------
-inline hash_t hash_value(const String& str) { return hash_string(str.c_str(), str.size()); }
-inline hash_t hash_value(const WString& wstr) { return hash_string(wstr.c_str(), wstr.size()); }
+hash_t hash_value(const String& str);
+hash_t hash_value(const WString& wstr);
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits, typename _Allocator>
 hash_t hash_value(const std::basic_string<_Char, _Traits, _Allocator>& str) {
@@ -62,196 +59,22 @@ hash_t hash_value(const std::basic_string<_Char, _Traits, _Allocator>& str) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline size_t Length(const char* string) { return ::strlen(string); }
+int Compare(const String& lhs, const String& rhs);
+int Compare(const WString& lhs, const WString& rhs);
 //----------------------------------------------------------------------------
-inline size_t Length(const wchar_t* string) { return ::wcslen(string); }
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-inline void Copy(char* dst, size_t capacity, const char* src) { ::strcpy_s(dst, capacity, src); }
-//----------------------------------------------------------------------------
-inline void Copy(wchar_t* dst, size_t capacity, const wchar_t* src) { ::wcscpy_s(dst, capacity, src); }
-//----------------------------------------------------------------------------
-template <typename _Char, size_t _Capacity >
-void Copy(_Char(&dst)[_Capacity], const _Char* src) { Copy(dst, _Capacity, src); }
+int CompareI(const String& lhs, const String& rhs);
+int CompareI(const WString& lhs, const WString& rhs);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline int Compare(const char* lhs, const char* rhs) { return ::strcmp(lhs, rhs); }
+inline const char *StrChr(const char* cstr, char ch) { return ::strchr(cstr, ch); }
+inline const char *StrRChr(const char* cstr, char ch) { return ::strrchr(cstr, ch); }
 //----------------------------------------------------------------------------
-inline int Compare(const wchar_t* lhs, const wchar_t* rhs) { return ::wcscmp(lhs, rhs); }
+inline const wchar_t *StrChr(const wchar_t* wcstr, wchar_t wch) { return ::wcschr(wcstr, wch); }
+inline const wchar_t *StrRChr(const wchar_t* wcstr, wchar_t wch) { return ::wcsrchr(wcstr, wch); }
 //----------------------------------------------------------------------------
-inline int CompareI(const char* lhs, const char* rhs) { return ::_strcmpi(lhs, rhs); }
-//----------------------------------------------------------------------------
-inline int CompareI(const wchar_t* lhs, const wchar_t* rhs) { return ::_wcsicmp(lhs, rhs); }
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-inline int CompareN(const char* lhs, const char* rhs, size_t length) { return ::strncmp(lhs, rhs, length); }
-//----------------------------------------------------------------------------
-inline int CompareN(const wchar_t* lhs, const wchar_t* rhs, size_t length) { return ::wcsncmp(lhs, rhs, length); }
-//----------------------------------------------------------------------------
-inline int CompareNI(const char* lhs, const char* rhs, size_t length) { return ::_strnicmp(lhs, rhs, length); }
-//----------------------------------------------------------------------------
-inline int CompareNI(const wchar_t* lhs, const wchar_t* rhs, size_t length) { return ::_wcsnicmp(lhs, rhs, length); }
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-inline const char *StrChr(const char* cstr, char ch) { return strchr(cstr, ch); }
-//----------------------------------------------------------------------------
-inline const char *StrRChr(const char* cstr, char ch) { return strrchr(cstr, ch); }
-//----------------------------------------------------------------------------
-inline const wchar_t *StrChr(const wchar_t* wcstr, wchar_t wch) { return wcschr(wcstr, wch); }
-//----------------------------------------------------------------------------
-inline const wchar_t *StrRChr(const wchar_t* wcstr, wchar_t wch) { return wcsrchr(wcstr, wch); }
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-inline const char *StrStr(const char* cstr, const char* firstOccurence) { return strstr(cstr, firstOccurence); }
-//----------------------------------------------------------------------------
-inline const wchar_t *StrStr(const wchar_t* wcstr, const wchar_t* firstOccurence) { return wcsstr(wcstr, firstOccurence); }
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-inline bool StartsWith(const char* cstr, const char *other) { return 0 == strncmp(cstr, other, Length(other)); }
-//----------------------------------------------------------------------------
-template <size_t _Capacity>
-bool StartsWith(const char* cstr, const char (&other)[_Capacity]) { return 0 == strncmp(cstr, other, _Capacity); }
-//----------------------------------------------------------------------------
-inline bool StartsWith(const wchar_t* wcstr, const wchar_t *other) { return 0 == wcsncmp(wcstr, other, Length(other)); }
-//----------------------------------------------------------------------------
-template <size_t _Capacity>
-bool StartsWith(const wchar_t* wcstr, const wchar_t (&other)[_Capacity]) { return 0 == wcsncmp(wcstr, other, _Capacity); }
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-bool WildMatch(const char *pattern, const char *cstr);
-//----------------------------------------------------------------------------
-bool WildMatch(const wchar_t *wpattern, const wchar_t *wcstr);
-//----------------------------------------------------------------------------
-bool WildMatchI(const char *pattern, const char *cstr);
-//----------------------------------------------------------------------------
-bool WildMatchI(const wchar_t *wpattern, const wchar_t *wcstr);
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <size_t _Base, typename T>
-bool Atoi(T *dst, const char *cstr, size_t length);
-//----------------------------------------------------------------------------
-template <size_t _Base, typename T, size_t _Capacity>
-bool Atoi(T *dst, const char (&cstr)[_Capacity]);
-//----------------------------------------------------------------------------
-template <size_t _Base, typename T>
-bool Atoi(T *dst, const String& str);
-//----------------------------------------------------------------------------
-template <size_t _Base, typename T>
-bool Atoi(T *dst, const MemoryView<const char>& strview);
-//----------------------------------------------------------------------------
-#define CORE_ATOIBASE_DECL(_Base) \
-    extern template bool Atoi<_Base, int>(int *, const char *, size_t ); \
-    extern template bool Atoi<_Base, unsigned>(unsigned *, const char *, size_t ); \
-    extern template bool Atoi<_Base, i8> (i8  *, const char *, size_t ); \
-    extern template bool Atoi<_Base, i16>(i16 *, const char *, size_t ); \
-    extern template bool Atoi<_Base, i32>(i32 *, const char *, size_t ); \
-    extern template bool Atoi<_Base, i64>(i64 *, const char *, size_t ); \
-    extern template bool Atoi<_Base, u8> (u8  *, const char *, size_t ); \
-    extern template bool Atoi<_Base, u16>(u16 *, const char *, size_t ); \
-    extern template bool Atoi<_Base, u32>(u32 *, const char *, size_t ); \
-    extern template bool Atoi<_Base, u64>(u64 *, const char *, size_t )
-CORE_ATOIBASE_DECL(2);
-CORE_ATOIBASE_DECL(8);
-CORE_ATOIBASE_DECL(10);
-CORE_ATOIBASE_DECL(16);
-#undef CORE_ATOIBASE_DECL
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename T>
-bool Atof(T *dst, const char *cstr, size_t length);
-//----------------------------------------------------------------------------
-template <typename T, size_t _Capacity>
-bool Atof(T *dst, const char (&cstr)[_Capacity]);
-//----------------------------------------------------------------------------
-template <typename T>
-bool Atof(T *dst, const String& str);
-//----------------------------------------------------------------------------
-template <typename T>
-bool Atof(T *dst, const MemoryView<const char>& strview);
-//----------------------------------------------------------------------------
-extern template bool Atof<float>(float *, const char *, size_t );
-extern template bool Atof<double>(double *, const char *, size_t );
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-inline char ToLower(char ch) { return ( ( ch >= 'A' ) && ( ch <= 'Z' ) ) ? 'a' + ( ch - 'A' ) : ch; }
-inline char ToUpper(char ch) { return ( ( ch >= 'a' ) && ( ch <= 'z' ) ) ? 'A' + ( ch - 'a' ) : ch; }
-//----------------------------------------------------------------------------
-inline wchar_t ToLower(wchar_t wch) { return std::towlower(wch); }
-inline wchar_t ToUpper(wchar_t wch) { return std::towupper(wch); }
-//----------------------------------------------------------------------------
-template <typename _Char> void InplaceToLower(_Char& ch) { ch = ToLower(ch); }
-template <typename _Char> void InplaceToUpper(_Char& ch) { ch = ToUpper(ch); }
-//----------------------------------------------------------------------------
-template <typename _Char> void InplaceToLower(const MemoryView<_Char>& str) { for (_Char& ch : str) InplaceToLower(ch); }
-template <typename _Char> void InplaceToUpper(const MemoryView<_Char>& str) { for (_Char& ch : str) InplaceToUpper(ch); }
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-inline bool IsAlpha(char ch) { return ( ( ch >= 'a' ) && ( ch <= 'z' ) ) || ( ( ch >= 'A' ) && ( ch <= 'Z' ) ); }
-inline bool IsAlpha(wchar_t wch) { return 0 != std::iswalpha(wch); }
-//----------------------------------------------------------------------------
-inline bool IsDigit(char ch) { return ( ( ch >= '0' ) && ( ch <= '9' ) ); }
-inline bool IsDigit(wchar_t wch) { return 0 != std::iswdigit(wch); }
-//----------------------------------------------------------------------------
-inline bool IsEndLine(char ch) { return ( ( ch == '\r' ) || ( ch == '\n' ) ); }
-inline bool IsEndLine(wchar_t wch) { return ( ( wch == L'\r' ) || ( wch == L'\n' ) ); }
-//----------------------------------------------------------------------------
-inline bool IsXDigit(char ch) { return IsDigit(ch) || ( ch >= 'a' && ch <= 'f' ) || ( ch >= 'A' && ch <= 'F' ); }
-inline bool IsXDigit(wchar_t wch) { return 0 != std::iswxdigit(wch); }
-//----------------------------------------------------------------------------
-inline bool IsAlnum(char ch) { return IsAlpha(ch) || IsDigit(ch); }
-inline bool IsAlnum(wchar_t wch) { return 0 != std::iswalnum(wch); }
-//----------------------------------------------------------------------------
-inline bool IsPrint(char ch) { return 0 != std::isprint(ch); }
-inline bool IsPrint(wchar_t wch) { return 0 != std::iswprint(wch); }
-//----------------------------------------------------------------------------
-inline bool IsPunct(char ch) { return 0 != std::ispunct(ch); }
-inline bool IsPunct(wchar_t wch) { return 0 != std::iswpunct(wch); }
-//----------------------------------------------------------------------------
-inline bool IsSpace(char ch) { return ( ch == ' ' || ch == '\f' || ch == '\n' || ch == '\r' || ch == '\t' || ch == '\v' ); }
-inline bool IsSpace(wchar_t wch) { return 0 != std::iswdigit(wch); }
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename _Char, CaseSensitive _CaseSensitive>
-struct CharEqualTo : public std::binary_function<const _Char, const _Char, bool> {
-    bool operator ()(const _Char& lhs, const _Char& rhs) const { return lhs == rhs; }
-};
-//----------------------------------------------------------------------------
-template <typename _Char>
-struct CharEqualTo<_Char, CaseSensitive::False> : public std::binary_function<const _Char, const _Char, bool> {
-    bool operator ()(const _Char& lhs, const _Char& rhs) const { return ToLower(lhs) == ToLower(rhs); }
-};
-//----------------------------------------------------------------------------
-template <typename _Char, CaseSensitive _CaseSensitive>
-struct CharLess : public std::binary_function<const _Char, const _Char, bool> {
-    bool operator ()(const _Char& lhs, const _Char& rhs) const { return lhs < rhs; }
-};
-//----------------------------------------------------------------------------
-template <typename _Char>
-struct CharLess<_Char, CaseSensitive::False> : public std::binary_function<const _Char, const _Char, bool>{
-    bool operator ()(const _Char& lhs, const _Char& rhs) const { return ToLower(lhs) < ToLower(rhs); }
-};
-//----------------------------------------------------------------------------
-template <typename _Char, CaseSensitive _CaseSensitive>
-struct CharCase : public std::unary_function<const _Char, _Char> {
-    _Char operator ()(const _Char& ch) const { return ch; }
-};
-//----------------------------------------------------------------------------
-template <typename _Char>
-struct CharCase<_Char, CaseSensitive::False> : public std::unary_function<const _Char, _Char> {
-    _Char operator ()(const _Char& ch) const { return ToLower(ch); }
-};
+inline const char *StrStr(const char* cstr, const char* firstOccurence) { return ::strstr(cstr, firstOccurence); }
+inline const wchar_t *StrStr(const wchar_t* wcstr, const wchar_t* firstOccurence) { return ::wcsstr(wcstr, firstOccurence); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -278,6 +101,16 @@ WString ToWString(const String& str);
 inline const WString& ToWString(const WString& wstr) { return wstr; }
 inline WString ToWString(const MemoryView<const wchar_t>& strview) { return WString(strview.Pointer(), strview.size()); }
 inline WString ToWString(const MemoryView<const char>& strview) { return ToWString(strview.Pointer(), strview.size()); }
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits, typename _Allocator>
+String ToString(const std::basic_string<_Char, _Traits, _Allocator>& str) {
+    return ToString(str.c_str(), str.size());
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits, typename _Allocator>
+WString ToWString(const std::basic_string<_Char, _Traits, _Allocator>& str) {
+    return ToWString(str.c_str(), str.size());
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

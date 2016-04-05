@@ -23,9 +23,7 @@ public:
 
     Filename(Core::Dirpath&& dirpath, Core::Basename&& basename);
     Filename(const Core::Dirpath& dirpath, const Core::Basename& basename);
-    Filename(const Core::Dirpath& dirpath, const FileSystem::char_type *relfilename);
-    Filename(const Core::Dirpath& dirpath, const FileSystem::char_type *relfilename, size_t length);
-    Filename(const Core::Dirpath& dirpath, const MemoryView<const FileSystem::char_type>& relfilename);
+    Filename(const Core::Dirpath& dirpath, const FileSystem::StringSlice& relfilename);
 
     Filename(Filename&& rvalue);
     Filename& operator =(Filename&& rvalue);
@@ -33,15 +31,17 @@ public:
     Filename(const Filename& other);
     Filename& operator =(const Filename& other);
 
-    Filename(const FileSystem::char_type* content);
-    Filename& operator =(const FileSystem::char_type* content);
+    Filename(const FileSystem::StringSlice& content);
+    Filename& operator =(const FileSystem::StringSlice& content);
 
-    Filename(const FileSystem::char_type* content, size_t length);
-    Filename(const BasicStringSlice<FileSystem::char_type>& content);
+    template <size_t _Dim>
+    Filename(const FileSystem::char_type (&content)[_Dim]) : Filename(MakeStringSlice(content)) {}
+    template <size_t _Dim>
+    Filename& operator =(const FileSystem::char_type (&content)[_Dim]) { return operator =(MakeStringSlice(content)); }
 
     template <typename _CharTraits, typename _Allocator>
     Filename(const std::basic_string<FileSystem::char_type, _CharTraits, _Allocator>& content)
-        : Filename(content.c_str(), content.size()) {}
+        : Filename(MakeStringSlice(content)) {}
 
     void Swap(Filename& other);
 

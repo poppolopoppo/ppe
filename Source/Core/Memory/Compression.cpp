@@ -49,7 +49,7 @@ size_t CompressedSizeUpperBound(size_t sizeInBytes) {
         + sizeof(FileHeader_);
 }
 //----------------------------------------------------------------------------
-size_t CompressMemory(MemoryView<u8>& dst, const MemoryView<const u8>& src, CompressMethod method /* = Default */) {
+size_t CompressMemory(const MemoryView<u8>& dst, const MemoryView<const u8>& src, CompressMethod method /* = Default */) {
     Assert(dst.Pointer());
     Assert(dst.size() >= CompressedSizeUpperBound(src.SizeInBytes()));
 
@@ -118,7 +118,7 @@ size_t DecompressedSize(const MemoryView<const u8>& src) {
     return pheader->SizeInBytes;
 }
 //----------------------------------------------------------------------------
-bool DecompressMemory(MemoryView<u8>& dst, const MemoryView<const u8>& src) {
+bool DecompressMemory(const MemoryView<u8>& dst, const MemoryView<const u8>& src) {
     Assert(dst.Pointer());
     Assert(dst.SizeInBytes() == DecompressedSize(src));
 

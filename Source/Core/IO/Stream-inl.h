@@ -98,19 +98,19 @@ void BasicOCStrStreamBuffer<_Char, _Traits>::swap(BasicOCStrStreamBuffer& other)
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits >
 BasicOCStrStream<_Char, _Traits>::BasicOCStrStream(_Char* storage, std::streamsize capacity)
-:   _buffer(storage, capacity)
-,   parent_type(&_buffer) {}
+:   buffer_type(storage, capacity)
+,   stream_type(this) {}
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits >
 BasicOCStrStream<_Char, _Traits>::BasicOCStrStream(BasicOCStrStream&& rvalue)
-:   _buffer(std::move(rvalue._buffer))
-,   parent_type(&_buffer) {
+:   buffer_type(std::move(rvalue))
+,   parent_type(this) {
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits >
 auto BasicOCStrStream<_Char, _Traits>::operator =(BasicOCStrStream&& rvalue) -> BasicOCStrStream& {
-    _buffer = std::move(rvalue._buffer);
-    parent_type::operator =(parent_type(&_buffer));
+    buffer_type::operator =(std::move(rvalue._buffer));
+    stream_type::operator =(parent_type(&_buffer));
     return *this;
 }
 //----------------------------------------------------------------------------
@@ -118,37 +118,17 @@ template <typename _Char, typename _Traits >
 BasicOCStrStream<_Char, _Traits>::~BasicOCStrStream() {}
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits >
-void BasicOCStrStream<_Char, _Traits>::ForceEOS() {
-    _buffer.ForceEOS();
-}
-//----------------------------------------------------------------------------
-template <typename _Char, typename _Traits >
-void BasicOCStrStream<_Char, _Traits>::PutEOS() {
-    _buffer.PutEOS();
-}
-//----------------------------------------------------------------------------
-template <typename _Char, typename _Traits >
-void BasicOCStrStream<_Char, _Traits>::RemoveEOS() {
-    _buffer.RemoveEOS();
-}
-//----------------------------------------------------------------------------
-template <typename _Char, typename _Traits >
-void BasicOCStrStream<_Char, _Traits>::Reset() {
-    _buffer.Reset();
-}
-//----------------------------------------------------------------------------
-template <typename _Char, typename _Traits >
 const _Char *BasicOCStrStream<_Char, _Traits>::NullTerminatedStr() {
-    _buffer.PutEOS();
-    return _buffer.storage();
+    buffer_type::PutEOS();
+    return buffer_type::storage();
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits >
 MemoryView<const _Char> BasicOCStrStream<_Char, _Traits>::MakeView() const {
     const _Char eos = _Traits::to_char_type(0); // ignores null char IFN
 
-    const _Char *ptr = _buffer.storage();
-    size_t length = checked_cast<size_t>(_buffer.size());
+    const _Char *ptr = buffer_type::storage();
+    size_t length = checked_cast<size_t>(buffer_type::size());
     Assert(nullptr != ptr || 0 == length);
     if (length && ptr[length - 1] == eos)
         --length;
@@ -157,9 +137,15 @@ MemoryView<const _Char> BasicOCStrStream<_Char, _Traits>::MakeView() const {
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits >
+MemoryView<const _Char> BasicOCStrStream<_Char, _Traits>::MakeView_NullTerminated() {
+    buffer_type::PutEOS();
+    return MakeView();
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits >
 void BasicOCStrStream<_Char, _Traits>::swap(BasicOCStrStream& other){
-    parent_type::swap(other);
-    std::swap(other._buffer, _buffer);
+    buffer_type::swap(other);
+    stream_type::swap(other);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -67,7 +67,7 @@ void FillVertexSubstitutions(   VECTOR_THREAD_LOCAL(Shader, Pair<String COMMA St
 
     oss << " }";
 
-    defines.emplace_back(ShaderSource::AppIn_VertexDefinitionName(), oss.NullTerminatedStr());
+    defines.emplace_back(ToString(ShaderSource::AppIn_VertexDefinitionName()), oss.NullTerminatedStr());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

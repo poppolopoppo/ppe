@@ -9,7 +9,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-MemoryPoolChunk::MemoryPoolChunk(size_t chunkSize, size_t blockCount, MemoryPoolChunk *nextChunk /* = nullptr */)
+MemoryPoolChunk::MemoryPoolChunk(size_t chunkSize, size_t blockCount)
 :   _blocks(nullptr)
 ,   _blockCount(checked_cast<u32>(blockCount))
 ,   _blockUsed(0)
@@ -47,6 +47,7 @@ void *MemoryPoolChunk::AllocateBlock(size_t blockSize) {
 }
 //----------------------------------------------------------------------------
 void MemoryPoolChunk::ReleaseBlock(void *ptr, size_t blockSize) {
+    UNUSED(blockSize);
     Assert(ptr);
     Assert(!CompletelyFree());
     Assert(Contains(ptr, blockSize));

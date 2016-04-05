@@ -142,7 +142,7 @@ void DeviceSharedEntityPool::Release_Exclusive(const DeviceSharedEntityKey& key,
 size_t DeviceSharedEntityPool::ReleaseLRU_ReturnRealSize(size_t targetSizeInBytes) {
 
 #ifdef WITH_CORE_ASSERT
-    size_t totalSizeInBytes = 0;
+    u64 totalSizeInBytes = 0;
 #endif
 
     SharedEntity* p = _lru;
@@ -175,7 +175,7 @@ size_t DeviceSharedEntityPool::ReleaseLRU_ReturnRealSize(size_t targetSizeInByte
     }
 
     Assert(_usedMemory.TotalSizeInBytes() == totalSizeInBytes);
-    return _usedMemory.TotalSizeInBytes();
+    return checked_cast<size_t>(_usedMemory.TotalSizeInBytes().Value);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

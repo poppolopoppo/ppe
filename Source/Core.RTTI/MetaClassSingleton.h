@@ -11,7 +11,7 @@ FWD_REFPTR(MetaObject);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, typename = std::enable_if< std::is_base_of<RTTI::MetaObject, T>::value >::type >
+template <typename T, typename = typename std::enable_if< std::is_base_of<RTTI::MetaObject, T>::value >::type >
 class MetaClassSingleton {
 public:
     typedef T object_type;

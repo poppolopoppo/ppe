@@ -193,7 +193,7 @@ static bool Lex_Numeric_(LookAheadReader& reader, const Symbol **psymbol, String
                 throw LexerException("invalid hexadecimal int", Match(Symbols::Int, std::move(value), reader.SourceSite()));
 
             int64_t numeric;
-            if (!Atoi<16>(&numeric, value)) {
+            if (!Atoi64(&numeric, MakeStringSlice(value), 16)) {
                 Assert(false);
                 return false;
             }
@@ -214,7 +214,7 @@ static bool Lex_Numeric_(LookAheadReader& reader, const Symbol **psymbol, String
                 throw LexerException("invalid octal int", Match(Symbols::Int, std::move(value), reader.SourceSite()));
 
             int64_t numeric;
-            if (!Atoi<8>(&numeric, value)) {
+            if (!Atoi64(&numeric, MakeStringSlice(value), 8)) {
                 Assert(false);
                 return false;
             }

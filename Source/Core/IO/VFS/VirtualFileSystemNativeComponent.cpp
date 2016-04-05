@@ -71,7 +71,7 @@ static void Unalias_(
 
     const size_t maxLength = 1 + alias.PathNode()->Depth() + aliased.PathNode()->Depth();
     STACKLOCAL_POD_ARRAY(FileSystemToken, subpath, maxLength);
-    const size_t k = FileSystemPath::Instance().Expand(subpath.Pointer(), subpath.size(), alias.PathNode(), aliased.PathNode());
+    const size_t k = FileSystemPath::Instance().Expand(subpath, alias.PathNode(), aliased.PathNode());
 
     for (size_t i = 0; i < k; ++i)
         oss << subpath[i] << wchar_t(FileSystem::Separator);
@@ -125,18 +125,18 @@ static size_t GlobFiles_Windows_(
     size_t total = 0;
 
     do {
+        const FileSystem::StringSlice fname = MakeStringSlice(ffd.cFileName, Meta::noinit_tag());
         if (FILE_ATTRIBUTE_DIRECTORY & ffd.dwFileAttributes) {
             if (!recursive)
                 continue;
 
-            if ( L'.' == ffd.cFileName[0] && (L'\0' == ffd.cFileName[1] ||
-                (L'.' == ffd.cFileName[1] && L'\0' == ffd.cFileName[2])) )
+            if (2 == fname.size() && L'.' == fname[0] && L'.' == fname[1])
                 continue;
 
-            subDirectories.emplace_back(aliased, ffd.cFileName);
+            subDirectories.emplace_back(aliased, Dirname(fname));
         }
         else {
-            foreach(Filename(aliased, ffd.cFileName));
+            foreach(Filename(aliased, fname));
             ++total;
         }
     } while (::FindNextFileW(hFind, &ffd));
@@ -306,7 +306,7 @@ bool VirtualFileSystemNativeComponent::TryCreateDirectory(const Dirpath& dirpath
 
     STACKLOCAL_POD_ARRAY(FileSystemToken, subpath, Dirpath::MaxDepth);
 
-    const size_t k = FileSystemPath::Instance().Expand(subpath.Pointer(), subpath.size(), _alias.PathNode(), dirpath.PathNode());
+    const size_t k = FileSystemPath::Instance().Expand(subpath, _alias.PathNode(), dirpath.PathNode());
 
     for (size_t i = 0; i < k; ++i) {
         oss.RemoveEOS();

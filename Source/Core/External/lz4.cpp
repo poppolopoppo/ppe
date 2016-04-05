@@ -151,6 +151,7 @@ static U16 LZ4_read16(const void* memPtr)
     return val16;
 }
 
+#ifndef LZ4_COMMONDEFS_ONLY
 static U16 LZ4_readLE16(const void* memPtr)
 {
     if (LZ4_isLittleEndian())
@@ -163,6 +164,7 @@ static U16 LZ4_readLE16(const void* memPtr)
         return (U16)((U16)p[0] + (p[1]<<8));
     }
 }
+#endif
 
 static void LZ4_writeLE16(void* memPtr, U16 value)
 {
@@ -200,8 +202,9 @@ static size_t LZ4_read_ARCH(const void* p)
         return (size_t)LZ4_read32(p);
 }
 
-
+#ifndef LZ4_COMMONDEFS_ONLY
 static void LZ4_copy4(void* dstPtr, const void* srcPtr) { memcpy(dstPtr, srcPtr, 4); }
+#endif
 
 static void LZ4_copy8(void* dstPtr, const void* srcPtr) { memcpy(dstPtr, srcPtr, 8); }
 

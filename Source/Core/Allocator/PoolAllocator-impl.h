@@ -13,6 +13,7 @@
 //----------------------------------------------------------------------------
 #define SINGLETON_POOL_ALLOCATED_DEF_IMPL_(_Type, _Prefix, _Pool) \
     _Prefix void *_Type::operator new(size_t size) { \
+        UNUSED(size); \
         Assert(sizeof(_Type) == size); \
         return _Pool::Allocate(); \
     } \

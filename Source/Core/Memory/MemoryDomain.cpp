@@ -100,6 +100,8 @@ void RegisterAdditionalTrackingData(MemoryTrackingData *pTrackingData) {
     SKIP_MEMORY_LEAKS_IN_SCOPE();
     std::unique_lock<std::mutex> scopeLock(gAllAdditionalTrackingData->Barrier);
     Add_AssertUnique(gAllAdditionalTrackingData->Datas, pTrackingData);
+#else
+    UNUSED(pTrackingData);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -110,6 +112,8 @@ void UnregisterAdditionalTrackingData(MemoryTrackingData *pTrackingData) {
     SKIP_MEMORY_LEAKS_IN_SCOPE();
     std::unique_lock<std::mutex> scopeLock(gAllAdditionalTrackingData->Barrier);
     Remove_AssertExists(gAllAdditionalTrackingData->Datas, pTrackingData);
+#else
+    UNUSED(pTrackingData);
 #endif
 }
 //----------------------------------------------------------------------------

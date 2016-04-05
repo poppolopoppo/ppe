@@ -55,6 +55,7 @@ void DeviceResourceBuffer::Resize(size_t count) {
 }
 //----------------------------------------------------------------------------
 void DeviceResourceBuffer::Create(IDeviceAPIEncapsulator *device, const DeviceResource * /* resource */, DeviceAPIDependantResourceBuffer *buffer) {
+    UNUSED(device);
     Assert(buffer);
     Assert(!_deviceAPIDependantBuffer);
     Assert(buffer->MatchDevice(device));
@@ -63,6 +64,7 @@ void DeviceResourceBuffer::Create(IDeviceAPIEncapsulator *device, const DeviceRe
 }
 //----------------------------------------------------------------------------
 PDeviceAPIDependantResourceBuffer DeviceResourceBuffer::Destroy(IDeviceAPIEncapsulator *device, const DeviceResource * /* resource */) {
+    UNUSED(device);
     Assert(_deviceAPIDependantBuffer);
     Assert(_deviceAPIDependantBuffer->MatchDevice(device));
 

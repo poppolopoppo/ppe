@@ -127,6 +127,7 @@ public:
     }
 
     void Overwrite(size_t offset, u8 value, u8 mask) {
+        UNUSED(mask);
         if (offset < _offset) {
             const std::streamoff cur = _writer->TellO();
             _writer->SeekO(std::streamoff(offset));
@@ -220,8 +221,8 @@ void CompressMemory(IStreamWriter* dst, const MemoryView<const u8>& src) {
         if (cpy >= s_start && cpy != psrc &&
             psrc[0] == cpy[0] && psrc[1] == cpy[1] && psrc[2] == cpy[2]) {
             copyval |= copymask;
-            writer.Overwrite(copyoff, copyval, copymask);
-            int mlen = MATCH_MIN;
+            writer.Overwrite(copyoff, copyval, u8(copymask));
+            size_t mlen = MATCH_MIN;
             for (; mlen < MATCH_MAX; mlen++)
                 if (psrc[mlen] != cpy[mlen])
                     break;
@@ -252,8 +253,8 @@ static bool DecompressMemory_(RawStorage<u8, _Allocator>* dst, const MemoryView<
     const u8* psrc = src.Pointer() + sizeof(Header);
     u8* pdst = dst->Pointer();
     u8 *d_end = pdst + dst->SizeInBytes();
-    const u8 *cpy;
-    u8 copymap;
+    const u8 *cpy = nullptr;
+    u8 copymap = 0;
     int copymask = 1 << (NBBY - 1);
 
     while (pdst < d_end) {

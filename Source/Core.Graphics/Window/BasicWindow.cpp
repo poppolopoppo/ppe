@@ -31,12 +31,14 @@ void BasicWindowHelper::SetWindowHandle(BasicWindow *wnd, void *handle) {
 }
 //----------------------------------------------------------------------------
 void BasicWindowHelper::SetWindowFocus(BasicWindow *wnd, void *handle, bool hasFocus) {
+    UNUSED(handle);
     Assert(wnd);
     Assert(wnd->_handle == handle);
     wnd->_wantFocus = hasFocus;
 }
 //----------------------------------------------------------------------------
 void BasicWindowHelper::SetWindowSize(BasicWindow *wnd, void *handle, size_t width, size_t height) {
+    UNUSED(handle);
     Assert(wnd);
     Assert(wnd->_handle == handle);
     wnd->_wantedWidth = width;
@@ -269,8 +271,7 @@ void BasicWindow::Close() {
 }
 //----------------------------------------------------------------------------
 bool BasicWindow::PumpMessage(WindowMessage& msg, MessageLParam& lparam, MessageWParam& wparam) {
-    HWND wnd = reinterpret_cast<HWND>(_handle);
-    Assert(wnd);
+    Assert(_handle);
 
     MSG windowMsg;
     if (::PeekMessage(&windowMsg, NULL, 0, 0, PM_REMOVE))
@@ -347,6 +348,8 @@ void BasicWindow::RegisterMessageDelegate_(WindowMessage msg, IWindowMessageHand
 }
 //----------------------------------------------------------------------------
 void BasicWindow::UnregisterMessageDelegate_(WindowMessage msg, IWindowMessageHandler *handler, IWindowMessageHandler::Delegate member) {
+    UNUSED(handler);
+    UNUSED(member);
     Assert(handler);
     Assert(member);
     Assert(Contains(_handlers, handler));

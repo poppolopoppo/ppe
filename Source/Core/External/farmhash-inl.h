@@ -8,6 +8,7 @@
 #pragma warning(disable: 4319)
 #pragma warning(disable: 4307)
 #pragma warning(disable: 4309)
+#pragma warning(disable: 6313)
 
 // Copyright (c) 2014 Google, Inc.
 //
@@ -1640,11 +1641,11 @@ FARMHASH_INLINE uint32_t Hash32(const char *s, size_t len) {
   f = f * 5 + 0xe6546b64;
   size_t iters = (len - 1) / 20;
   do {
-    uint32_t a0 = Rotate(Fetch(s) * c1, 17) * c2;
-    uint32_t a1 = Fetch(s + 4);
-    uint32_t a2 = Rotate(Fetch(s + 8) * c1, 17) * c2;
-    uint32_t a3 = Rotate(Fetch(s + 12) * c1, 17) * c2;
-    uint32_t a4 = Fetch(s + 16);
+    a0 = Rotate(Fetch(s) * c1, 17) * c2;
+    a1 = Fetch(s + 4);
+    a2 = Rotate(Fetch(s + 8) * c1, 17) * c2;
+    a3 = Rotate(Fetch(s + 12) * c1, 17) * c2;
+    a4 = Fetch(s + 16);
     h ^= a0;
     h = Rotate(h, 18);
     h = h * 5 + 0xe6546b64;

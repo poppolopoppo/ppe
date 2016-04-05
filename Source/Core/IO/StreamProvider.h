@@ -125,8 +125,8 @@ public:
     virtual bool Read(void* storage, std::streamsize sizeInBytes) override { Assert(!_iss.bad()); _iss.read((_Char*)storage, sizeInBytes/(sizeof(_Char))); return (false == _iss.bad()); }
     virtual std::streamsize ReadSome(void* storage, size_t eltsize, std::streamsize count) override { Assert(!_iss.bad()); return _iss.readsome((_Char*)storage, (count*eltsize)/(sizeof(_Char))); }
 
-    virtual char PeekChar() override { Assert(!_iss.bad()); return _iss.peek(); }
-    virtual wchar_t PeekCharW() override { AssertNotReached(); return _iss.peek(); }
+    virtual char PeekChar() override { Assert(!_iss.bad()); return checked_cast<char>(_iss.peek()); }
+    virtual wchar_t PeekCharW() override { Assert(!_iss.bad()); return checked_cast<wchar_t>(_iss.peek()); }
 
 private:
     stream_type& _iss;
@@ -144,7 +144,7 @@ public:
     virtual bool SeekO(std::streamoff offset, SeekOrigin policy = SeekOrigin::Begin) override { Assert(!_oss.bad()); _oss.seekp(offset, int(policy)); return true; }
 
     virtual bool Write(const void* storage, std::streamsize sizeInBytes) override { Assert(!_oss.bad()); _oss.write((const _Char*)storage, (sizeInBytes)/(sizeof(_Char))); return false == _oss.bad(); }
-    virtual bool WriteSome(const void* storage, size_t eltsize, std::streamsize count) { Assert(!_oss.bad()); _oss.write((const _Char*)storage, (eltsize*count)/(sizeof(_Char))); return false == _oss.bad(); }
+    virtual bool WriteSome(const void* storage, size_t eltsize, std::streamsize count) override { Assert(!_oss.bad()); _oss.write((const _Char*)storage, (eltsize*count)/(sizeof(_Char))); return false == _oss.bad(); }
 
 private:
     stream_type& _oss;

@@ -17,13 +17,18 @@ public:
     typedef _PoolTag pooltag_type;
     enum : bool { ThreadLocal = _ThreadLocal };
 
-    typedef typename base_type::pointer pointer;
-    typedef typename base_type::size_type size_type;
+    using typename base_type::pointer;
+    using typename base_type::size_type;
 
     typedef std::true_type propagate_on_container_copy_assignment;
     typedef std::true_type propagate_on_container_move_assignment;
     typedef std::true_type propagate_on_container_swap;
     typedef std::true_type is_always_equal;
+
+    using base_type::address;
+    using base_type::construct;
+    using base_type::destroy;
+    using base_type::max_size;
 
     typedef TypedSegregatedMemoryPool<_PoolTag, T, _ThreadLocal> segregatedpool_type;
 
@@ -87,6 +92,7 @@ auto SingletonPoolAllocator<T, _ThreadLocal, _PoolTag>::allocate(size_type n) ->
 //----------------------------------------------------------------------------
 template <typename T, bool _ThreadLocal, typename _PoolTag >
 void SingletonPoolAllocator<T, _ThreadLocal, _PoolTag>::deallocate(void* p, size_type n) {
+    UNUSED(n);
     Assert(1 >= n);
     // SingletonPoolAllocator wraps TypedSegregatedMemoryPool<>.
     segregatedpool_type::Deallocate(p);

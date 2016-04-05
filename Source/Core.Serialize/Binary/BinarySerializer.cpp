@@ -258,8 +258,10 @@ public:
     BinaryDeserialize_(const BinaryDeserialize_& ) = delete;
     BinaryDeserialize_& operator =(const BinaryDeserialize_& ) = delete;
 
+    const BinarySerializer* Owner() const { return _owner; }
+
     void Read(MemoryViewReader& reader);
-    void Finalize(RTTI::MetaTransaction* transaction, bool allowOverride);
+    void Finalize(RTTI::MetaTransaction* transaction);
 
 private:
     static const RTTI::MetaClass* RetrieveMetaClass_(const StringSlice& str);
@@ -294,7 +296,7 @@ private:
             BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize RTTI::Vector<{0}>",
                 pvector->ValueTypeInfo().Name );
 
-            u32 count;
+            u32 count = 0;
             if (false == _reader->ExpectPOD(pvector->Atom()->TypeInfo().Id) ||
                 false == _reader->ReadPOD(&count) )
                 throw BinarySerializerException("failed to deserialize a RTTI vector");
@@ -312,7 +314,7 @@ private:
             BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize RTTI::Dictionary<{0}, {1}>",
                 pdictionary->KeyTypeInfo().Name, pdictionary->ValueTypeInfo().Name );
 
-            u32 count;
+            u32 count = 0;
             if (false == _reader->ExpectPOD(pdictionary->Atom()->TypeInfo().Id) ||
                 false == _reader->ReadPOD(&count) )
                 throw BinarySerializerException("failed to deserialize a RTTI dictionary");
@@ -344,6 +346,7 @@ private:
         template <typename T>
         bool Visit_(RTTI::MetaTypedAtom<T>* scalar) {
             const std::streamoff dataoff = _reader->TellI();
+            UNUSED(dataoff);
 
             if (false == _reader->ExpectPOD(scalar->TypeInfo().Id))
                 return false;
@@ -414,7 +417,7 @@ private:
         bool ReadValue_(RTTI::PMetaAtom& atom) {
             if (_reader->ExpectPOD(TAG_ATOM_NULL_)) {
                 Assert(nullptr == atom);
-                return nullptr;
+                return true;
             }
             else {
                 RTTI::MetaTypeId typeId;
@@ -423,7 +426,7 @@ private:
                 switch (typeId) {
 #define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
                 case _TypeId: \
-                    atom = RTTI::MakeAtom( std::move(RTTI::MetaType< T >::DefaultValue()) ); \
+                    atom = RTTI::MakeAtom( RTTI::MetaType< T >::DefaultValue() ); \
                     Assert(atom->IsDefaultValue()); \
                     atom->Accept(this); \
                     break;
@@ -472,7 +475,6 @@ private:
 
         BinaryDeserialize_* _owner;
         MemoryViewReader* _reader;
-        std::streamoff _dataoff;
     };
 
     BinarySerializer* _owner;
@@ -584,7 +586,7 @@ void BinaryDeserialize_::Read(MemoryViewReader& reader) {
         throw BinarySerializerException("expected end section");
 }
 //----------------------------------------------------------------------------
-void BinaryDeserialize_::Finalize(RTTI::MetaTransaction* transaction, bool allowOverride) {
+void BinaryDeserialize_::Finalize(RTTI::MetaTransaction* transaction) {
     Assert(transaction);
 
     for (const Pair<name_index_t, object_index_t>& it : _objectsToExport) {
@@ -704,6 +706,8 @@ void BinaryDeserialize_::DeserializeObjectData_(MemoryViewReader& reader, RTTI::
         Assert(_metaClasses.size() == _properties.size());
 
         const RTTI::MetaClass* metaClass = _metaClasses[class_i];
+        UNUSED(metaClass);
+
         const properties_type& properties = _properties[class_i];
 
         BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize metaclass data <{0}>", metaClass->Name());
@@ -767,6 +771,8 @@ public:
 
     BinarySerialize_(const BinarySerialize_& ) = delete;
     BinarySerialize_& operator =(const BinarySerialize_& ) = delete;
+
+    const BinarySerializer* Owner() const { return _owner; }
 
     void Append(const RTTI::MetaObject* object, bool topObject = true);
     void Append(const MemoryView<const RTTI::PMetaObject>& objects, bool topObject = true);
@@ -1183,13 +1189,15 @@ BinarySerializer::BinarySerializer() {}
 BinarySerializer::~BinarySerializer() {}
 //----------------------------------------------------------------------------
 void BinarySerializer::Deserialize(RTTI::MetaTransaction* transaction, const MemoryView<const u8>& input, const wchar_t *sourceName/* = nullptr */) {
+    UNUSED(sourceName);
+
     if (input.empty())
         return;
 
     MemoryViewReader reader(input);
     BinaryDeserialize_ deserialize(this);
     deserialize.Read(reader);
-    deserialize.Finalize(transaction, true);
+    deserialize.Finalize(transaction);
 }
 //----------------------------------------------------------------------------
 void BinarySerializer::Serialize(IStreamWriter* output, const RTTI::MetaTransaction* transaction) {

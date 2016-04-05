@@ -3,7 +3,7 @@
 #include "Core.RTTI/RTTI.h"
 
 #include "Core/Allocator/Allocation.h"
-#include "Core/IO/String.h"
+#include "Core/IO/StringSlice.h"
 
 #include <locale>
 
@@ -14,7 +14,7 @@ namespace Core {
 template <
     typename        _Tag,
     typename        _Char,
-    CaseSensitive   _CaseSensitive,
+    Case            _Sensitive,
     typename        _TokenTraits,
     typename        _Allocator
 >
@@ -39,7 +39,7 @@ template <typename _Tag>
 using Token = Core::Token<
     _Tag,
     char_type,
-    CaseSensitive::True,
+    Case::Sensitive,
     TokenTraits,
     ALLOCATOR(RTTI, char_type)
 >;

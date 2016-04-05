@@ -6,7 +6,7 @@
 #   define WITH_CORE_ASSERT
 #endif
 
-#ifndef FINAL_RELEASE
+#if !defined(FINAL_RELEASE) && !defined(PROFILING_ENABLED)
 #   define WITH_CORE_ASSERT_RELEASE
 #endif
 
@@ -15,7 +15,7 @@
 #   error "there is someone messing with the project configuration"
 #endif
 
-#define STATIC_ASSERT(...) static_assert((__VA_ARGS__), #__VA_ARGS__)
+#define STATIC_ASSERT(...) static_assert(COMMA_PROTECT(__VA_ARGS__), #__VA_ARGS__)
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -57,7 +57,7 @@ inline void SetAssertionHandler(AssertionHandler ) {}
 //----------------------------------------------------------------------------
 } //!namespace Core
 
-#define Assert(...) AssertMessage(__VA_ARGS__, #__VA_ARGS__)
+#define Assert(...) AssertMessage(COMMA_PROTECT(__VA_ARGS__), #__VA_ARGS__)
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -99,7 +99,7 @@ inline void SetAssertionReleaseHandler(AssertionReleaseHandler ) {}
 //----------------------------------------------------------------------------
 } //!namespace Core
 
-#define AssertRelease(...) AssertReleaseMessage(__VA_ARGS__, #__VA_ARGS__)
+#define AssertRelease(...) AssertReleaseMessage(COMMA_PROTECT(__VA_ARGS__), #__VA_ARGS__)
 #define AssertNotReached() AssertReleaseMessage(false, "unreachable state")
 #define AssertNotImplemented() AssertReleaseMessage(false, "not implemented")
 

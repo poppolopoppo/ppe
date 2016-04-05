@@ -56,6 +56,7 @@ int APIENTRY _tWinMain(
     HINSTANCE hPrevInstance,
     LPTSTR    lpCmdLine,
     int       nCmdShow) {
+    UNUSED(hPrevInstance);
 #else
 int main(int argc, const wchar_t* argv[]) {
 #endif

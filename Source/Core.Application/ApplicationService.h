@@ -30,8 +30,10 @@ public:
         //STATIC_ASSERT(std::is_assignable<_Interface*, _Concrete*>::value);
         THIS_THREADRESOURCE_CHECKACCESS();
         provider_type provider(new ApplicationServiceProvider_<_Interface>(service));
+#ifdef WITH_CORE_ASSERT
         const ServiceId serviceId(ApplicationServiceProvider_<_Interface>::Id());
         Assert(_providers.end() == std::find_if(_providers.begin(), _providers.end(), [=](const provider_type& p) { return serviceId == p->ServiceId(); }));
+#endif
         _providers.emplace_back(std::move(provider));
     }
 
@@ -42,8 +44,12 @@ public:
         const ServiceId serviceId(ApplicationServiceProvider_<_Interface>::Id());
         const auto it = std::find_if(_providers.begin(), _providers.end(), [=](const provider_type& p) { return serviceId == p->ServiceId(); });
         Assert(_providers.end() != it);
+#ifdef WITH_CORE_ASSERT
         auto const provider = checked_cast<const ApplicationServiceProvider_<_Interface>* >(it->get());
         Assert(provider->Service() == &service);
+#else
+        UNUSED(service);
+#endif
         _providers.erase(it);
     }
 

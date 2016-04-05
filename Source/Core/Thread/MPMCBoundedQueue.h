@@ -105,7 +105,7 @@ bool MPMCBoundedQueueView<T>::Dequeue(T *pdata) {
 
     for (;;) {
         cell = &_buffer[pos & _bufferMask];
-        size_t seq = 
+        size_t seq =
         cell->_sequence.load(std::memory_order_acquire);
         intptr_t dif = (intptr_t)seq - (intptr_t)(pos + 1);
         if (dif == 0) {
@@ -129,6 +129,13 @@ bool MPMCBoundedQueueView<T>::Dequeue(T *pdata) {
 template <typename T>
 class MPMCBoundedQueue : public MPMCBoundedQueueView<T> {
 public:
+    typedef MPMCBoundedQueueView<T> parent_type;
+
+    using typename parent_type::cell_t;
+
+    using parent_type::Buffer;
+    using parent_type::capacity;
+
     explicit MPMCBoundedQueue(size_t bufferSize);
     ~MPMCBoundedQueue();
 };

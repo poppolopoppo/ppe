@@ -201,8 +201,10 @@ inline Production<const Lexer::Match *> Optional(Lexer::Symbol::TypeId symbol) {
         if (!match || match->Symbol()->Type() != symbol)
             return ParseResult<const Lexer::Match *>::Success(nullptr, match ? match->Site() : input.Site());
 
-        match = input.Read();
-        Assert(match && match->Symbol()->Type() == symbol);
+        Assert(match->Symbol()->Type() == symbol);
+        const Lexer::Match *consumed = input.Read(); // consumes match
+        Assert(consumed == match);
+        UNUSED(consumed);
 
         return ParseResult<const Lexer::Match *>::Success(match, match->Site());
     }};
@@ -214,8 +216,10 @@ inline Production<const Lexer::Match *> OptionalMask(uint64_t symbolMask) {
         if (!match || 0 == (match->Symbol()->Type() & symbolMask) )
             return ParseResult<const Lexer::Match *>::Success(nullptr, match ? match->Site() : input.Site());
 
-        match = input.Read();
-        Assert(match && match->Symbol()->Type() & symbolMask);
+        Assert(match->Symbol()->Type() & symbolMask);
+        const Lexer::Match *consumed = input.Read(); // consumes match
+        Assert(consumed == match);
+        UNUSED(consumed);
 
         return ParseResult<const Lexer::Match *>::Success(match, match->Site());
     }};

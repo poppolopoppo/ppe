@@ -14,8 +14,18 @@ class BuddyAllocator : public AllocatorBase<T> {
 public:
     typedef AllocatorBase<T> base_type;
 
-    typedef typename base_type::pointer pointer;
-    typedef typename base_type::size_type size_type;
+    using typename base_type::pointer;
+    using typename base_type::size_type;
+
+    typedef std::true_type propagate_on_container_copy_assignment;
+    typedef std::true_type propagate_on_container_move_assignment;
+    typedef std::true_type propagate_on_container_swap;
+    typedef std::true_type is_always_equal;
+
+    using base_type::address;
+    using base_type::construct;
+    using base_type::destroy;
+    using base_type::max_size;
 
     template<typename U>
     struct rebind
@@ -41,7 +51,7 @@ public:
     friend bool operator ==(const BuddyAllocator& lhs, const BuddyAllocator<U, _BuddyHeap>& rhs) {
         return lhs._heap == rhs._heap;
     }
-    
+
     template <typename U>
     friend bool operator !=(const BuddyAllocator& lhs, const BuddyAllocator<U, _BuddyHeap>& rhs) {
         return !operator ==(lhs, rhs);

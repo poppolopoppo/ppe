@@ -170,6 +170,22 @@ DEF_BINARYOPERATOR_COMPARATOR(GreaterOrEqual, >=);
 DEF_BINARYOPERATOR_COMPARATOR(Equals, ==);
 DEF_BINARYOPERATOR_COMPARATOR(NotEquals, !=);
 //----------------------------------------------------------------------------
+#pragma warning(push)
+#pragma warning(disable: 4702) // warning C4702: impossible d'atteindre le code
+template <typename T, template <typename > class _Op>
+static bool TryAssignCopy_(const RTTI::MetaAtom* value, const Parser::ParseExpression *expr, RTTI::PMetaAtom& result) {
+    Assert(!result);
+    T tmp;
+    if (RTTI::AssignCopy(&tmp, value)) {
+        result = RTTI::MakeAtom(_Op<T>()(expr, tmp));
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+#pragma warning(pop)
+//----------------------------------------------------------------------------
 template <template <typename > class _Op>
 struct UnaryOp {
     RTTI::MetaAtom *operator ()(Parser::ParseContext *context, const Parser::ParseExpression *expr) const {
@@ -193,21 +209,14 @@ struct UnaryOp {
         default:
             // now try to cast, ie not the current type but accessible through meta cast
             {
-                ParseBool tmp;
-                if (RTTI::AssignCopy(&tmp, value.get()))
-                    return RTTI::MakeAtom(_Op< ParseBool >()(expr, tmp));
-            }{
-                ParseInt tmp;
-                if (RTTI::AssignCopy(&tmp, value.get()))
-                    return RTTI::MakeAtom(_Op< ParseInt >()(expr, tmp));
-            }{
-                ParseFloat tmp;
-                if (RTTI::AssignCopy(&tmp, value.get()))
-                    return RTTI::MakeAtom(_Op< ParseFloat >()(expr, tmp));
-            }{
-                ParseString tmp;
-                if (RTTI::AssignCopy(&tmp, value.get()))
-                    return RTTI::MakeAtom(_Op< ParseString >()(expr, tmp));
+                RTTI::PMetaAtom result;
+                if (TryAssignCopy_<ParseBool, _Op>(value.get(), expr, result) ||
+                    TryAssignCopy_<ParseInt, _Op>(value.get(), expr, result) ||
+                    TryAssignCopy_<ParseFloat, _Op>(value.get(), expr, result) ||
+                    TryAssignCopy_<ParseString, _Op>(value.get(), expr, result) ) {
+                    Assert(result);
+                    return RemoveRef_AssertReachZero_KeepAlive(result);
+                }
             }
         }
 
@@ -224,31 +233,34 @@ struct BinaryOp {
         const RTTI::MetaAtom *rhs_value) {
         const RTTI::MetaTypeId rhs_type_id = rhs_value->TypeInfo().Id;
 
-        if (rhs_type_id == PARSEID_BOOL)
+        if (rhs_type_id == PARSEID_BOOL) {
             return RTTI::MakeAtom(
-                _Op< ParseBool >()(lhs, lhs_value->Cast<ParseBool>()->Wrapper(), rhs_value->Cast<ParseBool>()->Wrapper())
+                _Op< ParseBool >()(lhs, lhs_value->Cast<ParseBool>()->Wrapper(),
+                                        rhs_value->Cast<ParseBool>()->Wrapper() )
                 );
-
-        ParseBool b;
-        if (rhs_type_id == PARSEID_INT)
-            b = (ParseInt(0) != rhs_value->Cast<ParseInt>()->Wrapper());
-        else if (rhs_type_id == PARSEID_FLOAT)
-            b = (ParseFloat(0) != rhs_value->Cast<ParseFloat>()->Wrapper());
-        else {
-            ParseInt integer;
-            ParseFloat fp;
-
-            if (RTTI::AssignCopy(&integer, rhs_value))
-                b = (ParseInt(0) != integer);
-            else if (RTTI::AssignCopy(&fp, rhs_value))
-                b = (ParseFloat(0) != fp);
-            else
-                throw Parser::ParserException("could not convert to boolean", rhs);
         }
+        else {
+            ParseBool b;
+            if (rhs_type_id == PARSEID_INT)
+                b = (ParseInt(0) != rhs_value->Cast<ParseInt>()->Wrapper());
+            else if (rhs_type_id == PARSEID_FLOAT)
+                b = (ParseFloat(0) != rhs_value->Cast<ParseFloat>()->Wrapper());
+            else {
+                ParseInt integer;
+                ParseFloat fp;
 
-        return RTTI::MakeAtom(
-            _Op< ParseBool >()(lhs, lhs_value->Cast<ParseBool>()->Wrapper(), b)
-            );
+                if (RTTI::AssignCopy(&integer, rhs_value))
+                    b = (ParseInt(0) != integer);
+                else if (RTTI::AssignCopy(&fp, rhs_value))
+                    b = (ParseFloat(0) != fp);
+                else
+                    throw Parser::ParserException("could not convert to boolean", rhs);
+            }
+
+            return RTTI::MakeAtom(
+                _Op< ParseBool >()(lhs, lhs_value->Cast<ParseBool>()->Wrapper(), b)
+                );
+        }
     }
 
     static RTTI::MetaAtom *IntegerOp_(
@@ -874,6 +886,7 @@ GrammarImpl::GrammarImpl()
 
             Assert(question && question->Symbol()->Type() == Lexer::Symbol::Question);
             Assert(colon && colon->Symbol()->Type() == Lexer::Symbol::Colon);
+            UNUSED(colon);
 
             const Parser::PCParseExpression& ptrue = std::get<1>(it);
             const Parser::PCParseExpression& pfalse = std::get<3>(it);

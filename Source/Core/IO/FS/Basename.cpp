@@ -11,38 +11,30 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static bool ParseBasename_(
-    const wchar_t *cstr,
-    size_t length,
-    BasenameNoExt& basenameNoExt,
-    Extname& extname
-    ) {
+static bool ParseBasename_(const FileSystem::StringSlice& str, BasenameNoExt& basenameNoExt, Extname& extname) {
     basenameNoExt = BasenameNoExt();
     extname = Extname();
 
-    if (!cstr || L'\0' == cstr[0])
+    if (str.empty())
         return false;
 
-    static const FileSystem::char_type *sep = L"\\/";
+#ifdef WITH_CORE_ASSERT
+    const auto sep = str.FindIf([](FileSystem::char_type ch) {
+        return (ch == FileSystem::Separator || ch == FileSystem::AltSeparator );
+    });
+    Assert(str.end() == sep);
+#endif
 
-    const wchar_t *b = cstr + length - 1;
-    for (; b != cstr && !StrChr(sep, *b); --b);
+    const auto dot = str.FindIfR([](FileSystem::char_type ch) {
+        return (ch == L'.');
+    });
 
-    const wchar_t *p = cstr + length - 1;
-    for (; p != b && L'.' != *p; --p);
-
-    if (p != b) {
-        Assert(L'.' == *p);
-        basenameNoExt = BasenameNoExt(b, p - b);
-        extname = Extname(p, cstr + length - p);
-    }
-    else if (L'.' == *b && (L'\0' == b[1] ||
-            (L'.' == b[1] && L'\0' == b[2])) ) {
-        // '.' and '..' are forbidden
-        return false;
+    if (str.rend() == dot) {
+        basenameNoExt = str;
     }
     else {
-        basenameNoExt = BasenameNoExt(b, cstr + length - b);
+        basenameNoExt = str.CutBefore(dot);
+        extname = str.CutStartingAt(dot);
     }
 
     return true;
@@ -64,25 +56,15 @@ Basename& Basename::operator =(const Basename& other) {
     return *this;
 }
 //----------------------------------------------------------------------------
-Basename::Basename(const FileSystem::char_type* content) {
-    Assert(content);
-    ParseBasename_(content, Length(content), _basenameNoExt, _extname);
+Basename::Basename(const FileSystem::StringSlice& content) {
+    Assert(not content.empty());
+    ParseBasename_(content, _basenameNoExt, _extname);
 }
 //----------------------------------------------------------------------------
-Basename& Basename::operator =(const FileSystem::char_type* content) {
-    Assert(content);
-    ParseBasename_(content, Length(content), _basenameNoExt, _extname);
+Basename& Basename::operator =(const FileSystem::StringSlice& content) {
+    Assert(not content.empty());
+    ParseBasename_(content, _basenameNoExt, _extname);
     return *this;
-}
-//----------------------------------------------------------------------------
-Basename::Basename(const FileSystem::char_type* content, size_t length) {
-    Assert(content);
-    ParseBasename_(content, length, _basenameNoExt, _extname);
-}
-//----------------------------------------------------------------------------
-Basename::Basename(const BasicStringSlice<FileSystem::char_type>& content) {
-    Assert(content.data());
-    ParseBasename_(content.data(), content.size(), _basenameNoExt, _extname);
 }
 //----------------------------------------------------------------------------
 String Basename::ToString() const {

@@ -113,7 +113,7 @@ template <typename _Key, typename _Value, typename _Hash, typename _Equal, typen
 bool HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::CheckInvariants() const {
 #ifndef NDEBUG
     const details::HashTableProbe_ probe = MakeProbe_();
-    if (0 > probe.ValuesCapacity && false == IS_POW2(probe.ValuesCapacity))
+    if (0 != probe.ValuesCapacity && false == IS_POW2(probe.ValuesCapacity))
         return false;
     if (nullptr == _values_hashIndices && (probe.Size || probe.ValuesCapacity))
         return false;
@@ -215,6 +215,9 @@ template <typename _Key, typename _Value, typename _Hash, typename _Equal, typen
 bool HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::erase(const key_type& key, value_type* pValueIFP) {
     const details::HashTableProbe_ probe = MakeProbe_();
     Assert(0 < probe.Size);
+
+    UNUSED(key);
+    UNUSED(pValueIFP);
 
     /*
     const size_type hashValue = KeyHash_(key);
@@ -406,7 +409,8 @@ bool HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::InsertUsingProbe_Assume
 template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
 bool HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::Insert_ReturnIfExists_(const key_type& key, size_type* pDataIndex) {
     reserve_Additional(1);
-    const bool exists = InsertUsingProbe_AssumeEnoughCapacity_(MakeProbe_(), key, pDataIndex);
+    details::HashTableProbe_ probe = MakeProbe_();
+    const bool exists = InsertUsingProbe_AssumeEnoughCapacity_(probe, key, pDataIndex);
     Assert(exists || size() == *pDataIndex + 1);
     return exists;
 }
@@ -519,6 +523,12 @@ void HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::RehashUsingProbe_(detai
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
+void HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::Rehash_() {
+    details::HashTableProbe_ probe = MakeProbe_();
+    RehashUsingProbe_(probe);
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hash, typename _Equal, typename _Allocator>
 void HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::swap(HashTable& other) {
     typedef typename allocator_traits::propagate_on_container_swap propagate_type;
     if (this != &other)
@@ -575,8 +585,8 @@ void HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::swap_(HashTable& other,
 
         std::swap(plhs->_size_capacityIndex, prhs->_size_capacityIndex);
 
-        plhs->RehashUsingProbe_(plhs->MakeProbe_());
-        prhs->RehashUsingProbe_(prhs->MakeProbe_());
+        plhs->Rehash_();
+        prhs->Rehash_();
 
         AssertNotImplemented(); // TODO: rehash using old hash values
     }

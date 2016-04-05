@@ -3,6 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/IO/FS/FileSystemProperties.h"
+#include "Core/IO/StringSlice.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -11,7 +12,7 @@ namespace Core {
 template <
     typename        _Tag,
     typename        _Char,
-    CaseSensitive   _CaseSensitive,
+    Case            _Sensitive,
     typename        _TokenTraits,
     typename        _Allocator
 >
@@ -24,7 +25,7 @@ struct FileSystemTokenTag;
 using FileSystemToken = Core::Token<
     FileSystemTokenTag,
     FileSystem::char_type,
-    CaseSensitive::False,
+    Case::Insensitive,
     FileSystem::TokenTraits,
     ALLOCATOR(FileSystem, FileSystem::char_type)
 >;

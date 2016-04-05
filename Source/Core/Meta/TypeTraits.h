@@ -52,12 +52,19 @@ using IsDefined = has_destructor<T>;
         STATIC_ASSERT(Core::Meta::IsDefined<parent_type>::value); \
     public: \
         using parent_type::parent_type; \
-        using parent_type::operator =; \
+        using parent_type::operator=; \
         \
         _NAME() = default; \
         \
-        _NAME(parent_type&& rvalue) : parent_type(std::move(rvalue)) {} \
-        _NAME& operator =(parent_type&& rvalue) { parent_type::operator =(std::move(rvalue)); return *this; } \
+        template <typename _Arg0, typename... _Args> \
+        _NAME(_Arg0&& arg0, _Args&&... args) \
+            : parent_type(std::forward<_Arg0>(arg0), std::forward<_Args>(args)...) {} \
+        \
+        template <typename _Arg0> \
+        _NAME& operator=(_Arg0&& arg0) { \
+            parent_type::operator =(std::forward<_Arg0>(arg0)); \
+            return *this; \
+        } \
     }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -67,6 +74,9 @@ using Less = std::less<T>;
 //----------------------------------------------------------------------------
 template <typename T>
 using EqualTo = std::equal_to<T>;
+//----------------------------------------------------------------------------
+template <typename T>
+using RemoveConst = typename std::remove_const<T>::type;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

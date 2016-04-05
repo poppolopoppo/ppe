@@ -144,6 +144,8 @@ public:
 
     typedef _Accessor accessor_type;
 
+    using MetaProperty::Flags;
+
     MetaWrappedProperty(const MetaPropertyName& name, Flags attributes, accessor_type&& accessor);
     virtual ~MetaWrappedProperty();
 
@@ -184,6 +186,9 @@ public:
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
+private:
+    using MetaProperty::_name;
+    using MetaProperty::_attributes;
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Class>

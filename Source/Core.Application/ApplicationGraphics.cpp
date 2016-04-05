@@ -17,8 +17,8 @@ ApplicationGraphics::ApplicationGraphics(
     Graphics::DeviceAPI api,
     bool fixedTimeStep/* = true */)
 :   ApplicationWindow(appname, left, top, pp.BackBufferWidth(), pp.BackBufferHeight())
-,   _api(api)
 ,   _pp(pp)
+,   _api(api)
 ,   _fixedTimeStep(fixedTimeStep) {
 }
 //----------------------------------------------------------------------------

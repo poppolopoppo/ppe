@@ -17,7 +17,7 @@ public:
 
     // hash_value(hash_t) = hash_t,
     // will prevent helpers like hash_combine() from hashing twice the value :
-    inline hash_t hash_value(hash_t value) { return value; }
+    inline friend hash_t hash_value(hash_t value) { return value; }
 
     friend bool operator ==(const hash_t& lhs, const hash_t& rhs) { return lhs._value == rhs._value; }
     friend bool operator !=(const hash_t& lhs, const hash_t& rhs) { return lhs._value != rhs._value; }

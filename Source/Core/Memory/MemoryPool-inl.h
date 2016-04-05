@@ -26,7 +26,10 @@ MemoryPool<_Lock, _Allocator>::~MemoryPool() {
 }
 //----------------------------------------------------------------------------
 template <bool _Lock, typename _Allocator>
-void *MemoryPool<_Lock, _Allocator>::Allocate(MemoryTrackingData *trackingData = nullptr) {
+void *MemoryPool<_Lock, _Allocator>::Allocate(MemoryTrackingData *trackingData /* = nullptr */) {
+#ifndef USE_MEMORY_DOMAINS
+    UNUSED(trackingData);
+#endif
 #ifdef WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
     if (trackingData)
         trackingData->Allocate(1, BlockSize());
@@ -65,7 +68,10 @@ void *MemoryPool<_Lock, _Allocator>::Allocate(MemoryTrackingData *trackingData =
 }
 //----------------------------------------------------------------------------
 template <bool _Lock, typename _Allocator>
-void MemoryPool<_Lock, _Allocator>::Deallocate(void *ptr, MemoryTrackingData *trackingData = nullptr) {
+void MemoryPool<_Lock, _Allocator>::Deallocate(void *ptr, MemoryTrackingData *trackingData /* = nullptr */) {
+#ifndef USE_MEMORY_DOMAINS
+    UNUSED(trackingData);
+#endif
 #ifdef WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
     Core::aligned_free(ptr);
 

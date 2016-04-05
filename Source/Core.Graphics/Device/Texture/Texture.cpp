@@ -15,8 +15,8 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 Texture::Texture(DeviceResourceType textureType, const SurfaceFormat *format, BufferMode mode, BufferUsage usage, bool sharable)
 :   DeviceResourceSharable(textureType, sharable)
-,   _format(format)
-,   _usageAndMode(0) {
+,   _usageAndMode(0)
+,   _format(format) {
     Assert(format);
     Assert(format->SupportTexture());
     Assert( DeviceResourceType::Texture2D == textureType ||

@@ -5,6 +5,7 @@
 #include "Core/Container/StringHashSet.h"
 
 #include "Core/Diagnostic/Profiling.h"
+#include "Core/IO/StringSlice.h"
 #include "Core/Maths/Maths.h"
 #include "Core/Memory/MemoryStream.h"
 #include "Core/Time/TimedScope.h"
@@ -535,14 +536,14 @@ void Test_Containers() {
 
             typedef CompactHashSet<
                 StringSlice,
-                StringSliceHasher<char, CaseSensitive::True>,
-                StringSliceEqualTo<char, CaseSensitive::True>
+                StringSliceHasher<char, Case::Sensitive>,
+                StringSliceEqualTo<char, Case::Sensitive>
             >   hashtable_type;
 
 
             hashtable_type set;
             {
-                const BenchmarkScope bench("CompactHashSet construction");
+                const BenchmarkScope subbench("CompactHashSet construction");
                 PROFILING_SCOPE(Global, 3, "CompactHashSet construction");
                 set.resize(input.size());
                 for (const StringSlice& word : input)
@@ -550,7 +551,7 @@ void Test_Containers() {
             }
             Assert(set.size() == input.size());
             {
-                const BenchmarkScope bench("CompactHashSet search");
+                const BenchmarkScope subbench("CompactHashSet search");
                 PROFILING_SCOPE(Global, 4, "CompactHashSet search");
                 forrange(i, 0, loops) {
                     for (const StringSlice& word : search)
@@ -559,7 +560,7 @@ void Test_Containers() {
                     }
             }
             {
-                const BenchmarkScope bench("CompactHashSet negative search");
+                const BenchmarkScope subbench("CompactHashSet negative search");
                 PROFILING_SCOPE(Global, 4, "CompactHashSet negative search");
                 forrange(i, 0, loops) {
                     for (const StringSlice& word : negative)
@@ -573,14 +574,14 @@ void Test_Containers() {
 
             typedef HashTable<
                 StringSlice, void,
-                StringSliceHasher<char, CaseSensitive::True>,
-                StringSliceEqualTo<char, CaseSensitive::True>
+                StringSliceHasher<char, Case::Sensitive>,
+                StringSliceEqualTo<char, Case::Sensitive>
             >   hashtable_type;
 
 
             hashtable_type set;
             {
-                const BenchmarkScope bench("HashTable construction");
+                const BenchmarkScope subbench("HashTable construction");
                 PROFILING_SCOPE(Global, 3, "HashTable construction");
                 set.reserve(input.size());
                 size_t count = 0;
@@ -600,7 +601,7 @@ void Test_Containers() {
                 stats.MinProbe, stats.MaxProbe, stats.MeanProbe, stats.DevProbe );
 
             {
-                const BenchmarkScope bench("HashTable search");
+                const BenchmarkScope subbench("HashTable search");
                 PROFILING_SCOPE(Global, 4, "HashTable search");
                 forrange(i, 0, loops) {
                     for (const StringSlice& word : search)
@@ -609,7 +610,7 @@ void Test_Containers() {
                     }
             }
             {
-                const BenchmarkScope bench("HashTable negative search");
+                const BenchmarkScope subbench("HashTable negative search");
                 PROFILING_SCOPE(Global, 4, "HashTable negative search");
                 forrange(i, 0, loops) {
                     for (const StringSlice& word : negative)
@@ -621,9 +622,9 @@ void Test_Containers() {
         {
             const BenchmarkScope bench("HashSet");
 
-            STRINGSLICE_HASHSET(Container, CaseSensitive::True) set;
+            STRINGSLICE_HASHSET(Container, Case::Sensitive) set;
             {
-                const BenchmarkScope bench("HashSet construction");
+                const BenchmarkScope subbench("HashSet construction");
                 PROFILING_SCOPE(Global, 3, "HashSet construction");
                 set.reserve(input.size());
                 for (const StringSlice& word : input)
@@ -631,7 +632,7 @@ void Test_Containers() {
             }
             Assert(set.size() == input.size());
             {
-                const BenchmarkScope bench("HashSet search");
+                const BenchmarkScope subbench("HashSet search");
                 PROFILING_SCOPE(Global, 4, "HashSet search");
                 forrange(i, 0, loops) {
                     for (const StringSlice& word : search)
@@ -640,7 +641,7 @@ void Test_Containers() {
                     }
             }
             {
-                const BenchmarkScope bench("HashSet negative search");
+                const BenchmarkScope subbench("HashSet negative search");
                 PROFILING_SCOPE(Global, 4, "HashSet negative search");
                 forrange(i, 0, loops) {
                     for (const StringSlice& word : negative)

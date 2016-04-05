@@ -15,16 +15,22 @@ void MetaAtomWrapMoveVisitor::Append(MetaAtom* patom) {
 }
 //----------------------------------------------------------------------------
 void MetaAtomWrapMoveVisitor::Inspect(IMetaAtomPair* ppair, Pair<PMetaAtom, PMetaAtom>& pair) {
+    UNUSED(ppair);
+
     Append(pair.first.get());
     Append(pair.second.get());
 }
 //----------------------------------------------------------------------------
 void MetaAtomWrapMoveVisitor::Inspect(IMetaAtomVector* pvector, Vector<PMetaAtom>& vector) {
+    UNUSED(pvector);
+
     for(const PMetaAtom& atom : vector)
         Append(atom.get());
 }
 //----------------------------------------------------------------------------
 void MetaAtomWrapMoveVisitor::Inspect(IMetaAtomDictionary* pdictionary, Dictionary<PMetaAtom, PMetaAtom>& dictionary) {
+    UNUSED(pdictionary);
+
     for(const RTTI::Pair<PMetaAtom, PMetaAtom>& pair : dictionary) {
         Append(pair.first.get()); // do not call Visit(pair) !
         Append(pair.second.get());

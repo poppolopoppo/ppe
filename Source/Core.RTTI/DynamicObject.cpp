@@ -87,6 +87,32 @@ DynamicObject::DynamicObject() {}
 //----------------------------------------------------------------------------
 DynamicObject::~DynamicObject() {}
 //----------------------------------------------------------------------------
+MetaAtom* DynamicObject::GetValue(const MetaPropertyName& name) {
+    return _values[name].get();
+}
+//----------------------------------------------------------------------------
+const MetaAtom* DynamicObject::GetValue(const MetaPropertyName& name) const {
+    return _values[name].get();
+}
+//----------------------------------------------------------------------------
+MetaAtom* DynamicObject::TryGetValue(const MetaPropertyName& name) {
+    PMetaAtom value;
+    return (_values.TryGet(name, &value) ? value.get() : nullptr);
+}
+//----------------------------------------------------------------------------
+const MetaAtom* DynamicObject::TryGetValue(const MetaPropertyName& name) const {
+    PMetaAtom value;
+    return (_values.TryGet(name, &value) ? value.get() : nullptr);
+}
+//----------------------------------------------------------------------------
+void DynamicObject::SetValue(const MetaPropertyName& name, const PMetaAtom& value) {
+    _values[name] = value;
+}
+//----------------------------------------------------------------------------
+void DynamicObject::ClearValues() {
+    _values.clear();
+}
+//----------------------------------------------------------------------------
 const RTTI::MetaClass *DynamicObject::RTTI_MetaClass() const {
     return &_metaClass;
 }

@@ -21,11 +21,11 @@ enum CompressMethod {
 //----------------------------------------------------------------------------
 size_t  CompressedSizeUpperBound(size_t sizeInBytes);
 //----------------------------------------------------------------------------
-size_t  CompressMemory(MemoryView<u8>& dst, const MemoryView<const u8>& src, CompressMethod method = Default);
+size_t  CompressMemory(const MemoryView<u8>& dst, const MemoryView<const u8>& src, CompressMethod method = Default);
 //----------------------------------------------------------------------------
 size_t  DecompressedSize(const MemoryView<const u8>& src);
 //----------------------------------------------------------------------------
-bool    DecompressMemory(MemoryView<u8>& dst, const MemoryView<const u8>& src);
+bool    DecompressMemory(const MemoryView<u8>& dst, const MemoryView<const u8>& src);
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 size_t CompressMemory(RawStorage<u8, _Allocator>& dst, const MemoryView<const u8>& src, CompressMethod method = Default) {

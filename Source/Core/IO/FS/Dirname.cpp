@@ -6,13 +6,10 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Dirname::Dirname(const FileSystem::char_type* content)
+Dirname::Dirname(const FileSystem::StringSlice& content)
 :   parent_type(content) {}
 //----------------------------------------------------------------------------
-Dirname::Dirname(const FileSystem::char_type* content, size_t length)
-:   parent_type(content, length) {}
-//----------------------------------------------------------------------------
-Dirname& Dirname::operator =(const FileSystem::char_type* content) {
+Dirname& Dirname::operator =(const FileSystem::StringSlice& content) {
     parent_type::operator =(content);
     return *this;
 }

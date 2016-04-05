@@ -7,6 +7,7 @@
 
 #include "IO/Stream.h"
 #include "IO/String.h"
+#include "IO/StringSlice.h"
 
 #include <mutex>
 
@@ -133,11 +134,40 @@ static void LoadModules_(const DbghelpWrapper::Locked& dbghelp) {
         LOG(Info, L"[Symbols] {0} for \"{1}\"",
             succeed ? L"Loaded" : L"Failed to load",
             module_entry.szExePath);
+        UNUSED(succeed);
 
         module_found = ::Module32Next(snap, &module_entry);
     }
 
     ::CloseHandle(snap);
+}
+//----------------------------------------------------------------------------
+static void InitializeSymbols_(const DbghelpWrapper::Locked& dbghelp) {
+    DWORD options = dbghelp.SymGetOptions()();
+    options |= SYMOPT_LOAD_LINES;
+    options |= SYMOPT_FAIL_CRITICAL_ERRORS;
+    options |= SYMOPT_DEFERRED_LOADS;
+    options |= SYMOPT_UNDNAME;
+    dbghelp.SymSetOptions()(options);
+
+    // Force standard malloc, this is called at a very early stage for custom allocators
+    STATIC_CONST_INTEGRAL(size_t, SYMBOL_PATH_CAPACITY, 32 * MAX_PATH);
+    wchar_t *const symbol_path = (wchar_t*)std::malloc(SYMBOL_PATH_CAPACITY * sizeof(wchar_t));
+    memset(symbol_path, 0x0, SYMBOL_PATH_CAPACITY * sizeof(wchar_t));
+
+    GetSymbolsPath_(symbol_path, SYMBOL_PATH_CAPACITY);
+
+    HANDLE process = ::GetCurrentProcess();
+    BOOL succeed = dbghelp.SymInitializeW()(process, symbol_path, FALSE);
+
+    LOG(Info, L"[Symbols] Path = '{0}' -> succeed = {1:A}", symbol_path, (FALSE != succeed));
+
+    std::free(symbol_path);
+
+    if (FALSE == succeed)
+        return;
+
+    LoadModules_(dbghelp);
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -177,9 +207,9 @@ void Callstack::Decode(DecodedCallstack* decoded) const {
 void Callstack::Decode(DecodedCallstack* decoded, size_t hash, const MemoryView<void* const>& frames) {
     Assert(decoded);
 
-    const auto dbghelp = DbghelpWrapper::Instance().Lock();
+    const auto dbghelp(DbghelpWrapper::Instance().Lock());
 
-    static const wchar_t* kUnknown = L"??????????????????????";
+    static const wchar_t* kUnknown = L"?????????????????????";
 
     decoded->_hash = hash;
     decoded->_depth = frames.size();
@@ -269,42 +299,19 @@ size_t Callstack::Capture(
 }
 //----------------------------------------------------------------------------
 void Callstack::Start() {
-    const auto dbghelp = DbghelpWrapper::Instance().Lock();
+    const DbghelpWrapper::Locked dbghelp = DbghelpWrapper::Instance().Lock();
 
-    DWORD options = dbghelp.SymGetOptions()();
-    options |= SYMOPT_LOAD_LINES;
-    options |= SYMOPT_FAIL_CRITICAL_ERRORS;
-    options |= SYMOPT_DEFERRED_LOADS;
-    options |= SYMOPT_UNDNAME;
-    dbghelp.SymSetOptions()(options);
-
-    // Force standard malloc, this is called at a very early stage for custom allocators
-    enum { SYMBOL_PATH_CAPACITY = 0x100 * MAX_PATH * sizeof(wchar_t) };
-    wchar_t *const symbol_path = (wchar_t*)std::malloc(SYMBOL_PATH_CAPACITY);
-
-    GetSymbolsPath_(symbol_path, SYMBOL_PATH_CAPACITY);
-
-    HANDLE process = ::GetCurrentProcess();
-    BOOL succeed = dbghelp.SymInitializeW()(process, symbol_path, FALSE);
-
-    LOG(Info, L"[Symbols] Path = '{0}' -> {1}", symbol_path, (FALSE == succeed) ? L"Failed" : L"Succeed");
-
-    std::free(symbol_path);
-
-    if (!succeed)
-        return;
-
-    LoadModules_(dbghelp);
+    InitializeSymbols_(dbghelp);
 }
 //----------------------------------------------------------------------------
 void Callstack::ReloadSymbols() {
-    const auto dbghelp = DbghelpWrapper::Instance().Lock();
+    const DbghelpWrapper::Locked dbghelp = DbghelpWrapper::Instance().Lock();
 
     LoadModules_(dbghelp);
 }
 //----------------------------------------------------------------------------
 void Callstack::Shutdown() {
-    const auto dbghelp = DbghelpWrapper::Instance().Lock();
+    const DbghelpWrapper::Locked dbghelp = DbghelpWrapper::Instance().Lock();
 
     HANDLE hProcess = ::GetCurrentProcess();
 

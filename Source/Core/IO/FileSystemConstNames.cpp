@@ -40,7 +40,7 @@ FOREACH_FILESYSTEMCONSTNAMES(DEF_FILESYSTEMCONSTNAMES_ACCESSOR)
 //----------------------------------------------------------------------------
 void FileSystemConstNames::Start() {
 #define DEF_FILESYSTEMCONSTNAMES_STARTUP(_Type, _Name, _Content) \
-    new ((void *)&CONCAT(gPod_##_Type##_, _Name)) _Type(_Content);
+    new ((void *)&CONCAT(gPod_##_Type##_, _Name)) _Type(MakeStringSlice(_Content));
     FOREACH_FILESYSTEMCONSTNAMES(DEF_FILESYSTEMCONSTNAMES_STARTUP)
 #undef DEF_FILESYSTEMCONSTNAMES_STARTUP
 }

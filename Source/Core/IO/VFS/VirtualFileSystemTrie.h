@@ -4,6 +4,7 @@
 
 #include "Core/Container/AssociativeVector.h"
 #include "Core/IO/FS/MountingPoint.h"
+#include "Core/IO/String.h"
 #include "Core/IO/VirtualFileSystem_fwd.h"
 #include "Core/Memory/RefPtr.h"
 #include "Core/Thread/ReadWriteLock.h"

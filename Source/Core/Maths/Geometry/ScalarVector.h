@@ -215,7 +215,7 @@ void swap(ScalarVector<T, _Dim>& lhs, ScalarVector<T, _Dim>& rhs) {
 template <typename T, size_t _Dim>
 struct NumericLimits< ScalarVector<T, _Dim> > {
     typedef ScalarVector<T, _Dim> value_type;
-    typedef typename NumericLimits<T> scalar_type;
+    typedef NumericLimits<T> scalar_type;
 
     STATIC_CONST_INTEGRAL(bool, is_integer, scalar_type::is_integer);
     STATIC_CONST_INTEGRAL(bool, is_modulo,  scalar_type::is_modulo);

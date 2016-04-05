@@ -3,7 +3,7 @@
 #include "StreamProvider.h"
 
 #include "Container/RawStorage.h"
-#include "IO/String.h"
+#include "IO/StringSlice.h"
 
 namespace Core {
 //----------------------------------------------------------------------------

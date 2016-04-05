@@ -50,6 +50,7 @@ void DeviceAPIDependantEntity::AttachResource(const DeviceResource *resource) {
 }
 //----------------------------------------------------------------------------
 void DeviceAPIDependantEntity::DetachResource(const DeviceResource *resource) {
+    UNUSED(resource);
     Assert(nullptr != resource);
     Assert(resource == _resource);
     Assert(_resource->Frozen());

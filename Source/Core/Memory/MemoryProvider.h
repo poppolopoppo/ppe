@@ -56,7 +56,7 @@ private:
 class MemoryViewWriter : public IStreamWriter {
 public:
     MemoryViewWriter() : _size(0), _offsetO(0) {}
-    MemoryViewWriter(const MemoryView<u8>& rawData) : _offsetO(0), _size(0), _rawData(rawData) {}
+    MemoryViewWriter(const MemoryView<u8>& rawData) : _size(0), _offsetO(0), _rawData(rawData) {}
 
     virtual std::streamoff TellO() const override;
     virtual bool SeekO(std::streamoff offset, SeekOrigin policy = SeekOrigin::Begin) override;

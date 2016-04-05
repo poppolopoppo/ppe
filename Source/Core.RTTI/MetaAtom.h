@@ -262,6 +262,9 @@ public:
     virtual void Accept(IMetaAtomConstVisitor* visitor) const override { visitor->Visit(this); }
 
     SINGLETON_POOL_ALLOCATED_DECL();
+
+private:
+    using impl_type::_wrapper;
 };
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
@@ -311,6 +314,8 @@ public:
     // IMetaAtomPair interface
 
 private:
+    using impl_type::_wrapper;
+
     virtual const MetaAtom* Atom() const override { return this; }
 
     virtual MetaTypeInfo FirstTypeInfo() const override { return RTTI::TypeInfo< _First >(); }
@@ -381,6 +386,8 @@ public:
     // IMetaAtomVector interface
 
 private:
+    using impl_type::_wrapper;
+
     virtual const MetaAtom* Atom() const override { return this; }
 
     virtual MetaTypeInfo ValueTypeInfo() const override { return RTTI::TypeInfo< T >(); }
@@ -448,6 +455,8 @@ public:
     // IMetaAtomDictionary interface
 
 private:
+    using impl_type::_wrapper;
+
     virtual const MetaAtom* Atom() const override { return this; }
 
     virtual MetaTypeInfo KeyTypeInfo() const override { return RTTI::TypeInfo< _Key >(); }

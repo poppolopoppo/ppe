@@ -1,7 +1,9 @@
 #pragma once
 
-#include "Core/Allocator/Allocation.h"
 #include "Core/Core.h"
+
+#include "Core/Allocator/Allocation.h"
+#include "Core/IO/StringSlice.h"
 
 #include <regex>
 
@@ -14,6 +16,9 @@ using BasicRegexp = std::regex<_Char, _Traits>;
 //----------------------------------------------------------------------------
 using Regexp = BasicRegexp<char>;
 using WRegexp = BasicRegexp<wchar_t>;
+//----------------------------------------------------------------------------
+bool ReMatch(const Regexp& exp, const StringSlice& str);
+bool ReMatch(const WRegexp& exp, const WStringSlice& wstr);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -29,10 +29,15 @@ namespace {
 //----------------------------------------------------------------------------
 class TextSerialize_ {
 public:
-    TextSerialize_(const TextSerializer* owner) : _owner(owner), _indent(0), _newline(false) { Assert(owner); }
+    TextSerialize_(const TextSerializer* owner)
+        : _newline(false), _indent(0), _owner(owner) {
+        Assert(owner);
+    }
 
     TextSerialize_(const TextSerialize_& ) = delete;
     TextSerialize_& operator =(const TextSerialize_& ) = delete;
+
+    const TextSerializer* Owner() const { return _owner; }
 
     void Append(const RTTI::MetaObject* object, bool topObject = true);
     void Append(const MemoryView<const RTTI::PMetaObject>& objects, bool topObject = true);
@@ -266,12 +271,14 @@ private:
 };
 //----------------------------------------------------------------------------
 void TextSerialize_::Append(const RTTI::MetaObject* object, bool topObject /* = true */) {
+    UNUSED(topObject);
     Assert(false == topObject || nullptr != object);
     QueueObject_(object);
     ProcessQueue_();
 }
 //----------------------------------------------------------------------------
 void TextSerialize_::Append(const MemoryView<const RTTI::PMetaObject>& objects, bool topObject /* = true */) {
+    UNUSED(topObject);
     for (const RTTI::PMetaObject& object : objects) {
         QueueObject_(object.get());
     }

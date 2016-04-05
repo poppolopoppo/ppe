@@ -149,7 +149,8 @@ static bool CreateDX11DebugLayerIFP_(
     denyList.NumIDs = _countof(hide);
     denyList.pIDList = hide;
 
-    ::D3D11_INFO_QUEUE_FILTER filter = { 0 };
+    ::D3D11_INFO_QUEUE_FILTER filter;
+    ::SecureZeroMemory(&filter, sizeof(filter));
     filter.AllowList = allowList;
     filter.DenyList = denyList;
     (*dx11pInfoQueue)->PushStorageFilter(&filter);
@@ -380,6 +381,9 @@ void DX11DeviceWrapper::CheckDeviceErrors(const DX11DeviceAPIEncapsulator *encap
 
     _dx11InfoQueue->ClearStoredMessages();
 
+#else
+    UNUSED(encapsulator);
+
 #endif //!WITH_DIRECTX11_DEBUG_LAYER
 }
 //----------------------------------------------------------------------------
@@ -426,6 +430,10 @@ void DX11SetDeviceResourceName(::ID3D11DeviceChild *deviceChild, const char *nam
     Assert(length);
 
     deviceChild->SetPrivateData(WKPDID_D3DDebugObjectName, checked_cast<UINT>(length), name);
+#else
+    UNUSED(deviceChild);
+    UNUSED(name);
+    UNUSED(length);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -441,6 +449,9 @@ void DX11SetDeviceResourceNameIFP(::ID3D11DeviceChild *deviceChild, const Device
 
     const UINT length = checked_cast<UINT>(Length(resourceName));
     deviceChild->SetPrivateData(WKPDID_D3DDebugObjectName, length, resourceName);
+#else
+    UNUSED(deviceChild);
+    UNUSED(owner);
 #endif
 }
 //----------------------------------------------------------------------------

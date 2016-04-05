@@ -182,21 +182,21 @@ PShaderCompiled CompileShaderSource(
                 entryPoint,
                 defines )) {
 
-        const DialogBox::Result dialog = DialogBox::AbortRetryIgnore(
+        const Dialog::Result dialog = Dialog::AbortRetryIgnore(
             MakeStringSlice(errorMessage),
             L"Shader compilation error",
-            DialogBox::Icon::Exclamation );
+            Dialog::Icon::Exclamation );
 
         switch (dialog)
         {
-        case DialogBox::Result::Ignore:
+        case Dialog::Result::Ignore:
             {
                 RAWSTORAGE(Shader, char) preprocess;
                 deviceAPIShaderCompiler->PreprocessShaderSource(preprocess, source.get(), vertexDeclaration);
                 BREAKPOINT();
             }
             //break;
-        case DialogBox::Result::Retry:
+        case Dialog::Result::Retry:
             errorMessage.clear();
             if (source)
                 RemoveRef_AssertReachZero(source);

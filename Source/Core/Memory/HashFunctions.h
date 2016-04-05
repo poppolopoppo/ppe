@@ -51,6 +51,36 @@ size_t hash_as_pod_range(_It&& first, _It&& last);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename _It>
+u32 hash_fnv1a32(_It first, _It last, u32 seed = 2166136261U) {
+    u32 _Val = seed;
+    for (; first != last; ++first) {
+        _Val ^= (u32)*first;
+        _Val *= 16777619U;
+    }
+    return (_Val);
+}
+//----------------------------------------------------------------------------
+template <typename _It>
+u64 hash_fnv1a64(_It first, _It last, u64 seed = 14695981039346656037ULL) {
+    u64 _Val = seed;
+    for (; first != last; ++first) {
+        _Val ^= (u64)*first;
+        _Val *= 1099511628211ULL;
+    }
+    return (_Val);
+}
+//----------------------------------------------------------------------------
+#if defined(ARCH_X64)
+template <typename _It> size_t hash_fnv1a(_It first, _It last) { return hash_fnv1a64(first, last); }
+template <typename _It> size_t hash_fnv1a(_It first, _It last, size_t seed) { return hash_fnv1a64(first, last, seed); }
+#else
+template <typename _It> size_t hash_fnv1a(_It first, _It last) { return hash_fnv1a32(first, last); }
+template <typename _It> size_t hash_fnv1a(_It first, _It last, size_t seed) { return hash_fnv1a32(first, last, seed); }
+#endif
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 u128 Fingerprint128(const void *ptr, size_t sizeInBytes);
 template <typename T> u128 Fingerprint128(const MemoryView<T>& src) { return Fingerprint128(src.Pointer(), src.SizeInBytes()); }
 //----------------------------------------------------------------------------

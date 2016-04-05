@@ -23,7 +23,7 @@ public:
         : _succeed(false), _message(nullptr), _site(Lexer::Location::None()) {}
 
     ParseResult(T&& rvalue, const Lexer::Location& site)
-        : _succeed(true), _message(nullptr), _value(std::move(rvalue)), _site(site) {
+        : _succeed(true), _value(std::move(rvalue)), _message(nullptr), _site(site) {
         Assert(_site.FileName);
     }
 

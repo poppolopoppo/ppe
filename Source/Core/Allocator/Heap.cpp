@@ -67,6 +67,9 @@ Heap::Heap(const char* nameForDebug, bool locked, size_t maximumSize/* = 0 */)
 ,   _trackingData(nameForDebug)
 #endif
     {
+#ifndef USE_MEMORY_DOMAINS
+    UNUSED(nameForDebug);
+#endif
     _handle = CreateHeap_(locked, maximumSize, maximumSize);
 }
 //----------------------------------------------------------------------------
@@ -94,6 +97,8 @@ void* Heap::malloc(size_t size, MemoryTrackingData& trackingData) {
 #ifdef USE_MEMORY_DOMAINS
     _trackingData.Allocate(1, size);
     trackingData.Allocate(1, size);
+#else
+    UNUSED(trackingData);
 #endif
     return ::HeapAlloc(_handle, 0, size);
 }
@@ -104,6 +109,8 @@ void Heap::free(void *ptr, MemoryTrackingData& trackingData) {
     const size_t size = ::HeapSize(_handle, 0, ptr);
     _trackingData.Deallocate(blockCount, size);
     trackingData.Deallocate(blockCount, size);
+#else
+    UNUSED(trackingData);
 #endif
     ::HeapFree(_handle, 0, ptr);
 }
@@ -112,6 +119,8 @@ void* Heap::calloc(size_t nmemb, size_t size, MemoryTrackingData& trackingData) 
 #ifdef USE_MEMORY_DOMAINS
     _trackingData.Allocate(nmemb, size);
     trackingData.Allocate(nmemb, size);
+#else
+    UNUSED(trackingData);
 #endif
     return ::HeapAlloc(_handle, HEAP_ZERO_MEMORY, nmemb * size);
 }
@@ -127,6 +136,8 @@ void* Heap::realloc(void *ptr, size_t size, MemoryTrackingData& trackingData) {
         _trackingData.Allocate(1, size);
         trackingData.Allocate(1, size);
     }
+#else
+    UNUSED(trackingData);
 #endif
     if (ptr)
         return ::HeapReAlloc(_handle, 0, ptr, size);
@@ -140,6 +151,8 @@ void* Heap::aligned_malloc(size_t size, size_t alignment, MemoryTrackingData& tr
 #ifdef USE_MEMORY_DOMAINS
     _trackingData.Allocate(1, size + alignment);
     trackingData.Allocate(1, size + alignment);
+#else
+    UNUSED(trackingData);
 #endif
     void* const ptr = ::HeapAlloc(_handle, 0, size + alignment);
     void** const aligned = reinterpret_cast<void**>(((size_t)ptr + alignment) & (~(alignment - 1)));
@@ -156,6 +169,8 @@ void Heap::aligned_free(void *ptr, MemoryTrackingData& trackingData) {
     const size_t size = HeapSize(_handle, 0, block);
     _trackingData.Deallocate(blockCount, size);
     trackingData.Deallocate(blockCount, size);
+#else
+    UNUSED(trackingData);
 #endif
     ::HeapFree(_handle, 0, block);
 }
@@ -164,6 +179,8 @@ void* Heap::aligned_calloc(size_t nmemb, size_t size, size_t alignment, MemoryTr
 #ifdef USE_MEMORY_DOMAINS
     _trackingData.Allocate(1, size * nmemb + alignment);
     trackingData.Allocate(1, size * nmemb + alignment);
+#else
+    UNUSED(trackingData);
 #endif
     void* const ptr = ::HeapAlloc(_handle, HEAP_ZERO_MEMORY, size * nmemb + alignment);
     void** const aligned = reinterpret_cast<void**>(((size_t)ptr + alignment) & (~(alignment - 1)));
@@ -182,6 +199,8 @@ void* Heap::aligned_realloc(void *ptr, size_t size, size_t alignment, MemoryTrac
     trackingData.Deallocate(blockCount, oldSize);
     _trackingData.Allocate(1, size);
     trackingData.Allocate(1, size);
+#else
+    UNUSED(trackingData);
 #endif
     void* const new_ptr = ::HeapReAlloc(_handle, 0, block, size + alignment);
     aligned = reinterpret_cast<void**>(((size_t)new_ptr + alignment) & (~(alignment - 1)));

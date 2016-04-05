@@ -16,17 +16,12 @@ public:
     BasenameNoExt() {}
     ~BasenameNoExt() {}
 
-    BasenameNoExt(const FileSystem::char_type* content, size_t length);
-
-    BasenameNoExt(const FileSystem::char_type* content);
-    BasenameNoExt& operator =(const FileSystem::char_type* content);
+    BasenameNoExt(const FileSystem::StringSlice& content);
+    BasenameNoExt& operator =(const FileSystem::StringSlice& content);
 
     template <typename _CharTraits, typename _Allocator>
     BasenameNoExt(const std::basic_string<typename FileSystem::char_type, _CharTraits, _Allocator>& content)
         : BasenameNoExt(content.c_str(), content.size()) {}
-
-    BasenameNoExt(const BasicStringSlice<const FileSystem::char_type>& slice)
-        : BasenameNoExt(slice.Pointer(), slice.size()) {}
 
     BasenameNoExt(const FileSystemToken& token);
     BasenameNoExt& operator =(const FileSystemToken& token);

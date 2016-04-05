@@ -17,6 +17,7 @@ MetaClassHashMap::MetaClassHashMap() {
 MetaClassHashMap::~MetaClassHashMap() {}
 //----------------------------------------------------------------------------
 void MetaClassHashMap::Add(const MetaClassName& name, const MetaClass *metaClass, bool allowOverride) {
+    UNUSED(allowOverride);
     Assert(metaClass);
     Assert(!metaClass->Name().empty());
     Assert(MetaObject::MetaClass::Instance()->IsAssignableFrom(metaClass));
@@ -31,6 +32,7 @@ void MetaClassHashMap::Add(const MetaClassName& name, const MetaClass *metaClass
 }
 //----------------------------------------------------------------------------
 void MetaClassHashMap::Remove(const MetaClassName& name, const MetaClass *metaClass) {
+    UNUSED(metaClass);
     Assert(metaClass);
     Assert(!metaClass->Name().empty());
 

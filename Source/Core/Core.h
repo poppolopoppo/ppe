@@ -165,6 +165,7 @@
 #include "Core/Meta/StronglyTyped.h"
 #include "Core/Meta/ThreadResource.h"
 #include "Core/Meta/TypeTraits.h"
+#include "Core/Meta/Warnings.h"
 
 namespace Core {
 //----------------------------------------------------------------------------

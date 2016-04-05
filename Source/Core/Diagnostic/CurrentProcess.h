@@ -42,7 +42,7 @@ public:
 
     static Units::Time::Seconds ElapsedSeconds() {
         return HasInstance()
-            ? Timepoint::ElapsedSince(Instance().StartedAt())
+            ? Units::Time::Seconds(Timepoint::ElapsedSince(Instance().StartedAt()))
             : Units::Time::Seconds(0);
     }
 

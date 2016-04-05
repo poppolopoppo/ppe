@@ -190,7 +190,7 @@ DWORD CALLBACK MinidumpWriter_(LPVOID inParam) {
 
         // Set up the callback to be called by the minidump writer.  This allows us to
         // filter out information that we may not care about.
-        ::MINIDUMP_CALLBACK_INFORMATION callback = { 0 };
+        ::MINIDUMP_CALLBACK_INFORMATION callback = { 0, nullptr };
 
         const MinidumpCallbackParam_ info = { ::GetCurrentThreadId(), processName, p };
         callback.CallbackParam = (PVOID)&info;

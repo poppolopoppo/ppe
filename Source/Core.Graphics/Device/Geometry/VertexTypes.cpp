@@ -42,7 +42,7 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-typedef STRINGSLICE_HASHMAP(Vertex, SCVertexDeclaration, CaseSensitive::True) stringslice_to_vdecl_type;
+typedef STRINGSLICE_HASHMAP(Vertex, SCVertexDeclaration, Case::Sensitive) stringslice_to_vdecl_type;
 class VertexDeclarationDico_ : Meta::Singleton<stringslice_to_vdecl_type, VertexDeclarationDico_> {
     typedef Meta::Singleton<stringslice_to_vdecl_type, VertexDeclarationDico_> parent_type;
 public:

@@ -135,8 +135,8 @@ typename std::enable_if<
     STATIC_ASSERT(std::is_move_constructible<typename _Allocator::value_type>::value);
     typedef std::allocator_traits<_Allocator> allocator_traits;
     typedef typename allocator_traits::pointer pointer;
-    Assert(0 == oldSize || nullptr != data.Pointer());
     pointer const p = data.Pointer();
+    Assert(0 == oldSize || nullptr != p);
     pointer const newp = newSize ? allocator.allocate(newSize) : nullptr;
     const size_t moveRange = (newSize < data.size()) ? newSize : data.size();
     Assert((newp && p) || 0 == moveRange);

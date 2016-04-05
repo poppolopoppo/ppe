@@ -14,6 +14,7 @@ static void EraseBucketUsingProbe_(
     const MemoryView<_HashWIndex> hashWIndices,
     size_t bucket, size_t hashValue
     ) {
+    UNUSED(probe);
     Assert(bucket < probe.HashCapacity);
     typedef typename _HashWIndex::size_type size_type;
     hashValue = size_type(hashValue);
@@ -33,6 +34,7 @@ static void SwapDataIndexUsingProbe_(
     const MemoryView<_HashWIndex> hashWIndices,
     size_t bucket0, size_t bucket1
     ) {
+    UNUSED(probe);
     Assert(bucket0 < probe.HashCapacity);
     Assert(bucket1 < probe.HashCapacity);
     Assert(bucket0 != bucket1);
@@ -47,6 +49,8 @@ template <typename _HashWIndex>
 static void ClearBucketsUsingProbe_(
     const details::HashTableProbe_ probe,
     const MemoryView<_HashWIndex> hashWIndices ) {
+    UNUSED(probe);
+    Assert(hashWIndices.size() == probe.HashCapacity);
     const _HashWIndex zero = _HashWIndex::Zero();
     Assert(zero.empty());
     for (_HashWIndex& idx : hashWIndices)

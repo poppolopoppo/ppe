@@ -324,6 +324,8 @@ void KeyboardInputHandler::UpdateBeforeDispatch(Graphics::BasicWindow *wnd) {
 }
 //----------------------------------------------------------------------------
 void KeyboardInputHandler::UpdateAfterDispatch(Graphics::BasicWindow *wnd) {
+    UNUSED(wnd);
+
     for (KeyboardKey key : _state._keysUp.MakeView()) {
 #ifdef WITH_KEYBOARDSTATE_VERBOSE
         LOG(Info, L"[Keyboard] key {0} up", KeyboardKeyToCStr(key));
@@ -341,24 +343,40 @@ void KeyboardInputHandler::UpdateAfterDispatch(Graphics::BasicWindow *wnd) {
 }
 //----------------------------------------------------------------------------
 Graphics::MessageResult KeyboardInputHandler::OnKeyboardKeyDown_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
+    UNUSED(wnd);
+    UNUSED(msg);
+    UNUSED(lparam);
+
     KeyboardInputHandler *const keyboard = checked_cast<KeyboardInputHandler *>(handler);
     AddVirtualKey_IfMapped_(keyboard->_state._keysDown, wparam);
     return 0;
 }
 //----------------------------------------------------------------------------
 Graphics::MessageResult KeyboardInputHandler::OnKeyboardKeyUp_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
+    UNUSED(wnd);
+    UNUSED(msg);
+    UNUSED(lparam);
+
     KeyboardInputHandler *const keyboard = checked_cast<KeyboardInputHandler *>(handler);
     AddVirtualKey_IfMapped_(keyboard->_state._keysUp, wparam);
     return 0;
 }
 //----------------------------------------------------------------------------
 Graphics::MessageResult KeyboardInputHandler::OnKeyboardSysKeyDown_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
+    UNUSED(wnd);
+    UNUSED(msg);
+    UNUSED(lparam);
+
     KeyboardInputHandler *const keyboard = checked_cast<KeyboardInputHandler *>(handler);
     AddVirtualKey_IfMapped_(keyboard->_state._keysDown, wparam);
     return 0;
 }
 //----------------------------------------------------------------------------
 Graphics::MessageResult KeyboardInputHandler::OnKeyboardSysKeyUp_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
+    UNUSED(wnd);
+    UNUSED(msg);
+    UNUSED(lparam);
+
     KeyboardInputHandler *const keyboard = checked_cast<KeyboardInputHandler *>(handler);
     AddVirtualKey_IfMapped_(keyboard->_state._keysUp, wparam);
     return 0;

@@ -2,6 +2,7 @@
 
 #include "Core/Core.h"
 
+#include <algorithm>
 #include <iosfwd>
 #include <iterator>
 #include <type_traits>
@@ -60,8 +61,8 @@ public:
     iterator cbegin() const { return begin(); }
     iterator cend() const { return end(); }
 
-    reverse_iterator rbegin() const { return reverse_iterator(begin()); }
-    reverse_iterator rend() const { return reverse_iterator(end()); }
+    reverse_iterator rbegin() const { return reverse_iterator(end()); }
+    reverse_iterator rend() const { return reverse_iterator(begin()); }
 
     reference at(size_type index) const;
     reference operator [](size_type index) const { return at(index); }
@@ -75,14 +76,34 @@ public:
     MemoryView<T> CutStartingAt(size_t offset) const { return SubRange(offset, _size - offset); }
     MemoryView< typename std::add_const<T>::type > CutStartingAtConst(size_t offset) const { return SubRangeConst(offset, _size - offset); }
 
+    MemoryView<T> CutStartingAt(const iterator& it) const {
+        Assert(AliasesToContainer(it));
+        return (end() == it ? MemoryView(_storage+_size,0) : MemoryView(&*it, std::distance(it, end())) );
+    }
+
+    MemoryView<T> CutStartingAt(const reverse_iterator& it) const {
+        Assert(AliasesToContainer(it));
+        return (rend() == it ? MemoryView(_storage,0) : MemoryView(&*it, _storage + _size - &*it) );
+    }
+
     MemoryView<T> CutBefore(size_t offset) const { return SubRange(0, offset); }
     MemoryView< typename std::add_const<T>::type > CutBeforeConst(size_t offset) const { return SubRangeConst(0, offset); }
+
+    MemoryView<T> CutBefore(const iterator& it) const {
+        Assert(AliasesToContainer(it));
+        return MemoryView<T>(_storage, std::distance(begin(), it));
+    }
+
+    MemoryView<T> CutBefore(const reverse_iterator& it) const {
+        Assert(AliasesToContainer(it));
+        return MemoryView<T>(_storage, &*it - _storage);
+    }
 
     MemoryView<T> ShiftBack() const { Assert(_size > 0); return MemoryView<T>(_storage, _size - 1); }
     MemoryView<T> ShiftFront() const { Assert(_size > 0); return MemoryView<T>(_storage + 1, _size - 1); }
 
-    MemoryView<T> GrowBack() const { Assert(_size > 0); return MemoryView<T>(_storage, _size + 1); }
-    MemoryView<T> GrowFront() const { Assert(_size > 0); return MemoryView<T>(_storage - 1, _size + 1); }
+    MemoryView<T> GrowBack() const { return MemoryView<T>(_storage, _size + 1); }
+    MemoryView<T> GrowFront() const { return MemoryView<T>(_storage - 1, _size + 1); }
 
     template <typename U>
     bool IsSubRangeOf(const MemoryView<U>& parent) const {
@@ -91,9 +112,32 @@ public:
     }
 
     template <typename _Pred>
-    iterator find_if(const _Pred& pred) const { return std::find_if(begin(), end(), pred); }
+    iterator FindIf(const _Pred& pred) const { return std::find_if(begin(), end(), pred); }
+    template <typename _Pred>
+    size_type FindFirst(const _Pred& pred) const { return std::distance(begin(), FindIf(pred)); }
 
-    bool AliasesToContainer(iterator it) const { return (_storage <= &*it && _storage + _size > &*it); }
+    template <typename _Pred>
+    reverse_iterator FindIfR(const _Pred& pred) const { return std::find_if(rbegin(), rend(), pred); }
+    template <typename _Pred>
+    size_type FindLast(const _Pred& pred) const { return std::distance(rbegin(), FindIfR(pred)); }
+
+    template <typename _Pred>
+    iterator FindIfNot(const _Pred& pred) const { return std::find_if_not(begin(), end(), pred); }
+    template <typename _Pred>
+    size_type FindFirstNot(const _Pred& pred) const { return std::distance(begin(), FindIfNot(pred)); }
+
+    template <typename _Pred>
+    reverse_iterator FindIfNotR(const _Pred& pred) const { return std::find_if_not(rbegin(), rend(), pred); }
+    template <typename _Pred>
+    size_type FindLastNot(const _Pred& pred) const { return std::distance(rbegin(), FindIfNotR(pred)); }
+
+    template <typename _Pred>
+    MemoryView SplitIf(const _Pred& pred) const { return MemoryView(_storage, FindFirst(pred)); }
+    template <typename _Pred>
+    MemoryView SplitIfNot(const _Pred& pred) const { return MemoryView(_storage, FindFirstNot(pred)); }
+
+    bool AliasesToContainer(const iterator& it) const { return (begin() <= it && it <= end()); }
+    bool AliasesToContainer(const reverse_iterator& it) const { return (rbegin() <= it && it <= rend()); }
 
     template <typename U>
     MemoryView<U> Cast() const;

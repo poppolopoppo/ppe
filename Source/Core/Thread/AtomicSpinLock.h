@@ -14,6 +14,8 @@ namespace Core {
 //----------------------------------------------------------------------------
 // A fast, lightweight spinlock
 //----------------------------------------------------------------------------
+#pragma warning( push )
+#pragma warning( disable : 4324 ) // la structure a été remplie en raison du spécificateur d'alignement.
 CACHELINE_ALIGNED class AtomicSpinLock {
 public:
     AtomicSpinLock() { _state.clear(); }
@@ -57,6 +59,7 @@ public:
 private:
     std::atomic_flag _state;
 };
+#pragma warning( pop )
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

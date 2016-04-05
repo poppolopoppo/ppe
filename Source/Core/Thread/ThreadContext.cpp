@@ -5,11 +5,16 @@
 #include "Allocator/Alloca.h"
 #include "Allocator/ThreadLocalHeap.h"
 #include "Diagnostic/Logger.h"
-#include "IO/String.h"
+#include "IO/StringSlice.h"
 #include "Meta/AutoSingleton.h"
 
-#ifdef _DEBUG
-#include <Windows.h>
+#ifndef FINAL_RELEASE
+#   define WITH_CORE_THREADCONTEXT
+#endif
+
+
+#ifdef WITH_CORE_THREADCONTEXT
+#   include <Windows.h>
 #endif
 
 namespace Core {
@@ -43,8 +48,12 @@ inline void CurrentThreadContext::CreateMainThread() {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
+#pragma warning(push)
+#pragma warning(disable: 6320) // L'expression de filtre d'exception correspond à la constante EXCEPTION_EXECUTE_HANDLER.
+                               // Cela risque de masquer les exceptions qui n'étaient pas destinées à être gérées.
+#pragma warning(disable: 6322) // bloc empty _except.
 static void SetWin32ThreadName_(const char* name) {
-#ifdef _DEBUG
+#ifdef WITH_CORE_THREADCONTEXT
     /*
     // How to: Set a Thread Name in Native Code
     // http://msdn.microsoft.com/en-us/library/xcb2z8hs.aspx
@@ -73,8 +82,11 @@ static void SetWin32ThreadName_(const char* name) {
     __except (EXCEPTION_EXECUTE_HANDLER)
     {
     }
+#else
+    UNUSED(name);
 #endif
 }
+#pragma warning(pop)
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
@@ -83,8 +95,13 @@ static void SetWin32ThreadName_(const char* name) {
 ThreadContext::ThreadContext(const char* name, size_t tag, std::thread::id id)
 :   _tag(tag), _id(id) {
     Assert(name);
-    Copy(_name, name);
+
+    const size_t n = Copy(MakeView(_name), MakeStringSlice(name, Meta::noinit_tag()));
+    Assert(n < lengthof(_name));
+    _name[n] = '\0';
+
     SetWin32ThreadName_(_name);
+
     LOG(Info, L"[Thread] Start '{0}' with tag = {1} (id:{2})", _name, _tag, _id);
 }
 //----------------------------------------------------------------------------

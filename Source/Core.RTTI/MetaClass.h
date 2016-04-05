@@ -53,7 +53,7 @@ public:
 
     MemoryView<const UCMetaProperty> Properties() const;
 
-    const MetaProperty *PropertyIFP(const char *name, size_t attributes = 0, bool inherited = true) const;
+    const MetaProperty *PropertyIFP(const StringSlice& name, size_t attributes = 0, bool inherited = true) const;
     const MetaProperty *PropertyIFP(const MetaPropertyName& name, size_t attributes = 0, bool inherited = true) const;
 
     MetaObject* CreateInstance() const;
@@ -61,7 +61,7 @@ public:
 protected:
     virtual MemoryView<const UCMetaProperty> VirtualProperties() const = 0;
 
-    virtual const MetaProperty *VirtualPropertyIFP(const char *name, size_t attributes) const = 0;
+    virtual const MetaProperty *VirtualPropertyIFP(const StringSlice& name, size_t attributes) const = 0;
     virtual const MetaProperty *VirtualPropertyIFP(const MetaPropertyName& name, size_t attributes) const = 0;
 
     virtual MetaObject* VirtualCreateInstance() const = 0;
@@ -85,7 +85,7 @@ protected:
 private:
     virtual MemoryView<const UCMetaProperty> VirtualProperties() const override;
 
-    virtual const MetaProperty *VirtualPropertyIFP(const char *name, size_t attributes) const override;
+    virtual const MetaProperty *VirtualPropertyIFP(const StringSlice& name, size_t attributes) const override;
     virtual const MetaProperty *VirtualPropertyIFP(const MetaPropertyName& name, size_t attributes) const override;
 
     VECTOR(RTTI, UCMetaProperty) _properties;

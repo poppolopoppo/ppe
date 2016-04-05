@@ -91,7 +91,7 @@ static int Bootstrap(void *applicationHandle, int nShowCmd, int argc, const wcha
     catch (const std::exception& e)
     {
         const WString wwhat = ToWString(e.what());
-        DialogBox::Ok(wwhat.c_str(), L"Exception caught !", DialogBox::Icon::Exclamation);
+        Dialog::Ok(wwhat.c_str(), L"Exception caught !", Dialog::Icon::Exclamation);
         AssertNotReached();
     }
 #endif

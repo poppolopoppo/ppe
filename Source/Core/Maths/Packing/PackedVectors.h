@@ -45,7 +45,7 @@ UX10Y10Z10W2N FloatM11_to_UX10Y10Z10W2N(float x, float y, float z, u8 w);
 template <>
 struct NumericLimits< UX10Y10Z10W2N > {
     typedef UX10Y10Z10W2N value_type;
-    typedef typename NumericLimits<float> scalar_type;
+    typedef NumericLimits<float> scalar_type;
 
     STATIC_CONST_INTEGRAL(bool, is_integer, scalar_type::is_integer);
     STATIC_CONST_INTEGRAL(bool, is_modulo,  scalar_type::is_modulo);

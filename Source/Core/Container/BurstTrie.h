@@ -15,11 +15,11 @@ namespace Core {
 #define BURST_TRIE_INSITU 12 // no padding with chars
 //----------------------------------------------------------------------------
 #define BURST_TRIE(_DOMAIN, _CHAR, _VALUE, _CASE_SENSITIVE, _CAPACITY) \
-    ::Core::BurstTrie<_CHAR, _VALUE, _CASE_SENSITIVE, _CAPACITY, \
+    ::Core::BurstTrie<_CHAR, _VALUE, BURST_TRIE_INSITU, _CASE_SENSITIVE, _CAPACITY, \
         NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, COMMA_PROTECT(::Core::PatriciaNode<_CHAR COMMA _VALUE COMMA BURST_TRIE_INSITU>)) >
 //----------------------------------------------------------------------------
 #define BURST_TRIE_THREAD_LOCAL(_DOMAIN, _CHAR, _VALUE, _CASE_SENSITIVE, _CAPACITY) \
-    ::Core::BurstTrie<_CHAR, _VALUE, _CASE_SENSITIVE, _CAPACITY, \
+    ::Core::BurstTrie<_CHAR, _VALUE, BURST_TRIE_INSITU, _CASE_SENSITIVE, _CAPACITY, \
         THREAD_LOCAL_NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, COMMA_PROTECT(::Core::PatriciaNode<_CHAR COMMA _VALUE COMMA BURST_TRIE_INSITU>)) >
 //----------------------------------------------------------------------------
 #define STRINGTRIE_SET(_DOMAIN, _CASE_SENSITIVE, _CAPACITY) BURST_TRIE(_DOMAIN, char, void, _CASE_SENSITIVE, _CAPACITY)
@@ -37,16 +37,17 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <
-    typename _Char,
-    typename _Value,
-    CaseSensitive _CaseSensitive = CaseSensitive::True,
-    size_t _Capacity = 256,
-    typename _Allocator = NODEBASED_CONTAINER_ALLOCATOR(Container, PatriciaNode<_Key COMMA _Value>)
+    typename _Char
+,   typename _Value
+,   size_t _InSitu = BURST_TRIE_INSITU
+,   Case _Sensitive = Case::Sensitive
+,   size_t _Capacity = 256
+,   typename _Allocator = NODEBASED_CONTAINER_ALLOCATOR(Container, PatriciaNode<_Char COMMA _Value COMMA _InSitu>)
 >   class BurstTrie {
 public:
-    typedef CharCase<_Char, _CaseSensitive> case_functor;
-    typedef CharLess<_Char, _CaseSensitive> less_functor;
-    typedef CharEqualTo<_Char, _CaseSensitive> equal_to_functor;
+    typedef CharCase<_Char, _Sensitive> case_functor;
+    typedef CharLess<_Char, _Sensitive> less_functor;
+    typedef CharEqualTo<_Char, _Sensitive> equal_to_functor;
 
 #if 1
     typedef PatriciaTrie<_Char, _Value, BURST_TRIE_INSITU, less_functor, equal_to_functor, _Allocator> tree_type;
@@ -103,8 +104,8 @@ private:
     size_type _size;
 };
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Value, CaseSensitive _CaseSensitive, size_t _Capacity, typename _Allocator>
-bool BurstTrie<_Char, _Value, _CaseSensitive, _Capacity, _Allocator>::Insert_ReturnIfExists(node_type** pnode, const sequence_type& keys) {
+template <typename _Char, typename _Value, size_t _InSitu, Case _Sensitive, size_t _Capacity, typename _Allocator>
+bool BurstTrie<_Char, _Value, _InSitu, _Sensitive, _Capacity, _Allocator>::Insert_ReturnIfExists(node_type** pnode, const sequence_type& keys) {
     if (false == Tree_(Hash_(keys.front())).Insert_ReturnIfExists(pnode, keys)) {
         ++_size;
         return false:
@@ -114,19 +115,19 @@ bool BurstTrie<_Char, _Value, _CaseSensitive, _Capacity, _Allocator>::Insert_Ret
     }
 }
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Value, CaseSensitive _CaseSensitive, size_t _Capacity, typename _Allocator>
-auto BurstTrie<_Char, _Value, _CaseSensitive, _Capacity, _Allocator>::Insert_AssertUnique(const sequence_type& keys) -> node_type* {
+template <typename _Char, typename _Value, size_t _InSitu, Case _Sensitive, size_t _Capacity, typename _Allocator>
+auto BurstTrie<_Char, _Value, _InSitu, _Sensitive, _Capacity, _Allocator>::Insert_AssertUnique(const sequence_type& keys) -> node_type* {
     ++_size;
     return Tree_(Hash_(keys.front())).Insert_AssertUnique(keys);
 }
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Value, CaseSensitive _CaseSensitive, size_t _Capacity, typename _Allocator>
-auto BurstTrie<_Char, _Value, _CaseSensitive, _Capacity, _Allocator>::Find(const sequence_type& keys) const -> iterator {
+template <typename _Char, typename _Value, size_t _InSitu, Case _Sensitive, size_t _Capacity, typename _Allocator>
+auto BurstTrie<_Char, _Value, _InSitu, _Sensitive, _Capacity, _Allocator>::Find(const sequence_type& keys) const -> iterator {
     return Tree_(Hash_(keys.front())).Find(keys);
 }
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Value, CaseSensitive _CaseSensitive, size_t _Capacity, typename _Allocator>
-auto BurstTrie<_Char, _Value, _CaseSensitive, _Capacity, _Allocator>::Find(const sequence_type& keys, const query_t* phint) const -> query_t {
+template <typename _Char, typename _Value, size_t _InSitu, Case _Sensitive, size_t _Capacity, typename _Allocator>
+auto BurstTrie<_Char, _Value, _InSitu, _Sensitive, _Capacity, _Allocator>::Find(const sequence_type& keys, const query_t* phint) const -> query_t {
     query_t result;
     if (phint) {
         Assert(phint->It);
@@ -140,19 +141,19 @@ auto BurstTrie<_Char, _Value, _CaseSensitive, _Capacity, _Allocator>::Find(const
     return result;
 }
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Value, CaseSensitive _CaseSensitive, size_t _Capacity, typename _Allocator>
-bool BurstTrie<_Char, _Value, _CaseSensitive, _Capacity, _Allocator>::Contains(const sequence_type& keys) const {
+template <typename _Char, typename _Value, size_t _InSitu, Case _Sensitive, size_t _Capacity, typename _Allocator>
+bool BurstTrie<_Char, _Value, _InSitu, _Sensitive, _Capacity, _Allocator>::Contains(const sequence_type& keys) const {
     return Tree_(Hash_(keys.front())).Contains(keys);
 }
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Value, CaseSensitive _CaseSensitive, size_t _Capacity, typename _Allocator>
-void BurstTrie<_Char, _Value, _CaseSensitive, _Capacity, _Allocator>::Optimize() {
+template <typename _Char, typename _Value, size_t _InSitu, Case _Sensitive, size_t _Capacity, typename _Allocator>
+void BurstTrie<_Char, _Value, _InSitu, _Sensitive, _Capacity, _Allocator>::Optimize() {
     for (tree_type& tree : _root)
         tree.Optimize();
 }
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Value, CaseSensitive _CaseSensitive, size_t _Capacity, typename _Allocator>
-void BurstTrie<_Char, _Value, _CaseSensitive, _Capacity, _Allocator>::Clear() {
+template <typename _Char, typename _Value, size_t _InSitu, Case _Sensitive, size_t _Capacity, typename _Allocator>
+void BurstTrie<_Char, _Value, _InSitu, _Sensitive, _Capacity, _Allocator>::Clear() {
     for (tree_type& tree : _root) {
         Assert(_size >= tree.size());
         _size -= tree.size();

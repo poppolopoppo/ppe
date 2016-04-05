@@ -59,6 +59,7 @@ void ConstantBufferLayout::AddField(const BindName& name, ConstantFieldType type
 }
 //----------------------------------------------------------------------------
 void ConstantBufferLayout::AddField(const BindName& name, ConstantFieldType type, size_t offset, size_t size, bool inUse) {
+    UNUSED(size);
     Assert(!name.empty());
     Assert(size == ConstantFieldTypeSizeInBytes(type));
 

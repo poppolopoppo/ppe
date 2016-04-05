@@ -197,7 +197,7 @@ struct BasicNorm {
 template <typename T, typename _Traits>
 struct NumericLimits< BasicNorm<T, _Traits> > {
     typedef BasicNorm<T, _Traits> value_type;
-    typedef typename NumericLimits<T> scalar_type;
+    typedef NumericLimits<T> scalar_type;
 
     STATIC_CONST_INTEGRAL(bool, is_integer, scalar_type::is_integer);
     STATIC_CONST_INTEGRAL(bool, is_modulo,  scalar_type::is_modulo);

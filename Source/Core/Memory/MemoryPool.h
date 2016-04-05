@@ -24,7 +24,7 @@ public:
 
     struct Block { Block *Next; };
 
-    explicit MemoryPoolChunk(size_t chunkSize, size_t blockCount, MemoryPoolChunk *nextChunk = nullptr);
+    explicit MemoryPoolChunk(size_t chunkSize, size_t blockCount);
     ~MemoryPoolChunk();
 
     MemoryPoolChunk(MemoryPoolChunk&&) = delete;

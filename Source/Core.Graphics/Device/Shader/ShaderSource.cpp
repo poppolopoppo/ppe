@@ -7,6 +7,7 @@
 #include "VertexSubstitutions.h"
 
 #include "Core/Allocator/PoolAllocator-impl.h"
+#include "Core/IO/StringSlice.h"
 #include "Core/IO/VFS/VirtualFileSystemStream.h"
 #include "Core/IO/VirtualFileSystem.h"
 
@@ -17,9 +18,9 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, ShaderSource, );
 //----------------------------------------------------------------------------
-const char *ShaderSource::AppIn_SubstitutionName() { return "__AppIn_AutoSubstitutionHeader__"; }
-const char *ShaderSource::AppIn_VertexDefinitionName() { return "__AppIn_AutoVertexDefinition__"; }
-const FileSystem::char_type *ShaderSource::SystemDirpath() { return L"GameData:/Shaders/Lib"; }
+StringSlice ShaderSource::AppIn_SubstitutionName() { return MakeStringSlice("__AppIn_AutoSubstitutionHeader__"); }
+StringSlice ShaderSource::AppIn_VertexDefinitionName() { return MakeStringSlice("__AppIn_AutoVertexDefinition__"); }
+FileSystem::StringSlice ShaderSource::SystemDirpath() { return MakeStringSlice(L"GameData:/Shaders/Lib"); }
 //----------------------------------------------------------------------------
 ShaderSource::ShaderSource( const char *sourceName,
                             const Core::Filename& filename,

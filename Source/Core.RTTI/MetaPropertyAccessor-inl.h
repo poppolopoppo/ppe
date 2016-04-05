@@ -10,6 +10,7 @@ namespace RTTI {
 template <typename T>
 MetaFieldAccessor<T>::MetaFieldAccessor(ptrdiff_t fieldOffset, size_t fieldSize)
 :   _fieldOffset(fieldOffset) {
+    UNUSED(fieldSize);
     Assert(sizeof(T) == fieldSize);
 }
 //----------------------------------------------------------------------------

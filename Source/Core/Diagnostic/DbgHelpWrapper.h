@@ -10,8 +10,14 @@
 
 #include <mutex>
 
-#include <DbgHelp.h>
+#pragma warning(push)
+#pragma warning(disable: 4091) // 'typedef ' : ignoré à gauche de '' quand aucune variable n'est déclarée
+
+
 #include <Windows.h>
+#include <DbgHelp.h>
+
+#pragma warning(pop)
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -67,29 +73,25 @@ public:
     public:
         explicit Locked(const DbghelpWrapper& owner)
             : std::unique_lock<std::mutex>(owner._barrier)
-            , _owner(owner) {}
+            , _owner(&owner) {
+            Assert(_owner->Available());
+        }
 
-        Locked(const Locked& ) = delete;
-        Locked& operator =(const Locked& ) = delete;
+        SymInitializeW_t SymInitializeW() const { return _owner->_symInitializeW; }
+        SymCleanup_t SymCleanup() const { return _owner->_symCleanup; }
 
-        Locked(Locked&& ) = default;
-        Locked& operator =(Locked&& ) = default;
+        SymGetOptions_t SymGetOptions() const { return _owner->_symGetOptions; }
+        SymSetOptions_t SymSetOptions() const { return _owner->_symSetOptions; }
 
-        SymInitializeW_t SymInitializeW() const { return _owner._symInitializeW; }
-        SymCleanup_t SymCleanup() const { return _owner._symCleanup; }
+        SymLoadModuleExW_t SymLoadModuleExW() const { return _owner->_symLoadModuleExW; }
 
-        SymGetOptions_t SymGetOptions() const { return _owner._symGetOptions; }
-        SymSetOptions_t SymSetOptions() const { return _owner._symSetOptions; }
+        SymFromAddrW_t SymFromAddrW() const { return _owner->_symFromAddrW; }
+        SymGetLineFromAddrW64_t SymGetLineFromAddrW64() const { return _owner->_symGetLineFromAddrW64; }
 
-        SymLoadModuleExW_t SymLoadModuleExW() const { return _owner._symLoadModuleExW; }
-
-        SymFromAddrW_t SymFromAddrW() const { return _owner._symFromAddrW; }
-        SymGetLineFromAddrW64_t SymGetLineFromAddrW64() const { return _owner._symGetLineFromAddrW64; }
-
-        MiniDumpWriteDump_t MiniDumpWriteDump() const { return _owner._miniDumpWriteDump; }
+        MiniDumpWriteDump_t MiniDumpWriteDump() const { return _owner->_miniDumpWriteDump; }
 
     private:
-        const DbghelpWrapper& _owner;
+        const DbghelpWrapper* const _owner;
     };
 
     ~DbghelpWrapper();

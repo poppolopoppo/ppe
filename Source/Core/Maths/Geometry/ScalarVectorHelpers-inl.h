@@ -2,6 +2,11 @@
 
 #include "Core/Maths/Geometry/ScalarVectorHelpers.h"
 
+#pragma warning(push)
+#pragma warning(disable: 6201) // L'index 'XXX' est en dehors de la plage d'index valide 'XXX' à 'XXX' pour la mémoire tampon 'XXX' allouée sans doute par la pile.
+#pragma warning(disable: 6294) // Boucle mal définie : la condition initiale ne satisfait pas les tests. Le corps de la boucle n'est pas exécuté.
+
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -448,3 +453,5 @@ ScalarVector<float, 3> UByte4N_to_Float3M11(const ScalarVector<u8, 4>& value) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Core
+
+#pragma warning(pop)

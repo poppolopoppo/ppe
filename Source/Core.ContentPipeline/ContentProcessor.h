@@ -61,7 +61,7 @@ public:
     bool Process(ContentProcessorContext& ctx, _Output& dst, const _Input& src) const {
         const ContentProcessor<_Input, _Output>* const processor = dynamic_cast<const ContentProcessor<_Input, _Output>*>(this);
         if (nullptr == processor)
-            throw ContentProcessorException("invalid importer type", ctx.Identity(), this);
+            throw ContentProcessorException("invalid processor type", ctx.Identity(), this);
         else
             return processor->Process(ctx, dst, src);
     }

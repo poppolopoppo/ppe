@@ -9,7 +9,7 @@ namespace Core {
 template <
     typename        _Tag,
     typename        _Char,
-    CaseSensitive   _CaseSensitive,
+    CaseSensitive   _Sensitive,
     typename        _TokenTraits,
     typename        _Allocator
 >

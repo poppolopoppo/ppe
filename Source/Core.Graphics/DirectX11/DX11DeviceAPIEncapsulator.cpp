@@ -69,9 +69,9 @@ DX11DeviceAPIEncapsulator::~DX11DeviceAPIEncapsulator() {
 }
 //----------------------------------------------------------------------------
 void DX11DeviceAPIEncapsulator::Reset(const PresentationParameters& pp) {
+    UNUSED(pp);
     // TODO
     AssertNotImplemented();
-
     CHECK_DIRECTX11_ERROR();
 }
 //----------------------------------------------------------------------------

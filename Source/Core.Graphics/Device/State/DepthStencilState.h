@@ -84,6 +84,9 @@ public:
     CompareFunction FrontFaceStencilFunction() const { return _frontFaceStencilFunction; }
     void SetFrontFaceStencilFunction(CompareFunction v) { Assert(!Frozen()); _frontFaceStencilFunction = v; }
 
+    bool TwoSidedStencilMode() const { return _twoSidedStencilMode; }
+    void SetTwoSidedStencilMode(bool v) { Assert(!Frozen()); _twoSidedStencilMode = v; }
+
     StencilOperation BackFaceStencilDepthBufferFail() const { return _backFaceStencilDepthBufferFail; }
     void SetBackFaceStencilDepthBufferFail(StencilOperation v) { Assert(!Frozen()); _backFaceStencilDepthBufferFail = v; }
 

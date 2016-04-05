@@ -14,7 +14,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 class ThreadContext {
 public:
-    ThreadContext(const char *name, size_t tag, std::thread::id id);
+    ThreadContext(const char* name, size_t tag, std::thread::id id);
     ~ThreadContext();
 
     ThreadContext(const ThreadContext&) = delete;

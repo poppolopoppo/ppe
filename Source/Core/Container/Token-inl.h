@@ -21,85 +21,85 @@ bool ValidateToken(const BasicStringSlice<_Char>& content) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::Token() : _data{nullptr} {}
+template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator >
+Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::Token() : _data{nullptr} {}
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::Token(const _Char* cstr)
+template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator >
+Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::Token(const _Char* cstr)
 :   _data(factory_type::Instance().template GetOrCreate<_TokenTraits>(cstr)) {}
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-auto Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::operator =(const _Char* cstr) -> Token& {
+template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator >
+auto Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::operator =(const _Char* cstr) -> Token& {
     _data = factory_type::Instance().template GetOrCreate<_TokenTraits>(cstr);
     return *this;
 }
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::Token(const BasicStringSlice<_Char>& content)
+template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator >
+Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::Token(const BasicStringSlice<_Char>& content)
 :   _data(factory_type::Instance().template GetOrCreate<_TokenTraits>(content)) {}
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::Token(const _Char* cstr, size_t length)
+template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator >
+Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::Token(const _Char* cstr, size_t length)
 :   _data(factory_type::Instance().template GetOrCreate<_TokenTraits>(cstr, length)) {}
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::Token(const Token& other)
+template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator >
+Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::Token(const Token& other)
 :   _data(other._data) {}
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-auto Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::operator =(const Token& other) -> Token& {
+template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator >
+auto Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::operator =(const Token& other) -> Token& {
     if (this != &other)
         _data = other._data;
     return *this;
 }
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-size_t Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::HashValue() const {
+template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator >
+size_t Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::HashValue() const {
     return hash_as_pod(intptr_t(_data.Ptr));
 }
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-void Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::Swap(Token& other) {
+template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator >
+void Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::Swap(Token& other) {
     std::swap(other._data, _data);
 }
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-bool Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::Equals(const Token& other) const {
+template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator >
+bool Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::Equals(const Token& other) const {
     return _data.Ptr == other._data.Ptr;
 }
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-bool Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::Less(const Token& other) const {
-    return TokenDataLess<_Char, _CaseSensitive>()(_data, other._data);
+template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator >
+bool Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::Less(const Token& other) const {
+    return TokenDataLess<_Char, _Sensitive>()(_data, other._data);
 }
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-bool Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::Equals(const _Char *cstr) const {
-    return StringSliceEqualTo<_Char, _CaseSensitive>()(_data.MakeView(), BasicStringSlice<_Char>(cstr, Length(cstr)));
+template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator >
+bool Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::Equals(const _Char *cstr) const {
+    return StringSliceEqualTo<_Char, _Sensitive>()(_data.MakeView(), BasicStringSlice<_Char>(cstr, Length(cstr)));
 }
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-bool Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::Equals(const BasicStringSlice<_Char>& slice) const {
-    return StringSliceEqualTo<_Char, _CaseSensitive>()(_data.MakeView(), slice);
+template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator >
+bool Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::Equals(const BasicStringSlice<_Char>& slice) const {
+    return StringSliceEqualTo<_Char, _Sensitive>()(_data.MakeView(), slice);
 }
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-void Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::Start(size_t capacity) {
+template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator >
+void Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::Start(size_t capacity) {
     factory_type::Create(capacity);
 }
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-void Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::Clear() {
+template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator >
+void Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::Clear() {
     factory_type::Instance().Clear();
 }
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-void Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::Shutdown() {
+template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator >
+void Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::Shutdown() {
     factory_type::Destroy();
 }
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator >
-auto Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator>::Factory() -> factory_type& {
+template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator >
+auto Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::Factory() -> factory_type& {
     return factory_type::Instance();
 }
 //----------------------------------------------------------------------------
@@ -150,15 +150,15 @@ void TokenAllocator<_Char, _Allocator>::Clear() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, CaseSensitive _CaseSensitive, typename _Allocator>
-TokenSetSlot<_Char, _CaseSensitive, _Allocator>::TokenSetSlot() {}
+template <typename _Char, Case _Sensitive, typename _Allocator>
+TokenSetSlot<_Char, _Sensitive, _Allocator>::TokenSetSlot() {}
 //----------------------------------------------------------------------------
-template <typename _Char, CaseSensitive _CaseSensitive, typename _Allocator>
-TokenSetSlot<_Char, _CaseSensitive, _Allocator>::~TokenSetSlot() {}
+template <typename _Char, Case _Sensitive, typename _Allocator>
+TokenSetSlot<_Char, _Sensitive, _Allocator>::~TokenSetSlot() {}
 //----------------------------------------------------------------------------
-template <typename _Char, CaseSensitive _CaseSensitive, typename _Allocator>
+template <typename _Char, Case _Sensitive, typename _Allocator>
 template <typename _TokenTraits>
-auto TokenSetSlot<_Char, _CaseSensitive, _Allocator>::GetOrCreate(const BasicStringSlice<_Char>& content) -> TokenData<_Char> {
+auto TokenSetSlot<_Char, _Sensitive, _Allocator>::GetOrCreate(const BasicStringSlice<_Char>& content) -> TokenData<_Char> {
     if (content.empty())
         return TokenData<_Char>();
 
@@ -193,26 +193,26 @@ auto TokenSetSlot<_Char, _CaseSensitive, _Allocator>::GetOrCreate(const BasicStr
     return result;
 }
 //----------------------------------------------------------------------------
-template <typename _Char, CaseSensitive _CaseSensitive, typename _Allocator>
+template <typename _Char, Case _Sensitive, typename _Allocator>
 template <typename _TokenTraits>
-auto TokenSetSlot<_Char, _CaseSensitive, _Allocator>::GetOrCreate(const _Char* cstr, size_t length) -> TokenData<_Char> {
+auto TokenSetSlot<_Char, _Sensitive, _Allocator>::GetOrCreate(const _Char* cstr, size_t length) -> TokenData<_Char> {
     return GetOrCreate<_TokenTraits>(BasicStringSlice<_Char>(cstr, length));
 }
 //----------------------------------------------------------------------------
-template <typename _Char, CaseSensitive _CaseSensitive, typename _Allocator>
+template <typename _Char, Case _Sensitive, typename _Allocator>
 template <typename _TokenTraits>
-auto TokenSetSlot<_Char, _CaseSensitive, _Allocator>::GetOrCreate(const _Char* cstr) -> TokenData<_Char> {
+auto TokenSetSlot<_Char, _Sensitive, _Allocator>::GetOrCreate(const _Char* cstr) -> TokenData<_Char> {
     return GetOrCreate<_TokenTraits>(cstr, Length(cstr));
 }
 //----------------------------------------------------------------------------
-template <typename _Char, CaseSensitive _CaseSensitive, typename _Allocator>
+template <typename _Char, Case _Sensitive, typename _Allocator>
 template <typename _TokenTraits >
-bool TokenSetSlot<_Char, _CaseSensitive, _Allocator>::Validate(const BasicStringSlice<_Char>& content) {
+bool TokenSetSlot<_Char, _Sensitive, _Allocator>::Validate(const BasicStringSlice<_Char>& content) {
     return ValidateToken<_Char, _TokenTraits>(content);
 }
 //----------------------------------------------------------------------------
-template <typename _Char, CaseSensitive _CaseSensitive, typename _Allocator>
-void TokenSetSlot<_Char, _CaseSensitive, _Allocator>::Clear() {
+template <typename _Char, Case _Sensitive, typename _Allocator>
+void TokenSetSlot<_Char, _Sensitive, _Allocator>::Clear() {
     // invalidates all tokens !
     std::lock_guard<std::mutex> scopeLock(_barrier);
     _set.clear();
@@ -221,26 +221,26 @@ void TokenSetSlot<_Char, _CaseSensitive, _Allocator>::Clear() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, CaseSensitive _CaseSensitive, typename _Allocator>
-TokenSet<_Char, _CaseSensitive, _Allocator>::TokenSet(size_t capacity) {
+template <typename _Char, Case _Sensitive, typename _Allocator>
+TokenSet<_Char, _Sensitive, _Allocator>::TokenSet(size_t capacity) {
     for (token_set_slot_type& slot : _slots)
         slot.reserve(capacity/SlotCount);
 }
 //----------------------------------------------------------------------------
-template <typename _Char, CaseSensitive _CaseSensitive, typename _Allocator>
-TokenSet<_Char, _CaseSensitive, _Allocator>::~TokenSet() {}
+template <typename _Char, Case _Sensitive, typename _Allocator>
+TokenSet<_Char, _Sensitive, _Allocator>::~TokenSet() {}
 //----------------------------------------------------------------------------
-template <typename _Char, CaseSensitive _CaseSensitive, typename _Allocator>
-size_t TokenSet<_Char, _CaseSensitive, _Allocator>::size() const {
+template <typename _Char, Case _Sensitive, typename _Allocator>
+size_t TokenSet<_Char, _Sensitive, _Allocator>::size() const {
     size_t s = 0;
     for (const token_set_slot_type& slot : _slots)
         s += slot.size();
     return s;
 }
 //----------------------------------------------------------------------------
-template <typename _Char, CaseSensitive _CaseSensitive, typename _Allocator>
+template <typename _Char, Case _Sensitive, typename _Allocator>
 template <typename _TokenTraits>
-auto TokenSet<_Char, _CaseSensitive, _Allocator>::GetOrCreate(const BasicStringSlice<_Char>& content) -> TokenData<_Char> {
+auto TokenSet<_Char, _Sensitive, _Allocator>::GetOrCreate(const BasicStringSlice<_Char>& content) -> TokenData<_Char> {
     Assert(content.data());
     if (content.empty())
         return TokenData<_Char>();
@@ -252,22 +252,22 @@ auto TokenSet<_Char, _CaseSensitive, _Allocator>::GetOrCreate(const BasicStringS
     return slot.template GetOrCreate<_TokenTraits>(content);
 }
 //----------------------------------------------------------------------------
-template <typename _Char, CaseSensitive _CaseSensitive, typename _Allocator>
+template <typename _Char, Case _Sensitive, typename _Allocator>
 template <typename _TokenTraits>
-auto TokenSet<_Char, _CaseSensitive, _Allocator>::GetOrCreate(const _Char* cstr, size_t length) -> TokenData<_Char> {
+auto TokenSet<_Char, _Sensitive, _Allocator>::GetOrCreate(const _Char* cstr, size_t length) -> TokenData<_Char> {
     Assert(cstr);
     return GetOrCreate<_TokenTraits>(BasicStringSlice<_Char>(cstr, length));
 }
 //----------------------------------------------------------------------------
-template <typename _Char, CaseSensitive _CaseSensitive, typename _Allocator>
+template <typename _Char, Case _Sensitive, typename _Allocator>
 template <typename _TokenTraits>
-auto TokenSet<_Char, _CaseSensitive, _Allocator>::GetOrCreate(const _Char* cstr) -> TokenData<_Char> {
+auto TokenSet<_Char, _Sensitive, _Allocator>::GetOrCreate(const _Char* cstr) -> TokenData<_Char> {
     Assert(cstr);
     return GetOrCreate<_TokenTraits>(cstr, Length(cstr));
 }
 //----------------------------------------------------------------------------
-template <typename _Char, CaseSensitive _CaseSensitive, typename _Allocator>
-void TokenSet<_Char, _CaseSensitive, _Allocator>::Clear() {
+template <typename _Char, Case _Sensitive, typename _Allocator>
+void TokenSet<_Char, _Sensitive, _Allocator>::Clear() {
     // invalidates all tokens !
     for (token_set_slot_type& slot : _slots)
         slot.Clear();
@@ -275,12 +275,12 @@ void TokenSet<_Char, _CaseSensitive, _Allocator>::Clear() {
 //----------------------------------------------------------------------------
 #pragma warning( push )
 #pragma warning( disable : 4127) // C4127: l'expression conditionnelle est une constante
-template <typename _Char, CaseSensitive _CaseSensitive, typename _Allocator>
+template <typename _Char, Case _Sensitive, typename _Allocator>
 template <typename _TokenTraits>
-size_t TokenSet<_Char, _CaseSensitive, _Allocator>::SlotHash(const BasicStringSlice<_Char>& content) {
+size_t TokenSet<_Char, _Sensitive, _Allocator>::SlotHash(const BasicStringSlice<_Char>& content) {
     static_assert(IS_POW2(SlotCount), "SlotCount must be a power of 2");
     size_t h = 0;
-    if (CaseSensitive::True == _CaseSensitive) {
+    if (Case::Sensitive == _Sensitive) {
         for (const _Char ch : content)
             h += size_t(ch);
     }

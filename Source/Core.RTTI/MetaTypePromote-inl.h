@@ -214,9 +214,9 @@ struct MetaTypePromote<String, RTTI::BinaryData> {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define METATYPE_STRINGIZE_PROMOTE_IMPL(_From, _Char) \
-    template <> struct MetaTypePromote<_From, DefaultString<_Char>::type > { \
+    template <> struct MetaTypePromote<_From, BasicString<_Char> > { \
         typedef std::true_type enabled; \
-        bool operator ()(DefaultString<_Char>::type* dst, const _From& rvalue) const { \
+        bool operator ()(BasicString<_Char>* dst, const _From& rvalue) const { \
             _Char buffer[sizeof(size_t)<<3]; \
             BasicOCStrStream<_Char> oss(buffer); \
             oss << rvalue; \
@@ -261,7 +261,7 @@ bool PromoteMove(MetaAtom *dst, T *src) {
         return true;
     }
     else if (srcTypeId == MetaType<PMetaAtom>::TypeId) {
-        Assert(std::is_same<T, PMetaAtom>::value);
+        Assert((std::is_same<T, PMetaAtom>::value));
         const PMetaAtom& srcAtom = *reinterpret_cast<PMetaAtom*>(src);
         return (srcAtom ? PromoteMove(dst, srcAtom.get()) : false);
     }
@@ -286,7 +286,7 @@ bool PromoteCopy(MetaAtom *dst, const T *src) {
         return true;
     }
     else if (srcTypeId == MetaType<PMetaAtom>::TypeId) {
-        Assert(std::is_same<T, PMetaAtom>::value);
+        Assert((std::is_same<T, PMetaAtom>::value));
         const PMetaAtom& srcAtom = *reinterpret_cast<PMetaAtom*>(src);
         return (srcAtom ? PromoteCopy(dst, srcAtom.get()) : false);
     }
@@ -307,7 +307,7 @@ bool PromoteMove(T *dst, MetaAtom *src) {
         return true;
     }
     else if (dstTypeId == MetaType<PMetaAtom>::TypeId) {
-        Assert(std::is_same<T, PMetaAtom>::value);
+        Assert((std::is_same<T, PMetaAtom>::value));
         const PMetaAtom& dstAtom = *reinterpret_cast<PMetaAtom*>(dst);
         return (dstAtom ? PromoteMove(dstAtom.get(), src) : false);
     }
@@ -332,7 +332,7 @@ bool PromoteCopy(T *dst, const MetaAtom *src) {
         return true;
     }
     else if (dstTypeId == MetaType<PMetaAtom>::TypeId) {
-        Assert(std::is_same<T, PMetaAtom>::value);
+        Assert((std::is_same<T, PMetaAtom>::value));
         const PMetaAtom& dstAtom = *reinterpret_cast<PMetaAtom*>(dst);
         return (dstAtom ? PromoteCopy(dstAtom.get(), src) : false);
     }

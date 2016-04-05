@@ -11,7 +11,8 @@ namespace Parser {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 ParseList::ParseList(Lexer::Lexer *lexer)
-:   _current(nullptr), _site(Lexer::Location::None()) {
+:   _site(Lexer::Location::None())
+,   _current(nullptr) {
     Assert(lexer);
 
     Lexer::Match match;
@@ -31,7 +32,9 @@ ParseList::ParseList(Lexer::Lexer *lexer)
 ParseList::~ParseList() {}
 //----------------------------------------------------------------------------
 ParseList::ParseList(ParseList&& rvalue)
-:   _current(nullptr), _site(Lexer::Location::None()), _matches(std::move(rvalue._matches)) {
+:   _site(Lexer::Location::None())
+,   _current(nullptr)
+,   _matches(std::move(rvalue._matches)) {
     std::swap(rvalue._current, _current);
     std::swap(rvalue._site, _site);
 }

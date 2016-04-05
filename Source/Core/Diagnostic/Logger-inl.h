@@ -14,24 +14,25 @@ std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Trait
     return oss << LogCategoryToWCStr(category);
 }
 //----------------------------------------------------------------------------
-template <typename _Arg0, typename... _Args>
-void ILogger::Log(LogCategory category, const wchar_t* format, _Arg0&& arg0, _Args&&... args) {
-    wchar_t buffer[4096];
-    WOCStrStream oss(buffer);
-    Format(oss, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
-    this->Log(category, oss.NullTerminatedStr());
-}
-//----------------------------------------------------------------------------
-template <typename _Arg0, typename... _Args>
-void LoggerFrontend::Log(LogCategory category, const wchar_t* format, _Arg0&& arg0, _Args&&... args) {
+template <typename... _Args>
+void LoggerFrontend::Log(LogCategory category, const WStringSlice& format, _Args&&... args) {
     std::lock_guard<std::mutex> scopelock(_lock);
-    if (_impl)
-        _impl->Log(category, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+    if (_impl) {
+        wchar_t buffer[4096];
+        WOCStrStream oss(buffer);
+        Format(oss, format, std::forward<_Args>(args)...);
+        _impl->Log(category, oss.MakeView_NullTerminated());
+    }
 }
 //----------------------------------------------------------------------------
 template <typename... _Args>
-void Log(LogCategory category, const wchar_t* format, _Args&&... args) {
+void Log(LogCategory category, const WStringSlice& format, _Args&&... args) {
     Logger::Instance().Log(category, format, std::forward<_Args>(args)...);
+}
+//----------------------------------------------------------------------------
+template <size_t _Dim, typename... _Args>
+void Log(LogCategory category, const wchar_t (&format)[_Dim], _Args&&... args) {
+    Logger::Instance().Log(category, MakeStringSlice(format), std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

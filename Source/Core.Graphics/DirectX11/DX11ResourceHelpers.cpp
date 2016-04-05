@@ -19,11 +19,13 @@ namespace Graphics {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 bool DX11ResourceGetData(
-    IDeviceAPIEncapsulator *device, 
-    ::ID3D11Resource *resource, size_t subResource, 
+    IDeviceAPIEncapsulator *device,
+    ::ID3D11Resource *resource, size_t subResource,
     size_t offset, void *const dst, size_t stride, size_t count,
     BufferMode bufferMode,
     BufferUsage bufferUsage ) {
+    UNUSED(bufferMode);
+    UNUSED(bufferUsage);
     AssertRelease(BufferUsage::Staging == bufferUsage);
 
     const DX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
@@ -92,7 +94,7 @@ bool DX11CopyResource(IDeviceAPIEncapsulator *device, ::ID3D11Resource *dst, ::I
 //----------------------------------------------------------------------------
 bool DX11CopyResourceSubRegion(
     IDeviceAPIEncapsulator *device,
-    ::ID3D11Resource *dst, size_t dstSubResource, const uint3& dstPos, 
+    ::ID3D11Resource *dst, size_t dstSubResource, const uint3& dstPos,
     ::ID3D11Resource *src, size_t srcSubResource, const AABB3u& srcBox ) {
     Assert(dst);
     Assert(src);
@@ -100,7 +102,7 @@ bool DX11CopyResourceSubRegion(
     const DX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
 
     ::D3D11_BOX dx11SrcBox;
-    
+
     dx11SrcBox.left = checked_cast<UINT>(srcBox.Min().x());
     dx11SrcBox.right = checked_cast<UINT>(srcBox.Max().x());
 
@@ -111,9 +113,9 @@ bool DX11CopyResourceSubRegion(
     dx11SrcBox.back = checked_cast<UINT>(srcBox.Max().z());
 
     wrapper->ImmediateContext()->CopySubresourceRegion(
-        dst, checked_cast<UINT>(dstSubResource), 
-        checked_cast<UINT>(dstPos.x()), checked_cast<UINT>(dstPos.y()), checked_cast<UINT>(dstPos.z()), 
-        src, checked_cast<UINT>(srcSubResource), 
+        dst, checked_cast<UINT>(dstSubResource),
+        checked_cast<UINT>(dstPos.x()), checked_cast<UINT>(dstPos.y()), checked_cast<UINT>(dstPos.z()),
+        src, checked_cast<UINT>(srcSubResource),
         &dx11SrcBox );
 
     return true;

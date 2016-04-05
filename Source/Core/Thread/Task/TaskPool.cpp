@@ -243,6 +243,8 @@ void TaskPoolImpl::Shutdown() {
 namespace {
 //----------------------------------------------------------------------------
 static void TaskContextStartup_(TaskThreadContext& ctx, TaskPool *ppool) {
+    UNUSED(ctx);
+    UNUSED(ppool);
     Assert(ppool);
     Assert(nullptr == ctx.WaitingForPFiber);
     Assert(nullptr == ctx.FiberToReleaseBeforeExit);

@@ -31,23 +31,23 @@ void MetaTypeTraitsImpl< RefPtr<T>, typename std::enable_if<std::is_base_of<RTTI
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator>
-void MetaTypeTraitsImpl< Core::Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator> >::WrapMove(wrapper_type& dst, wrapped_type&& src) {
+template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator>
+void MetaTypeTraitsImpl< Core::Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> >::WrapMove(wrapper_type& dst, wrapped_type&& src) {
     dst = src.c_str();
 }
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator>
-void MetaTypeTraitsImpl< Core::Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator> >::WrapCopy(wrapper_type& dst, const wrapped_type& src) {
+template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator>
+void MetaTypeTraitsImpl< Core::Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> >::WrapCopy(wrapper_type& dst, const wrapped_type& src) {
     dst = src.c_str();
 }
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator>
-void MetaTypeTraitsImpl< Core::Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator> >::UnwrapMove(wrapped_type& dst, wrapper_type&& src) {
+template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator>
+void MetaTypeTraitsImpl< Core::Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> >::UnwrapMove(wrapped_type& dst, wrapper_type&& src) {
     dst = src;
 }
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, CaseSensitive _CaseSensitive, typename _TokenTraits, typename _Allocator>
-void MetaTypeTraitsImpl< Core::Token<_Tag, _Char, _CaseSensitive, _TokenTraits, _Allocator> >::UnwrapCopy(wrapped_type& dst, const wrapper_type& src) {
+template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator>
+void MetaTypeTraitsImpl< Core::Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> >::UnwrapCopy(wrapped_type& dst, const wrapper_type& src) {
     dst = src;
 }
 //----------------------------------------------------------------------------

@@ -23,8 +23,8 @@ ShaderProgram::ShaderProgram(
     bool sharable )
 :   DeviceResourceSharable(DeviceResourceType::ShaderProgram, sharable)
 ,   _data(0)
-,   _compiled(compiled)
-,   _vertexDeclaration(vertexDeclaration) {
+,   _vertexDeclaration(vertexDeclaration)
+,   _compiled(compiled) {
     Assert(_compiled);
     Assert(false == _compiled->Blob().empty());
     bitprogram_type::InplaceSet(_data, static_cast<size_t>(programType));

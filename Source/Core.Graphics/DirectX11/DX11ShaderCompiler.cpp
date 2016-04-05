@@ -79,7 +79,8 @@ HRESULT __stdcall DX11ShaderIncludeHandler_::Open(::D3D_INCLUDE_TYPE IncludeType
     *ppData = nullptr;
     *pBytes = 0;
 
-    if (0 == CompareI(pFileName, ShaderSource::AppIn_SubstitutionName())) {
+    if (0 == CompareI(  MakeStringSlice(pFileName, Meta::noinit_tag()),
+                        ShaderSource::AppIn_SubstitutionName()) ) {
         GenerateAutomaticSubstitutions_(ppData, pBytes);
         return S_OK;
     }

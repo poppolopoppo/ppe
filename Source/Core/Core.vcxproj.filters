@@ -877,6 +877,9 @@
     <CustomBuild Include="Meta\TypeTraits.h">
       <Filter>Meta</Filter>
     </CustomBuild>
+    <CustomBuild Include="Meta\Warnings.h">
+      <Filter>Meta</Filter>
+    </CustomBuild>
     <CustomBuild Include="Misc\CRC.cpp">
       <Filter>Misc</Filter>
     </CustomBuild>

@@ -15,7 +15,7 @@ public:
     bool IsAllowedChar(char ch) const;
 };
 //----------------------------------------------------------------------------
-BASICTOKEN_CLASS_DEF(BindName, char, CaseSensitive::False, BindTokenTraits);
+BASICTOKEN_CLASS_DEF(BindName, char, Case::Insensitive, BindTokenTraits);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

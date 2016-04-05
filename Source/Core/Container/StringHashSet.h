@@ -12,13 +12,13 @@ namespace Core {
 //----------------------------------------------------------------------------
 template <
     typename _Char,
-    CaseSensitive _CaseSensitive,
+    Case _Sensitive,
     typename _Allocator = ALLOCATOR(Container, BasicStringSlice<_Char>)
 >
 using BasicStringSliceHashSet = HashSet<
     BasicStringSlice<_Char>,
-    StringSliceHasher<_Char, _CaseSensitive>,
-    StringSliceEqualTo<_Char, _CaseSensitive>,
+    StringSliceHasher<_Char, _Sensitive>,
+    StringSliceEqualTo<_Char, _Sensitive>,
     _Allocator
 >;
 //----------------------------------------------------------------------------

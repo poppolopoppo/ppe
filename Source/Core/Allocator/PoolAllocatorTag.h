@@ -17,7 +17,7 @@ class MemoryPoolBase;
     namespace PoolTag { \
         struct _NameId { \
         public: \
-            static char *Name() { return (_NameStr); } \
+            static const char* Name() { return (_NameStr); } \
             \
             static void Register(MemoryPoolBase* ppool); \
             static void Unregister(MemoryPoolBase* ppool); \

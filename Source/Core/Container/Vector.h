@@ -172,14 +172,14 @@ public:
     const_iterator cbegin() const { return const_iterator(_data); }
     const_iterator cend() const { return const_iterator(_data + _size); }
 
-    reverse_iterator rbegin() { return reverse_iterator(begin()); }
-    reverse_iterator rend() { return reverse_iterator(end()); }
+    reverse_iterator rbegin() { return reverse_iterator(end()); }
+    reverse_iterator rend() { return reverse_iterator(begin()); }
 
-    const_reverse_iterator rbegin() const { return const_reverse_iterator(begin()); }
-    const_reverse_iterator rend() const { return const_reverse_iterator(end()); }
+    const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
+    const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
 
-    const_reverse_iterator crbegin() const { return const_reverse_iterator(begin()); }
-    const_reverse_iterator crend() const { return const_reverse_iterator(end()); }
+    const_reverse_iterator crbegin() const { return const_reverse_iterator(end()); }
+    const_reverse_iterator crend() const { return const_reverse_iterator(begin()); }
 
     allocator_type get_allocator() const { return static_cast<const allocator_type&>(*this); }
 
@@ -259,10 +259,10 @@ private:
     const allocator_type& allocator_() const { return static_cast<const allocator_type&>(*this); }
 
     void allocator_copy_(const allocator_type& other, std::true_type );
-    void allocator_copy_(const allocator_type& other, std::false_type ) {}
+    void allocator_copy_(const allocator_type& other, std::false_type ) { UNUSED(other); }
 
     void allocator_move_(allocator_type&& rvalue, std::true_type );
-    void allocator_move_(allocator_type&& rvalue, std::false_type ) {}
+    void allocator_move_(allocator_type&& rvalue, std::false_type ) { UNUSED(rvalue); }
 
     template <typename _It>
     void assign_(_It first, _It last, std::input_iterator_tag );
@@ -355,11 +355,13 @@ public:
     using typename vector_type::const_reference;
     using typename vector_type::size_type;
     using typename vector_type::difference_type;
+
     using vector_type::operator [];
+    using vector_type::assign;
 
     typedef typename allocator_type::storage_type storage_type;
 
-    VectorInSitu() noexcept : Vector(allocator_type(static_cast<storage_type&>(*this))) {}
+    VectorInSitu() noexcept : vector_type(allocator_type(static_cast<storage_type&>(*this))) {}
 
     explicit VectorInSitu(size_type count) : VectorInSitu() { resize_AssumeEmpty(count); }
     VectorInSitu(size_type count, const_reference value) : VectorInSitu() { resize_AssumeEmpty(count, value); }

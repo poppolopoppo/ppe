@@ -209,6 +209,7 @@ void AssociativeVector<_Key, _Value, _EqualTo, _Vector>::Erase(const const_itera
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 void AssociativeVector<_Key, _Value, _EqualTo, _Vector>::Remove_AssertExists(const _Key& key, const _Value& valueForDebug) {
+    UNUSED(valueForDebug);
     const const_iterator it = Find(key);
     Assert(end() != it);
     Assert(valueForDebug == it->second);

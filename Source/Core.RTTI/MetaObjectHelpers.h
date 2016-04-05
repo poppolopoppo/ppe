@@ -2,6 +2,8 @@
 
 #include "Core.RTTI/RTTI.h"
 
+#include "Core/IO/String.h"
+
 namespace Core {
 namespace RTTI {
 FWD_REFPTR(MetaObject);

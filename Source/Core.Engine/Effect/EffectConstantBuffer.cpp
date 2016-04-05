@@ -16,7 +16,7 @@
 
 #include "Core/Allocator/Alloca.h"
 #include "Core/Allocator/PoolAllocator-impl.h"
-#include "Core/Diagnostic/DialogBox.h"
+#include "Core/Diagnostic/Dialog.h"
 
 namespace Core {
 namespace Engine {
@@ -91,7 +91,7 @@ void EffectConstantBuffer::Prepare(const MaterialParameterMutableContext& contex
         if (!TryGetParameter_(&param, name, context.MaterialEffect, context.Scene) &&
             !TryCreateDefaultMaterialParameter(&param, context, name, field)) {
 
-            DialogBox::Show(L"Material parameter not found", DialogBox::Type::Ok, DialogBox::Icon::Aterisk,
+            Dialog::Show(L"Material parameter not found", Dialog::Type::Ok, Dialog::Icon::Aterisk,
                 L"Failed to retrieve parameter '{0}' in constant buffer '{1}' from material effect <{2}> !",
                 name.c_str(), sharedKey.Name.c_str(), material->Name().c_str() );
 

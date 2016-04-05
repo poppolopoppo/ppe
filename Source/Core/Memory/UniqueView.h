@@ -52,8 +52,8 @@ UniqueView<T, _Deleter>::UniqueView(pointer storage, size_type capacity)
 //----------------------------------------------------------------------------
 template <typename T, typename _Deleter >
 UniqueView<T, _Deleter>::~UniqueView() {
-    if (_storage)
-        _Deleter::operator ()(_storage);
+    if (base_type::data())
+        _Deleter::operator ()(base_type::data());
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Deleter >
@@ -62,8 +62,8 @@ UniqueView<T, _Deleter>::UniqueView(UniqueView&& rvalue)
 //----------------------------------------------------------------------------
 template <typename T, typename _Deleter >
 auto UniqueView<T, _Deleter>::operator =(UniqueView&& rvalue) -> UniqueView& {
-    if (_storage)
-        _Deleter::operator ()(_storage);
+    if (base_type::data())
+        _Deleter::operator ()(base_type::data());
 
     base_type::operator =(std::move(rvalue));
     return (*this);

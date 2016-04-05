@@ -6,6 +6,7 @@
 #include "Core/IO/FS/Extname.h"
 #include "Core/IO/FS/FileSystemProperties.h"
 
+#include "Core/IO/String.h"
 #include "Core/IO/StringSlice.h"
 
 #include <iosfwd>
@@ -24,15 +25,17 @@ public:
     Basename(const Basename& other);
     Basename& operator =(const Basename& other);
 
-    Basename(const FileSystem::char_type* content);
-    Basename& operator =(const FileSystem::char_type* content);
+    Basename(const FileSystem::StringSlice& content);
+    Basename& operator =(const FileSystem::StringSlice& content);
 
-    Basename(const FileSystem::char_type* content, size_t length);
-    Basename(const BasicStringSlice<FileSystem::char_type>& content);
+    template <size_t _Dim>
+    Basename(const FileSystem::char_type (&content)[_Dim]) : Basename(MakeStringSlice(content)) {}
+    template <size_t _Dim>
+    Basename& operator =(const FileSystem::char_type (&content)[_Dim]) { return operator =(MakeStringSlice(content)); }
 
     template <typename _CharTraits, typename _Allocator>
     Basename(const std::basic_string<FileSystem::char_type, _CharTraits, _Allocator>& content)
-        : Basename(content.c_str(), content.size()) {}
+        : Basename(MakeStringSlice(content)) {}
 
     bool empty() const { return _basenameNoExt.empty() && _extname.empty(); }
 

@@ -64,24 +64,24 @@ struct TokenData {
     }
 };
 //----------------------------------------------------------------------------
-template <typename _Char, CaseSensitive _CaseSensitive>
-struct TokenDataEqualTo : StringSliceEqualTo<_Char, _CaseSensitive> {
+template <typename _Char, Case _Sensitive>
+struct TokenDataEqualTo : StringSliceEqualTo<_Char, _Sensitive> {
     bool operator ()(const TokenData<_Char>& lhs, const TokenData<_Char>& rhs) const {
-        return StringSliceEqualTo<_Char, _CaseSensitive>::operator ()(lhs.MakeView(), rhs.MakeView());
+        return StringSliceEqualTo<_Char, _Sensitive>::operator ()(lhs.MakeView(), rhs.MakeView());
     }
 };
 //----------------------------------------------------------------------------
-template <typename _Char, CaseSensitive _CaseSensitive>
-struct TokenDataLess : StringSliceLess<_Char, _CaseSensitive> {
+template <typename _Char, Case _Sensitive>
+struct TokenDataLess : StringSliceLess<_Char, _Sensitive> {
     bool operator ()(const TokenData<_Char>& lhs, const TokenData<_Char>& rhs) const {
-        return StringSliceLess<_Char, _CaseSensitive>::operator ()(lhs.MakeView(), rhs.MakeView());
+        return StringSliceLess<_Char, _Sensitive>::operator ()(lhs.MakeView(), rhs.MakeView());
     }
 };
 //----------------------------------------------------------------------------
-template <typename _Char, CaseSensitive _CaseSensitive>
-struct TokenDataHasher : StringSliceHasher<_Char, _CaseSensitive> {
+template <typename _Char, Case _Sensitive>
+struct TokenDataHasher : StringSliceHasher<_Char, _Sensitive> {
     size_t operator ()(const TokenData<_Char>& data) const {
-        return StringSliceHasher<_Char, _CaseSensitive>::operator ()(data.MakeView());
+        return StringSliceHasher<_Char, _Sensitive>::operator ()(data.MakeView());
     }
 };
 //----------------------------------------------------------------------------
@@ -93,7 +93,7 @@ class TokenFactory;
 template <
     typename        _Tag,
     typename        _Char,
-    CaseSensitive   _CaseSensitive,
+    Case            _Sensitive,
     typename        _TokenTraits = TokenTraits<_Char>,
     typename        _Allocator = ALLOCATOR(Token, _Char)
 >
@@ -102,7 +102,7 @@ public:
     template <
         typename        _Tag2,
         typename        _Char2,
-        CaseSensitive   _CaseSensitive2,
+        Case            _Sensitive2,
         typename        _TokenTraits2,
         typename        _Allocator2
     >   friend class Token;
@@ -113,7 +113,7 @@ public:
     typedef _Allocator allocator_type;
     typedef TokenFactory<Token> factory_type;
 
-    enum { Sensitiveness = size_t(_CaseSensitive) };
+    enum { Sensitiveness = size_t(_Sensitive) };
 
     Token();
 
@@ -224,7 +224,7 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, CaseSensitive _CaseSensitive, typename _Allocator = ALLOCATOR(Token, TokenBucket<_Char>) >
+template <typename _Char, Case _Sensitive, typename _Allocator = ALLOCATOR(Token, TokenBucket<_Char>) >
 class TokenSetSlot : TokenAllocator<_Char, typename _Allocator::template rebind< TokenBucket<_Char> >::other> {
 public:
     typedef TokenAllocator<_Char, typename _Allocator::template rebind< TokenBucket<_Char> >::other > parent_type;
@@ -253,8 +253,8 @@ public:
 private:
     typedef std::unordered_set<
         BasicStringSlice<_Char>,
-        StringSliceHasher<_Char, _CaseSensitive>,
-        StringSliceEqualTo<_Char, _CaseSensitive>,
+        StringSliceHasher<_Char, _Sensitive>,
+        StringSliceEqualTo<_Char, _Sensitive>,
         typename _Allocator::template rebind< TokenData<_Char> >::other
     >   set_type;
 
@@ -264,10 +264,10 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, CaseSensitive _CaseSensitive, typename _Allocator = ALLOCATOR(Token, TokenBucket<_Char>) >
+template <typename _Char, Case _Sensitive, typename _Allocator = ALLOCATOR(Token, TokenBucket<_Char>) >
 class TokenSet {
 public:
-    typedef TokenSetSlot<_Char, _CaseSensitive, _Allocator> token_set_slot_type;
+    typedef TokenSetSlot<_Char, _Sensitive, _Allocator> token_set_slot_type;
 
     enum : size_t {
         SlotCount = 4,
@@ -306,7 +306,7 @@ template <typename _Token>
 class TokenFactory : Meta::Singleton<
     TokenSet<
         typename _Token::char_type,
-        CaseSensitive(_Token::Sensitiveness),
+        Case(_Token::Sensitiveness),
         typename _Token::allocator_type
     >,
     TokenFactory<_Token>
@@ -314,7 +314,7 @@ class TokenFactory : Meta::Singleton<
 public:
     typedef TokenSet<
         typename _Token::char_type,
-        CaseSensitive(_Token::Sensitiveness),
+        Case(_Token::Sensitiveness),
         typename _Token::allocator_type
     >   set_type;
     typedef Meta::Singleton<set_type, TokenFactory> parent_type;
@@ -335,13 +335,13 @@ template <
     typename        _StreamTraits,
     typename        _Tag,
     typename        _TokenChar,
-    CaseSensitive   _CaseSensitive,
+    Case            _Sensitive,
     typename        _TokenTraits,
     typename        _Allocator
 >
 std::basic_ostream<_StreamChar, _StreamTraits>& operator <<(
     std::basic_ostream<_StreamChar, _StreamTraits>& oss,
-    const Token<_Tag, _TokenChar, _CaseSensitive, _TokenTraits, _Allocator>& token) {
+    const Token<_Tag, _TokenChar, _Sensitive, _TokenTraits, _Allocator>& token) {
     if (!token.empty())
         oss << token.MakeView();
     return oss;

@@ -34,18 +34,21 @@ void VertexSubPart<T>::TypedSet(void *const vertex, const T& value) const {
 //----------------------------------------------------------------------------
 template <typename T>
 void VertexSubPart<T>::Get(const void *vertex, void *const value, size_t size) const {
+    UNUSED(size);
     Assert(sizeof(T) == size);
     *reinterpret_cast<T *>(value) = TypedGet(vertex);
 }
 //----------------------------------------------------------------------------
 template <typename T>
 void VertexSubPart<T>::Set(void *const vertex, const void *value, size_t size) const {
+    UNUSED(size);
     Assert(sizeof(T) == size);
     TypedSet(vertex, *reinterpret_cast<const T *>(value));
 }
 //----------------------------------------------------------------------------
 template <typename T>
 void VertexSubPart<T>::Copy(void *const dst, const void *src, size_t size) const {
+    UNUSED(size);
     Assert(dst);
     Assert(src);
     Assert(Offset() + sizeof(T) <= size);
@@ -54,6 +57,7 @@ void VertexSubPart<T>::Copy(void *const dst, const void *src, size_t size) const
 //----------------------------------------------------------------------------
 template <typename T>
 bool VertexSubPart<T>::Equals(const void *lhs, const void *rhs, size_t size) const {
+    UNUSED(size);
     Assert(lhs);
     Assert(rhs);
     Assert(Offset() + sizeof(T) <= size);

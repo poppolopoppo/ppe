@@ -4,6 +4,7 @@
 
 #include "FileSystem.h"
 #include "Format.h"
+#include "StringSlice.h"
 
 #include "Allocator/PoolAllocatorTag-impl.h"
 #include "Diagnostic/Logger.h"
@@ -30,10 +31,10 @@ Basename VirtualFileSystem::TemporaryBasename(const wchar_t *prefix, const wchar
     Assert(ext);
 
     const auto now = std::chrono::system_clock::now();
-    const time_t tt = std::chrono::system_clock::to_time_t(now);
+    const ::time_t tt = std::chrono::system_clock::to_time_t(now);
 
-    tm local_tm;
-    localtime_s(&local_tm, &tt);
+    ::tm local_tm;
+    ::localtime_s(&local_tm, &tt);
 
     wchar_t buffer[2048];
     const size_t length = Format(buffer, L"{0}_{1:#4}{2:#2}{3:#2}{4:#2}{5:#2}{6:#2}{7}{8}",
@@ -48,7 +49,7 @@ Basename VirtualFileSystem::TemporaryBasename(const wchar_t *prefix, const wchar
         ext );
 
     Assert(length > 0);
-    return Basename(buffer, length - 1);
+    return Basename(FileSystem::StringSlice(buffer, length - 1));
 }
 //----------------------------------------------------------------------------
 Filename VirtualFileSystem::TemporaryFilename(const wchar_t *prefix, const wchar_t *ext) {
@@ -56,10 +57,10 @@ Filename VirtualFileSystem::TemporaryFilename(const wchar_t *prefix, const wchar
     Assert(ext);
 
     const auto now = std::chrono::system_clock::now();
-    const time_t tt = std::chrono::system_clock::to_time_t(now);
+    const ::time_t tt = std::chrono::system_clock::to_time_t(now);
 
-    tm local_tm;
-    localtime_s(&local_tm, &tt);
+    ::tm local_tm;
+    ::localtime_s(&local_tm, &tt);
 
     wchar_t buffer[2048];
     const size_t length = Format(buffer, L"Tmp:/{0}_{1:#4}{2:#2}{3:#2}{4:#2}{5:#2}{6:#2}{7}{8}",
@@ -74,7 +75,7 @@ Filename VirtualFileSystem::TemporaryFilename(const wchar_t *prefix, const wchar
         ext );
 
     Assert(length > 0);
-    return Filename(buffer, length - 1);
+    return Filename(FileSystem::StringSlice(buffer, length - 1));
 }
 //----------------------------------------------------------------------------
 bool VirtualFileSystem::WriteAll(const Filename& filename, const MemoryView<const u8>& storage, AccessPolicy::Mode policy /* = AccessPolicy::None */) {
@@ -95,7 +96,7 @@ void VirtualFileSystemStartup::Start() {
     VirtualFileSystem::Create();
     // current process directory
     {
-        VirtualFileSystem::Instance().MountNativePath(L"Process:/", CurrentProcess::Instance().Directory());
+        VirtualFileSystem::Instance().MountNativePath(MakeStringSlice(L"Process:/"), CurrentProcess::Instance().Directory());
     }
     // system temporary path
     {
@@ -103,7 +104,7 @@ void VirtualFileSystemStartup::Start() {
         if (!FileSystem::SystemTemporaryDirectory(tmpPath, lengthof(tmpPath)) )
             AssertNotReached();
 
-        VirtualFileSystem::Instance().MountNativePath(L"Tmp:/", tmpPath);
+        VirtualFileSystem::Instance().MountNativePath(MakeStringSlice(L"Tmp:/"), tmpPath);
     }
     // user profile path
     {
@@ -118,7 +119,7 @@ void VirtualFileSystemStartup::Start() {
 #   error "unsupported platform"
 #endif
         AssertRelease(userPath);
-        VirtualFileSystem::Instance().MountNativePath(L"User:/", userPath);
+        VirtualFileSystem::Instance().MountNativePath(MakeStringSlice(L"User:/"), userPath);
     }
 }
 //----------------------------------------------------------------------------

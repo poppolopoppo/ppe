@@ -4,6 +4,8 @@
 
 #include "Core/Allocator/AllocatorBase.h"
 
+#include <type_traits>
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -12,7 +14,8 @@ template <size_t _SizeInBytes>
 class InSituStorage : Meta::ThreadResource {
 public:
     InSituStorage() noexcept
-        : _insituPtr(_insituData), _insituCount(0) {}
+        : _insituPtr(reinterpret_cast<u8*>(&_insituData))
+        , _insituCount(0) {}
 
     ~InSituStorage() {
         Assert(0 == _insituCount);
@@ -26,23 +29,25 @@ public:
     InSituStorage(InSituStorage&& ) = delete;
     InSituStorage& operator=(InSituStorage&& ) = delete;
 
+    const u8* InsituData() const { return reinterpret_cast<const u8*>(&_insituData); }
+
     void* AllocateIFP(size_t sizeInBytes);
     bool DeallocateIFP(void* ptr, size_t sizeInBytes) noexcept;
     void* ReallocateIFP(void* ptr, size_t newSizeInBytes, size_t oldSizeInBytes);
 
     bool InSituEmpty() const noexcept {
-        Assert((_insituData == _insituPtr) == (0 == _insituCount));
-        return (_insituData == _insituPtr);
+        Assert((InsituData() == _insituPtr) == (0 == _insituCount));
+        return (InsituData() == _insituPtr);
     }
 
     bool Contains(const void* ptr) const noexcept {
         THIS_THREADRESOURCE_CHECKACCESS();
         const u8* const p = reinterpret_cast<const u8*>(ptr);
-        return _insituData <= p && p <= _insituData + _SizeInBytes;
+        return (InsituData() <= p && p <= InsituData() + _SizeInBytes);
     }
 
 private:
-    ALIGN(16) u8 _insituData[_SizeInBytes];
+    typename std::aligned_storage<_SizeInBytes, 16>::type _insituData;
     u8* _insituPtr;
     size_t _insituCount;
 };
@@ -52,7 +57,7 @@ void* InSituStorage<_SizeInBytes>::AllocateIFP(size_t sizeInBytes) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Contains(_insituPtr));
     if (Contains(_insituPtr + sizeInBytes)) {
-        Assert(0 != _insituCount || _insituData == _insituPtr);
+        Assert(0 != _insituCount || InsituData() == _insituPtr);
         ++_insituCount;
         u8* const p = _insituPtr;
         _insituPtr += sizeInBytes;
@@ -74,7 +79,7 @@ bool InSituStorage<_SizeInBytes>::DeallocateIFP(void* ptr, size_t sizeInBytes) n
         Assert(Contains(p + sizeInBytes));
         if (0 == _insituCount) {
             Assert(p + sizeInBytes == _insituPtr);
-            _insituPtr = _insituData;
+            _insituPtr = reinterpret_cast<u8*>(&_insituData);
         }
         else if (p + sizeInBytes == _insituPtr) {
             _insituPtr = p;

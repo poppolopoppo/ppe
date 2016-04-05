@@ -9,9 +9,9 @@
 #endif
 
 #include "Diagnostic/CrtDebug.h"
+#include "Diagnostic/DialogBox.h"
 #include "Diagnostic/Exception.h"
 #include "Diagnostic/Logger.h"
-#include "Diagnostic/DialogBox.h"
 
 #include "IO/Stream.h"
 #include "IO/StringSlice.h"
@@ -22,14 +22,14 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-static DialogBox::Result AssertAbortRetryIgnore_(const WStringSlice& title, const char *msg, const wchar_t *file, unsigned line) {
+static Dialog::Result AssertAbortRetryIgnore_(const WStringSlice& title, const char *msg, const wchar_t *file, unsigned line) {
     ThreadLocalWOStringStream oss;
 
     oss << title << L"\r\n"
         << L"----------------------------------------------------------------\r\n"
         << file << L'(' << line << L"): " << msg;
 
-    return DialogBox::AbortRetryIgnore(MakeStringSlice(oss.str()), title);
+    return Dialog::AbortRetryIgnore(MakeStringSlice(oss.str()), title);
 }
 //----------------------------------------------------------------------------
 static bool IsDebuggerAttached_() {
@@ -69,7 +69,7 @@ AssertException::~AssertException() {}
 void AssertionFailed(const char *msg, const wchar_t *file, unsigned line) {
     static THREAD_LOCAL bool gIsInAssertion = false;
     static THREAD_LOCAL bool gIgnoreAssertsInThisThread = false;
-    static std::atomic<bool> gIgnoreAllAsserts = false;
+    static std::atomic<bool> gIgnoreAllAsserts = ATOMIC_VAR_INIT(false);
     if (gIgnoreAllAsserts || gIgnoreAssertsInThisThread)
         return;
 
@@ -92,14 +92,14 @@ void AssertionFailed(const char *msg, const wchar_t *file, unsigned line) {
     }
     else {
         switch (AssertAbortRetryIgnore_(MakeStringSlice(L"Assert debug failed !"), msg, file, line)) {
-        case DialogBox::Result::Abort:
+        case Dialog::Result::Abort:
             failure = true;
             break;
-        case DialogBox::Result::Retry:
+        case Dialog::Result::Retry:
             if (IsDebuggerAttached_())
                 BREAKPOINT();
             break;
-        case DialogBox::Result::Ignore:
+        case Dialog::Result::Ignore:
             failure = false;
             break;
         default:
@@ -145,7 +145,7 @@ AssertReleaseException::~AssertReleaseException() {}
 void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line) {
     static THREAD_LOCAL bool gIsInAssertion = false;
     static THREAD_LOCAL bool gIgnoreAssertsInThisThread = false;
-    static std::atomic<bool> gIgnoreAllAsserts = false;
+    static std::atomic<bool> gIgnoreAllAsserts = ATOMIC_VAR_INIT(false);
     if (gIgnoreAllAsserts || gIgnoreAssertsInThisThread)
         return;
 
@@ -168,14 +168,14 @@ void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line)
     }
     else {
         switch (AssertAbortRetryIgnore_(MakeStringSlice(L"Assert release failed !"), msg, file, line)) {
-        case DialogBox::Result::Abort:
+        case Dialog::Result::Abort:
             failure = true;
             break;
-        case DialogBox::Result::Retry:
+        case Dialog::Result::Retry:
             if (IsDebuggerAttached_())
                 BREAKPOINT();
             break;
-        case DialogBox::Result::Ignore:
+        case Dialog::Result::Ignore:
             failure = false;
             break;
         default:

@@ -324,7 +324,7 @@ void Test_RTTI() {
             if (false == Compression::DecompressMemory(decompressed, compressedView))
                 AssertNotReached();
 
-            Assert(uncompressed.SizeInBytes() == decompressed.SizeInBytes());
+            Assert(checked_cast<size_t>(uncompressed.SizeInBytes()) == decompressed.SizeInBytes());
             const size_t k = decompressed.SizeInBytes();
             for (size_t i = 0; i < k; ++i)
                 Assert(uncompressed.Pointer()[i] == decompressed.Pointer()[i]);
@@ -356,7 +356,7 @@ void Test_RTTI() {
             if (false == Compression::DecompressMemory(decompressed, compressed.MakeConstView()))
                 AssertNotReached();;
 
-            Assert(uncompressed.SizeInBytes() == decompressed.SizeInBytes());
+            Assert(checked_cast<size_t>(uncompressed.SizeInBytes()) == decompressed.SizeInBytes());
             const size_t k = decompressed.SizeInBytes();
             for (size_t i = 0; i < k; ++i)
                 Assert(uncompressed.Pointer()[i] == decompressed.Pointer()[i]);
@@ -374,16 +374,18 @@ void Test_RTTI() {
         {
             std::cout << "$ ";
 
-            char line[1024];
-            std::cin.getline(line, lengthof(line));
+            char buffer[1024];
+            std::cin.getline(buffer, lengthof(buffer));
 
-            if (0 == CompareNI("exit", line, 5))
+            const StringSlice line = MakeStringSlice(buffer, Meta::noinit_tag());
+
+            if (0 == CompareI(MakeStringSlice("exit"), line))
                 break;
 
             const wchar_t filename[] = L"@in_memory";
 
             try {
-                Lexer::Lexer lexer(StringSlice(&line[0], Length(line)), filename);
+                Lexer::Lexer lexer(line, filename);
                 Parser::ParseList input(&lexer);
 
                 Parser::PCParseItem item = Serialize::GrammarStartup::Parse(input);

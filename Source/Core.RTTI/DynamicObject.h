@@ -50,22 +50,27 @@ public:
 
     virtual size_t HashValue(const MetaObject *object) const override;
     */
-    SINGLETON_POOL_ALLOCATED_DECL(DynamicProperty);
+    SINGLETON_POOL_ALLOCATED_DECL();
 };
 //----------------------------------------------------------------------------
 class DynamicObject : public MetaObject {
 public:
     DynamicObject();
     virtual ~DynamicObject();
-    /*
+
     MetaAtom* GetValue(const MetaPropertyName& name);
     const MetaAtom* GetValue(const MetaPropertyName& name) const;
+
+    MetaAtom* TryGetValue(const MetaPropertyName& name);
+    const MetaAtom* TryGetValue(const MetaPropertyName& name) const;
+
     void SetValue(const MetaPropertyName& name, const PMetaAtom& value);
+
     void ClearValues();
-    */
+
     virtual const RTTI::MetaClass *RTTI_MetaClass() const override;
 
-    SINGLETON_POOL_ALLOCATED_DECL(DynamicObject);
+    SINGLETON_POOL_ALLOCATED_DECL();
 
     class MetaClass : public RTTI::InScopeMetaClass {
     public:

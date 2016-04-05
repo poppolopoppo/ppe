@@ -158,8 +158,8 @@ wchar_t VirtualFileSystemNativeFileIStream::PeekCharW() {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(IsValidFileHandle_(_handle));
 
-    const int ch = fgetwc(_handle);
-    if (EOF == ch)
+    const ::wint_t ch = fgetwc(_handle);
+    if (::wint_t(EOF) == ch)
         return '\0';
 
     if (ch != ungetwc(ch, _handle))

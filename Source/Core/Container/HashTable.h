@@ -200,14 +200,14 @@ public:
     const_iterator cbegin() const { return MakeView().begin(); }
     const_iterator cend() const { return MakeView().end(); }
 
-    reverse_iterator rbegin() { return reverse_iterator(begin()); }
-    reverse_iterator rend() { return reverse_iterator(end()); }
+    reverse_iterator rbegin() { return reverse_iterator(end()); }
+    reverse_iterator rend() { return reverse_iterator(begin()); }
 
-    const_reverse_iterator rbegin() const { return const_reverse_iterator(begin()); }
-    const_reverse_iterator rend() const { return const_reverse_iterator(end()); }
+    const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
+    const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
 
-    const_reverse_iterator crbegin() const { return const_reverse_iterator(begin()); }
-    const_reverse_iterator crend() const { return const_reverse_iterator(end()); }
+    const_reverse_iterator crbegin() const { return const_reverse_iterator(end()); }
+    const_reverse_iterator crend() const { return const_reverse_iterator(begin()); }
 
     iterator begin(size_type pos) { Assert(pos < size()); return begin() + pos; }
     const_iterator begin(size_type pos) const { Assert(pos < size()); return begin() + pos; }
@@ -312,6 +312,7 @@ public:
 
     using typename base_type::table_traits;
 
+    using typename base_type::key_type;
     using typename base_type::value_type;
     using typename base_type::reference;
     using typename base_type::const_reference;
@@ -324,6 +325,11 @@ public:
     using typename base_type::public_type;
     using typename base_type::mapped_reference;
     using typename base_type::mapped_const_reference;
+
+    using typename base_type::iterator;
+    using typename base_type::const_iterator;
+    using typename base_type::reverse_iterator;
+    using typename base_type::const_reverse_iterator;
 
     using base_type::size;
     using base_type::empty;
@@ -377,12 +383,12 @@ public:
 
     iterator find(const key_type& key) {
         size_type slotIndex, dataIndex;
-        return (FindUsingProbe_(MakeProbe_(), key, &slotIndex, &dataIndex) ? begin() + dataIndex : end());
+        return (FindUsingProbe_(base_type::MakeProbe_(), key, &slotIndex, &dataIndex) ? begin() + dataIndex : end());
     }
 
     const_iterator find(const key_type& key) const {
         size_type slotIndex, dataIndex;
-        return (FindUsingProbe_(MakeProbe_(), key, &slotIndex, &dataIndex) ? begin() + dataIndex : end());
+        return (FindUsingProbe_(base_type::MakeProbe_(), key, &slotIndex, &dataIndex) ? begin() + dataIndex : end());
     }
 
     mapped_reference at(const key_type& key) { return table_traits::Value(*find(key)); }
@@ -494,6 +500,20 @@ public:
     HashTableStats ProbingStats() const { return MakeProbe_().ProbingStats(); }
 
 private:
+    using typename base_type::probe_type;
+
+    using base_type::AliasesToContainer_;
+    using base_type::AllocationCountWIndicesFor_;
+    using base_type::GrowIFN_ReturnAllocationCount_;
+    using base_type::HashIndicesRaw_;
+    using base_type::IncSize_;
+    using base_type::MakeProbe_;
+    using base_type::SetSize_;
+    using base_type::ShrinkToFitIFN_ReturnAllocationCount_;
+
+    using base_type::_size_capacityIndex;
+    using base_type::_values_hashIndices;
+
     template <typename _KeyLike>
     static size_type KeyHash_(const _KeyLike& keylike) {
         const size_type h = hasher()(table_traits::Key(keylike));
@@ -509,10 +529,10 @@ private:
     const allocator_type& allocator_() const { return static_cast<const allocator_type&>(*this); }
 
     void allocator_copy_(const allocator_type& other, std::true_type );
-    void allocator_copy_(const allocator_type& other, std::false_type ) {}
+    void allocator_copy_(const allocator_type& other, std::false_type ) { UNUSED(other); }
 
     void allocator_move_(allocator_type&& rvalue, std::true_type );
-    void allocator_move_(allocator_type&& rvalue, std::false_type ) {}
+    void allocator_move_(allocator_type&& rvalue, std::false_type ) { UNUSED(rvalue); }
 
     void assign_rvalue_(HashTable&& rvalue, std::true_type );
     void assign_rvalue_(HashTable&& rvalue, std::false_type );
@@ -535,6 +555,7 @@ private:
     void Reserve_AssumeEmpty_(size_type count);
     void RelocateAndRehash_(size_type oldCapacity, size_type allocationCount);
     void RehashUsingProbe_(details::HashTableProbe_& probe);
+    void Rehash_();
 
     void swap_(HashTable& other, std::true_type );
     void swap_(HashTable& other, std::false_type );

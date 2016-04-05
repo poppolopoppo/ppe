@@ -32,6 +32,7 @@ POOLTAG_DEF(Application);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#ifndef FINAL_RELEASE
 static void PrintMemStats_(const Core::CrtMemoryStats& memoryStats) {
 #ifdef USE_DEBUG_LOGGER
     OutputDebugStream()
@@ -47,6 +48,7 @@ static void PrintMemStats_(const Core::CrtMemoryStats& memoryStats) {
         << " - Total comitted size      = " << Core::SizeInBytes{ memoryStats.TotalOverheadSize.Value + memoryStats.TotalFreeSize.Value + memoryStats.TotalUsedSize.Value } << std::endl
         << " - External fragmentation   = " << (memoryStats.ExternalFragmentation() * 100) << "%" << std::endl;
 }
+#endif
 //----------------------------------------------------------------------------
 #ifdef OS_WINDOWS
 static void GuaranteeStackSizeForStackOverflowRecovery_()
@@ -72,7 +74,7 @@ static void GuaranteeStackSizeForStackOverflowRecovery_()
 #ifdef OS_WINDOWS
 static void ConfigureCRTHeapForDebugging_() {
 #   ifdef _DEBUG
-    const int debugCheckHeap = _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_EVERY_1024_DF;
+    //const int debugCheckHeap = _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_EVERY_1024_DF;
     const int debugNecrophilia = _CRTDBG_DELAY_FREE_MEM_DF;
     const int debugLeaks = _CRTDBG_LEAK_CHECK_DF;
 
@@ -116,9 +118,11 @@ ApplicationContext::ApplicationContext() {
 }
 //----------------------------------------------------------------------------
 ApplicationContext::~ApplicationContext() {
-#if defined(OS_WINDOWS) && !defined(FINAL_RELEASE)
+#ifndef FINAL_RELEASE
+#if defined(OS_WINDOWS)
     CrtMemoryStats memoryStats;
     CrtDumpMemoryStats(&memoryStats);
+#endif
     PrintMemStats_(memoryStats);
 #endif
 }
@@ -137,7 +141,7 @@ int LaunchApplication(const ApplicationContext& context, ApplicationBase* app) {
         catch (const std::exception& e)
         {
             const WString wwhat = ToWString(e.what());
-            DialogBox::Ok(wwhat.c_str(), L"Exception caught while starting !", DialogBox::Icon::Exclamation);
+            Dialog::Ok(wwhat.c_str(), L"Exception caught while starting !", Dialog::Icon::Exclamation);
             AssertNotReached();
         }
 #endif
@@ -152,7 +156,7 @@ int LaunchApplication(const ApplicationContext& context, ApplicationBase* app) {
         catch (const std::exception& e)
         {
             const WString wwhat = ToWString(e.what());
-            DialogBox::Ok(wwhat.c_str(), L"Exception caught while shutting down !", DialogBox::Icon::Exclamation);
+            Dialog::Ok(wwhat.c_str(), L"Exception caught while shutting down !", Dialog::Icon::Exclamation);
             AssertNotReached();
         }
 #endif

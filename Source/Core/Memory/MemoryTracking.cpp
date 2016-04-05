@@ -6,7 +6,7 @@
 #include "IO/Format.h"
 #include "IO/FormatHelpers.h"
 #include "IO/Stream.h"
-#include "IO/String.h"
+#include "IO/StringSlice.h"
 #include "Memory/UniqueView.h"
 #include "Meta/OneTimeInitialize.h"
 
@@ -140,7 +140,9 @@ static void TrackingDataAbsoluteName_(BasicOCStrStream<char>& oss, const MemoryT
 static bool LessTrackingData_(const MemoryTrackingData& lhs, const MemoryTrackingData& rhs) {
     Assert(lhs.Name());
     Assert(rhs.Name());
-    return (lhs.Name() != rhs.Name()) && CompareI(lhs.Name(), rhs.Name()) < 0;
+    return (lhs.Name() != rhs.Name()) &&
+        CompareI(   MakeStringSlice(lhs.Name(), Meta::noinit_tag()),
+                    MakeStringSlice(rhs.Name(), Meta::noinit_tag()) ) < 0;
 }
 //----------------------------------------------------------------------------
 void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
@@ -167,7 +169,7 @@ void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
     });
 
     const size_t width = 109;
-    const wchar_t *fmt = L" {0:-40}|{1:8} {2:10} |{3:8} {4:11} |{5:11} {6:11}\n";
+    const wchar_t fmt[] = L" {0:-40}|{1:8} {2:10} |{3:8} {4:11} |{5:11} {6:11}\n";
 
     oss << Repeat<width>(L"-") << std::endl
         << "    " << header << L" (" << datas.size() << L" elements)" << std::endl
