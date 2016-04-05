@@ -12,20 +12,20 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::MemoryView&lt;*&gt;">
-    <DisplayString Condition="_size == 0">empty</DisplayString>
-    <DisplayString>{_storage,[_size]su} [{_size}]</DisplayString>
-    <Expand>
-      <Item Name="Size">_size</Item>
-      <ArrayItems>
-        <Size>_size</Size>
-        <ValuePointer>_storage</ValuePointer>
-      </ArrayItems>
-    </Expand>
-  </Type>
-  <Type Name="Core::MemoryView&lt;*&gt;">
+  <Type Name="Core::BasicStringSlice&lt;char&gt;">
     <DisplayString Condition="_size == 0">empty</DisplayString>
     <DisplayString>{_storage,[_size]s} [{_size}]</DisplayString>
+    <StringView>_storage,[_size]s</StringView>
+  </Type>
+  <Type Name="Core::BasicStringSlice&lt;wchar_t&gt;">
+    <DisplayString Condition="_size == 0">empty</DisplayString>
+    <DisplayString>{_storage,[_size]su} [{_size}]</DisplayString>
+    <StringView>_storage,[_size]su</StringView>
+  </Type>
+
+  <Type Name="Core::MemoryView&lt;*&gt;">
+    <DisplayString Condition="_size == 0">empty</DisplayString>
+    <DisplayString>[{_size}]</DisplayString>
     <Expand>
       <Item Name="Size">_size</Item>
       <ArrayItems>
@@ -60,12 +60,13 @@
   </Type>
 
   <Type Name="Core::HashTable&lt;*, *, *, *, *&gt;">
-    <DisplayString>{{ size={_size_capacityLog2Plus1>>5}, capacity={(1ul&lt;&lt;(_size_capacityLog2Plus1&amp;((1ul&lt;&lt;5)-1)))&gt;&gt;1}</DisplayString>
+    <DisplayString>{{ size={_size_capacityIndex>>5}, capacity={Core::details::HashTableCapacityForValue_[_size_capacityIndex&amp;31]} }}</DisplayString>
     <Expand>
-      <Item Name="Size">_size_capacityLog2Plus1>>5</Item>
-      <Item Name="Capacity">(1ul&lt;&lt;(_size_capacityLog2Plus1&amp;((1ul&lt;&lt;5)-1)))&gt;&gt;1</Item>
+      <Item Name="Size">_size_capacityIndex>>5</Item>
+      <Item Name="Capacity for hashes">Core::details::HashTableCapacityForHash_[_size_capacityIndex&amp;31]</Item>
+      <Item Name="Capacity for values">Core::details::HashTableCapacityForValue_[_size_capacityIndex&amp;31]</Item>
       <ArrayItems>
-        <Size>_size_capacityLog2Plus1>>5</Size>
+        <Size>_size_capacityIndex>>5</Size>
         <ValuePointer>_values_hashIndices</ValuePointer>
       </ArrayItems>
     </Expand>
@@ -203,7 +204,24 @@
   <Type Name="Core::RTTI::MetaTypeAtom&lt;* &gt;">
     <DisplayString>{_wrapper}</DisplayString>
     <Expand>
-      <Item Name="Wrapper">_wrapper</Item>
+      <ExpandedItem>_wrapper</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="Core::RefPtr&lt;* &gt;">
+    <DisplayString>{_ptr}</DisplayString>
+    <Expand>
+      <Item Name="RefCount" Condition="_ptr != nullptr">_ptr->_refCount</Item>
+      <ExpandedItem>_ptr</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="Core::SafePtr&lt;* &gt;">
+    <DisplayString>{_ptr}</DisplayString>
+    <Expand>
+      <Item Name="RefCount" Condition="_ptr != nullptr">_ptr->_refCount</Item>
+      <Item Name="SafeCount" Condition="_ptr != nullptr">_ptr->_safeRefCount</Item>
+      <ExpandedItem>_ptr</ExpandedItem>
     </Expand>
   </Type>
 
