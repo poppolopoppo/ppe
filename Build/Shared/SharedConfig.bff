@@ -35,7 +35,7 @@
 
     .Config = 'FastDebug'
     .ConfigDefines + { "FASTDEBUG", "_DEBUG", "DEBUG" }
-    .ConfigLinkType = 'Dll'
+    .ConfigLinkType = 'Lib' ;'Dll' %NOCOMMIT%
 ]
 .AllSharedConfigs + .SharedFastDebugConfig
 
