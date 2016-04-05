@@ -221,6 +221,18 @@
 	</array>
 	<key>scopeName</key>
 	<string>source.fastbuild</string>
+	<key>settings</key>
+	<dict>
+		<key>shellVariables</key>
+		<array>
+			<dict>
+				<key>name</key>
+				<string>TM_COMMENT_START</string>
+				<key>value</key>
+				<string>;</string>
+			</dict>
+		</array>
+	</dict>
 	<key>uuid</key>
 	<string>3d45b8f5-a94c-48a6-b5cb-94a94a88db98</string>
 </dict>

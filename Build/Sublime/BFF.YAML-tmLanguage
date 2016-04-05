@@ -5,6 +5,12 @@ scopeName: source.fastbuild
 fileTypes: ["*.bff"]
 uuid: 3d45b8f5-a94c-48a6-b5cb-94a94a88db98
 
+settings:
+  shellVariables:
+  -
+    name: 'TM_COMMENT_START'
+    value: ;
+
 patterns:
 -
   match: "(//|;).*$"
