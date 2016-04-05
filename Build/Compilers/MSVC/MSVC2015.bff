@@ -11,13 +11,18 @@
 ; utilise la toolchain 64 bits pour compiler en 32
 #define USE_VISUAL2015_NATIVE_ENVIRONMENT
 ; 2X Faster Links, mais TODO: les versions ne doivent pas utiliser ça
-#define USE_VISUAL2015_DEBUG_FASTLINK
+;#define USE_VISUAL2015_DEBUG_FASTLINK
 ; active l'utilisation des Pre-Compiled Headers (/Yu, /Yc)
 #define USE_PRECOMPILED_HEADERS
 ; utilise les .obj plutôt que les .lib comme input du linker
 #define USE_LIBRARY_DEPENDENCY_INPUT
 ; utilise le linker incremental en profiling
 #define USE_LTCG_INCREMENTAL_LINKER_IN_PROFILING
+
+; choix du SDK de Windows 10 (#cestlebordel)
+;#define USE_WINDOWS10_SDK_10
+#define USE_WINDOWS10_SDK_11 ; utilisé par Visual 2015 Update 2
+;#define USE_WINDOWS10_SDK_20
 
 #include "MSVCBase.bff"
 
@@ -51,7 +56,15 @@
     .WindowsSDKVersion81  = 'winv6.3'
     Print( "Using Visual 2015 with Windows 8.1 SDK $WindowsSDKVersion81$" )
     .WindowsSDKBasePath10 = 'C:\Program Files (x86)\Windows Kits\10'
-    .WindowsSDKVersion10  = '10.0.10150.0' ; Visual 2015 final
+#if USE_WINDOWS10_SDK_10
+    .WindowsSDKVersion10  = '10.0.10150.0'
+#endif
+#if USE_WINDOWS10_SDK_11
+    .WindowsSDKVersion10  = '10.0.10240.0'
+#endif
+#if USE_WINDOWS10_SDK_20
+    .WindowsSDKVersion10  = '10.0.10586.0'
+#endif
     Print( "Using Visual 2015 with Windows 10 SDK $WindowsSDKVersion10$" )
 ]
 

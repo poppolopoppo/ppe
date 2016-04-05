@@ -10,7 +10,9 @@
 ; active l'utilisation des guardes de securité au runtime
 #define USE_MSVC_RUNTIME_CHECKS
 ; active l'inlining simple en debug (/Ob1)
-#define USE_INLINING_IN_DEBUG
+;#define USE_INLINING_IN_DEBUG
+; active l'utilistion de /analyze pour une meilleure détéction d'erreur (mais des builds bcp plus lent)
+;#define USE_MSVC_ANALYZE
 
 //------------------------------------------------------------------------------
 // Common MSVC Configuration
@@ -47,8 +49,10 @@
     .IncludePaths = {}
 
     .CompilerOptions = ''
+    + ' /TP'                ; considère que toutes les sources sont du C++
     + ' /nologo'            ; pas de message de copyright lors de la compilation
-    + ' /W3 /WX-'           ; warning level 3, les warnings ne génèrent pas d'erreurs
+    + ' /W3'                ; tous les warnings de level 4 sont reportés
+    + ' /WX'                ; les warnings génèrent des erreurs !
     + ' /Gm-'               ; minimal rebuild est incompatible avec FastBuild qui gère cette feature lui même
     + ' /GR'                ; active le support des RTTI std de C++ (RunTime Type Information, nécessaire pour dynamic_cast<> par ex)
     + ' /GF'                ; fusion des chaînes de caractères identiques (string pooling)
@@ -59,8 +63,14 @@
     + ' /openmp-'           ; désactivation du support de openmp (parallèlisation automatique)
     + ' /Zc:wchar_t'        ; active le support de wchar_t comme type natif
     + ' /Zc:forScope'       ; interdit d'acceder à l'iterateur d'un for en dehors de son scope (comportement std)
-    + ' /errorreport:prompt'; affiche une boite de dialogue en cas de crash du compilo
-    + ' /c "%1" /TP'
+    ;+ ' /errorreport:prompt'; affiche une boite de dialogue en cas de crash du compilo
+    + ' /c "%1"'
+
+#if USE_MSVC_ANALYZE
+    Print( 'Using common errors detection warnings : /analyze.' )
+    .CompilerOptions    + ' /analyze'
+                        + ' /analyze:stacksize 4194304'
+#endif
 
     .PreprocessorOptions = ''
 
@@ -69,7 +79,7 @@
     .LibrarianOptions = ''
     + ' /WX'                ; considère les avertissements comme des erreurs
     + ' /nologo'            ; pas de message de copyright lors de la compilation
-    + ' /errorreport:prompt'; affiche une boite de dialogue en cas de crash du compilo
+    ;+ ' /errorreport:prompt'; affiche une boite de dialogue en cas de crash du compilo
     + ' /SUBSYSTEM:WINDOWS'
     + ' /IGNORE:4221'
     + ' /OUT:"%2" "%1"'
@@ -111,7 +121,6 @@
 //------------------------------------------------------------------------------
 // MSVC Base Pre-Compiled Headers Configurations
 //------------------------------------------------------------------------------
-
 .MSVCBasePCHDisabled    =
 [
     .CompilerOptions    = ' /Fo"%2"'
