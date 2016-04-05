@@ -1,7 +1,5 @@
 #once
 
-#define USE_CLANG_WINDOWS
-
 #include "../MSVC/MSVCBase.bff"
 
 //------------------------------------------------------------------------------
@@ -9,152 +7,264 @@
 //------------------------------------------------------------------------------
 .CLangWindowsBase =
 [
-    .AdditionalWarnings = ''
-    ;+ ' -Wshadow'                       ; extra warnings
-
-    ; Tout ça est désactivé pour compiler CRT sans chouiner
-    .DisabledWarnings = ''
-    + ' -Wno-microsoft'                 ; suppress "enumerator value is not representable in the underlying type 'int' [-Wmicrosoft]'"
-    + ' -Wno-#pragma-messages'
-    + ' -Wno-unknown-pragmas'
-    + ' -Wno-ignored-attributes'        ; ignore 'restrict, noalias' keyword
-    + ' -Wno-c++11-long-long'           ; don't want about use of "long long"
-    + ' -Wno-deprecated-declarations'
-    + ' -Wno-unused-private-field'
-    + ' -Wno-writable-strings'
-    + ' -Wno-parentheses-equality'
-    + ' -Wno-reorder'
-    + ' -Wno-assume'
-    + ' -Wno-dllimport-static-field-def'
-    + ' -Wno-delete-incomplete'
-    + ' -Wno-implicit-exception-spec-mismatch'
-    + ' -Wno-unused-value'
-    + ' -Wno-constant-logical-operand'
-    + ' -Wno-int-to-void-pointer-cast'
-    + ' -Wno-dangling-else'
-    + ' -Wno-missing-braces'
-
-    .MSVCCompatFlags = ''
-    + ' -Xclang -fms-extensions'
-    + ' -Xclang -fms-compatibility'
-    ;+ ' -Xclang -fdelayed-template-parsing'
-
-    .Defines =
-    {
-        "_MT", "_DLL",                  ; https://msdn.microsoft.com/fr-fr/library/abx4dbyh.aspx
-        "STRICT",                       ; https://msdn.microsoft.com/en-us/library/windows/desktop/aa383681(v=vs.85).aspx
-        "NOMINMAX",                     ; https://support.microsoft.com/en-us/kb/143208
-        "VC_EXTRALEAN",                 ; https://support.microsoft.com/en-us/kb/166474
-        "WIN32_LEAN_AND_MEAN",          ; https://support.microsoft.com/en-us/kb/166474
-        "STRSAFE_NO_DEPRECATE=1",       ; https://msdn.microsoft.com/en-us/library/windows/desktop/ms647466(v=vs.85).aspx
-        "_CRT_SECURE_NO_DEPRECATE=1",   ; https://msdn.microsoft.com/fr-fr/library/8ef0s5kh.aspx
-        "_CRT_NONSTDC_NO_DEPRECATE=1",  ; https://msdn.microsoft.com/fr-fr/library/8ef0s5kh.aspx
-        "DBGHELP_TRANSLATE_TCHAR",      ; https://msdn.microsoft.com/en-us/library/windows/desktop/ms679294(v=vs.85).aspx
-        "_UNICODE", "UNICODE"           ; https://msdn.microsoft.com/fr-fr/library/dybsewaf.aspx
-    }
-
-    .IncludePaths = {}
+    .FixWarningsOnWindows = ''
+        + ' -Wno-error'
+        + ' -Wno-expansion-to-defined'          // macro expansion producing 'defined' has undefined behavior (nécessaire pour WinAPI)
+        + ' -Wno-ignored-attributes'            // ignore les attributs de classe/fonction non supportées par CLANG (sinon échoue a cause de /WError)
+        + ' -Wno-int-to-void-pointer-cast'      // cast to 'void *' from smaller integer type 'unsigned long' (nécessaire pour WinAPI)
+        + ' -Wno-macro-redefined'               // '_MM_HINT_T0' macro redefined (nécessaire pour WinAPI)
+        + ' -Wno-microsoft-enum-value'          // ignore les dépassements de valeurs d'enums (nécessaire pour WinAPI)
+        + ' -Wno-missing-declarations'          // typedef requires a name (nécessaire pour DbgHelp)
+        + ' -Wno-unknown-pragmas'               // ignore les directives pragma non supportées par CLANG (sinon échoue a cause de /WError)
+        + ' -Wno-unused-command-line-argument'  // ignore les options non suportées par CLANG (sinon échoue a cause de /WError)
+        + ' -Wno-unused-local-typedef'          // ignore les typedefs locaux non utilisés (nécessaire pour STATIC_ASSERT(x))
+        + ' -Wno-unused-value'                  // ignore les expressions non utilisées (UNUSED(x) ou CRT)
 
     .CompilerOptions = ''
-    + ' /W2 /WX-'           ; warning level 2, les warnings ne génèrent pas d'erreurs
-    + ' /GR'                ; active le support des RTTI std de C++ (RunTime Type Information, nécessaire pour dynamic_cast<> par ex)
-    + ' /GF'                ; fusion des chaînes de caractères identiques (string pooling)
-    + ' /EHsc'              ; active le support des exceptions
-    + ' /c "%1" /TP'
-    + ' -Xclang -std=c++11'
-    + ' -Xclang -fexceptions'
-    + ' -Xclang -fcxx-exceptions'
-    + .MSVCCompatFlags
-    + .AdditionalWarnings
-    + .DisabledWarnings
+        + .FixWarningsOnWindows
+        //+ ' -Xclang -msse3'                     // active le support de SSE3 (marche pas : https://llvm.org/bugs/show_bug.cgi?id=20213)
+        + ' -fms-compatibility'                 // compatibilité microsoft
+        + ' -fms-extensions'                    // extensions spécifiques à microsoft
+        + ' -fcolor-diagnostics'
+]
 
-    .PreprocessorOptions = ''
-
-    .LibrarianOptions = ''
-    ;+ ' /WX'                ; considère les avertissements comme des erreurs
-    ;+ ' /SUBSYSTEM:WINDOWS'
-    + ' /OUT:"%2" "%1"'
-
-    .LinkerOptions = ''
-    + ' /LARGEADDRESSAWARE' ; l'application gère les adresses de taille supérieure à 2 gigaoctets
-    + ' /TLBID:1'           ; https://msdn.microsoft.com/fr-fr/library/b1kw34cb.aspx
-    + ' /DEBUG'             ; genère les infos de debug pour le binaire
-    + ' /IGNORE:4001'       ; https://msdn.microsoft.com/en-us/library/aa234697(v=vs.60).aspx
-    + ' /DYNAMICBASE:NO'    ; pas de randomisation des adresses
-    + ' /NXCOMPAT:NO'       ; indique que le programme n'est pas compatible avec Data Execution Prevention
-    + ' /SUBSYSTEM:WINDOWS'
-    + ' /LIBPATH:"$BinaryDirectory$"'
-    + ' /OUT:"%2" "%1"'
-    + ' kernel32.lib'
-    + ' User32.lib'
-    + ' Shell32.lib'
-    + ' Comctl32.lib'
-    + ' Gdi32.lib'
-
-    .DllOptions = ''
-    + ' /DLL'               ; https://msdn.microsoft.com/en-us/library/527z7zfs.aspx
-
-    .ExecutableOptions = ''
-    + ' /ENTRY:"wWinMainCRTStartup"'
-
-    ; utilisés pour généraliser les templates :
-    .CompilerDefineFlag         = ' -D '
-    .CompilerIncludeFlag        = ' -I'
-    .CompilerPreprocessorFlag   = ' /P /Fi"%2"'
-    .CompilerBinaryExtension    = 'exe'
-    .CompilerDllExtension       = 'dll'
-    .CompilerLibraryExtension   = 'lib'
-
-#if USE_PRECOMPILED_HEADERS
-    .CompilerCreatePCHFlag      = ' /Yc'
-    .CompilerUsePCHFlag         = ' /Yu'
-    .CompilerOutputPCHFlag      = ' /Fp'
-#endif
+.CLangWindowsOverrideMSVC =
+[
+    .LibrarianOptions   = ' /OUT:"%2" "%1"'
+                        + ' /llvmlibthin'       // http://llvm.org/docs/CommandGuide/llvm-lib.html
 ]
 
 //------------------------------------------------------------------------------
-// Pre-Compiled Headers Configurations
+// CLang Base Pre-Compiled Headers Configurations
 //------------------------------------------------------------------------------
-
-.CLangWindowsBasePCHEnabled     = .MSVCBasePCHEnabled
 .CLangWindowsBasePCHDisabled    = .MSVCBasePCHDisabled
+.CLangWindowsBasePCHEnabled     = .MSVCBasePCHEnabled
 
 //------------------------------------------------------------------------------
 // CLang Base Platforms
 //------------------------------------------------------------------------------
-.CLangWindowsBasePlatformWin32 =
+.CLangBasePlatformWin32 =
 [
-    Using( .SharedPlatformWin32 )
-    Using( .CLangWindowsBase )
+    .Inherited  = .MSVCBasePlatformWin32
+                + .CLangWindowsBase
 
-    .Defines            + .PlatformDefines
+    Using( .Inherited )
+    Using( .CLangWindowsOverrideMSVC )
 
     .CompilerOptions    + ' -m32'
-    .PCHOptions         + ' -m32'
-
-    .LibrarianOptions   = ' /MACHINE:X86 $LibrarianOptions$'
-    .LinkerOptions      = ' /MACHINE:X86 $LinkerOptions$'
+    .LibrarianOptions   + ' /MACHINE:X86'
 ]
 
-.CLangWindowsBasePlatformX64 =
+.CLangBasePlatformX64 =
 [
-    Using( .SharedPlatformX64 )
-    Using( .CLangWindowsBase )
+    .Inherited  = .MSVCBasePlatformX64
+                + .CLangWindowsBase
 
-    .Defines            + .PlatformDefines
+    Using( .Inherited )
+    Using( .CLangWindowsOverrideMSVC )
 
     .CompilerOptions    + ' -m64'
-    .PCHOptions         + ' -m64'
-
-    .LibrarianOptions   = ' /MACHINE:X64 $LibrarianOptions$'
-    .LinkerOptions      = ' /MACHINE:X64 $LinkerOptions$'
+    .LibrarianOptions   + ' /MACHINE:X64'
 ]
 
 //------------------------------------------------------------------------------
-// Configurations
+// CLang Config Dependent Flags
 //------------------------------------------------------------------------------
-.CLangWindowsBaseDebugConfig       = .MSVCBaseDebugConfig
-.CLangWindowsBaseFastDebugConfig   = .MSVCBaseFastDebugConfig
-.CLangWindowsBaseReleaseConfig     = .MSVCBaseReleaseConfig
-.CLangWindowsBaseProfilingConfig   = .MSVCBaseProfilingConfig
-.CLangWindowsBaseFinalConfig       = .MSVCBaseFinalConfig
+.CLangBaseConfig =
+[
+]
+
+//------------------------------------------------------------------------------
+// CLang Debug Configuration
+//------------------------------------------------------------------------------
+.CLangBaseDebugConfig =
+[
+    Using( .MSVCBaseDebugConfig )
+]
+
+//------------------------------------------------------------------------------
+// CLang FastDebug Configuration
+//------------------------------------------------------------------------------
+.CLangBaseFastDebugConfig =
+[
+    Using( .MSVCBaseFastDebugConfig )
+]
+
+//------------------------------------------------------------------------------
+// CLang Release Configuration
+//------------------------------------------------------------------------------
+.CLangBaseReleaseConfig =
+[
+    Using( .MSVCBaseReleaseConfig )
+]
+
+//------------------------------------------------------------------------------
+// CLang Profiling Configuration
+//------------------------------------------------------------------------------
+.CLangBaseProfilingConfig =
+[
+    Using( .MSVCBaseProfilingConfig )
+]
+
+//------------------------------------------------------------------------------
+// CLang Final Configuration
+//------------------------------------------------------------------------------
+.CLangBaseFinalConfig =
+[
+    Using( .MSVCBaseFinalConfig )
+]
+
+; //------------------------------------------------------------------------------
+; // Common CLang Configuration
+; //------------------------------------------------------------------------------
+; .CLangWindowsBase =
+; [
+;     .AdditionalWarnings = ''
+;     ;+ ' -Wshadow'                       ; extra warnings
+;
+;     ; Tout ça est désactivé pour compiler CRT sans chouiner
+;     .DisabledWarnings = ''
+;     + ' -Wno-microsoft'                 ; suppress "enumerator value is not representable in the underlying type 'int' [-Wmicrosoft]'"
+;     + ' -Wno-#pragma-messages'
+;     + ' -Wno-unknown-pragmas'
+;     + ' -Wno-ignored-attributes'        ; ignore 'restrict, noalias' keyword
+;     + ' -Wno-c++11-long-long'           ; don't want about use of "long long"
+;     + ' -Wno-deprecated-declarations'
+;     + ' -Wno-unused-private-field'
+;     + ' -Wno-writable-strings'
+;     + ' -Wno-parentheses-equality'
+;     + ' -Wno-reorder'
+;     + ' -Wno-assume'
+;     + ' -Wno-dllimport-static-field-def'
+;     + ' -Wno-delete-incomplete'
+;     + ' -Wno-implicit-exception-spec-mismatch'
+;     + ' -Wno-unused-value'
+;     + ' -Wno-constant-logical-operand'
+;     + ' -Wno-int-to-void-pointer-cast'
+;     + ' -Wno-dangling-else'
+;     + ' -Wno-missing-braces'
+;
+;     .MSVCCompatFlags = ''
+;     + ' -Xclang -fms-extensions'
+;     + ' -Xclang -fms-compatibility'
+;     ;+ ' -Xclang -fdelayed-template-parsing'
+;
+;     .Defines =
+;     {
+;         "_MT", "_DLL",                  ; https://msdn.microsoft.com/fr-fr/library/abx4dbyh.aspx
+;         "STRICT",                       ; https://msdn.microsoft.com/en-us/library/windows/desktop/aa383681(v=vs.85).aspx
+;         "NOMINMAX",                     ; https://support.microsoft.com/en-us/kb/143208
+;         "VC_EXTRALEAN",                 ; https://support.microsoft.com/en-us/kb/166474
+;         "WIN32_LEAN_AND_MEAN",          ; https://support.microsoft.com/en-us/kb/166474
+;         "STRSAFE_NO_DEPRECATE=1",       ; https://msdn.microsoft.com/en-us/library/windows/desktop/ms647466(v=vs.85).aspx
+;         "_CRT_SECURE_NO_DEPRECATE=1",   ; https://msdn.microsoft.com/fr-fr/library/8ef0s5kh.aspx
+;         "_CRT_NONSTDC_NO_DEPRECATE=1",  ; https://msdn.microsoft.com/fr-fr/library/8ef0s5kh.aspx
+;         "DBGHELP_TRANSLATE_TCHAR",      ; https://msdn.microsoft.com/en-us/library/windows/desktop/ms679294(v=vs.85).aspx
+;         "_UNICODE", "UNICODE"           ; https://msdn.microsoft.com/fr-fr/library/dybsewaf.aspx
+;     }
+;
+;     .IncludePaths = {}
+;
+;     .CompilerOptions = ''
+;     + ' /W2 /WX-'           ; warning level 2, les warnings ne génèrent pas d'erreurs
+;     + ' /GR'                ; active le support des RTTI std de C++ (RunTime Type Information, nécessaire pour dynamic_cast<> par ex)
+;     + ' /GF'                ; fusion des chaînes de caractères identiques (string pooling)
+;     + ' /EHsc'              ; active le support des exceptions
+;     + ' /c "%1" /TP'
+;     + ' -Xclang -std=c++11'
+;     + ' -Xclang -fexceptions'
+;     + ' -Xclang -fcxx-exceptions'
+;     + .MSVCCompatFlags
+;     + .AdditionalWarnings
+;     + .DisabledWarnings
+;
+;     .PreprocessorOptions = ''
+;
+;     .LibrarianOptions = ''
+;     ;+ ' /WX'                ; considère les avertissements comme des erreurs
+;     ;+ ' /SUBSYSTEM:WINDOWS'
+;     + ' /OUT:"%2" "%1"'
+;
+;     .LinkerOptions = ''
+;     + ' /LARGEADDRESSAWARE' ; l'application gère les adresses de taille supérieure à 2 gigaoctets
+;     + ' /TLBID:1'           ; https://msdn.microsoft.com/fr-fr/library/b1kw34cb.aspx
+;     + ' /DEBUG'             ; genère les infos de debug pour le binaire
+;     + ' /IGNORE:4001'       ; https://msdn.microsoft.com/en-us/library/aa234697(v=vs.60).aspx
+;     + ' /DYNAMICBASE:NO'    ; pas de randomisation des adresses
+;     + ' /NXCOMPAT:NO'       ; indique que le programme n'est pas compatible avec Data Execution Prevention
+;     + ' /SUBSYSTEM:WINDOWS'
+;     + ' /LIBPATH:"$BinaryDirectory$"'
+;     + ' /OUT:"%2" "%1"'
+;     + ' kernel32.lib'
+;     + ' User32.lib'
+;     + ' Shell32.lib'
+;     + ' Comctl32.lib'
+;     + ' Gdi32.lib'
+;
+;     .DllOptions = ''
+;     + ' /DLL'               ; https://msdn.microsoft.com/en-us/library/527z7zfs.aspx
+;
+;     .ExecutableOptions = ''
+;     + ' /ENTRY:"wWinMainCRTStartup"'
+;
+;     ; utilisés pour généraliser les templates :
+;     .CompilerDefineFlag         = ' -D '
+;     .CompilerIncludeFlag        = ' -I'
+;     .CompilerPreprocessorFlag   = ' /P /Fi"%2"'
+;     .CompilerBinaryExtension    = 'exe'
+;     .CompilerDllExtension       = 'dll'
+;     .CompilerLibraryExtension   = 'lib'
+;
+; #if USE_PRECOMPILED_HEADERS
+;     .CompilerCreatePCHFlag      = ' /Yc'
+;     .CompilerUsePCHFlag         = ' /Yu'
+;     .CompilerOutputPCHFlag      = ' /Fp'
+; #endif
+; ]
+;
+; //------------------------------------------------------------------------------
+; // Pre-Compiled Headers Configurations
+; //------------------------------------------------------------------------------
+;
+; .CLangWindowsBasePCHEnabled     = .MSVCBasePCHEnabled
+; .CLangWindowsBasePCHDisabled    = .MSVCBasePCHDisabled
+;
+; //------------------------------------------------------------------------------
+; // CLang Base Platforms
+; //------------------------------------------------------------------------------
+; .CLangWindowsBasePlatformWin32 =
+; [
+;     Using( .SharedPlatformWin32 )
+;     Using( .CLangWindowsBase )
+;
+;     .Defines            + .PlatformDefines
+;
+;     .CompilerOptions    + ' -m32'
+;     .PCHOptions         + ' -m32'
+;
+;     .LibrarianOptions   = ' /MACHINE:X86 $LibrarianOptions$'
+;     .LinkerOptions      = ' /MACHINE:X86 $LinkerOptions$'
+; ]
+;
+; .CLangWindowsBasePlatformX64 =
+; [
+;     Using( .SharedPlatformX64 )
+;     Using( .CLangWindowsBase )
+;
+;     .Defines            + .PlatformDefines
+;
+;     .CompilerOptions    + ' -m64'
+;     .PCHOptions         + ' -m64'
+;
+;     .LibrarianOptions   = ' /MACHINE:X64 $LibrarianOptions$'
+;     .LinkerOptions      = ' /MACHINE:X64 $LinkerOptions$'
+; ]
+;
+; //------------------------------------------------------------------------------
+; // Configurations
+; //------------------------------------------------------------------------------
+; .CLangWindowsBaseDebugConfig       = .MSVCBaseDebugConfig
+; .CLangWindowsBaseFastDebugConfig   = .MSVCBaseFastDebugConfig
+; .CLangWindowsBaseReleaseConfig     = .MSVCBaseReleaseConfig
+; .CLangWindowsBaseProfilingConfig   = .MSVCBaseProfilingConfig
+; .CLangWindowsBaseFinalConfig       = .MSVCBaseFinalConfig
