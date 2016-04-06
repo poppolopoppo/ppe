@@ -3,6 +3,7 @@
 #include "Core.ContentPipeline/ContentPipeline.h"
 
 #include "Core.ContentPipeline/ContentIdentity.h"
+#include "Core.ContentPipeline/ContentPipelineNode.h"
 
 #include "Core/Diagnostic/Logger.h"
 #include "Core/IO/FS/Dirname.h"
@@ -47,15 +48,9 @@ private:
 template <typename _Input, typename _Output>
 class ContentProcessor;
 //----------------------------------------------------------------------------
-class IContentProcessor : public RTTI::MetaObject {
+class IContentProcessor : public ContentPipelineNode {
 public:
     virtual ~IContentProcessor() {}
-
-    IContentProcessor(const IContentProcessor&) = delete;
-    IContentProcessor& operator=(const IContentProcessor&) = delete;
-
-    virtual const String& Name() const = 0;
-    virtual u128 Fingerprint() const = 0;
 
     template <typename _Input, typename _Output>
     bool Process(ContentProcessorContext& ctx, _Output& dst, const _Input& src) const {
@@ -66,7 +61,7 @@ public:
             return processor->Process(ctx, dst, src);
     }
 
-    RTTI_CLASS_HEADER(IContentProcessor, RTTI::MetaObject);
+    RTTI_CLASS_HEADER(IContentProcessor, ContentPipelineNode);
 };
 //----------------------------------------------------------------------------
 template <typename _Input, typename _Output>

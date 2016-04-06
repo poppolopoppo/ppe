@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <CustomBuild Include="ContentIdentity.cpp">
@@ -31,5 +31,13 @@
     </CustomBuild>
     <CustomBuild Include="targetver.h">
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ContentSerializer.h" />
+    <ClInclude Include="ContentPipelineNode.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ContentSerializer.cpp" />
+    <ClCompile Include="ContentPipelineNode.cpp" />
   </ItemGroup>
 </Project>

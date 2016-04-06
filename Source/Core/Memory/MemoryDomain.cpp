@@ -83,7 +83,7 @@ MemoryView<MemoryTrackingData *> EachDomainTrackingData() {
 }
 //----------------------------------------------------------------------------
 void ReportDomainTrackingData() {
-#ifdef USE_MEMORY_DOMAINS
+#if defined(USE_MEMORY_DOMAINS) && defined(USE_DEBUG_LOGGER)
     const MemoryTrackingData **ptr = (const MemoryTrackingData **)&gAllMemoryDomainTrackingData[0];
     const MemoryView<const MemoryTrackingData *> datas(ptr, lengthof(gAllMemoryDomainTrackingData));
     LoggerStream log(LogCategory::Debug);
@@ -118,7 +118,7 @@ void UnregisterAdditionalTrackingData(MemoryTrackingData *pTrackingData) {
 }
 //----------------------------------------------------------------------------
 void ReportAdditionalTrackingData() {
-#ifdef USE_MEMORY_DOMAINS
+#if defined(USE_MEMORY_DOMAINS) && defined(USE_DEBUG_LOGGER)
     AssertRelease(gAllAdditionalTrackingData);
     SKIP_MEMORY_LEAKS_IN_SCOPE();
     std::unique_lock<std::mutex> scopeLock(gAllAdditionalTrackingData->Barrier);

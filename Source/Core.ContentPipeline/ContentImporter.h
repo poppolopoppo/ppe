@@ -3,6 +3,7 @@
 #include "Core.ContentPipeline/ContentPipeline.h"
 
 #include "Core.ContentPipeline/ContentIdentity.h"
+#include "Core.ContentPipeline/ContentPipelineNode.h"
 
 #include "Core/Diagnostic/Logger.h"
 #include "Core/IO/FS/Dirname.h"
@@ -43,15 +44,9 @@ private:
 template <typename _Import>
 class ContentImporter;
 //----------------------------------------------------------------------------
-class IContentImporter : public RTTI::MetaObject {
+class IContentImporter : public ContentPipelineNode {
 public:
     virtual ~IContentImporter() {}
-
-    IContentImporter(const IContentImporter&) = delete;
-    IContentImporter& operator=(const IContentImporter&) = delete;
-
-    virtual const String& Name() const = 0;
-    virtual u128 Fingerprint() const = 0;
 
     template <typename _Import>
     bool Import(ContentImporterContext& ctx, _Import& dst) const {
@@ -62,7 +57,7 @@ public:
             return importer->Import(ctx, dst);
     }
 
-    RTTI_CLASS_HEADER(IContentImporter, RTTI::MetaObject);
+    RTTI_CLASS_HEADER(IContentImporter, ContentPipelineNode);
 };
 //----------------------------------------------------------------------------
 template <typename _Import>
