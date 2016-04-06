@@ -72,6 +72,30 @@ private:
     Flags _attributes;
 };
 //----------------------------------------------------------------------------
+template <typename _Visitor = void (*)(const MetaClass* metaClass, const MetaProperty* prop) >
+void ForEachProperty(const MetaClass* metaClass, const _Visitor& visitor) {
+    while (nullptr != metaClass) {
+        for (const UCMetaProperty& prop : metaClass->Properties()) {
+            Assert(prop);
+            visitor(metaClass, prop.get());
+        }
+        metaClass = metaClass->Parent();
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Pred = bool (*)(const MetaClass* metaClass, const MetaProperty* prop) >
+const MetaProperty* FindProperty(const MetaClass* metaClass, const _Pred& pred) {
+    while (nullptr != metaClass) {
+        for (const UCMetaProperty& prop : metaClass->Properties()) {
+            Assert(prop);
+            if (pred(metaClass, prop.get()))
+                return prop.get();
+        }
+        metaClass = metaClass->Parent();
+    }
+    return nullptr;
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class InScopeMetaClass : public MetaClass {
