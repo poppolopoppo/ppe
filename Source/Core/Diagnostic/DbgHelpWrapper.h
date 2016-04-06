@@ -25,17 +25,17 @@ namespace Core {
 //----------------------------------------------------------------------------
 class DbghelpWrapper : Meta::Singleton<DbghelpWrapper> {
 public:
-    typedef BOOL (*SymInitializeW_t)(
+    typedef BOOL (WINAPI *SymInitializeW_t)(
         _In_ HANDLE hProcess,
         _In_opt_ PCWSTR UserSearchPath,
         _In_ BOOL fInvadeProcess
         );
-    typedef BOOL (*SymCleanup_t)(_In_ HANDLE hProcess);
+    typedef BOOL (WINAPI *SymCleanup_t)(_In_ HANDLE hProcess);
 
-    typedef DWORD (*SymGetOptions_t)(VOID);
-    typedef DWORD (*SymSetOptions_t)(_In_ DWORD SymOptions);
+    typedef DWORD (WINAPI *SymGetOptions_t)(VOID);
+    typedef DWORD (WINAPI *SymSetOptions_t)(_In_ DWORD SymOptions);
 
-    typedef DWORD64 (*SymLoadModuleExW_t)(
+    typedef DWORD64 (WINAPI *SymLoadModuleExW_t)(
         _In_ HANDLE hProcess,
         _In_opt_ HANDLE hFile,
         _In_opt_ PCWSTR ImageName,
@@ -46,13 +46,13 @@ public:
         _In_opt_ DWORD Flags
         );
 
-    typedef BOOL (*SymGetLineFromAddrW64_t)(
+    typedef BOOL (WINAPI *SymGetLineFromAddrW64_t)(
         _In_ HANDLE hProcess,
         _In_ DWORD64 dwAddr,
         _Out_ PDWORD pdwDisplacement,
         _Out_ PIMAGEHLP_LINEW64 Line
         );
-    typedef BOOL (*SymFromAddrW_t)(
+    typedef BOOL (WINAPI *SymFromAddrW_t)(
         _In_ HANDLE hProcess,
         _In_ DWORD64 Address,
         _Out_opt_ PDWORD64 Displacement,
