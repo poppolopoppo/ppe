@@ -32,11 +32,16 @@ bool Equals(const MetaObject& lhs, const MetaObject& rhs) {
     if (rhs.RTTI_MetaClass() != metaClass)
         return false;
 
-    for (const UCMetaProperty& prop : metaClass->Properties())
-        if (false == prop->Equals(&lhs, &rhs))
-            return false;
+    const MetaObject* plhs = &lhs;
+    const MetaObject* prhs = &rhs;
 
-    return true;
+    const MetaProperty* notEquals = FindProperty(metaClass,
+        [plhs, prhs](const MetaClass* pMetaClass, const MetaProperty* pProp) {
+            UNUSED(pMetaClass);
+            return (not pProp->Equals(plhs, prhs));
+        });
+
+    return (nullptr == notEquals);
 }
 //----------------------------------------------------------------------------
 bool DeepEquals(const MetaObject& lhs, const MetaObject& rhs) {
@@ -49,11 +54,16 @@ bool DeepEquals(const MetaObject& lhs, const MetaObject& rhs) {
     if (rhs.RTTI_MetaClass() != metaClass)
         return false;
 
-    for (const UCMetaProperty& prop : metaClass->Properties())
-        if (false == prop->DeepEquals(&lhs, &rhs))
-            return false;
+    const MetaObject* plhs = &lhs;
+    const MetaObject* prhs = &rhs;
 
-    return true;
+    const MetaProperty* notEquals = FindProperty(metaClass,
+        [plhs, prhs](const MetaClass* pMetaClass, const MetaProperty* pProp) {
+            UNUSED(pMetaClass);
+            return (not pProp->DeepEquals(plhs, prhs));
+        });
+
+    return (nullptr == notEquals);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -62,11 +72,32 @@ hash_t hash_value(const MetaObject& object) {
     const MetaClass *metaClass = object.RTTI_MetaClass();
     Assert(metaClass);
 
+    const MetaObject* pObject = &object;
+
     hash_t h(CORE_HASH_VALUE_SEED);
-    for (const UCMetaProperty& prop : metaClass->Properties())
-        hash_combine(h, hash_t(prop->HashValue(&object)));
+    ForEachProperty(object.RTTI_MetaClass(),
+        [pObject, &h](const MetaClass* pMetaClass, const MetaProperty* pProp) {
+            UNUSED(pMetaClass);
+            hash_combine(h, hash_t(pProp->HashValue(pObject)));
+        });
 
     return h;
+}
+//----------------------------------------------------------------------------
+u128 Fingerprint128(const MetaObject& object) {
+    const MetaClass *metaClass = object.RTTI_MetaClass();
+    Assert(metaClass);
+
+    const MetaObject* pObject = &object;
+
+    STACKLOCAL_POD_STACK(hash_t, hashValues, 128);
+    ForEachProperty(object.RTTI_MetaClass(),
+        [pObject, &hashValues](const MetaClass* pMetaClass, const MetaProperty* pProp) {
+            UNUSED(pMetaClass);
+            hashValues.Push(pProp->HashValue(pObject));
+        });
+
+    return Fingerprint128(hashValues.MakeView());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -74,31 +105,49 @@ hash_t hash_value(const MetaObject& object) {
 void Move(MetaObject& dst, MetaObject& src) {
     const MetaClass *metaClass = src.RTTI_MetaClass();
     Assert(metaClass);
-    Assert(dst.RTTI_MetaClass() == metaClass);
+    AssertRelease(dst.RTTI_MetaClass() == metaClass);
 
-    for (const UCMetaProperty& prop : metaClass->Properties())
-        if (prop->IsWritable())
-            prop->Move(&dst, &src);
+    MetaObject* const pDst = &dst;
+    MetaObject* const pSrc = &src;
+
+    ForEachProperty(metaClass,
+        [pDst, pSrc](const MetaClass* pMetaClass, const MetaProperty* pProp) {
+            UNUSED(pMetaClass);
+            if (pProp->IsWritable())
+                pProp->Move(pDst, pSrc);
+        });
 }
 //----------------------------------------------------------------------------
 void Copy(MetaObject& dst, const MetaObject& src) {
     const MetaClass *metaClass = src.RTTI_MetaClass();
     Assert(metaClass);
-    Assert(dst.RTTI_MetaClass() == metaClass);
+    AssertRelease(dst.RTTI_MetaClass() == metaClass);
 
-    for (const UCMetaProperty& prop : metaClass->Properties())
-        if (prop->IsWritable())
-            prop->Copy(&dst, &src);
+    MetaObject* const pDst = &dst;
+    const MetaObject* const pSrc = &src;
+
+    ForEachProperty(metaClass,
+        [pDst, pSrc](const MetaClass* pMetaClass, const MetaProperty* pProp) {
+            UNUSED(pMetaClass);
+            if (pProp->IsWritable())
+                pProp->Copy(pDst, pSrc);
+        });
 }
 //----------------------------------------------------------------------------
 void Swap(MetaObject& lhs, MetaObject& rhs) {
     const MetaClass *metaClass = lhs.RTTI_MetaClass();
     Assert(metaClass);
-    Assert(rhs.RTTI_MetaClass() == metaClass);
+    AssertRelease(rhs.RTTI_MetaClass() == metaClass);
 
-    for (const UCMetaProperty& prop : metaClass->Properties())
-        if (prop->IsWritable())
-            prop->Swap(&lhs, &rhs);
+    MetaObject* const plhs = &lhs;
+    MetaObject* const prhs = &rhs;
+
+    ForEachProperty(metaClass,
+        [plhs, prhs](const MetaClass* pMetaClass, const MetaProperty* pProp) {
+            UNUSED(pMetaClass);
+            if (pProp->IsWritable())
+                pProp->Swap(plhs, prhs);
+        });
 }
 //----------------------------------------------------------------------------
 MetaObject *NewCopy(const MetaObject& src) {
