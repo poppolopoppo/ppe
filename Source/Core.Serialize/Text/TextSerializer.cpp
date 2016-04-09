@@ -316,17 +316,21 @@ void TextSerialize_::WriteObject_(AtomWriter_& writer, const RTTI::MetaObject* o
         Puts("(");
         IncIndent();
 
-        for (const RTTI::UCMetaProperty& prop : metaClass->Properties()) {
-            if (prop->IsDefaultValue(object))
-                continue;
+        while (metaClass) {
+            for (const RTTI::UCMetaProperty& prop : metaClass->Properties()) {
+                if (prop->IsDefaultValue(object))
+                    continue;
 
-            Print(prop->Name().MakeView());
-            Print(" = ");
+                Print(prop->Name().MakeView());
+                Print(" = ");
 
-            const RTTI::PMetaAtom atom = prop->WrapCopy(object);
-            writer.Append(atom.get());
+                const RTTI::PMetaAtom atom = prop->WrapCopy(object);
+                writer.Append(atom.get());
 
-            Puts("");
+                Puts("");
+            }
+
+            metaClass = metaClass->Parent();
         }
 
         DecIndent();

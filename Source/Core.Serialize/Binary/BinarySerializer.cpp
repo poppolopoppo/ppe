@@ -969,7 +969,7 @@ void BinarySerialize_::Append(const MemoryView<const RTTI::PMetaObject>& objects
 void BinarySerialize_::Finalize(IStreamWriter* writer) {
     Assert(writer);
 
-    // TODO: merge objects when metaclass allows it
+    // TODO: merge objects when metaclass allows it (separated preprocess ?)
 
     writer->WritePOD(FILE_MAGIC_);
     writer->WritePOD(FILE_VERSION_);
