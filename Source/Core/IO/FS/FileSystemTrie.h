@@ -34,7 +34,6 @@ public:
     const FileSystemToken& Token() const { return _token; }
 
     size_t Depth() const { return _depth; }
-
     size_t HashValue() const { return _hashValue; }
 
     bool IsChildOf(const FileSystemNode *parent) const;
@@ -64,6 +63,7 @@ public:
     const FileSystemNode *GetOrCreate(const MemoryView<const FileSystemToken>& path) { return Concat(nullptr, path); }
 
     const FileSystemNode* RootNode(const FileSystemNode *pnode) const;
+
     size_t Expand(const MemoryView<FileSystemToken>& tokens, const FileSystemNode *pnode) const; // returns actual tokens count
     size_t Expand(const MemoryView<FileSystemToken>& tokens, const FileSystemNode *pbegin, const FileSystemNode *pend) const; // returns actual tokens count
 

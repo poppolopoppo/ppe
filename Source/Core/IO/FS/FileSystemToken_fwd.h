@@ -25,7 +25,7 @@ struct FileSystemTokenTag;
 using FileSystemToken = Core::Token<
     FileSystemTokenTag,
     FileSystem::char_type,
-    Case::Insensitive,
+    FileSystem::CaseSensitive,
     FileSystem::TokenTraits,
     ALLOCATOR(FileSystem, FileSystem::char_type)
 >;
