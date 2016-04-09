@@ -9,7 +9,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define POOLTAG_DEF(_Name) \
+#define POOL_TAG_DEF(_Name) \
     namespace PoolTag { \
         typedef Core::Meta::Singleton< Core::MemoryPoolBaseList, _Name > CONCAT(_Name, _type); \
         \

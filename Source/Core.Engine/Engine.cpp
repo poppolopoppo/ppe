@@ -9,15 +9,22 @@
 
 #include "Core/Allocator/PoolAllocator-impl.h"
 
+#ifdef OS_WINDOWS
+#   pragma warning(disable: 4073) // initialiseurs placés dans la zone d'initialisation d'une bibliothèque
+#   pragma init_seg(lib)
+#else
+#   error "missing compiler specific command"
+#endif
+
 namespace Core {
 namespace Engine {
-POOLTAG_DEF(Engine);
+POOL_TAG_DEF(Engine);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void EngineStartup::Start() {
     // 0 - Pool allocator tag
-    POOLTAG(Engine)::Start();
+    POOL_TAG(Engine)::Start();
     // 1 - Effect
     Effect::Start();
     // 2 - Material
@@ -38,11 +45,11 @@ void EngineStartup::Shutdown() {
     // 1 - Effect
     Effect::Shutdown();
     // 0 - Pool allocator tag
-    POOLTAG(Engine)::Shutdown();
+    POOL_TAG(Engine)::Shutdown();
 }
 //----------------------------------------------------------------------------
 void EngineStartup::ClearAll_UnusedMemory() {
-    POOLTAG(Engine)::ClearAll_UnusedMemory();
+    POOL_TAG(Engine)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

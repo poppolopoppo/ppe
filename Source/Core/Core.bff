@@ -4,6 +4,7 @@
     .ProjectPath = '$SourceDiretory$/Core'
     .ProjectIsolatedFiles =
     {
+        'Core.cpp'
         'Maths/SphericalHarmonics/SHVector_extern.cpp',
         'External/farmhash.cpp',
         'External/lz4.cpp',

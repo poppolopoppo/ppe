@@ -26,9 +26,16 @@
 
 #define WITH_APPLICATION_TRY_CATCH 0 //%_NOCOMMIT%
 
+#ifdef OS_WINDOWS
+#   pragma warning(disable: 4073) // initialiseurs placés dans la zone d'initialisation d'une bibliothèque
+#   pragma init_seg(lib)
+    #else
+#   error "missing compiler specific command"
+#endif
+
 namespace Core {
 namespace Application {
-POOLTAG_DEF(Application);
+POOL_TAG_DEF(Application);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -97,15 +104,15 @@ static void ConfigureCRTHeapForDebugging_() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void ApplicationStartup::Start() {
-    POOLTAG(Application)::Start();
+    POOL_TAG(Application)::Start();
 }
 //----------------------------------------------------------------------------
 void ApplicationStartup::Shutdown() {
-    POOLTAG(Application)::Shutdown();
+    POOL_TAG(Application)::Shutdown();
 }
 //----------------------------------------------------------------------------
 void ApplicationStartup::ClearAll_UnusedMemory() {
-    POOLTAG(Application)::ClearAll_UnusedMemory();
+    POOL_TAG(Application)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

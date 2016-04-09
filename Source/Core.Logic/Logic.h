@@ -3,6 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/Allocator/PoolAllocatorTag.h"
+#include "Core.RTTI/RTTI_Tag.h"
 
 // CppCon 2015: Vittorio Romeo “Implementation of a component-based entity system in modern C++”
 // http://vittorioromeo.info/projects.html
@@ -11,7 +12,8 @@
 
 namespace Core {
 namespace Logic {
-POOLTAG_DECL(Logic);
+POOL_TAG_DECL(Logic);
+RTTI_TAG_DECL(Logic);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

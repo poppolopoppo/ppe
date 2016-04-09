@@ -9,12 +9,12 @@
 #include "Allocator/PoolAllocatorTag-impl.h"
 
 namespace Core {
-POOLTAG_DEF(FileSystem);
+POOL_TAG_DEF(FileSystem);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FileSystemStartup::Start() {
-    POOLTAG(FileSystem)::Start();
+    POOL_TAG(FileSystem)::Start();
     FileSystemToken::Start(1024);
     FileSystemPath::Create();
     FileSystemConstNames::Start();
@@ -24,7 +24,7 @@ void FileSystemStartup::Shutdown() {
     FileSystemConstNames::Shutdown();
     FileSystemPath::Destroy();
     FileSystemToken::Shutdown();
-    POOLTAG(FileSystem)::Shutdown();
+    POOL_TAG(FileSystem)::Shutdown();
 }
 //----------------------------------------------------------------------------
 void FileSystemStartup::Clear() {
@@ -32,7 +32,7 @@ void FileSystemStartup::Clear() {
     FileSystemPath::Instance().Clear();
     FileSystemToken::Clear();
     FileSystemConstNames::Start();
-    POOLTAG(FileSystem)::ClearAll_UnusedMemory();
+    POOL_TAG(FileSystem)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -51,9 +51,9 @@ void CoreStartup::Start(void *applicationHandle, int nShowCmd, size_t argc, cons
     // 3 - heap allocators
     Heaps::Process::Create(Heap::current_process_t());
     // 4 - pool allocators
-    POOLTAG(Default)::Start();
-    POOLTAG(NodeBasedContainer)::Start();
-    POOLTAG(TaskPool)::Start();
+    POOL_TAG(Default)::Start();
+    POOL_TAG(NodeBasedContainer)::Start();
+    POOL_TAG(TaskPool)::Start();
     // 5 - auto singleton manager
     Meta::AutoSingletonManager::Start();
     // 6 - thread pool
@@ -74,9 +74,9 @@ void CoreStartup::Shutdown() {
     // 5 - auto singleton manager
     Meta::AutoSingletonManager::Shutdown();
     // 4 - pool allocators
-    POOLTAG(TaskPool)::Shutdown();
-    POOLTAG(NodeBasedContainer)::Shutdown();
-    POOLTAG(Default)::Shutdown();
+    POOL_TAG(TaskPool)::Shutdown();
+    POOL_TAG(NodeBasedContainer)::Shutdown();
+    POOL_TAG(Default)::Shutdown();
     // 3 - heap allocators
     Heaps::Process::Destroy();
     // 2 - main thread context
@@ -86,11 +86,11 @@ void CoreStartup::Shutdown() {
 }
 //----------------------------------------------------------------------------
 void CoreStartup::ClearAll_UnusedMemory() {
-    POOLTAG(VirtualFileSystem)::ClearAll_UnusedMemory();
-    POOLTAG(FileSystem)::ClearAll_UnusedMemory();
-    POOLTAG(TaskPool)::ClearAll_UnusedMemory();
-    POOLTAG(NodeBasedContainer)::ClearAll_UnusedMemory();
-    POOLTAG(Default)::ClearAll_UnusedMemory();
+    POOL_TAG(VirtualFileSystem)::ClearAll_UnusedMemory();
+    POOL_TAG(FileSystem)::ClearAll_UnusedMemory();
+    POOL_TAG(TaskPool)::ClearAll_UnusedMemory();
+    POOL_TAG(NodeBasedContainer)::ClearAll_UnusedMemory();
+    POOL_TAG(Default)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

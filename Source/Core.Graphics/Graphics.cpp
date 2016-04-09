@@ -28,9 +28,16 @@
 #   include <DirectXMath.h>
 #endif
 
+#ifdef OS_WINDOWS
+#   pragma warning(disable: 4073) // initialiseurs placés dans la zone d'initialisation d'une bibliothèque
+#   pragma init_seg(lib)
+#else
+#   error "missing compiler specific command"
+#endif
+
 namespace Core {
 namespace Graphics {
-POOLTAG_DEF(Graphics);
+POOL_TAG_DEF(Graphics);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -283,7 +290,7 @@ void GraphicsStartup::Start() {
     MathUnitTests_();
 #endif
     // 0 - pool allocator tag
-    POOLTAG(Graphics)::Start();
+    POOL_TAG(Graphics)::Start();
     // 1 - Global video memory
     GlobalVideoMemory::Create();
     // 2 - Register basic window class
@@ -318,11 +325,11 @@ void GraphicsStartup::Shutdown() {
     // 1 - Global video memory
     GlobalVideoMemory::Destroy();
     // 0 - pool allocator tag
-    POOLTAG(Graphics)::Shutdown();
+    POOL_TAG(Graphics)::Shutdown();
 }
 //----------------------------------------------------------------------------
 void GraphicsStartup::ClearAll_UnusedMemory() {
-    POOLTAG(Graphics)::ClearAll_UnusedMemory();
+    POOL_TAG(Graphics)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -6,7 +6,7 @@
 #include "Core/Allocator/SingletonPoolAllocator.h"
 
 namespace Core {
-POOLTAG_DECL(NodeBasedContainer);
+POOL_TAG_DECL(NodeBasedContainer);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

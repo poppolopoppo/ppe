@@ -22,7 +22,7 @@
 #endif
 
 namespace Core {
-POOLTAG_DEF(VirtualFileSystem);
+POOL_TAG_DEF(VirtualFileSystem);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -92,7 +92,7 @@ bool VirtualFileSystem::WriteAll(const Filename& filename, const MemoryView<cons
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void VirtualFileSystemStartup::Start() {
-    POOLTAG(VirtualFileSystem)::Start();
+    POOL_TAG(VirtualFileSystem)::Start();
     VirtualFileSystem::Create();
     // current process directory
     {
@@ -125,12 +125,12 @@ void VirtualFileSystemStartup::Start() {
 //----------------------------------------------------------------------------
 void VirtualFileSystemStartup::Shutdown() {
     VirtualFileSystem::Destroy();
-    POOLTAG(VirtualFileSystem)::Shutdown();
+    POOL_TAG(VirtualFileSystem)::Shutdown();
 }
 //----------------------------------------------------------------------------
 void VirtualFileSystemStartup::Clear() {
     VirtualFileSystem::Instance().Clear();
-    POOLTAG(VirtualFileSystem)::ClearAll_UnusedMemory();
+    POOL_TAG(VirtualFileSystem)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -2,5 +2,9 @@
 {
     .ProjectName = 'Core.Logic'
     .ProjectPath = '$SourceDiretory$/Core.Logic'
+    .ProjectIsolatedFiles =
+    {
+        'Logic.cpp'
+    }
     #include "../../Build/Templates/Library.bff"
 }

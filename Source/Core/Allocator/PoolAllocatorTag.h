@@ -13,7 +13,7 @@ class MemoryPoolBase;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define _POOLTAG_DECL_IMPL(_NameId, _NameStr) \
+#define _POOL_TAG_DECL_IMPL(_NameId, _NameStr) \
     namespace PoolTag { \
         struct _NameId { \
         public: \
@@ -32,16 +32,16 @@ class MemoryPoolBase;
     }
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_POOL_ALLACATOR_TAGNAME
-#   define POOLTAG_DECL(_Name) _POOLTAG_DECL_IMPL(_Name, STRINGIZE(_Name))
+#   define POOL_TAG_DECL(_Name) _POOL_TAG_DECL_IMPL(_Name, STRINGIZE(_Name))
 #else
-#   define POOLTAG_DECL(_Name) _POOLTAG_DECL_IMPL(_Name, "")
+#   define POOL_TAG_DECL(_Name) _POOL_TAG_DECL_IMPL(_Name, "")
 #endif
 //----------------------------------------------------------------------------
-#define POOLTAG_FWD(_Name) namespace PoolTag { struct _Name; }
+#define POOL_TAG_FWD(_Name) namespace PoolTag { struct _Name; }
 //----------------------------------------------------------------------------
-#define POOLTAG(_Name) PoolTag::_Name
+#define POOL_TAG(_Name) PoolTag::_Name
 //----------------------------------------------------------------------------
-POOLTAG_DECL(Default) // Default tag for Pool segregation
+POOL_TAG_DECL(Default) // Default tag for Pool segregation
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

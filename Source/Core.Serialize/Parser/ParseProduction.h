@@ -14,7 +14,7 @@
 
 namespace Core {
 namespace Parser {
-POOLTAG_FWD(Parser);
+POOL_TAG_FWD(Parser);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -25,7 +25,7 @@ template <typename T>
 struct Production : public std::unary_function<ParseList&, ParseResult<T> > {
     typedef T value_type;
 
-    typedef SINGLETON_POOL_ALLOCATOR(Parser, int, POOLTAG(Parser)) allocator_type;
+    typedef SINGLETON_POOL_ALLOCATOR(Parser, int, POOL_TAG(Parser)) allocator_type;
     typedef std::function< ParseResult<T>(ParseList&) > lambda_type;
 
     lambda_type Lambda;

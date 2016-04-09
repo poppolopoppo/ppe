@@ -10,7 +10,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, bool _ThreadLocal = false, typename _PoolTag = POOLTAG(Default) >
+template <typename T, bool _ThreadLocal = false, typename _PoolTag = POOL_TAG(Default) >
 class SingletonPoolAllocator : public AllocatorBase<T> {
 public:
     typedef AllocatorBase<T> base_type;

@@ -2,5 +2,9 @@
 {
     .ProjectName = 'Core.Engine'
     .ProjectPath = '$SourceDiretory$/Core.Engine'
+    .ProjectIsolatedFiles =
+    {
+        'Engine.cpp'
+    }
     #include "../../Build/Templates/Library.bff"
 }

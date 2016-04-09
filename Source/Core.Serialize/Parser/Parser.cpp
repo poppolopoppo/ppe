@@ -6,20 +6,20 @@
 
 namespace Core {
 namespace Parser {
-POOLTAG_DEF(Parser);
+POOL_TAG_DEF(Parser);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void ParserStartup::Start() {
-    POOLTAG(Parser)::Start();
+    POOL_TAG(Parser)::Start();
 }
 //----------------------------------------------------------------------------
 void ParserStartup::Shutdown() {
-    POOLTAG(Parser)::Shutdown();
+    POOL_TAG(Parser)::Shutdown();
 }
 //----------------------------------------------------------------------------
 void ParserStartup::ClearAll_UnusedMemory() {
-    POOLTAG(Parser)::ClearAll_UnusedMemory();
+    POOL_TAG(Parser)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

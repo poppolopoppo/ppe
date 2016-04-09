@@ -2,5 +2,9 @@
 {
     .ProjectName = 'Core.Serialize'
     .ProjectPath = '$SourceDiretory$/Core.Serialize'
+    .ProjectIsolatedFiles =
+    {
+        'Serialize.cpp'
+    }
     #include "../../Build/Templates/Library.bff"
 }

@@ -6,7 +6,7 @@
 
 namespace Core {
 namespace Application {
-POOLTAG_DECL(Application);
+POOL_TAG_DECL(Application);
 class ApplicationBase;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

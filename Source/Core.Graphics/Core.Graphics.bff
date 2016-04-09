@@ -2,5 +2,9 @@
 {
     .ProjectName = 'Core.Graphics'
     .ProjectPath = '$SourceDiretory$/Core.Graphics'
+    .ProjectIsolatedFiles =
+    {
+        'Graphics.cpp'
+    }
     #include "../../Build/Templates/Library.bff"
 }

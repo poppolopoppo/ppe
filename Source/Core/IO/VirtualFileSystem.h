@@ -15,7 +15,7 @@
 namespace Core {
 template <typename T, typename _Allocator>
 class RawStorage;
-POOLTAG_DECL(VirtualFileSystem);
+POOL_TAG_DECL(VirtualFileSystem);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
