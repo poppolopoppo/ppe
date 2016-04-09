@@ -107,6 +107,12 @@
     </CustomBuild>
     <CustomBuild Include="RTTI_fwd.h">
     </CustomBuild>
+    <CustomBuild Include="RTTI_Tag-impl.h">
+    </CustomBuild>
+    <CustomBuild Include="RTTI_Tag.cpp">
+    </CustomBuild>
+    <CustomBuild Include="RTTI_Tag.h">
+    </CustomBuild>
     <CustomBuild Include="stdafx.cpp">
     </CustomBuild>
     <CustomBuild Include="stdafx.h">

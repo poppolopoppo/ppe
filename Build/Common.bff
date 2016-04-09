@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 // Default Unity Options
 //------------------------------------------------------------------------------
-.UnityNumFiles = 4 ; peut être override par projet
+.UnityNumFiles = 5 ; peut être override par projet
 .UnityInputIsolateWritableFiles = false ; passer à true désactive l'utilisation des unity builds
 
 //------------------------------------------------------------------------------

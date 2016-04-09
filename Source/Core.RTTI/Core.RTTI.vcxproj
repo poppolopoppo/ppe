@@ -96,6 +96,9 @@
     <CustomBuild Include="RTTI_extern.cpp" />
     <CustomBuild Include="RTTI_extern.h" />
     <CustomBuild Include="RTTI_fwd.h" />
+    <CustomBuild Include="RTTI_Tag-impl.h" />
+    <CustomBuild Include="RTTI_Tag.cpp" />
+    <CustomBuild Include="RTTI_Tag.h" />
     <CustomBuild Include="stdafx.cpp" />
     <CustomBuild Include="stdafx.h" />
     <CustomBuild Include="targetver.h" />

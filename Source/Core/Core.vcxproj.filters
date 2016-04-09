@@ -445,6 +445,9 @@
     <CustomBuild Include="IO\LZJB.h">
       <Filter>IO</Filter>
     </CustomBuild>
+    <CustomBuild Include="IO\regexp.cpp">
+      <Filter>IO</Filter>
+    </CustomBuild>
     <CustomBuild Include="IO\regexp.h">
       <Filter>IO</Filter>
     </CustomBuild>

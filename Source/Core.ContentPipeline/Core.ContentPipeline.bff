@@ -2,5 +2,9 @@
 {
     .ProjectName = 'Core.ContentPipeline'
     .ProjectPath = '$SourceDiretory$/Core.ContentPipeline'
+    .ProjectIsolatedFiles =
+    {
+        'ContentPipeline.cpp'
+    }
     #include "../../Build/Templates/Library.bff"
 }

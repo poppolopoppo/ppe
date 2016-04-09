@@ -1,6 +1,10 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <CustomBuild Include="ContentFilter.cpp">
+    </CustomBuild>
+    <CustomBuild Include="ContentFilter.h">
+    </CustomBuild>
     <CustomBuild Include="ContentIdentity.cpp">
     </CustomBuild>
     <CustomBuild Include="ContentIdentity.h">
@@ -13,9 +17,21 @@
     </CustomBuild>
     <CustomBuild Include="ContentPipeline.h">
     </CustomBuild>
+    <CustomBuild Include="ContentPipelineNode.cpp">
+    </CustomBuild>
+    <CustomBuild Include="ContentPipelineNode.h">
+    </CustomBuild>
     <CustomBuild Include="ContentProcessor.cpp">
     </CustomBuild>
     <CustomBuild Include="ContentProcessor.h">
+    </CustomBuild>
+    <CustomBuild Include="ContentSerializer.cpp">
+    </CustomBuild>
+    <CustomBuild Include="ContentSerializer.h">
+    </CustomBuild>
+    <CustomBuild Include="ContentToolchain.cpp">
+    </CustomBuild>
+    <CustomBuild Include="ContentToolchain.h">
     </CustomBuild>
     <CustomBuild Include="Core.ContentPipeline.bff">
     </CustomBuild>
@@ -31,13 +47,5 @@
     </CustomBuild>
     <CustomBuild Include="targetver.h">
     </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="ContentSerializer.h" />
-    <ClInclude Include="ContentPipelineNode.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="ContentSerializer.cpp" />
-    <ClCompile Include="ContentPipelineNode.cpp" />
   </ItemGroup>
 </Project>

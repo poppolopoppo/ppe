@@ -191,6 +191,7 @@
     <CustomBuild Include="IO\FormatHelpers.h" />
     <CustomBuild Include="IO\LZJB.cpp" />
     <CustomBuild Include="IO\LZJB.h" />
+    <CustomBuild Include="IO\regexp.cpp" />
     <CustomBuild Include="IO\regexp.h" />
     <CustomBuild Include="IO\SimpleFileVerification.h" />
     <CustomBuild Include="IO\Stream-inl.h" />
