@@ -36,8 +36,8 @@ enum class BlendFunction {
     Add = 0,
     Max,
     Min,
-    ReverseSubstract,
-    Substract
+    ReverseSubtract,
+    Subtract
 };
 //----------------------------------------------------------------------------
 enum class ColorChannels {

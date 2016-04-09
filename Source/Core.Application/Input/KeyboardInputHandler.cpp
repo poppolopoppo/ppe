@@ -134,7 +134,7 @@ static const u8 gVirtualKey_to_KeyboardKey[0xFF] = {
     u8(KeyboardKey::Multiply),
     u8(KeyboardKey::Add),
     0xFF,
-    u8(KeyboardKey::Substract),
+    u8(KeyboardKey::Subtract),
     0xFF,
     u8(KeyboardKey::Divide),
     u8(KeyboardKey::F1),

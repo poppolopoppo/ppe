@@ -64,7 +64,7 @@ enum class KeyboardKey : u32 {
     Numpad9,
 
     Add,
-    Substract,
+    Subtract,
     Multiply,
     Divide,
 

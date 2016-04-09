@@ -513,8 +513,9 @@ static void TestRTTI_() {
     const RTTI::MetaClass *metaClass = t->RTTI_MetaClass();
 
     Format(std::cout, "MetaClass<{0}> : {1}\n", metaClass->Name(), metaClass->Attributes());
-    for (const auto& it : metaClass->Properties())
-        Format(std::cout, "  - {0} : {1} -> {2}\n", it.first, it.second->Attributes(), it.second->TypeInfo());
+    RTTI::ForEachProperty(metaClass, [](const MetaClass* metaClass, const MetaProperty* prop) {
+        Format(std::cout, "  - {0} : {1} -> {2}\n", prop->Name(), prop->Attributes(), prop->TypeInfo());
+    });
 
     const RTTI::MetaProperty *prop = metaClass->PropertyIFP("_count");
 
@@ -1121,7 +1122,7 @@ void TestInputs_() {
     virtualKeyToKeyboardKey[VK_NUMPAD9] = u8(KeyboardKey::Numpad9);
 
     virtualKeyToKeyboardKey[VK_ADD] = u8(KeyboardKey::Add);
-    virtualKeyToKeyboardKey[VK_SUBTRACT] = u8(KeyboardKey::Substract);
+    virtualKeyToKeyboardKey[VK_SUBTRACT] = u8(KeyboardKey::Subtract);
     virtualKeyToKeyboardKey[VK_MULTIPLY] = u8(KeyboardKey::Multiply);
     virtualKeyToKeyboardKey[VK_DIVIDE] = u8(KeyboardKey::Divide);
 

@@ -66,7 +66,7 @@ static const KeyboardKey gEachKeyboardKeys[] = {
     KeyboardKey::Numpad9,
 
     KeyboardKey::Add,
-    KeyboardKey::Substract,
+    KeyboardKey::Subtract,
     KeyboardKey::Multiply,
     KeyboardKey::Divide,
     KeyboardKey::Enter,
@@ -222,8 +222,8 @@ StringSlice KeyboardKeyToCStr(KeyboardKey value) {
         return MakeStringSlice("Numpad9");
     case Core::Engine::KeyboardKey::Add:
         return MakeStringSlice("Add");
-    case Core::Engine::KeyboardKey::Substract:
-        return MakeStringSlice("Substract");
+    case Core::Engine::KeyboardKey::Subtract:
+        return MakeStringSlice("Subtract");
     case Core::Engine::KeyboardKey::Multiply:
         return MakeStringSlice("Multiply");
     case Core::Engine::KeyboardKey::Divide:

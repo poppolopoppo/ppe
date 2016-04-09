@@ -131,9 +131,9 @@ Blend DX11BlendToBlend(::D3D11_BLEND value) {
         return D3D11_BLEND_OP_MAX;
     case Core::Graphics::BlendFunction::Min:
         return D3D11_BLEND_OP_MIN;;
-    case Core::Graphics::BlendFunction::ReverseSubstract:
+    case Core::Graphics::BlendFunction::ReverseSubtract:
         return D3D11_BLEND_OP_REV_SUBTRACT;
-    case Core::Graphics::BlendFunction::Substract:
+    case Core::Graphics::BlendFunction::Subtract:
         return D3D11_BLEND_OP_SUBTRACT;
     default:
         AssertNotImplemented();
@@ -151,9 +151,9 @@ BlendFunction DX11BlendOpToBlendFunction(::D3D11_BLEND_OP value) {
     case D3D11_BLEND_OP_MIN:
         return Core::Graphics::BlendFunction::Min;
     case D3D11_BLEND_OP_REV_SUBTRACT:
-        return Core::Graphics::BlendFunction::ReverseSubstract;
+        return Core::Graphics::BlendFunction::ReverseSubtract;
     case D3D11_BLEND_OP_SUBTRACT:
-        return Core::Graphics::BlendFunction::Substract;
+        return Core::Graphics::BlendFunction::Subtract;
     default:
         AssertNotImplemented();
     }
