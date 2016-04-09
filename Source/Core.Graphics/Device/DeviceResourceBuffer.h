@@ -31,6 +31,7 @@ enum class BufferMode : u32 {
     WriteDiscard    = Write|Discard,
     WriteDoNotWait  = Write|DoNotWait,
 };
+ENUM_FLAGS(BufferMode)
 //----------------------------------------------------------------------------
 // http://amd-dev.wpengine.netdna-cdn.com/wordpress/media/2012/10/Ultimate%20Graphics%20Performance%20for%20DirectX%2010%20Hardware%20-%20Develop%202008.pdf
 // https://developer.nvidia.com/sites/default/files/akamai/gamedev/files/gdc12/Efficient_Buffer_Management_McDonald.pdf
@@ -84,7 +85,7 @@ public:
     }
 
     void CopyFrom(IDeviceAPIEncapsulator *device, const DeviceResourceBuffer *psource);
-    void CopySubPart(   IDeviceAPIEncapsulator *device, size_t dstOffset, 
+    void CopySubPart(   IDeviceAPIEncapsulator *device, size_t dstOffset,
                         const DeviceResourceBuffer *psource, size_t srcOffset,
                         size_t length );
 
@@ -125,8 +126,8 @@ public:
 
     virtual void CopyFrom(IDeviceAPIEncapsulator *device, const DeviceAPIDependantResourceBuffer *psource) = 0;
 
-    virtual void CopySubPart(   IDeviceAPIEncapsulator *device, size_t dstOffset, 
-                                const DeviceAPIDependantResourceBuffer *psource, size_t srcOffset, 
+    virtual void CopySubPart(   IDeviceAPIEncapsulator *device, size_t dstOffset,
+                                const DeviceAPIDependantResourceBuffer *psource, size_t srcOffset,
                                 size_t length ) = 0;
 
     virtual size_t VideoMemorySizeInBytes() const { return SizeInBytes(); }
