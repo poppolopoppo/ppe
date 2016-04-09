@@ -3,7 +3,6 @@
 #include "MetaClass.h"
 
 #include "MetaClassDatabase.h"
-
 #include "MetaProperty.h"
 
 #include "Core/IO/String.h"
@@ -14,9 +13,8 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-MetaClass::MetaClass(const MetaClassName& name, Flags attributes, const MetaClass *parent)
+MetaClass::MetaClass(const MetaClassName& name, Flags attributes)
 :   _name(name)
-,   _parent(parent)
 ,   _attributes(attributes) {}
 //----------------------------------------------------------------------------
 MetaClass::~MetaClass() {}
@@ -26,10 +24,11 @@ bool MetaClass::InheritsFrom(const MetaClass *parent) const {
 
     if (parent == this)
         return true;
-    else if (nullptr == _parent)
-        return false;
-    else
-        return _parent->InheritsFrom(parent);
+
+    const MetaClass* _parent = Parent();
+    return (nullptr != _parent)
+        ? _parent->InheritsFrom(parent)
+        : false;
 }
 //----------------------------------------------------------------------------
 bool MetaClass::IsAssignableFrom(const MetaClass *child) const {
@@ -43,6 +42,10 @@ void MetaClass::Register(MetaClassHashMap& database) const {
 //----------------------------------------------------------------------------
 void MetaClass::Unregister(MetaClassHashMap& database) const {
     database.Remove(this);
+}
+//----------------------------------------------------------------------------
+const MetaClass* MetaClass::Parent() const {
+    return VirtualParent();
 }
 //----------------------------------------------------------------------------
 MemoryView<const UCMetaProperty> MetaClass::Properties() const {
@@ -80,8 +83,8 @@ MetaObject* MetaClass::CreateInstance() const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-InScopeMetaClass::InScopeMetaClass(const MetaClassName& name, Flags attributes, const MetaClass *parent)
-:   MetaClass(name, attributes, parent) {}
+InScopeMetaClass::InScopeMetaClass(const MetaClassName& name, Flags attributes)
+:   MetaClass(name, attributes) {}
 //----------------------------------------------------------------------------
 InScopeMetaClass::~InScopeMetaClass() {}
 //----------------------------------------------------------------------------

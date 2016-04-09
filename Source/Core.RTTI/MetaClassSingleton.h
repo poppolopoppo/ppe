@@ -6,6 +6,7 @@
 
 namespace Core {
 namespace RTTI {
+class MetaClass;
 class MetaClassDatabase;
 FWD_REFPTR(MetaObject);
 //----------------------------------------------------------------------------
@@ -46,7 +47,8 @@ UniquePtr<const typename T::MetaClass> MetaClassSingleton<T, _Enabled>::_gInstan
 //----------------------------------------------------------------------------
 template <typename T> // valid RTTI parent
 static const RTTI::MetaClass *GetMetaClass(typename std::enable_if< std::is_base_of<RTTI::MetaObject, T>::value >::type* = 0) {
-    return &MetaClassSingleton<T>::Instance();
+    typedef typename std::decay<T>::type metaobject_type;
+    return &MetaClassSingleton<metaobject_type>::Instance();
 }
 //----------------------------------------------------------------------------
 template <typename T> // no parent

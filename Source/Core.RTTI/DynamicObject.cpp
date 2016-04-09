@@ -120,10 +120,14 @@ const RTTI::MetaClass *DynamicObject::RTTI_MetaClass() const {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 DynamicObject::MetaClass::MetaClass()
-:   RTTI::InScopeMetaClass("DynamicObject", RTTI::MetaClass::Dynamic, nullptr)
+:   RTTI::InScopeMetaClass("DynamicObject", RTTI::MetaClass::Dynamic)
 {}
 //----------------------------------------------------------------------------
 DynamicObject::MetaClass::~MetaClass() {}
+//----------------------------------------------------------------------------
+const RTTI::MetaClass* DynamicObject::MetaClass::VirtualParent() const {
+    return nullptr;
+}
 //----------------------------------------------------------------------------
 MetaObject* DynamicObject::MetaClass::VirtualCreateInstance() const {
     return new DynamicObject();

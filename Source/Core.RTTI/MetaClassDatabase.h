@@ -25,9 +25,6 @@ public:
     MetaClassHashMap(const MetaClassHashMap&) = delete;
     MetaClassHashMap& operator =(const MetaClassHashMap&) = delete;
 
-    void Add(const MetaClassName& name, const MetaClass *metaClass, bool allowOverride);
-    void Remove(const MetaClassName& name, const MetaClass *metaClass);
-
     void Add(const MetaClass *metaClass);
     void Remove(const MetaClass *metaClass);
 

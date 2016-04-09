@@ -40,16 +40,22 @@
 #define _RTTI_CLASS_DESTRUCTOR(_Name) \
     _Name::MetaClass::~MetaClass() {}
 //----------------------------------------------------------------------------
+#define _RTTI_CLASS_AUTOREGISTER(_Tag, _Name) \
+    static const Core::RTTI::MetaClassDecl<RTTI_TAG(_Tag)> CONCAT(gRTTI_AutoRegister_, _Name)( \
+        &_Name::MetaClass::Create, \
+        &_Name::MetaClass::Destroy \
+        );
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define RTTI_CLASS_BEGIN(_Name, _Attributes) \
+#define RTTI_CLASS_BEGIN(_Tag, _Name, _Attributes) \
     _RTTI_CLASS_SINGLETON(_Name) \
+    _RTTI_CLASS_AUTOREGISTER(_Tag, _Name) \
     _RTTI_CLASS_DESTRUCTOR(_Name) \
     _Name::MetaClass::MetaClass() \
-    :   Core::RTTI::DefaultMetaClass<_Name>( \
-            STRINGIZE(_Name), \
-            Core::RTTI::MetaClass::_Attributes, \
-            Core::RTTI::GetMetaClass<parent_type>() ) {
+        :   Core::RTTI::DefaultMetaClass<_Name>( \
+                STRINGIZE(_Name), \
+                Core::RTTI::MetaClass::_Attributes ) {
 //----------------------------------------------------------------------------
 #define RTTI_CLASS_END() }
 //----------------------------------------------------------------------------

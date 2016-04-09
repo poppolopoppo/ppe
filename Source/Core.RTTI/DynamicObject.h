@@ -90,6 +90,7 @@ public:
         //virtual const MetaProperty *VirtualPropertyIFP(const char *name, size_t attributes) const override;
         //virtual const MetaProperty *VirtualPropertyIFP(const MetaPropertyName& name, size_t attributes) const override;
 
+        virtual const RTTI::MetaClass* VirtualParent() const override;
         virtual MetaObject* VirtualCreateInstance() const override;
     };
 

@@ -2,10 +2,11 @@
 
 #include "Core.RTTI/RTTI.h"
 
-#include "Core/Container/AssociativeVector.h"
+#include "Core/Container/Vector.h"
 #include "Core/Memory/UniquePtr.h"
 
 #include "Core.RTTI/MetaClassName.h"
+#include "Core.RTTI/MetaClassSingleton.h"
 #include "Core.RTTI/MetaPropertyName.h"
 
 namespace Core {
@@ -19,6 +20,8 @@ FWD_UNIQUEPTR(MetaProperty);
 //----------------------------------------------------------------------------
 class MetaClass {
 public:
+    friend class MetaClassList;
+
     enum Flags {
         Concrete    = 0<<0,
         Abstract    = 1<<0,
@@ -29,14 +32,13 @@ public:
         Default     = Concrete
     };
 
-    MetaClass(const MetaClassName& name, Flags attributes, const MetaClass *parent);
+    MetaClass(const MetaClassName& name, Flags attributes);
     virtual ~MetaClass();
 
     MetaClass(const MetaClass&) = delete;
     MetaClass& operator =(const MetaClass&) = delete;
 
     const MetaClassName& Name() const { return _name; }
-    const MetaClass *Parent() const { return _parent; }
     Flags Attributes() const { return _attributes; }
 
     bool IsAbstract()   const { return Meta::HasFlag(_attributes, Abstract); }
@@ -51,6 +53,8 @@ public:
     void Register(MetaClassHashMap& database) const;
     void Unregister(MetaClassHashMap& database) const;
 
+    const MetaClass *Parent() const;
+
     MemoryView<const UCMetaProperty> Properties() const;
 
     const MetaProperty *PropertyIFP(const StringSlice& name, size_t attributes = 0, bool inherited = true) const;
@@ -59,6 +63,8 @@ public:
     MetaObject* CreateInstance() const;
 
 protected:
+    virtual const MetaClass* VirtualParent() const = 0;
+
     virtual MemoryView<const UCMetaProperty> VirtualProperties() const = 0;
 
     virtual const MetaProperty *VirtualPropertyIFP(const StringSlice& name, size_t attributes) const = 0;
@@ -68,7 +74,6 @@ protected:
 
 private:
     MetaClassName _name;
-    const MetaClass* _parent;
     Flags _attributes;
 };
 //----------------------------------------------------------------------------
@@ -100,7 +105,7 @@ const MetaProperty* FindProperty(const MetaClass* metaClass, const _Pred& pred) 
 //----------------------------------------------------------------------------
 class InScopeMetaClass : public MetaClass {
 public:
-    InScopeMetaClass(const MetaClassName& name, Flags attributes, const MetaClass *parent);
+    InScopeMetaClass(const MetaClassName& name, Flags attributes);
     virtual ~InScopeMetaClass();
 
 protected:
@@ -118,9 +123,21 @@ private:
 template <typename T>
 class DefaultMetaClass : public InScopeMetaClass {
 public:
-    DefaultMetaClass(const MetaClassName& name, Flags attributes, const MetaClass *parent)
-        : InScopeMetaClass(name, attributes, parent) {
+    DefaultMetaClass(const MetaClassName& name, Flags attributes)
+        : InScopeMetaClass(name, attributes) {
         STATIC_ASSERT(not std::is_abstract<DefaultMetaClass>::value);
+    }
+
+protected:
+    virtual const MetaClass* VirtualParent() const override {
+        typedef typename T::MetaClass metaclass_type;
+        typedef typename metaclass_type::parent_type parent_type;
+        return GetMetaClass<parent_type>();
+    }
+
+    virtual MetaObject* VirtualCreateInstance() const override {
+        typedef typename std::is_default_constructible<T>::type constructible_type;
+        return CreateInstance_<T>(constructible_type());
     }
 
 private:
@@ -136,11 +153,6 @@ private:
     static MetaObject* CreateInstance_(std::false_type) {
         AssertNotReached(); // abstract class
         return nullptr;
-    }
-
-    virtual MetaObject* VirtualCreateInstance() const override {
-        typedef typename std::is_default_constructible<T>::type constructible_type;
-        return CreateInstance_<T>(constructible_type());
     }
 };
 //----------------------------------------------------------------------------

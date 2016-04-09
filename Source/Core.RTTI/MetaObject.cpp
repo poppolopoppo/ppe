@@ -8,6 +8,9 @@
 #include "MetaClassSingleton.h"
 #include "MetaProperty.h"
 
+#include "RTTI_Tag-impl.h"
+#include "RTTIMacros-impl.h"
+
 #include "Core/Container/Hash.h"
 #include "Core/Container/HashMap.h"
 #include "Core/Container/Token.h"
@@ -20,8 +23,10 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+_RTTI_CLASS_AUTOREGISTER(Default, MetaObject);
+//----------------------------------------------------------------------------
 MetaObject::MetaClass::MetaClass()
-:   RTTI::DefaultMetaClass<MetaObject>("MetaObject", RTTI::MetaClass::Abstract, nullptr)
+:   RTTI::DefaultMetaClass<MetaObject>("MetaObject", RTTI::MetaClass::Abstract)
 {}
 //----------------------------------------------------------------------------
 MetaObject::MetaClass::~MetaClass() {}
@@ -72,12 +77,28 @@ void MetaObject::RTTI_Load(MetaLoadContext * /* context */) {
     Assert(0 == (_state & Loaded));
     Assert(0 == (_state & Unloaded));
     _state = Flags(_state | Loaded);
+
+#ifdef WITH_RTTI_VERIFY_PREDICATES
+    // checks that base method was called :
+    Assert(0 == (_state & Verifying));
+    _state = Flags(_state | Verifying);
+    RTTI_VerifyPredicates();
+    Assert(0 == (_state & Verifying));
+#endif
 }
 //----------------------------------------------------------------------------
 void MetaObject::RTTI_Unload(MetaUnloadContext * /* context */) {
     Assert(1 == (_state & Loaded));
     Assert(0 == (_state & Unloaded));
     _state = Flags((_state & ~Loaded) | Unloaded);
+
+#ifdef WITH_RTTI_VERIFY_PREDICATES
+    // checks that base method was called :
+    Assert(0 == (_state & Verifying));
+    _state = Flags(_state | Verifying);
+    RTTI_VerifyPredicates();
+    Assert(0 == (_state & Verifying));
+#endif
 }
 //----------------------------------------------------------------------------
 void MetaObject::RTTI_CallLoadIFN(MetaLoadContext *context) {
@@ -94,6 +115,13 @@ void MetaObject::RTTI_CallUnloadIFN(MetaUnloadContext *context) {
         Assert(Unloaded == (_state & Unloaded));
     }
 }
+//----------------------------------------------------------------------------
+#ifdef WITH_RTTI_VERIFY_PREDICATES
+void MetaObject::RTTI_VerifyPredicates() const {
+    // checks that base method was called :
+    const_cast<MetaObject*>(this)->_state = Flags(_state & ~Verifying);
+}
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

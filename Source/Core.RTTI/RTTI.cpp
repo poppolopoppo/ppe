@@ -2,6 +2,7 @@
 
 #include "RTTI.h"
 #include "RTTI_fwd.h"
+#include "RTTI_Tag.h"
 
 #include "MetaAtomDatabase.h"
 #include "MetaClassDatabase.h"
@@ -17,9 +18,16 @@
 //#   define WITH_RTTI_UNITTESTS %_NOCOMMIT%
 #endif
 
+#ifdef OS_WINDOWS
+#   pragma warning(disable: 4073) // initialiseurs placés dans la zone d'initialisation d'une bibliothèque
+#   pragma init_seg(lib)
+#else
+#   error "missing compiler specific command"
+#endif
+
 namespace Core {
 namespace RTTI {
-POOLTAG_DEF(RTTI);
+POOL_TAG_DEF(RTTI);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -27,16 +35,16 @@ POOLTAG_DEF(RTTI);
 static void RTTI_UnitTests();
 #endif
 void RTTIStartup::Start() {
-    POOLTAG(RTTI)::Start();
+    POOL_TAG(RTTI)::Start();
 
-    MetaClassName::Start(32);
-    MetaPropertyName::Start(128);
-    MetaObjectName::Start(128);
+    MetaClassName::Start(256);
+    MetaPropertyName::Start(512);
+    MetaObjectName::Start(1024);
 
     MetaClassDatabase::Create();
     MetaAtomDatabase::Create();
 
-    MetaObject::MetaClass::Create();
+    RTTI_TAG(Default)::Start();
 
 #ifdef WITH_RTTI_UNITTESTS
     RTTI_UnitTests();
@@ -44,7 +52,7 @@ void RTTIStartup::Start() {
 }
 //----------------------------------------------------------------------------
 void RTTIStartup::Shutdown() {
-    MetaObject::MetaClass::Destroy();
+    RTTI_TAG(Default)::Shutdown();
 
     MetaAtomDatabase::Destroy();
     MetaClassDatabase::Destroy();
@@ -53,7 +61,7 @@ void RTTIStartup::Shutdown() {
     MetaPropertyName::Shutdown();
     MetaClassName::Shutdown();
 
-    POOLTAG(RTTI)::Shutdown();
+    POOL_TAG(RTTI)::Shutdown();
 }
 //----------------------------------------------------------------------------
 void RTTIStartup::Clear() {
@@ -64,11 +72,11 @@ void RTTIStartup::Clear() {
     MetaPropertyName::Clear();
     MetaClassName::Clear();
 
-    POOLTAG(RTTI)::ClearAll_UnusedMemory();
+    POOL_TAG(RTTI)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 void RTTIStartup::ClearAll_UnusedMemory() {
-    POOLTAG(RTTI)::ClearAll_UnusedMemory();
+    POOL_TAG(RTTI)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

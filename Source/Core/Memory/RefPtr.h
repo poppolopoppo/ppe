@@ -91,6 +91,8 @@ private:
 template <typename T>
 class RefPtr {
 public:
+    typedef T value_type;
+
     template <typename U>
     friend class RefPtr;
 
@@ -138,6 +140,9 @@ private:
 };
 STATIC_ASSERT(sizeof(RefPtr<RefCountable>) == sizeof(RefCountable*));
 //----------------------------------------------------------------------------
+template <typename T> struct IsRefPtr : public std::false_type {};
+template <typename T> struct IsRefPtr<RefPtr<T>> : public std::true_type {};
+//----------------------------------------------------------------------------
 template <typename T>
 hash_t hash_value(const RefPtr<T>& refPtr) {
     return hash_value(refPtr.get());
@@ -173,6 +178,8 @@ bool operator >=(const RefPtr<_Lhs>& lhs, const RefPtr<_Rhs>& rhs) {
 template <typename T>
 class SafePtr {
 public:
+    typedef T value_type;
+
     template <typename U>
     friend class SafePtr;
 
@@ -217,6 +224,9 @@ protected:
 private:
     T* _ptr;
 };
+//----------------------------------------------------------------------------
+template <typename T> struct IsSafePtr : public std::false_type {};
+template <typename T> struct IsSafePtr<SafePtr<T>> : public std::true_type {};
 //----------------------------------------------------------------------------
 template <typename T>
 hash_t hash_value(const SafePtr<T>& SafePtr) {

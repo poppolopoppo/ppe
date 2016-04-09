@@ -7,6 +7,14 @@
 
 #include "Core/Memory/RefPtr.h"
 
+#if !(defined(FINAL_RELEASE) || defined(PROFILING_ENABLED))
+#   define WITH_RTTI_VERIFY_PREDICATES
+#endif
+
+#ifdef WITH_RTTI_VERIFY_PREDICATES
+#   define RTTI_VerifyPredicate(_COND) AssertRelease(_COND)
+#endif
+
 namespace Core {
 namespace RTTI {
 //----------------------------------------------------------------------------
@@ -24,6 +32,9 @@ public:
         Loaded      = 1<<0,
         Unloaded    = 1<<1,
         Exported    = 1<<2,
+#ifdef WITH_RTTI_VERIFY_PREDICATES
+        Verifying   = 1<<3,
+#endif
     };
 
 public:
@@ -47,6 +58,10 @@ public:
 
     void RTTI_CallLoadIFN(MetaLoadContext *context);
     void RTTI_CallUnloadIFN(MetaUnloadContext *context);
+
+#ifdef WITH_RTTI_VERIFY_PREDICATES
+    virtual void RTTI_VerifyPredicates() const;
+#endif
 
     class MetaClass : public DefaultMetaClass<MetaObject> {
     public:

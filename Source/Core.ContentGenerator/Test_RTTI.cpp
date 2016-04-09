@@ -13,6 +13,8 @@
 #include "Core.RTTI/RTTI.h"
 #include "Core.RTTI/RTTIMacros.h"
 #include "Core.RTTI/RTTIMacros-impl.h"
+#include "Core.RTTI/RTTI_Tag.h"
+#include "Core.RTTI/RTTI_Tag-impl.h"
 #include "Core.RTTI/MetaAtomVisitor.h"
 #include "Core.RTTI/MetaTransaction.h"
 #include "Core.RTTI/MetaType.Definitions-inl.h"
@@ -30,6 +32,9 @@ namespace ContentGenerator {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
+RTTI_TAG_DECL(Test);
+RTTI_TAG_DEF(Test);
+//----------------------------------------------------------------------------
 FWD_REFPTR(ContentIdentity);
 class ContentIdentity : public RTTI::MetaObject {
 public:
@@ -46,7 +51,7 @@ private:
     Filename _sourceFile;
     DateTime _lastModified;
 };
-RTTI_CLASS_BEGIN(ContentIdentity, Concrete)
+RTTI_CLASS_BEGIN(Test, ContentIdentity, Concrete)
 RTTI_PROPERTY_PRIVATE_FIELD(_sourceFile)
 RTTI_PROPERTY_PRIVATE_FIELD(_lastModified)
 RTTI_CLASS_END()
@@ -62,15 +67,31 @@ private:
     float3 _position;
     RTTI::Vector<RTTI::PMetaAtom> _atomVector;
 };
-RTTI_CLASS_BEGIN(RTTITest2_, Concrete)
+RTTI_CLASS_BEGIN(Test, RTTITest2_, Concrete)
     RTTI_PROPERTY_PRIVATE_FIELD(_position)
     RTTI_PROPERTY_PRIVATE_FIELD(_atomVector)
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------
-FWD_REFPTR(RTTITest_);
-class RTTITest_ : public RTTI::MetaObject {
+FWD_REFPTR(RTTITestParent_);
+class RTTITestParent_ : public RTTI::MetaObject {
 public:
-    RTTI_CLASS_HEADER(RTTITest_, RTTI::MetaObject);
+    RTTI_CLASS_HEADER(RTTITestParent_, RTTI::MetaObject);
+
+    RTTITestParent_() {}
+
+private:
+    PContentIdentity _identity;
+    WString _sourceName;
+};
+RTTI_CLASS_BEGIN(Test, RTTITestParent_, Concrete)
+    RTTI_PROPERTY_PRIVATE_FIELD(_identity)
+    RTTI_PROPERTY_PRIVATE_FIELD(_sourceName)
+RTTI_CLASS_END()
+//----------------------------------------------------------------------------
+FWD_REFPTR(RTTITest_);
+class RTTITest_ : public RTTITestParent_ {
+public:
+    RTTI_CLASS_HEADER(RTTITest_, RTTITestParent_);
 
     RTTITest_()
     :   _dummy(0)
@@ -109,7 +130,7 @@ public:
     FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR_IMPL_)
 #undef DEF_METATYPE_SCALAR_IMPL_
 };
-RTTI_CLASS_BEGIN(RTTITest_, Concrete)
+RTTI_CLASS_BEGIN(Test, RTTITest_, Concrete)
     RTTI_PROPERTY_PRIVATE_FIELD(_dummy)
     RTTI_PROPERTY_PRIVATE_FIELD(_half)
     RTTI_PROPERTY_PRIVATE_FIELD(_byte4n)
@@ -185,7 +206,7 @@ protected:
 #define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
     virtual void Visit(RTTI::MetaTypedAtom<T>* scalar) override { \
         Assert(_TypeId == scalar->TypeInfo().Id); \
-        Randomize_(scalar->Wrapper()); \
+        RandomizeDispatch_(scalar); \
         /*parent_type::Visit(scalar);*/ \
     }
     FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
@@ -195,6 +216,29 @@ private:
     const size_t _maxDim;
     size_t _depth;
     RandomGenerator _rand;
+
+    template <typename T>
+    void RandomizeDispatch_(RTTI::MetaTypedAtom<T>* scalar) {
+        Randomize_(scalar->Wrapper());
+    }
+
+    void RandomizeDispatch_(RTTI::MetaTypedAtom<RTTI::PMetaObject>* scalar) {
+        UNUSED(scalar);
+        // can't do anything since we don't know the metaclass, this is no trivial task ...
+        /*
+        const float d = ((float)_depth)/_maxDim;
+        const float r = _rand.NextFloat01() - d;
+        if (r - 0.4f < 0)
+            return;
+        RTTI::PMetaObject& object = scalar->Wrapper();
+        if (nullptr == object) {
+            const RTTI::MetaClass* metaClass = scalar->Traits()->GetMetaClassIFP();
+            Assert(metaClass);
+            object = metaClass->CreateInstance();
+        }
+        Randomize(object.get());
+        */
+    }
 
     size_t NextRandomDim_() { return (_rand.Next() % _maxDim); }
 
@@ -245,16 +289,6 @@ private:
         Assert(atom);
         atom = RTTI::MakeAtom(atom);
     }
-
-    void Randomize_(Core::RTTI::PMetaObject& object) {
-        const float d = ((float)_depth)/_maxDim;
-        const float r = _rand.NextFloat01() - d;
-        if (r - 0.5f < 0)
-            return;
-        if (nullptr == object)
-            object = new RTTITest_();
-        Randomize(object.get());
-    }
 };
 //----------------------------------------------------------------------------
 void RTTIAtomRandomizer_::Randomize(RTTI::MetaObject* pobject) {
@@ -262,11 +296,17 @@ void RTTIAtomRandomizer_::Randomize(RTTI::MetaObject* pobject) {
 
     ++_depth;
 
-    for (const RTTI::UCMetaProperty& prop : pobject->RTTI_MetaClass()->Properties()) {
-        RTTI::PMetaAtom atom = prop->WrapMove(pobject);
-        AssertRelease(nullptr != atom);
-        parent_type::Append(atom.get());
-        prop->MoveFrom(pobject, atom.get());
+    const RTTI::MetaClass* metaClass = pobject->RTTI_MetaClass();
+
+    while (metaClass) {
+        for (const RTTI::UCMetaProperty& prop : metaClass->Properties()) {
+            RTTI::PMetaAtom atom = prop->WrapMove(pobject);
+            AssertRelease(nullptr != atom);
+            parent_type::Append(atom.get());
+            prop->MoveFrom(pobject, atom.get());
+        }
+
+        metaClass = metaClass->Parent();
     }
 
     Assert(0 < _depth);
@@ -282,8 +322,7 @@ void Test_RTTI() {
     //typedef RTTITest2_ test_type;
     static const size_t test_count = 4;
 
-    ContentIdentity::MetaClass::Create();
-    test_type::MetaClass::Create();
+    RTTI_TAG(Test)::Start();
     {
         const Filename filename = L"Tmp:/robotapp.bin";
         const Filename filename2 = L"Tmp:/robotapp.raw";
@@ -405,8 +444,7 @@ void Test_RTTI() {
         } while (true);
 
     }
-    test_type::MetaClass::Destroy();
-    ContentIdentity::MetaClass::Destroy();
+    RTTI_TAG(Test)::Shutdown();
 
     Serialize::SerializeStartup::ClearAll_UnusedMemory();
     RTTI::RTTIStartup::ClearAll_UnusedMemory();
