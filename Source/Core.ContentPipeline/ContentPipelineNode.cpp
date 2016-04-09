@@ -9,7 +9,7 @@ namespace ContentPipeline {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-RTTI_CLASS_BEGIN(ContentPipelineNode, Abstract)
+RTTI_CLASS_BEGIN(ContentPipeline, ContentPipelineNode, Abstract)
 RTTI_PROPERTY_PRIVATE_FIELD(_nodeName);
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------

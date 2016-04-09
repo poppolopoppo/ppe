@@ -6,9 +6,12 @@
 #include "Core/IO/FileSystem_fwd.h"
 #include "Core/IO/FS/Filename.h"
 
+#include "Core.RTTI/RTTI_Tag.h"
+
 namespace Core {
 namespace ContentPipeline {
-POOLTAG_DECL(ContentPipeline);
+POOL_TAG_DECL(ContentPipeline);
+RTTI_TAG_DECL(ContentPipeline);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
