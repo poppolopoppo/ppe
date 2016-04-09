@@ -11,14 +11,23 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits = std::regex_traits<_Char> >
-using BasicRegexp = std::regex<_Char, _Traits>;
+template <
+    typename _Char,
+    typename _Traits = std::regex_traits<_Char>
+>
+using BasicRegexp = std::basic_regex<_Char, _Traits>;
 //----------------------------------------------------------------------------
-using Regexp = BasicRegexp<char>;
-using WRegexp = BasicRegexp<wchar_t>;
+typedef BasicRegexp<char>       Regexp;
+typedef BasicRegexp<wchar_t>    WRegexp;
 //----------------------------------------------------------------------------
-bool ReMatch(const Regexp& exp, const StringSlice& str);
-bool ReMatch(const WRegexp& exp, const WStringSlice& wstr);
+Regexp MakeRegexp(const StringSlice& str);
+WRegexp MakeRegexp(const WStringSlice& wstr);
+//----------------------------------------------------------------------------
+Regexp MakeRegexpI(const StringSlice& str);
+WRegexp MakeRegexpI(const WStringSlice& wstr);
+//----------------------------------------------------------------------------
+bool Match(const Regexp& exp, const StringSlice& str);
+bool Match(const WRegexp& exp, const WStringSlice& wstr);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
