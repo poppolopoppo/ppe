@@ -30,6 +30,16 @@ FORCE_INLINE void UnsetFlag(T *pvalue, T flag) {
     *pvalue = (T)(uint_type(*pvalue) & (~uint_type(flag)) );
 }
 //----------------------------------------------------------------------------
+template <class T, class = typename std::enable_if< std::is_enum<T>::value >::type >
+inline constexpr T CombineFlags(T&& flags...) {
+    return T(0 | flags...);
+}
+//----------------------------------------------------------------------------
+#define ENUM_FLAGS(_ENUMTYPE) \
+    STATIC_ASSERT(std::is_enum<_ENUMTYPE>::value); \
+    inline _ENUMTYPE operator &(_ENUMTYPE lhs, _ENUMTYPE rhs) { return _ENUMTYPE(lhs&rhs); } \
+    inline _ENUMTYPE operator |(_ENUMTYPE lhs, _ENUMTYPE rhs) { return _ENUMTYPE(lhs|rhs); }
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Meta
