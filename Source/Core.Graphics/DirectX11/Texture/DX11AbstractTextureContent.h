@@ -23,12 +23,12 @@ public:
 
 protected:
     void CreateTexture( ComPtr<::ID3D11Texture2D>& pTexture2D,
-                        IDeviceAPIEncapsulator *device, 
+                        IDeviceAPIEncapsulator *device,
                         const Texture *owner,
                         size_t width,
                         size_t height,
                         size_t levelCount,
-                        const MemoryView<const u8>& optionalData, 
+                        const MemoryView<const u8>& optionalData,
                         ::D3D11_BIND_FLAG bindFlags,
                         bool isCubeMap );
 

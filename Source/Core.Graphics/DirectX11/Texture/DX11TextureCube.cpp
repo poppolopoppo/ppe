@@ -46,7 +46,7 @@ void DX11TextureCubeContent::CopySubPart(
     IDeviceAPIEncapsulator *device,
     const DeviceAPIDependantTextureCube *dst, TextureCube::Face dstFace, size_t dstLevel, const uint2& dstPos,
     const DeviceAPIDependantTextureCube *src, TextureCube::Face srcFace, size_t srcLevel, const AABB2u& srcBox ) {
-    
+
     const size_t dstSubResource = ::D3D11CalcSubresource(checked_cast<UINT>(dstLevel), UINT(dstFace), checked_cast<UINT>(dst->LevelCount()) );
     const uint3 dstPos3u(dstPos, 0);
 

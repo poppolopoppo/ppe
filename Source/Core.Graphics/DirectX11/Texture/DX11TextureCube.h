@@ -28,9 +28,9 @@ public:
     void SetContent(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count, BufferMode mode, BufferUsage usage);
 
     void CopyFrom(IDeviceAPIEncapsulator *device, const DeviceAPIDependantTextureCube *psource);
-    
-    void CopySubPart(   IDeviceAPIEncapsulator *device, 
-                        const DeviceAPIDependantTextureCube *dst, TextureCube::Face dstFace, size_t dstLevel, const uint2& dstPos, 
+
+    void CopySubPart(   IDeviceAPIEncapsulator *device,
+                        const DeviceAPIDependantTextureCube *dst, TextureCube::Face dstFace, size_t dstLevel, const uint2& dstPos,
                         const DeviceAPIDependantTextureCube *src, TextureCube::Face srcFace, size_t srcLevel, const AABB2u& srcBox );
 
 private:
@@ -53,8 +53,8 @@ public:
 
     virtual void CopyFrom(IDeviceAPIEncapsulator *device, const DeviceAPIDependantTextureCube *psource) override;
 
-    virtual void CopySubPart(   IDeviceAPIEncapsulator *device, 
-                                TextureCube::Face dstFace, size_t dstLevel, const uint2& dstPos, 
+    virtual void CopySubPart(   IDeviceAPIEncapsulator *device,
+                                TextureCube::Face dstFace, size_t dstLevel, const uint2& dstPos,
                                 const DeviceAPIDependantTextureCube *src, TextureCube::Face srcFace, size_t srcLevel, const AABB2u& srcBox ) override;
 
     virtual const IDeviceAPIDependantAbstractTextureContent *Content() const override { return this; }
