@@ -30,7 +30,7 @@ using HashSet = std::unordered_set<T, _Hasher, _EqualTo, _Allocator>;
 //----------------------------------------------------------------------------
 template <typename T, typename _Hasher, typename _EqualTo, typename _Allocator>
 hash_t hash_value(const HashSet<T, _Hasher, _EqualTo, _Allocator>& hashSet) {
-    return hash_value_seq(hashSet.begin(), hashSet.end());
+    return hash_range(hashSet.begin(), hashSet.end());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

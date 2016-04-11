@@ -28,7 +28,7 @@ using MultiMap = std::multimap<_Key, _Value, _Predicate, _Allocator >;
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Pred, typename _Allocator>
 hash_t hash_value(const MultiMap<_Key, _Value, _Pred, _Allocator>& multiMap) {
-    return hash_value_seq(multiMap.begin(), multiMap.end());
+    return hash_range(multiMap.begin(), multiMap.end());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

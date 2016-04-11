@@ -31,7 +31,7 @@ using HashMultiMap = std::unordered_multimap<_Key, _Value, _Hasher, _EqualTo, _A
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
 hash_t hash_value(const HashMultiMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashMultiMap) {
-    return hash_value_seq(hashMultiMap.begin(), hashMultiMap.end());
+    return hash_range(hashMultiMap.begin(), hashMultiMap.end());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

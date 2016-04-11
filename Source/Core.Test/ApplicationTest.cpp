@@ -144,7 +144,7 @@ void TestHash_() {
 
     size_t h0 = hash_value(numbers);
     size_t h1 = hash_value(numbers[0],numbers[1],numbers[2],numbers[3],numbers[4],numbers[5]);
-    size_t h2 = hash_value_seq(&numbers[0],&numbers[6]);
+    size_t h2 = hash_range(&numbers[0],&numbers[6]);
 
     AssertRelease(h0 == h1);
     AssertRelease(h1 == h2);

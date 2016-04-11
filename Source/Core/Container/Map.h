@@ -28,7 +28,7 @@ using Map = std::map<_Key, _Value, _Predicate, _Allocator >;
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Pred, typename _Allocator>
 hash_t hash_value(const Map<_Key, _Value, _Pred, _Allocator>& map) {
-    return hash_value_seq(map.begin(), map.end());
+    return hash_range(map.begin(), map.end());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

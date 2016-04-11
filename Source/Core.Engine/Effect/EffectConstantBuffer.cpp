@@ -107,7 +107,7 @@ void EffectConstantBuffer::Prepare(const MaterialParameterMutableContext& contex
         _parameters[i] = param;
     }
 
-    _headerHashValue = hash_value_seq(_parameters.begin(), _parameters.end());
+    _headerHashValue = hash_range(_parameters.begin(), _parameters.end());
 }
 //----------------------------------------------------------------------------
 void EffectConstantBuffer::Eval(const MaterialParameterContext& context, const VariabilitySeeds& seeds ) {
