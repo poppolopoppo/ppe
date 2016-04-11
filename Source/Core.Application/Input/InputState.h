@@ -2,6 +2,7 @@
 
 #include "Core.Application/Application.h"
 
+#include "Core.Application/Input/GamepadButton.h"
 #include "Core.Application/Input/KeyboardKey.h"
 #include "Core.Application/Input/MouseButton.h"
 
@@ -15,6 +16,8 @@ namespace Application {
 template <typename T, size_t _Capacity>
 class InputState {
 public:
+    STATIC_ASSERT(std::is_enum<T>::value);
+
     typedef T value_type;
     enum : size_t { Capacity = _Capacity };
 
@@ -27,13 +30,13 @@ public:
     size_t size() const { return _size; }
     bool empty() const { return (0 == _size); }
 
-    bool Contains(const T& value) const;
+    bool Contains(const T value) const;
 
-    bool Add_KeepExisting(T&& value);
-    void Add_AssertUnique(T&& value);
+    bool Add_KeepExisting(T value);
+    void Add_AssertUnique(T value);
 
-    bool Remove_ReturnIfExists(const T& value);
-    void Remove_AssertExists(const T& value);
+    bool Remove_ReturnIfExists(T value);
+    void Remove_AssertExists(T value);
 
     void Clear();
 
@@ -59,8 +62,9 @@ public:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-typedef InputState<KeyboardKey, 6> KeyboardKeyState;
-typedef InputState<MouseButton, 6> MouseButtonState;
+typedef InputState<GamepadButton,  8> GamepadButtonState;
+typedef InputState<KeyboardKey,    8> KeyboardKeyState;
+typedef InputState<MouseButton,    8> MouseButtonState;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

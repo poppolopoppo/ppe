@@ -2,6 +2,7 @@
 
 #include "ApplicationWindow.h"
 
+#include "Input/GamepadInputHandler.h"
 #include "Input/KeyboardInputHandler.h"
 #include "Input/MouseInputHandler.h"
 
@@ -22,36 +23,37 @@ ApplicationWindow::ApplicationWindow(
 ,   BasicWindow(appname, left, top, width, height)
 {}
 //----------------------------------------------------------------------------
-ApplicationWindow::~ApplicationWindow() {}
+ApplicationWindow::~ApplicationWindow() {
+    Assert(nullptr == _keyboard);
+    Assert(nullptr == _mouse);
+}
 //----------------------------------------------------------------------------
 void ApplicationWindow::Start() {
     ApplicationBase::Start();
 
     BasicWindow::Show();
 
-    Assert(nullptr == _keyboard);
-    _keyboard.reset(new KeyboardInputHandler());
-    RegisterMessageHandler(_keyboard.get());
-    Services().Add<IKeyboardService>(*_keyboard);
+    Services().Create<IGamepadService>(_gamepad);
+    RegisterMessageHandler(_gamepad.get());
 
-    Assert(nullptr == _mouse);
-    _mouse.reset(new MouseInputHandler());
+    Services().Create<IKeyboardService>(_keyboard);
+    RegisterMessageHandler(_keyboard.get());
+
+    Services().Create<IMouseService>(_mouse);
     RegisterMessageHandler(_mouse.get());
-    Services().Add<IMouseService>(*_mouse);
 }
 //----------------------------------------------------------------------------
 void ApplicationWindow::Shutdown() {
     ApplicationBase::Shutdown(); // destroys engine services, including this device service
 
-    Assert(nullptr != _mouse);
-    Services().Remove<IMouseService>(*_mouse);
     UnregisterMessageHandler(_mouse.get());
-    _mouse.reset();
+    Services().Destroy<IMouseService>(_mouse);
 
-    Assert(nullptr != _keyboard);
-    Services().Remove<IKeyboardService>(*_keyboard);
     UnregisterMessageHandler(_keyboard.get());
-    _keyboard.reset();
+    Services().Destroy<IKeyboardService>(_keyboard);
+
+    UnregisterMessageHandler(_gamepad.get());
+    Services().Destroy<IGamepadService>(_gamepad);
 
     BasicWindow::Close();
 }

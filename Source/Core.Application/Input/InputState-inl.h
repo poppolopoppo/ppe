@@ -31,7 +31,7 @@ auto InputState<T, _Capacity>::operator =(const InputState& other) -> InputState
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Capacity>
-bool InputState<T, _Capacity>::Contains(const T& value) const {
+bool InputState<T, _Capacity>::Contains(const T value) const {
     for (size_t i = 0; i < _size; ++i)
         if (_events[i] == value)
             return true;
@@ -40,27 +40,27 @@ bool InputState<T, _Capacity>::Contains(const T& value) const {
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Capacity>
-bool InputState<T, _Capacity>::Add_KeepExisting(T&& value) {
+bool InputState<T, _Capacity>::Add_KeepExisting(const T value) {
     for (size_t i = 0; i < _size; ++i)
         if (_events[i] == value)
             return false;
 
     Assert(_size < _Capacity);
-    _events[_size++] = std::forward<T>(value);
+    _events[_size++] = value;
 
     return true;
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Capacity>
-void InputState<T, _Capacity>::Add_AssertUnique(T&& value) {
+void InputState<T, _Capacity>::Add_AssertUnique(const T value) {
     AssertRelease(_size < _Capacity);
-    Assert(!Contains(std::forward<T>(value)));
+    Assert(!Contains(value));
 
-    _events[_size++] = std::forward<T>(value);
+    _events[_size++] = value;
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Capacity>
-bool InputState<T, _Capacity>::Remove_ReturnIfExists(const T& value) {
+bool InputState<T, _Capacity>::Remove_ReturnIfExists(const T value) {
     Assert(_size < _Capacity);
 
     for (size_t i = 0; i < _size; ++i)
@@ -75,7 +75,7 @@ bool InputState<T, _Capacity>::Remove_ReturnIfExists(const T& value) {
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Capacity>
-void InputState<T, _Capacity>::Remove_AssertExists(const T& value) {
+void InputState<T, _Capacity>::Remove_AssertExists(const T value) {
     if (false == Remove_ReturnIfExists(value))
         AssertNotReached();
 }

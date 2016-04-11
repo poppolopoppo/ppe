@@ -338,7 +338,7 @@ void KeyboardInputHandler::UpdateAfterDispatch(Graphics::BasicWindow *wnd) {
 #ifdef WITH_KEYBOARDSTATE_VERBOSE
         LOG(Info, L"[Keyboard] key {0} down", KeyboardKeyToCStr(key));
 #endif
-        _state._keysPressed.Add_KeepExisting(std::move(key));
+        _state._keysPressed.Add_KeepExisting(key);
     }
 }
 //----------------------------------------------------------------------------
