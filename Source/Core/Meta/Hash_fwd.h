@@ -29,7 +29,7 @@ public:
         return oss
             << "#0x"
             << std::setfill('0') << std::hex << std::setw(sizeof(size_t)<<1) << h._value
-            << std::setfill(' ') << std::dec << std::setw(0) << std::endl;
+            << std::setfill(' ') << std::dec << std::setw(0);
     }
 
     template <typename _Traits>
@@ -37,7 +37,7 @@ public:
         return oss
             << L"#0x"
             << std::setfill(L'0') << std::hex << std::setw(sizeof(size_t)<<1) << h._value
-            << std::setfill(L' ') << std::dec << std::setw(0) << std::endl;
+            << std::setfill(L' ') << std::dec << std::setw(0);
     }
 };
 //----------------------------------------------------------------------------
