@@ -34,13 +34,13 @@ void ApplicationGraphics::Start() {
     _deviceEncapsulator->Create(_api, Window().Handle(), _pp);
 
     if (_deviceEncapsulator->Device())
-        Services().Add<Graphics::IDeviceAPIEncapsulator>(*_deviceEncapsulator->Device());
+        Services().Register<Graphics::IDeviceAPIEncapsulator>(_deviceEncapsulator->Device());
     if (_deviceEncapsulator->Immediate())
-        Services().Add<Graphics::IDeviceAPIContext>(*_deviceEncapsulator->Immediate());
+        Services().Register<Graphics::IDeviceAPIContext>(_deviceEncapsulator->Immediate());
 
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
     if (_deviceEncapsulator->Diagnostics())
-        Services().Add<Graphics::IDeviceAPIDiagnostics>(*_deviceEncapsulator->Diagnostics());
+        Services().Register<Graphics::IDeviceAPIDiagnostics>(_deviceEncapsulator->Diagnostics());
 #endif
 }
 //----------------------------------------------------------------------------
@@ -49,13 +49,13 @@ void ApplicationGraphics::Shutdown() {
 
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
     if (_deviceEncapsulator->Diagnostics())
-        Services().Remove<Graphics::IDeviceAPIDiagnostics>(*_deviceEncapsulator->Diagnostics());
+        Services().Unregister<Graphics::IDeviceAPIDiagnostics>(_deviceEncapsulator->Diagnostics());
 #endif
 
     if (_deviceEncapsulator->Immediate())
-        Services().Remove<Graphics::IDeviceAPIContext>(*_deviceEncapsulator->Immediate());
+        Services().Unregister<Graphics::IDeviceAPIContext>(_deviceEncapsulator->Immediate());
     if (_deviceEncapsulator->Device())
-        Services().Remove<Graphics::IDeviceAPIEncapsulator>(*_deviceEncapsulator->Device());
+        Services().Unregister<Graphics::IDeviceAPIEncapsulator>(_deviceEncapsulator->Device());
 
     _deviceEncapsulator->Destroy();
     _deviceEncapsulator.reset();

@@ -2,9 +2,8 @@
 
 #include "Core.Application/Application.h"
 
-#include "Core.Application/ApplicationService.h"
-
 #include "Core/IO/String.h"
+#include "Core/Misc/ServiceContainer.h"
 
 namespace Core {
 namespace Application {
@@ -25,15 +24,15 @@ public:
 
     const WString& AppName() const { return _appname; }
 
-    ApplicationServiceContainer& Services() { return _services; }
-    const ApplicationServiceContainer& Services() const { return _services; }
+    ServiceContainer& Services() { return _services; }
+    const ServiceContainer& Services() const { return _services; }
 
     virtual void Start();
     virtual void Shutdown();
 
 private:
     WString _appname;
-    ApplicationServiceContainer _services;
+    ServiceContainer _services;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
