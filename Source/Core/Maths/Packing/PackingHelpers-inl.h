@@ -2,20 +2,18 @@
 
 #include "Core/Maths/Packing/PackingHelpers.h"
 
+#include "Core/Maths/MathHelpers.h"
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 float UByte0255_to_Float01(u8 value) {
-    const float f = value / 255.0f;
-    Assert(0 <= f && 1 >= f);
-    return f;
+    return Saturate(value / 255.0f);
 }
 //----------------------------------------------------------------------------
 float UByte0255_to_FloatM11(u8 value) {
-    const float f = (value - 127.0f) / 127.0f;
-    Assert(-1 <= f && 1 >= f);
-    return f;
+    return Saturate((int(value) - 127) / 127.0f);
 }
 //----------------------------------------------------------------------------
 u8 Float01_to_UByte0255(float value) {
@@ -31,15 +29,11 @@ u8 FloatM11_to_UByte0255(float value) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 float UShort065535_to_Float01(u16 value) {
-    const float f = value / 65535.0f;
-    Assert(0 <= f && 1 >= f);
-    return f;
+    return Saturate(value / 65535.0f);
 }
 //----------------------------------------------------------------------------
 float UShort065535_to_FloatM11(u16 value) {
-    const float f = (value - 32767.0f) / 32767.0f;
-    Assert(-1 <= f && 1 >= f);
-    return f;
+    return Saturate((int(value) - 32767) / 32767.0f);
 }
 //----------------------------------------------------------------------------
 u16 Float01_to_UShort065535(float value) {
