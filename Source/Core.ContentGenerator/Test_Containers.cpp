@@ -486,6 +486,7 @@ void Test_Containers() {
 #endif
 
         /*{
+            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
             const BenchmarkScope bench("BurstTrie");
 
             STRINGTRIE_SET(Container, CaseSensitive::True, 31) set;
@@ -511,6 +512,7 @@ void Test_Containers() {
             }
         }
         {
+            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
             const BenchmarkScope bench("BulkTrie");
 
             BulkTrie<char, void, 8192, 31> set;
@@ -532,6 +534,7 @@ void Test_Containers() {
             }
         }*/
         {
+            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
             const BenchmarkScope bench("CompactHashSet");
 
             typedef CompactHashSet<
@@ -570,6 +573,7 @@ void Test_Containers() {
             }
         }
         {
+            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
             const BenchmarkScope bench("HashTable");
 
             typedef HashTable<
@@ -592,6 +596,7 @@ void Test_Containers() {
                 }
             }
             Assert(set.size() == input.size());
+#ifndef PROFILING_ENABLED
             HashTableStats stats = set.ProbingStats();
             LOG(Info,   L"[HASHTABLE] Probing stats =\n"
                         L"    Min : {0}\n"
@@ -599,7 +604,7 @@ void Test_Containers() {
                         L"    Mean: {2}\n"
                         L"    Dev : {3}\n",
                 stats.MinProbe, stats.MaxProbe, stats.MeanProbe, stats.DevProbe );
-
+#endif
             {
                 const BenchmarkScope subbench("HashTable search");
                 PROFILING_SCOPE(Global, 4, "HashTable search");
@@ -620,6 +625,7 @@ void Test_Containers() {
             }
         }
         {
+            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
             const BenchmarkScope bench("HashSet");
 
             STRINGSLICE_HASHSET(Container, Case::Sensitive) set;

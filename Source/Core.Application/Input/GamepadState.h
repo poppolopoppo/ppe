@@ -81,6 +81,8 @@ public:
 
     MultiGamepadState() {}
 
+    const GamepadState& First() const { return _gamepads[0]; }
+
     MemoryView<GamepadState> Gamepads() { return MakeView(_gamepads); }
     MemoryView<const GamepadState> Gamepads() const { return MakeView(_gamepads); }
 

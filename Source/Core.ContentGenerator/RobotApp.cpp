@@ -11,6 +11,7 @@
 #include "Core.Graphics/Device/Texture/SurfaceFormat.h"
 
 #include "Core.Application/ApplicationConsole.h"
+#include "Core.Application/Input/GamepadInputHandler.h"
 
 namespace Core {
 namespace ContentGenerator {
@@ -38,9 +39,9 @@ RobotApp::RobotApp()
 
     Application::ApplicationConsole::RedirectIOToConsole();
 
-    Test_Format();
-    Test_Containers();
-    Test_RTTI();
+    //Test_Format();
+    //Test_Containers();
+    //Test_RTTI();
 }
 //----------------------------------------------------------------------------
 void RobotApp::Start() {
@@ -53,8 +54,30 @@ void RobotApp::Draw(const Timeline& time) {
     parent_type::Draw(time);
 
     const double totalSeconds = Units::Time::Seconds(time.Total()).Value();
-    const float t = float(Frac(totalSeconds*0.1));
-    const float3 hsv(t, 1.0f, 0.5f);
+    float3 hsv(float(Frac(totalSeconds*0.1)), 1.0f, 0.5f);
+
+    const auto* gamepadService = Services().Get<Application::IGamepadService>();
+    const Application::GamepadState& gamepad = gamepadService->State().First();
+
+    if (gamepad.IsConnected()) {
+        static float3 p(0.5f);
+
+        if (gamepad.RightTrigger()>0.5f) {
+            p.x() += float(gamepad.LeftStickX()*time.Elapsed().Value()*0.0005f);
+            p.y() += float(gamepad.LeftStickY()*time.Elapsed().Value()*0.0005f);
+        }
+        else {
+            p.x() = hsv.x();
+            p.y() = hsv.y();
+        }
+
+        p.z() += float(gamepad.RightStickY()*time.Elapsed().Value()*0.0005f);
+
+        p = Saturate(p);
+
+        hsv = p;
+    }
+
     const float3 rgb = HSV_to_RGB(hsv);
     const ColorRGBAF clearColor(rgb, 1.0f);
 
