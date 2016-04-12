@@ -52,41 +52,28 @@ public:
 private:
     typedef size_t ServiceId;
 
-    class IService {
-    public:
-        IService() {}
-        virtual ~IService() {}
-
-        IService(const IService& ) = delete;
-        IService& operator =(const IService& ) = delete;
-
-        virtual ServiceId Id() const = 0;
-    };
-    typedef UniquePtr<const IService> UCService;
-
     template <typename _Interface>
-    static constexpr ServiceId StaticServiceId() {
+    static constexpr ServiceId  StaticServiceId() {
         return Meta::TypeHash<_Interface>::value();
     }
 
-    template <typename _Interface>
-    class Service : public IService {
+    class Service {
     public:
-        template <typename T>
-        Service(T* pimpl) : _pimpl(pimpl) { Assert(_pimpl); }
-        ~Service() { Assert(nullptr != _pimpl); }
+        Service() : Service(0, nullptr, nullptr) {}
+        Service(ServiceId id, void* pimpl, const char*name)
+            : _id(id), _pimpl(pimpl), _name(name) {}
 
-        _Interface* Pimpl() const { return _pimpl; }
-
-        virtual ServiceId Id() const override {
-            return StaticServiceId<_Interface>();
-        }
+        ServiceId Id() const { return _id; }
+        void* Pimpl() const { return _pimpl; }
+        const char* Name() const { return _name; }
 
     private:
-        _Interface* _pimpl;
+        ServiceId _id;
+        void* _pimpl;
+        const char* _name;
     };
 
-    typedef VECTORINSITU(Internal, UCService, 8) services_type;
+    typedef VECTORINSITU(Internal, Service, 8) services_type;
 
     services_type::const_iterator Find_(ServiceId serviceId) const;
 
@@ -103,30 +90,47 @@ template <typename _Interface, typename T>
 void ServiceContainer::Register(T* service) {
     STATIC_ASSERT(std::is_base_of<_Interface, T>::value);
 
+    const ServiceId serviceId = StaticServiceId<_Interface>();
+
     WRITESCOPELOCK(_barrierRW);
     Assert(nullptr != service);
-    Assert(_services.end() == Find_(StaticServiceId<_Interface>()));
+    Assert(_services.end() == Find_(serviceId));
+
+    const char* name(
+#ifdef USE_DEBUG_LOGGER
+        typeid(_Interface).name()
+#else
+        nullptr
+#endif
+    );
 
     LOG(Info, L"[Service] Register <{0}> with <{1}> (id={2:x})",
-        typeid(_Interface).name(), typeid(T).name(), hash_t(StaticServiceId<_Interface>()) );
+        name, typeid(T).name(), hash_t(serviceId) );
 
-    _services.emplace_back(new Service<_Interface>(service));
+    _Interface* const pimpl = service; // important before casting to (void*)
+
+    _services.emplace_back(serviceId, (void*)pimpl, name);
 }
 //----------------------------------------------------------------------------
 template <typename _Interface, typename T>
 void ServiceContainer::Unregister(T* service) {
     STATIC_ASSERT(std::is_base_of<_Interface, T>::value);
 
+    const ServiceId serviceId = StaticServiceId<_Interface>();
+
     WRITESCOPELOCK(_barrierRW);
     Assert(nullptr != service);
 
     LOG(Info, L"[Service] Unregister <{0}> with <{1}> (id={2})",
-        typeid(_Interface).name(), typeid(T).name(), hash_t(StaticServiceId<_Interface>()) );
+        typeid(_Interface).name(), typeid(T).name(), hash_t(serviceId) );
 
-    const auto it = Find_(StaticServiceId<_Interface>());
+#ifdef WITH_CORE_ASSERT
+    _Interface* const pimpl = service; // important before casting to (void*)
+#endif
+
+    const auto it = Find_(serviceId);
     Assert(_services.end() != it);
-    Assert(nullptr != dynamic_cast<const Service<_Interface>*>(it->get()));
-    Assert(service == static_cast<const Service<_Interface>*>(it->get())->Pimpl());
+    Assert((void*)pimpl == it->Pimpl());
 
     _services.erase_DontPreserveOrder(it);
 }
@@ -140,19 +144,21 @@ _Interface* ServiceContainer::Get() const {
 //----------------------------------------------------------------------------
 template <typename _Interface>
 _Interface* ServiceContainer::GetIFP() const {
+    const ServiceId serviceId = StaticServiceId<_Interface>();
+
     READSCOPELOCK(_barrierRW);
 
-    const auto it = Find_(StaticServiceId<_Interface>());
+    const auto it = Find_(serviceId);
 
     if (_services.end() == it) {
         LOG(Warning, L"[Service] Unknown service <{0}> ! (id={1})",
-            typeid(_Interface).name(), hash_t(StaticServiceId<_Interface>()) );
+            typeid(_Interface).name(), hash_t(serviceId) );
 
         return nullptr;
     }
     else {
-        const auto* service = checked_cast<const Service<_Interface>*>(it->get());
-        return service->Pimpl();
+        Assert(it->Pimpl());
+        return static_cast<_Interface*>(it->Pimpl());
     }
 }
 //----------------------------------------------------------------------------
