@@ -1,6 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <CustomBuild Include="Input\GamepadButton.cpp">
+      <Filter>Input</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Input\GamePadButton.h">
+      <Filter>Input</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Input\GamepadInputHandler.cpp">
+      <Filter>Input</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Input\GamepadInputHandler.h">
+      <Filter>Input</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Input\GamepadState.h">
+      <Filter>Input</Filter>
+    </CustomBuild>
     <CustomBuild Include="Input\InputState-inl.h">
       <Filter>Input</Filter>
     </CustomBuild>
@@ -52,8 +67,6 @@
     <CustomBuild Include="ApplicationGraphics.cpp">
     </CustomBuild>
     <CustomBuild Include="ApplicationGraphics.h">
-    </CustomBuild>
-    <CustomBuild Include="ApplicationService.h">
     </CustomBuild>
     <CustomBuild Include="ApplicationWindow.cpp">
     </CustomBuild>

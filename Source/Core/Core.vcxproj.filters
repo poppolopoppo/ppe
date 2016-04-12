@@ -898,6 +898,12 @@
     <CustomBuild Include="Misc\Guid.h">
       <Filter>Misc</Filter>
     </CustomBuild>
+    <CustomBuild Include="Misc\ServiceContainer.cpp">
+      <Filter>Misc</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Misc\ServiceContainer.h">
+      <Filter>Misc</Filter>
+    </CustomBuild>
     <CustomBuild Include="Misc\TargetPlatform.cpp">
       <Filter>Misc</Filter>
     </CustomBuild>

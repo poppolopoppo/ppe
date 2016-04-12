@@ -43,6 +43,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <CustomBuild Include="Input\GamepadButton.cpp" />
+    <CustomBuild Include="Input\GamePadButton.h" />
+    <CustomBuild Include="Input\GamepadInputHandler.cpp" />
+    <CustomBuild Include="Input\GamepadInputHandler.h" />
+    <CustomBuild Include="Input\GamepadState.h" />
     <CustomBuild Include="Input\InputState-inl.h" />
     <CustomBuild Include="Input\InputState.h" />
     <CustomBuild Include="Input\KeyboardInputHandler.cpp" />
@@ -63,7 +68,6 @@
     <CustomBuild Include="ApplicationConsole.h" />
     <CustomBuild Include="ApplicationGraphics.cpp" />
     <CustomBuild Include="ApplicationGraphics.h" />
-    <CustomBuild Include="ApplicationService.h" />
     <CustomBuild Include="ApplicationWindow.cpp" />
     <CustomBuild Include="ApplicationWindow.h" />
     <CustomBuild Include="Core.Application.bff" />

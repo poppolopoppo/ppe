@@ -342,6 +342,8 @@
     <CustomBuild Include="Misc\FourCC.h" />
     <CustomBuild Include="Misc\Guid.cpp" />
     <CustomBuild Include="Misc\Guid.h" />
+    <CustomBuild Include="Misc\ServiceContainer.cpp" />
+    <CustomBuild Include="Misc\ServiceContainer.h" />
     <CustomBuild Include="Misc\TargetPlatform.cpp" />
     <CustomBuild Include="Misc\TargetPlatform.h" />
     <CustomBuild Include="Thread\Task\Task.h" />
