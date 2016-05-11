@@ -208,7 +208,7 @@ int fib(int x) {
 void TestThreads_() {
     using namespace Core;
 
-    ThreadContext& context = CurrentThreadContext::Instance();
+    ThreadContext& context = ThreadLocalContext_::Instance();
 
     std::cout << context.Name() << ", " << context.Tag() << " = " << context.Id() << std::endl;
 

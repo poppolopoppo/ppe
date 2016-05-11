@@ -4,16 +4,16 @@
 
 #include "Allocator/Alloca.h"
 #include "Allocator/ThreadLocalHeap.h"
+#include "Diagnostic/LastError.h"
 #include "Diagnostic/Logger.h"
 #include "IO/StringSlice.h"
 #include "Meta/AutoSingleton.h"
 
 #ifndef FINAL_RELEASE
-#   define WITH_CORE_THREADCONTEXT
+#   define WITH_CORE_THREADCONTEXT_NAME
 #endif
 
-
-#ifdef WITH_CORE_THREADCONTEXT
+#ifdef WITH_CORE_THREADCONTEXT_NAME
 #   include <Windows.h>
 #endif
 
@@ -23,8 +23,8 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-class CurrentThreadContext : Meta::ThreadLocalSingleton<ThreadContext, CurrentThreadContext> {
-    typedef Meta::ThreadLocalSingleton<ThreadContext, CurrentThreadContext> parent_type;
+class ThreadLocalContext_ : Meta::ThreadLocalSingleton<ThreadContext, ThreadLocalContext_> {
+    typedef Meta::ThreadLocalSingleton<ThreadContext, ThreadLocalContext_> parent_type;
 public:
     using parent_type::HasInstance;
     using parent_type::Instance;
@@ -34,12 +34,13 @@ public:
     static void CreateMainThread();
 };
 //----------------------------------------------------------------------------
-inline void CurrentThreadContext::Create(const char* name, size_t tag) {
-    parent_type::Create(name, tag, std::this_thread::get_id());
+inline void ThreadLocalContext_::Create(const char* name, size_t tag) {
+    Assert(CORE_THREADTAG_MAIN != tag);
+    parent_type::Create(name, tag);
 }
 //----------------------------------------------------------------------------
-inline void CurrentThreadContext::CreateMainThread() {
-    CurrentThreadContext::Create("MainThread", MAIN_THREADTAG);
+inline void ThreadLocalContext_::CreateMainThread() {
+    parent_type::Create("MainThread", CORE_THREADTAG_MAIN);
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -53,7 +54,7 @@ namespace {
                                // Cela risque de masquer les exceptions qui n'étaient pas destinées à être gérées.
 #pragma warning(disable: 6322) // bloc empty _except.
 static void SetWin32ThreadName_(const char* name) {
-#ifdef WITH_CORE_THREADCONTEXT
+#ifdef WITH_CORE_THREADCONTEXT_NAME
     /*
     // How to: Set a Thread Name in Native Code
     // http://msdn.microsoft.com/en-us/library/xcb2z8hs.aspx
@@ -88,12 +89,25 @@ static void SetWin32ThreadName_(const char* name) {
 }
 #pragma warning(pop)
 //----------------------------------------------------------------------------
+static void GuaranteeStackSizeForStackOverflowRecovery_() {
+#ifdef OS_WINDOWS
+    ULONG stackSizeInBytes = 0;
+    if(1 == ::SetThreadStackGuarantee(&stackSizeInBytes)) {
+        stackSizeInBytes += 1*1024*1024;
+        if (1 == ::SetThreadStackGuarantee(&stackSizeInBytes))
+            return;
+    }
+    LOG(Warning, L"Unable to SetThreadStackGuarantee, Stack Overflows won't be caught properly !");
+#endif
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ThreadContext::ThreadContext(const char* name, size_t tag, std::thread::id id)
-:   _tag(tag), _id(id) {
+ThreadContext::ThreadContext(const char* name, size_t tag)
+:   _tag(tag)
+,   _threadId(std::this_thread::get_id()) {
     Assert(name);
 
     const size_t n = Copy(MakeView(_name), MakeStringSlice(name, Meta::noinit_tag()));
@@ -101,25 +115,61 @@ ThreadContext::ThreadContext(const char* name, size_t tag, std::thread::id id)
     _name[n] = '\0';
 
     SetWin32ThreadName_(_name);
+    GuaranteeStackSizeForStackOverflowRecovery_();
 
-    LOG(Info, L"[Thread] Start '{0}' with tag = {1} (id:{2})", _name, _tag, _id);
+    LOG(Info, L"[Thread] Start '{0}' with tag = {1} (id:{2})", _name, _tag, _threadId);
 }
 //----------------------------------------------------------------------------
 ThreadContext::~ThreadContext() {
-    LOG(Info, L"[Thread] Stop '{0}' with tag = {1} (id:{2})", _name, _tag, _id);
+    LOG(Info, L"[Thread] Stop '{0}' with tag = {1} (id:{2})", _name, _tag, _threadId);
+}
+//----------------------------------------------------------------------------
+size_t ThreadContext::AffinityMask() const {
+    Assert(std::this_thread::get_id() == _threadId);
+#ifdef OS_WINDOWS
+    HANDLE currentThread = ::GetCurrentThread();
+    DWORD_PTR affinityMask = ::SetThreadAffinityMask(currentThread, 0xFFul);
+    if (0 == affinityMask) {
+        LastErrorException e;
+        throw e;
+    }
+    if (0 == ::SetThreadAffinityMask(currentThread, affinityMask)) {
+        LastErrorException e;
+        throw e;
+    }
+    return checked_cast<size_t>(affinityMask);
+#else
+#   error "platform not supported"
+#endif
+}
+//----------------------------------------------------------------------------
+void ThreadContext::SetAffinityMask(size_t mask) const {
+    Assert(0 != mask);
+    Assert(std::this_thread::get_id() == _threadId);
+
+#ifdef OS_WINDOWS
+    HANDLE currentThread = ::GetCurrentThread();
+    DWORD_PTR affinityMask = ::SetThreadAffinityMask(currentThread, mask);
+    if (0 == affinityMask) {
+        LastErrorException e;
+        throw e;
+    }
+    Assert(mask == AffinityMask());
+#else
+#   error "platform not supported"
+#endif
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const ThreadContext& ThisThreadContext()
-{
-    return CurrentThreadContext::Instance();
+const ThreadContext& CurrentThreadContext() {
+    return ThreadLocalContext_::Instance();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void ThreadContextStartup::Start(const char* name, size_t tag) {
-    CurrentThreadContext::Create(name, tag);
+    ThreadLocalContext_::Create(name, tag);
     ThreadLocalHeapStartup::Start(false);
     Meta::ThreadLocalAutoSingletonManager::Start();
     AllocaStartup::Start(false);
@@ -127,7 +177,7 @@ void ThreadContextStartup::Start(const char* name, size_t tag) {
 //----------------------------------------------------------------------------
 void ThreadContextStartup::Start_MainThread() {
     Meta::ThreadLocalAutoSingletonManager::Start();
-    CurrentThreadContext::CreateMainThread();
+    ThreadLocalContext_::CreateMainThread();
     ThreadLocalHeapStartup::Start(true);
     AllocaStartup::Start(true);
 }
@@ -135,7 +185,7 @@ void ThreadContextStartup::Start_MainThread() {
 void ThreadContextStartup::Shutdown() {
     AllocaStartup::Shutdown();
     ThreadLocalHeapStartup::Shutdown();
-    CurrentThreadContext::Destroy();
+    ThreadLocalContext_::Destroy();
     Meta::ThreadLocalAutoSingletonManager::Shutdown();
 }
 //----------------------------------------------------------------------------

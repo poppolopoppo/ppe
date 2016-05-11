@@ -58,27 +58,6 @@ static void PrintMemStats_(const Core::CrtMemoryStats& memoryStats) {
 #endif
 //----------------------------------------------------------------------------
 #ifdef OS_WINDOWS
-static void GuaranteeStackSizeForStackOverflowRecovery_()
-{
-    HMODULE moduleHandle = GetModuleHandleA("kernel32.dll");
-    if(moduleHandle) {
-        typedef BOOL (WINAPI *TSetThreadStackGuarantee)(PULONG StackSizeInBytes);
-        TSetThreadStackGuarantee setThreadStackGuarantee = (TSetThreadStackGuarantee)GetProcAddress(moduleHandle, "SetThreadStackGuarantee");
-        if(setThreadStackGuarantee) {
-            ULONG stackSizeInBytes = 0;
-            if(1 == (*setThreadStackGuarantee)(&stackSizeInBytes))
-            {
-                stackSizeInBytes += 1*1024*1024;
-                if (1 == (*setThreadStackGuarantee)(&stackSizeInBytes))
-                    return;
-            }
-        }
-    }
-    LOG(Warning, L"Unable to SetThreadStackGuarantee, Stack Overflows won't be caught properly !");
-}
-#endif
-//----------------------------------------------------------------------------
-#ifdef OS_WINDOWS
 static void ConfigureCRTHeapForDebugging_() {
 #   ifdef _DEBUG
     //const int debugCheckHeap = _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_EVERY_1024_DF;
@@ -119,7 +98,6 @@ void ApplicationStartup::ClearAll_UnusedMemory() {
 //----------------------------------------------------------------------------
 ApplicationContext::ApplicationContext() {
 #ifdef OS_WINDOWS
-    GuaranteeStackSizeForStackOverflowRecovery_();
     ConfigureCRTHeapForDebugging_();
 #endif
 }
