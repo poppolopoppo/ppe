@@ -11,15 +11,14 @@
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#if defined(_MSC_VER)
+#if     defined(_MSC_VER)
 #   define OS_WINDOWS
 #   define CPP_VISUALSTUDIO
-// TODO :
-//#elif   defined(__GNUC__)
-//#   define CPP_GCC
-//#   define OS_LINUX
-//#elif   defined(__CLANG__)
-//#   define CPP_CLANG
+#elif   defined(__GNUC__)
+#   define CPP_GCC
+#   define OS_LINUX
+#elif   defined(__CLANG__)
+#   define CPP_CLANG
 #else
 #   error "unsupported compiler"
 #endif
@@ -79,18 +78,21 @@
 #   define NOALIAS
 #   define NOEXCEPT     noexcept
 #   define RESTRICT     __declspec(restrict)
+#   define STDCALL      __stdcall
 #   define THREAD_LOCAL thread_local
 #   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, _DEFAULT_VALUE) static constexpr _TYPE _NAME = (_TYPE)(_DEFAULT_VALUE)
 #elif defined(_MSC_VER) && _MSC_VER >= 1900
 #   define NOALIAS      __declspec(noalias)
 #   define NOEXCEPT     noexcept
 #   define RESTRICT     __declspec(restrict)
+#   define STDCALL      __stdcall
 #   define THREAD_LOCAL thread_local
 #   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, _DEFAULT_VALUE) static constexpr _TYPE _NAME = (_TYPE)(_DEFAULT_VALUE)
 #elif defined (_MSC_VER)
 #   define NOALIAS      __declspec(noalias)
 #   define NOEXCEPT     __declspec(nothrow)
 #   define RESTRICT     __declspec(restrict)
+#   define STDCALL      __stdcall
 #   define THREAD_LOCAL __declspec(thread)
 #   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, _DEFAULT_VALUE) enum : _TYPE { _NAME = (_TYPE)(_DEFAULT_VALUE) }
 #else

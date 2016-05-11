@@ -46,8 +46,8 @@ public:
     DX11ShaderIncludeHandler_(const DX11ShaderIncludeHandler_& ) = delete;
     DX11ShaderIncludeHandler_& operator =(const DX11ShaderIncludeHandler_& ) = delete;
 
-    HRESULT __stdcall Open(::D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID *ppData, UINT *pBytes) override;
-    HRESULT __stdcall Close(LPCVOID pData) override;
+    HRESULT STDCALL Open(::D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID *ppData, UINT *pBytes) override;
+    HRESULT STDCALL Close(LPCVOID pData) override;
 
 private:
     void Open_(const Filename& filename, LPCVOID *ppData, UINT *pBytes);
@@ -75,7 +75,7 @@ DX11ShaderIncludeHandler_::DX11ShaderIncludeHandler_(
 //----------------------------------------------------------------------------
 DX11ShaderIncludeHandler_::~DX11ShaderIncludeHandler_() {}
 //----------------------------------------------------------------------------
-HRESULT __stdcall DX11ShaderIncludeHandler_::Open(::D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID/* pParentData */, LPCVOID *ppData, UINT *pBytes) {
+HRESULT STDCALL DX11ShaderIncludeHandler_::Open(::D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID/* pParentData */, LPCVOID *ppData, UINT *pBytes) {
     *ppData = nullptr;
     *pBytes = 0;
 
@@ -109,7 +109,7 @@ HRESULT __stdcall DX11ShaderIncludeHandler_::Open(::D3D_INCLUDE_TYPE IncludeType
     return S_OK;
 }
 //----------------------------------------------------------------------------
-HRESULT __stdcall DX11ShaderIncludeHandler_::Close(LPCVOID pData) {
+HRESULT STDCALL DX11ShaderIncludeHandler_::Close(LPCVOID pData) {
     if (pData)
         Deallocate_(const_cast<void *>(pData));
 
