@@ -44,14 +44,26 @@ public:
 
     size_type capacity() const { return _capacity; }
     size_type size() const;
-    bool empty() const { return _tail == _head; }
+    bool empty() const { return (0 == _size); }
 
     template <typename _Arg0, typename... _Args>
-    void Queue(_Arg0&& arg0, _Args&&... args);
-    bool Dequeue(pointer pvalue);
+    void push_back(_Arg0&& arg0, _Args&&... args);
+    template <typename _Arg0, typename... _Args>
+    bool push_back_OverflowIFN(_Arg0&& arg0, _Args&&... args);
 
     template <typename _Arg0, typename... _Args>
-    bool Queue_OverflowIFN(_Arg0&& arg0, _Args&&... args);
+    void push_front(_Arg0&& arg0, _Args&&... args);
+    template <typename _Arg0, typename... _Args>
+    bool push_front_OverflowIFN(_Arg0&& arg0, _Args&&... args);
+
+    bool pop_front(pointer pvalue);
+    bool pop_back(pointer pvalue);
+
+    template <typename _Arg0, typename... _Args>
+    void Queue(_Arg0&& arg0, _Args&&... args) { push_back(std::forward<_Arg0>(arg0), std::forward<_Args>(args)); }
+    template <typename _Arg0, typename... _Args>
+    bool Queue_OverflowIFN(_Arg0&& arg0, _Args&&... args) { push_back_OverflowIFN(std::forward<_Arg0>(arg0), std::forward<_Args>(args)); }
+    bool Dequeue(pointer pvalue) { return pop_front(pvalue); }
 
     reference at(size_t index) { Assert(index < _size); return _storage[(_begin + index) % _capacity]; }
     const_reference at(size_t index) const { Assert(index < _size); return _storage[(_begin + index) % _capacity]; }
@@ -92,7 +104,7 @@ auto RingBuffer<T, _IsPod>::size() const -> size_type {
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
 template <typename _Arg0, typename... _Args>
-void RingBuffer<T, _IsPod>::Queue(_Arg0&& arg0, _Args&&... args) {
+void RingBuffer<T, _IsPod>::push_back(_Arg0&& arg0, _Args&&... args) {
     Assert(_storage);
     Assert(_size < _capacity);
 
@@ -101,23 +113,48 @@ void RingBuffer<T, _IsPod>::Queue(_Arg0&& arg0, _Args&&... args) {
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
 template <typename _Arg0, typename... _Args>
-bool RingBuffer<T, _IsPod>::Queue_OverflowIFN(_Arg0&& arg0, _Args&&... args) {
+bool RingBuffer<T, _IsPod>::push_back_OverflowIFN(_Arg0&& arg0, _Args&&... args) {
     Assert(_storage);
 
-    bool overflow = false;
-    if (_size == _capacity) {
+    const bool overflow = (_size == _capacity);
+    if (overflow) {
         Assert(0 < _size);
-        overflow = true;
-        Dequeue(nullptr);
+        pop_front(nullptr);
     }
 
-    Queue(std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+    push_back(std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
 
     return overflow;
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-bool RingBuffer<T, _IsPod>::Dequeue(pointer pvalue) {
+template <typename _Arg0, typename... _Args>
+void RingBuffer<T, _IsPod>::push_front(_Arg0&& arg0, _Args&&... args) {
+    Assert(_storage);
+    Assert(_size < _capacity);
+
+    new (&_storage[(_begin + (_capacity - 1)) % _capacity]) T{ std::forward<_Arg0>(arg0), std::forward<_Args>(args)... };
+    _size++;
+}
+//----------------------------------------------------------------------------
+template <typename T, bool _IsPod>
+template <typename _Arg0, typename... _Args>
+bool RingBuffer<T, _IsPod>::push_front_OverflowIFN(_Arg0&& arg0, _Args&&... args) {
+    Assert(_storage);
+
+    const bool overflow = (_size == _capacity);
+    if (overflow) {
+        Assert(0 < _size);
+        pop_back(nullptr);
+    }
+
+    push_front(std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+
+    return overflow;
+}
+//----------------------------------------------------------------------------
+template <typename T, bool _IsPod>
+bool RingBuffer<T, _IsPod>::pop_front(pointer pvalue) {
     Assert(pvalue);
 
     if (0 == _size)
@@ -125,14 +162,36 @@ bool RingBuffer<T, _IsPod>::Dequeue(pointer pvalue) {
 
     Assert(_storage);
     Assert(0 < _size);
+    Assert(_begin < _capacity);
 
-    T& elt = _storage[_begin % _capacity];
+    T& elt = _storage[_begin];
     if(pvalue)
         *pvalue = std::move(elt);
     if (false == _IsPod)
         elt.~T();
 
     _begin = ++_begin % _capacity;
+    _size--;
+    return true;
+}
+//----------------------------------------------------------------------------
+template <typename T, bool _IsPod>
+bool RingBuffer<T, _IsPod>::pop_back(pointer pvalue) {
+    Assert(pvalue);
+
+    if (0 == _size)
+        return false;
+
+    Assert(_storage);
+    Assert(0 < _size);
+    Assert(_begin < _capacity);
+
+    T& elt = _storage[(_begin + _size - 1) % _capacity];
+    if(pvalue)
+        *pvalue = std::move(elt);
+    if (false == _IsPod)
+        elt.~T();
+
     _size--;
     return true;
 }
