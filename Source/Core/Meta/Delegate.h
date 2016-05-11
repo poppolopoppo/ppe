@@ -24,60 +24,66 @@ public:
     Delegate() { static_assert(false, "Delegate<T> accepts only function pointers"); }
 };
 //----------------------------------------------------------------------------
-template <typename _Ret, typename... _Args >
-class Delegate<_Ret (*)(_Args... )> {
+class BaseDelegate {
 public:
-    typedef _Ret (*func_type)(_Args... );
-    typedef _Ret (*callback_type)(void *, _Args... );
-    typedef _Ret return_type;
+    BaseDelegate() : BaseDelegate(nullptr, nullptr) {}
+    BaseDelegate(void* pcallback, void*pcallee)
+    :   _pcallee(pcallee)
+    ,   _pcallback(pcallback) {}
 
-    Delegate() : Delegate(nullptr, nullptr) {}
-    Delegate(callback_type pcallback, void *pcallee = nullptr)
-    :   _pcallee(pcallee) {
-        _pcallback.Set(pcallback);
-    }
-
-    Delegate(const Delegate& other) { operator =(other); }
-    Delegate& operator =(const Delegate& other) {
+    BaseDelegate(const BaseDelegate& other) { operator =(other); }
+    BaseDelegate& operator =(const BaseDelegate& other) {
         _pcallee = other._pcallee;
         _pcallback = other._pcallback;
         return *this;
     }
 
-    bool Valid() const { return (nullptr != _pcallback.Get()); }
-    operator void *() const { return _pcallback.Get(); }
+    bool Valid() const { return (nullptr != _pcallback); }
+    operator void* () const { return _pcallback; }
 
-    size_t Flag01() const { return _pcallback.Flag01(); }
-    void SetFlag01(size_t value) { _pcallback.SetFlag01(value); }
-
-    bool Flag0() const { return _pcallback.Flag0(); }
-    void SetFlag0(bool value) { _pcallback.SetFlag0(value); }
-
-    bool Flag1() const { return _pcallback.Flag1(); }
-    void SetFlag1(bool value) { _pcallback.SetFlag01(); }
-
-    _Ret Invoke(_Args... args) const {
-        return (*_pcallback.Get())(_pcallee, std::forward<_Args>(args)... );
+    template <typename _Func>
+    const Delegate<_Func>& Cast() const {
+        return *static_cast<const Delegate<_Func>*>(this);
     }
 
-    FORCE_INLINE _Ret operator ()(_Args... args) const {
-        return Invoke(std::forward<_Args>(args)... );
-    }
-
-    friend bool operator ==(const Delegate<_Ret (*)(_Args... )>& lhs,
-                            const Delegate<_Ret (*)(_Args... )>& rhs ) {
+    friend bool operator ==(const BaseDelegate& lhs, const BaseDelegate& rhs) {
         return  lhs._pcallback == rhs._pcallback &&
                 lhs._pcallee == rhs._pcallee;
     }
 
-    friend bool operator !=(const Delegate<_Ret (*)(_Args... )>& lhs,
-                            const Delegate<_Ret (*)(_Args... )>& rhs ) {
-        return ! operator ==(lhs, rhs);
+    friend bool operator !=(const BaseDelegate& lhs, const BaseDelegate& rhs) {
+        return (not operator ==(lhs, rhs));
     }
 
 protected:
-    void *_pcallee;
-    Meta::PointerWFlags<callback_type> _pcallback;
+    void* _pcallee;
+    void* _pcallback;
+};
+//----------------------------------------------------------------------------
+template <typename _Ret, typename... _Args >
+class Delegate<_Ret (*)(_Args... )> : public BaseDelegate {
+public:
+    typedef _Ret return_type;
+    typedef return_type (*func_type)(_Args... );
+    typedef return_type (*callback_type)(void*, _Args... );
+
+    Delegate() : BaseDelegate(nullptr, nullptr) {}
+    Delegate(callback_type pcallback, void* pcallee = nullptr) : BaseDelegate(pcallback, pcallee) {}
+
+    Delegate(const Delegate& other) : BaseDelegate(other) {}
+    Delegate& operator =(const Delegate& other) {
+        BaseDelegate::operator =(other);
+        return *this;
+    }
+
+    return_type Invoke(_Args... args) const {
+        Assert(Valid());
+        return static_cast<callback_type>(_pcallback)(_pcallee, std::forward<_Args>(args)... );
+    }
+
+    FORCE_INLINE return_type operator ()(_Args... args) const {
+        return Invoke(std::forward<_Args>(args)... );
+    }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

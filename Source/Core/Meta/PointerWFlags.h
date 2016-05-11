@@ -12,8 +12,6 @@ namespace Meta {
 //----------------------------------------------------------------------------
 // use a macro instead of inheritance to keep PointerWFlags<> as a pod
 #define POINTERWFLAGS_BASE_DEF() \
-    size_t  _pFlags; \
-    \
     typedef Bit<size_t>::First<2>::type field_Flag01; \
     typedef Bit<size_t>::First<1>::type field_Flag0; \
     typedef Bit<size_t>::After<field_Flag0>::Field<1>::type field_Flag1; \
@@ -34,7 +32,17 @@ namespace Meta {
     void SetRawPointer(const void *ptr) { \
         Assert((size_t(ptr) & field_Flag01::Mask) == 0); \
         _pFlags = (_pFlags & field_Flag01::Mask) | size_t(ptr); \
-    }
+    } \
+    \
+    friend inline bool operator ==(const PointerWFlags& lhs, const PointerWFlags& rhs) { \
+        return (lhs._pFlags == rhs._pFlags); \
+    } \
+    \
+    friend inline bool operator !=(const PointerWFlags& lhs, const PointerWFlags& rhs) { \
+        return (lhs._pFlags != rhs._pFlags); \
+    } \
+    \
+    size_t  _pFlags
 //----------------------------------------------------------------------------
 template <typename T>
 struct PointerWFlags {
@@ -65,7 +73,6 @@ struct PointerWFlags {
     T* operator ->() const { return Get(); }
     T& operator *() const { return *Get(); }
 };
-
 //----------------------------------------------------------------------------
 template <typename T>
 struct PointerWFlags<T *> {
@@ -120,10 +127,8 @@ struct PointerWFlags<void> {
 //----------------------------------------------------------------------------
 #undef POINTERWFLAGS_BASE_DEF
 //----------------------------------------------------------------------------
-static_assert(std::is_pod< PointerWFlags<int> >::value,
-                "PointerWFlags<int> must be a POD type" );
-static_assert(std::is_pod< PointerWFlags<void> >::value,
-                "PointerWFlags<void> must be a POD type");
+static_assert(std::is_pod< PointerWFlags<int> >::value, "PointerWFlags<int> must be a POD type" );
+static_assert(std::is_pod< PointerWFlags<void> >::value, "PointerWFlags<void> must be a POD type");
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
