@@ -6,6 +6,7 @@
 
 #include "Diagnostic/CurrentProcess.h"
 
+#include "IO/Stream.h"
 #include "IO/String.h"
 #include "IO/StringSlice.h"
 
@@ -89,6 +90,8 @@ void LoggerFrontend::Log(LogCategory category, const WStringSlice& text) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void OutputDebugLogger::Log(LogCategory category, const WStringSlice& text) {
+    WOStringStream oss;
+
 #if 0
     if (LogCategory::Callstack != category) {
         wchar_t header[64];
@@ -98,16 +101,15 @@ void OutputDebugLogger::Log(LogCategory category, const WStringSlice& text) {
 #else
     if (LogCategory::Callstack != category &&
         LogCategory::Info != category ) {
-        wchar_t header[32];
-        Format(header, L"[{0}] ", category);
-        OutputDebugStringW(header);
+        Format(oss, L"[{0}] ", category);
     }
 #endif
 
     Assert('\0' == text.data()[text.size()]); // text must be null terminated !
+    oss << text;
+    oss << std::endl;
 
-    OutputDebugStringW(text.data());
-    OutputDebugStringW(L"\n");
+    OutputDebugStringW(oss.str().c_str());
 }
 //----------------------------------------------------------------------------
 void StdcoutLogger::Log(LogCategory category, const WStringSlice& text) {
