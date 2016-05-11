@@ -70,7 +70,16 @@ using IsDefined = has_destructor<T>;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
+using Greater = std::greater<T>;
+//----------------------------------------------------------------------------
+template <typename T>
+using GreaterEqual = std::greater_equal<T>;
+//----------------------------------------------------------------------------
+template <typename T>
 using Less = std::less<T>;
+//----------------------------------------------------------------------------
+template <typename T>
+using LessEqual = std::less_equal<T>;
 //----------------------------------------------------------------------------
 template <typename T>
 using EqualTo = std::equal_to<T>;
