@@ -25,11 +25,11 @@ typedef u16 ushort;
 typedef i32 word;
 typedef u32 uword;
 //----------------------------------------------------------------------------
-template <typename T>
-FORCE_INLINE T Max(const T& lhs, const T& rhs) { return lhs < rhs ? rhs : lhs; }
+template <typename _Lhs, typename _Rhs>
+decltype(std::declval<_Lhs>()+std::declval<_Rhs>()) Max(_Lhs lhs, _Rhs rhs) { return lhs < rhs ? rhs : lhs; }
 //----------------------------------------------------------------------------
-template <typename T>
-FORCE_INLINE T Min(const T& lhs, const T& rhs) { return lhs < rhs ? lhs : rhs; }
+template <typename _Lhs, typename _Rhs>
+decltype(std::declval<_Lhs>()+std::declval<_Rhs>()) Min(_Lhs lhs, _Rhs rhs) { return lhs < rhs ? lhs : rhs; }
 //----------------------------------------------------------------------------
 typedef struct uint128_t {
     u64 lo, hi;
