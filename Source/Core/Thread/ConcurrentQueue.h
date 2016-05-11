@@ -3,27 +3,28 @@
 #include "Core/Core.h"
 
 #include "Core/Allocator/Allocation.h"
+#include "Core/Container/Pair.h"
+#include "Core/Container/Vector.h"
 #include "Core/Meta/ThreadResource.h"
 
 #include <condition_variable>
 #include <mutex>
+#include <queue>
 #include <type_traits>
-
-/*
-// Naive concurrent queue
-// https://github.com/krizhanovsky/NatSys-Lab/blob/master/lockfree_rb_q.cc
-// http://natsys-lab.blogspot.ru/2013/05/lock-free-multi-producer-multi-consumer.html
-*/
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+/*
+// Naive concurrent queue
+// https://github.com/krizhanovsky/NatSys-Lab/blob/master/lockfree_rb_q.cc
+// http://natsys-lab.blogspot.ru/2013/05/lock-free-multi-producer-multi-consumer.html
+*/
+//----------------------------------------------------------------------------
 template <typename T, typename _Allocator = ALLOCATOR(Container, T) >
 class ConcurentQueue : _Allocator {
 public:
-    STATIC_ASSERT(std::is_pod<T>::value);
-
     explicit ConcurentQueue(size_t capacity);
     ConcurentQueue(size_t capacity, const _Allocator& allocator);
     ~ConcurentQueue();
@@ -32,10 +33,8 @@ public:
     ConcurentQueue& operator =(const ConcurentQueue& ) = delete;
 
     void Produce(T&& rvalue);
-    void Produce(const T& value);
-
-    void Consume(T *pvalue);
-    bool TryConsume(T *pvalue);
+    void Consume(T* pvalue);
+    bool TryConsume(T* pvalue);
 
 private:
     const size_t _capacity;
@@ -43,16 +42,61 @@ private:
     size_t _head;
     size_t _tail;
 
-    std::condition_variable    _empty;
-    std::condition_variable    _overflow;
+    std::condition_variable _empty;
+    std::condition_variable _overflow;
 
     std::mutex _barrier;
 
-    T *_queue;
+    T* _queue;
 };
 //----------------------------------------------------------------------------
 #define CONCURRENT_QUEUE(_DOMAIN, T) \
     ::Core::ConcurentQueue<T, ALLOCATOR(_DOMAIN, T)>
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+/*
+// Naive concurrent priority queue
+// The queue uses a Vector<> and can grow, based on std::push_heap()/pop_heap().
+// Not using std::priority_queue<> since it is too restrictive (no non-const reference to top, no reserve()).
+*/
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator = ALLOCATOR(Container, T) >
+class ConcurentPriorityQueue {
+public:
+    explicit ConcurentPriorityQueue(size_t capacity);
+    ConcurentPriorityQueue(size_t capacity, const _Allocator& allocator);
+    ~ConcurentPriorityQueue();
+
+    ConcurentPriorityQueue(const ConcurentPriorityQueue& ) = delete;
+    ConcurentPriorityQueue& operator =(const ConcurentPriorityQueue& ) = delete;
+
+    void Produce(int priority, T&& rvalue); // lower is higher priority
+    void Consume(T* pvalue);
+    bool TryConsume(T* pvalue);
+
+private:
+    std::condition_variable _empty;
+    std::mutex _barrier;
+
+    typedef Pair<int, T> item_type;
+
+    typedef Vector<
+        item_type,
+        typename _Allocator::template rebind<item_type>::other
+    >   vector_type;
+
+    struct Greater_ {
+        bool operator ()(const item_type& lhs, const item_type& rhs) const {
+            return (lhs.first > rhs.first); // ordered from min to max
+        }
+    };
+
+    vector_type _queue;
+};
+//----------------------------------------------------------------------------
+#define CONCURRENT_PRIORITY_QUEUE(_DOMAIN, T) \
+    ::Core::ConcurentPriorityQueue<T, ALLOCATOR(_DOMAIN, T)>
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
