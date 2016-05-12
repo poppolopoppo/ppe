@@ -31,8 +31,8 @@ private:
 
 #ifdef WITH_CORE_ASSERT
     std::thread::id _threadID;
-    void CheckThreadOwnerShip_() const { 
-        Assert(std::this_thread::get_id() == _threadID); 
+    void CheckThreadOwnerShip_() const {
+        Assert(std::this_thread::get_id() == _threadID);
     }
 #else
     void CheckThreadOwnerShip_() const {}
@@ -40,12 +40,12 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-MRUCache<T, _Dim>::MRUCache() 
-:   _headPos(0) 
+MRUCache<T, _Dim>::MRUCache()
+:   _headPos(0)
 ,   _tailPos(0)
 #ifdef WITH_CORE_ASSERT
 ,   _threadID(std::this_thread::get_id())
-#endif 
+#endif
 {
 #ifdef WITH_CORE_ASSERT
     for (size_t i = 0; i < _Dim; ++i)

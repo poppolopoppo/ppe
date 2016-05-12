@@ -3,7 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/Meta/Singleton.h"
-#include "Core/Thread/Task/TaskPool.h"
+#include "Core/Thread/Task/TaskManager.h"
 
 #include <chrono>
 
@@ -11,27 +11,31 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class GlobalThreadPool : Meta::Singleton<TaskPool, GlobalThreadPool> {
+class GlobalThreadPool : Meta::Singleton<TaskManager, GlobalThreadPool> {
 public:
-    typedef Meta::Singleton<TaskPool, GlobalThreadPool> parent_type;
+    typedef Meta::Singleton<TaskManager, GlobalThreadPool> parent_type;
 
     using parent_type::Instance;
     using parent_type::HasInstance;
-    using parent_type::Destroy;
 
     static void Create();
+    static void Destroy();
 };
 //----------------------------------------------------------------------------
-class IOThreadPool : Meta::Singleton<TaskPool, IOThreadPool> {
+void AsyncWork(const TaskDelegate& task, TaskPriority priority = TaskPriority::Normal);
+//----------------------------------------------------------------------------
+class IOThreadPool : Meta::Singleton<TaskManager, IOThreadPool> {
 public:
-    typedef Meta::Singleton<TaskPool, IOThreadPool> parent_type;
+    typedef Meta::Singleton<TaskManager, IOThreadPool> parent_type;
 
     using parent_type::Instance;
     using parent_type::HasInstance;
-    using parent_type::Destroy;
 
     static void Create();
+    static void Destroy();
 };
+//----------------------------------------------------------------------------
+void AsyncIO(const TaskDelegate& task, TaskPriority priority = TaskPriority::Normal);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

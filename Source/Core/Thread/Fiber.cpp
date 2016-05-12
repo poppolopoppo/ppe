@@ -14,7 +14,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-enum : size_t { 
+enum : size_t {
     FiberStackCommitSize    = 0,
     FiberStackReserveSize   = (2048/* kb */<<10),
     FiberFlags              = FIBER_FLAG_FLOAT_SWITCH,
@@ -26,6 +26,26 @@ static THREAD_LOCAL void *gCurrentThreadFiber = nullptr;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+Fiber::~Fiber() {
+    if (_pimpl)
+        Destroy();
+}
+//----------------------------------------------------------------------------
+Fiber::Fiber(Fiber&& rvalue)
+    : _pimpl(rvalue._pimpl) {
+    rvalue._pimpl = nullptr;
+}
+//----------------------------------------------------------------------------
+Fiber& Fiber::operator =(Fiber&& rvalue) {
+    if (_pimpl)
+        Destroy();
+
+    Assert(nullptr == _pimpl);
+    std::swap(_pimpl, rvalue._pimpl);
+
+    return *this;
+}
+//----------------------------------------------------------------------------
 void Fiber::Create(callback_t entryPoint, void *arg, size_t stackSize/* = 0 */) {
     Assert(!_pimpl);
     Assert(entryPoint);
@@ -35,14 +55,12 @@ void Fiber::Create(callback_t entryPoint, void *arg, size_t stackSize/* = 0 */) 
     if (0 == stackSize)
         stackSize = FiberStackReserveSize;
 
-#if 0
-    _pimpl = ::CreateFiber(stackSize, entryPoint, arg);
-#else
-    _pimpl = ::CreateFiberEx(   FiberStackCommitSize,
-                                stackSize,
-                                FiberFlags,
-                                entryPoint, arg );
-#endif
+    _pimpl = ::CreateFiberEx(
+        FiberStackCommitSize,
+        stackSize,
+        FiberFlags,
+        entryPoint,
+        arg );
 
     Assert(_pimpl);
 }
@@ -64,6 +82,10 @@ void Fiber::Destroy() {
     _pimpl = nullptr;
 }
 //----------------------------------------------------------------------------
+void Fiber::Reset(void* pimpl /* = nullptr */) {
+    _pimpl = pimpl;
+}
+//----------------------------------------------------------------------------
 void Fiber::Start() {
     Assert(!gCurrentThreadFiber);
     Assert(!::IsThreadAFiber());
@@ -80,23 +102,23 @@ void Fiber::Shutdown() {
     gCurrentThreadFiber = nullptr;
 }
 //----------------------------------------------------------------------------
-Fiber Fiber::ThreadFiber() {
+void* Fiber::ThreadFiber() {
     Assert(gCurrentThreadFiber);
     Assert(::IsThreadAFiber());
 
     return gCurrentThreadFiber;
 }
 //----------------------------------------------------------------------------
-Fiber Fiber::RunningFiber() {
+void* Fiber::RunningFiber() {
     Assert(gCurrentThreadFiber);
     Assert(::IsThreadAFiber());
 
     return ::GetCurrentFiber();
 }
 //----------------------------------------------------------------------------
-Fiber Fiber::RunningFiberIFP() {
-    return ::IsThreadAFiber() 
-        ? ::GetCurrentFiber() 
+void* Fiber::RunningFiberIFP() {
+    return ::IsThreadAFiber()
+        ? ::GetCurrentFiber()
         : nullptr;
 }
 //----------------------------------------------------------------------------
@@ -104,50 +126,6 @@ bool Fiber::IsInFiber() {
     const bool result = (nullptr != gCurrentThreadFiber);
     Assert(result == (TRUE == ::IsThreadAFiber()) );
     return result;
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-FiberFactory::FiberFactory(Fiber::callback_t entryPoint, void *arg, size_t stackSize/* = 0 */) 
-:   _entryPoint(entryPoint)
-,   _arg(arg)
-,   _stackSize(stackSize)
-#ifdef WITH_CORE_ASSERT
-,   _count(0)
-#endif
-{
-    Assert(_entryPoint);
-}
-//----------------------------------------------------------------------------
-FiberFactory::~FiberFactory() {
-#ifdef WITH_CORE_ASSERT
-    Assert(0 == _count);
-#endif
-}
-//----------------------------------------------------------------------------
-Fiber FiberFactory::Create() {
-    Fiber result;
-    result.Create(_entryPoint, _arg, _stackSize);
-
-#ifdef WITH_CORE_ASSERT
-    ++_count;
-#endif
-    
-    Assert(result);
-    return result;
-}
-//----------------------------------------------------------------------------
-void FiberFactory::Release(Fiber& fiber) {
-    Assert(fiber);
-    Assert(Fiber::RunningFiber() != fiber);
-
-    fiber.Destroy();
-
-#ifdef WITH_CORE_ASSERT
-    Assert(_count);
-    --_count;
-    fiber = Fiber();
-#endif
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

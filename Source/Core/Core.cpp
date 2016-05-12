@@ -10,7 +10,6 @@
 #include "IO/FileSystem.h"
 #include "IO/VirtualFileSystem.h"
 #include "Meta/AutoSingleton.h"
-#include "Thread/Task/TaskPool.h"
 #include "Thread/ThreadContext.h"
 #include "Thread/ThreadPool.h"
 
@@ -53,7 +52,6 @@ void CoreStartup::Start(void *applicationHandle, int nShowCmd, size_t argc, cons
     // 4 - pool allocators
     POOL_TAG(Default)::Start();
     POOL_TAG(NodeBasedContainer)::Start();
-    POOL_TAG(TaskPool)::Start();
     // 5 - auto singleton manager
     Meta::AutoSingletonManager::Start();
     // 6 - thread pool
@@ -74,7 +72,6 @@ void CoreStartup::Shutdown() {
     // 5 - auto singleton manager
     Meta::AutoSingletonManager::Shutdown();
     // 4 - pool allocators
-    POOL_TAG(TaskPool)::Shutdown();
     POOL_TAG(NodeBasedContainer)::Shutdown();
     POOL_TAG(Default)::Shutdown();
     // 3 - heap allocators
@@ -88,7 +85,6 @@ void CoreStartup::Shutdown() {
 void CoreStartup::ClearAll_UnusedMemory() {
     POOL_TAG(VirtualFileSystem)::ClearAll_UnusedMemory();
     POOL_TAG(FileSystem)::ClearAll_UnusedMemory();
-    POOL_TAG(TaskPool)::ClearAll_UnusedMemory();
     POOL_TAG(NodeBasedContainer)::ClearAll_UnusedMemory();
     POOL_TAG(Default)::ClearAll_UnusedMemory();
 }

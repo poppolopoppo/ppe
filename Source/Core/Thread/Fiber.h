@@ -12,13 +12,25 @@ namespace Core {
 //----------------------------------------------------------------------------
 class Fiber {
 public:
-    typedef void (__stdcall *callback_t)(void *arg);
+    typedef void (STDCALL *callback_t)(void *arg);
 
-    Fiber(void *pimpl = nullptr) : _pimpl(pimpl) {}
+    Fiber() : Fiber(nullptr) {}
+    Fiber(void* pimpl) : _pimpl(pimpl) {}
+    ~Fiber();
+
+    Fiber(const Fiber& ) = delete;
+    Fiber& operator =(const Fiber& ) = delete;
+
+    Fiber(Fiber&& rvalue);
+    Fiber& operator =(Fiber&& rvalue);
+
+    void* Pimpl() const { return _pimpl; }
 
     void Create(callback_t entryPoint, void *arg, size_t stackSize = 0);
     void Resume();
     void Destroy();
+
+    void Reset(void* pimpl = nullptr);
 
     operator void *() const { return _pimpl; }
 
@@ -28,9 +40,9 @@ public:
     static void Start();
     static void Shutdown();
 
-    static Fiber ThreadFiber();
-    static Fiber RunningFiber();
-    static Fiber RunningFiberIFP();
+    static void* ThreadFiber();
+    static void* RunningFiber();
+    static void* RunningFiberIFP();
 
     static bool IsInFiber();
 
@@ -39,34 +51,8 @@ public:
         ~ThreadScope() { Shutdown(); }
     };
 
-    void *_pimpl;
-};
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-class FiberFactory {
-public:
-    FiberFactory(Fiber::callback_t entryPoint, void *arg, size_t stackSize = 0);
-    ~FiberFactory();
-
-    FiberFactory(const FiberFactory& ) = delete;
-    FiberFactory& operator =(const FiberFactory& ) = delete;
-
-    Fiber::callback_t EntryPoint() const { return _entryPoint; }
-    void *Arg() const { return _arg; }
-    size_t StackSize() const { return _stackSize; }
-
-    Fiber Create();
-    void Release(Fiber& fiber);
-
 private:
-    const Fiber::callback_t _entryPoint;
-    void *const _arg;
-    const size_t _stackSize;
-
-#ifdef WITH_CORE_ASSERT
-    std::atomic<size_t> _count;
-#endif
+    void* _pimpl;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
