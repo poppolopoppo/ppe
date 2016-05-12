@@ -346,10 +346,8 @@
     <CustomBuild Include="Misc\ServiceContainer.h" />
     <CustomBuild Include="Misc\TargetPlatform.cpp" />
     <CustomBuild Include="Misc\TargetPlatform.h" />
-    <CustomBuild Include="Thread\Task\Task.h" />
-    <CustomBuild Include="Thread\Task\TaskPool.cpp" />
-    <CustomBuild Include="Thread\Task\TaskPool.h" />
-    <CustomBuild Include="Thread\Task\TaskPriorityQueue.h" />
+    <CustomBuild Include="Thread\Task\TaskManager.cpp" />
+    <CustomBuild Include="Thread\Task\TaskManager.h" />
     <CustomBuild Include="Thread\AtomicSpinLock.h" />
     <CustomBuild Include="Thread\ConcurrentQueue-inl.h" />
     <CustomBuild Include="Thread\ConcurrentQueue.h" />
