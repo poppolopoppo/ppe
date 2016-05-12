@@ -18,4 +18,5 @@
         'Test_RTTI.cpp',
     }
     #include "../../Build/Templates/Executable.bff"
+    #include "../../Build/Templates/CompressedExecutable.bff"
 }
