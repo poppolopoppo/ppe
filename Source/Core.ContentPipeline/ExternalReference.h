@@ -56,7 +56,7 @@ struct MetaTypeTraitsImpl< Core::ContentPipeline::ExternalReference<_Asset> > {
     }
 
     static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) {
-        return Filename::DeepEquals(lhs.Target(), rhs.Target());
+        return filename_traits::DeepEquals(lhs.Target(), rhs.Target());
     }
 
     static void WrapMove(wrapper_type& dst, wrapped_type&& src) {
