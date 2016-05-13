@@ -148,6 +148,6 @@ VSSolution( 'sln' )
 
     ForEach( .ProjectName in .ProjectList )
     {
-        ^SolutionProjects + '$ProjectName$-proj'
+        ^SolutionProjects + '$ProjectName$-Proj'
     }
 }

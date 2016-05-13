@@ -8,4 +8,14 @@
 
 ^ProjectList + .ProjectName
 
-Print( "Registered project <$ProjectName$>" )
+.SolutionFolder =
+[
+    .ProjectSolutionFolder ? ''
+    .Path = .ProjectSolutionFolder
+    .Projects = { "$ProjectName$-Proj" }
+]
+
+.ProjectSolutionFolder ? '^$'
+^SolutionFolders + .SolutionFolder
+
+Print( "Registered project <$ProjectSolutionFolder$/$ProjectName$>" )

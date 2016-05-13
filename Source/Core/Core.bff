@@ -2,6 +2,7 @@
 {
     .ProjectName = 'Core'
     .ProjectPath = '$SourceDiretory$/Core'
+    .ProjectSolutionFolder = 'Core'
     .ProjectIsolatedFiles =
     {
         'Core.cpp'

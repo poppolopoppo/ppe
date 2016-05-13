@@ -2,6 +2,7 @@
 {
     .BinaryPrefix = 'Core.ContentGenerator'
     .ProjectName  = 'Core.ContentGenerator'
+    .ProjectSolutionFolder = 'Core.Content'
     .ProjectPath  = '$SourceDiretory$/Core.ContentGenerator'
     .ProjectDependencies =
     {

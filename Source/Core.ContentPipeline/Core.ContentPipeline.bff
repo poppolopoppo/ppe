@@ -2,6 +2,7 @@
 {
     .ProjectName = 'Core.ContentPipeline'
     .ProjectPath = '$SourceDiretory$/Core.ContentPipeline'
+    .ProjectSolutionFolder = 'Core.Content'
     .ProjectIsolatedFiles =
     {
         'ContentPipeline.cpp'

@@ -2,6 +2,7 @@
 {
     .ProjectName = 'Core.Serialize'
     .ProjectPath = '$SourceDiretory$/Core.Serialize'
+    .ProjectSolutionFolder = 'Core'
     .ProjectIsolatedFiles =
     {
         'Serialize.cpp'

@@ -2,6 +2,7 @@
 {
     .ProjectName = 'Core.Graphics'
     .ProjectPath = '$SourceDiretory$/Core.Graphics'
+    .ProjectSolutionFolder = 'Core'
     .ProjectIsolatedFiles =
     {
         'Graphics.cpp'

@@ -18,3 +18,4 @@
 // Project registrations
 //------------------------------------------------------------------------------
 .ProjectList = {}
+.SolutionFolders = {}

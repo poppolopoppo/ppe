@@ -2,6 +2,7 @@
 {
     .ProjectName = 'Core.RTTI'
     .ProjectPath = '$SourceDiretory$/Core.RTTI'
+    .ProjectSolutionFolder = 'Core'
     .ProjectIsolatedFiles =
     {
         'RTTI.cpp',
