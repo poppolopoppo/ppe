@@ -68,6 +68,16 @@ FORCE_INLINE BasicStringSlice<_Char> MakeStringSlice(const _Char(&cstr)[_Dim]) {
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
+FORCE_INLINE BasicStringSlice<_Char> MakeStringSlice(const MemoryView<const _Char>& view) {
+    return BasicStringSlice<_Char>(view);
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+FORCE_INLINE BasicStringSlice<_Char> MakeStringSlice(const MemoryView<_Char>& view) {
+    return BasicStringSlice<_Char>(view.AddConst());
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
 FORCE_INLINE BasicStringSlice<_Char> MakeStringSlice(const BasicStringSlice<_Char>& slice) {
     return slice;
 }
