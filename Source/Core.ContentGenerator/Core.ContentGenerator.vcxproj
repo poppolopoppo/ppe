@@ -55,6 +55,7 @@
     <CustomBuild Include="Test_Containers.cpp" />
     <CustomBuild Include="Test_Format.cpp" />
     <CustomBuild Include="Test_RTTI.cpp" />
+    <CustomBuild Include="Test_Thread.cpp" />
   </ItemGroup>
   <ItemGroup>
   </ItemGroup>

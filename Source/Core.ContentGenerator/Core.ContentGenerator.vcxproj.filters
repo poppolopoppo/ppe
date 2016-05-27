@@ -25,5 +25,7 @@
     </CustomBuild>
     <CustomBuild Include="Test_RTTI.cpp">
     </CustomBuild>
+    <CustomBuild Include="Test_Thread.cpp">
+    </CustomBuild>
   </ItemGroup>
 </Project>

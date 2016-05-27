@@ -910,6 +910,21 @@
     <CustomBuild Include="Misc\TargetPlatform.h">
       <Filter>Misc</Filter>
     </CustomBuild>
+    <CustomBuild Include="Thread\Task\Task.cpp">
+      <Filter>Thread\Task</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Thread\Task\Task.h">
+      <Filter>Thread\Task</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Thread\Task\TaskHelpers-inl.h">
+      <Filter>Thread\Task</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Thread\Task\TaskHelpers.cpp">
+      <Filter>Thread\Task</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Thread\Task\TaskHelpers.h">
+      <Filter>Thread\Task</Filter>
+    </CustomBuild>
     <CustomBuild Include="Thread\Task\TaskManager.cpp">
       <Filter>Thread\Task</Filter>
     </CustomBuild>
@@ -941,6 +956,9 @@
       <Filter>Thread</Filter>
     </CustomBuild>
     <CustomBuild Include="Thread\ReadWriteLock.h">
+      <Filter>Thread</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Thread\Task.h">
       <Filter>Thread</Filter>
     </CustomBuild>
     <CustomBuild Include="Thread\ThreadContext.cpp">
