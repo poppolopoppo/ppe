@@ -34,6 +34,8 @@ decltype(std::declval<_Lhs>()+std::declval<_Rhs>()) Min(_Lhs lhs, _Rhs rhs) { re
 typedef struct uint128_t {
     u64 lo, hi;
 
+    static uint128_t Zero() { return uint128_t{ 0, 0 }; }
+
     friend bool operator ==(const uint128_t& lhs, const uint128_t& rhs) { return lhs.hi == rhs.hi && lhs.lo == rhs.lo; }
     friend bool operator !=(const uint128_t& lhs, const uint128_t& rhs) { return !operator ==(lhs, rhs); }
 
@@ -52,6 +54,8 @@ typedef struct uint128_t {
 //----------------------------------------------------------------------------
 typedef struct uint256_t {
     uint128_t lo, hi;
+
+    static uint256_t Zero() { return uint256_t{ uint128_t::Zero(), uint128_t::Zero() }; }
 
     friend bool operator ==(const uint256_t& lhs, const uint256_t& rhs) { return lhs.hi == rhs.hi && lhs.lo == rhs.lo; }
     friend bool operator !=(const uint256_t& lhs, const uint256_t& rhs) { return !operator ==(lhs, rhs); }
