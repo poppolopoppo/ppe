@@ -269,11 +269,33 @@ private:
             wstr[i] = (wchar_t)(_rand.Next(L'a'+0, L'z'+1));
     }
 
+    void Randomize_(RTTI::Name& name) {
+        const size_t count = NextRandomDim_();
+        STACKLOCAL_POD_ARRAY(RTTI::Name::char_type, cstr, count);
+        forrange(i, 0, count)
+            cstr[i] = (char)(_rand.Next('a'+0, 'z'+1));
+        name = MakeStringSlice(cstr);
+    }
+
     void Randomize_(RTTI::BinaryData& rawdata) {
         const size_t count = NextRandomDim_()*10;
         rawdata.Resize_DiscardData(count);
         forrange(i, 0, count)
             rawdata[i] = u8(_rand.Next());
+    }
+
+    void Randomize_(RTTI::OpaqueData& opaqueData) {
+        const size_t count = NextRandomDim_()*10;
+        opaqueData.reserve(count);
+        forrange(i, 0, count) {
+            RTTI::Name key;
+            Randomize_(key);
+
+            RTTI::PMetaAtom value;
+            Randomize_(value);
+
+            opaqueData.Insert_KeepOldIFN(key, value);
+        }
     }
 
     void Randomize_(Core::RTTI::PMetaAtom& atom) {
