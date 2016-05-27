@@ -18,10 +18,10 @@
 
 #ifdef ARCH_X64
 #   define POOL_MAX_CHUNKSIZE (2048ul << 10ul) /*2048k */
-#   define POOL_MIN_CHUNKSIZE (  16ul << 10ul) /*  16k */
+#   define POOL_MIN_CHUNKSIZE (  64ul << 10ul) /*  64k */
 #else
 #   define POOL_MAX_CHUNKSIZE (1024ul << 10ul) /*1024k */
-#   define POOL_MIN_CHUNKSIZE (   4ul << 10ul) /*   4k */
+#   define POOL_MIN_CHUNKSIZE (  16ul << 10ul) /*  16k */
 #endif
 
 #ifdef _DEBUG
