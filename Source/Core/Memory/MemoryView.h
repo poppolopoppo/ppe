@@ -142,6 +142,10 @@ public:
     template <typename U>
     MemoryView<U> Cast() const;
 
+    MemoryView<typename std::add_const<value_type>::type> AddConst() const {
+        return MemoryView<typename std::add_const<value_type>::type>(_storage, _size);
+    }
+
     friend void swap(MemoryView& lhs, MemoryView& rhs) {
         std::swap(lhs._storage, rhs._storage);
         std::swap(lhs._size, rhs._size);
@@ -270,7 +274,7 @@ typename std::enable_if<
 template <typename _VectorLike>
 MemoryView<typename _VectorLike::value_type> MakeView(_VectorLike& container) {
     if (container.begin() != container.end())
-        return MemoryView<typename _VectorLike::value_type>(&*container.begin(), container.end() - container.begin());
+        return MemoryView<typename _VectorLike::value_type>(&*std::begin(container), std::distance(std::begin(container), std::end(container)) );
     else
         return MemoryView<typename _VectorLike::value_type>();
 }
@@ -278,7 +282,7 @@ MemoryView<typename _VectorLike::value_type> MakeView(_VectorLike& container) {
 template <typename _VectorLike>
 MemoryView<const typename _VectorLike::value_type> MakeView(const _VectorLike& container) {
     if (container.begin() != container.end())
-        return MemoryView<const typename _VectorLike::value_type>(&*container.begin(), container.end() - container.begin());
+        return MemoryView<const typename _VectorLike::value_type>(&*std::begin(container), std::distance(std::begin(container), std::end(container)) );
     else
         return MemoryView<const typename _VectorLike::value_type>();
 }
@@ -286,7 +290,7 @@ MemoryView<const typename _VectorLike::value_type> MakeView(const _VectorLike& c
 template <typename _VectorLike>
 MemoryView<const typename _VectorLike::value_type> MakeConstView(const _VectorLike& container) {
     if (container.begin() != container.end())
-        return MemoryView<const typename _VectorLike::value_type>(&*container.begin(), container.end() - container.begin());
+        return MemoryView<const typename _VectorLike::value_type>(&*std::begin(container), std::distance(std::begin(container), std::end(container)) );
     else
         return MemoryView<const typename _VectorLike::value_type>();
 }
