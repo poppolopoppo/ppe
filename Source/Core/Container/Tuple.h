@@ -69,6 +69,20 @@ typename TupleMerger<_Lhs, _Rhs>::type MergeTuple(_Lhs&& lhs, _Rhs&& rhs) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+namespace details {
+template<typename _Return, typename... _Args, size_t... _Index>
+_Return CallHelper_(_Return (*func)(_Args...), const Tuple<_Args...>& args, std::index_sequence<_Index...>) {
+    return func(std::get<_Index>(args)...);
+}
+} //!details
+//----------------------------------------------------------------------------
+template<typename _Return, typename... _Args>
+_Return Call(_Return (*func)(_Args...), const Tuple<_Args...>& args) {
+    return details::CallHelper_(func, args, std::index_sequence_for<_Args...>{});
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 /*template <
     typename _Char,
     typename _Traits,
