@@ -2,12 +2,13 @@
 
 #include "Core/Core.h"
 
+#include "Core/Thread/Task/Task.h"
+
 #include "Core/Container/IntrusiveList.h"
 #include "Core/Diagnostic/Exception.h"
 #include "Core/Memory/MemoryView.h"
 #include "Core/Memory/RefPtr.h"
 #include "Core/Memory/UniquePtr.h"
-#include "Core/Meta/Delegate.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -16,14 +17,6 @@ namespace Core {
 FWD_REFPTR(TaskCounter);
 class TaskManager;
 class TaskManagerImpl;
-//----------------------------------------------------------------------------
-enum class TaskPriority : u32 {
-    High = 0,
-    Normal,
-    Low,
-
-    _Count
-};
 //----------------------------------------------------------------------------
 class TaskWaitHandle {
 public:
@@ -48,10 +41,6 @@ private:
     TaskPriority _priority;
     PTaskCounter _counter;
 };
-//----------------------------------------------------------------------------
-class ITaskContext;
-typedef void (*TaskFunc)(ITaskContext& context);
-typedef Delegate<TaskFunc> TaskDelegate;
 //----------------------------------------------------------------------------
 class ITaskContext {
 public:
@@ -101,6 +90,8 @@ private:
     const size_t _threadTag;
     const size_t _workerCount;
 };
+//----------------------------------------------------------------------------
+ITaskContext& CurrentTaskContext();
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

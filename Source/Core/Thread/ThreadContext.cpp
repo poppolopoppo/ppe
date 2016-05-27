@@ -89,12 +89,12 @@ static void SetWin32ThreadName_(const char* name) {
 }
 #pragma warning(pop)
 //----------------------------------------------------------------------------
-static void GuaranteeStackSizeForStackOverflowRecovery_() {
+static NO_INLINE void GuaranteeStackSizeForStackOverflowRecovery_() {
 #ifdef OS_WINDOWS
     ULONG stackSizeInBytes = 0;
-    if(1 == ::SetThreadStackGuarantee(&stackSizeInBytes)) {
-        stackSizeInBytes += 1*1024*1024;
-        if (1 == ::SetThreadStackGuarantee(&stackSizeInBytes))
+    if(::SetThreadStackGuarantee(&stackSizeInBytes)) {
+        stackSizeInBytes += 64*1024;
+        if (::SetThreadStackGuarantee(&stackSizeInBytes))
             return;
     }
     LOG(Warning, L"Unable to SetThreadStackGuarantee, Stack Overflows won't be caught properly !");

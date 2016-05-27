@@ -97,6 +97,12 @@ private:
     TaskPriorityQueue_ _queue;
     TaskManager& _manager;
     VECTOR(Task, std::thread) _threads;
+
+#ifdef WITH_CORE_ASSERT
+public: // public since this is complicated to friend WorkerContext_ in an anonymous namespace ...
+    std::atomic<int> _countersInUse = 0;
+    std::atomic<int> _fibersInUse = 0;
+#endif
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -105,26 +111,27 @@ namespace {
 //----------------------------------------------------------------------------
 class WorkerContext_ : Meta::ThreadResource {
 public:
-    explicit WorkerContext_(size_t workerIndex);
+    explicit WorkerContext_(TaskManager* pmanager, size_t workerIndex);
     ~WorkerContext_();
 
     WorkerContext_(const WorkerContext_& ) = delete;
     WorkerContext_& operator =(const WorkerContext_& ) = delete;
 
+    const TaskManager& Manager() const { return _manager; }
     size_t WorkerIndex() const { return _workerIndex; }
 
     PTaskCounter CreateCounter();
     void DestroyCounter(PTaskCounter& counter);
     void ClearCounters();
 
-    Fiber CreateFiber(TaskManager& manager);
+    void CreateFiber(Fiber* pFiber);
     void DestroyFiber(Fiber& fiber);
     void ClearFibers();
 
     void ReleaseFiber();
     void ReleaseFiberIFP();
     void ResumeFiber(Fiber& fiber);
-    void YieldFiber(TaskManager& manager);
+    void YieldFiber();
 
     static WorkerContext_& Instance();
 
@@ -135,17 +142,13 @@ private:
     STATIC_CONST_INTEGRAL(size_t, CacheSize, 32);
     STATIC_CONST_INTEGRAL(size_t, StackSize, 1024<<10);
 
+    Fiber _releasedFiber;
+
     FixedSizeRingBuffer<PTaskCounter, CacheSize> _counters;
     FixedSizeRingBuffer<Fiber, CacheSize> _fibers;
 
+    TaskManager& _manager;
     const size_t _workerIndex;
-
-#ifdef WITH_CORE_ASSERT
-    size_t _countersInUse;
-    size_t _fibersInUse;
-#endif
-
-    Fiber _releasedFiber;
 
     static void STDCALL WorkerEntryPoint_(void* pArg);
 
@@ -153,8 +156,10 @@ private:
 };
 THREAD_LOCAL WorkerContext_* WorkerContext_::_gInstanceTLS = nullptr;
 //----------------------------------------------------------------------------
-WorkerContext_::WorkerContext_(size_t workerIndex)
-:   _workerIndex(workerIndex) {
+WorkerContext_::WorkerContext_(TaskManager* pmanager, size_t workerIndex)
+:   _manager(*pmanager)
+,   _workerIndex(workerIndex) {
+    Assert(pmanager);
     Assert(nullptr == _gInstanceTLS);
 
     _gInstanceTLS = this;
@@ -166,11 +171,6 @@ WorkerContext_::~WorkerContext_() {
     Assert(nullptr == _releasedFiber.Pimpl());
 
     _gInstanceTLS = nullptr;
-
-#ifdef WITH_CORE_ASSERT
-    Assert(0 == _countersInUse);
-    Assert(0 == _fibersInUse);
-#endif
 
     ClearFibers();
     ClearCounters();
@@ -184,7 +184,10 @@ PTaskCounter WorkerContext_::CreateCounter() {
         result = new TaskCounter();
 
 #ifdef WITH_CORE_ASSERT
-    ++_countersInUse;
+    {
+        TaskManagerImpl* pimpl = _manager.Pimpl();
+        ++pimpl->_countersInUse;
+    }
 #endif
 
     Assert(nullptr != result);
@@ -197,8 +200,11 @@ void WorkerContext_::DestroyCounter(PTaskCounter& counter) {
     Assert(counter);
 
 #ifdef WITH_CORE_ASSERT
-    Assert(0 < _countersInUse);
-    --_countersInUse;
+    {
+        TaskManagerImpl* pimpl = _manager.Pimpl();
+        --pimpl->_countersInUse;
+        Assert(0 <= pimpl->_countersInUse);
+    }
 #endif
 
     TaskCounter* const pcounter = RemoveRef_AssertReachZero_KeepAlive(counter);
@@ -215,18 +221,19 @@ void WorkerContext_::ClearCounters() {
     Assert(0 == _counters.size());
 }
 //----------------------------------------------------------------------------
-Fiber WorkerContext_::CreateFiber(TaskManager& manager) {
+void WorkerContext_::CreateFiber(Fiber* pFiber) {
+    Assert(pFiber);
     THIS_THREADRESOURCE_CHECKACCESS();
 
 #ifdef WITH_CORE_ASSERT
-    ++_fibersInUse;
+    {
+        TaskManagerImpl* pimpl = _manager.Pimpl();
+        ++pimpl->_fibersInUse;
+    }
 #endif
 
-    Fiber result;
-    if (not _fibers.pop_back(&result))
-        result.Create(&WorkerEntryPoint_, &manager);
-
-    return result;
+    if (not _fibers.pop_back(pFiber))
+        pFiber->Create(&WorkerEntryPoint_, &_manager);
 }
 //----------------------------------------------------------------------------
 void WorkerContext_::DestroyFiber(Fiber& fiber) {
@@ -234,8 +241,11 @@ void WorkerContext_::DestroyFiber(Fiber& fiber) {
     Assert(fiber);
 
 #ifdef WITH_CORE_ASSERT
-    Assert(0 < _fibersInUse);
-    --_fibersInUse;
+    {
+        TaskManagerImpl* pimpl = _manager.Pimpl();
+        --pimpl->_fibersInUse;
+        Assert(0 <= pimpl->_fibersInUse);
+    }
 #endif
 
     _fibers.push_back_OverflowIFN(std::move(fiber));
@@ -280,10 +290,16 @@ void WorkerContext_::ResumeFiber(Fiber& fiber) {
     fiber.Reset(); // forget fiber pimpl to prevent destruction (the fiber is already recycled or destroyed)
 }
 //----------------------------------------------------------------------------
-void WorkerContext_::YieldFiber(TaskManager& manager) {
+void WorkerContext_::YieldFiber() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    CreateFiber(manager).Resume();
+    // current fiber is not released, assuming it was queued in a counter or is the thread fiber !
+
+    Fiber fiber;
+    CreateFiber(&fiber);
+
+    fiber.Resume(); // switch to another fiber, next lines will be executed later !
+    fiber.Reset(); // forget fiber pimpl to prevent destruction (the fiber is already recycled or destroyed)
 }
 //----------------------------------------------------------------------------
 WorkerContext_& WorkerContext_::Instance() {
@@ -297,12 +313,14 @@ void WorkerContext_::ResumeFiberTask(ITaskContext& ctx, void* fiber) {
     UNUSED(ctx);
     Fiber resume(fiber);
     Instance().ResumeFiber(resume);
+    resume.Reset();
 }
 //----------------------------------------------------------------------------
 void WorkerContext_::ExitWorkerTask(ITaskContext& ctx) {
     UNUSED(ctx);
     Fiber resume(Fiber::ThreadFiber());
     Instance().ResumeFiber(resume);
+    resume.Reset();
 }
 //----------------------------------------------------------------------------
 void STDCALL WorkerContext_::WorkerEntryPoint_(void* pArg) {
@@ -334,6 +352,8 @@ void STDCALL WorkerContext_::WorkerEntryPoint_(void* pArg) {
         if (task.Counter) {
             task.Counter->Decrement_ResumeWaitingTasksIfZero(impl);
         }
+
+        task = TaskQueued_(); // reset to release reference to counter
     }
 }
 //----------------------------------------------------------------------------
@@ -355,12 +375,10 @@ static void WorkerThreadLaunchpad_(TaskManager* pmanager, size_t workerIndex, si
 
     threadStartup.Context().SetAffinityMask(affinityMask);
 
-    WorkerContext_ workerContext(workerIndex);
+    WorkerContext_ workerContext(pmanager, workerIndex);
     {
         const Fiber::ThreadScope fiberScope;
-        Fiber worker = workerContext.CreateFiber(*pmanager);
-        worker.Resume(); // switch to a new fiber, following lines will be executed at worker exit !
-        worker.Reset(); // already release when this fiber was resume
+        workerContext.YieldFiber();
         workerContext.ReleaseFiber();
     }
 }
@@ -368,6 +386,7 @@ static void WorkerThreadLaunchpad_(TaskManager* pmanager, size_t workerIndex, si
 struct RunAndWaitForArgs_ {
     MemoryView<const TaskDelegate> Tasks;
     TaskPriority Priority;
+    bool Available;
 
     std::mutex Barrier;
     std::condition_variable OnFinished;
@@ -379,6 +398,8 @@ static void RunAndWaitForTask_(ITaskContext& context, RunAndWaitForArgs_* pArgs)
     context.RunAndWaitFor(pArgs->Tasks, pArgs->Priority);
     {
         std::unique_lock<std::mutex> scopeLock(pArgs->Barrier);
+        Assert(false == pArgs->Available);
+        pArgs->Available = true;
         pArgs->OnFinished.notify_all();
     }
 }
@@ -396,6 +417,11 @@ TaskManagerImpl::TaskManagerImpl(TaskManager& manager)
 TaskManagerImpl::~TaskManagerImpl() {
     Assert(_threads.empty());
     Assert(_threads.capacity() == _manager.WorkerCount());
+
+#ifdef WITH_CORE_ASSERT
+    Assert(0 == _countersInUse);
+    Assert(0 == _fibersInUse);
+#endif
 }
 //----------------------------------------------------------------------------
 void TaskManagerImpl::Start(const MemoryView<const size_t>& threadAffinities) {
@@ -466,7 +492,7 @@ void TaskManagerImpl::WaitFor(TaskWaitHandle& handle) {
 
     handle._counter->WaitFor(std::move(waiting));
 
-    WorkerContext_::Instance().YieldFiber(_manager);
+    WorkerContext_::Instance().YieldFiber();
 }
 //----------------------------------------------------------------------------
 void TaskManagerImpl::RunAndWaitFor(const MemoryView<const TaskDelegate>& tasks, TaskPriority priority /* = TaskPriority::Normal */) {
@@ -498,6 +524,7 @@ void TaskCounter::Decrement_ResumeWaitingTasksIfZero(TaskManagerImpl& impl) {
         while (_queue.pop_front(&waiting)) {
             const TaskDelegate task(Delegate(&WorkerContext_::ResumeFiberTask, waiting.Halted.Pimpl()));
             impl.RunOne(nullptr, task, waiting.Priority);
+            waiting.Halted.Reset();
         }
     }
 }
@@ -518,13 +545,18 @@ TaskWaitHandle::TaskWaitHandle(TaskPriority priority, TaskCounter* counter)
 :   _priority(priority)
 ,   _counter(counter) {}
 //----------------------------------------------------------------------------
-TaskWaitHandle::~TaskWaitHandle() {}
+TaskWaitHandle::~TaskWaitHandle() {
+    if (_counter)
+        WorkerContext_::Instance().DestroyCounter(_counter);
+}
 //----------------------------------------------------------------------------
 TaskWaitHandle::TaskWaitHandle(TaskWaitHandle&& rvalue) {
     operator =(std::move(rvalue));
 }
 //----------------------------------------------------------------------------
 TaskWaitHandle& TaskWaitHandle::operator =(TaskWaitHandle&& rvalue) {
+    Assert(nullptr == _counter);
+
     _priority = rvalue._priority;
     _counter = std::move(rvalue._counter);
 
@@ -579,14 +611,23 @@ void TaskManager::RunAndWaitFor(const MemoryView<const TaskDelegate>& tasks, Tas
     Assert(not tasks.empty());
     Assert(nullptr != _pimpl);
 
-    RunAndWaitForArgs_ args{ tasks, priority };
+    RunAndWaitForArgs_ args{ tasks, priority, false };
     const TaskDelegate utility = Delegate(&RunAndWaitForTask_, &args);
-
-    _pimpl->RunOne(nullptr, utility, priority);
     {
         std::unique_lock<std::mutex> scopeLock(args.Barrier);
-        args.OnFinished.wait(scopeLock);
+        _pimpl->RunOne(nullptr, utility, priority);
+        args.OnFinished.wait(scopeLock, [&args]() { return args.Available; });
     }
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+ITaskContext& CurrentTaskContext() {
+    // need to be called from a worker thread ! (asserted by WorkerContext_)
+    const TaskManager& manager = WorkerContext_::Instance().Manager();
+    TaskManagerImpl* const pimpl = manager.Pimpl();
+    Assert(pimpl);
+    return *pimpl;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
