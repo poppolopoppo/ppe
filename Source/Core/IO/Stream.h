@@ -122,7 +122,9 @@ public:
     using buffer_type::RemoveEOS;
     using buffer_type::Reset;
 
-    const _Char *NullTerminatedStr();
+    const _Char* NullTerminatedStr();
+    const _Char* c_str() { return NullTerminatedStr(); }
+
     MemoryView<const _Char> MakeView() const;
     MemoryView<const _Char> MakeView_NullTerminated();
 
