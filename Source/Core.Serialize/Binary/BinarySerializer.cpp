@@ -457,6 +457,19 @@ private:
             }
         }
 
+        bool ReadValue_(RTTI::Name& name) {
+            index_t string_i;
+            if (false == _reader->ReadPOD(&string_i))
+                return false;
+
+            if (string_i >= _owner->_strings.size())
+                throw BinarySerializerException("invalid RTTI name index");
+
+            const StringSlice& data = _owner->_strings[string_i];
+            name = data;
+            return true;
+        }
+
         bool ReadValue_(RTTI::BinaryData& rawdata) {
             u32 rawsize;
             if (_reader->ReadPOD(&rawsize)) {
@@ -466,6 +479,29 @@ private:
                 else {
                     rawdata.Resize_DiscardData(checked_cast<size_t>(rawsize));
                     return _reader->Read(rawdata.data(), rawsize);
+                }
+            }
+            else {
+                return false;
+            }
+        }
+
+        bool ReadValue_(RTTI::OpaqueData& opaqueData) {
+            u32 count;
+            if (_reader->ReadPOD(&count)) {
+                if (0 == count) {
+                    return true;
+                }
+                else {
+                    opaqueData.reserve(count);
+                    forrange(i, 0, count) {
+                        opaqueData.Vector().push_back_Default();
+                        Pair<RTTI::Name, RTTI::PMetaAtom>& item = opaqueData.Vector().back();
+                        if (not ReadValue_(item.first) ||
+                            not ReadValue_(item.second) )
+                            return false;
+                    }
+                    return true;
                 }
             }
             else {
@@ -899,10 +935,22 @@ private:
                 WritePOD(TAG_OBJECT_NULL_);
         }
 
+        void WriteValue_(const RTTI::Name& name) {
+            WriteValue_(ToString(name.MakeView()));
+        }
+
         void WriteValue_(const RTTI::BinaryData& rawdata) {
             WritePOD(checked_cast<u32>(rawdata.size()));
             if (rawdata.size())
                 _owner->_objectStream.Write(rawdata.data(), rawdata.SizeInBytes());
+        }
+
+        void WriteValue_(const RTTI::OpaqueData& opaqueData) {
+            WritePOD(checked_cast<u32>(opaqueData.size()));
+            for (const auto& it : opaqueData) {
+                WriteValue_(it.first);
+                WriteValue_(it.second);
+            }
         }
 
         BinarySerialize_* _owner;

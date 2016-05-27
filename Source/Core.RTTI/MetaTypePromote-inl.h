@@ -201,6 +201,38 @@ struct MetaTypePromote<RTTI::Vector<PMetaAtom>, ScalarMatrix<T, _Width, _Height>
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <>
+struct MetaTypePromote<String, RTTI::Name> {
+    typedef std::true_type enabled;
+    bool operator ()(RTTI::Name* dst, const String& value) const {
+        *dst = MakeStringSlice(value);
+        return true;
+    }
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <>
+struct MetaTypePromote<RTTI::Dictionary<PMetaAtom, PMetaAtom>, RTTI::OpaqueData> {
+    typedef std::true_type enabled;
+    bool operator ()(RTTI::OpaqueData* dst, const RTTI::Dictionary<PMetaAtom, PMetaAtom>& value) const {
+        dst->reserve(value.size());
+
+        for (const Pair<PMetaAtom, PMetaAtom>& it : value) {
+            auto& d = dst->Vector().push_back_Default();
+
+            if (false == PromoteCopy(&d.first, it.first.get()))
+                return false;
+
+            d.second = it.second;
+        }
+
+        return true;
+    }
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <>
 struct MetaTypePromote<String, RTTI::BinaryData> {
     typedef std::true_type enabled;
     bool operator ()(RTTI::BinaryData* dst, const String& value) const {

@@ -155,8 +155,14 @@ private:
         }
 
         void WriteValue_(const WString& wstr) {
-            String str = ToString(wstr);
+            const String str = ToString(wstr);
             WriteValue_(str);
+        }
+
+        void WriteValue_(const RTTI::Name& name) {
+            _owner->Print("Name:\"");
+            _owner->Print(name.MakeView());
+            _owner->Print("\"");
         }
 
         void WriteValue_(const RTTI::BinaryData& rawdata) {
@@ -178,6 +184,25 @@ private:
                     }
                 }
                 _owner->Print("\"");
+            }
+        }
+
+        void WriteValue_(const RTTI::OpaqueData& opaqueData) {
+            if (opaqueData.empty()) {
+                _owner->Print("OpaqueData:{}");
+            }
+            else {
+                _owner->Puts("OpaqueData:{");
+                _owner->IncIndent();
+                for(const RTTI::Pair<RTTI::Name, RTTI::PMetaAtom>& pair : opaqueData) {
+                    _owner->Print("(");
+                    WriteValue_(pair.first);
+                    _owner->Print(", ");
+                    Append(pair.second.get());
+                    _owner->Puts("),");
+                }
+                _owner->DecIndent();
+                _owner->Print("}");
             }
         }
 

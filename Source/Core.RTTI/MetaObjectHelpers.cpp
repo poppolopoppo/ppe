@@ -60,7 +60,8 @@ bool DeepEquals(const MetaObject& lhs, const MetaObject& rhs) {
     const MetaProperty* notEquals = FindProperty(metaClass,
         [plhs, prhs](const MetaClass* pMetaClass, const MetaProperty* pProp) {
             UNUSED(pMetaClass);
-            return (not pProp->DeepEquals(plhs, prhs));
+            const bool equals = pProp->DeepEquals(plhs, prhs);
+            return (not equals);
         });
 
     return (nullptr == notEquals);

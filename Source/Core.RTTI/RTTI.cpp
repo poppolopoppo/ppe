@@ -11,6 +11,7 @@
 #include "MetaObjectName.h"
 #include "MetaObjectHelpers.h"
 #include "MetaPropertyName.h"
+#include "MetaType.h"
 
 #include "Core/Allocator/PoolAllocatorTag-impl.h"
 
@@ -37,6 +38,8 @@ static void RTTI_UnitTests();
 void RTTIStartup::Start() {
     POOL_TAG(RTTI)::Start();
 
+    Name::Start(1024);
+
     MetaClassName::Start(256);
     MetaPropertyName::Start(512);
     MetaObjectName::Start(1024);
@@ -45,6 +48,7 @@ void RTTIStartup::Start() {
     MetaAtomDatabase::Create();
 
     RTTI_TAG(Default)::Start();
+
 
 #ifdef WITH_RTTI_UNITTESTS
     RTTI_UnitTests();
@@ -61,6 +65,8 @@ void RTTIStartup::Shutdown() {
     MetaPropertyName::Shutdown();
     MetaClassName::Shutdown();
 
+    Name::Shutdown();
+
     POOL_TAG(RTTI)::Shutdown();
 }
 //----------------------------------------------------------------------------
@@ -71,6 +77,8 @@ void RTTIStartup::Clear() {
     MetaObjectName::Clear();
     MetaPropertyName::Clear();
     MetaClassName::Clear();
+
+    Name::Clear();
 
     POOL_TAG(RTTI)::ClearAll_UnusedMemory();
 }

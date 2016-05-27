@@ -6,6 +6,7 @@
 #include "Core/Container/Pair.h"
 #include "Core/Container/RawStorage.h"
 #include "Core/Container/Vector.h"
+#include "Core/Container/Token.h"
 
 #include "Core/IO/Format.h"
 #include "Core/IO/String.h"
@@ -66,6 +67,14 @@ constexpr MetaTypeId hash_MetaTypeId_constexpr(_Args... args) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+class NameTokenTraits {
+public:
+    const std::locale& Locale() const { return std::locale::classic(); }
+    bool IsAllowedChar(char ch) const;
+};
+//----------------------------------------------------------------------------
+BASICTOKEN_CLASS_DEF(Name, char, Case::Insensitive, NameTokenTraits);
+//----------------------------------------------------------------------------
 template <typename T>
 using Vector = VECTORINSITU(Container, T, 4);
 //----------------------------------------------------------------------------
@@ -81,6 +90,8 @@ using Dictionary = Core::AssociativeVector<
 >;
 //----------------------------------------------------------------------------
 INSTANTIATE_CLASS_TYPEDEF(BinaryData, RAWSTORAGE_ALIGNED(RTTI, u8, 16));
+//----------------------------------------------------------------------------
+INSTANTIATE_CLASS_TYPEDEF(OpaqueData, Dictionary<Name, PMetaAtom>);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -287,6 +298,17 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+String ToString(const RTTI::Name& name);
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits>
+std::basic_ostream<_Char, _Traits>& operator <<(
+    std::basic_ostream<_Char, _Traits>& oss,
+    const RTTI::Name& name) {
+    return oss << ToString(name);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 hash_t hash_value(const RTTI::BinaryData& rawdata);
 //----------------------------------------------------------------------------
 String ToString(const RTTI::BinaryData& rawdata);
@@ -297,6 +319,19 @@ std::basic_ostream<_Char, _Traits>& operator <<(
     const RTTI::BinaryData& rawdata) {
     return oss << ToString(rawdata);
 }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+String ToString(const RTTI::OpaqueData& opaqueData);
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits>
+std::basic_ostream<_Char, _Traits>& operator <<(
+    std::basic_ostream<_Char, _Traits>& oss,
+    const RTTI::OpaqueData& opaqueData) {
+    return oss << ToString(opaqueData);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(

@@ -26,8 +26,16 @@ static bool IsDefaultValue_(const PMetaAtom& atom) {
     return (nullptr == atom || atom->IsDefaultValue() );
 }
 //----------------------------------------------------------------------------
+static bool IsDefaultValue_(const Name& name) {
+    return name.empty();
+}
+//----------------------------------------------------------------------------
 static bool IsDefaultValue_(const BinaryData& rawdata) {
     return rawdata.empty();
+}
+//----------------------------------------------------------------------------
+static bool IsDefaultValue_(const OpaqueData& opaqueData) {
+    return opaqueData.empty();
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -63,6 +71,22 @@ static bool DeepEquals_(const PMetaObject& lhs, const PMetaObject& rhs) {
     return (lhs != nullptr && rhs != nullptr)
         ? DeepEquals(*lhs, *rhs)
         : lhs == rhs;
+}
+//----------------------------------------------------------------------------
+static bool DeepEquals_(const OpaqueData& lhs, const OpaqueData& rhs) {
+    if (lhs.size() != rhs.size())
+        return false;
+
+    for (const auto& it : lhs) {
+        PMetaAtom value;
+        if (not rhs.TryGet(it.first, &value))
+            return false;
+
+        if (not DeepEquals_(it.second, value))
+            return false;
+    }
+
+    return true;
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -113,10 +137,22 @@ FOREACH_CORE_RTTI_NATIVE_TYPES(CASE_METATYPE_ID)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+bool NameTokenTraits::IsAllowedChar(char ch) const {
+    return IsAlnum(ch) || ch == '_' || ch == '-' || ch == '.';
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace RTTI
 } //!namespace Core
 
 namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+String ToString(const RTTI::Name& name) {
+    return StringFormat("Name:#{0}", name.MakeView());
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -125,7 +161,14 @@ hash_t hash_value(const RTTI::BinaryData& rawdata) {
 }
 //----------------------------------------------------------------------------
 String ToString(const RTTI::BinaryData& rawdata) {
-    return StringFormat("BINARYDATA:#{0}", rawdata.SizeInBytes());
+    return StringFormat("BinaryData:#{0}", rawdata.SizeInBytes());
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+String ToString(const RTTI::OpaqueData& opaqueData) {
+    return StringFormat("OpaqueData:#{0}",
+        static_cast<const RTTI::Dictionary<RTTI::Name, RTTI::PMetaAtom>&>(opaqueData));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
