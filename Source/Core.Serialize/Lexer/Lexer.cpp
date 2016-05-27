@@ -359,8 +359,6 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
         } while (inQuote);
 
         value = oss.str();
-        Assert(value.size());
-
         return true;
     }
 

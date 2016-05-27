@@ -507,7 +507,7 @@ GrammarImpl::GrammarImpl()
         return Parser::MakeLiteral(value, m->Site());
     }))
     .Or(Parser::Expect(Lexer::Symbol::String).Select<Parser::PCParseExpression>([](const Lexer::Match *&& m) -> Parser::PCParseExpression {
-        Assert(m && m->Value().size());
+        Assert(m/* && m->Value().size()*//* strings can be empty */);
         return Parser::MakeLiteral(m->Value(), m->Site());
     }))
     )
