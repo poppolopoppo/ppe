@@ -27,10 +27,10 @@ protected:
 
 private:
     const function_type _func;
-    _Result _result;
+    std::atomic<bool> _available;
 
     char cacheline_pad_t[CACHELINE_SIZE];// no thread collisions on _available :
-    std::atomic<bool> _available;
+    _Result _result;
 };
 //----------------------------------------------------------------------------
 template <typename _Result>
