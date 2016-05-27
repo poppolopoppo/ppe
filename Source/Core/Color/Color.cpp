@@ -17,6 +17,7 @@ float3 Hue_to_RGB(float hue) {
     return Saturate(float3(R,G,B));
 }
 //----------------------------------------------------------------------------
+// http://www.chilliant.com/rgb2hsv.html
 float3 RGB_to_HCV(const float3& rgb) {
     const float Epsilon = 1e-10f;
     // Based on work by Sam Hocevar and Emil Persson
@@ -26,6 +27,8 @@ float3 RGB_to_HCV(const float3& rgb) {
     float H = std::abs((Q.w() - Q.y()) / (6 * C + Epsilon) + Q.z());
     return float3(H, C, Q.x());
 }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 float3 HSV_to_RGB(const float3& hsv) {
     float3 RGB = Hue_to_RGB(hsv.x());
@@ -39,6 +42,8 @@ float3 RGB_to_HSV(const float3& rgb) {
     return float3(HCV.x(), S, HCV.z());
 }
 //----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 float3 HSL_to_RGB(const float3& hsl) {
     float3 RGB = Hue_to_RGB(hsl.x());
     float C = (1 - std::abs(2 * hsl.z() - 1)) * hsl.y();
@@ -51,6 +56,30 @@ float3 RGB_to_HSL(const float3& rgb) {
     float L = HCV.z() - HCV.y() * 0.5f;
     float S = HCV.y() / (1 - std::abs(L * 2 - 1) + Epsilon);
     return float3(HCV.x(), S, L);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// YCoCg
+// ranges: Y=0..1, Co=-0.5..0.5, Cg=-0.5..0.5
+// ranges returned by thoses functions is shifted to [0..1] for every channel
+// https://www.shadertoy.com/view/4dcSRN
+//----------------------------------------------------------------------------
+float3 YCoCg_to_RGB(const float3& yCoCg) {
+    float y = yCoCg.x();
+    float Co = yCoCg.y() + 0.5f;
+    float Cg = yCoCg.z() + 0.5f;
+    float r = Co - Cg;
+    float b = -Co - Cg;
+    return float3(y + r, y + Cg, y + b);
+}
+//----------------------------------------------------------------------------
+float3 RGB_to_YCoCg(const float3& rgb) {
+    float tmp = 0.5f*(rgb.x() + rgb.z());
+    float y = rgb.y() + tmp;
+    float Cg = rgb.y() - tmp;
+    float Co = rgb.x() - rgb.z();
+    return float3(y * 0.5f, Co*0.5f+0.5f, Cg*0.5f+0.5f);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
