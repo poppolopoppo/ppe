@@ -19,6 +19,7 @@ namespace ContentGenerator {
 extern void Test_Format();
 extern void Test_Containers();
 extern void Test_RTTI();
+extern void Test_Thread();
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -42,6 +43,7 @@ RobotApp::RobotApp()
     //Test_Format();
     //Test_Containers();
     //Test_RTTI();
+    Test_Thread();
 }
 //----------------------------------------------------------------------------
 void RobotApp::Start() {
