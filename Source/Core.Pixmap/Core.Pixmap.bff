@@ -1,0 +1,12 @@
+#once
+{
+    .ProjectName = 'Core.Pixmap'
+    .ProjectPath = '$SourceDiretory$/Core.Pixmap'
+    .ProjectSolutionFolder = 'Core'
+    .ProjectIsolatedFiles =
+    {
+        'Pixmap.cpp',
+        'Pixmap_extern.cpp',
+    }
+    #include "../../Build/Templates/Library.bff"
+}

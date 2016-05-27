@@ -9,6 +9,7 @@
         'Core',
         'Core.RTTI',
         'Core.Serialize',
+        'Core.Pixmap',
         'Core.Graphics',
         'Core.ContentPipeline',
         'Core.Application',

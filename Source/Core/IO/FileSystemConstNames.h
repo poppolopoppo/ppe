@@ -21,6 +21,8 @@ public:
     static const Extname& FxExt();
     static const Extname& ObjExt();
     static const Extname& PlyExt();
+    static const Extname& PngExt();
+    static const Extname& RawExt();
 
     // Mounting points :
     static const MountingPoint& GameDataDir();

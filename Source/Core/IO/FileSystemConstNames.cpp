@@ -11,6 +11,8 @@
     _Macro(Extname,         FxExt,          L".fx") \
     _Macro(Extname,         ObjExt,         L".obj") \
     _Macro(Extname,         PlyExt,         L".ply") \
+    _Macro(Extname,         PngExt,         L".png") \
+    _Macro(Extname,         RawExt,         L".raw") \
     _Macro(MountingPoint,   GameDataDir,    L"GameData:") \
     _Macro(MountingPoint,   ProcessDir,     L"Process:") \
     _Macro(MountingPoint,   TmpDir,         L"Tmp:") \

@@ -7,6 +7,7 @@
 // All projects
 //------------------------------------------------------------------------------
 #include "Source/Core/Core.bff"
+#include "Source/Core.Pixmap/Core.Pixmap.bff"
 #include "Source/Core.RTTI/Core.RTTI.bff"
 #include "Source/Core.Serialize/Core.Serialize.bff"
 #include "Source/Core.Graphics/Core.Graphics.bff"
