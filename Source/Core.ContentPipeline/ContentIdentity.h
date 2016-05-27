@@ -22,10 +22,19 @@ public:
     void SetFragmentIdentifier(String&& rvalue) const { _fragmentIdentifier == std::move(rvalue); }
     void SetFragmentIdentifier(const String& value) const { _fragmentIdentifier == value; }
 
+    const u128& ContentFingerprint() const { return _contentFingerPrint; }
+    void SetContentFingerprint(const u128& value) { _contentFingerPrint = value; }
+
+    const u128& ToolchainFingerPrint() const { return _toolchainFingerPrint; }
+    void SetToolchainFingerPrint(const u128& value) { _toolchainFingerPrint = value; }
+
 private:
     Filename _sourceFilename;
     String _sourceTool;
     String _fragmentIdentifier;
+
+    u128 _contentFingerPrint;
+    u128 _toolchainFingerPrint;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

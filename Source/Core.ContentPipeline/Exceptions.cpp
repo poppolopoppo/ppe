@@ -5,6 +5,7 @@
 #include "ContentImporter.h"
 #include "ContentProcessor.h"
 #include "ContentSerializer.h"
+#include "ContentToolchain.h"
 
 namespace Core {
 namespace ContentPipeline {
@@ -42,6 +43,14 @@ ContentSerializerException::ContentSerializerException(const char* what, const F
     , _serializer(serializer) {}
 //----------------------------------------------------------------------------
 ContentSerializerException::~ContentSerializerException() {}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+ContentToolchainException::ContentToolchainException(const char* what, const Filename& sourceFilename, const IContentToolchain* toolchain)
+    : ContentPipelineException(what, sourceFilename)
+    , _toolchain(toolchain) {}
+//----------------------------------------------------------------------------
+ContentToolchainException::~ContentToolchainException() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

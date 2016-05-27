@@ -16,17 +16,15 @@ namespace ContentPipeline {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(ContentPipeline, ContentToolchain, );
-//----------------------------------------------------------------------------
-RTTI_CLASS_BEGIN(ContentPipeline, ContentToolchain, Default)
+RTTI_CLASS_BEGIN(ContentPipeline, IContentToolchain, Abstract)
 RTTI_PROPERTY_PRIVATE_FIELD(_importer)
 RTTI_PROPERTY_PRIVATE_FIELD(_processor)
 RTTI_PROPERTY_PRIVATE_FIELD(_serializer)
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------
-ContentToolchain::ContentToolchain() {}
+IContentToolchain::IContentToolchain() {}
 //----------------------------------------------------------------------------
-ContentToolchain::ContentToolchain(
+IContentToolchain::IContentToolchain(
     const IContentImporter* importer,
     const IContentProcessor* processor,
     const IContentSerializer* serializer )
@@ -34,25 +32,16 @@ ContentToolchain::ContentToolchain(
     , _processor(processor)
     , _serializer(serializer) {}
 //----------------------------------------------------------------------------
-ContentToolchain::~ContentToolchain() {}
+IContentToolchain::~IContentToolchain() {}
 //----------------------------------------------------------------------------
 #ifdef WITH_RTTI_VERIFY_PREDICATES
-void ContentToolchain::RTTI_VerifyPredicates() const {
+void IContentToolchain::RTTI_VerifyPredicates() const {
     MetaClass::parent_type::RTTI_VerifyPredicates();
     RTTI_VerifyPredicate(nullptr != _importer);
     RTTI_VerifyPredicate(nullptr != _processor);
     RTTI_VerifyPredicate(nullptr != _serializer);
 }
 #endif
-//----------------------------------------------------------------------------
-u128 ContentToolchain::FingerPrint() const {
-    const u128 signature[3] = {
-        _importer->FingerPrint(),
-        _processor->FingerPrint(),
-        _serializer->FingerPrint()
-    };
-    return Fingerprint128(MakeView(signature));
-}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

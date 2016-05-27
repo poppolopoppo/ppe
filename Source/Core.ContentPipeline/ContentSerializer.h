@@ -19,18 +19,18 @@ FWD_INTERFACE_REFPTR(ContentSerializer);
 //----------------------------------------------------------------------------
 class ContentSerializerContext {
 public:
-    explicit ContentSerializerContext(const Filename& sourceFilename) : _sourceFilename(sourceFilename) {}
+    explicit ContentSerializerContext(const Filename& outputFilename) : _outputFilename(outputFilename) {}
     virtual ~ContentSerializerContext() {}
 
     ContentSerializerContext(const ContentSerializerContext&) = delete;
     ContentSerializerContext& operator=(const ContentSerializerContext&) = delete;
 
-    const Filename& SourceFilename() const { return _sourceFilename; }
+    const Filename& OutputFilename() const { return _outputFilename; }
 
     virtual ILogger* Logger() const = 0;
 
 private:
-    Filename _sourceFilename;
+    Filename _outputFilename;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -46,7 +46,7 @@ public:
     bool Serialize(ContentSerializerContext& ctx, const _Asset& src) const {
         const ContentSerializer<_Asset>* const serializer = dynamic_cast<const ContentSerializer<_Asset>*>(this);
         if (nullptr == serializer)
-            throw ContentSerializerException("invalid serializer type", ctx.SourceFilename(), this);
+            throw ContentSerializerException("invalid serializer type", ctx.OutputFilename(), this);
         else
             return serializer->Serialize(ctx, src);
     }
@@ -55,7 +55,7 @@ public:
     bool Deserialize(ContentSerializerContext& ctx, _Asset& dst) const {
         const ContentSerializer<_Asset>* const serializer = dynamic_cast<const ContentSerializer<_Asset>*>(this);
         if (nullptr == serializer)
-            throw ContentSerializerException("invalid serializer type", ctx.SourceFilename(), this);
+            throw ContentSerializerException("invalid serializer type", ctx.OutputFilename(), this);
         else
             return serializer->Deserialize(ctx, dst);
     }

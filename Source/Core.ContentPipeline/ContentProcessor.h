@@ -20,27 +20,32 @@ FWD_INTERFACE_REFPTR(ContentProcessor);
 //----------------------------------------------------------------------------
 class ContentProcessorContext {
 public:
-    explicit ContentProcessorContext(const ContentIdentity& source) : _source(source) {}
+    explicit ContentProcessorContext(   const ContentIdentity& source,
+                                        TargetPlatform platform,
+                                        bool debug)
+        : _source(source), _platform(platform), _debug(debug) {}
     virtual ~ContentProcessorContext() {}
 
     ContentProcessorContext(const ContentProcessorContext&) = delete;
     ContentProcessorContext& operator=(const ContentProcessorContext&) = delete;
 
     const ContentIdentity& Source() const { return _source; }
+    TargetPlatform Platform() const { return _platform; }
+    bool Debug() const { return _debug; }
 
     virtual ILogger* Logger() const = 0;
-
-    virtual TargetPlatform Platform() const = 0;
 
     virtual const Dirname& IntermediateDir() const = 0;
     virtual const Dirname& OutputDir() const = 0;
     virtual const Filename& OutputFilename() const = 0;
 
     virtual void AddDependency(const Filename& filename) = 0;
-    virtual void AddOutputFile(const Filename& filename) = 0;
+    virtual void AddAssetToBuild(const Filename& filename) = 0;
 
 private:
     const ContentIdentity& _source;
+    const TargetPlatform _platform;
+    const bool _debug;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

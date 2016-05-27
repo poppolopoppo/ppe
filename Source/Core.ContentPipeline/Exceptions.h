@@ -11,6 +11,7 @@ namespace ContentPipeline {
 FWD_INTERFACE_REFPTR(ContentImporter);
 FWD_INTERFACE_REFPTR(ContentProcessor);
 FWD_INTERFACE_REFPTR(ContentSerializer);
+FWD_INTERFACE_REFPTR(ContentToolchain);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -52,6 +53,15 @@ public:
     const IContentSerializer* Serializer() const { return _serializer.get(); }
 private:
     PCContentSerializer _serializer;
+};
+//----------------------------------------------------------------------------
+class ContentToolchainException : public ContentPipelineException {
+public:
+    ContentToolchainException(const char* what, const Filename& sourceFilename, const IContentToolchain* serializer);
+    ~ContentToolchainException();
+    const IContentToolchain* Toolchain() const { return _toolchain.get(); }
+private:
+    PCContentToolchain _toolchain;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
