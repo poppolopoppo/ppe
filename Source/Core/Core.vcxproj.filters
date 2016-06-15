@@ -88,6 +88,15 @@
     <CustomBuild Include="Allocator\TrackingAllocator.h">
       <Filter>Allocator</Filter>
     </CustomBuild>
+    <CustomBuild Include="Allocator\TrackingMalloc-inl.h">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Allocator\TrackingMalloc.cpp">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Allocator\TrackingMalloc.h">
+      <Filter>Allocator</Filter>
+    </CustomBuild>
     <CustomBuild Include="Color\Color-inl.h">
       <Filter>Color</Filter>
     </CustomBuild>
@@ -503,6 +512,12 @@
       <Filter>Maths\Geometry</Filter>
     </CustomBuild>
     <CustomBuild Include="Maths\Geometry\Collision.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\ConvexHull.cpp">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\ConvexHull.h">
       <Filter>Maths\Geometry</Filter>
     </CustomBuild>
     <CustomBuild Include="Maths\Geometry\Frustum-inl.h">

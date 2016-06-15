@@ -23,6 +23,8 @@
     </CustomBuild>
     <CustomBuild Include="Test_Format.cpp">
     </CustomBuild>
+    <CustomBuild Include="Test_Pixmap.cpp">
+    </CustomBuild>
     <CustomBuild Include="Test_RTTI.cpp">
     </CustomBuild>
     <CustomBuild Include="Test_Thread.cpp">

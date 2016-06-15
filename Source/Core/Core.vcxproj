@@ -72,6 +72,9 @@
     <CustomBuild Include="Allocator\ThreadLocalHeap.cpp" />
     <CustomBuild Include="Allocator\ThreadLocalHeap.h" />
     <CustomBuild Include="Allocator\TrackingAllocator.h" />
+    <CustomBuild Include="Allocator\TrackingMalloc-inl.h" />
+    <CustomBuild Include="Allocator\TrackingMalloc.cpp" />
+    <CustomBuild Include="Allocator\TrackingMalloc.h" />
     <CustomBuild Include="Color\Color-inl.h" />
     <CustomBuild Include="Color\Color.cpp" />
     <CustomBuild Include="Color\Color.h" />
@@ -211,6 +214,8 @@
     <CustomBuild Include="IO\VirtualFileSystem_fwd.h" />
     <CustomBuild Include="Maths\Geometry\Collision.cpp" />
     <CustomBuild Include="Maths\Geometry\Collision.h" />
+    <CustomBuild Include="Maths\Geometry\ConvexHull.cpp" />
+    <CustomBuild Include="Maths\Geometry\ConvexHull.h" />
     <CustomBuild Include="Maths\Geometry\Frustum-inl.h" />
     <CustomBuild Include="Maths\Geometry\Frustum.cpp" />
     <CustomBuild Include="Maths\Geometry\Frustum.h" />

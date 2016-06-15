@@ -43,13 +43,24 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <CustomBuild Include="External\stb_dxt.h" />
+    <CustomBuild Include="External\stb_image.h" />
+    <CustomBuild Include="External\stb_image_resize.h" />
+    <CustomBuild Include="External\stb_image_write.h" />
     <CustomBuild Include="Core.Pixmap.bff" />
+    <CustomBuild Include="DXTImage.cpp" />
+    <CustomBuild Include="DXTImage.h" />
     <CustomBuild Include="Enums.cpp" />
     <CustomBuild Include="Enums.h" />
     <CustomBuild Include="FloatImage.cpp" />
     <CustomBuild Include="FloatImage.h" />
     <CustomBuild Include="Image.cpp" />
     <CustomBuild Include="Image.h" />
+    <CustomBuild Include="ImageHelpers.cpp" />
+    <CustomBuild Include="ImageHelpers.h" />
+    <CustomBuild Include="MipMapChain.cpp" />
+    <CustomBuild Include="MipMapChain.h" />
+    <CustomBuild Include="PixelStorage.h" />
     <CustomBuild Include="Pixmap.cpp" />
     <CustomBuild Include="Pixmap.h" />
     <CustomBuild Include="Pixmap_extern.cpp" />

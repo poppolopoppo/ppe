@@ -54,6 +54,7 @@
     <CustomBuild Include="targetver.h" />
     <CustomBuild Include="Test_Containers.cpp" />
     <CustomBuild Include="Test_Format.cpp" />
+    <CustomBuild Include="Test_Pixmap.cpp" />
     <CustomBuild Include="Test_RTTI.cpp" />
     <CustomBuild Include="Test_Thread.cpp" />
   </ItemGroup>
