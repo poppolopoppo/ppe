@@ -69,12 +69,15 @@ static void Unalias_(
     if (aliased.PathNode() == alias.PathNode())
         return;
 
-    const size_t maxLength = 1 + alias.PathNode()->Depth() + aliased.PathNode()->Depth();
-    STACKLOCAL_POD_ARRAY(FileSystemToken, subpath, maxLength);
-    const size_t k = FileSystemPath::Instance().Expand(subpath, alias.PathNode(), aliased.PathNode());
+    Assert(aliased.PathNode()->Depth() >= alias.PathNode()->Depth());
+    const size_t length = aliased.PathNode()->Depth() - alias.PathNode()->Depth();
+    if (length > 0) {
+        STACKLOCAL_POD_ARRAY(FileSystemToken, subpath, length);
+        const size_t k = FileSystemPath::Instance().Expand(subpath, alias.PathNode(), aliased.PathNode());
 
-    for (size_t i = 0; i < k; ++i)
-        oss << subpath[i] << wchar_t(FileSystem::Separator);
+        for (size_t i = 0; i < k; ++i)
+            oss << subpath[i] << wchar_t(FileSystem::Separator);
+    }
 }
 //----------------------------------------------------------------------------
 static void Unalias_(

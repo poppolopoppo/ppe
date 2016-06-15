@@ -17,7 +17,7 @@ namespace Core {
 namespace {
 //----------------------------------------------------------------------------
 static size_t ExpandFileSystemNode_(
-    MemoryView<FileSystemToken> tokens,
+    const MemoryView<FileSystemToken>& tokens,
     const FileSystemNode *pnode,
     const FileSystemNode *proot ) {
     if (nullptr == pnode)
@@ -27,9 +27,7 @@ static size_t ExpandFileSystemNode_(
     for (; proot != pnode; pnode = pnode->Parent())
         tokens[count++] = pnode->Token();
 
-    Assert(pnode->Token().empty());
     Assert(tokens.size() == count);
-
     std::reverse(tokens.begin(), tokens.begin() + count);
 
     return count;
@@ -234,8 +232,10 @@ const FileSystemNode* FileSystemTrie::RootNode(const FileSystemNode *pnode) cons
     READSCOPELOCK(_barrier);
 
     for (   const FileSystemNode* pparent = pnode->Parent();
-            pparent && pparent != _root;
-            pnode = pparent, pparent = pnode->Parent() );
+            pparent != _root;
+            pnode = pparent, pparent = pnode->Parent() ) {
+        Assert(pparent);
+    }
 
     Assert(pnode);
     Assert(pnode->Parent() == _root);
