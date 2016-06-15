@@ -12,7 +12,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 #define STACKLOCAL_POD_BITSET(_NAME, _COUNT) \
     MALLOCA(Core::BitSet::word_t, CONCAT(CONCAT(_, _NAME), CONCAT(_Alloca, __LINE__)), Core::BitSet::WordCapacity(_COUNT)); \
-    Core::BitSet _NAME(CONCAT(CONCAT(_, _NAME), CONCAT(_Alloca, __LINE__)).get(), _COUNT)
+    Core::BitSet _NAME(CONCAT(CONCAT(_, _NAME), CONCAT(_Alloca, __LINE__)).RawData, _COUNT)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -42,7 +42,9 @@ public:
 
     void ResetAll(bool value);
 
-    static size_t WordCapacity(size_t size) { return (0 == size) ? 0 : 1 + (size / WordBitCount); }
+    void CopyTo(BitSet* other) const;
+
+    static size_t WordCapacity(size_t size) { return ((size + WordBitCount - 1) / WordBitCount); }
 
 private:
     static size_t IndexFlag_(size_t index) { return (size_t(1) << (index & WordBitMask)); }
