@@ -42,6 +42,8 @@ MEMORY_DOMAIN_IMPL(Texture,                 Graphics)
 MEMORY_DOMAIN_IMPL(Vertex,                  Graphics)
 //------------------------------------------------------------------------------
 MEMORY_DOMAIN_IMPL(Pixmap,                  Core)
+MEMORY_DOMAIN_IMPL(DXTImage,                Pixmap)
+MEMORY_DOMAIN_IMPL(FloatImage,              Pixmap)
 MEMORY_DOMAIN_IMPL(Image,                   Pixmap)
 //------------------------------------------------------------------------------
 MEMORY_DOMAIN_IMPL(ContentPipeline,         Core)
