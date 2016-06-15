@@ -102,10 +102,18 @@ static void Test_ConvexHull_(const Filename& input) {
     if (not convexhull.HasAlpha())
         return;
 
+    AABB2f aabb;
+    if (not Pixmap::BoundingBox(aabb, &convexhull, AlphaCutoff))
+        AssertNotReached();
+
+    float2 corners[4];
+    aabb.GetCorners(corners);
+
     float2 uvs[18];
     if (not Pixmap::ConvexHull(MakeView(uvs), &convexhull, AlphaCutoff))
         AssertNotReached();
 
+    Pixmap::DrawPolygon(&convexhull, corners, Color::Cyan().ToLinear());
     Pixmap::DrawPolygon(&convexhull, uvs, Color::Red().ToLinear());
 
     img.ConvertFrom(&convexhull);

@@ -3,6 +3,7 @@
 #include "Core.Pixmap/Pixmap.h"
 #include "Core.Pixmap/Pixmap_extern.h"
 
+#include "Core/Maths/Geometry/ScalarBoundingBox_fwd.h"
 #include "Core/Maths/Geometry/ScalarVector_fwd.h"
 
 namespace Core {
@@ -19,6 +20,8 @@ void DistanceField_DRA(Image* dst, const FloatImage* src, float alphaCutoff);
 void ExpandColorToTransparentPixels(FloatImage* img, float alphaCutoff);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+bool BoundingBox(AABB2f& uvs, const FloatImage* img, float alphaCutoff);
 //----------------------------------------------------------------------------
 bool ConvexHull(const MemoryView<float2>& uvs, const FloatImage* img, float alphaCutoff);
 //----------------------------------------------------------------------------

@@ -140,70 +140,77 @@ void ScalarBoundingBox<T, _Dim>::GetCorners(vector_type (&points)[_Dim2]) const 
     return GetCorners(MakeView(points));
 }
 //----------------------------------------------------------------------------
-#pragma warning( push )
-#pragma warning( disable : 4127) // C4127: l'expression conditionnelle est une constante
+namespace details {
+template <typename T, size_t _Dim>
+struct GetCornersAABB_;
+template <typename T>
+struct GetCornersAABB_<T, 1> {
+    void operator ()(const MemoryView<ScalarVector<T, 1>>& points, const ScalarVector<T, 1>& min, const ScalarVector<T, 1>& max) const {
+        Assert(points.size() == 2);
+        points[0].x() = min.x();
+        points[1].x() = max.x();
+    }
+};
+template <typename T>
+struct GetCornersAABB_<T, 2> {
+    void operator ()(const MemoryView<ScalarVector<T, 2>>& points, const ScalarVector<T, 2>& min, const ScalarVector<T, 2>& max) const {
+        Assert(points.size() == 4);
+        points[0].x() = min.x();
+        points[0].y() = min.y();
+
+        points[1].x() = max.x();
+        points[1].y() = min.y();
+
+        points[2].x() = max.x();
+        points[2].y() = max.y();
+
+        points[3].x() = min.x();
+        points[3].y() = max.y();
+    }
+};
+template <typename T>
+struct GetCornersAABB_<T, 3> {
+    void operator ()(const MemoryView<ScalarVector<T, 3>>& points, const ScalarVector<T, 3>& min, const ScalarVector<T, 3>& max) const {
+        Assert(points.size() == 8);
+        points[0].x() = min.x();
+        points[0].y() = min.y();
+        points[0].z() = min.z();
+
+        points[1].x() = min.x();
+        points[1].y() = min.y();
+        points[1].z() = max.z();
+
+        points[2].x() = min.x();
+        points[2].y() = max.y();
+        points[2].z() = max.z();
+
+        points[3].x() = min.x();
+        points[3].y() = max.y();
+        points[3].z() = min.z();
+
+        points[4].x() = max.x();
+        points[4].y() = min.y();
+        points[4].z() = max.z();
+
+        points[5].x() = max.x();
+        points[5].y() = max.y();
+        points[5].z() = max.z();
+
+        points[6].x() = max.x();
+        points[6].y() = max.y();
+        points[6].z() = min.z();
+
+        points[7].x() = max.x();
+        points[7].y() = max.y();
+        points[7].z() = max.z();
+    }
+};
+} //!details
 
 template <typename T, size_t _Dim>
 void ScalarBoundingBox<T, _Dim>::GetCorners(const MemoryView<vector_type>& points) const {
-    if (_Dim == 1) {
-        Assert(points.size() == 2);
-        points[0].x() = _min.x();
-        points[1].x() = _max.x();
-    }
-    else if (_Dim == 2) {
-        Assert(points.size() == 2);
-        points[0].x() = _min.x();
-        points[0].y() = _min.y();
-
-        points[1].x() = _max.x();
-        points[1].y() = _min.y();
-
-        points[2].x() = _max.x();
-        points[2].y() = _max.y();
-
-        points[3].x() = _min.x();
-        points[3].y() = _max.y();
-    }
-    else if (_Dim == 3) {
-        Assert(points.size() == 8);
-        points[0].x() = _min.x();
-        points[0].y() = _min.y();
-        points[0].z() = _min.z();
-
-        points[1].x() = _min.x();
-        points[1].y() = _min.y();
-        points[1].z() = _max.z();
-
-        points[2].x() = _min.x();
-        points[2].y() = _max.y();
-        points[2].z() = _max.z();
-
-        points[3].x() = _min.x();
-        points[3].y() = _max.y();
-        points[3].z() = _min.z();
-
-        points[4].x() = _max.x();
-        points[4].y() = _min.y();
-        points[4].z() = _max.z();
-
-        points[5].x() = _max.x();
-        points[5].y() = _max.y();
-        points[5].z() = _max.z();
-
-        points[6].x() = _max.x();
-        points[6].y() = _max.y();
-        points[6].z() = _min.z();
-
-        points[7].x() = _max.x();
-        points[7].y() = _max.y();
-        points[7].z() = _max.z();
-    }
-    else {
-        AssertNotImplemented();
-    }
+    details::GetCornersAABB_<T, _Dim>()(points, _min, _max);
 }
-
-#pragma warning( pop )
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 template <typename U>

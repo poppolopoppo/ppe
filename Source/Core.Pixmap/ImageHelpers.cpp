@@ -8,6 +8,7 @@
 
 #include "Core/Container/Vector.h"
 #include "Core/Maths/Geometry/ConvexHull.h"
+#include "Core/Maths/Geometry/ScalarBoundingBox.h"
 #include "Core/Maths/Geometry/ScalarVector.h"
 #include "Core/Maths/Geometry/ScalarVectorHelpers.h"
 #include "Core/Maths/MathHelpers.h"
@@ -417,6 +418,52 @@ void ExpandColorToTransparentPixels(FloatImage* img, float alphaCutoff) {
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+bool BoundingBox(AABB2f& uvs, const FloatImage* img, float alphaCutoff) {
+    Assert(img);
+    Assert(img->Width() > 1 && img->Height() > 1);
+    Assert(alphaCutoff >= 0.f && alphaCutoff < 1.f);
+
+    typedef FloatImage::color_type color_type;
+
+    const size_t w = img->Width();
+    const size_t h = img->Height();
+
+    const float2 dUdV = img->DuDv();
+
+    uvs = AABB2f();
+
+    forrange(y, 0, h) {
+        const float v = y * dUdV.y();
+        const MemoryView<const color_type> scanline = img->Scanline(y);
+
+        size_t xMin = w;
+        size_t xMax = 0;
+        forrange(x, 0, w) {
+            const color_type& col = scanline[x];
+            if (col.a() > alphaCutoff) {
+                // add 1 offset to the left
+                xMin = Min(xMin, x);
+                // add 1 offset to the right
+                xMax = Max(xMax, x);
+            }
+        }
+
+        if (xMin <= xMax) {
+            uvs.Add(float2(xMin*dUdV.x(), v));
+            uvs.Add(float2(xMax*dUdV.x(), v));
+        }
+    }
+
+    if (not uvs.HasPositiveExtents())
+        return false;
+
+    const float2 borderDuDv = dUdV * 5;
+    uvs.Add(Max(uvs.Min() - borderDuDv, float2::Zero()));
+    uvs.Add(Min(uvs.Max() + borderDuDv, float2::One() - dUdV));
+
+    return true;
+}
 //----------------------------------------------------------------------------
 bool ConvexHull(const MemoryView<float2>& uvs, const FloatImage* img, float alphaCutoff) {
     Assert(img);
