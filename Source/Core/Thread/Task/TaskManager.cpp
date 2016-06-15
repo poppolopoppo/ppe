@@ -620,6 +620,14 @@ void TaskManager::RunAndWaitFor(const MemoryView<const TaskDelegate>& tasks, Tas
     }
 }
 //----------------------------------------------------------------------------
+void TaskManager::RunAndWaitFor(const MemoryView<Task* const>& tasks, TaskPriority priority /* = TaskPriority::Normal */) const {
+    STACKLOCAL_POD_ARRAY(TaskDelegate, delegates, tasks.size());
+    forrange(i, 0, tasks.size())
+        delegates[i] = *tasks[i];
+
+    RunAndWaitFor(delegates.AddConst(), priority);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 ITaskContext& CurrentTaskContext() {

@@ -33,6 +33,10 @@ private:
     _Result _result;
 };
 //----------------------------------------------------------------------------
+template <typename _Lambda>
+TaskFuture< decltype(std::declval<_Lambda>()()) >*
+    MakeFuture(_Lambda&& func);
+//----------------------------------------------------------------------------
 template <typename _Result>
 using PFuture = RefPtr< const TaskFuture<_Result> >;
 //----------------------------------------------------------------------------
@@ -60,8 +64,10 @@ private:
     function_type _func;
 };
 //----------------------------------------------------------------------------
-void ASync(TaskManager& manager, std::function<void()>&& fireAndForget, TaskPriority priority = TaskPriority::Normal);
+TaskProcedure* MakeAsync(std::function<void()>&& fireAndForget);
+TaskProcedure* MakeAsync(std::function<void(ITaskContext&)>&& fireAndForget);
 //----------------------------------------------------------------------------
+void ASync(TaskManager& manager, std::function<void()>&& fireAndForget, TaskPriority priority = TaskPriority::Normal);
 void ASync(TaskManager& manager, std::function<void(ITaskContext&)>&& fireAndForget, TaskPriority priority = TaskPriority::Normal);
 //----------------------------------------------------------------------------
 template <typename _It, typename _Lambda>
@@ -78,7 +84,7 @@ void ParallelForRange(
 #define future(...) \
     Core::Future(Core::GlobalThreadPool::Instance(), __VA_ARGS__)
 //----------------------------------------------------------------------------
-#define parallel_forrange(_First, _Last, ...) \
+#define parallel_for(_First, _Last, ...) \
     Core::ParallelForRange(Core::GlobalThreadPool::Instance(), _First, _Last, __VA_ARGS__)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -72,6 +72,7 @@ public:
 
     void Run(const MemoryView<const TaskDelegate>& tasks, TaskPriority priority = TaskPriority::Normal) const;
     void RunAndWaitFor(const MemoryView<const TaskDelegate>& tasks, TaskPriority priority = TaskPriority::Normal) const;
+    void RunAndWaitFor(const MemoryView<Task* const>& tasks, TaskPriority priority = TaskPriority::Normal) const;
 
     void Run(const TaskDelegate& task, TaskPriority priority = TaskPriority::Normal) const {
         Run(MakeView(&task, &task+1), priority);

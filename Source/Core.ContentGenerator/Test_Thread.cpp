@@ -43,7 +43,7 @@ static void Test_Future_() {
 static void Test_ParallelFor_() {
     const size_t values[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20};
 
-    parallel_forrange(std::begin(values), std::end(values), [](size_t v) {
+    parallel_for(std::begin(values), std::end(values), [](size_t v) {
         STACKLOCAL_OCSTRSTREAM(oss, 512);
         oss << CurrentThreadContext().Name() << ": " << v << std::endl;
         std::cout << oss.c_str() << std::flush;

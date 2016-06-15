@@ -20,13 +20,21 @@ void TaskProcedure::Run(ITaskContext& ctx) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+TaskProcedure* MakeAsync(std::function<void()>&& fireAndForget) {
+    return new TaskProcedure(std::bind(std::move(fireAndForget))); // will be deleted by RunAndSuicide()
+}
+//----------------------------------------------------------------------------
+TaskProcedure* MakeAsync(std::function<void(ITaskContext&)>&& fireAndForget) {
+    return new TaskProcedure(std::move(fireAndForget)); // will be deleted by RunAndSuicide()
+}
+//----------------------------------------------------------------------------
 void ASync(TaskManager& manager, std::function<void()>&& fireAndForget, TaskPriority priority/* = TaskPriority::Normal */) {
-    auto* const task = new TaskProcedure(std::bind(std::move(fireAndForget))); // will be deleted by RunAndSuicide()
+    auto* const task = MakeAsync(std::move(fireAndForget));
     manager.Run(*task, priority);
 }
 //----------------------------------------------------------------------------
 void ASync(TaskManager& manager, std::function<void(ITaskContext&)>&& fireAndForget, TaskPriority priority/* = TaskPriority::Normal */) {
-    auto* const task = new TaskProcedure(std::move(fireAndForget)); // will be deleted by RunAndSuicide()
+    auto* const task = MakeAsync(std::move(fireAndForget));
     manager.Run(*task, priority);
 }
 //----------------------------------------------------------------------------

@@ -43,9 +43,15 @@ void TaskFuture<_Result>::Run(ITaskContext& ctx) {
 //----------------------------------------------------------------------------
 template <typename _Lambda>
 TaskFuture< decltype(std::declval<_Lambda>()()) >*
-    Future(TaskManager& manager, _Lambda&& func, TaskPriority priority/* = TaskPriority::Normal */) {
+    MakeFuture(_Lambda&& func) {
     typedef decltype(std::declval<_Lambda>()()) return_type;
-    auto* const task = new TaskFuture<return_type>(std::move(func));// will be deleted by RunAndSuicide()
+    return new TaskFuture<return_type>(std::move(func));// will be deleted by RunAndSuicide()
+}
+//----------------------------------------------------------------------------
+template <typename _Lambda>
+TaskFuture< decltype(std::declval<_Lambda>()()) >*
+    Future(TaskManager& manager, _Lambda&& func, TaskPriority priority/* = TaskPriority::Normal */) {
+    auto* const task = MakeFuture(std::move(func));
     manager.Run(*task, priority);
     return task;
 }
@@ -58,17 +64,25 @@ void ParallelForRange(
     _It first, _It last, _Lambda&& lambda,
     TaskPriority priority/* = TaskPriority::Normal */) {
     const size_t count = std::distance(first, last);
-    if (0 == count)
+    if (0 == count) {
+        // skip completly empty sequences
         return;
-
-    STACKLOCAL_STACK(TaskDelegate, tasks, count);
-
-    forrange(it, first, last) {
-        auto* const task = new TaskProcedure(std::bind(lambda, std::cref(*it)));
-        tasks.Push(*task/* will be deleted by RunAndSuicide() */);
     }
+    else if (1 == count) {
+        // skip task creation if there is only 1 iteration
+        lambda(*first);
+    }
+    else {
+        // creates tasks for multi-threaded completion
+        STACKLOCAL_STACK(TaskDelegate, tasks, count);
 
-    manager.RunAndWaitFor(tasks.MakeView(), priority);
+        forrange(it, first, last) {
+            auto* const task = new TaskProcedure(std::bind(lambda, std::cref(*it)));
+            tasks.Push(*task/* will be deleted by RunAndSuicide() */);
+        }
+
+        manager.RunAndWaitFor(tasks.MakeConstView(), priority);
+    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
