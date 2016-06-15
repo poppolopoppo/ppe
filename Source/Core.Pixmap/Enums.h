@@ -5,10 +5,22 @@
 #include "Core/IO/StringSlice.h"
 #include "Core/Meta/enum.h"
 
+#include <iosfwd>
+
 namespace Core {
 namespace Pixmap {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+enum class BlockFormat {
+    DXT1    = 8,
+    DXT5    = 16,
+};
+StringSlice BlockFormatToCStr(BlockFormat value);
+template <typename _Char, typename _Traits>
+std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, BlockFormat value) {
+    return oss << BlockFormatToCStr(value);
+}
 //----------------------------------------------------------------------------
 enum class ColorDepth {
     _8bits  = 8,
@@ -16,6 +28,10 @@ enum class ColorDepth {
     _32bits = 32,
 };
 StringSlice ColorDepthToCStr(ColorDepth value);
+template <typename _Char, typename _Traits>
+std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, ColorDepth value) {
+    return oss << ColorDepthToCStr(value);
+}
 //----------------------------------------------------------------------------
 enum class ColorMask {
     R       = 1,
@@ -24,6 +40,10 @@ enum class ColorMask {
     RGBA    = 4,
 };
 StringSlice ColorMaskToCStr(ColorMask value);
+template <typename _Char, typename _Traits>
+std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, ColorMask value) {
+    return oss << ColorMaskToCStr(value);
+}
 //----------------------------------------------------------------------------
 enum class ColorSpace {
     Linear  = 0,
@@ -32,6 +52,10 @@ enum class ColorSpace {
     YCoCg,
 };
 StringSlice ColorSpaceToCStr(ColorSpace value);
+template <typename _Char, typename _Traits>
+std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, ColorSpace value) {
+    return oss << ColorSpaceToCStr(value);
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -3,6 +3,8 @@
 #include "Pixmap.h"
 #include "Pixmap_fwd.h"
 
+#include "Image.h"
+
 #include "Core/Allocator/PoolAllocatorTag-impl.h"
 
 #ifdef OS_WINDOWS
@@ -20,9 +22,11 @@ POOL_TAG_DEF(Pixmap);
 //----------------------------------------------------------------------------
 void PixmapStartup::Start() {
     POOL_TAG(Pixmap)::Start();
+    Image::Start();
 }
 //----------------------------------------------------------------------------
 void PixmapStartup::Shutdown() {
+    Image::Shutdown();
     POOL_TAG(Pixmap)::Shutdown();
 }
 //----------------------------------------------------------------------------

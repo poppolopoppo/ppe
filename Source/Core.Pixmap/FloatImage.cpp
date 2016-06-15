@@ -4,8 +4,26 @@
 #include "Pixmap_fwd.h"
 
 #include "Core/Allocator/PoolAllocator-impl.h"
+#include "Core/Allocator/ThreadLocalHeap.h"
 #include "Core/Color/Color.h"
+#include "Core/Diagnostic/Logger.h"
+#include "Core/Container/BitSet.h"
 #include "Core/Maths/Geometry/ScalarVector.h"
+#include "Core/Maths/MathHelpers.h"
+
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
+
+#define STBIR_MALLOC(size,c) \
+    Core::GetThreadLocalHeap().malloc(size, MEMORY_DOMAIN_TRACKING_DATA(Image))
+#define STBIR_FREE(ptr,c) \
+    Core::GetThreadLocalHeap().free(ptr, MEMORY_DOMAIN_TRACKING_DATA(Image))
+#define STBIR_ASSERT(x) \
+    Assert(x)
+
+#define STBIR_DEFAULT_FILTER_UPSAMPLE     STBIR_FILTER_CATMULLROM
+#define STBIR_DEFAULT_FILTER_DOWNSAMPLE   STBIR_FILTER_CUBICBSPLINE // TODO: workaround invalid alpha with STBIR_FILTER_MITCHELL
+
+#include "External/stb_image_resize.h"
 
 namespace Core {
 namespace Pixmap {
@@ -32,12 +50,28 @@ uint2 FloatImage::WidthHeight() const {
     return uint2(checked_cast<unsigned>(_width), checked_cast<unsigned>(_height));
 }
 //----------------------------------------------------------------------------
+float2 FloatImage::DuDv() const {
+    return float2(Du(), Dv());
+}
+//----------------------------------------------------------------------------
 auto FloatImage::at(const uint2& xy) -> color_type& {
     return at(xy.x(), xy.y());
 }
 //----------------------------------------------------------------------------
 auto FloatImage::at(const uint2& xy) const -> const color_type& {
     return at(xy.x(), xy.y());
+}
+//----------------------------------------------------------------------------
+auto FloatImage::SampleClamp(int x, int y) const -> const color_type& {
+    x = Clamp(x, 0, int(_width)-1);
+    y = Clamp(x, 0, int(_height)-1);
+    return _data[x + y * _width];
+}
+//----------------------------------------------------------------------------
+auto FloatImage::SampleWrap(int x, int y) const -> const color_type& {
+    x = (x + int(_width)) % int(_width);
+    y = (y + int(_height)) % int(_height);
+    return _data[x + y * _width];
 }
 //----------------------------------------------------------------------------
 auto FloatImage::Scanline(size_t row) -> MemoryView<color_type> {
@@ -48,9 +82,40 @@ auto FloatImage::Scanline(size_t row) const -> MemoryView<const color_type> {
     return _data.MakeConstView().SubRange(row * _width, _width);
 }
 //----------------------------------------------------------------------------
+void FloatImage::DiscardAlpha() {
+    for (color_type& color : MakeView())
+        color.a() = 1.0f;
+}
+//----------------------------------------------------------------------------
+bool FloatImage::HasAlpha() const {
+    for (const color_type& color : MakeConstView())
+        if (color.a() != 1.0f)
+            return true;
+
+    return false;
+}
+//----------------------------------------------------------------------------
+bool FloatImage::HasVisiblePixels(float cutoff/* = 1.0f/255 */) const {
+    Assert(cutoff >= 0.f && cutoff < 1.f);
+
+    for (const color_type& color : MakeConstView())
+        if (color.a() > cutoff)
+            return true;
+
+    return false;
+}
+//----------------------------------------------------------------------------
 void FloatImage::Fill(const color_type& value) {
-    for (color_type& color : _data)
+    for (color_type& color : MakeView())
         color = value;
+}
+//----------------------------------------------------------------------------
+void FloatImage::CopyTo(FloatImage* dst) const {
+    Assert(dst);
+
+    dst->Resize_DiscardData(_width, _height);
+    const auto src = MakeConstView();
+    ::memcpy(dst->_data.data(), src.data(), src.SizeInBytes());
 }
 //----------------------------------------------------------------------------
 void FloatImage::Resize_DiscardData(const uint2& size) {
@@ -62,19 +127,55 @@ void FloatImage::Resize_DiscardData(const uint2& size, const color_type& value) 
 }
 //----------------------------------------------------------------------------
 void FloatImage::Resize_DiscardData(size_t width, size_t height) {
-    Resize_DiscardData(width, height, FloatImage::color_type(0.0f));
-}
-//----------------------------------------------------------------------------
-void FloatImage::Resize_DiscardData(size_t width, size_t height, const color_type& value) {
     Assert((width != 0) == (height != 0));
+
+    if (_width == width &&
+        _height == height)
+        return;
 
     _width = width;
     _height = height;
 
     _data.Resize_DiscardData(width * height);
+}
+//----------------------------------------------------------------------------
+void FloatImage::Resize_DiscardData(size_t width, size_t height, const color_type& value) {
+    Assert((width != 0) == (height != 0));
 
-    for (color_type& color : _data)
+    Resize_DiscardData(width, height);
+
+    for (color_type& color : MakeView())
         color = value;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+bool Resize(FloatImage* dst, const FloatImage* src) {
+    Assert(dst);
+    return Resize(dst, src, dst->_width, dst->_height);
+}
+//----------------------------------------------------------------------------
+bool Resize(FloatImage* dst, const FloatImage* src, size_t width, size_t height) {
+    Assert(dst);
+    Assert(src);
+    Assert(width > 0);
+    Assert(height > 0);
+
+    LOG(Info, L"[Pixmap] Resizing a FloatImage from {0}x{1} to {2}x{3}",
+        src->Width(), src->Height(),
+        width, height );
+
+    dst->Resize_DiscardData(width, height);
+
+    const float* srcPixels = reinterpret_cast<const float*>(src->_data.data());
+    float* const dstPixels = reinterpret_cast<float*>(dst->_data.data());
+
+    const int result = ::stbir_resize_float(
+        srcPixels, checked_cast<int>(src->_width), checked_cast<int>(src->_height), 0,
+        dstPixels, checked_cast<int>(width), checked_cast<int>(height), 0,
+        4 );
+
+    return (result == 1);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

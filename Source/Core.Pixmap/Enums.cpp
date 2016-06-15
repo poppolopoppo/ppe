@@ -7,15 +7,29 @@ namespace Pixmap {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+StringSlice BlockFormatToCStr(BlockFormat value) {
+    switch (value)
+    {
+    case Core::Pixmap::BlockFormat::DXT1:
+        return "DXT1";
+    case Core::Pixmap::BlockFormat::DXT5:
+        return "DXT5";
+    default:
+        AssertNotImplemented();
+        break;
+    }
+    return StringSlice();
+}
+//----------------------------------------------------------------------------
 StringSlice ColorDepthToCStr(ColorDepth value) {
     switch (value)
     {
     case Core::Pixmap::ColorDepth::_8bits:
-        return "8 bits";
+        return "8";
     case Core::Pixmap::ColorDepth::_16bits:
-        return "16 bits";
+        return "16";
     case Core::Pixmap::ColorDepth::_32bits:
-        return "32 bits";
+        return "32";
     default:
         AssertNotImplemented();
         break;
