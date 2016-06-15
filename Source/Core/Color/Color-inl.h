@@ -80,19 +80,55 @@ auto BasicColor<T, _Shuffle>::ToLinear() const -> BasicColor {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // http://chilliant.blogspot.fr/2012/08/srgb-approximations-for-hlsl.html
+// Unreal : https://github.com/EpicGames/UnrealEngine/blob/dff3c48be101bb9f84633a733ef79c91c38d9542/Engine/Shaders/GammaCorrectionCommon.usf
 //----------------------------------------------------------------------------
 float SRGB_to_Linear(float srgb) {
+#if 0
     return srgb * (srgb * (srgb * 0.305306011f + 0.682171111f) + 0.012522878f);
+#elif 0
+    return std::pow(srgb, 2.2f);
+#else
+	return (srgb > 0.04045f)
+        ? std::pow(srgb * (1.0f / 1.055f) + 0.0521327f, 2.4f)
+        : srgb * (1.0f / 12.92f);
+#endif
 }
 //----------------------------------------------------------------------------
 float Linear_to_SRGB(float lin) {
+#if 0
     const float s1 = std::sqrt(lin);
     const float s2 = std::sqrt(s1);
     const float s3 = std::sqrt(s2);
     return 0.585122381f * s1 + 0.783140355f * s2 - 0.368262736f * s3;
+#elif 0
+    constexpr float e = 1/2.2f;
+    return std::pow(lin, e);
+#else
+    return (lin >= 0.00313067f)
+        ? std::pow(lin, (1.0f / 2.4f)) * 1.055f - 0.055f
+        : lin * 12.92f;
+#endif
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+inline BasicColorData< UNorm<u8> > SRGB_to_Linear(const BasicColorData< UNorm<u8> >& srgb) {
+    return BasicColorData< UNorm<u8> >(
+        SRGB_to_Linear(srgb.x()._data),
+        SRGB_to_Linear(srgb.y()._data),
+        SRGB_to_Linear(srgb.z()._data),
+        srgb.w()
+        );
+}
+//----------------------------------------------------------------------------
+inline BasicColorData< UNorm<u16> > SRGB_to_Linear(const BasicColorData< UNorm<u16> >& srgb) {
+    return BasicColorData< UNorm<u16> >(
+        SRGB_to_Linear(srgb.x().Normalized()),
+        SRGB_to_Linear(srgb.y().Normalized()),
+        SRGB_to_Linear(srgb.z().Normalized()),
+        srgb.w()
+        );
+}
 //----------------------------------------------------------------------------
 template <typename T>
 BasicColorData<T> SRGB_to_Linear(const BasicColorData<T>& srgb) {
