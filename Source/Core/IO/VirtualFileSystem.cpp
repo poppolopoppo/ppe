@@ -98,6 +98,12 @@ void VirtualFileSystemStartup::Start() {
     {
         VirtualFileSystem::Instance().MountNativePath(MakeStringSlice(L"Process:/"), CurrentProcess::Instance().Directory());
     }
+    // data directory
+    {
+        WString path;
+        Format(path, L"{0}/../../Data", CurrentProcess::Instance().Directory());
+        VirtualFileSystem::Instance().MountNativePath(MakeStringSlice(L"Data:/"), path);
+    }
     // system temporary path
     {
         FileSystem::char_type tmpPath[1024];
