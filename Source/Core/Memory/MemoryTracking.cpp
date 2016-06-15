@@ -26,9 +26,19 @@ void MemoryTrackingData::Allocate(size_t blockCount, size_t strideInBytes) {
     _totalSizeInBytes += blockCount * strideInBytes;
     ++_allocationCount;
 
-    _maxBlockCount = max(_maxBlockCount, _blockCount).load();
-    _maxAllocationCount = max(_maxAllocationCount, _allocationCount).load();
-    _maxTotalSizeInBytes = max(_maxTotalSizeInBytes, _totalSizeInBytes).load();
+    size_t value = 0;
+
+    value = _blockCount;
+    if (_maxBlockCount < value)
+        _maxBlockCount = value;
+
+    value = _allocationCount;
+    if (_maxAllocationCount < value)
+        _maxAllocationCount = value;
+
+    value = _totalSizeInBytes;
+    if (_maxTotalSizeInBytes < value)
+        _maxTotalSizeInBytes = value;
 
     if (_parent)
         _parent->Allocate(blockCount, strideInBytes);
@@ -53,15 +63,28 @@ void MemoryTrackingData::Pool_AllocateOneBlock(size_t blockSizeInBytes) {
         _totalSizeInBytes += blockSizeInBytes;
         ++_allocationCount;
 
-        _maxBlockCount = max(_maxBlockCount, _blockCount).load();
-        _maxAllocationCount = max(_maxAllocationCount, _allocationCount).load();
-        _maxTotalSizeInBytes = max(_maxTotalSizeInBytes, _totalSizeInBytes).load();
+        size_t value = 0;
+
+        value = _blockCount;
+        if (_maxBlockCount < value)
+            _maxBlockCount = value;
+
+        value = _allocationCount;
+        if (_maxAllocationCount < value)
+            _maxAllocationCount = value;
+
+        value = _totalSizeInBytes;
+        if (_maxTotalSizeInBytes < value)
+            _maxTotalSizeInBytes = value;
 
         _parent->Pool_AllocateOneBlock(blockSizeInBytes);
     }
     else {
         ++_blockCount;
-        _maxBlockCount = max(_maxBlockCount, _blockCount).load();
+
+        size_t value = _blockCount;
+        if (_maxBlockCount < value)
+            _maxBlockCount = value;
     }
 }
 //----------------------------------------------------------------------------
