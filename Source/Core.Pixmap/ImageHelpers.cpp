@@ -481,8 +481,10 @@ bool ConvexHull(const MemoryView<float2>& uvs, const FloatImage* img, float alph
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void DrawPoint(FloatImage* img, int x, int y, const FloatImage::color_type& color) {
-    if (x < 0 || x >= img->Width() ||
-        y < 0 || y >= img->Height() )
+    const int w = int(img->Width());
+    const int h = int(img->Height());
+
+    if (x < 0 || x >= w || y < 0 || y >= h )
         return;
 
     FloatImage::color_type& dst = img->at(checked_cast<size_t>(x), checked_cast<size_t>(y));
