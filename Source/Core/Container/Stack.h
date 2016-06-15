@@ -73,6 +73,7 @@ public:
 
     MemoryView<T> MakeView() { return MemoryView<T>(_storage, _size); }
     MemoryView<const T> MakeView() const { return MemoryView<const T>(_storage, _size); }
+    MemoryView<const T> MakeConstView() const { return MemoryView<const T>(_storage, _size); }
 
     template <typename _Arg0, typename... _Args>
     void Push(_Arg0&& arg0, _Args&&... args);
