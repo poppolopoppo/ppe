@@ -89,6 +89,8 @@ public:
     FORCE_INLINE void Resize_DiscardData(size_type size) { Resize(size, false); }
     FORCE_INLINE void Resize_KeepData(size_type size) { Resize(size, true); }
 
+    void Clear_StealData(pointer p, size_type size);
+
     template <typename _It>
     void insert(iterator after, _It&& begin, _It&& end);
 
