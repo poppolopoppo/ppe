@@ -49,6 +49,9 @@ template <typename T>
 constexpr T Sqr(T x);
 //----------------------------------------------------------------------------
 template <typename T>
+constexpr T Sqrt(T x);
+//----------------------------------------------------------------------------
+template <typename T>
 constexpr T Step(T y, T x);
 //----------------------------------------------------------------------------
 template <typename T, typename U>

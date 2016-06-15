@@ -214,13 +214,20 @@ template <typename T, size_t _Dim>
 ScalarVector<T, _Dim> Abs(const ScalarVector<T, _Dim>& v) {
     ScalarVector<T, _Dim> result;
     for (size_t i = 0; i < _Dim; ++i)
-        result._data[i] = std::abs(v._data[i]);
+        result._data[i] = Abs(v._data[i]);
     return result;
 }
 //----------------------------------------------------------------------------
 template <typename T>
 T Det(const ScalarVector<T, 2>& lhs, const ScalarVector<T, 2>& rhs) {
-    return lhs.x()*rhs.y() - lhs.y()*rhs.x();
+    return lhs.x() * rhs.y() - lhs.y() * rhs.x();
+}
+//----------------------------------------------------------------------------
+template <typename T>
+float Cross(const ScalarVector<T, 2>& o, const ScalarVector<T, 2>& a, const ScalarVector<T, 2>& b) {
+    // Det(a - o, b - o) <=> Twiced signed area of the triangle
+    return ( (a.x() - o.x()) * (b.y() - o.y()) ) -
+           ( (a.y() - o.y()) * (b.x() - o.x()) );
 }
 //----------------------------------------------------------------------------
 template <typename T>

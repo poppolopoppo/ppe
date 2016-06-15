@@ -113,6 +113,9 @@ template <typename T>
 T Det(const ScalarVector<T, 2>& lhs, const ScalarVector<T, 2>& rhs);
 //----------------------------------------------------------------------------
 template <typename T>
+float Cross(const ScalarVector<T, 2>& o, const ScalarVector<T, 2>& a, const ScalarVector<T, 2>& b);
+//----------------------------------------------------------------------------
+template <typename T>
 ScalarVector<T, 3> Cross(const ScalarVector<T, 3>& lhs, const ScalarVector<T, 3>& rhs);
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
@@ -122,6 +125,9 @@ template <typename T, size_t _Dim>
 ScalarVector<T, _Dim> Refract(const ScalarVector<T, _Dim>& incident, const ScalarVector<T, _Dim>& normal, T refractionIndex);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+ScalarVector<T, _Dim> Abs(const ScalarVector<T, _Dim>& value);
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 ScalarVector<T, _Dim> Clamp(const ScalarVector<T, _Dim>& value, T vmin, T vmax);

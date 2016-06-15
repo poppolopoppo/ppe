@@ -7,6 +7,16 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
+T Abs(T value, typename std::enable_if<std::is_signed<T>::value>::type* = nullptr) {
+    return (value < 0 ? -value : value);
+}
+//----------------------------------------------------------------------------
+template <typename T>
+T Abs(T value, typename std::enable_if<not std::is_signed<T>::value>::type* = nullptr) {
+    return (value);
+}
+//----------------------------------------------------------------------------
+template <typename T>
 constexpr T Clamp(T value, T vmin, T vmax) {
     return std::min(vmax, std::max(vmin, value));
 }
@@ -47,6 +57,11 @@ constexpr T SLerp(T v0, T v1, U f) {
 template <typename T>
 constexpr T Sqr(T x) {
     return x * x;
+}
+//----------------------------------------------------------------------------
+template <typename T>
+constexpr T Sqrt(T x) {
+    return std::sqrt(x);
 }
 //----------------------------------------------------------------------------
 template <typename T>

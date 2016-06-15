@@ -12,6 +12,8 @@
 #include "ScalarVector.h"
 #include "ScalarVectorHelpers.h"
 
+#include "../MathHelpers.h"
+
 namespace Core {
 namespace Collision {
 //----------------------------------------------------------------------------
@@ -229,6 +231,40 @@ float DistanceSphereSphere(const Sphere& sphere1, const Sphere& sphere2) {
     distance -= sphere1.Radius() + sphere2.Radius();
 
     return Max(distance, 0.0f);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+float DistanceLine(const float2& a, const float2& b, const float2& point) {
+    const float twiceSignedArea = Cross(a, b, point);
+    const float base = Length2(a - b);
+    return Abs(twiceSignedArea / (base * 2));
+}
+//----------------------------------------------------------------------------
+float2 LineBisector(const float2& a, const float2& b, const float2& c) {
+    const float2 d0 = Normalize2(b - a);
+    const float2 d1 = Normalize2(c - b);
+
+    const float d = Dot2(d0, LineOrtho(d1));
+    return (Abs(d) >= F_EpsilonSQ
+        ? (d0 - d1) / d
+        : LineOrtho(d0) );
+}
+//----------------------------------------------------------------------------
+bool LineIntersectsLine(const float2& a0, const float2& b0, const float2& a1, const float2& b1, float2& point) {
+    const float2 slope0 = a0 - b0;
+    const float2 slope1 = a1 - b1;
+
+    const float d = Det(slope0, slope1);
+    if (Abs(d) < F_EpsilonSQ)
+        return false;
+
+    point = ( (slope1 * Det(a0, b0) - slope0 * Det(a1, b1)) / d );
+    return true;
+}
+//----------------------------------------------------------------------------
+float2 LineOrtho(const float2& dir) {
+    return float2(-dir.y(), dir.x());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
