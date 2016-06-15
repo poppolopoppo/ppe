@@ -3,6 +3,7 @@
     .ProjectName = 'Core.Application'
     .ProjectPath = '$SourceDiretory$/Core.Application'
     .ProjectSolutionFolder = 'Core'
+    .UnityNumFiles = 3
     .ProjectIsolatedFiles =
     {
         'Application.cpp'

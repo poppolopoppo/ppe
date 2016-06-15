@@ -4,6 +4,7 @@
     .ProjectName  = 'Core.ContentGenerator'
     .ProjectSolutionFolder = 'Core.Content'
     .ProjectPath  = '$SourceDiretory$/Core.ContentGenerator'
+    .UnityNumFiles = 1
     .ProjectDependencies =
     {
         'Core',

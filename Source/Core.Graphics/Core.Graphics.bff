@@ -3,6 +3,7 @@
     .ProjectName = 'Core.Graphics'
     .ProjectPath = '$SourceDiretory$/Core.Graphics'
     .ProjectSolutionFolder = 'Core'
+    .UnityNumFiles = 6
     .ProjectIsolatedFiles =
     {
         'Graphics.cpp'

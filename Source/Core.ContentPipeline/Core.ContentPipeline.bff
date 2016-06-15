@@ -3,6 +3,7 @@
     .ProjectName = 'Core.ContentPipeline'
     .ProjectPath = '$SourceDiretory$/Core.ContentPipeline'
     .ProjectSolutionFolder = 'Core.Content'
+    .UnityNumFiles = 3
     .ProjectIsolatedFiles =
     {
         'ContentPipeline.cpp'

@@ -3,6 +3,7 @@
     .ProjectName = 'Core.Logic'
     .ProjectPath = '$SourceDiretory$/Core.Logic'
     .ProjectSolutionFolder = 'Core'
+    .UnityNumFiles = 1
     .ProjectIsolatedFiles =
     {
         'Logic.cpp'
