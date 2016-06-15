@@ -7,12 +7,23 @@
 
 #define FOREACH_FILESYSTEMCONSTNAMES(_Macro) \
     _Macro(Dirname,         DotDot,         L"..") \
-    _Macro(Extname,         DdsExt,         L".dds") \
+    \
     _Macro(Extname,         FxExt,          L".fx") \
     _Macro(Extname,         ObjExt,         L".obj") \
     _Macro(Extname,         PlyExt,         L".ply") \
+    \
+    _Macro(Extname,         BmpExt,         L".bmp") \
+    _Macro(Extname,         DdsExt,         L".dds") \
+    _Macro(Extname,         GifExt,         L".gif") \
+    _Macro(Extname,         HdrExt,         L".hdr") \
+    _Macro(Extname,         JpgExt,         L".jpg") \
+    _Macro(Extname,         PgmExt,         L".pgm") \
     _Macro(Extname,         PngExt,         L".png") \
-    _Macro(Extname,         RawExt,         L".raw") \
+    _Macro(Extname,         PpmExt,         L".ppm") \
+    _Macro(Extname,         PicExt,         L".pic") \
+    _Macro(Extname,         PsdExt,         L".psd") \
+    _Macro(Extname,         TgaExt,         L".tga") \
+    \
     _Macro(MountingPoint,   GameDataDir,    L"GameData:") \
     _Macro(MountingPoint,   ProcessDir,     L"Process:") \
     _Macro(MountingPoint,   TmpDir,         L"Tmp:") \

@@ -17,12 +17,21 @@ public:
     static const Dirname& DotDot();
 
     // Extnames :
-    static const Extname& DdsExt();
     static const Extname& FxExt();
     static const Extname& ObjExt();
     static const Extname& PlyExt();
+
+    static const Extname& BmpExt();
+    static const Extname& DdsExt();
+    static const Extname& GifExt();
+    static const Extname& HdrExt();
+    static const Extname& JpgExt();
+    static const Extname& PgmExt();
     static const Extname& PngExt();
-    static const Extname& RawExt();
+    static const Extname& PpmExt();
+    static const Extname& PicExt();
+    static const Extname& PsdExt();
+    static const Extname& TgaExt();
 
     // Mounting points :
     static const MountingPoint& GameDataDir();
