@@ -3,12 +3,27 @@
 #include "Core/Core.h"
 
 #include "Core/Allocator/Heap.h"
+#include "Core/Memory/UniquePtr.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 Heap& GetThreadLocalHeap();
+//----------------------------------------------------------------------------
+template <typename T, typename _MemoryDomain>
+struct ThreadLocalHeapFree {
+    typedef void result_type;
+    typedef T * argument_type;
+    void operator ()(T * x) const {
+        STATIC_ASSERT(std::is_pod<T>::value); // ~T is never called !
+        if (x)
+            GetThreadLocalHeap().free(x, _MemoryDomain::TrackingData);
+    }
+};
+//----------------------------------------------------------------------------
+template <typename T, typename _MemoryDomain>
+using ThreadLocalPtr = UniquePtr<T, ThreadLocalHeapFree<T, _MemoryDomain> >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

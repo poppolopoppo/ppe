@@ -94,6 +94,9 @@ Heap::~Heap() {
 }
 //----------------------------------------------------------------------------
 void* Heap::malloc(size_t size, MemoryTrackingData& trackingData) {
+    if (0 == size)
+        return nullptr;
+
 #ifdef USE_MEMORY_DOMAINS
     _trackingData.Allocate(1, size);
     trackingData.Allocate(1, size);
@@ -104,6 +107,9 @@ void* Heap::malloc(size_t size, MemoryTrackingData& trackingData) {
 }
 //----------------------------------------------------------------------------
 void Heap::free(void *ptr, MemoryTrackingData& trackingData) {
+    if (nullptr == ptr)
+        return;
+
 #ifdef USE_MEMORY_DOMAINS
     const size_t blockCount = ptr ? 1 : 0;
     const size_t size = ::HeapSize(_handle, 0, ptr);
@@ -116,6 +122,9 @@ void Heap::free(void *ptr, MemoryTrackingData& trackingData) {
 }
 //----------------------------------------------------------------------------
 void* Heap::calloc(size_t nmemb, size_t size, MemoryTrackingData& trackingData) {
+    if (nmemb*size == 0)
+        return nullptr;
+
 #ifdef USE_MEMORY_DOMAINS
     _trackingData.Allocate(nmemb, size);
     trackingData.Allocate(nmemb, size);
@@ -126,6 +135,9 @@ void* Heap::calloc(size_t nmemb, size_t size, MemoryTrackingData& trackingData) 
 }
 //----------------------------------------------------------------------------
 void* Heap::realloc(void *ptr, size_t size, MemoryTrackingData& trackingData) {
+    if (nullptr == ptr)
+        return this->malloc(size, trackingData);
+
 #ifdef USE_MEMORY_DOMAINS
     if (ptr) {
         const size_t oldSize = HeapSize(_handle, 0, ptr);
@@ -148,6 +160,9 @@ void* Heap::realloc(void *ptr, size_t size, MemoryTrackingData& trackingData) {
 }
 //----------------------------------------------------------------------------
 void* Heap::aligned_malloc(size_t size, size_t alignment, MemoryTrackingData& trackingData) {
+    if (0 == size)
+        return nullptr;
+
 #ifdef USE_MEMORY_DOMAINS
     _trackingData.Allocate(1, size + alignment);
     trackingData.Allocate(1, size + alignment);
@@ -162,6 +177,9 @@ void* Heap::aligned_malloc(size_t size, size_t alignment, MemoryTrackingData& tr
 }
 //----------------------------------------------------------------------------
 void Heap::aligned_free(void *ptr, MemoryTrackingData& trackingData) {
+    if (nullptr == ptr)
+        return;
+
     void** const aligned = reinterpret_cast<void**>(ptr);
     void* const block = aligned[-1];
 #ifdef USE_MEMORY_DOMAINS
@@ -176,6 +194,9 @@ void Heap::aligned_free(void *ptr, MemoryTrackingData& trackingData) {
 }
 //----------------------------------------------------------------------------
 void* Heap::aligned_calloc(size_t nmemb, size_t size, size_t alignment, MemoryTrackingData& trackingData) {
+    if (nmemb*size == 0)
+        return nullptr;
+
 #ifdef USE_MEMORY_DOMAINS
     _trackingData.Allocate(1, size * nmemb + alignment);
     trackingData.Allocate(1, size * nmemb + alignment);
@@ -190,6 +211,9 @@ void* Heap::aligned_calloc(size_t nmemb, size_t size, size_t alignment, MemoryTr
 }
 //----------------------------------------------------------------------------
 void* Heap::aligned_realloc(void *ptr, size_t size, size_t alignment, MemoryTrackingData& trackingData) {
+    if (nullptr == ptr)
+        return this->aligned_malloc(size, alignment, trackingData);
+
     void** aligned = reinterpret_cast<void**>(ptr);
     void* const block = aligned[-1];
 #ifdef USE_MEMORY_DOMAINS
