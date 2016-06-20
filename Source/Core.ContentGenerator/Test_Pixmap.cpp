@@ -114,7 +114,7 @@ static void Test_ConvexHull_(const Filename& input) {
     aabb.GetCorners(corners);
 
     float2 uvs[18];
-    if (not Pixmap::ConvexHull(MakeView(uvs), &convexhull, AlphaCutoff))
+    if (not Pixmap::ConvexHull(uvs, &convexhull, AlphaCutoff))
         AssertNotReached();
 
     Pixmap::DrawPolygon(&convexhull, corners, Color::Indigo().ToLinear());
@@ -126,7 +126,7 @@ static void Test_ConvexHull_(const Filename& input) {
 }
 //----------------------------------------------------------------------------
 void Test_Binpacking() {
-    const size_t COUNT = 512;
+    const size_t COUNT = 1024;
 
     const float2 minSize(31.0f);
     const float2 maxSize(127.0f);
@@ -136,7 +136,7 @@ void Test_Binpacking() {
     RandomGenerator rng;
     forrange(i, 0, COUNT) {
         float2 box;
-#if 1
+#if 0
         box.x() = float(ROUND_TO_NEXT_32(size_t(Lerp(minSize.x(), maxSize.x(), rng.NextFloat01()))));
         box.y() = float(ROUND_TO_NEXT_32(size_t(Lerp(minSize.y(), maxSize.y(), rng.NextFloat01()))));
 #else
