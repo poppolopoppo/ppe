@@ -28,13 +28,24 @@ static void Split_(
     const float2 bmin = parent.Min();
     const float2 bcut = bmin + box;
 
-    right = AABB2f(
+    right.SetMinMax(
         float2(bcut.x(), bmin.y()),
         float2(bmax.x(), bcut.y()) );
 
-    bottom = AABB2f(
+    bottom.SetMinMax(
         float2(bmin.x(), bcut.y()),
         float2(bmax.x(), bmax.y()) );
+
+    // Try to minimize narrow features
+    if (Area(right) > Area(bottom)) {
+        right.SetMinMax(
+            float2(bcut.x(), bmin.y()),
+            float2(bmax.x(), bmax.y()) );
+
+        bottom.SetMinMax(
+            float2(bmin.x(), bcut.y()),
+            float2(bcut.x(), bmax.y()) );
+    }
 
     Assert(parent.Contains(right));
     Assert(parent.Contains(bottom));
