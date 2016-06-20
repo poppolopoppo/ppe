@@ -18,52 +18,56 @@ namespace Pixmap {
 void DrawPoint(FloatImage* img, int x, int y, const ColorRGBAF& color) {
     const int w = int(img->Width());
     const int h = int(img->Height());
-
-    if (x < 0 || x >= w || y < 0 || y >= h )
-        return;
-
-    FloatImage::color_type& dst = img->at(checked_cast<size_t>(x), checked_cast<size_t>(y));
-    if (color.a() < 1)
-        dst = Lerp(dst.Data(), color.Data(), color.a());
-    else
-        dst = color;
+    if (x >= 0 && x < w && y >= 0 && y < h ) {
+        FloatImage::color_type& dst = img->at(size_t(x), size_t(y));
+        dst = dst.AlphaBlend(color);
+    }
 }
 //----------------------------------------------------------------------------
 void DrawLine(FloatImage* img, int x0, int y0, int x1, int y1, const ColorRGBAF& color) {
     Assert(img);
 
-    const int w = checked_cast<int>(img->Width());
-    const int h = checked_cast<int>(img->Height());
+    const int dx = x1 - x0;
+    const int dy = y1 - y0;
 
-    const bool steep = Abs(int(y1) - int(y0)) > Abs(int(x1) - int(x0));
+    if (Abs(dx) > Abs(dy)) {
+        if (x1 < x0) {
+            std::swap(x0, x1);
+            std::swap(y0, y1);
+        }
 
-    if (steep) {
-        std::swap(x0, y0);
-        std::swap(x1, y1);
+        const float gradient = float(y1 - y0) / (x1 - x0);
+
+        ColorRGBAF c = color;
+        float yy = float(y0);
+        forrange(x, x0, x1) {
+            const int y = int(std::floor(yy));
+            const float fy = yy - y;
+            c.a() = color.a() * (1.0f - fy);
+            DrawPoint(img, x, y, c);
+            c.a() = color.a() * fy;
+            DrawPoint(img, x, y + 1, c);
+            yy += gradient;
+        }
     }
+    else {
+        if (y1 < y0) {
+            std::swap(x0, x1);
+            std::swap(y0, y1);
+        }
 
-    if (x0 > x1) {
-        std::swap(x0, x1);
-        std::swap(y0, y1);
-    }
+        const float gradient = float(x1 - x0) / (y1 - y0);
 
-    const int deltax = int(x1) - int(x0);
-    const int deltay = Abs(int(y1) - int(y0));
-
-    int error = -deltax / 2;
-
-    int ystep = y0 < y1 ? 1 : -1;
-    int y = int(y0);
-    for(int x = int(x0); x <= int(x1); x++) {
-        if (steep)
-            DrawPoint(img, y, x, color);
-        else
-            DrawPoint(img, x, y, color);
-
-        error += deltay;
-        if (error > 0) {
-            y += ystep;
-            error -= deltax;
+        ColorRGBAF c = color;
+        float xx = float(x0);
+        forrange(y, y0, y1) {
+            const int x = int(std::floor(xx));
+            const float fx = xx - x;
+            c.a() = color.a() * (1.0f - fx);
+            DrawPoint(img, x, y, c);
+            c.a() = color.a() * fx;
+            DrawPoint(img, x + 1, y, c);
+            xx += gradient;
         }
     }
 }
