@@ -212,6 +212,8 @@
     <CustomBuild Include="IO\VirtualFileSystem.h" />
     <CustomBuild Include="IO\VirtualFileSystem_fwd.cpp" />
     <CustomBuild Include="IO\VirtualFileSystem_fwd.h" />
+    <CustomBuild Include="Maths\Geometry\BinPacking.cpp" />
+    <CustomBuild Include="Maths\Geometry\BinPacking.h" />
     <CustomBuild Include="Maths\Geometry\Collision.cpp" />
     <CustomBuild Include="Maths\Geometry\Collision.h" />
     <CustomBuild Include="Maths\Geometry\ConvexHull.cpp" />

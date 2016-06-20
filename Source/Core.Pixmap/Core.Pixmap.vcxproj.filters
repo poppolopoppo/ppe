@@ -15,6 +15,10 @@
     </CustomBuild>
     <CustomBuild Include="Core.Pixmap.bff">
     </CustomBuild>
+    <CustomBuild Include="Drawing.cpp">
+    </CustomBuild>
+    <CustomBuild Include="Drawing.h">
+    </CustomBuild>
     <CustomBuild Include="DXTImage.cpp">
     </CustomBuild>
     <CustomBuild Include="DXTImage.h">

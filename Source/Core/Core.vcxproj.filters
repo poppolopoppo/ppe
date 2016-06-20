@@ -508,6 +508,12 @@
     <CustomBuild Include="IO\VirtualFileSystem_fwd.h">
       <Filter>IO</Filter>
     </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\BinPacking.cpp">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Geometry\BinPacking.h">
+      <Filter>Maths\Geometry</Filter>
+    </CustomBuild>
     <CustomBuild Include="Maths\Geometry\Collision.cpp">
       <Filter>Maths\Geometry</Filter>
     </CustomBuild>
