@@ -123,6 +123,53 @@ public:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+class ScalarBoxWExtent {
+public:
+    typedef ScalarVector<T, _Dim> vector_type;
+
+    ScalarBoxWExtent() : _center(T(0)), _halfExtents(T(0)) {}
+
+    ScalarBoxWExtent(const vector_type& center, const vector_type& halfExtents)
+        : _center(center), _halfExtents(halfExtents) {
+        Assert(_halfExtents.AllGreaterOrEqual(vector_type(T(0))));
+    }
+
+    ScalarBoxWExtent(const ScalarBoundingBox<T, _Dim>& aabb)
+        : _center(aabb.Center()), _halfExtents(aabb.Extents() / 2) {}
+
+    vector_type& Center() { return _center; }
+    const vector_type& Center() const { return _center; }
+
+    vector_type& HalfExtents() { return _halfExtents; }
+    const vector_type& HalfExtents() const { return _halfExtents; }
+
+    vector_type Max() const { return (_center + _halfExtents); }
+    vector_type Min() const { return (_center - _halfExtents); }
+
+    bool HasPositiveExtents() const { return (_halfExtents.AllGreaterOrEqual(T(0))); }
+    bool HasPositiveExtentsStrict() const { return (_halfExtents.AllGreaterThan(T(0))); }
+
+    bool Contains(const vector_type& p) const {
+        return (Abs(p - _center).AllGreaterOrEqual(_halfExtents));
+    }
+
+    bool Contains(const ScalarBoxWExtent& other) const {
+        return (Min().AllLessOrEqual(other.Min()) &&
+                Max().AllGreaterOrEqual(other.Max()) );
+    }
+
+    ScalarBoundingBox<T, _Dim> ToBoundingBox() const {
+        return ScalarBoundingBox<T, _Dim>(Min(), Max());
+    }
+
+private:
+    vector_type _center;
+    vector_type _halfExtents;
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename _Char, typename _Traits, typename T, size_t _Dim >
 std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
