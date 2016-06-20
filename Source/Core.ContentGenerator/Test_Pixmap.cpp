@@ -4,11 +4,17 @@
 #include "Core/IO/VirtualFileSystem.h"
 #include "Core/Thread/Task.h"
 
+#include "Core.Pixmap/Drawing.h"
 #include "Core.Pixmap/DXTImage.h"
 #include "Core.Pixmap/FloatImage.h"
 #include "Core.Pixmap/Image.h"
 #include "Core.Pixmap/ImageHelpers.h"
 #include "Core.Pixmap/MipMapChain.h"
+
+#include "Core/Maths/Geometry/BinPacking.h"
+#include "Core/Maths/Geometry/ScalarBoundingBox.h"
+#include "Core/Maths/Geometry/ScalarVector.h"
+#include "Core/Maths/RandomGenerator.h"
 
 namespace Core {
 namespace ContentGenerator {
@@ -31,8 +37,7 @@ static void Test_ExpandAlphaMask_(const Filename& input) {
 
     const bool hasAlpha = intermediate->HasAlpha();
 
-    if (hasAlpha)
-    {
+    if (hasAlpha) {
         Pixmap::FloatImage cpy = *intermediate;
         cpy.DiscardAlpha();
         img.ConvertFrom(&cpy);
@@ -43,8 +48,7 @@ static void Test_ExpandAlphaMask_(const Filename& input) {
     if (hasAlpha)
         Pixmap::ExpandColorToTransparentPixels(intermediate.get(), AlphaCutoff);
 
-    if (hasAlpha)
-    {
+    if (hasAlpha) {
         Pixmap::FloatImage cpy = *intermediate;
         cpy.DiscardAlpha();
         img.ConvertFrom(&cpy);
@@ -113,11 +117,72 @@ static void Test_ConvexHull_(const Filename& input) {
     if (not Pixmap::ConvexHull(MakeView(uvs), &convexhull, AlphaCutoff))
         AssertNotReached();
 
-    Pixmap::DrawPolygon(&convexhull, corners, Color::Cyan().ToLinear());
+    Pixmap::DrawPolygon(&convexhull, corners, Color::Indigo().ToLinear());
     Pixmap::DrawPolygon(&convexhull, uvs, Color::Red().ToLinear());
 
     img.ConvertFrom(&convexhull);
     if (false == Pixmap::Save(&img, StringFormat(L"Process:/{0}_ConvexHull.png", input.BasenameNoExt())))
+        AssertNotReached();
+}
+//----------------------------------------------------------------------------
+void Test_Binpacking() {
+    const size_t COUNT = 512;
+
+    const float2 minSize(31.0f);
+    const float2 maxSize(127.0f);
+
+    STACKLOCAL_POD_ARRAY(float2, boxes, COUNT);
+
+    RandomGenerator rng;
+    forrange(i, 0, COUNT) {
+        float2 box;
+#if 1
+        box.x() = float(ROUND_TO_NEXT_32(size_t(Lerp(minSize.x(), maxSize.x(), rng.NextFloat01()))));
+        box.y() = float(ROUND_TO_NEXT_32(size_t(Lerp(minSize.y(), maxSize.y(), rng.NextFloat01()))));
+#else
+        box.x() = float(Max(1 << ((1 + rng.NextU32()) & 7), 8));
+        box.y() = float(Max(1 << ((1 + rng.NextU32()) & 7), 8));
+#endif
+
+        boxes[i] = box;
+    }
+
+    STACKLOCAL_POD_ARRAY(float2, offsets, COUNT);
+
+    float2 binsize;
+    if (not BinPacking2D(binsize, offsets, boxes))
+        AssertNotReached();
+
+    Assert(binsize.x() > 0 && binsize.y() > 0);
+    const float2 dUdV = Rcp(binsize);
+
+    Pixmap::FloatImage intermediate(
+        size_t(binsize.x()),
+        size_t(binsize.y()),
+        Color::Transparent() );
+
+    forrange(i, 0, COUNT) {
+        const float2 pos = offsets[i].xy();
+
+        const AABB2f box(
+            (pos) * dUdV,
+            (pos + boxes[i]) * dUdV );
+
+        const float3 hsv(
+            rng.NextFloat01(),
+            0.5f + 0.5f * rng.NextFloat01(),
+            0.5f + 0.5f * rng.NextFloat01() );
+
+        const float3 rgb = HSV_to_RGB(hsv);
+        ColorRGBAF color(rgb.OneExtend());
+
+        color.a() = 0.8f;
+        Pixmap::FillBoundingBox(&intermediate, box, color.ToLinear());
+    }
+
+    Pixmap::Image img;
+    img.ConvertFrom(&intermediate);
+    if (false == Pixmap::Save(&img, L"Process:/BinPacking.png"))
         AssertNotReached();
 }
 //----------------------------------------------------------------------------
@@ -133,6 +198,8 @@ void Test_Pixmap() {
         L"Data:/Textures/Tech/text.png",
         L"Data:/Textures/Tech/error.png"
     };
+
+    Test_Binpacking();
 
     parallel_for(std::begin(inputs), std::end(inputs), [](const Filename& fname) {
         Test_ConvexHull_(fname);
