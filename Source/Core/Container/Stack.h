@@ -77,7 +77,7 @@ public:
 
     template <typename _Arg0, typename... _Args>
     void Push(_Arg0&& arg0, _Args&&... args);
-    bool Pop(pointer pvalue);
+    bool Pop(pointer pvalue = nullptr);
 
     pointer Peek() { return ((0 == _size) ? nullptr : &_storage[_size - 1] ); }
     const_pointer Peek() const { return ((0 == _size) ? nullptr : &_storage[_size - 1] ); }
@@ -121,9 +121,7 @@ void Stack<T, _IsPod>::Push(_Arg0&& arg0, _Args&&... args) {
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-bool Stack<T, _IsPod>::Pop(pointer pvalue) {
-    Assert(pvalue);
-
+bool Stack<T, _IsPod>::Pop(pointer pvalue/* = nullptr */) {
     if (0 == _size)
         return false;
 
