@@ -58,6 +58,37 @@ auto BasicColor<T, _Shuffle>::operator =(const BasicColor<U, _Shuffle2>& other) 
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Shuffle>
+auto BasicColor<T, _Shuffle>::AlphaBlend(const BasicColor& other) const -> BasicColor {
+    const T zero = NumericLimits<T>::Zero();
+
+    if (other.a() > zero && a() == zero) {
+        return other;
+    }
+    else if (other.a() == zero) {
+        return *this;
+    }
+    else {
+        const float oa = float(other.a());
+        const float ac = (1.0f - float(other.a())) * float(a());
+
+        BasicColor result;
+        result.r() = float(other.r()) * oa + float(r()) * ac;
+        result.g() = float(other.g()) * oa + float(g()) * ac;
+        result.b() = float(other.b()) * oa + float(b()) * ac;
+        result.a() = (oa + ac);
+
+        return result;
+    }
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Shuffle>
+auto BasicColor<T, _Shuffle>::Fade(T alpha) const -> BasicColor {
+     BasicColor c = *this;
+     c.a() = alpha;
+     return c;
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Shuffle>
 BasicColor<T, ColorShuffleRGBA> BasicColor<T, _Shuffle>::ToRGBA() const {
     return BasicColor<T, ColorShuffleRGBA>(*this);
 }

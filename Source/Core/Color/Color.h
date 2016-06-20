@@ -57,10 +57,14 @@ public:
     T b() const { return _data._data[_Shuffle::B]; }
     T a() const { return _data._data[_Shuffle::A]; }
 
-    ScalarVector<T, 3> rgb() const {  return ScalarVector<T, 3>(r(), g(), b()); }
-
     T& operator [](size_t i) { return _data[i]; }
     T operator [](size_t i) const { return _data[i]; }
+
+    BasicColor AlphaBlend(const BasicColor& other) const;
+    BasicColor Fade(T alpha) const;
+
+    void FromRGB(const ScalarVector<T, 3>& rgb) { r() = rgb.x(); g() = rgb.y(); b() = rgb.z(); }
+    ScalarVector<T, 3> ToRGB() const {  return ScalarVector<T, 3>(r(), g(), b()); }
 
     BasicColor<T, ColorShuffleRGBA> ToRGBA() const;
     BasicColor<T, ColorShuffleBGRA> ToBGRA() const;
