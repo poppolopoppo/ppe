@@ -6,6 +6,32 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename T>
+T Area(const ScalarBoundingBox<T, 2>& aabb) {
+    const ScalarVector<T, 2> extents = aabb.Extents();
+    return (extents.x() * extents.y());
+}
+//----------------------------------------------------------------------------
+template <typename T>
+T Area(const ScalarBoxWExtent<T, 2>& aabb) {
+    const ScalarVector<T, 2> halfExtents = aabb.HalfExtents();
+    return (halfExtents.x() * halfExtents.y() * 4);
+}
+//----------------------------------------------------------------------------
+template <typename T>
+T Volume(const ScalarBoundingBox<T, 3>& aabb) {
+    const ScalarVector<T, 3> extents = aabb.Extents();
+    return (extents.x() * extents.y() * extents.z());
+}
+//----------------------------------------------------------------------------
+template <typename T>
+T Volume(const ScalarBoxWExtent<T, 3>& aabb) {
+    const ScalarVector<T, 3> halfExtents = aabb.HalfExtents();
+    return (halfExtents.x() * halfExtents.y() * halfExtents.z() * 8);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 ScalarVector<float, _Dim> LinearStep(const ScalarBoundingBox<T, _Dim>& aabb, const ScalarVector<T, _Dim>& value) {
     return LinearStep(value, aabb.Min(), aabb.Max());

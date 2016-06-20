@@ -37,6 +37,12 @@ public:
     const vector_type& Min() const { return _min; }
     const vector_type& Max() const { return _max; }
 
+    void SetMinMax(const vector_type& vmin, const vector_type& vmax) {
+        Assert(vmin.AllLessOrEqual(vmax));
+        _min = vmin;
+        _max = vmax;
+    }
+
     vector_type Center() const;
     vector_type Extents() const;
 
