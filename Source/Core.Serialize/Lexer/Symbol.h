@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Core.h"
+#include "Core.Serialize/Serialize.h"
 
 #include "Core/Container/Hash.h"
 #include "Core/IO/StringSlice.h"
@@ -83,8 +83,9 @@ public:
         GreaterOrEqual  = 1ull<<44,   // >=
 
         DotDot          = 1ull<<45,   // ..
+        Sharp           = 1ull<<46,   // #
 
-        Typename        = 1ull<<46,   // float2,byte4,etc...
+        Typename        = 1ull<<50,   // float2,byte4,etc...
 
         Prefix          = 1ull<<63,   // for Symbols class
     };

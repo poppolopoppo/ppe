@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Core.h"
+#include "Core.Serialize/Serialize.h"
 
 #include "Core/Allocator/PoolAllocatorTag.h"
 
@@ -38,11 +38,21 @@ private:
 //----------------------------------------------------------------------------
 class Lexer {
 public:
-    Lexer(const StringSlice& input, const wchar_t *sourceFileName);
+    Lexer(const StringSlice& input, const WStringSlice& sourceFileName, bool allowTypenames);
     ~Lexer();
 
     const Match *Peek();
+    const Match *Peek(const Symbol* symbol);
+
     bool Read(Match& match);
+    bool ReadUntil(Match& match, const char ch);
+    bool SkipUntil(const char ch);
+
+    bool Expect(Match& match, const Core::Lexer::Symbol* expected);
+
+    void Rewind(const Match& at);
+    void Seek(size_t offset);
+    size_t Tell() const { return _reader.Tell(); }
 
     const WString& SourceFileName() { return _sourceFileName; }
 
@@ -54,6 +64,8 @@ private:
 
     String _lexing;
     Match _peek;
+
+    bool _allowTypenames;
     bool _peeking;
 };
 //----------------------------------------------------------------------------

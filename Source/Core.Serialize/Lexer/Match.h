@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Core.h"
+#include "Core.Serialize/Serialize.h"
 
 #include "Core.Serialize/Lexer/Location.h"
 #include "Core.Serialize/Lexer/Symbol.h"
@@ -23,12 +23,19 @@ public:
     Match();
     ~Match();
 
-    Match(const symbol_type *symbol, String&& rvalue, const Location& site);
-    Match(const symbol_type *symbol, const String& value, const Location& site);
+    Match(const symbol_type *symbol, String&& rvalue, const Location& site, size_t offset);
+    Match(const symbol_type *symbol, const String& value, const Location& site, size_t offset);
 
     const symbol_type *Symbol() const { return _symbol; }
+
+    String& Value() { return _value; }
     const String& Value() const { return _value; }
+
     const Location& Site() const { return _site; }
+
+    size_t Offset() const { return _offset; }
+
+    StringSlice MakeView() const { return MakeStringSlice(_value); }
 
     bool Valid() const { return symbol_type::Invalid != _symbol->Type(); }
 
@@ -36,6 +43,7 @@ private:
     const symbol_type *_symbol;
     String _value;
     Location _site;
+    size_t _offset;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

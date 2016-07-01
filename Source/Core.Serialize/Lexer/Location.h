@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Core.h"
+#include "Core.Serialize/Serialize.h"
 
 #include <iosfwd>
 
@@ -10,6 +10,7 @@ namespace Lexer {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct Location {
+    Location() : Location(nullptr, 0, 0) {}
     Location(const wchar_t *fileName, size_t line, size_t column)
         : FileName(fileName), Line(line), Column(column) {}
 
@@ -17,7 +18,7 @@ struct Location {
     size_t Line;
     size_t Column;
 
-    static Location None() { return Location(nullptr, 0, 0); }
+    static Location None() { return Location(); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

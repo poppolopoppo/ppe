@@ -143,14 +143,15 @@ Symbols::Symbols() {
     RegisterSymbol_(&Greater, _symbols, Symbol::Greater, ">");
     RegisterSymbol_(&GreaterOrEqual, _symbols, Symbol::GreaterOrEqual, ">=");
     RegisterSymbol_(&DotDot, _symbols, Symbol::DotDot, "..");
+    RegisterSymbol_(&Sharp, _symbols, Symbol::Sharp, "#");
 
     Symbols::Invalid = new Symbol(Symbol::Invalid, "%invalid%");
-    Symbols::Eof = new Symbol(Symbol::Eof, MakeStringSlice("Eof"));
-    Symbols::Int = new Symbol(Symbol::Int, MakeStringSlice("Int"));
-    Symbols::Float = new Symbol(Symbol::Float, MakeStringSlice("Float"));
-    Symbols::String = new Symbol(Symbol::String, MakeStringSlice("String"));
-    Symbols::Identifier = new Symbol(Symbol::Identifier, MakeStringSlice("Identifier"));
-    Symbols::Typename = new Symbol(Symbol::Typename, MakeStringSlice("Typename"));
+    Symbols::Eof = new Symbol(Symbol::Eof, "Eof");
+    Symbols::Int = new Symbol(Symbol::Int, "Int");
+    Symbols::Float = new Symbol(Symbol::Float, "Float");
+    Symbols::String = new Symbol(Symbol::String, "String");
+    Symbols::Identifier = new Symbol(Symbol::Identifier, "Identifier");
+    Symbols::Typename = new Symbol(Symbol::Typename, "Typename");
 
     RegisterRTTITypenames_(_symbols);
 
@@ -196,6 +197,7 @@ Symbols::Symbols() {
     CheckSymbol_(_symbols, Symbols::Greater);
     CheckSymbol_(_symbols, Symbols::GreaterOrEqual);
     CheckSymbol_(_symbols, Symbols::DotDot);
+    CheckSymbol_(_symbols, Symbols::Sharp);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -241,6 +243,7 @@ Symbols::~Symbols() {
     UnregisterSymbol_(_symbols, &Greater);
     UnregisterSymbol_(_symbols, &GreaterOrEqual);
     UnregisterSymbol_(_symbols, &DotDot);
+    UnregisterSymbol_(_symbols, &Sharp);
 
     Assert(nullptr != Symbols::Invalid);
     Assert(nullptr != Symbols::Eof);
@@ -314,6 +317,7 @@ const Symbol *Symbols::LessOrEqual = nullptr;
 const Symbol *Symbols::Greater = nullptr;
 const Symbol *Symbols::GreaterOrEqual = nullptr;
 const Symbol *Symbols::DotDot = nullptr;
+const Symbol *Symbols::Sharp = nullptr;
 const Symbol *Symbols::Typename = nullptr;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

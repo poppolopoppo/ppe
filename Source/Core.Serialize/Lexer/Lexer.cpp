@@ -97,6 +97,10 @@ static void Itoa_(int64_t value, String& str) {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
+static bool IsTokenChar_(char ch) {
+    return IsAlnum(ch) || '_' == ch;
+}
+//----------------------------------------------------------------------------
 static void Lex_Comments_(LookAheadReader& reader) {
     char ch = reader.Peek(0);
 
@@ -117,7 +121,7 @@ static void Lex_Comments_(LookAheadReader& reader) {
     }
 }
 //----------------------------------------------------------------------------
-static bool Lex_Symbol_(LookAheadReader& reader, const Symbol **psymbol) {
+static bool Lex_Symbol_(LookAheadReader& reader, const Symbol **psymbol, bool allowTypenames) {
     Assert(psymbol);
     Assert(Symbols::Invalid == *psymbol);
 
@@ -154,14 +158,22 @@ static bool Lex_Symbol_(LookAheadReader& reader, const Symbol **psymbol) {
 
         const char ch0 = reader.Peek(toss - 1);
         const char ch1 = reader.Peek(toss);
-        if (IsAlnum(ch0) && IsAlnum(ch1)) {
+        if (IsTokenChar_(ch0) && IsTokenChar_(ch1)) {
             // incomplete token
             *psymbol = Symbols::Invalid;
             return false;
         }
         else {
-            reader.SeekForward(toss);
-            return true;
+            if ((*psymbol)->Type() == Symbol::Typename &&
+                not allowTypenames ) {
+                *psymbol = Symbols::Invalid;
+                return false;
+            }
+            else {
+                Assert(Symbols::Invalid != *psymbol);
+                reader.SeekForward(toss);
+                return true;
+            }
         }
     }
     else {
@@ -190,7 +202,7 @@ static bool Lex_Numeric_(LookAheadReader& reader, const Symbol **psymbol, String
             *psymbol = Symbols::Int;
 
             if (!ReadCharset_(Hexadecimal_, reader, value))
-                throw LexerException("invalid hexadecimal int", Match(Symbols::Int, std::move(value), reader.SourceSite()));
+                throw LexerException("invalid hexadecimal int", Match(Symbols::Int, std::move(value), reader.SourceSite(), reader.Tell()) );
 
             int64_t numeric;
             if (!Atoi64(&numeric, MakeStringSlice(value), 16)) {
@@ -211,7 +223,7 @@ static bool Lex_Numeric_(LookAheadReader& reader, const Symbol **psymbol, String
             *psymbol = Symbols::Int;
 
             if (!ReadCharset_(Octal_, reader, value))
-                throw LexerException("invalid octal int", Match(Symbols::Int, std::move(value), reader.SourceSite()));
+                throw LexerException("invalid octal int", Match(Symbols::Int, std::move(value), reader.SourceSite(), reader.Tell() ));
 
             int64_t numeric;
             if (!Atoi64(&numeric, MakeStringSlice(value), 8)) {
@@ -229,7 +241,7 @@ static bool Lex_Numeric_(LookAheadReader& reader, const Symbol **psymbol, String
     {
         // decimal or float
         if (!ReadCharset_(Float_, reader, value))
-            throw LexerException("invalid float", Match(Symbols::Float, std::move(value), reader.SourceSite()));
+            throw LexerException("invalid float", Match(Symbols::Float, std::move(value), reader.SourceSite(), reader.Tell() ));
 
         Assert(value.size());
 
@@ -265,7 +277,7 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
         ReadCharset_(Until_<'\''>, reader, value);
 
         if ('\'' != (ch = reader.Read()))
-            throw LexerException("unterminated strong quoted string", Match(Symbols::String, std::move(value), reader.SourceSite()));
+            throw LexerException("unterminated strong quoted string", Match(Symbols::String, std::move(value), reader.SourceSite(), reader.Tell() ));
 
         return true;
     }
@@ -312,7 +324,7 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
                     d1 = ToLower(reader.Read());
 
                     if (!(Octal_(d0) && Octal_(d1)))
-                        throw LexerException("invalid octal character escaping", Match(Symbols::String, std::move(value), reader.SourceSite()));
+                        throw LexerException("invalid octal character escaping", Match(Symbols::String, std::move(value), reader.SourceSite(), reader.Tell() ));
 
                     ch = (char)((d0 - '0') * 8 + (d1 - '0') );
 
@@ -325,7 +337,7 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
                     d1 = ToLower(reader.Read());
 
                     if (!(Hexadecimal_(d0) && Hexadecimal_(d1)))
-                        throw LexerException("invalid hexadecimal character escaping", Match(Symbols::String, std::move(value), reader.SourceSite()));
+                        throw LexerException("invalid hexadecimal character escaping", Match(Symbols::String, std::move(value), reader.SourceSite(), reader.Tell() ));
 
                     ch = (char)((d0 <= '9' ? d0 - '0' : d0 - 'a') * 16 +
                                 (d1 <= '9' ? d1 - '0' : d1 - 'a') );
@@ -335,10 +347,10 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
                     break;
 
                 case '\0':
-                    throw LexerException("unterminated weak quoted string", Match(Symbols::String, std::move(value), reader.SourceSite()));
+                    throw LexerException("unterminated weak quoted string", Match(Symbols::String, std::move(value), reader.SourceSite(), reader.Tell() ));
 
                 default:
-                    throw LexerException("invalid character escaping", Match(Symbols::String, std::move(value), reader.SourceSite()));
+                    throw LexerException("invalid character escaping", Match(Symbols::String, std::move(value), reader.SourceSite(), reader.Tell() ));
                 }
             }
             else
@@ -349,7 +361,7 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
                 case '\\': escaped = true; break;
 
                 case '\0':
-                    throw LexerException("unterminated weak quoted string", Match(Symbols::String, std::move(value), reader.SourceSite()));
+                    throw LexerException("unterminated weak quoted string", Match(Symbols::String, std::move(value), reader.SourceSite(), reader.Tell() ));
 
                 default:
                     oss.put(ch);
@@ -390,9 +402,10 @@ static bool Lex_Identifier_(LookAheadReader& reader, const Symbol **psymbol, Str
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Lexer::Lexer(const StringSlice& input, const wchar_t *sourceFileName)
-:   _sourceFileName(sourceFileName)
+Lexer::Lexer(const StringSlice& input, const WStringSlice& sourceFileName, bool allowTypenames)
+:   _sourceFileName(sourceFileName.begin(), sourceFileName.end())
 ,   _reader(input, _sourceFileName.c_str())
+,   _allowTypenames(allowTypenames)
 ,   _peeking(false) {
     _lexing.reserve(512);
 }
@@ -401,20 +414,94 @@ Lexer::~Lexer() {}
 //----------------------------------------------------------------------------
 const Match *Lexer::Peek() {
     if (!_peeking) {
-        _peeking = true;
-        NextMatch_(_peek);
+        Assert(!_peek.Valid());
+        _peeking = NextMatch_(_peek);
     }
     return ((_peek.Valid()) ? &_peek : nullptr);
+}
+//----------------------------------------------------------------------------
+const Match* Lexer::Peek(const Symbol* symbol) {
+    Assert(symbol);
+    const Match* poken = Peek();
+    return (poken && poken->Symbol() == symbol) ? poken : nullptr;
 }
 //----------------------------------------------------------------------------
 bool Lexer::Read(Match& match) {
     return NextMatch_(match);
 }
 //----------------------------------------------------------------------------
+bool Lexer::ReadUntil(Match& match, const char ch) {
+    Assert('\0' != ch);
+
+    if (_peeking) {
+        _peeking = false;
+        _peek = Match();
+    }
+
+    _reader.EatWhiteSpaces();
+
+    match._site = _reader.SourceSite();
+    match._offset = _reader.Tell();
+    match._value.clear();
+
+    OStringStream oss;
+
+    char poken = _reader.Peek(0);
+    while ('\0' != poken && ch != poken) {
+        oss << _reader.Read();
+        poken = _reader.Peek(0);
+    }
+
+    if (poken == '\0') {
+        match._symbol = Symbols::Eof;
+        return false;
+    }
+    else {
+        Assert(ch == poken);
+        match._symbol = Symbols::String;
+        match._value = oss.str();
+        return true;
+    }
+}
+//----------------------------------------------------------------------------
+bool Lexer::SkipUntil(const char ch) {
+    Assert('\0' != ch);
+
+    if (_peeking) {
+        _peeking = false;
+        _peek = Match();
+    }
+
+    char poken = _reader.Peek(0);
+    while (poken && ch != poken)
+        _reader.Read();
+
+    return (ch == poken);
+}
+//----------------------------------------------------------------------------
+bool Lexer::Expect(Match& match, const Core::Lexer::Symbol* expected) {
+    Assert(expected);
+    return (NextMatch_(match) && match.Symbol() == expected);
+}
+//----------------------------------------------------------------------------
+void Lexer::Rewind(const Match& at) {
+    Seek(at.Offset());
+}
+//----------------------------------------------------------------------------
+void Lexer::Seek(size_t offset) {
+    if (_peeking) {
+        _peeking = false;
+        _peek = Match();
+    }
+
+    _reader.SeekAbsolute(offset);
+}
+//----------------------------------------------------------------------------
 bool Lexer::NextMatch_(Match& match) {
     if (_peeking) {
         _peeking = false;
         match = std::move(_peek);
+        _peek = Match();
         return (Symbol::Eof != match.Symbol()->Type());
     }
 
@@ -424,12 +511,14 @@ bool Lexer::NextMatch_(Match& match) {
         match._symbol = Symbols::Eof;
         match._value.clear();
         match._site = _reader.SourceSite();
+        match._offset = _reader.Tell();
         return false;
     }
 
     Lex_Comments_(_reader);
 
     match._site = _reader.SourceSite();
+    match._offset = _reader.Tell();
 
     const Symbol *psymbol = nullptr;
     Assert(_lexing.empty());
@@ -437,7 +526,7 @@ bool Lexer::NextMatch_(Match& match) {
     // by priority order :
     if (Lex_Numeric_(_reader, &psymbol, _lexing) ||
         Lex_String_(_reader, &psymbol, _lexing) ||
-        Lex_Symbol_(_reader, &psymbol) ||
+        Lex_Symbol_(_reader, &psymbol, _allowTypenames) ||
         Lex_Identifier_(_reader, &psymbol, _lexing)
         ) {
         Assert(psymbol);
@@ -445,19 +534,20 @@ bool Lexer::NextMatch_(Match& match) {
         Assert(Symbol::Invalid != psymbol->Type());
 
         match._symbol = psymbol;
-        match._value = _lexing;
+        match._value = std::move(_lexing);
 
         _lexing.clear();
 
         return true;
     }
+    else {
+        match._symbol = Symbols::Invalid;
+        match._value.clear();
 
-    match._symbol = Symbols::Invalid;
-    match._value.clear();
+        _lexing.clear();
 
-    _lexing.clear();
-
-    return false;
+        return false;
+    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

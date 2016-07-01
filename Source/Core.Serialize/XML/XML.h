@@ -5,55 +5,43 @@
 #include "Core/Allocator/PoolAllocatorTag.h"
 
 #include "Core.Serialize/Exceptions.h"
-#include "Core.Serialize/Parser/ParseContext.h"
-#include "Core.Serialize/Parser/ParseExpression.h"
-#include "Core.Serialize/Parser/ParseItem.h"
-#include "Core.Serialize/Parser/ParseList.h"
-#include "Core.Serialize/Parser/ParseProduction.h"
-#include "Core.Serialize/Parser/ParseResult.h"
-#include "Core.Serialize/Parser/ParseStatement.h"
+#include "Core.Serialize/Lexer/Location.h"
+#include "Core.Serialize/XML/Document.h"
+#include "Core.Serialize/XML/Element.h"
 
 namespace Core {
-namespace Parser {
-POOL_TAG_DECL(Parser);
+namespace XML {
+POOL_TAG_DECL(XML);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ParserException : public Core::Serialize::SerializeException {
+class XMLException : public Core::Serialize::SerializeException {
 public:
     typedef Core::Serialize::SerializeException parent_type;
 
-    ParserException(const char *what, Lexer::Location site)
-        : parent_type(what), _site(site), _item(nullptr) {}
+    XMLException(const char *what, const Lexer::Location& site)
+        : parent_type(what), _site(site) {}
 
-    ParserException(const char *what, const ParseItem *item)
-        : parent_type(what), _site(item->Site()), _item(item) {}
-
-    ParserException(const char *what, Lexer::Location site, const ParseItem *item)
-        : parent_type(what), _site(site), _item(item) {}
-
-    virtual ~ParserException() {}
+    virtual ~XMLException() {}
 
     const Lexer::Location& Site() const { return _site; }
-    const ParseItem *Item() const { return _item.get(); }
 
 private:
     Lexer::Location _site;
-    PCParseItem _item;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct ParserStartup {
+struct XMLStartup {
     static void Start();
     static void Shutdown();
     static void ClearAll_UnusedMemory();
 
-    ParserStartup() { Start(); }
-    ~ParserStartup() { Shutdown(); }
+    XMLStartup() { Start(); }
+    ~XMLStartup() { Shutdown(); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace Parser
+} //!namespace XML
 } //!namespace Core

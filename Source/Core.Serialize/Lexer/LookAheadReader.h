@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Core.h"
+#include "Core.Serialize/Serialize.h"
 
 #include "Core.Serialize/Lexer/Location.h"
 #include "Core/IO/StringSlice.h"
@@ -25,7 +25,10 @@ public:
 
     bool Eof() const { return _buffer.SizeInBytes() == _bufferOffset; }
 
+    void SeekAbsolute(size_t offset);
     void SeekForward(size_t offset);
+    size_t Tell() const {return _bufferOffset; }
+
     char Read();
     char Peek(size_t n) const;
     void EatWhiteSpaces();

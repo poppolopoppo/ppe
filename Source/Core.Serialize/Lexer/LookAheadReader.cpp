@@ -13,14 +13,19 @@ namespace Lexer {
 //----------------------------------------------------------------------------
 LookAheadReader::LookAheadReader(const StringSlice& input, const wchar_t *sourceFileName)
 :   _sourceFileName(sourceFileName)
-,   _sourceLine(0)
-,   _sourceColumn(0)
+,   _sourceLine(1)
+,   _sourceColumn(1)
 ,   _buffer(input)
 ,   _bufferOffset(0) {
     Assert(sourceFileName);
 }
 //----------------------------------------------------------------------------
 LookAheadReader::~LookAheadReader() {}
+//----------------------------------------------------------------------------
+void LookAheadReader::SeekAbsolute(size_t offset) {
+    Assert(offset < _buffer.SizeInBytes());
+    _bufferOffset = offset;
+}
 //----------------------------------------------------------------------------
 void LookAheadReader::SeekForward(size_t offset) {
     while (offset--)
@@ -36,7 +41,7 @@ char LookAheadReader::Read() {
 
     if ('\n' == value) {
         ++_sourceLine;
-        _sourceColumn = 0;
+        _sourceColumn = 1;
     }
     else {
         ++_sourceColumn;

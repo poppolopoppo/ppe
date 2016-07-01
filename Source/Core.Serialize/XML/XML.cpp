@@ -1,38 +1,28 @@
 #include "stdafx.h"
 
-#include "Match.h"
+#include "XML.h"
 
-#include "Symbols.h"
+#include "Core/Allocator/PoolAllocatorTag-impl.h"
 
 namespace Core {
-namespace Lexer {
+namespace XML {
+POOL_TAG_DEF(XML);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Match::Match()
-:   _symbol(Symbols::Invalid)
-,   _site(nullptr, 0, 0)
-,   _offset(size_t(-1)) {}
-//----------------------------------------------------------------------------
-Match::~Match() {}
-//----------------------------------------------------------------------------
-Match::Match(const symbol_type *symbol, String&& rvalue, const Location& site, size_t offset)
-:   _symbol(symbol)
-,   _value(std::move(rvalue))
-,   _site(site)
-,   _offset(offset) {
-    Assert(_symbol);
+void XMLStartup::Start() {
+    POOL_TAG(XML)::Start();
 }
 //----------------------------------------------------------------------------
-Match::Match(const symbol_type *symbol, const String& value, const Location& site, size_t offset)
-:   _symbol(symbol)
-,   _value(value)
-,   _site(site)
-,   _offset(offset) {
-    Assert(_symbol);
+void XMLStartup::Shutdown() {
+    POOL_TAG(XML)::Shutdown();
+}
+//----------------------------------------------------------------------------
+void XMLStartup::ClearAll_UnusedMemory() {
+    POOL_TAG(XML)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace Lexer
+} //!namespace XML
 } //!namespace Core

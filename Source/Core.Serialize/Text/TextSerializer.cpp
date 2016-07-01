@@ -409,7 +409,7 @@ void TextSerializer::Deserialize(RTTI::MetaTransaction* transaction, const Memor
     Assert(transaction);
     Assert(input.SizeInBytes());
 
-    Lexer::Lexer lexer(input.Cast<const char>(), sourceName);
+    Lexer::Lexer lexer(input.Cast<const char>(), MakeStringSlice(sourceName, Meta::noinit_tag()), true);
 
     Parser::ParseList parseList(&lexer);
     Parser::ParseContext parseContext;

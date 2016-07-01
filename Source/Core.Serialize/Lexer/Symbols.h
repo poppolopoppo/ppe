@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Core.h"
+#include "Core.Serialize/Serialize.h"
 
 #include "Core/Allocator/Allocation.h"
 #include "Core/Container/StringHashMap.h"
@@ -87,6 +87,7 @@ public:
     static const Symbol *Greater;
     static const Symbol *GreaterOrEqual;
     static const Symbol *DotDot;
+    static const Symbol *Sharp;
 
     static const Symbol *Typename;
 };
