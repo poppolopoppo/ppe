@@ -85,6 +85,21 @@ auto AssociativeVector<_Key, _Value, _EqualTo, _Vector>::Find(const _Key& key) -
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+auto AssociativeVector<_Key, _Value, _EqualTo, _Vector>::FindOrAdd(const _Key& key, bool* pAdded) -> iterator {
+    iterator it = Find(key);
+    if (end() == it) {
+        *pAdded = true;
+        _vector.emplace_back();
+        _vector.back().first = key;
+        return (_vector.end() - 1);
+    }
+    else {
+        *pAdded = false;
+        return it;
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 auto AssociativeVector<_Key, _Value, _EqualTo, _Vector>::Find(const _Key& key) const -> const_iterator {
     const const_iterator end = _vector.end();
     for (const_iterator it = _vector.begin(); it != end; ++it)

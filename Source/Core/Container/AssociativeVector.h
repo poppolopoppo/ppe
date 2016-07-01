@@ -110,6 +110,7 @@ public:
     void Clear_ReleaseMemory();
 
     iterator Find(const _Key& key);
+    iterator FindOrAdd(const _Key& key, bool* pAdded);
     const_iterator Find(const _Key& key) const;
 
     iterator FindAfter(const _Key& key, const iterator& previous);
