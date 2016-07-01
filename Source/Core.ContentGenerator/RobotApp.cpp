@@ -21,6 +21,7 @@ extern void Test_Containers();
 extern void Test_Pixmap();
 extern void Test_RTTI();
 extern void Test_Thread();
+extern void Test_XML();
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -41,11 +42,12 @@ RobotApp::RobotApp()
 
     Application::ApplicationConsole::RedirectIOToConsole();
 
-    //Test_Format();
-    //Test_Containers();
+    Test_Format();
+    Test_Containers();
     Test_Pixmap();
-    //Test_RTTI();
-    //Test_Thread();
+    Test_RTTI();
+    Test_Thread();
+    Test_XML();
 }
 //----------------------------------------------------------------------------
 void RobotApp::Start() {

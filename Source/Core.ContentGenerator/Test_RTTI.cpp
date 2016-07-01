@@ -446,7 +446,7 @@ void Test_RTTI() {
             const wchar_t filename[] = L"@in_memory";
 
             try {
-                Lexer::Lexer lexer(line, filename);
+                Lexer::Lexer lexer(line, filename, true);
                 Parser::ParseList input(&lexer);
 
                 Parser::PCParseItem item = Serialize::GrammarStartup::Parse(input);
