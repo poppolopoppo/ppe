@@ -61,16 +61,23 @@ ForEach( .CompileConfig in .AllCompileConfigs )
             }
 
             // Project includes
-            .IncludePaths       + .ProjectIncludes 
-                                + .SourceDiretory
-                                + .ProjectPath
+            .IncludePaths       + .ProjectIncludes
                                 + '.' // current dir
+
+            // Only for VCXProj
+            ForEach( .path in .IncludePaths )
+            {
+                ^IncludeSearchPath          + ';$path$'
+            }
+
+            // For actual compilation
+            .IncludePaths       + .SourceDiretory
+                                + .ProjectPath
 
             ForEach( .path in .IncludePaths )
             {
                 ^CompilerOptions            + ' $CompilerIncludeFlag$"$path$"'
                 ^PreprocessorOptions        + ' $CompilerIncludeFlag$"$path$"'
-                ^IncludeSearchPath          + ';$path$'
             }
         ]
 
