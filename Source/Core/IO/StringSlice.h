@@ -89,7 +89,9 @@ inline size_t Length(const wchar_t* string) { return ::wcslen(string); }
 //----------------------------------------------------------------------------
 template <typename _Char>
 FORCE_INLINE BasicStringSlice<_Char> MakeStringSlice(const _Char* cstr, Meta::noinit_tag ) {
-    return BasicStringSlice<_Char>(cstr, Length(cstr));
+    return (nullptr != cstr)
+        ? BasicStringSlice<_Char>(cstr, Length(cstr))
+        : BasicStringSlice<_Char>();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -182,6 +184,14 @@ int Compare(const WStringSlice& lhs, const WStringSlice& rhs);
 //----------------------------------------------------------------------------
 int CompareI(const StringSlice& lhs, const StringSlice& rhs);
 int CompareI(const WStringSlice& lhs, const WStringSlice& rhs);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+inline bool Equals(const StringSlice& lhs, const StringSlice& rhs) { return (0 == Compare(lhs, rhs)); }
+inline bool Equals(const WStringSlice& lhs, const WStringSlice& rhs) { return (0 == Compare(lhs, rhs)); }
+//----------------------------------------------------------------------------
+inline bool EqualsI(const StringSlice& lhs, const StringSlice& rhs) { return (0 == CompareI(lhs, rhs)); }
+inline bool EqualsI(const WStringSlice& lhs, const WStringSlice& rhs) { return (0 == CompareI(lhs, rhs)); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
