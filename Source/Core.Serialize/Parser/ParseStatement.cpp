@@ -48,7 +48,7 @@ void EvalExpr::Execute(ParseContext *context) const {
 SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, PropertyAssignment, )
 //----------------------------------------------------------------------------
 PropertyAssignment::PropertyAssignment(
-    const RTTI::MetaPropertyName& name,
+    const RTTI::Name& name,
     const Parser::PCParseExpression& value)
 :   ParseStatement(value->Site())
 ,   _name(name)

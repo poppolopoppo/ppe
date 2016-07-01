@@ -5,6 +5,7 @@
 #include "MetaClassDatabase.h"
 #include "MetaClassSingleton.h"
 #include "MetaProperty.h"
+#include "MetaType.h"
 
 #include "Core/Allocator/PoolAllocator-impl.h"
 
@@ -20,7 +21,7 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(RTTI, DynamicProperty, )
 //----------------------------------------------------------------------------
-DynamicProperty::DynamicProperty(const MetaPropertyName& name)
+DynamicProperty::DynamicProperty(const RTTI::Name& name)
     : MetaProperty(name, MetaProperty::Dynamic) {}
 //----------------------------------------------------------------------------
 DynamicProperty::~DynamicProperty() {}/*
@@ -87,25 +88,25 @@ DynamicObject::DynamicObject() {}
 //----------------------------------------------------------------------------
 DynamicObject::~DynamicObject() {}
 //----------------------------------------------------------------------------
-MetaAtom* DynamicObject::GetValue(const MetaPropertyName& name) {
+MetaAtom* DynamicObject::GetValue(const RTTI::Name& name) {
     return _values[name].get();
 }
 //----------------------------------------------------------------------------
-const MetaAtom* DynamicObject::GetValue(const MetaPropertyName& name) const {
+const MetaAtom* DynamicObject::GetValue(const RTTI::Name& name) const {
     return _values[name].get();
 }
 //----------------------------------------------------------------------------
-MetaAtom* DynamicObject::TryGetValue(const MetaPropertyName& name) {
+MetaAtom* DynamicObject::TryGetValue(const RTTI::Name& name) {
     PMetaAtom value;
     return (_values.TryGet(name, &value) ? value.get() : nullptr);
 }
 //----------------------------------------------------------------------------
-const MetaAtom* DynamicObject::TryGetValue(const MetaPropertyName& name) const {
+const MetaAtom* DynamicObject::TryGetValue(const RTTI::Name& name) const {
     PMetaAtom value;
     return (_values.TryGet(name, &value) ? value.get() : nullptr);
 }
 //----------------------------------------------------------------------------
-void DynamicObject::SetValue(const MetaPropertyName& name, const PMetaAtom& value) {
+void DynamicObject::SetValue(const RTTI::Name& name, const PMetaAtom& value) {
     _values[name] = value;
 }
 //----------------------------------------------------------------------------

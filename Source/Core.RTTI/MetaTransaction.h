@@ -2,6 +2,8 @@
 
 #include "Core.RTTI/RTTI.h"
 
+#include "Core.RTTI/Typedefs.h"
+
 #include "Core/Container/HashMap.h"
 #include "Core/Memory/RefPtr.h"
 
@@ -9,8 +11,6 @@ namespace Core {
 namespace RTTI {
 class MetaAtomHashMap;
 class MetaClassHashMap;
-class MetaClassName;
-class MetaObjectName;
 class MetaLoadContext;
 class MetaUnloadContext;
 //----------------------------------------------------------------------------

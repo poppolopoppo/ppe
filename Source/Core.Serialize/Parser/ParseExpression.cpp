@@ -28,7 +28,7 @@ ParseExpression::~ParseExpression() {}
 //----------------------------------------------------------------------------
 SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, VariableExport, )
 //----------------------------------------------------------------------------
-VariableExport::VariableExport(const RTTI::MetaObjectName& name, const PCParseExpression& value, const Flags scope, const Lexer::Location& site)
+VariableExport::VariableExport(const RTTI::Name& name, const PCParseExpression& value, const Flags scope, const Lexer::Location& site)
 :   ParseExpression(site)
 ,   _name(name), _value(value), _scope(scope) {
     Assert(!name.empty());
@@ -68,7 +68,7 @@ String VariableExport::ToString() const {
 //----------------------------------------------------------------------------
 SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, VariableReference, )
 //----------------------------------------------------------------------------
-VariableReference::VariableReference(const RTTI::MetaObjectName& name, const Lexer::Location& site)
+VariableReference::VariableReference(const RTTI::Name& name, const Lexer::Location& site)
 :   ParseExpression(site)
 ,   _name(name) {
     Assert(!name.empty());
@@ -94,7 +94,7 @@ String VariableReference::ToString() const {
 //----------------------------------------------------------------------------
 SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, ObjectDefinition, )
 //----------------------------------------------------------------------------
-ObjectDefinition::ObjectDefinition(const RTTI::MetaClassName& name, const Lexer::Location& site)
+ObjectDefinition::ObjectDefinition(const RTTI::Name& name, const Lexer::Location& site)
 :   ParseExpression(site)
 ,   _name(name) {
     Assert(!name.empty());
@@ -139,7 +139,7 @@ SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, PropertyReference, )
 //----------------------------------------------------------------------------
 PropertyReference::PropertyReference(
     const PCParseExpression& object,
-    const RTTI::MetaPropertyName& member,
+    const RTTI::Name& member,
     const Lexer::Location& site)
 :   ParseExpression(site),
     _object(object), _member(member) {

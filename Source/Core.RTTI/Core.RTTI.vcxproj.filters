@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <CustomBuild Include="Core.RTTI.bff">
@@ -31,10 +31,6 @@
     </CustomBuild>
     <CustomBuild Include="MetaClassDatabase.h">
     </CustomBuild>
-    <CustomBuild Include="MetaClassName.cpp">
-    </CustomBuild>
-    <CustomBuild Include="MetaClassName.h">
-    </CustomBuild>
     <CustomBuild Include="MetaClassSingleton.h">
     </CustomBuild>
     <CustomBuild Include="MetaObject.cpp">
@@ -45,10 +41,6 @@
     </CustomBuild>
     <CustomBuild Include="MetaObjectHelpers.h">
     </CustomBuild>
-    <CustomBuild Include="MetaObjectName.cpp">
-    </CustomBuild>
-    <CustomBuild Include="MetaObjectName.h">
-    </CustomBuild>
     <CustomBuild Include="MetaProperty-inl.h">
     </CustomBuild>
     <CustomBuild Include="MetaProperty.cpp">
@@ -58,10 +50,6 @@
     <CustomBuild Include="MetaPropertyAccessor-inl.h">
     </CustomBuild>
     <CustomBuild Include="MetaPropertyAccessor.h">
-    </CustomBuild>
-    <CustomBuild Include="MetaPropertyName.cpp">
-    </CustomBuild>
-    <CustomBuild Include="MetaPropertyName.h">
     </CustomBuild>
     <CustomBuild Include="MetaTransaction.cpp">
     </CustomBuild>
@@ -119,5 +107,8 @@
     </CustomBuild>
     <CustomBuild Include="targetver.h">
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Typedefs.h" />
   </ItemGroup>
 </Project>

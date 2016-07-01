@@ -9,7 +9,7 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-MetaProperty::MetaProperty(const MetaPropertyName& name, Flags attributes)
+MetaProperty::MetaProperty(const RTTI::Name& name, Flags attributes)
 :   _name(name), _attributes(attributes) {}
 //----------------------------------------------------------------------------
 MetaProperty::~MetaProperty() {}

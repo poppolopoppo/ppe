@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Core.h"
+#include "Core.Serialize/Serialize.h"
 
 #include "Core.Serialize/Lexer/Location.h"
 #include "Core/IO/String.h"
@@ -26,7 +26,7 @@ public:
 
     template <typename _ParseItemImpl>
     const _ParseItemImpl *As() const {
-        return checked_cast<const _ParseItemImpl *>(this); 
+        return checked_cast<const _ParseItemImpl *>(this);
     }
 
 private:

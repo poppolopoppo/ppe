@@ -552,12 +552,12 @@ GrammarImpl::GrammarImpl()
             .Many() )
     .And(   Parser::Expect(Lexer::Symbol::RParenthese))
     .Select<Parser::PCParseExpression>([](const Tuple<const Lexer::Match *, const Lexer::Match *, const Parser::Enumerable<Parser::PCParseStatement>, const Lexer::Match *>& args) -> Parser::PCParseExpression {
-        const Lexer::Match *metaclassName = std::get<0>(args);
+        const Lexer::Match *Name = std::get<0>(args);
         const Parser::Enumerable<Parser::PCParseStatement>& statements = std::get<2>(args);
 
-        Assert(metaclassName);
+        Assert(Name);
 
-        return Parser::MakeObjectDefinition(metaclassName->Value(), metaclassName->Site(), statements.begin(), statements.end());
+        return Parser::MakeObjectDefinition(Name->Value(), Name->Site(), statements.begin(), statements.end());
     }))
 
 ,   _rvalue(
@@ -1072,8 +1072,6 @@ static const GrammarImpl *sGrammarImpl = nullptr;
 //----------------------------------------------------------------------------
 void GrammarStartup::Start() {
     AssertIsMainThread();
-    Lexer::LexerStartup::Start();
-    Parser::ParserStartup::Start();
     AssertRelease(nullptr == sGrammarImpl);
     sGrammarImpl = new GrammarImpl();
 }
@@ -1083,8 +1081,6 @@ void GrammarStartup::Shutdown() {
     AssertRelease(nullptr != sGrammarImpl);
     checked_delete(sGrammarImpl);
     sGrammarImpl = nullptr;
-    Parser::ParserStartup::Shutdown();
-    Lexer::LexerStartup::Shutdown();
 }
 //----------------------------------------------------------------------------
 void GrammarStartup::ClearAll_UnusedMemory() {

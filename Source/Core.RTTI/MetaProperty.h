@@ -3,7 +3,7 @@
 #include "Core.RTTI/RTTI.h"
 
 #include "Core.RTTI/MetaPropertyAccessor.h"
-#include "Core.RTTI/MetaPropertyName.h"
+#include "Core.RTTI/MetaType.h"
 
 #include "Core.RTTI/MetaAtom.h"
 #include "Core.RTTI/MetaType.h"
@@ -34,13 +34,13 @@ public:
         Dynamic      = 1<<5,
     };
 
-    MetaProperty(const MetaPropertyName& name, Flags attributes);
+    MetaProperty(const RTTI::Name& name, Flags attributes);
     virtual ~MetaProperty();
 
     MetaProperty(const MetaProperty&) = delete;
     MetaProperty& operator =(const MetaProperty&) = delete;
 
-    const MetaPropertyName& Name() const { return _name; }
+    const RTTI::Name& Name() const { return _name; }
     Flags Attributes() const { return _attributes; }
 
     bool IsPublic()     const { return Meta::HasFlag(_attributes, Public); }
@@ -102,7 +102,7 @@ public:
     }
 
 protected:
-    MetaPropertyName _name;
+    RTTI::Name _name;
     Flags _attributes;
 };
 //----------------------------------------------------------------------------
@@ -114,7 +114,7 @@ public:
     typedef MetaType<T> meta_type;
     static_assert(meta_type::TypeId, "T is not supported by RTTI");
 
-    MetaTypedProperty(const MetaPropertyName& name, Flags attributes);
+    MetaTypedProperty(const RTTI::Name& name, Flags attributes);
     virtual ~MetaTypedProperty();
 
     virtual MetaTypeInfo TypeInfo() const override;
@@ -146,7 +146,7 @@ public:
 
     using MetaProperty::Flags;
 
-    MetaWrappedProperty(const MetaPropertyName& name, Flags attributes, accessor_type&& accessor);
+    MetaWrappedProperty(const RTTI::Name& name, Flags attributes, accessor_type&& accessor);
     virtual ~MetaWrappedProperty();
 
     virtual const IMetaTypeVirtualTraits *Traits() const override { return meta_type_traits::VirtualTraits(); }
@@ -193,7 +193,7 @@ private:
 //----------------------------------------------------------------------------
 template <typename T, typename _Class>
 MetaWrappedProperty<T, MetaFieldAccessor<T> > *MakeProperty(
-    const MetaPropertyName& name, MetaProperty::Flags attributes, T _Class::* field) {
+    const RTTI::Name& name, MetaProperty::Flags attributes, T _Class::* field) {
     return new MetaWrappedProperty<T, MetaFieldAccessor<T> >(
         name, attributes,
         MakeFieldAccessor(field) );
@@ -201,7 +201,7 @@ MetaWrappedProperty<T, MetaFieldAccessor<T> > *MakeProperty(
 //----------------------------------------------------------------------------
 template <typename T, typename _Class>
 MetaWrappedProperty<T, MetaDelegateAccessor<T, _Class> > *MakeProperty(
-    const MetaPropertyName& name, MetaProperty::Flags attributes,
+    const RTTI::Name& name, MetaProperty::Flags attributes,
     T&   (_Class::* getter)(),
     void (_Class::* mover)(T&& ),
     void (_Class::* setter)(const T& ) ) {
@@ -212,7 +212,7 @@ MetaWrappedProperty<T, MetaDelegateAccessor<T, _Class> > *MakeProperty(
 //----------------------------------------------------------------------------
 template <typename T, typename _Class>
 MetaWrappedProperty<T, MetaDelegateAccessor<T, _Class> > *MakeProperty(
-    const MetaPropertyName& name, MetaProperty::Flags attributes,
+    const RTTI::Name& name, MetaProperty::Flags attributes,
     Delegate<T&   (*)(_Class* )>&& getter,
     Delegate<void (*)(_Class*, T&& )>&& mover,
     Delegate<void (*)(_Class*, const T& )>&& setter ) {
@@ -223,7 +223,7 @@ MetaWrappedProperty<T, MetaDelegateAccessor<T, _Class> > *MakeProperty(
 //----------------------------------------------------------------------------
 template <typename T, typename _Class>
 MetaWrappedProperty<T, MetaDeprecatedAccessor<T, _Class> > *MakeDeprecatedProperty(
-    const MetaPropertyName& name, MetaProperty::Flags attributes ) {
+    const RTTI::Name& name, MetaProperty::Flags attributes ) {
     return new MetaWrappedProperty<T, MetaDeprecatedAccessor<T, _Class> >(
         name, MetaProperty::Flags(attributes | MetaProperty::Deprecated | MetaProperty::ReadOnly),
         MakeDeprecatedAccessor<T, _Class>() );

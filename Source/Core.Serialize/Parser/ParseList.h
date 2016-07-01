@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Core.h"
+#include "Core.Serialize/Serialize.h"
 
 #include "Core.Serialize/Lexer/Location.h"
 #include "Core.Serialize/Lexer/Match.h"

@@ -2,7 +2,7 @@
 {
     .ProjectName = 'Core.Pixmap'
     .ProjectPath = '$SourceDiretory$/Core.Pixmap'
-    .ProjectSolutionFolder = 'Core'
+    .ProjectSolutionFolder = 'Core.Content'
     .UnityNumFiles = 1
     .ProjectIsolatedFiles =
     {

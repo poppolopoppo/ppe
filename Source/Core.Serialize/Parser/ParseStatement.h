@@ -1,11 +1,10 @@
 #pragma once
 
-#include "Core/Core.h"
+#include "Core.Serialize/Serialize.h"
 
 #include "Core.Serialize/Parser/ParseItem.h"
 
-#include "Core.RTTI/MetaObjectName.h"
-#include "Core.RTTI/MetaPropertyName.h"
+#include "Core.RTTI/Typedefs.h"
 
 #include "Core/Allocator/PoolAllocator.h"
 
@@ -52,10 +51,10 @@ inline const EvalExpr *MakeEvalExpr(const Parser::PCParseExpression& expr) {
 //----------------------------------------------------------------------------
 class PropertyAssignment : public ParseStatement {
 public:
-    PropertyAssignment(const RTTI::MetaPropertyName& name, const Parser::PCParseExpression& value);
+    PropertyAssignment(const RTTI::Name& name, const Parser::PCParseExpression& value);
     virtual  ~PropertyAssignment();
 
-    const RTTI::MetaPropertyName& Name() const { return _name; }
+    const RTTI::Name& Name() const { return _name; }
     const Parser::PCParseExpression& Value() const { return _value; }
 
     virtual void Execute(ParseContext *context) const override;
@@ -64,12 +63,12 @@ public:
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    RTTI::MetaPropertyName _name;
+    RTTI::Name _name;
     Parser::PCParseExpression _value;
 };
 //----------------------------------------------------------------------------
 inline const PropertyAssignment *MakePropertyAssignment(
-    const RTTI::MetaPropertyName& name,
+    const RTTI::Name& name,
     const Parser::PCParseExpression& value) {
     return new PropertyAssignment(name, value);
 }

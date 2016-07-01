@@ -27,10 +27,8 @@ class MetaClassHashMap;
 class MetaClassName;
 //----------------------------------------------------------------------------
 FWD_REFPTR(MetaObject);
-class MetaObjectName;
 //----------------------------------------------------------------------------
 class MetaProperty;
-class MetaPropertyName;
 template <typename T>
 class MetaTypedProperty;
 template <typename T>

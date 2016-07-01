@@ -1,11 +1,8 @@
 #pragma once
 
-#include "Core/Core.h"
+#include "Core.Serialize/Serialize.h"
 
 #include "Core.RTTI/MetaAtom.h"
-#include "Core.RTTI/MetaClassName.h"
-#include "Core.RTTI/MetaObjectName.h"
-#include "Core.RTTI/MetaPropertyName.h"
 #include "Core.RTTI/MetaType.h"
 
 #include "Core.Serialize/Parser/ParseItem.h"
@@ -69,7 +66,7 @@ public:
         Global,
     };
 
-    explicit VariableExport(const RTTI::MetaObjectName& name, const PCParseExpression& value, const Flags scope, const Lexer::Location& site);
+    explicit VariableExport(const RTTI::Name& name, const PCParseExpression& value, const Flags scope, const Lexer::Location& site);
     virtual ~VariableExport();
 
     virtual RTTI::MetaAtom *Eval(ParseContext *context) const override;
@@ -78,12 +75,12 @@ public:
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    RTTI::MetaObjectName _name;
+    RTTI::Name _name;
     PCParseExpression _value;
     Flags _scope;
 };
 //----------------------------------------------------------------------------
-inline VariableExport *MakeVariableExport(const RTTI::MetaObjectName& name, const PCParseExpression& value, const VariableExport::Flags scope, const Lexer::Location& site) {
+inline VariableExport *MakeVariableExport(const RTTI::Name& name, const PCParseExpression& value, const VariableExport::Flags scope, const Lexer::Location& site) {
     return new VariableExport(name, value, scope, site);
 }
 //----------------------------------------------------------------------------
@@ -91,7 +88,7 @@ inline VariableExport *MakeVariableExport(const RTTI::MetaObjectName& name, cons
 //----------------------------------------------------------------------------
 class VariableReference : public ParseExpression {
 public:
-    explicit VariableReference(const RTTI::MetaObjectName& name, const Lexer::Location& site);
+    explicit VariableReference(const RTTI::Name& name, const Lexer::Location& site);
     virtual ~VariableReference();
 
     virtual RTTI::MetaAtom *Eval(ParseContext *context) const override;
@@ -100,10 +97,10 @@ public:
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    RTTI::MetaObjectName _name;
+    RTTI::Name _name;
 };
 //----------------------------------------------------------------------------
-inline VariableReference *MakeVariableReference(const RTTI::MetaObjectName& name, const Lexer::Location& site) {
+inline VariableReference *MakeVariableReference(const RTTI::Name& name, const Lexer::Location& site) {
     return new VariableReference(name, site);
 }
 //----------------------------------------------------------------------------
@@ -180,7 +177,7 @@ Ternary<_Test> *MakeTernary(_Test&& test, const ParseExpression *pif, const Pars
 //----------------------------------------------------------------------------
 class ObjectDefinition : public ParseExpression {
 public:
-    explicit ObjectDefinition(const RTTI::MetaClassName& name, const Lexer::Location& site);
+    explicit ObjectDefinition(const RTTI::Name& name, const Lexer::Location& site);
     virtual ~ObjectDefinition();
 
     void AddStatement(const ParseStatement *statement);
@@ -196,13 +193,13 @@ public:
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    RTTI::MetaClassName _name;
+    RTTI::Name _name;
     VECTOR(Parser, PCParseStatement) _statements;
 };
 //----------------------------------------------------------------------------
 template <typename _It>
 inline ObjectDefinition *MakeObjectDefinition(
-    const RTTI::MetaClassName& name,
+    const RTTI::Name& name,
     const Lexer::Location& site,
     _It&& statementsBegin, _It&& statementsEnd) {
     ObjectDefinition *const def = new ObjectDefinition(name, site);
@@ -214,7 +211,7 @@ inline ObjectDefinition *MakeObjectDefinition(
 //----------------------------------------------------------------------------
 class PropertyReference : public ParseExpression {
 public:
-    explicit PropertyReference(const PCParseExpression& object, const RTTI::MetaPropertyName& member, const Lexer::Location& site);
+    explicit PropertyReference(const PCParseExpression& object, const RTTI::Name& member, const Lexer::Location& site);
     virtual ~PropertyReference();
 
     virtual RTTI::MetaAtom *Eval(ParseContext *context) const override;
@@ -224,12 +221,12 @@ public:
 
 private:
     PCParseExpression _object;
-    RTTI::MetaPropertyName _member;
+    RTTI::Name _member;
 };
 //----------------------------------------------------------------------------
 inline PropertyReference *MakePropertyReference(
     const PCParseExpression& object,
-    const RTTI::MetaPropertyName& member,
+    const RTTI::Name& member,
     const Lexer::Location& site) {
     return new PropertyReference(object, member, site);
 }

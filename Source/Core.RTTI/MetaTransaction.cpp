@@ -5,11 +5,10 @@
 #include "MetaAtom.h"
 #include "MetaAtomDatabase.h"
 #include "MetaClass.h"
-#include "MetaClassName.h"
 #include "MetaClassDatabase.h"
 #include "MetaObject.h"
 #include "MetaObjectHelpers.h"
-#include "MetaObjectName.h"
+#include "MetaType.h"
 
 namespace Core {
 namespace RTTI {

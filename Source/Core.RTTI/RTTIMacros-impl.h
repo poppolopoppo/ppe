@@ -9,12 +9,10 @@
 #include "Core.RTTI/MetaAtomDatabase.h"
 #include "Core.RTTI/MetaClass.h"
 #include "Core.RTTI/MetaClassDatabase.h"
-#include "Core.RTTI/MetaClassName.h"
 #include "Core.RTTI/MetaClassSingleton.h"
 #include "Core.RTTI/MetaObject.h"
-#include "Core.RTTI/MetaObjectName.h"
 #include "Core.RTTI/MetaProperty.h"
-#include "Core.RTTI/MetaPropertyName.h"
+#include "Core.RTTI/MetaType.h"
 
 #include "Core.RTTI/RTTI_extern.h"
 

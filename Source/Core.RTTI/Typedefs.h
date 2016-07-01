@@ -1,31 +1,51 @@
 #pragma once
 
-#include "Core.Pixmap/Pixmap.h"
-#include "Core.Pixmap/Pixmap_fwd.h"
+#include "Core.RTTI/RTTI.h"
 
-#include "Core/Maths/Geometry/ScalarBoundingBox_fwd.h"
+#include "Core/Container/AssociativeVector.h"
+#include "Core/Container/Pair.h"
+#include "Core/Container/RawStorage.h"
+#include "Core/Container/Vector.h"
+#include "Core/Container/Token.h"
+
 #include "Core/Maths/Geometry/ScalarVector_fwd.h"
+#include "Core/Maths/Transform/ScalarMatrix_fwd.h"
 
 namespace Core {
-namespace Pixmap {
+namespace RTTI {
+FWD_REFPTR(MetaAtom);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void DistanceField_CDT(Image* dst, const FloatImage* src, float alphaCutoff);
+class NameTokenTraits {
+public:
+    const std::locale& Locale() const { return std::locale::classic(); }
+    bool IsAllowedChar(char ch) const;
+};
 //----------------------------------------------------------------------------
-void DistanceField_DRA(Image* dst, const FloatImage* src, float alphaCutoff);
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-void ExpandColorToTransparentPixels(FloatImage* img, float alphaCutoff);
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-bool BoundingBox(AABB2f& uvs, const FloatImage* img, float alphaCutoff);
-//----------------------------------------------------------------------------
-bool ConvexHull(const MemoryView<float2>& uvs, const FloatImage* img, float alphaCutoff);
+BASICTOKEN_CLASS_DEF(Name, char, Case::Insensitive, NameTokenTraits);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace Pixmap
+template <typename T>
+using Vector = VECTORINSITU(Container, T, 4);
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value>
+using Pair = Core::Pair<_Key, _Value>;
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value>
+using Dictionary = Core::AssociativeVector<
+    _Key,
+    _Value,
+    Meta::EqualTo<_Key>,
+    RTTI::Vector<RTTI::Pair<_Key COMMA _Value> >
+>;
+//----------------------------------------------------------------------------
+INSTANTIATE_CLASS_TYPEDEF(BinaryData, RAWSTORAGE_ALIGNED(RTTI, u8, 16));
+//----------------------------------------------------------------------------
+INSTANTIATE_CLASS_TYPEDEF(OpaqueData, Dictionary<Name, PMetaAtom>);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace RTTI
 } //!namespace Core

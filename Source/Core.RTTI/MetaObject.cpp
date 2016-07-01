@@ -54,7 +54,7 @@ MetaObject::MetaObject()
 //----------------------------------------------------------------------------
 MetaObject::~MetaObject() {}
 //----------------------------------------------------------------------------
-void MetaObject::RTTI_Export(const MetaObjectName& name) {
+void MetaObject::RTTI_Export(const RTTI::Name& name) {
     Assert(!name.empty());
     Assert(_name.empty());
     Assert(0 == (_state & Exported));
@@ -67,7 +67,7 @@ void MetaObject::RTTI_Unexport() {
     Assert(!_name.empty());
     Assert(Exported == (_state & Exported));
 
-    _name = MetaObjectName();
+    _name = RTTI::Name();
     _state = Flags(_state & ~Exported);
 
     Assert(_name.empty());

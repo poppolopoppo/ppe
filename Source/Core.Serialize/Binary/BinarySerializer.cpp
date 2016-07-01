@@ -521,7 +521,7 @@ private:
 
     typedef VECTOR_THREAD_LOCAL(Serialize, const RTTI::MetaProperty*) properties_type;
 
-    VECTOR_THREAD_LOCAL(Serialize, RTTI::MetaObjectName) _names;
+    VECTOR_THREAD_LOCAL(Serialize, RTTI::Name) _names;
     VECTOR_THREAD_LOCAL(Serialize, StringSlice) _strings;
     VECTOR_THREAD_LOCAL(Serialize, WStringSlice) _wstrings;
     VECTOR_THREAD_LOCAL(Serialize, const RTTI::MetaClass*) _metaClasses;
@@ -540,7 +540,7 @@ void BinaryDeserialize_::Read(MemoryViewReader& reader) {
         throw BinarySerializerException("unsupported file version");
 
     if (false == reader.ExpectPOD(SECTION_NAMES_) ||
-        false == DeserializePODArrays_<char>(reader, _names, [](const StringSlice& str) { Assert(str.size()); return RTTI::MetaObjectName(str); }) )
+        false == DeserializePODArrays_<char>(reader, _names, [](const StringSlice& str) { Assert(str.size()); return RTTI::Name(str); }) )
         throw BinarySerializerException("invalid names section");
 
     if (false == reader.ExpectPOD(SECTION_STRINGS_) ||
@@ -630,7 +630,7 @@ void BinaryDeserialize_::Finalize(RTTI::MetaTransaction* transaction) {
             it.second > _objects.size() )
             throw BinarySerializerException("invalid RTTI object export");
 
-        const RTTI::MetaObjectName& name = _names[it.first];
+        const RTTI::Name& name = _names[it.first];
         const RTTI::PMetaObject& object = _objects[it.second];
 
         object->RTTI_Export(name);
@@ -644,7 +644,7 @@ void BinaryDeserialize_::Finalize(RTTI::MetaTransaction* transaction) {
 }
 //----------------------------------------------------------------------------
 const RTTI::MetaClass* BinaryDeserialize_::RetrieveMetaClass_(const StringSlice& str) {
-    const RTTI::MetaClassName name(str);
+    const RTTI::Name name(str);
     Assert(!name.empty());
 
     const RTTI::MetaClass* metaClass = RTTI::MetaClassDatabase::Instance().GetIFP(name);
@@ -657,7 +657,7 @@ const RTTI::MetaClass* BinaryDeserialize_::RetrieveMetaClass_(const StringSlice&
 const RTTI::MetaProperty* BinaryDeserialize_::RetrieveMetaProperty_(const RTTI::MetaClass* metaClass, const StringSlice& str) {
     Assert(metaClass);
 
-    const RTTI::MetaPropertyName name(str);
+    const RTTI::Name name(str);
     Assert(!name.empty());
 
     const RTTI::MetaProperty* metaProperty = metaClass->PropertyIFP(name);
@@ -693,7 +693,7 @@ RTTI::MetaObject* BinaryDeserialize_::CreateObjectFromHeader_(const SerializedOb
         Assert(UINT32_MAX != header.NameIndex);
         Assert(UINT32_MAX != header.DataOffset);
 
-        const RTTI::MetaObjectName name = _names[header.NameIndex];
+        const RTTI::Name name = _names[header.NameIndex];
         const RTTI::MetaClass* metaClass = _metaClasses[header.MetaClassIndex];
 
         if (TAG_OBJECT_EXPORT_ == header.Type) {
@@ -790,7 +790,7 @@ public:
     typedef ObjectIndexer_<const RTTI::MetaObject* > object_indices_type;
     typedef ObjectIndexer_<String > string_indices_type;
     typedef ObjectIndexer_<WString > wstring_indices_type;
-    typedef ObjectIndexer_<RTTI::MetaObjectName > name_indices_type;
+    typedef ObjectIndexer_<RTTI::Name > name_indices_type;
 
     typedef property_indices_type::index_t property_index_t;
     typedef class_indices_type::index_t class_index_t;
@@ -1023,7 +1023,7 @@ void BinarySerialize_::Finalize(IStreamWriter* writer) {
     writer->WritePOD(FILE_VERSION_);
 
     writer->WritePOD(SECTION_NAMES_);
-    _nameIndices.Serialize(writer, [writer](const RTTI::MetaObjectName& name) {
+    _nameIndices.Serialize(writer, [writer](const RTTI::Name& name) {
         SerializePODs_(writer, name.MakeView());
     });
 
@@ -1125,7 +1125,7 @@ void BinarySerialize_::ProcessQueue_() {
             header.MetaClassIndex = class_i;
 
             if (object->RTTI_IsExported()) {
-                const RTTI::MetaObjectName metaName = object->RTTI_Name();
+                const RTTI::Name metaName = object->RTTI_Name();
                 Assert(!metaName.empty());
 
                 const name_index_t name_i = _nameIndices.IndexOf(metaName);

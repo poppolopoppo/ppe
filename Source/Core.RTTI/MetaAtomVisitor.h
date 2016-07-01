@@ -2,7 +2,7 @@
 
 #include "Core.RTTI/RTTI.h"
 
-#include "Core.RTTI/MetaType.h"
+#include "Core.RTTI/Typedefs.h"
 
 #include "Core.RTTI/MetaType.Definitions-inl.h"
 

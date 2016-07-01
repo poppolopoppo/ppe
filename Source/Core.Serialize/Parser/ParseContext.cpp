@@ -7,10 +7,9 @@
 #include "Core.RTTI/MetaAtom.h"
 #include "Core.RTTI/MetaAtomDatabase.h"
 #include "Core.RTTI/MetaClass.h"
-#include "Core.RTTI/MetaClassName.h"
 #include "Core.RTTI/MetaObject.h"
-#include "Core.RTTI/MetaObjectName.h"
 #include "Core.RTTI/MetaTransaction.h"
+#include "Core.RTTI/Typedefs.h"
 
 namespace Core {
 namespace Parser {
@@ -29,7 +28,7 @@ void ParseContext::SetScopeObject(RTTI::MetaObject *object) {
     _scopeObject = object;
 }
 //----------------------------------------------------------------------------
-RTTI::MetaAtom *ParseContext::GetLocal(const RTTI::MetaObjectName& name) const {
+RTTI::MetaAtom *ParseContext::GetLocal(const RTTI::Name& name) const {
     Assert(!name.empty());
 
     const auto it = _localScope.find(name);
@@ -37,7 +36,7 @@ RTTI::MetaAtom *ParseContext::GetLocal(const RTTI::MetaObjectName& name) const {
     return (_localScope.end() == it) ? nullptr : it->second.get();
 }
 //----------------------------------------------------------------------------
-void ParseContext::AddLocal(const ParseExpression* expr, const RTTI::MetaObjectName& name, RTTI::MetaAtom *value) {
+void ParseContext::AddLocal(const ParseExpression* expr, const RTTI::Name& name, RTTI::MetaAtom *value) {
     Assert(!name.empty());
     Assert(value);
 
@@ -49,7 +48,7 @@ void ParseContext::AddLocal(const ParseExpression* expr, const RTTI::MetaObjectN
     local = value;
 }
 //----------------------------------------------------------------------------
-void ParseContext::RemoveLocal(const ParseExpression* expr, const RTTI::MetaObjectName& name, RTTI::MetaAtom *value) {
+void ParseContext::RemoveLocal(const ParseExpression* expr, const RTTI::Name& name, RTTI::MetaAtom *value) {
     Assert(!name.empty());
     Assert(value);
 
@@ -64,7 +63,7 @@ void ParseContext::RemoveLocal(const ParseExpression* expr, const RTTI::MetaObje
     _localScope.erase(it);
 }
 //----------------------------------------------------------------------------
-void ParseContext::AddGlobal(const ParseExpression* expr, const RTTI::MetaObjectName& name, RTTI::MetaAtom* value) {
+void ParseContext::AddGlobal(const ParseExpression* expr, const RTTI::Name& name, RTTI::MetaAtom* value) {
     Assert(!name.empty());
     Assert(value);
 
@@ -89,7 +88,7 @@ void ParseContext::AddGlobal(const ParseExpression* expr, const RTTI::MetaObject
         obj->RTTI_Export(name);
 }
 //----------------------------------------------------------------------------
-void ParseContext::RemoveGlobal(const ParseExpression* expr, const RTTI::MetaObjectName& name, RTTI::MetaAtom* value) {
+void ParseContext::RemoveGlobal(const ParseExpression* expr, const RTTI::Name& name, RTTI::MetaAtom* value) {
     Assert(!name.empty());
     Assert(value);
 
@@ -119,7 +118,7 @@ void ParseContext::RemoveGlobal(const ParseExpression* expr, const RTTI::MetaObj
         obj->RTTI_Unexport();
 }
 //----------------------------------------------------------------------------
-RTTI::MetaAtom *ParseContext::GetGlobal(const RTTI::MetaObjectName& name) const {
+RTTI::MetaAtom *ParseContext::GetGlobal(const RTTI::Name& name) const {
     Assert(!name.empty());
 
     const ParseContext* ctx = this;
@@ -132,7 +131,7 @@ RTTI::MetaAtom *ParseContext::GetGlobal(const RTTI::MetaObjectName& name) const 
     return (ctx->_globalScope.end() == it) ? nullptr : it->second.get();
 }
 //----------------------------------------------------------------------------
-RTTI::MetaAtom *ParseContext::GetAny(const RTTI::MetaObjectName& name) const {
+RTTI::MetaAtom *ParseContext::GetAny(const RTTI::Name& name) const {
     const ParseContext *ctx = this;
     do {
         RTTI::MetaAtom *result;

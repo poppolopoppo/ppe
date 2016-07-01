@@ -11,7 +11,7 @@ namespace RTTI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-MetaTypedProperty<T>::MetaTypedProperty(const MetaPropertyName& name, Flags attributes)
+MetaTypedProperty<T>::MetaTypedProperty(const RTTI::Name& name, Flags attributes)
 :   MetaProperty(name, attributes) {}
 //----------------------------------------------------------------------------
 template <typename T>
@@ -27,7 +27,7 @@ MetaTypeInfo MetaTypedProperty<T>::TypeInfo() const {
 SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(RTTI, MetaWrappedProperty<T COMMA _Accessor>, template <typename T COMMA typename _Accessor>)
 //----------------------------------------------------------------------------
 template <typename T, typename _Accessor>
-MetaWrappedProperty<T, _Accessor>::MetaWrappedProperty(const MetaPropertyName& name, Flags attributes, accessor_type&& accessor)
+MetaWrappedProperty<T, _Accessor>::MetaWrappedProperty(const RTTI::Name& name, Flags attributes, accessor_type&& accessor)
 :   typed_property_type(name, attributes)
 ,   accessor_type(std::move(accessor)) {}
 //----------------------------------------------------------------------------

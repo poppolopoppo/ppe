@@ -7,8 +7,6 @@
 #include "Core/Meta/Singleton.h"
 #include "Core/Thread/ReadWriteLock.h"
 
-#include "Core.RTTI/MetaObjectName.h"
-
 #include <mutex>
 
 namespace Core {
@@ -16,6 +14,7 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+class Name;
 FWD_REFPTR(MetaAtom);
 FWD_REFPTR(MetaObject);
 //----------------------------------------------------------------------------
@@ -27,19 +26,19 @@ public:
     MetaAtomHashMap(const MetaAtomHashMap&) = delete;
     MetaAtomHashMap& operator =(const MetaAtomHashMap&) = delete;
 
-    void Add(const MetaObjectName& name, MetaAtom *metaAtom, bool allowOverride);
-    void Remove(const MetaObjectName& name, MetaAtom *metaAtom);
+    void Add(const RTTI::Name& name, MetaAtom *metaAtom, bool allowOverride);
+    void Remove(const RTTI::Name& name, MetaAtom *metaAtom);
 
     void Add(MetaObject *object);
     void Remove(MetaObject *object);
 
-    MetaAtom *GetIFP(const MetaObjectName& name) const;
+    MetaAtom *GetIFP(const RTTI::Name& name) const;
 
     void Clear();
 
 private:
     ReadWriteLock _barrier;
-    HASHMAP(RTTI, MetaObjectName, PMetaAtom) _objects;
+    HASHMAP(RTTI, RTTI::Name, PMetaAtom) _objects;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

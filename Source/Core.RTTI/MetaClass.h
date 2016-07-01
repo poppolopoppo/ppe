@@ -5,9 +5,8 @@
 #include "Core/Container/Vector.h"
 #include "Core/Memory/UniquePtr.h"
 
-#include "Core.RTTI/MetaClassName.h"
 #include "Core.RTTI/MetaClassSingleton.h"
-#include "Core.RTTI/MetaPropertyName.h"
+#include "Core.RTTI/MetaType.h"
 
 namespace Core {
 namespace RTTI {
@@ -32,13 +31,13 @@ public:
         Default     = Concrete
     };
 
-    MetaClass(const MetaClassName& name, Flags attributes);
+    MetaClass(const RTTI::Name& name, Flags attributes);
     virtual ~MetaClass();
 
     MetaClass(const MetaClass&) = delete;
     MetaClass& operator =(const MetaClass&) = delete;
 
-    const MetaClassName& Name() const { return _name; }
+    const RTTI::Name& Name() const { return _name; }
     Flags Attributes() const { return _attributes; }
 
     bool IsAbstract()   const { return Meta::HasFlag(_attributes, Abstract); }
@@ -58,7 +57,7 @@ public:
     MemoryView<const UCMetaProperty> Properties() const;
 
     const MetaProperty *PropertyIFP(const StringSlice& name, size_t attributes = 0, bool inherited = true) const;
-    const MetaProperty *PropertyIFP(const MetaPropertyName& name, size_t attributes = 0, bool inherited = true) const;
+    const MetaProperty *PropertyIFP(const RTTI::Name& name, size_t attributes = 0, bool inherited = true) const;
 
     MetaObject* CreateInstance() const;
 
@@ -68,12 +67,12 @@ protected:
     virtual MemoryView<const UCMetaProperty> VirtualProperties() const = 0;
 
     virtual const MetaProperty *VirtualPropertyIFP(const StringSlice& name, size_t attributes) const = 0;
-    virtual const MetaProperty *VirtualPropertyIFP(const MetaPropertyName& name, size_t attributes) const = 0;
+    virtual const MetaProperty *VirtualPropertyIFP(const RTTI::Name& name, size_t attributes) const = 0;
 
     virtual MetaObject* VirtualCreateInstance() const = 0;
 
 private:
-    MetaClassName _name;
+    RTTI::Name _name;
     Flags _attributes;
 };
 //----------------------------------------------------------------------------
@@ -105,7 +104,7 @@ const MetaProperty* FindProperty(const MetaClass* metaClass, const _Pred& pred) 
 //----------------------------------------------------------------------------
 class InScopeMetaClass : public MetaClass {
 public:
-    InScopeMetaClass(const MetaClassName& name, Flags attributes);
+    InScopeMetaClass(const RTTI::Name& name, Flags attributes);
     virtual ~InScopeMetaClass();
 
 protected:
@@ -115,7 +114,7 @@ private:
     virtual MemoryView<const UCMetaProperty> VirtualProperties() const override;
 
     virtual const MetaProperty *VirtualPropertyIFP(const StringSlice& name, size_t attributes) const override;
-    virtual const MetaProperty *VirtualPropertyIFP(const MetaPropertyName& name, size_t attributes) const override;
+    virtual const MetaProperty *VirtualPropertyIFP(const RTTI::Name& name, size_t attributes) const override;
 
     VECTOR(RTTI, UCMetaProperty) _properties;
 };
@@ -123,7 +122,7 @@ private:
 template <typename T>
 class DefaultMetaClass : public InScopeMetaClass {
 public:
-    DefaultMetaClass(const MetaClassName& name, Flags attributes)
+    DefaultMetaClass(const RTTI::Name& name, Flags attributes)
         : InScopeMetaClass(name, attributes) {
         STATIC_ASSERT(not std::is_abstract<DefaultMetaClass>::value);
     }

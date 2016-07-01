@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Core.h"
+#include "Core.Serialize/Serialize.h"
 
 #include "Core/Container/Vector.h"
 #include "Core/Memory/RefPtr.h"

@@ -3,7 +3,7 @@
 #include "Core.RTTI/RTTI.h"
 
 #include "Core.RTTI/MetaClass.h"
-#include "Core.RTTI/MetaObjectName.h"
+#include "Core.RTTI/MetaType.h"
 
 #include "Core/Memory/RefPtr.h"
 
@@ -44,13 +44,13 @@ public:
     MetaObject(const MetaObject&) = delete;
     MetaObject& operator =(const MetaObject&) = delete;
 
-    const MetaObjectName& RTTI_Name() const { return _name; }
+    const RTTI::Name& RTTI_Name() const { return _name; }
 
     bool RTTI_IsLoaded() const { return Loaded == (_state & Loaded); }
     bool RTTI_IsUnloaded() const { return Unloaded == (_state & Unloaded); }
     bool RTTI_IsExported() const { return Exported == (_state & Exported); }
 
-    void RTTI_Export(const MetaObjectName& name);
+    void RTTI_Export(const RTTI::Name& name);
     void RTTI_Unexport();
 
     virtual void RTTI_Load(MetaLoadContext *context);
@@ -83,7 +83,7 @@ public:
     }
 
 private:
-    MetaObjectName _name;
+    RTTI::Name _name;
     Flags _state;
 };
 //----------------------------------------------------------------------------

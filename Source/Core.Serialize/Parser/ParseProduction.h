@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Core.h"
+#include "Core.Serialize/Serialize.h"
 
 #include "Core/Allocator/SingletonPoolAllocator.h"
 #include "Core/Container/Tuple.h"

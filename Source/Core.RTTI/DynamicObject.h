@@ -17,7 +17,7 @@ FWD_REFPTR(DynamicObject);
 //----------------------------------------------------------------------------
 class DynamicProperty : public MetaProperty {
 public:
-    explicit DynamicProperty(const MetaPropertyName& name);
+    explicit DynamicProperty(const RTTI::Name& name);
     virtual ~DynamicProperty();
     /*
     virtual MetaTypeInfo TypeInfo() const override;
@@ -58,13 +58,13 @@ public:
     DynamicObject();
     virtual ~DynamicObject();
 
-    MetaAtom* GetValue(const MetaPropertyName& name);
-    const MetaAtom* GetValue(const MetaPropertyName& name) const;
+    MetaAtom* GetValue(const RTTI::Name& name);
+    const MetaAtom* GetValue(const RTTI::Name& name) const;
 
-    MetaAtom* TryGetValue(const MetaPropertyName& name);
-    const MetaAtom* TryGetValue(const MetaPropertyName& name) const;
+    MetaAtom* TryGetValue(const RTTI::Name& name);
+    const MetaAtom* TryGetValue(const RTTI::Name& name) const;
 
-    void SetValue(const MetaPropertyName& name, const PMetaAtom& value);
+    void SetValue(const RTTI::Name& name, const PMetaAtom& value);
 
     void ClearValues();
 
@@ -88,7 +88,7 @@ public:
 
     protected:
         //virtual const MetaProperty *VirtualPropertyIFP(const char *name, size_t attributes) const override;
-        //virtual const MetaProperty *VirtualPropertyIFP(const MetaPropertyName& name, size_t attributes) const override;
+        //virtual const MetaProperty *VirtualPropertyIFP(const RTTI::Name& name, size_t attributes) const override;
 
         virtual const RTTI::MetaClass* VirtualParent() const override;
         virtual MetaObject* VirtualCreateInstance() const override;
@@ -96,7 +96,7 @@ public:
 
 private:
     MetaClass _metaClass;
-    ASSOCIATIVE_VECTOR(RTTI, MetaPropertyName, PMetaAtom) _values;
+    ASSOCIATIVE_VECTOR(RTTI, RTTI::Name, PMetaAtom) _values;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

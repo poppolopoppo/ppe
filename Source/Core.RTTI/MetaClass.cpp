@@ -13,7 +13,7 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-MetaClass::MetaClass(const MetaClassName& name, Flags attributes)
+MetaClass::MetaClass(const RTTI::Name& name, Flags attributes)
 :   _name(name)
 ,   _attributes(attributes) {}
 //----------------------------------------------------------------------------
@@ -64,7 +64,7 @@ const MetaProperty *MetaClass::PropertyIFP(const StringSlice& name, size_t attri
         : nullptr;
 }
 //----------------------------------------------------------------------------
-const MetaProperty *MetaClass::PropertyIFP(const MetaPropertyName& name, size_t attributes /* = 0 */, bool inherited /* = true */) const {
+const MetaProperty *MetaClass::PropertyIFP(const RTTI::Name& name, size_t attributes /* = 0 */, bool inherited /* = true */) const {
     Assert(name.size());
 
     const MetaProperty* result = VirtualPropertyIFP(name, attributes);
@@ -83,7 +83,7 @@ MetaObject* MetaClass::CreateInstance() const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-InScopeMetaClass::InScopeMetaClass(const MetaClassName& name, Flags attributes)
+InScopeMetaClass::InScopeMetaClass(const RTTI::Name& name, Flags attributes)
 :   MetaClass(name, attributes) {}
 //----------------------------------------------------------------------------
 InScopeMetaClass::~InScopeMetaClass() {}
@@ -101,7 +101,7 @@ const MetaProperty *InScopeMetaClass::VirtualPropertyIFP(const StringSlice& name
     return nullptr;
 }
 //----------------------------------------------------------------------------
-const MetaProperty *InScopeMetaClass::VirtualPropertyIFP(const MetaPropertyName& name, size_t attributes) const {
+const MetaProperty *InScopeMetaClass::VirtualPropertyIFP(const RTTI::Name& name, size_t attributes) const {
     for (const UCMetaProperty& p : _properties)
         if ((p->Attributes() & attributes) == attributes &&
             (p->Name() == name) )
@@ -116,7 +116,7 @@ void InScopeMetaClass::RegisterProperty(UCMetaProperty&& prop) {
 
 #ifdef WITH_CORE_ASSERT
     {
-        const MetaPropertyName name = prop->Name();
+        const RTTI::Name name = prop->Name();
         for (const UCMetaProperty& p : _properties)
             Assert(p->Name() != name);
     }

@@ -4,6 +4,7 @@
 
 #include "MetaAtom.h"
 #include "MetaObject.h"
+#include "Typedefs.h"
 
 #include "Core/IO/Format.h"
 
@@ -20,7 +21,7 @@ MetaAtomHashMap::~MetaAtomHashMap() {
     Assert(_objects.empty());
 }
 //----------------------------------------------------------------------------
-void MetaAtomHashMap::Add(const MetaObjectName& name, MetaAtom *metaAtom, bool allowOverride) {
+void MetaAtomHashMap::Add(const RTTI::Name& name, MetaAtom *metaAtom, bool allowOverride) {
     UNUSED(allowOverride);
     Assert(!name.empty());
     Assert(metaAtom);
@@ -34,7 +35,7 @@ void MetaAtomHashMap::Add(const MetaObjectName& name, MetaAtom *metaAtom, bool a
     slot = metaAtom;
 }
 //----------------------------------------------------------------------------
-void MetaAtomHashMap::Remove(const MetaObjectName& name, MetaAtom *metaAtom) {
+void MetaAtomHashMap::Remove(const RTTI::Name& name, MetaAtom *metaAtom) {
     UNUSED(metaAtom);
     Assert(!name.empty());
     Assert(metaAtom);
@@ -52,7 +53,7 @@ void MetaAtomHashMap::Add(MetaObject *metaObject) {
     Assert(metaObject);
     Assert(metaObject->RTTI_IsExported());
 
-    const MetaObjectName& name = metaObject->RTTI_Name();
+    const RTTI::Name& name = metaObject->RTTI_Name();
     Assert(!name.empty());
 
     WRITESCOPELOCK(_barrier);
@@ -64,7 +65,7 @@ void MetaAtomHashMap::Remove(MetaObject *metaObject) {
     Assert(metaObject);
     Assert(metaObject->RTTI_IsExported());
 
-    const MetaObjectName& name = metaObject->RTTI_Name();
+    const RTTI::Name& name = metaObject->RTTI_Name();
     Assert(!name.empty());
 
     WRITESCOPELOCK(_barrier);
@@ -76,7 +77,7 @@ void MetaAtomHashMap::Remove(MetaObject *metaObject) {
     _objects.erase(it);
 }
 //----------------------------------------------------------------------------
-MetaAtom *MetaAtomHashMap::GetIFP(const MetaObjectName& name) const {
+MetaAtom *MetaAtomHashMap::GetIFP(const RTTI::Name& name) const {
     Assert(!name.empty());
 
     READSCOPELOCK(_barrier);

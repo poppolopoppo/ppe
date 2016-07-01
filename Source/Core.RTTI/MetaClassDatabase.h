@@ -2,7 +2,7 @@
 
 #include "Core.RTTI/RTTI.h"
 
-#include "Core.RTTI/MetaClassName.h"
+#include "Core.RTTI/MetaType.h"
 
 #include "Core/Container/HashMap.h"
 #include "Core/Meta/Singleton.h"
@@ -28,13 +28,13 @@ public:
     void Add(const MetaClass *metaClass);
     void Remove(const MetaClass *metaClass);
 
-    const MetaClass *GetIFP(const MetaClassName& name) const;
+    const MetaClass *GetIFP(const RTTI::Name& name) const;
 
     void Clear();
 
 private:
     ReadWriteLock _barrier;
-    HASHMAP(RTTI, MetaClassName, const MetaClass *) _classes;
+    HASHMAP(RTTI, RTTI::Name, const MetaClass *) _classes;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

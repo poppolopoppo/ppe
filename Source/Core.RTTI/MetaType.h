@@ -2,17 +2,8 @@
 
 #include "Core.RTTI/RTTI.h"
 
-#include "Core/Container/AssociativeVector.h"
-#include "Core/Container/Pair.h"
-#include "Core/Container/RawStorage.h"
-#include "Core/Container/Vector.h"
-#include "Core/Container/Token.h"
-
 #include "Core/IO/Format.h"
 #include "Core/IO/String.h"
-
-#include "Core/Maths/Geometry/ScalarVector_fwd.h"
-#include "Core/Maths/Transform/ScalarMatrix_fwd.h"
 
 #include "Core/Memory/RefPtr.h"
 
@@ -24,6 +15,7 @@
 
 #include "Core.RTTI/MetaType.Definitions-inl.h"
 #include "Core.RTTI/MetaTypeVirtualTraits.h"
+#include "Core.RTTI/Typedefs.h"
 
 #pragma warning( push )
 // TODO: see constexpr hash_MetaTypeId_constexpr(), is it dangerous ?
@@ -64,34 +56,6 @@ constexpr MetaTypeId hash_MetaTypeId_constexpr(_Args... args) {
     STATIC_ASSERT(sizeof(MetaTypeId) == sizeof(u32));
     return hash_u32_constexpr(MetaTypeId(args)...);
 }
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-class NameTokenTraits {
-public:
-    const std::locale& Locale() const { return std::locale::classic(); }
-    bool IsAllowedChar(char ch) const;
-};
-//----------------------------------------------------------------------------
-BASICTOKEN_CLASS_DEF(Name, char, Case::Insensitive, NameTokenTraits);
-//----------------------------------------------------------------------------
-template <typename T>
-using Vector = VECTORINSITU(Container, T, 4);
-//----------------------------------------------------------------------------
-template <typename _Key, typename _Value>
-using Pair = Core::Pair<_Key, _Value>;
-//----------------------------------------------------------------------------
-template <typename _Key, typename _Value>
-using Dictionary = Core::AssociativeVector<
-    _Key,
-    _Value,
-    Meta::EqualTo<_Key>,
-    RTTI::Vector<RTTI::Pair<_Key COMMA _Value> >
->;
-//----------------------------------------------------------------------------
-INSTANTIATE_CLASS_TYPEDEF(BinaryData, RAWSTORAGE_ALIGNED(RTTI, u8, 16));
-//----------------------------------------------------------------------------
-INSTANTIATE_CLASS_TYPEDEF(OpaqueData, Dictionary<Name, PMetaAtom>);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

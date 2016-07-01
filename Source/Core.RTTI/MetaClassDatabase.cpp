@@ -42,7 +42,7 @@ void MetaClassHashMap::Remove(const MetaClass *metaClass) {
     _classes.erase(it);
 }
 //----------------------------------------------------------------------------
-const MetaClass *MetaClassHashMap::GetIFP(const MetaClassName& name) const {
+const MetaClass *MetaClassHashMap::GetIFP(const RTTI::Name& name) const {
     Assert(!name.empty());
 
     READSCOPELOCK(_barrier);
