@@ -2,6 +2,8 @@
 
 #include "Core.Lattice/Lattice.h"
 
+// TODO: http://www.wazim.com/Collada_Tutorial_1.htm
+
 namespace Core {
 namespace Lattice {
 //----------------------------------------------------------------------------
