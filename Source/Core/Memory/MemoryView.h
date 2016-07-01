@@ -3,6 +3,7 @@
 #include "Core/Core.h"
 
 #include <algorithm>
+#include <initializer_list>
 #include <iosfwd>
 #include <iterator>
 #include <type_traits>
@@ -34,8 +35,14 @@ public:
     MemoryView(pointer storage, size_type size);
     ~MemoryView();
 
-    template <size_t _Dim> // enables type promotion between T[] and MemoryView<T>
-    MemoryView(value_type (&staticArray)[_Dim]) : MemoryView(staticArray, _Dim) {}
+    // enables type promotion between {T(),T(),T()} and MemoryView<T>
+    MemoryView(std::initializer_list<value_type> list)
+        : MemoryView(&*list.begin(), std::distance(list.begin(), list.end())) {}
+
+    // enables type promotion between T[] and MemoryView<T>
+    template <size_t _Dim>
+    MemoryView(value_type (&staticArray)[_Dim])
+        : MemoryView(staticArray, _Dim) {}
 
     MemoryView(MemoryView&& rvalue);
     MemoryView& operator =(MemoryView&& rvalue);
