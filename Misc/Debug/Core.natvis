@@ -161,15 +161,15 @@
   </Type>
 
   <Type Name="Core::Token&lt;*, char, *, *, * &gt;">
-    <DisplayString>{_data.Ptr,[_data.Ptr[-1]]s}</DisplayString>
-    <StringView>_data.Ptr,[_data.Ptr[-1]]s</StringView>
+    <DisplayString>{_data.Ptr,[(int)_data.Ptr[-1]]s}</DisplayString>
+    <StringView>_data.Ptr,[(int)_data.Ptr[-1]]s</StringView>
     <Expand>
       <Item Name="String">_data.Ptr,[_data.Ptr[-1]]s</Item>
-      <Item Name="Length">{_data.Ptr[-1]}</Item>
+      <Item Name="Length">(int)_data.Ptr[-1]</Item>
     </Expand>
   </Type>
   <Type Name="Core::Token&lt;*, wchar_t, *, *, * &gt;">
-    <DisplayString>{_data.Ptr,[_data.Ptr[-1]]su}</DisplayString>
+    <DisplayString>{_data.Ptr,[(int)_data.Ptr[-1]]su}</DisplayString>
     <StringView>_data.Ptr,[(int)_data.Ptr[-1]]su</StringView>
     <Expand>
       <Item Name="String">_data.Ptr,[_data.Ptr[-1]]su</Item>
