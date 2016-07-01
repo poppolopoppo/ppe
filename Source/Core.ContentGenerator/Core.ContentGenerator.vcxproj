@@ -57,6 +57,7 @@
     <CustomBuild Include="Test_Pixmap.cpp" />
     <CustomBuild Include="Test_RTTI.cpp" />
     <CustomBuild Include="Test_Thread.cpp" />
+    <CustomBuild Include="Text_XML.cpp" />
   </ItemGroup>
   <ItemGroup>
   </ItemGroup>
