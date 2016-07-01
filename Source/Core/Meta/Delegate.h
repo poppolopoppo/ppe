@@ -68,7 +68,8 @@ public:
     typedef return_type (*callback_type)(void*, _Args... );
 
     Delegate() : BaseDelegate(nullptr, nullptr) {}
-    Delegate(callback_type pcallback, void* pcallee = nullptr) : BaseDelegate(pcallback, pcallee) {}
+    Delegate(callback_type pcallback, void* pcallee = nullptr)
+        : BaseDelegate(reinterpret_cast<void*>(pcallback), pcallee) {}
 
     Delegate(const Delegate& other) : BaseDelegate(other) {}
     Delegate& operator =(const Delegate& other) {
@@ -78,7 +79,7 @@ public:
 
     return_type Invoke(_Args... args) const {
         Assert(Valid());
-        return static_cast<callback_type>(_pcallback)(_pcallee, std::forward<_Args>(args)... );
+        return reinterpret_cast<callback_type>(_pcallback)(_pcallee, std::forward<_Args>(args)... );
     }
 
     FORCE_INLINE return_type operator ()(_Args... args) const {

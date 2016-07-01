@@ -56,6 +56,10 @@
 #define FARMHASH_STATIC_CONST_INTEGRAL(_TYPE, _NAME, _VALUE) enum : _TYPE { _NAME = (_VALUE) }
 #define NAMESPACE_FOR_HASH_FUNCTIONS FarmHash
 
+#ifdef LLVM_FOR_WINDOWS
+#   undef FARMHASH_ASSUME_SSE41
+#endif
+
 #ifdef FARMHASH_INLINE_DEF
 #   define FARMHASH_INLINE inline
 #else

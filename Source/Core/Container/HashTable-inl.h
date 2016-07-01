@@ -215,6 +215,7 @@ template <typename _Key, typename _Value, typename _Hash, typename _Equal, typen
 bool HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::erase(const key_type& key, value_type* pValueIFP) {
     const details::HashTableProbe_ probe = MakeProbe_();
     Assert(0 < probe.Size);
+    UNUSED(probe);
 
     UNUSED(key);
     UNUSED(pValueIFP);
@@ -505,6 +506,7 @@ void HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::RehashUsingProbe_(detai
     Assert(AliasesToContainer_(probe));
 
     const size_type n = probe.Size;
+    UNUSED(n);
 
     SetSize_(0);
     probe.Size = 0;

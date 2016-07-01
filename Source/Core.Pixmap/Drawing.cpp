@@ -106,8 +106,6 @@ void DrawPolyline(FloatImage* img, const MemoryView<const int2>& polyline, const
 }
 //----------------------------------------------------------------------------
 void DrawPolyline(FloatImage* img, const MemoryView<const float2>& uvs, const ColorRGBAF& color) {
-    const int w = checked_cast<int>(img->Width());
-    const int h = checked_cast<int>(img->Height());
     forrange(i, 1, uvs.size())
         DrawLine(img, uvs[i - 1],  uvs[i], color);
 }
@@ -118,8 +116,6 @@ void DrawPolygon(FloatImage* img, const MemoryView<const int2>& polygon, const C
 }
 //----------------------------------------------------------------------------
 void DrawPolygon(FloatImage* img, const MemoryView<const float2>& uvs, const ColorRGBAF& color) {
-    const int w = checked_cast<int>(img->Width());
-    const int h = checked_cast<int>(img->Height());
     DrawPolyline(img, uvs, color);
     DrawLine(img, uvs.back(), uvs.front(), color);
 }

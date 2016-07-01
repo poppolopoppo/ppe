@@ -76,7 +76,7 @@ hash_t hash_value(const MetaObject& object) {
     const MetaObject* pObject = &object;
 
     hash_t h(CORE_HASH_VALUE_SEED);
-    ForEachProperty(object.RTTI_MetaClass(),
+    ForEachProperty(metaClass,
         [pObject, &h](const MetaClass* pMetaClass, const MetaProperty* pProp) {
             UNUSED(pMetaClass);
             hash_combine(h, hash_t(pProp->HashValue(pObject)));
@@ -92,7 +92,7 @@ u128 Fingerprint128(const MetaObject& object) {
     const MetaObject* pObject = &object;
 
     STACKLOCAL_POD_STACK(hash_t, hashValues, 128);
-    ForEachProperty(object.RTTI_MetaClass(),
+    ForEachProperty(metaClass,
         [pObject, &hashValues](const MetaClass* pMetaClass, const MetaProperty* pProp) {
             UNUSED(pMetaClass);
             hashValues.Push(pProp->HashValue(pObject));

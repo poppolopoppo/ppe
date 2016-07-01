@@ -366,9 +366,6 @@ namespace {
 static void WorkerThreadLaunchpad_(TaskManager* pmanager, size_t workerIndex, size_t affinityMask) {
     Assert(pmanager);
 
-    TaskManagerImpl* const pimpl = pmanager->Pimpl();
-    Assert(pimpl);
-
     char workerName[256];
     Format(workerName, "{0}_Worker#{1}", pmanager->Name(), workerIndex);
     const ThreadContextStartup threadStartup(workerName, pmanager->ThreadTag());
@@ -409,8 +406,8 @@ static void RunAndWaitForTask_(ITaskContext& context, RunAndWaitForArgs_* pArgs)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 TaskManagerImpl::TaskManagerImpl(TaskManager& manager)
-:   _manager(manager)
-,   _queue(FiberQueueCapacity_) {
+:   _queue(FiberQueueCapacity_)
+,   _manager(manager){
     _threads.reserve(_manager.WorkerCount());
 }
 //----------------------------------------------------------------------------
@@ -466,7 +463,7 @@ void TaskManagerImpl::Run(TaskWaitHandle* phandle, const MemoryView<const TaskDe
         counter = WorkerContext_::Instance().CreateCounter();
         counter->Reset(tasks.size());
 
-        *phandle = std::move(TaskWaitHandle(priority, counter.get()));
+        *phandle = TaskWaitHandle(priority, counter.get());
         Assert(phandle->Valid());
     }
 

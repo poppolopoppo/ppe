@@ -466,7 +466,7 @@ private:
                 throw BinarySerializerException("invalid RTTI name index");
 
             const StringSlice& data = _owner->_strings[string_i];
-            name = data;
+            name = RTTI::Name(data);
             return true;
         }
 
@@ -1065,10 +1065,12 @@ void BinarySerialize_::Finalize(IStreamWriter* writer) {
 
     const std::streamoff dataBegin = writer->TellO();
     const std::streamoff dataEnd = dataBegin + checked_cast<std::streamoff>(_objectStream.SizeInBytes());
+    UNUSED(dataEnd);
     writer->Write(_objectStream.Pointer(), _objectStream.SizeInBytes());
 
     const std::streamoff fileEnd = writer->TellO();
     Assert(fileEnd == dataEnd);
+    UNUSED(fileEnd);
     writer->WritePOD(SECTION_END_);
 }
 //----------------------------------------------------------------------------

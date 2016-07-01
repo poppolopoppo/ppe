@@ -7,6 +7,11 @@
 //------------------------------------------------------------------------------
 .CLangWindowsBase =
 [
+    .Defines =
+    {
+        'LLVM_FOR_WINDOWS'
+    }
+
     .FixWarningsOnWindows = ''
         + ' -Wno-error'
         + ' -Wno-expansion-to-defined'          // macro expansion producing 'defined' has undefined behavior (nécessaire pour WinAPI)
@@ -19,6 +24,8 @@
         + ' -Wno-unused-command-line-argument'  // ignore les options non suportées par CLANG (sinon échoue a cause de /WError)
         + ' -Wno-unused-local-typedef'          // ignore les typedefs locaux non utilisés (nécessaire pour STATIC_ASSERT(x))
         + ' -Wno-unused-value'                  // ignore les expressions non utilisées (UNUSED(x) ou CRT)
+        + ' -Wno-#pragma-messages'              // don't consider #pragma message as warnings
+        + ' -Wno-nonportable-include-path'      // windows libs are filled with includes not matching file system case, this will ignore those
 
     .CompilerOptions = ''
         + .FixWarningsOnWindows

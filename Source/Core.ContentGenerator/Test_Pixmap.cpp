@@ -92,7 +92,7 @@ static void Test_DXTCompression_(const Filename& input) {
         AssertNotReached();
 
     Pixmap::DXTImage compressed;
-    Pixmap::Compress(&compressed, &img);
+    Pixmap::Compress(&compressed, &img, Pixmap::DXTImage::Quality::HighQuality);
 }
 //----------------------------------------------------------------------------
 static void Test_ConvexHull_(const Filename& input) {

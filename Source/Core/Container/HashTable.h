@@ -409,6 +409,7 @@ public:
     void insert_AssertUnique(const value_type& value) {
         const Pair<iterator, bool> it = insert(value);
         Assert(it.second);
+        UNUSED(it);
     }
 
     void insert(std::initializer_list<value_type> ilist) { insert(ilist.begin(), ilist.end()); }

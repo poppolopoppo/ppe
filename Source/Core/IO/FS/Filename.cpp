@@ -109,6 +109,7 @@ void Filename::SetMountingPoint(const Core::MountingPoint& mountingPoint) {
     STACKLOCAL_POD_ARRAY(Dirname, dirnames, _dirpath.Depth());
     const size_t k = _dirpath.ExpandPath(oldMountingPoint, dirnames);
     Assert(_dirpath.Depth() == k);
+    UNUSED(k);
     _dirpath = Core::Dirpath(mountingPoint, dirnames);
 }
 //----------------------------------------------------------------------------

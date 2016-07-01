@@ -102,8 +102,6 @@ size_t ConvexHull2D_MonotoneChain(const MemoryView<size_t>& hull, const MemoryVi
         hull[count++] = indices[i];
     }
 
-    const size_t t = count;
-
     // Build upper hull
     reverseforrange(i, 0, points.size() - 1) {
         while (count > 1 && Cross(points[hull[count - 2]], points[hull[count - 1]], points[indices[i]]) >= 0)

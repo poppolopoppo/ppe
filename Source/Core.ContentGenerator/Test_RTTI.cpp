@@ -274,7 +274,7 @@ private:
         STACKLOCAL_POD_ARRAY(RTTI::Name::char_type, cstr, count);
         forrange(i, 0, count)
             cstr[i] = (char)(_rand.Next('a'+0, 'z'+1));
-        name = MakeStringSlice(cstr);
+        name = RTTI::Name(MakeStringSlice(cstr));
     }
 
     void Randomize_(RTTI::BinaryData& rawdata) {

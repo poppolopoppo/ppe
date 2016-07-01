@@ -36,8 +36,6 @@ bool BitSet::AllFalse() const {
     const size_t wordCount = WordCapacity(_size);
     Assert(wordCount);
 
-    constexpr word_t allTrueMask = word_t(-1);
-
     forrange(i, 0, wordCount - 1) {
         if (_storage[i] != 0)
             return false;
@@ -55,8 +53,6 @@ bool BitSet::AllFalse() const {
 bool BitSet::AnyTrue() const {
     const size_t wordCount = WordCapacity(_size);
     Assert(wordCount);
-
-    constexpr word_t allTrueMask = word_t(-1);
 
     forrange(i, 0, wordCount - 1) {
         if (_storage[i] != 0)

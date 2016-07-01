@@ -204,7 +204,7 @@ template <>
 struct MetaTypePromote<String, RTTI::Name> {
     typedef std::true_type enabled;
     bool operator ()(RTTI::Name* dst, const String& value) const {
-        *dst = MakeStringSlice(value);
+        *dst = RTTI::Name(value);
         return true;
     }
 };

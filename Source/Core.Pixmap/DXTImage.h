@@ -54,7 +54,7 @@ public:
         HighQuality, // Better refinement, 30-40% slower
     };
 
-    friend void Compress(DXTImage* dst, const Image* src, Quality quality = Quality::Default);
+    friend void Compress(DXTImage* dst, const Image* src, Quality quality);
 
     SINGLETON_POOL_ALLOCATED_DECL();
 

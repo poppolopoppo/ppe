@@ -19,9 +19,9 @@ template <typename _Tag>
 using EntityTagToken = Core::Token<
     _Tag,
     char,
-    CaseSensitive::True,
+    Case::Sensitive,
     EntityTagTokenTraits,
-    ALLOCATOR(Material, char)
+    ALLOCATOR(Entity, char)
 >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

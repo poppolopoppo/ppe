@@ -180,13 +180,13 @@ struct PixelTraits_<_Depth, ColorMask::RGB, ColorSpace::YCoCg> {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-template <template <typename> typename _Functor, typename _Dst, typename _Src, ColorDepth _Depth, ColorMask _Mask, ColorSpace _Space>
+template <template <typename> class _Functor, typename _Dst, typename _Src, ColorDepth _Depth, ColorMask _Mask, ColorSpace _Space>
 static void TypedMaskSpaceConvert_(_Dst* dst, const _Src* src) {
     typedef PixelTraits_<_Depth, _Mask, _Space> pixel_traits;
     _Functor<pixel_traits>()(dst, src);
 }
 //----------------------------------------------------------------------------
-template <template <typename> typename _Functor, typename _Dst, typename _Src, ColorDepth _Depth, ColorMask _Mask >
+template <template <typename> class _Functor, typename _Dst, typename _Src, ColorDepth _Depth, ColorMask _Mask >
 static void TypedMaskConvert_(_Dst* dst, const _Src* src, ColorSpace space ) {
     switch (space)
     {
@@ -205,7 +205,7 @@ static void TypedMaskConvert_(_Dst* dst, const _Src* src, ColorSpace space ) {
     }
 }
 //----------------------------------------------------------------------------
-template <template <typename> typename _Functor, typename _Dst, typename _Src, ColorDepth _Depth >
+template <template <typename> class _Functor, typename _Dst, typename _Src, ColorDepth _Depth >
 static void TypedConvert_(_Dst* dst, const _Src* src, ColorMask mask, ColorSpace space ) {
     switch (mask)
     {
@@ -227,7 +227,7 @@ static void TypedConvert_(_Dst* dst, const _Src* src, ColorMask mask, ColorSpace
     }
 }
 //----------------------------------------------------------------------------
-template <template <typename> typename _Functor, typename _Dst, typename _Src>
+template <template <typename> class _Functor, typename _Dst, typename _Src>
 static void Convert_(_Dst* dst, const _Src* src, ColorDepth depth, ColorMask mask, ColorSpace space ) {
     switch (depth)
     {
@@ -366,7 +366,7 @@ void Image::Resize_DiscardData(size_t width, size_t height) {
     Assert((0 != _width) == (0 != _height));
 
     if (_width == width &&
-        _height == _height)
+        _height == height)
         return;
 
     _width = width;
@@ -381,7 +381,7 @@ void Image::Resize_DiscardData(size_t width, size_t height, ColorDepth depth, Co
     Assert((space == ColorSpace::YCoCg) == (mask == ColorMask::RGBA));
 
     if (_width == width &&
-        _height == _height &&
+        _height == height &&
         _depth == depth &&
         _mask == mask &&
         _space == space)

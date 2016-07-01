@@ -222,7 +222,7 @@ void DXTImage::Resize_DiscardData(size_t width, size_t height, BlockFormat forma
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void Compress(DXTImage* dst, const Image* src, DXTImage::Quality quality/* = Quality::Default */) {
+void Compress(DXTImage* dst, const Image* src, DXTImage::Quality quality) {
     Assert(dst);
     Assert(src);
     AssertRelease(src->Depth() == ColorDepth::_8bits);
