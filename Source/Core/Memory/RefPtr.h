@@ -265,12 +265,10 @@ std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Trait
     return oss << refptr.get();
 }
 //----------------------------------------------------------------------------
-#ifdef WITH_CORE_SAFEPTR
 template < typename T, typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const SafePtr<T>& safeptr) {
     return oss << safeptr.get();
 }
-#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
