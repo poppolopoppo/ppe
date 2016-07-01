@@ -1,0 +1,13 @@
+#once
+{
+    .ProjectName = 'Core.Lattice'
+    .ProjectPath = '$SourceDiretory$/Core.Lattice'
+    .ProjectSolutionFolder = 'Core.Content'
+    .UnityNumFiles = 1
+    .ProjectIsolatedFiles =
+    {
+        'Lattice.cpp',
+        'Lattice_extern.cpp',
+    }
+    #include "../../Build/Templates/Library.bff"
+}
