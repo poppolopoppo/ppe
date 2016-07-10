@@ -8,6 +8,8 @@
 #include "Core/Container/Vector.h"
 #include "Core/Container/Token.h"
 
+#include "Core/IO/String.h"
+
 #include "Core/Maths/Geometry/ScalarVector_fwd.h"
 #include "Core/Maths/Transform/ScalarMatrix_fwd.h"
 

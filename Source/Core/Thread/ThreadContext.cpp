@@ -13,7 +13,7 @@
 #   define WITH_CORE_THREADCONTEXT_NAME
 #endif
 
-#ifdef WITH_CORE_THREADCONTEXT_NAME
+#ifdef OS_WINDOWS
 #   include <Windows.h>
 #endif
 
