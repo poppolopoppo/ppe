@@ -2,11 +2,11 @@
 
 #include "Core/Maths/MathHelpers.h"
 
-#include "Core/Maths/Geometry/ScalarBoundingBox.h"
-#include "Core/Maths/Geometry/ScalarBoundingBoxHelpers.h"
+#include "Core/Maths/ScalarBoundingBox.h"
+#include "Core/Maths/ScalarBoundingBoxHelpers.h"
 
-#include "Core/Maths/Geometry/ScalarVector.h"
-#include "Core/Maths/Geometry/ScalarVectorHelpers.h"
+#include "Core/Maths/ScalarVector.h"
+#include "Core/Maths/ScalarVectorHelpers.h"
 
-#include "Core/Maths/Transform/ScalarMatrix.h"
-#include "Core/Maths/Transform/ScalarMatrixHelpers.h"
+#include "Core/Maths/ScalarMatrix.h"
+#include "Core/Maths/ScalarMatrixHelpers.h"
