@@ -87,6 +87,12 @@ auto RawStorage<T, _Allocator>::at(size_type index) const -> const_reference {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
+void RawStorage<T, _Allocator>::CopyFrom(const MemoryView<const T>& src) {
+    Resize_DiscardData(src.size());
+    src.CopyTo(MakeView());
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
 void RawStorage<T, _Allocator>::Swap(RawStorage& other) {
     std::swap(other._storage, _storage);
     std::swap(other._size, _size);

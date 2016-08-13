@@ -81,6 +81,8 @@ public:
     FORCE_INLINE reference operator [](size_type index) { return at(index); }
     FORCE_INLINE const_reference operator [](size_type index) const { return at(index); }
 
+    void CopyFrom(const MemoryView<const T>& src);
+
     void Swap(RawStorage& other);
 
     void Resize(size_type size, bool keepData);
