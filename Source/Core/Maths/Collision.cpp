@@ -12,7 +12,7 @@
 #include "ScalarVector.h"
 #include "ScalarVectorHelpers.h"
 
-#include "../MathHelpers.h"
+#include "MathHelpers.h"
 
 namespace Core {
 namespace Collision {
