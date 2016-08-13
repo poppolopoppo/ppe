@@ -79,6 +79,8 @@ public:
     void Push(_Arg0&& arg0, _Args&&... args);
     bool Pop(pointer pvalue = nullptr);
 
+    bool Contains(const_reference item) const;
+
     pointer Peek() { return ((0 == _size) ? nullptr : &_storage[_size - 1] ); }
     const_pointer Peek() const { return ((0 == _size) ? nullptr : &_storage[_size - 1] ); }
 
@@ -117,7 +119,7 @@ void Stack<T, _IsPod>::Push(_Arg0&& arg0, _Args&&... args) {
     Assert(_storage);
     Assert(_size < _capacity);
 
-    new ((void*)&_storage[_size++]) T{ std::forward<_Arg0>(arg0), std::forward<_Args>(args)... };
+    AllocatorBase<T>().construct((T*)&_storage[_size++], std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
@@ -134,6 +136,11 @@ bool Stack<T, _IsPod>::Pop(pointer pvalue/* = nullptr */) {
         elt.~T();
 
     return true;
+}
+//----------------------------------------------------------------------------
+template <typename T, bool _IsPod>
+bool Stack<T, _IsPod>::Contains(const_reference item) const {
+    return (end() != std::find(begin(), end(), item));
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
@@ -158,6 +165,11 @@ bool Stack<T, _IsPod>::DeallocateIFP(pointer p, size_type count) {
     // can only delete the last block allocated !
     if ((p + count) != (_storage + _size))
         return false;
+
+    if (false == _IsPod) {
+        for (size_t i = _size - count; i < _size; ++i)
+            _storage[i].~T();
+    }
 
     _size -= count;
     return true;
