@@ -3,8 +3,8 @@
 #include "Core.Engine/Engine.h"
 
 #include "Core/Color/Color.h"
-#include "Core/Maths/Transform/ScalarMatrix_fwd.h"
-#include "Core/Maths/Geometry/ScalarVector.h"
+#include "Core/Maths/ScalarMatrix_fwd.h"
+#include "Core/Maths/ScalarVector.h"
 
 namespace Core {
 namespace Engine {

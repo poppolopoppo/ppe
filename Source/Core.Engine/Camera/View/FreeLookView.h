@@ -4,7 +4,7 @@
 
 #include "Camera/ICameraView.h"
 
-#include "Core/Maths/Geometry/ScalarVector.h"
+#include "Core/Maths/ScalarVector.h"
 #include "Core/Memory/RefPtr.h"
 
 namespace Core {

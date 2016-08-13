@@ -2,9 +2,9 @@
 
 #include "Core.Engine/Engine.h"
 
-#include "Core/Maths/Geometry/Frustum.h"
-#include "Core/Maths/Geometry/ScalarVector.h"
-#include "Core/Maths/Transform/ScalarMatrix.h"
+#include "Core/Maths/Frustum.h"
+#include "Core/Maths/ScalarVector.h"
+#include "Core/Maths/ScalarMatrix.h"
 
 namespace Core {
 namespace Engine {

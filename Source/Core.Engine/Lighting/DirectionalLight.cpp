@@ -2,9 +2,9 @@
 
 #include "DirectionalLight.h"
 
-#include "Core/Maths/Geometry/ScalarVectorHelpers.h"
-#include "Core/Maths/Transform/ScalarMatrix.h"
-#include "Core/Maths/Transform/ScalarMatrixHelpers.h"
+#include "Core/Maths/ScalarVectorHelpers.h"
+#include "Core/Maths/ScalarMatrix.h"
+#include "Core/Maths/ScalarMatrixHelpers.h"
 
 namespace Core {
 namespace Engine {

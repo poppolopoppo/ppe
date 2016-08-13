@@ -2,9 +2,9 @@
 
 #include "Core/Core.h"
 
-#include "Core/Maths/Geometry/ScalarVector.h"
+#include "Core/Maths/ScalarVector.h"
 #include "Core/Maths/MathHelpers.h"
-#include "Core/Maths/Packing/PackingHelpers.h"
+#include "Core/Maths/PackingHelpers.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -106,9 +106,6 @@ void MinMax(const ScalarVector<T, _Dim>& lhs, const ScalarVector<T, _Dim>& rhs,
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
-ScalarVector<T, _Dim> Abs(const ScalarVector<T, _Dim>& v);
-//----------------------------------------------------------------------------
 template <typename T>
 T Det(const ScalarVector<T, 2>& lhs, const ScalarVector<T, 2>& rhs);
 //----------------------------------------------------------------------------
@@ -129,6 +126,12 @@ ScalarVector<T, _Dim> Refract(const ScalarVector<T, _Dim>& incident, const Scala
 template <typename T, size_t _Dim>
 ScalarVector<T, _Dim> Abs(const ScalarVector<T, _Dim>& value);
 //----------------------------------------------------------------------------
+template <typename T, size_t _Dim, typename U>
+ScalarVector<T, _Dim> BarycentricLerp(const ScalarVector<T, _Dim>& v0, const ScalarVector<T, _Dim>& v1, const ScalarVector<T, _Dim>& v2, U f0, U f1, U f2);
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim, typename U>
+ScalarVector<T, _Dim> BarycentricLerp(const ScalarVector<T, _Dim>& v0, const ScalarVector<T, _Dim>& v1, const ScalarVector<T, _Dim>& v2, const ScalarVector<U, 3>& uvw);
+//----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 ScalarVector<T, _Dim> Clamp(const ScalarVector<T, _Dim>& value, T vmin, T vmax);
 //----------------------------------------------------------------------------
@@ -146,6 +149,12 @@ ScalarVector<T, _Dim> Lerp(const ScalarVector<T, _Dim>& v0, const ScalarVector<T
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 ScalarVector<float, _Dim> LinearStep(const ScalarVector<T, _Dim>& value, const ScalarVector<T, _Dim>& vmin, const ScalarVector<T, _Dim>& vmax);
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+ScalarVector<float, _Dim> Pow(const ScalarVector<T, _Dim>& value, T n);
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+ScalarVector<float, _Dim> Pow(const ScalarVector<T, _Dim>& value, const ScalarVector<T, _Dim>& n);
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 ScalarVector<T, _Dim> Rcp(const ScalarVector<T, _Dim>& f);
@@ -217,4 +226,4 @@ FORCE_INLINE ScalarVector<float, 3> UByte4N_to_Float3M11(const ScalarVector<u8, 
 //----------------------------------------------------------------------------
 } //!namespace Core
 
-#include "Core/Maths/Geometry/ScalarVectorHelpers-inl.h"
+#include "Core/Maths/ScalarVectorHelpers-inl.h"

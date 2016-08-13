@@ -5,11 +5,11 @@
 #include "Core.Graphics/Device/Geometry/VertexDeclaration.h"
 #include "Core.Graphics/Device/Geometry/VertexSubPart.h"
 
-#include "Core/Maths/Packing/PackedVectors.h"
-#include "Core/Maths/Packing/PackingHelpers.h"
+#include "Core/Maths/PackedVectors.h"
+#include "Core/Maths/PackingHelpers.h"
 
-#include "Core/Maths/Geometry/ScalarVector.h"
-#include "Core/Maths/Geometry/ScalarVectorHelpers.h"
+#include "Core/Maths/ScalarVector.h"
+#include "Core/Maths/ScalarVectorHelpers.h"
 
 namespace Core {
 namespace Engine {

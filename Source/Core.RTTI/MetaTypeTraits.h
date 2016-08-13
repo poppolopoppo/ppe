@@ -10,9 +10,9 @@
 #include "Core/IO/FS/Basename.h"
 #include "Core/IO/FS/Dirpath.h"
 #include "Core/IO/FS/Filename.h"
-#include "Core/Maths/Geometry/ScalarBoundingBox_fwd.h"
-#include "Core/Maths/Packing/PackedVectors.h"
-#include "Core/Maths/Packing/PackingHelpers.h"
+#include "Core/Maths/ScalarBoundingBox_fwd.h"
+#include "Core/Maths/PackedVectors.h"
+#include "Core/Maths/PackingHelpers.h"
 #include "Core/Time/DateTime.h"
 #include "Core/Time/Timestamp.h"
 
@@ -29,7 +29,7 @@ namespace RTTI {
 template <typename T>
 struct MetaTypeTraits;
 //----------------------------------------------------------------------------
-template <typename T, typename _Enabled = void>
+template <typename T, typename _Enabled>
 struct MetaTypeTraitsImpl {
     typedef T wrapped_type;
     typedef T wrapper_type;
@@ -72,6 +72,31 @@ struct MetaTypeTraitsDefault {
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Enums:
+//----------------------------------------------------------------------------
+template <typename T>
+struct MetaTypeTraitsImpl< T, typename std::enable_if< std::is_enum<T>::value >::type > {
+    typedef T wrapped_type;
+    typedef typename std::conditional<sizeof(T) < sizeof(u64), u32, u64>::type wrapper_type;
+    STATIC_ASSERT(sizeof(T) <= sizeof(u64));
+
+    typedef MetaType< wrapper_type > meta_type;
+
+    static const MetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
+        return MetaTypeScalarTraits< wrapper_type >::Instance();
+    }
+
+    static bool IsDefaultValue(const wrapped_type& value) { return (wrapped_type() == value); }
+
+    static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) { return lhs == rhs; }
+
+    static void WrapMove(wrapper_type& dst, wrapped_type&& src) { dst = wrapper_type(src); }
+    static void WrapCopy(wrapper_type& dst, const wrapped_type& src) { dst = wrapper_type(src); }
+
+    static void UnwrapMove(wrapped_type& dst, wrapper_type&& src) { dst = wrapped_type(src); }
+    static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src) { dst = wrapped_type(src); }
+};
 //----------------------------------------------------------------------------
 // Strongly typed numeric:
 //----------------------------------------------------------------------------

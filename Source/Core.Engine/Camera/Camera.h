@@ -4,7 +4,7 @@
 
 #include "Core.Engine/Camera/CameraModel.h"
 
-#include "Core/Maths/Geometry/ScalarRectangle_fwd.h"
+#include "Core/Maths/ScalarRectangle_fwd.h"
 #include "Core/Memory/RefPtr.h"
 
 namespace Core {

@@ -2,7 +2,7 @@
 
 #include "Core.Graphics/Graphics.h"
 
-#include "Core/Maths/Geometry/ScalarRectangle.h"
+#include "Core/Maths/ScalarRectangle.h"
 
 namespace Core {
 namespace Graphics {

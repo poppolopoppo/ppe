@@ -8,10 +8,10 @@
 
 #include "Core/Container/HashMap.h"
 #include "Core/Container/Pair.h"
-#include "Core/Maths/Geometry/Plane.h"
+#include "Core/Maths/Plane.h"
 
-#include "Core/Maths/Geometry/ScalarVector.h"
-#include "Core/Maths/Geometry/ScalarVectorHelpers.h"
+#include "Core/Maths/ScalarVector.h"
+#include "Core/Maths/ScalarVectorHelpers.h"
 
 namespace Core {
 namespace Engine {

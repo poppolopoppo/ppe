@@ -5,8 +5,8 @@
 #include "Input/State/KeyboardInputHandler.h"
 #include "Input/State/MouseInputHandler.h"
 
-#include "Core/Maths/Geometry/ScalarVector.h"
-#include "Core/Maths/Transform/ScalarMatrix.h"
+#include "Core/Maths/ScalarVector.h"
+#include "Core/Maths/ScalarMatrix.h"
 #include "Core/Time/Timeline.h"
 
 #include "Core.Graphics/Window/BasicWindow.h"

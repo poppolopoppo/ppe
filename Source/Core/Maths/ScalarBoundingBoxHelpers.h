@@ -2,9 +2,9 @@
 
 #include "Core/Core.h"
 
-#include "Core/Maths/Geometry/ScalarBoundingBox.h"
-#include "Core/Maths/Geometry/ScalarVector.h"
-#include "Core/Maths/Geometry/ScalarVectorHelpers.h"
+#include "Core/Maths/ScalarBoundingBox.h"
+#include "Core/Maths/ScalarVector.h"
+#include "Core/Maths/ScalarVectorHelpers.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -43,4 +43,4 @@ ScalarVector<T, _Dim> Unquantize(const ScalarBoundingBox<T, _Dim>& aabb, const S
 //----------------------------------------------------------------------------
 } //!namespace Core
 
-#include "Core/Maths/Geometry/ScalarBoundingBoxHelpers-inl.h"
+#include "Core/Maths/ScalarBoundingBoxHelpers-inl.h"

@@ -2,7 +2,7 @@
 
 #include "CameraModel.h"
 
-#include "Core/Maths/Transform/ScalarMatrixHelpers.h"
+#include "Core/Maths/ScalarMatrixHelpers.h"
 
 #include "Camera.h"
 #include "CameraController.h"

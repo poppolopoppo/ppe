@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Core/Color/Color.h"
-#include "Core/Maths/Transform/ScalarMatrix.h"
+#include "Core/Maths/ScalarMatrix.h"
 #include "Core/Memory/UniquePtr.h"
 #include "Core/Time/Timely.h"
 

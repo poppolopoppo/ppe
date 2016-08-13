@@ -10,8 +10,8 @@
 #include "Device/DeviceResource.h"
 #include "Device/DeviceResourceBuffer.h"
 
-#include "Core/Maths/Geometry/ScalarVector.h"
-#include "Core/Maths/Geometry/ScalarRectangle.h"
+#include "Core/Maths/ScalarVector.h"
+#include "Core/Maths/ScalarRectangle.h"
 
 namespace Core {
 namespace Graphics {

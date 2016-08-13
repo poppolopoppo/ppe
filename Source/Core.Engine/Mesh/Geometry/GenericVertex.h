@@ -3,8 +3,8 @@
 #include "Core.Engine/Engine.h"
 
 #include "Core/Color/Color.h"
-#include "Core/Maths/Geometry/ScalarVector_fwd.h"
-#include "Core/Maths/Packing/PackedVectors.h"
+#include "Core/Maths/ScalarVector_fwd.h"
+#include "Core/Maths/PackedVectors.h"
 #include "Core/Memory/MemoryView.h"
 
 namespace Core {

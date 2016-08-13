@@ -6,7 +6,7 @@
 
 #include "Core/Allocator/PoolAllocator.h"
 #include "Core/IO/String.h"
-#include "Core/Maths/Geometry/ScalarVector.h"
+#include "Core/Maths/ScalarVector.h"
 #include "Core/Memory/RefPtr.h"
 
 namespace Core {

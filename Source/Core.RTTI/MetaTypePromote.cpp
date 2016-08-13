@@ -6,8 +6,8 @@
 #include "MetaObject.h"
 #include "MetaProperty.h"
 
-#include "Core/Maths/Geometry/ScalarVector.h"
-#include "Core/Maths/Transform/ScalarMatrix.h"
+#include "Core/Maths/ScalarVector.h"
+#include "Core/Maths/ScalarMatrix.h"
 
 namespace Core {
 namespace RTTI {

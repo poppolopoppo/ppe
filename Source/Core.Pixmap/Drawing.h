@@ -4,8 +4,8 @@
 #include "Core.Pixmap/Pixmap_fwd.h"
 
 #include "Core/Color/Color_fwd.h"
-#include "Core/Maths/Geometry/ScalarBoundingBox_fwd.h"
-#include "Core/Maths/Geometry/ScalarVector_fwd.h"
+#include "Core/Maths/ScalarBoundingBox_fwd.h"
+#include "Core/Maths/ScalarVector_fwd.h"
 
 namespace Core {
 namespace Pixmap {

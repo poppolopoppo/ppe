@@ -8,7 +8,7 @@
 #include "Core/Color/Color.h"
 #include "Core/Diagnostic/Logger.h"
 #include "Core/Container/BitSet.h"
-#include "Core/Maths/Geometry/ScalarVector.h"
+#include "Core/Maths/ScalarVector.h"
 #include "Core/Maths/MathHelpers.h"
 
 #define STB_IMAGE_RESIZE_IMPLEMENTATION

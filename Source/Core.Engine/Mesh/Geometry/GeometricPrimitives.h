@@ -4,7 +4,7 @@
 
 #include "Core/Color/Color.h"
 #include "Core/Container/Vector.h"
-#include "Core/Maths/Geometry/ScalarVector_fwd.h"
+#include "Core/Maths/ScalarVector_fwd.h"
 
 namespace Core {
 namespace Engine {

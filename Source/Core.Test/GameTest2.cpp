@@ -4,14 +4,14 @@
 
 #include "Core/Diagnostic/Logger.h"
 #include "Core/IO/VirtualFileSystem.h"
-#include "Core/Maths/Transform/ScalarMatrixHelpers.h"
+#include "Core/Maths/ScalarMatrixHelpers.h"
 
 #include "Core.Graphics/Device/DeviceEncapsulator.h"
-#include "Core.Graphics/Device/Geometry/IndexBuffer.h"
-#include "Core.Graphics/Device/Geometry/PrimitiveType.h"
-#include "Core.Graphics/Device/Geometry/VertexBuffer.h"
-#include "Core.Graphics/Device/Geometry/VertexDeclaration.h"
-#include "Core.Graphics/Device/Geometry/VertexTypes.h"
+#include "Core.Graphics/Device/IndexBuffer.h"
+#include "Core.Graphics/Device/PrimitiveType.h"
+#include "Core.Graphics/Device/VertexBuffer.h"
+#include "Core.Graphics/Device/VertexDeclaration.h"
+#include "Core.Graphics/Device/VertexTypes.h"
 #include "Core.Graphics/Device/Texture/SurfaceFormat.h"
 
 #include "Core.Engine/Effect/Effect.h"
@@ -39,7 +39,7 @@
 
 #include "Core.Engine/Camera/Camera.h"
 #include "Core.Engine/Input/Camera/KeyboardMouseCameraController.h"
-#include "Core.Engine/Mesh/Geometry/GenericVertexOptimizer.h"
+#include "Core.Engine/Mesh/GenericVertexOptimizer.h"
 #include "Core.Engine/Mesh/Loader/MeshLoader.h"
 #include "Core.Engine/Mesh/Loader/ModelLoader.h"
 #include "Core.Engine/Mesh/Model.h"

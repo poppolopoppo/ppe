@@ -12,7 +12,7 @@
 #include "Core/IO/FileSystem.h"
 #include "Core/IO/FileSystemConstNames.h"
 #include "Core/IO/VirtualFileSystem.h"
-#include "Core/Maths/Geometry/ScalarVector.h"
+#include "Core/Maths/ScalarVector.h"
 #include "Core/Memory/MemoryStream.h"
 
 #define STB_IMAGE_IMPLEMENTATION

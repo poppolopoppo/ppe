@@ -3,7 +3,7 @@
 #include "Core.Engine/Engine.h"
 
 #include "Core/Allocator/PoolAllocator.h"
-#include "Core/Maths/Geometry/ScalarBoundingBox.h"
+#include "Core/Maths/ScalarBoundingBox.h"
 #include "Core/Memory/MemoryView.h"
 #include "Core/Memory/RefPtr.h"
 #include "Core/Memory/UniquePtr.h"

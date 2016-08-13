@@ -8,8 +8,8 @@
 #include "Core/Memory/UniqueView.h"
 
 #include "Core/Maths/MathHelpers.h"
-#include "Core/Maths/Geometry/ScalarVector.h"
-#include "Core/Maths/Geometry/ScalarVectorHelpers.h"
+#include "Core/Maths/ScalarVector.h"
+#include "Core/Maths/ScalarVectorHelpers.h"
 
 namespace Core {
 namespace Engine {

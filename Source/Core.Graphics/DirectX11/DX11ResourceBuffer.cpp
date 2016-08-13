@@ -12,8 +12,8 @@
 #include "Device/Texture/SurfaceFormat.h"
 
 #include "Core/Allocator/PoolAllocator-impl.h"
-#include "Core/Maths/Geometry/ScalarVector.h"
-#include "Core/Maths/Geometry/ScalarRectangle.h"
+#include "Core/Maths/ScalarVector.h"
+#include "Core/Maths/ScalarRectangle.h"
 
 namespace Core {
 namespace Graphics {

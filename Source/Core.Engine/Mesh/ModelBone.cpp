@@ -3,7 +3,7 @@
 #include "ModelBone.h"
 
 #include "Core/Allocator/PoolAllocator-impl.h"
-#include "Core/Maths/Transform/ScalarMatrixHelpers.h"
+#include "Core/Maths/ScalarMatrixHelpers.h"
 
 namespace Core {
 namespace Engine {

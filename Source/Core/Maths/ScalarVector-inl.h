@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Maths/Geometry/ScalarVector.h"
+#include "Core/Maths/ScalarVector.h"
 
 namespace Core {
 //----------------------------------------------------------------------------

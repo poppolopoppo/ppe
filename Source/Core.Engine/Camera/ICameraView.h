@@ -2,7 +2,7 @@
 
 #include "Core.Engine/Engine.h"
 
-#include "Core/Maths/Transform/ScalarMatrix_fwd.h"
+#include "Core/Maths/ScalarMatrix_fwd.h"
 #include "Core/Memory/RefPtr.h"
 
 namespace Core {

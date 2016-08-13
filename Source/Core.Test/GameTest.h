@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Core/Color/Color.h"
-#include "Core/Maths/Transform/ScalarMatrix.h"
+#include "Core/Maths/ScalarMatrix.h"
 #include "Core/Time/Timely.h"
 
 #include "Core.Graphics/Device/DeviceAPI.h"

@@ -2,11 +2,11 @@
 
 #include "Core/Core.h"
 
-#include "Core/Maths/Packing/Packing_fwd.h"
-#include "Core/Maths/Packing/PackingHelpers.h"
+#include "Core/Maths/Packing_fwd.h"
+#include "Core/Maths/PackingHelpers.h"
 
-#include "Core/Maths/Geometry/ScalarVector.h"
-#include "Core/Maths/Geometry/ScalarVectorHelpers.h"
+#include "Core/Maths/ScalarVector.h"
+#include "Core/Maths/ScalarVectorHelpers.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -35,11 +35,19 @@ struct UX10Y10Z10W2N {
 
     static UX10Y10Z10W2N DefaultValue() { return UX10Y10Z10W2N(u32(0)); }
 
+    operator float3 () const { return Unpack().xyz(); }
+    operator float4 () const { return Unpack(); }
+
     FORCE_INLINE bool operator ==(const UX10Y10Z10W2N& other) const { return _data == other._data; }
     FORCE_INLINE bool operator !=(const UX10Y10Z10W2N& other) const { return !operator ==(other); }
 
     inline friend hash_t hash_value(const UX10Y10Z10W2N& v) { return hash_as_pod(v._data); }
 };
+//----------------------------------------------------------------------------
+UX10Y10Z10W2N BarycentricLerp(const UX10Y10Z10W2N& v0, const UX10Y10Z10W2N& v1, const UX10Y10Z10W2N& v2, float f0, float f1, float f2);
+UX10Y10Z10W2N BarycentricLerp(const UX10Y10Z10W2N& v0, const UX10Y10Z10W2N& v1, const UX10Y10Z10W2N& v2, const float3& uvw);
+//----------------------------------------------------------------------------
+UX10Y10Z10W2N Lerp(const UX10Y10Z10W2N& v0, const UX10Y10Z10W2N& v1, float f);
 //----------------------------------------------------------------------------
 UX10Y10Z10W2N Float01_to_UX10Y10Z10W2N(const float3& xyz, u8 w);
 UX10Y10Z10W2N Float01_to_UX10Y10Z10W2N(float x, float y, float z, u8 w);
@@ -108,4 +116,4 @@ ScalarVector<float, _Dim> NormUnpack(const ScalarVector<BasicNorm<T, _Traits>, _
 //----------------------------------------------------------------------------
 } //!namespace Core
 
-#include "Core/Maths/Packing/PackedVectors-inl.h"
+#include "Core/Maths/PackedVectors-inl.h"

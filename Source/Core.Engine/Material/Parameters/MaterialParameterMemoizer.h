@@ -7,8 +7,8 @@
 #include "Core.Engine/Material/IMaterialParameter.h"
 #include "Core.Engine/Material/MaterialVariability.h"
 
-#include "Core/Maths/Geometry/ScalarVector_fwd.h"
-#include "Core/Maths/Transform/ScalarMatrix_fwd.h"
+#include "Core/Maths/ScalarVector_fwd.h"
+#include "Core/Maths/ScalarMatrix_fwd.h"
 
 #include "Core/Allocator/PoolAllocator.h"
 

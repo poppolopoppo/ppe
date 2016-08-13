@@ -11,9 +11,9 @@
 #include "Core.Pixmap/ImageHelpers.h"
 #include "Core.Pixmap/MipMapChain.h"
 
-#include "Core/Maths/Geometry/BinPacking.h"
-#include "Core/Maths/Geometry/ScalarBoundingBox.h"
-#include "Core/Maths/Geometry/ScalarVector.h"
+#include "Core/Maths/BinPacking.h"
+#include "Core/Maths/ScalarBoundingBox.h"
+#include "Core/Maths/ScalarVector.h"
 #include "Core/Maths/RandomGenerator.h"
 
 namespace Core {

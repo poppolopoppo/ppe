@@ -5,9 +5,9 @@
 #include "FloatImage.h"
 
 #include "Core/Color/Color.h"
-#include "Core/Maths/Geometry/ScalarBoundingBox.h"
-#include "Core/Maths/Geometry/ScalarVector.h"
-#include "Core/Maths/Geometry/ScalarVectorHelpers.h"
+#include "Core/Maths/ScalarBoundingBox.h"
+#include "Core/Maths/ScalarVector.h"
+#include "Core/Maths/ScalarVectorHelpers.h"
 #include "Core/Maths/MathHelpers.h"
 
 namespace Core {

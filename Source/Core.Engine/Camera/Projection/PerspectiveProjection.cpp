@@ -2,9 +2,9 @@
 
 #include "PerspectiveProjection.h"
 
-#include "Core/Maths/Geometry/ScalarRectangle.h"
-#include "Core/Maths/Transform/ScalarMatrix.h"
-#include "Core/Maths/Transform/ScalarMatrixHelpers.h"
+#include "Core/Maths/ScalarRectangle.h"
+#include "Core/Maths/ScalarMatrix.h"
+#include "Core/Maths/ScalarMatrixHelpers.h"
 
 
 namespace Core {

@@ -6,7 +6,7 @@
 
 #include "Core.Graphics/Device/BindName.h"
 
-#include "Core/Maths/Geometry/ScalarVectorHelpers.h"
+#include "Core/Maths/ScalarVectorHelpers.h"
 #include "Core/Maths/RandomGenerator.h"
 
 namespace Core {

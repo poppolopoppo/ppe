@@ -31,7 +31,7 @@
 #include "Device/PresentationParameters.h"
 
 #include "Core/Color/Color.h"
-#include "Core/Maths/Geometry/ScalarRectangle.h"
+#include "Core/Maths/ScalarRectangle.h"
 #include "Core/Memory/UniqueView.h"
 
 #ifdef WITH_DIRECTX11_DEBUG_LAYER

@@ -5,7 +5,7 @@
 #include "Core.Graphics/Device/DeviceAPI.h"
 #include "Core.Graphics/Device/DeviceEncapsulator.h"
 
-#include "Core.Graphics/Device/Geometry/PrimitiveType.h"
+#include "Core.Graphics/Device/PrimitiveType.h"
 #include "Core.Graphics/Device/PresentationParameters.h"
 #include "Core.Graphics/Device/Texture/SurfaceFormat.h"
 
@@ -16,9 +16,9 @@
 #include "Core.Graphics/Device/Texture/DepthStencil.h"
 #include "Core.Graphics/Device/Texture/RenderTarget.h"
 
-#include "Core.Graphics/Device/Geometry/IndexBuffer.h"
-#include "Core.Graphics/Device/Geometry/VertexBuffer.h"
-#include "Core.Graphics/Device/Geometry/VertexDeclaration.h"
+#include "Core.Graphics/Device/IndexBuffer.h"
+#include "Core.Graphics/Device/VertexBuffer.h"
+#include "Core.Graphics/Device/VertexDeclaration.h"
 
 #include "Core.Graphics/Device/Shader/ShaderEffect.h"
 #include "Core.Graphics/Device/Shader/ShaderProgram.h"
@@ -31,9 +31,9 @@
 #include "Core.Graphics/Device/Texture/RenderTarget.h"
 #include "Core.Graphics/Device/Texture/Texture2D.h"
 
-#include "Core.Engine/Mesh/Geometry/GenericVertex.h"
-#include "Core.Engine/Mesh/Geometry/GenericVertexOptimizer.h"
-#include "Core.Engine/Mesh/Geometry/GeometricPrimitives.h"
+#include "Core.Engine/Mesh/GenericVertex.h"
+#include "Core.Engine/Mesh/GenericVertexOptimizer.h"
+#include "Core.Engine/Mesh/GeometricPrimitives.h"
 #include "Core.Engine/Mesh/Loader/MeshLoader.h"
 
 #include "Core.Engine/Texture/TextureLoader.h"
@@ -47,10 +47,10 @@
 #include "Core/Diagnostic/Logger.h"
 #include "Core/IO/FS/Filename.h"
 #include "Core/IO/VirtualFileSystem.h"
-#include "Core/Maths/Geometry/ScalarRectangle.h"
-#include "Core/Maths/Packing/PackedVectors.h"
+#include "Core/Maths/ScalarRectangle.h"
+#include "Core/Maths/PackedVectors.h"
 #include "Core/Maths/RandomGenerator.h"
-#include "Core/Maths/Transform/ScalarMatrixHelpers.h"
+#include "Core/Maths/ScalarMatrixHelpers.h"
 
 namespace Core {
 //----------------------------------------------------------------------------

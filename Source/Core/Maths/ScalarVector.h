@@ -2,7 +2,7 @@
 
 #include "Core/Core.h"
 
-#include "Core/Maths/Geometry/ScalarVector_fwd.h"
+#include "Core/Maths/ScalarVector_fwd.h"
 
 #include "Core/Container/Hash.h"
 #include "Core/Memory/MemoryView.h"
@@ -172,7 +172,7 @@ public:
 #define DEF_SCALARVECTOR_SHUFFLE4(_Name, _0, _1, _2, _3) \
     ScalarVector<T, 4> _Name() const { return Shuffle4<_0, _1, _2, _3>(); }
 
-#   include "Core/Maths/Geometry/ScalarVector.Shuffle-inl.h"
+#   include "Core/Maths/ScalarVector.Shuffle-inl.h"
 
 #undef DEF_SCALARVECTOR_SHUFFLE2
 #undef DEF_SCALARVECTOR_SHUFFLE3
@@ -234,4 +234,4 @@ struct NumericLimits< ScalarVector<T, _Dim> > {
 //----------------------------------------------------------------------------
 } //!namespace Core
 
-#include "Core/Maths/Geometry/ScalarVector-inl.h"
+#include "Core/Maths/ScalarVector-inl.h"

@@ -7,8 +7,8 @@
 #include "MetaObjectHelpers.h"
 
 #include "Core/Container/Hash.h"
-#include "Core/Maths/Geometry/ScalarVector.h"
-#include "Core/Maths/Transform/ScalarMatrix.h"
+#include "Core/Maths/ScalarVector.h"
+#include "Core/Maths/ScalarMatrix.h"
 
 namespace Core {
 namespace RTTI {
@@ -133,12 +133,6 @@ FOREACH_CORE_RTTI_NATIVE_TYPES(CASE_METATYPE_ID)
     }
     AssertNotReached(); // typeId is not a native scalar !
     return MetaTypeInfo();
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-bool NameTokenTraits::IsAllowedChar(char ch) const {
-    return IsAlnum(ch) || ch == '_' || ch == '-' || ch == '.';
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

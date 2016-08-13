@@ -2,7 +2,7 @@
 
 #include "Core/Core.h"
 
-#include "Core/Maths/Packing/Packing_fwd.h"
+#include "Core/Maths/Packing_fwd.h"
 
 #include "Core/Memory/HashFunctions.h"
 
@@ -85,6 +85,9 @@ struct HalfFloat {
 
     inline friend hash_t hash_value(const HalfFloat& h) { return hash_as_pod(h._data); }
 };
+//----------------------------------------------------------------------------
+HalfFloat Lerp(const HalfFloat v0, const HalfFloat v1, float f);
+HalfFloat BarycentricLerp(const HalfFloat v0, const HalfFloat v1, const HalfFloat v2, float f0, float f1, float f2);
 //----------------------------------------------------------------------------
 template <>
 struct NumericLimits< HalfFloat > {
@@ -195,6 +198,16 @@ struct BasicNorm {
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Traits>
+BasicNorm<T, _Traits> BarycentricLerp(const BasicNorm<T, _Traits>& v0, const BasicNorm<T, _Traits>& v1, const BasicNorm<T, _Traits>& v2, float f0, float f1, float f2) {
+    return BarycentricLerp(v0.Normalized(), v1.Normalized(), v2.Normalized(), f0, f1, f2);
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Traits>
+BasicNorm<T, _Traits> Lerp(const BasicNorm<T, _Traits>& v0, const BasicNorm<T, _Traits>& v1, float f) {
+    return Lerp(v0.Normalized(), v1.Normalized(), f);
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Traits>
 struct NumericLimits< BasicNorm<T, _Traits> > {
     typedef BasicNorm<T, _Traits> value_type;
     typedef NumericLimits<T> scalar_type;
@@ -216,4 +229,4 @@ struct NumericLimits< BasicNorm<T, _Traits> > {
 //----------------------------------------------------------------------------
 } //!namespace Core
 
-#include "Core/Maths/Packing/PackingHelpers-inl.h"
+#include "Core/Maths/PackingHelpers-inl.h"

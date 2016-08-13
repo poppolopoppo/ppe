@@ -10,8 +10,8 @@
 
 #include "Core/IO/String.h"
 
-#include "Core/Maths/Geometry/ScalarVector_fwd.h"
-#include "Core/Maths/Transform/ScalarMatrix_fwd.h"
+#include "Core/Maths/ScalarVector_fwd.h"
+#include "Core/Maths/ScalarMatrix_fwd.h"
 
 namespace Core {
 namespace RTTI {
@@ -22,7 +22,9 @@ FWD_REFPTR(MetaAtom);
 class NameTokenTraits {
 public:
     const std::locale& Locale() const { return std::locale::classic(); }
-    bool IsAllowedChar(char ch) const;
+    bool NameTokenTraits::IsAllowedChar(char ch) const {
+        return IsAlnum(ch) || ch == '_' || ch == '-' || ch == '.';
+    }
 };
 //----------------------------------------------------------------------------
 BASICTOKEN_CLASS_DEF(Name, char, Case::Insensitive, NameTokenTraits);

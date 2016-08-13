@@ -3,9 +3,9 @@
 #include "FreeLookView.h"
 
 #include "Core/Maths/MathHelpers.h"
-#include "Core/Maths/Transform/Quaternion.h"
-#include "Core/Maths/Transform/QuaternionHelpers.h"
-#include "Core/Maths/Transform/ScalarMatrixHelpers.h"
+#include "Core/Maths/Quaternion.h"
+#include "Core/Maths/QuaternionHelpers.h"
+#include "Core/Maths/ScalarMatrixHelpers.h"
 
 namespace Core {
 namespace Engine {

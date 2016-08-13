@@ -4,8 +4,8 @@
 
 #include "Core.Graphics/Device/Texture/Texture.h"
 
-#include "Core/Maths/Geometry/ScalarBoundingBox_fwd.h"
-#include "Core/Maths/Geometry/ScalarVector_fwd.h"
+#include "Core/Maths/ScalarBoundingBox_fwd.h"
+#include "Core/Maths/ScalarVector_fwd.h"
 
 namespace Core {
 namespace Graphics {

@@ -7,8 +7,8 @@
 #include "SurfaceFormat.h"
 
 #include "Core/Container/Hash.h"
-#include "Core/Maths/Geometry/ScalarBoundingBox.h"
-#include "Core/Maths/Geometry/ScalarVector.h"
+#include "Core/Maths/ScalarBoundingBox.h"
+#include "Core/Maths/ScalarVector.h"
 
 namespace Core {
 namespace Graphics {

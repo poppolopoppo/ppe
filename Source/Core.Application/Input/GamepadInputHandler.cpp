@@ -5,7 +5,7 @@
 #include "Core.Graphics/Window/BasicWindow.h"
 #include "Core.Graphics/Window/WindowMessage.h"
 
-#include "Core/Maths/Packing/PackingHelpers.h"
+#include "Core/Maths/PackingHelpers.h"
 
 //#define WITH_GAMEPADSTATE_VERBOSE //%_NOCOMMIT%
 

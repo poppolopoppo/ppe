@@ -4,9 +4,9 @@
 
 #include "ModelBuilder.h"
 
-#include "Core/Maths/Geometry/ScalarBoundingBox.h"
-#include "Core/Maths/Geometry/ScalarVector.h"
-#include "Core/Maths/Transform/ScalarMatrixHelpers.h"
+#include "Core/Maths/ScalarBoundingBox.h"
+#include "Core/Maths/ScalarVector.h"
+#include "Core/Maths/ScalarMatrixHelpers.h"
 #include "Core/Meta/BitField.h"
 
 #include "Core.Engine/Material/Material.h"

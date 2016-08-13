@@ -7,8 +7,8 @@
 #include "Core/IO/FS/Filename.h"
 #include "Core/IO/String.h"
 #include "Core/IO/StringSlice.h"
-#include "Core/Maths/Geometry/ScalarVector_fwd.h"
-#include "Core/Maths/Transform/ScalarMatrix.h"
+#include "Core/Maths/ScalarVector_fwd.h"
+#include "Core/Maths/ScalarMatrix.h"
 
 namespace Core {
 namespace Engine {

@@ -5,7 +5,7 @@
 #include "Core.Application/Input/InputState.h"
 #include "Core.Application/Input/GamepadButton.h"
 
-#include "Core/Maths/Geometry/ScalarVector.h"
+#include "Core/Maths/ScalarVector.h"
 
 namespace Core {
 namespace Application {

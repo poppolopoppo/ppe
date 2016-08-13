@@ -4,7 +4,7 @@
 
 #include "Device/DeviceEncapsulator.h"
 
-#include "Core/Maths/Geometry/ScalarVector.h"
+#include "Core/Maths/ScalarVector.h"
 #include "Core/Memory/MemoryView.h"
 
 namespace Core {

@@ -2,10 +2,10 @@
 
 #include "Core/Core.h"
 
-#include "Core/Maths/Geometry/ScalarBoundingBox_fwd.h"
+#include "Core/Maths/ScalarBoundingBox_fwd.h"
 
-#include "Core/Maths/Geometry/ScalarVector.h"
-#include "Core/Maths/Geometry/ScalarVectorHelpers.h"
+#include "Core/Maths/ScalarVector.h"
+#include "Core/Maths/ScalarVectorHelpers.h"
 
 #include <iosfwd>
 
@@ -120,7 +120,7 @@ public:
 #define DEF_SCALARBOUNDINGBOX_SHUFFLE4(_Name, _0, _1, _2, _3) \
     FORCE_INLINE ScalarBoundingBox<T, 4> _Name() const { return Shuffle4<_0, _1, _2, _3>(); }
 
-#   include "Core/Maths/Geometry/ScalarBoundingBox.Shuffle-inl.h"
+#   include "Core/Maths/ScalarBoundingBox.Shuffle-inl.h"
 
 #undef DEF_SCALARBOUNDINGBOX_SHUFFLE2
 #undef DEF_SCALARBOUNDINGBOX_SHUFFLE3
@@ -192,4 +192,4 @@ void swap(ScalarBoundingBox<T, _Dim>& lhs, ScalarBoundingBox<T, _Dim>& rhs) {
 //----------------------------------------------------------------------------
 } //!namespace Core
 
-#include "Core/Maths/Geometry/ScalarBoundingBox-inl.h"
+#include "Core/Maths/ScalarBoundingBox-inl.h"

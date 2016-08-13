@@ -2,7 +2,7 @@
 
 #include "Core/Core.h"
 
-#include "Core/Maths/Geometry/ScalarVector_fwd.h"
+#include "Core/Maths/ScalarVector_fwd.h"
 
 // Pseudo-Random Number Generator
 // http://xorshift.di.unimi.it/

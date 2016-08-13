@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Maths/Geometry/ScalarVectorHelpers.h"
+#include "Core/Maths/ScalarVectorHelpers.h"
 
 #pragma warning(push)
 #pragma warning(disable: 6201) // L'index 'XXX' est en dehors de la plage d'index valide 'XXX' à 'XXX' pour la mémoire tampon 'XXX' allouée sans doute par la pile.
@@ -131,7 +131,7 @@ template <typename T, size_t _Dim>
 ScalarVector<T, _Dim> Normalize(const ScalarVector<T, _Dim>& v) {
     const float length = Length(v);
     Assert(length > 0); // no zero length normalize
-    ScalarVector<T, _Dim> result;
+    ScalarVector<T, _Dim> result(Meta::noinit_tag{});
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = static_cast<T>(v._data[i] / length);
     return result;
@@ -141,7 +141,7 @@ template <typename T, size_t _Dim>
 ScalarVector<T, _Dim> Normalize2(const ScalarVector<T, _Dim>& v) {
     const float length = Length2(v);
     Assert(length > 0); // no zero length normalize
-    ScalarVector<T, _Dim> result;
+    ScalarVector<T, _Dim> result(Meta::noinit_tag{});
     result.x() = static_cast<T>(v.x() / length);
     result.y() = static_cast<T>(v.y() / length);
     for (size_t i = 2; i < _Dim; ++i)
@@ -153,7 +153,7 @@ template <typename T, size_t _Dim>
 ScalarVector<T, _Dim> Normalize3(const ScalarVector<T, _Dim>& v) {
     const float length = Length3(v);
     Assert(length > 0); // no zero length normalize
-    ScalarVector<T, _Dim> result;
+    ScalarVector<T, _Dim> result(Meta::noinit_tag{});
     result.x() = static_cast<T>(v.x() / length);
     result.y() = static_cast<T>(v.y() / length);
     result.z() = static_cast<T>(v.z() / length);
@@ -166,11 +166,11 @@ template <typename T, size_t _Dim>
 ScalarVector<T, _Dim> Normalize4(const ScalarVector<T, _Dim>& v) {
     const float length = Length4(v);
     Assert(length > 0); // no zero length normalize
-    ScalarVector<T, _Dim> result;
-    result.x() = static_cast<T>(v.x() / length);
-    result.y() = static_cast<T>(v.y() / length);
-    result.z() = static_cast<T>(v.z() / length);
-    result.w() = static_cast<T>(v.w() / length);
+    ScalarVector<T, _Dim> result(
+        static_cast<T>(v.x() / length),
+        static_cast<T>(v.y() / length),
+        static_cast<T>(v.z() / length),
+        static_cast<T>(v.w() / length) );
     for (size_t i = 4; i < _Dim; ++i)
         result._data[i] = v._data[i];
     return result;
@@ -180,7 +180,7 @@ ScalarVector<T, _Dim> Normalize4(const ScalarVector<T, _Dim>& v) {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 ScalarVector<T, _Dim> Min(const ScalarVector<T, _Dim>& lhs, const ScalarVector<T, _Dim>& rhs) {
-    ScalarVector<T, _Dim> result;
+    ScalarVector<T, _Dim> result(Meta::noinit_tag{});
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = std::min(lhs._data[i], rhs._data[i]);
     return result;
@@ -188,7 +188,7 @@ ScalarVector<T, _Dim> Min(const ScalarVector<T, _Dim>& lhs, const ScalarVector<T
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 ScalarVector<T, _Dim> Max(const ScalarVector<T, _Dim>& lhs, const ScalarVector<T, _Dim>& rhs) {
-    ScalarVector<T, _Dim> result;
+    ScalarVector<T, _Dim> result(Meta::noinit_tag{});
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = std::max(lhs._data[i], rhs._data[i]);
     return result;
@@ -209,14 +209,6 @@ void MinMax(const ScalarVector<T, _Dim>& lhs, const ScalarVector<T, _Dim>& rhs,
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
-ScalarVector<T, _Dim> Abs(const ScalarVector<T, _Dim>& v) {
-    ScalarVector<T, _Dim> result;
-    for (size_t i = 0; i < _Dim; ++i)
-        result._data[i] = Abs(v._data[i]);
-    return result;
-}
 //----------------------------------------------------------------------------
 template <typename T>
 T Det(const ScalarVector<T, 2>& lhs, const ScalarVector<T, 2>& rhs) {
@@ -254,8 +246,29 @@ ScalarVector<T, _Dim> Refract(const ScalarVector<T, _Dim>& incident, const Scala
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
+ScalarVector<T, _Dim> Abs(const ScalarVector<T, _Dim>& v) {
+    ScalarVector<T, _Dim> result(Meta::noinit_tag{});
+    for (size_t i = 0; i < _Dim; ++i)
+        result._data[i] = Abs(v._data[i]);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim, typename U>
+ScalarVector<T, _Dim> BarycentricLerp(const ScalarVector<T, _Dim>& v0, const ScalarVector<T, _Dim>& v1, const ScalarVector<T, _Dim>& v2, U f0, U f1, U f2) {
+    ScalarVector<T, _Dim> result(Meta::noinit_tag{});
+    for (size_t i = 0; i < _Dim; ++i)
+        result._data[i] = BarycentricLerp(v0._data[i], v1._data[i], v2._data[i], f0, f1, f2);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim, typename U>
+ScalarVector<T, _Dim> BarycentricLerp(const ScalarVector<T, _Dim>& v0, const ScalarVector<T, _Dim>& v1, const ScalarVector<T, _Dim>& v2, const ScalarVector<U, 3>& uvw) {
+    return BarycentricLerp(v0, v1, v2, uvw.x(), uvw.y(), uvw.z());
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
 ScalarVector<T, _Dim> Clamp(const ScalarVector<T, _Dim>& value, T vmin, T vmax) {
-    ScalarVector<T, _Dim> result;
+    ScalarVector<T, _Dim> result(Meta::noinit_tag{});
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = Clamp(value._data[i], vmin, vmax);
     return result;
@@ -263,7 +276,7 @@ ScalarVector<T, _Dim> Clamp(const ScalarVector<T, _Dim>& value, T vmin, T vmax) 
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 ScalarVector<T, _Dim> Clamp(const ScalarVector<T, _Dim>& value, const ScalarVector<T, _Dim>& vmin, const ScalarVector<T, _Dim>& vmax) {
-    ScalarVector<T, _Dim> result;
+    ScalarVector<T, _Dim> result(Meta::noinit_tag{});
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = Clamp(value._data[i], vmin._data[i], vmax._data[i]);
     return result;
@@ -271,7 +284,7 @@ ScalarVector<T, _Dim> Clamp(const ScalarVector<T, _Dim>& value, const ScalarVect
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 ScalarVector<T, _Dim> Frac(const ScalarVector<T, _Dim>& f) {
-    ScalarVector<T, _Dim> result;
+    ScalarVector<T, _Dim> result(Meta::noinit_tag{});
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = Frac(f._data[i]);
     return result;
@@ -279,7 +292,7 @@ ScalarVector<T, _Dim> Frac(const ScalarVector<T, _Dim>& f) {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim, typename U>
 ScalarVector<T, _Dim> Lerp(const ScalarVector<T, _Dim>& v0, const ScalarVector<T, _Dim>& v1, U f) {
-    ScalarVector<T, _Dim> result;
+    ScalarVector<T, _Dim> result(Meta::noinit_tag{});
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = Lerp(v0._data[i], v1._data[i], f);
     return result;
@@ -287,7 +300,7 @@ ScalarVector<T, _Dim> Lerp(const ScalarVector<T, _Dim>& v0, const ScalarVector<T
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim, typename U>
 ScalarVector<T, _Dim> Lerp(const ScalarVector<T, _Dim>& v0, const ScalarVector<T, _Dim>& v1, const ScalarVector<U, _Dim>& f) {
-    ScalarVector<T, _Dim> result;
+    ScalarVector<T, _Dim> result(Meta::noinit_tag{});
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = Lerp(v0._data[i], v1._data[i], f._data[i]);
     return result;
@@ -295,15 +308,31 @@ ScalarVector<T, _Dim> Lerp(const ScalarVector<T, _Dim>& v0, const ScalarVector<T
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 ScalarVector<float, _Dim> LinearStep(const ScalarVector<T, _Dim>& value, const ScalarVector<T, _Dim>& vmin, const ScalarVector<T, _Dim>& vmax) {
-    ScalarVector<float, _Dim> result;
+    ScalarVector<float, _Dim> result(Meta::noinit_tag{});
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = LinearStep(value._data[i], vmin._data[i], vmax._data[i]);
     return result;
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
+ScalarVector<float, _Dim> Pow(const ScalarVector<T, _Dim>& value, T n) {
+    ScalarVector<T, _Dim> result(Meta::noinit_tag{});
+    for (size_t i = 0; i < _Dim; ++i)
+        result._data[i] = Pow(value._data[i], n);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+ScalarVector<float, _Dim> Pow(const ScalarVector<T, _Dim>& value, const ScalarVector<T, _Dim>& n) {
+    ScalarVector<T, _Dim> result(Meta::noinit_tag{});
+    for (size_t i = 0; i < _Dim; ++i)
+        result._data[i] = Pow(value._data[i], n._data[i]);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
 ScalarVector<T, _Dim> Rcp(const ScalarVector<T, _Dim>& f) {
-    ScalarVector<T, _Dim> result;
+    ScalarVector<T, _Dim> result(Meta::noinit_tag{});
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = Rcp(f._data[i]);
     return result;
@@ -311,7 +340,7 @@ ScalarVector<T, _Dim> Rcp(const ScalarVector<T, _Dim>& f) {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 ScalarVector<T, _Dim> RSqrt(const ScalarVector<T, _Dim>& f) {
-    ScalarVector<T, _Dim> result;
+    ScalarVector<T, _Dim> result(Meta::noinit_tag{});
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = RSqrt(f._data[i]);
     return result;
@@ -319,7 +348,7 @@ ScalarVector<T, _Dim> RSqrt(const ScalarVector<T, _Dim>& f) {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim, typename U>
 ScalarVector<T, _Dim> SLerp(const ScalarVector<T, _Dim>& v0, const ScalarVector<T, _Dim>& v1, U f) {
-    ScalarVector<T, _Dim> result;
+    ScalarVector<T, _Dim> result(Meta::noinit_tag{});
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = SLerp(v0._data[i], v1._data[i], f);
     return result;
@@ -327,7 +356,7 @@ ScalarVector<T, _Dim> SLerp(const ScalarVector<T, _Dim>& v0, const ScalarVector<
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim, typename U>
 ScalarVector<T, _Dim> SLerp(const ScalarVector<T, _Dim>& v0, const ScalarVector<T, _Dim>& v1, const ScalarVector<U, _Dim>& f) {
-    ScalarVector<T, _Dim> result;
+    ScalarVector<T, _Dim> result(Meta::noinit_tag{});
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = SLerp(v0._data[i], v1._data[i], f._data[i]);
     return result;
@@ -335,7 +364,7 @@ ScalarVector<T, _Dim> SLerp(const ScalarVector<T, _Dim>& v0, const ScalarVector<
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 ScalarVector<T, _Dim> Step(const ScalarVector<T, _Dim>& y, const ScalarVector<T, _Dim>& x) {
-    ScalarVector<T, _Dim> result;
+    ScalarVector<T, _Dim> result(Meta::noinit_tag{});
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = Step(y._data[i], x._data[i]);
     return result;
@@ -343,7 +372,7 @@ ScalarVector<T, _Dim> Step(const ScalarVector<T, _Dim>& y, const ScalarVector<T,
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim, typename U>
 ScalarVector<U, _Dim> Smoothstep(const ScalarVector<T, _Dim>& vmin, const ScalarVector<T, _Dim>& vmax, U f) {
-    ScalarVector<U, _Dim> result;
+    ScalarVector<U, _Dim> result(Meta::noinit_tag{});
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = Smoothstep(vmin._data[i], vmax._data[i], f);
     return result;
@@ -351,7 +380,7 @@ ScalarVector<U, _Dim> Smoothstep(const ScalarVector<T, _Dim>& vmin, const Scalar
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim, typename U>
 ScalarVector<U, _Dim> Smoothstep(const ScalarVector<T, _Dim>& vmin, const ScalarVector<T, _Dim>& vmax, const ScalarVector<U, _Dim>& f) {
-    ScalarVector<U, _Dim> result;
+    ScalarVector<U, _Dim> result(Meta::noinit_tag{});
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = Smoothstep(vmin._data[i], vmax._data[i], f._data[i]);
     return result;

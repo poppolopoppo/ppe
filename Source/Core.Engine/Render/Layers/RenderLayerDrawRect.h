@@ -7,7 +7,7 @@
 #include "Core.Engine/Material/MaterialVariability.h"
 
 #include "Core/Allocator/PoolAllocator.h"
-#include "Core/Maths/Geometry/ScalarRectangle.h"
+#include "Core/Maths/ScalarRectangle.h"
 
 namespace Core {
 namespace Graphics {

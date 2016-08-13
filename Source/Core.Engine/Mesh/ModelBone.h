@@ -3,7 +3,7 @@
 #include "Core.Engine/Engine.h"
 
 #include "Core/Allocator/PoolAllocator.h"
-#include "Core/Maths/Transform/ScalarMatrix.h"
+#include "Core/Maths/ScalarMatrix.h"
 #include "Core/Memory/RefPtr.h"
 
 #include "Core.Engine/Mesh/MeshName.h"

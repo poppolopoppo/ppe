@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Maths/Geometry/ScalarBoundingBoxHelpers.h"
+#include "Core/Maths/ScalarBoundingBoxHelpers.h"
 
 namespace Core {
 //----------------------------------------------------------------------------

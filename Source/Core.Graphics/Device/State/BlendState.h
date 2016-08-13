@@ -5,7 +5,7 @@
 #include "Core.Graphics/Device/DeviceAPIDependantEntity.h"
 #include "Core.Graphics/Device/DeviceResource.h"
 
-#include "Core/Maths/Geometry/ScalarVector.h"
+#include "Core/Maths/ScalarVector.h"
 
 namespace Core {
 namespace Graphics {

@@ -4,9 +4,9 @@
 
 #include "Core/Color/Color_fwd.h"
 
-#include "Core/Maths/Geometry/ScalarVector.h"
-#include "Core/Maths/Geometry/ScalarVectorHelpers.h"
-#include "Core/Maths/Packing/PackingHelpers.h"
+#include "Core/Maths/ScalarVector.h"
+#include "Core/Maths/ScalarVectorHelpers.h"
+#include "Core/Maths/PackingHelpers.h"
 
 namespace Core {
 template <typename T>
