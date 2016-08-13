@@ -138,12 +138,18 @@ struct HashTableProbe_ {
     size_t DesiredInc(size_t hashValue) const { return (1 + hashValue % (HashCapacity - 1)); }
     size_t NextBucket(size_t bucket, size_t inc) const { return (bucket + inc >= HashCapacity ? (bucket + inc) - HashCapacity : bucket + inc); }
     //size_t ProbeDistance(size_t hashValue, size_t bucket) const { return (((bucket + HashCapacity) - DesiredPos(hashValue)) % HashCapacity); }
-    FORCE_INLINE size_t ProbeDistance(size_t hashValue, size_t bucket) const {
+    size_t ProbeDistance(size_t hashValue, size_t bucket) const {
         size_t b = DesiredPos(hashValue);
         size_t inc = DesiredInc(hashValue);
         size_t distance = 0;
         for (; bucket != b; b = NextBucket(b, inc), ++distance);
         return distance;
+    }
+    bool ProbeAvailable(size_t hashValue, size_t bucket, size_t distance) const {
+        size_t b = DesiredPos(hashValue);
+        size_t inc = DesiredInc(hashValue);
+        for (; bucket != b && distance; b = NextBucket(b, inc), --distance);
+        return (0 == distance);
     }
     MemoryView<HashValueWIndex32_> HashIndices32() const { Assert(not UseHashIndices64); return MemoryView<HashValueWIndex32_>(reinterpret_cast<HashValueWIndex32_*>(HashIndicesRaw), HashCapacity); }
     MemoryView<HashValueWIndex64_> HashIndices64() const { Assert(UseHashIndices64); return MemoryView<HashValueWIndex64_>(reinterpret_cast<HashValueWIndex64_*>(HashIndicesRaw), HashCapacity); }

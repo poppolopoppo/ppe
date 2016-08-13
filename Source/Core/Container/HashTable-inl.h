@@ -327,7 +327,7 @@ bool HashTable<_Key, _Value, _Hash, _Equal, _Allocator>::FindUsingProbe_(const d
         Assert(distance < probe.HashCapacity);
         const _HashWIndices& it = hashWIndices[bucket];
 
-        if (it.empty() || distance > probe.ProbeDistance(it.hash_value, bucket)) {
+        if (it.empty() || not probe.ProbeAvailable(it.hash_value, bucket, distance)) {
             Assert(it.hash_value != hashValue);
             break;
         }

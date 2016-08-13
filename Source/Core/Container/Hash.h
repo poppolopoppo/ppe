@@ -28,8 +28,8 @@ HASH_AS_POD_DEF(inline, float)
 HASH_AS_POD_DEF(inline, double)
 //----------------------------------------------------------------------------
 template <typename T>
-typename std::enable_if<std::is_enum<T>::value, hash_t>::type hash_value(T&& value) {
-    return hash_as_pod(std::forward<T>(value));
+typename std::enable_if<std::is_enum<T>::value, hash_t>::type hash_value(T value) {
+    return hash_as_pod(value);
 }
 //----------------------------------------------------------------------------
 template <typename T>
