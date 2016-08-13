@@ -75,17 +75,35 @@ RTTI_CLASS_END()
 FWD_REFPTR(RTTITestParent_);
 class RTTITestParent_ : public RTTI::MetaObject {
 public:
+    enum class TestEnum32 : u32 {
+        A = 0, B, C
+    };
+
+    enum class TestEnum64 : u64 {
+        A = 1<<0, B=1<<1, C = 1<<2
+    };
+
     RTTI_CLASS_HEADER(RTTITestParent_, RTTI::MetaObject);
 
     RTTITestParent_() {}
 
+    const TestEnum32& Enum32() const { return _testEnum32; }
+    void SetEnum32(const TestEnum32& value) { _testEnum32 = value; }
+
+    const TestEnum64& Enum64() const { return _testEnum64; }
+    void SetEnum64(const TestEnum64& value) { _testEnum64 = value; }
+
 private:
     PContentIdentity _identity;
     WString _sourceName;
+    TestEnum32 _testEnum32;
+    TestEnum64 _testEnum64;
 };
 RTTI_CLASS_BEGIN(Test, RTTITestParent_, Concrete)
     RTTI_PROPERTY_PRIVATE_FIELD(_identity)
     RTTI_PROPERTY_PRIVATE_FIELD(_sourceName)
+    RTTI_PROPERTY_MEMBER(Enum32)
+    RTTI_PROPERTY_MEMBER(Enum64)
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------
 FWD_REFPTR(RTTITest_);
