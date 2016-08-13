@@ -16,6 +16,15 @@ T Abs(T value, typename std::enable_if<not std::is_signed<T>::value>::type* = nu
     return (value);
 }
 //----------------------------------------------------------------------------
+template <typename T, typename U>
+constexpr T BarycentricLerp(T v0, T v1, T v2, U f0, U f1, U f2) {
+    return static_cast<T>(v0*f0 + v1*f1 + v2*f2);
+}
+//----------------------------------------------------------------------------
+inline bool BarycentricLerp(bool v0, bool v1, bool v2, float f0, float f1, float f2) {
+    return (((v0?1:0)*f0 + (v1?1:0)*f1 + (v2?1:0)*f2) >= 0.5f);
+}
+//----------------------------------------------------------------------------
 template <typename T>
 constexpr T Clamp(T value, T vmin, T vmax) {
     return std::min(vmax, std::max(vmin, value));
@@ -31,10 +40,29 @@ constexpr T Lerp(T v0, T v1, U f) {
     return static_cast<T>(v0 + (v1 - v0) * f);
 }
 //----------------------------------------------------------------------------
+inline bool Lerp(bool v0, bool v1, float f) {
+    return (Lerp(v0 ? 1.f : 0.f, v1 ? 1.f : 0.f, f) >= 0.5f);
+}
+//----------------------------------------------------------------------------
 template <typename T>
 constexpr float LinearStep(T value, T vmin, T vmax) {
     Assert(vmin < vmax);
     return static_cast<float>(value - vmin) / (vmax - vmin);
+}
+//----------------------------------------------------------------------------
+template <typename T, typename U>
+constexpr T Pow(T v, U n) {
+    return (n == 0)  ? 1 : v * Pow(v, n - 1);
+}
+//----------------------------------------------------------------------------
+template <typename U>
+float Pow(float f, U n) {
+    return std::pow(f, n);
+}
+//----------------------------------------------------------------------------
+template <typename U>
+double Pow(double f, U n) {
+    return std::pow(d, n);
 }
 //----------------------------------------------------------------------------
 template <typename T>

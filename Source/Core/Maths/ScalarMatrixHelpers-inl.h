@@ -79,10 +79,8 @@ bool IsSymetrical(const ScalarMatrix<T, _Width, _Height>& m, float epsilon/* = F
 template <typename T, size_t _Width, size_t _Height>
 ScalarMatrix<T, _Width, _Height> Abs(const ScalarMatrix<T, _Width, _Height>& m) {
     ScalarMatrix<T, _Width, _Height> result;
-    T *const dst = result.data_();
-    const T *src = m.data_();
     for (size_t i = 0; i < ScalarMatrix<T, _Width, _Height>::Dim; ++i)
-        dst[i] = std::abs(src[i]);
+        result._data.raw[i] = std::abs(m._data.raw[i]);
     return result;
 }
 //----------------------------------------------------------------------------
@@ -91,8 +89,20 @@ void Lerp(  const ScalarMatrix<T, _Width, _Height>& v0,
             const ScalarMatrix<T, _Width, _Height>& v1,
             float f,
             ScalarMatrix<T, _Width, _Height>& result) {
-    for (size_t i 0; i < ScalarMatrix<T, _Width, _Height>::Dim; ++i)
-        result._data[i] = Lerp(v0._data[i], v1._data[i], f);
+    // TODO : this has probably no sense :'(
+    for (size_t i = 0; i < ScalarMatrix<T, _Width, _Height>::Dim; ++i)
+        result._data.raw[i] = Lerp(v0._data.raw[i], v1._data.raw[i], f);
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Width, size_t _Height>
+ScalarMatrix<T, _Width, _Height> Lerp(
+    const ScalarMatrix<T, _Width, _Height>& v0,
+    const ScalarMatrix<T, _Width, _Height>& v1,
+    float f ) {
+    // TODO : this has probably no sense :'(
+    ScalarMatrix<T, _Width, _Height> result;
+    Lerp(v0, v1, f, result);
+    return result;
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
@@ -100,8 +110,9 @@ void SLerp( const ScalarMatrix<T, _Width, _Height>& v0,
             const ScalarMatrix<T, _Width, _Height>& v1,
             float f,
             ScalarMatrix<T, _Width, _Height>& result) {
-    for (size_t i 0; i < ScalarMatrix<T, _Width, _Height>::Dim; ++i)
-        result._data[i] = SLerp(v0._data[i], v1._data[i], f);
+    // TODO : this has probably no sense :'(
+    for (size_t i = 0; i < ScalarMatrix<T, _Width, _Height>::Dim; ++i)
+        result._data.raw[i] = SLerp(v0._data.raw[i], v1._data.raw[i], f);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
@@ -109,8 +120,9 @@ void Smoothstep(const ScalarMatrix<T, _Width, _Height>& v0,
                 const ScalarMatrix<T, _Width, _Height>& v1,
                 float f,
                 ScalarMatrix<T, _Width, _Height>& result) {
-    for (size_t i 0; i < ScalarMatrix<T, _Width, _Height>::Dim; ++i)
-        result._data[i] = Smoothstep(v0._data[i], v1._data[i], f);
+    // TODO : this has probably no sense :'(
+    for (size_t i = 0; i < ScalarMatrix<T, _Width, _Height>::Dim; ++i)
+        result._data.raw[i] = Smoothstep(v0._data.raw[i], v1._data.raw[i], f);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
@@ -118,8 +130,9 @@ void Smootherstep(  const ScalarMatrix<T, _Width, _Height>& v0,
                     const ScalarMatrix<T, _Width, _Height>& v1,
                     float f,
                     ScalarMatrix<T, _Width, _Height>& result) {
-    for (size_t i 0; i < ScalarMatrix<T, _Width, _Height>::Dim; ++i)
-        result._data[i] = Smootherstep(v0._data[i], v1._data[i], f);
+    // TODO : this has probably no sense :'(
+    for (size_t i = 0; i < ScalarMatrix<T, _Width, _Height>::Dim; ++i)
+        result._data.raw[i] = Smootherstep(v0._data.raw[i], v1._data.raw[i], f);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

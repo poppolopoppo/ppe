@@ -155,7 +155,7 @@ public:
     FORCE_INLINE T& at_(size_t col, size_t row) { return _data.m[col][row]; }
     FORCE_INLINE const T& at_(size_t col, size_t row) const { return _data.m[col][row]; }
 
-private:
+public:
     STATIC_ASSERT(0 < _Width);
     STATIC_ASSERT(0 < _Height);
 

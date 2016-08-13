@@ -69,6 +69,20 @@ inline ScalarVector<float, 4> UX10Y10Z10W2N::Unpack() const {
     return ScalarVector<float, 4>(xyz, w/1.5f - 1.f);
 }
 //----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+inline UX10Y10Z10W2N BarycentricLerp(const UX10Y10Z10W2N& v0, const UX10Y10Z10W2N& v1, const UX10Y10Z10W2N& v2, float f0, float f1, float f2) {
+    return BarycentricLerp(v0.Unpack(), v1.Unpack(), v2.Unpack(), f0, f1, f2);
+}
+//----------------------------------------------------------------------------
+inline UX10Y10Z10W2N BarycentricLerp(const UX10Y10Z10W2N& v0, const UX10Y10Z10W2N& v1, const UX10Y10Z10W2N& v2, const float3& uvw) {
+    return BarycentricLerp(v0, v1, v2, uvw.x(), uvw.y(), uvw.z());
+}
+//----------------------------------------------------------------------------
+inline UX10Y10Z10W2N Lerp(const UX10Y10Z10W2N& v0, const UX10Y10Z10W2N& v1, float f) {
+    return Lerp(v0.Unpack(), v1.Unpack(), f);
+}
+//----------------------------------------------------------------------------
 inline UX10Y10Z10W2N Float01_to_UX10Y10Z10W2N(const ScalarVector<float, 3>& xyz, u8 w) {
     UX10Y10Z10W2N packed;
     packed.Pack_Float01(xyz, w);

@@ -6,10 +6,24 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+Quaternion BarycentricLerp(const Quaternion& v0, const Quaternion& v1, const Quaternion& v2, float f0, float f1, float f2) {
+    const float4 result(
+        BarycentricLerp(v0.x(), v1.x(), v2.x(), f0, f1, f2),
+        BarycentricLerp(v0.y(), v1.y(), v2.y(), f0, f1, f2),
+        BarycentricLerp(v0.z(), v1.z(), v2.z(), f0, f1, f2),
+        BarycentricLerp(v0.w(), v1.w(), v2.w(), f0, f1, f2) );
+
+    return Quaternion(Normalize4(result));
+}
+//----------------------------------------------------------------------------
+Quaternion BarycentricLerp(const Quaternion& v0, const Quaternion& v1, const Quaternion& v2, const float3& uvw) {
+    return BarycentricLerp(v0, v1, v2, uvw.x(), uvw.y(), uvw.z());
+}
+//----------------------------------------------------------------------------
 Quaternion Lerp(const Quaternion& v0, const Quaternion& v1, float f) {
     float inverse = 1.0f - f;
 
-    float4 result;
+    float4 result(Meta::noinit_tag{});
 
     if (Dot(v0, v1) >= 0.0f) {
         result.x() = (inverse * v0.x()) + (f * v1.x());
@@ -44,11 +58,11 @@ Quaternion SLerp(const Quaternion& v0, const Quaternion& v1, float f) {
         opposite = std::sin(f * facos) * invSin * (dot < 0 ? -1 : 1);
     }
 
-    float4 result;
-    result.x() = (inverse * v0.x()) + (opposite * v1.x());
-    result.y() = (inverse * v0.y()) + (opposite * v1.y());
-    result.z() = (inverse * v0.z()) + (opposite * v1.z());
-    result.w() = (inverse * v0.w()) + (opposite * v1.w());
+    const float4 result(
+        (inverse * v0.x()) + (opposite * v1.x()),
+        (inverse * v0.y()) + (opposite * v1.y()),
+        (inverse * v0.z()) + (opposite * v1.z()),
+        (inverse * v0.w()) + (opposite * v1.w()) );
 
     return Quaternion(result);
 }
@@ -112,11 +126,11 @@ Quaternion MakeAxisQuaternion(const float3& axis, float radians) {
 Quaternion MakeAxisQuaternion(const float3& axis, float fsin, float fcos) {
     Assert(std::abs(1 - LengthSq3(axis)) < F_Epsilon);
 
-    float4 result;
-    result.x() = axis.x() * fsin;
-    result.y() = axis.y() * fsin;
-    result.z() = axis.z() * fsin;
-    result.w() = fcos;
+    const float4 result(
+        axis.x() * fsin,
+        axis.y() * fsin,
+        axis.z() * fsin,
+        fcos );
 
     return Quaternion(result);
 }
@@ -126,7 +140,7 @@ Quaternion MakeQuaternionFromRotationMatrix(const float4x4& matrix) {
     float half;
     float scale = matrix._11() + matrix._22() + matrix._33();
 
-    float4 result;
+    float4 result(Meta::noinit_tag{});
 
     if (scale > 0.0f) {
         sqrt = std::sqrt(scale + 1.0f);
@@ -182,11 +196,11 @@ Quaternion MakeYawPitchRollQuaternion(float yaw, float pitch, float roll) {
     float sinYaw, cosYaw;
     SinCos(halfYaw, &sinYaw, &cosYaw);
 
-    float4 result;
-    result.x() = (cosYaw * sinPitch * cosRoll) + (sinYaw * cosPitch * sinRoll);
-    result.y() = (sinYaw * cosPitch * cosRoll) - (cosYaw * sinPitch * sinRoll);
-    result.z() = (cosYaw * cosPitch * sinRoll) - (sinYaw * sinPitch * cosRoll);
-    result.w() = (cosYaw * cosPitch * cosRoll) + (sinYaw * sinPitch * sinRoll);
+    const float4 result(
+        (cosYaw * sinPitch * cosRoll) + (sinYaw * cosPitch * sinRoll),
+        (sinYaw * cosPitch * cosRoll) - (cosYaw * sinPitch * sinRoll),
+        (cosYaw * cosPitch * sinRoll) - (sinYaw * sinPitch * cosRoll),
+        (cosYaw * cosPitch * cosRoll) + (sinYaw * sinPitch * sinRoll) );
 
     return Quaternion(result);
 }

@@ -26,7 +26,7 @@ ScalarMatrix<T, _Width, _Height>::ScalarMatrix(std::initializer_list<T> values) 
     AssertRelease(values.size() == Dim);
     T *data = _data.raw;
     for (const T& it : values)
-        *(data++) == it;
+        *(data++) = it;
     Assert(&_data.raw[Dim] == data);
 }
 //----------------------------------------------------------------------------

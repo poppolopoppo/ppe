@@ -2,7 +2,7 @@
 
 #include "PackingHelpers.h"
 
-#include "Maths/ScalarVector.h"
+#include "Maths/ScalarVectorHelpers.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -143,6 +143,14 @@ bool HalfFloat::IsConvertible(float value) {
     Assert(std::isfinite(value));
     return  MinValue().Unpack() <= value &&
             MaxValue().Unpack() >= value;
+}
+//----------------------------------------------------------------------------
+HalfFloat Lerp(const HalfFloat v0, const HalfFloat v1, float f) {
+    return Lerp(v0.Unpack(), v1.Unpack(), f);
+}
+//----------------------------------------------------------------------------
+HalfFloat BarycentricLerp(const HalfFloat v0, const HalfFloat v1, const HalfFloat v2, float f0, float f1, float f2) {
+    return BarycentricLerp(v0.Unpack(), v1.Unpack(), v2.Unpack(), f0, f1, f2);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

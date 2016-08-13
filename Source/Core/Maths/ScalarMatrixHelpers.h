@@ -45,6 +45,11 @@ void Lerp(  const ScalarMatrix<T, _Width, _Height>& v0,
             ScalarMatrix<T, _Width, _Height>& result);
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
+ScalarMatrix<T, _Width, _Height> Lerp(  const ScalarMatrix<T, _Width, _Height>& v0,
+                                        const ScalarMatrix<T, _Width, _Height>& v1,
+                                        float f );
+//----------------------------------------------------------------------------
+template <typename T, size_t _Width, size_t _Height>
 void SLerp( const ScalarMatrix<T, _Width, _Height>& v0,
             const ScalarMatrix<T, _Width, _Height>& v1,
             float f,

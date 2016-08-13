@@ -8,6 +8,9 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+Quaternion BarycentricLerp(const Quaternion& v0, const Quaternion& v1, const Quaternion& v2, float f0, float f1, float f2);
+Quaternion BarycentricLerp(const Quaternion& v0, const Quaternion& v1, const Quaternion& v2, const float3& uvw);
+//----------------------------------------------------------------------------
 float Dot(const Quaternion& lhs, const Quaternion& rhs);
 //----------------------------------------------------------------------------
 Quaternion Lerp(const Quaternion& v0, const Quaternion& v1, float f);
