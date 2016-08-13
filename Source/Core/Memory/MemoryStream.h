@@ -34,10 +34,12 @@ public:
     size_t capacity() const { return _storage.size(); }
     bool empty() const { return 0 == _size; }
 
-    void resize(size_t count);
+    void resize(size_t count, bool keepData = true);
     void reserve(size_t count);
     void shrink_to_fit();
     void clear();
+
+    MemoryView<u8> Append(size_t sizeInBytes);
 
     void Clear_ReleaseMemory();
     void Clear_StealMemory(storage_type& storage);
@@ -46,6 +48,12 @@ public:
 
     u8* Pointer() { return _storage.Pointer(); }
     const u8* Pointer() const { return _storage.Pointer(); }
+
+    MemoryView<u8> MakeView() { return MemoryView<u8>(_storage.Pointer(), _size); }
+    MemoryView<u8> MakeView(size_t offset, size_t count) {
+        Assert(offset + count < _size);
+        return MemoryView<u8>(&_storage[offset], count);
+    }
 
     MemoryView<const u8> MakeView() const { return MemoryView<const u8>(_storage.Pointer(), _size); }
     MemoryView<const u8> MakeView(size_t offset, size_t count) const {
@@ -100,10 +108,17 @@ MemoryStream<_Allocator>::MemoryStream(storage_type&& storage, std::streamsize s
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-void MemoryStream<_Allocator>::resize(size_t count) {
-    reserve(count);
+void MemoryStream<_Allocator>::resize(size_t count, bool keepData/* = true */) {
+    if  (keepData) {
+        reserve(count);
+    }
+    else if (count > _storage.size()) {
+        // can only grow, except in shrink_to_fit() or Clear_ReleaseMemory()
+        _storage.Resize_DiscardData(count);
+    }
 
     _size = count;
+    Assert(_storage.size() >= _size);
 
     if (_offsetI > _size)
         _offsetI = _size;
@@ -129,6 +144,23 @@ void MemoryStream<_Allocator>::shrink_to_fit() {
 template <typename _Allocator>
 void MemoryStream<_Allocator>::clear() {
     _size = _offsetI = _offsetO = 0;
+}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+MemoryView<u8> MemoryStream<_Allocator>::Append(size_t sizeInBytes) {
+    _size = Max(sizeInBytes + _offsetO, _size);
+
+    if (_size > _storage.size()) { // doubles the storage size if there is not enough space
+        const size_t growCapacity = (_storage.size() ? _storage.size() * 2 : 128);
+        const size_t newCapacity = Max(_size, growCapacity);
+        _storage.Resize_KeepData(newCapacity);
+    }
+
+    Assert(_storage.size() >= _size);
+    const MemoryView<u8> reserved = _storage.MakeView().SubRange(_offsetO, sizeInBytes);
+
+    _offsetO += sizeInBytes;
+    return reserved;
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
@@ -269,19 +301,10 @@ bool MemoryStream<_Allocator>::SeekO(std::streamoff offset, SeekOrigin policy /*
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 bool MemoryStream<_Allocator>::Write(const void* storage, std::streamsize sizeInBytes) {
-    const size_t sizeT = checked_cast<size_t>(sizeInBytes);
-    _size = std::max(sizeT + _offsetO, _size);
+    const MemoryView<u8> reserved = Append(checked_cast<size_t>(sizeInBytes));
+    Assert(std::streamsize(reserved.SizeInBytes()) == sizeInBytes);
 
-    if (_size > _storage.size()) { // doubles the storage size if there is not enough space
-        size_t newCapacity = std::max(_size, (_storage.size() + 1) * 2 );
-        newCapacity = ROUND_TO_NEXT_128(newCapacity);
-        _storage.Resize_KeepData(newCapacity);
-    }
-
-    Assert(_storage.size() >= _size);
-    memcpy(_storage.Pointer() + _offsetO, storage, sizeT);
-
-    _offsetO += sizeT;
+    memcpy(reserved.data(), storage, reserved.SizeInBytes());
     return true;
 }
 //----------------------------------------------------------------------------
