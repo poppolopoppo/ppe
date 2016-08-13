@@ -5,6 +5,7 @@
 #include "Core/Thread/Task/Task.h"
 
 #include "Core/Container/IntrusiveList.h"
+#include "Core/Container/Vector.h"
 #include "Core/Diagnostic/Exception.h"
 #include "Core/Memory/MemoryView.h"
 #include "Core/Memory/RefPtr.h"
