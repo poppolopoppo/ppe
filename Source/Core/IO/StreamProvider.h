@@ -95,7 +95,7 @@ public: // helpers
     void WriteCStr(const wchar_t (&wcstr)[_Dim]);
 
     template <typename T>
-    void WriteView(const MemoryView<const T>& data);
+    void WriteView(const MemoryView<T>& data);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

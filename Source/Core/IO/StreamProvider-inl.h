@@ -67,7 +67,7 @@ void IStreamWriter::WriteCStr(const wchar_t (&wcstr)[_Dim]) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void IStreamWriter::WriteView(const MemoryView<const T>& data) {
+void IStreamWriter::WriteView(const MemoryView<T>& data) {
     WriteSome(data.Pointer(), sizeof(T), data.size());
 }
 //----------------------------------------------------------------------------
