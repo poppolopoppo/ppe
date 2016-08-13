@@ -115,7 +115,7 @@ public:
 
     enum { Sensitiveness = size_t(_Sensitive) };
 
-    Token();
+    Token() : _data{nullptr} {}
 
     Token(const _Char* content);
     Token& operator =(const _Char* content);

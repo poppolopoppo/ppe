@@ -22,9 +22,6 @@ bool ValidateToken(const BasicStringSlice<_Char>& content) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator >
-Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::Token() : _data{nullptr} {}
-//----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator >
 Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::Token(const _Char* cstr)
 :   _data(factory_type::Instance().template GetOrCreate<_TokenTraits>(cstr)) {}
 //----------------------------------------------------------------------------
