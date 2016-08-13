@@ -7,7 +7,7 @@
     .ProjectIsolatedFiles =
     {
         'Core.cpp'
-        'Maths/SphericalHarmonics/SHVector_extern.cpp',
+        'Maths/SHVector_extern.cpp',
         'External/farmhash.cpp',
         'External/lz4.cpp',
         'External/lz4hc.cpp',
