@@ -77,6 +77,8 @@ public:
     reference front() const { return at(0); }
     reference back() const { return at(_size - 1); }
 
+    void CopyTo(const MemoryView<typename std::remove_const<T>::type>& dst) const;
+
     MemoryView<T> SubRange(size_t offset, size_t count) const;
     MemoryView< typename std::add_const<T>::type > SubRangeConst(size_t offset, size_t count) const;
 
@@ -151,6 +153,11 @@ public:
 
     MemoryView<typename std::add_const<value_type>::type> AddConst() const {
         return MemoryView<typename std::add_const<value_type>::type>(_storage, _size);
+    }
+
+    MemoryView<typename std::remove_const<value_type>::type> RemoveConst() const {
+        typedef MemoryView<typename std::remove_const<value_type>::type> nonconst_type;
+        return nonconst_type(const_cast<typename nonconst_type::pointer>(_storage), _size);
     }
 
     friend void swap(MemoryView& lhs, MemoryView& rhs) {
@@ -230,6 +237,12 @@ template <typename T>
 auto MemoryView<T>::at(size_type index) const -> reference {
     Assert(index < _size);
     return _storage[index];
+}
+//----------------------------------------------------------------------------
+template <typename T>
+void MemoryView<T>::CopyTo(const MemoryView<typename std::remove_const<T>::type>& dst) const {
+    Assert(dst.size() == size());
+    std::copy(begin(), end(), dst.begin());
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -314,10 +327,20 @@ MemoryView<typename std::add_const<T>::type > MakeConstView(T* pbegin, T* pend) 
     return MemoryView<typename std::add_const<T>::type >(pbegin, std::distance(pbegin, pend));
 }
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
+template <typename T>
+MemoryView<u8> MakeRawView(T& assumePod) {
+    return MemoryView<u8>(reinterpret_cast<u8*>(&assumePod), sizeof(T));
+}
 //----------------------------------------------------------------------------
 template <typename T>
-void Copy(const MemoryView<T>& dst, const MemoryView<const T>& src) {
+MemoryView<const u8> MakeRawView(const T& assumePod) {
+    return MemoryView<const u8>(reinterpret_cast<const u8*>(&assumePod), sizeof(T));
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename U, typename V>
+void Copy(const MemoryView<U>& dst, const MemoryView<V>& src) {
     Assert(dst.size() == src.size());
     std::copy(src.begin(), src.end(), dst.begin());
 }
