@@ -37,6 +37,7 @@ MEMORY_DOMAIN_IMPL(Index,                   Graphics)
 MEMORY_DOMAIN_IMPL(Resource,                Graphics)
 MEMORY_DOMAIN_IMPL(Shader,                  Graphics)
 MEMORY_DOMAIN_IMPL(Texture,                 Graphics)
+MEMORY_DOMAIN_IMPL(Value,                   Graphics)
 MEMORY_DOMAIN_IMPL(Vertex,                  Graphics)
 //------------------------------------------------------------------------------
 MEMORY_DOMAIN_IMPL(Lattice,                 Core)
