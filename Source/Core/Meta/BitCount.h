@@ -89,7 +89,7 @@ inline u64 FloorLog2(u64 value) {
 #endif
 //----------------------------------------------------------------------------
 inline size_t CeilLog2(size_t value) {
-    return static_cast<size_t>(!IS_POW2(value)) + FloorLog2(value);
+    return (IS_POW2(value) ? 0 : 1) + FloorLog2(value);
 }
 //----------------------------------------------------------------------------
 inline size_t HighestBitSet(size_t value) {
