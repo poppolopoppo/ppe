@@ -49,30 +49,6 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T>
-class ThreadProxy : public ThreadResource {
-public:
-    ThreadProxy() {}
-    ~ThreadProxy() {}
-
-    ThreadProxy(const T& value) : _value(value) {}
-    ThreadProxy(T&& rvalue) : _value(std::move(rvalue)) {}
-
-    ThreadProxy(const ThreadProxy& ) = delete;
-    ThreadProxy& operator =(const ThreadProxy& ) = delete;
-
-    T& Value() { THIS_THREADRESOURCE_CHECKACCESS; return _value; }
-    const T& Value() const { THIS_THREADRESOURCE_CHECKACCESS; return _value; }
-
-    void SetValue(const T& value) { THIS_THREADRESOURCE_CHECKACCESS; _value = value; }
-    void SetValue(T&& rvalue) { THIS_THREADRESOURCE_CHECKACCESS; _value = std::move(rvalue); }
-
-private:
-    T _value;
-};
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 template <bool _Lock>
 class ThreadLock {
 public:
