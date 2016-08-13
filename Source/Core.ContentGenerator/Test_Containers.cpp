@@ -320,13 +320,14 @@ public:
     void resize(size_type atleast) {
         atleast = atleast + ((100-MaxLoadFactor)*atleast)/100;
         if (atleast > _capacity) {
-            Assert(atleast <= Primes_[31]);
+            //Assert(atleast <= Primes_[31]);
             const size_type oldcapacity = _capacity;
-            forrange(i, 0, 32)
+            _capacity = Meta::NextPow2(atleast);
+            /*forrange(i, 0, 32)
                 if (atleast <= Primes_[i]) {
                     _capacity = Primes_[i];
                     break;
-                }
+                }*/
             Assert(_capacity >= atleast);
             if (oldcapacity) {
                 Assert(_values);
@@ -345,9 +346,12 @@ public:
         Assert(_size < _capacity);
 
         const size_t h = hasher()(value);
-
-        size_type bucket = size_type(h % _capacity);
-        size_type inc = size_type(1 + (h>>16) % (_capacity - 1));
+        /*
+        size_type bucket = h % _capacity;
+        size_type inc = 1 + (h>>16) % Min(5, _capacity - 1);
+        */
+        size_type bucket = size_type(h & (_capacity - 1));
+        size_type inc = 1 + ((h>>16) & Min(5ul, _capacity - 1));
 
         const value_type empty_key;
 
@@ -369,14 +373,17 @@ public:
         Assert(0 < _capacity);
         Assert(_size < _capacity);
         const size_t h = hasher()(value);
-
+        /*
         size_type bucket = h % _capacity;
-        size_type inc = 1 + (h>>16) % (_capacity - 1);
+        size_type inc = 1 + (h>>16) % Min(5, _capacity - 1);
+        */
+        size_type bucket = size_type(h & (_capacity - 1));
+        size_type inc = 1 + ((h>>16) & Min(5ul, _capacity - 1));
 
         const value_type empty_key;
 
-        while (not key_equal()(_values[bucket], empty_key) &&
-               not key_equal()(_values[bucket], value) )
+        while ( not key_equal()(_values[bucket], value) &&
+                not key_equal()(_values[bucket], empty_key) )
             bucket = (bucket + inc < _capacity ? bucket + inc : (bucket + inc) - _capacity);
 
         return (not key_equal()(_values[bucket], empty_key) ? _values + bucket : nullptr);
@@ -394,12 +401,14 @@ public:
     }
 
 private:
+    /*
     static constexpr size_type Primes_[32] = {
        0x00000000,0x00000003,0x0000000b,0x00000017,0x00000035,0x00000061,0x000000c1,0x00000185,
        0x00000301,0x00000607,0x00000c07,0x00001807,0x00003001,0x00006011,0x0000c005,0x0001800d,
        0x00030005,0x00060019,0x000c0001,0x00180005,0x0030000b,0x0060000d,0x00c00005,0x01800013,
        0x03000005,0x06000017,0x0c000013,0x18000005,0x30000059,0x60000005,0xc0000001,0xfffffffb,
     };
+    */
 
     pointer _values;
 
@@ -489,7 +498,7 @@ void Test_Containers() {
             LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
             const BenchmarkScope bench("BurstTrie");
 
-            STRINGTRIE_SET(Container, CaseSensitive::True, 31) set;
+            STRINGTRIE_SET(Container, Case::Sensitive, 31) set;
             {
                 const BenchmarkScope bench("BurstTrie construction");
                 PROFILING_SCOPE(Global, 1, "BurstTrie construction");
