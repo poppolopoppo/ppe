@@ -555,13 +555,13 @@ void Append(Vector<T, _Allocator>& v, const MemoryView<const T>& elts) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-typename Vector<T, _Allocator>::const_iterator FindFirstOf(const Vector<T, _Allocator>& v, const T& elt) {
+typename Vector<T, _Allocator>::const_iterator Find(const Vector<T, _Allocator>& v, const T& elt) {
     return std::find(v.begin(), v.end(), elt);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 bool Contains(const Vector<T, _Allocator>& v, const T& elt) {
-    return v.end() != FindFirstOf(v, elt);
+    return (v.end() != std::find(v.begin(), v.end(), elt));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
@@ -569,7 +569,20 @@ bool FindElementIndexIFP(size_t *pIndex, Vector<T, _Allocator>& v, const T& elt)
     Assert(pIndex);
     const auto it = std::find(v.begin(), v.end(), elt);
     if (v.end() != it) {
-        *pIndex = std::distance(v.begin(), v.end());
+        *pIndex = std::distance(v.begin(),it);
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator, typename _Pred>
+bool FindPredicateIndexIFP(size_t *pIndex, Vector<T, _Allocator>& v, const _Pred& pred) {
+    Assert(pIndex);
+    const auto it = std::find_first_of(v.begin(), v.end(), pred);
+    if (v.end() != it) {
+        *pIndex = std::distance(v.begin(), it);
         return true;
     }
     else {

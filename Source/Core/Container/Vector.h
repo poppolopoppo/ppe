@@ -143,6 +143,10 @@ public:
     Vector(std::initializer_list<value_type> ilist, const allocator_type& alloc) : Vector(alloc) { assign(ilist.begin(), ilist.end()); }
     Vector& operator=(std::initializer_list<value_type> ilist) { assign(ilist.begin(), ilist.end()); return *this; }
 
+    Vector(const MemoryView<const value_type>& view) : Vector() { assign(view.begin(), view.end()); }
+    Vector(const MemoryView<const value_type>& view, const allocator_type& alloc) : Vector(alloc) { assign(view.begin(), view.end()); }
+    Vector& operator=(const MemoryView<const value_type>& view) { assign(view.begin(), view.end()); return *this; }
+
     template <typename U>
     explicit Vector(const MemoryView<U>& view) : Vector() { assign(view); }
     template <typename U>
@@ -291,13 +295,13 @@ template <typename T, typename _Allocator>
 void Append(Vector<T, _Allocator>& v, const MemoryView<const T>& elts);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-typename Vector<T, _Allocator>::const_iterator FindFirstOf(const Vector<T, _Allocator>& v, const T& elt);
-//----------------------------------------------------------------------------
-template <typename T, typename _Allocator>
 bool Contains(const Vector<T, _Allocator>& v, const T& elt);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-bool FindElementIndexIFP(size_t *pIndex, Vector<T, _Allocator>& v, const T& elt);
+bool FindElementIndexIFP(size_t *pIndex, const Vector<T, _Allocator>& v, const T& elt);
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator, typename _Pred>
+bool FindPredicateIndexIFP(size_t *pIndex, const Vector<T, _Allocator>& v, const _Pred& pred);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void Add_AssertUnique(Vector<T, _Allocator>& v, const T& elt);
@@ -374,6 +378,9 @@ public:
 
     VectorInSitu(std::initializer_list<value_type> ilist) : VectorInSitu() { assign(ilist.begin(), ilist.end()); }
     VectorInSitu& operator=(std::initializer_list<value_type> ilist) { assign(ilist.begin(), ilist.end()); return *this; }
+
+    VectorInSitu(const MemoryView<const value_type>& view) : VectorInSitu() { assign(view.begin(), view.end()); }
+    VectorInSitu& operator=(const MemoryView<const value_type>& view) { assign(view.begin(), view.end()); return *this; }
 
     ~VectorInSitu() {}
 
