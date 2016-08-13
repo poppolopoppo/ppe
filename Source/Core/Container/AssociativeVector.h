@@ -118,6 +118,13 @@ public:
 
     bool Find(const _Key& key, _Value *pvalue) const;
 
+    template <class... _Args>
+    bool Emplace_ReturnIfExists(_Key&& key, _Args&&... args);
+    template <class... _Args>
+    void Emplace_KeepOldIFN(_Key&& key, _Args&&... args);
+    template <class... _Args>
+    void Emplace_AssertUnique(_Key&& key, _Args&&... args);
+
     bool Insert_ReturnIfExists(_Key&& key, _Value&& rvalue);
     void Insert_KeepOldIFN(_Key&& key, _Value&& rvalue);
     void Insert_AssertUnique(_Key&& key, _Value&& rvalue);
@@ -129,6 +136,8 @@ public:
     _Value& Get(const _Key& key);
     bool TryGet(const _Key& key, _Value *value) const;
     const _Value& At(const _Key& key) const;
+
+    _Value& GetOrAdd(const _Key& key) { return FindOrAdd(key, nullptr)->second; }
 
     bool Erase(const _Key& key);
     void Erase(const const_iterator& it);

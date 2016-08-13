@@ -88,13 +88,15 @@ template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 auto AssociativeVector<_Key, _Value, _EqualTo, _Vector>::FindOrAdd(const _Key& key, bool* pAdded) -> iterator {
     iterator it = Find(key);
     if (end() == it) {
-        *pAdded = true;
+        if (pAdded)
+            *pAdded = true;
         _vector.emplace_back();
         _vector.back().first = key;
         return (_vector.end() - 1);
     }
     else {
-        *pAdded = false;
+        if (pAdded)
+            *pAdded = false;
         return it;
     }
 }
@@ -137,34 +139,61 @@ bool AssociativeVector<_Key, _Value, _EqualTo, _Vector>::Find(const _Key& key, _
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-bool AssociativeVector<_Key, _Value, _EqualTo, _Vector>::Insert_ReturnIfExists(_Key&& key, _Value&& rvalue) {
-    if (end() != Find(key))
+template <class... _Args>
+bool AssociativeVector<_Key, _Value, _EqualTo, _Vector>::Emplace_ReturnIfExists(_Key&& key, _Args&&... args) {
+    if (end() == Find(key)) {
+        _vector.emplace_back(std::forward<_Key>(key), mapped_type(std::forward<_Args>(args)...));
+        return false;
+    }
+    else {
         return true;
-    _vector.emplace_back(std::forward<_Key>(key), std::forward<_Value>(rvalue));
-    return false;
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+template <class... _Args>
+void AssociativeVector<_Key, _Value, _EqualTo, _Vector>::Emplace_KeepOldIFN(_Key&& key, _Args&&... args) {
+    Emplace_ReturnIfExists(key, std::forward<_Args>(args)...);
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+template <class... _Args>
+void AssociativeVector<_Key, _Value, _EqualTo, _Vector>::Emplace_AssertUnique(_Key&& key, _Args&&... args) {
+    Assert(end() == Find(key));
+    _vector.emplace_back(key, mapped_type(std::forward<_Args>(args)...));
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+bool AssociativeVector<_Key, _Value, _EqualTo, _Vector>::Insert_ReturnIfExists(_Key&& key, _Value&& rvalue) {
+    if (end() == Find(key)) {
+        _vector.emplace_back(std::move(key), std::move(rvalue));
+        return false;
+    }
+    else {
+        return true;
+    }
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 void AssociativeVector<_Key, _Value, _EqualTo, _Vector>::Insert_KeepOldIFN(_Key&& key, _Value&& rvalue) {
-    Insert_ReturnIfExists(std::forward<_Key>(key), std::forward<_Value>(rvalue));
+    Insert_ReturnIfExists(std::move(key), std::move(rvalue));
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 void AssociativeVector<_Key, _Value, _EqualTo, _Vector>::Insert_AssertUnique(_Key&& key, _Value&& rvalue) {
-#ifdef _DEBUG
-    if (Insert_ReturnIfExists(std::forward<_Key>(key), std::forward<_Value>(rvalue)))
-        Assert(false);
-#else
-    _vector.emplace_back(std::forward<_Key>(key), std::forward<_Value>(rvalue));
-#endif
+    Assert(end() == Find(key));
+    _vector.emplace_back(std::move(key), std::move(rvalue));
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 bool AssociativeVector<_Key, _Value, _EqualTo, _Vector>::Insert_ReturnIfExists(const _Key& key, const _Value& value) {
-    if (end() != Find(key))
+    if (end() == Find(key)) {
+        _vector.emplace_back(key, value);
+        return false;
+    }
+    else {
         return true;
-    _vector.emplace_back(key, value);
-    return false;
+    }
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
@@ -174,12 +203,8 @@ void AssociativeVector<_Key, _Value, _EqualTo, _Vector>::Insert_KeepOldIFN(const
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 void AssociativeVector<_Key, _Value, _EqualTo, _Vector>::Insert_AssertUnique(const _Key& key, const _Value& value) {
-#ifdef _DEBUG
-    if (Insert_ReturnIfExists(key, value))
-        Assert(false);
-#else
+    Assert(end() == Find(key));
     _vector.emplace_back(key, value);
-#endif
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
