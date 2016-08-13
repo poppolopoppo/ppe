@@ -21,8 +21,8 @@
 
 ; choix du SDK de Windows 10 (#cestlebordel)
 ;#define USE_WINDOWS10_SDK_10
-#define USE_WINDOWS10_SDK_11 ; utilisé par Visual 2015 Update 2
-;#define USE_WINDOWS10_SDK_20
+;#define USE_WINDOWS10_SDK_11 ; utilisé par Visual 2015 Update 2
+#define USE_WINDOWS10_SDK_20 ; utilisé par Visual 2015 Update 3
 
 #include "MSVCBase.bff"
 
