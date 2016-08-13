@@ -78,18 +78,17 @@
     }
 //----------------------------------------------------------------------------
 // Add a public property "SomeName" from 3 delegates or 3 std::function : a getter, a mover & a setter
-#define RTTI_PROPERTY_GETMOVESET_FLAGS(_Name, _Flags, _Get, _Move, _Set) \
-    _RTTI_PROPERTY_IMPL(STRINGIZE(_Name), _Flags, COMMA_PROTECT(std::move(_Get), std::move(_Move), std::move(_Set)) )
+#define RTTI_PROPERTY_GETSET_FLAGS(_Name, _Flags, _Get, _Set) \
+    _RTTI_PROPERTY_IMPL(STRINGIZE(_Name), _Flags, COMMA_PROTECT(std::move(_Get), std::move(_Set)) )
 //----------------------------------------------------------------------------
 // Add a property "SomeName" from 3 delegates or 3 std::function : a getter, a mover & a setter
-#define RTTI_PROPERTY_GETMOVESET(_Name, _Get, _Move, _Set) \
-    RTTI_PROPERTY_GETMOVESET_FLAGS(_Name, Core::RTTI::MetaProperty::Public, _Get, _Move, _Set )
+#define RTTI_PROPERTY_GETSET(_Name, _Get, _Set) \
+    RTTI_PROPERTY_GETSET_FLAGS(_Name, Core::RTTI::MetaProperty::Public, _Get, _Set )
 //----------------------------------------------------------------------------
-// Add a property "SomeName" from 3 member functions : GetSomeName(), MoveSomeName() & SetSomeName()
+// Add a property "SomeName" from 2 member functions : SomeName() & SetSomeName()
 #define RTTI_PROPERTY_MEMBER(_Name) \
-    RTTI_PROPERTY_GETMOVESET(_Name, \
-        &object_type::CONCAT(Get,  _Name), \
-        &object_type::CONCAT(Move, _Name), \
+    RTTI_PROPERTY_GETSET(_Name, \
+        &object_type::_Name, \
         &object_type::CONCAT(Set,  _Name)  )
 //----------------------------------------------------------------------------
 // Add a deprecated property "SomeName" of type T, these are write-only : you can't read from them

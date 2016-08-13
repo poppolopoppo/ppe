@@ -200,14 +200,13 @@ MetaWrappedProperty<T, MetaFieldAccessor<T> > *MakeProperty(
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Class>
-MetaWrappedProperty<T, MetaDelegateAccessor<T, _Class> > *MakeProperty(
+MetaWrappedProperty<T, MetaMemberAccessor<T, _Class> > *MakeProperty(
     const RTTI::Name& name, MetaProperty::Flags attributes,
-    T&   (_Class::* getter)(),
-    void (_Class::* mover)(T&& ),
+    const T& (_Class::* getter)() const,
     void (_Class::* setter)(const T& ) ) {
     return new MetaWrappedProperty<T, MetaMemberAccessor<T, _Class> >(
         name, attributes,
-        MakeMemberAccessor(getter, mover, setter) );
+        MakeMemberAccessor(getter, setter) );
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Class>

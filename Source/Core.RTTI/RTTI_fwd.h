@@ -43,6 +43,8 @@ template <typename _From, typename _To>
 struct MetaTypePromote;
 template <typename T>
 struct MetaTypeTraits;
+template <typename T, typename _Enabled = void>
+struct MetaTypeTraitsImpl;
 class IMetaTypeVirtualTraits;
 class AbstractMetaTypeScalarTraits;
 template <typename T>

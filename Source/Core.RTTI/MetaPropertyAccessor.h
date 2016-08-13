@@ -47,11 +47,10 @@ MetaFieldAccessor<T> MakeFieldAccessor(T _Class::* field) {
 template <typename T, typename _Class>
 class MetaMemberAccessor {
 public:
-    typedef T&   (_Class::* getter_type)();
-    typedef void (_Class::* mover_type)(T&& );
+    typedef const T& (_Class::* getter_type)() const;
     typedef void (_Class::* setter_type)(const T& );
 
-    MetaMemberAccessor(getter_type getter, mover_type mover, setter_type setter);
+    MetaMemberAccessor(getter_type getter, setter_type setter);
 
     T& GetReference(MetaObject *object) const;
     const T& GetReference(const MetaObject *object) const;
@@ -64,18 +63,16 @@ public:
 
 private:
     getter_type _getter;
-    mover_type  _mover;
     setter_type _setter;
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Class>
 MetaMemberAccessor<T, _Class> MakeMemberAccessor(
-    T& (_Class::* getter)(),
-    void (_Class::* mover)(T&& ),
+    const T& (_Class::* getter)() const,
     void (_Class::* setter)(const T& ) ) {
     static_assert(  std::is_base_of<MetaObject, _Class>::value,
                     "_Class must be derived from RTTI::MetaObject");
-    return MetaMemberAccessor<T, _Class>(getter, mover, setter);
+    return MetaMemberAccessor<T, _Class>(getter, setter);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

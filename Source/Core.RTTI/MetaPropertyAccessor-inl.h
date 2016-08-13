@@ -59,45 +59,42 @@ FORCE_INLINE const T& MetaFieldAccessor<T>::FieldRef_(const MetaObject *object) 
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Class>
-MetaMemberAccessor<T, _Class>::MetaMemberAccessor(getter_type getter, mover_type mover, setter_type setter)
-:   _getter(getter), _mover(mover), _setter(setter) {
+MetaMemberAccessor<T, _Class>::MetaMemberAccessor(getter_type getter, setter_type setter)
+:   _getter(getter), _setter(setter) {
     Assert(_getter);
-    Assert(_mover);
     Assert(_setter);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Class>
 T& MetaMemberAccessor<T, _Class>::GetReference(MetaObject *object) const {
     Assert(object);
-    return object->_getter();
+    return const_cast<T&>((checked_cast<const _Class*>(object)->*_getter)());
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Class>
 const T& MetaMemberAccessor<T, _Class>::GetReference(const MetaObject *object) const {
     Assert(object);
-    return checked_cast<_Class *>(object)->_getter();
+    return (checked_cast<const _Class*>(object)->*_getter)();
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Class>
 void MetaMemberAccessor<T, _Class>::GetCopy(const MetaObject *object, T& dst) const {
-    Assert(object);
-    dst = checked_cast<_Class *>(object)->_getter();
+    dst = GetReference(object);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Class>
 void MetaMemberAccessor<T, _Class>::GetMove(MetaObject *object, T& dst) const {
-    Assert(object);
-    dst = std::move(checked_cast<_Class *>(object)->_getter());
+    dst = std::move(GetReference(object));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Class>
 void MetaMemberAccessor<T, _Class>::SetMove(MetaObject *object, T&& src) const {
-    checked_cast<_Class *>(object)->_mover(std::move(src));
+    GetReference(object) = std::move(src);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Class>
 void MetaMemberAccessor<T, _Class>::SetCopy(MetaObject *object, const T& src) const {
-    checked_cast<_Class *>(object)->_setter(src);
+    (checked_cast<_Class*>(object)->*_setter)(src);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
