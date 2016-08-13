@@ -25,7 +25,8 @@ public:
         Timepoint   Date;
         EntityID    ID;
 
-        DelayedProcess(const Timepoint& date, EntityID id) 
+        DelayedProcess() {}
+        DelayedProcess(const Timepoint& date, EntityID id)
         :   Date(date), ID(id) {}
     };
 
@@ -35,7 +36,7 @@ public:
     const VECTOR(System, DelayedProcess)& Entities() const { return _entities; }
 
     virtual bool Enabled() const override { return true; }
-    
+
     virtual void Initialize(EntityManager& manager) override;
     virtual void Destroy(EntityManager& manager) override;
 
