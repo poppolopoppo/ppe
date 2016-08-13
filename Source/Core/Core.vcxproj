@@ -212,79 +212,86 @@
     <CustomBuild Include="IO\VirtualFileSystem.h" />
     <CustomBuild Include="IO\VirtualFileSystem_fwd.cpp" />
     <CustomBuild Include="IO\VirtualFileSystem_fwd.h" />
-    <CustomBuild Include="Maths\Geometry\BinPacking.cpp" />
-    <CustomBuild Include="Maths\Geometry\BinPacking.h" />
-    <CustomBuild Include="Maths\Geometry\Collision.cpp" />
-    <CustomBuild Include="Maths\Geometry\Collision.h" />
-    <CustomBuild Include="Maths\Geometry\ConvexHull.cpp" />
-    <CustomBuild Include="Maths\Geometry\ConvexHull.h" />
-    <CustomBuild Include="Maths\Geometry\Frustum-inl.h" />
-    <CustomBuild Include="Maths\Geometry\Frustum.cpp" />
-    <CustomBuild Include="Maths\Geometry\Frustum.h" />
-    <CustomBuild Include="Maths\Geometry\Plane-inl.h" />
-    <CustomBuild Include="Maths\Geometry\Plane.cpp" />
-    <CustomBuild Include="Maths\Geometry\Plane.h" />
-    <CustomBuild Include="Maths\Geometry\Ray-inl.h" />
-    <CustomBuild Include="Maths\Geometry\Ray.cpp" />
-    <CustomBuild Include="Maths\Geometry\Ray.h" />
-    <CustomBuild Include="Maths\Geometry\ScalarBoundingBox-inl.h" />
-    <CustomBuild Include="Maths\Geometry\ScalarBoundingBox.h" />
-    <CustomBuild Include="Maths\Geometry\ScalarBoundingBox.Shuffle-inl.h" />
-    <CustomBuild Include="Maths\Geometry\ScalarBoundingBoxHelpers-inl.h" />
-    <CustomBuild Include="Maths\Geometry\ScalarBoundingBoxHelpers.h" />
-    <CustomBuild Include="Maths\Geometry\ScalarBoundingBox_fwd.h" />
-    <CustomBuild Include="Maths\Geometry\ScalarRectangle-inl.h" />
-    <CustomBuild Include="Maths\Geometry\ScalarRectangle.h" />
-    <CustomBuild Include="Maths\Geometry\ScalarRectangle_fwd.h" />
-    <CustomBuild Include="Maths\Geometry\ScalarVector-inl.h" />
-    <CustomBuild Include="Maths\Geometry\ScalarVector.cpp" />
-    <CustomBuild Include="Maths\Geometry\ScalarVector.h" />
-    <CustomBuild Include="Maths\Geometry\ScalarVector.Shuffle-inl.h" />
-    <CustomBuild Include="Maths\Geometry\ScalarVectorHelpers-inl.h" />
-    <CustomBuild Include="Maths\Geometry\ScalarVectorHelpers.h" />
-    <CustomBuild Include="Maths\Geometry\ScalarVector_fwd.h" />
-    <CustomBuild Include="Maths\Geometry\Sphere-inl.h" />
-    <CustomBuild Include="Maths\Geometry\Sphere.cpp" />
-    <CustomBuild Include="Maths\Geometry\Sphere.h" />
-    <CustomBuild Include="Maths\Packing\PackedVectors-inl.h" />
-    <CustomBuild Include="Maths\Packing\PackedVectors.cpp" />
-    <CustomBuild Include="Maths\Packing\PackedVectors.h" />
-    <CustomBuild Include="Maths\Packing\PackingHelpers-inl.h" />
-    <CustomBuild Include="Maths\Packing\PackingHelpers.cpp" />
-    <CustomBuild Include="Maths\Packing\PackingHelpers.h" />
-    <CustomBuild Include="Maths\SphericalHarmonics\SHFunctionProjector.cpp" />
-    <CustomBuild Include="Maths\SphericalHarmonics\SHFunctionProjector.h" />
-    <CustomBuild Include="Maths\SphericalHarmonics\SHRotation.cpp" />
-    <CustomBuild Include="Maths\SphericalHarmonics\SHRotation.h" />
-    <CustomBuild Include="Maths\SphericalHarmonics\SHSample.cpp" />
-    <CustomBuild Include="Maths\SphericalHarmonics\SHSample.h" />
-    <CustomBuild Include="Maths\SphericalHarmonics\SHSampleCollection.cpp" />
-    <CustomBuild Include="Maths\SphericalHarmonics\SHSampleCollection.h" />
-    <CustomBuild Include="Maths\SphericalHarmonics\SHVector-inl.h" />
-    <CustomBuild Include="Maths\SphericalHarmonics\SHVector.h" />
-    <CustomBuild Include="Maths\SphericalHarmonics\SHVector_extern.cpp" />
-    <CustomBuild Include="Maths\SphericalHarmonics\SHVector_extern.h" />
-    <CustomBuild Include="Maths\SphericalHarmonics\SHVector_fwd.h" />
-    <CustomBuild Include="Maths\Transform\AffineTransform.cpp" />
-    <CustomBuild Include="Maths\Transform\AffineTransform.h" />
-    <CustomBuild Include="Maths\Transform\Quaternion-inl.h" />
-    <CustomBuild Include="Maths\Transform\Quaternion.cpp" />
-    <CustomBuild Include="Maths\Transform\Quaternion.h" />
-    <CustomBuild Include="Maths\Transform\QuaternionHelpers-inl.h" />
-    <CustomBuild Include="Maths\Transform\QuaternionHelpers.cpp" />
-    <CustomBuild Include="Maths\Transform\QuaternionHelpers.h" />
-    <CustomBuild Include="Maths\Transform\ScalarMatrix-inl.h" />
-    <CustomBuild Include="Maths\Transform\ScalarMatrix.h" />
-    <CustomBuild Include="Maths\Transform\ScalarMatrixHelpers-inl.h" />
-    <CustomBuild Include="Maths\Transform\ScalarMatrixHelpers.h" />
-    <CustomBuild Include="Maths\Transform\ScalarMatrix_fwd.h" />
+    <CustomBuild Include="Maths\AffineTransform.cpp" />
+    <CustomBuild Include="Maths\AffineTransform.h" />
+    <CustomBuild Include="Maths\BinPacking.cpp" />
+    <CustomBuild Include="Maths\BinPacking.h" />
+    <CustomBuild Include="Maths\Collision.cpp" />
+    <CustomBuild Include="Maths\Collision.h" />
+    <CustomBuild Include="Maths\ConvexHull.cpp" />
+    <CustomBuild Include="Maths\ConvexHull.h" />
+    <CustomBuild Include="Maths\EigenMatrixSolver-inl.h" />
+    <CustomBuild Include="Maths\EigenMatrixSolver.h" />
+    <CustomBuild Include="Maths\Frustum-inl.h" />
+    <CustomBuild Include="Maths\Frustum.cpp" />
+    <CustomBuild Include="Maths\Frustum.h" />
+    <CustomBuild Include="Maths\LeastSquaresFitting.cpp" />
+    <CustomBuild Include="Maths\LeastSquaresFitting.h" />
     <CustomBuild Include="Maths\MathHelpers-inl.h" />
     <CustomBuild Include="Maths\MathHelpers.h" />
     <CustomBuild Include="Maths\Maths.h" />
     <CustomBuild Include="Maths\Maths_extern.h" />
+    <CustomBuild Include="Maths\PackedVectors-inl.h" />
+    <CustomBuild Include="Maths\PackedVectors.cpp" />
+    <CustomBuild Include="Maths\PackedVectors.h" />
+    <CustomBuild Include="Maths\PackingHelpers-inl.h" />
+    <CustomBuild Include="Maths\PackingHelpers.cpp" />
+    <CustomBuild Include="Maths\PackingHelpers.h" />
+    <CustomBuild Include="Maths\Packing_fwd.h" />
+    <CustomBuild Include="Maths\Plane-inl.h" />
+    <CustomBuild Include="Maths\Plane.cpp" />
+    <CustomBuild Include="Maths\Plane.h" />
+    <CustomBuild Include="Maths\PNTriangle.cpp" />
+    <CustomBuild Include="Maths\PNTriangle.h" />
+    <CustomBuild Include="Maths\Quaternion-inl.h" />
+    <CustomBuild Include="Maths\Quaternion.cpp" />
+    <CustomBuild Include="Maths\Quaternion.h" />
+    <CustomBuild Include="Maths\QuaternionHelpers-inl.h" />
+    <CustomBuild Include="Maths\QuaternionHelpers.cpp" />
+    <CustomBuild Include="Maths\QuaternionHelpers.h" />
     <CustomBuild Include="Maths\RandomGenerator-inl.h" />
     <CustomBuild Include="Maths\RandomGenerator.cpp" />
     <CustomBuild Include="Maths\RandomGenerator.h" />
+    <CustomBuild Include="Maths\Ray-inl.h" />
+    <CustomBuild Include="Maths\Ray.cpp" />
+    <CustomBuild Include="Maths\Ray.h" />
+    <CustomBuild Include="Maths\ScalarBoundingBox-inl.h" />
+    <CustomBuild Include="Maths\ScalarBoundingBox.h" />
+    <CustomBuild Include="Maths\ScalarBoundingBox.Shuffle-inl.h" />
+    <CustomBuild Include="Maths\ScalarBoundingBoxHelpers-inl.h" />
+    <CustomBuild Include="Maths\ScalarBoundingBoxHelpers.h" />
+    <CustomBuild Include="Maths\ScalarBoundingBox_fwd.h" />
+    <CustomBuild Include="Maths\ScalarMatrix-inl.h" />
+    <CustomBuild Include="Maths\ScalarMatrix.h" />
+    <CustomBuild Include="Maths\ScalarMatrixHelpers-inl.h" />
+    <CustomBuild Include="Maths\ScalarMatrixHelpers.h" />
+    <CustomBuild Include="Maths\ScalarMatrix_fwd.h" />
+    <CustomBuild Include="Maths\ScalarRectangle-inl.h" />
+    <CustomBuild Include="Maths\ScalarRectangle.h" />
+    <CustomBuild Include="Maths\ScalarRectangle_fwd.h" />
+    <CustomBuild Include="Maths\ScalarVector-inl.h" />
+    <CustomBuild Include="Maths\ScalarVector.cpp" />
+    <CustomBuild Include="Maths\ScalarVector.h" />
+    <CustomBuild Include="Maths\ScalarVector.Shuffle-inl.h" />
+    <CustomBuild Include="Maths\ScalarVectorHelpers-inl.h" />
+    <CustomBuild Include="Maths\ScalarVectorHelpers.h" />
+    <CustomBuild Include="Maths\ScalarVector_fwd.h" />
+    <CustomBuild Include="Maths\SHFunctionProjector.cpp" />
+    <CustomBuild Include="Maths\SHFunctionProjector.h" />
+    <CustomBuild Include="Maths\SHRotation.cpp" />
+    <CustomBuild Include="Maths\SHRotation.h" />
+    <CustomBuild Include="Maths\SHSample.cpp" />
+    <CustomBuild Include="Maths\SHSample.h" />
+    <CustomBuild Include="Maths\SHSampleCollection.cpp" />
+    <CustomBuild Include="Maths\SHSampleCollection.h" />
+    <CustomBuild Include="Maths\SHVector-inl.h" />
+    <CustomBuild Include="Maths\SHVector.h" />
+    <CustomBuild Include="Maths\SHVector_extern.cpp" />
+    <CustomBuild Include="Maths\SHVector_extern.h" />
+    <CustomBuild Include="Maths\SHVector_fwd.h" />
+    <CustomBuild Include="Maths\Sphere-inl.h" />
+    <CustomBuild Include="Maths\Sphere.cpp" />
+    <CustomBuild Include="Maths\Sphere.h" />
     <CustomBuild Include="Maths\Units-inl.h" />
     <CustomBuild Include="Maths\Units.cpp" />
     <CustomBuild Include="Maths\Units.Definitions-inl.h" />
@@ -500,7 +507,7 @@
     <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.rb -config fbuild.bff -vs  -summary -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakeOutput>$(SolutionDir)\Output\Binary\Core.Debug.Win32.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN32;ARCH_X86;ARCH_32BIT;DEBUG;_DEBUG;_SECURE_SCL=1;_ITERATOR_DEBUG_LEVEL=2;_HAS_ITERATOR_DEBUGGING=1</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ProjectDir);$(SolutionDir)\Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\VC\Include;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt;C:\Program Files (x86)\Windows Kits\8.1\Include\um;C:\Program Files (x86)\Windows Kits\8.1\Include\shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\PerfSDK;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir);$(SolutionDir)\Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\VC\Include;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10586.0\ucrt;C:\Program Files (x86)\Windows Kits\8.1\Include\um;C:\Program Files (x86)\Windows Kits\8.1\Include\shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\PerfSDK;.</NMakeIncludeSearchPath>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
     <OutDir>$(SolutionDir)\Output\Binary</OutDir>
@@ -511,7 +518,7 @@
     <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.rb -config fbuild.bff -vs  -summary -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakeOutput>$(SolutionDir)\Output\Binary\Core.FastDebug.Win32.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN32;ARCH_X86;ARCH_32BIT;FASTDEBUG;_DEBUG;DEBUG;_SECURE_SCL=1;_ITERATOR_DEBUG_LEVEL=2;_HAS_ITERATOR_DEBUGGING=1</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ProjectDir);$(SolutionDir)\Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\VC\Include;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt;C:\Program Files (x86)\Windows Kits\8.1\Include\um;C:\Program Files (x86)\Windows Kits\8.1\Include\shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\PerfSDK;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir);$(SolutionDir)\Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\VC\Include;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10586.0\ucrt;C:\Program Files (x86)\Windows Kits\8.1\Include\um;C:\Program Files (x86)\Windows Kits\8.1\Include\shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\PerfSDK;.</NMakeIncludeSearchPath>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
     <OutDir>$(SolutionDir)\Output\Binary</OutDir>
@@ -522,7 +529,7 @@
     <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.rb -config fbuild.bff -vs  -summary -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakeOutput>$(SolutionDir)\Output\Binary\Core.Release.Win32.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN32;ARCH_X86;ARCH_32BIT;RELEASE;NDEBUG;_SECURE_SCL=0;_ITERATOR_DEBUG_LEVEL=0;_HAS_ITERATOR_DEBUGGING=0</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ProjectDir);$(SolutionDir)\Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\VC\Include;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt;C:\Program Files (x86)\Windows Kits\8.1\Include\um;C:\Program Files (x86)\Windows Kits\8.1\Include\shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\PerfSDK;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir);$(SolutionDir)\Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\VC\Include;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10586.0\ucrt;C:\Program Files (x86)\Windows Kits\8.1\Include\um;C:\Program Files (x86)\Windows Kits\8.1\Include\shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\PerfSDK;.</NMakeIncludeSearchPath>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
     <OutDir>$(SolutionDir)\Output\Binary</OutDir>
@@ -533,7 +540,7 @@
     <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.rb -config fbuild.bff -vs  -summary -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakeOutput>$(SolutionDir)\Output\Binary\Core.Profiling.Win32.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN32;ARCH_X86;ARCH_32BIT;RELEASE;NDEBUG;PROFILING_ENABLED;_SECURE_SCL=0;_ITERATOR_DEBUG_LEVEL=0;_HAS_ITERATOR_DEBUGGING=0</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ProjectDir);$(SolutionDir)\Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\VC\Include;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt;C:\Program Files (x86)\Windows Kits\8.1\Include\um;C:\Program Files (x86)\Windows Kits\8.1\Include\shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\PerfSDK;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir);$(SolutionDir)\Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\VC\Include;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10586.0\ucrt;C:\Program Files (x86)\Windows Kits\8.1\Include\um;C:\Program Files (x86)\Windows Kits\8.1\Include\shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\PerfSDK;.</NMakeIncludeSearchPath>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
     <OutDir>$(SolutionDir)\Output\Binary</OutDir>
@@ -544,7 +551,7 @@
     <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.rb -config fbuild.bff -vs  -summary -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakeOutput>$(SolutionDir)\Output\Binary\Core.Final.Win32.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN32;ARCH_X86;ARCH_32BIT;FINAL_RELEASE;RELEASE;NDEBUG;_SECURE_SCL=0;_ITERATOR_DEBUG_LEVEL=0;_HAS_ITERATOR_DEBUGGING=0</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ProjectDir);$(SolutionDir)\Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\VC\Include;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt;C:\Program Files (x86)\Windows Kits\8.1\Include\um;C:\Program Files (x86)\Windows Kits\8.1\Include\shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\PerfSDK;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir);$(SolutionDir)\Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\VC\Include;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10586.0\ucrt;C:\Program Files (x86)\Windows Kits\8.1\Include\um;C:\Program Files (x86)\Windows Kits\8.1\Include\shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\PerfSDK;.</NMakeIncludeSearchPath>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
     <OutDir>$(SolutionDir)\Output\Binary</OutDir>
@@ -555,7 +562,7 @@
     <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.rb -config fbuild.bff -vs  -summary -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakeOutput>$(SolutionDir)\Output\Binary\Core.Debug.x64.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN64;ARCH_X64;ARCH_64BIT;DEBUG;_DEBUG;_SECURE_SCL=1;_ITERATOR_DEBUG_LEVEL=2;_HAS_ITERATOR_DEBUGGING=1</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ProjectDir);$(SolutionDir)\Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\VC\Include;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt;C:\Program Files (x86)\Windows Kits\8.1\Include\um;C:\Program Files (x86)\Windows Kits\8.1\Include\shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\x64\PerfSDK;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir);$(SolutionDir)\Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\VC\Include;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10586.0\ucrt;C:\Program Files (x86)\Windows Kits\8.1\Include\um;C:\Program Files (x86)\Windows Kits\8.1\Include\shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\x64\PerfSDK;.</NMakeIncludeSearchPath>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
     <OutDir>$(SolutionDir)\Output\Binary</OutDir>
@@ -566,7 +573,7 @@
     <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.rb -config fbuild.bff -vs  -summary -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakeOutput>$(SolutionDir)\Output\Binary\Core.FastDebug.x64.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN64;ARCH_X64;ARCH_64BIT;FASTDEBUG;_DEBUG;DEBUG;_SECURE_SCL=1;_ITERATOR_DEBUG_LEVEL=2;_HAS_ITERATOR_DEBUGGING=1</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ProjectDir);$(SolutionDir)\Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\VC\Include;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt;C:\Program Files (x86)\Windows Kits\8.1\Include\um;C:\Program Files (x86)\Windows Kits\8.1\Include\shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\x64\PerfSDK;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir);$(SolutionDir)\Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\VC\Include;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10586.0\ucrt;C:\Program Files (x86)\Windows Kits\8.1\Include\um;C:\Program Files (x86)\Windows Kits\8.1\Include\shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\x64\PerfSDK;.</NMakeIncludeSearchPath>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
     <OutDir>$(SolutionDir)\Output\Binary</OutDir>
@@ -577,7 +584,7 @@
     <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.rb -config fbuild.bff -vs  -summary -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakeOutput>$(SolutionDir)\Output\Binary\Core.Release.x64.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN64;ARCH_X64;ARCH_64BIT;RELEASE;NDEBUG;_SECURE_SCL=0;_ITERATOR_DEBUG_LEVEL=0;_HAS_ITERATOR_DEBUGGING=0</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ProjectDir);$(SolutionDir)\Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\VC\Include;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt;C:\Program Files (x86)\Windows Kits\8.1\Include\um;C:\Program Files (x86)\Windows Kits\8.1\Include\shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\x64\PerfSDK;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir);$(SolutionDir)\Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\VC\Include;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10586.0\ucrt;C:\Program Files (x86)\Windows Kits\8.1\Include\um;C:\Program Files (x86)\Windows Kits\8.1\Include\shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\x64\PerfSDK;.</NMakeIncludeSearchPath>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
     <OutDir>$(SolutionDir)\Output\Binary</OutDir>
@@ -588,7 +595,7 @@
     <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.rb -config fbuild.bff -vs  -summary -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakeOutput>$(SolutionDir)\Output\Binary\Core.Profiling.x64.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN64;ARCH_X64;ARCH_64BIT;RELEASE;NDEBUG;PROFILING_ENABLED;_SECURE_SCL=0;_ITERATOR_DEBUG_LEVEL=0;_HAS_ITERATOR_DEBUGGING=0</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ProjectDir);$(SolutionDir)\Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\VC\Include;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt;C:\Program Files (x86)\Windows Kits\8.1\Include\um;C:\Program Files (x86)\Windows Kits\8.1\Include\shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\x64\PerfSDK;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir);$(SolutionDir)\Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\VC\Include;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10586.0\ucrt;C:\Program Files (x86)\Windows Kits\8.1\Include\um;C:\Program Files (x86)\Windows Kits\8.1\Include\shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\x64\PerfSDK;.</NMakeIncludeSearchPath>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
     <OutDir>$(SolutionDir)\Output\Binary</OutDir>
@@ -599,7 +606,7 @@
     <NMakeCleanCommandLine>cd "$(SolutionDir)" &amp; fbuild.rb -config fbuild.bff -vs  -summary -clean $(ProjectName)-$(Platform)-$(Configuration)-Purge</NMakeCleanCommandLine>
     <NMakeOutput>$(SolutionDir)\Output\Binary\Core.Final.x64.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>;_MT;_DLL;STRICT;NOMINMAX;VC_EXTRALEAN;WIN32_LEAN_AND_MEAN;STRSAFE_NO_DEPRECATE=1;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NONSTDC_NO_DEPRECATE=1;DBGHELP_TRANSLATE_TCHAR;_UNICODE;UNICODE;PLATFORM_PC;PLATFORM_WIN;WIN32;__WINDOWS__;_WIN64;ARCH_X64;ARCH_64BIT;FINAL_RELEASE;RELEASE;NDEBUG;_SECURE_SCL=0;_ITERATOR_DEBUG_LEVEL=0;_HAS_ITERATOR_DEBUGGING=0</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ProjectDir);$(SolutionDir)\Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\VC\Include;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt;C:\Program Files (x86)\Windows Kits\8.1\Include\um;C:\Program Files (x86)\Windows Kits\8.1\Include\shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\x64\PerfSDK;.</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir);$(SolutionDir)\Source;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\VC\Include;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10586.0\ucrt;C:\Program Files (x86)\Windows Kits\8.1\Include\um;C:\Program Files (x86)\Windows Kits\8.1\Include\shared;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\\Include;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\..\..\Team Tools\Performance Tools\x64\PerfSDK;.</NMakeIncludeSearchPath>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)\Output\Binary</LocalDebuggerWorkingDirectory>
     <IntDir>$(SolutionDir)\Output\Intermediate\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
     <OutDir>$(SolutionDir)\Output\Binary</OutDir>

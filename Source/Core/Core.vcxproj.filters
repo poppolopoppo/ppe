@@ -508,203 +508,50 @@
     <CustomBuild Include="IO\VirtualFileSystem_fwd.h">
       <Filter>IO</Filter>
     </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\BinPacking.cpp">
-      <Filter>Maths\Geometry</Filter>
+    <CustomBuild Include="Maths\AffineTransform.cpp">
+      <Filter>Maths</Filter>
     </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\BinPacking.h">
-      <Filter>Maths\Geometry</Filter>
+    <CustomBuild Include="Maths\AffineTransform.h">
+      <Filter>Maths</Filter>
     </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\Collision.cpp">
-      <Filter>Maths\Geometry</Filter>
+    <CustomBuild Include="Maths\BinPacking.cpp">
+      <Filter>Maths</Filter>
     </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\Collision.h">
-      <Filter>Maths\Geometry</Filter>
+    <CustomBuild Include="Maths\BinPacking.h">
+      <Filter>Maths</Filter>
     </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\ConvexHull.cpp">
-      <Filter>Maths\Geometry</Filter>
+    <CustomBuild Include="Maths\Collision.cpp">
+      <Filter>Maths</Filter>
     </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\ConvexHull.h">
-      <Filter>Maths\Geometry</Filter>
+    <CustomBuild Include="Maths\Collision.h">
+      <Filter>Maths</Filter>
     </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\Frustum-inl.h">
-      <Filter>Maths\Geometry</Filter>
+    <CustomBuild Include="Maths\ConvexHull.cpp">
+      <Filter>Maths</Filter>
     </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\Frustum.cpp">
-      <Filter>Maths\Geometry</Filter>
+    <CustomBuild Include="Maths\ConvexHull.h">
+      <Filter>Maths</Filter>
     </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\Frustum.h">
-      <Filter>Maths\Geometry</Filter>
+    <CustomBuild Include="Maths\EigenMatrixSolver-inl.h">
+      <Filter>Maths</Filter>
     </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\Plane-inl.h">
-      <Filter>Maths\Geometry</Filter>
+    <CustomBuild Include="Maths\EigenMatrixSolver.h">
+      <Filter>Maths</Filter>
     </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\Plane.cpp">
-      <Filter>Maths\Geometry</Filter>
+    <CustomBuild Include="Maths\Frustum-inl.h">
+      <Filter>Maths</Filter>
     </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\Plane.h">
-      <Filter>Maths\Geometry</Filter>
+    <CustomBuild Include="Maths\Frustum.cpp">
+      <Filter>Maths</Filter>
     </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\Ray-inl.h">
-      <Filter>Maths\Geometry</Filter>
+    <CustomBuild Include="Maths\Frustum.h">
+      <Filter>Maths</Filter>
     </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\Ray.cpp">
-      <Filter>Maths\Geometry</Filter>
+    <CustomBuild Include="Maths\LeastSquaresFitting.cpp">
+      <Filter>Maths</Filter>
     </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\Ray.h">
-      <Filter>Maths\Geometry</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\ScalarBoundingBox-inl.h">
-      <Filter>Maths\Geometry</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\ScalarBoundingBox.h">
-      <Filter>Maths\Geometry</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\ScalarBoundingBox.Shuffle-inl.h">
-      <Filter>Maths\Geometry</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\ScalarBoundingBoxHelpers-inl.h">
-      <Filter>Maths\Geometry</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\ScalarBoundingBoxHelpers.h">
-      <Filter>Maths\Geometry</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\ScalarBoundingBox_fwd.h">
-      <Filter>Maths\Geometry</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\ScalarRectangle-inl.h">
-      <Filter>Maths\Geometry</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\ScalarRectangle.h">
-      <Filter>Maths\Geometry</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\ScalarRectangle_fwd.h">
-      <Filter>Maths\Geometry</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\ScalarVector-inl.h">
-      <Filter>Maths\Geometry</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\ScalarVector.cpp">
-      <Filter>Maths\Geometry</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\ScalarVector.h">
-      <Filter>Maths\Geometry</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\ScalarVector.Shuffle-inl.h">
-      <Filter>Maths\Geometry</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\ScalarVectorHelpers-inl.h">
-      <Filter>Maths\Geometry</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\ScalarVectorHelpers.h">
-      <Filter>Maths\Geometry</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\ScalarVector_fwd.h">
-      <Filter>Maths\Geometry</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\Sphere-inl.h">
-      <Filter>Maths\Geometry</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\Sphere.cpp">
-      <Filter>Maths\Geometry</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Geometry\Sphere.h">
-      <Filter>Maths\Geometry</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Packing\PackedVectors-inl.h">
-      <Filter>Maths\Packing</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Packing\PackedVectors.cpp">
-      <Filter>Maths\Packing</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Packing\PackedVectors.h">
-      <Filter>Maths\Packing</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Packing\PackingHelpers-inl.h">
-      <Filter>Maths\Packing</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Packing\PackingHelpers.cpp">
-      <Filter>Maths\Packing</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Packing\PackingHelpers.h">
-      <Filter>Maths\Packing</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\SphericalHarmonics\SHFunctionProjector.cpp">
-      <Filter>Maths\SphericalHarmonics</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\SphericalHarmonics\SHFunctionProjector.h">
-      <Filter>Maths\SphericalHarmonics</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\SphericalHarmonics\SHRotation.cpp">
-      <Filter>Maths\SphericalHarmonics</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\SphericalHarmonics\SHRotation.h">
-      <Filter>Maths\SphericalHarmonics</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\SphericalHarmonics\SHSample.cpp">
-      <Filter>Maths\SphericalHarmonics</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\SphericalHarmonics\SHSample.h">
-      <Filter>Maths\SphericalHarmonics</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\SphericalHarmonics\SHSampleCollection.cpp">
-      <Filter>Maths\SphericalHarmonics</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\SphericalHarmonics\SHSampleCollection.h">
-      <Filter>Maths\SphericalHarmonics</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\SphericalHarmonics\SHVector-inl.h">
-      <Filter>Maths\SphericalHarmonics</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\SphericalHarmonics\SHVector.h">
-      <Filter>Maths\SphericalHarmonics</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\SphericalHarmonics\SHVector_extern.cpp">
-      <Filter>Maths\SphericalHarmonics</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\SphericalHarmonics\SHVector_extern.h">
-      <Filter>Maths\SphericalHarmonics</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\SphericalHarmonics\SHVector_fwd.h">
-      <Filter>Maths\SphericalHarmonics</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Transform\AffineTransform.cpp">
-      <Filter>Maths\Transform</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Transform\AffineTransform.h">
-      <Filter>Maths\Transform</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Transform\Quaternion-inl.h">
-      <Filter>Maths\Transform</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Transform\Quaternion.cpp">
-      <Filter>Maths\Transform</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Transform\Quaternion.h">
-      <Filter>Maths\Transform</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Transform\QuaternionHelpers-inl.h">
-      <Filter>Maths\Transform</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Transform\QuaternionHelpers.cpp">
-      <Filter>Maths\Transform</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Transform\QuaternionHelpers.h">
-      <Filter>Maths\Transform</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Transform\ScalarMatrix-inl.h">
-      <Filter>Maths\Transform</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Transform\ScalarMatrix.h">
-      <Filter>Maths\Transform</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Transform\ScalarMatrixHelpers-inl.h">
-      <Filter>Maths\Transform</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Transform\ScalarMatrixHelpers.h">
-      <Filter>Maths\Transform</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Maths\Transform\ScalarMatrix_fwd.h">
-      <Filter>Maths\Transform</Filter>
+    <CustomBuild Include="Maths\LeastSquaresFitting.h">
+      <Filter>Maths</Filter>
     </CustomBuild>
     <CustomBuild Include="Maths\MathHelpers-inl.h">
       <Filter>Maths</Filter>
@@ -718,6 +565,60 @@
     <CustomBuild Include="Maths\Maths_extern.h">
       <Filter>Maths</Filter>
     </CustomBuild>
+    <CustomBuild Include="Maths\PackedVectors-inl.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\PackedVectors.cpp">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\PackedVectors.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\PackingHelpers-inl.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\PackingHelpers.cpp">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\PackingHelpers.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Packing_fwd.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Plane-inl.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Plane.cpp">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Plane.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\PNTriangle.cpp">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\PNTriangle.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Quaternion-inl.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Quaternion.cpp">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Quaternion.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\QuaternionHelpers-inl.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\QuaternionHelpers.cpp">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\QuaternionHelpers.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
     <CustomBuild Include="Maths\RandomGenerator-inl.h">
       <Filter>Maths</Filter>
     </CustomBuild>
@@ -725,6 +626,126 @@
       <Filter>Maths</Filter>
     </CustomBuild>
     <CustomBuild Include="Maths\RandomGenerator.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Ray-inl.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Ray.cpp">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Ray.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\ScalarBoundingBox-inl.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\ScalarBoundingBox.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\ScalarBoundingBox.Shuffle-inl.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\ScalarBoundingBoxHelpers-inl.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\ScalarBoundingBoxHelpers.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\ScalarBoundingBox_fwd.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\ScalarMatrix-inl.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\ScalarMatrix.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\ScalarMatrixHelpers-inl.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\ScalarMatrixHelpers.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\ScalarMatrix_fwd.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\ScalarRectangle-inl.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\ScalarRectangle.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\ScalarRectangle_fwd.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\ScalarVector-inl.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\ScalarVector.cpp">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\ScalarVector.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\ScalarVector.Shuffle-inl.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\ScalarVectorHelpers-inl.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\ScalarVectorHelpers.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\ScalarVector_fwd.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\SHFunctionProjector.cpp">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\SHFunctionProjector.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\SHRotation.cpp">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\SHRotation.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\SHSample.cpp">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\SHSample.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\SHSampleCollection.cpp">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\SHSampleCollection.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\SHVector-inl.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\SHVector.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\SHVector_extern.cpp">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\SHVector_extern.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\SHVector_fwd.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Sphere-inl.h">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Sphere.cpp">
+      <Filter>Maths</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Maths\Sphere.h">
       <Filter>Maths</Filter>
     </CustomBuild>
     <CustomBuild Include="Maths\Units-inl.h">
@@ -1083,28 +1104,8 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="Maths\Geometry">
-      <UniqueIdentifier>{b9d80f2d-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
     <Filter Include="Maths">
       <UniqueIdentifier>{d20bfa26-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <Filter Include="Maths\Packing">
-      <UniqueIdentifier>{bc28e1f6-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <Filter Include="Maths\SphericalHarmonics">
-      <UniqueIdentifier>{1cd1e6b6-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <Filter Include="Maths\Transform">
-      <UniqueIdentifier>{73452db9-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

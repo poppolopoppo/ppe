@@ -22,22 +22,10 @@
     <CustomBuild Include="Device\Geometry\VertexBuffer.h">
       <Filter>Device\Geometry</Filter>
     </CustomBuild>
-    <CustomBuild Include="Device\Geometry\VertexDeclaration-inl.h">
-      <Filter>Device\Geometry</Filter>
-    </CustomBuild>
     <CustomBuild Include="Device\Geometry\VertexDeclaration.cpp">
       <Filter>Device\Geometry</Filter>
     </CustomBuild>
     <CustomBuild Include="Device\Geometry\VertexDeclaration.h">
-      <Filter>Device\Geometry</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Device\Geometry\VertexSubPart-inl.h">
-      <Filter>Device\Geometry</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Device\Geometry\VertexSubPart.cpp">
-      <Filter>Device\Geometry</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Device\Geometry\VertexSubPart.h">
       <Filter>Device\Geometry</Filter>
     </CustomBuild>
     <CustomBuild Include="Device\Geometry\VertexTypes.cpp">
@@ -71,12 +59,6 @@
       <Filter>Device\Shader</Filter>
     </CustomBuild>
     <CustomBuild Include="Device\Shader\ConstantBufferLayout.h">
-      <Filter>Device\Shader</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Device\Shader\ConstantField.cpp">
-      <Filter>Device\Shader</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Device\Shader\ConstantField.h">
       <Filter>Device\Shader</Filter>
     </CustomBuild>
     <CustomBuild Include="Device\Shader\ShaderCompiled.cpp">
@@ -179,12 +161,6 @@
       <Filter>Device</Filter>
     </CustomBuild>
     <CustomBuild Include="Device\AbstractDeviceAPIEncapsulator.h">
-      <Filter>Device</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Device\BindName.cpp">
-      <Filter>Device</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Device\BindName.h">
       <Filter>Device</Filter>
     </CustomBuild>
     <CustomBuild Include="Device\DeviceAPI.h">
@@ -435,11 +411,25 @@
     </CustomBuild>
     <CustomBuild Include="Graphics.h">
     </CustomBuild>
+    <CustomBuild Include="Name.cpp">
+    </CustomBuild>
+    <CustomBuild Include="Name.h">
+    </CustomBuild>
     <CustomBuild Include="stdafx.cpp">
     </CustomBuild>
     <CustomBuild Include="stdafx.h">
     </CustomBuild>
     <CustomBuild Include="targetver.h">
+    </CustomBuild>
+    <CustomBuild Include="Value.cpp">
+    </CustomBuild>
+    <CustomBuild Include="Value.Definitions-inl.h">
+    </CustomBuild>
+    <CustomBuild Include="Value.h">
+    </CustomBuild>
+    <CustomBuild Include="ValueBlock.cpp">
+    </CustomBuild>
+    <CustomBuild Include="ValueBlock.h">
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>

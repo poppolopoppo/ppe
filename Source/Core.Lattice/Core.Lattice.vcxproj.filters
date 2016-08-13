@@ -3,17 +3,17 @@
   <ItemGroup>
     <CustomBuild Include="Core.Lattice.bff">
     </CustomBuild>
-    <CustomBuild Include="GenericVertex.cpp">
+    <CustomBuild Include="GenericMesh-inl.h">
     </CustomBuild>
-    <CustomBuild Include="GenericVertex.h">
+    <CustomBuild Include="GenericMesh.cpp">
     </CustomBuild>
-    <CustomBuild Include="GenericVertexExport.cpp">
+    <CustomBuild Include="GenericMesh.h">
     </CustomBuild>
-    <CustomBuild Include="GenericVertexExport.h">
+    <CustomBuild Include="GenericMeshHelpers.cpp">
     </CustomBuild>
-    <CustomBuild Include="GenericVertexOptimizer.cpp">
+    <CustomBuild Include="GenericMeshHelpers.h">
     </CustomBuild>
-    <CustomBuild Include="GenericVertexOptimizer.h">
+    <CustomBuild Include="GenericMesh_fwd.h">
     </CustomBuild>
     <CustomBuild Include="GeometricPrimitives.cpp">
     </CustomBuild>
@@ -28,6 +28,10 @@
     <CustomBuild Include="Lattice_extern.h">
     </CustomBuild>
     <CustomBuild Include="Lattice_fwd.h">
+    </CustomBuild>
+    <CustomBuild Include="ModelMaterial.cpp">
+    </CustomBuild>
+    <CustomBuild Include="ModelMaterial.h">
     </CustomBuild>
     <CustomBuild Include="stdafx.cpp">
     </CustomBuild>
