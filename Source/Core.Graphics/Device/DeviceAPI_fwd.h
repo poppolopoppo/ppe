@@ -36,7 +36,7 @@ struct VertexBufferBinding;
 class VertexDeclaration;
 FWD_REFPTR(DeviceAPIDependantVertexDeclaration);
 //----------------------------------------------------------------------------
-class BindName;
+class Name;
 class ConstantBuffer;
 FWD_REFPTR(ConstantBufferLayout);
 FWD_REFPTR(DeviceAPIDependantConstantWriter);

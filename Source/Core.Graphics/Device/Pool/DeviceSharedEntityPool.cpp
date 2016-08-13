@@ -89,7 +89,7 @@ bool DeviceSharedEntityPool::Acquire_Exclusive(PDeviceAPIDependantEntity *pEntit
     if (_map.end() == it)
         return false;
 
-    SharedEntity *p = it->second;
+    SharedEntity* p = it->second;
     Assert(p);
 
     while (p && false == (0 == p->LockCount && resource.MatchTerminalEntity(p->Entity.get())) ) {

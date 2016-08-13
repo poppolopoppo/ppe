@@ -49,12 +49,12 @@ void DeviceResource::Unfreeze() {
     UnfreezeImpl();
 }
 //----------------------------------------------------------------------------
-const char *DeviceResource::ResourceName() const {
+StringSlice DeviceResource::ResourceName() const {
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
     THIS_THREADRESOURCE_CHECKACCESS();
-    return _resourceName.c_str();
+    return MakeStringSlice(_resourceName);
 #else
-    return nullptr;
+    return StringSlice();
 #endif
 }
 //----------------------------------------------------------------------------
@@ -64,6 +64,17 @@ void DeviceResource::SetResourceName(const char *name) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(name);
     _resourceName = name;
+#else
+    UNUSED(name);
+#endif
+}
+//----------------------------------------------------------------------------
+void DeviceResource::SetResourceName(const StringSlice& name) {
+#ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
+    Assert(!Frozen());
+    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(name.empty());
+    _resourceName = ToString(name);
 #else
     UNUSED(name);
 #endif

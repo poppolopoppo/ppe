@@ -5,7 +5,7 @@
 #include "Core/Allocator/PoolAllocator-impl.h"
 
 #include "ConstantBufferLayout.h"
-#include "Device/BindName.h"
+#include "Name.h"
 
 namespace Core {
 namespace Graphics {

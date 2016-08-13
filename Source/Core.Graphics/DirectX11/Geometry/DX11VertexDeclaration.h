@@ -28,15 +28,15 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DXGI_FORMAT VertexSubPartFormatToDXGIFormat(VertexSubPartFormat value);
+DXGI_FORMAT VertexFormatToDXGIFormat(ValueType value);
 //----------------------------------------------------------------------------
-VertexSubPartFormat DXGIFormatToVertexSubPartFormat(DXGI_FORMAT value);
+ValueType DXGIFormatToVertexFormat(DXGI_FORMAT value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-LPCSTR VertexSubPartSemanticToDX11SemanticName(VertexSubPartSemantic value);
+LPCSTR VertexSubPartSemanticToDX11SemanticName(const Graphics::Name& value);
 //----------------------------------------------------------------------------
-VertexSubPartSemantic DX11SemanticNameVertexSubPartSemantic(LPCSTR value);
+const VertexSemantic& DX11SemanticNameVertexSubPartSemantic(LPCSTR value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

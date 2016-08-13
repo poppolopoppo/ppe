@@ -19,6 +19,14 @@ enum class TextureAddressMode {
     Wrap,
 };
 //----------------------------------------------------------------------------
+enum class TextureDimension {
+    Texture2D = 0,
+    Texture3D,
+    TextureCube,
+    Texture2DArray,
+    TextureCubeArray,
+};
+//----------------------------------------------------------------------------
 enum class TextureFilter {
     Linear = 0,
     Point,

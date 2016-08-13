@@ -2,14 +2,15 @@
 
 #include "Core.Graphics/Graphics.h"
 
+#include "Core.Graphics/Name.h"
+#include "Core.Graphics/ValueBlock.h"
 #include "Core.Graphics/Device/DeviceAPIDependantEntity.h"
 #include "Core.Graphics/Device/DeviceResource.h"
-#include "Core.Graphics/Device/Geometry/VertexSubPart.h"
-#include "Core.Graphics/Device/Geometry/VertexTypes.h"
 
 #include "Core/Allocator/PoolAllocator.h"
 #include "Core/Container/Pair.h"
 #include "Core/Container/Stack.h"
+#include "Core/Container/Vector.h"
 #include "Core/IO/String.h"
 #include "Core/Memory/RefPtr.h"
 
@@ -23,7 +24,32 @@ namespace Graphics {
 class DeviceEncapsulator;
 class IDeviceAPIEncapsulator;
 FWD_REFPTR(DeviceAPIDependantVertexDeclaration);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+using VertexFormat = ValueType;
+//----------------------------------------------------------------------------
+class VertexSemantic : public Graphics::Name {
+public:
+    static const VertexSemantic Position;
+    static const VertexSemantic TexCoord;
+    static const VertexSemantic Color;
+    static const VertexSemantic Normal;
+    static const VertexSemantic Tangent;
+    static const VertexSemantic Binormal;
 
+    static VertexSemantic Invalid() { return VertexSemantic(); }
+
+    VertexSemantic() {}
+
+    VertexSemantic(const VertexSemantic& ) = default;
+    VertexSemantic& operator =(const VertexSemantic& ) = default;
+
+private:
+    friend class VertexDeclaration;
+
+    VertexSemantic(const Graphics::Name& name) : Name(name) {}
+};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -42,36 +68,27 @@ public:
         Assert(Frozen()); return _deviceAPIDependantDeclaration;
     }
 
-    size_t size() const { return _subParts.size(); }
-    bool empty() const { return _subParts.empty(); }
+    size_t size() const { return _block.size(); }
+    bool empty() const { return _block.empty(); }
 
-    size_t SizeInBytes() const { return _sizeInBytes; }
+    size_t SizeInBytes() const { return _block.SizeInBytes(); }
 
-    MemoryView<const Pair<VertexSubPartKey, VertexSubPartPOD>> SubParts() const;
+    const ValueBlock& Block() const { return _block; }
 
-    template <VertexSubPartFormat _Format, VertexSubPartSemantic _Semantic>
-    void AddSubPart(size_t index);
+    MemoryView<const ValueBlock::Field> SubParts() const { return _block.MakeView(); }
 
-    template <VertexSubPartSemantic _Semantic, typename _Class, typename T>
-    void AddTypedSubPart(T _Class:: *member, size_t index);
+    void AddSubPart(const VertexSemantic& semantic, size_t index, ValueType type, size_t offset);
 
-    Pair<const VertexSubPartKey *, const AbstractVertexSubPart *> SubPartByIndex(size_t index) const;
-    Pair<const VertexSubPartKey *, const AbstractVertexSubPart *> SubPartBySemantic(const VertexSubPartSemantic semantic, size_t index) const;
-    Pair<const VertexSubPartKey *, const AbstractVertexSubPart *> SubPartBySemanticIFP(const VertexSubPartSemantic semantic, size_t index) const;
+    template <typename _Class, typename T>
+    void AddTypedSubPart(const VertexSemantic& semantic, size_t index, T _Class:: *member);
 
-    template <typename T>
-    const VertexSubPart<T> *SubPart(const VertexSubPartKey& key) const;
-    template <typename T>
-    const VertexSubPart<T> *SubPartIFP(const VertexSubPartKey& key) const;
+    const ValueBlock::Field& SubPartByIndex(size_t index) const { return _block[index]; }
+    const ValueBlock::Field& SubPartBySemantic(const VertexSemantic& semantic, size_t index) const;
+    const ValueBlock::Field* SubPartBySemanticIFP(const VertexSemantic& semantic, size_t index) const;
 
-    template <VertexSubPartFormat _Format>
-    const TypedVertexSubPart<_Format> *TypedSubPart(const VertexSubPartSemantic semantic, size_t index) const;
-    template <VertexSubPartFormat _Format>
-    const TypedVertexSubPart<_Format> *TypedSubPartIFP(const VertexSubPartSemantic semantic, size_t index) const;
+    void CopyVertex(const MemoryView<u8>& dst, const MemoryView<const u8>& src) const;
 
-    void CopyVertex(void *const dst, const void *src, size_t size) const;
-
-    String ToString() const;
+    virtual void FillSubstitutions(VECTOR_THREAD_LOCAL(Shader, Pair<String COMMA String>)& substitutions) const;
 
     static void Start();
     static void Shutdown();
@@ -85,13 +102,16 @@ public:
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    size_t _sizeInBytes;
-
-    typedef std::pair<VertexSubPartKey, VertexSubPartPOD> vertexsubpartentry_type;
-    FixedSizeStack<vertexsubpartentry_type, MaxSubPartCount> _subParts;
-
+    ValueBlock _block;
     PDeviceAPIDependantVertexDeclaration _deviceAPIDependantDeclaration;
 };
+//----------------------------------------------------------------------------
+template <typename _Class, typename T>
+void VertexDeclaration::AddTypedSubPart(const VertexSemantic& semantic, size_t index, T _Class:: *member) {
+    const size_t offset = (size_t)&(((_Class *)nullptr)->*member);
+    Assert(0 == offset % sizeof(u32));
+    AddSubPart(semantic, index, ValueTraits<T>::TypeId, offset);
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -105,27 +125,5 @@ public:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T>
-class VertexDeclarator {
-public:
-    VertexDeclarator(VertexDeclaration *vdecl);
-    ~VertexDeclarator();
-
-    VertexDeclarator(const VertexDeclarator&) = delete;
-    VertexDeclarator& operator =(const VertexDeclarator&) = delete;
-
-    template <VertexSubPartSemantic _Semantic, typename _Value>
-    void AddTypedSubPart(_Value T:: *member, size_t index) const;
-
-    void SetResourceName(String&& name);
-
-private:
-    VertexDeclaration *_vdecl;
-};
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 } //!namespace Graphics
 } //!namespace Core
-
-#include "Core.Graphics/Device/Geometry/VertexDeclaration-inl.h"

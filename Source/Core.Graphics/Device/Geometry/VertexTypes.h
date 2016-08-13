@@ -2,13 +2,13 @@
 
 #include "Core.Graphics/Graphics.h"
 
-#include "Core/Maths/Geometry/ScalarVector.h"
-#include "Core/Maths/Packing/PackedVectors.h"
+#include "Core/Maths/ScalarVector.h"
+#include "Core/Maths/PackedVectors.h"
 
 namespace Core {
 namespace Graphics {
 class DeviceEncapsulator;
-class VertexDeclaration;
+FWD_REFPTR(VertexDeclaration);
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -19,6 +19,8 @@ void VertexTypes_Shutdown();
 void VertexTypes_OnDeviceCreate(DeviceEncapsulator *device);
 void VertexTypes_OnDeviceDestroy(DeviceEncapsulator *device);
 //----------------------------------------------------------------------------
+void RegisterVertexType(const VertexDeclaration* vdecl);
+void UnregisterVertexType(const VertexDeclaration* vdecl);
 const VertexDeclaration* VertexTypeByName(const StringSlice& name);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -202,6 +204,29 @@ struct Position0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N_
 };
 //----------------------------------------------------------------------------
 } //!namespace Vertex
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+class VertexSemantic;
+class VertexDeclarator {
+public:
+    VertexDeclarator(VertexDeclaration* vdecl);
+    ~VertexDeclarator();
+
+    VertexDeclarator(const VertexDeclarator& ) = delete;
+    VertexDeclarator& operator =(const VertexDeclarator& ) = delete;
+
+    VertexDeclaration* VDecl() const { return _vdecl.get(); }
+
+    template <typename _Class, typename T>
+    void AddSubPart(const VertexSemantic& semantic, size_t index, T _Class:: *member) const {
+        Assert(!_vdecl->Frozen());
+        _vdecl->AddTypedSubPart(semantic, index, member);
+    }
+
+private:
+    PVertexDeclaration _vdecl;
+};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

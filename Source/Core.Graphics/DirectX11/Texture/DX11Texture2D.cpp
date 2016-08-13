@@ -44,9 +44,9 @@ void DX11Texture2DContent::CopyFrom(IDeviceAPIEncapsulator *device, const Device
 //----------------------------------------------------------------------------
 void DX11Texture2DContent::CopySubPart(
     IDeviceAPIEncapsulator *device,
-    const DeviceAPIDependantTexture2D *dst, size_t dstLevel, const uint2& dstPos, 
+    const DeviceAPIDependantTexture2D *dst, size_t dstLevel, const uint2& dstPos,
     const DeviceAPIDependantTexture2D *src, size_t srcLevel, const AABB2u& srcBox ) {
-    
+
     const size_t dstSubResource = ::D3D11CalcSubresource(checked_cast<UINT>(dstLevel), 0, checked_cast<UINT>(dst->LevelCount()) );
     const uint3 dstPos3u(dstPos, 0);
 

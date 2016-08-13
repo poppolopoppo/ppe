@@ -2,7 +2,7 @@
 
 #include "Core.Graphics/Graphics.h"
 
-#include "Core.Graphics/Device/BindName.h"
+#include "Core.Graphics/Name.h"
 #include "Core.Graphics/Device/DeviceAPIDependantEntity.h"
 #include "Core.Graphics/Device/DeviceResourceBuffer.h"
 #include "Core.Graphics/Device/Pool/DeviceResourceSharable.h"

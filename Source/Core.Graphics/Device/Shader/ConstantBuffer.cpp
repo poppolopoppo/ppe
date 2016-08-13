@@ -3,7 +3,6 @@
 #include "ConstantBuffer.h"
 
 #include "ConstantBufferLayout.h"
-#include "ConstantField.h"
 #include "Device/DeviceEncapsulator.h"
 
 #include "Core/Memory/UniqueView.h"

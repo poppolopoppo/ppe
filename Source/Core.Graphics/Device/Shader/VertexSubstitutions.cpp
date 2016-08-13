@@ -16,160 +16,163 @@ void FillVertexSubstitutions(   VECTOR_THREAD_LOCAL(Shader, Pair<String COMMA St
                                 const VertexDeclaration *declaration ) {
     Assert(declaration);
 
-    const MemoryView<const Pair<VertexSubPartKey, VertexSubPartPOD>> subParts = declaration->SubParts();
-
-    defines.reserve(defines.size() + subParts.size() + 1 /* auto vertex definition */);
+    defines.reserve(defines.size() + declaration->size() + 1 /* auto vertex definition */);
 
     STACKLOCAL_OCSTRSTREAM(oss, 1024);
 
     oss << "struct {";
 
-    const VertexSubPartKey *pNormalKey = nullptr;
-    const VertexSubPartKey *pTangentKey = nullptr;
-    const VertexSubPartKey *pBinormalKey = nullptr;
+    const ValueBlock::Field* pNormalKey = nullptr;
+    const ValueBlock::Field* pTangentKey = nullptr;
+    const ValueBlock::Field* pBinormalKey = nullptr;
 
-    for (const Pair<VertexSubPartKey, VertexSubPartPOD>& keyedSubPart : declaration->SubParts()) {
-        const size_t index = keyedSubPart.first.Index();
-        const VertexSubPartFormat format = keyedSubPart.first.Format();
-        const VertexSubPartSemantic semantic = keyedSubPart.first.Semantic();
+    for (const ValueBlock::Field& subPart : declaration->SubParts()) {
+        const size_t index = subPart.Index();
+        const ValueType type = subPart.Type();
+        const Graphics::Name& semantic = subPart.Name();
 
-        switch (semantic)
-        {
-        case VertexSubPartSemantic::Normal: pNormalKey = &keyedSubPart.first; break;
-        case VertexSubPartSemantic::Tangent: pTangentKey = &keyedSubPart.first; break;
-        case VertexSubPartSemantic::Binormal: pBinormalKey = &keyedSubPart.first; break;
-        default: break;
-        }
+        if      (semantic == VertexSemantic::Normal)
+            pNormalKey = &subPart;
+        else if (semantic == VertexSemantic::Tangent)
+            pTangentKey = &subPart;
+        else if (semantic == VertexSemantic::Binormal)
+            pBinormalKey = &subPart;
 
-        const StringSlice nameWithoutIndex = VertexSubPartSemanticToCStr(semantic);
-        const StringSlice formatCStr = VertexSubPartFormatToCStr(format);
+        const StringSlice nameWithoutIndex = semantic.MakeView();
 
-        oss << " " << VertexSubPartFormatToShaderFormat(format)
+        oss << " " << VertexFormatToShaderFormat(type)
             << " " << nameWithoutIndex << index
-            << " : " << VertexSubPartSemanticToShaderSemantic(semantic) << index
+            << " : " << VertexSemanticToShaderSemantic(semantic) << index
             << ";";
 
         defines.emplace_back(
-            StringFormat("AppIn_Get_{0}{1}(_AppIn)", nameWithoutIndex, index),
-            StringFormat("AppIn_Get_{0}X_{2}((_AppIn).{0}{1})", nameWithoutIndex, index, formatCStr) );
+            StringFormat("AppIn_Get_{0}{1}(_AppIn)",
+                nameWithoutIndex, index),
+            StringFormat("AppIn_Get_{0}X_{2}((_AppIn).{0}{1})",
+                nameWithoutIndex, index, ValueTypeToCStr(type)) );
     }
 
     // need tangent space without binormals ?
     if (pNormalKey && pTangentKey && !pBinormalKey) {
         // maybe binormal winding is packed in tangent.w ?
-        if (VertexSubPartFormat::UX10Y10Z10W2N == pTangentKey->Format()) {
+        if (ValueType::UX10Y10Z10W2N == pTangentKey->Type()) {
             Assert(pNormalKey->Index() == pTangentKey->Index());
             defines.emplace_back(
-                StringFormat("AppIn_Get_Binormal{0}(_AppIn)", pTangentKey->Index()),
-                StringFormat("AppIn_Get_BinormalX_PackedInTangentW(AppIn_Get_Normal{0}(_AppIn), AppIn_Get_Tangent{1}(_AppIn), ((_AppIn).Tangent{1}).w)", pNormalKey->Index(), pTangentKey->Index()) );
+                StringFormat("AppIn_Get_Binormal{0}(_AppIn)",
+                    pTangentKey->Index()),
+                StringFormat("AppIn_Get_BinormalX_PackedInTangentW(AppIn_Get_Normal{0}(_AppIn), AppIn_Get_Tangent{1}(_AppIn), ((_AppIn).Tangent{1}).w)",
+                    pNormalKey->Index(), pTangentKey->Index()) );
         }
     }
 
     oss << " }";
 
     defines.emplace_back(ToString(ShaderSource::AppIn_VertexDefinitionName()), oss.NullTerminatedStr());
+
+    declaration->FillSubstitutions(defines); // custom substitutions
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-StringSlice VertexSubPartFormatToShaderFormat(VertexSubPartFormat format) {
+StringSlice VertexFormatToShaderFormat(VertexFormat format) {
     switch (format)
     {
-    case Core::Graphics::VertexSubPartFormat::Float:
+    case Core::Graphics::VertexFormat::Float:
         return MakeStringSlice("float");
-    case Core::Graphics::VertexSubPartFormat::Float2:
+    case Core::Graphics::VertexFormat::Float2:
         return MakeStringSlice("float2");
-    case Core::Graphics::VertexSubPartFormat::Float3:
+    case Core::Graphics::VertexFormat::Float3:
         return MakeStringSlice("float3");
-    case Core::Graphics::VertexSubPartFormat::Float4:
+    case Core::Graphics::VertexFormat::Float4:
         return MakeStringSlice("float4");
-    case Core::Graphics::VertexSubPartFormat::Byte:
+    case Core::Graphics::VertexFormat::Byte:
         return MakeStringSlice("byte");
-    case Core::Graphics::VertexSubPartFormat::Byte2:
+    case Core::Graphics::VertexFormat::Byte2:
         return MakeStringSlice("byte2");
-    case Core::Graphics::VertexSubPartFormat::Byte4:
+    case Core::Graphics::VertexFormat::Byte4:
         return MakeStringSlice("byte4");
-    case Core::Graphics::VertexSubPartFormat::UByte:
+    case Core::Graphics::VertexFormat::UByte:
         return MakeStringSlice("ubyte");
-    case Core::Graphics::VertexSubPartFormat::UByte2:
+    case Core::Graphics::VertexFormat::UByte2:
         return MakeStringSlice("ubyte2");
-    case Core::Graphics::VertexSubPartFormat::UByte4:
+    case Core::Graphics::VertexFormat::UByte4:
         return MakeStringSlice("ubyte4");
-    case Core::Graphics::VertexSubPartFormat::Short:
+    case Core::Graphics::VertexFormat::Short:
         return MakeStringSlice("short");
-    case Core::Graphics::VertexSubPartFormat::Short2:
+    case Core::Graphics::VertexFormat::Short2:
         return MakeStringSlice("short2");
-    case Core::Graphics::VertexSubPartFormat::Short4:
+    case Core::Graphics::VertexFormat::Short4:
         return MakeStringSlice("short4");
-    case Core::Graphics::VertexSubPartFormat::UShort:
+    case Core::Graphics::VertexFormat::UShort:
         return MakeStringSlice("ushort");
-    case Core::Graphics::VertexSubPartFormat::UShort2:
+    case Core::Graphics::VertexFormat::UShort2:
         return MakeStringSlice("ushort2");
-    case Core::Graphics::VertexSubPartFormat::UShort4:
+    case Core::Graphics::VertexFormat::UShort4:
         return MakeStringSlice("ushort4");
-    case Core::Graphics::VertexSubPartFormat::Word:
+    case Core::Graphics::VertexFormat::Word:
         return MakeStringSlice("word");
-    case Core::Graphics::VertexSubPartFormat::Word2:
+    case Core::Graphics::VertexFormat::Word2:
         return MakeStringSlice("word2");
-    case Core::Graphics::VertexSubPartFormat::Word3:
+    case Core::Graphics::VertexFormat::Word3:
         return MakeStringSlice("word3");
-    case Core::Graphics::VertexSubPartFormat::Word4:
+    case Core::Graphics::VertexFormat::Word4:
         return MakeStringSlice("word4");
-    case Core::Graphics::VertexSubPartFormat::UWord:
+    case Core::Graphics::VertexFormat::UWord:
         return MakeStringSlice("uword");
-    case Core::Graphics::VertexSubPartFormat::UWord2:
+    case Core::Graphics::VertexFormat::UWord2:
         return MakeStringSlice("uword2");
-    case Core::Graphics::VertexSubPartFormat::UWord3:
+    case Core::Graphics::VertexFormat::UWord3:
         return MakeStringSlice("uword3");
-    case Core::Graphics::VertexSubPartFormat::UWord4:
+    case Core::Graphics::VertexFormat::UWord4:
         return MakeStringSlice("uword4");
-    case Core::Graphics::VertexSubPartFormat::Half:
+    case Core::Graphics::VertexFormat::Half:
         return MakeStringSlice("half");
-    case Core::Graphics::VertexSubPartFormat::Half2:
+    case Core::Graphics::VertexFormat::Half2:
         return MakeStringSlice("half2");
-    case Core::Graphics::VertexSubPartFormat::Half4:
+    case Core::Graphics::VertexFormat::Half4:
         return MakeStringSlice("half4");
-    case Core::Graphics::VertexSubPartFormat::Byte2N:
+    case Core::Graphics::VertexFormat::Byte2N:
         return MakeStringSlice("float2");
-    case Core::Graphics::VertexSubPartFormat::Byte4N:
+    case Core::Graphics::VertexFormat::Byte4N:
         return MakeStringSlice("float4");
-    case Core::Graphics::VertexSubPartFormat::UByte2N:
+    case Core::Graphics::VertexFormat::UByte2N:
         return MakeStringSlice("float2");
-    case Core::Graphics::VertexSubPartFormat::UByte4N:
+    case Core::Graphics::VertexFormat::UByte4N:
         return MakeStringSlice("float4");
-    case Core::Graphics::VertexSubPartFormat::Short2N:
+    case Core::Graphics::VertexFormat::Short2N:
         return MakeStringSlice("float2");
-    case Core::Graphics::VertexSubPartFormat::Short4N:
+    case Core::Graphics::VertexFormat::Short4N:
         return MakeStringSlice("float4");
-    case Core::Graphics::VertexSubPartFormat::UShort2N:
+    case Core::Graphics::VertexFormat::UShort2N:
         return MakeStringSlice("float2");
-    case Core::Graphics::VertexSubPartFormat::UShort4N:
+    case Core::Graphics::VertexFormat::UShort4N:
         return MakeStringSlice("float4");
-    case Core::Graphics::VertexSubPartFormat::UX10Y10Z10W2N:
+    case Core::Graphics::VertexFormat::UX10Y10Z10W2N:
         return MakeStringSlice("float4");
+    default:
+        AssertNotImplemented();
+        break;
     }
-    AssertNotImplemented();
     return StringSlice();
 }
 //----------------------------------------------------------------------------
-StringSlice VertexSubPartSemanticToShaderSemantic(VertexSubPartSemantic semantic) {
-    switch (semantic)
-    {
-    case Core::Graphics::VertexSubPartSemantic::Position:
+StringSlice VertexSemanticToShaderSemantic(const Graphics::Name& semantic) {
+    if      (semantic == VertexSemantic::Position)
         return MakeStringSlice("POSITION");
-    case Core::Graphics::VertexSubPartSemantic::TexCoord:
+    else if (semantic == VertexSemantic::Position)
         return MakeStringSlice("TEXCOORD");
-    case Core::Graphics::VertexSubPartSemantic::Color:
+    else if (semantic == VertexSemantic::Color)
         return MakeStringSlice("COLOR");
-    case Core::Graphics::VertexSubPartSemantic::Normal:
+    else if (semantic == VertexSemantic::Normal)
         return MakeStringSlice("NORMAL");
-    case Core::Graphics::VertexSubPartSemantic::Tangent:
+    else if (semantic == VertexSemantic::Tangent)
         return MakeStringSlice("TANGENT");
-    case Core::Graphics::VertexSubPartSemantic::Binormal:
+    else if (semantic == VertexSemantic::Binormal)
         return MakeStringSlice("BINORMAL");
+    else {
+        AssertNotImplemented();
+        return StringSlice();
     }
-    AssertNotImplemented();
-    return StringSlice();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

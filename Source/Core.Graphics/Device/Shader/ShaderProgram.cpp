@@ -3,7 +3,8 @@
 #include "ShaderProgram.h"
 
 #include "ConstantBufferLayout.h"
-#include "Device/BindName.h"
+#include "Name.h"
+
 #include "Device/DeviceEncapsulator.h"
 #include "Device/DeviceEncapsulatorException.h"
 #include "Device/Geometry/VertexDeclaration.h"

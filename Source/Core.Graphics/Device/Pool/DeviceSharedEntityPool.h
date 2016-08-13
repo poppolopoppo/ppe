@@ -7,8 +7,8 @@
 #include "Core/Allocator/PoolAllocator.h"
 #include "Core/Container/HashMap.h"
 #include "Core/Container/IntrusiveList.h"
-#include "Core/Memory/RefPtr.h"
 #include "Core/Memory/MemoryTracking.h"
+#include "Core/Memory/RefPtr.h"
 
 namespace Core {
 namespace Graphics {
@@ -46,7 +46,7 @@ public:
     size_t ReleaseAll_ReturnRealSize() { return ReleaseLRU_ReturnRealSize(0); }
 
 private:
-    typedef HASHMAP(Graphics, DeviceSharedEntityKey, SharedEntity *) map_type;
+    typedef HASHMAP(Graphics, DeviceSharedEntityKey, SharedEntity*) map_type;
 
     SharedEntity *_mru;
     SharedEntity *_lru;

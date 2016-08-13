@@ -3,8 +3,7 @@
 #include "Graphics.h"
 
 #include "GlobalVideoMemory.h"
-
-#include "Device/BindName.h"
+#include "Name.h"
 
 #include "Window/BasicWindow.h"
 
@@ -22,9 +21,9 @@
 #endif
 #ifdef WITH_CORE_MATHS_UNITTESTS
 #   include "Core/Maths/MathHelpers.h"
-#   include "Core/Maths/Geometry/ScalarVectorHelpers.h"
-#   include "Core/Maths/Transform/QuaternionHelpers.h"
-#   include "Core/Maths/Transform/ScalarMatrixHelpers.h"
+#   include "Core/Maths/ScalarVectorHelpers.h"
+#   include "Core/Maths/QuaternionHelpers.h"
+#   include "Core/Maths/ScalarMatrixHelpers.h"
 #   include <DirectXMath.h>
 #endif
 
@@ -291,39 +290,39 @@ void GraphicsStartup::Start() {
 #endif
     // 0 - pool allocator tag
     POOL_TAG(Graphics)::Start();
-    // 1 - Global video memory
+    // 1 - Graphics Names
+    Name::Start(256);
+    // 2 - Global video memory
     GlobalVideoMemory::Create();
-    // 2 - Register basic window class
+    // 3 - Register basic window class
     BasicWindow::Start();
-    // 3 - Surface format builtin-types
+    // 4 - Surface format builtin-types
     SurfaceFormat::Start();
-    // 4 - Vertex declaration builtin-types
+    // 5 - Vertex declaration builtin-types
     VertexDeclaration::Start();
-    // 5 - Device states
+    // 6 - Device states
     BlendState::Start();
     DepthStencilState::Start();
     RasterizerState::Start();
     SamplerState::Start();
-    // 6 - Bind names
-    BindName::Start(256);
 }
 //----------------------------------------------------------------------------
 void GraphicsStartup::Shutdown() {
-    // 6 - Bind names
-    BindName::Shutdown();
-    // 5 - Device states
+    // 6 - Device states
     SamplerState::Shutdown();
     RasterizerState::Shutdown();
     DepthStencilState::Shutdown();
     BlendState::Shutdown();
-    // 4 - Vertex declaration builtin-types
+    // 5 - Vertex declaration builtin-types
     VertexDeclaration::Shutdown();
-    // 3 - Surface format builtin-types
+    // 4 - Surface format builtin-types
     SurfaceFormat::Shutdown();
-    // 2 - Unregister basic window class
+    // 3 - Unregister basic window class
     BasicWindow::Shutdown();
-    // 1 - Global video memory
+    // 2 - Global video memory
     GlobalVideoMemory::Destroy();
+    // 1 - Graphic Names
+    Name::Shutdown();
     // 0 - pool allocator tag
     POOL_TAG(Graphics)::Shutdown();
 }

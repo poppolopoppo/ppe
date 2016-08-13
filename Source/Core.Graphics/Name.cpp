@@ -1,23 +1,19 @@
-#pragma once
+#include "stdafx.h"
 
-#include "Core.Graphics/Graphics.h"
+#include "Name.h"
 
-#include "Core/Container/Token.h"
+#include <locale>
 
 namespace Core {
 namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class BindTokenTraits {
-public:
-    const std::locale& Locale() const { return std::locale::classic(); }
-    bool IsAllowedChar(char ch) const;
-};
-//----------------------------------------------------------------------------
-BASICTOKEN_CLASS_DEF(BindName, char, Case::Insensitive, BindTokenTraits);
+bool NameTokenTraits::IsAllowedChar(char ch) const {
+    return IsAlnum(ch) || ch == '_' || ch == '-' || ch == ':' || ch == '.';
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace Graphics
+} //!namespace Engine
 } //!namespace Core

@@ -2,7 +2,7 @@
 
 #include "Core.Graphics/Graphics.h"
 
-#include "Core.Graphics/Device/BindName.h"
+#include "Core.Graphics/Name.h"
 #include "Core.Graphics/Device/Shader/ConstantBufferLayout.h"
 
 #include "Core/Allocator/PoolAllocator.h"
@@ -16,18 +16,9 @@ FWD_REFPTR(ConstantBufferLayout);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class ShaderTextureDimension {
-    Texture2D = 0,
-    //Texture3D, TODO
-    TextureCube,
-    //Texture2DArray, TODO
-    //Texture3DArray, TODO
-    //TextureCubeArray, TODO
-};
-//----------------------------------------------------------------------------
 struct ShaderProgramTexture {
-    Graphics::BindName Name;
-    ShaderTextureDimension Dimension;
+    Name Name;
+    enum class TextureDimension Dimension;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -36,7 +27,7 @@ FWD_REFPTR(ShaderCompiled);
 class ShaderCompiled : public RefCountable {
 public:
     typedef RAWSTORAGE(Shader, u8) blob_type;
-    typedef ASSOCIATIVE_VECTOR(Shader, BindName, PCConstantBufferLayout) constants_type;
+    typedef ASSOCIATIVE_VECTOR(Shader, Name, PCConstantBufferLayout) constants_type;
     typedef VECTOR(Shader, ShaderProgramTexture) textures_type;
 
     ShaderCompiled( u64 fingerprint,

@@ -2,6 +2,8 @@
 
 #include "DX11ShaderCompiler.h"
 
+#include "Name.h"
+
 #include "DirectX11/DX11CompilerIncludes.h"
 #include "DirectX11/DX11DeviceAPIEncapsulator.h"
 
@@ -11,8 +13,8 @@
 #include "Device/Shader/ShaderCompiled.h"
 #include "Device/Shader/ShaderSource.h"
 #include "Device/Shader/VertexSubstitutions.h"
+#include "Device/State/SamplerState.h"
 
-#include "Device/BindName.h"
 #include "Device/Shader/ConstantBufferLayout.h"
 
 #include "Core/Allocator/PoolAllocator-impl.h"
@@ -167,78 +169,86 @@ void DX11ShaderIncludeHandler_::GenerateAutomaticSubstitutions_(LPCVOID *ppData,
 namespace {
 //----------------------------------------------------------------------------
 template <typename T>
-static ConstantFieldType DX11VariableTypeToConstantFieldType_(const size_t rows, const size_t columns) {
+static ValueType DX11VariableTypeToValueType_(const size_t rows, const size_t columns) {
     switch (columns)
     {
     case 1:
         switch (rows)
         {
-        case 1: return ConstantFieldTraits< T >::Type;
-        case 2: return ConstantFieldTraits< ScalarVector<T, 2> >::Type;
-        case 3: return ConstantFieldTraits< ScalarVector<T, 3> >::Type;
-        case 4: return ConstantFieldTraits< ScalarVector<T, 4> >::Type;
+        case 1: return ValueTraits< T >::TypeId;
+        case 2: return ValueTraits< ScalarVector<T, 2> >::TypeId;
+        case 3: return ValueTraits< ScalarVector<T, 3> >::TypeId;
+        case 4: return ValueTraits< ScalarVector<T, 4> >::TypeId;
         }
         break;
 
     case 2:
         switch (rows)
         {
-        case 1: return ConstantFieldTraits< ScalarMatrix<T, 1, 2> >::Type;
-        case 2: return ConstantFieldTraits< ScalarMatrix<T, 2, 2> >::Type;
-        case 3: return ConstantFieldTraits< ScalarMatrix<T, 3, 2> >::Type;
-        case 4: return ConstantFieldTraits< ScalarMatrix<T, 4, 2> >::Type;
+        case 1: return ValueTraits< ScalarMatrix<T, 1, 2> >::TypeId;
+        case 2: return ValueTraits< ScalarMatrix<T, 2, 2> >::TypeId;
+        case 3: return ValueTraits< ScalarMatrix<T, 3, 2> >::TypeId;
+        case 4: return ValueTraits< ScalarMatrix<T, 4, 2> >::TypeId;
         }
         break;
 
     case 3:
         switch (rows)
         {
-        case 1: return ConstantFieldTraits< ScalarMatrix<T, 1, 3> >::Type;
-        case 2: return ConstantFieldTraits< ScalarMatrix<T, 2, 3> >::Type;
-        case 3: return ConstantFieldTraits< ScalarMatrix<T, 3, 3> >::Type;
-        case 4: return ConstantFieldTraits< ScalarMatrix<T, 4, 3> >::Type;
+        case 1: return ValueTraits< ScalarMatrix<T, 1, 3> >::TypeId;
+        case 2: return ValueTraits< ScalarMatrix<T, 2, 3> >::TypeId;
+        case 3: return ValueTraits< ScalarMatrix<T, 3, 3> >::TypeId;
+        case 4: return ValueTraits< ScalarMatrix<T, 4, 3> >::TypeId;
         }
         break;
 
     case 4:
         switch (rows)
         {
-        case 1: return ConstantFieldTraits< ScalarMatrix<T, 1, 4> >::Type;
-        case 2: return ConstantFieldTraits< ScalarMatrix<T, 2, 4> >::Type;
-        case 3: return ConstantFieldTraits< ScalarMatrix<T, 3, 4> >::Type;
-        case 4: return ConstantFieldTraits< ScalarMatrix<T, 4, 4> >::Type;
+        case 1: return ValueTraits< ScalarMatrix<T, 1, 4> >::TypeId;
+        case 2: return ValueTraits< ScalarMatrix<T, 2, 4> >::TypeId;
+        case 3: return ValueTraits< ScalarMatrix<T, 3, 4> >::TypeId;
+        case 4: return ValueTraits< ScalarMatrix<T, 4, 4> >::TypeId;
         }
         break;
     }
 
     AssertNotImplemented();
-    return ConstantFieldType::Unknown;
+    return ValueType::Void;
 }
 //----------------------------------------------------------------------------
-static ConstantFieldType DX11ShaderTypeToConstantFieldType_(const ::D3D11_SHADER_TYPE_DESC& desc) {
+static ValueType DX11ShaderTypeToValueType_(const ::D3D11_SHADER_TYPE_DESC& desc) {
     Assert(::D3D10_SVC_STRUCT != desc.Class);
 
     const size_t rows = desc.Rows;
     const size_t columns = desc.Columns;
 
+    ValueType result = ValueType::Void;
+
     switch (desc.Type)
     {
     case ::D3D10_SVT_FLOAT:
-        return DX11VariableTypeToConstantFieldType_<float>(rows, columns);
+        result = DX11VariableTypeToValueType_<float>(rows, columns);
+        break;
     case ::D3D10_SVT_INT:
-        return DX11VariableTypeToConstantFieldType_<i32>(rows, columns);
+        result = DX11VariableTypeToValueType_<i32>(rows, columns);
+        break;
     case ::D3D10_SVT_UINT:
-        return DX11VariableTypeToConstantFieldType_<u32>(rows, columns);
+        result = DX11VariableTypeToValueType_<u32>(rows, columns);
+        break;
     case ::D3D10_SVT_UINT8:
-        return DX11VariableTypeToConstantFieldType_<u8>(rows, columns);
+        result = DX11VariableTypeToValueType_<u8>(rows, columns);
+        break;
     case ::D3D10_SVT_BOOL:
-        return DX11VariableTypeToConstantFieldType_<bool>(rows, columns);
+        result = DX11VariableTypeToValueType_<bool>(rows, columns);
+        break;
     default:
+        AssertNotImplemented();
         break;
     }
 
-    AssertNotImplemented();
-    return ConstantFieldType::Unknown;
+    AssertRelease(ValueType::Void != result);
+    return result;
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -326,7 +336,7 @@ static void DX11ReflectShaderBlob_(
         if (FAILED(dx11Reflector_constantBuffer->GetDesc(&dx11ConstantDesc)) )
             AssertNotReached();
 
-        PConstantBufferLayout const layout = new ConstantBufferLayout(checked_cast<size_t>(dx11ConstantDesc.Size));
+        PConstantBufferLayout const layout = new ConstantBufferLayout();
 
         for (UINT j = 0; j < dx11ConstantDesc.Variables; ++j) {
             ::ID3D11ShaderReflectionVariable *dx11Reflector_variable = nullptr;
@@ -343,7 +353,7 @@ static void DX11ReflectShaderBlob_(
             if (FAILED(dx11Reflector_variable->GetType()->GetDesc(&dx11TypeDesc)))
                 AssertNotReached();
 
-            const ConstantFieldType type = DX11ShaderTypeToConstantFieldType_(dx11TypeDesc);
+            const ValueType type = DX11ShaderTypeToValueType_(dx11TypeDesc);
 
             layout->AddField(   dx11VariableDesc.Name,
                                 type,
@@ -352,7 +362,8 @@ static void DX11ReflectShaderBlob_(
                                 inUse );
         }
 
-        Assert(layout->Count() > 0);
+        Assert(layout->Block().size() > 0);
+        AssertRelease(checked_cast<size_t>(dx11ConstantDesc.Size) == layout->Block().SizeInBytes());
         constants.Insert_AssertUnique(dx11ConstantDesc.Name, layout);
     }
 
@@ -365,24 +376,25 @@ static void DX11ReflectShaderBlob_(
             continue;
 
         AssertRelease(1 == dx11ResourceDesc.BindCount);
-        AssertRelease(  ::D3D11_SRV_DIMENSION_TEXTURE2D == dx11ResourceDesc.Dimension ||
-                        ::D3D11_SRV_DIMENSION_TEXTURECUBE == dx11ResourceDesc.Dimension /*||
-                            TODO
-                        ::D3D11_SRV_DIMENSION_TEXTURE2DARRAY
-                        ::D3D11_SRV_DIMENSION_TEXTURECUBEARRAY
-                        ::D3D11_SRV_DIMENSION_TEXTURE3D
-                        ::D3D11_SRV_DIMENSION_TEXTURE3DARRAY
-                        */);
 
         ShaderProgramTexture texture;
         texture.Name = dx11ResourceDesc.Name;
         switch (dx11ResourceDesc.Dimension)
         {
         case ::D3D11_SRV_DIMENSION_TEXTURE2D:
-            texture.Dimension = ShaderTextureDimension::Texture2D;
+            texture.Dimension = TextureDimension::Texture2D;
+            break;
+        case ::D3D11_SRV_DIMENSION_TEXTURE3D:
+            texture.Dimension = TextureDimension::Texture3D;
             break;
         case ::D3D11_SRV_DIMENSION_TEXTURECUBE:
-            texture.Dimension = ShaderTextureDimension::TextureCube;
+            texture.Dimension = TextureDimension::TextureCube;
+            break;
+        case ::D3D11_SRV_DIMENSION_TEXTURE2DARRAY:
+            texture.Dimension = TextureDimension::Texture2DArray;
+            break;
+        case ::D3D11_SRV_DIMENSION_TEXTURECUBEARRAY:
+            texture.Dimension = TextureDimension::TextureCubeArray;
             break;
         default:
             AssertNotImplemented();

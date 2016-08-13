@@ -443,12 +443,12 @@ void DX11SetDeviceResourceNameIFP(::ID3D11DeviceChild *deviceChild, const Device
     if (!deviceChild)
         return;
 
-    const char *resourceName = owner->ResourceName();
-    if (!resourceName)
+    const StringSlice resourceName = owner->ResourceName();
+    if (resourceName.empty())
         return;
 
-    const UINT length = checked_cast<UINT>(Length(resourceName));
-    deviceChild->SetPrivateData(WKPDID_D3DDebugObjectName, length, resourceName);
+    const UINT length = checked_cast<UINT>(resourceName.size());
+    deviceChild->SetPrivateData(WKPDID_D3DDebugObjectName, length, resourceName.data());
 #else
     UNUSED(deviceChild);
     UNUSED(owner);

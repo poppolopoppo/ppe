@@ -2,8 +2,8 @@
 
 #include "Core.Graphics/Graphics.h"
 
-#include "Core.Graphics/Device/BindName.h"
-#include "Core.Graphics/Device/Shader/ConstantField.h"
+#include "Core.Graphics/Name.h"
+#include "Core.Graphics/ValueBlock.h"
 
 #include "Core/Allocator/PoolAllocator.h"
 #include "Core/Container/Stack.h"
@@ -18,48 +18,41 @@ namespace Graphics {
 FWD_REFPTR(ConstantBufferLayout);
 class ConstantBufferLayout : public RefCountable {
 public:
-    STATIC_CONST_INTEGRAL(size_t, MaxFieldCount, 16);
-
-    explicit ConstantBufferLayout(size_t sizeInBytes = 0);
+    ConstantBufferLayout();
     ~ConstantBufferLayout();
 
     ConstantBufferLayout(const ConstantBufferLayout& other) { operator =(other); }
     ConstantBufferLayout& operator =(const ConstantBufferLayout& other);
 
-    bool Frozen() const { return bitfrozen_type::Get(_data); }
-    size_t Count() const { return bitcount_type::Get(_data); }
-    size_t SizeInBytes() const { return bitsizeinbytes_type::Get(_data); }
+    bool Frozen() const { return _frozen; }
+    void Freeze();
 
-    MemoryView<const BindName> Names() const { return MakeView(_names, _names + Count()); }
-    MemoryView<const ConstantField> Fields() const { return MakeView(_fields, _fields + Count()); }
+    size_t size() const { return _block.size(); }
+    bool empty() const { return _block.empty(); }
 
-    void AddField(const BindName& name, ConstantFieldType type);
-    void AddField(const BindName& name, ConstantFieldType type, size_t offset, size_t size, bool inUse);
+    size_t SizeInBytes() const { return _block.SizeInBytes(); }
+
+    MemoryView<const ValueBlock::Field> Fields() const { return _block.MakeView(); }
+
+    const ValueBlock& Block() const { return _block; }
+
+    void AddField(const Name& name, ValueType type);
+    void AddField(const Name& name, ValueType type, size_t offset, size_t size, bool inUse = true);
 
     template <typename T>
-    void AddField(const BindName& name) {
-        STATIC_ASSERT(ConstantFieldTraits<T>::Enabled);
-        AddField(name, ConstantFieldTraits<T>::Type);
+    void AddField(const Name& name) {
+        STATIC_ASSERT(ValueType::Void != ValueTraits<T>::Type);
+        AddField(name, ValueTraits<T>::Type);
     }
 
-    size_t HashValue() const;
-    bool Equals(const ConstantBufferLayout& other) const;
+    bool Equals(const ConstantBufferLayout& other) const { return (other._block == _block); }
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    typedef Meta::Bit<size_t>::First<1>::type bitfrozen_type;
-    typedef Meta::Bit<size_t>::After<bitfrozen_type>::Field<4>::type bitcount_type;
-    typedef Meta::Bit<size_t>::After<bitcount_type>::Remain::type bitsizeinbytes_type;
-
-    size_t _data;
-    BindName _names[MaxFieldCount];
-    ConstantField _fields[MaxFieldCount];
+    ValueBlock _block;
+    bool _frozen;
 };
-//----------------------------------------------------------------------------
-inline hash_t hash_value(const ConstantBufferLayout& layout) {
-    return layout.HashValue();
-}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

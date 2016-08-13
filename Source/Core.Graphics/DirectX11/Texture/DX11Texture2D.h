@@ -29,8 +29,8 @@ public:
 
     void CopyFrom(IDeviceAPIEncapsulator *device, const DeviceAPIDependantTexture2D *psource);
 
-    void CopySubPart(   IDeviceAPIEncapsulator *device, 
-                        const DeviceAPIDependantTexture2D *dst, size_t dstLevel, const uint2& dstPos, 
+    void CopySubPart(   IDeviceAPIEncapsulator *device,
+                        const DeviceAPIDependantTexture2D *dst, size_t dstLevel, const uint2& dstPos,
                         const DeviceAPIDependantTexture2D *src, size_t srcLevel, const AABB2u& srcBox );
 
 private:
@@ -53,8 +53,8 @@ public:
 
     virtual void CopyFrom(IDeviceAPIEncapsulator *device, const DeviceAPIDependantTexture2D *psource) override;
 
-    virtual void CopySubPart(   IDeviceAPIEncapsulator *device, 
-                                size_t dstLevel, const uint2& dstPos, 
+    virtual void CopySubPart(   IDeviceAPIEncapsulator *device,
+                                size_t dstLevel, const uint2& dstPos,
                                 const DeviceAPIDependantTexture2D *psource, size_t srcLevel, const AABB2u& srcBox ) override;
 
     virtual const IDeviceAPIDependantAbstractTextureContent *Content() const override { return this; }

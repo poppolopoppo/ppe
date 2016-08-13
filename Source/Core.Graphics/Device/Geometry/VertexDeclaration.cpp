@@ -21,8 +21,7 @@ namespace Graphics {
 SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, VertexDeclaration, );
 //----------------------------------------------------------------------------
 VertexDeclaration::VertexDeclaration()
-:   DeviceResource(DeviceResourceType::VertexDeclaration)
-,   _sizeInBytes(0) {}
+:   DeviceResource(DeviceResourceType::VertexDeclaration) {}
 //----------------------------------------------------------------------------
 VertexDeclaration::~VertexDeclaration() {
     Assert(!_deviceAPIDependantDeclaration);
@@ -38,62 +37,30 @@ DeviceAPIDependantEntity *VertexDeclaration::TerminalEntity() const {
     return _deviceAPIDependantDeclaration.get();
 }
 //----------------------------------------------------------------------------
-MemoryView<const Pair<VertexSubPartKey, VertexSubPartPOD>> VertexDeclaration::SubParts() const {
-    return _subParts.MakeView().Cast<const vertexsubpartentry_type>();
-}
-//----------------------------------------------------------------------------
-Pair<const VertexSubPartKey *, const AbstractVertexSubPart *> VertexDeclaration::SubPartByIndex(size_t index) const {
-    Assert(index < _subParts.size());
+void VertexDeclaration::AddSubPart(const VertexSemantic& semantic, size_t index, ValueType type, size_t offset) {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(!Frozen());
+    Assert(!SubPartBySemanticIFP(semantic, index));
+    Assert(_block.size() < MaxSubPartCount);
 
-    const vertexsubpartentry_type& it = _subParts[index];
-    return MakePair(&it.first, reinterpret_cast<const AbstractVertexSubPart *>(&it.second));
+    _block.Add(semantic, type, offset, index);
 }
 //----------------------------------------------------------------------------
-Pair<const VertexSubPartKey *, const AbstractVertexSubPart *> VertexDeclaration::SubPartBySemantic(const VertexSubPartSemantic semantic, size_t index) const {
-    for (const vertexsubpartentry_type& it : _subParts) {
-        if (it.first.Semantic() == semantic &&
-            it.first.Index() == index ) {
-            return MakePair(&it.first, reinterpret_cast<const AbstractVertexSubPart *>(&it.second));
-        }
-    }
-
-    AssertNotReached();
-    return MakePair(static_cast<const VertexSubPartKey *>(nullptr), static_cast<const AbstractVertexSubPart *>(nullptr));
+const ValueBlock::Field& VertexDeclaration::SubPartBySemantic(const VertexSemantic& semantic, size_t index) const {
+    return _block.FindByNameAndIndex(semantic, index);
 }
 //----------------------------------------------------------------------------
-Pair<const VertexSubPartKey *, const AbstractVertexSubPart *> VertexDeclaration::SubPartBySemanticIFP(const VertexSubPartSemantic semantic, size_t index) const {
-    for (const vertexsubpartentry_type& it : _subParts) {
-        if (it.first.Semantic() == semantic &&
-            it.first.Index() == index) {
-            return MakePair(&it.first, reinterpret_cast<const AbstractVertexSubPart *>(&it.second));
-        }
-    }
-
-    return MakePair(static_cast<const VertexSubPartKey *>(nullptr), static_cast<const AbstractVertexSubPart *>(nullptr));
+const ValueBlock::Field* VertexDeclaration::SubPartBySemanticIFP(const VertexSemantic& semantic, size_t index) const {
+    return _block.FindByNameAndIndexIFP(semantic, index);
 }
 //----------------------------------------------------------------------------
-void VertexDeclaration::CopyVertex(void *const dst, const void *src, size_t size) const {
+void VertexDeclaration::CopyVertex(const MemoryView<u8>& dst, const MemoryView<const u8>& src) const {
     Assert(Frozen());
-    Assert(dst);
-    Assert(src);
-    Assert(SizeInBytes() <= size);
-
-    for (const vertexsubpartentry_type& it : _subParts) {
-        const AbstractVertexSubPart *subpart = reinterpret_cast<const AbstractVertexSubPart *>(&it.second);
-        subpart->Copy(dst, src, size);
-    }
+    _block.Copy(dst, src);
 }
 //----------------------------------------------------------------------------
-String VertexDeclaration::ToString() const {
-    OStringStream oss;
-    oss << "Vertex";
-    for (const vertexsubpartentry_type& subPart : _subParts)
-        Format( oss, "__{0}{1}_{2}",
-                VertexSubPartSemanticToCStr(subPart.first.Semantic()),
-                subPart.first.Index(),
-                VertexSubPartFormatToCStr(subPart.first.Format()) );
-
-    return oss.str();
+void VertexDeclaration::FillSubstitutions(VECTOR_THREAD_LOCAL(Shader, Pair<String COMMA String>)& substitutions) const {
+    UNUSED(substitutions);
 }
 //----------------------------------------------------------------------------
 void VertexDeclaration::Create(IDeviceAPIEncapsulator *device) {
@@ -127,13 +94,38 @@ DeviceAPIDependantVertexDeclaration::~DeviceAPIDependantVertexDeclaration() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#define FOREACH_VERTEXSEMANTIC_NAME(_Macro) \
+    _Macro(Position) \
+    _Macro(TexCoord) \
+    _Macro(Color) \
+    _Macro(Normal) \
+    _Macro(Tangent) \
+    _Macro(Binormal)
+//----------------------------------------------------------------------------
+#define DEF_VERTEXSEMANTIC_ACCESSOR(_Name) \
+    const VertexSemantic VertexSemantic::_Name;
+FOREACH_VERTEXSEMANTIC_NAME(DEF_VERTEXSEMANTIC_ACCESSOR)
+#undef DEF_VERTEXSEMANTIC_ACCESSOR
+//----------------------------------------------------------------------------
 void VertexDeclaration::Start() {
+#define DEF_VERTEXSEMANTIC_START(_Name) \
+    new ((void*)&VertexSemantic::_Name) VertexSemantic(STRINGIZE(_Name));
+    FOREACH_VERTEXSEMANTIC_NAME(DEF_VERTEXSEMANTIC_START)
+#undef DEF_VERTEXSEMANTIC_START
+
     VertexTypes_Start();
 }
 //----------------------------------------------------------------------------
 void VertexDeclaration::Shutdown() {
     VertexTypes_Shutdown();
+
+#define DEF_VERTEXSEMANTIC_SHUTDOWN(_Name) \
+    const_cast<VertexSemantic*>(&VertexSemantic::_Name)->~VertexSemantic();
+    FOREACH_VERTEXSEMANTIC_NAME(DEF_VERTEXSEMANTIC_SHUTDOWN)
+#undef DEF_VERTEXSEMANTIC_SHUTDOWN
 }
+//----------------------------------------------------------------------------
+#undef FOREACH_VERTEXSEMANTIC_NAME
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
