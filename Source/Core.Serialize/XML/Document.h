@@ -2,6 +2,8 @@
 
 #include "Core.Serialize/XML/XML.h"
 
+#include "Core.Serialize/XML/Name.h"
+
 #include "Core/Container/StringHashMap.h"
 #include "Core/IO/String.h"
 #include "Core/IO/StringSlice.h"
@@ -38,6 +40,8 @@ public:
 
     void ToStream(std::basic_ostream<char>& oss) const;
 
+    size_t XPath(std::initializer_list<Name> path, const std::function<void(const Element*)>& functor) const;
+
     static bool Load(Document* document, const Filename& filename);
     static bool Load(Document* document, const StringSlice& content, const WStringSlice& filename);
 
@@ -46,6 +50,7 @@ private:
 
     String _version;
     String _encoding;
+    String _standalone;
 
     byidentifier_type _byIdentifier;
 };

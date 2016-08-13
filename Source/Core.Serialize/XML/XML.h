@@ -6,12 +6,12 @@
 
 #include "Core.Serialize/Exceptions.h"
 #include "Core.Serialize/Lexer/Location.h"
-#include "Core.Serialize/XML/Document.h"
-#include "Core.Serialize/XML/Element.h"
 
 namespace Core {
 namespace XML {
 POOL_TAG_DECL(XML);
+FWD_REFPTR(Document);
+FWD_REFPTR(Element);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -1,29 +1,14 @@
 #include "stdafx.h"
 
-#include "XML.h"
-
 #include "Name.h"
-
-#include "Core/Allocator/PoolAllocatorTag-impl.h"
 
 namespace Core {
 namespace XML {
-POOL_TAG_DEF(XML);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void XMLStartup::Start() {
-    POOL_TAG(XML)::Start();
-    XML::Name::Start(256);
-}
-//----------------------------------------------------------------------------
-void XMLStartup::Shutdown() {
-    XML::Name::Shutdown();
-    POOL_TAG(XML)::Shutdown();
-}
-//----------------------------------------------------------------------------
-void XMLStartup::ClearAll_UnusedMemory() {
-    POOL_TAG(XML)::ClearAll_UnusedMemory();
+bool NameTokenTraits::IsAllowedChar(char ch) const {
+    return IsAlnum(ch) || ch == '_' || ch == '-' || ch == '.';
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

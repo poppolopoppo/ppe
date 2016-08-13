@@ -9,6 +9,7 @@
 #include "Lexer/Symbol.h"
 #include "Lexer/Symbols.h"
 
+#include "Core/Container/RawStorage.h"
 #include "Core/Container/Vector.h"
 
 namespace Core {
@@ -23,7 +24,7 @@ static void Expect_(Lexer::Lexer& lexer, Lexer::Match& eaten, const Lexer::Symbo
         throw XMLException("unexpected token", eaten.Site());
 }
 //----------------------------------------------------------------------------
-static void ReadHeader_(Lexer::Lexer& lexer, String& version, String& encoding) {
+static void ReadHeader_(Lexer::Lexer& lexer, String& version, String& encoding, String& standalone) {
     Lexer::Match eaten;
     Expect_(lexer, eaten, Lexer::Symbols::Less);
     Expect_(lexer, eaten, Lexer::Symbols::Question);
@@ -42,6 +43,9 @@ static void ReadHeader_(Lexer::Lexer& lexer, String& version, String& encoding) 
         }
         else if (EqualsI("encoding", eaten.MakeView())) {
             pValue = &encoding;
+        }
+        else if (EqualsI("standalone", eaten.MakeView())) {
+            pValue = &standalone;
         }
         else {
             throw XMLException("invalid document attribute", eaten.Site());
@@ -86,23 +90,26 @@ bool Document::Load(Document* document, const StringSlice& content, const WStrin
     document->_root.reset();
     document->_version.clear();
     document->_encoding.clear();
+    document->_standalone.clear();
     document->_byIdentifier.clear();
 
     Lexer::Lexer lexer(content, filename, false);
-    ReadHeader_(lexer, document->_version, document->_encoding);
+    ReadHeader_(lexer, document->_version, document->_encoding, document->_standalone);
 
     if (document->_version.empty())
         document->_version = "1.0";
     if (document->_encoding.empty())
         document->_encoding = "utf-8";
+    if (document->_standalone.empty())
+        document->_standalone = "yes";
 
-    const RTTI::Name keyId("id");
+    const XML::Name keyId("id");
 
     struct ReadElement_ {
         PElement Element;
         Lexer::Location Site;
 
-        void RegisterIFN(const RTTI::Name& key, byidentifier_type& ids) {
+        void RegisterIFN(const XML::Name& key, byidentifier_type& ids) {
             const auto elementId = Element->Attributes().Find(key);
             if (elementId != Element->Attributes().end()) {
                 if (Insert_ReturnIfExists(  ids,
@@ -199,7 +206,7 @@ bool Document::Load(Document* document, const StringSlice& content, const WStrin
             while ((poken = lexer.Peek(Lexer::Symbols::Identifier)) ) {
                 Expect_(lexer, eaten, Lexer::Symbols::Identifier);
 
-                const RTTI::Name key(eaten.MakeView());
+                const XML::Name key(eaten.MakeView());
 
                 bool added = false;
                 auto value = it.Element->Attributes().FindOrAdd(key, &added);
@@ -241,10 +248,15 @@ bool Document::Load(Document* document, const StringSlice& content, const WStrin
 void Document::ToStream(std::basic_ostream<char>& oss) const {
     oss << "<?xml version=\"" << _version
         << "\" encoding=\"" << _encoding
-        << "\"?>" << std::endl;
+        << "\" standalone=\"" << _standalone
+        << "\" ?>" << std::endl;
 
     if (_root)
         _root->ToStream(oss);
+}
+//----------------------------------------------------------------------------
+size_t Document::XPath(std::initializer_list<Name> path, const std::function<void(const Element*)>& functor) const {
+    return (_root ? _root->XPath(path, functor) : 0 );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

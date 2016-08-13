@@ -1,30 +1,21 @@
-#include "stdafx.h"
+#pragma once
 
-#include "XML.h"
+#include "Core.Serialize/XML/XML.h"
 
-#include "Name.h"
-
-#include "Core/Allocator/PoolAllocatorTag-impl.h"
+#include "Core/Container/Token.h"
 
 namespace Core {
 namespace XML {
-POOL_TAG_DEF(XML);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void XMLStartup::Start() {
-    POOL_TAG(XML)::Start();
-    XML::Name::Start(256);
-}
+class NameTokenTraits {
+public:
+    const std::locale& Locale() const { return std::locale::classic(); }
+    bool IsAllowedChar(char ch) const;
+};
 //----------------------------------------------------------------------------
-void XMLStartup::Shutdown() {
-    XML::Name::Shutdown();
-    POOL_TAG(XML)::Shutdown();
-}
-//----------------------------------------------------------------------------
-void XMLStartup::ClearAll_UnusedMemory() {
-    POOL_TAG(XML)::ClearAll_UnusedMemory();
-}
+BASICTOKEN_CLASS_DEF(Name, char, Case::Insensitive, NameTokenTraits);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

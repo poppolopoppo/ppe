@@ -2,9 +2,10 @@
 
 #include "Core.Serialize/XML/XML.h"
 
-#include "Core.RTTI/Typedefs.h"
+#include "Core.Serialize/XML/Name.h"
 
 #include "Core/Allocator/PoolAllocator.h"
+#include "Core/Container/AssociativeVector.h"
 #include "Core/IO/String.h"
 #include "Core/IO/StringSlice.h"
 #include "Core/Memory/RefPtr.h"
@@ -17,7 +18,7 @@ namespace XML {
 FWD_REFPTR(Element);
 class Element : public RefCountable {
 public:
-    typedef ASSOCIATIVE_VECTORINSITU(XML, RTTI::Name, String, 1) attributes_type;
+    typedef ASSOCIATIVE_VECTORINSITU(XML, Name, String, 1) attributes_type;
     typedef VECTORINSITU(XML, PElement, 1) children_type;
 
     Element();
@@ -26,9 +27,9 @@ public:
     Element(const Element& ) = delete;
     Element& operator =(const Element& ) = delete;
 
-    const RTTI::Name& Type() const { return _type; }
-    void SetType(RTTI::Name&& rvalue) { _type = std::move(rvalue); }
-    void SetType(const RTTI::Name& value) { _type = value; }
+    const Name& Type() const { return _type; }
+    void SetType(Name&& rvalue) { _type = std::move(rvalue); }
+    void SetType(const Name& value) { _type = value; }
 
     const String& Text() const { return _text; }
     void SetText(String&& rvalue) { _text = std::move(rvalue); }
@@ -54,10 +55,12 @@ public:
 
     void ToStream(std::basic_ostream<char>& oss) const;
 
+    size_t XPath(std::initializer_list<Name> path, const std::function<void(const Element*)>& functor) const;
+
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    RTTI::Name _type;
+    Name _type;
     String _text;
     attributes_type _attributes;
 

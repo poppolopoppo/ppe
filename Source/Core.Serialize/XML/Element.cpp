@@ -40,6 +40,29 @@ static void PrintElement_(std::basic_ostream<char>& oss, const XML::Element* elt
     }
 }
 //----------------------------------------------------------------------------
+template <typename _It>
+static size_t XPath_(_It first, _It last, const XML::Element* elt, const std::function<void(const Element*)>& functor) {
+    Assert(elt);
+    Assert(first != last);
+
+    if (*first != elt->Type())
+        return 0;
+
+    ++first;
+
+    if (first != last) {
+        functor(elt);
+        return 1;
+    }
+    else {
+        size_t count = 0;
+        for (const PElement& child : elt->Children())
+            count += XPath_(first, last, elt, functor);
+
+        return count;
+    }
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -62,6 +85,11 @@ Element::~Element() {
 //----------------------------------------------------------------------------
 void Element::ToStream(std::basic_ostream<char>& oss) const {
     PrintElement_(oss, this);
+}
+//----------------------------------------------------------------------------
+size_t Element::XPath(std::initializer_list<Name> path, const std::function<void(const Element*)>& functor) const {
+    Assert(not std::empty(path));
+    return XPath_(std::begin(path), std::end(path), this, functor);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
