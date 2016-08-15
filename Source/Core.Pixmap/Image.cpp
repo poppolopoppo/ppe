@@ -17,11 +17,11 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_MALLOC(sz) \
-    Core::GetThreadLocalHeap().malloc(sz, MEMORY_DOMAIN_TRACKING_DATA(Image))
+    Core::GetThreadLocalHeap().Malloc(sz, MEMORY_DOMAIN_TRACKING_DATA(Image))
 #define STBI_REALLOC(p,newsz) \
-    Core::GetThreadLocalHeap().realloc(p, newsz, MEMORY_DOMAIN_TRACKING_DATA(Image))
+    Core::GetThreadLocalHeap().Realloc(p, newsz, MEMORY_DOMAIN_TRACKING_DATA(Image))
 #define STBI_FREE(p) \
-    Core::GetThreadLocalHeap().free(p, MEMORY_DOMAIN_TRACKING_DATA(Image))
+    Core::GetThreadLocalHeap().Free(p, MEMORY_DOMAIN_TRACKING_DATA(Image))
 #define STBI_ASSERT(x) \
     Assert(x)
 #define STBI_NO_STDIO
@@ -29,11 +29,11 @@
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STBIW_MALLOC(sz) \
-    Core::GetThreadLocalHeap().malloc(sz, MEMORY_DOMAIN_TRACKING_DATA(Image))
+    Core::GetThreadLocalHeap().Malloc(sz, MEMORY_DOMAIN_TRACKING_DATA(Image))
 #define STBIW_REALLOC(p,newsz) \
-    Core::GetThreadLocalHeap().realloc(p, newsz, MEMORY_DOMAIN_TRACKING_DATA(Image))
+    Core::GetThreadLocalHeap().Realloc(p, newsz, MEMORY_DOMAIN_TRACKING_DATA(Image))
 #define STBIW_FREE(p) \
-    Core::GetThreadLocalHeap().free(p, MEMORY_DOMAIN_TRACKING_DATA(Image))
+    Core::GetThreadLocalHeap().Free(p, MEMORY_DOMAIN_TRACKING_DATA(Image))
 #define STBIW_ASSERT(x) \
     Assert(x)
 #define STBI_WRITE_NO_STDIO

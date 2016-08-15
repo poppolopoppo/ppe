@@ -7,13 +7,13 @@ class MemoryTrackingData;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void* malloc(MemoryTrackingData& trackingData, size_t size);
+void* (malloc)(MemoryTrackingData& trackingData, size_t size);
 //----------------------------------------------------------------------------
-void  free(MemoryTrackingData& trackingData, void *ptr);
+void  (free)(MemoryTrackingData& trackingData, void *ptr);
 //----------------------------------------------------------------------------
-void* calloc(MemoryTrackingData& trackingData, size_t nmemb, size_t size);
+void* (calloc)(MemoryTrackingData& trackingData, size_t nmemb, size_t size);
 //----------------------------------------------------------------------------
-void* realloc(MemoryTrackingData& trackingData, void *ptr, size_t size);
+void* (realloc)(MemoryTrackingData& trackingData, void *ptr, size_t size);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

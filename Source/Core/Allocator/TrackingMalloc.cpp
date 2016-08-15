@@ -33,13 +33,13 @@ STATIC_ASSERT(sizeof(BlockTracking_) == 16);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void* malloc(MemoryTrackingData& trackingData, size_t size) {
+void* (malloc)(MemoryTrackingData& trackingData, size_t size) {
 #ifdef USE_MEMORY_DOMAINS
     if (0 == size)
         return nullptr;
 
     trackingData.Allocate(1, size);
-    void* const ptr = Core::malloc(size + sizeof(BlockTracking_));
+    void* const ptr = malloc(size + sizeof(BlockTracking_));
 
     auto* const pblock = reinterpret_cast<BlockTracking_*>(ptr);
     pblock->TrackingData = &trackingData;
@@ -48,11 +48,11 @@ void* malloc(MemoryTrackingData& trackingData, size_t size) {
 
     return (pblock+1);
 #else
-    return Core::malloc(size);
+    return malloc(size);
 #endif
 }
 //----------------------------------------------------------------------------
-void free(MemoryTrackingData& trackingData, void *ptr) {
+void (free)(MemoryTrackingData& trackingData, void *ptr) {
 #ifdef USE_MEMORY_DOMAINS
     if (nullptr == ptr)
         return;
@@ -62,16 +62,16 @@ void free(MemoryTrackingData& trackingData, void *ptr) {
     Assert(BlockTracking_::CanaryValue == pblock->CanaryValue);
 
     trackingData.Deallocate(1, pblock->SizeInBytes);
-    Core::free(pblock);
+    free(pblock);
 #else
-    Core::free(ptr);
+    free(ptr);
 #endif
 }
 //----------------------------------------------------------------------------
-void* calloc(MemoryTrackingData& trackingData, size_t nmemb, size_t size) {
+void* (calloc)(MemoryTrackingData& trackingData, size_t nmemb, size_t size) {
 #ifdef USE_MEMORY_DOMAINS
     const size_t sizeInBytes = nmemb*size;
-    void* const ptr = Core::malloc(trackingData, sizeInBytes);
+    void* const ptr = (malloc)(trackingData, sizeInBytes);
     ::memset(ptr, 0, sizeInBytes);
     return ptr;
 #else
@@ -79,7 +79,7 @@ void* calloc(MemoryTrackingData& trackingData, size_t nmemb, size_t size) {
 #endif
 }
 //----------------------------------------------------------------------------
-void* realloc(MemoryTrackingData& trackingData, void *ptr, size_t size) {
+void* (realloc)(MemoryTrackingData& trackingData, void *ptr, size_t size) {
 #ifdef USE_MEMORY_DOMAINS
     if (nullptr != ptr) {
         auto* const pblock = reinterpret_cast<BlockTracking_*>(ptr) - 1;
@@ -90,12 +90,12 @@ void* realloc(MemoryTrackingData& trackingData, void *ptr, size_t size) {
     }
 
     if (0 == size) {
-        Core::free(ptr);
+        free(ptr);
         return nullptr;
     }
     else {
         trackingData.Allocate(1, size);
-        ptr = Core::realloc(ptr, size + sizeof(BlockTracking_));
+        ptr = realloc(ptr, size + sizeof(BlockTracking_));
 
         auto* const pblock = reinterpret_cast<BlockTracking_*>(ptr);
         pblock->TrackingData = &trackingData;
@@ -105,7 +105,7 @@ void* realloc(MemoryTrackingData& trackingData, void *ptr, size_t size) {
         return (pblock+1);
     }
 #else
-    return Core::realloc(ptr, size);
+    return realloc(ptr, size);
 #endif
 }
 //----------------------------------------------------------------------------

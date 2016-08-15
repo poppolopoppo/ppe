@@ -14,9 +14,9 @@
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 
 #define STBIR_MALLOC(size,c) \
-    Core::GetThreadLocalHeap().malloc(size, MEMORY_DOMAIN_TRACKING_DATA(Image))
+    Core::GetThreadLocalHeap().Malloc(size, MEMORY_DOMAIN_TRACKING_DATA(Image))
 #define STBIR_FREE(ptr,c) \
-    Core::GetThreadLocalHeap().free(ptr, MEMORY_DOMAIN_TRACKING_DATA(Image))
+    Core::GetThreadLocalHeap().Free(ptr, MEMORY_DOMAIN_TRACKING_DATA(Image))
 #define STBIR_ASSERT(x) \
     Assert(x)
 

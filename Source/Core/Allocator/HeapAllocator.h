@@ -84,7 +84,7 @@ auto HeapAllocator<T, _HeapSingleton>::allocate(size_type n) -> pointer {
         throw std::length_error("HeapAllocator<T, _HeapSingleton>::allocate() - Integer overflow.");
 
     // HeapAllocator wraps Heap.
-    void * const pv = HeapInstance().malloc<Alignment>(n * sizeof(T));
+    void * const pv = HeapInstance().Malloc<Alignment>(n * sizeof(T));
 
     // Allocators should throw std::bad_alloc in the case of memory allocation failure.
     if (pv == nullptr)
@@ -99,7 +99,7 @@ void HeapAllocator<T, _HeapSingleton>::deallocate(void* p, size_type n) {
     UNUSED(n);
 
     // HeapAllocator wraps Heap.
-    HeapInstance().free<Alignment>(p);
+    HeapInstance().Free<Alignment>(p);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _HeapSingleton >
@@ -108,7 +108,7 @@ void* HeapAllocator<T, _HeapSingleton>::relocate(void* p, size_type newSize, siz
     UNUSED(oldSize);
 
     // HeapAllocator wraps Heap.
-    void* const newp = HeapInstance().realloc<Alignment>(p, newSize * sizeof(T));
+    void* const newp = HeapInstance().Realloc<Alignment>(p, newSize * sizeof(T));
     if (nullptr == newp && newSize)
         throw std::bad_alloc();
 

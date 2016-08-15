@@ -18,7 +18,7 @@ struct ThreadLocalHeapFree {
     void operator ()(T * x) const {
         STATIC_ASSERT(std::is_pod<T>::value); // ~T is never called !
         if (x)
-            GetThreadLocalHeap().free(x, _MemoryDomain::TrackingData);
+            GetThreadLocalHeap().Free(x, _MemoryDomain::TrackingData);
     }
 };
 //----------------------------------------------------------------------------

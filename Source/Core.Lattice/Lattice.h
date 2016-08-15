@@ -14,7 +14,6 @@ public:
     static void Start();
     static void Shutdown();
 
-    static void Clear();
     static void ClearAll_UnusedMemory();
 
     LatticeStartup() { Start(); }

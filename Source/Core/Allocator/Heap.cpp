@@ -93,7 +93,7 @@ Heap::~Heap() {
         DestroyHeap_(_handle);
 }
 //----------------------------------------------------------------------------
-void* Heap::malloc(size_t size, MemoryTrackingData& trackingData) {
+void* Heap::Malloc(size_t size, MemoryTrackingData& trackingData) {
     if (0 == size)
         return nullptr;
 
@@ -106,7 +106,7 @@ void* Heap::malloc(size_t size, MemoryTrackingData& trackingData) {
     return ::HeapAlloc(_handle, 0, size);
 }
 //----------------------------------------------------------------------------
-void Heap::free(void *ptr, MemoryTrackingData& trackingData) {
+void Heap::Free(void *ptr, MemoryTrackingData& trackingData) {
     if (nullptr == ptr)
         return;
 
@@ -121,7 +121,7 @@ void Heap::free(void *ptr, MemoryTrackingData& trackingData) {
     ::HeapFree(_handle, 0, ptr);
 }
 //----------------------------------------------------------------------------
-void* Heap::calloc(size_t nmemb, size_t size, MemoryTrackingData& trackingData) {
+void* Heap::Calloc(size_t nmemb, size_t size, MemoryTrackingData& trackingData) {
     if (nmemb*size == 0)
         return nullptr;
 
@@ -134,9 +134,9 @@ void* Heap::calloc(size_t nmemb, size_t size, MemoryTrackingData& trackingData) 
     return ::HeapAlloc(_handle, HEAP_ZERO_MEMORY, nmemb * size);
 }
 //----------------------------------------------------------------------------
-void* Heap::realloc(void *ptr, size_t size, MemoryTrackingData& trackingData) {
+void* Heap::Realloc(void *ptr, size_t size, MemoryTrackingData& trackingData) {
     if (nullptr == ptr)
-        return this->malloc(size, trackingData);
+        return this->Malloc(size, trackingData);
 
 #ifdef USE_MEMORY_DOMAINS
     if (ptr) {
@@ -159,7 +159,7 @@ void* Heap::realloc(void *ptr, size_t size, MemoryTrackingData& trackingData) {
         return nullptr;
 }
 //----------------------------------------------------------------------------
-void* Heap::aligned_malloc(size_t size, size_t alignment, MemoryTrackingData& trackingData) {
+void* Heap::AlignedMalloc(size_t size, size_t alignment, MemoryTrackingData& trackingData) {
     if (0 == size)
         return nullptr;
 
@@ -176,7 +176,7 @@ void* Heap::aligned_malloc(size_t size, size_t alignment, MemoryTrackingData& tr
     return aligned;
 }
 //----------------------------------------------------------------------------
-void Heap::aligned_free(void *ptr, MemoryTrackingData& trackingData) {
+void Heap::AlignedFree(void *ptr, MemoryTrackingData& trackingData) {
     if (nullptr == ptr)
         return;
 
@@ -193,7 +193,7 @@ void Heap::aligned_free(void *ptr, MemoryTrackingData& trackingData) {
     ::HeapFree(_handle, 0, block);
 }
 //----------------------------------------------------------------------------
-void* Heap::aligned_calloc(size_t nmemb, size_t size, size_t alignment, MemoryTrackingData& trackingData) {
+void* Heap::AlignedCalloc(size_t nmemb, size_t size, size_t alignment, MemoryTrackingData& trackingData) {
     if (nmemb*size == 0)
         return nullptr;
 
@@ -210,9 +210,9 @@ void* Heap::aligned_calloc(size_t nmemb, size_t size, size_t alignment, MemoryTr
     return aligned;
 }
 //----------------------------------------------------------------------------
-void* Heap::aligned_realloc(void *ptr, size_t size, size_t alignment, MemoryTrackingData& trackingData) {
+void* Heap::AlignedRealloc(void *ptr, size_t size, size_t alignment, MemoryTrackingData& trackingData) {
     if (nullptr == ptr)
-        return this->aligned_malloc(size, alignment, trackingData);
+        return this->AlignedMalloc(size, alignment, trackingData);
 
     void** aligned = reinterpret_cast<void**>(ptr);
     void* const block = aligned[-1];

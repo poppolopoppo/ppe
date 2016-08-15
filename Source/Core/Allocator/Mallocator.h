@@ -69,7 +69,7 @@ auto Mallocator<T, _Alignment>::allocate(size_type n) -> pointer {
         throw std::length_error("Mallocator<T>::allocate() - Integer overflow.");
 
     // Mallocator wraps malloc().
-    void * const pv = malloc<_Alignment>(n * sizeof(T));
+    void * const pv = Core::malloc<_Alignment>(n * sizeof(T));
 
     // Allocators should throw std::bad_alloc in the case of memory allocation failure.
     if (pv == nullptr)
@@ -82,7 +82,7 @@ template <typename T, size_t _Alignment>
 void Mallocator<T, _Alignment>::deallocate(void* p, size_type n) {
     UNUSED(n);
     // Mallocator wraps malloc().
-    free<_Alignment>(p);
+    Core::free<_Alignment>(p);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Alignment>
@@ -90,7 +90,7 @@ void* Mallocator<T, _Alignment>::relocate(void* p, size_type newSize, size_type 
     UNUSED(oldSize);
 
     // Mallocator wraps malloc()
-    void* const newp = realloc<_Alignment>(p, newSize * sizeof(T));
+    void* const newp = Core::realloc<_Alignment>(p, newSize * sizeof(T));
     if (nullptr == newp && newSize)
         throw std::bad_alloc();
 
