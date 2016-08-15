@@ -256,8 +256,7 @@ static int __cdecl ReportHook_(int nRptType, char *szMsg, int *retVal) {
     Assert(szMsg);
     Assert(retVal);
 
-    if (_CRT_WARN != nRptType ||
-        nullptr == szMsg)
+    if (_CRT_WARN != nRptType || nullptr == szMsg)
         return TRUE;
 
     if ('{' == *szMsg)
@@ -270,7 +269,7 @@ static int __cdecl ReportHook_(int nRptType, char *szMsg, int *retVal) {
         for (int n = 1; i > 0; --i, n *= 10)
             requestNumber += n * (szMsg[i] - '0');
 
-        auto const log = CrtAllocationCallstackLogger::Instance;
+        auto const* log = CrtAllocationCallstackLogger::Instance;
         if (log) {
             const CrtAllocationCallstackLogger::TAllocation* alloc = log->Callstack(requestNumber);
             if (alloc)
@@ -282,16 +281,14 @@ static int __cdecl ReportHook_(int nRptType, char *szMsg, int *retVal) {
                 DecodedCallstack decoded;
                 Core::Callstack::Decode(&decoded, 0, MakeView(&alloc->Backtrace[0], &alloc->Backtrace[depth]));
 
-                LOG(Error, L"Error leak detected #{0} !", alloc->RequestNumber);
-                for (const DecodedCallstack::Frame& frame : decoded.Frames())
-                    LOG(Callstack, L"{0}", frame);
+                LOG(Error, L"Error leak detected #{0} !\n{1}", alloc->RequestNumber, decoded);
             }
         }
     }
     else {
         StringSlice msgWithoutEndl;
-        const char *p = szMsg;
-        if (Split(&p, "\n", msgWithoutEndl))
+        StringSlice msg = MakeStringSlice(szMsg, Meta::noinit_tag{});
+        if (Split(msg, "\n", msgWithoutEndl))
             LOG(Error, L"{0}", msgWithoutEndl);
     }
 
@@ -329,7 +326,7 @@ CrtCheckMemoryLeaksImpl::~CrtCheckMemoryLeaksImpl() {
     _CrtMemState memCurrent;
     _CrtMemCheckpoint(&memCurrent);
     _CrtMemState memDiff;
-    if (!_CrtMemDifference(&memDiff, &_memCheckpoint, &memCurrent))
+    if (FALSE == _CrtMemDifference(&memDiff, &_memCheckpoint, &memCurrent))
         return; // no diff => bye, bye
 
     const _CRT_REPORT_HOOK reportHook = _CrtSetReportHook(ReportHook_);
