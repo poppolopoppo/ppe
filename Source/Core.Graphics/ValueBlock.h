@@ -16,7 +16,7 @@ public:
     class Field {
     public:
         Field() : _type(0), _index(0), _offset(0), _inUse(0) {}
-        Field(Graphics::Name name, ValueType type, size_t offset, size_t index = 0, bool inUse = true)
+        Field(Graphics::Name name, ValueType type, size_t offset, size_t index = 0, bool inUse = false)
             : _name(name), _index(u32(index)), _type(u32(type)), _offset(u32(offset)), _inUse(inUse?1:0) {
             Assert(ValueType::Void != type);
             Assert(index == _index);
@@ -29,40 +29,23 @@ public:
         ValueType Type() const { return ValueType(_type); }
         size_t Offset() const { return _offset; }
         size_t SizeInBytes() const { return ValueSizeInBytes(ValueType(_type)); }
-        bool InUse() const { return (_inUse ? 1 : 0); }
+        bool InUse() const { return bool(_inUse); }
 
-        void Copy(const MemoryView<u8>& dst, const MemoryView<const u8>& src) const {
-            ValueCopy(Type(), dst.CutStartingAt(_offset), src.CutStartingAt(_offset));
-        }
+        void SetInUse(bool value = true) { _inUse = (value?1:0); }
 
-        bool Equals(const MemoryView<const u8>& lhs, const MemoryView<const u8>& rhs) const {
-            return ValueEquals(Type(), lhs.CutStartingAt(_offset), rhs.CutStartingAt(_offset));
-        }
+        void Copy(const MemoryView<u8>& dst, const MemoryView<const u8>& src) const { ValueCopy(Type(), dst.CutStartingAt(_offset), src.CutStartingAt(_offset)); }
+        bool Equals(const MemoryView<const u8>& lhs, const MemoryView<const u8>& rhs) const { return ValueEquals(Type(), lhs.CutStartingAt(_offset), rhs.CutStartingAt(_offset)); }
 
         void Lerp(const MemoryView<u8>& dst, const MemoryView<const u8>& a, const MemoryView<const u8>& b, float f) const {
             ValueLerp(Type(), dst.CutStartingAt(_offset), a.CutStartingAt(_offset), b.CutStartingAt(_offset), f);
         }
 
-        bool IsPromotable(ValueType other) const {
-            return (ValueIsPromotable(Type(), other) &&
-                    ValueIsPromotable(other, Type()) );
-        }
+        bool IsPromotable(ValueType other) const { return (ValueIsPromotable(Type(), other) && ValueIsPromotable(other, Type()) ); }
+        bool IsPromotableFrom(ValueType src) const { return ValueIsPromotable(Type(), src); }
+        bool IsPromotableTo(ValueType dst) const { return ValueIsPromotable(dst, Type()); }
 
-        bool IsPromotableFrom(ValueType src) const {
-            return ValueIsPromotable(Type(), src);
-        }
-
-        bool IsPromotableTo(ValueType dst) const {
-            return ValueIsPromotable(dst, Type());
-        }
-
-        bool Promote(const MemoryView<u8>& dst, const Value& src) const {
-            return ValuePromote(Type(), dst.CutStartingAt(_offset), src.Type(), src.MakeView());
-        }
-
-        bool Promote(const MemoryView<u8>& dst, ValueType input, const MemoryView<const u8>& src) const {
-            return ValuePromote(Type(), dst.CutStartingAt(_offset), input, src);
-        }
+        bool Promote(const MemoryView<u8>& dst, const Value& src) const { return ValuePromote(Type(), dst.CutStartingAt(_offset), src.Type(), src.MakeView()); }
+        bool Promote(const MemoryView<u8>& dst, ValueType input, const MemoryView<const u8>& src) const { return ValuePromote(Type(), dst.CutStartingAt(_offset), input, src); }
 
         bool PromoteArray(const MemoryView<u8>& dst, size_t dstStride, ValueType input, const MemoryView<const u8>& src, size_t srcStride, size_t count) const {
             return ValuePromoteArray(Type(), dst.CutStartingAt(_offset), dstStride, input, src, srcStride, count);
@@ -82,11 +65,7 @@ public:
             ValueDefault(Type(), dst);
         }
 
-        friend bool operator ==(const Field& lhs, const Field& rhs) {
-            return (lhs._name == rhs._name &&
-                    lhs._type == rhs._type &&
-                    lhs._offset == rhs._offset &&
-                    lhs._index == rhs._index ); }
+        friend bool operator ==(const Field& lhs, const Field& rhs) { return (lhs._name == rhs._name && lhs._type == rhs._type && lhs._offset == rhs._offset && lhs._index == rhs._index ); }
         friend bool operator !=(const Field& lhs, const Field& rhs) { return not operator ==(lhs, rhs); }
 
     private:
@@ -126,11 +105,17 @@ public:
     void Defaults(const MemoryView<u8>& dst) const;
     bool Equals(const MemoryView<const u8>& lhs, const MemoryView<const u8>& rhs) const;
 
-    const Field& FindByName(const Graphics::Name& name) const;
-    const Field* FindByNameIFP(const Graphics::Name& name) const;
+    Field& FindByName(const Graphics::Name& name);
+    Field* FindByNameIFP(const Graphics::Name& name);
 
-    const Field& FindByNameAndIndex(const Graphics::Name& name, size_t index) const;
-    const Field* FindByNameAndIndexIFP(const Graphics::Name& name, size_t index) const;
+    Field& FindByNameAndIndex(const Graphics::Name& name, size_t index);
+    Field* FindByNameAndIndexIFP(const Graphics::Name& name, size_t index);
+
+    const Field& FindByName(const Graphics::Name& name) const { return remove_const(this)->FindByName(name); }
+    const Field* FindByNameIFP(const Graphics::Name& name) const { return remove_const(this)->FindByNameIFP(name); }
+
+    const Field& FindByNameAndIndex(const Graphics::Name& name, size_t index) const { return remove_const(this)->FindByNameAndIndex(name, index); }
+    const Field* FindByNameAndIndexIFP(const Graphics::Name& name, size_t index) const { return remove_const(this)->FindByNameAndIndexIFP(name, index); }
 
     MemoryView<const Field> MakeView() const { return _fields.MakeConstView(); }
 

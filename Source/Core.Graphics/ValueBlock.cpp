@@ -63,26 +63,26 @@ bool ValueBlock::Equals(const MemoryView<const u8>& lhs, const MemoryView<const 
     return true;
 }
 //----------------------------------------------------------------------------
-const ValueBlock::Field& ValueBlock::FindByName(const Graphics::Name& name) const {
-    const Field* field = FindByNameIFP(name);
+ValueBlock::Field& ValueBlock::FindByName(const Graphics::Name& name) {
+    Field* const field = FindByNameIFP(name);
     Assert(field);
     return *field;
 }
 //----------------------------------------------------------------------------
-const ValueBlock::Field* ValueBlock::FindByNameIFP(const Graphics::Name& name) const {
+ValueBlock::Field* ValueBlock::FindByNameIFP(const Graphics::Name& name) {
     const auto it = std::find_if(_fields.begin(), _fields.end(), [=](const ValueBlock::Field& field) {
         return (field.Name() == name);
     });
     return (it != _fields.end() ? &*it : nullptr);
 }
 //----------------------------------------------------------------------------
-const ValueBlock::Field& ValueBlock::FindByNameAndIndex(const Graphics::Name& name, size_t index) const {
-    const Field* field = FindByNameAndIndexIFP(name, index);
+ValueBlock::Field& ValueBlock::FindByNameAndIndex(const Graphics::Name& name, size_t index) {
+    Field* const field = FindByNameAndIndexIFP(name, index);
     Assert(field);
     return *field;
 }
 //----------------------------------------------------------------------------
-const ValueBlock::Field* ValueBlock::FindByNameAndIndexIFP(const Graphics::Name& name, size_t index) const {
+ValueBlock::Field* ValueBlock::FindByNameAndIndexIFP(const Graphics::Name& name, size_t index) {
     const auto it = std::find_if(_fields.begin(), _fields.end(), [=](const ValueBlock::Field& field) {
         return (field.Name() == name && field.Index() == index);
     });
