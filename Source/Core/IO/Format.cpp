@@ -320,6 +320,7 @@ static void FormatArgs_(
     const BasicStringSlice<_Char>& format,
     const MemoryView<const details::_FormatFunctor<_Char, _Traits>>& args ) {
     Assert(format.Pointer());
+    Assert(!oss.bad());
 
     FormatProperties_ original;
     original.From(oss); // backups original state
@@ -341,6 +342,8 @@ static void FormatArgs_(
                 oss << args[index];
             }
         }
+
+        Assert(!oss.bad());
 
         original.To(oss); // restores original state
         props = original;

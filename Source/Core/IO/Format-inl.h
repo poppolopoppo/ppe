@@ -51,9 +51,18 @@ void _FormatArgs(std::basic_ostream<wchar_t>& oss, const WStringSlice& format, c
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename _Char, typename _Traits = std::char_traits<_Char> >
+using BasicFormatArgList = MemoryView< const details::_FormatFunctor<_Char, _Traits> >;
+typedef BasicFormatArgList<char>    FormatArgList;
+typedef BasicFormatArgList<wchar_t> FormatArgListW;
+//----------------------------------------------------------------------------
+template <typename _Char>
+void FormatArgs(std::basic_ostream<_Char>& oss, const BasicStringSlice<_Char>& format, const BasicFormatArgList<_Char>& args) {
+    details::_FormatArgs(oss, format, args);
+}
+//----------------------------------------------------------------------------
 template <typename _Char, typename _Traits, typename _Arg0, typename... _Args>
 void Format(std::basic_ostream<_Char, _Traits>& oss, const BasicStringSlice<_Char>& format, _Arg0&& arg0, _Args&&... args) {
-
     // args are always passed by pointer, wrapped in a void *
     // this avoids unintended copies and decorrelates from actual types (_FormatArgs is defined in Format.cpp)
     const details::_FormatFunctor<_Char, _Traits> functors[] = {
