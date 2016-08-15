@@ -132,7 +132,6 @@
     <CustomBuild Include="Diagnostic\Exception.h" />
     <CustomBuild Include="Diagnostic\LastError.cpp" />
     <CustomBuild Include="Diagnostic\LastError.h" />
-    <CustomBuild Include="Diagnostic\Logger-inl.h" />
     <CustomBuild Include="Diagnostic\Logger.cpp" />
     <CustomBuild Include="Diagnostic\Logger.h" />
     <CustomBuild Include="Diagnostic\MiniDump.cpp" />
