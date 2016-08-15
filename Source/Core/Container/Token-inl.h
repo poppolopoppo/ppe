@@ -172,7 +172,7 @@ auto TokenSetSlot<_Char, _Sensitive, _Allocator>::GetOrCreate(const BasicStringS
                 + length
                 + 1/* null terminated */ );
 
-            newToken[0] = checked_cast<_Char>(length); // size of cstr is packed in cstr[-1]
+            newToken[0] = _Char(checked_cast<u8>(length)); // size of cstr is packed in cstr[-1]
             memcpy(&newToken[1], content.Pointer(), sizeof(_Char)*(length + 1));
             newToken[1 + length] = _Char(0);
 
