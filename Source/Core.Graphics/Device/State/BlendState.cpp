@@ -11,7 +11,7 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-BlendState::BlendState() 
+BlendState::BlendState()
 :   DeviceResource(DeviceResourceType::BlendState)
 ,   _blendEnabled(false), _blendFactor(0) {}
 //----------------------------------------------------------------------------
@@ -166,7 +166,7 @@ void BlendState::Shutdown() {
 //----------------------------------------------------------------------------
 void BlendState::OnDeviceCreate(DeviceEncapsulator *device) {
 #define CREATEWDEVICE_BLENDSTATE_BUILTINTYPE(_NAME) \
-    const_cast<BlendState *>(BlendState::_NAME)->Create(device->Device())
+    remove_const(BlendState::_NAME)->Create(device->Device())
 
     CREATEWDEVICE_BLENDSTATE_BUILTINTYPE(Additive);
     CREATEWDEVICE_BLENDSTATE_BUILTINTYPE(AlphaBlend);
@@ -178,7 +178,7 @@ void BlendState::OnDeviceCreate(DeviceEncapsulator *device) {
 //----------------------------------------------------------------------------
 void BlendState::OnDeviceDestroy(DeviceEncapsulator *device) {
 #define DESTROYWDEVICE_BLENDSTATE_BUILTINTYPE(_NAME) \
-    const_cast<BlendState *>(BlendState::_NAME)->Destroy(device->Device())
+    remove_const(BlendState::_NAME)->Destroy(device->Device())
 
     DESTROYWDEVICE_BLENDSTATE_BUILTINTYPE(Additive);
     DESTROYWDEVICE_BLENDSTATE_BUILTINTYPE(AlphaBlend);

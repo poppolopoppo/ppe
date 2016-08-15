@@ -15,6 +15,7 @@ inline NOALIAS typename std::enable_if<
     checked_cast(const _Src value) noexcept {
 #ifdef _DEBUG
     const _Dst result = static_cast<_Dst>(value);
+
     Assert(static_cast<_Src>(result) == value);
     return result;
 #else
@@ -57,6 +58,16 @@ inline NOALIAS typename std::enable_if<
 template <typename _Dst>
 FORCE_INLINE NOALIAS const _Dst& checked_cast(const _Dst& value) noexcept {
     return value;
+}
+//----------------------------------------------------------------------------
+template <typename T>
+FORCE_INLINE NOALIAS T& remove_const(const T& value) {
+    return const_cast< T& >(value);
+}
+//----------------------------------------------------------------------------
+template <typename T>
+FORCE_INLINE NOALIAS T* remove_const(const T* pvalue) {
+    return const_cast< T* >(pvalue);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

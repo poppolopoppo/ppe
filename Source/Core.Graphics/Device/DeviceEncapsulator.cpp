@@ -64,18 +64,18 @@ const PresentationParameters& DeviceEncapsulator::Parameters() const {
 //----------------------------------------------------------------------------
 IDeviceAPIEncapsulator *DeviceEncapsulator::Device() const {
     THIS_THREADRESOURCE_CHECKACCESS();
-    return const_cast<DeviceEncapsulator *>(this);
+    return remove_const(this);
 }
 //----------------------------------------------------------------------------
 IDeviceAPIContext *DeviceEncapsulator::Immediate() const {
     THIS_THREADRESOURCE_CHECKACCESS();
-    return const_cast<DeviceEncapsulator *>(this);
+    return remove_const(this);
 }
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
 IDeviceAPIDiagnostics *DeviceEncapsulator::Diagnostics() const {
     THIS_THREADRESOURCE_CHECKACCESS();
-    return const_cast<DeviceEncapsulator *>(this);
+    return remove_const(this);
 }
 #endif
 //----------------------------------------------------------------------------

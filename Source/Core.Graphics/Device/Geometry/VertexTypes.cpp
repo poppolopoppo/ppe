@@ -110,7 +110,7 @@ void VertexTypes_Start() {
     #define CREATE_VERTEXDECL_BUILTINTYPE(_Name) \
         Assert(nullptr == Vertex::_Name::Declaration); \
         Vertex::_Name::Declaration = ::new ((void*)&CONCAT(gVertexDeclarationPOD_, _Name)) VertexDeclaration(); \
-        VertexDeclarator vdecl(const_cast<VertexDeclaration *>(Vertex::_Name::Declaration));
+        VertexDeclarator vdecl(remove_const(Vertex::_Name::Declaration));
 
     {
         CREATE_VERTEXDECL_BUILTINTYPE(Position0_UByte4);
@@ -265,7 +265,7 @@ void VertexTypes_Shutdown() {
 //----------------------------------------------------------------------------
 void VertexTypes_OnDeviceCreate(DeviceEncapsulator *device) {
 #define CREATEWDEVICE_VERTEXDECL_BUILTINTYPE(_NAME) \
-    const_cast<VertexDeclaration *>(Vertex::_NAME::Declaration)->Create(device->Device());
+    remove_const(Vertex::_NAME::Declaration)->Create(device->Device());
 
     FOREACH_VERTEXDECL_BUILTINTYPE(CREATEWDEVICE_VERTEXDECL_BUILTINTYPE)
 
@@ -274,7 +274,7 @@ void VertexTypes_OnDeviceCreate(DeviceEncapsulator *device) {
 //----------------------------------------------------------------------------
 void VertexTypes_OnDeviceDestroy(DeviceEncapsulator *device) {
 #define DESTROYWDEVICE_VERTEXDECL_BUILTINTYPE(_NAME) \
-    const_cast<VertexDeclaration *>(Vertex::_NAME::Declaration)->Destroy(device->Device());
+    remove_const(Vertex::_NAME::Declaration)->Destroy(device->Device());
 
     FOREACH_VERTEXDECL_BUILTINTYPE(DESTROYWDEVICE_VERTEXDECL_BUILTINTYPE)
 

@@ -127,7 +127,7 @@ GenericVertexData* GenericMesh::GetOrAddVertexData(const Graphics::VertexSemanti
         return _vertices.Peek();
     }
     else {
-        return const_cast<GenericVertexData*>(vertices);
+        return remove_const(vertices);
     }
 }
 //----------------------------------------------------------------------------

@@ -31,7 +31,7 @@ IDeviceAPIShaderCompiler* ShaderCompilerEncapsulator::Compiler() const {
     Assert(DeviceAPI::Unknown != _api);
     Assert(nullptr != _deviceAPIShaderCompiler);
 
-    return const_cast<ShaderCompilerEncapsulator*>(this);
+    return remove_const(this);
 }
 //----------------------------------------------------------------------------
 void ShaderCompilerEncapsulator::Create(DeviceAPI api) {

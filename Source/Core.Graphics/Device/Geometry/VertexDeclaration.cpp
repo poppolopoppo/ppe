@@ -120,7 +120,7 @@ void VertexDeclaration::Shutdown() {
     VertexTypes_Shutdown();
 
 #define DEF_VERTEXSEMANTIC_SHUTDOWN(_Name) \
-    const_cast<VertexSemantic*>(&VertexSemantic::_Name)->~VertexSemantic();
+    remove_const(&VertexSemantic::_Name)->~VertexSemantic();
     FOREACH_VERTEXSEMANTIC_NAME(DEF_VERTEXSEMANTIC_SHUTDOWN)
 #undef DEF_VERTEXSEMANTIC_SHUTDOWN
 }

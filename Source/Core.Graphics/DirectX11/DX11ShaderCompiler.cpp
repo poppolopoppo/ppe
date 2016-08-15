@@ -113,7 +113,7 @@ HRESULT STDCALL DX11ShaderIncludeHandler_::Open(::D3D_INCLUDE_TYPE IncludeType, 
 //----------------------------------------------------------------------------
 HRESULT STDCALL DX11ShaderIncludeHandler_::Close(LPCVOID pData) {
     if (pData)
-        Deallocate_(const_cast<void *>(pData));
+        Deallocate_(remove_const(pData));
 
     return S_OK;
 }

@@ -17,7 +17,7 @@ AbstractDeviceAPIEncapsulator::AbstractDeviceAPIEncapsulator(DeviceAPI api, Devi
 :   _api(api)
 ,   _owner(owner)
 ,   _parameters(pp)
-,   _usedMemory("UsedMemory",const_cast<MemoryTrackingData *>(&owner->VideoMemory())) {
+,   _usedMemory("UsedMemory", remove_const(&owner->VideoMemory())) {
     Assert(owner);
 }
 //----------------------------------------------------------------------------

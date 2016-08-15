@@ -34,11 +34,11 @@ public:
 
     const DX11DeviceWrapper& Wrapper() const { return _wrapper; }
 
-    virtual IDeviceAPIEncapsulator *Device() const override { return const_cast<DX11DeviceAPIEncapsulator *>(this); }
-    virtual IDeviceAPIContext *Immediate() const override { return const_cast<DX11DeviceAPIEncapsulator *>(this); }
+    virtual IDeviceAPIEncapsulator *Device() const override { return remove_const(this); }
+    virtual IDeviceAPIContext *Immediate() const override { return remove_const(this); }
 
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
-    virtual IDeviceAPIDiagnostics *Diagnostics() const override { return const_cast<DX11DeviceAPIEncapsulator *>(this); }
+    virtual IDeviceAPIDiagnostics *Diagnostics() const override { return remove_const(this); }
 #endif
 
     virtual void Reset(const PresentationParameters& pp) override;

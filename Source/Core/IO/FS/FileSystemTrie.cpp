@@ -127,8 +127,8 @@ const FileSystemNode *FileSystemTrie::Concat(const FileSystemNode *basedir, cons
         parent = _root.get();
     }
     else {
-        node = const_cast<FileSystemNode *>(basedir->_child.get());
-        parent = const_cast<FileSystemNode *>(basedir);
+        node = remove_const(basedir->_child.get());
+        parent = remove_const(basedir);
     }
     Assert(parent);
 

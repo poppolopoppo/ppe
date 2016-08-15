@@ -11,7 +11,7 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-RasterizerState::RasterizerState() 
+RasterizerState::RasterizerState()
 :   DeviceResource(DeviceResourceType::RasterizerState) {}
 //----------------------------------------------------------------------------
 RasterizerState::~RasterizerState() {
@@ -149,7 +149,7 @@ void RasterizerState::Shutdown() {
 //----------------------------------------------------------------------------
 void RasterizerState::OnDeviceCreate(DeviceEncapsulator *device) {
 #define CREATEWDEVICE_RASTERIZERSTATE_BUILTINTYPE(_NAME) \
-    const_cast<RasterizerState *>(RasterizerState::_NAME)->Create(device->Device())
+    remove_const(RasterizerState::_NAME)->Create(device->Device())
 
     CREATEWDEVICE_RASTERIZERSTATE_BUILTINTYPE(CullClockwise);
     CREATEWDEVICE_RASTERIZERSTATE_BUILTINTYPE(CullCounterClockwise);
@@ -161,7 +161,7 @@ void RasterizerState::OnDeviceCreate(DeviceEncapsulator *device) {
 //----------------------------------------------------------------------------
 void RasterizerState::OnDeviceDestroy(DeviceEncapsulator *device) {
 #define DESTROYWDEVICE_RASTERIZERSTATE_BUILTINTYPE(_NAME) \
-    const_cast<RasterizerState *>(RasterizerState::_NAME)->Destroy(device->Device())
+    remove_const(RasterizerState::_NAME)->Destroy(device->Device())
 
     DESTROYWDEVICE_RASTERIZERSTATE_BUILTINTYPE(CullClockwise);
     DESTROYWDEVICE_RASTERIZERSTATE_BUILTINTYPE(CullCounterClockwise);

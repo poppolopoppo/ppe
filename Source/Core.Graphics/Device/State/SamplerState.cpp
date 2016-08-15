@@ -206,7 +206,7 @@ void SamplerState::Shutdown() {
 //----------------------------------------------------------------------------
 void SamplerState::OnDeviceCreate(DeviceEncapsulator *device) {
 #define CREATEWDEVICE_SAMPLERSTATE_BUILTINTYPE(_NAME) \
-    const_cast<SamplerState *>(SamplerState::_NAME)->Create(device->Device())
+    remove_const(SamplerState::_NAME)->Create(device->Device())
 
     CREATEWDEVICE_SAMPLERSTATE_BUILTINTYPE(AnisotropicClamp);
     CREATEWDEVICE_SAMPLERSTATE_BUILTINTYPE(AnisotropicWrap);
@@ -220,7 +220,7 @@ void SamplerState::OnDeviceCreate(DeviceEncapsulator *device) {
 //----------------------------------------------------------------------------
 void SamplerState::OnDeviceDestroy(DeviceEncapsulator *device) {
 #define DESTROYWDEVICE_SAMPLERSTATE_BUILTINTYPE(_NAME) \
-    const_cast<SamplerState *>(SamplerState::_NAME)->Destroy(device->Device())
+    remove_const(SamplerState::_NAME)->Destroy(device->Device())
 
     DESTROYWDEVICE_SAMPLERSTATE_BUILTINTYPE(AnisotropicClamp);
     DESTROYWDEVICE_SAMPLERSTATE_BUILTINTYPE(AnisotropicWrap);

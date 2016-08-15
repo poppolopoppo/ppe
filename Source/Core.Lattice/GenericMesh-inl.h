@@ -65,7 +65,7 @@ MemoryView<T> GenericVertexSubPart<T>::Resize(size_t count, bool keepData/* = fa
 template <typename T>
 MemoryView<T> GenericVertexSubPart<T>::MakeView() const {
     if (_data) {
-        const MemoryView<T> view = const_cast<GenericVertexData*>(_data)->MakeView().Cast<T>();
+        const MemoryView<T> view = remove_const                                                     yyyyyyyyyy(_data)->MakeView().Cast<T>();
         Assert(view.size() == _data->_vertexCount);
         return view;
     }

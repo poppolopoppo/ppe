@@ -11,7 +11,7 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DepthStencilState::DepthStencilState() 
+DepthStencilState::DepthStencilState()
 :   DeviceResource(DeviceResourceType::DepthStencilState) {}
 //----------------------------------------------------------------------------
 DepthStencilState::~DepthStencilState() {
@@ -134,7 +134,7 @@ void DepthStencilState::Shutdown() {
 //----------------------------------------------------------------------------
 void DepthStencilState::OnDeviceCreate(DeviceEncapsulator *device) {
 #define CREATEWDEVICE_DEPTHSTENCILSTATE_BUILTINTYPE(_NAME) \
-    const_cast<DepthStencilState *>(DepthStencilState::_NAME)->Create(device->Device())
+    remove_const(DepthStencilState::_NAME)->Create(device->Device())
 
     CREATEWDEVICE_DEPTHSTENCILSTATE_BUILTINTYPE(Default);
     CREATEWDEVICE_DEPTHSTENCILSTATE_BUILTINTYPE(DepthRead);
@@ -145,7 +145,7 @@ void DepthStencilState::OnDeviceCreate(DeviceEncapsulator *device) {
 //----------------------------------------------------------------------------
 void DepthStencilState::OnDeviceDestroy(DeviceEncapsulator *device) {
 #define DESTROYWDEVICE_DEPTHSTENCILSTATE_BUILTINTYPE(_NAME) \
-    const_cast<DepthStencilState *>(DepthStencilState::_NAME)->Destroy(device->Device())
+    remove_const(DepthStencilState::_NAME)->Destroy(device->Device())
 
     DESTROYWDEVICE_DEPTHSTENCILSTATE_BUILTINTYPE(Default);
     DESTROYWDEVICE_DEPTHSTENCILSTATE_BUILTINTYPE(DepthRead);
