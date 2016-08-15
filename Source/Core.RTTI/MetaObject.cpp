@@ -119,7 +119,7 @@ void MetaObject::RTTI_CallUnloadIFN(MetaUnloadContext *context) {
 #ifdef WITH_RTTI_VERIFY_PREDICATES
 void MetaObject::RTTI_VerifyPredicates() const {
     // checks that base method was called :
-    const_cast<MetaObject*>(this)->_state = Flags(_state & ~Verifying);
+    _state = Flags(_state & ~Verifying);
 }
 #endif
 //----------------------------------------------------------------------------
