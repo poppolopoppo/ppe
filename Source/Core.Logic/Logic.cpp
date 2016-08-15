@@ -22,18 +22,24 @@ RTTI_TAG_DEF(Logic);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void LogicStartup::Start() {
+    CORE_MODULE_START(Logic);
+
     POOL_TAG(Logic)::Start();
     RTTI_TAG(Logic)::Start();
     Entity::Start();
 }
 //----------------------------------------------------------------------------
 void LogicStartup::Shutdown() {
+    CORE_MODULE_SHUTDOWN(Logic);
+
     Entity::Shutdown();
     RTTI_TAG(Logic)::Shutdown();
     POOL_TAG(Logic)::Shutdown();
 }
 //----------------------------------------------------------------------------
 void LogicStartup::ClearAll_UnusedMemory() {
+    CORE_MODULE_CLEARALL(Logic);
+
     POOL_TAG(Logic)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------

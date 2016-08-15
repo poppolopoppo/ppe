@@ -33,6 +33,8 @@ POOL_TAG_DEF(RTTI);
 static void RTTI_UnitTests();
 #endif
 void RTTIStartup::Start() {
+    CORE_MODULE_START(RTTI);
+
     POOL_TAG(RTTI)::Start();
 
     Name::Start(2048);
@@ -49,6 +51,8 @@ void RTTIStartup::Start() {
 }
 //----------------------------------------------------------------------------
 void RTTIStartup::Shutdown() {
+    CORE_MODULE_SHUTDOWN(RTTI);
+
     RTTI_TAG(Default)::Shutdown();
 
     MetaAtomDatabase::Destroy();
@@ -60,6 +64,8 @@ void RTTIStartup::Shutdown() {
 }
 //----------------------------------------------------------------------------
 void RTTIStartup::Clear() {
+    CORE_MODULE_CLEARALL(RTTI);
+
     MetaAtomDatabase::Instance().Clear();
     MetaClassDatabase::Instance().Clear();
 
@@ -69,6 +75,8 @@ void RTTIStartup::Clear() {
 }
 //----------------------------------------------------------------------------
 void RTTIStartup::ClearAll_UnusedMemory() {
+    CORE_MODULE_CLEARALL(RTTI);
+
     POOL_TAG(RTTI)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------

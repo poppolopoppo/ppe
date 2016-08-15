@@ -23,6 +23,8 @@ POOL_TAG_DEF(Serialize);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void SerializeStartup::Start() {
+    CORE_MODULE_START(Serialize);
+
     POOL_TAG(Serialize)::Start();
     Lexer::LexerStartup::Start();
     Parser::ParserStartup::Start();
@@ -31,6 +33,8 @@ void SerializeStartup::Start() {
 }
 //----------------------------------------------------------------------------
 void SerializeStartup::Shutdown() {
+    CORE_MODULE_SHUTDOWN(Serialize);
+
     XML::XMLStartup::Shutdown();
     GrammarStartup::Shutdown();
     Parser::ParserStartup::Shutdown();
@@ -39,6 +43,8 @@ void SerializeStartup::Shutdown() {
 }
 //----------------------------------------------------------------------------
 void SerializeStartup::ClearAll_UnusedMemory() {
+    CORE_MODULE_CLEARALL(Serialize);
+
     Lexer::LexerStartup::ClearAll_UnusedMemory();
     Parser::ParserStartup::ClearAll_UnusedMemory();
     GrammarStartup::ClearAll_UnusedMemory();

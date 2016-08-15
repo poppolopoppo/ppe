@@ -285,6 +285,8 @@ static void MathUnitTests_() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void GraphicsStartup::Start() {
+    CORE_MODULE_START(Graphics);
+
 #ifdef WITH_CORE_MATHS_UNITTESTS
     MathUnitTests_();
 #endif
@@ -308,6 +310,8 @@ void GraphicsStartup::Start() {
 }
 //----------------------------------------------------------------------------
 void GraphicsStartup::Shutdown() {
+    CORE_MODULE_SHUTDOWN(Graphics);
+
     // 6 - Device states
     SamplerState::Shutdown();
     RasterizerState::Shutdown();
@@ -328,6 +332,8 @@ void GraphicsStartup::Shutdown() {
 }
 //----------------------------------------------------------------------------
 void GraphicsStartup::ClearAll_UnusedMemory() {
+    CORE_MODULE_CLEARALL(Graphics);
+
     POOL_TAG(Graphics)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------

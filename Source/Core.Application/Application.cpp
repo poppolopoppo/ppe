@@ -60,14 +60,16 @@ static void PrintMemStats_(const Core::CrtMemoryStats& memoryStats) {
 #ifdef OS_WINDOWS
 static void ConfigureCRTHeapForDebugging_() {
 #   ifdef _DEBUG
-    //const int debugCheckHeap = _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_EVERY_1024_DF;
-    const int debugNecrophilia = _CRTDBG_DELAY_FREE_MEM_DF;
-    const int debugLeaks = _CRTDBG_LEAK_CHECK_DF;
+    constexpr int debugHeapEnabled  = _CRTDBG_ALLOC_MEM_DF;
+    constexpr int debugCheckMemory  = _CRTDBG_CHECK_EVERY_1024_DF;
+    constexpr int debugNecrophilia  = _CRTDBG_DELAY_FREE_MEM_DF;
+    constexpr int debugLeaks        = _CRTDBG_LEAK_CHECK_DF;
 
-    int debugHeapFlag = 0;
-    //debugHeapFlag |= debugCheckHeap; %_NOCOMMIT%
-    debugHeapFlag |= debugNecrophilia;
-    debugHeapFlag |= debugLeaks;
+    int debugHeapFlag = 0
+        | debugHeapEnabled
+        //| debugCheckMemory //%_NOCOMMIT%
+        | debugNecrophilia
+        | debugLeaks;
 
     _CrtSetDbgFlag(debugHeapFlag);
 
@@ -75,7 +77,7 @@ static void ConfigureCRTHeapForDebugging_() {
     _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG | _CRTDBG_MODE_WNDW);
     _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG | _CRTDBG_MODE_WNDW);
 
-    //_CrtSetBreakAlloc(1146); // for leak debugging purpose // %__NOCOMMIT%
+    //_CrtSetBreakAlloc(1869); // for leak debugging purpose // %_NOCOMMIT%
 #   endif
 }
 #endif
@@ -83,14 +85,20 @@ static void ConfigureCRTHeapForDebugging_() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void ApplicationStartup::Start() {
+    CORE_MODULE_START(Application);
+
     POOL_TAG(Application)::Start();
 }
 //----------------------------------------------------------------------------
 void ApplicationStartup::Shutdown() {
+    CORE_MODULE_SHUTDOWN(Application);
+
     POOL_TAG(Application)::Shutdown();
 }
 //----------------------------------------------------------------------------
 void ApplicationStartup::ClearAll_UnusedMemory() {
+    CORE_MODULE_CLEARALL(Application);
+
     POOL_TAG(Application)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------

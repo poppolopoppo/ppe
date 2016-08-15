@@ -19,18 +19,20 @@ POOL_TAG_DEF(Lattice);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void LatticeStartup::Start() {
+    CORE_MODULE_START(Lattice);
+
     POOL_TAG(Lattice)::Start();
 }
 //----------------------------------------------------------------------------
 void LatticeStartup::Shutdown() {
+    CORE_MODULE_SHUTDOWN(Lattice);
+
     POOL_TAG(Lattice)::Shutdown();
 }
 //----------------------------------------------------------------------------
-void LatticeStartup::Clear() {
-    POOL_TAG(Lattice)::ClearAll_UnusedMemory();
-}
-//----------------------------------------------------------------------------
 void LatticeStartup::ClearAll_UnusedMemory() {
+    CORE_MODULE_CLEARALL(Lattice);
+
     POOL_TAG(Lattice)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------

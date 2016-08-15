@@ -21,20 +21,22 @@ POOL_TAG_DEF(Pixmap);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void PixmapStartup::Start() {
+    CORE_MODULE_START(Pixmap);
+
     POOL_TAG(Pixmap)::Start();
     Image::Start();
 }
 //----------------------------------------------------------------------------
 void PixmapStartup::Shutdown() {
+    CORE_MODULE_SHUTDOWN(Pixmap);
+
     Image::Shutdown();
     POOL_TAG(Pixmap)::Shutdown();
 }
 //----------------------------------------------------------------------------
-void PixmapStartup::Clear() {
-    POOL_TAG(Pixmap)::ClearAll_UnusedMemory();
-}
-//----------------------------------------------------------------------------
 void PixmapStartup::ClearAll_UnusedMemory() {
+    CORE_MODULE_CLEARALL(Pixmap);
+
     POOL_TAG(Pixmap)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------

@@ -43,6 +43,8 @@ STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, SingletonPoolA
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void CoreStartup::Start(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t** argv) {
+    CORE_MODULE_START(Core);
+
     // 1 - diagnostics
     DiagnosticsStartup::Start(applicationHandle, nShowCmd, argc, argv);
     // 2 - main thread context
@@ -63,6 +65,8 @@ void CoreStartup::Start(void *applicationHandle, int nShowCmd, size_t argc, cons
 }
 //----------------------------------------------------------------------------
 void CoreStartup::Shutdown() {
+    CORE_MODULE_SHUTDOWN(Core);
+
     // 8 - virtual file system
     VirtualFileSystemStartup::Shutdown();
     // 7 - file system
@@ -83,11 +87,67 @@ void CoreStartup::Shutdown() {
 }
 //----------------------------------------------------------------------------
 void CoreStartup::ClearAll_UnusedMemory() {
+    CORE_MODULE_CLEARALL(Core);
+
     POOL_TAG(VirtualFileSystem)::ClearAll_UnusedMemory();
     POOL_TAG(FileSystem)::ClearAll_UnusedMemory();
     POOL_TAG(NodeBasedContainer)::ClearAll_UnusedMemory();
     POOL_TAG(Default)::ClearAll_UnusedMemory();
 }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+#ifndef FINAL_RELEASE
+//----------------------------------------------------------------------------
+void CheckMemory() {
+    static THREAD_LOCAL bool bInScope = false;
+    if (bInScope)
+        return;
+
+    bInScope = true;
+    AssertRelease(!std::cout.bad());
+    AssertRelease(!std::wcout.bad());
+    AssertRelease(!std::cerr.bad());
+    AssertRelease(!std::wcerr.bad());
+    AssertRelease(!std::cin.bad());
+    AssertRelease(!std::wcin.bad());
+#ifdef OS_WINDOWS
+    _CrtCheckMemory();
+#endif
+    bInScope = false;
+}
+//----------------------------------------------------------------------------
+OnModuleStart::OnModuleStart(const wchar_t* moduleName) : ModuleName(moduleName) {
+    LOG(Info, L"[{0}] Begin start module", ModuleName);
+    CheckMemory();
+}
+//----------------------------------------------------------------------------
+OnModuleStart::~OnModuleStart() {
+    LOG(Info, L"[{0}] End start module", ModuleName);
+    CheckMemory();
+}
+//----------------------------------------------------------------------------
+OnModuleShutdown::OnModuleShutdown(const wchar_t* moduleName) : ModuleName(moduleName) {
+    LOG(Info, L"[{0}] Begin shutdown module", ModuleName);
+    CheckMemory();
+}
+//----------------------------------------------------------------------------
+OnModuleShutdown::~OnModuleShutdown() {
+    LOG(Info, L"[{0}] End shutdown module", ModuleName);
+    CheckMemory();
+}
+//----------------------------------------------------------------------------
+OnModuleClearAll::OnModuleClearAll(const wchar_t* moduleName) : ModuleName(moduleName) {
+    LOG(Info, L"[{0}] Begin clear all module", ModuleName);
+    CheckMemory();
+}
+//----------------------------------------------------------------------------
+OnModuleClearAll::~OnModuleClearAll() {
+    LOG(Info, L"[{0}] End clear all module", ModuleName);
+    CheckMemory();
+}
+//----------------------------------------------------------------------------
+#endif //!FINAL_RELEASE
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
