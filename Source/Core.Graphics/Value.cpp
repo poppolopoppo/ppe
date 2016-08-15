@@ -405,14 +405,88 @@ namespace Graphics {
 StringSlice ValueTypeToCStr(ValueType value) {
     switch (value)
     {
-#define VALUETYPE_TOCSTR_DEF(_Name, T, _TypeId, _Unused) \
-    case Core::Graphics::ValueType::_Name: \
-        return STRINGIZE(T);
-    FOREACH_CORE_GRAPHIC_VALUETYPE(VALUETYPE_TOCSTR_DEF)
-#undef VALUETYPE_TOCSTR_DEF
-
     case Core::Graphics::ValueType::Void:
         return "void";
+    case Core::Graphics::ValueType::Float:
+        return "float";
+    case Core::Graphics::ValueType::Float2:
+        return "float2";
+    case Core::Graphics::ValueType::Float3:
+        return "float3";
+    case Core::Graphics::ValueType::Float4:
+        return "float4";
+    case Core::Graphics::ValueType::Float3x3:
+        return "float3x3";
+    case Core::Graphics::ValueType::Float4x3:
+        return "float4x3";
+    case Core::Graphics::ValueType::Float4x4:
+        return "float4x4";
+    case Core::Graphics::ValueType::Bool:
+        return "bool";
+    case Core::Graphics::ValueType::Byte:
+        return "byte";
+    case Core::Graphics::ValueType::Byte2:
+        return "byte2";
+    case Core::Graphics::ValueType::Byte4:
+        return "byte4";
+    case Core::Graphics::ValueType::UByte:
+        return "ubyte";
+    case Core::Graphics::ValueType::UByte2:
+        return "ubyte2";
+    case Core::Graphics::ValueType::UByte4:
+        return "ubyte4";
+    case Core::Graphics::ValueType::Short:
+        return "short";
+    case Core::Graphics::ValueType::Short2:
+        return "short2";
+    case Core::Graphics::ValueType::Short4:
+        return "short4";
+    case Core::Graphics::ValueType::UShort:
+        return "ushort";
+    case Core::Graphics::ValueType::UShort2:
+        return "ushort2";
+    case Core::Graphics::ValueType::UShort4:
+        return "ushort4";
+    case Core::Graphics::ValueType::Word:
+        return "word";
+    case Core::Graphics::ValueType::Word2:
+        return "word2";
+    case Core::Graphics::ValueType::Word3:
+        return "word3";
+    case Core::Graphics::ValueType::Word4:
+        return "word4";
+    case Core::Graphics::ValueType::UWord:
+        return "uword";
+    case Core::Graphics::ValueType::UWord2:
+        return "uword2";
+    case Core::Graphics::ValueType::UWord3:
+        return "uword3";
+    case Core::Graphics::ValueType::UWord4:
+        return "uword4";
+    case Core::Graphics::ValueType::Half:
+        return "half";
+    case Core::Graphics::ValueType::Half2:
+        return "half2";
+    case Core::Graphics::ValueType::Half4:
+        return "half4";
+    case Core::Graphics::ValueType::Byte2N:
+        return "byte2n";
+    case Core::Graphics::ValueType::Byte4N:
+        return "byte4n";
+    case Core::Graphics::ValueType::UByte2N:
+        return "ubyte2n";
+    case Core::Graphics::ValueType::UByte4N:
+        return "ubyte4n";
+    case Core::Graphics::ValueType::Short2N:
+        return "short2n";
+    case Core::Graphics::ValueType::Short4N:
+        return "short4n";
+    case Core::Graphics::ValueType::UShort2N:
+        return "ushort2n";
+    case Core::Graphics::ValueType::UShort4N:
+        return "ushort4n";
+    case Core::Graphics::ValueType::UX10Y10Z10W2N:
+        return "UX10Y10Z10W2N";
     }
     AssertNotImplemented();
     return StringSlice();
