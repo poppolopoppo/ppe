@@ -5,7 +5,6 @@
 #include "Callstack.h"
 #include "CrtDebug.h"
 #include "CurrentProcess.h"
-#include "Logger.h"
 #include "MiniDump.h"
 #include "Profiling.h"
 
@@ -20,9 +19,6 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void DiagnosticsStartup::Start(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t** argv) {
-#ifdef USE_DEBUG_LOGGER
-    LoggerStartup::Start();
-#endif
     CurrentProcess::Create(applicationHandle, nShowCmd, argc, argv);
 #ifdef OS_WINDOWS
     DbghelpWrapper::Create();
@@ -37,6 +33,7 @@ void DiagnosticsStartup::Start(void *applicationHandle, int nShowCmd, size_t arg
 }
 //----------------------------------------------------------------------------
 void DiagnosticsStartup::Shutdown() {
+    GLOBAL_CHECK_MEMORY_LEAKS(false);
 #ifdef WITH_CORE_PROFILING
     Profiler::Shutdown();
 #endif
@@ -47,9 +44,6 @@ void DiagnosticsStartup::Shutdown() {
     DbghelpWrapper::Destroy();
 #endif
     CurrentProcess::Destroy();
-#ifdef USE_DEBUG_LOGGER
-    LoggerStartup::Shutdown();
-#endif
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

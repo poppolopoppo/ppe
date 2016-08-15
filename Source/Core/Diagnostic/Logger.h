@@ -2,6 +2,7 @@
 
 #include "Core/Core.h"
 
+#include "Core/IO/Format.h"
 #include "Core/IO/StringSlice.h"
 
 #include <iosfwd>
@@ -28,16 +29,17 @@ enum class LogCategory {
 MemoryView<const LogCategory> EachLogCategory();
 const wchar_t* LogCategoryToWCStr(LogCategory category);
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits = std::char_traits<_Char> >
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, LogCategory category);
+template <typename _Char, typename _Traits >
+std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, LogCategory category) {
+    return oss << LogCategoryToWCStr(category);
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class ILogger {
 public:
     virtual ~ILogger() {}
-
-    virtual void Log(LogCategory category, const WStringSlice& text) = 0;
+    virtual void Log(LogCategory category, const WStringSlice& format, const FormatArgListW& args) = 0;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -48,64 +50,35 @@ public:
 
 #include "Core/IO/FormatHelpers.h"
 #include "Core/IO/Stream.h"
-#include "Core/Memory/UniquePtr.h"
-#include "Core/Meta/Singleton.h"
 
 #include <memory>
-#include <mutex>
 #include <sstream>
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class LoggerFrontend {
-public:
-    typedef std::chrono::steady_clock clock_type;
-
-    LoggerFrontend();
-    explicit LoggerFrontend(ILogger* impl);
-    ~LoggerFrontend();
-
-    ILogger* Impl() const { return _impl.get(); }
-    void SetImpl(ILogger* impl);
-
-    void Log(LogCategory category, const WStringSlice& text);
-
-    template <typename... _Args>
-    void Log(LogCategory category, const WStringSlice& format, _Args&&... args);
-
-private:
-    mutable std::mutex _lock;
-    UniquePtr<ILogger> _impl;
-};
+ILogger* SetLoggerImpl(ILogger* logger);
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
+void Log(LogCategory category, const WStringSlice& text);
 //----------------------------------------------------------------------------
-class Logger : Meta::Singleton<LoggerFrontend, Logger> {
-    typedef Meta::Singleton<LoggerFrontend, Logger> parent_type;
-public:
-    using parent_type::Instance;
-    using parent_type::HasInstance;
-    using parent_type::Destroy;
+void LogArgs(LogCategory category, const WStringSlice& format, const FormatArgListW& args);
+//----------------------------------------------------------------------------
+template <typename _Arg0, typename... _Args>
+void Log(LogCategory category, const WStringSlice& format, _Arg0&& arg0, _Args&&... args) {
+    typedef details::_FormatFunctor<wchar_t> formatfunctor_t;
+    const formatfunctor_t functors[] = {
+        formatfunctor_t::Make(std::forward<_Arg0>(arg0)),
+        formatfunctor_t::Make(std::forward<_Args>(args))...
+    };
 
-    static void Create(ILogger* impl = nullptr) {
-        parent_type::Create(impl);
-    }
-};
-//----------------------------------------------------------------------------
-template <typename... _Args>
-void Log(LogCategory category, const WStringSlice& format, _Args&&... args);
-//----------------------------------------------------------------------------
-template <size_t _Dim, typename... _Args>
-void Log(LogCategory category, const wchar_t (&format)[_Dim], _Args&&... args);
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
+    LogArgs(category, format, FormatArgListW(functors));
+}
 //----------------------------------------------------------------------------
 class LoggerStream : public ThreadLocalWOStringStream {
 public:
     LoggerStream(LogCategory category) : _category(category) {}
-    ~LoggerStream() { Logger::Instance().Log(_category, MakeStringSlice(str())); }
+    ~LoggerStream() { Log(_category, MakeStringSlice(str())); }
 
 private:
     LogCategory _category;
@@ -116,19 +89,19 @@ private:
 class OutputDebugLogger : public ILogger {
 public:
     virtual ~OutputDebugLogger() {}
-    virtual void Log(LogCategory category, const WStringSlice& text) override;
+    virtual void Log(LogCategory category, const WStringSlice& format, const FormatArgListW& args) override;
 };
 //----------------------------------------------------------------------------
 class StdcoutLogger : public ILogger {
 public:
     virtual ~StdcoutLogger() {}
-    virtual void Log(LogCategory category, const WStringSlice& text) override;
+    virtual void Log(LogCategory category, const WStringSlice& format, const FormatArgListW& args) override;
 };
 //----------------------------------------------------------------------------
 class StderrLogger : public ILogger {
 public:
     virtual ~StderrLogger() {}
-    virtual void Log(LogCategory category, const WStringSlice& text) override;
+    virtual void Log(LogCategory category, const WStringSlice& format, const FormatArgListW& args) override;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -145,8 +118,6 @@ public:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Core
-
-#include "Core/Diagnostic/Logger-inl.h"
 
 #define LOG(_Category, ...) \
     Core::Log(Core::LogCategory::_Category, __VA_ARGS__)

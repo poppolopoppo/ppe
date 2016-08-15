@@ -7,6 +7,7 @@
 #include "Allocator/PoolAllocatorTag-impl.h"
 #include "Allocator/NodeBasedContainerAllocator.h"
 #include "Diagnostic/Diagnostics.h"
+#include "Diagnostic/Logger.h"
 #include "IO/FileSystem.h"
 #include "IO/VirtualFileSystem.h"
 #include "Meta/AutoSingleton.h"
@@ -62,11 +63,19 @@ void CoreStartup::Start(void *applicationHandle, int nShowCmd, size_t argc, cons
     FileSystemStartup::Start();
     // 8 - virtual file system
     VirtualFileSystemStartup::Start();
+    // 9 - logger
+#ifdef USE_DEBUG_LOGGER
+    LoggerStartup::Start();
+#endif
 }
 //----------------------------------------------------------------------------
 void CoreStartup::Shutdown() {
     CORE_MODULE_SHUTDOWN(Core);
 
+    // 9 - logger
+#ifdef USE_DEBUG_LOGGER
+    LoggerStartup::Shutdown();
+#endif
     // 8 - virtual file system
     VirtualFileSystemStartup::Shutdown();
     // 7 - file system
