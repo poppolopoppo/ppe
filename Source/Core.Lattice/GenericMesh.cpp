@@ -2,9 +2,12 @@
 
 #include "GenericMesh.h"
 
+#include "Lattice_fwd.h"
+
 #include "Core.Graphics/Device/Geometry/IndexElementSize.h"
 #include "Core.Graphics/Device/Geometry/VertexDeclaration.h"
 
+#include "Core/Allocator/PoolAllocator-impl.h"
 #include "Core/Container/Hash.h"
 
 namespace Core {
@@ -12,69 +15,7 @@ namespace Lattice {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-GenericVertexData::GenericVertexData(GenericMesh* owner, const Graphics::VertexSemantic& semantic, size_t index, Graphics::ValueType type)
-    : _owner(owner), _semantic(semantic), _type(type), _index(index), _vertexCount(0) {
-    Assert(nullptr != _owner);
-    Assert(Graphics::ValueType::Void != _type);
-}
-//----------------------------------------------------------------------------
-GenericVertexData::~GenericVertexData() {}
-//----------------------------------------------------------------------------
-void GenericVertexData::Resize(size_t count, bool keepData/* = true */) {
-    if (count != _vertexCount) {
-        _vertexCount = count;
-        _stream.resize(StrideInBytes() * count, keepData);
-    }
-}
-//----------------------------------------------------------------------------
-void GenericVertexData::Reserve(size_t count) {
-    if (count > _vertexCount)
-        _stream.reserve(StrideInBytes() * count);
-}
-//----------------------------------------------------------------------------
-MemoryView<const u8> GenericVertexData::VertexView(size_t v) const {
-    Assert(v < _vertexCount);
-
-    const size_t strideInBytes = StrideInBytes();
-    return _stream.MakeView().SubRange(v * strideInBytes, strideInBytes);
-}
-//----------------------------------------------------------------------------
-void GenericVertexData::CopyVertex(size_t dst, size_t src) {
-    Assert(dst < _vertexCount);
-    Assert(src < _vertexCount);
-
-    if (dst == src)
-        return;
-
-    const size_t strideInBytes = StrideInBytes();
-    const MemoryView<u8> storage = _stream.MakeView();
-
-    memcpy(&storage[dst * strideInBytes], &storage[src * strideInBytes], strideInBytes);
-}
-//----------------------------------------------------------------------------
-void GenericVertexData::ReadVertex(size_t v, Graphics::Value& dst) const {
-    dst.SetRaw(_type, VertexView(v));
-}
-//----------------------------------------------------------------------------
-void GenericVertexData::WriteVertex(size_t v, const Graphics::Value& src) {
-    Graphics::ValuePromote(_type, VertexView(v).RemoveConst(), src.Type(), src.MakeView());
-}
-//----------------------------------------------------------------------------
-MemoryView<u8> GenericVertexData::SubRange(size_t start, size_t count) {
-    Assert(start + count <= _vertexCount);
-
-    const size_t strideInBytes = StrideInBytes();
-    return _stream.MakeView().SubRange(start * strideInBytes, count * strideInBytes);
-}
-//----------------------------------------------------------------------------
-MemoryView<const u8> GenericVertexData::SubRange(size_t start, size_t count) const {
-    Assert(start + count <= _vertexCount);
-
-    const size_t strideInBytes = StrideInBytes();
-    return _stream.MakeView().SubRange(start * strideInBytes, count * strideInBytes);
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Lattice, GenericMesh, );
 //----------------------------------------------------------------------------
 GenericMesh::GenericMesh() : _indexCount(0), _vertexCount(0) {}
 //----------------------------------------------------------------------------
@@ -291,9 +232,6 @@ bool GenericMesh::ExportVertices(const Graphics::VertexDeclaration* vdecl, const
     const size_t vertexSizeInBytes = vdecl->SizeInBytes();
     Assert(dst.SizeInBytes() == vertexSizeInBytes * _vertexCount);
 
-    if (0 == _vertexCount)
-        return true;
-
     const MemoryView<const Graphics::ValueBlock::Field> subParts = vdecl->SubParts();
     STACKLOCAL_POD_STACK(const GenericVertexData*, channels, subParts.size());
 
@@ -316,6 +254,9 @@ bool GenericMesh::ExportVertices(const Graphics::VertexDeclaration* vdecl, const
         if (not found)
             return false;
     }
+
+    if (0 == _vertexCount) // skips only after compatibility tests
+        return true;
 
     Assert(channels.size() == subParts.size());
 
@@ -360,6 +301,70 @@ void GenericMesh::ClearIndices() {
 void GenericMesh::ClearVertices() {
     _vertexCount = 0;
     _vertices.clear();
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+GenericVertexData::GenericVertexData(GenericMesh* owner, const Graphics::VertexSemantic& semantic, size_t index, Graphics::ValueType type)
+    : _owner(owner), _semantic(semantic), _type(type), _index(index), _vertexCount(0) {
+    Assert(nullptr != _owner);
+    Assert(Graphics::ValueType::Void != _type);
+}
+//----------------------------------------------------------------------------
+GenericVertexData::~GenericVertexData() {}
+//----------------------------------------------------------------------------
+void GenericVertexData::Resize(size_t count, bool keepData/* = true */) {
+    if (count != _vertexCount) {
+        _vertexCount = count;
+        _stream.resize(StrideInBytes() * count, keepData);
+    }
+}
+//----------------------------------------------------------------------------
+void GenericVertexData::Reserve(size_t count) {
+    if (count > _vertexCount)
+        _stream.reserve(StrideInBytes() * count);
+}
+//----------------------------------------------------------------------------
+MemoryView<const u8> GenericVertexData::VertexView(size_t v) const {
+    Assert(v < _vertexCount);
+
+    const size_t strideInBytes = StrideInBytes();
+    return _stream.MakeView().SubRange(v * strideInBytes, strideInBytes);
+}
+//----------------------------------------------------------------------------
+void GenericVertexData::CopyVertex(size_t dst, size_t src) {
+    Assert(dst < _vertexCount);
+    Assert(src < _vertexCount);
+
+    if (dst == src)
+        return;
+
+    const size_t strideInBytes = StrideInBytes();
+    const MemoryView<u8> storage = _stream.MakeView();
+
+    memcpy(&storage[dst * strideInBytes], &storage[src * strideInBytes], strideInBytes);
+}
+//----------------------------------------------------------------------------
+void GenericVertexData::ReadVertex(size_t v, Graphics::Value& dst) const {
+    dst.SetRaw(_type, VertexView(v));
+}
+//----------------------------------------------------------------------------
+void GenericVertexData::WriteVertex(size_t v, const Graphics::Value& src) {
+    Graphics::ValuePromote(_type, VertexView(v).RemoveConst(), src.Type(), src.MakeView());
+}
+//----------------------------------------------------------------------------
+MemoryView<u8> GenericVertexData::SubRange(size_t start, size_t count) {
+    Assert(start + count <= _vertexCount);
+
+    const size_t strideInBytes = StrideInBytes();
+    return _stream.MakeView().SubRange(start * strideInBytes, count * strideInBytes);
+}
+//----------------------------------------------------------------------------
+MemoryView<const u8> GenericVertexData::SubRange(size_t start, size_t count) const {
+    Assert(start + count <= _vertexCount);
+
+    const size_t strideInBytes = StrideInBytes();
+    return _stream.MakeView().SubRange(start * strideInBytes, count * strideInBytes);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

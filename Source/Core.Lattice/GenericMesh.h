@@ -6,8 +6,10 @@
 
 #include "Core.Graphics/Value.h"
 
+#include "Core/Allocator/PoolAllocator.h"
 #include "Core/Container/Stack.h"
 #include "Core/Memory/MemoryStream.h"
+#include "Core/Memory/RefPtr.h"
 
 namespace Core {
 namespace Graphics {
@@ -17,7 +19,7 @@ class VertexSemantic;
 }
 
 namespace Lattice {
-class GenericMesh;
+FWD_REFPTR(GenericMesh);
 class GenericVertexData;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -54,7 +56,7 @@ public:
     template <typename T>
     friend class GenericVertexSubPart;
 
-    typedef MEMORYSTREAM_THREAD_LOCAL(Geometry) VertexStream;
+    typedef MEMORYSTREAM_THREAD_LOCAL(GenericMesh) VertexStream;
 
     GenericVertexData(GenericMesh* owner, const Graphics::VertexSemantic& semantic, size_t index, Graphics::ValueType type);
     ~GenericVertexData();
@@ -94,13 +96,13 @@ private:
     mutable VertexStream _stream;
 };
 //----------------------------------------------------------------------------
-class GenericMesh {
+class GenericMesh : public RefCountable {
 public:
     template <typename T>
     friend class GenericVertexSubPart;
     friend GenericVertexData;
 
-    typedef MEMORYSTREAM_THREAD_LOCAL(Geometry) IndexStream;
+    typedef MEMORYSTREAM_THREAD_LOCAL(GenericMesh) IndexStream;
 
     GenericMesh();
     ~GenericMesh();
@@ -193,6 +195,8 @@ public:
     void Clear();
     void ClearIndices();
     void ClearVertices();
+
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     size_t _indexCount;

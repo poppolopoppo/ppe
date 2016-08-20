@@ -249,8 +249,8 @@ static void ComputeTangentSpace_(
     const MemoryView<const float2> texcoords2f = sp_texcoord2f.MakeView();
     const MemoryView<const float3> normals3f = sp_normal3f.MakeView();
 
-    VECTOR_THREAD_LOCAL(Geometry, float3) tmpTangents3f;
-    VECTOR_THREAD_LOCAL(Geometry, float3) tmpBinormals3f;
+    VECTOR_THREAD_LOCAL(GenericMesh, float3) tmpTangents3f;
+    VECTOR_THREAD_LOCAL(GenericMesh, float3) tmpBinormals3f;
 
     MemoryView<float3> tangents3f;
     MemoryView<float4> tangents4f;
@@ -648,7 +648,7 @@ bool PNTriangles(GenericMesh& mesh, size_t index, size_t recursions) {
     return true;
 }
 //----------------------------------------------------------------------------
-void PNTriangles(GenericMesh& mesh, Positions3f& positions, Normals3f& normals, size_t recursions) {
+void PNTriangles(GenericMesh& mesh, const Positions3f& positions, const Normals3f& normals, size_t recursions) {
     PNTriangles_(mesh, positions, normals, recursions);
 }
 //----------------------------------------------------------------------------

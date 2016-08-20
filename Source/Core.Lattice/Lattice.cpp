@@ -3,6 +3,8 @@
 #include "Lattice.h"
 #include "Lattice_fwd.h"
 
+#include "Collada.h"
+
 #include "Core/Allocator/PoolAllocatorTag-impl.h"
 
 #ifdef OS_WINDOWS
@@ -22,10 +24,14 @@ void LatticeStartup::Start() {
     CORE_MODULE_START(Lattice);
 
     POOL_TAG(Lattice)::Start();
+
+    Collada::Start();
 }
 //----------------------------------------------------------------------------
 void LatticeStartup::Shutdown() {
     CORE_MODULE_SHUTDOWN(Lattice);
+
+    Collada::Shutdown();
 
     POOL_TAG(Lattice)::Shutdown();
 }
