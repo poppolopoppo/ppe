@@ -1,5 +1,9 @@
 #include "stdafx.h"
 
+#include "Core.Lattice/Collada.h"
+#include "Core.Lattice/GenericMaterial.h"
+#include "Core.Lattice/GenericMesh.h"
+
 #include "Core.Serialize/XML/XML.h"
 #include "Core.Serialize/XML/Document.h"
 #include "Core.Serialize/XML/Element.h"
@@ -19,9 +23,30 @@ static void Test_XMLLoad_Simple_() {
 }
 //----------------------------------------------------------------------------
 static void Test_XMLLoad_Collada_() {
-    XML::Document xml;
-    if (XML::Document::Load(&xml, L"Data:/Models/astroBoy_walk_Maya.dae"))
-        std::cout << xml << std::endl;
+    Lattice::Collada collada;
+    if (not Lattice::Collada::Load(&collada, L"Data:/Models/astroBoy_walk_Maya.dae"))
+        AssertNotReached();
+
+    Lattice::Collada::Array<Lattice::PGenericMaterial> materials;
+    if (not collada.ImportMaterials(materials))
+        AssertNotReached();
+
+    for (const Lattice::PGenericMaterial& m : materials) {
+        std::cout
+            << Repeat<80>('-') << std::endl
+            << "Name = " << m->Name() << std::endl
+            << "Technique = " << m->Technique() << std::endl;
+
+        std::cout << "Parameters (" << m->Parameters().size() << ")" << std::endl;
+        for (const auto& it : m->Parameters())
+            std::cout << "  * '" << it.first << "' = " << it.second << std::endl;
+
+        std::cout << "Textures (" << m->Textures().size() << ")" << std::endl;
+        for (const auto& it : m->Textures())
+            std::cout << "  * '" << it.first << "' = " << it.second.Filename << std::endl;
+
+        std::cout << std::endl;
+    }
 }
 //----------------------------------------------------------------------------
 } //!namespace

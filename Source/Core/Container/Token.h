@@ -14,7 +14,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define BASICTOKEN_CLASS_DEF(_NAME, _CHAR, _CASESENSITIVE, _TRAITS) \
+#define BEGIN_BASICTOKEN_CLASS_DEF(_NAME, _CHAR, _CASESENSITIVE, _TRAITS) \
     class _NAME : public Core::Token< \
         _NAME, \
         _CHAR, \
@@ -32,8 +32,14 @@ namespace Core {
         >   parent_type; \
         \
         using parent_type::parent_type; \
-        using parent_type::operator =; \
+        using parent_type::operator =;
+//----------------------------------------------------------------------------
+#define END_BASICTOKEN_CLASS_DEF() \
     }
+//----------------------------------------------------------------------------
+#define BASICTOKEN_CLASS_DEF(_NAME, _CHAR, _CASESENSITIVE, _TRAITS) \
+    BEGIN_BASICTOKEN_CLASS_DEF(_NAME, _CHAR, _CASESENSITIVE, _TRAITS) \
+    END_BASICTOKEN_CLASS_DEF() \
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
