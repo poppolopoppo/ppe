@@ -122,6 +122,7 @@ public:
 
     void Swap(ScalarMatrix& other);
 
+    MemoryView<T> MakeView() { return Core::MakeView(_data.raw); }
     MemoryView<const T> MakeView() const { return Core::MakeView(_data.raw); }
 
     friend hash_t hash_value(const ScalarMatrix& m) { return hash_as_pod_array(m._data.raw); }
