@@ -225,6 +225,13 @@ struct NumericLimits< BasicNorm<T, _Traits> > {
     static const value_type Zero() { return value_type{ scalar_type::Zero() }; }
 };
 //----------------------------------------------------------------------------
+template <typename T, typename _Traits, typename _Char, typename _CharTraits>
+std::basic_ostream<_Char, _CharTraits>& operator <<(
+    std::basic_ostream<_Char, _CharTraits>& oss,
+    const BasicNorm<T, _Traits>& packed) {
+    return oss << packed.Normalized();
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Core
