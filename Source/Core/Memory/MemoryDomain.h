@@ -2,8 +2,14 @@
 
 #include "Core/Core.h"
 
+// Memory Domains ON/OFF
 #ifndef FINAL_RELEASE
 #   define USE_MEMORY_DOMAINS
+#endif
+
+// Memory domains collapsing (less codegen)
+#if defined(USE_MEMORY_DOMAINS) && !defined(PROFILING_ENABLED) // %_NOCOMMIT%
+#   define COLLAPSE_MEMORY_DOMAINS
 #endif
 
 namespace Core {
@@ -25,17 +31,29 @@ namespace Domain {
 }
 //----------------------------------------------------------------------------
 #ifdef USE_MEMORY_DOMAINS
-#   define MEMORY_DOMAIN_IMPL(_Name, _Parent) namespace Domain { \
-    struct MEMORY_DOMAIN_NAME(_Name) { \
-        static MemoryTrackingData& TrackingData; \
-        }; }
+#   define MEMORY_DOMAIN_IMPL(_Name, _Parent) \
+    namespace Domain { \
+        struct MEMORY_DOMAIN_NAME(_Name) { \
+            static MemoryTrackingData& TrackingData; \
+        }; \
+    }
 #else
-#   define MEMORY_DOMAIN_IMPL(_Name, _Parent) namespace Domain { \
-    typedef MEMORY_DOMAIN_TAG(Global) MEMORY_DOMAIN_NAME(_Name); }
+#   define MEMORY_DOMAIN_IMPL(_Name, _Parent) \
+    namespace Domain { \
+        typedef MEMORY_DOMAIN_TAG(Global) MEMORY_DOMAIN_NAME(_Name); \
+    }
+#endif
+//----------------------------------------------------------------------------
+#ifdef COLLAPSE_MEMORY_DOMAINS
+#   define MEMORY_DOMAIN_COLLAPSABLE_IMPL(_Name, _Parent) \
+    namespace Domain { \
+        typedef MEMORY_DOMAIN_TAG(_Parent) MEMORY_DOMAIN_NAME(_Name); \
+    }
 #endif
 //----------------------------------------------------------------------------
 #include "Core/Memory/MemoryDomain.Definitions-inl.h"
 //----------------------------------------------------------------------------
+#undef MEMORY_DOMAIN_COLLAPSABLE_IMPL
 #undef MEMORY_DOMAIN_IMPL
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

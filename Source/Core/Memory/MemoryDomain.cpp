@@ -24,16 +24,27 @@ namespace Domain {
 }
 //----------------------------------------------------------------------------
 #ifdef USE_MEMORY_DOMAINS
-#   define MEMORY_DOMAIN_IMPL(_Name, _Parent) namespace Domain { \
-    namespace { static MemoryTrackingData CONCAT(gTrackingData, MEMORY_DOMAIN_NAME(_Name)) { STRINGIZE(_Name), &MEMORY_DOMAIN_TRACKING_DATA(_Parent) }; }\
-    MemoryTrackingData& MEMORY_DOMAIN_NAME(_Name)::TrackingData = CONCAT(gTrackingData, MEMORY_DOMAIN_NAME(_Name)); \
+#   define MEMORY_DOMAIN_IMPL(_Name, _Parent) \
+    namespace Domain { \
+        namespace { \
+            static MemoryTrackingData CONCAT(gTrackingData, MEMORY_DOMAIN_NAME(_Name)) { \
+                STRINGIZE(_Name), &MEMORY_DOMAIN_TRACKING_DATA(_Parent) \
+            }; \
+        }\
+        MemoryTrackingData& MEMORY_DOMAIN_NAME(_Name)::TrackingData = \
+            CONCAT(gTrackingData, MEMORY_DOMAIN_NAME(_Name)); \
     }
 #else
 #   define MEMORY_DOMAIN_IMPL(_Name, _Parent)
 #endif
 //----------------------------------------------------------------------------
+#ifdef COLLAPSE_MEMORY_DOMAINS
+#   define MEMORY_DOMAIN_COLLAPSABLE_IMPL(_Name, _Parent)
+#endif
+//----------------------------------------------------------------------------
 #include "MemoryDomain.Definitions-inl.h"
 //----------------------------------------------------------------------------
+#undef MEMORY_DOMAIN_COLLAPSABLE_IMPL
 #undef MEMORY_DOMAIN_IMPL
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -50,8 +61,13 @@ static MemoryTrackingData *gAllMemoryDomainTrackingData[] = {
 #   define MEMORY_DOMAIN_IMPL(_Name, _Parent)
 #endif
 //----------------------------------------------------------------------------
+#ifdef COLLAPSE_MEMORY_DOMAINS
+#   define MEMORY_DOMAIN_COLLAPSABLE_IMPL(_Name, _Parent)
+#endif
+//----------------------------------------------------------------------------
 #include "MemoryDomain.Definitions-inl.h"
 //----------------------------------------------------------------------------
+#undef MEMORY_DOMAIN_COLLAPSABLE_IMPL
 #undef MEMORY_DOMAIN_IMPL
 //----------------------------------------------------------------------------
 }; //!gAllMemoryDomainTrackingData[]
