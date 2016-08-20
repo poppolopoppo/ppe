@@ -566,6 +566,40 @@ void ValueSwap(ValueType type, const MemoryView<u8>& lhs, const MemoryView<u8>& 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const Value& value) {
+    switch (value.Type()) {
+    case ValueType::Void:
+        oss << "void";
+        break;
+
+#define VALUETYPE_TO_OSS(_Name, T, _TypeId, _Unused) \
+    case ValueType::_Name: \
+        oss << value.Get< T >(); \
+        break;
+    FOREACH_CORE_GRAPHIC_VALUETYPE(VALUETYPE_TO_OSS)
+#undef VALUETYPE_TO_OSS
+    }
+    return oss;
+}
+//----------------------------------------------------------------------------
+std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const Value& value) {
+    switch (value.Type()) {
+    case ValueType::Void:
+        oss << L"void";
+        break;
+
+#define VALUETYPE_TO_OSS(_Name, T, _TypeId, _Unused) \
+    case ValueType::_Name: \
+        oss << value.Get< T >(); \
+        break;
+    FOREACH_CORE_GRAPHIC_VALUETYPE(VALUETYPE_TO_OSS)
+#undef VALUETYPE_TO_OSS
+    }
+    return oss;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Graphics
 } //!namespace Core
 

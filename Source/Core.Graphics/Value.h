@@ -138,6 +138,9 @@ FOREACH_CORE_GRAPHIC_VALUETYPE(VALUETYPE_UNION_DEF)
         return not operator ==(lhs, rhs);
     }
 
+    friend std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const Value& value);
+    friend std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const Value& value);
+
 private:
     ValueType _type;
     udata_type _data;
