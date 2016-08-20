@@ -37,10 +37,12 @@ constexpr T Frac(T f) {
 //----------------------------------------------------------------------------
 template <typename T, typename U>
 constexpr T Lerp(T v0, T v1, U f) {
-    return static_cast<T>(v0 + (v1 - v0) * f);
+    Assert(f >= U(0) && f <= U(1));
+    return static_cast<T>((v0 * f) + (v1 * (U(1) - f)));
 }
 //----------------------------------------------------------------------------
 inline bool Lerp(bool v0, bool v1, float f) {
+    Assert(f >= 0 && f <= 1);
     return (Lerp(v0 ? 1.f : 0.f, v1 ? 1.f : 0.f, f) >= 0.5f);
 }
 //----------------------------------------------------------------------------
@@ -77,6 +79,7 @@ constexpr T RSqrt(T f) {
 //----------------------------------------------------------------------------
 template <typename T, typename U>
 constexpr T SLerp(T v0, T v1, U f) {
+    Assert(f >= U(0) && f <= U(1));
     return (f < T(0.5))
         ? (v1 - v0) * f + v0
         : (v0 - v1) * (1 - f) + v1;
