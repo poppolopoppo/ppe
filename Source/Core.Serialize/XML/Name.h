@@ -15,7 +15,24 @@ public:
     bool IsAllowedChar(char ch) const;
 };
 //----------------------------------------------------------------------------
-BASICTOKEN_CLASS_DEF(Name, char, Case::Insensitive, NameTokenTraits);
+BEGIN_BASICTOKEN_CLASS_DEF(Name, char, Case::Insensitive, NameTokenTraits);
+
+    static const Name& Any;
+
+    static void Start(size_t reserve);
+    static void Shutdown();
+
+    friend inline bool operator ==(const Name& lhs, const Name& rhs) {
+        return (lhs.c_str() == rhs.c_str() ||
+                Any.c_str() == lhs.c_str() ||
+                Any.c_str() == rhs.c_str() );
+    }
+
+    friend inline bool operator !=(const Name& lhs, const Name& rhs) {
+        return not operator ==(lhs, rhs);
+    }
+
+END_BASICTOKEN_CLASS_DEF();
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -7,6 +7,7 @@
 #include "Core/Container/StringHashMap.h"
 #include "Core/IO/String.h"
 #include "Core/IO/StringSlice.h"
+#include "Core/Memory/RefPtr.h"
 
 namespace Core {
 namespace XML {
@@ -14,7 +15,8 @@ FWD_REFPTR(Element);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Document {
+FWD_REFPTR(Document);
+class Document : public RefCountable {
 public:
     typedef STRINGSLICE_HASHMAP(XML, SElement, Case::Sensitive) byidentifier_type;
 
@@ -36,14 +38,17 @@ public:
 
     const byidentifier_type& ByIdentifier() const { return _byIdentifier; }
 
+    const Element* FindById(const StringSlice& Id) const;
+
     bool empty() const { return (nullptr != _root); }
 
     void ToStream(std::basic_ostream<char>& oss) const;
 
-    size_t XPath(std::initializer_list<Name> path, const std::function<void(const Element*)>& functor) const;
+    const Element* XPath(const MemoryView<const Name>& path) const;
+    size_t XPath(const MemoryView<const Name>& path, const std::function<void(const Element&)>& functor) const;
 
     static bool Load(Document* document, const Filename& filename);
-    static bool Load(Document* document, const StringSlice& content, const WStringSlice& filename);
+    static bool Load(Document* document, const Filename& filename, const StringSlice& content);
 
 private:
     PElement _root;

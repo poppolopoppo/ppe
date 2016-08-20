@@ -2,10 +2,11 @@
 
 #include "Core.Serialize/Serialize.h"
 
-#include "Core/Allocator/PoolAllocatorTag.h"
-
 #include "Core.Serialize/Exceptions.h"
 #include "Core.Serialize/Lexer/Location.h"
+
+#include "Core/Allocator/PoolAllocatorTag.h"
+#include "Core/Memory/RefPtr.h"
 
 namespace Core {
 namespace XML {

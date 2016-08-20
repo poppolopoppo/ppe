@@ -41,23 +41,24 @@ static void PrintElement_(std::basic_ostream<char>& oss, const XML::Element* elt
 }
 //----------------------------------------------------------------------------
 template <typename _It>
-static size_t XPath_(_It first, _It last, const XML::Element* elt, const std::function<void(const Element*)>& functor) {
-    Assert(elt);
+static size_t XPath_(_It first, _It last, const XML::Element& elt, const std::function<void(const Element&)>& functor) {
     Assert(first != last);
 
-    if (*first != elt->Type())
+    if (*first != elt.Type())
         return 0;
 
     ++first;
 
-    if (first != last) {
+    if (first == last) {
         functor(elt);
         return 1;
     }
     else {
         size_t count = 0;
-        for (const PElement& child : elt->Children())
-            count += XPath_(first, last, elt, functor);
+        for (const PElement& child : elt.Children()) {
+            Assert(child);
+            count += XPath_(first, last, *child.get(), functor);
+        }
 
         return count;
     }
@@ -87,9 +88,46 @@ void Element::ToStream(std::basic_ostream<char>& oss) const {
     PrintElement_(oss, this);
 }
 //----------------------------------------------------------------------------
-size_t Element::XPath(std::initializer_list<Name> path, const std::function<void(const Element*)>& functor) const {
-    Assert(not std::empty(path));
-    return XPath_(std::begin(path), std::end(path), this, functor);
+StringSlice Element::operator [](const XML::Name& name) const {
+    Assert(!name.empty());
+
+    const String* pvalue = _attributes.GetIFP(name);
+    return (pvalue ? MakeStringSlice(*pvalue) : StringSlice());
+}
+//----------------------------------------------------------------------------
+const Element* Element::XPath(const MemoryView<const Name>& path) const {
+    Assert(!path.empty());
+
+    const Element* result = nullptr;
+    XPath_(path.begin(), path.end(), *this, [&result](const Element& elt) {
+        result = &elt;
+    });
+
+    return result;
+}
+//----------------------------------------------------------------------------
+size_t Element::XPath(const MemoryView<const Name>& path, const std::function<void(const Element&)>& functor) const {
+    Assert(!path.empty());
+
+    return XPath_(path.begin(), path.end(), *this, functor);
+}
+//----------------------------------------------------------------------------
+const Element* Element::ChildXPath(const MemoryView<const Name>& path) const {
+    const Element* result = nullptr;
+    for (const PElement& child : _children) {
+        result = child->XPath(path);
+        if (result)
+            break;
+    }
+    return result;
+}
+//----------------------------------------------------------------------------
+size_t Element::ChildXPath(const MemoryView<const Name>& path, const std::function<void(const Element&)>& functor) const {
+    size_t count = 0;
+    for (const PElement& child : _children) {
+        count += child->XPath(path, functor);
+    }
+    return count;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -55,7 +55,13 @@ public:
 
     void ToStream(std::basic_ostream<char>& oss) const;
 
-    size_t XPath(std::initializer_list<Name> path, const std::function<void(const Element*)>& functor) const;
+    StringSlice operator [](const XML::Name& name) const; // return the attribute IFP
+
+    const Element* XPath(const MemoryView<const Name>& path) const;
+    size_t XPath(const MemoryView<const Name>& path, const std::function<void(const Element&)>& functor) const;
+
+    const Element* ChildXPath(const MemoryView<const Name>& path) const;
+    size_t ChildXPath(const MemoryView<const Name>& path, const std::function<void(const Element&)>& functor) const;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 

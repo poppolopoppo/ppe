@@ -71,6 +71,24 @@ Document::Document() {}
 //----------------------------------------------------------------------------
 Document::~Document() {}
 //----------------------------------------------------------------------------
+const Element* Document::FindById(const StringSlice& Id) const {
+    Assert(!Id.empty());
+
+    // some exporter append a leading '#'
+    const StringSlice query = ('#' == Id.front() ? Id.ShiftFront() : Id);
+
+    SElement elt;
+    return (TryGetValue(_byIdentifier, query, &elt) ? elt.get() : nullptr);
+}
+//----------------------------------------------------------------------------
+const Element* Document::XPath(const MemoryView<const Name>& path) const {
+    return (_root ? _root->XPath(path) : nullptr );
+}
+//----------------------------------------------------------------------------
+size_t Document::XPath(const MemoryView<const Name>& path, const std::function<void(const Element&)>& functor) const {
+    return (_root ? _root->XPath(path, functor) : 0 );
+}
+//----------------------------------------------------------------------------
 bool Document::Load(Document* document, const Filename& filename) {
     Assert(document);
     Assert(not filename.empty());
@@ -79,12 +97,10 @@ bool Document::Load(Document* document, const Filename& filename) {
     if (not VFS_ReadAll(&content, filename, AccessPolicy::Binary))
         return false;
 
-    return Load(document,
-                content.MakeConstView().Cast<const char>(),
-                MakeStringSlice(filename.ToWString()) );
+    return Load(document, filename, content.MakeConstView().Cast<const char>() );
 }
 //----------------------------------------------------------------------------
-bool Document::Load(Document* document, const StringSlice& content, const WStringSlice& filename) {
+bool Document::Load(Document* document, const Filename& filename, const StringSlice& content) {
     Assert(document);
 
     document->_root.reset();
@@ -93,7 +109,7 @@ bool Document::Load(Document* document, const StringSlice& content, const WStrin
     document->_standalone.clear();
     document->_byIdentifier.clear();
 
-    Lexer::Lexer lexer(content, filename, false);
+    Lexer::Lexer lexer(content, MakeView(filename.ToWString()), false);
     ReadHeader_(lexer, document->_version, document->_encoding, document->_standalone);
 
     if (document->_version.empty())
@@ -111,7 +127,7 @@ bool Document::Load(Document* document, const StringSlice& content, const WStrin
 
         void RegisterIFN(const XML::Name& key, byidentifier_type& ids) {
             const auto elementId = Element->Attributes().Find(key);
-            if (elementId != Element->Attributes().end()) {
+            if (Element->Attributes().end() != elementId) {
                 if (Insert_ReturnIfExists(  ids,
                                             MakeStringSlice(elementId->second),
                                             SElement(Element.get())) ) {
@@ -171,8 +187,10 @@ bool Document::Load(Document* document, const StringSlice& content, const WStrin
 
                 Expect_(lexer, eaten, Lexer::Symbols::Identifier);
 
-                if (visited.back().Element->Type() != eaten.MakeView())
+                if (not EqualsI(MakeStringSlice(visited.back().Element->Type()), eaten.MakeView()))
                     throw XMLException("mismatching closing tag", eaten.Site());
+
+                visited.back().RegisterIFN(keyId, document->_byIdentifier);
 
                 visited.pop_back();
 
@@ -226,6 +244,7 @@ bool Document::Load(Document* document, const StringSlice& content, const WStrin
                 Expect_(lexer, eaten, Lexer::Symbols::Greater);
 
                 it.RegisterIFN(keyId, document->_byIdentifier);
+
                 RemoveRef_AssertGreaterThanZero(it.Element);
             }
             else if (poken && poken->Symbol() == Lexer::Symbols::Greater) {
@@ -253,10 +272,6 @@ void Document::ToStream(std::basic_ostream<char>& oss) const {
 
     if (_root)
         _root->ToStream(oss);
-}
-//----------------------------------------------------------------------------
-size_t Document::XPath(std::initializer_list<Name> path, const std::function<void(const Element*)>& functor) const {
-    return (_root ? _root->XPath(path, functor) : 0 );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
