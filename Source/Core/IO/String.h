@@ -44,6 +44,9 @@ public:
 
     BasicString(parent_type&& rvalue) : parent_type(std::move(rvalue)) {}
     BasicString& operator =(parent_type&& rvalue) { parent_type::operator =(std::move(rvalue)); return *this; }
+
+    MemoryView<const _Char> MakeView() const { return MemoryView<const _Char>(c_str(), size()); }
+    operator MemoryView<const _Char> () const { return MakeView(); }
 };
 //----------------------------------------------------------------------------
 typedef BasicString<char> String;
