@@ -134,6 +134,8 @@ public:
     void Insert_AssertUnique(const _Key& key, const _Value& value);
 
     _Value& Get(const _Key& key);
+    _Value* GetIFP(const _Key& key);
+    const _Value* GetIFP(const _Key& key) const { return remove_const(this)->GetIFP(key); }
     bool TryGet(const _Key& key, _Value *value) const;
     const _Value& At(const _Key& key) const;
 

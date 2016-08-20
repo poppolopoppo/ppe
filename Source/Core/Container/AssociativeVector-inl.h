@@ -215,6 +215,12 @@ _Value& AssociativeVector<_Key, _Value, _EqualTo, _Vector>::Get(const _Key& key)
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+_Value* AssociativeVector<_Key, _Value, _EqualTo, _Vector>::GetIFP(const _Key& key) {
+    const iterator it = Find(key);
+    return (end() != it ? &it->second : nullptr);
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 bool AssociativeVector<_Key, _Value, _EqualTo, _Vector>::TryGet(const _Key& key, _Value *value) const {
     Assert(value);
 
