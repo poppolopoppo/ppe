@@ -8,6 +8,7 @@
 #define FOREACH_FILESYSTEMCONSTNAMES(_Macro) \
     _Macro(Dirname,         DotDot,         L"..") \
     \
+    _Macro(Extname,         DaeExt,         L".dae") \
     _Macro(Extname,         FxExt,          L".fx") \
     _Macro(Extname,         ObjExt,         L".obj") \
     _Macro(Extname,         PlyExt,         L".ply") \

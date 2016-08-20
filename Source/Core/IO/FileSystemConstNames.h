@@ -17,6 +17,7 @@ public:
     static const Dirname& DotDot();
 
     // Extnames :
+    static const Extname& DaeExt();
     static const Extname& FxExt();
     static const Extname& ObjExt();
     static const Extname& PlyExt();
