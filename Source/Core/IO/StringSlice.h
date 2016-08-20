@@ -177,6 +177,9 @@ WStringSlice EatSpaces(WStringSlice& wstr);
 StringSlice Chomp(const StringSlice& str);
 WStringSlice Chomp(const WStringSlice& wstr);
 //----------------------------------------------------------------------------
+StringSlice Strip(const StringSlice& str);
+WStringSlice Strip(const WStringSlice& wstr);
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 int Compare(const StringSlice& lhs, const StringSlice& rhs);

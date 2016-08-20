@@ -285,6 +285,22 @@ WStringSlice EatSpaces(WStringSlice& wstr) { return SplitInplaceIf_ReturnEaten_(
 StringSlice Chomp(const StringSlice& str) { return SplitIf_(str, &IsEndLine); }
 WStringSlice Chomp(const WStringSlice& wstr) { return SplitIf_(wstr, &IsEndLine); }
 //----------------------------------------------------------------------------
+StringSlice Strip(const StringSlice& str) {
+    size_t first = 0;
+    size_t last = str.size();
+    for(; first < last && IsSpace(str[first]); ++first);
+    for(; first < last && IsSpace(str[last - 1]); --last);
+    return str.SubRange(first, last - first);
+}
+//----------------------------------------------------------------------------
+WStringSlice Strip(const WStringSlice& wstr) {
+    size_t first = 0;
+    size_t last = wstr.size();
+    for(; first < last && IsSpace(wstr[first]); ++first);
+    for(; first < last && IsSpace(wstr[last - 1]); --last);
+    return wstr.SubRange(first, last - first);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 int Compare(const StringSlice& lhs, const StringSlice& rhs) {
