@@ -79,6 +79,8 @@
     <CustomBuild Include="XML\Document.h" />
     <CustomBuild Include="XML\Element.cpp" />
     <CustomBuild Include="XML\Element.h" />
+    <CustomBuild Include="XML\Helpers.cpp" />
+    <CustomBuild Include="XML\Helpers.h" />
     <CustomBuild Include="XML\Name.cpp" />
     <CustomBuild Include="XML\Name.h" />
     <CustomBuild Include="XML\XML.cpp" />

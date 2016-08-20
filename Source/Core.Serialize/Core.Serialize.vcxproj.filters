@@ -109,6 +109,12 @@
     <CustomBuild Include="XML\Element.h">
       <Filter>XML</Filter>
     </CustomBuild>
+    <CustomBuild Include="XML\Helpers.cpp">
+      <Filter>XML</Filter>
+    </CustomBuild>
+    <CustomBuild Include="XML\Helpers.h">
+      <Filter>XML</Filter>
+    </CustomBuild>
     <CustomBuild Include="XML\Name.cpp">
       <Filter>XML</Filter>
     </CustomBuild>
