@@ -102,13 +102,13 @@ static void SetClipboard_(HWND hwndDlg, const WStringSlice& content)
 static void ExternalEditor_(const WStringSlice& filename, size_t line) {
     Assert(not filename.empty());
 
-    String cmdLine;
-    Format(cmdLine, "\"{0}\" \"{1}:{2}\"",
-        L"C:\\Program Files\\Sublime Text 3\\sublime_text.exe", // TODO: handle other editors ?
+	STACKLOCAL_OCSTRSTREAM(oss, 4096);
+    Format(oss, "\"{0}\" \"{1}:{2}\"",
+        "C:\\Program Files\\Sublime Text 3\\sublime_text.exe", // TODO: handle other editors ?
         filename,
         line );
 
-    ::WinExec(cmdLine.c_str(), SW_SHOW);
+    ::WinExec(oss.NullTerminatedStr(), SW_SHOW);
 }
 //----------------------------------------------------------------------------
 enum class AtomClass_ {
@@ -121,14 +121,14 @@ enum class AtomClass_ {
     ComboBox    = 0x0085,
 };
 //----------------------------------------------------------------------------
-static constexpr size_t DIALOG_ID_TEXT      = 41001;
-static constexpr size_t DIALOG_ID_STACK     = 41002;
-static constexpr size_t DIALOG_ID_MINIDUMP  = 41003;
-static constexpr size_t DIALOG_ID_COPY      = 41005;
-static constexpr size_t DIALOG_ID_BREAK     = 41006;
-static constexpr size_t DIALOG_ID_ICON      = 41007;
-static constexpr size_t ResultToID_(Dialog::Result button) { return 40000+size_t(button); }
-static constexpr Dialog::Result IDToResult_(size_t id) { return Dialog::Result(id-40000); }
+static constexpr size_t DIALOG_ID_TEXT      = 150;
+static constexpr size_t DIALOG_ID_STACK     = 151;
+static constexpr size_t DIALOG_ID_MINIDUMP  = 152;
+static constexpr size_t DIALOG_ID_COPY      = 153;
+static constexpr size_t DIALOG_ID_BREAK     = 154;
+static constexpr size_t DIALOG_ID_ICON      = 155;
+static constexpr size_t ResultToID_(Dialog::Result button) { return 200+size_t(button); }
+static constexpr Dialog::Result IDToResult_(size_t id) { return Dialog::Result(id-200); }
 //----------------------------------------------------------------------------
 static void Template_AddItem_(
     MemoryViewWriter& writer,
@@ -162,6 +162,19 @@ static void Template_AddCaption_(MemoryViewWriter& writer, const WStringSlice& c
         writer.WritePOD(L'\0');
 }
 //----------------------------------------------------------------------------
+static void Template_AddButton_(
+	MemoryViewWriter& writer, 
+	size_t x, size_t y, 
+	size_t cx, size_t cy, 
+	size_t id, 
+	const WStringSlice& caption ) {
+	Template_AddItem_(writer, x, y, cx, cy,
+		id,
+		WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, AtomClass_::Button);
+	Template_AddCaption_(writer, caption);
+	writer.WritePOD(WORD(0)); // no creation data
+}
+//----------------------------------------------------------------------------
 struct Template_DialogContext_ {
     WStringSlice Text;
     WStringSlice Caption;
@@ -173,8 +186,6 @@ struct Template_DialogContext_ {
 };
 //----------------------------------------------------------------------------
 static LRESULT CALLBACK Template_TextProc_(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
-    UNUSED(wParam);
-    UNUSED(lParam);
     switch (message)
     {
         case WM_LBUTTONDBLCLK:
@@ -191,7 +202,7 @@ static LRESULT CALLBACK Template_TextProc_(HWND hwndDlg, UINT message, WPARAM wP
 
         default:
             {
-                if (::WNDPROC prevProc = reinterpret_cast<::WNDPROC>(::GetWindowLongPtr(hwndDlg, GWLP_USERDATA)) )
+                if (::WNDPROC prevProc = reinterpret_cast<::WNDPROC>(::GetWindowLongPtr(hwndDlg, GWLP_USERDATA)))
                     return ::CallWindowProc(prevProc, hwndDlg, message, wParam, lParam);
             }
     }
@@ -247,7 +258,7 @@ static LRESULT CALLBACK Template_DialogProc_(HWND hwndDlg, UINT message, WPARAM 
             ::SetWindowLongPtr(text, GWLP_USERDATA, ::SetWindowLongPtr(text, GWLP_WNDPROC, (LPARAM)Template_TextProc_));
 
             ::HWND stack = ::GetDlgItem(hwndDlg, DIALOG_ID_STACK);
-            ::SetWindowLongPtr(text, GWLP_USERDATA, ::SetWindowLongPtr(stack, GWLP_WNDPROC, (LPARAM)Template_StackProc_));
+            ::SetWindowLongPtr(stack, GWLP_USERDATA, ::SetWindowLongPtr(stack, GWLP_WNDPROC, (LPARAM)Template_StackProc_));
             ::SendMessage(stack, LB_SETHORIZONTALEXTENT, 4096, 0);
             for (const WString& str : ctx->CallstackFrames)
                 ::SendMessageW(stack, LB_ADDSTRING, 0, (LPARAM)str.c_str());
@@ -325,9 +336,16 @@ static LRESULT CALLBACK Template_DialogProc_(HWND hwndDlg, UINT message, WPARAM 
 }
 //----------------------------------------------------------------------------
 static constexpr Dialog::Result gTemplate_AllButtons[] = {
-    Dialog::Result::Ok, Dialog::Result::Retry, Dialog::Result::Ignore, Dialog::Result::Yes,
-    Dialog::Result::TryAgain, Dialog::Result::Continue, Dialog::Result::IgnoreAlways,
-    Dialog::Result::No, Dialog::Result::Cancel, Dialog::Result::Abort,
+    Dialog::Result::Ok, 
+    Dialog::Result::Retry, 
+    Dialog::Result::Ignore, 
+    Dialog::Result::Yes,
+    Dialog::Result::TryAgain, 
+    Dialog::Result::Continue, 
+    Dialog::Result::IgnoreAlways,
+    Dialog::Result::No, 
+    Dialog::Result::Cancel, 
+    Dialog::Result::Abort,
 };
 //----------------------------------------------------------------------------
 static Dialog::Result Template_CreateDialogBox_(
@@ -335,6 +353,8 @@ static Dialog::Result Template_CreateDialogBox_(
     Dialog::Type buttons,
     const WStringSlice& text,
     const WStringSlice& caption ) {
+	STATIC_ASSERT(sizeof(u16) == sizeof(WORD));
+	STATIC_ASSERT(sizeof(u32) == sizeof(DWORD));
 
     Template_DialogContext_ ctx;
     ctx.Text = text;
@@ -343,10 +363,10 @@ static Dialog::Result Template_CreateDialogBox_(
     ctx.IconId = SystemIcon_(icon);
     ctx.IconResource = ::LoadIconW(nullptr, ctx.IconId);
 
-    VECTORINSITU(Diagnostic, WString, Callstack::MaxDeph) callstackFrames;
+    VECTORINSITU(Diagnostic, WString, Callstack::MaxDepth) callstackFrames;
     {
         Callstack callstack;
-        Callstack::Capture(&callstack, 4, Callstack::MaxDeph);
+        Callstack::Capture(&callstack, 4, Callstack::MaxDepth);
 
         ctx.DecodedCallstack = DecodedCallstack(callstack);
         callstackFrames.reserve(ctx.DecodedCallstack.Frames().size());
@@ -383,7 +403,7 @@ static Dialog::Result Template_CreateDialogBox_(
         tpl->cdit = 0;
 
         writer.WritePOD(WORD(0)); // No menu
-        writer.WritePOD(WORD(AtomClass_::Predefined)); // default
+        writer.WritePOD(WORD(AtomClass_::Predefined)); // default class
 
         Template_AddCaption_(writer, caption);
 
@@ -403,47 +423,35 @@ static Dialog::Result Template_CreateDialogBox_(
             const size_t w = buttonWidthPadding*2 + buttonWidthPerChar*buttonCaption.size();
             buttonRight -= buttonWidthPadding + w;
 
-            Template_AddItem_(writer, buttonRight, buttonTop, w, buttonHeight,
-                ResultToID_(button),
-                WS_CHILD | WS_VISIBLE, AtomClass_::Button);
-            Template_AddCaption_(writer, buttonCaption);
-
-            writer.WritePOD(WORD(0));
-
+			Template_AddButton_(writer, buttonRight, buttonTop, w, buttonHeight, ResultToID_(button), buttonCaption);
             tpl->cdit++;
         }
 
-        Template_AddItem_(writer, 5, buttonTop, 32, buttonHeight, DIALOG_ID_COPY,
-            WS_CHILD | WS_VISIBLE, AtomClass_::Button);
-        Template_AddCaption_(writer, L"Copy");
-        writer.WritePOD(WORD(0));
+		Template_AddButton_(writer, 5, buttonTop, 32, buttonHeight, DIALOG_ID_COPY, L"Copy");
         tpl->cdit++;
 
-        Template_AddItem_(writer, 40, buttonTop, 32, buttonHeight, DIALOG_ID_BREAK,
-            WS_CHILD | WS_VISIBLE, AtomClass_::Button);
-        Template_AddCaption_(writer, L"Break");
-        writer.WritePOD(WORD(0));
+		Template_AddButton_(writer, 40, buttonTop, 32, buttonHeight, DIALOG_ID_BREAK, L"Break");
         tpl->cdit++;
 
-        Template_AddItem_(writer, 75, buttonTop, 55, buttonHeight, DIALOG_ID_MINIDUMP,
-            WS_CHILD | WS_VISIBLE, AtomClass_::Button);
-        Template_AddCaption_(writer, L"Minidump");
-        writer.WritePOD(WORD(0));
+		Template_AddButton_(writer, 75, buttonTop, 55, buttonHeight, DIALOG_ID_MINIDUMP, L"Minidump");
         tpl->cdit++;
 
-        Template_AddItem_(writer, 15, 10, 32, 32, DIALOG_ID_ICON,
+        Template_AddItem_(writer, 15, 10, 32, 32, 
+			DIALOG_ID_ICON,
             WS_CHILD | WS_VISIBLE | SS_ICON | SS_LEFT, AtomClass_::Static);
-        writer.WritePOD(WORD(0));
-        writer.WritePOD(WORD(0));
+        writer.WritePOD(WORD(0)); // no caption text
+        writer.WritePOD(WORD(0)); // no creation data
         tpl->cdit++;
-
-        Template_AddItem_(writer, 45, 8, 350, 47, DIALOG_ID_TEXT,
-            WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_MULTILINE | ES_READONLY, AtomClass_::Edit);
+        
+		Template_AddItem_(writer, 45, 8, 350, 47,
+			DIALOG_ID_TEXT,
+			WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_MULTILINE | ES_READONLY, AtomClass_::Edit);
         Template_AddCaption_(writer, text);
-        writer.WritePOD(WORD(0));
+        writer.WritePOD(WORD(0)); // no creation data
         tpl->cdit++;
 
-        Template_AddItem_(writer, 5, 5+50+5, 390, 127, DIALOG_ID_STACK,
+        Template_AddItem_(writer, 5, 5+50+5, 390, 127, 
+			DIALOG_ID_STACK,
             WS_BORDER | WS_HSCROLL | WS_VSCROLL | WS_CHILD | WS_VISIBLE, AtomClass_::ListBox);
         writer.WritePOD(WORD(0));
         tpl->cdit++;
@@ -467,8 +475,7 @@ static Dialog::Result Template_CreateDialogBox_(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Dialog::Result Show(const WStringSlice& text, const WStringSlice& caption, Dialog::Type dialogType, Dialog::Icon iconType)
-{
+Dialog::Result Show(const WStringSlice& text, const WStringSlice& caption, Dialog::Type dialogType, Dialog::Icon iconType) {
     Assert(not text.empty());
     Assert(not caption.empty());
 #ifdef OS_WINDOWS

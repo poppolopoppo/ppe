@@ -262,7 +262,7 @@ void Callstack::Decode(DecodedCallstack* decoded, size_t hash, const MemoryView<
 void Callstack::Capture(Callstack* callstack, size_t framesToSkip, size_t framesToCapture) {
     Assert(callstack);
     callstack->_depth = Capture(
-        MakeView(&callstack->_frames[0], &callstack->_frames[MaxDeph]),
+        MakeView(&callstack->_frames[0], &callstack->_frames[MaxDepth]),
         &callstack->_hash,
         framesToSkip,
         framesToCapture);
@@ -278,10 +278,10 @@ size_t Callstack::Capture(
     Assert(framesToSkip + framesToCapture <= 64 /* see RtlCaptureStackBackTrace() */);
     Assert(framesToCapture <= frames.size());
 
-    if (framesToCapture > MaxDeph)
+    if (framesToCapture > MaxDepth)
     {
         Assert(false);
-        framesToCapture = MaxDeph;
+        framesToCapture = MaxDepth;
     }
 
     DWORD rtlHash = 0;

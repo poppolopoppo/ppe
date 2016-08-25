@@ -12,7 +12,7 @@ class DecodedCallstack;
 //----------------------------------------------------------------------------
 class ALIGN(16) Callstack {
 public:
-    enum { MaxDeph = 46};
+    enum { MaxDepth = 46};
     // 46 * 4 + 4 + 4 = 192 -> align on 16, no overhead (32 bits)
     // 46 * 8 + 8 + 8 = 384 -> align on 16, no overhead (64 bits)
 
@@ -47,7 +47,7 @@ public:
 private:
     size_t _hash;
     size_t _depth;
-    void* _frames[MaxDeph];
+    void* _frames[MaxDepth];
 };
 //----------------------------------------------------------------------------
 inline hash_t hash_value(const Callstack& callstack) {

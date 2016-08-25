@@ -72,23 +72,42 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
+template <typename _Traits>
+std::basic_ostream<char, _Traits>& operator <<(
+    std::basic_ostream<char, _Traits>& oss,
     const DecodedCallstack::Frame& frame) {
     return oss  << frame.Symbol() << std::endl
                 << "    " << frame.Filename()
                 << '(' << frame.Line() << ')';
 }
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
+template <typename _Traits>
+std::basic_ostream<wchar_t, _Traits>& operator <<(
+	std::basic_ostream<wchar_t, _Traits>& oss,
+	const DecodedCallstack::Frame& frame) {
+	return oss << frame.Symbol() << std::endl
+		<< L"    " << frame.Filename()
+		<< L'(' << frame.Line() << L')';
+}
+//----------------------------------------------------------------------------
+template <typename _Traits>
+std::basic_ostream<char, _Traits>& operator <<(
+    std::basic_ostream<char, _Traits>& oss,
     const DecodedCallstack& decoded) {
     const MemoryView<const DecodedCallstack::Frame> frames = decoded.Frames();
     for (size_t i = 0; i < frames.size(); ++i)
         oss << '[' << i << "] " << frames[i] << std::endl;
     return oss;
+}
+//----------------------------------------------------------------------------
+template <typename _Traits>
+std::basic_ostream<wchar_t, _Traits>& operator <<(
+	std::basic_ostream<wchar_t, _Traits>& oss,
+	const DecodedCallstack& decoded) {
+	const MemoryView<const DecodedCallstack::Frame> frames = decoded.Frames();
+	for (size_t i = 0; i < frames.size(); ++i)
+		oss << L'[' << i << L"] " << frames[i] << std::endl;
+	return oss;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
