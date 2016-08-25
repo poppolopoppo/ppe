@@ -63,4 +63,16 @@ std::basic_ostream<_Char, _Traits>& operator <<(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+struct HexDump {
+    MemoryView<const u8> RawData;
+    size_t BytesPerRow;
+    HexDump(const MemoryView<const u8>& rawData, size_t bytesPerRow = 16)
+        : RawData(rawData), BytesPerRow(bytesPerRow) {}
+};
+//----------------------------------------------------------------------------
+std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const HexDump& hexDump);
+std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const HexDump& hexDump);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Core

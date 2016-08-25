@@ -97,4 +97,46 @@ void Format(wchar_t *buffer, size_t capacity, CountOfElements count) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const HexDump& hexDump) {
+    const size_t totalBytes = hexDump.RawData.SizeInBytes();
+    for (size_t offset = 0; offset < totalBytes; ) {
+        Format(oss, "0x{0:#8X} ", offset);
+        const size_t origin = offset;
+        for (size_t row = 0; row < hexDump.BytesPerRow; ++row, ++offset) {
+            if (offset < totalBytes)
+                Format(oss, " {0:#2X}", (unsigned)hexDump.RawData[offset]);
+            else
+                oss << "   ";
+        }
+        oss << "  ";
+        offset = origin;
+        for (size_t row = 0; row < hexDump.BytesPerRow && offset < totalBytes; ++row, ++offset)
+            oss << (IsPrint(char(hexDump.RawData[offset])) ? char(hexDump.RawData[offset]) : '.');
+        oss << std::endl;
+    }
+    return oss;
+}
+//----------------------------------------------------------------------------
+std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const HexDump& hexDump) {
+    const size_t totalBytes = hexDump.RawData.SizeInBytes();
+    for (size_t offset = 0; offset < totalBytes; ) {
+        Format(oss, L"0x{0:#8X} ", offset);
+        const size_t origin = offset;
+        for (size_t row = 0; row < hexDump.BytesPerRow; ++row, ++offset) {
+            if (offset < totalBytes)
+                Format(oss, L" {0:#2X}", (unsigned)hexDump.RawData[offset]);
+            else
+                oss << L"   ";
+        }
+        oss << L"  ";
+        offset = origin;
+        for (size_t row = 0; row < hexDump.BytesPerRow && offset < totalBytes; ++row, ++offset)
+            oss << (IsPrint(char(hexDump.RawData[offset])) ? char(hexDump.RawData[offset]) : '.');
+        oss << std::endl;
+    }
+    return oss;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Core
