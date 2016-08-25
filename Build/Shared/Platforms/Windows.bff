@@ -7,7 +7,15 @@
 [
     Using( .SharedBasePlatform )
 
-    .PlatformDefines + { 'PLATFORM_PC', 'PLATFORM_WIN', 'WIN32', '__WINDOWS__' }
+    .PlatformDefines +
+    {
+        'PLATFORM_PC',
+        'PLATFORM_WIN',
+        'WIN32',
+        '__WINDOWS__',
+        'UNICODE',
+        '_UNICODE'
+    }
 ]
 
 //------------------------------------------------------------------------------
