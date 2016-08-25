@@ -125,10 +125,10 @@ FORCE_INLINE bool IsXDigit(wchar_t wch) { return 0 != std::iswxdigit(wch); }
 FORCE_INLINE bool IsAlnum(char ch) { return IsAlpha(ch) || IsDigit(ch); }
 FORCE_INLINE bool IsAlnum(wchar_t wch) { return 0 != std::iswalnum(wch); }
 //----------------------------------------------------------------------------
-FORCE_INLINE bool IsPrint(char ch) { return 0 != std::isprint(int(ch)); }
+FORCE_INLINE bool IsPrint(char ch) { return 0 != std::isprint(int(unsigned char(ch))); }
 FORCE_INLINE bool IsPrint(wchar_t wch) { return 0 != std::iswprint(wch); }
 //----------------------------------------------------------------------------
-FORCE_INLINE bool IsPunct(char ch) { return 0 != std::ispunct(int(ch)); }
+FORCE_INLINE bool IsPunct(char ch) { return 0 != std::ispunct(int(unsigned char(ch))); }
 FORCE_INLINE bool IsPunct(wchar_t wch) { return 0 != std::iswpunct(wch); }
 //----------------------------------------------------------------------------
 FORCE_INLINE bool IsSpace(char ch) { return ( ch == ' ' || ch == '\f' || ch == '\n' || ch == '\r' || ch == '\t' || ch == '\v' ); }
