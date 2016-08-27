@@ -20,7 +20,11 @@
     .ProjectIsolatedFiles =
     {
         'Test_Containers.cpp',
+        'Test_Format.cpp',
+        'Test_Pixmap.cpp',
         'Test_RTTI.cpp',
+        'Test_Thread.cpp',
+        'Test_XML.cpp',
     }
     #include "../../Build/Templates/Executable.bff"
     #include "../../Build/Templates/CompressedExecutable.bff"
