@@ -52,7 +52,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
             Using( .CompileConfig )
 
             // Project defines
-            .Defines                    + .ProjectDefines
+            .Defines            + .ProjectDefines
             ForEach( .define in .Defines )
             {
                 ^CompilerOptions            + ' $CompilerDefineFlag$"$define$"'
@@ -60,21 +60,27 @@ ForEach( .CompileConfig in .AllCompileConfigs )
                 ^PreprocessorDefinitions    + ';$define$'
             }
 
-            // Project includes
-            .IncludePaths       + .ProjectIncludes
-                                + '.' // current dir
+            // Project and System includes (project includes first, then system includes)
+            .SystemIncludes     = .IncludePaths
+            .ProjectIncludes    + '.' // current dir
 
             // Only for VCXProj
-            ForEach( .path in .IncludePaths )
+            ForEach( .path in .ProjectIncludes )
+            {
+                ^IncludeSearchPath          + ';$path$'
+            }
+            ForEach( .path in .SystemIncludes )
             {
                 ^IncludeSearchPath          + ';$path$'
             }
 
             // For actual compilation
-            .IncludePaths       + .SourceDiretory
+            .ProjectIncludes    + .SourceDiretory
                                 + .ProjectPath
 
-            ForEach( .path in .IncludePaths )
+            .AllIncludes        = .ProjectIncludes + .SystemIncludes
+
+            ForEach( .path in .AllIncludes )
             {
                 ^CompilerOptions            + ' $CompilerIncludeFlag$"$path$"'
                 ^PreprocessorOptions        + ' $CompilerIncludeFlag$"$path$"'
