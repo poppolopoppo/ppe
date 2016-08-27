@@ -12,6 +12,7 @@
 #include "Source/Core.Logic/Core.Logic.bff"
 #include "Source/Core.RTTI/Core.RTTI.bff"
 #include "Source/Core.Serialize/Core.Serialize.bff"
+#include "Source/Core.Network/Core.Network.bff"
 
 #include "Source/Core.Lattice/Core.Lattice.bff"
 #include "Source/Core.Pixmap/Core.Pixmap.bff"

@@ -10,6 +10,7 @@
         'Core',
         'Core.RTTI',
         'Core.Serialize',
+        'Core.Network',
         'Core.Lattice',
         'Core.Pixmap',
         'Core.Graphics',

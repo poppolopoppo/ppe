@@ -1,0 +1,12 @@
+#once
+{
+    .ProjectName = 'Core.Network'
+    .ProjectPath = '$SourceDiretory$/Core.Network'
+    .ProjectSolutionFolder = 'Core'
+    .ProjectIsolatedFiles =
+    {
+        'Network.cpp',
+        'Network_extern.cpp',
+    }
+    #include "../../Build/Templates/Library.bff"
+}
