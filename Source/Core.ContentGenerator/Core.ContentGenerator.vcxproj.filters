@@ -29,7 +29,7 @@
     </CustomBuild>
     <CustomBuild Include="Test_Thread.cpp">
     </CustomBuild>
-    <CustomBuild Include="Text_XML.cpp">
+    <CustomBuild Include="Test_XML.cpp">
     </CustomBuild>
   </ItemGroup>
 </Project>
