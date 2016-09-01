@@ -142,11 +142,8 @@
 //----------------------------------------------------------------------------
 #ifdef CPP_VISUALSTUDIO
 #   define CORE_THROW_SPECIFIER(_Type)  _THROW1(_Type)
-#   define CORE_RETURN_NOT_NULL         _Ret_notnull_ _Post_writable_byte_size_(size)
-#   define CORE_RETURN_MAYBE_NULL       _Ret_maybenull_ _Post_writable_byte_size_(size)
 #else
 #   define CORE_THROW_SPECIFIER(_Type)
-#   define CORE_RETURN_NOT_NULL
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
