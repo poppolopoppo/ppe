@@ -70,17 +70,6 @@ int CompareI(const WString& lhs, const WString& rhs);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline const char *StrChr(const char* cstr, char ch) { return ::strchr(cstr, ch); }
-inline const char *StrRChr(const char* cstr, char ch) { return ::strrchr(cstr, ch); }
-//----------------------------------------------------------------------------
-inline const wchar_t *StrChr(const wchar_t* wcstr, wchar_t wch) { return ::wcschr(wcstr, wch); }
-inline const wchar_t *StrRChr(const wchar_t* wcstr, wchar_t wch) { return ::wcsrchr(wcstr, wch); }
-//----------------------------------------------------------------------------
-inline const char *StrStr(const char* cstr, const char* firstOccurence) { return ::strstr(cstr, firstOccurence); }
-inline const wchar_t *StrStr(const wchar_t* wcstr, const wchar_t* firstOccurence) { return ::wcsstr(wcstr, firstOccurence); }
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 size_t ToCStr(char *dst, size_t capacity, const wchar_t *wcstr, size_t length);
 size_t ToCStr(char *dst, size_t capacity, const wchar_t *wcstr);
 size_t ToCStr(char *dst, size_t capacity, const WString& wstr);

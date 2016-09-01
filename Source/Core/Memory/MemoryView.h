@@ -44,6 +44,9 @@ public:
     MemoryView(value_type (&staticArray)[_Dim])
         : MemoryView(staticArray, _Dim) {}
 
+    MemoryView(const iterator& first, const iterator& last)
+        : MemoryView(std::addressof(*first), std::distance(first, last)) {}
+
     MemoryView(MemoryView&& rvalue);
     MemoryView& operator =(MemoryView&& rvalue);
 
@@ -78,6 +81,12 @@ public:
     reference back() const { return at(_size - 1); }
 
     void CopyTo(const MemoryView<typename std::remove_const<T>::type>& dst) const;
+
+    template <size_t _Dim>
+    void CopyTo(typename std::remove_const<T>::type (&dst)[_Dim]) const {
+        Assert(_Dim >= _size);
+        CopyTo(MakeView(dst).CutBefore(_size));
+    }
 
     MemoryView<T> SubRange(size_t offset, size_t count) const;
     MemoryView< typename std::add_const<T>::type > SubRangeConst(size_t offset, size_t count) const;
@@ -139,6 +148,8 @@ public:
     reverse_iterator FindIfNotR(const _Pred& pred) const { return std::find_if_not(rbegin(), rend(), pred); }
     template <typename _Pred>
     size_type FindLastNot(const _Pred& pred) const { return std::distance(rbegin(), FindIfNotR(pred)); }
+
+    iterator FindSubRange(const MemoryView<T>& subrange) const;
 
     template <typename _Pred>
     MemoryView SplitIf(const _Pred& pred) const { return MemoryView(_storage, FindFirst(pred)); }
@@ -240,6 +251,17 @@ auto MemoryView<T>::at(size_type index) const -> reference {
 }
 //----------------------------------------------------------------------------
 template <typename T>
+auto MemoryView<T>::FindSubRange(const MemoryView<T>& subrange) const -> iterator {
+    Assert(!subrange.empty());
+    const auto last = end();
+    for (auto it = begin(); it != last; ++it) {
+        if (std::equal(begin(), end(), subrange.begin(), subrange.end()))
+            return it;
+    }
+    return last;
+}
+//----------------------------------------------------------------------------
+template <typename T>
 void MemoryView<T>::CopyTo(const MemoryView<typename std::remove_const<T>::type>& dst) const {
     Assert(dst.size() == size());
     std::copy(begin(), end(), dst.begin());
@@ -286,9 +308,8 @@ typename std::enable_if<
     MemoryView< typename std::iterator_traits<_It>::value_type >
 >::type MakeView(_It first, _It last) {
     typedef std::iterator_traits<_It> traits_type;
-    typedef MemoryView< typename traits_type::value_type > view_type;
     STATIC_ASSERT(std::is_same<typename traits_type::iterator_category, std::random_access_iterator_tag>::value);
-    return view_type(std::addressof(*first), std::distance(first, last));
+    return MemoryView< typename traits_type::value_type >(std::addressof(*first), std::distance(first, last));
 }
 //----------------------------------------------------------------------------
 template <typename _VectorLike>

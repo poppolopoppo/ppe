@@ -240,7 +240,33 @@ static BasicStringSlice<_Char> SplitInplaceIf_ReturnEaten_(BasicStringSlice<_Cha
     return eaten;
 }
 //----------------------------------------------------------------------------
+template <typename _Char>
+typename BasicStringSlice<_Char>::iterator StrChr_(const BasicStringSlice<_Char>& str, _Char ch) {
+    return str.FindIf([ch](_Char c) { return (c == ch); });
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+typename BasicStringSlice<_Char>::reverse_iterator StrRChr_(const BasicStringSlice<_Char>& str, _Char ch) {
+    return str.FindIfR([ch](_Char c) { return (c == ch); });
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+typename BasicStringSlice<_Char>::iterator StrStr_(const BasicStringSlice<_Char>& str, const BasicStringSlice<_Char>& firstOccurence) {
+    return str.FindSubRange(firstOccurence);
+}
+//----------------------------------------------------------------------------
 } //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+StringSlice::iterator StrChr(const StringSlice& str, char ch) { return StrChr_(str, ch); }
+StringSlice::reverse_iterator StrRChr(const StringSlice& str, char ch) { return StrRChr_(str, ch); }
+//----------------------------------------------------------------------------
+WStringSlice::iterator StrChr(const WStringSlice& wstr, wchar_t wch) { return StrChr_(wstr, wch); }
+WStringSlice::reverse_iterator StrRChr(const WStringSlice& wstr, wchar_t wch) { return StrRChr_(wstr, wch); }
+//----------------------------------------------------------------------------
+StringSlice::iterator StrStr(const StringSlice& str, const StringSlice& firstOccurence) { return StrStr_(str, firstOccurence); }
+WStringSlice::iterator StrStr(const WStringSlice& wstr, const WStringSlice& firstOccurence) { return StrStr_(wstr, firstOccurence); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

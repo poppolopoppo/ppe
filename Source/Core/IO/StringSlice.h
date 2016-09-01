@@ -27,6 +27,7 @@ class BasicStringSlice : public MemoryView< typename std::add_const<_Char>::type
 public:
     typedef MemoryView< typename std::add_const<_Char>::type > parent_type;
 
+    using typename parent_type::iterator;
     using parent_type::parent_type;
     using parent_type::operator=;
 
@@ -49,6 +50,13 @@ public:
         : parent_type(staticChars, _Dim - 1/* assume null terminated string */) {
         static_assert(_Dim, "invalid string");
         Assert(not staticChars[_Dim - 1]);
+    }
+
+    template <size_t _Dim>
+    void ToNullTerminatedCStr(_Char (&dst)[_Dim]) const {
+        Assert(_Dim > size());
+        CopyTo(dst);
+        dst[size()] = _Char(0);
     }
 };
 //----------------------------------------------------------------------------
@@ -82,6 +90,26 @@ FORCE_INLINE BasicStringSlice<_Char> MakeStringSlice(const BasicStringSlice<_Cha
     return slice;
 }
 //----------------------------------------------------------------------------
+template <typename _It>
+typename std::enable_if<
+    Meta::is_iterator_of<_It, char>::value,
+    StringSlice
+>::type MakeStringSlice(_It first, _It last) {
+    typedef std::iterator_traits<_It> traits_type;
+    STATIC_ASSERT(std::is_same<typename traits_type::iterator_category, std::random_access_iterator_tag>::value);
+    return StringSlice(std::addressof(*first), std::distance(first, last));
+}
+//----------------------------------------------------------------------------
+template <typename _It>
+typename std::enable_if<
+    Meta::is_iterator_of<_It, wchar_t>::value,
+    WStringSlice
+>::type MakeStringSlice(_It first, _It last) {
+    typedef std::iterator_traits<_It> traits_type;
+    STATIC_ASSERT(std::is_same<typename traits_type::iterator_category, std::random_access_iterator_tag>::value);
+    return WStringSlice(std::addressof(*first), std::distance(first, last));
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 inline size_t Length(const char* string) { return ::strlen(string); }
@@ -93,6 +121,28 @@ FORCE_INLINE BasicStringSlice<_Char> MakeStringSlice(const _Char* cstr, Meta::no
         ? BasicStringSlice<_Char>(cstr, Length(cstr))
         : BasicStringSlice<_Char>();
 }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+inline const char *StrChr(const char* cstr, char ch) { return ::strchr(cstr, ch); }
+inline const char *StrRChr(const char* cstr, char ch) { return ::strrchr(cstr, ch); }
+//----------------------------------------------------------------------------
+inline const wchar_t *StrChr(const wchar_t* wcstr, wchar_t wch) { return ::wcschr(wcstr, wch); }
+inline const wchar_t *StrRChr(const wchar_t* wcstr, wchar_t wch) { return ::wcsrchr(wcstr, wch); }
+//----------------------------------------------------------------------------
+inline const char *StrStr(const char* cstr, const char* firstOccurence) { return ::strstr(cstr, firstOccurence); }
+inline const wchar_t *StrStr(const wchar_t* wcstr, const wchar_t* firstOccurence) { return ::wcsstr(wcstr, firstOccurence); }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+StringSlice::iterator StrChr(const StringSlice& str, char ch);
+StringSlice::reverse_iterator StrRChr(const StringSlice& str, char ch);
+//----------------------------------------------------------------------------
+WStringSlice::iterator StrChr(const WStringSlice& wstr, wchar_t wch);
+WStringSlice::reverse_iterator StrRChr(const WStringSlice& wstr, wchar_t wch);
+//----------------------------------------------------------------------------
+StringSlice::iterator StrStr(const StringSlice& str, const StringSlice& firstOccurence);
+WStringSlice::iterator StrStr(const WStringSlice& wstr, const WStringSlice& firstOccurence);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -221,6 +271,11 @@ bool Atoi(intptr_t* dst, const BasicStringSlice<_Char>& str, size_t base) {
     STATIC_ASSERT(sizeof(intptr_t) == sizeof(i32));
     return Atoi32(dst, str, base);
 #endif
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+bool Atoi(size_t* dst, const BasicStringSlice<_Char>& str, size_t base) {
+    return Atoi((intptr_t*)dst, str, base);
 }
 //----------------------------------------------------------------------------
 bool Atof(float* dst, const StringSlice& str);
