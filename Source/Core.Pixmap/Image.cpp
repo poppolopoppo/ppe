@@ -593,6 +593,7 @@ bool Save(const Image* src, const Filename& filename, IStreamWriter* writer) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void Image::Start() {
+    // TODO: remove when fixed in an updated version
     // Workaround for thread safety of stb_image
     // https://github.com/nothings/stb/issues/309
     ::stbi__init_zdefaults();
