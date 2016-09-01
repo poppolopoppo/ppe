@@ -3,6 +3,7 @@
     .ProjectName = 'Core.Network'
     .ProjectPath = '$SourceDiretory$/Core.Network'
     .ProjectSolutionFolder = 'Core'
+    .UnityNumFiles = 1
     .ProjectIsolatedFiles =
     {
         'Network.cpp',

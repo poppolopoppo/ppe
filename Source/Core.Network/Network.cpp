@@ -3,6 +3,8 @@
 #include "Network.h"
 #include "Network_fwd.h"
 
+#include "Socket.h"
+
 #include "Core/Allocator/PoolAllocatorTag-impl.h"
 
 #ifdef OS_WINDOWS
@@ -22,18 +24,16 @@ void NetworkStartup::Start() {
     CORE_MODULE_START(Network);
 
     POOL_TAG(Network)::Start();
+
+    Socket::Start();
 }
 //----------------------------------------------------------------------------
 void NetworkStartup::Shutdown() {
     CORE_MODULE_SHUTDOWN(Network);
 
-    POOL_TAG(Network)::Shutdown();
-}
-//----------------------------------------------------------------------------
-void NetworkStartup::Clear() {
-    CORE_MODULE_CLEARALL(Network);
+    Socket::Shutdown();
 
-    POOL_TAG(Network)::ClearAll_UnusedMemory();
+    POOL_TAG(Network)::Shutdown();
 }
 //----------------------------------------------------------------------------
 void NetworkStartup::ClearAll_UnusedMemory() {
