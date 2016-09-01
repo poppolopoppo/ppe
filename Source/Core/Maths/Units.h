@@ -140,6 +140,7 @@ namespace Core {
 #define UNITS_BEGIN(NAME)
 #define UNITS_END()
 #define UNITS_DECL(TAG, SYMBOL, NAME, RATIO, SMALLER) \
+    typedef Core::Units::TAG::NAME NAME; \
     extern template class Core::Units::Unit< Core::Units::UnitTraits<Core::Units::TAG::_Tag, RATIO, SMALLER> >; \
     template <typename _Traits> \
     std::basic_ostream<char, _Traits>& operator <<( \
