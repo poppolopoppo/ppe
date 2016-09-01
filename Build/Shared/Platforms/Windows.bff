@@ -13,8 +13,6 @@
         'PLATFORM_WIN',
         'WIN32',
         '__WINDOWS__',
-        'UNICODE',
-        '_UNICODE'
     }
 ]
 

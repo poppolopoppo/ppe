@@ -43,7 +43,8 @@
         "_CRT_SECURE_NO_DEPRECATE=1",   ; https://msdn.microsoft.com/fr-fr/library/8ef0s5kh.aspx
         "_CRT_NONSTDC_NO_DEPRECATE=1",  ; https://msdn.microsoft.com/fr-fr/library/8ef0s5kh.aspx
         "DBGHELP_TRANSLATE_TCHAR",      ; https://msdn.microsoft.com/en-us/library/windows/desktop/ms679294(v=vs.85).aspx
-        "_UNICODE", "UNICODE"           ; https://msdn.microsoft.com/fr-fr/library/dybsewaf.aspx
+        "_UNICODE", "UNICODE",          ; https://msdn.microsoft.com/fr-fr/library/dybsewaf.aspx
+        "_NO_W32_PSEUDO_MODIFIERS",     ; Prevent windows from #defining IN or OUT (undocumented)
     }
 
     .IncludePaths = {}
