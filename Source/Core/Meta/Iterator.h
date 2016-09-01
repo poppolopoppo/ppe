@@ -116,7 +116,17 @@ struct is_iterator : public std::false_type {};
 //----------------------------------------------------------------------------
 template<typename T>
 struct is_iterator<T,
-    typename std::enable_if<not std::is_same<typename std::iterator_traits<T>::value_type, void>::value>::type
+    typename std::enable_if< not std::is_same<typename std::iterator_traits<T>::value_type, void>::value >::type
+> : public std::true_type {};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template<typename _Iterator, typename T, typename = void>
+struct is_iterator_of : public std::false_type {};
+//----------------------------------------------------------------------------
+template<typename _Iterator, typename T>
+struct is_iterator_of<_Iterator, T,
+    typename std::enable_if< std::is_same<typename std::iterator_traits<_Iterator>::value_type, T>::value >::type
 > : public std::true_type {};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
