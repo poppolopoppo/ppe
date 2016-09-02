@@ -55,9 +55,9 @@ public:
     void OnDeviceLost(DeviceEncapsulator *device);
     void OnDeviceDestroy(DeviceEncapsulator *device);
 
-    StringSlice ResourceName() const;
+    StringView ResourceName() const;
     void SetResourceName(const char *name);
-    void SetResourceName(const StringSlice& name);
+    void SetResourceName(const StringView& name);
     void SetResourceName(String&& name);
 
 protected:

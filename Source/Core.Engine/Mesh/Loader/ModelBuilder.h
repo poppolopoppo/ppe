@@ -6,7 +6,7 @@
 #include "Core/Container/Vector.h"
 #include "Core/IO/FS/Filename.h"
 #include "Core/IO/String.h"
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 #include "Core/Maths/ScalarVector_fwd.h"
 #include "Core/Maths/ScalarMatrix.h"
 
@@ -215,9 +215,9 @@ public:
     const Material& OpenedMaterial() const { Assert(_openMaterial); return _materials.back(); }
     void CloseMaterial(Material *material);
 
-    bool MaterialIndexFromName(size_t *pIndex, const StringSlice& name) const;
-    bool MaterialIndexFromName(size_t *pIndex, const String& name) const { return MaterialIndexFromName(pIndex, StringSlice(name.c_str(), name.size())); }
-    bool MaterialIndexFromName(size_t *pIndex, const char *name) const { return MaterialIndexFromName(pIndex, StringSlice(name, Length(name)) ); }
+    bool MaterialIndexFromName(size_t *pIndex, const StringView& name) const;
+    bool MaterialIndexFromName(size_t *pIndex, const String& name) const { return MaterialIndexFromName(pIndex, StringView(name.c_str(), name.size())); }
+    bool MaterialIndexFromName(size_t *pIndex, const char *name) const { return MaterialIndexFromName(pIndex, StringView(name, Length(name)) ); }
 
     PModel CreateModel();
     void Clear();

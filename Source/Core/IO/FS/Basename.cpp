@@ -11,7 +11,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static bool ParseBasename_(const FileSystem::StringSlice& str, BasenameNoExt& basenameNoExt, Extname& extname) {
+static bool ParseBasename_(const FileSystem::StringView& str, BasenameNoExt& basenameNoExt, Extname& extname) {
     basenameNoExt = BasenameNoExt();
     extname = Extname();
 
@@ -56,12 +56,12 @@ Basename& Basename::operator =(const Basename& other) {
     return *this;
 }
 //----------------------------------------------------------------------------
-Basename::Basename(const FileSystem::StringSlice& content) {
+Basename::Basename(const FileSystem::StringView& content) {
     Assert(not content.empty());
     ParseBasename_(content, _basenameNoExt, _extname);
 }
 //----------------------------------------------------------------------------
-Basename& Basename::operator =(const FileSystem::StringSlice& content) {
+Basename& Basename::operator =(const FileSystem::StringView& content) {
     Assert(not content.empty());
     ParseBasename_(content, _basenameNoExt, _extname);
     return *this;

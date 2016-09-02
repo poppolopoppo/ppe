@@ -14,7 +14,7 @@
 #include "Diagnostic/Logger.h"
 
 #include "IO/Stream.h"
-#include "IO/StringSlice.h"
+#include "IO/StringView.h"
 
 #include <atomic>
 
@@ -22,14 +22,14 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-static Dialog::Result AssertAbortRetryIgnore_(const WStringSlice& title, const char *msg, const wchar_t *file, unsigned line) {
+static Dialog::Result AssertAbortRetryIgnore_(const WStringView& title, const char *msg, const wchar_t *file, unsigned line) {
     ThreadLocalWOStringStream oss;
 
     oss << title << L"\r\n"
         << L"----------------------------------------------------------------\r\n"
         << file << L'(' << line << L"): " << msg;
 
-    return Dialog::AbortRetryIgnore(MakeStringSlice(oss.str()), title);
+    return Dialog::AbortRetryIgnore(MakeStringView(oss.str()), title);
 }
 //----------------------------------------------------------------------------
 static bool IsDebuggerAttached_() {
@@ -91,7 +91,7 @@ void AssertionFailed(const char *msg, const wchar_t *file, unsigned line) {
         BREAKPOINT();
     }
     else {
-        switch (AssertAbortRetryIgnore_(MakeStringSlice(L"Assert debug failed !"), msg, file, line)) {
+        switch (AssertAbortRetryIgnore_(MakeStringView(L"Assert debug failed !"), msg, file, line)) {
         case Dialog::Result::Abort:
             failure = true;
             break;
@@ -167,7 +167,7 @@ void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line)
         BREAKPOINT();
     }
     else {
-        switch (AssertAbortRetryIgnore_(MakeStringSlice(L"Assert release failed !"), msg, file, line)) {
+        switch (AssertAbortRetryIgnore_(MakeStringView(L"Assert release failed !"), msg, file, line)) {
         case Dialog::Result::Abort:
             failure = true;
             break;

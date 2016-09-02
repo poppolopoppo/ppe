@@ -3,7 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/IO/Format.h"
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 
 #include <iosfwd>
 
@@ -39,7 +39,7 @@ std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Trait
 class ILogger {
 public:
     virtual ~ILogger() {}
-    virtual void Log(LogCategory category, const WStringSlice& format, const FormatArgListW& args) = 0;
+    virtual void Log(LogCategory category, const WStringView& format, const FormatArgListW& args) = 0;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -60,12 +60,12 @@ namespace Core {
 //----------------------------------------------------------------------------
 ILogger* SetLoggerImpl(ILogger* logger);
 //----------------------------------------------------------------------------
-void Log(LogCategory category, const WStringSlice& text);
+void Log(LogCategory category, const WStringView& text);
 //----------------------------------------------------------------------------
-void LogArgs(LogCategory category, const WStringSlice& format, const FormatArgListW& args);
+void LogArgs(LogCategory category, const WStringView& format, const FormatArgListW& args);
 //----------------------------------------------------------------------------
 template <typename _Arg0, typename... _Args>
-void Log(LogCategory category, const WStringSlice& format, _Arg0&& arg0, _Args&&... args) {
+void Log(LogCategory category, const WStringView& format, _Arg0&& arg0, _Args&&... args) {
     typedef details::_FormatFunctor<wchar_t> formatfunctor_t;
     const formatfunctor_t functors[] = {
         formatfunctor_t::Make(std::forward<_Arg0>(arg0)),
@@ -78,7 +78,7 @@ void Log(LogCategory category, const WStringSlice& format, _Arg0&& arg0, _Args&&
 class LoggerStream : public ThreadLocalWOStringStream {
 public:
     LoggerStream(LogCategory category) : _category(category) {}
-    ~LoggerStream() { Log(_category, MakeStringSlice(str())); }
+    ~LoggerStream() { Log(_category, MakeStringView(str())); }
 
 private:
     LogCategory _category;
@@ -89,19 +89,19 @@ private:
 class OutputDebugLogger : public ILogger {
 public:
     virtual ~OutputDebugLogger() {}
-    virtual void Log(LogCategory category, const WStringSlice& format, const FormatArgListW& args) override;
+    virtual void Log(LogCategory category, const WStringView& format, const FormatArgListW& args) override;
 };
 //----------------------------------------------------------------------------
 class StdcoutLogger : public ILogger {
 public:
     virtual ~StdcoutLogger() {}
-    virtual void Log(LogCategory category, const WStringSlice& format, const FormatArgListW& args) override;
+    virtual void Log(LogCategory category, const WStringView& format, const FormatArgListW& args) override;
 };
 //----------------------------------------------------------------------------
 class StderrLogger : public ILogger {
 public:
     virtual ~StderrLogger() {}
-    virtual void Log(LogCategory category, const WStringSlice& format, const FormatArgListW& args) override;
+    virtual void Log(LogCategory category, const WStringView& format, const FormatArgListW& args) override;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

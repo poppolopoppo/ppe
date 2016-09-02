@@ -228,81 +228,81 @@ const SurfaceFormat* SurfaceFormat::FromType(SurfaceFormatType type) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-StringSlice SurfaceFormatTypeToCStr(SurfaceFormatType value) {
+StringView SurfaceFormatTypeToCStr(SurfaceFormatType value) {
     switch (value)
     {
     case Core::Graphics::SurfaceFormatType::UNKNOWN:
-        return MakeStringSlice("UNKNOWN");
+        return MakeStringView("UNKNOWN");
     case Core::Graphics::SurfaceFormatType::A8:
-        return MakeStringSlice("A8");
+        return MakeStringView("A8");
     case Core::Graphics::SurfaceFormatType::D16:
-        return MakeStringSlice("D16");
+        return MakeStringView("D16");
     case Core::Graphics::SurfaceFormatType::D24S8:
-        return MakeStringSlice("D24S8");
+        return MakeStringView("D24S8");
     case Core::Graphics::SurfaceFormatType::D32:
-        return MakeStringSlice("D32");
+        return MakeStringView("D32");
     case Core::Graphics::SurfaceFormatType::DXN0:
-        return MakeStringSlice("DXN0");
+        return MakeStringView("DXN0");
     case Core::Graphics::SurfaceFormatType::DXT1:
-        return MakeStringSlice("DXT1");
+        return MakeStringView("DXT1");
     case Core::Graphics::SurfaceFormatType::DXT1_SRGB:
-        return MakeStringSlice("DXT1_SRGB");
+        return MakeStringView("DXT1_SRGB");
     case Core::Graphics::SurfaceFormatType::DXT3:
-        return MakeStringSlice("DXT3");
+        return MakeStringView("DXT3");
     case Core::Graphics::SurfaceFormatType::DXT3_SRGB:
-        return MakeStringSlice("DXT3_SRGB");
+        return MakeStringView("DXT3_SRGB");
     case Core::Graphics::SurfaceFormatType::DXT5:
-        return MakeStringSlice("DXT5");
+        return MakeStringView("DXT5");
     case Core::Graphics::SurfaceFormatType::DXT5_SRGB:
-        return MakeStringSlice("DXT5_SRGB");
+        return MakeStringView("DXT5_SRGB");
     case Core::Graphics::SurfaceFormatType::R5G5B5A1:
-        return MakeStringSlice("R5G5B5A1");
+        return MakeStringView("R5G5B5A1");
     case Core::Graphics::SurfaceFormatType::R5G6B5:
-        return MakeStringSlice("R5G6B5");
+        return MakeStringView("R5G6B5");
     case Core::Graphics::SurfaceFormatType::R8:
-        return MakeStringSlice("R8");
+        return MakeStringView("R8");
     case Core::Graphics::SurfaceFormatType::R8G8:
-        return MakeStringSlice("R8G8");
+        return MakeStringView("R8G8");
     case Core::Graphics::SurfaceFormatType::R8G8B8A8:
-        return MakeStringSlice("R8G8B8A8");
+        return MakeStringView("R8G8B8A8");
     case Core::Graphics::SurfaceFormatType::R8G8B8A8_SRGB:
-        return MakeStringSlice("R8G8B8A8_SRGB");
+        return MakeStringView("R8G8B8A8_SRGB");
     case Core::Graphics::SurfaceFormatType::B8G8R8A8:
-        return MakeStringSlice("B8G8R8A8");
+        return MakeStringView("B8G8R8A8");
     case Core::Graphics::SurfaceFormatType::B8G8R8A8_SRGB:
-        return MakeStringSlice("B8G8R8A8_SRGB");
+        return MakeStringView("B8G8R8A8_SRGB");
     case Core::Graphics::SurfaceFormatType::R10G10B10A2:
-        return MakeStringSlice("R10G10B10A2");
+        return MakeStringView("R10G10B10A2");
     case Core::Graphics::SurfaceFormatType::R11G11B10:
-        return MakeStringSlice("R11G11B10");
+        return MakeStringView("R11G11B10");
     case Core::Graphics::SurfaceFormatType::R16:
-        return MakeStringSlice("R16");
+        return MakeStringView("R16");
     case Core::Graphics::SurfaceFormatType::R16G16:
-        return MakeStringSlice("R16G16");
+        return MakeStringView("R16G16");
     case Core::Graphics::SurfaceFormatType::R16G16B16A16:
-        return MakeStringSlice("R16G16B16A16");
+        return MakeStringView("R16G16B16A16");
     case Core::Graphics::SurfaceFormatType::R16G16B16A16_F:
-        return MakeStringSlice("R16G16B16A16_F");
+        return MakeStringView("R16G16B16A16_F");
     case Core::Graphics::SurfaceFormatType::R16G16_F:
-        return MakeStringSlice("R16G16_F");
+        return MakeStringView("R16G16_F");
     case Core::Graphics::SurfaceFormatType::R16_F:
-        return MakeStringSlice("R16_F");
+        return MakeStringView("R16_F");
     case Core::Graphics::SurfaceFormatType::R32:
-        return MakeStringSlice("R32");
+        return MakeStringView("R32");
     case Core::Graphics::SurfaceFormatType::R32G32:
-        return MakeStringSlice("R32G32");
+        return MakeStringView("R32G32");
     case Core::Graphics::SurfaceFormatType::R32G32B32A32:
-        return MakeStringSlice("R32G32B32A32");
+        return MakeStringView("R32G32B32A32");
     case Core::Graphics::SurfaceFormatType::R32G32B32A32_F:
-        return MakeStringSlice("R32G32B32A32_F");
+        return MakeStringView("R32G32B32A32_F");
     case Core::Graphics::SurfaceFormatType::R32G32_F:
-        return MakeStringSlice("R32G32_F");
+        return MakeStringView("R32G32_F");
     case Core::Graphics::SurfaceFormatType::R32_F:
-        return MakeStringSlice("R32_F");
+        return MakeStringView("R32_F");
     default:
         AssertNotImplemented();
     }
-    return StringSlice();
+    return StringView();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

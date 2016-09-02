@@ -11,7 +11,7 @@ namespace Network {
 //----------------------------------------------------------------------------
 Address::Address() : _port(DefaultPort) {}
 //----------------------------------------------------------------------------
-Address::Address(const StringSlice& host, size_t port) : Address(ToString(host), port) {}
+Address::Address(const StringView& host, size_t port) : Address(ToString(host), port) {}
 //----------------------------------------------------------------------------
 Address::Address(String&& host, size_t port) : _host(std::move(host)), _port(port) {
     Assert(String::npos == _host.find_first_of(':'));
@@ -24,7 +24,7 @@ bool Address::IsIPv4() const {
     return ParseIPv4(ipV4, *this);
 }
 //----------------------------------------------------------------------------
-bool Address::IP(Address* paddr, const StringSlice& hostname, size_t port/* = DefaultPort */) {
+bool Address::IP(Address* paddr, const StringView& hostname, size_t port/* = DefaultPort */) {
     Assert(paddr);
     Assert(!hostname.empty());
 
@@ -45,7 +45,7 @@ bool Address::Localhost(Address* paddr, size_t port/* = DefaultPort */) {
     return true;
 }
 //----------------------------------------------------------------------------
-bool Address::Parse(Address* paddr, const StringSlice& input) {
+bool Address::Parse(Address* paddr, const StringView& input) {
     Assert(paddr);
     Assert(!input.empty());
 
@@ -54,7 +54,7 @@ bool Address::Parse(Address* paddr, const StringSlice& input) {
         return false;
 
     const size_t length = std::distance(input.rbegin(), it);
-    const StringSlice inputPort(std::addressof(*it), length);
+    const StringView inputPort(std::addressof(*it), length);
     Assert(!inputPort.empty());
 
     if (not Atoi(&paddr->_port, inputPort, 10))
@@ -78,7 +78,7 @@ bool Address::ParseIPv4(u8 (&ipV4)[4], const Address& addr) {
                 return false;
 
             i32 n;
-            if (not Atoi32(&n, MakeStringSlice(first, it), 10))
+            if (not Atoi32(&n, MakeStringView(first, it), 10))
                 return false;
 
             if (n < 0 || n > 255)

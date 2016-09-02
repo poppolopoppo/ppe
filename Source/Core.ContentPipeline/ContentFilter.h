@@ -8,7 +8,7 @@
 #include "Core/Container/Vector.h"
 #include "Core/IO/FS/Filename.h"
 #include "Core/IO/regexp.h"
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 
 namespace Core {
 namespace ContentPipeline {
@@ -20,7 +20,7 @@ class IContentFilter : public RTTI::MetaObject {
 public:
     virtual ~IContentFilter() {}
 
-    virtual bool Matches(const WStringSlice& sourceFilename) const = 0;
+    virtual bool Matches(const WStringView& sourceFilename) const = 0;
 
     RTTI_CLASS_HEADER(IContentFilter, RTTI::MetaObject);
 };
@@ -37,7 +37,7 @@ public:
     ContentFilterGlob(pattern_type&& pattern);
     virtual ~ContentFilterGlob();
 
-    virtual bool Matches(const WStringSlice& sourceFilename) const override;
+    virtual bool Matches(const WStringView& sourceFilename) const override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
     RTTI_CLASS_HEADER(ContentFilterGlob, IContentFilter);
@@ -58,7 +58,7 @@ public:
     ContentFilterGroup(group_type&& group);
     virtual ~ContentFilterGroup();
 
-    virtual bool Matches(const WStringSlice& sourceFilename) const override;
+    virtual bool Matches(const WStringView& sourceFilename) const override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
     RTTI_CLASS_HEADER(ContentFilterGroup, IContentFilter);
@@ -80,7 +80,7 @@ public:
     ContentFilterRegexp(string_type&& regexp);
     virtual ~ContentFilterRegexp();
 
-    virtual bool Matches(const WStringSlice& sourceFilename) const override;
+    virtual bool Matches(const WStringView& sourceFilename) const override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
     RTTI_CLASS_HEADER(ContentFilterRegexp, IContentFilter);

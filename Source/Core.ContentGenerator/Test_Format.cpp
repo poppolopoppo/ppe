@@ -2,7 +2,7 @@
 
 #include "Core/IO/Format.h"
 #include "Core/IO/String.h"
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 
 namespace Core {
 namespace ContentGenerator {

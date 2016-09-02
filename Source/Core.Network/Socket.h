@@ -103,9 +103,9 @@ private:
 //----------------------------------------------------------------------------
 bool LocalHostName(String& hostname);
 //----------------------------------------------------------------------------
-bool HostnameToIP(String& ip, const StringSlice& hostname, size_t n = 0);
+bool HostnameToIP(String& ip, const StringView& hostname, size_t n = 0);
 //----------------------------------------------------------------------------
-bool IPToHostname(String& hostname, const StringSlice& ip);
+bool IPToHostname(String& hostname, const StringView& ip);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

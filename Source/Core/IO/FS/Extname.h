@@ -3,7 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/IO/FS/FileSystemToken.h"
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -16,8 +16,8 @@ public:
     Extname() {}
     ~Extname() {}
 
-    Extname(const FileSystem::StringSlice& content);
-    Extname& operator =(const FileSystem::StringSlice& content);
+    Extname(const FileSystem::StringView& content);
+    Extname& operator =(const FileSystem::StringView& content);
 
     template <typename _CharTraits, typename _Allocator>
     Extname(const std::basic_string<typename FileSystem::char_type, _CharTraits, _Allocator>& content)

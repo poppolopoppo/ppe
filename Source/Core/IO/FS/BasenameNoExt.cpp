@@ -6,10 +6,10 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-BasenameNoExt::BasenameNoExt(const FileSystem::StringSlice& content)
+BasenameNoExt::BasenameNoExt(const FileSystem::StringView& content)
 :   parent_type(content) {}
 //----------------------------------------------------------------------------
-BasenameNoExt& BasenameNoExt::operator =(const FileSystem::StringSlice& content) {
+BasenameNoExt& BasenameNoExt::operator =(const FileSystem::StringView& content) {
     parent_type::operator =(content);
     return *this;
 }

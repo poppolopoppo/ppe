@@ -164,7 +164,7 @@ bool Collada::ImportMaterials(Array<PGenericMaterial>& materials) const {
             return;
         }
 
-        const StringSlice effect_source = (*instance_effect)[DAE::Url];
+        const StringView effect_source = (*instance_effect)[DAE::Url];
         if (effect_source.empty()) {
             succeed = false;
             return;
@@ -271,7 +271,7 @@ bool Collada::Load(Collada* pdst, const Filename& filename) {
     return XML::Document::Load(pdst->_xml.get(), filename);
 }
 //----------------------------------------------------------------------------
-bool Collada::Load(Collada* pdst, const Filename& filename, const StringSlice& content) {
+bool Collada::Load(Collada* pdst, const Filename& filename, const StringView& content) {
     Assert(filename.Extname() == FileSystemConstNames::DaeExt());
 
     pdst->_xml = new XML::Document();

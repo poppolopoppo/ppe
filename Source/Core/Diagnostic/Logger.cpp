@@ -61,7 +61,7 @@ const wchar_t* LogCategoryToWCStr(LogCategory category) {
 
 #include "IO/Stream.h"
 #include "IO/String.h"
-#include "IO/StringSlice.h"
+#include "IO/StringView.h"
 #include "Thread/AtomicSpinLock.h"
 
 #include <iostream>
@@ -79,10 +79,10 @@ namespace {
 //----------------------------------------------------------------------------
 class BasicLogger_ : public ILogger {
 public:
-    BasicLogger_(const WStringSlice& prefix) : _prefix(prefix) {}
+    BasicLogger_(const WStringView& prefix) : _prefix(prefix) {}
 
     // Used before main, no dependencies on allocators
-    virtual void Log(LogCategory category, const WStringSlice& text, const FormatArgListW& args) override {
+    virtual void Log(LogCategory category, const WStringView& text, const FormatArgListW& args) override {
         wchar_t buffer[2048];
         WOCStrStream oss(buffer);
         if (LogCategory::Callstack != category &&
@@ -98,7 +98,7 @@ public:
     }
 
 private:
-    WStringSlice _prefix;
+    WStringView _prefix;
 };
 static const BasicLogger_ gLoggerBeforeMain (L"BEFORE_MAIN");
 static const BasicLogger_ gLoggerAfterMain  (L"AFTER_MAIN");
@@ -114,14 +114,14 @@ ILogger* SetLoggerImpl(ILogger* logger) { // return previous handler
     return gLoggerCurrentImpl.exchange(logger);
 }
 //----------------------------------------------------------------------------
-void Log(LogCategory category, const WStringSlice& text) {
+void Log(LogCategory category, const WStringView& text) {
     Assert(text.size());
     Assert('\0' == text.data()[text.size()]); // text must be null terminated !
     const AtomicSpinLock::Scope scopeLock(gLoggerSpinLock);
     gLoggerCurrentImpl.load()->Log(category, text, FormatArgListW());
 }
 //----------------------------------------------------------------------------
-void LogArgs(LogCategory category, const WStringSlice& format, const FormatArgListW& args) {
+void LogArgs(LogCategory category, const WStringView& format, const FormatArgListW& args) {
     Assert(format.size());
     Assert('\0' == format.data()[format.size()]); // text must be null terminated !
     const AtomicSpinLock::Scope scopeLock(gLoggerSpinLock);
@@ -130,7 +130,7 @@ void LogArgs(LogCategory category, const WStringSlice& format, const FormatArgLi
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void OutputDebugLogger::Log(LogCategory category, const WStringSlice& text, const FormatArgListW& args) {
+void OutputDebugLogger::Log(LogCategory category, const WStringView& text, const FormatArgListW& args) {
     ThreadLocalWOStringStream oss;
 
 #if 0
@@ -154,7 +154,7 @@ void OutputDebugLogger::Log(LogCategory category, const WStringSlice& text, cons
     OutputDebugStringW(oss.str().c_str());
 }
 //----------------------------------------------------------------------------
-void StdcoutLogger::Log(LogCategory category, const WStringSlice& text, const FormatArgListW& args) {
+void StdcoutLogger::Log(LogCategory category, const WStringView& text, const FormatArgListW& args) {
     if (LogCategory::Callstack != category)
         Format(std::wcout, L"[{0:12f}][{1}]", CurrentProcess::ElapsedSeconds(), category);
 
@@ -166,7 +166,7 @@ void StdcoutLogger::Log(LogCategory category, const WStringSlice& text, const Fo
     std::wcout << std::endl;
 }
 //----------------------------------------------------------------------------
-void StderrLogger::Log(LogCategory category, const WStringSlice& text, const FormatArgListW& args) {
+void StderrLogger::Log(LogCategory category, const WStringView& text, const FormatArgListW& args) {
     if (LogCategory::Callstack != category)
         Format(std::wcerr, L"[{0:12f}][{1}]", CurrentProcess::ElapsedSeconds(), category);
 

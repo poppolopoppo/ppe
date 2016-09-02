@@ -52,27 +52,27 @@ STATIC_ASSERT(std::is_same<MessageResult COMMA LRESULT>::value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-StringSlice WindowMessageToCStr(WindowMessage msg) {
+StringView WindowMessageToCStr(WindowMessage msg) {
     switch (msg)
     {
-    case WindowMessage::Show: return MakeStringSlice("Show");
-    case WindowMessage::KeyDown: return MakeStringSlice("KeyDown");
-    case WindowMessage::KeyUp: return MakeStringSlice("KeyUp");
-    case WindowMessage::MouseMove: return MakeStringSlice("MouseMove");
-    case WindowMessage::LButtonDown: return MakeStringSlice("LButtonDown");
-    case WindowMessage::LButtonUp: return MakeStringSlice("LButtonUp");
-    case WindowMessage::LButtonDblClick: return MakeStringSlice("LButtonDblClick");
-    case WindowMessage::RButtonDown: return MakeStringSlice("RButtonDown");
-    case WindowMessage::RButtonUp: return MakeStringSlice("RButtonUp");
-    case WindowMessage::RButtonDblClick: return MakeStringSlice("RButtonDblClick");
-    case WindowMessage::MButtonDown: return MakeStringSlice("MButtonDown");
-    case WindowMessage::MButtonUp: return MakeStringSlice("MButtonUp");
-    case WindowMessage::MButtonDblClick: return MakeStringSlice("MButtonDblClick");
-    case WindowMessage::MouseWheel: return MakeStringSlice("MouseWheel");
-    case WindowMessage::MouseHover: return MakeStringSlice("MouseHover");
-    case WindowMessage::MouseLeave: return MakeStringSlice("MouseLeave");
+    case WindowMessage::Show: return MakeStringView("Show");
+    case WindowMessage::KeyDown: return MakeStringView("KeyDown");
+    case WindowMessage::KeyUp: return MakeStringView("KeyUp");
+    case WindowMessage::MouseMove: return MakeStringView("MouseMove");
+    case WindowMessage::LButtonDown: return MakeStringView("LButtonDown");
+    case WindowMessage::LButtonUp: return MakeStringView("LButtonUp");
+    case WindowMessage::LButtonDblClick: return MakeStringView("LButtonDblClick");
+    case WindowMessage::RButtonDown: return MakeStringView("RButtonDown");
+    case WindowMessage::RButtonUp: return MakeStringView("RButtonUp");
+    case WindowMessage::RButtonDblClick: return MakeStringView("RButtonDblClick");
+    case WindowMessage::MButtonDown: return MakeStringView("MButtonDown");
+    case WindowMessage::MButtonUp: return MakeStringView("MButtonUp");
+    case WindowMessage::MButtonDblClick: return MakeStringView("MButtonDblClick");
+    case WindowMessage::MouseWheel: return MakeStringView("MouseWheel");
+    case WindowMessage::MouseHover: return MakeStringView("MouseHover");
+    case WindowMessage::MouseLeave: return MakeStringView("MouseLeave");
     default:
-        return MakeStringSlice("@Unknown");
+        return MakeStringView("@Unknown");
     }
 }
 //----------------------------------------------------------------------------

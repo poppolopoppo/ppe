@@ -49,12 +49,12 @@ void DeviceResource::Unfreeze() {
     UnfreezeImpl();
 }
 //----------------------------------------------------------------------------
-StringSlice DeviceResource::ResourceName() const {
+StringView DeviceResource::ResourceName() const {
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
     THIS_THREADRESOURCE_CHECKACCESS();
-    return MakeStringSlice(_resourceName);
+    return MakeStringView(_resourceName);
 #else
-    return StringSlice();
+    return StringView();
 #endif
 }
 //----------------------------------------------------------------------------
@@ -69,7 +69,7 @@ void DeviceResource::SetResourceName(const char *name) {
 #endif
 }
 //----------------------------------------------------------------------------
-void DeviceResource::SetResourceName(const StringSlice& name) {
+void DeviceResource::SetResourceName(const StringView& name) {
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
     Assert(!Frozen());
     THIS_THREADRESOURCE_CHECKACCESS();

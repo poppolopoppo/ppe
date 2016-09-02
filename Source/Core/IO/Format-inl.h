@@ -44,8 +44,8 @@ struct _FormatFunctor {
     }
 };
 //----------------------------------------------------------------------------
-void _FormatArgs(std::basic_ostream<char>& oss, const StringSlice& format, const MemoryView<const _FormatFunctor<char>>& args);
-void _FormatArgs(std::basic_ostream<wchar_t>& oss, const WStringSlice& format, const MemoryView<const _FormatFunctor<wchar_t>>& args);
+void _FormatArgs(std::basic_ostream<char>& oss, const StringView& format, const MemoryView<const _FormatFunctor<char>>& args);
+void _FormatArgs(std::basic_ostream<wchar_t>& oss, const WStringView& format, const MemoryView<const _FormatFunctor<wchar_t>>& args);
 //----------------------------------------------------------------------------
 } //!namespace details
 //----------------------------------------------------------------------------
@@ -57,12 +57,12 @@ typedef BasicFormatArgList<char>    FormatArgList;
 typedef BasicFormatArgList<wchar_t> FormatArgListW;
 //----------------------------------------------------------------------------
 template <typename _Char>
-void FormatArgs(std::basic_ostream<_Char>& oss, const BasicStringSlice<_Char>& format, const BasicFormatArgList<_Char>& args) {
+void FormatArgs(std::basic_ostream<_Char>& oss, const BasicStringView<_Char>& format, const BasicFormatArgList<_Char>& args) {
     details::_FormatArgs(oss, format, args);
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits, typename _Arg0, typename... _Args>
-void Format(std::basic_ostream<_Char, _Traits>& oss, const BasicStringSlice<_Char>& format, _Arg0&& arg0, _Args&&... args) {
+void Format(std::basic_ostream<_Char, _Traits>& oss, const BasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
     // args are always passed by pointer, wrapped in a void *
     // this avoids unintended copies and decorrelates from actual types (_FormatArgs is defined in Format.cpp)
     const details::_FormatFunctor<_Char, _Traits> functors[] = {
@@ -74,7 +74,7 @@ void Format(std::basic_ostream<_Char, _Traits>& oss, const BasicStringSlice<_Cha
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Arg0, typename... _Args>
-size_t Format(_Char* result, size_t capacity, const BasicStringSlice<_Char>& format, _Arg0&& arg0, _Args&&... args) {
+size_t Format(_Char* result, size_t capacity, const BasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
     Assert(result);
     Assert(capacity);
 
@@ -86,7 +86,7 @@ size_t Format(_Char* result, size_t capacity, const BasicStringSlice<_Char>& for
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits, typename _Arg0, typename... _Args>
-void Format(BasicString<_Char, _Traits>& result, const BasicStringSlice<_Char>& format, _Arg0&& arg0, _Args&&... args) {
+void Format(BasicString<_Char, _Traits>& result, const BasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
     STACKLOCAL_BASICOCSTRSTREAM(_Char, oss, 2048);
     Format(oss, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
     result.assign(oss.Pointer(), checked_cast<size_t>(oss.size()) );

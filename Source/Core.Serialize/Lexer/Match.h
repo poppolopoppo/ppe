@@ -35,7 +35,7 @@ public:
 
     size_t Offset() const { return _offset; }
 
-    StringSlice MakeView() const { return MakeStringSlice(_value); }
+    StringView MakeView() const { return MakeStringView(_value); }
 
     bool Valid() const { return symbol_type::Invalid != _symbol->Type(); }
 

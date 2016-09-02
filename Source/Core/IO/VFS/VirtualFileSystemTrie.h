@@ -34,7 +34,7 @@ public:
     bool FileStats(FileStat* pstat, const Filename& filename) const;
 
     size_t EnumerateFiles(const Dirpath& dirpath, bool recursive, const std::function<void(const Filename&)>& foreach) const;
-    size_t GlobFiles(const Dirpath& dirpath, const WStringSlice& pattern, bool recursive, const std::function<void(const Filename&)>& foreach) const;
+    size_t GlobFiles(const Dirpath& dirpath, const WStringView& pattern, bool recursive, const std::function<void(const Filename&)>& foreach) const;
 
     bool TryCreateDirectory(const Dirpath& dirpath) const;
 

@@ -37,7 +37,7 @@ public:
     static const Extname& Ext;
 
     static bool Load(Collada* pdst, const Filename& filename);
-    static bool Load(Collada* pdst, const Filename& filename, const StringSlice& content);
+    static bool Load(Collada* pdst, const Filename& filename, const StringView& content);
 
     static void Start();
     static void Shutdown();

@@ -41,16 +41,16 @@ static bool NormalizePath_(size_t* plength, const MemoryView<Dirname>& dirnames)
     return true;
 }
 //----------------------------------------------------------------------------
-static const FileSystemNode *ParseDirpath_(const FileSystem::StringSlice& str) {
+static const FileSystemNode *ParseDirpath_(const FileSystem::StringView& str) {
     if (str.empty())
         return nullptr;
 
     STACKLOCAL_POD_STACK(FileSystemToken, path, Dirpath::MaxDepth);
 
-    const FileSystem::StringSlice separators = FileSystem::Separators();
+    const FileSystem::StringView separators = FileSystem::Separators();
 
-    FileSystem::StringSlice src = str;
-    FileSystem::StringSlice slice;
+    FileSystem::StringView src = str;
+    FileSystem::StringView slice;
     while (Split(src, separators, slice)) {
         if (not slice.empty()) // ex: "toto//file.ext" -> 1 empty slice at "//"
             path.Push(slice);
@@ -114,11 +114,11 @@ Dirpath::Dirpath(const Dirpath& other, const MemoryView<const Dirname>& append) 
     _path = FileSystemPath::Instance().Concat(other._path, append.Cast<const FileSystemToken>());
 }
 //----------------------------------------------------------------------------
-Dirpath::Dirpath(const FileSystem::StringSlice& content) {
+Dirpath::Dirpath(const FileSystem::StringView& content) {
     _path = ParseDirpath_(content);
 }
 //----------------------------------------------------------------------------
-Dirpath& Dirpath::operator =(const FileSystem::StringSlice& content) {
+Dirpath& Dirpath::operator =(const FileSystem::StringView& content) {
     _path = ParseDirpath_(content);
     return *this;
 }
@@ -210,10 +210,10 @@ void Dirpath::Concat(const MemoryView<const FileSystem::char_type>& strview) {
 
     FileSystemTrie& trie = FileSystemPath::Instance();
 
-    const BasicStringSlice<FileSystem::char_type> separators = FileSystem::Separators();
+    const BasicStringView<FileSystem::char_type> separators = FileSystem::Separators();
 
-    BasicStringSlice<FileSystem::char_type> src(strview);
-    BasicStringSlice<FileSystem::char_type> slice;
+    BasicStringView<FileSystem::char_type> src(strview);
+    BasicStringView<FileSystem::char_type> slice;
     while (Split(src, separators, slice))
         _path = trie.Concat(_path, FileSystemToken(slice) );
 }

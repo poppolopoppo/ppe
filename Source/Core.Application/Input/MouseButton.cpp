@@ -7,24 +7,24 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-StringSlice MouseButtonToCStr(MouseButton value) {
+StringView MouseButtonToCStr(MouseButton value) {
     switch (value)
     {
     case Core::Application::MouseButton::Button0:
-        return MakeStringSlice("Button0");
+        return MakeStringView("Button0");
     case Core::Application::MouseButton::Button1:
-        return MakeStringSlice("Button1");
+        return MakeStringView("Button1");
     case Core::Application::MouseButton::Button2:
-        return MakeStringSlice("Button2");
+        return MakeStringView("Button2");
     case Core::Application::MouseButton::Wheel:
-        return MakeStringSlice("Wheel");
+        return MakeStringView("Wheel");
     case Core::Application::MouseButton::Thumb0:
-        return MakeStringSlice("Thumb0");
+        return MakeStringView("Thumb0");
     case Core::Application::MouseButton::Thumb1:
-        return MakeStringSlice("Thumb1");
+        return MakeStringView("Thumb1");
     }
     AssertNotImplemented();
-    return StringSlice();
+    return StringView();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -5,7 +5,7 @@
 #include "Core/Container/StringHashSet.h"
 
 #include "Core/Diagnostic/Profiling.h"
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 #include "Core/Maths/Maths.h"
 #include "Core/Memory/MemoryStream.h"
 #include "Core/Time/TimedScope.h"
@@ -466,18 +466,18 @@ void Test_Containers() {
             char buffer[2048];
             std::streamsize len = 0;
             while (0 < (len = iss.ReadLine(buffer))) {
-                const StringSlice line(buffer, checked_cast<size_t>(len));
-                const StringSlice word = Chomp(line);
+                const StringView line(buffer, checked_cast<size_t>(len));
+                const StringView word = Chomp(line);
                 words.emplace_back(ToString(word));
             }
         }
 
         //words.resize((UINT16_MAX*80)/100);
 
-        VECTOR_THREAD_LOCAL(Container, StringSlice) all;
+        VECTOR_THREAD_LOCAL(Container, StringView) all;
         all.reserve(words.size());
         for (const String& word : words)
-            all.emplace_back(MakeStringSlice(word));
+            all.emplace_back(MakeStringView(word));
         std::random_shuffle(all.begin(), all.end());
 
         const size_t k = (all.size() * 80) / 100;
@@ -485,7 +485,7 @@ void Test_Containers() {
         const auto input = all.MakeConstView().CutBefore(k);
         const auto negative = all.MakeConstView().CutStartingAt(k);
 
-        VECTOR_THREAD_LOCAL(Container, StringSlice) search(input);
+        VECTOR_THREAD_LOCAL(Container, StringView) search(input);
         std::random_shuffle(search.begin(), search.end());
 
 #ifdef WITH_CORE_ASSERT
@@ -502,7 +502,7 @@ void Test_Containers() {
             {
                 const BenchmarkScope bench("BurstTrie construction");
                 PROFILING_SCOPE(Global, 1, "BurstTrie construction");
-                for (const StringSlice& word : input)
+                for (const StringView& word : input)
                     set.Insert_AssertUnique(word);
             }
             {
@@ -514,7 +514,7 @@ void Test_Containers() {
                 const BenchmarkScope bench("BurstTrie search");
                 PROFILING_SCOPE(Global, 2, "BurstTrie search");
                 forrange(i, 0, loops) {
-                    for (const StringSlice& word : search)
+                    for (const StringView& word : search)
                         if (not set.Contains(word))
                             AssertNotReached();
                 }
@@ -528,7 +528,7 @@ void Test_Containers() {
             {
                 const BenchmarkScope bench("BulkTrie construction");
                 PROFILING_SCOPE(Global, 3, "BulkTrie construction");
-                for (const StringSlice& word : input)
+                for (const StringView& word : input)
                     set.Insert_AssertUnique(word);
             }
 
@@ -536,7 +536,7 @@ void Test_Containers() {
                 const BenchmarkScope bench("BulkTrie search");
                 PROFILING_SCOPE(Global, 4, "BulkTrie search");
                 forrange(i, 0, loops) {
-                    for (const StringSlice& word : search)
+                    for (const StringView& word : search)
                         if (not set.Contains(word))
                             AssertNotReached();
                     }
@@ -547,9 +547,9 @@ void Test_Containers() {
             const BenchmarkScope bench("CompactHashSet");
 
             typedef CompactHashSet<
-                StringSlice,
-                StringSliceHasher<char, Case::Sensitive>,
-                StringSliceEqualTo<char, Case::Sensitive>
+                StringView,
+                StringViewHasher<char, Case::Sensitive>,
+                StringViewEqualTo<char, Case::Sensitive>
             >   hashtable_type;
 
 
@@ -558,7 +558,7 @@ void Test_Containers() {
                 const BenchmarkScope subbench("CompactHashSet construction");
                 PROFILING_SCOPE(Global, 3, "CompactHashSet construction");
                 set.resize(input.size());
-                for (const StringSlice& word : input)
+                for (const StringView& word : input)
                     set.insert(word);
             }
             Assert(set.size() == input.size());
@@ -566,7 +566,7 @@ void Test_Containers() {
                 const BenchmarkScope subbench("CompactHashSet search");
                 PROFILING_SCOPE(Global, 4, "CompactHashSet search");
                 forrange(i, 0, loops) {
-                    for (const StringSlice& word : search)
+                    for (const StringView& word : search)
                         if (nullptr == set.find(word))
                             AssertNotReached();
                     }
@@ -575,7 +575,7 @@ void Test_Containers() {
                 const BenchmarkScope subbench("CompactHashSet negative search");
                 PROFILING_SCOPE(Global, 4, "CompactHashSet negative search");
                 forrange(i, 0, loops) {
-                    for (const StringSlice& word : negative)
+                    for (const StringView& word : negative)
                         if (nullptr != set.find(word))
                             AssertNotReached();
                     }
@@ -586,9 +586,9 @@ void Test_Containers() {
             const BenchmarkScope bench("HashTable");
 
             typedef HashTable<
-                StringSlice, void,
-                StringSliceHasher<char, Case::Sensitive>,
-                StringSliceEqualTo<char, Case::Sensitive>
+                StringView, void,
+                StringViewHasher<char, Case::Sensitive>,
+                StringViewEqualTo<char, Case::Sensitive>
             >   hashtable_type;
 
 
@@ -598,7 +598,7 @@ void Test_Containers() {
                 PROFILING_SCOPE(Global, 3, "HashTable construction");
                 set.reserve(input.size());
                 size_t count = 0;
-                for (const StringSlice& word : input) {
+                for (const StringView& word : input) {
                     set.insert(word);
                     count++;
                     Assert(set.size() == count);
@@ -618,7 +618,7 @@ void Test_Containers() {
                 const BenchmarkScope subbench("HashTable search");
                 PROFILING_SCOPE(Global, 4, "HashTable search");
                 forrange(i, 0, loops) {
-                    for (const StringSlice& word : search)
+                    for (const StringView& word : search)
                         if (set.end() == set.find(word))
                             AssertNotReached();
                     }
@@ -627,7 +627,7 @@ void Test_Containers() {
                 const BenchmarkScope subbench("HashTable negative search");
                 PROFILING_SCOPE(Global, 4, "HashTable negative search");
                 forrange(i, 0, loops) {
-                    for (const StringSlice& word : negative)
+                    for (const StringView& word : negative)
                         if (set.end() != set.find(word))
                             AssertNotReached();
                     }
@@ -637,12 +637,12 @@ void Test_Containers() {
             LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
             const BenchmarkScope bench("HashSet");
 
-            STRINGSLICE_HASHSET(Container, Case::Sensitive) set;
+            STRINGVIEW_HASHSET(Container, Case::Sensitive) set;
             {
                 const BenchmarkScope subbench("HashSet construction");
                 PROFILING_SCOPE(Global, 3, "HashSet construction");
                 set.reserve(input.size());
-                for (const StringSlice& word : input)
+                for (const StringView& word : input)
                     set.insert(word);
             }
             Assert(set.size() == input.size());
@@ -650,7 +650,7 @@ void Test_Containers() {
                 const BenchmarkScope subbench("HashSet search");
                 PROFILING_SCOPE(Global, 4, "HashSet search");
                 forrange(i, 0, loops) {
-                    for (const StringSlice& word : search)
+                    for (const StringView& word : search)
                         if (set.end() == set.find(word))
                             AssertNotReached();
                     }
@@ -659,7 +659,7 @@ void Test_Containers() {
                 const BenchmarkScope subbench("HashSet negative search");
                 PROFILING_SCOPE(Global, 4, "HashSet negative search");
                 forrange(i, 0, loops) {
-                    for (const StringSlice& word : negative)
+                    for (const StringView& word : negative)
                         if (set.end() != set.find(word))
                             AssertNotReached();
                     }

@@ -5,7 +5,7 @@
 #include "Core/Allocator/Allocation.h"
 #include "Core/Container/HashSet.h"
 #include "Core/Container/Stack.h"
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 
 #include <iosfwd>
 #include <mutex>
@@ -51,7 +51,7 @@ public:
 };
 //----------------------------------------------------------------------------
 template <typename _Char, typename _TokenTraits = TokenTraits<_Char> >
-bool ValidateToken(const BasicStringSlice<_Char>& content);
+bool ValidateToken(const BasicStringView<_Char>& content);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -63,31 +63,31 @@ struct TokenData {
     size_t size() const { return Ptr ? Ptr[-1] : 0; }
     bool empty() const { return Ptr == nullptr; }
 
-    BasicStringSlice<_Char> MakeView() const {
+    BasicStringView<_Char> MakeView() const {
         return (nullptr != Ptr)
-            ? BasicStringSlice<_Char>(Ptr, Ptr[-1])
-            : BasicStringSlice<_Char>();
+            ? BasicStringView<_Char>(Ptr, Ptr[-1])
+            : BasicStringView<_Char>();
     }
 };
 //----------------------------------------------------------------------------
 template <typename _Char, Case _Sensitive>
-struct TokenDataEqualTo : StringSliceEqualTo<_Char, _Sensitive> {
+struct TokenDataEqualTo : StringViewEqualTo<_Char, _Sensitive> {
     bool operator ()(const TokenData<_Char>& lhs, const TokenData<_Char>& rhs) const {
-        return StringSliceEqualTo<_Char, _Sensitive>::operator ()(lhs.MakeView(), rhs.MakeView());
+        return StringViewEqualTo<_Char, _Sensitive>::operator ()(lhs.MakeView(), rhs.MakeView());
     }
 };
 //----------------------------------------------------------------------------
 template <typename _Char, Case _Sensitive>
-struct TokenDataLess : StringSliceLess<_Char, _Sensitive> {
+struct TokenDataLess : StringViewLess<_Char, _Sensitive> {
     bool operator ()(const TokenData<_Char>& lhs, const TokenData<_Char>& rhs) const {
-        return StringSliceLess<_Char, _Sensitive>::operator ()(lhs.MakeView(), rhs.MakeView());
+        return StringViewLess<_Char, _Sensitive>::operator ()(lhs.MakeView(), rhs.MakeView());
     }
 };
 //----------------------------------------------------------------------------
 template <typename _Char, Case _Sensitive>
-struct TokenDataHasher : StringSliceHasher<_Char, _Sensitive> {
+struct TokenDataHasher : StringViewHasher<_Char, _Sensitive> {
     size_t operator ()(const TokenData<_Char>& data) const {
-        return StringSliceHasher<_Char, _Sensitive>::operator ()(data.MakeView());
+        return StringViewHasher<_Char, _Sensitive>::operator ()(data.MakeView());
     }
 };
 //----------------------------------------------------------------------------
@@ -126,7 +126,7 @@ public:
     Token(const _Char* content);
     Token& operator =(const _Char* content);
 
-    Token(const BasicStringSlice<_Char>& content);
+    Token(const BasicStringView<_Char>& content);
     Token(const _Char* content, size_t length);
 
     template <typename _CharTraits, typename _Allocator>
@@ -141,7 +141,7 @@ public:
 
     const _Char* c_str() const { return _data.c_str(); }
     const _Char* data() const { return _data.c_str(); }
-    BasicStringSlice<_Char> MakeView() const { return _data.MakeView(); }
+    BasicStringView<_Char> MakeView() const { return _data.MakeView(); }
 
     size_t HashValue() const;
 
@@ -151,16 +151,16 @@ public:
     bool Less(const Token& other) const;
 
     bool Equals(const _Char *cstr) const;
-    bool Equals(const BasicStringSlice<_Char>& slice) const;
+    bool Equals(const BasicStringView<_Char>& slice) const;
 
     template <size_t _Dim>
     bool Equals(const _Char (&array)[_Dim]) const {
-        return Equals(MakeStringSlice(array));
+        return Equals(MakeStringView(array));
     }
 
     friend void swap(Token& lhs, Token& rhs) { lhs.Swap(rhs); }
     friend hash_t hash_value(const Token& token) { return token.HashValue(); }
-    friend BasicStringSlice<const _Char> MakeStringSlice(const Token& token) { return token.MakeView(); }
+    friend BasicStringView<const _Char> MakeStringView(const Token& token) { return token.MakeView(); }
 
     friend bool operator ==(const Token& lhs, const Token& rhs) { return lhs.Equals(rhs); }
     friend bool operator !=(const Token& lhs, const Token& rhs) { return !operator ==(lhs, rhs); }
@@ -174,11 +174,11 @@ public:
     friend bool operator ==(const _Char* lhs, const Token& rhs) { return rhs.Equals(lhs); }
     friend bool operator !=(const _Char* lhs, const Token& rhs) { return !operator ==(lhs, rhs); }
 
-    friend bool operator ==(const Token& lhs, const BasicStringSlice<_Char>& rhs) { return lhs.Equals(rhs); }
-    friend bool operator !=(const Token& lhs, const BasicStringSlice<_Char>& rhs) { return !operator ==(lhs, rhs); }
+    friend bool operator ==(const Token& lhs, const BasicStringView<_Char>& rhs) { return lhs.Equals(rhs); }
+    friend bool operator !=(const Token& lhs, const BasicStringView<_Char>& rhs) { return !operator ==(lhs, rhs); }
 
-    friend bool operator ==(const BasicStringSlice<_Char>& lhs, const Token& rhs) { return rhs.Equals(lhs); }
-    friend bool operator !=(const BasicStringSlice<_Char>& lhs, const Token& rhs) { return !operator ==(lhs, rhs); }
+    friend bool operator ==(const BasicStringView<_Char>& lhs, const Token& rhs) { return rhs.Equals(lhs); }
+    friend bool operator !=(const BasicStringView<_Char>& lhs, const Token& rhs) { return !operator ==(lhs, rhs); }
 
     static void Start(size_t capacity);
     static void Clear();
@@ -245,22 +245,22 @@ public:
     void reserve(size_t capacity) { _set.reserve(capacity); }
 
     template <typename _TokenTraits = TokenTraits<_Char> >
-    TokenData<_Char> GetOrCreate(const BasicStringSlice<_Char>& content);
+    TokenData<_Char> GetOrCreate(const BasicStringView<_Char>& content);
     template <typename _TokenTraits = TokenTraits<_Char> >
     TokenData<_Char> GetOrCreate(const _Char *content, size_t length);
     template <typename _TokenTraits = TokenTraits<_Char> >
     TokenData<_Char> GetOrCreate(const _Char *content);
 
     template <typename _TokenTraits = TokenTraits<_Char> >
-    static bool Validate(const BasicStringSlice<_Char>& content);
+    static bool Validate(const BasicStringView<_Char>& content);
 
     void Clear();
 
 private:
     typedef std::unordered_set<
-        BasicStringSlice<_Char>,
-        StringSliceHasher<_Char, _Sensitive>,
-        StringSliceEqualTo<_Char, _Sensitive>,
+        BasicStringView<_Char>,
+        StringViewHasher<_Char, _Sensitive>,
+        StringViewEqualTo<_Char, _Sensitive>,
         typename _Allocator::template rebind< TokenData<_Char> >::other
     >   set_type;
 
@@ -289,7 +289,7 @@ public:
     size_t size() const;
 
     template <typename _TokenTraits = TokenTraits<_Char> >
-    TokenData<_Char> GetOrCreate(const BasicStringSlice<_Char>& content);
+    TokenData<_Char> GetOrCreate(const BasicStringView<_Char>& content);
     template <typename _TokenTraits = TokenTraits<_Char> >
     TokenData<_Char> GetOrCreate(const _Char *content, size_t length);
     template <typename _TokenTraits = TokenTraits<_Char> >
@@ -299,7 +299,7 @@ public:
 
     // slot hash function : tells in which slot goes content
     template <typename _TokenTraits = TokenTraits<_Char> >
-    size_t SlotHash(const BasicStringSlice<_Char>& content);
+    size_t SlotHash(const BasicStringView<_Char>& content);
 
 private:
     // to diminish lock contention

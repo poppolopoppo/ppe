@@ -6,7 +6,7 @@
 #include "IO/Format.h"
 #include "IO/FormatHelpers.h"
 #include "IO/Stream.h"
-#include "IO/StringSlice.h"
+#include "IO/StringView.h"
 #include "Memory/UniqueView.h"
 #include "Meta/OneTimeInitialize.h"
 
@@ -164,8 +164,8 @@ static bool LessTrackingData_(const MemoryTrackingData& lhs, const MemoryTrackin
     Assert(lhs.Name());
     Assert(rhs.Name());
     return (lhs.Name() != rhs.Name()) &&
-        CompareI(   MakeStringSlice(lhs.Name(), Meta::noinit_tag()),
-                    MakeStringSlice(rhs.Name(), Meta::noinit_tag()) ) < 0;
+        CompareI(   MakeStringView(lhs.Name(), Meta::noinit_tag()),
+                    MakeStringView(rhs.Name(), Meta::noinit_tag()) ) < 0;
 }
 //----------------------------------------------------------------------------
 void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,

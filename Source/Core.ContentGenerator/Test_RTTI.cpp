@@ -3,7 +3,7 @@
 #include "Core/Container/RawStorage.h"
 #include "Core/Container/Vector.h"
 #include "Core/IO/FileSystem.h"
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 #include "Core/IO/VirtualFileSystem.h"
 #include "Core/Maths/Maths.h"
 #include "Core/Maths/RandomGenerator.h"
@@ -292,7 +292,7 @@ private:
         STACKLOCAL_POD_ARRAY(RTTI::Name::char_type, cstr, count);
         forrange(i, 0, count)
             cstr[i] = (char)(_rand.Next('a'+0, 'z'+1));
-        name = RTTI::Name(MakeStringSlice(cstr));
+        name = RTTI::Name(MakeStringView(cstr));
     }
 
     void Randomize_(RTTI::BinaryData& rawdata) {
@@ -456,9 +456,9 @@ void Test_RTTI() {
             char buffer[1024];
             std::cin.getline(buffer, lengthof(buffer));
 
-            const StringSlice line = MakeStringSlice(buffer, Meta::noinit_tag());
+            const StringView line = MakeStringView(buffer, Meta::noinit_tag());
 
-            if (0 == CompareI(MakeStringSlice("exit"), line))
+            if (0 == CompareI(MakeStringView("exit"), line))
                 break;
 
             const wchar_t filename[] = L"@in_memory";

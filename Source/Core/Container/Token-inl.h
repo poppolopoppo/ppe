@@ -7,7 +7,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char, typename _TokenTraits>
-bool ValidateToken(const BasicStringSlice<_Char>& content) {
+bool ValidateToken(const BasicStringView<_Char>& content) {
     if (content.empty())
         return false;
 
@@ -32,7 +32,7 @@ auto Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::operator =(const 
 }
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator >
-Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::Token(const BasicStringSlice<_Char>& content)
+Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::Token(const BasicStringView<_Char>& content)
 :   _data(factory_type::Instance().template GetOrCreate<_TokenTraits>(content)) {}
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator >
@@ -72,12 +72,12 @@ bool Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::Less(const Token&
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator >
 bool Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::Equals(const _Char *cstr) const {
-    return StringSliceEqualTo<_Char, _Sensitive>()(_data.MakeView(), BasicStringSlice<_Char>(cstr, Length(cstr)));
+    return StringViewEqualTo<_Char, _Sensitive>()(_data.MakeView(), BasicStringView<_Char>(cstr, Length(cstr)));
 }
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator >
-bool Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::Equals(const BasicStringSlice<_Char>& slice) const {
-    return StringSliceEqualTo<_Char, _Sensitive>()(_data.MakeView(), slice);
+bool Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::Equals(const BasicStringView<_Char>& slice) const {
+    return StringViewEqualTo<_Char, _Sensitive>()(_data.MakeView(), slice);
 }
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator >
@@ -155,7 +155,7 @@ TokenSetSlot<_Char, _Sensitive, _Allocator>::~TokenSetSlot() {}
 //----------------------------------------------------------------------------
 template <typename _Char, Case _Sensitive, typename _Allocator>
 template <typename _TokenTraits>
-auto TokenSetSlot<_Char, _Sensitive, _Allocator>::GetOrCreate(const BasicStringSlice<_Char>& content) -> TokenData<_Char> {
+auto TokenSetSlot<_Char, _Sensitive, _Allocator>::GetOrCreate(const BasicStringView<_Char>& content) -> TokenData<_Char> {
     if (content.empty())
         return TokenData<_Char>();
 
@@ -193,7 +193,7 @@ auto TokenSetSlot<_Char, _Sensitive, _Allocator>::GetOrCreate(const BasicStringS
 template <typename _Char, Case _Sensitive, typename _Allocator>
 template <typename _TokenTraits>
 auto TokenSetSlot<_Char, _Sensitive, _Allocator>::GetOrCreate(const _Char* cstr, size_t length) -> TokenData<_Char> {
-    return GetOrCreate<_TokenTraits>(BasicStringSlice<_Char>(cstr, length));
+    return GetOrCreate<_TokenTraits>(BasicStringView<_Char>(cstr, length));
 }
 //----------------------------------------------------------------------------
 template <typename _Char, Case _Sensitive, typename _Allocator>
@@ -204,7 +204,7 @@ auto TokenSetSlot<_Char, _Sensitive, _Allocator>::GetOrCreate(const _Char* cstr)
 //----------------------------------------------------------------------------
 template <typename _Char, Case _Sensitive, typename _Allocator>
 template <typename _TokenTraits >
-bool TokenSetSlot<_Char, _Sensitive, _Allocator>::Validate(const BasicStringSlice<_Char>& content) {
+bool TokenSetSlot<_Char, _Sensitive, _Allocator>::Validate(const BasicStringView<_Char>& content) {
     return ValidateToken<_Char, _TokenTraits>(content);
 }
 //----------------------------------------------------------------------------
@@ -237,7 +237,7 @@ size_t TokenSet<_Char, _Sensitive, _Allocator>::size() const {
 //----------------------------------------------------------------------------
 template <typename _Char, Case _Sensitive, typename _Allocator>
 template <typename _TokenTraits>
-auto TokenSet<_Char, _Sensitive, _Allocator>::GetOrCreate(const BasicStringSlice<_Char>& content) -> TokenData<_Char> {
+auto TokenSet<_Char, _Sensitive, _Allocator>::GetOrCreate(const BasicStringView<_Char>& content) -> TokenData<_Char> {
     Assert(content.data());
     if (content.empty())
         return TokenData<_Char>();
@@ -253,7 +253,7 @@ template <typename _Char, Case _Sensitive, typename _Allocator>
 template <typename _TokenTraits>
 auto TokenSet<_Char, _Sensitive, _Allocator>::GetOrCreate(const _Char* cstr, size_t length) -> TokenData<_Char> {
     Assert(cstr);
-    return GetOrCreate<_TokenTraits>(BasicStringSlice<_Char>(cstr, length));
+    return GetOrCreate<_TokenTraits>(BasicStringView<_Char>(cstr, length));
 }
 //----------------------------------------------------------------------------
 template <typename _Char, Case _Sensitive, typename _Allocator>
@@ -274,7 +274,7 @@ void TokenSet<_Char, _Sensitive, _Allocator>::Clear() {
 #pragma warning( disable : 4127) // C4127: l'expression conditionnelle est une constante
 template <typename _Char, Case _Sensitive, typename _Allocator>
 template <typename _TokenTraits>
-size_t TokenSet<_Char, _Sensitive, _Allocator>::SlotHash(const BasicStringSlice<_Char>& content) {
+size_t TokenSet<_Char, _Sensitive, _Allocator>::SlotHash(const BasicStringView<_Char>& content) {
     static_assert(IS_POW2(SlotCount), "SlotCount must be a power of 2");
     size_t h = 0;
     if (Case::Sensitive == _Sensitive) {

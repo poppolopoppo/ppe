@@ -3,7 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/IO/FS/FileSystemProperties.h"
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 
 namespace Core {
 //----------------------------------------------------------------------------

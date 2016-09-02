@@ -11,7 +11,7 @@
 #include "IO/Format.h"
 #include "IO/FormatHelpers.h"
 #include "IO/String.h"
-#include "IO/StringSlice.h"
+#include "IO/StringView.h"
 
 #include "Thread/ReadWriteLock.h"
 
@@ -286,8 +286,8 @@ static int __cdecl ReportHook_(int nRptType, char *szMsg, int *retVal) {
         }
     }
     else {
-        StringSlice msgWithoutEndl;
-        StringSlice msg = MakeStringSlice(szMsg, Meta::noinit_tag{});
+        StringView msgWithoutEndl;
+        StringView msg = MakeStringView(szMsg, Meta::noinit_tag{});
         if (Split(msg, "\n", msgWithoutEndl))
             LOG(Error, L"{0}", msgWithoutEndl);
     }

@@ -86,7 +86,7 @@ static size_t ParseFloat4_Obj_ReturnDim_(float4 *pValues, const LineTokens_Obj_&
 static size_t ParseU323_Obj_ReturnDim_(u323 *pValues, const MemoryView<const char>& token) {
 
     size_t index = 0;
-    StringSlice slice;
+    StringView slice;
 
     const char *cstr = token.Pointer();
     size_t length = token.size();

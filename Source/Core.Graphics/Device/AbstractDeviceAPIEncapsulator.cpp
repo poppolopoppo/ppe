@@ -44,13 +44,13 @@ void AbstractDeviceAPIEncapsulator::OnDestroyEntity(const DeviceResource *resour
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-StringSlice DeviceAPIToCStr(DeviceAPI api) {
+StringView DeviceAPIToCStr(DeviceAPI api) {
     switch (api)
     {
     case Core::Graphics::DeviceAPI::DirectX11:
-        return MakeStringSlice("DirectX11");
+        return MakeStringView("DirectX11");
     case Core::Graphics::DeviceAPI::OpenGL4:
-        return MakeStringSlice("OpenGL4");
+        return MakeStringView("OpenGL4");
     case Core::Graphics::DeviceAPI::Unknown:
         AssertNotReached();
         break;
@@ -58,7 +58,7 @@ StringSlice DeviceAPIToCStr(DeviceAPI api) {
         AssertNotImplemented();
         break;
     }
-    return StringSlice();
+    return StringView();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

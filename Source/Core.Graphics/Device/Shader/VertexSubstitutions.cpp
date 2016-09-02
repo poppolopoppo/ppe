@@ -38,7 +38,7 @@ void FillVertexSubstitutions(   VECTOR_THREAD_LOCAL(Shader, Pair<String COMMA St
         else if (semantic == VertexSemantic::Binormal)
             pBinormalKey = &subPart;
 
-        const StringSlice nameWithoutIndex = semantic.MakeView();
+        const StringView nameWithoutIndex = semantic.MakeView();
 
         oss << " " << VertexFormatToShaderFormat(type)
             << " " << nameWithoutIndex << index
@@ -74,104 +74,104 @@ void FillVertexSubstitutions(   VECTOR_THREAD_LOCAL(Shader, Pair<String COMMA St
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-StringSlice VertexFormatToShaderFormat(VertexFormat format) {
+StringView VertexFormatToShaderFormat(VertexFormat format) {
     switch (format)
     {
     case Core::Graphics::VertexFormat::Float:
-        return MakeStringSlice("float");
+        return MakeStringView("float");
     case Core::Graphics::VertexFormat::Float2:
-        return MakeStringSlice("float2");
+        return MakeStringView("float2");
     case Core::Graphics::VertexFormat::Float3:
-        return MakeStringSlice("float3");
+        return MakeStringView("float3");
     case Core::Graphics::VertexFormat::Float4:
-        return MakeStringSlice("float4");
+        return MakeStringView("float4");
     case Core::Graphics::VertexFormat::Byte:
-        return MakeStringSlice("byte");
+        return MakeStringView("byte");
     case Core::Graphics::VertexFormat::Byte2:
-        return MakeStringSlice("byte2");
+        return MakeStringView("byte2");
     case Core::Graphics::VertexFormat::Byte4:
-        return MakeStringSlice("byte4");
+        return MakeStringView("byte4");
     case Core::Graphics::VertexFormat::UByte:
-        return MakeStringSlice("ubyte");
+        return MakeStringView("ubyte");
     case Core::Graphics::VertexFormat::UByte2:
-        return MakeStringSlice("ubyte2");
+        return MakeStringView("ubyte2");
     case Core::Graphics::VertexFormat::UByte4:
-        return MakeStringSlice("ubyte4");
+        return MakeStringView("ubyte4");
     case Core::Graphics::VertexFormat::Short:
-        return MakeStringSlice("short");
+        return MakeStringView("short");
     case Core::Graphics::VertexFormat::Short2:
-        return MakeStringSlice("short2");
+        return MakeStringView("short2");
     case Core::Graphics::VertexFormat::Short4:
-        return MakeStringSlice("short4");
+        return MakeStringView("short4");
     case Core::Graphics::VertexFormat::UShort:
-        return MakeStringSlice("ushort");
+        return MakeStringView("ushort");
     case Core::Graphics::VertexFormat::UShort2:
-        return MakeStringSlice("ushort2");
+        return MakeStringView("ushort2");
     case Core::Graphics::VertexFormat::UShort4:
-        return MakeStringSlice("ushort4");
+        return MakeStringView("ushort4");
     case Core::Graphics::VertexFormat::Word:
-        return MakeStringSlice("word");
+        return MakeStringView("word");
     case Core::Graphics::VertexFormat::Word2:
-        return MakeStringSlice("word2");
+        return MakeStringView("word2");
     case Core::Graphics::VertexFormat::Word3:
-        return MakeStringSlice("word3");
+        return MakeStringView("word3");
     case Core::Graphics::VertexFormat::Word4:
-        return MakeStringSlice("word4");
+        return MakeStringView("word4");
     case Core::Graphics::VertexFormat::UWord:
-        return MakeStringSlice("uword");
+        return MakeStringView("uword");
     case Core::Graphics::VertexFormat::UWord2:
-        return MakeStringSlice("uword2");
+        return MakeStringView("uword2");
     case Core::Graphics::VertexFormat::UWord3:
-        return MakeStringSlice("uword3");
+        return MakeStringView("uword3");
     case Core::Graphics::VertexFormat::UWord4:
-        return MakeStringSlice("uword4");
+        return MakeStringView("uword4");
     case Core::Graphics::VertexFormat::Half:
-        return MakeStringSlice("half");
+        return MakeStringView("half");
     case Core::Graphics::VertexFormat::Half2:
-        return MakeStringSlice("half2");
+        return MakeStringView("half2");
     case Core::Graphics::VertexFormat::Half4:
-        return MakeStringSlice("half4");
+        return MakeStringView("half4");
     case Core::Graphics::VertexFormat::Byte2N:
-        return MakeStringSlice("float2");
+        return MakeStringView("float2");
     case Core::Graphics::VertexFormat::Byte4N:
-        return MakeStringSlice("float4");
+        return MakeStringView("float4");
     case Core::Graphics::VertexFormat::UByte2N:
-        return MakeStringSlice("float2");
+        return MakeStringView("float2");
     case Core::Graphics::VertexFormat::UByte4N:
-        return MakeStringSlice("float4");
+        return MakeStringView("float4");
     case Core::Graphics::VertexFormat::Short2N:
-        return MakeStringSlice("float2");
+        return MakeStringView("float2");
     case Core::Graphics::VertexFormat::Short4N:
-        return MakeStringSlice("float4");
+        return MakeStringView("float4");
     case Core::Graphics::VertexFormat::UShort2N:
-        return MakeStringSlice("float2");
+        return MakeStringView("float2");
     case Core::Graphics::VertexFormat::UShort4N:
-        return MakeStringSlice("float4");
+        return MakeStringView("float4");
     case Core::Graphics::VertexFormat::UX10Y10Z10W2N:
-        return MakeStringSlice("float4");
+        return MakeStringView("float4");
     default:
         AssertNotImplemented();
         break;
     }
-    return StringSlice();
+    return StringView();
 }
 //----------------------------------------------------------------------------
-StringSlice VertexSemanticToShaderSemantic(const Graphics::Name& semantic) {
+StringView VertexSemanticToShaderSemantic(const Graphics::Name& semantic) {
     if      (semantic == VertexSemantic::Position)
-        return MakeStringSlice("POSITION");
+        return MakeStringView("POSITION");
     else if (semantic == VertexSemantic::Position)
-        return MakeStringSlice("TEXCOORD");
+        return MakeStringView("TEXCOORD");
     else if (semantic == VertexSemantic::Color)
-        return MakeStringSlice("COLOR");
+        return MakeStringView("COLOR");
     else if (semantic == VertexSemantic::Normal)
-        return MakeStringSlice("NORMAL");
+        return MakeStringView("NORMAL");
     else if (semantic == VertexSemantic::Tangent)
-        return MakeStringSlice("TANGENT");
+        return MakeStringView("TANGENT");
     else if (semantic == VertexSemantic::Binormal)
-        return MakeStringSlice("BINORMAL");
+        return MakeStringView("BINORMAL");
     else {
         AssertNotImplemented();
-        return StringSlice();
+        return StringView();
     }
 }
 //----------------------------------------------------------------------------

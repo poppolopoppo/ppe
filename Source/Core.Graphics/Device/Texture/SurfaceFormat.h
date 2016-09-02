@@ -53,7 +53,7 @@ enum class SurfaceFormatType : u32 {
     __COUNT
 };
 //----------------------------------------------------------------------------
-StringSlice SurfaceFormatTypeToCStr(SurfaceFormatType value);
+StringView SurfaceFormatTypeToCStr(SurfaceFormatType value);
 //----------------------------------------------------------------------------
 enum class SurfaceFormatFlags : u32 {
     RGB             = 1 << 0,

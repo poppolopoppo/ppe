@@ -23,21 +23,21 @@ MemoryView<const TargetPlatform> EachTargetPlatform() {
     return MakeView(gTargetPlatforms);
 }
 //----------------------------------------------------------------------------
-StringSlice TargetPlatformToCStr(TargetPlatform platform) {
+StringView TargetPlatformToCStr(TargetPlatform platform) {
     switch (platform)
     {
     case Core::TargetPlatform::PC:
-        return StringSlice("PC");
+        return StringView("PC");
     case Core::TargetPlatform::PS4:
-        return StringSlice("PS4");
+        return StringView("PS4");
     case Core::TargetPlatform::XONE:
-        return StringSlice("XONE");
+        return StringView("XONE");
     case Core::TargetPlatform::MAC:
-        return StringSlice("MAC");
+        return StringView("MAC");
     default:
         AssertNotImplemented();
     }
-    return StringSlice();
+    return StringView();
 }
 //----------------------------------------------------------------------------
 Endianness TargetPlatformEndianness(TargetPlatform platform) {

@@ -45,8 +45,8 @@ enum class GamepadButton : u32 {
     DPadDown = 'v',
 };
 //----------------------------------------------------------------------------
-StringSlice GamepadButtonToCStr(GamepadButton value);
-StringSlice GamepadButtonToXBoxCStr(GamepadButton value);
+StringView GamepadButtonToCStr(GamepadButton value);
+StringView GamepadButtonToXBoxCStr(GamepadButton value);
 //----------------------------------------------------------------------------
 MemoryView<const GamepadButton> EachGamepadButtons();
 //----------------------------------------------------------------------------

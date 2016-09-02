@@ -11,7 +11,7 @@
 #include "Core/IO/Format.h"
 #include "Core/IO/Stream.h"
 #include "Core/IO/String.h"
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 #include "Core/Memory/MemoryStack.h"
 #include "Core/Memory/MemoryView.h"
 
@@ -126,7 +126,7 @@ void TestStrings_() {
     const char* test = "titi,toto,,tata,,";
 
     const char* s = test;
-    StringSlice p;
+    StringView p;
     while (Split(&s, ',', p))
         std::cout << p << std::endl;
 
@@ -628,7 +628,7 @@ static void TestLexerParser_() {
             break;
 
         try {
-            Lexer::Lexer lexer(StringSlice(&line[0], Length(line)), "@in_memory");
+            Lexer::Lexer lexer(StringView(&line[0], Length(line)), "@in_memory");
             Parser::ParseList input(&lexer);
 
             Parser::PCParseItem item = Serialize::Grammar_Parse(input);

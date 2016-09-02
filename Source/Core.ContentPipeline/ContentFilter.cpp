@@ -5,7 +5,7 @@
 #include "Core.RTTI/RTTIMacros-impl.h"
 
 #include "Core/Allocator/PoolAllocatorTag-impl.h"
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 
 namespace Core {
 namespace ContentPipeline {
@@ -37,9 +37,9 @@ void ContentFilterGlob::RTTI_VerifyPredicates() const {
 //----------------------------------------------------------------------------
 ContentFilterGlob::~ContentFilterGlob() {}
 //----------------------------------------------------------------------------
-bool ContentFilterGlob::Matches(const WStringSlice& sourceFilename) const {
+bool ContentFilterGlob::Matches(const WStringView& sourceFilename) const {
     STATIC_ASSERT(Case::Insensitive == FileSystem::CaseSensitive);
-    return WildMatchI(MakeStringSlice(_pattern), sourceFilename);
+    return WildMatchI(MakeStringView(_pattern), sourceFilename);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -64,7 +64,7 @@ void ContentFilterGroup::RTTI_VerifyPredicates() const {
 }
 #endif
 //----------------------------------------------------------------------------
-bool ContentFilterGroup::Matches(const WStringSlice& sourceFilename) const {
+bool ContentFilterGroup::Matches(const WStringView& sourceFilename) const {
     for (const PCContentFilter& filter : _group) {
         if (filter->Matches(sourceFilename))
             return true;
@@ -84,13 +84,13 @@ ContentFilterRegexp::ContentFilterRegexp() {}
 //----------------------------------------------------------------------------
 ContentFilterRegexp::ContentFilterRegexp(string_type&& regexp)
     : _regexp(std::move(regexp))
-    , _compiled(MakeRegexp(MakeStringSlice(_regexp))) {}
+    , _compiled(MakeRegexp(MakeStringView(_regexp))) {}
 //----------------------------------------------------------------------------
 ContentFilterRegexp::~ContentFilterRegexp() {}
 //----------------------------------------------------------------------------
 void ContentFilterRegexp::RTTI_Load(RTTI::MetaLoadContext* context) {
     UNUSED(context);
-    _compiled = MakeRegexp(MakeStringSlice(_regexp));
+    _compiled = MakeRegexp(MakeStringView(_regexp));
 }
 //----------------------------------------------------------------------------
 #ifdef WITH_RTTI_VERIFY_PREDICATES
@@ -99,7 +99,7 @@ void ContentFilterRegexp::RTTI_VerifyPredicates() const {
 }
 #endif
 //----------------------------------------------------------------------------
-bool ContentFilterRegexp::Matches(const WStringSlice& sourceFilename) const {
+bool ContentFilterRegexp::Matches(const WStringView& sourceFilename) const {
     return Match(_compiled, sourceFilename);
 }
 //----------------------------------------------------------------------------

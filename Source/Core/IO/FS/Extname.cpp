@@ -6,12 +6,12 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Extname::Extname(const FileSystem::StringSlice& content)
+Extname::Extname(const FileSystem::StringView& content)
 :   parent_type(content) {
     Assert(content.size() && L'.' == content[0]);
 }
 //----------------------------------------------------------------------------
-Extname& Extname::operator =(const FileSystem::StringSlice& content) {
+Extname& Extname::operator =(const FileSystem::StringView& content) {
     parent_type::operator =(content);
     return *this;
 }

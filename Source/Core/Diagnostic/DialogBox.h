@@ -4,7 +4,7 @@
 
 #include "Core/IO/Format.h"
 #include "Core/IO/Stream.h"
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -46,22 +46,22 @@ namespace Dialog {
         IgnoreOnceAlwaysAbort   = (1<<(size_t)Result::Ignore)|(1<<(size_t)Result::IgnoreAlways)|(1<<(size_t)Result::Abort),
     };
 
-    Result Show(const WStringSlice& text, const WStringSlice& caption, Type dialogType, Icon iconType);
+    Result Show(const WStringView& text, const WStringView& caption, Type dialogType, Icon iconType);
 
-    inline Result Ok(const WStringSlice& text, const WStringSlice& caption, Icon iconType = Icon::Information) { return Show(text, caption, Type::Ok, iconType); }
-    inline Result OkCancel(const WStringSlice& text, const WStringSlice& caption, Icon iconType = Icon::Question) { return Show(text, caption, Type::OkCancel, iconType); }
-    inline Result AbortRetryIgnore(const WStringSlice& text, const WStringSlice& caption, Icon iconType = Icon::Error) { return Show(text, caption, Type::AbortRetryIgnore, iconType); }
-    inline Result YesNoCancel(const WStringSlice& text, const WStringSlice& caption, Icon iconType = Icon::Question) { return Show(text, caption, Type::YesNoCancel, iconType); }
-    inline Result YesNo(const WStringSlice& text, const WStringSlice& caption, Icon iconType = Icon::Question) { return Show(text, caption, Type::YesNo, iconType); }
-    inline Result RetryCancel(const WStringSlice& text, const WStringSlice& caption, Icon iconType = Icon::Exclamation) { return Show(text, caption, Type::RetryCancel, iconType); }
-    inline Result CancelTryContinue(const WStringSlice& text, const WStringSlice& caption, Icon iconType = Icon::Exclamation) { return Show(text, caption, Type::CancelTryContinue, iconType); }
-    inline Result IgnoreOnceAlwaysAbort(const WStringSlice& text, const WStringSlice& caption, Icon iconType = Icon::Error) { return Show(text, caption, Type::IgnoreOnceAlwaysAbort, iconType); }
+    inline Result Ok(const WStringView& text, const WStringView& caption, Icon iconType = Icon::Information) { return Show(text, caption, Type::Ok, iconType); }
+    inline Result OkCancel(const WStringView& text, const WStringView& caption, Icon iconType = Icon::Question) { return Show(text, caption, Type::OkCancel, iconType); }
+    inline Result AbortRetryIgnore(const WStringView& text, const WStringView& caption, Icon iconType = Icon::Error) { return Show(text, caption, Type::AbortRetryIgnore, iconType); }
+    inline Result YesNoCancel(const WStringView& text, const WStringView& caption, Icon iconType = Icon::Question) { return Show(text, caption, Type::YesNoCancel, iconType); }
+    inline Result YesNo(const WStringView& text, const WStringView& caption, Icon iconType = Icon::Question) { return Show(text, caption, Type::YesNo, iconType); }
+    inline Result RetryCancel(const WStringView& text, const WStringView& caption, Icon iconType = Icon::Exclamation) { return Show(text, caption, Type::RetryCancel, iconType); }
+    inline Result CancelTryContinue(const WStringView& text, const WStringView& caption, Icon iconType = Icon::Exclamation) { return Show(text, caption, Type::CancelTryContinue, iconType); }
+    inline Result IgnoreOnceAlwaysAbort(const WStringView& text, const WStringView& caption, Icon iconType = Icon::Error) { return Show(text, caption, Type::IgnoreOnceAlwaysAbort, iconType); }
 
     template <typename _Arg0, typename... _Args>
-    Result Show(const WStringSlice& caption, Type dialogType, Icon iconType, const wchar_t *fmt, _Arg0&& arg0, _Args&&... args) {
+    Result Show(const WStringView& caption, Type dialogType, Icon iconType, const wchar_t *fmt, _Arg0&& arg0, _Args&&... args) {
         ThreadLocalWOStringStream oss;
         Format(oss, fmt, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
-        return Show(MakeStringSlice(oss.str()), caption, dialogType, iconType);
+        return Show(MakeStringView(oss.str()), caption, dialogType, iconType);
     }
 };
 //----------------------------------------------------------------------------

@@ -54,7 +54,7 @@ public:
     virtual bool FileStats(FileStat* pstat, const Filename& filename) = 0;
 
     virtual size_t EnumerateFiles(const Dirpath& dirpath, bool recursive, const std::function<void(const Filename&)>& foreach) = 0;
-    virtual size_t GlobFiles(const Dirpath& dirpath, const WStringSlice& pattern, bool recursive, const std::function<void(const Filename&)>& foreach) = 0;
+    virtual size_t GlobFiles(const Dirpath& dirpath, const WStringView& pattern, bool recursive, const std::function<void(const Filename&)>& foreach) = 0;
 
     virtual UniquePtr<IVirtualFileSystemIStream> OpenReadable(const Filename& filename, AccessPolicy::Mode policy) = 0;
 };

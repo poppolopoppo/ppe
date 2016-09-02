@@ -3,7 +3,7 @@
 #include "LastError.h"
 
 #include "IO/Stream.h"
-#include "IO/StringSlice.h"
+#include "IO/StringView.h"
 
 #ifdef OS_WINDOWS
 
@@ -22,7 +22,7 @@ namespace Core {
 String GetLastErrorToString(long errorCode) {
 #ifdef OS_WINDOWS
     _com_error com(errorCode);
-    return ToString(MakeStringSlice(com.ErrorMessage(), Meta::noinit_tag()));
+    return ToString(MakeStringView(com.ErrorMessage(), Meta::noinit_tag()));
 
 #else
     return String();
@@ -33,7 +33,7 @@ String GetLastErrorToString(long errorCode) {
 WString GetLastErrorToWString(long errorCode) {
 #ifdef OS_WINDOWS
     _com_error com(errorCode);
-    return ToWString(MakeStringSlice(com.ErrorMessage(), Meta::noinit_tag()));
+    return ToWString(MakeStringView(com.ErrorMessage(), Meta::noinit_tag()));
 
 #else
     return WString();

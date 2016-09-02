@@ -5,7 +5,7 @@
 #include "Core/IO/FS/FileSystemProperties.h"
 
 #include "Core/IO/String.h"
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 #include "Core/Memory/UniqueView.h"
 
 #include <initializer_list>
@@ -44,17 +44,17 @@ public:
 
     Dirpath(std::initializer_list<const FileSystem::char_type *> path);
 
-    Dirpath(const FileSystem::StringSlice& content);
-    Dirpath& operator =(const FileSystem::StringSlice& content);
+    Dirpath(const FileSystem::StringView& content);
+    Dirpath& operator =(const FileSystem::StringView& content);
 
     template <size_t _Dim>
-    Dirpath(const FileSystem::char_type (&content)[_Dim]) : Dirpath(MakeStringSlice(content)) {}
+    Dirpath(const FileSystem::char_type (&content)[_Dim]) : Dirpath(MakeStringView(content)) {}
     template <size_t _Dim>
-    Dirpath& operator =(const FileSystem::char_type (&content)[_Dim]) { return operator =(MakeStringSlice(content)); }
+    Dirpath& operator =(const FileSystem::char_type (&content)[_Dim]) { return operator =(MakeStringView(content)); }
 
     template <typename _CharTraits, typename _Allocator>
     Dirpath(const std::basic_string<FileSystem::char_type, _CharTraits, _Allocator>& str)
-        : Dirpath(MakeStringSlice(str)) {}
+        : Dirpath(MakeStringView(str)) {}
 
     size_t Depth() const;
     Core::MountingPoint MountingPoint() const;

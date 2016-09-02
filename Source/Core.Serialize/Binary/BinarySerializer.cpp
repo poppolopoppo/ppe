@@ -91,8 +91,8 @@ struct SerializedObject_ {
 };
 //----------------------------------------------------------------------------
 template <typename T> struct ObjectTraits_  { T proxy_(const T& p) const { return p; } };
-template <> struct ObjectTraits_< String >  { StringSlice proxy_(const String& s) const { return MakeStringSlice(s); } };
-template <> struct ObjectTraits_< WString > { WStringSlice proxy_(const WString& s) const { return MakeStringSlice(s); } };
+template <> struct ObjectTraits_< String >  { StringView proxy_(const String& s) const { return MakeStringView(s); } };
+template <> struct ObjectTraits_< WString > { WStringView proxy_(const WString& s) const { return MakeStringView(s); } };
 //----------------------------------------------------------------------------
 template <typename _Key>
 class ObjectIndexer_ : ObjectTraits_<_Key> {
@@ -264,8 +264,8 @@ public:
     void Finalize(RTTI::MetaTransaction* transaction);
 
 private:
-    static const RTTI::MetaClass* RetrieveMetaClass_(const StringSlice& str);
-    static const RTTI::MetaProperty* RetrieveMetaProperty_(const RTTI::MetaClass* metaClass, const StringSlice& str);
+    static const RTTI::MetaClass* RetrieveMetaClass_(const StringView& str);
+    static const RTTI::MetaProperty* RetrieveMetaProperty_(const RTTI::MetaClass* metaClass, const StringView& str);
 
     RTTI::MetaObject* CreateObjectFromHeader_(const SerializedObject_& header);
     void DeserializeObjectData_(MemoryViewReader& reader, RTTI::MetaObject* object);
@@ -396,7 +396,7 @@ private:
             if (string_i >= _owner->_strings.size())
                 throw BinarySerializerException("invalid RTTI string index");
 
-            const StringSlice& data = _owner->_strings[string_i];
+            const StringView& data = _owner->_strings[string_i];
             str.assign(data.begin(), data.end());
             return true;
         }
@@ -409,7 +409,7 @@ private:
             if (wstring_i >= _owner->_wstrings.size())
                 throw BinarySerializerException("invalid RTTI wstring index");
 
-            const WStringSlice& data = _owner->_wstrings[wstring_i];
+            const WStringView& data = _owner->_wstrings[wstring_i];
             wstr.assign(data.begin(), data.end());
             return true;
         }
@@ -465,7 +465,7 @@ private:
             if (string_i >= _owner->_strings.size())
                 throw BinarySerializerException("invalid RTTI name index");
 
-            const StringSlice& data = _owner->_strings[string_i];
+            const StringView& data = _owner->_strings[string_i];
             name = RTTI::Name(data);
             return true;
         }
@@ -522,8 +522,8 @@ private:
     typedef VECTOR_THREAD_LOCAL(Serialize, const RTTI::MetaProperty*) properties_type;
 
     VECTOR_THREAD_LOCAL(Serialize, RTTI::Name) _names;
-    VECTOR_THREAD_LOCAL(Serialize, StringSlice) _strings;
-    VECTOR_THREAD_LOCAL(Serialize, WStringSlice) _wstrings;
+    VECTOR_THREAD_LOCAL(Serialize, StringView) _strings;
+    VECTOR_THREAD_LOCAL(Serialize, WStringView) _wstrings;
     VECTOR_THREAD_LOCAL(Serialize, const RTTI::MetaClass*) _metaClasses;
     VECTOR_THREAD_LOCAL(Serialize, properties_type) _properties;
     VECTOR_THREAD_LOCAL(Serialize, object_index_t) _topObjects;
@@ -540,15 +540,15 @@ void BinaryDeserialize_::Read(MemoryViewReader& reader) {
         throw BinarySerializerException("unsupported file version");
 
     if (false == reader.ExpectPOD(SECTION_NAMES_) ||
-        false == DeserializePODArrays_<char>(reader, _names, [](const StringSlice& str) { Assert(str.size()); return RTTI::Name(str); }) )
+        false == DeserializePODArrays_<char>(reader, _names, [](const StringView& str) { Assert(str.size()); return RTTI::Name(str); }) )
         throw BinarySerializerException("invalid names section");
 
     if (false == reader.ExpectPOD(SECTION_STRINGS_) ||
-        false == DeserializePODArrays_<char>(reader, _strings, [](const StringSlice& str) { return str; }) )
+        false == DeserializePODArrays_<char>(reader, _strings, [](const StringView& str) { return str; }) )
         throw BinarySerializerException("invalid strings section");
 
     if (false == reader.ExpectPOD(SECTION_WSTRINGS_) ||
-        false == DeserializePODArrays_<wchar_t>(reader, _wstrings, [](const WStringSlice& wstr) { return wstr; }) )
+        false == DeserializePODArrays_<wchar_t>(reader, _wstrings, [](const WStringView& wstr) { return wstr; }) )
         throw BinarySerializerException("invalid wstrings section");
 
     if (false == reader.ExpectPOD(SECTION_CLASSES_) ||
@@ -563,7 +563,7 @@ void BinaryDeserialize_::Read(MemoryViewReader& reader) {
         const RTTI::MetaClass* metaClass = _metaClasses[i];
         properties_type& properties = _properties[i];
 
-        const bool succeed = DeserializePODArrays_<char>(reader, properties, [metaClass](const StringSlice& str) {
+        const bool succeed = DeserializePODArrays_<char>(reader, properties, [metaClass](const StringView& str) {
             return RetrieveMetaProperty_(metaClass, str);
         });
 
@@ -643,7 +643,7 @@ void BinaryDeserialize_::Finalize(RTTI::MetaTransaction* transaction) {
         transaction->Add(_objects[object_i].get());
 }
 //----------------------------------------------------------------------------
-const RTTI::MetaClass* BinaryDeserialize_::RetrieveMetaClass_(const StringSlice& str) {
+const RTTI::MetaClass* BinaryDeserialize_::RetrieveMetaClass_(const StringView& str) {
     const RTTI::Name name(str);
     Assert(!name.empty());
 
@@ -654,7 +654,7 @@ const RTTI::MetaClass* BinaryDeserialize_::RetrieveMetaClass_(const StringSlice&
     return metaClass;
 }
 //----------------------------------------------------------------------------
-const RTTI::MetaProperty* BinaryDeserialize_::RetrieveMetaProperty_(const RTTI::MetaClass* metaClass, const StringSlice& str) {
+const RTTI::MetaProperty* BinaryDeserialize_::RetrieveMetaProperty_(const RTTI::MetaClass* metaClass, const StringView& str) {
     Assert(metaClass);
 
     const RTTI::Name name(str);
@@ -1028,12 +1028,12 @@ void BinarySerialize_::Finalize(IStreamWriter* writer) {
     });
 
     writer->WritePOD(SECTION_STRINGS_);
-    _stringIndices.Serialize(writer, [writer](const StringSlice& str) {
+    _stringIndices.Serialize(writer, [writer](const StringView& str) {
         SerializePODs_(writer, str);
     });
 
     writer->WritePOD(SECTION_WSTRINGS_);
-    _wstringIndices.Serialize(writer, [writer](const WStringSlice& wstr) {
+    _wstringIndices.Serialize(writer, [writer](const WStringView& wstr) {
         SerializePODs_(writer, wstr);
     });
 

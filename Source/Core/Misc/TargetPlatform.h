@@ -2,7 +2,7 @@
 
 #include "Core/Core.h"
 
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 #include "Core/Memory/MemoryView.h"
 
 namespace Core {
@@ -28,7 +28,7 @@ enum class TargetPlatform {
 };
 //----------------------------------------------------------------------------
 MemoryView<const TargetPlatform> EachTargetPlatform();
-StringSlice TargetPlatformToCStr(TargetPlatform platform);
+StringView TargetPlatformToCStr(TargetPlatform platform);
 Endianness TargetPlatformEndianness(TargetPlatform platform);
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>

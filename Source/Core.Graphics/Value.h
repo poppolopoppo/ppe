@@ -4,7 +4,7 @@
 
 #include "Core.Graphics/Name.h"
 
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 #include "Core/Maths/ScalarMatrix.h"
 #include "Core/Maths/ScalarVector.h"
 #include "Core/Maths/PackedVectors.h"
@@ -25,7 +25,7 @@ FOREACH_CORE_GRAPHIC_VALUETYPE(VALUETYPE_ENUM_DEF)
 #undef VALUETYPE_ENUM_DEF
 };
 //----------------------------------------------------------------------------
-StringSlice ValueTypeToCStr(ValueType value);
+StringView ValueTypeToCStr(ValueType value);
 size_t ValueSizeInBytes(ValueType value);
 //----------------------------------------------------------------------------
 void ValueCopy(ValueType type, const MemoryView<u8>& dst, const MemoryView<const u8>& src);

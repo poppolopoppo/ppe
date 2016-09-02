@@ -118,7 +118,7 @@ enum class KeyboardKey : u32 {
     Shift,
 };
 //----------------------------------------------------------------------------
-StringSlice KeyboardKeyToCStr(KeyboardKey value);
+StringView KeyboardKeyToCStr(KeyboardKey value);
 //----------------------------------------------------------------------------
 MemoryView<const KeyboardKey> EachKeyboardKeys();
 //----------------------------------------------------------------------------

@@ -71,11 +71,11 @@ Document::Document() {}
 //----------------------------------------------------------------------------
 Document::~Document() {}
 //----------------------------------------------------------------------------
-const Element* Document::FindById(const StringSlice& Id) const {
+const Element* Document::FindById(const StringView& Id) const {
     Assert(!Id.empty());
 
     // some exporter append a leading '#'
-    const StringSlice query = ('#' == Id.front() ? Id.ShiftFront() : Id);
+    const StringView query = ('#' == Id.front() ? Id.ShiftFront() : Id);
 
     SElement elt;
     return (TryGetValue(_byIdentifier, query, &elt) ? elt.get() : nullptr);
@@ -100,7 +100,7 @@ bool Document::Load(Document* document, const Filename& filename) {
     return Load(document, filename, content.MakeConstView().Cast<const char>() );
 }
 //----------------------------------------------------------------------------
-bool Document::Load(Document* document, const Filename& filename, const StringSlice& content) {
+bool Document::Load(Document* document, const Filename& filename, const StringView& content) {
     Assert(document);
 
     document->_root.reset();
@@ -129,7 +129,7 @@ bool Document::Load(Document* document, const Filename& filename, const StringSl
             const auto elementId = Element->Attributes().Find(key);
             if (Element->Attributes().end() != elementId) {
                 if (Insert_ReturnIfExists(  ids,
-                                            MakeStringSlice(elementId->second),
+                                            MakeStringView(elementId->second),
                                             SElement(Element.get())) ) {
                     throw XMLException("an element with the same id alread exists", Site);
                 }
@@ -187,7 +187,7 @@ bool Document::Load(Document* document, const Filename& filename, const StringSl
 
                 Expect_(lexer, eaten, Lexer::Symbols::Identifier);
 
-                if (not EqualsI(MakeStringSlice(visited.back().Element->Type()), eaten.MakeView()))
+                if (not EqualsI(MakeStringView(visited.back().Element->Type()), eaten.MakeView()))
                     throw XMLException("mismatching closing tag", eaten.Site());
 
                 visited.back().RegisterIFN(keyId, document->_byIdentifier);

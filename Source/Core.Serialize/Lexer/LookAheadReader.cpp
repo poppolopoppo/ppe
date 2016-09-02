@@ -11,7 +11,7 @@ namespace Lexer {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-LookAheadReader::LookAheadReader(const StringSlice& input, const wchar_t *sourceFileName)
+LookAheadReader::LookAheadReader(const StringView& input, const wchar_t *sourceFileName)
 :   _sourceFileName(sourceFileName)
 ,   _sourceLine(1)
 ,   _sourceColumn(1)

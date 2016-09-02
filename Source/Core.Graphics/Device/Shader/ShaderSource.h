@@ -54,9 +54,9 @@ public:
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
-    static StringSlice AppIn_SubstitutionName();
-    static StringSlice AppIn_VertexDefinitionName();
-    static FileSystem::StringSlice SystemDirpath();
+    static StringView AppIn_SubstitutionName();
+    static StringView AppIn_VertexDefinitionName();
+    static FileSystem::StringView SystemDirpath();
 
 private:
     String _sourceName;

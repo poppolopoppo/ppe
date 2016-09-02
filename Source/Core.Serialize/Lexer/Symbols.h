@@ -15,7 +15,7 @@ class Symbol;
 class Symbols : Meta::Singleton<Symbols>, Meta::ThreadResource {
 public:
     STATIC_CONST_INTEGRAL(size_t, MaxLength, 32);
-    typedef STRINGSLICE_HASHMAP(Lexer, Symbol, Case::Sensitive) hashmap_type;
+    typedef STRINGVIEW_HASHMAP(Lexer, Symbol, Case::Sensitive) hashmap_type;
 private:
     friend class Meta::Singleton<Symbols>;
     typedef Meta::Singleton<Symbols> singleton_type;
@@ -34,7 +34,7 @@ public:
 
     const hashmap_type& All() const { THIS_THREADRESOURCE_CHECKACCESS(); return _symbols; }
 
-    bool IsPrefix(const Symbol** psymbol, const StringSlice& cstr) const;
+    bool IsPrefix(const Symbol** psymbol, const StringView& cstr) const;
 
 public:
     static const Symbol *Invalid;

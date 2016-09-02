@@ -8,7 +8,7 @@
 #include "Core/IO/FS/MountingPoint.h"
 
 #include "Core/IO/String.h"
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 
 #include <iosfwd>
 
@@ -23,7 +23,7 @@ public:
 
     Filename(Core::Dirpath&& dirpath, Core::Basename&& basename);
     Filename(const Core::Dirpath& dirpath, const Core::Basename& basename);
-    Filename(const Core::Dirpath& dirpath, const FileSystem::StringSlice& relfilename);
+    Filename(const Core::Dirpath& dirpath, const FileSystem::StringView& relfilename);
 
     Filename(Filename&& rvalue);
     Filename& operator =(Filename&& rvalue);
@@ -31,17 +31,17 @@ public:
     Filename(const Filename& other);
     Filename& operator =(const Filename& other);
 
-    Filename(const FileSystem::StringSlice& content);
-    Filename& operator =(const FileSystem::StringSlice& content);
+    Filename(const FileSystem::StringView& content);
+    Filename& operator =(const FileSystem::StringView& content);
 
     template <size_t _Dim>
-    Filename(const FileSystem::char_type (&content)[_Dim]) : Filename(MakeStringSlice(content)) {}
+    Filename(const FileSystem::char_type (&content)[_Dim]) : Filename(MakeStringView(content)) {}
     template <size_t _Dim>
-    Filename& operator =(const FileSystem::char_type (&content)[_Dim]) { return operator =(MakeStringSlice(content)); }
+    Filename& operator =(const FileSystem::char_type (&content)[_Dim]) { return operator =(MakeStringView(content)); }
 
     template <typename _CharTraits, typename _Allocator>
     Filename(const std::basic_string<FileSystem::char_type, _CharTraits, _Allocator>& content)
-        : Filename(MakeStringSlice(content)) {}
+        : Filename(MakeStringView(content)) {}
 
     void Swap(Filename& other);
 

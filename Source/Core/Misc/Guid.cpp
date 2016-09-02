@@ -26,7 +26,7 @@ Guid Guid::Generate() {
     return result;
 }
 //----------------------------------------------------------------------------
-bool Guid::TryParse(const StringSlice& str, Guid *guid) {
+bool Guid::TryParse(const StringView& str, Guid *guid) {
     Assert(guid);
 
     // Format: {88888888-4444-4444-4444-444488888888}
@@ -42,15 +42,15 @@ bool Guid::TryParse(const StringSlice& str, Guid *guid) {
     i32 g1, g2, g3 = 0;
     i64 g4 = 0;
 
-    if (not Atoi32(&g0, StringSlice(str.SubRange(1, 8)), 16))
+    if (not Atoi32(&g0, StringView(str.SubRange(1, 8)), 16))
         return false;
-    if (not Atoi32(&g1, StringSlice(str.SubRange(10, 4)), 16))
+    if (not Atoi32(&g1, StringView(str.SubRange(10, 4)), 16))
         return false;
-    if (not Atoi32(&g2, StringSlice(str.SubRange(15, 4)), 16))
+    if (not Atoi32(&g2, StringView(str.SubRange(15, 4)), 16))
         return false;
-    if (not Atoi32(&g3, StringSlice(str.SubRange(20, 4)), 16))
+    if (not Atoi32(&g3, StringView(str.SubRange(20, 4)), 16))
         return false;
-    if (not Atoi64(&g4, StringSlice(str.SubRange(25, 12)), 16))
+    if (not Atoi64(&g4, StringView(str.SubRange(25, 12)), 16))
         return false;
 
     guid->Data.as_rfc.G0 = g0;

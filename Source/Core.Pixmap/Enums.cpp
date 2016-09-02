@@ -7,7 +7,7 @@ namespace Pixmap {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-StringSlice BlockFormatToCStr(BlockFormat value) {
+StringView BlockFormatToCStr(BlockFormat value) {
     switch (value)
     {
     case Core::Pixmap::BlockFormat::DXT1:
@@ -18,10 +18,10 @@ StringSlice BlockFormatToCStr(BlockFormat value) {
         AssertNotImplemented();
         break;
     }
-    return StringSlice();
+    return StringView();
 }
 //----------------------------------------------------------------------------
-StringSlice ColorDepthToCStr(ColorDepth value) {
+StringView ColorDepthToCStr(ColorDepth value) {
     switch (value)
     {
     case Core::Pixmap::ColorDepth::_8bits:
@@ -34,10 +34,10 @@ StringSlice ColorDepthToCStr(ColorDepth value) {
         AssertNotImplemented();
         break;
     }
-    return StringSlice();
+    return StringView();
 }
 //----------------------------------------------------------------------------
-StringSlice ColorMaskToCStr(ColorMask value) {
+StringView ColorMaskToCStr(ColorMask value) {
     switch (value)
     {
     case Core::Pixmap::ColorMask::R:
@@ -52,10 +52,10 @@ StringSlice ColorMaskToCStr(ColorMask value) {
         AssertNotImplemented();
         break;
     }
-    return StringSlice();
+    return StringView();
 }
 //----------------------------------------------------------------------------
-StringSlice ColorSpaceToCStr(ColorSpace value) {
+StringView ColorSpaceToCStr(ColorSpace value) {
     switch (value)
     {
     case Core::Pixmap::ColorSpace::Linear:
@@ -70,7 +70,7 @@ StringSlice ColorSpaceToCStr(ColorSpace value) {
         AssertNotImplemented();
         break;
     }
-    return StringSlice();
+    return StringView();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -132,7 +132,7 @@ std::basic_ostream<_Char, _Traits>& operator <<(
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-static bool FormatParser_(BasicStringSlice<_Char>& format, BasicStringSlice<_Char> *outp, size_t *index, FormatProperties_& props) {
+static bool FormatParser_(BasicStringView<_Char>& format, BasicStringView<_Char> *outp, size_t *index, FormatProperties_& props) {
     typedef typename FormatTraits_<_Char>::Flags format_traits;
 
     if (format.empty())
@@ -149,14 +149,14 @@ static bool FormatParser_(BasicStringSlice<_Char>& format, BasicStringSlice<_Cha
             format = format.ShiftFront();
         }
         else {
-            const BasicStringSlice<_Char> formatBeforeParse = format;
+            const BasicStringView<_Char> formatBeforeParse = format;
 
             Assert(format_traits::lbrace == format.front());
             format = format.ShiftFront(); // eat '{'
 
             intptr_t parsedIndex = 0;
             {
-                const BasicStringSlice<_Char> digits = EatDigits(format);
+                const BasicStringView<_Char> digits = EatDigits(format);
                 Assert(digits.data() + digits.size() == format.data());
 
                 if (not Atoi(&parsedIndex, digits, 10))
@@ -245,7 +245,7 @@ static bool FormatParser_(BasicStringSlice<_Char>& format, BasicStringSlice<_Cha
 
                     intptr_t parsedScalar = 0;
                     {
-                        const BasicStringSlice<_Char> digits = EatDigits(format);
+                        const BasicStringView<_Char> digits = EatDigits(format);
                         Assert(digits.data() + digits.size() == format.data());
 
                         if (not Atoi(&parsedScalar, digits, 10))
@@ -280,7 +280,7 @@ static bool FormatParser_(BasicStringSlice<_Char>& format, BasicStringSlice<_Cha
 
                 intptr_t parsedRepeat = 0;
                 {
-                    const BasicStringSlice<_Char> digits = EatDigits(format);
+                    const BasicStringView<_Char> digits = EatDigits(format);
                     Assert(digits.data() + digits.size() == format.data());
 
                     if (not Atoi(&parsedRepeat, digits, 10))
@@ -317,7 +317,7 @@ static bool FormatParser_(BasicStringSlice<_Char>& format, BasicStringSlice<_Cha
 template <typename _Char, typename _Traits>
 static void FormatArgs_(
     std::basic_ostream<_Char, _Traits>& oss,
-    const BasicStringSlice<_Char>& format,
+    const BasicStringView<_Char>& format,
     const MemoryView<const details::_FormatFunctor<_Char, _Traits>>& args ) {
     Assert(format.Pointer());
     Assert(!oss.bad());
@@ -326,8 +326,8 @@ static void FormatArgs_(
     original.From(oss); // backups original state
 
     FormatProperties_ props = original;
-    BasicStringSlice<_Char> formatIt = format;
-    BasicStringSlice<_Char> outp;
+    BasicStringView<_Char> formatIt = format;
+    BasicStringView<_Char> outp;
 
     size_t index = size_t(-1);
     while (FormatParser_(formatIt, &outp, &index, props)) {
@@ -356,11 +356,11 @@ static void FormatArgs_(
 //----------------------------------------------------------------------------
 namespace details {
 //----------------------------------------------------------------------------
-void _FormatArgs(std::basic_ostream<char>& oss, const StringSlice& format, const MemoryView<const _FormatFunctor<char>>& args) {
+void _FormatArgs(std::basic_ostream<char>& oss, const StringView& format, const MemoryView<const _FormatFunctor<char>>& args) {
     FormatArgs_(oss, format, args);
 }
 //----------------------------------------------------------------------------
-void _FormatArgs(std::basic_ostream<wchar_t>& oss, const WStringSlice& format, const MemoryView<const _FormatFunctor<wchar_t>>& args) {
+void _FormatArgs(std::basic_ostream<wchar_t>& oss, const WStringView& format, const MemoryView<const _FormatFunctor<wchar_t>>& args) {
     FormatArgs_(oss, format, args);
 }
 //----------------------------------------------------------------------------

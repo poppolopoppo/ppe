@@ -3,7 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/Allocator/Allocation.h"
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 
 namespace Core {
 namespace FileSystem {
@@ -22,9 +22,9 @@ public:
     bool IsAllowedChar(wchar_t ch) const;
 };
 //----------------------------------------------------------------------------
-typedef BasicStringSlice<char_type> StringSlice;
+typedef BasicStringView<char_type> StringView;
 //----------------------------------------------------------------------------
-inline FileSystem::StringSlice Separators() { return MakeStringSlice(L"/\\"); }
+inline FileSystem::StringView Separators() { return MakeStringView(L"/\\"); }
 //----------------------------------------------------------------------------
 size_t SystemTemporaryDirectory(char_type *path, size_t capacity);
 //----------------------------------------------------------------------------

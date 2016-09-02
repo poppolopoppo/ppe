@@ -26,7 +26,7 @@
 #include "Core/IO/Format.h"
 #include "Core/IO/Stream.h"
 #include "Core/IO/String.h"
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 #include "Core/IO/VirtualFileSystem_fwd.h"
 
 #include "Core/Container/HashMap.h"

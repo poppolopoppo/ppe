@@ -88,11 +88,11 @@ void Element::ToStream(std::basic_ostream<char>& oss) const {
     PrintElement_(oss, this);
 }
 //----------------------------------------------------------------------------
-StringSlice Element::operator [](const XML::Name& name) const {
+StringView Element::operator [](const XML::Name& name) const {
     Assert(!name.empty());
 
     const String* pvalue = _attributes.GetIFP(name);
-    return (pvalue ? MakeStringSlice(*pvalue) : StringSlice());
+    return (pvalue ? MakeStringView(*pvalue) : StringView());
 }
 //----------------------------------------------------------------------------
 const Element* Element::XPath(const MemoryView<const Name>& path) const {

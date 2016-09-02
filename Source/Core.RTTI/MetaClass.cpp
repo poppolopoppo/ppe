@@ -52,7 +52,7 @@ MemoryView<const UCMetaProperty> MetaClass::Properties() const {
     return VirtualProperties();
 }
 //----------------------------------------------------------------------------
-const MetaProperty *MetaClass::PropertyIFP(const StringSlice& name, size_t attributes /* = 0 */, bool inherited /* = true */) const {
+const MetaProperty *MetaClass::PropertyIFP(const StringView& name, size_t attributes /* = 0 */, bool inherited /* = true */) const {
     Assert(not name.empty());
 
     const MetaProperty* result = VirtualPropertyIFP(name, attributes);
@@ -92,7 +92,7 @@ MemoryView<const UCMetaProperty> InScopeMetaClass::VirtualProperties() const {
     return MakeView(_properties);
 }
 //----------------------------------------------------------------------------
-const MetaProperty *InScopeMetaClass::VirtualPropertyIFP(const StringSlice& name, size_t attributes) const {
+const MetaProperty *InScopeMetaClass::VirtualPropertyIFP(const StringView& name, size_t attributes) const {
     for (const UCMetaProperty& p : _properties)
         if ((p->Attributes() & attributes) == attributes &&
             (0 == Compare(p->Name().MakeView(), name)) )

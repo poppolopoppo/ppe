@@ -94,7 +94,7 @@ static bool DeepEquals_(const OpaqueData& lhs, const OpaqueData& rhs) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
-    StringSlice MetaType< T >::Name() { return MakeStringSlice(STRINGIZE(_Name)); } \
+    StringView MetaType< T >::Name() { return MakeStringView(STRINGIZE(_Name)); } \
     T MetaType< T >::DefaultValue() { return T(); } \
     bool MetaType< T >::IsDefaultValue(const T& value) { return IsDefaultValue_(value); } \
     hash_t MetaType< T >::HashValue(const T& value) { return HashValue_(value); } \

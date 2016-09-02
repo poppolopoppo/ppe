@@ -7,7 +7,7 @@
 #include "Core/Allocator/PoolAllocator.h"
 #include "Core/Container/AssociativeVector.h"
 #include "Core/IO/String.h"
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 #include "Core/Memory/RefPtr.h"
 
 namespace Core {
@@ -33,7 +33,7 @@ public:
 
     const String& Text() const { return _text; }
     void SetText(String&& rvalue) { _text = std::move(rvalue); }
-    void SetText(const StringSlice& value) { _text = ToString(value); }
+    void SetText(const StringView& value) { _text = ToString(value); }
 
     attributes_type& Attributes() { return _attributes; }
     const attributes_type& Attributes() const { return _attributes; }
@@ -55,7 +55,7 @@ public:
 
     void ToStream(std::basic_ostream<char>& oss) const;
 
-    StringSlice operator [](const XML::Name& name) const; // return the attribute IFP
+    StringView operator [](const XML::Name& name) const; // return the attribute IFP
 
     const Element* XPath(const MemoryView<const Name>& path) const;
     size_t XPath(const MemoryView<const Name>& path, const std::function<void(const Element&)>& functor) const;

@@ -15,7 +15,7 @@ enum class PrimitiveType {
     TriangleStrip,
 };
 //----------------------------------------------------------------------------
-StringSlice PrimitiveTypeToCStr(PrimitiveType primitiveType);
+StringView PrimitiveTypeToCStr(PrimitiveType primitiveType);
 //----------------------------------------------------------------------------
 size_t PrimitiveCount(PrimitiveType primitiveType, size_t indexCount);
 //----------------------------------------------------------------------------

@@ -15,7 +15,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static bool ParseFilename_(const FileSystem::StringSlice& str, Dirpath& dirpath, Basename& basename) {
+static bool ParseFilename_(const FileSystem::StringView& str, Dirpath& dirpath, Basename& basename) {
     dirpath = Dirpath();
     basename = Basename();
 
@@ -37,7 +37,7 @@ static bool ParseFilename_(const FileSystem::StringSlice& str, Dirpath& dirpath,
     return true;
 }
 //----------------------------------------------------------------------------
-static bool AppendRelname_(Dirpath& dirpath, Basename& basename, const FileSystem::StringSlice& relname) {
+static bool AppendRelname_(Dirpath& dirpath, Basename& basename, const FileSystem::StringView& relname) {
     Assert(basename.empty());
     if (relname.empty())
         return false;
@@ -67,7 +67,7 @@ Filename::Filename(Core::Dirpath&& dirpath, Core::Basename&& basename)
 Filename::Filename(const Core::Dirpath& dirpath, const Core::Basename& basename)
 :   _dirpath(dirpath), _basename(basename) {}
 //----------------------------------------------------------------------------
-Filename::Filename(const Core::Dirpath& dirpath, const FileSystem::StringSlice& relfilename)
+Filename::Filename(const Core::Dirpath& dirpath, const FileSystem::StringView& relfilename)
 :   _dirpath(dirpath) {
     if (!AppendRelname_(_dirpath, _basename, relfilename))
         AssertNotReached();
@@ -93,12 +93,12 @@ Filename& Filename::operator =(const Filename& other) {
     return *this;
 }
 //----------------------------------------------------------------------------
-Filename::Filename(const FileSystem::StringSlice& content) {
+Filename::Filename(const FileSystem::StringView& content) {
     if (!ParseFilename_(content, _dirpath, _basename))
         AssertNotReached();
 }
 //----------------------------------------------------------------------------
-Filename& Filename::operator =(const FileSystem::StringSlice& content) {
+Filename& Filename::operator =(const FileSystem::StringView& content) {
     if (!ParseFilename_(content, _dirpath, _basename))
         AssertNotReached();
     return *this;

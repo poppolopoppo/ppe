@@ -183,7 +183,7 @@ PShaderCompiled CompileShaderSource(
                 defines )) {
 
         const Dialog::Result dialog = Dialog::AbortRetryIgnore(
-            MakeStringSlice(errorMessage),
+            MakeStringView(errorMessage),
             L"Shader compilation error",
             Dialog::Icon::Exclamation );
 

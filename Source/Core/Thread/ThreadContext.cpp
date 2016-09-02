@@ -6,7 +6,7 @@
 #include "Allocator/ThreadLocalHeap.h"
 #include "Diagnostic/LastError.h"
 #include "Diagnostic/Logger.h"
-#include "IO/StringSlice.h"
+#include "IO/StringView.h"
 #include "Meta/AutoSingleton.h"
 
 #ifndef FINAL_RELEASE
@@ -110,7 +110,7 @@ ThreadContext::ThreadContext(const char* name, size_t tag)
 ,   _threadId(std::this_thread::get_id()) {
     Assert(name);
 
-    const size_t n = Copy(MakeView(_name), MakeStringSlice(name, Meta::noinit_tag()));
+    const size_t n = Copy(MakeView(_name), MakeStringView(name, Meta::noinit_tag()));
     Assert(n < lengthof(_name));
     _name[n] = '\0';
 

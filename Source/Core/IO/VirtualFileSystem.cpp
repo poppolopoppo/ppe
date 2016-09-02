@@ -4,7 +4,7 @@
 
 #include "FileSystem.h"
 #include "Format.h"
-#include "StringSlice.h"
+#include "StringView.h"
 
 #include "Allocator/PoolAllocatorTag-impl.h"
 #include "Diagnostic/Logger.h"
@@ -49,7 +49,7 @@ Basename VirtualFileSystem::TemporaryBasename(const wchar_t *prefix, const wchar
         ext );
 
     Assert(length > 0);
-    return Basename(FileSystem::StringSlice(buffer, length - 1));
+    return Basename(FileSystem::StringView(buffer, length - 1));
 }
 //----------------------------------------------------------------------------
 Filename VirtualFileSystem::TemporaryFilename(const wchar_t *prefix, const wchar_t *ext) {
@@ -75,7 +75,7 @@ Filename VirtualFileSystem::TemporaryFilename(const wchar_t *prefix, const wchar
         ext );
 
     Assert(length > 0);
-    return Filename(FileSystem::StringSlice(buffer, length - 1));
+    return Filename(FileSystem::StringView(buffer, length - 1));
 }
 //----------------------------------------------------------------------------
 bool VirtualFileSystem::WriteAll(const Filename& filename, const MemoryView<const u8>& storage, AccessPolicy::Mode policy /* = AccessPolicy::None */) {
@@ -96,13 +96,13 @@ void VirtualFileSystemStartup::Start() {
     VirtualFileSystem::Create();
     // current process directory
     {
-        VirtualFileSystem::Instance().MountNativePath(MakeStringSlice(L"Process:/"), CurrentProcess::Instance().Directory());
+        VirtualFileSystem::Instance().MountNativePath(MakeStringView(L"Process:/"), CurrentProcess::Instance().Directory());
     }
     // data directory
     {
         WString path;
         Format(path, L"{0}/../../Data", CurrentProcess::Instance().Directory());
-        VirtualFileSystem::Instance().MountNativePath(MakeStringSlice(L"Data:/"), path);
+        VirtualFileSystem::Instance().MountNativePath(MakeStringView(L"Data:/"), path);
     }
     // system temporary path
     {
@@ -110,7 +110,7 @@ void VirtualFileSystemStartup::Start() {
         if (!FileSystem::SystemTemporaryDirectory(tmpPath, lengthof(tmpPath)) )
             AssertNotReached();
 
-        VirtualFileSystem::Instance().MountNativePath(MakeStringSlice(L"Tmp:/"), tmpPath);
+        VirtualFileSystem::Instance().MountNativePath(MakeStringView(L"Tmp:/"), tmpPath);
     }
     // user profile path
     {
@@ -125,7 +125,7 @@ void VirtualFileSystemStartup::Start() {
 #   error "unsupported platform"
 #endif
         AssertRelease(userPath);
-        VirtualFileSystem::Instance().MountNativePath(MakeStringSlice(L"User:/"), userPath);
+        VirtualFileSystem::Instance().MountNativePath(MakeStringView(L"User:/"), userPath);
     }
 }
 //----------------------------------------------------------------------------

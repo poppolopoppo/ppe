@@ -582,7 +582,7 @@ bool LocalHostName(String& hostname) {
     return true;
 }
 //----------------------------------------------------------------------------
-bool HostnameToIP(String& ip, const StringSlice& hostname, size_t n/* = 0 */) {
+bool HostnameToIP(String& ip, const StringView& hostname, size_t n/* = 0 */) {
     Assert(!hostname.empty());
     Assert(hostname.size() < NI_MAXHOST);
 
@@ -622,7 +622,7 @@ bool HostnameToIP(String& ip, const StringSlice& hostname, size_t n/* = 0 */) {
     return true;
 }
 //----------------------------------------------------------------------------
-bool IPToHostname(String& hostname, const StringSlice& ip) {
+bool IPToHostname(String& hostname, const StringView& ip) {
     Assert(!ip.empty());
 
     char temp[NI_MAXHOST]; // hostname must be a null terminated string

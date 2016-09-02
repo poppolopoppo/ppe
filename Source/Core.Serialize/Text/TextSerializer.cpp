@@ -268,13 +268,13 @@ private:
     void DecIndent() { Assert(0 < _indent); --_indent; }
     void Indent_();
 
-    void Print(const StringSlice& str);
+    void Print(const StringView& str);
     template <size_t _Dim>
-    void Print(const char (&cstr)[_Dim]) { Print(MakeStringSlice(cstr)); }
+    void Print(const char (&cstr)[_Dim]) { Print(MakeStringView(cstr)); }
 
-    void Puts(const StringSlice& str);
+    void Puts(const StringView& str);
     template <size_t _Dim>
-    void Puts(const char (&cstr)[_Dim]) { Puts(MakeStringSlice(cstr)); }
+    void Puts(const char (&cstr)[_Dim]) { Puts(MakeStringView(cstr)); }
 
     template <typename T>
     void PrintFormat(const T& value) {
@@ -385,12 +385,12 @@ void TextSerialize_::Indent_() {
     }
 }
 //----------------------------------------------------------------------------
-void TextSerialize_::Print(const StringSlice& str) {
+void TextSerialize_::Print(const StringView& str) {
     Indent_();
     _oss.WriteView(str);
 }
 //----------------------------------------------------------------------------
-void TextSerialize_::Puts(const StringSlice& str) {
+void TextSerialize_::Puts(const StringView& str) {
     Indent_();
     _oss.WriteView(str);
     _oss.WriteCStr("\r\n");
@@ -409,7 +409,7 @@ void TextSerializer::Deserialize(RTTI::MetaTransaction* transaction, const Memor
     Assert(transaction);
     Assert(input.SizeInBytes());
 
-    Lexer::Lexer lexer(input.Cast<const char>(), MakeStringSlice(sourceName, Meta::noinit_tag()), true);
+    Lexer::Lexer lexer(input.Cast<const char>(), MakeStringView(sourceName, Meta::noinit_tag()), true);
 
     Parser::ParseList parseList(&lexer);
     Parser::ParseContext parseContext;

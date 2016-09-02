@@ -52,12 +52,12 @@ public:
     const String& Name() const { return _name; }
     void SetName(String&& rvalue) { Assert(!rvalue.empty()); _name = std::move(rvalue); }
     void SetName(const String& value) { Assert(!value.empty()); _name = value; }
-    void SetName(const StringSlice& value) { Assert(!value.empty()); _name = ToString(value); }
+    void SetName(const StringView& value) { Assert(!value.empty()); _name = ToString(value); }
 
     const String& Technique() const { return _technique; }
     void SetTechnique(String&& rvalue) { Assert(!rvalue.empty()); _technique = std::move(rvalue); }
     void SetTechnique(const String& value) { Assert(!value.empty()); _technique = value; }
-    void SetTechnique(const StringSlice& value) { Assert(!value.empty()); _technique = ToString(value); }
+    void SetTechnique(const StringView& value) { Assert(!value.empty()); _technique = ToString(value); }
 
     const ParameterMap& Parameters() const { return _parameters; }
     void SetParameters(ParameterMap&& rvalue) { _parameters = std::move(rvalue); }
@@ -65,35 +65,35 @@ public:
     const TextureMap& Textures() const { return _textures; }
     void SetTextures(TextureMap&& rvalue) { _textures = std::move(rvalue); }
 
-    void AddTag(const StringSlice& tag);
-    bool HasTag(const StringSlice& tag) const;
-    bool RemoveTag(const StringSlice& tag);
+    void AddTag(const StringView& tag);
+    bool HasTag(const StringView& tag) const;
+    bool RemoveTag(const StringView& tag);
 
-    void AddParameter(const StringSlice& key, const Graphics::Value& value); // must be unique
-    void SetParameter(const StringSlice& key, const Graphics::Value& value); // will override existing value
-    Graphics::Value& GetParameterValue(const StringSlice& key);
-    Graphics::Value* GetParameterValueIFP(const StringSlice& key);
-    const Graphics::Value& GetParameterValue(const StringSlice& key) const { return remove_const(this)->GetParameterValue(key); }
-    const Graphics::Value* GetParameterValueIFP(const StringSlice& key) const { return remove_const(this)->GetParameterValueIFP(key); }
-    bool RemoveParameter(const StringSlice& key);
+    void AddParameter(const StringView& key, const Graphics::Value& value); // must be unique
+    void SetParameter(const StringView& key, const Graphics::Value& value); // will override existing value
+    Graphics::Value& GetParameterValue(const StringView& key);
+    Graphics::Value* GetParameterValueIFP(const StringView& key);
+    const Graphics::Value& GetParameterValue(const StringView& key) const { return remove_const(this)->GetParameterValue(key); }
+    const Graphics::Value* GetParameterValueIFP(const StringView& key) const { return remove_const(this)->GetParameterValueIFP(key); }
+    bool RemoveParameter(const StringView& key);
 
-    template <typename T> T& GetParameter(const StringSlice& key) { return GetParameterValue(key).Get<T>(); }
-    template <typename T> T* GetParameterIFP(const StringSlice& key) { return auto v = GetParameterValueIFP(key), (v ? v->Get<T>() : nullptr); }
-    template <typename T> const T& GetParameter(const StringSlice& key) const { return GetParameterValue(key).Get<T>(); }
-    template <typename T> const T* GetParameterIFP(const StringSlice& key) const { return auto v = GetParameterValueIFP(key), (v ? v->Get<T>() : nullptr); }
+    template <typename T> T& GetParameter(const StringView& key) { return GetParameterValue(key).Get<T>(); }
+    template <typename T> T* GetParameterIFP(const StringView& key) { return auto v = GetParameterValueIFP(key), (v ? v->Get<T>() : nullptr); }
+    template <typename T> const T& GetParameter(const StringView& key) const { return GetParameterValue(key).Get<T>(); }
+    template <typename T> const T* GetParameterIFP(const StringView& key) const { return auto v = GetParameterValueIFP(key), (v ? v->Get<T>() : nullptr); }
 
-    void AddTexture(const StringSlice& key,
+    void AddTexture(const StringView& key,
                     const Filename& filename,
                     Graphics::TextureDimension dimension,
                     Graphics::TextureAddressMode addressMode,
                     Graphics::TextureFilter filter );
-    void AddTexture2D(const StringSlice& key, const Filename& filename);
-    void AddTexture3D(const StringSlice& key, const Filename& filename);
-    void AddTextureCube(const StringSlice& key, const Filename& filename);
-    void AddTexture(const StringSlice& key, const GenericTextureSampler& sampler);
-    const GenericTextureSampler& GetTexture(const StringSlice& key) const;
-    const GenericTextureSampler* GetTextureIFP(const StringSlice& key) const;
-    bool RemoveTexture(const StringSlice& key);
+    void AddTexture2D(const StringView& key, const Filename& filename);
+    void AddTexture3D(const StringView& key, const Filename& filename);
+    void AddTextureCube(const StringView& key, const Filename& filename);
+    void AddTexture(const StringView& key, const GenericTextureSampler& sampler);
+    const GenericTextureSampler& GetTexture(const StringView& key) const;
+    const GenericTextureSampler* GetTextureIFP(const StringView& key) const;
+    bool RemoveTexture(const StringView& key);
 
     SINGLETON_POOL_ALLOCATED_DECL();
 

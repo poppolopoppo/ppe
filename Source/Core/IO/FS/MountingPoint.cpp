@@ -6,12 +6,12 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-MountingPoint::MountingPoint(const FileSystem::StringSlice& content)
+MountingPoint::MountingPoint(const FileSystem::StringView& content)
 :   parent_type(content) {
     Assert(content.size() && L':' == content.back());
 }
 //----------------------------------------------------------------------------
-MountingPoint& MountingPoint::operator =(const FileSystem::StringSlice& content) {
+MountingPoint& MountingPoint::operator =(const FileSystem::StringView& content) {
     parent_type::operator =(content);
     return *this;
 }

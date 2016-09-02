@@ -21,7 +21,7 @@ void VertexTypes_OnDeviceDestroy(DeviceEncapsulator *device);
 //----------------------------------------------------------------------------
 void RegisterVertexType(const VertexDeclaration* vdecl);
 void UnregisterVertexType(const VertexDeclaration* vdecl);
-const VertexDeclaration* VertexTypeByName(const StringSlice& name);
+const VertexDeclaration* VertexTypeByName(const StringView& name);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

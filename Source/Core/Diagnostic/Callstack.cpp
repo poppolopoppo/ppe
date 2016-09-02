@@ -7,7 +7,7 @@
 
 #include "IO/Stream.h"
 #include "IO/String.h"
-#include "IO/StringSlice.h"
+#include "IO/StringView.h"
 
 #include <mutex>
 

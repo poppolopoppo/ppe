@@ -89,7 +89,7 @@ size_t VirtualFileSystemTrie::EnumerateFiles(const Dirpath& dirpath, bool recurs
         : 0;
 }
 //----------------------------------------------------------------------------
-size_t VirtualFileSystemTrie::GlobFiles(const Dirpath& dirpath, const WStringSlice& pattern, bool recursive, const std::function<void(const Filename&)>& foreach) const {
+size_t VirtualFileSystemTrie::GlobFiles(const Dirpath& dirpath, const WStringView& pattern, bool recursive, const std::function<void(const Filename&)>& foreach) const {
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentReadable* const readable = ReadableComponent_(dirpath.MountingPoint(), _nodes);
     return (readable)

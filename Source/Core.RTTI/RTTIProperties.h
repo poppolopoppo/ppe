@@ -3,7 +3,7 @@
 #include "Core.RTTI/RTTI.h"
 
 #include "Core/Allocator/Allocation.h"
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 
 #include <locale>
 

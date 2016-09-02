@@ -11,7 +11,7 @@
 
 #include "Container/Vector.h"
 #include "IO/FileSystem.h"
-#include "IO/StringSlice.h"
+#include "IO/StringView.h"
 #include "IO/VirtualFileSystem.h"
 #include "Memory/MemoryProvider.h"
 
@@ -53,7 +53,7 @@ static LPCWSTR SystemIcon_(Dialog::Icon iconType) {
     return nullptr;
 }
 //----------------------------------------------------------------------------
-static WStringSlice ResultCaption_(Dialog::Result result) {
+static WStringView ResultCaption_(Dialog::Result result) {
     switch (result)
     {
     case Core::Dialog::Result::Ok:
@@ -79,10 +79,10 @@ static WStringSlice ResultCaption_(Dialog::Result result) {
     default:
         AssertNotImplemented();
     }
-    return WStringSlice();
+    return WStringView();
 }
 //----------------------------------------------------------------------------
-static void SetClipboard_(HWND hwndDlg, const WStringSlice& content)
+static void SetClipboard_(HWND hwndDlg, const WStringView& content)
 {
     HANDLE handle = (HANDLE)::GlobalAlloc(GHND|GMEM_ZEROINIT, (content.size()+2)*sizeof(wchar_t));
     if(handle != NULL)
@@ -99,7 +99,7 @@ static void SetClipboard_(HWND hwndDlg, const WStringSlice& content)
     ::GlobalFree(handle);
 }
 //----------------------------------------------------------------------------
-static void ExternalEditor_(const WStringSlice& filename, size_t line) {
+static void ExternalEditor_(const WStringView& filename, size_t line) {
     Assert(not filename.empty());
 
 	STACKLOCAL_OCSTRSTREAM(oss, 4096);
@@ -156,7 +156,7 @@ static void Template_AddItem_(
     }
 }
 //----------------------------------------------------------------------------
-static void Template_AddCaption_(MemoryViewWriter& writer, const WStringSlice& caption ) {
+static void Template_AddCaption_(MemoryViewWriter& writer, const WStringView& caption ) {
     writer.Write(caption.Pointer(), caption.SizeInBytes());
     if (caption.back() != L'\0')
         writer.WritePOD(L'\0');
@@ -167,7 +167,7 @@ static void Template_AddButton_(
 	size_t x, size_t y, 
 	size_t cx, size_t cy, 
 	size_t id, 
-	const WStringSlice& caption ) {
+	const WStringView& caption ) {
 	Template_AddItem_(writer, x, y, cx, cy,
 		id,
 		WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, AtomClass_::Button);
@@ -176,8 +176,8 @@ static void Template_AddButton_(
 }
 //----------------------------------------------------------------------------
 struct Template_DialogContext_ {
-    WStringSlice Text;
-    WStringSlice Caption;
+    WStringView Text;
+    WStringView Caption;
     Dialog::Type Buttons;
     LPCWSTR IconId;
     HICON IconResource;
@@ -196,7 +196,7 @@ static LRESULT CALLBACK Template_TextProc_(HWND hwndDlg, UINT message, WPARAM wP
                 wchar_t buffer[2048];
                 DWORD length = ::GetWindowTextW(hwndDlg, buffer, lengthof(buffer));
 
-                const WStringSlice text(buffer, length);
+                const WStringView text(buffer, length);
             }
             break;
 
@@ -224,7 +224,7 @@ static LRESULT CALLBACK Template_StackProc_(HWND hwndDlg, UINT message, WPARAM w
 
                     LOG(Info, L"double click on frame : >>> {0} <<<", ctx->CallstackFrames[index]);
 
-                    ExternalEditor_(MakeStringSlice(ctx->DecodedCallstack.Frames()[index].Filename()),
+                    ExternalEditor_(MakeStringView(ctx->DecodedCallstack.Frames()[index].Filename()),
                                     ctx->DecodedCallstack.Frames()[index].Line() );
                 }
             }
@@ -305,7 +305,7 @@ static LRESULT CALLBACK Template_DialogProc_(HWND hwndDlg, UINT message, WPARAM 
                 for (const WString& frame : ctx->CallstackFrames)
                     oss << frame << L"\r\n";
 
-                SetClipboard_(hwndDlg, MakeStringSlice(oss.str()));
+                SetClipboard_(hwndDlg, MakeStringView(oss.str()));
             }
             return TRUE;
 
@@ -327,7 +327,7 @@ static LRESULT CALLBACK Template_DialogProc_(HWND hwndDlg, UINT message, WPARAM 
 
                 ::MessageBoxExW(hwndDlg, path.c_str(), L"Core dumped", MB_OK|MB_ICONASTERISK, 0);
 
-                SetClipboard_(hwndDlg, MakeStringSlice(path));
+                SetClipboard_(hwndDlg, MakeStringView(path));
             }
             return TRUE;
         }
@@ -351,8 +351,8 @@ static constexpr Dialog::Result gTemplate_AllButtons[] = {
 static Dialog::Result Template_CreateDialogBox_(
     Dialog::Icon icon,
     Dialog::Type buttons,
-    const WStringSlice& text,
-    const WStringSlice& caption ) {
+    const WStringView& text,
+    const WStringView& caption ) {
 	STATIC_ASSERT(sizeof(u16) == sizeof(WORD));
 	STATIC_ASSERT(sizeof(u32) == sizeof(DWORD));
 
@@ -418,7 +418,7 @@ static Dialog::Result Template_CreateDialogBox_(
             if (((size_t)1<<(size_t)button) != (((size_t)1<<(size_t)button) & (size_t)buttons))
                 continue;
 
-            const WStringSlice buttonCaption = ResultCaption_(button);
+            const WStringView buttonCaption = ResultCaption_(button);
 
             const size_t w = buttonWidthPadding*2 + buttonWidthPerChar*buttonCaption.size();
             buttonRight -= buttonWidthPadding + w;
@@ -475,7 +475,7 @@ static Dialog::Result Template_CreateDialogBox_(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Dialog::Result Show(const WStringSlice& text, const WStringSlice& caption, Dialog::Type dialogType, Dialog::Icon iconType) {
+Dialog::Result Show(const WStringView& text, const WStringView& caption, Dialog::Type dialogType, Dialog::Icon iconType) {
     Assert(not text.empty());
     Assert(not caption.empty());
 #ifdef OS_WINDOWS

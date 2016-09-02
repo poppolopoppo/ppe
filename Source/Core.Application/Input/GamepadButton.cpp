@@ -30,78 +30,78 @@ static const GamepadButton gEachGamepadButtons[] = {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-StringSlice GamepadButtonToCStr(GamepadButton value) {
+StringView GamepadButtonToCStr(GamepadButton value) {
     switch (value)
     {
     case Core::Application::GamepadButton::Button0:
-        return MakeStringSlice("Button0");
+        return MakeStringView("Button0");
     case Core::Application::GamepadButton::Button1:
-        return MakeStringSlice("Button1");
+        return MakeStringView("Button1");
     case Core::Application::GamepadButton::Button2:
-        return MakeStringSlice("Button2");
+        return MakeStringView("Button2");
     case Core::Application::GamepadButton::Button3:
-        return MakeStringSlice("Button3");
+        return MakeStringView("Button3");
     case Core::Application::GamepadButton::Button4:
-        return MakeStringSlice("Button4");
+        return MakeStringView("Button4");
     case Core::Application::GamepadButton::Button5:
-        return MakeStringSlice("Button5");
+        return MakeStringView("Button5");
     case Core::Application::GamepadButton::Button6:
-        return MakeStringSlice("Button6");
+        return MakeStringView("Button6");
     case Core::Application::GamepadButton::Button7:
-        return MakeStringSlice("Button7");
+        return MakeStringView("Button7");
     case Core::Application::GamepadButton::Button8:
-        return MakeStringSlice("Button8");
+        return MakeStringView("Button8");
     case Core::Application::GamepadButton::Button9:
-        return MakeStringSlice("Button9");
+        return MakeStringView("Button9");
     case Core::Application::GamepadButton::DPadUp:
-        return MakeStringSlice("DPadUp");
+        return MakeStringView("DPadUp");
     case Core::Application::GamepadButton::DPadLeft:
-        return MakeStringSlice("DPadLeft");
+        return MakeStringView("DPadLeft");
     case Core::Application::GamepadButton::DPadRight:
-        return MakeStringSlice("DPadRight");
+        return MakeStringView("DPadRight");
     case Core::Application::GamepadButton::DPadDown:
-        return MakeStringSlice("DPadDown");
+        return MakeStringView("DPadDown");
     default:
         AssertNotImplemented();
     }
-    return StringSlice();
+    return StringView();
 }
 //----------------------------------------------------------------------------
-StringSlice GamepadButtonToXBoxCStr(GamepadButton value) {
+StringView GamepadButtonToXBoxCStr(GamepadButton value) {
     switch (value)
     {
     case Core::Application::GamepadButton::A:
-        return MakeStringSlice("A");
+        return MakeStringView("A");
     case Core::Application::GamepadButton::B:
-        return MakeStringSlice("B");
+        return MakeStringView("B");
     case Core::Application::GamepadButton::X:
-        return MakeStringSlice("X");
+        return MakeStringView("X");
     case Core::Application::GamepadButton::Y:
-        return MakeStringSlice("Y");
+        return MakeStringView("Y");
     case Core::Application::GamepadButton::LeftThumb:
-        return MakeStringSlice("LeftThumb");
+        return MakeStringView("LeftThumb");
     case Core::Application::GamepadButton::RightThumb:
-        return MakeStringSlice("RightThumb");
+        return MakeStringView("RightThumb");
     case Core::Application::GamepadButton::Start:
-        return MakeStringSlice("Start");
+        return MakeStringView("Start");
     case Core::Application::GamepadButton::Back:
-        return MakeStringSlice("Back");
+        return MakeStringView("Back");
     case Core::Application::GamepadButton::LeftShoulder:
-        return MakeStringSlice("LeftShoulder");
+        return MakeStringView("LeftShoulder");
     case Core::Application::GamepadButton::RightShoulder:
-        return MakeStringSlice("RightShoulder");
+        return MakeStringView("RightShoulder");
     case Core::Application::GamepadButton::DPadUp:
-        return MakeStringSlice("DPadUp");
+        return MakeStringView("DPadUp");
     case Core::Application::GamepadButton::DPadLeft:
-        return MakeStringSlice("DPadLeft");
+        return MakeStringView("DPadLeft");
     case Core::Application::GamepadButton::DPadRight:
-        return MakeStringSlice("DPadRight");
+        return MakeStringView("DPadRight");
     case Core::Application::GamepadButton::DPadDown:
-        return MakeStringSlice("DPadDown");
+        return MakeStringView("DPadDown");
     default:
         AssertNotImplemented();
     }
-    return StringSlice();
+    return StringView();
 }
 //----------------------------------------------------------------------------
 MemoryView<const GamepadButton> EachGamepadButtons() {

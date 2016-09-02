@@ -3,7 +3,7 @@
 #include "Core.Serialize/Serialize.h"
 
 #include "Core/Container/Hash.h"
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 
 #include <iosfwd>
 
@@ -91,18 +91,18 @@ public:
     };
 
     Symbol() : _type(Invalid), _ord(0) {}
-    Symbol(TypeId type, const StringSlice& cstr, u64 ord = 0) : _type(type), _cstr(cstr), _ord(ord) {}
+    Symbol(TypeId type, const StringView& cstr, u64 ord = 0) : _type(type), _cstr(cstr), _ord(ord) {}
 
     bool IsValid() const { return (Meta::CountBitsSet(uint64_t(_type)) == 1); }
     bool IsPrefix() const { return Meta::HasFlag(_type, Prefix); }
 
     TypeId Type() const { return _type; }
-    const StringSlice& CStr() const { return _cstr; }
+    const StringView& CStr() const { return _cstr; }
     u64 Ord() const { return _ord; }
 
 private:
     TypeId _type;
-    StringSlice _cstr;
+    StringView _cstr;
     u64 _ord;
 };
 //----------------------------------------------------------------------------

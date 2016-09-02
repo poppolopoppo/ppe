@@ -2,7 +2,7 @@
 
 #include "Core.Pixmap/Pixmap.h"
 
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 #include "Core/Meta/enum.h"
 
 #include <iosfwd>
@@ -16,7 +16,7 @@ enum class BlockFormat {
     DXT1    = 8,
     DXT5    = 16,
 };
-StringSlice BlockFormatToCStr(BlockFormat value);
+StringView BlockFormatToCStr(BlockFormat value);
 template <typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, BlockFormat value) {
     return oss << BlockFormatToCStr(value);
@@ -27,7 +27,7 @@ enum class ColorDepth {
     _16bits = 16,
     _32bits = 32,
 };
-StringSlice ColorDepthToCStr(ColorDepth value);
+StringView ColorDepthToCStr(ColorDepth value);
 template <typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, ColorDepth value) {
     return oss << ColorDepthToCStr(value);
@@ -39,7 +39,7 @@ enum class ColorMask {
     RGB     = 3,
     RGBA    = 4,
 };
-StringSlice ColorMaskToCStr(ColorMask value);
+StringView ColorMaskToCStr(ColorMask value);
 template <typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, ColorMask value) {
     return oss << ColorMaskToCStr(value);
@@ -51,7 +51,7 @@ enum class ColorSpace {
     Float,
     YCoCg,
 };
-StringSlice ColorSpaceToCStr(ColorSpace value);
+StringView ColorSpaceToCStr(ColorSpace value);
 template <typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, ColorSpace value) {
     return oss << ColorSpaceToCStr(value);

@@ -6,7 +6,7 @@
 
 #include "Core/Container/StringHashMap.h"
 #include "Core/IO/String.h"
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 #include "Core/Memory/RefPtr.h"
 
 namespace Core {
@@ -18,7 +18,7 @@ FWD_REFPTR(Element);
 FWD_REFPTR(Document);
 class Document : public RefCountable {
 public:
-    typedef STRINGSLICE_HASHMAP(XML, SElement, Case::Sensitive) byidentifier_type;
+    typedef STRINGVIEW_HASHMAP(XML, SElement, Case::Sensitive) byidentifier_type;
 
     Document();
     ~Document();
@@ -38,7 +38,7 @@ public:
 
     const byidentifier_type& ByIdentifier() const { return _byIdentifier; }
 
-    const Element* FindById(const StringSlice& Id) const;
+    const Element* FindById(const StringView& Id) const;
 
     bool empty() const { return (nullptr != _root); }
 
@@ -48,7 +48,7 @@ public:
     size_t XPath(const MemoryView<const Name>& path, const std::function<void(const Element&)>& functor) const;
 
     static bool Load(Document* document, const Filename& filename);
-    static bool Load(Document* document, const Filename& filename, const StringSlice& content);
+    static bool Load(Document* document, const Filename& filename, const StringView& content);
 
 private:
     PElement _root;

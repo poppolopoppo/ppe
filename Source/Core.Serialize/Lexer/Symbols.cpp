@@ -15,13 +15,13 @@ namespace {
 //----------------------------------------------------------------------------
 static const Symbol* InsertSymbol_(
     Symbols::hashmap_type& symbols,
-    Symbol::TypeId type, const StringSlice& cstr, u64 ord ) {
+    Symbol::TypeId type, const StringView& cstr, u64 ord ) {
     Assert(not cstr.empty());
 
     const Symbol* result = &(symbols[cstr] = Symbol(type, cstr, ord));
 
     forrange(i, 1, cstr.size()) {
-        const StringSlice prefix = cstr.CutBefore(i);
+        const StringView prefix = cstr.CutBefore(i);
         Symbol& symbol = symbols[prefix];
         if (not symbol.IsValid()) {
             symbol = Symbol(Symbol::TypeId(Symbol::Prefix|symbol.Type()|type), prefix);
@@ -43,18 +43,18 @@ static void RegisterSymbol_(
     typename Symbols::hashmap_type& symbols,
     typename Symbol::TypeId type, const char (&cstr)[_Dim], u64 ord = 0) {
     Assert(nullptr == *psymbol);
-    *psymbol = InsertSymbol_(symbols, type, MakeStringSlice(cstr), ord);
+    *psymbol = InsertSymbol_(symbols, type, MakeStringView(cstr), ord);
 }
 //----------------------------------------------------------------------------
 static void RegisterRTTITypenames_(Symbols::hashmap_type& symbols) {
 #define RTTI_INSERT_TYPENAME(_Name, T, _TypeId, _Unused) \
-    InsertSymbol_(symbols, Symbol::Typename, MakeStringSlice(STRINGIZE(_Name)), _TypeId);
+    InsertSymbol_(symbols, Symbol::Typename, MakeStringView(STRINGIZE(_Name)), _TypeId);
     FOREACH_CORE_RTTI_NATIVE_TYPES(RTTI_INSERT_TYPENAME)
 #undef RTTI_INSERT_TYPENAME
 }
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_ASSERT
-static const Symbol* FindSymbol_(const Symbols::hashmap_type& symbols, const StringSlice& cstr) {
+static const Symbol* FindSymbol_(const Symbols::hashmap_type& symbols, const StringView& cstr) {
     const auto it = symbols.find(cstr);
     return (symbols.end() != it ? &it->second : nullptr);
 }
@@ -81,7 +81,7 @@ static void CheckSymbol_(const Symbols::hashmap_type& symbols, const Symbol* sym
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool Symbols::IsPrefix(const Symbol** psymbol, const StringSlice& cstr) const {
+bool Symbols::IsPrefix(const Symbol** psymbol, const StringView& cstr) const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(psymbol);
     Assert(not cstr.empty());

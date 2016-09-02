@@ -9,27 +9,27 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-StringSlice MaterialVariabilityToCStr(MaterialVariability value) {
+StringView MaterialVariabilityToCStr(MaterialVariability value) {
     switch (value)
     {
     case Core::Engine::MaterialVariability::Always:
-        return MakeStringSlice("Always");
+        return MakeStringView("Always");
     case Core::Engine::MaterialVariability::Batch:
-        return MakeStringSlice("Batch");
+        return MakeStringView("Batch");
     case Core::Engine::MaterialVariability::Material:
-        return MakeStringSlice("Material");
+        return MakeStringView("Material");
     case Core::Engine::MaterialVariability::Scene:
-        return MakeStringSlice("Scene");
+        return MakeStringView("Scene");
     case Core::Engine::MaterialVariability::World:
-        return MakeStringSlice("World");
+        return MakeStringView("World");
     case Core::Engine::MaterialVariability::Frame:
-        return MakeStringSlice("Frame");
+        return MakeStringView("Frame");
     case Core::Engine::MaterialVariability::Once:
-        return MakeStringSlice("Once");
+        return MakeStringView("Once");
     default:
         AssertNotImplemented();
     }
-    return StringSlice();
+    return StringView();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -443,7 +443,7 @@ void DX11SetDeviceResourceNameIFP(::ID3D11DeviceChild *deviceChild, const Device
     if (!deviceChild)
         return;
 
-    const StringSlice resourceName = owner->ResourceName();
+    const StringView resourceName = owner->ResourceName();
     if (resourceName.empty())
         return;
 

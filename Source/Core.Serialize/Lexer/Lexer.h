@@ -38,7 +38,7 @@ private:
 //----------------------------------------------------------------------------
 class Lexer {
 public:
-    Lexer(const StringSlice& input, const WStringSlice& sourceFileName, bool allowTypenames);
+    Lexer(const StringView& input, const WStringView& sourceFileName, bool allowTypenames);
     ~Lexer();
 
     const Match *Peek();

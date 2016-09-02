@@ -7,7 +7,7 @@
 #include "Core/IO/FS/FileSystemProperties.h"
 
 #include "Core/IO/String.h"
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 
 #include <iosfwd>
 
@@ -25,17 +25,17 @@ public:
     Basename(const Basename& other);
     Basename& operator =(const Basename& other);
 
-    Basename(const FileSystem::StringSlice& content);
-    Basename& operator =(const FileSystem::StringSlice& content);
+    Basename(const FileSystem::StringView& content);
+    Basename& operator =(const FileSystem::StringView& content);
 
     template <size_t _Dim>
-    Basename(const FileSystem::char_type (&content)[_Dim]) : Basename(MakeStringSlice(content)) {}
+    Basename(const FileSystem::char_type (&content)[_Dim]) : Basename(MakeStringView(content)) {}
     template <size_t _Dim>
-    Basename& operator =(const FileSystem::char_type (&content)[_Dim]) { return operator =(MakeStringSlice(content)); }
+    Basename& operator =(const FileSystem::char_type (&content)[_Dim]) { return operator =(MakeStringView(content)); }
 
     template <typename _CharTraits, typename _Allocator>
     Basename(const std::basic_string<FileSystem::char_type, _CharTraits, _Allocator>& content)
-        : Basename(MakeStringSlice(content)) {}
+        : Basename(MakeStringView(content)) {}
 
     bool empty() const { return _basenameNoExt.empty() && _extname.empty(); }
 

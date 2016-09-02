@@ -4,7 +4,7 @@
 
 #include "Core/Container/Hash.h"
 #include "Core/IO/Format.h"
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 
 // Globally Unique Identifier
 // ex: {3F2504E0-4F89-11D3-9A0C-0305E82C3301}
@@ -37,11 +37,11 @@ ALIGN(16) struct Guid {
     static Guid Zero() { Guid v; v.Data.as_u64[0] = v.Data.as_u64[1] = 0; return v; }
 
     static Guid Generate();
-    static bool TryParse(const StringSlice& str, Guid *guid);
+    static bool TryParse(const StringView& str, Guid *guid);
 
-    static bool TryParse(const char *str, Guid *guid) { return TryParse(StringSlice(str, Length(str)), guid); }
+    static bool TryParse(const char *str, Guid *guid) { return TryParse(StringView(str, Length(str)), guid); }
     template <size_t _Dim>
-    static bool TryParse(const char(&cstr)[_Dim], Guid *guid) { return TryParse(MakeStringSlice(cstr), guid); }
+    static bool TryParse(const char(&cstr)[_Dim], Guid *guid) { return TryParse(MakeStringView(cstr), guid); }
 
     template <size_t _Dim>
     static Guid FromCStr(const char(&cstr)[_Dim]) {

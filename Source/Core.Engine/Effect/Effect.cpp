@@ -27,7 +27,7 @@
 #include "Core/Diagnostic/Logger.h"
 #include "Core/IO/FS/Filename.h"
 #include "Core/IO/String.h"
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 
 namespace Core {
 namespace Engine {
@@ -140,7 +140,7 @@ static void AppendTagSubstitutions_(
         const char *cstr = substitution.second.c_str();
         size_t size = substitution.second.size();
 
-        StringSlice define;
+        StringView define;
         while (Split(&cstr, &size, ';', define)) {
             Assert(!define.empty());
 

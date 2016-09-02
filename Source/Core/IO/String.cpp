@@ -2,7 +2,7 @@
 
 #include "String.h"
 
-#include "StringSlice.h"
+#include "StringView.h"
 
 #include <string.h>
 
@@ -20,29 +20,29 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 hash_t hash_value(const String& str) {
-    return hash_string(MakeStringSlice(str));
+    return hash_string(MakeStringView(str));
 }
 //----------------------------------------------------------------------------
 hash_t hash_value(const WString& wstr) {
-    return hash_string(MakeStringSlice(wstr));
+    return hash_string(MakeStringView(wstr));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 int Compare(const String& lhs, const String& rhs) {
-    return Compare(MakeStringSlice(lhs), MakeStringSlice(rhs));
+    return Compare(MakeStringView(lhs), MakeStringView(rhs));
 }
 //----------------------------------------------------------------------------
 int Compare(const WString& lhs, const WString& rhs) {
-    return Compare(MakeStringSlice(lhs), MakeStringSlice(rhs));
+    return Compare(MakeStringView(lhs), MakeStringView(rhs));
 }
 //----------------------------------------------------------------------------
 int CompareI(const String& lhs, const String& rhs) {
-    return CompareI(MakeStringSlice(lhs), MakeStringSlice(rhs));
+    return CompareI(MakeStringView(lhs), MakeStringView(rhs));
 }
 //----------------------------------------------------------------------------
 int CompareI(const WString& lhs, const WString& rhs) {
-    return CompareI(MakeStringSlice(lhs), MakeStringSlice(rhs));
+    return CompareI(MakeStringView(lhs), MakeStringView(rhs));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

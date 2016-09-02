@@ -411,7 +411,7 @@ void ModelBuilder::CloseMaterial(Material *material) {
 #endif
 }
 //----------------------------------------------------------------------------
-bool ModelBuilder::MaterialIndexFromName(size_t *pIndex, const StringSlice& name) const {
+bool ModelBuilder::MaterialIndexFromName(size_t *pIndex, const StringView& name) const {
     Assert(pIndex);
     Assert(!name.empty());
 

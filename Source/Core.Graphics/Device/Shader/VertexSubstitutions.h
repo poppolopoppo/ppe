@@ -13,9 +13,9 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-StringSlice VertexFormatToShaderFormat(VertexFormat format);
+StringView VertexFormatToShaderFormat(VertexFormat format);
 //----------------------------------------------------------------------------
-StringSlice VertexSemanticToShaderSemantic(const Graphics::Name& semantic);
+StringView VertexSemanticToShaderSemantic(const Graphics::Name& semantic);
 //----------------------------------------------------------------------------
 void FillVertexSubstitutions(   VECTOR_THREAD_LOCAL(Shader, Pair<String COMMA String>)& defines,
                                 const VertexDeclaration *declaration );

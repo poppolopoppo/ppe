@@ -3,7 +3,7 @@
 #include "Core.Serialize/Serialize.h"
 
 #include "Core.Serialize/Lexer/Location.h"
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 
 namespace Core {
 class IVirtualFileSystemIStream;
@@ -14,7 +14,7 @@ namespace Lexer {
 //----------------------------------------------------------------------------
 class LookAheadReader {
 public:
-    LookAheadReader(const StringSlice& input, const wchar_t *sourceFileName);
+    LookAheadReader(const StringView& input, const wchar_t *sourceFileName);
     ~LookAheadReader();
 
     const wchar_t *SourceFileName() const { return _sourceFileName; }
@@ -38,7 +38,7 @@ private:
     size_t _sourceLine;
     size_t _sourceColumn;
 
-    StringSlice _buffer;
+    StringView _buffer;
     size_t _bufferOffset;
 };
 //----------------------------------------------------------------------------

@@ -44,7 +44,7 @@ struct MetaType {
     static constexpr bool Enabled = false;
     static constexpr MetaTypeId Id() = delete;
     static constexpr MetaTypeFlags Flags() = delete;
-    static StringSlice Name() = delete;
+    static StringView Name() = delete;
     static T DefaultValue() = delete;
     static bool IsDefaultValue(const T& value) = delete;
     static hash_t HashValue(const T& value) = delete;
@@ -65,7 +65,7 @@ constexpr MetaTypeId hash_MetaTypeId_constexpr(_Args... args) {
         static constexpr bool Enabled = true; \
         static constexpr MetaTypeId Id() { return _TypeId; } \
         static constexpr MetaTypeFlags Flags() { return MetaTypeFlags::Scalar; } \
-        static StringSlice Name(); \
+        static StringView Name(); \
         static T DefaultValue(); \
         static bool IsDefaultValue(const T& value); \
         static hash_t HashValue(const T& value); \
@@ -99,7 +99,7 @@ struct MetaType< RTTI::Pair<_First, _Second> > {
     static constexpr MetaTypeId Id() { return TypeId; }
     static constexpr MetaTypeFlags Flags() { return MetaTypeFlags::Pair; }
 
-    NO_INLINE static StringSlice Name() {
+    NO_INLINE static StringView Name() {
         ONE_TIME_INITIALIZE(const CORE_RTTI_METATYPE_NAMETYPE, gName,
             "Pair<{0}, {1}>", first_meta_type::Name(), second_meta_type::Name() );
         return gName.MakeView();
@@ -141,7 +141,7 @@ struct MetaType< RTTI::Vector<T> > {
     static constexpr MetaTypeId Id() { return TypeId; }
     static constexpr MetaTypeFlags Flags() { return MetaTypeFlags::Vector; }
 
-    NO_INLINE static StringSlice Name() {
+    NO_INLINE static StringView Name() {
         ONE_TIME_INITIALIZE(const CORE_RTTI_METATYPE_NAMETYPE, gName,
             "Vector<{0}>", value_meta_type::Name() );
         return gName.MakeView();
@@ -191,7 +191,7 @@ struct MetaType< RTTI::Dictionary<_Key, _Value> > {
     static constexpr MetaTypeId Id() { return TypeId; }
     static constexpr MetaTypeFlags Flags() { return MetaTypeFlags::Dictionary; }
 
-    NO_INLINE static StringSlice Name() {
+    NO_INLINE static StringView Name() {
         ONE_TIME_INITIALIZE(const CORE_RTTI_METATYPE_NAMETYPE, gName,
             "Dictionary<{0}, {1}>", key_meta_type::Name(), value_meta_type::Name() );
         return gName.MakeView();
@@ -235,7 +235,7 @@ struct MetaType< RTTI::Dictionary<_Key, _Value> > {
 struct MetaTypeInfo {
     MetaTypeId Id;
     MetaTypeFlags Flags;
-    StringSlice Name;
+    StringView Name;
 
     bool operator ==(const MetaTypeInfo& other) const { return Id == other.Id; }
     bool operator !=(const MetaTypeInfo& other) const { return Id != other.Id; }

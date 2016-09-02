@@ -402,7 +402,7 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-StringSlice ValueTypeToCStr(ValueType value) {
+StringView ValueTypeToCStr(ValueType value) {
     switch (value)
     {
     case Core::Graphics::ValueType::Void:
@@ -489,7 +489,7 @@ StringSlice ValueTypeToCStr(ValueType value) {
         return "UX10Y10Z10W2N";
     }
     AssertNotImplemented();
-    return StringSlice();
+    return StringView();
 }
 //----------------------------------------------------------------------------
 size_t ValueSizeInBytes(ValueType value) {

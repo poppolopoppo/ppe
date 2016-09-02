@@ -6,7 +6,7 @@
 #include "VertexDeclaration.h"
 
 #include "Core/Container/StringHashMap.h"
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 #include "Core/Memory/AlignedStorage.h"
 #include "Core/Meta/Singleton.h"
 
@@ -42,9 +42,9 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-typedef STRINGSLICE_HASHMAP(Vertex, PCVertexDeclaration, Case::Sensitive) stringslice_to_vdecl_type;
-class VertexDeclarationDico_ : Meta::Singleton<stringslice_to_vdecl_type, VertexDeclarationDico_> {
-    typedef Meta::Singleton<stringslice_to_vdecl_type, VertexDeclarationDico_> parent_type;
+typedef STRINGVIEW_HASHMAP(Vertex, PCVertexDeclaration, Case::Sensitive) stringview_to_vdecl_type;
+class VertexDeclarationDico_ : Meta::Singleton<stringview_to_vdecl_type, VertexDeclarationDico_> {
+    typedef Meta::Singleton<stringview_to_vdecl_type, VertexDeclarationDico_> parent_type;
 public:
     using parent_type::HasInstance;
 
@@ -53,7 +53,7 @@ public:
         parent_type::Create();
     }
 
-    static stringslice_to_vdecl_type& Instance() {
+    static stringview_to_vdecl_type& Instance() {
         AssertIsMainThread();
         return parent_type::Instance();
     }
@@ -289,7 +289,7 @@ void RegisterVertexType(const VertexDeclaration* vdecl) {
     Assert(vdecl->ResourceName() == VertexTypeName_(vdecl));
 
     PCVertexDeclaration pcvdecl(vdecl);
-    Insert_AssertUnique(VertexDeclarationDico_::Instance(), MakeStringSlice(vdecl->ResourceName()), pcvdecl);
+    Insert_AssertUnique(VertexDeclarationDico_::Instance(), MakeStringView(vdecl->ResourceName()), pcvdecl);
 }
 //----------------------------------------------------------------------------
 void UnregisterVertexType(const VertexDeclaration* vdecl) {
@@ -298,10 +298,10 @@ void UnregisterVertexType(const VertexDeclaration* vdecl) {
     Assert(vdecl->ResourceName() == VertexTypeName_(vdecl));
 
     PCVertexDeclaration pcvdecl(vdecl);
-    Remove_AssertExistsAndSameValue(VertexDeclarationDico_::Instance(), MakeStringSlice(vdecl->ResourceName()), pcvdecl);
+    Remove_AssertExistsAndSameValue(VertexDeclarationDico_::Instance(), MakeStringView(vdecl->ResourceName()), pcvdecl);
 }
 //----------------------------------------------------------------------------
-const VertexDeclaration* VertexTypeByName(const StringSlice& name) {
+const VertexDeclaration* VertexTypeByName(const StringView& name) {
     PCVertexDeclaration vdecl;
     TryGetValue(VertexDeclarationDico_::Instance(), name, &vdecl);
     return vdecl.get();

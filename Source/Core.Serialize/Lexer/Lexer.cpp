@@ -205,7 +205,7 @@ static bool Lex_Numeric_(LookAheadReader& reader, const Symbol **psymbol, String
                 throw LexerException("invalid hexadecimal int", Match(Symbols::Int, std::move(value), reader.SourceSite(), reader.Tell()) );
 
             int64_t numeric;
-            if (!Atoi64(&numeric, MakeStringSlice(value), 16)) {
+            if (!Atoi64(&numeric, MakeStringView(value), 16)) {
                 Assert(false);
                 return false;
             }
@@ -226,7 +226,7 @@ static bool Lex_Numeric_(LookAheadReader& reader, const Symbol **psymbol, String
                 throw LexerException("invalid octal int", Match(Symbols::Int, std::move(value), reader.SourceSite(), reader.Tell() ));
 
             int64_t numeric;
-            if (!Atoi64(&numeric, MakeStringSlice(value), 8)) {
+            if (!Atoi64(&numeric, MakeStringView(value), 8)) {
                 Assert(false);
                 return false;
             }
@@ -402,7 +402,7 @@ static bool Lex_Identifier_(LookAheadReader& reader, const Symbol **psymbol, Str
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Lexer::Lexer(const StringSlice& input, const WStringSlice& sourceFileName, bool allowTypenames)
+Lexer::Lexer(const StringView& input, const WStringView& sourceFileName, bool allowTypenames)
 :   _sourceFileName(sourceFileName.begin(), sourceFileName.end())
 ,   _reader(input, _sourceFileName.c_str())
 ,   _allowTypenames(allowTypenames)

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 
 #include "Core/Memory/HashFunctions.h"
 
@@ -13,14 +13,14 @@ namespace Core {
 namespace {
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Pred>
-static bool SplitIf_(BasicStringSlice<_Char>& str, BasicStringSlice<_Char>& slice, const _Pred& pred) {
+static bool SplitIf_(BasicStringView<_Char>& str, BasicStringView<_Char>& slice, const _Pred& pred) {
     if (str.empty())
         return false;
 
     const auto it = str.FindIf(pred);
     if (str.end() == it) {
         slice = str;
-        str = BasicStringSlice<_Char>();
+        str = BasicStringView<_Char>();
     }
     else {
         Assert(pred(*it));
@@ -32,14 +32,14 @@ static bool SplitIf_(BasicStringSlice<_Char>& str, BasicStringSlice<_Char>& slic
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-static bool Split_(BasicStringSlice<_Char>& str, _Char separator, BasicStringSlice<_Char>& slice) {
+static bool Split_(BasicStringView<_Char>& str, _Char separator, BasicStringView<_Char>& slice) {
     return SplitIf_<_Char>(str, slice, [separator](const _Char ch) {
         return separator == ch;
     });
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-static bool SplitMulti_(BasicStringSlice<_Char>& str, const BasicStringSlice<_Char>& separators, BasicStringSlice<_Char>& slice) {
+static bool SplitMulti_(BasicStringView<_Char>& str, const BasicStringView<_Char>& separators, BasicStringView<_Char>& slice) {
     return SplitIf_<_Char>(str, slice, [separators](const _Char ch) {
         return (separators.end() != std::find(separators.begin(), separators.end(), ch));
     });
@@ -72,7 +72,7 @@ template <> struct AtoN_traits<wchar_t> {
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Char>
-static bool Atoi_(T *dst, const BasicStringSlice<_Char>& str, size_t base) {
+static bool Atoi_(T *dst, const BasicStringView<_Char>& str, size_t base) {
     static_assert(std::is_integral<T>::value, "T must be an integral type");
     Assert(1 < base && base <= 16);
 
@@ -108,7 +108,7 @@ static bool Atoi_(T *dst, const BasicStringSlice<_Char>& str, size_t base) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Char>
-static bool Atof_(T *dst, const BasicStringSlice<_Char>& str) {
+static bool Atof_(T *dst, const BasicStringView<_Char>& str) {
     static_assert(std::is_floating_point<T>::value, "T must be a floating point type");
 
     typedef AtoN_traits<_Char> traits;
@@ -168,11 +168,11 @@ struct WildChars_< wchar_t > {
     enum : wchar_t { Dot = L'.', Question = L'?', Star = L'*', };
 };
 template <Case _Sensitive, typename _Char>
-static bool WildMatch_(const BasicStringSlice<_Char>& pat, const BasicStringSlice<_Char>& str)
+static bool WildMatch_(const BasicStringView<_Char>& pat, const BasicStringView<_Char>& str)
 {
     CharEqualTo<_Char, _Sensitive> equalto;
     typedef WildChars_<_Char> chars;
-    typedef const typename BasicStringSlice<_Char>::iterator iterator;
+    typedef const typename BasicStringView<_Char>::iterator iterator;
 
     // Wildcard matching algorithms
     // http://xoomer.virgilio.it/acantato/dev/wildcard/wildmatch.html#evolution
@@ -223,35 +223,35 @@ struct CharFunctor_ {
 };
 //----------------------------------------------------------------------------
 template <typename _Char>
-static bool IsAll_(const BasicStringSlice<_Char>& str, bool (*pred)(_Char)) {
+static bool IsAll_(const BasicStringView<_Char>& str, bool (*pred)(_Char)) {
     return (str.end() == str.FindIfNot(pred));
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-static BasicStringSlice<_Char> SplitIf_(const BasicStringSlice<_Char>& str, bool (*pred)(_Char)) {
+static BasicStringView<_Char> SplitIf_(const BasicStringView<_Char>& str, bool (*pred)(_Char)) {
     return str.SplitIf(pred);
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-static BasicStringSlice<_Char> SplitInplaceIf_ReturnEaten_(BasicStringSlice<_Char>& str, bool (*pred)(_Char)) {
+static BasicStringView<_Char> SplitInplaceIf_ReturnEaten_(BasicStringView<_Char>& str, bool (*pred)(_Char)) {
     const auto it = str.FindIfNot(pred);
-    const BasicStringSlice<_Char> eaten = str.CutBefore(it);
+    const BasicStringView<_Char> eaten = str.CutBefore(it);
     str = str.CutStartingAt(it);
     return eaten;
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-typename BasicStringSlice<_Char>::iterator StrChr_(const BasicStringSlice<_Char>& str, _Char ch) {
+typename BasicStringView<_Char>::iterator StrChr_(const BasicStringView<_Char>& str, _Char ch) {
     return str.FindIf([ch](_Char c) { return (c == ch); });
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-typename BasicStringSlice<_Char>::reverse_iterator StrRChr_(const BasicStringSlice<_Char>& str, _Char ch) {
+typename BasicStringView<_Char>::reverse_iterator StrRChr_(const BasicStringView<_Char>& str, _Char ch) {
     return str.FindIfR([ch](_Char c) { return (c == ch); });
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-typename BasicStringSlice<_Char>::iterator StrStr_(const BasicStringSlice<_Char>& str, const BasicStringSlice<_Char>& firstOccurence) {
+typename BasicStringView<_Char>::iterator StrStr_(const BasicStringView<_Char>& str, const BasicStringView<_Char>& firstOccurence) {
     return str.FindSubRange(firstOccurence);
 }
 //----------------------------------------------------------------------------
@@ -259,59 +259,59 @@ typename BasicStringSlice<_Char>::iterator StrStr_(const BasicStringSlice<_Char>
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-StringSlice::iterator StrChr(const StringSlice& str, char ch) { return StrChr_(str, ch); }
-StringSlice::reverse_iterator StrRChr(const StringSlice& str, char ch) { return StrRChr_(str, ch); }
+StringView::iterator StrChr(const StringView& str, char ch) { return StrChr_(str, ch); }
+StringView::reverse_iterator StrRChr(const StringView& str, char ch) { return StrRChr_(str, ch); }
 //----------------------------------------------------------------------------
-WStringSlice::iterator StrChr(const WStringSlice& wstr, wchar_t wch) { return StrChr_(wstr, wch); }
-WStringSlice::reverse_iterator StrRChr(const WStringSlice& wstr, wchar_t wch) { return StrRChr_(wstr, wch); }
+WStringView::iterator StrChr(const WStringView& wstr, wchar_t wch) { return StrChr_(wstr, wch); }
+WStringView::reverse_iterator StrRChr(const WStringView& wstr, wchar_t wch) { return StrRChr_(wstr, wch); }
 //----------------------------------------------------------------------------
-StringSlice::iterator StrStr(const StringSlice& str, const StringSlice& firstOccurence) { return StrStr_(str, firstOccurence); }
-WStringSlice::iterator StrStr(const WStringSlice& wstr, const WStringSlice& firstOccurence) { return StrStr_(wstr, firstOccurence); }
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-bool IsAlnum(const StringSlice& str) { return IsAll_(str, &IsAlnum); }
-bool IsAlnum(const WStringSlice& wstr) { return IsAll_(wstr, &IsAlnum); }
-//----------------------------------------------------------------------------
-bool IsAlpha(const StringSlice& str) { return IsAll_(str, &IsAlpha); }
-bool IsAlpha(const WStringSlice& wstr) { return IsAll_(wstr, &IsAlpha); }
-//----------------------------------------------------------------------------
-bool IsDigit(const StringSlice& str) { return IsAll_(str, &IsDigit); }
-bool IsDigit(const WStringSlice& wstr) { return IsAll_(wstr, &IsDigit); }
-//----------------------------------------------------------------------------
-bool IsXDigit(const StringSlice& str) { return IsAll_(str, &IsXDigit); }
-bool IsXDigit(const WStringSlice& wstr) { return IsAll_(wstr, &IsXDigit); }
-//----------------------------------------------------------------------------
-bool IsPrint(const StringSlice& str) { return IsAll_(str, &IsPrint); }
-bool IsPrint(const WStringSlice& wstr) { return IsAll_(wstr, &IsPrint); }
-//----------------------------------------------------------------------------
-bool IsSpace(const StringSlice& str) { return IsAll_(str, &IsSpace); }
-bool IsSpace(const WStringSlice& wstr) { return IsAll_(wstr, &IsSpace); }
+StringView::iterator StrStr(const StringView& str, const StringView& firstOccurence) { return StrStr_(str, firstOccurence); }
+WStringView::iterator StrStr(const WStringView& wstr, const WStringView& firstOccurence) { return StrStr_(wstr, firstOccurence); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-StringSlice EatAlnums(StringSlice& str) { return SplitInplaceIf_ReturnEaten_(str, &IsAlnum); }
-WStringSlice EatAlnums(WStringSlice& wstr) { return SplitInplaceIf_ReturnEaten_(wstr, &IsAlnum); }
+bool IsAlnum(const StringView& str) { return IsAll_(str, &IsAlnum); }
+bool IsAlnum(const WStringView& wstr) { return IsAll_(wstr, &IsAlnum); }
 //----------------------------------------------------------------------------
-StringSlice EatAlphas(StringSlice& str) { return SplitInplaceIf_ReturnEaten_(str, &IsAlpha); }
-WStringSlice EatAlphas(WStringSlice& wstr) { return SplitInplaceIf_ReturnEaten_(wstr, &IsAlpha); }
+bool IsAlpha(const StringView& str) { return IsAll_(str, &IsAlpha); }
+bool IsAlpha(const WStringView& wstr) { return IsAll_(wstr, &IsAlpha); }
 //----------------------------------------------------------------------------
-StringSlice EatDigits(StringSlice& str) { return SplitInplaceIf_ReturnEaten_(str, &IsDigit); }
-WStringSlice EatDigits(WStringSlice& wstr) { return SplitInplaceIf_ReturnEaten_(wstr, &IsDigit); }
+bool IsDigit(const StringView& str) { return IsAll_(str, &IsDigit); }
+bool IsDigit(const WStringView& wstr) { return IsAll_(wstr, &IsDigit); }
 //----------------------------------------------------------------------------
-StringSlice EatXDigits(StringSlice& str) { return SplitInplaceIf_ReturnEaten_(str, &IsXDigit); }
-WStringSlice EatXDigits(WStringSlice& wstr) { return SplitInplaceIf_ReturnEaten_(wstr, &IsXDigit); }
+bool IsXDigit(const StringView& str) { return IsAll_(str, &IsXDigit); }
+bool IsXDigit(const WStringView& wstr) { return IsAll_(wstr, &IsXDigit); }
 //----------------------------------------------------------------------------
-StringSlice EatPrints(StringSlice& str) { return SplitInplaceIf_ReturnEaten_(str, &IsPrint); }
-WStringSlice EatPrints(WStringSlice& wstr) { return SplitInplaceIf_ReturnEaten_(wstr, &IsPrint); }
+bool IsPrint(const StringView& str) { return IsAll_(str, &IsPrint); }
+bool IsPrint(const WStringView& wstr) { return IsAll_(wstr, &IsPrint); }
 //----------------------------------------------------------------------------
-StringSlice EatSpaces(StringSlice& str) { return SplitInplaceIf_ReturnEaten_(str, &IsSpace); }
-WStringSlice EatSpaces(WStringSlice& wstr) { return SplitInplaceIf_ReturnEaten_(wstr, &IsSpace); }
+bool IsSpace(const StringView& str) { return IsAll_(str, &IsSpace); }
+bool IsSpace(const WStringView& wstr) { return IsAll_(wstr, &IsSpace); }
 //----------------------------------------------------------------------------
-StringSlice Chomp(const StringSlice& str) { return SplitIf_(str, &IsEndLine); }
-WStringSlice Chomp(const WStringSlice& wstr) { return SplitIf_(wstr, &IsEndLine); }
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-StringSlice Strip(const StringSlice& str) {
+StringView EatAlnums(StringView& str) { return SplitInplaceIf_ReturnEaten_(str, &IsAlnum); }
+WStringView EatAlnums(WStringView& wstr) { return SplitInplaceIf_ReturnEaten_(wstr, &IsAlnum); }
+//----------------------------------------------------------------------------
+StringView EatAlphas(StringView& str) { return SplitInplaceIf_ReturnEaten_(str, &IsAlpha); }
+WStringView EatAlphas(WStringView& wstr) { return SplitInplaceIf_ReturnEaten_(wstr, &IsAlpha); }
+//----------------------------------------------------------------------------
+StringView EatDigits(StringView& str) { return SplitInplaceIf_ReturnEaten_(str, &IsDigit); }
+WStringView EatDigits(WStringView& wstr) { return SplitInplaceIf_ReturnEaten_(wstr, &IsDigit); }
+//----------------------------------------------------------------------------
+StringView EatXDigits(StringView& str) { return SplitInplaceIf_ReturnEaten_(str, &IsXDigit); }
+WStringView EatXDigits(WStringView& wstr) { return SplitInplaceIf_ReturnEaten_(wstr, &IsXDigit); }
+//----------------------------------------------------------------------------
+StringView EatPrints(StringView& str) { return SplitInplaceIf_ReturnEaten_(str, &IsPrint); }
+WStringView EatPrints(WStringView& wstr) { return SplitInplaceIf_ReturnEaten_(wstr, &IsPrint); }
+//----------------------------------------------------------------------------
+StringView EatSpaces(StringView& str) { return SplitInplaceIf_ReturnEaten_(str, &IsSpace); }
+WStringView EatSpaces(WStringView& wstr) { return SplitInplaceIf_ReturnEaten_(wstr, &IsSpace); }
+//----------------------------------------------------------------------------
+StringView Chomp(const StringView& str) { return SplitIf_(str, &IsEndLine); }
+WStringView Chomp(const WStringView& wstr) { return SplitIf_(wstr, &IsEndLine); }
+//----------------------------------------------------------------------------
+StringView Strip(const StringView& str) {
     size_t first = 0;
     size_t last = str.size();
     for(; first < last && IsSpace(str[first]); ++first);
@@ -319,7 +319,7 @@ StringSlice Strip(const StringSlice& str) {
     return str.SubRange(first, last - first);
 }
 //----------------------------------------------------------------------------
-WStringSlice Strip(const WStringSlice& wstr) {
+WStringView Strip(const WStringView& wstr) {
     size_t first = 0;
     size_t last = wstr.size();
     for(; first < last && IsSpace(wstr[first]); ++first);
@@ -329,7 +329,7 @@ WStringSlice Strip(const WStringSlice& wstr) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-int Compare(const StringSlice& lhs, const StringSlice& rhs) {
+int Compare(const StringView& lhs, const StringView& rhs) {
     if (lhs == rhs)
         return 0;
 
@@ -343,7 +343,7 @@ int Compare(const StringSlice& lhs, const StringSlice& rhs) {
         return (lhs.size() < rhs.size() ? -1 : 1);
 }
 //----------------------------------------------------------------------------
-int Compare(const WStringSlice& lhs, const WStringSlice& rhs) {
+int Compare(const WStringView& lhs, const WStringView& rhs) {
     if (lhs == rhs)
         return 0;
 
@@ -357,7 +357,7 @@ int Compare(const WStringSlice& lhs, const WStringSlice& rhs) {
         return (lhs.size() < rhs.size() ? -1 : 1);
 }
 //----------------------------------------------------------------------------
-int CompareI(const StringSlice& lhs, const StringSlice& rhs) {
+int CompareI(const StringView& lhs, const StringView& rhs) {
     if (lhs == rhs)
         return 0;
 
@@ -371,7 +371,7 @@ int CompareI(const StringSlice& lhs, const StringSlice& rhs) {
         return (lhs.size() < rhs.size() ? -1 : 1);
 }
 //----------------------------------------------------------------------------
-int CompareI(const WStringSlice& lhs, const WStringSlice& rhs) {
+int CompareI(const WStringView& lhs, const WStringView& rhs) {
     if (lhs == rhs)
         return 0;
 
@@ -387,83 +387,83 @@ int CompareI(const WStringSlice& lhs, const WStringSlice& rhs) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool Split(StringSlice& str, char separator, StringSlice& slice) {
+bool Split(StringView& str, char separator, StringView& slice) {
     return Split_<char>(str, separator, slice);
 }
 //----------------------------------------------------------------------------
-bool Split(WStringSlice& wstr, wchar_t separator, WStringSlice& slice) {
+bool Split(WStringView& wstr, wchar_t separator, WStringView& slice) {
     return Split_<wchar_t>(wstr, separator, slice);
 }
 //----------------------------------------------------------------------------
-bool Split(StringSlice& str, const StringSlice& separators, StringSlice& slice) {
+bool Split(StringView& str, const StringView& separators, StringView& slice) {
     return SplitMulti_<char>(str, separators, slice);
 }
 //----------------------------------------------------------------------------
-bool Split(WStringSlice& wstr, const WStringSlice& separators, WStringSlice& slice) {
+bool Split(WStringView& wstr, const WStringView& separators, WStringView& slice) {
     return SplitMulti_<wchar_t>(wstr, separators, slice);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool Atoi32(i32* dst, const StringSlice& str, size_t base) {
+bool Atoi32(i32* dst, const StringView& str, size_t base) {
     return Atoi_(dst, str, base);
 }
 //----------------------------------------------------------------------------
-bool Atoi64(i64* dst, const StringSlice& str, size_t base) {
+bool Atoi64(i64* dst, const StringView& str, size_t base) {
     return Atoi_(dst, str, base);
 }
 //----------------------------------------------------------------------------
-bool Atoi32(i32* dst, const WStringSlice& wstr, size_t base) {
+bool Atoi32(i32* dst, const WStringView& wstr, size_t base) {
     return Atoi_(dst, wstr, base);
 }
 //----------------------------------------------------------------------------
-bool Atoi64(i64* dst, const WStringSlice& wstr, size_t base) {
+bool Atoi64(i64* dst, const WStringView& wstr, size_t base) {
     return Atoi_(dst, wstr, base);
 }
 //----------------------------------------------------------------------------
-bool Atof(float* dst, const StringSlice& str) {
+bool Atof(float* dst, const StringView& str) {
     return Atof_(dst, str);
 }
 //----------------------------------------------------------------------------
-bool Atod(double* dst, const StringSlice& str) {
+bool Atod(double* dst, const StringView& str) {
     return Atof_(dst, str);
 }
 //----------------------------------------------------------------------------
-bool Atof(float* dst, const WStringSlice& wstr) {
+bool Atof(float* dst, const WStringView& wstr) {
     return Atof_(dst, wstr);
 }
 //----------------------------------------------------------------------------
-bool Atod(double* dst, const WStringSlice& wstr) {
+bool Atod(double* dst, const WStringView& wstr) {
     return Atof_(dst, wstr);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool WildMatch(const StringSlice& pattern, const StringSlice& str) {
+bool WildMatch(const StringView& pattern, const StringView& str) {
     return WildMatch_<Case::Sensitive, char>(pattern, str);
 }
 //----------------------------------------------------------------------------
-bool WildMatch(const WStringSlice& pattern, const WStringSlice& wstr) {
+bool WildMatch(const WStringView& pattern, const WStringView& wstr) {
     return WildMatch_<Case::Sensitive, wchar_t>(pattern, wstr);
 }
 //----------------------------------------------------------------------------
-bool WildMatchI(const StringSlice& pattern, const StringSlice& str) {
+bool WildMatchI(const StringView& pattern, const StringView& str) {
     return WildMatch_<Case::Insensitive, char>(pattern, str);
 }
 //----------------------------------------------------------------------------
-bool WildMatchI(const WStringSlice& pattern, const WStringSlice& wstr) {
+bool WildMatchI(const WStringView& pattern, const WStringView& wstr) {
     return WildMatch_<Case::Insensitive, wchar_t>(pattern, wstr);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-size_t Copy(const MemoryView<char>& dst, const StringSlice& src) {
+size_t Copy(const MemoryView<char>& dst, const StringView& src) {
     const size_t n = std::min(dst.size(), src.size());
     std::copy(src.begin(), src.begin() + n, dst.begin());
     return n;
 }
 //----------------------------------------------------------------------------
-size_t Copy(const MemoryView<wchar_t>& dst, const WStringSlice& src) {
+size_t Copy(const MemoryView<wchar_t>& dst, const WStringView& src) {
     const size_t n = std::min(dst.size(), src.size());
     std::copy(src.begin(), src.begin() + n, dst.begin());
     return n;
@@ -471,31 +471,31 @@ size_t Copy(const MemoryView<wchar_t>& dst, const WStringSlice& src) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-hash_t hash_string(const StringSlice& str) {
+hash_t hash_string(const StringView& str) {
     return hash_mem(str.data(), str.SizeInBytes());
 }
 //----------------------------------------------------------------------------
-hash_t hash_string(const WStringSlice& wstr) {
+hash_t hash_string(const WStringView& wstr) {
     return hash_mem(wstr.data(), wstr.SizeInBytes());
 }
 //----------------------------------------------------------------------------
-hash_t hash_stringI(const StringSlice& str) {
+hash_t hash_stringI(const StringView& str) {
     char (*transform)(char) = &ToLower;
     return hash_fnv1a(MakeOutputIterator(str.begin(), transform), MakeOutputIterator(str.end(), transform));
 }
 //----------------------------------------------------------------------------
-hash_t hash_stringI(const WStringSlice& wstr) {
+hash_t hash_stringI(const WStringView& wstr) {
     wchar_t (*transform)(wchar_t) = &ToLower;
     return hash_fnv1a(MakeOutputIterator(wstr.begin(), transform), MakeOutputIterator(wstr.end(), transform));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const StringSlice& slice) {
+std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const StringView& slice) {
     return oss.write(slice.data(), slice.size());
 }
 //----------------------------------------------------------------------------
-std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const WStringSlice& wslice) {
+std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const WStringView& wslice) {
     return oss.write(wslice.data(), wslice.size());
 }
 //----------------------------------------------------------------------------

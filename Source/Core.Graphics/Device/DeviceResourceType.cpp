@@ -7,39 +7,39 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-StringSlice ResourceTypeToCStr(DeviceResourceType type) {
+StringView ResourceTypeToCStr(DeviceResourceType type) {
     switch (type)
     {
     case Core::Graphics::DeviceResourceType::Constants:
-        return MakeStringSlice("Constants");
+        return MakeStringView("Constants");
     case Core::Graphics::DeviceResourceType::Indices:
-        return MakeStringSlice("Indices");
+        return MakeStringView("Indices");
     case Core::Graphics::DeviceResourceType::BlendState:
-        return MakeStringSlice("BlendState");
+        return MakeStringView("BlendState");
     case Core::Graphics::DeviceResourceType::DepthStencilState:
-        return MakeStringSlice("DepthStencilState");
+        return MakeStringView("DepthStencilState");
     case Core::Graphics::DeviceResourceType::RasterizerState:
-        return MakeStringSlice("RasterizerState");
+        return MakeStringView("RasterizerState");
     case Core::Graphics::DeviceResourceType::RenderTarget:
-        return MakeStringSlice("RenderTarget");
+        return MakeStringView("RenderTarget");
     case Core::Graphics::DeviceResourceType::SamplerState:
-        return MakeStringSlice("SamplerState");
+        return MakeStringView("SamplerState");
     case Core::Graphics::DeviceResourceType::ShaderEffect:
-        return MakeStringSlice("ShaderEffect");
+        return MakeStringView("ShaderEffect");
     case Core::Graphics::DeviceResourceType::ShaderProgram:
-        return MakeStringSlice("ShaderProgram");
+        return MakeStringView("ShaderProgram");
     case Core::Graphics::DeviceResourceType::Texture2D:
-        return MakeStringSlice("Texture2D");
+        return MakeStringView("Texture2D");
     case Core::Graphics::DeviceResourceType::TextureCube:
-        return MakeStringSlice("TextureCube");
+        return MakeStringView("TextureCube");
     case Core::Graphics::DeviceResourceType::VertexDeclaration:
-        return MakeStringSlice("VertexDeclaration");
+        return MakeStringView("VertexDeclaration");
     case Core::Graphics::DeviceResourceType::Vertices:
-        return MakeStringSlice("Vertices");
+        return MakeStringView("Vertices");
     default:
         AssertNotImplemented();
     }
-    return StringSlice();
+    return StringView();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

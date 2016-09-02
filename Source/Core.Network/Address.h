@@ -3,7 +3,7 @@
 #include "Core.Network/Network.h"
 
 #include "Core/IO/String.h"
-#include "Core/IO/StringSlice.h"
+#include "Core/IO/StringView.h"
 
 namespace Core {
 namespace Network {
@@ -15,7 +15,7 @@ public:
     STATIC_CONST_INTEGRAL(size_t, DefaultPort, 80);
 
     Address();
-    Address(const StringSlice& host, size_t port);
+    Address(const StringView& host, size_t port);
     Address(String&& host, size_t port);
     explicit Address(size_t port) : Address(String(), port) {}
     ~Address();
@@ -30,16 +30,16 @@ public:
 
     const String& Host() const { return _host; }
     void SetHost(String&& value) { _host = std::move(value); }
-    void SetHost(const StringSlice& value) { _host = ToString(value); }
+    void SetHost(const StringView& value) { _host = ToString(value); }
 
     size_t Port() const { return _port; }
     void SetPort(size_t value) { _port = value; }
 
     bool IsIPv4() const;
 
-    static bool IP(Address* paddr, const StringSlice& hostname, size_t port = DefaultPort);
+    static bool IP(Address* paddr, const StringView& hostname, size_t port = DefaultPort);
     static bool Localhost(Address* paddr, size_t port = DefaultPort);
-    static bool Parse(Address* paddr, const StringSlice& input);
+    static bool Parse(Address* paddr, const StringView& input);
 
     static bool ParseIPv4(u8 (&ipV4)[4], const Address& addr);
 

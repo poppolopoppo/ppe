@@ -128,7 +128,7 @@ static size_t GlobFiles_Windows_(
     size_t total = 0;
 
     do {
-        const FileSystem::StringSlice fname = MakeStringSlice(ffd.cFileName, Meta::noinit_tag());
+        const FileSystem::StringView fname = MakeStringView(ffd.cFileName, Meta::noinit_tag());
         if (FILE_ATTRIBUTE_DIRECTORY & ffd.dwFileAttributes) {
             if (!recursive)
                 continue;
@@ -157,7 +157,7 @@ static size_t GlobFiles_(
     const Dirpath& aliased,
     const Dirpath& alias, const WString& destination,
     const std::function<void(const Filename&)>& foreach,
-    const WStringSlice& pattern,
+    const WStringView& pattern,
     bool recursive
     ) {
     VECTOR_THREAD_LOCAL(FileSystem, Dirpath) subDirectories;
@@ -275,7 +275,7 @@ size_t VirtualFileSystemNativeComponent::EnumerateFiles(const Dirpath& dirpath, 
     return GlobFiles_(dirpath, _alias, _target, foreach, L"*", recursive);
 }
 //----------------------------------------------------------------------------
-size_t VirtualFileSystemNativeComponent::GlobFiles(const Dirpath& dirpath, const WStringSlice& pattern, bool recursive, const std::function<void(const Filename&)>& foreach) {
+size_t VirtualFileSystemNativeComponent::GlobFiles(const Dirpath& dirpath, const WStringView& pattern, bool recursive, const std::function<void(const Filename&)>& foreach) {
     Assert(ModeReadable & _mode);
     Assert(pattern.size());
     return GlobFiles_(dirpath, _alias, _target, foreach, pattern, recursive);
