@@ -22,7 +22,8 @@
 ; choix du SDK de Windows 10 (#cestlebordel)
 ;#define USE_WINDOWS10_SDK_10
 ;#define USE_WINDOWS10_SDK_11 ; utilisé par Visual 2015 Update 2
-#define USE_WINDOWS10_SDK_20 ; utilisé par Visual 2015 Update 3
+;#define USE_WINDOWS10_SDK_20 ; utilisé par Visual 2015 Update 3
+#define USE_WINDOWS10_SDK_21 ; utilisé par Visual 2015 Update 3.1
 
 #include "MSVCBase.bff"
 
@@ -64,6 +65,9 @@
 #endif
 #if USE_WINDOWS10_SDK_20
     .WindowsSDKVersion10  = '10.0.10586.0'
+#endif
+#if USE_WINDOWS10_SDK_21
+    .WindowsSDKVersion10  = '10.0.14393.0'
 #endif
     Print( "Using Visual 2015 with Windows 10 SDK $WindowsSDKVersion10$" )
 ]
