@@ -7,5 +7,5 @@
 #pragma warning(disable: 6011) // Suppression de la référence du pointeur NULL 'XXX'.
 #pragma warning(disable: 6255) // _alloca signale un échec en levant une exception de dépassement de capacité de la pile. Utilisez _malloca à la place.
 #pragma warning(disable: 6385) // Lecture de données non valides depuis 'XXX' : la taille lisible est 'XXX' octets, mais 'XXX' octets sont peut-être lus.
+#pragma warning(disable: 4714) // Fonction 'XXX' marquée comme __forceinline non inline
 #endif
-
