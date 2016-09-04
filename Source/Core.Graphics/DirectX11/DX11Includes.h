@@ -2,6 +2,10 @@
 
 #include "Core.Graphics/Graphics.h"
 
+#ifndef EXPORT_CORE_GRAPHICS
+#   error "This file should not be included outside of Core.Graphics"
+#endif
+
 #include "Core.Graphics/Device/DeviceDiagnostics.h"
 
 #ifdef _DEBUG
