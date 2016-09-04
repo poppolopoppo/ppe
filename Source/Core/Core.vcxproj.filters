@@ -484,10 +484,10 @@
     <CustomBuild Include="IO\String.h">
       <Filter>IO</Filter>
     </CustomBuild>
-    <CustomBuild Include="IO\StringSlice.cpp">
+    <CustomBuild Include="IO\StringView.cpp">
       <Filter>IO</Filter>
     </CustomBuild>
-    <CustomBuild Include="IO\StringSlice.h">
+    <CustomBuild Include="IO\StringView.h">
       <Filter>IO</Filter>
     </CustomBuild>
     <CustomBuild Include="IO\VirtualFileSystem-inl.h">

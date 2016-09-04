@@ -7,9 +7,15 @@
     </CustomBuild>
     <CustomBuild Include="Core.Network.bff">
     </CustomBuild>
+    <CustomBuild Include="Listener.cpp">
+    </CustomBuild>
+    <CustomBuild Include="Listener.h">
+    </CustomBuild>
     <CustomBuild Include="Network.cpp">
     </CustomBuild>
     <CustomBuild Include="Network.h">
+    </CustomBuild>
+    <CustomBuild Include="NetworkIncludes.h">
     </CustomBuild>
     <CustomBuild Include="Network_extern.cpp">
     </CustomBuild>
