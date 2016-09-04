@@ -84,11 +84,12 @@ static WStringView ResultCaption_(Dialog::Result result) {
 //----------------------------------------------------------------------------
 static void SetClipboard_(HWND hwndDlg, const WStringView& content)
 {
-    HANDLE handle = (HANDLE)::GlobalAlloc(GHND|GMEM_ZEROINIT, (content.size()+2)*sizeof(wchar_t));
+    HANDLE handle = (HANDLE)::GlobalAlloc(GHND|GMEM_ZEROINIT, (content.size()+1)*sizeof(wchar_t));
     if(handle != NULL)
     {
         wchar_t *pData = (wchar_t *) ::GlobalLock((HGLOBAL)handle);
-        wcsncpy(pData, content.Pointer(), content.size());
+        ::wcsncpy_s(pData, content.size(), content.Pointer(), content.size());
+        Assert(L'\0' == pData[content.size()]);
         ::GlobalUnlock((HGLOBAL)handle);
 
         ::OpenClipboard(hwndDlg);
@@ -163,10 +164,10 @@ static void Template_AddCaption_(MemoryViewWriter& writer, const WStringView& ca
 }
 //----------------------------------------------------------------------------
 static void Template_AddButton_(
-	MemoryViewWriter& writer, 
-	size_t x, size_t y, 
-	size_t cx, size_t cy, 
-	size_t id, 
+	MemoryViewWriter& writer,
+	size_t x, size_t y,
+	size_t cx, size_t cy,
+	size_t id,
 	const WStringView& caption ) {
 	Template_AddItem_(writer, x, y, cx, cy,
 		id,
@@ -336,15 +337,15 @@ static LRESULT CALLBACK Template_DialogProc_(HWND hwndDlg, UINT message, WPARAM 
 }
 //----------------------------------------------------------------------------
 static constexpr Dialog::Result gTemplate_AllButtons[] = {
-    Dialog::Result::Ok, 
-    Dialog::Result::Retry, 
-    Dialog::Result::Ignore, 
+    Dialog::Result::Ok,
+    Dialog::Result::Retry,
+    Dialog::Result::Ignore,
     Dialog::Result::Yes,
-    Dialog::Result::TryAgain, 
-    Dialog::Result::Continue, 
+    Dialog::Result::TryAgain,
+    Dialog::Result::Continue,
     Dialog::Result::IgnoreAlways,
-    Dialog::Result::No, 
-    Dialog::Result::Cancel, 
+    Dialog::Result::No,
+    Dialog::Result::Cancel,
     Dialog::Result::Abort,
 };
 //----------------------------------------------------------------------------
@@ -436,13 +437,13 @@ static Dialog::Result Template_CreateDialogBox_(
 		Template_AddButton_(writer, 75, buttonTop, 55, buttonHeight, DIALOG_ID_MINIDUMP, L"Minidump");
         tpl->cdit++;
 
-        Template_AddItem_(writer, 15, 10, 32, 32, 
+        Template_AddItem_(writer, 15, 10, 32, 32,
 			DIALOG_ID_ICON,
             WS_CHILD | WS_VISIBLE | SS_ICON | SS_LEFT, AtomClass_::Static);
         writer.WritePOD(WORD(0)); // no caption text
         writer.WritePOD(WORD(0)); // no creation data
         tpl->cdit++;
-        
+
 		Template_AddItem_(writer, 45, 8, 350, 47,
 			DIALOG_ID_TEXT,
 			WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_MULTILINE | ES_READONLY, AtomClass_::Edit);
@@ -450,7 +451,7 @@ static Dialog::Result Template_CreateDialogBox_(
         writer.WritePOD(WORD(0)); // no creation data
         tpl->cdit++;
 
-        Template_AddItem_(writer, 5, 5+50+5, 390, 127, 
+        Template_AddItem_(writer, 5, 5+50+5, 390, 127,
 			DIALOG_ID_STACK,
             WS_BORDER | WS_HSCROLL | WS_VSCROLL | WS_CHILD | WS_VISIBLE, AtomClass_::ListBox);
         writer.WritePOD(WORD(0));

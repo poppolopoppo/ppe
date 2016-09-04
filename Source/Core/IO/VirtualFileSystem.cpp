@@ -114,10 +114,13 @@ void VirtualFileSystemStartup::Start() {
     }
     // user profile path
     {
-        const wchar_t* userPath = nullptr;
 #if defined(OS_WINDOWS)
-        userPath = _wgetenv(L"USERPROFILE");
+        wchar_t* userPath = nullptr;
+        size_t userPathLen = 0;
+        if (0 != _wdupenv_s(&userPath, &userPathLen, L"USERPROFILE"))
+            AssertNotReached();
 #elif defined(OS_LINUX)
+        const wchar_t* userPath = nullptr;
         const char* userPathA = std::getenv("HOME");
         WString userPathW = ToWString(userPath);
         userPath = userPathW.c_str();
@@ -126,6 +129,9 @@ void VirtualFileSystemStartup::Start() {
 #endif
         AssertRelease(userPath);
         VirtualFileSystem::Instance().MountNativePath(MakeStringView(L"User:/"), userPath);
+#if defined(OS_WINDOWS)
+        free(userPath); // must free() the string allocated by _wdupenv_s()
+#endif
     }
 }
 //----------------------------------------------------------------------------

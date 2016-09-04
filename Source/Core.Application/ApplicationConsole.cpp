@@ -44,14 +44,14 @@ void ApplicationConsole::RedirectIOToConsole() {
 
     FILE* fp = nullptr;
 
-    fp = freopen("conin$","r",stdin);
-    Assert(fp);
+    if (0 != ::freopen_s(&fp, "conin$","r",stdin))
+        AssertNotReached();
 
-    fp = freopen("conout$","w",stdout);
-    Assert(fp);
+    if (0 != ::freopen_s(&fp, "conout$","w",stdout))
+        AssertNotReached();
 
-    fp = freopen("conout$","w",stderr);
-    Assert(fp);
+    if (0 != ::freopen_s(&fp, "conout$","w",stderr))
+        AssertNotReached();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

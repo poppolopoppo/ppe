@@ -39,9 +39,6 @@
         "NOMINMAX",                     ; https://support.microsoft.com/en-us/kb/143208
         "VC_EXTRALEAN",                 ; https://support.microsoft.com/en-us/kb/166474
         "WIN32_LEAN_AND_MEAN",          ; https://support.microsoft.com/en-us/kb/166474
-        "STRSAFE_NO_DEPRECATE=1",       ; https://msdn.microsoft.com/en-us/library/windows/desktop/ms647466(v=vs.85).aspx
-        "_CRT_SECURE_NO_DEPRECATE=1",   ; https://msdn.microsoft.com/fr-fr/library/8ef0s5kh.aspx
-        "_CRT_NONSTDC_NO_DEPRECATE=1",  ; https://msdn.microsoft.com/fr-fr/library/8ef0s5kh.aspx
         "DBGHELP_TRANSLATE_TCHAR",      ; https://msdn.microsoft.com/en-us/library/windows/desktop/ms679294(v=vs.85).aspx
         "_UNICODE", "UNICODE",          ; https://msdn.microsoft.com/fr-fr/library/dybsewaf.aspx
         "_NO_W32_PSEUDO_MODIFIERS",     ; Prevent windows from #defining IN or OUT (undocumented)
