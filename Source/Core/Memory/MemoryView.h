@@ -96,12 +96,16 @@ public:
 
     MemoryView<T> CutStartingAt(const iterator& it) const {
         Assert(AliasesToContainer(it));
-        return (end() == it ? MemoryView(_storage+_size,0) : MemoryView(&*it, std::distance(it, end())) );
+        return (end() != it
+            ? MemoryView(std::addressof(*it), std::distance(it, end()))
+            : MemoryView(_storage+_size, size_type(0)) );
     }
 
     MemoryView<T> CutStartingAt(const reverse_iterator& it) const {
         Assert(AliasesToContainer(it));
-        return (rend() == it ? MemoryView(_storage,0) : MemoryView(&*it, _storage + _size - &*it) );
+        return (rend() != it
+            ? MemoryView(std::addressof(*it), _storage + _size - std::addressof(*it))
+            : MemoryView(_storage, size_type(0)) );
     }
 
     MemoryView<T> CutBefore(size_t offset) const { return SubRange(0, offset); }
@@ -114,7 +118,7 @@ public:
 
     MemoryView<T> CutBefore(const reverse_iterator& it) const {
         Assert(AliasesToContainer(it));
-        return MemoryView<T>(_storage, &*it - _storage);
+        return MemoryView<T>(_storage, std::addressof(*it) - _storage);
     }
 
     MemoryView<T> ShiftBack() const { Assert(_size > 0); return MemoryView<T>(_storage, _size - 1); }
