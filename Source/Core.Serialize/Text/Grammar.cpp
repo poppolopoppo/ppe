@@ -58,7 +58,7 @@ DEF_UNARYOPERATOR_FUNCTOR(Cpl,  ~);
 #define FORBID_UNARYOPERATOR_FUNCTOR(_Name, _Op, _Type) template <> \
     struct CONCAT(UnOp_, _Name)< _Type > { \
         _Type operator ()(const Parser::ParseExpression *expr, const _Type& ) const { \
-            throw Parser::ParserException("unary operator " STRINGIZE(_Op) " is not available for <" STRINGIZE(_Type) ">", expr->Site(), expr); \
+            CORE_THROW_IT(Parser::ParserException("unary operator " STRINGIZE(_Op) " is not available for <" STRINGIZE(_Type) ">", expr->Site(), expr)); \
         } \
     }
 
@@ -105,7 +105,7 @@ struct BinOp_Pow {
 #define FORBID_BINARYOPERATOR_FUNCTOR(_Name, _Op, _Type) template <> \
     struct CONCAT(BinOp_, _Name)< _Type > { \
         _Type operator ()(const Parser::ParseExpression *expr, const _Type& , const _Type& ) const { \
-            throw Parser::ParserException("binary operator " STRINGIZE(_Op) " is not available for <" STRINGIZE(_Type) ">", expr->Site(), expr); \
+            CORE_THROW_IT(Parser::ParserException("binary operator " STRINGIZE(_Op) " is not available for <" STRINGIZE(_Type) ">", expr->Site(), expr)); \
         } \
     }
 
@@ -220,7 +220,7 @@ struct UnaryOp {
             }
         }
 
-        throw Parser::ParserException("invalid atom type", expr);
+        CORE_THROW_IT(Parser::ParserException("invalid atom type", expr));
     }
 };
 //----------------------------------------------------------------------------
@@ -254,7 +254,7 @@ struct BinaryOp {
                 else if (RTTI::AssignCopy(&fp, rhs_value))
                     b = (ParseFloat(0) != fp);
                 else
-                    throw Parser::ParserException("could not convert to boolean", rhs);
+                    CORE_THROW_IT(Parser::ParserException("could not convert to boolean", rhs));
             }
 
             return RTTI::MakeAtom(
@@ -296,7 +296,7 @@ struct BinaryOp {
                     );
         }
 
-        throw Parser::ParserException("could not convert to integer", rhs);
+        CORE_THROW_IT(Parser::ParserException("could not convert to integer", rhs));
     }
 
     static RTTI::MetaAtom *FloatOp_(
@@ -322,7 +322,7 @@ struct BinaryOp {
             else if (RTTI::AssignCopy(&fp, rhs_value))
                 f = fp;
             else
-                throw Parser::ParserException("could not convert to float", rhs);
+                CORE_THROW_IT(Parser::ParserException("could not convert to float", rhs));
         }
 
         return RTTI::MakeAtom(
@@ -362,7 +362,7 @@ struct BinaryOp {
             else if (RTTI::AssignCopy(&fp, rhs_value))
                 oss << fp;
             else
-                throw Parser::ParserException("could not convert to string", rhs);
+                CORE_THROW_IT(Parser::ParserException("could not convert to string", rhs));
         }
 
         return RTTI::MakeAtom(
@@ -412,7 +412,7 @@ struct BinaryOp {
             }
         }
 
-        throw Parser::ParserException("invalid atom type", lhs);
+        CORE_THROW_IT(Parser::ParserException("invalid atom type", lhs));
     }
 };
 //----------------------------------------------------------------------------
@@ -436,7 +436,7 @@ struct TernaryOp {
             return value->Cast<ParseString>()->Wrapper().size() != 0;
         }
 
-        throw Parser::ParserException("invalid atom type", expr);
+        CORE_THROW_IT(Parser::ParserException("invalid atom type", expr));
     }
 };
 //----------------------------------------------------------------------------

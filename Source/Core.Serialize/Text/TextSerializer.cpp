@@ -244,7 +244,7 @@ private:
                     break;
 
                 default:
-                    throw TextSerializerException("no support for abstract RTTI atoms serialization");
+                    CORE_THROW_IT(TextSerializerException("no support for abstract RTTI atoms serialization"));
                 }
             }
             else

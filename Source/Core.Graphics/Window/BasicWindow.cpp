@@ -124,12 +124,12 @@ static void CreateBasicWindowClass_() {
     wc.lpszClassName = BASICWINDOW_CLASNAME;
 
     if (!RegisterClassEx(&wc))
-        throw LastErrorException();
+        CORE_THROW_IT(LastErrorException());
 }
 //----------------------------------------------------------------------------
 static void DestroyBasicWindowClass_() {
     if (!UnregisterClass(BASICWINDOW_CLASNAME, reinterpret_cast<HINSTANCE>(CurrentProcess::Instance().ApplicationHandle())))
-        throw LastErrorException();
+        CORE_THROW_IT(LastErrorException());
 }
 //----------------------------------------------------------------------------
 static HWND CreateBasicWindowHandle_(
@@ -142,7 +142,7 @@ static HWND CreateBasicWindowHandle_(
 
     RECT size = { 0, 0, checked_cast<LONG>(width), checked_cast<LONG>(height) };
     if (!::AdjustWindowRect(&size, windowStyle, FALSE))
-        throw LastErrorException();
+        CORE_THROW_IT(LastErrorException());
 
     HWND handle = ::CreateWindowEx(
         NULL,
@@ -159,7 +159,7 @@ static HWND CreateBasicWindowHandle_(
         checked_cast<LPVOID>(wnd));
 
     if (!handle)
-        throw LastErrorException();
+        CORE_THROW_IT(LastErrorException());
 
     return handle;
 }

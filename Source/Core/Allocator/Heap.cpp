@@ -22,7 +22,7 @@ static void* CreateHeap_(bool/* locked */, size_t initialSize = 0, size_t maximu
 
     HANDLE const handle = ::HeapCreate(heapOpts, initialSize, maximumSize);
     if (!handle)
-        throw std::bad_alloc();
+        CORE_THROW_IT(std::bad_alloc());
 
 #if _DEBUG
     // Enable heap terminate-on-corruption.
@@ -44,7 +44,7 @@ static void* CreateHeap_(bool/* locked */, size_t initialSize = 0, size_t maximu
 static void ValidateHeap_(void* handle, void* ptr = nullptr) {
     Assert(handle);
     if (!::HeapValidate(handle, 0, ptr))
-        throw std::bad_alloc();
+        CORE_THROW_IT(std::bad_alloc());
 }
 #endif
 //----------------------------------------------------------------------------
@@ -54,7 +54,7 @@ static void DestroyHeap_(void* handle) {
 #endif
 
     if (!::HeapDestroy(handle))
-        throw std::bad_alloc();
+        CORE_THROW_IT(std::bad_alloc());
 }
 //----------------------------------------------------------------------------
 } //!namespace

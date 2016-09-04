@@ -296,7 +296,7 @@ static void DX11CompileShaderBlob_(
         AssertRelease(errors);
 
         const char *msg = reinterpret_cast<const char *>(errors->GetBufferPointer());
-        throw ShaderCompilerException(msg, compiler, source);
+        CORE_THROW_IT(ShaderCompilerException(msg, compiler, source));
     }
     Assert(!errors);
 }
@@ -316,7 +316,7 @@ static void DX11ReflectShaderBlob_(
         ::IID_ID3D11ShaderReflection,
         (void **)&dx11Reflector
         )) ) {
-        throw ShaderCompilerException("failed to reflect shader program", compiler, source);
+        CORE_THROW_IT(ShaderCompilerException("failed to reflect shader program", compiler, source));
     }
     Assert(dx11Reflector);
 
@@ -426,7 +426,7 @@ static void DX11StripShaderBlobIFN_(
                     ::D3DCOMPILER_STRIP_TEST_BLOBS,
                     striped.GetAddressOf()
         )) ) {
-        throw ShaderCompilerException("failed to strip shader program", compiler, source);
+        CORE_THROW_IT(ShaderCompilerException("failed to strip shader program", compiler, source));
     }
 
     compiled = striped;
@@ -501,7 +501,7 @@ void DX11ShaderCompiler::PreprocessShaderSource(
         AssertRelease(errors);
 
         const char *msg = reinterpret_cast<const char *>(errors->GetBufferPointer());
-        throw ShaderCompilerException(msg, this, source);
+        CORE_THROW_IT(ShaderCompilerException(msg, this, source));
     }
     Assert(!errors);
     Assert(preprocessed);

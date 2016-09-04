@@ -81,7 +81,7 @@ RTTI::MetaAtom *VariableReference::Eval(ParseContext *context) const {
 
     RTTI::MetaAtom *const value = context->GetAny(_name);
     if (!value)
-        throw ParserException("unknown variable name", this);
+        CORE_THROW_IT(ParserException("unknown variable name", this));
 
     return value;
 }
@@ -113,7 +113,7 @@ RTTI::MetaAtom *ObjectDefinition::Eval(ParseContext *context) const {
 
     const RTTI::MetaClass *metaclass = RTTI::MetaClassDatabase::Instance().GetIFP(_name);
     if (!metaclass)
-        throw ParserException("unknown metaclass", this);
+        CORE_THROW_IT(ParserException("unknown metaclass", this));
 
     const RTTI::PMetaObject obj = metaclass->CreateInstance();
     Assert(obj);
@@ -157,18 +157,18 @@ RTTI::MetaAtom *PropertyReference::Eval(ParseContext *context) const {
 
     const auto *typed_atom = atom->As<RTTI::PMetaObject>();
     if (!typed_atom)
-        throw ParserException("invalid object", _object.get());
+        CORE_THROW_IT(ParserException("invalid object", _object.get()));
 
     const RTTI::PMetaObject object = typed_atom->Wrapper();
     if (!object)
-        throw ParserException("object is null", _object.get());
+        CORE_THROW_IT(ParserException("object is null", _object.get()));
 
     const RTTI::MetaClass *metaclass = object->RTTI_MetaClass();
     Assert(metaclass);
 
     const RTTI::MetaProperty *metaproperty = metaclass->PropertyIFP(_member);
     if (!metaproperty)
-        throw ParserException("invalid member name", this);
+        CORE_THROW_IT(ParserException("invalid member name", this));
 
     RTTI::MetaAtom *const pvalue = metaproperty->WrapCopy(object.get());
 
@@ -314,7 +314,7 @@ RTTI::MetaAtom *CastExpr::Eval(ParseContext *context) const {
     Assert(cast);
 
     if (false == cast->Traits()->AssignMove(cast.get(), atom.get()))
-        throw ParserException("invalid cast", this);
+        CORE_THROW_IT(ParserException("invalid cast", this));
 
     return RemoveRef_AssertReachZero_KeepAlive(cast);
 }

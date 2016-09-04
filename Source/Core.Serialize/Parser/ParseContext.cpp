@@ -43,7 +43,7 @@ void ParseContext::AddLocal(const ParseExpression* expr, const RTTI::Name& name,
     RTTI::PMetaAtom& local = _localScope[name];
 
     if (local)
-        throw ParserException("failed to overwrite local variable", expr);
+        CORE_THROW_IT(ParserException("failed to overwrite local variable", expr));
 
     local = value;
 }
@@ -55,10 +55,10 @@ void ParseContext::RemoveLocal(const ParseExpression* expr, const RTTI::Name& na
     const auto it = _localScope.find(name);
 
     if (_localScope.end() == it)
-        throw ParserException("failed to remove unknown local variable", expr);
+        CORE_THROW_IT(ParserException("failed to remove unknown local variable", expr));
 
     if (it->second != value)
-        throw ParserException("failed to remove local variable with wrong value", expr);
+        CORE_THROW_IT(ParserException("failed to remove local variable with wrong value", expr));
 
     _localScope.erase(it);
 }
@@ -75,12 +75,12 @@ void ParseContext::AddGlobal(const ParseExpression* expr, const RTTI::Name& name
     RTTI::PMetaAtom& global = ctx->_globalScope[name];
 
     if (global)
-        throw ParserException("failed to overwrite global variable", expr);
+        CORE_THROW_IT(ParserException("failed to overwrite global variable", expr));
 
     const auto* atom = value->As<RTTI::PMetaObject>();
 
     if (nullptr == atom)
-        throw ParserException("exported atom is not an object", expr);
+        CORE_THROW_IT(ParserException("exported atom is not an object", expr));
 
     global = value;
     const RTTI::PMetaObject& obj = atom->Wrapper();
@@ -100,15 +100,15 @@ void ParseContext::RemoveGlobal(const ParseExpression* expr, const RTTI::Name& n
     const auto it = ctx->_globalScope.find(name);
 
     if (ctx->_globalScope.end() == it)
-        throw ParserException("failed to remove unknown global variable", expr);
+        CORE_THROW_IT(ParserException("failed to remove unknown global variable", expr));
 
     if (it->second != value)
-        throw ParserException("failed to remove global variable with wrong value", expr);
+        CORE_THROW_IT(ParserException("failed to remove global variable with wrong value", expr));
 
     const auto* atom = it->second->As<RTTI::PMetaObject>();
 
     if (nullptr == atom)
-        throw ParserException("exported atom is not an object", expr);
+        CORE_THROW_IT(ParserException("exported atom is not an object", expr));
 
     RTTI::PMetaObject obj = atom->Wrapper();
 

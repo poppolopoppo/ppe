@@ -506,7 +506,7 @@ void DX11DeviceAPIEncapsulator::SetTexture(ShaderProgramType stage, size_t slot,
 
         const IDeviceAPIDependantAbstractTextureContent *content = texture->TextureEntity()->Content();
         if (!content)
-            throw DeviceEncapsulatorException("DX11: empty texture content could not be set to device", this, texture);
+            CORE_THROW_IT(DeviceEncapsulatorException("DX11: empty texture content could not be set to device", this, texture));
 
         const DX11AbstractTextureContent *dx11Content = checked_cast<const DX11AbstractTextureContent *>(content);
 
@@ -557,7 +557,7 @@ void DX11DeviceAPIEncapsulator::SetTextures(ShaderProgramType stage, const Memor
 
             const IDeviceAPIDependantAbstractTextureContent *content = texture->TextureEntity()->Content();
             if (!content)
-                throw DeviceEncapsulatorException("DX11: empty texture content could not be set to device", this, texture);
+                CORE_THROW_IT(DeviceEncapsulatorException("DX11: empty texture content could not be set to device", this, texture));
 
             const DX11AbstractTextureContent *dx11Content = checked_cast<const DX11AbstractTextureContent *>(content);
 

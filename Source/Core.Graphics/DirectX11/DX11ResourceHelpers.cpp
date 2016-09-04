@@ -34,7 +34,7 @@ bool DX11ResourceGetData(
     Assert(Meta::HasFlag(bufferMode, BufferMode::Read) );
 
     if (!DX11MapRead(wrapper->ImmediateContext(), resource, subResource, offset, dst, stride, count))
-        throw DeviceEncapsulatorException("DX11: failed to map resource buffer for reading", device);
+        CORE_THROW_IT(DeviceEncapsulatorException("DX11: failed to map resource buffer for reading", device));
 
     return true;
 }
@@ -57,7 +57,7 @@ bool DX11ResourceSetData(
     {
     case Core::Graphics::BufferUsage::Default:
         if (!DX11UpdateResource(wrapper->ImmediateContext(), resource, subResource, src, rowPitch, depthPitch))
-            throw DeviceEncapsulatorException("DX11: failed to update resource buffer", device);
+            CORE_THROW_IT(DeviceEncapsulatorException("DX11: failed to update resource buffer", device));
         break;
 
     case Core::Graphics::BufferUsage::Dynamic:
@@ -66,11 +66,11 @@ bool DX11ResourceSetData(
         if (!DX11MapWrite(  wrapper->ImmediateContext(), resource, subResource, offset, src, stride, count,
                             Meta::HasFlag(bufferMode, BufferMode::Discard),
                             Meta::HasFlag(bufferMode, BufferMode::DoNotWait) ))
-            throw DeviceEncapsulatorException("DX11: failed to map resource buffer for writing", device);
+            CORE_THROW_IT(DeviceEncapsulatorException("DX11: failed to map resource buffer for writing", device));
         break;
 
     case Core::Graphics::BufferUsage::Immutable:
-        throw DeviceEncapsulatorException("DX11: immutable buffer can't be muted", device);
+        CORE_THROW_IT(DeviceEncapsulatorException("DX11: immutable buffer can't be muted", device));
 
     default:
         AssertNotImplemented();

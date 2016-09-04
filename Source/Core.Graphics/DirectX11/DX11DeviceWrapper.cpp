@@ -109,7 +109,7 @@ static bool CreateDX11DeviceAndSwapChainIFP_(
 
     switch (result) {
     case DXGI_ERROR_SDK_COMPONENT_MISSING:
-        throw DeviceEncapsulatorException("Windows SDK is not at the correct version", encapsulator->Device());
+        CORE_THROW_IT(DeviceEncapsulatorException("Windows SDK is not at the correct version", encapsulator->Device()));
     default:
         return SUCCEEDED(result);
     }
@@ -374,7 +374,7 @@ void DX11DeviceWrapper::CheckDeviceErrors(const DX11DeviceAPIEncapsulator *encap
         case ::D3D11_MESSAGE_SEVERITY_ERROR:
         case ::D3D11_MESSAGE_SEVERITY_CORRUPTION:
             LOG(Error, L"[D3D11] {0}", formatedMessage);
-            throw DeviceEncapsulatorException(formatedMessage, encapsulator->Device());
+            CORE_THROW_IT(DeviceEncapsulatorException(formatedMessage, encapsulator->Device()));
             break;
         }
     }
@@ -418,7 +418,7 @@ void DX11ThrowIfFailed(
         );
 
     LOG(Error, L"[D3D11] {0}", formatedMessage);
-    throw DeviceEncapsulatorException(formatedMessage, encapsulator, optionalResource);
+    CORE_THROW_IT(DeviceEncapsulatorException(formatedMessage, encapsulator, optionalResource));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

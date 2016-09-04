@@ -74,7 +74,7 @@ void AssertionFailed(const char *msg, const wchar_t *file, unsigned line) {
         return;
 
     if (gIsInAssertion)
-        throw AssertException("Assert reentrancy !", WIDESTRING(__FILE__), __LINE__);
+        CORE_THROW_IT(AssertException("Assert reentrancy !", WIDESTRING(__FILE__), __LINE__));
 
     gIsInAssertion = true;
 
@@ -110,7 +110,7 @@ void AssertionFailed(const char *msg, const wchar_t *file, unsigned line) {
     gIsInAssertion = false;
 
     if (failure)
-        throw AssertException(msg, file, line);
+        CORE_THROW_IT(AssertException(msg, file, line));
 }
 //----------------------------------------------------------------------------
 void SetAssertionHandler(AssertionHandler handler) {
@@ -150,7 +150,7 @@ void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line)
         return;
 
     if (gIsInAssertion)
-        throw AssertReleaseException("Assert release reentrancy !", WIDESTRING(__FILE__), __LINE__);
+        CORE_THROW_IT(AssertReleaseException("Assert release reentrancy !", WIDESTRING(__FILE__), __LINE__));
 
     gIsInAssertion = true;
 
@@ -186,7 +186,7 @@ void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line)
     gIsInAssertion = false;
 
     if (failure)
-        throw AssertReleaseException(msg, file, line);
+        CORE_THROW_IT(AssertReleaseException(msg, file, line));
 }
 //----------------------------------------------------------------------------
 void SetAssertionReleaseHandler(AssertionReleaseHandler handler) {

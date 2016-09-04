@@ -202,7 +202,7 @@ static bool Lex_Numeric_(LookAheadReader& reader, const Symbol **psymbol, String
             *psymbol = Symbols::Int;
 
             if (!ReadCharset_(Hexadecimal_, reader, value))
-                throw LexerException("invalid hexadecimal int", Match(Symbols::Int, std::move(value), reader.SourceSite(), reader.Tell()) );
+                CORE_THROW_IT(LexerException("invalid hexadecimal int", Match(Symbols::Int, std::move(value), reader.SourceSite(), reader.Tell()) ));
 
             int64_t numeric;
             if (!Atoi64(&numeric, MakeStringView(value), 16)) {
@@ -223,7 +223,7 @@ static bool Lex_Numeric_(LookAheadReader& reader, const Symbol **psymbol, String
             *psymbol = Symbols::Int;
 
             if (!ReadCharset_(Octal_, reader, value))
-                throw LexerException("invalid octal int", Match(Symbols::Int, std::move(value), reader.SourceSite(), reader.Tell() ));
+                CORE_THROW_IT(LexerException("invalid octal int", Match(Symbols::Int, std::move(value), reader.SourceSite(), reader.Tell() )));
 
             int64_t numeric;
             if (!Atoi64(&numeric, MakeStringView(value), 8)) {
@@ -241,7 +241,7 @@ static bool Lex_Numeric_(LookAheadReader& reader, const Symbol **psymbol, String
     {
         // decimal or float
         if (!ReadCharset_(Float_, reader, value))
-            throw LexerException("invalid float", Match(Symbols::Float, std::move(value), reader.SourceSite(), reader.Tell() ));
+            CORE_THROW_IT(LexerException("invalid float", Match(Symbols::Float, std::move(value), reader.SourceSite(), reader.Tell() )));
 
         Assert(value.size());
 
@@ -277,7 +277,7 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
         ReadCharset_(Until_<'\''>, reader, value);
 
         if ('\'' != (ch = reader.Read()))
-            throw LexerException("unterminated strong quoted string", Match(Symbols::String, std::move(value), reader.SourceSite(), reader.Tell() ));
+            CORE_THROW_IT(LexerException("unterminated strong quoted string", Match(Symbols::String, std::move(value), reader.SourceSite(), reader.Tell() )));
 
         return true;
     }
@@ -324,7 +324,7 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
                     d1 = ToLower(reader.Read());
 
                     if (!(Octal_(d0) && Octal_(d1)))
-                        throw LexerException("invalid octal character escaping", Match(Symbols::String, std::move(value), reader.SourceSite(), reader.Tell() ));
+                        CORE_THROW_IT(LexerException("invalid octal character escaping", Match(Symbols::String, std::move(value), reader.SourceSite(), reader.Tell() )));
 
                     ch = (char)((d0 - '0') * 8 + (d1 - '0') );
 
@@ -337,7 +337,7 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
                     d1 = ToLower(reader.Read());
 
                     if (!(Hexadecimal_(d0) && Hexadecimal_(d1)))
-                        throw LexerException("invalid hexadecimal character escaping", Match(Symbols::String, std::move(value), reader.SourceSite(), reader.Tell() ));
+                        CORE_THROW_IT(LexerException("invalid hexadecimal character escaping", Match(Symbols::String, std::move(value), reader.SourceSite(), reader.Tell() )));
 
                     ch = (char)((d0 <= '9' ? d0 - '0' : d0 - 'a') * 16 +
                                 (d1 <= '9' ? d1 - '0' : d1 - 'a') );
@@ -347,10 +347,10 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
                     break;
 
                 case '\0':
-                    throw LexerException("unterminated weak quoted string", Match(Symbols::String, std::move(value), reader.SourceSite(), reader.Tell() ));
+                    CORE_THROW_IT(LexerException("unterminated weak quoted string", Match(Symbols::String, std::move(value), reader.SourceSite(), reader.Tell() )));
 
                 default:
-                    throw LexerException("invalid character escaping", Match(Symbols::String, std::move(value), reader.SourceSite(), reader.Tell() ));
+                    CORE_THROW_IT(LexerException("invalid character escaping", Match(Symbols::String, std::move(value), reader.SourceSite(), reader.Tell() )));
                 }
             }
             else
@@ -361,7 +361,7 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
                 case '\\': escaped = true; break;
 
                 case '\0':
-                    throw LexerException("unterminated weak quoted string", Match(Symbols::String, std::move(value), reader.SourceSite(), reader.Tell() ));
+                    CORE_THROW_IT(LexerException("unterminated weak quoted string", Match(Symbols::String, std::move(value), reader.SourceSite(), reader.Tell() )));
 
                 default:
                     oss.put(ch);

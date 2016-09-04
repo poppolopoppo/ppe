@@ -284,7 +284,7 @@ private:
                 ppair->FirstTypeInfo().Name, ppair->SecondTypeInfo().Name );
 
             if (false == _reader->ExpectPOD(ppair->Atom()->TypeInfo().Id) )
-                throw BinarySerializerException("failed to deserialize a PAIR vector");
+                CORE_THROW_IT(BinarySerializerException("failed to deserialize a PAIR vector"));
 
             pair.first = ppair->FirstTraits()->CreateDefaultValue();
             pair.second = ppair->SecondTraits()->CreateDefaultValue();
@@ -299,7 +299,7 @@ private:
             u32 count = 0;
             if (false == _reader->ExpectPOD(pvector->Atom()->TypeInfo().Id) ||
                 false == _reader->ReadPOD(&count) )
-                throw BinarySerializerException("failed to deserialize a RTTI vector");
+                CORE_THROW_IT(BinarySerializerException("failed to deserialize a RTTI vector"));
 
             const RTTI::IMetaTypeVirtualTraits* traits = pvector->ValueTraits();
 
@@ -317,7 +317,7 @@ private:
             u32 count = 0;
             if (false == _reader->ExpectPOD(pdictionary->Atom()->TypeInfo().Id) ||
                 false == _reader->ReadPOD(&count) )
-                throw BinarySerializerException("failed to deserialize a RTTI dictionary");
+                CORE_THROW_IT(BinarySerializerException("failed to deserialize a RTTI dictionary"));
 
             const RTTI::IMetaTypeVirtualTraits* keyTraits = pdictionary->KeyTraits();
             const RTTI::IMetaTypeVirtualTraits* valueTraits = pdictionary->ValueTraits();
@@ -336,7 +336,7 @@ private:
             Assert(scalar); \
             Assert(_TypeId == scalar->TypeInfo().Id); \
             if (false == Visit_(scalar)) \
-                throw BinarySerializerException("failed to deserialize a RTTI " #T ); \
+                CORE_THROW_IT(BinarySerializerException("failed to deserialize a RTTI " #T )); \
             /*parent_type::Visit(scalar);*/ \
         }
         FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
@@ -394,7 +394,7 @@ private:
                 return false;
 
             if (string_i >= _owner->_strings.size())
-                throw BinarySerializerException("invalid RTTI string index");
+                CORE_THROW_IT(BinarySerializerException("invalid RTTI string index"));
 
             const StringView& data = _owner->_strings[string_i];
             str.assign(data.begin(), data.end());
@@ -407,7 +407,7 @@ private:
                 return false;
 
             if (wstring_i >= _owner->_wstrings.size())
-                throw BinarySerializerException("invalid RTTI wstring index");
+                CORE_THROW_IT(BinarySerializerException("invalid RTTI wstring index"));
 
             const WStringView& data = _owner->_wstrings[wstring_i];
             wstr.assign(data.begin(), data.end());
@@ -433,7 +433,7 @@ private:
                 FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
 #undef DEF_METATYPE_SCALAR
                 default:
-                    throw BinarySerializerException("no support for abstract RTTI atoms deserialization");
+                    CORE_THROW_IT(BinarySerializerException("no support for abstract RTTI atoms deserialization"));
                 }
                 return true;
             }
@@ -450,7 +450,7 @@ private:
                     return false;
 
                 if (object_i >= _owner->_objects.size())
-                    throw BinarySerializerException("invalid RTTI object index");
+                    CORE_THROW_IT(BinarySerializerException("invalid RTTI object index"));
 
                 object = _owner->_objects[object_i];
                 return true;
@@ -463,7 +463,7 @@ private:
                 return false;
 
             if (string_i >= _owner->_strings.size())
-                throw BinarySerializerException("invalid RTTI name index");
+                CORE_THROW_IT(BinarySerializerException("invalid RTTI name index"));
 
             const StringView& data = _owner->_strings[string_i];
             name = RTTI::Name(data);
@@ -535,28 +535,28 @@ private:
 void BinaryDeserialize_::Read(MemoryViewReader& reader) {
 
     if (false == reader.ExpectPOD(FILE_MAGIC_) )
-        throw BinarySerializerException("invalid file magic");
+        CORE_THROW_IT(BinarySerializerException("invalid file magic"));
     if (false == reader.ExpectPOD(FILE_VERSION_) )
-        throw BinarySerializerException("unsupported file version");
+        CORE_THROW_IT(BinarySerializerException("unsupported file version"));
 
     if (false == reader.ExpectPOD(SECTION_NAMES_) ||
         false == DeserializePODArrays_<char>(reader, _names, [](const StringView& str) { Assert(str.size()); return RTTI::Name(str); }) )
-        throw BinarySerializerException("invalid names section");
+        CORE_THROW_IT(BinarySerializerException("invalid names section"));
 
     if (false == reader.ExpectPOD(SECTION_STRINGS_) ||
         false == DeserializePODArrays_<char>(reader, _strings, [](const StringView& str) { return str; }) )
-        throw BinarySerializerException("invalid strings section");
+        CORE_THROW_IT(BinarySerializerException("invalid strings section"));
 
     if (false == reader.ExpectPOD(SECTION_WSTRINGS_) ||
         false == DeserializePODArrays_<wchar_t>(reader, _wstrings, [](const WStringView& wstr) { return wstr; }) )
-        throw BinarySerializerException("invalid wstrings section");
+        CORE_THROW_IT(BinarySerializerException("invalid wstrings section"));
 
     if (false == reader.ExpectPOD(SECTION_CLASSES_) ||
         false == DeserializePODArrays_<char>(reader, _metaClasses, RetrieveMetaClass_) )
-        throw BinarySerializerException("expected classes section");
+        CORE_THROW_IT(BinarySerializerException("expected classes section"));
 
     if (false == reader.ExpectPOD(SECTION_PROPERTIES_) )
-        throw BinarySerializerException("expected properties section");
+        CORE_THROW_IT(BinarySerializerException("expected properties section"));
 
     _properties.resize(_metaClasses.size());
     forrange(i, 0, _properties.size()) {
@@ -568,20 +568,20 @@ void BinaryDeserialize_::Read(MemoryViewReader& reader) {
         });
 
         if (false == succeed)
-            throw BinarySerializerException("invalid RTTI property");
+            CORE_THROW_IT(BinarySerializerException("invalid RTTI property"));
     }
 
     if (false == reader.ExpectPOD(SECTION_TOP_OBJECTS_) ||
         false == DeserializePODs_(reader, _topObjects) )
-        throw BinarySerializerException("expected top objects section");
+        CORE_THROW_IT(BinarySerializerException("expected top objects section"));
 
     if (false == reader.ExpectPOD(SECTION_OBJECTS_TO_EXPORT_) ||
         false == DeserializePODs_(reader, _objectsToExport) )
-        throw BinarySerializerException("expected objects to export section");
+        CORE_THROW_IT(BinarySerializerException("expected objects to export section"));
 
     if (false == reader.ExpectPOD(SECTION_OBJECTS_HEADER_) ||
         false == DeserializePODs_(reader, _headers))
-        throw BinarySerializerException("expected objects header section");
+        CORE_THROW_IT(BinarySerializerException("expected objects header section"));
 
     // first pass : create or import every object in the file
     _objects.reserve(_headers.size());
@@ -591,7 +591,7 @@ void BinaryDeserialize_::Read(MemoryViewReader& reader) {
     u64 dataSizeInBytes = 0;
     if (false == reader.ExpectPOD(SECTION_OBJECTS_DATA_) ||
         false == reader.ReadPOD(&dataSizeInBytes) )
-        throw BinarySerializerException("expected objects data section");
+        CORE_THROW_IT(BinarySerializerException("expected objects data section"));
 
     const std::streamoff dataBegin = reader.TellI();
     const std::streamoff dataEnd = checked_cast<std::streamoff>(dataBegin + dataSizeInBytes);
@@ -615,11 +615,11 @@ void BinaryDeserialize_::Read(MemoryViewReader& reader) {
     }
 
     if (false == dataReader.Eof())
-        throw BinarySerializerException("object section has unread data");
+        CORE_THROW_IT(BinarySerializerException("object section has unread data"));
 
     reader.SeekI(dataEnd);
     if (false == reader.ExpectPOD(SECTION_END_) )
-        throw BinarySerializerException("expected end section");
+        CORE_THROW_IT(BinarySerializerException("expected end section"));
 }
 //----------------------------------------------------------------------------
 void BinaryDeserialize_::Finalize(RTTI::MetaTransaction* transaction) {
@@ -628,7 +628,7 @@ void BinaryDeserialize_::Finalize(RTTI::MetaTransaction* transaction) {
     for (const Pair<name_index_t, object_index_t>& it : _objectsToExport) {
         if (it.first > _names.size() ||
             it.second > _objects.size() )
-            throw BinarySerializerException("invalid RTTI object export");
+            CORE_THROW_IT(BinarySerializerException("invalid RTTI object export"));
 
         const RTTI::Name& name = _names[it.first];
         const RTTI::PMetaObject& object = _objects[it.second];
@@ -649,7 +649,7 @@ const RTTI::MetaClass* BinaryDeserialize_::RetrieveMetaClass_(const StringView& 
 
     const RTTI::MetaClass* metaClass = RTTI::MetaClassDatabase::Instance().GetIFP(name);
     if (nullptr == metaClass)
-        throw BinarySerializerException("unknown RTTI metaclass");
+        CORE_THROW_IT(BinarySerializerException("unknown RTTI metaclass"));
 
     return metaClass;
 }
@@ -662,7 +662,7 @@ const RTTI::MetaProperty* BinaryDeserialize_::RetrieveMetaProperty_(const RTTI::
 
     const RTTI::MetaProperty* metaProperty = metaClass->PropertyIFP(name);
     if (nullptr == metaProperty)
-        throw BinarySerializerException("unknown RTTI property");
+        CORE_THROW_IT(BinarySerializerException("unknown RTTI property"));
 
     return metaProperty;
 }
@@ -710,7 +710,7 @@ RTTI::MetaObject* BinaryDeserialize_::CreateObjectFromHeader_(const SerializedOb
             const RTTI::MetaAtom* patom = RTTI::MetaAtomDatabase::Instance().GetIFP(name);
             if (nullptr == patom ||
                 nullptr == patom->As<RTTI::PMetaObject>() )
-                throw BinarySerializerException("failed to import RTTI object from database");
+                CORE_THROW_IT(BinarySerializerException("failed to import RTTI object from database"));
 
             return patom->Cast<RTTI::PMetaObject>()->Wrapper().get();
         }
@@ -721,7 +721,7 @@ void BinaryDeserialize_::DeserializeObjectData_(MemoryViewReader& reader, RTTI::
     u32 metaClassCount = 0;
     if (false == reader.ExpectPOD(TAG_OBJECT_START_) ||
         false == reader.ReadPOD(&metaClassCount) )
-        throw BinarySerializerException("failed to read RTTI object header");
+        CORE_THROW_IT(BinarySerializerException("failed to read RTTI object header"));
 
     BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize object data for @{0}", reader.TellI());
 
@@ -733,12 +733,12 @@ void BinaryDeserialize_::DeserializeObjectData_(MemoryViewReader& reader, RTTI::
         if (false == reader.ExpectPOD(TAG_OBJECT_METACLASS_) ||
             false == reader.ReadPOD(&class_i) ||
             false == reader.ReadPOD(&propertyCount) )
-            throw BinarySerializerException("failed to read RTTI obect metaclass");
+            CORE_THROW_IT(BinarySerializerException("failed to read RTTI obect metaclass"));
 
         Assert(0 < propertyCount);
 
         if (class_i >= _metaClasses.size())
-            throw BinarySerializerException("invalid RTTI metaclass index");
+            CORE_THROW_IT(BinarySerializerException("invalid RTTI metaclass index"));
         Assert(_metaClasses.size() == _properties.size());
 
         const RTTI::MetaClass* metaClass = _metaClasses[class_i];
@@ -752,7 +752,7 @@ void BinaryDeserialize_::DeserializeObjectData_(MemoryViewReader& reader, RTTI::
             index_t prop_i;
             if (false == reader.ReadPOD(&prop_i) ||
                 prop_i > properties.size() )
-                throw BinarySerializerException("invalid RTTI property index");
+                CORE_THROW_IT(BinarySerializerException("invalid RTTI property index"));
 
             const RTTI::MetaProperty* metaProperty = properties[prop_i];
 
@@ -772,7 +772,7 @@ void BinaryDeserialize_::DeserializeObjectData_(MemoryViewReader& reader, RTTI::
     }
 
     if (false == reader.ExpectPOD(TAG_OBJECT_END_))
-        throw BinarySerializerException("failed to read RTTI object foorter");
+        CORE_THROW_IT(BinarySerializerException("failed to read RTTI object foorter"));
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -919,7 +919,7 @@ private:
                     break;
 
                 default:
-                    throw BinarySerializerException("no support for abstract RTTI atoms serialization");
+                    CORE_THROW_IT(BinarySerializerException("no support for abstract RTTI atoms serialization"));
                 }
             }
             else

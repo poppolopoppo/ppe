@@ -131,11 +131,11 @@ size_t ThreadContext::AffinityMask() const {
     DWORD_PTR affinityMask = ::SetThreadAffinityMask(currentThread, 0xFFul);
     if (0 == affinityMask) {
         LastErrorException e;
-        throw e;
+        CORE_THROW_IT(e);
     }
     if (0 == ::SetThreadAffinityMask(currentThread, affinityMask)) {
         LastErrorException e;
-        throw e;
+        CORE_THROW_IT(e);
     }
     return checked_cast<size_t>(affinityMask);
 #else
@@ -152,7 +152,7 @@ void ThreadContext::SetAffinityMask(size_t mask) const {
     DWORD_PTR affinityMask = ::SetThreadAffinityMask(currentThread, mask);
     if (0 == affinityMask) {
         LastErrorException e;
-        throw e;
+        CORE_THROW_IT(e);
     }
     Assert(mask == AffinityMask());
 #else

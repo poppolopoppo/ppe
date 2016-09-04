@@ -70,12 +70,12 @@ void PropertyAssignment::Execute(ParseContext *context) const {
 
     const RTTI::MetaProperty *metaproperty = metaclass->PropertyIFP(_name);
     if (!metaproperty)
-        throw ParserException("unknowm property name", this);
+        CORE_THROW_IT(ParserException("unknowm property name", this));
 
     const RTTI::PMetaAtom value = _value->Eval(context);
 
     if (!metaproperty->UnwrapMove(obj, value.get()))
-        throw ParserException("invalid property assignment", this);
+        CORE_THROW_IT(ParserException("invalid property assignment", this));
 }
 //----------------------------------------------------------------------------
 String PropertyAssignment::ToString() const {

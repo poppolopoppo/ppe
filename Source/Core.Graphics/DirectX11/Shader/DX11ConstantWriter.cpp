@@ -113,7 +113,7 @@ void DX11ConstantWriter::SetData(
 
         if (!ExportFieldData_(dst, src, field.Type())) {
             AssertNotImplemented();
-            throw DeviceEncapsulatorException("DX11: failed to write constant buffer field", device, resource);
+            CORE_THROW_IT(DeviceEncapsulatorException("DX11: failed to write constant buffer field", device, resource));
         }
     }
 }
@@ -140,7 +140,7 @@ void DX11ConstantWriter::SetData(
 
         if (!ExportFieldData_(dst, src, field.Type())) {
             AssertNotImplemented();
-            throw DeviceEncapsulatorException("DX11: failed to write constant buffer field", device, resource);
+            CORE_THROW_IT(DeviceEncapsulatorException("DX11: failed to write constant buffer field", device, resource));
         }
     }
 }

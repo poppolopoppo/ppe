@@ -21,7 +21,7 @@ namespace  {
 //----------------------------------------------------------------------------
 static void Expect_(Lexer::Lexer& lexer, Lexer::Match& eaten, const Lexer::Symbol* symbol) {
     if (not lexer.Expect(eaten, symbol))
-        throw XMLException("unexpected token", eaten.Site());
+        CORE_THROW_IT(XMLException("unexpected token", eaten.Site()));
 }
 //----------------------------------------------------------------------------
 static void ReadHeader_(Lexer::Lexer& lexer, String& version, String& encoding, String& standalone) {
@@ -31,7 +31,7 @@ static void ReadHeader_(Lexer::Lexer& lexer, String& version, String& encoding, 
     Expect_(lexer, eaten, Lexer::Symbols::Identifier);
 
     if (not EqualsI("xml", eaten.MakeView()))
-        throw XMLException("invalid document type", eaten.Site());
+        CORE_THROW_IT(XMLException("invalid document type", eaten.Site()));
 
     const Lexer::Match* poken;
     while ((poken = lexer.Peek(Lexer::Symbols::Identifier)) ) {
@@ -48,7 +48,7 @@ static void ReadHeader_(Lexer::Lexer& lexer, String& version, String& encoding, 
             pValue = &standalone;
         }
         else {
-            throw XMLException("invalid document attribute", eaten.Site());
+            CORE_THROW_IT(XMLException("invalid document attribute", eaten.Site()));
         }
 
         Assert(pValue);
@@ -131,7 +131,7 @@ bool Document::Load(Document* document, const Filename& filename, const StringVi
                 if (Insert_ReturnIfExists(  ids,
                                             MakeStringView(elementId->second),
                                             SElement(Element.get())) ) {
-                    throw XMLException("an element with the same id alread exists", Site);
+                    CORE_THROW_IT(XMLException("an element with the same id alread exists", Site));
                 }
             }
         }
@@ -155,11 +155,11 @@ bool Document::Load(Document* document, const Filename& filename, const StringVi
             // XML inner text
             const Lexer::Location site = poken->Site();
             if (visited.empty())
-                throw XMLException("text without tag", site);
+                CORE_THROW_IT(XMLException("text without tag", site));
 
             lexer.Seek(poken->Offset());
             if (not lexer.ReadUntil(eaten, '<'))
-                throw XMLException("unterminated text", site);
+                CORE_THROW_IT(XMLException("unterminated text", site));
 
             visited.back().Element->SetText(std::move(eaten.Value()));
         }
@@ -172,7 +172,7 @@ bool Document::Load(Document* document, const Filename& filename, const StringVi
                 Expect_(lexer, eaten, Lexer::Symbols::Decrement);
 
                 if (lexer.SkipUntil('-'))
-                    throw XMLException("unterminated comment", eaten.Site());
+                    CORE_THROW_IT(XMLException("unterminated comment", eaten.Site()));
 
                 Expect_(lexer, eaten, Lexer::Symbols::Decrement);
                 Expect_(lexer, eaten, Lexer::Symbols::Greater);
@@ -183,12 +183,12 @@ bool Document::Load(Document* document, const Filename& filename, const StringVi
             if ((poken = lexer.Peek(Lexer::Symbols::Div)) ) {
                 Expect_(lexer, eaten, Lexer::Symbols::Div);
                 if (visited.empty())
-                    throw XMLException("no opened tag", eaten.Site());
+                    CORE_THROW_IT(XMLException("no opened tag", eaten.Site()));
 
                 Expect_(lexer, eaten, Lexer::Symbols::Identifier);
 
                 if (not EqualsI(MakeStringView(visited.back().Element->Type()), eaten.MakeView()))
-                    throw XMLException("mismatching closing tag", eaten.Site());
+                    CORE_THROW_IT(XMLException("mismatching closing tag", eaten.Site()));
 
                 visited.back().RegisterIFN(keyId, document->_byIdentifier);
 
@@ -229,7 +229,7 @@ bool Document::Load(Document* document, const Filename& filename, const StringVi
                 bool added = false;
                 auto value = it.Element->Attributes().FindOrAdd(key, &added);
                 if (not added)
-                    throw XMLException("redefining block attribute", eaten.Site());
+                    CORE_THROW_IT(XMLException("redefining block attribute", eaten.Site()));
 
                 Expect_(lexer, eaten, Lexer::Symbols::Assignment);
                 Expect_(lexer, eaten, Lexer::Symbols::String);
@@ -253,13 +253,13 @@ bool Document::Load(Document* document, const Filename& filename, const StringVi
                 visited.emplace_back(std::move(it));
             }
             else {
-                throw XMLException("unterminated xml tag", eaten.Site());
+                CORE_THROW_IT(XMLException("unterminated xml tag", eaten.Site()));
             }
         }
     }
 
     if (visited.size())
-        throw XMLException("unterminated xml block", visited.back().Site);
+        CORE_THROW_IT(XMLException("unterminated xml block", visited.back().Site));
 
     return true;
 }

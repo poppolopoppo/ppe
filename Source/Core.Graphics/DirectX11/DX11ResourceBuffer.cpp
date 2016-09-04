@@ -188,7 +188,7 @@ BufferUsage DX11UsageToBufferUsage(D3D11_USAGE value) {
 
     default:
         AssertNotImplemented();
-        throw DeviceEncapsulatorException("DX11: unsupported resource type", nullptr);
+        CORE_THROW_IT(DeviceEncapsulatorException("DX11: unsupported resource type", nullptr));
     }
 }
 //----------------------------------------------------------------------------

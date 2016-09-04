@@ -127,7 +127,7 @@ static bool TryCompileShaderSource_(
     try {
         source = ShaderSource::LoadFromFileIFP(filename, defines);
         if (nullptr == source)
-            throw ShaderCompilerException("failed to read source file", compiler, nullptr);
+            CORE_THROW_IT(ShaderCompilerException("failed to read source file", compiler, nullptr));
 
         compiled = compiler->CompileShaderSource(
             source.get(),
@@ -205,7 +205,7 @@ PShaderCompiled CompileShaderSource(
             continue;
 
         default:
-            throw ShaderCompilerException("abort compilation", deviceAPIShaderCompiler, source.get());
+            CORE_THROW_IT(ShaderCompilerException("abort compilation", deviceAPIShaderCompiler, source.get()));
         }
     }
 
