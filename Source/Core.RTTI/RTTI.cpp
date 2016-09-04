@@ -16,7 +16,7 @@
 //#   define WITH_RTTI_UNITTESTS %_NOCOMMIT%
 #endif
 
-#ifdef OS_WINDOWS
+#ifdef CPP_VISUALSTUDIO
 #   pragma warning(disable: 4073) // initialiseurs placés dans la zone d'initialisation d'une bibliothèque
 #   pragma init_seg(lib)
 #else

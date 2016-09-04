@@ -3,6 +3,7 @@
     .ProjectName = 'Core.Engine'
     .ProjectPath = '$SourceDiretory$/Core.Engine'
     .ProjectSolutionFolder = 'Core.Engine'
+    .ProjectDefines = { 'EXPORT_CORE_ENGINE' }
     .ProjectIsolatedFiles =
     {
         'Engine.cpp'
