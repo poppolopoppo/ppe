@@ -3,6 +3,7 @@
     .ProjectName = 'Core.Pixmap'
     .ProjectPath = '$SourceDiretory$/Core.Pixmap'
     .ProjectSolutionFolder = 'Core.Content'
+    .ProjectDefines = { 'EXPORT_CORE_PIXMAP' }
     .UnityNumFiles = 1
     .ProjectIsolatedFiles =
     {

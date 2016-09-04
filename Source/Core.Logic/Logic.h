@@ -2,6 +2,12 @@
 
 #include "Core/Core.h"
 
+#ifdef EXPORT_CORE_LOGIC
+#   define CORE_LOGIC_API DLL_EXPORT
+#else
+#   define CORE_LOGIC_API DLL_IMPORT
+#endif
+
 #include "Core/Allocator/PoolAllocatorTag.h"
 #include "Core.RTTI/RTTI_Tag.h"
 
@@ -17,7 +23,7 @@ RTTI_TAG_DECL(Logic);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class LogicStartup {
+class CORE_LOGIC_API LogicStartup {
 public:
     static void Start();
     static void Shutdown();

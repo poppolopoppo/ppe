@@ -3,6 +3,7 @@
     .ProjectName = 'Core.Serialize'
     .ProjectPath = '$SourceDiretory$/Core.Serialize'
     .ProjectSolutionFolder = 'Core'
+    .ProjectDefines = { 'EXPORT_CORE_SERIALIZE' }
     .ProjectIsolatedFiles =
     {
         'Serialize.cpp'

@@ -3,6 +3,7 @@
     .ProjectName = 'Core.ContentPipeline'
     .ProjectPath = '$SourceDiretory$/Core.ContentPipeline'
     .ProjectSolutionFolder = 'Core.Content'
+    .ProjectDefines = { 'EXPORT_CORE_CONTENTPIPELINE' }
     .UnityNumFiles = 3
     .ProjectIsolatedFiles =
     {

@@ -3,6 +3,7 @@
     .ProjectName = 'Core'
     .ProjectPath = '$SourceDiretory$/Core'
     .ProjectSolutionFolder = 'Core'
+    .ProjectDefines = { 'EXPORT_CORE' }
     .UnityNumFiles = 8
     .ProjectIsolatedFiles =
     {

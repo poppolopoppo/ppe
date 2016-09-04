@@ -2,6 +2,12 @@
 
 #include "Core/Core.h"
 
+#ifdef EXPORT_CORE_APPLICATION
+#   define CORE_APPLICATION_API DLL_EXPORT
+#else
+#   define CORE_APPLICATION_API DLL_IMPORT
+#endif
+
 #include "Core/Allocator/PoolAllocatorTag.h"
 
 namespace Core {

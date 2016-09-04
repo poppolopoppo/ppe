@@ -52,7 +52,13 @@ ForEach( .CompileConfig in .AllCompileConfigs )
             Using( .CompileConfig )
 
             // Project defines
-            .Defines            + .ProjectDefines
+            .Defines_Link_Obj   = { 'STATIC_LINK' }
+            .Defines_Link_Lib   = { 'STATIC_LINK' }
+            .Defines_Link_Dll   = { 'DYNAMIC_LINK' }
+
+            .Defines    + ."Defines_Link_$ConfigLinkType$"
+            .Defines    + .ProjectDefines
+
             ForEach( .define in .Defines )
             {
                 ^CompilerOptions            + ' $CompilerDefineFlag$"$define$"'

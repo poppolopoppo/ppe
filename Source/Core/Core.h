@@ -113,15 +113,6 @@
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#ifdef CPP_VISUALSTUDIO
-//----------------------------------------------------------------------------
-//  warning C4714: fonction 'XXX' marquée comme __forceinline non inline
-#   pragma warning( disable : 4714 )
-//----------------------------------------------------------------------------
-#endif //!CPP_VISUALSTUDIO
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 #define CORE_ENABLE_EXCEPTIONS
 //----------------------------------------------------------------------------
 #ifdef CORE_ENABLE_EXCEPTIONS
@@ -148,6 +139,34 @@
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#if     defined(STATIC_LINK)
+#   define DLL_IMPORT
+#   define DLL_EXPORT
+#elif   defined(DYNAMIC_LINK)
+#   if     defined(CPP_VISUALSTUDIO)
+#       define DLL_IMPORT __declspec(dllimport)
+#       define DLL_EXPORT __declspec(dllexport)
+#   elif   defined(CPP_CLANG)
+#       define DLL_IMPORT __declspec(dllimport)
+#       define DLL_EXPORT __declspec(dllexport)
+#   elif   defined(CPP_GCC)
+#       define DLL_IMPORT __attribute__ ((dllimport))
+#       define DLL_EXPORT __attribute__ ((dllexport))
+#   else
+#       error "unsupported compiler"
+#   endif
+#else
+#   error "inconsistent configuration"
+#endif
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+
+#ifdef EXPORT_CORE
+#   define CORE_API DLL_EXPORT
+#else
+#   define CORE_API DLL_IMPORT
+#endif
 
 #include "Core/Meta/Aliases.h"
 #include "Core/Meta/Alignment.h"
@@ -173,7 +192,7 @@ namespace Core {
 // CoreStartup is the entry and exit point encapsulating every call to Core::.
 // Constructed with the same lifetime than the program (or application if segregated).
 //----------------------------------------------------------------------------
-class CoreStartup {
+class CORE_API CoreStartup {
 public:
     static void Start(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t** argv);
     static void Shutdown();
@@ -191,7 +210,7 @@ public:
 //----------------------------------------------------------------------------
 // Called for each module on start
 #ifndef FINAL_RELEASE
-struct OnModuleStart {
+struct CORE_API OnModuleStart {
     const wchar_t* const ModuleName;
     OnModuleStart(const wchar_t* moduleName);
     ~OnModuleStart();
@@ -204,7 +223,7 @@ struct OnModuleStart {
 //----------------------------------------------------------------------------
 // Called for each module on shutdown
 #ifndef FINAL_RELEASE
-struct OnModuleShutdown {
+struct CORE_API OnModuleShutdown {
     const wchar_t* const ModuleName;
     OnModuleShutdown(const wchar_t* moduleName);
     ~OnModuleShutdown();
@@ -217,7 +236,7 @@ struct OnModuleShutdown {
 //----------------------------------------------------------------------------
 // Called for each module on ClearAll_UnusedMemory
 #ifndef FINAL_RELEASE
-struct OnModuleClearAll {
+struct CORE_API OnModuleClearAll {
     const wchar_t* const ModuleName;
     OnModuleClearAll(const wchar_t* moduleName);
     ~OnModuleClearAll();
@@ -229,7 +248,7 @@ struct OnModuleClearAll {
 #endif
 //----------------------------------------------------------------------------
 #ifndef FINAL_RELEASE
-void CheckMemory();
+void CORE_API CheckMemory();
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

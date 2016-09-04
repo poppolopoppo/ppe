@@ -2,6 +2,12 @@
 
 #include "Core.Lattice/Lattice.h"
 
+#ifdef EXPORT_CORE_LATTICE
+#   define CORE_LATTICE_API DLL_EXPORT
+#else
+#   define CORE_LATTICE_API DLL_IMPORT
+#endif
+
 // TODO: http://www.wazim.com/Collada_Tutorial_1.htm
 
 namespace Core {
@@ -9,7 +15,7 @@ namespace Lattice {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class LatticeStartup {
+class CORE_LATTICE_API LatticeStartup {
 public:
     static void Start();
     static void Shutdown();

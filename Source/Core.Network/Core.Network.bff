@@ -3,6 +3,7 @@
     .ProjectName = 'Core.Network'
     .ProjectPath = '$SourceDiretory$/Core.Network'
     .ProjectSolutionFolder = 'Core'
+    .ProjectDefines = { 'EXPORT_CORE_NETWORK' }
     .UnityNumFiles = 1
     .ProjectIsolatedFiles =
     {

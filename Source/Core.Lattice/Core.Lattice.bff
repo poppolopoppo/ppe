@@ -3,6 +3,7 @@
     .ProjectName = 'Core.Lattice'
     .ProjectPath = '$SourceDiretory$/Core.Lattice'
     .ProjectSolutionFolder = 'Core.Content'
+    .ProjectDefines = { 'EXPORT_CORE_LATTICE' }
     .UnityNumFiles = 1
     .ProjectIsolatedFiles =
     {

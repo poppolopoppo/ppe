@@ -2,6 +2,12 @@
 
 #include "Core.RTTI/RTTI.h"
 
+#ifdef EXPORT_CORE_RTTI
+#   define CORE_RTTI_API DLL_EXPORT
+#else
+#   define CORE_RTTI_API DLL_IMPORT
+#endif
+
 #include "Core.RTTI/RTTIProperties.h"
 
 namespace Core {
@@ -9,7 +15,7 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class RTTIStartup {
+class CORE_RTTI_API RTTIStartup {
 public:
     static void Start();
     static void Shutdown();
