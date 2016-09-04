@@ -68,45 +68,6 @@ private:
     Address _remote;
 };
 //----------------------------------------------------------------------------
-class Listener {
-public:
-    Listener();
-    explicit Listener(Address&& listening);
-    explicit Listener(const Address& listening)
-        : Listener(std::move(Address(listening))) {}
-    ~Listener();
-
-    Listener(Listener&& rvalue) : Listener() { operator =(std::move(rvalue)); }
-    Listener& operator =(Listener&& rvalue);
-
-    Listener(const Listener& ) = delete;
-    Listener& operator =(const Listener& ) = delete;
-
-    void* Handle() const { return _handle; }
-
-    const Address& Listening() const { return _listening; }
-
-    bool Connect();
-    bool Disconnect();
-
-    bool IsConnected() const;
-
-    bool Accept(Socket& socket, const Milliseconds& timeout);
-
-private:
-    void* _handle;
-
-    Address _listening;
-};
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-bool LocalHostName(String& hostname);
-//----------------------------------------------------------------------------
-bool HostnameToIP(String& ip, const StringView& hostname, size_t n = 0);
-//----------------------------------------------------------------------------
-bool IPToHostname(String& hostname, const StringView& ip);
-//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Network

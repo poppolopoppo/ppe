@@ -14,6 +14,11 @@
 #   error "missing compiler specific command"
 #endif
 
+#ifdef OS_WINDOWS
+//  Link with WinSock2 library
+#   pragma comment(lib, "ws2_32.lib")
+#endif
+
 namespace Core {
 namespace Network {
 POOL_TAG_DEF(Network);

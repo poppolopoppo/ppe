@@ -2,7 +2,7 @@
 
 #include "Address.h"
 
-#include "Socket.h"
+#include "NetworkIncludes.h"
 
 namespace Core {
 namespace Network {
@@ -93,6 +93,92 @@ bool Address::ParseIPv4(u8 (&ipV4)[4], const Address& addr) {
     }
 
     return (4 == slot);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+bool LocalHostName(String& hostname) {
+    char temp[NI_MAXHOST];
+    if (::gethostname(temp, NI_MAXHOST) == SOCKET_ERROR)
+        return false;
+
+    hostname.assign(temp);
+
+    Assert(hostname.size());
+    return true;
+}
+//----------------------------------------------------------------------------
+bool HostnameToIP(String& ip, const StringView& hostname, size_t n/* = 0 */) {
+    Assert(!hostname.empty());
+    Assert(hostname.size() < NI_MAXHOST);
+
+    char nodeName[NI_MAXHOST]; // hostname must be a null terminated string
+    hostname.ToNullTerminatedCStr(nodeName);
+
+    const char* serviceName = "http"; // use http as default port
+
+    ::ADDRINFOA* address;
+    if (0 != ::getaddrinfo(nodeName, serviceName, nullptr, &address))
+        return false;
+
+    // find the nth address
+    ::addrinfo* nth_addr = address;
+    for (int i = 1; i <= n; ++i)
+    {
+        nth_addr = nth_addr->ai_next;
+
+        // if there is no nth address then return error
+        if (nullptr == nth_addr) {
+            ::freeaddrinfo(address);
+            return false;
+        }
+    }
+
+    char temp_ip[17];
+    const char* resolved_ip = ::inet_ntop(nth_addr->ai_family, nth_addr->ai_addr, temp_ip, lengthof(temp_ip));
+
+    ::freeaddrinfo(address);
+
+    if (nullptr == resolved_ip)
+        return false;
+
+    ip.assign(resolved_ip);
+
+    Assert(ip.size());
+    return true;
+}
+//----------------------------------------------------------------------------
+bool IPToHostname(String& hostname, const StringView& ip) {
+    Assert(!ip.empty());
+
+    char temp[NI_MAXHOST]; // hostname must be a null terminated string
+    ip.ToNullTerminatedCStr(temp);
+
+    ::sockaddr_in sa;
+    sa.sin_family = AF_INET;
+    sa.sin_port = ::htons(80);
+
+    // if inet_pton couldn't convert ip then return an error
+    if (1 != ::inet_pton(AF_INET, temp, &sa.sin_addr) )
+        return false;
+
+    char hostinfo[NI_MAXHOST];
+    char servInfo[NI_MAXSERV];
+
+    const DWORD ret = ::getnameinfo(
+        (struct sockaddr *)&sa, sizeof(sa),
+            hostinfo, NI_MAXHOST,
+            servInfo, NI_MAXSERV,
+            NI_NUMERICSERV );
+
+    // check if gethostbyaddr returned an error
+    if (0 != ret)
+        return false;
+
+    hostname.assign(hostinfo);
+
+    Assert(hostname.size());
+    return true;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
