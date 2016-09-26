@@ -12,12 +12,12 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::BasicStringSlice&lt;char&gt;">
+  <Type Name="Core::BasicStringView&lt;char&gt;">
     <DisplayString Condition="_size == 0">empty</DisplayString>
     <DisplayString>{_storage,[_size]s} [{_size}]</DisplayString>
     <StringView>_storage,[_size]s</StringView>
   </Type>
-  <Type Name="Core::BasicStringSlice&lt;wchar_t&gt;">
+  <Type Name="Core::BasicStringView&lt;wchar_t&gt;">
     <DisplayString Condition="_size == 0">empty</DisplayString>
     <DisplayString>{_storage,[_size]su} [{_size}]</DisplayString>
     <StringView>_storage,[_size]su</StringView>
