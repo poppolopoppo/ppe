@@ -21,9 +21,9 @@ public:
     enum : u32 {
     // memory reserved per thread for alloca
 #if defined(ARCH_X64)
-        Capacity        =128<<10    /* 256 kb   */
+        Capacity        =128<<10    /* 128 kb   */
 #elif defined(ARCH_X86)
-        Capacity        = 64<<10    /* 128 kb   */
+        Capacity        = 64<<10    /*  64 kb   */
 #else
 #   error "no support"
 #endif
@@ -56,7 +56,7 @@ public:
 
     void* Push(size_t sizeInBytes);
     void Pop(void* ptr);
-    void* Relocate(void* ptr, size_t newSizeInBytes);
+    void* Relocate(void* ptr, size_t newSizeInBytes, bool keepData);
 
 private:
     u32 _offset;
@@ -81,7 +81,7 @@ void* AllocaStorage::Push(size_t sizeInBytes) {
     const size_t alignedSizeInBytes = ROUND_TO_NEXT_16(sizeInBytes);
 
     if (alignedSizeInBytes <= MaxBlockSize &&
-        alignedSizeInBytes + _offset <= Capacity) {
+        alignedSizeInBytes + PayloadSize + _offset <= Capacity) {
         if (!_storage) {
             Assert(0  == _offset);
             _storage = GetThreadLocalHeap().AlignedMalloc(
@@ -100,7 +100,7 @@ void* AllocaStorage::Push(size_t sizeInBytes) {
         u32* const header = reinterpret_cast<u32*>(block);
         void* const userBlock = reinterpret_cast<u8*>(block) + HeaderSize;
 
-        _offset += (* header = blockSize);
+        _offset += (*header = blockSize);
 
 #ifdef WITH_CORE_ALLOCA_CANARY
         header[1] = checked_cast<u32>(sizeInBytes);
@@ -134,7 +134,7 @@ void AllocaStorage::Pop(void* ptr) {
     void* const block = reinterpret_cast<u8*>(ptr) - HeaderSize;
 
     const u32* header = reinterpret_cast<const u32*>(block);
-    const u32 blockSize =* header;
+    const u32 blockSize = *header;
 
     if (size_t(block) + blockSize == size_t(_storage) + _offset) {
         Assert(_storage);
@@ -170,7 +170,7 @@ void AllocaStorage::Pop(void* ptr) {
     }
 }
 //----------------------------------------------------------------------------
-void* AllocaStorage::Relocate(void* ptr, size_t newSizeInBytes) {
+void* AllocaStorage::Relocate(void* ptr, size_t newSizeInBytes, bool keepData) {
     Assert(size_t(ptr) > HeaderSize);
     Assert(newSizeInBytes);
 
@@ -179,7 +179,7 @@ void* AllocaStorage::Relocate(void* ptr, size_t newSizeInBytes) {
     void* const block = reinterpret_cast<u8*>(ptr) - HeaderSize;
 
     u32* header = reinterpret_cast<u32*>(block);
-    u32& blockSize =* header;
+    u32& blockSize = *header;
 
     if (size_t(block) + blockSize == size_t(_storage) + _offset) {
         Assert(_storage);
@@ -199,8 +199,25 @@ void* AllocaStorage::Relocate(void* ptr, size_t newSizeInBytes) {
         Assert(footer[3] == userSizeInBytes);
 #endif
 
-        if (size_t(block) + alignedSizeInBytes <= size_t(_storage) + Capacity) {
-            blockSize = checked_cast<u32>(alignedSizeInBytes);
+        if (size_t(block) + alignedSizeInBytes + PayloadSize <= size_t(_storage) + Capacity) {
+            _offset -= blockSize;
+            blockSize = checked_cast<u32>(alignedSizeInBytes + PayloadSize);
+            _offset += blockSize;
+            *header = blockSize;
+
+            Assert(size_t(_storage) + _offset == size_t(block) + blockSize);
+
+#ifdef WITH_CORE_ALLOCA_CANARY
+            header[1] = checked_cast<u32>(newSizeInBytes);
+            header[2] = HeaderCanary;
+            header[3] = HeaderCanary;
+
+            u32* const footer = reinterpret_cast<u32*>((u8*)&header[4] + newSizeInBytes);
+            footer[0] = FooterCanary;
+            footer[1] = FooterCanary;
+            footer[2] = FooterCanary;
+            footer[3] = header[1];
+#endif
         }
         else { // not enough place in the stack local space, fallback to thread local allocation
             void* newPtr = GetThreadLocalHeap().AlignedMalloc(
@@ -208,8 +225,10 @@ void* AllocaStorage::Relocate(void* ptr, size_t newSizeInBytes) {
                 Boundary,
                 MEMORY_DOMAIN_TRACKING_DATA(Alloca));
 
-            const size_t copySizeInBytes = Min(alignedSizeInBytes, blockSize);
-            memcpy(newPtr, ptr, copySizeInBytes);
+            if (keepData) {
+                const size_t copySizeInBytes = Min(alignedSizeInBytes, blockSize);
+                memcpy(newPtr, ptr, copySizeInBytes);
+            }
 
             Pop(ptr);
 
@@ -226,7 +245,7 @@ void* AllocaStorage::Relocate(void* ptr, size_t newSizeInBytes) {
             ptr,
             alignedSizeInBytes,
             Boundary,
-            MEMORY_DOMAIN_TRACKING_DATA(Alloca));
+            MEMORY_DOMAIN_TRACKING_DATA(Alloca) );
     }
 }
 //----------------------------------------------------------------------------
@@ -257,14 +276,14 @@ void* Alloca(size_t sizeInBytes) {
     return ThreadLocalAllocaStorage::Instance().Push(sizeInBytes);
 }
 //----------------------------------------------------------------------------
-void* RelocateAlloca(void* ptr, size_t newSizeInBytes) {
+void* RelocateAlloca(void* ptr, size_t newSizeInBytes, bool keepData) {
     if (ptr) {
         if (0 == newSizeInBytes) {
             FreeAlloca(ptr);
             return nullptr;
         }
         else {
-            return ThreadLocalAllocaStorage::Instance().Relocate(ptr, newSizeInBytes);
+            return ThreadLocalAllocaStorage::Instance().Relocate(ptr, newSizeInBytes, keepData);
         }
     }
     else if (newSizeInBytes) {

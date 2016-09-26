@@ -26,13 +26,18 @@ namespace Core {
 //----------------------------------------------------------------------------
 void* Alloca(size_t sizeInBytes);
 //----------------------------------------------------------------------------
-void* RelocateAlloca(void* ptr, size_t newSizeInBytes);
+void* RelocateAlloca(void* ptr, size_t newSizeInBytes, bool keepData);
 //----------------------------------------------------------------------------
 void FreeAlloca(void *ptr);
 //----------------------------------------------------------------------------
 template <typename T>
 FORCE_INLINE T *TypedAlloca(size_t count) {
     return reinterpret_cast<T *>( Alloca(count * sizeof(T)) );
+}
+//----------------------------------------------------------------------------
+template <typename T>
+FORCE_INLINE T *TypedRelocateAlloca(T* ptr, size_t count, bool keepData) {
+    return reinterpret_cast<T *>( RelocateAlloca(ptr, count * sizeof(T), keepData) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -43,26 +48,40 @@ struct AllocaBlock {
 
 #ifdef ARCH_X64
     u64 Count : 63;
-    u64 ExternalAlloc : 1;
+    u64 UsingSysAlloca : 1;
 #else
     u32 Count : 31;
-    u32 ExternalAlloc : 1;
+    u32 UsingSysAlloca : 1;
 #endif
 
+    AllocaBlock() : RawData(nullptr), Count(0), UsingSysAlloca(0) {}
+
     AllocaBlock(T* rawData, size_t count)
-    :   RawData(rawData), Count(count), ExternalAlloc(1) {
+    :   RawData(rawData), Count(count), UsingSysAlloca(1) {
         if (nullptr == RawData) {
             RawData = TypedAlloca< T >(Count);
-            ExternalAlloc = 0;
+            UsingSysAlloca = 0;
         }
         Assert(RawData);
     }
 
     ~AllocaBlock() {
-        if (0 == ExternalAlloc) {
-            Assert(RawData);
+        if (not UsingSysAlloca && RawData)
             FreeAlloca(RawData);
-        }
+    }
+
+    void Relocate(size_t newCount, bool keepData = true)
+    {
+        Assert(newCount != Count);
+        Assert(!UsingSysAlloca);
+        RawData = TypedRelocateAlloca(RawData, newCount, keepData);
+        Count = newCount;
+    }
+
+    void RelocateIFP(size_t newCount, bool keepData = true)
+    {
+        if (newCount > Count)
+            Relocate(newCount, keepData);
     }
 
     MemoryView<T> MakeView() const { return MemoryView<T>(RawData, Count); }
