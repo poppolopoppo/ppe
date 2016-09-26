@@ -37,6 +37,10 @@ public:
 
     UniqueView(const UniqueView& other) = delete;
     UniqueView& operator =(const UniqueView& other) = delete;
+
+    operator void* () const { return base_type::data(); }
+
+    void Reset(UniqueView&&  rvalue);
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Deleter >
@@ -62,11 +66,16 @@ UniqueView<T, _Deleter>::UniqueView(UniqueView&& rvalue)
 //----------------------------------------------------------------------------
 template <typename T, typename _Deleter >
 auto UniqueView<T, _Deleter>::operator =(UniqueView&& rvalue) -> UniqueView& {
+    Reset(std::move(rvalue));
+    return (*this);
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Deleter >
+void UniqueView<T, _Deleter>::Reset(UniqueView&&  rvalue) {
     if (base_type::data())
         _Deleter::operator ()(base_type::data());
 
     base_type::operator =(std::move(rvalue));
-    return (*this);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
