@@ -123,8 +123,7 @@ bool HostnameToIP(String& ip, const StringView& hostname, size_t n/* = 0 */) {
 
     // find the nth address
     ::addrinfo* nth_addr = address;
-    for (int i = 1; i <= n; ++i)
-    {
+    for (size_t i = 1; i <= n; ++i) {
         nth_addr = nth_addr->ai_next;
 
         // if there is no nth address then return error
