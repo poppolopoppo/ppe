@@ -4,13 +4,11 @@
 
 #include "Element.h"
 
-#include "Lexer/Lexer.h"
-#include "Lexer/Match.h"
-#include "Lexer/Symbol.h"
-#include "Lexer/Symbols.h"
+#include "Lexer/LookAheadReader.h"
 
 #include "Core/Container/RawStorage.h"
 #include "Core/Container/Vector.h"
+#include "Core/Memory/MemoryProvider.h"
 
 namespace Core {
 namespace XML {
@@ -19,24 +17,104 @@ namespace XML {
 //----------------------------------------------------------------------------
 namespace  {
 //----------------------------------------------------------------------------
-static void Expect_(Lexer::Lexer& lexer, Lexer::Match& eaten, const Lexer::Symbol* symbol) {
-    if (not lexer.Expect(eaten, symbol))
-        CORE_THROW_IT(XMLException("unexpected token", eaten.Site()));
+namespace Token_ {
+STATIC_CONST_INTEGRAL(char, Assignment, '=');
+STATIC_CONST_INTEGRAL(char, Div,        '/');
+STATIC_CONST_INTEGRAL(char, Greater,    '>');
+STATIC_CONST_INTEGRAL(char, Less,       '<');
+STATIC_CONST_INTEGRAL(char, Minus,      '-');
+STATIC_CONST_INTEGRAL(char, Not,        '!');
+STATIC_CONST_INTEGRAL(char, Question,   '?');
+STATIC_CONST_INTEGRAL(char, Quote,      '"');
+} //!Token_
+//----------------------------------------------------------------------------
+static bool IsIdentifierCharset_(char ch) {
+    return (IsAlnum(ch) || '_' == ch);
 }
 //----------------------------------------------------------------------------
-static void ReadHeader_(Lexer::Lexer& lexer, String& version, String& encoding, String& standalone) {
-    Lexer::Match eaten;
-    Expect_(lexer, eaten, Lexer::Symbols::Less);
-    Expect_(lexer, eaten, Lexer::Symbols::Question);
-    Expect_(lexer, eaten, Lexer::Symbols::Identifier);
+static void ExpectChar_(Lexer::LookAheadReader& reader, char expected) {
+    Assert(0 != expected);
 
-    if (not EqualsI("xml", eaten.MakeView()))
-        CORE_THROW_IT(XMLException("invalid document type", eaten.Site()));
+    reader.EatWhiteSpaces();
 
-    const Lexer::Match* poken;
-    while ((poken = lexer.Peek(Lexer::Symbols::Identifier)) ) {
-        Expect_(lexer, eaten, Lexer::Symbols::Identifier);
+    if (expected != reader.Peek())
+        CORE_THROW_IT(XMLException("unexpected token", reader.SourceSite()));
 
+    reader.Read();
+}
+//----------------------------------------------------------------------------
+static void ExpectToken_(Lexer::LookAheadReader& reader, const StringView& id) {
+    Assert(id.size());
+
+    reader.EatWhiteSpaces();
+
+    bool succeed = true;
+    forrange(i, 0, id.size()) {
+        if (not EqualsI(reader.Read(), id[i]))
+            CORE_THROW_IT(XMLException("unexpected idenitifier", reader.SourceSite()));
+    }
+}
+//----------------------------------------------------------------------------
+static bool ReadIdentifier_(Lexer::LookAheadReader& reader, String& id) {
+    Assert(id.empty());
+
+    reader.EatWhiteSpaces();
+
+    if (not IsAlpha(reader.Peek()) )
+        return false;
+
+    id += reader.Read();
+    while (IsIdentifierCharset_(reader.Peek()) )
+        id += reader.Read();
+
+    return true;
+}
+//----------------------------------------------------------------------------
+static void ExpectIdentifier_(Lexer::LookAheadReader& reader, String& id) {
+    const Lexer::Location site = reader.SourceSite();
+    if (false == ReadIdentifier_(reader, id))
+        CORE_THROW_IT(XMLException("expected an identitfer", site));
+}
+//----------------------------------------------------------------------------
+static bool ReadString_(Lexer::LookAheadReader& reader, String& str) {
+    Assert(str.empty());
+
+    reader.EatWhiteSpaces();
+
+    if (reader.Peek() != Token_::Quote)
+        return false;
+
+    const Lexer::Location site = reader.SourceSite();
+
+    reader.SeekFwd(1);
+
+    while (reader.Peek() != Token_::Quote)
+        str += reader.Read();
+
+    if (reader.Read() != Token_::Quote)
+        CORE_THROW_IT(XMLException("unclosed string", site));
+
+    return true;
+}
+//----------------------------------------------------------------------------
+static void ExpectString_(Lexer::LookAheadReader& reader, String& str) {
+    const Lexer::Location site = reader.SourceSite();
+    if (false == ReadString_(reader, str))
+        CORE_THROW_IT(XMLException("expected a string value", site));
+}
+//----------------------------------------------------------------------------
+static char PeekChar_(Lexer::LookAheadReader& reader) {
+    reader.EatWhiteSpaces();
+    return reader.Peek();
+}
+//----------------------------------------------------------------------------
+static void ReadHeader_(Lexer::LookAheadReader& reader, String& version, String& encoding, String& standalone) {
+    ExpectChar_(reader, Token_::Less);
+    ExpectChar_(reader, Token_::Question);
+    ExpectToken_(reader, "xml");
+
+    String eaten;
+    while (ReadIdentifier_(reader, eaten) ) {
         String* pValue = nullptr;
         if (EqualsI("version", eaten.MakeView())) {
             pValue = &version;
@@ -48,19 +126,22 @@ static void ReadHeader_(Lexer::Lexer& lexer, String& version, String& encoding, 
             pValue = &standalone;
         }
         else {
-            CORE_THROW_IT(XMLException("invalid document attribute", eaten.Site()));
+            CORE_THROW_IT(XMLException("invalid document attribute", reader.SourceSite()));
         }
 
         Assert(pValue);
 
-        Expect_(lexer, eaten, Lexer::Symbols::Assignment);
-        Expect_(lexer, eaten, Lexer::Symbols::String);
+        ExpectChar_(reader, Token_::Assignment);
 
-        *pValue = std::move(eaten.Value());
+        eaten.clear();
+
+        ExpectString_(reader, eaten);
+
+        *pValue = std::move(eaten);
     }
 
-    Expect_(lexer, eaten, Lexer::Symbols::Question);
-    Expect_(lexer, eaten, Lexer::Symbols::Greater);
+    ExpectChar_(reader, Token_::Question);
+    ExpectChar_(reader, Token_::Greater);
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -100,8 +181,9 @@ bool Document::Load(Document* document, const Filename& filename) {
     return Load(document, filename, content.MakeConstView().Cast<const char>() );
 }
 //----------------------------------------------------------------------------
-bool Document::Load(Document* document, const Filename& filename, const StringView& content) {
+bool Document::Load(Document* document, const Filename& filename, IStreamReader* input) {
     Assert(document);
+    Assert(input);
 
     document->_root.reset();
     document->_version.clear();
@@ -109,8 +191,9 @@ bool Document::Load(Document* document, const Filename& filename, const StringVi
     document->_standalone.clear();
     document->_byIdentifier.clear();
 
-    Lexer::Lexer lexer(content, MakeView(filename.ToWString()), false);
-    ReadHeader_(lexer, document->_version, document->_encoding, document->_standalone);
+    const WString filenameStr(filename.ToWString());
+    Lexer::LookAheadReader reader(input, filenameStr.c_str());
+    ReadHeader_(reader, document->_version, document->_encoding, document->_standalone);
 
     if (document->_version.empty())
         document->_version = "1.0";
@@ -137,70 +220,76 @@ bool Document::Load(Document* document, const Filename& filename, const StringVi
         }
 
         ReadElement_() {}
-        ReadElement_(const Lexer::Match& start)
+        ReadElement_(const String& start, const Lexer::Location& site)
             : Element(new XML::Element())
-            , Site(start.Site()) {
-            Assert(start.Symbol() == Lexer::Symbols::Identifier);
-            Element->SetType(start.MakeView());
+            , Site(site) {
+            Element->SetType(XML::Name(start.MakeView()) );
         }
     };
 
     VECTORINSITU_THREAD_LOCAL(XML, ReadElement_, 32) visited;
     visited.reserve(32);
 
-    Lexer::Match eaten;
-    const Lexer::Match* poken;
-    while ((poken = lexer.Peek()) && poken->Symbol() != Lexer::Symbols::Eof) {
-        if (poken->Symbol() != Lexer::Symbols::Less) {
+    String eaten;
+    while (char poken = PeekChar_(reader)) {
+        if (poken != Token_::Less) {
             // XML inner text
-            const Lexer::Location site = poken->Site();
+            const Lexer::Location site = reader.SourceSite();
             if (visited.empty())
                 CORE_THROW_IT(XMLException("text without tag", site));
 
-            lexer.Seek(poken->Offset());
-            if (not lexer.ReadUntil(eaten, '<'))
+            if (not reader.ReadUntil(eaten, '<'))
                 CORE_THROW_IT(XMLException("unterminated text", site));
 
-            visited.back().Element->SetText(std::move(eaten.Value()));
+            visited.back().Element->SetText(std::move(eaten));
         }
         else {
-            Expect_(lexer, eaten, Lexer::Symbols::Less);
+            ExpectChar_(reader, Token_::Less);
 
             // XML comment
-            if ((poken = lexer.Peek(Lexer::Symbols::Not)) ) {
-                Expect_(lexer, eaten, Lexer::Symbols::Not);
-                Expect_(lexer, eaten, Lexer::Symbols::Decrement);
+            if (PeekChar_(reader) == Token_::Not) {
+                ExpectChar_(reader, Token_::Not);
+                ExpectChar_(reader, Token_::Minus);
+                ExpectChar_(reader, Token_::Minus);
 
-                if (lexer.SkipUntil('-'))
-                    CORE_THROW_IT(XMLException("unterminated comment", eaten.Site()));
+                const Lexer::Location site = reader.SourceSite();
 
-                Expect_(lexer, eaten, Lexer::Symbols::Decrement);
-                Expect_(lexer, eaten, Lexer::Symbols::Greater);
+                if (not reader.SkipUntil(Token_::Minus))
+                    CORE_THROW_IT(XMLException("unterminated comment", site));
+
+                ExpectChar_(reader, Token_::Minus);
+                ExpectChar_(reader, Token_::Minus);
+                ExpectChar_(reader, Token_::Greater);
+
                 continue;
             }
 
             // XML close tag ?
-            if ((poken = lexer.Peek(Lexer::Symbols::Div)) ) {
-                Expect_(lexer, eaten, Lexer::Symbols::Div);
+            if (PeekChar_(reader) == Token_::Div) {
+                ExpectChar_(reader, Token_::Div);
+
                 if (visited.empty())
-                    CORE_THROW_IT(XMLException("no opened tag", eaten.Site()));
+                    CORE_THROW_IT(XMLException("no opened tag", reader.SourceSite()));
 
-                Expect_(lexer, eaten, Lexer::Symbols::Identifier);
+                ExpectIdentifier_(reader, eaten);
 
-                if (not EqualsI(MakeStringView(visited.back().Element->Type()), eaten.MakeView()))
-                    CORE_THROW_IT(XMLException("mismatching closing tag", eaten.Site()));
+                if (not EqualsI(visited.back().Element->Type().MakeView(), eaten.MakeView()) )
+                    CORE_THROW_IT(XMLException("mismatching closing tag", reader.SourceSite()) );
+
+                eaten.clear();
 
                 visited.back().RegisterIFN(keyId, document->_byIdentifier);
-
                 visited.pop_back();
 
-                Expect_(lexer, eaten, Lexer::Symbols::Greater);
+                ExpectChar_(reader, Token_::Greater);
+
                 continue;
             }
 
-            Expect_(lexer, eaten, Lexer::Symbols::Identifier);
+            ExpectIdentifier_(reader, eaten);
 
-            ReadElement_ it(eaten);
+            ReadElement_ it(eaten, reader.SourceSite());
+            eaten.clear();
 
             // Attach new element to parent and siblings IFP
             if (visited.size()) {
@@ -221,39 +310,39 @@ bool Document::Load(Document* document, const Filename& filename, const StringVi
             }
 
             // XML attributes
-            while ((poken = lexer.Peek(Lexer::Symbols::Identifier)) ) {
-                Expect_(lexer, eaten, Lexer::Symbols::Identifier);
-
+            while (ReadIdentifier_(reader, eaten)) {
                 const XML::Name key(eaten.MakeView());
+                eaten.clear();
 
                 bool added = false;
                 auto value = it.Element->Attributes().FindOrAdd(key, &added);
                 if (not added)
-                    CORE_THROW_IT(XMLException("redefining block attribute", eaten.Site()));
+                    CORE_THROW_IT(XMLException("redefining block attribute", reader.SourceSite()) );
 
-                Expect_(lexer, eaten, Lexer::Symbols::Assignment);
-                Expect_(lexer, eaten, Lexer::Symbols::String);
+                ExpectChar_(reader, Token_::Assignment);
+                ExpectString_(reader, eaten);
 
-                value->second = std::move(eaten.Value());
+                value->second = std::move(eaten);
             }
 
-            poken = lexer.Peek();
-            if (poken && poken->Symbol() == Lexer::Symbols::Div) {
+            poken = PeekChar_(reader);
+
+            if (Token_::Div == poken) {
                 // XML short tag
-                Expect_(lexer, eaten, Lexer::Symbols::Div);
-                Expect_(lexer, eaten, Lexer::Symbols::Greater);
+                ExpectChar_(reader, Token_::Div);
+                ExpectChar_(reader, Token_::Greater);
 
                 it.RegisterIFN(keyId, document->_byIdentifier);
 
                 RemoveRef_AssertGreaterThanZero(it.Element);
             }
-            else if (poken && poken->Symbol() == Lexer::Symbols::Greater) {
+            else if (Token_::Greater == poken) {
                 // XML unclosed tag
-                Expect_(lexer, eaten, Lexer::Symbols::Greater);
+                ExpectChar_(reader, Token_::Greater);
                 visited.emplace_back(std::move(it));
             }
             else {
-                CORE_THROW_IT(XMLException("unterminated xml tag", eaten.Site()));
+                CORE_THROW_IT(XMLException("unterminated xml tag", reader.SourceSite()) );
             }
         }
     }
@@ -262,6 +351,11 @@ bool Document::Load(Document* document, const Filename& filename, const StringVi
         CORE_THROW_IT(XMLException("unterminated xml block", visited.back().Site));
 
     return true;
+}
+//----------------------------------------------------------------------------
+bool Document::Load(Document* document, const Filename& filename, const StringView& content) {
+    MemoryViewReader reader(content.Cast<const u8>());
+    return Load(document, filename, &reader);
 }
 //----------------------------------------------------------------------------
 void Document::ToStream(std::basic_ostream<char>& oss) const {

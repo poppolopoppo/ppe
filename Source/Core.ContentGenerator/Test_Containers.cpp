@@ -6,6 +6,7 @@
 
 #include "Core/Diagnostic/Profiling.h"
 #include "Core/IO/StringView.h"
+#include "Core/IO/VFS/VirtualFileSystemStream.h"
 #include "Core/Maths/Maths.h"
 #include "Core/Memory/MemoryStream.h"
 #include "Core/Time/TimedScope.h"
@@ -458,15 +459,16 @@ void Test_Containers() {
 
         VECTOR_THREAD_LOCAL(Container, String) words;
         {
-            RAWSTORAGE_THREAD_LOCAL(FileSystem, u8) read;
-            if (false == VFS_ReadAll(&read, filename, AccessPolicy::Binary))
+            const UniquePtr<IVirtualFileSystemIStream> reader = VFS_OpenBinaryReadable(filename);
+            if (not reader)
                 AssertNotReached();
 
-            MEMORYSTREAM_THREAD_LOCAL(FileSystem) iss(std::move(read), read.size());
             char buffer[2048];
-            std::streamsize len = 0;
-            while (0 < (len = iss.ReadLine(buffer))) {
-                const StringView line(buffer, checked_cast<size_t>(len));
+            while (true) {
+                const StringView line = reader->ReadLine(buffer);
+                if (line.empty())
+                    break;
+
                 const StringView word = Chomp(line);
                 words.emplace_back(ToString(word));
             }

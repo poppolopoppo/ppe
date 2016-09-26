@@ -6,15 +6,17 @@
 #include "Core/IO/StringView.h"
 
 namespace Core {
-class IVirtualFileSystemIStream;
-
+class IStreamReader;
+enum class SeekOrigin;
 namespace Lexer {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class LookAheadReader {
 public:
-    LookAheadReader(const StringView& input, const wchar_t *sourceFileName);
+    STATIC_CONST_INTEGRAL(size_t, BufferCapacity, 2048 - 6 * sizeof(size_t));
+
+    LookAheadReader(IStreamReader* input, const wchar_t *sourceFileName);
     ~LookAheadReader();
 
     const wchar_t *SourceFileName() const { return _sourceFileName; }
@@ -23,23 +25,30 @@ public:
 
     Location SourceSite() const { return Location(_sourceFileName, _sourceLine, _sourceColumn); }
 
-    bool Eof() const { return _buffer.SizeInBytes() == _bufferOffset; }
+    bool Eof() const;
+    size_t Tell() const;
+    void SeekFwd(size_t off);
 
-    void SeekAbsolute(size_t offset);
-    void SeekForward(size_t offset);
-    size_t Tell() const {return _bufferOffset; }
+    char Peek(size_t n = 0) const;
 
     char Read();
-    char Peek(size_t n) const;
+    bool ReadUntil(String& dst, char expected);
+    bool SkipUntil(char expected);
     void EatWhiteSpaces();
+
+    void Flush();
 
 private:
     const wchar_t *_sourceFileName;
     size_t _sourceLine;
     size_t _sourceColumn;
 
-    StringView _buffer;
-    size_t _bufferOffset;
+    IStreamReader* _input;
+
+    size_t _bufferPos;
+    size_t _bufferSize;
+
+    u8 _bufferData[BufferCapacity];
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

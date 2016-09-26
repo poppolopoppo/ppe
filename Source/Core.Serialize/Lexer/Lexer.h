@@ -13,6 +13,7 @@
 #include <stdexcept>
 
 namespace Core {
+class IStreamReader;
 namespace Lexer {
 POOL_TAG_DECL(Lexer);
 //----------------------------------------------------------------------------
@@ -38,7 +39,7 @@ private:
 //----------------------------------------------------------------------------
 class Lexer {
 public:
-    Lexer(const StringView& input, const WStringView& sourceFileName, bool allowTypenames);
+    Lexer(IStreamReader* input, const WStringView& sourceFileName, bool allowTypenames);
     ~Lexer();
 
     const Match *Peek();
@@ -49,10 +50,6 @@ public:
     bool SkipUntil(const char ch);
 
     bool Expect(Match& match, const Core::Lexer::Symbol* expected);
-
-    void Rewind(const Match& at);
-    void Seek(size_t offset);
-    size_t Tell() const { return _reader.Tell(); }
 
     const WString& SourceFileName() { return _sourceFileName; }
 

@@ -171,7 +171,7 @@ static bool Lex_Symbol_(LookAheadReader& reader, const Symbol **psymbol, bool al
             }
             else {
                 Assert(Symbols::Invalid != *psymbol);
-                reader.SeekForward(toss);
+                reader.SeekFwd(toss);
                 return true;
             }
         }
@@ -402,7 +402,7 @@ static bool Lex_Identifier_(LookAheadReader& reader, const Symbol **psymbol, Str
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Lexer::Lexer(const StringView& input, const WStringView& sourceFileName, bool allowTypenames)
+Lexer::Lexer(IStreamReader* input, const WStringView& sourceFileName, bool allowTypenames)
 :   _sourceFileName(sourceFileName.begin(), sourceFileName.end())
 ,   _reader(input, _sourceFileName.c_str())
 ,   _allowTypenames(allowTypenames)
@@ -482,19 +482,6 @@ bool Lexer::SkipUntil(const char ch) {
 bool Lexer::Expect(Match& match, const Core::Lexer::Symbol* expected) {
     Assert(expected);
     return (NextMatch_(match) && match.Symbol() == expected);
-}
-//----------------------------------------------------------------------------
-void Lexer::Rewind(const Match& at) {
-    Seek(at.Offset());
-}
-//----------------------------------------------------------------------------
-void Lexer::Seek(size_t offset) {
-    if (_peeking) {
-        _peeking = false;
-        _peek = Match();
-    }
-
-    _reader.SeekAbsolute(offset);
 }
 //----------------------------------------------------------------------------
 bool Lexer::NextMatch_(Match& match) {

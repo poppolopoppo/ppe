@@ -190,7 +190,7 @@ static void SerializePODs_(IStreamWriter* writer, const HashMap<_Key, _Value, _H
 }
 //----------------------------------------------------------------------------
 template <typename T>
-bool DeserializePODs_(MemoryViewReader& reader, VECTOR_THREAD_LOCAL(Serialize, T)& results) {
+bool DeserializePODs_(IStreamReader& reader, VECTOR_THREAD_LOCAL(Serialize, T)& results) {
     u32 arraySize = UINT32_MAX;
     if (false == reader.ReadPOD(&arraySize))
         return false;
@@ -199,15 +199,9 @@ bool DeserializePODs_(MemoryViewReader& reader, VECTOR_THREAD_LOCAL(Serialize, T
     results.clear();
 
     if (arraySize) {
-        MemoryView<const u8> eaten;
-        if (false == reader.EatIFP(&eaten, sizeof(T)*arraySize) )
+        results.resize(arraySize);
+        if (false == reader.ReadView(results.MakeView()) )
             return false;
-
-        Assert(eaten.SizeInBytes() == sizeof(T)*arraySize);
-        const MemoryView<const T> src = eaten.Cast<const T>();
-        Assert(src.size() == arraySize);
-
-        results.assign(src.begin(), src.end());
     }
 
     Assert(results.size() == arraySize);
@@ -215,7 +209,7 @@ bool DeserializePODs_(MemoryViewReader& reader, VECTOR_THREAD_LOCAL(Serialize, T
 }
 //----------------------------------------------------------------------------
 template <typename _Elt, typename _Result, typename _ReadLambda>
-bool DeserializePODArrays_( MemoryViewReader& reader,
+bool DeserializePODArrays_( IStreamReader& reader,
                             VECTOR_THREAD_LOCAL(Serialize, _Result)& results,
                             _ReadLambda&& lambda ) {
     u32 arraySize = UINT32_MAX;
@@ -226,17 +220,24 @@ bool DeserializePODArrays_( MemoryViewReader& reader,
     results.clear();
     results.reserve(arraySize);
 
+    AllocaBlock<u8> temp;
+
     forrange(i, 0, arraySize) {
         u32 count = UINT32_MAX;
         if (false == reader.ReadPOD(&count))
             return false;
 
         Assert(UINT32_MAX > count);
-        MemoryView<const u8> eaten;
-        if (false == reader.EatIFP(&eaten, sizeof(_Elt) * count))
+        const size_t sizeInBytes = sizeof(_Elt) * count;
+        temp.RelocateIFP(sizeInBytes, false);
+
+        if (false == reader.Read(temp.RawData, sizeInBytes))
             return false;
 
-        results.emplace_back(lambda(eaten.Cast<const _Elt>()) );
+        const MemoryView<const _Elt> eaten = temp.MakeView().CutBefore(sizeInBytes).Cast<const _Elt>();
+        Assert(eaten.SizeInBytes() == sizeInBytes);
+
+        results.emplace_back(lambda(eaten));
     }
 
     Assert(results.size() == arraySize);
@@ -260,7 +261,7 @@ public:
 
     const BinarySerializer* Owner() const { return _owner; }
 
-    void Read(MemoryViewReader& reader);
+    void Read(IStreamReader& reader);
     void Finalize(RTTI::MetaTransaction* transaction);
 
 private:
@@ -268,12 +269,12 @@ private:
     static const RTTI::MetaProperty* RetrieveMetaProperty_(const RTTI::MetaClass* metaClass, const StringView& str);
 
     RTTI::MetaObject* CreateObjectFromHeader_(const SerializedObject_& header);
-    void DeserializeObjectData_(MemoryViewReader& reader, RTTI::MetaObject* object);
+    void DeserializeObjectData_(IStreamReader& reader, RTTI::MetaObject* object);
 
     class AtomReader_ : public RTTI::MetaAtomWrapMoveVisitor {
     public:
         typedef RTTI::MetaAtomWrapMoveVisitor parent_type;
-        AtomReader_(BinaryDeserialize_* owner, MemoryViewReader* reader)
+        AtomReader_(BinaryDeserialize_* owner, IStreamReader* reader)
             : _owner(owner), _reader(reader) {}
 
         using parent_type::Inspect;
@@ -396,8 +397,7 @@ private:
             if (string_i >= _owner->_strings.size())
                 CORE_THROW_IT(BinarySerializerException("invalid RTTI string index"));
 
-            const StringView& data = _owner->_strings[string_i];
-            str.assign(data.begin(), data.end());
+            str = _owner->_strings[string_i];
             return true;
         }
 
@@ -409,8 +409,7 @@ private:
             if (wstring_i >= _owner->_wstrings.size())
                 CORE_THROW_IT(BinarySerializerException("invalid RTTI wstring index"));
 
-            const WStringView& data = _owner->_wstrings[wstring_i];
-            wstr.assign(data.begin(), data.end());
+            wstr = _owner->_wstrings[wstring_i];
             return true;
         }
 
@@ -465,8 +464,8 @@ private:
             if (string_i >= _owner->_strings.size())
                 CORE_THROW_IT(BinarySerializerException("invalid RTTI name index"));
 
-            const StringView& data = _owner->_strings[string_i];
-            name = RTTI::Name(data);
+            const String& data = _owner->_strings[string_i];
+            name = RTTI::Name(data.MakeView());
             return true;
         }
 
@@ -510,7 +509,7 @@ private:
         }
 
         BinaryDeserialize_* _owner;
-        MemoryViewReader* _reader;
+        IStreamReader* _reader;
     };
 
     BinarySerializer* _owner;
@@ -522,8 +521,8 @@ private:
     typedef VECTOR_THREAD_LOCAL(Serialize, const RTTI::MetaProperty*) properties_type;
 
     VECTOR_THREAD_LOCAL(Serialize, RTTI::Name) _names;
-    VECTOR_THREAD_LOCAL(Serialize, StringView) _strings;
-    VECTOR_THREAD_LOCAL(Serialize, WStringView) _wstrings;
+    VECTOR_THREAD_LOCAL(Serialize, String) _strings;
+    VECTOR_THREAD_LOCAL(Serialize, WString) _wstrings;
     VECTOR_THREAD_LOCAL(Serialize, const RTTI::MetaClass*) _metaClasses;
     VECTOR_THREAD_LOCAL(Serialize, properties_type) _properties;
     VECTOR_THREAD_LOCAL(Serialize, object_index_t) _topObjects;
@@ -532,7 +531,7 @@ private:
     VECTOR_THREAD_LOCAL(Serialize, RTTI::PMetaObject) _objects;
 };
 //----------------------------------------------------------------------------
-void BinaryDeserialize_::Read(MemoryViewReader& reader) {
+void BinaryDeserialize_::Read(IStreamReader& reader) {
 
     if (false == reader.ExpectPOD(FILE_MAGIC_) )
         CORE_THROW_IT(BinarySerializerException("invalid file magic"));
@@ -544,11 +543,11 @@ void BinaryDeserialize_::Read(MemoryViewReader& reader) {
         CORE_THROW_IT(BinarySerializerException("invalid names section"));
 
     if (false == reader.ExpectPOD(SECTION_STRINGS_) ||
-        false == DeserializePODArrays_<char>(reader, _strings, [](const StringView& str) { return str; }) )
+        false == DeserializePODArrays_<char>(reader, _strings, [](const StringView& str) { return ToString(str); }) )
         CORE_THROW_IT(BinarySerializerException("invalid strings section"));
 
     if (false == reader.ExpectPOD(SECTION_WSTRINGS_) ||
-        false == DeserializePODArrays_<wchar_t>(reader, _wstrings, [](const WStringView& wstr) { return wstr; }) )
+        false == DeserializePODArrays_<wchar_t>(reader, _wstrings, [](const WStringView& wstr) { return ToWString(wstr); }) )
         CORE_THROW_IT(BinarySerializerException("invalid wstrings section"));
 
     if (false == reader.ExpectPOD(SECTION_CLASSES_) ||
@@ -597,10 +596,6 @@ void BinaryDeserialize_::Read(MemoryViewReader& reader) {
     const std::streamoff dataEnd = checked_cast<std::streamoff>(dataBegin + dataSizeInBytes);
 
     // second pass : read every object properties
-    MemoryViewReader dataReader = reader.SubRange(
-        checked_cast<size_t>(dataBegin),
-        checked_cast<size_t>(dataSizeInBytes) );
-
     forrange(i, 0, _headers.size()) {
         const SerializedObject_& header = _headers[i];
         if (header.Type == TAG_OBJECT_NULL_ ||
@@ -609,15 +604,14 @@ void BinaryDeserialize_::Read(MemoryViewReader& reader) {
 
         const RTTI::PMetaObject& object = _objects[i];
         Assert(object);
-        Assert(header.DataOffset == dataReader.TellI());
+        Assert(dataBegin + header.DataOffset == reader.TellI());
 
-        DeserializeObjectData_(dataReader, object.get());
+        DeserializeObjectData_(reader, object.get());
     }
 
-    if (false == dataReader.Eof())
+    if (reader.TellI() != dataEnd)
         CORE_THROW_IT(BinarySerializerException("object section has unread data"));
 
-    reader.SeekI(dataEnd);
     if (false == reader.ExpectPOD(SECTION_END_) )
         CORE_THROW_IT(BinarySerializerException("expected end section"));
 }
@@ -717,7 +711,7 @@ RTTI::MetaObject* BinaryDeserialize_::CreateObjectFromHeader_(const SerializedOb
     }
 }
 //----------------------------------------------------------------------------
-void BinaryDeserialize_::DeserializeObjectData_(MemoryViewReader& reader, RTTI::MetaObject* object) {
+void BinaryDeserialize_::DeserializeObjectData_(IStreamReader& reader, RTTI::MetaObject* object) {
     u32 metaClassCount = 0;
     if (false == reader.ExpectPOD(TAG_OBJECT_START_) ||
         false == reader.ReadPOD(&metaClassCount) )
@@ -1238,15 +1232,12 @@ BinarySerializer::BinarySerializer() {}
 //----------------------------------------------------------------------------
 BinarySerializer::~BinarySerializer() {}
 //----------------------------------------------------------------------------
-void BinarySerializer::Deserialize(RTTI::MetaTransaction* transaction, const MemoryView<const u8>& input, const wchar_t *sourceName/* = nullptr */) {
+void BinarySerializer::Deserialize(RTTI::MetaTransaction* transaction, IStreamReader* input, const wchar_t *sourceName/* = nullptr */) {
+    Assert(input);
     UNUSED(sourceName);
 
-    if (input.empty())
-        return;
-
-    MemoryViewReader reader(input);
     BinaryDeserialize_ deserialize(this);
-    deserialize.Read(reader);
+    deserialize.Read(*input);
     deserialize.Finalize(transaction);
 }
 //----------------------------------------------------------------------------

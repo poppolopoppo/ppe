@@ -8,6 +8,7 @@
 #include "Core/Maths/Maths.h"
 #include "Core/Maths/RandomGenerator.h"
 #include "Core/Memory/Compression.h"
+#include "Core/Memory/MemoryProvider.h"
 #include "Core/Memory/MemoryStream.h"
 
 #include "Core.RTTI/RTTI.h"
@@ -464,7 +465,8 @@ void Test_RTTI() {
             const wchar_t filename[] = L"@in_memory";
 
             try {
-                Lexer::Lexer lexer(line, filename, true);
+                MemoryViewReader reader(line.Cast<const u8>());
+                Lexer::Lexer lexer(&reader, filename, true);
                 Parser::ParseList input(&lexer);
 
                 Parser::PCParseItem item = Serialize::GrammarStartup::Parse(input);

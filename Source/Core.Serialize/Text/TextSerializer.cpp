@@ -405,11 +405,11 @@ TextSerializer::TextSerializer() {}
 //----------------------------------------------------------------------------
 TextSerializer::~TextSerializer() {}
 //----------------------------------------------------------------------------
-void TextSerializer::Deserialize(RTTI::MetaTransaction* transaction, const MemoryView<const u8>& input, const wchar_t *sourceName /* = nullptr */) {
+void TextSerializer::Deserialize(RTTI::MetaTransaction* transaction, IStreamReader* input, const wchar_t *sourceName /* = nullptr */) {
     Assert(transaction);
-    Assert(input.SizeInBytes());
+    Assert(input);
 
-    Lexer::Lexer lexer(input.Cast<const char>(), MakeStringView(sourceName, Meta::noinit_tag()), true);
+    Lexer::Lexer lexer(input, MakeStringView(sourceName, Meta::noinit_tag()), true);
 
     Parser::ParseList parseList(&lexer);
     Parser::ParseContext parseContext;

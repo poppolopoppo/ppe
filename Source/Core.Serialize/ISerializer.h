@@ -23,10 +23,10 @@ public:
     ISerializer(const ISerializer& ) = delete;
     ISerializer& operator =(const ISerializer& ) = delete;
 
-    virtual void Deserialize(RTTI::MetaTransaction* transaction, const MemoryView<const u8>& input, const wchar_t *sourceName = nullptr) = 0;
+    virtual void Deserialize(RTTI::MetaTransaction* transaction, IStreamReader* input, const wchar_t *sourceName = nullptr) = 0;
     virtual void Serialize(IStreamWriter* output, const RTTI::MetaTransaction* transaction) = 0;
 
-    void Deserialize(RTTI::MetaTransaction* transaction, IStreamReader* iss, const wchar_t *sourceName = nullptr);
+    void Deserialize(RTTI::MetaTransaction* transaction, const MemoryView<const u8>& rawData, const wchar_t *sourceName = nullptr);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

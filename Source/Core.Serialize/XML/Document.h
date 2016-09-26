@@ -48,6 +48,7 @@ public:
     size_t XPath(const MemoryView<const Name>& path, const std::function<void(const Element&)>& functor) const;
 
     static bool Load(Document* document, const Filename& filename);
+    static bool Load(Document* document, const Filename& filename, IStreamReader* input);
     static bool Load(Document* document, const Filename& filename, const StringView& content);
 
 private:
