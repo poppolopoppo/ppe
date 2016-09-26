@@ -24,7 +24,7 @@ static float AlphaTestCoverage_(const FloatImage* img, float cutoff, float scale
 
     const size_t subSamples = 4;
     const float subSamplesOO = 1.0f/subSamples;
-    const float halfSubSamplesOO = 0.5f * subSamples;
+    const float halfSubSamplesOO = 0.5f * subSamplesOO;
 
     size_t visible = 0;
     size_t total = 0;
