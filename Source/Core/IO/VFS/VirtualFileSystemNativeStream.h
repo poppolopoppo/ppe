@@ -29,14 +29,16 @@ public:
 
     virtual bool Bad() const override;
 
+    virtual bool IsSeekableI() const override { return true; }
+
     virtual std::streamoff TellI() const override;
     virtual bool SeekI(std::streamoff offset, SeekOrigin policy) override;
 
     virtual bool Read(void* storage, std::streamsize sizeInBytes) override;
     virtual std::streamsize ReadSome(void* storage, size_t eltsize, std::streamsize count) override;
 
-    virtual char PeekChar() override;
-    virtual wchar_t PeekCharW() override;
+    virtual bool Peek(char& ch) override;
+    virtual bool Peek(wchar_t& ch) override;
 
     virtual bool Eof() const override;
     virtual std::streamsize SizeInBytes() const override;
@@ -59,6 +61,8 @@ public:
     virtual const Filename& SourceFilename() const override { return _filename; }
 
     virtual bool Bad() const override;
+
+    virtual bool IsSeekableO() const override { return true; }
 
     virtual std::streamoff TellO() const override;
     virtual bool SeekO(std::streamoff offset, SeekOrigin policy) override;

@@ -64,6 +64,8 @@ public:
 public: // IStreamReader
     virtual bool Eof() const override;
 
+    virtual bool IsSeekableI() const override { return true; }
+
     virtual std::streamoff TellI() const override;
     virtual bool SeekI(std::streamoff offset, SeekOrigin origin = SeekOrigin::Begin) override;
 
@@ -72,10 +74,12 @@ public: // IStreamReader
     virtual bool Read(void* storage, std::streamsize sizeInBytes) override;
     virtual std::streamsize ReadSome(void* storage, size_t eltsize, std::streamsize count) override;
 
-    virtual char PeekChar() override;
-    virtual wchar_t PeekCharW() override;
+    virtual bool Peek(char& ch) override;
+    virtual bool Peek(wchar_t& ch) override;
 
 public: // IStreamWriter
+    virtual bool IsSeekableO() const override { return true; }
+
     virtual std::streamoff TellO() const override;
     virtual bool SeekO(std::streamoff offset, SeekOrigin policy = SeekOrigin::Begin) override;
 
@@ -246,21 +250,23 @@ std::streamsize MemoryStream<_Allocator>::ReadSome(void* storage, size_t eltsize
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-char MemoryStream<_Allocator>::PeekChar() {
+bool MemoryStream<_Allocator>::Peek(char& ch) {
     Assert(_offsetI <= _size);
     if (_offsetI == _size)
-        return '\0';
+        return false;
 
-    return checked_cast<char>(_storage[_offsetI]);
+    ch = checked_cast<char>(_storage[_offsetI]);
+    return true;
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-wchar_t MemoryStream<_Allocator>::PeekCharW() {
+bool MemoryStream<_Allocator>::Peek(wchar_t& wch) {
     Assert(_offsetI <= _size);
     if (_offsetI + sizeof(wchar_t) > _size)
-        return L'\0';
+        return false;
 
-    return *reinterpret_cast<const wchar_t*>(&_storage[_offsetI]);
+    wch = *reinterpret_cast<const wchar_t*>(&_storage[_offsetI]);
+    return true;
 }
 //----------------------------------------------------------------------------
 // IStreamWriter

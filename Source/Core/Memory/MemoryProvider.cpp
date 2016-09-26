@@ -52,23 +52,25 @@ std::streamsize MemoryViewReader::ReadSome(void* storage, size_t eltsize, std::s
     const std::streamsize remaining = checked_cast<std::streamsize>(_rawData.SizeInBytes() - _offsetI);
     const std::streamsize wantedsize = eltsize*count;
     const std::streamsize realsize = remaining < wantedsize ? remaining : wantedsize;
-    return (MemoryViewReader::Read(storage, eltsize * count) ) ? realsize : 0;
+    return (MemoryViewReader::Read(storage, realsize) ) ? realsize : 0;
 }
 //----------------------------------------------------------------------------
-char MemoryViewReader::PeekChar() {
+bool MemoryViewReader::Peek(char& ch) {
     Assert(_offsetI <= _rawData.SizeInBytes());
     if (_offsetI == _rawData.SizeInBytes())
-        return '\0';
+        return false;
 
-    return checked_cast<char>(_rawData[_offsetI]);
+    ch = checked_cast<char>(_rawData[_offsetI]);
+    return true;
 }
 //----------------------------------------------------------------------------
-wchar_t MemoryViewReader::PeekCharW() {
+bool MemoryViewReader::Peek(wchar_t& wch) {
     Assert(_offsetI <= _rawData.SizeInBytes());
     if (_offsetI + sizeof(wchar_t) > _rawData.SizeInBytes())
-        return L'\0';
+        return false;
 
-    return *reinterpret_cast<const wchar_t*>(&_rawData[_offsetI]);
+    wch = *reinterpret_cast<const wchar_t*>(&_rawData[_offsetI]);
+    return true;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

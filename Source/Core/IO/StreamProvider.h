@@ -23,6 +23,8 @@ public: // virtual interface
 
     virtual bool Eof() const = 0;
 
+    virtual bool IsSeekableI() const = 0;
+
     virtual std::streamoff TellI() const = 0;
     virtual bool SeekI(std::streamoff offset, SeekOrigin origin = SeekOrigin::Begin) = 0;
 
@@ -31,8 +33,8 @@ public: // virtual interface
     virtual bool Read(void* storage, std::streamsize sizeInBytes) = 0;
     virtual std::streamsize ReadSome(void* storage, size_t eltsize, std::streamsize count) = 0;
 
-    virtual char PeekChar() = 0;
-    virtual wchar_t PeekCharW() = 0;
+    virtual bool Peek(char& ch) = 0;
+    virtual bool Peek(wchar_t& ch) = 0;
 
 public: // read helpers
     template <typename T>
@@ -45,26 +47,22 @@ public: // read helpers
     void ReadAll(RawStorage<T, _Allocator>& dst);
 
     template <typename T>
+    bool ReadView(const MemoryView<T>& dst);
+
+    template <typename T>
     bool ExpectPOD(const T& pod);
 
-    std::streamsize ReadLine(char *storage, std::streamsize capacity);
-    std::streamsize ReadLine(wchar_t *storage, std::streamsize capacity);
-    std::streamsize ReadWord(char *storage, std::streamsize capacity);
-    std::streamsize ReadWord(wchar_t *storage, std::streamsize capacity);
+    MemoryView<char> ReadUntil(const MemoryView<char>& storage, char expected);
+    MemoryView<wchar_t> ReadUntil(const MemoryView<wchar_t>& storage, wchar_t expected);
 
-    std::streamsize ReadLine(const MemoryView<char>& storage) { return ReadLine(storage.Pointer(), storage.size()); }
-    std::streamsize ReadLine(const MemoryView<wchar_t>& storage) { return ReadLine(storage.Pointer(), storage.size()); }
-    std::streamsize ReadWord(const MemoryView<char>& storage) { return ReadWord(storage.Pointer(), storage.size()); }
-    std::streamsize ReadWord(const MemoryView<wchar_t>& storage) { return ReadWord(storage.Pointer(), storage.size()); }
+    MemoryView<char> ReadUntil(const MemoryView<char>& storage, const MemoryView<const char>& any);
+    MemoryView<wchar_t> ReadUntil(const MemoryView<wchar_t>& storage, const MemoryView<const wchar_t>& any);
 
-    template <size_t _Capacity>
-    std::streamsize ReadLine(char (&storage)[_Capacity]) { return ReadLine(storage, _Capacity); }
-    template <size_t _Capacity>
-    std::streamsize ReadLine(wchar_t (&storage)[_Capacity]) { return ReadLine(storage, _Capacity); }
-    template <size_t _Capacity>
-    std::streamsize ReadWord(char (&storage)[_Capacity]) { return ReadWord(storage, _Capacity); }
-    template <size_t _Capacity>
-    std::streamsize ReadWord(wchar_t (&storage)[_Capacity]) { return ReadWord(storage, _Capacity); }
+    MemoryView<char> ReadLine(const MemoryView<char>& storage);
+    MemoryView<wchar_t> ReadLine(const MemoryView<wchar_t>& storage);
+
+    MemoryView<char> ReadWord(const MemoryView<char>& storage);
+    MemoryView<wchar_t> ReadWord(const MemoryView<wchar_t>& storage);
 
     bool SeekI_FirstOf(char cmp);
     bool SeekI_FirstOf(wchar_t cmp);
@@ -75,6 +73,8 @@ public: // read helpers
 class IStreamWriter {
 public: // virtual interface
     virtual ~IStreamWriter() {}
+
+    virtual bool IsSeekableO() const = 0;
 
     virtual std::streamoff TellO() const = 0;
     virtual bool SeekO(std::streamoff offset, SeekOrigin policy = SeekOrigin::Begin) = 0;
@@ -110,6 +110,8 @@ public:
 
     virtual bool Eof() const override { return _iss.eof(); }
 
+    virtual bool IsSeekableI() const override { return true; }
+
     virtual std::streamoff TellI() const override {
         Assert(!_iss.bad());
         return _iss.tellg();
@@ -142,17 +144,24 @@ public:
         return _iss.readsome((_Char*)storage, (count*eltsize)/(sizeof(_Char)));
     }
 
-    virtual char PeekChar() override {
+    virtual bool Peek(char& ch) override {
         Assert(!_iss.bad());
-        return checked_cast<char>(_iss.peek());
+        const auto read = _iss.peek();
+        ch = char(read);
+        return (read != Eof_);
     }
 
-    virtual wchar_t PeekCharW() override {
+    virtual bool Peek(wchar_t& wch) override {
         Assert(!_iss.bad());
-        return checked_cast<wchar_t>(_iss.peek());
+        const auto read = _iss.peek();
+        wch = wchar_t(read);
+        return (read != Eof_);
     }
 
 private:
+    typedef typename stream_type::traits_type traits_type;
+    static constexpr auto Eof_ = traits_type::eof();
+
     stream_type& _iss;
 };
 //----------------------------------------------------------------------------
@@ -163,6 +172,8 @@ public:
 
     explicit BasicStreamWriter(stream_type& oss) : _oss(oss) { Assert(!_oss.bad()); }
     virtual ~BasicStreamWriter() { Assert(!_oss.bad()); }
+
+    virtual bool IsSeekableO() const override { return true; }
 
     virtual std::streamoff TellO() const override {
         Assert(!_oss.bad());

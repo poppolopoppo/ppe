@@ -28,7 +28,11 @@ void IStreamReader::ReadAll(RawStorage<T, _Allocator>& dst) {
     SeekI(0);
     Read(dst.Pointer(), s);
 }
-
+//----------------------------------------------------------------------------
+template <typename T>
+bool IStreamReader::ReadView(const MemoryView<T>& dst) {
+    return Read(dst.data(), dst.SizeInBytes());
+}
 //----------------------------------------------------------------------------
 template <typename T>
 bool IStreamReader::ExpectPOD(const T& pod) {

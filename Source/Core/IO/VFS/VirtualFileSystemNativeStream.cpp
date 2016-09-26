@@ -140,32 +140,34 @@ std::streamsize VirtualFileSystemNativeFileIStream::ReadSome(void* storage, size
     return read;
 }
 //----------------------------------------------------------------------------
-char VirtualFileSystemNativeFileIStream::PeekChar() {
+bool VirtualFileSystemNativeFileIStream::Peek(char& ch) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(IsValidFileHandle_(_handle));
 
-    const int ch = fgetc(_handle);
-    if (EOF == ch)
-        return '\0';
+    const int poke = fgetc(_handle);
+    if (EOF == poke)
+        return false;
 
-    if (ch != ungetc(ch, _handle))
+    if (poke != ungetc(poke, _handle))
         AssertNotReached();
 
-    return checked_cast<char>(ch);
+    ch = char(checked_cast<u8>(poke));
+    return true;
 }
 //----------------------------------------------------------------------------
-wchar_t VirtualFileSystemNativeFileIStream::PeekCharW() {
+bool VirtualFileSystemNativeFileIStream::Peek(wchar_t& wch) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(IsValidFileHandle_(_handle));
 
-    const ::wint_t ch = fgetwc(_handle);
-    if (::wint_t(EOF) == ch)
-        return '\0';
+    const ::wint_t poke = fgetwc(_handle);
+    if (::wint_t(EOF) == poke)
+        return false;
 
-    if (ch != ungetwc(ch, _handle))
+    if (poke != ungetwc(poke, _handle))
         AssertNotReached();
 
-    return checked_cast<wchar_t>(ch);
+    wch = wchar_t(checked_cast<u16>(poke));
+    return true;
 }
 //----------------------------------------------------------------------------
 bool VirtualFileSystemNativeFileIStream::Eof() const {

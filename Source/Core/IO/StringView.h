@@ -246,6 +246,9 @@ inline bool Equals(const WStringView& lhs, const WStringView& rhs) { return (0 =
 inline bool EqualsI(const StringView& lhs, const StringView& rhs) { return (0 == CompareI(lhs, rhs)); }
 inline bool EqualsI(const WStringView& lhs, const WStringView& rhs) { return (0 == CompareI(lhs, rhs)); }
 //----------------------------------------------------------------------------
+inline bool EqualsI(char lhs, char rhs) { return (ToUpper(lhs) == ToUpper(rhs)); }
+inline bool EqualsI(wchar_t lhs, wchar_t rhs) { return (ToUpper(lhs) == ToUpper(rhs)); }
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 bool Split(StringView& str, char separator, StringView& slice);
