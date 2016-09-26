@@ -121,6 +121,9 @@ public:
         return MemoryView<T>(_storage, std::addressof(*it) - _storage);
     }
 
+    MemoryView<T> FirstNElements(size_t count) const { return CutBefore(count); }
+    MemoryView<T> LastNElements(size_t count) const { Assert(_size >= count); return CutStartingAt(_size - count); }
+
     MemoryView<T> ShiftBack() const { Assert(_size > 0); return MemoryView<T>(_storage, _size - 1); }
     MemoryView<T> ShiftFront() const { Assert(_size > 0); return MemoryView<T>(_storage + 1, _size - 1); }
 
@@ -132,6 +135,9 @@ public:
         return ((void*)parent.data() <= (void*)_storage &&
                 (void*)(parent.data()+parent.size()) >= (void*)(_storage+_size));
     }
+
+    iterator Find(const T& elem) const { return std::find(begin(), end(), elem); }
+    bool Contains(const T& elem) const { return (end() != Find(elem)); }
 
     template <typename _Pred>
     iterator FindIf(const _Pred& pred) const { return std::find_if(begin(), end(), pred); }
