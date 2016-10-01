@@ -31,7 +31,7 @@ public:
 
     virtual bool Eof() const override { return _offsetI >= _rawData.SizeInBytes(); }
 
-    virtual bool IsSeekableI() const override { return true; }
+    virtual bool IsSeekableI(SeekOrigin ) const override { return true; }
 
     virtual std::streamoff TellI() const override { return checked_cast<std::streamsize>(_offsetI); }
     virtual bool SeekI(std::streamoff offset, SeekOrigin origin = SeekOrigin::Begin) override;
@@ -60,7 +60,7 @@ public:
     MemoryViewWriter() : _size(0), _offsetO(0) {}
     MemoryViewWriter(const MemoryView<u8>& rawData) : _size(0), _offsetO(0), _rawData(rawData) {}
 
-    virtual bool IsSeekableO() const override { return true; }
+    virtual bool IsSeekableO(SeekOrigin ) const override { return true; }
 
     virtual std::streamoff TellO() const override;
     virtual bool SeekO(std::streamoff offset, SeekOrigin policy = SeekOrigin::Begin) override;

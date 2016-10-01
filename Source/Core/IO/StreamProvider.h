@@ -15,6 +15,7 @@ enum class SeekOrigin {
     Begin       = 0,
     Relative    = 1,
     End         = 2,
+    All         = 0xFF,
 };
 //----------------------------------------------------------------------------
 class IStreamReader {
@@ -23,7 +24,7 @@ public: // virtual interface
 
     virtual bool Eof() const = 0;
 
-    virtual bool IsSeekableI() const = 0;
+    virtual bool IsSeekableI(SeekOrigin origin = SeekOrigin::All) const = 0;
 
     virtual std::streamoff TellI() const = 0;
     virtual bool SeekI(std::streamoff offset, SeekOrigin origin = SeekOrigin::Begin) = 0;
@@ -74,10 +75,10 @@ class IStreamWriter {
 public: // virtual interface
     virtual ~IStreamWriter() {}
 
-    virtual bool IsSeekableO() const = 0;
+    virtual bool IsSeekableO(SeekOrigin origin = SeekOrigin::All) const = 0;
 
     virtual std::streamoff TellO() const = 0;
-    virtual bool SeekO(std::streamoff offset, SeekOrigin policy = SeekOrigin::Begin) = 0;
+    virtual bool SeekO(std::streamoff offset, SeekOrigin origin = SeekOrigin::Begin) = 0;
 
     virtual bool Write(const void* storage, std::streamsize sizeInBytes) = 0;
     virtual bool WriteSome(const void* storage, size_t eltsize, std::streamsize count) = 0;
@@ -110,7 +111,7 @@ public:
 
     virtual bool Eof() const override { return _iss.eof(); }
 
-    virtual bool IsSeekableI() const override { return true; }
+    virtual bool IsSeekableI(SeekOrigin ) const override { return true; }
 
     virtual std::streamoff TellI() const override {
         Assert(!_iss.bad());
@@ -173,7 +174,7 @@ public:
     explicit BasicStreamWriter(stream_type& oss) : _oss(oss) { Assert(!_oss.bad()); }
     virtual ~BasicStreamWriter() { Assert(!_oss.bad()); }
 
-    virtual bool IsSeekableO() const override { return true; }
+    virtual bool IsSeekableO(SeekOrigin ) const override { return true; }
 
     virtual std::streamoff TellO() const override {
         Assert(!_oss.bad());

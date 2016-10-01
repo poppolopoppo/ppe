@@ -29,7 +29,7 @@ public:
 
     virtual bool Bad() const override;
 
-    virtual bool IsSeekableI() const override { return true; }
+    virtual bool IsSeekableI(SeekOrigin ) const override { return true; }
 
     virtual std::streamoff TellI() const override;
     virtual bool SeekI(std::streamoff offset, SeekOrigin policy) override;
@@ -62,7 +62,7 @@ public:
 
     virtual bool Bad() const override;
 
-    virtual bool IsSeekableO() const override { return true; }
+    virtual bool IsSeekableO(SeekOrigin ) const override { return true; }
 
     virtual std::streamoff TellO() const override;
     virtual bool SeekO(std::streamoff offset, SeekOrigin policy) override;

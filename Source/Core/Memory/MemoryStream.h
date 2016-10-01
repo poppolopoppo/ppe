@@ -64,7 +64,7 @@ public:
 public: // IStreamReader
     virtual bool Eof() const override;
 
-    virtual bool IsSeekableI() const override { return true; }
+    virtual bool IsSeekableI(SeekOrigin ) const override { return true; }
 
     virtual std::streamoff TellI() const override;
     virtual bool SeekI(std::streamoff offset, SeekOrigin origin = SeekOrigin::Begin) override;
@@ -78,7 +78,7 @@ public: // IStreamReader
     virtual bool Peek(wchar_t& ch) override;
 
 public: // IStreamWriter
-    virtual bool IsSeekableO() const override { return true; }
+    virtual bool IsSeekableO(SeekOrigin ) const override { return true; }
 
     virtual std::streamoff TellO() const override;
     virtual bool SeekO(std::streamoff offset, SeekOrigin policy = SeekOrigin::Begin) override;
