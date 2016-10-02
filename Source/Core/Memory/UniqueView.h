@@ -40,7 +40,7 @@ public:
 
     operator void* () const { return base_type::data(); }
 
-    void Reset(UniqueView&&  rvalue);
+    void Reset(UniqueView&& rvalue);
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Deleter >
