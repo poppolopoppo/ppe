@@ -51,8 +51,8 @@ public:
     bool IsConnected() const;
     bool IsReadable(const Milliseconds& timeout) const;
 
-    size_t Read(MemoryView<u8>& rawData);
-    size_t Read(MemoryView<u8>& rawData, const Milliseconds& timeout);
+    size_t Read(const MemoryView<u8>& rawData);
+    size_t Read(const MemoryView<u8>& rawData, const Milliseconds& timeout);
     size_t Write(const MemoryView<const u8>& rawData);
 
     static void Start();
@@ -66,6 +66,23 @@ private:
 
     Address _local;
     Address _remote;
+};
+//----------------------------------------------------------------------------
+struct ConnectionScope {
+
+    explicit ConnectionScope(Socket& socket, bool graceful = true)
+        : PSocket(&socket), Graceful(graceful) {
+        Assert(false == PSocket->IsConnected());
+        PSocket->Connect();
+    }
+
+    ~ConnectionScope() {
+        Assert(true == PSocket->IsConnected());
+        PSocket->Disconnect(Graceful);
+    }
+
+    Socket* const PSocket;
+    const bool Graceful;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

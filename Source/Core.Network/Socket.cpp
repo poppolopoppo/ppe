@@ -231,7 +231,7 @@ bool Socket::IsReadable(const Milliseconds& timeout) const {
     return true;
 }
 //----------------------------------------------------------------------------
-size_t Socket::Read(MemoryView<u8>& rawData) {
+size_t Socket::Read(const MemoryView<u8>& rawData) {
     Assert(!rawData.empty());
     Assert(IsConnected());
 
@@ -245,7 +245,7 @@ size_t Socket::Read(MemoryView<u8>& rawData) {
     return (SOCKET_ERROR == status ? 0 : status);
 }
 //----------------------------------------------------------------------------
-size_t Socket::Read(MemoryView<u8>& rawData, const Milliseconds& timeout) {
+size_t Socket::Read(const MemoryView<u8>& rawData, const Milliseconds& timeout) {
     Assert(!rawData.empty());
 
     if (not IsReadable(timeout))
