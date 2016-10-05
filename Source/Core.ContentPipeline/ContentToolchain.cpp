@@ -36,7 +36,7 @@ IContentToolchain::~IContentToolchain() {}
 //----------------------------------------------------------------------------
 #ifdef WITH_RTTI_VERIFY_PREDICATES
 void IContentToolchain::RTTI_VerifyPredicates() const {
-    MetaClass::parent_type::RTTI_VerifyPredicates();
+    FMetaClass::parent_type::RTTI_VerifyPredicates();
     RTTI_VerifyPredicate(nullptr != _importer);
     RTTI_VerifyPredicate(nullptr != _processor);
     RTTI_VerifyPredicate(nullptr != _serializer);

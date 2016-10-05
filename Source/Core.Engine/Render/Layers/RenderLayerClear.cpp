@@ -20,11 +20,11 @@ namespace Engine {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static String RenderLayerClearName_(AbstractRenderSurface *surface) {
+static FString RenderLayerClearName_(FAbstractRenderSurface *surface) {
 #ifdef WITH_CORE_ENGINE_RENDERLAYER_DEBUGNAME
     return StringFormat("Clear_{0}", surface->Name());
 #else
-    return String();
+    return FString();
 #endif
 }
 //----------------------------------------------------------------------------
@@ -32,15 +32,15 @@ static String RenderLayerClearName_(AbstractRenderSurface *surface) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, RenderLayerClear, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, FRenderLayerClear, );
 //----------------------------------------------------------------------------
-RenderLayerClear::RenderLayerClear(
-    AbstractRenderSurface *surface,
+FRenderLayerClear::FRenderLayerClear(
+    FAbstractRenderSurface *surface,
     const ColorRGBAF& color,
-    Graphics::ClearOptions options /* = Graphics::ClearOptions::DepthStencil */,
+    Graphics::EClearOptions options /* = Graphics::EClearOptions::FDepthStencil */,
     float depth /* = 1.0f */,
     u8 stencil /* = 0 */ )
-:   AbstractRenderLayer(RenderLayerClearName_(surface))
+:   FAbstractRenderLayer(RenderLayerClearName_(surface))
 ,   _surface(surface)
 ,   _color(color)
 ,   _options(options)
@@ -49,33 +49,33 @@ RenderLayerClear::RenderLayerClear(
     Assert(surface);
 }
 //----------------------------------------------------------------------------
-RenderLayerClear::~RenderLayerClear() {
+FRenderLayerClear::~FRenderLayerClear() {
     Assert(!_surfaceLock);
 }
 //----------------------------------------------------------------------------
-void RenderLayerClear::PrepareImpl_(
+void FRenderLayerClear::PrepareImpl_(
     Graphics::IDeviceAPIEncapsulator *device, 
-    MaterialDatabase * /* materialDatabase */, 
-    const RenderTree * /* renderTree */, 
-    VariabilitySeed * /* seeds */) {
+    FMaterialDatabase * /* materialDatabase */, 
+    const FRenderTree * /* renderTree */, 
+    FVariabilitySeed * /* seeds */) {
     _surface->Prepare(device, _surfaceLock);
 }
 //----------------------------------------------------------------------------
-void RenderLayerClear::RenderImpl_(Graphics::IDeviceAPIContext *context) {
+void FRenderLayerClear::RenderImpl_(Graphics::IDeviceAPIContext *context) {
     Assert(_surfaceLock);
 
-    const Graphics::RenderTarget *rt = nullptr;
-    const Graphics::DepthStencil *ds = nullptr;
+    const Graphics::FRenderTarget *rt = nullptr;
+    const Graphics::FDepthStencil *ds = nullptr;
     _surfaceLock->Acquire(&rt, &ds);
 
-    if (rt && !Meta::HasFlag(_options, Graphics::ClearOptions::NotRenderTarget) )
+    if (rt && !Meta::HasFlag(_options, Graphics::EClearOptions::NotRenderTarget) )
         context->Clear(rt, _color);
 
-    if (ds && Graphics::ClearOptions::None != _options)
+    if (ds && Graphics::EClearOptions::None != _options)
         context->Clear(ds, _options, _depth, _stencil);
 }
 //----------------------------------------------------------------------------
-void RenderLayerClear::DestroyImpl_(Graphics::IDeviceAPIEncapsulator *device, const RenderTree * /* renderTree */) {
+void FRenderLayerClear::DestroyImpl_(Graphics::IDeviceAPIEncapsulator *device, const FRenderTree * /* renderTree */) {
     Assert(_surfaceLock);
 
     _surface->Destroy(device, _surfaceLock);

@@ -278,14 +278,14 @@ ColorRGBA YellowGreen() { return ColorRGBA(u8(0x9A), u8(0xCD), u8(0x32), u8(0xFF
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template class BasicColor< UNorm<u8>, ColorShuffleBGRA >;
-template class BasicColor< UNorm<u8>, ColorShuffleRGBA >;
+template class TBasicColor< TUNorm<u8>, FColorShuffleBGRA >;
+template class TBasicColor< TUNorm<u8>, FColorShuffleRGBA >;
 //----------------------------------------------------------------------------
-template class BasicColor< UNorm<u16>, ColorShuffleBGRA >;
-template class BasicColor< UNorm<u16>, ColorShuffleRGBA >;
+template class TBasicColor< TUNorm<u16>, FColorShuffleBGRA >;
+template class TBasicColor< TUNorm<u16>, FColorShuffleRGBA >;
 //----------------------------------------------------------------------------
-template class BasicColor< float, ColorShuffleBGRA >;
-template class BasicColor< float, ColorShuffleRGBA >;
+template class TBasicColor< float, FColorShuffleBGRA >;
+template class TBasicColor< float, FColorShuffleRGBA >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

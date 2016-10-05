@@ -12,57 +12,57 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Callstack;
+class FCallstack;
 //----------------------------------------------------------------------------
-class DecodedCallstack {
+class FDecodedCallstack {
 public:
-    friend class Callstack;
+    friend class FCallstack;
     enum { MaxDeph = 46 };
 
-    class Frame {
+    class FFrame {
     public:
-        Frame();
-        Frame(void* address, const wchar_t* symbol, const wchar_t* filename, size_t line);
-        ~Frame();
+        FFrame();
+        FFrame(void* address, const wchar_t* symbol, const wchar_t* filename, size_t line);
+        ~FFrame();
 
-        Frame(Frame&& rvalue);
-        Frame& operator =(Frame&& rvalue);
+        FFrame(FFrame&& rvalue);
+        FFrame& operator =(FFrame&& rvalue);
 
-        Frame(const Frame& other) = delete;
-        Frame& operator =(const Frame& other) = delete;
+        FFrame(const FFrame& other) = delete;
+        FFrame& operator =(const FFrame& other) = delete;
 
         void* Address() const { return _address; }
-        const WString& Symbol() const { return _symbol; }
-        const WString& Filename() const { return _filename; }
+        const FWString& Symbol() const { return _symbol; }
+        const FWString& Filename() const { return _filename; }
         size_t Line() const { return _line; }
 
     private:
         void*   _address;
-        WString _symbol;
-        WString _filename;
+        FWString _symbol;
+        FWString _filename;
         size_t  _line;
     };
 
-    DecodedCallstack();
-    DecodedCallstack(const Callstack& callstack);
-    ~DecodedCallstack();
+    FDecodedCallstack();
+    FDecodedCallstack(const FCallstack& callstack);
+    ~FDecodedCallstack();
 
-    DecodedCallstack(DecodedCallstack&& rvalue);
-    DecodedCallstack& operator =(DecodedCallstack&& rvalue);
+    FDecodedCallstack(FDecodedCallstack&& rvalue);
+    FDecodedCallstack& operator =(FDecodedCallstack&& rvalue);
 
-    DecodedCallstack(const DecodedCallstack& other) = delete;
-    DecodedCallstack& operator =(const DecodedCallstack& other) = delete;
+    FDecodedCallstack(const FDecodedCallstack& other) = delete;
+    FDecodedCallstack& operator =(const FDecodedCallstack& other) = delete;
 
     size_t Hash() const { return _hash; }
     size_t Depth() const { return _depth; }
 
-    MemoryView<const Frame> Frames() const {
-        return MemoryView<const Frame>(reinterpret_cast<const Frame*>(&_frames), _depth);
+    TMemoryView<const FFrame> Frames() const {
+        return TMemoryView<const FFrame>(reinterpret_cast<const FFrame*>(&_frames), _depth);
     }
 
 private:
     // no ctor/dtor overhead for unused frames
-    typedef ALIGNED_STORAGE(sizeof(Frame) * MaxDeph, std::alignment_of<Frame>::value)
+    typedef ALIGNED_STORAGE(sizeof(FFrame) * MaxDeph, std::alignment_of<FFrame>::value)
         frames_type;
 
     size_t _hash;
@@ -75,7 +75,7 @@ private:
 template <typename _Traits>
 std::basic_ostream<char, _Traits>& operator <<(
     std::basic_ostream<char, _Traits>& oss,
-    const DecodedCallstack::Frame& frame) {
+    const FDecodedCallstack::FFrame& frame) {
     return oss  << frame.Symbol() << std::endl
                 << "    " << frame.Filename()
                 << '(' << frame.Line() << ')';
@@ -84,7 +84,7 @@ std::basic_ostream<char, _Traits>& operator <<(
 template <typename _Traits>
 std::basic_ostream<wchar_t, _Traits>& operator <<(
 	std::basic_ostream<wchar_t, _Traits>& oss,
-	const DecodedCallstack::Frame& frame) {
+	const FDecodedCallstack::FFrame& frame) {
 	return oss << frame.Symbol() << std::endl
 		<< L"    " << frame.Filename()
 		<< L'(' << frame.Line() << L')';
@@ -93,8 +93,8 @@ std::basic_ostream<wchar_t, _Traits>& operator <<(
 template <typename _Traits>
 std::basic_ostream<char, _Traits>& operator <<(
     std::basic_ostream<char, _Traits>& oss,
-    const DecodedCallstack& decoded) {
-    const MemoryView<const DecodedCallstack::Frame> frames = decoded.Frames();
+    const FDecodedCallstack& decoded) {
+    const TMemoryView<const FDecodedCallstack::FFrame> frames = decoded.Frames();
     for (size_t i = 0; i < frames.size(); ++i)
         oss << '[' << i << "] " << frames[i] << std::endl;
     return oss;
@@ -103,8 +103,8 @@ std::basic_ostream<char, _Traits>& operator <<(
 template <typename _Traits>
 std::basic_ostream<wchar_t, _Traits>& operator <<(
 	std::basic_ostream<wchar_t, _Traits>& oss,
-	const DecodedCallstack& decoded) {
-	const MemoryView<const DecodedCallstack::Frame> frames = decoded.Frames();
+	const FDecodedCallstack& decoded) {
+	const TMemoryView<const FDecodedCallstack::FFrame> frames = decoded.Frames();
 	for (size_t i = 0; i < frames.size(); ++i)
 		oss << L'[' << i << L"] " << frames[i] << std::endl;
 	return oss;

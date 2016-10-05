@@ -9,9 +9,9 @@ namespace Lattice {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-/*extern*/ template class GenericVertexSubPart<float2>;
-/*extern*/ template class GenericVertexSubPart<float3>;
-/*extern*/ template class GenericVertexSubPart<float4>;
+/*extern*/ template class TGenericVertexSubPart<float2>;
+/*extern*/ template class TGenericVertexSubPart<float3>;
+/*extern*/ template class TGenericVertexSubPart<float4>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

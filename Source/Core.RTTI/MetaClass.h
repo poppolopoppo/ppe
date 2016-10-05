@@ -13,32 +13,32 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MetaClassHashMap;
-class MetaObject;
+class FMetaClassHashMap;
+class FMetaObject;
 FWD_UNIQUEPTR(MetaProperty);
 //----------------------------------------------------------------------------
-class MetaClass {
+class FMetaClass {
 public:
-    friend class MetaClassList;
+    friend class FMetaClassList;
 
-    enum Flags {
-        Concrete    = 0<<0,
-        Abstract    = 1<<0,
-        Dynamic     = 1<<1,
-        Mergeable   = 1<<2,
-        Deprecated  = 1<<3,
+    enum EFlags {
+        Concrete    = 1<<0,
+        Abstract    = 1<<1,
+        Dynamic     = 1<<2,
+        Mergeable   = 1<<3,
+        Deprecated  = 1<<4,
 
         Default     = Concrete
     };
 
-    MetaClass(const RTTI::Name& name, Flags attributes);
-    virtual ~MetaClass();
+    FMetaClass(const FName& name, EFlags attributes);
+    virtual ~FMetaClass();
 
-    MetaClass(const MetaClass&) = delete;
-    MetaClass& operator =(const MetaClass&) = delete;
+    FMetaClass(const FMetaClass&) = delete;
+    FMetaClass& operator =(const FMetaClass&) = delete;
 
-    const RTTI::Name& Name() const { return _name; }
-    Flags Attributes() const { return _attributes; }
+    const FName& Name() const { return _name; }
+    EFlags Attributes() const { return _attributes; }
 
     bool IsAbstract()   const { return Meta::HasFlag(_attributes, Abstract); }
     bool IsConcrete()   const { return Meta::HasFlag(_attributes, Concrete); }
@@ -46,38 +46,38 @@ public:
     bool IsMergeable()  const { return Meta::HasFlag(_attributes, Mergeable); }
     bool IsDeprecated() const { return Meta::HasFlag(_attributes, Deprecated); }
 
-    bool InheritsFrom(const MetaClass *parent) const;
-    bool IsAssignableFrom(const MetaClass *child) const;
+    bool InheritsFrom(const FMetaClass *parent) const;
+    bool IsAssignableFrom(const FMetaClass *child) const;
 
-    void Register(MetaClassHashMap& database) const;
-    void Unregister(MetaClassHashMap& database) const;
+    void Register(FMetaClassHashMap& database) const;
+    void Unregister(FMetaClassHashMap& database) const;
 
-    const MetaClass *Parent() const;
+    const FMetaClass *Parent() const;
 
-    MemoryView<const UCMetaProperty> Properties() const;
+    TMemoryView<const UCMetaProperty> Properties() const;
 
-    const MetaProperty *PropertyIFP(const StringView& name, size_t attributes = 0, bool inherited = true) const;
-    const MetaProperty *PropertyIFP(const RTTI::Name& name, size_t attributes = 0, bool inherited = true) const;
+    const FMetaProperty *PropertyIFP(const FStringView& name, size_t attributes = 0, bool inherited = true) const;
+    const FMetaProperty *PropertyIFP(const FName& name, size_t attributes = 0, bool inherited = true) const;
 
-    MetaObject* CreateInstance() const;
+    FMetaObject* CreateInstance() const;
 
 protected:
-    virtual const MetaClass* VirtualParent() const = 0;
+    virtual const FMetaClass* VirtualParent() const = 0;
 
-    virtual MemoryView<const UCMetaProperty> VirtualProperties() const = 0;
+    virtual TMemoryView<const UCMetaProperty> VirtualProperties() const = 0;
 
-    virtual const MetaProperty *VirtualPropertyIFP(const StringView& name, size_t attributes) const = 0;
-    virtual const MetaProperty *VirtualPropertyIFP(const RTTI::Name& name, size_t attributes) const = 0;
+    virtual const FMetaProperty *VirtualPropertyIFP(const FStringView& name, size_t attributes) const = 0;
+    virtual const FMetaProperty *VirtualPropertyIFP(const FName& name, size_t attributes) const = 0;
 
-    virtual MetaObject* VirtualCreateInstance() const = 0;
+    virtual FMetaObject* VirtualCreateInstance() const = 0;
 
 private:
-    RTTI::Name _name;
-    Flags _attributes;
+    FName _name;
+    EFlags _attributes;
 };
 //----------------------------------------------------------------------------
-template <typename _Visitor = void (*)(const MetaClass* metaClass, const MetaProperty* prop) >
-void ForEachProperty(const MetaClass* metaClass, const _Visitor& visitor) {
+template <typename _Visitor = void (*)(const FMetaClass* metaClass, const FMetaProperty* prop) >
+void ForEachProperty(const FMetaClass* metaClass, const _Visitor& visitor) {
     while (nullptr != metaClass) {
         for (const UCMetaProperty& prop : metaClass->Properties()) {
             Assert(prop);
@@ -87,8 +87,8 @@ void ForEachProperty(const MetaClass* metaClass, const _Visitor& visitor) {
     }
 }
 //----------------------------------------------------------------------------
-template <typename _Pred = bool (*)(const MetaClass* metaClass, const MetaProperty* prop) >
-const MetaProperty* FindProperty(const MetaClass* metaClass, const _Pred& pred) {
+template <typename _Pred = bool (*)(const FMetaClass* metaClass, const FMetaProperty* prop) >
+const FMetaProperty* FindProperty(const FMetaClass* metaClass, const _Pred& pred) {
     while (nullptr != metaClass) {
         for (const UCMetaProperty& prop : metaClass->Properties()) {
             Assert(prop);
@@ -102,54 +102,54 @@ const MetaProperty* FindProperty(const MetaClass* metaClass, const _Pred& pred) 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class InScopeMetaClass : public MetaClass {
+class InScopeMetaClass : public FMetaClass {
 public:
-    InScopeMetaClass(const RTTI::Name& name, Flags attributes);
+    InScopeMetaClass(const FName& name, EFlags attributes);
     virtual ~InScopeMetaClass();
 
 protected:
     void RegisterProperty(UCMetaProperty&& prop);
 
 private:
-    virtual MemoryView<const UCMetaProperty> VirtualProperties() const override;
+    virtual TMemoryView<const UCMetaProperty> VirtualProperties() const override;
 
-    virtual const MetaProperty *VirtualPropertyIFP(const StringView& name, size_t attributes) const override;
-    virtual const MetaProperty *VirtualPropertyIFP(const RTTI::Name& name, size_t attributes) const override;
+    virtual const FMetaProperty *VirtualPropertyIFP(const FStringView& name, size_t attributes) const override;
+    virtual const FMetaProperty *VirtualPropertyIFP(const FName& name, size_t attributes) const override;
 
     VECTOR(RTTI, UCMetaProperty) _properties;
 };
 //----------------------------------------------------------------------------
 template <typename T>
-class DefaultMetaClass : public InScopeMetaClass {
+class TDefaultMetaClass : public InScopeMetaClass {
 public:
-    DefaultMetaClass(const RTTI::Name& name, Flags attributes)
+    TDefaultMetaClass(const FName& name, EFlags attributes)
         : InScopeMetaClass(name, attributes) {
-        STATIC_ASSERT(not std::is_abstract<DefaultMetaClass>::value);
+        STATIC_ASSERT(not std::is_abstract<TDefaultMetaClass>::value);
     }
 
 protected:
-    virtual const MetaClass* VirtualParent() const override {
-        typedef typename T::MetaClass metaclass_type;
+    virtual const FMetaClass* VirtualParent() const override {
+        typedef typename T::FMetaClass metaclass_type;
         typedef typename metaclass_type::parent_type parent_type;
         return GetMetaClass<parent_type>();
     }
 
-    virtual MetaObject* VirtualCreateInstance() const override {
+    virtual FMetaObject* VirtualCreateInstance() const override {
         typedef typename std::is_default_constructible<T>::type constructible_type;
         return CreateInstance_<T>(constructible_type());
     }
 
 private:
     template <typename U>
-    static MetaObject* CreateInstance_(std::true_type) {
+    static FMetaObject* CreateInstance_(std::true_type) {
         STATIC_ASSERT(std::is_same<T, U>::value);
-        MetaObject* const obj = new U();
+        FMetaObject* const obj = new U();
         Assert(obj);
         return obj;
     }
 
     template <typename U>
-    static MetaObject* CreateInstance_(std::false_type) {
+    static FMetaObject* CreateInstance_(std::false_type) {
         AssertNotReached(); // abstract class
         return nullptr;
     }

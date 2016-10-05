@@ -11,28 +11,28 @@ namespace Logic {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class ISystem;
-typedef RefPtr<ISystem> PSystem;
-typedef RefPtr<const ISystem> PCSystem;
-typedef SafePtr<ISystem> SSystem;
-typedef SafePtr<const ISystem> SCSystem;
+typedef TRefPtr<ISystem> PSystem;
+typedef TRefPtr<const ISystem> PCSystem;
+typedef TSafePtr<ISystem> SSystem;
+typedef TSafePtr<const ISystem> SCSystem;
 //----------------------------------------------------------------------------
 template <typename T>
 class ITypedSystem;
 template <typename T>
-using PTypedSystem = RefPtr<ITypedSystem<T>>;
+using TPTypedSystem = TRefPtr<ITypedSystem<T>>;
 template <typename T>
-using PCTypedSystem = RefPtr<const ITypedSystem<T>>;
+using TPCTypedSystem = TRefPtr<const ITypedSystem<T>>;
 template <typename T>
-using STypedSystem = SafePtr<ITypedSystem<T>>;
+using TSTypedSystem = TSafePtr<ITypedSystem<T>>;
 template <typename T>
-using SCTypedSystem = SafePtr<const ITypedSystem<T>>;
+using TSCTypedSystem = TSafePtr<const ITypedSystem<T>>;
 //----------------------------------------------------------------------------
-enum class SystemExecution;
+enum class ESystemExecution;
 //----------------------------------------------------------------------------
-class SystemLayer;
+class FSystemLayer;
 FWD_REFPTR(SystemLayer);
 //----------------------------------------------------------------------------
-class SystemContainer;
+class FSystemContainer;
 //----------------------------------------------------------------------------
 CORE_STRONGLYTYPED_NUMERIC_DEF(u32, MessageID);
 //----------------------------------------------------------------------------

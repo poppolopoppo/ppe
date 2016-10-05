@@ -82,7 +82,7 @@ float3 ClosestPointPointTriangle(const float3& point, const float3& vertex1, con
     return result;
 }
 //----------------------------------------------------------------------------
-float3 ClosestPointPlanePoint(const Plane& plane, const float3& point) {
+float3 ClosestPointPlanePoint(const FPlane& plane, const float3& point) {
     //Source: Real-Time Collision Detection by Christer Ericson
     //Reference: Page 126
 
@@ -100,7 +100,7 @@ float3 ClosestPointBoxPoint(const AABB3f& box, const float3& point) {
     return Min(temp, box.Max());
 }
 //----------------------------------------------------------------------------
-float3 ClosestPointSpherePoint(const Sphere& sphere, const float3& point) {
+float3 ClosestPointSpherePoint(const FSphere& sphere, const float3& point) {
     //Source: Jorgy343
     //Reference: None
 
@@ -117,7 +117,7 @@ float3 ClosestPointSpherePoint(const Sphere& sphere, const float3& point) {
     return result;
 }
 //----------------------------------------------------------------------------
-float3 ClosestPointSphereSphere(const Sphere& sphere1, const Sphere& sphere2) {
+float3 ClosestPointSphereSphere(const FSphere& sphere1, const FSphere& sphere2) {
     //Source: Jorgy343
     //Reference: None
 
@@ -136,7 +136,7 @@ float3 ClosestPointSphereSphere(const Sphere& sphere1, const Sphere& sphere2) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-float DistancePlanePoint(const Plane& plane, const float3& point) {
+float DistancePlanePoint(const FPlane& plane, const float3& point) {
     //Source: Real-Time Collision Detection by Christer Ericson
     //Reference: Page 127
 
@@ -213,7 +213,7 @@ float DistanceBoxBox(const AABB3f& box1, const AABB3f& box2) {
     return std::sqrt(distance);
 }
 //----------------------------------------------------------------------------
-float DistanceSpherePoint(const Sphere& sphere, const float3& point) {
+float DistanceSpherePoint(const FSphere& sphere, const float3& point) {
     //Source: Jorgy343
     //Reference: None
 
@@ -223,7 +223,7 @@ float DistanceSpherePoint(const Sphere& sphere, const float3& point) {
     return Max(distance, 0.0f);
 }
 //----------------------------------------------------------------------------
-float DistanceSphereSphere(const Sphere& sphere1, const Sphere& sphere2) {
+float DistanceSphereSphere(const FSphere& sphere1, const FSphere& sphere2) {
     //Source: Jorgy343
     //Reference: None
 
@@ -269,7 +269,7 @@ float2 LineOrtho(const float2& dir) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool RayIntersectsPoint(const Ray& ray, const float3& point) {
+bool RayIntersectsPoint(const FRay& ray, const float3& point) {
     //Source: RayIntersectsSphere
     //Reference: None
 
@@ -291,7 +291,7 @@ bool RayIntersectsPoint(const Ray& ray, const float3& point) {
     return true;
 }
 //----------------------------------------------------------------------------
-bool RayIntersectsRay(const Ray& ray1, const Ray& ray2, float3& point) {
+bool RayIntersectsRay(const FRay& ray1, const FRay& ray2, float3& point) {
     //Source: Real-Time Rendering, Third Edition
     //Reference: Page 780
 
@@ -368,7 +368,7 @@ bool RayIntersectsRay(const Ray& ray1, const Ray& ray2, float3& point) {
     return true;
 }
 //----------------------------------------------------------------------------
-bool RayIntersectsPlane(const Ray& ray, const Plane& plane, float& distance) {
+bool RayIntersectsPlane(const FRay& ray, const FPlane& plane, float& distance) {
     //Source: Real-Time Collision Detection by Christer Ericson
     //Reference: Page 175
 
@@ -397,7 +397,7 @@ bool RayIntersectsPlane(const Ray& ray, const Plane& plane, float& distance) {
     return true;
 }
 //----------------------------------------------------------------------------
-bool RayIntersectsPlane(const Ray& ray, const Plane& plane, float3& point) {
+bool RayIntersectsPlane(const FRay& ray, const FPlane& plane, float3& point) {
     //Source: Real-Time Collision Detection by Christer Ericson
     //Reference: Page 175
 
@@ -412,8 +412,8 @@ bool RayIntersectsPlane(const Ray& ray, const Plane& plane, float3& point) {
     return true;
 }
 //----------------------------------------------------------------------------
-bool RayIntersectsTriangle(const Ray& ray, const float3& vertex1, const float3& vertex2, const float3& vertex3, float& distance) {
-    //Source: Fast Minimum Storage Ray / Triangle Intersection
+bool RayIntersectsTriangle(const FRay& ray, const float3& vertex1, const float3& vertex2, const float3& vertex3, float& distance) {
+    //Source: Fast Minimum Storage FRay / FTriangle Intersection
     //Reference: http://www.cs.virginia.edu/~gfx/Courses/2003/ImageSynthesis/papers/Acceleration/Fast%20MinimumStorage%20RayTriangle%20Intersection.pdf
 
     //Compute vectors along two edges of the triangle.
@@ -501,7 +501,7 @@ bool RayIntersectsTriangle(const Ray& ray, const float3& vertex1, const float3& 
     return true;
 }
 //----------------------------------------------------------------------------
-bool RayIntersectsTriangle(const Ray& ray, const float3& vertex1, const float3& vertex2, const float3& vertex3, float3& point) {
+bool RayIntersectsTriangle(const FRay& ray, const float3& vertex1, const float3& vertex2, const float3& vertex3, float3& point) {
     float distance;
     if (!RayIntersectsTriangle(ray, vertex1, vertex2, vertex3, distance))
     {
@@ -513,7 +513,7 @@ bool RayIntersectsTriangle(const Ray& ray, const float3& vertex1, const float3& 
     return true;
 }
 //----------------------------------------------------------------------------
-bool RayIntersectsBox(const Ray& ray, const AABB3f& box, float& distance) {
+bool RayIntersectsBox(const FRay& ray, const AABB3f& box, float& distance) {
     //Source: Real-Time Collision Detection by Christer Ericson
     //Reference: Page 179
 
@@ -616,7 +616,7 @@ bool RayIntersectsBox(const Ray& ray, const AABB3f& box, float& distance) {
     return true;
 }
 //----------------------------------------------------------------------------
-bool RayIntersectsBox(const Ray& ray, const AABB3f& box, float3& point) {
+bool RayIntersectsBox(const FRay& ray, const AABB3f& box, float3& point) {
     float distance;
     if (!RayIntersectsBox(ray, box, distance))
     {
@@ -628,7 +628,7 @@ bool RayIntersectsBox(const Ray& ray, const AABB3f& box, float3& point) {
     return true;
 }
 //----------------------------------------------------------------------------
-bool RayIntersectsSphere(const Ray& ray, const Sphere& sphere, float& distance) {
+bool RayIntersectsSphere(const FRay& ray, const FSphere& sphere, float& distance) {
     //Source: Real-Time Collision Detection by Christer Ericson
     //Reference: Page 177
 
@@ -659,7 +659,7 @@ bool RayIntersectsSphere(const Ray& ray, const Sphere& sphere, float& distance) 
     return true;
 }
 //----------------------------------------------------------------------------
-bool RayIntersectsSphere(const Ray& ray, const Sphere& sphere, float3& point) {
+bool RayIntersectsSphere(const FRay& ray, const FSphere& sphere, float3& point) {
     float distance;
     if (!RayIntersectsSphere(ray, sphere, distance))
     {
@@ -673,20 +673,20 @@ bool RayIntersectsSphere(const Ray& ray, const Sphere& sphere, float3& point) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PlaneIntersectionType PlaneIntersectsPoint(const Plane& plane, const float3& point) {
+EPlaneIntersectionType PlaneIntersectsPoint(const FPlane& plane, const float3& point) {
     float distance = Dot3(plane.Normal(), point);
     distance += plane.D();
 
     if (distance > 0.0f)
-        return PlaneIntersectionType::Front;
+        return EPlaneIntersectionType::Front;
 
     if (distance < 0.0f)
-        return PlaneIntersectionType::Back;
+        return EPlaneIntersectionType::Back;
 
-    return PlaneIntersectionType::Intersecting;
+    return EPlaneIntersectionType::Intersecting;
 }
 //----------------------------------------------------------------------------
-bool PlaneIntersectsPlane(const Plane& plane1, const Plane& plane2) {
+bool PlaneIntersectsPlane(const FPlane& plane1, const FPlane& plane2) {
     float3 direction = Cross(plane1.Normal(), plane2.Normal());
 
     //If direction is the zero vector, the planes are parallel and possibly
@@ -699,7 +699,7 @@ bool PlaneIntersectsPlane(const Plane& plane1, const Plane& plane2) {
     return true;
 }
 //----------------------------------------------------------------------------
-bool PlaneIntersectsPlane(const Plane& plane1, const Plane& plane2, Ray& line) {
+bool PlaneIntersectsPlane(const FPlane& plane1, const FPlane& plane2, FRay& line) {
     //Source: Real-Time Collision Detection by Christer Ericson
     //Reference: Page 207
 
@@ -720,29 +720,29 @@ bool PlaneIntersectsPlane(const Plane& plane1, const Plane& plane2, Ray& line) {
     float3 temp = plane1.D() * plane2.Normal() - plane2.D() * plane1.Normal();
     float3 point = Cross(temp, direction);
 
-    line = Ray(point, Normalize3(direction));
+    line = FRay(point, Normalize3(direction));
 
     return true;
 }
 //----------------------------------------------------------------------------
-PlaneIntersectionType PlaneIntersectsTriangle(const Plane& plane, const float3& vertex1, const float3& vertex2, const float3& vertex3) {
+EPlaneIntersectionType PlaneIntersectsTriangle(const FPlane& plane, const float3& vertex1, const float3& vertex2, const float3& vertex3) {
     //Source: Real-Time Collision Detection by Christer Ericson
     //Reference: Page 207
 
-    PlaneIntersectionType test1 = PlaneIntersectsPoint(plane, vertex1);
-    PlaneIntersectionType test2 = PlaneIntersectsPoint(plane, vertex2);
-    PlaneIntersectionType test3 = PlaneIntersectsPoint(plane, vertex3);
+    EPlaneIntersectionType test1 = PlaneIntersectsPoint(plane, vertex1);
+    EPlaneIntersectionType test2 = PlaneIntersectsPoint(plane, vertex2);
+    EPlaneIntersectionType test3 = PlaneIntersectsPoint(plane, vertex3);
 
-    if (test1 == PlaneIntersectionType::Front && test2 == PlaneIntersectionType::Front && test3 == PlaneIntersectionType::Front)
-        return PlaneIntersectionType::Front;
+    if (test1 == EPlaneIntersectionType::Front && test2 == EPlaneIntersectionType::Front && test3 == EPlaneIntersectionType::Front)
+        return EPlaneIntersectionType::Front;
 
-    if (test1 == PlaneIntersectionType::Back && test2 == PlaneIntersectionType::Back && test3 == PlaneIntersectionType::Back)
-        return PlaneIntersectionType::Back;
+    if (test1 == EPlaneIntersectionType::Back && test2 == EPlaneIntersectionType::Back && test3 == EPlaneIntersectionType::Back)
+        return EPlaneIntersectionType::Back;
 
-    return PlaneIntersectionType::Intersecting;
+    return EPlaneIntersectionType::Intersecting;
 }
 //----------------------------------------------------------------------------
-PlaneIntersectionType PlaneIntersectsBox(const Plane& plane, const AABB3f& box) {
+EPlaneIntersectionType PlaneIntersectsBox(const FPlane& plane, const AABB3f& box) {
     //Source: Real-Time Collision Detection by Christer Ericson
     //Reference: Page 161
 
@@ -759,17 +759,17 @@ PlaneIntersectionType PlaneIntersectsBox(const Plane& plane, const AABB3f& box) 
     float distance = Dot3(plane.Normal(), max);
 
     if (distance + plane.D() > 0.0f)
-        return PlaneIntersectionType::Front;
+        return EPlaneIntersectionType::Front;
 
     distance = Dot3(plane.Normal(), min);
 
     if (distance + plane.D() < 0.0f)
-        return PlaneIntersectionType::Back;
+        return EPlaneIntersectionType::Back;
 
-    return PlaneIntersectionType::Intersecting;
+    return EPlaneIntersectionType::Intersecting;
 }
 //----------------------------------------------------------------------------
-PlaneIntersectionType PlaneIntersectsSphere(const Plane& plane, const Sphere& sphere) {
+EPlaneIntersectionType PlaneIntersectsSphere(const FPlane& plane, const FSphere& sphere) {
     //Source: Real-Time Collision Detection by Christer Ericson
     //Reference: Page 160
 
@@ -777,24 +777,24 @@ PlaneIntersectionType PlaneIntersectsSphere(const Plane& plane, const Sphere& sp
     distance += plane.D();
 
     if (distance > sphere.Radius())
-        return PlaneIntersectionType::Front;
+        return EPlaneIntersectionType::Front;
 
     if (distance < -sphere.Radius())
-        return PlaneIntersectionType::Back;
+        return EPlaneIntersectionType::Back;
 
-    return PlaneIntersectionType::Intersecting;
+    return EPlaneIntersectionType::Intersecting;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 bool BoxIntersectsTriangle(const AABB3f& box, const float3& vertex1, const float3& vertex2, const float3& vertex3) {
-    if (BoxContainsPoint(box, vertex1) == ContainmentType::Contains)
+    if (BoxContainsPoint(box, vertex1) == EContainmentType::Contains)
         return true;
 
-    if (BoxContainsPoint(box, vertex2) == ContainmentType::Contains)
+    if (BoxContainsPoint(box, vertex2) == EContainmentType::Contains)
         return true;
 
-    if (BoxContainsPoint(box, vertex3) == ContainmentType::Contains)
+    if (BoxContainsPoint(box, vertex3) == EContainmentType::Contains)
         return true;
 
     return false;
@@ -813,7 +813,7 @@ bool BoxIntersectsBox(const AABB3f& box1, const AABB3f& box2) {
     return true;
 }
 //----------------------------------------------------------------------------
-bool BoxIntersectsSphere(const AABB3f& box, const Sphere& sphere) {
+bool BoxIntersectsSphere(const AABB3f& box, const FSphere& sphere) {
     //Source: Real-Time Collision Detection by Christer Ericson
     //Reference: Page 166
 
@@ -825,7 +825,7 @@ bool BoxIntersectsSphere(const AABB3f& box, const Sphere& sphere) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool SphereIntersectsTriangle(const Sphere& sphere, const float3& vertex1, const float3& vertex2, const float3& vertex3) {
+bool SphereIntersectsTriangle(const FSphere& sphere, const float3& vertex1, const float3& vertex2, const float3& vertex3) {
     //Source: Real-Time Collision Detection by Christer Ericson
     //Reference: Page 167
 
@@ -837,106 +837,106 @@ bool SphereIntersectsTriangle(const Sphere& sphere, const float3& vertex1, const
     return dot <= sphere.Radius() * sphere.Radius();
 }
 //----------------------------------------------------------------------------
-bool SphereIntersectsSphere(const Sphere& sphere1, const Sphere& sphere2) {
+bool SphereIntersectsSphere(const FSphere& sphere1, const FSphere& sphere2) {
     float radiisum = sphere1.Radius() + sphere2.Radius();
     return DistanceSq3(sphere1.Center(), sphere2.Center()) <= radiisum * radiisum;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ContainmentType BoxContainsPoint(const AABB3f& box, const float3& point) {
+EContainmentType BoxContainsPoint(const AABB3f& box, const float3& point) {
     if (box.Min().x() <= point.x() && box.Max().x() >= point.x() &&
         box.Min().y() <= point.y() && box.Max().y() >= point.y() &&
         box.Min().z() <= point.z() && box.Max().z() >= point.z())
     {
-        return ContainmentType::Contains;
+        return EContainmentType::Contains;
     }
 
-    return ContainmentType::Disjoint;
+    return EContainmentType::Disjoint;
 }
 //----------------------------------------------------------------------------
-ContainmentType BoxContainsTriangle(const AABB3f& box, const float3& vertex1, const float3& vertex2, const float3& vertex3) {
-    ContainmentType test1 = BoxContainsPoint(box, vertex1);
-    ContainmentType test2 = BoxContainsPoint(box, vertex2);
-    ContainmentType test3 = BoxContainsPoint(box, vertex3);
+EContainmentType BoxContainsTriangle(const AABB3f& box, const float3& vertex1, const float3& vertex2, const float3& vertex3) {
+    EContainmentType test1 = BoxContainsPoint(box, vertex1);
+    EContainmentType test2 = BoxContainsPoint(box, vertex2);
+    EContainmentType test3 = BoxContainsPoint(box, vertex3);
 
-    if (test1 == ContainmentType::Contains && test2 == ContainmentType::Contains && test3 == ContainmentType::Contains)
-        return ContainmentType::Contains;
+    if (test1 == EContainmentType::Contains && test2 == EContainmentType::Contains && test3 == EContainmentType::Contains)
+        return EContainmentType::Contains;
 
-    if (test1 == ContainmentType::Contains || test2 == ContainmentType::Contains || test3 == ContainmentType::Contains)
-        return ContainmentType::Intersects;
+    if (test1 == EContainmentType::Contains || test2 == EContainmentType::Contains || test3 == EContainmentType::Contains)
+        return EContainmentType::Intersects;
 
-    return ContainmentType::Disjoint;
+    return EContainmentType::Disjoint;
 }
 //----------------------------------------------------------------------------
-ContainmentType BoxContainsBox(const AABB3f& box1, const AABB3f& box2) {
+EContainmentType BoxContainsBox(const AABB3f& box1, const AABB3f& box2) {
     if (box1.Max().x() < box2.Min().x() || box1.Min().x() > box2.Max().x())
-        return ContainmentType::Disjoint;
+        return EContainmentType::Disjoint;
 
     if (box1.Max().y() < box2.Min().y() || box1.Min().y() > box2.Max().y())
-        return ContainmentType::Disjoint;
+        return EContainmentType::Disjoint;
 
     if (box1.Max().z() < box2.Min().z() || box1.Min().z() > box2.Max().z())
-        return ContainmentType::Disjoint;
+        return EContainmentType::Disjoint;
 
     if (box1.Min().x() <= box2.Min().x() && (box2.Max().x() <= box1.Max().x() &&
         box1.Min().y() <= box2.Min().y() && box2.Max().y() <= box1.Max().y()) &&
         box1.Min().z() <= box2.Min().z() && box2.Max().z() <= box1.Max().z())
     {
-        return ContainmentType::Contains;
+        return EContainmentType::Contains;
     }
 
-    return ContainmentType::Intersects;
+    return EContainmentType::Intersects;
 }
 //----------------------------------------------------------------------------
-ContainmentType BoxContainsSphere(const AABB3f& box, const Sphere& sphere) {
+EContainmentType BoxContainsSphere(const AABB3f& box, const FSphere& sphere) {
     float3 vector = Clamp(sphere.Center(), box.Min(), box.Max());
     float distance = DistanceSq3(sphere.Center(), vector);
 
     if (distance > sphere.Radius() * sphere.Radius())
-        return ContainmentType::Disjoint;
+        return EContainmentType::Disjoint;
 
     if ((((box.Min().x() + sphere.Radius() <= sphere.Center().x()) && (sphere.Center().x() <= box.Max().x() - sphere.Radius())) && ((box.Max().x() - box.Min().x() > sphere.Radius()) &&
         (box.Min().y() + sphere.Radius() <= sphere.Center().y()))) && (((sphere.Center().y() <= box.Max().y() - sphere.Radius()) && (box.Max().y() - box.Min().y() > sphere.Radius())) &&
         (((box.Min().z() + sphere.Radius() <= sphere.Center().z()) && (sphere.Center().z() <= box.Max().z() - sphere.Radius())) && (box.Max().x() - box.Min().x() > sphere.Radius()))))
     {
-        return ContainmentType::Contains;
+        return EContainmentType::Contains;
     }
 
-    return ContainmentType::Intersects;
+    return EContainmentType::Intersects;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ContainmentType SphereContainsPoint(const Sphere& sphere, const float3& point) {
+EContainmentType SphereContainsPoint(const FSphere& sphere, const float3& point) {
     if (DistanceSq3(point, sphere.Center()) <= sphere.Radius() * sphere.Radius())
-        return ContainmentType::Contains;
+        return EContainmentType::Contains;
 
-    return ContainmentType::Disjoint;
+    return EContainmentType::Disjoint;
 }
 //----------------------------------------------------------------------------
-ContainmentType SphereContainsTriangle(const Sphere& sphere, const float3& vertex1, const float3& vertex2, const float3& vertex3) {
+EContainmentType SphereContainsTriangle(const FSphere& sphere, const float3& vertex1, const float3& vertex2, const float3& vertex3) {
     //Source: Jorgy343
     //Reference: None
 
-    ContainmentType test1 = SphereContainsPoint(sphere, vertex1);
-    ContainmentType test2 = SphereContainsPoint(sphere, vertex2);
-    ContainmentType test3 = SphereContainsPoint(sphere, vertex3);
+    EContainmentType test1 = SphereContainsPoint(sphere, vertex1);
+    EContainmentType test2 = SphereContainsPoint(sphere, vertex2);
+    EContainmentType test3 = SphereContainsPoint(sphere, vertex3);
 
-    if (test1 == ContainmentType::Contains && test2 == ContainmentType::Contains && test3 == ContainmentType::Contains)
-        return ContainmentType::Contains;
+    if (test1 == EContainmentType::Contains && test2 == EContainmentType::Contains && test3 == EContainmentType::Contains)
+        return EContainmentType::Contains;
 
     if (SphereIntersectsTriangle(sphere, vertex1, vertex2, vertex3))
-        return ContainmentType::Intersects;
+        return EContainmentType::Intersects;
 
-    return ContainmentType::Disjoint;
+    return EContainmentType::Disjoint;
 }
 //----------------------------------------------------------------------------
-ContainmentType SphereContainsBox(const Sphere& sphere, const AABB3f& box) {
+EContainmentType SphereContainsBox(const FSphere& sphere, const AABB3f& box) {
     float3 vector;
 
     if (!BoxIntersectsSphere(box, sphere))
-        return ContainmentType::Disjoint;
+        return EContainmentType::Disjoint;
 
     float radiussquared = sphere.Radius() * sphere.Radius();
     vector.x() = sphere.Center().x() - box.Min().x();
@@ -944,70 +944,70 @@ ContainmentType SphereContainsBox(const Sphere& sphere, const AABB3f& box) {
     vector.z() = sphere.Center().z() - box.Max().z();
 
     if (LengthSq3(vector) > radiussquared)
-        return ContainmentType::Intersects;
+        return EContainmentType::Intersects;
 
     vector.x() = sphere.Center().x() - box.Max().x();
     vector.y() = sphere.Center().y() - box.Max().y();
     vector.z() = sphere.Center().z() - box.Max().z();
 
     if (LengthSq3(vector) > radiussquared)
-        return ContainmentType::Intersects;
+        return EContainmentType::Intersects;
 
     vector.x() = sphere.Center().x() - box.Max().x();
     vector.y() = sphere.Center().y() - box.Min().y();
     vector.z() = sphere.Center().z() - box.Max().z();
 
     if (LengthSq3(vector) > radiussquared)
-        return ContainmentType::Intersects;
+        return EContainmentType::Intersects;
 
     vector.x() = sphere.Center().x() - box.Min().x();
     vector.y() = sphere.Center().y() - box.Min().y();
     vector.z() = sphere.Center().z() - box.Max().z();
 
     if (LengthSq3(vector) > radiussquared)
-        return ContainmentType::Intersects;
+        return EContainmentType::Intersects;
 
     vector.x() = sphere.Center().x() - box.Min().x();
     vector.y() = sphere.Center().y() - box.Max().y();
     vector.z() = sphere.Center().z() - box.Min().z();
 
     if (LengthSq3(vector) > radiussquared)
-        return ContainmentType::Intersects;
+        return EContainmentType::Intersects;
 
     vector.x() = sphere.Center().x() - box.Max().x();
     vector.y() = sphere.Center().y() - box.Max().y();
     vector.z() = sphere.Center().z() - box.Min().z();
 
     if (LengthSq3(vector) > radiussquared)
-        return ContainmentType::Intersects;
+        return EContainmentType::Intersects;
 
     vector.x() = sphere.Center().x() - box.Max().x();
     vector.y() = sphere.Center().y() - box.Min().y();
     vector.z() = sphere.Center().z() - box.Min().z();
 
     if (LengthSq3(vector) > radiussquared)
-        return ContainmentType::Intersects;
+        return EContainmentType::Intersects;
 
     vector.x() = sphere.Center().x() - box.Min().x();
     vector.y() = sphere.Center().y() - box.Min().y();
     vector.z() = sphere.Center().z() - box.Min().z();
 
     if (LengthSq3(vector) > radiussquared)
-        return ContainmentType::Intersects;
+        return EContainmentType::Intersects;
 
-    return ContainmentType::Contains;
+    return EContainmentType::Contains;
 }
 //----------------------------------------------------------------------------
-ContainmentType SphereContainsSphere(const Sphere& sphere1, const Sphere& sphere2) {
+EContainmentType SphereContainsSphere(const FSphere& sphere1, const FSphere& sphere2) {
     float distance = Distance3(sphere1.Center(), sphere2.Center());
 
     if (sphere1.Radius() + sphere2.Radius() < distance)
-        return ContainmentType::Disjoint;
+        return EContainmentType::Disjoint;
 
     if (sphere1.Radius() - sphere2.Radius() < distance)
-        return ContainmentType::Intersects;
+        return EContainmentType::Intersects;
 
-    return ContainmentType::Contains;
+    return EContainmentType::Contains;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

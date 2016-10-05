@@ -39,7 +39,7 @@ namespace Engine {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static MaterialEffect::TextureSlot TextureSlot_(const Graphics::BindName& name, bool isCubeMap) {
+static FMaterialEffect::FTextureSlot TextureSlot_(const Graphics::FBindName& name, bool isCubeMap) {
     Assert(!name.empty());
 
     const char *cstr = name.c_str();
@@ -54,33 +54,33 @@ static MaterialEffect::TextureSlot TextureSlot_(const Graphics::BindName& name, 
     static const char SRGB[] = "uniSRGB_";
 
     const char *textureName = cstr;
-    const Graphics::SamplerState *samplerState = Graphics::SamplerState::LinearClamp;
+    const Graphics::FSamplerState *samplerState = Graphics::FSamplerState::LinearClamp;
     bool useSRGB = false;
 
     do {
         if (StartsWith(textureName, AnisotropicClamp)) {
             textureName = &textureName[lengthof(AnisotropicClamp) - 1];
-            samplerState = Graphics::SamplerState::AnisotropicClamp;
+            samplerState = Graphics::FSamplerState::AnisotropicClamp;
         }
         else if (StartsWith(textureName, AnisotropicWrap)) {
             textureName = &textureName[lengthof(AnisotropicWrap) - 1];
-            samplerState = Graphics::SamplerState::AnisotropicWrap;
+            samplerState = Graphics::FSamplerState::AnisotropicWrap;
         }
         else if (StartsWith(textureName, LinearClamp)) {
             textureName = &textureName[lengthof(LinearClamp) - 1];
-            samplerState = Graphics::SamplerState::LinearClamp;
+            samplerState = Graphics::FSamplerState::LinearClamp;
         }
         else if (StartsWith(textureName, LinearWrap)) {
             textureName = &textureName[lengthof(LinearWrap) - 1];
-            samplerState = Graphics::SamplerState::LinearWrap;
+            samplerState = Graphics::FSamplerState::LinearWrap;
         }
         else if (StartsWith(textureName, PointClamp)) {
             textureName = &textureName[lengthof(PointClamp) - 1];
-            samplerState = Graphics::SamplerState::PointClamp;
+            samplerState = Graphics::FSamplerState::PointClamp;
         }
         else if (StartsWith(textureName, PointWrap)) {
             textureName = &textureName[lengthof(PointWrap) - 1];
-            samplerState = Graphics::SamplerState::PointWrap;
+            samplerState = Graphics::FSamplerState::PointWrap;
         }
         else if (StartsWith(textureName, SRGB)) {
             textureName = &textureName[lengthof(SRGB) - 1];
@@ -92,16 +92,16 @@ static MaterialEffect::TextureSlot TextureSlot_(const Graphics::BindName& name, 
     }
     while (true);
 
-    return MaterialEffect::TextureSlot(textureName, samplerState, useSRGB, isCubeMap);
+    return FMaterialEffect::FTextureSlot(textureName, samplerState, useSRGB, isCubeMap);
 }
 //----------------------------------------------------------------------------
-static void PrepareTexture_(Filename *filename,
-                            MaterialEffect::TextureSlot& slot,
-                            const Material *material,
-                            const MaterialDatabase *materialDatabase,
-                            TextureCache *textureCache,
-                            RenderSurfaceManager *renderSurfaceManager ) {
-    const ASSOCIATIVE_VECTOR(Material, Graphics::BindName, Filename)& materialTextures = material->Textures();
+static void PrepareTexture_(FFilename *filename,
+                            FMaterialEffect::FTextureSlot& slot,
+                            const FMaterial *material,
+                            const FMaterialDatabase *materialDatabase,
+                            FTextureCache *textureCache,
+                            FRenderSurfaceManager *renderSurfaceManager ) {
+    const ASSOCIATIVE_VECTOR(FMaterial, Graphics::FBindName, FFilename)& materialTextures = material->Textures();
 
     const auto it = materialTextures.Find(slot.Name);
     if (materialTextures.end() == it) {
@@ -127,21 +127,21 @@ static void PrepareTexture_(Filename *filename,
     }
 }
 //----------------------------------------------------------------------------
-static void FetchTexture_(  MaterialEffect::TextureBinding& binding,
-                            const MaterialEffect::TextureSlot& slot,
-                            TextureCache *textureCache,
-                            RenderSurfaceManager *renderSurfaceManager,
+static void FetchTexture_(  FMaterialEffect::FTextureBinding& binding,
+                            const FMaterialEffect::FTextureSlot& slot,
+                            FTextureCache *textureCache,
+                            FRenderSurfaceManager *renderSurfaceManager,
                             Graphics::IDeviceAPIEncapsulator *device ) {
-    const Filename& filename = binding.Filename;
+    const FFilename& filename = binding.Filename;
 
     if (slot.IsVirtualTexture) {
-        AbstractRenderSurface *renderSurface = renderSurfaceManager->Unalias(filename.Dirpath());
+        FAbstractRenderSurface *renderSurface = renderSurfaceManager->Unalias(filename.Dirpath());
         Assert(renderSurface->InUse()); // else the render target has never been filled !
 
         renderSurface->Prepare(device, binding.SurfaceLock);
 
-        const Graphics::RenderTarget *renderTarget = nullptr;
-        const Graphics::DepthStencil *depthStencil = nullptr;
+        const Graphics::FRenderTarget *renderTarget = nullptr;
+        const Graphics::FDepthStencil *depthStencil = nullptr;
         binding.SurfaceLock->Acquire(&renderTarget, &depthStencil);
 
         if(filename.Basename() == renderSurfaceManager->RenderTargetName()) {
@@ -163,8 +163,8 @@ static void FetchTexture_(  MaterialEffect::TextureBinding& binding,
     Assert(binding.Texture);
 }
 //----------------------------------------------------------------------------
-static void DestroyTexture2D_(  MaterialEffect::TextureBinding& binding,
-                                const MaterialEffect::TextureSlot& slot,
+static void DestroyTexture2D_(  FMaterialEffect::FTextureBinding& binding,
+                                const FMaterialEffect::FTextureSlot& slot,
                                 Graphics::IDeviceAPIEncapsulator *device ) {
     Assert(binding.Texture);
     binding.Texture.reset(nullptr);
@@ -180,13 +180,13 @@ static void DestroyTexture2D_(  MaterialEffect::TextureBinding& binding,
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-MaterialEffect::TextureSlot::TextureSlot(
-    const Graphics::BindName& name,
-    const Graphics::SamplerState *sampler,
+FMaterialEffect::FTextureSlot::FTextureSlot(
+    const Graphics::FBindName& name,
+    const Graphics::FSamplerState *sampler,
     bool useSRGB,
     bool isCubeMap,
     bool isVirtuaTexture/* = false */)
-:   Name(name)
+:   FName(name)
 ,   Sampler(sampler) 
 ,   UseSRGB(useSRGB) 
 ,   IsCubeMap(isCubeMap)
@@ -197,9 +197,9 @@ MaterialEffect::TextureSlot::TextureSlot(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, MaterialEffect, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, FMaterialEffect, );
 //----------------------------------------------------------------------------
-MaterialEffect::MaterialEffect(const Engine::Effect *effect, const Engine::Material *material)
+FMaterialEffect::FMaterialEffect(const Engine::FEffect *effect, const Engine::FMaterial *material)
 :   _effect(effect)
 ,   _material(material) {
     Assert(effect);
@@ -208,37 +208,37 @@ MaterialEffect::MaterialEffect(const Engine::Effect *effect, const Engine::Mater
     Assert(material);
 }
 //----------------------------------------------------------------------------
-MaterialEffect::~MaterialEffect() {}
+FMaterialEffect::~FMaterialEffect() {}
 //----------------------------------------------------------------------------
-void MaterialEffect::BindParameter(const Graphics::BindName& name, IMaterialParameter *parameter) {
+void FMaterialEffect::BindParameter(const Graphics::FBindName& name, IMaterialParameter *parameter) {
     Assert(!name.empty());
     Assert(parameter);
 
     _parameters.Insert_AssertUnique(name, parameter);
 }
 //----------------------------------------------------------------------------
-void MaterialEffect::Create(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, const Scene *scene) {
+void FMaterialEffect::Create(Graphics::IDeviceAPIEncapsulator *device, FMaterialDatabase *materialDatabase, const FScene *scene) {
     Assert(_constants.empty());
     Assert(_textureSlots.empty());
     Assert(_textureBindings.empty());
 
     // *** TEXTURES ***
 
-    for (const Graphics::ShaderProgramType stage : Graphics::EachShaderProgramType()) {
-        const EffectProgram *program = _effect->StageProgram(stage);
+    for (const Graphics::EShaderProgramType stage : Graphics::EachShaderProgramType()) {
+        const FEffectProgram *program = _effect->StageProgram(stage);
         if (!program)
             continue;
 
         _textureSlots.reserve(_textureSlots.size() + program->Textures().size());
-        for (const Graphics::ShaderProgramTexture& texture : program->Textures())
+        for (const Graphics::FShaderProgramTexture& texture : program->Textures())
             _textureSlots.emplace_back(TextureSlot_(texture.Name, texture.IsCubeMap));
     }
 
     _textureBindings.resize(_textureSlots.size());
 
-    TextureCache *const textureCache = scene->RenderTree()->TextureCache();
+    FTextureCache *const textureCache = scene->RenderTree()->TextureCache();
     Assert(textureCache);
-    RenderSurfaceManager *const renderSurfaceManager = scene->RenderTree()->RenderSurfaceManager();
+    FRenderSurfaceManager *const renderSurfaceManager = scene->RenderTree()->RenderSurfaceManager();
     Assert(renderSurfaceManager);
 
     const size_t textureCount = _textureSlots.size();
@@ -248,18 +248,18 @@ void MaterialEffect::Create(Graphics::IDeviceAPIEncapsulator *device, MaterialDa
 
     // *** CONSTANT BUFFERS ***
 
-    const VECTOR(Effect, PSharedConstantBuffer)& sharedBuffers = _effect->SharedBuffers();
-    const MaterialParameterMutableContext paramContext{scene, this, materialDatabase};
+    const VECTOR(FEffect, PSharedConstantBuffer)& sharedBuffers = _effect->SharedBuffers();
+    const FMaterialParameterMutableContext paramContext{scene, this, materialDatabase};
 
     _constants.resize(sharedBuffers.size());
     forrange(i, 0, sharedBuffers.size()) {
-        PEffectConstantBuffer cbuffer = new EffectConstantBuffer(sharedBuffers[i].get());
+        PEffectConstantBuffer cbuffer = new FEffectConstantBuffer(sharedBuffers[i].get());
         cbuffer->Prepare(paramContext);
         _constants[i] = std::move(cbuffer);
     }
 }
 //----------------------------------------------------------------------------
-void MaterialEffect::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
+void FMaterialEffect::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
 
     // *** CONSTANT BUFFERS ***
 
@@ -279,10 +279,10 @@ void MaterialEffect::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
     _textureBindings.clear();
 }
 //----------------------------------------------------------------------------
-void MaterialEffect::Prepare(Graphics::IDeviceAPIEncapsulator *device, const Scene *scene, const VariabilitySeeds& seeds) {
-    TextureCache *const textureCache = scene->RenderTree()->TextureCache();
+void FMaterialEffect::Prepare(Graphics::IDeviceAPIEncapsulator *device, const FScene *scene, const VariabilitySeeds& seeds) {
+    FTextureCache *const textureCache = scene->RenderTree()->TextureCache();
     Assert(textureCache);
-    RenderSurfaceManager *const renderSurfaceManager = scene->RenderTree()->RenderSurfaceManager();
+    FRenderSurfaceManager *const renderSurfaceManager = scene->RenderTree()->RenderSurfaceManager();
     Assert(renderSurfaceManager);
 
     // *** TEXTURES ***
@@ -293,12 +293,12 @@ void MaterialEffect::Prepare(Graphics::IDeviceAPIEncapsulator *device, const Sce
 
     // *** CONSTANT BUFFERS ***
 
-    const MaterialParameterContext context = { scene };
+    const FMaterialParameterContext context = { scene };
     for (const PEffectConstantBuffer& cbuffer : _constants)
         cbuffer->Eval(context);
 }
 //----------------------------------------------------------------------------
-void MaterialEffect::Set(Graphics::IDeviceAPIContext *deviceContext) {
+void FMaterialEffect::Set(Graphics::IDeviceAPIContext *deviceContext) {
 
     // *** CONSTANT BUFFERS ***
 
@@ -307,19 +307,19 @@ void MaterialEffect::Set(Graphics::IDeviceAPIContext *deviceContext) {
 
     // *** TEXTURES ***
 
-    const Graphics::Texture *stageTextures[16];
-    const Graphics::SamplerState *stageSamplers[16];
+    const Graphics::FTexture *stageTextures[16];
+    const Graphics::FSamplerState *stageSamplers[16];
 
     size_t textureOffset = 0;
-    for (const Graphics::ShaderProgramType stage : Graphics::EachShaderProgramType()) {
-        const EffectProgram *program = _effect->StageProgram(stage);
+    for (const Graphics::EShaderProgramType stage : Graphics::EachShaderProgramType()) {
+        const FEffectProgram *program = _effect->StageProgram(stage);
         if (!program)
             continue;
 
         const size_t textureCount = program->Textures().size();
         for (size_t i = 0; i < textureCount; ++i) {
-            const TextureSlot& slot = _textureSlots[textureOffset + i];
-            const TextureBinding& binding = _textureBindings[textureOffset + i];
+            const FTextureSlot& slot = _textureSlots[textureOffset + i];
+            const FTextureBinding& binding = _textureBindings[textureOffset + i];
 
             // achtung, texture can be null as it's a weak reference pointing to the texture cache
             // so cleaning the texture cache will reset that value !

@@ -70,27 +70,27 @@ using IsDefined = has_destructor<T>;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-using Greater = std::greater<T>;
+using TGreater = std::greater<T>;
 //----------------------------------------------------------------------------
 template <typename T>
-using GreaterEqual = std::greater_equal<T>;
+using TGreaterEqual = std::greater_equal<T>;
 //----------------------------------------------------------------------------
 template <typename T>
-using Less = std::less<T>;
+using TLess = std::less<T>;
 //----------------------------------------------------------------------------
 template <typename T>
-using LessEqual = std::less_equal<T>;
+using TLessEqual = std::less_equal<T>;
 //----------------------------------------------------------------------------
 template <typename T>
-using EqualTo = std::equal_to<T>;
+using TEqualTo = std::equal_to<T>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-using Decay = typename std::decay<T>::type;
+using TDecay = typename std::decay<T>::type;
 //----------------------------------------------------------------------------
 template <typename T>
-using RemoveConst = typename std::remove_const<T>::type;
+using TRemoveConst = typename std::remove_const<T>::type;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -19,11 +19,11 @@ namespace Logic {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-struct AsyncSystemUpdater_ {
-    Timeline Timeline;
+struct FAsyncSystemUpdater_ {
+    FTimeline FTimeline;
     ISystem *System;
     void Update() const {
-        System->Update(Timeline);
+        System->Update(FTimeline);
     }
 };
 //----------------------------------------------------------------------------
@@ -31,31 +31,31 @@ struct AsyncSystemUpdater_ {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Logic, SystemLayer, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Logic, FSystemLayer, );
 //----------------------------------------------------------------------------
-SystemLayer::SystemLayer() {}
+FSystemLayer::FSystemLayer() {}
 //----------------------------------------------------------------------------
-SystemLayer::~SystemLayer() {}
+FSystemLayer::~FSystemLayer() {}
 //----------------------------------------------------------------------------
-SystemLayer::SystemLayer(SystemLayer&& rvalue)
+FSystemLayer::FSystemLayer(FSystemLayer&& rvalue)
 :   _asynchronous(std::move(rvalue._asynchronous))
 ,   _synchronous(std::move(rvalue._asynchronous)) {}
 //----------------------------------------------------------------------------
-SystemLayer& SystemLayer::operator =(SystemLayer&& rvalue) {
+FSystemLayer& FSystemLayer::operator =(FSystemLayer&& rvalue) {
     _asynchronous = std::move(rvalue._asynchronous);
     _synchronous = std::move(rvalue._synchronous);
     return *this;
 }
 //----------------------------------------------------------------------------
-void SystemLayer::Add(SystemExecution executionType, ISystem *system) {
+void FSystemLayer::Add(ESystemExecution executionType, ISystem *system) {
     Assert(system);
 
     switch (executionType)
     {
-    case Core::Logic::SystemExecution::Asynchronous:
+    case Core::Logic::ESystemExecution::Asynchronous:
         _asynchronous.emplace_back(system);
         break;
-    case Core::Logic::SystemExecution::Synchronous:
+    case Core::Logic::ESystemExecution::Synchronous:
         _synchronous.emplace_back(system);
         break;
     default:
@@ -63,7 +63,7 @@ void SystemLayer::Add(SystemExecution executionType, ISystem *system) {
     }
 }
 //----------------------------------------------------------------------------
-bool SystemLayer::TryRemove(const PSystem& system) {
+bool FSystemLayer::TryRemove(const PSystem& system) {
     Assert(system);
 
     VECTOR(System, PSystem)::iterator it;
@@ -77,34 +77,34 @@ bool SystemLayer::TryRemove(const PSystem& system) {
     return true;
 }
 //----------------------------------------------------------------------------
-bool SystemLayer::Contains(const PSystem& system) const {
+bool FSystemLayer::Contains(const PSystem& system) const {
     Assert(system);
 
     return  Core::Contains(_asynchronous, system) ||
             Core::Contains(_synchronous, system);
 }
 //----------------------------------------------------------------------------
-void SystemLayer::Process(SystemContainer& container, const Timeline& timeline) {
+void FSystemLayer::Process(FSystemContainer& container, const FTimeline& timeline) {
 
     // asynchronous part :
-    TaskCounter *pcounter = nullptr;
+    FTaskCounter *pcounter = nullptr;
     if (_asynchronous.size())
     {
         const size_t taskCount = _asynchronous.size();
 
         size_t queuedTask = 0;
-        STACKLOCAL_POD_ARRAY(Task, tasks, taskCount);
-        STACKLOCAL_POD_ARRAY(AsyncSystemUpdater_, updaters, taskCount);
+        STACKLOCAL_POD_ARRAY(FTask, tasks, taskCount);
+        STACKLOCAL_POD_ARRAY(FAsyncSystemUpdater_, updaters, taskCount);
 
         for (const PSystem& system : _asynchronous)
             if (system->Enabled()) {
                 updaters[queuedTask].System = system.get();
                 updaters[queuedTask].Timeline = timeline;
-                tasks[queuedTask] = Delegate(&AsyncSystemUpdater_::Update, &updaters[queuedTask]);
+                tasks[queuedTask] = TDelegate(&FAsyncSystemUpdater_::Update, &updaters[queuedTask]);
                 ++queuedTask;
             }
 
-        GlobalThreadPool::Instance().Run(tasks.SubRange(0, queuedTask), &pcounter);
+        FGlobalThreadPool::Instance().Run(tasks.SubRange(0, queuedTask), &pcounter);
     }
     // synchronous part :
     if (_synchronous.size())
@@ -116,12 +116,12 @@ void SystemLayer::Process(SystemContainer& container, const Timeline& timeline) 
     // wait for asynchronous tasks :
     if (pcounter)
     {
-        GlobalThreadPool::Instance().WaitFor(&pcounter);
+        FGlobalThreadPool::Instance().WaitFor(&pcounter);
     }
     Assert(nullptr == pcounter);
 }
 //----------------------------------------------------------------------------
-void SystemLayer::Destroy(EntityManager& manager) {
+void FSystemLayer::Destroy(FEntityManager& manager) {
 
     for (const PSystem& system : _asynchronous)
         system->Destroy(manager);
@@ -130,7 +130,7 @@ void SystemLayer::Destroy(EntityManager& manager) {
         system->Destroy(manager);
 }
 //----------------------------------------------------------------------------
-void SystemLayer::RefreshEntity(const Entity& entity, ComponentFlag components) {
+void FSystemLayer::RefreshEntity(const FEntity& entity, ComponentFlag components) {
 
     for (const PSystem& system : _asynchronous)
         system->OnEntityRefresh(entity, components);
@@ -139,7 +139,7 @@ void SystemLayer::RefreshEntity(const Entity& entity, ComponentFlag components) 
         system->OnEntityRefresh(entity, components);
 }
 //----------------------------------------------------------------------------
-void SystemLayer::RemoveEntity(const Entity& entity) {
+void FSystemLayer::RemoveEntity(const FEntity& entity) {
 
     for (const PSystem& system : _asynchronous)
         system->OnEntityDeleted(entity);

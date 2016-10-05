@@ -51,7 +51,7 @@ inline uint64_t rotl64 ( uint64_t x, int8_t r )
 #endif // !defined(_MSC_VER)
 
 //-----------------------------------------------------------------------------
-// Block read - if your platform needs to do endian-swapping or can only
+// FBlock read - if your platform needs to do endian-swapping or can only
 // handle aligned reads, do the conversion here
 
 FORCE_INLINE uint32_t getblock32 ( const uint32_t * p, int i )
@@ -334,4 +334,3 @@ void MurmurHash3_x64_128 ( const void * key, const int len,
 }
 
 //-----------------------------------------------------------------------------
-

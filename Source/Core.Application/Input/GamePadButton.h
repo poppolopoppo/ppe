@@ -7,7 +7,7 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class GamepadButton : u32 {
+enum class EGamepadButton : u32 {
     Button0 = 0,
     Button1,
     Button2,
@@ -45,10 +45,10 @@ enum class GamepadButton : u32 {
     DPadDown = 'v',
 };
 //----------------------------------------------------------------------------
-StringView GamepadButtonToCStr(GamepadButton value);
-StringView GamepadButtonToXBoxCStr(GamepadButton value);
+FStringView GamepadButtonToCStr(EGamepadButton value);
+FStringView GamepadButtonToXBoxCStr(EGamepadButton value);
 //----------------------------------------------------------------------------
-MemoryView<const GamepadButton> EachGamepadButtons();
+TMemoryView<const EGamepadButton> EachGamepadButtons();
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

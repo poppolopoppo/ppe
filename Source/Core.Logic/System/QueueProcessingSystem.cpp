@@ -9,27 +9,27 @@ namespace Logic {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-QueueProcessingSystem::QueueProcessingSystem() {}
+FQueueProcessingSystem::FQueueProcessingSystem() {}
 //----------------------------------------------------------------------------
-QueueProcessingSystem::~QueueProcessingSystem() {
+FQueueProcessingSystem::~FQueueProcessingSystem() {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(_entities.empty());
 }
 //----------------------------------------------------------------------------
-void QueueProcessingSystem::Initialize(EntityManager& /* manager */) {
+void FQueueProcessingSystem::Initialize(FEntityManager& /* manager */) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     _entities.reserve(32);
 }
 //----------------------------------------------------------------------------
-void QueueProcessingSystem::Destroy(EntityManager& /* manager */) {
+void FQueueProcessingSystem::Destroy(FEntityManager& /* manager */) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     Assert(_entities.empty());
     _entities.shrink_to_fit();
 }
 //----------------------------------------------------------------------------
-void QueueProcessingSystem::Update(const Timeline& timeline) {
+void FQueueProcessingSystem::Update(const FTimeline& timeline) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     for (EntityID id : _entities)
@@ -38,19 +38,19 @@ void QueueProcessingSystem::Update(const Timeline& timeline) {
     _entities.clear();
 }
 //----------------------------------------------------------------------------
-void QueueProcessingSystem::OnEntityDeleted(const Entity& entity) {
+void FQueueProcessingSystem::OnEntityDeleted(const FEntity& entity) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     Remove_ReturnIfExists(_entities, entity.ID());
 }
 //----------------------------------------------------------------------------
-void QueueProcessingSystem::OnEntityRefresh(const Entity& /* entity */, ComponentFlag /* previousComponents */) {
+void FQueueProcessingSystem::OnEntityRefresh(const FEntity& /* entity */, ComponentFlag /* previousComponents */) {
     THIS_THREADRESOURCE_CHECKACCESS();
 }
 //----------------------------------------------------------------------------
-void QueueProcessingSystem::Queue(EntityID id) {
+void FQueueProcessingSystem::Queue(EntityID id) {
     THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(Entity::InvalidID != id);
+    Assert(FEntity::InvalidID != id);
 
     _entities.push_back(id);
 }

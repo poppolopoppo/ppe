@@ -7,24 +7,24 @@
 namespace Core {
 
 namespace Graphics {
-enum class ConstantFieldType;
+enum class EConstantFieldType;
 }
 
 namespace Engine {
-enum class MaterialVariability;
-struct MaterialParameterContext;
-struct MaterialParameterMutableContext;
+enum class EMaterialVariability;
+struct FMaterialParameterContext;
+struct FMaterialParameterMutableContext;
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class IMaterialParameter;
 //----------------------------------------------------------------------------
-typedef RefPtr<IMaterialParameter> PMaterialParameter;
-typedef RefPtr<const IMaterialParameter> PCMaterialParameter;
+typedef TRefPtr<IMaterialParameter> PMaterialParameter;
+typedef TRefPtr<const IMaterialParameter> PCMaterialParameter;
 //----------------------------------------------------------------------------
-typedef SafePtr<IMaterialParameter> SMaterialParameter;
-typedef SafePtr<const IMaterialParameter> SCMaterialParameter;
+typedef TSafePtr<IMaterialParameter> SMaterialParameter;
+typedef TSafePtr<const IMaterialParameter> SCMaterialParameter;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -32,14 +32,14 @@ template <typename T>
 class ITypedMaterialParameter;
 //----------------------------------------------------------------------------
 template <typename T>
-using PTypedMaterialParameter = RefPtr<ITypedMaterialParameter<T> >;
+using TPTypedMaterialParameter = TRefPtr<ITypedMaterialParameter<T> >;
 template <typename T>
-using PCTypedMaterialParameter = RefPtr<const ITypedMaterialParameter<T> >;
+using TPCTypedMaterialParameter = TRefPtr<const ITypedMaterialParameter<T> >;
 //----------------------------------------------------------------------------
 template <typename T>
-using STypedMaterialParameter = SafePtr<ITypedMaterialParameter<T> >;
+using TSTypedMaterialParameter = TSafePtr<ITypedMaterialParameter<T> >;
 template <typename T>
-using SCTypedMaterialParameter = SafePtr<const ITypedMaterialParameter<T> >;
+using TSCTypedMaterialParameter = TSafePtr<const ITypedMaterialParameter<T> >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

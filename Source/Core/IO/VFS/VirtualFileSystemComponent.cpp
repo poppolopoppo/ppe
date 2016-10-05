@@ -8,21 +8,21 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-VirtualFileSystemComponent::VirtualFileSystemComponent(const Dirpath& alias)
+FVirtualFileSystemComponent::FVirtualFileSystemComponent(const FDirpath& alias)
 :   _alias(alias) {
     Assert(!_alias.empty());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void VirtualFileSystemComponentStartup::Start(VirtualFileSystemComponent *component) {
+void FVirtualFileSystemComponentStartup::Start(FVirtualFileSystemComponent *component) {
     Assert(component);
-    VirtualFileSystem::Instance().Mount(component);
+    FVirtualFileSystem::Instance().Mount(component);
 }
 //----------------------------------------------------------------------------
-void VirtualFileSystemComponentStartup::Shutdown(VirtualFileSystemComponent *component) {
+void FVirtualFileSystemComponentStartup::Shutdown(FVirtualFileSystemComponent *component) {
     Assert(component);
-    VirtualFileSystem::Instance().Unmount(component);
+    FVirtualFileSystem::Instance().Unmount(component);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

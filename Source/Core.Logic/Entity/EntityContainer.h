@@ -13,18 +13,18 @@ namespace Logic {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class EntityContainer {
+class FEntityContainer {
 public:
-    EntityContainer();
-    ~EntityContainer();
+    FEntityContainer();
+    ~FEntityContainer();
 
     EntityID CreateEntity(const EntityUID *optionalUID = nullptr);
     void DestroyEntity(EntityID id);
 
-    const VECTOR(Entity, EntityID)& UsedIDs() const { return _usedIDs; }
+    const VECTOR(FEntity, EntityID)& UsedIDs() const { return _usedIDs; }
 
-    Entity& Get(EntityID id) { Assert(id < _nextAvailableID); return _entities[id]; }
-    const Entity& Get(EntityID id) const { Assert(id < _nextAvailableID); return _entities[id]; }
+    FEntity& Get(EntityID id) { Assert(id < _nextAvailableID); return _entities[id]; }
+    const FEntity& Get(EntityID id) const { Assert(id < _nextAvailableID); return _entities[id]; }
 
     bool Contains(EntityID id) const;
 
@@ -38,13 +38,13 @@ public:
     void ShrinkToFit();
 
 private:
-    VECTOR(Entity, Entity) _entities;
+    VECTOR(FEntity, FEntity) _entities;
 
-    VECTOR(Entity, EntityID) _usedIDs;
-    VECTOR(Entity, EntityID) _freeIDs;
+    VECTOR(FEntity, EntityID) _usedIDs;
+    VECTOR(FEntity, EntityID) _freeIDs;
     EntityID _nextAvailableID;
 
-    HASHMAP(Entity, EntityUID, EntityID) _uidToId;
+    HASHMAP(FEntity, EntityUID, EntityID) _uidToId;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

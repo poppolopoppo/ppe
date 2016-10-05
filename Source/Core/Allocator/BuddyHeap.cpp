@@ -35,7 +35,7 @@ enum : size_t {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct BuddyBlock {
+struct FBuddyBlock {
     u32 SizeInBytes : 31;
     u32 InUse       : 1;
     u32 PrevOffset  : 31;
@@ -43,26 +43,26 @@ struct BuddyBlock {
 
     void *Data() const { return reinterpret_cast<void *>(size_t(this) + HeaderFootprint); }
 
-    BuddyBlock *Prev() const {
-        return reinterpret_cast<BuddyBlock *>(PrevOffset ? size_t(this) - PrevOffset : 0);
+    FBuddyBlock *Prev() const {
+        return reinterpret_cast<FBuddyBlock *>(PrevOffset ? size_t(this) - PrevOffset : 0);
     }
 
-    void SetPrev(BuddyBlock *block) {
+    void SetPrev(FBuddyBlock *block) {
         Assert(size_t(block) < size_t(this));
         PrevOffset = block ? size_t(this) - size_t(block) : 0;
     }
 
-    BuddyBlock *Next() const {
-        return reinterpret_cast<BuddyBlock *>((size_t(this) + OverheadPerBlock + SizeInBytes) * NextPresent);
+    FBuddyBlock *Next() const {
+        return reinterpret_cast<FBuddyBlock *>((size_t(this) + OverheadPerBlock + SizeInBytes) * NextPresent);
     }
 
-    void SetNext(BuddyBlock *block) {
+    void SetNext(FBuddyBlock *block) {
         NextPresent = block ? 1 : 0;
         Assert(Next() == block);
     }
 };
-STATIC_ASSERT(sizeof(BuddyBlock) == 8);
-STATIC_ASSERT(sizeof(BuddyBlock) <= HeaderFootprint);
+STATIC_ASSERT(sizeof(FBuddyBlock) == 8);
+STATIC_ASSERT(sizeof(FBuddyBlock) <= HeaderFootprint);
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_BUDDYCHUNK_CANARY
 #   define CORE_BUDDYCHUNK_CANARY_MAGICKHEADER  0xABADCAFE
@@ -75,8 +75,8 @@ STATIC_ASSERT(sizeof(BuddyBlock) <= HeaderFootprint);
 #endif
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_BUDDYCHUNK_CANARY
-static void BuddyBlock_SetCanary_(BuddyBlock *block) {
-    STATIC_ASSERT(sizeof(BuddyBlock) == sizeof(u32)*2);
+static void BuddyBlock_SetCanary_(FBuddyBlock *block) {
+    STATIC_ASSERT(sizeof(FBuddyBlock) == sizeof(u32)*2);
 
     u32 *const header = reinterpret_cast<u32 *>(block);
     header[2] = CORE_BUDDYCHUNK_CANARY_MAGICKHEADER;
@@ -91,8 +91,8 @@ static void BuddyBlock_SetCanary_(BuddyBlock *block) {
 #endif
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_BUDDYCHUNK_CANARY
-static void BuddyBlock_CheckCanary_(const BuddyBlock *block) {
-    STATIC_ASSERT(sizeof(BuddyBlock) == sizeof(u32)*2);
+static void BuddyBlock_CheckCanary_(const FBuddyBlock *block) {
+    STATIC_ASSERT(sizeof(FBuddyBlock) == sizeof(u32)*2);
 
     const u32 *header = reinterpret_cast<const u32 *>(block);
     Assert(header[2] == CORE_BUDDYCHUNK_CANARY_MAGICKHEADER);
@@ -108,7 +108,7 @@ static void BuddyBlock_CheckCanary_(const BuddyBlock *block) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-BuddyChunk::BuddyChunk(size_t capacityInBytes, BuddyChunk *sibling)
+FBuddyChunk::FBuddyChunk(size_t capacityInBytes, FBuddyChunk *sibling)
 :   _capacityInBytes(checked_cast<u32>(capacityInBytes))
 ,   _consumedInBytes(0)
 ,   _blockCount(0)
@@ -118,7 +118,7 @@ BuddyChunk::BuddyChunk(size_t capacityInBytes, BuddyChunk *sibling)
     Assert(capacityInBytes >= (32<<10)); // sanity check
     STATIC_ASSERT(sizeof(*this) <= size_t(ChunkFootprint) );
 
-    _blocks = reinterpret_cast<BuddyBlock *>(size_t(this) + ChunkFootprint);
+    _blocks = reinterpret_cast<FBuddyBlock *>(size_t(this) + ChunkFootprint);
     _blocks->SizeInBytes = _capacityInBytes + ReservedPerChunk - OverheadPerBlock;
     _blocks->InUse = false;
     _blocks->PrevOffset = 0;
@@ -127,7 +127,7 @@ BuddyChunk::BuddyChunk(size_t capacityInBytes, BuddyChunk *sibling)
     CORE_BUDDYCHUNK_CANARY_SET(_blocks);
 }
 //----------------------------------------------------------------------------
-BuddyChunk::~BuddyChunk() {
+FBuddyChunk::~FBuddyChunk() {
     Assert(_blocks);
     Assert(!_blocks->InUse);
     Assert(!_blocks->PrevOffset);
@@ -136,24 +136,24 @@ BuddyChunk::~BuddyChunk() {
     CORE_BUDDYCHUNK_CANARY_CHECK(_blocks);
 }
 //----------------------------------------------------------------------------
-void *BuddyChunk::Allocate(size_t sizeInBytes) {
+void *FBuddyChunk::Allocate(size_t sizeInBytes) {
     if (0 == sizeInBytes || !_available )
         return nullptr;
 
     STATIC_ASSERT(BuddyBoundary == 16);
     sizeInBytes = ROUND_TO_NEXT_16(sizeInBytes);
 
-    for (BuddyBlock *block = _blocks; block; block = block->Next()) {
+    for (FBuddyBlock *block = _blocks; block; block = block->Next()) {
         CORE_BUDDYCHUNK_CANARY_CHECK(block);
 
         if (block->InUse || block->SizeInBytes < sizeInBytes)
             continue;
 
         if (block->SizeInBytes > sizeInBytes + OverheadPerBlock) {
-            BuddyBlock *const nextBlock = block->Next();
+            FBuddyBlock *const nextBlock = block->Next();
 
             // keeps free block ahead, allows shorter iterations on next call
-            BuddyBlock *const reserved = reinterpret_cast<BuddyBlock *>(size_t(block->Data()) + block->SizeInBytes - sizeInBytes - HeaderFootprint);
+            FBuddyBlock *const reserved = reinterpret_cast<FBuddyBlock *>(size_t(block->Data()) + block->SizeInBytes - sizeInBytes - HeaderFootprint);
             reserved->InUse = false;
             reserved->SizeInBytes = sizeInBytes;
             reserved->SetPrev(block);
@@ -191,13 +191,13 @@ void *BuddyChunk::Allocate(size_t sizeInBytes) {
     return nullptr;
 }
 //----------------------------------------------------------------------------
-void BuddyChunk::Deallocate(void *ptr) {
+void FBuddyChunk::Deallocate(void *ptr) {
     if (!ptr)
         return;
 
     Assert(size_t(ptr) > HeaderFootprint && IS_ALIGNED(16, ptr));
 
-    BuddyBlock *block = reinterpret_cast<BuddyBlock *>(size_t(ptr) - HeaderFootprint);
+    FBuddyBlock *block = reinterpret_cast<FBuddyBlock *>(size_t(ptr) - HeaderFootprint);
 
     CORE_BUDDYCHUNK_CANARY_CHECK(block);
 
@@ -210,8 +210,8 @@ void BuddyChunk::Deallocate(void *ptr) {
     _consumedInBytes -= block->SizeInBytes;
     _blockCount--;
 
-    BuddyBlock *const prevBlock = block->Prev();
-    BuddyBlock *const nextBlock = block->Next();
+    FBuddyBlock *const prevBlock = block->Prev();
+    FBuddyBlock *const nextBlock = block->Next();
 
     if (prevBlock && !prevBlock->InUse) {
         Assert(!prevBlock->Prev() || prevBlock->Prev()->InUse);
@@ -233,7 +233,7 @@ void BuddyChunk::Deallocate(void *ptr) {
 
         CORE_BUDDYCHUNK_CANARY_CHECK(nextBlock);
 
-        BuddyBlock *const nextNextBlock = nextBlock->Next();
+        FBuddyBlock *const nextNextBlock = nextBlock->Next();
 
         block->SizeInBytes += nextBlock->SizeInBytes + OverheadPerBlock;
         block->SetNext(nextNextBlock);
@@ -244,33 +244,33 @@ void BuddyChunk::Deallocate(void *ptr) {
     }
 }
 //----------------------------------------------------------------------------
-bool BuddyChunk::Contains(void *ptr) const {
+bool FBuddyChunk::Contains(void *ptr) const {
     return size_t(ptr) >= size_t(_blocks) &&
            size_t(ptr) <= size_t(_blocks) + _capacityInBytes + ReservedPerChunk - OverheadPerBlock;
 }
 //----------------------------------------------------------------------------
-BuddyChunk *BuddyChunk::Create(size_t capacityInBytes, BuddyChunk *sibling /* = nullptr */) {
+FBuddyChunk *FBuddyChunk::Create(size_t capacityInBytes, FBuddyChunk *sibling /* = nullptr */) {
     Assert(capacityInBytes);
 
     void *const storage = aligned_malloc(capacityInBytes + OverheadPerChunk, BuddyBoundary);
     AssertRelease(storage);
 
-    return new (storage) BuddyChunk(capacityInBytes, sibling);
+    return new (storage) FBuddyChunk(capacityInBytes, sibling);
 }
 //----------------------------------------------------------------------------
-void BuddyChunk::Destroy(BuddyChunk *chunk) {
+void FBuddyChunk::Destroy(FBuddyChunk *chunk) {
     Assert(chunk);
     Assert(0 == chunk->BlockCount());
     Assert(0 == chunk->ConsumedInBytes());
 
-    chunk->~BuddyChunk();
+    chunk->~FBuddyChunk();
 
     aligned_free(chunk);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-BuddyHeap::BuddyHeap(size_t capacityInBytes, bool growable)
+FBuddyHeap::FBuddyHeap(size_t capacityInBytes, bool growable)
 :   _chunkSizeInBytes(checked_cast<u32>(capacityInBytes))
 ,   _growable(growable)
 ,   _capacityInBytes(0)
@@ -280,11 +280,11 @@ BuddyHeap::BuddyHeap(size_t capacityInBytes, bool growable)
     Assert(capacityInBytes);
 }
 //----------------------------------------------------------------------------
-BuddyHeap::~BuddyHeap() {
+FBuddyHeap::~FBuddyHeap() {
     Assert(!_chunks);
 }
 //----------------------------------------------------------------------------
-void *BuddyHeap::Allocate(size_t sizeInBytes) {
+void *FBuddyHeap::Allocate(size_t sizeInBytes) {
     sizeInBytes = ROUND_TO_NEXT_16(sizeInBytes);
     STATIC_ASSERT(16 == BuddyBoundary);
     AssertRelease(sizeInBytes <= _chunkSizeInBytes);
@@ -293,7 +293,7 @@ void *BuddyHeap::Allocate(size_t sizeInBytes) {
     Assert(_capacityInBytes);
 
     void *ptr = nullptr;
-    for (BuddyChunk *chunk = _chunks; chunk; chunk = chunk->Sibling()) {
+    for (FBuddyChunk *chunk = _chunks; chunk; chunk = chunk->Sibling()) {
         if ( nullptr == (ptr = chunk->Allocate(sizeInBytes)) )
             continue;
 
@@ -306,7 +306,7 @@ void *BuddyHeap::Allocate(size_t sizeInBytes) {
     if (!_growable)
         return nullptr;
 
-    _chunks = BuddyChunk::Create(_chunkSizeInBytes, _chunks);
+    _chunks = FBuddyChunk::Create(_chunkSizeInBytes, _chunks);
     _capacityInBytes += _chunkSizeInBytes;
 
     ptr = _chunks->Allocate(sizeInBytes);
@@ -318,14 +318,14 @@ void *BuddyHeap::Allocate(size_t sizeInBytes) {
     return ptr;
 }
 //----------------------------------------------------------------------------
-void BuddyHeap::Deallocate(void *ptr) {
+void FBuddyHeap::Deallocate(void *ptr) {
     if (!ptr)
         return;
 
     Assert(IS_ALIGNED(BuddyBoundary, ptr));
 
-    BuddyChunk *prevChunk = nullptr;
-    for (BuddyChunk *chunk = _chunks; chunk; prevChunk = chunk, chunk = chunk->Sibling()) {
+    FBuddyChunk *prevChunk = nullptr;
+    for (FBuddyChunk *chunk = _chunks; chunk; prevChunk = chunk, chunk = chunk->Sibling()) {
         if (!chunk->Contains(ptr))
             continue;
 
@@ -340,7 +340,7 @@ void BuddyHeap::Deallocate(void *ptr) {
         if (prevChunk && 0 == chunk->BlockCount() &&
             prevChunk->ConsumedInBytes() * 3 < 2 * prevChunk->CapacityInBytes()) {
             prevChunk->SetSibling(chunk->Sibling());
-            BuddyChunk::Destroy(chunk);
+            FBuddyChunk::Destroy(chunk);
         }
 
         return;
@@ -349,52 +349,52 @@ void BuddyHeap::Deallocate(void *ptr) {
     AssertNotReached();
 }
 //----------------------------------------------------------------------------
-void BuddyHeap::Start() {
+void FBuddyHeap::Start() {
     Assert(!_chunks);
     Assert(0 == _capacityInBytes);
     Assert(0 == _blockCount);
     Assert(0 == _consumedInBytes);
 
-    _chunks = BuddyChunk::Create(_chunkSizeInBytes + OverheadPerChunk);
+    _chunks = FBuddyChunk::Create(_chunkSizeInBytes + OverheadPerChunk);
     _capacityInBytes += _chunkSizeInBytes;
 }
 //----------------------------------------------------------------------------
-void BuddyHeap::Shutdown() {
+void FBuddyHeap::Shutdown() {
     Assert(_chunks);
     Assert(_capacityInBytes);
     Assert(0 == _blockCount);
     Assert(0 == _consumedInBytes);
 
-    for (BuddyChunk *sibling = nullptr; _chunks; _chunks = sibling) {
+    for (FBuddyChunk *sibling = nullptr; _chunks; _chunks = sibling) {
         sibling = _chunks->Sibling();
-        BuddyChunk::Destroy(_chunks);
+        FBuddyChunk::Destroy(_chunks);
     }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void *ThreadSafeBuddyHeap::Allocate(size_t sizeInBytes) {
+void *FThreadSafeBuddyHeap::Allocate(size_t sizeInBytes) {
     std::lock_guard<std::mutex> scopeLock(_barrier);
 
-    return BuddyHeap::Allocate(sizeInBytes);
+    return FBuddyHeap::Allocate(sizeInBytes);
 }
 //----------------------------------------------------------------------------
-void ThreadSafeBuddyHeap::Deallocate(void *ptr) {
+void FThreadSafeBuddyHeap::Deallocate(void *ptr) {
     std::lock_guard<std::mutex> scopeLock(_barrier);
 
-    return BuddyHeap::Deallocate(ptr);
+    return FBuddyHeap::Deallocate(ptr);
 }
 //----------------------------------------------------------------------------
-void ThreadSafeBuddyHeap::Start() {
+void FThreadSafeBuddyHeap::Start() {
     std::lock_guard<std::mutex> scopeLock(_barrier);
 
-    BuddyHeap::Start();
+    FBuddyHeap::Start();
 }
 //----------------------------------------------------------------------------
-void ThreadSafeBuddyHeap::Shutdown() {
+void FThreadSafeBuddyHeap::Shutdown() {
     std::lock_guard<std::mutex> scopeLock(_barrier);
 
-    BuddyHeap::Shutdown();
+    FBuddyHeap::Shutdown();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

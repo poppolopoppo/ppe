@@ -10,20 +10,20 @@ namespace ContentPipeline {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Asset>
-class ExternalReference {
+class TExternalReference {
 public:
     typedef _Asset asset_type;
 
-    ExternalReference() {}
-    explicit ExternalReference(const Filename& target) : _target(target) { Assert(not target.empty()); }
-    ExternalReference(const Filename& absolute, const ContentIdentity& source)
-        : ExternalReference(absolute.Relative(source.SourceFilename().Dirpath())) {}
+    TExternalReference() {}
+    explicit TExternalReference(const FFilename& target) : _target(target) { Assert(not target.empty()); }
+    TExternalReference(const FFilename& absolute, const FContentIdentity& source)
+        : TExternalReference(absolute.Relative(source.SourceFilename().Dirpath())) {}
 
-    Filename& Target() {return _target; }
-    const Filename& Target() const {return _target; }
+    FFilename& Target() {return _target; }
+    const FFilename& Target() const {return _target; }
 
 private:
-    Filename _target;
+    FFilename _target;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -36,19 +36,19 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// ExternalReference<_Asset> wrapped as a string for RTTI :
+// TExternalReference<_Asset> wrapped as a string for RTTI :
 //----------------------------------------------------------------------------
 template <typename _Asset>
-struct MetaTypeTraitsImpl< Core::ContentPipeline::ExternalReference<_Asset> > {
-    typedef MetaTypeTraitsImpl< Filename > filename_traits;
+struct TMetaTypeTraitsImpl< Core::ContentPipeline::TExternalReference<_Asset> > {
+    typedef TMetaTypeTraitsImpl< FFilename > filename_traits;
 
-    typedef Core::ContentPipeline::ExternalReference<_Asset> wrapped_type;
+    typedef Core::ContentPipeline::TExternalReference<_Asset> wrapped_type;
     typedef typename filename_traits::wrapper_type wrapper_type;
 
-    typedef MetaType< wrapper_type > meta_type;
+    typedef TMetaType< wrapper_type > meta_type;
 
-    static const MetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
-        return MetaTypeScalarTraits< wrapper_type >::Instance();
+    static const TMetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
+        return TMetaTypeScalarTraits< wrapper_type >::Instance();
     }
 
     static bool IsDefaultValue(const wrapped_type& value) {
@@ -68,13 +68,13 @@ struct MetaTypeTraitsImpl< Core::ContentPipeline::ExternalReference<_Asset> > {
     }
 
     static void UnwrapMove(wrapped_type& dst, wrapper_type&& src) {
-        Filename target;
+        FFilename target;
         filename_traits::UnwrapMove(target, std::move(src));
         dst = wrapped_type(target);
     }
 
     static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src) {
-        Filename target;
+        FFilename target;
         filename_traits::UnwrapCopy(target, src);
         dst = wrapped_type(target);
     }

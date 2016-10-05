@@ -16,30 +16,30 @@ FWD_REFPTR(Element);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class XMLException : public Core::Serialize::SerializeException {
+class FXMLException : public Core::Serialize::FSerializeException {
 public:
-    typedef Core::Serialize::SerializeException parent_type;
+    typedef Core::Serialize::FSerializeException parent_type;
 
-    XMLException(const char *what, const Lexer::Location& site)
+    FXMLException(const char *what, const FLexer::FLocation& site)
         : parent_type(what), _site(site) {}
 
-    virtual ~XMLException() {}
+    virtual ~FXMLException() {}
 
-    const Lexer::Location& Site() const { return _site; }
+    const FLexer::FLocation& Site() const { return _site; }
 
 private:
-    Lexer::Location _site;
+    FLexer::FLocation _site;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct XMLStartup {
+struct FXMLStartup {
     static void Start();
     static void Shutdown();
     static void ClearAll_UnusedMemory();
 
-    XMLStartup() { Start(); }
-    ~XMLStartup() { Shutdown(); }
+    FXMLStartup() { Start(); }
+    ~FXMLStartup() { Shutdown(); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

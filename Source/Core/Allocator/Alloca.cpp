@@ -16,7 +16,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-class AllocaStorage {
+class FAllocaStorage {
 public:
     enum : u32 {
     // memory reserved per thread for alloca
@@ -51,8 +51,8 @@ public:
     STATIC_ASSERT(Boundary == 16);
     STATIC_ASSERT(ROUND_TO_NEXT_16(PayloadSize) == PayloadSize);
 
-    AllocaStorage();
-    ~AllocaStorage();
+    FAllocaStorage();
+    ~FAllocaStorage();
 
     void* Push(size_t sizeInBytes);
     void Pop(void* ptr);
@@ -63,19 +63,19 @@ private:
     void* _storage;
 };
 //----------------------------------------------------------------------------
-AllocaStorage::AllocaStorage()
+FAllocaStorage::FAllocaStorage()
 :   _offset(0)
 ,   _storage(nullptr)
 {}
 //----------------------------------------------------------------------------
-AllocaStorage::~AllocaStorage() {
+FAllocaStorage::~FAllocaStorage() {
     Assert(0 == _offset); // Check that all used memory has been released
 
     if (_storage)
         GetThreadLocalHeap().AlignedFree(_storage, MEMORY_DOMAIN_TRACKING_DATA(Alloca));
 }
 //----------------------------------------------------------------------------
-void* AllocaStorage::Push(size_t sizeInBytes) {
+void* FAllocaStorage::Push(size_t sizeInBytes) {
     Assert(sizeInBytes > 0);
 
     const size_t alignedSizeInBytes = ROUND_TO_NEXT_16(sizeInBytes);
@@ -128,7 +128,7 @@ void* AllocaStorage::Push(size_t sizeInBytes) {
     }
 }
 //----------------------------------------------------------------------------
-void AllocaStorage::Pop(void* ptr) {
+void FAllocaStorage::Pop(void* ptr) {
     Assert(size_t(ptr) > HeaderSize);
 
     void* const block = reinterpret_cast<u8*>(ptr) - HeaderSize;
@@ -170,7 +170,7 @@ void AllocaStorage::Pop(void* ptr) {
     }
 }
 //----------------------------------------------------------------------------
-void* AllocaStorage::Relocate(void* ptr, size_t newSizeInBytes, bool keepData) {
+void* FAllocaStorage::Relocate(void* ptr, size_t newSizeInBytes, bool keepData) {
     Assert(size_t(ptr) > HeaderSize);
     Assert(newSizeInBytes);
 
@@ -255,8 +255,8 @@ void* AllocaStorage::Relocate(void* ptr, size_t newSizeInBytes, bool keepData) {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-class ThreadLocalAllocaStorage : Meta::ThreadLocalSingleton<AllocaStorage, ThreadLocalAllocaStorage> {
-    typedef Meta::ThreadLocalSingleton<AllocaStorage, ThreadLocalAllocaStorage> parent_type;
+class FThreadLocalAllocaStorage : Meta::TThreadLocalSingleton<FAllocaStorage, FThreadLocalAllocaStorage> {
+    typedef Meta::TThreadLocalSingleton<FAllocaStorage, FThreadLocalAllocaStorage> parent_type;
 public:
     using parent_type::Instance;
     using parent_type::HasInstance;
@@ -273,7 +273,7 @@ void* Alloca(size_t sizeInBytes) {
     if (0 == sizeInBytes)
         return nullptr;
 
-    return ThreadLocalAllocaStorage::Instance().Push(sizeInBytes);
+    return FThreadLocalAllocaStorage::Instance().Push(sizeInBytes);
 }
 //----------------------------------------------------------------------------
 void* RelocateAlloca(void* ptr, size_t newSizeInBytes, bool keepData) {
@@ -283,7 +283,7 @@ void* RelocateAlloca(void* ptr, size_t newSizeInBytes, bool keepData) {
             return nullptr;
         }
         else {
-            return ThreadLocalAllocaStorage::Instance().Relocate(ptr, newSizeInBytes, keepData);
+            return FThreadLocalAllocaStorage::Instance().Relocate(ptr, newSizeInBytes, keepData);
         }
     }
     else if (newSizeInBytes) {
@@ -298,17 +298,17 @@ void FreeAlloca(void* ptr) {
     if (!ptr)
         return;
 
-    ThreadLocalAllocaStorage::Instance().Pop(ptr);
+    FThreadLocalAllocaStorage::Instance().Pop(ptr);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void AllocaStartup::Start(bool/* mainThread */) {
-    ThreadLocalAllocaStorage::Create();
+void FAllocaStartup::Start(bool/* mainThread */) {
+    FThreadLocalAllocaStorage::Create();
 }
 //----------------------------------------------------------------------------
-void AllocaStartup::Shutdown() {
-    ThreadLocalAllocaStorage::Destroy();
+void FAllocaStartup::Shutdown() {
+    FThreadLocalAllocaStorage::Destroy();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

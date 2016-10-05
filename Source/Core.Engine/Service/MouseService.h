@@ -8,7 +8,7 @@
 #include "Core.Engine/Input/State/MouseInputHandler.h"
 
 namespace Core {
-struct Guid;
+struct FGuid;
 
 namespace Graphics {
 FWD_REFPTR(GraphicsWindow);
@@ -25,28 +25,28 @@ protected:
 public:
     virtual ~IMouseService() {}
 
-    virtual Engine::MouseInputHandler *MouseInputHandler() = 0;
-    virtual const Engine::MouseInputHandler *MouseInputHandler() const = 0;
+    virtual Engine::FMouseInputHandler *FMouseInputHandler() = 0;
+    virtual const Engine::FMouseInputHandler *FMouseInputHandler() const = 0;
 
     ENGINESERVICE_GUID_DECL(IMouseService);
 };
 //----------------------------------------------------------------------------
-class DefaultMouseService : public IMouseService {
+class FDefaultMouseService : public IMouseService {
 public:
-    explicit DefaultMouseService(Graphics::GraphicsWindow *window);
-    virtual ~DefaultMouseService();
+    explicit FDefaultMouseService(Graphics::FGraphicsWindow *window);
+    virtual ~FDefaultMouseService();
 
-    const Graphics::GraphicsWindow *Window() const { return _window.get(); }
+    const Graphics::FGraphicsWindow *Window() const { return _window.get(); }
 
-    virtual Engine::MouseInputHandler *MouseInputHandler() override;
-    virtual const Engine::MouseInputHandler *MouseInputHandler() const override;
+    virtual Engine::FMouseInputHandler *FMouseInputHandler() override;
+    virtual const Engine::FMouseInputHandler *FMouseInputHandler() const override;
 
-    virtual void Start(IServiceProvider *provider, const Guid& guid) override;
-    virtual void Shutdown(IServiceProvider *provider, const Guid& guid) override;
+    virtual void Start(IServiceProvider *provider, const FGuid& guid) override;
+    virtual void Shutdown(IServiceProvider *provider, const FGuid& guid) override;
 
 private:
     Graphics::SGraphicsWindow _window;
-    Engine::MouseInputHandler _mouseInputHandler;
+    Engine::FMouseInputHandler _mouseInputHandler;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

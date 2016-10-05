@@ -19,28 +19,28 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DX11AbstractTextureContent::DX11AbstractTextureContent(::ID3D11ShaderResourceView *shaderView/* = nullptr */)
+FDX11AbstractTextureContent::FDX11AbstractTextureContent(::ID3D11ShaderResourceView *shaderView/* = nullptr */)
 :   _shaderView(shaderView) {}
 //----------------------------------------------------------------------------
-DX11AbstractTextureContent::~DX11AbstractTextureContent() {
+FDX11AbstractTextureContent::~FDX11AbstractTextureContent() {
     if (_shaderView)
         ReleaseComRef(_shaderView);
 }
 //----------------------------------------------------------------------------
-void DX11AbstractTextureContent::CreateTexture(
-    ComPtr<::ID3D11Texture2D>& pTexture2D,
+void FDX11AbstractTextureContent::CreateTexture(
+    TComPtr<::ID3D11Texture2D>& pTexture2D,
     IDeviceAPIEncapsulator *device,
-    const Texture *owner,
+    const FTexture *owner,
     size_t width,
     size_t height,
     size_t levelCount,
-    const MemoryView<const u8>& optionalData,
+    const TMemoryView<const u8>& optionalData,
     ::D3D11_BIND_FLAG bindFlags,
     bool isCubeMap ) {
     Assert(owner);
     Assert(nullptr == pTexture2D.Get());
 
-    const DX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
+    const FDX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
     {
         ::D3D11_TEXTURE2D_DESC textureDesc;
         ::SecureZeroMemory(&textureDesc, sizeof(textureDesc));
@@ -78,7 +78,7 @@ void DX11AbstractTextureContent::CreateTexture(
         textureDesc.MiscFlags = (isCubeMap ? ::D3D11_RESOURCE_MISC_TEXTURECUBE : 0);
 
         if (optionalData.empty()) {
-            Assert(owner->Usage() != BufferUsage::Immutable);
+            Assert(owner->Usage() != EBufferUsage::Immutable);
 
             DX11_THROW_IF_FAILED(device, owner, (
                 wrapper->Device()->CreateTexture2D(&textureDesc, NULL, pTexture2D.GetAddressOf())

@@ -11,7 +11,7 @@ namespace Meta {
 // /!\ INVALIDATED EACH BUILD/RUN /!\
 //----------------------------------------------------------------------------
 template <typename T>
-struct TypeHash {
+struct TTypeHash {
     static constexpr size_t value() {
         return hash_size_t_constexpr(size_t(&value));
     }

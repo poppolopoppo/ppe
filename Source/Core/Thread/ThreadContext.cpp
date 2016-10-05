@@ -23,8 +23,8 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-class ThreadLocalContext_ : Meta::ThreadLocalSingleton<ThreadContext, ThreadLocalContext_> {
-    typedef Meta::ThreadLocalSingleton<ThreadContext, ThreadLocalContext_> parent_type;
+class FThreadLocalContext_ : Meta::TThreadLocalSingleton<FThreadContext, FThreadLocalContext_> {
+    typedef Meta::TThreadLocalSingleton<FThreadContext, FThreadLocalContext_> parent_type;
 public:
     using parent_type::HasInstance;
     using parent_type::Instance;
@@ -34,12 +34,12 @@ public:
     static void CreateMainThread();
 };
 //----------------------------------------------------------------------------
-inline void ThreadLocalContext_::Create(const char* name, size_t tag) {
+inline void FThreadLocalContext_::Create(const char* name, size_t tag) {
     Assert(CORE_THREADTAG_MAIN != tag);
     parent_type::Create(name, tag);
 }
 //----------------------------------------------------------------------------
-inline void ThreadLocalContext_::CreateMainThread() {
+inline void FThreadLocalContext_::CreateMainThread() {
     parent_type::Create("MainThread", CORE_THREADTAG_MAIN);
 }
 //----------------------------------------------------------------------------
@@ -56,7 +56,7 @@ namespace {
 static void SetWin32ThreadName_(const char* name) {
 #ifdef WITH_CORE_THREADCONTEXT_NAME
     /*
-    // How to: Set a Thread Name in Native Code
+    // How to: Set a Thread FName in Native Code
     // http://msdn.microsoft.com/en-us/library/xcb2z8hs.aspx
     */
     const DWORD MS_VC_EXCEPTION = 0x406D1388;
@@ -97,7 +97,7 @@ static NO_INLINE void GuaranteeStackSizeForStackOverflowRecovery_() {
         if (::SetThreadStackGuarantee(&stackSizeInBytes))
             return;
     }
-    LOG(Warning, L"Unable to SetThreadStackGuarantee, Stack Overflows won't be caught properly !");
+    LOG(Warning, L"Unable to SetThreadStackGuarantee, TStack Overflows won't be caught properly !");
 #endif
 }
 //----------------------------------------------------------------------------
@@ -105,7 +105,7 @@ static NO_INLINE void GuaranteeStackSizeForStackOverflowRecovery_() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ThreadContext::ThreadContext(const char* name, size_t tag)
+FThreadContext::FThreadContext(const char* name, size_t tag)
 :   _tag(tag)
 ,   _threadId(std::this_thread::get_id()) {
     Assert(name);
@@ -120,21 +120,21 @@ ThreadContext::ThreadContext(const char* name, size_t tag)
     LOG(Info, L"[Thread] Start '{0}' with tag = {1} (id:{2})", _name, _tag, _threadId);
 }
 //----------------------------------------------------------------------------
-ThreadContext::~ThreadContext() {
+FThreadContext::~FThreadContext() {
     LOG(Info, L"[Thread] Stop '{0}' with tag = {1} (id:{2})", _name, _tag, _threadId);
 }
 //----------------------------------------------------------------------------
-size_t ThreadContext::AffinityMask() const {
+size_t FThreadContext::AffinityMask() const {
     Assert(std::this_thread::get_id() == _threadId);
 #ifdef OS_WINDOWS
     HANDLE currentThread = ::GetCurrentThread();
     DWORD_PTR affinityMask = ::SetThreadAffinityMask(currentThread, 0xFFul);
     if (0 == affinityMask) {
-        LastErrorException e;
+        FLastErrorException e;
         CORE_THROW_IT(e);
     }
     if (0 == ::SetThreadAffinityMask(currentThread, affinityMask)) {
-        LastErrorException e;
+        FLastErrorException e;
         CORE_THROW_IT(e);
     }
     return checked_cast<size_t>(affinityMask);
@@ -143,7 +143,7 @@ size_t ThreadContext::AffinityMask() const {
 #endif
 }
 //----------------------------------------------------------------------------
-void ThreadContext::SetAffinityMask(size_t mask) const {
+void FThreadContext::SetAffinityMask(size_t mask) const {
     Assert(0 != mask);
     Assert(std::this_thread::get_id() == _threadId);
 
@@ -151,7 +151,7 @@ void ThreadContext::SetAffinityMask(size_t mask) const {
     HANDLE currentThread = ::GetCurrentThread();
     DWORD_PTR affinityMask = ::SetThreadAffinityMask(currentThread, mask);
     if (0 == affinityMask) {
-        LastErrorException e;
+        FLastErrorException e;
         CORE_THROW_IT(e);
     }
     Assert(mask == AffinityMask());
@@ -162,31 +162,31 @@ void ThreadContext::SetAffinityMask(size_t mask) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const ThreadContext& CurrentThreadContext() {
-    return ThreadLocalContext_::Instance();
+const FThreadContext& CurrentThreadContext() {
+    return FThreadLocalContext_::Instance();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void ThreadContextStartup::Start(const char* name, size_t tag) {
-    ThreadLocalContext_::Create(name, tag);
-    ThreadLocalHeapStartup::Start(false);
-    Meta::ThreadLocalAutoSingletonManager::Start();
-    AllocaStartup::Start(false);
+void FThreadContextStartup::Start(const char* name, size_t tag) {
+    FThreadLocalContext_::Create(name, tag);
+    FThreadLocalHeapStartup::Start(false);
+    Meta::FThreadLocalAutoSingletonManager::Start();
+    FAllocaStartup::Start(false);
 }
 //----------------------------------------------------------------------------
-void ThreadContextStartup::Start_MainThread() {
-    Meta::ThreadLocalAutoSingletonManager::Start();
-    ThreadLocalContext_::CreateMainThread();
-    ThreadLocalHeapStartup::Start(true);
-    AllocaStartup::Start(true);
+void FThreadContextStartup::Start_MainThread() {
+    Meta::FThreadLocalAutoSingletonManager::Start();
+    FThreadLocalContext_::CreateMainThread();
+    FThreadLocalHeapStartup::Start(true);
+    FAllocaStartup::Start(true);
 }
 //----------------------------------------------------------------------------
-void ThreadContextStartup::Shutdown() {
-    AllocaStartup::Shutdown();
-    ThreadLocalHeapStartup::Shutdown();
-    ThreadLocalContext_::Destroy();
-    Meta::ThreadLocalAutoSingletonManager::Shutdown();
+void FThreadContextStartup::Shutdown() {
+    FAllocaStartup::Shutdown();
+    FThreadLocalHeapStartup::Shutdown();
+    FThreadLocalContext_::Destroy();
+    Meta::FThreadLocalAutoSingletonManager::Shutdown();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

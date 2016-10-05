@@ -14,14 +14,14 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-MemoryTrackingData::MemoryTrackingData(
+FMemoryTrackingData::FMemoryTrackingData(
     const char* optionalName /*= "unknown"*/,
-    MemoryTrackingData* optionalParent /*= nullptr*/)
+    FMemoryTrackingData* optionalParent /*= nullptr*/)
 :   _name(optionalName), _parent(optionalParent),
     _blockCount(0), _allocationCount(0), _totalSizeInBytes(0),
     _maxBlockCount(0), _maxAllocationCount(0), _maxTotalSizeInBytes(0) {}
 //----------------------------------------------------------------------------
-void MemoryTrackingData::Allocate(size_t blockCount, size_t strideInBytes) {
+void FMemoryTrackingData::Allocate(size_t blockCount, size_t strideInBytes) {
     _blockCount += blockCount;
     _totalSizeInBytes += blockCount * strideInBytes;
     ++_allocationCount;
@@ -44,7 +44,7 @@ void MemoryTrackingData::Allocate(size_t blockCount, size_t strideInBytes) {
         _parent->Allocate(blockCount, strideInBytes);
 }
 //----------------------------------------------------------------------------
-void MemoryTrackingData::Deallocate(size_t blockCount, size_t strideInBytes) {
+void FMemoryTrackingData::Deallocate(size_t blockCount, size_t strideInBytes) {
     Assert(_blockCount >= blockCount);
     Assert(_totalSizeInBytes >= blockCount * strideInBytes);
     Assert(_allocationCount);
@@ -57,7 +57,7 @@ void MemoryTrackingData::Deallocate(size_t blockCount, size_t strideInBytes) {
         _parent->Deallocate(blockCount, strideInBytes);
 }
 //----------------------------------------------------------------------------
-void MemoryTrackingData::Pool_AllocateOneBlock(size_t blockSizeInBytes) {
+void FMemoryTrackingData::Pool_AllocateOneBlock(size_t blockSizeInBytes) {
     if (_parent) {
         ++_blockCount;
         _totalSizeInBytes += blockSizeInBytes;
@@ -88,7 +88,7 @@ void MemoryTrackingData::Pool_AllocateOneBlock(size_t blockSizeInBytes) {
     }
 }
 //----------------------------------------------------------------------------
-void MemoryTrackingData::Pool_DeallocateOneBlock(size_t blockSizeInBytes) {
+void FMemoryTrackingData::Pool_DeallocateOneBlock(size_t blockSizeInBytes) {
     if (_parent) {
         Assert(_blockCount >= 1);
         Assert(_totalSizeInBytes >= blockSizeInBytes);
@@ -106,7 +106,7 @@ void MemoryTrackingData::Pool_DeallocateOneBlock(size_t blockSizeInBytes) {
     }
 }
 //----------------------------------------------------------------------------
-void MemoryTrackingData::Pool_AllocateOneChunk(size_t chunkSizeInBytes) {
+void FMemoryTrackingData::Pool_AllocateOneChunk(size_t chunkSizeInBytes) {
     if (_parent) {
         _parent->Pool_AllocateOneChunk(chunkSizeInBytes);
     }
@@ -119,7 +119,7 @@ void MemoryTrackingData::Pool_AllocateOneChunk(size_t chunkSizeInBytes) {
     }
 }
 //----------------------------------------------------------------------------
-void MemoryTrackingData::Pool_DeallocateOneChunk(size_t chunkSizeInBytes) {
+void FMemoryTrackingData::Pool_DeallocateOneChunk(size_t chunkSizeInBytes) {
     if (_parent) {
         _parent->Pool_DeallocateOneChunk(chunkSizeInBytes);
     }
@@ -132,7 +132,7 @@ void MemoryTrackingData::Pool_DeallocateOneChunk(size_t chunkSizeInBytes) {
     }
 }
 //----------------------------------------------------------------------------
-void MemoryTrackingData::Append(const MemoryTrackingData& other) {
+void FMemoryTrackingData::Append(const FMemoryTrackingData& other) {
     _blockCount += other._blockCount;
     _allocationCount += other._allocationCount;
     _totalSizeInBytes += other._totalSizeInBytes;
@@ -145,14 +145,14 @@ void MemoryTrackingData::Append(const MemoryTrackingData& other) {
         _parent->Append(other);
 }
 //----------------------------------------------------------------------------
-MemoryTrackingData& MemoryTrackingData::Global() {
-    ONE_TIME_INITIALIZE(MemoryTrackingData, gGlobalMemoryTrackingData, "$");
+FMemoryTrackingData& FMemoryTrackingData::Global() {
+    ONE_TIME_INITIALIZE(FMemoryTrackingData, gGlobalMemoryTrackingData, "$");
     return gGlobalMemoryTrackingData;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-static void TrackingDataAbsoluteName_(BasicOCStrStream<char>& oss, const MemoryTrackingData& trackingData) {
+static void TrackingDataAbsoluteName_(TBasicOCStrStream<char>& oss, const FMemoryTrackingData& trackingData) {
     if (trackingData.Parent()) {
         TrackingDataAbsoluteName_(oss, *trackingData.Parent());
         oss << "::";
@@ -160,7 +160,7 @@ static void TrackingDataAbsoluteName_(BasicOCStrStream<char>& oss, const MemoryT
     oss << trackingData.Name();
 }
 //----------------------------------------------------------------------------
-static bool LessTrackingData_(const MemoryTrackingData& lhs, const MemoryTrackingData& rhs) {
+static bool LessTrackingData_(const FMemoryTrackingData& lhs, const FMemoryTrackingData& rhs) {
     Assert(lhs.Name());
     Assert(rhs.Name());
     return (lhs.Name() != rhs.Name()) &&
@@ -170,17 +170,17 @@ static bool LessTrackingData_(const MemoryTrackingData& lhs, const MemoryTrackin
 //----------------------------------------------------------------------------
 void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
                             const wchar_t *header,
-                            const MemoryView<const MemoryTrackingData *>& datas ) {
+                            const TMemoryView<const FMemoryTrackingData *>& datas ) {
     Assert(header);
 
     oss << L"Reporting trackings data :" << std::endl;
 
-    STACKLOCAL_POD_ARRAY(const MemoryTrackingData *, sortedDatas, datas.size());
+    STACKLOCAL_POD_ARRAY(const FMemoryTrackingData *, sortedDatas, datas.size());
     memcpy(sortedDatas.Pointer(), datas.Pointer(), datas.SizeInBytes());
 
-    std::stable_sort(sortedDatas.begin(), sortedDatas.end(), [](const MemoryTrackingData *lhs, const MemoryTrackingData *rhs) {
-        const MemoryTrackingData *lhsp = lhs->Parent();
-        const MemoryTrackingData *rhsp = rhs->Parent();
+    std::stable_sort(sortedDatas.begin(), sortedDatas.end(), [](const FMemoryTrackingData *lhs, const FMemoryTrackingData *rhs) {
+        const FMemoryTrackingData *lhsp = lhs->Parent();
+        const FMemoryTrackingData *rhsp = rhs->Parent();
         if (lhsp && rhsp)
             return (LessTrackingData_(*lhsp, *rhsp) || (lhsp->Name() == rhsp->Name() && LessTrackingData_(*lhs, *rhs)));
         else if (lhsp)
@@ -198,15 +198,15 @@ void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
         << "    " << header << L" (" << datas.size() << L" elements)" << std::endl
         << Repeat<width>(L"-") << std::endl;
 
-    Format(oss, fmt,    L"Tracking Data Name",
-                        L"Block", "Max",
+    Format(oss, fmt,    L"Tracking Data FName",
+                        L"FBlock", "Max",
                         L"Alloc", "Max",
                         L"Total", "Max" );
 
     oss << Repeat<width>(L"-") << std::endl;
 
     STACKLOCAL_OCSTRSTREAM(tmp, 256);
-    for (const MemoryTrackingData *data : datas) {
+    for (const FMemoryTrackingData *data : datas) {
         Assert(data);
         tmp.Reset();
         TrackingDataAbsoluteName_(tmp, *data);
@@ -224,33 +224,33 @@ void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-MemoryBlockHeader::MemoryBlockHeader()
+FMemoryBlockHeader::FMemoryBlockHeader()
 :   _trackingData(nullptr), _blockCount(0), _strideInBytes(0) {
     _backtraceFrames[0] = nullptr;
 }
 //----------------------------------------------------------------------------
-MemoryBlockHeader::MemoryBlockHeader(MemoryTrackingData* trackingData, size_t blockCount, size_t strideInBytes)
+FMemoryBlockHeader::FMemoryBlockHeader(FMemoryTrackingData* trackingData, size_t blockCount, size_t strideInBytes)
 : _trackingData(trackingData), _blockCount(checked_cast<uint32_t>(blockCount)), _strideInBytes(checked_cast<uint32_t>(strideInBytes)) {
     Assert(blockCount == _blockCount);
     Assert(strideInBytes == _strideInBytes);
     if (_trackingData)
         _trackingData->Allocate(_blockCount, _strideInBytes);
-    const size_t backtraceDepth = Callstack::Capture(MakeView(_backtraceFrames), nullptr, 2, BacktraceMaxDepth);
+    const size_t backtraceDepth = FCallstack::Capture(MakeView(_backtraceFrames), nullptr, 2, BacktraceMaxDepth);
     if (backtraceDepth < BacktraceMaxDepth)
         _backtraceFrames[backtraceDepth] = nullptr;
 }
 //----------------------------------------------------------------------------
-MemoryBlockHeader::~MemoryBlockHeader() {
+FMemoryBlockHeader::~FMemoryBlockHeader() {
     if (_trackingData)
         _trackingData->Deallocate(_blockCount, _strideInBytes);
 }
 //----------------------------------------------------------------------------
-void MemoryBlockHeader::DecodeCallstack(DecodedCallstack* decoded) const {
+void FMemoryBlockHeader::DecodeCallstack(FDecodedCallstack* decoded) const {
     size_t backtraceDepth = 0;
     while (backtraceDepth < BacktraceMaxDepth && _backtraceFrames[backtraceDepth])
         ++backtraceDepth;
     auto frames = MakeView(&_backtraceFrames[0], &_backtraceFrames[backtraceDepth]);
-    Callstack::Decode(decoded, 0, frames);
+    FCallstack::Decode(decoded, 0, frames);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

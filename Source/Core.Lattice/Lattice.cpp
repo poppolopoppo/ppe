@@ -25,13 +25,13 @@ void LatticeStartup::Start() {
 
     POOL_TAG(Lattice)::Start();
 
-    Collada::Start();
+    FCollada::Start();
 }
 //----------------------------------------------------------------------------
 void LatticeStartup::Shutdown() {
     CORE_MODULE_SHUTDOWN(Lattice);
 
-    Collada::Shutdown();
+    FCollada::Shutdown();
 
     POOL_TAG(Lattice)::Shutdown();
 }

@@ -3956,7 +3956,7 @@ static int stbi__check_png_header(stbi__context *s)
    static stbi_uc png_sig[8] = { 137,80,78,71,13,10,26,10 };
    int i;
    for (i=0; i < 8; ++i)
-      if (stbi__get8(s) != png_sig[i]) return stbi__err("bad png sig","Not a PNG");
+      if (stbi__get8(s) != png_sig[i]) return stbi__err("bad png sig","TNot a PNG");
    return 1;
 }
 
@@ -5345,7 +5345,7 @@ static stbi_uc *stbi__psd_load(stbi__context *s, int *x, int *y, int *comp, int 
    if (stbi__get16be(s) != 3)
       return stbi__errpuc("wrong color format", "PSD is not in RGB color format");
 
-   // Skip the Mode Data.  (It's the palette for indexed color; other info for other modes.)
+   // Skip the EMode Data.  (It's the palette for indexed color; other info for other modes.)
    stbi__skip(s,stbi__get32be(s) );
 
    // Skip the image resources.  (resolution, pen tool paths, etc)
@@ -6394,7 +6394,7 @@ static int stbi__pic_info(stbi__context *s, int *x, int *y, int *comp)
 #endif
 
 // *************************************************************************************************
-// Portable Gray Map and Portable Pixel Map loader
+// Portable Gray TMap and Portable Pixel TMap loader
 // by Ken Miller
 //
 // PGM: http://netpbm.sourceforge.net/doc/pgm.html

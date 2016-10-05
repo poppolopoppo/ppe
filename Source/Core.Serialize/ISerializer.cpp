@@ -12,8 +12,8 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void ISerializer::Deserialize(RTTI::MetaTransaction* transaction, const MemoryView<const u8>& rawData, const wchar_t *sourceName/* = nullptr */) {
-    MemoryViewReader reader(rawData);
+void ISerializer::Deserialize(RTTI::FMetaTransaction* transaction, const TMemoryView<const u8>& rawData, const wchar_t *sourceName/* = nullptr */) {
+    FMemoryViewReader reader(rawData);
     Deserialize(transaction, &reader, sourceName);
 }
 //----------------------------------------------------------------------------

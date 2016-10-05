@@ -8,42 +8,42 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Timeline {
+class FTimeline {
 public:
-    static Timeline StartNow() { return Timeline(Timepoint::Now()); }
+    static FTimeline StartNow() { return FTimeline(FTimepoint::Now()); }
 
-    Timeline();
-    explicit Timeline(const Timepoint& start);
-    ~Timeline();
+    FTimeline();
+    explicit FTimeline(const FTimepoint& start);
+    ~FTimeline();
 
-    Timeline(const Timeline& other);
-    Timeline& operator =(const Timeline& other);
+    FTimeline(const FTimeline& other);
+    FTimeline& operator =(const FTimeline& other);
 
-    const Timepoint& Now() const { return _now; }
-    const Timepoint& Last() const { return _last; }
-    const Timepoint& Start() const { return _start; }
+    const FTimepoint& Now() const { return _now; }
+    const FTimepoint& Last() const { return _last; }
+    const FTimepoint& Start() const { return _start; }
 
-    Timespan Elapsed() const { return Timepoint::Duration(_last, _now); }
-    Timespan Total() const { return Timepoint::Duration(_start, _now); }
+    Timespan Elapsed() const { return FTimepoint::Duration(_last, _now); }
+    Timespan Total() const { return FTimepoint::Duration(_start, _now); }
 
     void Reset();
 
     void Tick();
-    void Tick(const Timeline& other);
-    void Tick(const Timeline& other, float speed);
+    void Tick(const FTimeline& other);
+    void Tick(const FTimeline& other, float speed);
 
     bool Tick_Every(const Timespan& target, Timespan& elapsed);
-    bool Tick_Every(const Timeline& other, const Timespan& target, Timespan& elapsed);
-    bool Tick_Every(const Timepoint& now, const Timespan& target, Timespan& elapsed);
+    bool Tick_Every(const FTimeline& other, const Timespan& target, Timespan& elapsed);
+    bool Tick_Every(const FTimepoint& now, const Timespan& target, Timespan& elapsed);
 
     FORCE_INLINE bool Tick_Target60FPS(Timespan& elapsed) { return Tick_Every(Timespan_60hz(), elapsed); }
     FORCE_INLINE bool Tick_Target30FPS(Timespan& elapsed) { return Tick_Every(Timespan_30hz(), elapsed); }
     FORCE_INLINE bool Tick_Target15FPS(Timespan& elapsed) { return Tick_Every(Timespan_15hz(), elapsed); }
 
 private:
-    Timepoint _now;
-    Timepoint _last;
-    Timepoint _start;
+    FTimepoint _now;
+    FTimepoint _last;
+    FTimepoint _start;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

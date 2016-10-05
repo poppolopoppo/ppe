@@ -18,38 +18,38 @@ namespace Engine {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(AbstractRenderLayer);
-class EffectCompiler;
-class MaterialDatabase;
-class RenderSurfaceManager;
+class FEffectCompiler;
+class FMaterialDatabase;
+class FRenderSurfaceManager;
 FWD_REFPTR(Scene);
-class TextureCache;
-struct VariabilitySeed;
+class FTextureCache;
+struct FVariabilitySeed;
 //----------------------------------------------------------------------------
-class RenderTree : public Meta::ThreadResource {
+class FRenderTree : public Meta::FThreadResource {
 public:
-    RenderTree( const Engine::Scene *scene, IServiceProvider *serviceProvider);
-    ~RenderTree();
+    FRenderTree( const Engine::FScene *scene, IServiceProvider *serviceProvider);
+    ~FRenderTree();
 
-    const Engine::Scene *Scene() const { return _scene; }
-    Engine::RenderSurfaceManager *RenderSurfaceManager() const;
-    Engine::EffectCompiler *EffectCompiler() const;
-    Engine::TextureCache *TextureCache() const;
+    const Engine::FScene *FScene() const { return _scene; }
+    Engine::FRenderSurfaceManager *FRenderSurfaceManager() const;
+    Engine::FEffectCompiler *FEffectCompiler() const;
+    Engine::FTextureCache *FTextureCache() const;
     const VECTOR(Render, PAbstractRenderLayer)& Layers() const { return _layers; }
 
-    void Add(AbstractRenderLayer *layer);
-    void Remove(AbstractRenderLayer *layer);
-    bool TryGet(const char *name, AbstractRenderLayer **layer) const;
+    void Add(FAbstractRenderLayer *layer);
+    void Remove(FAbstractRenderLayer *layer);
+    bool TryGet(const char *name, FAbstractRenderLayer **layer) const;
     bool TryGet(const char *name, PAbstractRenderLayer& player) const;
 
     // (1) create the resources and sort if necessary
-    void Prepare(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, VariabilitySeed *seeds);
+    void Prepare(Graphics::IDeviceAPIEncapsulator *device, FMaterialDatabase *materialDatabase, FVariabilitySeed *seeds);
     // (2) change device context and execute draw calls
     void Render(Graphics::IDeviceAPIContext *context);
     // (3) called before death or disabling to destroy possibly created resources
     void Destroy(Graphics::IDeviceAPIEncapsulator *device);
 
 private:
-    const Engine::Scene *_scene;
+    const Engine::FScene *_scene;
     Engine::SRenderSurfaceService _renderSurfaceService;
     Engine::SEffectCompilerService _effectCompilerService;
     Engine::STextureCacheService _textureCacheService;

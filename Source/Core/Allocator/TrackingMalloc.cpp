@@ -14,8 +14,8 @@ namespace Core {
 namespace {
 //----------------------------------------------------------------------------
 #ifdef USE_MEMORY_DOMAINS
-struct BlockTracking_ {
-    MemoryTrackingData* TrackingData;
+struct FBlockTracking_ {
+    FMemoryTrackingData* TrackingData;
     u32 SizeInBytes;
     // adapt canary size to preserve alignment on 16 :
 #ifdef ARCH_X86
@@ -26,25 +26,25 @@ struct BlockTracking_ {
     STATIC_CONST_INTEGRAL(u32, CanaryValue, 0xABADCAFEul);
 #endif
 };
-STATIC_ASSERT(sizeof(BlockTracking_) == 16);
+STATIC_ASSERT(sizeof(FBlockTracking_) == 16);
 #endif
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void* (malloc)(MemoryTrackingData& trackingData, size_t size) {
+void* (malloc)(FMemoryTrackingData& trackingData, size_t size) {
 #ifdef USE_MEMORY_DOMAINS
     if (0 == size)
         return nullptr;
 
     trackingData.Allocate(1, size);
-    void* const ptr = malloc(size + sizeof(BlockTracking_));
+    void* const ptr = malloc(size + sizeof(FBlockTracking_));
 
-    auto* const pblock = reinterpret_cast<BlockTracking_*>(ptr);
+    auto* const pblock = reinterpret_cast<FBlockTracking_*>(ptr);
     pblock->TrackingData = &trackingData;
     pblock->SizeInBytes = checked_cast<u32>(size);
-    pblock->Canary = BlockTracking_::CanaryValue;
+    pblock->Canary = FBlockTracking_::CanaryValue;
 
     return (pblock+1);
 #else
@@ -52,14 +52,14 @@ void* (malloc)(MemoryTrackingData& trackingData, size_t size) {
 #endif
 }
 //----------------------------------------------------------------------------
-void (free)(MemoryTrackingData& trackingData, void *ptr) {
+void (free)(FMemoryTrackingData& trackingData, void *ptr) {
 #ifdef USE_MEMORY_DOMAINS
     if (nullptr == ptr)
         return;
 
-    auto* const pblock = reinterpret_cast<BlockTracking_*>(ptr) - 1;
+    auto* const pblock = reinterpret_cast<FBlockTracking_*>(ptr) - 1;
     Assert(&trackingData == pblock->TrackingData);
-    Assert(BlockTracking_::CanaryValue == pblock->CanaryValue);
+    Assert(FBlockTracking_::CanaryValue == pblock->CanaryValue);
 
     trackingData.Deallocate(1, pblock->SizeInBytes);
     free(pblock);
@@ -68,7 +68,7 @@ void (free)(MemoryTrackingData& trackingData, void *ptr) {
 #endif
 }
 //----------------------------------------------------------------------------
-void* (calloc)(MemoryTrackingData& trackingData, size_t nmemb, size_t size) {
+void* (calloc)(FMemoryTrackingData& trackingData, size_t nmemb, size_t size) {
 #ifdef USE_MEMORY_DOMAINS
     const size_t sizeInBytes = nmemb*size;
     void* const ptr = (malloc)(trackingData, sizeInBytes);
@@ -79,12 +79,12 @@ void* (calloc)(MemoryTrackingData& trackingData, size_t nmemb, size_t size) {
 #endif
 }
 //----------------------------------------------------------------------------
-void* (realloc)(MemoryTrackingData& trackingData, void *ptr, size_t size) {
+void* (realloc)(FMemoryTrackingData& trackingData, void *ptr, size_t size) {
 #ifdef USE_MEMORY_DOMAINS
     if (nullptr != ptr) {
-        auto* const pblock = reinterpret_cast<BlockTracking_*>(ptr) - 1;
+        auto* const pblock = reinterpret_cast<FBlockTracking_*>(ptr) - 1;
         Assert(&trackingData == pblock->TrackingData);
-        Assert(BlockTracking_::CanaryValue == pblock->CanaryValue);
+        Assert(FBlockTracking_::CanaryValue == pblock->CanaryValue);
 
         trackingData.Deallocate(1, pblock->SizeInBytes);
     }
@@ -95,12 +95,12 @@ void* (realloc)(MemoryTrackingData& trackingData, void *ptr, size_t size) {
     }
     else {
         trackingData.Allocate(1, size);
-        ptr = realloc(ptr, size + sizeof(BlockTracking_));
+        ptr = realloc(ptr, size + sizeof(FBlockTracking_));
 
-        auto* const pblock = reinterpret_cast<BlockTracking_*>(ptr);
+        auto* const pblock = reinterpret_cast<FBlockTracking_*>(ptr);
         pblock->TrackingData = &trackingData;
         pblock->SizeInBytes = checked_cast<u32>(size);
-        pblock->Canary = BlockTracking_::CanaryValue;
+        pblock->Canary = FBlockTracking_::CanaryValue;
 
         return (pblock+1);
     }

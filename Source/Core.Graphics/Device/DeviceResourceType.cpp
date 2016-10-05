@@ -7,39 +7,39 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-StringView ResourceTypeToCStr(DeviceResourceType type) {
+FStringView ResourceTypeToCStr(EDeviceResourceType type) {
     switch (type)
     {
-    case Core::Graphics::DeviceResourceType::Constants:
+    case Core::Graphics::EDeviceResourceType::Constants:
         return MakeStringView("Constants");
-    case Core::Graphics::DeviceResourceType::Indices:
+    case Core::Graphics::EDeviceResourceType::Indices:
         return MakeStringView("Indices");
-    case Core::Graphics::DeviceResourceType::BlendState:
-        return MakeStringView("BlendState");
-    case Core::Graphics::DeviceResourceType::DepthStencilState:
-        return MakeStringView("DepthStencilState");
-    case Core::Graphics::DeviceResourceType::RasterizerState:
-        return MakeStringView("RasterizerState");
-    case Core::Graphics::DeviceResourceType::RenderTarget:
-        return MakeStringView("RenderTarget");
-    case Core::Graphics::DeviceResourceType::SamplerState:
-        return MakeStringView("SamplerState");
-    case Core::Graphics::DeviceResourceType::ShaderEffect:
-        return MakeStringView("ShaderEffect");
-    case Core::Graphics::DeviceResourceType::ShaderProgram:
-        return MakeStringView("ShaderProgram");
-    case Core::Graphics::DeviceResourceType::Texture2D:
-        return MakeStringView("Texture2D");
-    case Core::Graphics::DeviceResourceType::TextureCube:
-        return MakeStringView("TextureCube");
-    case Core::Graphics::DeviceResourceType::VertexDeclaration:
-        return MakeStringView("VertexDeclaration");
-    case Core::Graphics::DeviceResourceType::Vertices:
+    case Core::Graphics::EDeviceResourceType::FBlendState:
+        return MakeStringView("FBlendState");
+    case Core::Graphics::EDeviceResourceType::FDepthStencilState:
+        return MakeStringView("FDepthStencilState");
+    case Core::Graphics::EDeviceResourceType::FRasterizerState:
+        return MakeStringView("FRasterizerState");
+    case Core::Graphics::EDeviceResourceType::FRenderTarget:
+        return MakeStringView("FRenderTarget");
+    case Core::Graphics::EDeviceResourceType::FSamplerState:
+        return MakeStringView("FSamplerState");
+    case Core::Graphics::EDeviceResourceType::FShaderEffect:
+        return MakeStringView("FShaderEffect");
+    case Core::Graphics::EDeviceResourceType::FShaderProgram:
+        return MakeStringView("FShaderProgram");
+    case Core::Graphics::EDeviceResourceType::FTexture2D:
+        return MakeStringView("FTexture2D");
+    case Core::Graphics::EDeviceResourceType::FTextureCube:
+        return MakeStringView("FTextureCube");
+    case Core::Graphics::EDeviceResourceType::FVertexDeclaration:
+        return MakeStringView("FVertexDeclaration");
+    case Core::Graphics::EDeviceResourceType::Vertices:
         return MakeStringView("Vertices");
     default:
         AssertNotImplemented();
     }
-    return StringView();
+    return FStringView();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -8,21 +8,21 @@
 #include <iosfwd>
 
 namespace Core {
-namespace Lexer {
+namespace FLexer {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Symbol {
+class FSymbol {
 public:
 
-    enum TypeId : uint64_t {
+    enum ETypeId : uint64_t {
         Invalid         = 0,
 
         Eof             = 1ull<< 0,
 
         Int             = 1ull<< 1,   // 42 or 033 or 0xFE
         Float           = 1ull<< 2,   // 0.5 or 1e5
-        String          = 1ull<< 3,   // "dsf\"dsfs" or 'sdfdsf'
+        FString          = 1ull<< 3,   // "dsf\"dsfs" or 'sdfdsf'
         Identifier      = 1ull<< 4,   // [_a-zA-Z][\w\d]*
 
         True            = 1ull<< 5,   // true
@@ -66,7 +66,7 @@ public:
 
         And             = 1ull<<33,   // &
         Or              = 1ull<<34,   // |
-        Not             = 1ull<<35,   // !
+        TNot             = 1ull<<35,   // !
 
         Xor             = 1ull<<36,   // ^
         Complement      = 1ull<<37,   // ~
@@ -76,10 +76,10 @@ public:
         Equals          = 1ull<<39,   // ==
         NotEquals       = 1ull<<40,   // !=
 
-        Less            = 1ull<<41,   // <
+        TLess            = 1ull<<41,   // <
         LessOrEqual     = 1ull<<42,   // <=
 
-        Greater         = 1ull<<43,   // >
+        TGreater         = 1ull<<43,   // >
         GreaterOrEqual  = 1ull<<44,   // >=
 
         DotDot          = 1ull<<45,   // ..
@@ -87,34 +87,34 @@ public:
 
         Typename        = 1ull<<50,   // float2,byte4,etc...
 
-        Prefix          = 1ull<<63,   // for Symbols class
+        Prefix          = 1ull<<63,   // for FSymbols class
     };
 
-    Symbol() : _type(Invalid), _ord(0) {}
-    Symbol(TypeId type, const StringView& cstr, u64 ord = 0) : _type(type), _cstr(cstr), _ord(ord) {}
+    FSymbol() : _type(Invalid), _ord(0) {}
+    FSymbol(ETypeId type, const FStringView& cstr, u64 ord = 0) : _type(type), _cstr(cstr), _ord(ord) {}
 
     bool IsValid() const { return (Meta::CountBitsSet(uint64_t(_type)) == 1); }
     bool IsPrefix() const { return Meta::HasFlag(_type, Prefix); }
 
-    TypeId Type() const { return _type; }
-    const StringView& CStr() const { return _cstr; }
+    ETypeId Type() const { return _type; }
+    const FStringView& CStr() const { return _cstr; }
     u64 Ord() const { return _ord; }
 
 private:
-    TypeId _type;
-    StringView _cstr;
+    ETypeId _type;
+    FStringView _cstr;
     u64 _ord;
 };
 //----------------------------------------------------------------------------
-inline bool operator ==(const Symbol& lhs, const Symbol& rhs) {
+inline bool operator ==(const FSymbol& lhs, const FSymbol& rhs) {
     return lhs.Type() == rhs.Type();
 }
 //----------------------------------------------------------------------------
-inline bool operator !=(const Symbol& lhs, const Symbol& rhs) {
+inline bool operator !=(const FSymbol& lhs, const FSymbol& rhs) {
     return !operator ==(lhs, rhs);
 }
 //----------------------------------------------------------------------------
-inline hash_t hash_value(const Symbol& symbol) {
+inline hash_t hash_value(const FSymbol& symbol) {
     return Core::hash_value(u64(symbol.Type()) );
 }
 //----------------------------------------------------------------------------
@@ -123,11 +123,11 @@ inline hash_t hash_value(const Symbol& symbol) {
 template <typename _Char, typename _Traits, typename T >
 std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
-    const Symbol& symbol) {
+    const FSymbol& symbol) {
     return oss << symbol.CStr();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace Lexer
+} //!namespace FLexer
 } //!namespace Core

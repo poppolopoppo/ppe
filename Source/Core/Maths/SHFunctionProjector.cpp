@@ -12,23 +12,23 @@ namespace Core {
 namespace {
 //----------------------------------------------------------------------------
 template <size_t _Dim>
-struct SHPolarFunctor_ {
-    SHPolarFunction<_Dim> Func;
-    SHCoefficient<_Dim> operator ()(const SHSphericalCoord& thetaPhi, const SHDirection& ) const {
+struct TSHPolarFunctor_ {
+    TSHPolarFunction<_Dim> Func;
+    TSHCoefficient<_Dim> operator ()(const SHSphericalCoord& thetaPhi, const SHDirection& ) const {
         return (*Func)(thetaPhi);
     }
 };
 //----------------------------------------------------------------------------
 template <size_t _Dim>
-struct SH3DFunctor_ {
-    SH3DFunction<_Dim> Func;
-    SHCoefficient<_Dim> operator ()(const SHSphericalCoord& , const SHDirection& dir) const {
+struct TSH3DFunctor_ {
+    TSH3DFunction<_Dim> Func;
+    TSHCoefficient<_Dim> operator ()(const SHSphericalCoord& , const SHDirection& dir) const {
         return (*Func)(dir);
     }
 };
 //----------------------------------------------------------------------------
 template <size_t _Dim, typename _SHFunctor>
-static void SHProjectFunctor_(SHVector<_Dim> *coefficients, const _SHFunctor& functor, const SHSampleCollection& samples) {
+static void SHProjectFunctor_(TSHVector<_Dim> *coefficients, const _SHFunctor& functor, const FSHSampleCollection& samples) {
     Assert(coefficients);
     Assert(coefficients->Bands() == samples.Bands());
     Assert(samples.SampleCount());
@@ -45,7 +45,7 @@ static void SHProjectFunctor_(SHVector<_Dim> *coefficients, const _SHFunctor& fu
 
     coefficients->Reset(); // set to zero SH coefficients
 
-    SHCoefficient<_Dim> *const output = coefficients->Coefficients().Pointer();
+    TSHCoefficient<_Dim> *const output = coefficients->Coefficients().Pointer();
 
     for (size_t i = 0; i < sampleCount; ++i) {
         for (size_t j = 0; j < shCoeffsPerSamples; ++j, ++sampleCoeffs)
@@ -65,21 +65,21 @@ static void SHProjectFunctor_(SHVector<_Dim> *coefficients, const _SHFunctor& fu
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define DEF_SHPROJECTFUNCTION_IMPL(_DIM, _FUNCTYPE) \
-    void SHProjectFunction(SHVector<_DIM> *coefficients, CONCAT(_FUNCTYPE, Function)<_DIM> func, const SHSampleCollection& samples) { \
+    void SHProjectFunction(TSHVector<_DIM> *coefficients, CONCAT(_FUNCTYPE, Function)<_DIM> func, const FSHSampleCollection& samples) { \
         Assert(func); \
         const CONCAT(_FUNCTYPE, Functor_)<_DIM> functor = {func}; \
         SHProjectFunctor_(coefficients, functor, samples); \
     }
 //----------------------------------------------------------------------------
-DEF_SHPROJECTFUNCTION_IMPL(1, SHPolar)
-DEF_SHPROJECTFUNCTION_IMPL(2, SHPolar)
-DEF_SHPROJECTFUNCTION_IMPL(3, SHPolar)
-DEF_SHPROJECTFUNCTION_IMPL(4, SHPolar)
+DEF_SHPROJECTFUNCTION_IMPL(1, TSHPolar)
+DEF_SHPROJECTFUNCTION_IMPL(2, TSHPolar)
+DEF_SHPROJECTFUNCTION_IMPL(3, TSHPolar)
+DEF_SHPROJECTFUNCTION_IMPL(4, TSHPolar)
 //----------------------------------------------------------------------------
-DEF_SHPROJECTFUNCTION_IMPL(1, SH3D)
-DEF_SHPROJECTFUNCTION_IMPL(2, SH3D)
-DEF_SHPROJECTFUNCTION_IMPL(3, SH3D)
-DEF_SHPROJECTFUNCTION_IMPL(4, SH3D)
+DEF_SHPROJECTFUNCTION_IMPL(1, TSH3D)
+DEF_SHPROJECTFUNCTION_IMPL(2, TSH3D)
+DEF_SHPROJECTFUNCTION_IMPL(3, TSH3D)
+DEF_SHPROJECTFUNCTION_IMPL(4, TSH3D)
 //----------------------------------------------------------------------------
 #undef DEF_SHPROJECTFUNCTION_IMPL
 //----------------------------------------------------------------------------

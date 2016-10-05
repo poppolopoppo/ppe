@@ -15,9 +15,9 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static bool ParseFilename_(const FileSystem::StringView& str, Dirpath& dirpath, Basename& basename) {
-    dirpath = Dirpath();
-    basename = Basename();
+static bool ParseFilename_(const FileSystem::FStringView& str, FDirpath& dirpath, FBasename& basename) {
+    dirpath = FDirpath();
+    basename = FBasename();
 
     if (str.empty())
         return false;
@@ -30,14 +30,14 @@ static bool ParseFilename_(const FileSystem::StringView& str, Dirpath& dirpath, 
         basename = str;
     }
     else {
-        dirpath = Dirpath(str.CutBefore(it));
+        dirpath = FDirpath(str.CutBefore(it));
         basename = str.CutStartingAt(it - 1);
     }
 
     return true;
 }
 //----------------------------------------------------------------------------
-static bool AppendRelname_(Dirpath& dirpath, Basename& basename, const FileSystem::StringView& relname) {
+static bool AppendRelname_(FDirpath& dirpath, FBasename& basename, const FileSystem::FStringView& relname) {
     Assert(basename.empty());
     if (relname.empty())
         return false;
@@ -61,141 +61,141 @@ static bool AppendRelname_(Dirpath& dirpath, Basename& basename, const FileSyste
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Filename::Filename(Core::Dirpath&& dirpath, Core::Basename&& basename)
+FFilename::FFilename(Core::FDirpath&& dirpath, Core::FBasename&& basename)
 :   _dirpath(std::move(dirpath)), _basename(std::move(basename)) {}
 //----------------------------------------------------------------------------
-Filename::Filename(const Core::Dirpath& dirpath, const Core::Basename& basename)
+FFilename::FFilename(const Core::FDirpath& dirpath, const Core::FBasename& basename)
 :   _dirpath(dirpath), _basename(basename) {}
 //----------------------------------------------------------------------------
-Filename::Filename(const Core::Dirpath& dirpath, const FileSystem::StringView& relfilename)
+FFilename::FFilename(const Core::FDirpath& dirpath, const FileSystem::FStringView& relfilename)
 :   _dirpath(dirpath) {
     if (!AppendRelname_(_dirpath, _basename, relfilename))
         AssertNotReached();
 }
 //----------------------------------------------------------------------------
-Filename::Filename(Filename&& rvalue)
+FFilename::FFilename(FFilename&& rvalue)
 :   _dirpath(std::move(rvalue._dirpath)),
     _basename(std::move(rvalue._basename)) {}
 //----------------------------------------------------------------------------
-Filename& Filename::operator =(Filename&& rvalue) {
+FFilename& FFilename::operator =(FFilename&& rvalue) {
     _dirpath = std::move(rvalue._dirpath);
     _basename = std::move(rvalue._basename);
     return *this;
 }
 //----------------------------------------------------------------------------
-Filename::Filename(const Filename& other)
+FFilename::FFilename(const FFilename& other)
 :   _dirpath(other._dirpath),
     _basename(other._basename) {}
 //----------------------------------------------------------------------------
-Filename& Filename::operator =(const Filename& other) {
+FFilename& FFilename::operator =(const FFilename& other) {
     _dirpath = other._dirpath;
     _basename = other._basename;
     return *this;
 }
 //----------------------------------------------------------------------------
-Filename::Filename(const FileSystem::StringView& content) {
+FFilename::FFilename(const FileSystem::FStringView& content) {
     if (!ParseFilename_(content, _dirpath, _basename))
         AssertNotReached();
 }
 //----------------------------------------------------------------------------
-Filename& Filename::operator =(const FileSystem::StringView& content) {
+FFilename& FFilename::operator =(const FileSystem::FStringView& content) {
     if (!ParseFilename_(content, _dirpath, _basename))
         AssertNotReached();
     return *this;
 }
 //----------------------------------------------------------------------------
-void Filename::SetMountingPoint(const Core::MountingPoint& mountingPoint) {
-    Core::MountingPoint oldMountingPoint;
-    STACKLOCAL_POD_ARRAY(Dirname, dirnames, _dirpath.Depth());
+void FFilename::SetMountingPoint(const Core::FMountingPoint& mountingPoint) {
+    Core::FMountingPoint oldMountingPoint;
+    STACKLOCAL_POD_ARRAY(FDirname, dirnames, _dirpath.Depth());
     const size_t k = _dirpath.ExpandPath(oldMountingPoint, dirnames);
     Assert(_dirpath.Depth() == k);
     UNUSED(k);
-    _dirpath = Core::Dirpath(mountingPoint, dirnames);
+    _dirpath = Core::FDirpath(mountingPoint, dirnames);
 }
 //----------------------------------------------------------------------------
-Filename Filename::WithReplacedExtension(const Core::Extname& ext) const {
-    Filename cpy(*this);
+FFilename FFilename::WithReplacedExtension(const Core::FExtname& ext) const {
+    FFilename cpy(*this);
     cpy.ReplaceExtension(ext);
     return cpy;
 }
 //----------------------------------------------------------------------------
-bool Filename::Absolute(Filename* absolute, const Core::Dirpath& origin) const {
+bool FFilename::Absolute(FFilename* absolute, const Core::FDirpath& origin) const {
     Assert(absolute);
-    Core::Dirpath dirpath;
-    if (false == Core::Dirpath::Absolute(&dirpath, origin, _dirpath))
+    Core::FDirpath dirpath;
+    if (false == Core::FDirpath::Absolute(&dirpath, origin, _dirpath))
         return false;
-    *absolute = Filename(dirpath, _basename);
+    *absolute = FFilename(dirpath, _basename);
     return true;
 }
 //----------------------------------------------------------------------------
-Filename Filename::Absolute(const Core::Dirpath& origin) const {
-    Filename result;
+FFilename FFilename::Absolute(const Core::FDirpath& origin) const {
+    FFilename result;
     if (not Absolute(&result, origin))
         AssertNotReached();
     return result;
 }
 //----------------------------------------------------------------------------
-bool Filename::Normalize(Filename* normalized) const {
+bool FFilename::Normalize(FFilename* normalized) const {
     Assert(normalized);
-    Core::Dirpath dirpath;
-    if (false == Core::Dirpath::Normalize(&dirpath, _dirpath))
+    Core::FDirpath dirpath;
+    if (false == Core::FDirpath::Normalize(&dirpath, _dirpath))
         return false;
-    *normalized = Filename(dirpath, _basename);
+    *normalized = FFilename(dirpath, _basename);
     return true;
 }
 //----------------------------------------------------------------------------
-Filename Filename::Normalized() const {
-    Filename result;
+FFilename FFilename::Normalized() const {
+    FFilename result;
     if (not Normalize(&result))
         AssertNotReached();
     return result;
 }
 //----------------------------------------------------------------------------
-bool Filename::Relative(Filename* relative, const Core::Dirpath& origin) const {
+bool FFilename::Relative(FFilename* relative, const Core::FDirpath& origin) const {
     Assert(relative);
-    Core::Dirpath dirpath;
-    if (false == Core::Dirpath::Relative(&dirpath, origin, _dirpath))
+    Core::FDirpath dirpath;
+    if (false == Core::FDirpath::Relative(&dirpath, origin, _dirpath))
         return false;
-    *relative = Filename(dirpath, _basename);
+    *relative = FFilename(dirpath, _basename);
     return true;
 }
 //----------------------------------------------------------------------------
-Filename Filename::Relative(const Core::Dirpath& origin) const {
-    Filename result;
+FFilename FFilename::Relative(const Core::FDirpath& origin) const {
+    FFilename result;
     if (not Relative(&result, origin))
         AssertNotReached();
     return result;
 }
 //----------------------------------------------------------------------------
-size_t Filename::HashValue() const {
+size_t FFilename::HashValue() const {
     return hash_tuple(_dirpath.HashValue(), _basename.HashValue());
 }
 //----------------------------------------------------------------------------
-String Filename::ToString() const {
+FString FFilename::ToString() const {
     STACKLOCAL_OCSTRSTREAM(oss, 1024);
     oss << *this;
     return Core::ToString(oss.MakeView());
 }
 //----------------------------------------------------------------------------
-WString Filename::ToWString() const {
+FWString FFilename::ToWString() const {
     STACKLOCAL_WOCSTRSTREAM(oss, 1024);
     oss << *this;
     return Core::ToWString(oss.MakeView());
 }
 //----------------------------------------------------------------------------
-size_t Filename::ToCStr(char *dst, size_t capacity) const {
-    OCStrStream oss(dst, capacity);
+size_t FFilename::ToCStr(char *dst, size_t capacity) const {
+    FOCStrStream oss(dst, capacity);
     oss << *this;
     return static_cast<size_t>(oss.tellp());
 }
 //----------------------------------------------------------------------------
-size_t Filename::ToWCStr(wchar_t *dst, size_t capacity) const {
-    WOCStrStream oss(dst, capacity);
+size_t FFilename::ToWCStr(wchar_t *dst, size_t capacity) const {
+    FWOCStrStream oss(dst, capacity);
     oss << *this;
     return static_cast<size_t>(oss.tellp());
 }
 //----------------------------------------------------------------------------
-void Filename::Swap(Filename& other) {
+void FFilename::Swap(FFilename& other) {
     swap(other._dirpath, _dirpath);
     swap(other._basename, _basename);
 }

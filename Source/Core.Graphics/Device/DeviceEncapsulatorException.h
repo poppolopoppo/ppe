@@ -15,18 +15,18 @@ FWD_REFPTR(ShaderProgram);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class GraphicsException : public Exception {
+class FGraphicsException : public FException {
 public:
-    GraphicsException(const char* what) : Exception(what) {}
+    FGraphicsException(const char* what) : FException(what) {}
 };
 //----------------------------------------------------------------------------
-class DeviceEncapsulatorException : public GraphicsException {
+class FDeviceEncapsulatorException : public FGraphicsException {
 public:
-    explicit DeviceEncapsulatorException(
+    explicit FDeviceEncapsulatorException(
         const char *what,
         const IDeviceAPIEncapsulator *encapsulator,
-        const DeviceResource *optionalResource = nullptr);
-    ~DeviceEncapsulatorException();
+        const FDeviceResource *optionalResource = nullptr);
+    ~FDeviceEncapsulatorException();
 
     const IDeviceAPIEncapsulator *Encapsulator() const { return _encapsulator; }
     const PCDeviceResource& OptionalResource() const { return _optionalResource; }
@@ -36,16 +36,16 @@ private:
     PCDeviceResource _optionalResource;
 };
 //----------------------------------------------------------------------------
-class ShaderCompilerException : public GraphicsException {
+class FShaderCompilerException : public FGraphicsException {
 public:
-    explicit ShaderCompilerException(
+    explicit FShaderCompilerException(
         const char *what,
         const IDeviceAPIShaderCompiler *encapsulator,
-        const Graphics::ShaderSource *shaderSource);
-    ~ShaderCompilerException();
+        const Graphics::FShaderSource *shaderSource);
+    ~FShaderCompilerException();
 
     const IDeviceAPIShaderCompiler *Encapsulator() const { return _encapsulator; }
-    const PCShaderSource& ShaderSource() const { return _shaderSource; }
+    const PCShaderSource& FShaderSource() const { return _shaderSource; }
 
 private:
     const IDeviceAPIShaderCompiler *_encapsulator;

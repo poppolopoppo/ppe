@@ -13,25 +13,25 @@ template <
     typename        _TokenTraits,
     typename        _Allocator
 >
-class Token;
+class EToken;
 
 namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MaterialTokenTraits {
+class FMaterialTokenTraits {
 public:
     const std::locale& Locale() const { return std::locale::classic(); }
     bool IsAllowedChar(char ch) const;
 };
 //----------------------------------------------------------------------------
 template <typename _Tag>
-using MaterialToken = Core::Token<
+using MaterialToken = Core::EToken<
     _Tag,
     char,
     CaseSensitive::False,
-    MaterialTokenTraits,
-    ALLOCATOR(Material, char)
+    FMaterialTokenTraits,
+    ALLOCATOR(FMaterial, char)
 >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -16,21 +16,21 @@ namespace Engine {
 FWD_REFPTR(Material);
 //----------------------------------------------------------------------------
 FWD_REFPTR(ModelMeshSubPart);
-class ModelMeshSubPart : public RefCountable {
+class FModelMeshSubPart : public FRefCountable {
 public:
-    ModelMeshSubPart(   const MeshName& name,
+    FModelMeshSubPart(   const FMeshName& name,
                         u32 boneIndex,
                         u32 baseVertex,
                         u32 firstIndex,
                         u32 indexCount,
                         const AABB3f& boundingBox,
-                        const Engine::Material *material );
-    ~ModelMeshSubPart();
+                        const Engine::FMaterial *material );
+    ~FModelMeshSubPart();
 
-    ModelMeshSubPart(const ModelMeshSubPart& ) = delete;
-    ModelMeshSubPart& operator =(const ModelMeshSubPart& ) = delete;
+    FModelMeshSubPart(const FModelMeshSubPart& ) = delete;
+    FModelMeshSubPart& operator =(const FModelMeshSubPart& ) = delete;
 
-    const MeshName& Name() const { return _name; }
+    const FMeshName& FName() const { return _name; }
 
     u32 BoneIndex() const { return _boneIndex; }
     u32 BaseVertex() const { return _baseVertex; }
@@ -39,12 +39,12 @@ public:
 
     const AABB3f& BoundingBox() const { return _boundingBox; }
 
-    const PCMaterial& Material() const { return _material; }
+    const PCMaterial& FMaterial() const { return _material; }
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    MeshName _name;
+    FMeshName _name;
 
     u32 _boneIndex;
     u32 _baseVertex;

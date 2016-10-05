@@ -38,51 +38,51 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-class DX11ShaderIncludeHandler_ : public ::ID3DInclude {
+class FDX11ShaderIncludeHandler_ : public ::ID3DInclude {
 public:
-    DX11ShaderIncludeHandler_(  const Dirpath& systemDir,
-                                const ShaderSource *source,
-                                const VertexDeclaration *vertexDeclaration);
-    virtual ~DX11ShaderIncludeHandler_();
+    FDX11ShaderIncludeHandler_(  const FDirpath& systemDir,
+                                const FShaderSource *source,
+                                const FVertexDeclaration *vertexDeclaration);
+    virtual ~FDX11ShaderIncludeHandler_();
 
-    DX11ShaderIncludeHandler_(const DX11ShaderIncludeHandler_& ) = delete;
-    DX11ShaderIncludeHandler_& operator =(const DX11ShaderIncludeHandler_& ) = delete;
+    FDX11ShaderIncludeHandler_(const FDX11ShaderIncludeHandler_& ) = delete;
+    FDX11ShaderIncludeHandler_& operator =(const FDX11ShaderIncludeHandler_& ) = delete;
 
     HRESULT STDCALL Open(::D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID *ppData, UINT *pBytes) override;
     HRESULT STDCALL Close(LPCVOID pData) override;
 
 private:
-    void Open_(const Filename& filename, LPCVOID *ppData, UINT *pBytes);
+    void Open_(const FFilename& filename, LPCVOID *ppData, UINT *pBytes);
     void GenerateAutomaticSubstitutions_(LPCVOID *ppData, UINT *pBytes);
 
     static void *Allocate_(size_t sizeInBytes) { return GetThreadLocalHeap().Malloc(sizeInBytes, MEMORY_DOMAIN_TRACKING_DATA(Shader)); }
     static void Deallocate_(void *ptr) { GetThreadLocalHeap().Free(ptr); }
 
-    const Dirpath _systemDir;
-    const ShaderSource *_source;
-    const VertexDeclaration *_vertexDeclaration;
+    const FDirpath _systemDir;
+    const FShaderSource *_source;
+    const FVertexDeclaration *_vertexDeclaration;
 };
 //----------------------------------------------------------------------------
-DX11ShaderIncludeHandler_::DX11ShaderIncludeHandler_(
-    const Dirpath& systemDir,
-    const ShaderSource *source,
-    const VertexDeclaration *vertexDeclaration )
+FDX11ShaderIncludeHandler_::FDX11ShaderIncludeHandler_(
+    const FDirpath& systemDir,
+    const FShaderSource *source,
+    const FVertexDeclaration *vertexDeclaration )
 :   _systemDir(systemDir)
 ,   _source(source)
 ,   _vertexDeclaration(vertexDeclaration) {
-    Assert(VirtualFileSystem::Instance().DirectoryExists(_systemDir));
+    Assert(FVirtualFileSystem::Instance().DirectoryExists(_systemDir));
     Assert(source);
     Assert(vertexDeclaration);
 }
 //----------------------------------------------------------------------------
-DX11ShaderIncludeHandler_::~DX11ShaderIncludeHandler_() {}
+FDX11ShaderIncludeHandler_::~FDX11ShaderIncludeHandler_() {}
 //----------------------------------------------------------------------------
-HRESULT STDCALL DX11ShaderIncludeHandler_::Open(::D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID/* pParentData */, LPCVOID *ppData, UINT *pBytes) {
+HRESULT STDCALL FDX11ShaderIncludeHandler_::Open(::D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID/* pParentData */, LPCVOID *ppData, UINT *pBytes) {
     *ppData = nullptr;
     *pBytes = 0;
 
     if (0 == CompareI(  MakeStringView(pFileName, Meta::noinit_tag()),
-                        ShaderSource::AppIn_SubstitutionName()) ) {
+                        FShaderSource::AppIn_SubstitutionName()) ) {
         GenerateAutomaticSubstitutions_(ppData, pBytes);
         return S_OK;
     }
@@ -103,23 +103,23 @@ HRESULT STDCALL DX11ShaderIncludeHandler_::Open(::D3D_INCLUDE_TYPE IncludeType, 
         return E_FAIL;
     }
 
-    const Filename includeFilename(buffer);
-    if (!VirtualFileSystem::Instance().FileExists(includeFilename))
+    const FFilename includeFilename(buffer);
+    if (!FVirtualFileSystem::Instance().FileExists(includeFilename))
         return E_FAIL;
 
     Open_(includeFilename, ppData, pBytes);
     return S_OK;
 }
 //----------------------------------------------------------------------------
-HRESULT STDCALL DX11ShaderIncludeHandler_::Close(LPCVOID pData) {
+HRESULT STDCALL FDX11ShaderIncludeHandler_::Close(LPCVOID pData) {
     if (pData)
         Deallocate_(remove_const(pData));
 
     return S_OK;
 }
 //----------------------------------------------------------------------------
-void DX11ShaderIncludeHandler_::Open_(const Filename& filename, LPCVOID *ppData, UINT *pBytes) {
-    const auto file = VirtualFileSystem::Instance().OpenReadable(filename, AccessPolicy::Ate_Binary );
+void FDX11ShaderIncludeHandler_::Open_(const FFilename& filename, LPCVOID *ppData, UINT *pBytes) {
+    const auto file = FVirtualFileSystem::Instance().OpenReadable(filename, AccessPolicy::Ate_Binary );
     AssertRelease(file);
 
     const size_t sizeInBytes = checked_cast<size_t>(file->TellI()); // Ate
@@ -132,11 +132,11 @@ void DX11ShaderIncludeHandler_::Open_(const Filename& filename, LPCVOID *ppData,
     *pBytes = checked_cast<UINT>(sizeInBytes);
 }
 //----------------------------------------------------------------------------
-void DX11ShaderIncludeHandler_::GenerateAutomaticSubstitutions_(LPCVOID *ppData, UINT *pBytes) {
-    VECTOR_THREAD_LOCAL(Shader, Pair<String COMMA String>) substitutions;
+void FDX11ShaderIncludeHandler_::GenerateAutomaticSubstitutions_(LPCVOID *ppData, UINT *pBytes) {
+    VECTOR_THREAD_LOCAL(Shader, TPair<FString COMMA FString>) substitutions;
     _source->FillSubstitutions(substitutions, _vertexDeclaration);
 
-    ThreadLocalOStringStream oss;
+    FThreadLocalOStringStream oss;
 
     oss << "#ifndef __AppIn_SubstitutionName_INCLUDED" << std::endl
         << "#define __AppIn_SubstitutionName_INCLUDED" << std::endl
@@ -144,7 +144,7 @@ void DX11ShaderIncludeHandler_::GenerateAutomaticSubstitutions_(LPCVOID *ppData,
         << "/* automatically generated by shader compiler */" << std::endl
         << std::endl;
 
-    for (const Pair<String COMMA String>& s : substitutions)
+    for (const TPair<FString COMMA FString>& s : substitutions)
         oss << "#define " << s.first << " " << s.second << std::endl;
 
     oss << std::endl
@@ -169,61 +169,61 @@ void DX11ShaderIncludeHandler_::GenerateAutomaticSubstitutions_(LPCVOID *ppData,
 namespace {
 //----------------------------------------------------------------------------
 template <typename T>
-static ValueType DX11VariableTypeToValueType_(const size_t rows, const size_t columns) {
+static EValueType DX11VariableTypeToValueType_(const size_t rows, const size_t columns) {
     switch (columns)
     {
     case 1:
         switch (rows)
         {
-        case 1: return ValueTraits< T >::TypeId;
-        case 2: return ValueTraits< ScalarVector<T, 2> >::TypeId;
-        case 3: return ValueTraits< ScalarVector<T, 3> >::TypeId;
-        case 4: return ValueTraits< ScalarVector<T, 4> >::TypeId;
+        case 1: return TValueTraits< T >::ETypeId;
+        case 2: return TValueTraits< TScalarVector<T, 2> >::ETypeId;
+        case 3: return TValueTraits< TScalarVector<T, 3> >::ETypeId;
+        case 4: return TValueTraits< TScalarVector<T, 4> >::ETypeId;
         }
         break;
 
     case 2:
         switch (rows)
         {
-        case 1: return ValueTraits< ScalarMatrix<T, 1, 2> >::TypeId;
-        case 2: return ValueTraits< ScalarMatrix<T, 2, 2> >::TypeId;
-        case 3: return ValueTraits< ScalarMatrix<T, 3, 2> >::TypeId;
-        case 4: return ValueTraits< ScalarMatrix<T, 4, 2> >::TypeId;
+        case 1: return TValueTraits< TScalarMatrix<T, 1, 2> >::ETypeId;
+        case 2: return TValueTraits< TScalarMatrix<T, 2, 2> >::ETypeId;
+        case 3: return TValueTraits< TScalarMatrix<T, 3, 2> >::ETypeId;
+        case 4: return TValueTraits< TScalarMatrix<T, 4, 2> >::ETypeId;
         }
         break;
 
     case 3:
         switch (rows)
         {
-        case 1: return ValueTraits< ScalarMatrix<T, 1, 3> >::TypeId;
-        case 2: return ValueTraits< ScalarMatrix<T, 2, 3> >::TypeId;
-        case 3: return ValueTraits< ScalarMatrix<T, 3, 3> >::TypeId;
-        case 4: return ValueTraits< ScalarMatrix<T, 4, 3> >::TypeId;
+        case 1: return TValueTraits< TScalarMatrix<T, 1, 3> >::ETypeId;
+        case 2: return TValueTraits< TScalarMatrix<T, 2, 3> >::ETypeId;
+        case 3: return TValueTraits< TScalarMatrix<T, 3, 3> >::ETypeId;
+        case 4: return TValueTraits< TScalarMatrix<T, 4, 3> >::ETypeId;
         }
         break;
 
     case 4:
         switch (rows)
         {
-        case 1: return ValueTraits< ScalarMatrix<T, 1, 4> >::TypeId;
-        case 2: return ValueTraits< ScalarMatrix<T, 2, 4> >::TypeId;
-        case 3: return ValueTraits< ScalarMatrix<T, 3, 4> >::TypeId;
-        case 4: return ValueTraits< ScalarMatrix<T, 4, 4> >::TypeId;
+        case 1: return TValueTraits< TScalarMatrix<T, 1, 4> >::ETypeId;
+        case 2: return TValueTraits< TScalarMatrix<T, 2, 4> >::ETypeId;
+        case 3: return TValueTraits< TScalarMatrix<T, 3, 4> >::ETypeId;
+        case 4: return TValueTraits< TScalarMatrix<T, 4, 4> >::ETypeId;
         }
         break;
     }
 
     AssertNotImplemented();
-    return ValueType::Void;
+    return EValueType::Void;
 }
 //----------------------------------------------------------------------------
-static ValueType DX11ShaderTypeToValueType_(const ::D3D11_SHADER_TYPE_DESC& desc) {
+static EValueType DX11ShaderTypeToValueType_(const ::D3D11_SHADER_TYPE_DESC& desc) {
     Assert(::D3D10_SVC_STRUCT != desc.Class);
 
     const size_t rows = desc.Rows;
     const size_t columns = desc.Columns;
 
-    ValueType result = ValueType::Void;
+    EValueType result = EValueType::Void;
 
     switch (desc.Type)
     {
@@ -247,7 +247,7 @@ static ValueType DX11ShaderTypeToValueType_(const ::D3D11_SHADER_TYPE_DESC& desc
         break;
     }
 
-    AssertRelease(ValueType::Void != result);
+    AssertRelease(EValueType::Void != result);
     return result;
 }
 //----------------------------------------------------------------------------
@@ -258,18 +258,18 @@ static ValueType DX11ShaderTypeToValueType_(const ::D3D11_SHADER_TYPE_DESC& desc
 namespace {
 //----------------------------------------------------------------------------
 static void DX11CompileShaderBlob_(
-    ComPtr<::ID3DBlob>& compiled,
+    TComPtr<::ID3DBlob>& compiled,
     IDeviceAPIShaderCompiler* compiler,
-    const ShaderSource *source,
-    const VertexDeclaration* vertexDeclaration,
-    ShaderProgramType programType,
-    ShaderProfileType profileType,
-    ShaderCompilerFlags flags,
+    const FShaderSource *source,
+    const FVertexDeclaration* vertexDeclaration,
+    EShaderProgramType programType,
+    EShaderProfileType profileType,
+    EShaderCompilerFlags flags,
     const char* entryPoint ) {
 
-    const MemoryView<const char> sourceCode = source->SourceCode();
+    const TMemoryView<const char> sourceCode = source->SourceCode();
 
-    DX11ShaderIncludeHandler_ dx11Include(ShaderSource::SystemDirpath(), source, vertexDeclaration);
+    FDX11ShaderIncludeHandler_ dx11Include(FShaderSource::SystemDirpath(), source, vertexDeclaration);
     const ::D3D_SHADER_MACRO dx11Defines[] = {
         {"DIRECTX11", "1"},
         {nullptr, nullptr},
@@ -278,7 +278,7 @@ static void DX11CompileShaderBlob_(
     const char *dx11Target = ShaderProfileTypeToD3D11Target(programType, profileType);
     const UINT dx11Compile = ShaderCompilerFlagsToD3D11CompileFlags(flags);
 
-    ComPtr<::ID3DBlob> errors = nullptr;
+    TComPtr<::ID3DBlob> errors = nullptr;
 
     if ( FAILED(::D3DCompile(
                     sourceCode.Pointer(),
@@ -296,17 +296,17 @@ static void DX11CompileShaderBlob_(
         AssertRelease(errors);
 
         const char *msg = reinterpret_cast<const char *>(errors->GetBufferPointer());
-        CORE_THROW_IT(ShaderCompilerException(msg, compiler, source));
+        CORE_THROW_IT(FShaderCompilerException(msg, compiler, source));
     }
     Assert(!errors);
 }
 //----------------------------------------------------------------------------
 static void DX11ReflectShaderBlob_(
-    ShaderCompiled::constants_type& constants,
-    ShaderCompiled::textures_type& textures,
+    FShaderCompiled::constants_type& constants,
+    FShaderCompiled::textures_type& textures,
     IDeviceAPIShaderCompiler* compiler,
-    const ShaderSource* source,
-    const ComPtr<::ID3DBlob>& compiled
+    const FShaderSource* source,
+    const TComPtr<::ID3DBlob>& compiled
     ) {
 
     ::ID3D11ShaderReflection *dx11Reflector = nullptr;
@@ -316,7 +316,7 @@ static void DX11ReflectShaderBlob_(
         ::IID_ID3D11ShaderReflection,
         (void **)&dx11Reflector
         )) ) {
-        CORE_THROW_IT(ShaderCompilerException("failed to reflect shader program", compiler, source));
+        CORE_THROW_IT(FShaderCompilerException("failed to reflect shader program", compiler, source));
     }
     Assert(dx11Reflector);
 
@@ -336,7 +336,7 @@ static void DX11ReflectShaderBlob_(
         if (FAILED(dx11Reflector_constantBuffer->GetDesc(&dx11ConstantDesc)) )
             AssertNotReached();
 
-        PConstantBufferLayout const layout = new ConstantBufferLayout();
+        PConstantBufferLayout const layout = new FConstantBufferLayout();
 
         for (UINT j = 0; j < dx11ConstantDesc.Variables; ++j) {
             ::ID3D11ShaderReflectionVariable *dx11Reflector_variable = nullptr;
@@ -353,7 +353,7 @@ static void DX11ReflectShaderBlob_(
             if (FAILED(dx11Reflector_variable->GetType()->GetDesc(&dx11TypeDesc)))
                 AssertNotReached();
 
-            const ValueType type = DX11ShaderTypeToValueType_(dx11TypeDesc);
+            const EValueType type = DX11ShaderTypeToValueType_(dx11TypeDesc);
 
             layout->AddField(   dx11VariableDesc.Name,
                                 type,
@@ -377,24 +377,24 @@ static void DX11ReflectShaderBlob_(
 
         AssertRelease(1 == dx11ResourceDesc.BindCount);
 
-        ShaderProgramTexture texture;
+        FShaderProgramTexture texture;
         texture.Name = dx11ResourceDesc.Name;
         switch (dx11ResourceDesc.Dimension)
         {
         case ::D3D11_SRV_DIMENSION_TEXTURE2D:
-            texture.Dimension = TextureDimension::Texture2D;
+            texture.Dimension = ETextureDimension::FTexture2D;
             break;
         case ::D3D11_SRV_DIMENSION_TEXTURE3D:
-            texture.Dimension = TextureDimension::Texture3D;
+            texture.Dimension = ETextureDimension::Texture3D;
             break;
         case ::D3D11_SRV_DIMENSION_TEXTURECUBE:
-            texture.Dimension = TextureDimension::TextureCube;
+            texture.Dimension = ETextureDimension::FTextureCube;
             break;
         case ::D3D11_SRV_DIMENSION_TEXTURE2DARRAY:
-            texture.Dimension = TextureDimension::Texture2DArray;
+            texture.Dimension = ETextureDimension::Texture2DArray;
             break;
         case ::D3D11_SRV_DIMENSION_TEXTURECUBEARRAY:
-            texture.Dimension = TextureDimension::TextureCubeArray;
+            texture.Dimension = ETextureDimension::TextureCubeArray;
             break;
         default:
             AssertNotImplemented();
@@ -407,15 +407,15 @@ static void DX11ReflectShaderBlob_(
 }
 //----------------------------------------------------------------------------
 static void DX11StripShaderBlobIFN_(
-    ComPtr<::ID3DBlob>& compiled,
+    TComPtr<::ID3DBlob>& compiled,
     IDeviceAPIShaderCompiler* compiler,
-    const ShaderSource *source,
-    ShaderCompilerFlags flags ) {
+    const FShaderSource *source,
+    EShaderCompilerFlags flags ) {
 
-    if (Meta::HasFlag(flags, ShaderCompilerFlags::NoOptimize) )
+    if (Meta::HasFlag(flags, EShaderCompilerFlags::NoOptimize) )
         return; // shader is not stripped when NoOptimize is set (debug)
 
-    ComPtr<::ID3DBlob> striped = nullptr;
+    TComPtr<::ID3DBlob> striped = nullptr;
 
     if ( FAILED(::D3DStripShader(
                     compiled->GetBufferPointer(),
@@ -426,7 +426,7 @@ static void DX11StripShaderBlobIFN_(
                     ::D3DCOMPILER_STRIP_TEST_BLOBS,
                     striped.GetAddressOf()
         )) ) {
-        CORE_THROW_IT(ShaderCompilerException("failed to strip shader program", compiler, source));
+        CORE_THROW_IT(FShaderCompilerException("failed to strip shader program", compiler, source));
     }
 
     compiled = striped;
@@ -436,58 +436,58 @@ static void DX11StripShaderBlobIFN_(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DX11ShaderCompiler::DX11ShaderCompiler() {}
+FDX11ShaderCompiler::FDX11ShaderCompiler() {}
 //----------------------------------------------------------------------------
-DX11ShaderCompiler::~DX11ShaderCompiler() {}
+FDX11ShaderCompiler::~FDX11ShaderCompiler() {}
 //----------------------------------------------------------------------------
-ShaderCompiled* DX11ShaderCompiler::CompileShaderSource(
-    const ShaderSource *source,
-    const VertexDeclaration *vertexDeclaration,
-    ShaderProgramType programType,
-    ShaderProfileType profileType,
-    ShaderCompilerFlags flags,
+FShaderCompiled* FDX11ShaderCompiler::CompileShaderSource(
+    const FShaderSource *source,
+    const FVertexDeclaration *vertexDeclaration,
+    EShaderProgramType programType,
+    EShaderProfileType profileType,
+    EShaderCompilerFlags flags,
     const char *entryPoint ) {
 
-    ComPtr<::ID3DBlob> compiled;
+    TComPtr<::ID3DBlob> compiled;
 
     DX11CompileShaderBlob_(compiled, this, source, vertexDeclaration, programType, profileType, flags, entryPoint);
     Assert(compiled);
 
-    ShaderCompiled::constants_type constants;
-    ShaderCompiled::textures_type textures;
+    FShaderCompiled::constants_type constants;
+    FShaderCompiled::textures_type textures;
     DX11ReflectShaderBlob_(constants, textures, this, source, compiled);
 
     DX11StripShaderBlobIFN_(compiled, this, source, flags);
     Assert(compiled);
 
-    ShaderCompiled::blob_type blob;
+    FShaderCompiled::blob_type blob;
     blob.Resize_DiscardData(compiled->GetBufferSize());
     memcpy(blob.Pointer(), compiled->GetBufferPointer(), blob.SizeInBytes());
 
     const u64 fingerprint = Fingerprint64(blob.MakeConstView());
 
-    return new ShaderCompiled(
+    return new FShaderCompiled(
         fingerprint,
         std::move(blob),
         std::move(constants),
         std::move(textures) );
 }
 //----------------------------------------------------------------------------
-void DX11ShaderCompiler::PreprocessShaderSource(
+void FDX11ShaderCompiler::PreprocessShaderSource(
     RAWSTORAGE(Shader, char)& output,
-    const ShaderSource *source,
-    const VertexDeclaration *vertexDeclaration ) {
+    const FShaderSource *source,
+    const FVertexDeclaration *vertexDeclaration ) {
 
-    const MemoryView<const char> sourceCode = source->SourceCode();
+    const TMemoryView<const char> sourceCode = source->SourceCode();
 
-    DX11ShaderIncludeHandler_ dx11Include(ShaderSource::SystemDirpath(), source, vertexDeclaration);
+    FDX11ShaderIncludeHandler_ dx11Include(FShaderSource::SystemDirpath(), source, vertexDeclaration);
     const ::D3D_SHADER_MACRO dx11Defines[] = {
         {"DIRECTX11", "1"},
         {nullptr, nullptr},
     };
 
-    ComPtr<::ID3DBlob> errors = nullptr;
-    ComPtr<::ID3DBlob> preprocessed = nullptr;
+    TComPtr<::ID3DBlob> errors = nullptr;
+    TComPtr<::ID3DBlob> preprocessed = nullptr;
 
     if ( FAILED(::D3DPreprocess(
                     sourceCode.Pointer(),
@@ -501,7 +501,7 @@ void DX11ShaderCompiler::PreprocessShaderSource(
         AssertRelease(errors);
 
         const char *msg = reinterpret_cast<const char *>(errors->GetBufferPointer());
-        CORE_THROW_IT(ShaderCompilerException(msg, this, source));
+        CORE_THROW_IT(FShaderCompilerException(msg, this, source));
     }
     Assert(!errors);
     Assert(preprocessed);
@@ -512,94 +512,94 @@ void DX11ShaderCompiler::PreprocessShaderSource(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-UINT ShaderCompilerFlagsToD3D11CompileFlags(ShaderCompilerFlags value) {
+UINT ShaderCompilerFlagsToD3D11CompileFlags(EShaderCompilerFlags value) {
     UINT result = 0;
-    if (Meta::HasFlag(value, ShaderCompilerFlags::Debug) )
+    if (Meta::HasFlag(value, EShaderCompilerFlags::Debug) )
         result |= D3DCOMPILE_DEBUG;
-    if (Meta::HasFlag(value, ShaderCompilerFlags::Optimize) )
+    if (Meta::HasFlag(value, EShaderCompilerFlags::Optimize) )
         result |= D3DCOMPILE_OPTIMIZATION_LEVEL3;
-    else if (Meta::HasFlag(value, ShaderCompilerFlags::NoOptimize) )
+    else if (Meta::HasFlag(value, EShaderCompilerFlags::NoOptimize) )
         result |= D3DCOMPILE_SKIP_OPTIMIZATION;
-    if (Meta::HasFlag(value, ShaderCompilerFlags::Pedantic) )
+    if (Meta::HasFlag(value, EShaderCompilerFlags::Pedantic) )
         result |= D3DCOMPILE_ENABLE_STRICTNESS;
-    if (Meta::HasFlag(value, ShaderCompilerFlags::WError) )
+    if (Meta::HasFlag(value, EShaderCompilerFlags::WError) )
         result |= D3DCOMPILE_WARNINGS_ARE_ERRORS;
     return result;
 }
 //----------------------------------------------------------------------------
-ShaderCompilerFlags D3D11CompileFlagsToShaderCompilerFlags(UINT  value) {
-    ShaderCompilerFlags result = ShaderCompilerFlags::None;
+EShaderCompilerFlags D3D11CompileFlagsToShaderCompilerFlags(UINT  value) {
+    EShaderCompilerFlags result = EShaderCompilerFlags::None;
     if (D3DCOMPILE_DEBUG == (D3DCOMPILE_DEBUG & value) )
-        result = static_cast<ShaderCompilerFlags>(size_t(result) | size_t(ShaderCompilerFlags::Debug));
+        result = static_cast<EShaderCompilerFlags>(size_t(result) | size_t(EShaderCompilerFlags::Debug));
     if (D3DCOMPILE_OPTIMIZATION_LEVEL3 == (D3DCOMPILE_OPTIMIZATION_LEVEL3 & value) )
-        result = static_cast<ShaderCompilerFlags>(size_t(result) | size_t(ShaderCompilerFlags::Optimize));
+        result = static_cast<EShaderCompilerFlags>(size_t(result) | size_t(EShaderCompilerFlags::Optimize));
     else if (D3DCOMPILE_SKIP_OPTIMIZATION == (D3DCOMPILE_SKIP_OPTIMIZATION & value) )
-        result = static_cast<ShaderCompilerFlags>(size_t(result) | size_t(ShaderCompilerFlags::NoOptimize));
+        result = static_cast<EShaderCompilerFlags>(size_t(result) | size_t(EShaderCompilerFlags::NoOptimize));
     if (D3DCOMPILE_ENABLE_STRICTNESS == (D3DCOMPILE_ENABLE_STRICTNESS & value) )
-        result = static_cast<ShaderCompilerFlags>(size_t(result) | size_t(ShaderCompilerFlags::Pedantic));
+        result = static_cast<EShaderCompilerFlags>(size_t(result) | size_t(EShaderCompilerFlags::Pedantic));
     if (D3DCOMPILE_WARNINGS_ARE_ERRORS == (D3DCOMPILE_WARNINGS_ARE_ERRORS & value) )
-        result = static_cast<ShaderCompilerFlags>(size_t(result) | size_t(ShaderCompilerFlags::WError));
+        result = static_cast<EShaderCompilerFlags>(size_t(result) | size_t(EShaderCompilerFlags::WError));
     return result;
 }
 //----------------------------------------------------------------------------
-LPCSTR ShaderProfileTypeToD3D11Target(ShaderProgramType program, ShaderProfileType profile) {
+LPCSTR ShaderProfileTypeToD3D11Target(EShaderProgramType program, EShaderProfileType profile) {
     switch (profile)
     {
-    case Core::Graphics::ShaderProfileType::ShaderModel5:
+    case Core::Graphics::EShaderProfileType::ShaderModel5:
         switch (program)
         {
-        case Core::Graphics::ShaderProgramType::Vertex:
+        case Core::Graphics::EShaderProgramType::Vertex:
             return "vs_5_0";
-        case Core::Graphics::ShaderProgramType::Hull:
+        case Core::Graphics::EShaderProgramType::Hull:
             return "hs_5_0";
-        case Core::Graphics::ShaderProgramType::Domain:
+        case Core::Graphics::EShaderProgramType::Domain:
             return "ds_5_0";
-        case Core::Graphics::ShaderProgramType::Pixel:
+        case Core::Graphics::EShaderProgramType::Pixel:
             return "ps_5_0";
-        case Core::Graphics::ShaderProgramType::Geometry:
+        case Core::Graphics::EShaderProgramType::Geometry:
             return "gs_5_0";
-        case Core::Graphics::ShaderProgramType::Compute:
+        case Core::Graphics::EShaderProgramType::Compute:
             return "cs_5_0";
         default:
             AssertNotImplemented();
         }
         break;
-    case Core::Graphics::ShaderProfileType::ShaderModel4_1:
+    case Core::Graphics::EShaderProfileType::ShaderModel4_1:
         switch (program)
         {
-        case Core::Graphics::ShaderProgramType::Vertex:
+        case Core::Graphics::EShaderProgramType::Vertex:
             return "vs_4_1";
-        case Core::Graphics::ShaderProgramType::Pixel:
+        case Core::Graphics::EShaderProgramType::Pixel:
             return "ps_4_1";
-        case Core::Graphics::ShaderProgramType::Geometry:
+        case Core::Graphics::EShaderProgramType::Geometry:
             return "gs_4_1";
-        case Core::Graphics::ShaderProgramType::Compute:
+        case Core::Graphics::EShaderProgramType::Compute:
             return "cs_4_1";
         default:
             AssertNotImplemented();
         }
         break;
-    case Core::Graphics::ShaderProfileType::ShaderModel4:
+    case Core::Graphics::EShaderProfileType::ShaderModel4:
         switch (program)
         {
-        case Core::Graphics::ShaderProgramType::Vertex:
+        case Core::Graphics::EShaderProgramType::Vertex:
             return "vs_4_0";
-        case Core::Graphics::ShaderProgramType::Pixel:
+        case Core::Graphics::EShaderProgramType::Pixel:
             return "ps_4_0";
-        case Core::Graphics::ShaderProgramType::Geometry:
+        case Core::Graphics::EShaderProgramType::Geometry:
             return "gs_4_0";
-        case Core::Graphics::ShaderProgramType::Compute:
+        case Core::Graphics::EShaderProgramType::Compute:
             return "cs_4_0";
         default:
             AssertNotImplemented();
         }
         break;
-    case Core::Graphics::ShaderProfileType::ShaderModel3:
+    case Core::Graphics::EShaderProfileType::ShaderModel3:
         switch (program)
         {
-        case Core::Graphics::ShaderProgramType::Vertex:
+        case Core::Graphics::EShaderProgramType::Vertex:
             return "vs_3_0";
-        case Core::Graphics::ShaderProgramType::Pixel:
+        case Core::Graphics::EShaderProgramType::Pixel:
             return "ps_3_0";
         default:
             AssertNotImplemented();

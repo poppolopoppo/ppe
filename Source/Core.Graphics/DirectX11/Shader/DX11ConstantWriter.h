@@ -10,22 +10,22 @@ class IDeviceAPIEncapsulator;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DX11ConstantWriter : public DeviceAPIDependantConstantWriter {
+class FDX11ConstantWriter : public FDeviceAPIDependantConstantWriter {
 public:
-    DX11ConstantWriter(IDeviceAPIEncapsulator *device);
-    virtual ~DX11ConstantWriter();
+    FDX11ConstantWriter(IDeviceAPIEncapsulator *device);
+    virtual ~FDX11ConstantWriter();
 
     virtual void SetData(
         IDeviceAPIEncapsulator *device,
-        const ConstantBuffer *resource,
-        const MemoryView<const u8>& rawData,
-        const MemoryView<u8>& output) const override;
+        const FConstantBuffer *resource,
+        const TMemoryView<const u8>& rawData,
+        const TMemoryView<u8>& output) const override;
 
     virtual void SetData(
         IDeviceAPIEncapsulator *device,
-        const ConstantBuffer *resource,
-        const MemoryView<const void *>& fieldsData,
-        const MemoryView<u8>& output) const override;
+        const FConstantBuffer *resource,
+        const TMemoryView<const void *>& fieldsData,
+        const TMemoryView<u8>& output) const override;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

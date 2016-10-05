@@ -17,54 +17,54 @@ RTTI_CLASS_END()
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(ContentPipeline, ContentFilterGlob, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(ContentPipeline, FContentFilterGlob, );
 //----------------------------------------------------------------------------
-RTTI_CLASS_BEGIN(ContentPipeline, ContentFilterGlob, Default)
+RTTI_CLASS_BEGIN(ContentPipeline, FContentFilterGlob, Default)
 RTTI_PROPERTY_PRIVATE_FIELD(_pattern)
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------
-ContentFilterGlob::ContentFilterGlob() {}
+FContentFilterGlob::FContentFilterGlob() {}
 //----------------------------------------------------------------------------
-ContentFilterGlob::ContentFilterGlob(pattern_type&& pattern)
+FContentFilterGlob::FContentFilterGlob(pattern_type&& pattern)
     : _pattern(std::move(pattern)) {}
 //----------------------------------------------------------------------------
 #ifdef WITH_RTTI_VERIFY_PREDICATES
-void ContentFilterGlob::RTTI_VerifyPredicates() const {
-    MetaClass::parent_type::RTTI_VerifyPredicates();
+void FContentFilterGlob::RTTI_VerifyPredicates() const {
+    FMetaClass::parent_type::RTTI_VerifyPredicates();
     RTTI_VerifyPredicate(not _pattern.empty());
 }
 #endif
 //----------------------------------------------------------------------------
-ContentFilterGlob::~ContentFilterGlob() {}
+FContentFilterGlob::~FContentFilterGlob() {}
 //----------------------------------------------------------------------------
-bool ContentFilterGlob::Matches(const WStringView& sourceFilename) const {
-    STATIC_ASSERT(Case::Insensitive == FileSystem::CaseSensitive);
+bool FContentFilterGlob::Matches(const FWStringView& sourceFilename) const {
+    STATIC_ASSERT(ECase::Insensitive == FileSystem::CaseSensitive);
     return WildMatchI(MakeStringView(_pattern), sourceFilename);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(ContentPipeline, ContentFilterGroup, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(ContentPipeline, FContentFilterGroup, );
 //----------------------------------------------------------------------------
-RTTI_CLASS_BEGIN(ContentPipeline, ContentFilterGroup, Default)
+RTTI_CLASS_BEGIN(ContentPipeline, FContentFilterGroup, Default)
 RTTI_PROPERTY_PRIVATE_FIELD(_group)
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------
-ContentFilterGroup::ContentFilterGroup() {}
+FContentFilterGroup::FContentFilterGroup() {}
 //----------------------------------------------------------------------------
-ContentFilterGroup::ContentFilterGroup(group_type&& group)
+FContentFilterGroup::FContentFilterGroup(group_type&& group)
     : _group(std::move(group)) {}
 //----------------------------------------------------------------------------
-ContentFilterGroup::~ContentFilterGroup() {}
+FContentFilterGroup::~FContentFilterGroup() {}
 //----------------------------------------------------------------------------
 #ifdef WITH_RTTI_VERIFY_PREDICATES
-void ContentFilterGroup::RTTI_VerifyPredicates() const {
-    MetaClass::parent_type::RTTI_VerifyPredicates();
+void FContentFilterGroup::RTTI_VerifyPredicates() const {
+    FMetaClass::parent_type::RTTI_VerifyPredicates();
     RTTI_VerifyPredicate(not _group.empty());
 }
 #endif
 //----------------------------------------------------------------------------
-bool ContentFilterGroup::Matches(const WStringView& sourceFilename) const {
+bool FContentFilterGroup::Matches(const FWStringView& sourceFilename) const {
     for (const PCContentFilter& filter : _group) {
         if (filter->Matches(sourceFilename))
             return true;
@@ -74,33 +74,33 @@ bool ContentFilterGroup::Matches(const WStringView& sourceFilename) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(ContentPipeline, ContentFilterRegexp, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(ContentPipeline, FContentFilterRegexp, );
 //----------------------------------------------------------------------------
-RTTI_CLASS_BEGIN(ContentPipeline, ContentFilterRegexp, Default)
+RTTI_CLASS_BEGIN(ContentPipeline, FContentFilterRegexp, Default)
 RTTI_PROPERTY_PRIVATE_FIELD(_regexp)
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------
-ContentFilterRegexp::ContentFilterRegexp() {}
+FContentFilterRegexp::FContentFilterRegexp() {}
 //----------------------------------------------------------------------------
-ContentFilterRegexp::ContentFilterRegexp(string_type&& regexp)
+FContentFilterRegexp::FContentFilterRegexp(string_type&& regexp)
     : _regexp(std::move(regexp))
     , _compiled(MakeRegexp(MakeStringView(_regexp))) {}
 //----------------------------------------------------------------------------
-ContentFilterRegexp::~ContentFilterRegexp() {}
+FContentFilterRegexp::~FContentFilterRegexp() {}
 //----------------------------------------------------------------------------
-void ContentFilterRegexp::RTTI_Load(RTTI::MetaLoadContext* context) {
+void FContentFilterRegexp::RTTI_Load(RTTI::FMetaLoadContext* context) {
     UNUSED(context);
     _compiled = MakeRegexp(MakeStringView(_regexp));
 }
 //----------------------------------------------------------------------------
 #ifdef WITH_RTTI_VERIFY_PREDICATES
-void ContentFilterRegexp::RTTI_VerifyPredicates() const {
-    MetaClass::parent_type::RTTI_VerifyPredicates();
+void FContentFilterRegexp::RTTI_VerifyPredicates() const {
+    FMetaClass::parent_type::RTTI_VerifyPredicates();
 }
 #endif
 //----------------------------------------------------------------------------
-bool ContentFilterRegexp::Matches(const WStringView& sourceFilename) const {
-    return Match(_compiled, sourceFilename);
+bool FContentFilterRegexp::Matches(const FWStringView& sourceFilename) const {
+    return FMatch(_compiled, sourceFilename);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

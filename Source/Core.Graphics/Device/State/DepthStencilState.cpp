@@ -11,25 +11,25 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DepthStencilState::DepthStencilState()
-:   DeviceResource(DeviceResourceType::DepthStencilState) {}
+FDepthStencilState::FDepthStencilState()
+:   FDeviceResource(EDeviceResourceType::FDepthStencilState) {}
 //----------------------------------------------------------------------------
-DepthStencilState::~DepthStencilState() {
+FDepthStencilState::~FDepthStencilState() {
     Assert(!_deviceAPIDependantState);
 }
 //----------------------------------------------------------------------------
-bool DepthStencilState::Available() const {
+bool FDepthStencilState::Available() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     return nullptr != _deviceAPIDependantState;
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantEntity *DepthStencilState::TerminalEntity() const {
+FDeviceAPIDependantEntity *FDepthStencilState::TerminalEntity() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     return _deviceAPIDependantState.get();
 }
 //----------------------------------------------------------------------------
-void DepthStencilState::Create(IDeviceAPIEncapsulator *device) {
+void FDepthStencilState::Create(IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(!_deviceAPIDependantState);
@@ -39,7 +39,7 @@ void DepthStencilState::Create(IDeviceAPIEncapsulator *device) {
     Assert(_deviceAPIDependantState);
 }
 //----------------------------------------------------------------------------
-void DepthStencilState::Destroy(IDeviceAPIEncapsulator *device) {
+void FDepthStencilState::Destroy(IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(_deviceAPIDependantState);
@@ -51,29 +51,29 @@ void DepthStencilState::Destroy(IDeviceAPIEncapsulator *device) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceAPIDependantDepthStencilState::DeviceAPIDependantDepthStencilState(IDeviceAPIEncapsulator *device, const DepthStencilState *resource)
-:   TypedDeviceAPIDependantEntity<DepthStencilState>(device->APIEncapsulator(), resource) {
+FDeviceAPIDependantDepthStencilState::FDeviceAPIDependantDepthStencilState(IDeviceAPIEncapsulator *device, const FDepthStencilState *resource)
+:   TTypedDeviceAPIDependantEntity<FDepthStencilState>(device->APIEncapsulator(), resource) {
     Assert(resource);
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantDepthStencilState::~DeviceAPIDependantDepthStencilState() {}
+FDeviceAPIDependantDepthStencilState::~FDeviceAPIDependantDepthStencilState() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const DepthStencilState *DepthStencilState::Default = nullptr;
-const DepthStencilState *DepthStencilState::DepthRead = nullptr;
-const DepthStencilState *DepthStencilState::None = nullptr;
+const FDepthStencilState *FDepthStencilState::Default = nullptr;
+const FDepthStencilState *FDepthStencilState::DepthRead = nullptr;
+const FDepthStencilState *FDepthStencilState::None = nullptr;
 //----------------------------------------------------------------------------
 namespace {
-    static POD_STORAGE(DepthStencilState) gDepthStencilState_Default;
-    static POD_STORAGE(DepthStencilState) gDepthStencilState_DepthRead;
-    static POD_STORAGE(DepthStencilState) gDepthStencilState_None;
+    static POD_STORAGE(FDepthStencilState) gDepthStencilState_Default;
+    static POD_STORAGE(FDepthStencilState) gDepthStencilState_DepthRead;
+    static POD_STORAGE(FDepthStencilState) gDepthStencilState_None;
 }
 //----------------------------------------------------------------------------
-void DepthStencilState::Start() {
+void FDepthStencilState::Start() {
     Assert(nullptr == Default);
     {
-        DepthStencilState *const state = new ((void *)&gDepthStencilState_Default) DepthStencilState();
+        FDepthStencilState *const state = new ((void *)&gDepthStencilState_Default) FDepthStencilState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("Default");
@@ -85,7 +85,7 @@ void DepthStencilState::Start() {
     }
     Assert(nullptr == DepthRead);
     {
-        DepthStencilState *const state = new ((void *)&gDepthStencilState_DepthRead) DepthStencilState();
+        FDepthStencilState *const state = new ((void *)&gDepthStencilState_DepthRead) FDepthStencilState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("DepthRead");
@@ -97,7 +97,7 @@ void DepthStencilState::Start() {
     }
     Assert(nullptr == None);
     {
-        DepthStencilState *const state = new ((void *)&gDepthStencilState_None) DepthStencilState();
+        FDepthStencilState *const state = new ((void *)&gDepthStencilState_None) FDepthStencilState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("None");
@@ -109,7 +109,7 @@ void DepthStencilState::Start() {
     }
 }
 //----------------------------------------------------------------------------
-void DepthStencilState::Shutdown() {
+void FDepthStencilState::Shutdown() {
     Assert(nullptr != Default);
     {
         Assert((void *)Default == (void *)&gDepthStencilState_Default);
@@ -132,9 +132,9 @@ void DepthStencilState::Shutdown() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void DepthStencilState::OnDeviceCreate(DeviceEncapsulator *device) {
+void FDepthStencilState::OnDeviceCreate(FDeviceEncapsulator *device) {
 #define CREATEWDEVICE_DEPTHSTENCILSTATE_BUILTINTYPE(_NAME) \
-    remove_const(DepthStencilState::_NAME)->Create(device->Device())
+    remove_const(FDepthStencilState::_NAME)->Create(device->Device())
 
     CREATEWDEVICE_DEPTHSTENCILSTATE_BUILTINTYPE(Default);
     CREATEWDEVICE_DEPTHSTENCILSTATE_BUILTINTYPE(DepthRead);
@@ -143,9 +143,9 @@ void DepthStencilState::OnDeviceCreate(DeviceEncapsulator *device) {
 #undef CREATEWDEVICE_DEPTHSTENCILSTATE_BUILTINTYPE
 }
 //----------------------------------------------------------------------------
-void DepthStencilState::OnDeviceDestroy(DeviceEncapsulator *device) {
+void FDepthStencilState::OnDeviceDestroy(FDeviceEncapsulator *device) {
 #define DESTROYWDEVICE_DEPTHSTENCILSTATE_BUILTINTYPE(_NAME) \
-    remove_const(DepthStencilState::_NAME)->Destroy(device->Device())
+    remove_const(FDepthStencilState::_NAME)->Destroy(device->Device())
 
     DESTROYWDEVICE_DEPTHSTENCILSTATE_BUILTINTYPE(Default);
     DESTROYWDEVICE_DEPTHSTENCILSTATE_BUILTINTYPE(DepthRead);

@@ -10,9 +10,9 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Deleter = checked_deleter<T> >
-class UniqueView : public MemoryView<T>, private _Deleter {
+class TUniqueView : public TMemoryView<T>, private _Deleter {
 public:
-    typedef MemoryView<T> base_type;
+    typedef TMemoryView<T> base_type;
 
     using typename base_type::value_type;
     using typename base_type::pointer;
@@ -26,52 +26,52 @@ public:
     using typename base_type::iterator;
     using typename base_type::iterator_category;
 
-    UniqueView();
-    ~UniqueView();
+    TUniqueView();
+    ~TUniqueView();
 
-    explicit UniqueView(const MemoryView<T>& other);
-    UniqueView(pointer storage, size_type capacity);
+    explicit TUniqueView(const TMemoryView<T>& other);
+    TUniqueView(pointer storage, size_type capacity);
 
-    UniqueView(UniqueView&& rvalue);
-    UniqueView& operator =(UniqueView&& rvalue);
+    TUniqueView(TUniqueView&& rvalue);
+    TUniqueView& operator =(TUniqueView&& rvalue);
 
-    UniqueView(const UniqueView& other) = delete;
-    UniqueView& operator =(const UniqueView& other) = delete;
+    TUniqueView(const TUniqueView& other) = delete;
+    TUniqueView& operator =(const TUniqueView& other) = delete;
 
     operator void* () const { return base_type::data(); }
 
-    void Reset(UniqueView&& rvalue);
+    void Reset(TUniqueView&& rvalue);
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Deleter >
-UniqueView<T, _Deleter>::UniqueView() {}
+TUniqueView<T, _Deleter>::TUniqueView() {}
 //----------------------------------------------------------------------------
 template <typename T, typename _Deleter >
-UniqueView<T, _Deleter>::UniqueView(const MemoryView<T>& other)
+TUniqueView<T, _Deleter>::TUniqueView(const TMemoryView<T>& other)
 :   base_type(other) {}
 //----------------------------------------------------------------------------
 template <typename T, typename _Deleter >
-UniqueView<T, _Deleter>::UniqueView(pointer storage, size_type capacity)
+TUniqueView<T, _Deleter>::TUniqueView(pointer storage, size_type capacity)
 :   base_type(storage, capacity) {}
 //----------------------------------------------------------------------------
 template <typename T, typename _Deleter >
-UniqueView<T, _Deleter>::~UniqueView() {
+TUniqueView<T, _Deleter>::~TUniqueView() {
     if (base_type::data())
         _Deleter::operator ()(base_type::data());
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Deleter >
-UniqueView<T, _Deleter>::UniqueView(UniqueView&& rvalue)
+TUniqueView<T, _Deleter>::TUniqueView(TUniqueView&& rvalue)
 :   base_type(std::move(rvalue)) {}
 //----------------------------------------------------------------------------
 template <typename T, typename _Deleter >
-auto UniqueView<T, _Deleter>::operator =(UniqueView&& rvalue) -> UniqueView& {
+auto TUniqueView<T, _Deleter>::operator =(TUniqueView&& rvalue) -> TUniqueView& {
     Reset(std::move(rvalue));
     return (*this);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Deleter >
-void UniqueView<T, _Deleter>::Reset(UniqueView&&  rvalue) {
+void TUniqueView<T, _Deleter>::Reset(TUniqueView&&  rvalue) {
     if (base_type::data())
         _Deleter::operator ()(base_type::data());
 
@@ -81,11 +81,11 @@ void UniqueView<T, _Deleter>::Reset(UniqueView&&  rvalue) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-using UniqueArray = UniqueView<T, checked_deleter<T[]> >;
+using TUniqueArray = TUniqueView<T, checked_deleter<T[]> >;
 //----------------------------------------------------------------------------
 template <typename T>
-inline UniqueArray<T> NewArray(size_t count) {
-    return UniqueArray<T>{ new T[count], count };
+inline TUniqueArray<T> NewArray(size_t count) {
+    return TUniqueArray<T>{ new T[count], count };
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

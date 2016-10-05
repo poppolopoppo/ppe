@@ -14,7 +14,7 @@ namespace Core {
 // http://www.geometrictools.com/Documentation/LeastSquaresFitting.pdf
 // http://www.geometrictools.com/GTEngine/Include/Mathematics/GteSymmetricEigensolver3x3.h
 //----------------------------------------------------------------------------
-// The SymmetricEigensolver class is an implementation of Algorithm 8.2.3
+// The TSymmetricEigensolver class is an implementation of Algorithm 8.2.3
 // (Symmetric QR Algorithm) described in "Matrix Computations, 2nd edition"
 // by G. H. Golub and C. F. Van Loan, The Johns Hopkins University Press,
 // Baltimore MD, Fourth Printing 1993.  Algorithm 8.2.1 (Householder
@@ -102,20 +102,20 @@ namespace Core {
 // small number of eigenvectors, use function GetEigenvector(int,T*).
 
 template <typename T, size_t N>
-class SymmetricEigensolver {
+class TSymmetricEigensolver {
 public:
     // The number N of rows and columns of the matrices to be processed.
     STATIC_CONST_INTEGRAL(size_t, Dim, N);
 
-    typedef ScalarVector<T, N> vector_type;
-    typedef ScalarMatrix<T, N, N> matrix_type;
+    typedef TScalarVector<T, N> vector_type;
+    typedef TScalarMatrix<T, N, N> matrix_type;
 
     // The solver processes NxN symmetric matrices, where N > 1 ('size' is N)
     // and the matrix is stored in row-major order.  The maximum number of
     // iterations ('maxIterations') must be specified for the reduction of a
     // tridiagonal matrix to a diagonal matrix.  The goal is to compute
     // NxN orthogonal Q and NxN diagonal D for which Q^T*A*Q = D.
-    SymmetricEigensolver(size_t maxIterations);
+    TSymmetricEigensolver(size_t maxIterations);
 
     // A copy of the NxN symmetric input is made internally.  The order of
     // the eigenvalues is specified by sortType: -1 (decreasing), 0 (no
@@ -185,11 +185,11 @@ private:
     // about function Tridiagonalize() about what is stored in the matrix.
     matrix_type _matrix;  // NxN elements
 
-    // After the initial tridiagonalization by Householder reflections, we no
+    // TAfter the initial tridiagonalization by Householder reflections, we no
     // longer need the full _matrix.  Copy the diagonal and superdiagonal
     // entries to linear arrays in order to be cache friendly.
     vector_type mDiagonal;  // N elements
-    ScalarVector<T, N-1> _superdiagonal; // N-1 elements
+    TScalarVector<T, N-1> _superdiagonal; // N-1 elements
 
     // The Givens rotations used to reduce the initial tridiagonal matrix to
     // a diagonal matrix.  A rotation is the identity with the following
@@ -198,21 +198,21 @@ private:
     // matrix size and K is the maximum number of iterations, the maximum
     // number of Givens rotations is K*(N-1).  The maximum amount of memory
     // is allocated to store these.
-    struct GivensRotation
+    struct FGivensRotation
     {
-        GivensRotation();
-        GivensRotation(int inIndex, T inCs, T inSn);
+        FGivensRotation();
+        FGivensRotation(int inIndex, T inCs, T inSn);
         int index;
         T cs, sn;
     };
 
-    VECTOR_THREAD_LOCAL(Maths, GivensRotation) _givens;  // K*(N-1) elements
+    VECTOR_THREAD_LOCAL(Maths, FGivensRotation) _givens;  // K*(N-1) elements
 
     // When sorting is requested, the permutation associated with the sort is
     // stored in _permutation.  When sorting is not requested, _permutation[0]
     // is set to -1.  mVisited is used for finding cycles in the permutation.
-    ScalarVector<int, N> _permutation;  // N elements
-    mutable ScalarVector<int, N> _visited;  // N elements
+    TScalarVector<int, N> _permutation;  // N elements
+    mutable TScalarVector<int, N> _visited;  // N elements
     mutable int _isRotation;  // 1 = rotation, 0 = reflection, -1 = unknown
 
     // Temporary storage to compute Householder reflections and to support

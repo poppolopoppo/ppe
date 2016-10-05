@@ -9,19 +9,19 @@
 
 namespace Core {
 template <typename T>
-class MemoryView;
+class TMemoryView;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MemoryTrackingData {
+class FMemoryTrackingData {
 public:
-    MemoryTrackingData( const char* optionalName = "unknown",
-                        MemoryTrackingData* optionalParent = nullptr);
+    FMemoryTrackingData( const char* optionalName = "unknown",
+                        FMemoryTrackingData* optionalParent = nullptr);
 
     const char* Name() const { return _name; }
 
-    MemoryTrackingData* Parent() { return _parent; }
-    const MemoryTrackingData* Parent() const { return _parent; }
+    FMemoryTrackingData* Parent() { return _parent; }
+    const FMemoryTrackingData* Parent() const { return _parent; }
 
     CountOfElements BlockCount() const { return CountOfElements{ _blockCount }; }
     CountOfElements AllocationCount() const { return CountOfElements{ _allocationCount }; }
@@ -40,13 +40,13 @@ public:
     void Pool_AllocateOneChunk(size_t chunkSizeInBytes);
     void Pool_DeallocateOneChunk(size_t chunkSizeInBytes);
 
-    void Append(const MemoryTrackingData& other);
+    void Append(const FMemoryTrackingData& other);
 
-    static MemoryTrackingData& Global();
+    static FMemoryTrackingData& Global();
 
 private:
     const char* _name;
-    MemoryTrackingData* _parent;
+    FMemoryTrackingData* _parent;
 
     std::atomic<size_t> _blockCount;
     std::atomic<size_t> _allocationCount;
@@ -59,28 +59,28 @@ private:
 //----------------------------------------------------------------------------
 void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
                             const wchar_t *header,
-                            const MemoryView<const MemoryTrackingData *>& datas );
+                            const TMemoryView<const FMemoryTrackingData *>& datas );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DecodedCallstack;
+class FDecodedCallstack;
 //----------------------------------------------------------------------------
-class MemoryBlockHeader {
+class FMemoryBlockHeader {
 public:
-    MemoryBlockHeader();
-    MemoryBlockHeader(MemoryTrackingData* trackingData, size_t blockCount, size_t strideInBytes);
-    ~MemoryBlockHeader();
+    FMemoryBlockHeader();
+    FMemoryBlockHeader(FMemoryTrackingData* trackingData, size_t blockCount, size_t strideInBytes);
+    ~FMemoryBlockHeader();
 
-    MemoryTrackingData* TrackingData() const { return _trackingData; }
+    FMemoryTrackingData* TrackingData() const { return _trackingData; }
     size_t BlockCount() const { return _blockCount; }
     size_t StrideInBytes() const{ return _strideInBytes; }
 
-    void DecodeCallstack(DecodedCallstack* decoded) const;
+    void DecodeCallstack(FDecodedCallstack* decoded) const;
 
 private:
     enum { BacktraceMaxDepth = 6 };
 
-    MemoryTrackingData* _trackingData;
+    FMemoryTrackingData* _trackingData;
 #ifdef ARCH_X64
     uint32_t    _blockCount;
     uint32_t    _strideInBytes;
@@ -91,8 +91,8 @@ private:
     void*       _backtraceFrames[BacktraceMaxDepth];
 };
 //----------------------------------------------------------------------------
-static_assert(  sizeof(MemoryBlockHeader) == sizeof(size_t) * 8,
-                "invalid MemoryBlockHeader size");
+static_assert(  sizeof(FMemoryBlockHeader) == sizeof(size_t) * 8,
+                "invalid FMemoryBlockHeader size");
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -98,47 +98,47 @@ inline uint128_t Uint128(uint64_t lo, uint64_t hi) { return uint128_t(lo, hi); }
 
 // BASIC STRING HASHING
 
-// Hash function for a byte array.
+// THash function for a byte array.
 // May change from time to time, may differ on different platforms, may differ
 // depending on NDEBUG.
-size_t Hash(const char* s, size_t len);
+size_t THash(const char* s, size_t len);
 
-// Hash function for a byte array.  Most useful in 32-bit binaries.
+// THash function for a byte array.  Most useful in 32-bit binaries.
 // May change from time to time, may differ on different platforms, may differ
 // depending on NDEBUG.
 uint32_t Hash32(const char* s, size_t len);
 
-// Hash function for a byte array.  For convenience, a 32-bit seed is also
+// THash function for a byte array.  For convenience, a 32-bit seed is also
 // hashed into the result.
 // May change from time to time, may differ on different platforms, may differ
 // depending on NDEBUG.
 uint32_t Hash32WithSeed(const char* s, size_t len, uint32_t seed);
 
-// Hash 128 input bits down to 64 bits of output.
-// Hash function for a byte array.
+// THash 128 input bits down to 64 bits of output.
+// THash function for a byte array.
 // May change from time to time, may differ on different platforms, may differ
 // depending on NDEBUG.
 uint64_t Hash64(const char* s, size_t len);
 
-// Hash function for a byte array.  For convenience, a 64-bit seed is also
+// THash function for a byte array.  For convenience, a 64-bit seed is also
 // hashed into the result.
 // May change from time to time, may differ on different platforms, may differ
 // depending on NDEBUG.
 uint64_t Hash64WithSeed(const char* s, size_t len, uint64_t seed);
 
-// Hash function for a byte array.  For convenience, two seeds are also
+// THash function for a byte array.  For convenience, two seeds are also
 // hashed into the result.
 // May change from time to time, may differ on different platforms, may differ
 // depending on NDEBUG.
 uint64_t Hash64WithSeeds(const char* s, size_t len,
                        uint64_t seed0, uint64_t seed1);
 
-// Hash function for a byte array.
+// THash function for a byte array.
 // May change from time to time, may differ on different platforms, may differ
 // depending on NDEBUG.
 uint128_t Hash128(const char* s, size_t len);
 
-// Hash function for a byte array.  For convenience, a 128-bit seed is also
+// THash function for a byte array.  For convenience, a 128-bit seed is also
 // hashed into the result.
 // May change from time to time, may differ on different platforms, may differ
 // depending on NDEBUG.
@@ -205,16 +205,16 @@ inline uint64_t Fingerprint(uint64_t x) {
 // (as a const char*) and that Str::length() return the string's length;
 // they work with std::string, for example.
 
-// Hash function for a byte array.
+// THash function for a byte array.
 // May change from time to time, may differ on different platforms, may differ
 // depending on NDEBUG.
 template <typename Str>
-inline size_t Hash(const Str& s) {
+inline size_t THash(const Str& s) {
   assert(sizeof(s[0]) == 1);
-  return Hash(s.data(), s.length());
+  return THash(s.data(), s.length());
 }
 
-// Hash function for a byte array.  Most useful in 32-bit binaries.
+// THash function for a byte array.  Most useful in 32-bit binaries.
 // May change from time to time, may differ on different platforms, may differ
 // depending on NDEBUG.
 template <typename Str>
@@ -223,7 +223,7 @@ inline uint32_t Hash32(const Str& s) {
   return Hash32(s.data(), s.length());
 }
 
-// Hash function for a byte array.  For convenience, a 32-bit seed is also
+// THash function for a byte array.  For convenience, a 32-bit seed is also
 // hashed into the result.
 // May change from time to time, may differ on different platforms, may differ
 // depending on NDEBUG.
@@ -233,8 +233,8 @@ inline uint32_t Hash32WithSeed(const Str& s, uint32_t seed) {
   return Hash32WithSeed(s.data(), s.length(), seed);
 }
 
-// Hash 128 input bits down to 64 bits of output.
-// Hash function for a byte array.
+// THash 128 input bits down to 64 bits of output.
+// THash function for a byte array.
 // May change from time to time, may differ on different platforms, may differ
 // depending on NDEBUG.
 template <typename Str>
@@ -243,7 +243,7 @@ inline uint64_t Hash64(const Str& s) {
   return Hash64(s.data(), s.length());
 }
 
-// Hash function for a byte array.  For convenience, a 64-bit seed is also
+// THash function for a byte array.  For convenience, a 64-bit seed is also
 // hashed into the result.
 // May change from time to time, may differ on different platforms, may differ
 // depending on NDEBUG.
@@ -253,7 +253,7 @@ inline uint64_t Hash64WithSeed(const Str& s, uint64_t seed) {
   return Hash64WithSeed(s.data(), s.length(), seed);
 }
 
-// Hash function for a byte array.  For convenience, two seeds are also
+// THash function for a byte array.  For convenience, two seeds are also
 // hashed into the result.
 // May change from time to time, may differ on different platforms, may differ
 // depending on NDEBUG.
@@ -263,7 +263,7 @@ inline uint64_t Hash64WithSeeds(const Str& s, uint64_t seed0, uint64_t seed1) {
   return Hash64WithSeeds(s.data(), s.length(), seed0, seed1);
 }
 
-// Hash function for a byte array.
+// THash function for a byte array.
 // May change from time to time, may differ on different platforms, may differ
 // depending on NDEBUG.
 template <typename Str>
@@ -272,7 +272,7 @@ inline uint128_t Hash128(const Str& s) {
   return Hash128(s.data(), s.length());
 }
 
-// Hash function for a byte array.  For convenience, a 128-bit seed is also
+// THash function for a byte array.  For convenience, a 128-bit seed is also
 // hashed into the result.
 // May change from time to time, may differ on different platforms, may differ
 // depending on NDEBUG.

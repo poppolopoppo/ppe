@@ -9,7 +9,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-MemoryPoolChunk::MemoryPoolChunk(size_t chunkSize, size_t blockCount)
+FMemoryPoolChunk::FMemoryPoolChunk(size_t chunkSize, size_t blockCount)
 :   _blocks(nullptr)
 ,   _blockCount(checked_cast<u32>(blockCount))
 ,   _blockUsed(0)
@@ -18,13 +18,13 @@ MemoryPoolChunk::MemoryPoolChunk(size_t chunkSize, size_t blockCount)
     Assert(blockCount > 10);
 }
 //----------------------------------------------------------------------------
-MemoryPoolChunk::~MemoryPoolChunk() {
+FMemoryPoolChunk::~FMemoryPoolChunk() {
     AssertRelease(0 == _blockUsed);
     Assert(nullptr == _node.Next);
     Assert(nullptr == _node.Prev);
 }
 //----------------------------------------------------------------------------
-void *MemoryPoolChunk::AllocateBlock(size_t blockSize) {
+void *FMemoryPoolChunk::AllocateBlock(size_t blockSize) {
     Assert(BlockAvailable());
     Assert(_blockUsed < _blockCount);
 
@@ -46,14 +46,14 @@ void *MemoryPoolChunk::AllocateBlock(size_t blockSize) {
     return block;
 }
 //----------------------------------------------------------------------------
-void MemoryPoolChunk::ReleaseBlock(void *ptr, size_t blockSize) {
+void FMemoryPoolChunk::ReleaseBlock(void *ptr, size_t blockSize) {
     UNUSED(blockSize);
     Assert(ptr);
     Assert(!CompletelyFree());
     Assert(Contains(ptr, blockSize));
     Assert(_blockUsed);
 
-    Block *const block = reinterpret_cast<Block *>(ptr);
+    FBlock *const block = reinterpret_cast<FBlock *>(ptr);
 
     block->Next = _blocks;
     _blocks = block;
@@ -63,7 +63,7 @@ void MemoryPoolChunk::ReleaseBlock(void *ptr, size_t blockSize) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-MemoryPoolBase::MemoryPoolBase(size_t blockSize, size_t minChunkSize, size_t maxChunkSize)
+FMemoryPoolBase::FMemoryPoolBase(size_t blockSize, size_t minChunkSize, size_t maxChunkSize)
 :   _chunkCount(0)
 ,   _usedSize(0)
 ,   _totalSize(0)
@@ -71,7 +71,7 @@ MemoryPoolBase::MemoryPoolBase(size_t blockSize, size_t minChunkSize, size_t max
 ,   _blockSize(blockSize)
 ,   _minChunkSize(minChunkSize)
 ,   _maxChunkSize(maxChunkSize) {
-    Assert(blockSize >= sizeof(MemoryPoolChunk::Block));
+    Assert(blockSize >= sizeof(FMemoryPoolChunk::FBlock));
     Assert(_maxChunkSize >= minChunkSize);
 
     _currentChunksize = _minChunkSize;
@@ -86,7 +86,7 @@ MemoryPoolBase::MemoryPoolBase(size_t blockSize, size_t minChunkSize, size_t max
         BlockCountPerChunk(_currentChunksize) );
 }
 //----------------------------------------------------------------------------
-MemoryPoolBase::~MemoryPoolBase() {
+FMemoryPoolBase::~FMemoryPoolBase() {
     Assert(0 == _usedSize);
     Assert(0 == _totalSize);
     Assert(0 == _chunkCount);
@@ -100,7 +100,7 @@ MemoryPoolBase::~MemoryPoolBase() {
         BlockCountPerChunk(_currentChunksize) );
 }
 //----------------------------------------------------------------------------
-void MemoryPoolBase::GrowChunkSizeIFP() {
+void FMemoryPoolBase::GrowChunkSizeIFP() {
     const size_t nextChunkSize = _currentChunksize * 2;
     if (nextChunkSize <= _maxChunkSize) {
         _currentChunksize = nextChunkSize;
@@ -116,11 +116,11 @@ void MemoryPoolBase::GrowChunkSizeIFP() {
     }
 }
 //----------------------------------------------------------------------------
-void MemoryPoolBase::ResetChunkSize() {
+void FMemoryPoolBase::ResetChunkSize() {
     _currentChunksize = _minChunkSize;
 }
 //----------------------------------------------------------------------------
-void MemoryPoolBase::AddChunk(MemoryPoolChunk *chunk) {
+void FMemoryPoolBase::AddChunk(FMemoryPoolChunk *chunk) {
     Assert(chunk);
     Assert(_spares.empty());
 
@@ -130,8 +130,8 @@ void MemoryPoolBase::AddChunk(MemoryPoolChunk *chunk) {
     _totalSize += chunk->ChunkSize();
 }
 //----------------------------------------------------------------------------
-void *MemoryPoolBase::TryAllocate_FailIfNoBlockAvailable() {
-    MemoryPoolChunk *chunk = _chunks.Head();
+void *FMemoryPoolBase::TryAllocate_FailIfNoBlockAvailable() {
+    FMemoryPoolChunk *chunk = _chunks.Head();
 
     while (chunk) {
         if (chunk->BlockAvailable())
@@ -158,10 +158,10 @@ void *MemoryPoolBase::TryAllocate_FailIfNoBlockAvailable() {
     }
 }
 //----------------------------------------------------------------------------
-MemoryPoolChunk *MemoryPoolBase::Deallocate_ReturnChunkToRelease(void *ptr) {
+FMemoryPoolChunk *FMemoryPoolBase::Deallocate_ReturnChunkToRelease(void *ptr) {
     Assert(false == _chunks.empty());
 
-    MemoryPoolChunk *chunk = _chunks.Head();
+    FMemoryPoolChunk *chunk = _chunks.Head();
     while (chunk) {
         if (chunk->Contains(ptr, _blockSize)) {
             Assert(_usedSize >= _blockSize);
@@ -189,8 +189,8 @@ MemoryPoolChunk *MemoryPoolBase::Deallocate_ReturnChunkToRelease(void *ptr) {
     return nullptr;
 }
 //----------------------------------------------------------------------------
-MemoryPoolChunk *MemoryPoolBase::ClearOneChunk_AssertCompletelyFree() {
-    MemoryPoolChunk* const last = _chunks.PopHead();
+FMemoryPoolChunk *FMemoryPoolBase::ClearOneChunk_AssertCompletelyFree() {
+    FMemoryPoolChunk* const last = _chunks.PopHead();
 
     if (nullptr == last) {
         return ReleaseChunk_();
@@ -200,7 +200,7 @@ MemoryPoolChunk *MemoryPoolBase::ClearOneChunk_AssertCompletelyFree() {
 
         SpareChunk_(last);
 
-        MemoryPoolChunk* const release = ReleaseChunk_();
+        FMemoryPoolChunk* const release = ReleaseChunk_();
         Assert(release);
         Assert(release->CompletelyFree());
 
@@ -208,8 +208,8 @@ MemoryPoolChunk *MemoryPoolBase::ClearOneChunk_AssertCompletelyFree() {
     }
 }
 //----------------------------------------------------------------------------
-MemoryPoolChunk *MemoryPoolBase::ClearOneChunk_IgnoreLeaks() {
-    MemoryPoolChunk* const last = _chunks.PopHead();
+FMemoryPoolChunk *FMemoryPoolBase::ClearOneChunk_IgnoreLeaks() {
+    FMemoryPoolChunk* const last = _chunks.PopHead();
 
     if (nullptr == last) {
         return ReleaseChunk_();
@@ -217,21 +217,21 @@ MemoryPoolChunk *MemoryPoolBase::ClearOneChunk_IgnoreLeaks() {
     else {
         SpareChunk_(last);
 
-        MemoryPoolChunk* const release = ReleaseChunk_();
+        FMemoryPoolChunk* const release = ReleaseChunk_();
         Assert(release);
 
         return release;
     }
 }
 //----------------------------------------------------------------------------
-MemoryPoolChunk *MemoryPoolBase::ClearOneChunk_UnusedMemory() {
+FMemoryPoolChunk *FMemoryPoolBase::ClearOneChunk_UnusedMemory() {
     if (_chunks.Head() && _chunks.Head()->CompletelyFree())
         SpareChunk_(_chunks.Head());
 
     return ReleaseChunk_();
 }
 //----------------------------------------------------------------------------
-void MemoryPoolBase::SpareChunk_(MemoryPoolChunk *chunk) {
+void FMemoryPoolBase::SpareChunk_(FMemoryPoolChunk *chunk) {
     Assert(chunk);
     Assert(not _chunks.empty());
 
@@ -239,13 +239,13 @@ void MemoryPoolBase::SpareChunk_(MemoryPoolChunk *chunk) {
     Assert(_usedSize <= _totalSize);
 
     _chunks.Erase(chunk);
-    _spares.Insert(chunk, [](const MemoryPoolChunk& lhs, const MemoryPoolChunk& rhs) {
+    _spares.Insert(chunk, [](const FMemoryPoolChunk& lhs, const FMemoryPoolChunk& rhs) {
         return lhs.ChunkSize() < rhs.ChunkSize();
     });
 }
 //----------------------------------------------------------------------------
-MemoryPoolChunk *MemoryPoolBase::ReviveChunk_() {
-    MemoryPoolChunk* const revive = _spares.PopTail();
+FMemoryPoolChunk *FMemoryPoolBase::ReviveChunk_() {
+    FMemoryPoolChunk* const revive = _spares.PopTail();
 
     if (nullptr == revive) {
         return nullptr;
@@ -257,8 +257,8 @@ MemoryPoolChunk *MemoryPoolBase::ReviveChunk_() {
     }
 }
 //----------------------------------------------------------------------------
-MemoryPoolChunk *MemoryPoolBase::ReleaseChunk_() {
-    MemoryPoolChunk* const release = _spares.PopHead();
+FMemoryPoolChunk *FMemoryPoolBase::ReleaseChunk_() {
+    FMemoryPoolChunk* const release = _spares.PopHead();
 
     if (nullptr == release) {
         return nullptr;
@@ -287,41 +287,41 @@ MemoryPoolChunk *MemoryPoolBase::ReleaseChunk_() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-MemoryPoolBaseList::MemoryPoolBaseList() {}
+FMemoryPoolBaseList::FMemoryPoolBaseList() {}
 //----------------------------------------------------------------------------
-MemoryPoolBaseList::~MemoryPoolBaseList() {
+FMemoryPoolBaseList::~FMemoryPoolBaseList() {
     while (nullptr != _pools.Head())
         checked_delete(_pools.Head());
     Assert(_pools.empty());
 }
 //----------------------------------------------------------------------------
-void MemoryPoolBaseList::Insert(MemoryPoolBase* ppool) {
+void FMemoryPoolBaseList::Insert(FMemoryPoolBase* ppool) {
     Assert(ppool);
-    const AtomicSpinLock::Scope scopeLock(_barrier);
+    const FAtomicSpinLock::FScope scopeLock(_barrier);
     _pools.PushFront(ppool);
 }
 //----------------------------------------------------------------------------
-void MemoryPoolBaseList::Remove(MemoryPoolBase* ppool) {
+void FMemoryPoolBaseList::Remove(FMemoryPoolBase* ppool) {
     Assert(ppool);
-    const AtomicSpinLock::Scope scopeLock(_barrier);
+    const FAtomicSpinLock::FScope scopeLock(_barrier);
     _pools.Erase(ppool);
 }
 //----------------------------------------------------------------------------
-void MemoryPoolBaseList::ClearAll_AssertCompletelyFree() {
-    const AtomicSpinLock::Scope scopeLock(_barrier);
-    for (MemoryPoolBase* phead = _pools.Head(); phead; phead = phead->Node().Next )
+void FMemoryPoolBaseList::ClearAll_AssertCompletelyFree() {
+    const FAtomicSpinLock::FScope scopeLock(_barrier);
+    for (FMemoryPoolBase* phead = _pools.Head(); phead; phead = phead->Node().Next )
         phead->Clear_AssertCompletelyFree();
 }
 //----------------------------------------------------------------------------
-void MemoryPoolBaseList::ClearAll_IgnoreLeaks() {
-    const AtomicSpinLock::Scope scopeLock(_barrier);
-    for (MemoryPoolBase* phead = _pools.Head(); phead; phead = phead->Node().Next )
+void FMemoryPoolBaseList::ClearAll_IgnoreLeaks() {
+    const FAtomicSpinLock::FScope scopeLock(_barrier);
+    for (FMemoryPoolBase* phead = _pools.Head(); phead; phead = phead->Node().Next )
         phead->Clear_IgnoreLeaks();
 }
 //----------------------------------------------------------------------------
-void MemoryPoolBaseList::ClearAll_UnusedMemory() {
-    const AtomicSpinLock::Scope scopeLock(_barrier);
-    for (MemoryPoolBase* phead = _pools.Head(); phead; phead = phead->Node().Next )
+void FMemoryPoolBaseList::ClearAll_UnusedMemory() {
+    const FAtomicSpinLock::FScope scopeLock(_barrier);
+    for (FMemoryPoolBase* phead = _pools.Head(); phead; phead = phead->Node().Next )
         phead->Clear_UnusedMemory();
 }
 //----------------------------------------------------------------------------

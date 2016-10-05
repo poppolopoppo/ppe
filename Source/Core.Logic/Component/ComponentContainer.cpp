@@ -13,14 +13,14 @@ namespace Logic {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ComponentContainer::ComponentContainer() : _reservedFlags(0) {
+FComponentContainer::FComponentContainer() : _reservedFlags(0) {
     _components.resize(ComponentCapacity);
     _tagToID.reserve(ComponentCapacity);
 }
 //----------------------------------------------------------------------------
-ComponentContainer::~ComponentContainer() {}
+FComponentContainer::~FComponentContainer() {}
 //----------------------------------------------------------------------------
-void ComponentContainer::Register(IComponent *component) {
+void FComponentContainer::Register(IComponent *component) {
     Assert(nullptr != component);
 
     const ComponentTag tag = component->Tag();
@@ -40,7 +40,7 @@ void ComponentContainer::Register(IComponent *component) {
     Insert_AssertUnique(_tagToID, tag, freeID);
 }
 //----------------------------------------------------------------------------
-void ComponentContainer::Unregister(IComponent *component) {
+void FComponentContainer::Unregister(IComponent *component) {
     Assert(nullptr != component);
 
     const ComponentTag tag = component->Tag();
@@ -56,7 +56,7 @@ void ComponentContainer::Unregister(IComponent *component) {
     _reservedFlags.Value = _reservedFlags.Value & ~(1<<it->second);
 }
 //----------------------------------------------------------------------------
-ComponentID ComponentContainer::ID(ComponentTag tag) const {
+ComponentID FComponentContainer::ID(ComponentTag tag) const {
     Assert(IComponent::InvalidTag != tag);
 
     const ComponentID id = _tagToID.at(tag);
@@ -65,7 +65,7 @@ ComponentID ComponentContainer::ID(ComponentTag tag) const {
     return id;
 }
 //----------------------------------------------------------------------------
-IComponent *ComponentContainer::GetByTag(ComponentTag tag) {
+IComponent *FComponentContainer::GetByTag(ComponentTag tag) {
     Assert(IComponent::InvalidTag != tag);
 
     ComponentID id(-1);
@@ -80,7 +80,7 @@ IComponent *ComponentContainer::GetByTag(ComponentTag tag) {
     return _components[id].get();
 }
 //----------------------------------------------------------------------------
-IComponent *ComponentContainer::GetByID(ComponentID id) {
+IComponent *FComponentContainer::GetByID(ComponentID id) {
     Assert(id);
     Assert(u32(id) < ComponentCapacity);
     Assert(0 != (_reservedFlags & (1<<id)));
@@ -89,10 +89,10 @@ IComponent *ComponentContainer::GetByID(ComponentID id) {
     return _components[id].get();
 }
 //----------------------------------------------------------------------------
-void ComponentContainer::RemoveEntity(const Entity& entity) {
+void FComponentContainer::RemoveEntity(const FEntity& entity) {
     Assert(entity.Deleting());
 
-    forrange(i, 0, u32(ComponentContainer::ComponentCapacity))
+    forrange(i, 0, u32(FComponentContainer::ComponentCapacity))
         if (0 != (entity.ComponentFlags() & (1<<i))) {
             const PComponent& component = _components[i];
             Assert(component);
@@ -101,7 +101,7 @@ void ComponentContainer::RemoveEntity(const Entity& entity) {
         }
 }
 //----------------------------------------------------------------------------
-void ComponentContainer::Clear() {
+void FComponentContainer::Clear() {
     for (const PComponent& component : _components) {
         if (component)
             component->Clear();

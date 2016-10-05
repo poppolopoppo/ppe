@@ -12,8 +12,8 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-virtual float4x4 OrthographicProjection::ProjectionMatrix(
-    const Timeline& ,
+virtual float4x4 FOrthographicProjection::ProjectionMatrix(
+    const FTimeline& ,
     float znear, float zfar,
     const ViewportF& viewport ) override;
     Assert(znear < zfar);

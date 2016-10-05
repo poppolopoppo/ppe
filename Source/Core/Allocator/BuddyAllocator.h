@@ -9,10 +9,10 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, typename _BuddyHeap = BuddyHeap >
-class BuddyAllocator : public AllocatorBase<T> {
+template <typename T, typename _BuddyHeap = FBuddyHeap >
+class TBuddyAllocator : public TAllocatorBase<T> {
 public:
-    typedef AllocatorBase<T> base_type;
+    typedef TAllocatorBase<T> base_type;
 
     using typename base_type::pointer;
     using typename base_type::size_type;
@@ -30,30 +30,30 @@ public:
     template<typename U>
     struct rebind
     {
-        typedef BuddyAllocator<U> other;
+        typedef TBuddyAllocator<U> other;
     };
 
-    explicit BuddyAllocator(_BuddyHeap *heap) throw() : _heap(heap) { Assert(_heap); }
+    explicit TBuddyAllocator(_BuddyHeap *heap) throw() : _heap(heap) { Assert(_heap); }
 
-    BuddyAllocator(const BuddyAllocator& other) throw() : _heap(other._heap) {}
+    TBuddyAllocator(const TBuddyAllocator& other) throw() : _heap(other._heap) {}
     template <typename U>
-    BuddyAllocator(const BuddyAllocator<U>& other) throw() : _heap(other._heap) {}
+    TBuddyAllocator(const TBuddyAllocator<U>& other) throw() : _heap(other._heap) {}
 
-    BuddyAllocator& operator=(const BuddyAllocator& other) { _heap = other._heap; return *this; }
+    TBuddyAllocator& operator=(const TBuddyAllocator& other) { _heap = other._heap; return *this; }
     template <typename U>
-    BuddyAllocator& operator=(const BuddyAllocator<U>& other) { _heap = other._heap; return *this; }
+    TBuddyAllocator& operator=(const TBuddyAllocator<U>& other) { _heap = other._heap; return *this; }
 
     pointer allocate(size_type n);
     pointer allocate(size_type n, const void* /*hint*/) { return allocate(n); }
     void deallocate(void* p, size_type );
 
     template <typename U>
-    friend bool operator ==(const BuddyAllocator& lhs, const BuddyAllocator<U, _BuddyHeap>& rhs) {
+    friend bool operator ==(const TBuddyAllocator& lhs, const TBuddyAllocator<U, _BuddyHeap>& rhs) {
         return lhs._heap == rhs._heap;
     }
 
     template <typename U>
-    friend bool operator !=(const BuddyAllocator& lhs, const BuddyAllocator<U, _BuddyHeap>& rhs) {
+    friend bool operator !=(const TBuddyAllocator& lhs, const TBuddyAllocator<U, _BuddyHeap>& rhs) {
         return !operator ==(lhs, rhs);
     }
 
@@ -62,11 +62,11 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _BuddyHeap>
-auto BuddyAllocator<T, _BuddyHeap>::allocate(size_type n) -> pointer {
+auto TBuddyAllocator<T, _BuddyHeap>::allocate(size_type n) -> pointer {
     Assert(_heap);
 
     // The return value of allocate(0) is unspecified.
-    // Mallocator returns NULL in order to avoid depending
+    // TMallocator returns NULL in order to avoid depending
     // on malloc(0)'s implementation-defined behavior
     // (the implementation can define malloc(0) to return NULL,
     // in which case the bad_alloc check below would fire).
@@ -78,9 +78,9 @@ auto BuddyAllocator<T, _BuddyHeap>::allocate(size_type n) -> pointer {
     // The Standardization Committee recommends that std::length_error
     // be thrown in the case of integer overflow.
     if (n > max_size())
-        throw std::length_error("BuddyAllocator<T, _HeapSingleton>::allocate() - Integer overflow.");
+        throw std::length_error("TBuddyAllocator<T, _HeapSingleton>::allocate() - Integer overflow.");
 
-    // BuddyAllocator wraps BuddyHeap.
+    // TBuddyAllocator wraps FBuddyHeap.
     void *const pv = _heap->Allocate(n * sizeof(T));
 
     // Allocators should throw std::bad_alloc in the case of memory allocation failure.
@@ -91,10 +91,10 @@ auto BuddyAllocator<T, _BuddyHeap>::allocate(size_type n) -> pointer {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _BuddyHeap>
-void BuddyAllocator<T, _BuddyHeap>::deallocate(void* p, size_type) {
+void TBuddyAllocator<T, _BuddyHeap>::deallocate(void* p, size_type) {
     Assert(_heap);
 
-    // BuddyAllocator wraps BuddyHeap.
+    // TBuddyAllocator wraps FBuddyHeap.
     _heap->Deallocate(p);
 }
 //----------------------------------------------------------------------------

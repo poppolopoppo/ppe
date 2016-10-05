@@ -11,59 +11,59 @@ namespace Graphics {
 class IDeviceAPIEncapsulator;
 FWD_REFPTR(DepthStencil);
 FWD_REFPTR(RenderTarget);
-enum class ShaderProgramType;
-class SurfaceFormat;
+enum class EShaderProgramType;
+class FSurfaceFormat;
 }
 
 namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class AbstractRenderSurface;
+class FAbstractRenderSurface;
 FWD_REFPTR(RenderSurfaceLock);
 //----------------------------------------------------------------------------
 // Same lifetime than created resources
-class RenderSurfaceLock : public RefCountable {
+class FRenderSurfaceLock : public FRefCountable {
 private:
-    friend class AbstractRenderSurface;
-    RenderSurfaceLock(const AbstractRenderSurface *owner);
+    friend class FAbstractRenderSurface;
+    FRenderSurfaceLock(const FAbstractRenderSurface *owner);
 
 public:
-    ~RenderSurfaceLock();
+    ~FRenderSurfaceLock();
 
-    RenderSurfaceLock(RenderSurfaceLock&& ) = delete;
-    RenderSurfaceLock& operator =(RenderSurfaceLock&& ) = delete;
+    FRenderSurfaceLock(FRenderSurfaceLock&& ) = delete;
+    FRenderSurfaceLock& operator =(FRenderSurfaceLock&& ) = delete;
 
-    RenderSurfaceLock(const RenderSurfaceLock& ) = delete;
-    RenderSurfaceLock& operator =(const RenderSurfaceLock& ) = delete;
+    FRenderSurfaceLock(const FRenderSurfaceLock& ) = delete;
+    FRenderSurfaceLock& operator =(const FRenderSurfaceLock& ) = delete;
 
-    const AbstractRenderSurface *Owner() const;
+    const FAbstractRenderSurface *Owner() const;
 
-    void Acquire(   const Graphics::RenderTarget **pRenderTarget,
-                    const Graphics::DepthStencil **pDepthStencil ) const;
+    void Acquire(   const Graphics::FRenderTarget **pRenderTarget,
+                    const Graphics::FDepthStencil **pDepthStencil ) const;
     void Release(   Graphics::IDeviceAPIEncapsulator *device,
                     PRenderSurfaceLock& plockSelf);
 
-    void Bind(Graphics::ShaderProgramType stage, size_t slot);
+    void Bind(Graphics::EShaderProgramType stage, size_t slot);
     void Unbind(Graphics::IDeviceAPIContext *context);
 
 private:
-    typedef Meta::Bit<size_t>::First<8>::type stage_field;
-    typedef Meta::Bit<size_t>::After<stage_field>::Remain::type slots_field;
+    typedef Meta::TBit<size_t>::TFirst<8>::type stage_field;
+    typedef Meta::TBit<size_t>::TAfter<stage_field>::FRemain::type slots_field;
 
     size_t _state;
 };
 //----------------------------------------------------------------------------
 FWD_REFPTR(AbstractRenderSurface);
-class AbstractRenderSurface : public RefCountable {
+class FAbstractRenderSurface : public FRefCountable {
 protected:
-    friend class RenderSurfaceLock;
-    explicit AbstractRenderSurface(String&& name);
+    friend class FRenderSurfaceLock;
+    explicit FAbstractRenderSurface(FString&& name);
 
 public:
-    virtual ~AbstractRenderSurface();
+    virtual ~FAbstractRenderSurface();
 
-    const String& Name() const { return _name; }
+    const FString& FName() const { return _name; }
 
     bool InUse() const { return _lock.RefCount() > 1; }
     size_t LockRefCount() const { return _lock.RefCount() - 1; }
@@ -84,13 +84,13 @@ protected:
                                     Graphics::PCDepthStencil& pDepthStencil ) = 0;
 
 private:
-    void AcquireFromLock_(  const RenderSurfaceLock *plock,
-                            const Graphics::RenderTarget **pRenderTarget,
-                            const Graphics::DepthStencil **pDepthStencil ) const;
+    void AcquireFromLock_(  const FRenderSurfaceLock *plock,
+                            const Graphics::FRenderTarget **pRenderTarget,
+                            const Graphics::FDepthStencil **pDepthStencil ) const;
 
-    String _name;
+    FString _name;
 
-    RenderSurfaceLock _lock;
+    FRenderSurfaceLock _lock;
 
     Graphics::PCRenderTarget _renderTarget;
     Graphics::PCDepthStencil _depthStencil;

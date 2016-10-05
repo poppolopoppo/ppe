@@ -9,45 +9,45 @@
 #include "Core/Meta/ThreadResource.h"
 
 namespace Core {
-class Filename;
+class FFilename;
 
 namespace Graphics {
-class BindName;
+class FBindName;
 }
 
 namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MaterialDatabase : public Meta::ThreadResource {
+class FMaterialDatabase : public Meta::FThreadResource {
 public:
-    explicit MaterialDatabase(const MaterialDatabase *parent = nullptr);
-    ~MaterialDatabase();
+    explicit FMaterialDatabase(const FMaterialDatabase *parent = nullptr);
+    ~FMaterialDatabase();
 
-    const MaterialDatabase *Parent() const { return _parent; }
+    const FMaterialDatabase *Parent() const { return _parent; }
 
-    void BindParameter(const Graphics::BindName& name, IMaterialParameter *parameter, bool allowOverride = false);
-    void UnbindParameter(const Graphics::BindName& name, const IMaterialParameter *parameter);
-    bool TryGetParameter(const Graphics::BindName& name, IMaterialParameter **parameter) const;
-    bool TryGetParameter(const Graphics::BindName& name, PMaterialParameter& parameter) const;
+    void BindParameter(const Graphics::FBindName& name, IMaterialParameter *parameter, bool allowOverride = false);
+    void UnbindParameter(const Graphics::FBindName& name, const IMaterialParameter *parameter);
+    bool TryGetParameter(const Graphics::FBindName& name, IMaterialParameter **parameter) const;
+    bool TryGetParameter(const Graphics::FBindName& name, PMaterialParameter& parameter) const;
 
-    void BindTexture(const Graphics::BindName& name, const Filename& path, bool allowOverride = false);
-    void UnbindTexture(const Graphics::BindName& name, const Filename& path);
-    bool TryGetTexture(const Graphics::BindName& name, Filename *path) const;
+    void BindTexture(const Graphics::FBindName& name, const FFilename& path, bool allowOverride = false);
+    void UnbindTexture(const Graphics::FBindName& name, const FFilename& path);
+    bool TryGetTexture(const Graphics::FBindName& name, FFilename *path) const;
 
-    void BindEffect(const Graphics::BindName& name, const IEffectPasses *effect, bool allowOverride = false);
-    void UnbindEffect(const Graphics::BindName& name, const IEffectPasses *effect);
-    bool TryGetEffect(const Graphics::BindName& name, const IEffectPasses **effect) const;
-    bool TryGetEffect(const Graphics::BindName& name, PCEffectPasses& effect) const;
+    void BindEffect(const Graphics::FBindName& name, const IEffectPasses *effect, bool allowOverride = false);
+    void UnbindEffect(const Graphics::FBindName& name, const IEffectPasses *effect);
+    bool TryGetEffect(const Graphics::FBindName& name, const IEffectPasses **effect) const;
+    bool TryGetEffect(const Graphics::FBindName& name, PCEffectPasses& effect) const;
 
     void Clear();
 
 private:
-    const MaterialDatabase *_parent;
+    const FMaterialDatabase *_parent;
 
-    HASHMAP(Material, Graphics::BindName, PMaterialParameter) _parameters;
-    HASHMAP(Material, Graphics::BindName, Filename) _textures;
-    HASHMAP(Material, Graphics::BindName, PCEffectPasses) _effects;
+    HASHMAP(FMaterial, Graphics::FBindName, PMaterialParameter) _parameters;
+    HASHMAP(FMaterial, Graphics::FBindName, FFilename) _textures;
+    HASHMAP(FMaterial, Graphics::FBindName, PCEffectPasses) _effects;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

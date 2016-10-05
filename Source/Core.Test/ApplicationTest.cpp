@@ -90,7 +90,7 @@
 #   error "no support"
 #endif
 
-static void Print(const Core::CrtMemoryStats& memoryStats) {
+static void Print(const Core::FCrtMemoryStats& memoryStats) {
     std::cerr << "Memory statistics :" << std::endl
         << " - Total free size          = " << memoryStats.TotalFreeSize << std::endl
         << " - Largest free block       = " << memoryStats.LargestFreeBlockSize << std::endl
@@ -104,10 +104,10 @@ static void Print(const Core::CrtMemoryStats& memoryStats) {
 void TestCallstack_() {
     using namespace Core;
 
-    Callstack callstack{ 2, 32 };
-    DecodedCallstack decoded{ callstack };
+    FCallstack callstack{ 2, 32 };
+    FDecodedCallstack decoded{ callstack };
 
-    std::cout << "Callstack[" << decoded.Depth() << "] #"
+    std::cout << "FCallstack[" << decoded.Depth() << "] #"
         << std::hex << decoded.Hash() << std::dec
         << std::endl;
 
@@ -121,12 +121,12 @@ void TestStrings_() {
     Format(buffer, L"string = {2}, decimal = {0}, float = {1}\n", "test", 42, 0.123456f);
     std::cout << buffer;
 
-    WString wstr = StringFormat(L"num={0} alphabool={0:a}", true);
+    FWString wstr = StringFormat(L"num={0} alphabool={0:a}", true);
 
     const char* test = "titi,toto,,tata,,";
 
     const char* s = test;
-    StringView p;
+    FStringView p;
     while (Split(&s, ',', p))
         std::cout << p << std::endl;
 
@@ -165,31 +165,31 @@ void TestHash_() {
     AssertRelease(h8 == h9);
 }
 
-class A : public Core::RefCountable {
+class A : public Core::FRefCountable {
 public:
     A() {}
 };
 
-class B : public Core::RefCountable {
+class B : public Core::FRefCountable {
 public:
     B() {}
     virtual ~B() {}
-    virtual int Value() const { return 0; }
+    virtual int FValue() const { return 0; }
 };
 class C : public B {
 public:
     C() {}
     virtual ~C() {}
-    virtual int Value() const override { return 42; }
+    virtual int FValue() const override { return 42; }
 };
 
 void TestPointers_() {
     using namespace Core;
 
-    RefPtr<A> a = new A();
-    RefPtr<C> c = new C();
+    TRefPtr<A> a = new A();
+    TRefPtr<C> c = new C();
 
-    RefPtr<B> b = c;
+    TRefPtr<B> b = c;
     AssertRelease(b == c);
     AssertRelease(a != b);
 
@@ -208,13 +208,13 @@ int fib(int x) {
 void TestThreads_() {
     using namespace Core;
 
-    ThreadContext& context = ThreadLocalContext_::Instance();
+    FThreadContext& context = FThreadLocalContext_::Instance();
 
     std::cout << context.Name() << ", " << context.Tag() << " = " << context.Id() << std::endl;
 
     LockFreeCircularQueue_SingleProducer<const wchar_t*> queue(128);
 
-    queue.Produce(L"Toto");
+    queue.Produce(L"FToto");
 
     const wchar_t* str = nullptr;
     if (!queue.Consume(str))
@@ -250,19 +250,19 @@ void TestThreads_() {
     }
 }
 
-struct TestToken {};
+struct FTestToken {};
 
-class TestToken2 : public Core::Token<TestToken2, char, Core::CaseSensitive::False> {
+class FTestToken2 : public Core::EToken<FTestToken2, char, Core::CaseSensitive::False> {
 };
 
 void TestTokens_() {
     using namespace Core;
 
-    typedef Token<TestToken, char, CaseSensitive::False> token_type;
-    token_type::Startup tokenStartup(32);
+    typedef EToken<FTestToken, char, CaseSensitive::False> token_type;
+    token_type::FStartup tokenStartup(32);
 
     token_type t("toto");
-    token_type v("Toto");
+    token_type v("FToto");
     AssertRelease(t == v);
 
     v = "tata";
@@ -276,7 +276,7 @@ void TestTokens_() {
 
     token_type q = "";
 
-    Hash<token_type> h;
+    THash<token_type> h;
     std::cout << h(t) << std::endl;
     std::cout << h(v) << std::endl;
     std::cout << h(e) << std::endl;
@@ -286,36 +286,36 @@ void TestTokens_() {
 void TestFileSystem_() {
     using namespace Core;
 
-    Extname ext = L".jpg";
+    FExtname ext = L".jpg";
 
     std::cout << ext << " (" << hash_value(ext) << ")" << std::endl;
-    std::cout << Extname(L".jPG") << std::endl;
+    std::cout << FExtname(L".jPG") << std::endl;
 
-    Extname e{ WString(L".Jpg") };
+    FExtname e{ FWString(L".Jpg") };
     AssertRelease(e == ext);
     AssertRelease(e.c_str() == ext.c_str());
     std::cout << e << " (" << hash_value(e) << ")" << std::endl;
 
     std::cout
         << "Size of filesystem classes :" << std::endl
-        << " * MountingPoint    = " << sizeof(MountingPoint)    << std::endl
-        << " * Dirpath          = " << sizeof(Dirpath)          << std::endl
-        << " * Basename         = " << sizeof(Basename)         << std::endl
-        << " * Extname          = " << sizeof(Extname)          << std::endl
-        << " * Filename         = " << sizeof(Filename)         << std::endl
-        << " * Vector<int>      = " << sizeof(std::vector<int>) << std::endl
-        << " * Vector<Dirname>  = " << sizeof(std::vector<Dirname>) << std::endl
-        << " * RawStorage<int>  = " << sizeof(RAWSTORAGE(Task, int)) << std::endl
+        << " * FMountingPoint    = " << sizeof(FMountingPoint)    << std::endl
+        << " * FDirpath          = " << sizeof(FDirpath)          << std::endl
+        << " * FBasename         = " << sizeof(FBasename)         << std::endl
+        << " * FExtname          = " << sizeof(FExtname)          << std::endl
+        << " * FFilename         = " << sizeof(FFilename)         << std::endl
+        << " * TVector<int>      = " << sizeof(std::vector<int>) << std::endl
+        << " * TVector<FDirname>  = " << sizeof(std::vector<FDirname>) << std::endl
+        << " * TRawStorage<int>  = " << sizeof(RAWSTORAGE(FTask, int)) << std::endl
         << std::endl;
 
-    MountingPoint mount(L"Data:");
-    Dirpath path = { L"Data:", L"Assets", L"3D", L"Models" };
-    Basename basename(L"Test", L".JPG");
-    Filename filename{ path, basename };
+    FMountingPoint mount(L"Data:");
+    FDirpath path = { L"Data:", L"Assets", L"3D", L"Models" };
+    FBasename basename(L"Test", L".JPG");
+    FFilename filename{ path, basename };
 
     std::cout << filename << " (" << hash_value(filename) << ")" << std::endl;
 
-    Filename f = L"data:/assets/3d/models/test.jpg";
+    FFilename f = L"data:/assets/3d/models/test.jpg";
     std::cout << f << " (" << hash_value(f) << ")" << std::endl;
     f = L"test.jpg";
     std::cout << f << " (" << hash_value(f) << ")" << " (basename: " << hash_value(f.Basename()) << ")" << std::endl;
@@ -339,7 +339,7 @@ void TestFileSystem_() {
     AssertRelease(hash_value(e) == hash_value(filename.Extname()));
     AssertRelease(hash_value(e) == hash_value(basename.Extname()));
 
-    Dirpath p = L"data:/assets/3d";
+    FDirpath p = L"data:/assets/3d";
     std::cout << p << " (" << hash_value(p) << ")" << std::endl;
     p = L"data:";
     std::cout << p << " (" << hash_value(p) << ")" << std::endl;
@@ -350,7 +350,7 @@ void TestFileSystem_() {
 void TestVirtualFileSystem_() {
     using namespace Core;
 
-    VirtualFileSystemRoot& vfs = VirtualFileSystem::Instance();
+    VirtualFileSystemRoot& vfs = FVirtualFileSystem::Instance();
 
     vfs.MountNativePath(L"C:", L"C:");
 
@@ -376,54 +376,54 @@ void TestVirtualFileSystem_() {
     if (!vfs.FileExists(L"procesS:/tEsT.tXT"))
         AssertRelease(false);
 
-    vfs.EnumerateFiles(L"process:/", true, [](const Core::Filename& filename) {
+    vfs.EnumerateFiles(L"process:/", true, [](const Core::FFilename& filename) {
         std::cout << filename << std::endl;
     });
 }
 
 FWD_REFPTR(Titi);
-class Titi : public Core::RTTI::MetaObject {
+class FTiti : public Core::RTTI::FMetaObject {
 public:
-    Titi() {}
-    virtual ~Titi() {}
-    RTTI_CLASS_HEADER(Titi, void);
+    FTiti() {}
+    virtual ~FTiti() {}
+    RTTI_CLASS_HEADER(FTiti, void);
 private:
     int _count;
-    Core::String _name;
+    Core::FString _name;
     VECTOR(Internal, PTiti) _tities;
 };
-RTTI_CLASS_BEGIN(Titi, Concrete)
+RTTI_CLASS_BEGIN(FTiti, Concrete)
 RTTI_PROPERTY_FIELD(_count)
-RTTI_PROPERTY_FIELD_ALIAS(_name, Name)
+RTTI_PROPERTY_FIELD_ALIAS(_name, FName)
 RTTI_PROPERTY_FIELD(_tities)
 RTTI_CLASS_END()
 
 FWD_REFPTR(Toto);
-class Toto : public Core::RTTI::MetaObject {
+class FToto : public Core::RTTI::FMetaObject {
 public:
-    Toto() {}
-    virtual ~Toto() {}
-    RTTI_CLASS_HEADER(Toto, void);
+    FToto() {}
+    virtual ~FToto() {}
+    RTTI_CLASS_HEADER(FToto, void);
 private:
     int _count;
-    Core::String _name;
+    Core::FString _name;
     VECTOR(Internal, PTiti) _tities;
-    VECTOR_THREAD_LOCAL(Internal, Core::String) _titles;
-    Core::RefPtr<Toto> _parent;
-    Core::Pair<int, int> _pair;
-    Core::Pair<float, float> _fpair;
-    Core::Pair<Core::Pair<int, int>, Core::Pair<int, int> > _vpair;
-    Core::Pair<Core::Pair<int, int>, Core::Pair<int, float> > _vpair2;
-    HASHMAP_THREAD_LOCAL(Internal, Core::String, float) _dict;
-    HASHMAP_THREAD_LOCAL(Internal, Core::String, Core::Pair<int COMMA Core::Pair<float COMMA Core::String>>) _dict2;
+    VECTOR_THREAD_LOCAL(Internal, Core::FString) _titles;
+    Core::TRefPtr<FToto> _parent;
+    Core::TPair<int, int> _pair;
+    Core::TPair<float, float> _fpair;
+    Core::TPair<Core::TPair<int, int>, Core::TPair<int, int> > _vpair;
+    Core::TPair<Core::TPair<int, int>, Core::TPair<int, float> > _vpair2;
+    HASHMAP_THREAD_LOCAL(Internal, Core::FString, float) _dict;
+    HASHMAP_THREAD_LOCAL(Internal, Core::FString, Core::TPair<int COMMA Core::TPair<float COMMA Core::FString>>) _dict2;
 };
-RTTI_CLASS_BEGIN(Toto, Concrete)
+RTTI_CLASS_BEGIN(FToto, Concrete)
 RTTI_PROPERTY_FIELD_ALIAS(_count, Count)
-RTTI_PROPERTY_FIELD_ALIAS(_name, Name)
+RTTI_PROPERTY_FIELD_ALIAS(_name, FName)
 RTTI_PROPERTY_FIELD_ALIAS(_tities, Tities)
 RTTI_PROPERTY_FIELD_ALIAS(_titles, Titles)
 RTTI_PROPERTY_FIELD_ALIAS(_parent, Parent)
-RTTI_PROPERTY_FIELD_ALIAS(_pair, Pair)
+RTTI_PROPERTY_FIELD_ALIAS(_pair, TPair)
 RTTI_PROPERTY_FIELD_ALIAS(_fpair, FPair)
 RTTI_PROPERTY_FIELD_ALIAS(_vpair, VPair)
 RTTI_PROPERTY_FIELD_ALIAS(_vpair2, VPair2)
@@ -433,7 +433,7 @@ RTTI_CLASS_END()
 
 template <typename T>
 static void TestRTTIWrap_() {
-    typedef Core::RTTI::MetaTypeTraits< T > type_traits;
+    typedef Core::RTTI::TMetaTypeTraits< T > type_traits;
     T wrapped;
     typename type_traits::wrapper_type wrapper;
     type_traits::WrapCopy(wrapper, wrapped);
@@ -445,79 +445,79 @@ static void TestRTTIWrap_() {
 static void TestRTTI_() {
     using namespace Core;
 
-    Format(std::cout, "Id = {0}, Name = {1}, Default = {2}, Flags = {3}\n",
-        RTTI::MetaType< int32_t >::Id(),
-        RTTI::MetaType< int32_t >::Name(),
-        RTTI::MetaType< int32_t >::DefaultValue(),
-        (size_t)RTTI::MetaType< int32_t >::Flags()
+    Format(std::cout, "Id = {0}, FName = {1}, Default = {2}, EFlags = {3}\n",
+        RTTI::TMetaType< int32_t >::Id(),
+        RTTI::TMetaType< int32_t >::FName(),
+        RTTI::TMetaType< int32_t >::DefaultValue(),
+        (size_t)RTTI::TMetaType< int32_t >::EFlags()
         );
 
-    Format(std::cout, "Id = {0}, Name = {1}, Default = {2}, Flags = {3}\n",
-        RTTI::MetaType< int >::Id(),
-        RTTI::MetaType< int >::Name(),
-        RTTI::MetaType< int >::DefaultValue(),
-        (size_t)RTTI::MetaType< int >::Flags()
+    Format(std::cout, "Id = {0}, FName = {1}, Default = {2}, EFlags = {3}\n",
+        RTTI::TMetaType< int >::Id(),
+        RTTI::TMetaType< int >::FName(),
+        RTTI::TMetaType< int >::DefaultValue(),
+        (size_t)RTTI::TMetaType< int >::EFlags()
         );
 
-    Format(std::cout, "Id = {0}, Name = {1}, Default = {2}, Flags = {3}\n",
-        RTTI::MetaType< size_t >::Id(),
-        RTTI::MetaType< size_t >::Name(),
-        RTTI::MetaType< size_t >::DefaultValue(),
-        (size_t)RTTI::MetaType< size_t >::Flags()
+    Format(std::cout, "Id = {0}, FName = {1}, Default = {2}, EFlags = {3}\n",
+        RTTI::TMetaType< size_t >::Id(),
+        RTTI::TMetaType< size_t >::FName(),
+        RTTI::TMetaType< size_t >::DefaultValue(),
+        (size_t)RTTI::TMetaType< size_t >::EFlags()
         );
 
-    Format(std::cout, "Id = {0}, Name = {1}, Default = {2}, Flags = {3}\n",
-        RTTI::MetaType< String >::Id(),
-        RTTI::MetaType< String >::Name(),
-        RTTI::MetaType< String >::DefaultValue(),
-        (size_t)RTTI::MetaType< String >::Flags()
+    Format(std::cout, "Id = {0}, FName = {1}, Default = {2}, EFlags = {3}\n",
+        RTTI::TMetaType< FString >::Id(),
+        RTTI::TMetaType< FString >::FName(),
+        RTTI::TMetaType< FString >::DefaultValue(),
+        (size_t)RTTI::TMetaType< FString >::EFlags()
         );
 
-    Format(std::cout, "Id = {0}, Name = {1}, Default = {2}, Flags = {3}\n",
-        RTTI::MetaType< VECTOR(RTTI, int) >::Id(),
-        RTTI::MetaType< VECTOR(RTTI, int) >::Name(),
-        RTTI::MetaType< VECTOR(RTTI, int) >::DefaultValue(),
-        (size_t)RTTI::MetaType< VECTOR(RTTI, int) >::Flags()
+    Format(std::cout, "Id = {0}, FName = {1}, Default = {2}, EFlags = {3}\n",
+        RTTI::TMetaType< VECTOR(RTTI, int) >::Id(),
+        RTTI::TMetaType< VECTOR(RTTI, int) >::FName(),
+        RTTI::TMetaType< VECTOR(RTTI, int) >::DefaultValue(),
+        (size_t)RTTI::TMetaType< VECTOR(RTTI, int) >::EFlags()
         );
 
-    Format(std::cout, "Id = {0}, Name = {1}, Default = {2}, Flags = {3}\n",
-        RTTI::MetaType< Pair<float, int> >::Id(),
-        RTTI::MetaType< Pair<float, int> >::Name(),
-        RTTI::MetaType< Pair<float, int> >::DefaultValue(),
-        (size_t)RTTI::MetaType< Pair<float, int> >::Flags()
+    Format(std::cout, "Id = {0}, FName = {1}, Default = {2}, EFlags = {3}\n",
+        RTTI::TMetaType< TPair<float, int> >::Id(),
+        RTTI::TMetaType< TPair<float, int> >::FName(),
+        RTTI::TMetaType< TPair<float, int> >::DefaultValue(),
+        (size_t)RTTI::TMetaType< TPair<float, int> >::EFlags()
         );
 
-    RTTI::MetaTypeTraits< int >::meta_type::Name();
+    RTTI::TMetaTypeTraits< int >::meta_type::FName();
 
     int i = 0;
-    RTTI::MetaTypeTraits< int >::UnwrapCopy(i, 42);
+    RTTI::TMetaTypeTraits< int >::UnwrapCopy(i, 42);
 
     RTTI::PMetaObject o;
-    RTTI::MetaTypeTraits< RTTI::PMetaObject >::UnwrapCopy(o, nullptr);
+    RTTI::TMetaTypeTraits< RTTI::PMetaObject >::UnwrapCopy(o, nullptr);
 
     PTiti t;
-    RTTI::MetaTypeTraits< PTiti >::UnwrapCopy(t, nullptr);
-    RTTI::MetaTypeTraits< PTiti >::WrapMove(o, std::move(t));
+    RTTI::TMetaTypeTraits< PTiti >::UnwrapCopy(t, nullptr);
+    RTTI::TMetaTypeTraits< PTiti >::WrapMove(o, std::move(t));
 
     TestRTTIWrap_< PTiti >();
-    TestRTTIWrap_< Pair<WString, PTiti> >();
+    TestRTTIWrap_< TPair<FWString, PTiti> >();
     TestRTTIWrap_< VECTOR_THREAD_LOCAL(RTTI, PTiti) >();
     TestRTTIWrap_< HASHMAP(RTTI, int, int) >();
-    TestRTTIWrap_< HASHMAP(RTTI, String, PTiti) >();
-    TestRTTIWrap_< ASSOCIATIVE_VECTOR(RTTI, String, PTiti) >();
-    //TestRTTIWrap_< HASHSET(RTTI, String) >();
+    TestRTTIWrap_< HASHMAP(RTTI, FString, PTiti) >();
+    TestRTTIWrap_< ASSOCIATIVE_VECTOR(RTTI, FString, PTiti) >();
+    //TestRTTIWrap_< HASHSET(RTTI, FString) >();
 
-    RTTI::MetaClassSingleton<Titi>::Create();
+    RTTI::TMetaClassSingleton<FTiti>::Create();
 
-    t = new Titi();
-    const RTTI::MetaClass *metaClass = t->RTTI_MetaClass();
+    t = new FTiti();
+    const RTTI::FMetaClass *metaClass = t->RTTI_MetaClass();
 
-    Format(std::cout, "MetaClass<{0}> : {1}\n", metaClass->Name(), metaClass->Attributes());
-    RTTI::ForEachProperty(metaClass, [](const MetaClass* metaClass, const MetaProperty* prop) {
+    Format(std::cout, "TMetaClass<{0}> : {1}\n", metaClass->Name(), metaClass->Attributes());
+    RTTI::ForEachProperty(metaClass, [](const FMetaClass* metaClass, const FMetaProperty* prop) {
         Format(std::cout, "  - {0} : {1} -> {2}\n", prop->Name(), prop->Attributes(), prop->TypeInfo());
     });
 
-    const RTTI::MetaProperty *prop = metaClass->PropertyIFP("_count");
+    const RTTI::FMetaProperty *prop = metaClass->PropertyIFP("_count");
 
     int value;
     prop->Cast<int>()->GetCopy(t, value);
@@ -532,7 +532,7 @@ static void TestRTTI_() {
     atom = prop->WrapCopy(t);
 
     auto typedAtom = atom->Cast< VECTOR(Internal, PTiti) >();
-    typedAtom->Wrapper().push_back(new Titi());
+    typedAtom->Wrapper().push_back(new FTiti());
 
     prop->MoveFrom(t, typedAtom);
 
@@ -540,36 +540,36 @@ static void TestRTTI_() {
     auto wrongAtom2 = atom->As< int >();
     AssertRelease(!wrongAtom2);
 
-    RTTI::MetaClassSingleton<Titi>::Destroy();
+    RTTI::TMetaClassSingleton<FTiti>::Destroy();
 }
 
 static void TestLexerParser_() {
     using namespace Core;
 
-    Lexer::LexerStartup lexerStartup;
-    Parser::ParserStartup parserStartup;
+    FLexer::FLexerStartup lexerStartup;
+    Parser::FParserStartup parserStartup;
 
-    Parser::Production< Parser::Enumerable<
-        Tuple<  const Lexer::Match *,
-        const Lexer::Match *,
-        const Lexer::Match *>
+    Parser::TProduction< Parser::TEnumerable<
+        TTuple<  const FLexer::FMatch *,
+        const FLexer::FMatch *,
+        const FLexer::FMatch *>
     > > p =
-    Parser::Expect(Lexer::Symbol::Int)
-    .And(Parser::Expect(Lexer::Symbol::Add)
-    .Or(Parser::Expect(Lexer::Symbol::Sub))
-    .Or(Parser::Expect(Lexer::Symbol::Mul))
-    .Or(Parser::Expect(Lexer::Symbol::Div)))
-    .And(Parser::Expect(Lexer::Symbol::Int))
+    Parser::Expect(FLexer::FSymbol::Int)
+    .And(Parser::Expect(FLexer::FSymbol::Add)
+    .Or(Parser::Expect(FLexer::FSymbol::Sub))
+    .Or(Parser::Expect(FLexer::FSymbol::Mul))
+    .Or(Parser::Expect(FLexer::FSymbol::Div)))
+    .And(Parser::Expect(FLexer::FSymbol::Int))
     .Many();
 
-    VirtualFileSystemRoot& vfs = VirtualFileSystem::Instance();
+    VirtualFileSystemRoot& vfs = FVirtualFileSystem::Instance();
 
-    VirtualFileSystemComponentStartup processStartup(
-        new VirtualFileSystemNativeComponent(L"Process:/", CurrentProcess::Instance().Directory())
+    FVirtualFileSystemComponentStartup processStartup(
+        new FVirtualFileSystemNativeComponent(L"Process:/", FCurrentProcess::Instance().Directory())
         );
 
-    const Filename inputFilename = L"Process:/parser.txt";
-    const String nativeFilename = StringFormat("{0}", inputFilename);
+    const FFilename inputFilename = L"Process:/parser.txt";
+    const FString nativeFilename = StringFormat("{0}", inputFilename);
 
     {
         auto oss = vfs.OpenWritable(inputFilename, AccessPolicy::Truncate);
@@ -580,32 +580,32 @@ static void TestLexerParser_() {
         RAWSTORAGE(Serializer, char) storage;
         vfs.ReadAll(inputFilename, storage);
 
-        Lexer::Lexer lexer(storage.MakeConstView(), nativeFilename.c_str());
-        Parser::ParseList input(&lexer);
+        FLexer::FLexer lexer(storage.MakeConstView(), nativeFilename.c_str());
+        Parser::FParseList input(&lexer);
 
-        Parser::ParseContext globalContext(nullptr);
+        Parser::FParseContext globalContext(nullptr);
 
         try {
             Parser::PCParseStatement statement = Serialize::Grammar_Parse(input);
 
-            Parser::ParseContext localContext(globalContext.Transaction(), &globalContext);
+            Parser::FParseContext localContext(globalContext.Transaction(), &globalContext);
             statement->Invoke(&localContext);
         }
-        catch (const Parser::ParserException& e) {
+        catch (const Parser::FParserException& e) {
             if (e.Item())
                 Format(std::cerr, "parser error : <{0}> {1}, {2}.\n", e.Item()->ToString(), e.what(), e.Site());
             else
                 Format(std::cerr, "parser error : {0}, {1}.\n", e.what(), e.Site());
         }
-        catch (const Lexer::LexerException& e) {
+        catch (const FLexer::FLexerException& e) {
             Format(std::cerr, "lexer error : <{0}>: {1}, {2}.\n", e.Match().Symbol()->CStr(), e.what(), e.Match().Site());
         }
     }
 
-    RTTI::MetaClassSingleton<Toto>::Create();
+    RTTI::TMetaClassSingleton<FToto>::Create();
     {
-        const RTTI::MetaClass& metaClass = RTTI::MetaClassSingleton<Toto>::Instance();
-        Format(std::cout, "MetaClass<{0}> : {1}\n", metaClass.Name(), metaClass.Attributes());
+        const RTTI::FMetaClass& metaClass = RTTI::TMetaClassSingleton<FToto>::Instance();
+        Format(std::cout, "TMetaClass<{0}> : {1}\n", metaClass.Name(), metaClass.Attributes());
         for (const auto& it : metaClass.Properties())
             Format(std::cout, "  - {0} : {1}, {2} -> {4} [{3}]\n",
             it.first,
@@ -615,7 +615,7 @@ static void TestLexerParser_() {
             it.second->TypeInfo());
     }
 
-    Parser::ParseContext globalContext(new RTTI::MetaTransaction());
+    Parser::FParseContext globalContext(new RTTI::FMetaTransaction());
 
     do
     {
@@ -628,26 +628,26 @@ static void TestLexerParser_() {
             break;
 
         try {
-            Lexer::Lexer lexer(StringView(&line[0], Length(line)), "@in_memory");
-            Parser::ParseList input(&lexer);
+            FLexer::FLexer lexer(FStringView(&line[0], Length(line)), "@in_memory");
+            Parser::FParseList input(&lexer);
 
             Parser::PCParseItem item = Serialize::Grammar_Parse(input);
             AssertRelease(item);
 
             item->Invoke(&globalContext);
         }
-        catch (const Parser::ParserException& e) {
+        catch (const Parser::FParserException& e) {
             if (e.Item())
                 Format(std::cerr, "parser error : <{0}> {1}, {2}.\n", e.Item()->ToString(), e.what(), e.Site());
             else
                 Format(std::cerr, "parser error : {0}, {1}.\n", e.what(), e.Site());
         }
-        catch (const Lexer::LexerException& e) {
+        catch (const FLexer::FLexerException& e) {
             Format(std::cerr, "lexer error : <{0}>: {1}, {2}.\n", e.Match().Symbol()->CStr(), e.what(), e.Match().Site());
         }
     } while (true);
 
-    RTTI::MetaClassSingleton<Toto>::Destroy();
+    RTTI::TMetaClassSingleton<FToto>::Destroy();
 }
 
 static void TestTuple_() {
@@ -656,15 +656,15 @@ static void TestTuple_() {
     int i = 42;
     float f = 4.0f;
 
-    Tuple<int, float> t = MergeTuple(i, f);
+    TTuple<int, float> t = MergeTuple(i, f);
 
     auto k1 = MakeTuple(i);
     auto k2 = MakeTuple(f);
     auto k3 = MakeTuple(t);
 
-    Tuple<int, float, float> t2 = MergeTuple(t, f);
+    TTuple<int, float, float> t2 = MergeTuple(t, f);
 
-    //Tuple<int, float, float> t2 = std::tuple_cat(MakeTuple(t), MakeTuple(f));
+    //TTuple<int, float, float> t2 = std::tuple_cat(MakeTuple(t), MakeTuple(f));
 }
 
 static void TestMaths_() {
@@ -685,15 +685,15 @@ static void TestMaths_() {
 
     w = 1.0f + w;
 
-    float3 x = Lerp(w, 2 * w, 0.5f);
+    float3 x = TLerp(w, 2 * w, 0.5f);
 
     std::cout << (w == x) << std::endl;
 
     x = Saturate(x) + 1.0f;
-    x = Rcp(x);
+    x = TRcp(x);
 
-    RandomGenerator rand;
-    x = Lerp(float2(-13), float2(42), rand.NextFloat01()).ZeroExtend();
+    FRandomGenerator rand;
+    x = TLerp(float2(-13), float2(42), rand.NextFloat01()).ZeroExtend();
 
     u32 i = rand.NextU32(10);
     u32 j = rand.NextU32(10, 42);
@@ -701,9 +701,9 @@ static void TestMaths_() {
     float t = rand.NextFloat01();
     float s = rand.NextFloatM11();
 
-    float4 z = Lerp(float4(-42), float4(69), NextRandFloat01<4>(rand));
+    float4 z = TLerp(float4(-42), float4(69), NextRandFloat01<4>(rand));
 
-    RandomGenerator rand2(RandomGenerator::RandomSeedTag{});
+    FRandomGenerator rand2(FRandomGenerator::RandomSeedTag{});
     t = rand2.NextFloat01();
     s = rand2.NextFloatM11();
 
@@ -712,9 +712,9 @@ static void TestMaths_() {
     for (size_t c = 0; c < 10; ++c) {
         float3 n = NextRandFloatM11<3>(rand2);
 
-        ScalarVector<u16, 3> q0 = QuantizeCeil<u16>(aabb, n);
-        ScalarVector<u16, 3> q1 = QuantizeFloor<u16>(aabb, n);
-        ScalarVector<u16, 3> q2 = QuantizeRound<u16>(aabb, n);
+        TScalarVector<u16, 3> q0 = QuantizeCeil<u16>(aabb, n);
+        TScalarVector<u16, 3> q1 = QuantizeFloor<u16>(aabb, n);
+        TScalarVector<u16, 3> q2 = QuantizeRound<u16>(aabb, n);
 
         float3 r0 = Unquantize(aabb, q0);
         float3 r1 = Unquantize(aabb, q1);
@@ -742,12 +742,12 @@ static void TestMaths_() {
     float4x4 mti = Invert(mt);
     float4x4 mtii = Invert(mti);
 
-    HalfFloat h = 1.234f;
+    FHalfFloat h = 1.234f;
     float hf = h;
-    HalfFloat hc = hf;
+    FHalfFloat hc = hf;
     AssertRelease(hc == h);
 
-    const float half_epsilon = HalfFloat::Epsilon.Unpack();
+    const float half_epsilon = FHalfFloat::Epsilon.Unpack();
 
     half4 h4(half(1.0f), half(0.0f), half(-1.0f), half(0.234f));
     float4 h4f = HalfUnpack(h4);
@@ -927,7 +927,7 @@ static void TestMatrices_() {
 static void TestTime_() {
     using namespace Core;
 
-    Timeline time = Timeline::StartNow();
+    FTimeline time = FTimeline::StartNow();
 
     const size_t seconds = 1;
     const size_t wantedTickCount = seconds*15;
@@ -950,17 +950,17 @@ static void TestTime_() {
 }
 
 namespace Core {
-    struct VertexPositionTexCoordNormalTangent {
+    struct FVertexPositionTexCoordNormalTangent {
         float3  Position;
         ushort2 TexCoord;
         ubyte4  Normal;
         ubyte4  Tangent;
 
-        static void CreateVertexDeclaration(Graphics::VertexDeclaration *vertexDecl) {
-            vertexDecl->AddTypedSubPart<Graphics::VertexSubPartSemantic::Position>(&VertexPositionTexCoordNormalTangent::Position, 0);
-            vertexDecl->AddTypedSubPart<Graphics::VertexSubPartSemantic::TexCoord>(&VertexPositionTexCoordNormalTangent::TexCoord, 0);
-            vertexDecl->AddTypedSubPart<Graphics::VertexSubPartSemantic::Normal>(&VertexPositionTexCoordNormalTangent::Normal, 0);
-            vertexDecl->AddTypedSubPart<Graphics::VertexSubPartSemantic::Tangent>(&VertexPositionTexCoordNormalTangent::Tangent, 0);
+        static void CreateVertexDeclaration(Graphics::FVertexDeclaration *vertexDecl) {
+            vertexDecl->AddTypedSubPart<Graphics::VertexSubPartSemantic::Position>(&FVertexPositionTexCoordNormalTangent::Position, 0);
+            vertexDecl->AddTypedSubPart<Graphics::VertexSubPartSemantic::TexCoord>(&FVertexPositionTexCoordNormalTangent::TexCoord, 0);
+            vertexDecl->AddTypedSubPart<Graphics::VertexSubPartSemantic::Normal>(&FVertexPositionTexCoordNormalTangent::Normal, 0);
+            vertexDecl->AddTypedSubPart<Graphics::VertexSubPartSemantic::Tangent>(&FVertexPositionTexCoordNormalTangent::Tangent, 0);
             vertexDecl->Freeze();
         }
     };
@@ -969,17 +969,17 @@ namespace Core {
 void TestGraphics_() {
     using namespace Core;
 
-    Graphics::VertexDeclaration vertexDecl;
+    Graphics::FVertexDeclaration vertexDecl;
     vertexDecl.AddSubPart<Graphics::VertexSubPartFormat::Float3, Graphics::VertexSubPartSemantic::Position>(0);
     vertexDecl.AddSubPart<Graphics::VertexSubPartFormat::UShort2, Graphics::VertexSubPartSemantic::TexCoord>(0);
     vertexDecl.AddSubPart<Graphics::VertexSubPartFormat::UByte4, Graphics::VertexSubPartSemantic::Normal>(0);
     vertexDecl.AddSubPart<Graphics::VertexSubPartFormat::UByte4, Graphics::VertexSubPartSemantic::Tangent>(0);
     vertexDecl.Freeze();
 
-    String str = vertexDecl.ToString();
+    FString str = vertexDecl.ToString();
     size_t size = vertexDecl.SizeInBytes();
 
-    Pair<const Graphics::VertexSubPartKey *, const Graphics::AbstractVertexSubPart *> it =
+    TPair<const Graphics::FVertexSubPartKey *, const Graphics::FAbstractVertexSubPart *> it =
         vertexDecl.SubPartBySemantic(Graphics::VertexSubPartSemantic::Position, 0);
     AssertRelease(it.second);
     AssertRelease(it.first->Format() == Graphics::VertexSubPartFormat::Float3);
@@ -990,28 +990,28 @@ void TestGraphics_() {
 
     const auto *subpart = vertexDecl.TypedSubPart<Graphics::VertexSubPartFormat::UByte4>(Graphics::VertexSubPartSemantic::Normal, 0);
 
-    Graphics::VertexDeclaration vertexDecl2;
-    VertexPositionTexCoordNormalTangent::CreateVertexDeclaration(&vertexDecl2);
+    Graphics::FVertexDeclaration vertexDecl2;
+    FVertexPositionTexCoordNormalTangent::CreateVertexDeclaration(&vertexDecl2);
 
-    String str2 = vertexDecl2.ToString();
+    FString str2 = vertexDecl2.ToString();
     size_t size2 = vertexDecl2.SizeInBytes();
 
-    VertexPositionTexCoordNormalTangent v;
+    FVertexPositionTexCoordNormalTangent v;
 
     vertexDecl2.TypedSubPart<Graphics::VertexSubPartFormat::Float3>(Graphics::VertexSubPartSemantic::Position, 0)->TypedSet(&v, float3(1,2,3));
     vertexDecl2.TypedSubPart<Graphics::VertexSubPartFormat::UShort2>(Graphics::VertexSubPartSemantic::TexCoord, 0)->TypedSet(&v, ushort2(16,1024));
     vertexDecl2.TypedSubPart<Graphics::VertexSubPartFormat::UByte4>(Graphics::VertexSubPartSemantic::Normal, 0)->TypedSet(&v, ubyte4(0,0,0xFF,0));
 
-    VertexPositionTexCoordNormalTangent v2;
-    vertexDecl2.CopyVertex(&v2, &v, sizeof(VertexPositionTexCoordNormalTangent));
+    FVertexPositionTexCoordNormalTangent v2;
+    vertexDecl2.CopyVertex(&v2, &v, sizeof(FVertexPositionTexCoordNormalTangent));
     AssertRelease(v.Position == v2.Position);
     AssertRelease(v.TexCoord == v2.TexCoord);
     AssertRelease(v.Normal == v2.Normal);
 
-    const Graphics::VertexDeclaration *vdecl2 = Graphics::Vertex::Position0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N::Declaration;
+    const Graphics::FVertexDeclaration *vdecl2 = Graphics::Vertex::FPosition0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N::Declaration;
     const auto autoName = vdecl2->ToString();
 
-    Graphics::Vertex::Position0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N vvv;
+    Graphics::Vertex::FPosition0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N vvv;
     vvv.Position0 = float3(1,2,3);
     vvv.TexCoord0 = HalfPack(float2(1100, -12345));
     vvv.Normal0.Pack_FloatM11(float3(-1,0,0), 0);
@@ -1026,14 +1026,14 @@ void TestGraphics_() {
     AssertRelease(normal0 == vvv.Normal0);
     AssertRelease(tangent0 == vvv.Tangent0);
 
-    const Graphics::SurfaceFormat *fmt0 = Graphics::SurfaceFormat::D24S8;
+    const Graphics::FSurfaceFormat *fmt0 = Graphics::FSurfaceFormat::D24S8;
     AssertRelease(fmt0->IsDepth());
     AssertRelease(fmt0->IsStencil());
     AssertRelease(fmt0->BitsPerPixels() == 32);
     AssertRelease(fmt0->Pitch() == 4);
     AssertRelease(fmt0->MacroBlockSizeInPixels() == 1);
 
-    fmt0 = Graphics::SurfaceFormat::R8G8B8A8_SRGB;
+    fmt0 = Graphics::FSurfaceFormat::R8G8B8A8_SRGB;
     AssertRelease(fmt0->IsRGB());
     AssertRelease(fmt0->IsAlpha());
     AssertRelease(fmt0->IsGammaSpace());
@@ -1042,7 +1042,7 @@ void TestGraphics_() {
     AssertRelease(fmt0->MacroBlockSizeInPixels() == 1);
 
     /* TODO
-    fmt0 = Graphics::SurfaceFormat::DXT5_SRGB;
+    fmt0 = Graphics::FSurfaceFormat::DXT5_SRGB;
     AssertRelease(fmt0->RGB());
     AssertRelease(fmt0->Alpha());
     AssertRelease(fmt0->GammaSpace());
@@ -1052,14 +1052,14 @@ void TestGraphics_() {
     AssertRelease(fmt0->MacroBlockSizeInPixels() == 4);
     */
 
-    fmt0 = Graphics::SurfaceFormat::R32G32_F;
+    fmt0 = Graphics::FSurfaceFormat::R32G32_F;
     AssertRelease(fmt0->IsRA());
     AssertRelease(fmt0->IsFloatingPoint());
     AssertRelease(fmt0->BitsPerPixels() == 64);
     AssertRelease(fmt0->Pitch() == 8);
     AssertRelease(fmt0->MacroBlockSizeInPixels() == 1);
 
-    fmt0 = Graphics::SurfaceFormat::R16G16B16A16_F;
+    fmt0 = Graphics::FSurfaceFormat::R16G16B16A16_F;
     AssertRelease(fmt0->IsRGB());
     AssertRelease(fmt0->IsAlpha());
     AssertRelease(fmt0->IsFloatingPoint());
@@ -1067,7 +1067,7 @@ void TestGraphics_() {
      AssertRelease(fmt0->Pitch() == 8);
     AssertRelease(fmt0->MacroBlockSizeInPixels() == 1);
 
-    fmt0 = Graphics::SurfaceFormat::R32G32B32A32;
+    fmt0 = Graphics::FSurfaceFormat::R32G32B32A32;
     AssertRelease(fmt0->IsRGB());
     AssertRelease(fmt0->IsAlpha());
     AssertRelease(!fmt0->IsFloatingPoint());
@@ -1075,17 +1075,17 @@ void TestGraphics_() {
     AssertRelease(fmt0->Pitch() == 16);
     AssertRelease(fmt0->MacroBlockSizeInPixels() == 1);
 
-    const Graphics::BlendState *blend = Graphics::BlendState::AlphaBlend;
-    AssertRelease(blend->ColorSourceBlend() == Graphics::Blend::One);
-    AssertRelease(blend->AlphaDestinationBlend() == Graphics::Blend::InverseSourceAlpha);
+    const Graphics::FBlendState *blend = Graphics::FBlendState::AlphaBlend;
+    AssertRelease(blend->ColorSourceBlend() == Graphics::EBlend::One);
+    AssertRelease(blend->AlphaDestinationBlend() == Graphics::EBlend::InverseSourceAlpha);
     AssertRelease(blend->Frozen());
 
-    const Graphics::DepthStencilState *depth = Graphics::DepthStencilState::Default;
+    const Graphics::FDepthStencilState *depth = Graphics::FDepthStencilState::Default;
     AssertRelease(depth->DepthBufferEnabled());
-    AssertRelease(depth->DepthBufferFunction() == Graphics::CompareFunction::LessEqual);
+    AssertRelease(depth->DepthBufferFunction() == Graphics::ECompareFunction::TLessEqual);
 
-    const Graphics::RasterizerState *rasterizer = Graphics::RasterizerState::CullCounterClockwise;
-    AssertRelease(rasterizer->CullMode() == Graphics::CullMode::CullCounterClockwiseFace);
+    const Graphics::FRasterizerState *rasterizer = Graphics::FRasterizerState::CullCounterClockwise;
+    AssertRelease(rasterizer->CullMode() == Graphics::ECullMode::CullCounterClockwiseFace);
     AssertRelease(rasterizer->MultiSampleAntiAlias());
     AssertRelease(!rasterizer->ScissorTestEnabled());
 
@@ -1110,69 +1110,69 @@ void TestInputs_() {
     u8 virtualKeyToKeyboardKey[0xFF];
     memset(virtualKeyToKeyboardKey, 0xFF, sizeof(virtualKeyToKeyboardKey));
 
-    virtualKeyToKeyboardKey[VK_NUMPAD0] = u8(KeyboardKey::Numpad0);
-    virtualKeyToKeyboardKey[VK_NUMPAD1] = u8(KeyboardKey::Numpad1);
-    virtualKeyToKeyboardKey[VK_NUMPAD2] = u8(KeyboardKey::Numpad2);
-    virtualKeyToKeyboardKey[VK_NUMPAD3] = u8(KeyboardKey::Numpad3);
-    virtualKeyToKeyboardKey[VK_NUMPAD4] = u8(KeyboardKey::Numpad4);
-    virtualKeyToKeyboardKey[VK_NUMPAD5] = u8(KeyboardKey::Numpad5);
-    virtualKeyToKeyboardKey[VK_NUMPAD6] = u8(KeyboardKey::Numpad6);
-    virtualKeyToKeyboardKey[VK_NUMPAD7] = u8(KeyboardKey::Numpad7);
-    virtualKeyToKeyboardKey[VK_NUMPAD8] = u8(KeyboardKey::Numpad8);
-    virtualKeyToKeyboardKey[VK_NUMPAD9] = u8(KeyboardKey::Numpad9);
+    virtualKeyToKeyboardKey[VK_NUMPAD0] = u8(EKeyboardKey::Numpad0);
+    virtualKeyToKeyboardKey[VK_NUMPAD1] = u8(EKeyboardKey::Numpad1);
+    virtualKeyToKeyboardKey[VK_NUMPAD2] = u8(EKeyboardKey::Numpad2);
+    virtualKeyToKeyboardKey[VK_NUMPAD3] = u8(EKeyboardKey::Numpad3);
+    virtualKeyToKeyboardKey[VK_NUMPAD4] = u8(EKeyboardKey::Numpad4);
+    virtualKeyToKeyboardKey[VK_NUMPAD5] = u8(EKeyboardKey::Numpad5);
+    virtualKeyToKeyboardKey[VK_NUMPAD6] = u8(EKeyboardKey::Numpad6);
+    virtualKeyToKeyboardKey[VK_NUMPAD7] = u8(EKeyboardKey::Numpad7);
+    virtualKeyToKeyboardKey[VK_NUMPAD8] = u8(EKeyboardKey::Numpad8);
+    virtualKeyToKeyboardKey[VK_NUMPAD9] = u8(EKeyboardKey::Numpad9);
 
-    virtualKeyToKeyboardKey[VK_ADD] = u8(KeyboardKey::Add);
-    virtualKeyToKeyboardKey[VK_SUBTRACT] = u8(KeyboardKey::Subtract);
-    virtualKeyToKeyboardKey[VK_MULTIPLY] = u8(KeyboardKey::Multiply);
-    virtualKeyToKeyboardKey[VK_DIVIDE] = u8(KeyboardKey::Divide);
+    virtualKeyToKeyboardKey[VK_ADD] = u8(EKeyboardKey::Add);
+    virtualKeyToKeyboardKey[VK_SUBTRACT] = u8(EKeyboardKey::Subtract);
+    virtualKeyToKeyboardKey[VK_MULTIPLY] = u8(EKeyboardKey::Multiply);
+    virtualKeyToKeyboardKey[VK_DIVIDE] = u8(EKeyboardKey::Divide);
 
-    virtualKeyToKeyboardKey[VK_F1] = u8(KeyboardKey::F1);
-    virtualKeyToKeyboardKey[VK_F2] = u8(KeyboardKey::F2);
-    virtualKeyToKeyboardKey[VK_F3] = u8(KeyboardKey::F3);
-    virtualKeyToKeyboardKey[VK_F4] = u8(KeyboardKey::F4);
-    virtualKeyToKeyboardKey[VK_F5] = u8(KeyboardKey::F5);
-    virtualKeyToKeyboardKey[VK_F6] = u8(KeyboardKey::F6);
-    virtualKeyToKeyboardKey[VK_F7] = u8(KeyboardKey::F7);
-    virtualKeyToKeyboardKey[VK_F8] = u8(KeyboardKey::F8);
-    virtualKeyToKeyboardKey[VK_F9] = u8(KeyboardKey::F9);
-    virtualKeyToKeyboardKey[VK_F10] = u8(KeyboardKey::F10);
-    virtualKeyToKeyboardKey[VK_F11] = u8(KeyboardKey::F11);
-    virtualKeyToKeyboardKey[VK_F12] = u8(KeyboardKey::F12);
+    virtualKeyToKeyboardKey[VK_F1] = u8(EKeyboardKey::F1);
+    virtualKeyToKeyboardKey[VK_F2] = u8(EKeyboardKey::F2);
+    virtualKeyToKeyboardKey[VK_F3] = u8(EKeyboardKey::F3);
+    virtualKeyToKeyboardKey[VK_F4] = u8(EKeyboardKey::F4);
+    virtualKeyToKeyboardKey[VK_F5] = u8(EKeyboardKey::F5);
+    virtualKeyToKeyboardKey[VK_F6] = u8(EKeyboardKey::F6);
+    virtualKeyToKeyboardKey[VK_F7] = u8(EKeyboardKey::F7);
+    virtualKeyToKeyboardKey[VK_F8] = u8(EKeyboardKey::F8);
+    virtualKeyToKeyboardKey[VK_F9] = u8(EKeyboardKey::F9);
+    virtualKeyToKeyboardKey[VK_F10] = u8(EKeyboardKey::F10);
+    virtualKeyToKeyboardKey[VK_F11] = u8(EKeyboardKey::F11);
+    virtualKeyToKeyboardKey[VK_F12] = u8(EKeyboardKey::F12);
 
-    virtualKeyToKeyboardKey[VK_UP] = u8(KeyboardKey::Up);
-    virtualKeyToKeyboardKey[VK_DOWN] = u8(KeyboardKey::Down);
-    virtualKeyToKeyboardKey[VK_LEFT] = u8(KeyboardKey::Left);
-    virtualKeyToKeyboardKey[VK_RIGHT] = u8(KeyboardKey::Right);
+    virtualKeyToKeyboardKey[VK_UP] = u8(EKeyboardKey::Up);
+    virtualKeyToKeyboardKey[VK_DOWN] = u8(EKeyboardKey::Down);
+    virtualKeyToKeyboardKey[VK_LEFT] = u8(EKeyboardKey::Left);
+    virtualKeyToKeyboardKey[VK_RIGHT] = u8(EKeyboardKey::Right);
 
-    virtualKeyToKeyboardKey[VK_ESCAPE] = u8(KeyboardKey::Escape);
-    virtualKeyToKeyboardKey[VK_SPACE] = u8(KeyboardKey::Space);
+    virtualKeyToKeyboardKey[VK_ESCAPE] = u8(EKeyboardKey::Escape);
+    virtualKeyToKeyboardKey[VK_SPACE] = u8(EKeyboardKey::Space);
 
-    virtualKeyToKeyboardKey[VK_PAUSE] = u8(KeyboardKey::Pause);
-    virtualKeyToKeyboardKey[VK_PRINT] = u8(KeyboardKey::PrintScreen);
-    virtualKeyToKeyboardKey[VK_SCROLL] = u8(KeyboardKey::ScrollLock);
+    virtualKeyToKeyboardKey[VK_PAUSE] = u8(EKeyboardKey::Pause);
+    virtualKeyToKeyboardKey[VK_PRINT] = u8(EKeyboardKey::PrintScreen);
+    virtualKeyToKeyboardKey[VK_SCROLL] = u8(EKeyboardKey::ScrollLock);
 
-    virtualKeyToKeyboardKey[VK_BACK] = u8(KeyboardKey::Backspace);
-    virtualKeyToKeyboardKey[VK_RETURN] = u8(KeyboardKey::Enter);
-    virtualKeyToKeyboardKey[VK_TAB] = u8(KeyboardKey::Tab);
+    virtualKeyToKeyboardKey[VK_BACK] = u8(EKeyboardKey::Backspace);
+    virtualKeyToKeyboardKey[VK_RETURN] = u8(EKeyboardKey::Enter);
+    virtualKeyToKeyboardKey[VK_TAB] = u8(EKeyboardKey::Tab);
 
-    virtualKeyToKeyboardKey[VK_HOME] = u8(KeyboardKey::Home);
-    virtualKeyToKeyboardKey[VK_END] = u8(KeyboardKey::End);
-    virtualKeyToKeyboardKey[VK_INSERT] = u8(KeyboardKey::Insert);
-    virtualKeyToKeyboardKey[VK_DELETE] = u8(KeyboardKey::Delete);
-    virtualKeyToKeyboardKey[VK_PRIOR] = u8(KeyboardKey::PageUp);
-    virtualKeyToKeyboardKey[VK_NEXT] = u8(KeyboardKey::PageDown);
+    virtualKeyToKeyboardKey[VK_HOME] = u8(EKeyboardKey::Home);
+    virtualKeyToKeyboardKey[VK_END] = u8(EKeyboardKey::End);
+    virtualKeyToKeyboardKey[VK_INSERT] = u8(EKeyboardKey::Insert);
+    virtualKeyToKeyboardKey[VK_DELETE] = u8(EKeyboardKey::Delete);
+    virtualKeyToKeyboardKey[VK_PRIOR] = u8(EKeyboardKey::PageUp);
+    virtualKeyToKeyboardKey[VK_NEXT] = u8(EKeyboardKey::PageDown);
 
-    virtualKeyToKeyboardKey[VK_MENU] = u8(KeyboardKey::Alt);
-    virtualKeyToKeyboardKey[VK_APPS] = u8(KeyboardKey::Menu);
-    virtualKeyToKeyboardKey[VK_SHIFT] = u8(KeyboardKey::Control);
-    virtualKeyToKeyboardKey[VK_CONTROL] = u8(KeyboardKey::Shift);
+    virtualKeyToKeyboardKey[VK_MENU] = u8(EKeyboardKey::Alt);
+    virtualKeyToKeyboardKey[VK_APPS] = u8(EKeyboardKey::Menu);
+    virtualKeyToKeyboardKey[VK_SHIFT] = u8(EKeyboardKey::Control);
+    virtualKeyToKeyboardKey[VK_CONTROL] = u8(EKeyboardKey::Shift);
 
     for (u8 i = 'A'; i <= 'Z'; ++i) {
-        AssertRelease(u8(KeyboardKey::A) + i - 'A' == i);
+        AssertRelease(u8(EKeyboardKey::A) + i - 'A' == i);
         virtualKeyToKeyboardKey[i] = i;
     }
     for (u8 i = '0'; i <= '9'; ++i) {
-        AssertRelease(u8(KeyboardKey::_0) + i - '0' == i);
+        AssertRelease(u8(EKeyboardKey::_0) + i - '0' == i);
         virtualKeyToKeyboardKey[i] = i;
     }
 
@@ -1180,7 +1180,7 @@ void TestInputs_() {
         if (virtualKeyToKeyboardKey[i] == 0xFF)
             std::cout << "    0xFF," << std::endl;
         else
-            std::cout << "    u8(KeyboardKey::" << KeyboardKeyToCStr(KeyboardKey(virtualKeyToKeyboardKey[i])) << ")," << std::endl;
+            std::cout << "    u8(EKeyboardKey::" << KeyboardKeyToCStr(EKeyboardKey(virtualKeyToKeyboardKey[i])) << ")," << std::endl;
 
     std::cout << "};" << std::endl;
 }
@@ -1188,8 +1188,8 @@ void TestInputs_() {
 void Tests() {
     using namespace Core;
 
-    MemoryTrackingData scopeTrackingData;
-    std::vector<int, TrackingAllocator< Mallocator<int>> > u{ TrackingAllocator<Mallocator<int>>(scopeTrackingData) };
+    FMemoryTrackingData scopeTrackingData;
+    std::vector<int, TTrackingAllocator< TMallocator<int>> > u{ TTrackingAllocator<TMallocator<int>>(scopeTrackingData) };
     u.push_back(1);
     u.push_back(2);
     u.push_back(3);
@@ -1215,16 +1215,16 @@ void Tests() {
     }
 
     {
-        std::vector<int, Allocator<int> > v{ 4, 5, 6 };
+        std::vector<int, TAllocator<int> > v{ 4, 5, 6 };
         v.push_back(2);
         v.insert(v.end(), u.begin(), u.end());
         v.reserve(9);
 
-        //Print(MemoryTrackingData::Global());
+        //Print(FMemoryTrackingData::Global());
 
-        Vector<int> w(v.begin(), v.end());
+        TVector<int> w(v.begin(), v.end());
 
-        //Print(MemoryTrackingData::Global());
+        //Print(FMemoryTrackingData::Global());
 
         STACKLOCAL_POD_STACK(uint8_t, memoryStack, 30000);
         {
@@ -1249,22 +1249,22 @@ void Tests() {
             x.reserve(42);
         }
 
-        //Print(MemoryTrackingData::Global());
+        //Print(FMemoryTrackingData::Global());
     }
 
     {
-        Heap& heap = Heaps::Process::Instance();
+        FHeap& heap = Heaps::Process::Instance();
         void* p = heap.malloc<16>(100);
 
-        CrtMemoryStats memStats;
+        FCrtMemoryStats memStats;
         CrtDumpMemoryStats(&memStats, heap.Handle());
         Print(memStats);
 
-        typedef DECORATE_ALLOCATOR(Internal, HeapAllocator<int>) allocator_type;
+        typedef DECORATE_ALLOCATOR(Internal, THeapAllocator<int>) allocator_type;
         std::vector<int, allocator_type> x(u.begin(), u.end());
         x.reserve(1024);
 
-        std::cout << "Heap size = " << heap.Size() << std::endl;
+        std::cout << "FHeap size = " << heap.Size() << std::endl;
 
         CrtDumpMemoryStats(&memStats, heap.Handle());
         Print(memStats);
@@ -1273,12 +1273,12 @@ void Tests() {
     }
 
     {
-        Heap heap{ "stack", false };
+        FHeap heap{ "stack", false };
         void* p = heap.malloc<16>(100);
 
-        std::cout << "Heap size = " << heap.Size() << std::endl;
+        std::cout << "FHeap size = " << heap.Size() << std::endl;
 
-        CrtMemoryStats memStats;
+        FCrtMemoryStats memStats;
         CrtDumpMemoryStats(&memStats, heap.Handle());
         Print(memStats);
 
@@ -1322,13 +1322,13 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ApplicationTest::ApplicationTest()
-:   ApplicationConsole(L"ApplicationTest") {}
+FApplicationTest::FApplicationTest()
+:   FApplicationConsole(L"FApplicationTest") {}
 //----------------------------------------------------------------------------
-ApplicationTest::~ApplicationTest() {}
+FApplicationTest::~FApplicationTest() {}
 //----------------------------------------------------------------------------
-void ApplicationTest::Start() {
-    ApplicationConsole::Start();
+void FApplicationTest::Start() {
+    FApplicationConsole::Start();
     Tests();
 }
 //----------------------------------------------------------------------------

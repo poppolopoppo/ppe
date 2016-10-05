@@ -30,64 +30,64 @@ namespace Pixmap {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Pixmap, FloatImage, )
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Pixmap, FFloatImage, )
 //----------------------------------------------------------------------------
-FloatImage::FloatImage() : _width(0), _height(0) {}
+FFloatImage::FFloatImage() : _width(0), _height(0) {}
 //----------------------------------------------------------------------------
-FloatImage::FloatImage(size_t width, size_t height)
-:   FloatImage() {
+FFloatImage::FFloatImage(size_t width, size_t height)
+:   FFloatImage() {
     Resize_DiscardData(width, height);
 }
 //----------------------------------------------------------------------------
-FloatImage::FloatImage(size_t width, size_t height, const color_type& value)
-:   FloatImage() {
+FFloatImage::FFloatImage(size_t width, size_t height, const color_type& value)
+:   FFloatImage() {
     Resize_DiscardData(width, height, value);
 }
 //----------------------------------------------------------------------------
-FloatImage::~FloatImage() {}
+FFloatImage::~FFloatImage() {}
 //----------------------------------------------------------------------------
-uint2 FloatImage::WidthHeight() const {
+uint2 FFloatImage::WidthHeight() const {
     return uint2(checked_cast<unsigned>(_width), checked_cast<unsigned>(_height));
 }
 //----------------------------------------------------------------------------
-float2 FloatImage::DuDv() const {
+float2 FFloatImage::DuDv() const {
     return float2(Du(), Dv());
 }
 //----------------------------------------------------------------------------
-auto FloatImage::at(const uint2& xy) -> color_type& {
+auto FFloatImage::at(const uint2& xy) -> color_type& {
     return at(xy.x(), xy.y());
 }
 //----------------------------------------------------------------------------
-auto FloatImage::at(const uint2& xy) const -> const color_type& {
+auto FFloatImage::at(const uint2& xy) const -> const color_type& {
     return at(xy.x(), xy.y());
 }
 //----------------------------------------------------------------------------
-auto FloatImage::SampleClamp(int x, int y) const -> const color_type& {
+auto FFloatImage::SampleClamp(int x, int y) const -> const color_type& {
     x = Clamp(x, 0, int(_width)-1);
     y = Clamp(x, 0, int(_height)-1);
     return _data[x + y * _width];
 }
 //----------------------------------------------------------------------------
-auto FloatImage::SampleWrap(int x, int y) const -> const color_type& {
+auto FFloatImage::SampleWrap(int x, int y) const -> const color_type& {
     x = (x + int(_width)) % int(_width);
     y = (y + int(_height)) % int(_height);
     return _data[x + y * _width];
 }
 //----------------------------------------------------------------------------
-auto FloatImage::Scanline(size_t row) -> MemoryView<color_type> {
+auto FFloatImage::Scanline(size_t row) -> TMemoryView<color_type> {
     return _data.MakeView().SubRange(row * _width, _width);
 }
 //----------------------------------------------------------------------------
-auto FloatImage::Scanline(size_t row) const -> MemoryView<const color_type> {
+auto FFloatImage::Scanline(size_t row) const -> TMemoryView<const color_type> {
     return _data.MakeConstView().SubRange(row * _width, _width);
 }
 //----------------------------------------------------------------------------
-void FloatImage::DiscardAlpha() {
+void FFloatImage::DiscardAlpha() {
     for (color_type& color : MakeView())
         color.a() = 1.0f;
 }
 //----------------------------------------------------------------------------
-bool FloatImage::HasAlpha() const {
+bool FFloatImage::HasAlpha() const {
     for (const color_type& color : MakeConstView())
         if (color.a() != 1.0f)
             return true;
@@ -95,7 +95,7 @@ bool FloatImage::HasAlpha() const {
     return false;
 }
 //----------------------------------------------------------------------------
-bool FloatImage::HasVisiblePixels(float cutoff/* = 1.0f/255 */) const {
+bool FFloatImage::HasVisiblePixels(float cutoff/* = 1.0f/255 */) const {
     Assert(cutoff >= 0.f && cutoff < 1.f);
 
     for (const color_type& color : MakeConstView())
@@ -105,12 +105,12 @@ bool FloatImage::HasVisiblePixels(float cutoff/* = 1.0f/255 */) const {
     return false;
 }
 //----------------------------------------------------------------------------
-void FloatImage::Fill(const color_type& value) {
+void FFloatImage::Fill(const color_type& value) {
     for (color_type& color : MakeView())
         color = value;
 }
 //----------------------------------------------------------------------------
-void FloatImage::CopyTo(FloatImage* dst) const {
+void FFloatImage::CopyTo(FFloatImage* dst) const {
     Assert(dst);
 
     dst->Resize_DiscardData(_width, _height);
@@ -118,15 +118,15 @@ void FloatImage::CopyTo(FloatImage* dst) const {
     ::memcpy(dst->_data.data(), src.data(), src.SizeInBytes());
 }
 //----------------------------------------------------------------------------
-void FloatImage::Resize_DiscardData(const uint2& size) {
+void FFloatImage::Resize_DiscardData(const uint2& size) {
     Resize_DiscardData(size.x(), size.y());
 }
 //----------------------------------------------------------------------------
-void FloatImage::Resize_DiscardData(const uint2& size, const color_type& value) {
+void FFloatImage::Resize_DiscardData(const uint2& size, const color_type& value) {
     Resize_DiscardData(size.x(), size.y(), value);
 }
 //----------------------------------------------------------------------------
-void FloatImage::Resize_DiscardData(size_t width, size_t height) {
+void FFloatImage::Resize_DiscardData(size_t width, size_t height) {
     Assert((width != 0) == (height != 0));
 
     if (_width == width &&
@@ -139,7 +139,7 @@ void FloatImage::Resize_DiscardData(size_t width, size_t height) {
     _data.Resize_DiscardData(width * height);
 }
 //----------------------------------------------------------------------------
-void FloatImage::Resize_DiscardData(size_t width, size_t height, const color_type& value) {
+void FFloatImage::Resize_DiscardData(size_t width, size_t height, const color_type& value) {
     Assert((width != 0) == (height != 0));
 
     Resize_DiscardData(width, height);
@@ -150,18 +150,18 @@ void FloatImage::Resize_DiscardData(size_t width, size_t height, const color_typ
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool Resize(FloatImage* dst, const FloatImage* src) {
+bool Resize(FFloatImage* dst, const FFloatImage* src) {
     Assert(dst);
     return Resize(dst, src, dst->_width, dst->_height);
 }
 //----------------------------------------------------------------------------
-bool Resize(FloatImage* dst, const FloatImage* src, size_t width, size_t height) {
+bool Resize(FFloatImage* dst, const FFloatImage* src, size_t width, size_t height) {
     Assert(dst);
     Assert(src);
     Assert(width > 0);
     Assert(height > 0);
 
-    LOG(Info, L"[Pixmap] Resizing a FloatImage from {0}x{1} to {2}x{3}",
+    LOG(Info, L"[Pixmap] Resizing a FFloatImage from {0}x{1} to {2}x{3}",
         src->Width(), src->Height(),
         width, height );
 

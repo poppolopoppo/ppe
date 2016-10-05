@@ -6,23 +6,23 @@
 
 namespace Core {
 namespace RTTI {
-class MetaProperty;
+class FMetaProperty;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class RTTIException : public Exception {
+class FRTTIException : public FException {
 public:
-    RTTIException(const char* what) : Exception(what) {}
+    FRTTIException(const char* what) : FException(what) {}
 };
 //----------------------------------------------------------------------------
-class PropertyException : public RTTIException {
+class FPropertyException : public FRTTIException {
 public:
-    PropertyException(const char* what, const MetaProperty* prop = nullptr) : RTTIException(what), _property(prop) {}
+    FPropertyException(const char* what, const FMetaProperty* prop = nullptr) : FRTTIException(what), _property(prop) {}
 
-    const MetaProperty* Property() const { return _property; }
+    const FMetaProperty* EProperty() const { return _property; }
 
 private:
-    const MetaProperty* _property;
+    const FMetaProperty* _property;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

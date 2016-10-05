@@ -15,29 +15,29 @@ FWD_REFPTR(GenericMesh);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Collada {
+class FCollada {
 public:
     template <typename T>
-    using Array = VECTOR_THREAD_LOCAL(Collada, T);
+    using TArray = VECTOR_THREAD_LOCAL(Collada, T);
 
-    Collada() : Collada(nullptr) {}
-    explicit Collada(XML::Document* xml);
-    ~Collada();
+    FCollada() : FCollada(nullptr) {}
+    explicit FCollada(XML::FDocument* xml);
+    ~FCollada();
 
-    Collada(const Collada& ) = delete;
-    Collada& operator =(const Collada& ) = delete;
+    FCollada(const FCollada& ) = delete;
+    FCollada& operator =(const FCollada& ) = delete;
 
-    const XML::Document* Xml() const { return _xml.get(); }
+    const XML::FDocument* Xml() const { return _xml.get(); }
 
     bool empty() const { return (nullptr == _xml); }
 
-    bool ImportGeometries(Array<PGenericMesh>& meshes) const;
-    bool ImportMaterials(Array<PGenericMaterial>& materials) const;
+    bool ImportGeometries(TArray<PGenericMesh>& meshes) const;
+    bool ImportMaterials(TArray<PGenericMaterial>& materials) const;
 
-    static const Extname& Ext;
+    static const FExtname& Ext;
 
-    static bool Load(Collada* pdst, const Filename& filename);
-    static bool Load(Collada* pdst, const Filename& filename, const StringView& content);
+    static bool Load(FCollada* pdst, const FFilename& filename);
+    static bool Load(FCollada* pdst, const FFilename& filename, const FStringView& content);
 
     static void Start();
     static void Shutdown();

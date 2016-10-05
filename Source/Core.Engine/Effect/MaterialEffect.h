@@ -15,10 +15,10 @@
 #include "Core.Engine/Material/MaterialParameter_fwd.h"
 
 namespace Core {
-class Filename;
+class FFilename;
 
 namespace Graphics {
-class BindName;
+class FBindName;
 class IDeviceAPIContext;
 class IDeviceAPIEncapsulator;
 FWD_REFPTR(SamplerState);
@@ -32,54 +32,54 @@ namespace Engine {
 FWD_REFPTR(Effect);
 FWD_REFPTR(EffectConstantBuffer);
 FWD_REFPTR(Material);
-class MaterialDatabase;
+class FMaterialDatabase;
 FWD_REFPTR(RenderSurfaceLock);
 FWD_REFPTR(Scene);
-struct VariabilitySeed;
+struct FVariabilitySeed;
 //----------------------------------------------------------------------------
-class MaterialEffect : public RefCountable {
+class FMaterialEffect : public FRefCountable {
 public:
-    struct TextureSlot {
-        TextureSlot(const Graphics::BindName& name,
-                    const Graphics::SamplerState *sampler,
+    struct FTextureSlot {
+        FTextureSlot(const Graphics::FBindName& name,
+                    const Graphics::FSamplerState *sampler,
                     bool useSRGB,
                     bool isCubeMap,
                     bool isVirtualTexture = false);
 
-        Graphics::BindName Name;
-        const Graphics::SamplerState *Sampler;
+        Graphics::FBindName FName;
+        const Graphics::FSamplerState *Sampler;
 
         bool UseSRGB;
         bool IsCubeMap;
         bool IsVirtualTexture;
     };
 
-    struct TextureBinding {
-        Core::Filename Filename;
-        Graphics::WCTexture Texture;
+    struct FTextureBinding {
+        Core::FFilename FFilename;
+        Graphics::WCTexture FTexture;
         PRenderSurfaceLock SurfaceLock;
     };
 
-    MaterialEffect(const Engine::Effect *effect, const Engine::Material *material);
-    ~MaterialEffect();
+    FMaterialEffect(const Engine::FEffect *effect, const Engine::FMaterial *material);
+    ~FMaterialEffect();
 
-    const PCEffect& Effect() const { return _effect; }
-    const PCMaterial& Material() const { return _material; }
+    const PCEffect& FEffect() const { return _effect; }
+    const PCMaterial& FMaterial() const { return _material; }
 
-    const VECTOR(Effect, PEffectConstantBuffer)& Constants() const { return _constants; }
-    const VECTOR(Effect, TextureSlot)& TextureSlots() const { return _textureSlots; }
-    const VECTOR(Effect, TextureBinding)& TextureBindings() const { return _textureBindings; }
-    const ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, PMaterialParameter)& Parameters() const { return _parameters; }
-    
-    void BindParameter(const Graphics::BindName& name, IMaterialParameter *parameter);
+    const VECTOR(FEffect, PEffectConstantBuffer)& Constants() const { return _constants; }
+    const VECTOR(FEffect, FTextureSlot)& TextureSlots() const { return _textureSlots; }
+    const VECTOR(FEffect, FTextureBinding)& TextureBindings() const { return _textureBindings; }
+    const ASSOCIATIVE_VECTOR(FEffect, Graphics::FBindName, PMaterialParameter)& Parameters() const { return _parameters; }
+
+    void BindParameter(const Graphics::FBindName& name, IMaterialParameter *parameter);
 
     /* (1) link parameters and textures from database and material */
-    void Create(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, const Scene *scene);
+    void Create(Graphics::IDeviceAPIEncapsulator *device, FMaterialDatabase *materialDatabase, const FScene *scene);
     /* (4) destroy binded resources, ready to call Create() again */
     void Destroy(Graphics::IDeviceAPIEncapsulator *device);
 
     /* (2) eval linked parameters and update constant buffers IFN, retrieves texture resources */
-    void Prepare(Graphics::IDeviceAPIEncapsulator *device, const Scene *scene, const VariabilitySeed *seeds);
+    void Prepare(Graphics::IDeviceAPIEncapsulator *device, const FScene *scene, const FVariabilitySeed *seeds);
     /* (3) setup constant buffers and textures (with sampler states) on the device */
     void Set(Graphics::IDeviceAPIContext *deviceContext);
 
@@ -89,10 +89,10 @@ private:
     PCEffect _effect;
     PCMaterial _material;
 
-    VECTOR(Effect, PEffectConstantBuffer) _constants;
-    VECTOR(Effect, TextureSlot) _textureSlots;
-    VECTOR(Effect, TextureBinding) _textureBindings;
-    ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, PMaterialParameter) _parameters;
+    VECTOR(FEffect, PEffectConstantBuffer) _constants;
+    VECTOR(FEffect, FTextureSlot) _textureSlots;
+    VECTOR(FEffect, FTextureBinding) _textureBindings;
+    ASSOCIATIVE_VECTOR(FEffect, Graphics::FBindName, PMaterialParameter) _parameters;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

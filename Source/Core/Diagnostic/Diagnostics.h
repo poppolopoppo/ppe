@@ -6,10 +6,10 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DiagnosticsStartup {
+class FDiagnosticsStartup {
 public:
-    DiagnosticsStartup(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t** argv) { Start(applicationHandle, nShowCmd, argc, argv); }
-    ~DiagnosticsStartup() { Shutdown(); }
+    FDiagnosticsStartup(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t** argv) { Start(applicationHandle, nShowCmd, argc, argv); }
+    ~FDiagnosticsStartup() { Shutdown(); }
 
     static void Start(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t** argv);
     static void Shutdown();

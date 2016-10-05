@@ -11,7 +11,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Plane Plane::FromTriangle(const float3& a, const float3& b, const float3& c) {
+FPlane FPlane::FromTriangle(const float3& a, const float3& b, const float3& c) {
     float x1 = b.x() - a.x();
     float y1 = b.y() - a.y();
     float z1 = b.z() - a.z();
@@ -31,10 +31,10 @@ Plane Plane::FromTriangle(const float3& a, const float3& b, const float3& c) {
     float3 normal(yz * invPyth, xz * invPyth, xy * invPyth);
     float d = -((normal.x() * a.x()) + (normal.y() * a.y()) + (normal.z() * a.z()));
 
-    return Plane(normal, d);
+    return FPlane(normal, d);
 }
 //----------------------------------------------------------------------------
-Plane Plane::Transform(const Plane& plane, const Quaternion& rotation) {
+FPlane FPlane::Transform(const FPlane& plane, const FQuaternion& rotation) {
     float x2 = rotation.x() + rotation.x();
     float y2 = rotation.y() + rotation.y();
     float z2 = rotation.z() + rotation.z();
@@ -60,10 +60,10 @@ Plane Plane::Transform(const Plane& plane, const Quaternion& rotation) {
         ((x * (xy + wz)) + (y * ((1.0f - xx) - zz))) + (z * (yz - wx)),
         ((x * (xz - wy)) + (y * (yz + wx))) + (z * ((1.0f - xx) - yy)) );
 
-    return Plane(normal, plane.D());
+    return FPlane(normal, plane.D());
 }
 //----------------------------------------------------------------------------
-void Plane::Transform(const MemoryView<Plane>& planes, const Quaternion& rotation) {
+void FPlane::Transform(const TMemoryView<FPlane>& planes, const FQuaternion& rotation) {
     if (planes.empty())
         return;
 
@@ -98,7 +98,7 @@ void Plane::Transform(const MemoryView<Plane>& planes, const Quaternion& rotatio
     }
 }
 //----------------------------------------------------------------------------
-Plane Plane::Transform(const Plane& plane, const Matrix& transformation) {
+FPlane FPlane::Transform(const FPlane& plane, const Matrix& transformation) {
     Matrix inverse = Invert(transformation);
 
     float x = plane.Normal().x();
@@ -111,18 +111,18 @@ Plane Plane::Transform(const Plane& plane, const Matrix& transformation) {
         (((x * inverse._21()) + (y * inverse._22())) + (z * inverse._23())) + (d * inverse._24()),
         (((x * inverse._31()) + (y * inverse._32())) + (z * inverse._33())) + (d * inverse._34()) );
 
-    return Plane(
+    return FPlane(
         normal,
         (((x * inverse._41()) + (y * inverse._42())) + (z * inverse._43())) + (d * inverse._44()) );
 }
 //----------------------------------------------------------------------------
-void Plane::Transform(const MemoryView<Plane>& planes, const Matrix& transformation) {
+void FPlane::Transform(const TMemoryView<FPlane>& planes, const Matrix& transformation) {
     if (planes.empty())
         return;
 
     Matrix inverse = Invert(transformation);
 
-    for (Plane& plane : planes) {
+    for (FPlane& plane : planes) {
         float x = plane.Normal().x();
         float y = plane.Normal().y();
         float z = plane.Normal().z();
@@ -135,7 +135,7 @@ void Plane::Transform(const MemoryView<Plane>& planes, const Matrix& transformat
     }
 }
 //----------------------------------------------------------------------------
-float3 Plane::Get3PlanesInterPoint(const Plane& p1, const Plane& p2, const Plane& p3) {
+float3 FPlane::Get3PlanesInterPoint(const FPlane& p1, const FPlane& p2, const FPlane& p3) {
     //P = -d1 * N2xN3 / N1.N2xN3 - d2 * N3xN1 / N2.N3xN1 - d3 * N1xN2 / N3.N1xN2
     const float3 v =
         -p1.D() * Cross(p2.Normal(), p3.Normal()) / Dot3(p1.Normal(), Cross(p2.Normal(), p3.Normal()))
@@ -145,12 +145,12 @@ float3 Plane::Get3PlanesInterPoint(const Plane& p1, const Plane& p2, const Plane
     return v;
 }
 //----------------------------------------------------------------------------
-PlaneIntersectionType Plane::PointsIntersection(const Plane& plane, const MemoryView<const float3>& points) {
-    PlaneIntersectionType result = Collision::PlaneIntersectsPoint(plane, points[0]);
+EPlaneIntersectionType FPlane::PointsIntersection(const FPlane& plane, const TMemoryView<const float3>& points) {
+    EPlaneIntersectionType result = Collision::PlaneIntersectsPoint(plane, points[0]);
 
     for (size_t i = 1; i < points.size(); ++i)
         if (Collision::PlaneIntersectsPoint(plane, points[i]) != result)
-            return PlaneIntersectionType::Intersecting;
+            return EPlaneIntersectionType::Intersecting;
 
     return result;
 }

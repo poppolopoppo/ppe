@@ -9,23 +9,23 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-class ScalarRectangle : public ScalarBoundingBox<T, _Dim> {
+class TScalarRectangle : public TScalarBoundingBox<T, _Dim> {
 public:
-    typedef ScalarBoundingBox<T, _Dim> aabb_type;
+    typedef TScalarBoundingBox<T, _Dim> aabb_type;
 
-    ScalarRectangle();
-    ScalarRectangle(T left, T top, T width, T height);
-    ScalarRectangle(T left, T top, T width, T height, T znear, T zfar);
-    explicit ScalarRectangle(const aabb_type& aabb);
-    ~ScalarRectangle();
+    TScalarRectangle();
+    TScalarRectangle(T left, T top, T width, T height);
+    TScalarRectangle(T left, T top, T width, T height, T znear, T zfar);
+    explicit TScalarRectangle(const aabb_type& aabb);
+    ~TScalarRectangle();
 
-    ScalarRectangle(const ScalarRectangle& other);
-    ScalarRectangle& operator =(const ScalarRectangle& other);
+    TScalarRectangle(const TScalarRectangle& other);
+    TScalarRectangle& operator =(const TScalarRectangle& other);
 
     template <typename U>
-    ScalarRectangle(const ScalarRectangle<U, _Dim>& other);
+    TScalarRectangle(const TScalarRectangle<U, _Dim>& other);
     template <typename U>
-    ScalarRectangle& operator =(const ScalarRectangle<U, _Dim>& other);
+    TScalarRectangle& operator =(const TScalarRectangle<U, _Dim>& other);
 
     T Left()    const { return aabb_type::Min().x(); }
     T Right()   const { return aabb_type::Max().x(); }
@@ -58,9 +58,9 @@ public:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-typedef ScalarRectangle<float, 2> RectangleF;
+typedef TScalarRectangle<float, 2> RectangleF;
 //----------------------------------------------------------------------------
-typedef ScalarRectangle<float, 3> ViewportF;
+typedef TScalarRectangle<float, 3> ViewportF;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

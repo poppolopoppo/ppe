@@ -35,7 +35,7 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 // Alpha/Raster/Depth State
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetBlendState(const BlendState *state) {
+void FDeviceEncapsulator::SetBlendState(const FBlendState *state) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(state);
     Assert(state->Frozen());
@@ -45,7 +45,7 @@ void DeviceEncapsulator::SetBlendState(const BlendState *state) {
     _deviceAPIEncapsulator->Immediate()->SetBlendState(state);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetRasterizerState(const RasterizerState *state) {
+void FDeviceEncapsulator::SetRasterizerState(const FRasterizerState *state) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(state);
     Assert(state->Frozen());
@@ -55,7 +55,7 @@ void DeviceEncapsulator::SetRasterizerState(const RasterizerState *state) {
     _deviceAPIEncapsulator->Immediate()->SetRasterizerState(state);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetDepthStencilState(const DepthStencilState *state) {
+void FDeviceEncapsulator::SetDepthStencilState(const FDepthStencilState *state) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(state);
     Assert(state->Frozen());
@@ -65,9 +65,9 @@ void DeviceEncapsulator::SetDepthStencilState(const DepthStencilState *state) {
     _deviceAPIEncapsulator->Immediate()->SetDepthStencilState(state);
 }
 //----------------------------------------------------------------------------
-// SamplerState
+// FSamplerState
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetSamplerState(ShaderProgramType stage, size_t slot, const SamplerState *state) {
+void FDeviceEncapsulator::SetSamplerState(EShaderProgramType stage, size_t slot, const FSamplerState *state) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(state);
     Assert(state->Frozen());
@@ -78,10 +78,10 @@ void DeviceEncapsulator::SetSamplerState(ShaderProgramType stage, size_t slot, c
 }
 
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetSamplerStates(ShaderProgramType stage, const MemoryView<const SamplerState *>& states) {
+void FDeviceEncapsulator::SetSamplerStates(EShaderProgramType stage, const TMemoryView<const FSamplerState *>& states) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    for (const SamplerState *state : states) {
+    for (const FSamplerState *state : states) {
         Assert(state);
         Assert(state->Frozen());
         Assert(state->Available());
@@ -93,7 +93,7 @@ void DeviceEncapsulator::SetSamplerStates(ShaderProgramType stage, const MemoryV
 //----------------------------------------------------------------------------
 // IndexBuffer
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetIndexBuffer(const IndexBuffer *indexBuffer) {
+void FDeviceEncapsulator::SetIndexBuffer(const IndexBuffer *indexBuffer) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(indexBuffer);
     Assert(indexBuffer->Frozen());
@@ -103,7 +103,7 @@ void DeviceEncapsulator::SetIndexBuffer(const IndexBuffer *indexBuffer) {
     _deviceAPIEncapsulator->Immediate()->SetIndexBuffer(indexBuffer);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetIndexBuffer(const IndexBuffer *indexBuffer, size_t offset) {
+void FDeviceEncapsulator::SetIndexBuffer(const IndexBuffer *indexBuffer, size_t offset) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(indexBuffer);
     Assert(indexBuffer->Frozen());
@@ -114,9 +114,9 @@ void DeviceEncapsulator::SetIndexBuffer(const IndexBuffer *indexBuffer, size_t o
     _deviceAPIEncapsulator->Immediate()->SetIndexBuffer(indexBuffer, offset);
 }
 //----------------------------------------------------------------------------
-// VertexBuffer
+// FVertexBuffer
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetVertexBuffer(const VertexBuffer *vertexBuffer) {
+void FDeviceEncapsulator::SetVertexBuffer(const FVertexBuffer *vertexBuffer) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(vertexBuffer);
     Assert(vertexBuffer->Frozen());
@@ -126,7 +126,7 @@ void DeviceEncapsulator::SetVertexBuffer(const VertexBuffer *vertexBuffer) {
     _deviceAPIEncapsulator->Immediate()->SetVertexBuffer(vertexBuffer);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetVertexBuffer(const VertexBuffer *vertexBuffer, u32 vertexOffset) {
+void FDeviceEncapsulator::SetVertexBuffer(const FVertexBuffer *vertexBuffer, u32 vertexOffset) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(vertexBuffer);
     Assert(vertexBuffer->Frozen());
@@ -137,11 +137,11 @@ void DeviceEncapsulator::SetVertexBuffer(const VertexBuffer *vertexBuffer, u32 v
     _deviceAPIEncapsulator->Immediate()->SetVertexBuffer(vertexBuffer, vertexOffset);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetVertexBuffer(const MemoryView<const VertexBufferBinding>& bindings) {
+void FDeviceEncapsulator::SetVertexBuffer(const TMemoryView<const FVertexBufferBinding>& bindings) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(bindings.size());
 
-    for (const VertexBufferBinding& b : bindings) {
+    for (const FVertexBufferBinding& b : bindings) {
         Assert(b.VertexBuffer);
         Assert(b.VertexBuffer->Frozen());
         Assert(b.VertexBuffer->Available());
@@ -154,7 +154,7 @@ void DeviceEncapsulator::SetVertexBuffer(const MemoryView<const VertexBufferBind
 //----------------------------------------------------------------------------
 // Shaders
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetConstantBuffer(ShaderProgramType stage, size_t slot, const ConstantBuffer *constantBuffer) {
+void FDeviceEncapsulator::SetConstantBuffer(EShaderProgramType stage, size_t slot, const FConstantBuffer *constantBuffer) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(constantBuffer);
     Assert(constantBuffer->Frozen());
@@ -164,10 +164,10 @@ void DeviceEncapsulator::SetConstantBuffer(ShaderProgramType stage, size_t slot,
     _deviceAPIEncapsulator->Immediate()->SetConstantBuffer(stage, slot, constantBuffer);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetConstantBuffers(ShaderProgramType stage, const MemoryView<const ConstantBuffer *>& constantBuffers) {
+void FDeviceEncapsulator::SetConstantBuffers(EShaderProgramType stage, const TMemoryView<const FConstantBuffer *>& constantBuffers) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    for (const ConstantBuffer *constantBuffer : constantBuffers) {
+    for (const FConstantBuffer *constantBuffer : constantBuffers) {
         Assert(constantBuffer);
         Assert(constantBuffer->Frozen());
         Assert(constantBuffer->Available());
@@ -177,7 +177,7 @@ void DeviceEncapsulator::SetConstantBuffers(ShaderProgramType stage, const Memor
     _deviceAPIEncapsulator->Immediate()->SetConstantBuffers(stage, constantBuffers);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetShaderEffect(const ShaderEffect *effect) {
+void FDeviceEncapsulator::SetShaderEffect(const FShaderEffect *effect) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(effect);
     Assert(effect->Frozen());
@@ -189,7 +189,7 @@ void DeviceEncapsulator::SetShaderEffect(const ShaderEffect *effect) {
 //----------------------------------------------------------------------------
 // Textures
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetTexture(ShaderProgramType stage, size_t slot, const Texture *texture) {
+void FDeviceEncapsulator::SetTexture(EShaderProgramType stage, size_t slot, const FTexture *texture) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!texture || texture->Frozen());
     Assert(!texture || texture->Available());
@@ -198,10 +198,10 @@ void DeviceEncapsulator::SetTexture(ShaderProgramType stage, size_t slot, const 
     _deviceAPIEncapsulator->Immediate()->SetTexture(stage, slot, texture);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetTextures(ShaderProgramType stage, const MemoryView<const Texture *>& textures) {
+void FDeviceEncapsulator::SetTextures(EShaderProgramType stage, const TMemoryView<const FTexture *>& textures) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    for (const Texture *texture : textures) {
+    for (const FTexture *texture : textures) {
         if (!texture) continue;
         Assert(texture->Frozen());
         Assert(texture->Available());
@@ -213,19 +213,19 @@ void DeviceEncapsulator::SetTextures(ShaderProgramType stage, const MemoryView<c
 //----------------------------------------------------------------------------
 // Draw
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DrawPrimitives(PrimitiveType primitiveType, size_t startVertex, size_t primitiveCount) {
+void FDeviceEncapsulator::DrawPrimitives(EPrimitiveType primitiveType, size_t startVertex, size_t primitiveCount) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     _deviceAPIEncapsulator->Immediate()->DrawPrimitives(primitiveType, startVertex, primitiveCount);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DrawIndexedPrimitives(PrimitiveType primitiveType, size_t baseVertex, size_t startIndex, size_t primitiveCount) {
+void FDeviceEncapsulator::DrawIndexedPrimitives(EPrimitiveType primitiveType, size_t baseVertex, size_t startIndex, size_t primitiveCount) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     _deviceAPIEncapsulator->Immediate()->DrawIndexedPrimitives(primitiveType, baseVertex, startIndex, primitiveCount);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DrawInstancedPrimitives(PrimitiveType primitiveType, size_t baseVertex, size_t startIndex, size_t primitiveCount, size_t startInstance, size_t instanceCount) {
+void FDeviceEncapsulator::DrawInstancedPrimitives(EPrimitiveType primitiveType, size_t baseVertex, size_t startIndex, size_t primitiveCount, size_t startInstance, size_t instanceCount) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     _deviceAPIEncapsulator->Immediate()->DrawInstancedPrimitives(primitiveType, baseVertex, startIndex, primitiveCount, startInstance, instanceCount);

@@ -16,84 +16,84 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-STATIC_ASSERT(::PROFILE_GLOBALLEVEL   == Profiler::GlobalLevel);
-STATIC_ASSERT(::PROFILE_PROCESSLEVEL  == Profiler::ProcessLevel);
-STATIC_ASSERT(::PROFILE_THREADLEVEL   == Profiler::ThreadLevel);
+STATIC_ASSERT(::PROFILE_GLOBALLEVEL   == FProfiler::GlobalLevel);
+STATIC_ASSERT(::PROFILE_PROCESSLEVEL  == FProfiler::ProcessLevel);
+STATIC_ASSERT(::PROFILE_THREADLEVEL   == FProfiler::ThreadLevel);
 //----------------------------------------------------------------------------
-STATIC_ASSERT(::PROFILE_CURRENTID     == Profiler::CurrentID);
+STATIC_ASSERT(::PROFILE_CURRENTID     == FProfiler::CurrentID);
 //----------------------------------------------------------------------------
-Profiler::Profiler(Level level, u32 id /* = CurrentID */) : _level(level), _id(id) {}
+FProfiler::FProfiler(ELevel level, u32 id /* = CurrentID */) : _level(level), _id(id) {}
 //----------------------------------------------------------------------------
-Profiler::~Profiler() {}
+FProfiler::~FProfiler() {}
 //----------------------------------------------------------------------------
-void Profiler::Start() const {
+void FProfiler::Start() const {
     ::StartProfile(::PROFILE_CONTROL_LEVEL(_level), _id);
 }
 //----------------------------------------------------------------------------
-void Profiler::Stop() const {
+void FProfiler::Stop() const {
     ::StopProfile(::PROFILE_CONTROL_LEVEL(_level), _id);
 }
 //----------------------------------------------------------------------------
-void Profiler::Resume() const {
+void FProfiler::Resume() const {
     ::ResumeProfile(::PROFILE_CONTROL_LEVEL(_level), _id);
 }
 //----------------------------------------------------------------------------
-void Profiler::Suspend() const {
+void FProfiler::Suspend() const {
     ::SuspendProfile(::PROFILE_CONTROL_LEVEL(_level), _id);
 }
 //----------------------------------------------------------------------------
-void Profiler::Mark(u32 data) const {
+void FProfiler::Mark(u32 data) const {
     ::MarkProfile(data);
 }
 //----------------------------------------------------------------------------
-void Profiler::MarkAndComment(u32 data, const char* cstr) const {
+void FProfiler::MarkAndComment(u32 data, const char* cstr) const {
     ::CommentMarkProfileA(data, cstr);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
-static POD_STORAGE(Profiler) _gProfilerPOD_Global;
-static Profiler* _gProfilerPtr_Global = nullptr;
-static POD_STORAGE(Profiler) _gProfilerPOD_Process;
-static Profiler* _gProfilerPtr_Process = nullptr;
-static POD_STORAGE(Profiler) _gProfilerPOD_Thread;
-static Profiler* _gProfilerPtr_Thread = nullptr;
+static POD_STORAGE(FProfiler) _gProfilerPOD_Global;
+static FProfiler* _gProfilerPtr_Global = nullptr;
+static POD_STORAGE(FProfiler) _gProfilerPOD_Process;
+static FProfiler* _gProfilerPtr_Process = nullptr;
+static POD_STORAGE(FProfiler) _gProfilerPOD_Thread;
+static FProfiler* _gProfilerPtr_Thread = nullptr;
 }
 //----------------------------------------------------------------------------
-void Profiler::Startup() {
+void FProfiler::FStartup() {
     Assert(nullptr == _gProfilerPtr_Global);
     Assert(nullptr == _gProfilerPtr_Process);
     Assert(nullptr == _gProfilerPtr_Thread);
 
-    _gProfilerPtr_Global = new ((void*)&_gProfilerPOD_Global) Profiler(Profiler::GlobalLevel);
-    _gProfilerPtr_Process = new ((void*)&_gProfilerPOD_Process) Profiler(Profiler::ProcessLevel);
-    _gProfilerPtr_Thread = new ((void*)&_gProfilerPOD_Thread) Profiler(Profiler::ThreadLevel);
+    _gProfilerPtr_Global = new ((void*)&_gProfilerPOD_Global) FProfiler(FProfiler::GlobalLevel);
+    _gProfilerPtr_Process = new ((void*)&_gProfilerPOD_Process) FProfiler(FProfiler::ProcessLevel);
+    _gProfilerPtr_Thread = new ((void*)&_gProfilerPOD_Thread) FProfiler(FProfiler::ThreadLevel);
 
     _gProfilerPtr_Global->Stop(); // profiler is started by default
 }
 //----------------------------------------------------------------------------
-void Profiler::Shutdown() {
+void FProfiler::Shutdown() {
     Assert(nullptr != _gProfilerPtr_Global);
     Assert(nullptr != _gProfilerPtr_Process);
     Assert(nullptr != _gProfilerPtr_Thread);
 
-    _gProfilerPtr_Global->~Profiler();
-    _gProfilerPtr_Process->~Profiler();
-    _gProfilerPtr_Thread->~Profiler();
+    _gProfilerPtr_Global->~FProfiler();
+    _gProfilerPtr_Process->~FProfiler();
+    _gProfilerPtr_Thread->~FProfiler();
 
     _gProfilerPtr_Global = nullptr;
     _gProfilerPtr_Process = nullptr;
     _gProfilerPtr_Thread = nullptr;
 }
 //----------------------------------------------------------------------------
-const Profiler* Profiler::Global()  { return _gProfilerPtr_Global; }
-const Profiler* Profiler::Process() { return _gProfilerPtr_Process; }
-const Profiler* Profiler::Thread()  { return _gProfilerPtr_Thread; }
+const FProfiler* FProfiler::Global()  { return _gProfilerPtr_Global; }
+const FProfiler* FProfiler::Process() { return _gProfilerPtr_Process; }
+const FProfiler* FProfiler::Thread()  { return _gProfilerPtr_Thread; }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ProfilingScope::ProfilingScope(const Profiler* profiler, u32 marker, const char* comment)
+FProfilingScope::FProfilingScope(const FProfiler* profiler, u32 marker, const char* comment)
 :   _profiler(profiler) {
     if (_profiler) {
         _profiler->Start();
@@ -101,7 +101,7 @@ ProfilingScope::ProfilingScope(const Profiler* profiler, u32 marker, const char*
     }
 }
 //----------------------------------------------------------------------------
-ProfilingScope::~ProfilingScope() {
+FProfilingScope::~FProfilingScope() {
     if (_profiler)
         _profiler->Stop();
 }

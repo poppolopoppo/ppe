@@ -7,10 +7,10 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ApplicationTest : public Application::ApplicationConsole {
+class FApplicationTest : public Application::FApplicationConsole {
 public:
-    ApplicationTest();
-    virtual ~ApplicationTest();
+    FApplicationTest();
+    virtual ~FApplicationTest();
 
 protected:
     virtual void Start() override;

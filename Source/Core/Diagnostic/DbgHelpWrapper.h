@@ -23,7 +23,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DbghelpWrapper : Meta::Singleton<DbghelpWrapper> {
+class FDbghelpWrapper : Meta::TSingleton<FDbghelpWrapper> {
 public:
     typedef BOOL (WINAPI *SymInitializeW_t)(
         _In_ HANDLE hProcess,
@@ -43,7 +43,7 @@ public:
         _In_ DWORD64 BaseOfDll,
         _In_ DWORD DllSize,
         _In_opt_ PMODLOAD_DATA Data,
-        _In_opt_ DWORD Flags
+        _In_opt_ DWORD EFlags
         );
 
     typedef BOOL (WINAPI *SymGetLineFromAddrW64_t)(
@@ -54,9 +54,9 @@ public:
         );
     typedef BOOL (WINAPI *SymFromAddrW_t)(
         _In_ HANDLE hProcess,
-        _In_ DWORD64 Address,
+        _In_ DWORD64 FAddress,
         _Out_opt_ PDWORD64 Displacement,
-        _Inout_ PSYMBOL_INFOW Symbol
+        _Inout_ PSYMBOL_INFOW FSymbol
         );
 
     typedef BOOL (WINAPI *MiniDumpWriteDump_t)(
@@ -69,9 +69,9 @@ public:
         PMINIDUMP_CALLBACK_INFORMATION CallbackParam
         );
 
-    class Locked : std::unique_lock<std::mutex> {
+    class FLocked : std::unique_lock<std::mutex> {
     public:
-        explicit Locked(const DbghelpWrapper& owner)
+        explicit FLocked(const FDbghelpWrapper& owner)
             : std::unique_lock<std::mutex>(owner._barrier)
             , _owner(&owner) {
             Assert(_owner->Available());
@@ -91,24 +91,24 @@ public:
         MiniDumpWriteDump_t MiniDumpWriteDump() const { return _owner->_miniDumpWriteDump; }
 
     private:
-        const DbghelpWrapper* const _owner;
+        const FDbghelpWrapper* const _owner;
     };
 
-    ~DbghelpWrapper();
+    ~FDbghelpWrapper();
 
     bool Available() const { return nullptr != _library; }
-    Locked Lock() const { return Locked(*this); }
+    FLocked Lock() const { return FLocked(*this); }
 
-    using Meta::Singleton<DbghelpWrapper>::HasInstance;
-    using Meta::Singleton<DbghelpWrapper>::Instance;
+    using Meta::TSingleton<FDbghelpWrapper>::HasInstance;
+    using Meta::TSingleton<FDbghelpWrapper>::Instance;
 
-    static void Create() { Meta::Singleton<DbghelpWrapper>::Create(); }
-    using Meta::Singleton<DbghelpWrapper>::Destroy;
+    static void Create() { Meta::TSingleton<FDbghelpWrapper>::Create(); }
+    using Meta::TSingleton<FDbghelpWrapper>::Destroy;
 
 private:
-    friend Meta::Singleton<DbghelpWrapper>;
+    friend Meta::TSingleton<FDbghelpWrapper>;
 
-    DbghelpWrapper();
+    FDbghelpWrapper();
 
     mutable std::mutex _barrier;
 

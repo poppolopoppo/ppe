@@ -23,7 +23,7 @@
     _Prefix void _Type::Pool_ReleaseMemory() { \
         _Pool::Clear_UnusedMemory(); \
     } \
-    _Prefix const MemoryTrackingData *_Type::Pool_TrackingData() { \
+    _Prefix const FMemoryTrackingData *_Type::Pool_TrackingData() { \
         return _Pool::TrackingData(); \
     }
 //----------------------------------------------------------------------------
@@ -31,7 +31,7 @@
 //----------------------------------------------------------------------------
 #define SINGLETON_POOL_ALLOCATED_DEF_IMPL_(_Type, _Prefix, _Pool) \
     _Prefix void _Type::Pool_ReleaseMemory() {} \
-    _Prefix const MemoryTrackingData *_Type::Pool_TrackingData() { return nullptr; }
+    _Prefix const FMemoryTrackingData *_Type::Pool_TrackingData() { return nullptr; }
 //----------------------------------------------------------------------------
 #endif //!WITH_CORE_POOL_ALLOCATOR
 //----------------------------------------------------------------------------
@@ -41,11 +41,11 @@
 //----------------------------------------------------------------------------
 #define SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(_Tag, _Type, _Prefix) \
     SINGLETON_POOL_ALLOCATED_DEF_IMPL_(COMMA_PROTECT(_Type), COMMA_PROTECT(_Prefix), \
-        Core::TypedSegregatedMemoryPool<POOL_TAG(_Tag) COMMA COMMA_PROTECT(_Type) COMMA false>)
+        Core::TTypedSegregatedMemoryPool<POOL_TAG(_Tag) COMMA COMMA_PROTECT(_Type) COMMA false>)
 //----------------------------------------------------------------------------
 #define THREAD_LOCAL_SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(_Tag, _Type, _Prefix) \
     SINGLETON_POOL_ALLOCATED_DEF_IMPL_(COMMA_PROTECT(_Type), COMMA_PROTECT(_Prefix), \
-        Core::TypedSegregatedMemoryPool<POOL_TAG(_Tag) COMMA COMMA_PROTECT(_Type) COMMA true>)
+        Core::TTypedSegregatedMemoryPool<POOL_TAG(_Tag) COMMA COMMA_PROTECT(_Type) COMMA true>)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

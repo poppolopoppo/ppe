@@ -12,9 +12,9 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, ShaderCompiled, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, FShaderCompiled, );
 //----------------------------------------------------------------------------
-ShaderCompiled::ShaderCompiled(
+FShaderCompiled::FShaderCompiled(
     u64 fingerprint,
     blob_type&& compiledCode,
     constants_type&& constants,

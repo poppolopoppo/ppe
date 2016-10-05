@@ -8,27 +8,27 @@
 
 namespace Core {
 namespace Graphics {
-class BindName;
+class FBindName;
 class IDeviceAPIEncapsulator;
 FWD_REFPTR(ConstantBufferLayout);
 }
 
 namespace Engine {
-struct SharedConstantBufferKey;
+struct FSharedConstantBufferKey;
 FWD_REFPTR(SharedConstantBuffer);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class SharedConstantBufferFactory : public Meta::ThreadResource {
+class FSharedConstantBufferFactory : public Meta::FThreadResource {
 public:
-    SharedConstantBufferFactory();
-    ~SharedConstantBufferFactory();
+    FSharedConstantBufferFactory();
+    ~FSharedConstantBufferFactory();
 
-    SharedConstantBufferFactory(const SharedConstantBufferFactory& ) = delete;
-    SharedConstantBufferFactory& operator =(const SharedConstantBufferFactory& ) = delete;
+    FSharedConstantBufferFactory(const FSharedConstantBufferFactory& ) = delete;
+    FSharedConstantBufferFactory& operator =(const FSharedConstantBufferFactory& ) = delete;
 
-    SharedConstantBuffer *GetOrCreate(  const Graphics::BindName& name,
-                                        const Graphics::ConstantBufferLayout *layout );
+    FSharedConstantBuffer *GetOrCreate(  const Graphics::FBindName& name,
+                                        const Graphics::FConstantBufferLayout *layout );
 
     void ReleaseDestroyIFN(PSharedConstantBuffer& buffer);
 
@@ -39,7 +39,7 @@ public:
 
 private:
     Graphics::IDeviceAPIEncapsulator *_device;
-    HASHMAP(Effect, SharedConstantBufferKey, PSharedConstantBuffer) _buffers;
+    HASHMAP(FEffect, FSharedConstantBufferKey, PSharedConstantBuffer) _buffers;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -13,10 +13,10 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-class MemoryView {
+class TMemoryView {
 public:
     template <typename U>
-    friend class MemoryView;
+    friend class TMemoryView;
 
     typedef T value_type;
     typedef typename std::add_pointer<T>::type pointer;
@@ -27,36 +27,36 @@ public:
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;
 
-    typedef CheckedArrayIterator<value_type> iterator;
+    typedef TCheckedArrayIterator<value_type> iterator;
     typedef std::random_access_iterator_tag iterator_category;
     typedef std::reverse_iterator<iterator> reverse_iterator;
 
-    MemoryView();
-    MemoryView(pointer storage, size_type size);
-    ~MemoryView();
+    TMemoryView();
+    TMemoryView(pointer storage, size_type size);
+    ~TMemoryView();
 
-    // enables type promotion between {T(),T(),T()} and MemoryView<T>
-    MemoryView(std::initializer_list<value_type> list)
-        : MemoryView(&*list.begin(), std::distance(list.begin(), list.end())) {}
+    // enables type promotion between {T(),T(),T()} and TMemoryView<T>
+    TMemoryView(std::initializer_list<value_type> list)
+        : TMemoryView(&*list.begin(), std::distance(list.begin(), list.end())) {}
 
-    // enables type promotion between T[] and MemoryView<T>
+    // enables type promotion between T[] and TMemoryView<T>
     template <size_t _Dim>
-    MemoryView(value_type (&staticArray)[_Dim])
-        : MemoryView(staticArray, _Dim) {}
+    TMemoryView(value_type (&staticArray)[_Dim])
+        : TMemoryView(staticArray, _Dim) {}
 
-    MemoryView(const iterator& first, const iterator& last)
-        : MemoryView(std::addressof(*first), std::distance(first, last)) {}
+    TMemoryView(const iterator& first, const iterator& last)
+        : TMemoryView(std::addressof(*first), std::distance(first, last)) {}
 
-    MemoryView(MemoryView&& rvalue);
-    MemoryView& operator =(MemoryView&& rvalue);
+    TMemoryView(TMemoryView&& rvalue);
+    TMemoryView& operator =(TMemoryView&& rvalue);
 
-    MemoryView(const MemoryView& other);
-    MemoryView& operator =(const MemoryView& other);
+    TMemoryView(const TMemoryView& other);
+    TMemoryView& operator =(const TMemoryView& other);
 
     template <typename U>
-    MemoryView(const MemoryView<U>& other);
+    TMemoryView(const TMemoryView<U>& other);
     template <typename U>
-    MemoryView& operator =(const MemoryView<U>& other);
+    TMemoryView& operator =(const TMemoryView<U>& other);
 
     pointer Pointer() const { return _storage; }
     size_t SizeInBytes() const { return _size * sizeof(T); }
@@ -80,7 +80,7 @@ public:
     reference front() const { return at(0); }
     reference back() const { return at(_size - 1); }
 
-    void CopyTo(const MemoryView<typename std::remove_const<T>::type>& dst) const;
+    void CopyTo(const TMemoryView<typename std::remove_const<T>::type>& dst) const;
 
     template <size_t _Dim>
     void CopyTo(typename std::remove_const<T>::type (&dst)[_Dim]) const {
@@ -88,50 +88,50 @@ public:
         CopyTo(MakeView(dst).CutBefore(_size));
     }
 
-    MemoryView<T> SubRange(size_t offset, size_t count) const;
-    MemoryView< typename std::add_const<T>::type > SubRangeConst(size_t offset, size_t count) const;
+    TMemoryView<T> SubRange(size_t offset, size_t count) const;
+    TMemoryView< typename std::add_const<T>::type > SubRangeConst(size_t offset, size_t count) const;
 
-    MemoryView<T> CutStartingAt(size_t offset) const { return SubRange(offset, _size - offset); }
-    MemoryView< typename std::add_const<T>::type > CutStartingAtConst(size_t offset) const { return SubRangeConst(offset, _size - offset); }
+    TMemoryView<T> CutStartingAt(size_t offset) const { return SubRange(offset, _size - offset); }
+    TMemoryView< typename std::add_const<T>::type > CutStartingAtConst(size_t offset) const { return SubRangeConst(offset, _size - offset); }
 
-    MemoryView<T> CutStartingAt(const iterator& it) const {
+    TMemoryView<T> CutStartingAt(const iterator& it) const {
         Assert(AliasesToContainer(it));
         return (end() != it
-            ? MemoryView(std::addressof(*it), std::distance(it, end()))
-            : MemoryView(_storage+_size, size_type(0)) );
+            ? TMemoryView(std::addressof(*it), std::distance(it, end()))
+            : TMemoryView(_storage+_size, size_type(0)) );
     }
 
-    MemoryView<T> CutStartingAt(const reverse_iterator& it) const {
+    TMemoryView<T> CutStartingAt(const reverse_iterator& it) const {
         Assert(AliasesToContainer(it));
         return (rend() != it
-            ? MemoryView(std::addressof(*it), _storage + _size - std::addressof(*it))
-            : MemoryView(_storage, size_type(0)) );
+            ? TMemoryView(std::addressof(*it), _storage + _size - std::addressof(*it))
+            : TMemoryView(_storage, size_type(0)) );
     }
 
-    MemoryView<T> CutBefore(size_t offset) const { return SubRange(0, offset); }
-    MemoryView< typename std::add_const<T>::type > CutBeforeConst(size_t offset) const { return SubRangeConst(0, offset); }
+    TMemoryView<T> CutBefore(size_t offset) const { return SubRange(0, offset); }
+    TMemoryView< typename std::add_const<T>::type > CutBeforeConst(size_t offset) const { return SubRangeConst(0, offset); }
 
-    MemoryView<T> CutBefore(const iterator& it) const {
+    TMemoryView<T> CutBefore(const iterator& it) const {
         Assert(AliasesToContainer(it));
-        return MemoryView<T>(_storage, std::distance(begin(), it));
+        return TMemoryView<T>(_storage, std::distance(begin(), it));
     }
 
-    MemoryView<T> CutBefore(const reverse_iterator& it) const {
+    TMemoryView<T> CutBefore(const reverse_iterator& it) const {
         Assert(AliasesToContainer(it));
-        return MemoryView<T>(_storage, std::addressof(*it) - _storage);
+        return TMemoryView<T>(_storage, std::addressof(*it) - _storage);
     }
 
-    MemoryView<T> FirstNElements(size_t count) const { return CutBefore(count); }
-    MemoryView<T> LastNElements(size_t count) const { Assert(_size >= count); return CutStartingAt(_size - count); }
+    TMemoryView<T> FirstNElements(size_t count) const { return CutBefore(count); }
+    TMemoryView<T> LastNElements(size_t count) const { Assert(_size >= count); return CutStartingAt(_size - count); }
 
-    MemoryView<T> ShiftBack() const { Assert(_size > 0); return MemoryView<T>(_storage, _size - 1); }
-    MemoryView<T> ShiftFront() const { Assert(_size > 0); return MemoryView<T>(_storage + 1, _size - 1); }
+    TMemoryView<T> ShiftBack() const { Assert(_size > 0); return TMemoryView<T>(_storage, _size - 1); }
+    TMemoryView<T> ShiftFront() const { Assert(_size > 0); return TMemoryView<T>(_storage + 1, _size - 1); }
 
-    MemoryView<T> GrowBack() const { return MemoryView<T>(_storage, _size + 1); }
-    MemoryView<T> GrowFront() const { return MemoryView<T>(_storage - 1, _size + 1); }
+    TMemoryView<T> GrowBack() const { return TMemoryView<T>(_storage, _size + 1); }
+    TMemoryView<T> GrowFront() const { return TMemoryView<T>(_storage - 1, _size + 1); }
 
     template <typename U>
-    bool IsSubRangeOf(const MemoryView<U>& parent) const {
+    bool IsSubRangeOf(const TMemoryView<U>& parent) const {
         return ((void*)parent.data() <= (void*)_storage &&
                 (void*)(parent.data()+parent.size()) >= (void*)(_storage+_size));
     }
@@ -159,39 +159,39 @@ public:
     template <typename _Pred>
     size_type FindLastNot(const _Pred& pred) const { return std::distance(rbegin(), FindIfNotR(pred)); }
 
-    iterator FindSubRange(const MemoryView<T>& subrange) const;
+    iterator FindSubRange(const TMemoryView<T>& subrange) const;
 
     template <typename _Pred>
-    MemoryView SplitIf(const _Pred& pred) const { return MemoryView(_storage, FindFirst(pred)); }
+    TMemoryView SplitIf(const _Pred& pred) const { return TMemoryView(_storage, FindFirst(pred)); }
     template <typename _Pred>
-    MemoryView SplitIfNot(const _Pred& pred) const { return MemoryView(_storage, FindFirstNot(pred)); }
+    TMemoryView SplitIfNot(const _Pred& pred) const { return TMemoryView(_storage, FindFirstNot(pred)); }
 
     bool AliasesToContainer(const iterator& it) const { return (begin() <= it && it <= end()); }
     bool AliasesToContainer(const reverse_iterator& it) const { return (rbegin() <= it && it <= rend()); }
 
     template <typename U>
-    MemoryView<U> Cast() const;
+    TMemoryView<U> Cast() const;
 
-    MemoryView<typename std::add_const<value_type>::type> AddConst() const {
-        return MemoryView<typename std::add_const<value_type>::type>(_storage, _size);
+    TMemoryView<typename std::add_const<value_type>::type> AddConst() const {
+        return TMemoryView<typename std::add_const<value_type>::type>(_storage, _size);
     }
 
-    MemoryView<typename std::remove_const<value_type>::type> RemoveConst() const {
-        typedef MemoryView<typename std::remove_const<value_type>::type> nonconst_type;
+    TMemoryView<typename std::remove_const<value_type>::type> RemoveConst() const {
+        typedef TMemoryView<typename std::remove_const<value_type>::type> nonconst_type;
         return nonconst_type(const_cast<typename nonconst_type::pointer>(_storage), _size);
     }
 
-    friend void swap(MemoryView& lhs, MemoryView& rhs) {
+    friend void swap(TMemoryView& lhs, TMemoryView& rhs) {
         std::swap(lhs._storage, rhs._storage);
         std::swap(lhs._size, rhs._size);
     }
 
-    friend bool operator ==(const MemoryView& lhs, const MemoryView& rhs) {
+    friend bool operator ==(const TMemoryView& lhs, const TMemoryView& rhs) {
         return  lhs._storage == rhs._storage &&
                 lhs._size == rhs._size;
     }
 
-    friend bool operator !=(const MemoryView& lhs, const MemoryView& rhs) {
+    friend bool operator !=(const TMemoryView& lhs, const TMemoryView& rhs) {
         return false == operator ==(lhs, rhs);
     }
 
@@ -201,20 +201,20 @@ protected:
 };
 //----------------------------------------------------------------------------
 template <typename T>
-MemoryView<T>::MemoryView()
+TMemoryView<T>::TMemoryView()
 : _storage(nullptr), _size(0) {}
 //----------------------------------------------------------------------------
 template <typename T>
-MemoryView<T>::MemoryView(pointer storage, size_type size)
+TMemoryView<T>::TMemoryView(pointer storage, size_type size)
 : _storage(storage), _size(size) {
     Assert(storage || 0 == size);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-MemoryView<T>::~MemoryView() {}
+TMemoryView<T>::~TMemoryView() {}
 //----------------------------------------------------------------------------
 template <typename T>
-MemoryView<T>::MemoryView(MemoryView&& rvalue)
+TMemoryView<T>::TMemoryView(TMemoryView&& rvalue)
 :   _storage(std::move(rvalue._storage))
 ,   _size(std::move(rvalue._size)) {
     rvalue._storage = nullptr;
@@ -222,7 +222,7 @@ MemoryView<T>::MemoryView(MemoryView&& rvalue)
 }
 //----------------------------------------------------------------------------
 template <typename T>
-MemoryView<T>& MemoryView<T>::operator =(MemoryView&& rvalue) {
+TMemoryView<T>& TMemoryView<T>::operator =(TMemoryView&& rvalue) {
     _storage = std::move(rvalue._storage);
     _size = std::move(rvalue._size);
     rvalue._storage = nullptr;
@@ -231,11 +231,11 @@ MemoryView<T>& MemoryView<T>::operator =(MemoryView&& rvalue) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-MemoryView<T>::MemoryView(const MemoryView& other)
+TMemoryView<T>::TMemoryView(const TMemoryView& other)
 :   _storage(other._storage), _size(other._size) {}
 //----------------------------------------------------------------------------
 template <typename T>
-MemoryView<T>& MemoryView<T>::operator =(const MemoryView& other) {
+TMemoryView<T>& TMemoryView<T>::operator =(const TMemoryView& other) {
     _storage = other._storage;
     _size = other._size;
     return (*this);
@@ -243,25 +243,25 @@ MemoryView<T>& MemoryView<T>::operator =(const MemoryView& other) {
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-MemoryView<T>::MemoryView(const MemoryView<U>& other)
+TMemoryView<T>::TMemoryView(const TMemoryView<U>& other)
 :   _storage(other._storage), _size(other._size) {}
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-MemoryView<T>& MemoryView<T>::operator =(const MemoryView<U>& other) {
+TMemoryView<T>& TMemoryView<T>::operator =(const TMemoryView<U>& other) {
     _storage = other._storage;
     _size = other._size;
     return (*this);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-auto MemoryView<T>::at(size_type index) const -> reference {
+auto TMemoryView<T>::at(size_type index) const -> reference {
     Assert(index < _size);
     return _storage[index];
 }
 //----------------------------------------------------------------------------
 template <typename T>
-auto MemoryView<T>::FindSubRange(const MemoryView<T>& subrange) const -> iterator {
+auto TMemoryView<T>::FindSubRange(const TMemoryView<T>& subrange) const -> iterator {
     Assert(!subrange.empty());
     const auto last = end();
     for (auto it = begin(); it != last; ++it) {
@@ -272,112 +272,112 @@ auto MemoryView<T>::FindSubRange(const MemoryView<T>& subrange) const -> iterato
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void MemoryView<T>::CopyTo(const MemoryView<typename std::remove_const<T>::type>& dst) const {
+void TMemoryView<T>::CopyTo(const TMemoryView<typename std::remove_const<T>::type>& dst) const {
     Assert(dst.size() == size());
     std::copy(begin(), end(), dst.begin());
 }
 //----------------------------------------------------------------------------
 template <typename T>
-MemoryView<T> MemoryView<T>::SubRange(size_t offset, size_t count) const {
+TMemoryView<T> TMemoryView<T>::SubRange(size_t offset, size_t count) const {
     Assert(offset <= _size);
     Assert(offset + count <= _size);
-    return MemoryView(_storage + offset, count);
+    return TMemoryView(_storage + offset, count);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-MemoryView< typename std::add_const<T>::type > MemoryView<T>::SubRangeConst(size_t offset, size_t count) const {
+TMemoryView< typename std::add_const<T>::type > TMemoryView<T>::SubRangeConst(size_t offset, size_t count) const {
     Assert(offset <= _size);
     Assert(offset + count <= _size);
-    return MemoryView< typename std::add_const<T>::type >(_storage + offset, count);
+    return TMemoryView< typename std::add_const<T>::type >(_storage + offset, count);
 }
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-MemoryView<U> MemoryView<T>::Cast() const {
+TMemoryView<U> TMemoryView<T>::Cast() const {
     STATIC_ASSERT(  (0 == (sizeof(T) % sizeof(U)) ) ||
                     (0 == (sizeof(U) % sizeof(T)) ) );
 
-    return MemoryView<U>(reinterpret_cast<U *>(_storage), (_size * sizeof(T)) / sizeof(U));
+    return TMemoryView<U>(reinterpret_cast<U *>(_storage), (_size * sizeof(T)) / sizeof(U));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-MemoryView<T> MakeView(T(&staticArray)[_Dim]) {
-    return MemoryView<T>(&staticArray[0], _Dim);
+TMemoryView<T> MakeView(T(&staticArray)[_Dim]) {
+    return TMemoryView<T>(&staticArray[0], _Dim);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-MemoryView<typename std::add_const<T>::type > MakeConstView(T(&staticArray)[_Dim]) {
-    return MemoryView<typename std::add_const<T>::type >(&staticArray[0], _Dim);
+TMemoryView<typename std::add_const<T>::type > MakeConstView(T(&staticArray)[_Dim]) {
+    return TMemoryView<typename std::add_const<T>::type >(&staticArray[0], _Dim);
 }
 //----------------------------------------------------------------------------
 template <typename _It>
 typename std::enable_if<
     Meta::is_iterator<_It>::value,
-    MemoryView< typename std::iterator_traits<_It>::value_type >
+    TMemoryView< typename std::iterator_traits<_It>::value_type >
 >::type MakeView(_It first, _It last) {
     typedef std::iterator_traits<_It> traits_type;
     STATIC_ASSERT(std::is_same<typename traits_type::iterator_category, std::random_access_iterator_tag>::value);
-    return MemoryView< typename traits_type::value_type >(std::addressof(*first), std::distance(first, last));
+    return TMemoryView< typename traits_type::value_type >(std::addressof(*first), std::distance(first, last));
 }
 //----------------------------------------------------------------------------
 template <typename _VectorLike>
-MemoryView<typename _VectorLike::value_type> MakeView(_VectorLike& container) {
+TMemoryView<typename _VectorLike::value_type> MakeView(_VectorLike& container) {
     if (container.begin() != container.end())
-        return MemoryView<typename _VectorLike::value_type>(&*std::begin(container), std::distance(std::begin(container), std::end(container)) );
+        return TMemoryView<typename _VectorLike::value_type>(&*std::begin(container), std::distance(std::begin(container), std::end(container)) );
     else
-        return MemoryView<typename _VectorLike::value_type>();
+        return TMemoryView<typename _VectorLike::value_type>();
 }
 //----------------------------------------------------------------------------
 template <typename _VectorLike>
-MemoryView<const typename _VectorLike::value_type> MakeView(const _VectorLike& container) {
+TMemoryView<const typename _VectorLike::value_type> MakeView(const _VectorLike& container) {
     if (container.begin() != container.end())
-        return MemoryView<const typename _VectorLike::value_type>(&*std::begin(container), std::distance(std::begin(container), std::end(container)) );
+        return TMemoryView<const typename _VectorLike::value_type>(&*std::begin(container), std::distance(std::begin(container), std::end(container)) );
     else
-        return MemoryView<const typename _VectorLike::value_type>();
+        return TMemoryView<const typename _VectorLike::value_type>();
 }
 //----------------------------------------------------------------------------
 template <typename _VectorLike>
-MemoryView<const typename _VectorLike::value_type> MakeConstView(const _VectorLike& container) {
+TMemoryView<const typename _VectorLike::value_type> MakeConstView(const _VectorLike& container) {
     if (container.begin() != container.end())
-        return MemoryView<const typename _VectorLike::value_type>(&*std::begin(container), std::distance(std::begin(container), std::end(container)) );
+        return TMemoryView<const typename _VectorLike::value_type>(&*std::begin(container), std::distance(std::begin(container), std::end(container)) );
     else
-        return MemoryView<const typename _VectorLike::value_type>();
+        return TMemoryView<const typename _VectorLike::value_type>();
 }
 //----------------------------------------------------------------------------
 template <typename T>
-MemoryView< T > MakeView(T* pbegin, T* pend) {
+TMemoryView< T > MakeView(T* pbegin, T* pend) {
     Assert(pend >= pbegin);
-    return MemoryView< T >(pbegin, std::distance(pbegin, pend));
+    return TMemoryView< T >(pbegin, std::distance(pbegin, pend));
 }
 //----------------------------------------------------------------------------
 template <typename T>
-MemoryView<typename std::add_const<T>::type > MakeConstView(T* pbegin, T* pend) {
+TMemoryView<typename std::add_const<T>::type > MakeConstView(T* pbegin, T* pend) {
     Assert(pend >= pbegin);
-    return MemoryView<typename std::add_const<T>::type >(pbegin, std::distance(pbegin, pend));
+    return TMemoryView<typename std::add_const<T>::type >(pbegin, std::distance(pbegin, pend));
 }
 //----------------------------------------------------------------------------
 template <typename T>
-MemoryView<u8> MakeRawView(T& assumePod) {
-    return MemoryView<u8>(reinterpret_cast<u8*>(&assumePod), sizeof(T));
+TMemoryView<u8> MakeRawView(T& assumePod) {
+    return TMemoryView<u8>(reinterpret_cast<u8*>(&assumePod), sizeof(T));
 }
 //----------------------------------------------------------------------------
 template <typename T>
-MemoryView<const u8> MakeRawView(const T& assumePod) {
-    return MemoryView<const u8>(reinterpret_cast<const u8*>(&assumePod), sizeof(T));
+TMemoryView<const u8> MakeRawView(const T& assumePod) {
+    return TMemoryView<const u8>(reinterpret_cast<const u8*>(&assumePod), sizeof(T));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename U, typename V>
-void Copy(const MemoryView<U>& dst, const MemoryView<V>& src) {
+void Copy(const TMemoryView<U>& dst, const TMemoryView<V>& src) {
     Assert(dst.size() == src.size());
     std::copy(src.begin(), src.end(), dst.begin());
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void Move(const MemoryView<T>& dst, const MemoryView<T>& src) {
+void Move(const TMemoryView<T>& dst, const TMemoryView<T>& src) {
     Assert(dst.size() == src.size());
     std::move(src.begin(), src.end(), dst.begin());
 }
@@ -387,7 +387,7 @@ void Move(const MemoryView<T>& dst, const MemoryView<T>& src) {
 template <typename _Char, typename _Traits, typename T >
 std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
-    const MemoryView<T>& view) {
+    const TMemoryView<T>& view) {
     for (const auto& it : view)
         oss << it;
     return oss;

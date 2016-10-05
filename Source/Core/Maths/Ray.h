@@ -10,24 +10,24 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Ray {
+class FRay {
 public:
-    Ray(const float3& origin, const float3& direction);
+    FRay(const float3& origin, const float3& direction);
 
-    Ray(const Ray& other);
-    Ray& operator =(const Ray& other);
+    FRay(const FRay& other);
+    FRay& operator =(const FRay& other);
 
     const float3& Origin() const { return _origin; }
     const float3& Direction() const { return _direction; }
 
     bool Intersects(const float3& point) const;
 
-    bool Intersects(const Ray& ray) const;
-    bool Intersects(const Ray& ray, float3& point) const;
+    bool Intersects(const FRay& ray) const;
+    bool Intersects(const FRay& ray, float3& point) const;
 
-    bool Intersects(const Plane& plane) const;
-    bool Intersects(const Plane& plane, float& distance) const;
-    bool Intersects(const Plane& plane, float3& point) const;
+    bool Intersects(const FPlane& plane) const;
+    bool Intersects(const FPlane& plane, float& distance) const;
+    bool Intersects(const FPlane& plane, float3& point) const;
 
     bool Intersects(const float3& triangle1, const float3& triangle2, const float3& triangle3) const;
     bool Intersects(const float3& triangle1, const float3& triangle2, const float3& triangle3, float& distance) const;
@@ -37,11 +37,11 @@ public:
     bool Intersects(const BoundingBox& box, float& distance) const;
     bool Intersects(const BoundingBox& box, float3& point) const;
 
-    bool Intersects(const Sphere& sphere) const;
-    bool Intersects(const Sphere& sphere, float& distance) const;
-    bool Intersects(const Sphere& sphere, float3& point) const;
+    bool Intersects(const FSphere& sphere) const;
+    bool Intersects(const FSphere& sphere, float& distance) const;
+    bool Intersects(const FSphere& sphere, float3& point) const;
 
-    static Ray FromSegment(const float3& a, const float3& b);
+    static FRay FromSegment(const float3& a, const float3& b);
 
 private:
     float3 _origin;

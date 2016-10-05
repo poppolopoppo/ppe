@@ -22,8 +22,8 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-static Dialog::Result AssertAbortRetryIgnore_(const WStringView& title, const char *msg, const wchar_t *file, unsigned line) {
-    ThreadLocalWOStringStream oss;
+static Dialog::EResult AssertAbortRetryIgnore_(const FWStringView& title, const char *msg, const wchar_t *file, unsigned line) {
+    FThreadLocalWOStringStream oss;
 
     oss << title << L"\r\n"
         << L"----------------------------------------------------------------\r\n"
@@ -59,10 +59,10 @@ static std::atomic<AssertionHandler> gAssertionHandler = { nullptr };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-AssertException::AssertException(const char *msg, const wchar_t *file, unsigned line)
-:   Exception(msg), _file(file), _line(line) {}
+FAssertException::FAssertException(const char *msg, const wchar_t *file, unsigned line)
+:   FException(msg), _file(file), _line(line) {}
 //----------------------------------------------------------------------------
-AssertException::~AssertException() {}
+FAssertException::~FAssertException() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -74,7 +74,7 @@ void AssertionFailed(const char *msg, const wchar_t *file, unsigned line) {
         return;
 
     if (gIsInAssertion)
-        CORE_THROW_IT(AssertException("Assert reentrancy !", WIDESTRING(__FILE__), __LINE__));
+        CORE_THROW_IT(FAssertException("Assert reentrancy !", WIDESTRING(__FILE__), __LINE__));
 
     gIsInAssertion = true;
 
@@ -92,14 +92,14 @@ void AssertionFailed(const char *msg, const wchar_t *file, unsigned line) {
     }
     else {
         switch (AssertAbortRetryIgnore_(MakeStringView(L"Assert debug failed !"), msg, file, line)) {
-        case Dialog::Result::Abort:
+        case Dialog::EResult::Abort:
             failure = true;
             break;
-        case Dialog::Result::Retry:
+        case Dialog::EResult::Retry:
             if (IsDebuggerAttached_())
                 BREAKPOINT();
             break;
-        case Dialog::Result::Ignore:
+        case Dialog::EResult::Ignore:
             failure = false;
             break;
         default:
@@ -110,7 +110,7 @@ void AssertionFailed(const char *msg, const wchar_t *file, unsigned line) {
     gIsInAssertion = false;
 
     if (failure)
-        CORE_THROW_IT(AssertException(msg, file, line));
+        CORE_THROW_IT(FAssertException(msg, file, line));
 }
 //----------------------------------------------------------------------------
 void SetAssertionHandler(AssertionHandler handler) {
@@ -135,10 +135,10 @@ static std::atomic<AssertionReleaseHandler> gAssertionReleaseHandler = { nullptr
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-AssertReleaseException::AssertReleaseException(const char *msg, const wchar_t *file, unsigned line)
-:   Exception(msg), _file(file), _line(line) {}
+FAssertReleaseException::FAssertReleaseException(const char *msg, const wchar_t *file, unsigned line)
+:   FException(msg), _file(file), _line(line) {}
 //----------------------------------------------------------------------------
-AssertReleaseException::~AssertReleaseException() {}
+FAssertReleaseException::~FAssertReleaseException() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -150,7 +150,7 @@ void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line)
         return;
 
     if (gIsInAssertion)
-        CORE_THROW_IT(AssertReleaseException("Assert release reentrancy !", WIDESTRING(__FILE__), __LINE__));
+        CORE_THROW_IT(FAssertReleaseException("Assert release reentrancy !", WIDESTRING(__FILE__), __LINE__));
 
     gIsInAssertion = true;
 
@@ -168,14 +168,14 @@ void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line)
     }
     else {
         switch (AssertAbortRetryIgnore_(MakeStringView(L"Assert release failed !"), msg, file, line)) {
-        case Dialog::Result::Abort:
+        case Dialog::EResult::Abort:
             failure = true;
             break;
-        case Dialog::Result::Retry:
+        case Dialog::EResult::Retry:
             if (IsDebuggerAttached_())
                 BREAKPOINT();
             break;
-        case Dialog::Result::Ignore:
+        case Dialog::EResult::Ignore:
             failure = false;
             break;
         default:
@@ -186,7 +186,7 @@ void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line)
     gIsInAssertion = false;
 
     if (failure)
-        CORE_THROW_IT(AssertReleaseException(msg, file, line));
+        CORE_THROW_IT(FAssertReleaseException(msg, file, line));
 }
 //----------------------------------------------------------------------------
 void SetAssertionReleaseHandler(AssertionReleaseHandler handler) {

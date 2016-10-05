@@ -9,31 +9,31 @@
 namespace Core {
 namespace Graphics {
 class IDeviceAPIEncapsulator;
-class Texture2D;
-class TextureCube;
+class FTexture2D;
+class FTextureCube;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DX11AbstractTextureContent : public IDeviceAPIDependantAbstractTextureContent {
+class FDX11AbstractTextureContent : public IDeviceAPIDependantAbstractTextureContent {
 public:
-    DX11AbstractTextureContent(::ID3D11ShaderResourceView *shaderView = nullptr);
-    virtual ~DX11AbstractTextureContent();
+    FDX11AbstractTextureContent(::ID3D11ShaderResourceView *shaderView = nullptr);
+    virtual ~FDX11AbstractTextureContent();
 
     ::ID3D11ShaderResourceView *ShaderView() const { return _shaderView.Get(); }
 
 protected:
-    void CreateTexture( ComPtr<::ID3D11Texture2D>& pTexture2D,
+    void CreateTexture( TComPtr<::ID3D11Texture2D>& pTexture2D,
                         IDeviceAPIEncapsulator *device,
-                        const Texture *owner,
+                        const FTexture *owner,
                         size_t width,
                         size_t height,
                         size_t levelCount,
-                        const MemoryView<const u8>& optionalData,
+                        const TMemoryView<const u8>& optionalData,
                         ::D3D11_BIND_FLAG bindFlags,
                         bool isCubeMap );
 
 protected:
-    ComPtr<::ID3D11ShaderResourceView> _shaderView;
+    TComPtr<::ID3D11ShaderResourceView> _shaderView;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

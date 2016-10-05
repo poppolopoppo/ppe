@@ -7,7 +7,7 @@
 #include "Core.Engine/Service/Service_fwd.h"
 
 namespace Core {
-struct Guid;
+struct FGuid;
 namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -19,25 +19,25 @@ protected:
 public:
     virtual ~IEffectCompilerService() {}
 
-    virtual Engine::EffectCompiler *EffectCompiler() = 0;
-    virtual const Engine::EffectCompiler *EffectCompiler() const = 0;
+    virtual Engine::FEffectCompiler *FEffectCompiler() = 0;
+    virtual const Engine::FEffectCompiler *FEffectCompiler() const = 0;
 
     ENGINESERVICE_GUID_DECL(IEffectCompilerService);
 };
 //----------------------------------------------------------------------------
-class DefaultEffectCompilerService : public IEffectCompilerService {
+class FDefaultEffectCompilerService : public IEffectCompilerService {
 public:
-    DefaultEffectCompilerService();
-    virtual ~DefaultEffectCompilerService();
+    FDefaultEffectCompilerService();
+    virtual ~FDefaultEffectCompilerService();
 
-    virtual Engine::EffectCompiler *EffectCompiler() override;
-    virtual const Engine::EffectCompiler *EffectCompiler() const override;
+    virtual Engine::FEffectCompiler *FEffectCompiler() override;
+    virtual const Engine::FEffectCompiler *FEffectCompiler() const override;
 
-    virtual void Start(IServiceProvider *provider, const Guid& guid) override;
-    virtual void Shutdown(IServiceProvider *provider, const Guid& guid) override;
+    virtual void Start(IServiceProvider *provider, const FGuid& guid) override;
+    virtual void Shutdown(IServiceProvider *provider, const FGuid& guid) override;
 
 private:
-    Engine::EffectCompiler _effectCompiler;
+    Engine::FEffectCompiler _effectCompiler;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

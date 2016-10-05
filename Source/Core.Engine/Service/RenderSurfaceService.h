@@ -7,7 +7,7 @@
 #include "Core.Engine/Service/Service_fwd.h"
 
 namespace Core {
-struct Guid;
+struct FGuid;
 namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -19,25 +19,25 @@ protected:
 public:
     virtual ~IRenderSurfaceService() {}
 
-    virtual Engine::RenderSurfaceManager *Manager() = 0;
-    virtual const Engine::RenderSurfaceManager *Manager() const = 0;
+    virtual Engine::FRenderSurfaceManager *Manager() = 0;
+    virtual const Engine::FRenderSurfaceManager *Manager() const = 0;
 
     ENGINESERVICE_GUID_DECL(IRenderSurfaceService);
 };
 //----------------------------------------------------------------------------
-class DefaultRenderSurfaceService: public IRenderSurfaceService {
+class FDefaultRenderSurfaceService: public IRenderSurfaceService {
 public:
-    DefaultRenderSurfaceService();
-    virtual ~DefaultRenderSurfaceService();
+    FDefaultRenderSurfaceService();
+    virtual ~FDefaultRenderSurfaceService();
 
-    virtual Engine::RenderSurfaceManager *Manager() override;
-    virtual const Engine::RenderSurfaceManager *Manager() const override;
+    virtual Engine::FRenderSurfaceManager *Manager() override;
+    virtual const Engine::FRenderSurfaceManager *Manager() const override;
 
-    virtual void Start(IServiceProvider *provider, const Guid& guid) override;
-    virtual void Shutdown(IServiceProvider *provider, const Guid& guid) override;
+    virtual void Start(IServiceProvider *provider, const FGuid& guid) override;
+    virtual void Shutdown(IServiceProvider *provider, const FGuid& guid) override;
 
 private:
-    Engine::RenderSurfaceManager _manager;
+    Engine::FRenderSurfaceManager _manager;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

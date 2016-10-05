@@ -1,6 +1,6 @@
 /*
-   LZ4 HC - High Compression Mode of LZ4
-   Header File
+   LZ4 HC - High Compression EMode of LZ4
+   FHeader File
    Copyright (C) 2011-2015, Yann Collet.
    BSD 2-Clause License (http://www.opensource.org/licenses/bsd-license.php)
 
@@ -45,7 +45,7 @@ extern "C" {
 
 
 /**************************************
-*  Block Compression
+*  FBlock Compression
 **************************************/
 int LZ4_compress_HC (const char* src, char* dst, int srcSize, int maxDstSize, int compressionLevel);
 /*

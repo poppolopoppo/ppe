@@ -19,37 +19,37 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ShaderCompilerEncapsulator::ShaderCompilerEncapsulator() : _api(DeviceAPI::Unknown) {}
+FShaderCompilerEncapsulator::FShaderCompilerEncapsulator() : _api(EDeviceAPI::Unknown) {}
 //----------------------------------------------------------------------------
-ShaderCompilerEncapsulator::~ShaderCompilerEncapsulator() {
-    Assert(DeviceAPI::Unknown == _api);
+FShaderCompilerEncapsulator::~FShaderCompilerEncapsulator() {
+    Assert(EDeviceAPI::Unknown == _api);
     Assert(nullptr == _deviceAPIShaderCompiler);
 }
 //----------------------------------------------------------------------------
-IDeviceAPIShaderCompiler* ShaderCompilerEncapsulator::Compiler() const {
+IDeviceAPIShaderCompiler* FShaderCompilerEncapsulator::Compiler() const {
     THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(DeviceAPI::Unknown != _api);
+    Assert(EDeviceAPI::Unknown != _api);
     Assert(nullptr != _deviceAPIShaderCompiler);
 
     return remove_const(this);
 }
 //----------------------------------------------------------------------------
-void ShaderCompilerEncapsulator::Create(DeviceAPI api) {
+void FShaderCompilerEncapsulator::Create(EDeviceAPI api) {
     THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(DeviceAPI::Unknown == _api);
+    Assert(EDeviceAPI::Unknown == _api);
     Assert(nullptr == _deviceAPIShaderCompiler);
 
     _api = api;
 
     switch (_api)
     {
-    case Core::Graphics::DeviceAPI::DirectX11:
-        _deviceAPIShaderCompiler.reset(new DX11ShaderCompiler());
+    case Core::Graphics::EDeviceAPI::DirectX11:
+        _deviceAPIShaderCompiler.reset(new FDX11ShaderCompiler());
         break;
-    case Core::Graphics::DeviceAPI::OpenGL4:
+    case Core::Graphics::EDeviceAPI::OpenGL4:
         AssertNotImplemented();
         break;
-    case Core::Graphics::DeviceAPI::Unknown:
+    case Core::Graphics::EDeviceAPI::Unknown:
         AssertNotReached();
         break;
     default:
@@ -58,21 +58,21 @@ void ShaderCompilerEncapsulator::Create(DeviceAPI api) {
     };
 }
 //----------------------------------------------------------------------------
-void ShaderCompilerEncapsulator::Destroy() {
+void FShaderCompilerEncapsulator::Destroy() {
     THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(DeviceAPI::Unknown != _api);
+    Assert(EDeviceAPI::Unknown != _api);
     Assert(nullptr != _deviceAPIShaderCompiler);
 
-    _api = DeviceAPI::Unknown;
+    _api = EDeviceAPI::Unknown;
     _deviceAPIShaderCompiler.reset(nullptr);
 }
 //----------------------------------------------------------------------------
-ShaderCompiled* ShaderCompilerEncapsulator::CompileShaderSource(
-    const ShaderSource *source,
-    const VertexDeclaration* vertexDeclaration,
-    ShaderProgramType programType,
-    ShaderProfileType profileType,
-    ShaderCompilerFlags flags,
+FShaderCompiled* FShaderCompilerEncapsulator::CompileShaderSource(
+    const FShaderSource *source,
+    const FVertexDeclaration* vertexDeclaration,
+    EShaderProgramType programType,
+    EShaderProfileType profileType,
+    EShaderCompilerFlags flags,
     const char *entryPoint ) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(source);
@@ -82,10 +82,10 @@ ShaderCompiled* ShaderCompilerEncapsulator::CompileShaderSource(
     return _deviceAPIShaderCompiler->CompileShaderSource(source, vertexDeclaration, programType, profileType, flags, entryPoint);
 }
 //----------------------------------------------------------------------------
-void ShaderCompilerEncapsulator::PreprocessShaderSource(
+void FShaderCompilerEncapsulator::PreprocessShaderSource(
     RAWSTORAGE(Shader, char)& output,
-    const ShaderSource *source,
-    const VertexDeclaration *vertexDeclaration ) {
+    const FShaderSource *source,
+    const FVertexDeclaration *vertexDeclaration ) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(source);
     Assert(vertexDeclaration);
@@ -95,17 +95,17 @@ void ShaderCompilerEncapsulator::PreprocessShaderSource(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void ShaderCompilerFlagsToCStr(char *cstr, size_t capacity, ShaderCompilerFlags flags) {
-    OCStrStream oss(cstr, capacity);
-    if (Meta::HasFlag(flags, ShaderCompilerFlags::Debug))
+void ShaderCompilerFlagsToCStr(char *cstr, size_t capacity, EShaderCompilerFlags flags) {
+    FOCStrStream oss(cstr, capacity);
+    if (Meta::HasFlag(flags, EShaderCompilerFlags::Debug))
         oss << "Debug,";
-    if (Meta::HasFlag(flags, ShaderCompilerFlags::Optimize))
+    if (Meta::HasFlag(flags, EShaderCompilerFlags::Optimize))
         oss << "Optimize,";
-    if (Meta::HasFlag(flags, ShaderCompilerFlags::NoOptimize))
+    if (Meta::HasFlag(flags, EShaderCompilerFlags::NoOptimize))
         oss << "NoOptimize,";
-    if (Meta::HasFlag(flags, ShaderCompilerFlags::Pedantic))
+    if (Meta::HasFlag(flags, EShaderCompilerFlags::Pedantic))
         oss << "Pedantic,";
-    if (Meta::HasFlag(flags, ShaderCompilerFlags::WError))
+    if (Meta::HasFlag(flags, EShaderCompilerFlags::WError))
         oss << "WError,";
 }
 //----------------------------------------------------------------------------
@@ -114,20 +114,20 @@ void ShaderCompilerFlagsToCStr(char *cstr, size_t capacity, ShaderCompilerFlags 
 static bool TryCompileShaderSource_(
     PShaderCompiled& compiled,
     PShaderSource& source,
-    WString& whatIfFailed,
+    FWString& whatIfFailed,
     IDeviceAPIShaderCompiler *compiler,
-    const Filename& filename,
-    const VertexDeclaration *vertexDeclaration,
-    ShaderProgramType programType,
-    ShaderProfileType profileType,
-    ShaderCompilerFlags flags,
+    const FFilename& filename,
+    const FVertexDeclaration *vertexDeclaration,
+    EShaderProgramType programType,
+    EShaderProfileType profileType,
+    EShaderCompilerFlags flags,
     const char *entryPoint,
-    const MemoryView<const Pair<String, String>>& defines ) {
+    const TMemoryView<const TPair<FString, FString>>& defines ) {
 
     try {
-        source = ShaderSource::LoadFromFileIFP(filename, defines);
+        source = FShaderSource::LoadFromFileIFP(filename, defines);
         if (nullptr == source)
-            CORE_THROW_IT(ShaderCompilerException("failed to read source file", compiler, nullptr));
+            CORE_THROW_IT(FShaderCompilerException("failed to read source file", compiler, nullptr));
 
         compiled = compiler->CompileShaderSource(
             source.get(),
@@ -137,7 +137,7 @@ static bool TryCompileShaderSource_(
             flags,
             entryPoint );
     }
-    catch (const ShaderCompilerException& e) {
+    catch (const FShaderCompilerException& e) {
         whatIfFailed = ToWString(e.what());
         return false;
     }
@@ -145,14 +145,14 @@ static bool TryCompileShaderSource_(
 }
 //----------------------------------------------------------------------------
 PShaderCompiled CompileShaderSource(
-    const ShaderCompilerEncapsulator* encapsulator,
-    const Filename& filename,
-    const VertexDeclaration *vertexDeclaration,
-    ShaderProgramType programType,
-    ShaderProfileType profileType,
-    ShaderCompilerFlags flags,
+    const FShaderCompilerEncapsulator* encapsulator,
+    const FFilename& filename,
+    const FVertexDeclaration *vertexDeclaration,
+    EShaderProgramType programType,
+    EShaderProfileType profileType,
+    EShaderCompilerFlags flags,
     const char *entryPoint,
-    const MemoryView<const Pair<String, String>>& defines ) {
+    const TMemoryView<const TPair<FString, FString>>& defines ) {
     Assert(encapsulator);
     Assert(false == filename.empty());
 
@@ -162,7 +162,7 @@ PShaderCompiled CompileShaderSource(
         ShaderProfileTypeToCStr(profileType),
         filename, entryPoint );
 
-    for (const Pair<String, String>& define : defines)
+    for (const TPair<FString, FString>& define : defines)
         LOG(Info, L"[Shader] #define {0} {1}", define.first, define.second);
 #endif
 
@@ -170,7 +170,7 @@ PShaderCompiled CompileShaderSource(
 
     PShaderSource source;
     PShaderCompiled compiled;
-    WString errorMessage;
+    FWString errorMessage;
     while (!TryCompileShaderSource_(
                 compiled, source, errorMessage,
                 deviceAPIShaderCompiler,
@@ -182,21 +182,21 @@ PShaderCompiled CompileShaderSource(
                 entryPoint,
                 defines )) {
 
-        const Dialog::Result dialog = Dialog::AbortRetryIgnore(
+        const Dialog::EResult dialog = Dialog::AbortRetryIgnore(
             MakeStringView(errorMessage),
             L"Shader compilation error",
             Dialog::Icon::Exclamation );
 
         switch (dialog)
         {
-        case Dialog::Result::Ignore:
+        case Dialog::EResult::Ignore:
             {
                 RAWSTORAGE(Shader, char) preprocess;
                 deviceAPIShaderCompiler->PreprocessShaderSource(preprocess, source.get(), vertexDeclaration);
                 BREAKPOINT();
             }
             //break;
-        case Dialog::Result::Retry:
+        case Dialog::EResult::Retry:
             errorMessage.clear();
             if (source)
                 RemoveRef_AssertReachZero(source);
@@ -205,7 +205,7 @@ PShaderCompiled CompileShaderSource(
             continue;
 
         default:
-            CORE_THROW_IT(ShaderCompilerException("abort compilation", deviceAPIShaderCompiler, source.get()));
+            CORE_THROW_IT(FShaderCompilerException("abort compilation", deviceAPIShaderCompiler, source.get()));
         }
     }
 

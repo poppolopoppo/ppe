@@ -19,8 +19,8 @@ namespace Logic {
 namespace {
 //----------------------------------------------------------------------------
 static bool SortSystemLayers_(
-    const Pair<int, PSystemLayer>& lhs,
-    const Pair<int, PSystemLayer>& rhs ) {
+    const TPair<int, PSystemLayer>& lhs,
+    const TPair<int, PSystemLayer>& rhs ) {
     return lhs.first < rhs.first;
 }
 //----------------------------------------------------------------------------
@@ -28,18 +28,18 @@ static bool SortSystemLayers_(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SystemContainer::SystemContainer(EntityManager& manager) 
+FSystemContainer::FSystemContainer(FEntityManager& manager) 
 :   _manager(&manager) {
     Assert(_manager);
 }
 //----------------------------------------------------------------------------
-SystemContainer::~SystemContainer() {}
+FSystemContainer::~FSystemContainer() {}
 //----------------------------------------------------------------------------
-void SystemContainer::Initialize() {
+void FSystemContainer::Initialize() {
     Assert(_manager);
 }
 //----------------------------------------------------------------------------
-void SystemContainer::Destroy() {
+void FSystemContainer::Destroy() {
     Assert(_manager);
 
     for (const auto& it : _layers)
@@ -48,12 +48,12 @@ void SystemContainer::Destroy() {
     _layers.clear();
 }
 //----------------------------------------------------------------------------
-void SystemContainer::Add(ISystem *system, int priority, SystemExecution executionType) {
+void FSystemContainer::Add(ISystem *system, int priority, ESystemExecution executionType) {
     Assert(system);
 
     PSystemLayer layer;
     if (!_layers.TryGet(priority, &layer)) {
-        layer = new SystemLayer();
+        layer = new FSystemLayer();
         _layers.Insert_AssertUnique(priority, layer);
         std::sort(_layers.Vector().begin(), _layers.Vector().end(), SortSystemLayers_);
     }
@@ -63,10 +63,10 @@ void SystemContainer::Add(ISystem *system, int priority, SystemExecution executi
     layer->Add(executionType, system);
 }
 //----------------------------------------------------------------------------
-void SystemContainer::Remove(const PSystem& system) {
+void FSystemContainer::Remove(const PSystem& system) {
     Assert(system);
 
-    for (const Pair<int, PSystemLayer>& it : _layers)
+    for (const TPair<int, PSystemLayer>& it : _layers)
         if (it.second->TryRemove(system)) {
             system->Destroy(*_manager);
             return;
@@ -75,19 +75,19 @@ void SystemContainer::Remove(const PSystem& system) {
     AssertNotReached();
 }
 //----------------------------------------------------------------------------
-void SystemContainer::Process(const Timeline& timeline) {
+void FSystemContainer::Process(const FTimeline& timeline) {
 
     for (const auto& it : _layers)
         it.second->Process(*this, timeline);
 }
 //----------------------------------------------------------------------------
-void SystemContainer::RefreshEntity(const Entity& entity, ComponentFlag components) {
+void FSystemContainer::RefreshEntity(const FEntity& entity, ComponentFlag components) {
 
     for (const auto& it : _layers)
         it.second->RefreshEntity(entity, components);
 }
 //----------------------------------------------------------------------------
-void SystemContainer::RemoveEntity(const Entity& entity) {
+void FSystemContainer::RemoveEntity(const FEntity& entity) {
 
     for (const auto& it : _layers)
         it.second->RemoveEntity(entity);

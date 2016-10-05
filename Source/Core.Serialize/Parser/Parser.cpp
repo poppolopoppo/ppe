@@ -10,15 +10,15 @@ POOL_TAG_DEF(Parser);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void ParserStartup::Start() {
+void FParserStartup::Start() {
     POOL_TAG(Parser)::Start();
 }
 //----------------------------------------------------------------------------
-void ParserStartup::Shutdown() {
+void FParserStartup::Shutdown() {
     POOL_TAG(Parser)::Shutdown();
 }
 //----------------------------------------------------------------------------
-void ParserStartup::ClearAll_UnusedMemory() {
+void FParserStartup::ClearAll_UnusedMemory() {
     POOL_TAG(Parser)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------

@@ -144,7 +144,7 @@ static void stb__EvalColors(unsigned char *color,unsigned short c0,unsigned shor
    stb__Lerp13RGB(color+12, color+4, color+0);
 }
 
-// Block dithering function. Simply dithers a block to 565 RGB.
+// FBlock dithering function. Simply dithers a block to 565 RGB.
 // (Floyd-Steinberg)
 static void stb__DitherBlock(unsigned char *dest, unsigned char *block)
 {

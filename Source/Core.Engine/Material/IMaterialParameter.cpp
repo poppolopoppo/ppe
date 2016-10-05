@@ -25,7 +25,7 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void RegisterDefaultMaterialParameters(MaterialDatabase *database) {
+void RegisterDefaultMaterialParameters(FMaterialDatabase *database) {
     Assert(database);
 
     MaterialParameterBool::RegisterMaterialParameters(database);
@@ -40,9 +40,9 @@ void RegisterDefaultMaterialParameters(MaterialDatabase *database) {
 //----------------------------------------------------------------------------
 bool TryCreateDefaultMaterialParameter(
     PMaterialParameter *param,
-    const MaterialParameterMutableContext& context,
-    const Graphics::BindName& name,
-    const Graphics::ConstantField& field ) {
+    const FMaterialParameterMutableContext& context,
+    const Graphics::FBindName& name,
+    const Graphics::FConstantField& field ) {
     Assert(param);
     Assert(!name.empty());
 
@@ -54,9 +54,9 @@ bool TryCreateDefaultMaterialParameter(
 //----------------------------------------------------------------------------
 bool GetOrCreateMaterialParameter(
     PMaterialParameter *param,
-    const MaterialParameterMutableContext& context,
-    const Graphics::BindName& name,
-    const Graphics::ConstantField& field) {
+    const FMaterialParameterMutableContext& context,
+    const Graphics::FBindName& name,
+    const Graphics::FConstantField& field) {
     Assert(param);
     Assert(!name.empty());
 

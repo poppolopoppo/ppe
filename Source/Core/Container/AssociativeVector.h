@@ -12,29 +12,29 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define ASSOCIATIVE_VECTOR(_DOMAIN, _KEY, _VALUE) \
-    ::Core::AssociativeVector<_KEY, _VALUE, ::Core::Meta::EqualTo<_KEY>, VECTOR(_DOMAIN, ::Core::Pair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>) >
+    ::Core::TAssociativeVector<_KEY, _VALUE, ::Core::Meta::TEqualTo<_KEY>, VECTOR(_DOMAIN, ::Core::TPair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>) >
 //----------------------------------------------------------------------------
 #define ASSOCIATIVE_VECTOR_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE) \
-    ::Core::AssociativeVector<_KEY, _VALUE, ::Core::Meta::EqualTo<_KEY>, VECTOR_THREAD_LOCAL(_DOMAIN, ::Core::Pair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>) >
+    ::Core::TAssociativeVector<_KEY, _VALUE, ::Core::Meta::TEqualTo<_KEY>, VECTOR_THREAD_LOCAL(_DOMAIN, ::Core::TPair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>) >
 //----------------------------------------------------------------------------
 #define ASSOCIATIVE_VECTORINSITU(_DOMAIN, _KEY, _VALUE, _InSituCount) \
-    ::Core::AssociativeVector<_KEY, _VALUE, ::Core::Meta::EqualTo<_KEY>, VECTORINSITU(_DOMAIN, ::Core::Pair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>, _InSituCount) >
+    ::Core::TAssociativeVector<_KEY, _VALUE, ::Core::Meta::TEqualTo<_KEY>, VECTORINSITU(_DOMAIN, ::Core::TPair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>, _InSituCount) >
 //----------------------------------------------------------------------------
 #define ASSOCIATIVE_VECTORINSITU_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE, _InSituCount) \
-    ::Core::AssociativeVector<_KEY, _VALUE, ::Core::Meta::EqualTo<_KEY>, VECTORINSITU_THREAD_LOCAL(_DOMAIN, ::Core::Pair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>, _InSituCount) >
+    ::Core::TAssociativeVector<_KEY, _VALUE, ::Core::Meta::TEqualTo<_KEY>, VECTORINSITU_THREAD_LOCAL(_DOMAIN, ::Core::TPair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>, _InSituCount) >
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <
     typename _Key,
     typename _Value,
-    typename _EqualTo = Meta::EqualTo<_Key>,
-    typename _Vector = Vector<Pair<_Key COMMA _Value>> >
-class AssociativeVector {
+    typename _EqualTo = Meta::TEqualTo<_Key>,
+    typename _Vector = TVector<TPair<_Key COMMA _Value>> >
+class TAssociativeVector {
 public:
     typedef _Key key_type;
     typedef _Value mapped_type;
-    typedef Pair<_Key, _Value> value_type;
+    typedef TPair<_Key, _Value> value_type;
     typedef _EqualTo key_equal;
     typedef _Vector vector_type;
 
@@ -54,12 +54,12 @@ public:
 
     typedef typename std::random_access_iterator_tag iterator_category;
 
-    AssociativeVector();
-    explicit AssociativeVector(size_type capacity);
-    ~AssociativeVector();
+    TAssociativeVector();
+    explicit TAssociativeVector(size_type capacity);
+    ~TAssociativeVector();
 
     template <typename _It>
-    AssociativeVector(_It&& begin, _It&& end)
+    TAssociativeVector(_It&& begin, _It&& end)
 #ifdef _DEBUG
         { insert(begin, end); }
 #else
@@ -67,23 +67,23 @@ public:
 #endif
 
     template <typename U>
-    AssociativeVector(std::initializer_list<U> values)
-        : AssociativeVector(values.begin(), values.end()) {}
+    TAssociativeVector(std::initializer_list<U> values)
+        : TAssociativeVector(values.begin(), values.end()) {}
 
-    explicit AssociativeVector(vector_type&& vector);
-    AssociativeVector& operator =(vector_type&& vector);
+    explicit TAssociativeVector(vector_type&& vector);
+    TAssociativeVector& operator =(vector_type&& vector);
 
-    explicit AssociativeVector(const vector_type& vector);
-    AssociativeVector& operator =(const vector_type& vector);
+    explicit TAssociativeVector(const vector_type& vector);
+    TAssociativeVector& operator =(const vector_type& vector);
 
-    AssociativeVector(AssociativeVector&& rvalue);
-    AssociativeVector& operator =(AssociativeVector&& rvalue);
+    TAssociativeVector(TAssociativeVector&& rvalue);
+    TAssociativeVector& operator =(TAssociativeVector&& rvalue);
 
-    AssociativeVector(const AssociativeVector& other);
-    AssociativeVector& operator =(const AssociativeVector& other);
+    TAssociativeVector(const TAssociativeVector& other);
+    TAssociativeVector& operator =(const TAssociativeVector& other);
 
-    bool operator ==(const AssociativeVector& other) const { return _vector == other._vector; }
-    bool operator !=(const AssociativeVector& other) const { return !operator ==(other); }
+    bool operator ==(const TAssociativeVector& other) const { return _vector == other._vector; }
+    bool operator !=(const TAssociativeVector& other) const { return !operator ==(other); }
 
     vector_type& Vector() { return _vector; }
     const vector_type& Vector() const { return _vector; }
@@ -163,10 +163,10 @@ public:
 
     size_t HashValue() const { return hash_value(_vector); }
 
-    MemoryView<value_type> MakeView() { return MakeView(_vector); }
-    MemoryView<const value_type> MakeView() const { return MakeConstView(_vector); }
+    TMemoryView<value_type> MakeView() { return MakeView(_vector); }
+    TMemoryView<const value_type> MakeView() const { return MakeConstView(_vector); }
 
-    friend void swap(AssociativeVector& lhs, AssociativeVector& rhs) {
+    friend void swap(TAssociativeVector& lhs, TAssociativeVector& rhs) {
         swap(lhs._vector, rhs._vector);
     }
 
@@ -175,7 +175,7 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-hash_t hash_value(const AssociativeVector<_Key, _Value, _EqualTo, _Vector>& associativeVector) {
+hash_t hash_value(const TAssociativeVector<_Key, _Value, _EqualTo, _Vector>& associativeVector) {
     return associativeVector.HashValue();
 }
 //----------------------------------------------------------------------------
@@ -189,7 +189,7 @@ template <
     typename _Char,
     typename _Traits
 >
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const AssociativeVector<_Key, _Value, _EqualTo, _Vector>& associativeVector) {
+std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const TAssociativeVector<_Key, _Value, _EqualTo, _Vector>& associativeVector) {
     if (associativeVector.empty()) {
         return oss << "{}";
     }

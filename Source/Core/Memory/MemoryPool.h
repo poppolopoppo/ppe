@@ -11,32 +11,32 @@
 //#define WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC //%__NOCOMMIT%
 
 namespace Core {
-class MemoryTrackingData;
+class FMemoryTrackingData;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #pragma warning(push)
-#pragma warning(disable: 4324) // warning C4324: 'Core::MemoryPoolChunk' : structure was padded due to __declspec(align())
+#pragma warning(disable: 4324) // warning C4324: 'Core::FMemoryPoolChunk' : structure was padded due to __declspec(align())
 //----------------------------------------------------------------------------
-ALIGN(16) class MemoryPoolChunk {
+ALIGN(16) class FMemoryPoolChunk {
 public:
-    friend class MemoryPoolBase;
+    friend class FMemoryPoolBase;
 
-    struct Block { Block *Next; };
+    struct FBlock { FBlock *Next; };
 
-    explicit MemoryPoolChunk(size_t chunkSize, size_t blockCount);
-    ~MemoryPoolChunk();
+    explicit FMemoryPoolChunk(size_t chunkSize, size_t blockCount);
+    ~FMemoryPoolChunk();
 
-    MemoryPoolChunk(MemoryPoolChunk&&) = delete;
-    MemoryPoolChunk& operator =(MemoryPoolChunk&&) = delete;
+    FMemoryPoolChunk(FMemoryPoolChunk&&) = delete;
+    FMemoryPoolChunk& operator =(FMemoryPoolChunk&&) = delete;
 
-    MemoryPoolChunk(const MemoryPoolChunk&) = delete;
-    MemoryPoolChunk& operator =(const MemoryPoolChunk&) = delete;
+    FMemoryPoolChunk(const FMemoryPoolChunk&) = delete;
+    FMemoryPoolChunk& operator =(const FMemoryPoolChunk&) = delete;
 
     size_t ChunkSize() const { return _chunkSize; }
     size_t BlockCount() const { return _blockCount; }
 
-    IntrusiveListNode<MemoryPoolChunk>& Node() { return _node; }
+    IntrusiveListNode<FMemoryPoolChunk>& Node() { return _node; }
 
     size_t BlockUsed() const { return _blockUsed; }
 
@@ -54,7 +54,7 @@ public:
     void ReleaseBlock(void *ptr, size_t blockSize);
 
 private:
-    Block *_blocks;
+    FBlock *_blocks;
 
     u32 _blockCount;
     u32 _blockUsed;
@@ -62,27 +62,27 @@ private:
 
     const size_t _chunkSize;
 
-    IntrusiveListNode<MemoryPoolChunk> _node;
+    IntrusiveListNode<FMemoryPoolChunk> _node;
 };
 //----------------------------------------------------------------------------
-STATIC_ASSERT(IS_ALIGNED(16, sizeof(MemoryPoolChunk)));
+STATIC_ASSERT(IS_ALIGNED(16, sizeof(FMemoryPoolChunk)));
 //----------------------------------------------------------------------------
 #pragma warning(pop)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MemoryPoolBase {
+class FMemoryPoolBase {
 public:
-    friend class MemoryPoolBaseList;
+    friend class FMemoryPoolBaseList;
 
-    MemoryPoolBase(size_t blockSize, size_t minChunkSize, size_t maxChunkSize);
-    virtual ~MemoryPoolBase();
+    FMemoryPoolBase(size_t blockSize, size_t minChunkSize, size_t maxChunkSize);
+    virtual ~FMemoryPoolBase();
 
-    MemoryPoolBase(MemoryPoolBase&&) = delete;
-    MemoryPoolBase& operator =(MemoryPoolBase&&) = delete;
+    FMemoryPoolBase(FMemoryPoolBase&&) = delete;
+    FMemoryPoolBase& operator =(FMemoryPoolBase&&) = delete;
 
-    MemoryPoolBase(const MemoryPoolBase&) = delete;
-    MemoryPoolBase& operator =(const MemoryPoolBase&) = delete;
+    FMemoryPoolBase(const FMemoryPoolBase&) = delete;
+    FMemoryPoolBase& operator =(const FMemoryPoolBase&) = delete;
 
     size_t BlockSize() const { return _blockSize; }
     size_t MinChunkSize() const { return _minChunkSize; }
@@ -90,36 +90,36 @@ public:
     size_t CurrentChunkSize() const { return _currentChunksize; }
     size_t ChunkCount() const { return _chunkCount; }
 
-    MemoryPoolChunk *Chunks() { return _chunks.Head(); }
-    const MemoryPoolChunk *Chunks() const { return _chunks.Head(); }
+    FMemoryPoolChunk *Chunks() { return _chunks.Head(); }
+    const FMemoryPoolChunk *Chunks() const { return _chunks.Head(); }
 
-    size_t BlockCountPerChunk(size_t chunkSize) const { return (chunkSize - sizeof(MemoryPoolChunk)) / _blockSize; }
+    size_t BlockCountPerChunk(size_t chunkSize) const { return (chunkSize - sizeof(FMemoryPoolChunk)) / _blockSize; }
 
     virtual void Clear_AssertCompletelyFree() = 0;
     virtual void Clear_IgnoreLeaks() = 0;
     virtual void Clear_UnusedMemory() = 0;
 
-    const IntrusiveListNode<MemoryPoolBase>& Node() const { return _node; }
+    const IntrusiveListNode<FMemoryPoolBase>& Node() const { return _node; }
 
 protected:
     void GrowChunkSizeIFP();
     void ResetChunkSize();
 
-    void AddChunk(MemoryPoolChunk *chunk);
+    void AddChunk(FMemoryPoolChunk *chunk);
 
     void *TryAllocate_FailIfNoBlockAvailable();
-    MemoryPoolChunk *Deallocate_ReturnChunkToRelease(void *ptr);
+    FMemoryPoolChunk *Deallocate_ReturnChunkToRelease(void *ptr);
 
-    MemoryPoolChunk *ClearOneChunk_AssertCompletelyFree();
-    MemoryPoolChunk *ClearOneChunk_IgnoreLeaks();
-    MemoryPoolChunk *ClearOneChunk_UnusedMemory();
+    FMemoryPoolChunk *ClearOneChunk_AssertCompletelyFree();
+    FMemoryPoolChunk *ClearOneChunk_IgnoreLeaks();
+    FMemoryPoolChunk *ClearOneChunk_UnusedMemory();
 
 private:
-    void SpareChunk_(MemoryPoolChunk *chunk);
-    MemoryPoolChunk* ReviveChunk_();
-    MemoryPoolChunk* ReleaseChunk_();
+    void SpareChunk_(FMemoryPoolChunk *chunk);
+    FMemoryPoolChunk* ReviveChunk_();
+    FMemoryPoolChunk* ReleaseChunk_();
 
-    typedef INTRUSIVELIST(&MemoryPoolChunk::_node) list_type;
+    typedef INTRUSIVELIST(&FMemoryPoolChunk::_node) list_type;
 
     list_type _chunks;
     list_type _spares;
@@ -134,61 +134,61 @@ private:
     const size_t _minChunkSize;
     const size_t _maxChunkSize;
 
-    IntrusiveListNode<MemoryPoolBase> _node;
+    IntrusiveListNode<FMemoryPoolBase> _node;
 };
 //----------------------------------------------------------------------------
-class MemoryPoolBaseList {
+class FMemoryPoolBaseList {
 public:
-    MemoryPoolBaseList();
-    ~MemoryPoolBaseList();
+    FMemoryPoolBaseList();
+    ~FMemoryPoolBaseList();
 
-    MemoryPoolBaseList(const MemoryPoolBaseList& ) = delete;
-    MemoryPoolBaseList& operator =(const MemoryPoolBaseList& ) = delete;
+    FMemoryPoolBaseList(const FMemoryPoolBaseList& ) = delete;
+    FMemoryPoolBaseList& operator =(const FMemoryPoolBaseList& ) = delete;
 
-    void Insert(MemoryPoolBase* ppool);
-    void Remove(MemoryPoolBase* ppool);
+    void Insert(FMemoryPoolBase* ppool);
+    void Remove(FMemoryPoolBase* ppool);
 
     void ClearAll_AssertCompletelyFree();
     void ClearAll_IgnoreLeaks();
     void ClearAll_UnusedMemory();
 
 private:
-    typedef INTRUSIVELIST(&MemoryPoolBase::_node) list_type;
+    typedef INTRUSIVELIST(&FMemoryPoolBase::_node) list_type;
 
-    AtomicSpinLock _barrier;
+    FAtomicSpinLock _barrier;
     list_type _pools;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <bool _Lock, typename _Allocator = ALLOCATOR(Pool, u64) >
-class MemoryPool : protected MemoryPoolBase, private _Allocator, private Meta::ThreadLock<_Lock> {
+class TMemoryPool : protected FMemoryPoolBase, private _Allocator, private Meta::TThreadLock<_Lock> {
 public:
-    typedef Meta::ThreadLock<_Lock> threadlock_type;
+    typedef Meta::TThreadLock<_Lock> threadlock_type;
     typedef _Allocator allocator_type;
 
     enum : bool { IsLocked = _Lock };
 
-    MemoryPool(size_t blockSize, size_t minChunkSize, size_t maxChunkSize);
-    MemoryPool(size_t blockSize, size_t minChunkSize, size_t maxChunkSize, allocator_type&& allocator);
-    MemoryPool(size_t blockSize, size_t minChunkSize, size_t maxChunkSize, const allocator_type& allocator);
-    virtual ~MemoryPool();
+    TMemoryPool(size_t blockSize, size_t minChunkSize, size_t maxChunkSize);
+    TMemoryPool(size_t blockSize, size_t minChunkSize, size_t maxChunkSize, allocator_type&& allocator);
+    TMemoryPool(size_t blockSize, size_t minChunkSize, size_t maxChunkSize, const allocator_type& allocator);
+    virtual ~TMemoryPool();
 
-    using MemoryPoolBase::BlockSize;
-    using MemoryPoolBase::CurrentChunkSize;
-    using MemoryPoolBase::BlockCountPerChunk;
-    using MemoryPoolBase::ResetChunkSize;
+    using FMemoryPoolBase::BlockSize;
+    using FMemoryPoolBase::CurrentChunkSize;
+    using FMemoryPoolBase::BlockCountPerChunk;
+    using FMemoryPoolBase::ResetChunkSize;
 
-    void *Allocate(MemoryTrackingData *trackingData = nullptr);
-    void Deallocate(void *ptr, MemoryTrackingData *trackingData = nullptr);
+    void *Allocate(FMemoryTrackingData *trackingData = nullptr);
+    void Deallocate(void *ptr, FMemoryTrackingData *trackingData = nullptr);
 
     virtual void Clear_AssertCompletelyFree() override;
     virtual void Clear_IgnoreLeaks() override;
     virtual void Clear_UnusedMemory() override;
 
 private:
-    MemoryPoolChunk *AllocateChunk_();
-    void DeallocateChunk_(MemoryPoolChunk *chunk);
+    FMemoryPoolChunk *AllocateChunk_();
+    void DeallocateChunk_(FMemoryPoolChunk *chunk);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

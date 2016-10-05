@@ -9,9 +9,9 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class SurfaceFormatType : u32;
+enum class ESurfaceFormatType : u32;
 //----------------------------------------------------------------------------
-enum class PresentInterval {
+enum class EPresentInterval {
     Immediate   = 0,
     One         = 1,
     Two         = 2,
@@ -21,43 +21,43 @@ enum class PresentInterval {
     Default     = One
 };
 //----------------------------------------------------------------------------
-class PresentationParameters {
+class FPresentationParameters {
 public:
-    PresentationParameters();
-    PresentationParameters(
+    FPresentationParameters();
+    FPresentationParameters(
         u32 backBufferWidth,
         u32 backBufferHeight,
-        SurfaceFormatType backBufferFormat,
-        SurfaceFormatType depthStencilFormat,
+        ESurfaceFormatType backBufferFormat,
+        ESurfaceFormatType depthStencilFormat,
         bool fullscreen,
         bool tripleBuffer,
         u32 multiSampleCount,
-        PresentInterval presentationInterval
+        EPresentInterval presentationInterval
         );
-    PresentationParameters(
+    FPresentationParameters(
         u32 backBufferWidth,
         u32 backBufferHeight,
-        SurfaceFormatType backBufferFormat,
-        SurfaceFormatType depthStencilFormat,
+        ESurfaceFormatType backBufferFormat,
+        ESurfaceFormatType depthStencilFormat,
         bool fullscreen,
         bool tripleBuffer,
         u32 multiSampleCount,
-        PresentInterval presentationInterval,
+        EPresentInterval presentationInterval,
         const ViewportF& viewport
         );
-    ~PresentationParameters();
+    ~FPresentationParameters();
 
     u32 BackBufferWidth() const { return _backBufferWidth; }
     u32 BackBufferHeight() const { return _backBufferHeight; }
 
-    SurfaceFormatType BackBufferFormat() const { return _backBufferFormat; }
-    SurfaceFormatType DepthStencilFormat() const { return _depthStencilFormat; }
+    ESurfaceFormatType BackBufferFormat() const { return _backBufferFormat; }
+    ESurfaceFormatType DepthStencilFormat() const { return _depthStencilFormat; }
 
     bool FullScreen() const;
     bool TripleBuffer() const;
 
     u32 MultiSampleCount() const;
-    PresentInterval PresentationInterval() const;
+    EPresentInterval PresentationInterval() const;
 
     ViewportF Viewport() const { return _viewport; }
 
@@ -65,8 +65,8 @@ private:
     u32 _backBufferWidth;
     u32 _backBufferHeight;
 
-    SurfaceFormatType _backBufferFormat;
-    SurfaceFormatType _depthStencilFormat;
+    ESurfaceFormatType _backBufferFormat;
+    ESurfaceFormatType _depthStencilFormat;
 
     u32 _data; // fullscreen + present + multisample
 

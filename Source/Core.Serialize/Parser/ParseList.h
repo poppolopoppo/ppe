@@ -9,42 +9,42 @@
 #include "Core/Container/Vector.h"
 
 namespace Core {
-namespace Lexer {
-    class Lexer;
+namespace FLexer {
+    class FLexer;
 }
 
 namespace Parser {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ParseList {
+class FParseList {
 public:
-    ParseList(Lexer::Lexer *lexer);
-    ~ParseList();
+    FParseList(FLexer::FLexer *lexer);
+    ~FParseList();
 
-    ParseList(ParseList&& rvalue);
-    ParseList& operator =(ParseList&& rvalue);
+    FParseList(FParseList&& rvalue);
+    FParseList& operator =(FParseList&& rvalue);
 
-    ParseList(const ParseList&) = delete;
-    ParseList& operator =(const ParseList&) = delete;
+    FParseList(const FParseList&) = delete;
+    FParseList& operator =(const FParseList&) = delete;
 
     bool empty() const { return _matches.empty(); }
 
-    const Lexer::Location& Site() const { return _site; }
+    const FLexer::FLocation& Site() const { return _site; }
 
-    const Lexer::Match *Peek() const { return _current; }
-    Lexer::Symbol::TypeId PeekType() const { return (_current) ? _current->Symbol()->Type() : Lexer::Symbol::Eof; }
+    const FLexer::FMatch *Peek() const { return _current; }
+    FLexer::FSymbol::ETypeId PeekType() const { return (_current) ? _current->Symbol()->Type() : FLexer::FSymbol::Eof; }
 
-    const VECTOR(Parser, Lexer::Match)& Matches() const { return _matches; }
+    const VECTOR(Parser, FLexer::FMatch)& Matches() const { return _matches; }
 
     void Reset();
-    void Seek(const Lexer::Match *match);
-    const Lexer::Match *Read();
+    void Seek(const FLexer::FMatch *match);
+    const FLexer::FMatch *Read();
 
 private:
-    Lexer::Location _site;
-    const Lexer::Match *_current;
-    VECTOR(Parser, Lexer::Match) _matches;
+    FLexer::FLocation _site;
+    const FLexer::FMatch *_current;
+    VECTOR(Parser, FLexer::FMatch) _matches;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

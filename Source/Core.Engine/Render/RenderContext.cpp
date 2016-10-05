@@ -20,15 +20,15 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-RenderContext::RenderContext(IServiceProvider *services, size_t textureCacheSizeInBytes)
+FRenderContext::FRenderContext(IServiceProvider *services, size_t textureCacheSizeInBytes)
 :   _services(services)
-,   _renderSurfaceService(new DefaultRenderSurfaceService())
-,   _textureCacheService(new DefaultTextureCacheService(textureCacheSizeInBytes))
-,   _sharedConstantBufferFactoryService(new DefaultSharedConstantBufferFactoryService())
-,   _effectCompilerService(new DefaultEffectCompilerService()) {
+,   _renderSurfaceService(new FDefaultRenderSurfaceService())
+,   _textureCacheService(new FDefaultTextureCacheService(textureCacheSizeInBytes))
+,   _sharedConstantBufferFactoryService(new FDefaultSharedConstantBufferFactoryService())
+,   _effectCompilerService(new FDefaultEffectCompilerService()) {
     Assert(services);
 
-    for (size_t i = 0; i < VariabilitySeed::Count; ++i)
+    for (size_t i = 0; i < FVariabilitySeed::Count; ++i)
         _variabilitySeeds[i].Reset();
 
     RegisterDefaultMaterialParameters(&_materialDatabase);
@@ -39,7 +39,7 @@ RenderContext::RenderContext(IServiceProvider *services, size_t textureCacheSize
     ENGINESERVICE_REGISTER(IEffectCompilerService, _services, _effectCompilerService.get());
 }
 //----------------------------------------------------------------------------
-RenderContext::~RenderContext() {
+FRenderContext::~FRenderContext() {
     ENGINESERVICE_UNREGISTER(IEffectCompilerService, _services, _effectCompilerService.get());
     ENGINESERVICE_UNREGISTER(ISharedConstantBufferFactoryService, _services, _sharedConstantBufferFactoryService.get());
     ENGINESERVICE_UNREGISTER(ITextureCacheService, _services, _textureCacheService.get());
@@ -51,38 +51,38 @@ RenderContext::~RenderContext() {
     RemoveRef_AssertReachZero(_renderSurfaceService);
 }
 //----------------------------------------------------------------------------
-void RenderContext::UpdateAndPrepare(
+void FRenderContext::UpdateAndPrepare(
     Graphics::IDeviceAPIEncapsulator *device,
-    const Timeline& timeline,
-    World *const world,
-    const MemoryView<Scene *const>& scenes ) {
+    const FTimeline& timeline,
+    FWorld *const world,
+    const TMemoryView<FScene *const>& scenes ) {
     Assert(device);
     Assert(world);
 
-    _variabilitySeeds[size_t(MaterialVariability::World)].Next();
+    _variabilitySeeds[size_t(EMaterialVariability::FWorld)].Next();
 
     world->Update(timeline);
 
-    for (Scene *scene : scenes) {
+    for (FScene *scene : scenes) {
         scene->Update(timeline);
     }
 
-    for (Scene *scene : scenes) {
-        _variabilitySeeds[size_t(MaterialVariability::Scene)].Next();
+    for (FScene *scene : scenes) {
+        _variabilitySeeds[size_t(EMaterialVariability::FScene)].Next();
         scene->Prepare(device, _variabilitySeeds);
     }
 }
 //----------------------------------------------------------------------------
-void RenderContext::Render(
+void FRenderContext::Render(
     Graphics::IDeviceAPIContext *context,
-    const MemoryView<Scene *const>& scenes ) {
+    const TMemoryView<FScene *const>& scenes ) {
     Assert(context);
 
-    for (Scene *scene : scenes)
+    for (FScene *scene : scenes)
         scene->Render(context);
 }
 //----------------------------------------------------------------------------
-void RenderContext::Clear() {
+void FRenderContext::Clear() {
     _effectCompilerService->EffectCompiler()->Clear();
     _sharedConstantBufferFactoryService->SharedConstantBufferFactory()->Clear();
     _textureCacheService->TextureCache()->Clear();

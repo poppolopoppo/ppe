@@ -10,40 +10,40 @@
 namespace Core {
 namespace Graphics {
 class IDeviceAPIEncapsulator;
-struct ShaderProgramTexture;
+struct FShaderProgramTexture;
 }
 
 namespace Engine {
 FWD_REFPTR(Effect);
 FWD_REFPTR(SharedConstantBuffer);
-class SharedConstantBufferFactory;
+class FSharedConstantBufferFactory;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(EffectProgram);
 typedef size_t EffectSharedBufferIndex;
 //----------------------------------------------------------------------------
-class EffectProgram : public Graphics::ShaderProgram {
+class FEffectProgram : public Graphics::FShaderProgram {
 public:
-    EffectProgram(Graphics::ShaderProfileType profile, Graphics::ShaderProgramType type);
-    virtual ~EffectProgram();
+    FEffectProgram(Graphics::EShaderProfileType profile, Graphics::EShaderProgramType type);
+    virtual ~FEffectProgram();
 
-    void LinkReflectedData( VECTOR(Effect, PSharedConstantBuffer)& sharedBuffers,
-                            SharedConstantBufferFactory *sharedBufferFactory,
+    void LinkReflectedData( VECTOR(FEffect, PSharedConstantBuffer)& sharedBuffers,
+                            FSharedConstantBufferFactory *sharedBufferFactory,
                             Graphics::IDeviceAPIShaderCompiler *compiler);
 
     void UnlinkReflectedData();
 
-    void Set(Graphics::IDeviceAPIContext *context, const Effect *effect) const;
+    void Set(Graphics::IDeviceAPIContext *context, const FEffect *effect) const;
 
-    const ASSOCIATIVE_VECTOR(Shader, Graphics::BindName, EffectSharedBufferIndex)& Constants() const { return _constants; }
-    const VECTOR(Shader, Graphics::ShaderProgramTexture)& Textures() const { return _textures; }
+    const ASSOCIATIVE_VECTOR(Shader, Graphics::FBindName, EffectSharedBufferIndex)& Constants() const { return _constants; }
+    const VECTOR(Shader, Graphics::FShaderProgramTexture)& Textures() const { return _textures; }
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    ASSOCIATIVE_VECTOR(Shader, Graphics::BindName, EffectSharedBufferIndex) _constants;
-    VECTOR(Shader, Graphics::ShaderProgramTexture) _textures;
+    ASSOCIATIVE_VECTOR(Shader, Graphics::FBindName, EffectSharedBufferIndex) _constants;
+    VECTOR(Shader, Graphics::FShaderProgramTexture) _textures;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

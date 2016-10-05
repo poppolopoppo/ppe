@@ -11,18 +11,18 @@ namespace Parser {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ParseContext;
+class FParseContext;
 FWD_REFPTR(ParseItem);
 //----------------------------------------------------------------------------
-class ParseItem : public RefCountable {
+class FParseItem : public FRefCountable {
 public:
-    ParseItem(const Lexer::Location& site);
-    virtual ~ParseItem();
+    FParseItem(const FLexer::FLocation& site);
+    virtual ~FParseItem();
 
-    const Lexer::Location& Site() const { return _site; }
+    const FLexer::FLocation& Site() const { return _site; }
 
-    virtual void Invoke(ParseContext *context) const = 0;
-    virtual String ToString() const { return String(); }
+    virtual void Invoke(FParseContext *context) const = 0;
+    virtual FString ToString() const { return FString(); }
 
     template <typename _ParseItemImpl>
     const _ParseItemImpl *As() const {
@@ -30,7 +30,7 @@ public:
     }
 
 private:
-    Lexer::Location _site;
+    FLexer::FLocation _site;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -9,12 +9,12 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class Endianness {
+enum class EEndianness {
     LittleEndian    = 0,
     BigEndian       = 1,
 };
 //----------------------------------------------------------------------------
-enum class TargetPlatform {
+enum class ETargetPlatform {
     PC              = 1<<0,
     PS4             = 1<<1,
     XONE            = 1<<2,
@@ -27,14 +27,14 @@ enum class TargetPlatform {
 #endif
 };
 //----------------------------------------------------------------------------
-MemoryView<const TargetPlatform> EachTargetPlatform();
-StringView TargetPlatformToCStr(TargetPlatform platform);
-Endianness TargetPlatformEndianness(TargetPlatform platform);
+TMemoryView<const ETargetPlatform> EachTargetPlatform();
+FStringView TargetPlatformToCStr(ETargetPlatform platform);
+EEndianness TargetPlatformEndianness(ETargetPlatform platform);
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
-    TargetPlatform platform) {
+    ETargetPlatform platform) {
     return TargetPlatformToCStr(platform);
 }
 //----------------------------------------------------------------------------

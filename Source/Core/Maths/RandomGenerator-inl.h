@@ -8,52 +8,52 @@ namespace Random {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Generator>
-Rng<_Generator>::Rng() : Rng(MakeSeed(0xDEADBEEFABADCAFEull)) {}
+TRng<_Generator>::TRng() : TRng(MakeSeed(0xDEADBEEFABADCAFEull)) {}
 //----------------------------------------------------------------------------
 template <typename _Generator>
-Rng<_Generator>::Rng(u64 seed) {
+TRng<_Generator>::TRng(u64 seed) {
     _generator.Reset(seed);
 }
 //----------------------------------------------------------------------------
 template <typename _Generator>
-void Rng<_Generator>::Reset(u64 seed) {
+void TRng<_Generator>::Reset(u64 seed) {
     _generator.Reset(seed);
 }
 //----------------------------------------------------------------------------
 template <typename _Generator>
-u64 Rng<_Generator>::NextU64() {
+u64 TRng<_Generator>::NextU64() {
     return _generator.NextU64();
 }
 //----------------------------------------------------------------------------
 template <typename _Generator>
-u64 Rng<_Generator>::NextU64(u64 vmax) {
+u64 TRng<_Generator>::NextU64(u64 vmax) {
     return _generator.NextU64() % vmax;
 }
 //----------------------------------------------------------------------------
 template <typename _Generator>
-u64 Rng<_Generator>::NextU64(u64 vmin, u64 vmax) {
+u64 TRng<_Generator>::NextU64(u64 vmin, u64 vmax) {
     Assert(vmin < vmax);
     return NextU64(vmax - vmin) + vmin;
 }
 //----------------------------------------------------------------------------
 template <typename _Generator>
-u32 Rng<_Generator>::NextU32() {
+u32 TRng<_Generator>::NextU32() {
     return u32(_generator.NextU64());
 }
 //----------------------------------------------------------------------------
 template <typename _Generator>
-u32 Rng<_Generator>::NextU32(u32 vmax) {
+u32 TRng<_Generator>::NextU32(u32 vmax) {
     return _generator.NextU64() % vmax;
 }
 //----------------------------------------------------------------------------
 template <typename _Generator>
-u32 Rng<_Generator>::NextU32(u32 vmin, u32 vmax) {
+u32 TRng<_Generator>::NextU32(u32 vmin, u32 vmax) {
     Assert(vmin < vmax);
     return NextU32(vmax - vmin) + vmin;
 }
 //----------------------------------------------------------------------------
 template <typename _Generator>
-float Rng<_Generator>::NextFloat01() {
+float TRng<_Generator>::NextFloat01() {
     // Pour rappel, la representation d'un float IEEE 754-2008 est :
     //   [31] : s, [30-23] : e, [22-0] : m
     // dont la valeur est : (-1)^s . (1 + m / 2^23) . 2^(e-127)
@@ -75,7 +75,7 @@ float Rng<_Generator>::NextFloat01() {
 }
 //----------------------------------------------------------------------------
 template <typename _Generator>
-float Rng<_Generator>::NextFloatM11() {
+float TRng<_Generator>::NextFloatM11() {
     // On peut optimiser le calcul en tirant un nombre dans [2, 4[ et en supprimant 3, comme dans UnitRand().
     // Note : 0x40000000 est la représentation hexadecimale de 2.f
     //        0x007fffff est le masque de la mantisse.

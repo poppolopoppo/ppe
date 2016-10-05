@@ -18,39 +18,39 @@ FWD_REFPTR(VertexDeclaration);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(ShaderProgram);
-class ShaderProgram : public DeviceResourceSharable {
+class FShaderProgram : public FDeviceResourceSharable {
 public:
-    ShaderProgram(  const Graphics::VertexDeclaration* vertexDeclaration,
-                    ShaderProgramType programType,
-                    ShaderProfileType profileType,
-                    const ShaderCompiled* compiled,
+    FShaderProgram(  const Graphics::FVertexDeclaration* vertexDeclaration,
+                    EShaderProgramType programType,
+                    EShaderProfileType profileType,
+                    const FShaderCompiled* compiled,
                     bool sharable );
-    virtual ~ShaderProgram();
+    virtual ~FShaderProgram();
 
     virtual bool Available() const override;
-    virtual DeviceAPIDependantEntity *TerminalEntity() const override;
+    virtual FDeviceAPIDependantEntity *TerminalEntity() const override;
 
     const PDeviceAPIDependantShaderProgram& DeviceAPIDependantProgram() const {
         Assert(Frozen()); return _deviceAPIDependantProgram;
     }
 
-    const Graphics::VertexDeclaration* VertexDeclaration() const { return _vertexDeclaration; }
+    const Graphics::FVertexDeclaration* VertexDeclaration() const { return _vertexDeclaration; }
 
-    ShaderProgramType ProgramType() const { return static_cast<ShaderProgramType>(bitprogram_type::Get(_data)); }
-    ShaderProfileType ProfileType() const { return static_cast<ShaderProfileType>(bitprofile_type::Get(_data)); }
+    EShaderProgramType ProgramType() const { return static_cast<EShaderProgramType>(bitprogram_type::Get(_data)); }
+    EShaderProfileType ProfileType() const { return static_cast<EShaderProfileType>(bitprofile_type::Get(_data)); }
 
-    const ShaderCompiled* Compiled() const { return _compiled; }
+    const FShaderCompiled* Compiled() const { return _compiled; }
 
     virtual void Create(IDeviceAPIEncapsulator *device);
     virtual void Destroy(IDeviceAPIEncapsulator *device);
 
 protected:
     virtual size_t VirtualSharedKeyHashValue() const override;
-    virtual bool VirtualMatchTerminalEntity(const DeviceAPIDependantEntity *entity) const override;
+    virtual bool VirtualMatchTerminalEntity(const FDeviceAPIDependantEntity *entity) const override;
 
 private:
-    typedef Meta::Bit<size_t>::First<2>::type bitprogram_type;
-    typedef Meta::Bit<size_t>::After<bitprogram_type>::Remain::type bitprofile_type;
+    typedef Meta::TBit<size_t>::TFirst<2>::type bitprogram_type;
+    typedef Meta::TBit<size_t>::TAfter<bitprogram_type>::FRemain::type bitprofile_type;
 
     size_t _data;
     SCVertexDeclaration _vertexDeclaration;
@@ -60,21 +60,21 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DeviceAPIDependantShaderProgram : public TypedDeviceAPIDependantEntity<ShaderProgram> {
+class FDeviceAPIDependantShaderProgram : public TTypedDeviceAPIDependantEntity<FShaderProgram> {
 public:
-    DeviceAPIDependantShaderProgram(IDeviceAPIEncapsulator *device, const ShaderProgram *resource);
-    virtual ~DeviceAPIDependantShaderProgram();
+    FDeviceAPIDependantShaderProgram(IDeviceAPIEncapsulator *device, const FShaderProgram *resource);
+    virtual ~FDeviceAPIDependantShaderProgram();
 
-    const Graphics::VertexDeclaration* VertexDeclaration() const { return _vertexDeclaration; }
+    const Graphics::FVertexDeclaration* VertexDeclaration() const { return _vertexDeclaration; }
 
-    ShaderProgramType ProgramType() const { return static_cast<ShaderProgramType>(bitprogram_type::Get(_data)); }
-    ShaderProfileType ProfileType() const { return static_cast<ShaderProfileType>(bitprofile_type::Get(_data)); }
+    EShaderProgramType ProgramType() const { return static_cast<EShaderProgramType>(bitprogram_type::Get(_data)); }
+    EShaderProfileType ProfileType() const { return static_cast<EShaderProfileType>(bitprofile_type::Get(_data)); }
 
-    const ShaderCompiled* Compiled() const { return _compiled; }
+    const FShaderCompiled* Compiled() const { return _compiled; }
 
 private:
-    typedef Meta::Bit<size_t>::First<2>::type bitprogram_type;
-    typedef Meta::Bit<size_t>::After<bitprogram_type>::Remain::type bitprofile_type;
+    typedef Meta::TBit<size_t>::TFirst<2>::type bitprogram_type;
+    typedef Meta::TBit<size_t>::TAfter<bitprogram_type>::FRemain::type bitprofile_type;
 
     size_t _data;
     SCShaderCompiled _compiled;

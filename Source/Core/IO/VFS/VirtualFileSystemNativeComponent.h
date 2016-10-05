@@ -11,55 +11,55 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Filename;
-class FileStat;
+class FFilename;
+class FFileStat;
 //----------------------------------------------------------------------------
-class VirtualFileSystemNativeComponent : public VirtualFileSystemComponent, IVirtualFileSystemComponentReadWritable {
+class FVirtualFileSystemNativeComponent : public FVirtualFileSystemComponent, IVirtualFileSystemComponentReadWritable {
 public:
-    enum OpenMode {
+    enum EOpenMode {
         ModeReadable        = 1,
         ModeWritable        = 2,
         ModeReadWritable    = 3
     };
 
-    VirtualFileSystemNativeComponent(const Dirpath& alias, WString&& target, OpenMode mode = ModeReadWritable);
-    VirtualFileSystemNativeComponent(const Dirpath& alias, const WString& target, OpenMode mode = ModeReadWritable);
-    virtual ~VirtualFileSystemNativeComponent();
+    FVirtualFileSystemNativeComponent(const FDirpath& alias, FWString&& target, EOpenMode mode = ModeReadWritable);
+    FVirtualFileSystemNativeComponent(const FDirpath& alias, const FWString& target, EOpenMode mode = ModeReadWritable);
+    virtual ~FVirtualFileSystemNativeComponent();
 
-    OpenMode Mode() const { return _mode; }
-    const WString& Target() const { return _target; }
+    EOpenMode EMode() const { return _mode; }
+    const FWString& Target() const { return _target; }
 
-    // VirtualFileSystemComponent
+    // FVirtualFileSystemComponent
     virtual IVirtualFileSystemComponentReadable* Readable() override;
     virtual IVirtualFileSystemComponentWritable* Writable() override;
     virtual IVirtualFileSystemComponentReadWritable* ReadWritable() override;
 
-    virtual WString Unalias(const Filename& aliased) const override;
+    virtual FWString Unalias(const FFilename& aliased) const override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     // IVirtualFileSystemComponentReadable
-    virtual bool DirectoryExists(const Dirpath& dirpath, ExistPolicy::Mode policy) override;
-    virtual bool FileExists(const Filename& filename, ExistPolicy::Mode policy) override;
-    virtual bool FileStats(FileStat* pstat, const Filename& filename) override;
+    virtual bool DirectoryExists(const FDirpath& dirpath, ExistPolicy::EMode policy) override;
+    virtual bool FileExists(const FFilename& filename, ExistPolicy::EMode policy) override;
+    virtual bool FileStats(FFileStat* pstat, const FFilename& filename) override;
 
-    virtual size_t EnumerateFiles(const Dirpath& dirpath, bool recursive, const std::function<void(const Filename&)>& foreach) override;
-    virtual size_t GlobFiles(const Dirpath& dirpath, const WStringView& pattern, bool recursive, const std::function<void(const Filename&)>& foreach) override;
+    virtual size_t EnumerateFiles(const FDirpath& dirpath, bool recursive, const std::function<void(const FFilename&)>& foreach) override;
+    virtual size_t GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const std::function<void(const FFilename&)>& foreach) override;
 
-    virtual UniquePtr<IVirtualFileSystemIStream> OpenReadable(const Filename& filename, AccessPolicy::Mode policy) override;
+    virtual TUniquePtr<IVirtualFileSystemIStream> OpenReadable(const FFilename& filename, AccessPolicy::EMode policy) override;
 
     // IVirtualFileSystemComponentWritable
-    virtual bool TryCreateDirectory(const Dirpath& dirpath) override;
+    virtual bool TryCreateDirectory(const FDirpath& dirpath) override;
 
-    virtual UniquePtr<IVirtualFileSystemOStream> OpenWritable(const Filename& filename, AccessPolicy::Mode policy) override;
+    virtual TUniquePtr<IVirtualFileSystemOStream> OpenWritable(const FFilename& filename, AccessPolicy::EMode policy) override;
 
     // IVirtualFileSystemComponentReadWritable
-    virtual UniquePtr<IVirtualFileSystemIOStream> OpenReadWritable(const Filename& filename, AccessPolicy::Mode policy) override;
+    virtual TUniquePtr<IVirtualFileSystemIOStream> OpenReadWritable(const FFilename& filename, AccessPolicy::EMode policy) override;
 
 private:
-    const OpenMode _mode;
-    const WString _target;
+    const EOpenMode _mode;
+    const FWString _target;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

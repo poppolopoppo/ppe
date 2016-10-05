@@ -33,18 +33,18 @@ static void TriangleOffset_(Indices& indices, u32 offset, u32 a, u32 b, u32 c) {
     indices.emplace_back(c + offset);
 }
 //----------------------------------------------------------------------------
-struct Edge_ {
+struct FEdge_ {
     u32 A, B;
 
-    bool operator ==(const Edge_& other) const { return reinterpret_cast<const u64&>(*this) == reinterpret_cast<const u64&>(other); }
-    bool operator !=(const Edge_& other) const { return !operator ==(other); }
+    bool operator ==(const FEdge_& other) const { return reinterpret_cast<const u64&>(*this) == reinterpret_cast<const u64&>(other); }
+    bool operator !=(const FEdge_& other) const { return !operator ==(other); }
 };
 //----------------------------------------------------------------------------
-void swap(Edge_& lhs, Edge_& rhs) {
+void swap(FEdge_& lhs, FEdge_& rhs) {
     std::swap(reinterpret_cast<u64&>(lhs), reinterpret_cast<u64&>(rhs));
 }
 //----------------------------------------------------------------------------
-hash_t hash_value(const Edge_& value) {
+hash_t hash_value(const FEdge_& value) {
     return Core::hash_value(reinterpret_cast<const u64&>(value));
 }
 //----------------------------------------------------------------------------
@@ -257,7 +257,7 @@ void DivideTriangles(Indices& dstIdx, const Indices& srcIdx, Positions& uvw) {
 
     dstIdx.reserve(srcIdx.size() * 4);
 
-    HASHMAP_THREAD_LOCAL(Geometry, Edge_, u32) splits;
+    HASHMAP_THREAD_LOCAL(Geometry, FEdge_, u32) splits;
     splits.reserve(srcIdx.size()/(2/* edge */ * 2/* only half since A,B <=> B,A */));
 
     for (size_t t = 0; t < srcIdx.size(); t += 3) {
@@ -265,9 +265,9 @@ void DivideTriangles(Indices& dstIdx, const Indices& srcIdx, Positions& uvw) {
         const u32 ib = srcIdx[t + 1];
         const u32 ic = srcIdx[t + 2];
 
-        const Edge_ edgeAB = ia < ib ? Edge_{ia, ib} : Edge_{ib, ia};
-        const Edge_ edgeBC = ib < ic ? Edge_{ib, ic} : Edge_{ic, ib};
-        const Edge_ edgeCA = ic < ia ? Edge_{ic, ia} : Edge_{ia, ic};
+        const FEdge_ edgeAB = ia < ib ? FEdge_{ia, ib} : FEdge_{ib, ia};
+        const FEdge_ edgeBC = ib < ic ? FEdge_{ib, ic} : FEdge_{ic, ib};
+        const FEdge_ edgeCA = ic < ia ? FEdge_{ic, ia} : FEdge_{ia, ic};
 
         u32 splitAB, splitBC, splitCA;
 
@@ -328,7 +328,7 @@ void SmoothNormals(Normals& normals, const Indices& indices, const Positions& uv
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void ExportVertices(
-    GenericVertex& vertices,
+    FGenericVertex& vertices,
 
     const Positions *positions0,
     const Positions *positions1,
@@ -362,29 +362,29 @@ void ExportVertices(
             tangents0||tangents1||tangents2||
             binormals0||binormals1||binormals2 );
 
-    const GenericVertex::SubPart sp_positions0 = positions0 ? vertices.Position3f(0) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_positions1 = positions1 ? vertices.Position3f(1) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_positions2 = positions2 ? vertices.Position3f(2) : GenericVertex::SubPart::Null();
+    const FGenericVertex::FSubPart sp_positions0 = positions0 ? vertices.Position3f(0) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_positions1 = positions1 ? vertices.Position3f(1) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_positions2 = positions2 ? vertices.Position3f(2) : FGenericVertex::FSubPart::Null();
 
-    const GenericVertex::SubPart sp_colors0 = colors0 ? vertices.Color4b(0) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_colors1 = colors1 ? vertices.Color4b(1) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_colors2 = colors2 ? vertices.Color4b(2) : GenericVertex::SubPart::Null();
+    const FGenericVertex::FSubPart sp_colors0 = colors0 ? vertices.Color4b(0) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_colors1 = colors1 ? vertices.Color4b(1) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_colors2 = colors2 ? vertices.Color4b(2) : FGenericVertex::FSubPart::Null();
 
-    const GenericVertex::SubPart sp_texcoords0 = texCoords0 ? vertices.TexCoord2f(0) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_texcoords1 = texCoords1 ? vertices.TexCoord2f(1) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_texcoords2 = texCoords2 ? vertices.TexCoord2f(2) : GenericVertex::SubPart::Null();
+    const FGenericVertex::FSubPart sp_texcoords0 = texCoords0 ? vertices.TexCoord2f(0) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_texcoords1 = texCoords1 ? vertices.TexCoord2f(1) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_texcoords2 = texCoords2 ? vertices.TexCoord2f(2) : FGenericVertex::FSubPart::Null();
 
-    const GenericVertex::SubPart sp_normals0 = normals0 ? vertices.Normal3f(0) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_normals1 = normals1 ? vertices.Normal3f(1) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_normals2 = normals2 ? vertices.Normal3f(2) : GenericVertex::SubPart::Null();
+    const FGenericVertex::FSubPart sp_normals0 = normals0 ? vertices.Normal3f(0) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_normals1 = normals1 ? vertices.Normal3f(1) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_normals2 = normals2 ? vertices.Normal3f(2) : FGenericVertex::FSubPart::Null();
 
-    const GenericVertex::SubPart sp_tangents0 = tangents0 ? vertices.Tangent3f(0) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_tangents1 = tangents1 ? vertices.Tangent3f(1) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_tangents2 = tangents2 ? vertices.Tangent3f(2) : GenericVertex::SubPart::Null();
+    const FGenericVertex::FSubPart sp_tangents0 = tangents0 ? vertices.Tangent3f(0) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_tangents1 = tangents1 ? vertices.Tangent3f(1) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_tangents2 = tangents2 ? vertices.Tangent3f(2) : FGenericVertex::FSubPart::Null();
 
-    const GenericVertex::SubPart sp_birnormals0 = binormals0 ? vertices.Binormal3f(0) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_birnormals1 = binormals1 ? vertices.Binormal3f(1) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_birnormals2 = binormals2 ? vertices.Binormal3f(2) : GenericVertex::SubPart::Null();
+    const FGenericVertex::FSubPart sp_birnormals0 = binormals0 ? vertices.Binormal3f(0) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_birnormals1 = binormals1 ? vertices.Binormal3f(1) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_birnormals2 = binormals2 ? vertices.Binormal3f(2) : FGenericVertex::FSubPart::Null();
 
     size_t i = 0;
     do {
@@ -422,7 +422,7 @@ void ExportVertices(
 }
 //----------------------------------------------------------------------------
 void ExportVertices(
-    GenericVertex& vertices,
+    FGenericVertex& vertices,
 
     const Positions *positions0,
     const Colors *colors0,
@@ -433,12 +433,12 @@ void ExportVertices(
     Assert(vertices.VertexCountRemaining());
     Assert( positions0||colors0||texCoords0||normals0||tangents0||binormals0 );
 
-    const GenericVertex::SubPart sp_positions0 = positions0 ? vertices.Position3f(0) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_colors0 = colors0 ? vertices.Color4b(0) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_texcoords0 = texCoords0 ? vertices.TexCoord2f(0) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_normals0 = normals0 ? vertices.Normal3f(0) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_tangents0 = tangents0 ? vertices.Tangent3f(0) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_birnormals0 = binormals0 ? vertices.Binormal3f(0) : GenericVertex::SubPart::Null();
+    const FGenericVertex::FSubPart sp_positions0 = positions0 ? vertices.Position3f(0) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_colors0 = colors0 ? vertices.Color4b(0) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_texcoords0 = texCoords0 ? vertices.TexCoord2f(0) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_normals0 = normals0 ? vertices.Normal3f(0) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_tangents0 = tangents0 ? vertices.Tangent3f(0) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_birnormals0 = binormals0 ? vertices.Binormal3f(0) : FGenericVertex::FSubPart::Null();
 
     size_t i = 0;
     do {

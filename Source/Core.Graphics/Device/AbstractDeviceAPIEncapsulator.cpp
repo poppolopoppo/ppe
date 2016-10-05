@@ -13,7 +13,7 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-AbstractDeviceAPIEncapsulator::AbstractDeviceAPIEncapsulator(DeviceAPI api, DeviceEncapsulator *owner, const PresentationParameters& pp)
+FAbstractDeviceAPIEncapsulator::FAbstractDeviceAPIEncapsulator(EDeviceAPI api, FDeviceEncapsulator *owner, const FPresentationParameters& pp)
 :   _api(api)
 ,   _owner(owner)
 ,   _parameters(pp)
@@ -21,9 +21,9 @@ AbstractDeviceAPIEncapsulator::AbstractDeviceAPIEncapsulator(DeviceAPI api, Devi
     Assert(owner);
 }
 //----------------------------------------------------------------------------
-AbstractDeviceAPIEncapsulator::~AbstractDeviceAPIEncapsulator() {}
+FAbstractDeviceAPIEncapsulator::~FAbstractDeviceAPIEncapsulator() {}
 //----------------------------------------------------------------------------
-void AbstractDeviceAPIEncapsulator::OnCreateEntity(const DeviceResource *resource, DeviceAPIDependantEntity *entity) {
+void FAbstractDeviceAPIEncapsulator::OnCreateEntity(const FDeviceResource *resource, FDeviceAPIDependantEntity *entity) {
     Assert(entity);
 
     entity->AttachResource(resource);
@@ -33,7 +33,7 @@ void AbstractDeviceAPIEncapsulator::OnCreateEntity(const DeviceResource *resourc
     _usedMemory.Allocate(1, sizeInBytes);
 }
 //----------------------------------------------------------------------------
-void AbstractDeviceAPIEncapsulator::OnDestroyEntity(const DeviceResource *resource, DeviceAPIDependantEntity *entity) {
+void FAbstractDeviceAPIEncapsulator::OnDestroyEntity(const FDeviceResource *resource, FDeviceAPIDependantEntity *entity) {
     Assert(entity);
 
     const size_t sizeInBytes = entity->VideoMemorySizeInBytes();
@@ -44,21 +44,21 @@ void AbstractDeviceAPIEncapsulator::OnDestroyEntity(const DeviceResource *resour
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-StringView DeviceAPIToCStr(DeviceAPI api) {
+FStringView DeviceAPIToCStr(EDeviceAPI api) {
     switch (api)
     {
-    case Core::Graphics::DeviceAPI::DirectX11:
+    case Core::Graphics::EDeviceAPI::DirectX11:
         return MakeStringView("DirectX11");
-    case Core::Graphics::DeviceAPI::OpenGL4:
+    case Core::Graphics::EDeviceAPI::OpenGL4:
         return MakeStringView("OpenGL4");
-    case Core::Graphics::DeviceAPI::Unknown:
+    case Core::Graphics::EDeviceAPI::Unknown:
         AssertNotReached();
         break;
     default:
         AssertNotImplemented();
         break;
     }
-    return StringView();
+    return FStringView();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

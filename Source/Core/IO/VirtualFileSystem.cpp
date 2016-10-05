@@ -22,11 +22,11 @@
 #endif
 
 namespace Core {
-POOL_TAG_DEF(VirtualFileSystem);
+POOL_TAG_DEF(FVirtualFileSystem);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Basename VirtualFileSystem::TemporaryBasename(const wchar_t *prefix, const wchar_t *ext) {
+FBasename FVirtualFileSystem::TemporaryBasename(const wchar_t *prefix, const wchar_t *ext) {
     Assert(prefix);
     Assert(ext);
 
@@ -49,10 +49,10 @@ Basename VirtualFileSystem::TemporaryBasename(const wchar_t *prefix, const wchar
         ext );
 
     Assert(length > 0);
-    return Basename(FileSystem::StringView(buffer, length - 1));
+    return FBasename(FileSystem::FStringView(buffer, length - 1));
 }
 //----------------------------------------------------------------------------
-Filename VirtualFileSystem::TemporaryFilename(const wchar_t *prefix, const wchar_t *ext) {
+FFilename FVirtualFileSystem::TemporaryFilename(const wchar_t *prefix, const wchar_t *ext) {
     Assert(prefix);
     Assert(ext);
 
@@ -75,11 +75,11 @@ Filename VirtualFileSystem::TemporaryFilename(const wchar_t *prefix, const wchar
         ext );
 
     Assert(length > 0);
-    return Filename(FileSystem::StringView(buffer, length - 1));
+    return FFilename(FileSystem::FStringView(buffer, length - 1));
 }
 //----------------------------------------------------------------------------
-bool VirtualFileSystem::WriteAll(const Filename& filename, const MemoryView<const u8>& storage, AccessPolicy::Mode policy /* = AccessPolicy::None */) {
-    const UniquePtr<IVirtualFileSystemOStream> ostream = Instance().OpenWritable(filename, policy);
+bool FVirtualFileSystem::WriteAll(const FFilename& filename, const TMemoryView<const u8>& storage, AccessPolicy::EMode policy /* = AccessPolicy::None */) {
+    const TUniquePtr<IVirtualFileSystemOStream> ostream = Instance().OpenWritable(filename, policy);
     if (ostream) {
         ostream->Write(storage.Pointer(), storage.SizeInBytes());
         return true;
@@ -91,18 +91,18 @@ bool VirtualFileSystem::WriteAll(const Filename& filename, const MemoryView<cons
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void VirtualFileSystemStartup::Start() {
-    POOL_TAG(VirtualFileSystem)::Start();
-    VirtualFileSystem::Create();
+void FVirtualFileSystemStartup::Start() {
+    POOL_TAG(FVirtualFileSystem)::Start();
+    FVirtualFileSystem::Create();
     // current process directory
     {
-        VirtualFileSystem::Instance().MountNativePath(MakeStringView(L"Process:/"), CurrentProcess::Instance().Directory());
+        FVirtualFileSystem::Instance().MountNativePath(MakeStringView(L"Process:/"), FCurrentProcess::Instance().Directory());
     }
     // data directory
     {
-        WString path;
-        Format(path, L"{0}/../../Data", CurrentProcess::Instance().Directory());
-        VirtualFileSystem::Instance().MountNativePath(MakeStringView(L"Data:/"), path);
+        FWString path;
+        Format(path, L"{0}/../../Data", FCurrentProcess::Instance().Directory());
+        FVirtualFileSystem::Instance().MountNativePath(MakeStringView(L"Data:/"), path);
     }
     // system temporary path
     {
@@ -110,7 +110,7 @@ void VirtualFileSystemStartup::Start() {
         if (!FileSystem::SystemTemporaryDirectory(tmpPath, lengthof(tmpPath)) )
             AssertNotReached();
 
-        VirtualFileSystem::Instance().MountNativePath(MakeStringView(L"Tmp:/"), tmpPath);
+        FVirtualFileSystem::Instance().MountNativePath(MakeStringView(L"Tmp:/"), tmpPath);
     }
     // user profile path
     {
@@ -122,27 +122,27 @@ void VirtualFileSystemStartup::Start() {
 #elif defined(OS_LINUX)
         const wchar_t* userPath = nullptr;
         const char* userPathA = std::getenv("HOME");
-        WString userPathW = ToWString(userPath);
+        FWString userPathW = ToWString(userPath);
         userPath = userPathW.c_str();
 #else
 #   error "unsupported platform"
 #endif
         AssertRelease(userPath);
-        VirtualFileSystem::Instance().MountNativePath(MakeStringView(L"User:/"), userPath);
+        FVirtualFileSystem::Instance().MountNativePath(MakeStringView(L"User:/"), userPath);
 #if defined(OS_WINDOWS)
         free(userPath); // must free() the string allocated by _wdupenv_s()
 #endif
     }
 }
 //----------------------------------------------------------------------------
-void VirtualFileSystemStartup::Shutdown() {
-    VirtualFileSystem::Destroy();
-    POOL_TAG(VirtualFileSystem)::Shutdown();
+void FVirtualFileSystemStartup::Shutdown() {
+    FVirtualFileSystem::Destroy();
+    POOL_TAG(FVirtualFileSystem)::Shutdown();
 }
 //----------------------------------------------------------------------------
-void VirtualFileSystemStartup::Clear() {
-    VirtualFileSystem::Instance().Clear();
-    POOL_TAG(VirtualFileSystem)::ClearAll_UnusedMemory();
+void FVirtualFileSystemStartup::Clear() {
+    FVirtualFileSystem::Instance().Clear();
+    POOL_TAG(FVirtualFileSystem)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

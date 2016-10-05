@@ -11,20 +11,20 @@ namespace Core {
 #if 0 != _SECURE_SCL
 //----------------------------------------------------------------------------
 template <typename T>
-using CheckedArrayIterator = stdext::checked_array_iterator<typename std::add_pointer<T>::type>;
+using TCheckedArrayIterator = stdext::checked_array_iterator<typename std::add_pointer<T>::type>;
 //----------------------------------------------------------------------------
 template <typename T>
-CheckedArrayIterator<T> MakeCheckedIterator(T* ptr, size_t count, size_t index) {
-    return CheckedArrayIterator<T>(ptr, count, index);
+TCheckedArrayIterator<T> MakeCheckedIterator(T* ptr, size_t count, size_t index) {
+    return TCheckedArrayIterator<T>(ptr, count, index);
 }
 //----------------------------------------------------------------------------
 #else
 //----------------------------------------------------------------------------
 template <typename T>
-using CheckedArrayIterator = typename std::add_pointer<T>::type;
+using TCheckedArrayIterator = typename std::add_pointer<T>::type;
 //----------------------------------------------------------------------------
 template <typename T>
-CheckedArrayIterator<T> MakeCheckedIterator(T* ptr, size_t count, size_t index) {
+TCheckedArrayIterator<T> MakeCheckedIterator(T* ptr, size_t count, size_t index) {
 #ifdef WITH_CORE_ASSERT
     Assert(index <= count);
     Assert(0 == count || nullptr != ptr);
@@ -37,14 +37,14 @@ CheckedArrayIterator<T> MakeCheckedIterator(T* ptr, size_t count, size_t index) 
 #endif
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-CheckedArrayIterator<T> MakeCheckedIterator(T (&staticArray)[_Dim], size_t index) {
+TCheckedArrayIterator<T> MakeCheckedIterator(T (&staticArray)[_Dim], size_t index) {
     return MakeCheckedIterator<T>(&staticArray[0], _Dim, index);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _It, typename _Transform>
-class OutputIterator : public std::iterator<
+class TOutputIterator : public std::iterator<
     typename std::iterator_traits<_It>::iterator_category,
     decltype( std::declval<_Transform>()(*std::declval<_It>()) )
 > {
@@ -59,38 +59,38 @@ public:
     using typename parent_type::pointer;
     using typename parent_type::value_type;
 
-    OutputIterator(const _It& it, const _Transform& transform) : _it(it), _transform(transform) {}
+    TOutputIterator(const _It& it, const _Transform& transform) : _it(it), _transform(transform) {}
 
-    OutputIterator(const OutputIterator& ) = default;
-    OutputIterator& operator =(const OutputIterator& ) = default;
+    TOutputIterator(const TOutputIterator& ) = default;
+    TOutputIterator& operator =(const TOutputIterator& ) = default;
 
-    OutputIterator& operator++() /* prefix */ { ++_it; return *this; }
-    OutputIterator& operator--() /* prefix */ { --_it; return *this; }
+    TOutputIterator& operator++() /* prefix */ { ++_it; return *this; }
+    TOutputIterator& operator--() /* prefix */ { --_it; return *this; }
 
-    OutputIterator operator++(int) /* postfix */ { return OutputIterator(_it++); }
-    OutputIterator operator--(int) /* postfix */ { return OutputIterator(_it--); }
+    TOutputIterator operator++(int) /* postfix */ { return TOutputIterator(_it++); }
+    TOutputIterator operator--(int) /* postfix */ { return TOutputIterator(_it--); }
 
-    OutputIterator& operator+=(difference_type n) { _it += n; return *this; }
-    OutputIterator& operator-=(difference_type n) { _it -= n; return *this; }
+    TOutputIterator& operator+=(difference_type n) { _it += n; return *this; }
+    TOutputIterator& operator-=(difference_type n) { _it -= n; return *this; }
 
-    OutputIterator operator+(difference_type n) { return OutputIterator(_it + n); }
-    OutputIterator operator-(difference_type n) { return OutputIterator(_it - n); }
+    TOutputIterator operator+(difference_type n) { return TOutputIterator(_it + n); }
+    TOutputIterator operator-(difference_type n) { return TOutputIterator(_it - n); }
 
     decltype( std::declval<_Transform>()(*std::declval<_It>()) ) operator*() const { return _transform(*_it); }
     //pointer operator->() const { return _it.operator ->(); }
 
     decltype( std::declval<_Transform>()(*std::declval<_It>()) ) operator[](difference_type n) const { return _transform(_it[n]); }
 
-    difference_type operator-(const OutputIterator& other) const { return checked_cast<difference_type>(_it - other._it); }
+    difference_type operator-(const TOutputIterator& other) const { return checked_cast<difference_type>(_it - other._it); }
 
-    bool operator==(const OutputIterator& other) const { return (_it == other._it); }
-    bool operator!=(const OutputIterator& other) const { return (_it != other._it); }
+    bool operator==(const TOutputIterator& other) const { return (_it == other._it); }
+    bool operator!=(const TOutputIterator& other) const { return (_it != other._it); }
 
-    bool operator< (const OutputIterator& other) const { return (_it <  other._it); }
-    bool operator> (const OutputIterator& other) const { return (_it >  other._it); }
+    bool operator< (const TOutputIterator& other) const { return (_it <  other._it); }
+    bool operator> (const TOutputIterator& other) const { return (_it >  other._it); }
 
-    bool operator<=(const OutputIterator& other) const { return (_it <= other._it); }
-    bool operator>=(const OutputIterator& other) const { return (_it >= other._it); }
+    bool operator<=(const TOutputIterator& other) const { return (_it <= other._it); }
+    bool operator>=(const TOutputIterator& other) const { return (_it >= other._it); }
 
 private:
     _It _it;
@@ -98,8 +98,8 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename _It, typename _Transform>
-OutputIterator<_It, _Transform> MakeOutputIterator(const _It& it, const _Transform& transform) {
-    return OutputIterator<_It, _Transform>(it, transform);
+TOutputIterator<_It, _Transform> MakeOutputIterator(const _It& it, const _Transform& transform) {
+    return TOutputIterator<_It, _Transform>(it, transform);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

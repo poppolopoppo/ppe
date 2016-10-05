@@ -22,12 +22,12 @@ static IMaterialParameter *CreateNotParam_(IMaterialParameter *source) {
     Assert(source);
 
     switch (source->Info().Type) {
-    case Graphics::ConstantFieldType::Bool:
-        return new MaterialParameterBool::Memoizer_Not<bool>(source->Cast<bool>());
-    case Graphics::ConstantFieldType::Int:
-        return new MaterialParameterBool::Memoizer_Not<i32>(source->Cast<i32>());
-    case Graphics::ConstantFieldType::UInt:
-        return new MaterialParameterBool::Memoizer_Not<u32>(source->Cast<u32>());
+    case Graphics::EConstantFieldType::Bool:
+        return new MaterialParameterBool::TMemoizer_Not<bool>(source->Cast<bool>());
+    case Graphics::EConstantFieldType::Int:
+        return new MaterialParameterBool::TMemoizer_Not<i32>(source->Cast<i32>());
+    case Graphics::EConstantFieldType::UInt:
+        return new MaterialParameterBool::TMemoizer_Not<u32>(source->Cast<u32>());
     
     default:
         AssertNotImplemented();
@@ -43,7 +43,7 @@ namespace MaterialParameterBool {
 //----------------------------------------------------------------------------
 EACH_MATERIALPARAMETER_BOOL(MATERIALPARAMETER_FN_DEF)
 //----------------------------------------------------------------------------
-void RegisterMaterialParameters(MaterialDatabase *database) {
+void RegisterMaterialParameters(FMaterialDatabase *database) {
     Assert(database);
 
 #define BIND_MATERIALPARAMETER(_Variability, _Type, _Name) \
@@ -60,29 +60,29 @@ void RegisterMaterialParameters(MaterialDatabase *database) {
 //----------------------------------------------------------------------------
 namespace MaterialParameterBool {
 //----------------------------------------------------------------------------
-// Not
+// TNot
 //----------------------------------------------------------------------------
 template <typename T>
-Not<T>::Not(ITypedMaterialParameter<T> *source) 
+TNot<T>::TNot(ITypedMaterialParameter<T> *source) 
 :   Source(source) { Assert(Source); }
 //----------------------------------------------------------------------------
 template <typename T>
-void Not<T>::TypedEval(const MaterialParameterContext& context, T& dst) {
+void TNot<T>::TypedEval(const FMaterialParameterContext& context, T& dst) {
     T original;
     Source->TypedEval(context, original);
     dst = (~original);
 }
 //----------------------------------------------------------------------------
 template <>
-void Not<bool>::TypedEval(const MaterialParameterContext& context, bool& dst) {
+void TNot<bool>::TypedEval(const FMaterialParameterContext& context, bool& dst) {
     bool original;
     Source->TypedEval(context, original);
     dst = (!original);
 }
 //----------------------------------------------------------------------------
-template class MaterialParameterMemoizer<Not<bool> >;
-template class MaterialParameterMemoizer<Not<i32> >;
-template class MaterialParameterMemoizer<Not<u32> >;
+template class TMaterialParameterMemoizer<TNot<bool> >;
+template class TMaterialParameterMemoizer<TNot<i32> >;
+template class TMaterialParameterMemoizer<TNot<u32> >;
 //----------------------------------------------------------------------------
 } //!MaterialParameterBool
 //----------------------------------------------------------------------------
@@ -92,9 +92,9 @@ namespace MaterialParameterBool {
 //----------------------------------------------------------------------------
 bool TryCreateMaterialParameter(
     PMaterialParameter *param,
-    const MaterialParameterMutableContext& context,
-    const Graphics::BindName& name,
-    const Graphics::ConstantField& field ) {
+    const FMaterialParameterMutableContext& context,
+    const Graphics::FBindName& name,
+    const Graphics::FConstantField& field ) {
     Assert(param);
     Assert(context.MaterialEffect);
     Assert(context.Database);
@@ -106,7 +106,7 @@ bool TryCreateMaterialParameter(
     static const char uniNot[] = "uniNot_";
 
     IMaterialParameter *(*paramFunc)(IMaterialParameter *) = nullptr;
-    Graphics::BindName parameterName;
+    Graphics::FBindName parameterName;
 
     if (StartsWith(cstr, uniNot)) {
         paramFunc = &CreateNotParam_;

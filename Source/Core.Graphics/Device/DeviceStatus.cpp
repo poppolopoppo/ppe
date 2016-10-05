@@ -7,24 +7,24 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-StringView DeviceStatusToCStr(DeviceStatus status) {
+FStringView DeviceStatusToCStr(EDeviceStatus status) {
     switch (status)
     {
-    case Core::Graphics::DeviceStatus::Invalid:
+    case Core::Graphics::EDeviceStatus::Invalid:
         return MakeStringView("Invalid");
-    case Core::Graphics::DeviceStatus::Normal:
+    case Core::Graphics::EDeviceStatus::Normal:
         return MakeStringView("Normal");
-    case Core::Graphics::DeviceStatus::Create:
+    case Core::Graphics::EDeviceStatus::Create:
         return MakeStringView("Create");
-    case Core::Graphics::DeviceStatus::Destroy:
+    case Core::Graphics::EDeviceStatus::Destroy:
         return MakeStringView("Destroy");
-    case Core::Graphics::DeviceStatus::Reset:
+    case Core::Graphics::EDeviceStatus::Reset:
         return MakeStringView("Reset");
-    case Core::Graphics::DeviceStatus::Lost:
+    case Core::Graphics::EDeviceStatus::Lost:
         return MakeStringView("Lost");
     }
     AssertNotImplemented();
-    return StringView();
+    return FStringView();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

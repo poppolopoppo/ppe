@@ -20,24 +20,24 @@ namespace Parser {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ParseStatement::ParseStatement(const Lexer::Location& site)
-:   ParseItem(site) {}
+FParseStatement::FParseStatement(const FLexer::FLocation& site)
+:   FParseItem(site) {}
 //----------------------------------------------------------------------------
-ParseStatement::~ParseStatement() {}
+FParseStatement::~FParseStatement() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, EvalExpr, )
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FEvalExpr, )
 //----------------------------------------------------------------------------
-EvalExpr::EvalExpr(const Parser::PCParseExpression& expr)
-:   ParseStatement(expr->Site())
+FEvalExpr::FEvalExpr(const Parser::PCParseExpression& expr)
+:   FParseStatement(expr->Site())
 ,   _expr(expr) {
     Assert(expr);
 }
 //----------------------------------------------------------------------------
-EvalExpr::~EvalExpr() {}
+FEvalExpr::~FEvalExpr() {}
 //----------------------------------------------------------------------------
-void EvalExpr::Execute(ParseContext *context) const {
+void FEvalExpr::Execute(FParseContext *context) const {
     const RTTI::PCMetaAtom result = _expr->Eval(context);
     if (result)
         Format(std::cout, "<{0}> = {1} ({2})\n", result->TypeInfo(), result->ToString(), result->HashValue());
@@ -45,40 +45,40 @@ void EvalExpr::Execute(ParseContext *context) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, PropertyAssignment, )
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FPropertyAssignment, )
 //----------------------------------------------------------------------------
-PropertyAssignment::PropertyAssignment(
-    const RTTI::Name& name,
+FPropertyAssignment::FPropertyAssignment(
+    const RTTI::FName& name,
     const Parser::PCParseExpression& value)
-:   ParseStatement(value->Site())
+:   FParseStatement(value->Site())
 ,   _name(name)
 ,   _value(value) {
     Assert(!name.empty());
     Assert(value);
 }
 //----------------------------------------------------------------------------
-PropertyAssignment::~PropertyAssignment() {}
+FPropertyAssignment::~FPropertyAssignment() {}
 //----------------------------------------------------------------------------
-void PropertyAssignment::Execute(ParseContext *context) const {
+void FPropertyAssignment::Execute(FParseContext *context) const {
     Assert(context);
 
-    RTTI::MetaObject *obj = context->ScopeObject();
+    RTTI::FMetaObject *obj = context->ScopeObject();
     Assert(obj);
 
-    const RTTI::MetaClass *metaclass = context->ScopeObject()->RTTI_MetaClass();
+    const RTTI::FMetaClass *metaclass = context->ScopeObject()->RTTI_MetaClass();
     Assert(metaclass);
 
-    const RTTI::MetaProperty *metaproperty = metaclass->PropertyIFP(_name);
+    const RTTI::FMetaProperty *metaproperty = metaclass->PropertyIFP(_name);
     if (!metaproperty)
-        CORE_THROW_IT(ParserException("unknowm property name", this));
+        CORE_THROW_IT(FParserException("unknowm property name", this));
 
     const RTTI::PMetaAtom value = _value->Eval(context);
 
     if (!metaproperty->UnwrapMove(obj, value.get()))
-        CORE_THROW_IT(ParserException("invalid property assignment", this));
+        CORE_THROW_IT(FParserException("invalid property assignment", this));
 }
 //----------------------------------------------------------------------------
-String PropertyAssignment::ToString() const {
+FString FPropertyAssignment::ToString() const {
     return _name.c_str();
 }
 //----------------------------------------------------------------------------

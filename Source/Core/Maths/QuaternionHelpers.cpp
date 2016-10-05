@@ -6,21 +6,21 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Quaternion BarycentricLerp(const Quaternion& v0, const Quaternion& v1, const Quaternion& v2, float f0, float f1, float f2) {
+FQuaternion BarycentricLerp(const FQuaternion& v0, const FQuaternion& v1, const FQuaternion& v2, float f0, float f1, float f2) {
     const float4 result(
         BarycentricLerp(v0.x(), v1.x(), v2.x(), f0, f1, f2),
         BarycentricLerp(v0.y(), v1.y(), v2.y(), f0, f1, f2),
         BarycentricLerp(v0.z(), v1.z(), v2.z(), f0, f1, f2),
         BarycentricLerp(v0.w(), v1.w(), v2.w(), f0, f1, f2) );
 
-    return Quaternion(Normalize4(result));
+    return FQuaternion(Normalize4(result));
 }
 //----------------------------------------------------------------------------
-Quaternion BarycentricLerp(const Quaternion& v0, const Quaternion& v1, const Quaternion& v2, const float3& uvw) {
+FQuaternion BarycentricLerp(const FQuaternion& v0, const FQuaternion& v1, const FQuaternion& v2, const float3& uvw) {
     return BarycentricLerp(v0, v1, v2, uvw.x(), uvw.y(), uvw.z());
 }
 //----------------------------------------------------------------------------
-Quaternion Lerp(const Quaternion& v0, const Quaternion& v1, float f) {
+FQuaternion Lerp(const FQuaternion& v0, const FQuaternion& v1, float f) {
     float inverse = 1.0f - f;
 
     float4 result(Meta::noinit_tag{});
@@ -38,10 +38,10 @@ Quaternion Lerp(const Quaternion& v0, const Quaternion& v1, float f) {
         result.w() = (inverse * v0.w()) - (f * v1.w());
     }
 
-    return Quaternion(Normalize4(result));
+    return FQuaternion(Normalize4(result));
 }
 //----------------------------------------------------------------------------
-Quaternion SLerp(const Quaternion& v0, const Quaternion& v1, float f) {
+FQuaternion SLerp(const FQuaternion& v0, const FQuaternion& v1, float f) {
     float opposite;
     float inverse;
     float dot = Dot(v0, v1);
@@ -64,28 +64,28 @@ Quaternion SLerp(const Quaternion& v0, const Quaternion& v1, float f) {
         (inverse * v0.z()) + (opposite * v1.z()),
         (inverse * v0.w()) + (opposite * v1.w()) );
 
-    return Quaternion(result);
+    return FQuaternion(result);
 }
 //----------------------------------------------------------------------------
-Quaternion SQuad(const Quaternion& v0, const Quaternion& v1, const Quaternion& v2, const Quaternion& v3, float f) {
-    const Quaternion start = SLerp(v0, v3, f);
-    const Quaternion end = SLerp(v1, v2, f);
+FQuaternion SQuad(const FQuaternion& v0, const FQuaternion& v1, const FQuaternion& v2, const FQuaternion& v3, float f) {
+    const FQuaternion start = SLerp(v0, v3, f);
+    const FQuaternion end = SLerp(v1, v2, f);
     return SLerp(start, end, (2*f) * (1-f));
 }
 //----------------------------------------------------------------------------
-void SQuadSetup(Quaternion *p0, Quaternion *p1, Quaternion *p2,
-                const Quaternion& v0, const Quaternion& v1, const Quaternion& v2, const Quaternion& v3 ) {
+void SQuadSetup(FQuaternion *p0, FQuaternion *p1, FQuaternion *p2,
+                const FQuaternion& v0, const FQuaternion& v1, const FQuaternion& v2, const FQuaternion& v3 ) {
     Assert(p0);
     Assert(p1);
     Assert(p2);
 
-    Quaternion q0((v0 + v1).LengthSq() < (v0 - v1).LengthSq() ? -v0.Value() : v0.Value());
-    Quaternion q2((v1 + v2).LengthSq() < (v1 - v2).LengthSq() ? -v2.Value() : v2.Value());
-    Quaternion q3((v2 + v3).LengthSq() < (v2 - v3).LengthSq() ? -v3.Value() : v3.Value());
-    Quaternion q1 = v1;
+    FQuaternion q0((v0 + v1).LengthSq() < (v0 - v1).LengthSq() ? -v0.Value() : v0.Value());
+    FQuaternion q2((v1 + v2).LengthSq() < (v1 - v2).LengthSq() ? -v2.Value() : v2.Value());
+    FQuaternion q3((v2 + v3).LengthSq() < (v2 - v3).LengthSq() ? -v3.Value() : v3.Value());
+    FQuaternion q1 = v1;
 
-    const Quaternion q1Exp = q1.Exponential();
-    const Quaternion q2Exp = q2.Exponential();
+    const FQuaternion q1Exp = q1.Exponential();
+    const FQuaternion q2Exp = q2.Exponential();
 
     *p0 = q1 * (-0.25f * ((q1Exp * q2).Logarithm() + (q1Exp * q0).Logarithm() )).Exponential();
     *p1 = q2 * (-0.25f * ((q2Exp * q3).Logarithm() + (q2Exp * q1).Logarithm() )).Exponential();
@@ -93,7 +93,7 @@ void SQuadSetup(Quaternion *p0, Quaternion *p1, Quaternion *p2,
 }
 //----------------------------------------------------------------------------
 void Extract3AxisFromQuaternion(float3 *paxisx, float3 *paxisy, float3 *paxisz,
-                                const Quaternion& quaternion ) {
+                                const FQuaternion& quaternion ) {
     Assert(paxisx);
     Assert(paxisy);
     Assert(paxisz);
@@ -113,17 +113,17 @@ void Extract3AxisFromQuaternion(float3 *paxisx, float3 *paxisy, float3 *paxisz,
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Quaternion MakeAxisQuaternion(const float3& axis) {
+FQuaternion MakeAxisQuaternion(const float3& axis) {
     return MakeAxisQuaternion(axis, 0.0f, 1.0f); // SinCos(0)
 }
 //----------------------------------------------------------------------------
-Quaternion MakeAxisQuaternion(const float3& axis, float radians) {
+FQuaternion MakeAxisQuaternion(const float3& axis, float radians) {
     float fsin, fcos;
     SinCos(radians, &fsin, &fcos);
     return MakeAxisQuaternion(axis, fsin, fcos);
 }
 //----------------------------------------------------------------------------
-Quaternion MakeAxisQuaternion(const float3& axis, float fsin, float fcos) {
+FQuaternion MakeAxisQuaternion(const float3& axis, float fsin, float fcos) {
     Assert(std::abs(1 - LengthSq3(axis)) < F_Epsilon);
 
     const float4 result(
@@ -132,10 +132,10 @@ Quaternion MakeAxisQuaternion(const float3& axis, float fsin, float fcos) {
         axis.z() * fsin,
         fcos );
 
-    return Quaternion(result);
+    return FQuaternion(result);
 }
 //----------------------------------------------------------------------------
-Quaternion MakeQuaternionFromRotationMatrix(const float4x4& matrix) {
+FQuaternion MakeQuaternionFromRotationMatrix(const float4x4& matrix) {
     float sqrt;
     float half;
     float scale = matrix._11() + matrix._22() + matrix._33();
@@ -179,10 +179,10 @@ Quaternion MakeQuaternionFromRotationMatrix(const float4x4& matrix) {
         result.w() = (matrix._12() - matrix._21()) * half;
     }
 
-    return Quaternion(result);
+    return FQuaternion(result);
 }
 //----------------------------------------------------------------------------
-Quaternion MakeYawPitchRollQuaternion(float yaw, float pitch, float roll) {
+FQuaternion MakeYawPitchRollQuaternion(float yaw, float pitch, float roll) {
     float halfRoll = roll * 0.5f;
     float halfPitch = pitch * 0.5f;
     float halfYaw = yaw * 0.5f;
@@ -202,11 +202,11 @@ Quaternion MakeYawPitchRollQuaternion(float yaw, float pitch, float roll) {
         (cosYaw * cosPitch * sinRoll) - (sinYaw * sinPitch * cosRoll),
         (cosYaw * cosPitch * cosRoll) + (sinYaw * sinPitch * sinRoll) );
 
-    return Quaternion(result);
+    return FQuaternion(result);
 }
 //----------------------------------------------------------------------------
-Quaternion Make3AxisQuaterion(const float3& axisx, const float3& axisy, const float3& axisz) {
-    Quaternion quaternion;
+FQuaternion Make3AxisQuaterion(const float3& axisx, const float3& axisy, const float3& axisz) {
+    FQuaternion quaternion;
     quaternion.x() = axisz.y() - axisy.z();
     quaternion.y() = axisx.z() - axisz.x();
     quaternion.z() = axisy.x() - axisx.y();
@@ -214,14 +214,14 @@ Quaternion Make3AxisQuaterion(const float3& axisx, const float3& axisy, const fl
     return quaternion.Normalize();
 }
 //----------------------------------------------------------------------------
-Quaternion MakeBarycentricQuaternion(
-    const Quaternion& value1,
-    const Quaternion& value2,
-    const Quaternion& value3,
+FQuaternion MakeBarycentricQuaternion(
+    const FQuaternion& value1,
+    const FQuaternion& value2,
+    const FQuaternion& value3,
     float amount12,
     float amount13 ) {
-    const Quaternion start = SLerp(value1, value2, amount12 + amount13);
-    const Quaternion end = SLerp(value1, value3, amount12 + amount13);
+    const FQuaternion start = SLerp(value1, value2, amount12 + amount13);
+    const FQuaternion end = SLerp(value1, value3, amount12 + amount13);
     return SLerp(start, end, amount13 / (amount12 + amount13));
 }
 //----------------------------------------------------------------------------

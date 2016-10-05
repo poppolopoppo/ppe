@@ -12,48 +12,48 @@ namespace Pixmap {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class BlockFormat {
+enum class EBlockFormat {
     DXT1    = 8,
     DXT5    = 16,
 };
-StringView BlockFormatToCStr(BlockFormat value);
+FStringView BlockFormatToCStr(EBlockFormat value);
 template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, BlockFormat value) {
+std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, EBlockFormat value) {
     return oss << BlockFormatToCStr(value);
 }
 //----------------------------------------------------------------------------
-enum class ColorDepth {
+enum class EColorDepth {
     _8bits  = 8,
     _16bits = 16,
     _32bits = 32,
 };
-StringView ColorDepthToCStr(ColorDepth value);
+FStringView ColorDepthToCStr(EColorDepth value);
 template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, ColorDepth value) {
+std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, EColorDepth value) {
     return oss << ColorDepthToCStr(value);
 }
 //----------------------------------------------------------------------------
-enum class ColorMask {
+enum class EColorMask {
     R       = 1,
     RG      = 2,
     RGB     = 3,
     RGBA    = 4,
 };
-StringView ColorMaskToCStr(ColorMask value);
+FStringView ColorMaskToCStr(EColorMask value);
 template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, ColorMask value) {
+std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, EColorMask value) {
     return oss << ColorMaskToCStr(value);
 }
 //----------------------------------------------------------------------------
-enum class ColorSpace {
+enum class EColorSpace {
     Linear  = 0,
     sRGB,
     Float,
     YCoCg,
 };
-StringView ColorSpaceToCStr(ColorSpace value);
+FStringView ColorSpaceToCStr(EColorSpace value);
 template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, ColorSpace value) {
+std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, EColorSpace value) {
     return oss << ColorSpaceToCStr(value);
 }
 //----------------------------------------------------------------------------

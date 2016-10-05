@@ -15,69 +15,69 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Heap {
+class FHeap {
 public:
     struct current_process_t{};
 
-    explicit Heap(const char* nameForDebug, bool locked, size_t maximumSize = 0);
-    explicit Heap(current_process_t);
-    Heap(Heap&& rvalue);
-    ~Heap();
+    explicit FHeap(const char* nameForDebug, bool locked, size_t maximumSize = 0);
+    explicit FHeap(current_process_t);
+    FHeap(FHeap&& rvalue);
+    ~FHeap();
 
-    Heap(const Heap&) = delete;
-    Heap& operator =(const Heap&) = delete;
+    FHeap(const FHeap&) = delete;
+    FHeap& operator =(const FHeap&) = delete;
 
     void*   Handle() const { return _handle; }
     SizeInBytes Size() const { return TrackingData().TotalSizeInBytes(); }
 
-    void*   Malloc(size_t size, MemoryTrackingData& trackingData = MemoryTrackingData::Global());
-    void    Free(void *ptr, MemoryTrackingData& trackingData = MemoryTrackingData::Global());
-    void*   Calloc(size_t nmemb, size_t size, MemoryTrackingData& trackingData = MemoryTrackingData::Global());
-    void*   Realloc(void *ptr, size_t size, MemoryTrackingData& trackingData = MemoryTrackingData::Global());
+    void*   Malloc(size_t size, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global());
+    void    Free(void *ptr, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global());
+    void*   Calloc(size_t nmemb, size_t size, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global());
+    void*   Realloc(void *ptr, size_t size, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global());
 
-    void*   AlignedMalloc(size_t size, size_t alignment, MemoryTrackingData& trackingData = MemoryTrackingData::Global());
-    void    AlignedFree(void *ptr, MemoryTrackingData& trackingData = MemoryTrackingData::Global());
-    void*   AlignedCalloc(size_t nmemb, size_t size, size_t alignment, MemoryTrackingData& trackingData = MemoryTrackingData::Global());
-    void*   AlignedRealloc(void *ptr, size_t size, size_t alignment, MemoryTrackingData& trackingData = MemoryTrackingData::Global());
-
-    template <size_t _Alignment>
-    void*   Malloc(size_t size, MemoryTrackingData& trackingData = MemoryTrackingData::Global(), typename std::enable_if< IsNaturalyAligned<_Alignment>::value >::type* = 0);
-    template <size_t _Alignment>
-    void    Free(void *ptr, MemoryTrackingData& trackingData = MemoryTrackingData::Global(), typename std::enable_if< IsNaturalyAligned<_Alignment>::value >::type* = 0);
-    template <size_t _Alignment>
-    void*   Calloc(size_t nmemb, size_t size, MemoryTrackingData& trackingData = MemoryTrackingData::Global(), typename std::enable_if< IsNaturalyAligned<_Alignment>::value >::type* = 0);
-    template <size_t _Alignment>
-    void*   Realloc(void *ptr, size_t size, MemoryTrackingData& trackingData = MemoryTrackingData::Global(), typename std::enable_if< IsNaturalyAligned<_Alignment>::value >::type* = 0);
+    void*   AlignedMalloc(size_t size, size_t alignment, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global());
+    void    AlignedFree(void *ptr, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global());
+    void*   AlignedCalloc(size_t nmemb, size_t size, size_t alignment, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global());
+    void*   AlignedRealloc(void *ptr, size_t size, size_t alignment, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global());
 
     template <size_t _Alignment>
-    void*   Malloc(size_t size, MemoryTrackingData& trackingData = MemoryTrackingData::Global(), typename std::enable_if< !IsNaturalyAligned<_Alignment>::value >::type* = 0);
+    void*   Malloc(size_t size, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global(), typename std::enable_if< IsNaturalyAligned<_Alignment>::value >::type* = 0);
     template <size_t _Alignment>
-    void    Free(void *ptr, MemoryTrackingData& trackingData = MemoryTrackingData::Global(), typename std::enable_if< !IsNaturalyAligned<_Alignment>::value >::type* = 0);
+    void    Free(void *ptr, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global(), typename std::enable_if< IsNaturalyAligned<_Alignment>::value >::type* = 0);
     template <size_t _Alignment>
-    void*   Calloc(size_t nmemb, size_t size, MemoryTrackingData& trackingData = MemoryTrackingData::Global(), typename std::enable_if< !IsNaturalyAligned<_Alignment>::value >::type* = 0);
+    void*   Calloc(size_t nmemb, size_t size, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global(), typename std::enable_if< IsNaturalyAligned<_Alignment>::value >::type* = 0);
     template <size_t _Alignment>
-    void*   Realloc(void *ptr, size_t size, MemoryTrackingData& trackingData = MemoryTrackingData::Global(), typename std::enable_if< !IsNaturalyAligned<_Alignment>::value >::type* = 0);
+    void*   Realloc(void *ptr, size_t size, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global(), typename std::enable_if< IsNaturalyAligned<_Alignment>::value >::type* = 0);
 
-    void    Swap(Heap& other);
+    template <size_t _Alignment>
+    void*   Malloc(size_t size, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global(), typename std::enable_if< !IsNaturalyAligned<_Alignment>::value >::type* = 0);
+    template <size_t _Alignment>
+    void    Free(void *ptr, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global(), typename std::enable_if< !IsNaturalyAligned<_Alignment>::value >::type* = 0);
+    template <size_t _Alignment>
+    void*   Calloc(size_t nmemb, size_t size, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global(), typename std::enable_if< !IsNaturalyAligned<_Alignment>::value >::type* = 0);
+    template <size_t _Alignment>
+    void*   Realloc(void *ptr, size_t size, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global(), typename std::enable_if< !IsNaturalyAligned<_Alignment>::value >::type* = 0);
+
+    void    Swap(FHeap& other);
 
 private:
     void*   _handle;
 
 public:
 #ifdef USE_MEMORY_DOMAINS
-    const MemoryTrackingData& TrackingData() const { return _trackingData; }
+    const FMemoryTrackingData& TrackingData() const { return _trackingData; }
 private:
-    MemoryTrackingData _trackingData;
+    FMemoryTrackingData _trackingData;
 #else
-    const MemoryTrackingData& TrackingData() const { return MemoryTrackingData::Global(); }
+    const FMemoryTrackingData& TrackingData() const { return FMemoryTrackingData::Global(); }
 #endif
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Tag>
-class HeapSingleton : Meta::Singleton<Heap, _Tag> {
-    typedef Meta::Singleton<Heap, _Tag> parent_type;
+class THeapSingleton : Meta::TSingleton<FHeap, _Tag> {
+    typedef Meta::TSingleton<FHeap, _Tag> parent_type;
 public:
     using parent_type::Instance;
     using parent_type::HasInstance;
@@ -86,7 +86,7 @@ public:
 };
 //----------------------------------------------------------------------------
 #define HEAP_SINGLETON_DEF(_NAME) namespace Heaps { \
-    struct _NAME : public Core::HeapSingleton<_NAME> {}; \
+    struct _NAME : public Core::THeapSingleton<_NAME> {}; \
     }
 //----------------------------------------------------------------------------
 HEAP_SINGLETON_DEF(Process);

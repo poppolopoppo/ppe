@@ -1,6 +1,6 @@
 #include "stdafx.h"
 /*
-    LZ4 HC - High Compression Mode of LZ4
+    LZ4 HC - High Compression EMode of LZ4
     Copyright (C) 2011-2015, Yann Collet.
 
     BSD 2-Clause License (http://www.opensource.org/licenses/bsd-license.php)
@@ -131,7 +131,7 @@ static void LZ4HC_init (LZ4HC_Data_Structure* hc4, const BYTE* start)
 FORCE_INLINE void LZ4HC_Insert (LZ4HC_Data_Structure* hc4, const BYTE* ip)
 {
     U16* chainTable = hc4->chainTable;
-    U32* HashTable  = hc4->hashTable;
+    U32* THashTable  = hc4->hashTable;
     const BYTE* const base = hc4->base;
     const U32 target = (U32)(ip - base);
     U32 idx = hc4->nextToUpdate;
@@ -139,10 +139,10 @@ FORCE_INLINE void LZ4HC_Insert (LZ4HC_Data_Structure* hc4, const BYTE* ip)
     while(idx < target)
     {
         U32 h = LZ4HC_hashPtr(base+idx);
-        size_t delta = idx - HashTable[h];
+        size_t delta = idx - THashTable[h];
         if (delta>LZ4_MAX_DISTANCE) delta = LZ4_MAX_DISTANCE;
         LZ4_DELTANEXTU16(idx) = (U16)delta;
-        HashTable[h] = idx;
+        THashTable[h] = idx;
         idx++;
     }
 
@@ -156,7 +156,7 @@ FORCE_INLINE int LZ4HC_InsertAndFindBestMatch (LZ4HC_Data_Structure* hc4,   /* I
                                                const int maxNbAttempts)
 {
     U16* const chainTable = hc4->chainTable;
-    U32* const HashTable = hc4->hashTable;
+    U32* const THashTable = hc4->hashTable;
     const BYTE* const base = hc4->base;
     const BYTE* const dictBase = hc4->dictBase;
     const U32 dictLimit = hc4->dictLimit;
@@ -168,7 +168,7 @@ FORCE_INLINE int LZ4HC_InsertAndFindBestMatch (LZ4HC_Data_Structure* hc4,   /* I
 
     /* HC4 match finder */
     LZ4HC_Insert(hc4, ip);
-    matchIndex = HashTable[LZ4HC_hashPtr(ip)];
+    matchIndex = THashTable[LZ4HC_hashPtr(ip)];
 
     while ((matchIndex>=lowLimit) && (nbAttempts))
     {
@@ -215,7 +215,7 @@ FORCE_INLINE int LZ4HC_InsertAndGetWiderMatch (
     const int maxNbAttempts)
 {
     U16* const chainTable = hc4->chainTable;
-    U32* const HashTable = hc4->hashTable;
+    U32* const THashTable = hc4->hashTable;
     const BYTE* const base = hc4->base;
     const U32 dictLimit = hc4->dictLimit;
     const BYTE* const lowPrefixPtr = base + dictLimit;
@@ -226,9 +226,9 @@ FORCE_INLINE int LZ4HC_InsertAndGetWiderMatch (
     int delta = (int)(ip-iLowLimit);
 
 
-    /* First Match */
+    /* TFirst FMatch */
     LZ4HC_Insert(hc4, ip);
-    matchIndex = HashTable[LZ4HC_hashPtr(ip)];
+    matchIndex = THashTable[LZ4HC_hashPtr(ip)];
 
     while ((matchIndex>=lowLimit) && (nbAttempts))
     {
@@ -304,7 +304,7 @@ FORCE_INLINE int LZ4HC_encodeSequence (
     if (debug) printf("literal : %u  --  match : %u  --  offset : %u\n", (U32)(*ip - *anchor), (U32)matchLength, (U32)(*ip-match));
 #endif
 
-    /* Encode Literal length */
+    /* Encode TLiteral length */
     length = (int)(*ip - *anchor);
     token = (*op)++;
     if ((limitedOutputBuffer) && ((*op + (length>>8) + length + (2 + 1 + LZ4_LASTLITERALS)) > oend)) return 1;   /* Check output limit */
@@ -404,7 +404,7 @@ _Search2:
         }
 
         /* Here, start0==ip */
-        if ((start2 - ip) < 3)   /* First Match too small : removed */
+        if ((start2 - ip) < 3)   /* TFirst FMatch too small : removed */
         {
             ml = ml2;
             ip = start2;
@@ -449,7 +449,7 @@ _Search3:
             continue;
         }
 
-        if (start3 < ip+ml+3) /* Not enough space for match 2 : remove it */
+        if (start3 < ip+ml+3) /* TNot enough space for match 2 : remove it */
         {
             if (start3 >= (ip+ml)) /* can write Seq1 immediately ==> Seq2 is removed, so Seq3 becomes Seq1 */
             {

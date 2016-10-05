@@ -20,13 +20,13 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DX11ResourceBuffer::DX11ResourceBuffer(
+FDX11ResourceBuffer::FDX11ResourceBuffer(
     IDeviceAPIEncapsulator *device,
-    const DeviceResource *resource,
-    const DeviceResourceBuffer *buffer,
-    const MemoryView<const u8>& optionalData)
-:   DeviceAPIDependantResourceBuffer(device, resource, buffer, optionalData) {
-    const DX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
+    const FDeviceResource *resource,
+    const FDeviceResourceBuffer *buffer,
+    const TMemoryView<const u8>& optionalData)
+:   FDeviceAPIDependantResourceBuffer(device, resource, buffer, optionalData) {
+    const FDX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
 
     ::D3D11_BUFFER_DESC bd;
     ::SecureZeroMemory(&bd, sizeof(bd));
@@ -38,7 +38,7 @@ DX11ResourceBuffer::DX11ResourceBuffer(
     bd.MiscFlags = 0;
 
     if (optionalData.empty()) {
-        AssertRelease(Usage() != BufferUsage::Immutable);
+        AssertRelease(Usage() != EBufferUsage::Immutable);
 
         DX11_THROW_IF_FAILED(device, resource, (
             wrapper->Device()->CreateBuffer(&bd, NULL, _entity.GetAddressOf())
@@ -61,33 +61,33 @@ DX11ResourceBuffer::DX11ResourceBuffer(
     DX11SetDeviceResourceNameIFP(_entity, resource);
 }
 //----------------------------------------------------------------------------
-DX11ResourceBuffer::~DX11ResourceBuffer() {
+FDX11ResourceBuffer::~FDX11ResourceBuffer() {
     ReleaseComRef(_entity);
 }
 //----------------------------------------------------------------------------
-void DX11ResourceBuffer::GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) {
-    AssertRelease(Usage() == BufferUsage::Staging);
+void FDX11ResourceBuffer::GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) {
+    AssertRelease(Usage() == EBufferUsage::Staging);
 
     DX11ResourceGetData(device, _entity.Get(), 0, offset, dst, stride, count, Mode(), Usage());
 }
 //----------------------------------------------------------------------------
-void DX11ResourceBuffer::SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) {
+void FDX11ResourceBuffer::SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) {
 
     DX11ResourceSetData(device, _entity.Get(), 0, offset, src, stride, count, Mode(), Usage());
 }
 //----------------------------------------------------------------------------
-void DX11ResourceBuffer::CopyFrom(IDeviceAPIEncapsulator *device, const DeviceAPIDependantResourceBuffer *psource) {
+void FDX11ResourceBuffer::CopyFrom(IDeviceAPIEncapsulator *device, const FDeviceAPIDependantResourceBuffer *psource) {
 
-    const DX11ResourceBuffer *psourceDX11 = checked_cast<const DX11ResourceBuffer *>(psource);
+    const FDX11ResourceBuffer *psourceDX11 = checked_cast<const FDX11ResourceBuffer *>(psource);
 
     DX11CopyResource(device, _entity.Get(), psourceDX11->Entity());
 }
 //----------------------------------------------------------------------------
-void DX11ResourceBuffer::CopySubPart(
+void FDX11ResourceBuffer::CopySubPart(
     IDeviceAPIEncapsulator *device, size_t dstOffset,
-    const DeviceAPIDependantResourceBuffer *psource, size_t srcOffset, size_t length ) {
+    const FDeviceAPIDependantResourceBuffer *psource, size_t srcOffset, size_t length ) {
 
-    const DX11ResourceBuffer *psourceDX11 = checked_cast<const DX11ResourceBuffer *>(psource);
+    const FDX11ResourceBuffer *psourceDX11 = checked_cast<const FDX11ResourceBuffer *>(psource);
 
     const uint3 dstPos(checked_cast<u32>(dstOffset), 0, 0);
     const AABB3u srcBox(uint3(checked_cast<u32>(srcOffset), 0, 0),
@@ -96,22 +96,22 @@ void DX11ResourceBuffer::CopySubPart(
     DX11CopyResourceSubRegion(device, _entity.Get(), 0, dstPos, psourceDX11->Entity(), 0, srcBox);
 }
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, DX11ResourceBuffer, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, FDX11ResourceBuffer, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-D3D11_CPU_ACCESS_FLAG BufferModeToDX11CPUAccessFlags(BufferMode value) {
+D3D11_CPU_ACCESS_FLAG BufferModeToDX11CPUAccessFlags(EBufferMode value) {
     switch (value)
     {
-    case Core::Graphics::BufferMode::None:
+    case Core::Graphics::EBufferMode::None:
         return static_cast<D3D11_CPU_ACCESS_FLAG>(0);
-    case Core::Graphics::BufferMode::Read:
+    case Core::Graphics::EBufferMode::Read:
         return D3D11_CPU_ACCESS_READ;
-    case Core::Graphics::BufferMode::Write:
-    case Core::Graphics::BufferMode::WriteDiscard:
-    case Core::Graphics::BufferMode::WriteDoNotWait:
+    case Core::Graphics::EBufferMode::Write:
+    case Core::Graphics::EBufferMode::WriteDiscard:
+    case Core::Graphics::EBufferMode::WriteDoNotWait:
         return D3D11_CPU_ACCESS_WRITE;
-    case Core::Graphics::BufferMode::ReadWrite:
+    case Core::Graphics::EBufferMode::ReadWrite:
         return static_cast<D3D11_CPU_ACCESS_FLAG>(D3D11_CPU_ACCESS_READ|D3D11_CPU_ACCESS_WRITE);
     default:
         break;
@@ -120,95 +120,95 @@ D3D11_CPU_ACCESS_FLAG BufferModeToDX11CPUAccessFlags(BufferMode value) {
     return static_cast<D3D11_CPU_ACCESS_FLAG>(-1);
 }
 //----------------------------------------------------------------------------
-BufferMode DX11CPUAccessFlagsToBufferMode(D3D11_CPU_ACCESS_FLAG value) {
+EBufferMode DX11CPUAccessFlagsToBufferMode(D3D11_CPU_ACCESS_FLAG value) {
     switch (size_t(value))
     {
     case D3D11_CPU_ACCESS_FLAG(0):
-        return Core::Graphics::BufferMode::None;
+        return Core::Graphics::EBufferMode::None;
     case D3D11_CPU_ACCESS_READ:
-        return Core::Graphics::BufferMode::Read;
+        return Core::Graphics::EBufferMode::Read;
     case D3D11_CPU_ACCESS_WRITE:
-        return Core::Graphics::BufferMode::Write;
+        return Core::Graphics::EBufferMode::Write;
     case D3D11_CPU_ACCESS_READ|D3D11_CPU_ACCESS_WRITE:
-        return Core::Graphics::BufferMode::ReadWrite;
+        return Core::Graphics::EBufferMode::ReadWrite;
     }
     AssertNotImplemented();
-    return static_cast<Graphics::BufferMode>(-1);
+    return static_cast<Graphics::EBufferMode>(-1);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-::D3D11_USAGE BufferUsageToDX11Usage(BufferUsage value) {
+::D3D11_USAGE BufferUsageToDX11Usage(EBufferUsage value) {
     switch (value)
     {
-    case Core::Graphics::BufferUsage::Default:
+    case Core::Graphics::EBufferUsage::Default:
         return D3D11_USAGE_DEFAULT;
-    case Core::Graphics::BufferUsage::Immutable:
+    case Core::Graphics::EBufferUsage::Immutable:
         return D3D11_USAGE_IMMUTABLE;
-    case Core::Graphics::BufferUsage::Dynamic:
+    case Core::Graphics::EBufferUsage::Dynamic:
         return D3D11_USAGE_DYNAMIC;
-    case Core::Graphics::BufferUsage::Staging:
+    case Core::Graphics::EBufferUsage::Staging:
         return D3D11_USAGE_STAGING;
     }
     AssertNotImplemented();
     return static_cast<::D3D11_USAGE>(-1);
 }
 //----------------------------------------------------------------------------
-BufferUsage DX11UsageToBufferUsage(D3D11_USAGE value) {
+EBufferUsage DX11UsageToBufferUsage(D3D11_USAGE value) {
     switch (value)
     {
     case D3D11_USAGE_DEFAULT:
-        return Core::Graphics::BufferUsage::Default;
+        return Core::Graphics::EBufferUsage::Default;
     case D3D11_USAGE_IMMUTABLE:
-        return Core::Graphics::BufferUsage::Immutable;
+        return Core::Graphics::EBufferUsage::Immutable;
     case D3D11_USAGE_DYNAMIC:
-        return Core::Graphics::BufferUsage::Dynamic;
+        return Core::Graphics::EBufferUsage::Dynamic;
     case D3D11_USAGE_STAGING:
-        return Core::Graphics::BufferUsage::Staging;
+        return Core::Graphics::EBufferUsage::Staging;
     }
     AssertNotImplemented();
-    return static_cast<Graphics::BufferUsage>(-1);
+    return static_cast<Graphics::EBufferUsage>(-1);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-::D3D11_BIND_FLAG DeviceResourceTypeToDX11BindFlag(DeviceResourceType value) {
+::D3D11_BIND_FLAG DeviceResourceTypeToDX11BindFlag(EDeviceResourceType value) {
     switch (value)
     {
-    case Core::Graphics::DeviceResourceType::Constants:
+    case Core::Graphics::EDeviceResourceType::Constants:
         return D3D11_BIND_CONSTANT_BUFFER;
-    case Core::Graphics::DeviceResourceType::Indices:
+    case Core::Graphics::EDeviceResourceType::Indices:
         return D3D11_BIND_INDEX_BUFFER;
-    case Core::Graphics::DeviceResourceType::RenderTarget:
+    case Core::Graphics::EDeviceResourceType::FRenderTarget:
         return D3D11_BIND_RENDER_TARGET;
-    case Core::Graphics::DeviceResourceType::ShaderProgram:
+    case Core::Graphics::EDeviceResourceType::FShaderProgram:
         return D3D11_BIND_SHADER_RESOURCE;
-    case Core::Graphics::DeviceResourceType::Vertices:
+    case Core::Graphics::EDeviceResourceType::Vertices:
         return D3D11_BIND_VERTEX_BUFFER;
 
     default:
         AssertNotImplemented();
-        CORE_THROW_IT(DeviceEncapsulatorException("DX11: unsupported resource type", nullptr));
+        CORE_THROW_IT(FDeviceEncapsulatorException("DX11: unsupported resource type", nullptr));
     }
 }
 //----------------------------------------------------------------------------
-DeviceResourceType DX11BindFlagToDeviceResourceType(::D3D11_BIND_FLAG value) {
+EDeviceResourceType DX11BindFlagToDeviceResourceType(::D3D11_BIND_FLAG value) {
     switch (value)
     {
     case D3D11_BIND_CONSTANT_BUFFER:
-        return Core::Graphics::DeviceResourceType::Constants;
+        return Core::Graphics::EDeviceResourceType::Constants;
     case D3D11_BIND_INDEX_BUFFER:
-        return Core::Graphics::DeviceResourceType::Indices;
+        return Core::Graphics::EDeviceResourceType::Indices;
     case D3D11_BIND_RENDER_TARGET:
-        return Core::Graphics::DeviceResourceType::RenderTarget;
+        return Core::Graphics::EDeviceResourceType::FRenderTarget;
     case D3D11_BIND_SHADER_RESOURCE:
-        return Core::Graphics::DeviceResourceType::ShaderProgram;
+        return Core::Graphics::EDeviceResourceType::FShaderProgram;
     case D3D11_BIND_VERTEX_BUFFER:
-        return Core::Graphics::DeviceResourceType::Vertices;
+        return Core::Graphics::EDeviceResourceType::Vertices;
     default:
         AssertNotImplemented();
     }
-    return static_cast<Graphics::DeviceResourceType>(-1);
+    return static_cast<Graphics::EDeviceResourceType>(-1);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

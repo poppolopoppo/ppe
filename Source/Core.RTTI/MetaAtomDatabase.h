@@ -14,37 +14,37 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Name;
+class FName;
 FWD_REFPTR(MetaAtom);
 FWD_REFPTR(MetaObject);
 //----------------------------------------------------------------------------
-class MetaAtomHashMap {
+class FMetaAtomHashMap {
 public:
-    MetaAtomHashMap();
-    ~MetaAtomHashMap();
+    FMetaAtomHashMap();
+    ~FMetaAtomHashMap();
 
-    MetaAtomHashMap(const MetaAtomHashMap&) = delete;
-    MetaAtomHashMap& operator =(const MetaAtomHashMap&) = delete;
+    FMetaAtomHashMap(const FMetaAtomHashMap&) = delete;
+    FMetaAtomHashMap& operator =(const FMetaAtomHashMap&) = delete;
 
-    void Add(const RTTI::Name& name, MetaAtom *metaAtom, bool allowOverride);
-    void Remove(const RTTI::Name& name, MetaAtom *metaAtom);
+    void Add(const FName& name, FMetaAtom *metaAtom, bool allowOverride);
+    void Remove(const FName& name, FMetaAtom *metaAtom);
 
-    void Add(MetaObject *object);
-    void Remove(MetaObject *object);
+    void Add(FMetaObject *object);
+    void Remove(FMetaObject *object);
 
-    MetaAtom *GetIFP(const RTTI::Name& name) const;
+    FMetaAtom *GetIFP(const FName& name) const;
 
     void Clear();
 
 private:
-    ReadWriteLock _barrier;
-    HASHMAP(RTTI, RTTI::Name, PMetaAtom) _objects;
+    FReadWriteLock _barrier;
+    HASHMAP(RTTI, FName, PMetaAtom) _objects;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MetaAtomDatabase : Meta::Singleton<MetaAtomHashMap, MetaAtomDatabase> {
-    typedef Meta::Singleton<MetaAtomHashMap, MetaAtomDatabase> parent_type;
+class FMetaAtomDatabase : Meta::TSingleton<FMetaAtomHashMap, FMetaAtomDatabase> {
+    typedef Meta::TSingleton<FMetaAtomHashMap, FMetaAtomDatabase> parent_type;
 public:
     using parent_type::Instance;
     using parent_type::HasInstance;

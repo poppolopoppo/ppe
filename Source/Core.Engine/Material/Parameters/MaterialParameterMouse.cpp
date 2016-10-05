@@ -21,7 +21,7 @@ namespace MaterialParameterMouse {
 //----------------------------------------------------------------------------
 EACH_MATERIALPARAMETER_MOUSE(MATERIALPARAMETER_FN_DEF)
 //----------------------------------------------------------------------------
-void RegisterMaterialParameters(MaterialDatabase *database) {
+void RegisterMaterialParameters(FMaterialDatabase *database) {
     Assert(database);
 
 #define BIND_MATERIALPARAMETER(_Variability, _Type, _Name) \
@@ -38,7 +38,7 @@ void RegisterMaterialParameters(MaterialDatabase *database) {
 //----------------------------------------------------------------------------
 namespace MaterialParameterMouse {
 //----------------------------------------------------------------------------
-void MousePosition(const MaterialParameterContext& context, float4& dst) {
+void MousePosition(const FMaterialParameterContext& context, float4& dst) {
     ENGINESERVICE_PROVIDE(IMouseService, mouseService, context.Scene->World()->ServiceProvider());
 
     dst.x() = float(mouseService->MouseInputHandler()->ClientX());
@@ -47,13 +47,13 @@ void MousePosition(const MaterialParameterContext& context, float4& dst) {
     dst.w() = mouseService->MouseInputHandler()->RelativeY();
 }
 //----------------------------------------------------------------------------
-void MouseButtons(const MaterialParameterContext& context, float4& dst) {
+void MouseButtons(const FMaterialParameterContext& context, float4& dst) {
     ENGINESERVICE_PROVIDE(IMouseService, mouseService, context.Scene->World()->ServiceProvider());
 
-    dst.x() = mouseService->MouseInputHandler()->IsButtonPressed(MouseButton::Button0) ? 1.0f : 0.0f;
-    dst.y() = mouseService->MouseInputHandler()->IsButtonPressed(MouseButton::Button1) ? 1.0f : 0.0f;
-    dst.z() = mouseService->MouseInputHandler()->IsButtonPressed(MouseButton::Button2) ? 1.0f : 0.0f;
-    dst.w() = mouseService->MouseInputHandler()->IsButtonPressed(MouseButton::Wheel)   ? 1.0f : 0.0f;
+    dst.x() = mouseService->MouseInputHandler()->IsButtonPressed(EMouseButton::Button0) ? 1.0f : 0.0f;
+    dst.y() = mouseService->MouseInputHandler()->IsButtonPressed(EMouseButton::Button1) ? 1.0f : 0.0f;
+    dst.z() = mouseService->MouseInputHandler()->IsButtonPressed(EMouseButton::Button2) ? 1.0f : 0.0f;
+    dst.w() = mouseService->MouseInputHandler()->IsButtonPressed(EMouseButton::Wheel)   ? 1.0f : 0.0f;
 }
 //----------------------------------------------------------------------------
 } //!MaterialParameterMouse

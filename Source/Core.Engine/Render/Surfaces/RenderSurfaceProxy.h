@@ -14,15 +14,15 @@ namespace Engine {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(RenderSurfaceProxy);
-class RenderSurfaceProxy : public AbstractRenderSurface {
+class FRenderSurfaceProxy : public FAbstractRenderSurface {
 public:
-    RenderSurfaceProxy( String&& name,
-                        AbstractRenderSurface *renderTargetSurfaceIFN,
-                        AbstractRenderSurface *depthStencilSurfaceIFN );
-    virtual ~RenderSurfaceProxy();
+    FRenderSurfaceProxy( FString&& name,
+                        FAbstractRenderSurface *renderTargetSurfaceIFN,
+                        FAbstractRenderSurface *depthStencilSurfaceIFN );
+    virtual ~FRenderSurfaceProxy();
 
-    const AbstractRenderSurface *RenderTargetSurface() const { return _renderTargetSurface; }
-    const AbstractRenderSurface *DepthStencilSurface() const { return _depthStencilSurface; }
+    const FAbstractRenderSurface *RenderTargetSurface() const { return _renderTargetSurface; }
+    const FAbstractRenderSurface *DepthStencilSurface() const { return _depthStencilSurface; }
 
     SINGLETON_POOL_ALLOCATED_DECL();
 

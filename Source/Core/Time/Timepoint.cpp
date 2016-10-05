@@ -15,31 +15,31 @@ namespace Core {
 namespace {
     // Retrieves QPC frequency one time per run
 
-    struct QueryPerformanceCounterContext {
-        QueryPerformanceCounterContext();
+    struct FQueryPerformanceCounterContext {
+        FQueryPerformanceCounterContext();
         LARGE_INTEGER Frequency;
-        STATIC_ASSERT(sizeof(LARGE_INTEGER) == sizeof(Timepoint));
+        STATIC_ASSERT(sizeof(LARGE_INTEGER) == sizeof(FTimepoint));
     };
 
-    QueryPerformanceCounterContext::QueryPerformanceCounterContext() {
+    FQueryPerformanceCounterContext::FQueryPerformanceCounterContext() {
         QueryPerformanceFrequency(&Frequency);
     }
 
-    static const QueryPerformanceCounterContext gQPC_Context;
+    static const FQueryPerformanceCounterContext gQPC_Context;
 } //!namespace
 //----------------------------------------------------------------------------
-Timepoint Timepoint::Now() {
+FTimepoint FTimepoint::Now() {
     LARGE_INTEGER now;
     QueryPerformanceCounter(&now);
     return *reinterpret_cast<const value_type *>(&now);
 }
 //----------------------------------------------------------------------------
-Timepoint::value_type Timepoint::Ticks(const Timespan& duration) {
+FTimepoint::value_type FTimepoint::Ticks(const Timespan& duration) {
     const double d = (duration.Value() * gQPC_Context.Frequency.QuadPart)/1000000;
-    return static_cast<Timepoint::value_type>(d);
+    return static_cast<FTimepoint::value_type>(d);
 }
 //----------------------------------------------------------------------------
-Timespan Timepoint::Duration(const Timepoint& start, const Timepoint& stop) {
+Timespan FTimepoint::Duration(const FTimepoint& start, const FTimepoint& stop) {
     LARGE_INTEGER elapsedMicroS;
     elapsedMicroS.QuadPart = reinterpret_cast<const LARGE_INTEGER *>(&stop)->QuadPart -
                              reinterpret_cast<const LARGE_INTEGER *>(&start)->QuadPart;

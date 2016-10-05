@@ -8,23 +8,23 @@
 namespace Core {
 namespace Graphics {
 class IDeviceAPIEncapsulator;
-enum class BufferMode : u32;
-enum class BufferUsage : u32;
-enum class DeviceResourceType;
+enum class EBufferMode : u32;
+enum class EBufferUsage : u32;
+enum class EDeviceResourceType;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 bool DX11ResourceGetData(   IDeviceAPIEncapsulator *device,
                             ::ID3D11Resource *resource, size_t subResource,
                             size_t offset, void *const dst, size_t stride, size_t count,
-                            BufferMode bufferMode,
-                            BufferUsage bufferUsage );
+                            EBufferMode bufferMode,
+                            EBufferUsage bufferUsage );
 //----------------------------------------------------------------------------
 bool DX11ResourceSetData(   IDeviceAPIEncapsulator *device,
                             ::ID3D11Resource *resource, size_t subResource,
                             size_t offset, const void *src, size_t stride, size_t count,
-                            BufferMode bufferMode,
-                            BufferUsage bufferUsage );
+                            EBufferMode bufferMode,
+                            EBufferUsage bufferUsage );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

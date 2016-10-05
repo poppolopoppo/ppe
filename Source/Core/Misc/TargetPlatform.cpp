@@ -8,53 +8,53 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static const TargetPlatform gTargetPlatforms[] = {
-    TargetPlatform::PC,
-    TargetPlatform::PS4,
-    TargetPlatform::XONE,
-    TargetPlatform::MAC
+static const ETargetPlatform gTargetPlatforms[] = {
+    ETargetPlatform::PC,
+    ETargetPlatform::PS4,
+    ETargetPlatform::XONE,
+    ETargetPlatform::MAC
 };
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-MemoryView<const TargetPlatform> EachTargetPlatform() {
+TMemoryView<const ETargetPlatform> EachTargetPlatform() {
     return MakeView(gTargetPlatforms);
 }
 //----------------------------------------------------------------------------
-StringView TargetPlatformToCStr(TargetPlatform platform) {
+FStringView TargetPlatformToCStr(ETargetPlatform platform) {
     switch (platform)
     {
-    case Core::TargetPlatform::PC:
-        return StringView("PC");
-    case Core::TargetPlatform::PS4:
-        return StringView("PS4");
-    case Core::TargetPlatform::XONE:
-        return StringView("XONE");
-    case Core::TargetPlatform::MAC:
-        return StringView("MAC");
+    case Core::ETargetPlatform::PC:
+        return FStringView("PC");
+    case Core::ETargetPlatform::PS4:
+        return FStringView("PS4");
+    case Core::ETargetPlatform::XONE:
+        return FStringView("XONE");
+    case Core::ETargetPlatform::MAC:
+        return FStringView("MAC");
     default:
         AssertNotImplemented();
     }
-    return StringView();
+    return FStringView();
 }
 //----------------------------------------------------------------------------
-Endianness TargetPlatformEndianness(TargetPlatform platform) {
+EEndianness TargetPlatformEndianness(ETargetPlatform platform) {
     switch (platform)
     {
-    case Core::TargetPlatform::PC:
-        return Endianness::LittleEndian;
-    case Core::TargetPlatform::PS4:
-        return Endianness::LittleEndian;
-    case Core::TargetPlatform::XONE:
-        return Endianness::LittleEndian;
-    case Core::TargetPlatform::MAC:
-        return Endianness::LittleEndian;
+    case Core::ETargetPlatform::PC:
+        return EEndianness::LittleEndian;
+    case Core::ETargetPlatform::PS4:
+        return EEndianness::LittleEndian;
+    case Core::ETargetPlatform::XONE:
+        return EEndianness::LittleEndian;
+    case Core::ETargetPlatform::MAC:
+        return EEndianness::LittleEndian;
     default:
         AssertNotImplemented();
     }
-    return Endianness::LittleEndian;
+    return EEndianness::LittleEndian;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

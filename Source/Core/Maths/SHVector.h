@@ -14,21 +14,21 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <size_t _Dim>
-class SHVector {
+class TSHVector {
 public:
     STATIC_ASSERT(0 < _Dim);
     enum : size_t { Dim = _Dim };
-    typedef SHCoefficient<_Dim> shcoefficient_type;
+    typedef TSHCoefficient<_Dim> shcoefficient_type;
 
-    explicit SHVector(size_t bands);
-    ~SHVector();
+    explicit TSHVector(size_t bands);
+    ~TSHVector();
 
-    SHVector(const SHVector& ) = delete;
-    SHVector& operator =(const SHVector& ) = delete;
+    TSHVector(const TSHVector& ) = delete;
+    TSHVector& operator =(const TSHVector& ) = delete;
 
     size_t Bands() const { return _bands; }
 
-    MemoryView<shcoefficient_type> Coefficients() { return MakeView(_coefficients.begin(), _coefficients.end()); }
+    TMemoryView<shcoefficient_type> Coefficients() { return MakeView(_coefficients.begin(), _coefficients.end()); }
     const RAWSTORAGE(Maths, shcoefficient_type)& Coefficients() const { return _coefficients; }
 
     void Reset(SHScalar broadcast = 0);

@@ -48,19 +48,19 @@ static const size_t IOWorkerThreadAffinities[MaxIOWorkerCount_] = {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void GlobalThreadPool::Create() {
+void FGlobalThreadPool::Create() {
     const size_t count = GlobalWorkerCount_();
-    parent_type::Create("GlobalThreadPool", CORE_THREADTAG_WORKER, count);
+    parent_type::Create("FGlobalThreadPool", CORE_THREADTAG_WORKER, count);
     parent_type::Instance().Start(MakeView(GlobalWorkerThreadAffinities).CutBefore(count));
 }
 //----------------------------------------------------------------------------
-void GlobalThreadPool::Destroy() {
+void FGlobalThreadPool::Destroy() {
     parent_type::Instance().Shutdown();
     parent_type::Destroy();
 }
 //----------------------------------------------------------------------------
-void AsyncWork(const TaskDelegate& task, TaskPriority priority /* = TaskPriority::Normal */) {
-    GlobalThreadPool::Instance().Run(task, priority);
+void AsyncWork(const TaskDelegate& task, ETaskPriority priority /* = ETaskPriority::Normal */) {
+    FGlobalThreadPool::Instance().Run(task, priority);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -77,20 +77,20 @@ void IOThreadPool::Destroy() {
     parent_type::Destroy();
 }
 //----------------------------------------------------------------------------
-void AsyncIO(const TaskDelegate& task, TaskPriority priority /* = TaskPriority::Normal */) {
+void AsyncIO(const TaskDelegate& task, ETaskPriority priority /* = ETaskPriority::Normal */) {
     IOThreadPool::Instance().Run(task, priority);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void ThreadPoolStartup::Start() {
-    GlobalThreadPool::Create();
+void FThreadPoolStartup::Start() {
+    FGlobalThreadPool::Create();
     IOThreadPool::Create();
 }
 //----------------------------------------------------------------------------
-void ThreadPoolStartup::Shutdown() {
+void FThreadPoolStartup::Shutdown() {
     IOThreadPool::Destroy();
-    GlobalThreadPool::Destroy();
+    FGlobalThreadPool::Destroy();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -11,20 +11,20 @@
 #include "Core/Container/Vector.h"
 
 namespace Core {
-class Timeline;
+class FTimeline;
 namespace Logic {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class EntityManager {
+class FEntityManager {
 public:
-    EntityManager();
-    ~EntityManager();
+    FEntityManager();
+    ~FEntityManager();
 
-    const ComponentContainer& Components() const { return _components; }
-    const EntityContainer& Entities() const { return _entities; }
-    const EntityTagContainer& Tags() const { return _tags; }
-    const SystemContainer& Systems() const { return _systems; }
+    const FComponentContainer& Components() const { return _components; }
+    const FEntityContainer& Entities() const { return _entities; }
+    const FEntityTagContainer& Tags() const { return _tags; }
+    const FSystemContainer& Systems() const { return _systems; }
 
     void Initialize();
     void Destroy();
@@ -42,22 +42,22 @@ public:
     void AddComponent(ComponentID componentID, EntityID entityID, T&& data);
     void RemoveComponent(ComponentID componentID, EntityID entityID);
 
-    void AddTag(EntityID id, const EntityTag& tag);
-    void RemoveTag(EntityID id, const EntityTag& tag);
+    void AddTag(EntityID id, const FEntityTag& tag);
+    void RemoveTag(EntityID id, const FEntityTag& tag);
 
-    void Update(const Timeline& timeline);
+    void Update(const FTimeline& timeline);
 
     void ShrinkToFit();
     void Clear();
 
 private:
-    ComponentContainer _components;
-    EntityContainer _entities;
-    EntityTagContainer _tags;
-    SystemContainer _systems;
+    FComponentContainer _components;
+    FEntityContainer _entities;
+    FEntityTagContainer _tags;
+    FSystemContainer _systems;
 
-    VECTOR(Entity, EntityID) _deleting;
-    ASSOCIATIVE_VECTOR(Entity, EntityID, ComponentFlag) _refreshing;
+    VECTOR(FEntity, EntityID) _deleting;
+    ASSOCIATIVE_VECTOR(FEntity, EntityID, ComponentFlag) _refreshing;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

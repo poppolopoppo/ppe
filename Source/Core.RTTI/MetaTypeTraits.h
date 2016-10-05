@@ -19,22 +19,22 @@
 #include <type_traits>
 
 namespace Core {
-template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator>
-class Token;
+template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits, typename _Allocator>
+class EToken;
 
 namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-struct MetaTypeTraits;
+struct TMetaTypeTraits;
 //----------------------------------------------------------------------------
 template <typename T, typename _Enabled>
-struct MetaTypeTraitsImpl {
+struct TMetaTypeTraitsImpl {
     typedef T wrapped_type;
     typedef T wrapper_type;
 
-    typedef MetaType<T> meta_type;
+    typedef TMetaType<T> meta_type;
     static_assert(meta_type::Enabled, "T is not supported by RTTI");
 
     static const auto* VirtualTraits() = delete;
@@ -51,11 +51,11 @@ struct MetaTypeTraitsImpl {
 };
 //----------------------------------------------------------------------------
 template <typename T>
-struct MetaTypeTraitsDefault {
+struct TMetaTypeTraitsDefault {
     typedef T wrapped_type;
     typedef T wrapper_type;
 
-    typedef MetaType<T> meta_type;
+    typedef TMetaType<T> meta_type;
     static_assert(meta_type::Enabled, "T is not supported by RTTI");
 
     static const auto* VirtualTraits() { return meta_type::VirtualTraits(); }
@@ -76,15 +76,15 @@ struct MetaTypeTraitsDefault {
 // Enums:
 //----------------------------------------------------------------------------
 template <typename T>
-struct MetaTypeTraitsImpl< T, typename std::enable_if< std::is_enum<T>::value >::type > {
+struct TMetaTypeTraitsImpl< T, typename std::enable_if< std::is_enum<T>::value >::type > {
     typedef T wrapped_type;
     typedef typename std::conditional<sizeof(T) < sizeof(u64), u32, u64>::type wrapper_type;
     STATIC_ASSERT(sizeof(T) <= sizeof(u64));
 
-    typedef MetaType< wrapper_type > meta_type;
+    typedef TMetaType< wrapper_type > meta_type;
 
-    static const MetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
-        return MetaTypeScalarTraits< wrapper_type >::Instance();
+    static const TMetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
+        return TMetaTypeScalarTraits< wrapper_type >::Instance();
     }
 
     static bool IsDefaultValue(const wrapped_type& value) { return (wrapped_type() == value); }
@@ -101,14 +101,14 @@ struct MetaTypeTraitsImpl< T, typename std::enable_if< std::is_enum<T>::value >:
 // Strongly typed numeric:
 //----------------------------------------------------------------------------
 template <typename T, typename _Tag, T _DefaultValue >
-struct MetaTypeTraitsImpl< StronglyTyped::Numeric<T, _Tag, _DefaultValue> > {
-    typedef StronglyTyped::Numeric<T, _Tag, _DefaultValue> wrapped_type;
+struct TMetaTypeTraitsImpl< StronglyTyped::TNumeric<T, _Tag, _DefaultValue> > {
+    typedef StronglyTyped::TNumeric<T, _Tag, _DefaultValue> wrapped_type;
     typedef T wrapper_type;
 
-    typedef MetaType< wrapper_type > meta_type;
+    typedef TMetaType< wrapper_type > meta_type;
 
-    static const MetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
-        return MetaTypeScalarTraits< wrapper_type >::Instance();
+    static const TMetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
+        return TMetaTypeScalarTraits< wrapper_type >::Instance();
     }
 
     static bool IsDefaultValue(const wrapped_type& value) { return meta_type::IsDefaultValue(value.Value); }
@@ -125,15 +125,15 @@ struct MetaTypeTraitsImpl< StronglyTyped::Numeric<T, _Tag, _DefaultValue> > {
 // Quantized float
 //----------------------------------------------------------------------------
 template <typename T, typename _Traits>
-struct MetaTypeTraitsImpl< BasicNorm<T, _Traits> > {
-    typedef BasicNorm<T, _Traits> wrapped_type;
+struct TMetaTypeTraitsImpl< TBasicNorm<T, _Traits> > {
+    typedef TBasicNorm<T, _Traits> wrapped_type;
     typedef T wrapper_type;
 
-    typedef MetaType< wrapper_type > meta_type;
-    STATIC_ASSERT(MetaType< wrapper_type >::Enabled);
+    typedef TMetaType< wrapper_type > meta_type;
+    STATIC_ASSERT(TMetaType< wrapper_type >::Enabled);
 
-    static const MetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
-        return MetaTypeScalarTraits< wrapper_type >::Instance();
+    static const TMetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
+        return TMetaTypeScalarTraits< wrapper_type >::Instance();
     }
 
     static bool IsDefaultValue(const wrapped_type& value) { return wrapped_type::DefaultValue() == value; }
@@ -152,14 +152,14 @@ struct MetaTypeTraitsImpl< BasicNorm<T, _Traits> > {
 // MetaObjects :
 //----------------------------------------------------------------------------
 template <typename T>
-struct MetaTypeTraitsImpl< Core::RefPtr<T>, typename std::enable_if< std::is_base_of<RTTI::MetaObject, T>::value >::type > {
-    typedef Core::RefPtr<T> wrapped_type;
+struct TMetaTypeTraitsImpl< Core::TRefPtr<T>, typename std::enable_if< std::is_base_of<RTTI::FMetaObject, T>::value >::type > {
+    typedef Core::TRefPtr<T> wrapped_type;
     typedef PMetaObject wrapper_type;
 
-    typedef MetaType< wrapper_type > meta_type;
+    typedef TMetaType< wrapper_type > meta_type;
 
-    static const MetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
-        return MetaTypeScalarTraits< wrapper_type >::Instance();
+    static const TMetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
+        return TMetaTypeScalarTraits< wrapper_type >::Instance();
     }
 
     static bool IsDefaultValue(const wrapped_type& value) { return (nullptr == value.get()); }
@@ -180,14 +180,14 @@ struct MetaTypeTraitsImpl< Core::RefPtr<T>, typename std::enable_if< std::is_bas
 // Strings :
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits, typename _Allocator>
-struct MetaTypeTraitsImpl< std::basic_string<_Char, _Traits, _Allocator> > {
+struct TMetaTypeTraitsImpl< std::basic_string<_Char, _Traits, _Allocator> > {
     typedef std::basic_string<_Char, _Traits, _Allocator> wrapped_type;
-    typedef BasicString<_Char> wrapper_type;
+    typedef TBasicString<_Char> wrapper_type;
 
-    typedef MetaType< wrapper_type > meta_type;
+    typedef TMetaType< wrapper_type > meta_type;
 
-    static const MetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
-        return MetaTypeScalarTraits< wrapper_type >::Instance();
+    static const TMetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
+        return TMetaTypeScalarTraits< wrapper_type >::Instance();
     }
 
     static bool IsDefaultValue(const wrapped_type& value) { return value.empty(); }
@@ -201,15 +201,15 @@ struct MetaTypeTraitsImpl< std::basic_string<_Char, _Traits, _Allocator> > {
     static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src);
 };
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator>
-struct MetaTypeTraitsImpl< Core::Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> > {
-    typedef Core::Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> wrapped_type;
-    typedef BasicString<_Char> wrapper_type;
+template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits, typename _Allocator>
+struct TMetaTypeTraitsImpl< Core::EToken<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> > {
+    typedef Core::EToken<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> wrapped_type;
+    typedef TBasicString<_Char> wrapper_type;
 
-    typedef MetaType< wrapper_type > meta_type;
+    typedef TMetaType< wrapper_type > meta_type;
 
-    static const MetaTypeScalarTraits< wrapper_type >*VirtualTraits() {
-        return MetaTypeScalarTraits< wrapper_type >::Instance();
+    static const TMetaTypeScalarTraits< wrapper_type >*VirtualTraits() {
+        return TMetaTypeScalarTraits< wrapper_type >::Instance();
     }
 
     static bool IsDefaultValue(const wrapped_type& value) { return value.empty(); }
@@ -228,18 +228,18 @@ struct MetaTypeTraitsImpl< Core::Token<_Tag, _Char, _Sensitive, _TokenTraits, _A
 // Vectors :
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-struct MetaTypeTraitsImpl< Core::Vector<T, _Allocator> > {
-    typedef Core::Vector<T, _Allocator> wrapped_type;
+struct TMetaTypeTraitsImpl< Core::TVector<T, _Allocator> > {
+    typedef Core::TVector<T, _Allocator> wrapped_type;
 
-    typedef MetaTypeTraits<T> value_traits;
+    typedef TMetaTypeTraits<T> value_traits;
     typedef typename value_traits::wrapper_type value_wrapper_type;
 
-    typedef RTTI::Vector< typename value_traits::wrapper_type > wrapper_type;
+    typedef RTTI::TVector< typename value_traits::wrapper_type > wrapper_type;
 
-    typedef MetaType< wrapper_type > meta_type;
+    typedef TMetaType< wrapper_type > meta_type;
 
-    static const MetaTypeVectorTraits< value_wrapper_type > *VirtualTraits() {
-        return MetaTypeVectorTraits< value_wrapper_type >::Instance();
+    static const TMetaTypeVectorTraits< value_wrapper_type > *VirtualTraits() {
+        return TMetaTypeVectorTraits< value_wrapper_type >::Instance();
     }
 
     static bool IsDefaultValue(const wrapped_type& value) { return value.empty(); }
@@ -254,18 +254,18 @@ struct MetaTypeTraitsImpl< Core::Vector<T, _Allocator> > {
 };
 //----------------------------------------------------------------------------
 template <typename T, size_t _InSituCount, typename _Allocator>
-struct MetaTypeTraitsImpl< Core::VectorInSitu<T, _InSituCount, _Allocator> > {
-    typedef Core::VectorInSitu<T, _InSituCount, _Allocator> wrapped_type;
+struct TMetaTypeTraitsImpl< Core::TVectorInSitu<T, _InSituCount, _Allocator> > {
+    typedef Core::TVectorInSitu<T, _InSituCount, _Allocator> wrapped_type;
 
-    typedef MetaTypeTraits<T> value_traits;
+    typedef TMetaTypeTraits<T> value_traits;
     typedef typename value_traits::wrapper_type value_wrapper_type;
 
-    typedef RTTI::Vector<value_wrapper_type> wrapper_type;
+    typedef RTTI::TVector<value_wrapper_type> wrapper_type;
 
-    typedef MetaType< wrapper_type > meta_type;
+    typedef TMetaType< wrapper_type > meta_type;
 
-    static const MetaTypeVectorTraits< value_wrapper_type > *VirtualTraits() {
-        return MetaTypeVectorTraits< value_wrapper_type >::Instance();
+    static const TMetaTypeVectorTraits< value_wrapper_type > *VirtualTraits() {
+        return TMetaTypeVectorTraits< value_wrapper_type >::Instance();
     }
 
     static bool IsDefaultValue(const wrapped_type& value) { return value.empty(); }
@@ -284,21 +284,21 @@ struct MetaTypeTraitsImpl< Core::VectorInSitu<T, _InSituCount, _Allocator> > {
 // Pairs :
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
-struct MetaTypeTraitsImpl< Core::Pair<_First, _Second> > {
-    typedef Core::Pair<_First, _Second> wrapped_type;
+struct TMetaTypeTraitsImpl< Core::TPair<_First, _Second> > {
+    typedef Core::TPair<_First, _Second> wrapped_type;
 
-    typedef MetaTypeTraits< typename std::decay<_First>::type > first_traits;
-    typedef MetaTypeTraits< typename std::decay<_Second>::type > second_traits;
+    typedef TMetaTypeTraits< typename std::decay<_First>::type > first_traits;
+    typedef TMetaTypeTraits< typename std::decay<_Second>::type > second_traits;
 
     typedef typename first_traits::wrapper_type first_wrapper_type;
     typedef typename second_traits::wrapper_type second_wrapper_type;
 
-    typedef RTTI::Pair<first_wrapper_type, second_wrapper_type> wrapper_type;
+    typedef RTTI::TPair<first_wrapper_type, second_wrapper_type> wrapper_type;
 
-    typedef MetaType< wrapper_type > meta_type;
+    typedef TMetaType< wrapper_type > meta_type;
 
-    static const MetaTypePairTraits< first_wrapper_type, second_wrapper_type > *VirtualTraits() {
-        return MetaTypePairTraits< first_wrapper_type, second_wrapper_type >::Instance();
+    static const TMetaTypePairTraits< first_wrapper_type, second_wrapper_type > *VirtualTraits() {
+        return TMetaTypePairTraits< first_wrapper_type, second_wrapper_type >::Instance();
     }
 
     static bool IsDefaultValue(const wrapped_type& value) {
@@ -323,21 +323,21 @@ struct MetaTypeTraitsImpl< Core::Pair<_First, _Second> > {
 // Associative Containers :
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-struct MetaTypeTraitsImpl< Core::AssociativeVector<_Key, _Value, _EqualTo, _Vector> > {
-    typedef Core::AssociativeVector<_Key, _Value, _EqualTo, _Vector> wrapped_type;
+struct TMetaTypeTraitsImpl< Core::TAssociativeVector<_Key, _Value, _EqualTo, _Vector> > {
+    typedef Core::TAssociativeVector<_Key, _Value, _EqualTo, _Vector> wrapped_type;
 
-    typedef MetaTypeTraits< typename std::decay<_Key>::type > key_traits;
-    typedef MetaTypeTraits< typename std::decay<_Value>::type > value_traits;
+    typedef TMetaTypeTraits< typename std::decay<_Key>::type > key_traits;
+    typedef TMetaTypeTraits< typename std::decay<_Value>::type > value_traits;
 
     typedef typename key_traits::wrapper_type key_wrapper_type;
     typedef typename value_traits::wrapper_type value_wrapper_type;
 
-    typedef RTTI::Dictionary<key_wrapper_type, value_wrapper_type> wrapper_type;
+    typedef RTTI::TDictionary<key_wrapper_type, value_wrapper_type> wrapper_type;
 
-    typedef MetaType< wrapper_type > meta_type;
+    typedef TMetaType< wrapper_type > meta_type;
 
-    static const MetaTypeDictionaryTraits< key_wrapper_type, value_wrapper_type > *VirtualTraits() {
-        return MetaTypeDictionaryTraits< key_wrapper_type, value_wrapper_type >::Instance();
+    static const TMetaTypeDictionaryTraits< key_wrapper_type, value_wrapper_type > *VirtualTraits() {
+        return TMetaTypeDictionaryTraits< key_wrapper_type, value_wrapper_type >::Instance();
     }
 
     static bool IsDefaultValue(const wrapped_type& value) { return value.empty(); }
@@ -352,22 +352,22 @@ struct MetaTypeTraitsImpl< Core::AssociativeVector<_Key, _Value, _EqualTo, _Vect
 };
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
-struct MetaTypeTraitsImpl< Core::HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator> > {
-    typedef Core::HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator> wrapped_type;
+struct TMetaTypeTraitsImpl< Core::THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator> > {
+    typedef Core::THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator> wrapped_type;
 
-    typedef MetaTypeTraits< typename std::decay<_Key>::type > key_traits;
-    typedef MetaTypeTraits< typename std::decay<_Value>::type > value_traits;
-    typedef MetaTypeTraits< Pair<_Key, _Value> > pair_traits;
+    typedef TMetaTypeTraits< typename std::decay<_Key>::type > key_traits;
+    typedef TMetaTypeTraits< typename std::decay<_Value>::type > value_traits;
+    typedef TMetaTypeTraits< TPair<_Key, _Value> > pair_traits;
 
     typedef typename key_traits::wrapper_type key_wrapper_type;
     typedef typename value_traits::wrapper_type value_wrapper_type;
 
-    typedef RTTI::Dictionary<key_wrapper_type, value_wrapper_type> wrapper_type;
+    typedef RTTI::TDictionary<key_wrapper_type, value_wrapper_type> wrapper_type;
 
-    typedef MetaType< wrapper_type > meta_type;
+    typedef TMetaType< wrapper_type > meta_type;
 
-    static const MetaTypeDictionaryTraits< key_wrapper_type, value_wrapper_type > *VirtualTraits() {
-        return MetaTypeDictionaryTraits< key_wrapper_type, value_wrapper_type >::Instance();
+    static const TMetaTypeDictionaryTraits< key_wrapper_type, value_wrapper_type > *VirtualTraits() {
+        return TMetaTypeDictionaryTraits< key_wrapper_type, value_wrapper_type >::Instance();
     }
 
     static bool IsDefaultValue(const wrapped_type& value) { return value.empty(); }
@@ -386,23 +386,23 @@ struct MetaTypeTraitsImpl< Core::HashMap<_Key, _Value, _Hasher, _EqualTo, _Alloc
 // Maths :
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-struct MetaTypeTraitsImpl< Core::ScalarVector<T, _Dim>, typename std::enable_if< not MetaType<Core::ScalarVector<T, _Dim>>::Enabled >::type > {
+struct TMetaTypeTraitsImpl< Core::TScalarVector<T, _Dim>, typename std::enable_if< not TMetaType<Core::TScalarVector<T, _Dim>>::Enabled >::type > {
     STATIC_ASSERT(_Dim > 1 && _Dim <= 4);
-    typedef Core::ScalarVector<T, _Dim> wrapped_type;
+    typedef Core::TScalarVector<T, _Dim> wrapped_type;
 
     typedef T value_type;
-    typedef MetaTypeTraits<value_type> value_traits;
+    typedef TMetaTypeTraits<value_type> value_traits;
     typedef typename value_traits::wrapper_type value_wrapper_type;
 
-    typedef ScalarVector<value_wrapper_type, _Dim> wrapper_type;
-    typedef MetaType< wrapper_type > meta_type;
+    typedef TScalarVector<value_wrapper_type, _Dim> wrapper_type;
+    typedef TMetaType< wrapper_type > meta_type;
     STATIC_ASSERT(meta_type::Enabled);
 
-    static const MetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
-        return MetaTypeScalarTraits< wrapper_type >::Instance();
+    static const TMetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
+        return TMetaTypeScalarTraits< wrapper_type >::Instance();
     }
 
-    static bool IsDefaultValue(const wrapped_type& value) { return (NumericLimits<wrapped_type>::DefaultValue() == value); }
+    static bool IsDefaultValue(const wrapped_type& value) { return (TNumericLimits<wrapped_type>::DefaultValue() == value); }
 
     static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) { return lhs == rhs; }
 
@@ -424,19 +424,19 @@ struct MetaTypeTraitsImpl< Core::ScalarVector<T, _Dim>, typename std::enable_if<
 };
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-struct MetaTypeTraitsImpl< Core::ScalarBoundingBox<T, _Dim> > {
+struct TMetaTypeTraitsImpl< Core::TScalarBoundingBox<T, _Dim> > {
     STATIC_ASSERT(_Dim > 1 && _Dim <= 4);
-    typedef Core::ScalarBoundingBox<T, _Dim> wrapped_type;
+    typedef Core::TScalarBoundingBox<T, _Dim> wrapped_type;
 
-    typedef Core::ScalarVector<T, _Dim> value_type;
-    typedef MetaTypeTraits<value_type> value_traits;
+    typedef Core::TScalarVector<T, _Dim> value_type;
+    typedef TMetaTypeTraits<value_type> value_traits;
     typedef typename value_traits::wrapper_type value_wrapper_type;
 
-    typedef RTTI::Pair<value_wrapper_type, value_wrapper_type> wrapper_type;
-    typedef MetaType< wrapper_type > meta_type;
+    typedef RTTI::TPair<value_wrapper_type, value_wrapper_type> wrapper_type;
+    typedef TMetaType< wrapper_type > meta_type;
 
-    static const MetaTypePairTraits< value_wrapper_type, value_wrapper_type > *VirtualTraits() {
-        return MetaTypePairTraits< value_wrapper_type, value_wrapper_type >::Instance();
+    static const TMetaTypePairTraits< value_wrapper_type, value_wrapper_type > *VirtualTraits() {
+        return TMetaTypePairTraits< value_wrapper_type, value_wrapper_type >::Instance();
     }
 
     static bool IsDefaultValue(const wrapped_type& value) { return (wrapped_type::DefaultValue() == value); }
@@ -474,13 +474,13 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 namespace details {
 template <typename T, typename _Enabled = void>
-struct bind_traits_ { typedef MetaTypeTraitsImpl< typename std::decay<T>::type > type; };
+struct bind_traits_ { typedef TMetaTypeTraitsImpl< typename std::decay<T>::type > type; };
 template <typename T >
-struct bind_traits_<T, typename std::enable_if< MetaType< typename std::decay<T>::type >::Enabled >::type> { typedef MetaTypeTraitsDefault< typename std::decay<T>::type > type; };
+struct bind_traits_<T, typename std::enable_if< TMetaType< typename std::decay<T>::type >::Enabled >::type> { typedef TMetaTypeTraitsDefault< typename std::decay<T>::type > type; };
 } //!details
 //----------------------------------------------------------------------------
 template <typename T>
-struct MetaTypeTraits : details::bind_traits_<T>::type {
+struct TMetaTypeTraits : details::bind_traits_<T>::type {
     typedef typename details::bind_traits_<T>::type impl_type;
 
     using typename impl_type::wrapped_type;
@@ -504,14 +504,14 @@ struct MetaTypeTraits : details::bind_traits_<T>::type {
 // fake_bool :
 //----------------------------------------------------------------------------
 template <>
-struct MetaTypeTraitsImpl< fake_bool > {
+struct TMetaTypeTraitsImpl< fake_bool > {
     typedef fake_bool wrapped_type;
     typedef bool wrapper_type;
 
-    typedef MetaType< wrapper_type > meta_type;
+    typedef TMetaType< wrapper_type > meta_type;
 
-    static const MetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
-        return MetaTypeScalarTraits< wrapper_type >::Instance();
+    static const TMetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
+        return TMetaTypeScalarTraits< wrapper_type >::Instance();
     }
 
     static bool IsDefaultValue(const wrapped_type& value) { return fake_bool() == value; }
@@ -528,14 +528,14 @@ struct MetaTypeTraitsImpl< fake_bool > {
 // u128 :
 //----------------------------------------------------------------------------
 template <>
-struct MetaTypeTraitsImpl< u128 > {
+struct TMetaTypeTraitsImpl< u128 > {
     typedef u128 wrapped_type;
-    typedef Pair<u64, u64> wrapper_type;
+    typedef TPair<u64, u64> wrapper_type;
 
-    typedef MetaType< wrapper_type > meta_type;
+    typedef TMetaType< wrapper_type > meta_type;
 
-    static const MetaTypePairTraits< u64, u64 > *VirtualTraits() {
-        return MetaTypePairTraits< u64, u64 >::Instance();
+    static const TMetaTypePairTraits< u64, u64 > *VirtualTraits() {
+        return TMetaTypePairTraits< u64, u64 >::Instance();
     }
 
     static bool IsDefaultValue(const wrapped_type& value) { return 0 == value.lo && 0 == value.hi; }
@@ -549,20 +549,20 @@ struct MetaTypeTraitsImpl< u128 > {
     static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src) { dst.lo = src.first; dst.hi = src.second; }
 };
 //----------------------------------------------------------------------------
-// HalfFloat
+// FHalfFloat
 //----------------------------------------------------------------------------
 template <>
-struct MetaTypeTraitsImpl< HalfFloat > {
-    typedef HalfFloat wrapped_type;
+struct TMetaTypeTraitsImpl< FHalfFloat > {
+    typedef FHalfFloat wrapped_type;
     typedef float wrapper_type;
 
-    typedef MetaType< wrapper_type > meta_type;
+    typedef TMetaType< wrapper_type > meta_type;
 
-    static const MetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
-        return MetaTypeScalarTraits< wrapper_type >::Instance();
+    static const TMetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
+        return TMetaTypeScalarTraits< wrapper_type >::Instance();
     }
 
-    static bool IsDefaultValue(const wrapped_type& value) { return HalfFloat::DefaultValue() == value; }
+    static bool IsDefaultValue(const wrapped_type& value) { return FHalfFloat::DefaultValue() == value; }
 
     static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) { return lhs == rhs; }
 
@@ -576,14 +576,14 @@ struct MetaTypeTraitsImpl< HalfFloat > {
 // UX10Y10Z10W2N
 //----------------------------------------------------------------------------
 template <>
-struct MetaTypeTraitsImpl< UX10Y10Z10W2N > {
+struct TMetaTypeTraitsImpl< UX10Y10Z10W2N > {
     typedef UX10Y10Z10W2N wrapped_type;
     typedef float4 wrapper_type;
 
-    typedef MetaType< wrapper_type > meta_type;
+    typedef TMetaType< wrapper_type > meta_type;
 
-    static const MetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
-        return MetaTypeScalarTraits< wrapper_type >::Instance();
+    static const TMetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
+        return TMetaTypeScalarTraits< wrapper_type >::Instance();
     }
 
     static bool IsDefaultValue(const wrapped_type& value) { return UX10Y10Z10W2N::DefaultValue() == value; }
@@ -602,14 +602,14 @@ struct MetaTypeTraitsImpl< UX10Y10Z10W2N > {
 // FileSystem :
 //----------------------------------------------------------------------------
 template <>
-struct MetaTypeTraitsImpl< Basename > {
-    typedef Basename wrapped_type;
-    typedef BasicString<typename FileSystem::char_type> wrapper_type;
+struct TMetaTypeTraitsImpl< FBasename > {
+    typedef FBasename wrapped_type;
+    typedef TBasicString<typename FileSystem::char_type> wrapper_type;
 
-    typedef MetaType< wrapper_type > meta_type;
+    typedef TMetaType< wrapper_type > meta_type;
 
-    static const MetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
-        return MetaTypeScalarTraits< wrapper_type >::Instance();
+    static const TMetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
+        return TMetaTypeScalarTraits< wrapper_type >::Instance();
     }
 
     static bool IsDefaultValue(const wrapped_type& value) { return value.empty(); }
@@ -624,14 +624,14 @@ struct MetaTypeTraitsImpl< Basename > {
 };
 //----------------------------------------------------------------------------
 template <>
-struct MetaTypeTraitsImpl< Dirpath > {
-    typedef Dirpath wrapped_type;
-    typedef BasicString<FileSystem::char_type> wrapper_type;
+struct TMetaTypeTraitsImpl< FDirpath > {
+    typedef FDirpath wrapped_type;
+    typedef TBasicString<FileSystem::char_type> wrapper_type;
 
-    typedef MetaType< wrapper_type > meta_type;
+    typedef TMetaType< wrapper_type > meta_type;
 
-    static const MetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
-        return MetaTypeScalarTraits< wrapper_type >::Instance();
+    static const TMetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
+        return TMetaTypeScalarTraits< wrapper_type >::Instance();
     }
 
     static bool IsDefaultValue(const wrapped_type& value) { return value.empty(); }
@@ -646,14 +646,14 @@ struct MetaTypeTraitsImpl< Dirpath > {
 };
 //----------------------------------------------------------------------------
 template <>
-struct MetaTypeTraitsImpl< Filename > {
-    typedef Filename wrapped_type;
-    typedef BasicString<FileSystem::char_type> wrapper_type;
+struct TMetaTypeTraitsImpl< FFilename > {
+    typedef FFilename wrapped_type;
+    typedef TBasicString<FileSystem::char_type> wrapper_type;
 
-    typedef MetaType< wrapper_type > meta_type;
+    typedef TMetaType< wrapper_type > meta_type;
 
-    static const MetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
-        return MetaTypeScalarTraits< wrapper_type >::Instance();
+    static const TMetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
+        return TMetaTypeScalarTraits< wrapper_type >::Instance();
     }
 
     static bool IsDefaultValue(const wrapped_type& value) { return value.empty(); }
@@ -672,14 +672,14 @@ struct MetaTypeTraitsImpl< Filename > {
 // Time :
 //----------------------------------------------------------------------------
 template <>
-struct MetaTypeTraitsImpl< DateTime > {
-    typedef DateTime wrapped_type;
+struct TMetaTypeTraitsImpl< FDateTime > {
+    typedef FDateTime wrapped_type;
     typedef u64 wrapper_type;
 
-    typedef MetaType< wrapper_type > meta_type;
+    typedef TMetaType< wrapper_type > meta_type;
 
-    static const MetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
-        return MetaTypeScalarTraits< wrapper_type >::Instance();
+    static const TMetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
+        return TMetaTypeScalarTraits< wrapper_type >::Instance();
     }
 
     static bool IsDefaultValue(const wrapped_type& value) { return 0 == value.Ord(); }
@@ -689,19 +689,19 @@ struct MetaTypeTraitsImpl< DateTime > {
     static void WrapMove(wrapper_type& dst, wrapped_type&& src) { dst = src.Ord(); }
     static void WrapCopy(wrapper_type& dst, const wrapped_type& src) { dst = src.Ord(); }
 
-    static void UnwrapMove(wrapped_type& dst, wrapper_type&& src) { dst = DateTime(src); }
-    static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src) { dst = DateTime(src); }
+    static void UnwrapMove(wrapped_type& dst, wrapper_type&& src) { dst = FDateTime(src); }
+    static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src) { dst = FDateTime(src); }
 };
 //----------------------------------------------------------------------------
 template <>
-struct MetaTypeTraitsImpl< Timestamp > {
-    typedef Timestamp wrapped_type;
+struct TMetaTypeTraitsImpl< FTimestamp > {
+    typedef FTimestamp wrapped_type;
     typedef i64 wrapper_type;
 
-    typedef MetaType< wrapper_type > meta_type;
+    typedef TMetaType< wrapper_type > meta_type;
 
-    static const MetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
-        return MetaTypeScalarTraits< wrapper_type >::Instance();
+    static const TMetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
+        return TMetaTypeScalarTraits< wrapper_type >::Instance();
     }
 
     static bool IsDefaultValue(const wrapped_type& value) { return 0 == value.Value(); }

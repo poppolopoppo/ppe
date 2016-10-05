@@ -7,13 +7,13 @@
 #include <locale>
 
 namespace Core {
-namespace Lexer {
+namespace FLexer {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-STATIC_ASSERT(sizeof(LookAheadReader) == 2048);
+STATIC_ASSERT(sizeof(FLookAheadReader) == 2048);
 //----------------------------------------------------------------------------
-LookAheadReader::LookAheadReader(IStreamReader* input, const wchar_t *sourceFileName)
+FLookAheadReader::FLookAheadReader(IStreamReader* input, const wchar_t *sourceFileName)
 :   _sourceFileName(sourceFileName)
 ,   _sourceLine(1)
 ,   _sourceColumn(1)
@@ -24,13 +24,13 @@ LookAheadReader::LookAheadReader(IStreamReader* input, const wchar_t *sourceFile
     Assert(sourceFileName);
 }
 //----------------------------------------------------------------------------
-LookAheadReader::~LookAheadReader() {}
+FLookAheadReader::~FLookAheadReader() {}
 //----------------------------------------------------------------------------
-bool LookAheadReader::Eof() const {
+bool FLookAheadReader::Eof() const {
     return (_bufferPos == _bufferPos && _input->Eof());
 }
 //----------------------------------------------------------------------------
-size_t LookAheadReader::Tell() const {
+size_t FLookAheadReader::Tell() const {
     const std::streamsize streamPos = _input->TellI();
     Assert(_bufferPos <= _bufferSize);
     const std::streamsize bufferRemaining(_bufferSize - _bufferPos);
@@ -38,14 +38,14 @@ size_t LookAheadReader::Tell() const {
     return checked_cast<size_t>(streamPos - bufferRemaining);
 }
 //----------------------------------------------------------------------------
-void LookAheadReader::SeekFwd(size_t offset) {
+void FLookAheadReader::SeekFwd(size_t offset) {
     while (offset--)
         Read();
 }
 //----------------------------------------------------------------------------
-char LookAheadReader::Peek(size_t n/* = 0 */) const {
+char FLookAheadReader::Peek(size_t n/* = 0 */) const {
     if (_bufferPos + n >= _bufferSize) {
-        const_cast<LookAheadReader*>(this)->Flush();
+        const_cast<FLookAheadReader*>(this)->Flush();
 
         if ((_bufferPos + n >= _bufferSize))
             return '\0';
@@ -54,7 +54,7 @@ char LookAheadReader::Peek(size_t n/* = 0 */) const {
     return char(_bufferData[_bufferPos + n]);
 }
 //----------------------------------------------------------------------------
-char LookAheadReader::Read() {
+char FLookAheadReader::Read() {
     if (_bufferSize == _bufferPos)
         Flush();
 
@@ -75,7 +75,7 @@ char LookAheadReader::Read() {
     return value;
 }
 //----------------------------------------------------------------------------
-bool LookAheadReader::ReadUntil(String& dst, char expected) {
+bool FLookAheadReader::ReadUntil(FString& dst, char expected) {
     while (char read = Peek()) {
         if (expected == read)
             return true;
@@ -85,7 +85,7 @@ bool LookAheadReader::ReadUntil(String& dst, char expected) {
     return false;
 }
 //----------------------------------------------------------------------------
-bool LookAheadReader::SkipUntil(char expected) {
+bool FLookAheadReader::SkipUntil(char expected) {
     while (char read = Peek()) {
         if (expected == read)
             return true;
@@ -95,12 +95,12 @@ bool LookAheadReader::SkipUntil(char expected) {
     return false;
 }
 //----------------------------------------------------------------------------
-void LookAheadReader::EatWhiteSpaces() {
+void FLookAheadReader::EatWhiteSpaces() {
     while (IsSpace(Peek(0)))
         Read();
 }
 //----------------------------------------------------------------------------
-void LookAheadReader::Flush() {
+void FLookAheadReader::Flush() {
     if (0 == _bufferPos && 0 < _bufferSize) {
         return;
     }
@@ -124,5 +124,5 @@ void LookAheadReader::Flush() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace Lexer
+} //!namespace FLexer
 } //!namespace Core

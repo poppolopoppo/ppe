@@ -4,11 +4,11 @@
 
 /*
 //
-// AutoSingleton
+// FAutoSingleton
 // -------------
 // Enables lazy instantiation of a singleton.
 // This is only allowed when we can't know the type in advance (like in memory pools).
-// Use AutoSingletonManager to kill all auto singletons.
+// Use FAutoSingletonManager to kill all auto singletons.
 //
 */
 
@@ -19,55 +19,55 @@ namespace Meta {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class AbstractAutoSingleton {
+class FAbstractAutoSingleton {
 protected:
-    AbstractAutoSingleton() : _pnext(nullptr), _pprev(nullptr) {}
+    FAbstractAutoSingleton() : _pnext(nullptr), _pprev(nullptr) {}
 
 public:
-    virtual ~AbstractAutoSingleton() { // must be virtual to allow delete()
+    virtual ~FAbstractAutoSingleton() { // must be virtual to allow delete()
         Assert(nullptr == _pnext);
         Assert(nullptr == _pprev);
     }
 
-    AbstractAutoSingleton(AbstractAutoSingleton&&) = delete;
-    AbstractAutoSingleton& operator =(AbstractAutoSingleton&&) = delete;
+    FAbstractAutoSingleton(FAbstractAutoSingleton&&) = delete;
+    FAbstractAutoSingleton& operator =(FAbstractAutoSingleton&&) = delete;
 
-    AbstractAutoSingleton(const AbstractAutoSingleton&) = delete;
-    AbstractAutoSingleton& operator =(const AbstractAutoSingleton&) = delete;
+    FAbstractAutoSingleton(const FAbstractAutoSingleton&) = delete;
+    FAbstractAutoSingleton& operator =(const FAbstractAutoSingleton&) = delete;
 
 private:
-    friend class AutoSingletonManagerImpl;
-    AbstractAutoSingleton *_pnext;
-    AbstractAutoSingleton *_pprev;
+    friend class FAutoSingletonManagerImpl;
+    FAbstractAutoSingleton *_pnext;
+    FAbstractAutoSingleton *_pprev;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class AutoSingletonManager {
+class FAutoSingletonManager {
 public:
     static void Start();
     static void Shutdown();
 
-    static void Register(AbstractAutoSingleton *pinstance);
-    static void Unregister(AbstractAutoSingleton *pinstance);
+    static void Register(FAbstractAutoSingleton *pinstance);
+    static void Unregister(FAbstractAutoSingleton *pinstance);
 };
 //----------------------------------------------------------------------------
-class ThreadLocalAutoSingletonManager {
+class FThreadLocalAutoSingletonManager {
 public:
     static void Start();
     static void Shutdown();
 
-    static void Register(AbstractAutoSingleton *pinstance);
-    static void Unregister(AbstractAutoSingleton *pinstance);
+    static void Register(FAbstractAutoSingleton *pinstance);
+    static void Unregister(FAbstractAutoSingleton *pinstance);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-class AutoSingleton : public AbstractAutoSingleton {
+class FAutoSingleton : public FAbstractAutoSingleton {
 protected:
-    AutoSingleton() { AutoSingletonManager::Register(this); }
-    virtual ~AutoSingleton() { AutoSingletonManager::Unregister(this); }
+    FAutoSingleton() { FAutoSingletonManager::Register(this); }
+    virtual ~FAutoSingleton() { FAutoSingletonManager::Unregister(this); }
 
 public:
     static T& Instance() {
@@ -77,10 +77,10 @@ public:
 };
 //----------------------------------------------------------------------------
 template <typename T>
-class ThreadLocalAutoSingleton : public AbstractAutoSingleton {
+class FThreadLocalAutoSingleton : public FAbstractAutoSingleton {
 protected:
-    ThreadLocalAutoSingleton() { ThreadLocalAutoSingletonManager::Register(this); }
-    virtual ~ThreadLocalAutoSingleton() { ThreadLocalAutoSingletonManager::Unregister(this); }
+    FThreadLocalAutoSingleton() { FThreadLocalAutoSingletonManager::Register(this); }
+    virtual ~FThreadLocalAutoSingleton() { FThreadLocalAutoSingletonManager::Unregister(this); }
 
 public:
     static T& Instance() {

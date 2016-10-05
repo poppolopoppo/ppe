@@ -13,16 +13,16 @@ namespace Lattice {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Lattice, GenericMaterial, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Lattice, FGenericMaterial, );
 //----------------------------------------------------------------------------
-GenericMaterial::GenericMaterial() {}
+FGenericMaterial::FGenericMaterial() {}
 //----------------------------------------------------------------------------
-GenericMaterial::GenericMaterial(
-    String&& name,
-    String&& technique,
-    TagVector&& tags,
-    ParameterMap&& parameters,
-    TextureMap&& textures )
+FGenericMaterial::FGenericMaterial(
+    FString&& name,
+    FString&& technique,
+    FTagVector&& tags,
+    FParameterMap&& parameters,
+    FTextureMap&& textures )
 :   _name(std::move(name))
 ,   _technique(std::move(technique))
 ,   _tags(std::move(tags))
@@ -32,25 +32,25 @@ GenericMaterial::GenericMaterial(
     Assert(!_technique.empty());
 }
 //----------------------------------------------------------------------------
-GenericMaterial::~GenericMaterial() {}
+FGenericMaterial::~FGenericMaterial() {}
 //----------------------------------------------------------------------------
-void GenericMaterial::AddTag(const StringView& tag) {
+void FGenericMaterial::AddTag(const FStringView& tag) {
     Assert(!tag.empty());
 
     Add_AssertUnique(_tags, ToString(tag));
 }
 //----------------------------------------------------------------------------
-bool GenericMaterial::HasTag(const StringView& tag) const {
+bool FGenericMaterial::HasTag(const FStringView& tag) const {
     Assert(!tag.empty());
 
-    const auto it = std::find_if(_tags.begin(), _tags.end(), [&tag](const String& value) {
+    const auto it = std::find_if(_tags.begin(), _tags.end(), [&tag](const FString& value) {
         return EqualsI(MakeStringView(value), tag);
     });
     return (_tags.end() != it);
 }
 //----------------------------------------------------------------------------
-bool GenericMaterial::RemoveTag(const StringView& tag) {
-    const auto it = std::find_if(_tags.begin(), _tags.end(), [&tag](const String& value) {
+bool FGenericMaterial::RemoveTag(const FStringView& tag) {
+    const auto it = std::find_if(_tags.begin(), _tags.end(), [&tag](const FString& value) {
         return EqualsI(MakeStringView(value), tag);
     });
     if (it != _tags.end()) {
@@ -62,21 +62,21 @@ bool GenericMaterial::RemoveTag(const StringView& tag) {
     }
 }
 //----------------------------------------------------------------------------
-void GenericMaterial::AddParameter(const StringView& key, const Graphics::Value& value) {
+void FGenericMaterial::AddParameter(const FStringView& key, const Graphics::FValue& value) {
     Assert(!key.empty());
     Assert(!value.empty());
 
     _parameters.Insert_AssertUnique(ToString(key), value);
 }
 //----------------------------------------------------------------------------
-void GenericMaterial::SetParameter(const StringView& key, const Graphics::Value& value) {
+void FGenericMaterial::SetParameter(const FStringView& key, const Graphics::FValue& value) {
     Assert(!key.empty());
     Assert(!value.empty());
 
     _parameters.GetOrAdd(ToString(key)) = value;
 }
 //----------------------------------------------------------------------------
-Graphics::Value& GenericMaterial::GetParameterValue(const StringView& key) {
+Graphics::FValue& FGenericMaterial::GetParameterValue(const FStringView& key) {
     Assert(!key.empty());
 
     const auto it = std::find_if(_parameters.begin(), _parameters.end(), [&key](const auto& it) {
@@ -86,7 +86,7 @@ Graphics::Value& GenericMaterial::GetParameterValue(const StringView& key) {
     return (it->second);
 }
 //----------------------------------------------------------------------------
-Graphics::Value* GenericMaterial::GetParameterValueIFP(const StringView& key) {
+Graphics::FValue* FGenericMaterial::GetParameterValueIFP(const FStringView& key) {
     Assert(!key.empty());
 
     const auto it = std::find_if(_parameters.begin(), _parameters.end(), [&key](const auto& it) {
@@ -96,7 +96,7 @@ Graphics::Value* GenericMaterial::GetParameterValueIFP(const StringView& key) {
     return (it != _parameters.end() ? &it->second : nullptr);
 }
 //----------------------------------------------------------------------------
-bool GenericMaterial::RemoveParameter(const StringView& key) {
+bool FGenericMaterial::RemoveParameter(const FStringView& key) {
     Assert(!key.empty());
 
     const auto it = std::find_if(_parameters.begin(), _parameters.end(), [&key](const auto& it) {
@@ -112,13 +112,13 @@ bool GenericMaterial::RemoveParameter(const StringView& key) {
     }
 }
 //----------------------------------------------------------------------------
-void GenericMaterial::AddTexture(
-    const StringView& key,
-    const Filename& filename,
-    Graphics::TextureDimension dimension,
-    Graphics::TextureAddressMode addressMode,
-    Graphics::TextureFilter filter ) {
-    const GenericTextureSampler sampler{
+void FGenericMaterial::AddTexture(
+    const FStringView& key,
+    const FFilename& filename,
+    Graphics::ETextureDimension dimension,
+    Graphics::ETextureAddressMode addressMode,
+    Graphics::ETextureFilter filter ) {
+    const FGenericTextureSampler sampler{
         filename,
         dimension,
         addressMode,
@@ -127,35 +127,35 @@ void GenericMaterial::AddTexture(
     AddTexture(key, sampler);
 }
 //----------------------------------------------------------------------------
-void GenericMaterial::AddTexture2D(const StringView& key, const Filename& filename) {
+void FGenericMaterial::AddTexture2D(const FStringView& key, const FFilename& filename) {
     AddTexture(key, filename,
-        Graphics::TextureDimension::Texture2D,
-        Graphics::TextureAddressMode::Wrap,
-        Graphics::TextureFilter::Linear );
+        Graphics::ETextureDimension::FTexture2D,
+        Graphics::ETextureAddressMode::Wrap,
+        Graphics::ETextureFilter::Linear );
 }
 //----------------------------------------------------------------------------
-void GenericMaterial::AddTexture3D(const StringView& key, const Filename& filename) {
+void FGenericMaterial::AddTexture3D(const FStringView& key, const FFilename& filename) {
     AddTexture(key, filename,
-        Graphics::TextureDimension::Texture3D,
-        Graphics::TextureAddressMode::Wrap,
-        Graphics::TextureFilter::Linear );
+        Graphics::ETextureDimension::Texture3D,
+        Graphics::ETextureAddressMode::Wrap,
+        Graphics::ETextureFilter::Linear );
 }
 //----------------------------------------------------------------------------
-void GenericMaterial::AddTextureCube(const StringView& key, const Filename& filename) {
+void FGenericMaterial::AddTextureCube(const FStringView& key, const FFilename& filename) {
     AddTexture(key, filename,
-        Graphics::TextureDimension::TextureCube,
-        Graphics::TextureAddressMode::Wrap,
-        Graphics::TextureFilter::Linear );
+        Graphics::ETextureDimension::FTextureCube,
+        Graphics::ETextureAddressMode::Wrap,
+        Graphics::ETextureFilter::Linear );
 }
 //----------------------------------------------------------------------------
-void GenericMaterial::AddTexture(const StringView& key, const GenericTextureSampler& sampler) {
+void FGenericMaterial::AddTexture(const FStringView& key, const FGenericTextureSampler& sampler) {
     Assert(!key.empty());
     Assert(!sampler.Filename.empty());
 
     _textures.Insert_AssertUnique(ToString(key), sampler);
 }
 //----------------------------------------------------------------------------
-const GenericTextureSampler& GenericMaterial::GetTexture(const StringView& key) const {
+const FGenericTextureSampler& FGenericMaterial::GetTexture(const FStringView& key) const {
     Assert(!key.empty());
 
     const auto it = std::find_if(_textures.begin(), _textures.end(), [&key](const auto& it) {
@@ -165,7 +165,7 @@ const GenericTextureSampler& GenericMaterial::GetTexture(const StringView& key) 
     return (it->second);
 }
 //----------------------------------------------------------------------------
-const GenericTextureSampler* GenericMaterial::GetTextureIFP(const StringView& key) const {
+const FGenericTextureSampler* FGenericMaterial::GetTextureIFP(const FStringView& key) const {
     Assert(!key.empty());
 
     const auto it = std::find_if(_textures.begin(), _textures.end(), [&key](const auto& it) {
@@ -175,7 +175,7 @@ const GenericTextureSampler* GenericMaterial::GetTextureIFP(const StringView& ke
     return (it != _textures.end() ? &it->second : nullptr);
 }
 //----------------------------------------------------------------------------
-bool GenericMaterial::RemoveTexture(const StringView& key) {
+bool FGenericMaterial::RemoveTexture(const FStringView& key) {
     Assert(!key.empty());
 
     const auto it = std::find_if(_textures.begin(), _textures.end(), [&key](const auto& it) {

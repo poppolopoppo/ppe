@@ -329,7 +329,7 @@ static DDS_DXGI_FORMAT GetDXGIFormat(const DDS_PIXELFORMAT& ddpf)
             if (ISBITMASK(0xffffffff, 0x00000000, 0x00000000, 0x00000000))
             {
                 // Only 32-bit color channel format in D3D9 was R32F
-                return DDS_DXGI_FORMAT_R32_FLOAT; // D3DX writes this out as a FourCC of 114
+                return DDS_DXGI_FORMAT_R32_FLOAT; // D3DX writes this out as a FFourCC of 114
             }
             break;
 
@@ -485,7 +485,7 @@ static DDS_DXGI_FORMAT GetDXGIFormat(const DDS_PIXELFORMAT& ddpf)
     return DDS_DXGI_FORMAT_UNKNOWN;
 }
 //----------------------------------------------------------------------------
-bool ReadTextureHeader(TextureHeader& header, IVirtualFileSystemIStream *stream) {
+bool ReadTextureHeader(FTextureHeader& header, IVirtualFileSystemIStream *stream) {
     u32 dwMagicNumber;
     if (!stream->ReadPOD(&dwMagicNumber) || DDS_MAGIC != dwMagicNumber)
         return false;
@@ -571,117 +571,117 @@ bool ReadTextureHeader(TextureHeader& header, IVirtualFileSystemIStream *stream)
         switch (DDS_D3D11_DXGI_FORMAT(format))
         {
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R32G32B32A32_FLOAT:
-            header.Format = Core::Graphics::SurfaceFormat::R32G32B32A32_F;
+            header.Format = Core::Graphics::FSurfaceFormat::R32G32B32A32_F;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R32G32B32A32_UINT:
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R32G32B32A32_SINT:
-            header.Format = Core::Graphics::SurfaceFormat::R32G32B32A32;
+            header.Format = Core::Graphics::FSurfaceFormat::R32G32B32A32;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16G16B16A16_FLOAT:
-            header.Format = Core::Graphics::SurfaceFormat::R16G16B16A16_F;
+            header.Format = Core::Graphics::FSurfaceFormat::R16G16B16A16_F;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16G16B16A16_UNORM:
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16G16B16A16_UINT:
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16G16B16A16_SNORM:
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16G16B16A16_SINT:
-            header.Format = Core::Graphics::SurfaceFormat::R16G16B16A16;
+            header.Format = Core::Graphics::FSurfaceFormat::R16G16B16A16;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R32G32_FLOAT:
-            header.Format = Core::Graphics::SurfaceFormat::R32G32_F;
+            header.Format = Core::Graphics::FSurfaceFormat::R32G32_F;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R32G32_UINT:
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R32G32_SINT:
-            header.Format = Core::Graphics::SurfaceFormat::R32G32;
+            header.Format = Core::Graphics::FSurfaceFormat::R32G32;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R10G10B10A2_UNORM:
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R10G10B10A2_UINT:
-            header.Format = Core::Graphics::SurfaceFormat::R10G10B10A2;
+            header.Format = Core::Graphics::FSurfaceFormat::R10G10B10A2;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R11G11B10_FLOAT:
-            header.Format = Core::Graphics::SurfaceFormat::R11G11B10;
+            header.Format = Core::Graphics::FSurfaceFormat::R11G11B10;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
-            header.Format = Core::Graphics::SurfaceFormat::R8G8B8A8_SRGB;
+            header.Format = Core::Graphics::FSurfaceFormat::R8G8B8A8_SRGB;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R8G8B8A8_UNORM:
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R8G8B8A8_UINT:
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R8G8B8A8_SNORM:
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R8G8B8A8_SINT:
-            header.Format = Core::Graphics::SurfaceFormat::R8G8B8A8;
+            header.Format = Core::Graphics::FSurfaceFormat::R8G8B8A8;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
-            header.Format = Core::Graphics::SurfaceFormat::B8G8R8A8_SRGB;
+            header.Format = Core::Graphics::FSurfaceFormat::B8G8R8A8_SRGB;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_B8G8R8A8_UNORM:
-            header.Format = Core::Graphics::SurfaceFormat::B8G8R8A8;
+            header.Format = Core::Graphics::FSurfaceFormat::B8G8R8A8;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16G16_FLOAT:
-            header.Format = Core::Graphics::SurfaceFormat::R16G16_F;
+            header.Format = Core::Graphics::FSurfaceFormat::R16G16_F;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16G16_UNORM:
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16G16_UINT:
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16G16_SNORM:
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16G16_SINT:
-            header.Format = Core::Graphics::SurfaceFormat::R16G16_F;
+            header.Format = Core::Graphics::FSurfaceFormat::R16G16_F;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R32_FLOAT:
-            header.Format = Core::Graphics::SurfaceFormat::R32_F;
+            header.Format = Core::Graphics::FSurfaceFormat::R32_F;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R32_UINT:
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R32_SINT:
-            header.Format = Core::Graphics::SurfaceFormat::R32;
+            header.Format = Core::Graphics::FSurfaceFormat::R32;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R8G8_UNORM:
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R8G8_UINT:
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R8G8_SNORM:
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R8G8_SINT:
-            header.Format = Core::Graphics::SurfaceFormat::R8G8;
+            header.Format = Core::Graphics::FSurfaceFormat::R8G8;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16_FLOAT:
-            header.Format = Core::Graphics::SurfaceFormat::R16_F;
+            header.Format = Core::Graphics::FSurfaceFormat::R16_F;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16_UNORM:
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16_UINT:
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16_SNORM:
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R16_SINT:
-            header.Format = Core::Graphics::SurfaceFormat::R16;
+            header.Format = Core::Graphics::FSurfaceFormat::R16;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R8_UNORM:
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R8_UINT:
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R8_SNORM:
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_R8_SINT:
-            header.Format = Core::Graphics::SurfaceFormat::R8;
+            header.Format = Core::Graphics::FSurfaceFormat::R8;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_A8_UNORM:
-            header.Format = Core::Graphics::SurfaceFormat::A8;
+            header.Format = Core::Graphics::FSurfaceFormat::A8;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_BC1_UNORM:
-            header.Format = Core::Graphics::SurfaceFormat::DXT1;
+            header.Format = Core::Graphics::FSurfaceFormat::DXT1;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_BC1_UNORM_SRGB:
-            header.Format = Core::Graphics::SurfaceFormat::DXT1_SRGB;
+            header.Format = Core::Graphics::FSurfaceFormat::DXT1_SRGB;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_BC2_UNORM:
-            header.Format = Core::Graphics::SurfaceFormat::DXT3;
+            header.Format = Core::Graphics::FSurfaceFormat::DXT3;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_BC2_UNORM_SRGB:
-            header.Format = Core::Graphics::SurfaceFormat::DXT3_SRGB;
+            header.Format = Core::Graphics::FSurfaceFormat::DXT3_SRGB;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_BC3_UNORM:
-            header.Format = Core::Graphics::SurfaceFormat::DXT5;
+            header.Format = Core::Graphics::FSurfaceFormat::DXT5;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_BC3_UNORM_SRGB:
-            header.Format = Core::Graphics::SurfaceFormat::DXT5_SRGB;
+            header.Format = Core::Graphics::FSurfaceFormat::DXT5_SRGB;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_BC5_UNORM:
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_BC5_SNORM:
-            header.Format = Core::Graphics::SurfaceFormat::DXN0;
+            header.Format = Core::Graphics::FSurfaceFormat::DXN0;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_B5G6R5_UNORM:
-            header.Format = Core::Graphics::SurfaceFormat::R5G6B5;
+            header.Format = Core::Graphics::FSurfaceFormat::R5G6B5;
             break;
         case Core::Engine::DDS::DDS_D3D11_DXGI_FORMAT_B5G5R5A1_UNORM:
-            header.Format = Core::Graphics::SurfaceFormat::R5G5B5A1;
+            header.Format = Core::Graphics::FSurfaceFormat::R5G5B5A1;
             break;
 
         default:
@@ -718,37 +718,37 @@ bool ReadTextureHeader(TextureHeader& header, IVirtualFileSystemIStream *stream)
 
         switch (format)
         {
-        case DDS_DXGI_FORMAT_A8_UNORM: header.Format = Core::Graphics::SurfaceFormat::A8; break;
-        case DDS_DXGI_FORMAT_BC5_SNORM: header.Format = Core::Graphics::SurfaceFormat::DXN0; break;
-        case DDS_DXGI_FORMAT_BC1_UNORM: header.Format = Core::Graphics::SurfaceFormat::DXT1; break;
-        case DDS_DXGI_FORMAT_BC2_UNORM: header.Format = Core::Graphics::SurfaceFormat::DXT3; break;
-        case DDS_DXGI_FORMAT_BC3_UNORM: header.Format = Core::Graphics::SurfaceFormat::DXT5; break;
-        case DDS_DXGI_FORMAT_ATI2: header.Format = Core::Graphics::SurfaceFormat::DXN0; break;
-        case DDS_DXGI_FORMAT_B5G5R5A1_UNORM: header.Format = Core::Graphics::SurfaceFormat::R5G5B5A1; break;
-        case DDS_DXGI_FORMAT_B5G6R5_UNORM: header.Format = Core::Graphics::SurfaceFormat::R5G6B5; break;
-        case DDS_DXGI_FORMAT_R8_UNORM: header.Format = Core::Graphics::SurfaceFormat::R8; break;
-        case DDS_DXGI_FORMAT_R8G8_UNORM: header.Format = Core::Graphics::SurfaceFormat::R8G8; break;
-        case DDS_DXGI_FORMAT_R8G8B8A8_UNORM: header.Format = Core::Graphics::SurfaceFormat::R8G8B8A8; break;
-        case DDS_DXGI_FORMAT_B8G8R8A8_UNORM: header.Format = Core::Graphics::SurfaceFormat::B8G8R8A8; break;
-        case DDS_DXGI_FORMAT_R10G10B10A2_UNORM: header.Format = Core::Graphics::SurfaceFormat::R10G10B10A2; break;
-        case DDS_DXGI_FORMAT_R16_UNORM: header.Format = Core::Graphics::SurfaceFormat::R16; break;
-        case DDS_DXGI_FORMAT_R16G16_UNORM: header.Format = Core::Graphics::SurfaceFormat::R16G16; break;
-        case DDS_DXGI_FORMAT_R16G16B16A16_UNORM: header.Format = Core::Graphics::SurfaceFormat::R16G16B16A16; break;
-        case DDS_DXGI_FORMAT_R16G16B16A16_FLOAT: header.Format = Core::Graphics::SurfaceFormat::R16G16B16A16_F; break;
-        case DDS_DXGI_FORMAT_R16G16_FLOAT: header.Format = Core::Graphics::SurfaceFormat::R16G16_F; break;
-        case DDS_DXGI_FORMAT_R16_FLOAT: header.Format = Core::Graphics::SurfaceFormat::R16_F; break;
-        case DDS_DXGI_FORMAT_R32G32B32A32_FLOAT: header.Format = Core::Graphics::SurfaceFormat::R32G32B32A32_F; break;
-        case DDS_DXGI_FORMAT_R32G32_FLOAT: header.Format = Core::Graphics::SurfaceFormat::R32G32_F; break;
-        case DDS_DXGI_FORMAT_R32_FLOAT: header.Format = Core::Graphics::SurfaceFormat::R32_F; break;
+        case DDS_DXGI_FORMAT_A8_UNORM: header.Format = Core::Graphics::FSurfaceFormat::A8; break;
+        case DDS_DXGI_FORMAT_BC5_SNORM: header.Format = Core::Graphics::FSurfaceFormat::DXN0; break;
+        case DDS_DXGI_FORMAT_BC1_UNORM: header.Format = Core::Graphics::FSurfaceFormat::DXT1; break;
+        case DDS_DXGI_FORMAT_BC2_UNORM: header.Format = Core::Graphics::FSurfaceFormat::DXT3; break;
+        case DDS_DXGI_FORMAT_BC3_UNORM: header.Format = Core::Graphics::FSurfaceFormat::DXT5; break;
+        case DDS_DXGI_FORMAT_ATI2: header.Format = Core::Graphics::FSurfaceFormat::DXN0; break;
+        case DDS_DXGI_FORMAT_B5G5R5A1_UNORM: header.Format = Core::Graphics::FSurfaceFormat::R5G5B5A1; break;
+        case DDS_DXGI_FORMAT_B5G6R5_UNORM: header.Format = Core::Graphics::FSurfaceFormat::R5G6B5; break;
+        case DDS_DXGI_FORMAT_R8_UNORM: header.Format = Core::Graphics::FSurfaceFormat::R8; break;
+        case DDS_DXGI_FORMAT_R8G8_UNORM: header.Format = Core::Graphics::FSurfaceFormat::R8G8; break;
+        case DDS_DXGI_FORMAT_R8G8B8A8_UNORM: header.Format = Core::Graphics::FSurfaceFormat::R8G8B8A8; break;
+        case DDS_DXGI_FORMAT_B8G8R8A8_UNORM: header.Format = Core::Graphics::FSurfaceFormat::B8G8R8A8; break;
+        case DDS_DXGI_FORMAT_R10G10B10A2_UNORM: header.Format = Core::Graphics::FSurfaceFormat::R10G10B10A2; break;
+        case DDS_DXGI_FORMAT_R16_UNORM: header.Format = Core::Graphics::FSurfaceFormat::R16; break;
+        case DDS_DXGI_FORMAT_R16G16_UNORM: header.Format = Core::Graphics::FSurfaceFormat::R16G16; break;
+        case DDS_DXGI_FORMAT_R16G16B16A16_UNORM: header.Format = Core::Graphics::FSurfaceFormat::R16G16B16A16; break;
+        case DDS_DXGI_FORMAT_R16G16B16A16_FLOAT: header.Format = Core::Graphics::FSurfaceFormat::R16G16B16A16_F; break;
+        case DDS_DXGI_FORMAT_R16G16_FLOAT: header.Format = Core::Graphics::FSurfaceFormat::R16G16_F; break;
+        case DDS_DXGI_FORMAT_R16_FLOAT: header.Format = Core::Graphics::FSurfaceFormat::R16_F; break;
+        case DDS_DXGI_FORMAT_R32G32B32A32_FLOAT: header.Format = Core::Graphics::FSurfaceFormat::R32G32B32A32_F; break;
+        case DDS_DXGI_FORMAT_R32G32_FLOAT: header.Format = Core::Graphics::FSurfaceFormat::R32G32_F; break;
+        case DDS_DXGI_FORMAT_R32_FLOAT: header.Format = Core::Graphics::FSurfaceFormat::R32_F; break;
 
         // TODO : SRGB, INT, UINT
-        /* case DDS_DXGI_FORMAT_BC1_UNORM_SRGB: header.Format = Core::Graphics::SurfaceFormat::DXT1_SRGB; break;
-        case DDS_DXGI_FORMAT_BC2_UNORM_SRGB: header.Format = Core::Graphics::SurfaceFormat::DXT3_SRGB; break;
-        case DDS_DXGI_FORMAT_BC3_UNORM_SRGB: header.Format = Core::Graphics::SurfaceFormat::DXT5_SRGB; break;
-        case DDS_DXGI_FORMAT_R8G8B8A8_UNORM_SRGB: header.Format = Core::Graphics::SurfaceFormat::R8G8B8A8_SRGB; break;
-        case DDS_DXGI_FORMAT_R32_UINT: header.Format = Core::Graphics::SurfaceFormat::R32; break;
-        case DDS_DXGI_FORMAT_R32G32_UINT: header.Format = Core::Graphics::SurfaceFormat::R32G32; break;
-        case DDS_DXGI_FORMAT_R32G32B32A32_UINT: header.Format = Core::Graphics::SurfaceFormat::R32G32B32A32; break; */
+        /* case DDS_DXGI_FORMAT_BC1_UNORM_SRGB: header.Format = Core::Graphics::FSurfaceFormat::DXT1_SRGB; break;
+        case DDS_DXGI_FORMAT_BC2_UNORM_SRGB: header.Format = Core::Graphics::FSurfaceFormat::DXT3_SRGB; break;
+        case DDS_DXGI_FORMAT_BC3_UNORM_SRGB: header.Format = Core::Graphics::FSurfaceFormat::DXT5_SRGB; break;
+        case DDS_DXGI_FORMAT_R8G8B8A8_UNORM_SRGB: header.Format = Core::Graphics::FSurfaceFormat::R8G8B8A8_SRGB; break;
+        case DDS_DXGI_FORMAT_R32_UINT: header.Format = Core::Graphics::FSurfaceFormat::R32; break;
+        case DDS_DXGI_FORMAT_R32G32_UINT: header.Format = Core::Graphics::FSurfaceFormat::R32G32; break;
+        case DDS_DXGI_FORMAT_R32G32B32A32_UINT: header.Format = Core::Graphics::FSurfaceFormat::R32G32B32A32; break; */
 
         default:
             return false;
@@ -809,7 +809,7 @@ bool ReadTextureHeader(TextureHeader& header, IVirtualFileSystemIStream *stream)
     return true;
 }
 //----------------------------------------------------------------------------
-bool ReadTextureData(const TextureHeader& header, const MemoryView<u8>& pixels, IVirtualFileSystemIStream *stream) {
+bool ReadTextureData(const FTextureHeader& header, const TMemoryView<u8>& pixels, IVirtualFileSystemIStream *stream) {
     Assert(stream);
     Assert(pixels.SizeInBytes() == header.SizeInBytes);
 

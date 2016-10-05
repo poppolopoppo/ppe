@@ -8,7 +8,7 @@
 #include "targetver.h"
 
 #if defined(_MSC_VER) && defined(_DEBUG)
-//  Finding memory leaks with CRT Heap
+//  Finding memory leaks with CRT FHeap
 //  https://msdn.microsoft.com/en-us/library/x98tx3cf.aspx
 #   define _CRTDBG_MAP_ALLOC
 #   include <stdlib.h>

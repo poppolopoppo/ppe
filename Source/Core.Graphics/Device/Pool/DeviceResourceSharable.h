@@ -12,24 +12,24 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 FWD_REFPTR(DeviceResourceSharable);
 FWD_WEAKPTR(DeviceResourceSharable);
-class DeviceResourceSharable : public DeviceResource {
+class FDeviceResourceSharable : public FDeviceResource {
 public:
-    bool Sharable() const { return DeviceResource::Sharable_(); }
+    bool Sharable() const { return FDeviceResource::Sharable_(); }
 
-    const DeviceSharedEntityKey& SharedKey() const;
-    bool MatchTerminalEntity(const DeviceAPIDependantEntity *entity) const;
+    const FDeviceSharedEntityKey& SharedKey() const;
+    bool MatchTerminalEntity(const FDeviceAPIDependantEntity *entity) const;
 
 protected:
-    DeviceResourceSharable(DeviceResourceType resourceType, bool sharable);
+    FDeviceResourceSharable(EDeviceResourceType resourceType, bool sharable);
 
     virtual void FreezeImpl() override;
     virtual void UnfreezeImpl() override;
 
     virtual size_t VirtualSharedKeyHashValue() const = 0;
-    virtual bool VirtualMatchTerminalEntity(const DeviceAPIDependantEntity *entity) const = 0;
+    virtual bool VirtualMatchTerminalEntity(const FDeviceAPIDependantEntity *entity) const = 0;
 
 private:
-    DeviceSharedEntityKey _sharedKey;
+    FDeviceSharedEntityKey _sharedKey;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

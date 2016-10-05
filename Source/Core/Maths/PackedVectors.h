@@ -56,9 +56,9 @@ UX10Y10Z10W2N FloatM11_to_UX10Y10Z10W2N(const float3& xyz, u8 w);
 UX10Y10Z10W2N FloatM11_to_UX10Y10Z10W2N(float x, float y, float z, u8 w);
 //----------------------------------------------------------------------------
 template <>
-struct NumericLimits< UX10Y10Z10W2N > {
+struct TNumericLimits< UX10Y10Z10W2N > {
     typedef UX10Y10Z10W2N value_type;
-    typedef NumericLimits<float> scalar_type;
+    typedef TNumericLimits<float> scalar_type;
 
     STATIC_CONST_INTEGRAL(bool, is_integer, scalar_type::is_integer);
     STATIC_CONST_INTEGRAL(bool, is_modulo,  scalar_type::is_modulo);
@@ -75,42 +75,42 @@ struct NumericLimits< UX10Y10Z10W2N > {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-typedef ScalarVector<HalfFloat, 2> half2;
-typedef ScalarVector<HalfFloat, 4> half4;
+typedef TScalarVector<FHalfFloat, 2> half2;
+typedef TScalarVector<FHalfFloat, 4> half4;
 //----------------------------------------------------------------------------
 template <size_t _Dim>
-ScalarVector<HalfFloat, _Dim> HalfPack(const ScalarVector<float, _Dim>& value);
+TScalarVector<FHalfFloat, _Dim> HalfPack(const TScalarVector<float, _Dim>& value);
 //----------------------------------------------------------------------------
 template <size_t _Dim>
-ScalarVector<float, _Dim> HalfUnpack(const ScalarVector<HalfFloat, _Dim>& value);
+TScalarVector<float, _Dim> HalfUnpack(const TScalarVector<FHalfFloat, _Dim>& value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-typedef ScalarVector<SNorm<u8>, 2> byte2n;
-typedef ScalarVector<SNorm<u8>, 4> byte4n;
-typedef ScalarVector<UNorm<u8>, 2> ubyte2n;
-typedef ScalarVector<UNorm<u8>, 4> Short2Nubyte4n;
+typedef TScalarVector<TSNorm<u8>, 2> byte2n;
+typedef TScalarVector<TSNorm<u8>, 4> byte4n;
+typedef TScalarVector<TUNorm<u8>, 2> ubyte2n;
+typedef TScalarVector<TUNorm<u8>, 4> Short2Nubyte4n;
 
-typedef ScalarVector<SNorm<u16>, 2> short2n;
-typedef ScalarVector<SNorm<u16>, 4> short4n;
-typedef ScalarVector<UNorm<u16>, 2> ushort2n;
-typedef ScalarVector<UNorm<u16>, 4> ushort4n;
+typedef TScalarVector<TSNorm<u16>, 2> short2n;
+typedef TScalarVector<TSNorm<u16>, 4> short4n;
+typedef TScalarVector<TUNorm<u16>, 2> ushort2n;
+typedef TScalarVector<TUNorm<u16>, 4> ushort4n;
 
-typedef ScalarVector<SNorm<u32>, 2> word2n;
-typedef ScalarVector<SNorm<u32>, 3> word3n;
-typedef ScalarVector<SNorm<u32>, 4> word4n;
-typedef ScalarVector<UNorm<u32>, 2> uword2n;
-typedef ScalarVector<UNorm<u32>, 3> uword3n;
-typedef ScalarVector<UNorm<u32>, 4> uword4n;
+typedef TScalarVector<TSNorm<u32>, 2> word2n;
+typedef TScalarVector<TSNorm<u32>, 3> word3n;
+typedef TScalarVector<TSNorm<u32>, 4> word4n;
+typedef TScalarVector<TUNorm<u32>, 2> uword2n;
+typedef TScalarVector<TUNorm<u32>, 3> uword3n;
+typedef TScalarVector<TUNorm<u32>, 4> uword4n;
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarVector<UNorm<T>, _Dim> UNormPack(const ScalarVector<float, _Dim>& value);
+TScalarVector<TUNorm<T>, _Dim> UNormPack(const TScalarVector<float, _Dim>& value);
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarVector<SNorm<T>, _Dim> SNormPack(const ScalarVector<float, _Dim>& value);
+TScalarVector<TSNorm<T>, _Dim> SNormPack(const TScalarVector<float, _Dim>& value);
 //----------------------------------------------------------------------------
 template <typename _Traits, typename T, size_t _Dim>
-ScalarVector<float, _Dim> NormUnpack(const ScalarVector<BasicNorm<T, _Traits>, _Dim>& value);
+TScalarVector<float, _Dim> NormUnpack(const TScalarVector<TBasicNorm<T, _Traits>, _Dim>& value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

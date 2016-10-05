@@ -11,28 +11,28 @@ namespace XML {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static POD_STORAGE(XML::Name) _gAnyStorage;
+static POD_STORAGE(XML::FName) _gAnyStorage;
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const XML::Name& XML::Name::Any = reinterpret_cast<XML::Name&>(_gAnyStorage);
+const XML::FName& XML::FName::Any = reinterpret_cast<XML::FName&>(_gAnyStorage);
 //----------------------------------------------------------------------------
-bool NameTokenTraits::IsAllowedChar(char ch) const {
+bool FNameTokenTraits::IsAllowedChar(char ch) const {
     return IsAlnum(ch) || ch == '_' || ch == '-' || ch == '.';
 }
 //----------------------------------------------------------------------------
-void Name::Start(size_t reserve) {
+void FName::Start(size_t reserve) {
 
     parent_type::Start(reserve);
 
-    new ((void*)&_gAnyStorage) Name("_.A.-.N.-.Y._");
+    new ((void*)&_gAnyStorage) FName("_.A.-.N.-.Y._");
 }
 //----------------------------------------------------------------------------
-void Name::Shutdown() {
+void FName::Shutdown() {
 
-    reinterpret_cast<XML::Name&>(_gAnyStorage).~Name();
+    reinterpret_cast<XML::FName&>(_gAnyStorage).~FName();
 
     parent_type::Shutdown();
 }

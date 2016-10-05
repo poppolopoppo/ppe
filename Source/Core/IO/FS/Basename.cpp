@@ -11,9 +11,9 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static bool ParseBasename_(const FileSystem::StringView& str, BasenameNoExt& basenameNoExt, Extname& extname) {
-    basenameNoExt = BasenameNoExt();
-    extname = Extname();
+static bool ParseBasename_(const FileSystem::FStringView& str, FBasenameNoExt& basenameNoExt, FExtname& extname) {
+    basenameNoExt = FBasenameNoExt();
+    extname = FExtname();
 
     if (str.empty())
         return false;
@@ -44,59 +44,59 @@ static bool ParseBasename_(const FileSystem::StringView& str, BasenameNoExt& bas
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Basename::Basename(const Core::BasenameNoExt& basenameNoExt, const Core::Extname& extname)
+FBasename::FBasename(const Core::FBasenameNoExt& basenameNoExt, const Core::FExtname& extname)
 :   _basenameNoExt(basenameNoExt), _extname(extname) {}
 //----------------------------------------------------------------------------
-Basename::Basename(const Basename& other)
+FBasename::FBasename(const FBasename& other)
 :   _basenameNoExt(other._basenameNoExt), _extname(other._extname) {}
 //----------------------------------------------------------------------------
-Basename& Basename::operator =(const Basename& other) {
+FBasename& FBasename::operator =(const FBasename& other) {
     _basenameNoExt = other._basenameNoExt;
     _extname = other._extname;
     return *this;
 }
 //----------------------------------------------------------------------------
-Basename::Basename(const FileSystem::StringView& content) {
+FBasename::FBasename(const FileSystem::FStringView& content) {
     Assert(not content.empty());
     ParseBasename_(content, _basenameNoExt, _extname);
 }
 //----------------------------------------------------------------------------
-Basename& Basename::operator =(const FileSystem::StringView& content) {
+FBasename& FBasename::operator =(const FileSystem::FStringView& content) {
     Assert(not content.empty());
     ParseBasename_(content, _basenameNoExt, _extname);
     return *this;
 }
 //----------------------------------------------------------------------------
-String Basename::ToString() const {
+FString FBasename::ToString() const {
     STACKLOCAL_OCSTRSTREAM(oss, 1024);
     oss << *this;
     return Core::ToString(oss.MakeView());
 }
 //----------------------------------------------------------------------------
-WString Basename::ToWString() const {
+FWString FBasename::ToWString() const {
     STACKLOCAL_WOCSTRSTREAM(oss, 1024);
     oss << *this;
     return Core::ToWString(oss.MakeView());
 }
 //----------------------------------------------------------------------------
-size_t Basename::ToCStr(char *dst, size_t capacity) const {
-    OCStrStream oss(dst, capacity);
+size_t FBasename::ToCStr(char *dst, size_t capacity) const {
+    FOCStrStream oss(dst, capacity);
     oss << *this;
     return static_cast<size_t>(oss.tellp());
 }
 //----------------------------------------------------------------------------
-size_t Basename::ToWCStr(wchar_t *dst, size_t capacity) const {
-    WOCStrStream oss(dst, capacity);
+size_t FBasename::ToWCStr(wchar_t *dst, size_t capacity) const {
+    FWOCStrStream oss(dst, capacity);
     oss << *this;
     return static_cast<size_t>(oss.tellp());
 }
 //----------------------------------------------------------------------------
-void Basename::Swap(Basename& other) {
+void FBasename::Swap(FBasename& other) {
     swap(other._basenameNoExt, _basenameNoExt);
     swap(other._extname, _extname);
 }
 //----------------------------------------------------------------------------
-size_t Basename::HashValue() const {
+size_t FBasename::HashValue() const {
     return hash_tuple(  size_t(_basenameNoExt.c_str()),
                         size_t(_extname.c_str()) );
 }

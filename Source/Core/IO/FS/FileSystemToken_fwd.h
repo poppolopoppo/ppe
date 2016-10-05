@@ -12,21 +12,21 @@ namespace Core {
 template <
     typename        _Tag,
     typename        _Char,
-    Case            _Sensitive,
+    ECase            _Sensitive,
     typename        _TokenTraits,
     typename        _Allocator
 >
-class Token;
+class TToken;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct FileSystemTokenTag;
+struct FFFileSystemTokenTag;
 //----------------------------------------------------------------------------
-using FileSystemToken = Core::Token<
-    FileSystemTokenTag,
+using FFileSystemToken = Core::TToken<
+    FFFileSystemTokenTag,
     FileSystem::char_type,
     FileSystem::CaseSensitive,
-    FileSystem::TokenTraits,
+    FileSystem::TTokenTraits,
     ALLOCATOR(FileSystem, FileSystem::char_type)
 >;
 //----------------------------------------------------------------------------

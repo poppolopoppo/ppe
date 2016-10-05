@@ -16,20 +16,20 @@ namespace Core {
 //----------------------------------------------------------------------------
 template <
     typename T,
-    typename _Hasher = Hash<T>,
-    typename _EqualTo = Meta::EqualTo<T>,
+    typename _Hasher = THash<T>,
+    typename _EqualTo = Meta::TEqualTo<T>,
     typename _Allocator = ALLOCATOR(Container, T)
 >
-using HashSet = std::unordered_set<T, _Hasher, _EqualTo, _Allocator>;
+using THashSet = std::unordered_set<T, _Hasher, _EqualTo, _Allocator>;
 //----------------------------------------------------------------------------
 #define HASHSET(_DOMAIN, T) \
-    ::Core::HashSet<T, Hash<T>, ::Core::Meta::EqualTo<T>, ALLOCATOR(_DOMAIN, T)>
+    ::Core::THashSet<T, THash<T>, ::Core::Meta::TEqualTo<T>, ALLOCATOR(_DOMAIN, T)>
 //----------------------------------------------------------------------------
 #define HASHSET_THREAD_LOCAL(_DOMAIN, T) \
-    ::Core::HashSet<T, Hash<T>, ::Core::Meta::EqualTo<T>, THREAD_LOCAL_ALLOCATOR(_DOMAIN, T)>
+    ::Core::THashSet<T, THash<T>, ::Core::Meta::TEqualTo<T>, THREAD_LOCAL_ALLOCATOR(_DOMAIN, T)>
 //----------------------------------------------------------------------------
 template <typename T, typename _Hasher, typename _EqualTo, typename _Allocator>
-hash_t hash_value(const HashSet<T, _Hasher, _EqualTo, _Allocator>& hashSet) {
+hash_t hash_value(const THashSet<T, _Hasher, _EqualTo, _Allocator>& hashSet) {
     return hash_range(hashSet.begin(), hashSet.end());
 }
 //----------------------------------------------------------------------------
@@ -43,7 +43,7 @@ template <
     typename _Char,
     typename _Traits
 >
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const HashSet<T, _Hasher, _EqualTo, _Allocator>& hashSet) {
+std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const THashSet<T, _Hasher, _EqualTo, _Allocator>& hashSet) {
     oss << "[ ";
     for (const auto& it : hashSet)
         oss << *it << ", ";

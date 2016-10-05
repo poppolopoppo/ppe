@@ -8,7 +8,7 @@
 #include "Core.Engine/Material/MaterialVariability.h"
 
 namespace Core {
-class Timeline;
+class FTimeline;
 
 namespace Graphics {
 class IDeviceAPIEncapsulator;
@@ -26,48 +26,48 @@ FWD_REFPTR(DefaultTextureCacheService);
 FWD_REFPTR(Scene);
 FWD_REFPTR(World);
 //----------------------------------------------------------------------------
-class RenderContext : public RefCountable {
+class FRenderContext : public FRefCountable {
 public:
-    RenderContext(IServiceProvider *services, size_t textureCacheSizeInBytes);
-    ~RenderContext();
+    FRenderContext(IServiceProvider *services, size_t textureCacheSizeInBytes);
+    ~FRenderContext();
 
-    Engine::MaterialDatabase *MaterialDatabase() { return &_materialDatabase; }
-    const Engine::MaterialDatabase *MaterialDatabase() const { return &_materialDatabase; }
+    Engine::FMaterialDatabase *FMaterialDatabase() { return &_materialDatabase; }
+    const Engine::FMaterialDatabase *FMaterialDatabase() const { return &_materialDatabase; }
 
 
-    DefaultRenderSurfaceService *RenderSurfaceService() { return _renderSurfaceService.get(); }
-    const DefaultRenderSurfaceService *RenderSurfaceService() const { return _renderSurfaceService.get(); }
+    FDefaultRenderSurfaceService *RenderSurfaceService() { return _renderSurfaceService.get(); }
+    const FDefaultRenderSurfaceService *RenderSurfaceService() const { return _renderSurfaceService.get(); }
     
-    DefaultTextureCacheService *TextureCacheService() { return _textureCacheService.get(); }
-    const DefaultTextureCacheService *TextureCacheService() const { return _textureCacheService.get(); }
+    FDefaultTextureCacheService *TextureCacheService() { return _textureCacheService.get(); }
+    const FDefaultTextureCacheService *TextureCacheService() const { return _textureCacheService.get(); }
 
-    DefaultSharedConstantBufferFactoryService *SharedConstantBufferFactoryService() { return _sharedConstantBufferFactoryService.get(); }
-    const DefaultSharedConstantBufferFactoryService *SharedConstantBufferFactoryService() const { return _sharedConstantBufferFactoryService.get(); }
+    FDefaultSharedConstantBufferFactoryService *SharedConstantBufferFactoryService() { return _sharedConstantBufferFactoryService.get(); }
+    const FDefaultSharedConstantBufferFactoryService *SharedConstantBufferFactoryService() const { return _sharedConstantBufferFactoryService.get(); }
 
-    DefaultEffectCompilerService *EffectCompilerService() { return _effectCompilerService.get(); }
-    const DefaultEffectCompilerService *EffectCompilerService() const { return _effectCompilerService.get(); }
+    FDefaultEffectCompilerService *EffectCompilerService() { return _effectCompilerService.get(); }
+    const FDefaultEffectCompilerService *EffectCompilerService() const { return _effectCompilerService.get(); }
 
 
 
-    VariabilitySeed *VariabilitySeeds() { return _variabilitySeeds; }
-    const VariabilitySeed *VariabilitySeeds() const { return _variabilitySeeds; }
+    FVariabilitySeed *VariabilitySeeds() { return _variabilitySeeds; }
+    const FVariabilitySeed *VariabilitySeeds() const { return _variabilitySeeds; }
 
-    void FrameTick() { _variabilitySeeds[size_t(MaterialVariability::Frame)].Next(); }
+    void FrameTick() { _variabilitySeeds[size_t(EMaterialVariability::FFrame)].Next(); }
 
     void UpdateAndPrepare(  Graphics::IDeviceAPIEncapsulator *device,
-                            const Timeline& timeline,
-                            World *const world,
-                            const MemoryView<Scene *const>& scenes );
+                            const FTimeline& timeline,
+                            FWorld *const world,
+                            const TMemoryView<FScene *const>& scenes );
 
     void Render(Graphics::IDeviceAPIContext *context,
-                const MemoryView<Scene *const>& scenes );
+                const TMemoryView<FScene *const>& scenes );
 
     void Clear();
 
 private:
     IServiceProvider *_services;
-    VariabilitySeed _variabilitySeeds[VariabilitySeed::Count];
-    Engine::MaterialDatabase _materialDatabase;
+    FVariabilitySeed _variabilitySeeds[FVariabilitySeed::Count];
+    Engine::FMaterialDatabase _materialDatabase;
 
     PDefaultRenderSurfaceService _renderSurfaceService;
     PDefaultTextureCacheService _textureCacheService;

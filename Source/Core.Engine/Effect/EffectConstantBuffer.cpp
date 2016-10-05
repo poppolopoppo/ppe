@@ -27,9 +27,9 @@ namespace {
 //----------------------------------------------------------------------------
 static bool TryGetParameter_(
     PMaterialParameter *param,
-    const Graphics::BindName& name, 
-    MaterialEffect *materialEffect, 
-    const Scene *scene ) {
+    const Graphics::FBindName& name, 
+    FMaterialEffect *materialEffect, 
+    const FScene *scene ) {
     Assert(param);
 
     if (materialEffect->Material()->Parameters().TryGet(name, param)) {
@@ -52,46 +52,46 @@ static bool TryGetParameter_(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, EffectConstantBuffer, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, FEffectConstantBuffer, );
 //----------------------------------------------------------------------------
-EffectConstantBuffer::EffectConstantBuffer(SharedConstantBuffer *sharedBuffer)
+FEffectConstantBuffer::FEffectConstantBuffer(FSharedConstantBuffer *sharedBuffer)
 :   _sharedBuffer(sharedBuffer)
 ,   _headerHashValue(0)
 ,   _dataHashValue(0) {
     Assert(!_sharedBuffer);
 
-    _variability.Variability = MaterialVariability::Once;
-    _variability.Seed.Value = VariabilitySeed::Invalid;
+    _variability.Variability = EMaterialVariability::Once;
+    _variability.Seed.Value = FVariabilitySeed::Invalid;
 }
 //----------------------------------------------------------------------------
-EffectConstantBuffer::~EffectConstantBuffer() {}
+FEffectConstantBuffer::~FEffectConstantBuffer() {}
 //----------------------------------------------------------------------------
-void EffectConstantBuffer::Prepare(const MaterialParameterMutableContext& context) {
+void FEffectConstantBuffer::Prepare(const FMaterialParameterMutableContext& context) {
 
-    const Material *material = context.MaterialEffect->Material();
+    const FMaterial *material = context.MaterialEffect->Material();
     const auto materialParameters = material->Parameters();
     Assert(context.Database == context.Scene->MaterialDatabase());
 
-    const SharedConstantBufferKey sharedKey = _sharedBuffer->SharedKey();
+    const FSharedConstantBufferKey sharedKey = _sharedBuffer->SharedKey();
 
     const size_t count = sharedKey.Layout->Count();
     const auto names = sharedKey.Layout->Names();
     const auto fields = sharedKey.Layout->Fields();
 
     _parameters.resize(count);
-    _variability.Seed.Value = VariabilitySeed::Invalid;
-    _variability.Variability = MaterialVariability::Once;
+    _variability.Seed.Value = FVariabilitySeed::Invalid;
+    _variability.Variability = EMaterialVariability::Once;
 
     for (size_t i = 0; i < count; ++i) {
-        const Graphics::BindName& name = names[i];
-        const Graphics::ConstantField& field = fields[i];
+        const Graphics::FBindName& name = names[i];
+        const Graphics::FConstantField& field = fields[i];
 
         PMaterialParameter param;
 
         if (!TryGetParameter_(&param, name, context.MaterialEffect, context.Scene) &&
             !TryCreateDefaultMaterialParameter(&param, context, name, field)) {
 
-            Dialog::Show(L"Material parameter not found", Dialog::Type::Ok, Dialog::Icon::Aterisk,
+            Dialog::Show(L"FMaterial parameter not found", Dialog::EType::Ok, Dialog::Icon::Aterisk,
                 L"Failed to retrieve parameter '{0}' in constant buffer '{1}' from material effect <{2}> !",
                 name.c_str(), sharedKey.Name.c_str(), material->Name().c_str() );
 
@@ -99,7 +99,7 @@ void EffectConstantBuffer::Prepare(const MaterialParameterMutableContext& contex
         }
 
         Assert(param);
-        const MaterialParameterInfo paramInfo = param->Info();
+        const FMaterialParameterInfo paramInfo = param->Info();
 
         if (SameOrMoreVariability(paramInfo.Variability, _variability.Variability))
             _variability.Variability = paramInfo.Variability;
@@ -110,7 +110,7 @@ void EffectConstantBuffer::Prepare(const MaterialParameterMutableContext& contex
     _headerHashValue = hash_range(_parameters.begin(), _parameters.end());
 }
 //----------------------------------------------------------------------------
-void EffectConstantBuffer::Eval(const MaterialParameterContext& context, const VariabilitySeeds& seeds ) {
+void FEffectConstantBuffer::Eval(const FMaterialParameterContext& context, const VariabilitySeeds& seeds ) {
 
     if (_sharedBuffer->HeaderHashValue() == _headerHashValue &&
         seeds[size_t(_variability.Variability)] == _variability.Seed) {
@@ -120,7 +120,7 @@ void EffectConstantBuffer::Eval(const MaterialParameterContext& context, const V
 
     _variability.Seed = seeds[size_t(_variability.Variability)];
 
-    const Graphics::ConstantBufferLayout *layout = _sharedBuffer->Layout();
+    const Graphics::FConstantBufferLayout *layout = _sharedBuffer->Layout();
 
     _rawData.Resize_DiscardData(layout->SizeInBytes());
     memset(_rawData.Pointer(), 0xDE, _rawData.SizeInBytes());
@@ -130,7 +130,7 @@ void EffectConstantBuffer::Eval(const MaterialParameterContext& context, const V
     Assert(count == _parameters.size());
 
     for (size_t i = 0; i < count; ++i) {
-        const Graphics::ConstantField& field = fields[i];
+        const Graphics::FConstantField& field = fields[i];
         void *const storage = &_rawData.at(field.Offset());
         const size_t sizeInBytes = Graphics::ConstantFieldTypeSizeInBytes(field.Type());
         _parameters[i]->Eval(context, storage, sizeInBytes);
@@ -139,7 +139,7 @@ void EffectConstantBuffer::Eval(const MaterialParameterContext& context, const V
     _dataHashValue = hash_value_as_memory(_rawData.Pointer(), _rawData.SizeInBytes());
 }
 //----------------------------------------------------------------------------
-void EffectConstantBuffer::SetDataIFN(Graphics::IDeviceAPIEncapsulator *device) const {
+void FEffectConstantBuffer::SetDataIFN(Graphics::IDeviceAPIEncapsulator *device) const {
 
     if (0 == _dataHashValue)
         return;
@@ -149,13 +149,13 @@ void EffectConstantBuffer::SetDataIFN(Graphics::IDeviceAPIEncapsulator *device) 
     _sharedBuffer->SetData_OnlyIfChanged(device, _headerHashValue, _dataHashValue, _rawData.MakeConstView());
 }
 //----------------------------------------------------------------------------
-void EffectConstantBuffer::Clear() {
+void FEffectConstantBuffer::Clear() {
 
     _headerHashValue = 0;
     _dataHashValue = 0;
 
-    _variability.Variability = MaterialVariability::Once;
-    _variability.Seed.Value = VariabilitySeed::Invalid;
+    _variability.Variability = EMaterialVariability::Once;
+    _variability.Seed.Value = FVariabilitySeed::Invalid;
 
     _parameters.clear();
     _parameters.shrink_to_fit();

@@ -17,34 +17,34 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct MetaClassBaseDecl {
+struct FMetaClassBaseDecl {
     typedef void (*create_delegate)();
     typedef void (*destroy_delegate)() ;
 
     create_delegate Create;
     create_delegate Destroy;
 
-    MetaClassBaseDecl(create_delegate&& create, destroy_delegate&& destroy)
+    FMetaClassBaseDecl(create_delegate&& create, destroy_delegate&& destroy)
         : Create(std::move(create))
         , Destroy(std::move(destroy)) {}
 
-    MetaClassBaseDecl(const MetaClassBaseDecl& ) = delete;
-    MetaClassBaseDecl& operator=(const MetaClassBaseDecl& ) = delete;
+    FMetaClassBaseDecl(const FMetaClassBaseDecl& ) = delete;
+    FMetaClassBaseDecl& operator=(const FMetaClassBaseDecl& ) = delete;
 
-    mutable IntrusiveListNode<MetaClassBaseDecl> Node;
+    mutable IntrusiveListNode<FMetaClassBaseDecl> Node;
 };
 //----------------------------------------------------------------------------
 template <typename _Tag>
-struct MetaClassDecl : public MetaClassBaseDecl {
-    using typename MetaClassBaseDecl::create_delegate;
-    using typename MetaClassBaseDecl::destroy_delegate;
+struct TMetaClassDecl : public FMetaClassBaseDecl {
+    using typename FMetaClassBaseDecl::create_delegate;
+    using typename FMetaClassBaseDecl::destroy_delegate;
 
-    MetaClassDecl(create_delegate&& create, destroy_delegate&& destroy)
-        : MetaClassBaseDecl(std::move(create), std::move(destroy)) {
+    TMetaClassDecl(create_delegate&& create, destroy_delegate&& destroy)
+        : FMetaClassBaseDecl(std::move(create), std::move(destroy)) {
         _Tag::Register(this);
     }
 
-    ~MetaClassDecl() {
+    ~TMetaClassDecl() {
         _Tag::Unregister(this);
     }
 };
@@ -55,10 +55,10 @@ struct MetaClassDecl : public MetaClassBaseDecl {
     namespace RTTI_Tag { \
         struct _NameId { \
         public: \
-            static const char* Name() { return (_NameStr); } \
+            static const char* FName() { return (_NameStr); } \
             \
-            static void Register(const Core::RTTI::MetaClassBaseDecl* pdecl); \
-            static void Unregister(const Core::RTTI::MetaClassBaseDecl* pdecl); \
+            static void Register(const Core::RTTI::FMetaClassBaseDecl* pdecl); \
+            static void Unregister(const Core::RTTI::FMetaClassBaseDecl* pdecl); \
             \
             static void Start(); \
             static void Shutdown(); \

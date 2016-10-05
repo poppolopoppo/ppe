@@ -18,14 +18,14 @@ FORCE_INLINE static size_t SHLmToIndex_(int l, int m) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SHSampleCollection::SHSampleCollection(size_t bands)
+FSHSampleCollection::FSHSampleCollection(size_t bands)
 :   _bands(bands), _sampleCount(0) {
     Assert(0 < _bands);
 }
 //----------------------------------------------------------------------------
-SHSampleCollection::~SHSampleCollection() {}
+FSHSampleCollection::~FSHSampleCollection() {}
 //----------------------------------------------------------------------------
-void SHSampleCollection::GenerateSphericalSamples_JiterredStratification(size_t sampleCount, RandomGenerator& random) {
+void FSHSampleCollection::GenerateSphericalSamples_JiterredStratification(size_t sampleCount, FRandomGenerator& random) {
     Assert(0 < sampleCount);
     _sampleCount = sampleCount;
 

@@ -33,56 +33,18 @@ static const u8 gVirtualKey_to_KeyboardKey[0xFF] = {
     0xFF,
     0xFF,
     0xFF,
-    u8(KeyboardKey::Backspace),
-    u8(KeyboardKey::Tab),
+    u8(EKeyboardKey::Backspace),
+    u8(EKeyboardKey::Tab),
     0xFF,
     0xFF,
     0xFF,
-    u8(KeyboardKey::Enter),
+    u8(EKeyboardKey::Enter),
     0xFF,
     0xFF,
-    u8(KeyboardKey::Shift),
-    u8(KeyboardKey::Control),
-    u8(KeyboardKey::Alt),
-    u8(KeyboardKey::Pause),
-    0xFF,
-    0xFF,
-    0xFF,
-    0xFF,
-    0xFF,
-    0xFF,
-    0xFF,
-    u8(KeyboardKey::Escape),
-    0xFF,
-    0xFF,
-    0xFF,
-    0xFF,
-    u8(KeyboardKey::Space),
-    u8(KeyboardKey::PageUp),
-    u8(KeyboardKey::PageDown),
-    u8(KeyboardKey::End),
-    u8(KeyboardKey::Home),
-    u8(KeyboardKey::Left),
-    u8(KeyboardKey::Up),
-    u8(KeyboardKey::Right),
-    u8(KeyboardKey::Down),
-    0xFF,
-    u8(KeyboardKey::PrintScreen),
-    0xFF,
-    0xFF,
-    u8(KeyboardKey::Insert),
-    u8(KeyboardKey::Delete),
-    0xFF,
-    u8(KeyboardKey::_0),
-    u8(KeyboardKey::_1),
-    u8(KeyboardKey::_2),
-    u8(KeyboardKey::_3),
-    u8(KeyboardKey::_4),
-    u8(KeyboardKey::_5),
-    u8(KeyboardKey::_6),
-    u8(KeyboardKey::_7),
-    u8(KeyboardKey::_8),
-    u8(KeyboardKey::_9),
+    u8(EKeyboardKey::Shift),
+    u8(EKeyboardKey::Control),
+    u8(EKeyboardKey::Alt),
+    u8(EKeyboardKey::Pause),
     0xFF,
     0xFF,
     0xFF,
@@ -90,69 +52,103 @@ static const u8 gVirtualKey_to_KeyboardKey[0xFF] = {
     0xFF,
     0xFF,
     0xFF,
-    u8(KeyboardKey::A),
-    u8(KeyboardKey::B),
-    u8(KeyboardKey::C),
-    u8(KeyboardKey::D),
-    u8(KeyboardKey::E),
-    u8(KeyboardKey::F),
-    u8(KeyboardKey::G),
-    u8(KeyboardKey::H),
-    u8(KeyboardKey::I),
-    u8(KeyboardKey::J),
-    u8(KeyboardKey::K),
-    u8(KeyboardKey::L),
-    u8(KeyboardKey::M),
-    u8(KeyboardKey::N),
-    u8(KeyboardKey::O),
-    u8(KeyboardKey::P),
-    u8(KeyboardKey::Q),
-    u8(KeyboardKey::R),
-    u8(KeyboardKey::S),
-    u8(KeyboardKey::T),
-    u8(KeyboardKey::U),
-    u8(KeyboardKey::V),
-    u8(KeyboardKey::W),
-    u8(KeyboardKey::X),
-    u8(KeyboardKey::Y),
-    u8(KeyboardKey::Z),
-    0xFF,
-    0xFF,
-    u8(KeyboardKey::Menu),
-    0xFF,
-    0xFF,
-    u8(KeyboardKey::Numpad0),
-    u8(KeyboardKey::Numpad1),
-    u8(KeyboardKey::Numpad2),
-    u8(KeyboardKey::Numpad3),
-    u8(KeyboardKey::Numpad4),
-    u8(KeyboardKey::Numpad5),
-    u8(KeyboardKey::Numpad6),
-    u8(KeyboardKey::Numpad7),
-    u8(KeyboardKey::Numpad8),
-    u8(KeyboardKey::Numpad9),
-    u8(KeyboardKey::Multiply),
-    u8(KeyboardKey::Add),
-    0xFF,
-    u8(KeyboardKey::Subtract),
-    0xFF,
-    u8(KeyboardKey::Divide),
-    u8(KeyboardKey::F1),
-    u8(KeyboardKey::F2),
-    u8(KeyboardKey::F3),
-    u8(KeyboardKey::F4),
-    u8(KeyboardKey::F5),
-    u8(KeyboardKey::F6),
-    u8(KeyboardKey::F7),
-    u8(KeyboardKey::F8),
-    u8(KeyboardKey::F9),
-    u8(KeyboardKey::F10),
-    u8(KeyboardKey::F11),
-    u8(KeyboardKey::F12),
+    u8(EKeyboardKey::Escape),
     0xFF,
     0xFF,
     0xFF,
     0xFF,
+    u8(EKeyboardKey::Space),
+    u8(EKeyboardKey::PageUp),
+    u8(EKeyboardKey::PageDown),
+    u8(EKeyboardKey::End),
+    u8(EKeyboardKey::Home),
+    u8(EKeyboardKey::Left),
+    u8(EKeyboardKey::Up),
+    u8(EKeyboardKey::Right),
+    u8(EKeyboardKey::Down),
+    0xFF,
+    u8(EKeyboardKey::PrintScreen),
+    0xFF,
+    0xFF,
+    u8(EKeyboardKey::Insert),
+    u8(EKeyboardKey::Delete),
+    0xFF,
+    u8(EKeyboardKey::_0),
+    u8(EKeyboardKey::_1),
+    u8(EKeyboardKey::_2),
+    u8(EKeyboardKey::_3),
+    u8(EKeyboardKey::_4),
+    u8(EKeyboardKey::_5),
+    u8(EKeyboardKey::_6),
+    u8(EKeyboardKey::_7),
+    u8(EKeyboardKey::_8),
+    u8(EKeyboardKey::_9),
+    0xFF,
+    0xFF,
+    0xFF,
+    0xFF,
+    0xFF,
+    0xFF,
+    0xFF,
+    u8(EKeyboardKey::A),
+    u8(EKeyboardKey::B),
+    u8(EKeyboardKey::C),
+    u8(EKeyboardKey::D),
+    u8(EKeyboardKey::E),
+    u8(EKeyboardKey::F),
+    u8(EKeyboardKey::G),
+    u8(EKeyboardKey::H),
+    u8(EKeyboardKey::I),
+    u8(EKeyboardKey::J),
+    u8(EKeyboardKey::K),
+    u8(EKeyboardKey::L),
+    u8(EKeyboardKey::M),
+    u8(EKeyboardKey::N),
+    u8(EKeyboardKey::O),
+    u8(EKeyboardKey::P),
+    u8(EKeyboardKey::Q),
+    u8(EKeyboardKey::R),
+    u8(EKeyboardKey::S),
+    u8(EKeyboardKey::T),
+    u8(EKeyboardKey::U),
+    u8(EKeyboardKey::V),
+    u8(EKeyboardKey::W),
+    u8(EKeyboardKey::X),
+    u8(EKeyboardKey::Y),
+    u8(EKeyboardKey::Z),
+    0xFF,
+    0xFF,
+    u8(EKeyboardKey::Menu),
+    0xFF,
+    0xFF,
+    u8(EKeyboardKey::Numpad0),
+    u8(EKeyboardKey::Numpad1),
+    u8(EKeyboardKey::Numpad2),
+    u8(EKeyboardKey::Numpad3),
+    u8(EKeyboardKey::Numpad4),
+    u8(EKeyboardKey::Numpad5),
+    u8(EKeyboardKey::Numpad6),
+    u8(EKeyboardKey::Numpad7),
+    u8(EKeyboardKey::Numpad8),
+    u8(EKeyboardKey::Numpad9),
+    u8(EKeyboardKey::Multiply),
+    u8(EKeyboardKey::Add),
+    0xFF,
+    u8(EKeyboardKey::Subtract),
+    0xFF,
+    u8(EKeyboardKey::Divide),
+    u8(EKeyboardKey::F1),
+    u8(EKeyboardKey::F2),
+    u8(EKeyboardKey::F3),
+    u8(EKeyboardKey::F4),
+    u8(EKeyboardKey::F5),
+    u8(EKeyboardKey::F6),
+    u8(EKeyboardKey::F7),
+    u8(EKeyboardKey::F8),
+    u8(EKeyboardKey::F9),
+    u8(EKeyboardKey::F10),
+    u8(EKeyboardKey::F11),
+    u8(EKeyboardKey::F12),
     0xFF,
     0xFF,
     0xFF,
@@ -170,7 +166,11 @@ static const u8 gVirtualKey_to_KeyboardKey[0xFF] = {
     0xFF,
     0xFF,
     0xFF,
-    u8(KeyboardKey::ScrollLock),
+    0xFF,
+    0xFF,
+    0xFF,
+    0xFF,
+    u8(EKeyboardKey::ScrollLock),
     0xFF,
     0xFF,
     0xFF,
@@ -286,36 +286,36 @@ static void AddVirtualKey_IfMapped_(KeyboardKeyState& state, Graphics::MessageWP
     const u8 keyboardKey = gVirtualKey_to_KeyboardKey[checked_cast<u8>(virtualKey)];
 
     if (keyboardKey != 0xFF)
-        state.Add_KeepExisting(KeyboardKey(keyboardKey));
+        state.Add_KeepExisting(EKeyboardKey(keyboardKey));
 }
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-KeyboardInputHandler::KeyboardInputHandler() {}
+FKeyboardInputHandler::FKeyboardInputHandler() {}
 //----------------------------------------------------------------------------
-KeyboardInputHandler::~KeyboardInputHandler() {}
+FKeyboardInputHandler::~FKeyboardInputHandler() {}
 //----------------------------------------------------------------------------
-void KeyboardInputHandler::RegisterMessageDelegates(Graphics::BasicWindow *wnd) {
+void FKeyboardInputHandler::RegisterMessageDelegates(Graphics::FBasicWindow *wnd) {
     Assert(wnd);
 
-    RegisterMessageDelegate(wnd, Graphics::WindowMessage::KeyDown, &KeyboardInputHandler::OnKeyboardKeyDown_);
-    RegisterMessageDelegate(wnd, Graphics::WindowMessage::KeyUp, &KeyboardInputHandler::OnKeyboardKeyUp_);
-    RegisterMessageDelegate(wnd, Graphics::WindowMessage::SysKeyDown, &KeyboardInputHandler::OnKeyboardSysKeyDown_);
-    RegisterMessageDelegate(wnd, Graphics::WindowMessage::SysKeyUp, &KeyboardInputHandler::OnKeyboardSysKeyUp_);
+    RegisterMessageDelegate(wnd, Graphics::EWindowMessage::KeyDown, &FKeyboardInputHandler::OnKeyboardKeyDown_);
+    RegisterMessageDelegate(wnd, Graphics::EWindowMessage::KeyUp, &FKeyboardInputHandler::OnKeyboardKeyUp_);
+    RegisterMessageDelegate(wnd, Graphics::EWindowMessage::SysKeyDown, &FKeyboardInputHandler::OnKeyboardSysKeyDown_);
+    RegisterMessageDelegate(wnd, Graphics::EWindowMessage::SysKeyUp, &FKeyboardInputHandler::OnKeyboardSysKeyUp_);
 }
 //----------------------------------------------------------------------------
-void KeyboardInputHandler::UnregisterMessageDelegates(Graphics::BasicWindow *wnd) {
+void FKeyboardInputHandler::UnregisterMessageDelegates(Graphics::FBasicWindow *wnd) {
     Assert(wnd);
 
-    UnregisterMessageDelegate(wnd, Graphics::WindowMessage::KeyDown, &KeyboardInputHandler::OnKeyboardKeyDown_);
-    UnregisterMessageDelegate(wnd, Graphics::WindowMessage::KeyUp, &KeyboardInputHandler::OnKeyboardKeyUp_);
-    UnregisterMessageDelegate(wnd, Graphics::WindowMessage::SysKeyDown, &KeyboardInputHandler::OnKeyboardSysKeyDown_);
-    UnregisterMessageDelegate(wnd, Graphics::WindowMessage::SysKeyUp, &KeyboardInputHandler::OnKeyboardSysKeyUp_);
+    UnregisterMessageDelegate(wnd, Graphics::EWindowMessage::KeyDown, &FKeyboardInputHandler::OnKeyboardKeyDown_);
+    UnregisterMessageDelegate(wnd, Graphics::EWindowMessage::KeyUp, &FKeyboardInputHandler::OnKeyboardKeyUp_);
+    UnregisterMessageDelegate(wnd, Graphics::EWindowMessage::SysKeyDown, &FKeyboardInputHandler::OnKeyboardSysKeyDown_);
+    UnregisterMessageDelegate(wnd, Graphics::EWindowMessage::SysKeyUp, &FKeyboardInputHandler::OnKeyboardSysKeyUp_);
 }
 //----------------------------------------------------------------------------
-void KeyboardInputHandler::UpdateBeforeDispatch(Graphics::BasicWindow *wnd) {
+void FKeyboardInputHandler::UpdateBeforeDispatch(Graphics::FBasicWindow *wnd) {
     _state._keysDown.Clear();
     _state._keysUp.Clear();
 
@@ -323,10 +323,10 @@ void KeyboardInputHandler::UpdateBeforeDispatch(Graphics::BasicWindow *wnd) {
         _state._keysPressed.Clear();
 }
 //----------------------------------------------------------------------------
-void KeyboardInputHandler::UpdateAfterDispatch(Graphics::BasicWindow *wnd) {
+void FKeyboardInputHandler::UpdateAfterDispatch(Graphics::FBasicWindow *wnd) {
     UNUSED(wnd);
 
-    for (KeyboardKey key : _state._keysUp.MakeView()) {
+    for (EKeyboardKey key : _state._keysUp.MakeView()) {
 #ifdef WITH_KEYBOARDSTATE_VERBOSE
         LOG(Info, L"[Keyboard] key {0} up", KeyboardKeyToCStr(key));
 #endif
@@ -334,7 +334,7 @@ void KeyboardInputHandler::UpdateAfterDispatch(Graphics::BasicWindow *wnd) {
         _state._keysDown.Remove_ReturnIfExists(key);
     }
 
-    for (KeyboardKey key : _state._keysDown.MakeView()) {
+    for (EKeyboardKey key : _state._keysDown.MakeView()) {
 #ifdef WITH_KEYBOARDSTATE_VERBOSE
         LOG(Info, L"[Keyboard] key {0} down", KeyboardKeyToCStr(key));
 #endif
@@ -342,42 +342,42 @@ void KeyboardInputHandler::UpdateAfterDispatch(Graphics::BasicWindow *wnd) {
     }
 }
 //----------------------------------------------------------------------------
-Graphics::MessageResult KeyboardInputHandler::OnKeyboardKeyDown_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
+Graphics::MessageResult FKeyboardInputHandler::OnKeyboardKeyDown_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
     UNUSED(wnd);
     UNUSED(msg);
     UNUSED(lparam);
 
-    KeyboardInputHandler *const keyboard = checked_cast<KeyboardInputHandler *>(handler);
+    FKeyboardInputHandler *const keyboard = checked_cast<FKeyboardInputHandler *>(handler);
     AddVirtualKey_IfMapped_(keyboard->_state._keysDown, wparam);
     return 0;
 }
 //----------------------------------------------------------------------------
-Graphics::MessageResult KeyboardInputHandler::OnKeyboardKeyUp_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
+Graphics::MessageResult FKeyboardInputHandler::OnKeyboardKeyUp_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
     UNUSED(wnd);
     UNUSED(msg);
     UNUSED(lparam);
 
-    KeyboardInputHandler *const keyboard = checked_cast<KeyboardInputHandler *>(handler);
+    FKeyboardInputHandler *const keyboard = checked_cast<FKeyboardInputHandler *>(handler);
     AddVirtualKey_IfMapped_(keyboard->_state._keysUp, wparam);
     return 0;
 }
 //----------------------------------------------------------------------------
-Graphics::MessageResult KeyboardInputHandler::OnKeyboardSysKeyDown_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
+Graphics::MessageResult FKeyboardInputHandler::OnKeyboardSysKeyDown_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
     UNUSED(wnd);
     UNUSED(msg);
     UNUSED(lparam);
 
-    KeyboardInputHandler *const keyboard = checked_cast<KeyboardInputHandler *>(handler);
+    FKeyboardInputHandler *const keyboard = checked_cast<FKeyboardInputHandler *>(handler);
     AddVirtualKey_IfMapped_(keyboard->_state._keysDown, wparam);
     return 0;
 }
 //----------------------------------------------------------------------------
-Graphics::MessageResult KeyboardInputHandler::OnKeyboardSysKeyUp_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
+Graphics::MessageResult FKeyboardInputHandler::OnKeyboardSysKeyUp_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
     UNUSED(wnd);
     UNUSED(msg);
     UNUSED(lparam);
 
-    KeyboardInputHandler *const keyboard = checked_cast<KeyboardInputHandler *>(handler);
+    FKeyboardInputHandler *const keyboard = checked_cast<FKeyboardInputHandler *>(handler);
     AddVirtualKey_IfMapped_(keyboard->_state._keysUp, wparam);
     return 0;
 }

@@ -8,12 +8,12 @@
 
 namespace Core {
 namespace Engine {
-class GenericVertex;
+class FGenericVertex;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void ExportVertices(
-    GenericVertex& vertices,
+    FGenericVertex& vertices,
 
     const GeometricPrimitive::Positions *positions0,
     const GeometricPrimitive::Positions *positions1,
@@ -40,7 +40,7 @@ void ExportVertices(
     const GeometricPrimitive::Binormals *binormals2 );
 //----------------------------------------------------------------------------
 void ExportVertices(
-    GenericVertex& vertices,
+    FGenericVertex& vertices,
 
     const GeometricPrimitive::Positions *positions0,
     const GeometricPrimitive::Colors *colors0,
@@ -53,8 +53,8 @@ void ExportVertices(
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void ExportVertices(
-    RawStorage<T, _Allocator>& vertices,
-    const Graphics::VertexDeclaration *vertexDeclaration,
+    TRawStorage<T, _Allocator>& vertices,
+    const Graphics::FVertexDeclaration *vertexDeclaration,
     const size_t vertexCount,
 
     const GeometricPrimitive::Positions *positions0,
@@ -86,7 +86,7 @@ void ExportVertices(
 
     vertices.Resize_DiscardData(vertexDeclaration->SizeInBytes() * vertexCount);
 
-    GenericVertex vertex(vertexDeclaration);
+    FGenericVertex vertex(vertexDeclaration);
     vertex.SetDestination(vertices.Pointer(), vertices.SizeInBytes());
     Assert(vertexCount == vertex.VertexCountRemaining());
 
@@ -101,8 +101,8 @@ void ExportVertices(
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void ExportVertices(
-    RawStorage<T, _Allocator>& vertices,
-    const Graphics::VertexDeclaration *vertexDeclaration,
+    TRawStorage<T, _Allocator>& vertices,
+    const Graphics::FVertexDeclaration *vertexDeclaration,
     const size_t vertexCount,
 
     const GeometricPrimitive::Positions *positions0,
@@ -117,7 +117,7 @@ void ExportVertices(
 
     vertices.Resize_DiscardData(vertexDeclaration->SizeInBytes() * vertexCount);
 
-    GenericVertex vertex(vertexDeclaration);
+    FGenericVertex vertex(vertexDeclaration);
     vertex.SetDestination(vertices.Pointer(), vertices.SizeInBytes());
     Assert(vertexCount == vertex.VertexCountRemaining());
 
@@ -126,7 +126,7 @@ void ExportVertices(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void ComputeTangentSpace(GenericVertex& vertices, const MemoryView<const u32>& indices);
+void ComputeTangentSpace(FGenericVertex& vertices, const TMemoryView<const u32>& indices);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

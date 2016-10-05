@@ -16,31 +16,31 @@ namespace ContentPipeline {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_INTERFACE_REFPTR(ContentFilter);
-class IContentFilter : public RTTI::MetaObject {
+class IContentFilter : public RTTI::FMetaObject {
 public:
     virtual ~IContentFilter() {}
 
-    virtual bool Matches(const WStringView& sourceFilename) const = 0;
+    virtual bool Matches(const FWStringView& sourceFilename) const = 0;
 
-    RTTI_CLASS_HEADER(IContentFilter, RTTI::MetaObject);
+    RTTI_CLASS_HEADER(IContentFilter, RTTI::FMetaObject);
 };
 //----------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ContentFilterGlob : public IContentFilter {
+class FContentFilterGlob : public IContentFilter {
 public:
-    typedef BasicString<FileSystem::char_type> pattern_type;
+    typedef TBasicString<FileSystem::char_type> pattern_type;
 
-    ContentFilterGlob();
-    ContentFilterGlob(pattern_type&& pattern);
-    virtual ~ContentFilterGlob();
+    FContentFilterGlob();
+    FContentFilterGlob(pattern_type&& pattern);
+    virtual ~FContentFilterGlob();
 
-    virtual bool Matches(const WStringView& sourceFilename) const override;
+    virtual bool Matches(const FWStringView& sourceFilename) const override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
-    RTTI_CLASS_HEADER(ContentFilterGlob, IContentFilter);
+    RTTI_CLASS_HEADER(FContentFilterGlob, IContentFilter);
 
 protected:
 #ifdef WITH_RTTI_VERIFY_PREDICATES
@@ -50,18 +50,18 @@ private:
     pattern_type _pattern;
 };
 //----------------------------------------------------------------------------
-class ContentFilterGroup : public IContentFilter {
+class FContentFilterGroup : public IContentFilter {
 public:
     typedef VECTOR(Generation, PCContentFilter) group_type;
 
-    ContentFilterGroup();
-    ContentFilterGroup(group_type&& group);
-    virtual ~ContentFilterGroup();
+    FContentFilterGroup();
+    FContentFilterGroup(group_type&& group);
+    virtual ~FContentFilterGroup();
 
-    virtual bool Matches(const WStringView& sourceFilename) const override;
+    virtual bool Matches(const FWStringView& sourceFilename) const override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
-    RTTI_CLASS_HEADER(ContentFilterGroup, IContentFilter);
+    RTTI_CLASS_HEADER(FContentFilterGroup, IContentFilter);
 
 protected:
 #ifdef WITH_RTTI_VERIFY_PREDICATES
@@ -71,21 +71,21 @@ private:
     group_type _group;
 };
 //----------------------------------------------------------------------------
-class ContentFilterRegexp : public IContentFilter {
+class FContentFilterRegexp : public IContentFilter {
 public:
-    typedef BasicString<FileSystem::char_type> string_type;
-    typedef BasicRegexp<FileSystem::char_type> regexp_type;
+    typedef TBasicString<FileSystem::char_type> string_type;
+    typedef TBasicRegexp<FileSystem::char_type> regexp_type;
 
-    ContentFilterRegexp();
-    ContentFilterRegexp(string_type&& regexp);
-    virtual ~ContentFilterRegexp();
+    FContentFilterRegexp();
+    FContentFilterRegexp(string_type&& regexp);
+    virtual ~FContentFilterRegexp();
 
-    virtual bool Matches(const WStringView& sourceFilename) const override;
+    virtual bool Matches(const FWStringView& sourceFilename) const override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
-    RTTI_CLASS_HEADER(ContentFilterRegexp, IContentFilter);
+    RTTI_CLASS_HEADER(FContentFilterRegexp, IContentFilter);
 
-    virtual void RTTI_Load(RTTI::MetaLoadContext* context) override;
+    virtual void RTTI_Load(RTTI::FMetaLoadContext* context) override;
 
 protected:
 #ifdef WITH_RTTI_VERIFY_PREDICATES

@@ -57,7 +57,7 @@ float FP16_to_FP32(u16 value) {
 }
 //----------------------------------------------------------------------------
 u16 FP32_to_FP16(float value) {
-    Assert(HalfFloat::IsConvertible(value));
+    Assert(FHalfFloat::IsConvertible(value));
 
     static const FP32 f32infty = { 255 << 23 };
     static const FP32 f16infty = { 31 << 23 };
@@ -139,17 +139,17 @@ FORCE_INLINE static __m128i FP32_to_FP16_SSE2_(__m128  value) {
 }
 #endif
 //----------------------------------------------------------------------------
-bool HalfFloat::IsConvertible(float value) {
+bool FHalfFloat::IsConvertible(float value) {
     Assert(std::isfinite(value));
     return  MinValue().Unpack() <= value &&
             MaxValue().Unpack() >= value;
 }
 //----------------------------------------------------------------------------
-HalfFloat Lerp(const HalfFloat v0, const HalfFloat v1, float f) {
+FHalfFloat Lerp(const FHalfFloat v0, const FHalfFloat v1, float f) {
     return Lerp(v0.Unpack(), v1.Unpack(), f);
 }
 //----------------------------------------------------------------------------
-HalfFloat BarycentricLerp(const HalfFloat v0, const HalfFloat v1, const HalfFloat v2, float f0, float f1, float f2) {
+FHalfFloat BarycentricLerp(const FHalfFloat v0, const FHalfFloat v1, const FHalfFloat v2, float f0, float f1, float f2) {
     return BarycentricLerp(v0.Unpack(), v1.Unpack(), v2.Unpack(), f0, f1, f2);
 }
 //----------------------------------------------------------------------------

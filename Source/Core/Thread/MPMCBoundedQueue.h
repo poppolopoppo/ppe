@@ -15,15 +15,15 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template<typename T>
-class MPMCBoundedQueueView {
+class TMPMCBoundedQueueView {
 public:
     typedef T value_type;
     typedef size_t size_type;
 
-    ~MPMCBoundedQueueView();
+    ~TMPMCBoundedQueueView();
 
-    MPMCBoundedQueueView(const MPMCBoundedQueueView& ) = delete;
-    MPMCBoundedQueueView& operator =(const MPMCBoundedQueueView& ) = delete;
+    TMPMCBoundedQueueView(const TMPMCBoundedQueueView& ) = delete;
+    TMPMCBoundedQueueView& operator =(const TMPMCBoundedQueueView& ) = delete;
 
     bool empty() const { return _enqueuePos == _dequeuePos; }
     size_type capacity() const { return _bufferMask + 1; }
@@ -37,8 +37,8 @@ protected:
         typename POD_STORAGE(T) _data;
     };
 
-    MPMCBoundedQueueView();
-    MPMCBoundedQueueView(cell_t *buffer, size_type bufferSize);
+    TMPMCBoundedQueueView();
+    TMPMCBoundedQueueView(cell_t *buffer, size_type bufferSize);
 
     cell_t *Buffer() const { return _buffer; }
 
@@ -56,7 +56,7 @@ private:
 };
 //----------------------------------------------------------------------------
 template<typename T>
-MPMCBoundedQueueView<T>::MPMCBoundedQueueView()
+TMPMCBoundedQueueView<T>::TMPMCBoundedQueueView()
 :   _buffer(nullptr)
 ,   _bufferMask(0) {
     _enqueuePos.store(0, std::memory_order_relaxed);
@@ -64,7 +64,7 @@ MPMCBoundedQueueView<T>::MPMCBoundedQueueView()
 }
 //----------------------------------------------------------------------------
 template<typename T>
-MPMCBoundedQueueView<T>::MPMCBoundedQueueView(cell_t *buffer, size_type bufferSize)
+TMPMCBoundedQueueView<T>::TMPMCBoundedQueueView(cell_t *buffer, size_type bufferSize)
 :   _buffer(buffer)
 ,   _bufferMask(bufferSize - 1) {
     Assert(_buffer);
@@ -79,13 +79,13 @@ MPMCBoundedQueueView<T>::MPMCBoundedQueueView(cell_t *buffer, size_type bufferSi
 }
 //----------------------------------------------------------------------------
 template<typename T>
-MPMCBoundedQueueView<T>::~MPMCBoundedQueueView() {
+TMPMCBoundedQueueView<T>::~TMPMCBoundedQueueView() {
     Assert(empty());
     Assert(_buffer);
 }
 //----------------------------------------------------------------------------
 template<typename T>
-bool MPMCBoundedQueueView<T>::Produce(T&& rdata) {
+bool TMPMCBoundedQueueView<T>::Produce(T&& rdata) {
     cell_t* cell;
     size_type pos = _enqueuePos.load(std::memory_order_relaxed);
 
@@ -110,7 +110,7 @@ bool MPMCBoundedQueueView<T>::Produce(T&& rdata) {
 }
 //----------------------------------------------------------------------------
 template<typename T>
-bool MPMCBoundedQueueView<T>::Consume(T *pdata) {
+bool TMPMCBoundedQueueView<T>::Consume(T *pdata) {
     Assert(pdata);
 
     cell_t* cell;
@@ -141,9 +141,9 @@ bool MPMCBoundedQueueView<T>::Consume(T *pdata) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-class MPMCBoundedQueue : public MPMCBoundedQueueView<T> {
+class TMPMCBoundedQueue : public TMPMCBoundedQueueView<T> {
 public:
-    typedef MPMCBoundedQueueView<T> parent_type;
+    typedef TMPMCBoundedQueueView<T> parent_type;
 
     using typename parent_type::cell_t;
     using typename parent_type::size_type;
@@ -151,28 +151,28 @@ public:
     using parent_type::Buffer;
     using parent_type::capacity;
 
-    MPMCBoundedQueue();
-    explicit MPMCBoundedQueue(size_type bufferSize);
-    ~MPMCBoundedQueue();
+    TMPMCBoundedQueue();
+    explicit TMPMCBoundedQueue(size_type bufferSize);
+    ~TMPMCBoundedQueue();
 };
 //----------------------------------------------------------------------------
 template <typename T>
-MPMCBoundedQueue<T>::MPMCBoundedQueue()
-:   MPMCBoundedQueueView<T>(nullptr, 0)
+TMPMCBoundedQueue<T>::TMPMCBoundedQueue()
+:   TMPMCBoundedQueueView<T>(nullptr, 0)
 {
     Assert(capacity() == 0);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-MPMCBoundedQueue<T>::MPMCBoundedQueue(size_type bufferSize)
-:   MPMCBoundedQueueView<T>(reinterpret_cast<cell_t *>(aligned_malloc(bufferSize * sizeof(cell_t), CACHELINE_SIZE)),
+TMPMCBoundedQueue<T>::TMPMCBoundedQueue(size_type bufferSize)
+:   TMPMCBoundedQueueView<T>(reinterpret_cast<cell_t *>(aligned_malloc(bufferSize * sizeof(cell_t), CACHELINE_SIZE)),
                             bufferSize )
 {
     Assert(capacity() == bufferSize);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-MPMCBoundedQueue<T>::~MPMCBoundedQueue() {
+TMPMCBoundedQueue<T>::~TMPMCBoundedQueue() {
     cell_t *const pbuf = Buffer();
     const size_type bufferSize = capacity();
     for (size_type i = 0; i < bufferSize; ++i)
@@ -184,19 +184,19 @@ MPMCBoundedQueue<T>::~MPMCBoundedQueue() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Capacity>
-class MPMCFixedSizeQueue : public MPMCBoundedQueueView<T> {
+class TMPMCFixedSizeQueue : public TMPMCBoundedQueueView<T> {
 public:
-    typedef MPMCBoundedQueueView<T> parent_type;
+    typedef TMPMCBoundedQueueView<T> parent_type;
 
     using typename parent_type::cell_t;
     using typename parent_type::size_type;
 
     STATIC_CONST_INTEGRAL(size_type, Capacity, _Capacity);
 
-    MPMCFixedSizeQueue();
+    TMPMCFixedSizeQueue();
 
-    explicit MPMCFixedSizeQueue(size_type bufferSize) // compatibility with MPMCBoundedQueue<T>
-        : MPMCFixedSizeQueue() {
+    explicit TMPMCFixedSizeQueue(size_type bufferSize) // compatibility with TMPMCBoundedQueue<T>
+        : TMPMCFixedSizeQueue() {
         UNUSED(bufferSize);
     }
 
@@ -205,25 +205,25 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename T, size_t _Capacity>
-MPMCFixedSizeQueue<T, _Capacity>::MPMCFixedSizeQueue()
-:   MPMCBoundedQueueView<T>(reinterpret_cast<cell_t *>(&_storage), _Capacity)
+TMPMCFixedSizeQueue<T, _Capacity>::TMPMCFixedSizeQueue()
+:   TMPMCBoundedQueueView<T>(reinterpret_cast<cell_t *>(&_storage), _Capacity)
 {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _MPMCQueue, size_t _MaxPriority>
-class MPMCPriorityQueue {
+class TMPMCPriorityQueue {
 public:
     typedef _MPMCQueue queue_type;
 
     typedef typename queue_type::value_type value_type;
     typedef typename queue_type::size_type size_type;
 
-    MPMCPriorityQueue();
-    explicit MPMCPriorityQueue(size_type bufferSize);
+    TMPMCPriorityQueue();
+    explicit TMPMCPriorityQueue(size_type bufferSize);
 
-    MPMCPriorityQueue(const MPMCPriorityQueue& ) = delete;
-    MPMCPriorityQueue& operator =(const MPMCPriorityQueue& ) = delete;
+    TMPMCPriorityQueue(const TMPMCPriorityQueue& ) = delete;
+    TMPMCPriorityQueue& operator =(const TMPMCPriorityQueue& ) = delete;
 
     bool empty() const;
 
@@ -231,23 +231,23 @@ public:
     bool Consume(value_type *pdata);
 
 private:
-    UniquePtr<queue_type> _byPriority[_MaxPriority+1];
+    TUniquePtr<queue_type> _byPriority[_MaxPriority+1];
 };
 //----------------------------------------------------------------------------
 template <typename _MPMCQueue, size_t _MaxPriority>
-MPMCPriorityQueue<_MPMCQueue, _MaxPriority>::MPMCPriorityQueue() {
+TMPMCPriorityQueue<_MPMCQueue, _MaxPriority>::TMPMCPriorityQueue() {
     forrange(i, 0, _MaxPriority+1)
         _byPriority[i].reset(new queue_type());
 }
 //----------------------------------------------------------------------------
 template <typename _MPMCQueue, size_t _MaxPriority>
-MPMCPriorityQueue<_MPMCQueue, _MaxPriority>::MPMCPriorityQueue(size_type bufferSize) {
+TMPMCPriorityQueue<_MPMCQueue, _MaxPriority>::TMPMCPriorityQueue(size_type bufferSize) {
     forrange(i, 0, _MaxPriority+1)
         _byPriority[i].reset(new queue_type(bufferSize));
 }
 //----------------------------------------------------------------------------
 template <typename _MPMCQueue, size_t _MaxPriority>
-bool MPMCPriorityQueue<_MPMCQueue, _MaxPriority>::empty() const {
+bool TMPMCPriorityQueue<_MPMCQueue, _MaxPriority>::empty() const {
     forrange(i, 0, _MaxPriority+1)
         if (not _byPriority[i]->empty())
             return false;
@@ -256,13 +256,13 @@ bool MPMCPriorityQueue<_MPMCQueue, _MaxPriority>::empty() const {
 }
 //----------------------------------------------------------------------------
 template <typename _MPMCQueue, size_t _MaxPriority>
-bool MPMCPriorityQueue<_MPMCQueue, _MaxPriority>::Produce(int priority, value_type&& rdata) {
+bool TMPMCPriorityQueue<_MPMCQueue, _MaxPriority>::Produce(int priority, value_type&& rdata) {
     Assert(priority <= _MaxPriority);
     return _byPriority[size_t(priority)]->Produce(std::move(rdata));
 }
 //----------------------------------------------------------------------------
 template <typename _MPMCQueue, size_t _MaxPriority>
-bool MPMCPriorityQueue<_MPMCQueue, _MaxPriority>::Consume(value_type* pdata) {
+bool TMPMCPriorityQueue<_MPMCQueue, _MaxPriority>::Consume(value_type* pdata) {
     forrange(i, 0, _MaxPriority+1)
         if (_byPriority[i]->Consume(pdata))
             return true;

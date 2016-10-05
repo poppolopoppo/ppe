@@ -11,19 +11,19 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, Material, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, FMaterial, );
 //----------------------------------------------------------------------------
-Material::Material(const Graphics::BindName& name)
+FMaterial::FMaterial(const Graphics::FBindName& name)
 :   _name(name) {
     Assert(!name.empty());
 }
 //----------------------------------------------------------------------------
-Material::Material(
-    const Graphics::BindName& name,
-    const String& description,
-    VECTOR(Material, Graphics::BindName)&& tags,
-    ASSOCIATIVE_VECTOR(Material, Graphics::BindName, Filename)&& textures,
-    ASSOCIATIVE_VECTOR(Material, Graphics::BindName, PMaterialParameter)&& parameters )
+FMaterial::FMaterial(
+    const Graphics::FBindName& name,
+    const FString& description,
+    VECTOR(FMaterial, Graphics::FBindName)&& tags,
+    ASSOCIATIVE_VECTOR(FMaterial, Graphics::FBindName, FFilename)&& textures,
+    ASSOCIATIVE_VECTOR(FMaterial, Graphics::FBindName, PMaterialParameter)&& parameters )
 :   _name(name)
 ,   _description(description)
 ,   _tags(std::move(tags))
@@ -32,43 +32,43 @@ Material::Material(
     Assert(!name.empty());
 }
 //----------------------------------------------------------------------------
-Material::~Material() {}
+FMaterial::~FMaterial() {}
 //----------------------------------------------------------------------------
-void Material::AddTag(const Graphics::BindName& name) {
+void FMaterial::AddTag(const Graphics::FBindName& name) {
     Assert(!name.empty());
 
     Add_AssertUnique(_tags, name);
 }
 //----------------------------------------------------------------------------
-void Material::AddTexture(const Graphics::BindName& name, const Filename& filename) {
+void FMaterial::AddTexture(const Graphics::FBindName& name, const FFilename& filename) {
     Assert(!name.empty());
     Assert(!filename.empty());
 
     _textures.Insert_AssertUnique(name, filename);
 }
 //----------------------------------------------------------------------------
-void Material::AddParameter(const Graphics::BindName& name, const PMaterialParameter& parameter) {
+void FMaterial::AddParameter(const Graphics::FBindName& name, const PMaterialParameter& parameter) {
     Assert(!name.empty());
     Assert(parameter);
 
     _parameters.Insert_AssertUnique(name, parameter);
 }
 //----------------------------------------------------------------------------
-void Material::SetTexture(const Graphics::BindName& name, const Filename& filename) {
+void FMaterial::SetTexture(const Graphics::FBindName& name, const FFilename& filename) {
     Assert(!name.empty());
     Assert(!filename.empty());
 
     _textures.Get(name) = filename;
 }
 //----------------------------------------------------------------------------
-void Material::SetParameter(const Graphics::BindName& name, const PMaterialParameter& parameter) {
+void FMaterial::SetParameter(const Graphics::FBindName& name, const PMaterialParameter& parameter) {
     Assert(!name.empty());
     Assert(parameter);
 
     _parameters[name] = parameter;
 }
 //----------------------------------------------------------------------------
-bool Material::Equals(const Material& other) const {
+bool FMaterial::Equals(const FMaterial& other) const {
     return (_name == other._name && 
             _tags == other._tags &&
             _textures == other._textures &&

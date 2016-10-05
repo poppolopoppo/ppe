@@ -4,7 +4,7 @@
 
 #include "Core/Maths/Units.h"
 
-// Use Timepoint only to measure durations, if you want a true date use Timestamp/DateTime instead
+// Use FTimepoint only to measure durations, if you want a true date use FTimestamp/FDateTime instead
 
 // - /!\ -
 // Chrono has no real high precision clock on VS2013 (and since VS2010)
@@ -18,38 +18,38 @@ namespace Core {
 //----------------------------------------------------------------------------
 typedef Units::Time::Milliseconds Timespan;
 //----------------------------------------------------------------------------
-class Timepoint {
+class FTimepoint {
 public:
     typedef i64 value_type;
 
-    Timepoint() : _value(0) {}
-    Timepoint(value_type value) : _value(value) {}
+    FTimepoint() : _value(0) {}
+    FTimepoint(value_type value) : _value(value) {}
 
-    Timepoint(const Timepoint& other) : _value(other._value) {}
-    Timepoint& operator =(const Timepoint& other) { _value = other._value; return *this; }
+    FTimepoint(const FTimepoint& other) : _value(other._value) {}
+    FTimepoint& operator =(const FTimepoint& other) { _value = other._value; return *this; }
 
     value_type Value() const { return _value; }
     void SetValue(value_type value) { _value = value; }
 
-    Timepoint operator +(value_type value) { return _value + value; }
-    Timepoint operator -(value_type value) { Assert(_value >= value); return _value - value; }
+    FTimepoint operator +(value_type value) { return _value + value; }
+    FTimepoint operator -(value_type value) { Assert(_value >= value); return _value - value; }
 
-    Timepoint operator +(const Timespan& duration) { return operator +(Ticks(duration)); }
-    Timepoint operator -(const Timespan& duration) { return operator -(Ticks(duration)); }
+    FTimepoint operator +(const Timespan& duration) { return operator +(Ticks(duration)); }
+    FTimepoint operator -(const Timespan& duration) { return operator -(Ticks(duration)); }
 
-    bool operator ==(const Timepoint& other) const { return _value == other._value; }
-    bool operator !=(const Timepoint& other) const { return _value != other._value; }
+    bool operator ==(const FTimepoint& other) const { return _value == other._value; }
+    bool operator !=(const FTimepoint& other) const { return _value != other._value; }
 
-    bool operator <(const Timepoint& other) const  { return _value <  other._value; }
-    bool operator >=(const Timepoint& other) const { return _value >= other._value; }
+    bool operator <(const FTimepoint& other) const  { return _value <  other._value; }
+    bool operator >=(const FTimepoint& other) const { return _value >= other._value; }
 
-    bool operator >(const Timepoint& other) const  { return _value >  other._value; }
-    bool operator <=(const Timepoint& other) const { return _value <= other._value; }
+    bool operator >(const FTimepoint& other) const  { return _value >  other._value; }
+    bool operator <=(const FTimepoint& other) const { return _value <= other._value; }
 
-    static Timepoint Now();
+    static FTimepoint Now();
     static value_type Ticks(const Timespan& duration);
-    static Timespan Duration(const Timepoint& start, const Timepoint& stop);
-    static Timespan ElapsedSince(const Timepoint& t) { return Duration(t, Now()); }
+    static Timespan Duration(const FTimepoint& start, const FTimepoint& stop);
+    static Timespan ElapsedSince(const FTimepoint& t) { return Duration(t, Now()); }
 
 private:
     value_type _value;

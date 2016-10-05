@@ -9,20 +9,20 @@ namespace Lattice {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class GenericMesh;
-class GenericVertexData;
+class FGenericMesh;
+class FGenericVertexData;
 template <typename T>
-class GenericVertexSubPart;
-typedef GenericVertexSubPart<float3> Positions3f;
-typedef GenericVertexSubPart<float4> Positions4f;
-typedef GenericVertexSubPart<float2> TexCoords2f;
-typedef GenericVertexSubPart<float3> TexCoords3f;
-typedef GenericVertexSubPart<float4> TexCoords4f;
-typedef GenericVertexSubPart<float4> Colors4f;
-typedef GenericVertexSubPart<float3> Normals3f;
-typedef GenericVertexSubPart<float3> Tangents3f;
-typedef GenericVertexSubPart<float4> Tangents4f;
-typedef GenericVertexSubPart<float3> Binormals3f;
+class TGenericVertexSubPart;
+typedef TGenericVertexSubPart<float3> FPositions3f;
+typedef TGenericVertexSubPart<float4> FPositions4f;
+typedef TGenericVertexSubPart<float2> FTexCoords2f;
+typedef TGenericVertexSubPart<float3> FTexCoords3f;
+typedef TGenericVertexSubPart<float4> FTexCoords4f;
+typedef TGenericVertexSubPart<float4> FColors4f;
+typedef TGenericVertexSubPart<float3> FNormals3f;
+typedef TGenericVertexSubPart<float3> FTangents3f;
+typedef TGenericVertexSubPart<float4> FTangents4f;
+typedef TGenericVertexSubPart<float3> FBinormals3f;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

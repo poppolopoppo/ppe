@@ -4,14 +4,14 @@
 
 namespace Core {
 namespace Graphics {
-enum class SurfaceFormatType : u32;
-class PresentationParameters;
+enum class ESurfaceFormatType : u32;
+class FPresentationParameters;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DXGI_FORMAT SurfaceFormatTypeToDXGIFormat(SurfaceFormatType value);
+DXGI_FORMAT SurfaceFormatTypeToDXGIFormat(ESurfaceFormatType value);
 //----------------------------------------------------------------------------
-SurfaceFormatType DXGIFormatToSurfaceFormatType(DXGI_FORMAT value);
+ESurfaceFormatType DXGIFormatToSurfaceFormatType(DXGI_FORMAT value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

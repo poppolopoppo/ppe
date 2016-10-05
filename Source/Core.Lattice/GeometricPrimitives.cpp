@@ -21,13 +21,13 @@ namespace Lattice {
 namespace {
 //----------------------------------------------------------------------------
 static void TransformIFP_(
-    const MemoryView<float3>& normalizeds,
-    const Positions3f& positions,
+    const TMemoryView<float3>& normalizeds,
+    const FPositions3f& positions,
     const float4x4& transform,
     bool useTransform ) {
 
     if (positions) {
-        const MemoryView<float3> transformeds = positions.Append(normalizeds.size());
+        const TMemoryView<float3> transformeds = positions.Append(normalizeds.size());
 
         if (useTransform) {
             forrange(i, 0, transformeds.size())
@@ -49,9 +49,9 @@ static void TransformIFP_(
 //----------------------------------------------------------------------------
 namespace {
 static void Cube_(
-    GenericMesh& mesh,
-    const Positions3f& positions,
-    const TexCoords3f& texcoords,
+    FGenericMesh& mesh,
+    const FPositions3f& positions,
+    const FTexCoords3f& texcoords,
     const float4x4& transform,
     bool useTransform ) {
     Assert(positions || texcoords);
@@ -62,7 +62,7 @@ static void Cube_(
 
     mesh.Reserve(indexCount, vertexCount, true);
 
-    const MemoryView<float3> normalizeds = (texcoords ? texcoords : positions).Append(vertexCount);
+    const TMemoryView<float3> normalizeds = (texcoords ? texcoords : positions).Append(vertexCount);
 
     size_t i = 0;
 
@@ -120,11 +120,11 @@ static void Cube_(
 }
 } //!namespace
 //----------------------------------------------------------------------------
-void Cube(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords) {
+void Cube(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords) {
     Cube_(mesh, positions, texcoords, float4x4::Identity(), false);
 }
 //----------------------------------------------------------------------------
-void Cube(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords, const float4x4& transform) {
+void Cube(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords, const float4x4& transform) {
     Cube_(mesh, positions, texcoords, transform, true);
 }
 //----------------------------------------------------------------------------
@@ -132,9 +132,9 @@ void Cube(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& te
 //----------------------------------------------------------------------------
 namespace {
 static void Pyramid_(
-    GenericMesh& mesh,
-    const Positions3f& positions,
-    const TexCoords3f& texcoords,
+    FGenericMesh& mesh,
+    const FPositions3f& positions,
+    const FTexCoords3f& texcoords,
     const float4x4& transform,
     bool useTransform ) {
     Assert(positions || texcoords);
@@ -145,7 +145,7 @@ static void Pyramid_(
 
     mesh.Reserve(indexCount, vertexCount, true);
 
-    const MemoryView<float3> normalizeds = (texcoords ? texcoords : positions).Append(vertexCount);
+    const TMemoryView<float3> normalizeds = (texcoords ? texcoords : positions).Append(vertexCount);
 
     size_t i = 0;
 
@@ -166,11 +166,11 @@ static void Pyramid_(
 }
 } //!namespace
 //----------------------------------------------------------------------------
-void Pyramid(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords) {
+void Pyramid(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords) {
     Pyramid_(mesh, positions, texcoords, float4x4::Identity(), false);
 }
 //----------------------------------------------------------------------------
-void Pyramid(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords, const float4x4& transform) {
+void Pyramid(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords, const float4x4& transform) {
     Pyramid_(mesh, positions, texcoords, transform, true);
 }
 //----------------------------------------------------------------------------
@@ -178,9 +178,9 @@ void Pyramid(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f&
 //----------------------------------------------------------------------------
 namespace {
 static void Octahedron_(
-    GenericMesh& mesh,
-    const Positions3f& positions,
-    const TexCoords3f& texcoords,
+    FGenericMesh& mesh,
+    const FPositions3f& positions,
+    const FTexCoords3f& texcoords,
     const float4x4& transform,
     bool useTransform ) {
     Assert(positions || texcoords);
@@ -191,7 +191,7 @@ static void Octahedron_(
 
     mesh.Reserve(indexCount, vertexCount, true);
 
-    const MemoryView<float3> normalizeds = (texcoords ? texcoords : positions).Append(vertexCount);
+    const TMemoryView<float3> normalizeds = (texcoords ? texcoords : positions).Append(vertexCount);
 
     size_t i = 0;
 
@@ -217,11 +217,11 @@ static void Octahedron_(
 }
 } //!namespace
 //----------------------------------------------------------------------------
-void Octahedron(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords) {
+void Octahedron(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords) {
     Octahedron_(mesh, positions, texcoords, float4x4::Identity(), false);
 }
 //----------------------------------------------------------------------------
-void Octahedron(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords, const float4x4& transform) {
+void Octahedron(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords, const float4x4& transform) {
     Octahedron_(mesh, positions, texcoords, transform, true);
 }
 //----------------------------------------------------------------------------
@@ -229,9 +229,9 @@ void Octahedron(GenericMesh& mesh, const Positions3f& positions, const TexCoords
 //----------------------------------------------------------------------------
 namespace {
 static void Icosahedron_(
-    GenericMesh& mesh,
-    const Positions3f& positions,
-    const TexCoords3f& texcoords,
+    FGenericMesh& mesh,
+    const FPositions3f& positions,
+    const FTexCoords3f& texcoords,
     const float4x4& transform,
     bool useTransform ) {
     Assert(positions || texcoords);
@@ -242,7 +242,7 @@ static void Icosahedron_(
 
     mesh.Reserve(indexCount, vertexCount, true);
 
-    const MemoryView<float3> normalizeds = (texcoords ? texcoords : positions).Append(vertexCount);
+    const TMemoryView<float3> normalizeds = (texcoords ? texcoords : positions).Append(vertexCount);
 
     size_t i = 0;
 
@@ -289,11 +289,11 @@ static void Icosahedron_(
 }
 } //!namespace
 //----------------------------------------------------------------------------
-void Icosahedron(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords) {
+void Icosahedron(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords) {
     Icosahedron_(mesh, positions, texcoords, float4x4::Identity(), false);
 }
 //----------------------------------------------------------------------------
-void Icosahedron(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords, const float4x4& transform) {
+void Icosahedron(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords, const float4x4& transform) {
     Icosahedron_(mesh, positions, texcoords, transform, true);
 }
 //----------------------------------------------------------------------------
@@ -301,9 +301,9 @@ void Icosahedron(GenericMesh& mesh, const Positions3f& positions, const TexCoord
 //----------------------------------------------------------------------------
 namespace {
 static void ContellatedTetraHedron_(
-    GenericMesh& mesh,
-    const Positions3f& positions,
-    const TexCoords3f& texcoords,
+    FGenericMesh& mesh,
+    const FPositions3f& positions,
+    const FTexCoords3f& texcoords,
     const float4x4& transform,
     bool useTransform ) {
     Assert(positions || texcoords);
@@ -314,7 +314,7 @@ static void ContellatedTetraHedron_(
 
     mesh.Reserve(indexCount, vertexCount, true);
 
-    const MemoryView<float3> normalizeds = (texcoords ? texcoords : positions).Append(vertexCount);
+    const TMemoryView<float3> normalizeds = (texcoords ? texcoords : positions).Append(vertexCount);
 
     size_t i = 0;
 
@@ -370,11 +370,11 @@ static void ContellatedTetraHedron_(
 }
 } //!namespace
 //----------------------------------------------------------------------------
-void ContellatedTetraHedron(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords) {
+void ContellatedTetraHedron(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords) {
     ContellatedTetraHedron_(mesh, positions, texcoords, float4x4::Identity(), false);
 }
 //----------------------------------------------------------------------------
-void ContellatedTetraHedron(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords, const float4x4& transform) {
+void ContellatedTetraHedron(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords, const float4x4& transform) {
     ContellatedTetraHedron_(mesh, positions, texcoords, transform, true);
 }
 //----------------------------------------------------------------------------
@@ -382,9 +382,9 @@ void ContellatedTetraHedron(GenericMesh& mesh, const Positions3f& positions, con
 //----------------------------------------------------------------------------
 namespace {
 static void HemiContellatedTetraHedron_(
-    GenericMesh& mesh,
-    const Positions3f& positions,
-    const TexCoords3f& texcoords,
+    FGenericMesh& mesh,
+    const FPositions3f& positions,
+    const FTexCoords3f& texcoords,
     const float4x4& transform,
     bool useTransform ) {
     Assert(positions || texcoords);
@@ -395,7 +395,7 @@ static void HemiContellatedTetraHedron_(
 
     mesh.Reserve(indexCount, vertexCount, true);
 
-    const MemoryView<float3> normalizeds = (texcoords ? texcoords : positions).Append(vertexCount);
+    const TMemoryView<float3> normalizeds = (texcoords ? texcoords : positions).Append(vertexCount);
 
     size_t i = 0;
 
@@ -430,11 +430,11 @@ static void HemiContellatedTetraHedron_(
 }
 } //!namespace
 //----------------------------------------------------------------------------
-void HemiContellatedTetraHedron(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords) {
+void HemiContellatedTetraHedron(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords) {
     HemiContellatedTetraHedron_(mesh, positions, texcoords, float4x4::Identity(), false);
 }
 //----------------------------------------------------------------------------
-void HemiContellatedTetraHedron(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords, const float4x4& transform) {
+void HemiContellatedTetraHedron(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords, const float4x4& transform) {
     HemiContellatedTetraHedron_(mesh, positions, texcoords, transform, true);
 }
 //----------------------------------------------------------------------------
@@ -442,9 +442,9 @@ void HemiContellatedTetraHedron(GenericMesh& mesh, const Positions3f& positions,
 //----------------------------------------------------------------------------
 namespace {
 void Geosphere_(
-    GenericMesh& mesh,
-    const Positions3f& positions,
-    const TexCoords3f& texcoords,
+    FGenericMesh& mesh,
+    const FPositions3f& positions,
+    const FTexCoords3f& texcoords,
     size_t divisions,
     const float4x4& transform,
     bool useTransform ) {
@@ -453,7 +453,7 @@ void Geosphere_(
 
     Icosahedron_(mesh, positions, texcoords, float4x4::Identity(), false);
 
-    Normals3f normals = mesh.Normal3f(0);
+    FNormals3f normals = mesh.Normal3f(0);
 
     ComputeNormals(mesh, positions, normals);
     PNTriangles(mesh, positions, normals, divisions);
@@ -479,11 +479,11 @@ void Geosphere_(
 }
 } //!namespace
 //----------------------------------------------------------------------------
-void Geosphere(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords, size_t divisions) {
+void Geosphere(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords, size_t divisions) {
     Geosphere_(mesh, positions, texcoords, divisions, float4x4::Identity(), false);
 }
 //----------------------------------------------------------------------------
-void Geosphere(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords, size_t divisions, const float4x4& transform) {
+void Geosphere(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords, size_t divisions, const float4x4& transform) {
     Geosphere_(mesh, positions, texcoords, divisions, transform, true);
 }
 //----------------------------------------------------------------------------
@@ -491,9 +491,9 @@ void Geosphere(GenericMesh& mesh, const Positions3f& positions, const TexCoords3
 //----------------------------------------------------------------------------
 namespace {
 void HemiGeosphere_(
-    GenericMesh& mesh,
-    const Positions3f& positions,
-    const TexCoords3f& texcoords,
+    FGenericMesh& mesh,
+    const FPositions3f& positions,
+    const FTexCoords3f& texcoords,
     size_t divisions,
     const float4x4& transform,
     bool useTransform ) {
@@ -502,7 +502,7 @@ void HemiGeosphere_(
 
     Pyramid_(mesh, positions, texcoords, float4x4::Identity(), false);
 
-    Normals3f normals = mesh.Normal3f(0);
+    FNormals3f normals = mesh.Normal3f(0);
 
     ComputeNormals(mesh, positions, normals);
     PNTriangles(mesh, positions, normals, divisions);
@@ -528,11 +528,11 @@ void HemiGeosphere_(
 }
 } //!namespace
 //----------------------------------------------------------------------------
-void HemiGeosphere(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords, size_t divisions) {
+void HemiGeosphere(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords, size_t divisions) {
     HemiGeosphere_(mesh, positions, texcoords, divisions, float4x4::Identity(), false);
 }
 //----------------------------------------------------------------------------
-void HemiGeosphere(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords, size_t divisions, const float4x4& transform) {
+void HemiGeosphere(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords, size_t divisions, const float4x4& transform) {
     HemiGeosphere_(mesh, positions, texcoords, divisions, transform, true);
 }
 //----------------------------------------------------------------------------

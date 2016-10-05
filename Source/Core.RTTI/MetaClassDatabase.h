@@ -15,32 +15,32 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MetaClass;
+class FMetaClass;
 //----------------------------------------------------------------------------
-class MetaClassHashMap {
+class FMetaClassHashMap {
 public:
-    MetaClassHashMap();
-    ~MetaClassHashMap();
+    FMetaClassHashMap();
+    ~FMetaClassHashMap();
 
-    MetaClassHashMap(const MetaClassHashMap&) = delete;
-    MetaClassHashMap& operator =(const MetaClassHashMap&) = delete;
+    FMetaClassHashMap(const FMetaClassHashMap&) = delete;
+    FMetaClassHashMap& operator =(const FMetaClassHashMap&) = delete;
 
-    void Add(const MetaClass *metaClass);
-    void Remove(const MetaClass *metaClass);
+    void Add(const FMetaClass *metaClass);
+    void Remove(const FMetaClass *metaClass);
 
-    const MetaClass *GetIFP(const RTTI::Name& name) const;
+    const FMetaClass *GetIFP(const FName& name) const;
 
     void Clear();
 
 private:
-    ReadWriteLock _barrier;
-    HASHMAP(RTTI, RTTI::Name, const MetaClass *) _classes;
+    FReadWriteLock _barrier;
+    HASHMAP(RTTI, FName, const FMetaClass *) _classes;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MetaClassDatabase : Meta::Singleton<MetaClassHashMap, MetaClassDatabase> {
-    typedef Meta::Singleton<MetaClassHashMap, MetaClassDatabase> parent_type;
+class FMetaClassDatabase : Meta::TSingleton<FMetaClassHashMap, FMetaClassDatabase> {
+    typedef Meta::TSingleton<FMetaClassHashMap, FMetaClassDatabase> parent_type;
 public:
     using parent_type::Instance;
     using parent_type::HasInstance;

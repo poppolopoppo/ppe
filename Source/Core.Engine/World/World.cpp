@@ -13,9 +13,9 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-World::World(const char *name, IServiceProvider *serviceProvider)
+FWorld::FWorld(const char *name, IServiceProvider *serviceProvider)
 :   _name(name)
-,   _status(WorldStatus::BeforeInitialize)
+,   _status(EWorldStatus::BeforeInitialize)
 ,   _serviceProvider(serviceProvider)
 ,   _revision(0)
 ,   _timespeed(1.0f) {
@@ -23,23 +23,23 @@ World::World(const char *name, IServiceProvider *serviceProvider)
     Assert(serviceProvider);
 }
 //----------------------------------------------------------------------------
-World::~World() {
+FWorld::~FWorld() {
     THIS_THREADRESOURCE_CHECKACCESS();
 }
 //----------------------------------------------------------------------------
-void World::Pause() {
+void FWorld::Pause() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     _timespeed = 0;
 }
 //----------------------------------------------------------------------------
-bool World::IsPaused() const {
+bool FWorld::IsPaused() const {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     return 0 == _timespeed;
 }
 //----------------------------------------------------------------------------
-void World::TogglePause() {
+void FWorld::TogglePause() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     if (IsPaused())
@@ -48,50 +48,50 @@ void World::TogglePause() {
         Pause();
 }
 //----------------------------------------------------------------------------
-void World::SetSpeed(float value) {
+void FWorld::SetSpeed(float value) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(value > 0 /* use Pause() for == 0 */);
 
     _timespeed = value;
 }
 //----------------------------------------------------------------------------
-void World::SetLighting(LightingEnvironment *lighting) {
+void FWorld::SetLighting(FLightingEnvironment *lighting) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(lighting);
 
     _lighting.reset(lighting);
 }
 //----------------------------------------------------------------------------
-void World::Initialize() {
+void FWorld::Initialize() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    LOG(Info, L"[World] Initialize world \"{0}\" ...", _name.c_str());
+    LOG(Info, L"[FWorld] Initialize world \"{0}\" ...", _name.c_str());
 
-    ChangeStatus_(WorldStatus::BeforeInitialize);
+    ChangeStatus_(EWorldStatus::BeforeInitialize);
     {
-        ChangeStatus_(WorldStatus::Initialize);
+        ChangeStatus_(EWorldStatus::Initialize);
         /**********************************************************************/
 
         _timeline.Tick();
-        _lighting = new LightingEnvironment();
+        _lighting = new FLightingEnvironment();
 
         Assert(!_logic);
-        _logic.reset(new Logic::EntityManager());
+        _logic.reset(new Logic::FEntityManager());
         _logic->Initialize();
 
         /**********************************************************************/
     }
-    ChangeStatus_(WorldStatus::AfterInitialize);
+    ChangeStatus_(EWorldStatus::AfterInitialize);
 }
 //----------------------------------------------------------------------------
-void World::Destroy() {
+void FWorld::Destroy() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    LOG(Info, L"[World] Destroy world \"{0}\" ...", _name.c_str());
+    LOG(Info, L"[FWorld] Destroy world \"{0}\" ...", _name.c_str());
 
-    ChangeStatus_(WorldStatus::BeforeDestroy);
+    ChangeStatus_(EWorldStatus::BeforeDestroy);
     {
-        ChangeStatus_(WorldStatus::Destroy);
+        ChangeStatus_(EWorldStatus::Destroy);
         /**********************************************************************/
 
         Assert(_logic);
@@ -102,15 +102,15 @@ void World::Destroy() {
 
         /**********************************************************************/
     }
-    ChangeStatus_(WorldStatus::AfterDestroy);
+    ChangeStatus_(EWorldStatus::AfterDestroy);
 }
 //----------------------------------------------------------------------------
-void World::Update(const Timeline& timeline) {
+void FWorld::Update(const FTimeline& timeline) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    ChangeStatus_(WorldStatus::BeforeUpdate);
+    ChangeStatus_(EWorldStatus::BeforeUpdate);
     {
-        ChangeStatus_(WorldStatus::Update);
+        ChangeStatus_(EWorldStatus::Update);
         /**********************************************************************/
 
         ++_revision;
@@ -120,19 +120,19 @@ void World::Update(const Timeline& timeline) {
 
         /**********************************************************************/
     }
-    ChangeStatus_(WorldStatus::AfterUpdate);
+    ChangeStatus_(EWorldStatus::AfterUpdate);
 }
 //----------------------------------------------------------------------------
-void World::ChangeStatus_(WorldStatus value) {
+void FWorld::ChangeStatus_(EWorldStatus value) {
     _status = value;
     switch (value)
     {
-    case WorldStatus::BeforeInitialize: _onBeforeInitialize(this); break;
-    case WorldStatus::AfterInitialize: _onAfterInitialize(this); break;
-    case WorldStatus::BeforeUpdate: _onBeforeUpdate(this); break;
-    case WorldStatus::AfterUpdate: _onAfterUpdate(this); break;
-    case WorldStatus::BeforeDestroy: _onBeforeDestroy(this); break;
-    case WorldStatus::AfterDestroy: _onAfterDestroy(this); break;
+    case EWorldStatus::BeforeInitialize: _onBeforeInitialize(this); break;
+    case EWorldStatus::AfterInitialize: _onAfterInitialize(this); break;
+    case EWorldStatus::BeforeUpdate: _onBeforeUpdate(this); break;
+    case EWorldStatus::AfterUpdate: _onAfterUpdate(this); break;
+    case EWorldStatus::BeforeDestroy: _onBeforeDestroy(this); break;
+    case EWorldStatus::AfterDestroy: _onAfterDestroy(this); break;
     default:
         break;
     } 
@@ -140,11 +140,11 @@ void World::ChangeStatus_(WorldStatus value) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void World::Start() {
+void FWorld::Start() {
     NOOP;
 }
 //----------------------------------------------------------------------------
-void World::Shutdown() {
+void FWorld::Shutdown() {
     NOOP;
 }
 //----------------------------------------------------------------------------

@@ -6,36 +6,36 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline WeakAndRefCountable::WeakAndRefCountable()
+inline FWeakAndRefCountable::FWeakAndRefCountable()
 :   _weakPtrs(nullptr)
 {}
 //----------------------------------------------------------------------------
-inline WeakAndRefCountable::WeakAndRefCountable(WeakAndRefCountable&& )
+inline FWeakAndRefCountable::FWeakAndRefCountable(FWeakAndRefCountable&& )
 :   _weakPtrs(nullptr)
 {}
 //----------------------------------------------------------------------------
-inline WeakAndRefCountable& WeakAndRefCountable::operator =(WeakAndRefCountable&& ) { return *this; }
+inline FWeakAndRefCountable& FWeakAndRefCountable::operator =(FWeakAndRefCountable&& ) { return *this; }
 //----------------------------------------------------------------------------
-inline WeakAndRefCountable::WeakAndRefCountable(const WeakAndRefCountable& )
+inline FWeakAndRefCountable::FWeakAndRefCountable(const FWeakAndRefCountable& )
 :   _weakPtrs(nullptr)
 {}
 //----------------------------------------------------------------------------
-inline WeakAndRefCountable& WeakAndRefCountable::operator =(const WeakAndRefCountable& ) { return *this; }
+inline FWeakAndRefCountable& FWeakAndRefCountable::operator =(const FWeakAndRefCountable& ) { return *this; }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline WeakPtrBase::WeakPtrBase(void **pptr)
+inline FWeakPtrBase::FWeakPtrBase(void **pptr)
 :   _pptr(pptr)
 ,   _next(nullptr)
 ,   _prev(nullptr) {
     Assert(_pptr);
 }
 //----------------------------------------------------------------------------
-inline WeakPtrBase::~WeakPtrBase() {}
+inline FWeakPtrBase::~FWeakPtrBase() {}
 //----------------------------------------------------------------------------
 template <typename T>
-void WeakPtrBase::set_(T *ptr) {
-    STATIC_ASSERT(std::is_base_of<WeakAndRefCountable COMMA T>::value);
+void FWeakPtrBase::set_(T *ptr) {
+    STATIC_ASSERT(std::is_base_of<FWeakAndRefCountable COMMA T>::value);
 
     if (*_pptr == (void *)ptr)
         return;
@@ -75,80 +75,80 @@ void WeakPtrBase::set_(T *ptr) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-WeakPtr<T>::WeakPtr()
-:   WeakPtrBase((void **)&_ptr)
+TWeakPtr<T>::TWeakPtr()
+:   FWeakPtrBase((void **)&_ptr)
 ,   _ptr(nullptr) {}
 //----------------------------------------------------------------------------
 template <typename T>
-WeakPtr<T>::WeakPtr(T* ptr)
-:   WeakPtrBase((void **)&_ptr)
+TWeakPtr<T>::TWeakPtr(T* ptr)
+:   FWeakPtrBase((void **)&_ptr)
 ,   _ptr(nullptr) {
-    WeakPtrBase::set_(ptr);
+    FWeakPtrBase::set_(ptr);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-WeakPtr<T>::~WeakPtr() {
-    WeakPtrBase::set_<T>(nullptr);
+TWeakPtr<T>::~TWeakPtr() {
+    FWeakPtrBase::set_<T>(nullptr);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-WeakPtr<T>::WeakPtr(WeakPtr&& rvalue)
-:   WeakPtr(rvalue._ptr) {
+TWeakPtr<T>::TWeakPtr(TWeakPtr&& rvalue)
+:   TWeakPtr(rvalue._ptr) {
     rvalue.set_<T>(nullptr);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-auto WeakPtr<T>::operator =(WeakPtr&& rvalue) -> WeakPtr& {
-    WeakPtrBase::set_(rvalue._ptr);
+auto TWeakPtr<T>::operator =(TWeakPtr&& rvalue) -> TWeakPtr& {
+    FWeakPtrBase::set_(rvalue._ptr);
     rvalue.set_<T>(nullptr);
     return *this;
 }
 //----------------------------------------------------------------------------
 template <typename T>
-WeakPtr<T>::WeakPtr(const WeakPtr& other)
-:   WeakPtr(other._ptr) {}
+TWeakPtr<T>::TWeakPtr(const TWeakPtr& other)
+:   TWeakPtr(other._ptr) {}
 //----------------------------------------------------------------------------
 template <typename T>
-auto WeakPtr<T>::operator =(const WeakPtr& other) -> WeakPtr& {
-    WeakPtrBase::set_(other._ptr);
+auto TWeakPtr<T>::operator =(const TWeakPtr& other) -> TWeakPtr& {
+    FWeakPtrBase::set_(other._ptr);
     return *this;
 }
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-WeakPtr<T>::WeakPtr(const WeakPtr<U>& other)
-:   WeakPtr(checked_cast<T *>(other.get())) {}
+TWeakPtr<T>::TWeakPtr(const TWeakPtr<U>& other)
+:   TWeakPtr(checked_cast<T *>(other.get())) {}
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-auto WeakPtr<T>::operator =(const WeakPtr<U>& other) -> WeakPtr& {
-    WeakPtrBase::set_(checked_cast<T *>(other.get()));
+auto TWeakPtr<T>::operator =(const TWeakPtr<U>& other) -> TWeakPtr& {
+    FWeakPtrBase::set_(checked_cast<T *>(other.get()));
     return *this;
 }
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-WeakPtr<T>::WeakPtr(WeakPtr<U>&& rvalue)
-:   WeakPtr(checked_cast<T *>(rvalue.get())) {
+TWeakPtr<T>::TWeakPtr(TWeakPtr<U>&& rvalue)
+:   TWeakPtr(checked_cast<T *>(rvalue.get())) {
     rvalue.set_<U>(nullptr);
 }
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-auto WeakPtr<T>::operator =(WeakPtr<U>&& rvalue) -> WeakPtr& {
-    WeakPtrBase::set_(checked_cast<T *>(rvalue.get()));
+auto TWeakPtr<T>::operator =(TWeakPtr<U>&& rvalue) -> TWeakPtr& {
+    FWeakPtrBase::set_(checked_cast<T *>(rvalue.get()));
     rvalue.set_<U>(nullptr);
     return *this;
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void WeakPtr<T>::reset(T* ptr/* = nullptr */) {
-    WeakPtrBase::set_(ptr);
+void TWeakPtr<T>::reset(T* ptr/* = nullptr */) {
+    FWeakPtrBase::set_(ptr);
 }
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-bool WeakPtr<T>::TryLock(RefPtr<U> *pLocked) const {
+bool TWeakPtr<T>::TryLock(TRefPtr<U> *pLocked) const {
     Assert(pLocked);
     Likely(pLocked);
     pLocked->reset(_ptr);
@@ -157,10 +157,10 @@ bool WeakPtr<T>::TryLock(RefPtr<U> *pLocked) const {
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-void WeakPtr<T>::Swap(WeakPtr<U>& other) {
+void TWeakPtr<T>::Swap(TWeakPtr<U>& other) {
     T *const lhs = get();
     U *const rhs = get();
-    WeakPtrBase::set_(checked_cast<T *>(rhs));
+    FWeakPtrBase::set_(checked_cast<T *>(rhs));
     other.set_(checked_cast<U *>(lhs));
 }
 //----------------------------------------------------------------------------

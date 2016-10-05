@@ -13,49 +13,49 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-MetaClass::MetaClass(const RTTI::Name& name, Flags attributes)
+FMetaClass::FMetaClass(const FName& name, EFlags attributes)
 :   _name(name)
 ,   _attributes(attributes) {}
 //----------------------------------------------------------------------------
-MetaClass::~MetaClass() {}
+FMetaClass::~FMetaClass() {}
 //----------------------------------------------------------------------------
-bool MetaClass::InheritsFrom(const MetaClass *parent) const {
+bool FMetaClass::InheritsFrom(const FMetaClass *parent) const {
     Assert(parent);
 
     if (parent == this)
         return true;
 
-    const MetaClass* _parent = Parent();
+    const FMetaClass* _parent = Parent();
     return (nullptr != _parent)
         ? _parent->InheritsFrom(parent)
         : false;
 }
 //----------------------------------------------------------------------------
-bool MetaClass::IsAssignableFrom(const MetaClass *child) const {
+bool FMetaClass::IsAssignableFrom(const FMetaClass *child) const {
     Assert(child);
     return child->InheritsFrom(this);
 }
 //----------------------------------------------------------------------------
-void MetaClass::Register(MetaClassHashMap& database) const {
+void FMetaClass::Register(FMetaClassHashMap& database) const {
     database.Add(this);
 }
 //----------------------------------------------------------------------------
-void MetaClass::Unregister(MetaClassHashMap& database) const {
+void FMetaClass::Unregister(FMetaClassHashMap& database) const {
     database.Remove(this);
 }
 //----------------------------------------------------------------------------
-const MetaClass* MetaClass::Parent() const {
+const FMetaClass* FMetaClass::Parent() const {
     return VirtualParent();
 }
 //----------------------------------------------------------------------------
-MemoryView<const UCMetaProperty> MetaClass::Properties() const {
+TMemoryView<const UCMetaProperty> FMetaClass::Properties() const {
     return VirtualProperties();
 }
 //----------------------------------------------------------------------------
-const MetaProperty *MetaClass::PropertyIFP(const StringView& name, size_t attributes /* = 0 */, bool inherited /* = true */) const {
+const FMetaProperty *FMetaClass::PropertyIFP(const FStringView& name, size_t attributes /* = 0 */, bool inherited /* = true */) const {
     Assert(not name.empty());
 
-    const MetaProperty* result = VirtualPropertyIFP(name, attributes);
+    const FMetaProperty* result = VirtualPropertyIFP(name, attributes);
     if (result)
         return result;
 
@@ -64,10 +64,10 @@ const MetaProperty *MetaClass::PropertyIFP(const StringView& name, size_t attrib
         : nullptr;
 }
 //----------------------------------------------------------------------------
-const MetaProperty *MetaClass::PropertyIFP(const RTTI::Name& name, size_t attributes /* = 0 */, bool inherited /* = true */) const {
+const FMetaProperty *FMetaClass::PropertyIFP(const FName& name, size_t attributes /* = 0 */, bool inherited /* = true */) const {
     Assert(name.size());
 
-    const MetaProperty* result = VirtualPropertyIFP(name, attributes);
+    const FMetaProperty* result = VirtualPropertyIFP(name, attributes);
     if (result)
         return result;
 
@@ -76,23 +76,23 @@ const MetaProperty *MetaClass::PropertyIFP(const RTTI::Name& name, size_t attrib
         : nullptr;
 }
 //----------------------------------------------------------------------------
-MetaObject* MetaClass::CreateInstance() const {
+FMetaObject* FMetaClass::CreateInstance() const {
     Assert(not IsAbstract());
     return VirtualCreateInstance();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-InScopeMetaClass::InScopeMetaClass(const RTTI::Name& name, Flags attributes)
-:   MetaClass(name, attributes) {}
+InScopeMetaClass::InScopeMetaClass(const FName& name, EFlags attributes)
+:   FMetaClass(name, attributes) {}
 //----------------------------------------------------------------------------
 InScopeMetaClass::~InScopeMetaClass() {}
 //----------------------------------------------------------------------------
-MemoryView<const UCMetaProperty> InScopeMetaClass::VirtualProperties() const {
+TMemoryView<const UCMetaProperty> InScopeMetaClass::VirtualProperties() const {
     return MakeView(_properties);
 }
 //----------------------------------------------------------------------------
-const MetaProperty *InScopeMetaClass::VirtualPropertyIFP(const StringView& name, size_t attributes) const {
+const FMetaProperty *InScopeMetaClass::VirtualPropertyIFP(const FStringView& name, size_t attributes) const {
     for (const UCMetaProperty& p : _properties)
         if ((p->Attributes() & attributes) == attributes &&
             (0 == Compare(p->Name().MakeView(), name)) )
@@ -101,7 +101,7 @@ const MetaProperty *InScopeMetaClass::VirtualPropertyIFP(const StringView& name,
     return nullptr;
 }
 //----------------------------------------------------------------------------
-const MetaProperty *InScopeMetaClass::VirtualPropertyIFP(const RTTI::Name& name, size_t attributes) const {
+const FMetaProperty *InScopeMetaClass::VirtualPropertyIFP(const FName& name, size_t attributes) const {
     for (const UCMetaProperty& p : _properties)
         if ((p->Attributes() & attributes) == attributes &&
             (p->Name() == name) )
@@ -116,7 +116,7 @@ void InScopeMetaClass::RegisterProperty(UCMetaProperty&& prop) {
 
 #ifdef WITH_CORE_ASSERT
     {
-        const RTTI::Name name = prop->Name();
+        const FName name = prop->Name();
         for (const UCMetaProperty& p : _properties)
             Assert(p->Name() != name);
     }

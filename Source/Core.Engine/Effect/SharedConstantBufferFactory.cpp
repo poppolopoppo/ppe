@@ -16,27 +16,27 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SharedConstantBufferFactory::SharedConstantBufferFactory() 
+FSharedConstantBufferFactory::FSharedConstantBufferFactory() 
 :   _device(nullptr) {}
 //----------------------------------------------------------------------------
-SharedConstantBufferFactory::~SharedConstantBufferFactory() {
+FSharedConstantBufferFactory::~FSharedConstantBufferFactory() {
     THIS_THREADRESOURCE_CHECKACCESS();
     AssertRelease(_buffers.empty()); // someone forgot to call ReleaseDestroyIFN()
     Assert(nullptr == _device);
 }
 //----------------------------------------------------------------------------
-SharedConstantBuffer *SharedConstantBufferFactory::GetOrCreate(
-    const Graphics::BindName& name,
-    const Graphics::ConstantBufferLayout *layout ) {
+FSharedConstantBuffer *FSharedConstantBufferFactory::GetOrCreate(
+    const Graphics::FBindName& name,
+    const Graphics::FConstantBufferLayout *layout ) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(_device);
     Assert(!name.empty());
     Assert(layout);
 
-    const SharedConstantBufferKey sharedKey{name, layout};
+    const FSharedConstantBufferKey sharedKey{name, layout};
     PSharedConstantBuffer& buffer = _buffers[sharedKey];
     if (!buffer) {
-        buffer = new SharedConstantBuffer(sharedKey);
+        buffer = new FSharedConstantBuffer(sharedKey);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         buffer->SetResourceName(name.c_str());
 #endif
@@ -47,7 +47,7 @@ SharedConstantBuffer *SharedConstantBufferFactory::GetOrCreate(
     return buffer.get();
 }
 //----------------------------------------------------------------------------
-void SharedConstantBufferFactory::ReleaseDestroyIFN(PSharedConstantBuffer& buffer) {
+void FSharedConstantBufferFactory::ReleaseDestroyIFN(PSharedConstantBuffer& buffer) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(_device);
     Assert(buffer);
@@ -63,18 +63,18 @@ void SharedConstantBufferFactory::ReleaseDestroyIFN(PSharedConstantBuffer& buffe
     }
 }
 //----------------------------------------------------------------------------
-void SharedConstantBufferFactory::Clear() {
-    AssertRelease(_buffers.empty()); // should be already empty after EffectCompiler.Clear() !
+void FSharedConstantBufferFactory::Clear() {
+    AssertRelease(_buffers.empty()); // should be already empty after FEffectCompiler.Clear() !
 }
 //----------------------------------------------------------------------------
-void SharedConstantBufferFactory::Start(Graphics::IDeviceAPIEncapsulator *device) {
+void FSharedConstantBufferFactory::Start(Graphics::IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!_device);
 
     _device = device;
 }
 //----------------------------------------------------------------------------
-void SharedConstantBufferFactory::Shutdown(Graphics::IDeviceAPIEncapsulator *device) {
+void FSharedConstantBufferFactory::Shutdown(Graphics::IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(device == _device);
     AssertRelease(_buffers.empty());

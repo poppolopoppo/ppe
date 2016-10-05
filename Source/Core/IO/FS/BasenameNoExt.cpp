@@ -6,31 +6,31 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-BasenameNoExt::BasenameNoExt(const FileSystem::StringView& content)
+FBasenameNoExt::FBasenameNoExt(const FileSystem::FStringView& content)
 :   parent_type(content) {}
 //----------------------------------------------------------------------------
-BasenameNoExt& BasenameNoExt::operator =(const FileSystem::StringView& content) {
+FBasenameNoExt& FBasenameNoExt::operator =(const FileSystem::FStringView& content) {
     parent_type::operator =(content);
     return *this;
 }
 //----------------------------------------------------------------------------
-BasenameNoExt::BasenameNoExt(const BasenameNoExt& other)
+FBasenameNoExt::FBasenameNoExt(const FBasenameNoExt& other)
 :   parent_type(other) {}
 //----------------------------------------------------------------------------
-BasenameNoExt& BasenameNoExt::operator =(const BasenameNoExt& other) {
+FBasenameNoExt& FBasenameNoExt::operator =(const FBasenameNoExt& other) {
     parent_type::operator =(other);
     return *this;
 }
 //----------------------------------------------------------------------------
-BasenameNoExt::BasenameNoExt(const FileSystemToken& token)
+FBasenameNoExt::FBasenameNoExt(const FFileSystemToken& token)
 :   parent_type(token) {}
 //----------------------------------------------------------------------------
-BasenameNoExt& BasenameNoExt::operator =(const FileSystemToken& token) {
+FBasenameNoExt& FBasenameNoExt::operator =(const FFileSystemToken& token) {
     parent_type::operator =(token);
     return *this;
 }
 //----------------------------------------------------------------------------
-void BasenameNoExt::Swap(BasenameNoExt& other) {
+void FBasenameNoExt::Swap(FBasenameNoExt& other) {
     parent_type::Swap(other);
 }
 //----------------------------------------------------------------------------

@@ -13,7 +13,7 @@ FWD_REFPTR(ShaderSource);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class ShaderCompilerFlags {
+enum class EShaderCompilerFlags {
     None        = 0,
     Debug       = 1 << 0,
     Optimize    = 1 << 1,
@@ -31,18 +31,18 @@ class IDeviceAPIShaderCompiler {
 public:
     virtual ~IDeviceAPIShaderCompiler() {}
 
-    virtual ShaderCompiled* CompileShaderSource(
-        const ShaderSource* source,
-        const VertexDeclaration* vertexDeclaration,
-        ShaderProgramType programType,
-        ShaderProfileType profileType,
-        ShaderCompilerFlags flags,
+    virtual FShaderCompiled* CompileShaderSource(
+        const FShaderSource* source,
+        const FVertexDeclaration* vertexDeclaration,
+        EShaderProgramType programType,
+        EShaderProfileType profileType,
+        EShaderCompilerFlags flags,
         const char* entryPoint ) = 0;
 
     virtual void PreprocessShaderSource(
         RAWSTORAGE(Shader, char)& output,
-        const ShaderSource* source,
-        const VertexDeclaration* vertexDeclaration) = 0;
+        const FShaderSource* source,
+        const FVertexDeclaration* vertexDeclaration) = 0;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -26,26 +26,26 @@ FWD_REFPTR(KeyboardMouseCameraController);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class GameTest3 : public Core::Application::ApplicationWindow {
+class FGameTest3 : public Core::Application::FApplicationWindow {
 public:
-    typedef Core::Application::ApplicationWindow parent_type;
+    typedef Core::Application::FApplicationWindow parent_type;
 
-    GameTest3() : GameTest3(L"Core Game Window Test Pipa Bimba 3") {}
-    explicit GameTest3(const wchar_t *appname);
-    virtual ~GameTest3();
+    FGameTest3() : FGameTest3(L"Core Game Window Test Pipa Bimba 3") {}
+    explicit FGameTest3(const wchar_t *appname);
+    virtual ~FGameTest3();
 
     virtual void Start() override;
     virtual void Shutdown() override;
 
 protected:
-    virtual void Initialize(const Timeline& time) override;
+    virtual void Initialize(const FTimeline& time) override;
     virtual void Destroy() override;
 
     virtual void LoadContent() override;
     virtual void UnloadContent() override;
 
-    virtual void Update(const Timeline& time) override;
-    virtual void Draw(const Timeline& time) override;
+    virtual void Update(const FTimeline& time) override;
+    virtual void Draw(const FTimeline& time) override;
 
     virtual void Present() override;
 

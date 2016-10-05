@@ -7,23 +7,23 @@
 
 namespace Core {
 class IStreamReader;
-enum class SeekOrigin;
-namespace Lexer {
+enum class ESeekOrigin;
+namespace FLexer {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class LookAheadReader {
+class FLookAheadReader {
 public:
     STATIC_CONST_INTEGRAL(size_t, BufferCapacity, 2048 - 6 * sizeof(size_t));
 
-    LookAheadReader(IStreamReader* input, const wchar_t *sourceFileName);
-    ~LookAheadReader();
+    FLookAheadReader(IStreamReader* input, const wchar_t *sourceFileName);
+    ~FLookAheadReader();
 
     const wchar_t *SourceFileName() const { return _sourceFileName; }
     size_t SourceLine() const { return _sourceLine; }
     size_t SourceColumn() const { return _sourceColumn; }
 
-    Location SourceSite() const { return Location(_sourceFileName, _sourceLine, _sourceColumn); }
+    FLocation SourceSite() const { return FLocation(_sourceFileName, _sourceLine, _sourceColumn); }
 
     bool Eof() const;
     size_t Tell() const;
@@ -32,7 +32,7 @@ public:
     char Peek(size_t n = 0) const;
 
     char Read();
-    bool ReadUntil(String& dst, char expected);
+    bool ReadUntil(FString& dst, char expected);
     bool SkipUntil(char expected);
     void EatWhiteSpaces();
 
@@ -53,5 +53,5 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace Lexer
+} //!namespace FLexer
 } //!namespace Core

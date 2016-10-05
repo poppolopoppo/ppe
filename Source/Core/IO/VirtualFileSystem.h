@@ -14,14 +14,14 @@
 
 namespace Core {
 template <typename T, typename _Allocator>
-class RawStorage;
-POOL_TAG_DECL(VirtualFileSystem);
+class TRawStorage;
+POOL_TAG_DECL(FVirtualFileSystem);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class VirtualFileSystem : Meta::Singleton<VirtualFileSystemTrie, VirtualFileSystem> {
+class FVirtualFileSystem : Meta::TSingleton<FVirtualFileSystemTrie, FVirtualFileSystem> {
 public:
-    typedef Meta::Singleton<VirtualFileSystemTrie, VirtualFileSystem> parent_type;
+    typedef Meta::TSingleton<FVirtualFileSystemTrie, FVirtualFileSystem> parent_type;
 
     using parent_type::Instance;
     using parent_type::HasInstance;
@@ -29,27 +29,27 @@ public:
 
     static void Create() { parent_type::Create(); }
 
-    static Basename TemporaryBasename(const wchar_t *prefix, const wchar_t *ext);
-    static Filename TemporaryFilename(const wchar_t *prefix, const wchar_t *ext);
+    static FBasename TemporaryBasename(const wchar_t *prefix, const wchar_t *ext);
+    static FFilename TemporaryFilename(const wchar_t *prefix, const wchar_t *ext);
 
     template <typename T, typename _Allocator>
-    static bool ReadAll(const Filename& filename, RawStorage<T, _Allocator>& storage, AccessPolicy::Mode policy = AccessPolicy::None);
+    static bool ReadAll(const FFilename& filename, TRawStorage<T, _Allocator>& storage, AccessPolicy::EMode policy = AccessPolicy::None);
     template <typename T, typename _Allocator>
-    static bool WriteAll(const Filename& filename, const RawStorage<T, _Allocator>& storage, AccessPolicy::Mode policy = AccessPolicy::None);
-    static bool WriteAll(const Filename& filename, const MemoryView<const u8>& storage, AccessPolicy::Mode policy = AccessPolicy::None);
+    static bool WriteAll(const FFilename& filename, const TRawStorage<T, _Allocator>& storage, AccessPolicy::EMode policy = AccessPolicy::None);
+    static bool WriteAll(const FFilename& filename, const TMemoryView<const u8>& storage, AccessPolicy::EMode policy = AccessPolicy::None);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class VirtualFileSystemStartup {
+class FVirtualFileSystemStartup {
 public:
     static void Start();
     static void Shutdown();
 
     static void Clear();
 
-    VirtualFileSystemStartup() { Start(); }
-    ~VirtualFileSystemStartup() { Shutdown(); }
+    FVirtualFileSystemStartup() { Start(); }
+    ~FVirtualFileSystemStartup() { Shutdown(); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

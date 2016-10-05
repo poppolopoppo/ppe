@@ -26,9 +26,9 @@ namespace Engine {
 namespace {
 //----------------------------------------------------------------------------
 static void TextureEntry_InsertMRU_(
-    TextureCache::TextureEntry **lru,
-    TextureCache::TextureEntry **mru,
-    TextureCache::TextureEntry *node ) {
+    FTextureCache::FTextureEntry **lru,
+    FTextureCache::FTextureEntry **mru,
+    FTextureCache::FTextureEntry *node ) {
     Assert(node);
     Assert(nullptr == node->Prev());
     Assert(nullptr == node->Next());
@@ -52,9 +52,9 @@ static void TextureEntry_InsertMRU_(
 }
 //----------------------------------------------------------------------------
 static void TextureEntry_Erase_(
-    TextureCache::TextureEntry **lru,
-    TextureCache::TextureEntry **mru,
-    TextureCache::TextureEntry *node ) {
+    FTextureCache::FTextureEntry **lru,
+    FTextureCache::FTextureEntry **mru,
+    FTextureCache::FTextureEntry *node ) {
     Assert(node);
     Assert(!*lru || (*lru)->Prev() == nullptr);
     Assert(!*mru || (*mru)->Next() == nullptr);
@@ -77,62 +77,62 @@ static void TextureEntry_Erase_(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-TextureCache::TextureData::TextureData(TextureCache *cache)
+FTextureCache::FTextureData::FTextureData(FTextureCache *cache)
 :   _pixels(TexturePixelsAllocator(&cache->_heap)) {}
 //----------------------------------------------------------------------------
-TextureCache::TextureData::~TextureData() {}
+FTextureCache::FTextureData::~FTextureData() {}
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, TextureCache::TextureData, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, FTextureCache::FTextureData, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-TextureCache::TextureEntry::TextureEntry(const Core::Filename& filename, bool useSRGB, bool keepData)
+FTextureCache::FTextureEntry::FTextureEntry(const Core::FFilename& filename, bool useSRGB, bool keepData)
 :   _filename(filename)
 ,   _prev(nullptr) {
     _nextWFlags.Reset(nullptr, useSRGB, keepData);
 
-    LOG(Info, L"[TextureCache] Loading texture '{0}', SRGB = {1:A}, Keep data = {2:A} ...",
+    LOG(Info, L"[FTextureCache] Loading texture '{0}', SRGB = {1:A}, Keep data = {2:A} ...",
         _filename, UseSRGB(), KeepData() );
 }
 //----------------------------------------------------------------------------
-TextureCache::TextureEntry::~TextureEntry() {
+FTextureCache::FTextureEntry::~FTextureEntry() {
     if (_texture)
         RemoveRef_AssertReachZero(_texture);
 
-    LOG(Info, L"[TextureCache] Unloading texture '{0}' ...",
+    LOG(Info, L"[FTextureCache] Unloading texture '{0}' ...",
         _filename, UseSRGB(), KeepData() );
 }
 //----------------------------------------------------------------------------
-const Graphics::Texture2D *TextureCache::TextureEntry::AsTexture2D() const {
+const Graphics::FTexture2D *FTextureCache::FTextureEntry::AsTexture2D() const {
     Assert(_texture);
-    return checked_cast<const Graphics::Texture2D *>(_texture.get());
+    return checked_cast<const Graphics::FTexture2D *>(_texture.get());
 }
 //----------------------------------------------------------------------------
-const Graphics::TextureCube *TextureCache::TextureEntry::AsTextureCube() const {
+const Graphics::FTextureCube *FTextureCache::FTextureEntry::AsTextureCube() const {
     Assert(_texture);
-    return checked_cast<const Graphics::TextureCube *>(_texture.get());
+    return checked_cast<const Graphics::FTextureCube *>(_texture.get());
 }
 //----------------------------------------------------------------------------
-void TextureCache::TextureEntry::SetData_(const TextureData *data) {
+void FTextureCache::FTextureEntry::SetData_(const FTextureData *data) {
     _data.reset(data);
 }
 //----------------------------------------------------------------------------
-void TextureCache::TextureEntry::SetTexture_(Graphics::Texture *texture) {
+void FTextureCache::FTextureEntry::SetTexture_(Graphics::FTexture *texture) {
     Assert(texture);
     Assert(!_texture);
 
     _texture.reset(texture);
 }
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, TextureCache::TextureEntry, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, FTextureCache::FTextureEntry, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-TaskResult TextureCache::TextureEntryAsyncJob::Invoke(const TaskContext& ) {
+TaskResult FTextureCache::FTextureEntryAsyncJob::Invoke(const TaskContext& ) {
     Assert(_pentry);
 
-    Texture2DLoader loader;
-    TextureCache::TextureData *pdata = new TextureCache::TextureData(_cache);
+    FTexture2DLoader loader;
+    FTextureCache::FTextureData *pdata = new FTextureCache::FTextureData(_cache);
     if (!loader.Read(pdata->Pixels(), _pentry->Filename()))
         AssertNotImplemented();
 
@@ -145,13 +145,13 @@ TaskResult TextureCache::TextureEntryAsyncJob::Invoke(const TaskContext& ) {
     return TaskResult::Succeed;
 }
 //----------------------------------------------------------------------------
-void TextureCache::TextureEntryAsyncJob::Finalize_MainThread(Graphics::IDeviceAPIEncapsulator *device) const {
+void FTextureCache::FTextureEntryAsyncJob::Finalize_MainThread(Graphics::IDeviceAPIEncapsulator *device) const {
     Assert(_pentry->Data());
 
-    Texture2DLoader loader(_pentry->Data()->Header());
+    FTexture2DLoader loader(_pentry->Data()->Header());
 
-    const MemoryView<const u8> pixels = _pentry->Data()->Pixels().MakeConstView();
-    Graphics::Texture *const texture = loader.CreateTexture(
+    const TMemoryView<const u8> pixels = _pentry->Data()->Pixels().MakeConstView();
+    Graphics::FTexture *const texture = loader.CreateTexture(
         device, pixels, _pentry->Filename().ToString(), _pentry->UseSRGB() );
     Assert(texture);
 
@@ -161,14 +161,14 @@ void TextureCache::TextureEntryAsyncJob::Finalize_MainThread(Graphics::IDeviceAP
         _pentry->SetData_(nullptr);
 }
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, TextureCache::TextureEntryAsyncJob, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, FTextureCache::FTextureEntryAsyncJob, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-TextureCache::TextureCache(size_t capacityInBytes)
+FTextureCache::FTextureCache(size_t capacityInBytes)
 :   _device(nullptr)
 ,   _heap(capacityInBytes, true)
-,   _completionPort("TextureCache", IOThreadPool::Instance().Evaluator())
+,   _completionPort("FTextureCache", IOThreadPool::Instance().Evaluator())
 ,   _lru(nullptr)
 ,   _mru(nullptr) {
     Assert(capacityInBytes >= Units::Storage::Megabytes(128).Value());
@@ -176,23 +176,23 @@ TextureCache::TextureCache(size_t capacityInBytes)
     _pjobs.reserve(128);
 }
 //----------------------------------------------------------------------------
-TextureCache::~TextureCache() {
+FTextureCache::~FTextureCache() {
     THIS_THREADRESOURCE_CHECKACCESS();
 }
 //----------------------------------------------------------------------------
-void TextureCache::SetFallbackTexture2D(const Filename& path) {
+void FTextureCache::SetFallbackTexture2D(const FFilename& path) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!path.empty());
     Assert(_device);
 
     const bool useSRGB = true;
-    Graphics::Texture *texture = Texture2DLoader::Load(_device, path, useSRGB);
+    Graphics::FTexture *texture = FTexture2DLoader::Load(_device, path, useSRGB);
     Assert(texture);
 
-    SetFallbackTexture2D(checked_cast<Graphics::Texture2D *>(texture));
+    SetFallbackTexture2D(checked_cast<Graphics::FTexture2D *>(texture));
 }
 //----------------------------------------------------------------------------
-void TextureCache::SetFallbackTexture2D(Graphics::Texture2D *texture) {
+void FTextureCache::SetFallbackTexture2D(Graphics::FTexture2D *texture) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(texture);
     Assert(texture->Frozen());
@@ -201,19 +201,19 @@ void TextureCache::SetFallbackTexture2D(Graphics::Texture2D *texture) {
     _fallbackTexture2D = texture;
 }
 //----------------------------------------------------------------------------
-void TextureCache::SetFallbackTextureCube(const Filename& path) {
+void FTextureCache::SetFallbackTextureCube(const FFilename& path) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!path.empty());
     Assert(_device);
 
     const bool useSRGB = true;
-    Graphics::Texture *texture = Texture2DLoader::Load(_device, path, useSRGB);
+    Graphics::FTexture *texture = FTexture2DLoader::Load(_device, path, useSRGB);
     Assert(texture);
 
-    SetFallbackTextureCube(checked_cast<Graphics::TextureCube *>(texture));
+    SetFallbackTextureCube(checked_cast<Graphics::FTextureCube *>(texture));
 }
 //----------------------------------------------------------------------------
-void TextureCache::SetFallbackTextureCube(Graphics::TextureCube *texture) {
+void FTextureCache::SetFallbackTextureCube(Graphics::FTextureCube *texture) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(texture);
     Assert(texture->Frozen());
@@ -222,7 +222,7 @@ void TextureCache::SetFallbackTextureCube(Graphics::TextureCube *texture) {
     _fallbackTextureCube = texture;
 }
 //----------------------------------------------------------------------------
-void TextureCache::Update() {
+void FTextureCache::Update() {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(_device);
 
@@ -254,38 +254,38 @@ void TextureCache::Update() {
     }
 }
 //----------------------------------------------------------------------------
-TextureCache::TextureEntry *TextureCache::LoadTexture_Sync_(const Filename& filename, bool useSRGB, bool keepData) {
+FTextureCache::FTextureEntry *FTextureCache::LoadTexture_Sync_(const FFilename& filename, bool useSRGB, bool keepData) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!filename.empty());
     Assert(_textures.end() == _textures.find(filename));
 
-    UniquePtr<TextureEntry>& pentry = _textures[filename];
+    TUniquePtr<FTextureEntry>& pentry = _textures[filename];
     Assert(!pentry);
 
-    pentry.reset(new TextureEntry(filename, useSRGB, keepData));
+    pentry.reset(new FTextureEntry(filename, useSRGB, keepData));
 
-    Texture2DLoader loader;
+    FTexture2DLoader loader;
     if (keepData) {
-        TextureCache::TextureData *pdata = new TextureCache::TextureData(this);
+        FTextureCache::FTextureData *pdata = new FTextureCache::FTextureData(this);
         if (!loader.Read(pdata->Pixels(), pentry->Filename()))
             AssertNotImplemented();
 
         pdata->Header() = loader.Header();
         pentry->SetData_(pdata);
 
-        const MemoryView<const u8> pixels = pdata->Pixels().MakeConstView();
-        Graphics::Texture *const texture = loader.CreateTexture(_device, pixels, filename.ToString(), useSRGB);
+        const TMemoryView<const u8> pixels = pdata->Pixels().MakeConstView();
+        Graphics::FTexture *const texture = loader.CreateTexture(_device, pixels, filename.ToString(), useSRGB);
         Assert(texture);
 
         pentry->SetTexture_(texture);
     }
     else {
-        TextureCache::TextureData data(this);
+        FTextureCache::FTextureData data(this);
         if (!loader.Read(data.Pixels(), pentry->Filename()))
             AssertNotReached();
 
-        const MemoryView<const u8> pixels = data.Pixels().MakeConstView();
-        Graphics::Texture *const texture = loader.CreateTexture(_device, pixels, filename.ToString(), useSRGB);
+        const TMemoryView<const u8> pixels = data.Pixels().MakeConstView();
+        Graphics::FTexture *const texture = loader.CreateTexture(_device, pixels, filename.ToString(), useSRGB);
         Assert(texture);
 
         pentry->SetTexture_(texture);
@@ -295,22 +295,22 @@ TextureCache::TextureEntry *TextureCache::LoadTexture_Sync_(const Filename& file
     return pentry.get();
 }
 //----------------------------------------------------------------------------
-TextureCache::TextureEntry *TextureCache::LoadTexture_ASync_(const Filename& filename, bool useSRGB, bool keepData) {
+FTextureCache::FTextureEntry *FTextureCache::LoadTexture_ASync_(const FFilename& filename, bool useSRGB, bool keepData) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!filename.empty());
     Assert(_textures.end() == _textures.find(filename));
 
-    UniquePtr<TextureEntry>& pentry = _textures[filename];
+    TUniquePtr<FTextureEntry>& pentry = _textures[filename];
     Assert(!pentry);
 
-    pentry.reset(new TextureEntry(filename, useSRGB, keepData));
+    pentry.reset(new FTextureEntry(filename, useSRGB, keepData));
 
-    _completionPort.Produce(new TextureEntryAsyncJob(this, pentry.get()));
+    _completionPort.Produce(new FTextureEntryAsyncJob(this, pentry.get()));
 
     return pentry.get();
 }
 //----------------------------------------------------------------------------
-void TextureCache::UnloadTextureEntry_(UniquePtr<TextureEntry>& pentry) {
+void FTextureCache::UnloadTextureEntry_(TUniquePtr<FTextureEntry>& pentry) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(pentry);
     Assert(pentry->Available());
@@ -328,7 +328,7 @@ void TextureCache::UnloadTextureEntry_(UniquePtr<TextureEntry>& pentry) {
     pentry.reset(nullptr);
 }
 //----------------------------------------------------------------------------
-void TextureCache::UnloadTexture(const Filename& filename) {
+void FTextureCache::UnloadTexture(const FFilename& filename) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!filename.empty());
     Assert(_device);
@@ -338,7 +338,7 @@ void TextureCache::UnloadTexture(const Filename& filename) {
     const auto it = _textures.find(filename);
     AssertRelease(_textures.end() != it);
 
-    UniquePtr<TextureEntry>& pentry = it->second;
+    TUniquePtr<FTextureEntry>& pentry = it->second;
     Assert(pentry);
     Assert(pentry->Filename() == it->first);
 
@@ -347,7 +347,7 @@ void TextureCache::UnloadTexture(const Filename& filename) {
     _textures.erase(it);
 }
 //----------------------------------------------------------------------------
-void TextureCache::UnloadLRUTextures() {
+void FTextureCache::UnloadLRUTextures() {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(_device);
 
@@ -355,12 +355,12 @@ void TextureCache::UnloadLRUTextures() {
         UnloadTexture(_lru->Filename());
 }
 //----------------------------------------------------------------------------
-void TextureCache::PrepareTexture(const Filename& filename, bool useSRGB/* = false */, bool asynchronous/* = true */) {
+void FTextureCache::PrepareTexture(const FFilename& filename, bool useSRGB/* = false */, bool asynchronous/* = true */) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!filename.empty());
     Assert(_device);
 
-    TextureEntry *pentry = nullptr;
+    FTextureEntry *pentry = nullptr;
 
     const bool keepData = false;
 
@@ -383,20 +383,20 @@ void TextureCache::PrepareTexture(const Filename& filename, bool useSRGB/* = fal
         TextureEntry_InsertMRU_(&_lru, &_mru, pentry);
 }
 //----------------------------------------------------------------------------
-bool TextureCache::FetchTexture2D(const Filename& filename, const Graphics::Texture2D **texture) const {
-    const Graphics::Texture *t = nullptr;
+bool FTextureCache::FetchTexture2D(const FFilename& filename, const Graphics::FTexture2D **texture) const {
+    const Graphics::FTexture *t = nullptr;
     if (!FetchTextureImpl_(filename, &t))
         return false;
 
-    *texture = checked_cast<const Graphics::Texture2D *>(t);
+    *texture = checked_cast<const Graphics::FTexture2D *>(t);
     return true;
 }
 //----------------------------------------------------------------------------
-const Graphics::Texture2D *TextureCache::FetchTexture2D_Fallback(const Filename& filename) const {
+const Graphics::FTexture2D *FTextureCache::FetchTexture2D_Fallback(const FFilename& filename) const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(_device);
 
-    const Graphics::Texture2D *texture = nullptr;
+    const Graphics::FTexture2D *texture = nullptr;
     if (!FetchTexture2D(filename, &texture))
         texture = _fallbackTexture2D.get();
 
@@ -404,20 +404,20 @@ const Graphics::Texture2D *TextureCache::FetchTexture2D_Fallback(const Filename&
     return texture;
 }
 //----------------------------------------------------------------------------
-bool TextureCache::FetchTextureCube(const Filename& filename, const Graphics::TextureCube **texture) const {
-    const Graphics::Texture *t = nullptr;
+bool FTextureCache::FetchTextureCube(const FFilename& filename, const Graphics::FTextureCube **texture) const {
+    const Graphics::FTexture *t = nullptr;
     if (!FetchTextureImpl_(filename, &t))
         return false;
 
-    *texture = checked_cast<const Graphics::TextureCube *>(t);
+    *texture = checked_cast<const Graphics::FTextureCube *>(t);
     return true;
 }
 //----------------------------------------------------------------------------
-const Graphics::TextureCube *TextureCache::FetchTextureCube_Fallback(const Filename& filename) const {
+const Graphics::FTextureCube *FTextureCache::FetchTextureCube_Fallback(const FFilename& filename) const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(_device);
 
-    const Graphics::TextureCube *texture = nullptr;
+    const Graphics::FTextureCube *texture = nullptr;
     if (!FetchTextureCube(filename, &texture))
         texture = _fallbackTextureCube.get();
 
@@ -425,7 +425,7 @@ const Graphics::TextureCube *TextureCache::FetchTextureCube_Fallback(const Filen
     return texture;
 }
 //----------------------------------------------------------------------------
-bool TextureCache::FetchTextureImpl_(const Filename& filename, const Graphics::Texture **texture) const {
+bool FTextureCache::FetchTextureImpl_(const FFilename& filename, const Graphics::FTexture **texture) const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!filename.empty());
     Assert(texture);
@@ -435,7 +435,7 @@ bool TextureCache::FetchTextureImpl_(const Filename& filename, const Graphics::T
     if (_textures.end() == it)
         return false;
 
-    const UniquePtr<TextureEntry>& pentry = it->second;
+    const TUniquePtr<FTextureEntry>& pentry = it->second;
     Assert(pentry);
     Assert(pentry->Filename() == filename);
 
@@ -446,14 +446,14 @@ bool TextureCache::FetchTextureImpl_(const Filename& filename, const Graphics::T
     return true;
 }
 //----------------------------------------------------------------------------
-void TextureCache::Clear() {
+void FTextureCache::Clear() {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(_device);
 
     _completionPort.WaitAll();
 
-    for (Pair<const Filename, UniquePtr<TextureEntry> >& entry : _textures) {
-        UniquePtr<TextureEntry>& pentry = entry.second;
+    for (TPair<const FFilename, TUniquePtr<FTextureEntry> >& entry : _textures) {
+        TUniquePtr<FTextureEntry>& pentry = entry.second;
         Assert(pentry);
         Assert(pentry->Filename() == entry.first);
 
@@ -463,7 +463,7 @@ void TextureCache::Clear() {
     _textures.clear();
 }
 //----------------------------------------------------------------------------
-void TextureCache::ReloadAllTextures() {
+void FTextureCache::ReloadAllTextures() {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(_device);
 
@@ -471,23 +471,23 @@ void TextureCache::ReloadAllTextures() {
 
     const size_t textureCount = _textures.size();
 
-    LOG(Info, L"[TextureCache] Reloading {0} textures ...", textureCount);
+    LOG(Info, L"[FTextureCache] Reloading {0} textures ...", textureCount);
 
-    struct TextureQuery {
-        Core::Filename Filename;
+    struct FTextureQuery {
+        Core::FFilename FFilename;
         bool KeepData   : 1;
         bool UseSRGB    : 1;
     };
 
-    STACKLOCAL_POD_ARRAY(TextureQuery, queries, textureCount);
+    STACKLOCAL_POD_ARRAY(FTextureQuery, queries, textureCount);
 
     size_t i = 0;
-    for (Pair<const Filename, UniquePtr<TextureEntry> >& entry : _textures) {
-        UniquePtr<TextureEntry>& pentry = entry.second;
+    for (TPair<const FFilename, TUniquePtr<FTextureEntry> >& entry : _textures) {
+        TUniquePtr<FTextureEntry>& pentry = entry.second;
         Assert(pentry);
         Assert(pentry->Filename() == entry.first);
 
-        new ((void *)&queries[i].Filename) Core::Filename(pentry->Filename());
+        new ((void *)&queries[i].Filename) Core::FFilename(pentry->Filename());
         queries[i].UseSRGB = pentry->UseSRGB();
         queries[i].KeepData = pentry->KeepData();
 
@@ -499,32 +499,32 @@ void TextureCache::ReloadAllTextures() {
 
     _textures.clear();
 
-    for (const TextureQuery& query : queries) {
-        TextureEntry *const pentry = LoadTexture_ASync_(query.Filename, query.UseSRGB, query.KeepData);
+    for (const FTextureQuery& query : queries) {
+        FTextureEntry *const pentry = LoadTexture_ASync_(query.Filename, query.UseSRGB, query.KeepData);
         Assert(pentry);
         TextureEntry_InsertMRU_(&_lru, &_mru, pentry);
-        query.Filename.~Filename();
+        query.Filename.~FFilename();
     }
 }
 //----------------------------------------------------------------------------
-void TextureCache::Start(Graphics::IDeviceAPIEncapsulator *device) {
+void FTextureCache::Start(Graphics::IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(device);
     Assert(!_device);
 
-    LOG(Info, L"[TextureCache] Starting with device <{0}> ...",
+    LOG(Info, L"[FTextureCache] Starting with device <{0}> ...",
         device );
 
     _device = device;
     _heap.Start();
 }
 //----------------------------------------------------------------------------
-void TextureCache::Shutdown(Graphics::IDeviceAPIEncapsulator *device) {
+void FTextureCache::Shutdown(Graphics::IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(device);
     Assert(device == _device);
 
-    LOG(Info, L"[TextureCache] Shutting down with device <{0}> ...",
+    LOG(Info, L"[FTextureCache] Shutting down with device <{0}> ...",
         device );
 
     _completionPort.WaitAll();

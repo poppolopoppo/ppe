@@ -9,31 +9,31 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(TaskProcedure, );
+SINGLETON_POOL_ALLOCATED_DEF(FTaskProcedure, );
 //----------------------------------------------------------------------------
-TaskProcedure::TaskProcedure(function_type&& func)
+FTaskProcedure::FTaskProcedure(function_type&& func)
 :   _func(std::move(func)) {}
 //----------------------------------------------------------------------------
-void TaskProcedure::Run(ITaskContext& ctx) {
+void FTaskProcedure::Run(ITaskContext& ctx) {
     _func(ctx);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-TaskProcedure* MakeAsync(std::function<void()>&& fireAndForget) {
-    return new TaskProcedure(std::bind(std::move(fireAndForget))); // will be deleted by RunAndSuicide()
+FTaskProcedure* MakeAsync(std::function<void()>&& fireAndForget) {
+    return new FTaskProcedure(std::bind(std::move(fireAndForget))); // will be deleted by RunAndSuicide()
 }
 //----------------------------------------------------------------------------
-TaskProcedure* MakeAsync(std::function<void(ITaskContext&)>&& fireAndForget) {
-    return new TaskProcedure(std::move(fireAndForget)); // will be deleted by RunAndSuicide()
+FTaskProcedure* MakeAsync(std::function<void(ITaskContext&)>&& fireAndForget) {
+    return new FTaskProcedure(std::move(fireAndForget)); // will be deleted by RunAndSuicide()
 }
 //----------------------------------------------------------------------------
-void ASync(TaskManager& manager, std::function<void()>&& fireAndForget, TaskPriority priority/* = TaskPriority::Normal */) {
+void ASync(FTaskManager& manager, std::function<void()>&& fireAndForget, ETaskPriority priority/* = ETaskPriority::Normal */) {
     auto* const task = MakeAsync(std::move(fireAndForget));
     manager.Run(*task, priority);
 }
 //----------------------------------------------------------------------------
-void ASync(TaskManager& manager, std::function<void(ITaskContext&)>&& fireAndForget, TaskPriority priority/* = TaskPriority::Normal */) {
+void ASync(FTaskManager& manager, std::function<void(ITaskContext&)>&& fireAndForget, ETaskPriority priority/* = ETaskPriority::Normal */) {
     auto* const task = MakeAsync(std::move(fireAndForget));
     manager.Run(*task, priority);
 }

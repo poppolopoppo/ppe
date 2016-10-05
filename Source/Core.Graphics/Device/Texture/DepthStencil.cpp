@@ -11,17 +11,17 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DepthStencil::DepthStencil(size_t width, size_t height, const SurfaceFormat *format, bool sharable)
-:   Texture2D(width, height, 1, format, BufferMode::None, BufferUsage::Default, sharable) {
+FDepthStencil::FDepthStencil(size_t width, size_t height, const FSurfaceFormat *format, bool sharable)
+:   FTexture2D(width, height, 1, format, EBufferMode::None, EBufferUsage::Default, sharable) {
     Assert(format->SupportDepthStencil());
 }
 //----------------------------------------------------------------------------
-DepthStencil::DepthStencil(size_t width, size_t height, const SurfaceFormat *format, bool sharable, DeviceAPIDependantDepthStencil *deviceAPIDependantDepthStencil)
-:   Texture2D(width, height, 1, format, BufferMode::None, BufferUsage::Default, sharable, deviceAPIDependantDepthStencil) {}
+FDepthStencil::FDepthStencil(size_t width, size_t height, const FSurfaceFormat *format, bool sharable, FDeviceAPIDependantDepthStencil *deviceAPIDependantDepthStencil)
+:   FTexture2D(width, height, 1, format, EBufferMode::None, EBufferUsage::Default, sharable, deviceAPIDependantDepthStencil) {}
 //----------------------------------------------------------------------------
-DepthStencil::~DepthStencil() {}
+FDepthStencil::~FDepthStencil() {}
 //----------------------------------------------------------------------------
-void DepthStencil::Create_(IDeviceAPIEncapsulator *device, const MemoryView<const u8>& optionalRawData) {
+void FDepthStencil::Create_(IDeviceAPIEncapsulator *device, const TMemoryView<const u8>& optionalRawData) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(device);
@@ -33,13 +33,13 @@ void DepthStencil::Create_(IDeviceAPIEncapsulator *device, const MemoryView<cons
     Assert(_deviceAPIDependantTexture2D);
 }
 //----------------------------------------------------------------------------
-void DepthStencil::Destroy(IDeviceAPIEncapsulator *device) {
+void FDepthStencil::Destroy(IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(device);
     Assert(_deviceAPIDependantTexture2D);
 
-    PDeviceAPIDependantDepthStencil ds = checked_cast<DeviceAPIDependantDepthStencil *>(_deviceAPIDependantTexture2D.get());
+    PDeviceAPIDependantDepthStencil ds = checked_cast<FDeviceAPIDependantDepthStencil *>(_deviceAPIDependantTexture2D.get());
     _deviceAPIDependantTexture2D.reset();
 
     device->DestroyDepthStencil(this, ds);
@@ -49,10 +49,10 @@ void DepthStencil::Destroy(IDeviceAPIEncapsulator *device) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceAPIDependantDepthStencil::DeviceAPIDependantDepthStencil(IDeviceAPIEncapsulator *device, const DepthStencil *resource, const MemoryView<const u8>& optionalData)
-:   DeviceAPIDependantTexture2D(device, resource, optionalData) {}
+FDeviceAPIDependantDepthStencil::FDeviceAPIDependantDepthStencil(IDeviceAPIEncapsulator *device, const FDepthStencil *resource, const TMemoryView<const u8>& optionalData)
+:   FDeviceAPIDependantTexture2D(device, resource, optionalData) {}
 //----------------------------------------------------------------------------
-DeviceAPIDependantDepthStencil::~DeviceAPIDependantDepthStencil() {}
+FDeviceAPIDependantDepthStencil::~FDeviceAPIDependantDepthStencil() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

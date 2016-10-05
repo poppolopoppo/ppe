@@ -30,20 +30,20 @@ namespace Engine {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static RenderCommandRegistration *AcquireRenderCommandForOnePass_(
-    EffectCompiler *effectCompiler,
-    AbstractRenderLayer *baseRenderLayer, 
-    const Material *material,
-    const EffectDescriptor *effectDescriptor,
+static FRenderCommandRegistration *AcquireRenderCommandForOnePass_(
+    FEffectCompiler *effectCompiler,
+    FAbstractRenderLayer *baseRenderLayer, 
+    const FMaterial *material,
+    const FEffectDescriptor *effectDescriptor,
     const Graphics::IndexBuffer *indices,
-    const Graphics::VertexBuffer *vertices,
-    Graphics::PrimitiveType primitiveType,
+    const Graphics::FVertexBuffer *vertices,
+    Graphics::EPrimitiveType primitiveType,
     size_t baseVertex,
     size_t startIndex,
     size_t primitiveCount ) {
     Assert(effectDescriptor);
 
-    const Graphics::VertexDeclaration *vertexDeclaration = vertices->VertexDeclaration();
+    const Graphics::FVertexDeclaration *vertexDeclaration = vertices->VertexDeclaration();
 
     const PMaterialEffect materialEffect = effectCompiler->CreateMaterialEffect(effectDescriptor, vertexDeclaration, material);
 
@@ -51,27 +51,27 @@ static RenderCommandRegistration *AcquireRenderCommandForOnePass_(
     AddRef(indices);
     AddRef(vertices);
 
-    RenderCommandCriteria criteria;
+    FRenderCommandCriteria criteria;
     criteria.SetMaterialEffect(materialEffect);
     criteria.Indices = indices;
     criteria.Vertices = vertices;
     criteria.Effect = materialEffect->Effect();
     Assert(!criteria.Ready());
 
-    RenderCommandParams params;
+    FRenderCommandParams params;
     params.BaseVertex = checked_cast<u32>(baseVertex);
     params.StartIndex = checked_cast<u32>(startIndex);
     params.SetPrimitiveCount(checked_cast<u32>(primitiveCount));
     params.SetPrimitiveType(primitiveType);
 
-    RenderCommandRegistration *const pcommand = new RenderCommandRegistration {
+    FRenderCommandRegistration *const pcommand = new FRenderCommandRegistration {
         nullptr,    /* will be bet set by render batch */
         nullptr     /* next command */ };
 
-    AbstractRenderLayer *const renderLayer = baseRenderLayer->NextLayer(effectDescriptor->RenderLayerOffset());
+    FAbstractRenderLayer *const renderLayer = baseRenderLayer->NextLayer(effectDescriptor->RenderLayerOffset());
     AssertRelease(renderLayer);
 
-    RenderBatch *const renderBatch = renderLayer->RenderBatchIFP();
+    FRenderBatch *const renderBatch = renderLayer->RenderBatchIFP();
     AssertRelease(renderBatch);
 
     renderBatch->Add(pcommand, criteria, params);
@@ -80,11 +80,11 @@ static RenderCommandRegistration *AcquireRenderCommandForOnePass_(
 }
 //----------------------------------------------------------------------------
 static void ReleaseRenderCommandForOnePass_(
-    const RenderCommandRegistration *pcommand,
+    const FRenderCommandRegistration *pcommand,
     Graphics::IDeviceAPIEncapsulator *device ) {
     Assert(pcommand->Batch);
 
-    const RenderCommandCriteria criteria = pcommand->Batch->Remove(pcommand);
+    const FRenderCommandCriteria criteria = pcommand->Batch->Remove(pcommand);
     Assert(1 == criteria.MaterialEffect()->RefCount());
 
     if (criteria.Ready())
@@ -99,16 +99,16 @@ static void ReleaseRenderCommandForOnePass_(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, RenderCommandRegistration, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, FRenderCommandRegistration, );
 //----------------------------------------------------------------------------
 bool AcquireRenderCommand(
     URenderCommand& pOutCommand,
-    RenderTree *renderTree,
+    FRenderTree *renderTree,
     const char *renderLayerName,
-    const Material *material,
+    const FMaterial *material,
     const Graphics::IndexBuffer *indices,
-    const Graphics::VertexBuffer *vertices,
-    Graphics::PrimitiveType primitiveType,
+    const Graphics::FVertexBuffer *vertices,
+    Graphics::EPrimitiveType primitiveType,
     size_t baseVertex,
     size_t startIndex,
     size_t primitiveCount ) {
@@ -128,7 +128,7 @@ bool AcquireRenderCommand(
     // will mess up the rendering of other commands.
     //
     renderTree->OwnedByThisThread();
-    AssertRelease(renderTree->Scene()->Status() <= SceneStatus::BeforePrepare);
+    AssertRelease(renderTree->Scene()->Status() <= ESceneStatus::BeforePrepare);
 
     PAbstractRenderLayer renderLayer;
     if (!renderTree->TryGet(renderLayerName, renderLayer)) {
@@ -139,8 +139,8 @@ bool AcquireRenderCommand(
     if (!renderLayer->Enabled())
         return false;
 
-    const Scene *scene = renderTree->Scene();
-    const MaterialDatabase *materialDatabase = scene->MaterialDatabase();
+    const FScene *scene = renderTree->Scene();
+    const FMaterialDatabase *materialDatabase = scene->MaterialDatabase();
 
     PCEffectPasses effectPasses;
     if (!materialDatabase->TryGetEffect(material->Name(), effectPasses)) {
@@ -149,16 +149,16 @@ bool AcquireRenderCommand(
     }
     Assert(effectPasses);
 
-    const EffectDescriptor *effectDescriptors[MultiPassEffectDescriptor::MaxPassCount];
+    const FEffectDescriptor *effectDescriptors[FMultiPassEffectDescriptor::MaxPassCount];
     const size_t effectDescriptorsCount = effectPasses->FillEffectPasses(effectDescriptors);
     if (0 == effectDescriptorsCount) {
         AssertNotReached();
         return false;
     }
 
-    RenderCommandRegistration *prevcmd = nullptr;
+    FRenderCommandRegistration *prevcmd = nullptr;
     forrange(i, 0, effectDescriptorsCount) {
-        RenderCommandRegistration *const passcmd = AcquireRenderCommandForOnePass_(
+        FRenderCommandRegistration *const passcmd = AcquireRenderCommandForOnePass_(
             renderTree->EffectCompiler(),
             renderLayer,
             material,
@@ -188,9 +188,9 @@ void ReleaseRenderCommand(  URenderCommand& pcommand,
     Assert(pcommand);
     Assert(device);
 
-    const RenderCommandRegistration *nextcmd = pcommand->Next;
+    const FRenderCommandRegistration *nextcmd = pcommand->Next;
     while (nextcmd) {
-        const RenderCommandRegistration *nextnextcmd = nextcmd->Next;
+        const FRenderCommandRegistration *nextnextcmd = nextcmd->Next;
         ReleaseRenderCommandForOnePass_(nextcmd, device);
         checked_delete(nextcmd);
         nextcmd = nextnextcmd;

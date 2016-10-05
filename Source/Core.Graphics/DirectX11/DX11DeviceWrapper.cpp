@@ -34,20 +34,20 @@ namespace Graphics {
 namespace {
 //----------------------------------------------------------------------------
 static bool CreateDX11DeviceAndSwapChainIFP_(
-    const DX11DeviceAPIEncapsulator *encapsulator,
-    ComPtr<::ID3D11DeviceContext>& dx11ImmediateContext,
-    ComPtr<::ID3D11Device>& dx11Device,
-    ComPtr<::IDXGISwapChain>& dx11SwapChain,
+    const FDX11DeviceAPIEncapsulator *encapsulator,
+    TComPtr<::ID3D11DeviceContext>& dx11ImmediateContext,
+    TComPtr<::ID3D11Device>& dx11Device,
+    TComPtr<::IDXGISwapChain>& dx11SwapChain,
     ::D3D_FEATURE_LEVEL *dx11pFeatureLevel,
     void *windowHandle,
-    const PresentationParameters& presentationParameters ) {
+    const FPresentationParameters& presentationParameters ) {
     UINT refreshRateDenominator = 1;
     switch (presentationParameters.PresentationInterval())
     {
-    case PresentInterval::One:      refreshRateDenominator = 1; break;
-    case PresentInterval::Two:      refreshRateDenominator = 2; break;
-    case PresentInterval::Three:    refreshRateDenominator = 3; break;
-    case PresentInterval::Four:     refreshRateDenominator = 4; break;
+    case EPresentInterval::One:      refreshRateDenominator = 1; break;
+    case EPresentInterval::Two:      refreshRateDenominator = 2; break;
+    case EPresentInterval::Three:    refreshRateDenominator = 3; break;
+    case EPresentInterval::Four:     refreshRateDenominator = 4; break;
     default:
         AssertNotImplemented();
     }
@@ -109,7 +109,7 @@ static bool CreateDX11DeviceAndSwapChainIFP_(
 
     switch (result) {
     case DXGI_ERROR_SDK_COMPONENT_MISSING:
-        CORE_THROW_IT(DeviceEncapsulatorException("Windows SDK is not at the correct version", encapsulator->Device()));
+        CORE_THROW_IT(FDeviceEncapsulatorException("Windows SDK is not at the correct version", encapsulator->Device()));
     default:
         return SUCCEEDED(result);
     }
@@ -119,7 +119,7 @@ static bool CreateDX11DeviceAndSwapChainIFP_(
 static bool CreateDX11DebugLayerIFP_(
     ::ID3D11Debug **dx11pDebug,
     ::ID3D11InfoQueue **dx11pInfoQueue,
-    const ComPtr<::ID3D11Device>& dx11Device ) {
+    const TComPtr<::ID3D11Device>& dx11Device ) {
     HRESULT result;
 
     result = dx11Device.Get()->QueryInterface(__uuidof(::ID3D11Debug), (LPVOID *)dx11pDebug);
@@ -164,34 +164,34 @@ static bool CreateDX11DebugLayerIFP_(
 }
 #endif //!WITH_DIRECTX11_DEBUG_LAYER
 //----------------------------------------------------------------------------
-static RenderTarget *CreateDX11BackBufferRenderTarget_(
-    DX11DeviceAPIEncapsulator *device,
-    const ComPtr<::ID3D11Device>& dx11Device,
-    const ComPtr<::IDXGISwapChain>& dx11SwapChain,
-    const PresentationParameters& presentationParameters ) {
-    ComPtr<::ID3D11Texture2D> pBackBuffer;
+static FRenderTarget *CreateDX11BackBufferRenderTarget_(
+    FDX11DeviceAPIEncapsulator *device,
+    const TComPtr<::ID3D11Device>& dx11Device,
+    const TComPtr<::IDXGISwapChain>& dx11SwapChain,
+    const FPresentationParameters& presentationParameters ) {
+    TComPtr<::ID3D11Texture2D> pBackBuffer;
     DX11_THROW_IF_FAILED(device->Device(), nullptr, (
         dx11SwapChain->GetBuffer(0, __uuidof(::ID3D11Texture2D), (LPVOID *)pBackBuffer.GetAddressOf())
         ));
 
     DX11SetDeviceResourceName(pBackBuffer, "BackBuffer");
 
-    ComPtr<::ID3D11RenderTargetView> pBackBufferRenderTargetView;
+    TComPtr<::ID3D11RenderTargetView> pBackBufferRenderTargetView;
     DX11_THROW_IF_FAILED(device->Device(), nullptr, (
         dx11Device->CreateRenderTargetView(pBackBuffer.Get(), nullptr, pBackBufferRenderTargetView.GetAddressOf())
         ));
 
     DX11SetDeviceResourceName(pBackBufferRenderTargetView, "BackBuffer");
 
-    RenderTarget *const backBufferRenderTarget = new RenderTarget(
+    FRenderTarget *const backBufferRenderTarget = new FRenderTarget(
         presentationParameters.BackBufferWidth(),
         presentationParameters.BackBufferHeight(),
-        SurfaceFormat::FromType(presentationParameters.BackBufferFormat()),
+        FSurfaceFormat::FromType(presentationParameters.BackBufferFormat()),
         false );
     backBufferRenderTarget->SetResourceName("BackBufferRenderTarget");
     backBufferRenderTarget->Freeze();
 
-    DX11RenderTarget *dx11RenderTarget = new DX11RenderTarget(device->Device(), backBufferRenderTarget, pBackBuffer.Get(), nullptr, pBackBufferRenderTargetView.Get());
+    FDX11RenderTarget *dx11RenderTarget = new FDX11RenderTarget(device->Device(), backBufferRenderTarget, pBackBuffer.Get(), nullptr, pBackBufferRenderTargetView.Get());
     DX11SetDeviceResourceName(dx11RenderTarget->RenderTargetView(), "BackBufferRenderTarget");
 
     backBufferRenderTarget->StealRenderTarget(dx11RenderTarget);
@@ -203,9 +203,9 @@ static RenderTarget *CreateDX11BackBufferRenderTarget_(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DX11DeviceWrapper::DX11DeviceWrapper() {}
+FDX11DeviceWrapper::FDX11DeviceWrapper() {}
 //----------------------------------------------------------------------------
-DX11DeviceWrapper::~DX11DeviceWrapper() {
+FDX11DeviceWrapper::~FDX11DeviceWrapper() {
     Assert(!_dx11SwapChain);
     Assert(!_dx11Device);
     Assert(!_dx11ImmediateContext);
@@ -214,7 +214,7 @@ DX11DeviceWrapper::~DX11DeviceWrapper() {
     Assert(!_backBufferDepthStencil);
 }
 //----------------------------------------------------------------------------
-void DX11DeviceWrapper::Create(DX11DeviceAPIEncapsulator *device, void *windowHandle, const PresentationParameters& presentationParameters) {
+void FDX11DeviceWrapper::Create(FDX11DeviceAPIEncapsulator *device, void *windowHandle, const FPresentationParameters& presentationParameters) {
     Assert(!_dx11SwapChain);
     Assert(!_dx11Device);
     Assert(!_dx11ImmediateContext);
@@ -263,10 +263,10 @@ void DX11DeviceWrapper::Create(DX11DeviceAPIEncapsulator *device, void *windowHa
 
     // create back buffer depth stencil IFN
 
-    if (presentationParameters.DepthStencilFormat() != SurfaceFormatType::UNKNOWN) {
-        _backBufferDepthStencil = new DepthStencil(
+    if (presentationParameters.DepthStencilFormat() != ESurfaceFormatType::UNKNOWN) {
+        _backBufferDepthStencil = new FDepthStencil(
             _backBufferRenderTarget->Width(), _backBufferRenderTarget->Height(),
-            SurfaceFormat::FromType(presentationParameters.DepthStencilFormat()),
+            FSurfaceFormat::FromType(presentationParameters.DepthStencilFormat()),
             false );
         _backBufferDepthStencil->SetResourceName("BackBufferDepthStencil");
         _backBufferDepthStencil->Freeze();
@@ -280,12 +280,12 @@ void DX11DeviceWrapper::Create(DX11DeviceAPIEncapsulator *device, void *windowHa
     Assert(_dx11ImmediateContext);
 
     Assert(_backBufferRenderTarget);
-    Assert(SurfaceFormatType::UNKNOWN == presentationParameters.BackBufferFormat() || _backBufferDepthStencil);
+    Assert(ESurfaceFormatType::UNKNOWN == presentationParameters.BackBufferFormat() || _backBufferDepthStencil);
 
     CheckDeviceErrors(device);
 }
 //----------------------------------------------------------------------------
-void DX11DeviceWrapper::Destroy(DX11DeviceAPIEncapsulator *device) {
+void FDX11DeviceWrapper::Destroy(FDX11DeviceAPIEncapsulator *device) {
     Assert(_dx11SwapChain);
     Assert(_dx11Device);
     Assert(_dx11ImmediateContext);
@@ -327,7 +327,7 @@ void DX11DeviceWrapper::Destroy(DX11DeviceAPIEncapsulator *device) {
     ReleaseComRef(_dx11Device);
 }
 //----------------------------------------------------------------------------
-void DX11DeviceWrapper::CheckDeviceErrors(const DX11DeviceAPIEncapsulator *encapsulator) const {
+void FDX11DeviceWrapper::CheckDeviceErrors(const FDX11DeviceAPIEncapsulator *encapsulator) const {
 #ifdef WITH_DIRECTX11_DEBUG_LAYER
 
     if(!_dx11InfoQueue)
@@ -374,7 +374,7 @@ void DX11DeviceWrapper::CheckDeviceErrors(const DX11DeviceAPIEncapsulator *encap
         case ::D3D11_MESSAGE_SEVERITY_ERROR:
         case ::D3D11_MESSAGE_SEVERITY_CORRUPTION:
             LOG(Error, L"[D3D11] {0}", formatedMessage);
-            CORE_THROW_IT(DeviceEncapsulatorException(formatedMessage, encapsulator->Device()));
+            CORE_THROW_IT(FDeviceEncapsulatorException(formatedMessage, encapsulator->Device()));
             break;
         }
     }
@@ -392,7 +392,7 @@ void DX11DeviceWrapper::CheckDeviceErrors(const DX11DeviceAPIEncapsulator *encap
 void DX11ThrowIfFailed(
     const IDeviceAPIEncapsulator *encapsulator,
     HRESULT result,
-    const DeviceResource *optionalResource,
+    const FDeviceResource *optionalResource,
     const char *call,
     const char *file, const size_t line,
     const char *func) {
@@ -403,7 +403,7 @@ void DX11ThrowIfFailed(
     Assert(file);
     Assert(func);
 
-    const String dx11Message = GetLastErrorToString((long)result);
+    const FString dx11Message = GetLastErrorToString((long)result);
 
     char formatedMessage[1024];
     Format(formatedMessage,
@@ -418,7 +418,7 @@ void DX11ThrowIfFailed(
         );
 
     LOG(Error, L"[D3D11] {0}", formatedMessage);
-    CORE_THROW_IT(DeviceEncapsulatorException(formatedMessage, encapsulator, optionalResource));
+    CORE_THROW_IT(FDeviceEncapsulatorException(formatedMessage, encapsulator, optionalResource));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -437,13 +437,13 @@ void DX11SetDeviceResourceName(::ID3D11DeviceChild *deviceChild, const char *nam
 #endif
 }
 //----------------------------------------------------------------------------
-void DX11SetDeviceResourceNameIFP(::ID3D11DeviceChild *deviceChild, const DeviceResource *owner) {
+void DX11SetDeviceResourceNameIFP(::ID3D11DeviceChild *deviceChild, const FDeviceResource *owner) {
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
     Assert(owner);
     if (!deviceChild)
         return;
 
-    const StringView resourceName = owner->ResourceName();
+    const FStringView resourceName = owner->ResourceName();
     if (resourceName.empty())
         return;
 

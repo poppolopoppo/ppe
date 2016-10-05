@@ -9,17 +9,17 @@
 namespace Core {
 namespace Graphics {
 class IDeviceAPIEncapsulator;
-class SurfaceFormat;
-class Texture;
-class Texture2D;
-class TextureCube;
+class FSurfaceFormat;
+class FTexture;
+class FTexture2D;
+class FTextureCube;
 }
 
 namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct TextureHeader {
+struct FTextureHeader {
     u32 Width;
     u32 Height;
     u32 Depth;
@@ -27,66 +27,66 @@ struct TextureHeader {
     u32 ArraySize;
     u32 SizeInBytes;
     bool IsCubeMap;
-    const Graphics::SurfaceFormat *Format;
+    const Graphics::FSurfaceFormat *Format;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class BasicTextureLoader {
+class FBasicTextureLoader {
 public:
-    ~BasicTextureLoader() {}
+    ~FBasicTextureLoader() {}
 
-    BasicTextureLoader(const BasicTextureLoader& ) = delete;
-    BasicTextureLoader& operator =(const BasicTextureLoader& ) = delete;
+    FBasicTextureLoader(const FBasicTextureLoader& ) = delete;
+    FBasicTextureLoader& operator =(const FBasicTextureLoader& ) = delete;
 
-    const TextureHeader& Header() const { return _header; }
+    const FTextureHeader& FHeader() const { return _header; }
 
     template <typename T, typename _Allocator>
-    bool Read(RawStorage<T, _Allocator>& pixels, const Filename& filename);
+    bool Read(TRawStorage<T, _Allocator>& pixels, const FFilename& filename);
 
-    static bool ReadHeader(TextureHeader *header, const Filename& filename, IVirtualFileSystemIStream *stream);
-    static bool ReadPixels(const MemoryView<u8>& pixels,  const TextureHeader *header, const Filename& filename, IVirtualFileSystemIStream *stream);
+    static bool ReadHeader(FTextureHeader *header, const FFilename& filename, IVirtualFileSystemIStream *stream);
+    static bool ReadPixels(const TMemoryView<u8>& pixels,  const FTextureHeader *header, const FFilename& filename, IVirtualFileSystemIStream *stream);
 
 protected:
-    BasicTextureLoader();
-    BasicTextureLoader(const TextureHeader& header);
+    FBasicTextureLoader();
+    FBasicTextureLoader(const FTextureHeader& header);
 
-    TextureHeader _header;
+    FTextureHeader _header;
 };
 //----------------------------------------------------------------------------
-class Texture2DLoader : public BasicTextureLoader {
+class FTexture2DLoader : public FBasicTextureLoader {
 public:
-    Texture2DLoader() {}
-    ~Texture2DLoader() {}
+    FTexture2DLoader() {}
+    ~FTexture2DLoader() {}
 
-    Texture2DLoader(const TextureHeader& header)
-    :   BasicTextureLoader(header) {}
+    FTexture2DLoader(const FTextureHeader& header)
+    :   FBasicTextureLoader(header) {}
 
-    Graphics::Texture2D *CreateTexture2D(   Graphics::IDeviceAPIEncapsulator *device,
-                                            const MemoryView<const u8>& pixels,
-                                            String&& name,
+    Graphics::FTexture2D *CreateTexture2D(   Graphics::IDeviceAPIEncapsulator *device,
+                                            const TMemoryView<const u8>& pixels,
+                                            FString&& name,
                                             bool useSRGB ) const;
-    Graphics::TextureCube *CreateTextureCube(   Graphics::IDeviceAPIEncapsulator *device,
-                                                const MemoryView<const u8>& pixels,
-                                                String&& name,
+    Graphics::FTextureCube *CreateTextureCube(   Graphics::IDeviceAPIEncapsulator *device,
+                                                const TMemoryView<const u8>& pixels,
+                                                FString&& name,
                                                 bool useSRGB ) const;
 
     // choose the right texture class :
-    Graphics::Texture *CreateTexture(   Graphics::IDeviceAPIEncapsulator *device,
-                                        const MemoryView<const u8>& pixels,
-                                        String&& name,
+    Graphics::FTexture *CreateTexture(   Graphics::IDeviceAPIEncapsulator *device,
+                                        const TMemoryView<const u8>& pixels,
+                                        FString&& name,
                                         bool useSRGB ) const;
 
-    static Graphics::Texture *Load(Graphics::IDeviceAPIEncapsulator *device, const Filename& filename, bool useSRGB);
+    static Graphics::FTexture *Load(Graphics::IDeviceAPIEncapsulator *device, const FFilename& filename, bool useSRGB);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace DDS {
 //----------------------------------------------------------------------------
-bool ReadTextureHeader(TextureHeader& header, IVirtualFileSystemIStream *stream);
+bool ReadTextureHeader(FTextureHeader& header, IVirtualFileSystemIStream *stream);
 //----------------------------------------------------------------------------
-bool ReadTextureData(const TextureHeader& header, const MemoryView<u8>& pixels, IVirtualFileSystemIStream *stream);
+bool ReadTextureData(const FTextureHeader& header, const TMemoryView<u8>& pixels, IVirtualFileSystemIStream *stream);
 //----------------------------------------------------------------------------
 } //!namespace DDS
 //----------------------------------------------------------------------------

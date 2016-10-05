@@ -10,8 +10,8 @@ namespace {
 //----------------------------------------------------------------------------
 template <typename _HashWIndex>
 static void EraseBucketUsingProbe_(
-    const details::HashTableProbe_ probe,
-    const MemoryView<_HashWIndex> hashWIndices,
+    const details::FHashTableProbe_ probe,
+    const TMemoryView<_HashWIndex> hashWIndices,
     size_t bucket, size_t hashValue
     ) {
     UNUSED(probe);
@@ -30,8 +30,8 @@ static void EraseBucketUsingProbe_(
 //----------------------------------------------------------------------------
 template <typename _HashWIndex>
 static void SwapDataIndexUsingProbe_(
-    const details::HashTableProbe_ probe,
-    const MemoryView<_HashWIndex> hashWIndices,
+    const details::FHashTableProbe_ probe,
+    const TMemoryView<_HashWIndex> hashWIndices,
     size_t bucket0, size_t bucket1
     ) {
     UNUSED(probe);
@@ -47,8 +47,8 @@ static void SwapDataIndexUsingProbe_(
 //----------------------------------------------------------------------------
 template <typename _HashWIndex>
 static void ClearBucketsUsingProbe_(
-    const details::HashTableProbe_ probe,
-    const MemoryView<_HashWIndex> hashWIndices ) {
+    const details::FHashTableProbe_ probe,
+    const TMemoryView<_HashWIndex> hashWIndices ) {
     UNUSED(probe);
     Assert(hashWIndices.size() == probe.HashCapacity);
     const _HashWIndex zero = _HashWIndex::Zero();
@@ -58,13 +58,13 @@ static void ClearBucketsUsingProbe_(
 }
 //----------------------------------------------------------------------------
 template <typename _HashWIndex>
-static HashTableStats ProbingStatsUsingProbe_(
-    const details::HashTableProbe_ probe,
-    const MemoryView<_HashWIndex>& hashWIndices ) {
+static FHashTableStats ProbingStatsUsingProbe_(
+    const details::FHashTableProbe_ probe,
+    const TMemoryView<_HashWIndex>& hashWIndices ) {
 
-    HashTableStats stats;
-    stats.MinProbe = NumericLimits<size_t>::MaxValue();
-    stats.MaxProbe = NumericLimits<size_t>::MinValue();
+    FHashTableStats stats;
+    stats.MinProbe = TNumericLimits<size_t>::MaxValue();
+    stats.MaxProbe = TNumericLimits<size_t>::MinValue();
     stats.MeanProbe = 0;
     stats.DevProbe = 0;
 
@@ -106,31 +106,31 @@ static HashTableStats ProbingStatsUsingProbe_(
 //----------------------------------------------------------------------------
 namespace details {
 //----------------------------------------------------------------------------
-STATIC_ASSERT(sizeof(u32) == sizeof(HashValueWIndex32_));
-STATIC_ASSERT(sizeof(u64) == sizeof(HashValueWIndex64_));
+STATIC_ASSERT(sizeof(u32) == sizeof(FHashValueWIndex32_));
+STATIC_ASSERT(sizeof(u64) == sizeof(FHashValueWIndex64_));
 //----------------------------------------------------------------------------
-STATIC_ASSERT(std::is_pod<HashValueWIndex32_>::value);
-STATIC_ASSERT(std::is_pod<HashValueWIndex64_>::value);
+STATIC_ASSERT(std::is_pod<FHashValueWIndex32_>::value);
+STATIC_ASSERT(std::is_pod<FHashValueWIndex64_>::value);
 //----------------------------------------------------------------------------
-void HashTableProbe_::EraseBucket(size_t bucket, size_t hashValue) const {
+void FHashTableProbe_::EraseBucket(size_t bucket, size_t hashValue) const {
     (UseHashIndices64
         ? EraseBucketUsingProbe_(*this, HashIndices64(), bucket, hashValue)
         : EraseBucketUsingProbe_(*this, HashIndices32(), bucket, hashValue) );
 }
 //----------------------------------------------------------------------------
-void HashTableProbe_::SwapDataIndex(size_t bucket0, size_t bucket1) const {
+void FHashTableProbe_::SwapDataIndex(size_t bucket0, size_t bucket1) const {
     (UseHashIndices64
         ? SwapDataIndexUsingProbe_(*this, HashIndices64(), bucket0, bucket1)
         : SwapDataIndexUsingProbe_(*this, HashIndices32(), bucket0, bucket1) );
 }
 //----------------------------------------------------------------------------
-void HashTableProbe_::ClearBuckets() const {
+void FHashTableProbe_::ClearBuckets() const {
     (UseHashIndices64
         ? ClearBucketsUsingProbe_(*this, HashIndices64())
         : ClearBucketsUsingProbe_(*this, HashIndices32()) );
 }
 //----------------------------------------------------------------------------
-HashTableStats HashTableProbe_::ProbingStats() const {
+FHashTableStats FHashTableProbe_::ProbingStats() const {
     return (UseHashIndices64
         ? ProbingStatsUsingProbe_(*this, HashIndices64())
         : ProbingStatsUsingProbe_(*this, HashIndices32()) );
@@ -142,20 +142,20 @@ HashTableStats HashTableProbe_::ProbingStats() const {
 //----------------------------------------------------------------------------
 #ifndef FINAL_RELEASE
 // checks template class compilation :
-template class HashTable<int, float>;
-template class HashTable<double, void>;
+template class THashTable<int, float>;
+template class THashTable<double, void>;
 #endif
 //----------------------------------------------------------------------------
 template <typename T, size_t _Eq, size_t _Size = sizeof(T)>
-struct CheckSize
+struct TCheckSize
 {
     static constexpr bool value = (_Size == _Eq);
     STATIC_ASSERT(value);
 };
 
-STATIC_ASSERT(CheckSize<HashTableBase<int, float>, 2*sizeof(size_t)>::value);
-STATIC_ASSERT(CheckSize<HashTable<int, float>, 2*sizeof(size_t)>::value);
-STATIC_ASSERT(CheckSize<HashTable<double, void>, 2*sizeof(size_t)>::value);
+STATIC_ASSERT(TCheckSize<THashTableBase<int, float>, 2*sizeof(size_t)>::value);
+STATIC_ASSERT(TCheckSize<THashTable<int, float>, 2*sizeof(size_t)>::value);
+STATIC_ASSERT(TCheckSize<THashTable<double, void>, 2*sizeof(size_t)>::value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

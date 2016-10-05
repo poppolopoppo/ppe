@@ -20,7 +20,7 @@ namespace MaterialParameterCamera {
 //----------------------------------------------------------------------------
 EACH_MATERIALPARAMETER_CAMERA(MATERIALPARAMETER_FN_DEF)
 //----------------------------------------------------------------------------
-void RegisterMaterialParameters(MaterialDatabase *database) {
+void RegisterMaterialParameters(FMaterialDatabase *database) {
     Assert(database);
 
 #define BIND_MATERIALPARAMETER(_Variability, _Type, _Name) \
@@ -37,17 +37,17 @@ void RegisterMaterialParameters(MaterialDatabase *database) {
 //----------------------------------------------------------------------------
 namespace MaterialParameterCamera {
 //----------------------------------------------------------------------------
-// Camera Model
+// FCamera FModel
 //----------------------------------------------------------------------------
-void EyePosition(const MaterialParameterContext& context, float3& dst) {
+void EyePosition(const FMaterialParameterContext& context, float3& dst) {
     dst = context.Scene->Camera()->Model().Parameters().Position;
 }
 //----------------------------------------------------------------------------
-void EyeDirection(const MaterialParameterContext& context, float3& dst) {
+void EyeDirection(const FMaterialParameterContext& context, float3& dst) {
     dst = context.Scene->Camera()->Model().Parameters().LookAtDir;
 }
 //----------------------------------------------------------------------------
-void EyeUp(const MaterialParameterContext& context, float3& dst) {
+void EyeUp(const FMaterialParameterContext& context, float3& dst) {
     dst = context.Scene->Camera()->Model().Parameters().UpDir;
 }
 //----------------------------------------------------------------------------
@@ -59,11 +59,11 @@ namespace MaterialParameterCamera {
 //----------------------------------------------------------------------------
 // View
 //----------------------------------------------------------------------------
-void View(const MaterialParameterContext& context, float4x4& dst) {
+void View(const FMaterialParameterContext& context, float4x4& dst) {
     dst = context.Scene->Camera()->Model().View();
 }
 //----------------------------------------------------------------------------
-void InvertView(const MaterialParameterContext& context, float4x4& dst) {
+void InvertView(const FMaterialParameterContext& context, float4x4& dst) {
     dst = context.Scene->Camera()->Model().InvertView();
 }
 //----------------------------------------------------------------------------
@@ -75,11 +75,11 @@ namespace MaterialParameterCamera {
 //----------------------------------------------------------------------------
 // Projection
 //----------------------------------------------------------------------------
-void Projection(const MaterialParameterContext& context, float4x4& dst) {
+void Projection(const FMaterialParameterContext& context, float4x4& dst) {
     dst = context.Scene->Camera()->Model().Projection();
 }
 //----------------------------------------------------------------------------
-void InvertProjection(const MaterialParameterContext& context, float4x4& dst) {
+void InvertProjection(const FMaterialParameterContext& context, float4x4& dst) {
     dst = context.Scene->Camera()->Model().InvertProjection();
 }
 //----------------------------------------------------------------------------
@@ -91,11 +91,11 @@ namespace MaterialParameterCamera {
 //----------------------------------------------------------------------------
 // View Projection
 //----------------------------------------------------------------------------
-void ViewProjection(const MaterialParameterContext& context, float4x4& dst) {
+void ViewProjection(const FMaterialParameterContext& context, float4x4& dst) {
     dst = context.Scene->Camera()->Model().ViewProjection();
 }
 //----------------------------------------------------------------------------
-void InvertViewProjection(const MaterialParameterContext& context, float4x4& dst) {
+void InvertViewProjection(const FMaterialParameterContext& context, float4x4& dst) {
     dst = context.Scene->Camera()->Model().InvertViewProjection();
 }
 //----------------------------------------------------------------------------
@@ -105,37 +105,37 @@ void InvertViewProjection(const MaterialParameterContext& context, float4x4& dst
 //----------------------------------------------------------------------------
 namespace MaterialParameterCamera {
 //----------------------------------------------------------------------------
-// Frustum
+// FFrustum
 //----------------------------------------------------------------------------
-void FrustumRays(const MaterialParameterContext& context, float4x4& dst) {
+void FrustumRays(const FMaterialParameterContext& context, float4x4& dst) {
     float3 cameraRays[4];
     context.Scene->Camera()->Model().GetFrustumRays(cameraRays);
 
-    dst.SetRow(size_t(CameraRay::LeftTop),     cameraRays[size_t(CameraRay::LeftTop)].ZeroExtend());
-    dst.SetRow(size_t(CameraRay::LeftBottom),  cameraRays[size_t(CameraRay::LeftBottom)].ZeroExtend());
-    dst.SetRow(size_t(CameraRay::RightBottom), cameraRays[size_t(CameraRay::RightBottom)].ZeroExtend());
-    dst.SetRow(size_t(CameraRay::RightTop),    cameraRays[size_t(CameraRay::RightTop)].ZeroExtend());
+    dst.SetRow(size_t(ECameraRay::LeftTop),     cameraRays[size_t(ECameraRay::LeftTop)].ZeroExtend());
+    dst.SetRow(size_t(ECameraRay::LeftBottom),  cameraRays[size_t(ECameraRay::LeftBottom)].ZeroExtend());
+    dst.SetRow(size_t(ECameraRay::RightBottom), cameraRays[size_t(ECameraRay::RightBottom)].ZeroExtend());
+    dst.SetRow(size_t(ECameraRay::RightTop),    cameraRays[size_t(ECameraRay::RightTop)].ZeroExtend());
 }
 //----------------------------------------------------------------------------
-void FarCorners(const MaterialParameterContext& context, float4x4& dst) {
-    const MemoryView<const float3> frustumCorners = context.Scene->Camera()->Model().FrustumCorners();
+void FarCorners(const FMaterialParameterContext& context, float4x4& dst) {
+    const TMemoryView<const float3> frustumCorners = context.Scene->Camera()->Model().FrustumCorners();
 
-    dst.SetRow(size_t(CameraRay::LeftTop),     frustumCorners[size_t(FrustumCorner::Far_LeftTop)].ZeroExtend());
-    dst.SetRow(size_t(CameraRay::LeftBottom),  frustumCorners[size_t(FrustumCorner::Far_LeftBottom)].ZeroExtend());
-    dst.SetRow(size_t(CameraRay::RightBottom), frustumCorners[size_t(FrustumCorner::Far_RightBottom)].ZeroExtend());
-    dst.SetRow(size_t(CameraRay::RightTop),    frustumCorners[size_t(FrustumCorner::Far_RightTop)].ZeroExtend());
+    dst.SetRow(size_t(ECameraRay::LeftTop),     frustumCorners[size_t(EFrustumCorner::Far_LeftTop)].ZeroExtend());
+    dst.SetRow(size_t(ECameraRay::LeftBottom),  frustumCorners[size_t(EFrustumCorner::Far_LeftBottom)].ZeroExtend());
+    dst.SetRow(size_t(ECameraRay::RightBottom), frustumCorners[size_t(EFrustumCorner::Far_RightBottom)].ZeroExtend());
+    dst.SetRow(size_t(ECameraRay::RightTop),    frustumCorners[size_t(EFrustumCorner::Far_RightTop)].ZeroExtend());
 }
 //----------------------------------------------------------------------------
-void NearCorners(const MaterialParameterContext& context, float4x4& dst) {
-    const MemoryView<const float3> frustumCorners = context.Scene->Camera()->Model().FrustumCorners();
+void NearCorners(const FMaterialParameterContext& context, float4x4& dst) {
+    const TMemoryView<const float3> frustumCorners = context.Scene->Camera()->Model().FrustumCorners();
 
-    dst.SetRow(size_t(CameraRay::LeftTop),     frustumCorners[size_t(FrustumCorner::Near_LeftTop)].ZeroExtend());
-    dst.SetRow(size_t(CameraRay::LeftBottom),  frustumCorners[size_t(FrustumCorner::Near_LeftBottom)].ZeroExtend());
-    dst.SetRow(size_t(CameraRay::RightBottom), frustumCorners[size_t(FrustumCorner::Near_RightBottom)].ZeroExtend());
-    dst.SetRow(size_t(CameraRay::RightTop),    frustumCorners[size_t(FrustumCorner::Near_RightTop)].ZeroExtend());
+    dst.SetRow(size_t(ECameraRay::LeftTop),     frustumCorners[size_t(EFrustumCorner::Near_LeftTop)].ZeroExtend());
+    dst.SetRow(size_t(ECameraRay::LeftBottom),  frustumCorners[size_t(EFrustumCorner::Near_LeftBottom)].ZeroExtend());
+    dst.SetRow(size_t(ECameraRay::RightBottom), frustumCorners[size_t(EFrustumCorner::Near_RightBottom)].ZeroExtend());
+    dst.SetRow(size_t(ECameraRay::RightTop),    frustumCorners[size_t(EFrustumCorner::Near_RightTop)].ZeroExtend());
 }
 //----------------------------------------------------------------------------
-void NearFarZ(const MaterialParameterContext& context, float2& dst) {
+void NearFarZ(const FMaterialParameterContext& context, float2& dst) {
     const ICamera *const camera = context.Scene->Camera();
 
     dst.x() = camera->ZNear();

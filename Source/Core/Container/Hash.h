@@ -64,7 +64,7 @@ hash_t hash_range(_It first, _It last);
 // Enables ADL/KL in Core namespace
 //----------------------------------------------------------------------------
 template <typename T>
-struct Hash : public std::unary_function<const T&, size_t> {
+struct THash : public std::unary_function<const T&, size_t> {
     hash_t operator ()(const T& value) const {
         using Core::hash_value;
         return hash_value(value);

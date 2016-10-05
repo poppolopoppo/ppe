@@ -16,27 +16,27 @@ namespace Logic {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-EntityManager::EntityManager() 
+FEntityManager::FEntityManager() 
 :   _systems(*this) {
 }
 //----------------------------------------------------------------------------
-EntityManager::~EntityManager() {
+FEntityManager::~FEntityManager() {
 }
 //----------------------------------------------------------------------------
-void EntityManager::Initialize() {
+void FEntityManager::Initialize() {
     _systems.Initialize();
 }
 //----------------------------------------------------------------------------
-void EntityManager::Destroy() {
+void FEntityManager::Destroy() {
     _systems.Destroy();
 }
 //----------------------------------------------------------------------------
-EntityID EntityManager::CreateEntity(const EntityUID *optionalUID/* = nullptr */) {
+EntityID FEntityManager::CreateEntity(const EntityUID *optionalUID/* = nullptr */) {
     return _entities.CreateEntity(optionalUID);
 }
 //----------------------------------------------------------------------------
-void EntityManager::DeleteEntity(EntityID id) {
-    Entity& entity = _entities.Get(id);
+void FEntityManager::DeleteEntity(EntityID id) {
+    FEntity& entity = _entities.Get(id);
     if (entity.Deleting())
         return;
 
@@ -50,8 +50,8 @@ void EntityManager::DeleteEntity(EntityID id) {
     Add_AssertUnique(_deleting, id);
 }
 //----------------------------------------------------------------------------
-void EntityManager::Refresh(EntityID id, ComponentFlag previousComponents) {
-    Entity& entity = _entities.Get(id);
+void FEntityManager::Refresh(EntityID id, ComponentFlag previousComponents) {
+    FEntity& entity = _entities.Get(id);
     if (entity.Refreshing() || entity.Deleting())
         return;
 
@@ -59,15 +59,15 @@ void EntityManager::Refresh(EntityID id, ComponentFlag previousComponents) {
     _refreshing.Insert_AssertUnique(id, previousComponents);
 }
 //----------------------------------------------------------------------------
-void EntityManager::RemoveComponent(ComponentTag componentTag, EntityID id) {
+void FEntityManager::RemoveComponent(ComponentTag componentTag, EntityID id) {
     const ComponentID componentID = _components.ID(componentTag);
     RemoveComponent(componentID, id);
 }
 //----------------------------------------------------------------------------
-void EntityManager::RemoveComponent(ComponentID componentID, EntityID entityID) {
+void FEntityManager::RemoveComponent(ComponentID componentID, EntityID entityID) {
     _components.GetByID(componentID)->RemoveComponent(entityID);
 
-    Entity& entity = _entities.Get(entityID);
+    FEntity& entity = _entities.Get(entityID);
     Assert(0 != (entity._componentFlags & (1<<componentID)) );
 
     const ComponentFlag previousComponents = entity._componentFlags;
@@ -76,24 +76,24 @@ void EntityManager::RemoveComponent(ComponentID componentID, EntityID entityID) 
     Refresh(entityID, previousComponents);
 }
 //----------------------------------------------------------------------------
-void EntityManager::AddTag(EntityID id, const EntityTag& tag) {
+void FEntityManager::AddTag(EntityID id, const FEntityTag& tag) {
     Assert(_entities.Contains(id));
 
     _tags.AddTag(id, tag);
 }
 //----------------------------------------------------------------------------
-void EntityManager::RemoveTag(EntityID id, const EntityTag& tag) {
+void FEntityManager::RemoveTag(EntityID id, const FEntityTag& tag) {
     Assert(_entities.Contains(id));
 
     _tags.RemoveTag(id, tag);
 }
 //----------------------------------------------------------------------------
-void EntityManager::Update(const Timeline& timeline) {
+void FEntityManager::Update(const FTimeline& timeline) {
     const Timespan delta = timeline.Elapsed();
 
     if (_deleting.size()) {
         for (EntityID const id : _deleting) {
-            Entity& entity = _entities.Get(id);
+            FEntity& entity = _entities.Get(id);
             Assert(entity.Deleting());
 
             _systems.RemoveEntity(entity);
@@ -108,8 +108,8 @@ void EntityManager::Update(const Timeline& timeline) {
     Assert(_deleting.empty());
 
     if (_refreshing.size()) {
-        for (const Pair<EntityID, ComponentFlag>& it : _refreshing) {
-            Entity& entity = _entities.Get(it.first);
+        for (const TPair<EntityID, ComponentFlag>& it : _refreshing) {
+            FEntity& entity = _entities.Get(it.first);
             Assert(entity.Refreshing());
 
             _systems.RefreshEntity(entity, it.second);
@@ -124,11 +124,11 @@ void EntityManager::Update(const Timeline& timeline) {
     _systems.Process(timeline);
 }
 //----------------------------------------------------------------------------
-void EntityManager::ShrinkToFit() {
+void FEntityManager::ShrinkToFit() {
     _entities.ShrinkToFit();
 }
 //----------------------------------------------------------------------------
-void EntityManager::Clear() {
+void FEntityManager::Clear() {
     _components.Clear();
     _entities.Clear();
     _tags.Clear();

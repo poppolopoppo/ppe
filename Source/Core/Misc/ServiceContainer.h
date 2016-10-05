@@ -14,13 +14,13 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ServiceContainer {
+class FServiceContainer {
 public:
-    ServiceContainer();
-    ~ServiceContainer();
+    FServiceContainer();
+    ~FServiceContainer();
 
-    ServiceContainer(const ServiceContainer& ) = delete;
-    ServiceContainer& operator =(const ServiceContainer& ) = delete;
+    FServiceContainer(const FServiceContainer& ) = delete;
+    FServiceContainer& operator =(const FServiceContainer& ) = delete;
 
     size_t size() const;
     bool empty() const { return (0 == size()); }
@@ -36,14 +36,14 @@ public:
     _Interface* GetIFP() const;
 
     template <typename _Interface, typename T, typename... _Args>
-    void Create(UniquePtr<T>& service, _Args&&... args) {
+    void Create(TUniquePtr<T>& service, _Args&&... args) {
         Assert(nullptr == service);
         service.reset(new T(std::forward<_Args>(args)...));
         Register<_Interface>(service.get());
     }
 
     template <typename _Interface, typename T>
-    void Destroy(UniquePtr<T>& service) {
+    void Destroy(TUniquePtr<T>& service) {
         Assert(nullptr != service);
         Unregister<_Interface>(service.get());
         service.reset();
@@ -54,18 +54,18 @@ private:
 
     template <typename _Interface>
     static constexpr ServiceId  StaticServiceId() {
-        return Meta::TypeHash<_Interface>::value();
+        return Meta::TTypeHash<_Interface>::value();
     }
 
-    class Service {
+    class TService {
     public:
-        Service() : Service(0, nullptr, nullptr) {}
-        Service(ServiceId id, void* pimpl, const char*name)
+        TService() : TService(0, nullptr, nullptr) {}
+        TService(ServiceId id, void* pimpl, const char*name)
             : _id(id), _pimpl(pimpl), _name(name) {}
 
         ServiceId Id() const { return _id; }
         void* Pimpl() const { return _pimpl; }
-        const char* Name() const { return _name; }
+        const char* FName() const { return _name; }
 
     private:
         ServiceId _id;
@@ -73,21 +73,21 @@ private:
         const char* _name;
     };
 
-    typedef VECTORINSITU(Internal, Service, 8) services_type;
+    typedef VECTORINSITU(Internal, TService, 8) services_type;
 
     services_type::const_iterator Find_(ServiceId serviceId) const;
 
-    ReadWriteLock _barrierRW;
+    FReadWriteLock _barrierRW;
     services_type _services;
 };
 //----------------------------------------------------------------------------
-inline size_t ServiceContainer::size() const {
+inline size_t FServiceContainer::size() const {
     READSCOPELOCK(_barrierRW);
     return _services.size();
 }
 //----------------------------------------------------------------------------
 template <typename _Interface, typename T>
-void ServiceContainer::Register(T* service) {
+void FServiceContainer::Register(T* service) {
     STATIC_ASSERT(std::is_base_of<_Interface, T>::value);
 
     const ServiceId serviceId = StaticServiceId<_Interface>();
@@ -104,7 +104,7 @@ void ServiceContainer::Register(T* service) {
 #endif
     );
 
-    LOG(Info, L"[Service] Register <{0}> with <{1}> (id={2:x})",
+    LOG(Info, L"[TService] Register <{0}> with <{1}> (id={2:x})",
         name, typeid(T).name(), hash_t(serviceId) );
 
     _Interface* const pimpl = service; // important before casting to (void*)
@@ -113,7 +113,7 @@ void ServiceContainer::Register(T* service) {
 }
 //----------------------------------------------------------------------------
 template <typename _Interface, typename T>
-void ServiceContainer::Unregister(T* service) {
+void FServiceContainer::Unregister(T* service) {
     STATIC_ASSERT(std::is_base_of<_Interface, T>::value);
 
     const ServiceId serviceId = StaticServiceId<_Interface>();
@@ -121,7 +121,7 @@ void ServiceContainer::Unregister(T* service) {
     WRITESCOPELOCK(_barrierRW);
     Assert(nullptr != service);
 
-    LOG(Info, L"[Service] Unregister <{0}> with <{1}> (id={2})",
+    LOG(Info, L"[TService] Unregister <{0}> with <{1}> (id={2})",
         typeid(_Interface).name(), typeid(T).name(), hash_t(serviceId) );
 
 #ifdef WITH_CORE_ASSERT
@@ -136,14 +136,14 @@ void ServiceContainer::Unregister(T* service) {
 }
 //----------------------------------------------------------------------------
 template <typename _Interface>
-_Interface* ServiceContainer::Get() const {
+_Interface* FServiceContainer::Get() const {
     _Interface* const service = GetIFP<_Interface>();
     AssertRelease(nullptr != service);
     return service;
 }
 //----------------------------------------------------------------------------
 template <typename _Interface>
-_Interface* ServiceContainer::GetIFP() const {
+_Interface* FServiceContainer::GetIFP() const {
     const ServiceId serviceId = StaticServiceId<_Interface>();
 
     READSCOPELOCK(_barrierRW);
@@ -151,7 +151,7 @@ _Interface* ServiceContainer::GetIFP() const {
     const auto it = Find_(serviceId);
 
     if (_services.end() == it) {
-        LOG(Warning, L"[Service] Unknown service <{0}> ! (id={1})",
+        LOG(Warning, L"[TService] Unknown service <{0}> ! (id={1})",
             typeid(_Interface).name(), hash_t(serviceId) );
 
         return nullptr;

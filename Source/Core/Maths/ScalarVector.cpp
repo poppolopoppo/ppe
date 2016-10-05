@@ -8,9 +8,9 @@ namespace Core {
 //----------------------------------------------------------------------------
     /*
 #define DEF_SCALARVECTOR(_Scalar) \
-    template class ScalarVector<_Scalar, 2>; \
-    template class ScalarVector<_Scalar, 3>; \
-    template class ScalarVector<_Scalar, 4>;
+    template class TScalarVector<_Scalar, 2>; \
+    template class TScalarVector<_Scalar, 3>; \
+    template class TScalarVector<_Scalar, 4>;
 //----------------------------------------------------------------------------
 DEF_SCALARVECTOR(int)
 DEF_SCALARVECTOR(unsigned)

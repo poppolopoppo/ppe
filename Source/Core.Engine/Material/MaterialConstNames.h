@@ -4,54 +4,54 @@
 
 namespace Core {
 namespace Graphics {
-class BindName;
+class FBindName;
 }
 
 namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MaterialConstNames {
+class FMaterialConstNames {
 private:
-    MaterialConstNames();
+    FMaterialConstNames();
 
 public:
     // Parameters :
-    static const Graphics::BindName& AmbientColor();
-    static const Graphics::BindName& DiffuseColor();
-    static const Graphics::BindName& EmissiveColor();
-    static const Graphics::BindName& Metallic();
-    static const Graphics::BindName& NormalDepth();
-    static const Graphics::BindName& RefractiveIndex();
-    static const Graphics::BindName& Roughness();
-    static const Graphics::BindName& SpecularColor();
-    static const Graphics::BindName& SpecularExponent();
-    static const Graphics::BindName& World();
+    static const Graphics::FBindName& AmbientColor();
+    static const Graphics::FBindName& DiffuseColor();
+    static const Graphics::FBindName& EmissiveColor();
+    static const Graphics::FBindName& Metallic();
+    static const Graphics::FBindName& NormalDepth();
+    static const Graphics::FBindName& RefractiveIndex();
+    static const Graphics::FBindName& Roughness();
+    static const Graphics::FBindName& SpecularColor();
+    static const Graphics::FBindName& SpecularExponent();
+    static const Graphics::FBindName& FWorld();
 
     // Tags :
-    static const Graphics::BindName& Ambient();
-    static const Graphics::BindName& BumpMapping();
-    static const Graphics::BindName& CastShadows();
-    static const Graphics::BindName& Color();
-    static const Graphics::BindName& Emissive();
-    static const Graphics::BindName& Fresnel();
-    static const Graphics::BindName& Glass();
-    static const Graphics::BindName& Highlight();
-    static const Graphics::BindName& Reflection();
-    static const Graphics::BindName& Refraction();
-    static const Graphics::BindName& SeparateAlpha();
-    static const Graphics::BindName& Transparency();
+    static const Graphics::FBindName& Ambient();
+    static const Graphics::FBindName& BumpMapping();
+    static const Graphics::FBindName& CastShadows();
+    static const Graphics::FBindName& Color();
+    static const Graphics::FBindName& Emissive();
+    static const Graphics::FBindName& Fresnel();
+    static const Graphics::FBindName& Glass();
+    static const Graphics::FBindName& Highlight();
+    static const Graphics::FBindName& Reflection();
+    static const Graphics::FBindName& Refraction();
+    static const Graphics::FBindName& SeparateAlpha();
+    static const Graphics::FBindName& Transparency();
 
     // Textures :
-    static const Graphics::BindName& AlphaMap();
-    static const Graphics::BindName& AmbientMap();
-    static const Graphics::BindName& DiffuseMap();
-    static const Graphics::BindName& DisplacementMap();
-    static const Graphics::BindName& EmissiveMap();
-    static const Graphics::BindName& NormalMap();
-    static const Graphics::BindName& ReflectionMap();
-    static const Graphics::BindName& SpecularColorMap();
-    static const Graphics::BindName& SpecularPowerMap();
+    static const Graphics::FBindName& AlphaMap();
+    static const Graphics::FBindName& AmbientMap();
+    static const Graphics::FBindName& DiffuseMap();
+    static const Graphics::FBindName& DisplacementMap();
+    static const Graphics::FBindName& EmissiveMap();
+    static const Graphics::FBindName& NormalMap();
+    static const Graphics::FBindName& ReflectionMap();
+    static const Graphics::FBindName& SpecularColorMap();
+    static const Graphics::FBindName& SpecularPowerMap();
 
     static void Start();
     static void Shutdown();

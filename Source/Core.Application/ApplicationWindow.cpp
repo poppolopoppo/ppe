@@ -15,23 +15,23 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ApplicationWindow::ApplicationWindow(
+FApplicationWindow::FApplicationWindow(
     const wchar_t *appname,
     int left, int top,
     size_t width, size_t height )
-:   ApplicationBase(appname)
-,   BasicWindow(appname, left, top, width, height)
+:   FApplicationBase(appname)
+,   FBasicWindow(appname, left, top, width, height)
 {}
 //----------------------------------------------------------------------------
-ApplicationWindow::~ApplicationWindow() {
+FApplicationWindow::~FApplicationWindow() {
     Assert(nullptr == _keyboard);
     Assert(nullptr == _mouse);
 }
 //----------------------------------------------------------------------------
-void ApplicationWindow::Start() {
-    ApplicationBase::Start();
+void FApplicationWindow::Start() {
+    FApplicationBase::Start();
 
-    BasicWindow::Show();
+    FBasicWindow::Show();
 
     Services().Create<IGamepadService>(_gamepad);
     RegisterMessageHandler(_gamepad.get());
@@ -43,8 +43,8 @@ void ApplicationWindow::Start() {
     RegisterMessageHandler(_mouse.get());
 }
 //----------------------------------------------------------------------------
-void ApplicationWindow::Shutdown() {
-    ApplicationBase::Shutdown(); // destroys engine services, including this device service
+void FApplicationWindow::Shutdown() {
+    FApplicationBase::Shutdown(); // destroys engine services, including this device service
 
     UnregisterMessageHandler(_mouse.get());
     Services().Destroy<IMouseService>(_mouse);
@@ -55,7 +55,7 @@ void ApplicationWindow::Shutdown() {
     UnregisterMessageHandler(_gamepad.get());
     Services().Destroy<IGamepadService>(_gamepad);
 
-    BasicWindow::Close();
+    FBasicWindow::Close();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

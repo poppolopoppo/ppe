@@ -13,13 +13,13 @@ FWD_REFPTR(DeviceAPIDependantRasterizerState);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class CullMode {
+enum class ECullMode {
     CullClockwiseFace = 0,
     CullCounterClockwiseFace,
     None,
 };
 //----------------------------------------------------------------------------
-enum class FillMode {
+enum class EFillMode {
     Solid = 0,
     WireFrame,
 };
@@ -27,23 +27,23 @@ enum class FillMode {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(RasterizerState);
-class RasterizerState : public DeviceResource {
+class FRasterizerState : public FDeviceResource {
 public:
-    RasterizerState();
-    virtual ~RasterizerState();
+    FRasterizerState();
+    virtual ~FRasterizerState();
 
     virtual bool Available() const override;
-    virtual DeviceAPIDependantEntity *TerminalEntity() const override;
+    virtual FDeviceAPIDependantEntity *TerminalEntity() const override;
 
     const PDeviceAPIDependantRasterizerState& DeviceAPIDependantState() const {
         Assert(Frozen()); return _deviceAPIDependantState;
     }
 
-    Graphics::CullMode CullMode() const { return _cullMode; }
-    void SetCullMode(Graphics::CullMode v) { Assert(!Frozen()); _cullMode = v; }
+    Graphics::ECullMode CullMode() const { return _cullMode; }
+    void SetCullMode(Graphics::ECullMode v) { Assert(!Frozen()); _cullMode = v; }
 
-    Graphics::FillMode FillMode() const { return _fillMode; }
-    void SetFillMode(Graphics::FillMode v) { Assert(!Frozen()); _fillMode = v; }
+    Graphics::EFillMode FillMode() const { return _fillMode; }
+    void SetFillMode(Graphics::EFillMode v) { Assert(!Frozen()); _fillMode = v; }
 
     bool MultiSampleAntiAlias() const { return _multiSampleAntiAlias; }
     void SetMultiSampleAntiAlias(bool v) { Assert(!Frozen()); _multiSampleAntiAlias = v; }
@@ -57,10 +57,10 @@ public:
     float SlopeScaledDepthBias() const { return _slopeScaledDepthBias; }
     void SetSlopeScaledDepthBias(float v) { Assert(!Frozen()); _slopeScaledDepthBias = v; }
 
-    static const RasterizerState *CullClockwise;
-    static const RasterizerState *CullCounterClockwise;
-    static const RasterizerState *CullNone;
-    static const RasterizerState *Wireframe;
+    static const FRasterizerState *CullClockwise;
+    static const FRasterizerState *CullCounterClockwise;
+    static const FRasterizerState *CullNone;
+    static const FRasterizerState *Wireframe;
 
     void Create(IDeviceAPIEncapsulator *device);
     void Destroy(IDeviceAPIEncapsulator *device);
@@ -68,12 +68,12 @@ public:
     static void Start();
     static void Shutdown();
 
-    static void OnDeviceCreate(DeviceEncapsulator *device);
-    static void OnDeviceDestroy(DeviceEncapsulator *device);
+    static void OnDeviceCreate(FDeviceEncapsulator *device);
+    static void OnDeviceDestroy(FDeviceEncapsulator *device);
 
 private:
-    Graphics::CullMode _cullMode = CullMode::CullClockwiseFace;
-    Graphics::FillMode _fillMode = FillMode::Solid;
+    Graphics::ECullMode _cullMode = ECullMode::CullClockwiseFace;
+    Graphics::EFillMode _fillMode = EFillMode::Solid;
 
     bool _multiSampleAntiAlias = true;
     bool _scissorTestEnabled = false;
@@ -86,10 +86,10 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DeviceAPIDependantRasterizerState : public TypedDeviceAPIDependantEntity<RasterizerState> {
+class FDeviceAPIDependantRasterizerState : public TTypedDeviceAPIDependantEntity<FRasterizerState> {
 public:
-    DeviceAPIDependantRasterizerState(IDeviceAPIEncapsulator *device, const RasterizerState *resource);
-    virtual ~DeviceAPIDependantRasterizerState();
+    FDeviceAPIDependantRasterizerState(IDeviceAPIEncapsulator *device, const FRasterizerState *resource);
+    virtual ~FDeviceAPIDependantRasterizerState();
 
     virtual size_t VideoMemorySizeInBytes() const override { return 0; }
 };

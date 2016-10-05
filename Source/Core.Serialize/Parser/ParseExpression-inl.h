@@ -11,46 +11,46 @@ namespace Parser {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, Literal<T>, template <typename T>)
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, TLiteral<T>, template <typename T>)
 //----------------------------------------------------------------------------
 template <typename T>
-Literal<T>::Literal(T&& rvalue, const Lexer::Location& site)
-:   ParseExpression(site)
+TLiteral<T>::TLiteral(T&& rvalue, const FLexer::FLocation& site)
+:   FParseExpression(site)
 ,   _literal(RTTI::MakeAtom(std::move(rvalue))) {
     Assert(_literal);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-Literal<T>::~Literal() {}
+TLiteral<T>::~TLiteral() {}
 //----------------------------------------------------------------------------
 template <typename T>
-RTTI::MetaAtom *Literal<T>::Eval(ParseContext * /* context */) const {
+RTTI::FMetaAtom *TLiteral<T>::Eval(FParseContext * /* context */) const {
     Assert(_literal);
     return _literal.get();
 }
 //----------------------------------------------------------------------------
 template <typename T>
-String Literal<T>::ToString() const {
+FString TLiteral<T>::ToString() const {
     Assert(_literal);
     return _literal->ToString();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, UnaryFunction<_Functor>, template <typename _Functor>)
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, TUnaryFunction<_Functor>, template <typename _Functor>)
 //----------------------------------------------------------------------------
 template <typename _Functor>
-UnaryFunction<_Functor>::UnaryFunction(_Functor&& functor, const ParseExpression *expr, const Lexer::Location& site)
-:   ParseExpression(site)
+TUnaryFunction<_Functor>::TUnaryFunction(_Functor&& functor, const FParseExpression *expr, const FLexer::FLocation& site)
+:   FParseExpression(site)
 ,   _functor(std::move(functor)), _expr(expr) {
     Assert(expr);
 }
 //----------------------------------------------------------------------------
 template <typename _Functor>
-UnaryFunction<_Functor>::~UnaryFunction() {}
+TUnaryFunction<_Functor>::~TUnaryFunction() {}
 //----------------------------------------------------------------------------
 template <typename _Functor>
-RTTI::MetaAtom *UnaryFunction<_Functor>::Eval(ParseContext *context) const {
+RTTI::FMetaAtom *TUnaryFunction<_Functor>::Eval(FParseContext *context) const {
     Assert(_expr);
 
     return _functor(context, _expr.get());
@@ -58,21 +58,21 @@ RTTI::MetaAtom *UnaryFunction<_Functor>::Eval(ParseContext *context) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, BinaryFunction<_Functor>, template <typename _Functor>)
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, TBinaryFunction<_Functor>, template <typename _Functor>)
 //----------------------------------------------------------------------------
 template <typename _Functor>
-BinaryFunction<_Functor>::BinaryFunction(_Functor&& functor, const ParseExpression *lhs, const ParseExpression *rhs, const Lexer::Location& site)
-:   ParseExpression(site)
+TBinaryFunction<_Functor>::TBinaryFunction(_Functor&& functor, const FParseExpression *lhs, const FParseExpression *rhs, const FLexer::FLocation& site)
+:   FParseExpression(site)
 ,   _functor(std::move(functor)), _lhs(lhs), _rhs(rhs) {
     Assert(lhs);
     Assert(rhs);
 }
 //----------------------------------------------------------------------------
 template <typename _Functor>
-BinaryFunction<_Functor>::~BinaryFunction() {}
+TBinaryFunction<_Functor>::~TBinaryFunction() {}
 //----------------------------------------------------------------------------
 template <typename _Functor>
-RTTI::MetaAtom *BinaryFunction<_Functor>::Eval(ParseContext *context) const {
+RTTI::FMetaAtom *TBinaryFunction<_Functor>::Eval(FParseContext *context) const {
     Assert(_lhs);
     Assert(_rhs);
 
@@ -81,11 +81,11 @@ RTTI::MetaAtom *BinaryFunction<_Functor>::Eval(ParseContext *context) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, Ternary<_Test>, template <typename _Test>)
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, TTernary<_Test>, template <typename _Test>)
 //----------------------------------------------------------------------------
 template <typename _Test>
-Ternary<_Test>::Ternary(_Test&& test, const ParseExpression *pif, const ParseExpression *ptrue, const ParseExpression *pfalse, const Lexer::Location& site)
-:   ParseExpression(site)
+TTernary<_Test>::TTernary(_Test&& test, const FParseExpression *pif, const FParseExpression *ptrue, const FParseExpression *pfalse, const FLexer::FLocation& site)
+:   FParseExpression(site)
 ,   _test(std::move(test))
 ,   _if(pif), _true(ptrue), _false(pfalse) {
     Assert(pif);
@@ -94,10 +94,10 @@ Ternary<_Test>::Ternary(_Test&& test, const ParseExpression *pif, const ParseExp
 }
 //----------------------------------------------------------------------------
 template <typename _Test>
-Ternary<_Test>::~Ternary() {}
+TTernary<_Test>::~TTernary() {}
 //----------------------------------------------------------------------------*
 template <typename _Test>
-RTTI::MetaAtom *Ternary<_Test>::Eval(ParseContext *context) const {
+RTTI::FMetaAtom *TTernary<_Test>::Eval(FParseContext *context) const {
     Assert(_if);
     Assert(_true);
     Assert(_false);

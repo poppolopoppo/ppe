@@ -23,15 +23,15 @@ void Diagnostics_SetMarker(const IDeviceAPIDiagnostics *diagnostics, const wchar
 //----------------------------------------------------------------------------
 void Diagnostics_EndEvent(const IDeviceAPIDiagnostics *encapsulator);
 //----------------------------------------------------------------------------
-class AbstractDeviceAPIEncapsulator;
+class FAbstractDeviceAPIEncapsulator;
 //----------------------------------------------------------------------------
-void Diagnostics_BeginEvent(const AbstractDeviceAPIEncapsulator *encapsulator, const char *cstr);
-void Diagnostics_SetMarker(const AbstractDeviceAPIEncapsulator *encapsulator, const char *cstr);
+void Diagnostics_BeginEvent(const FAbstractDeviceAPIEncapsulator *encapsulator, const char *cstr);
+void Diagnostics_SetMarker(const FAbstractDeviceAPIEncapsulator *encapsulator, const char *cstr);
 //----------------------------------------------------------------------------
-void Diagnostics_BeginEvent(const AbstractDeviceAPIEncapsulator *encapsulator, const wchar_t *wcstr);
-void Diagnostics_SetMarker(const AbstractDeviceAPIEncapsulator *encapsulator, const wchar_t *wcstr);
+void Diagnostics_BeginEvent(const FAbstractDeviceAPIEncapsulator *encapsulator, const wchar_t *wcstr);
+void Diagnostics_SetMarker(const FAbstractDeviceAPIEncapsulator *encapsulator, const wchar_t *wcstr);
 //----------------------------------------------------------------------------
-void Diagnostics_EndEvent(const AbstractDeviceAPIEncapsulator *encapsulator);
+void Diagnostics_EndEvent(const FAbstractDeviceAPIEncapsulator *encapsulator);
 //----------------------------------------------------------------------------
 #endif //!WITH_CORE_GRAPHICS_DIAGNOSTICS
 //----------------------------------------------------------------------------

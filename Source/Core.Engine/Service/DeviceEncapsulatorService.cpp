@@ -13,10 +13,10 @@ namespace Engine {
 //----------------------------------------------------------------------------
 ENGINESERVICE_GUID_DEF(IDeviceEncapsulatorService);
 //----------------------------------------------------------------------------
-DefaultDeviceEncapsulatorService::DefaultDeviceEncapsulatorService(
-    Graphics::DeviceAPI api,
-    const Graphics::GraphicsWindow *window,
-    const Graphics::PresentationParameters& presentationParameters
+FDefaultDeviceEncapsulatorService::FDefaultDeviceEncapsulatorService(
+    Graphics::EDeviceAPI api,
+    const Graphics::FGraphicsWindow *window,
+    const Graphics::FPresentationParameters& presentationParameters
     )
 :   IDeviceEncapsulatorService(ENGINESERVICE_CONSTRUCT(IDeviceEncapsulatorService))
 ,   _deviceAPI(api)
@@ -25,31 +25,31 @@ DefaultDeviceEncapsulatorService::DefaultDeviceEncapsulatorService(
     Assert(window);
 }
 //----------------------------------------------------------------------------
-DefaultDeviceEncapsulatorService::~DefaultDeviceEncapsulatorService() {
+FDefaultDeviceEncapsulatorService::~FDefaultDeviceEncapsulatorService() {
     Assert(!_deviceEncapsulator.Available());
 }
 //----------------------------------------------------------------------------
-Graphics::DeviceEncapsulator *DefaultDeviceEncapsulatorService::DeviceEncapsulator() {
+Graphics::FDeviceEncapsulator *FDefaultDeviceEncapsulatorService::FDeviceEncapsulator() {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(ServiceAvailable());
 
     return &_deviceEncapsulator;
 }
 //----------------------------------------------------------------------------
-const Graphics::DeviceEncapsulator *DefaultDeviceEncapsulatorService::DeviceEncapsulator() const {
+const Graphics::FDeviceEncapsulator *FDefaultDeviceEncapsulatorService::FDeviceEncapsulator() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(ServiceAvailable());
 
     return &_deviceEncapsulator;
 }
 //----------------------------------------------------------------------------
-void DefaultDeviceEncapsulatorService::Start(IServiceProvider *provider, const Guid& guid) {
+void FDefaultDeviceEncapsulatorService::Start(IServiceProvider *provider, const FGuid& guid) {
     IDeviceEncapsulatorService::Start(provider, guid);
 
     _deviceEncapsulator.Create(_deviceAPI, _window->Handle(), _presentationParameters);
 }
 //----------------------------------------------------------------------------
-void DefaultDeviceEncapsulatorService::Shutdown(IServiceProvider *provider, const Guid& guid) {
+void FDefaultDeviceEncapsulatorService::Shutdown(IServiceProvider *provider, const FGuid& guid) {
     IDeviceEncapsulatorService::Shutdown(provider, guid);
 
     _deviceEncapsulator.Destroy();

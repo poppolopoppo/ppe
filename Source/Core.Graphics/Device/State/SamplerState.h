@@ -13,21 +13,21 @@ FWD_REFPTR(DeviceAPIDependantSamplerState);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class TextureAddressMode {
+enum class ETextureAddressMode {
     Clamp = 0,
     Mirror,
     Wrap,
 };
 //----------------------------------------------------------------------------
-enum class TextureDimension {
-    Texture2D = 0,
+enum class ETextureDimension {
+    FTexture2D = 0,
     Texture3D,
-    TextureCube,
+    FTextureCube,
     Texture2DArray,
     TextureCubeArray,
 };
 //----------------------------------------------------------------------------
-enum class TextureFilter {
+enum class ETextureFilter {
     Linear = 0,
     Point,
     Anisotropic,
@@ -42,29 +42,29 @@ enum class TextureFilter {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(SamplerState);
-class SamplerState : public DeviceResource {
+class FSamplerState : public FDeviceResource {
 public:
-    SamplerState();
-    virtual ~SamplerState();
+    FSamplerState();
+    virtual ~FSamplerState();
 
     virtual bool Available() const override;
-    virtual DeviceAPIDependantEntity *TerminalEntity() const override;
+    virtual FDeviceAPIDependantEntity *TerminalEntity() const override;
 
     const PDeviceAPIDependantSamplerState& DeviceAPIDependantState() const {
         Assert(Frozen()); return _deviceAPIDependantState;
     }
 
-    TextureAddressMode AddressU() const { return _addressU; }
-    void SetAddressU(TextureAddressMode v) { Assert(!Frozen()); _addressU = v; }
+    ETextureAddressMode AddressU() const { return _addressU; }
+    void SetAddressU(ETextureAddressMode v) { Assert(!Frozen()); _addressU = v; }
 
-    TextureAddressMode AddressV() const { return _addressV; }
-    void SetAddressV(TextureAddressMode v) { Assert(!Frozen()); _addressV = v; }
+    ETextureAddressMode AddressV() const { return _addressV; }
+    void SetAddressV(ETextureAddressMode v) { Assert(!Frozen()); _addressV = v; }
 
-    TextureAddressMode AddressW() const { return _addressW; }
-    void SetAddressW(TextureAddressMode v) { Assert(!Frozen()); _addressW = v; }
+    ETextureAddressMode AddressW() const { return _addressW; }
+    void SetAddressW(ETextureAddressMode v) { Assert(!Frozen()); _addressW = v; }
 
-    TextureFilter Filter() const { return _filter; }
-    void SetFilter(TextureFilter v) { Assert(!Frozen()); _filter = v; }
+    ETextureFilter Filter() const { return _filter; }
+    void SetFilter(ETextureFilter v) { Assert(!Frozen()); _filter = v; }
 
     u32 MaxAnisotropy() const { return _maxAnisotropy; }
     void SetMaxAnisotropy(u32 v) { Assert(!Frozen()); _maxAnisotropy = v; }
@@ -75,14 +75,14 @@ public:
     float MipMapLODBias() const { return _mipMapLODBias; }
     void SetMipMapLODBias(float v) { Assert(!Frozen()); _mipMapLODBias = v; }
 
-    static const SamplerState *AnisotropicClamp;
-    static const SamplerState *AnisotropicWrap;
-    static const SamplerState *LinearClamp;
-    static const SamplerState *LinearWrap;
-    static const SamplerState *PointClamp;
-    static const SamplerState *PointWrap;
+    static const FSamplerState *AnisotropicClamp;
+    static const FSamplerState *AnisotropicWrap;
+    static const FSamplerState *LinearClamp;
+    static const FSamplerState *LinearWrap;
+    static const FSamplerState *PointClamp;
+    static const FSamplerState *PointWrap;
 
-    static const SamplerState *Default() { return LinearClamp; }
+    static const FSamplerState *Default() { return LinearClamp; }
 
     void Create(IDeviceAPIEncapsulator *device);
     void Destroy(IDeviceAPIEncapsulator *device);
@@ -90,15 +90,15 @@ public:
     static void Start();
     static void Shutdown();
 
-    static void OnDeviceCreate(DeviceEncapsulator *device);
-    static void OnDeviceDestroy(DeviceEncapsulator *device);
+    static void OnDeviceCreate(FDeviceEncapsulator *device);
+    static void OnDeviceDestroy(FDeviceEncapsulator *device);
 
 private:
-    TextureAddressMode _addressU = TextureAddressMode::Wrap;
-    TextureAddressMode _addressV = TextureAddressMode::Wrap;
-    TextureAddressMode _addressW = TextureAddressMode::Wrap;
+    ETextureAddressMode _addressU = ETextureAddressMode::Wrap;
+    ETextureAddressMode _addressV = ETextureAddressMode::Wrap;
+    ETextureAddressMode _addressW = ETextureAddressMode::Wrap;
 
-    TextureFilter _filter = TextureFilter::Linear;
+    ETextureFilter _filter = ETextureFilter::Linear;
 
     u32 _maxAnisotropy = 16;
     u32 _maxMipLevel = 32;
@@ -109,10 +109,10 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DeviceAPIDependantSamplerState : public TypedDeviceAPIDependantEntity<SamplerState> {
+class FDeviceAPIDependantSamplerState : public TTypedDeviceAPIDependantEntity<FSamplerState> {
 public:
-    DeviceAPIDependantSamplerState(IDeviceAPIEncapsulator *device, const SamplerState *resource);
-    virtual ~DeviceAPIDependantSamplerState();
+    FDeviceAPIDependantSamplerState(IDeviceAPIEncapsulator *device, const FSamplerState *resource);
+    virtual ~FDeviceAPIDependantSamplerState();
 
     virtual size_t VideoMemorySizeInBytes() const override { return 0; }
 };

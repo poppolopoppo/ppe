@@ -13,36 +13,36 @@ FWD_REFPTR(DeviceAPIDependantDepthStencil);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(DepthStencil);
-class DepthStencil : public Texture2D {
+class FDepthStencil : public FTexture2D {
 public:
-    DepthStencil(size_t width, size_t height, const SurfaceFormat *format, bool sharable);
-    DepthStencil(size_t width, size_t height, const SurfaceFormat *format, bool sharable, DeviceAPIDependantDepthStencil *deviceAPIDependantDepthStencil);
-    virtual ~DepthStencil();
+    FDepthStencil(size_t width, size_t height, const FSurfaceFormat *format, bool sharable);
+    FDepthStencil(size_t width, size_t height, const FSurfaceFormat *format, bool sharable, FDeviceAPIDependantDepthStencil *deviceAPIDependantDepthStencil);
+    virtual ~FDepthStencil();
 
     template <typename T>
-    void Create(IDeviceAPIEncapsulator *device, const MemoryView<const T>& optionalData);
+    void Create(IDeviceAPIEncapsulator *device, const TMemoryView<const T>& optionalData);
     void Create(IDeviceAPIEncapsulator *device);
     void Destroy(IDeviceAPIEncapsulator *device);
 
 private:
-    void Create_(IDeviceAPIEncapsulator *device, const MemoryView<const u8>& optionalRawData);
+    void Create_(IDeviceAPIEncapsulator *device, const TMemoryView<const u8>& optionalRawData);
 };
 //----------------------------------------------------------------------------
 template <typename T>
-void DepthStencil::Create(IDeviceAPIEncapsulator *device, const MemoryView<const T>& optionalData) {
+void FDepthStencil::Create(IDeviceAPIEncapsulator *device, const TMemoryView<const T>& optionalData) {
     Create_(device, optionalData.Cast<const u8>());
 }
 //----------------------------------------------------------------------------
-inline void DepthStencil::Create(IDeviceAPIEncapsulator *device) {
-    Create_(device, MemoryView<const u8>());
+inline void FDepthStencil::Create(IDeviceAPIEncapsulator *device) {
+    Create_(device, TMemoryView<const u8>());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DeviceAPIDependantDepthStencil : public Graphics::DeviceAPIDependantTexture2D {
+class FDeviceAPIDependantDepthStencil : public Graphics::FDeviceAPIDependantTexture2D {
 public:
-    DeviceAPIDependantDepthStencil(IDeviceAPIEncapsulator *device, const DepthStencil *owner, const MemoryView<const u8>& optionalData);
-    virtual ~DeviceAPIDependantDepthStencil();
+    FDeviceAPIDependantDepthStencil(IDeviceAPIEncapsulator *device, const FDepthStencil *owner, const TMemoryView<const u8>& optionalData);
+    virtual ~FDeviceAPIDependantDepthStencil();
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

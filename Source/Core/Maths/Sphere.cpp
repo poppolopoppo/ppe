@@ -10,16 +10,16 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Sphere Sphere::FromSegment(const float3& a, const float3& b) {
+FSphere FSphere::FromSegment(const float3& a, const float3& b) {
     Assert(LengthSq3(a - b) > F_Epsilon);
 
     const float3& center = a;
     const float radius = Length3(b - center);
 
-    return Sphere(center, radius);
+    return FSphere(center, radius);
 }
 //----------------------------------------------------------------------------
-Sphere Sphere::FromPoints(const MemoryView<const float3>& points) {
+FSphere FSphere::FromPoints(const TMemoryView<const float3>& points) {
     //Find the center of all points.
     float3 center(0);
     for (const float3& p : points)
@@ -43,10 +43,10 @@ Sphere Sphere::FromPoints(const MemoryView<const float3>& points) {
     radius = std::sqrt(radius);
 
     //Construct the sphere.
-    return Sphere(center, radius);
+    return FSphere(center, radius);
 }
 //----------------------------------------------------------------------------
-Sphere Sphere::FromBox(const BoundingBox& box) {
+FSphere FSphere::FromBox(const BoundingBox& box) {
     float3 center = box.Center();
 
     float x = box.Min().x() - box.Max().x();
@@ -55,10 +55,10 @@ Sphere Sphere::FromBox(const BoundingBox& box) {
 
     float distance = std::sqrt((x * x) + (y * y) + (z * z));
 
-    return Sphere(center, distance * 0.5f);
+    return FSphere(center, distance * 0.5f);
 }
 //----------------------------------------------------------------------------
-Sphere Sphere::Merge(const Sphere& lhs, const Sphere& rhs) {
+FSphere FSphere::Merge(const FSphere& lhs, const FSphere& rhs) {
     float3 difference = lhs.Center() - rhs.Center();
 
     float length = Length3(difference);
@@ -77,7 +77,7 @@ Sphere Sphere::Merge(const Sphere& lhs, const Sphere& rhs) {
     float min = Min(-radius, length - radius2);
     float max = (Max(radius, length + radius2) - min) * 0.5f;
 
-    return Sphere(lhs.Center() + vector * (max + min), max);
+    return FSphere(lhs.Center() + vector * (max + min), max);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

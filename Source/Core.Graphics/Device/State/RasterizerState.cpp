@@ -11,25 +11,25 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-RasterizerState::RasterizerState()
-:   DeviceResource(DeviceResourceType::RasterizerState) {}
+FRasterizerState::FRasterizerState()
+:   FDeviceResource(EDeviceResourceType::FRasterizerState) {}
 //----------------------------------------------------------------------------
-RasterizerState::~RasterizerState() {
+FRasterizerState::~FRasterizerState() {
     Assert(!_deviceAPIDependantState);
 }
 //----------------------------------------------------------------------------
-bool RasterizerState::Available() const {
+bool FRasterizerState::Available() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     return nullptr != _deviceAPIDependantState;
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantEntity *RasterizerState::TerminalEntity() const {
+FDeviceAPIDependantEntity *FRasterizerState::TerminalEntity() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     return _deviceAPIDependantState.get();
 }
 //----------------------------------------------------------------------------
-void RasterizerState::Create(IDeviceAPIEncapsulator *device) {
+void FRasterizerState::Create(IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(!_deviceAPIDependantState);
@@ -39,7 +39,7 @@ void RasterizerState::Create(IDeviceAPIEncapsulator *device) {
     Assert(_deviceAPIDependantState);
 }
 //----------------------------------------------------------------------------
-void RasterizerState::Destroy(IDeviceAPIEncapsulator *device) {
+void FRasterizerState::Destroy(IDeviceAPIEncapsulator *device) {
     Assert(_deviceAPIDependantState);
 
     device->DestroyRasterizerState(this, _deviceAPIDependantState);
@@ -49,76 +49,76 @@ void RasterizerState::Destroy(IDeviceAPIEncapsulator *device) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceAPIDependantRasterizerState::DeviceAPIDependantRasterizerState(IDeviceAPIEncapsulator *device, const RasterizerState *resource)
-:   TypedDeviceAPIDependantEntity<RasterizerState>(device->APIEncapsulator(), resource) {
+FDeviceAPIDependantRasterizerState::FDeviceAPIDependantRasterizerState(IDeviceAPIEncapsulator *device, const FRasterizerState *resource)
+:   TTypedDeviceAPIDependantEntity<FRasterizerState>(device->APIEncapsulator(), resource) {
     Assert(resource);
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantRasterizerState::~DeviceAPIDependantRasterizerState() {}
+FDeviceAPIDependantRasterizerState::~FDeviceAPIDependantRasterizerState() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const RasterizerState *RasterizerState::CullClockwise = nullptr;
-const RasterizerState *RasterizerState::CullCounterClockwise = nullptr;
-const RasterizerState *RasterizerState::CullNone = nullptr;
-const RasterizerState *RasterizerState::Wireframe = nullptr;
+const FRasterizerState *FRasterizerState::CullClockwise = nullptr;
+const FRasterizerState *FRasterizerState::CullCounterClockwise = nullptr;
+const FRasterizerState *FRasterizerState::CullNone = nullptr;
+const FRasterizerState *FRasterizerState::Wireframe = nullptr;
 //----------------------------------------------------------------------------
 namespace {
-    static POD_STORAGE(RasterizerState) gRasterizerState_CullClockwise;
-    static POD_STORAGE(RasterizerState) gRasterizerState_CullCounterClockwise;
-    static POD_STORAGE(RasterizerState) gRasterizerState_CullNone;
-    static POD_STORAGE(RasterizerState) gRasterizerState_Wireframe;
+    static POD_STORAGE(FRasterizerState) gRasterizerState_CullClockwise;
+    static POD_STORAGE(FRasterizerState) gRasterizerState_CullCounterClockwise;
+    static POD_STORAGE(FRasterizerState) gRasterizerState_CullNone;
+    static POD_STORAGE(FRasterizerState) gRasterizerState_Wireframe;
 }
 //----------------------------------------------------------------------------
-void RasterizerState::Start() {
+void FRasterizerState::Start() {
     Assert(nullptr == CullClockwise);
     {
-        RasterizerState *const state = new ((void *)&gRasterizerState_CullClockwise) RasterizerState();
+        FRasterizerState *const state = new ((void *)&gRasterizerState_CullClockwise) FRasterizerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("CullClockwise");
 #endif
-        state->SetCullMode(Graphics::CullMode::CullClockwiseFace);
+        state->SetCullMode(Graphics::ECullMode::CullClockwiseFace);
         state->Freeze();
         CullClockwise = state;
     }
     Assert(nullptr == CullCounterClockwise);
     {
-        RasterizerState *const state = new ((void *)&gRasterizerState_CullCounterClockwise) RasterizerState();
+        FRasterizerState *const state = new ((void *)&gRasterizerState_CullCounterClockwise) FRasterizerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("CullCounterClockwise");
 #endif
-        state->SetCullMode(Graphics::CullMode::CullCounterClockwiseFace);
+        state->SetCullMode(Graphics::ECullMode::CullCounterClockwiseFace);
         state->Freeze();
         CullCounterClockwise = state;
     }
     Assert(nullptr == CullNone);
     {
-        RasterizerState *const state = new ((void *)&gRasterizerState_CullNone) RasterizerState();
+        FRasterizerState *const state = new ((void *)&gRasterizerState_CullNone) FRasterizerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("CullNone");
 #endif
-        state->SetCullMode(Graphics::CullMode::None);
+        state->SetCullMode(Graphics::ECullMode::None);
         state->Freeze();
         CullNone = state;
     }
     Assert(nullptr == Wireframe);
     {
-        RasterizerState *const state = new ((void *)&gRasterizerState_Wireframe) RasterizerState();
+        FRasterizerState *const state = new ((void *)&gRasterizerState_Wireframe) FRasterizerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("Wireframe");
 #endif
-        state->SetFillMode(Graphics::FillMode::WireFrame);
-        state->SetCullMode(Graphics::CullMode::None);
+        state->SetFillMode(Graphics::EFillMode::WireFrame);
+        state->SetCullMode(Graphics::ECullMode::None);
         state->Freeze();
         Wireframe = state;
     }
 }
 //----------------------------------------------------------------------------
-void RasterizerState::Shutdown() {
+void FRasterizerState::Shutdown() {
     Assert(nullptr != CullClockwise);
     {
         Assert((void *)CullClockwise == (void *)&gRasterizerState_CullClockwise);
@@ -147,9 +147,9 @@ void RasterizerState::Shutdown() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void RasterizerState::OnDeviceCreate(DeviceEncapsulator *device) {
+void FRasterizerState::OnDeviceCreate(FDeviceEncapsulator *device) {
 #define CREATEWDEVICE_RASTERIZERSTATE_BUILTINTYPE(_NAME) \
-    remove_const(RasterizerState::_NAME)->Create(device->Device())
+    remove_const(FRasterizerState::_NAME)->Create(device->Device())
 
     CREATEWDEVICE_RASTERIZERSTATE_BUILTINTYPE(CullClockwise);
     CREATEWDEVICE_RASTERIZERSTATE_BUILTINTYPE(CullCounterClockwise);
@@ -159,9 +159,9 @@ void RasterizerState::OnDeviceCreate(DeviceEncapsulator *device) {
 #undef CREATEWDEVICE_RASTERIZERSTATE_BUILTINTYPE
 }
 //----------------------------------------------------------------------------
-void RasterizerState::OnDeviceDestroy(DeviceEncapsulator *device) {
+void FRasterizerState::OnDeviceDestroy(FDeviceEncapsulator *device) {
 #define DESTROYWDEVICE_RASTERIZERSTATE_BUILTINTYPE(_NAME) \
-    remove_const(RasterizerState::_NAME)->Destroy(device->Device())
+    remove_const(FRasterizerState::_NAME)->Destroy(device->Device())
 
     DESTROYWDEVICE_RASTERIZERSTATE_BUILTINTYPE(CullClockwise);
     DESTROYWDEVICE_RASTERIZERSTATE_BUILTINTYPE(CullCounterClockwise);

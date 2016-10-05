@@ -9,11 +9,11 @@ namespace Logic {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Entity;
-class EntityContainer;
-class EntityManager;
-class EntityTag;
-class EntityTagManager;
+class FEntity;
+class FEntityContainer;
+class FEntityManager;
+class FEntityTag;
+class FEntityTagManager;
 //----------------------------------------------------------------------------
 CORE_STRONGLYTYPED_NUMERIC_DEF(u32, EntityID);
 CORE_STRONGLYTYPED_NUMERIC_DEF(u64, EntityUID);

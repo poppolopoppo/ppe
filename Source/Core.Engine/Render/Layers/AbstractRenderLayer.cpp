@@ -12,54 +12,54 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-AbstractRenderLayer::AbstractRenderLayer(
-    String&& name,
+FAbstractRenderLayer::FAbstractRenderLayer(
+    FString&& name,
     bool enabled /* = true */,
     bool exported /* = false */,
-    AbstractRenderLayer *next /* = nullptr */ )
+    FAbstractRenderLayer *next /* = nullptr */ )
 :   _name(std::move(name)) {
     _nextWFlags.Reset(next, enabled, exported);
 }
 //----------------------------------------------------------------------------
-AbstractRenderLayer::~AbstractRenderLayer() {}
+FAbstractRenderLayer::~FAbstractRenderLayer() {}
 //----------------------------------------------------------------------------
-void AbstractRenderLayer::SetName(String&& name) {
+void FAbstractRenderLayer::SetName(FString&& name) {
     _name = std::move(name);
 }
 //----------------------------------------------------------------------------
-void AbstractRenderLayer::SetEnabled(bool value) {
+void FAbstractRenderLayer::SetEnabled(bool value) {
     _nextWFlags.SetFlag0(value);
 }
 //----------------------------------------------------------------------------
-void AbstractRenderLayer::SetNext(AbstractRenderLayer *layer) {
+void FAbstractRenderLayer::SetNext(FAbstractRenderLayer *layer) {
     _nextWFlags.Set(layer);
 }
 //----------------------------------------------------------------------------
-AbstractRenderLayer *AbstractRenderLayer::NextLayer(size_t offset) const {
+FAbstractRenderLayer *FAbstractRenderLayer::NextLayer(size_t offset) const {
     if (0 == offset)
-        return const_cast<AbstractRenderLayer *>(this);
+        return const_cast<FAbstractRenderLayer *>(this);
 
-    AbstractRenderLayer *const next = Next();
+    FAbstractRenderLayer *const next = Next();
     Assert(next);
 
     return next->NextLayer(offset - 1);
 }
 //----------------------------------------------------------------------------
-RenderBatch *AbstractRenderLayer::RenderBatchIFP() {
+FRenderBatch *FAbstractRenderLayer::RenderBatchIFP() {
     // TODO : check that this is called before prepare !
     return RenderBatchIFPImpl_();
 }
 //----------------------------------------------------------------------------
-const RenderBatch *AbstractRenderLayer::RenderBatchIFP() const {
+const FRenderBatch *FAbstractRenderLayer::RenderBatchIFP() const {
     // TODO : check that this is called before prepare !
     return RenderBatchIFPImpl_();
 }
 //----------------------------------------------------------------------------
-void AbstractRenderLayer::Prepare(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, const RenderTree *renderTree, VariabilitySeed *seeds) {
+void FAbstractRenderLayer::Prepare(Graphics::IDeviceAPIEncapsulator *device, FMaterialDatabase *materialDatabase, const FRenderTree *renderTree, FVariabilitySeed *seeds) {
     PrepareImpl_(device, materialDatabase, renderTree, seeds);
 }
 //----------------------------------------------------------------------------
-void AbstractRenderLayer::Render(Graphics::IDeviceAPIContext *context) {
+void FAbstractRenderLayer::Render(Graphics::IDeviceAPIContext *context) {
     if (Enabled()) {
         GRAPHICS_DIAGNOSTICS_BEGINEVENT(context->Diagnostics(), _name.c_str());
 
@@ -72,7 +72,7 @@ void AbstractRenderLayer::Render(Graphics::IDeviceAPIContext *context) {
     }
 }
 //----------------------------------------------------------------------------
-void AbstractRenderLayer::Destroy(Graphics::IDeviceAPIEncapsulator *device, const RenderTree *renderTree) {
+void FAbstractRenderLayer::Destroy(Graphics::IDeviceAPIEncapsulator *device, const FRenderTree *renderTree) {
     DestroyImpl_(device, renderTree);
 }
 //----------------------------------------------------------------------------

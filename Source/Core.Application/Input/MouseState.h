@@ -10,11 +10,11 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MouseState {
+class FMouseState {
 public:
-    friend class MouseInputHandler;
+    friend class FMouseInputHandler;
 
-    MouseState() : _clientX(0), _clientY(0), _relativeX(0), _relativeY(0) {}
+    FMouseState() : _clientX(0), _clientY(0), _relativeX(0), _relativeY(0) {}
 
     int ClientX() const { return _clientX; }
     int ClientY() const { return _clientY; }
@@ -43,7 +43,7 @@ private:
     MouseButtonState _buttonsUp;
 };
 //----------------------------------------------------------------------------
-typedef IInputStateProvider<MouseState> IMouseService;
+typedef IInputStateProvider<FMouseState> IMouseService;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

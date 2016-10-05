@@ -9,11 +9,11 @@ namespace Core {
 namespace {
 //----------------------------------------------------------------------------
 template <typename _Char>
-struct FormatTraits_ {};
+struct TFormatTraits_ {};
 //----------------------------------------------------------------------------
 template <>
-struct FormatTraits_<char> {
-    enum Flags : char {
+struct TFormatTraits_<char> {
+    enum EFlags : char {
         null        = '\0',
         lbrace      = '{',
         rbrace      = '}',
@@ -45,8 +45,8 @@ struct FormatTraits_<char> {
 };
 //----------------------------------------------------------------------------
 template <>
-struct FormatTraits_<wchar_t> {
-    enum Flags : wchar_t {
+struct TFormatTraits_<wchar_t> {
+    enum EFlags : wchar_t {
         null        = L'\0',
         lbrace      = L'{',
         rbrace      = L'}',
@@ -83,7 +83,7 @@ struct FormatTraits_<wchar_t> {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-struct FormatProperties_ {
+struct FFormatProperties_ {
     int Fill;
     std::streamsize Width;
     std::streamsize Precision;
@@ -94,11 +94,11 @@ struct FormatProperties_ {
     void From(const std::basic_ostream<_Char, _Traits>& io);
 
     template <typename _Char, typename _Traits = std::char_traits<_Char> >
-    FormatProperties_ To(std::basic_ostream<_Char, _Traits>& io) const;
+    FFormatProperties_ To(std::basic_ostream<_Char, _Traits>& io) const;
 };
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
-void FormatProperties_::From(const std::basic_ostream<_Char, _Traits>& io) {
+void FFormatProperties_::From(const std::basic_ostream<_Char, _Traits>& io) {
     Fill = checked_cast<int>(io.fill());
     Width = io.width();
     Precision = io.precision();
@@ -107,8 +107,8 @@ void FormatProperties_::From(const std::basic_ostream<_Char, _Traits>& io) {
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
-FormatProperties_ FormatProperties_::To(std::basic_ostream<_Char, _Traits>& io) const {
-    return FormatProperties_ {
+FFormatProperties_ FFormatProperties_::To(std::basic_ostream<_Char, _Traits>& io) const {
+    return FFormatProperties_ {
         io.fill(checked_cast<_Char>(Fill)),
         io.width(Width),
         io.precision(Precision),
@@ -132,8 +132,8 @@ std::basic_ostream<_Char, _Traits>& operator <<(
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-static bool FormatParser_(BasicStringView<_Char>& format, BasicStringView<_Char> *outp, size_t *index, FormatProperties_& props) {
-    typedef typename FormatTraits_<_Char>::Flags format_traits;
+static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStringView<_Char> *outp, size_t *index, FFormatProperties_& props) {
+    typedef typename TFormatTraits_<_Char>::EFlags format_traits;
 
     if (format.empty())
         return false;
@@ -149,14 +149,14 @@ static bool FormatParser_(BasicStringView<_Char>& format, BasicStringView<_Char>
             format = format.ShiftFront();
         }
         else {
-            const BasicStringView<_Char> formatBeforeParse = format;
+            const TBasicStringView<_Char> formatBeforeParse = format;
 
             Assert(format_traits::lbrace == format.front());
             format = format.ShiftFront(); // eat '{'
 
             intptr_t parsedIndex = 0;
             {
-                const BasicStringView<_Char> digits = EatDigits(format);
+                const TBasicStringView<_Char> digits = EatDigits(format);
                 Assert(digits.data() + digits.size() == format.data());
 
                 if (not Atoi(&parsedIndex, digits, 10))
@@ -245,7 +245,7 @@ static bool FormatParser_(BasicStringView<_Char>& format, BasicStringView<_Char>
 
                     intptr_t parsedScalar = 0;
                     {
-                        const BasicStringView<_Char> digits = EatDigits(format);
+                        const TBasicStringView<_Char> digits = EatDigits(format);
                         Assert(digits.data() + digits.size() == format.data());
 
                         if (not Atoi(&parsedScalar, digits, 10))
@@ -280,7 +280,7 @@ static bool FormatParser_(BasicStringView<_Char>& format, BasicStringView<_Char>
 
                 intptr_t parsedRepeat = 0;
                 {
-                    const BasicStringView<_Char> digits = EatDigits(format);
+                    const TBasicStringView<_Char> digits = EatDigits(format);
                     Assert(digits.data() + digits.size() == format.data());
 
                     if (not Atoi(&parsedRepeat, digits, 10))
@@ -317,17 +317,17 @@ static bool FormatParser_(BasicStringView<_Char>& format, BasicStringView<_Char>
 template <typename _Char, typename _Traits>
 static void FormatArgs_(
     std::basic_ostream<_Char, _Traits>& oss,
-    const BasicStringView<_Char>& format,
-    const MemoryView<const details::_FormatFunctor<_Char, _Traits>>& args ) {
+    const TBasicStringView<_Char>& format,
+    const TMemoryView<const details::_FormatFunctor<_Char, _Traits>>& args ) {
     Assert(format.Pointer());
     Assert(!oss.bad());
 
-    FormatProperties_ original;
+    FFormatProperties_ original;
     original.From(oss); // backups original state
 
-    FormatProperties_ props = original;
-    BasicStringView<_Char> formatIt = format;
-    BasicStringView<_Char> outp;
+    FFormatProperties_ props = original;
+    TBasicStringView<_Char> formatIt = format;
+    TBasicStringView<_Char> outp;
 
     size_t index = size_t(-1);
     while (FormatParser_(formatIt, &outp, &index, props)) {
@@ -356,11 +356,11 @@ static void FormatArgs_(
 //----------------------------------------------------------------------------
 namespace details {
 //----------------------------------------------------------------------------
-void _FormatArgs(std::basic_ostream<char>& oss, const StringView& format, const MemoryView<const _FormatFunctor<char>>& args) {
+void _FormatArgs(std::basic_ostream<char>& oss, const FStringView& format, const TMemoryView<const _FormatFunctor<char>>& args) {
     FormatArgs_(oss, format, args);
 }
 //----------------------------------------------------------------------------
-void _FormatArgs(std::basic_ostream<wchar_t>& oss, const WStringView& format, const MemoryView<const _FormatFunctor<wchar_t>>& args) {
+void _FormatArgs(std::basic_ostream<wchar_t>& oss, const FWStringView& format, const TMemoryView<const _FormatFunctor<wchar_t>>& args) {
     FormatArgs_(oss, format, args);
 }
 //----------------------------------------------------------------------------

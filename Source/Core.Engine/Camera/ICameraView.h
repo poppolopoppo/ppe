@@ -6,20 +6,20 @@
 #include "Core/Memory/RefPtr.h"
 
 namespace Core {
-class Timeline;
+class FTimeline;
 namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_INTERFACE_REFPTR(CameraView)
-class ICameraView : public RefCountable {
+class ICameraView : public FRefCountable {
 public:
     virtual ~ICameraView() {}
 
     ICameraView(const ICameraView& ) = delete;
     ICameraView& operator =(const ICameraView& ) = delete;
 
-    virtual float4x4 ViewMatrix(const Timeline& time) = 0;
+    virtual float4x4 ViewMatrix(const FTimeline& time) = 0;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

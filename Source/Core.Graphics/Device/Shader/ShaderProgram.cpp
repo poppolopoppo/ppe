@@ -16,13 +16,13 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ShaderProgram::ShaderProgram(
-    const Graphics::VertexDeclaration* vertexDeclaration,
-    ShaderProgramType programType,
-    ShaderProfileType profileType,
-    const ShaderCompiled* compiled,
+FShaderProgram::FShaderProgram(
+    const Graphics::FVertexDeclaration* vertexDeclaration,
+    EShaderProgramType programType,
+    EShaderProfileType profileType,
+    const FShaderCompiled* compiled,
     bool sharable )
-:   DeviceResourceSharable(DeviceResourceType::ShaderProgram, sharable)
+:   FDeviceResourceSharable(EDeviceResourceType::FShaderProgram, sharable)
 ,   _data(0)
 ,   _vertexDeclaration(vertexDeclaration)
 ,   _compiled(compiled) {
@@ -32,22 +32,22 @@ ShaderProgram::ShaderProgram(
     bitprofile_type::InplaceSet(_data, static_cast<size_t>(profileType));
 }
 //----------------------------------------------------------------------------
-ShaderProgram::~ShaderProgram() {
+FShaderProgram::~FShaderProgram() {
     Assert(!_deviceAPIDependantProgram);
 }
 //----------------------------------------------------------------------------
-bool ShaderProgram::Available() const {
+bool FShaderProgram::Available() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     return nullptr != _deviceAPIDependantProgram;
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantEntity *ShaderProgram::TerminalEntity() const {
+FDeviceAPIDependantEntity *FShaderProgram::TerminalEntity() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     return _deviceAPIDependantProgram.get();
 }
 //----------------------------------------------------------------------------
-void ShaderProgram::Create(IDeviceAPIEncapsulator* device) {
+void FShaderProgram::Create(IDeviceAPIEncapsulator* device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(device);
@@ -58,7 +58,7 @@ void ShaderProgram::Create(IDeviceAPIEncapsulator* device) {
     Assert(_deviceAPIDependantProgram);
 }
 //----------------------------------------------------------------------------
-void ShaderProgram::Destroy(IDeviceAPIEncapsulator* device) {
+void FShaderProgram::Destroy(IDeviceAPIEncapsulator* device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(device);
@@ -69,13 +69,13 @@ void ShaderProgram::Destroy(IDeviceAPIEncapsulator* device) {
     Assert(!_deviceAPIDependantProgram);
 }
 //----------------------------------------------------------------------------
-size_t ShaderProgram::VirtualSharedKeyHashValue() const {
+size_t FShaderProgram::VirtualSharedKeyHashValue() const {
     return size_t(_compiled->Fingerprint());
 }
 //----------------------------------------------------------------------------
-bool ShaderProgram::VirtualMatchTerminalEntity(const DeviceAPIDependantEntity *entity) const {
-    const Graphics::DeviceAPIDependantShaderProgram *shaderProgram =
-        checked_cast<const Graphics::DeviceAPIDependantShaderProgram *>(entity);
+bool FShaderProgram::VirtualMatchTerminalEntity(const FDeviceAPIDependantEntity *entity) const {
+    const Graphics::FDeviceAPIDependantShaderProgram *shaderProgram =
+        checked_cast<const Graphics::FDeviceAPIDependantShaderProgram *>(entity);
     return  shaderProgram->VertexDeclaration() == VertexDeclaration() &&
             shaderProgram->ProgramType() == ProgramType() &&
             shaderProgram->ProfileType() == ProfileType() &&
@@ -84,10 +84,10 @@ bool ShaderProgram::VirtualMatchTerminalEntity(const DeviceAPIDependantEntity *e
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceAPIDependantShaderProgram::DeviceAPIDependantShaderProgram(
+FDeviceAPIDependantShaderProgram::FDeviceAPIDependantShaderProgram(
     IDeviceAPIEncapsulator* device,
-    const ShaderProgram* resource  )
-:   TypedDeviceAPIDependantEntity<ShaderProgram>(device->APIEncapsulator(), resource)
+    const FShaderProgram* resource  )
+:   TTypedDeviceAPIDependantEntity<FShaderProgram>(device->APIEncapsulator(), resource)
 ,   _data(0)
 ,   _compiled(resource->Compiled())
 ,   _vertexDeclaration(resource->VertexDeclaration()) {
@@ -97,7 +97,7 @@ DeviceAPIDependantShaderProgram::DeviceAPIDependantShaderProgram(
     bitprofile_type::InplaceSet(_data, static_cast<size_t>(resource->ProfileType()));
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantShaderProgram::~DeviceAPIDependantShaderProgram() {}
+FDeviceAPIDependantShaderProgram::~FDeviceAPIDependantShaderProgram() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

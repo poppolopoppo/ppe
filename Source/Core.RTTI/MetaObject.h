@@ -20,14 +20,14 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MetaClass;
+class FMetaClass;
 FWD_REFPTR(MetaObject);
-class MetaLoadContext;
-class MetaUnloadContext;
+class FMetaLoadContext;
+class FMetaUnloadContext;
 //----------------------------------------------------------------------------
-class MetaObject : public RefCountable {
+class FMetaObject : public FRefCountable {
 public:
-    enum Flags : size_t {
+    enum EFlags : size_t {
         None        = 0,
         Loaded      = 1<<0,
         Unloaded    = 1<<1,
@@ -38,53 +38,53 @@ public:
     };
 
 public:
-    MetaObject();
-    virtual ~MetaObject();
+    FMetaObject();
+    virtual ~FMetaObject();
 
-    MetaObject(const MetaObject&) = delete;
-    MetaObject& operator =(const MetaObject&) = delete;
+    FMetaObject(const FMetaObject&) = delete;
+    FMetaObject& operator =(const FMetaObject&) = delete;
 
-    const RTTI::Name& RTTI_Name() const { return _name; }
+    const FName& RTTI_Name() const { return _name; }
 
     bool RTTI_IsLoaded() const { return Loaded == (_state & Loaded); }
     bool RTTI_IsUnloaded() const { return Unloaded == (_state & Unloaded); }
     bool RTTI_IsExported() const { return Exported == (_state & Exported); }
 
-    void RTTI_Export(const RTTI::Name& name);
+    void RTTI_Export(const FName& name);
     void RTTI_Unexport();
 
-    virtual void RTTI_Load(MetaLoadContext *context);
-    virtual void RTTI_Unload(MetaUnloadContext *context);
+    virtual void RTTI_Load(FMetaLoadContext *context);
+    virtual void RTTI_Unload(FMetaUnloadContext *context);
 
-    void RTTI_CallLoadIFN(MetaLoadContext *context);
-    void RTTI_CallUnloadIFN(MetaUnloadContext *context);
+    void RTTI_CallLoadIFN(FMetaLoadContext *context);
+    void RTTI_CallUnloadIFN(FMetaUnloadContext *context);
 
 #ifdef WITH_RTTI_VERIFY_PREDICATES
     virtual void RTTI_VerifyPredicates() const;
 #endif
 
-    class MetaClass : public DefaultMetaClass<MetaObject> {
+    class FMetaClass: public TDefaultMetaClass<FMetaObject> {
     public:
-        typedef MetaObject object_type;
+        typedef FMetaObject object_type;
         typedef void parent_type;
 
-        MetaClass();
-        virtual ~MetaClass();
+        FMetaClass();
+        virtual ~FMetaClass();
 
         static void Create();
         static void Destroy();
 
         static bool HasInstance();
-        static const MetaClass *Instance();
+        static const FMetaClass*Instance();
     };
 
-    virtual const RTTI::MetaClass *RTTI_MetaClass() const {
-        return MetaObject::MetaClass::Instance();
+    virtual const RTTI::FMetaClass *RTTI_MetaClass() const {
+        return FMetaObject::FMetaClass::Instance();
     }
 
 private:
-    RTTI::Name _name;
-    mutable Flags _state;
+    FName _name;
+    mutable EFlags _state;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

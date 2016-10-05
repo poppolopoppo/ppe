@@ -10,29 +10,29 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ApplicationBase
+class FApplicationBase
 {
 public:
-    explicit ApplicationBase(const wchar_t *appname);
-    virtual ~ApplicationBase();
+    explicit FApplicationBase(const wchar_t *appname);
+    virtual ~FApplicationBase();
 
-    ApplicationBase(ApplicationBase&&) = delete;
-    ApplicationBase& operator =(ApplicationBase&&) = delete;
+    FApplicationBase(FApplicationBase&&) = delete;
+    FApplicationBase& operator =(FApplicationBase&&) = delete;
 
-    ApplicationBase(const ApplicationBase&) = delete;
-    ApplicationBase& operator =(const ApplicationBase&) = delete;
+    FApplicationBase(const FApplicationBase&) = delete;
+    FApplicationBase& operator =(const FApplicationBase&) = delete;
 
-    const WString& AppName() const { return _appname; }
+    const FWString& AppName() const { return _appname; }
 
-    ServiceContainer& Services() { return _services; }
-    const ServiceContainer& Services() const { return _services; }
+    FServiceContainer& Services() { return _services; }
+    const FServiceContainer& Services() const { return _services; }
 
     virtual void Start();
     virtual void Shutdown();
 
 private:
-    WString _appname;
-    ServiceContainer _services;
+    FWString _appname;
+    FServiceContainer _services;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

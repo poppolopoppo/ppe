@@ -13,25 +13,25 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceResourceBuffer::DeviceResourceBuffer(size_t stride, size_t count, BufferMode mode, BufferUsage usage)
+FDeviceResourceBuffer::FDeviceResourceBuffer(size_t stride, size_t count, EBufferMode mode, EBufferUsage usage)
 :   _count(checked_cast<u32>(count)), _strideModeUsage(0) {
     Assert(stride);
 
 #ifdef WITH_CORE_ASSERT_RELEASE
     switch (usage)
     {
-    case BufferUsage::Default:
-        AssertRelease(  BufferMode::None == mode ||
-                        BufferMode::Write == mode);
+    case EBufferUsage::Default:
+        AssertRelease(  EBufferMode::None == mode ||
+                        EBufferMode::Write == mode);
         break;
-    case BufferUsage::Dynamic:
-        AssertRelease(  BufferMode::Write == mode);
+    case EBufferUsage::Dynamic:
+        AssertRelease(  EBufferMode::Write == mode);
         break;
-    case BufferUsage::Immutable:
-        AssertRelease(  BufferMode::None == mode);
+    case EBufferUsage::Immutable:
+        AssertRelease(  EBufferMode::None == mode);
         break;
-    case BufferUsage::Staging:
-        AssertRelease(  BufferMode::None != mode);
+    case EBufferUsage::Staging:
+        AssertRelease(  EBufferMode::None != mode);
         break;
     default:
         AssertNotImplemented();
@@ -44,17 +44,17 @@ DeviceResourceBuffer::DeviceResourceBuffer(size_t stride, size_t count, BufferMo
     bitstride_type::InplaceSet(_strideModeUsage, checked_cast<u32>(stride));
 }
 //----------------------------------------------------------------------------
-DeviceResourceBuffer::~DeviceResourceBuffer() {
+FDeviceResourceBuffer::~FDeviceResourceBuffer() {
     Assert(!_deviceAPIDependantBuffer);
 }
 //----------------------------------------------------------------------------
-void DeviceResourceBuffer::Resize(size_t count) {
+void FDeviceResourceBuffer::Resize(size_t count) {
     Assert(!_deviceAPIDependantBuffer);
 
     _count = checked_cast<u32>(count);
 }
 //----------------------------------------------------------------------------
-void DeviceResourceBuffer::Create(IDeviceAPIEncapsulator *device, const DeviceResource * /* resource */, DeviceAPIDependantResourceBuffer *buffer) {
+void FDeviceResourceBuffer::Create(IDeviceAPIEncapsulator *device, const FDeviceResource * /* resource */, FDeviceAPIDependantResourceBuffer *buffer) {
     UNUSED(device);
     Assert(buffer);
     Assert(!_deviceAPIDependantBuffer);
@@ -63,7 +63,7 @@ void DeviceResourceBuffer::Create(IDeviceAPIEncapsulator *device, const DeviceRe
     _deviceAPIDependantBuffer = buffer;
 }
 //----------------------------------------------------------------------------
-PDeviceAPIDependantResourceBuffer DeviceResourceBuffer::Destroy(IDeviceAPIEncapsulator *device, const DeviceResource * /* resource */) {
+PDeviceAPIDependantResourceBuffer FDeviceResourceBuffer::Destroy(IDeviceAPIEncapsulator *device, const FDeviceResource * /* resource */) {
     UNUSED(device);
     Assert(_deviceAPIDependantBuffer);
     Assert(_deviceAPIDependantBuffer->MatchDevice(device));
@@ -74,27 +74,27 @@ PDeviceAPIDependantResourceBuffer DeviceResourceBuffer::Destroy(IDeviceAPIEncaps
     return result;
 }
 //----------------------------------------------------------------------------
-void DeviceResourceBuffer::GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) {
+void FDeviceResourceBuffer::GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) {
     Assert(dst);
     Assert(stride == Stride());
     Assert(offset + count <= _count);
     Assert(_deviceAPIDependantBuffer);
-    //Assert(u32(BufferMode::Read) == (u32(Mode()) & u32(BufferMode::Read)));
+    //Assert(u32(EBufferMode::Read) == (u32(EMode()) & u32(EBufferMode::Read)));
 
     _deviceAPIDependantBuffer->GetData(device, offset, dst, stride, count);
 }
 //----------------------------------------------------------------------------
-void DeviceResourceBuffer::SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) {
+void FDeviceResourceBuffer::SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) {
     Assert(src);
     Assert(stride == Stride());
     Assert(offset + count <= _count);
     Assert(_deviceAPIDependantBuffer);
-    //Assert(u32(BufferMode::Write) == (u32(Mode()) & u32(BufferMode::Write)));
+    //Assert(u32(EBufferMode::Write) == (u32(EMode()) & u32(EBufferMode::Write)));
 
     _deviceAPIDependantBuffer->SetData(device, offset, src, stride, count);
 }
 //----------------------------------------------------------------------------
-void DeviceResourceBuffer::CopyFrom(IDeviceAPIEncapsulator *device, const DeviceResourceBuffer *psource) {
+void FDeviceResourceBuffer::CopyFrom(IDeviceAPIEncapsulator *device, const FDeviceResourceBuffer *psource) {
     Assert(psource);
     Assert(psource->Available());
     Assert(psource->SizeInBytes() == SizeInBytes());
@@ -102,9 +102,9 @@ void DeviceResourceBuffer::CopyFrom(IDeviceAPIEncapsulator *device, const Device
     _deviceAPIDependantBuffer->CopyFrom(device, psource->DeviceAPIDependantBuffer().get());
 }
 //----------------------------------------------------------------------------
-void DeviceResourceBuffer::CopySubPart(
+void FDeviceResourceBuffer::CopySubPart(
     IDeviceAPIEncapsulator *device, size_t dstOffset,
-    const DeviceResourceBuffer *psource, size_t srcOffset,
+    const FDeviceResourceBuffer *psource, size_t srcOffset,
     size_t length ) {
     Assert(0 < length);
     Assert(psource);
@@ -115,11 +115,11 @@ void DeviceResourceBuffer::CopySubPart(
     _deviceAPIDependantBuffer->CopySubPart(device, dstOffset, psource->DeviceAPIDependantBuffer().get(), srcOffset, length);
 }
 //----------------------------------------------------------------------------
-size_t DeviceResourceBuffer::HashValue() const {
+size_t FDeviceResourceBuffer::HashValue() const {
     return hash_tuple(_count, _strideModeUsage);
 }
 //----------------------------------------------------------------------------
-bool DeviceResourceBuffer::Match(const DeviceAPIDependantResourceBuffer& entity) const {
+bool FDeviceResourceBuffer::Match(const FDeviceAPIDependantResourceBuffer& entity) const {
     return  entity.Count() == Count() &&
             entity.Stride() == Stride() &&
             entity.SizeInBytes() == SizeInBytes() &&
@@ -129,12 +129,12 @@ bool DeviceResourceBuffer::Match(const DeviceAPIDependantResourceBuffer& entity)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceAPIDependantResourceBuffer::DeviceAPIDependantResourceBuffer(
+FDeviceAPIDependantResourceBuffer::FDeviceAPIDependantResourceBuffer(
     IDeviceAPIEncapsulator *device,
-    const DeviceResource *resource,
-    const DeviceResourceBuffer *buffer,
-    const MemoryView<const u8>& /* optionalData */)
-:   DeviceAPIDependantEntity(device->APIEncapsulator(), resource)
+    const FDeviceResource *resource,
+    const FDeviceResourceBuffer *buffer,
+    const TMemoryView<const u8>& /* optionalData */)
+:   FDeviceAPIDependantEntity(device->APIEncapsulator(), resource)
 ,   _count(checked_cast<u32>(buffer->Count()))
 ,   _strideModeUsage(0)
 ,   _resourceType(resource->ResourceType()) {
@@ -143,7 +143,7 @@ DeviceAPIDependantResourceBuffer::DeviceAPIDependantResourceBuffer(
     bitstride_type::InplaceSet(_strideModeUsage, checked_cast<u32>(buffer->Stride()));
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantResourceBuffer::~DeviceAPIDependantResourceBuffer() {}
+FDeviceAPIDependantResourceBuffer::~FDeviceAPIDependantResourceBuffer() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -8,11 +8,11 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Task::operator TaskDelegate () {
-    return Delegate(&Task::RunAndSuicide, this);
+FTask::operator TaskDelegate () {
+    return TDelegate(&FTask::RunAndSuicide, this);
 }
 //----------------------------------------------------------------------------
-void Task::RunAndSuicide(ITaskContext& ctx) {
+void FTask::RunAndSuicide(ITaskContext& ctx) {
     const PCTask suicidal(this); // will delete the task if nobody has a reference on it
     Run(ctx);
 }

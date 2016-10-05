@@ -55,19 +55,19 @@ namespace Core {
 #ifdef WITH_CORE_POOL_ALLOCATOR_TRACKING
 //----------------------------------------------------------------------------
 template <typename T, bool _ThreadLocal, size_t _Size = sizeof(T) >
-struct PoolTracking {
-    typedef PoolTracking<T, _ThreadLocal, _Size> self_type;
+struct TPoolTracking {
+    typedef TPoolTracking<T, _ThreadLocal, _Size> self_type;
 
-    Core::MemoryTrackingData TrackingData;
-    char Name[128];
+    Core::FMemoryTrackingData TrackingData;
+    char FName[128];
 
-    PoolTracking(const char* tagname, MemoryTrackingData* parent = nullptr)
-    :   TrackingData(&Name[0], parent) {
-        Format(Name, "{0}<{1},{2}>", tagname, _ThreadLocal, _Size);
+    TPoolTracking(const char* tagname, FMemoryTrackingData* parent = nullptr)
+    :   TrackingData(&FName[0], parent) {
+        Format(FName, "{0}<{1},{2}>", tagname, _ThreadLocal, _Size);
         RegisterAdditionalTrackingData(&TrackingData);
     }
 
-    ~PoolTracking() {
+    ~TPoolTracking() {
         UnregisterAdditionalTrackingData(&TrackingData);
     }
 };
@@ -78,13 +78,13 @@ struct PoolTracking {
 //----------------------------------------------------------------------------
 template <  typename _Tag
 ,           size_t _BlockSize
-,           typename _MemoryPool = MemoryPool<true>
-,           template <class > class _AutoSingleton = Meta::AutoSingleton >
-class SegregatedMemoryPool :
+,           typename _MemoryPool = TMemoryPool<true>
+,           template <class > class _AutoSingleton = Meta::FAutoSingleton >
+class TSegregatedMemoryPool :
     private _MemoryPool
-,   private _AutoSingleton<SegregatedMemoryPool<_Tag, _BlockSize, _MemoryPool, _AutoSingleton> > {
+,   private _AutoSingleton<TSegregatedMemoryPool<_Tag, _BlockSize, _MemoryPool, _AutoSingleton> > {
 public:
-    typedef SegregatedMemoryPool<_Tag, _BlockSize, _MemoryPool, _AutoSingleton> self_type;
+    typedef TSegregatedMemoryPool<_Tag, _BlockSize, _MemoryPool, _AutoSingleton> self_type;
     typedef _AutoSingleton<self_type> singleton_type;
     typedef _MemoryPool memorypool_type;
 
@@ -102,24 +102,24 @@ public:
 
 #ifdef WITH_CORE_POOL_ALLOCATOR_TRACKING
 private:
-    PoolTracking<_Tag, (false == memorypool_type::IsLocked), _BlockSize> _poolTracking;
+    TPoolTracking<_Tag, (false == memorypool_type::IsLocked), _BlockSize> _poolTracking;
 public:
-    MemoryTrackingData* TrackingData() { return &_poolTracking.TrackingData; }
+    FMemoryTrackingData* TrackingData() { return &_poolTracking.TrackingData; }
 #else
-    MemoryTrackingData* TrackingData() const { return nullptr; }
+    FMemoryTrackingData* TrackingData() const { return nullptr; }
 #endif
 
 public:
-    SegregatedMemoryPool()
+    TSegregatedMemoryPool()
     :   memorypool_type(PoolBlockSize, PoolMinChunkSize, PoolMaxChunkSize)
 #ifdef WITH_CORE_POOL_ALLOCATOR_TRACKING
-    ,   _poolTracking(_Tag::Name())
+    ,   _poolTracking(_Tag::FName())
 #endif
     {
         _Tag::Register(this);
     }
 
-    ~SegregatedMemoryPool() {
+    ~TSegregatedMemoryPool() {
         _Tag::Unregister(this);
     }
 };
@@ -127,18 +127,18 @@ public:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Tag, typename T, bool _ThreadLocal >
-class TypedSegregatedMemoryPool {
+class TTypedSegregatedMemoryPool {
 public:
-    typedef TypedSegregatedMemoryPool<_Tag, T, _ThreadLocal> self_type;
+    typedef TTypedSegregatedMemoryPool<_Tag, T, _ThreadLocal> self_type;
 
-    TypedSegregatedMemoryPool() = delete;
-    ~TypedSegregatedMemoryPool() = delete;
+    TTypedSegregatedMemoryPool() = delete;
+    ~TTypedSegregatedMemoryPool() = delete;
 
     enum : size_t { BlockSize = SNAP_SIZE_FOR_POOL_SEGREGATION(T) };
 
     typedef typename std::conditional<_ThreadLocal,
-        SegregatedMemoryPool<_Tag, BlockSize, MemoryPool<false, THREAD_LOCAL_ALLOCATOR(Pool, size_t) >, Meta::ThreadLocalAutoSingleton >,
-        SegregatedMemoryPool<_Tag, BlockSize, MemoryPool<true , ALLOCATOR(Pool, size_t)              >, Meta::AutoSingleton >
+        TSegregatedMemoryPool<_Tag, BlockSize, TMemoryPool<false, THREAD_LOCAL_ALLOCATOR(Pool, size_t) >, Meta::FThreadLocalAutoSingleton >,
+        TSegregatedMemoryPool<_Tag, BlockSize, TMemoryPool<true , ALLOCATOR(Pool, size_t)              >, Meta::FAutoSingleton >
     >::type     segregatedpool_type;
 
     FORCE_INLINE static void* Allocate() { return segregatedpool_type::Instance().Allocate(TrackingData()); }
@@ -146,15 +146,15 @@ public:
     FORCE_INLINE static void Clear_UnusedMemory() { segregatedpool_type::Instance().Clear_UnusedMemory(); }
 
 #if defined(WITH_CORE_POOL_ALLOCATOR_TRACKING_DETAILS)
-    static MemoryTrackingData* TrackingData() {
-        ONE_TIME_INITIALIZE_TPL(PoolTracking<T COMMA _ThreadLocal>, sPoolTracking,
+    static FMemoryTrackingData* TrackingData() {
+        ONE_TIME_INITIALIZE_TPL(TPoolTracking<T COMMA _ThreadLocal>, sPoolTracking,
             typeid(T).name(), segregatedpool_type::Instance().TrackingData());
         return &sPoolTracking.TrackingData;
     }
 #elif defined(WITH_CORE_POOL_ALLOCATOR_TRACKING)
-    static MemoryTrackingData* TrackingData() { return segregatedpool_type::Instance().TrackingData(); }
+    static FMemoryTrackingData* TrackingData() { return segregatedpool_type::Instance().TrackingData(); }
 #else
-    static constexpr MemoryTrackingData* TrackingData() { return nullptr; }
+    static constexpr FMemoryTrackingData* TrackingData() { return nullptr; }
 #endif
 };
 //----------------------------------------------------------------------------

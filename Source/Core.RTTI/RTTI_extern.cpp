@@ -15,17 +15,17 @@ namespace RTTI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define _DEF_METATYPE_SCALAR_INSTANTIATE_TEMPLATE(T) \
-    STATIC_ASSERT(false == MetaTypeTraits<T>::Wrapping); \
-    /*extern*/ template struct  MetaType<T>; \
-    /*extern*/ template struct  MetaTypeTraits<T>; \
-    /*extern*/ template class   MetaTypeScalarTraits<T>; \
-    /*extern*//* template class   MetaTypePairTraits<T, T>; */ \
-    /*extern*/ template class   MetaTypeVectorTraits<T>; \
-    /*extern*//* template class   MetaTypeDictionaryTraits<T, T>; */ \
-    /*extern*/ template class   MetaTypedAtom<T>; \
-    /*extern*/ template class   MetaTypedProperty<T>; \
-    /*extern*/ template class   MetaFieldAccessor<T>; \
-    /*extern*/ template class   MetaWrappedProperty<T, MetaFieldAccessor<T> >;
+    STATIC_ASSERT(false == TMetaTypeTraits<T>::Wrapping); \
+    /*extern*/ template struct  TMetaType<T>; \
+    /*extern*/ template struct  TMetaTypeTraits<T>; \
+    /*extern*/ template class   TMetaTypeScalarTraits<T>; \
+    /*extern*//* template class   TMetaTypePairTraits<T, T>; */ \
+    /*extern*/ template class   TMetaTypeVectorTraits<T>; \
+    /*extern*//* template class   TMetaTypeDictionaryTraits<T, T>; */ \
+    /*extern*/ template class   TMetaTypedAtom<T>; \
+    /*extern*/ template class   TMetaTypedProperty<T>; \
+    /*extern*/ template class   TMetaFieldAccessor<T>; \
+    /*extern*/ template class   TMetaWrappedProperty<T, TMetaFieldAccessor<T> >;
 
 #define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
     _DEF_METATYPE_SCALAR_INSTANTIATE_TEMPLATE(T)

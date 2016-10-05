@@ -12,7 +12,7 @@ namespace Core {
 namespace {
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Pred>
-MemoryView<_Char> StreamLookup_(  IStreamReader& iss,
+TMemoryView<_Char> StreamLookup_(  IStreamReader& iss,
                                 _Char *const storage, const std::streamsize capacity,
                                 _Pred&& pred ) {
     Assert(storage);
@@ -38,7 +38,7 @@ MemoryView<_Char> StreamLookup_(  IStreamReader& iss,
         }
     }
 
-    return MemoryView<_Char>(storage, checked_cast<size_t>(read));
+    return TMemoryView<_Char>(storage, checked_cast<size_t>(read));
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Pred>
@@ -64,37 +64,37 @@ bool StreamSeekI_(IStreamReader& iss, _Pred&& pred ) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-MemoryView<char> IStreamReader::ReadUntil(const MemoryView<char>& storage, char expected) {
+TMemoryView<char> IStreamReader::ReadUntil(const TMemoryView<char>& storage, char expected) {
     return StreamLookup_(*this, storage.data(), storage.size(), [expected](const char ch) { return (expected == ch); });
 }
 //----------------------------------------------------------------------------
-MemoryView<wchar_t> IStreamReader::ReadUntil(const MemoryView<wchar_t>& storage, wchar_t expected) {
+TMemoryView<wchar_t> IStreamReader::ReadUntil(const TMemoryView<wchar_t>& storage, wchar_t expected) {
     return StreamLookup_(*this, storage.data(), storage.size(), [expected](const wchar_t wch) { return (expected == wch); });
 }
 //----------------------------------------------------------------------------
-MemoryView<char> IStreamReader::ReadUntil(const MemoryView<char>& storage, const MemoryView<const char>& any) {
+TMemoryView<char> IStreamReader::ReadUntil(const TMemoryView<char>& storage, const TMemoryView<const char>& any) {
     Assert(!any.empty());
     return StreamLookup_(*this, storage.data(), storage.size(), [&any](const char ch) { return any.Contains(ch); });
 }
 //----------------------------------------------------------------------------
-MemoryView<wchar_t> IStreamReader::ReadUntil(const MemoryView<wchar_t>& storage, const MemoryView<const wchar_t>& any) {
+TMemoryView<wchar_t> IStreamReader::ReadUntil(const TMemoryView<wchar_t>& storage, const TMemoryView<const wchar_t>& any) {
     Assert(!any.empty());
     return StreamLookup_(*this, storage.data(), storage.size(), [&any](const wchar_t wch) { return any.Contains(wch); });
 }
 //----------------------------------------------------------------------------
-MemoryView<char> IStreamReader::ReadLine(const MemoryView<char>& storage) {
+TMemoryView<char> IStreamReader::ReadLine(const TMemoryView<char>& storage) {
     return StreamLookup_(*this, storage.data(), storage.size(), [](const char ch) { return '\n' == ch; });
 }
 //----------------------------------------------------------------------------
-MemoryView<wchar_t> IStreamReader::ReadLine(const MemoryView<wchar_t>& storage) {
+TMemoryView<wchar_t> IStreamReader::ReadLine(const TMemoryView<wchar_t>& storage) {
     return StreamLookup_(*this, storage.data(), storage.size(), [](const wchar_t wch) { return L'\n' == wch; });
 }
 //----------------------------------------------------------------------------
-MemoryView<char> IStreamReader::ReadWord(const MemoryView<char>& storage) {
+TMemoryView<char> IStreamReader::ReadWord(const TMemoryView<char>& storage) {
     return StreamLookup_(*this, storage.data(), storage.size(), [](const char ch) { return IsSpace(ch); });
 }
 //----------------------------------------------------------------------------
-MemoryView<wchar_t> IStreamReader::ReadWord(const MemoryView<wchar_t>& storage) {
+TMemoryView<wchar_t> IStreamReader::ReadWord(const TMemoryView<wchar_t>& storage) {
     return StreamLookup_(*this, storage.data(), storage.size(), [](const wchar_t wch) { return IsSpace(wch); });
 }
 //----------------------------------------------------------------------------

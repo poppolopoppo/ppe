@@ -7,35 +7,35 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarVector<T, _Dim>::ScalarVector() : ScalarVector(NumericLimits<T>::DefaultValue()) {}
+TScalarVector<T, _Dim>::TScalarVector() : TScalarVector(TNumericLimits<T>::DefaultValue()) {}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarVector<T, _Dim>::ScalarVector(Meta::noinit_tag) {}
+TScalarVector<T, _Dim>::TScalarVector(Meta::noinit_tag) {}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarVector<T, _Dim>::~ScalarVector() {}
+TScalarVector<T, _Dim>::~TScalarVector() {}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarVector<T, _Dim>::ScalarVector(T broadcast) {
+TScalarVector<T, _Dim>::TScalarVector(T broadcast) {
     for (size_t i = 0; i < _Dim; ++i)
         _data[i] = broadcast;
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarVector<T, _Dim>::ScalarVector(std::initializer_list<T> values) {
+TScalarVector<T, _Dim>::TScalarVector(std::initializer_list<T> values) {
     Assert(_Dim == values.size());
     std::copy(std::begin(values), std::end(values), _data);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarVector<T, _Dim>::ScalarVector(T v0, T v1) {
+TScalarVector<T, _Dim>::TScalarVector(T v0, T v1) {
     STATIC_ASSERT(2 == _Dim);
     _data[0] = v0;
     _data[1] = v1;
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarVector<T, _Dim>::ScalarVector(T v0, T v1, T v2) {
+TScalarVector<T, _Dim>::TScalarVector(T v0, T v1, T v2) {
     STATIC_ASSERT(3 == _Dim);
     _data[0] = v0;
     _data[1] = v1;
@@ -43,7 +43,7 @@ ScalarVector<T, _Dim>::ScalarVector(T v0, T v1, T v2) {
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarVector<T, _Dim>::ScalarVector(T v0, T v1, T v2, T v3) {
+TScalarVector<T, _Dim>::TScalarVector(T v0, T v1, T v2, T v3) {
     STATIC_ASSERT(4 == _Dim);
     _data[0] = v0;
     _data[1] = v1;
@@ -52,7 +52,7 @@ ScalarVector<T, _Dim>::ScalarVector(T v0, T v1, T v2, T v3) {
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarVector<T, _Dim>::ScalarVector(T extend, const ScalarVector<T, _Dim - 1>& other) {
+TScalarVector<T, _Dim>::TScalarVector(T extend, const TScalarVector<T, _Dim - 1>& other) {
     STATIC_ASSERT(1 < _Dim);
     _data[0] = extend;
     for (size_t i = 1; i < _Dim; ++i)
@@ -60,7 +60,7 @@ ScalarVector<T, _Dim>::ScalarVector(T extend, const ScalarVector<T, _Dim - 1>& o
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarVector<T, _Dim>::ScalarVector(const ScalarVector<T, _Dim - 1>& other, T extend) {
+TScalarVector<T, _Dim>::TScalarVector(const TScalarVector<T, _Dim - 1>& other, T extend) {
     STATIC_ASSERT(1 < _Dim);
     for (size_t i = 0; i < _Dim - 1; ++i)
         _data[i] = other[i];
@@ -68,20 +68,20 @@ ScalarVector<T, _Dim>::ScalarVector(const ScalarVector<T, _Dim - 1>& other, T ex
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarVector<T, _Dim>::ScalarVector(const MemoryView<const T>& data) {
+TScalarVector<T, _Dim>::TScalarVector(const TMemoryView<const T>& data) {
     Assert(data.size() == _Dim);
     for (size_t i = 0; i < _Dim; ++i)
         _data[i] = data[i];
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarVector<T, _Dim>::ScalarVector(const ScalarVector& other) {
+TScalarVector<T, _Dim>::TScalarVector(const TScalarVector& other) {
     for (size_t i = 0; i < _Dim; ++i)
         _data[i] = other._data[i];
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-auto ScalarVector<T, _Dim>::operator =(const ScalarVector& other) -> ScalarVector& {
+auto TScalarVector<T, _Dim>::operator =(const TScalarVector& other) -> TScalarVector& {
     for (size_t i = 0; i < _Dim; ++i)
         _data[i] = other._data[i];
     return *this;
@@ -89,27 +89,27 @@ auto ScalarVector<T, _Dim>::operator =(const ScalarVector& other) -> ScalarVecto
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 template <typename U>
-ScalarVector<T, _Dim>::ScalarVector(const ScalarVector<U, _Dim>& other) {
+TScalarVector<T, _Dim>::TScalarVector(const TScalarVector<U, _Dim>& other) {
     for (size_t i = 0; i < _Dim; ++i)
         _data[i] = static_cast<T>(other._data[i]);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 template <typename U>
-auto ScalarVector<T, _Dim>::operator =(const ScalarVector<U, _Dim>& other) -> ScalarVector& {
+auto TScalarVector<T, _Dim>::operator =(const TScalarVector<U, _Dim>& other) -> TScalarVector& {
     for (size_t i = 0; i < _Dim; ++i)
         _data[i] = static_cast<T>(other._data[i]);
     return *this;
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-const T& ScalarVector<T, _Dim>::operator [](size_t i) const {
+const T& TScalarVector<T, _Dim>::operator [](size_t i) const {
     Assert(i < _Dim);
     return _data[i];
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-T& ScalarVector<T, _Dim>::operator [](size_t i) {
+T& TScalarVector<T, _Dim>::operator [](size_t i) {
     Assert(i < _Dim);
     return _data[i];
 }
@@ -118,7 +118,7 @@ T& ScalarVector<T, _Dim>::operator [](size_t i) {
 //----------------------------------------------------------------------------
 #define DEF_SCALARVECTOR_OP_SELFSCALAR(_SelfOp) \
     template <typename T, size_t _Dim> \
-    auto ScalarVector<T, _Dim>::operator _SelfOp (T scalar) -> ScalarVector& { \
+    auto TScalarVector<T, _Dim>::operator _SelfOp (T scalar) -> TScalarVector& { \
         for (size_t i = 0; i < _Dim; ++i) \
             _data[i] _SelfOp scalar; \
         return *this; \
@@ -126,8 +126,8 @@ T& ScalarVector<T, _Dim>::operator [](size_t i) {
 //----------------------------------------------------------------------------
 #define DEF_SCALARVECTOR_OP_SCALAR(_Op) \
     template <typename T, size_t _Dim> \
-    auto ScalarVector<T, _Dim>::operator _Op (T scalar) const -> ScalarVector { \
-        ScalarVector result; \
+    auto TScalarVector<T, _Dim>::operator _Op (T scalar) const -> TScalarVector { \
+        TScalarVector result; \
         for (size_t i = 0; i < _Dim; ++i) \
             result._data[i] = _data[i] _Op scalar; \
         return result; \
@@ -135,7 +135,7 @@ T& ScalarVector<T, _Dim>::operator [](size_t i) {
 //----------------------------------------------------------------------------
 #define DEF_SCALARVECTOR_OP_SELFOTHER(_SelfOp) \
     template <typename T, size_t _Dim> \
-    auto ScalarVector<T, _Dim>::operator _SelfOp (const ScalarVector& other) -> ScalarVector& { \
+    auto TScalarVector<T, _Dim>::operator _SelfOp (const TScalarVector& other) -> TScalarVector& { \
         for (size_t i = 0; i < _Dim; ++i) \
             _data[i] _SelfOp other._data[i]; \
         return *this; \
@@ -143,8 +143,8 @@ T& ScalarVector<T, _Dim>::operator [](size_t i) {
 //----------------------------------------------------------------------------
 #define DEF_SCALARVECTOR_OP_OTHER(_Op) \
     template <typename T, size_t _Dim> \
-    auto ScalarVector<T, _Dim>::operator _Op (const ScalarVector& other) const -> ScalarVector { \
-        ScalarVector result; \
+    auto TScalarVector<T, _Dim>::operator _Op (const TScalarVector& other) const -> TScalarVector { \
+        TScalarVector result; \
         for (size_t i = 0; i < _Dim; ++i) \
             result._data[i] = _data[i] _Op other._data[i]; \
         return result; \
@@ -153,7 +153,7 @@ T& ScalarVector<T, _Dim>::operator [](size_t i) {
 #define DEF_SCALARVECTOR_OP_SELFOTHERU(_SelfOp) \
     template <typename T, size_t _Dim> \
     template <typename U> \
-    auto ScalarVector<T, _Dim>::operator _SelfOp (const ScalarVector<U, _Dim>& other) -> ScalarVector& { \
+    auto TScalarVector<T, _Dim>::operator _SelfOp (const TScalarVector<U, _Dim>& other) -> TScalarVector& { \
         for (size_t i = 0; i < _Dim; ++i) \
             _data[i] _SelfOp static_cast<T>(other._data[i]); \
         return *this; \
@@ -162,8 +162,8 @@ T& ScalarVector<T, _Dim>::operator [](size_t i) {
 #define DEF_SCALARVECTOR_OP_OTHERU(_Op) \
     template <typename T, size_t _Dim> \
     template <typename U> \
-    auto ScalarVector<T, _Dim>::operator _Op (const ScalarVector<U, _Dim>& other) const -> ScalarVector { \
-        ScalarVector result; \
+    auto TScalarVector<T, _Dim>::operator _Op (const TScalarVector<U, _Dim>& other) const -> TScalarVector { \
+        TScalarVector result; \
         for (size_t i = 0; i < _Dim; ++i) \
             result._data[i] = _data[i] _Op static_cast<T>(other._data[i]); \
         return result; \
@@ -206,15 +206,15 @@ DEF_SCALARVECTOR_OP_LHS(%)
 //----------------------------------------------------------------------------
 #define DEF_SCALARVECTOR_OP_RHS(_Op) \
     template <typename T, size_t _Dim> \
-    ScalarVector<T, _Dim> operator _Op(T lhs, const ScalarVector<T, _Dim>& rhs) { \
-        ScalarVector<T, _Dim> result; \
+    TScalarVector<T, _Dim> operator _Op(T lhs, const TScalarVector<T, _Dim>& rhs) { \
+        TScalarVector<T, _Dim> result; \
         for (size_t i = 0; i < _Dim; ++i) \
             result[i] = lhs _Op rhs[i]; \
         return result; \
     } \
     template <typename U, typename T, size_t _Dim> \
-    ScalarVector<T, _Dim> operator _Op(U lhs, const ScalarVector<T, _Dim>& rhs) { \
-        ScalarVector<T, _Dim> result; \
+    TScalarVector<T, _Dim> operator _Op(U lhs, const TScalarVector<T, _Dim>& rhs) { \
+        TScalarVector<T, _Dim> result; \
         for (size_t i = 0; i < _Dim; ++i) \
             result[i] = static_cast<T>(lhs _Op rhs[i]); \
         return result; \
@@ -232,15 +232,15 @@ DEF_SCALARVECTOR_OP_RHS(%)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-auto ScalarVector<T, _Dim>::operator -() const -> ScalarVector {
-    ScalarVector result;
+auto TScalarVector<T, _Dim>::operator -() const -> TScalarVector {
+    TScalarVector result;
     for (size_t i = 0; i < _Dim; ++i)
         result[i] = -_data[i];
     return result;
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-bool ScalarVector<T, _Dim>::operator ==(const ScalarVector& other) const {
+bool TScalarVector<T, _Dim>::operator ==(const TScalarVector& other) const {
     for (size_t i = 0; i < _Dim; ++i)
         if (_data[i] != other._data[i])
             return false;
@@ -248,13 +248,13 @@ bool ScalarVector<T, _Dim>::operator ==(const ScalarVector& other) const {
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-void ScalarVector<T, _Dim>::Broadcast(T scalar) {
+void TScalarVector<T, _Dim>::Broadcast(T scalar) {
     for (size_t i = 0; i < _Dim; ++i)
         _data[i] = scalar;
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-void ScalarVector<T, _Dim>::Swap(ScalarVector& other) {
+void TScalarVector<T, _Dim>::Swap(TScalarVector& other) {
     using std::swap;
     using Core::swap;
     for (size_t i = 0; i < _Dim; ++i)
@@ -262,17 +262,17 @@ void ScalarVector<T, _Dim>::Swap(ScalarVector& other) {
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarVector<T, _Dim - 1> ScalarVector<T, _Dim>::Dehomogenize() const {
+TScalarVector<T, _Dim - 1> TScalarVector<T, _Dim>::Dehomogenize() const {
     STATIC_ASSERT(1 < _Dim);
-    ScalarVector<T, _Dim - 1> result;
+    TScalarVector<T, _Dim - 1> result;
     for (size_t i = 0; i < _Dim - 1; ++i)
         result[i] = _data[i] / _data[_Dim - 1];
     return result;
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarVector<T, _Dim + 1> ScalarVector<T, _Dim>::Extend(T value) const {
-    ScalarVector<T, _Dim + 1> result;
+TScalarVector<T, _Dim + 1> TScalarVector<T, _Dim>::Extend(T value) const {
+    TScalarVector<T, _Dim + 1> result;
     for (size_t i = 0; i < _Dim; ++i)
         result[i] = _data[i];
     result[_Dim] = value;
@@ -280,7 +280,7 @@ ScalarVector<T, _Dim + 1> ScalarVector<T, _Dim>::Extend(T value) const {
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-bool ScalarVector<T, _Dim>::AllLessThan(const ScalarVector& other) const {
+bool TScalarVector<T, _Dim>::AllLessThan(const TScalarVector& other) const {
     for (size_t i = 0; i < _Dim; ++i)
         if (!(_data[i] < other._data[i]))
             return false;
@@ -288,7 +288,7 @@ bool ScalarVector<T, _Dim>::AllLessThan(const ScalarVector& other) const {
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-bool ScalarVector<T, _Dim>::AllLessOrEqual(const ScalarVector& other) const {
+bool TScalarVector<T, _Dim>::AllLessOrEqual(const TScalarVector& other) const {
     for (size_t i = 0; i < _Dim; ++i)
         if (!(_data[i] <= other._data[i]))
             return false;
@@ -296,7 +296,7 @@ bool ScalarVector<T, _Dim>::AllLessOrEqual(const ScalarVector& other) const {
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-bool ScalarVector<T, _Dim>::AllGreaterThan(const ScalarVector& other) const {
+bool TScalarVector<T, _Dim>::AllGreaterThan(const TScalarVector& other) const {
     for (size_t i = 0; i < _Dim; ++i)
         if (!(_data[i] > other._data[i]))
             return false;
@@ -304,7 +304,7 @@ bool ScalarVector<T, _Dim>::AllGreaterThan(const ScalarVector& other) const {
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-bool ScalarVector<T, _Dim>::AllGreaterOrEqual(const ScalarVector& other) const {
+bool TScalarVector<T, _Dim>::AllGreaterOrEqual(const TScalarVector& other) const {
     for (size_t i = 0; i < _Dim; ++i)
         if (!(_data[i] >= other._data[i]))
             return false;
@@ -313,8 +313,8 @@ bool ScalarVector<T, _Dim>::AllGreaterOrEqual(const ScalarVector& other) const {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 template <typename U>
-ScalarVector<U, _Dim> ScalarVector<T, _Dim>::Cast() const {
-    return ScalarVector<U, _Dim>(*this);
+TScalarVector<U, _Dim> TScalarVector<T, _Dim>::Cast() const {
+    return TScalarVector<U, _Dim>(*this);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

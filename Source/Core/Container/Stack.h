@@ -15,16 +15,16 @@ namespace Core {
 //----------------------------------------------------------------------------
 #define STACKLOCAL_POD_STACK(T, _NAME, _COUNT) \
     MALLOCA(T, CONCAT(_Alloca_, _NAME), _COUNT); \
-    Core::PodStack<T> _NAME( CONCAT(_Alloca_, _NAME).MakeView() )
+    Core::TPodStack<T> _NAME( CONCAT(_Alloca_, _NAME).MakeView() )
 //----------------------------------------------------------------------------
 #define STACKLOCAL_STACK(T, _NAME, _COUNT) \
     MALLOCA(T, CONCAT(_Alloca_, _NAME), _COUNT); \
-    Core::Stack<T> _NAME( CONCAT(_Alloca_, _NAME).MakeView() )
+    Core::TStack<T> _NAME( CONCAT(_Alloca_, _NAME).MakeView() )
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod = std::is_pod<T>::value >
-class Stack {
+class TStack {
 public:
     typedef T value_type;
 
@@ -36,18 +36,18 @@ public:
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;
 
-    typedef CheckedArrayIterator<T> iterator;
-    typedef CheckedArrayIterator<typename std::add_const<T>::type> const_iterator;
+    typedef TCheckedArrayIterator<T> iterator;
+    typedef TCheckedArrayIterator<typename std::add_const<T>::type> const_iterator;
 
     typedef std::reverse_iterator<iterator> reverse_iterator;
     typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
     typedef typename std::random_access_iterator_tag iterator_category;
 
-    Stack();
-    Stack(pointer storage, size_type capacity);
-    explicit Stack(const MemoryView<T>& storage);
-    ~Stack() { clear(); }
+    TStack();
+    TStack(pointer storage, size_type capacity);
+    explicit TStack(const TMemoryView<T>& storage);
+    ~TStack() { clear(); }
 
     size_type capacity() const { return _capacity; }
     size_type size() const { return _size; }
@@ -71,9 +71,9 @@ public:
     reference operator [](size_type index) { Assert(index < _size); return _storage[index]; }
     const_reference operator [](size_type index) const { Assert(index < _size); return _storage[index]; }
 
-    MemoryView<T> MakeView() { return MemoryView<T>(_storage, _size); }
-    MemoryView<const T> MakeView() const { return MemoryView<const T>(_storage, _size); }
-    MemoryView<const T> MakeConstView() const { return MemoryView<const T>(_storage, _size); }
+    TMemoryView<T> MakeView() { return TMemoryView<T>(_storage, _size); }
+    TMemoryView<const T> MakeView() const { return TMemoryView<const T>(_storage, _size); }
+    TMemoryView<const T> MakeConstView() const { return TMemoryView<const T>(_storage, _size); }
 
     template <typename _Arg0, typename... _Args>
     void Push(_Arg0&& arg0, _Args&&... args);
@@ -91,7 +91,7 @@ public:
     bool DeallocateIFP(pointer p, size_type count);
     void Deallocate_AssertLIFO(pointer p, size_type count);
 
-    void Swap(Stack& other);
+    void Swap(TStack& other);
 
 private:
     size_type _size;
@@ -100,30 +100,30 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-Stack<T, _IsPod>::Stack()
+TStack<T, _IsPod>::TStack()
 :   _size(0), _capacity(0), _storage(nullptr) {}
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-Stack<T, _IsPod>::Stack(pointer storage, size_type capacity)
+TStack<T, _IsPod>::TStack(pointer storage, size_type capacity)
 :   _size(0), _capacity(capacity), _storage(storage) {
     Assert(0 == _capacity || _storage);
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-Stack<T, _IsPod>::Stack(const MemoryView<T>& storage)
-:   Stack(storage.Pointer(), storage.size()) {}
+TStack<T, _IsPod>::TStack(const TMemoryView<T>& storage)
+:   TStack(storage.Pointer(), storage.size()) {}
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
 template <typename _Arg0, typename... _Args>
-void Stack<T, _IsPod>::Push(_Arg0&& arg0, _Args&&... args) {
+void TStack<T, _IsPod>::Push(_Arg0&& arg0, _Args&&... args) {
     Assert(_storage);
     Assert(_size < _capacity);
 
-    AllocatorBase<T>().construct((T*)&_storage[_size++], std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+    TAllocatorBase<T>().construct((T*)&_storage[_size++], std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-bool Stack<T, _IsPod>::Pop(pointer pvalue/* = nullptr */) {
+bool TStack<T, _IsPod>::Pop(pointer pvalue/* = nullptr */) {
     if (0 == _size)
         return false;
 
@@ -139,12 +139,12 @@ bool Stack<T, _IsPod>::Pop(pointer pvalue/* = nullptr */) {
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-bool Stack<T, _IsPod>::Contains(const_reference item) const {
+bool TStack<T, _IsPod>::Contains(const_reference item) const {
     return (end() != std::find(begin(), end(), item));
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-auto Stack<T, _IsPod>::Allocate(size_type count) -> pointer {
+auto TStack<T, _IsPod>::Allocate(size_type count) -> pointer {
     if (_size + count > _capacity)
         return nullptr;
 
@@ -157,7 +157,7 @@ auto Stack<T, _IsPod>::Allocate(size_type count) -> pointer {
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-bool Stack<T, _IsPod>::DeallocateIFP(pointer p, size_type count) {
+bool TStack<T, _IsPod>::DeallocateIFP(pointer p, size_type count) {
     Assert(_size > 0);
     Assert(p >= _storage);
     Assert(p + count <= _storage + _size);
@@ -176,13 +176,13 @@ bool Stack<T, _IsPod>::DeallocateIFP(pointer p, size_type count) {
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-void Stack<T, _IsPod>::Deallocate_AssertLIFO(pointer p, size_type count) {
+void TStack<T, _IsPod>::Deallocate_AssertLIFO(pointer p, size_type count) {
     if (false == DeallocateIFP(p, count))
         AssertNotReached();
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-void Stack<T, _IsPod>::clear() {
+void TStack<T, _IsPod>::clear() {
     if (false == _IsPod) {
         for (size_t i = 0; i < _size; ++i)
             _storage[i].~T();
@@ -191,28 +191,28 @@ void Stack<T, _IsPod>::clear() {
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-void Stack<T, _IsPod>::Swap(Stack& other) {
+void TStack<T, _IsPod>::Swap(TStack& other) {
     std::swap(_size, other._size);
     std::swap(_capacity, other._capacity);
     std::swap(_storage, other._storage);
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-void swap(Stack<T, _IsPod>& lhs, Stack<T, _IsPod>& rhs) {
+void swap(TStack<T, _IsPod>& lhs, TStack<T, _IsPod>& rhs) {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-using PodStack = Stack<T, true>;
+using TPodStack = TStack<T, true>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Capacity, size_t _Alignment = std::alignment_of<T>::value >
-class FixedSizeStack : public Stack<T> {
+class TFixedSizeStack : public TStack<T> {
 public:
-    typedef Stack<T> parent_type;
+    typedef TStack<T> parent_type;
 
     using typename parent_type::value_type;
     using typename parent_type::pointer;
@@ -231,15 +231,15 @@ public:
 
     using typename parent_type::iterator_category;
 
-    FixedSizeStack() : parent_type(reinterpret_cast<pointer>(&_insitu), _Capacity) {}
+    TFixedSizeStack() : parent_type(reinterpret_cast<pointer>(&_insitu), _Capacity) {}
 
-    FixedSizeStack(FixedSizeStack&& ) = delete;
-    FixedSizeStack& operator =(FixedSizeStack&& rvalue) = delete;
+    TFixedSizeStack(TFixedSizeStack&& ) = delete;
+    TFixedSizeStack& operator =(TFixedSizeStack&& rvalue) = delete;
 
-    FixedSizeStack(const FixedSizeStack& other) = delete;
-    FixedSizeStack& operator =(const FixedSizeStack& other) = delete;
+    TFixedSizeStack(const TFixedSizeStack& other) = delete;
+    TFixedSizeStack& operator =(const TFixedSizeStack& other) = delete;
 
-    void Swap(Stack<T>& other) = delete;
+    void Swap(TStack<T>& other) = delete;
 
 private:
     // /!\ won't call any ctor or dtor, values are considered as undefined

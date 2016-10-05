@@ -13,9 +13,9 @@ class IMetaAtomPair;
 class IMetaAtomVector;
 class IMetaAtomDictionary;
 FWD_REFPTR(MetaObject);
-class MetaProperty;
+class FMetaProperty;
 template <typename T>
-class MetaTypedAtom;
+class TMetaTypedAtom;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -27,7 +27,7 @@ public:
     virtual void Visit(IMetaAtomVector* pvector) = 0;
     virtual void Visit(IMetaAtomDictionary* pdictionary) = 0;
 
-#define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) virtual void Visit(MetaTypedAtom<T>* scalar) = 0;
+#define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) virtual void Visit(TMetaTypedAtom<T>* scalar) = 0;
     FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
 #undef DEF_METATYPE_SCALAR
 };
@@ -40,47 +40,47 @@ public:
     virtual void Visit(const IMetaAtomVector* pvector) = 0;
     virtual void Visit(const IMetaAtomDictionary* pdictionary) = 0;
 
-#define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) virtual void Visit(const MetaTypedAtom<T>* scalar) = 0;
+#define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) virtual void Visit(const TMetaTypedAtom<T>* scalar) = 0;
     FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
 #undef DEF_METATYPE_SCALAR
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MetaAtomWrapMoveVisitor : public IMetaAtomVisitor {
+class FMetaAtomWrapMoveVisitor : public IMetaAtomVisitor {
 public:
-    virtual ~MetaAtomWrapMoveVisitor() {}
+    virtual ~FMetaAtomWrapMoveVisitor() {}
 
-    void Append(MetaAtom* atom);
+    void Append(FMetaAtom* atom);
 
-    virtual void Inspect(IMetaAtomPair* ppair, Pair<PMetaAtom, PMetaAtom>& pair);
-    virtual void Inspect(IMetaAtomVector* pvector, Vector<PMetaAtom>& vector);
-    virtual void Inspect(IMetaAtomDictionary* pdictionary, Dictionary<PMetaAtom, PMetaAtom>& dictionary);
+    virtual void Inspect(IMetaAtomPair* ppair, TPair<PMetaAtom, PMetaAtom>& pair);
+    virtual void Inspect(IMetaAtomVector* pvector, TVector<PMetaAtom>& vector);
+    virtual void Inspect(IMetaAtomDictionary* pdictionary, TDictionary<PMetaAtom, PMetaAtom>& dictionary);
 
     using IMetaAtomVisitor::Visit;
 
     virtual void Visit(IMetaAtomPair* ppair) override;
     virtual void Visit(IMetaAtomVector* pvector) override;
     virtual void Visit(IMetaAtomDictionary* pdictionary) override;
-    virtual void Visit(MetaTypedAtom<PMetaAtom>* patom) override;
+    virtual void Visit(TMetaTypedAtom<PMetaAtom>* patom) override;
 };
 //----------------------------------------------------------------------------
-class MetaAtomWrapCopyVisitor : public IMetaAtomConstVisitor {
+class FMetaAtomWrapCopyVisitor : public IMetaAtomConstVisitor {
 public:
-    virtual ~MetaAtomWrapCopyVisitor() {}
+    virtual ~FMetaAtomWrapCopyVisitor() {}
 
-    void Append(const MetaAtom* atom);
+    void Append(const FMetaAtom* atom);
 
-    virtual void Inspect(const IMetaAtomPair* ppair, const Pair<PMetaAtom, PMetaAtom>& pair);
-    virtual void Inspect(const IMetaAtomVector* pvector, const Vector<PMetaAtom>& vector);
-    virtual void Inspect(const IMetaAtomDictionary* pdictionary, const Dictionary<PMetaAtom, PMetaAtom>& dictionary);
+    virtual void Inspect(const IMetaAtomPair* ppair, const TPair<PMetaAtom, PMetaAtom>& pair);
+    virtual void Inspect(const IMetaAtomVector* pvector, const TVector<PMetaAtom>& vector);
+    virtual void Inspect(const IMetaAtomDictionary* pdictionary, const TDictionary<PMetaAtom, PMetaAtom>& dictionary);
 
     using IMetaAtomConstVisitor::Visit;
 
     virtual void Visit(const IMetaAtomPair* ppair) override;
     virtual void Visit(const IMetaAtomVector* pvector) override;
     virtual void Visit(const IMetaAtomDictionary* pdictionary) override;
-    virtual void Visit(const MetaTypedAtom<PMetaAtom>* patom) override;
+    virtual void Visit(const TMetaTypedAtom<PMetaAtom>* patom) override;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

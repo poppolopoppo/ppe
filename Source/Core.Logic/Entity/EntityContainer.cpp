@@ -13,7 +13,7 @@ namespace Logic {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-EntityContainer::EntityContainer() : _nextAvailableID(0) {
+FEntityContainer::FEntityContainer() : _nextAvailableID(0) {
     // memory warmup to preserve over resizing in the first steps :
     STATIC_CONST_INTEGRAL(size_t, WarmupCapacity, 128);
     _entities.reserve(WarmupCapacity);
@@ -22,9 +22,9 @@ EntityContainer::EntityContainer() : _nextAvailableID(0) {
     _uidToId.reserve(WarmupCapacity);
 }
 //----------------------------------------------------------------------------
-EntityContainer::~EntityContainer() {}
+FEntityContainer::~FEntityContainer() {}
 //----------------------------------------------------------------------------
-EntityID EntityContainer::CreateEntity(const EntityUID *optionalUID/* = nullptr */) {
+EntityID FEntityContainer::CreateEntity(const EntityUID *optionalUID/* = nullptr */) {
     if (_freeIDs.empty()) {
         const EntityID oldAvailableID = _nextAvailableID;
         _nextAvailableID.Value = 1 + _nextAvailableID * 2;
@@ -44,50 +44,50 @@ EntityID EntityContainer::CreateEntity(const EntityUID *optionalUID/* = nullptr 
     const EntityID id = _freeIDs.back();
     _freeIDs.pop_back();
 
-    const EntityUID uid(optionalUID ? *optionalUID : Guid::Generate().ToUID() );
+    const EntityUID uid(optionalUID ? *optionalUID : FGuid::Generate().ToUID() );
     Insert_AssertUnique(_uidToId, uid, id);
 
-    _entities[id] = Entity(id, uid);
+    _entities[id] = FEntity(id, uid);
 
     _usedIDs.push_back(id);
 
     return id;
 }
 //----------------------------------------------------------------------------
-void EntityContainer::DestroyEntity(EntityID id) {
-    Assert(Entity::InvalidID != id);
+void FEntityContainer::DestroyEntity(EntityID id) {
+    Assert(FEntity::InvalidID != id);
 
     Remove_AssertExists(_usedIDs, id);
 
-    Entity& entity = _entities[id];
+    FEntity& entity = _entities[id];
     Assert(entity.ID() == id);
     Remove_AssertExistsAndSameValue(_uidToId, entity.UID(), id);
 
-    entity = Entity();
+    entity = FEntity();
 
     _freeIDs.push_back(id);
 }
 //----------------------------------------------------------------------------
-bool EntityContainer::Contains(EntityID id) const {
-    Assert(Entity::InvalidID != id);
+bool FEntityContainer::Contains(EntityID id) const {
+    Assert(FEntity::InvalidID != id);
 
     return Core::Contains(_usedIDs, id);
 }
 //----------------------------------------------------------------------------
-EntityID EntityContainer::IDFromUID(EntityUID uid) const {
-    Assert(Entity::InvalidUID != uid);
+EntityID FEntityContainer::IDFromUID(EntityUID uid) const {
+    Assert(FEntity::InvalidUID != uid);
 
     EntityID id;
     if (!TryGetValue(_uidToId, uid, &id)) {
         AssertNotReached();
-        return EntityID(Entity::InvalidID);
+        return EntityID(FEntity::InvalidID);
     }
 
-    Assert(Entity::InvalidID != id);
+    Assert(FEntity::InvalidID != id);
     return id;
 }
 //----------------------------------------------------------------------------
-void EntityContainer::Clear() {
+void FEntityContainer::Clear() {
     Clear_ReleaseMemory(_entities);
     Clear_ReleaseMemory(_freeIDs);
     Clear_ReleaseMemory(_usedIDs);
@@ -95,7 +95,7 @@ void EntityContainer::Clear() {
     _nextAvailableID.Value = 0;
 }
 //----------------------------------------------------------------------------
-void EntityContainer::ShrinkToFit() {
+void FEntityContainer::ShrinkToFit() {
     const auto max_it = std::max_element(_usedIDs.begin(), _usedIDs.end());
     Assert(_usedIDs.end() != max_it);
 

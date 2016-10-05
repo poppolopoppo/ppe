@@ -16,13 +16,13 @@ namespace Graphics {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(ConstantBufferLayout);
-class ConstantBufferLayout : public RefCountable {
+class FConstantBufferLayout : public FRefCountable {
 public:
-    ConstantBufferLayout();
-    ~ConstantBufferLayout();
+    FConstantBufferLayout();
+    ~FConstantBufferLayout();
 
-    ConstantBufferLayout(const ConstantBufferLayout& other) { operator =(other); }
-    ConstantBufferLayout& operator =(const ConstantBufferLayout& other);
+    FConstantBufferLayout(const FConstantBufferLayout& other) { operator =(other); }
+    FConstantBufferLayout& operator =(const FConstantBufferLayout& other);
 
     bool Frozen() const { return _frozen; }
     void Freeze();
@@ -32,25 +32,25 @@ public:
 
     size_t SizeInBytes() const { return _block.SizeInBytes(); }
 
-    MemoryView<const ValueBlock::Field> Fields() const { return _block.MakeView(); }
+    TMemoryView<const FValueBlock::TField> Fields() const { return _block.MakeView(); }
 
-    const ValueBlock& Block() const { return _block; }
+    const FValueBlock& Block() const { return _block; }
 
-    void AddField(const Name& name, ValueType type);
-    void AddField(const Name& name, ValueType type, size_t offset, size_t size, bool inUse = true);
+    void AddField(const FName& name, EValueType type);
+    void AddField(const FName& name, EValueType type, size_t offset, size_t size, bool inUse = true);
 
     template <typename T>
-    void AddField(const Name& name) {
-        STATIC_ASSERT(ValueType::Void != ValueTraits<T>::Type);
-        AddField(name, ValueTraits<T>::Type);
+    void AddField(const FName& name) {
+        STATIC_ASSERT(EValueType::Void != TValueTraits<T>::EType);
+        AddField(name, TValueTraits<T>::EType);
     }
 
-    bool Equals(const ConstantBufferLayout& other) const { return (other._block == _block); }
+    bool Equals(const FConstantBufferLayout& other) const { return (other._block == _block); }
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    ValueBlock _block;
+    FValueBlock _block;
     bool _frozen;
 };
 //----------------------------------------------------------------------------

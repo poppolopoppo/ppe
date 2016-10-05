@@ -14,7 +14,7 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-RenderSurfaceManager::RenderSurfaceManager(
+FRenderSurfaceManager::FRenderSurfaceManager(
     const FileSystem::char_type *virtualDir,
     const FileSystem::char_type *renderTargetName,
     const FileSystem::char_type *depthStencilName )
@@ -26,20 +26,20 @@ RenderSurfaceManager::RenderSurfaceManager(
     Assert(!_depthStencilName.empty());
 }
 //----------------------------------------------------------------------------
-RenderSurfaceManager::~RenderSurfaceManager() {
+FRenderSurfaceManager::~FRenderSurfaceManager() {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(_surfaces.empty());
 }
 //----------------------------------------------------------------------------
-void RenderSurfaceManager::Register(AbstractRenderSurface *renderSurface) {
+void FRenderSurfaceManager::Register(FAbstractRenderSurface *renderSurface) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(renderSurface);
     Assert(renderSurface->Name().size());
 
-    const Dirname virtualDirname(ToWString(renderSurface->Name()));
+    const FDirname virtualDirname(ToWString(renderSurface->Name()));
 
-    LOG(Info, L"[RenderSurfaceManager] Register render surface with alias \"{0}\" ...",
-        Dirpath(_virtualDir, virtualDirname) );
+    LOG(Info, L"[FRenderSurfaceManager] Register render surface with alias \"{0}\" ...",
+        FDirpath(_virtualDir, virtualDirname) );
 
     PAbstractRenderSurface& it = _surfaces[virtualDirname];
     AssertRelease(!it);
@@ -48,31 +48,31 @@ void RenderSurfaceManager::Register(AbstractRenderSurface *renderSurface) {
     it = renderSurface;
 }
 //----------------------------------------------------------------------------
-void RenderSurfaceManager::Unregister(AbstractRenderSurface *renderSurface) {
+void FRenderSurfaceManager::Unregister(FAbstractRenderSurface *renderSurface) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(renderSurface);
     Assert(renderSurface->Name().size());
 
-    const Dirname virtualDirname(ToWString(renderSurface->Name()));
+    const FDirname virtualDirname(ToWString(renderSurface->Name()));
 
-    LOG(Info, L"[RenderSurfaceManager] Unregister render surface with alias \"{0}\" ...",
-        Dirpath(_virtualDir, virtualDirname) );
+    LOG(Info, L"[FRenderSurfaceManager] Unregister render surface with alias \"{0}\" ...",
+        FDirpath(_virtualDir, virtualDirname) );
 
     Assert(!renderSurface->InUse());
     Assert(renderSurface == _surfaces[virtualDirname]);
     _surfaces.erase(virtualDirname);
 }
 //----------------------------------------------------------------------------
-Dirpath RenderSurfaceManager::Alias(const AbstractRenderSurface *renderSurface) const {
+FDirpath FRenderSurfaceManager::Alias(const FAbstractRenderSurface *renderSurface) const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(renderSurface);
     Assert(renderSurface->Name().size());
 
-    const Dirname virtualDirname(ToWString(renderSurface->Name()));
-    return Dirpath(_virtualDir, virtualDirname);
+    const FDirname virtualDirname(ToWString(renderSurface->Name()));
+    return FDirpath(_virtualDir, virtualDirname);
 }
 //----------------------------------------------------------------------------
-bool RenderSurfaceManager::TryUnalias(const Dirpath& dirpath, PAbstractRenderSurface *renderSurface) const {
+bool FRenderSurfaceManager::TryUnalias(const FDirpath& dirpath, PAbstractRenderSurface *renderSurface) const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!dirpath.empty());
     Assert(renderSurface);
@@ -80,7 +80,7 @@ bool RenderSurfaceManager::TryUnalias(const Dirpath& dirpath, PAbstractRenderSur
     if (dirpath.PathNode()->Parent() != _virtualDir.PathNode())
         return false;
 
-    const Dirname& virtualDirname = dirpath.LastDirname();
+    const FDirname& virtualDirname = dirpath.LastDirname();
     Assert(!virtualDirname.empty());
 
     const auto it = _surfaces.find(virtualDirname);
@@ -92,27 +92,27 @@ bool RenderSurfaceManager::TryUnalias(const Dirpath& dirpath, PAbstractRenderSur
     return true;
 }
 //----------------------------------------------------------------------------
-AbstractRenderSurface *RenderSurfaceManager::Unalias(const Dirpath& dirpath) const {
+FAbstractRenderSurface *FRenderSurfaceManager::Unalias(const FDirpath& dirpath) const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!dirpath.empty());
     Assert(dirpath.PathNode()->Parent() == _virtualDir.PathNode());
 
-    const Dirname virtualDirname = dirpath.LastDirname();
+    const FDirname virtualDirname = dirpath.LastDirname();
     Assert(!virtualDirname.empty());
 
-    AbstractRenderSurface *const result = _surfaces.at(virtualDirname).get();
+    FAbstractRenderSurface *const result = _surfaces.at(virtualDirname).get();
     Assert(result);
 
     return result;
 }
 //----------------------------------------------------------------------------
-void RenderSurfaceManager::Clear() {
+void FRenderSurfaceManager::Clear() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     _surfaces.clear();
 }
 //----------------------------------------------------------------------------
-void RenderSurfaceManager::Start(Graphics::IDeviceAPIEncapsulator *device) {
+void FRenderSurfaceManager::Start(Graphics::IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(device);
     Assert(_surfaces.empty());
@@ -120,26 +120,26 @@ void RenderSurfaceManager::Start(Graphics::IDeviceAPIEncapsulator *device) {
     Assert(!_renderTargetName.empty());
     Assert(!_depthStencilName.empty());
 
-    LOG(Info, L"[RenderSurfaceManager] Starting with device <{0}> ...",
+    LOG(Info, L"[FRenderSurfaceManager] Starting with device <{0}> ...",
         device );
 }
 //----------------------------------------------------------------------------
-void RenderSurfaceManager::Shutdown(Graphics::IDeviceAPIEncapsulator *device) {
+void FRenderSurfaceManager::Shutdown(Graphics::IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(device);
     Assert(!_virtualDir.empty());
     Assert(!_renderTargetName.empty());
     Assert(!_depthStencilName.empty());
 
-    LOG(Info, L"[RenderSurfaceManager] Shutting down with device <{0}> ...",
+    LOG(Info, L"[FRenderSurfaceManager] Shutting down with device <{0}> ...",
         device );
 
-    for (Pair<const Dirname, PAbstractRenderSurface>& it : _surfaces) {
+    for (TPair<const FDirname, PAbstractRenderSurface>& it : _surfaces) {
         Assert(!it.first.empty());
         Assert(it.second);
         Assert(!it.second->InUse());
 
-        LOG(Info, L"[RenderSurfaceManager] Destroy render surface with alias \"{0}\" ...",
+        LOG(Info, L"[FRenderSurfaceManager] Destroy render surface with alias \"{0}\" ...",
             it.first );
 
         RemoveRef_AssertReachZero(it.second);

@@ -14,7 +14,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void Format(char *buffer, size_t capacity, SizeInBytes size) {
-    BasicOCStrStream<char> oss(buffer, capacity);
+    TBasicOCStrStream<char> oss(buffer, capacity);
     oss.precision(2);
     oss.flags(std::ios_base::fixed);
 
@@ -41,7 +41,7 @@ void Format(char *buffer, size_t capacity, SizeInBytes size) {
 }
 //----------------------------------------------------------------------------
 void Format(wchar_t *buffer, size_t capacity, SizeInBytes size) {
-    BasicOCStrStream<wchar_t> oss(buffer, capacity);
+    TBasicOCStrStream<wchar_t> oss(buffer, capacity);
     oss.precision(2);
     oss.flags(std::ios_base::fixed);
 
@@ -70,7 +70,7 @@ void Format(wchar_t *buffer, size_t capacity, SizeInBytes size) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void Format(char *buffer, size_t capacity, CountOfElements count) {
-    BasicOCStrStream<char> oss(buffer, capacity);
+    TBasicOCStrStream<char> oss(buffer, capacity);
     oss.precision(2);
     oss.flags(std::ios_base::fixed);
 
@@ -83,7 +83,7 @@ void Format(char *buffer, size_t capacity, CountOfElements count) {
 }
 //----------------------------------------------------------------------------
 void Format(wchar_t *buffer, size_t capacity, CountOfElements count) {
-    BasicOCStrStream<wchar_t> oss(buffer, capacity);
+    TBasicOCStrStream<wchar_t> oss(buffer, capacity);
     oss.precision(2);
     oss.flags(std::ios_base::fixed);
 
@@ -97,7 +97,7 @@ void Format(wchar_t *buffer, size_t capacity, CountOfElements count) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const HexDump& hexDump) {
+std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const FHexDump& hexDump) {
     const size_t totalBytes = hexDump.RawData.SizeInBytes();
     for (size_t offset = 0; offset < totalBytes; ) {
         Format(oss, "0x{0:#8X} ", offset);
@@ -117,7 +117,7 @@ std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const HexDu
     return oss;
 }
 //----------------------------------------------------------------------------
-std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const HexDump& hexDump) {
+std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const FHexDump& hexDump) {
     const size_t totalBytes = hexDump.RawData.SizeInBytes();
     for (size_t offset = 0; offset < totalBytes; ) {
         Format(oss, L"0x{0:#8X} ", offset);

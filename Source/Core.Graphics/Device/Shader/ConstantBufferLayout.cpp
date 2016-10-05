@@ -10,30 +10,30 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, ConstantBufferLayout, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, FConstantBufferLayout, );
 //----------------------------------------------------------------------------
-ConstantBufferLayout::ConstantBufferLayout() : _frozen(false) {}
+FConstantBufferLayout::FConstantBufferLayout() : _frozen(false) {}
 //----------------------------------------------------------------------------
-ConstantBufferLayout::~ConstantBufferLayout() {}
+FConstantBufferLayout::~FConstantBufferLayout() {}
 //----------------------------------------------------------------------------
-ConstantBufferLayout& ConstantBufferLayout::operator =(const ConstantBufferLayout& other) {
+FConstantBufferLayout& FConstantBufferLayout::operator =(const FConstantBufferLayout& other) {
     Assert(not _frozen);
     _block = other._block;
     return *this;
 }
 //----------------------------------------------------------------------------
-void ConstantBufferLayout::Freeze() {
+void FConstantBufferLayout::Freeze() {
     Assert(!_frozen);
     _frozen = true;
 }
 //----------------------------------------------------------------------------
-void ConstantBufferLayout::AddField(const Name& name, ValueType type) {
+void FConstantBufferLayout::AddField(const FName& name, EValueType type) {
     Assert(!_frozen);
     Assert(!name.empty());
 
     size_t offset = 0;
     if (_block.size()) {
-        const ValueBlock::Field& pred = _block.MakeView().back();
+        const FValueBlock::TField& pred = _block.MakeView().back();
         offset = pred.Offset();
         offset += pred.SizeInBytes();
     }
@@ -45,7 +45,7 @@ void ConstantBufferLayout::AddField(const Name& name, ValueType type) {
     _block.Add(name, type, offset);
 }
 //----------------------------------------------------------------------------
-void ConstantBufferLayout::AddField(const Name& name, ValueType type, size_t offset, size_t size, bool inUse/* = true */) {
+void FConstantBufferLayout::AddField(const FName& name, EValueType type, size_t offset, size_t size, bool inUse/* = true */) {
     UNUSED(size);
     Assert(!_frozen);
     Assert(!name.empty());

@@ -17,7 +17,7 @@ namespace Logic {
 template <typename T>
 class ITypedComponent;
 //----------------------------------------------------------------------------
-class IComponent : public RefCountable {
+class IComponent : public FRefCountable {
 public:
     STATIC_CONST_INTEGRAL(ComponentID::value_type, InvalidID, -1);
     STATIC_CONST_INTEGRAL(ComponentTag::value_type, InvalidTag, 0);

@@ -37,7 +37,7 @@ public:
 
     void Clear();
 
-    MemoryView<const T> MakeView() const;
+    TMemoryView<const T> MakeView() const;
 
     /*static void Intersect(
         InputState& up,
@@ -52,8 +52,8 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-typedef InputState<KeyboardKey, 6> KeyboardKeyState;
-typedef InputState<MouseButton, 6> MouseButtonState;
+typedef InputState<EKeyboardKey, 6> KeyboardKeyState;
+typedef InputState<EMouseButton, 6> MouseButtonState;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

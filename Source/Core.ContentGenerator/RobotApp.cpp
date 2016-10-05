@@ -26,21 +26,21 @@ extern void Test_XML();
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-RobotApp::RobotApp()
+FRobotApp::FRobotApp()
 : parent_type(
-    L"RobotApp", 100, 100,
-    Graphics::PresentationParameters(
+    L"FRobotApp", 100, 100,
+    Graphics::FPresentationParameters(
         640, 480,
-        Graphics::SurfaceFormatType::B8G8R8A8_SRGB,
-        Graphics::SurfaceFormatType::D24S8,
+        Graphics::ESurfaceFormatType::B8G8R8A8_SRGB,
+        Graphics::ESurfaceFormatType::D24S8,
         false,
         false,
         0,
-        Graphics::PresentInterval::Default ),
-    Graphics::DeviceAPI::DirectX11,
+        Graphics::EPresentInterval::Default ),
+    Graphics::EDeviceAPI::DirectX11,
     true ) {
 
-    Application::ApplicationConsole::RedirectIOToConsole();
+    Application::FApplicationConsole::RedirectIOToConsole();
 
     Test_Format();
     Test_Containers();
@@ -50,20 +50,20 @@ RobotApp::RobotApp()
     Test_XML();
 }
 //----------------------------------------------------------------------------
-void RobotApp::Start() {
+void FRobotApp::Start() {
     parent_type::Start();
 
     RenderLoop();
 }
 //----------------------------------------------------------------------------
-void RobotApp::Draw(const Timeline& time) {
+void FRobotApp::Draw(const FTimeline& time) {
     parent_type::Draw(time);
 
     const double totalSeconds = Units::Time::Seconds(time.Total()).Value();
     float3 hsv(float(Frac(totalSeconds*0.1)), 1.0f, 0.5f);
 
     const auto* gamepadService = Services().Get<Application::IGamepadService>();
-    const Application::GamepadState& gamepad = gamepadService->State().First();
+    const Application::FGamepadState& gamepad = gamepadService->State().First();
 
     if (gamepad.IsConnected()) {
         static float3 p(0.5f);
@@ -87,7 +87,7 @@ void RobotApp::Draw(const Timeline& time) {
     const float3 rgb = HSV_to_RGB(hsv);
     const ColorRGBAF clearColor(rgb, 1.0f);
 
-    Graphics::IDeviceAPIEncapsulator* const device = DeviceEncapsulator().Device();
+    Graphics::IDeviceAPIEncapsulator* const device = FDeviceEncapsulator().Device();
     device->Clear(device->BackBufferRenderTarget(), clearColor);
 }
 //----------------------------------------------------------------------------

@@ -15,9 +15,9 @@
 #   include <sstream>
 #   include <windows.h>
 
-    class OutputDebugStream : public std::wstringstream {
+    class FOutputDebugStream : public std::wstringstream {
     public:
-        ~OutputDebugStream() { ::OutputDebugStringW(str().c_str()); }
+        ~FOutputDebugStream() { ::OutputDebugStringW(str().c_str()); }
     };
 
 #endif
@@ -40,9 +40,9 @@ POOL_TAG_DEF(Application);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #ifndef FINAL_RELEASE
-static void PrintMemStats_(const Core::CrtMemoryStats& memoryStats) {
+static void PrintMemStats_(const Core::FCrtMemoryStats& memoryStats) {
 #ifdef USE_DEBUG_LOGGER
-    OutputDebugStream()
+    FOutputDebugStream()
 #else
     std::cerr
 #endif
@@ -84,19 +84,19 @@ static void ConfigureCRTHeapForDebugging_() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void ApplicationStartup::Start() {
+void FApplicationStartup::Start() {
     CORE_MODULE_START(Application);
 
     POOL_TAG(Application)::Start();
 }
 //----------------------------------------------------------------------------
-void ApplicationStartup::Shutdown() {
+void FApplicationStartup::Shutdown() {
     CORE_MODULE_SHUTDOWN(Application);
 
     POOL_TAG(Application)::Shutdown();
 }
 //----------------------------------------------------------------------------
-void ApplicationStartup::ClearAll_UnusedMemory() {
+void FApplicationStartup::ClearAll_UnusedMemory() {
     CORE_MODULE_CLEARALL(Application);
 
     POOL_TAG(Application)::ClearAll_UnusedMemory();
@@ -104,23 +104,23 @@ void ApplicationStartup::ClearAll_UnusedMemory() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ApplicationContext::ApplicationContext() {
+FApplicationContext::FApplicationContext() {
 #ifdef OS_WINDOWS
     ConfigureCRTHeapForDebugging_();
 #endif
 }
 //----------------------------------------------------------------------------
-ApplicationContext::~ApplicationContext() {
+FApplicationContext::~FApplicationContext() {
 #ifndef FINAL_RELEASE
 #if defined(OS_WINDOWS)
-    CrtMemoryStats memoryStats;
+    FCrtMemoryStats memoryStats;
     CrtDumpMemoryStats(&memoryStats);
 #endif
     PrintMemStats_(memoryStats);
 #endif
 }
 //----------------------------------------------------------------------------
-int LaunchApplication(const ApplicationContext& context, ApplicationBase* app) {
+int LaunchApplication(const FApplicationContext& context, FApplicationBase* app) {
     UNUSED(context);
     AssertRelease(app);
     {
@@ -133,8 +133,8 @@ int LaunchApplication(const ApplicationContext& context, ApplicationBase* app) {
 #if WITH_APPLICATION_TRY_CATCH
         catch (const std::exception& e)
         {
-            const WString wwhat = ToWString(e.what());
-            Dialog::Ok(wwhat.c_str(), L"Exception caught while starting !", Dialog::Icon::Exclamation);
+            const FWString wwhat = ToWString(e.what());
+            Dialog::Ok(wwhat.c_str(), L"FException caught while starting !", Dialog::Icon::Exclamation);
             AssertNotReached();
         }
 #endif
@@ -148,8 +148,8 @@ int LaunchApplication(const ApplicationContext& context, ApplicationBase* app) {
 #if WITH_APPLICATION_TRY_CATCH
         catch (const std::exception& e)
         {
-            const WString wwhat = ToWString(e.what());
-            Dialog::Ok(wwhat.c_str(), L"Exception caught while shutting down !", Dialog::Icon::Exclamation);
+            const FWString wwhat = ToWString(e.what());
+            Dialog::Ok(wwhat.c_str(), L"FException caught while shutting down !", Dialog::Icon::Exclamation);
             AssertNotReached();
         }
 #endif
@@ -157,7 +157,7 @@ int LaunchApplication(const ApplicationContext& context, ApplicationBase* app) {
 #ifndef FINAL_RELEASE
     ReportAllTrackingData();
 #endif
-    return CurrentProcess::Instance().ExitCode();
+    return FCurrentProcess::Instance().ExitCode();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

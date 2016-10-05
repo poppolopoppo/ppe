@@ -13,32 +13,32 @@ namespace Logic {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class EntityTagContainer {
+class FEntityTagContainer {
 public:
-    EntityTagContainer();
-    ~EntityTagContainer();
+    FEntityTagContainer();
+    ~FEntityTagContainer();
 
-    EntityTagContainer(const EntityTagContainer& ) = delete;
-    EntityTagContainer& operator =(const EntityTagContainer& ) = delete;
+    FEntityTagContainer(const FEntityTagContainer& ) = delete;
+    FEntityTagContainer& operator =(const FEntityTagContainer& ) = delete;
 
-    void AddTag(EntityID id, const EntityTag& tag);
-    void RemoveTag(EntityID id, const EntityTag& tag);
+    void AddTag(EntityID id, const FEntityTag& tag);
+    void RemoveTag(EntityID id, const FEntityTag& tag);
 
-    bool HasTag(EntityID id, const EntityTag& tag) const;
+    bool HasTag(EntityID id, const FEntityTag& tag) const;
 
     void RemoveEntity(EntityID id);
 
-    size_t EntityTags(EntityTag *pTags, size_t capacity, EntityID id) const;
-    void EntityTags(VECTOR_THREAD_LOCAL(Entity, EntityTag)& outTags, EntityID id) const;
+    size_t EntityTags(FEntityTag *pTags, size_t capacity, EntityID id) const;
+    void EntityTags(VECTOR_THREAD_LOCAL(FEntity, FEntityTag)& outTags, EntityID id) const;
 
-    const VECTOR(Entity, EntityID)& TagEntities(const EntityTag& tag) const;
+    const VECTOR(FEntity, EntityID)& TagEntities(const FEntityTag& tag) const;
 
     void Clear();
 
 private:
-    typedef VECTOR(Entity, EntityID) Entities;
-    typedef HASHMAP(Entity, EntityTag, Entities) TagToEntities;
-    typedef MULTIMAP(Entity, EntityID, EntityTag) EntityToTags;
+    typedef VECTOR(FEntity, EntityID) Entities;
+    typedef HASHMAP(FEntity, FEntityTag, Entities) TagToEntities;
+    typedef MULTIMAP(FEntity, EntityID, FEntityTag) EntityToTags;
 
     TagToEntities _tagToIDs;
     EntityToTags _idToTags;

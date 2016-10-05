@@ -10,27 +10,27 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ApplicationGraphics::ApplicationGraphics(
+FApplicationGraphics::FApplicationGraphics(
     const wchar_t *appname,
     int left, int top,
-    const Graphics::PresentationParameters& pp,
-    Graphics::DeviceAPI api,
+    const Graphics::FPresentationParameters& pp,
+    Graphics::EDeviceAPI api,
     bool fixedTimeStep/* = true */)
-:   ApplicationWindow(appname, left, top, pp.BackBufferWidth(), pp.BackBufferHeight())
+:   FApplicationWindow(appname, left, top, pp.BackBufferWidth(), pp.BackBufferHeight())
 ,   _pp(pp)
 ,   _api(api)
 ,   _fixedTimeStep(fixedTimeStep) {
 }
 //----------------------------------------------------------------------------
-ApplicationGraphics::~ApplicationGraphics() {
+FApplicationGraphics::~FApplicationGraphics() {
     Assert(nullptr == _deviceEncapsulator);
 }
 //----------------------------------------------------------------------------
-void ApplicationGraphics::Start() {
-    ApplicationWindow::Start();
+void FApplicationGraphics::Start() {
+    FApplicationWindow::Start();
 
     Assert(nullptr == _deviceEncapsulator);
-    _deviceEncapsulator.reset(new Graphics::DeviceEncapsulator());
+    _deviceEncapsulator.reset(new Graphics::FDeviceEncapsulator());
     _deviceEncapsulator->Create(_api, Window().Handle(), _pp);
 
     if (_deviceEncapsulator->Device())
@@ -44,7 +44,7 @@ void ApplicationGraphics::Start() {
 #endif
 }
 //----------------------------------------------------------------------------
-void ApplicationGraphics::Shutdown() {
+void FApplicationGraphics::Shutdown() {
     Assert(nullptr != _deviceEncapsulator);
 
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
@@ -60,14 +60,14 @@ void ApplicationGraphics::Shutdown() {
     _deviceEncapsulator->Destroy();
     _deviceEncapsulator.reset();
 
-    ApplicationWindow::Shutdown();
+    FApplicationWindow::Shutdown();
 }
 //----------------------------------------------------------------------------
-void ApplicationGraphics::RenderLoop() {
+void FApplicationGraphics::RenderLoop() {
     Assert(_deviceEncapsulator);
 
-    Timeline clock = Timeline::StartNow();
-    Timeline realtime = clock;
+    FTimeline clock = FTimeline::StartNow();
+    FTimeline realtime = clock;
 
     LoadContent();
 
@@ -108,19 +108,19 @@ void ApplicationGraphics::RenderLoop() {
     UnloadContent();
 }
 //----------------------------------------------------------------------------
-void ApplicationGraphics::LoadContent() {
+void FApplicationGraphics::LoadContent() {
     LOG(Info, L"[Application][Graphics] LoadContent()");
 }
 //----------------------------------------------------------------------------
-void ApplicationGraphics::UnloadContent() {
+void FApplicationGraphics::UnloadContent() {
     LOG(Info, L"[Application][Graphics] UnloadContent()");
 }
 //----------------------------------------------------------------------------
-void ApplicationGraphics::Update(const Timeline&/* time */) {}
+void FApplicationGraphics::Update(const FTimeline&/* time */) {}
 //----------------------------------------------------------------------------
-void ApplicationGraphics::Draw(const Timeline&/* time */) {}
+void FApplicationGraphics::Draw(const FTimeline&/* time */) {}
 //----------------------------------------------------------------------------
-void ApplicationGraphics::Present() {}
+void FApplicationGraphics::Present() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

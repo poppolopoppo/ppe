@@ -7,7 +7,7 @@
 #include "Core.Engine/Texture/TextureCache.h"
 
 namespace Core {
-struct Guid;
+struct FGuid;
 namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -19,25 +19,25 @@ protected:
 public:
     virtual ~ITextureCacheService() {}
 
-    virtual Engine::TextureCache *TextureCache() = 0;
-    virtual const Engine::TextureCache *TextureCache() const = 0;
+    virtual Engine::FTextureCache *FTextureCache() = 0;
+    virtual const Engine::FTextureCache *FTextureCache() const = 0;
 
     ENGINESERVICE_GUID_DECL(ITextureCacheService);
 };
 //----------------------------------------------------------------------------
-class DefaultTextureCacheService : public ITextureCacheService {
+class FDefaultTextureCacheService : public ITextureCacheService {
 public:
-    explicit DefaultTextureCacheService(size_t capacityInBytes);
-    virtual ~DefaultTextureCacheService();
+    explicit FDefaultTextureCacheService(size_t capacityInBytes);
+    virtual ~FDefaultTextureCacheService();
 
-    virtual Engine::TextureCache *TextureCache() override;
-    virtual const Engine::TextureCache *TextureCache() const override;
+    virtual Engine::FTextureCache *FTextureCache() override;
+    virtual const Engine::FTextureCache *FTextureCache() const override;
 
-    virtual void Start(IServiceProvider *provider, const Guid& guid) override;
-    virtual void Shutdown(IServiceProvider *provider, const Guid& guid) override;
+    virtual void Start(IServiceProvider *provider, const FGuid& guid) override;
+    virtual void Shutdown(IServiceProvider *provider, const FGuid& guid) override;
 
 private:
-    Engine::TextureCache _textureCache;
+    Engine::FTextureCache _textureCache;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

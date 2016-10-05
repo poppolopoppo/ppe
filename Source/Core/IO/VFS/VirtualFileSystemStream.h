@@ -9,9 +9,9 @@
 #include <iosfwd>
 
 namespace Core {
-class Filename;
+class FFilename;
 template <typename T, typename _Allocator>
-class RawStorage;
+class TRawStorage;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -22,7 +22,7 @@ public:
     virtual ~IVirtualFileSystemBaseStream() {}
 
     virtual bool Bad() const = 0;
-    virtual const Filename& SourceFilename() const = 0;
+    virtual const FFilename& SourceFilename() const = 0;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

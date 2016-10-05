@@ -13,18 +13,18 @@ namespace Pixmap {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// FloatImage : always 4 float channels in linear space
+// FFloatImage : always 4 float channels in linear space
 //----------------------------------------------------------------------------
 FWD_REFPTR(FloatImage);
-class FloatImage : public RefCountable {
+class FFloatImage : public FRefCountable {
 public:
     typedef ColorRGBAF color_type;
     typedef PIXELSTORAGE(FloatImage, color_type) float_data_type;
 
-    FloatImage();
-    FloatImage(size_t width, size_t height);
-    FloatImage(size_t width, size_t height, const color_type& value);
-    ~FloatImage();
+    FFloatImage();
+    FFloatImage(size_t width, size_t height);
+    FFloatImage(size_t width, size_t height, const color_type& value);
+    ~FFloatImage();
 
     size_t Width() const { return _width; }
     size_t Height() const { return _height; }
@@ -55,11 +55,11 @@ public:
     const color_type& SampleClamp(int x, int y) const;
     const color_type& SampleWrap(int x, int y) const;
 
-    MemoryView<color_type> MakeView() { return _data.MakeView(); }
-    MemoryView<const color_type> MakeConstView() const { return _data.MakeConstView(); }
+    TMemoryView<color_type> MakeView() { return _data.MakeView(); }
+    TMemoryView<const color_type> MakeConstView() const { return _data.MakeConstView(); }
 
-    MemoryView<color_type> Scanline(size_t row);
-    MemoryView<const color_type> Scanline(size_t row) const;
+    TMemoryView<color_type> Scanline(size_t row);
+    TMemoryView<const color_type> Scanline(size_t row) const;
 
     void DiscardAlpha();
     bool HasAlpha() const;
@@ -67,7 +67,7 @@ public:
 
     void Fill(const color_type& value);
 
-    void CopyTo(FloatImage* dst) const;
+    void CopyTo(FFloatImage* dst) const;
 
     void Resize_DiscardData(const uint2& size);
     void Resize_DiscardData(const uint2& size, const color_type& value);
@@ -77,8 +77,8 @@ public:
 
     void TrimData() { _data.TrimData(); }
 
-    friend bool Resize(FloatImage* dst, const FloatImage* src);
-    friend bool Resize(FloatImage* dst, const FloatImage* src, size_t width, size_t height);
+    friend bool Resize(FFloatImage* dst, const FFloatImage* src);
+    friend bool Resize(FFloatImage* dst, const FFloatImage* src, size_t width, size_t height);
 
     SINGLETON_POOL_ALLOCATED_DECL();
 

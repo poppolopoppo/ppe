@@ -23,92 +23,92 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-_RTTI_CLASS_AUTOREGISTER(Default, MetaObject);
+_RTTI_CLASS_AUTOREGISTER(Default, FMetaObject);
 //----------------------------------------------------------------------------
-MetaObject::MetaClass::MetaClass()
-:   RTTI::DefaultMetaClass<MetaObject>("MetaObject", RTTI::MetaClass::Abstract)
+FMetaObject::FMetaClass::FMetaClass()
+:   RTTI::TDefaultMetaClass<FMetaObject>("FMetaObject", RTTI::FMetaClass::Abstract)
 {}
 //----------------------------------------------------------------------------
-MetaObject::MetaClass::~MetaClass() {}
+FMetaObject::FMetaClass::~FMetaClass() {}
 //----------------------------------------------------------------------------
-void MetaObject::MetaClass::Create() {
-    Core::RTTI::MetaClassSingleton< MetaObject >::Create();
+void FMetaObject::FMetaClass::Create() {
+    Core::RTTI::TMetaClassSingleton< FMetaObject >::Create();
 }
 //----------------------------------------------------------------------------
-void MetaObject::MetaClass::Destroy() {
-    Core::RTTI::MetaClassSingleton< MetaObject >::Destroy();
+void FMetaObject::FMetaClass::Destroy() {
+    Core::RTTI::TMetaClassSingleton< FMetaObject >::Destroy();
 }
 //----------------------------------------------------------------------------
-bool MetaObject::MetaClass::HasInstance() {
-    return Core::RTTI::MetaClassSingleton< MetaObject >::HasInstance();
+bool FMetaObject::FMetaClass::HasInstance() {
+    return Core::RTTI::TMetaClassSingleton< FMetaObject >::HasInstance();
 }
 //----------------------------------------------------------------------------
-const MetaObject::MetaClass *MetaObject::MetaClass::Instance() {
-    return &Core::RTTI::MetaClassSingleton< MetaObject >::Instance();
+const FMetaObject::FMetaClass *FMetaObject::FMetaClass::Instance() {
+    return &Core::RTTI::TMetaClassSingleton< FMetaObject >::Instance();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-MetaObject::MetaObject()
+FMetaObject::FMetaObject()
 :   _state(None) {}
 //----------------------------------------------------------------------------
-MetaObject::~MetaObject() {}
+FMetaObject::~FMetaObject() {}
 //----------------------------------------------------------------------------
-void MetaObject::RTTI_Export(const RTTI::Name& name) {
+void FMetaObject::RTTI_Export(const FName& name) {
     Assert(!name.empty());
     Assert(_name.empty());
     Assert(0 == (_state & Exported));
 
     _name = name;
-    _state = Flags(_state | Exported);
+    _state = EFlags(_state | Exported);
 }
 //----------------------------------------------------------------------------
-void MetaObject::RTTI_Unexport() {
+void FMetaObject::RTTI_Unexport() {
     Assert(!_name.empty());
     Assert(Exported == (_state & Exported));
 
-    _name = RTTI::Name();
-    _state = Flags(_state & ~Exported);
+    _name = FName();
+    _state = EFlags(_state & ~Exported);
 
     Assert(_name.empty());
 }
 //----------------------------------------------------------------------------
-void MetaObject::RTTI_Load(MetaLoadContext * /* context */) {
+void FMetaObject::RTTI_Load(FMetaLoadContext * /* context */) {
     Assert(0 == (_state & Loaded));
     Assert(0 == (_state & Unloaded));
-    _state = Flags(_state | Loaded);
+    _state = EFlags(_state | Loaded);
 
 #ifdef WITH_RTTI_VERIFY_PREDICATES
     // checks that base method was called :
     Assert(0 == (_state & Verifying));
-    _state = Flags(_state | Verifying);
+    _state = EFlags(_state | Verifying);
     RTTI_VerifyPredicates();
     Assert(0 == (_state & Verifying));
 #endif
 }
 //----------------------------------------------------------------------------
-void MetaObject::RTTI_Unload(MetaUnloadContext * /* context */) {
+void FMetaObject::RTTI_Unload(FMetaUnloadContext * /* context */) {
     Assert(1 == (_state & Loaded));
     Assert(0 == (_state & Unloaded));
-    _state = Flags((_state & ~Loaded) | Unloaded);
+    _state = EFlags((_state & ~Loaded) | Unloaded);
 
 #ifdef WITH_RTTI_VERIFY_PREDICATES
     // checks that base method was called :
     Assert(0 == (_state & Verifying));
-    _state = Flags(_state | Verifying);
+    _state = EFlags(_state | Verifying);
     RTTI_VerifyPredicates();
     Assert(0 == (_state & Verifying));
 #endif
 }
 //----------------------------------------------------------------------------
-void MetaObject::RTTI_CallLoadIFN(MetaLoadContext *context) {
+void FMetaObject::RTTI_CallLoadIFN(FMetaLoadContext *context) {
     if (0 == (_state & Loaded)) {
         RTTI_Load(context);
         Assert(Loaded == (_state & Loaded));
     }
 }
 //----------------------------------------------------------------------------
-void MetaObject::RTTI_CallUnloadIFN(MetaUnloadContext *context) {
+void FMetaObject::RTTI_CallUnloadIFN(FMetaUnloadContext *context) {
     Assert(Loaded == (_state & Loaded));
     if (0 == (_state & Unloaded)) {
         RTTI_Unload(context);
@@ -117,9 +117,9 @@ void MetaObject::RTTI_CallUnloadIFN(MetaUnloadContext *context) {
 }
 //----------------------------------------------------------------------------
 #ifdef WITH_RTTI_VERIFY_PREDICATES
-void MetaObject::RTTI_VerifyPredicates() const {
+void FMetaObject::RTTI_VerifyPredicates() const {
     // checks that base method was called :
-    _state = Flags(_state & ~Verifying);
+    _state = EFlags(_state & ~Verifying);
 }
 #endif
 //----------------------------------------------------------------------------

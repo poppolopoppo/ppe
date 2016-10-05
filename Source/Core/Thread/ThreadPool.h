@@ -11,9 +11,9 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class GlobalThreadPool : Meta::Singleton<TaskManager, GlobalThreadPool> {
+class FGlobalThreadPool : Meta::TSingleton<FTaskManager, FGlobalThreadPool> {
 public:
-    typedef Meta::Singleton<TaskManager, GlobalThreadPool> parent_type;
+    typedef Meta::TSingleton<FTaskManager, FGlobalThreadPool> parent_type;
 
     using parent_type::Instance;
     using parent_type::HasInstance;
@@ -22,11 +22,11 @@ public:
     static void Destroy();
 };
 //----------------------------------------------------------------------------
-void AsyncWork(const TaskDelegate& task, TaskPriority priority = TaskPriority::Normal);
+void AsyncWork(const TaskDelegate& task, ETaskPriority priority = ETaskPriority::Normal);
 //----------------------------------------------------------------------------
-class IOThreadPool : Meta::Singleton<TaskManager, IOThreadPool> {
+class IOThreadPool : Meta::TSingleton<FTaskManager, IOThreadPool> {
 public:
-    typedef Meta::Singleton<TaskManager, IOThreadPool> parent_type;
+    typedef Meta::TSingleton<FTaskManager, IOThreadPool> parent_type;
 
     using parent_type::Instance;
     using parent_type::HasInstance;
@@ -35,17 +35,17 @@ public:
     static void Destroy();
 };
 //----------------------------------------------------------------------------
-void AsyncIO(const TaskDelegate& task, TaskPriority priority = TaskPriority::Normal);
+void AsyncIO(const TaskDelegate& task, ETaskPriority priority = ETaskPriority::Normal);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ThreadPoolStartup {
+class FThreadPoolStartup {
 public:
     static void Start();
     static void Shutdown();
 
-    ThreadPoolStartup() { Start(); }
-    ~ThreadPoolStartup() { Shutdown(); }
+    FThreadPoolStartup() { Start(); }
+    ~FThreadPoolStartup() { Shutdown(); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

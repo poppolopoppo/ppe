@@ -9,21 +9,21 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class TimedScope {
+class FTimedScope {
 public:
-    TimedScope() : _startedAt(Timepoint::Now()) {}
+    FTimedScope() : _startedAt(FTimepoint::Now()) {}
 
-    const Timepoint& StartedAt() const { return _startedAt; }
-    Timespan Elapsed() const { return Timepoint::ElapsedSince(_startedAt); }
+    const FTimepoint& StartedAt() const { return _startedAt; }
+    Timespan Elapsed() const { return FTimepoint::ElapsedSince(_startedAt); }
 
 private:
-    Timepoint _startedAt;
+    FTimepoint _startedAt;
 };
 //----------------------------------------------------------------------------
-class BenchmarkScope : public TimedScope {
+class FBenchmarkScope : public FTimedScope {
 public:
-    BenchmarkScope(const char* message) : _message(message) {}
-    ~BenchmarkScope() { LOG(Profiling, L"benchmark scope: {0:-30} = {1}", _message, Elapsed()); }
+    FBenchmarkScope(const char* message) : _message(message) {}
+    ~FBenchmarkScope() { LOG(Profiling, L"benchmark scope: {0:-30} = {1}", _message, Elapsed()); }
 
 private:
     const char* _message;

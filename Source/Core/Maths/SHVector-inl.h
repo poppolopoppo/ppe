@@ -7,23 +7,23 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <size_t _Dim>
-SHVector<_Dim>::SHVector(size_t bands)
+TSHVector<_Dim>::TSHVector(size_t bands)
 :   _bands(bands) {
     Assert(0 < bands);
     _coefficients.Resize_DiscardData(_bands * _bands);
 }
 //----------------------------------------------------------------------------
 template <size_t _Dim>
-SHVector<_Dim>::~SHVector() {}
+TSHVector<_Dim>::~TSHVector() {}
 //----------------------------------------------------------------------------
 template <size_t _Dim>
-void SHVector<_Dim>::Reset(SHScalar broadcast /* = 0 */) {
+void TSHVector<_Dim>::Reset(SHScalar broadcast /* = 0 */) {
     for (shcoefficient_type& coeff : _coefficients)
         coeff.Broadcast(broadcast);
 }
 //----------------------------------------------------------------------------
 template <size_t _Dim>
-void SHVector<_Dim>::Reset(const shcoefficient_type& value) {
+void TSHVector<_Dim>::Reset(const shcoefficient_type& value) {
     for (shcoefficient_type& coeff : _coefficients)
         coeff = value;
 }

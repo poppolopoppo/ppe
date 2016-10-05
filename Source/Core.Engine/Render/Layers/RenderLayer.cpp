@@ -13,26 +13,26 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, RenderLayer, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, FRenderLayer, );
 //----------------------------------------------------------------------------
-RenderLayer::RenderLayer(String&& name)
-:   AbstractRenderLayer(std::move(name), true/* enabled */, true/* exported */) {
-    Assert(!Name().empty());
-    Assert(_effectVariability.Value == VariabilitySeed::Invalid);
+FRenderLayer::FRenderLayer(FString&& name)
+:   FAbstractRenderLayer(std::move(name), true/* enabled */, true/* exported */) {
+    Assert(!FName().empty());
+    Assert(_effectVariability.Value == FVariabilitySeed::Invalid);
 }
 //----------------------------------------------------------------------------
-RenderLayer::~RenderLayer() {
-    Assert(_effectVariability.Value == VariabilitySeed::Invalid);
+FRenderLayer::~FRenderLayer() {
+    Assert(_effectVariability.Value == FVariabilitySeed::Invalid);
 }
 //----------------------------------------------------------------------------
-void RenderLayer::PrepareImpl_(
+void FRenderLayer::PrepareImpl_(
     Graphics::IDeviceAPIEncapsulator *device,
-    MaterialDatabase *materialDatabase, const RenderTree *renderTree, VariabilitySeed *seeds ) {
-    const VariabilitySeed variability = renderTree->EffectCompiler()->Variability();
+    FMaterialDatabase *materialDatabase, const FRenderTree *renderTree, FVariabilitySeed *seeds ) {
+    const FVariabilitySeed variability = renderTree->EffectCompiler()->Variability();
     if (variability != _effectVariability &&
-        _effectVariability.Value != VariabilitySeed::Invalid ) {
-        LOG(Info, L"[RenderLayer] Invalidate render batch in layer \"{0}\" ({1}>{2})",
-            Name().c_str(), _effectVariability.Value, variability.Value );
+        _effectVariability.Value != FVariabilitySeed::Invalid ) {
+        LOG(Info, L"[FRenderLayer] Invalidate render batch in layer \"{0}\" ({1}>{2})",
+            FName().c_str(), _effectVariability.Value, variability.Value );
 
         _batch.Destroy(device);
         _batch.Prepare(device, materialDatabase, renderTree, seeds); // prepare is done twice to ensure it has been called at least once before
@@ -44,13 +44,13 @@ void RenderLayer::PrepareImpl_(
     _effectVariability = variability;
 }
 //----------------------------------------------------------------------------
-void RenderLayer::RenderImpl_(Graphics::IDeviceAPIContext *context) {
+void FRenderLayer::RenderImpl_(Graphics::IDeviceAPIContext *context) {
     _batch.Render(context);
 }
 //----------------------------------------------------------------------------
-void RenderLayer::DestroyImpl_(Graphics::IDeviceAPIEncapsulator *device, const RenderTree * /* renderTree */) {
+void FRenderLayer::DestroyImpl_(Graphics::IDeviceAPIEncapsulator *device, const FRenderTree * /* renderTree */) {
     _batch.Destroy(device);
-    _effectVariability.Value = VariabilitySeed::Invalid;
+    _effectVariability.Value = FVariabilitySeed::Invalid;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -15,23 +15,23 @@ FWD_REFPTR(EffectDescriptor);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(MultiPassEffectDescriptor);
-class MultiPassEffectDescriptor : public IEffectPasses {
+class FMultiPassEffectDescriptor : public IEffectPasses {
 public:
     STATIC_CONST_INTEGRAL(size_t, MaxPassCount, 8);
 
-    MultiPassEffectDescriptor();
-    virtual ~MultiPassEffectDescriptor();
+    FMultiPassEffectDescriptor();
+    virtual ~FMultiPassEffectDescriptor();
 
-    MultiPassEffectDescriptor(const MemoryView<const PCEffectDescriptor>& passes);
+    FMultiPassEffectDescriptor(const TMemoryView<const PCEffectDescriptor>& passes);
 
     size_t size() const { return _size; }
     bool empty() const { return 0 == _size; }
 
-    MemoryView<const PCEffectDescriptor> Passes() const { return MemoryView<const PCEffectDescriptor>(_passes, _size); }
+    TMemoryView<const PCEffectDescriptor> Passes() const { return TMemoryView<const PCEffectDescriptor>(_passes, _size); }
 
-    void AddPass(const EffectDescriptor *pass);
+    void AddPass(const FEffectDescriptor *pass);
 
-    virtual size_t FillEffectPasses(const EffectDescriptor **pOutPasses, const size_t capacity) const override;
+    virtual size_t FillEffectPasses(const FEffectDescriptor **pOutPasses, const size_t capacity) const override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 

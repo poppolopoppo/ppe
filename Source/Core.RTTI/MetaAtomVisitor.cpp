@@ -9,112 +9,112 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void MetaAtomWrapMoveVisitor::Append(MetaAtom* patom) {
+void FMetaAtomWrapMoveVisitor::Append(FMetaAtom* patom) {
     if (patom)
         patom->Accept(this);
 }
 //----------------------------------------------------------------------------
-void MetaAtomWrapMoveVisitor::Inspect(IMetaAtomPair* ppair, Pair<PMetaAtom, PMetaAtom>& pair) {
+void FMetaAtomWrapMoveVisitor::Inspect(IMetaAtomPair* ppair, TPair<PMetaAtom, PMetaAtom>& pair) {
     UNUSED(ppair);
 
     Append(pair.first.get());
     Append(pair.second.get());
 }
 //----------------------------------------------------------------------------
-void MetaAtomWrapMoveVisitor::Inspect(IMetaAtomVector* pvector, Vector<PMetaAtom>& vector) {
+void FMetaAtomWrapMoveVisitor::Inspect(IMetaAtomVector* pvector, TVector<PMetaAtom>& vector) {
     UNUSED(pvector);
 
     for(const PMetaAtom& atom : vector)
         Append(atom.get());
 }
 //----------------------------------------------------------------------------
-void MetaAtomWrapMoveVisitor::Inspect(IMetaAtomDictionary* pdictionary, Dictionary<PMetaAtom, PMetaAtom>& dictionary) {
+void FMetaAtomWrapMoveVisitor::Inspect(IMetaAtomDictionary* pdictionary, TDictionary<PMetaAtom, PMetaAtom>& dictionary) {
     UNUSED(pdictionary);
 
-    for(const RTTI::Pair<PMetaAtom, PMetaAtom>& pair : dictionary) {
+    for(const RTTI::TPair<PMetaAtom, PMetaAtom>& pair : dictionary) {
         Append(pair.first.get()); // do not call Visit(pair) !
         Append(pair.second.get());
     }
 }
 //----------------------------------------------------------------------------
-void MetaAtomWrapMoveVisitor::Visit(IMetaAtomPair* ppair) {
+void FMetaAtomWrapMoveVisitor::Visit(IMetaAtomPair* ppair) {
     Assert(ppair);
-    RTTI::Pair<PMetaAtom, PMetaAtom> pair;
+    RTTI::TPair<PMetaAtom, PMetaAtom> pair;
     ppair->WrapMoveTo(pair);
     Inspect(ppair, pair);
     ppair->UnwrapMoveFrom(pair);
 }
 //----------------------------------------------------------------------------
-void MetaAtomWrapMoveVisitor::Visit(IMetaAtomVector* pvector) {
+void FMetaAtomWrapMoveVisitor::Visit(IMetaAtomVector* pvector) {
     Assert(pvector);
-    RTTI::Vector<PMetaAtom> vector;
+    RTTI::TVector<PMetaAtom> vector;
     pvector->WrapMoveTo(vector);
     Inspect(pvector, vector);
     pvector->UnwrapMoveFrom(vector);
 }
 //----------------------------------------------------------------------------
-void MetaAtomWrapMoveVisitor::Visit(IMetaAtomDictionary* pdictionary) {
+void FMetaAtomWrapMoveVisitor::Visit(IMetaAtomDictionary* pdictionary) {
     Assert(pdictionary);
-    RTTI::Dictionary<PMetaAtom, PMetaAtom> dictionary;
+    RTTI::TDictionary<PMetaAtom, PMetaAtom> dictionary;
     pdictionary->WrapMoveTo(dictionary);
     Inspect(pdictionary, dictionary);
     pdictionary->UnwrapMoveFrom(dictionary);
 }
 //----------------------------------------------------------------------------
-void MetaAtomWrapMoveVisitor::Visit(MetaTypedAtom<PMetaAtom>* patom) {
+void FMetaAtomWrapMoveVisitor::Visit(TMetaTypedAtom<PMetaAtom>* patom) {
     Assert(patom);
     Append(patom->Wrapper().get());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void MetaAtomWrapCopyVisitor::Append(const MetaAtom* patom) {
+void FMetaAtomWrapCopyVisitor::Append(const FMetaAtom* patom) {
     if (patom)
         patom->Accept(this);
 }
 //----------------------------------------------------------------------------
-void MetaAtomWrapCopyVisitor::Inspect(const IMetaAtomPair* ppair, const Pair<PMetaAtom, PMetaAtom>& pair) {
+void FMetaAtomWrapCopyVisitor::Inspect(const IMetaAtomPair* ppair, const TPair<PMetaAtom, PMetaAtom>& pair) {
     UNUSED(ppair);
     Append(pair.first.get());
     Append(pair.second.get());
 }
 //----------------------------------------------------------------------------
-void MetaAtomWrapCopyVisitor::Inspect(const IMetaAtomVector* pvector, const Vector<PMetaAtom>& vector) {
+void FMetaAtomWrapCopyVisitor::Inspect(const IMetaAtomVector* pvector, const TVector<PMetaAtom>& vector) {
     UNUSED(pvector);
     for(const PMetaAtom& atom : vector)
         Append(atom.get());
 }
 //----------------------------------------------------------------------------
-void MetaAtomWrapCopyVisitor::Inspect(const IMetaAtomDictionary* pdictionary, const Dictionary<PMetaAtom, PMetaAtom>& dictionary) {
+void FMetaAtomWrapCopyVisitor::Inspect(const IMetaAtomDictionary* pdictionary, const TDictionary<PMetaAtom, PMetaAtom>& dictionary) {
     UNUSED(pdictionary);
-    for(const RTTI::Pair<PMetaAtom, PMetaAtom>& pair : dictionary) {
+    for(const RTTI::TPair<PMetaAtom, PMetaAtom>& pair : dictionary) {
         Append(pair.first.get()); // do not call Visit(pair) !
         Append(pair.second.get());
     }
 }
 //----------------------------------------------------------------------------
-void MetaAtomWrapCopyVisitor::Visit(const IMetaAtomPair* ppair) {
+void FMetaAtomWrapCopyVisitor::Visit(const IMetaAtomPair* ppair) {
     Assert(ppair);
-    RTTI::Pair<PMetaAtom, PMetaAtom> pair;
+    RTTI::TPair<PMetaAtom, PMetaAtom> pair;
     ppair->WrapCopyTo(pair);
     Inspect(ppair, pair);
 }
 //----------------------------------------------------------------------------
-void MetaAtomWrapCopyVisitor::Visit(const IMetaAtomVector* pvector) {
+void FMetaAtomWrapCopyVisitor::Visit(const IMetaAtomVector* pvector) {
     Assert(pvector);
-    RTTI::Vector<PMetaAtom> vector;
+    RTTI::TVector<PMetaAtom> vector;
     pvector->WrapCopyTo(vector);
     Inspect(pvector, vector);
 }
 //----------------------------------------------------------------------------
-void MetaAtomWrapCopyVisitor::Visit(const IMetaAtomDictionary* pdictionary) {
+void FMetaAtomWrapCopyVisitor::Visit(const IMetaAtomDictionary* pdictionary) {
     Assert(pdictionary);
-    RTTI::Dictionary<PMetaAtom, PMetaAtom> dictionary;
+    RTTI::TDictionary<PMetaAtom, PMetaAtom> dictionary;
     pdictionary->WrapCopyTo(dictionary);
     Inspect(pdictionary, dictionary);
 }
 //----------------------------------------------------------------------------
-void MetaAtomWrapCopyVisitor::Visit(const MetaTypedAtom<PMetaAtom>* patom) {
+void FMetaAtomWrapCopyVisitor::Visit(const TMetaTypedAtom<PMetaAtom>* patom) {
     Assert(patom);
     Append(patom->Wrapper().get());
 }

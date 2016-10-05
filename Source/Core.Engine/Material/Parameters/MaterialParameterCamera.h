@@ -6,26 +6,26 @@
 
 namespace Core {
 namespace Engine {
-class MaterialDatabase;
+class FMaterialDatabase;
 
 #define EACH_MATERIALPARAMETER_CAMERA(_Macro) \
-    _Macro(MaterialVariability::Scene, float3,   EyePosition) \
-    _Macro(MaterialVariability::Scene, float3,   EyeDirection) \
-    _Macro(MaterialVariability::Scene, float3,   EyeUp) \
+    _Macro(EMaterialVariability::FScene, float3,   EyePosition) \
+    _Macro(EMaterialVariability::FScene, float3,   EyeDirection) \
+    _Macro(EMaterialVariability::FScene, float3,   EyeUp) \
     \
-    _Macro(MaterialVariability::Scene, float4x4, View) \
-    _Macro(MaterialVariability::Scene, float4x4, InvertView) \
+    _Macro(EMaterialVariability::FScene, float4x4, View) \
+    _Macro(EMaterialVariability::FScene, float4x4, InvertView) \
     \
-    _Macro(MaterialVariability::Scene, float4x4, Projection) \
-    _Macro(MaterialVariability::Scene, float4x4, InvertProjection) \
+    _Macro(EMaterialVariability::FScene, float4x4, Projection) \
+    _Macro(EMaterialVariability::FScene, float4x4, InvertProjection) \
     \
-    _Macro(MaterialVariability::Scene, float4x4, ViewProjection) \
-    _Macro(MaterialVariability::Scene, float4x4, InvertViewProjection) \
+    _Macro(EMaterialVariability::FScene, float4x4, ViewProjection) \
+    _Macro(EMaterialVariability::FScene, float4x4, InvertViewProjection) \
     \
-    _Macro(MaterialVariability::Scene, float4x4, FrustumRays) \
-    _Macro(MaterialVariability::Scene, float4x4, FarCorners) \
-    _Macro(MaterialVariability::Scene, float4x4, NearCorners) \
-    _Macro(MaterialVariability::Scene, float2,   NearFarZ)
+    _Macro(EMaterialVariability::FScene, float4x4, FrustumRays) \
+    _Macro(EMaterialVariability::FScene, float4x4, FarCorners) \
+    _Macro(EMaterialVariability::FScene, float4x4, NearCorners) \
+    _Macro(EMaterialVariability::FScene, float2,   NearFarZ)
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -34,7 +34,7 @@ namespace MaterialParameterCamera {
 //----------------------------------------------------------------------------
 EACH_MATERIALPARAMETER_CAMERA(MATERIALPARAMETER_FN_DECL)
 //----------------------------------------------------------------------------
-void RegisterMaterialParameters(MaterialDatabase *database);
+void RegisterMaterialParameters(FMaterialDatabase *database);
 //----------------------------------------------------------------------------
 } //!MaterialParameterCamera
 //----------------------------------------------------------------------------

@@ -7,7 +7,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t N>
-SymmetricEigensolver<T, N>::SymmetricEigensolver(size_t maxIterations)
+TSymmetricEigensolver<T, N>::TSymmetricEigensolver(size_t maxIterations)
     :
     _maxIterations(0),
     _isRotation(-1)
@@ -21,7 +21,7 @@ SymmetricEigensolver<T, N>::SymmetricEigensolver(size_t maxIterations)
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t N>
-size_t SymmetricEigensolver<T, N>::Solve(const matrix_type& input, int sortType)
+size_t TSymmetricEigensolver<T, N>::Solve(const matrix_type& input, int sortType)
 {
     STATIC_ASSERT(N > 0);
 
@@ -74,7 +74,7 @@ size_t SymmetricEigensolver<T, N>::Solve(const matrix_type& input, int sortType)
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t N>
-void SymmetricEigensolver<T, N>::GetEigenvalues(vector_type& eigenvalues) const
+void TSymmetricEigensolver<T, N>::GetEigenvalues(vector_type& eigenvalues) const
 {
     if (_permutation[0] >= 0)
     {
@@ -93,7 +93,7 @@ void SymmetricEigensolver<T, N>::GetEigenvalues(vector_type& eigenvalues) const
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t N>
-void SymmetricEigensolver<T, N>::GetEigenvectors(matrix_type& eigenvectors) const
+void TSymmetricEigensolver<T, N>::GetEigenvectors(matrix_type& eigenvectors) const
 {
     // Start with the identity matrix.
     eigenvectors = matrix_type::Identity();
@@ -188,7 +188,7 @@ void SymmetricEigensolver<T, N>::GetEigenvectors(matrix_type& eigenvectors) cons
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t N>
-bool SymmetricEigensolver<T, N>::IsRotation() const
+bool TSymmetricEigensolver<T, N>::IsRotation() const
 {
     if (N > 0)
     {
@@ -226,7 +226,7 @@ bool SymmetricEigensolver<T, N>::IsRotation() const
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t N>
-void SymmetricEigensolver<T, N>::GetEigenvector(int c, vector_type& eigenvector) const
+void TSymmetricEigensolver<T, N>::GetEigenvector(int c, vector_type& eigenvector) const
 {
     if (0 <= c && c < N)
     {
@@ -296,7 +296,7 @@ void SymmetricEigensolver<T, N>::GetEigenvector(int c, vector_type& eigenvector)
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t N>
-T SymmetricEigensolver<T, N>::GetEigenvalue(int c) const
+T TSymmetricEigensolver<T, N>::GetEigenvalue(int c) const
 {
     if (N > 0)
     {
@@ -318,7 +318,7 @@ T SymmetricEigensolver<T, N>::GetEigenvalue(int c) const
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t N>
-void SymmetricEigensolver<T, N>::Tridiagonalize()
+void TSymmetricEigensolver<T, N>::Tridiagonalize()
 {
     int r, c;
     for (int i = 0, ip1 = 1; i < N - 2; ++i, ++ip1)
@@ -415,7 +415,7 @@ void SymmetricEigensolver<T, N>::Tridiagonalize()
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t N>
-void SymmetricEigensolver<T, N>::GetSinCos(T x, T y, T& cs, T& sn)
+void TSymmetricEigensolver<T, N>::GetSinCos(T x, T y, T& cs, T& sn)
 {
     // Solves sn*x + cs*y = 0 robustly.
     T tau;
@@ -442,7 +442,7 @@ void SymmetricEigensolver<T, N>::GetSinCos(T x, T y, T& cs, T& sn)
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t N>
-void SymmetricEigensolver<T, N>::DoQRImplicitShift(int imin, int imax)
+void TSymmetricEigensolver<T, N>::DoQRImplicitShift(int imin, int imax)
 {
     // The implicit shift.  Compute the eigenvalue u of the lower-right 2x2
     // block that is closer to a11.
@@ -464,7 +464,7 @@ void SymmetricEigensolver<T, N>::DoQRImplicitShift(int imin, int imax)
         // Compute the Givens rotation and save it for use in computing the
         // eigenvectors.
         GetSinCos(x, y, cs, sn);
-        _givens.push_back(GivensRotation(i1, cs, sn));
+        _givens.push_back(FGivensRotation(i1, cs, sn));
 
         // Update the tridiagonal matrix.  This amounts to updating a 4x4
         // subblock,
@@ -509,7 +509,7 @@ void SymmetricEigensolver<T, N>::DoQRImplicitShift(int imin, int imax)
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t N>
-void SymmetricEigensolver<T, N>::ComputePermutation(int sortType)
+void TSymmetricEigensolver<T, N>::ComputePermutation(int sortType)
 {
     _isRotation = -1;
 
@@ -523,13 +523,13 @@ void SymmetricEigensolver<T, N>::ComputePermutation(int sortType)
 
     // Compute the permutation induced by sorting.  Initially, we start with
     // the identity permutation I = (0,1,...,N-1).
-    struct SortItem
+    struct FSortItem
     {
         T eigenvalue;
         int index;
     };
 
-    SortItem items[N];
+    FSortItem items[N];
     int i;
     for (i = 0; i < N; ++i)
     {
@@ -540,7 +540,7 @@ void SymmetricEigensolver<T, N>::ComputePermutation(int sortType)
     if (sortType > 0)
     {
         std::sort(std::begin(items), std::end(items),
-            [](SortItem const& item0, SortItem const& item1)
+            [](FSortItem const& item0, FSortItem const& item1)
             {
                 return item0.eigenvalue < item1.eigenvalue;
             }
@@ -549,7 +549,7 @@ void SymmetricEigensolver<T, N>::ComputePermutation(int sortType)
     else
     {
         std::sort(std::begin(items), std::end(items),
-            [](SortItem const& item0, SortItem const& item1)
+            [](FSortItem const& item0, FSortItem const& item1)
             {
                 return item0.eigenvalue > item1.eigenvalue;
             }
@@ -579,14 +579,14 @@ void SymmetricEigensolver<T, N>::ComputePermutation(int sortType)
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t N>
-SymmetricEigensolver<T, N>::GivensRotation::GivensRotation()
+TSymmetricEigensolver<T, N>::FGivensRotation::FGivensRotation()
 {
     // No default initialization for fast creation of std::vector of objects
     // of this type.
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t N>
-SymmetricEigensolver<T, N>::GivensRotation::GivensRotation(int inIndex, T inCs, T inSn)
+TSymmetricEigensolver<T, N>::FGivensRotation::FGivensRotation(int inIndex, T inCs, T inSn)
     :
     index(inIndex),
     cs(inCs),

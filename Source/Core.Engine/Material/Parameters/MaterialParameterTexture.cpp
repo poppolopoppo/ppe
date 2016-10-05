@@ -26,24 +26,24 @@ namespace {
 //----------------------------------------------------------------------------
 static bool RetrieveTexture2DFromMaterialIFP_(
     Graphics::SCTexture2D *pTexture2D,
-    const MaterialParameterContext& context,
-    const Graphics::BindName& textureName ) {
+    const FMaterialParameterContext& context,
+    const Graphics::FBindName& textureName ) {
     Assert(pTexture2D);
 
-    const Graphics::Texture *texture = nullptr;
+    const Graphics::FTexture *texture = nullptr;
     const size_t textureCount = context.MaterialEffect->TextureSlots().size();
 
     for (size_t i = 0; i < textureCount; ++i)
         if (context.MaterialEffect->TextureSlots()[i].Name == textureName) {
             texture = context.MaterialEffect->TextureBindings()[i].Texture;
-            pTexture2D->reset(checked_cast<const Graphics::Texture2D *>(texture));
+            pTexture2D->reset(checked_cast<const Graphics::FTexture2D *>(texture));
             return true;
         }
 
     return false;
 }
 //----------------------------------------------------------------------------
-static IMaterialParameter *CreateTextureParam_(const Graphics::BindName& textureName, bool hasDimensions) {
+static IMaterialParameter *CreateTextureParam_(const Graphics::FBindName& textureName, bool hasDimensions) {
     if (hasDimensions)
         return new MaterialParameterTexture::Memoizer_DuDvDimensions(textureName);
     else
@@ -58,7 +58,7 @@ namespace MaterialParameterTexture {
 //----------------------------------------------------------------------------
 EACH_MATERIALPARAMETER_TEXTURE(MATERIALPARAMETER_FN_DEF)
 //----------------------------------------------------------------------------
-void RegisterMaterialParameters(MaterialDatabase *database) {
+void RegisterMaterialParameters(FMaterialDatabase *database) {
     Assert(database);
 
 #define BIND_MATERIALPARAMETER(_Variability, _Type, _Name) \
@@ -75,7 +75,7 @@ void RegisterMaterialParameters(MaterialDatabase *database) {
 //----------------------------------------------------------------------------
 namespace MaterialParameterTexture {
 //----------------------------------------------------------------------------
-void RenderTargetDuDvDimensions(const MaterialParameterContext& context, float4& dst) {
+void RenderTargetDuDvDimensions(const FMaterialParameterContext& context, float4& dst) {
     AssertNotImplemented(); // TODO: access current render layer from scene
     dst = float4(0);
 }
@@ -86,14 +86,14 @@ void RenderTargetDuDvDimensions(const MaterialParameterContext& context, float4&
 //----------------------------------------------------------------------------
 namespace MaterialParameterTexture {
 //----------------------------------------------------------------------------
-// DuDv
+// FDuDv
 //----------------------------------------------------------------------------
-DuDv::DuDv(const Graphics::BindName& textureName)
+FDuDv::FDuDv(const Graphics::FBindName& textureName)
 :   TextureName(textureName) {
     Assert(!textureName.empty());
 }
 //----------------------------------------------------------------------------
-void DuDv::TypedEval(const MaterialParameterContext& context, float2& dst) {
+void FDuDv::TypedEval(const FMaterialParameterContext& context, float2& dst) {
     Graphics::SCTexture2D texture;
     if (RetrieveTexture2DFromMaterialIFP_(&texture, context, TextureName))
         dst = texture->DuDvDimensions().xy();
@@ -101,7 +101,7 @@ void DuDv::TypedEval(const MaterialParameterContext& context, float2& dst) {
         dst.Broadcast(0.0f);
 }
 //----------------------------------------------------------------------------
-template class MaterialParameterMemoizer<DuDv>;
+template class TMaterialParameterMemoizer<FDuDv>;
 //----------------------------------------------------------------------------
 } //!MaterialParameterTexture
 //----------------------------------------------------------------------------
@@ -109,14 +109,14 @@ template class MaterialParameterMemoizer<DuDv>;
 //----------------------------------------------------------------------------
 namespace MaterialParameterTexture {
 //----------------------------------------------------------------------------
-// DuDvDimensions
+// FDuDvDimensions
 //----------------------------------------------------------------------------
-DuDvDimensions::DuDvDimensions(const Graphics::BindName& textureName)
+FDuDvDimensions::FDuDvDimensions(const Graphics::FBindName& textureName)
 :   TextureName(textureName) {
     Assert(!textureName.empty());
 }
 //----------------------------------------------------------------------------
-void DuDvDimensions::TypedEval(const MaterialParameterContext& context, float4& dst) {
+void FDuDvDimensions::TypedEval(const FMaterialParameterContext& context, float4& dst) {
     Graphics::SCTexture2D texture;
     if (RetrieveTexture2DFromMaterialIFP_(&texture, context, TextureName))
         dst = texture->DuDvDimensions();
@@ -124,7 +124,7 @@ void DuDvDimensions::TypedEval(const MaterialParameterContext& context, float4& 
         dst.Broadcast(0.0f);
 }
 //----------------------------------------------------------------------------
-template class MaterialParameterMemoizer<DuDvDimensions>;
+template class TMaterialParameterMemoizer<FDuDvDimensions>;
 //----------------------------------------------------------------------------
 } //!MaterialParameterTexture
 //----------------------------------------------------------------------------
@@ -134,9 +134,9 @@ namespace MaterialParameterTexture {
 //----------------------------------------------------------------------------
 bool TryCreateMaterialParameter(
     PMaterialParameter *param,
-    const MaterialParameterMutableContext& context,
-    const Graphics::BindName& name,
-    const Graphics::ConstantField& field ) {
+    const FMaterialParameterMutableContext& context,
+    const Graphics::FBindName& name,
+    const Graphics::FConstantField& field ) {
     Assert(param);
     Assert(context.MaterialEffect);
     Assert(context.Database);
@@ -149,17 +149,17 @@ bool TryCreateMaterialParameter(
     static const char uniDuDv[] = "uniDuDv_";
 
     bool hasDimensions = false;
-    Graphics::BindName textureName;
+    Graphics::FBindName textureName;
 
     if (StartsWith(cstr, uniDuDvDimensions)) {
         hasDimensions = true;
         textureName = &cstr[lengthof(uniDuDvDimensions) - 1];
-        Assert(Graphics::ConstantFieldType::Float4 == field.Type());
+        Assert(Graphics::EConstantFieldType::Float4 == field.Type());
     }
     else if (StartsWith(cstr, uniDuDv)) {
         Assert(!hasDimensions);
         textureName = &cstr[lengthof(uniDuDv) - 1];
-        Assert(Graphics::ConstantFieldType::Float2 == field.Type());
+        Assert(Graphics::EConstantFieldType::Float2 == field.Type());
     }
     else {
         Assert(!*param);
@@ -168,7 +168,7 @@ bool TryCreateMaterialParameter(
 
     Assert(!textureName.empty());
 
-    Filename filename;
+    FFilename filename;
     // Local texture path search :
     if (context.MaterialEffect->Material()->Textures().TryGet(textureName, &filename)) {
         Assert(!filename.empty());

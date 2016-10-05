@@ -17,24 +17,24 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-extern bool LoadModel_Obj(PModel& pModel, const Filename& filename, const ModelStream& meshStream);
+extern bool LoadModel_Obj(PModel& pModel, const FFilename& filename, const ModelStream& meshStream);
 //----------------------------------------------------------------------------
-bool LoadModel(PModel& pModel, const Filename& filename) {
+bool LoadModel(PModel& pModel, const FFilename& filename) {
     Assert(!filename.empty());
 
-    LOG(Info, L"Model: loading model from '{0}' ...", filename);
+    LOG(Info, L"FModel: loading model from '{0}' ...", filename);
 
     if (!filename.HasExtension())
         AssertNotReached();
 
     ModelStream meshStream;
-    if (!VirtualFileSystem::Instance().ReadAll(filename, meshStream))
+    if (!FVirtualFileSystem::Instance().ReadAll(filename, meshStream))
         return false;
 
-    const Extname& extname = filename.Basename().Extname();
+    const FExtname& extname = filename.Basename().Extname();
     Assert(!extname.empty());
 
-    if (FileSystemConstNames::ObjExt() == extname) {
+    if (FFileSystemConstNames::ObjExt() == extname) {
         return LoadModel_Obj(pModel, filename, meshStream);
     }
     else {

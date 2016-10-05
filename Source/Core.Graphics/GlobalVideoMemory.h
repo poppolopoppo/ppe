@@ -10,9 +10,9 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class GlobalVideoMemory : Meta::Singleton<MemoryTrackingData, GlobalVideoMemory> {
+class FGlobalVideoMemory : Meta::TSingleton<FMemoryTrackingData, FGlobalVideoMemory> {
 public:
-    typedef Meta::Singleton<MemoryTrackingData, GlobalVideoMemory> parent_type;
+    typedef Meta::TSingleton<FMemoryTrackingData, FGlobalVideoMemory> parent_type;
 
     using parent_type::Instance;
     using parent_type::HasInstance;

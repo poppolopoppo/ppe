@@ -11,7 +11,7 @@
 // TODO : template ?
 
 namespace Core {
-class RandomGenerator;
+class FRandomGenerator;
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -29,8 +29,8 @@ typedef double SHScalar;
 typedef float SHScalar;
 #endif
 //----------------------------------------------------------------------------
-typedef ScalarVector<SHScalar, 2> SHSphericalCoord; // Theta/Phi
-typedef ScalarVector<SHScalar, 3> SHDirection;      // Nx/Ny/Nz
+typedef TScalarVector<SHScalar, 2> SHSphericalCoord; // Theta/Phi
+typedef TScalarVector<SHScalar, 3> SHDirection;      // Nx/Ny/Nz
 //----------------------------------------------------------------------------
 inline SHDirection SHSphericalCoordToDirection(const SHSphericalCoord& thetaPhi) {
     const SHScalar sinTheta = std::sin(thetaPhi.x());
@@ -41,10 +41,10 @@ inline SHDirection SHSphericalCoordToDirection(const SHSphericalCoord& thetaPhi)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct SHSample {
+struct FSHSample {
     SHSphericalCoord ThetaPhi;
     SHDirection Direction;
-    MemoryView<const SHScalar> Coefficients;
+    TMemoryView<const SHScalar> Coefficients;
 };
 //----------------------------------------------------------------------------
 SHScalar SHPointSampleFunction(int l, int m, const SHSphericalCoord& thetaPhi);

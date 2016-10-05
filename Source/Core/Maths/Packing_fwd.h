@@ -7,50 +7,50 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-class ScalarVector;
+class TScalarVector;
 //----------------------------------------------------------------------------
 struct UX10Y10Z10W2N;
 //----------------------------------------------------------------------------
-struct HalfFloat;
-typedef HalfFloat half;
-typedef ScalarVector<HalfFloat, 2> half2;
-typedef ScalarVector<HalfFloat, 4> half4;
+struct FHalfFloat;
+typedef FHalfFloat half;
+typedef TScalarVector<FHalfFloat, 2> half2;
+typedef TScalarVector<FHalfFloat, 4> half4;
 //----------------------------------------------------------------------------
 template <typename T, typename _Traits>
-struct BasicNorm;
+struct TBasicNorm;
 template <typename T>
-struct UNormTraits;
+struct TUNormTraits;
 template <typename T>
-struct SNormTraits;
-//----------------------------------------------------------------------------
-template <typename T>
-using UNorm = BasicNorm<T, UNormTraits<T> >;
-typedef UNorm<u8> ubyten;
-typedef UNorm<u16> ushortn;
-typedef UNorm<u32> uwordn;
+struct TSNormTraits;
 //----------------------------------------------------------------------------
 template <typename T>
-using SNorm = BasicNorm<T, SNormTraits<T> >;
-typedef SNorm<u8> byten;
-typedef SNorm<u16> shortn;
-typedef SNorm<u32> wordn;
+using TUNorm = TBasicNorm<T, TUNormTraits<T> >;
+typedef TUNorm<u8> ubyten;
+typedef TUNorm<u16> ushortn;
+typedef TUNorm<u32> uwordn;
 //----------------------------------------------------------------------------
-typedef ScalarVector<SNorm<u8>, 2> byte2n;
-typedef ScalarVector<SNorm<u8>, 4> byte4n;
-typedef ScalarVector<UNorm<u8>, 2> ubyte2n;
-typedef ScalarVector<UNorm<u8>, 4> ubyte4n;
+template <typename T>
+using TSNorm = TBasicNorm<T, TSNormTraits<T> >;
+typedef TSNorm<u8> byten;
+typedef TSNorm<u16> shortn;
+typedef TSNorm<u32> wordn;
 //----------------------------------------------------------------------------
-typedef ScalarVector<SNorm<u16>, 2> short2n;
-typedef ScalarVector<SNorm<u16>, 4> short4n;
-typedef ScalarVector<UNorm<u16>, 2> ushort2n;
-typedef ScalarVector<UNorm<u16>, 4> ushort4n;
+typedef TScalarVector<TSNorm<u8>, 2> byte2n;
+typedef TScalarVector<TSNorm<u8>, 4> byte4n;
+typedef TScalarVector<TUNorm<u8>, 2> ubyte2n;
+typedef TScalarVector<TUNorm<u8>, 4> ubyte4n;
 //----------------------------------------------------------------------------
-typedef ScalarVector<SNorm<u32>, 2> word2n;
-typedef ScalarVector<SNorm<u32>, 3> word3n;
-typedef ScalarVector<SNorm<u32>, 4> word4n;
-typedef ScalarVector<UNorm<u32>, 2> uword2n;
-typedef ScalarVector<UNorm<u32>, 3> uword3n;
-typedef ScalarVector<UNorm<u32>, 4> uword4n;
+typedef TScalarVector<TSNorm<u16>, 2> short2n;
+typedef TScalarVector<TSNorm<u16>, 4> short4n;
+typedef TScalarVector<TUNorm<u16>, 2> ushort2n;
+typedef TScalarVector<TUNorm<u16>, 4> ushort4n;
+//----------------------------------------------------------------------------
+typedef TScalarVector<TSNorm<u32>, 2> word2n;
+typedef TScalarVector<TSNorm<u32>, 3> word3n;
+typedef TScalarVector<TSNorm<u32>, 4> word4n;
+typedef TScalarVector<TUNorm<u32>, 2> uword2n;
+typedef TScalarVector<TUNorm<u32>, 3> uword3n;
+typedef TScalarVector<TUNorm<u32>, 4> uword4n;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

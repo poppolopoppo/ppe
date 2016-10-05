@@ -16,27 +16,27 @@ FWD_REFPTR(ConstantBufferLayout);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct ShaderProgramTexture {
-    Name Name;
-    enum class TextureDimension Dimension;
+struct FShaderProgramTexture {
+    FName Name;
+    enum class ETextureDimension Dimension;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(ShaderCompiled);
-class ShaderCompiled : public RefCountable {
+class FShaderCompiled : public FRefCountable {
 public:
     typedef RAWSTORAGE(Shader, u8) blob_type;
-    typedef ASSOCIATIVE_VECTOR(Shader, Name, PCConstantBufferLayout) constants_type;
-    typedef VECTOR(Shader, ShaderProgramTexture) textures_type;
+    typedef ASSOCIATIVE_VECTOR(Shader, FName, PCConstantBufferLayout) constants_type;
+    typedef VECTOR(Shader, FShaderProgramTexture) textures_type;
 
-    ShaderCompiled( u64 fingerprint,
+    FShaderCompiled( u64 fingerprint,
                     blob_type&& blob,
                     constants_type&& constants,
                     textures_type&& textures );
 
-    ShaderCompiled(const ShaderCompiled& ) = delete;
-    ShaderCompiled& operator =(const ShaderCompiled& ) = delete;
+    FShaderCompiled(const FShaderCompiled& ) = delete;
+    FShaderCompiled& operator =(const FShaderCompiled& ) = delete;
 
     u64 Fingerprint() const { return _fingerprint; }
     const blob_type& Blob() const { return _compiledCode; }

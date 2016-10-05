@@ -17,61 +17,61 @@ FWD_INTERFACE_REFPTR(ContentSerializer);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ContentSerializerContext {
+class FContentSerializerContext {
 public:
-    explicit ContentSerializerContext(const Filename& outputFilename) : _outputFilename(outputFilename) {}
-    virtual ~ContentSerializerContext() {}
+    explicit FContentSerializerContext(const FFilename& outputFilename) : _outputFilename(outputFilename) {}
+    virtual ~FContentSerializerContext() {}
 
-    ContentSerializerContext(const ContentSerializerContext&) = delete;
-    ContentSerializerContext& operator=(const ContentSerializerContext&) = delete;
+    FContentSerializerContext(const FContentSerializerContext&) = delete;
+    FContentSerializerContext& operator=(const FContentSerializerContext&) = delete;
 
-    const Filename& OutputFilename() const { return _outputFilename; }
+    const FFilename& OutputFilename() const { return _outputFilename; }
 
     virtual ILogger* Logger() const = 0;
 
 private:
-    Filename _outputFilename;
+    FFilename _outputFilename;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Asset>
-class ContentSerializer;
+class TContentSerializer;
 //----------------------------------------------------------------------------
-class IContentSerializer : public ContentPipelineNode {
+class IContentSerializer : public FContentPipelineNode {
 public:
     virtual ~IContentSerializer() {}
 
     template <typename _Asset>
-    bool Serialize(ContentSerializerContext& ctx, const _Asset& src) const {
-        const ContentSerializer<_Asset>* const serializer = dynamic_cast<const ContentSerializer<_Asset>*>(this);
+    bool Serialize(FContentSerializerContext& ctx, const _Asset& src) const {
+        const TContentSerializer<_Asset>* const serializer = dynamic_cast<const TContentSerializer<_Asset>*>(this);
         if (nullptr == serializer)
-            throw ContentSerializerException("invalid serializer type", ctx.OutputFilename(), this);
+            throw FContentSerializerException("invalid serializer type", ctx.OutputFilename(), this);
         else
             return serializer->Serialize(ctx, src);
     }
 
     template <typename _Asset>
-    bool Deserialize(ContentSerializerContext& ctx, _Asset& dst) const {
-        const ContentSerializer<_Asset>* const serializer = dynamic_cast<const ContentSerializer<_Asset>*>(this);
+    bool Deserialize(FContentSerializerContext& ctx, _Asset& dst) const {
+        const TContentSerializer<_Asset>* const serializer = dynamic_cast<const TContentSerializer<_Asset>*>(this);
         if (nullptr == serializer)
-            throw ContentSerializerException("invalid serializer type", ctx.OutputFilename(), this);
+            throw FContentSerializerException("invalid serializer type", ctx.OutputFilename(), this);
         else
             return serializer->Deserialize(ctx, dst);
     }
 
-    RTTI_CLASS_HEADER(IContentSerializer, ContentPipelineNode);
+    RTTI_CLASS_HEADER(IContentSerializer, FContentPipelineNode);
 };
 //----------------------------------------------------------------------------
 template <typename _Asset>
-class ContentSerializer : public IContentSerializer {
+class TContentSerializer : public IContentSerializer {
 public:
     typedef _Asset asset_type;
 
-    virtual ~ContentSerializer() {}
+    virtual ~TContentSerializer() {}
 
-    virtual bool Serialize(ContentSerializerContext& ctx, const asset_type& src) const = 0;
-    virtual bool Deserialize(ContentSerializerContext& ctx, asset_type& dst) const = 0;
+    virtual bool Serialize(FContentSerializerContext& ctx, const asset_type& src) const = 0;
+    virtual bool Deserialize(FContentSerializerContext& ctx, asset_type& dst) const = 0;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

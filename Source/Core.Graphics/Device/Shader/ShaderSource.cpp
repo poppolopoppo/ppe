@@ -16,16 +16,16 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, ShaderSource, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, FShaderSource, );
 //----------------------------------------------------------------------------
-StringView ShaderSource::AppIn_SubstitutionName() { return MakeStringView("__AppIn_AutoSubstitutionHeader__"); }
-StringView ShaderSource::AppIn_VertexDefinitionName() { return MakeStringView("__AppIn_AutoVertexDefinition__"); }
-FileSystem::StringView ShaderSource::SystemDirpath() { return MakeStringView(L"GameData:/Shaders/Lib"); }
+FStringView FShaderSource::AppIn_SubstitutionName() { return MakeStringView("__AppIn_AutoSubstitutionHeader__"); }
+FStringView FShaderSource::AppIn_VertexDefinitionName() { return MakeStringView("__AppIn_AutoVertexDefinition__"); }
+FileSystem::FStringView FShaderSource::SystemDirpath() { return MakeStringView(L"GameData:/Shaders/Lib"); }
 //----------------------------------------------------------------------------
-ShaderSource::ShaderSource( const char *sourceName,
-                            const Core::Filename& filename,
-                            const MemoryView<const char>& sourceCode,
-                            const MemoryView<const Pair<String, String>>& defines)
+FShaderSource::FShaderSource( const char *sourceName,
+                            const Core::FFilename& filename,
+                            const TMemoryView<const char>& sourceCode,
+                            const TMemoryView<const TPair<FString, FString>>& defines)
 :   _sourceName(sourceName)
 ,   _filename(filename)
 ,   _defines(defines.begin(), defines.end()) {
@@ -36,10 +36,10 @@ ShaderSource::ShaderSource( const char *sourceName,
     memcpy(_sourceCode.Pointer(), sourceCode.Pointer(), _sourceCode.SizeInBytes());
 }
 //----------------------------------------------------------------------------
-ShaderSource::ShaderSource( String&& sourceName,
-                            const Core::Filename& filename,
+FShaderSource::FShaderSource( FString&& sourceName,
+                            const Core::FFilename& filename,
                             RAWSTORAGE_THREAD_LOCAL(Shader, char)&& sourceCode,
-                            ASSOCIATIVE_VECTOR_THREAD_LOCAL(Shader, String, String)&& defines)
+                            ASSOCIATIVE_VECTOR_THREAD_LOCAL(Shader, FString, FString)&& defines)
 :   _sourceName(std::move(sourceName))
 ,   _filename(filename)
 ,   _sourceCode(std::move(sourceCode))
@@ -48,16 +48,16 @@ ShaderSource::ShaderSource( String&& sourceName,
     Assert(_sourceCode.size());
 }
 //----------------------------------------------------------------------------
-ShaderSource::~ShaderSource() {}
+FShaderSource::~FShaderSource() {}
 //----------------------------------------------------------------------------
-void ShaderSource::Preprocess(
+void FShaderSource::Preprocess(
     RAWSTORAGE_THREAD_LOCAL(Shader, char)& preprocessed,
-    const ShaderProgram * /* program */,
-    const VertexDeclaration *vertexDeclaration) const {
+    const FShaderProgram * /* program */,
+    const FVertexDeclaration *vertexDeclaration) const {
     Assert(_sourceCode.size());
 
-    VECTOR_THREAD_LOCAL(Shader, Pair<String COMMA String>) substitutions;
-    substitutions.reserve(VertexDeclaration::MaxSubPartCount + _defines.size());
+    VECTOR_THREAD_LOCAL(Shader, TPair<FString COMMA FString>) substitutions;
+    substitutions.reserve(FVertexDeclaration::MaxSubPartCount + _defines.size());
     substitutions.insert(substitutions.end(), _defines.begin(), _defines.end());
     FillVertexSubstitutions(substitutions, vertexDeclaration);
 
@@ -66,7 +66,7 @@ void ShaderSource::Preprocess(
     const char expandFooter[] = "/*******  End shader source expansion  *******/\n";
 
     size_t expandSize = lengthof(expandHeader) + lengthof(expandFooter) - 2 /* remove final '\0' */;
-    for (const Pair<String, String>& substitution : substitutions)
+    for (const TPair<FString, FString>& substitution : substitutions)
         expandSize +=   lengthof(expandDefine) - 1 +
                         substitution.first.size() +
                         substitution.second.size() +
@@ -80,7 +80,7 @@ void ShaderSource::Preprocess(
     memcpy(outb, expandHeader, sizeof(expandHeader) - 1);
     outb += lengthof(expandHeader) - 1;
 
-    for (const Pair<String, String>& substitution : substitutions) {
+    for (const TPair<FString, FString>& substitution : substitutions) {
         memcpy(outb, expandDefine, sizeof(expandDefine) - 1);
         outb += lengthof(expandDefine) - 1;
 
@@ -104,30 +104,30 @@ void ShaderSource::Preprocess(
     Assert(outb - preprocessed.Pointer() == intptr_t(preprocessed.size()) );
 }
 //----------------------------------------------------------------------------
-void ShaderSource::FillSubstitutions(
-    VECTOR_THREAD_LOCAL(Shader, Pair<String COMMA String>)& substitutions,
-    const VertexDeclaration *vertexDeclaration ) const {
+void FShaderSource::FillSubstitutions(
+    VECTOR_THREAD_LOCAL(Shader, TPair<FString COMMA FString>)& substitutions,
+    const FVertexDeclaration *vertexDeclaration ) const {
     Assert(vertexDeclaration);
 
-    substitutions.reserve(VertexDeclaration::MaxSubPartCount + _defines.size());
+    substitutions.reserve(FVertexDeclaration::MaxSubPartCount + _defines.size());
     substitutions.insert(substitutions.end(), _defines.begin(), _defines.end());
     FillVertexSubstitutions(substitutions, vertexDeclaration);
 }
 //----------------------------------------------------------------------------
-ShaderSource *ShaderSource::LoadFromFileIFP(const Core::Filename& filename,
-                                            const MemoryView<const Pair<String, String>>& defines) {
+FShaderSource *FShaderSource::LoadFromFileIFP(const Core::FFilename& filename,
+                                            const TMemoryView<const TPair<FString, FString>>& defines) {
     Assert(!filename.empty());
 
     RAWSTORAGE_THREAD_LOCAL(Shader, char) sourceCode;
-    if (false == VirtualFileSystem::ReadAll(filename, sourceCode))
+    if (false == FVirtualFileSystem::ReadAll(filename, sourceCode))
         return nullptr;
 
-    ASSOCIATIVE_VECTOR_THREAD_LOCAL(Shader, String, String) sourceDefines(defines.size());
+    ASSOCIATIVE_VECTOR_THREAD_LOCAL(Shader, FString, FString) sourceDefines(defines.size());
     sourceDefines.insert(defines.begin(), defines.end());
 
-    const WString nativeFilenameW = VirtualFileSystem::Instance().Unalias(filename);
+    const FWString nativeFilenameW = FVirtualFileSystem::Instance().Unalias(filename);
 
-    return new ShaderSource(ToString(nativeFilenameW), filename, std::move(sourceCode), std::move(sourceDefines));
+    return new FShaderSource(ToString(nativeFilenameW), filename, std::move(sourceCode), std::move(sourceDefines));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -13,41 +13,41 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-struct PresentationParametersData {
-    typedef Meta::Bit<u32>::First<1>::type bitfullscreen_type;
-    typedef Meta::Bit<u32>::After<bitfullscreen_type>::Field<1>::type bittriplebuffer_type;
-    typedef Meta::Bit<u32>::After<bittriplebuffer_type>::Field<3>::type bitpresentinterval_type;
-    typedef Meta::Bit<u32>::After<bitpresentinterval_type>::Remain::type bitmultisample_type;
+struct FPresentationParametersData {
+    typedef Meta::TBit<u32>::TFirst<1>::type bitfullscreen_type;
+    typedef Meta::TBit<u32>::TAfter<bitfullscreen_type>::TField<1>::type bittriplebuffer_type;
+    typedef Meta::TBit<u32>::TAfter<bittriplebuffer_type>::TField<3>::type bitpresentinterval_type;
+    typedef Meta::TBit<u32>::TAfter<bitpresentinterval_type>::FRemain::type bitmultisample_type;
 };
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PresentationParameters::PresentationParameters()
-:   PresentationParameters(0, 0, SurfaceFormatType::UNKNOWN, SurfaceFormatType::UNKNOWN, false, false, 0, PresentInterval::Immediate) {}
+FPresentationParameters::FPresentationParameters()
+:   FPresentationParameters(0, 0, ESurfaceFormatType::UNKNOWN, ESurfaceFormatType::UNKNOWN, false, false, 0, EPresentInterval::Immediate) {}
 //----------------------------------------------------------------------------
-PresentationParameters::PresentationParameters(
+FPresentationParameters::FPresentationParameters(
     u32 backBufferWidth,
     u32 backBufferHeight,
-    SurfaceFormatType backBufferFormat,
-    SurfaceFormatType depthStencilFormat,
+    ESurfaceFormatType backBufferFormat,
+    ESurfaceFormatType depthStencilFormat,
     bool fullscreen,
     bool tripleBuffer,
     u32 multiSampleCount,
-    PresentInterval presentationInterval )
-:   PresentationParameters( backBufferWidth, backBufferHeight, backBufferFormat, depthStencilFormat, fullscreen, tripleBuffer, multiSampleCount, presentationInterval,
+    EPresentInterval presentationInterval )
+:   FPresentationParameters( backBufferWidth, backBufferHeight, backBufferFormat, depthStencilFormat, fullscreen, tripleBuffer, multiSampleCount, presentationInterval,
                             ViewportF(0, 0, float(backBufferWidth), float(backBufferHeight), 0, 1)) {}
 //----------------------------------------------------------------------------
-PresentationParameters::PresentationParameters(
+FPresentationParameters::FPresentationParameters(
     u32 backBufferWidth,
     u32 backBufferHeight,
-    SurfaceFormatType backBufferFormat,
-    SurfaceFormatType depthStencilFormat,
+    ESurfaceFormatType backBufferFormat,
+    ESurfaceFormatType depthStencilFormat,
     bool fullscreen,
     bool tripleBuffer,
     u32 multiSampleCount,
-    PresentInterval presentationInterval,
+    EPresentInterval presentationInterval,
     const ViewportF& viewport)
 :   _backBufferWidth(backBufferWidth)
 ,   _backBufferHeight(backBufferHeight)
@@ -55,28 +55,28 @@ PresentationParameters::PresentationParameters(
 ,   _depthStencilFormat(depthStencilFormat)
 ,   _data(0)
 ,   _viewport(viewport) {
-    PresentationParametersData::bitfullscreen_type::InplaceSet(_data, fullscreen);
-    PresentationParametersData::bittriplebuffer_type::InplaceSet(_data, tripleBuffer);
-    PresentationParametersData::bitpresentinterval_type::InplaceSet(_data, static_cast<u32>(presentationInterval));
-    PresentationParametersData::bitmultisample_type::InplaceSet(_data, multiSampleCount);
+    FPresentationParametersData::bitfullscreen_type::InplaceSet(_data, fullscreen);
+    FPresentationParametersData::bittriplebuffer_type::InplaceSet(_data, tripleBuffer);
+    FPresentationParametersData::bitpresentinterval_type::InplaceSet(_data, static_cast<u32>(presentationInterval));
+    FPresentationParametersData::bitmultisample_type::InplaceSet(_data, multiSampleCount);
 }
 //----------------------------------------------------------------------------
-PresentationParameters::~PresentationParameters() {}
+FPresentationParameters::~FPresentationParameters() {}
 //----------------------------------------------------------------------------
-bool PresentationParameters::FullScreen() const {
-    return PresentationParametersData::bitfullscreen_type::Get(_data);
+bool FPresentationParameters::FullScreen() const {
+    return FPresentationParametersData::bitfullscreen_type::Get(_data);
 }
 //----------------------------------------------------------------------------
-bool PresentationParameters::TripleBuffer() const {
-    return PresentationParametersData::bittriplebuffer_type::Get(_data);
+bool FPresentationParameters::TripleBuffer() const {
+    return FPresentationParametersData::bittriplebuffer_type::Get(_data);
 }
 //----------------------------------------------------------------------------
-u32 PresentationParameters::MultiSampleCount() const {
-    return PresentationParametersData::bitmultisample_type::Get(_data);
+u32 FPresentationParameters::MultiSampleCount() const {
+    return FPresentationParametersData::bitmultisample_type::Get(_data);
 }
 //----------------------------------------------------------------------------
-PresentInterval PresentationParameters::PresentationInterval() const {
-    return static_cast<PresentInterval>(PresentationParametersData::bitpresentinterval_type::Get(_data));
+EPresentInterval FPresentationParameters::PresentationInterval() const {
+    return static_cast<EPresentInterval>(FPresentationParametersData::bitpresentinterval_type::Get(_data));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

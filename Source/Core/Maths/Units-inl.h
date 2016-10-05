@@ -9,23 +9,23 @@ namespace Units {
 //----------------------------------------------------------------------------
 namespace details {
 template <typename _Smaller>
-struct NextUnitIndex {
+struct TNextUnitIndex {
     typedef typename _Smaller::traits_type smaller_traits_type;
-    static constexpr u64 Value = smaller_traits_type::Index + 1;
+    static constexpr u64 FValue = smaller_traits_type::Index + 1;
 };
 template <>
-struct NextUnitIndex<void> {
-    static constexpr u64 Value = 0;
+struct TNextUnitIndex<void> {
+    static constexpr u64 FValue = 0;
 };
 } //!details
 //----------------------------------------------------------------------------
 template <typename _Tag, u64 _Ratio, typename _Smaller>
-struct UnitTraits {
+struct TUnitTraits {
     typedef _Tag tag_type;
     typedef _Smaller smaller_type;
     typedef typename tag_type::value_type value_type;
     static constexpr u64 Ratio = _Ratio;
-    static constexpr u64 Index = details::NextUnitIndex<smaller_type>::Value;
+    static constexpr u64 Index = details::TNextUnitIndex<smaller_type>::FValue;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -33,7 +33,7 @@ struct UnitTraits {
 namespace details {
 //----------------------------------------------------------------------------
 template <typename _To, typename _From>
-struct ConvertionRatio_LargerToSmaller {
+struct TConvertionRatio_LargerToSmaller {
     typedef typename _To::traits_type to_traits_type;
     typedef typename _From::traits_type from_traits_type;
 
@@ -42,12 +42,12 @@ struct ConvertionRatio_LargerToSmaller {
     typedef typename from_traits_type::smaller_type from_smaller_type;
     typedef typename from_smaller_type::traits_type from_smaller_traits_type;
 
-    static constexpr u64 Value = from_smaller_traits_type::Ratio * ConvertionRatio_LargerToSmaller<_To, from_smaller_type>::Value;
+    static constexpr u64 FValue = from_smaller_traits_type::Ratio * TConvertionRatio_LargerToSmaller<_To, from_smaller_type>::FValue;
 };
 //----------------------------------------------------------------------------
 template <typename _ToFrom>
-struct ConvertionRatio_LargerToSmaller<_ToFrom, _ToFrom> {
-    static constexpr u64 Value = 1;
+struct TConvertionRatio_LargerToSmaller<_ToFrom, _ToFrom> {
+    static constexpr u64 FValue = 1;
 };
 //----------------------------------------------------------------------------
 } //!details
@@ -57,7 +57,7 @@ struct ConvertionRatio_LargerToSmaller<_ToFrom, _ToFrom> {
 namespace details {
 //----------------------------------------------------------------------------
 template <typename _To, typename _From>
-struct ConvertionRatio {
+struct TConvertionRatio {
     typedef typename _To::traits_type to_traits_type;
     typedef typename _From::traits_type from_traits_type;
 
@@ -70,16 +70,16 @@ struct ConvertionRatio {
     typedef typename to_traits_type::value_type value_type;
     typedef typename std::conditional<
         LargerToSmaller,
-        ConvertionRatio_LargerToSmaller<_To, _From>,
-        ConvertionRatio_LargerToSmaller<_From, _To>
+        TConvertionRatio_LargerToSmaller<_To, _From>,
+        TConvertionRatio_LargerToSmaller<_From, _To>
     >::type convertionratio_type;
 
-    static constexpr u64 Value = convertionratio_type::Value;
+    static constexpr u64 FValue = convertionratio_type::FValue;
 };
 //----------------------------------------------------------------------------
 template <typename _ToFrom>
-struct ConvertionRatio<_ToFrom, _ToFrom> {
-    static constexpr u64 Value = 1;
+struct TConvertionRatio<_ToFrom, _ToFrom> {
+    static constexpr u64 FValue = 1;
 };
 //----------------------------------------------------------------------------
 } //!details
@@ -90,27 +90,27 @@ namespace details {
 //----------------------------------------------------------------------------
 template <
     typename _To, typename _From
-,   bool _LargerToSmaller = ConvertionRatio<_To, _From>::LargerToSmaller >
-struct Converter {
+,   bool _LargerToSmaller = TConvertionRatio<_To, _From>::LargerToSmaller >
+struct TConverter {
     typedef typename _To::traits_type from_traits_type;
     typedef typename from_traits_type::value_type value_type;
     static constexpr value_type Convert(value_type from) {
-        return value_type(ConvertionRatio<_To, _From>::Value * from);
+        return value_type(TConvertionRatio<_To, _From>::FValue * from);
     }
 };
 //----------------------------------------------------------------------------
 template <typename _To, typename _From>
-struct Converter<_To, _From, false> {
+struct TConverter<_To, _From, false> {
     typedef typename _To::traits_type from_traits_type;
     typedef typename from_traits_type::value_type value_type;
     static constexpr value_type Convert(value_type from) {
-        return value_type(from / ConvertionRatio<_To, _From>::Value);
+        return value_type(from / TConvertionRatio<_To, _From>::FValue);
     }
 };
 //----------------------------------------------------------------------------
 template <typename _To, typename _From>
-constexpr typename Converter<_To, _From>::value_type ConvertValue(typename Converter<_To, _From>::value_type value) {
-    return Converter<_To, _From>::Convert(value);
+constexpr typename TConverter<_To, _From>::value_type ConvertValue(typename TConverter<_To, _From>::value_type value) {
+    return TConverter<_To, _From>::Convert(value);
 }
 //----------------------------------------------------------------------------
 } //!details
@@ -119,13 +119,13 @@ constexpr typename Converter<_To, _From>::value_type ConvertValue(typename Conve
 //----------------------------------------------------------------------------
 template <typename _Traits>
 template <typename _OtherTraits>
-Unit<_Traits>::Unit(const Unit<_OtherTraits>& other)
-:   _value(details::ConvertValue<self_type, Unit<_OtherTraits> >(other._value)) {}
+TUnit<_Traits>::TUnit(const TUnit<_OtherTraits>& other)
+:   _value(details::ConvertValue<self_type, TUnit<_OtherTraits> >(other._value)) {}
 //----------------------------------------------------------------------------
 template <typename _Traits>
 template <typename _OtherTraits>
-Unit<_Traits>& Unit<_Traits>::operator =(const Unit<_OtherTraits>& other) {
-    _value = details::ConvertValue<self_type, Unit<_OtherTraits> >(other._value);
+TUnit<_Traits>& TUnit<_Traits>::operator =(const TUnit<_OtherTraits>& other) {
+    _value = details::ConvertValue<self_type, TUnit<_OtherTraits> >(other._value);
     return *this;
 }
 //----------------------------------------------------------------------------

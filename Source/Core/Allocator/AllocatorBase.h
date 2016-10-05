@@ -9,7 +9,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-class AllocatorBase {
+class TAllocatorBase {
 public:
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;
@@ -22,18 +22,18 @@ public:
     template<typename U>
     struct rebind
     {
-        typedef AllocatorBase<U> other;
+        typedef TAllocatorBase<U> other;
     };
 
-    AllocatorBase() throw() {}
+    TAllocatorBase() throw() {}
 
-    AllocatorBase(const AllocatorBase& ) throw() {}
+    TAllocatorBase(const TAllocatorBase& ) throw() {}
     template<typename U>
-    AllocatorBase(const AllocatorBase<U>& ) throw() {}
+    TAllocatorBase(const TAllocatorBase<U>& ) throw() {}
 
-    AllocatorBase& operator=(const AllocatorBase& ) { return *this; }
+    TAllocatorBase& operator=(const TAllocatorBase& ) { return *this; }
     template<typename U>
-    AllocatorBase& operator=(const AllocatorBase<U>&) { return *this; }
+    TAllocatorBase& operator=(const TAllocatorBase<U>&) { return *this; }
 
     pointer address(reference x) const { return std::addressof(x); }
     const_pointer address(const_reference x) const { return std::addressof(x); }
@@ -82,7 +82,7 @@ public:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-class AllocatorDeleter : _Allocator {
+class TAllocatorDeleter : _Allocator {
 public:
     void operator ()(T* ptr) {
         _Allocator::destroy(ptr);
@@ -91,7 +91,7 @@ public:
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-using AllocatorPtr = UniquePtr<T, AllocatorDeleter<T, _Allocator> >;
+using TAllocatorPtr = TUniquePtr<T, TAllocatorDeleter<T, _Allocator> >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -113,7 +113,7 @@ template <typename _Allocator>
 typename std::enable_if<
     true  == std::is_pod<typename _Allocator::value_type>::value,
     typename _Allocator::pointer
->::type Relocate_AssumeNoRealloc(_Allocator& allocator, const MemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
+>::type Relocate_AssumeNoRealloc(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
     typedef std::allocator_traits<_Allocator> allocator_traits;
     typedef typename allocator_traits::pointer pointer;
     Assert(0 == oldSize || nullptr != data.Pointer());
@@ -136,7 +136,7 @@ template <typename _Allocator>
 typename std::enable_if<
     false  == std::is_pod<typename _Allocator::value_type>::value,
     typename _Allocator::pointer
->::type Relocate_AssumeNoRealloc(_Allocator& allocator, const MemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
+>::type Relocate_AssumeNoRealloc(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
     STATIC_ASSERT(std::is_default_constructible<typename _Allocator::value_type>::value);
     STATIC_ASSERT(std::is_move_constructible<typename _Allocator::value_type>::value);
     typedef std::allocator_traits<_Allocator> allocator_traits;
@@ -163,7 +163,7 @@ typename std::enable_if<
     true  == allocator_has_realloc<_Allocator>::value &&
     true  == std::is_pod<typename _Allocator::value_type>::value,
     typename _Allocator::pointer
->::type Relocate(_Allocator& allocator, const MemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
+>::type Relocate(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
     return static_cast<typename _Allocator::pointer>(allocator.relocate(data.Pointer(), newSize, oldSize));
 }
 //----------------------------------------------------------------------------
@@ -173,7 +173,7 @@ typename std::enable_if<
     false == allocator_has_realloc<_Allocator>::value &&
     true  == std::is_pod<typename _Allocator::value_type>::value,
     typename _Allocator::pointer
->::type Relocate(_Allocator& allocator, const MemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
+>::type Relocate(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
     return Relocate_AssumeNoRealloc(allocator, data, newSize, oldSize);
 }
 //----------------------------------------------------------------------------
@@ -182,7 +182,7 @@ template <typename _Allocator>
 typename std::enable_if<
     false == std::is_pod<typename _Allocator::value_type>::value,
     typename _Allocator::pointer
->::type Relocate(_Allocator& allocator, const MemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
+>::type Relocate(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
     return Relocate_AssumeNoRealloc(allocator, data, newSize, oldSize);
 }
 //----------------------------------------------------------------------------
@@ -194,7 +194,7 @@ template <typename _Allocator>
 typename std::enable_if<
     true  == allocator_has_realloc<_Allocator>::value,
     typename _Allocator::pointer
->::type Relocate_AssumePod(_Allocator& allocator, const MemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
+>::type Relocate_AssumePod(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
     return static_cast<typename _Allocator::pointer>(allocator.relocate(data.Pointer(), newSize, oldSize));
 }
 //----------------------------------------------------------------------------
@@ -202,7 +202,7 @@ template <typename _Allocator>
 typename std::enable_if<
     false == allocator_has_realloc<_Allocator>::value,
     typename _Allocator::pointer
->::type Relocate_AssumePod(_Allocator& allocator, const MemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
+>::type Relocate_AssumePod(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
     return Relocate(allocator, data, newSize, oldSize);
 }
 //----------------------------------------------------------------------------

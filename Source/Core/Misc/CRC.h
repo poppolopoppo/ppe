@@ -4,16 +4,16 @@
 
 namespace Core {
 template <typename T>
-class MemoryView;
+class TMemoryView;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class CRC32_t {
+class FCRC32_t {
 public:
-    CRC32_t();
+    FCRC32_t();
 
-    void Update(const MemoryView<const u8>& rawData);
-    void UpdateI(const MemoryView<const u8>& rawData);
+    void Update(const TMemoryView<const u8>& rawData);
+    void UpdateI(const TMemoryView<const u8>& rawData);
 
     u32 Finalize();
 
@@ -21,7 +21,7 @@ private:
     u32 _crc32;
 };
 //----------------------------------------------------------------------------
-u32 CRC32(const MemoryView<const u8>& rawData);
+u32 CRC32(const TMemoryView<const u8>& rawData);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

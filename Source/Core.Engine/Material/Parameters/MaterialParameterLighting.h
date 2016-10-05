@@ -6,16 +6,16 @@
 
 namespace Core {
 namespace Engine {
-class MaterialDatabase;
+class FMaterialDatabase;
 FWD_REFPTR(LightingEnvironment);
 
 #define EACH_MATERIALPARAMETER_LIGHTING(_Macro) \
-    _Macro(MaterialVariability::World, float3,  SunColor) \
-    _Macro(MaterialVariability::World, float3,  SunDirection) \
-    _Macro(MaterialVariability::World, float,   SunIntensity) \
+    _Macro(EMaterialVariability::FWorld, float3,  SunColor) \
+    _Macro(EMaterialVariability::FWorld, float3,  SunDirection) \
+    _Macro(EMaterialVariability::FWorld, float,   SunIntensity) \
     \
-    _Macro(MaterialVariability::World, float,   Exposure) \
-    _Macro(MaterialVariability::World, float,   WhitePoint)
+    _Macro(EMaterialVariability::FWorld, float,   Exposure) \
+    _Macro(EMaterialVariability::FWorld, float,   WhitePoint)
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -24,7 +24,7 @@ namespace MaterialParameterLighting {
 //----------------------------------------------------------------------------
 EACH_MATERIALPARAMETER_LIGHTING(MATERIALPARAMETER_FN_DECL)
 //----------------------------------------------------------------------------
-void RegisterMaterialParameters(MaterialDatabase *database);
+void RegisterMaterialParameters(FMaterialDatabase *database);
 //----------------------------------------------------------------------------
 } //!MaterialParameterLighting
 //----------------------------------------------------------------------------

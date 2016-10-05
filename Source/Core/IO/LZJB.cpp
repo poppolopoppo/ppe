@@ -104,15 +104,15 @@ namespace {
  * no need to initialize the Lempel history; not doing so saves time.
  */
 //----------------------------------------------------------------------------
-class BufferedStreamWriter_ {
+class FBufferedStreamWriter_ {
 public:
-    BufferedStreamWriter_(IStreamWriter* writer, const MemoryView<u8>& buffer)
+    FBufferedStreamWriter_(IStreamWriter* writer, const TMemoryView<u8>& buffer)
         : _writer(writer), _buffer(buffer), _offset(0), _pendingSize(0) {
         Assert(buffer.size());
         _offset = checked_cast<size_t>(_writer->TellO());
     }
 
-    ~BufferedStreamWriter_() {
+    ~FBufferedStreamWriter_() {
         Flush();
     }
 
@@ -153,7 +153,7 @@ public:
 
 private:
     IStreamWriter* _writer;
-    MemoryView<u8> _buffer;
+    TMemoryView<u8> _buffer;
     size_t _offset;
     size_t _pendingSize;
 };
@@ -164,8 +164,8 @@ private:
 //----------------------------------------------------------------------------
 namespace LZJB {
 //----------------------------------------------------------------------------
-static const FourCC FILE_MAGIC_         ("LZJB");
-static const FourCC FILE_VERSION_       ("1.00");
+static const FFourCC FILE_MAGIC_         ("LZJB");
+static const FFourCC FILE_VERSION_       ("1.00");
 //----------------------------------------------------------------------------
 STATIC_CONST_INTEGRAL(size_t, MATCH_BITS,   6 );
 STATIC_CONST_INTEGRAL(size_t, MATCH_MIN,    3 );
@@ -174,14 +174,14 @@ STATIC_CONST_INTEGRAL(size_t, OFFSET_MASK,  ((1 << (16 - MATCH_BITS)) - 1) );
 STATIC_CONST_INTEGRAL(size_t, LEMPEL_SIZE,  1024 );
 STATIC_CONST_INTEGRAL(size_t, NBBY,         8 ); // number of bits in a byte
 //----------------------------------------------------------------------------
-struct Header {
-    FourCC  Magic;
-    FourCC  Version;
+struct FHeader {
+    FFourCC  Magic;
+    FFourCC  Version;
     u32     SizeInBytes;
 };
 //----------------------------------------------------------------------------
-void CompressMemory(IStreamWriter* dst, const MemoryView<const u8>& src) {
-    const Header header = {
+void CompressMemory(IStreamWriter* dst, const TMemoryView<const u8>& src) {
+    const FHeader header = {
         FILE_MAGIC_,
         FILE_VERSION_,
         checked_cast<u32>(src.SizeInBytes())
@@ -189,7 +189,7 @@ void CompressMemory(IStreamWriter* dst, const MemoryView<const u8>& src) {
     dst->WritePOD(header);
 
     STACKLOCAL_POD_ARRAY(u8, buffer, 8<<10);
-    BufferedStreamWriter_ writer(dst, buffer);
+    FBufferedStreamWriter_ writer(dst, buffer);
 
     const u8* s_start = src.Pointer();
     const u8* psrc = s_start;
@@ -239,18 +239,18 @@ void CompressMemory(IStreamWriter* dst, const MemoryView<const u8>& src) {
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-static bool DecompressMemory_(RawStorage<u8, _Allocator>* dst, const MemoryView<const u8>& src) {
+static bool DecompressMemory_(TRawStorage<u8, _Allocator>* dst, const TMemoryView<const u8>& src) {
     Assert(dst);
 
-    const Header& header = *reinterpret_cast<const Header*>(src.Pointer());
-    if (sizeof(Header) > src.size() ||
+    const FHeader& header = *reinterpret_cast<const FHeader*>(src.Pointer());
+    if (sizeof(FHeader) > src.size() ||
         FILE_MAGIC_ != header.Magic ||
         FILE_VERSION_ != header.Version )
         return false;
 
     dst->Resize_DiscardData(header.SizeInBytes);
 
-    const u8* psrc = src.Pointer() + sizeof(Header);
+    const u8* psrc = src.Pointer() + sizeof(FHeader);
     u8* pdst = dst->Pointer();
     u8 *d_end = pdst + dst->SizeInBytes();
     const u8 *cpy = nullptr;
@@ -279,11 +279,11 @@ static bool DecompressMemory_(RawStorage<u8, _Allocator>* dst, const MemoryView<
     return true;
 }
 //----------------------------------------------------------------------------
-bool DecompressMemory(RAWSTORAGE(Stream, u8)* dst, const MemoryView<const u8>& src) {
+bool DecompressMemory(RAWSTORAGE(Stream, u8)* dst, const TMemoryView<const u8>& src) {
     return DecompressMemory_(dst, src);
 }
 //----------------------------------------------------------------------------
-bool DecompressMemory(RAWSTORAGE_THREAD_LOCAL(Stream, u8)* dst, const MemoryView<const u8>& src) {
+bool DecompressMemory(RAWSTORAGE_THREAD_LOCAL(Stream, u8)* dst, const TMemoryView<const u8>& src) {
     return DecompressMemory_(dst, src);
 }
 //----------------------------------------------------------------------------

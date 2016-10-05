@@ -17,17 +17,17 @@ namespace Engine {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-class MaterialParameterConstant : public ITypedMaterialParameter<T> {
+class TMaterialParameterConstant : public ITypedMaterialParameter<T> {
 public:
-    explicit MaterialParameterConstant(T&& rvalue);
-    explicit MaterialParameterConstant(const T& value);
-    virtual ~MaterialParameterConstant();
+    explicit TMaterialParameterConstant(T&& rvalue);
+    explicit TMaterialParameterConstant(const T& value);
+    virtual ~TMaterialParameterConstant();
 
-    const T& Value() const { return _value; }
+    const T& FValue() const { return _value; }
 
-    virtual MaterialParameterInfo Info() const override;
+    virtual FMaterialParameterInfo Info() const override;
 
-    virtual void Eval(const MaterialParameterContext& context, void *dst, size_t sizeInBytes) override;
+    virtual void Eval(const FMaterialParameterContext& context, void *dst, size_t sizeInBytes) override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
@@ -35,15 +35,15 @@ private:
     T _value;
 };
 //----------------------------------------------------------------------------
-CONSTANTFIELD_EXTERNALTEMPLATE_DECL(MaterialParameterConstant, );
+CONSTANTFIELD_EXTERNALTEMPLATE_DECL(TMaterialParameterConstant, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 bool TryCreateOptionalMaterialParameter(
     PMaterialParameter *param,
-    const MaterialParameterMutableContext& context,
-    const Graphics::BindName& name,
-    const Graphics::ConstantField& field );
+    const FMaterialParameterMutableContext& context,
+    const Graphics::FBindName& name,
+    const Graphics::FConstantField& field );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

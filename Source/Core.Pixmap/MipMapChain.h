@@ -12,28 +12,28 @@ FWD_REFPTR(FloatImage);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(MipMapChain);
-class MipMapChain : public RefCountable {
+class FMipMapChain : public FRefCountable {
 public:
     STATIC_CONST_INTEGRAL(size_t, MaxCount, 16);
 
-    MipMapChain();
-    ~MipMapChain();
+    FMipMapChain();
+    ~FMipMapChain();
 
-    MipMapChain(const MipMapChain& ) = delete;
-    MipMapChain& operator =(const MipMapChain& ) = delete;
+    FMipMapChain(const FMipMapChain& ) = delete;
+    FMipMapChain& operator =(const FMipMapChain& ) = delete;
 
     bool empty() const { return _chain.empty(); }
     size_t size() const { return _chain.size(); }
 
-    void Generate(FloatImage* topMip, bool hq = false);
+    void Generate(FFloatImage* topMip, bool hq = false);
     void PreserveAlphaTestCoverage(float cutoff);
 
-    MemoryView<const PFloatImage> MakeView() const { return _chain.MakeView(); }
+    TMemoryView<const PFloatImage> MakeView() const { return _chain.MakeView(); }
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    FixedSizeStack<PFloatImage, MaxCount> _chain;
+    TFixedSizeStack<PFloatImage, MaxCount> _chain;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

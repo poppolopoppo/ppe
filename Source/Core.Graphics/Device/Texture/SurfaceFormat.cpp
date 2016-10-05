@@ -12,13 +12,13 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SurfaceFormat::SurfaceFormat(
+FSurfaceFormat::FSurfaceFormat(
     const char *name,
     u32 blockSize,
     u32 macroBlockBitCount,
-    SurfaceFormatType type,
-    SurfaceFormatFlags flags,
-    SurfaceFormatSupport support)
+    ESurfaceFormatType type,
+    ESurfaceFormatFlags flags,
+    ESurfaceFormatSupport support)
 :   _name(name),
     _blockSize(blockSize), _macroBlockBitCount(macroBlockBitCount),
     _type(type), _flags(flags), _support(support) {
@@ -27,17 +27,17 @@ SurfaceFormat::SurfaceFormat(
     Assert(1 == blockSize || 4*4 == blockSize);
 }
 //----------------------------------------------------------------------------
-SurfaceFormat::~SurfaceFormat() {}
+FSurfaceFormat::~FSurfaceFormat() {}
 //----------------------------------------------------------------------------
-u32 SurfaceFormat::Pitch() const {
+u32 FSurfaceFormat::Pitch() const {
     return _macroBlockBitCount >> 3;
 }
 //----------------------------------------------------------------------------
-u32 SurfaceFormat::BitsPerPixels() const {
+u32 FSurfaceFormat::BitsPerPixels() const {
     return _macroBlockBitCount / _blockSize;
 }
 //----------------------------------------------------------------------------
-u32 SurfaceFormat::MacroBlockSizeInPixels() const {
+u32 FSurfaceFormat::MacroBlockSizeInPixels() const {
     if (1 == _blockSize)
         return 1;
     else {
@@ -46,7 +46,7 @@ u32 SurfaceFormat::MacroBlockSizeInPixels() const {
     }
 }
 //----------------------------------------------------------------------------
-void SurfaceFormat::SizeOfTexture2D(size_t *rowBytes, size_t *numRows, size_t width, size_t height) const {
+void FSurfaceFormat::SizeOfTexture2D(size_t *rowBytes, size_t *numRows, size_t width, size_t height) const {
     Assert(rowBytes);
     Assert(numRows);
 
@@ -65,7 +65,7 @@ void SurfaceFormat::SizeOfTexture2D(size_t *rowBytes, size_t *numRows, size_t wi
     *numRows = blocksHigh;
 }
 //----------------------------------------------------------------------------
-size_t SurfaceFormat::SizeOfTexture2DInBytes(size_t width, size_t height) const {
+size_t FSurfaceFormat::SizeOfTexture2DInBytes(size_t width, size_t height) const {
     size_t rowBytes;
     size_t numRows;
     SizeOfTexture2D(&rowBytes, &numRows, width, height);
@@ -73,7 +73,7 @@ size_t SurfaceFormat::SizeOfTexture2DInBytes(size_t width, size_t height) const 
     return rowBytes * numRows;
 }
 //----------------------------------------------------------------------------
-size_t SurfaceFormat::SizeOfTexture2DInBytes(size_t width, size_t height, size_t levelCount) const {
+size_t FSurfaceFormat::SizeOfTexture2DInBytes(size_t width, size_t height, size_t levelCount) const {
     Assert(levelCount);
 
     size_t totalSizeInBytes = 0;
@@ -88,15 +88,15 @@ size_t SurfaceFormat::SizeOfTexture2DInBytes(size_t width, size_t height, size_t
     return totalSizeInBytes;
 }
 //----------------------------------------------------------------------------
-size_t SurfaceFormat::SizeOfTexture2DInBytes(const uint2& widthHeight) const {
+size_t FSurfaceFormat::SizeOfTexture2DInBytes(const uint2& widthHeight) const {
     return SizeOfTexture2DInBytes(widthHeight.x(), widthHeight.y());
 }
 //----------------------------------------------------------------------------
-size_t SurfaceFormat::SizeOfTexture2DInBytes(const uint2& widthHeight, size_t levelCount) const {
+size_t FSurfaceFormat::SizeOfTexture2DInBytes(const uint2& widthHeight, size_t levelCount) const {
     return SizeOfTexture2DInBytes(widthHeight.x(), widthHeight.y(), levelCount);
 }
 //----------------------------------------------------------------------------
-bool SurfaceFormat::operator ==(const SurfaceFormat& other) const {
+bool FSurfaceFormat::operator ==(const FSurfaceFormat& other) const {
 #ifdef _DEBUG
     if (this != &other) {
         Assert(_type != other._type);
@@ -116,110 +116,110 @@ bool SurfaceFormat::operator ==(const SurfaceFormat& other) const {
 #endif
 }
 //----------------------------------------------------------------------------
-void SurfaceFormat::CheckSupport(DeviceEncapsulator * /* device */) const {
+void FSurfaceFormat::CheckSupport(FDeviceEncapsulator * /* device */) const {
     // TODO
-    _support = SurfaceFormatSupport::All;
+    _support = ESurfaceFormatSupport::All;
 }
 //----------------------------------------------------------------------------
-void SurfaceFormat::ClearSupport(DeviceEncapsulator * /* device */) const {
-    _support = SurfaceFormatSupport::All;
+void FSurfaceFormat::ClearSupport(FDeviceEncapsulator * /* device */) const {
+    _support = ESurfaceFormatSupport::All;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void SurfaceFormat::Start() {
-    for (const SurfaceFormat& fmt : SurfaceFormat::AllFormats())
+void FSurfaceFormat::Start() {
+    for (const FSurfaceFormat& fmt : FSurfaceFormat::AllFormats())
         fmt.ClearSupport(nullptr);
 }
 //----------------------------------------------------------------------------
-void SurfaceFormat::Shutdown() {
+void FSurfaceFormat::Shutdown() {
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void SurfaceFormat::OnDeviceCreate(DeviceEncapsulator *device) {
-    for (const SurfaceFormat& fmt : SurfaceFormat::AllFormats())
+void FSurfaceFormat::OnDeviceCreate(FDeviceEncapsulator *device) {
+    for (const FSurfaceFormat& fmt : FSurfaceFormat::AllFormats())
         fmt.CheckSupport(device);
 }
 //----------------------------------------------------------------------------
-void SurfaceFormat::OnDeviceDestroy(DeviceEncapsulator *device) {
-    for (const SurfaceFormat& fmt : SurfaceFormat::AllFormats())
+void FSurfaceFormat::OnDeviceDestroy(FDeviceEncapsulator *device) {
+    for (const FSurfaceFormat& fmt : FSurfaceFormat::AllFormats())
         fmt.ClearSupport(device);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const SurfaceFormat* SurfaceFormat::FromType(SurfaceFormatType type) {
+const FSurfaceFormat* FSurfaceFormat::FromType(ESurfaceFormatType type) {
     switch (type)
     {
-    case Core::Graphics::SurfaceFormatType::UNKNOWN:
-        return SurfaceFormat::UNKNOWN;
-    case Core::Graphics::SurfaceFormatType::A8:
-        return SurfaceFormat::A8;
-    case Core::Graphics::SurfaceFormatType::D16:
-        return SurfaceFormat::D16;
-    case Core::Graphics::SurfaceFormatType::D24S8:
-        return SurfaceFormat::D24S8;
-    case Core::Graphics::SurfaceFormatType::D32:
-        return SurfaceFormat::D32;
-    case Core::Graphics::SurfaceFormatType::DXN0:
-        return SurfaceFormat::DXN0;
-    case Core::Graphics::SurfaceFormatType::DXT1:
-        return SurfaceFormat::DXT1;
-    case Core::Graphics::SurfaceFormatType::DXT1_SRGB:
-        return SurfaceFormat::DXT1_SRGB;
-    case Core::Graphics::SurfaceFormatType::DXT3:
-        return SurfaceFormat::DXT3;
-    case Core::Graphics::SurfaceFormatType::DXT3_SRGB:
-        return SurfaceFormat::DXT3_SRGB;
-    case Core::Graphics::SurfaceFormatType::DXT5:
-        return SurfaceFormat::DXT5;
-    case Core::Graphics::SurfaceFormatType::DXT5_SRGB:
-        return SurfaceFormat::DXT5_SRGB;
-    case Core::Graphics::SurfaceFormatType::R5G5B5A1:
-        return SurfaceFormat::R5G5B5A1;
-    case Core::Graphics::SurfaceFormatType::R5G6B5:
-        return SurfaceFormat::R5G6B5;
-    case Core::Graphics::SurfaceFormatType::R8:
-        return SurfaceFormat::R8;
-    case Core::Graphics::SurfaceFormatType::R8G8:
-        return SurfaceFormat::R8G8;
-    case Core::Graphics::SurfaceFormatType::R8G8B8A8:
-        return SurfaceFormat::R8G8B8A8;
-    case Core::Graphics::SurfaceFormatType::R8G8B8A8_SRGB:
-        return SurfaceFormat::R8G8B8A8_SRGB;
-    case Core::Graphics::SurfaceFormatType::B8G8R8A8:
-        return SurfaceFormat::B8G8R8A8;
-    case Core::Graphics::SurfaceFormatType::B8G8R8A8_SRGB:
-        return SurfaceFormat::B8G8R8A8_SRGB;
-    case Core::Graphics::SurfaceFormatType::R10G10B10A2:
-        return SurfaceFormat::R10G10B10A2;
-    case Core::Graphics::SurfaceFormatType::R11G11B10:
-        return SurfaceFormat::R11G11B10;
-    case Core::Graphics::SurfaceFormatType::R16:
-        return SurfaceFormat::R16;
-    case Core::Graphics::SurfaceFormatType::R16G16:
-        return SurfaceFormat::R16G16;
-    case Core::Graphics::SurfaceFormatType::R16G16B16A16:
-        return SurfaceFormat::R16G16B16A16;
-    case Core::Graphics::SurfaceFormatType::R16G16B16A16_F:
-        return SurfaceFormat::R16G16B16A16_F;
-    case Core::Graphics::SurfaceFormatType::R16G16_F:
-        return SurfaceFormat::R16G16_F;
-    case Core::Graphics::SurfaceFormatType::R16_F:
-        return SurfaceFormat::R16_F;
-    case Core::Graphics::SurfaceFormatType::R32:
-        return SurfaceFormat::R32;
-    case Core::Graphics::SurfaceFormatType::R32G32:
-        return SurfaceFormat::R32G32;
-    case Core::Graphics::SurfaceFormatType::R32G32B32A32:
-        return SurfaceFormat::R32G32B32A32;
-    case Core::Graphics::SurfaceFormatType::R32G32B32A32_F:
-        return SurfaceFormat::R32G32B32A32_F;
-    case Core::Graphics::SurfaceFormatType::R32G32_F:
-        return SurfaceFormat::R32G32_F;
-    case Core::Graphics::SurfaceFormatType::R32_F:
-        return SurfaceFormat::R32_F;
+    case Core::Graphics::ESurfaceFormatType::UNKNOWN:
+        return FSurfaceFormat::UNKNOWN;
+    case Core::Graphics::ESurfaceFormatType::A8:
+        return FSurfaceFormat::A8;
+    case Core::Graphics::ESurfaceFormatType::D16:
+        return FSurfaceFormat::D16;
+    case Core::Graphics::ESurfaceFormatType::D24S8:
+        return FSurfaceFormat::D24S8;
+    case Core::Graphics::ESurfaceFormatType::D32:
+        return FSurfaceFormat::D32;
+    case Core::Graphics::ESurfaceFormatType::DXN0:
+        return FSurfaceFormat::DXN0;
+    case Core::Graphics::ESurfaceFormatType::DXT1:
+        return FSurfaceFormat::DXT1;
+    case Core::Graphics::ESurfaceFormatType::DXT1_SRGB:
+        return FSurfaceFormat::DXT1_SRGB;
+    case Core::Graphics::ESurfaceFormatType::DXT3:
+        return FSurfaceFormat::DXT3;
+    case Core::Graphics::ESurfaceFormatType::DXT3_SRGB:
+        return FSurfaceFormat::DXT3_SRGB;
+    case Core::Graphics::ESurfaceFormatType::DXT5:
+        return FSurfaceFormat::DXT5;
+    case Core::Graphics::ESurfaceFormatType::DXT5_SRGB:
+        return FSurfaceFormat::DXT5_SRGB;
+    case Core::Graphics::ESurfaceFormatType::R5G5B5A1:
+        return FSurfaceFormat::R5G5B5A1;
+    case Core::Graphics::ESurfaceFormatType::R5G6B5:
+        return FSurfaceFormat::R5G6B5;
+    case Core::Graphics::ESurfaceFormatType::R8:
+        return FSurfaceFormat::R8;
+    case Core::Graphics::ESurfaceFormatType::R8G8:
+        return FSurfaceFormat::R8G8;
+    case Core::Graphics::ESurfaceFormatType::R8G8B8A8:
+        return FSurfaceFormat::R8G8B8A8;
+    case Core::Graphics::ESurfaceFormatType::R8G8B8A8_SRGB:
+        return FSurfaceFormat::R8G8B8A8_SRGB;
+    case Core::Graphics::ESurfaceFormatType::B8G8R8A8:
+        return FSurfaceFormat::B8G8R8A8;
+    case Core::Graphics::ESurfaceFormatType::B8G8R8A8_SRGB:
+        return FSurfaceFormat::B8G8R8A8_SRGB;
+    case Core::Graphics::ESurfaceFormatType::R10G10B10A2:
+        return FSurfaceFormat::R10G10B10A2;
+    case Core::Graphics::ESurfaceFormatType::R11G11B10:
+        return FSurfaceFormat::R11G11B10;
+    case Core::Graphics::ESurfaceFormatType::R16:
+        return FSurfaceFormat::R16;
+    case Core::Graphics::ESurfaceFormatType::R16G16:
+        return FSurfaceFormat::R16G16;
+    case Core::Graphics::ESurfaceFormatType::R16G16B16A16:
+        return FSurfaceFormat::R16G16B16A16;
+    case Core::Graphics::ESurfaceFormatType::R16G16B16A16_F:
+        return FSurfaceFormat::R16G16B16A16_F;
+    case Core::Graphics::ESurfaceFormatType::R16G16_F:
+        return FSurfaceFormat::R16G16_F;
+    case Core::Graphics::ESurfaceFormatType::R16_F:
+        return FSurfaceFormat::R16_F;
+    case Core::Graphics::ESurfaceFormatType::R32:
+        return FSurfaceFormat::R32;
+    case Core::Graphics::ESurfaceFormatType::R32G32:
+        return FSurfaceFormat::R32G32;
+    case Core::Graphics::ESurfaceFormatType::R32G32B32A32:
+        return FSurfaceFormat::R32G32B32A32;
+    case Core::Graphics::ESurfaceFormatType::R32G32B32A32_F:
+        return FSurfaceFormat::R32G32B32A32_F;
+    case Core::Graphics::ESurfaceFormatType::R32G32_F:
+        return FSurfaceFormat::R32G32_F;
+    case Core::Graphics::ESurfaceFormatType::R32_F:
+        return FSurfaceFormat::R32_F;
     default:
         AssertNotImplemented();
     }
@@ -228,81 +228,81 @@ const SurfaceFormat* SurfaceFormat::FromType(SurfaceFormatType type) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-StringView SurfaceFormatTypeToCStr(SurfaceFormatType value) {
+FStringView SurfaceFormatTypeToCStr(ESurfaceFormatType value) {
     switch (value)
     {
-    case Core::Graphics::SurfaceFormatType::UNKNOWN:
+    case Core::Graphics::ESurfaceFormatType::UNKNOWN:
         return MakeStringView("UNKNOWN");
-    case Core::Graphics::SurfaceFormatType::A8:
+    case Core::Graphics::ESurfaceFormatType::A8:
         return MakeStringView("A8");
-    case Core::Graphics::SurfaceFormatType::D16:
+    case Core::Graphics::ESurfaceFormatType::D16:
         return MakeStringView("D16");
-    case Core::Graphics::SurfaceFormatType::D24S8:
+    case Core::Graphics::ESurfaceFormatType::D24S8:
         return MakeStringView("D24S8");
-    case Core::Graphics::SurfaceFormatType::D32:
+    case Core::Graphics::ESurfaceFormatType::D32:
         return MakeStringView("D32");
-    case Core::Graphics::SurfaceFormatType::DXN0:
+    case Core::Graphics::ESurfaceFormatType::DXN0:
         return MakeStringView("DXN0");
-    case Core::Graphics::SurfaceFormatType::DXT1:
+    case Core::Graphics::ESurfaceFormatType::DXT1:
         return MakeStringView("DXT1");
-    case Core::Graphics::SurfaceFormatType::DXT1_SRGB:
+    case Core::Graphics::ESurfaceFormatType::DXT1_SRGB:
         return MakeStringView("DXT1_SRGB");
-    case Core::Graphics::SurfaceFormatType::DXT3:
+    case Core::Graphics::ESurfaceFormatType::DXT3:
         return MakeStringView("DXT3");
-    case Core::Graphics::SurfaceFormatType::DXT3_SRGB:
+    case Core::Graphics::ESurfaceFormatType::DXT3_SRGB:
         return MakeStringView("DXT3_SRGB");
-    case Core::Graphics::SurfaceFormatType::DXT5:
+    case Core::Graphics::ESurfaceFormatType::DXT5:
         return MakeStringView("DXT5");
-    case Core::Graphics::SurfaceFormatType::DXT5_SRGB:
+    case Core::Graphics::ESurfaceFormatType::DXT5_SRGB:
         return MakeStringView("DXT5_SRGB");
-    case Core::Graphics::SurfaceFormatType::R5G5B5A1:
+    case Core::Graphics::ESurfaceFormatType::R5G5B5A1:
         return MakeStringView("R5G5B5A1");
-    case Core::Graphics::SurfaceFormatType::R5G6B5:
+    case Core::Graphics::ESurfaceFormatType::R5G6B5:
         return MakeStringView("R5G6B5");
-    case Core::Graphics::SurfaceFormatType::R8:
+    case Core::Graphics::ESurfaceFormatType::R8:
         return MakeStringView("R8");
-    case Core::Graphics::SurfaceFormatType::R8G8:
+    case Core::Graphics::ESurfaceFormatType::R8G8:
         return MakeStringView("R8G8");
-    case Core::Graphics::SurfaceFormatType::R8G8B8A8:
+    case Core::Graphics::ESurfaceFormatType::R8G8B8A8:
         return MakeStringView("R8G8B8A8");
-    case Core::Graphics::SurfaceFormatType::R8G8B8A8_SRGB:
+    case Core::Graphics::ESurfaceFormatType::R8G8B8A8_SRGB:
         return MakeStringView("R8G8B8A8_SRGB");
-    case Core::Graphics::SurfaceFormatType::B8G8R8A8:
+    case Core::Graphics::ESurfaceFormatType::B8G8R8A8:
         return MakeStringView("B8G8R8A8");
-    case Core::Graphics::SurfaceFormatType::B8G8R8A8_SRGB:
+    case Core::Graphics::ESurfaceFormatType::B8G8R8A8_SRGB:
         return MakeStringView("B8G8R8A8_SRGB");
-    case Core::Graphics::SurfaceFormatType::R10G10B10A2:
+    case Core::Graphics::ESurfaceFormatType::R10G10B10A2:
         return MakeStringView("R10G10B10A2");
-    case Core::Graphics::SurfaceFormatType::R11G11B10:
+    case Core::Graphics::ESurfaceFormatType::R11G11B10:
         return MakeStringView("R11G11B10");
-    case Core::Graphics::SurfaceFormatType::R16:
+    case Core::Graphics::ESurfaceFormatType::R16:
         return MakeStringView("R16");
-    case Core::Graphics::SurfaceFormatType::R16G16:
+    case Core::Graphics::ESurfaceFormatType::R16G16:
         return MakeStringView("R16G16");
-    case Core::Graphics::SurfaceFormatType::R16G16B16A16:
+    case Core::Graphics::ESurfaceFormatType::R16G16B16A16:
         return MakeStringView("R16G16B16A16");
-    case Core::Graphics::SurfaceFormatType::R16G16B16A16_F:
+    case Core::Graphics::ESurfaceFormatType::R16G16B16A16_F:
         return MakeStringView("R16G16B16A16_F");
-    case Core::Graphics::SurfaceFormatType::R16G16_F:
+    case Core::Graphics::ESurfaceFormatType::R16G16_F:
         return MakeStringView("R16G16_F");
-    case Core::Graphics::SurfaceFormatType::R16_F:
+    case Core::Graphics::ESurfaceFormatType::R16_F:
         return MakeStringView("R16_F");
-    case Core::Graphics::SurfaceFormatType::R32:
+    case Core::Graphics::ESurfaceFormatType::R32:
         return MakeStringView("R32");
-    case Core::Graphics::SurfaceFormatType::R32G32:
+    case Core::Graphics::ESurfaceFormatType::R32G32:
         return MakeStringView("R32G32");
-    case Core::Graphics::SurfaceFormatType::R32G32B32A32:
+    case Core::Graphics::ESurfaceFormatType::R32G32B32A32:
         return MakeStringView("R32G32B32A32");
-    case Core::Graphics::SurfaceFormatType::R32G32B32A32_F:
+    case Core::Graphics::ESurfaceFormatType::R32G32B32A32_F:
         return MakeStringView("R32G32B32A32_F");
-    case Core::Graphics::SurfaceFormatType::R32G32_F:
+    case Core::Graphics::ESurfaceFormatType::R32G32_F:
         return MakeStringView("R32G32_F");
-    case Core::Graphics::SurfaceFormatType::R32_F:
+    case Core::Graphics::ESurfaceFormatType::R32_F:
         return MakeStringView("R32_F");
     default:
         AssertNotImplemented();
     }
-    return StringView();
+    return FStringView();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -310,27 +310,27 @@ StringView SurfaceFormatTypeToCStr(SurfaceFormatType value) {
 namespace {
 //----------------------------------------------------------------------------
 #define DEF_SURFACEFORMAT_INSTANCE(_Type, _BlockSize, _MacroBlockBitCount, _Flags) \
-    SurfaceFormat( \
+    FSurfaceFormat( \
             STRINGIZE(_Type), \
             _BlockSize, _MacroBlockBitCount, \
-            SurfaceFormatType::_Type, \
-            static_cast<SurfaceFormatFlags>(_Flags), \
-            static_cast<SurfaceFormatSupport>(0) \
+            ESurfaceFormatType::_Type, \
+            static_cast<ESurfaceFormatFlags>(_Flags), \
+            static_cast<ESurfaceFormatSupport>(0) \
             )
 //----------------------------------------------------------------------------
-#define SFMT_RGB u32(SurfaceFormatFlags::RGB)
-#define SFMT_RA u32(SurfaceFormatFlags::RA)
-#define SFMT_Alpha u32(SurfaceFormatFlags::Alpha)
-#define SFMT_Luminance u32(SurfaceFormatFlags::Luminance)
-#define SFMT_Depth u32(SurfaceFormatFlags::Depth)
-#define SFMT_Stencil u32(SurfaceFormatFlags::Stencil)
-#define SFMT_Bump u32(SurfaceFormatFlags::Bump)
-#define SFMT_Palette u32(SurfaceFormatFlags::Palette)
-#define SFMT_FloatingPoint u32(SurfaceFormatFlags::FloatingPoint)
-#define SFMT_DXTC u32(SurfaceFormatFlags::DXTC)
-#define SFMT_GammaSpace u32(SurfaceFormatFlags::GammaSpace)
+#define SFMT_RGB u32(ESurfaceFormatFlags::RGB)
+#define SFMT_RA u32(ESurfaceFormatFlags::RA)
+#define SFMT_Alpha u32(ESurfaceFormatFlags::Alpha)
+#define SFMT_Luminance u32(ESurfaceFormatFlags::Luminance)
+#define SFMT_Depth u32(ESurfaceFormatFlags::Depth)
+#define SFMT_Stencil u32(ESurfaceFormatFlags::Stencil)
+#define SFMT_Bump u32(ESurfaceFormatFlags::Bump)
+#define SFMT_Palette u32(ESurfaceFormatFlags::Palette)
+#define SFMT_FloatingPoint u32(ESurfaceFormatFlags::FloatingPoint)
+#define SFMT_DXTC u32(ESurfaceFormatFlags::DXTC)
+#define SFMT_GammaSpace u32(ESurfaceFormatFlags::GammaSpace)
 //----------------------------------------------------------------------------
-static const SurfaceFormat gAllSurfaceFormats[(u32)SurfaceFormatType::__COUNT] = {
+static const FSurfaceFormat gAllSurfaceFormats[(u32)ESurfaceFormatType::__COUNT] = {
 DEF_SURFACEFORMAT_INSTANCE(UNKNOWN,             1,  0,  0),
 DEF_SURFACEFORMAT_INSTANCE(A8,                  1,  8,  SFMT_Alpha),
 DEF_SURFACEFORMAT_INSTANCE(D16,                 1, 16,  SFMT_Depth),
@@ -385,15 +385,15 @@ DEF_SURFACEFORMAT_INSTANCE(R32_F,               1, 32,  SFMT_Luminance|SFMT_Floa
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-MemoryView<const SurfaceFormat> SurfaceFormat::AllFormats() {
+TMemoryView<const FSurfaceFormat> FSurfaceFormat::AllFormats() {
     return MakeView(gAllSurfaceFormats);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define DEF_SURFACEFORMAT_MEMBER(_Type) \
-    STATIC_ASSERT(static_cast<size_t>(SurfaceFormatType::_Type) < lengthof(gAllSurfaceFormats)); \
-    const SurfaceFormat *SurfaceFormat::_Type = &gAllSurfaceFormats[static_cast<size_t>(SurfaceFormatType::_Type)];
+    STATIC_ASSERT(static_cast<size_t>(ESurfaceFormatType::_Type) < lengthof(gAllSurfaceFormats)); \
+    const FSurfaceFormat *FSurfaceFormat::_Type = &gAllSurfaceFormats[static_cast<size_t>(ESurfaceFormatType::_Type)];
 //----------------------------------------------------------------------------
 DEF_SURFACEFORMAT_MEMBER(UNKNOWN)
 DEF_SURFACEFORMAT_MEMBER(A8)

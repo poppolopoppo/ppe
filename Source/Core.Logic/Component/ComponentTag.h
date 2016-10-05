@@ -12,9 +12,9 @@ namespace Logic {
 // Gets a unique ID for T
 //----------------------------------------------------------------------------
 template <typename T>
-struct Component {
+struct TComponent {
     static constexpr ComponentTag Tag() {
-        return ComponentTag( Meta::TypeHash<T>::value() );
+        return ComponentTag( Meta::TTypeHash<T>::value() );
     }
 };
 //----------------------------------------------------------------------------

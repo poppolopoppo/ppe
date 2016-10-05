@@ -11,9 +11,9 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Profiler {
+class FProfiler {
 public:
-    enum Level : int {
+    enum ELevel : int {
         GlobalLevel     = 1,
         ProcessLevel    = 2,
         ThreadLevel     = 3,
@@ -22,12 +22,12 @@ public:
     static constexpr u32 CurrentID = -1;
 
 private:
-    explicit Profiler(Level level, u32 id = CurrentID);
+    explicit FProfiler(ELevel level, u32 id = CurrentID);
 public:
-    ~Profiler();
+    ~FProfiler();
 
-    Profiler(const Profiler& other) = delete;
-    Profiler& operator=(const Profiler& other) = delete;
+    FProfiler(const FProfiler& other) = delete;
+    FProfiler& operator=(const FProfiler& other) = delete;
 
     void Start() const;
     void Stop() const;
@@ -38,25 +38,25 @@ public:
     void Mark(u32 data) const;
     void MarkAndComment(u32 data, const char* cstr) const;
 
-    static void Startup();
+    static void FStartup();
     static void Shutdown();
 
-    static const Profiler* Global();
-    static const Profiler* Process();
-    static const Profiler* Thread();
+    static const FProfiler* Global();
+    static const FProfiler* Process();
+    static const FProfiler* Thread();
 
 private:
-    Level _level;
+    ELevel _level;
     u32 _id;
 };
 //----------------------------------------------------------------------------
-class ProfilingScope {
+class FProfilingScope {
 public:
-    ProfilingScope(const Profiler* profiler, u32 marker, const char* comment);
-    ~ProfilingScope();
+    FProfilingScope(const FProfiler* profiler, u32 marker, const char* comment);
+    ~FProfilingScope();
 
 private:
-    const Profiler* _profiler;
+    const FProfiler* _profiler;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -71,8 +71,8 @@ namespace Core {
 #ifdef WITH_CORE_PROFILING
 //----------------------------------------------------------------------------
 #define PROFILING_SCOPE(_Level, _Marker, _Message) \
-    const Core::ProfilingScope _profilingScope_##__LINE__( \
-        Core::Profiler::_Level(), \
+    const Core::FProfilingScope _profilingScope_##__LINE__( \
+        Core::FProfiler::_Level(), \
         (_Marker), \
         _Message ", " __FILE__ "(" STRINGIZE(__LINE__) ")" )
 //----------------------------------------------------------------------------
@@ -85,4 +85,3 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Core
-

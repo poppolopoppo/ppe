@@ -8,9 +8,9 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FileStat {
+class FFileStat {
 public:
-    FileStat() : UID(0), GID(0), Link(0), Mode(0), SizeInBytes(0) {}
+    FFileStat() : UID(0), GID(0), Link(0), Mode(0), SizeInBytes(0) {}
 
     u16 UID;
     u16 GID;
@@ -20,14 +20,14 @@ public:
 
     u64 SizeInBytes;
 
-    Timestamp CreatedAt;
-    Timestamp LastAccess;
-    Timestamp LastModified;
+    FTimestamp CreatedAt;
+    FTimestamp LastAccess;
+    FTimestamp LastModified;
 
-    friend hash_t hash_value(const FileStat& s);
-    friend void swap(FileStat& lhs, FileStat& rhs);
+    friend hash_t hash_value(const FFileStat& s);
+    friend void swap(FFileStat& lhs, FFileStat& rhs);
 
-    static bool FromNativePath(FileStat* pstat, const wchar_t* nativeFilename);
+    static bool FromNativePath(FFileStat* pstat, const wchar_t* nativeFilename);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

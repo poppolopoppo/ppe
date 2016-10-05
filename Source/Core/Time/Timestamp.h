@@ -8,40 +8,40 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DateTime;
-class Timestamp {
+class FDateTime;
+class FTimestamp {
 public:
     typedef i64 value_type;
 
-    Timestamp() : _value(0) {}
-    Timestamp(value_type value) : _value(value) {}
+    FTimestamp() : _value(0) {}
+    FTimestamp(value_type value) : _value(value) {}
 
-    Timestamp(const Timestamp& other) : _value(other._value) {}
-    Timestamp& operator =(const Timestamp& other) { _value = other._value; return *this; }
+    FTimestamp(const FTimestamp& other) : _value(other._value) {}
+    FTimestamp& operator =(const FTimestamp& other) { _value = other._value; return *this; }
 
     value_type Value() const { return _value; }
     void SetValue(value_type value) { _value = value; }
 
-    DateTime ToDateTime() const;
-    DateTime ToDateTimeUTC() const;
+    FDateTime ToDateTime() const;
+    FDateTime ToDateTimeUTC() const;
 
-    static Timestamp Now();
+    static FTimestamp Now();
 
-    friend hash_t hash_value(const Timestamp& t) { return hash_as_pod(t._value); }
-    friend void swap(Timestamp& lhs, Timestamp& rhs) { std::swap(lhs._value, rhs._value); }
+    friend hash_t hash_value(const FTimestamp& t) { return hash_as_pod(t._value); }
+    friend void swap(FTimestamp& lhs, FTimestamp& rhs) { std::swap(lhs._value, rhs._value); }
 
-    friend bool operator ==(const Timestamp& lhs, const Timestamp& rhs) { return lhs._value == rhs._value; }
-    friend bool operator !=(const Timestamp& lhs, const Timestamp& rhs) { return lhs._value != rhs._value; }
+    friend bool operator ==(const FTimestamp& lhs, const FTimestamp& rhs) { return lhs._value == rhs._value; }
+    friend bool operator !=(const FTimestamp& lhs, const FTimestamp& rhs) { return lhs._value != rhs._value; }
 
-    friend bool operator < (const Timestamp& lhs, const Timestamp& rhs) { return lhs._value <  rhs._value; }
-    friend bool operator >=(const Timestamp& lhs, const Timestamp& rhs) { return lhs._value >= rhs._value; }
+    friend bool operator < (const FTimestamp& lhs, const FTimestamp& rhs) { return lhs._value <  rhs._value; }
+    friend bool operator >=(const FTimestamp& lhs, const FTimestamp& rhs) { return lhs._value >= rhs._value; }
 
 private:
     value_type _value;
 };
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const Timestamp& t) {
+std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const FTimestamp& t) {
     return oss << t.ToDateTime();
 }
 //----------------------------------------------------------------------------

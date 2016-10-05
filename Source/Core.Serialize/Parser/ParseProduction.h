@@ -19,126 +19,126 @@ POOL_TAG_FWD(Parser);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-using Enumerable = VECTOR_THREAD_LOCAL(Parser, T);
+using TEnumerable = VECTOR_THREAD_LOCAL(Parser, T);
 //----------------------------------------------------------------------------
 template <typename T>
-struct Production : public std::unary_function<ParseList&, ParseResult<T> > {
+struct TProduction : public std::unary_function<FParseList&, TParseResult<T> > {
     typedef T value_type;
 
     typedef SINGLETON_POOL_ALLOCATOR(Parser, int, POOL_TAG(Parser)) allocator_type;
-    typedef std::function< ParseResult<T>(ParseList&) > lambda_type;
+    typedef std::function< TParseResult<T>(FParseList&) > lambda_type;
 
     lambda_type Lambda;
 
     template <typename _Func>
-    explicit Production(_Func&& lambda) {
+    explicit TProduction(_Func&& lambda) {
         Lambda.assign(std::move(lambda), allocator_type());
     }
 
-    Production(const Production& other) { operator =(other); }
-    Production& operator =(const Production& other) { Lambda.assign(other.Lambda, allocator_type()); return *this; }
+    TProduction(const TProduction& other) { operator =(other); }
+    TProduction& operator =(const TProduction& other) { Lambda.assign(other.Lambda, allocator_type()); return *this; }
 
-    Production(Production&& rvalue) : Lambda(std::move(rvalue.Lambda)) {}
-    Production& operator =(Production&& rvalue) { Lambda = std::move(rvalue.Lambda); return *this; }
+    TProduction(TProduction&& rvalue) : Lambda(std::move(rvalue.Lambda)) {}
+    TProduction& operator =(TProduction&& rvalue) { Lambda = std::move(rvalue.Lambda); return *this; }
 
-    ParseResult<T> operator ()(ParseList& input) const {
+    TParseResult<T> operator ()(FParseList& input) const {
         return Lambda(input);
     }
 
-    ParseResult<T> TryParse(ParseList& input) const {
-        const Lexer::Match *state = input.Peek();
+    TParseResult<T> TryParse(FParseList& input) const {
+        const FLexer::FMatch *state = input.Peek();
 
-        ParseResult<T> result{ Lambda(input) };
+        TParseResult<T> result{ Lambda(input) };
         if (!result.Succeed())
             input.Seek(state);
 
         return result;
     }
 
-    T Parse(ParseList& input) const {
-        ParseResult<T> result = Lambda(input);
+    T Parse(FParseList& input) const {
+        TParseResult<T> result = Lambda(input);
         if (result.Succeed())
             return result.Value();
 
-        throw ParserException(result.Message(), result.Site(), nullptr);
+        throw FParserException(result.Message(), result.Site(), nullptr);
     }
 
-    Production Ref() const {
-        const Production *ref = this;
-        return Production{[ref](ParseList& input) -> ParseResult<T> {
+    TProduction Ref() const {
+        const TProduction *ref = this;
+        return TProduction{[ref](FParseList& input) -> TParseResult<T> {
             return ref->Lambda(input);
         }};
     }
 
-    static Production Return(T&& rvalue) {
-        return Production{[rvalue](ParseList& input) -> ParseResult<T> {
-            return ParseResult<T>.Success(rvalue, input.Site());
+    static TProduction Return(T&& rvalue) {
+        return TProduction{[rvalue](FParseList& input) -> TParseResult<T> {
+            return TParseResult<T>.Success(rvalue, input.Site());
         }};
     }
 
     template <typename U>
-    Production<U> Then(std::function< Production<U>(T&&) >&& then) const {
-        const Production& first = *this;
-        return Production<U>{[first, then](ParseList& input) -> ParseResult<U> {
-            ParseResult<T> result = first(input);
+    TProduction<U> Then(std::function< TProduction<U>(T&&) >&& then) const {
+        const TProduction& first = *this;
+        return TProduction<U>{[first, then](FParseList& input) -> TParseResult<U> {
+            TParseResult<T> result = first(input);
             return (result.Succeed())
                 ? then(std::move(result.Value()))
-                : ParseResult<U>::Failure(result.Message(), result.Expected(), result.Site());
+                : TParseResult<U>::Failure(result.Message(), result.Expected(), result.Site());
         }};
     }
 
     template <typename U>
-    Production<U> Select(std::function< U(T&&) >&& convert) const {
-        const Production& first = *this;
-        return Production<U>{[first, convert](ParseList& input) -> ParseResult<U> {
-            ParseResult<T> result = first(input);
+    TProduction<U> Select(std::function< U(T&&) >&& convert) const {
+        const TProduction& first = *this;
+        return TProduction<U>{[first, convert](FParseList& input) -> TParseResult<U> {
+            TParseResult<T> result = first(input);
             return (result.Succeed())
-                ? ParseResult<U>::Success(convert(std::move(result.Value())), result.Site())
-                : ParseResult<U>::Failure(result.Message(), result.Expected(), result.Site());
+                ? TParseResult<U>::Success(convert(std::move(result.Value())), result.Site())
+                : TParseResult<U>::Failure(result.Message(), result.Expected(), result.Site());
         }};
     }
 
     template <typename U>
-    Production<U> Return(U&& rvalue) const {
+    TProduction<U> Return(U&& rvalue) const {
         return Select([value = std::move(rvalue)](T&& ) -> U {
             return value;
         });
     }
 
-    Production< Enumerable<T> > Many() const {
-        const Production& parser = *this;
-        return Production< Enumerable<T> >{[parser](ParseList& input) -> ParseResult< Enumerable<T> > {
-            const Lexer::Match *offset = input.Peek();
+    TProduction< TEnumerable<T> > Many() const {
+        const TProduction& parser = *this;
+        return TProduction< TEnumerable<T> >{[parser](FParseList& input) -> TParseResult< TEnumerable<T> > {
+            const FLexer::FMatch *offset = input.Peek();
 
-            Enumerable<T> many;
-            ParseResult<T> result;
+            TEnumerable<T> many;
+            TParseResult<T> result;
             while ((result = parser.TryParse(input)).Succeed())
                 many.push_back(std::move(result.Value()));
 
-            return ParseResult< Enumerable<T> >::Success(std::move(many), offset ? offset->Site() : input.Site());
+            return TParseResult< TEnumerable<T> >::Success(std::move(many), offset ? offset->Site() : input.Site());
         }};
     }
 
-    Production< Enumerable<T> > AtLeastOnce() const {
-        const Production& parser = *this;
-        return Production< Enumerable<T> >{[parser](ParseList& input) -> ParseResult< Enumerable<T> > {
-            const Lexer::Match *offset = input.Peek();
+    TProduction< TEnumerable<T> > AtLeastOnce() const {
+        const TProduction& parser = *this;
+        return TProduction< TEnumerable<T> >{[parser](FParseList& input) -> TParseResult< TEnumerable<T> > {
+            const FLexer::FMatch *offset = input.Peek();
 
-            Enumerable<T> many;
-            ParseResult<T> result;
+            TEnumerable<T> many;
+            TParseResult<T> result;
             while ((result = parser.TryParse(input)).Succeed())
                 many.push_back(std::move(result.Value()));
 
             return (many.size())
-                ? ParseResult< Enumerable<T> >::Success(std::move(many), offset ? offset->Site() : input.Site())
-                : ParseResult< Enumerable<T> >::Failure("invalid match", Lexer::Symbol::Invalid, offset ? offset->Site() : input.Site());
+                ? TParseResult< TEnumerable<T> >::Success(std::move(many), offset ? offset->Site() : input.Site())
+                : TParseResult< TEnumerable<T> >::Failure("invalid match", FLexer::FSymbol::Invalid, offset ? offset->Site() : input.Site());
         }};
     }
 
-    Production Or(Production<T>&& other) const {
-        const Production& first = *this;
-        return Production<T>{[first, other](ParseList& input) -> ParseResult<T> {
-            ParseResult<T> result = first.TryParse(input);
+    TProduction Or(TProduction<T>&& other) const {
+        const TProduction& first = *this;
+        return TProduction<T>{[first, other](FParseList& input) -> TParseResult<T> {
+            TParseResult<T> result = first.TryParse(input);
             if (!result.Succeed())
                 result = other(input);
             return result;
@@ -146,82 +146,82 @@ struct Production : public std::unary_function<ParseList&, ParseResult<T> > {
     }
 
     template <typename U>
-    Production< typename TupleMerger<T, U>::type > And(Production<U>&& other) const {
-        typedef typename TupleMerger<T, U>::type tuple_type;
-        const Production& first = *this;
-        return Production<tuple_type>{[first, other](ParseList& input) -> ParseResult<tuple_type> {
-            ParseResult<T> a = first.TryParse(input);
+    TProduction< typename TTupleMerger<T, U>::type > And(TProduction<U>&& other) const {
+        typedef typename TTupleMerger<T, U>::type tuple_type;
+        const TProduction& first = *this;
+        return TProduction<tuple_type>{[first, other](FParseList& input) -> TParseResult<tuple_type> {
+            TParseResult<T> a = first.TryParse(input);
             if (!a.Succeed())
-                return ParseResult<tuple_type>::Failure(a.Message(), a.Expected(), a.Site());
+                return TParseResult<tuple_type>::Failure(a.Message(), a.Expected(), a.Site());
 
-            ParseResult<U> b = other.TryParse(input);
+            TParseResult<U> b = other.TryParse(input);
             if (!b.Succeed())
-                return ParseResult<tuple_type>::Failure(b.Message(), b.Expected(), b.Site());
+                return TParseResult<tuple_type>::Failure(b.Message(), b.Expected(), b.Site());
 
             tuple_type merged = MergeTuple(std::move(a.Value()), std::move(b.Value()));
 
-            return ParseResult<tuple_type>::Success(std::move(merged), a.Site());
+            return TParseResult<tuple_type>::Success(std::move(merged), a.Site());
         }};
     }
 
-    Production Except(Production&& other) const {
-        const Production& second = *this;
-        return Production<T>{[other, second](ParseList& input) {
-            ParseResult<T> result = other.TryParse(input);
+    TProduction Except(TProduction&& other) const {
+        const TProduction& second = *this;
+        return TProduction<T>{[other, second](FParseList& input) {
+            TParseResult<T> result = other.TryParse(input);
             return (result.Succeed())
-                ? ParseResult<T>::Failure("excepted parser succeeded", result.Site())
+                ? TParseResult<T>::Failure("excepted parser succeeded", result.Site())
                 : second(input);
         }};
     }
 };
 //----------------------------------------------------------------------------
-inline Production<const Lexer::Match *> Expect(Lexer::Symbol::TypeId symbol, const char *message = nullptr) {
-    return Production<const Lexer::Match *>{[symbol, message](ParseList& input) -> ParseResult<const Lexer::Match *> {
-        const Lexer::Match *match = input.Read();
+inline TProduction<const FLexer::FMatch *> Expect(FLexer::FSymbol::ETypeId symbol, const char *message = nullptr) {
+    return TProduction<const FLexer::FMatch *>{[symbol, message](FParseList& input) -> TParseResult<const FLexer::FMatch *> {
+        const FLexer::FMatch *match = input.Read();
 
         return (match && match->Symbol()->Type() == symbol)
-            ? ParseResult<const Lexer::Match *>::Success(match, match->Site())
-            : ParseResult<const Lexer::Match *>::Unexpected(symbol, match, input);
+            ? TParseResult<const FLexer::FMatch *>::Success(match, match->Site())
+            : TParseResult<const FLexer::FMatch *>::Unexpected(symbol, match, input);
     }};
 }
 //----------------------------------------------------------------------------
-inline Production<const Lexer::Match *> ExpectMask(uint64_t symbolMask, const char *message = nullptr) {
-    return Production<const Lexer::Match *>{[symbolMask, message](ParseList& input) -> ParseResult<const Lexer::Match *> {
-        const Lexer::Match *match = input.Read();
+inline TProduction<const FLexer::FMatch *> ExpectMask(uint64_t symbolMask, const char *message = nullptr) {
+    return TProduction<const FLexer::FMatch *>{[symbolMask, message](FParseList& input) -> TParseResult<const FLexer::FMatch *> {
+        const FLexer::FMatch *match = input.Read();
 
         return (match && match->Symbol()->Type() & symbolMask)
-            ? ParseResult<const Lexer::Match *>::Success(match, match->Site())
-            : ParseResult<const Lexer::Match *>::Unexpected(Lexer::Symbol::TypeId(symbolMask), match, input);
+            ? TParseResult<const FLexer::FMatch *>::Success(match, match->Site())
+            : TParseResult<const FLexer::FMatch *>::Unexpected(FLexer::FSymbol::ETypeId(symbolMask), match, input);
     }};
 }
 //----------------------------------------------------------------------------
-inline Production<const Lexer::Match *> Optional(Lexer::Symbol::TypeId symbol) {
-    return Production<const Lexer::Match *>{[symbol](ParseList& input) -> ParseResult<const Lexer::Match *> {
-        const Lexer::Match *match = input.Peek();
+inline TProduction<const FLexer::FMatch *> Optional(FLexer::FSymbol::ETypeId symbol) {
+    return TProduction<const FLexer::FMatch *>{[symbol](FParseList& input) -> TParseResult<const FLexer::FMatch *> {
+        const FLexer::FMatch *match = input.Peek();
         if (!match || match->Symbol()->Type() != symbol)
-            return ParseResult<const Lexer::Match *>::Success(nullptr, match ? match->Site() : input.Site());
+            return TParseResult<const FLexer::FMatch *>::Success(nullptr, match ? match->Site() : input.Site());
 
         Assert(match->Symbol()->Type() == symbol);
-        const Lexer::Match *consumed = input.Read(); // consumes match
+        const FLexer::FMatch *consumed = input.Read(); // consumes match
         Assert(consumed == match);
         UNUSED(consumed);
 
-        return ParseResult<const Lexer::Match *>::Success(match, match->Site());
+        return TParseResult<const FLexer::FMatch *>::Success(match, match->Site());
     }};
 }
 //----------------------------------------------------------------------------
-inline Production<const Lexer::Match *> OptionalMask(uint64_t symbolMask) {
-    return Production<const Lexer::Match *>{[symbolMask](ParseList& input) -> ParseResult<const Lexer::Match *> {
-        const Lexer::Match *match = input.Peek();
+inline TProduction<const FLexer::FMatch *> OptionalMask(uint64_t symbolMask) {
+    return TProduction<const FLexer::FMatch *>{[symbolMask](FParseList& input) -> TParseResult<const FLexer::FMatch *> {
+        const FLexer::FMatch *match = input.Peek();
         if (!match || 0 == (match->Symbol()->Type() & symbolMask) )
-            return ParseResult<const Lexer::Match *>::Success(nullptr, match ? match->Site() : input.Site());
+            return TParseResult<const FLexer::FMatch *>::Success(nullptr, match ? match->Site() : input.Site());
 
         Assert(match->Symbol()->Type() & symbolMask);
-        const Lexer::Match *consumed = input.Read(); // consumes match
+        const FLexer::FMatch *consumed = input.Read(); // consumes match
         Assert(consumed == match);
         UNUSED(consumed);
 
-        return ParseResult<const Lexer::Match *>::Success(match, match->Site());
+        return TParseResult<const FLexer::FMatch *>::Success(match, match->Site());
     }};
 }
 //----------------------------------------------------------------------------

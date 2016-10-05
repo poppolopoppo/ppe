@@ -22,36 +22,36 @@ namespace RTTI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-class MetaTypedAtom;
+class TMetaTypedAtom;
 FWD_REFPTR(MetaAtom);
 class IMetaAtomPair;
 class IMetaAtomVector;
 class IMetaAtomDictionary;
 //----------------------------------------------------------------------------
-class MetaAtom : public RefCountable {
+class FMetaAtom : public FRefCountable {
 public:
-    MetaAtom() {}
-    virtual ~MetaAtom() {}
+    FMetaAtom() {}
+    virtual ~FMetaAtom() {}
 
-    virtual MetaTypeInfo TypeInfo() const = 0;
+    virtual FMetaTypeInfo TypeInfo() const = 0;
     virtual const IMetaTypeVirtualTraits *Traits() const = 0;
 
     virtual bool IsDefaultValue() const = 0;
 
-    virtual void MoveTo(MetaAtom *atom) = 0;
-    virtual void CopyTo(MetaAtom *atom) const = 0;
+    virtual void MoveTo(FMetaAtom *atom) = 0;
+    virtual void CopyTo(FMetaAtom *atom) const = 0;
 
-    virtual MetaAtom *WrapMoveTo() = 0;
-    virtual MetaAtom *WrapCopyTo() const = 0;
+    virtual FMetaAtom *WrapMoveTo() = 0;
+    virtual FMetaAtom *WrapCopyTo() const = 0;
 
-    virtual void MoveFrom(MetaAtom *atom) = 0;
-    virtual void CopyFrom(const MetaAtom *atom) = 0;
+    virtual void MoveFrom(FMetaAtom *atom) = 0;
+    virtual void CopyFrom(const FMetaAtom *atom) = 0;
 
-    virtual bool Equals(const MetaAtom *atom) const = 0;
-    virtual bool DeepEquals(const MetaAtom *atom) const = 0;
+    virtual bool Equals(const FMetaAtom *atom) const = 0;
+    virtual bool DeepEquals(const FMetaAtom *atom) const = 0;
 
     virtual size_t HashValue() const = 0;
-    virtual String ToString() const = 0;
+    virtual FString ToString() const = 0;
 
     virtual IMetaAtomPair *AsPair() = 0;
     virtual const IMetaAtomPair *AsPair() const = 0;
@@ -66,33 +66,33 @@ public:
     virtual void Accept(IMetaAtomConstVisitor* visitor) const = 0;
 
     template <typename T>
-    MetaTypedAtom< typename MetaTypeTraits<T>::wrapper_type > *Cast() {
-        return checked_cast<MetaTypedAtom< typename MetaTypeTraits<T>::wrapper_type > *>(this);
+    TMetaTypedAtom< typename TMetaTypeTraits<T>::wrapper_type > *Cast() {
+        return checked_cast<TMetaTypedAtom< typename TMetaTypeTraits<T>::wrapper_type > *>(this);
     }
 
     template <typename T>
-    const MetaTypedAtom< typename MetaTypeTraits<T>::wrapper_type > *Cast() const {
-        return checked_cast<const MetaTypedAtom< typename MetaTypeTraits<T>::wrapper_type > *>(this);
+    const TMetaTypedAtom< typename TMetaTypeTraits<T>::wrapper_type > *Cast() const {
+        return checked_cast<const TMetaTypedAtom< typename TMetaTypeTraits<T>::wrapper_type > *>(this);
     }
 
     template <typename T>
-    MetaTypedAtom< typename MetaTypeTraits<T>::wrapper_type > *As() {
-        return dynamic_cast<MetaTypedAtom< typename MetaTypeTraits<T>::wrapper_type > *>(this);
+    TMetaTypedAtom< typename TMetaTypeTraits<T>::wrapper_type > *As() {
+        return dynamic_cast<TMetaTypedAtom< typename TMetaTypeTraits<T>::wrapper_type > *>(this);
     }
 
     template <typename T>
-    const MetaTypedAtom< typename MetaTypeTraits<T>::wrapper_type > *As() const {
-        return dynamic_cast<const MetaTypedAtom< typename MetaTypeTraits<T>::wrapper_type > *>(this);
+    const TMetaTypedAtom< typename TMetaTypeTraits<T>::wrapper_type > *As() const {
+        return dynamic_cast<const TMetaTypedAtom< typename TMetaTypeTraits<T>::wrapper_type > *>(this);
     }
 };
 //----------------------------------------------------------------------------
 template <typename T>
-T *AtomValueAs(MetaAtom *atom);
+T *AtomValueAs(FMetaAtom *atom);
 //----------------------------------------------------------------------------
 template <typename T>
-const T *AtomValueAs(const MetaAtom *atom);
+const T *AtomValueAs(const FMetaAtom *atom);
 //----------------------------------------------------------------------------
-inline hash_t hash_value(const MetaAtom& atom) { return atom.HashValue(); }
+inline hash_t hash_value(const FMetaAtom& atom) { return atom.HashValue(); }
 inline hash_t hash_value(const PMetaAtom& patom) { return patom ? patom->HashValue() : 0; }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -101,124 +101,124 @@ class IMetaAtomPair {
 public:
     virtual ~IMetaAtomPair() {}
 
-    virtual const MetaAtom* Atom() const = 0;
+    virtual const FMetaAtom* Atom() const = 0;
 
-    virtual MetaTypeInfo FirstTypeInfo() const = 0;
-    virtual MetaTypeInfo SecondTypeInfo() const = 0;
+    virtual FMetaTypeInfo FirstTypeInfo() const = 0;
+    virtual FMetaTypeInfo SecondTypeInfo() const = 0;
 
     virtual const IMetaTypeVirtualTraits *FirstTraits() const = 0;
     virtual const IMetaTypeVirtualTraits *SecondTraits() const = 0;
 
-    virtual void MoveTo(RTTI::Pair<PMetaAtom, PMetaAtom>& pair) = 0;
-    virtual void CopyTo(RTTI::Pair<PMetaAtom, PMetaAtom>& pair) const = 0;
+    virtual void MoveTo(RTTI::TPair<PMetaAtom, PMetaAtom>& pair) = 0;
+    virtual void CopyTo(RTTI::TPair<PMetaAtom, PMetaAtom>& pair) const = 0;
 
-    virtual void WrapMoveTo(RTTI::Pair<PMetaAtom, PMetaAtom>& pair) = 0;
-    virtual void WrapCopyTo(RTTI::Pair<PMetaAtom, PMetaAtom>& pair) const = 0;
+    virtual void WrapMoveTo(RTTI::TPair<PMetaAtom, PMetaAtom>& pair) = 0;
+    virtual void WrapCopyTo(RTTI::TPair<PMetaAtom, PMetaAtom>& pair) const = 0;
 
-    virtual void MoveFrom(const RTTI::Pair<PMetaAtom, PMetaAtom>& pair) = 0;
-    virtual void CopyFrom(const RTTI::Pair<PMetaAtom, PMetaAtom>& pair) = 0;
+    virtual void MoveFrom(const RTTI::TPair<PMetaAtom, PMetaAtom>& pair) = 0;
+    virtual void CopyFrom(const RTTI::TPair<PMetaAtom, PMetaAtom>& pair) = 0;
 
-    virtual bool UnwrapMoveFrom(const RTTI::Pair<PMetaAtom, PMetaAtom>& pair) = 0;
-    virtual bool UnwrapCopyFrom(const RTTI::Pair<PMetaAtom, PMetaAtom>& pair) = 0;
+    virtual bool UnwrapMoveFrom(const RTTI::TPair<PMetaAtom, PMetaAtom>& pair) = 0;
+    virtual bool UnwrapCopyFrom(const RTTI::TPair<PMetaAtom, PMetaAtom>& pair) = 0;
 
-    virtual bool Equals(const RTTI::Pair<PMetaAtom, PMetaAtom>& pair) const = 0;
+    virtual bool Equals(const RTTI::TPair<PMetaAtom, PMetaAtom>& pair) const = 0;
 };
 //----------------------------------------------------------------------------
 class IMetaAtomVector {
 public:
     virtual ~IMetaAtomVector() {}
 
-    virtual const MetaAtom* Atom() const = 0;
+    virtual const FMetaAtom* Atom() const = 0;
 
-    virtual MetaTypeInfo ValueTypeInfo() const = 0;
+    virtual FMetaTypeInfo ValueTypeInfo() const = 0;
     virtual const IMetaTypeVirtualTraits *ValueTraits() const = 0;
 
-    virtual void MoveTo(RTTI::Vector<PMetaAtom>& vector) = 0;
-    virtual void CopyTo(RTTI::Vector<PMetaAtom>& vector) const = 0;
+    virtual void MoveTo(RTTI::TVector<PMetaAtom>& vector) = 0;
+    virtual void CopyTo(RTTI::TVector<PMetaAtom>& vector) const = 0;
 
-    virtual void WrapMoveTo(RTTI::Vector<PMetaAtom>& vector) = 0;
-    virtual void WrapCopyTo(RTTI::Vector<PMetaAtom>& vector) const = 0;
+    virtual void WrapMoveTo(RTTI::TVector<PMetaAtom>& vector) = 0;
+    virtual void WrapCopyTo(RTTI::TVector<PMetaAtom>& vector) const = 0;
 
-    virtual void MoveFrom(const RTTI::Vector<PMetaAtom>& vector) = 0;
-    virtual void CopyFrom(const RTTI::Vector<PMetaAtom>& vector) = 0;
+    virtual void MoveFrom(const RTTI::TVector<PMetaAtom>& vector) = 0;
+    virtual void CopyFrom(const RTTI::TVector<PMetaAtom>& vector) = 0;
 
-    virtual bool UnwrapMoveFrom(const RTTI::Vector<PMetaAtom>& vector) = 0;
-    virtual bool UnwrapCopyFrom(const RTTI::Vector<PMetaAtom>& vector) = 0;
+    virtual bool UnwrapMoveFrom(const RTTI::TVector<PMetaAtom>& vector) = 0;
+    virtual bool UnwrapCopyFrom(const RTTI::TVector<PMetaAtom>& vector) = 0;
 
-    virtual bool Equals(const RTTI::Vector<PMetaAtom>& vector) const = 0;
+    virtual bool Equals(const RTTI::TVector<PMetaAtom>& vector) const = 0;
 };
 //----------------------------------------------------------------------------
 class IMetaAtomDictionary {
 public:
     virtual ~IMetaAtomDictionary() {}
 
-    virtual const MetaAtom* Atom() const = 0;
+    virtual const FMetaAtom* Atom() const = 0;
 
-    virtual MetaTypeInfo KeyTypeInfo() const = 0;
-    virtual MetaTypeInfo ValueTypeInfo() const = 0;
+    virtual FMetaTypeInfo KeyTypeInfo() const = 0;
+    virtual FMetaTypeInfo ValueTypeInfo() const = 0;
 
     virtual const IMetaTypeVirtualTraits *KeyTraits() const = 0;
     virtual const IMetaTypeVirtualTraits *ValueTraits() const = 0;
 
-    virtual void MoveTo(RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) = 0;
-    virtual void CopyTo(RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) const = 0;
+    virtual void MoveTo(RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) = 0;
+    virtual void CopyTo(RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) const = 0;
 
-    virtual void WrapMoveTo(RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) = 0;
-    virtual void WrapCopyTo(RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) const = 0;
+    virtual void WrapMoveTo(RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) = 0;
+    virtual void WrapCopyTo(RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) const = 0;
 
-    virtual void MoveFrom(const RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) = 0;
-    virtual void CopyFrom(const RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) = 0;
+    virtual void MoveFrom(const RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) = 0;
+    virtual void CopyFrom(const RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) = 0;
 
-    virtual bool UnwrapMoveFrom(const RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) = 0;
-    virtual bool UnwrapCopyFrom(const RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) = 0;
+    virtual bool UnwrapMoveFrom(const RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) = 0;
+    virtual bool UnwrapCopyFrom(const RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) = 0;
 
-    virtual bool Equals(const RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) const = 0;
+    virtual bool Equals(const RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) const = 0;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-class MetaTypedAtomImpl : public MetaAtom {
+class TMetaTypedAtomImpl : public FMetaAtom {
 public:
-    typedef MetaType<T> meta_type;
+    typedef TMetaType<T> meta_type;
 
-    MetaTypedAtomImpl();
-    virtual ~MetaTypedAtomImpl();
+    TMetaTypedAtomImpl();
+    virtual ~TMetaTypedAtomImpl();
 
-    MetaTypedAtomImpl(T&& wrapper);
-    MetaTypedAtomImpl& operator =(T&& wrapper);
+    TMetaTypedAtomImpl(T&& wrapper);
+    TMetaTypedAtomImpl& operator =(T&& wrapper);
 
-    MetaTypedAtomImpl(const T& wrapper);
-    MetaTypedAtomImpl& operator =(const T& wrapper);
+    TMetaTypedAtomImpl(const T& wrapper);
+    TMetaTypedAtomImpl& operator =(const T& wrapper);
 
-    MetaTypedAtomImpl(MetaTypedAtomImpl&& rvalue);
-    MetaTypedAtomImpl& operator =(MetaTypedAtomImpl&& rvalue);
+    TMetaTypedAtomImpl(TMetaTypedAtomImpl&& rvalue);
+    TMetaTypedAtomImpl& operator =(TMetaTypedAtomImpl&& rvalue);
 
-    MetaTypedAtomImpl(const MetaTypedAtomImpl& other);
-    MetaTypedAtomImpl& operator =(const MetaTypedAtomImpl& other);
+    TMetaTypedAtomImpl(const TMetaTypedAtomImpl& other);
+    TMetaTypedAtomImpl& operator =(const TMetaTypedAtomImpl& other);
 
     T& Wrapper() { return _wrapper; }
     const T& Wrapper() const { return _wrapper; }
 
-    virtual MetaTypeInfo TypeInfo() const override;
+    virtual FMetaTypeInfo TypeInfo() const override;
     virtual const IMetaTypeVirtualTraits *Traits() const override;
 
     virtual bool IsDefaultValue() const override;
 
-    virtual void MoveTo(MetaAtom *atom) override;
-    virtual void CopyTo(MetaAtom *atom) const override;
+    virtual void MoveTo(FMetaAtom *atom) override;
+    virtual void CopyTo(FMetaAtom *atom) const override;
 
-    virtual MetaAtom *WrapMoveTo() override;
-    virtual MetaAtom *WrapCopyTo() const override;
+    virtual FMetaAtom *WrapMoveTo() override;
+    virtual FMetaAtom *WrapCopyTo() const override;
 
-    virtual void MoveFrom(MetaAtom *atom) override;
-    virtual void CopyFrom(const MetaAtom *atom) override;
+    virtual void MoveFrom(FMetaAtom *atom) override;
+    virtual void CopyFrom(const FMetaAtom *atom) override;
 
-    virtual bool Equals(const MetaAtom *atom) const override;
-    virtual bool DeepEquals(const MetaAtom *atom) const override;
+    virtual bool Equals(const FMetaAtom *atom) const override;
+    virtual bool DeepEquals(const FMetaAtom *atom) const override;
 
     virtual size_t HashValue() const override;
-    virtual String ToString() const override;
+    virtual FString ToString() const override;
 
     void Swap(T& wrapper);
 
@@ -229,25 +229,25 @@ protected:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-class MetaTypedAtom : public MetaTypedAtomImpl<T> {
+class TMetaTypedAtom : public TMetaTypedAtomImpl<T> {
 public:
     typedef T wrapper_type;
-    typedef MetaTypedAtomImpl< wrapper_type > impl_type;
+    typedef TMetaTypedAtomImpl< wrapper_type > impl_type;
 
-    MetaTypedAtom() {}
-    virtual ~MetaTypedAtom() {}
+    TMetaTypedAtom() {}
+    virtual ~TMetaTypedAtom() {}
 
-    MetaTypedAtom(wrapper_type&& wrapper) : impl_type(std::move(wrapper)) {}
-    MetaTypedAtom& operator =(T&& wrapper) { impl_type::operator =(std::move(wrapper)); return *this; }
+    TMetaTypedAtom(wrapper_type&& wrapper) : impl_type(std::move(wrapper)) {}
+    TMetaTypedAtom& operator =(T&& wrapper) { impl_type::operator =(std::move(wrapper)); return *this; }
 
-    MetaTypedAtom(const wrapper_type& wrapper) : impl_type(wrapper) {}
-    MetaTypedAtom& operator =(const wrapper_type& wrapper) { impl_type::operator =(wrapper); return *this; }
+    TMetaTypedAtom(const wrapper_type& wrapper) : impl_type(wrapper) {}
+    TMetaTypedAtom& operator =(const wrapper_type& wrapper) { impl_type::operator =(wrapper); return *this; }
 
-    MetaTypedAtom(MetaTypedAtom&& rvalue) : impl_type(std::move(rvalue)) {}
-    MetaTypedAtom& operator =(MetaTypedAtom&& rvalue) { impl_type::operator =(std::move(rvalue)); return *this; }
+    TMetaTypedAtom(TMetaTypedAtom&& rvalue) : impl_type(std::move(rvalue)) {}
+    TMetaTypedAtom& operator =(TMetaTypedAtom&& rvalue) { impl_type::operator =(std::move(rvalue)); return *this; }
 
-    MetaTypedAtom(const MetaTypedAtom& other) : impl_type(other) {}
-    MetaTypedAtom& operator =(const MetaTypedAtom& other) { impl_type::operator =(other); return *this; }
+    TMetaTypedAtom(const TMetaTypedAtom& other) : impl_type(other) {}
+    TMetaTypedAtom& operator =(const TMetaTypedAtom& other) { impl_type::operator =(other); return *this; }
 
     virtual IMetaAtomPair *AsPair() override { return nullptr; }
     virtual const IMetaAtomPair *AsPair() const override { return nullptr; }
@@ -268,25 +268,25 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
-class MetaTypedAtom< RTTI::Pair<_First, _Second> > : public MetaTypedAtomImpl< RTTI::Pair<_First, _Second> >, public IMetaAtomPair {
+class TMetaTypedAtom< RTTI::TPair<_First, _Second> > : public TMetaTypedAtomImpl< RTTI::TPair<_First, _Second> >, public IMetaAtomPair {
 public:
-    typedef RTTI::Pair<_First, _Second> wrapper_type;
-    typedef MetaTypedAtomImpl< wrapper_type > impl_type;
+    typedef RTTI::TPair<_First, _Second> wrapper_type;
+    typedef TMetaTypedAtomImpl< wrapper_type > impl_type;
 
-    MetaTypedAtom() {}
-    virtual ~MetaTypedAtom() {}
+    TMetaTypedAtom() {}
+    virtual ~TMetaTypedAtom() {}
 
-    MetaTypedAtom(wrapper_type&& wrapper) : impl_type(std::move(wrapper)) {}
-    MetaTypedAtom& operator =(wrapper_type&& wrapper) { impl_type::operator =(std::move(wrapper)); return *this; }
+    TMetaTypedAtom(wrapper_type&& wrapper) : impl_type(std::move(wrapper)) {}
+    TMetaTypedAtom& operator =(wrapper_type&& wrapper) { impl_type::operator =(std::move(wrapper)); return *this; }
 
-    MetaTypedAtom(const wrapper_type& wrapper) : impl_type(wrapper) {}
-    MetaTypedAtom& operator =(const wrapper_type& wrapper) { impl_type::operator =(wrapper); return *this; }
+    TMetaTypedAtom(const wrapper_type& wrapper) : impl_type(wrapper) {}
+    TMetaTypedAtom& operator =(const wrapper_type& wrapper) { impl_type::operator =(wrapper); return *this; }
 
-    MetaTypedAtom(MetaTypedAtom&& rvalue) : impl_type(std::move(rvalue)) {}
-    MetaTypedAtom& operator =(MetaTypedAtom&& rvalue) { impl_type::operator =(std::move(rvalue)); return *this; }
+    TMetaTypedAtom(TMetaTypedAtom&& rvalue) : impl_type(std::move(rvalue)) {}
+    TMetaTypedAtom& operator =(TMetaTypedAtom&& rvalue) { impl_type::operator =(std::move(rvalue)); return *this; }
 
-    MetaTypedAtom(const MetaTypedAtom& other) : impl_type(other) {}
-    MetaTypedAtom& operator =(const MetaTypedAtom& other) { impl_type::operator =(other); return *this; }
+    TMetaTypedAtom(const TMetaTypedAtom& other) : impl_type(other) {}
+    TMetaTypedAtom& operator =(const TMetaTypedAtom& other) { impl_type::operator =(other); return *this; }
 
     virtual IMetaAtomPair *AsPair() override { return this; }
     virtual const IMetaAtomPair *AsPair() const override { return this; }
@@ -316,49 +316,49 @@ public:
 private:
     using impl_type::_wrapper;
 
-    virtual const MetaAtom* Atom() const override { return this; }
+    virtual const FMetaAtom* Atom() const override { return this; }
 
-    virtual MetaTypeInfo FirstTypeInfo() const override { return RTTI::TypeInfo< _First >(); }
-    virtual MetaTypeInfo SecondTypeInfo() const override { return RTTI::TypeInfo< _Second >(); }
+    virtual FMetaTypeInfo FirstTypeInfo() const override { return RTTI::TypeInfo< _First >(); }
+    virtual FMetaTypeInfo SecondTypeInfo() const override { return RTTI::TypeInfo< _Second >(); }
 
-    virtual const IMetaTypeVirtualTraits *FirstTraits() const override { return MetaTypeTraits< _First >::VirtualTraits(); }
-    virtual const IMetaTypeVirtualTraits *SecondTraits() const override { return MetaTypeTraits< _Second >::VirtualTraits(); }
+    virtual const IMetaTypeVirtualTraits *FirstTraits() const override { return TMetaTypeTraits< _First >::VirtualTraits(); }
+    virtual const IMetaTypeVirtualTraits *SecondTraits() const override { return TMetaTypeTraits< _Second >::VirtualTraits(); }
 
-    virtual void MoveTo(RTTI::Pair<PMetaAtom, PMetaAtom>& pair) override;
-    virtual void CopyTo(RTTI::Pair<PMetaAtom, PMetaAtom>& pair) const override;
+    virtual void MoveTo(RTTI::TPair<PMetaAtom, PMetaAtom>& pair) override;
+    virtual void CopyTo(RTTI::TPair<PMetaAtom, PMetaAtom>& pair) const override;
 
-    virtual void WrapMoveTo(RTTI::Pair<PMetaAtom, PMetaAtom>& pair) override;
-    virtual void WrapCopyTo(RTTI::Pair<PMetaAtom, PMetaAtom>& pair) const override;
+    virtual void WrapMoveTo(RTTI::TPair<PMetaAtom, PMetaAtom>& pair) override;
+    virtual void WrapCopyTo(RTTI::TPair<PMetaAtom, PMetaAtom>& pair) const override;
 
-    virtual void MoveFrom(const RTTI::Pair<PMetaAtom, PMetaAtom>& pair) override;
-    virtual void CopyFrom(const RTTI::Pair<PMetaAtom, PMetaAtom>& pair) override;
+    virtual void MoveFrom(const RTTI::TPair<PMetaAtom, PMetaAtom>& pair) override;
+    virtual void CopyFrom(const RTTI::TPair<PMetaAtom, PMetaAtom>& pair) override;
 
-    virtual bool UnwrapMoveFrom(const RTTI::Pair<PMetaAtom, PMetaAtom>& pair) override;
-    virtual bool UnwrapCopyFrom(const RTTI::Pair<PMetaAtom, PMetaAtom>& pair) override;
+    virtual bool UnwrapMoveFrom(const RTTI::TPair<PMetaAtom, PMetaAtom>& pair) override;
+    virtual bool UnwrapCopyFrom(const RTTI::TPair<PMetaAtom, PMetaAtom>& pair) override;
 
-    virtual bool Equals(const RTTI::Pair<PMetaAtom, PMetaAtom>& pair) const override;
+    virtual bool Equals(const RTTI::TPair<PMetaAtom, PMetaAtom>& pair) const override;
 };
 //----------------------------------------------------------------------------
 template <typename T>
-class MetaTypedAtom< RTTI::Vector<T> > : public MetaTypedAtomImpl< RTTI::Vector<T> >, public IMetaAtomVector {
+class TMetaTypedAtom< RTTI::TVector<T> > : public TMetaTypedAtomImpl< RTTI::TVector<T> >, public IMetaAtomVector {
 public:
-    typedef RTTI::Vector<T> wrapper_type;
-    typedef MetaTypedAtomImpl< wrapper_type > impl_type;
+    typedef RTTI::TVector<T> wrapper_type;
+    typedef TMetaTypedAtomImpl< wrapper_type > impl_type;
 
-    MetaTypedAtom() {}
-    virtual ~MetaTypedAtom() {}
+    TMetaTypedAtom() {}
+    virtual ~TMetaTypedAtom() {}
 
-    MetaTypedAtom(wrapper_type&& wrapper) : impl_type(std::move(wrapper)) {}
-    MetaTypedAtom& operator =(wrapper_type&& wrapper) { impl_type::operator =(std::move(wrapper)); return *this; }
+    TMetaTypedAtom(wrapper_type&& wrapper) : impl_type(std::move(wrapper)) {}
+    TMetaTypedAtom& operator =(wrapper_type&& wrapper) { impl_type::operator =(std::move(wrapper)); return *this; }
 
-    MetaTypedAtom(const wrapper_type& wrapper) : impl_type(wrapper) {}
-    MetaTypedAtom& operator =(const wrapper_type& wrapper) { impl_type::operator =(wrapper); return *this; }
+    TMetaTypedAtom(const wrapper_type& wrapper) : impl_type(wrapper) {}
+    TMetaTypedAtom& operator =(const wrapper_type& wrapper) { impl_type::operator =(wrapper); return *this; }
 
-    MetaTypedAtom(MetaTypedAtom&& rvalue) : impl_type(std::move(rvalue)) {}
-    MetaTypedAtom& operator =(MetaTypedAtom&& rvalue) { impl_type::operator =(std::move(rvalue)); return *this; }
+    TMetaTypedAtom(TMetaTypedAtom&& rvalue) : impl_type(std::move(rvalue)) {}
+    TMetaTypedAtom& operator =(TMetaTypedAtom&& rvalue) { impl_type::operator =(std::move(rvalue)); return *this; }
 
-    MetaTypedAtom(const MetaTypedAtom& other) : impl_type(other) {}
-    MetaTypedAtom& operator =(const MetaTypedAtom& other) { impl_type::operator =(other); return *this; }
+    TMetaTypedAtom(const TMetaTypedAtom& other) : impl_type(other) {}
+    TMetaTypedAtom& operator =(const TMetaTypedAtom& other) { impl_type::operator =(other); return *this; }
 
     virtual IMetaAtomPair *AsPair() override { return nullptr; }
     virtual const IMetaAtomPair *AsPair() const override { return nullptr; }
@@ -388,46 +388,46 @@ public:
 private:
     using impl_type::_wrapper;
 
-    virtual const MetaAtom* Atom() const override { return this; }
+    virtual const FMetaAtom* Atom() const override { return this; }
 
-    virtual MetaTypeInfo ValueTypeInfo() const override { return RTTI::TypeInfo< T >(); }
-    virtual const IMetaTypeVirtualTraits *ValueTraits() const override { return MetaTypeTraits< T >::VirtualTraits(); }
+    virtual FMetaTypeInfo ValueTypeInfo() const override { return RTTI::TypeInfo< T >(); }
+    virtual const IMetaTypeVirtualTraits *ValueTraits() const override { return TMetaTypeTraits< T >::VirtualTraits(); }
 
-    virtual void MoveTo(RTTI::Vector<PMetaAtom>& vector) override;
-    virtual void CopyTo(RTTI::Vector<PMetaAtom>& vector) const override;
+    virtual void MoveTo(RTTI::TVector<PMetaAtom>& vector) override;
+    virtual void CopyTo(RTTI::TVector<PMetaAtom>& vector) const override;
 
-    virtual void WrapMoveTo(RTTI::Vector<PMetaAtom>& vector) override;
-    virtual void WrapCopyTo(RTTI::Vector<PMetaAtom>& vector) const override;
+    virtual void WrapMoveTo(RTTI::TVector<PMetaAtom>& vector) override;
+    virtual void WrapCopyTo(RTTI::TVector<PMetaAtom>& vector) const override;
 
-    virtual void MoveFrom(const RTTI::Vector<PMetaAtom>& vector) override;
-    virtual void CopyFrom(const RTTI::Vector<PMetaAtom>& vector) override;
+    virtual void MoveFrom(const RTTI::TVector<PMetaAtom>& vector) override;
+    virtual void CopyFrom(const RTTI::TVector<PMetaAtom>& vector) override;
 
-    virtual bool UnwrapMoveFrom(const RTTI::Vector<PMetaAtom>& vector) override;
-    virtual bool UnwrapCopyFrom(const RTTI::Vector<PMetaAtom>& vector) override;
+    virtual bool UnwrapMoveFrom(const RTTI::TVector<PMetaAtom>& vector) override;
+    virtual bool UnwrapCopyFrom(const RTTI::TVector<PMetaAtom>& vector) override;
 
-    virtual bool Equals(const RTTI::Vector<PMetaAtom>& vector) const override;
+    virtual bool Equals(const RTTI::TVector<PMetaAtom>& vector) const override;
 };
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
-class MetaTypedAtom< RTTI::Dictionary<_Key, _Value> > : public MetaTypedAtomImpl< RTTI::Dictionary<_Key, _Value> >, public IMetaAtomDictionary {
+class TMetaTypedAtom< RTTI::TDictionary<_Key, _Value> > : public TMetaTypedAtomImpl< RTTI::TDictionary<_Key, _Value> >, public IMetaAtomDictionary {
 public:
-    typedef RTTI::Dictionary<_Key, _Value> wrapper_type;
-    typedef MetaTypedAtomImpl< wrapper_type > impl_type;
+    typedef RTTI::TDictionary<_Key, _Value> wrapper_type;
+    typedef TMetaTypedAtomImpl< wrapper_type > impl_type;
 
-    MetaTypedAtom() {}
-    virtual ~MetaTypedAtom() {}
+    TMetaTypedAtom() {}
+    virtual ~TMetaTypedAtom() {}
 
-    MetaTypedAtom(wrapper_type&& wrapper) : impl_type(std::move(wrapper)) {}
-    MetaTypedAtom& operator =(wrapper_type&& wrapper) { impl_type::operator =(std::move(wrapper)); return *this; }
+    TMetaTypedAtom(wrapper_type&& wrapper) : impl_type(std::move(wrapper)) {}
+    TMetaTypedAtom& operator =(wrapper_type&& wrapper) { impl_type::operator =(std::move(wrapper)); return *this; }
 
-    MetaTypedAtom(const wrapper_type& wrapper) : impl_type(wrapper) {}
-    MetaTypedAtom& operator =(const wrapper_type& wrapper) { impl_type::operator =(wrapper); return *this; }
+    TMetaTypedAtom(const wrapper_type& wrapper) : impl_type(wrapper) {}
+    TMetaTypedAtom& operator =(const wrapper_type& wrapper) { impl_type::operator =(wrapper); return *this; }
 
-    MetaTypedAtom(MetaTypedAtom&& rvalue) : impl_type(std::move(rvalue)) {}
-    MetaTypedAtom& operator =(MetaTypedAtom&& rvalue) { impl_type::operator =(std::move(rvalue)); return *this; }
+    TMetaTypedAtom(TMetaTypedAtom&& rvalue) : impl_type(std::move(rvalue)) {}
+    TMetaTypedAtom& operator =(TMetaTypedAtom&& rvalue) { impl_type::operator =(std::move(rvalue)); return *this; }
 
-    MetaTypedAtom(const MetaTypedAtom& other) : impl_type(other) {}
-    MetaTypedAtom& operator =(const MetaTypedAtom& other) { impl_type::operator =(other); return *this; }
+    TMetaTypedAtom(const TMetaTypedAtom& other) : impl_type(other) {}
+    TMetaTypedAtom& operator =(const TMetaTypedAtom& other) { impl_type::operator =(other); return *this; }
 
     virtual IMetaAtomPair *AsPair() override { return nullptr; }
     virtual const IMetaAtomPair *AsPair() const override { return nullptr; }
@@ -457,58 +457,58 @@ public:
 private:
     using impl_type::_wrapper;
 
-    virtual const MetaAtom* Atom() const override { return this; }
+    virtual const FMetaAtom* Atom() const override { return this; }
 
-    virtual MetaTypeInfo KeyTypeInfo() const override { return RTTI::TypeInfo< _Key >(); }
-    virtual MetaTypeInfo ValueTypeInfo() const override { return RTTI::TypeInfo< _Value >(); }
+    virtual FMetaTypeInfo KeyTypeInfo() const override { return RTTI::TypeInfo< _Key >(); }
+    virtual FMetaTypeInfo ValueTypeInfo() const override { return RTTI::TypeInfo< _Value >(); }
 
-    virtual const IMetaTypeVirtualTraits *KeyTraits() const override { return MetaTypeTraits< _Key >::VirtualTraits(); }
-    virtual const IMetaTypeVirtualTraits *ValueTraits() const override { return MetaTypeTraits< _Value >::VirtualTraits(); }
+    virtual const IMetaTypeVirtualTraits *KeyTraits() const override { return TMetaTypeTraits< _Key >::VirtualTraits(); }
+    virtual const IMetaTypeVirtualTraits *ValueTraits() const override { return TMetaTypeTraits< _Value >::VirtualTraits(); }
 
-    virtual void MoveTo(RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) override;
-    virtual void CopyTo(RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) const override;
+    virtual void MoveTo(RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) override;
+    virtual void CopyTo(RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) const override;
 
-    virtual void WrapMoveTo(RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) override;
-    virtual void WrapCopyTo(RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) const override;
+    virtual void WrapMoveTo(RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) override;
+    virtual void WrapCopyTo(RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) const override;
 
-    virtual void MoveFrom(const RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) override;
-    virtual void CopyFrom(const RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) override;
+    virtual void MoveFrom(const RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) override;
+    virtual void CopyFrom(const RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) override;
 
-    virtual bool UnwrapMoveFrom(const RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) override;
-    virtual bool UnwrapCopyFrom(const RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) override;
+    virtual bool UnwrapMoveFrom(const RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) override;
+    virtual bool UnwrapCopyFrom(const RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) override;
 
-    virtual bool Equals(const RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) const override;
+    virtual bool Equals(const RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) const override;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-struct MetaAtomWrapper {
-    typedef MetaTypeTraits< typename std::decay<T>::type > trais_type;
+struct TMetaAtomWrapper {
+    typedef TMetaTypeTraits< typename std::decay<T>::type > trais_type;
     typedef typename std::is_same<
         typename trais_type::wrapper_type,
         typename trais_type::wrapped_type
     >::type dont_need_wrapper;
     typedef std::integral_constant<bool, false == dont_need_wrapper::value> need_wrapper;
-    typedef MetaTypedAtom< typename trais_type::wrapper_type > type;
+    typedef TMetaTypedAtom< typename trais_type::wrapper_type > type;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-/*inline MetaAtom* MakeAtom(MetaAtom* atom) { return atom; }
-inline const MetaAtom* MakeAtom(const MetaAtom* atom) { return atom; }
-inline MetaAtom* MakeAtom(PMetaAtom&& ratom) { return ratom.get(); }
-inline MetaAtom* MakeAtom(const PMetaAtom& atom) { return atom.get(); }
-inline const MetaAtom* MakeAtom(const PCMetaAtom& atom) { return atom.get(); }*/
+/*inline FMetaAtom* MakeAtom(FMetaAtom* atom) { return atom; }
+inline const FMetaAtom* MakeAtom(const FMetaAtom* atom) { return atom; }
+inline FMetaAtom* MakeAtom(PMetaAtom&& ratom) { return ratom.get(); }
+inline FMetaAtom* MakeAtom(const PMetaAtom& atom) { return atom.get(); }
+inline const FMetaAtom* MakeAtom(const PCMetaAtom& atom) { return atom.get(); }*/
 //----------------------------------------------------------------------------
 template <typename T>
-typename MetaAtomWrapper<T>::type *MakeAtom(T&& rvalue, typename std::enable_if< MetaAtomWrapper<T>::need_wrapper::value >::type* = 0 );
+typename TMetaAtomWrapper<T>::type *MakeAtom(T&& rvalue, typename std::enable_if< TMetaAtomWrapper<T>::need_wrapper::value >::type* = 0 );
 //----------------------------------------------------------------------------
 template <typename T>
-typename MetaAtomWrapper<T>::type *MakeAtom(const T& value, typename std::enable_if< MetaAtomWrapper<T>::need_wrapper::value >::type* = 0 );
+typename TMetaAtomWrapper<T>::type *MakeAtom(const T& value, typename std::enable_if< TMetaAtomWrapper<T>::need_wrapper::value >::type* = 0 );
 //----------------------------------------------------------------------------
 template <typename T>
-typename MetaAtomWrapper<T>::type *MakeAtom(T&& rvalue, typename std::enable_if< MetaAtomWrapper<T>::dont_need_wrapper::value >::type* = 0 );
+typename TMetaAtomWrapper<T>::type *MakeAtom(T&& rvalue, typename std::enable_if< TMetaAtomWrapper<T>::dont_need_wrapper::value >::type* = 0 );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -522,14 +522,14 @@ namespace Core {
 template <typename T, typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
-    const RTTI::MetaTypedAtom<T>& typedAtom) {
+    const RTTI::TMetaTypedAtom<T>& typedAtom) {
     return oss << typedAtom.Wrapper();
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
-    const RTTI::MetaAtom *atom) {
+    const RTTI::FMetaAtom *atom) {
     Assert(atom);
     return oss << atom->ToString();
 }

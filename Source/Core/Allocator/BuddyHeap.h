@@ -8,30 +8,30 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct BuddyBlock;
-class BuddyChunk {
+struct FBuddyBlock;
+class FBuddyChunk {
 public:
-    BuddyChunk(const BuddyChunk& ) = delete;
-    BuddyChunk& operator =(const BuddyChunk& ) = delete;
+    FBuddyChunk(const FBuddyChunk& ) = delete;
+    FBuddyChunk& operator =(const FBuddyChunk& ) = delete;
 
     size_t CapacityInBytes() const { return _capacityInBytes; }
     size_t ConsumedInBytes() const { return _consumedInBytes; }
     size_t BlockCount() const { return _blockCount; }
 
-    BuddyChunk *Sibling() const { return _sibling; }
-    void SetSibling(BuddyChunk *chunk) { _sibling = chunk; }
+    FBuddyChunk *Sibling() const { return _sibling; }
+    void SetSibling(FBuddyChunk *chunk) { _sibling = chunk; }
 
     void *Allocate(size_t sizeInBytes);
     void Deallocate(void *ptr);
 
     bool Contains(void *ptr) const;
 
-    static BuddyChunk *Create(size_t capacityInBytes, BuddyChunk *sibling = nullptr);
-    static void Destroy(BuddyChunk *chunk);
+    static FBuddyChunk *Create(size_t capacityInBytes, FBuddyChunk *sibling = nullptr);
+    static void Destroy(FBuddyChunk *chunk);
 
 protected:
-    BuddyChunk(size_t capacityInBytes, BuddyChunk *sibling);
-    ~BuddyChunk();
+    FBuddyChunk(size_t capacityInBytes, FBuddyChunk *sibling);
+    ~FBuddyChunk();
 
 private:
     u32 _capacityInBytes;
@@ -39,19 +39,19 @@ private:
     u32 _blockCount : 31;
     u32 _available  : 1;
 
-    BuddyBlock *_blocks;
-    BuddyChunk *_sibling;
+    FBuddyBlock *_blocks;
+    FBuddyChunk *_sibling;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class BuddyHeap {
+class FBuddyHeap {
 public:
-    BuddyHeap(size_t capacityInBytes, bool growable);
-    ~BuddyHeap();
+    FBuddyHeap(size_t capacityInBytes, bool growable);
+    ~FBuddyHeap();
 
-    BuddyHeap(const BuddyHeap& ) = delete;
-    BuddyHeap& operator =(const BuddyHeap& ) = delete;
+    FBuddyHeap(const FBuddyHeap& ) = delete;
+    FBuddyHeap& operator =(const FBuddyHeap& ) = delete;
 
     size_t ChunkSizeInBytes() const { return _chunkSizeInBytes; }
     bool Growable() const { return _growable; }
@@ -74,22 +74,22 @@ private:
     size_t _consumedInBytes;
     size_t _blockCount;
 
-    BuddyChunk *_chunks;
+    FBuddyChunk *_chunks;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ThreadSafeBuddyHeap : BuddyHeap {
+class FThreadSafeBuddyHeap : FBuddyHeap {
 public:
-    ThreadSafeBuddyHeap(size_t capacityInBytes, bool growable) : BuddyHeap(capacityInBytes, growable) {}
-    ~ThreadSafeBuddyHeap() {}
+    FThreadSafeBuddyHeap(size_t capacityInBytes, bool growable) : FBuddyHeap(capacityInBytes, growable) {}
+    ~FThreadSafeBuddyHeap() {}
 
-    using BuddyHeap::ChunkSizeInBytes;
-    using BuddyHeap::Growable;
+    using FBuddyHeap::ChunkSizeInBytes;
+    using FBuddyHeap::Growable;
 
-    using BuddyHeap::CapacityInBytes;
-    using BuddyHeap::ConsumedInBytes;
-    using BuddyHeap::BlockCount;
+    using FBuddyHeap::CapacityInBytes;
+    using FBuddyHeap::ConsumedInBytes;
+    using FBuddyHeap::BlockCount;
 
     void *Allocate(size_t sizeInBytes);
     void Deallocate(void *ptr);

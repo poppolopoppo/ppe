@@ -13,10 +13,10 @@ class IDeviceAPIEncapsulator;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DX11ShaderEffect : public DeviceAPIDependantShaderEffect {
+class FDX11ShaderEffect : public FDeviceAPIDependantShaderEffect {
 public:
-    explicit DX11ShaderEffect(IDeviceAPIEncapsulator *device, ShaderEffect *owner);
-    virtual ~DX11ShaderEffect();
+    explicit FDX11ShaderEffect(IDeviceAPIEncapsulator *device, FShaderEffect *owner);
+    virtual ~FDX11ShaderEffect();
 
     ::ID3D11InputLayout *InputLayout() const { return _inputLayout.Get(); }
 
@@ -30,14 +30,14 @@ public:
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    ComPtr<::ID3D11InputLayout> _inputLayout;
+    TComPtr<::ID3D11InputLayout> _inputLayout;
 
-    ComPtr<::ID3D11VertexShader> _vertexShader;
-    ComPtr<::ID3D11DomainShader> _domainShader;
-    ComPtr<::ID3D11HullShader> _hullShader;
-    ComPtr<::ID3D11GeometryShader> _geometryShader;
-    ComPtr<::ID3D11PixelShader> _pixelShader;
-    ComPtr<::ID3D11ComputeShader> _computeShader;
+    TComPtr<::ID3D11VertexShader> _vertexShader;
+    TComPtr<::ID3D11DomainShader> _domainShader;
+    TComPtr<::ID3D11HullShader> _hullShader;
+    TComPtr<::ID3D11GeometryShader> _geometryShader;
+    TComPtr<::ID3D11PixelShader> _pixelShader;
+    TComPtr<::ID3D11ComputeShader> _computeShader;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

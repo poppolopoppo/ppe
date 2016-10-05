@@ -9,34 +9,34 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Extname : public FileSystemToken {
+class FExtname : public FFileSystemToken {
 public:
-    typedef FileSystemToken parent_type;
+    typedef FFileSystemToken parent_type;
 
-    Extname() {}
-    ~Extname() {}
+    FExtname() {}
+    ~FExtname() {}
 
-    Extname(const FileSystem::StringView& content);
-    Extname& operator =(const FileSystem::StringView& content);
+    FExtname(const FileSystem::FStringView& content);
+    FExtname& operator =(const FileSystem::FStringView& content);
 
     template <typename _CharTraits, typename _Allocator>
-    Extname(const std::basic_string<typename FileSystem::char_type, _CharTraits, _Allocator>& content)
-        : Extname(content.c_str(), content.size()) {}
+    FExtname(const std::basic_string<typename FileSystem::char_type, _CharTraits, _Allocator>& content)
+        : FExtname(content.c_str(), content.size()) {}
 
-    Extname(const Extname& other);
-    Extname& operator =(const Extname& other);
+    FExtname(const FExtname& other);
+    FExtname& operator =(const FExtname& other);
 
-    Extname(const FileSystemToken& token);
-    Extname& operator =(const FileSystemToken& token);
+    FExtname(const FFileSystemToken& token);
+    FExtname& operator =(const FFileSystemToken& token);
 
-    void Swap(Extname& other);
+    void Swap(FExtname& other);
 };
 //----------------------------------------------------------------------------
-inline void swap(Extname& lhs, Extname& rhs) {
+inline void swap(FExtname& lhs, FExtname& rhs) {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
-inline hash_t hash_value(const Extname& token) {
+inline hash_t hash_value(const FExtname& token) {
     return token.HashValue();
 }
 //----------------------------------------------------------------------------

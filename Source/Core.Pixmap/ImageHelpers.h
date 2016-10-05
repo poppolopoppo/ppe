@@ -11,19 +11,19 @@ namespace Pixmap {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void DistanceField_CDT(Image* dst, const FloatImage* src, float alphaCutoff);
+void DistanceField_CDT(Image* dst, const FFloatImage* src, float alphaCutoff);
 //----------------------------------------------------------------------------
-void DistanceField_DRA(Image* dst, const FloatImage* src, float alphaCutoff);
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-void ExpandColorToTransparentPixels(FloatImage* img, float alphaCutoff);
+void DistanceField_DRA(Image* dst, const FFloatImage* src, float alphaCutoff);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool BoundingBox(AABB2f& uvs, const FloatImage* img, float alphaCutoff);
+void ExpandColorToTransparentPixels(FFloatImage* img, float alphaCutoff);
 //----------------------------------------------------------------------------
-bool ConvexHull(const MemoryView<float2>& uvs, const FloatImage* img, float alphaCutoff);
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+bool BoundingBox(AABB2f& uvs, const FFloatImage* img, float alphaCutoff);
+//----------------------------------------------------------------------------
+bool ConvexHull(const TMemoryView<float2>& uvs, const FFloatImage* img, float alphaCutoff);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

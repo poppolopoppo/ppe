@@ -17,24 +17,24 @@ namespace {
 using namespace Core::Serialize;
 //----------------------------------------------------------------------------
 static void Test_XMLLoad_Simple_() {
-    XML::Document xml;
-    if (XML::Document::Load(&xml, L"Data:/Models/sample.xml"))
+    XML::FDocument xml;
+    if (XML::FDocument::Load(&xml, L"Data:/Models/sample.xml"))
         std::cout << xml << std::endl;
 }
 //----------------------------------------------------------------------------
 static void Test_XMLLoad_Collada_() {
-    Lattice::Collada collada;
-    if (not Lattice::Collada::Load(&collada, L"Data:/Models/astroBoy_walk_Maya.dae"))
+    Lattice::FCollada collada;
+    if (not Lattice::FCollada::Load(&collada, L"Data:/Models/astroBoy_walk_Maya.dae"))
         AssertNotReached();
 
-    Lattice::Collada::Array<Lattice::PGenericMaterial> materials;
+    Lattice::FCollada::TArray<Lattice::PGenericMaterial> materials;
     if (not collada.ImportMaterials(materials))
         AssertNotReached();
 
     for (const Lattice::PGenericMaterial& m : materials) {
         std::cout
             << Repeat<80>('-') << std::endl
-            << "Name = " << m->Name() << std::endl
+            << "FName = " << m->Name() << std::endl
             << "Technique = " << m->Technique() << std::endl;
 
         std::cout << "Parameters (" << m->Parameters().size() << ")" << std::endl;

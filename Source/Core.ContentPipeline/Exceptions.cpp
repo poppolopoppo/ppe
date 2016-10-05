@@ -12,45 +12,45 @@ namespace ContentPipeline {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ContentPipelineException::ContentPipelineException(const char* what, const Filename& sourceFilename)
-    : Exception(what)
+FContentPipelineException::FContentPipelineException(const char* what, const FFilename& sourceFilename)
+    : FException(what)
     , _sourceFilename(sourceFilename) {}
 //----------------------------------------------------------------------------
-ContentPipelineException::~ContentPipelineException() {}
+FContentPipelineException::~FContentPipelineException() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ContentImporterException::ContentImporterException(const char* what, const ContentIdentity& source, const IContentImporter* importer)
-    : ContentPipelineException(what, source.SourceFilename())
+FContentImporterException::FContentImporterException(const char* what, const FContentIdentity& source, const IContentImporter* importer)
+    : FContentPipelineException(what, source.SourceFilename())
     , _source(source)
     , _importer(importer) {}
 //----------------------------------------------------------------------------
-ContentImporterException::~ContentImporterException() {}
+FContentImporterException::~FContentImporterException() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ContentProcessorException::ContentProcessorException(const char* what, const ContentIdentity& source, const IContentProcessor* processor)
-    : ContentPipelineException(what, source.SourceFilename())
+FContentProcessorException::FContentProcessorException(const char* what, const FContentIdentity& source, const IContentProcessor* processor)
+    : FContentPipelineException(what, source.SourceFilename())
     , _source(source)
     , _processor(processor) {}
 //----------------------------------------------------------------------------
-ContentProcessorException::~ContentProcessorException() {}
+FContentProcessorException::~FContentProcessorException() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ContentSerializerException::ContentSerializerException(const char* what, const Filename& sourceFilename, const IContentSerializer* serializer)
-    : ContentPipelineException(what, sourceFilename)
+FContentSerializerException::FContentSerializerException(const char* what, const FFilename& sourceFilename, const IContentSerializer* serializer)
+    : FContentPipelineException(what, sourceFilename)
     , _serializer(serializer) {}
 //----------------------------------------------------------------------------
-ContentSerializerException::~ContentSerializerException() {}
+FContentSerializerException::~FContentSerializerException() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ContentToolchainException::ContentToolchainException(const char* what, const Filename& sourceFilename, const IContentToolchain* toolchain)
-    : ContentPipelineException(what, sourceFilename)
+FContentToolchainException::FContentToolchainException(const char* what, const FFilename& sourceFilename, const IContentToolchain* toolchain)
+    : FContentPipelineException(what, sourceFilename)
     , _toolchain(toolchain) {}
 //----------------------------------------------------------------------------
-ContentToolchainException::~ContentToolchainException() {}
+FContentToolchainException::~FContentToolchainException() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

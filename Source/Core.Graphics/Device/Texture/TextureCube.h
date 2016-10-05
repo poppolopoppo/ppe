@@ -15,9 +15,9 @@ FWD_REFPTR(DeviceAPIDependantTextureCube);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(TextureCube);
-class TextureCube : public Texture {
+class FTextureCube : public FTexture {
 public:
-    enum class Face {
+    enum class EFace {
         PositiveX = 0,
         NegativeX,
         PositiveY,
@@ -26,12 +26,12 @@ public:
         NegativeZ,
     };
 
-    TextureCube(
+    FTextureCube(
         size_t width, size_t height, size_t levelCount,
-        const SurfaceFormat *format,
-        BufferMode mode, BufferUsage usage,
+        const FSurfaceFormat *format,
+        EBufferMode mode, EBufferUsage usage,
         bool sharable );
-    virtual ~TextureCube();
+    virtual ~FTextureCube();
 
     size_t Width() const { return _width; }
     size_t Height() const { return _height; }
@@ -42,30 +42,30 @@ public:
     const PDeviceAPIDependantTextureCube& DeviceAPIDependantTextureCube() const { return _deviceAPIDependantTextureCube; }
 
     template <typename T>
-    void Create(IDeviceAPIEncapsulator *device, const MemoryView<const T>& optionalData);
+    void Create(IDeviceAPIEncapsulator *device, const TMemoryView<const T>& optionalData);
     virtual void Destroy(IDeviceAPIEncapsulator *device) override;
 
-    virtual Graphics::DeviceAPIDependantTexture *TextureEntity() const override;
+    virtual Graphics::FDeviceAPIDependantTexture *TextureEntity() const override;
 
     virtual size_t SizeInBytes() const override;
 
     virtual void GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) override;
     virtual void SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) override;
 
-    virtual void CopyFrom(IDeviceAPIEncapsulator *device, const Texture *psource) override;
-    void CopyFrom(IDeviceAPIEncapsulator *device, const TextureCube *psourceCube);
+    virtual void CopyFrom(IDeviceAPIEncapsulator *device, const FTexture *psource) override;
+    void CopyFrom(IDeviceAPIEncapsulator *device, const FTextureCube *psourceCube);
 
     void CopySubPart(   IDeviceAPIEncapsulator *device,
-                        Face dstFace, size_t dstLevel, const uint2& dstPos,
-                        const TextureCube *psourceCube, Face srcFace, size_t srcLevel, const AABB2u& srcBox );
+                        EFace dstFace, size_t dstLevel, const uint2& dstPos,
+                        const FTextureCube *psourceCube, EFace srcFace, size_t srcLevel, const AABB2u& srcBox );
 
 
 protected:
     virtual size_t VirtualSharedKeyHashValue() const override;
-    virtual bool VirtualMatchTerminalEntity(const DeviceAPIDependantEntity *entity) const override;
+    virtual bool VirtualMatchTerminalEntity(const FDeviceAPIDependantEntity *entity) const override;
 
 private:
-    void Create_(IDeviceAPIEncapsulator *device, const MemoryView<const u8>& optionalRawData);
+    void Create_(IDeviceAPIEncapsulator *device, const TMemoryView<const u8>& optionalRawData);
 
     u32 _width;
     u32 _height;
@@ -75,30 +75,30 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename T>
-void TextureCube::Create(IDeviceAPIEncapsulator *device, const MemoryView<const T>& optionalData) {
+void FTextureCube::Create(IDeviceAPIEncapsulator *device, const TMemoryView<const T>& optionalData) {
     Create_(device, optionalData.Cast<const u8>());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DeviceAPIDependantTextureCube : public Graphics::DeviceAPIDependantTexture {
+class FDeviceAPIDependantTextureCube : public Graphics::FDeviceAPIDependantTexture {
 public:
-    DeviceAPIDependantTextureCube(IDeviceAPIEncapsulator *device, const TextureCube *resource, const MemoryView<const u8>& optionalData);
-    virtual ~DeviceAPIDependantTextureCube();
+    FDeviceAPIDependantTextureCube(IDeviceAPIEncapsulator *device, const FTextureCube *resource, const TMemoryView<const u8>& optionalData);
+    virtual ~FDeviceAPIDependantTextureCube();
 
-    /*const TextureCube *TypedResource() const {
-        return checked_cast<const TextureCube *>(Resource());
+    /*const FTextureCube *TypedResource() const {
+        return checked_cast<const FTextureCube *>(Resource());
     }*/
 
     size_t Width() const { return _width; }
     size_t Height() const { return _height; }
     size_t LevelCount() const { return _levelCount; }
 
-    virtual void CopyFrom(IDeviceAPIEncapsulator *device, const DeviceAPIDependantTextureCube *psource) = 0;
+    virtual void CopyFrom(IDeviceAPIEncapsulator *device, const FDeviceAPIDependantTextureCube *psource) = 0;
 
     virtual void CopySubPart(   IDeviceAPIEncapsulator *device,
-                                TextureCube::Face dstFace, size_t dstLevel, const uint2& dstPos,
-                                const DeviceAPIDependantTextureCube *psource, TextureCube::Face srcFace, size_t srcLevel, const AABB2u& srcBox ) = 0;
+                                FTextureCube::EFace dstFace, size_t dstLevel, const uint2& dstPos,
+                                const FDeviceAPIDependantTextureCube *psource, FTextureCube::EFace srcFace, size_t srcLevel, const AABB2u& srcBox ) = 0;
 
     virtual size_t VideoMemorySizeInBytes() const override;
 

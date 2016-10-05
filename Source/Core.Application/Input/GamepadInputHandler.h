@@ -11,26 +11,26 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class GamepadInputHandler :
+class FGamepadInputHandler :
     public Graphics::IWindowMessageHandler
-,   public IInputStateProvider<MultiGamepadState> {
+,   public IInputStateProvider<FMultiGamepadState> {
 public:
-    GamepadInputHandler();
-    virtual ~GamepadInputHandler();
+    FGamepadInputHandler();
+    virtual ~FGamepadInputHandler();
 
-    GamepadInputHandler(const GamepadInputHandler& ) = delete;
-    GamepadInputHandler& operator =(const GamepadInputHandler& ) = delete;
+    FGamepadInputHandler(const FGamepadInputHandler& ) = delete;
+    FGamepadInputHandler& operator =(const FGamepadInputHandler& ) = delete;
 
-    virtual const MultiGamepadState& State() const override { return _state; }
+    virtual const FMultiGamepadState& State() const override { return _state; }
 
-    virtual void RegisterMessageDelegates(Graphics::BasicWindow *wnd) override;
-    virtual void UnregisterMessageDelegates(Graphics::BasicWindow *wnd) override;
+    virtual void RegisterMessageDelegates(Graphics::FBasicWindow *wnd) override;
+    virtual void UnregisterMessageDelegates(Graphics::FBasicWindow *wnd) override;
 
-    virtual void UpdateBeforeDispatch(Graphics::BasicWindow *wnd) override;
-    virtual void UpdateAfterDispatch(Graphics::BasicWindow *wnd) override;
+    virtual void UpdateBeforeDispatch(Graphics::FBasicWindow *wnd) override;
+    virtual void UpdateAfterDispatch(Graphics::FBasicWindow *wnd) override;
 
 private:
-    MultiGamepadState _state;
+    FMultiGamepadState _state;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

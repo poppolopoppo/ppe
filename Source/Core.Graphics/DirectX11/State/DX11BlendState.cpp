@@ -13,9 +13,9 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DX11BlendState::DX11BlendState(IDeviceAPIEncapsulator *device, BlendState *owner)
-:   DeviceAPIDependantBlendState(device, owner) {
-    const DX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
+FDX11BlendState::FDX11BlendState(IDeviceAPIEncapsulator *device, FBlendState *owner)
+:   FDeviceAPIDependantBlendState(device, owner) {
+    const FDX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
 
     ::D3D11_BLEND_DESC blendStateDesc;
     ::SecureZeroMemory(&blendStateDesc, sizeof(blendStateDesc));
@@ -43,97 +43,97 @@ DX11BlendState::DX11BlendState(IDeviceAPIEncapsulator *device, BlendState *owner
     DX11SetDeviceResourceNameIFP(_entity, owner);
 }
 //----------------------------------------------------------------------------
-DX11BlendState::~DX11BlendState() {
+FDX11BlendState::~FDX11BlendState() {
     ReleaseComRef(_entity);
 }
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, DX11BlendState, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, FDX11BlendState, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-::D3D11_BLEND BlendToDX11Blend(Blend value) {
+::D3D11_BLEND BlendToDX11Blend(EBlend value) {
     switch (value)
     {
-    case Core::Graphics::Blend::Zero:
+    case Core::Graphics::EBlend::Zero:
         return D3D11_BLEND_ZERO;
-    case Core::Graphics::Blend::One:
+    case Core::Graphics::EBlend::One:
         return D3D11_BLEND_ONE;
-    case Core::Graphics::Blend::SourceColor:
+    case Core::Graphics::EBlend::SourceColor:
         return D3D11_BLEND_SRC_COLOR;
-    case Core::Graphics::Blend::InverseSourceColor:
+    case Core::Graphics::EBlend::InverseSourceColor:
         return D3D11_BLEND_INV_SRC_COLOR;
-    case Core::Graphics::Blend::SourceAlpha:
+    case Core::Graphics::EBlend::SourceAlpha:
         return D3D11_BLEND_SRC_ALPHA;
-    case Core::Graphics::Blend::InverseSourceAlpha:
+    case Core::Graphics::EBlend::InverseSourceAlpha:
         return D3D11_BLEND_INV_SRC_ALPHA;
-    case Core::Graphics::Blend::DestinationAlpha:
+    case Core::Graphics::EBlend::DestinationAlpha:
         return D3D11_BLEND_DEST_ALPHA;
-    case Core::Graphics::Blend::InverseDestinationAlpha:
+    case Core::Graphics::EBlend::InverseDestinationAlpha:
         return D3D11_BLEND_INV_DEST_ALPHA;
-    case Core::Graphics::Blend::DestinationColor:
+    case Core::Graphics::EBlend::DestinationColor:
         return D3D11_BLEND_DEST_COLOR;
-    case Core::Graphics::Blend::InverseDestinationColor:
+    case Core::Graphics::EBlend::InverseDestinationColor:
         return D3D11_BLEND_INV_DEST_COLOR;
-    case Core::Graphics::Blend::SourceAlphaSaturation:
+    case Core::Graphics::EBlend::SourceAlphaSaturation:
         return D3D11_BLEND_SRC_ALPHA_SAT;
-    case Core::Graphics::Blend::BlendFactor:
+    case Core::Graphics::EBlend::BlendFactor:
         return D3D11_BLEND_BLEND_FACTOR;
-    case Core::Graphics::Blend::InverseBlendFactor:
+    case Core::Graphics::EBlend::InverseBlendFactor:
         return D3D11_BLEND_INV_BLEND_FACTOR;
     }
     AssertNotImplemented();
     return static_cast<D3D11_BLEND>(-1);
 }
 //----------------------------------------------------------------------------
-Blend DX11BlendToBlend(::D3D11_BLEND value) {
+EBlend DX11BlendToBlend(::D3D11_BLEND value) {
     switch (value)
     {
     case D3D11_BLEND_ZERO:
-        return Core::Graphics::Blend::Zero;
+        return Core::Graphics::EBlend::Zero;
     case D3D11_BLEND_ONE:
-        return Core::Graphics::Blend::One;
+        return Core::Graphics::EBlend::One;
     case D3D11_BLEND_SRC_COLOR:
-        return Core::Graphics::Blend::SourceColor;
+        return Core::Graphics::EBlend::SourceColor;
     case D3D11_BLEND_INV_SRC_COLOR:
-        return Core::Graphics::Blend::InverseSourceColor;
+        return Core::Graphics::EBlend::InverseSourceColor;
     case D3D11_BLEND_SRC_ALPHA:
-        return Core::Graphics::Blend::SourceAlpha;
+        return Core::Graphics::EBlend::SourceAlpha;
     case D3D11_BLEND_INV_SRC_ALPHA:
-        return Core::Graphics::Blend::InverseSourceAlpha;
+        return Core::Graphics::EBlend::InverseSourceAlpha;
     case D3D11_BLEND_DEST_ALPHA:
-        return Core::Graphics::Blend::DestinationAlpha;
+        return Core::Graphics::EBlend::DestinationAlpha;
     case D3D11_BLEND_INV_DEST_ALPHA:
-        return Core::Graphics::Blend::InverseDestinationAlpha;
+        return Core::Graphics::EBlend::InverseDestinationAlpha;
     case D3D11_BLEND_DEST_COLOR:
-        return Core::Graphics::Blend::DestinationColor;
+        return Core::Graphics::EBlend::DestinationColor;
     case D3D11_BLEND_INV_DEST_COLOR:
-        return Core::Graphics::Blend::InverseDestinationColor;
+        return Core::Graphics::EBlend::InverseDestinationColor;
     case D3D11_BLEND_SRC_ALPHA_SAT:
-        return Core::Graphics::Blend::SourceAlphaSaturation;
+        return Core::Graphics::EBlend::SourceAlphaSaturation;
     case D3D11_BLEND_BLEND_FACTOR:
-        return Core::Graphics::Blend::BlendFactor;
+        return Core::Graphics::EBlend::BlendFactor;
     case D3D11_BLEND_INV_BLEND_FACTOR:
-        return Core::Graphics::Blend::InverseBlendFactor;
+        return Core::Graphics::EBlend::InverseBlendFactor;
     default:
         AssertNotImplemented();
     }
-    return static_cast<Blend>(-1);
+    return static_cast<EBlend>(-1);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-::D3D11_BLEND_OP BlendFunctionToDX11BlendOp(BlendFunction value) {
+::D3D11_BLEND_OP BlendFunctionToDX11BlendOp(EBlendFunction value) {
     switch (value)
     {
-    case Core::Graphics::BlendFunction::Add:
+    case Core::Graphics::EBlendFunction::Add:
         return D3D11_BLEND_OP_ADD;
-    case Core::Graphics::BlendFunction::Max:
+    case Core::Graphics::EBlendFunction::Max:
         return D3D11_BLEND_OP_MAX;
-    case Core::Graphics::BlendFunction::Min:
+    case Core::Graphics::EBlendFunction::Min:
         return D3D11_BLEND_OP_MIN;;
-    case Core::Graphics::BlendFunction::ReverseSubtract:
+    case Core::Graphics::EBlendFunction::ReverseSubtract:
         return D3D11_BLEND_OP_REV_SUBTRACT;
-    case Core::Graphics::BlendFunction::Subtract:
+    case Core::Graphics::EBlendFunction::Subtract:
         return D3D11_BLEND_OP_SUBTRACT;
     default:
         AssertNotImplemented();
@@ -141,39 +141,39 @@ Blend DX11BlendToBlend(::D3D11_BLEND value) {
     return static_cast<D3D11_BLEND_OP>(-1);
 }
 //----------------------------------------------------------------------------
-BlendFunction DX11BlendOpToBlendFunction(::D3D11_BLEND_OP value) {
+EBlendFunction DX11BlendOpToBlendFunction(::D3D11_BLEND_OP value) {
     switch (value)
     {
     case D3D11_BLEND_OP_ADD:
-        return Core::Graphics::BlendFunction::Add;
+        return Core::Graphics::EBlendFunction::Add;
     case D3D11_BLEND_OP_MAX:
-        return Core::Graphics::BlendFunction::Max;
+        return Core::Graphics::EBlendFunction::Max;
     case D3D11_BLEND_OP_MIN:
-        return Core::Graphics::BlendFunction::Min;
+        return Core::Graphics::EBlendFunction::Min;
     case D3D11_BLEND_OP_REV_SUBTRACT:
-        return Core::Graphics::BlendFunction::ReverseSubtract;
+        return Core::Graphics::EBlendFunction::ReverseSubtract;
     case D3D11_BLEND_OP_SUBTRACT:
-        return Core::Graphics::BlendFunction::Subtract;
+        return Core::Graphics::EBlendFunction::Subtract;
     default:
         AssertNotImplemented();
     }
-    return static_cast<BlendFunction>(-1);
+    return static_cast<EBlendFunction>(-1);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-STATIC_ASSERT(size_t(D3D11_COLOR_WRITE_ENABLE_RED)  == size_t(ColorChannels::Red));
-STATIC_ASSERT(size_t(D3D11_COLOR_WRITE_ENABLE_GREEN)== size_t(ColorChannels::Green));
-STATIC_ASSERT(size_t(D3D11_COLOR_WRITE_ENABLE_BLUE) == size_t(ColorChannels::Blue));
-STATIC_ASSERT(size_t(D3D11_COLOR_WRITE_ENABLE_ALPHA)== size_t(ColorChannels::Alpha));
-STATIC_ASSERT(size_t(D3D11_COLOR_WRITE_ENABLE_ALL)  == size_t(ColorChannels::All));
+STATIC_ASSERT(size_t(D3D11_COLOR_WRITE_ENABLE_RED)  == size_t(EColorChannels::Red));
+STATIC_ASSERT(size_t(D3D11_COLOR_WRITE_ENABLE_GREEN)== size_t(EColorChannels::Green));
+STATIC_ASSERT(size_t(D3D11_COLOR_WRITE_ENABLE_BLUE) == size_t(EColorChannels::Blue));
+STATIC_ASSERT(size_t(D3D11_COLOR_WRITE_ENABLE_ALPHA)== size_t(EColorChannels::Alpha));
+STATIC_ASSERT(size_t(D3D11_COLOR_WRITE_ENABLE_ALL)  == size_t(EColorChannels::All));
 //----------------------------------------------------------------------------
-::D3D11_COLOR_WRITE_ENABLE ColorChannelsToDX11ColorWriteEnable(ColorChannels value) {
+::D3D11_COLOR_WRITE_ENABLE ColorChannelsToDX11ColorWriteEnable(EColorChannels value) {
     return static_cast<::D3D11_COLOR_WRITE_ENABLE>(value);
 }
 //----------------------------------------------------------------------------
-ColorChannels DX11ColorWriteEnableToColorChannels(::D3D11_COLOR_WRITE_ENABLE value) {
-    return static_cast<ColorChannels>(value);
+EColorChannels DX11ColorWriteEnableToColorChannels(::D3D11_COLOR_WRITE_ENABLE value) {
+    return static_cast<EColorChannels>(value);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

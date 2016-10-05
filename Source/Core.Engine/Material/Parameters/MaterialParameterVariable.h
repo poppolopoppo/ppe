@@ -18,18 +18,18 @@ namespace Engine {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-class MaterialParameterVariable : public ITypedMaterialParameter<T> {
+class TMaterialParameterVariable : public ITypedMaterialParameter<T> {
 public:
-    explicit MaterialParameterVariable(T&& rvalue);
-    explicit MaterialParameterVariable(const T& value);
-    virtual ~MaterialParameterVariable();
+    explicit TMaterialParameterVariable(T&& rvalue);
+    explicit TMaterialParameterVariable(const T& value);
+    virtual ~TMaterialParameterVariable();
 
-    const T& Value() const;
+    const T& FValue() const;
     void SetValue(const T& value);
 
-    virtual MaterialParameterInfo Info() const override;
+    virtual FMaterialParameterInfo Info() const override;
 
-    virtual void Eval(const MaterialParameterContext& context, void *dst, size_t sizeInBytes) override;
+    virtual void Eval(const FMaterialParameterContext& context, void *dst, size_t sizeInBytes) override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
@@ -37,7 +37,7 @@ private:
     T _value;
 };
 //----------------------------------------------------------------------------
-CONSTANTFIELD_EXTERNALTEMPLATE_DECL(MaterialParameterVariable, );
+CONSTANTFIELD_EXTERNALTEMPLATE_DECL(TMaterialParameterVariable, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

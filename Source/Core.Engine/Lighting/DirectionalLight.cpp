@@ -11,14 +11,14 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DirectionalLight::DirectionalLight()
+FDirectionalLight::FDirectionalLight()
 :   _color(Color::White)
 ,   _direction(float3::Down())
 ,   _intensity(1.0f) {}
 //----------------------------------------------------------------------------
-DirectionalLight::~DirectionalLight() {}
+FDirectionalLight::~FDirectionalLight() {}
 //----------------------------------------------------------------------------
-DirectionalLight::DirectionalLight(
+FDirectionalLight::FDirectionalLight(
     const ColorRGBA& color,
     const float3& direction,
     float intensity ) 

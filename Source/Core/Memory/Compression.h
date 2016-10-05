@@ -5,15 +5,15 @@
 namespace Core {
 class IStreamWriter;
 template <typename T>
-class MemoryView;
+class TMemoryView;
 template <typename T, typename _Allocator>
-class RawStorage;
+class TRawStorage;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace Compression {
 //----------------------------------------------------------------------------
-enum CompressMethod {
+enum ECompressMethod {
     Default = 0,
     Fast,
     HighCompression,
@@ -21,14 +21,14 @@ enum CompressMethod {
 //----------------------------------------------------------------------------
 size_t  CompressedSizeUpperBound(size_t sizeInBytes);
 //----------------------------------------------------------------------------
-size_t  CompressMemory(const MemoryView<u8>& dst, const MemoryView<const u8>& src, CompressMethod method = Default);
+size_t  CompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& src, ECompressMethod method = Default);
 //----------------------------------------------------------------------------
-size_t  DecompressedSize(const MemoryView<const u8>& src);
+size_t  DecompressedSize(const TMemoryView<const u8>& src);
 //----------------------------------------------------------------------------
-bool    DecompressMemory(const MemoryView<u8>& dst, const MemoryView<const u8>& src);
+bool    DecompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& src);
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-size_t CompressMemory(RawStorage<u8, _Allocator>& dst, const MemoryView<const u8>& src, CompressMethod method = Default) {
+size_t CompressMemory(TRawStorage<u8, _Allocator>& dst, const TMemoryView<const u8>& src, ECompressMethod method = Default) {
     const size_t maxSize = CompressedSizeUpperBound(src.SizeInBytes());
     dst.Resize_DiscardData(maxSize);
     Assert(dst.SizeInBytes());
@@ -36,7 +36,7 @@ size_t CompressMemory(RawStorage<u8, _Allocator>& dst, const MemoryView<const u8
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-bool DecompressMemory(RawStorage<u8, _Allocator>& dst, const MemoryView<const u8>& src) {
+bool DecompressMemory(TRawStorage<u8, _Allocator>& dst, const TMemoryView<const u8>& src) {
     const size_t origSize = DecompressedSize(src);
     dst.Resize_DiscardData(origSize);
     return DecompressMemory(dst.MakeView(), src);

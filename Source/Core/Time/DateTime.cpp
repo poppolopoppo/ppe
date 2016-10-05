@@ -10,13 +10,13 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DateTime DateTime::Now() {
-    return FromLocalTime(Timestamp::Now());
+FDateTime FDateTime::Now() {
+    return FromLocalTime(FTimestamp::Now());
 }
 //----------------------------------------------------------------------------
-DateTime DateTime::FromLocalTime(const Timestamp& t) {
+FDateTime FDateTime::FromLocalTime(const FTimestamp& t) {
     STATIC_ASSERT(sizeof(t) == sizeof(::__time64_t));
-    DateTime d;
+    FDateTime d;
     ::tm lc;
     const ::errno_t err = ::_localtime64_s(&lc, reinterpret_cast<const ::__time64_t*>(&t));
     AssertRelease(0 == err);
@@ -39,9 +39,9 @@ DateTime DateTime::FromLocalTime(const Timestamp& t) {
     return d;
 }
 //----------------------------------------------------------------------------
-DateTime DateTime::FromTimeUTC(const Timestamp& t) {
+FDateTime FDateTime::FromTimeUTC(const FTimestamp& t) {
     STATIC_ASSERT(sizeof(t) == sizeof(::__time64_t));
-    DateTime d;
+    FDateTime d;
     ::tm lc;
     const ::errno_t err = ::_gmtime64_s(&lc, reinterpret_cast<const ::__time64_t*>(&t));
     AssertRelease(0 == err);

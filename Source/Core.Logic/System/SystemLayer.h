@@ -11,44 +11,44 @@
 #include "Core/Memory/RefPtr.h"
 
 namespace Core {
-class Timeline;
+class FTimeline;
 
 namespace Logic {
-class EntityManager;
+class FEntityManager;
 class ISystem;
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class SystemExecution {
+enum class ESystemExecution {
     Asynchronous = 0,
     Synchronous
 };
 //----------------------------------------------------------------------------
-class SystemLayer : public RefCountable {
+class FSystemLayer : public FRefCountable {
 public:
-    SystemLayer();
-    ~SystemLayer();
+    FSystemLayer();
+    ~FSystemLayer();
 
-    SystemLayer(const SystemLayer& ) = delete;
-    SystemLayer& operator =(const SystemLayer& ) = delete;
+    FSystemLayer(const FSystemLayer& ) = delete;
+    FSystemLayer& operator =(const FSystemLayer& ) = delete;
 
-    SystemLayer(SystemLayer&& rvalue);
-    SystemLayer& operator =(SystemLayer&& rvalue);
+    FSystemLayer(FSystemLayer&& rvalue);
+    FSystemLayer& operator =(FSystemLayer&& rvalue);
 
     const VECTOR(System, PSystem)& Asynchronous() const { return _asynchronous; }
     const VECTOR(System, PSystem)& Synchronous() const { return _synchronous; }
 
-    void Add(SystemExecution executionType, ISystem *system);
+    void Add(ESystemExecution executionType, ISystem *system);
     bool TryRemove(const PSystem& system);
 
     bool Contains(const PSystem& system) const;
 
-    void Process(SystemContainer& container, const Timeline& timeline);
-    void Destroy(EntityManager& container);
+    void Process(FSystemContainer& container, const FTimeline& timeline);
+    void Destroy(FEntityManager& container);
 
-    void RefreshEntity(const Entity& entity, ComponentFlag components);
-    void RemoveEntity(const Entity& entity);
+    void RefreshEntity(const FEntity& entity, ComponentFlag components);
+    void RemoveEntity(const FEntity& entity);
 
     SINGLETON_POOL_ALLOCATED_DECL();
 

@@ -9,7 +9,7 @@ namespace Meta {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-struct BitCount {
+struct TBitCount {
     enum : size_t { value = (sizeof(T) << 3) };
 
     static constexpr size_t Words(size_t bits) {
@@ -27,7 +27,7 @@ struct BitCount {
 //----------------------------------------------------------------------------
 template <typename T>
 typename std::enable_if<std::is_integral<T>::value, size_t>::type CountBitsSet(T value) {
-    return BitCount<T>::Set(value);
+    return TBitCount<T>::Set(value);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

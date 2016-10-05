@@ -16,75 +16,75 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Filename {
+class FFilename {
 public:
-    Filename() {}
-    ~Filename() {}
+    FFilename() {}
+    ~FFilename() {}
 
-    Filename(Core::Dirpath&& dirpath, Core::Basename&& basename);
-    Filename(const Core::Dirpath& dirpath, const Core::Basename& basename);
-    Filename(const Core::Dirpath& dirpath, const FileSystem::StringView& relfilename);
+    FFilename(FDirpath&& dirpath, FBasename&& basename);
+    FFilename(const FDirpath& dirpath, const FBasename& basename);
+    FFilename(const FDirpath& dirpath, const FileSystem::FStringView& relfilename);
 
-    Filename(Filename&& rvalue);
-    Filename& operator =(Filename&& rvalue);
+    FFilename(FFilename&& rvalue);
+    FFilename& operator =(FFilename&& rvalue);
 
-    Filename(const Filename& other);
-    Filename& operator =(const Filename& other);
+    FFilename(const FFilename& other);
+    FFilename& operator =(const FFilename& other);
 
-    Filename(const FileSystem::StringView& content);
-    Filename& operator =(const FileSystem::StringView& content);
+    FFilename(const FileSystem::FStringView& content);
+    FFilename& operator =(const FileSystem::FStringView& content);
 
     template <size_t _Dim>
-    Filename(const FileSystem::char_type (&content)[_Dim]) : Filename(MakeStringView(content)) {}
+    FFilename(const FileSystem::char_type (&content)[_Dim]) : FFilename(MakeStringView(content)) {}
     template <size_t _Dim>
-    Filename& operator =(const FileSystem::char_type (&content)[_Dim]) { return operator =(MakeStringView(content)); }
+    FFilename& operator =(const FileSystem::char_type (&content)[_Dim]) { return operator =(MakeStringView(content)); }
 
     template <typename _CharTraits, typename _Allocator>
-    Filename(const std::basic_string<FileSystem::char_type, _CharTraits, _Allocator>& content)
-        : Filename(MakeStringView(content)) {}
+    FFilename(const std::basic_string<FileSystem::char_type, _CharTraits, _Allocator>& content)
+        : FFilename(MakeStringView(content)) {}
 
-    void Swap(Filename& other);
+    void Swap(FFilename& other);
 
-    const Core::Dirpath& Dirpath() const { return _dirpath; }
+    const FDirpath& Dirpath() const { return _dirpath; }
 
-    Core::Basename& Basename() { return _basename; }
-    const Core::Basename& Basename() const { return _basename; }
+    FBasename& Basename() { return _basename; }
+    const FBasename& Basename() const { return _basename; }
 
-    Core::MountingPoint MountingPoint() const { return _dirpath.MountingPoint(); }
-    void SetMountingPoint(const Core::MountingPoint& mountingPoint);
+    FMountingPoint MountingPoint() const { return _dirpath.MountingPoint(); }
+    void SetMountingPoint(const FMountingPoint& mountingPoint);
 
-    size_t ExpandPath(Core::MountingPoint& mountingPoint, MemoryView<Dirname>& dirnames) const { return _dirpath.ExpandPath(mountingPoint, dirnames); }
-    const Core::BasenameNoExt& BasenameNoExt() const { return _basename.BasenameNoExt(); }
-    const Core::Extname& Extname() const { return _basename.Extname(); }
+    size_t ExpandPath(FMountingPoint& mountingPoint, TMemoryView<FDirname>& dirnames) const { return _dirpath.ExpandPath(mountingPoint, dirnames); }
+    const FBasenameNoExt& BasenameNoExt() const { return _basename.BasenameNoExt(); }
+    const FExtname& Extname() const { return _basename.Extname(); }
 
     bool empty() const { return _dirpath.empty() && _basename.empty(); }
 
     bool HasExtname() const { return _basename.HasExtname(); }
     bool HasMountingPoint() const { return _dirpath.HasMountingPoint(); }
 
-    void ReplaceExtension(const Core::Extname& ext);
-    Filename WithReplacedExtension(const Core::Extname& ext) const;
+    void ReplaceExtension(const FExtname& ext);
+    FFilename WithReplacedExtension(const FExtname& ext) const;
 
-    bool Absolute(Filename* absolute, const Core::Dirpath& origin) const;
-    bool Normalize(Filename* normalized) const;
-    bool Relative(Filename* relative, const Core::Dirpath& origin) const;
+    bool Absolute(FFilename* absolute, const FDirpath& origin) const;
+    bool Normalize(FFilename* normalized) const;
+    bool Relative(FFilename* relative, const FDirpath& origin) const;
 
-    Filename Absolute(const Core::Dirpath& origin) const;
-    Filename Normalized() const;
-    Filename Relative(const Core::Dirpath& origin) const;
+    FFilename Absolute(const FDirpath& origin) const;
+    FFilename Normalized() const;
+    FFilename Relative(const FDirpath& origin) const;
 
-    bool Equals(const Filename& other) const;
-    bool Less(const Filename& other) const;
+    bool Equals(const FFilename& other) const;
+    bool Less(const FFilename& other) const;
 
     size_t HashValue() const;
 
-    String ToString() const;
-    WString ToWString() const;
+    FString ToString() const;
+    FWString ToWString() const;
 
     size_t ToCStr(char *dst, size_t capacity) const;
     size_t ToWCStr(wchar_t *dst, size_t capacity) const;
 
-    inline size_t ToWCStr(const MemoryView<wchar_t>& dst) const { return ToWCStr(dst.Pointer(), dst.SizeInBytes()); }
+    inline size_t ToWCStr(const TMemoryView<wchar_t>& dst) const { return ToWCStr(dst.Pointer(), dst.SizeInBytes()); }
 
     template <size_t _Dim>
     size_t ToCStr(char (&dst)[_Dim]) const { return ToCStr(dst, _Dim); }
@@ -92,46 +92,46 @@ public:
     size_t ToWCStr(wchar_t (&dst)[_Dim]) const { return ToWCStr(dst, _Dim); }
 
 private:
-    Core::Dirpath _dirpath;
-    Core::Basename _basename;
+    FDirpath _dirpath;
+    FBasename _basename;
 };
 //----------------------------------------------------------------------------
-inline void Filename::ReplaceExtension(const Core::Extname& ext) {
+inline void FFilename::ReplaceExtension(const FExtname& ext) {
     _basename.SetExtname(ext);
 }
 //----------------------------------------------------------------------------
-inline bool Filename::Equals(const Filename& other) const {
+inline bool FFilename::Equals(const FFilename& other) const {
     return  _basename == other._basename &&
             _dirpath == other._dirpath;
 }
 //----------------------------------------------------------------------------
-inline bool Filename::Less(const Filename& other) const {
+inline bool FFilename::Less(const FFilename& other) const {
     return (_dirpath == other._dirpath)
         ? _basename < other._basename
         : _dirpath < other._dirpath;
 }
 //----------------------------------------------------------------------------
-inline bool operator ==(const Filename& lhs, const Filename& rhs) {
+inline bool operator ==(const FFilename& lhs, const FFilename& rhs) {
     return lhs.Equals(rhs);
 }
 //----------------------------------------------------------------------------
-inline bool operator !=(const Filename& lhs, const Filename& rhs) {
+inline bool operator !=(const FFilename& lhs, const FFilename& rhs) {
     return !operator ==(lhs, rhs);
 }
 //----------------------------------------------------------------------------
-inline bool operator <(const Filename& lhs, const Filename& rhs) {
+inline bool operator <(const FFilename& lhs, const FFilename& rhs) {
     return lhs.Less(rhs);
 }
 //----------------------------------------------------------------------------
-inline bool operator >=(const Filename& lhs, const Filename& rhs) {
+inline bool operator >=(const FFilename& lhs, const FFilename& rhs) {
     return !operator <(lhs, rhs);
 }
 //----------------------------------------------------------------------------
-inline void swap(Filename& lhs, Filename& rhs) {
+inline void swap(FFilename& lhs, FFilename& rhs) {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
-inline hash_t hash_value(const Filename& filename) {
+inline hash_t hash_value(const FFilename& filename) {
     return filename.HashValue();
 }
 //----------------------------------------------------------------------------
@@ -140,7 +140,7 @@ inline hash_t hash_value(const Filename& filename) {
 template <typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
-    const Core::Filename& filename) {
+    const Core::FFilename& filename) {
     if (filename.empty())
         return oss;
     if (!filename.Dirpath().empty())

@@ -11,25 +11,25 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SamplerState::SamplerState()
-:   DeviceResource(DeviceResourceType::SamplerState) {}
+FSamplerState::FSamplerState()
+:   FDeviceResource(EDeviceResourceType::FSamplerState) {}
 //----------------------------------------------------------------------------
-SamplerState::~SamplerState() {
+FSamplerState::~FSamplerState() {
     Assert(!_deviceAPIDependantState);
 }
 //----------------------------------------------------------------------------
-bool SamplerState::Available() const {
+bool FSamplerState::Available() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     return nullptr != _deviceAPIDependantState;
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantEntity *SamplerState::TerminalEntity() const {
+FDeviceAPIDependantEntity *FSamplerState::TerminalEntity() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     return _deviceAPIDependantState.get();
 }
 //----------------------------------------------------------------------------
-void SamplerState::Create(IDeviceAPIEncapsulator *device) {
+void FSamplerState::Create(IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(!_deviceAPIDependantState);
@@ -39,7 +39,7 @@ void SamplerState::Create(IDeviceAPIEncapsulator *device) {
     Assert(_deviceAPIDependantState);
 }
 //----------------------------------------------------------------------------
-void SamplerState::Destroy(IDeviceAPIEncapsulator *device) {
+void FSamplerState::Destroy(IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(_deviceAPIDependantState);
@@ -51,119 +51,119 @@ void SamplerState::Destroy(IDeviceAPIEncapsulator *device) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceAPIDependantSamplerState::DeviceAPIDependantSamplerState(IDeviceAPIEncapsulator *device, const SamplerState *resource)
-:   TypedDeviceAPIDependantEntity<SamplerState>(device->APIEncapsulator(), resource) {
+FDeviceAPIDependantSamplerState::FDeviceAPIDependantSamplerState(IDeviceAPIEncapsulator *device, const FSamplerState *resource)
+:   TTypedDeviceAPIDependantEntity<FSamplerState>(device->APIEncapsulator(), resource) {
     Assert(resource);
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantSamplerState::~DeviceAPIDependantSamplerState() {}
+FDeviceAPIDependantSamplerState::~FDeviceAPIDependantSamplerState() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const SamplerState *SamplerState::AnisotropicClamp = nullptr;
-const SamplerState *SamplerState::AnisotropicWrap = nullptr;
-const SamplerState *SamplerState::LinearClamp = nullptr;
-const SamplerState *SamplerState::LinearWrap = nullptr;
-const SamplerState *SamplerState::PointClamp = nullptr;
-const SamplerState *SamplerState::PointWrap = nullptr;
+const FSamplerState *FSamplerState::AnisotropicClamp = nullptr;
+const FSamplerState *FSamplerState::AnisotropicWrap = nullptr;
+const FSamplerState *FSamplerState::LinearClamp = nullptr;
+const FSamplerState *FSamplerState::LinearWrap = nullptr;
+const FSamplerState *FSamplerState::PointClamp = nullptr;
+const FSamplerState *FSamplerState::PointWrap = nullptr;
 //----------------------------------------------------------------------------
 namespace {
-    static POD_STORAGE(SamplerState) gSamplerState_AnisotropicClamp;
-    static POD_STORAGE(SamplerState) gSamplerState_AnisotropicWrap;
-    static POD_STORAGE(SamplerState) gSamplerState_LinearClamp;
-    static POD_STORAGE(SamplerState) gSamplerState_LinearWrap;
-    static POD_STORAGE(SamplerState) gSamplerState_PointClamp;
-    static POD_STORAGE(SamplerState) gSamplerState_PointWrap;
+    static POD_STORAGE(FSamplerState) gSamplerState_AnisotropicClamp;
+    static POD_STORAGE(FSamplerState) gSamplerState_AnisotropicWrap;
+    static POD_STORAGE(FSamplerState) gSamplerState_LinearClamp;
+    static POD_STORAGE(FSamplerState) gSamplerState_LinearWrap;
+    static POD_STORAGE(FSamplerState) gSamplerState_PointClamp;
+    static POD_STORAGE(FSamplerState) gSamplerState_PointWrap;
 }
 //----------------------------------------------------------------------------
-void SamplerState::Start() {
+void FSamplerState::Start() {
     Assert(nullptr == AnisotropicClamp);
     {
-        SamplerState *const state = new ((void *)&gSamplerState_AnisotropicClamp) SamplerState();
+        FSamplerState *const state = new ((void *)&gSamplerState_AnisotropicClamp) FSamplerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("AnisotropicClamp");
 #endif
-        state->SetAddressU(TextureAddressMode::Clamp);
-        state->SetAddressV(TextureAddressMode::Clamp);
-        state->SetAddressW(TextureAddressMode::Clamp);
-        state->SetFilter(TextureFilter::Anisotropic);
+        state->SetAddressU(ETextureAddressMode::Clamp);
+        state->SetAddressV(ETextureAddressMode::Clamp);
+        state->SetAddressW(ETextureAddressMode::Clamp);
+        state->SetFilter(ETextureFilter::Anisotropic);
         state->Freeze();
         AnisotropicClamp = state;
     }
     Assert(nullptr == AnisotropicWrap);
     {
-        SamplerState *const state = new ((void *)&gSamplerState_AnisotropicWrap) SamplerState();
+        FSamplerState *const state = new ((void *)&gSamplerState_AnisotropicWrap) FSamplerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("AnisotropicWrap");
 #endif
-        state->SetAddressU(TextureAddressMode::Wrap);
-        state->SetAddressV(TextureAddressMode::Wrap);
-        state->SetAddressW(TextureAddressMode::Wrap);
-        state->SetFilter(TextureFilter::Anisotropic);
+        state->SetAddressU(ETextureAddressMode::Wrap);
+        state->SetAddressV(ETextureAddressMode::Wrap);
+        state->SetAddressW(ETextureAddressMode::Wrap);
+        state->SetFilter(ETextureFilter::Anisotropic);
         state->Freeze();
         AnisotropicWrap = state;
     }
     Assert(nullptr == LinearClamp);
     {
-        SamplerState *const state = new ((void *)&gSamplerState_LinearClamp) SamplerState();
+        FSamplerState *const state = new ((void *)&gSamplerState_LinearClamp) FSamplerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("LinearClamp");
 #endif
-        state->SetAddressU(TextureAddressMode::Clamp);
-        state->SetAddressV(TextureAddressMode::Clamp);
-        state->SetAddressW(TextureAddressMode::Clamp);
-        state->SetFilter(TextureFilter::Linear);
+        state->SetAddressU(ETextureAddressMode::Clamp);
+        state->SetAddressV(ETextureAddressMode::Clamp);
+        state->SetAddressW(ETextureAddressMode::Clamp);
+        state->SetFilter(ETextureFilter::Linear);
         state->Freeze();
         LinearClamp = state;
     }
     Assert(nullptr == LinearWrap);
     {
-        SamplerState *const state = new ((void *)&gSamplerState_LinearWrap) SamplerState();
+        FSamplerState *const state = new ((void *)&gSamplerState_LinearWrap) FSamplerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("LinearWrap");
 #endif
-        state->SetAddressU(TextureAddressMode::Wrap);
-        state->SetAddressV(TextureAddressMode::Wrap);
-        state->SetAddressW(TextureAddressMode::Wrap);
-        state->SetFilter(TextureFilter::Linear);
+        state->SetAddressU(ETextureAddressMode::Wrap);
+        state->SetAddressV(ETextureAddressMode::Wrap);
+        state->SetAddressW(ETextureAddressMode::Wrap);
+        state->SetFilter(ETextureFilter::Linear);
         state->Freeze();
         LinearWrap = state;
     }
     Assert(nullptr == PointClamp);
     {
-        SamplerState *const state = new ((void *)&gSamplerState_PointClamp) SamplerState();
+        FSamplerState *const state = new ((void *)&gSamplerState_PointClamp) FSamplerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("PointClamp");
 #endif
-        state->SetAddressU(TextureAddressMode::Clamp);
-        state->SetAddressV(TextureAddressMode::Clamp);
-        state->SetAddressW(TextureAddressMode::Clamp);
-        state->SetFilter(TextureFilter::Point);
+        state->SetAddressU(ETextureAddressMode::Clamp);
+        state->SetAddressV(ETextureAddressMode::Clamp);
+        state->SetAddressW(ETextureAddressMode::Clamp);
+        state->SetFilter(ETextureFilter::Point);
         state->Freeze();
         PointClamp = state;
     }
     Assert(nullptr == PointWrap);
     {
-        SamplerState *const state = new ((void *)&gSamplerState_PointWrap) SamplerState();
+        FSamplerState *const state = new ((void *)&gSamplerState_PointWrap) FSamplerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("PointWrap");
 #endif
-        state->SetAddressU(TextureAddressMode::Wrap);
-        state->SetAddressV(TextureAddressMode::Wrap);
-        state->SetAddressW(TextureAddressMode::Wrap);
-        state->SetFilter(TextureFilter::Point);
+        state->SetAddressU(ETextureAddressMode::Wrap);
+        state->SetAddressV(ETextureAddressMode::Wrap);
+        state->SetAddressW(ETextureAddressMode::Wrap);
+        state->SetFilter(ETextureFilter::Point);
         state->Freeze();
         PointWrap = state;
     }
 }
 //----------------------------------------------------------------------------
-void SamplerState::Shutdown() {
+void FSamplerState::Shutdown() {
     Assert(nullptr != AnisotropicClamp);
     {
         Assert((void *)AnisotropicClamp == (void *)&gSamplerState_AnisotropicClamp);
@@ -204,9 +204,9 @@ void SamplerState::Shutdown() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void SamplerState::OnDeviceCreate(DeviceEncapsulator *device) {
+void FSamplerState::OnDeviceCreate(FDeviceEncapsulator *device) {
 #define CREATEWDEVICE_SAMPLERSTATE_BUILTINTYPE(_NAME) \
-    remove_const(SamplerState::_NAME)->Create(device->Device())
+    remove_const(FSamplerState::_NAME)->Create(device->Device())
 
     CREATEWDEVICE_SAMPLERSTATE_BUILTINTYPE(AnisotropicClamp);
     CREATEWDEVICE_SAMPLERSTATE_BUILTINTYPE(AnisotropicWrap);
@@ -218,9 +218,9 @@ void SamplerState::OnDeviceCreate(DeviceEncapsulator *device) {
 #undef CREATEWDEVICE_SAMPLERSTATE_BUILTINTYPE
 }
 //----------------------------------------------------------------------------
-void SamplerState::OnDeviceDestroy(DeviceEncapsulator *device) {
+void FSamplerState::OnDeviceDestroy(FDeviceEncapsulator *device) {
 #define DESTROYWDEVICE_SAMPLERSTATE_BUILTINTYPE(_NAME) \
-    remove_const(SamplerState::_NAME)->Destroy(device->Device())
+    remove_const(FSamplerState::_NAME)->Destroy(device->Device())
 
     DESTROYWDEVICE_SAMPLERSTATE_BUILTINTYPE(AnisotropicClamp);
     DESTROYWDEVICE_SAMPLERSTATE_BUILTINTYPE(AnisotropicWrap);

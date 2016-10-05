@@ -11,28 +11,28 @@ FWD_REFPTR(ContentPipelineNode);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ContentPipelineNode : public RTTI::MetaObject {
+class FContentPipelineNode : public RTTI::FMetaObject {
 public:
-    ContentPipelineNode();
-    virtual ~ContentPipelineNode();
+    FContentPipelineNode();
+    virtual ~FContentPipelineNode();
 
-    ContentPipelineNode(ContentPipelineNode& ) = delete;
-    ContentPipelineNode& operator =(ContentPipelineNode& ) = delete;
+    FContentPipelineNode(FContentPipelineNode& ) = delete;
+    FContentPipelineNode& operator =(FContentPipelineNode& ) = delete;
 
-    const String& NodeName() const { return _nodeName; }
+    const FString& NodeName() const { return _nodeName; }
     const u128& FingerPrint() const { return _fingerPrint; }
 
     bool CheckFingerPrint() const;
 
-    RTTI_CLASS_HEADER(ContentPipelineNode, RTTI::MetaObject);
+    RTTI_CLASS_HEADER(FContentPipelineNode, RTTI::FMetaObject);
 
 protected:
     void RefreshFingerPrint_() const;
 
-    virtual void RTTI_Load(RTTI::MetaLoadContext *context) override;
+    virtual void RTTI_Load(RTTI::FMetaLoadContext *context) override;
 
 private:
-    String _nodeName;
+    FString _nodeName;
     mutable u128 _fingerPrint;
 };
 //----------------------------------------------------------------------------

@@ -9,15 +9,15 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <size_t _Dim>
-using SHCoefficient = ScalarVector<SHScalar, _Dim>;
+using TSHCoefficient = TScalarVector<SHScalar, _Dim>;
 //----------------------------------------------------------------------------
 template <size_t _Dim>
-class SHVector;
+class TSHVector;
 //----------------------------------------------------------------------------
-typedef SHVector<1> SHVector1;
-typedef SHVector<2> SHVector2;
-typedef SHVector<3> SHVector3;
-typedef SHVector<4> SHVector4;
+typedef TSHVector<1> SHVector1;
+typedef TSHVector<2> SHVector2;
+typedef TSHVector<3> SHVector3;
+typedef TSHVector<4> SHVector4;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

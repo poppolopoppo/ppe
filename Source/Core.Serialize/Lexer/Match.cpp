@@ -5,18 +5,18 @@
 #include "Symbols.h"
 
 namespace Core {
-namespace Lexer {
+namespace FLexer {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Match::Match()
-:   _symbol(Symbols::Invalid)
+FMatch::FMatch()
+:   _symbol(FSymbols::Invalid)
 ,   _site(nullptr, 0, 0)
 ,   _offset(size_t(-1)) {}
 //----------------------------------------------------------------------------
-Match::~Match() {}
+FMatch::~FMatch() {}
 //----------------------------------------------------------------------------
-Match::Match(const symbol_type *symbol, String&& rvalue, const Location& site, size_t offset)
+FMatch::FMatch(const symbol_type *symbol, FString&& rvalue, const FLocation& site, size_t offset)
 :   _symbol(symbol)
 ,   _value(std::move(rvalue))
 ,   _site(site)
@@ -24,7 +24,7 @@ Match::Match(const symbol_type *symbol, String&& rvalue, const Location& site, s
     Assert(_symbol);
 }
 //----------------------------------------------------------------------------
-Match::Match(const symbol_type *symbol, const String& value, const Location& site, size_t offset)
+FMatch::FMatch(const symbol_type *symbol, const FString& value, const FLocation& site, size_t offset)
 :   _symbol(symbol)
 ,   _value(value)
 ,   _site(site)
@@ -34,5 +34,5 @@ Match::Match(const symbol_type *symbol, const String& value, const Location& sit
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace Lexer
+} //!namespace FLexer
 } //!namespace Core

@@ -11,7 +11,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-struct NumericLimits {
+struct TNumericLimits {
     STATIC_ASSERT(std::is_arithmetic<T>::value);
     typedef typename std::numeric_limits<T> limits_type;
 
@@ -29,8 +29,8 @@ struct NumericLimits {
 };
 //----------------------------------------------------------------------------
 template <>
-struct NumericLimits<u128> {
-    typedef NumericLimits<uint64_t> limits_type;
+struct TNumericLimits<u128> {
+    typedef TNumericLimits<uint64_t> limits_type;
 
     STATIC_CONST_INTEGRAL(bool, is_integer, limits_type::is_integer);
     STATIC_CONST_INTEGRAL(bool, is_modulo,  limits_type::is_modulo);
@@ -46,8 +46,8 @@ struct NumericLimits<u128> {
 };
 //----------------------------------------------------------------------------
 template <>
-struct NumericLimits<u256> {
-    typedef NumericLimits<u128> limits_type;
+struct TNumericLimits<u256> {
+    typedef TNumericLimits<u128> limits_type;
 
     STATIC_CONST_INTEGRAL(bool, is_integer, limits_type::is_integer);
     STATIC_CONST_INTEGRAL(bool, is_modulo,  limits_type::is_modulo);
@@ -65,4 +65,3 @@ struct NumericLimits<u256> {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Core
-

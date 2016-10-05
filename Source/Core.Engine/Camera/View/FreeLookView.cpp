@@ -12,20 +12,20 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FreeLookView::FreeLookView(const float3& position, float heading, float pitch) {
+FFreeLookView::FFreeLookView(const float3& position, float heading, float pitch) {
     LookAt(position, heading, pitch);
 }
 //----------------------------------------------------------------------------
-FreeLookView::~FreeLookView() {}
+FFreeLookView::~FFreeLookView() {}
 //----------------------------------------------------------------------------
-void FreeLookView::LookAt(const float3& position, float heading, float pitch) {
+void FFreeLookView::LookAt(const float3& position, float heading, float pitch) {
     _position = position;
     _heading = std::fmod(heading, F_2PI);
     _pitch = std::fmod(pitch, F_2PI);
 }
 //----------------------------------------------------------------------------
-virtual float4x4 FreeLookView::ViewMatrix(const Timeline& ) override;
-    const Quaternion rotation = MakeYawPitchRollQuaternion(_heading, _pitch, 0.0f);
+virtual float4x4 FFreeLookView::ViewMatrix(const FTimeline& ) override;
+    const FQuaternion rotation = MakeYawPitchRollQuaternion(_heading, _pitch, 0.0f);
 
     const float3 dU(0.0f, 1.0f, 0.0f);
     const float3 dV(0.0f, 0.0f, 1.0f);

@@ -22,58 +22,58 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct EffectCompilerKey {
+struct FEffectCompilerKey {
     STATIC_CONST_INTEGRAL(size_t, TagCapacity, 8);
 
     size_t HashValue;
     PCEffectDescriptor Descriptor;
-    Graphics::BindName Tags[TagCapacity];
-    Graphics::PCVertexDeclaration VertexDeclaration;
+    Graphics::FBindName Tags[TagCapacity];
+    Graphics::PCVertexDeclaration FVertexDeclaration;
 
-    bool operator ==(const EffectCompilerKey& other) const { 
+    bool operator ==(const FEffectCompilerKey& other) const { 
         return  this == &other || (
                 HashValue == other.HashValue && 
                 Descriptor == other.Descriptor && 
-                VertexDeclaration == other.VertexDeclaration &&
+                FVertexDeclaration == other.VertexDeclaration &&
                 std::equal(&Tags[0], &Tags[TagCapacity], other.Tags) ); // most expensive last
     }
 
-    bool operator !=(const EffectCompilerKey& other) const { return !operator ==(other); }
+    bool operator !=(const FEffectCompilerKey& other) const { return !operator ==(other); }
 };
 //----------------------------------------------------------------------------
-hash_t hash_value(const EffectCompilerKey& key) {
+hash_t hash_value(const FEffectCompilerKey& key) {
     return key.HashValue;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-EffectCompiler::EffectCompiler() 
+FEffectCompiler::FEffectCompiler() 
 :   _device(nullptr)
 ,   _sharedBufferFactory(nullptr) {
-    Assert(_variability.Value == VariabilitySeed::Invalid);
+    Assert(_variability.Value == FVariabilitySeed::Invalid);
 }
 //----------------------------------------------------------------------------
-EffectCompiler::~EffectCompiler() {
+FEffectCompiler::~FEffectCompiler() {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!_device);
     Assert(!_sharedBufferFactory);
     Assert(_effects.empty());
-    Assert(_variability.Value == VariabilitySeed::Invalid);
+    Assert(_variability.Value == FVariabilitySeed::Invalid);
 }
 //----------------------------------------------------------------------------
-Effect *EffectCompiler::GetOrCreateEffect(
-    const EffectDescriptor *descriptor,
-    const Graphics::VertexDeclaration *vertexDeclaration,
-    const MemoryView<const Graphics::BindName>& tags )
+FEffect *FEffectCompiler::GetOrCreateEffect(
+    const FEffectDescriptor *descriptor,
+    const Graphics::FVertexDeclaration *vertexDeclaration,
+    const TMemoryView<const Graphics::FBindName>& tags )
 {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(descriptor);
     Assert(vertexDeclaration);
     Assert(_device);
     Assert(_sharedBufferFactory);
-    Assert(_variability.Value != VariabilitySeed::Invalid);
+    Assert(_variability.Value != FVariabilitySeed::Invalid);
 
-    EffectCompilerKey key;
+    FEffectCompilerKey key;
     key.Descriptor = descriptor;
     key.VertexDeclaration = vertexDeclaration;
     for (size_t i = 0; i < tags.size(); ++i) 
@@ -86,10 +86,10 @@ Effect *EffectCompiler::GetOrCreateEffect(
     if (!effect) {
         Graphics::IDeviceAPIShaderCompiler *const compiler = _device->Encapsulator()->Compiler();
 
-        LOG(Info, L"[EffectCompiler] Create effect for descriptor <{0}> and vertex declaration <{1}> ...",
+        LOG(Info, L"[FEffectCompiler] Create effect for descriptor <{0}> and vertex declaration <{1}> ...",
             descriptor->Name().c_str(), vertexDeclaration->ResourceName() );
 
-        effect = new Effect(descriptor, vertexDeclaration, tags);
+        effect = new FEffect(descriptor, vertexDeclaration, tags);
         effect->Create(_device);
         effect->LinkReflectedData(_sharedBufferFactory, compiler);
     }
@@ -101,49 +101,49 @@ Effect *EffectCompiler::GetOrCreateEffect(
     return effect;
 }
 //----------------------------------------------------------------------------
-MaterialEffect *EffectCompiler::CreateMaterialEffect(
-    const EffectDescriptor *descriptor,
-    const Graphics::VertexDeclaration *vertexDeclaration,
-    const Material *material ) {
+FMaterialEffect *FEffectCompiler::CreateMaterialEffect(
+    const FEffectDescriptor *descriptor,
+    const Graphics::FVertexDeclaration *vertexDeclaration,
+    const FMaterial *material ) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(material);
 
-    LOG(Info, L"[EffectCompiler] Create material effect '{0}' for material <{1}> descriptor <{2}> and vertex declaration <{3}> ...",
+    LOG(Info, L"[FEffectCompiler] Create material effect '{0}' for material <{1}> descriptor <{2}> and vertex declaration <{3}> ...",
         material->Description(), material->Name(), descriptor->Name().c_str(), vertexDeclaration->ResourceName() );
 
-    STACKLOCAL_POD_ARRAY(Graphics::BindName, activeTags, descriptor->Substitutions().size());
+    STACKLOCAL_POD_ARRAY(Graphics::FBindName, activeTags, descriptor->Substitutions().size());
     size_t activeTagsCount = 0;
-    for (const Pair<Graphics::BindName, String>& substitution : descriptor->Substitutions())
+    for (const TPair<Graphics::FBindName, FString>& substitution : descriptor->Substitutions())
         if (Contains(material->Tags(), substitution.first))
             activeTags[activeTagsCount++] = substitution.first;
 
-    Effect *const effect = GetOrCreateEffect(descriptor, vertexDeclaration, activeTags.SubRangeConst(0, activeTagsCount) );
+    FEffect *const effect = GetOrCreateEffect(descriptor, vertexDeclaration, activeTags.SubRangeConst(0, activeTagsCount) );
 
-    return new MaterialEffect(effect, material);
+    return new FMaterialEffect(effect, material);
 }
 //----------------------------------------------------------------------------
-void EffectCompiler::RegenerateEffects() {
+void FEffectCompiler::RegenerateEffects() {
     THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(_variability.Value != VariabilitySeed::Invalid);
+    Assert(_variability.Value != FVariabilitySeed::Invalid);
 
-    LOG(Info, L"[EffectCompiler] Regenerating {0} effects ...",
+    LOG(Info, L"[FEffectCompiler] Regenerating {0} effects ...",
         _effects.size() );
 
     const Units::Time::Seconds startedAt = ProcessTime::TotalSeconds();
 
     Graphics::IDeviceAPIShaderCompiler *const compiler = _device->Encapsulator()->Compiler();
 
-    for (const Pair<const EffectCompilerKey, PEffect>& effect : _effects) {
+    for (const TPair<const FEffectCompilerKey, PEffect>& effect : _effects) {
         Assert(effect.second->Available());
 
 #ifdef USE_DEBUG_LOGGER
-        LOG(Info, L"[EffectCompiler] Regenerate effect named \"{0}\" with vertex declaration <{1}> ...",
+        LOG(Info, L"[FEffectCompiler] Regenerate effect named \"{0}\" with vertex declaration <{1}> ...",
             effect.first.Descriptor->Name().c_str(),
             effect.first.VertexDeclaration->ResourceName() );
 
-        for (const Graphics::BindName& tag : effect.first.Tags)
+        for (const Graphics::FBindName& tag : effect.first.Tags)
             if (!tag.empty())
-                LOG(Info, L"[EffectCompiler] - With material tag <{0}>", tag);
+                LOG(Info, L"[FEffectCompiler] - With material tag <{0}>", tag);
 #endif
 
         effect.second->UnlinkReflectedData(_sharedBufferFactory);
@@ -156,18 +156,18 @@ void EffectCompiler::RegenerateEffects() {
     const Units::Time::Seconds stoppedAt = ProcessTime::TotalSeconds();
     const double totalDuration = stoppedAt.Value() - startedAt.Value();
 
-    LOG(Info, L"[EffectCompiler] Regenerated {0} effects in {1:f4} seconds.",
+    LOG(Info, L"[FEffectCompiler] Regenerated {0} effects in {1:f4} seconds.",
         _effects.size(), totalDuration );
 
     _variability.Next();
 }
 //----------------------------------------------------------------------------
-void EffectCompiler::Clear() {
+void FEffectCompiler::Clear() {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(_device);
-    Assert(_variability.Value != VariabilitySeed::Invalid);
+    Assert(_variability.Value != FVariabilitySeed::Invalid);
 
-    for (Pair<const EffectCompilerKey, PEffect>& effect : _effects) {
+    for (TPair<const FEffectCompilerKey, PEffect>& effect : _effects) {
         Assert(effect.second->Available());
 
         effect.second->UnlinkReflectedData(_sharedBufferFactory);
@@ -180,14 +180,14 @@ void EffectCompiler::Clear() {
     _variability.Next();
 }
 //----------------------------------------------------------------------------
-void EffectCompiler::Start(Graphics::IDeviceAPIEncapsulator *device, SharedConstantBufferFactory *sharedBufferFactory) {
+void FEffectCompiler::Start(Graphics::IDeviceAPIEncapsulator *device, FSharedConstantBufferFactory *sharedBufferFactory) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!_device);
     Assert(!_sharedBufferFactory);
     Assert(_effects.empty());
-    Assert(_variability.Value == VariabilitySeed::Invalid);
+    Assert(_variability.Value == FVariabilitySeed::Invalid);
 
-    LOG(Info, L"[EffectCompiler] Starting with device <{0}> and shared buffer factory <{1}> ...",
+    LOG(Info, L"[FEffectCompiler] Starting with device <{0}> and shared buffer factory <{1}> ...",
         device, sharedBufferFactory );
 
     _device = device;
@@ -195,22 +195,22 @@ void EffectCompiler::Start(Graphics::IDeviceAPIEncapsulator *device, SharedConst
     _variability.Reset();
 }
 //----------------------------------------------------------------------------
-void EffectCompiler::Shutdown(Graphics::IDeviceAPIEncapsulator *device, SharedConstantBufferFactory *sharedBufferFactory) {
+void FEffectCompiler::Shutdown(Graphics::IDeviceAPIEncapsulator *device, FSharedConstantBufferFactory *sharedBufferFactory) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(device);
     Assert(device == _device);
     Assert(sharedBufferFactory);
     Assert(sharedBufferFactory == _sharedBufferFactory);
-    Assert(_variability.Value != VariabilitySeed::Invalid);
+    Assert(_variability.Value != FVariabilitySeed::Invalid);
 
-    LOG(Info, L"[EffectCompiler] Shutting down with device <{0}> and shared buffer factory <{1}> ...",
+    LOG(Info, L"[FEffectCompiler] Shutting down with device <{0}> and shared buffer factory <{1}> ...",
         device, sharedBufferFactory );
 
     Clear();
 
     _device = nullptr;
     _sharedBufferFactory = nullptr;
-    _variability.Value = size_t(VariabilitySeed::Invalid);
+    _variability.Value = size_t(FVariabilitySeed::Invalid);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

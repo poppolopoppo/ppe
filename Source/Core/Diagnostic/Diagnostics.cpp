@@ -18,32 +18,32 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void DiagnosticsStartup::Start(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t** argv) {
-    CurrentProcess::Create(applicationHandle, nShowCmd, argc, argv);
+void FDiagnosticsStartup::Start(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t** argv) {
+    FCurrentProcess::Create(applicationHandle, nShowCmd, argc, argv);
 #ifdef OS_WINDOWS
-    DbghelpWrapper::Create();
+    FDbghelpWrapper::Create();
 #endif
-    Callstack::Start();
-    MemoryDomainStartup::Start();
+    FCallstack::Start();
+    FMemoryDomainStartup::Start();
     MiniDump::Start();
 #ifdef WITH_CORE_PROFILING
-    Profiler::Startup();
+    FProfiler::FStartup();
 #endif
     GLOBAL_CHECK_MEMORY_LEAKS(true);
 }
 //----------------------------------------------------------------------------
-void DiagnosticsStartup::Shutdown() {
+void FDiagnosticsStartup::Shutdown() {
     GLOBAL_CHECK_MEMORY_LEAKS(false);
 #ifdef WITH_CORE_PROFILING
-    Profiler::Shutdown();
+    FProfiler::Shutdown();
 #endif
     MiniDump::Shutdown();
-    MemoryDomainStartup::Shutdown();
-    Callstack::Shutdown();
+    FMemoryDomainStartup::Shutdown();
+    FCallstack::Shutdown();
 #ifdef OS_WINDOWS
-    DbghelpWrapper::Destroy();
+    FDbghelpWrapper::Destroy();
 #endif
-    CurrentProcess::Destroy();
+    FCurrentProcess::Destroy();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

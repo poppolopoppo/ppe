@@ -15,18 +15,18 @@ namespace Engine {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(RenderSurface);
-class RenderSurface : public AbstractRenderSurface {
+class FRenderSurface : public FAbstractRenderSurface {
 public:
-    RenderSurface(  String&& name, size_t width, size_t height,
-                    const Graphics::SurfaceFormat *renderTargetFormatIFN,
-                    const Graphics::SurfaceFormat *depthStencilFormatIFN );
-    virtual ~RenderSurface();
+    FRenderSurface(  FString&& name, size_t width, size_t height,
+                    const Graphics::FSurfaceFormat *renderTargetFormatIFN,
+                    const Graphics::FSurfaceFormat *depthStencilFormatIFN );
+    virtual ~FRenderSurface();
 
     size_t Width() const { return _width; }
     size_t Height() const { return _height; }
 
-    const Graphics::SurfaceFormat *RenderTargetFormat() const { return _renderTargetFormat; }
-    const Graphics::SurfaceFormat *DepthStencilFormat() const { return _depthStencilFormat; }
+    const Graphics::FSurfaceFormat *RenderTargetFormat() const { return _renderTargetFormat; }
+    const Graphics::FSurfaceFormat *DepthStencilFormat() const { return _depthStencilFormat; }
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
@@ -43,8 +43,8 @@ private:
     size_t _width;
     size_t _height;
 
-    const Graphics::SurfaceFormat *_renderTargetFormat;
-    const Graphics::SurfaceFormat *_depthStencilFormat;
+    const Graphics::FSurfaceFormat *_renderTargetFormat;
+    const Graphics::FSurfaceFormat *_depthStencilFormat;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

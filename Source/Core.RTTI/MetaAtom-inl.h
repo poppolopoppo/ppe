@@ -15,7 +15,7 @@ namespace RTTI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-T *AtomValueAs(MetaAtom *atom) {
+T *AtomValueAs(FMetaAtom *atom) {
     Assert(atom);
     auto *typed_atom = atom->As<T>;
     return (typed_atom)
@@ -24,7 +24,7 @@ T *AtomValueAs(MetaAtom *atom) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-const T *AtomValueAs(const MetaAtom *atom) {
+const T *AtomValueAs(const FMetaAtom *atom) {
     Assert(atom);
     const auto *typed_atom = atom->As<T>;
     return (typed_atom)
@@ -35,112 +35,112 @@ const T *AtomValueAs(const MetaAtom *atom) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-MetaTypedAtomImpl<T>::MetaTypedAtomImpl() {}
+TMetaTypedAtomImpl<T>::TMetaTypedAtomImpl() {}
 //----------------------------------------------------------------------------
 template <typename T>
-MetaTypedAtomImpl<T>::~MetaTypedAtomImpl() {}
+TMetaTypedAtomImpl<T>::~TMetaTypedAtomImpl() {}
 //----------------------------------------------------------------------------
 template <typename T>
-MetaTypedAtomImpl<T>::MetaTypedAtomImpl(T&& wrapper)
+TMetaTypedAtomImpl<T>::TMetaTypedAtomImpl(T&& wrapper)
 :   _wrapper(std::move(wrapper)) {}
 //----------------------------------------------------------------------------
 template <typename T>
-MetaTypedAtomImpl<T>& MetaTypedAtomImpl<T>::operator =(T&& wrapper) {
+TMetaTypedAtomImpl<T>& TMetaTypedAtomImpl<T>::operator =(T&& wrapper) {
     _wrapper = std::move(wrapper);
     return *this;
 }
 //----------------------------------------------------------------------------
 template <typename T>
-MetaTypedAtomImpl<T>::MetaTypedAtomImpl(const T& wrapper)
+TMetaTypedAtomImpl<T>::TMetaTypedAtomImpl(const T& wrapper)
 :   _wrapper(wrapper) {}
 //----------------------------------------------------------------------------
 template <typename T>
-MetaTypedAtomImpl<T>& MetaTypedAtomImpl<T>::operator =(const T& wrapper) {
+TMetaTypedAtomImpl<T>& TMetaTypedAtomImpl<T>::operator =(const T& wrapper) {
     _wrapper = wrapper;
     return *this;
 }
 //----------------------------------------------------------------------------
 template <typename T>
-MetaTypedAtomImpl<T>::MetaTypedAtomImpl(MetaTypedAtomImpl&& rvalue)
+TMetaTypedAtomImpl<T>::TMetaTypedAtomImpl(TMetaTypedAtomImpl&& rvalue)
 :   _wrapper(std::move(rvalue._wrapper)) {}
 //----------------------------------------------------------------------------
 template <typename T>
-MetaTypedAtomImpl<T>& MetaTypedAtomImpl<T>::operator =(MetaTypedAtomImpl&& rvalue) {
+TMetaTypedAtomImpl<T>& TMetaTypedAtomImpl<T>::operator =(TMetaTypedAtomImpl&& rvalue) {
     _wrapper = std::move(rvalue._wrapper);
     return *this;
 }
 //----------------------------------------------------------------------------
 template <typename T>
-MetaTypedAtomImpl<T>::MetaTypedAtomImpl(const MetaTypedAtomImpl& other)
+TMetaTypedAtomImpl<T>::TMetaTypedAtomImpl(const TMetaTypedAtomImpl& other)
 :   _wrapper(other._wrapper) {}
 //----------------------------------------------------------------------------
 template <typename T>
-MetaTypedAtomImpl<T>& MetaTypedAtomImpl<T>::operator =(const MetaTypedAtomImpl& other) {
+TMetaTypedAtomImpl<T>& TMetaTypedAtomImpl<T>::operator =(const TMetaTypedAtomImpl& other) {
     _wrapper = other._wrapper;
     return *this;
 }
 //----------------------------------------------------------------------------
 template <typename T>
-MetaTypeInfo MetaTypedAtomImpl<T>::TypeInfo() const {
+FMetaTypeInfo TMetaTypedAtomImpl<T>::TypeInfo() const {
     return RTTI::TypeInfo< T >();
 }
 //----------------------------------------------------------------------------
 template <typename T>
-const IMetaTypeVirtualTraits *MetaTypedAtomImpl<T>::Traits() const {
-    return MetaTypeTraits<T>::VirtualTraits();
+const IMetaTypeVirtualTraits *TMetaTypedAtomImpl<T>::Traits() const {
+    return TMetaTypeTraits<T>::VirtualTraits();
 }
 //----------------------------------------------------------------------------
 template <typename T>
-bool MetaTypedAtomImpl<T>::IsDefaultValue() const {
-    return MetaType< T >::IsDefaultValue(_wrapper);
+bool TMetaTypedAtomImpl<T>::IsDefaultValue() const {
+    return TMetaType< T >::IsDefaultValue(_wrapper);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void MetaTypedAtomImpl<T>::MoveTo(MetaAtom *atom) {
+void TMetaTypedAtomImpl<T>::MoveTo(FMetaAtom *atom) {
     Assert(atom);
     Assert(atom->TypeInfo().Id == meta_type::TypeId);
 
-    MetaTypedAtomImpl<T> *const other = checked_cast<MetaTypedAtomImpl<T> *>(atom);
+    TMetaTypedAtomImpl<T> *const other = checked_cast<TMetaTypedAtomImpl<T> *>(atom);
     other->_wrapper = std::move(_wrapper);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void MetaTypedAtomImpl<T>::CopyTo(MetaAtom *atom) const {
+void TMetaTypedAtomImpl<T>::CopyTo(FMetaAtom *atom) const {
     Assert(atom);
     Assert(atom->TypeInfo().Id == meta_type::TypeId);
 
-    MetaTypedAtomImpl<T> *const other = checked_cast<MetaTypedAtomImpl<T> *>(atom);
+    TMetaTypedAtomImpl<T> *const other = checked_cast<TMetaTypedAtomImpl<T> *>(atom);
     other->_wrapper = _wrapper;
 }
 //----------------------------------------------------------------------------
 template <typename T>
-MetaAtom *MetaTypedAtomImpl<T>::WrapMoveTo() {
+FMetaAtom *TMetaTypedAtomImpl<T>::WrapMoveTo() {
     return MakeAtom(std::move(_wrapper));
 }
 //----------------------------------------------------------------------------
 template <typename T>
-MetaAtom *MetaTypedAtomImpl<T>::WrapCopyTo() const {
+FMetaAtom *TMetaTypedAtomImpl<T>::WrapCopyTo() const {
     return MakeAtom(_wrapper);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void MetaTypedAtomImpl<T>::MoveFrom(MetaAtom *atom) {
+void TMetaTypedAtomImpl<T>::MoveFrom(FMetaAtom *atom) {
     Assert(atom);
     Assert(atom->TypeInfo().Id == meta_type::TypeId);
-    MetaTypedAtomImpl<T> *const other = checked_cast<MetaTypedAtomImpl<T> *>(atom);
+    TMetaTypedAtomImpl<T> *const other = checked_cast<TMetaTypedAtomImpl<T> *>(atom);
     _wrapper = std::move(other->_wrapper);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void MetaTypedAtomImpl<T>::CopyFrom(const MetaAtom *atom) {
+void TMetaTypedAtomImpl<T>::CopyFrom(const FMetaAtom *atom) {
     Assert(atom);
     Assert(atom->TypeInfo().Id == meta_type::TypeId);
-    const MetaTypedAtomImpl<T> *const other = checked_cast<const MetaTypedAtomImpl<T> *>(atom);
+    const TMetaTypedAtomImpl<T> *const other = checked_cast<const TMetaTypedAtomImpl<T> *>(atom);
     _wrapper = other->_wrapper;
 }
 //----------------------------------------------------------------------------
 template <typename T>
-bool MetaTypedAtomImpl<T>::Equals(const MetaAtom *atom) const {
+bool TMetaTypedAtomImpl<T>::Equals(const FMetaAtom *atom) const {
     Assert(atom);
     if (atom->TypeInfo().Id != meta_type::TypeId)
         return false;
@@ -149,7 +149,7 @@ bool MetaTypedAtomImpl<T>::Equals(const MetaAtom *atom) const {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-bool MetaTypedAtomImpl<T>::DeepEquals(const MetaAtom *atom) const {
+bool TMetaTypedAtomImpl<T>::DeepEquals(const FMetaAtom *atom) const {
     Assert(atom);
     if (atom->TypeInfo().Id != meta_type::TypeId)
         return false;
@@ -158,88 +158,88 @@ bool MetaTypedAtomImpl<T>::DeepEquals(const MetaAtom *atom) const {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-size_t MetaTypedAtomImpl<T>::HashValue() const {
+size_t TMetaTypedAtomImpl<T>::HashValue() const {
     using Core::hash_value;
     return hash_tuple(u64(meta_type::TypeId), _wrapper);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-String MetaTypedAtomImpl<T>::ToString() const {
+FString TMetaTypedAtomImpl<T>::ToString() const {
     using Core::ToString;
     return ToString(_wrapper);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void MetaTypedAtomImpl<T>::Swap(T& wrapper) {
+void TMetaTypedAtomImpl<T>::Swap(T& wrapper) {
     swap(wrapper, _wrapper);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(RTTI, MetaTypedAtom< T >, template <typename T>)
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(RTTI, TMetaTypedAtom< T >, template <typename T>)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(RTTI, MetaTypedAtom< RTTI::Pair<_First COMMA _Second> >, template <typename _First COMMA typename _Second>)
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(RTTI, TMetaTypedAtom< RTTI::TPair<_First COMMA _Second> >, template <typename _First COMMA typename _Second>)
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
-void MetaTypedAtom< RTTI::Pair<_First, _Second> >::MoveTo(RTTI::Pair<PMetaAtom, PMetaAtom>& pair) {
+void TMetaTypedAtom< RTTI::TPair<_First, _Second> >::MoveTo(RTTI::TPair<PMetaAtom, PMetaAtom>& pair) {
     Assert(pair.first);
     Assert(pair.second);
-    Assert(pair.first->TypeInfo().Id == MetaType<_First>::TypeId);
-    Assert(pair.second->TypeInfo().Id == MetaType<_Second>::TypeId);
+    Assert(pair.first->TypeInfo().Id == TMetaType<_First>::TypeId);
+    Assert(pair.second->TypeInfo().Id == TMetaType<_Second>::TypeId);
 
     pair.first->Cast<_First>()->Wrapper() = std::move(_wrapper.first);
     pair.second->Cast<_Second>()->Wrapper() = std::move(_wrapper.second);
 }
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
-void MetaTypedAtom< RTTI::Pair<_First, _Second> >::CopyTo(RTTI::Pair<PMetaAtom, PMetaAtom>& pair) const {
+void TMetaTypedAtom< RTTI::TPair<_First, _Second> >::CopyTo(RTTI::TPair<PMetaAtom, PMetaAtom>& pair) const {
     Assert(pair.first);
     Assert(pair.second);
-    Assert(pair.first->TypeInfo().Id == MetaType<_First>::TypeId);
-    Assert(pair.second->TypeInfo().Id == MetaType<_Second>::TypeId);
+    Assert(pair.first->TypeInfo().Id == TMetaType<_First>::TypeId);
+    Assert(pair.second->TypeInfo().Id == TMetaType<_Second>::TypeId);
 
     pair.first->Cast<_First>()->Wrapper() = _wrapper.first;
     pair.second->Cast<_Second>()->Wrapper() = _wrapper.second;
 }
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
-void MetaTypedAtom< RTTI::Pair<_First, _Second> >::WrapMoveTo(RTTI::Pair<PMetaAtom, PMetaAtom>& pair) {
+void TMetaTypedAtom< RTTI::TPair<_First, _Second> >::WrapMoveTo(RTTI::TPair<PMetaAtom, PMetaAtom>& pair) {
     pair.first = MakeAtom(std::move(_wrapper.first));
     pair.second = MakeAtom(std::move(_wrapper.second));
 }
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
-void MetaTypedAtom< RTTI::Pair<_First, _Second> >::WrapCopyTo(RTTI::Pair<PMetaAtom, PMetaAtom>& pair) const {
+void TMetaTypedAtom< RTTI::TPair<_First, _Second> >::WrapCopyTo(RTTI::TPair<PMetaAtom, PMetaAtom>& pair) const {
     pair.first = MakeAtom(_wrapper.first);
     pair.second = MakeAtom(_wrapper.second);
 }
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
-void MetaTypedAtom< RTTI::Pair<_First, _Second> >::MoveFrom(const RTTI::Pair<PMetaAtom, PMetaAtom>& pair) {
+void TMetaTypedAtom< RTTI::TPair<_First, _Second> >::MoveFrom(const RTTI::TPair<PMetaAtom, PMetaAtom>& pair) {
     Assert(pair.first);
     Assert(pair.second);
-    Assert(pair.first->TypeInfo().Id == MetaType<_First>::TypeId);
-    Assert(pair.second->TypeInfo().Id == MetaType<_Second>::TypeId);
+    Assert(pair.first->TypeInfo().Id == TMetaType<_First>::TypeId);
+    Assert(pair.second->TypeInfo().Id == TMetaType<_Second>::TypeId);
 
     _wrapper.first = std::move(pair.first->Cast<_First>()->Wrapper());
     _wrapper.second = std::move(pair.second->Cast<_Second>()->Wrapper());
 }
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
-void MetaTypedAtom< RTTI::Pair<_First, _Second> >::CopyFrom(const RTTI::Pair<PMetaAtom, PMetaAtom>& pair) {
+void TMetaTypedAtom< RTTI::TPair<_First, _Second> >::CopyFrom(const RTTI::TPair<PMetaAtom, PMetaAtom>& pair) {
     Assert(pair.first);
     Assert(pair.second);
-    Assert(pair.first->TypeInfo().Id == MetaType<_First>::TypeId);
-    Assert(pair.second->TypeInfo().Id == MetaType<_Second>::TypeId);
+    Assert(pair.first->TypeInfo().Id == TMetaType<_First>::TypeId);
+    Assert(pair.second->TypeInfo().Id == TMetaType<_Second>::TypeId);
 
     _wrapper.first = pair.first->Cast<_First>()->Wrapper();
     _wrapper.second = pair.second->Cast<_Second>()->Wrapper();
 }
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
-bool MetaTypedAtom< RTTI::Pair<_First, _Second> >::UnwrapMoveFrom(const RTTI::Pair<PMetaAtom, PMetaAtom>& pair) {
+bool TMetaTypedAtom< RTTI::TPair<_First, _Second> >::UnwrapMoveFrom(const RTTI::TPair<PMetaAtom, PMetaAtom>& pair) {
     Assert(pair.first);
     Assert(pair.second);
 
@@ -254,7 +254,7 @@ bool MetaTypedAtom< RTTI::Pair<_First, _Second> >::UnwrapMoveFrom(const RTTI::Pa
 }
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
-bool MetaTypedAtom< RTTI::Pair<_First, _Second> >::UnwrapCopyFrom(const RTTI::Pair<PMetaAtom, PMetaAtom>& pair) {
+bool TMetaTypedAtom< RTTI::TPair<_First, _Second> >::UnwrapCopyFrom(const RTTI::TPair<PMetaAtom, PMetaAtom>& pair) {
     Assert(pair.first);
     Assert(pair.second);
 
@@ -266,15 +266,15 @@ bool MetaTypedAtom< RTTI::Pair<_First, _Second> >::UnwrapCopyFrom(const RTTI::Pa
 }
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
-bool MetaTypedAtom< RTTI::Pair<_First, _Second> >::Equals(const RTTI::Pair<PMetaAtom, PMetaAtom>& pair) const {
+bool TMetaTypedAtom< RTTI::TPair<_First, _Second> >::Equals(const RTTI::TPair<PMetaAtom, PMetaAtom>& pair) const {
     Assert(pair.first);
     Assert(pair.second);
 
-    const MetaTypedAtom<_First> *other_first = pair.first->As<_First>();
+    const TMetaTypedAtom<_First> *other_first = pair.first->As<_First>();
     if (false == (other_first && (other_first->Wrapper() == _wrapper.first)))
         return false;
 
-    const MetaTypedAtom<_Second> *other_second = pair.second->As<_Second>();
+    const TMetaTypedAtom<_Second> *other_second = pair.second->As<_Second>();
     if (false == (other_second && (other_second->Wrapper() == _wrapper.second)))
         return false;
 
@@ -283,16 +283,16 @@ bool MetaTypedAtom< RTTI::Pair<_First, _Second> >::Equals(const RTTI::Pair<PMeta
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(RTTI, MetaTypedAtom< RTTI::Vector<T> >, template <typename T>)
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(RTTI, TMetaTypedAtom< RTTI::TVector<T> >, template <typename T>)
 //----------------------------------------------------------------------------
 template <typename T>
-void MetaTypedAtom< RTTI::Vector<T> >::MoveTo(RTTI::Vector<PMetaAtom>& vector) {
+void TMetaTypedAtom< RTTI::TVector<T> >::MoveTo(RTTI::TVector<PMetaAtom>& vector) {
     Assert(vector.size() == _wrapper.size());
 
     size_t i = 0;
     for (const PMetaAtom& atom : vector) {
         Assert(atom);
-        Assert(atom->TypeInfo().Id == MetaType<T>::TypeId);
+        Assert(atom->TypeInfo().Id == TMetaType<T>::TypeId);
 
         atom->Cast<T>()->Wrapper() = std::move(_wrapper.at(i++));
     }
@@ -300,13 +300,13 @@ void MetaTypedAtom< RTTI::Vector<T> >::MoveTo(RTTI::Vector<PMetaAtom>& vector) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void MetaTypedAtom< RTTI::Vector<T> >::CopyTo(RTTI::Vector<PMetaAtom>& vector) const {
+void TMetaTypedAtom< RTTI::TVector<T> >::CopyTo(RTTI::TVector<PMetaAtom>& vector) const {
     Assert(vector.size() == _wrapper.size());
 
     size_t i = 0;
     for (const PMetaAtom& atom : vector) {
         Assert(atom);
-        Assert(atom->TypeInfo().Id == MetaType<T>::TypeId);
+        Assert(atom->TypeInfo().Id == TMetaType<T>::TypeId);
 
         atom->Cast<T>()->Wrapper() = _wrapper.at(i++);
     }
@@ -314,7 +314,7 @@ void MetaTypedAtom< RTTI::Vector<T> >::CopyTo(RTTI::Vector<PMetaAtom>& vector) c
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void MetaTypedAtom< RTTI::Vector<T> >::WrapMoveTo(RTTI::Vector<PMetaAtom>& vector) {
+void TMetaTypedAtom< RTTI::TVector<T> >::WrapMoveTo(RTTI::TVector<PMetaAtom>& vector) {
     vector.reserve(_wrapper.size());
 
     typedef typename wrapper_type::iterator iterator;
@@ -327,7 +327,7 @@ void MetaTypedAtom< RTTI::Vector<T> >::WrapMoveTo(RTTI::Vector<PMetaAtom>& vecto
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void MetaTypedAtom< RTTI::Vector<T> >::WrapCopyTo(RTTI::Vector<PMetaAtom>& vector) const {
+void TMetaTypedAtom< RTTI::TVector<T> >::WrapCopyTo(RTTI::TVector<PMetaAtom>& vector) const {
     vector.reserve(_wrapper.size());
 
     typedef typename wrapper_type::const_iterator const_iterator;
@@ -339,33 +339,33 @@ void MetaTypedAtom< RTTI::Vector<T> >::WrapCopyTo(RTTI::Vector<PMetaAtom>& vecto
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void MetaTypedAtom< RTTI::Vector<T> >::MoveFrom(const RTTI::Vector<PMetaAtom>& vector) {
+void TMetaTypedAtom< RTTI::TVector<T> >::MoveFrom(const RTTI::TVector<PMetaAtom>& vector) {
     _wrapper.clear();
     _wrapper.reserve(vector.size());
 
     for (const PMetaAtom& atom : vector) {
         Assert(atom);
-        Assert(atom->TypeInfo().Id == MetaType<T>::TypeId);
+        Assert(atom->TypeInfo().Id == TMetaType<T>::TypeId);
 
         _wrapper.emplace_back(std::move(atom->Cast<T>()->Wrapper()));
     }
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void MetaTypedAtom< RTTI::Vector<T> >::CopyFrom(const RTTI::Vector<PMetaAtom>& vector) {
+void TMetaTypedAtom< RTTI::TVector<T> >::CopyFrom(const RTTI::TVector<PMetaAtom>& vector) {
     _wrapper.clear();
     _wrapper.reserve(vector.size());
 
     for (const PMetaAtom& atom : vector) {
         Assert(atom);
-        Assert(atom->TypeInfo().Id == MetaType<T>::TypeId);
+        Assert(atom->TypeInfo().Id == TMetaType<T>::TypeId);
 
         _wrapper.emplace_back(atom->Cast<T>()->Wrapper());
     }
 }
 //----------------------------------------------------------------------------
 template <typename T>
-bool MetaTypedAtom< RTTI::Vector<T> >::UnwrapMoveFrom(const RTTI::Vector<PMetaAtom>& vector) {
+bool TMetaTypedAtom< RTTI::TVector<T> >::UnwrapMoveFrom(const RTTI::TVector<PMetaAtom>& vector) {
     const size_t n = vector.size();
     for (size_t i = 0; i < n; ++i) {
         const PMetaAtom& atom = vector[i];
@@ -392,7 +392,7 @@ bool MetaTypedAtom< RTTI::Vector<T> >::UnwrapMoveFrom(const RTTI::Vector<PMetaAt
 }
 //----------------------------------------------------------------------------
 template <typename T>
-bool MetaTypedAtom< RTTI::Vector<T> >::UnwrapCopyFrom(const RTTI::Vector<PMetaAtom>& vector) {
+bool TMetaTypedAtom< RTTI::TVector<T> >::UnwrapCopyFrom(const RTTI::TVector<PMetaAtom>& vector) {
     const size_t n = vector.size();
     for (size_t i = 0; i < n; ++i) {
         const PMetaAtom& atom = vector[i];
@@ -419,7 +419,7 @@ bool MetaTypedAtom< RTTI::Vector<T> >::UnwrapCopyFrom(const RTTI::Vector<PMetaAt
 }
 //----------------------------------------------------------------------------
 template <typename T>
-bool MetaTypedAtom< RTTI::Vector<T> >::Equals(const RTTI::Vector<PMetaAtom>& vector) const {
+bool TMetaTypedAtom< RTTI::TVector<T> >::Equals(const RTTI::TVector<PMetaAtom>& vector) const {
     if (_wrapper.size() != vector.size())
         return false;
 
@@ -427,7 +427,7 @@ bool MetaTypedAtom< RTTI::Vector<T> >::Equals(const RTTI::Vector<PMetaAtom>& vec
     for (size_t i = 0; i < n; ++i) {
         const PMetaAtom& atom = vector[i];
 
-        if (nullptr == atom || atom->TypeInfo().Id == MetaType<T>::TypeId)
+        if (nullptr == atom || atom->TypeInfo().Id == TMetaType<T>::TypeId)
             return false;
 
         if (atom->Cast<T>()->Wrapper() != _wrapper[i])
@@ -439,19 +439,19 @@ bool MetaTypedAtom< RTTI::Vector<T> >::Equals(const RTTI::Vector<PMetaAtom>& vec
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(RTTI, MetaTypedAtom< RTTI::Dictionary<_Key COMMA _Value> >, template <typename _Key COMMA typename _Value>)
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(RTTI, TMetaTypedAtom< RTTI::TDictionary<_Key COMMA _Value> >, template <typename _Key COMMA typename _Value>)
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
-void MetaTypedAtom< RTTI::Dictionary<_Key, _Value> >::MoveTo(RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) {
+void TMetaTypedAtom< RTTI::TDictionary<_Key, _Value> >::MoveTo(RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) {
     Assert(dict.size() == _wrapper.size());
 
     const size_t n = _wrapper.size();
     for (size_t i = 0; i < n; ++i) {
-        Pair<_Key, _Value>& src = _wrapper.Vector()[i];
-        Pair<PMetaAtom, PMetaAtom>& dst = dict.Vector()[i];
+        TPair<_Key, _Value>& src = _wrapper.Vector()[i];
+        TPair<PMetaAtom, PMetaAtom>& dst = dict.Vector()[i];
 
-        Assert(dst.first && dst.first->TypeInfo().Id == MetaType<_Key>::TypeId);
-        Assert(dst.second && dst.second->TypeInfo().Id == MetaType<_Value>::TypeId);
+        Assert(dst.first && dst.first->TypeInfo().Id == TMetaType<_Key>::TypeId);
+        Assert(dst.second && dst.second->TypeInfo().Id == TMetaType<_Value>::TypeId);
 
         dst.first->Cast<_Key>()->Wrapper() = std::move(src.first);
         dst.second->Cast<_Value>()->Wrapper() = std::move(src.second);
@@ -459,16 +459,16 @@ void MetaTypedAtom< RTTI::Dictionary<_Key, _Value> >::MoveTo(RTTI::Dictionary<PM
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
-void MetaTypedAtom< RTTI::Dictionary<_Key, _Value> >::CopyTo(RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) const {
+void TMetaTypedAtom< RTTI::TDictionary<_Key, _Value> >::CopyTo(RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) const {
     Assert(dict.size() == _wrapper.size());
 
     const size_t n = _wrapper.size();
     for (size_t i = 0; i < n; ++i) {
-        const Pair<_Key, _Value>& src = _wrapper.Vector()[i];
-        Pair<PMetaAtom, PMetaAtom>& dst = dict.Vector()[i];
+        const TPair<_Key, _Value>& src = _wrapper.Vector()[i];
+        TPair<PMetaAtom, PMetaAtom>& dst = dict.Vector()[i];
 
-        Assert(dst.first && dst.first->TypeInfo().Id == MetaType<_Key>::TypeId);
-        Assert(dst.second && dst.second->TypeInfo().Id == MetaType<_Value>::TypeId);
+        Assert(dst.first && dst.first->TypeInfo().Id == TMetaType<_Key>::TypeId);
+        Assert(dst.second && dst.second->TypeInfo().Id == TMetaType<_Value>::TypeId);
 
         dst.first->Cast<_Key>()->Wrapper() = src.first;
         dst.second->Cast<_Value>()->Wrapper() = src.second;
@@ -476,13 +476,13 @@ void MetaTypedAtom< RTTI::Dictionary<_Key, _Value> >::CopyTo(RTTI::Dictionary<PM
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
-void MetaTypedAtom< RTTI::Dictionary<_Key, _Value> >::WrapMoveTo(RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) {
+void TMetaTypedAtom< RTTI::TDictionary<_Key, _Value> >::WrapMoveTo(RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) {
     const size_t n = _wrapper.size();
     dict.Vector().reserve(n);
 
     for (size_t i = 0; i < n; ++i) {
-        Pair<_Key, _Value>& src = _wrapper.Vector()[i];
-        Pair<PMetaAtom, PMetaAtom>& dst = dict.Vector().push_back_Default();;
+        TPair<_Key, _Value>& src = _wrapper.Vector()[i];
+        TPair<PMetaAtom, PMetaAtom>& dst = dict.Vector().push_back_Default();;
 
         dst.first = MakeAtom(std::move(src.first));
         dst.second = MakeAtom(std::move(src.second));
@@ -492,13 +492,13 @@ void MetaTypedAtom< RTTI::Dictionary<_Key, _Value> >::WrapMoveTo(RTTI::Dictionar
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
-void MetaTypedAtom< RTTI::Dictionary<_Key, _Value> >::WrapCopyTo(RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) const {
+void TMetaTypedAtom< RTTI::TDictionary<_Key, _Value> >::WrapCopyTo(RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) const {
     const size_t n = _wrapper.size();
     dict.Vector().reserve(n);
 
     for (size_t i = 0; i < n; ++i) {
-        const Pair<_Key, _Value>& src = _wrapper.Vector()[i];
-        Pair<PMetaAtom, PMetaAtom>& dst = dict.Vector().push_back_Default();
+        const TPair<_Key, _Value>& src = _wrapper.Vector()[i];
+        TPair<PMetaAtom, PMetaAtom>& dst = dict.Vector().push_back_Default();
 
         dst.first = MakeAtom(src.first);
         dst.second = MakeAtom(src.second);
@@ -508,15 +508,15 @@ void MetaTypedAtom< RTTI::Dictionary<_Key, _Value> >::WrapCopyTo(RTTI::Dictionar
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
-void MetaTypedAtom< RTTI::Dictionary<_Key, _Value> >::MoveFrom(const RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) {
+void TMetaTypedAtom< RTTI::TDictionary<_Key, _Value> >::MoveFrom(const RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) {
     const size_t n = dict.size();
     _wrapper.Vector().reserve(n);
 
     for (size_t i = 0; i < n; ++i) {
-        const Pair<PMetaAtom, PMetaAtom>& src = dict.Vector()[i];
+        const TPair<PMetaAtom, PMetaAtom>& src = dict.Vector()[i];
 
-        Assert(src.first && src.first->TypeInfo().Id == MetaType<_Key>::TypeId);
-        Assert(src.second && src.second->TypeInfo().Id == MetaType<_Value>::TypeId);
+        Assert(src.first && src.first->TypeInfo().Id == TMetaType<_Key>::TypeId);
+        Assert(src.second && src.second->TypeInfo().Id == TMetaType<_Value>::TypeId);
 
         _wrapper.Vector().emplace_back(
             std::move(src.first->Cast<_Key>()->Wrapper()),
@@ -527,15 +527,15 @@ void MetaTypedAtom< RTTI::Dictionary<_Key, _Value> >::MoveFrom(const RTTI::Dicti
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
-void MetaTypedAtom< RTTI::Dictionary<_Key, _Value> >::CopyFrom(const RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) {
+void TMetaTypedAtom< RTTI::TDictionary<_Key, _Value> >::CopyFrom(const RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) {
     const size_t n = dict.size();
     _wrapper.Vector().reserve(n);
 
     for (size_t i = 0; i < n; ++i) {
-        const Pair<PMetaAtom, PMetaAtom>& src = dict.Vector()[i];
+        const TPair<PMetaAtom, PMetaAtom>& src = dict.Vector()[i];
 
-        Assert(src.first && src.first->TypeInfo().Id == MetaType<_Key>::TypeId);
-        Assert(src.second && src.second->TypeInfo().Id == MetaType<_Value>::TypeId);
+        Assert(src.first && src.first->TypeInfo().Id == TMetaType<_Key>::TypeId);
+        Assert(src.second && src.second->TypeInfo().Id == TMetaType<_Value>::TypeId);
 
         _wrapper.Vector().emplace_back(
             src.first->Cast<_Key>()->Wrapper(),
@@ -546,12 +546,12 @@ void MetaTypedAtom< RTTI::Dictionary<_Key, _Value> >::CopyFrom(const RTTI::Dicti
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
-bool MetaTypedAtom< RTTI::Dictionary<_Key, _Value> >::UnwrapMoveFrom(const RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) {
+bool TMetaTypedAtom< RTTI::TDictionary<_Key, _Value> >::UnwrapMoveFrom(const RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) {
     const size_t n = dict.size();
     for (size_t i = 0; i < n; ++i) {
-        const Pair<PMetaAtom, PMetaAtom>& src = dict.Vector()[i];
+        const TPair<PMetaAtom, PMetaAtom>& src = dict.Vector()[i];
 
-        Pair<_Key, _Value> dst;
+        TPair<_Key, _Value> dst;
 
         if (false == AssignMove(&dst.first, src.first.get())) {
             Assert(0 == i);
@@ -576,12 +576,12 @@ bool MetaTypedAtom< RTTI::Dictionary<_Key, _Value> >::UnwrapMoveFrom(const RTTI:
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
-bool MetaTypedAtom< RTTI::Dictionary<_Key, _Value> >::UnwrapCopyFrom(const RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) {
+bool TMetaTypedAtom< RTTI::TDictionary<_Key, _Value> >::UnwrapCopyFrom(const RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) {
     const size_t n = dict.size();
     for (size_t i = 0; i < n; ++i) {
-        const Pair<PMetaAtom, PMetaAtom>& src = dict.Vector()[i];
+        const TPair<PMetaAtom, PMetaAtom>& src = dict.Vector()[i];
 
-        Pair<_Key, _Value> dst;
+        TPair<_Key, _Value> dst;
 
         if (false == AssignCopy(&dst.first, src.first.get())) {
             Assert(0 == i);
@@ -604,18 +604,18 @@ bool MetaTypedAtom< RTTI::Dictionary<_Key, _Value> >::UnwrapCopyFrom(const RTTI:
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
-bool MetaTypedAtom< RTTI::Dictionary<_Key, _Value> >::Equals(const RTTI::Dictionary<PMetaAtom, PMetaAtom>& dict) const {
+bool TMetaTypedAtom< RTTI::TDictionary<_Key, _Value> >::Equals(const RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) const {
     if (_wrapper.size() != dict.size())
         return false;
 
     const size_t n = dict.size();
     for (size_t i = 0; i < n; ++i) {
-        const Pair<PMetaAtom, PMetaAtom>& v = dict.Vector()[i];
+        const TPair<PMetaAtom, PMetaAtom>& v = dict.Vector()[i];
 
-        if (false == (v.first && v.first->TypeInfo().Id == MetaType<_Key>::TypeId))
+        if (false == (v.first && v.first->TypeInfo().Id == TMetaType<_Key>::TypeId))
             return false;
 
-        if (false == (v.second && v.second->TypeInfo().Id == MetaType<_Value>::TypeId))
+        if (false == (v.second && v.second->TypeInfo().Id == TMetaType<_Value>::TypeId))
             return false;
 
         const _Key& key = v.first->Cast<_Key>()->Wrapper();
@@ -635,26 +635,26 @@ bool MetaTypedAtom< RTTI::Dictionary<_Key, _Value> >::Equals(const RTTI::Diction
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-typename MetaAtomWrapper<T>::type *MakeAtom(T&& rvalue, typename std::enable_if< MetaAtomWrapper<T>::need_wrapper::value >::type* /* = 0 */) {
-    typedef MetaTypeTraits<T> traits_type;
-    typedef typename MetaAtomWrapper<T>::type atom_type;
+typename TMetaAtomWrapper<T>::type *MakeAtom(T&& rvalue, typename std::enable_if< TMetaAtomWrapper<T>::need_wrapper::value >::type* /* = 0 */) {
+    typedef TMetaTypeTraits<T> traits_type;
+    typedef typename TMetaAtomWrapper<T>::type atom_type;
     typename traits_type::wrapper_type wrapper;
     traits_type::WrapMove(wrapper, std::move(rvalue));
     return new atom_type(std::move(wrapper));
 }
 //----------------------------------------------------------------------------
 template <typename T>
-typename MetaAtomWrapper<T>::type *MakeAtom(const T& value, typename std::enable_if< MetaAtomWrapper<T>::need_wrapper::value >::type* /* = 0 */) {
-    typedef MetaTypeTraits<T> traits_type;
-    typedef typename MetaAtomWrapper<T>::type atom_type;
+typename TMetaAtomWrapper<T>::type *MakeAtom(const T& value, typename std::enable_if< TMetaAtomWrapper<T>::need_wrapper::value >::type* /* = 0 */) {
+    typedef TMetaTypeTraits<T> traits_type;
+    typedef typename TMetaAtomWrapper<T>::type atom_type;
     typename traits_type::wrapper_type wrapper;
     traits_type::WrapCopy(wrapper, value);
     return new atom_type(std::move(wrapper));
 }
 //----------------------------------------------------------------------------
 template <typename T>
-typename MetaAtomWrapper<T>::type *MakeAtom(T&& rvalue, typename std::enable_if< MetaAtomWrapper<T>::dont_need_wrapper::value >::type* /* = 0 */) {
-    typedef typename MetaAtomWrapper<T>::type atom_type;
+typename TMetaAtomWrapper<T>::type *MakeAtom(T&& rvalue, typename std::enable_if< TMetaAtomWrapper<T>::dont_need_wrapper::value >::type* /* = 0 */) {
+    typedef typename TMetaAtomWrapper<T>::type atom_type;
     return new atom_type(std::forward<T>(rvalue));
 }
 //----------------------------------------------------------------------------

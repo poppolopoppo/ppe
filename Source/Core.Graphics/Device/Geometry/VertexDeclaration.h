@@ -16,53 +16,53 @@
 
 namespace Core {
     template <typename T>
-    class MemoryView;
+    class TMemoryView;
 }
 
 namespace Core {
 namespace Graphics {
-class DeviceEncapsulator;
+class FDeviceEncapsulator;
 class IDeviceAPIEncapsulator;
 FWD_REFPTR(DeviceAPIDependantVertexDeclaration);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-using VertexFormat = ValueType;
+using FVertexFormat = EValueType;
 //----------------------------------------------------------------------------
-class VertexSemantic : public Graphics::Name {
+class FVertexSemantic : public Graphics::FName {
 public:
-    static const VertexSemantic Position;
-    static const VertexSemantic TexCoord;
-    static const VertexSemantic Color;
-    static const VertexSemantic Normal;
-    static const VertexSemantic Tangent;
-    static const VertexSemantic Binormal;
+    static const FVertexSemantic Position;
+    static const FVertexSemantic TexCoord;
+    static const FVertexSemantic Color;
+    static const FVertexSemantic Normal;
+    static const FVertexSemantic Tangent;
+    static const FVertexSemantic Binormal;
 
-    static VertexSemantic Invalid() { return VertexSemantic(); }
+    static FVertexSemantic Invalid() { return FVertexSemantic(); }
 
-    VertexSemantic() {}
+    FVertexSemantic() {}
 
-    VertexSemantic(const VertexSemantic& ) = default;
-    VertexSemantic& operator =(const VertexSemantic& ) = default;
+    FVertexSemantic(const FVertexSemantic& ) = default;
+    FVertexSemantic& operator =(const FVertexSemantic& ) = default;
 
 private:
-    friend class VertexDeclaration;
+    friend class FVertexDeclaration;
 
-    VertexSemantic(const Graphics::Name& name) : Name(name) {}
+    FVertexSemantic(const Graphics::FName& name) : FName(name) {}
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(VertexDeclaration);
-class VertexDeclaration : public DeviceResource {
+class FVertexDeclaration : public FDeviceResource {
 public:
     STATIC_CONST_INTEGRAL(u32, MaxSubPartCount, 6);
 
-    VertexDeclaration();
-    virtual ~VertexDeclaration();
+    FVertexDeclaration();
+    virtual ~FVertexDeclaration();
 
     virtual bool Available() const override;
-    virtual DeviceAPIDependantEntity *TerminalEntity() const override;
+    virtual FDeviceAPIDependantEntity *TerminalEntity() const override;
 
     const PDeviceAPIDependantVertexDeclaration& DeviceAPIDependantDeclaration() const {
         Assert(Frozen()); return _deviceAPIDependantDeclaration;
@@ -73,22 +73,22 @@ public:
 
     size_t SizeInBytes() const { return _block.SizeInBytes(); }
 
-    const ValueBlock& Block() const { return _block; }
+    const FValueBlock& FBlock() const { return _block; }
 
-    MemoryView<const ValueBlock::Field> SubParts() const { return _block.MakeView(); }
+    TMemoryView<const FValueBlock::TField> SubParts() const { return _block.MakeView(); }
 
-    void AddSubPart(const VertexSemantic& semantic, size_t index, ValueType type, size_t offset);
+    void AddSubPart(const FVertexSemantic& semantic, size_t index, EValueType type, size_t offset);
 
     template <typename _Class, typename T>
-    void AddTypedSubPart(const VertexSemantic& semantic, size_t index, T _Class:: *member);
+    void AddTypedSubPart(const FVertexSemantic& semantic, size_t index, T _Class:: *member);
 
-    const ValueBlock::Field& SubPartByIndex(size_t index) const { return _block[index]; }
-    const ValueBlock::Field& SubPartBySemantic(const VertexSemantic& semantic, size_t index) const;
-    const ValueBlock::Field* SubPartBySemanticIFP(const VertexSemantic& semantic, size_t index) const;
+    const FValueBlock::TField& SubPartByIndex(size_t index) const { return _block[index]; }
+    const FValueBlock::TField& SubPartBySemantic(const FVertexSemantic& semantic, size_t index) const;
+    const FValueBlock::TField* SubPartBySemanticIFP(const FVertexSemantic& semantic, size_t index) const;
 
-    void CopyVertex(const MemoryView<u8>& dst, const MemoryView<const u8>& src) const;
+    void CopyVertex(const TMemoryView<u8>& dst, const TMemoryView<const u8>& src) const;
 
-    virtual void FillSubstitutions(VECTOR_THREAD_LOCAL(Shader, Pair<String COMMA String>)& substitutions) const;
+    virtual void FillSubstitutions(VECTOR_THREAD_LOCAL(Shader, TPair<FString COMMA FString>)& substitutions) const;
 
     static void Start();
     static void Shutdown();
@@ -96,29 +96,29 @@ public:
     void Create(IDeviceAPIEncapsulator *device);
     void Destroy(IDeviceAPIEncapsulator *device);
 
-    static void OnDeviceCreate(DeviceEncapsulator *device);
-    static void OnDeviceDestroy(DeviceEncapsulator *device);
+    static void OnDeviceCreate(FDeviceEncapsulator *device);
+    static void OnDeviceDestroy(FDeviceEncapsulator *device);
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    ValueBlock _block;
+    FValueBlock _block;
     PDeviceAPIDependantVertexDeclaration _deviceAPIDependantDeclaration;
 };
 //----------------------------------------------------------------------------
 template <typename _Class, typename T>
-void VertexDeclaration::AddTypedSubPart(const VertexSemantic& semantic, size_t index, T _Class:: *member) {
+void FVertexDeclaration::AddTypedSubPart(const FVertexSemantic& semantic, size_t index, T _Class:: *member) {
     const size_t offset = (size_t)&(((_Class *)nullptr)->*member);
     Assert(0 == offset % sizeof(u32));
-    AddSubPart(semantic, index, ValueTraits<T>::TypeId, offset);
+    AddSubPart(semantic, index, TValueTraits<T>::ETypeId, offset);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DeviceAPIDependantVertexDeclaration : public TypedDeviceAPIDependantEntity<VertexDeclaration> {
+class FDeviceAPIDependantVertexDeclaration : public TTypedDeviceAPIDependantEntity<FVertexDeclaration> {
 public:
-    DeviceAPIDependantVertexDeclaration(IDeviceAPIEncapsulator *device, const VertexDeclaration *resource);
-    virtual ~DeviceAPIDependantVertexDeclaration();
+    FDeviceAPIDependantVertexDeclaration(IDeviceAPIEncapsulator *device, const FVertexDeclaration *resource);
+    virtual ~FDeviceAPIDependantVertexDeclaration();
 
     virtual size_t VideoMemorySizeInBytes() const override { return 0; }
 };

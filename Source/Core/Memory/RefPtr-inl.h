@@ -6,44 +6,44 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline RefCountable::RefCountable()
+inline FRefCountable::FRefCountable()
 :   _refCount(0)
 #ifdef WITH_CORE_SAFEPTR
 ,   _safeRefCount(0)
 #endif
 {}
 //----------------------------------------------------------------------------
-inline RefCountable::~RefCountable() {
+inline FRefCountable::~FRefCountable() {
     Assert(0 == _refCount);
 #ifdef WITH_CORE_SAFEPTR
-    // check if a SafePtr<> is still holding a reference to this object
+    // check if a TSafePtr<> is still holding a reference to this object
     AssertRelease(0 == _safeRefCount);
 #endif
 }
 //----------------------------------------------------------------------------
-inline RefCountable::RefCountable(RefCountable&& )
+inline FRefCountable::FRefCountable(FRefCountable&& )
 :   _refCount(0)
 #ifdef WITH_CORE_SAFEPTR
 ,   _safeRefCount(0)
 #endif
 {}
 //----------------------------------------------------------------------------
-inline RefCountable& RefCountable::operator =(RefCountable&& ) { return *this; }
+inline FRefCountable& FRefCountable::operator =(FRefCountable&& ) { return *this; }
 //----------------------------------------------------------------------------
-inline RefCountable::RefCountable(const RefCountable& )
+inline FRefCountable::FRefCountable(const FRefCountable& )
 :   _refCount(0)
 #ifdef WITH_CORE_SAFEPTR
 ,   _safeRefCount(0)
 #endif
 {}
 //----------------------------------------------------------------------------
-inline RefCountable& RefCountable::operator =(const RefCountable& ) { return *this; }
+inline FRefCountable& FRefCountable::operator =(const FRefCountable& ) { return *this; }
 //----------------------------------------------------------------------------
-inline void RefCountable::IncRefCount() const {
+inline void FRefCountable::IncRefCount() const {
     std::atomic_fetch_add_explicit(&_refCount, 1u, std::memory_order_relaxed);
 }
 //----------------------------------------------------------------------------
-inline bool RefCountable::DecRefCount_ReturnIfReachZero() const {
+inline bool FRefCountable::DecRefCount_ReturnIfReachZero() const {
     Assert(_refCount);
     if (std::atomic_fetch_sub_explicit(&_refCount, 1u, std::memory_order_release) == 1 ) {
         std::atomic_thread_fence(std::memory_order_acquire);
@@ -54,20 +54,20 @@ inline bool RefCountable::DecRefCount_ReturnIfReachZero() const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline void AddRef(const RefCountable* ptr) {
+inline void AddRef(const FRefCountable* ptr) {
     ptr->IncRefCount();
 }
 //----------------------------------------------------------------------------
 template <typename T>
 void RemoveRef(T* ptr) {
-    static_assert(std::is_base_of<RefCountable, T>::value, "T must be derived from RefCountable");
+    static_assert(std::is_base_of<FRefCountable, T>::value, "T must be derived from FRefCountable");
     if (ptr->DecRefCount_ReturnIfReachZero())
         OnRefCountReachZero(ptr);
 }
 //----------------------------------------------------------------------------
 template <typename T>
 void OnRefCountReachZero(T* ptr) {
-    static_assert(std::is_base_of<RefCountable, T>::value, "T must be derived from RefCountable");
+    static_assert(std::is_base_of<FRefCountable, T>::value, "T must be derived from FRefCountable");
     checked_delete(ptr);
 }
 //----------------------------------------------------------------------------
@@ -83,23 +83,23 @@ void RemoveRef_AssertReachZero_NoDelete(T *& ptr) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void RemoveRef_AssertReachZero(RefPtr<T>& ptr) {
-    static_assert(std::is_base_of<RefCountable, T>::value, "T must be derived from RefCountable");
+void RemoveRef_AssertReachZero(TRefPtr<T>& ptr) {
+    static_assert(std::is_base_of<FRefCountable, T>::value, "T must be derived from FRefCountable");
     Assert(ptr);
     Assert(1 == ptr->RefCount());
     ptr.reset();
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void RemoveRef_AssertGreaterThanZero(RefPtr<T>& ptr) {
-    static_assert(std::is_base_of<RefCountable, T>::value, "T must be derived from RefCountable");
+void RemoveRef_AssertGreaterThanZero(TRefPtr<T>& ptr) {
+    static_assert(std::is_base_of<FRefCountable, T>::value, "T must be derived from FRefCountable");
     Assert(ptr);
     Assert(1 < ptr->RefCount());
     ptr.reset();
 }
 //----------------------------------------------------------------------------
 template <typename T>
-T *RemoveRef_AssertReachZero_KeepAlive(RefPtr<T>& ptr) {
+T *RemoveRef_AssertReachZero_KeepAlive(TRefPtr<T>& ptr) {
     Assert(ptr);
     Assert(1 == ptr->RefCount());
     T *const result = ptr.get();
@@ -113,27 +113,27 @@ T *RemoveRef_AssertReachZero_KeepAlive(RefPtr<T>& ptr) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-RefPtr<T>::RefPtr()
+TRefPtr<T>::TRefPtr()
 :   _ptr(nullptr) {}
 //----------------------------------------------------------------------------
 template <typename T>
-RefPtr<T>::RefPtr(T* ptr)
+TRefPtr<T>::TRefPtr(T* ptr)
 :   _ptr(ptr) {
     IncRefCountIFP();
 }
 //----------------------------------------------------------------------------
 template <typename T>
-RefPtr<T>::~RefPtr() {
+TRefPtr<T>::~TRefPtr() {
     DecRefCountIFP();
 }
 //----------------------------------------------------------------------------
 template <typename T>
-RefPtr<T>::RefPtr(RefPtr&& rvalue) : _ptr(rvalue._ptr) {
+TRefPtr<T>::TRefPtr(TRefPtr&& rvalue) : _ptr(rvalue._ptr) {
     rvalue._ptr = nullptr;
 }
 //----------------------------------------------------------------------------
 template <typename T>
-auto RefPtr<T>::operator =(RefPtr&& rvalue) -> RefPtr& {
+auto TRefPtr<T>::operator =(TRefPtr&& rvalue) -> TRefPtr& {
     DecRefCountIFP();
     _ptr = rvalue._ptr;
     rvalue._ptr = nullptr;
@@ -141,12 +141,12 @@ auto RefPtr<T>::operator =(RefPtr&& rvalue) -> RefPtr& {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-RefPtr<T>::RefPtr(const RefPtr& other) : _ptr(other._ptr) {
+TRefPtr<T>::TRefPtr(const TRefPtr& other) : _ptr(other._ptr) {
     IncRefCountIFP();
 }
 //----------------------------------------------------------------------------
 template <typename T>
-auto RefPtr<T>::operator =(const RefPtr& other) -> RefPtr& {
+auto TRefPtr<T>::operator =(const TRefPtr& other) -> TRefPtr& {
     if (other._ptr != _ptr) {
         DecRefCountIFP();
         _ptr = other._ptr;
@@ -157,14 +157,14 @@ auto RefPtr<T>::operator =(const RefPtr& other) -> RefPtr& {
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-RefPtr<T>::RefPtr(const RefPtr<U>& other)
+TRefPtr<T>::TRefPtr(const TRefPtr<U>& other)
 :   _ptr(checked_cast<T *>(other.get())) {
     IncRefCountIFP();
 }
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-auto RefPtr<T>::operator =(const RefPtr<U>& other) -> RefPtr& {
+auto TRefPtr<T>::operator =(const TRefPtr<U>& other) -> TRefPtr& {
     if (other.get() != _ptr) {
         DecRefCountIFP();
         _ptr = checked_cast<T *>(other.get());
@@ -175,14 +175,14 @@ auto RefPtr<T>::operator =(const RefPtr<U>& other) -> RefPtr& {
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-RefPtr<T>::RefPtr(RefPtr<U>&& rvalue)
+TRefPtr<T>::TRefPtr(TRefPtr<U>&& rvalue)
 :   _ptr(checked_cast<T *>(rvalue.get())) {
     rvalue._ptr = nullptr;
 }
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-auto RefPtr<T>::operator =(RefPtr<U>&& rvalue) -> RefPtr& {
+auto TRefPtr<T>::operator =(TRefPtr<U>&& rvalue) -> TRefPtr& {
     DecRefCountIFP();
     _ptr = checked_cast<T *>(rvalue.get());
     rvalue._ptr = nullptr;
@@ -190,7 +190,7 @@ auto RefPtr<T>::operator =(RefPtr<U>&& rvalue) -> RefPtr& {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void RefPtr<T>::reset(T* ptr/* = nullptr */) {
+void TRefPtr<T>::reset(T* ptr/* = nullptr */) {
     if (ptr != _ptr) {
         DecRefCountIFP();
         _ptr = ptr;
@@ -200,20 +200,20 @@ void RefPtr<T>::reset(T* ptr/* = nullptr */) {
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-void RefPtr<T>::Swap(RefPtr<U>& other) {
+void TRefPtr<T>::Swap(TRefPtr<U>& other) {
     std::swap(other._ptr, _ptr);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-FORCE_INLINE void RefPtr<T>::IncRefCountIFP() const {
-    static_assert(std::is_base_of<RefCountable, T>::value, "T must be derived from RefCountable");
+FORCE_INLINE void TRefPtr<T>::IncRefCountIFP() const {
+    static_assert(std::is_base_of<FRefCountable, T>::value, "T must be derived from FRefCountable");
     if (_ptr)
         AddRef(_ptr);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-FORCE_INLINE void RefPtr<T>::DecRefCountIFP() const {
-    static_assert(std::is_base_of<RefCountable, T>::value, "T must be derived from RefCountable");
+FORCE_INLINE void TRefPtr<T>::DecRefCountIFP() const {
+    static_assert(std::is_base_of<FRefCountable, T>::value, "T must be derived from FRefCountable");
     if (_ptr)
         RemoveRef(_ptr);
 }
@@ -221,11 +221,11 @@ FORCE_INLINE void RefPtr<T>::DecRefCountIFP() const {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-SafePtr<T>::SafePtr()
+TSafePtr<T>::TSafePtr()
 :   _ptr(nullptr) {}
 //----------------------------------------------------------------------------
 template <typename T>
-SafePtr<T>::SafePtr(T* ptr)
+TSafePtr<T>::TSafePtr(T* ptr)
 :   _ptr(ptr) {
 #ifdef WITH_CORE_SAFEPTR
     IncRefCountIFP();
@@ -233,19 +233,19 @@ SafePtr<T>::SafePtr(T* ptr)
 }
 //----------------------------------------------------------------------------
 template <typename T>
-SafePtr<T>::~SafePtr() {
+TSafePtr<T>::~TSafePtr() {
 #ifdef WITH_CORE_SAFEPTR
     DecRefCountIFP();
 #endif
 }
 //----------------------------------------------------------------------------
 template <typename T>
-SafePtr<T>::SafePtr(SafePtr&& rvalue) : _ptr(rvalue._ptr) {
+TSafePtr<T>::TSafePtr(TSafePtr&& rvalue) : _ptr(rvalue._ptr) {
     rvalue._ptr = nullptr;
 }
 //----------------------------------------------------------------------------
 template <typename T>
-auto SafePtr<T>::operator =(SafePtr&& rvalue) -> SafePtr& {
+auto TSafePtr<T>::operator =(TSafePtr&& rvalue) -> TSafePtr& {
 #ifdef WITH_CORE_SAFEPTR
     DecRefCountIFP();
 #endif
@@ -255,14 +255,14 @@ auto SafePtr<T>::operator =(SafePtr&& rvalue) -> SafePtr& {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-SafePtr<T>::SafePtr(const SafePtr& other) : _ptr(other._ptr) {
+TSafePtr<T>::TSafePtr(const TSafePtr& other) : _ptr(other._ptr) {
 #ifdef WITH_CORE_SAFEPTR
     IncRefCountIFP();
 #endif
 }
 //----------------------------------------------------------------------------
 template <typename T>
-auto SafePtr<T>::operator =(const SafePtr& other) -> SafePtr& {
+auto TSafePtr<T>::operator =(const TSafePtr& other) -> TSafePtr& {
 #ifdef WITH_CORE_SAFEPTR
     if (other._ptr != _ptr) {
         DecRefCountIFP();
@@ -277,7 +277,7 @@ auto SafePtr<T>::operator =(const SafePtr& other) -> SafePtr& {
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-SafePtr<T>::SafePtr(const SafePtr<U>& other)
+TSafePtr<T>::TSafePtr(const TSafePtr<U>& other)
 :   _ptr(checked_cast<T *>(other.get())) {
 #ifdef WITH_CORE_SAFEPTR
     IncRefCountIFP();
@@ -286,7 +286,7 @@ SafePtr<T>::SafePtr(const SafePtr<U>& other)
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-auto SafePtr<T>::operator =(const SafePtr<U>& other) -> SafePtr& {
+auto TSafePtr<T>::operator =(const TSafePtr<U>& other) -> TSafePtr& {
 #ifdef WITH_CORE_SAFEPTR
     if (other.get() != _ptr) {
         DecRefCountIFP();
@@ -301,14 +301,14 @@ auto SafePtr<T>::operator =(const SafePtr<U>& other) -> SafePtr& {
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-SafePtr<T>::SafePtr(SafePtr<U>&& rvalue)
+TSafePtr<T>::TSafePtr(TSafePtr<U>&& rvalue)
 :   _ptr(checked_cast<T *>(rvalue.get())) {
     rvalue._ptr = nullptr;
 }
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-auto SafePtr<T>::operator =(SafePtr<U>&& rvalue) -> SafePtr& {
+auto TSafePtr<T>::operator =(TSafePtr<U>&& rvalue) -> TSafePtr& {
 #ifdef WITH_CORE_SAFEPTR
     DecRefCountIFP();
 #endif
@@ -318,7 +318,7 @@ auto SafePtr<T>::operator =(SafePtr<U>&& rvalue) -> SafePtr& {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void SafePtr<T>::reset(T* ptr/* = nullptr */) {
+void TSafePtr<T>::reset(T* ptr/* = nullptr */) {
 #ifdef WITH_CORE_SAFEPTR
     if (ptr != _ptr) {
         DecRefCountIFP();
@@ -332,13 +332,13 @@ void SafePtr<T>::reset(T* ptr/* = nullptr */) {
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-void SafePtr<T>::Swap(SafePtr<U>& other) {
+void TSafePtr<T>::Swap(TSafePtr<U>& other) {
     std::swap(other._ptr, _ptr);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-FORCE_INLINE void SafePtr<T>::IncRefCountIFP() const {
-    static_assert(std::is_base_of<RefCountable, T>::value, "T must be derived from RefCountable");
+FORCE_INLINE void TSafePtr<T>::IncRefCountIFP() const {
+    static_assert(std::is_base_of<FRefCountable, T>::value, "T must be derived from FRefCountable");
 #ifdef WITH_CORE_SAFEPTR
     if (_ptr) {
         _ptr->_safeRefCount.fetch_add(1u, std::memory_order_seq_cst);
@@ -347,8 +347,8 @@ FORCE_INLINE void SafePtr<T>::IncRefCountIFP() const {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-FORCE_INLINE void SafePtr<T>::DecRefCountIFP() const {
-    static_assert(std::is_base_of<RefCountable, T>::value, "T must be derived from RefCountable");
+FORCE_INLINE void TSafePtr<T>::DecRefCountIFP() const {
+    static_assert(std::is_base_of<FRefCountable, T>::value, "T must be derived from FRefCountable");
 #ifdef WITH_CORE_SAFEPTR
     if (_ptr) {
         Assert(_ptr->_safeRefCount);

@@ -11,13 +11,13 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator = ALLOCATOR(Container, T)>
-using Deque = std::deque<T, _Allocator>;
+using TDeque = std::deque<T, _Allocator>;
 //----------------------------------------------------------------------------
 #define DEQUE(_DOMAIN, T) \
-    ::Core::Deque<COMMA_PROTECT(T), ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
+    ::Core::TDeque<COMMA_PROTECT(T), ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
 //----------------------------------------------------------------------------
 #define DEQUE_THREAD_LOCAL(_DOMAIN, T) \
-    ::Core::Deque<COMMA_PROTECT(T), THREAD_LOCAL_ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
+    ::Core::TDeque<COMMA_PROTECT(T), THREAD_LOCAL_ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

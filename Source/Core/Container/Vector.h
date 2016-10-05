@@ -18,21 +18,21 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define VECTOR(_DOMAIN, T) \
-    ::Core::Vector<COMMA_PROTECT(T), ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
+    ::Core::TVector<COMMA_PROTECT(T), ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
 //----------------------------------------------------------------------------
 #define VECTOR_THREAD_LOCAL(_DOMAIN, T) \
-    ::Core::Vector<COMMA_PROTECT(T), THREAD_LOCAL_ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
+    ::Core::TVector<COMMA_PROTECT(T), THREAD_LOCAL_ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
 //----------------------------------------------------------------------------
 #define VECTORINSITU(_DOMAIN, T, _InSituCount) \
-    ::Core::VectorInSitu<COMMA_PROTECT(T), _InSituCount, ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
+    ::Core::TVectorInSitu<COMMA_PROTECT(T), _InSituCount, ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
 //----------------------------------------------------------------------------
 #define VECTORINSITU_THREAD_LOCAL(_DOMAIN, T, _InSituCount) \
-    ::Core::VectorInSitu<COMMA_PROTECT(T), _InSituCount, THREAD_LOCAL_ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
+    ::Core::TVectorInSitu<COMMA_PROTECT(T), _InSituCount, THREAD_LOCAL_ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator = ALLOCATOR(Container, T) >
-class Vector : _Allocator {
+class TVector : _Allocator {
 public:
     typedef _Allocator allocator_type;
     typedef std::allocator_traits<allocator_type> allocator_traits;
@@ -61,7 +61,7 @@ public:
         using typename parent_type::difference_type;
         using typename parent_type::iterator_category;
 
-        static_assert(std::is_same<typename parent_type::difference_type, typename Vector::difference_type>::value, "");
+        static_assert(std::is_same<typename parent_type::difference_type, typename TVector::difference_type>::value, "");
 
         iterator_() noexcept : _p(nullptr) {}
         explicit iterator_(pointer p) : _p(p) {}
@@ -90,7 +90,7 @@ public:
 
         reference operator[](difference_type n) const { return _p[n]; }
 
-        bool AliasesToContainer(const Vector& v) const { return v.AliasesToContainer(_p); }
+        bool AliasesToContainer(const TVector& v) const { return v.AliasesToContainer(_p); }
 
         template <typename _V, typename _P, typename _R>
         difference_type operator-(const iterator_<_V, _P, _R>& other) const { return checked_cast<difference_type>(_p - other.data()); }
@@ -120,44 +120,44 @@ public:
     typedef std::reverse_iterator<iterator> reverse_iterator;
     typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
-    Vector() noexcept : _data(nullptr), _size(0), _capacity(0) {}
-    ~Vector() { Assert(CheckInvariants()); clear_ReleaseMemory(); }
+    TVector() noexcept : _data(nullptr), _size(0), _capacity(0) {}
+    ~TVector() { Assert(CheckInvariants()); clear_ReleaseMemory(); }
 
-    explicit Vector(allocator_type&& alloc) : allocator_type(std::move(alloc)), _data(nullptr), _size(0), _capacity(0) {}
-    explicit Vector(const allocator_type& alloc) : allocator_type(alloc), _data(nullptr), _size(0), _capacity(0) {}
+    explicit TVector(allocator_type&& alloc) : allocator_type(std::move(alloc)), _data(nullptr), _size(0), _capacity(0) {}
+    explicit TVector(const allocator_type& alloc) : allocator_type(alloc), _data(nullptr), _size(0), _capacity(0) {}
 
-    explicit Vector(size_type count) : Vector() { resize_AssumeEmpty(count); }
-    Vector(size_type count, const_reference value) : Vector() { resize_AssumeEmpty(count, value); }
-    Vector(size_type count, const allocator_type& alloc) : Vector(alloc) { resize_AssumeEmpty(count); }
-    Vector(size_type count, const_reference value, const allocator_type& alloc) : Vector(alloc) { resize_AssumeEmpty(count, value); }
+    explicit TVector(size_type count) : TVector() { resize_AssumeEmpty(count); }
+    TVector(size_type count, const_reference value) : TVector() { resize_AssumeEmpty(count, value); }
+    TVector(size_type count, const allocator_type& alloc) : TVector(alloc) { resize_AssumeEmpty(count); }
+    TVector(size_type count, const_reference value, const allocator_type& alloc) : TVector(alloc) { resize_AssumeEmpty(count, value); }
 
-    Vector(const Vector& other) : Vector(allocator_traits::select_on_container_copy_construction(other)) { assign(other.begin(), other.end()); }
-    Vector(const Vector& other, const allocator_type& alloc) : Vector(alloc) { assign(other.begin(), other.end()); }
-    Vector& operator=(const Vector& other);
+    TVector(const TVector& other) : TVector(allocator_traits::select_on_container_copy_construction(other)) { assign(other.begin(), other.end()); }
+    TVector(const TVector& other, const allocator_type& alloc) : TVector(alloc) { assign(other.begin(), other.end()); }
+    TVector& operator=(const TVector& other);
 
-    Vector(Vector&& rvalue) noexcept : Vector(static_cast<allocator_type&&>(rvalue)) { assign(std::move(rvalue)); }
-    Vector(Vector&& rvalue, const allocator_type& alloc) noexcept : Vector(alloc) { assign_rvalue_(std::move(rvalue), std::false_type()); }
-    Vector& operator=(Vector&& rvalue) noexcept;
+    TVector(TVector&& rvalue) noexcept : TVector(static_cast<allocator_type&&>(rvalue)) { assign(std::move(rvalue)); }
+    TVector(TVector&& rvalue, const allocator_type& alloc) noexcept : TVector(alloc) { assign_rvalue_(std::move(rvalue), std::false_type()); }
+    TVector& operator=(TVector&& rvalue) noexcept;
 
-    Vector(std::initializer_list<value_type> ilist) : Vector() { assign(ilist.begin(), ilist.end()); }
-    Vector(std::initializer_list<value_type> ilist, const allocator_type& alloc) : Vector(alloc) { assign(ilist.begin(), ilist.end()); }
-    Vector& operator=(std::initializer_list<value_type> ilist) { assign(ilist.begin(), ilist.end()); return *this; }
+    TVector(std::initializer_list<value_type> ilist) : TVector() { assign(ilist.begin(), ilist.end()); }
+    TVector(std::initializer_list<value_type> ilist, const allocator_type& alloc) : TVector(alloc) { assign(ilist.begin(), ilist.end()); }
+    TVector& operator=(std::initializer_list<value_type> ilist) { assign(ilist.begin(), ilist.end()); return *this; }
 
-    Vector(const MemoryView<const value_type>& view) : Vector() { assign(view.begin(), view.end()); }
-    Vector(const MemoryView<const value_type>& view, const allocator_type& alloc) : Vector(alloc) { assign(view.begin(), view.end()); }
-    Vector& operator=(const MemoryView<const value_type>& view) { assign(view.begin(), view.end()); return *this; }
+    TVector(const TMemoryView<const value_type>& view) : TVector() { assign(view.begin(), view.end()); }
+    TVector(const TMemoryView<const value_type>& view, const allocator_type& alloc) : TVector(alloc) { assign(view.begin(), view.end()); }
+    TVector& operator=(const TMemoryView<const value_type>& view) { assign(view.begin(), view.end()); return *this; }
 
     template <typename U>
-    explicit Vector(const MemoryView<U>& view) : Vector() { assign(view); }
+    explicit TVector(const TMemoryView<U>& view) : TVector() { assign(view); }
     template <typename U>
-    Vector(const MemoryView<U>& view, const allocator_type& alloc) : Vector(alloc) { assign(view); }
+    TVector(const TMemoryView<U>& view, const allocator_type& alloc) : TVector(alloc) { assign(view); }
     template <typename U>
-    Vector& operator=(const MemoryView<U>& view) { assign(view); return *this; }
+    TVector& operator=(const TMemoryView<U>& view) { assign(view); return *this; }
 
     template <typename _It>
-    Vector(_It first, _It last) : Vector() { assign(first, last); }
+    TVector(_It first, _It last) : TVector() { assign(first, last); }
     template <typename _It>
-    Vector(_It first, _It last, const allocator_type& alloc) : Vector(alloc) { assign(first, last); }
+    TVector(_It first, _It last, const allocator_type& alloc) : TVector(alloc) { assign(first, last); }
 
     size_type size() const { return _size; }
     size_type capacity() const { return _capacity; }
@@ -204,12 +204,12 @@ public:
         assign(_It first, _It last);
     void assign(size_type count, const T& value);
     void assign(std::initializer_list<T> ilist) { assign(ilist.begin(), ilist.end()); }
-    void assign(Vector&& rvalue);
+    void assign(TVector&& rvalue);
 
     template <typename U>
-    void assign(const MemoryView<U>& view) { assign(view.begin(), view.end()); }
-    void assign(const MemoryView<value_type>& view) { assign(std::make_move_iterator(view.begin()), std::make_move_iterator(view.end())); }
-    void assign(const MemoryView<const value_type>& view) { assign(view.begin(), view.end()); }
+    void assign(const TMemoryView<U>& view) { assign(view.begin(), view.end()); }
+    void assign(const TMemoryView<value_type>& view) { assign(std::make_move_iterator(view.begin()), std::make_move_iterator(view.end())); }
+    void assign(const TMemoryView<const value_type>& view) { assign(view.begin(), view.end()); }
 
     template <class... _Args>
     iterator emplace(const_iterator pos, _Args&&... args);
@@ -249,11 +249,11 @@ public:
     void resize_AssumeEmpty(size_type count, const_reference value);
     void shrink_to_fit() { reserve_Exactly(_size); }
 
-    void swap(Vector& other);
-    friend void swap(Vector& lhs, Vector& rhs) { lhs.swap(rhs); }
+    void swap(TVector& other);
+    friend void swap(TVector& lhs, TVector& rhs) { lhs.swap(rhs); }
 
-    MemoryView<value_type> MakeView() const { return MemoryView<value_type>(_data, _size); }
-    MemoryView<typename std::add_const<value_type>::type> MakeConstView() const { return MemoryView<typename std::add_const<value_type>::type>(_data, _size); }
+    TMemoryView<value_type> MakeView() const { return TMemoryView<value_type>(_data, _size); }
+    TMemoryView<typename std::add_const<value_type>::type> MakeConstView() const { return TMemoryView<typename std::add_const<value_type>::type>(_data, _size); }
 
     bool CheckInvariants() const;
     bool AliasesToContainer(const_pointer p) const { return ((p >= _data) && (p <= _data + _size)); }
@@ -273,16 +273,16 @@ private:
     template <typename _It, typename _ItCat>
     void assign_(_It first, _It last, _ItCat );
 
-    void assign_rvalue_(Vector&& rvalue, std::true_type );
-    void assign_rvalue_(Vector&& rvalue, std::false_type );
+    void assign_rvalue_(TVector&& rvalue, std::true_type );
+    void assign_rvalue_(TVector&& rvalue, std::false_type );
 
     template <typename _It>
     iterator insert_(const_iterator pos, _It first, _It last, std::input_iterator_tag );
     template <typename _It, typename _ItCat>
     iterator insert_(const_iterator pos, _It first, _It last, _ItCat );
 
-    void swap_(Vector& other, std::true_type );
-    void swap_(Vector& other, std::false_type );
+    void swap_(TVector& other, std::true_type );
+    void swap_(TVector& other, std::false_type );
 
     pointer _data;
     size_type _size;
@@ -292,62 +292,62 @@ private:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Append(Vector<T, _Allocator>& v, const MemoryView<const T>& elts);
+void Append(TVector<T, _Allocator>& v, const TMemoryView<const T>& elts);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-bool Contains(const Vector<T, _Allocator>& v, const T& elt);
+bool Contains(const TVector<T, _Allocator>& v, const T& elt);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-bool FindElementIndexIFP(size_t *pIndex, const Vector<T, _Allocator>& v, const T& elt);
+bool FindElementIndexIFP(size_t *pIndex, const TVector<T, _Allocator>& v, const T& elt);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator, typename _Pred>
-bool FindPredicateIndexIFP(size_t *pIndex, const Vector<T, _Allocator>& v, const _Pred& pred);
+bool FindPredicateIndexIFP(size_t *pIndex, const TVector<T, _Allocator>& v, const _Pred& pred);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Add_AssertUnique(Vector<T, _Allocator>& v, const T& elt);
+void Add_AssertUnique(TVector<T, _Allocator>& v, const T& elt);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Add_AssertUnique(Vector<T, _Allocator>& v, T&& elt);
+void Add_AssertUnique(TVector<T, _Allocator>& v, T&& elt);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Remove_AssertExists(Vector<T, _Allocator>& v, const T& elt);
+void Remove_AssertExists(TVector<T, _Allocator>& v, const T& elt);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-bool Remove_ReturnIfExists(Vector<T, _Allocator>& v, const T& elt);
-//----------------------------------------------------------------------------
-// Fast erase : swap last elem with elem to erase and pop_back() the vector
-template <typename T, typename _Allocator>
-void Remove_DontPreserveOrder(Vector<T, _Allocator>& v, const T& elt);
+bool Remove_ReturnIfExists(TVector<T, _Allocator>& v, const T& elt);
 //----------------------------------------------------------------------------
 // Fast erase : swap last elem with elem to erase and pop_back() the vector
 template <typename T, typename _Allocator>
-bool Remove_ReturnIfExists_DontPreserveOrder(Vector<T, _Allocator>& v, const T& elt);
+void Remove_DontPreserveOrder(TVector<T, _Allocator>& v, const T& elt);
 //----------------------------------------------------------------------------
 // Fast erase : swap last elem with elem to erase and pop_back() the vector
 template <typename T, typename _Allocator>
-void Erase_DontPreserveOrder(Vector<T, _Allocator>& v, size_t index);
+bool Remove_ReturnIfExists_DontPreserveOrder(TVector<T, _Allocator>& v, const T& elt);
 //----------------------------------------------------------------------------
 // Fast erase : swap last elem with elem to erase and pop_back() the vector
 template <typename T, typename _Allocator>
-void Erase_DontPreserveOrder(Vector<T, _Allocator>& v, const typename Vector<T, _Allocator>::const_iterator& it);
+void Erase_DontPreserveOrder(TVector<T, _Allocator>& v, size_t index);
+//----------------------------------------------------------------------------
+// Fast erase : swap last elem with elem to erase and pop_back() the vector
+template <typename T, typename _Allocator>
+void Erase_DontPreserveOrder(TVector<T, _Allocator>& v, const typename TVector<T, _Allocator>::const_iterator& it);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Clear_ReleaseMemory(Vector<T, _Allocator>& v);
+void Clear_ReleaseMemory(TVector<T, _Allocator>& v);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-hash_t hash_value(const Vector<T, _Allocator>& vector);
+hash_t hash_value(const TVector<T, _Allocator>& vector);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _InSitu, typename _Allocator = ALLOCATOR(Container, T) >
-class VectorInSitu :
+class TVectorInSitu :
     private InSituAllocator<T, sizeof(T) * _InSitu, _Allocator>::storage_type
-,   public Vector<T, InSituAllocator<T, sizeof(T) * _InSitu, _Allocator> > {
+,   public TVector<T, InSituAllocator<T, sizeof(T) * _InSitu, _Allocator> > {
 public:
     static_assert(_InSitu > 0, "insitu size must be greater than 0");
 
     typedef InSituAllocator<T, sizeof(T) * _InSitu, _Allocator> allocator_type;
-    typedef Vector<T, allocator_type> vector_type;
+    typedef TVector<T, allocator_type> vector_type;
 
     static_assert(std::is_same<allocator_type, typename vector_type::allocator_type>::value, "");
 
@@ -365,34 +365,34 @@ public:
 
     typedef typename allocator_type::storage_type storage_type;
 
-    VectorInSitu() noexcept : vector_type(allocator_type(static_cast<storage_type&>(*this))) {}
+    TVectorInSitu() noexcept : vector_type(allocator_type(static_cast<storage_type&>(*this))) {}
 
-    explicit VectorInSitu(size_type count) : VectorInSitu() { resize_AssumeEmpty(count); }
-    VectorInSitu(size_type count, const_reference value) : VectorInSitu() { resize_AssumeEmpty(count, value); }
+    explicit TVectorInSitu(size_type count) : TVectorInSitu() { resize_AssumeEmpty(count); }
+    TVectorInSitu(size_type count, const_reference value) : TVectorInSitu() { resize_AssumeEmpty(count, value); }
 
-    VectorInSitu(const VectorInSitu& other) : VectorInSitu() { assign(other.begin(), other.end()); }
-    VectorInSitu& operator=(const VectorInSitu& other) { vector_type::operator =(other); return *this; }
+    TVectorInSitu(const TVectorInSitu& other) : TVectorInSitu() { assign(other.begin(), other.end()); }
+    TVectorInSitu& operator=(const TVectorInSitu& other) { vector_type::operator =(other); return *this; }
 
-    VectorInSitu(VectorInSitu&& rvalue) noexcept : VectorInSitu() { assign(std::move(rvalue)); }
-    VectorInSitu& operator=(VectorInSitu&& rvalue) noexcept { vector_type::operator=(std::move(rvalue)); return *this; }
+    TVectorInSitu(TVectorInSitu&& rvalue) noexcept : TVectorInSitu() { assign(std::move(rvalue)); }
+    TVectorInSitu& operator=(TVectorInSitu&& rvalue) noexcept { vector_type::operator=(std::move(rvalue)); return *this; }
 
-    VectorInSitu(std::initializer_list<value_type> ilist) : VectorInSitu() { assign(ilist.begin(), ilist.end()); }
-    VectorInSitu& operator=(std::initializer_list<value_type> ilist) { assign(ilist.begin(), ilist.end()); return *this; }
+    TVectorInSitu(std::initializer_list<value_type> ilist) : TVectorInSitu() { assign(ilist.begin(), ilist.end()); }
+    TVectorInSitu& operator=(std::initializer_list<value_type> ilist) { assign(ilist.begin(), ilist.end()); return *this; }
 
-    VectorInSitu(const MemoryView<const value_type>& view) : VectorInSitu() { assign(view.begin(), view.end()); }
-    VectorInSitu& operator=(const MemoryView<const value_type>& view) { assign(view.begin(), view.end()); return *this; }
+    TVectorInSitu(const TMemoryView<const value_type>& view) : TVectorInSitu() { assign(view.begin(), view.end()); }
+    TVectorInSitu& operator=(const TMemoryView<const value_type>& view) { assign(view.begin(), view.end()); return *this; }
 
-    ~VectorInSitu() {}
+    ~TVectorInSitu() {}
 
     bool UseInSitu() const { return storage_type::Contains(vector_type::data()); }
 
-    friend hash_t hash_value(const VectorInSitu& vector) { return hash_value(static_cast<const vector_type&>(vector)); }
+    friend hash_t hash_value(const TVectorInSitu& vector) { return hash_value(static_cast<const vector_type&>(vector)); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator, typename _Char, typename _Traits >
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const Core::Vector<T, _Allocator>& vector);
+std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const Core::TVector<T, _Allocator>& vector);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

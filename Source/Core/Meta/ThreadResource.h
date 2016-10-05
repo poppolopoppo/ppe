@@ -15,12 +15,12 @@ namespace Meta {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ThreadResource {
+class FThreadResource {
 public:
 #ifdef WITH_CORE_THREADRESOURCE_CHECKS
-    ThreadResource() : ThreadResource(std::this_thread::get_id()) {}
-    explicit ThreadResource(std::thread::id threadId) : _threadId(threadId) {}
-    ~ThreadResource() { Assert(std::this_thread::get_id() == _threadId); }
+    FThreadResource() : FThreadResource(std::this_thread::get_id()) {}
+    explicit FThreadResource(std::thread::id threadId) : _threadId(threadId) {}
+    ~FThreadResource() { Assert(std::this_thread::get_id() == _threadId); }
     std::thread::id ThreadId() const { return _threadId; }
     void CheckThreadId(std::thread::id threadId) const { Assert(threadId == _threadId); }
     void OwnedByThisThread() const { CheckThreadId(std::this_thread::get_id()); }
@@ -28,8 +28,8 @@ public:
 private:
     std::thread::id _threadId;
 #else
-    ThreadResource() {}
-    ~ThreadResource() {}
+    FThreadResource() {}
+    ~FThreadResource() {}
     std::thread::id ThreadId() const { return std::thread::id(); }
     void CheckThreadId(std::thread::id) const {}
     void OwnedByThisThread() const {}
@@ -50,15 +50,15 @@ private:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <bool _Lock>
-class ThreadLock {
+class TThreadLock {
 public:
-    class ScopeLock {
+    class FScopeLock {
     public:
-        ScopeLock(ThreadLock&) {}
+        FScopeLock(TThreadLock&) {}
     };
 
-    ThreadLock() {}
-    ~ThreadLock() {}
+    TThreadLock() {}
+    ~TThreadLock() {}
 
     void Lock() {}
     bool TryLock() { return true; }
@@ -66,18 +66,18 @@ public:
 };
 //----------------------------------------------------------------------------
 template <>
-class ThreadLock<true> {
+class TThreadLock<true> {
 public:
-    class ScopeLock {
+    class FScopeLock {
     public:
-        ScopeLock(ThreadLock& owner) : _owner(&owner) { _owner->Lock(); }
-        ~ScopeLock() { Assert(_owner); _owner->Unlock(); }
+        FScopeLock(TThreadLock& owner) : _owner(&owner) { _owner->Lock(); }
+        ~FScopeLock() { Assert(_owner); _owner->Unlock(); }
     private:
-        ThreadLock *_owner;
+        TThreadLock *_owner;
     };
 
-    ThreadLock() {}
-    ~ThreadLock() {}
+    TThreadLock() {}
+    ~TThreadLock() {}
 
     void Lock() { _lock.lock(); }
     bool TryLock() { return _lock.try_lock(); }

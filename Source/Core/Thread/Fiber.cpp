@@ -26,17 +26,17 @@ static THREAD_LOCAL void *gCurrentThreadFiber = nullptr;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Fiber::~Fiber() {
+FFiber::~FFiber() {
     if (_pimpl)
         Destroy();
 }
 //----------------------------------------------------------------------------
-Fiber::Fiber(Fiber&& rvalue)
+FFiber::FFiber(FFiber&& rvalue)
     : _pimpl(rvalue._pimpl) {
     rvalue._pimpl = nullptr;
 }
 //----------------------------------------------------------------------------
-Fiber& Fiber::operator =(Fiber&& rvalue) {
+FFiber& FFiber::operator =(FFiber&& rvalue) {
     if (_pimpl)
         Destroy();
 
@@ -46,7 +46,7 @@ Fiber& Fiber::operator =(Fiber&& rvalue) {
     return *this;
 }
 //----------------------------------------------------------------------------
-void Fiber::Create(callback_t entryPoint, void *arg, size_t stackSize/* = 0 */) {
+void FFiber::Create(callback_t entryPoint, void *arg, size_t stackSize/* = 0 */) {
     Assert(!_pimpl);
     Assert(entryPoint);
     Assert(gCurrentThreadFiber);
@@ -65,7 +65,7 @@ void Fiber::Create(callback_t entryPoint, void *arg, size_t stackSize/* = 0 */) 
     Assert(_pimpl);
 }
 //----------------------------------------------------------------------------
-void Fiber::Resume() {
+void FFiber::Resume() {
     Assert(_pimpl);
     Assert(gCurrentThreadFiber);
     Assert(::IsThreadAFiber());
@@ -74,7 +74,7 @@ void Fiber::Resume() {
     ::SwitchToFiber(_pimpl);
 }
 //----------------------------------------------------------------------------
-void Fiber::Destroy() {
+void FFiber::Destroy() {
     Assert(_pimpl);
     Assert(::GetCurrentFiber() != _pimpl);
 
@@ -82,18 +82,18 @@ void Fiber::Destroy() {
     _pimpl = nullptr;
 }
 //----------------------------------------------------------------------------
-void Fiber::Reset(void* pimpl /* = nullptr */) {
+void FFiber::Reset(void* pimpl /* = nullptr */) {
     _pimpl = pimpl;
 }
 //----------------------------------------------------------------------------
-void Fiber::Start() {
+void FFiber::Start() {
     Assert(!gCurrentThreadFiber);
     Assert(!::IsThreadAFiber());
 
     gCurrentThreadFiber = ::ConvertThreadToFiberEx(nullptr, FiberFlags);
 }
 //----------------------------------------------------------------------------
-void Fiber::Shutdown() {
+void FFiber::Shutdown() {
     Assert(gCurrentThreadFiber);
     Assert(::IsThreadAFiber());
     Assert(::GetCurrentFiber() == gCurrentThreadFiber);
@@ -102,27 +102,27 @@ void Fiber::Shutdown() {
     gCurrentThreadFiber = nullptr;
 }
 //----------------------------------------------------------------------------
-void* Fiber::ThreadFiber() {
+void* FFiber::ThreadFiber() {
     Assert(gCurrentThreadFiber);
     Assert(::IsThreadAFiber());
 
     return gCurrentThreadFiber;
 }
 //----------------------------------------------------------------------------
-void* Fiber::RunningFiber() {
+void* FFiber::RunningFiber() {
     Assert(gCurrentThreadFiber);
     Assert(::IsThreadAFiber());
 
     return ::GetCurrentFiber();
 }
 //----------------------------------------------------------------------------
-void* Fiber::RunningFiberIFP() {
+void* FFiber::RunningFiberIFP() {
     return ::IsThreadAFiber()
         ? ::GetCurrentFiber()
         : nullptr;
 }
 //----------------------------------------------------------------------------
-bool Fiber::IsInFiber() {
+bool FFiber::IsInFiber() {
     const bool result = (nullptr != gCurrentThreadFiber);
     Assert(result == (TRUE == ::IsThreadAFiber()) );
     return result;

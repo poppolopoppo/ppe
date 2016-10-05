@@ -14,11 +14,11 @@ namespace Core {
 template <
     typename        _Tag,
     typename        _Char,
-    Case            _Sensitive,
+    ECase            _Sensitive,
     typename        _TokenTraits,
     typename        _Allocator
 >
-class Token;
+class EToken;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -26,9 +26,9 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class TokenTraits {
+class TTokenTraits {
 public:
-    TokenTraits() {}
+    TTokenTraits() {}
     const std::locale& Locale() const { return std::locale::classic(); }
     bool IsAllowedChar(char ch) const;
 };
@@ -36,11 +36,11 @@ public:
 typedef char char_type;
 //----------------------------------------------------------------------------
 template <typename _Tag>
-using Token = Core::Token<
+using EToken = Core::EToken<
     _Tag,
     char_type,
-    Case::Sensitive,
-    TokenTraits,
+    ECase::Sensitive,
+    TTokenTraits,
     ALLOCATOR(RTTI, char_type)
 >;
 //----------------------------------------------------------------------------

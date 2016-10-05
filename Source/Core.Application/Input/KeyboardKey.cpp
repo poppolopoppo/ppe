@@ -9,299 +9,299 @@ namespace Application {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static const KeyboardKey gEachKeyboardKeys[] = {
-    // Numeric
+static const EKeyboardKey gEachKeyboardKeys[] = {
+    // TNumeric
 
-    KeyboardKey::_0,
-    KeyboardKey::_1,
-    KeyboardKey::_2,
-    KeyboardKey::_3,
-    KeyboardKey::_4,
-    KeyboardKey::_5,
-    KeyboardKey::_6,
-    KeyboardKey::_7,
-    KeyboardKey::_8,
-    KeyboardKey::_9,
+    EKeyboardKey::_0,
+    EKeyboardKey::_1,
+    EKeyboardKey::_2,
+    EKeyboardKey::_3,
+    EKeyboardKey::_4,
+    EKeyboardKey::_5,
+    EKeyboardKey::_6,
+    EKeyboardKey::_7,
+    EKeyboardKey::_8,
+    EKeyboardKey::_9,
 
     // Alpha
 
-    KeyboardKey::A,
-    KeyboardKey::B,
-    KeyboardKey::C,
-    KeyboardKey::D,
-    KeyboardKey::E,
-    KeyboardKey::F,
-    KeyboardKey::G,
-    KeyboardKey::H,
-    KeyboardKey::I,
-    KeyboardKey::J,
-    KeyboardKey::K,
-    KeyboardKey::L,
-    KeyboardKey::M,
-    KeyboardKey::N,
-    KeyboardKey::O,
-    KeyboardKey::P,
-    KeyboardKey::Q,
-    KeyboardKey::R,
-    KeyboardKey::S,
-    KeyboardKey::T,
-    KeyboardKey::U,
-    KeyboardKey::V,
-    KeyboardKey::W,
-    KeyboardKey::X,
-    KeyboardKey::Y,
-    KeyboardKey::Z,
+    EKeyboardKey::A,
+    EKeyboardKey::B,
+    EKeyboardKey::C,
+    EKeyboardKey::D,
+    EKeyboardKey::E,
+    EKeyboardKey::F,
+    EKeyboardKey::G,
+    EKeyboardKey::H,
+    EKeyboardKey::I,
+    EKeyboardKey::J,
+    EKeyboardKey::K,
+    EKeyboardKey::L,
+    EKeyboardKey::M,
+    EKeyboardKey::N,
+    EKeyboardKey::O,
+    EKeyboardKey::P,
+    EKeyboardKey::Q,
+    EKeyboardKey::R,
+    EKeyboardKey::S,
+    EKeyboardKey::T,
+    EKeyboardKey::U,
+    EKeyboardKey::V,
+    EKeyboardKey::W,
+    EKeyboardKey::X,
+    EKeyboardKey::Y,
+    EKeyboardKey::Z,
 
     // Numpad
 
-    KeyboardKey::Numpad0,
-    KeyboardKey::Numpad1,
-    KeyboardKey::Numpad2,
-    KeyboardKey::Numpad3,
-    KeyboardKey::Numpad4,
-    KeyboardKey::Numpad5,
-    KeyboardKey::Numpad6,
-    KeyboardKey::Numpad7,
-    KeyboardKey::Numpad8,
-    KeyboardKey::Numpad9,
+    EKeyboardKey::Numpad0,
+    EKeyboardKey::Numpad1,
+    EKeyboardKey::Numpad2,
+    EKeyboardKey::Numpad3,
+    EKeyboardKey::Numpad4,
+    EKeyboardKey::Numpad5,
+    EKeyboardKey::Numpad6,
+    EKeyboardKey::Numpad7,
+    EKeyboardKey::Numpad8,
+    EKeyboardKey::Numpad9,
 
-    KeyboardKey::Add,
-    KeyboardKey::Subtract,
-    KeyboardKey::Multiply,
-    KeyboardKey::Divide,
-    KeyboardKey::Enter,
+    EKeyboardKey::Add,
+    EKeyboardKey::Subtract,
+    EKeyboardKey::Multiply,
+    EKeyboardKey::Divide,
+    EKeyboardKey::Enter,
 
     // Function
 
-    KeyboardKey::F1,
-    KeyboardKey::F2,
-    KeyboardKey::F3,
-    KeyboardKey::F4,
-    KeyboardKey::F5,
-    KeyboardKey::F6,
-    KeyboardKey::F7,
-    KeyboardKey::F8,
-    KeyboardKey::F9,
-    KeyboardKey::F10,
-    KeyboardKey::F11,
-    KeyboardKey::F12,
+    EKeyboardKey::F1,
+    EKeyboardKey::F2,
+    EKeyboardKey::F3,
+    EKeyboardKey::F4,
+    EKeyboardKey::F5,
+    EKeyboardKey::F6,
+    EKeyboardKey::F7,
+    EKeyboardKey::F8,
+    EKeyboardKey::F9,
+    EKeyboardKey::F10,
+    EKeyboardKey::F11,
+    EKeyboardKey::F12,
 
     // Direction
 
-    KeyboardKey::Up,
-    KeyboardKey::Down,
-    KeyboardKey::Left,
-    KeyboardKey::Right,
+    EKeyboardKey::Up,
+    EKeyboardKey::Down,
+    EKeyboardKey::Left,
+    EKeyboardKey::Right,
 
     // Specials
 
-    KeyboardKey::Escape,
-    KeyboardKey::Space,
+    EKeyboardKey::Escape,
+    EKeyboardKey::Space,
 
-    KeyboardKey::Pause,
-    KeyboardKey::PrintScreen,
-    KeyboardKey::ScrollLock,
+    EKeyboardKey::Pause,
+    EKeyboardKey::PrintScreen,
+    EKeyboardKey::ScrollLock,
 
-    KeyboardKey::Backspace,
-    KeyboardKey::Enter,
-    KeyboardKey::Tab,
+    EKeyboardKey::Backspace,
+    EKeyboardKey::Enter,
+    EKeyboardKey::Tab,
 
-    KeyboardKey::Home,
-    KeyboardKey::End,
-    KeyboardKey::Insert,
-    KeyboardKey::Delete,
-    KeyboardKey::PageUp,
-    KeyboardKey::PageDown,
+    EKeyboardKey::Home,
+    EKeyboardKey::End,
+    EKeyboardKey::Insert,
+    EKeyboardKey::Delete,
+    EKeyboardKey::PageUp,
+    EKeyboardKey::PageDown,
 
     // Modifiers
 
-    KeyboardKey::Alt,
-    KeyboardKey::Menu,          // windows key
-    KeyboardKey::Control,
-    KeyboardKey::Shift,
+    EKeyboardKey::Alt,
+    EKeyboardKey::Menu,          // windows key
+    EKeyboardKey::Control,
+    EKeyboardKey::Shift,
 };
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-StringView KeyboardKeyToCStr(KeyboardKey value) {
+FStringView KeyboardKeyToCStr(EKeyboardKey value) {
     switch (value)
     {
-    case Core::Application::KeyboardKey::_0:
+    case Core::Application::EKeyboardKey::_0:
         return MakeStringView("0");
-    case Core::Application::KeyboardKey::_1:
+    case Core::Application::EKeyboardKey::_1:
         return MakeStringView("1");
-    case Core::Application::KeyboardKey::_2:
+    case Core::Application::EKeyboardKey::_2:
         return MakeStringView("2");
-    case Core::Application::KeyboardKey::_3:
+    case Core::Application::EKeyboardKey::_3:
         return MakeStringView("3");
-    case Core::Application::KeyboardKey::_4:
+    case Core::Application::EKeyboardKey::_4:
         return MakeStringView("4");
-    case Core::Application::KeyboardKey::_5:
+    case Core::Application::EKeyboardKey::_5:
         return MakeStringView("5");
-    case Core::Application::KeyboardKey::_6:
+    case Core::Application::EKeyboardKey::_6:
         return MakeStringView("6");
-    case Core::Application::KeyboardKey::_7:
+    case Core::Application::EKeyboardKey::_7:
         return MakeStringView("7");
-    case Core::Application::KeyboardKey::_8:
+    case Core::Application::EKeyboardKey::_8:
         return MakeStringView("8");
-    case Core::Application::KeyboardKey::_9:
+    case Core::Application::EKeyboardKey::_9:
         return MakeStringView("9");
-    case Core::Application::KeyboardKey::A:
+    case Core::Application::EKeyboardKey::A:
         return MakeStringView("A");
-    case Core::Application::KeyboardKey::B:
+    case Core::Application::EKeyboardKey::B:
         return MakeStringView("B");
-    case Core::Application::KeyboardKey::C:
+    case Core::Application::EKeyboardKey::C:
         return MakeStringView("C");
-    case Core::Application::KeyboardKey::D:
+    case Core::Application::EKeyboardKey::D:
         return MakeStringView("D");
-    case Core::Application::KeyboardKey::E:
+    case Core::Application::EKeyboardKey::E:
         return MakeStringView("E");
-    case Core::Application::KeyboardKey::F:
+    case Core::Application::EKeyboardKey::F:
         return MakeStringView("F");
-    case Core::Application::KeyboardKey::G:
+    case Core::Application::EKeyboardKey::G:
         return MakeStringView("G");
-    case Core::Application::KeyboardKey::H:
+    case Core::Application::EKeyboardKey::H:
         return MakeStringView("H");
-    case Core::Application::KeyboardKey::I:
+    case Core::Application::EKeyboardKey::I:
         return MakeStringView("I");
-    case Core::Application::KeyboardKey::J:
+    case Core::Application::EKeyboardKey::J:
         return MakeStringView("J");
-    case Core::Application::KeyboardKey::K:
+    case Core::Application::EKeyboardKey::K:
         return MakeStringView("K");
-    case Core::Application::KeyboardKey::L:
+    case Core::Application::EKeyboardKey::L:
         return MakeStringView("L");
-    case Core::Application::KeyboardKey::M:
+    case Core::Application::EKeyboardKey::M:
         return MakeStringView("M");
-    case Core::Application::KeyboardKey::N:
+    case Core::Application::EKeyboardKey::N:
         return MakeStringView("N");
-    case Core::Application::KeyboardKey::O:
+    case Core::Application::EKeyboardKey::O:
         return MakeStringView("O");
-    case Core::Application::KeyboardKey::P:
+    case Core::Application::EKeyboardKey::P:
         return MakeStringView("P");
-    case Core::Application::KeyboardKey::Q:
+    case Core::Application::EKeyboardKey::Q:
         return MakeStringView("Q");
-    case Core::Application::KeyboardKey::R:
+    case Core::Application::EKeyboardKey::R:
         return MakeStringView("R");
-    case Core::Application::KeyboardKey::S:
+    case Core::Application::EKeyboardKey::S:
         return MakeStringView("S");
-    case Core::Application::KeyboardKey::T:
+    case Core::Application::EKeyboardKey::T:
         return MakeStringView("T");
-    case Core::Application::KeyboardKey::U:
+    case Core::Application::EKeyboardKey::U:
         return MakeStringView("U");
-    case Core::Application::KeyboardKey::V:
+    case Core::Application::EKeyboardKey::V:
         return MakeStringView("V");
-    case Core::Application::KeyboardKey::W:
+    case Core::Application::EKeyboardKey::W:
         return MakeStringView("W");
-    case Core::Application::KeyboardKey::X:
+    case Core::Application::EKeyboardKey::X:
         return MakeStringView("X");
-    case Core::Application::KeyboardKey::Y:
+    case Core::Application::EKeyboardKey::Y:
         return MakeStringView("Y");
-    case Core::Application::KeyboardKey::Z:
+    case Core::Application::EKeyboardKey::Z:
         return MakeStringView("Z");
-    case Core::Application::KeyboardKey::Numpad0:
+    case Core::Application::EKeyboardKey::Numpad0:
         return MakeStringView("Numpad0");
-    case Core::Application::KeyboardKey::Numpad1:
+    case Core::Application::EKeyboardKey::Numpad1:
         return MakeStringView("Numpad1");
-    case Core::Application::KeyboardKey::Numpad2:
+    case Core::Application::EKeyboardKey::Numpad2:
         return MakeStringView("Numpad2");
-    case Core::Application::KeyboardKey::Numpad3:
+    case Core::Application::EKeyboardKey::Numpad3:
         return MakeStringView("Numpad3");
-    case Core::Application::KeyboardKey::Numpad4:
+    case Core::Application::EKeyboardKey::Numpad4:
         return MakeStringView("Numpad4");
-    case Core::Application::KeyboardKey::Numpad5:
+    case Core::Application::EKeyboardKey::Numpad5:
         return MakeStringView("Numpad5");
-    case Core::Application::KeyboardKey::Numpad6:
+    case Core::Application::EKeyboardKey::Numpad6:
         return MakeStringView("Numpad6");
-    case Core::Application::KeyboardKey::Numpad7:
+    case Core::Application::EKeyboardKey::Numpad7:
         return MakeStringView("Numpad7");
-    case Core::Application::KeyboardKey::Numpad8:
+    case Core::Application::EKeyboardKey::Numpad8:
         return MakeStringView("Numpad8");
-    case Core::Application::KeyboardKey::Numpad9:
+    case Core::Application::EKeyboardKey::Numpad9:
         return MakeStringView("Numpad9");
-    case Core::Application::KeyboardKey::Add:
+    case Core::Application::EKeyboardKey::Add:
         return MakeStringView("Add");
-    case Core::Application::KeyboardKey::Subtract:
+    case Core::Application::EKeyboardKey::Subtract:
         return MakeStringView("Subtract");
-    case Core::Application::KeyboardKey::Multiply:
+    case Core::Application::EKeyboardKey::Multiply:
         return MakeStringView("Multiply");
-    case Core::Application::KeyboardKey::Divide:
+    case Core::Application::EKeyboardKey::Divide:
         return MakeStringView("Divide");
-    case Core::Application::KeyboardKey::F1:
+    case Core::Application::EKeyboardKey::F1:
         return MakeStringView("F1");
-    case Core::Application::KeyboardKey::F2:
+    case Core::Application::EKeyboardKey::F2:
         return MakeStringView("F2");
-    case Core::Application::KeyboardKey::F3:
+    case Core::Application::EKeyboardKey::F3:
         return MakeStringView("F3");
-    case Core::Application::KeyboardKey::F4:
+    case Core::Application::EKeyboardKey::F4:
         return MakeStringView("F4");
-    case Core::Application::KeyboardKey::F5:
+    case Core::Application::EKeyboardKey::F5:
         return MakeStringView("F5");
-    case Core::Application::KeyboardKey::F6:
+    case Core::Application::EKeyboardKey::F6:
         return MakeStringView("F6");
-    case Core::Application::KeyboardKey::F7:
+    case Core::Application::EKeyboardKey::F7:
         return MakeStringView("F7");
-    case Core::Application::KeyboardKey::F8:
+    case Core::Application::EKeyboardKey::F8:
         return MakeStringView("F8");
-    case Core::Application::KeyboardKey::F9:
+    case Core::Application::EKeyboardKey::F9:
         return MakeStringView("F9");
-    case Core::Application::KeyboardKey::F10:
+    case Core::Application::EKeyboardKey::F10:
         return MakeStringView("F10");
-    case Core::Application::KeyboardKey::F11:
+    case Core::Application::EKeyboardKey::F11:
         return MakeStringView("F11");
-    case Core::Application::KeyboardKey::F12:
+    case Core::Application::EKeyboardKey::F12:
         return MakeStringView("F12");
-    case Core::Application::KeyboardKey::Up:
+    case Core::Application::EKeyboardKey::Up:
         return MakeStringView("Up");
-    case Core::Application::KeyboardKey::Down:
+    case Core::Application::EKeyboardKey::Down:
         return MakeStringView("Down");
-    case Core::Application::KeyboardKey::Left:
+    case Core::Application::EKeyboardKey::Left:
         return MakeStringView("Left");
-    case Core::Application::KeyboardKey::Right:
+    case Core::Application::EKeyboardKey::Right:
         return MakeStringView("Right");
-    case Core::Application::KeyboardKey::Escape:
+    case Core::Application::EKeyboardKey::Escape:
         return MakeStringView("Escape");
-    case Core::Application::KeyboardKey::Space:
+    case Core::Application::EKeyboardKey::Space:
         return MakeStringView("Space");
-    case Core::Application::KeyboardKey::Pause:
+    case Core::Application::EKeyboardKey::Pause:
         return MakeStringView("Pause");
-    case Core::Application::KeyboardKey::PrintScreen:
+    case Core::Application::EKeyboardKey::PrintScreen:
         return MakeStringView("PrintScreen");
-    case Core::Application::KeyboardKey::ScrollLock:
+    case Core::Application::EKeyboardKey::ScrollLock:
         return MakeStringView("ScrollLock");
-    case Core::Application::KeyboardKey::Backspace:
+    case Core::Application::EKeyboardKey::Backspace:
         return MakeStringView("Backspace");
-    case Core::Application::KeyboardKey::Enter:
+    case Core::Application::EKeyboardKey::Enter:
         return MakeStringView("Enter");
-    case Core::Application::KeyboardKey::Tab:
+    case Core::Application::EKeyboardKey::Tab:
         return MakeStringView("Tab");
-    case Core::Application::KeyboardKey::Home:
+    case Core::Application::EKeyboardKey::Home:
         return MakeStringView("Home");
-    case Core::Application::KeyboardKey::End:
+    case Core::Application::EKeyboardKey::End:
         return MakeStringView("End");
-    case Core::Application::KeyboardKey::Insert:
+    case Core::Application::EKeyboardKey::Insert:
         return MakeStringView("Insert");
-    case Core::Application::KeyboardKey::Delete:
+    case Core::Application::EKeyboardKey::Delete:
         return MakeStringView("Delete");
-    case Core::Application::KeyboardKey::PageUp:
+    case Core::Application::EKeyboardKey::PageUp:
         return MakeStringView("PageUp");
-    case Core::Application::KeyboardKey::PageDown:
+    case Core::Application::EKeyboardKey::PageDown:
         return MakeStringView("PageDown");
-    case Core::Application::KeyboardKey::Alt:
+    case Core::Application::EKeyboardKey::Alt:
         return MakeStringView("Alt");
-    case Core::Application::KeyboardKey::Menu:
+    case Core::Application::EKeyboardKey::Menu:
         return MakeStringView("Menu");
-    case Core::Application::KeyboardKey::Control:
+    case Core::Application::EKeyboardKey::Control:
         return MakeStringView("Control");
-    case Core::Application::KeyboardKey::Shift:
+    case Core::Application::EKeyboardKey::Shift:
         return MakeStringView("Shift");
     }
     AssertNotImplemented();
-    return StringView();
+    return FStringView();
 }
 //----------------------------------------------------------------------------
-MemoryView<const KeyboardKey> EachKeyboardKeys() {
+TMemoryView<const EKeyboardKey> EachKeyboardKeys() {
     return MakeView(gEachKeyboardKeys);
 }
 //----------------------------------------------------------------------------

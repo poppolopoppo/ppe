@@ -8,7 +8,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace MiniDump {
 //----------------------------------------------------------------------------
-enum class Result
+enum class EResult
 {
     Success = 0,
     NoDbgHelpDLL,
@@ -28,11 +28,11 @@ enum class InfoLevel {
 void Start();
 void Shutdown();
 //----------------------------------------------------------------------------
-Result Write(const wchar_t *filename, InfoLevel level,
+EResult Write(const wchar_t *filename, InfoLevel level,
     const void *exception_ptrs = nullptr,
     bool inSuspendOtherThreads = false );
 //----------------------------------------------------------------------------
-const char *ResultMessage(Result code);
+const char *ResultMessage(EResult code);
 //----------------------------------------------------------------------------
 } //!namespace MiniDump
 //----------------------------------------------------------------------------

@@ -18,66 +18,66 @@ FWD_INTERFACE_REFPTR(ContentProcessor);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ContentProcessorContext {
+class FContentProcessorContext {
 public:
-    explicit ContentProcessorContext(   const ContentIdentity& source,
-                                        TargetPlatform platform,
+    explicit FContentProcessorContext(   const FContentIdentity& source,
+                                        ETargetPlatform platform,
                                         bool debug)
         : _source(source), _platform(platform), _debug(debug) {}
-    virtual ~ContentProcessorContext() {}
+    virtual ~FContentProcessorContext() {}
 
-    ContentProcessorContext(const ContentProcessorContext&) = delete;
-    ContentProcessorContext& operator=(const ContentProcessorContext&) = delete;
+    FContentProcessorContext(const FContentProcessorContext&) = delete;
+    FContentProcessorContext& operator=(const FContentProcessorContext&) = delete;
 
-    const ContentIdentity& Source() const { return _source; }
-    TargetPlatform Platform() const { return _platform; }
+    const FContentIdentity& Source() const { return _source; }
+    ETargetPlatform Platform() const { return _platform; }
     bool Debug() const { return _debug; }
 
     virtual ILogger* Logger() const = 0;
 
-    virtual const Dirname& IntermediateDir() const = 0;
-    virtual const Dirname& OutputDir() const = 0;
-    virtual const Filename& OutputFilename() const = 0;
+    virtual const FDirname& IntermediateDir() const = 0;
+    virtual const FDirname& OutputDir() const = 0;
+    virtual const FFilename& OutputFilename() const = 0;
 
-    virtual void AddDependency(const Filename& filename) = 0;
-    virtual void AddAssetToBuild(const Filename& filename) = 0;
+    virtual void AddDependency(const FFilename& filename) = 0;
+    virtual void AddAssetToBuild(const FFilename& filename) = 0;
 
 private:
-    const ContentIdentity& _source;
-    const TargetPlatform _platform;
+    const FContentIdentity& _source;
+    const ETargetPlatform _platform;
     const bool _debug;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Input, typename _Output>
-class ContentProcessor;
+class TContentProcessor;
 //----------------------------------------------------------------------------
-class IContentProcessor : public ContentPipelineNode {
+class IContentProcessor : public FContentPipelineNode {
 public:
     virtual ~IContentProcessor() {}
 
     template <typename _Input, typename _Output>
-    bool Process(ContentProcessorContext& ctx, _Output& dst, const _Input& src) const {
-        const ContentProcessor<_Input, _Output>* const processor = dynamic_cast<const ContentProcessor<_Input, _Output>*>(this);
+    bool Process(FContentProcessorContext& ctx, _Output& dst, const _Input& src) const {
+        const TContentProcessor<_Input, _Output>* const processor = dynamic_cast<const TContentProcessor<_Input, _Output>*>(this);
         if (nullptr == processor)
-            throw ContentProcessorException("invalid processor type", ctx.Identity(), this);
+            throw FContentProcessorException("invalid processor type", ctx.Identity(), this);
         else
             return processor->Process(ctx, dst, src);
     }
 
-    RTTI_CLASS_HEADER(IContentProcessor, ContentPipelineNode);
+    RTTI_CLASS_HEADER(IContentProcessor, FContentPipelineNode);
 };
 //----------------------------------------------------------------------------
 template <typename _Input, typename _Output>
-class ContentProcessor : public IContentProcessor {
+class TContentProcessor : public IContentProcessor {
 public:
     typedef _Input input_type;
     typedef _Input output_type;
 
-    virtual ~ContentProcessor() {}
+    virtual ~TContentProcessor() {}
 
-    virtual bool Process(ContentProcessorContext& ctx, output_type& dst, const input_type& src) const = 0;
+    virtual bool Process(FContentProcessorContext& ctx, output_type& dst, const input_type& src) const = 0;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

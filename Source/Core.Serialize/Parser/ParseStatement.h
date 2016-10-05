@@ -13,29 +13,29 @@ namespace Parser {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ParseContext;
+class FParseContext;
 FWD_REFPTR(ParseExpression);
 FWD_REFPTR(ParseStatement);
 //----------------------------------------------------------------------------
-class ParseStatement : public ParseItem {
+class FParseStatement : public FParseItem {
 public:
-    ParseStatement(const Lexer::Location& site);
-    virtual ~ParseStatement();
+    FParseStatement(const FLexer::FLocation& site);
+    virtual ~FParseStatement();
 
-    virtual void Execute(ParseContext *context) const = 0;
-    virtual void Invoke(ParseContext *context) const override { Execute(context); }
+    virtual void Execute(FParseContext *context) const = 0;
+    virtual void Invoke(FParseContext *context) const override { Execute(context); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class EvalExpr : public ParseStatement {
+class FEvalExpr : public FParseStatement {
 public:
-    EvalExpr(const Parser::PCParseExpression& expr);
-    virtual  ~EvalExpr();
+    FEvalExpr(const Parser::PCParseExpression& expr);
+    virtual  ~FEvalExpr();
 
     const Parser::PCParseExpression& Expr() const { return _expr; }
 
-    virtual void Execute(ParseContext *context) const override;
+    virtual void Execute(FParseContext *context) const override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
@@ -43,34 +43,34 @@ private:
     Parser::PCParseExpression _expr;
 };
 //----------------------------------------------------------------------------
-inline const EvalExpr *MakeEvalExpr(const Parser::PCParseExpression& expr) {
-    return new EvalExpr(expr);
+inline const FEvalExpr *MakeEvalExpr(const Parser::PCParseExpression& expr) {
+    return new FEvalExpr(expr);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PropertyAssignment : public ParseStatement {
+class FPropertyAssignment : public FParseStatement {
 public:
-    PropertyAssignment(const RTTI::Name& name, const Parser::PCParseExpression& value);
-    virtual  ~PropertyAssignment();
+    FPropertyAssignment(const RTTI::FName& name, const Parser::PCParseExpression& value);
+    virtual  ~FPropertyAssignment();
 
-    const RTTI::Name& Name() const { return _name; }
-    const Parser::PCParseExpression& Value() const { return _value; }
+    const RTTI::FName& FName() const { return _name; }
+    const Parser::PCParseExpression& FValue() const { return _value; }
 
-    virtual void Execute(ParseContext *context) const override;
-    virtual String ToString() const override;
+    virtual void Execute(FParseContext *context) const override;
+    virtual FString ToString() const override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    RTTI::Name _name;
+    RTTI::FName _name;
     Parser::PCParseExpression _value;
 };
 //----------------------------------------------------------------------------
-inline const PropertyAssignment *MakePropertyAssignment(
-    const RTTI::Name& name,
+inline const FPropertyAssignment *MakePropertyAssignment(
+    const RTTI::FName& name,
     const Parser::PCParseExpression& value) {
-    return new PropertyAssignment(name, value);
+    return new FPropertyAssignment(name, value);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

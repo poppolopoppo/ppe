@@ -11,21 +11,21 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, MultiPassEffectDescriptor, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, FMultiPassEffectDescriptor, );
 //----------------------------------------------------------------------------
-MultiPassEffectDescriptor::MultiPassEffectDescriptor()
+FMultiPassEffectDescriptor::FMultiPassEffectDescriptor()
 :   _size(0) {}
 //----------------------------------------------------------------------------
-MultiPassEffectDescriptor::~MultiPassEffectDescriptor() {}
+FMultiPassEffectDescriptor::~FMultiPassEffectDescriptor() {}
 //----------------------------------------------------------------------------
-void MultiPassEffectDescriptor::AddPass(const EffectDescriptor *pass) {
+void FMultiPassEffectDescriptor::AddPass(const FEffectDescriptor *pass) {
     Assert(pass);
     AssertRelease(_size < MaxPassCount);
 
     _passes[_size++] = pass;
 }
 //----------------------------------------------------------------------------
-size_t MultiPassEffectDescriptor::FillEffectPasses(const EffectDescriptor **pOutPasses, const size_t capacity) const {
+size_t FMultiPassEffectDescriptor::FillEffectPasses(const FEffectDescriptor **pOutPasses, const size_t capacity) const {
     Assert(pOutPasses);
     Assert(capacity >= _size);
     Assert(_size > 0);

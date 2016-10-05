@@ -14,26 +14,26 @@ FWD_REFPTR(BasicWindow);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class BasicWindow : public RefCountable {
+class FBasicWindow : public FRefCountable {
 public:
-    BasicWindow(const wchar_t *title,
+    FBasicWindow(const wchar_t *title,
                 int left, int top,
                 size_t width, size_t height,
-                BasicWindow *parent = nullptr   );
-    virtual ~BasicWindow();
+                FBasicWindow *parent = nullptr   );
+    virtual ~FBasicWindow();
 
     void *Handle() const { return _handle; }
-    const WString& Title() const { return _title; }
+    const FWString& Title() const { return _title; }
     size_t Width() const { return _width; }
     size_t Height() const { return _height; }
-    BasicWindow *Parent() const { return _parent; }
+    FBasicWindow *Parent() const { return _parent; }
     bool HasFocus() const { return _hasFocus; }
 
     void RegisterMessageHandler(IWindowMessageHandler *handler);
     void UnregisterMessageHandler(IWindowMessageHandler *handler);
 
     virtual bool DispatchMessageIFP(
-        WindowMessage msg,
+        EWindowMessage msg,
         MessageLParam lparam, MessageWParam wparam,
         MessageResult *result);
 
@@ -43,7 +43,7 @@ public:
     void Show();
     void Close();
 
-    bool PumpMessage(WindowMessage& msg, MessageLParam& lparam, MessageWParam& wparam);
+    bool PumpMessage(EWindowMessage& msg, MessageLParam& lparam, MessageWParam& wparam);
     bool PumpAllMessages_ReturnIfQuit();
 
     void ScreenToClient(int *screenX, int *screenY) const;
@@ -61,25 +61,25 @@ protected:
     virtual void OnResize(size_t width, size_t height);
 
 private:
-    typedef Pair<IWindowMessageHandler *, IWindowMessageHandler::Delegate> WindowMessageHandlerDelegate;
+    typedef TPair<IWindowMessageHandler *, IWindowMessageHandler::TDelegate> WindowMessageHandlerDelegate;
 
-    friend struct BasicWindowHelper;
+    friend struct FBasicWindowHelper;
     friend class IWindowMessageHandler;
 
-    void RegisterMessageDelegate_(WindowMessage msg, IWindowMessageHandler *handler, IWindowMessageHandler::Delegate member);
-    void UnregisterMessageDelegate_(WindowMessage msg, IWindowMessageHandler *handler, IWindowMessageHandler::Delegate member);
+    void RegisterMessageDelegate_(EWindowMessage msg, IWindowMessageHandler *handler, IWindowMessageHandler::TDelegate member);
+    void UnregisterMessageDelegate_(EWindowMessage msg, IWindowMessageHandler *handler, IWindowMessageHandler::TDelegate member);
 
     void UpdateMessageHandlers_BeforeDispatch_();
     void UpdateMessageHandlers_AfterDispatch_();
 
     void *_handle;
 
-    WString _title;
+    FWString _title;
 
     size_t _width;
     size_t _height;
 
-    BasicWindow *_parent;
+    FBasicWindow *_parent;
 
     bool _hasFocus;
     bool _wantFocus;
@@ -87,7 +87,7 @@ private:
     size_t _wantedWidth;
     size_t _wantedHeight;
 
-    ASSOCIATIVE_VECTOR(Window, WindowMessage, WindowMessageHandlerDelegate) _dispatch;
+    ASSOCIATIVE_VECTOR(Window, EWindowMessage, WindowMessageHandlerDelegate) _dispatch;
     VECTOR(Window, IWindowMessageHandler *) _handlers;
 };
 //----------------------------------------------------------------------------

@@ -7,63 +7,63 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-T Area(const ScalarBoundingBox<T, 2>& aabb) {
-    const ScalarVector<T, 2> extents = aabb.Extents();
+T Area(const TScalarBoundingBox<T, 2>& aabb) {
+    const TScalarVector<T, 2> extents = aabb.Extents();
     return (extents.x() * extents.y());
 }
 //----------------------------------------------------------------------------
 template <typename T>
-T Area(const ScalarBoxWExtent<T, 2>& aabb) {
-    const ScalarVector<T, 2> halfExtents = aabb.HalfExtents();
+T Area(const TScalarBoxWExtent<T, 2>& aabb) {
+    const TScalarVector<T, 2> halfExtents = aabb.HalfExtents();
     return (halfExtents.x() * halfExtents.y() * 4);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-T Volume(const ScalarBoundingBox<T, 3>& aabb) {
-    const ScalarVector<T, 3> extents = aabb.Extents();
+T Volume(const TScalarBoundingBox<T, 3>& aabb) {
+    const TScalarVector<T, 3> extents = aabb.Extents();
     return (extents.x() * extents.y() * extents.z());
 }
 //----------------------------------------------------------------------------
 template <typename T>
-T Volume(const ScalarBoxWExtent<T, 3>& aabb) {
-    const ScalarVector<T, 3> halfExtents = aabb.HalfExtents();
+T Volume(const TScalarBoxWExtent<T, 3>& aabb) {
+    const TScalarVector<T, 3> halfExtents = aabb.HalfExtents();
     return (halfExtents.x() * halfExtents.y() * halfExtents.z() * 8);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarVector<float, _Dim> LinearStep(const ScalarBoundingBox<T, _Dim>& aabb, const ScalarVector<T, _Dim>& value) {
+TScalarVector<float, _Dim> LinearStep(const TScalarBoundingBox<T, _Dim>& aabb, const TScalarVector<T, _Dim>& value) {
     return LinearStep(value, aabb.Min(), aabb.Max());
 }
 //----------------------------------------------------------------------------
 template <typename U, typename T, size_t _Dim>
-ScalarVector<U, _Dim> QuantizeCeil(const ScalarBoundingBox<T, _Dim>& aabb, const ScalarVector<T, _Dim>& value) {
-    ScalarVector<float, _Dim> normalized = LinearStep(aabb, value);
-    normalized += 1 / static_cast<float>(NumericLimits<U>::MaxValue() - NumericLimits<U>::MinValue());
+TScalarVector<U, _Dim> QuantizeCeil(const TScalarBoundingBox<T, _Dim>& aabb, const TScalarVector<T, _Dim>& value) {
+    TScalarVector<float, _Dim> normalized = LinearStep(aabb, value);
+    normalized += 1 / static_cast<float>(TNumericLimits<U>::MaxValue() - TNumericLimits<U>::MinValue());
     normalized = Saturate(normalized);
-    return Lerp(ScalarVector<U, _Dim>::MinValue(), ScalarVector<U, _Dim>::MaxValue(), normalized);
+    return TLerp(TScalarVector<U, _Dim>::MinValue(), TScalarVector<U, _Dim>::MaxValue(), normalized);
 }
 //----------------------------------------------------------------------------
 template <typename U, typename T, size_t _Dim>
-ScalarVector<U, _Dim> QuantizeFloor(const ScalarBoundingBox<T, _Dim>& aabb, const ScalarVector<T, _Dim>& value) {
-    ScalarVector<float, _Dim> normalized = LinearStep(aabb, value);
-    normalized -= 1 / static_cast<float>(NumericLimits<U>::MaxValue() - NumericLimits<U>::MinValue());
+TScalarVector<U, _Dim> QuantizeFloor(const TScalarBoundingBox<T, _Dim>& aabb, const TScalarVector<T, _Dim>& value) {
+    TScalarVector<float, _Dim> normalized = LinearStep(aabb, value);
+    normalized -= 1 / static_cast<float>(TNumericLimits<U>::MaxValue() - TNumericLimits<U>::MinValue());
     normalized = Saturate(normalized);
-    return Lerp(ScalarVector<U, _Dim>::MinValue(), ScalarVector<U, _Dim>::MaxValue(), normalized);
+    return TLerp(TScalarVector<U, _Dim>::MinValue(), TScalarVector<U, _Dim>::MaxValue(), normalized);
 }
 //----------------------------------------------------------------------------
 template <typename U, typename T, size_t _Dim>
-ScalarVector<U, _Dim> QuantizeRound(const ScalarBoundingBox<T, _Dim>& aabb, const ScalarVector<T, _Dim>& value) {
-    ScalarVector<float, _Dim> normalized = LinearStep(aabb, value);
-    normalized += 0.5f / static_cast<float>(NumericLimits<U>::MaxValue() - NumericLimits<U>::MinValue());
+TScalarVector<U, _Dim> QuantizeRound(const TScalarBoundingBox<T, _Dim>& aabb, const TScalarVector<T, _Dim>& value) {
+    TScalarVector<float, _Dim> normalized = LinearStep(aabb, value);
+    normalized += 0.5f / static_cast<float>(TNumericLimits<U>::MaxValue() - TNumericLimits<U>::MinValue());
     normalized = Saturate(normalized);
-    return Lerp(ScalarVector<U, _Dim>::MinValue(), ScalarVector<U, _Dim>::MaxValue(), normalized);
+    return TLerp(TScalarVector<U, _Dim>::MinValue(), TScalarVector<U, _Dim>::MaxValue(), normalized);
 }
 //----------------------------------------------------------------------------
 template <typename U, typename T, size_t _Dim>
-ScalarVector<T, _Dim> Unquantize(const ScalarBoundingBox<T, _Dim>& aabb, const ScalarVector<U, _Dim>& quantized) {
-    return aabb.Lerp( LinearStep(ScalarBoundingBox<U, _Dim>::MinMax(), quantized) );
+TScalarVector<T, _Dim> Unquantize(const TScalarBoundingBox<T, _Dim>& aabb, const TScalarVector<U, _Dim>& quantized) {
+    return aabb.Lerp( LinearStep(TScalarBoundingBox<U, _Dim>::MinMax(), quantized) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

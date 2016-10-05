@@ -14,16 +14,16 @@
 
 namespace Core {
 namespace Engine {
-class KeyboardInputHandler;
-class MouseInputHandler;
+class FKeyboardInputHandler;
+class FMouseInputHandler;
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-KeyboardMouseCameraController::KeyboardMouseCameraController(
+FKeyboardMouseCameraController::FKeyboardMouseCameraController(
     const float3& position, float heading/* rad */, float pitch/* rad */,
-    const KeyboardInputHandler *keyboard,
-    const MouseInputHandler *mouse )
+    const FKeyboardInputHandler *keyboard,
+    const FMouseInputHandler *mouse )
 :   Engine::FreeLookCameraController(position, heading, pitch)
 ,   _keyboard(keyboard), _mouse(mouse)
 
@@ -52,16 +52,16 @@ KeyboardMouseCameraController::KeyboardMouseCameraController(
     _deltaForwardBackward = _deltaStrafe = 0;
 }
 //----------------------------------------------------------------------------
-KeyboardMouseCameraController::~KeyboardMouseCameraController() {}
+FKeyboardMouseCameraController::~FKeyboardMouseCameraController() {}
 //----------------------------------------------------------------------------
-void KeyboardMouseCameraController::UpdateImpl(float4x4 *view, const Timeline& time) {
-    const Graphics::BasicWindow *wnd = _mouse->Window();
+void FKeyboardMouseCameraController::UpdateImpl(float4x4 *view, const FTimeline& time) {
+    const Graphics::FBasicWindow *wnd = _mouse->Window();
     Assert(_keyboard->Window() == wnd);
 
-    _deltaSpeed = (_keyboard->IsKeyPressed(KeyboardKey::Shift)) ? _fastSpeed : _slowSpeed;
+    _deltaSpeed = (_keyboard->IsKeyPressed(EKeyboardKey::Shift)) ? _fastSpeed : _slowSpeed;
 
-    const MouseButton mouseLookButton = MouseButton::Button1;
-    const MouseButton mouseTranslateButton = MouseButton::Button2;
+    const EMouseButton mouseLookButton = EMouseButton::Button1;
+    const EMouseButton mouseTranslateButton = EMouseButton::Button2;
 
     // heading/pitch on scroll button
     if (_mouse->IsButtonDown(mouseLookButton)) {
@@ -108,37 +108,37 @@ void KeyboardMouseCameraController::UpdateImpl(float4x4 *view, const Timeline& t
     }
 
     // heading/pitch on keyboard arrow
-    if (_keyboard->IsKeyPressed(KeyboardKey::Left)  ) {
+    if (_keyboard->IsKeyPressed(EKeyboardKey::Left)  ) {
         _deltaHeading -= _headingSpeed * _keyboardSpeed;
         _deltaHeading *= _acceleration;
     }
-    if (_keyboard->IsKeyPressed(KeyboardKey::Right)  ) {
+    if (_keyboard->IsKeyPressed(EKeyboardKey::Right)  ) {
         _deltaHeading += _headingSpeed * _keyboardSpeed;
         _deltaHeading *= _acceleration;
     }
-    if (_keyboard->IsKeyPressed(KeyboardKey::Up)  ) {
+    if (_keyboard->IsKeyPressed(EKeyboardKey::Up)  ) {
         _deltaPitch -= _pitchSpeed * _keyboardSpeed;
         _deltaPitch *= _acceleration;
     }
-    if (_keyboard->IsKeyPressed(KeyboardKey::Down)) {
+    if (_keyboard->IsKeyPressed(EKeyboardKey::Down)) {
         _deltaPitch += _pitchSpeed * _keyboardSpeed;
         _deltaPitch *= _acceleration;
     }
 
     // 3D translation on keyboard zqsd
-    if (_keyboard->IsKeyPressed(KeyboardKey::Q)  ) {
+    if (_keyboard->IsKeyPressed(EKeyboardKey::Q)  ) {
         _deltaStrafe -= _strafeSpeed * _keyboardSpeed;
         _deltaStrafe *= _acceleration;
     }
-    if (_keyboard->IsKeyPressed(KeyboardKey::D)  ) {
+    if (_keyboard->IsKeyPressed(EKeyboardKey::D)  ) {
         _deltaStrafe += _strafeSpeed * _keyboardSpeed;
         _deltaStrafe *= _acceleration;
     }
-    if (_keyboard->IsKeyPressed(KeyboardKey::Z)  ) {
+    if (_keyboard->IsKeyPressed(EKeyboardKey::Z)  ) {
         _deltaForwardBackward += _forwardSpeed * _keyboardSpeed;
         _deltaForwardBackward *= _acceleration;
     }
-    if (_keyboard->IsKeyPressed(KeyboardKey::S)) {
+    if (_keyboard->IsKeyPressed(EKeyboardKey::S)) {
         _deltaForwardBackward -= _backwardSpeed * _keyboardSpeed;
         _deltaForwardBackward *= _acceleration;
     }

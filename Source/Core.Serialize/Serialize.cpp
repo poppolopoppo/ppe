@@ -26,29 +26,29 @@ void SerializeStartup::Start() {
     CORE_MODULE_START(Serialize);
 
     POOL_TAG(Serialize)::Start();
-    Lexer::LexerStartup::Start();
-    Parser::ParserStartup::Start();
-    GrammarStartup::Start();
-    XML::XMLStartup::Start();
+    FLexer::FLexerStartup::Start();
+    Parser::FParserStartup::Start();
+    FGrammarStartup::Start();
+    XML::FXMLStartup::Start();
 }
 //----------------------------------------------------------------------------
 void SerializeStartup::Shutdown() {
     CORE_MODULE_SHUTDOWN(Serialize);
 
-    XML::XMLStartup::Shutdown();
-    GrammarStartup::Shutdown();
-    Parser::ParserStartup::Shutdown();
-    Lexer::LexerStartup::Shutdown();
+    XML::FXMLStartup::Shutdown();
+    FGrammarStartup::Shutdown();
+    Parser::FParserStartup::Shutdown();
+    FLexer::FLexerStartup::Shutdown();
     POOL_TAG(Serialize)::Shutdown();
 }
 //----------------------------------------------------------------------------
 void SerializeStartup::ClearAll_UnusedMemory() {
     CORE_MODULE_CLEARALL(Serialize);
 
-    Lexer::LexerStartup::ClearAll_UnusedMemory();
-    Parser::ParserStartup::ClearAll_UnusedMemory();
-    GrammarStartup::ClearAll_UnusedMemory();
-    XML::XMLStartup::ClearAll_UnusedMemory();
+    FLexer::FLexerStartup::ClearAll_UnusedMemory();
+    Parser::FParserStartup::ClearAll_UnusedMemory();
+    FGrammarStartup::ClearAll_UnusedMemory();
+    XML::FXMLStartup::ClearAll_UnusedMemory();
     POOL_TAG(Serialize)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------

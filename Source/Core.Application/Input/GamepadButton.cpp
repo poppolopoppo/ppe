@@ -9,102 +9,102 @@ namespace Application {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static const GamepadButton gEachGamepadButtons[] = {
-    GamepadButton::Button0,
-    GamepadButton::Button1,
-    GamepadButton::Button2,
-    GamepadButton::Button3,
-    GamepadButton::Button4,
-    GamepadButton::Button5,
-    GamepadButton::Button6,
-    GamepadButton::Button7,
-    GamepadButton::Button8,
-    GamepadButton::Button9,
-    GamepadButton::DPadUp,
-    GamepadButton::DPadLeft,
-    GamepadButton::DPadRight,
-    GamepadButton::DPadDown,
+static const EGamepadButton gEachGamepadButtons[] = {
+    EGamepadButton::Button0,
+    EGamepadButton::Button1,
+    EGamepadButton::Button2,
+    EGamepadButton::Button3,
+    EGamepadButton::Button4,
+    EGamepadButton::Button5,
+    EGamepadButton::Button6,
+    EGamepadButton::Button7,
+    EGamepadButton::Button8,
+    EGamepadButton::Button9,
+    EGamepadButton::DPadUp,
+    EGamepadButton::DPadLeft,
+    EGamepadButton::DPadRight,
+    EGamepadButton::DPadDown,
 };
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-StringView GamepadButtonToCStr(GamepadButton value) {
+FStringView GamepadButtonToCStr(EGamepadButton value) {
     switch (value)
     {
-    case Core::Application::GamepadButton::Button0:
+    case Core::Application::EGamepadButton::Button0:
         return MakeStringView("Button0");
-    case Core::Application::GamepadButton::Button1:
+    case Core::Application::EGamepadButton::Button1:
         return MakeStringView("Button1");
-    case Core::Application::GamepadButton::Button2:
+    case Core::Application::EGamepadButton::Button2:
         return MakeStringView("Button2");
-    case Core::Application::GamepadButton::Button3:
+    case Core::Application::EGamepadButton::Button3:
         return MakeStringView("Button3");
-    case Core::Application::GamepadButton::Button4:
+    case Core::Application::EGamepadButton::Button4:
         return MakeStringView("Button4");
-    case Core::Application::GamepadButton::Button5:
+    case Core::Application::EGamepadButton::Button5:
         return MakeStringView("Button5");
-    case Core::Application::GamepadButton::Button6:
+    case Core::Application::EGamepadButton::Button6:
         return MakeStringView("Button6");
-    case Core::Application::GamepadButton::Button7:
+    case Core::Application::EGamepadButton::Button7:
         return MakeStringView("Button7");
-    case Core::Application::GamepadButton::Button8:
+    case Core::Application::EGamepadButton::Button8:
         return MakeStringView("Button8");
-    case Core::Application::GamepadButton::Button9:
+    case Core::Application::EGamepadButton::Button9:
         return MakeStringView("Button9");
-    case Core::Application::GamepadButton::DPadUp:
+    case Core::Application::EGamepadButton::DPadUp:
         return MakeStringView("DPadUp");
-    case Core::Application::GamepadButton::DPadLeft:
+    case Core::Application::EGamepadButton::DPadLeft:
         return MakeStringView("DPadLeft");
-    case Core::Application::GamepadButton::DPadRight:
+    case Core::Application::EGamepadButton::DPadRight:
         return MakeStringView("DPadRight");
-    case Core::Application::GamepadButton::DPadDown:
+    case Core::Application::EGamepadButton::DPadDown:
         return MakeStringView("DPadDown");
     default:
         AssertNotImplemented();
     }
-    return StringView();
+    return FStringView();
 }
 //----------------------------------------------------------------------------
-StringView GamepadButtonToXBoxCStr(GamepadButton value) {
+FStringView GamepadButtonToXBoxCStr(EGamepadButton value) {
     switch (value)
     {
-    case Core::Application::GamepadButton::A:
+    case Core::Application::EGamepadButton::A:
         return MakeStringView("A");
-    case Core::Application::GamepadButton::B:
+    case Core::Application::EGamepadButton::B:
         return MakeStringView("B");
-    case Core::Application::GamepadButton::X:
+    case Core::Application::EGamepadButton::X:
         return MakeStringView("X");
-    case Core::Application::GamepadButton::Y:
+    case Core::Application::EGamepadButton::Y:
         return MakeStringView("Y");
-    case Core::Application::GamepadButton::LeftThumb:
+    case Core::Application::EGamepadButton::LeftThumb:
         return MakeStringView("LeftThumb");
-    case Core::Application::GamepadButton::RightThumb:
+    case Core::Application::EGamepadButton::RightThumb:
         return MakeStringView("RightThumb");
-    case Core::Application::GamepadButton::Start:
+    case Core::Application::EGamepadButton::Start:
         return MakeStringView("Start");
-    case Core::Application::GamepadButton::Back:
+    case Core::Application::EGamepadButton::Back:
         return MakeStringView("Back");
-    case Core::Application::GamepadButton::LeftShoulder:
+    case Core::Application::EGamepadButton::LeftShoulder:
         return MakeStringView("LeftShoulder");
-    case Core::Application::GamepadButton::RightShoulder:
+    case Core::Application::EGamepadButton::RightShoulder:
         return MakeStringView("RightShoulder");
-    case Core::Application::GamepadButton::DPadUp:
+    case Core::Application::EGamepadButton::DPadUp:
         return MakeStringView("DPadUp");
-    case Core::Application::GamepadButton::DPadLeft:
+    case Core::Application::EGamepadButton::DPadLeft:
         return MakeStringView("DPadLeft");
-    case Core::Application::GamepadButton::DPadRight:
+    case Core::Application::EGamepadButton::DPadRight:
         return MakeStringView("DPadRight");
-    case Core::Application::GamepadButton::DPadDown:
+    case Core::Application::EGamepadButton::DPadDown:
         return MakeStringView("DPadDown");
     default:
         AssertNotImplemented();
     }
-    return StringView();
+    return FStringView();
 }
 //----------------------------------------------------------------------------
-MemoryView<const GamepadButton> EachGamepadButtons() {
+TMemoryView<const EGamepadButton> EachGamepadButtons() {
     return MakeConstView(gEachGamepadButtons);
 }
 //----------------------------------------------------------------------------

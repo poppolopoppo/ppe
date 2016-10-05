@@ -6,17 +6,20 @@
 
 #include <memory.h>
 
-#define FWD_UNIQUEPTR(T) \
-    class T; \
-    typedef Core::UniquePtr<T> CONCAT(U, T); \
-    typedef Core::UniquePtr<const T> CONCAT(UC, T);
+#define _FWD_UNIQUEPTR_IMPL(T, _PREFIX)                                     \
+    class CONCAT(_PREFIX, T);                                               \
+    typedef Core::TUniquePtr<CONCAT(_PREFIX, T)>           CONCAT(U,  T);   \
+    typedef Core::TUniquePtr<const CONCAT(_PREFIX, T)>     CONCAT(UC, T)
+
+#define FWD_UNIQUEPTR(T_WITHOUT_F)              _FWD_UNIQUEPTR_IMPL(T_WITHOUT_F, F)
+#define FWD_INTEFARCE_UNIQUEPTR(T_WITHOUT_I)    _FWD_UNIQUEPTR_IMPL(T_WITHOUT_I, I)
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Deleter = checked_deleter<T> >
-using UniquePtr = std::unique_ptr<T, _Deleter>;
+using TUniquePtr = std::unique_ptr<T, _Deleter>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -10,11 +10,11 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, ModelBone, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, FModelBone, );
 //----------------------------------------------------------------------------
-ModelBone::ModelBone(
-    const MeshName& name,
-    const MeshName& group,
+FModelBone::FModelBone(
+    const FMeshName& name,
+    const FMeshName& group,
     const float4x4& transform,
     const AABB3f& boundingBox )
 :   _name(name)
@@ -27,7 +27,7 @@ ModelBone::ModelBone(
     Assert(boundingBox.HasPositiveExtents());
 }
 //----------------------------------------------------------------------------
-ModelBone::~ModelBone() {}
+FModelBone::~FModelBone() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

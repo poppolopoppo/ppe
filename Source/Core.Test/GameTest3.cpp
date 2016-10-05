@@ -56,7 +56,7 @@
 #include "Core.Application/ApplicationConsole.h"
 
 namespace Core {
-typedef Graphics::Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Float2__Normal0_UX10Y10Z10W2N vertex_type;
+typedef Graphics::Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Float2__Normal0_UX10Y10Z10W2N vertex_type;
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -64,111 +64,111 @@ typedef Graphics::Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Float2__No
 namespace {
 //----------------------------------------------------------------------------
 static void MountGameDataPath_() {
-    VirtualFileSystem::Instance().MountNativePath(
+    FVirtualFileSystem::Instance().MountNativePath(
         L"GameData:\\", 
-        CurrentProcess::Instance().Directory() + L"\\..\\..\\Data\\" );
+        FCurrentProcess::Instance().Directory() + L"\\..\\..\\Data\\" );
 }
 //----------------------------------------------------------------------------
 static void SetupPostprocess_(
-    Engine::Scene *scene,
-    Engine::AbstractRenderSurface *principal,
-    Engine::AbstractRenderSurface *backBuffer,
+    Engine::FScene *scene,
+    Engine::FAbstractRenderSurface *principal,
+    Engine::FAbstractRenderSurface *backBuffer,
     Graphics::IDeviceAPIEncapsulator *device,
-    Engine::EffectCompiler *effectCompiler,
-    Engine::RenderSurfaceManager *renderSurfaceManager ) {
+    Engine::FEffectCompiler *effectCompiler,
+    Engine::FRenderSurfaceManager *renderSurfaceManager ) {
     using namespace Engine;
     using namespace Graphics;
 
     // Bloom selector
 
-    EffectDescriptor *const bloomSelectorDescriptor = new EffectDescriptor();
+    FEffectDescriptor *const bloomSelectorDescriptor = new FEffectDescriptor();
     bloomSelectorDescriptor->SetName("BloomSelector");
     bloomSelectorDescriptor->SetRenderState(
-        new RenderState(RenderState::Blending::Opaque,
-                        RenderState::Culling::None,
-                        RenderState::DepthTest::None,
-                        RenderState::FillMode::Solid ));
+        new FRenderState(FRenderState::EBlending::Opaque,
+                        FRenderState::ECulling::None,
+                        FRenderState::EDepthTest::None,
+                        FRenderState::EFillMode::Solid ));
     bloomSelectorDescriptor->SetVS(L"GameData:/Shaders/BloomSelector.fx");
     bloomSelectorDescriptor->SetPS(L"GameData:/Shaders/BloomSelector.fx");
-    bloomSelectorDescriptor->SetShaderProfile(ShaderProfileType::ShaderModel4_1);
-    bloomSelectorDescriptor->AddVertexDeclaration(Vertex::Position0_Float4__TexCoord0_Float2::Declaration);
+    bloomSelectorDescriptor->SetShaderProfile(EShaderProfileType::ShaderModel4_1);
+    bloomSelectorDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float4__TexCoord0_Float2::Declaration);
 
-    Material *const bloomSelectorMaterial = new Material("BloomSelector");
+    FMaterial *const bloomSelectorMaterial = new FMaterial("BloomSelector");
     bloomSelectorMaterial->AddTexture("Input", L"VirtualData:/Surfaces/Principal/RT");
 
-    MaterialEffect *const bloomSelectorEffect = effectCompiler->CreateMaterialEffect(
+    FMaterialEffect *const bloomSelectorEffect = effectCompiler->CreateMaterialEffect(
         bloomSelectorDescriptor, bloomSelectorDescriptor->VertexDeclarations().front(), bloomSelectorMaterial);
 
     // Gaussian blur effect
 
-    EffectDescriptor *const gaussianBlur9Descriptor = new EffectDescriptor();
+    FEffectDescriptor *const gaussianBlur9Descriptor = new FEffectDescriptor();
     gaussianBlur9Descriptor->SetName("GaussianBlur9");
     gaussianBlur9Descriptor->SetRenderState(
-        new RenderState(RenderState::Blending::Opaque,
-                        RenderState::Culling::None,
-                        RenderState::DepthTest::None,
-                        RenderState::FillMode::Solid ));
+        new FRenderState(FRenderState::EBlending::Opaque,
+                        FRenderState::ECulling::None,
+                        FRenderState::EDepthTest::None,
+                        FRenderState::EFillMode::Solid ));
     gaussianBlur9Descriptor->SetVS(L"GameData:/Shaders/GaussianBlur9.fx");
     gaussianBlur9Descriptor->SetPS(L"GameData:/Shaders/GaussianBlur9.fx");
-    gaussianBlur9Descriptor->SetShaderProfile(ShaderProfileType::ShaderModel4_1);
-    gaussianBlur9Descriptor->AddVertexDeclaration(Vertex::Position0_Float4__TexCoord0_Float2::Declaration);
+    gaussianBlur9Descriptor->SetShaderProfile(EShaderProfileType::ShaderModel4_1);
+    gaussianBlur9Descriptor->AddVertexDeclaration(Vertex::FPosition0_Float4__TexCoord0_Float2::Declaration);
 
     // Bloom gaussian blur material effect
 
-    Material *const bloomBlurHMaterial = new Material("BloomBlurH");
+    FMaterial *const bloomBlurHMaterial = new FMaterial("BloomBlurH");
     bloomBlurHMaterial->AddTexture("Input", L"VirtualData:/Surfaces/DownsizeDiv2/RT");
-    bloomBlurHMaterial->AddParameter("BlurDuDv", new MaterialParameterBlock<float2>(float2(1, 0)));
-    MaterialEffect *const bloomBlurHEffect = effectCompiler->CreateMaterialEffect(
+    bloomBlurHMaterial->AddParameter("BlurDuDv", new TMaterialParameterBlock<float2>(float2(1, 0)));
+    FMaterialEffect *const bloomBlurHEffect = effectCompiler->CreateMaterialEffect(
         gaussianBlur9Descriptor, gaussianBlur9Descriptor->VertexDeclarations().front(), bloomBlurHMaterial);
 
-    Material *const bloomBlurVMaterial = new Material("BloomBlurV");
+    FMaterial *const bloomBlurVMaterial = new FMaterial("BloomBlurV");
     bloomBlurVMaterial->AddTexture("Input", L"VirtualData:/Surfaces/DownsizeDiv4/RT");
-    bloomBlurVMaterial->AddParameter("BlurDuDv", new MaterialParameterBlock<float2>(float2(0, 0.5f)));
-    MaterialEffect *const bloomBlurVEffect = effectCompiler->CreateMaterialEffect(
+    bloomBlurVMaterial->AddParameter("BlurDuDv", new TMaterialParameterBlock<float2>(float2(0, 0.5f)));
+    FMaterialEffect *const bloomBlurVEffect = effectCompiler->CreateMaterialEffect(
         gaussianBlur9Descriptor, gaussianBlur9Descriptor->VertexDeclarations().front(), bloomBlurVMaterial);
 
     // Principal gaussian blur material effect
 
-    Material *const principalBlurHMaterial = new Material("PrincipalBlurH");
+    FMaterial *const principalBlurHMaterial = new FMaterial("PrincipalBlurH");
     principalBlurHMaterial->AddTexture("Input", L"VirtualData:/Surfaces/Principal/RT");
-    principalBlurHMaterial->AddParameter("BlurDuDv", new MaterialParameterBlock<float2>(float2(1, 0)));
-    MaterialEffect *const principalBlurHEffect = effectCompiler->CreateMaterialEffect(
+    principalBlurHMaterial->AddParameter("BlurDuDv", new TMaterialParameterBlock<float2>(float2(1, 0)));
+    FMaterialEffect *const principalBlurHEffect = effectCompiler->CreateMaterialEffect(
         gaussianBlur9Descriptor, gaussianBlur9Descriptor->VertexDeclarations().front(), principalBlurHMaterial);
 
-    Material *const principalBlurVMaterial = new Material("PrincipalBlurV");
+    FMaterial *const principalBlurVMaterial = new FMaterial("PrincipalBlurV");
     principalBlurVMaterial->AddTexture("Input", L"VirtualData:/Surfaces/DownsizeDiv2/RT");
-    principalBlurVMaterial->AddParameter("BlurDuDv", new MaterialParameterBlock<float2>(float2(0, 0.5f)));
-    MaterialEffect *const principalBlurVEffect = effectCompiler->CreateMaterialEffect(
+    principalBlurVMaterial->AddParameter("BlurDuDv", new TMaterialParameterBlock<float2>(float2(0, 0.5f)));
+    FMaterialEffect *const principalBlurVEffect = effectCompiler->CreateMaterialEffect(
         gaussianBlur9Descriptor, gaussianBlur9Descriptor->VertexDeclarations().front(), principalBlurVMaterial);
 
     // Postprocess effect
 
-    EffectDescriptor *const postprocessDescriptor = new EffectDescriptor();
+    FEffectDescriptor *const postprocessDescriptor = new FEffectDescriptor();
     postprocessDescriptor->SetName("Postprocess");
     postprocessDescriptor->SetRenderState(
-        new RenderState(RenderState::Blending::Opaque,
-                        RenderState::Culling::None,
-                        RenderState::DepthTest::None,
-                        RenderState::FillMode::Solid ));
+        new FRenderState(FRenderState::EBlending::Opaque,
+                        FRenderState::ECulling::None,
+                        FRenderState::EDepthTest::None,
+                        FRenderState::EFillMode::Solid ));
     postprocessDescriptor->SetVS(L"GameData:/Shaders/Postprocess.fx");
     postprocessDescriptor->SetPS(L"GameData:/Shaders/Postprocess.fx");
-    postprocessDescriptor->SetShaderProfile(ShaderProfileType::ShaderModel4_1);
-    postprocessDescriptor->AddVertexDeclaration(Vertex::Position0_Float4__TexCoord0_Float2::Declaration);
+    postprocessDescriptor->SetShaderProfile(EShaderProfileType::ShaderModel4_1);
+    postprocessDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float4__TexCoord0_Float2::Declaration);
 
     // Postprocess material effect
 
-    Material *const postprocessMaterial = new Material("Postprocess");
+    FMaterial *const postprocessMaterial = new FMaterial("Postprocess");
     postprocessMaterial->AddTexture("Principal", L"VirtualData:/Surfaces/Principal/RT");
     postprocessMaterial->AddTexture("Bloom", L"VirtualData:/Surfaces/Bloom/RT");
     postprocessMaterial->AddTexture("PrincipalBlur", L"VirtualData:/Surfaces/DownsizeDiv4/RT");
-    MaterialEffect *const postprocessEffect = effectCompiler->CreateMaterialEffect(
+    FMaterialEffect *const postprocessEffect = effectCompiler->CreateMaterialEffect(
         postprocessDescriptor, postprocessDescriptor->VertexDeclarations().front(), postprocessMaterial);
 
     // Postprocess render surfaces
 
-    const PAbstractRenderSurface downSizeDiv2 = new RenderSurfaceRelative("DownsizeDiv2", float2(0.5f), principal, SurfaceFormat::R11G11B10);
-    const PAbstractRenderSurface downSizeDiv4 = new RenderSurfaceRelative("DownsizeDiv4", float2(0.25f), principal, SurfaceFormat::R11G11B10);
-    const PAbstractRenderSurface bloom = new RenderSurfaceRelative("Bloom", float2(0.125f), principal, SurfaceFormat::R11G11B10);
+    const PAbstractRenderSurface downSizeDiv2 = new FRenderSurfaceRelative("DownsizeDiv2", float2(0.5f), principal, FSurfaceFormat::R11G11B10);
+    const PAbstractRenderSurface downSizeDiv4 = new FRenderSurfaceRelative("DownsizeDiv4", float2(0.25f), principal, FSurfaceFormat::R11G11B10);
+    const PAbstractRenderSurface bloom = new FRenderSurfaceRelative("Bloom", float2(0.125f), principal, FSurfaceFormat::R11G11B10);
 
     renderSurfaceManager->Register(downSizeDiv2);
     renderSurfaceManager->Register(downSizeDiv4);
@@ -176,25 +176,25 @@ static void SetupPostprocess_(
 
     // Postprocess render tree
 
-    scene->RenderTree()->Add(new RenderLayerSetRenderTarget(downSizeDiv2));
-    scene->RenderTree()->Add(new RenderLayerDrawRect(bloomSelectorEffect));
-    scene->RenderTree()->Add(new RenderLayerSetRenderTarget(downSizeDiv4));
-    scene->RenderTree()->Add(new RenderLayerDrawRect(bloomBlurHEffect));
-    scene->RenderTree()->Add(new RenderLayerSetRenderTarget(bloom));
-    scene->RenderTree()->Add(new RenderLayerDrawRect(bloomBlurVEffect));
+    scene->RenderTree()->Add(new FRenderLayerSetRenderTarget(downSizeDiv2));
+    scene->RenderTree()->Add(new FRenderLayerDrawRect(bloomSelectorEffect));
+    scene->RenderTree()->Add(new FRenderLayerSetRenderTarget(downSizeDiv4));
+    scene->RenderTree()->Add(new FRenderLayerDrawRect(bloomBlurHEffect));
+    scene->RenderTree()->Add(new FRenderLayerSetRenderTarget(bloom));
+    scene->RenderTree()->Add(new FRenderLayerDrawRect(bloomBlurVEffect));
 
-    scene->RenderTree()->Add(new RenderLayerSetRenderTarget(downSizeDiv2));
-    scene->RenderTree()->Add(new RenderLayerDrawRect(principalBlurHEffect));
-    scene->RenderTree()->Add(new RenderLayerSetRenderTarget(downSizeDiv4));
-    scene->RenderTree()->Add(new RenderLayerDrawRect(principalBlurVEffect));
+    scene->RenderTree()->Add(new FRenderLayerSetRenderTarget(downSizeDiv2));
+    scene->RenderTree()->Add(new FRenderLayerDrawRect(principalBlurHEffect));
+    scene->RenderTree()->Add(new FRenderLayerSetRenderTarget(downSizeDiv4));
+    scene->RenderTree()->Add(new FRenderLayerDrawRect(principalBlurVEffect));
 
-    scene->RenderTree()->Add(new RenderLayerSetRenderTarget(backBuffer));
-    scene->RenderTree()->Add(new RenderLayerDrawRect(postprocessEffect));
+    scene->RenderTree()->Add(new FRenderLayerSetRenderTarget(backBuffer));
+    scene->RenderTree()->Add(new FRenderLayerDrawRect(postprocessEffect));
 }
 //----------------------------------------------------------------------------
-static Engine::Model *CreatePBRTestModel_() {
+static Engine::FModel *CreatePBRTestModel_() {
     Engine::PModel referenceModel;
-    if (!Engine::LoadModel(referenceModel, L"GameData:/Models/Test/Sphere.obj"))
+    if (!Engine::LoadModel(referenceModel, L"GameData:/Models/Test/FSphere.obj"))
         AssertNotReached();
 
     const Engine::PModelMesh modelMesh = referenceModel->Meshes().front();
@@ -227,30 +227,30 @@ static Engine::Model *CreatePBRTestModel_() {
 
     for (size_t i = 0; i < rows; ++i) {
         const float fx = i*dr;
-        const float roughness = Lerp(roughnessRange.x(), roughnessRange.y(), fx);
+        const float roughness = TLerp(roughnessRange.x(), roughnessRange.y(), fx);
         const float x = positionRange.x() * fx - positionRange.x() * 0.5f;
 
         for (size_t j = 0; j < columns; ++j) {
             const float fy = j*dc;
-            const float metallic = Lerp(metallicRange.x(), metallicRange.y(), fy);
+            const float metallic = TLerp(metallicRange.x(), metallicRange.y(), fy);
             const float y = positionRange.y() * fy - positionRange.y() * 0.5f;
 
             for (size_t k = 0; k < depths; ++k) {
                 const float fz = k*dd;
-                const float refractiveIndex = Lerp(refractiveIndexRange.x(), refractiveIndexRange.y(), fz);
+                const float refractiveIndex = TLerp(refractiveIndexRange.x(), refractiveIndexRange.y(), fz);
                 const float z = positionRange.z() * fz - positionRange.z() * 0.5f;
 
                 const float3 translation(x, y, z);
                 const float4x4 world = MakeTranslationMatrix(translation);
                 const AABB3f boundingBox(meshBoundingBox.Min()+translation, meshBoundingBox.Max()+translation);
 
-                Engine::Material *const newMaterial = new Engine::Material(*material);
-                newMaterial->SetParameter(Engine::MaterialConstNames::Metallic(), new Engine::MaterialParameterBlock<float>(metallic));
-                newMaterial->SetParameter(Engine::MaterialConstNames::Roughness(), new Engine::MaterialParameterBlock<float>(roughness));
-                newMaterial->SetParameter(Engine::MaterialConstNames::RefractiveIndex(), new Engine::MaterialParameterBlock<float>(refractiveIndex));
-                newMaterial->SetParameter(Engine::MaterialConstNames::World(), new Engine::MaterialParameterBlock<float4x4>(world));
+                Engine::FMaterial *const newMaterial = new Engine::FMaterial(*material);
+                newMaterial->SetParameter(Engine::FMaterialConstNames::Metallic(), new Engine::TMaterialParameterBlock<float>(metallic));
+                newMaterial->SetParameter(Engine::FMaterialConstNames::Roughness(), new Engine::TMaterialParameterBlock<float>(roughness));
+                newMaterial->SetParameter(Engine::FMaterialConstNames::RefractiveIndex(), new Engine::TMaterialParameterBlock<float>(refractiveIndex));
+                newMaterial->SetParameter(Engine::FMaterialConstNames::FWorld(), new Engine::TMaterialParameterBlock<float4x4>(world));
 
-                newModelMeshSubParts.push_back(new Engine::ModelMeshSubPart(
+                newModelMeshSubParts.push_back(new Engine::FModelMeshSubPart(
                     modelMeshSubPart->Name(),
                     modelMeshSubPart->BoneIndex(),
                     modelMeshSubPart->BaseVertex(),
@@ -271,7 +271,7 @@ static Engine::Model *CreatePBRTestModel_() {
     newModelBones.push_back(referenceModel->Bones().front());
 
     VECTOR(Mesh, Engine::PModelMesh) newModelMeshes;
-    newModelMeshes.push_back(new Engine::ModelMesh(
+    newModelMeshes.push_back(new Engine::FModelMesh(
         modelMesh->IndexCount(), 
         modelMesh->VertexCount(),
         modelMesh->PrimitiveType(),
@@ -281,47 +281,47 @@ static Engine::Model *CreatePBRTestModel_() {
         std::move(vertices),
         std::move(newModelMeshSubParts) ));
 
-    return new Engine::Model(referenceModel->Name(), newBoundingBox, std::move(newModelBones), std::move(newModelMeshes));
+    return new Engine::FModel(referenceModel->Name(), newBoundingBox, std::move(newModelBones), std::move(newModelMeshes));
 }
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-GameTest3::GameTest3(const wchar_t *appname)
+FGameTest3::FGameTest3(const wchar_t *appname)
 :   parent_type(
     appname,
-    Graphics::DeviceAPI::DirectX11,
-    Graphics::PresentationParameters(
+    Graphics::EDeviceAPI::DirectX11,
+    Graphics::FPresentationParameters(
         //640, 480,
         1600, 900,
-        Graphics::SurfaceFormat::R8G8B8A8_SRGB,
-        Graphics::SurfaceFormat::D24S8,
+        Graphics::FSurfaceFormat::R8G8B8A8_SRGB,
+        Graphics::FSurfaceFormat::D24S8,
         false,
         true,
         0,
-        Graphics::PresentInterval::Default ),
+        Graphics::EPresentInterval::Default ),
     10, 10) {
 #if 1
 #ifndef FINAL_RELEASE
     // creates a command window to show stdout messages
-    Application::ApplicationConsole::RedirectIOToConsole();
+    Application::FApplicationConsole::RedirectIOToConsole();
 #endif
 #endif
 }
 //----------------------------------------------------------------------------
-GameTest3::~GameTest3() {}
+FGameTest3::~FGameTest3() {}
 //----------------------------------------------------------------------------
-void GameTest3::Start() {
+void FGameTest3::Start() {
     using namespace Engine;
 
     Assert(!_context);
-    _context = new RenderContext(parent_type::Services(), 512/* mo */<< 20);
+    _context = new FRenderContext(parent_type::Services(), 512/* mo */<< 20);
 
     parent_type::Start();
 }
 //----------------------------------------------------------------------------
-void GameTest3::Shutdown() {
+void FGameTest3::Shutdown() {
     using namespace Engine;
 
     parent_type::Shutdown();
@@ -330,45 +330,45 @@ void GameTest3::Shutdown() {
     RemoveRef_AssertReachZero(_context);
 }
 //----------------------------------------------------------------------------
-void GameTest3::Initialize(const Timeline& time) {
+void FGameTest3::Initialize(const FTimeline& time) {
     parent_type::Initialize(time);
 
     using namespace Engine;
     using namespace Graphics;
 
-    IDeviceAPIEncapsulator *const device = DeviceEncapsulator().Device();
-    const ViewportF& viewport = DeviceEncapsulator().Parameters().Viewport();
+    IDeviceAPIEncapsulator *const device = FDeviceEncapsulator().Device();
+    const ViewportF& viewport = FDeviceEncapsulator().Parameters().Viewport();
 
-    EffectCompiler *const effectCompiler = _context->EffectCompilerService()->EffectCompiler();
-    RenderSurfaceManager *const renderSurfaceManager = _context->RenderSurfaceService()->Manager();
-    TextureCache *const textureCache = _context->TextureCacheService()->TextureCache();
+    FEffectCompiler *const effectCompiler = _context->EffectCompilerService()->EffectCompiler();
+    FRenderSurfaceManager *const renderSurfaceManager = _context->RenderSurfaceService()->Manager();
+    FTextureCache *const textureCache = _context->TextureCacheService()->TextureCache();
 
     MountGameDataPath_();
 
     textureCache->SetFallbackTexture2D(L"GameData:/Textures/Tech/error2D.dds");
     textureCache->SetFallbackTextureCube(L"GameData:/Textures/Tech/errorCube.dds");
 
-    _world = new World("Test world", Services());
+    _world = new FWorld("Test world", Services());
     _world->Initialize();
 
-    _cameraController = new KeyboardMouseCameraController(float3(0.0f, 3.0f, -6.0f), 0.0f, 0.5f*F_PIOver3, &Keyboard(), &Mouse());
+    _cameraController = new FKeyboardMouseCameraController(float3(0.0f, 3.0f, -6.0f), 0.0f, 0.5f*F_PIOver3, &Keyboard(), &Mouse());
     _camera = new PerspectiveCamera(F_PIOver3, 0.01f, 1000.0f, viewport);
     _camera->SetController(_cameraController);
 
     // Main scene
 
-    const PAbstractRenderSurface backBuffer = new RenderSurfaceBackBuffer("BackBuffer", RenderSurfaceBackBuffer::RenderTarget_DepthStencil);
-    const PAbstractRenderSurface principal = new RenderSurfaceRelative("Principal", float2::One(), SurfaceFormat::R16G16B16A16_F, SurfaceFormat::D24S8);
+    const PAbstractRenderSurface backBuffer = new FRenderSurfaceBackBuffer("BackBuffer", FRenderSurfaceBackBuffer::RenderTarget_DepthStencil);
+    const PAbstractRenderSurface principal = new FRenderSurfaceRelative("Principal", float2::One(), FSurfaceFormat::R16G16B16A16_F, FSurfaceFormat::D24S8);
 
     renderSurfaceManager->Register(backBuffer);
     renderSurfaceManager->Register(principal);
 
-    _mainScene = new Scene("Main scene", _camera, _world, _context->MaterialDatabase());
+    _mainScene = new FScene("Main scene", _camera, _world, _context->MaterialDatabase());
 
-    _mainScene->RenderTree()->Add(new RenderLayerSetRenderTarget(principal));
-    _mainScene->RenderTree()->Add(new RenderLayerClear(principal, Color::OliveDrab));
-    _mainScene->RenderTree()->Add(new RenderLayer("Opaque_Objects"));
-    _mainScene->RenderTree()->Add(new RenderLayer("Transparent_Objects"));
+    _mainScene->RenderTree()->Add(new FRenderLayerSetRenderTarget(principal));
+    _mainScene->RenderTree()->Add(new FRenderLayerClear(principal, Color::OliveDrab));
+    _mainScene->RenderTree()->Add(new FRenderLayer("Opaque_Objects"));
+    _mainScene->RenderTree()->Add(new FRenderLayer("Transparent_Objects"));
 
     // Postprocess settings
 
@@ -377,11 +377,11 @@ void GameTest3::Initialize(const Timeline& time) {
     _mainScene->Initialize(device);
 }
 //----------------------------------------------------------------------------
-void GameTest3::Destroy() {
+void FGameTest3::Destroy() {
     using namespace Engine;
     using namespace Graphics;
 
-    IDeviceAPIEncapsulator *const device = DeviceEncapsulator().Device();
+    IDeviceAPIEncapsulator *const device = FDeviceEncapsulator().Device();
 
     _mainScene->Destroy(device);
     RemoveRef_AssertReachZero(_mainScene);
@@ -398,65 +398,65 @@ void GameTest3::Destroy() {
     parent_type::Destroy();
 }
 //----------------------------------------------------------------------------
-void GameTest3::LoadContent() {
+void FGameTest3::LoadContent() {
     parent_type::LoadContent();
 
     using namespace Engine;
     using namespace Graphics;
 
-    IDeviceAPIEncapsulator *const device = DeviceEncapsulator().Device();
+    IDeviceAPIEncapsulator *const device = FDeviceEncapsulator().Device();
 
 #if 1
     // Standard model rendering effect
 
-    EffectDescriptor *const stdEffectDescriptor = new EffectDescriptor();
+    FEffectDescriptor *const stdEffectDescriptor = new FEffectDescriptor();
     stdEffectDescriptor->SetName("StandardEffect");
     stdEffectDescriptor->SetRenderState(
-        new RenderState(RenderState::Blending::AlphaBlend,
-                        RenderState::Culling::CounterClockwise,
-                        RenderState::DepthTest::Default ));
+        new FRenderState(FRenderState::EBlending::AlphaBlend,
+                        FRenderState::ECulling::CounterClockwise,
+                        FRenderState::EDepthTest::Default ));
     stdEffectDescriptor->SetVS(L"GameData:/Shaders/Standard.fx");
     stdEffectDescriptor->SetPS(L"GameData:/Shaders/Standard.fx");
-    stdEffectDescriptor->SetShaderProfile(ShaderProfileType::ShaderModel4_1);
-    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N::Declaration);
-    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N::Declaration);
-    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N::Declaration);
-    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N::Declaration);
-    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__TexCoord0_Float2__Normal0_Float3::Declaration);
-    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Half2::Declaration);
-    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Color0_UByte4N__Normal0_UX10Y10Z10W2N::Declaration);
-    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Normal0_UX10Y10Z10W2N::Declaration);
-    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Color0_UByte4N::Declaration);
-    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3::Declaration);
-    stdEffectDescriptor->AddSubstitution(MaterialConstNames::BumpMapping(), "WITH_BUMP_MAPPING");
-    stdEffectDescriptor->AddSubstitution(MaterialConstNames::SeparateAlpha(), "WITH_SEPARATE_ALPHA=1");
+    stdEffectDescriptor->SetShaderProfile(EShaderProfileType::ShaderModel4_1);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N::Declaration);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N::Declaration);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N::Declaration);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N::Declaration);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3__TexCoord0_Float2__Normal0_Float3::Declaration);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2::Declaration);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3__Color0_UByte4N__Normal0_UX10Y10Z10W2N::Declaration);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3__Normal0_UX10Y10Z10W2N::Declaration);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3__Color0_UByte4N::Declaration);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3::Declaration);
+    stdEffectDescriptor->AddSubstitution(FMaterialConstNames::BumpMapping(), "WITH_BUMP_MAPPING");
+    stdEffectDescriptor->AddSubstitution(FMaterialConstNames::SeparateAlpha(), "WITH_SEPARATE_ALPHA=1");
 
     _mainScene->MaterialDatabase()->BindEffect("Standard", stdEffectDescriptor);
 
 #else
     // AA Wireframe model rendering effect
 
-    EffectDescriptor *const wireframeEffectDescriptor = new EffectDescriptor();
+    FEffectDescriptor *const wireframeEffectDescriptor = new FEffectDescriptor();
     wireframeEffectDescriptor->SetName("WireframeEffect");
     wireframeEffectDescriptor->SetRenderState(
-        new RenderState(RenderState::Blending::AlphaBlend,
-                        RenderState::Culling::None,
-                        RenderState::DepthTest::Default,
-                        RenderState::FillMode::Solid ));
+        new FRenderState(FRenderState::EBlending::AlphaBlend,
+                        FRenderState::ECulling::None,
+                        FRenderState::EDepthTest::Default,
+                        FRenderState::EFillMode::Solid ));
     wireframeEffectDescriptor->SetVS(L"GameData:/Shaders/Wireframe.fx");
     wireframeEffectDescriptor->SetGS(L"GameData:/Shaders/Wireframe.fx");
     wireframeEffectDescriptor->SetPS(L"GameData:/Shaders/Wireframe.fx");
-    wireframeEffectDescriptor->SetShaderProfile(ShaderProfileType::ShaderModel4_1);
-    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N::Declaration);
-    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N::Declaration);
-    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N::Declaration);
-    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N::Declaration);
-    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__TexCoord0_Float2__Normal0_Float3::Declaration);
-    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Half2::Declaration);
-    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Color0_UByte4N__Normal0_UX10Y10Z10W2N::Declaration);
-    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Normal0_UX10Y10Z10W2N::Declaration);
-    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Color0_UByte4N::Declaration);
-    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3::Declaration);
+    wireframeEffectDescriptor->SetShaderProfile(EShaderProfileType::ShaderModel4_1);
+    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N::Declaration);
+    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N::Declaration);
+    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N::Declaration);
+    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N::Declaration);
+    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3__TexCoord0_Float2__Normal0_Float3::Declaration);
+    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2::Declaration);
+    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3__Color0_UByte4N__Normal0_UX10Y10Z10W2N::Declaration);
+    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3__Normal0_UX10Y10Z10W2N::Declaration);
+    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3__Color0_UByte4N::Declaration);
+    wireframeEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3::Declaration);
 
     _mainScene->MaterialDatabase()->BindEffect("Standard", wireframeEffectDescriptor);
 
@@ -471,8 +471,8 @@ void GameTest3::LoadContent() {
     //if (!LoadModel(_model, L"GameData:/Models/Infinity/Potion/Potion.obj"))
     //if (!LoadModel(_model, L"GameData:/Models/Test/Cone.obj"))
     //if (!LoadModel(_model, L"GameData:/Models/Test/TeaPot.obj"))
-    //if (!LoadModel(_model, L"GameData:/Models/Test/Scene.obj"))
-    //if (!LoadModel(_model, L"GameData:/Models/Test/Sphere.obj"))
+    //if (!LoadModel(_model, L"GameData:/Models/Test/FScene.obj"))
+    //if (!LoadModel(_model, L"GameData:/Models/Test/FSphere.obj"))
     //if (!LoadModel(_model, L"GameData:/Models/Test/Bunny.obj"))
     if (!LoadModel(_model, L"GameData:/Models/Sponza/sponza.obj"))
     //if (!LoadModel(_model, L"GameData:/Models/Sponza/sponza_light.obj"))
@@ -486,8 +486,8 @@ void GameTest3::LoadContent() {
 
     _model->Create(device);
 
-    const Pair<Graphics::BindName, const char *> tagToRenderLayerName[] = {
-        {MaterialConstNames::SeparateAlpha(), "Transparent_Objects"}
+    const TPair<Graphics::FBindName, const char *> tagToRenderLayerName[] = {
+        {FMaterialConstNames::SeparateAlpha(), "Transparent_Objects"}
     };
     if (!AcquireModelRenderCommand( _renderCommand, device, 
                                     _mainScene->RenderTree(),
@@ -497,11 +497,11 @@ void GameTest3::LoadContent() {
         AssertNotReached();
 }
 //----------------------------------------------------------------------------
-void GameTest3::UnloadContent() {
+void FGameTest3::UnloadContent() {
     using namespace Engine;
     using namespace Graphics;
 
-    IDeviceAPIEncapsulator *const device = DeviceEncapsulator().Device();
+    IDeviceAPIEncapsulator *const device = FDeviceEncapsulator().Device();
 
     ReleaseModelRenderCommand(_renderCommand, device, _model);
 
@@ -511,63 +511,63 @@ void GameTest3::UnloadContent() {
     parent_type::UnloadContent();
 }
 //----------------------------------------------------------------------------
-void GameTest3::Update(const Timeline& time) {
+void FGameTest3::Update(const FTimeline& time) {
     parent_type::Update(time);
 
     using namespace Engine;
     using namespace Graphics;
     using namespace Application;
 
-    const Graphics::DeviceEncapsulator& encapsulator = DeviceEncapsulator();
+    const Graphics::FDeviceEncapsulator& encapsulator = FDeviceEncapsulator();
 
     IDeviceAPIEncapsulator *const device = encapsulator.Device();
     IDeviceAPIContext *const context = encapsulator.Context();
 
     // texture reloading
-    if (Keyboard().IsKeyPressed(KeyboardKey::Control) &&
-        Keyboard().IsKeyUp(KeyboardKey::F7)) {
+    if (Keyboard().IsKeyPressed(EKeyboardKey::Control) &&
+        Keyboard().IsKeyUp(EKeyboardKey::F7)) {
         _context->TextureCacheService()->TextureCache()->ReloadAllTextures();
     }
     // shader compilation
-    if (Keyboard().IsKeyPressed(KeyboardKey::Control) &&
-        Keyboard().IsKeyUp(KeyboardKey::F8)) {
+    if (Keyboard().IsKeyPressed(EKeyboardKey::Control) &&
+        Keyboard().IsKeyUp(EKeyboardKey::F8)) {
         _context->EffectCompilerService()->EffectCompiler()->RegenerateEffects();
     }
 
     // wireframe
-    if (Keyboard().IsKeyUp(KeyboardKey::F11))
-        Effect::SwitchAutomaticFillMode();
+    if (Keyboard().IsKeyUp(EKeyboardKey::F11))
+        FEffect::SwitchAutomaticFillMode();
 
     // world time speed
-    if (Keyboard().IsKeyUp(KeyboardKey::Add))
+    if (Keyboard().IsKeyUp(EKeyboardKey::Add))
         _world->SetSpeed(std::max(1.0f, _world->Speed() * 2));
-    if (Keyboard().IsKeyUp(KeyboardKey::Subtract) && !_world->IsPaused() )
+    if (Keyboard().IsKeyUp(EKeyboardKey::Subtract) && !_world->IsPaused() )
         _world->SetSpeed(_world->Speed() * 0.5f);
-    if (Keyboard().IsKeyUp(KeyboardKey::Multiply))
+    if (Keyboard().IsKeyUp(EKeyboardKey::Multiply))
         _world->TogglePause();
 
-    Scene *const scenes[] = { _mainScene.get() };
+    FScene *const scenes[] = { _mainScene.get() };
     _context->UpdateAndPrepare(device, time, _world, MakeView(scenes));
 }
 //----------------------------------------------------------------------------
-void GameTest3::Draw(const Timeline& time) {
+void FGameTest3::Draw(const FTimeline& time) {
     parent_type::Draw(time);
 
     using namespace Engine;
     using namespace Graphics;
 
-    const Graphics::DeviceEncapsulator& encapsulator = DeviceEncapsulator();
+    const Graphics::FDeviceEncapsulator& encapsulator = FDeviceEncapsulator();
 
     IDeviceAPIEncapsulator *const device = encapsulator.Device();
     IDeviceAPIContext *const context = encapsulator.Context();
 
     _context->FrameTick();
 
-    Scene *const scenes[] = { _mainScene.get() };
+    FScene *const scenes[] = { _mainScene.get() };
     _context->Render(context, MakeView(scenes));
 }
 //----------------------------------------------------------------------------
-void GameTest3::Present() {
+void FGameTest3::Present() {
     parent_type::Present();
 }
 //----------------------------------------------------------------------------

@@ -15,88 +15,88 @@ FWD_REFPTR(DynamicObject);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DynamicProperty : public MetaProperty {
+class FDynamicProperty : public FMetaProperty {
 public:
-    explicit DynamicProperty(const RTTI::Name& name);
-    virtual ~DynamicProperty();
+    explicit FDynamicProperty(const FName& name);
+    virtual ~FDynamicProperty();
     /*
-    virtual MetaTypeInfo TypeInfo() const override;
+    virtual FMetaTypeInfo TypeInfo() const override;
     virtual const IMetaTypeVirtualTraits *Traits() const override;
 
-    virtual bool IsDefaultValue(const MetaObject *object) const override;
+    virtual bool IsDefaultValue(const FMetaObject *object) const override;
 
-    virtual MetaAtom *WrapMove(MetaObject *src) const override;
-    virtual MetaAtom *WrapCopy(const MetaObject *src) const override;
+    virtual FMetaAtom *WrapMove(FMetaObject *src) const override;
+    virtual FMetaAtom *WrapCopy(const FMetaObject *src) const override;
 
-    virtual bool UnwrapMove(MetaObject *dst, MetaAtom *src) const override;
-    virtual bool UnwrapCopy(MetaObject *dst, const MetaAtom *src) const override;
+    virtual bool UnwrapMove(FMetaObject *dst, FMetaAtom *src) const override;
+    virtual bool UnwrapCopy(FMetaObject *dst, const FMetaAtom *src) const override;
 
-    virtual void MoveTo(MetaObject *object, MetaAtom *atom) const override;
-    virtual void CopyTo(const MetaObject *object, MetaAtom *atom) const override;
+    virtual void MoveTo(FMetaObject *object, FMetaAtom *atom) const override;
+    virtual void CopyTo(const FMetaObject *object, FMetaAtom *atom) const override;
 
-    virtual void MoveFrom(MetaObject *object, MetaAtom *atom) const override;
-    virtual void CopyFrom(MetaObject *object, const MetaAtom *atom) const override;
+    virtual void MoveFrom(FMetaObject *object, FMetaAtom *atom) const override;
+    virtual void CopyFrom(FMetaObject *object, const FMetaAtom *atom) const override;
 
-    virtual void Move(MetaObject *dst, MetaObject *src) const override;
-    virtual void Copy(MetaObject *dst, const MetaObject *src) const override;
+    virtual void Move(FMetaObject *dst, FMetaObject *src) const override;
+    virtual void Copy(FMetaObject *dst, const FMetaObject *src) const override;
 
-    virtual void Swap(MetaObject *lhs, MetaObject *rhs) const override;
+    virtual void Swap(FMetaObject *lhs, FMetaObject *rhs) const override;
 
-    virtual bool Equals(const MetaObject *lhs, const MetaObject *rhs) const override;
-    virtual bool DeepEquals(const MetaObject *lhs, const MetaObject *rhs) const override;
+    virtual bool Equals(const FMetaObject *lhs, const FMetaObject *rhs) const override;
+    virtual bool DeepEquals(const FMetaObject *lhs, const FMetaObject *rhs) const override;
 
-    virtual void *RawPtr(MetaObject *obj) const override;
-    virtual const void *RawPtr(const MetaObject *obj) const override;
+    virtual void *RawPtr(FMetaObject *obj) const override;
+    virtual const void *RawPtr(const FMetaObject *obj) const override;
 
-    virtual size_t HashValue(const MetaObject *object) const override;
+    virtual size_t HashValue(const FMetaObject *object) const override;
     */
     SINGLETON_POOL_ALLOCATED_DECL();
 };
 //----------------------------------------------------------------------------
-class DynamicObject : public MetaObject {
+class FDynamicObject : public FMetaObject {
 public:
-    DynamicObject();
-    virtual ~DynamicObject();
+    FDynamicObject();
+    virtual ~FDynamicObject();
 
-    MetaAtom* GetValue(const RTTI::Name& name);
-    const MetaAtom* GetValue(const RTTI::Name& name) const;
+    FMetaAtom* GetValue(const FName& name);
+    const FMetaAtom* GetValue(const FName& name) const;
 
-    MetaAtom* TryGetValue(const RTTI::Name& name);
-    const MetaAtom* TryGetValue(const RTTI::Name& name) const;
+    FMetaAtom* TryGetValue(const FName& name);
+    const FMetaAtom* TryGetValue(const FName& name) const;
 
-    void SetValue(const RTTI::Name& name, const PMetaAtom& value);
+    void SetValue(const FName& name, const PMetaAtom& value);
 
     void ClearValues();
 
-    virtual const RTTI::MetaClass *RTTI_MetaClass() const override;
+    virtual const RTTI::FMetaClass *RTTI_MetaClass() const override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
-    class MetaClass : public RTTI::InScopeMetaClass {
+    class FMetaClass : public RTTI::InScopeMetaClass {
     public:
-        typedef MetaObject object_type;
+        typedef FMetaObject object_type;
         typedef void parent_type;
 
-        MetaClass();
-        virtual ~MetaClass();
+        FMetaClass();
+        virtual ~FMetaClass();
 
         static void Create();
         static void Destroy();
 
         static bool HasInstance();
-        static const MetaClass *Instance();
+        static const FMetaClass *Instance();
 
     protected:
-        //virtual const MetaProperty *VirtualPropertyIFP(const char *name, size_t attributes) const override;
-        //virtual const MetaProperty *VirtualPropertyIFP(const RTTI::Name& name, size_t attributes) const override;
+        //virtual const FMetaProperty *VirtualPropertyIFP(const char *name, size_t attributes) const override;
+        //virtual const FMetaProperty *VirtualPropertyIFP(const FName& name, size_t attributes) const override;
 
-        virtual const RTTI::MetaClass* VirtualParent() const override;
-        virtual MetaObject* VirtualCreateInstance() const override;
+        virtual const RTTI::FMetaClass* VirtualParent() const override;
+        virtual FMetaObject* VirtualCreateInstance() const override;
     };
 
 private:
-    MetaClass _metaClass;
-    ASSOCIATIVE_VECTOR(RTTI, RTTI::Name, PMetaAtom) _values;
+    FMetaClass _metaClass;
+    ASSOCIATIVE_VECTOR(RTTI, FName, PMetaAtom) _values;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

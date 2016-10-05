@@ -8,25 +8,25 @@
 
 namespace Core {
 namespace Engine {
-class World;
+class FWorld;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class LightingEnvironment : public RefCountable {
+class FLightingEnvironment : public FRefCountable {
 public:
-    LightingEnvironment();
-    ~LightingEnvironment();
+    FLightingEnvironment();
+    ~FLightingEnvironment();
 
     float Exposure() const { return _exposure; }
     void SetExposure(float value) { _exposure = value; }
     float WhitePoint() const { return _whitePoint; }
     void SetWhitePoint(float value) { _whitePoint = value; }
-    DirectionalLight& Sun() { return _sun; }
-    const DirectionalLight& Sun() const { return _sun; }
+    FDirectionalLight& Sun() { return _sun; }
+    const FDirectionalLight& Sun() const { return _sun; }
 private:
     float _exposure;
     float _whitePoint;
-    DirectionalLight _sun;
+    FDirectionalLight _sun;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -20,14 +20,14 @@ namespace ContentGenerator {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, size_t _BulkSize>
-struct BulkTrieNode : public BulkTrieNode<_Key, void , _BulkSize>{
+struct TBulkTrieNode : public TBulkTrieNode<_Key, void , _BulkSize>{
     _Value Values[_BulkSize];
 
-    BulkTrieNode() {}
+    TBulkTrieNode() {}
 };
 //----------------------------------------------------------------------------
 template <typename _Key, size_t _BulkSize>
-struct BulkTrieNode<_Key, void, _BulkSize> {
+struct TBulkTrieNode<_Key, void, _BulkSize> {
     typedef uint32_t index_type;
 
     static constexpr index_type NoIndex = index_type(-1);
@@ -38,7 +38,7 @@ struct BulkTrieNode<_Key, void, _BulkSize> {
     index_type Center[_BulkSize];
     index_type Right[_BulkSize];
 
-    BulkTrieNode() {
+    TBulkTrieNode() {
         std::fill(Left, Left+_BulkSize, NoIndex);
         std::fill(Center, Center+_BulkSize, NoIndex);
         std::fill(Right, Right+_BulkSize, NoIndex);
@@ -50,10 +50,10 @@ template <
 ,   typename _Value
 ,   size_t _BulkSize = 4096
 ,   size_t _BucketCount = 11
-,   typename _Less = Meta::Less<_Key>
-,   typename _Equal = Meta::EqualTo<_Key>
-,   typename _Allocator = ALLOCATOR(Container, BulkTrieNode<_Key COMMA _Value COMMA _BulkSize>)
->   class BulkTrie : _Allocator {
+,   typename _Less = Meta::TLess<_Key>
+,   typename _Equal = Meta::TEqualTo<_Key>
+,   typename _Allocator = ALLOCATOR(Container, TBulkTrieNode<_Key COMMA _Value COMMA _BulkSize>)
+>   class FBulkTrie : _Allocator {
 public:
     typedef _Key key_type;
     typedef _Value value_type;
@@ -68,24 +68,24 @@ public:
     static constexpr size_type BulkSize = _BulkSize;
     static constexpr size_type BucketCount = _BucketCount;
 
-    typedef MemoryView<const _Key> sequence_type;
+    typedef TMemoryView<const _Key> sequence_type;
 
-    typedef BulkTrieNode<_Key, _Value, _BulkSize> node_type;
+    typedef TBulkTrieNode<_Key, _Value, _BulkSize> node_type;
     typedef typename node_type::index_type index_type;
     static constexpr index_type NoIndex = node_type::NoIndex;
     static constexpr index_type RootIndex = 0;
-    typedef Vector<node_type*, typename _Allocator::template rebind<node_type*>::other> node_vector;
+    typedef TVector<node_type*, typename _Allocator::template rebind<node_type*>::other> node_vector;
 
     struct Iterator {
-        index_type Bucket;
+        index_type FBucket;
         index_type Index;
     };
 
-    BulkTrie() : _wordCount(0) {}
-    ~BulkTrie() { Clear(); }
+    FBulkTrie() : _wordCount(0) {}
+    ~FBulkTrie() { Clear(); }
 
-    BulkTrie(const BulkTrie&) = delete;
-    BulkTrie& operator=(const BulkTrie&) = delete;
+    FBulkTrie(const FBulkTrie&) = delete;
+    FBulkTrie& operator=(const FBulkTrie&) = delete;
 
     size_type size() const { return _wordCount; }
     bool empty() const { return (0 == _wordCount); }
@@ -95,7 +95,7 @@ public:
         Assert(false == keys.empty());
 
         it->Bucket = BucketIndex_(keys);
-        Bucket& bucket = _buckets[it->Bucket];
+        FBucket& bucket = _buckets[it->Bucket];
 
         index_type parent = NoIndex;
         index_type current = RootIndex;
@@ -196,7 +196,7 @@ public:
             ? hint.Bucket
             : BucketIndex_(keys);
 
-        const Bucket& bucket = _buckets[it->Bucket];
+        const FBucket& bucket = _buckets[it->Bucket];
 
         index_type parent = NoIndex;
         index_type current = (bucket.Count ? RootIndex : NoIndex);
@@ -246,7 +246,7 @@ public:
     }
 
     void Clear() {
-        for (Bucket& bucket : _buckets) {
+        for (FBucket& bucket : _buckets) {
             for (node_type* node : bucket.Nodes) {
                 allocator_traits::destroy(*this, node);
                 allocator_traits::deallocate(*this, node, 1);
@@ -264,7 +264,7 @@ private:
         return ((keys.front()) % BucketCount);
     }
 
-    struct Bucket {
+    struct FBucket {
         size_type Count = 0;
         node_vector Nodes;
 
@@ -281,17 +281,17 @@ private:
 
     size_type _wordCount;
 
-    Bucket _buckets[BucketCount];
+    FBucket _buckets[BucketCount];
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <
     typename _Key
-,   typename _Hash = Hash<_Key>
-,   typename _EqualTo = Meta::EqualTo<_Key>
+,   typename _Hash = THash<_Key>
+,   typename _EqualTo = Meta::TEqualTo<_Key>
 ,   typename _Allocator = ALLOCATOR(Container, _Key)
->   class CompactHashSet : _Allocator {
+>   class TCompactHashSet : _Allocator {
 public:
     typedef _Key value_type;
 
@@ -311,8 +311,8 @@ public:
 
     static constexpr size_type MaxLoadFactor = 50;
 
-    CompactHashSet() : _values(nullptr), _capacity(0), _size(0) {}
-    ~CompactHashSet() { clear(); }
+    TCompactHashSet() : _values(nullptr), _capacity(0), _size(0) {}
+    ~TCompactHashSet() { clear(); }
 
     size_type size() const { return _size; }
     bool empty() const { return 0 == _size; }
@@ -427,26 +427,26 @@ void Test_Containers() {
         float4 ss = Transform4(m, p);
     }
     {
-        const Filename filename = L"Tmp:/koala/a/Test/../robocop/4/../3/2/1/../a/b/c/../robotapp.bin";
-        const Filename filename2 = L"Tmp:/Test/toto/../chimpanzee/../../koala/a/b/../c/1/../2/3/robotapp.raw";
+        const FFilename filename = L"Tmp:/koala/a/Test/../robocop/4/../3/2/1/../a/b/c/../robotapp.bin";
+        const FFilename filename2 = L"Tmp:/Test/toto/../chimpanzee/../../koala/a/b/../c/1/../2/3/robotapp.raw";
 
         std::cout << filename << std::endl;
         std::cout << filename2 << std::endl;
 
-        Filename normalized = filename.Normalized();
-        Filename normalized2 = filename2.Normalized();
+        FFilename normalized = filename.Normalized();
+        FFilename normalized2 = filename2.Normalized();
 
         std::cout << normalized << std::endl;
         std::cout << normalized2 << std::endl;
 
-        Filename relative = filename.Relative(filename2.Dirpath());
-        Filename relative2 = filename2.Relative(filename.Dirpath());
+        FFilename relative = filename.Relative(filename2.Dirpath());
+        FFilename relative2 = filename2.Relative(filename.Dirpath());
 
         std::cout << relative << std::endl;
         std::cout << relative2 << std::endl;
 
-        Filename absolute = relative.Absolute(filename2.Dirpath());
-        Filename absolute2 = relative2.Absolute(filename.Dirpath());
+        FFilename absolute = relative.Absolute(filename2.Dirpath());
+        FFilename absolute2 = relative2.Absolute(filename.Dirpath());
 
         std::cout << absolute << std::endl;
         std::cout << absolute2 << std::endl;
@@ -455,30 +455,30 @@ void Test_Containers() {
         Assert(absolute2 == normalized2);
     }
     {
-        const Filename filename = L"Process:/dico.txt";
+        const FFilename filename = L"Process:/dico.txt";
 
-        VECTOR_THREAD_LOCAL(Container, String) words;
+        VECTOR_THREAD_LOCAL(Container, FString) words;
         {
-            const UniquePtr<IVirtualFileSystemIStream> reader = VFS_OpenBinaryReadable(filename);
+            const TUniquePtr<IVirtualFileSystemIStream> reader = VFS_OpenBinaryReadable(filename);
             if (not reader)
                 AssertNotReached();
 
             char buffer[2048];
             while (true) {
-                const StringView line = reader->ReadLine(buffer);
+                const FStringView line = reader->ReadLine(buffer);
                 if (line.empty())
                     break;
 
-                const StringView word = Chomp(line);
+                const FStringView word = Chomp(line);
                 words.emplace_back(ToString(word));
             }
         }
 
         //words.resize((UINT16_MAX*80)/100);
 
-        VECTOR_THREAD_LOCAL(Container, StringView) all;
+        VECTOR_THREAD_LOCAL(Container, FStringView) all;
         all.reserve(words.size());
-        for (const String& word : words)
+        for (const FString& word : words)
             all.emplace_back(MakeStringView(word));
         std::random_shuffle(all.begin(), all.end());
 
@@ -487,7 +487,7 @@ void Test_Containers() {
         const auto input = all.MakeConstView().CutBefore(k);
         const auto negative = all.MakeConstView().CutStartingAt(k);
 
-        VECTOR_THREAD_LOCAL(Container, StringView) search(input);
+        VECTOR_THREAD_LOCAL(Container, FStringView) search(input);
         std::random_shuffle(search.begin(), search.end());
 
 #ifdef WITH_CORE_ASSERT
@@ -498,25 +498,25 @@ void Test_Containers() {
 
         /*{
             LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
-            const BenchmarkScope bench("BurstTrie");
+            const FBenchmarkScope bench("TBurstTrie");
 
-            STRINGTRIE_SET(Container, Case::Sensitive, 31) set;
+            STRINGTRIE_SET(Container, ECase::Sensitive, 31) set;
             {
-                const BenchmarkScope bench("BurstTrie construction");
-                PROFILING_SCOPE(Global, 1, "BurstTrie construction");
-                for (const StringView& word : input)
+                const FBenchmarkScope bench("TBurstTrie construction");
+                PROFILING_SCOPE(Global, 1, "TBurstTrie construction");
+                for (const FStringView& word : input)
                     set.Insert_AssertUnique(word);
             }
             {
-                const BenchmarkScope bench("BurstTrie optimization");
-                PROFILING_SCOPE(Global, 1, "BurstTrie optimization");
+                const FBenchmarkScope bench("TBurstTrie optimization");
+                PROFILING_SCOPE(Global, 1, "TBurstTrie optimization");
                 set.Optimize();
             }
             {
-                const BenchmarkScope bench("BurstTrie search");
-                PROFILING_SCOPE(Global, 2, "BurstTrie search");
+                const FBenchmarkScope bench("TBurstTrie search");
+                PROFILING_SCOPE(Global, 2, "TBurstTrie search");
                 forrange(i, 0, loops) {
-                    for (const StringView& word : search)
+                    for (const FStringView& word : search)
                         if (not set.Contains(word))
                             AssertNotReached();
                 }
@@ -524,21 +524,21 @@ void Test_Containers() {
         }
         {
             LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
-            const BenchmarkScope bench("BulkTrie");
+            const FBenchmarkScope bench("FBulkTrie");
 
-            BulkTrie<char, void, 8192, 31> set;
+            FBulkTrie<char, void, 8192, 31> set;
             {
-                const BenchmarkScope bench("BulkTrie construction");
-                PROFILING_SCOPE(Global, 3, "BulkTrie construction");
-                for (const StringView& word : input)
+                const FBenchmarkScope bench("FBulkTrie construction");
+                PROFILING_SCOPE(Global, 3, "FBulkTrie construction");
+                for (const FStringView& word : input)
                     set.Insert_AssertUnique(word);
             }
 
             {
-                const BenchmarkScope bench("BulkTrie search");
-                PROFILING_SCOPE(Global, 4, "BulkTrie search");
+                const FBenchmarkScope bench("FBulkTrie search");
+                PROFILING_SCOPE(Global, 4, "FBulkTrie search");
                 forrange(i, 0, loops) {
-                    for (const StringView& word : search)
+                    for (const FStringView& word : search)
                         if (not set.Contains(word))
                             AssertNotReached();
                     }
@@ -546,38 +546,38 @@ void Test_Containers() {
         }*/
         {
             LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
-            const BenchmarkScope bench("CompactHashSet");
+            const FBenchmarkScope bench("TCompactHashSet");
 
-            typedef CompactHashSet<
-                StringView,
-                StringViewHasher<char, Case::Sensitive>,
-                StringViewEqualTo<char, Case::Sensitive>
+            typedef TCompactHashSet<
+                FStringView,
+                TStringViewHasher<char, ECase::Sensitive>,
+                TStringViewEqualTo<char, ECase::Sensitive>
             >   hashtable_type;
 
 
             hashtable_type set;
             {
-                const BenchmarkScope subbench("CompactHashSet construction");
-                PROFILING_SCOPE(Global, 3, "CompactHashSet construction");
+                const FBenchmarkScope subbench("TCompactHashSet construction");
+                PROFILING_SCOPE(Global, 3, "TCompactHashSet construction");
                 set.resize(input.size());
-                for (const StringView& word : input)
+                for (const FStringView& word : input)
                     set.insert(word);
             }
             Assert(set.size() == input.size());
             {
-                const BenchmarkScope subbench("CompactHashSet search");
-                PROFILING_SCOPE(Global, 4, "CompactHashSet search");
+                const FBenchmarkScope subbench("TCompactHashSet search");
+                PROFILING_SCOPE(Global, 4, "TCompactHashSet search");
                 forrange(i, 0, loops) {
-                    for (const StringView& word : search)
+                    for (const FStringView& word : search)
                         if (nullptr == set.find(word))
                             AssertNotReached();
                     }
             }
             {
-                const BenchmarkScope subbench("CompactHashSet negative search");
-                PROFILING_SCOPE(Global, 4, "CompactHashSet negative search");
+                const FBenchmarkScope subbench("TCompactHashSet negative search");
+                PROFILING_SCOPE(Global, 4, "TCompactHashSet negative search");
                 forrange(i, 0, loops) {
-                    for (const StringView& word : negative)
+                    for (const FStringView& word : negative)
                         if (nullptr != set.find(word))
                             AssertNotReached();
                     }
@@ -585,22 +585,22 @@ void Test_Containers() {
         }
         {
             LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
-            const BenchmarkScope bench("HashTable");
+            const FBenchmarkScope bench("THashTable");
 
-            typedef HashTable<
-                StringView, void,
-                StringViewHasher<char, Case::Sensitive>,
-                StringViewEqualTo<char, Case::Sensitive>
+            typedef THashTable<
+                FStringView, void,
+                TStringViewHasher<char, ECase::Sensitive>,
+                TStringViewEqualTo<char, ECase::Sensitive>
             >   hashtable_type;
 
 
             hashtable_type set;
             {
-                const BenchmarkScope subbench("HashTable construction");
-                PROFILING_SCOPE(Global, 3, "HashTable construction");
+                const FBenchmarkScope subbench("THashTable construction");
+                PROFILING_SCOPE(Global, 3, "THashTable construction");
                 set.reserve(input.size());
                 size_t count = 0;
-                for (const StringView& word : input) {
+                for (const FStringView& word : input) {
                     set.insert(word);
                     count++;
                     Assert(set.size() == count);
@@ -608,7 +608,7 @@ void Test_Containers() {
             }
             Assert(set.size() == input.size());
 #ifndef PROFILING_ENABLED
-            HashTableStats stats = set.ProbingStats();
+            FHashTableStats stats = set.ProbingStats();
             LOG(Info,   L"[HASHTABLE] Probing stats =\n"
                         L"    Min : {0}\n"
                         L"    Max : {1}\n"
@@ -617,19 +617,19 @@ void Test_Containers() {
                 stats.MinProbe, stats.MaxProbe, stats.MeanProbe, stats.DevProbe );
 #endif
             {
-                const BenchmarkScope subbench("HashTable search");
-                PROFILING_SCOPE(Global, 4, "HashTable search");
+                const FBenchmarkScope subbench("THashTable search");
+                PROFILING_SCOPE(Global, 4, "THashTable search");
                 forrange(i, 0, loops) {
-                    for (const StringView& word : search)
+                    for (const FStringView& word : search)
                         if (set.end() == set.find(word))
                             AssertNotReached();
                     }
             }
             {
-                const BenchmarkScope subbench("HashTable negative search");
-                PROFILING_SCOPE(Global, 4, "HashTable negative search");
+                const FBenchmarkScope subbench("THashTable negative search");
+                PROFILING_SCOPE(Global, 4, "THashTable negative search");
                 forrange(i, 0, loops) {
-                    for (const StringView& word : negative)
+                    for (const FStringView& word : negative)
                         if (set.end() != set.find(word))
                             AssertNotReached();
                     }
@@ -637,31 +637,31 @@ void Test_Containers() {
         }
         {
             LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
-            const BenchmarkScope bench("HashSet");
+            const FBenchmarkScope bench("THashSet");
 
-            STRINGVIEW_HASHSET(Container, Case::Sensitive) set;
+            STRINGVIEW_HASHSET(Container, ECase::Sensitive) set;
             {
-                const BenchmarkScope subbench("HashSet construction");
-                PROFILING_SCOPE(Global, 3, "HashSet construction");
+                const FBenchmarkScope subbench("THashSet construction");
+                PROFILING_SCOPE(Global, 3, "THashSet construction");
                 set.reserve(input.size());
-                for (const StringView& word : input)
+                for (const FStringView& word : input)
                     set.insert(word);
             }
             Assert(set.size() == input.size());
             {
-                const BenchmarkScope subbench("HashSet search");
-                PROFILING_SCOPE(Global, 4, "HashSet search");
+                const FBenchmarkScope subbench("THashSet search");
+                PROFILING_SCOPE(Global, 4, "THashSet search");
                 forrange(i, 0, loops) {
-                    for (const StringView& word : search)
+                    for (const FStringView& word : search)
                         if (set.end() == set.find(word))
                             AssertNotReached();
                     }
             }
             {
-                const BenchmarkScope subbench("HashSet negative search");
-                PROFILING_SCOPE(Global, 4, "HashSet negative search");
+                const FBenchmarkScope subbench("THashSet negative search");
+                PROFILING_SCOPE(Global, 4, "THashSet negative search");
                 forrange(i, 0, loops) {
-                    for (const StringView& word : negative)
+                    for (const FStringView& word : negative)
                         if (set.end() != set.find(word))
                             AssertNotReached();
                     }

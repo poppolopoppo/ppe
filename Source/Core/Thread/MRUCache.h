@@ -9,13 +9,13 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-class MRUCache {
+class TMRUCache {
 public:
     static_assert(0 == ((_Dim - 1) & _Dim), "_Dim must be a power of 2");
     enum : size_t { Dim = _Dim, Mask = _Dim - 1 };
 
-    MRUCache();
-    ~MRUCache();
+    TMRUCache();
+    ~TMRUCache();
 
     bool empty() const { return _headPos == _tailPos; }
 
@@ -40,7 +40,7 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-MRUCache<T, _Dim>::MRUCache()
+TMRUCache<T, _Dim>::TMRUCache()
 :   _headPos(0)
 ,   _tailPos(0)
 #ifdef WITH_CORE_ASSERT
@@ -54,7 +54,7 @@ MRUCache<T, _Dim>::MRUCache()
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-MRUCache<T, _Dim>::~MRUCache() {
+TMRUCache<T, _Dim>::~TMRUCache() {
     Assert(empty());
     CheckThreadOwnerShip_();
 #ifdef WITH_CORE_ASSERT
@@ -64,7 +64,7 @@ MRUCache<T, _Dim>::~MRUCache() {
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-bool MRUCache<T, _Dim>::Get_ReturnIfEmpty(T **pacquire) {
+bool TMRUCache<T, _Dim>::Get_ReturnIfEmpty(T **pacquire) {
     Assert(pacquire);
     Assert(!*pacquire);
     CheckThreadOwnerShip_();
@@ -83,7 +83,7 @@ bool MRUCache<T, _Dim>::Get_ReturnIfEmpty(T **pacquire) {
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-bool MRUCache<T, _Dim>::Release_ReturnIfFull(T **prelease) {
+bool TMRUCache<T, _Dim>::Release_ReturnIfFull(T **prelease) {
     Assert(prelease);
     Assert(*prelease);
     CheckThreadOwnerShip_();
@@ -105,7 +105,7 @@ bool MRUCache<T, _Dim>::Release_ReturnIfFull(T **prelease) {
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-void MRUCache<T, _Dim>::Clear_AssumeCacheDestroyed() {
+void TMRUCache<T, _Dim>::Clear_AssumeCacheDestroyed() {
     CheckThreadOwnerShip_();
 
 #ifdef WITH_CORE_ASSERT

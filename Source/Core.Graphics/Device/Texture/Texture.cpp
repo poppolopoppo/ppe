@@ -13,30 +13,30 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Texture::Texture(DeviceResourceType textureType, const SurfaceFormat *format, BufferMode mode, BufferUsage usage, bool sharable)
-:   DeviceResourceSharable(textureType, sharable)
+FTexture::FTexture(EDeviceResourceType textureType, const FSurfaceFormat *format, EBufferMode mode, EBufferUsage usage, bool sharable)
+:   FDeviceResourceSharable(textureType, sharable)
 ,   _usageAndMode(0)
 ,   _format(format) {
     Assert(format);
     Assert(format->SupportTexture());
-    Assert( DeviceResourceType::Texture2D == textureType ||
-            DeviceResourceType::TextureCube == textureType );
+    Assert( EDeviceResourceType::FTexture2D == textureType ||
+            EDeviceResourceType::FTextureCube == textureType );
 
 #ifdef WITH_CORE_ASSERT_RELEASE
     switch (usage)
     {
-    case BufferUsage::Default:
-        AssertRelease(  BufferMode::None == mode ||
-                        BufferMode::Write == mode);
+    case EBufferUsage::Default:
+        AssertRelease(  EBufferMode::None == mode ||
+                        EBufferMode::Write == mode);
         break;
-    case BufferUsage::Dynamic:
-        AssertRelease(  BufferMode::Write == mode);
+    case EBufferUsage::Dynamic:
+        AssertRelease(  EBufferMode::Write == mode);
         break;
-    case BufferUsage::Immutable:
-        AssertRelease(  BufferMode::None == mode);
+    case EBufferUsage::Immutable:
+        AssertRelease(  EBufferMode::None == mode);
         break;
-    case BufferUsage::Staging:
-        AssertRelease(  BufferMode::None != mode);
+    case EBufferUsage::Staging:
+        AssertRelease(  EBufferMode::None != mode);
         break;
     default:
         AssertNotImplemented();
@@ -48,21 +48,21 @@ Texture::Texture(DeviceResourceType textureType, const SurfaceFormat *format, Bu
     bitusage_type::InplaceSet(_usageAndMode, u32(usage));
 }
 //----------------------------------------------------------------------------
-Texture::~Texture() {}
+FTexture::~FTexture() {}
 //----------------------------------------------------------------------------
-bool Texture::Available() const {
+bool FTexture::Available() const {
     return nullptr != TextureEntity();
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantEntity *Texture::TerminalEntity() const {
+FDeviceAPIDependantEntity *FTexture::TerminalEntity() const {
     return TextureEntity();
 }
 //----------------------------------------------------------------------------
-size_t Texture::HashValue_() const {
+size_t FTexture::HashValue_() const {
     return hash_tuple(_usageAndMode, _format);
 }
 //----------------------------------------------------------------------------
-bool Texture::Match_(const DeviceAPIDependantTexture& texture) const {
+bool FTexture::Match_(const FDeviceAPIDependantTexture& texture) const {
     return  texture.Mode() == Mode() &&
             texture.Usage() == Usage() &&
             texture.Format() == Format();
@@ -70,8 +70,8 @@ bool Texture::Match_(const DeviceAPIDependantTexture& texture) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceAPIDependantTexture::DeviceAPIDependantTexture(IDeviceAPIEncapsulator *device, const Texture *resource)
-:   TypedDeviceAPIDependantEntity<Texture>(device->APIEncapsulator(), resource)
+FDeviceAPIDependantTexture::FDeviceAPIDependantTexture(IDeviceAPIEncapsulator *device, const FTexture *resource)
+:   TTypedDeviceAPIDependantEntity<FTexture>(device->APIEncapsulator(), resource)
 ,   _format(resource->Format())
 ,   _mode(resource->Mode())
 ,   _usage(resource->Usage()) {
@@ -79,7 +79,7 @@ DeviceAPIDependantTexture::DeviceAPIDependantTexture(IDeviceAPIEncapsulator *dev
     Assert(_format);
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantTexture::~DeviceAPIDependantTexture() {}
+FDeviceAPIDependantTexture::~FDeviceAPIDependantTexture() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

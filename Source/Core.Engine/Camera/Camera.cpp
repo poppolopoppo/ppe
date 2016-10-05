@@ -14,25 +14,25 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Camera::Camera(float znear, float zfar)
+FCamera::FCamera(float znear, float zfar)
 :   _znear(znear)
 ,   _zfar(zfar) {
     Assert(0 <= znear);
     Assert(znear < zfar);
 }
 //----------------------------------------------------------------------------
-Camera::~Camera() {}
+FCamera::~FCamera() {}
 //----------------------------------------------------------------------------
-void Camera::SetController(CameraController *controller) {
+void FCamera::SetController(CameraController *controller) {
     _controller = controller;
 }
 //----------------------------------------------------------------------------
-void Camera::CurrentProjection(float4x4 *projection) const {
+void FCamera::CurrentProjection(float4x4 *projection) const {
     Assert(projection);
     *projection = _projection;
 }
 //----------------------------------------------------------------------------
-void Camera::Update(const Timeline& time) {
+void FCamera::Update(const FTimeline& time) {
     UpdateImpl(&_projection, time);
 
     if (_controller)
@@ -41,29 +41,29 @@ void Camera::Update(const Timeline& time) {
     _model.Update(this, _controller);
 }
 //----------------------------------------------------------------------------
-void Camera::OnResize(const ViewportF& viewport) {
+void FCamera::OnResize(const ViewportF& viewport) {
     OnResizeImpl(viewport);
 }
 //----------------------------------------------------------------------------
-void Camera::SetZNear(float value) {
+void FCamera::SetZNear(float value) {
     Assert(0 <= value);
     _znear = value;
 }
 //----------------------------------------------------------------------------
-void Camera::SetZFar(float value) {
+void FCamera::SetZFar(float value) {
     Assert(0 < value);
     _zfar = value;
 }
 //----------------------------------------------------------------------------
-void Camera::SetView(ICameraView *view) {
+void FCamera::SetView(ICameraView *view) {
     _view.reset(view);
 }
 //----------------------------------------------------------------------------
-void Camera::SetProjection(ICameraProjection *projection) {
+void FCamera::SetProjection(ICameraProjection *projection) {
     _projection.reset(projection);
 }
 //----------------------------------------------------------------------------
-void Camera::Update(const Timeline& time, const ViewportF& viewport) {
+void FCamera::Update(const FTimeline& time, const ViewportF& viewport) {
     const float4x4 view = (_view)
         ? _view->ViewMatrix(time)
         : float4x4:Identity();
@@ -72,7 +72,7 @@ void Camera::Update(const Timeline& time, const ViewportF& viewport) {
         ? _projection->ProjectionMatrix(time, _znear, _zfar, viewport)
         : float4x4:Identity();
 
-    CameraModel tmp;
+    FCameraModel tmp;
     _currentState.CopyTo(&tmp);
     _currentState.Update(view, projection);
 

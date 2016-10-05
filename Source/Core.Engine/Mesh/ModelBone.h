@@ -14,27 +14,27 @@ namespace Engine {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(ModelBone);
-class ModelBone : public RefCountable {
+class FModelBone : public FRefCountable {
 public:
-    ModelBone(  const MeshName& name,
-                const MeshName& group,
+    FModelBone(  const FMeshName& name,
+                const FMeshName& group,
                 const float4x4& transform,
                 const AABB3f& boundingBox );
-    ~ModelBone();
+    ~FModelBone();
 
-    ModelBone(const ModelBone& ) = delete;
-    ModelBone& operator =(const ModelBone& ) = delete;
+    FModelBone(const FModelBone& ) = delete;
+    FModelBone& operator =(const FModelBone& ) = delete;
 
-    const MeshName& Name() const { return _name; }
-    const MeshName& Group() const { return _group; }
+    const FMeshName& FName() const { return _name; }
+    const FMeshName& FGroup() const { return _group; }
     const float4x4& Transform() const { return _transform; }
     const AABB3f& BoundingBox() const { return _boundingBox; }
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    MeshName _name;
-    MeshName _group;
+    FMeshName _name;
+    FMeshName _group;
     float4x4 _transform;
     AABB3f _boundingBox;
 };

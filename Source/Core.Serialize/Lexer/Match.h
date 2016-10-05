@@ -9,47 +9,47 @@
 #include <iosfwd>
 
 namespace Core {
-namespace Lexer {
+namespace FLexer {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Lexer;
+class FLexer;
 //----------------------------------------------------------------------------
-class Match {
+class FMatch {
 public:
-    friend class Lexer;
-    typedef Core::Lexer::Symbol symbol_type;
+    friend class FLexer;
+    typedef Core::FLexer::FSymbol symbol_type;
 
-    Match();
-    ~Match();
+    FMatch();
+    ~FMatch();
 
-    Match(const symbol_type *symbol, String&& rvalue, const Location& site, size_t offset);
-    Match(const symbol_type *symbol, const String& value, const Location& site, size_t offset);
+    FMatch(const symbol_type *symbol, FString&& rvalue, const FLocation& site, size_t offset);
+    FMatch(const symbol_type *symbol, const FString& value, const FLocation& site, size_t offset);
 
     const symbol_type *Symbol() const { return _symbol; }
 
-    String& Value() { return _value; }
-    const String& Value() const { return _value; }
+    FString& Value() { return _value; }
+    const FString& Value() const { return _value; }
 
-    const Location& Site() const { return _site; }
+    const FLocation& Site() const { return _site; }
 
     size_t Offset() const { return _offset; }
 
-    StringView MakeView() const { return MakeStringView(_value); }
+    FStringView MakeView() const { return MakeStringView(_value); }
 
     bool Valid() const { return symbol_type::Invalid != _symbol->Type(); }
 
 private:
     const symbol_type *_symbol;
-    String _value;
-    Location _site;
+    FString _value;
+    FLocation _site;
     size_t _offset;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const Match& match) {
+std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const FMatch& match) {
     if (match.Symbol()) {
         return oss << "<" << match.Symbol()->CStr() << "> = \"" << match.Value() << "\"";
     }
@@ -60,5 +60,5 @@ std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Trait
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace Lexer
+} //!namespace FLexer
 } //!namespace Core

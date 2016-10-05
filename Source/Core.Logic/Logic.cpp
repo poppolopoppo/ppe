@@ -26,13 +26,13 @@ void LogicStartup::Start() {
 
     POOL_TAG(Logic)::Start();
     RTTI_TAG(Logic)::Start();
-    Entity::Start();
+    FEntity::Start();
 }
 //----------------------------------------------------------------------------
 void LogicStartup::Shutdown() {
     CORE_MODULE_SHUTDOWN(Logic);
 
-    Entity::Shutdown();
+    FEntity::Shutdown();
     RTTI_TAG(Logic)::Shutdown();
     POOL_TAG(Logic)::Shutdown();
 }

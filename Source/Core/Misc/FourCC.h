@@ -9,14 +9,14 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FourCC {
+class FFourCC {
 public:
-    FourCC() : _asU32(0) {}
+    FFourCC() : _asU32(0) {}
 
-    FourCC(const FourCC& other) : _asU32(other._asU32) {}
-    FourCC& operator =(const FourCC& other) { _asU32 = other._asU32; return *this; }
+    FFourCC(const FFourCC& other) : _asU32(other._asU32) {}
+    FFourCC& operator =(const FFourCC& other) { _asU32 = other._asU32; return *this; }
 
-    FourCC(const char c0, const char c1, const char c2, const char c3) {
+    FFourCC(const char c0, const char c1, const char c2, const char c3) {
         Assert('\0' != c0);
         Assert('\0' != c1);
         Assert('\0' != c2);
@@ -27,7 +27,7 @@ public:
         _asChars[2] = c2;
         _asChars[3] = c3;
     }
-    FourCC(const char* cstr) {
+    FFourCC(const char* cstr) {
         Assert('\0' != cstr[0]);
         Assert('\0' != cstr[1]);
         Assert('\0' != cstr[2]);
@@ -41,15 +41,15 @@ public:
 
     u32 AsU32() const { return _asU32; }
 
-    MemoryView<const char> MakeView() const { return MakeConstView(_asChars); }
+    TMemoryView<const char> MakeView() const { return MakeConstView(_asChars); }
 
-    friend bool operator ==(const FourCC& lhs, const FourCC& rhs) { return lhs._asU32 == rhs._asU32; }
-    friend bool operator !=(const FourCC& lhs, const FourCC& rhs) { return lhs._asU32 != rhs._asU32; }
+    friend bool operator ==(const FFourCC& lhs, const FFourCC& rhs) { return lhs._asU32 == rhs._asU32; }
+    friend bool operator !=(const FFourCC& lhs, const FFourCC& rhs) { return lhs._asU32 != rhs._asU32; }
 
-    friend bool operator < (const FourCC& lhs, const FourCC& rhs) { return lhs._asU32 <  rhs._asU32; }
-    friend bool operator >=(const FourCC& lhs, const FourCC& rhs) { return lhs._asU32 >= rhs._asU32; }
+    friend bool operator < (const FFourCC& lhs, const FFourCC& rhs) { return lhs._asU32 <  rhs._asU32; }
+    friend bool operator >=(const FFourCC& lhs, const FFourCC& rhs) { return lhs._asU32 >= rhs._asU32; }
 
-    friend hash_t hash_value(const FourCC& value) { return hash_as_pod(value._asU32); }
+    friend hash_t hash_value(const FFourCC& value) { return hash_as_pod(value._asU32); }
 
 private:
     union {

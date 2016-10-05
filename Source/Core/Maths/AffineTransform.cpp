@@ -11,14 +11,14 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-AffineTransform::AffineTransform()
+FAffineTransform::FAffineTransform()
 :   _position(0.0f)
 ,   _direction(float3::Forward())
 ,   _scale(1.0f) {}
 //----------------------------------------------------------------------------
-AffineTransform::~AffineTransform() {}
+FAffineTransform::~FAffineTransform() {}
 //----------------------------------------------------------------------------
-AffineTransform::AffineTransform(
+FAffineTransform::FAffineTransform(
     const float3& position,
     const float3& direction,
     const float3& scale )
@@ -29,37 +29,37 @@ AffineTransform::AffineTransform(
     Assert(_scale.AllGreaterThan(float3::Zero()));
 }
 //----------------------------------------------------------------------------
-AffineTransform::AffineTransform(const AffineTransform& other)
+FAffineTransform::FAffineTransform(const FAffineTransform& other)
 :   _position(other._position)
 ,   _direction(other._direction)
 ,   _scale(other._scale) {}
 //----------------------------------------------------------------------------
-AffineTransform& AffineTransform::operator =(const AffineTransform& other) {
+FAffineTransform& FAffineTransform::operator =(const FAffineTransform& other) {
     _position = other._position;
     _direction = other._direction;
     _scale = other._scale;
     return *this;
 }
 //----------------------------------------------------------------------------
-Quaternion AffineTransform::MakeQuaternion() const {
+FQuaternion FAffineTransform::MakeQuaternion() const {
     return MakeAxisQuaternion(_direction);
 }
 //----------------------------------------------------------------------------
-float4x4 AffineTransform::MakeTransformMatrix() const {
+float4x4 FAffineTransform::MakeTransformMatrix() const {
     return Make3DRotationMatrix(_direction);
 }
 //----------------------------------------------------------------------------
-void AffineTransform::SetFromMatrix(const float4x4& parMatrix) {
-    Quaternion rotation;
+void FAffineTransform::SetFromMatrix(const float4x4& parMatrix) {
+    FQuaternion rotation;
     Decompose(parMatrix, _scale, rotation, _position);
     _direction = rotation.Transform(float3::Forward());
 }
 //----------------------------------------------------------------------------
-void AffineTransform::Transform(const Quaternion& rotation) {
+void FAffineTransform::Transform(const FQuaternion& rotation) {
     _direction = rotation.Transform(_direction);
 }
 //----------------------------------------------------------------------------
-void AffineTransform::Transform(const float4x4& transform) {
+void FAffineTransform::Transform(const float4x4& transform) {
     float4x4 t = MakeTransformMatrix();
     t = t.Multiply(transform);
     SetFromMatrix(t);

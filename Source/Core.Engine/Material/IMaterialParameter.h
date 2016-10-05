@@ -7,43 +7,43 @@
 namespace Core {
 
 namespace Graphics {
-class BindName;
-struct ConstantField;
+class FBindName;
+struct FConstantField;
 }
 
 namespace Engine {
-class MaterialDatabase;
+class FMaterialDatabase;
 FWD_REFPTR(MaterialEffect);
 FWD_REFPTR(Scene);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct MaterialParameterInfo {
-    Graphics::ConstantFieldType Type;
-    MaterialVariability Variability;
+struct FMaterialParameterInfo {
+    Graphics::EConstantFieldType EType;
+    EMaterialVariability Variability;
 };
 //----------------------------------------------------------------------------
-struct MaterialParameterContext {
-    SCScene Scene;
-    SCMaterialEffect MaterialEffect;
-    const MaterialDatabase *Database;
+struct FMaterialParameterContext {
+    SCScene FScene;
+    SCMaterialEffect FMaterialEffect;
+    const FMaterialDatabase *Database;
 };
 //----------------------------------------------------------------------------
-struct MaterialParameterMutableContext {
-    SCScene Scene;
-    SMaterialEffect MaterialEffect;
-    MaterialDatabase *Database;
+struct FMaterialParameterMutableContext {
+    SCScene FScene;
+    SMaterialEffect FMaterialEffect;
+    FMaterialDatabase *Database;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class IMaterialParameter : public RefCountable {
+class IMaterialParameter : public FRefCountable {
 public:
     virtual ~IMaterialParameter() {}
 
-    virtual MaterialParameterInfo Info() const = 0;
+    virtual FMaterialParameterInfo Info() const = 0;
 
-    virtual void Eval(const MaterialParameterContext& context, void *dst, size_t sizeInBytes) = 0;
+    virtual void Eval(const FMaterialParameterContext& context, void *dst, size_t sizeInBytes) = 0;
 
     template <typename T>
     ITypedMaterialParameter<T> *Cast() { return checked_cast<ITypedMaterialParameter<T> *>(this); }
@@ -58,28 +58,28 @@ class ITypedMaterialParameter : public IMaterialParameter {
 public:
     virtual ~ITypedMaterialParameter() {}
 
-    Graphics::ConstantFieldType Type() const { return Graphics::ConstantFieldTraits<T>::Type; }
+    Graphics::EConstantFieldType EType() const { return Graphics::ConstantFieldTraits<T>::EType; }
 
-    void TypedEval(const MaterialParameterContext& context, T& dst) { 
+    void TypedEval(const FMaterialParameterContext& context, T& dst) { 
         IMaterialParameter::Eval(context, &dst, sizeof(T)); 
     }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void RegisterDefaultMaterialParameters(MaterialDatabase *database);
+void RegisterDefaultMaterialParameters(FMaterialDatabase *database);
 //----------------------------------------------------------------------------
 bool TryCreateDefaultMaterialParameter(
     PMaterialParameter *param,
-    const MaterialParameterMutableContext& context,
-    const Graphics::BindName& name,
-    const Graphics::ConstantField& field );
+    const FMaterialParameterMutableContext& context,
+    const Graphics::FBindName& name,
+    const Graphics::FConstantField& field );
 //----------------------------------------------------------------------------
 bool GetOrCreateMaterialParameter(
     PMaterialParameter *param,
-    const MaterialParameterMutableContext& context,
-    const Graphics::BindName& name,
-    const Graphics::ConstantField& field );
+    const FMaterialParameterMutableContext& context,
+    const Graphics::FBindName& name,
+    const Graphics::FConstantField& field );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

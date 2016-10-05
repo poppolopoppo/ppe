@@ -18,7 +18,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool LeastSquaresFittingGaussian2(float2& center, float2& axis0, float2& axis1, float2& extents, const MemoryView<const float2>& points) {
+bool LeastSquaresFittingGaussian2(float2& center, float2& axis0, float2& axis1, float2& extents, const TMemoryView<const float2>& points) {
     if (points.size() < 2)
         return false;
 
@@ -43,7 +43,7 @@ bool LeastSquaresFittingGaussian2(float2& center, float2& axis0, float2& axis1, 
     covar11 *= invSize;
 
     // Solve the eigensystem.
-    SymmetricEigensolver<float, 2> es(32);
+    TSymmetricEigensolver<float, 2> es(32);
     float2x2 M =
     {
         covar00, covar01,
@@ -73,7 +73,7 @@ bool LeastSquaresFittingGaussian2(float2& center, float2& axis0, float2& axis1, 
     return true;
 }
 //----------------------------------------------------------------------------
-bool LeastSquaresFittingGaussian3(float3& center, float3& axis0, float3& axis1, float3& axis2, float3& extents, const MemoryView<const float3>& points) {
+bool LeastSquaresFittingGaussian3(float3& center, float3& axis0, float3& axis1, float3& axis2, float3& extents, const TMemoryView<const float3>& points) {
     if (points.size() < 2)
         return false;
 
@@ -105,7 +105,7 @@ bool LeastSquaresFittingGaussian3(float3& center, float3& axis0, float3& axis1, 
     covar22 *= invSize;
 
     // Solve the eigensystem.
-    SymmetricEigensolver<float, 3> es(32);
+    TSymmetricEigensolver<float, 3> es(32);
     float3x3 M =
     {
         covar00, covar01, covar02,
@@ -140,10 +140,10 @@ bool LeastSquaresFittingGaussian3(float3& center, float3& axis0, float3& axis1, 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-float LeastSquaresFittingQuadratic2(ScalarVector<float, 6>& coefficients, const MemoryView<const float2>& points) {
+float LeastSquaresFittingQuadratic2(TScalarVector<float, 6>& coefficients, const TMemoryView<const float2>& points) {
     Assert(points.size() > 1);
 
-    ScalarMatrix<float, 6, 6> A;
+    TScalarMatrix<float, 6, 6> A;
     for (const float2& p : points) {
         float x = p[0];
         float y = p[1];
@@ -201,7 +201,7 @@ float LeastSquaresFittingQuadratic2(ScalarVector<float, 6>& coefficients, const 
         }
     }
 
-    SymmetricEigensolver<float, 6> es(1024);
+    TSymmetricEigensolver<float, 6> es(1024);
     es.Solve(A, +1);
     es.GetEigenvector(0, coefficients);
 
@@ -211,7 +211,7 @@ float LeastSquaresFittingQuadratic2(ScalarVector<float, 6>& coefficients, const 
     return Abs(es.GetEigenvalue(0));
 }
 //----------------------------------------------------------------------------
-float LeastSquaresFittingQuadraticCircle2(float2& center, float radius, const MemoryView<const float2>& points) {
+float LeastSquaresFittingQuadraticCircle2(float2& center, float radius, const TMemoryView<const float2>& points) {
     Assert(points.size() > 1);
 
     float4x4 A;
@@ -256,7 +256,7 @@ float LeastSquaresFittingQuadraticCircle2(float2& center, float radius, const Me
         }
     }
 
-    SymmetricEigensolver<float, 4> es(1024);
+    TSymmetricEigensolver<float, 4> es(1024);
     es.Solve(A, +1);
     float4 evector;
     es.GetEigenvector(0, evector);
@@ -278,10 +278,10 @@ float LeastSquaresFittingQuadraticCircle2(float2& center, float radius, const Me
     return Abs(es.GetEigenvalue(0));
 }
 //----------------------------------------------------------------------------
-float LeastSquaresFittingQuadratic3(ScalarVector<float, 10>& coefficients, const MemoryView<const float3>& points) {
+float LeastSquaresFittingQuadratic3(TScalarVector<float, 10>& coefficients, const TMemoryView<const float3>& points) {
     Assert(points.size() > 1);
 
-    ScalarMatrix<float, 10, 10> A;
+    TScalarMatrix<float, 10, 10> A;
     for (const float3& p : points)
     {
         float x = p[0];
@@ -395,7 +395,7 @@ float LeastSquaresFittingQuadratic3(ScalarVector<float, 10>& coefficients, const
         }
     }
 
-    SymmetricEigensolver<float, 10> es(1024);
+    TSymmetricEigensolver<float, 10> es(1024);
     es.Solve(A, +1);
     es.GetEigenvector(0, coefficients);
 
@@ -405,10 +405,10 @@ float LeastSquaresFittingQuadratic3(ScalarVector<float, 10>& coefficients, const
     return Abs(es.GetEigenvalue(0));
 }
 //----------------------------------------------------------------------------
-float LeastSquaresFittingQuadraticSphere3(float3& center, float radius, const MemoryView<const float3>& points) {
+float LeastSquaresFittingQuadraticSphere3(float3& center, float radius, const TMemoryView<const float3>& points) {
     Assert(points.size() > 1);
 
-    ScalarMatrix<float, 5, 5> A;
+    TScalarMatrix<float, 5, 5> A;
     for (const float3& p : points)
     {
         float x = p[0];
@@ -461,9 +461,9 @@ float LeastSquaresFittingQuadraticSphere3(float3& center, float radius, const Me
         }
     }
 
-    SymmetricEigensolver<float, 5> es(1024);
+    TSymmetricEigensolver<float, 5> es(1024);
     es.Solve(A, +1);
-    ScalarVector<float, 5> evector;
+    TScalarVector<float, 5> evector;
     es.GetEigenvector(0, evector);
 
     float inv = ((float)1) / evector[4];  // TODO: Guard against zero divide?
@@ -486,7 +486,7 @@ float LeastSquaresFittingQuadraticSphere3(float3& center, float radius, const Me
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool LeastSquaresFittingOrthogonalLine2(float2& origin, float2& direction, const MemoryView<const float2>& points) {
+bool LeastSquaresFittingOrthogonalLine2(float2& origin, float2& direction, const TMemoryView<const float2>& points) {
     if (points.size() < 2)
         return false;
 
@@ -506,7 +506,7 @@ bool LeastSquaresFittingOrthogonalLine2(float2& origin, float2& direction, const
     }
 
     // Solve the eigensystem.
-    SymmetricEigensolver<float, 2> es(32);
+    TSymmetricEigensolver<float, 2> es(32);
     float2x2 M =
     {
         covar00, covar01,
@@ -528,7 +528,7 @@ bool LeastSquaresFittingOrthogonalLine2(float2& origin, float2& direction, const
     return (D[0] < D[1]);
 }
 //----------------------------------------------------------------------------
-bool LeastSquaresFittingOrthogonalLine3(float3& origin, float3& direction, const MemoryView<const float3>& points) {
+bool LeastSquaresFittingOrthogonalLine3(float3& origin, float3& direction, const TMemoryView<const float3>& points) {
     if (points.size() < 2)
         return false;
 
@@ -559,7 +559,7 @@ bool LeastSquaresFittingOrthogonalLine3(float3& origin, float3& direction, const
     covar22 *= invSize;
 
     // Solve the eigensystem.
-    SymmetricEigensolver<float, 3> es(32);
+    TSymmetricEigensolver<float, 3> es(32);
     float3x3 M =
     {
         covar00, covar01, covar02,
@@ -582,7 +582,7 @@ bool LeastSquaresFittingOrthogonalLine3(float3& origin, float3& direction, const
     return (D[1]< D[2]);
 }
 //----------------------------------------------------------------------------
-bool LeastSquaresFittingOrthogonalPlane3(Plane& plane, const MemoryView<const float3>& points) {
+bool LeastSquaresFittingOrthogonalPlane3(FPlane& plane, const TMemoryView<const float3>& points) {
     if (points.size() < 3)
         return false;
 
@@ -607,7 +607,7 @@ bool LeastSquaresFittingOrthogonalPlane3(Plane& plane, const MemoryView<const fl
     }
 
     // Solve the eigensystem.
-    SymmetricEigensolver<float, 3> es(32);
+    TSymmetricEigensolver<float, 3> es(32);
     float3x3 M =
     {
         covar00, covar01, covar02,
@@ -623,7 +623,7 @@ bool LeastSquaresFittingOrthogonalPlane3(Plane& plane, const MemoryView<const fl
     // The plane normal is the eigenvector in the direction of smallest
     // variance of the points.
     const float3 normal(R.data().raw[0], R.data().raw[3], R.data().raw[6]);
-    plane = Plane(normal, mean);
+    plane = FPlane(normal, mean);
 
     // The fitted plane is unique when the minimum eigenvalue has
     // multiplicity 1.

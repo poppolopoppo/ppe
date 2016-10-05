@@ -37,10 +37,10 @@ void RTTIStartup::Start() {
 
     POOL_TAG(RTTI)::Start();
 
-    Name::Start(2048);
+    FName::Start(2048);
 
-    MetaClassDatabase::Create();
-    MetaAtomDatabase::Create();
+    FMetaClassDatabase::Create();
+    FMetaAtomDatabase::Create();
 
     RTTI_TAG(Default)::Start();
 
@@ -55,10 +55,10 @@ void RTTIStartup::Shutdown() {
 
     RTTI_TAG(Default)::Shutdown();
 
-    MetaAtomDatabase::Destroy();
-    MetaClassDatabase::Destroy();
+    FMetaAtomDatabase::Destroy();
+    FMetaClassDatabase::Destroy();
 
-    Name::Shutdown();
+    FName::Shutdown();
 
     POOL_TAG(RTTI)::Shutdown();
 }
@@ -66,10 +66,10 @@ void RTTIStartup::Shutdown() {
 void RTTIStartup::Clear() {
     CORE_MODULE_CLEARALL(RTTI);
 
-    MetaAtomDatabase::Instance().Clear();
-    MetaClassDatabase::Instance().Clear();
+    FMetaAtomDatabase::Instance().Clear();
+    FMetaClassDatabase::Instance().Clear();
 
-    Name::Clear();
+    FName::Clear();
 
     POOL_TAG(RTTI)::ClearAll_UnusedMemory();
 }
@@ -105,21 +105,21 @@ namespace Core {
 namespace {
 //----------------------------------------------------------------------------
 FWD_REFPTR(Titi);
-class Titi : public Core::RTTI::MetaObject {
+class FTiti : public Core::RTTI::FMetaObject {
 public:
-    Titi() {}
-    virtual ~Titi() {}
-    RTTI_CLASS_HEADER(Titi, Core::RTTI::MetaObject);
+    FTiti() {}
+    virtual ~FTiti() {}
+    RTTI_CLASS_HEADER(FTiti, Core::RTTI::FMetaObject);
 private:
     int _count;
-    Core::String _name;
+    Core::FString _name;
     VECTOR(Internal, PTiti) _tities;
     VECTOR(Internal, PCTiti) _consttities;
-    ASSOCIATIVE_VECTOR(Internal, Core::Pair<int COMMA PTiti>, VECTORINSITU(RTTI, Core::Pair<float COMMA Core::String>, 2)) _dict;
+    ASSOCIATIVE_VECTOR(Internal, Core::TPair<int COMMA PTiti>, VECTORINSITU(RTTI, Core::TPair<float COMMA Core::FString>, 2)) _dict;
 };
-RTTI_CLASS_BEGIN(Titi, Concrete)
+RTTI_CLASS_BEGIN(FTiti, Concrete)
 RTTI_PROPERTY_PRIVATE_FIELD(_count)
-RTTI_PROPERTY_FIELD_ALIAS(_name, Name)
+RTTI_PROPERTY_FIELD_ALIAS(_name, FName)
 RTTI_PROPERTY_PRIVATE_FIELD(_tities)
 RTTI_PROPERTY_DEPRECATED(VECTOR(Internal, PTiti), Tities2)
 RTTI_PROPERTY_PRIVATE_FIELD(_consttities)
@@ -127,33 +127,33 @@ RTTI_PROPERTY_PRIVATE_FIELD(_dict)
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------
 FWD_REFPTR(Toto);
-class Toto : public Core::RTTI::MetaObject {
+class FToto : public Core::RTTI::FMetaObject {
 public:
-    Toto() {}
-    virtual ~Toto() {}
-    RTTI_CLASS_HEADER(Toto, Core::RTTI::MetaObject);
+    FToto() {}
+    virtual ~FToto() {}
+    RTTI_CLASS_HEADER(FToto, Core::RTTI::FMetaObject);
 private:
-    typedef Core::Pair<int COMMA Core::Pair<float COMMA Core::String>> value_type;
+    typedef Core::TPair<int COMMA Core::TPair<float COMMA Core::FString>> value_type;
     int _count;
-    Core::String _name;
+    Core::FString _name;
     VECTOR(Internal, PTiti) _tities;
-    VECTOR_THREAD_LOCAL(Internal, Core::String) _titles;
-    Core::RefPtr<Toto> _parent;
-    Core::Pair<int, int> _pair;
-    Core::Pair<float, float> _fpair;
-    Core::Pair<Core::Pair<int, int>, Core::Pair<int, int> > _vpair;
-    Core::Pair<Core::Pair<int, int>, Core::Pair<int, float> > _vpair2;
-    HASHMAP_THREAD_LOCAL(Internal, Core::String, float) _dict;
-    HASHMAP_THREAD_LOCAL(Internal, Core::String, value_type) _dict2;
-    ASSOCIATIVE_VECTOR(Internal, Core::Pair<int COMMA float>, VECTORINSITU(RTTI, Core::Pair<float COMMA Core::String>, 2)) _dict3;
+    VECTOR_THREAD_LOCAL(Internal, Core::FString) _titles;
+    Core::TRefPtr<FToto> _parent;
+    Core::TPair<int, int> _pair;
+    Core::TPair<float, float> _fpair;
+    Core::TPair<Core::TPair<int, int>, Core::TPair<int, int> > _vpair;
+    Core::TPair<Core::TPair<int, int>, Core::TPair<int, float> > _vpair2;
+    HASHMAP_THREAD_LOCAL(Internal, Core::FString, float) _dict;
+    HASHMAP_THREAD_LOCAL(Internal, Core::FString, value_type) _dict2;
+    ASSOCIATIVE_VECTOR(Internal, Core::TPair<int COMMA float>, VECTORINSITU(RTTI, Core::TPair<float COMMA Core::FString>, 2)) _dict3;
 };
-RTTI_CLASS_BEGIN(Toto, Concrete)
+RTTI_CLASS_BEGIN(FToto, Concrete)
 RTTI_PROPERTY_FIELD_ALIAS(_count, Count)
-RTTI_PROPERTY_FIELD_ALIAS(_name, Name)
+RTTI_PROPERTY_FIELD_ALIAS(_name, FName)
 RTTI_PROPERTY_FIELD_ALIAS(_tities, Tities)
 RTTI_PROPERTY_FIELD_ALIAS(_titles, Titles)
 RTTI_PROPERTY_FIELD_ALIAS(_parent, Parent)
-RTTI_PROPERTY_FIELD_ALIAS(_pair, Pair)
+RTTI_PROPERTY_FIELD_ALIAS(_pair, TPair)
 RTTI_PROPERTY_FIELD_ALIAS(_fpair, FPair)
 RTTI_PROPERTY_FIELD_ALIAS(_vpair, VPair)
 RTTI_PROPERTY_FIELD_ALIAS(_vpair2, VPair2)
@@ -164,7 +164,7 @@ RTTI_CLASS_END()
 //----------------------------------------------------------------------------
 template <typename T>
 static void TestRTTIWrap_() {
-    typedef Core::RTTI::MetaTypeTraits< T > type_traits;
+    typedef Core::RTTI::TMetaTypeTraits< T > type_traits;
     T wrapped;
     typename type_traits::wrapper_type wrapper;
     type_traits::WrapCopy(wrapper, wrapped);
@@ -176,78 +176,78 @@ static void TestRTTIWrap_() {
 static void TestRTTI_() {
     using namespace Core;
 
-    LOG(Debug, L"[RTTI] Id = {0}, Name = {1}, Default = {2}, Flags = {3}",
-        RTTI::MetaType< int32_t >::Id(),
-        RTTI::MetaType< int32_t >::Name(),
-        RTTI::MetaType< int32_t >::DefaultValue(),
-        (size_t)RTTI::MetaType< int32_t >::Flags()
+    LOG(Debug, L"[RTTI] Id = {0}, FName = {1}, Default = {2}, EFlags = {3}",
+        RTTI::TMetaType< int32_t >::Id(),
+        RTTI::TMetaType< int32_t >::FName(),
+        RTTI::TMetaType< int32_t >::DefaultValue(),
+        (size_t)RTTI::TMetaType< int32_t >::EFlags()
         );
 
-    LOG(Debug, L"[RTTI] Id = {0}, Name = {1}, Default = {2}, Flags = {3}",
-        RTTI::MetaType< int >::Id(),
-        RTTI::MetaType< int >::Name(),
-        RTTI::MetaType< int >::DefaultValue(),
-        (size_t)RTTI::MetaType< int >::Flags()
+    LOG(Debug, L"[RTTI] Id = {0}, FName = {1}, Default = {2}, EFlags = {3}",
+        RTTI::TMetaType< int >::Id(),
+        RTTI::TMetaType< int >::FName(),
+        RTTI::TMetaType< int >::DefaultValue(),
+        (size_t)RTTI::TMetaType< int >::EFlags()
         );
 
-    LOG(Debug, L"[RTTI] Id = {0}, Name = {1}, Default = {2}, Flags = {3}",
-        RTTI::MetaType< size_t >::Id(),
-        RTTI::MetaType< size_t >::Name(),
-        RTTI::MetaType< size_t >::DefaultValue(),
-        (size_t)RTTI::MetaType< size_t >::Flags()
+    LOG(Debug, L"[RTTI] Id = {0}, FName = {1}, Default = {2}, EFlags = {3}",
+        RTTI::TMetaType< size_t >::Id(),
+        RTTI::TMetaType< size_t >::FName(),
+        RTTI::TMetaType< size_t >::DefaultValue(),
+        (size_t)RTTI::TMetaType< size_t >::EFlags()
         );
 
-    LOG(Debug, L"[RTTI] Id = {0}, Name = {1}, Default = {2}, Flags = {3}",
-        RTTI::MetaType< String >::Id(),
-        RTTI::MetaType< String >::Name(),
-        RTTI::MetaType< String >::DefaultValue(),
-        (size_t)RTTI::MetaType< String >::Flags()
+    LOG(Debug, L"[RTTI] Id = {0}, FName = {1}, Default = {2}, EFlags = {3}",
+        RTTI::TMetaType< FString >::Id(),
+        RTTI::TMetaType< FString >::FName(),
+        RTTI::TMetaType< FString >::DefaultValue(),
+        (size_t)RTTI::TMetaType< FString >::EFlags()
         );
 
-    LOG(Debug, L"[RTTI] Id = {0}, Name = {1}, Default = {2}, Flags = {3}",
-        RTTI::MetaType< RTTI::Vector<int> >::Id(),
-        RTTI::MetaType< RTTI::Vector<int> >::Name(),
-        RTTI::MetaType< RTTI::Vector<int> >::DefaultValue(),
-        (size_t)RTTI::MetaType< RTTI::Vector<int> >::Flags()
+    LOG(Debug, L"[RTTI] Id = {0}, FName = {1}, Default = {2}, EFlags = {3}",
+        RTTI::TMetaType< RTTI::TVector<int> >::Id(),
+        RTTI::TMetaType< RTTI::TVector<int> >::FName(),
+        RTTI::TMetaType< RTTI::TVector<int> >::DefaultValue(),
+        (size_t)RTTI::TMetaType< RTTI::TVector<int> >::EFlags()
         );
 
-    LOG(Debug, L"[RTTI] Id = {0}, Name = {1}, Default = {2}, Flags = {3}",
-        RTTI::MetaType< Pair<float, int> >::Id(),
-        RTTI::MetaType< Pair<float, int> >::Name(),
-        RTTI::MetaType< Pair<float, int> >::DefaultValue(),
-        (size_t)RTTI::MetaType< Pair<float, int> >::Flags()
+    LOG(Debug, L"[RTTI] Id = {0}, FName = {1}, Default = {2}, EFlags = {3}",
+        RTTI::TMetaType< TPair<float, int> >::Id(),
+        RTTI::TMetaType< TPair<float, int> >::FName(),
+        RTTI::TMetaType< TPair<float, int> >::DefaultValue(),
+        (size_t)RTTI::TMetaType< TPair<float, int> >::EFlags()
         );
 
-    RTTI::MetaTypeTraits< int >::meta_type::Name();
+    RTTI::TMetaTypeTraits< int >::meta_type::FName();
 
     int i = 0;
-    RTTI::MetaTypeTraits< int >::UnwrapCopy(i, 42);
+    RTTI::TMetaTypeTraits< int >::UnwrapCopy(i, 42);
 
     RTTI::PMetaObject o;
-    RTTI::MetaTypeTraits< RTTI::PMetaObject >::UnwrapCopy(o, nullptr);
+    RTTI::TMetaTypeTraits< RTTI::PMetaObject >::UnwrapCopy(o, nullptr);
 
     PTiti t;
-    RTTI::MetaTypeTraits< PTiti >::UnwrapCopy(t, nullptr);
-    RTTI::MetaTypeTraits< PTiti >::WrapMove(o, std::move(t));
+    RTTI::TMetaTypeTraits< PTiti >::UnwrapCopy(t, nullptr);
+    RTTI::TMetaTypeTraits< PTiti >::WrapMove(o, std::move(t));
 
     TestRTTIWrap_< PTiti >();
-    TestRTTIWrap_< Pair<WString, PTiti> >();
+    TestRTTIWrap_< TPair<FWString, PTiti> >();
     TestRTTIWrap_< VECTOR_THREAD_LOCAL(RTTI, PTiti) >();
     TestRTTIWrap_< HASHMAP(RTTI, int, int) >();
-    TestRTTIWrap_< HASHMAP(RTTI, String, PTiti) >();
-    TestRTTIWrap_< ASSOCIATIVE_VECTOR(RTTI, String, PTiti) >();
-    //TestRTTIWrap_< HASHSET(RTTI, String) >();
+    TestRTTIWrap_< HASHMAP(RTTI, FString, PTiti) >();
+    TestRTTIWrap_< ASSOCIATIVE_VECTOR(RTTI, FString, PTiti) >();
+    //TestRTTIWrap_< HASHSET(RTTI, FString) >();
 
-    RTTI::MetaClassSingleton<Titi>::Create();
+    RTTI::TMetaClassSingleton<FTiti>::Create();
 
-    t = new Titi();
-    const RTTI::MetaClass *metaClass = t->RTTI_MetaClass();
+    t = new FTiti();
+    const RTTI::FMetaClass *metaClass = t->RTTI_MetaClass();
 
-    LOG(Info, L"[RTTI] MetaClass<{0}> : {1}", metaClass->Name(), metaClass->Attributes());
+    LOG(Info, L"[RTTI] TMetaClass<{0}> : {1}", metaClass->Name(), metaClass->Attributes());
     for (const auto& it : metaClass->Properties())
         LOG(Info, L"[RTTI]   - {0} : {1} -> {2}", it.first, it.second->Attributes(), it.second->TypeInfo());
 
-    const RTTI::MetaProperty *prop = metaClass->PropertyIFP("Count");
+    const RTTI::FMetaProperty *prop = metaClass->PropertyIFP("Count");
 
     int value;
     prop->Cast<int>()->GetCopy(t.get(), value);
@@ -256,7 +256,7 @@ static void TestRTTI_() {
     prop->Cast<int>()->SetMove(t.get(), int());
     Assert(prop->IsDefaultValue(t.get()));
 
-    PTiti t2 = new Titi();
+    PTiti t2 = new FTiti();
     prop->Swap(t.get(), t2.get());
     Swap(*t, *t2);
 
@@ -276,7 +276,7 @@ static void TestRTTI_() {
     atom = prop->WrapCopy(t.get());
 
     auto typedAtom = atom->Cast< VECTOR(Internal, PTiti) >();
-    typedAtom->Wrapper().push_back(new Titi());
+    typedAtom->Wrapper().push_back(new FTiti());
 
     prop->MoveFrom(t.get(), typedAtom);
 
@@ -289,7 +289,7 @@ static void TestRTTI_() {
     LOG(Info, L"[RTTI] wrong atom = {0}", v);
 #endif
 
-    RTTI::MetaClassSingleton<Titi>::Destroy();
+    RTTI::TMetaClassSingleton<FTiti>::Destroy();
 }
 //----------------------------------------------------------------------------
 } //!namespace

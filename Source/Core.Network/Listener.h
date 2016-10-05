@@ -8,39 +8,39 @@
 
 namespace Core {
 namespace Network {
-class Socket;
+class FSocket;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Listener {
+class FListener {
 public:
-    Listener();
-    explicit Listener(Address&& listening);
-    explicit Listener(const Address& listening)
-        : Listener(std::move(Address(listening))) {}
-    ~Listener();
+    FListener();
+    explicit FListener(FAddress&& listening);
+    explicit FListener(const FAddress& listening)
+        : FListener(std::move(FAddress(listening))) {}
+    ~FListener();
 
-    Listener(Listener&& rvalue) : Listener() { operator =(std::move(rvalue)); }
-    Listener& operator =(Listener&& rvalue);
+    FListener(FListener&& rvalue) : FListener() { operator =(std::move(rvalue)); }
+    FListener& operator =(FListener&& rvalue);
 
-    Listener(const Listener& ) = delete;
-    Listener& operator =(const Listener& ) = delete;
+    FListener(const FListener& ) = delete;
+    FListener& operator =(const FListener& ) = delete;
 
     void* Handle() const { return _handle; }
 
-    const Address& Listening() const { return _listening; }
+    const FAddress& Listening() const { return _listening; }
 
     bool Connect();
     bool Disconnect();
 
     bool IsConnected() const;
 
-    bool Accept(Socket& socket, const Milliseconds& timeout);
+    bool Accept(FSocket& socket, const Milliseconds& timeout);
 
 private:
     void* _handle;
 
-    Address _listening;
+    FAddress _listening;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

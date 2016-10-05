@@ -13,17 +13,17 @@
 
 namespace MiniDump
 {
-    Result Write(const wchar_t *filename, void *exception_ptrs, Level level) {
+    EResult Write(const wchar_t *filename, void *exception_ptrs, ELevel level) {
         UNUSED(filename);
         UNUSED(exception_ptrs);
         UNUSED(level);
-        return Result::NotAvailable;
+        return EResult::NotAvailable;
     }
 
-    void Startup() {}
+    void FStartup() {}
     void Shutdown() {}
 
-    const char *ResultMessage(Result code) { return "MiniDump: unsupported platform"; }
+    const char *ResultMessage(EResult code) { return "MiniDump: unsupported platform"; }
 }
 
 #else
@@ -45,9 +45,9 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static AtomicSpinLock gMinidumpBarrier_;
+static FAtomicSpinLock gMinidumpBarrier_;
 //----------------------------------------------------------------------------
-struct MinidumpParams_ {
+struct FMinidumpParams_ {
     const wchar_t* Filename;
     const void* ExceptionPtrs;
     MiniDump::InfoLevel Level;
@@ -55,10 +55,10 @@ struct MinidumpParams_ {
 //----------------------------------------------------------------------------
 // We use this structure as a way to pass some information to our static
 // callback.  It's only used for transport.
-struct MinidumpCallbackParam_ {
+struct FMinidumpCallbackParam_ {
     DWORD ThreadId;
     const wchar_t* ProcessName;
-    const MinidumpParams_* Params;
+    const FMinidumpParams_* Params;
 };
 //----------------------------------------------------------------------------
 static bool IsDataSegmentNeeded_(const wchar_t* processName, const wchar_t *inPath) {
@@ -95,7 +95,7 @@ BOOL CALLBACK MinidumpFilter_(PVOID inParam, const PMINIDUMP_CALLBACK_INPUT inIn
     // If we were so inclined, we could use a delegate class to allow the user
     // to customize the dump files even further.  But for right now, this is
     // close enough.
-    const MinidumpCallbackParam_ *const p = (MinidumpCallbackParam_ *)inParam;
+    const FMinidumpCallbackParam_ *const p = (FMinidumpCallbackParam_ *)inParam;
     const MiniDump::InfoLevel infoLevel = p->Params->Level;
 
     switch (inInput->CallbackType) {
@@ -148,7 +148,7 @@ BOOL CALLBACK MinidumpFilter_(PVOID inParam, const PMINIDUMP_CALLBACK_INPUT inIn
 }
 //----------------------------------------------------------------------------
 DWORD CALLBACK MinidumpWriter_(LPVOID inParam) {
-    const MinidumpParams_ *const p = (const MinidumpParams_ *)inParam;
+    const FMinidumpParams_ *const p = (const FMinidumpParams_ *)inParam;
 
     // We need to keep track of the name of the process, sans extension, so that it can
     // be used if we're filtering module data segments.  So we calculate that up front.
@@ -156,7 +156,7 @@ DWORD CALLBACK MinidumpWriter_(LPVOID inParam) {
     ::GetModuleFileNameW(NULL, processName, MAX_PATH );
     ::_wsplitpath_s(processName, NULL, 0, NULL, 0, processName, MAX_PATH, NULL, 0 );
 
-    // First, attempt to create the file that the minidump will be written to
+    // TFirst, attempt to create the file that the minidump will be written to
     HANDLE hFile = ::CreateFileW(p->Filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
     if (INVALID_HANDLE_VALUE != hFile) {
         // Determine what information we want the minidumper to pass along for our
@@ -192,24 +192,24 @@ DWORD CALLBACK MinidumpWriter_(LPVOID inParam) {
         // filter out information that we may not care about.
         ::MINIDUMP_CALLBACK_INFORMATION callback = { 0, nullptr };
 
-        const MinidumpCallbackParam_ info = { ::GetCurrentThreadId(), processName, p };
+        const FMinidumpCallbackParam_ info = { ::GetCurrentThreadId(), processName, p };
         callback.CallbackParam = (PVOID)&info;
         callback.CallbackRoutine = MinidumpFilter_;
 
-        // After all that, we can write out the minidump
-        BOOL bRet = DbghelpWrapper::Instance().Lock().MiniDumpWriteDump()(
+        // TAfter all that, we can write out the minidump
+        BOOL bRet = FDbghelpWrapper::Instance().Lock().MiniDumpWriteDump()(
             ::GetCurrentProcess(),
             ::GetCurrentProcessId(),
             hFile,
             (MINIDUMP_TYPE)type, NULL, NULL, &callback );
 
         if (FALSE == ::CloseHandle( hFile ))
-            return DWORD(MiniDump::Result::FailedToCloseHandle);
+            return DWORD(MiniDump::EResult::FailedToCloseHandle);
 
-        return DWORD(bRet ? MiniDump::Result::Success : MiniDump::Result::DumpFailed);
+        return DWORD(bRet ? MiniDump::EResult::Success : MiniDump::EResult::DumpFailed);
     }
 
-    return DWORD(MiniDump::Result::CantCreateFile);
+    return DWORD(MiniDump::EResult::CantCreateFile);
 }
 //----------------------------------------------------------------------------
 static void EnumerateThreads_(DWORD (WINAPI *inCallback)( HANDLE ), DWORD inExceptThisOne)
@@ -252,17 +252,17 @@ static void EnumerateThreads_(DWORD (WINAPI *inCallback)( HANDLE ), DWORD inExce
 namespace Core {
 namespace MiniDump
 {
-    Result Write(const wchar_t *filename, InfoLevel level,
+    EResult Write(const wchar_t *filename, InfoLevel level,
         const void *exception_ptrs /* = nullptr */,
         bool inSuspendOtherThreads /* = false */)
     {
         if ( nullptr == filename )
-            return Result::InvalidFilename;
+            return EResult::InvalidFilename;
 
-        if ( false == DbghelpWrapper::HasInstance() )
-            return Result::NoDbgHelpDLL;
+        if ( false == FDbghelpWrapper::HasInstance() )
+            return EResult::NoDbgHelpDLL;
 
-        const MinidumpParams_ params = { filename, exception_ptrs, level };
+        const FMinidumpParams_ params = { filename, exception_ptrs, level };
 
         DWORD threadId = 0;
         HANDLE hThread = ::CreateThread(NULL, 0, MinidumpWriter_, (PVOID)&params, CREATE_SUSPENDED, &threadId );
@@ -296,10 +296,10 @@ namespace MiniDump
                 EnumerateThreads_(::ResumeThread, threadId );
             }
 
-            return MiniDump::Result(code);
+            return MiniDump::EResult(code);
         }
 
-        return MiniDump::Result::NotAvailable;
+        return MiniDump::EResult::NotAvailable;
     }
 
     void Write(PEXCEPTION_POINTERS pExceptionInfo)
@@ -328,7 +328,7 @@ namespace MiniDump
     LONG WINAPI OnUnhandledException_(PEXCEPTION_POINTERS pExceptionInfo)
     {
         // no reentrancy (needed by ::MiniDumpWriteDump !)
-        const AtomicSpinLock::TryScope scopeLock(gMinidumpBarrier_);
+        const FAtomicSpinLock::FTryScope scopeLock(gMinidumpBarrier_);
 
         if (scopeLock.Locked())
             Write(pExceptionInfo);
@@ -341,7 +341,7 @@ namespace MiniDump
     LONG WINAPI OnVectoredHandler_(PEXCEPTION_POINTERS pExceptionInfo)
     {
         // no reentrancy (needed by ::MiniDumpWriteDump !)
-        const AtomicSpinLock::TryScope scopeLock(gMinidumpBarrier_);
+        const FAtomicSpinLock::FTryScope scopeLock(gMinidumpBarrier_);
 
         if (scopeLock.Locked())
             Write(pExceptionInfo);
@@ -352,7 +352,7 @@ namespace MiniDump
 
     void Start()
     {
-        if (not DbghelpWrapper::HasInstance())
+        if (not FDbghelpWrapper::HasInstance())
             return;
 
 #ifdef HANDLE_VECTORED_EXCEPTION
@@ -364,7 +364,7 @@ namespace MiniDump
 
     void Shutdown()
     {
-        if (not DbghelpWrapper::HasInstance())
+        if (not FDbghelpWrapper::HasInstance())
             return;
 
         ::SetUnhandledExceptionFilter(gPreviousUnhandledExceptionFilter);
@@ -381,23 +381,23 @@ namespace MiniDump
 namespace Core {
 namespace MiniDump
 {
-    const char *ResultMessage(Result code)
+    const char *ResultMessage(EResult code)
     {
         switch (code)
         {
-        case MiniDump::Result::Success:
+        case MiniDump::EResult::Success:
             return "minidump was successfully created";
-        case MiniDump::Result::NoDbgHelpDLL:
+        case MiniDump::EResult::NoDbgHelpDLL:
             return "minidump failed to retrieve dbghelp.dll";
-        case MiniDump::Result::InvalidFilename:
+        case MiniDump::EResult::InvalidFilename:
             return "minidump filename is invalid";
-        case MiniDump::Result::CantCreateFile:
+        case MiniDump::EResult::CantCreateFile:
             return "minidump file could not be created";
-        case MiniDump::Result::DumpFailed:
+        case MiniDump::EResult::DumpFailed:
             return "failed to create a minidump";
-        case MiniDump::Result::FailedToCloseHandle:
+        case MiniDump::EResult::FailedToCloseHandle:
             return "minidump file was not closed correctly";
-        case MiniDump::Result::NotAvailable:
+        case MiniDump::EResult::NotAvailable:
             return "minidump is not available on this platform";
         default:
             return "invalid minidump result code";

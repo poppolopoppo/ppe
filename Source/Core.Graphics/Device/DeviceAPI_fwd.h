@@ -6,7 +6,7 @@
 
 namespace Core {
     template <typename T>
-    class MemoryView;
+    class TMemoryView;
 }
 
 namespace Core {
@@ -14,64 +14,64 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PresentationParameters;
+class FPresentationParameters;
 //----------------------------------------------------------------------------
-class DeviceResource;
-class DeviceResourceBuffer;
+class FDeviceResource;
+class FDeviceResourceBuffer;
 FWD_REFPTR(DeviceAPIDependantResourceBuffer);
 //----------------------------------------------------------------------------
-class BlendState;
+class FBlendState;
 FWD_REFPTR(DeviceAPIDependantBlendState);
-class RasterizerState;
+class FRasterizerState;
 FWD_REFPTR(DeviceAPIDependantRasterizerState);
-class DepthStencilState;
+class FDepthStencilState;
 FWD_REFPTR(DeviceAPIDependantDepthStencilState);
-class SamplerState;
+class FSamplerState;
 FWD_REFPTR(DeviceAPIDependantSamplerState);
 //----------------------------------------------------------------------------
-enum class PrimitiveType;
+enum class EPrimitiveType;
 class IndexBuffer;
-class VertexBuffer;
-struct VertexBufferBinding;
-class VertexDeclaration;
+class FVertexBuffer;
+struct FVertexBufferBinding;
+class FVertexDeclaration;
 FWD_REFPTR(DeviceAPIDependantVertexDeclaration);
 //----------------------------------------------------------------------------
-class Name;
-class ConstantBuffer;
+class FName;
+class FConstantBuffer;
 FWD_REFPTR(ConstantBufferLayout);
 FWD_REFPTR(DeviceAPIDependantConstantWriter);
-enum class ShaderProfileType;
-class ShaderProgram;
-struct ShaderProgramTexture;
-enum class ShaderTextureDimension;
-enum class ShaderProgramType;
+enum class EShaderProfileType;
+class FShaderProgram;
+struct FShaderProgramTexture;
+enum class EShaderTextureDimension;
+enum class EShaderProgramType;
 FWD_REFPTR(DeviceAPIDependantShaderProgram);
-class ShaderEffect;
+class FShaderEffect;
 FWD_REFPTR(DeviceAPIDependantShaderEffect);
 FWD_REFPTR(ShaderCompiled);
 //----------------------------------------------------------------------------
-class SurfaceFormat;
+class FSurfaceFormat;
 //----------------------------------------------------------------------------
-class Texture;
+class FTexture;
 FWD_REFPTR(DeviceAPIDependantTexture);
-class Texture2D;
+class FTexture2D;
 FWD_REFPTR(DeviceAPIDependantTexture2D);
-class TextureCube;
+class FTextureCube;
 FWD_REFPTR(DeviceAPIDependantTextureCube);
-class RenderTarget;
+class FRenderTarget;
 FWD_REFPTR(DeviceAPIDependantRenderTarget);
-class DepthStencil;
+class FDepthStencil;
 FWD_REFPTR(DeviceAPIDependantDepthStencil);
-struct RenderTargetBinding;
+struct FRenderTargetBinding;
 //----------------------------------------------------------------------------
 class IDeviceAPIEncapsulator;
 class IDeviceAPIDiagnostics;
 class IDeviceAPIContext;
 //----------------------------------------------------------------------------
-class AbstractDeviceAPIEncapsulator;
+class FAbstractDeviceAPIEncapsulator;
 //----------------------------------------------------------------------------
-enum class DeviceAPI;
-enum class DeviceResourceType;
+enum class EDeviceAPI;
+enum class EDeviceResourceType;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

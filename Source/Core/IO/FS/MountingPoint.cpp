@@ -6,36 +6,36 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-MountingPoint::MountingPoint(const FileSystem::StringView& content)
+FMountingPoint::FMountingPoint(const FileSystem::FStringView& content)
 :   parent_type(content) {
     Assert(content.size() && L':' == content.back());
 }
 //----------------------------------------------------------------------------
-MountingPoint& MountingPoint::operator =(const FileSystem::StringView& content) {
+FMountingPoint& FMountingPoint::operator =(const FileSystem::FStringView& content) {
     parent_type::operator =(content);
     return *this;
 }
 //----------------------------------------------------------------------------
-MountingPoint::MountingPoint(const MountingPoint& other)
+FMountingPoint::FMountingPoint(const FMountingPoint& other)
 :   parent_type(other) {}
 //----------------------------------------------------------------------------
-MountingPoint& MountingPoint::operator =(const MountingPoint& other) {
+FMountingPoint& FMountingPoint::operator =(const FMountingPoint& other) {
     parent_type::operator =(other);
     return *this;
 }
 //----------------------------------------------------------------------------
-MountingPoint::MountingPoint(const FileSystemToken& token)
+FMountingPoint::FMountingPoint(const FFileSystemToken& token)
 :   parent_type(token) {
     Assert(token.empty() || L':' == token.MakeView().back());
 }
 //----------------------------------------------------------------------------
-MountingPoint& MountingPoint::operator =(const FileSystemToken& token) {
+FMountingPoint& FMountingPoint::operator =(const FFileSystemToken& token) {
     Assert(token.empty() || L':' == token.MakeView().back());
     parent_type::operator =(token);
     return *this;
 }
 //----------------------------------------------------------------------------
-void MountingPoint::Swap(MountingPoint& other) {
+void FMountingPoint::Swap(FMountingPoint& other) {
     parent_type::Swap(other);
 }
 //----------------------------------------------------------------------------

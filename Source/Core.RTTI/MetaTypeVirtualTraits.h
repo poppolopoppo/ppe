@@ -9,142 +9,142 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MetaAtom;
-class MetaObject;
-class MetaProperty;
+class FMetaAtom;
+class FMetaObject;
+class FMetaProperty;
 template <typename T>
-struct MetaTypeTraits;
+struct TMetaTypeTraits;
 //----------------------------------------------------------------------------
 class IMetaTypeVirtualTraits {
 public:
     virtual ~IMetaTypeVirtualTraits() {}
 
-    virtual MetaAtom *CreateDefaultValue() const = 0;
+    virtual FMetaAtom *CreateDefaultValue() const = 0;
 
-    virtual bool AssignMove(MetaAtom *dst, MetaAtom *src) const = 0;
-    virtual bool AssignCopy(MetaAtom *dst, const MetaAtom *src) const = 0;
+    virtual bool AssignMove(FMetaAtom *dst, FMetaAtom *src) const = 0;
+    virtual bool AssignCopy(FMetaAtom *dst, const FMetaAtom *src) const = 0;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class AbstractMetaTypeScalarTraits : public IMetaTypeVirtualTraits {
+class FAbstractMetaTypeScalarTraits : public IMetaTypeVirtualTraits {
 public:
-    virtual bool AssignMove(MetaAtom *dst, MetaAtom *src) const override;
-    virtual bool AssignCopy(MetaAtom *dst, const MetaAtom *src) const override;
+    virtual bool AssignMove(FMetaAtom *dst, FMetaAtom *src) const override;
+    virtual bool AssignCopy(FMetaAtom *dst, const FMetaAtom *src) const override;
 };
 //----------------------------------------------------------------------------
 template <typename T>
-class MetaTypeScalarTraits : public AbstractMetaTypeScalarTraits {
+class TMetaTypeScalarTraits : public FAbstractMetaTypeScalarTraits {
 public:
-    STATIC_ASSERT(false == MetaTypeTraits< T >::Wrapping);
+    STATIC_ASSERT(false == TMetaTypeTraits< T >::Wrapping);
 
-    virtual MetaAtom* CreateDefaultValue() const override {
-        typedef typename MetaAtomWrapper<T>::type atom_type;
-        MetaAtom* const result = MakeAtom(std::move(MetaTypeTraits<T>::meta_type::DefaultValue()));
+    virtual FMetaAtom* CreateDefaultValue() const override {
+        typedef typename TMetaAtomWrapper<T>::type atom_type;
+        FMetaAtom* const result = MakeAtom(std::move(TMetaTypeTraits<T>::meta_type::DefaultValue()));
         Assert(result->IsDefaultValue());
         return result;
     }
 
-    static const MetaTypeScalarTraits* Instance() {
-        ONE_TIME_INITIALIZE_TPL(const MetaTypeScalarTraits, gInstance);
+    static const TMetaTypeScalarTraits* Instance() {
+        ONE_TIME_INITIALIZE_TPL(const TMetaTypeScalarTraits, gInstance);
         return &gInstance;
     }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class AbstractMetaTypePairTraits : public IMetaTypeVirtualTraits {
+class FAbstractMetaTypePairTraits : public IMetaTypeVirtualTraits {
 public:
-    virtual bool AssignMove(MetaAtom *dst, MetaAtom *src) const override;
-    virtual bool AssignCopy(MetaAtom *dst, const MetaAtom *src) const override;
+    virtual bool AssignMove(FMetaAtom *dst, FMetaAtom *src) const override;
+    virtual bool AssignCopy(FMetaAtom *dst, const FMetaAtom *src) const override;
 };
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
-class MetaTypePairTraits : public AbstractMetaTypePairTraits {
+class TMetaTypePairTraits : public FAbstractMetaTypePairTraits {
 public:
-    STATIC_ASSERT(false == MetaTypeTraits< _First >::Wrapping);
-    STATIC_ASSERT(false == MetaTypeTraits< _Second >::Wrapping);
+    STATIC_ASSERT(false == TMetaTypeTraits< _First >::Wrapping);
+    STATIC_ASSERT(false == TMetaTypeTraits< _Second >::Wrapping);
 
-    virtual MetaAtom* CreateDefaultValue() const override {
-        typedef typename MetaAtomWrapper< RTTI::Pair<_First, _Second> >::type atom_type;
-        MetaAtom* const result = new atom_type();
+    virtual FMetaAtom* CreateDefaultValue() const override {
+        typedef typename TMetaAtomWrapper< RTTI::TPair<_First, _Second> >::type atom_type;
+        FMetaAtom* const result = new atom_type();
         Assert(result->IsDefaultValue());
         return result;
     }
 
-    static const MetaTypePairTraits* Instance() {
-        ONE_TIME_INITIALIZE_TPL(const MetaTypePairTraits, gInstance);
+    static const TMetaTypePairTraits* Instance() {
+        ONE_TIME_INITIALIZE_TPL(const TMetaTypePairTraits, gInstance);
         return &gInstance;
     }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class AbstractMetaTypeVectorTraits : public IMetaTypeVirtualTraits {
+class FAbstractMetaTypeVectorTraits : public IMetaTypeVirtualTraits {
 public:
-    virtual bool AssignMove(MetaAtom *dst, MetaAtom *src) const override;
-    virtual bool AssignCopy(MetaAtom *dst, const MetaAtom *src) const override;
+    virtual bool AssignMove(FMetaAtom *dst, FMetaAtom *src) const override;
+    virtual bool AssignCopy(FMetaAtom *dst, const FMetaAtom *src) const override;
 };
 //----------------------------------------------------------------------------
 template <typename T>
-class MetaTypeVectorTraits : public AbstractMetaTypeVectorTraits {
+class TMetaTypeVectorTraits : public FAbstractMetaTypeVectorTraits {
 public:
-    STATIC_ASSERT(false == MetaTypeTraits< T >::Wrapping);
+    STATIC_ASSERT(false == TMetaTypeTraits< T >::Wrapping);
 
-    virtual MetaAtom* CreateDefaultValue() const override {
-        typedef typename MetaAtomWrapper< RTTI::Vector<T> >::type atom_type;
-        MetaAtom* const result = new atom_type();
+    virtual FMetaAtom* CreateDefaultValue() const override {
+        typedef typename TMetaAtomWrapper< RTTI::TVector<T> >::type atom_type;
+        FMetaAtom* const result = new atom_type();
         Assert(result->IsDefaultValue());
         return result;
     }
 
-    static const MetaTypeVectorTraits* Instance() {
-        ONE_TIME_INITIALIZE_TPL(const MetaTypeVectorTraits, gInstance);
+    static const TMetaTypeVectorTraits* Instance() {
+        ONE_TIME_INITIALIZE_TPL(const TMetaTypeVectorTraits, gInstance);
         return &gInstance;
     }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class AbstractMetaTypeDictionaryTraits : public IMetaTypeVirtualTraits {
+class FAbstractMetaTypeDictionaryTraits : public IMetaTypeVirtualTraits {
 public:
-    virtual bool AssignMove(MetaAtom *dst, MetaAtom *src) const override;
-    virtual bool AssignCopy(MetaAtom *dst, const MetaAtom *src) const override;
+    virtual bool AssignMove(FMetaAtom *dst, FMetaAtom *src) const override;
+    virtual bool AssignCopy(FMetaAtom *dst, const FMetaAtom *src) const override;
 };
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
-class MetaTypeDictionaryTraits : public AbstractMetaTypeDictionaryTraits {
+class TMetaTypeDictionaryTraits : public FAbstractMetaTypeDictionaryTraits {
 public:
-    STATIC_ASSERT(false == MetaTypeTraits< _Key >::Wrapping);
-    STATIC_ASSERT(false == MetaTypeTraits< _Value >::Wrapping);
+    STATIC_ASSERT(false == TMetaTypeTraits< _Key >::Wrapping);
+    STATIC_ASSERT(false == TMetaTypeTraits< _Value >::Wrapping);
 
-    virtual MetaAtom* CreateDefaultValue() const override {
-        typedef typename MetaAtomWrapper< RTTI::Dictionary<_Key, _Value> >::type atom_type;
-        MetaAtom* const result = new atom_type();
+    virtual FMetaAtom* CreateDefaultValue() const override {
+        typedef typename TMetaAtomWrapper< RTTI::TDictionary<_Key, _Value> >::type atom_type;
+        FMetaAtom* const result = new atom_type();
         Assert(result->IsDefaultValue());
         return result;
     }
 
-    static const MetaTypeDictionaryTraits* Instance() {
-        ONE_TIME_INITIALIZE_TPL(const MetaTypeDictionaryTraits, gInstance);
+    static const TMetaTypeDictionaryTraits* Instance() {
+        ONE_TIME_INITIALIZE_TPL(const TMetaTypeDictionaryTraits, gInstance);
         return &gInstance;
     }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool AssignMove(MetaAtom *dst, MetaAtom *src);
-bool AssignCopy(MetaAtom *dst, const MetaAtom *src);
+bool AssignMove(FMetaAtom *dst, FMetaAtom *src);
+bool AssignCopy(FMetaAtom *dst, const FMetaAtom *src);
 //----------------------------------------------------------------------------
 template <typename T>
-bool AssignMove(T *dst, MetaAtom *src);
+bool AssignMove(T *dst, FMetaAtom *src);
 template <typename T>
-bool AssignCopy(T *dst, const MetaAtom *src);
+bool AssignCopy(T *dst, const FMetaAtom *src);
 //----------------------------------------------------------------------------
 template <typename T>
-bool AssignMove(MetaAtom *dst, T *src);
+bool AssignMove(FMetaAtom *dst, T *src);
 template <typename T>
-bool AssignCopy(MetaAtom *dst, const T *src);
+bool AssignCopy(FMetaAtom *dst, const T *src);
 //----------------------------------------------------------------------------
 template <typename T>
 bool AssignMove(T *dst, T *src);

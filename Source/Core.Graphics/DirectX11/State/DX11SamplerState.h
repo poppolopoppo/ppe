@@ -13,30 +13,30 @@ class IDeviceAPIEncapsulator;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DX11SamplerState : public DeviceAPIDependantSamplerState {
+class FDX11SamplerState : public FDeviceAPIDependantSamplerState {
 public:
-    DX11SamplerState(IDeviceAPIEncapsulator *device, SamplerState *owner);
-    virtual ~DX11SamplerState();
+    FDX11SamplerState(IDeviceAPIEncapsulator *device, FSamplerState *owner);
+    virtual ~FDX11SamplerState();
 
     ::ID3D11SamplerState *Entity() const { return _entity.Get(); }
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    ComPtr<::ID3D11SamplerState> _entity;
+    TComPtr<::ID3D11SamplerState> _entity;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-D3D11_FILTER TextureFilterToDX11Filter(TextureFilter value);
+D3D11_FILTER TextureFilterToDX11Filter(ETextureFilter value);
 //----------------------------------------------------------------------------
-TextureFilter DX11FilterToTextureFilter(D3D11_FILTER value);
+ETextureFilter DX11FilterToTextureFilter(D3D11_FILTER value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-D3D11_TEXTURE_ADDRESS_MODE TextureAddressModeToDX11TextureAddressMode(TextureAddressMode value);
+D3D11_TEXTURE_ADDRESS_MODE TextureAddressModeToDX11TextureAddressMode(ETextureAddressMode value);
 //----------------------------------------------------------------------------
-TextureAddressMode DX11TextureAddressModeToTextureAddressMode(D3D11_TEXTURE_ADDRESS_MODE value);
+ETextureAddressMode DX11TextureAddressModeToTextureAddressMode(D3D11_TEXTURE_ADDRESS_MODE value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

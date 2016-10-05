@@ -10,13 +10,13 @@ namespace Pixmap {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define PIXELSTORAGE(_Domain, T) \
-    Core::Pixmap::PixelStorage< T, MEMORY_DOMAIN_TAG(_Domain) >
+    Core::Pixmap::TPixelStorage< T, MEMORY_DOMAIN_TAG(_Domain) >
 //----------------------------------------------------------------------------
 template <typename T, typename _Domain>
-class PixelStorage {
+class TPixelStorage {
 public:
-    PixelStorage() : _size(0) {}
-    explicit PixelStorage(size_t size) : _size(0) { Resize_DiscardData(size); }
+    TPixelStorage() : _size(0) {}
+    explicit TPixelStorage(size_t size) : _size(0) { Resize_DiscardData(size); }
 
     size_t size() const { return _size; }
     size_t capacity() const { return _storage.size(); }
@@ -34,8 +34,8 @@ public:
         return _storage[index];
     }
 
-    MemoryView<T> MakeView() { return _storage.MakeView().SubRange(0, _size); }
-    MemoryView<const T> MakeConstView() const { return _storage.MakeConstView().SubRange(0, _size); }
+    TMemoryView<T> MakeView() { return _storage.MakeView().SubRange(0, _size); }
+    TMemoryView<const T> MakeConstView() const { return _storage.MakeConstView().SubRange(0, _size); }
 
     void Resize_DiscardData(size_t size) {
         // skip allocation if there is enough space :
@@ -52,7 +52,7 @@ public:
     }
 
 private:
-    RawStorage<T, Allocator<T, _Domain> > _storage;
+    TRawStorage<T, TAllocator<T, _Domain> > _storage;
     size_t _size;
 };
 //----------------------------------------------------------------------------

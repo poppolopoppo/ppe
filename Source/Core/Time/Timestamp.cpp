@@ -10,17 +10,17 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DateTime Timestamp::ToDateTime() const {
-    return DateTime::FromLocalTime(*this);
+FDateTime FTimestamp::ToDateTime() const {
+    return FDateTime::FromLocalTime(*this);
 }
 //----------------------------------------------------------------------------
-DateTime Timestamp::ToDateTimeUTC() const {
-    return DateTime::FromTimeUTC(*this);
+FDateTime FTimestamp::ToDateTimeUTC() const {
+    return FDateTime::FromTimeUTC(*this);
 }
 //----------------------------------------------------------------------------
-Timestamp Timestamp::Now() {
+FTimestamp FTimestamp::Now() {
     STATIC_ASSERT(sizeof(::__time64_t) == sizeof(value_type));
-    Timestamp t;
+    FTimestamp t;
     ::_time64(reinterpret_cast<::__time64_t*>(&t._value));
     return t;
 }

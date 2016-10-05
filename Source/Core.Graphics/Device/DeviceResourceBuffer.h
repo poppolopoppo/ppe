@@ -9,19 +9,19 @@
 
 namespace Core {
     template <typename T>
-    class MemoryView;
+    class TMemoryView;
 } //!namespace Core
 
 namespace Core {
 namespace Graphics {
 class IDeviceAPIEncapsulator;
-class DeviceResource;
+class FDeviceResource;
 FWD_REFPTR(DeviceAPIDependantResourceBuffer);
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class BufferMode : u32 {
+enum class EBufferMode : u32 {
     None            = 0,
     Read            = 1<<0,
     Write           = 1<<1,
@@ -31,7 +31,7 @@ enum class BufferMode : u32 {
     WriteDiscard    = Write|Discard,
     WriteDoNotWait  = Write|DoNotWait,
 };
-ENUM_FLAGS(BufferMode)
+ENUM_FLAGS(EBufferMode)
 //----------------------------------------------------------------------------
 // http://amd-dev.wpengine.netdna-cdn.com/wordpress/media/2012/10/Ultimate%20Graphics%20Performance%20for%20DirectX%2010%20Hardware%20-%20Develop%202008.pdf
 // https://developer.nvidia.com/sites/default/files/akamai/gamedev/files/gdc12/Efficient_Buffer_Management_McDonald.pdf
@@ -39,7 +39,7 @@ ENUM_FLAGS(BufferMode)
 // - Long lived : Default
 // - Temporary : Dynamic
 // - Constant : Staging
-enum class BufferUsage : u32 {
+enum class EBufferUsage : u32 {
     Default     = 0,    // The CPU updates the resource less than once per frame
     Immutable   ,       // The CPU does not update the resource
     Dynamic     ,       // The CPU updates the resource more than once per frame
@@ -48,13 +48,13 @@ enum class BufferUsage : u32 {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DeviceResourceBuffer {
+class FDeviceResourceBuffer {
 public:
-    DeviceResourceBuffer(size_t stride, size_t count, BufferMode mode, BufferUsage usage);
-    ~DeviceResourceBuffer();
+    FDeviceResourceBuffer(size_t stride, size_t count, EBufferMode mode, EBufferUsage usage);
+    ~FDeviceResourceBuffer();
 
-    DeviceResourceBuffer(const DeviceResourceBuffer& ) = delete;
-    DeviceResourceBuffer& operator =(const DeviceResourceBuffer& ) = delete;
+    FDeviceResourceBuffer(const FDeviceResourceBuffer& ) = delete;
+    FDeviceResourceBuffer& operator =(const FDeviceResourceBuffer& ) = delete;
 
     bool Available() const { return nullptr != _deviceAPIDependantBuffer; }
     const PDeviceAPIDependantResourceBuffer& DeviceAPIDependantBuffer() const { return _deviceAPIDependantBuffer; }
@@ -63,13 +63,13 @@ public:
     size_t Stride() const { return bitstride_type::Get(_strideModeUsage); }
     size_t SizeInBytes() const { return Stride() * _count; }
 
-    BufferMode Mode() const { return static_cast<BufferMode>(bitmode_type::Get(_strideModeUsage)); }
-    BufferUsage Usage() const { return static_cast<BufferUsage>(bitusage_type::Get(_strideModeUsage)); }
+    EBufferMode Mode() const { return static_cast<EBufferMode>(bitmode_type::Get(_strideModeUsage)); }
+    EBufferUsage Usage() const { return static_cast<EBufferUsage>(bitusage_type::Get(_strideModeUsage)); }
 
     void Resize(size_t count);
 
-    void Create(IDeviceAPIEncapsulator *device, const DeviceResource *resource, DeviceAPIDependantResourceBuffer *buffer);
-    PDeviceAPIDependantResourceBuffer Destroy(IDeviceAPIEncapsulator *device, const DeviceResource *resource);
+    void Create(IDeviceAPIEncapsulator *device, const FDeviceResource *resource, FDeviceAPIDependantResourceBuffer *buffer);
+    PDeviceAPIDependantResourceBuffer Destroy(IDeviceAPIEncapsulator *device, const FDeviceResource *resource);
 
     void GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count);
     void SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count);
@@ -84,18 +84,18 @@ public:
         SetData(device, offset, src, sizeof(T), count);
     }
 
-    void CopyFrom(IDeviceAPIEncapsulator *device, const DeviceResourceBuffer *psource);
+    void CopyFrom(IDeviceAPIEncapsulator *device, const FDeviceResourceBuffer *psource);
     void CopySubPart(   IDeviceAPIEncapsulator *device, size_t dstOffset,
-                        const DeviceResourceBuffer *psource, size_t srcOffset,
+                        const FDeviceResourceBuffer *psource, size_t srcOffset,
                         size_t length );
 
     size_t HashValue() const;
-    bool Match(const DeviceAPIDependantResourceBuffer& entity) const;
+    bool Match(const FDeviceAPIDependantResourceBuffer& entity) const;
 
 private:
-    typedef Meta::Bit<u32>::First<2>::type bitusage_type;
-    typedef Meta::Bit<u32>::After<bitusage_type>::Field<4>::type bitmode_type;
-    typedef Meta::Bit<u32>::After<bitmode_type>::Remain::type bitstride_type;
+    typedef Meta::TBit<u32>::TFirst<2>::type bitusage_type;
+    typedef Meta::TBit<u32>::TAfter<bitusage_type>::TField<4>::type bitmode_type;
+    typedef Meta::TBit<u32>::TAfter<bitmode_type>::FRemain::type bitstride_type;
 
     u32 _count;
     u32 _strideModeUsage;
@@ -104,42 +104,42 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DeviceAPIDependantResourceBuffer : public DeviceAPIDependantEntity {
+class FDeviceAPIDependantResourceBuffer : public FDeviceAPIDependantEntity {
 public:
-    DeviceAPIDependantResourceBuffer(   IDeviceAPIEncapsulator *device,
-                                        const DeviceResource *resource,
-                                        const DeviceResourceBuffer *buffer,
-                                        const MemoryView<const u8>& optionalData);
-    virtual ~DeviceAPIDependantResourceBuffer();
+    FDeviceAPIDependantResourceBuffer(   IDeviceAPIEncapsulator *device,
+                                        const FDeviceResource *resource,
+                                        const FDeviceResourceBuffer *buffer,
+                                        const TMemoryView<const u8>& optionalData);
+    virtual ~FDeviceAPIDependantResourceBuffer();
 
-    DeviceResourceType ResourceType() const { return _resourceType; }
+    EDeviceResourceType ResourceType() const { return _resourceType; }
 
     size_t Count() const { return _count; }
     size_t Stride() const { return bitstride_type::Get(_strideModeUsage); }
     size_t SizeInBytes() const { return Stride() * _count; }
 
-    BufferMode Mode() const { return static_cast<BufferMode>(bitmode_type::Get(_strideModeUsage)); }
-    BufferUsage Usage() const { return static_cast<BufferUsage>(bitusage_type::Get(_strideModeUsage)); }
+    EBufferMode Mode() const { return static_cast<EBufferMode>(bitmode_type::Get(_strideModeUsage)); }
+    EBufferUsage Usage() const { return static_cast<EBufferUsage>(bitusage_type::Get(_strideModeUsage)); }
 
     virtual void GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) = 0;
     virtual void SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) = 0;
 
-    virtual void CopyFrom(IDeviceAPIEncapsulator *device, const DeviceAPIDependantResourceBuffer *psource) = 0;
+    virtual void CopyFrom(IDeviceAPIEncapsulator *device, const FDeviceAPIDependantResourceBuffer *psource) = 0;
 
     virtual void CopySubPart(   IDeviceAPIEncapsulator *device, size_t dstOffset,
-                                const DeviceAPIDependantResourceBuffer *psource, size_t srcOffset,
+                                const FDeviceAPIDependantResourceBuffer *psource, size_t srcOffset,
                                 size_t length ) = 0;
 
     virtual size_t VideoMemorySizeInBytes() const { return SizeInBytes(); }
 
 private:
-    typedef Meta::Bit<u32>::First<2>::type bitusage_type;
-    typedef Meta::Bit<u32>::After<bitusage_type>::Field<2>::type bitmode_type;
-    typedef Meta::Bit<u32>::After<bitmode_type>::Remain::type bitstride_type;
+    typedef Meta::TBit<u32>::TFirst<2>::type bitusage_type;
+    typedef Meta::TBit<u32>::TAfter<bitusage_type>::TField<2>::type bitmode_type;
+    typedef Meta::TBit<u32>::TAfter<bitmode_type>::FRemain::type bitstride_type;
 
     u32 _count;
     u32 _strideModeUsage;
-    DeviceResourceType _resourceType;
+    EDeviceResourceType _resourceType;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

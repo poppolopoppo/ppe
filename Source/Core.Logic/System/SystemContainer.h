@@ -10,31 +10,31 @@
 
 namespace Core {
 namespace Logic {
-class EntityManager;
+class FEntityManager;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class SystemContainer {
+class FSystemContainer {
 public:
-    explicit SystemContainer(EntityManager& manager);
-    ~SystemContainer();
+    explicit FSystemContainer(FEntityManager& manager);
+    ~FSystemContainer();
 
     void Initialize();
     void Destroy();
 
-    void Add(ISystem *system, int priority, SystemExecution executionType);
+    void Add(ISystem *system, int priority, ESystemExecution executionType);
     void Remove(const PSystem& system);
 
-    void Process(const Timeline& timeline);
+    void Process(const FTimeline& timeline);
 
-    void RefreshEntity(const Entity& entity, ComponentFlag components);
-    void RemoveEntity(const Entity& entity);
+    void RefreshEntity(const FEntity& entity, ComponentFlag components);
+    void RemoveEntity(const FEntity& entity);
 
 private:
-    friend class SystemLayer;
+    friend class FSystemLayer;
 
     ASSOCIATIVE_VECTOR(System, int, PSystemLayer) _layers;
-    EntityManager *_manager;
+    FEntityManager *_manager;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

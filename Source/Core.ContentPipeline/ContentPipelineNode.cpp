@@ -9,27 +9,27 @@ namespace ContentPipeline {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-RTTI_CLASS_BEGIN(ContentPipeline, ContentPipelineNode, Abstract)
+RTTI_CLASS_BEGIN(ContentPipeline, FContentPipelineNode, Abstract)
 RTTI_PROPERTY_PRIVATE_FIELD(_nodeName);
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------
-ContentPipelineNode::ContentPipelineNode()
+FContentPipelineNode::FContentPipelineNode()
     : _fingerPrint{0,0} {}
 //----------------------------------------------------------------------------
-ContentPipelineNode::~ContentPipelineNode() {}
+FContentPipelineNode::~FContentPipelineNode() {}
 //----------------------------------------------------------------------------
-bool ContentPipelineNode::CheckFingerPrint() const {
+bool FContentPipelineNode::CheckFingerPrint() const {
     const u128 computedFingerPrint = RTTI::Fingerprint128(*this);
     return (computedFingerPrint == _fingerPrint);
 }
 //----------------------------------------------------------------------------
-void ContentPipelineNode::RefreshFingerPrint_() const {
+void FContentPipelineNode::RefreshFingerPrint_() const {
     AssertIsMainThread();
     _fingerPrint = RTTI::Fingerprint128(*this);
 }
 //----------------------------------------------------------------------------
-void ContentPipelineNode::RTTI_Load(RTTI::MetaLoadContext *context) {
-    MetaClass::parent_type::RTTI_Load(context);
+void FContentPipelineNode::RTTI_Load(RTTI::FMetaLoadContext *context) {
+    FMetaClass::parent_type::RTTI_Load(context);
     RefreshFingerPrint_();
 }
 //----------------------------------------------------------------------------

@@ -23,27 +23,27 @@ namespace Core {
 template <
     typename _Key,
     typename _Value,
-    typename _Hasher = Hash<_Key>,
-    typename _EqualTo = Meta::EqualTo<_Key>,
-    typename _Allocator = ALLOCATOR(Container, Pair<_Key COMMA _Value>)
+    typename _Hasher = THash<_Key>,
+    typename _EqualTo = Meta::TEqualTo<_Key>,
+    typename _Allocator = ALLOCATOR(Container, TPair<_Key COMMA _Value>)
 >
-using HashMap = std::unordered_map<_Key, _Value, _Hasher, _EqualTo, _Allocator>;
+using THashMap = std::unordered_map<_Key, _Value, _Hasher, _EqualTo, _Allocator>;
 //----------------------------------------------------------------------------
 #define HASHMAP(_DOMAIN, _KEY, _VALUE) \
-    ::Core::HashMap<_KEY, _VALUE, ::Core::Hash<_KEY>, ::Core::Meta::EqualTo<_KEY>, ALLOCATOR(_DOMAIN, ::Core::Pair<_KEY COMMA _VALUE>)>
+    ::Core::THashMap<_KEY, _VALUE, ::Core::THash<_KEY>, ::Core::Meta::TEqualTo<_KEY>, ALLOCATOR(_DOMAIN, ::Core::TPair<_KEY COMMA _VALUE>)>
 //----------------------------------------------------------------------------
 #define HASHMAP_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE) \
-    ::Core::HashMap<_KEY, _VALUE, ::Core::Hash<_KEY>, ::Core::Meta::EqualTo<_KEY>, THREAD_LOCAL_ALLOCATOR(_DOMAIN, ::Core::Pair<_KEY COMMA _VALUE>)>
+    ::Core::THashMap<_KEY, _VALUE, ::Core::THash<_KEY>, ::Core::Meta::TEqualTo<_KEY>, THREAD_LOCAL_ALLOCATOR(_DOMAIN, ::Core::TPair<_KEY COMMA _VALUE>)>
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
-hash_t hash_value(const HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashMap) {
+hash_t hash_value(const THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashMap) {
     return hash_range(hashMap.begin(), hashMap.end());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
-bool TryGetValue(const HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashmap, const _Key& key, _Value *value) {
+bool TryGetValue(const THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashmap, const _Key& key, _Value *value) {
     Assert(value);
 
     const auto it = hashmap.find(key);
@@ -55,7 +55,7 @@ bool TryGetValue(const HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& has
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
-bool Insert_ReturnIfExists(HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashmap, const _Key& key, const _Value& value) {
+bool Insert_ReturnIfExists(THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashmap, const _Key& key, const _Value& value) {
     const auto it = hashmap.lower_bound(key);
     if (it != hashmap.end() && !(hashmap.key_comp()(key, it->first)) ) {
         Assert(it->second == value);
@@ -68,7 +68,7 @@ bool Insert_ReturnIfExists(HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>&
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
-void Insert_AssertUnique(HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashmap, const _Key& key, const _Value& value) {
+void Insert_AssertUnique(THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashmap, const _Key& key, const _Value& value) {
 #ifdef WITH_CORE_ASSERT
     const auto it = hashmap.lower_bound(key);
     if (it != hashmap.end() && !(hashmap.key_comp()(key, it->first)) )
@@ -81,7 +81,7 @@ void Insert_AssertUnique(HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& h
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
-bool Remove_ReturnIfExists(HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashmap, const _Key& key) {
+bool Remove_ReturnIfExists(THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashmap, const _Key& key) {
     const auto it = hashmap.find(key);
     if (hashmap.end() == it) {
         return false;
@@ -93,13 +93,13 @@ bool Remove_ReturnIfExists(HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>&
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
-void Remove_AssertExists(HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashmap, const _Key& key) {
+void Remove_AssertExists(THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashmap, const _Key& key) {
     if (!Remove_ReturnIfExists(hashmap, key))
         AssertNotReached();
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
-_Value Remove_ReturnValue(HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashmap, const _Key& key) {
+_Value Remove_ReturnValue(THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashmap, const _Key& key) {
     const auto it = hashmap.find(key);
     AssertRelease(hashmap.end() != it);
     _Value result(std::move(it->second));
@@ -108,7 +108,7 @@ _Value Remove_ReturnValue(HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& 
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
-void Remove_AssertExistsAndSameValue(HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashmap, const _Key& key, const _Value& value) {
+void Remove_AssertExistsAndSameValue(THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashmap, const _Key& key, const _Value& value) {
     const auto it = hashmap.find(key);
     if (hashmap.end() == it) {
         AssertNotReached();
@@ -130,7 +130,7 @@ template <
     typename _Char,
     typename _Traits
 >
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashMap) {
+std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashMap) {
     oss << "{ ";
     for (const auto& it : hashMap)
         oss << '(' << it.first << ", " << it.second << "), ";

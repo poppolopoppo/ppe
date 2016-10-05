@@ -20,41 +20,41 @@ union ScalarMatrixData {
 };
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
-class ScalarMatrix {
+class TScalarMatrix {
 public:
     template <typename U, size_t _Width2, size_t _Height2>
-    friend class ScalarMatrix;
+    friend class TScalarMatrix;
 
     STATIC_CONST_INTEGRAL(size_t, Width, _Width);
     STATIC_CONST_INTEGRAL(size_t, Height, _Height);
 
-    typedef ScalarVector<T, _Width> row_type;
-    typedef ScalarVector<T, _Height> column_type;
+    typedef TScalarVector<T, _Width> row_type;
+    typedef TScalarVector<T, _Height> column_type;
 
-    ScalarMatrix();
-    explicit ScalarMatrix(Meta::noinit_tag);
-    ~ScalarMatrix();
+    TScalarMatrix();
+    explicit TScalarMatrix(Meta::noinit_tag);
+    ~TScalarMatrix();
 
-    ScalarMatrix(T broadcast);
-    ScalarMatrix(std::initializer_list<T> values);
+    TScalarMatrix(T broadcast);
+    TScalarMatrix(std::initializer_list<T> values);
 
-    ScalarMatrix(const column_type& x);
-    ScalarMatrix(const column_type& x, const column_type& y);
-    ScalarMatrix(const column_type& x, const column_type& y, const column_type& z);
-    ScalarMatrix(const column_type& x, const column_type& y, const column_type& z, const column_type& w);
+    TScalarMatrix(const column_type& x);
+    TScalarMatrix(const column_type& x, const column_type& y);
+    TScalarMatrix(const column_type& x, const column_type& y, const column_type& z);
+    TScalarMatrix(const column_type& x, const column_type& y, const column_type& z, const column_type& w);
 
-    ScalarMatrix(const ScalarMatrix<T, _Width - 1, _Height>& other, const column_type& column);
-    ScalarMatrix(const ScalarMatrix<T, _Width, _Height - 1>& other, const row_type& row);
+    TScalarMatrix(const TScalarMatrix<T, _Width - 1, _Height>& other, const column_type& column);
+    TScalarMatrix(const TScalarMatrix<T, _Width, _Height - 1>& other, const row_type& row);
 
-    ScalarMatrix(const MemoryView<const T>& data);
+    TScalarMatrix(const TMemoryView<const T>& data);
 
-    FORCE_INLINE ScalarMatrix(const ScalarMatrix& other) { operator =(other); }
-    ScalarMatrix& operator =(const ScalarMatrix& other);
+    FORCE_INLINE TScalarMatrix(const TScalarMatrix& other) { operator =(other); }
+    TScalarMatrix& operator =(const TScalarMatrix& other);
 
     template <typename U>
-    FORCE_INLINE ScalarMatrix(const ScalarMatrix<U, _Width, _Height>& other) { operator =(other); }
+    FORCE_INLINE TScalarMatrix(const TScalarMatrix<U, _Width, _Height>& other) { operator =(other); }
     template <typename U>
-    ScalarMatrix& operator =(const ScalarMatrix<U, _Width, _Height>& other);
+    TScalarMatrix& operator =(const TScalarMatrix<U, _Width, _Height>& other);
 
     template <size_t _Idx>
     FORCE_INLINE column_type Column() const;
@@ -87,55 +87,55 @@ public:
     FORCE_INLINE void SetRow_w(const row_type& value) { return SetRow(3, value); }
 
     template <size_t _Idx>
-    ScalarVector<T, 3> Axis() const;
+    TScalarVector<T, 3> Axis() const;
     template <size_t _Idx>
-    void SetAxis(const ScalarVector<T, 3>& v);
+    void SetAxis(const TScalarVector<T, 3>& v);
 
-    FORCE_INLINE ScalarVector<T, 3> AxisX() const { return Axis<0>(); }
-    FORCE_INLINE ScalarVector<T, 3> AxisY() const { return Axis<1>(); }
-    FORCE_INLINE ScalarVector<T, 3> AxisZ() const { return Axis<2>(); }
-    FORCE_INLINE ScalarVector<T, 3> AxisT() const { return Axis<3>(); }
+    FORCE_INLINE TScalarVector<T, 3> AxisX() const { return Axis<0>(); }
+    FORCE_INLINE TScalarVector<T, 3> AxisY() const { return Axis<1>(); }
+    FORCE_INLINE TScalarVector<T, 3> AxisZ() const { return Axis<2>(); }
+    FORCE_INLINE TScalarVector<T, 3> AxisT() const { return Axis<3>(); }
 
-    FORCE_INLINE void SetAxisX(const ScalarVector<T, 3>& v) { SetAxis<0>(v); }
-    FORCE_INLINE void SetAxisY(const ScalarVector<T, 3>& v) { SetAxis<1>(v); }
-    FORCE_INLINE void SetAxisZ(const ScalarVector<T, 3>& v) { SetAxis<2>(v); }
-    FORCE_INLINE void SetAxisT(const ScalarVector<T, 3>& v) { SetAxis<3>(v); }
+    FORCE_INLINE void SetAxisX(const TScalarVector<T, 3>& v) { SetAxis<0>(v); }
+    FORCE_INLINE void SetAxisY(const TScalarVector<T, 3>& v) { SetAxis<1>(v); }
+    FORCE_INLINE void SetAxisZ(const TScalarVector<T, 3>& v) { SetAxis<2>(v); }
+    FORCE_INLINE void SetAxisT(const TScalarVector<T, 3>& v) { SetAxis<3>(v); }
 
-    ScalarVector<T, _Width> Diagonal() const;
-    void SetDiagonal(const ScalarVector<T, _Width>& v);
+    TScalarVector<T, _Width> Diagonal() const;
+    void SetDiagonal(const TScalarVector<T, _Width>& v);
 
     void SetBroadcast(T broadcast);
 
-    bool operator ==(const ScalarMatrix& other) const;
-    bool operator !=(const ScalarMatrix& other) const { return !operator ==(other); }
+    bool operator ==(const TScalarMatrix& other) const;
+    bool operator !=(const TScalarMatrix& other) const { return !operator ==(other); }
 
     template <size_t _NWidth>
-    ScalarMatrix<T, _NWidth, _Height> Multiply(const ScalarMatrix<T, _NWidth, _Width>& other) const;
+    TScalarMatrix<T, _NWidth, _Height> Multiply(const TScalarMatrix<T, _NWidth, _Width>& other) const;
 
-    ScalarVector<T, _Height> Multiply(const ScalarVector<T, _Width>& v) const;
-    ScalarVector<T, _Height> Multiply_OneExtend(const ScalarVector<T, _Width - 1>& v) const;
-    ScalarVector<T, _Height> Multiply_ZeroExtend(const ScalarVector<T, _Width - 1>& v) const;
+    TScalarVector<T, _Height> Multiply(const TScalarVector<T, _Width>& v) const;
+    TScalarVector<T, _Height> Multiply_OneExtend(const TScalarVector<T, _Width - 1>& v) const;
+    TScalarVector<T, _Height> Multiply_ZeroExtend(const TScalarVector<T, _Width - 1>& v) const;
 
     T Trace() const;
 
-    ScalarMatrix<T, _Height, _Width> Transpose() const;
+    TScalarMatrix<T, _Height, _Width> Transpose() const;
 
-    void Swap(ScalarMatrix& other);
+    void Swap(TScalarMatrix& other);
 
-    MemoryView<T> MakeView() { return Core::MakeView(_data.raw); }
-    MemoryView<const T> MakeView() const { return Core::MakeView(_data.raw); }
+    TMemoryView<T> MakeView() { return Core::MakeView(_data.raw); }
+    TMemoryView<const T> MakeView() const { return Core::MakeView(_data.raw); }
 
-    friend hash_t hash_value(const ScalarMatrix& m) { return hash_as_pod_array(m._data.raw); }
+    friend hash_t hash_value(const TScalarMatrix& m) { return hash_as_pod_array(m._data.raw); }
 
     template <typename U>
-    ScalarMatrix<U, _Width, _Height> Cast() const;
+    TScalarMatrix<U, _Width, _Height> Cast() const;
 
     template <size_t _NWidth, size_t _NHeight>
-    ScalarMatrix<T, _NWidth, _NHeight> Crop() const;
+    TScalarMatrix<T, _NWidth, _NHeight> Crop() const;
 
-    static ScalarMatrix One() { return ScalarMatrix(T(1)); }
-    static ScalarMatrix Zero() { return ScalarMatrix(T(0)); }
-    static ScalarMatrix Identity();
+    static TScalarMatrix One() { return TScalarMatrix(T(1)); }
+    static TScalarMatrix Zero() { return TScalarMatrix(T(0)); }
+    static TScalarMatrix Identity();
 
     STATIC_CONST_INTEGRAL(size_t, Dim, _Width * _Height);
 
@@ -191,8 +191,8 @@ public:
 #undef DECL_SCALARMATRIX_SCALAR_ACCESSOR
 
 #define DECL_SCALARMATRIX_SCALAR_OP_LHS(_Op) \
-    ScalarMatrix&   operator _Op##=(T scalar); \
-    ScalarMatrix    operator _Op(T scalar) const;
+    TScalarMatrix&   operator _Op##=(T scalar); \
+    TScalarMatrix    operator _Op(T scalar) const;
 
     DECL_SCALARMATRIX_SCALAR_OP_LHS(+)
     DECL_SCALARMATRIX_SCALAR_OP_LHS(-)
@@ -205,9 +205,9 @@ public:
 
 #define DECL_SCALARMATRIX_SCALAR_OP_RHS(_Op) \
     template <typename T, size_t _Width, size_t _Height> \
-    friend ScalarMatrix<T, _Width, _Height> operator _Op(T lhs, const ScalarMatrix<T, _Width, _Height>& rhs); \
+    friend TScalarMatrix<T, _Width, _Height> operator _Op(T lhs, const TScalarMatrix<T, _Width, _Height>& rhs); \
     template <typename U, typename T, size_t _Width, size_t _Height> \
-    friend ScalarMatrix<T, _Width, _Height> operator _Op(U lhs, const ScalarMatrix<T, _Width, _Height>& rhs);
+    friend TScalarMatrix<T, _Width, _Height> operator _Op(U lhs, const TScalarMatrix<T, _Width, _Height>& rhs);
 
     DECL_SCALARMATRIX_SCALAR_OP_RHS(+)
     DECL_SCALARMATRIX_SCALAR_OP_RHS(-)
@@ -218,16 +218,16 @@ public:
 
 #undef DECL_SCALARMATRIX_SCALAR_OP_RHS
 
-    ScalarMatrix    operator -() const;
+    TScalarMatrix    operator -() const;
 
-    ScalarMatrix&   operator +=(const ScalarMatrix& other);
-    ScalarMatrix&   operator -=(const ScalarMatrix& other);
+    TScalarMatrix&   operator +=(const TScalarMatrix& other);
+    TScalarMatrix&   operator -=(const TScalarMatrix& other);
 
-    ScalarMatrix    operator +(const ScalarMatrix& other) const;
-    ScalarMatrix    operator -(const ScalarMatrix& other) const;
+    TScalarMatrix    operator +(const TScalarMatrix& other) const;
+    TScalarMatrix    operator -(const TScalarMatrix& other) const;
 
     template <size_t _NWidth>
-    ScalarMatrix<T, _NWidth, _Height> operator *(const ScalarMatrix<T, _NWidth, _Width>& other) const {
+    TScalarMatrix<T, _NWidth, _Height> operator *(const TScalarMatrix<T, _NWidth, _Width>& other) const {
         return Multiply(other);
     }
 };
@@ -237,14 +237,14 @@ public:
 template <typename _Char, typename _Traits, typename T, size_t _Width, size_t _Height>
 std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
-    const ScalarMatrix<T, _Width, _Height>& v) {
+    const TScalarMatrix<T, _Width, _Height>& v) {
     for (size_t i = 0; i < _Height; ++i)
         oss << v.Row(i) << std::endl;
     return oss;
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
-void swap(ScalarMatrix<T, _Width, _Height>& lhs, ScalarMatrix<T, _Width, _Height>& rhs) {
+void swap(TScalarMatrix<T, _Width, _Height>& lhs, TScalarMatrix<T, _Width, _Height>& rhs) {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------

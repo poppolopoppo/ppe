@@ -8,7 +8,7 @@
 #include "Core.Engine/Service/Service_fwd.h"
 
 namespace Core {
-struct Guid;
+struct FGuid;
 
 namespace Graphics {
 FWD_REFPTR(GraphicsWindow);
@@ -25,35 +25,35 @@ protected:
 public:
     virtual ~IDeviceEncapsulatorService() {}
 
-    virtual Graphics::DeviceEncapsulator *DeviceEncapsulator() = 0;
-    virtual const Graphics::DeviceEncapsulator *DeviceEncapsulator() const = 0;
+    virtual Graphics::FDeviceEncapsulator *FDeviceEncapsulator() = 0;
+    virtual const Graphics::FDeviceEncapsulator *FDeviceEncapsulator() const = 0;
 
     ENGINESERVICE_GUID_DECL(IDeviceEncapsulatorService);
 };
 //----------------------------------------------------------------------------
-class DefaultDeviceEncapsulatorService : public IDeviceEncapsulatorService {
+class FDefaultDeviceEncapsulatorService : public IDeviceEncapsulatorService {
 public:
-    DefaultDeviceEncapsulatorService(   Graphics::DeviceAPI api,
-                                        const Graphics::GraphicsWindow *window,
-                                        const Graphics::PresentationParameters& presentationParameters);
-    virtual ~DefaultDeviceEncapsulatorService();
+    FDefaultDeviceEncapsulatorService(   Graphics::EDeviceAPI api,
+                                        const Graphics::FGraphicsWindow *window,
+                                        const Graphics::FPresentationParameters& presentationParameters);
+    virtual ~FDefaultDeviceEncapsulatorService();
 
-    const Graphics::DeviceAPI DeviceAPI() const { return _deviceAPI; }
-    const Graphics::GraphicsWindow *Window() const { return _window.get(); }
-    const Graphics::PresentationParameters& PresentationParameters() const { return _presentationParameters; }
+    const Graphics::EDeviceAPI EDeviceAPI() const { return _deviceAPI; }
+    const Graphics::FGraphicsWindow *Window() const { return _window.get(); }
+    const Graphics::FPresentationParameters& FPresentationParameters() const { return _presentationParameters; }
 
-    virtual Graphics::DeviceEncapsulator *DeviceEncapsulator() override;
-    virtual const Graphics::DeviceEncapsulator *DeviceEncapsulator() const override;
+    virtual Graphics::FDeviceEncapsulator *FDeviceEncapsulator() override;
+    virtual const Graphics::FDeviceEncapsulator *FDeviceEncapsulator() const override;
 
-    virtual void Start(IServiceProvider *provider, const Guid& guid) override;
-    virtual void Shutdown(IServiceProvider *provider, const Guid& guid) override;
+    virtual void Start(IServiceProvider *provider, const FGuid& guid) override;
+    virtual void Shutdown(IServiceProvider *provider, const FGuid& guid) override;
 
 private:
-    Graphics::DeviceAPI _deviceAPI;
+    Graphics::EDeviceAPI _deviceAPI;
     Graphics::SCGraphicsWindow _window;
-    Graphics::PresentationParameters _presentationParameters;
+    Graphics::FPresentationParameters _presentationParameters;
 
-    Graphics::DeviceEncapsulator _deviceEncapsulator;
+    Graphics::FDeviceEncapsulator _deviceEncapsulator;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

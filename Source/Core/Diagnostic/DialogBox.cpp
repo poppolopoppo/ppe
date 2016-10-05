@@ -53,36 +53,36 @@ static LPCWSTR SystemIcon_(Dialog::Icon iconType) {
     return nullptr;
 }
 //----------------------------------------------------------------------------
-static WStringView ResultCaption_(Dialog::Result result) {
+static FWStringView ResultCaption_(Dialog::EResult result) {
     switch (result)
     {
-    case Core::Dialog::Result::Ok:
+    case Core::Dialog::EResult::Ok:
         return L"Ok";
-    case Core::Dialog::Result::Cancel:
+    case Core::Dialog::EResult::Cancel:
         return L"Cancel";
-    case Core::Dialog::Result::Abort:
+    case Core::Dialog::EResult::Abort:
         return L"Abort";
-    case Core::Dialog::Result::Retry:
+    case Core::Dialog::EResult::Retry:
         return L"Retry";
-    case Core::Dialog::Result::Ignore:
+    case Core::Dialog::EResult::Ignore:
         return L"Ignore";
-    case Core::Dialog::Result::Yes:
+    case Core::Dialog::EResult::Yes:
         return L"Yes";
-    case Core::Dialog::Result::No:
+    case Core::Dialog::EResult::No:
         return L"No";
-    case Core::Dialog::Result::TryAgain:
+    case Core::Dialog::EResult::TryAgain:
         return L"Try Again";
-    case Core::Dialog::Result::Continue:
+    case Core::Dialog::EResult::Continue:
         return L"Continue";
-    case Core::Dialog::Result::IgnoreAlways:
+    case Core::Dialog::EResult::IgnoreAlways:
         return L"Ignore Always";
     default:
         AssertNotImplemented();
     }
-    return WStringView();
+    return FWStringView();
 }
 //----------------------------------------------------------------------------
-static void SetClipboard_(HWND hwndDlg, const WStringView& content)
+static void SetClipboard_(HWND hwndDlg, const FWStringView& content)
 {
     HANDLE handle = (HANDLE)::GlobalAlloc(GHND|GMEM_ZEROINIT, (content.size()+1)*sizeof(wchar_t));
     if(handle != NULL)
@@ -100,7 +100,7 @@ static void SetClipboard_(HWND hwndDlg, const WStringView& content)
     ::GlobalFree(handle);
 }
 //----------------------------------------------------------------------------
-static void ExternalEditor_(const WStringView& filename, size_t line) {
+static void ExternalEditor_(const FWStringView& filename, size_t line) {
     Assert(not filename.empty());
 
 	STACKLOCAL_OCSTRSTREAM(oss, 4096);
@@ -112,7 +112,7 @@ static void ExternalEditor_(const WStringView& filename, size_t line) {
     ::WinExec(oss.NullTerminatedStr(), SW_SHOW);
 }
 //----------------------------------------------------------------------------
-enum class AtomClass_ {
+enum class EAtomClass_ {
     Predefined  = 0,
     Button      = 0x0080,
     Edit        = 0x0081,
@@ -128,15 +128,15 @@ static constexpr size_t DIALOG_ID_MINIDUMP  = 152;
 static constexpr size_t DIALOG_ID_COPY      = 153;
 static constexpr size_t DIALOG_ID_BREAK     = 154;
 static constexpr size_t DIALOG_ID_ICON      = 155;
-static constexpr size_t ResultToID_(Dialog::Result button) { return 200+size_t(button); }
-static constexpr Dialog::Result IDToResult_(size_t id) { return Dialog::Result(id-200); }
+static constexpr size_t ResultToID_(Dialog::EResult button) { return 200+size_t(button); }
+static constexpr Dialog::EResult IDToResult_(size_t id) { return Dialog::EResult(id-200); }
 //----------------------------------------------------------------------------
 static void Template_AddItem_(
-    MemoryViewWriter& writer,
+    FMemoryViewWriter& writer,
     size_t x, size_t y,
     size_t cx, size_t cy,
     size_t id, size_t style,
-    AtomClass_ klass ) {
+    EAtomClass_ klass ) {
     const auto eaten = writer.EatAligned(sizeof(::DLGITEMTEMPLATE), sizeof(DWORD));
     Assert(IS_ALIGNED(sizeof(DWORD), eaten.Pointer()));
     ::LPDLGITEMTEMPLATE const tpl = reinterpret_cast<::LPDLGITEMTEMPLATE>(eaten.Pointer());
@@ -148,7 +148,7 @@ static void Template_AddItem_(
     tpl->id = checked_cast<WORD>(id);
     tpl->style = checked_cast<DWORD>(style);
 
-    if (klass == AtomClass_::Predefined) {
+    if (klass == EAtomClass_::Predefined) {
         writer.WritePOD(u32(0));
     }
     else {
@@ -157,33 +157,33 @@ static void Template_AddItem_(
     }
 }
 //----------------------------------------------------------------------------
-static void Template_AddCaption_(MemoryViewWriter& writer, const WStringView& caption ) {
+static void Template_AddCaption_(FMemoryViewWriter& writer, const FWStringView& caption ) {
     writer.Write(caption.Pointer(), caption.SizeInBytes());
     if (caption.back() != L'\0')
         writer.WritePOD(L'\0');
 }
 //----------------------------------------------------------------------------
 static void Template_AddButton_(
-	MemoryViewWriter& writer,
+	FMemoryViewWriter& writer,
 	size_t x, size_t y,
 	size_t cx, size_t cy,
 	size_t id,
-	const WStringView& caption ) {
+	const FWStringView& caption ) {
 	Template_AddItem_(writer, x, y, cx, cy,
 		id,
-		WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, AtomClass_::Button);
+		WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, EAtomClass_::Button);
 	Template_AddCaption_(writer, caption);
 	writer.WritePOD(WORD(0)); // no creation data
 }
 //----------------------------------------------------------------------------
-struct Template_DialogContext_ {
-    WStringView Text;
-    WStringView Caption;
-    Dialog::Type Buttons;
+struct FTemplate_DialogContext_ {
+    FWStringView Text;
+    FWStringView Caption;
+    Dialog::EType Buttons;
     LPCWSTR IconId;
     HICON IconResource;
-    DecodedCallstack DecodedCallstack;
-    MemoryView<const WString> CallstackFrames;
+    FDecodedCallstack DecodedCallstack;
+    TMemoryView<const FWString> CallstackFrames;
 };
 //----------------------------------------------------------------------------
 static LRESULT CALLBACK Template_TextProc_(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -197,7 +197,7 @@ static LRESULT CALLBACK Template_TextProc_(HWND hwndDlg, UINT message, WPARAM wP
                 wchar_t buffer[2048];
                 DWORD length = ::GetWindowTextW(hwndDlg, buffer, lengthof(buffer));
 
-                const WStringView text(buffer, length);
+                const FWStringView text(buffer, length);
             }
             break;
 
@@ -220,7 +220,7 @@ static LRESULT CALLBACK Template_StackProc_(HWND hwndDlg, UINT message, WPARAM w
                 HWND window = ::GetParent(hwndDlg);
                 LRESULT index = ::SendDlgItemMessage(window, DIALOG_ID_STACK, LB_GETCURSEL, 0, 0);
                 if (index != LB_ERR) {
-                    const Template_DialogContext_* ctx = reinterpret_cast<const Template_DialogContext_*>(::GetWindowLongPtr(window, GWLP_USERDATA));
+                    const FTemplate_DialogContext_* ctx = reinterpret_cast<const FTemplate_DialogContext_*>(::GetWindowLongPtr(window, GWLP_USERDATA));
                     Assert(ctx);
 
                     LOG(Info, L"double click on frame : >>> {0} <<<", ctx->CallstackFrames[index]);
@@ -246,7 +246,7 @@ static LRESULT CALLBACK Template_DialogProc_(HWND hwndDlg, UINT message, WPARAM 
     case WM_INITDIALOG:
         {
             Assert(lParam);
-            const Template_DialogContext_* ctx = reinterpret_cast<const Template_DialogContext_*>(lParam);
+            const FTemplate_DialogContext_* ctx = reinterpret_cast<const FTemplate_DialogContext_*>(lParam);
 
             ::SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)ctx);
 
@@ -261,7 +261,7 @@ static LRESULT CALLBACK Template_DialogProc_(HWND hwndDlg, UINT message, WPARAM 
             ::HWND stack = ::GetDlgItem(hwndDlg, DIALOG_ID_STACK);
             ::SetWindowLongPtr(stack, GWLP_USERDATA, ::SetWindowLongPtr(stack, GWLP_WNDPROC, (LPARAM)Template_StackProc_));
             ::SendMessage(stack, LB_SETHORIZONTALEXTENT, 4096, 0);
-            for (const WString& str : ctx->CallstackFrames)
+            for (const FWString& str : ctx->CallstackFrames)
                 ::SendMessageW(stack, LB_ADDSTRING, 0, (LPARAM)str.c_str());
 
             ::RECT rect;
@@ -278,32 +278,32 @@ static LRESULT CALLBACK Template_DialogProc_(HWND hwndDlg, UINT message, WPARAM 
     case WM_COMMAND:
         switch (LOWORD(wParam))
         {
-        case ResultToID_(Dialog::Result::Ok):
-        case ResultToID_(Dialog::Result::Cancel):
-        case ResultToID_(Dialog::Result::Abort):
-        case ResultToID_(Dialog::Result::Retry):
-        case ResultToID_(Dialog::Result::Ignore):
-        case ResultToID_(Dialog::Result::Yes):
-        case ResultToID_(Dialog::Result::No):
-        case ResultToID_(Dialog::Result::TryAgain):
-        case ResultToID_(Dialog::Result::Continue):
-        case ResultToID_(Dialog::Result::IgnoreAlways):
+        case ResultToID_(Dialog::EResult::Ok):
+        case ResultToID_(Dialog::EResult::Cancel):
+        case ResultToID_(Dialog::EResult::Abort):
+        case ResultToID_(Dialog::EResult::Retry):
+        case ResultToID_(Dialog::EResult::Ignore):
+        case ResultToID_(Dialog::EResult::Yes):
+        case ResultToID_(Dialog::EResult::No):
+        case ResultToID_(Dialog::EResult::TryAgain):
+        case ResultToID_(Dialog::EResult::Continue):
+        case ResultToID_(Dialog::EResult::IgnoreAlways):
             ::EndDialog(hwndDlg, LOWORD(wParam));
             return TRUE;
 
         case DIALOG_ID_COPY:
             {
-                const Template_DialogContext_* ctx = reinterpret_cast<const Template_DialogContext_*>(::GetWindowLongPtr(hwndDlg, GWLP_USERDATA));
+                const FTemplate_DialogContext_* ctx = reinterpret_cast<const FTemplate_DialogContext_*>(::GetWindowLongPtr(hwndDlg, GWLP_USERDATA));
                 Assert(ctx);
 
-                ThreadLocalWOStringStream oss;
+                FThreadLocalWOStringStream oss;
                 oss << ctx->Text << L"\r\n"
                     << L"\r\n"
                     << L"----------------------------------------------------------------\r\n"
-                    << L"Callstack:" << L"\r\n"
+                    << L"FCallstack:" << L"\r\n"
                     << L"----------------------------------------------------------------\r\n";
 
-                for (const WString& frame : ctx->CallstackFrames)
+                for (const FWString& frame : ctx->CallstackFrames)
                     oss << frame << L"\r\n";
 
                 SetClipboard_(hwndDlg, MakeStringView(oss.str()));
@@ -318,11 +318,11 @@ static LRESULT CALLBACK Template_DialogProc_(HWND hwndDlg, UINT message, WPARAM 
 
         case DIALOG_ID_MINIDUMP:
             {
-                const Filename process(CurrentProcess::Instance().FileName());
-                const Filename vfs(process.Dirpath(),
-                    VirtualFileSystem::TemporaryBasename(process.BasenameNoExt().c_str(), L".dmp"));
+                const FFilename process(FCurrentProcess::Instance().FileName());
+                const FFilename vfs(process.Dirpath(),
+                    FVirtualFileSystem::TemporaryBasename(process.BasenameNoExt().c_str(), L".dmp"));
 
-                const WString path = vfs.ToWString();
+                const FWString path = vfs.ToWString();
 
                 MiniDump::Write(path.c_str(), MiniDump::InfoLevel::Large);
 
@@ -336,44 +336,44 @@ static LRESULT CALLBACK Template_DialogProc_(HWND hwndDlg, UINT message, WPARAM 
     return FALSE;
 }
 //----------------------------------------------------------------------------
-static constexpr Dialog::Result gTemplate_AllButtons[] = {
-    Dialog::Result::Ok,
-    Dialog::Result::Retry,
-    Dialog::Result::Ignore,
-    Dialog::Result::Yes,
-    Dialog::Result::TryAgain,
-    Dialog::Result::Continue,
-    Dialog::Result::IgnoreAlways,
-    Dialog::Result::No,
-    Dialog::Result::Cancel,
-    Dialog::Result::Abort,
+static constexpr Dialog::EResult gTemplate_AllButtons[] = {
+    Dialog::EResult::Ok,
+    Dialog::EResult::Retry,
+    Dialog::EResult::Ignore,
+    Dialog::EResult::Yes,
+    Dialog::EResult::TryAgain,
+    Dialog::EResult::Continue,
+    Dialog::EResult::IgnoreAlways,
+    Dialog::EResult::No,
+    Dialog::EResult::Cancel,
+    Dialog::EResult::Abort,
 };
 //----------------------------------------------------------------------------
-static Dialog::Result Template_CreateDialogBox_(
+static Dialog::EResult Template_CreateDialogBox_(
     Dialog::Icon icon,
-    Dialog::Type buttons,
-    const WStringView& text,
-    const WStringView& caption ) {
+    Dialog::EType buttons,
+    const FWStringView& text,
+    const FWStringView& caption ) {
 	STATIC_ASSERT(sizeof(u16) == sizeof(WORD));
 	STATIC_ASSERT(sizeof(u32) == sizeof(DWORD));
 
-    Template_DialogContext_ ctx;
+    FTemplate_DialogContext_ ctx;
     ctx.Text = text;
     ctx.Caption = caption;
     ctx.Buttons = buttons;
     ctx.IconId = SystemIcon_(icon);
     ctx.IconResource = ::LoadIconW(nullptr, ctx.IconId);
 
-    VECTORINSITU(Diagnostic, WString, Callstack::MaxDepth) callstackFrames;
+    VECTORINSITU(Diagnostic, FWString, FCallstack::MaxDepth) callstackFrames;
     {
-        Callstack callstack;
-        Callstack::Capture(&callstack, 4, Callstack::MaxDepth);
+        FCallstack callstack;
+        FCallstack::Capture(&callstack, 4, FCallstack::MaxDepth);
 
-        ctx.DecodedCallstack = DecodedCallstack(callstack);
+        ctx.DecodedCallstack = FDecodedCallstack(callstack);
         callstackFrames.reserve(ctx.DecodedCallstack.Frames().size());
 
         STACKLOCAL_WOCSTRSTREAM(tmp, 4096);
-        for (const DecodedCallstack::Frame& frame : ctx.DecodedCallstack.Frames()) {
+        for (const FDecodedCallstack::FFrame& frame : ctx.DecodedCallstack.Frames()) {
             tmp << frame.Filename() << L'(' << frame.Line() << L"): " << frame.Symbol();
             callstackFrames.emplace_back(tmp.NullTerminatedStr());
             tmp.Reset();
@@ -390,7 +390,7 @@ static Dialog::Result Template_CreateDialogBox_(
         constexpr size_t buttonWidthPadding = 3;
         constexpr size_t buttonHeight = 15;
 
-        MemoryViewWriter writer(MemoryView<u8>((u8*)::GlobalLock(hgbl), gAllocSize));
+        FMemoryViewWriter writer(TMemoryView<u8>((u8*)::GlobalLock(hgbl), gAllocSize));
 
         const auto eaten = writer.Eat(sizeof(::DLGTEMPLATE));
         Assert(IS_ALIGNED(sizeof(DWORD), eaten.Pointer()));
@@ -404,7 +404,7 @@ static Dialog::Result Template_CreateDialogBox_(
         tpl->cdit = 0;
 
         writer.WritePOD(WORD(0)); // No menu
-        writer.WritePOD(WORD(AtomClass_::Predefined)); // default class
+        writer.WritePOD(WORD(EAtomClass_::Predefined)); // default class
 
         Template_AddCaption_(writer, caption);
 
@@ -415,11 +415,11 @@ static Dialog::Result Template_CreateDialogBox_(
         const size_t buttonTop = tpl->cy - 5 - buttonHeight;
         size_t buttonRight = tpl->cx - 2;
 
-        for (Dialog::Result button : gTemplate_AllButtons) {
+        for (Dialog::EResult button : gTemplate_AllButtons) {
             if (((size_t)1<<(size_t)button) != (((size_t)1<<(size_t)button) & (size_t)buttons))
                 continue;
 
-            const WStringView buttonCaption = ResultCaption_(button);
+            const FWStringView buttonCaption = ResultCaption_(button);
 
             const size_t w = buttonWidthPadding*2 + buttonWidthPerChar*buttonCaption.size();
             buttonRight -= buttonWidthPadding + w;
@@ -439,21 +439,21 @@ static Dialog::Result Template_CreateDialogBox_(
 
         Template_AddItem_(writer, 15, 10, 32, 32,
 			DIALOG_ID_ICON,
-            WS_CHILD | WS_VISIBLE | SS_ICON | SS_LEFT, AtomClass_::Static);
+            WS_CHILD | WS_VISIBLE | SS_ICON | SS_LEFT, EAtomClass_::Static);
         writer.WritePOD(WORD(0)); // no caption text
         writer.WritePOD(WORD(0)); // no creation data
         tpl->cdit++;
 
 		Template_AddItem_(writer, 45, 8, 350, 47,
 			DIALOG_ID_TEXT,
-			WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_MULTILINE | ES_READONLY, AtomClass_::Edit);
+			WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_MULTILINE | ES_READONLY, EAtomClass_::Edit);
         Template_AddCaption_(writer, text);
         writer.WritePOD(WORD(0)); // no creation data
         tpl->cdit++;
 
         Template_AddItem_(writer, 5, 5+50+5, 390, 127,
 			DIALOG_ID_STACK,
-            WS_BORDER | WS_HSCROLL | WS_VSCROLL | WS_CHILD | WS_VISIBLE, AtomClass_::ListBox);
+            WS_BORDER | WS_HSCROLL | WS_VSCROLL | WS_CHILD | WS_VISIBLE, EAtomClass_::ListBox);
         writer.WritePOD(WORD(0));
         tpl->cdit++;
     }
@@ -461,14 +461,14 @@ static Dialog::Result Template_CreateDialogBox_(
 
     const INT_PTR ret = DialogBoxIndirectParamW(NULL, (::LPDLGTEMPLATE)hgbl, NULL, (::DLGPROC)Template_DialogProc_, (LPARAM)&ctx);
     if (-1 == ret) {
-        const WString lastError = GetLastErrorToWString(GetLastError());
+        const FWString lastError = GetLastErrorToWString(GetLastError());
         LOG(Error, L"Failed to create dialog box : {0}", lastError);
         AssertNotReached();
     }
 
     ::GlobalFree(hgbl);
 
-    return (Dialog::Result)IDToResult_(ret);
+    return (Dialog::EResult)IDToResult_(ret);
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -476,7 +476,7 @@ static Dialog::Result Template_CreateDialogBox_(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Dialog::Result Show(const WStringView& text, const WStringView& caption, Dialog::Type dialogType, Dialog::Icon iconType) {
+Dialog::EResult Show(const FWStringView& text, const FWStringView& caption, Dialog::EType dialogType, Dialog::Icon iconType) {
     Assert(not text.empty());
     Assert(not caption.empty());
 #ifdef OS_WINDOWS

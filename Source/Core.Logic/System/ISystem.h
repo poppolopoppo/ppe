@@ -9,27 +9,27 @@
 #include "Core/Memory/RefPtr.h"
 
 namespace Core {
-class Timeline;
+class FTimeline;
 
 namespace Logic {
-class EntityManager;
+class FEntityManager;
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ISystem : public RefCountable {
+class ISystem : public FRefCountable {
 public:
     virtual ~ISystem() {}
 
     virtual bool Enabled() const = 0;
     
-    virtual void Initialize(EntityManager& manager) = 0;
-    virtual void Destroy(EntityManager& manager) = 0;
+    virtual void Initialize(FEntityManager& manager) = 0;
+    virtual void Destroy(FEntityManager& manager) = 0;
 
-    virtual void Update(const Timeline& timeline) = 0;
+    virtual void Update(const FTimeline& timeline) = 0;
 
-    virtual void OnEntityDeleted(const Entity& entity) = 0;
-    virtual void OnEntityRefresh(const Entity& entity, ComponentFlag previousComponents) = 0;
+    virtual void OnEntityDeleted(const FEntity& entity) = 0;
+    virtual void OnEntityRefresh(const FEntity& entity, ComponentFlag previousComponents) = 0;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -30,13 +30,13 @@ void NetworkStartup::Start() {
 
     POOL_TAG(Network)::Start();
 
-    Socket::Start();
+    FSocket::Start();
 }
 //----------------------------------------------------------------------------
 void NetworkStartup::Shutdown() {
     CORE_MODULE_SHUTDOWN(Network);
 
-    Socket::Shutdown();
+    FSocket::Shutdown();
 
     POOL_TAG(Network)::Shutdown();
 }

@@ -22,15 +22,15 @@ namespace Engine {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static String RenderLayerSetRenderTargetName_(AbstractRenderSurface *surface) {
+static FString RenderLayerSetRenderTargetName_(FAbstractRenderSurface *surface) {
 #ifdef WITH_CORE_ENGINE_RENDERLAYER_DEBUGNAME
     return StringFormat("SetRenderTarget_{0}", surface->Name());
 #else
-    return String();
+    return FString();
 #endif
 }
 //----------------------------------------------------------------------------
-static String RenderLayerSetRenderTargetName_(const MemoryView<const PAbstractRenderSurface>& surfaces) {
+static FString RenderLayerSetRenderTargetName_(const TMemoryView<const PAbstractRenderSurface>& surfaces) {
 #ifdef WITH_CORE_ENGINE_RENDERLAYER_DEBUGNAME
     STACKLOCAL_OCSTRSTREAM(oss, 2048);
     oss << "SetRenderTargets";
@@ -38,7 +38,7 @@ static String RenderLayerSetRenderTargetName_(const MemoryView<const PAbstractRe
         oss << "_" << surface->Name();
     return ToString(oss.MakeView());
 #else
-    return String();
+    return FString();
 #endif
 }
 //----------------------------------------------------------------------------
@@ -46,18 +46,18 @@ static String RenderLayerSetRenderTargetName_(const MemoryView<const PAbstractRe
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, RenderLayerSetRenderTarget, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, FRenderLayerSetRenderTarget, );
 //----------------------------------------------------------------------------
-RenderLayerSetRenderTarget::RenderLayerSetRenderTarget(AbstractRenderSurface *surface)
-:   AbstractRenderLayer(RenderLayerSetRenderTargetName_(surface))
+FRenderLayerSetRenderTarget::FRenderLayerSetRenderTarget(FAbstractRenderSurface *surface)
+:   FAbstractRenderLayer(RenderLayerSetRenderTargetName_(surface))
 ,   _count(1) {
     Assert(surface);
 
     _surfaces[0] = surface;
 }
 //----------------------------------------------------------------------------
-RenderLayerSetRenderTarget::RenderLayerSetRenderTarget(const MemoryView<const PAbstractRenderSurface>& surfaces)
-:   AbstractRenderLayer(RenderLayerSetRenderTargetName_(surfaces))
+FRenderLayerSetRenderTarget::FRenderLayerSetRenderTarget(const TMemoryView<const PAbstractRenderSurface>& surfaces)
+:   FAbstractRenderLayer(RenderLayerSetRenderTargetName_(surfaces))
 ,   _count(surfaces.size()) {
     Assert(!surfaces.empty());
     Assert(surfaces.size() < MaxSurface); // hard coded value from directx11 macro D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT
@@ -68,8 +68,8 @@ RenderLayerSetRenderTarget::RenderLayerSetRenderTarget(const MemoryView<const PA
     }
 }
 //----------------------------------------------------------------------------
-RenderLayerSetRenderTarget::RenderLayerSetRenderTarget(const MemoryView<const PAbstractRenderSurface>& surfaces, const PAbstractRenderSurface& depthStencil)
-:   AbstractRenderLayer(RenderLayerSetRenderTargetName_(surfaces))
+FRenderLayerSetRenderTarget::FRenderLayerSetRenderTarget(const TMemoryView<const PAbstractRenderSurface>& surfaces, const PAbstractRenderSurface& depthStencil)
+:   FAbstractRenderLayer(RenderLayerSetRenderTargetName_(surfaces))
 ,   _count(surfaces.size() + 1) {
     Assert(!surfaces.empty());
     Assert(depthStencil);
@@ -83,23 +83,23 @@ RenderLayerSetRenderTarget::RenderLayerSetRenderTarget(const MemoryView<const PA
     _surfaces[_count - 1] = depthStencil;
 }
 //----------------------------------------------------------------------------
-RenderLayerSetRenderTarget::~RenderLayerSetRenderTarget() {}
+FRenderLayerSetRenderTarget::~FRenderLayerSetRenderTarget() {}
 //----------------------------------------------------------------------------
-void RenderLayerSetRenderTarget::PrepareImpl_(
+void FRenderLayerSetRenderTarget::PrepareImpl_(
     Graphics::IDeviceAPIEncapsulator *device,
-    MaterialDatabase * /* materialDatabase */,
-    const RenderTree * /* renderTree */,
-    VariabilitySeed  * /* seeds */) {
+    FMaterialDatabase * /* materialDatabase */,
+    const FRenderTree * /* renderTree */,
+    FVariabilitySeed  * /* seeds */) {
     for (size_t i = 0; i < _count; ++i)
         _surfaces[i]->Prepare(device, _surfaceLocks[i]);
 }
 //----------------------------------------------------------------------------
-void RenderLayerSetRenderTarget::RenderImpl_(Graphics::IDeviceAPIContext *context) {
+void FRenderLayerSetRenderTarget::RenderImpl_(Graphics::IDeviceAPIContext *context) {
     if (1 == _count) {
         // only one render target
 
-        const Graphics::RenderTarget *rt = nullptr;
-        const Graphics::DepthStencil *ds = nullptr;
+        const Graphics::FRenderTarget *rt = nullptr;
+        const Graphics::FDepthStencil *ds = nullptr;
         _surfaceLocks[0]->Acquire(&rt, &ds);
         _surfaceLocks[0]->Unbind(context);
 
@@ -114,12 +114,12 @@ void RenderLayerSetRenderTarget::RenderImpl_(Graphics::IDeviceAPIContext *contex
         // Multiple Render Target (MRT)
         Assert(_count > 0);
 
-        STACKLOCAL_POD_STACK(Graphics::RenderTargetBinding, actualRTs, _count);
-        const Graphics::DepthStencil *actualDS = nullptr;
+        STACKLOCAL_POD_STACK(Graphics::FRenderTargetBinding, actualRTs, _count);
+        const Graphics::FDepthStencil *actualDS = nullptr;
 
         for (size_t i = 0; i < _count; ++i) {
-            const Graphics::RenderTarget *rt = nullptr;
-            const Graphics::DepthStencil *ds = nullptr;
+            const Graphics::FRenderTarget *rt = nullptr;
+            const Graphics::FDepthStencil *ds = nullptr;
             _surfaceLocks[i]->Acquire(&rt, &ds);
             _surfaceLocks[i]->Unbind(context);
 
@@ -139,7 +139,7 @@ void RenderLayerSetRenderTarget::RenderImpl_(Graphics::IDeviceAPIContext *contex
     }
 }
 //----------------------------------------------------------------------------
-void RenderLayerSetRenderTarget::DestroyImpl_(Graphics::IDeviceAPIEncapsulator *device, const RenderTree * /* renderTree */) {
+void FRenderLayerSetRenderTarget::DestroyImpl_(Graphics::IDeviceAPIEncapsulator *device, const FRenderTree * /* renderTree */) {
     for (size_t i = 0; i < _count; ++i)
         _surfaces[i]->Destroy(device, _surfaceLocks[i]);
 }

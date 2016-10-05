@@ -21,18 +21,18 @@ namespace Compression {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static const FourCC FILE_MAGIC_     ("LZ4B");
-static const FourCC FILE_VERSION_   ("1.00");
+static const FFourCC FILE_MAGIC_     ("LZ4B");
+static const FFourCC FILE_VERSION_   ("1.00");
 //----------------------------------------------------------------------------
-struct FileHeader_ {
-    FourCC  Magic;
-    FourCC  Version;
+struct FFileHeader_ {
+    FFourCC  Magic;
+    FFourCC  Version;
     u32     SizeInBytes;
     u32     Fingerpint;
 };
-STATIC_ASSERT(sizeof(FileHeader_) == 16);
+STATIC_ASSERT(sizeof(FFileHeader_) == 16);
 //----------------------------------------------------------------------------
-static u32 StreamFingerprint_(const MemoryView<const u8>& src) {
+static u32 StreamFingerprint_(const TMemoryView<const u8>& src) {
 #if WITH_CORE_COMPRESSION_FINGERPRINT
     return Fingerprint32(src);
 #else
@@ -46,25 +46,25 @@ static u32 StreamFingerprint_(const MemoryView<const u8>& src) {
 //----------------------------------------------------------------------------
 size_t CompressedSizeUpperBound(size_t sizeInBytes) {
     return checked_cast<size_t>(::LZ4_compressBound(checked_cast<int>(sizeInBytes)))
-        + sizeof(FileHeader_);
+        + sizeof(FFileHeader_);
 }
 //----------------------------------------------------------------------------
-size_t CompressMemory(const MemoryView<u8>& dst, const MemoryView<const u8>& src, CompressMethod method /* = Default */) {
+size_t CompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& src, ECompressMethod method /* = Default */) {
     Assert(dst.Pointer());
     Assert(dst.size() >= CompressedSizeUpperBound(src.SizeInBytes()));
 
-    FileHeader_* const pheader = reinterpret_cast<FileHeader_*>(dst.Pointer());
+    FFileHeader_* const pheader = reinterpret_cast<FFileHeader_*>(dst.Pointer());
     pheader->Magic = FILE_MAGIC_;
     pheader->Version = FILE_VERSION_;
     pheader->SizeInBytes = checked_cast<u32>(src.SizeInBytes());
     pheader->Fingerpint = StreamFingerprint_(src);
 
-    size_t compressedSizeInBytes = sizeof(FileHeader_);
+    size_t compressedSizeInBytes = sizeof(FFileHeader_);
     if (src.empty())
         return compressedSizeInBytes;
     Assert(src.Pointer());
 
-    const MemoryView<u8> datas = dst.CutStartingAt(compressedSizeInBytes);
+    const TMemoryView<u8> datas = dst.CutStartingAt(compressedSizeInBytes);
 
     STATIC_CONST_INTEGRAL(int, FastAccelerator,  7/* ~21% faster */);
     STATIC_CONST_INTEGRAL(int, CompressionLevel, 9/* LZ4 default */);
@@ -110,19 +110,19 @@ size_t CompressMemory(const MemoryView<u8>& dst, const MemoryView<const u8>& src
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-size_t DecompressedSize(const MemoryView<const u8>& src) {
-    if (src.SizeInBytes() < sizeof(FileHeader_))
+size_t DecompressedSize(const TMemoryView<const u8>& src) {
+    if (src.SizeInBytes() < sizeof(FFileHeader_))
         return 0;
 
-    const FileHeader_* pheader = reinterpret_cast<const FileHeader_*>(src.Pointer());
+    const FFileHeader_* pheader = reinterpret_cast<const FFileHeader_*>(src.Pointer());
     return pheader->SizeInBytes;
 }
 //----------------------------------------------------------------------------
-bool DecompressMemory(const MemoryView<u8>& dst, const MemoryView<const u8>& src) {
+bool DecompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& src) {
     Assert(dst.Pointer());
     Assert(dst.SizeInBytes() == DecompressedSize(src));
 
-    const FileHeader_* pheader = reinterpret_cast<const FileHeader_*>(src.Pointer());
+    const FFileHeader_* pheader = reinterpret_cast<const FFileHeader_*>(src.Pointer());
     if (nullptr == pheader ||
         FILE_MAGIC_ != pheader->Magic ||
         FILE_VERSION_ != pheader->Version )
@@ -133,7 +133,7 @@ bool DecompressMemory(const MemoryView<u8>& dst, const MemoryView<const u8>& src
         (char*)dst.Pointer(),
         pheader->SizeInBytes ));
 
-    const size_t compressedSizeInBytes = dataSizeInBytes + sizeof(FileHeader_);
+    const size_t compressedSizeInBytes = dataSizeInBytes + sizeof(FFileHeader_);
     Assert(compressedSizeInBytes <= src.SizeInBytes());
 
 #if WITH_CORE_COMPRESSION_FINGERPRINT

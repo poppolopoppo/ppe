@@ -16,7 +16,7 @@ class IDeviceAPIEncapsulator;
 class IDeviceAPIContext;
 FWD_REFPTR(IndexBuffer);
 FWD_REFPTR(VertexBuffer);
-enum class PrimitiveType;
+enum class EPrimitiveType;
 }
 
 namespace Engine {
@@ -24,28 +24,28 @@ namespace Engine {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(MaterialEffect);
-struct VariabilitySeed;
+struct FVariabilitySeed;
 //----------------------------------------------------------------------------
-class RenderLayer : public AbstractRenderLayer {
+class FRenderLayer : public FAbstractRenderLayer {
 public:
-    explicit RenderLayer(String&& name);
-    virtual ~RenderLayer();
+    explicit FRenderLayer(FString&& name);
+    virtual ~FRenderLayer();
 
-    const RenderBatch& Batch() const { return _batch; }
+    const FRenderBatch& Batch() const { return _batch; }
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 protected:
-    virtual RenderBatch *RenderBatchIFPImpl_() override { return &_batch; }
-    virtual const RenderBatch *RenderBatchIFPImpl_() const override { return &_batch; }
+    virtual FRenderBatch *RenderBatchIFPImpl_() override { return &_batch; }
+    virtual const FRenderBatch *RenderBatchIFPImpl_() const override { return &_batch; }
 
-    virtual void PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, const RenderTree *renderTree, VariabilitySeed *seeds) override;
+    virtual void PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, FMaterialDatabase *materialDatabase, const FRenderTree *renderTree, FVariabilitySeed *seeds) override;
     virtual void RenderImpl_(Graphics::IDeviceAPIContext *context) override;
-    virtual void DestroyImpl_(Graphics::IDeviceAPIEncapsulator *device, const RenderTree *renderTree) override;
+    virtual void DestroyImpl_(Graphics::IDeviceAPIEncapsulator *device, const FRenderTree *renderTree) override;
 
 private:
-    RenderBatch _batch;
-    VariabilitySeed _effectVariability;
+    FRenderBatch _batch;
+    FVariabilitySeed _effectVariability;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

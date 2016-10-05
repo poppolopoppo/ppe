@@ -12,29 +12,29 @@ namespace Logic {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T0, typename... TN >
-class ComponentMapper;
+class TComponentMapper;
 //----------------------------------------------------------------------------
 template <typename T>
-class ComponentMapper<T> {
+class TComponentMapper<T> {
 public:
-    ComponentMapper(ComponentContainer& components) { Map(components); }
+    TComponentMapper(FComponentContainer& components) { TMap(components); }
 
     ComponentID ID() const { return _id; }
-    ComponentTag Tag() const { return Logic::Component<T>::Tag(); }
-    ITypedComponent<T> *Component() const { return _component.get(); }
+    ComponentTag Tag() const { return Logic::TComponent<T>::Tag(); }
+    ITypedComponent<T> *TComponent() const { return _component.get(); }
 
     ITypedComponent<T> *operator ->() const { Assert(_component); return _component.get(); }
     ITypedComponent<T>& operator  *() const { Assert(_component); return *_component.get(); }
 
-    void Map(ComponentContainer& components);
+    void TMap(FComponentContainer& components);
 
 private:
     ComponentID _id;
-    PTypedComponent<T> _component;
+    TPTypedComponent<T> _component;
 };
 //----------------------------------------------------------------------------
 template <typename T>
-void ComponentMapper<T>::Map(ComponentContainer& components) {
+void TComponentMapper<T>::TMap(FComponentContainer& components) {
     _id = components.TagToID(Tag());
     Assert(IComponent::InvalidID != _id);
 
@@ -45,27 +45,27 @@ void ComponentMapper<T>::Map(ComponentContainer& components) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T0, typename... TN >
-class ComponentMapper {
+class TComponentMapper {
 public:
     typedef std::tuple<T0, TN... > tuple_type;
 
-    ComponentMapper(ComponentContainer& components) { Map(components); }
+    TComponentMapper(FComponentContainer& components) { TMap(components); }
 
-    void Map(ComponentContainer& components);
+    void TMap(FComponentContainer& components);
 
     template <size_t _Index>
     typename std::add_reference<typename std::add_const<
         typename std::tuple_element<_Index, tuple_type>::type >::type
     >::type Get() const {
-        return std::get<_Index>(Tuple);
+        return std::get<_Index>(TTuple);
     }
 
-    tuple_type Tuple;
+    tuple_type TTuple;
 };
 //----------------------------------------------------------------------------
 template <typename T0, typename... TN >
-void ComponentMapper<T0, TN... >::Map(ComponentContainer& components) {
-    Tuple = tuple_type(ComponentMapper<T0>(components), ComponentMapper<TN>(components)...);
+void TComponentMapper<T0, TN... >::TMap(FComponentContainer& components) {
+    TTuple = tuple_type(TComponentMapper<T0>(components), TComponentMapper<TN>(components)...);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

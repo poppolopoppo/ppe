@@ -12,7 +12,7 @@
 
 #include "RobotApp.h"
 
-typedef Core::ContentGenerator::RobotApp application_type;
+typedef Core::ContentGenerator::FRobotApp application_type;
 
 #ifdef OS_WINDOWS
 #   define CORE_RESOURCES 1
@@ -32,7 +32,7 @@ template <typename _Application>
 static int Bootstrap(void *appHandle, int nShowCmd, int argc, const wchar_t**argv) {
     using namespace Core;
 
-    const Application::ApplicationContext appContext;
+    const Application::FApplicationContext appContext;
 
     const Core::CoreStartup startupCore{ appHandle, nShowCmd, size_t(argc), argv };
     const RTTI::RTTIStartup startupRTTI;
@@ -41,10 +41,10 @@ static int Bootstrap(void *appHandle, int nShowCmd, int argc, const wchar_t**arg
     const Lattice::LatticeStartup startupLattice;
     const Pixmap::PixmapStartup startupPixmap;
     const ContentPipeline::ContentPipelineStartup startupContentPipeline;
-    const Application::ApplicationStartup startupApplication;
+    const Application::FApplicationStartup startupApplication;
 
 #if defined(OS_WINDOWS) && CORE_RESOURCES
-    CurrentProcess::Instance().SetAppIcon(IDI_WINDOW_ICON);
+    FCurrentProcess::Instance().SetAppIcon(IDI_WINDOW_ICON);
 #endif
 
     _Application app;

@@ -9,50 +9,50 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MeshTokenTraits {
+class FMeshTokenTraits {
 public:
     const std::locale& Locale() const { return std::locale::classic(); }
     bool IsAllowedChar(char ch) const;
 };
 //----------------------------------------------------------------------------
 template <typename _Tag>
-using MeshToken = Core::Token<
+using MeshToken = Core::EToken<
     _Tag,
     char,
     CaseSensitive::False,
-    MeshTokenTraits,
-    ALLOCATOR(Material, char)
+    FMeshTokenTraits,
+    ALLOCATOR(FMaterial, char)
 >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MeshName : public MeshToken<MeshName> {
+class FMeshName : public MeshToken<FMeshName> {
 public:
-    typedef MeshToken<MeshName> parent_type;
+    typedef MeshToken<FMeshName> parent_type;
 
-    MeshName() {}
-    ~MeshName() {}
+    FMeshName() {}
+    ~FMeshName() {}
 
-    MeshName(const char *content, size_t length);
+    FMeshName(const char *content, size_t length);
 
-    MeshName(const char *content);
-    MeshName& operator =(const char *content);
+    FMeshName(const char *content);
+    FMeshName& operator =(const char *content);
 
     template <typename _CharTraits, typename _Allocator>
-    MeshName(const std::basic_string<char, _CharTraits, _Allocator>& content)
-        : MeshName(content.c_str(), content.size()) {}
+    FMeshName(const std::basic_string<char, _CharTraits, _Allocator>& content)
+        : FMeshName(content.c_str(), content.size()) {}
 
-    MeshName(const MeshName& other);
-    MeshName& operator =(const MeshName& other);
+    FMeshName(const FMeshName& other);
+    FMeshName& operator =(const FMeshName& other);
 
-    void Swap(MeshName& other);
+    void Swap(FMeshName& other);
 };
 //----------------------------------------------------------------------------
-inline void swap(MeshName& lhs, MeshName& rhs) {
+inline void swap(FMeshName& lhs, FMeshName& rhs) {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
-inline hash_t hash_value(const MeshName& token) {
+inline hash_t hash_value(const FMeshName& token) {
     return token.HashValue();
 }
 //----------------------------------------------------------------------------

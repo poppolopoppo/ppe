@@ -10,26 +10,26 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ShaderEffect::ShaderEffect(const Graphics::VertexDeclaration *vertexDeclaration)
-:   DeviceResource(DeviceResourceType::ShaderEffect)
+FShaderEffect::FShaderEffect(const Graphics::FVertexDeclaration *vertexDeclaration)
+:   FDeviceResource(EDeviceResourceType::FShaderEffect)
 ,   _vertexDeclaration(vertexDeclaration) {
     Assert(vertexDeclaration);
 }
 //----------------------------------------------------------------------------
-ShaderEffect::~ShaderEffect() {}
+FShaderEffect::~FShaderEffect() {}
 //----------------------------------------------------------------------------
-bool ShaderEffect::Available() const {
+bool FShaderEffect::Available() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     return nullptr != _deviceAPIDependantEffect;
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantEntity *ShaderEffect::TerminalEntity() const {
+FDeviceAPIDependantEntity *FShaderEffect::TerminalEntity() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     return _deviceAPIDependantEffect.get();
 }
 //----------------------------------------------------------------------------
-void ShaderEffect::SetStageProgram(ShaderProgramType stage, PShaderProgram&& program) {
+void FShaderEffect::SetStageProgram(EShaderProgramType stage, PShaderProgram&& program) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!Frozen());
     Assert(program);
@@ -39,7 +39,7 @@ void ShaderEffect::SetStageProgram(ShaderProgramType stage, PShaderProgram&& pro
     _stagePrograms[size_t(stage)] = std::move(program);
 }
 //----------------------------------------------------------------------------
-void ShaderEffect::ResetStageProgram(ShaderProgramType stage) {
+void FShaderEffect::ResetStageProgram(EShaderProgramType stage) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(size_t(stage) < lengthof(_stagePrograms));
@@ -48,7 +48,7 @@ void ShaderEffect::ResetStageProgram(ShaderProgramType stage) {
         RemoveRef_AssertReachZero(_stagePrograms[size_t(stage)]);
 }
 //----------------------------------------------------------------------------
-void ShaderEffect::Create(IDeviceAPIEncapsulator *device) {
+void FShaderEffect::Create(IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(!_deviceAPIDependantEffect);
@@ -58,7 +58,7 @@ void ShaderEffect::Create(IDeviceAPIEncapsulator *device) {
     Assert(_deviceAPIDependantEffect);
 }
 //----------------------------------------------------------------------------
-void ShaderEffect::Destroy(IDeviceAPIEncapsulator *device) {
+void FShaderEffect::Destroy(IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(_deviceAPIDependantEffect);
@@ -70,15 +70,15 @@ void ShaderEffect::Destroy(IDeviceAPIEncapsulator *device) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceAPIDependantShaderEffect::DeviceAPIDependantShaderEffect(
-    IDeviceAPIEncapsulator *device, const ShaderEffect *resource)
-:   TypedDeviceAPIDependantEntity<ShaderEffect>(device->APIEncapsulator(), resource) {
+FDeviceAPIDependantShaderEffect::FDeviceAPIDependantShaderEffect(
+    IDeviceAPIEncapsulator *device, const FShaderEffect *resource)
+:   TTypedDeviceAPIDependantEntity<FShaderEffect>(device->APIEncapsulator(), resource) {
     Assert(resource);
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantShaderEffect::~DeviceAPIDependantShaderEffect() {}
+FDeviceAPIDependantShaderEffect::~FDeviceAPIDependantShaderEffect() {}
 //----------------------------------------------------------------------------
-size_t DeviceAPIDependantShaderEffect::VideoMemorySizeInBytes() const {
+size_t FDeviceAPIDependantShaderEffect::VideoMemorySizeInBytes() const {
     return 0; // TODO ?
 }
 //----------------------------------------------------------------------------

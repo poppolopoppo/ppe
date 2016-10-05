@@ -32,67 +32,67 @@ namespace {
 //----------------------------------------------------------------------------
 static THREAD_LOCAL bool gEnableCrtAllocationHook = true;
 //----------------------------------------------------------------------------
-class CrtAllocationCallstackLogger {
+class FCrtAllocationCallstackLogger {
 public:
-    struct TAllocation {
+    struct FTAllocation {
         enum { MaxDepth = 31 };
         size_t RequestNumber;
         void* Backtrace[MaxDepth];
     };
 
-    struct TPoolChunk {
-        enum { ChunkSize = (4*1024*1024/*4mo*/-sizeof(size_t))/sizeof(TAllocation) };
-        TAllocation Allocations[ChunkSize];
-        TPoolChunk* Next;
+    struct FTPoolChunk {
+        enum { ChunkSize = (4*1024*1024/*4mo*/-sizeof(size_t))/sizeof(FTAllocation) };
+        FTAllocation Allocations[ChunkSize];
+        FTPoolChunk* Next;
     };
 
-    explicit CrtAllocationCallstackLogger();
-    ~CrtAllocationCallstackLogger();
+    explicit FCrtAllocationCallstackLogger();
+    ~FCrtAllocationCallstackLogger();
 
     void Allocate(long requestNumber);
-    const TAllocation* Callstack(long requestNumber) const;
+    const FTAllocation* FCallstack(long requestNumber) const;
 
     size_t AllocationCount() const { return _allocationCount; }
     size_t ChunkCount() const { return _chunkCount; }
-    SizeInBytes TotalSizeInBytes() const { return SizeInBytes{ _chunkCount * sizeof(TPoolChunk) }; }
+    SizeInBytes TotalSizeInBytes() const { return SizeInBytes{ _chunkCount * sizeof(FTPoolChunk) }; }
 
-    static CrtAllocationCallstackLogger* Instance;
+    static FCrtAllocationCallstackLogger* Instance;
 
 protected:
     bool NeedNewPoolChunk_() const;
     void AllocatePoolChunk_();
     void DestroyPoolChunks_();
 
-    static const TAllocation* FindRequestAllocation_(
+    static const FTAllocation* FindRequestAllocation_(
         size_t requestNumber,
-        const TAllocation* begin,
-        const TAllocation* end
+        const FTAllocation* begin,
+        const FTAllocation* end
         );
 
 private:
-    ReadWriteLock _barrier;
+    FReadWriteLock _barrier;
     std::atomic<bool> _enabled;
     size_t _chunkCount;
     size_t _allocationCount;
-    TPoolChunk* _chunks;
-    TAllocation* _freeAllocation;
+    FTPoolChunk* _chunks;
+    FTAllocation* _freeAllocation;
 };
 //----------------------------------------------------------------------------
-CrtAllocationCallstackLogger* CrtAllocationCallstackLogger::Instance = nullptr;
+FCrtAllocationCallstackLogger* FCrtAllocationCallstackLogger::Instance = nullptr;
 //----------------------------------------------------------------------------
-CrtAllocationCallstackLogger::CrtAllocationCallstackLogger()
+FCrtAllocationCallstackLogger::FCrtAllocationCallstackLogger()
 :   _enabled(true),
     _chunkCount(0), _allocationCount(0),
     _freeAllocation(nullptr), _chunks(nullptr) {
     AllocatePoolChunk_();
 }
 //----------------------------------------------------------------------------
-CrtAllocationCallstackLogger::~CrtAllocationCallstackLogger() {
+FCrtAllocationCallstackLogger::~FCrtAllocationCallstackLogger() {
     _enabled = false;
     DestroyPoolChunks_();
 }
 //----------------------------------------------------------------------------
-void CrtAllocationCallstackLogger::Allocate(long requestNumber) {
+void FCrtAllocationCallstackLogger::Allocate(long requestNumber) {
     if (!_enabled) // filter internal allocations
         return;
 
@@ -102,46 +102,46 @@ void CrtAllocationCallstackLogger::Allocate(long requestNumber) {
     if (NeedNewPoolChunk_())
         AllocatePoolChunk_();
 
-    TAllocation* const alloc = _freeAllocation;
+    FTAllocation* const alloc = _freeAllocation;
     ++_freeAllocation;
     ++_allocationCount;
 
     alloc->RequestNumber = requestNumber;
 
-    const size_t depth = Core::Callstack::Capture(MakeView(alloc->Backtrace), nullptr, 6, TAllocation::MaxDepth);
-    if (depth < TAllocation::MaxDepth)
+    const size_t depth = Core::FCallstack::Capture(MakeView(alloc->Backtrace), nullptr, 6, FTAllocation::MaxDepth);
+    if (depth < FTAllocation::MaxDepth)
         alloc->Backtrace[depth] = nullptr;
 
     _enabled = true;
 }
 //----------------------------------------------------------------------------
-auto CrtAllocationCallstackLogger::Callstack(long requestNumber) const -> const TAllocation*{
+auto FCrtAllocationCallstackLogger::FCallstack(long requestNumber) const -> const FTAllocation*{
     READSCOPELOCK(_barrier);
 
     if (nullptr == _chunks)
         return nullptr;
 
-    const TAllocation* result = nullptr;
+    const FTAllocation* result = nullptr;
     if (_freeAllocation > &_chunks->Allocations[0] &&
         nullptr != (result = FindRequestAllocation_(requestNumber, &_chunks->Allocations[0], _freeAllocation)) )
         return result;
 
-    for (const TPoolChunk* chunk = _chunks->Next; chunk; chunk = chunk->Next)
-        if (nullptr != (result = FindRequestAllocation_(requestNumber, &chunk->Allocations[0], &chunk->Allocations[TPoolChunk::ChunkSize])) )
+    for (const FTPoolChunk* chunk = _chunks->Next; chunk; chunk = chunk->Next)
+        if (nullptr != (result = FindRequestAllocation_(requestNumber, &chunk->Allocations[0], &chunk->Allocations[FTPoolChunk::ChunkSize])) )
             return result;
 
     return nullptr;
 }
 //----------------------------------------------------------------------------
-bool CrtAllocationCallstackLogger::NeedNewPoolChunk_() const {
+bool FCrtAllocationCallstackLogger::NeedNewPoolChunk_() const {
     return  nullptr == _freeAllocation ||
             &_chunks->Allocations[lengthof(_chunks->Allocations)] == _freeAllocation;
 }
 //----------------------------------------------------------------------------
-void CrtAllocationCallstackLogger::AllocatePoolChunk_() {
-    TPoolChunk* const new_chunk = (TPoolChunk*)VirtualAlloc(
+void FCrtAllocationCallstackLogger::AllocatePoolChunk_() {
+    FTPoolChunk* const new_chunk = (FTPoolChunk*)VirtualAlloc(
         nullptr,
-        sizeof(TPoolChunk),
+        sizeof(FTPoolChunk),
         MEM_COMMIT | MEM_RESERVE,
         PAGE_READWRITE
         );
@@ -152,21 +152,21 @@ void CrtAllocationCallstackLogger::AllocatePoolChunk_() {
     ++_chunkCount;
 }
 //----------------------------------------------------------------------------
-void CrtAllocationCallstackLogger::DestroyPoolChunks_() {
+void FCrtAllocationCallstackLogger::DestroyPoolChunks_() {
     _freeAllocation = nullptr;
     while (_chunks) {
-        TPoolChunk* const next = _chunks->Next;
+        FTPoolChunk* const next = _chunks->Next;
         //_free_dbg(_chunks, _CRT_BLOCK);
         VirtualFree(_chunks, 0, MEM_RELEASE);
         _chunks = next;
     }
 }
 //----------------------------------------------------------------------------
-auto CrtAllocationCallstackLogger::FindRequestAllocation_(
+auto FCrtAllocationCallstackLogger::FindRequestAllocation_(
     size_t requestNumber,
-    const TAllocation* begin,
-    const TAllocation* end
-    ) -> const TAllocation* {
+    const FTAllocation* begin,
+    const FTAllocation* end
+    ) -> const FTAllocation* {
     Assert(begin <= end);
 
     if (begin->RequestNumber > requestNumber ||
@@ -174,7 +174,7 @@ auto CrtAllocationCallstackLogger::FindRequestAllocation_(
         return nullptr;
 
      while (begin + 1 < end) {
-        const TAllocation* pivot = begin + ((end - begin - 1) >> 1);
+        const FTAllocation* pivot = begin + ((end - begin - 1) >> 1);
         Assert(pivot < end);
         if (pivot->RequestNumber < requestNumber)
             begin = pivot + 1;
@@ -226,7 +226,7 @@ static int __cdecl AllocHook_(
     if (!gEnableCrtAllocationHook)
         return (TRUE);
 
-    auto const log = CrtAllocationCallstackLogger::Instance;
+    auto const log = FCrtAllocationCallstackLogger::Instance;
 
     switch (nAllocType)
     {
@@ -269,25 +269,25 @@ static int __cdecl ReportHook_(int nRptType, char *szMsg, int *retVal) {
         for (int n = 1; i > 0; --i, n *= 10)
             requestNumber += n * (szMsg[i] - '0');
 
-        auto const* log = CrtAllocationCallstackLogger::Instance;
+        auto const* log = FCrtAllocationCallstackLogger::Instance;
         if (log) {
-            const CrtAllocationCallstackLogger::TAllocation* alloc = log->Callstack(requestNumber);
+            const FCrtAllocationCallstackLogger::FTAllocation* alloc = log->Callstack(requestNumber);
             if (alloc)
             {
                 size_t depth = 0;
-                for (; depth < CrtAllocationCallstackLogger::TAllocation::MaxDepth && alloc->Backtrace[depth]; ++depth)
+                for (; depth < FCrtAllocationCallstackLogger::FTAllocation::MaxDepth && alloc->Backtrace[depth]; ++depth)
                     ;
 
-                DecodedCallstack decoded;
-                Core::Callstack::Decode(&decoded, 0, MakeView(&alloc->Backtrace[0], &alloc->Backtrace[depth]));
+                FDecodedCallstack decoded;
+                Core::FCallstack::Decode(&decoded, 0, MakeView(&alloc->Backtrace[0], &alloc->Backtrace[depth]));
 
                 LOG(Error, L"Error leak detected #{0} !\n{1}", alloc->RequestNumber, decoded);
             }
         }
     }
     else {
-        StringView msgWithoutEndl;
-        StringView msg = MakeStringView(szMsg, Meta::noinit_tag{});
+        FStringView msgWithoutEndl;
+        FStringView msg = MakeStringView(szMsg, Meta::noinit_tag{});
         if (Split(msg, "\n", msgWithoutEndl))
             LOG(Error, L"{0}", msgWithoutEndl);
     }
@@ -303,24 +303,24 @@ static int __cdecl ReportHook_(int nRptType, char *szMsg, int *retVal) {
 //----------------------------------------------------------------------------
 #ifdef USE_CRT_DEBUG
 //----------------------------------------------------------------------------
-class CrtCheckMemoryLeaksImpl {
+class FCrtCheckMemoryLeaksImpl {
 public:
-    CrtCheckMemoryLeaksImpl();
-    ~CrtCheckMemoryLeaksImpl();
+    FCrtCheckMemoryLeaksImpl();
+    ~FCrtCheckMemoryLeaksImpl();
 private:
     _CRT_ALLOC_HOOK _allocHook;
     _CrtMemState _memCheckpoint;
-    CrtAllocationCallstackLogger _log;
+    FCrtAllocationCallstackLogger _log;
 };
 //----------------------------------------------------------------------------
-CrtCheckMemoryLeaksImpl::CrtCheckMemoryLeaksImpl()
+FCrtCheckMemoryLeaksImpl::FCrtCheckMemoryLeaksImpl()
     : _log() {
-    CrtAllocationCallstackLogger::Instance = &_log;
+    FCrtAllocationCallstackLogger::Instance = &_log;
     _CrtMemCheckpoint(&_memCheckpoint);
     _allocHook = _CrtSetAllocHook(AllocHook_);
 }
 //----------------------------------------------------------------------------
-CrtCheckMemoryLeaksImpl::~CrtCheckMemoryLeaksImpl() {
+FCrtCheckMemoryLeaksImpl::~FCrtCheckMemoryLeaksImpl() {
     _CrtSetAllocHook(_allocHook);
 
     _CrtMemState memCurrent;
@@ -333,8 +333,8 @@ CrtCheckMemoryLeaksImpl::~CrtCheckMemoryLeaksImpl() {
     _CrtMemDumpAllObjectsSince(&_memCheckpoint);
     _CrtSetReportHook(reportHook);
 
-    Assert(CrtAllocationCallstackLogger::Instance == &_log);
-    CrtAllocationCallstackLogger::Instance = nullptr;
+    Assert(FCrtAllocationCallstackLogger::Instance == &_log);
+    FCrtAllocationCallstackLogger::Instance = nullptr;
 
     LOG(Info, L"Allocation logger overhead = {0} ({1})", _log.TotalSizeInBytes(), _log.ChunkCount());
     LOG(Info, L"Total allocation count = {0}", _log.AllocationCount());
@@ -349,10 +349,10 @@ CrtCheckMemoryLeaksImpl::~CrtCheckMemoryLeaksImpl() {
 //----------------------------------------------------------------------------
 #ifdef USE_CRT_DEBUG
 //----------------------------------------------------------------------------
-CrtCheckMemoryLeaks::CrtCheckMemoryLeaks()
-:   _pimpl(new CrtCheckMemoryLeaksImpl()) {}
+FCrtCheckMemoryLeaks::FCrtCheckMemoryLeaks()
+:   _pimpl(new FCrtCheckMemoryLeaksImpl()) {}
 //----------------------------------------------------------------------------
-CrtCheckMemoryLeaks::~CrtCheckMemoryLeaks() {}
+FCrtCheckMemoryLeaks::~FCrtCheckMemoryLeaks() {}
 //----------------------------------------------------------------------------
 #endif //!USE_CRT_DEBUG
 //----------------------------------------------------------------------------
@@ -360,12 +360,12 @@ CrtCheckMemoryLeaks::~CrtCheckMemoryLeaks() {}
 //----------------------------------------------------------------------------
 #ifdef USE_CRT_DEBUG
 //----------------------------------------------------------------------------
-CrtSkipMemoryLeaks::CrtSkipMemoryLeaks() {
+FCrtSkipMemoryLeaks::FCrtSkipMemoryLeaks() {
     _prev = gEnableCrtAllocationHook;
     gEnableCrtAllocationHook = false;
 }
 //----------------------------------------------------------------------------
-CrtSkipMemoryLeaks::~CrtSkipMemoryLeaks() {
+FCrtSkipMemoryLeaks::~FCrtSkipMemoryLeaks() {
     gEnableCrtAllocationHook = _prev;
 }
 //----------------------------------------------------------------------------
@@ -375,12 +375,12 @@ CrtSkipMemoryLeaks::~CrtSkipMemoryLeaks() {
 //----------------------------------------------------------------------------
 #ifdef USE_CRT_DEBUG
 //----------------------------------------------------------------------------
-static std::unique_ptr<CrtCheckMemoryLeaksImpl> gGlobalCrtCheckMemoryLeaks;
+static std::unique_ptr<FCrtCheckMemoryLeaksImpl> gGlobalCrtCheckMemoryLeaks;
 //----------------------------------------------------------------------------
 void CrtCheckGlobalMemoryLeaks(bool enabled) {
     if (enabled) {
         Assert(nullptr == gGlobalCrtCheckMemoryLeaks.get());
-        gGlobalCrtCheckMemoryLeaks.reset(new CrtCheckMemoryLeaksImpl());
+        gGlobalCrtCheckMemoryLeaks.reset(new FCrtCheckMemoryLeaksImpl());
     }
     else {
         Assert(nullptr != gGlobalCrtCheckMemoryLeaks.get());
@@ -392,7 +392,7 @@ void CrtCheckGlobalMemoryLeaks(bool enabled) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool CrtDumpMemoryStats(CrtMemoryStats* memoryStats, void* heapHandle/* = nullptr */) {
+bool CrtDumpMemoryStats(FCrtMemoryStats* memoryStats, void* heapHandle/* = nullptr */) {
     Assert(memoryStats);
 
     // walk default process heap if not supplied

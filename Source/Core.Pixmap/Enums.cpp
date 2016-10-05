@@ -7,70 +7,70 @@ namespace Pixmap {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-StringView BlockFormatToCStr(BlockFormat value) {
+FStringView BlockFormatToCStr(EBlockFormat value) {
     switch (value)
     {
-    case Core::Pixmap::BlockFormat::DXT1:
+    case Core::Pixmap::EBlockFormat::DXT1:
         return "DXT1";
-    case Core::Pixmap::BlockFormat::DXT5:
+    case Core::Pixmap::EBlockFormat::DXT5:
         return "DXT5";
     default:
         AssertNotImplemented();
         break;
     }
-    return StringView();
+    return FStringView();
 }
 //----------------------------------------------------------------------------
-StringView ColorDepthToCStr(ColorDepth value) {
+FStringView ColorDepthToCStr(EColorDepth value) {
     switch (value)
     {
-    case Core::Pixmap::ColorDepth::_8bits:
+    case Core::Pixmap::EColorDepth::_8bits:
         return "8";
-    case Core::Pixmap::ColorDepth::_16bits:
+    case Core::Pixmap::EColorDepth::_16bits:
         return "16";
-    case Core::Pixmap::ColorDepth::_32bits:
+    case Core::Pixmap::EColorDepth::_32bits:
         return "32";
     default:
         AssertNotImplemented();
         break;
     }
-    return StringView();
+    return FStringView();
 }
 //----------------------------------------------------------------------------
-StringView ColorMaskToCStr(ColorMask value) {
+FStringView ColorMaskToCStr(EColorMask value) {
     switch (value)
     {
-    case Core::Pixmap::ColorMask::R:
+    case Core::Pixmap::EColorMask::R:
         return "R";
-    case Core::Pixmap::ColorMask::RG:
+    case Core::Pixmap::EColorMask::RG:
         return "RG";
-    case Core::Pixmap::ColorMask::RGB:
+    case Core::Pixmap::EColorMask::RGB:
         return "RGB";
-    case Core::Pixmap::ColorMask::RGBA:
+    case Core::Pixmap::EColorMask::RGBA:
         return "RGBA";
     default:
         AssertNotImplemented();
         break;
     }
-    return StringView();
+    return FStringView();
 }
 //----------------------------------------------------------------------------
-StringView ColorSpaceToCStr(ColorSpace value) {
+FStringView ColorSpaceToCStr(EColorSpace value) {
     switch (value)
     {
-    case Core::Pixmap::ColorSpace::Linear:
+    case Core::Pixmap::EColorSpace::Linear:
         return "Linear";
-    case Core::Pixmap::ColorSpace::sRGB:
+    case Core::Pixmap::EColorSpace::sRGB:
         return "sRGB";
-    case Core::Pixmap::ColorSpace::Float:
+    case Core::Pixmap::EColorSpace::Float:
         return "Float";
-    case Core::Pixmap::ColorSpace::YCoCg:
+    case Core::Pixmap::EColorSpace::YCoCg:
         return "YCoCg";
     default:
         AssertNotImplemented();
         break;
     }
-    return StringView();
+    return FStringView();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

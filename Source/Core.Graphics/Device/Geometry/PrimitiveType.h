@@ -7,7 +7,7 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class PrimitiveType {
+enum class EPrimitiveType {
     LineList = 0,
     LineStrip,
 
@@ -15,11 +15,11 @@ enum class PrimitiveType {
     TriangleStrip,
 };
 //----------------------------------------------------------------------------
-StringView PrimitiveTypeToCStr(PrimitiveType primitiveType);
+FStringView PrimitiveTypeToCStr(EPrimitiveType primitiveType);
 //----------------------------------------------------------------------------
-size_t PrimitiveCount(PrimitiveType primitiveType, size_t indexCount);
+size_t PrimitiveCount(EPrimitiveType primitiveType, size_t indexCount);
 //----------------------------------------------------------------------------
-size_t IndexCount(PrimitiveType primitiveType, size_t primitiveCount);
+size_t IndexCount(EPrimitiveType primitiveType, size_t primitiveCount);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

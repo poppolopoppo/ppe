@@ -11,35 +11,35 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MouseInputHandler :
+class FMouseInputHandler :
     public Graphics::IWindowMessageHandler
-,   public IInputStateProvider<MouseState> {
+,   public IInputStateProvider<FMouseState> {
 public:
-    MouseInputHandler();
-    virtual ~MouseInputHandler();
+    FMouseInputHandler();
+    virtual ~FMouseInputHandler();
 
-    MouseInputHandler(const MouseInputHandler& ) = delete;
-    MouseInputHandler& operator =(const MouseInputHandler& ) = delete;
+    FMouseInputHandler(const FMouseInputHandler& ) = delete;
+    FMouseInputHandler& operator =(const FMouseInputHandler& ) = delete;
 
-    virtual const MouseState& State() const override { return _state; }
+    virtual const FMouseState& State() const override { return _state; }
 
-    virtual void RegisterMessageDelegates(Graphics::BasicWindow *wnd) override;
-    virtual void UnregisterMessageDelegates(Graphics::BasicWindow *wnd) override;
+    virtual void RegisterMessageDelegates(Graphics::FBasicWindow *wnd) override;
+    virtual void UnregisterMessageDelegates(Graphics::FBasicWindow *wnd) override;
 
-    virtual void UpdateBeforeDispatch(Graphics::BasicWindow *wnd) override;
-    virtual void UpdateAfterDispatch(Graphics::BasicWindow *wnd) override;
+    virtual void UpdateBeforeDispatch(Graphics::FBasicWindow *wnd) override;
+    virtual void UpdateAfterDispatch(Graphics::FBasicWindow *wnd) override;
 
 protected:
-    static Graphics::MessageResult OnMouseMove_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);
-    static Graphics::MessageResult OnMouseLButtonDown_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);
-    static Graphics::MessageResult OnMouseLButtonUp_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);
-    static Graphics::MessageResult OnMouseRButtonDown_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);
-    static Graphics::MessageResult OnMouseRButtonUp_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);
-    static Graphics::MessageResult OnMouseMButtonDown_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);
-    static Graphics::MessageResult OnMouseMButtonUp_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);
+    static Graphics::MessageResult OnMouseMove_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);
+    static Graphics::MessageResult OnMouseLButtonDown_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);
+    static Graphics::MessageResult OnMouseLButtonUp_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);
+    static Graphics::MessageResult OnMouseRButtonDown_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);
+    static Graphics::MessageResult OnMouseRButtonUp_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);
+    static Graphics::MessageResult OnMouseMButtonDown_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);
+    static Graphics::MessageResult OnMouseMButtonUp_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);
 
 private:
-    MouseState _state;
+    FMouseState _state;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

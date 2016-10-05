@@ -11,21 +11,21 @@ namespace Logic {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class IComponent;
-typedef RefPtr<IComponent> PComponent;
-typedef RefPtr<const IComponent> PCComponent;
-typedef SafePtr<IComponent> SComponent;
-typedef SafePtr<const IComponent> SCComponent;
+typedef TRefPtr<IComponent> PComponent;
+typedef TRefPtr<const IComponent> PCComponent;
+typedef TSafePtr<IComponent> SComponent;
+typedef TSafePtr<const IComponent> SCComponent;
 //----------------------------------------------------------------------------
 template <typename T>
 class ITypedComponent;
 template <typename T>
-using PTypedComponent = RefPtr<ITypedComponent<T>>;
+using TPTypedComponent = TRefPtr<ITypedComponent<T>>;
 template <typename T>
-using PCTypedComponent = RefPtr<const ITypedComponent<T>>;
+using TPCTypedComponent = TRefPtr<const ITypedComponent<T>>;
 template <typename T>
-using STypedComponent = SafePtr<ITypedComponent<T>>;
+using TSTypedComponent = TSafePtr<ITypedComponent<T>>;
 template <typename T>
-using SCTypedComponent = SafePtr<const ITypedComponent<T>>;
+using TSCTypedComponent = TSafePtr<const ITypedComponent<T>>;
 //----------------------------------------------------------------------------
 CORE_STRONGLYTYPED_NUMERIC_DEF(size_t,  ComponentTag);
 CORE_STRONGLYTYPED_NUMERIC_DEF(u32,     ComponentID);

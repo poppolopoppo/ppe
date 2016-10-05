@@ -6,17 +6,17 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ServiceContainer::ServiceContainer() {}
+FServiceContainer::FServiceContainer() {}
 //----------------------------------------------------------------------------
-ServiceContainer::~ServiceContainer() {
+FServiceContainer::~FServiceContainer() {
     READSCOPELOCK(_barrierRW);
     Assert(_services.empty());
 }
 //----------------------------------------------------------------------------
-auto ServiceContainer::Find_(ServiceId serviceId) const
+auto FServiceContainer::Find_(ServiceId serviceId) const
     -> services_type::const_iterator {
     return std::find_if(_services.begin(), _services.end(),
-        [serviceId](const Service& service) {
+        [serviceId](const TService& service) {
             return (service.Id() == serviceId);
         });
 }

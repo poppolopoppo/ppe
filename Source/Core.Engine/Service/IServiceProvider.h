@@ -5,14 +5,14 @@
 #include "Core/Meta/ThreadResource.h"
 
 namespace Core {
-struct Guid;
+struct FGuid;
 namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class IService;
 //----------------------------------------------------------------------------
-class IServiceProvider : public Meta::ThreadResource {
+class IServiceProvider : public Meta::FThreadResource {
 protected:
     IServiceProvider() {}
 public:
@@ -21,17 +21,17 @@ public:
     IServiceProvider(const IServiceProvider& ) = delete;
     IServiceProvider& operator =(const IServiceProvider& ) = delete;
 
-    virtual void RegisterService(const Guid& guid, IService *service) = 0;
-    virtual void UnregisterService(const Guid& guid, IService *service) = 0;
+    virtual void RegisterService(const FGuid& guid, IService *service) = 0;
+    virtual void UnregisterService(const FGuid& guid, IService *service) = 0;
 
-    virtual IService *RequestService(const Guid& guid) = 0;
+    virtual IService *RequestService(const FGuid& guid) = 0;
 
     virtual void Start() = 0;
     virtual void Shutdown() = 0;
 
 public:
     template <typename T>
-    T *Service(const Guid& guid) {
+    T *TService(const FGuid& guid) {
         T *const service = checked_cast<T *>(RequestService(guid));
         Assert(service);
         Assert(service->ServiceAvailable());

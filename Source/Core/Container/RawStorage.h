@@ -11,19 +11,19 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define RAWSTORAGE(_DOMAIN, T) \
-    ::Core::RawStorage<T, ALLOCATOR(_DOMAIN, T)>
+    ::Core::TRawStorage<T, ALLOCATOR(_DOMAIN, T)>
 //----------------------------------------------------------------------------
 #define RAWSTORAGE_THREAD_LOCAL(_DOMAIN, T) \
-    ::Core::RawStorage<T, THREAD_LOCAL_ALLOCATOR(_DOMAIN, T)>
+    ::Core::TRawStorage<T, THREAD_LOCAL_ALLOCATOR(_DOMAIN, T)>
 //----------------------------------------------------------------------------
 #define RAWSTORAGE_ALIGNED(_DOMAIN, T, _ALIGNMENT) \
-    ::Core::RawStorage<T, ALIGNED_ALLOCATOR(_DOMAIN, T, _ALIGNMENT)>
+    ::Core::TRawStorage<T, ALIGNED_ALLOCATOR(_DOMAIN, T, _ALIGNMENT)>
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // No dtor will be called !
 template <typename T, typename _Allocator = ALLOCATOR(Container, T)>
-class RawStorage : _Allocator {
+class TRawStorage : _Allocator {
 public:
     typedef _Allocator allocator_type;
 
@@ -40,21 +40,21 @@ public:
     typedef const_pointer const_iterator;
     typedef std::random_access_iterator_tag iterator_category;
 
-    RawStorage();
-    ~RawStorage();
+    TRawStorage();
+    ~TRawStorage();
 
-    explicit RawStorage(size_type size);
-    explicit RawStorage(allocator_type&& allocator);
-    RawStorage(size_type size, allocator_type&& allocator);
+    explicit TRawStorage(size_type size);
+    explicit TRawStorage(allocator_type&& allocator);
+    TRawStorage(size_type size, allocator_type&& allocator);
 
     template <typename _It>
-    RawStorage(_It&& begin, _It&& end);
+    TRawStorage(_It&& begin, _It&& end);
 
-    RawStorage(RawStorage&& rvalue);
-    RawStorage& operator =(RawStorage&& rvalue);
+    TRawStorage(TRawStorage&& rvalue);
+    TRawStorage& operator =(TRawStorage&& rvalue);
 
-    RawStorage(const RawStorage& other);
-    RawStorage& operator =(const RawStorage& other);
+    TRawStorage(const TRawStorage& other);
+    TRawStorage& operator =(const TRawStorage& other);
 
     pointer Pointer() const { return _storage; }
     size_t SizeInBytes() const { return _size * sizeof(T); }
@@ -81,9 +81,9 @@ public:
     FORCE_INLINE reference operator [](size_type index) { return at(index); }
     FORCE_INLINE const_reference operator [](size_type index) const { return at(index); }
 
-    void CopyFrom(const MemoryView<const T>& src);
+    void CopyFrom(const TMemoryView<const T>& src);
 
-    void Swap(RawStorage& other);
+    void Swap(TRawStorage& other);
 
     void Resize(size_type size, bool keepData);
     void Clear_ReleaseMemory();
@@ -96,14 +96,14 @@ public:
     template <typename _It>
     void insert(iterator after, _It&& begin, _It&& end);
 
-    bool Equals(const RawStorage& other) const;
+    bool Equals(const TRawStorage& other) const;
 
-    MemoryView<T> MakeView() { return MemoryView<T>(data(), size()); }
-    MemoryView<const T> MakeView() const { return MemoryView<const T>(data(), size()); }
-    MemoryView<const T> MakeConstView() const { return MemoryView<const T>(data(), size()); }
+    TMemoryView<T> MakeView() { return TMemoryView<T>(data(), size()); }
+    TMemoryView<const T> MakeView() const { return TMemoryView<const T>(data(), size()); }
+    TMemoryView<const T> MakeConstView() const { return TMemoryView<const T>(data(), size()); }
 
-    friend bool operator ==(const RawStorage& lhs, const RawStorage& rhs) { return lhs.Equals(rhs); }
-    friend bool operator !=(const RawStorage& lhs, const RawStorage& rhs) { return not lhs.Equals(rhs); }
+    friend bool operator ==(const TRawStorage& lhs, const TRawStorage& rhs) { return lhs.Equals(rhs); }
+    friend bool operator !=(const TRawStorage& lhs, const TRawStorage& rhs) { return not lhs.Equals(rhs); }
 
 protected:
     pointer _storage;
@@ -111,7 +111,7 @@ protected:
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void swap(RawStorage<T, _Allocator>& lhs, RawStorage<T, _Allocator>& rhs) {
+void swap(TRawStorage<T, _Allocator>& lhs, TRawStorage<T, _Allocator>& rhs) {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------

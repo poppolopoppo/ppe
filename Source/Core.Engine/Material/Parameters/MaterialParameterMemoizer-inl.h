@@ -9,19 +9,19 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, MaterialParameterMemoizer<_Functor>, template <typename _Functor>);
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, TMaterialParameterMemoizer<_Functor>, template <typename _Functor>);
 //----------------------------------------------------------------------------
 template <typename _Functor>
-MaterialParameterInfo MaterialParameterMemoizer<_Functor>::Info() const {
-    const MaterialParameterInfo info{
-        parent_type::Type(),
+FMaterialParameterInfo TMaterialParameterMemoizer<_Functor>::Info() const {
+    const FMaterialParameterInfo info{
+        parent_type::EType(),
         functor_type::Variability()
     };
     return info;
 }
 //----------------------------------------------------------------------------
 template <typename _Functor>
-void MaterialParameterMemoizer<_Functor>::Eval(const MaterialParameterContext& context, void *dst, size_t sizeInBytes) {
+void TMaterialParameterMemoizer<_Functor>::Eval(const FMaterialParameterContext& context, void *dst, size_t sizeInBytes) {
     Assert(dst);
     Assert(sizeInBytes == sizeof(functor_type::value_type));
 

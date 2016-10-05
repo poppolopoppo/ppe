@@ -37,13 +37,13 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
 //----------------------------------------------------------------------------
-bool DeviceEncapsulator::IsProfilerAttached() const {
+bool FDeviceEncapsulator::IsProfilerAttached() const {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     return _deviceAPIEncapsulator->Diagnostics()->IsProfilerAttached();
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::BeginEvent(const wchar_t *name) {
+void FDeviceEncapsulator::BeginEvent(const wchar_t *name) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(name);
     Assert(IsProfilerAttached());
@@ -51,14 +51,14 @@ void DeviceEncapsulator::BeginEvent(const wchar_t *name) {
     return _deviceAPIEncapsulator->Diagnostics()->BeginEvent(name);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::EndEvent() {
+void FDeviceEncapsulator::EndEvent() {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(IsProfilerAttached());
 
     return _deviceAPIEncapsulator->Diagnostics()->EndEvent();
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetMarker(const wchar_t *name) {
+void FDeviceEncapsulator::SetMarker(const wchar_t *name) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(name);
     Assert(IsProfilerAttached());

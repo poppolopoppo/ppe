@@ -11,26 +11,26 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-BlendState::BlendState()
-:   DeviceResource(DeviceResourceType::BlendState)
+FBlendState::FBlendState()
+:   FDeviceResource(EDeviceResourceType::FBlendState)
 ,   _blendEnabled(false), _blendFactor(0) {}
 //----------------------------------------------------------------------------
-BlendState::~BlendState() {
+FBlendState::~FBlendState() {
     Assert(!_deviceAPIDependantState);
 }
 //----------------------------------------------------------------------------
-bool BlendState::Available() const {
+bool FBlendState::Available() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     return nullptr != _deviceAPIDependantState;
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantEntity *BlendState::TerminalEntity() const {
+FDeviceAPIDependantEntity *FBlendState::TerminalEntity() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     return _deviceAPIDependantState.get();
 }
 //----------------------------------------------------------------------------
-void BlendState::Create(IDeviceAPIEncapsulator *device) {
+void FBlendState::Create(IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(!_deviceAPIDependantState);
@@ -40,7 +40,7 @@ void BlendState::Create(IDeviceAPIEncapsulator *device) {
     Assert(_deviceAPIDependantState);
 }
 //----------------------------------------------------------------------------
-void BlendState::Destroy(IDeviceAPIEncapsulator *device) {
+void FBlendState::Destroy(IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(_deviceAPIDependantState);
@@ -52,90 +52,90 @@ void BlendState::Destroy(IDeviceAPIEncapsulator *device) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceAPIDependantBlendState::DeviceAPIDependantBlendState(IDeviceAPIEncapsulator *device, const BlendState *resource)
-:   TypedDeviceAPIDependantEntity<BlendState>(device->APIEncapsulator(), resource) {
+FDeviceAPIDependantBlendState::FDeviceAPIDependantBlendState(IDeviceAPIEncapsulator *device, const FBlendState *resource)
+:   TTypedDeviceAPIDependantEntity<FBlendState>(device->APIEncapsulator(), resource) {
     Assert(resource);
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantBlendState::~DeviceAPIDependantBlendState() {}
+FDeviceAPIDependantBlendState::~FDeviceAPIDependantBlendState() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const BlendState *BlendState::Additive = nullptr;
-const BlendState *BlendState::AlphaBlend = nullptr;
-const BlendState *BlendState::NonPremultiplied = nullptr;
-const BlendState *BlendState::Opaque = nullptr;
+const FBlendState *FBlendState::Additive = nullptr;
+const FBlendState *FBlendState::AlphaBlend = nullptr;
+const FBlendState *FBlendState::NonPremultiplied = nullptr;
+const FBlendState *FBlendState::Opaque = nullptr;
 //----------------------------------------------------------------------------
 namespace {
-    static POD_STORAGE(BlendState) gBlendState_Additive;
-    static POD_STORAGE(BlendState) gBlendState_AlphaBlend;
-    static POD_STORAGE(BlendState) gBlendState_NonPremultiplied;
-    static POD_STORAGE(BlendState) gBlendState_Opaque;
+    static POD_STORAGE(FBlendState) gBlendState_Additive;
+    static POD_STORAGE(FBlendState) gBlendState_AlphaBlend;
+    static POD_STORAGE(FBlendState) gBlendState_NonPremultiplied;
+    static POD_STORAGE(FBlendState) gBlendState_Opaque;
 }
 //----------------------------------------------------------------------------
-void BlendState::Start() {
+void FBlendState::Start() {
     Assert(nullptr == Additive);
     {
-        BlendState *const state = new ((void *)&gBlendState_Additive) BlendState();
+        FBlendState *const state = new ((void *)&gBlendState_Additive) FBlendState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("Additive");
 #endif
         state->SetBlendEnabled(true);
-        state->SetColorSourceBlend(Blend::SourceAlpha);
-        state->SetAlphaSourceBlend(Blend::SourceAlpha);
-        state->SetColorDestinationBlend(Blend::One);
-        state->SetAlphaDestinationBlend(Blend::One);
+        state->SetColorSourceBlend(EBlend::SourceAlpha);
+        state->SetAlphaSourceBlend(EBlend::SourceAlpha);
+        state->SetColorDestinationBlend(EBlend::One);
+        state->SetAlphaDestinationBlend(EBlend::One);
         state->Freeze();
         Additive = state;
     }
     Assert(nullptr == AlphaBlend);
     {
-        BlendState *const state = new ((void *)&gBlendState_AlphaBlend) BlendState();
+        FBlendState *const state = new ((void *)&gBlendState_AlphaBlend) FBlendState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("AlphaBlend");
 #endif
         state->SetBlendEnabled(true);
-        state->SetColorSourceBlend(Blend::One);
-        state->SetAlphaSourceBlend(Blend::One);
-        state->SetColorDestinationBlend(Blend::InverseSourceAlpha);
-        state->SetAlphaDestinationBlend(Blend::InverseSourceAlpha);
+        state->SetColorSourceBlend(EBlend::One);
+        state->SetAlphaSourceBlend(EBlend::One);
+        state->SetColorDestinationBlend(EBlend::InverseSourceAlpha);
+        state->SetAlphaDestinationBlend(EBlend::InverseSourceAlpha);
         state->Freeze();
         AlphaBlend = state;
     }
     Assert(nullptr == NonPremultiplied);
     {
-        BlendState *const state = new ((void *)&gBlendState_NonPremultiplied) BlendState();
+        FBlendState *const state = new ((void *)&gBlendState_NonPremultiplied) FBlendState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("NonPremultiplied");
 #endif
         state->SetBlendEnabled(true);
-        state->SetColorSourceBlend(Blend::SourceAlpha);
-        state->SetAlphaSourceBlend(Blend::SourceAlpha);
-        state->SetColorDestinationBlend(Blend::InverseSourceAlpha);
-        state->SetAlphaDestinationBlend(Blend::InverseSourceAlpha);
+        state->SetColorSourceBlend(EBlend::SourceAlpha);
+        state->SetAlphaSourceBlend(EBlend::SourceAlpha);
+        state->SetColorDestinationBlend(EBlend::InverseSourceAlpha);
+        state->SetAlphaDestinationBlend(EBlend::InverseSourceAlpha);
         state->Freeze();
         NonPremultiplied = state;
     }
     Assert(nullptr == Opaque);
     {
-        BlendState *const state = new ((void *)&gBlendState_Opaque) BlendState();
+        FBlendState *const state = new ((void *)&gBlendState_Opaque) FBlendState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("Opaque");
 #endif
-        state->SetColorSourceBlend(Blend::One);
-        state->SetAlphaSourceBlend(Blend::One);
-        state->SetColorDestinationBlend(Blend::Zero);
-        state->SetAlphaDestinationBlend(Blend::Zero);
+        state->SetColorSourceBlend(EBlend::One);
+        state->SetAlphaSourceBlend(EBlend::One);
+        state->SetColorDestinationBlend(EBlend::Zero);
+        state->SetAlphaDestinationBlend(EBlend::Zero);
         state->Freeze();
         Opaque = state;
     }
 }
 //----------------------------------------------------------------------------
-void BlendState::Shutdown() {
+void FBlendState::Shutdown() {
     Assert(nullptr != Additive);
     {
         Assert((void *)Additive == (void *)&gBlendState_Additive);
@@ -164,9 +164,9 @@ void BlendState::Shutdown() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void BlendState::OnDeviceCreate(DeviceEncapsulator *device) {
+void FBlendState::OnDeviceCreate(FDeviceEncapsulator *device) {
 #define CREATEWDEVICE_BLENDSTATE_BUILTINTYPE(_NAME) \
-    remove_const(BlendState::_NAME)->Create(device->Device())
+    remove_const(FBlendState::_NAME)->Create(device->Device())
 
     CREATEWDEVICE_BLENDSTATE_BUILTINTYPE(Additive);
     CREATEWDEVICE_BLENDSTATE_BUILTINTYPE(AlphaBlend);
@@ -176,9 +176,9 @@ void BlendState::OnDeviceCreate(DeviceEncapsulator *device) {
 #undef CREATEWDEVICE_BLENDSTATE_BUILTINTYPE
 }
 //----------------------------------------------------------------------------
-void BlendState::OnDeviceDestroy(DeviceEncapsulator *device) {
+void FBlendState::OnDeviceDestroy(FDeviceEncapsulator *device) {
 #define DESTROYWDEVICE_BLENDSTATE_BUILTINTYPE(_NAME) \
-    remove_const(BlendState::_NAME)->Destroy(device->Device())
+    remove_const(FBlendState::_NAME)->Destroy(device->Device())
 
     DESTROYWDEVICE_BLENDSTATE_BUILTINTYPE(Additive);
     DESTROYWDEVICE_BLENDSTATE_BUILTINTYPE(AlphaBlend);

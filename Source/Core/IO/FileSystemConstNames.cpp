@@ -6,29 +6,29 @@
 #include "../Memory/AlignedStorage.h"
 
 #define FOREACH_FILESYSTEMCONSTNAMES(_Macro) \
-    _Macro(Dirname,         DotDot,         L"..") \
+    _Macro(FDirname,         DotDot,         L"..") \
     \
-    _Macro(Extname,         DaeExt,         L".dae") \
-    _Macro(Extname,         FxExt,          L".fx") \
-    _Macro(Extname,         ObjExt,         L".obj") \
-    _Macro(Extname,         PlyExt,         L".ply") \
+    _Macro(FExtname,         DaeExt,         L".dae") \
+    _Macro(FExtname,         FxExt,          L".fx") \
+    _Macro(FExtname,         ObjExt,         L".obj") \
+    _Macro(FExtname,         PlyExt,         L".ply") \
     \
-    _Macro(Extname,         BmpExt,         L".bmp") \
-    _Macro(Extname,         DdsExt,         L".dds") \
-    _Macro(Extname,         GifExt,         L".gif") \
-    _Macro(Extname,         HdrExt,         L".hdr") \
-    _Macro(Extname,         JpgExt,         L".jpg") \
-    _Macro(Extname,         PgmExt,         L".pgm") \
-    _Macro(Extname,         PngExt,         L".png") \
-    _Macro(Extname,         PpmExt,         L".ppm") \
-    _Macro(Extname,         PicExt,         L".pic") \
-    _Macro(Extname,         PsdExt,         L".psd") \
-    _Macro(Extname,         TgaExt,         L".tga") \
+    _Macro(FExtname,         BmpExt,         L".bmp") \
+    _Macro(FExtname,         DdsExt,         L".dds") \
+    _Macro(FExtname,         GifExt,         L".gif") \
+    _Macro(FExtname,         HdrExt,         L".hdr") \
+    _Macro(FExtname,         JpgExt,         L".jpg") \
+    _Macro(FExtname,         PgmExt,         L".pgm") \
+    _Macro(FExtname,         PngExt,         L".png") \
+    _Macro(FExtname,         PpmExt,         L".ppm") \
+    _Macro(FExtname,         PicExt,         L".pic") \
+    _Macro(FExtname,         PsdExt,         L".psd") \
+    _Macro(FExtname,         TgaExt,         L".tga") \
     \
-    _Macro(MountingPoint,   GameDataDir,    L"GameData:") \
-    _Macro(MountingPoint,   ProcessDir,     L"Process:") \
-    _Macro(MountingPoint,   TmpDir,         L"Tmp:") \
-    _Macro(MountingPoint,   VirtualDataDir, L"VirtualData:")
+    _Macro(FMountingPoint,   GameDataDir,    L"GameData:") \
+    _Macro(FMountingPoint,   ProcessDir,     L"Process:") \
+    _Macro(FMountingPoint,   TmpDir,         L"Tmp:") \
+    _Macro(FMountingPoint,   VirtualDataDir, L"VirtualData:")
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -46,13 +46,13 @@ FOREACH_FILESYSTEMCONSTNAMES(DEF_FILESYSTEMCONSTNAMES_STORAGE)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define DEF_FILESYSTEMCONSTNAMES_ACCESSOR(_Type, _Name, _Content) \
-    const _Type& FileSystemConstNames::_Name() { return *reinterpret_cast<const _Type *>(&CONCAT(gPod_##_Type##_, _Name)); }
+    const _Type& FFileSystemConstNames::_Name() { return *reinterpret_cast<const _Type *>(&CONCAT(gPod_##_Type##_, _Name)); }
 FOREACH_FILESYSTEMCONSTNAMES(DEF_FILESYSTEMCONSTNAMES_ACCESSOR)
 #undef DEF_FILESYSTEMCONSTNAMES_ACCESSOR
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FileSystemConstNames::Start() {
+void FFileSystemConstNames::Start() {
 #define DEF_FILESYSTEMCONSTNAMES_STARTUP(_Type, _Name, _Content) \
     new ((void *)&CONCAT(gPod_##_Type##_, _Name)) _Type(MakeStringView(_Content));
     FOREACH_FILESYSTEMCONSTNAMES(DEF_FILESYSTEMCONSTNAMES_STARTUP)
@@ -61,7 +61,7 @@ void FileSystemConstNames::Start() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FileSystemConstNames::Shutdown() {
+void FFileSystemConstNames::Shutdown() {
 #define DEF_FILESYSTEMCONSTNAMES_SHUTDOWN(_Type, _Name, _Content) \
     reinterpret_cast<const _Type *>(&CONCAT(gPod_##_Type##_, _Name))->~_Type();
     FOREACH_FILESYSTEMCONSTNAMES(DEF_FILESYSTEMCONSTNAMES_SHUTDOWN)

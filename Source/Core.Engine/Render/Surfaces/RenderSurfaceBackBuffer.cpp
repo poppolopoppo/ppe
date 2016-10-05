@@ -13,40 +13,40 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, RenderSurfaceBackBuffer, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, FRenderSurfaceBackBuffer, );
 //----------------------------------------------------------------------------
-RenderSurfaceBackBuffer::RenderSurfaceBackBuffer(String&& name, Flags selected)
-:   AbstractRenderSurface(std::move(name))
+FRenderSurfaceBackBuffer::FRenderSurfaceBackBuffer(FString&& name, EFlags selected)
+:   FAbstractRenderSurface(std::move(name))
 ,   _selected(selected) {
     Assert(size_t(selected) != 0); // at least one or nothing to do :p
 }
 //----------------------------------------------------------------------------
-RenderSurfaceBackBuffer::~RenderSurfaceBackBuffer() {}
+FRenderSurfaceBackBuffer::~FRenderSurfaceBackBuffer() {}
 //----------------------------------------------------------------------------
-void RenderSurfaceBackBuffer::CreateResources_(
+void FRenderSurfaceBackBuffer::CreateResources_(
     Graphics::IDeviceAPIEncapsulator *device,
     Graphics::PCRenderTarget& pRenderTarget,
     Graphics::PCDepthStencil& pDepthStencil ) {
     Assert(!pRenderTarget);
     Assert(!pDepthStencil);
 
-    if (RenderSurfaceBackBuffer::RenderTarget & _selected)
+    if (FRenderSurfaceBackBuffer::FRenderTarget & _selected)
         pRenderTarget = device->BackBufferRenderTarget();
 
-    if (RenderSurfaceBackBuffer::DepthStencil & _selected)
+    if (FRenderSurfaceBackBuffer::FDepthStencil & _selected)
         pDepthStencil = device->BackBufferDepthStencil();
 }
 //----------------------------------------------------------------------------
-void RenderSurfaceBackBuffer::DestroyResources_(
+void FRenderSurfaceBackBuffer::DestroyResources_(
     Graphics::IDeviceAPIEncapsulator *device,
     Graphics::PCRenderTarget& pRenderTarget,
     Graphics::PCDepthStencil& pDepthStencil ) {
-    if (RenderSurfaceBackBuffer::RenderTarget & _selected) {
+    if (FRenderSurfaceBackBuffer::FRenderTarget & _selected) {
         Assert(device->BackBufferRenderTarget() == pRenderTarget);
         pRenderTarget.reset(nullptr);
     }
 
-    if (RenderSurfaceBackBuffer::DepthStencil & _selected) {
+    if (FRenderSurfaceBackBuffer::FDepthStencil & _selected) {
         Assert(device->BackBufferDepthStencil() == pDepthStencil);
         pDepthStencil.reset(nullptr);
     }

@@ -22,26 +22,26 @@
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define _RTTI_CLASS_SINGLETON(_Name) \
-    void _Name::MetaClass::Create() { \
-        Core::RTTI::MetaClassSingleton< _Name >::Create(); \
+    void _Name::FMetaClass::Create() { \
+        Core::RTTI::TMetaClassSingleton< _Name >::Create(); \
     } \
-    void _Name::MetaClass::Destroy() { \
-        Core::RTTI::MetaClassSingleton< _Name >::Destroy(); \
+    void _Name::FMetaClass::Destroy() { \
+        Core::RTTI::TMetaClassSingleton< _Name >::Destroy(); \
     } \
-    bool _Name::MetaClass::HasInstance() { \
-        return Core::RTTI::MetaClassSingleton< _Name >::HasInstance(); \
+    bool _Name::FMetaClass::HasInstance() { \
+        return Core::RTTI::TMetaClassSingleton< _Name >::HasInstance(); \
     } \
-    const _Name::MetaClass *_Name::MetaClass::Instance() { \
-        return &Core::RTTI::MetaClassSingleton< _Name >::Instance(); \
+    const _Name::FMetaClass *_Name::FMetaClass::Instance() { \
+        return &Core::RTTI::TMetaClassSingleton< _Name >::Instance(); \
     }
 //----------------------------------------------------------------------------
 #define _RTTI_CLASS_DESTRUCTOR(_Name) \
-    _Name::MetaClass::~MetaClass() {}
+    _Name::FMetaClass::~FMetaClass() {}
 //----------------------------------------------------------------------------
 #define _RTTI_CLASS_AUTOREGISTER(_Tag, _Name) \
-    static const Core::RTTI::MetaClassDecl<RTTI_TAG(_Tag)> CONCAT(gRTTI_AutoRegister_, _Name)( \
-        &_Name::MetaClass::Create, \
-        &_Name::MetaClass::Destroy \
+    static const Core::RTTI::TMetaClassDecl<RTTI_TAG(_Tag)> CONCAT(gRTTI_AutoRegister_, _Name)( \
+        &_Name::FMetaClass::Create, \
+        &_Name::FMetaClass::Destroy \
         );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -50,10 +50,10 @@
     _RTTI_CLASS_SINGLETON(_Name) \
     _RTTI_CLASS_AUTOREGISTER(_Tag, _Name) \
     _RTTI_CLASS_DESTRUCTOR(_Name) \
-    _Name::MetaClass::MetaClass() \
-        :   Core::RTTI::DefaultMetaClass<_Name>( \
+    _Name::FMetaClass::FMetaClass() \
+        :   Core::RTTI::TDefaultMetaClass<_Name>( \
                 STRINGIZE(_Name), \
-                Core::RTTI::MetaClass::_Attributes ) {
+                Core::RTTI::FMetaClass::_Attributes ) {
 //----------------------------------------------------------------------------
 #define RTTI_CLASS_END() }
 //----------------------------------------------------------------------------
@@ -67,14 +67,14 @@
 //----------------------------------------------------------------------------
 // Add a public property "Alias" from a private field "_someName"
 #define RTTI_PROPERTY_FIELD_ALIAS(_Name, _Alias) \
-    _RTTI_PROPERTY_IMPL(STRINGIZE(_Alias), Core::RTTI::MetaProperty::Public, &object_type::_Name )
+    _RTTI_PROPERTY_IMPL(STRINGIZE(_Alias), Core::RTTI::FMetaProperty::Public, &object_type::_Name )
 //----------------------------------------------------------------------------
 // Add a private property "SomeName" from a private field "_someName"
 #define RTTI_PROPERTY_PRIVATE_FIELD(_Name) { \
         char propName[] = STRINGIZE(_Name); \
         STATIC_ASSERT(sizeof(propName) > 1); \
         InplaceToUpper(propName[1]); \
-        _RTTI_PROPERTY_IMPL(&propName[1], Core::RTTI::MetaProperty::Private, &object_type::_Name ) \
+        _RTTI_PROPERTY_IMPL(&propName[1], Core::RTTI::FMetaProperty::Private, &object_type::_Name ) \
     }
 //----------------------------------------------------------------------------
 // Add a public property "SomeName" from 3 delegates or 3 std::function : a getter, a mover & a setter
@@ -83,7 +83,7 @@
 //----------------------------------------------------------------------------
 // Add a property "SomeName" from 3 delegates or 3 std::function : a getter, a mover & a setter
 #define RTTI_PROPERTY_GETSET(_Name, _Get, _Set) \
-    RTTI_PROPERTY_GETSET_FLAGS(_Name, Core::RTTI::MetaProperty::Public, _Get, _Set )
+    RTTI_PROPERTY_GETSET_FLAGS(_Name, Core::RTTI::FMetaProperty::Public, _Get, _Set )
 //----------------------------------------------------------------------------
 // Add a property "SomeName" from 2 member functions : SomeName() & SetSomeName()
 #define RTTI_PROPERTY_MEMBER(_Name) \
@@ -94,7 +94,7 @@
 // Add a deprecated property "SomeName" of type T, these are write-only : you can't read from them
 #define RTTI_PROPERTY_DEPRECATED(_Type, _Name) { \
         Core::RTTI::UCMetaProperty prop = Core::RTTI::MakeDeprecatedProperty<_Type, object_type>( \
-            STRINGIZE(_Name), Core::RTTI::MetaProperty::Private ); \
+            STRINGIZE(_Name), Core::RTTI::FMetaProperty::Private ); \
         RegisterProperty(std::move(prop)); \
     }
 //----------------------------------------------------------------------------

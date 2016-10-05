@@ -7,7 +7,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, size_t _InSitu>
-PatriciaNodeBase<_Key, _Value, _InSitu>::PatriciaNodeBase(const sequence_type& keys)
+TPatriciaNodeBase<_Key, _Value, _InSitu>::TPatriciaNodeBase(const sequence_type& keys)
     : _size(0)
     , _hasValue(0)
     , _left(nullptr), _center(nullptr), _right(nullptr)
@@ -17,7 +17,7 @@ PatriciaNodeBase<_Key, _Value, _InSitu>::PatriciaNodeBase(const sequence_type& k
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, size_t _InSitu>
-void PatriciaNodeBase<_Key, _Value, _InSitu>::SetKeys_(const sequence_type& keys) {
+void TPatriciaNodeBase<_Key, _Value, _InSitu>::SetKeys_(const sequence_type& keys) {
     Assert(keys.size());
     Assert(keys.size() <= _InSitu);
 
@@ -29,18 +29,18 @@ void PatriciaNodeBase<_Key, _Value, _InSitu>::SetKeys_(const sequence_type& keys
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, size_t _InSitu, typename _Less, typename _EqualTo, typename _Allocator>
-PatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::PatriciaTrie()
+TPatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::TPatriciaTrie()
     : _root(0), _size(0) {}
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, size_t _InSitu, typename _Less, typename _EqualTo, typename _Allocator>
-PatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::~PatriciaTrie() {
+TPatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::~TPatriciaTrie() {
     Clear();
     Assert(nullptr == _root);
     Assert(0 == _size);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, size_t _InSitu, typename _Less, typename _EqualTo, typename _Allocator>
-PatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::PatriciaTrie(PatriciaTrie&& rvalue)
+TPatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::TPatriciaTrie(TPatriciaTrie&& rvalue)
     :   allocator_type(std::move(rvalue))
     ,   _root(nullptr), _size(0) {
     std::swap(rvalue._root, _root);
@@ -48,7 +48,7 @@ PatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::PatriciaTrie(P
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, size_t _InSitu, typename _Less, typename _EqualTo, typename _Allocator>
-bool PatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::Insert_ReturnIfExists(node_type** pnode, const sequence_type& keys) {
+bool TPatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::Insert_ReturnIfExists(node_type** pnode, const sequence_type& keys) {
     Assert(pnode);
     Assert(false == keys.empty());
 
@@ -140,7 +140,7 @@ bool PatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::Insert_Re
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, size_t _InSitu, typename _Less, typename _EqualTo, typename _Allocator>
-auto PatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::Insert_AssertUnique(const sequence_type& keys) -> node_type* {
+auto TPatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::Insert_AssertUnique(const sequence_type& keys) -> node_type* {
     node_type* node = nullptr;
     if (true == Insert_ReturnIfExists(&node, keys))
         AssertNotReached();
@@ -150,7 +150,7 @@ auto PatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::Insert_As
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, size_t _InSitu, typename _Less, typename _EqualTo, typename _Allocator>
-auto PatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::Find(const sequence_type& keys, const iterator* hint /* = nullptr */) const -> iterator {
+auto TPatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::Find(const sequence_type& keys, const iterator* hint /* = nullptr */) const -> iterator {
     Assert(false == keys.empty());
 
     const node_type* it = _root;
@@ -231,13 +231,13 @@ auto PatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::Find(cons
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, size_t _InSitu, typename _Less, typename _EqualTo, typename _Allocator>
-bool PatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::Contains(const sequence_type& keys) const {
+bool TPatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::Contains(const sequence_type& keys) const {
     const iterator it = Find(keys);
     return it.HasValue();
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, size_t _InSitu, typename _Less, typename _EqualTo, typename _Allocator>
-void PatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::Optimize() {
+void TPatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::Optimize() {
     if (nullptr == _root) {
         Assert(0 == _size);
         return;
@@ -309,7 +309,7 @@ void PatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::Optimize(
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, size_t _InSitu, typename _Less, typename _EqualTo, typename _Allocator>
-void PatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::Clear() {
+void TPatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::Clear() {
     if (nullptr == _root) {
         Assert(0 == _size);
         return;
@@ -343,14 +343,14 @@ void PatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::Clear() {
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, size_t _InSitu, typename _Less, typename _EqualTo, typename _Allocator>
-void PatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::Swap(PatriciaTrie& other) {
+void TPatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::Swap(TPatriciaTrie& other) {
     AssertRelease(static_cast<allocator_type&>(other) == static_cast<allocator_type&>(*this));
     std::swap(other._root, _root);
     std::swap(other._size, _size);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, size_t _InSitu, typename _Less, typename _EqualTo, typename _Allocator>
-auto PatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::SplitNode_(node_type* parent, size_t index) -> node_type* {
+auto TPatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::SplitNode_(node_type* parent, size_t index) -> node_type* {
     Assert(parent);
 
     const sequence_type k0 = parent->Keys().CutBefore(index);

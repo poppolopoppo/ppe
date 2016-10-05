@@ -13,9 +13,9 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DX11DepthStencilState::DX11DepthStencilState(IDeviceAPIEncapsulator *device, DepthStencilState *owner)
-:   DeviceAPIDependantDepthStencilState(device, owner) {
-    const DX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
+FDX11DepthStencilState::FDX11DepthStencilState(IDeviceAPIEncapsulator *device, FDepthStencilState *owner)
+:   FDeviceAPIDependantDepthStencilState(device, owner) {
+    const FDX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
 
     ::D3D11_DEPTH_STENCIL_DESC depthStencilStateDesc;
     ::SecureZeroMemory(&depthStencilStateDesc, sizeof(depthStencilStateDesc));
@@ -47,110 +47,110 @@ DX11DepthStencilState::DX11DepthStencilState(IDeviceAPIEncapsulator *device, Dep
     DX11SetDeviceResourceNameIFP(_entity, owner);
 }
 //----------------------------------------------------------------------------
-DX11DepthStencilState::~DX11DepthStencilState() {
+FDX11DepthStencilState::~FDX11DepthStencilState() {
     ReleaseComRef(_entity);
 }
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, DX11DepthStencilState, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, FDX11DepthStencilState, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-D3D11_COMPARISON_FUNC CompareFunctionToDX11ComparisonFunc(CompareFunction value) {
+D3D11_COMPARISON_FUNC CompareFunctionToDX11ComparisonFunc(ECompareFunction value) {
     switch (value)
     {
-    case Core::Graphics::CompareFunction::Always:
+    case Core::Graphics::ECompareFunction::Always:
         return D3D11_COMPARISON_ALWAYS;
-    case Core::Graphics::CompareFunction::Equal:
+    case Core::Graphics::ECompareFunction::Equal:
         return D3D11_COMPARISON_EQUAL;
-    case Core::Graphics::CompareFunction::Greater:
+    case Core::Graphics::ECompareFunction::TGreater:
         return D3D11_COMPARISON_GREATER;
-    case Core::Graphics::CompareFunction::GreaterEqual:
+    case Core::Graphics::ECompareFunction::TGreaterEqual:
         return D3D11_COMPARISON_GREATER_EQUAL;
-    case Core::Graphics::CompareFunction::Less:
+    case Core::Graphics::ECompareFunction::TLess:
         return D3D11_COMPARISON_LESS;
-    case Core::Graphics::CompareFunction::LessEqual:
+    case Core::Graphics::ECompareFunction::TLessEqual:
         return D3D11_COMPARISON_LESS_EQUAL;
-    case Core::Graphics::CompareFunction::Never:
+    case Core::Graphics::ECompareFunction::Never:
         return D3D11_COMPARISON_NEVER;
-    case Core::Graphics::CompareFunction::NotEqual:
+    case Core::Graphics::ECompareFunction::NotEqual:
         return D3D11_COMPARISON_NOT_EQUAL;
     }
     AssertNotImplemented();
     return static_cast<D3D11_COMPARISON_FUNC>(-1);
 }
 //----------------------------------------------------------------------------
-CompareFunction DX11ComparisonFuncToCompareFunction(D3D11_COMPARISON_FUNC value) {
+ECompareFunction DX11ComparisonFuncToCompareFunction(D3D11_COMPARISON_FUNC value) {
     switch (value)
     {
     case D3D11_COMPARISON_ALWAYS:
-        return Core::Graphics::CompareFunction::Always;
+        return Core::Graphics::ECompareFunction::Always;
     case D3D11_COMPARISON_EQUAL:
-        return Core::Graphics::CompareFunction::Equal;
+        return Core::Graphics::ECompareFunction::Equal;
     case D3D11_COMPARISON_GREATER:
-        return Core::Graphics::CompareFunction::Greater;
+        return Core::Graphics::ECompareFunction::TGreater;
     case D3D11_COMPARISON_GREATER_EQUAL:
-        return Core::Graphics::CompareFunction::GreaterEqual;
+        return Core::Graphics::ECompareFunction::TGreaterEqual;
     case D3D11_COMPARISON_LESS:
-        return Core::Graphics::CompareFunction::Less;
+        return Core::Graphics::ECompareFunction::TLess;
     case D3D11_COMPARISON_LESS_EQUAL:
-        return Core::Graphics::CompareFunction::LessEqual;
+        return Core::Graphics::ECompareFunction::TLessEqual;
     case D3D11_COMPARISON_NEVER:
-        return Core::Graphics::CompareFunction::Never;
+        return Core::Graphics::ECompareFunction::Never;
     case D3D11_COMPARISON_NOT_EQUAL:
-        return Core::Graphics::CompareFunction::NotEqual;
+        return Core::Graphics::ECompareFunction::NotEqual;
     }
     AssertNotImplemented();
-    return static_cast<Graphics::CompareFunction>(-1);
+    return static_cast<Graphics::ECompareFunction>(-1);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-D3D11_STENCIL_OP StencilOperationToDX11StencilOp(StencilOperation value) {
+D3D11_STENCIL_OP StencilOperationToDX11StencilOp(EStencilOperation value) {
     switch (value)
     {
-    case Core::Graphics::StencilOperation::Decrement:
+    case Core::Graphics::EStencilOperation::Decrement:
         return D3D11_STENCIL_OP_DECR;
-    case Core::Graphics::StencilOperation::DecrementSaturation:
+    case Core::Graphics::EStencilOperation::DecrementSaturation:
         return D3D11_STENCIL_OP_DECR_SAT;
-    case Core::Graphics::StencilOperation::Increment:
+    case Core::Graphics::EStencilOperation::Increment:
         return D3D11_STENCIL_OP_INCR;
-    case Core::Graphics::StencilOperation::IncrementSaturation:
+    case Core::Graphics::EStencilOperation::IncrementSaturation:
         return D3D11_STENCIL_OP_INCR_SAT;
-    case Core::Graphics::StencilOperation::Invert:
+    case Core::Graphics::EStencilOperation::Invert:
         return D3D11_STENCIL_OP_INVERT;
-    case Core::Graphics::StencilOperation::Keep:
+    case Core::Graphics::EStencilOperation::Keep:
         return D3D11_STENCIL_OP_KEEP;
-    case Core::Graphics::StencilOperation::Replace:
+    case Core::Graphics::EStencilOperation::Replace:
         return D3D11_STENCIL_OP_REPLACE;
-    case Core::Graphics::StencilOperation::Zero:
+    case Core::Graphics::EStencilOperation::Zero:
         return D3D11_STENCIL_OP_ZERO;
     }
     AssertNotImplemented();
     return static_cast<D3D11_STENCIL_OP>(-1);
 }
 //----------------------------------------------------------------------------
-StencilOperation DX11StencilOpToStencilOperation(D3D11_STENCIL_OP value) {
+EStencilOperation DX11StencilOpToStencilOperation(D3D11_STENCIL_OP value) {
     switch (value)
     {
     case D3D11_STENCIL_OP_DECR:
-        return Core::Graphics::StencilOperation::Decrement;
+        return Core::Graphics::EStencilOperation::Decrement;
     case D3D11_STENCIL_OP_DECR_SAT:
-        return Core::Graphics::StencilOperation::DecrementSaturation;
+        return Core::Graphics::EStencilOperation::DecrementSaturation;
     case D3D11_STENCIL_OP_INCR:
-        return Core::Graphics::StencilOperation::Increment;
+        return Core::Graphics::EStencilOperation::Increment;
     case D3D11_STENCIL_OP_INCR_SAT:
-        return Core::Graphics::StencilOperation::IncrementSaturation;
+        return Core::Graphics::EStencilOperation::IncrementSaturation;
     case D3D11_STENCIL_OP_INVERT:
-        return Core::Graphics::StencilOperation::Invert;
+        return Core::Graphics::EStencilOperation::Invert;
     case D3D11_STENCIL_OP_KEEP:
-        return Core::Graphics::StencilOperation::Keep;
+        return Core::Graphics::EStencilOperation::Keep;
     case D3D11_STENCIL_OP_REPLACE:
-        return Core::Graphics::StencilOperation::Replace;
+        return Core::Graphics::EStencilOperation::Replace;
     case D3D11_STENCIL_OP_ZERO:
-        return Core::Graphics::StencilOperation::Zero;
+        return Core::Graphics::EStencilOperation::Zero;
     }
     AssertNotImplemented();
-    return static_cast<Graphics::StencilOperation>(-1);
+    return static_cast<Graphics::EStencilOperation>(-1);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

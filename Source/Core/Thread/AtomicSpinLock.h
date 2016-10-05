@@ -16,12 +16,12 @@ namespace Core {
 //----------------------------------------------------------------------------
 #pragma warning( push )
 #pragma warning( disable : 4324 ) // la structure a été remplie en raison du spécificateur d'alignement.
-CACHELINE_ALIGNED class AtomicSpinLock {
+CACHELINE_ALIGNED class FAtomicSpinLock {
 public:
-    AtomicSpinLock() { _state.clear(); }
+    FAtomicSpinLock() { _state.clear(); }
 
-    AtomicSpinLock(const AtomicSpinLock& ) = delete;
-    AtomicSpinLock& operator =(const AtomicSpinLock& ) = delete;
+    FAtomicSpinLock(const FAtomicSpinLock& ) = delete;
+    FAtomicSpinLock& operator =(const FAtomicSpinLock& ) = delete;
 
     void Unlock() { _state.clear(std::memory_order_release); }
     bool TryLock() { return false == _state.test_and_set(std::memory_order_acquire); }
@@ -31,28 +31,28 @@ public:
             _mm_pause();
     }
 
-    struct Scope {
-        Scope(AtomicSpinLock& lock) : _lock(lock) { _lock.Lock(); }
-        ~Scope() { _lock.Unlock(); }
+    struct FScope {
+        FScope(FAtomicSpinLock& lock) : _lock(lock) { _lock.Lock(); }
+        ~FScope() { _lock.Unlock(); }
 
-        Scope(const Scope& ) = delete;
-        Scope& operator =(const Scope& ) = delete;
+        FScope(const FScope& ) = delete;
+        FScope& operator =(const FScope& ) = delete;
 
     private:
-        AtomicSpinLock& _lock;
+        FAtomicSpinLock& _lock;
     };
 
-    struct TryScope {
-        TryScope(AtomicSpinLock& lock) : _lock(lock), _locked(lock.TryLock()) {}
-        ~TryScope() { if (_locked) _lock.Unlock(); }
+    struct FTryScope {
+        FTryScope(FAtomicSpinLock& lock) : _lock(lock), _locked(lock.TryLock()) {}
+        ~FTryScope() { if (_locked) _lock.Unlock(); }
 
-        TryScope(const TryScope& ) = delete;
-        TryScope& operator =(const TryScope& ) = delete;
+        FTryScope(const FTryScope& ) = delete;
+        FTryScope& operator =(const FTryScope& ) = delete;
 
         bool Locked() const { return _locked; }
 
     private:
-        AtomicSpinLock& _lock;
+        FAtomicSpinLock& _lock;
         bool _locked;
     };
 

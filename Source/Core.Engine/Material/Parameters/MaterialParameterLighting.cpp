@@ -18,7 +18,7 @@ namespace MaterialParameterLighting {
 //----------------------------------------------------------------------------
 EACH_MATERIALPARAMETER_LIGHTING(MATERIALPARAMETER_FN_DEF)
 //----------------------------------------------------------------------------
-void RegisterMaterialParameters(MaterialDatabase *database) {
+void RegisterMaterialParameters(FMaterialDatabase *database) {
     Assert(database);
 
 #define BIND_MATERIALPARAMETER(_Variability, _Type, _Name) \
@@ -37,16 +37,16 @@ namespace MaterialParameterLighting {
 //----------------------------------------------------------------------------
 // Sun
 //----------------------------------------------------------------------------
-void SunColor(const MaterialParameterContext& context, float3& dst) {
+void SunColor(const FMaterialParameterContext& context, float3& dst) {
     const ColorRGBA& color = context.Scene->World()->Lighting()->Sun().Color();
     dst = ColorRGBAF(color).Data().xyz();
 }
 //----------------------------------------------------------------------------
-void SunDirection(const MaterialParameterContext& context, float3& dst) {
+void SunDirection(const FMaterialParameterContext& context, float3& dst) {
     dst = context.Scene->World()->Lighting()->Sun().Direction();
 }
 //----------------------------------------------------------------------------
-void SunIntensity(const MaterialParameterContext& context, float& dst) {
+void SunIntensity(const FMaterialParameterContext& context, float& dst) {
     dst = context.Scene->World()->Lighting()->Sun().Intensity();
 }
 //----------------------------------------------------------------------------
@@ -58,11 +58,11 @@ namespace MaterialParameterLighting {
 //----------------------------------------------------------------------------
 // Tone Mapping
 //----------------------------------------------------------------------------
-void Exposure(const MaterialParameterContext& context, float& dst) {
+void Exposure(const FMaterialParameterContext& context, float& dst) {
     dst = context.Scene->World()->Lighting()->Exposure();
 }
 //----------------------------------------------------------------------------
-void WhitePoint(const MaterialParameterContext& context, float& dst) {
+void WhitePoint(const FMaterialParameterContext& context, float& dst) {
     dst = context.Scene->World()->Lighting()->WhitePoint();
 }
 //----------------------------------------------------------------------------

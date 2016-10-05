@@ -13,15 +13,15 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-MetaAtomHashMap::MetaAtomHashMap() {
+FMetaAtomHashMap::FMetaAtomHashMap() {
     _objects.reserve(128);
 }
 //----------------------------------------------------------------------------
-MetaAtomHashMap::~MetaAtomHashMap() {
+FMetaAtomHashMap::~FMetaAtomHashMap() {
     Assert(_objects.empty());
 }
 //----------------------------------------------------------------------------
-void MetaAtomHashMap::Add(const RTTI::Name& name, MetaAtom *metaAtom, bool allowOverride) {
+void FMetaAtomHashMap::Add(const FName& name, FMetaAtom *metaAtom, bool allowOverride) {
     UNUSED(allowOverride);
     Assert(!name.empty());
     Assert(metaAtom);
@@ -35,7 +35,7 @@ void MetaAtomHashMap::Add(const RTTI::Name& name, MetaAtom *metaAtom, bool allow
     slot = metaAtom;
 }
 //----------------------------------------------------------------------------
-void MetaAtomHashMap::Remove(const RTTI::Name& name, MetaAtom *metaAtom) {
+void FMetaAtomHashMap::Remove(const FName& name, FMetaAtom *metaAtom) {
     UNUSED(metaAtom);
     Assert(!name.empty());
     Assert(metaAtom);
@@ -49,11 +49,11 @@ void MetaAtomHashMap::Remove(const RTTI::Name& name, MetaAtom *metaAtom) {
     _objects.erase(it);
 }
 //----------------------------------------------------------------------------
-void MetaAtomHashMap::Add(MetaObject *metaObject) {
+void FMetaAtomHashMap::Add(FMetaObject *metaObject) {
     Assert(metaObject);
     Assert(metaObject->RTTI_IsExported());
 
-    const RTTI::Name& name = metaObject->RTTI_Name();
+    const FName& name = metaObject->RTTI_Name();
     Assert(!name.empty());
 
     WRITESCOPELOCK(_barrier);
@@ -61,11 +61,11 @@ void MetaAtomHashMap::Add(MetaObject *metaObject) {
     _objects[name] = MakeAtom(PMetaObject(metaObject));
 }
 //----------------------------------------------------------------------------
-void MetaAtomHashMap::Remove(MetaObject *metaObject) {
+void FMetaAtomHashMap::Remove(FMetaObject *metaObject) {
     Assert(metaObject);
     Assert(metaObject->RTTI_IsExported());
 
-    const RTTI::Name& name = metaObject->RTTI_Name();
+    const FName& name = metaObject->RTTI_Name();
     Assert(!name.empty());
 
     WRITESCOPELOCK(_barrier);
@@ -77,7 +77,7 @@ void MetaAtomHashMap::Remove(MetaObject *metaObject) {
     _objects.erase(it);
 }
 //----------------------------------------------------------------------------
-MetaAtom *MetaAtomHashMap::GetIFP(const RTTI::Name& name) const {
+FMetaAtom *FMetaAtomHashMap::GetIFP(const FName& name) const {
     Assert(!name.empty());
 
     READSCOPELOCK(_barrier);
@@ -87,7 +87,7 @@ MetaAtom *MetaAtomHashMap::GetIFP(const RTTI::Name& name) const {
     return (_objects.end() == it) ? nullptr : it->second.get();
 }
 //----------------------------------------------------------------------------
-void MetaAtomHashMap::Clear() {
+void FMetaAtomHashMap::Clear() {
     WRITESCOPELOCK(_barrier);
 
     _objects.clear();

@@ -490,7 +490,7 @@ LZ4_FORCE_INLINE int LZ4_compress_generic(
     if ((tableType == byU16) && (inputSize>=LZ4_64Klimit)) return 0;   /* Size too large (not within 64K limit) */
     if (inputSize<LZ4_minLength) goto _last_literals;                  /* Input too small, no compression (all literals) */
 
-    /* First Byte */
+    /* TFirst Byte */
     LZ4_putPosition(ip, ctx, tableType, base);
     ip++; forwardH = LZ4_hashPosition(ip, tableType);
 
@@ -539,7 +539,7 @@ LZ4_FORCE_INLINE int LZ4_compress_generic(
         while ((ip>anchor) && (match+refDelta > lowLimit) && (LZ4_unlikely(ip[-1]==match[refDelta-1]))) { ip--; match--; }
 
         {
-            /* Encode Literal length */
+            /* Encode TLiteral length */
             unsigned litLength = (unsigned)(ip - anchor);
             token = op++;
             if ((outputLimited) && (LZ4_unlikely(op + litLength + (2 + 1 + LZ4_LASTLITERALS) + (litLength/255) > olimit)))
@@ -755,7 +755,7 @@ static int LZ4_compress_destSize_generic(
     if ((tableType == byU16) && (*srcSizePtr>=LZ4_64Klimit)) return 0;   /* Size too large (not within 64K limit) */
     if (*srcSizePtr<LZ4_minLength) goto _last_literals;                  /* Input too small, no compression (all literals) */
 
-    /* First Byte */
+    /* TFirst Byte */
     *srcSizePtr = 0;
     LZ4_putPosition(ip, ctx, tableType, base);
     ip++; forwardH = LZ4_hashPosition(ip, tableType);
@@ -792,12 +792,12 @@ static int LZ4_compress_destSize_generic(
         while ((ip>anchor) && (match > lowLimit) && (LZ4_unlikely(ip[-1]==match[-1]))) { ip--; match--; }
 
         {
-            /* Encode Literal length */
+            /* Encode TLiteral length */
             unsigned litLength = (unsigned)(ip - anchor);
             token = op++;
             if (op + ((litLength+240)/255) + litLength > oMaxLit)
             {
-                /* Not enough space for a last match */
+                /* TNot enough space for a last match */
                 op--;
                 goto _last_literals;
             }
@@ -827,7 +827,7 @@ _next_match:
 
             if (op + ((matchLength+240)/255) > oMaxMatch)
             {
-                /* Match description too long : reduce it */
+                /* FMatch description too long : reduce it */
                 matchLength = (15-1) + (oMaxMatch-op) * 255;
             }
             //printf("offset %5i, matchLength%5i \n", (int)(ip-match), matchLength + LZ4_MINMATCH);
@@ -1518,4 +1518,3 @@ int LZ4_decompress_fast_withPrefix64k(const char* source, char* dest, int origin
 }
 
 #endif   /* LZ4_COMMONDEFS_ONLY */
-

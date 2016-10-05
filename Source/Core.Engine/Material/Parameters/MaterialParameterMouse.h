@@ -6,11 +6,11 @@
 
 namespace Core {
 namespace Engine {
-class MaterialDatabase;
+class FMaterialDatabase;
 
 #define EACH_MATERIALPARAMETER_MOUSE(_Macro) \
-    _Macro(MaterialVariability::Frame, float4,  MousePosition) \
-    _Macro(MaterialVariability::Frame, float4,  MouseButtons)
+    _Macro(EMaterialVariability::FFrame, float4,  MousePosition) \
+    _Macro(EMaterialVariability::FFrame, float4,  MouseButtons)
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -19,7 +19,7 @@ namespace MaterialParameterMouse {
 //----------------------------------------------------------------------------
 EACH_MATERIALPARAMETER_MOUSE(MATERIALPARAMETER_FN_DECL)
 //----------------------------------------------------------------------------
-void RegisterMaterialParameters(MaterialDatabase *database);
+void RegisterMaterialParameters(FMaterialDatabase *database);
 //----------------------------------------------------------------------------
 } //!MaterialParameterMouse
 //----------------------------------------------------------------------------

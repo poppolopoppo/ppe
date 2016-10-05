@@ -9,14 +9,14 @@
 
 namespace Core {
 namespace Graphics {
-class DeviceEncapsulator;
+class FDeviceEncapsulator;
 class IDeviceAPIEncapsulator;
 FWD_REFPTR(DeviceAPIDependantBlendState);
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class Blend {
+enum class EBlend {
     Zero = 0,
     One,
     SourceColor,
@@ -32,7 +32,7 @@ enum class Blend {
     InverseBlendFactor,
 };
 //----------------------------------------------------------------------------
-enum class BlendFunction {
+enum class EBlendFunction {
     Add = 0,
     Max,
     Min,
@@ -40,7 +40,7 @@ enum class BlendFunction {
     Subtract
 };
 //----------------------------------------------------------------------------
-enum class ColorChannels {
+enum class EColorChannels {
     None = 0,
     Red = 1,
     Green = 2,
@@ -52,13 +52,13 @@ enum class ColorChannels {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(BlendState);
-class BlendState : public DeviceResource {
+class FBlendState : public FDeviceResource {
 public:
-    BlendState();
-    virtual ~BlendState();
+    FBlendState();
+    virtual ~FBlendState();
 
     virtual bool Available() const override;
-    virtual DeviceAPIDependantEntity *TerminalEntity() const override;
+    virtual FDeviceAPIDependantEntity *TerminalEntity() const override;
 
     const PDeviceAPIDependantBlendState& DeviceAPIDependantState() const {
         Assert(Frozen()); return _deviceAPIDependantState;
@@ -70,34 +70,34 @@ public:
     const float4& BlendFactor() const { return _blendFactor; }
     void SetBlendFactor(const float4& v) { Assert(!Frozen()); _blendFactor = v; }
 
-    BlendFunction AlphaBlendFunction() const { return _alphaBlendFunction; }
-    void SetAlphaBlendFunction(BlendFunction v) { Assert(!Frozen()); _alphaBlendFunction = v; }
+    EBlendFunction AlphaBlendFunction() const { return _alphaBlendFunction; }
+    void SetAlphaBlendFunction(EBlendFunction v) { Assert(!Frozen()); _alphaBlendFunction = v; }
 
-    Blend AlphaDestinationBlend() const { return _alphaDestinationBlend; }
-    void SetAlphaDestinationBlend(Blend v) { Assert(!Frozen()); _alphaDestinationBlend = v; }
+    EBlend AlphaDestinationBlend() const { return _alphaDestinationBlend; }
+    void SetAlphaDestinationBlend(EBlend v) { Assert(!Frozen()); _alphaDestinationBlend = v; }
 
-    Blend AlphaSourceBlend() const { return _alphaSourceBlend; }
-    void SetAlphaSourceBlend(Blend v) { Assert(!Frozen()); _alphaSourceBlend = v; }
+    EBlend AlphaSourceBlend() const { return _alphaSourceBlend; }
+    void SetAlphaSourceBlend(EBlend v) { Assert(!Frozen()); _alphaSourceBlend = v; }
 
-    BlendFunction ColorBlendFunction() const { return _colorBlendFunction; }
-    void SetColorBlendFunction(BlendFunction v) { Assert(!Frozen()); _colorBlendFunction = v; }
+    EBlendFunction ColorBlendFunction() const { return _colorBlendFunction; }
+    void SetColorBlendFunction(EBlendFunction v) { Assert(!Frozen()); _colorBlendFunction = v; }
 
-    Blend ColorDestinationBlend() const { return _colorDestinationBlend; }
-    void SetColorDestinationBlend(Blend v) { Assert(!Frozen()); _colorDestinationBlend = v; }
+    EBlend ColorDestinationBlend() const { return _colorDestinationBlend; }
+    void SetColorDestinationBlend(EBlend v) { Assert(!Frozen()); _colorDestinationBlend = v; }
 
-    Blend ColorSourceBlend() const { return _colorSourceBlend; }
-    void SetColorSourceBlend(Blend v) { Assert(!Frozen()); _colorSourceBlend = v; }
+    EBlend ColorSourceBlend() const { return _colorSourceBlend; }
+    void SetColorSourceBlend(EBlend v) { Assert(!Frozen()); _colorSourceBlend = v; }
 
-    ColorChannels ColorWriteChannels() const { return _colorWriteChannels; }
-    void SetColorWriteChannels(ColorChannels v) { Assert(!Frozen()); _colorWriteChannels = v; }
+    EColorChannels ColorWriteChannels() const { return _colorWriteChannels; }
+    void SetColorWriteChannels(EColorChannels v) { Assert(!Frozen()); _colorWriteChannels = v; }
 
     u32 MultiSampleMask() const { return _multiSampleMask; }
     void MultiSampleMask(u32 v) { Assert(!Frozen()); _multiSampleMask = v; }
 
-    static const BlendState *Additive;
-    static const BlendState *AlphaBlend;
-    static const BlendState *NonPremultiplied;
-    static const BlendState *Opaque;
+    static const FBlendState *Additive;
+    static const FBlendState *AlphaBlend;
+    static const FBlendState *NonPremultiplied;
+    static const FBlendState *Opaque;
 
     static void Start();
     static void Shutdown();
@@ -105,22 +105,22 @@ public:
     void Create(IDeviceAPIEncapsulator *device);
     void Destroy(IDeviceAPIEncapsulator *device);
 
-    static void OnDeviceCreate(DeviceEncapsulator *device);
-    static void OnDeviceDestroy(DeviceEncapsulator *device);
+    static void OnDeviceCreate(FDeviceEncapsulator *device);
+    static void OnDeviceDestroy(FDeviceEncapsulator *device);
 
 private:
     bool _blendEnabled;
     float4 _blendFactor;
 
-    BlendFunction _alphaBlendFunction = BlendFunction::Add;
-    Blend _alphaDestinationBlend = Blend::One;
-    Blend _alphaSourceBlend = Blend::One;
+    EBlendFunction _alphaBlendFunction = EBlendFunction::Add;
+    EBlend _alphaDestinationBlend = EBlend::One;
+    EBlend _alphaSourceBlend = EBlend::One;
 
-    BlendFunction _colorBlendFunction = BlendFunction::Add;
-    Blend _colorDestinationBlend = Blend::One;
-    Blend _colorSourceBlend = Blend::One;
+    EBlendFunction _colorBlendFunction = EBlendFunction::Add;
+    EBlend _colorDestinationBlend = EBlend::One;
+    EBlend _colorSourceBlend = EBlend::One;
 
-    ColorChannels _colorWriteChannels = ColorChannels::All;
+    EColorChannels _colorWriteChannels = EColorChannels::All;
 
     u32 _multiSampleMask = UINT32_MAX;
 
@@ -129,10 +129,10 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DeviceAPIDependantBlendState : public TypedDeviceAPIDependantEntity<BlendState> {
+class FDeviceAPIDependantBlendState : public TTypedDeviceAPIDependantEntity<FBlendState> {
 public:
-    DeviceAPIDependantBlendState(IDeviceAPIEncapsulator *device, const BlendState *resource);
-    virtual ~DeviceAPIDependantBlendState();
+    FDeviceAPIDependantBlendState(IDeviceAPIEncapsulator *device, const FBlendState *resource);
+    virtual ~FDeviceAPIDependantBlendState();
 
     virtual size_t VideoMemorySizeInBytes() const override { return 0; }
 };

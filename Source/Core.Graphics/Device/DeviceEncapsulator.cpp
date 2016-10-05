@@ -40,85 +40,85 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceEncapsulator::DeviceEncapsulator()
-:   _status(DeviceStatus::Invalid)
+FDeviceEncapsulator::FDeviceEncapsulator()
+:   _status(EDeviceStatus::Invalid)
 ,   _revision(InvalidDeviceRevision())
-,   _videoMemory("DeviceEncapsulator", &GlobalVideoMemory::Instance()) {}
+,   _videoMemory("FDeviceEncapsulator", &FGlobalVideoMemory::Instance()) {}
 //----------------------------------------------------------------------------
-DeviceEncapsulator::~DeviceEncapsulator() {
-    Assert(DeviceStatus::Invalid == _status);
+FDeviceEncapsulator::~FDeviceEncapsulator() {
+    Assert(EDeviceStatus::Invalid == _status);
     AssertRelease(!_deviceAPIEncapsulator);
 }
 //----------------------------------------------------------------------------
-DeviceAPI DeviceEncapsulator::API() const {
+EDeviceAPI FDeviceEncapsulator::API() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(_deviceAPIEncapsulator);
     return _deviceAPIEncapsulator->API();
 }
 //----------------------------------------------------------------------------
-const PresentationParameters& DeviceEncapsulator::Parameters() const {
+const FPresentationParameters& FDeviceEncapsulator::Parameters() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(_deviceAPIEncapsulator);
     return _deviceAPIEncapsulator->Parameters();
 }
 //----------------------------------------------------------------------------
-IDeviceAPIEncapsulator *DeviceEncapsulator::Device() const {
+IDeviceAPIEncapsulator *FDeviceEncapsulator::Device() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     return remove_const(this);
 }
 //----------------------------------------------------------------------------
-IDeviceAPIContext *DeviceEncapsulator::Immediate() const {
+IDeviceAPIContext *FDeviceEncapsulator::Immediate() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     return remove_const(this);
 }
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
-IDeviceAPIDiagnostics *DeviceEncapsulator::Diagnostics() const {
+IDeviceAPIDiagnostics *FDeviceEncapsulator::Diagnostics() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     return remove_const(this);
 }
 #endif
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::Create(DeviceAPI api, void *windowHandle, const PresentationParameters& presentationParameters) {
+void FDeviceEncapsulator::Create(EDeviceAPI api, void *windowHandle, const FPresentationParameters& presentationParameters) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!_deviceAPIEncapsulator);
 
-    LOG(Info, L"[DeviceEncapsulator] CreateDevice({0})", DeviceAPIToCStr(api));
+    LOG(Info, L"[FDeviceEncapsulator] CreateDevice({0})", DeviceAPIToCStr(api));
 
-    Assert(DeviceStatus::Invalid == _status);
-    _status = DeviceStatus::Create;
+    Assert(EDeviceStatus::Invalid == _status);
+    _status = EDeviceStatus::Create;
     _revision.Value = 0;
 
     switch (api)
     {
-    case Core::Graphics::DeviceAPI::DirectX11:
-        _deviceAPIEncapsulator.reset(new DX11DeviceAPIEncapsulator(this, windowHandle, presentationParameters));
+    case Core::Graphics::EDeviceAPI::DirectX11:
+        _deviceAPIEncapsulator.reset(new FDX11DeviceAPIEncapsulator(this, windowHandle, presentationParameters));
         break;
 
-    case Core::Graphics::DeviceAPI::OpenGL4:
+    case Core::Graphics::EDeviceAPI::OpenGL4:
     default:
         AssertNotImplemented();
     }
 
     Assert(nullptr == _deviceSharedEntityPool);
-    _deviceSharedEntityPool.reset(new DeviceSharedEntityPool(&_videoMemory));
+    _deviceSharedEntityPool.reset(new FDeviceSharedEntityPool(&_videoMemory));
 
     Assert(_deviceAPIEncapsulator);
     GraphicsStartup::OnDeviceCreate(this);
     _onDeviceCreate.Invoke(this);
 
-    Assert(DeviceStatus::Create == _status);
-    _status = DeviceStatus::Normal;
+    Assert(EDeviceStatus::Create == _status);
+    _status = EDeviceStatus::Normal;
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::Destroy() {
+void FDeviceEncapsulator::Destroy() {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(_deviceAPIEncapsulator);
 
-    LOG(Info, L"[DeviceEncapsulator] DestroyDevice({0})", DeviceAPIToCStr(_deviceAPIEncapsulator->API()));
+    LOG(Info, L"[FDeviceEncapsulator] DestroyDevice({0})", DeviceAPIToCStr(_deviceAPIEncapsulator->API()));
 
-    Assert(DeviceStatus::Normal == _status);
-    _status = DeviceStatus::Destroy;
+    Assert(EDeviceStatus::Normal == _status);
+    _status = EDeviceStatus::Destroy;
 
     _onDeviceDestroy.Invoke(this);
 
@@ -127,7 +127,7 @@ void DeviceEncapsulator::Destroy() {
     Assert(nullptr != _deviceSharedEntityPool);
     const size_t poolSizeInBytes = _deviceSharedEntityPool->ReleaseAll_ReturnRealSize();
     if (0 != poolSizeInBytes) {
-        LOG(Error, L"[DeviceSharedEntityPool] There is still {0} used in the pool !", SizeInBytes(poolSizeInBytes));
+        LOG(Error, L"[FDeviceSharedEntityPool] There is still {0} used in the pool !", SizeInBytes(poolSizeInBytes));
         AssertNotReached();
     }
     _deviceSharedEntityPool.reset();
@@ -138,17 +138,17 @@ void DeviceEncapsulator::Destroy() {
 
     _revision = InvalidDeviceRevision();
 
-    Assert(DeviceStatus::Destroy == _status);
-    _status = DeviceStatus::Invalid;
+    Assert(EDeviceStatus::Destroy == _status);
+    _status = EDeviceStatus::Invalid;
 
     Assert(!_deviceAPIEncapsulator);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::Reset(const PresentationParameters& pp) {
+void FDeviceEncapsulator::Reset(const FPresentationParameters& pp) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    Assert(DeviceStatus::Normal == _status);
-    _status = DeviceStatus::Reset;
+    Assert(EDeviceStatus::Normal == _status);
+    _status = EDeviceStatus::Reset;
 
     _onDeviceReset.Invoke(this);
 
@@ -156,11 +156,11 @@ void DeviceEncapsulator::Reset(const PresentationParameters& pp) {
     _deviceAPIEncapsulator->Reset(pp);
     _revision.Value = 0;
 
-    Assert(DeviceStatus::Reset == _status);
-    _status = DeviceStatus::Invalid;
+    Assert(EDeviceStatus::Reset == _status);
+    _status = EDeviceStatus::Invalid;
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::Present() {
+void FDeviceEncapsulator::Present() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     _onDevicePresent.Invoke(this);
@@ -169,13 +169,13 @@ void DeviceEncapsulator::Present() {
     ++_revision.Value;
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::ClearState() {
+void FDeviceEncapsulator::ClearState() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     _deviceAPIEncapsulator->ClearState();
 }
 //----------------------------------------------------------------------------
-const AbstractDeviceAPIEncapsulator *DeviceEncapsulator::APIEncapsulator() const {
+const FAbstractDeviceAPIEncapsulator *FDeviceEncapsulator::APIEncapsulator() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(_deviceAPIEncapsulator);
 

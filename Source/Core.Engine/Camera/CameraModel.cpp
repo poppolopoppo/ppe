@@ -12,25 +12,25 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-CameraModel::CameraModel() {
+FCameraModel::FCameraModel() {
     _view = _projection = _viewProjection = float4x4::Identity();
     _invertView = _invertProjection = _invertViewProjection = float4x4::Identity();
     _frustum.GetCorners(_frustumCorners);
     _frustum.GetCameraParams(_parameters);
 }
 //----------------------------------------------------------------------------
-CameraModel::~CameraModel() {}
+FCameraModel::~FCameraModel() {}
 //----------------------------------------------------------------------------
-void CameraModel::GetFrustumRays(const MemoryView<float3>& rays) const {
+void FCameraModel::GetFrustumRays(const TMemoryView<float3>& rays) const {
     Assert(4 == rays.size());
 
-    rays[size_t(CameraRay::LeftTop)]        = _frustumCorners[size_t(FrustumCorner::Far_LeftTop)]       - _frustumCorners[size_t(FrustumCorner::Near_LeftTop)];
-    rays[size_t(CameraRay::LeftBottom)]     = _frustumCorners[size_t(FrustumCorner::Far_LeftBottom)]    - _frustumCorners[size_t(FrustumCorner::Near_LeftBottom)];
-    rays[size_t(CameraRay::RightBottom)]    = _frustumCorners[size_t(FrustumCorner::Far_RightBottom)]   - _frustumCorners[size_t(FrustumCorner::Near_RightBottom)];
-    rays[size_t(CameraRay::RightTop)]       = _frustumCorners[size_t(FrustumCorner::Far_RightTop)]      - _frustumCorners[size_t(FrustumCorner::Near_RightTop)];
+    rays[size_t(ECameraRay::LeftTop)]        = _frustumCorners[size_t(EFrustumCorner::Far_LeftTop)]       - _frustumCorners[size_t(EFrustumCorner::Near_LeftTop)];
+    rays[size_t(ECameraRay::LeftBottom)]     = _frustumCorners[size_t(EFrustumCorner::Far_LeftBottom)]    - _frustumCorners[size_t(EFrustumCorner::Near_LeftBottom)];
+    rays[size_t(ECameraRay::RightBottom)]    = _frustumCorners[size_t(EFrustumCorner::Far_RightBottom)]   - _frustumCorners[size_t(EFrustumCorner::Near_RightBottom)];
+    rays[size_t(ECameraRay::RightTop)]       = _frustumCorners[size_t(EFrustumCorner::Far_RightTop)]      - _frustumCorners[size_t(EFrustumCorner::Near_RightTop)];
 }
 //----------------------------------------------------------------------------
-void CameraModel::Update(const float4x4& view, const float4x4& projection) {
+void FCameraModel::Update(const float4x4& view, const float4x4& projection) {
     _view = view;
     _projection = projection;
     _viewProjection = _view.Multiply(_projection);
@@ -44,7 +44,7 @@ void CameraModel::Update(const float4x4& view, const float4x4& projection) {
     _frustum.GetCameraParams(_parameters);
 }
 //----------------------------------------------------------------------------
-void CameraModel::CopyTo(CameraModel *dst) const {
+void FCameraModel::CopyTo(FCameraModel *dst) const {
     Assert(dst);
 
     dst->_view = _view;
@@ -62,7 +62,7 @@ void CameraModel::CopyTo(CameraModel *dst) const {
     dst->_parameters = _parameters;
 }
 //----------------------------------------------------------------------------
-bool CameraModel::Equals(const CameraModel& other) const {
+bool FCameraModel::Equals(const FCameraModel& other) const {
     const bool result = _view == other->_view &&
                         _projection == other->_projection;
 #ifdef WITH_CORE_ASSERT

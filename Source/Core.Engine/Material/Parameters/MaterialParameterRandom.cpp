@@ -18,7 +18,7 @@ namespace MaterialParameterRandom {
 //----------------------------------------------------------------------------
 EACH_MATERIALPARAMETER_RANDOM(MATERIALPARAMETER_FN_DEF)
 //----------------------------------------------------------------------------
-void RegisterMaterialParameters(MaterialDatabase *database) {
+void RegisterMaterialParameters(FMaterialDatabase *database) {
     Assert(database);
 
 #define BIND_MATERIALPARAMETER(_Variability, _Type, _Name) \
@@ -35,8 +35,8 @@ void RegisterMaterialParameters(MaterialDatabase *database) {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static RandomGenerator& Rnd_() {
-    ONE_TIME_INITIALIZE(RandomGenerator, sRng, RandomGenerator::RandomSeedTag());
+static FRandomGenerator& Rnd_() {
+    ONE_TIME_INITIALIZE(FRandomGenerator, sRng, FRandomGenerator::RandomSeedTag());
     return sRng;
 }
 //----------------------------------------------------------------------------
@@ -46,29 +46,29 @@ static RandomGenerator& Rnd_() {
 //----------------------------------------------------------------------------
 namespace MaterialParameterRandom {
 //----------------------------------------------------------------------------
-void UnitRand(const MaterialParameterContext& context, float& dst) {
+void UnitRand(const FMaterialParameterContext& context, float& dst) {
     dst = Rnd_().NextFloat01();
 }
 //----------------------------------------------------------------------------
-void UnitRand2(const MaterialParameterContext& context, float2& dst) {
+void UnitRand2(const FMaterialParameterContext& context, float2& dst) {
     dst.x() = Rnd_().NextFloat01();
     dst.y() = Rnd_().NextFloat01();
 }
 //----------------------------------------------------------------------------
-void UnitRand3(const MaterialParameterContext& context, float3& dst) {
+void UnitRand3(const FMaterialParameterContext& context, float3& dst) {
     dst.x() = Rnd_().NextFloat01();
     dst.y() = Rnd_().NextFloat01();
     dst.z() = Rnd_().NextFloat01();
 }
 //----------------------------------------------------------------------------
-void UnitRand4(const MaterialParameterContext& context, float4& dst) {
+void UnitRand4(const FMaterialParameterContext& context, float4& dst) {
     dst.x() = Rnd_().NextFloat01();
     dst.y() = Rnd_().NextFloat01();
     dst.z() = Rnd_().NextFloat01();
     dst.w() = Rnd_().NextFloat01();
 }
 //----------------------------------------------------------------------------
-void HemisphereRand(const MaterialParameterContext& context, float3& dst) {
+void HemisphereRand(const FMaterialParameterContext& context, float3& dst) {
     dst.x() = Rnd_().NextFloatM11();
     dst.y() = Rnd_().NextFloatM11();
     dst.z() = Rnd_().NextFloat01();

@@ -8,10 +8,10 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-extern template class SHVector<1>;
-extern template class SHVector<2>;
-extern template class SHVector<3>;
-extern template class SHVector<4>;
+extern template class TSHVector<1>;
+extern template class TSHVector<2>;
+extern template class TSHVector<3>;
+extern template class TSHVector<4>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

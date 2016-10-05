@@ -9,50 +9,50 @@ namespace Logic {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class EntityTagTokenTraits {
+class FEntityTagTokenTraits {
 public:
     const std::locale& Locale() const { return std::locale::classic(); }
     bool IsAllowedChar(char ch) const;
 };
 //----------------------------------------------------------------------------
 template <typename _Tag>
-using EntityTagToken = Core::Token<
+using EntityTagToken = Core::EToken<
     _Tag,
     char,
-    Case::Sensitive,
-    EntityTagTokenTraits,
-    ALLOCATOR(Entity, char)
+    ECase::Sensitive,
+    FEntityTagTokenTraits,
+    ALLOCATOR(FEntity, char)
 >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class EntityTag : public EntityTagToken<EntityTag> {
+class FEntityTag : public EntityTagToken<FEntityTag> {
 public:
-    typedef EntityTagToken<EntityTag> parent_type;
+    typedef EntityTagToken<FEntityTag> parent_type;
 
-    EntityTag() {}
-    ~EntityTag() {}
+    FEntityTag() {}
+    ~FEntityTag() {}
 
-    EntityTag(const char *content, size_t length);
+    FEntityTag(const char *content, size_t length);
 
-    EntityTag(const char *content);
-    EntityTag& operator =(const char *content);
+    FEntityTag(const char *content);
+    FEntityTag& operator =(const char *content);
 
     template <typename _CharTraits, typename _Allocator>
-    EntityTag(const std::basic_string<char, _CharTraits, _Allocator>& content)
-        : EntityTag(content.c_str(), content.size()) {}
+    FEntityTag(const std::basic_string<char, _CharTraits, _Allocator>& content)
+        : FEntityTag(content.c_str(), content.size()) {}
 
-    EntityTag(const EntityTag& other);
-    EntityTag& operator =(const EntityTag& other);
+    FEntityTag(const FEntityTag& other);
+    FEntityTag& operator =(const FEntityTag& other);
 
-    void Swap(EntityTag& other);
+    void Swap(FEntityTag& other);
 };
 //----------------------------------------------------------------------------
-inline void swap(EntityTag& lhs, EntityTag& rhs) {
+inline void swap(FEntityTag& lhs, FEntityTag& rhs) {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
-inline hash_t hash_value(const EntityTag& token) {
+inline hash_t hash_value(const FEntityTag& token) {
     return token.HashValue();
 }
 //----------------------------------------------------------------------------

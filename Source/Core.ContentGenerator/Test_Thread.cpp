@@ -35,7 +35,7 @@ static void Test_Future_() {
     while (not future->Available())
         std::cout << "Waiting for future...\n";
 
-    std::cout << "Result from future : " << future->Result() << std::endl;
+    std::cout << "EResult from future : " << future->Result() << std::endl;
 
     Assert(42 == future->Result());
 }

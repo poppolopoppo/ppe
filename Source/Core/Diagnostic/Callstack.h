@@ -8,37 +8,37 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DecodedCallstack;
+class FDecodedCallstack;
 //----------------------------------------------------------------------------
-class ALIGN(16) Callstack {
+class ALIGN(16) FCallstack {
 public:
     enum { MaxDepth = 46};
     // 46 * 4 + 4 + 4 = 192 -> align on 16, no overhead (32 bits)
     // 46 * 8 + 8 + 8 = 384 -> align on 16, no overhead (64 bits)
 
-    Callstack();
-    Callstack(size_t framesToSkip, size_t framesToCapture);
-    ~Callstack();
+    FCallstack();
+    FCallstack(size_t framesToSkip, size_t framesToCapture);
+    ~FCallstack();
 
-    Callstack(const Callstack& other);
-    Callstack& operator =(const Callstack& other);
+    FCallstack(const FCallstack& other);
+    FCallstack& operator =(const FCallstack& other);
 
     size_t Hash() const { return _hash; }
     size_t Depth() const { return _depth; }
 
-    MemoryView<void*> Frames() { return MakeView(&_frames[0], &_frames[_depth]); }
-    MemoryView<void* const> Frames() const { return MakeView(&_frames[0], &_frames[_depth]); }
+    TMemoryView<void*> Frames() { return MakeView(&_frames[0], &_frames[_depth]); }
+    TMemoryView<void* const> Frames() const { return MakeView(&_frames[0], &_frames[_depth]); }
 
-    static void Capture(Callstack* callstack, size_t framesToSkip, size_t framesToCapture);
+    static void Capture(FCallstack* callstack, size_t framesToSkip, size_t framesToCapture);
     static size_t Capture(
-        const MemoryView<void*>& frames,
+        const TMemoryView<void*>& frames,
         size_t* backtraceHash,
         size_t framesToSkip,
         size_t framesToCapture
         );
 
-    void Decode(DecodedCallstack* decoded) const;
-    static void Decode(DecodedCallstack* decoded, size_t hash, const MemoryView<void* const>& frames);
+    void Decode(FDecodedCallstack* decoded) const;
+    static void Decode(FDecodedCallstack* decoded, size_t hash, const TMemoryView<void* const>& frames);
 
     static void Start();
     static void ReloadSymbols();
@@ -50,7 +50,7 @@ private:
     void* _frames[MaxDepth];
 };
 //----------------------------------------------------------------------------
-inline hash_t hash_value(const Callstack& callstack) {
+inline hash_t hash_value(const FCallstack& callstack) {
     return callstack.Hash();
 }
 //----------------------------------------------------------------------------

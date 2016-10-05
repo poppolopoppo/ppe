@@ -7,7 +7,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator >
-ConcurentQueue<T, _Allocator>::ConcurentQueue(size_t capacity)
+TConcurentQueue<T, _Allocator>::TConcurentQueue(size_t capacity)
 :   _capacity(capacity)
 ,   _head(0)
 ,   _tail(0) {
@@ -16,7 +16,7 @@ ConcurentQueue<T, _Allocator>::ConcurentQueue(size_t capacity)
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator >
-ConcurentQueue<T, _Allocator>::ConcurentQueue(size_t capacity, const _Allocator& allocator)
+TConcurentQueue<T, _Allocator>::TConcurentQueue(size_t capacity, const _Allocator& allocator)
 :   _Allocator(allocator)
 ,   _head(0)
 ,   _tail(0) {
@@ -25,7 +25,7 @@ ConcurentQueue<T, _Allocator>::ConcurentQueue(size_t capacity, const _Allocator&
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator >
-ConcurentQueue<T, _Allocator>::~ConcurentQueue() {
+TConcurentQueue<T, _Allocator>::~TConcurentQueue() {
     Assert(_queue);
     Assert(_tail == _head);
 
@@ -33,7 +33,7 @@ ConcurentQueue<T, _Allocator>::~ConcurentQueue() {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator >
-void ConcurentQueue<T, _Allocator>::Produce(T&& rvalue) {
+void TConcurentQueue<T, _Allocator>::Produce(T&& rvalue) {
     std::unique_lock<std::mutex> scopeLock(_barrier);
     _overflow.wait(scopeLock, [this] { return _tail + _capacity > _head; });
 
@@ -43,7 +43,7 @@ void ConcurentQueue<T, _Allocator>::Produce(T&& rvalue) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator >
-void ConcurentQueue<T, _Allocator>::Consume(T *pvalue) {
+void TConcurentQueue<T, _Allocator>::Consume(T *pvalue) {
     Assert(pvalue);
 
     std::unique_lock<std::mutex> scopeLock(_barrier);
@@ -55,7 +55,7 @@ void ConcurentQueue<T, _Allocator>::Consume(T *pvalue) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator >
-bool ConcurentQueue<T, _Allocator>::TryConsume(T *pvalue) {
+bool TConcurentQueue<T, _Allocator>::TryConsume(T *pvalue) {
     Assert(pvalue);
 
     std::unique_lock<std::mutex> scopeLock(_barrier);
@@ -75,31 +75,31 @@ bool ConcurentQueue<T, _Allocator>::TryConsume(T *pvalue) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator >
-ConcurentPriorityQueue<T, _Allocator>::ConcurentPriorityQueue(size_t capacity) {
+TConcurentPriorityQueue<T, _Allocator>::TConcurentPriorityQueue(size_t capacity) {
     _queue.reserve(capacity);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator >
-ConcurentPriorityQueue<T, _Allocator>::ConcurentPriorityQueue(size_t capacity, const _Allocator& allocator)
+TConcurentPriorityQueue<T, _Allocator>::TConcurentPriorityQueue(size_t capacity, const _Allocator& allocator)
 :   _queue(allocator) {
     _queue.reserve(capacity);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator >
-ConcurentPriorityQueue<T, _Allocator>::~ConcurentPriorityQueue() {}
+TConcurentPriorityQueue<T, _Allocator>::~TConcurentPriorityQueue() {}
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator >
-void ConcurentPriorityQueue<T, _Allocator>::Produce(int priority, T&& rvalue) {
+void TConcurentPriorityQueue<T, _Allocator>::Produce(int priority, T&& rvalue) {
     std::unique_lock<std::mutex> scopeLock(_barrier);
 
     _queue.emplace_back(priority, std::move(rvalue));
-    std::push_heap(_queue.begin(), _queue.end(), Greater_());
+    std::push_heap(_queue.begin(), _queue.end(), FGreater_());
 
     _empty.notify_one();
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator >
-void ConcurentPriorityQueue<T, _Allocator>::Consume(T *pvalue) {
+void TConcurentPriorityQueue<T, _Allocator>::Consume(T *pvalue) {
     Assert(pvalue);
 
     std::unique_lock<std::mutex> scopeLock(_barrier);
@@ -107,12 +107,12 @@ void ConcurentPriorityQueue<T, _Allocator>::Consume(T *pvalue) {
 
     *pvalue = std::move(_queue.front().second);
 
-    std::pop_heap(_queue.begin(), _queue.end(), Greater_());
+    std::pop_heap(_queue.begin(), _queue.end(), FGreater_());
     _queue.pop_back();
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator >
-bool ConcurentPriorityQueue<T, _Allocator>::TryConsume(T *pvalue) {
+bool TConcurentPriorityQueue<T, _Allocator>::TryConsume(T *pvalue) {
     Assert(pvalue);
 
     std::unique_lock<std::mutex> scopeLock(_barrier);
@@ -124,7 +124,7 @@ bool ConcurentPriorityQueue<T, _Allocator>::TryConsume(T *pvalue) {
 
     *pvalue = std::move(_queue.front().second);
 
-    std::pop_heap(_queue.begin(), _queue.end(), Greater_());
+    std::pop_heap(_queue.begin(), _queue.end(), FGreater_());
     _queue.pop_back();
 
     return true;

@@ -7,12 +7,12 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-class ScalarVector;
+class TScalarVector;
 //----------------------------------------------------------------------------
 #define DECL_SCALARVECTOR_ALIAS(_Scalar, _ALIAS) \
-    typedef ScalarVector<_Scalar, 2> CONCAT(_ALIAS, 2); \
-    typedef ScalarVector<_Scalar, 3> CONCAT(_ALIAS, 3); \
-    typedef ScalarVector<_Scalar, 4> CONCAT(_ALIAS, 4);
+    typedef TScalarVector<_Scalar, 2> CONCAT(_ALIAS, 2); \
+    typedef TScalarVector<_Scalar, 3> CONCAT(_ALIAS, 3); \
+    typedef TScalarVector<_Scalar, 4> CONCAT(_ALIAS, 4);
 #define DECL_SCALARVECTOR(_Scalar) DECL_SCALARVECTOR_ALIAS(_Scalar, _Scalar)
 //----------------------------------------------------------------------------
 DECL_SCALARVECTOR(byte);

@@ -11,21 +11,21 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceResourceSharable::DeviceResourceSharable(DeviceResourceType resourceType, bool sharable)
-:   DeviceResource(resourceType) {
-    DeviceResource::SetSharable_(sharable);
-    _sharedKey = DeviceSharedEntityKey::Invalid();
+FDeviceResourceSharable::FDeviceResourceSharable(EDeviceResourceType resourceType, bool sharable)
+:   FDeviceResource(resourceType) {
+    FDeviceResource::SetSharable_(sharable);
+    _sharedKey = FDeviceSharedEntityKey::Invalid();
 }
 //----------------------------------------------------------------------------
-const DeviceSharedEntityKey& DeviceResourceSharable::SharedKey() const {
+const FDeviceSharedEntityKey& FDeviceResourceSharable::SharedKey() const {
     Assert(Frozen());
     Assert(Sharable());
-    Assert(_sharedKey != DeviceSharedEntityKey::Invalid());
+    Assert(_sharedKey != FDeviceSharedEntityKey::Invalid());
 
     return _sharedKey;
 }
 //----------------------------------------------------------------------------
-bool DeviceResourceSharable::MatchTerminalEntity(const DeviceAPIDependantEntity *entity) const {
+bool FDeviceResourceSharable::MatchTerminalEntity(const FDeviceAPIDependantEntity *entity) const {
     Assert(Frozen());
     Assert(!Available());
     Assert(Sharable());
@@ -37,22 +37,22 @@ bool DeviceResourceSharable::MatchTerminalEntity(const DeviceAPIDependantEntity 
         : false;
 }
 //----------------------------------------------------------------------------
-void DeviceResourceSharable::FreezeImpl() {
-    DeviceResource::FreezeImpl();
+void FDeviceResourceSharable::FreezeImpl() {
+    FDeviceResource::FreezeImpl();
 
     if (Sharable_())
     {
         const size_t hashValue = VirtualSharedKeyHashValue();
-        _sharedKey = DeviceSharedEntityKey::Make(ResourceType(), hashValue);
+        _sharedKey = FDeviceSharedEntityKey::Make(ResourceType(), hashValue);
     }
 }
 //----------------------------------------------------------------------------
-void DeviceResourceSharable::UnfreezeImpl() {
-    DeviceResource::UnfreezeImpl();
+void FDeviceResourceSharable::UnfreezeImpl() {
+    FDeviceResource::UnfreezeImpl();
 
     if (Sharable_())
     {
-        _sharedKey = DeviceSharedEntityKey::Invalid();
+        _sharedKey = FDeviceSharedEntityKey::Invalid();
     }
 }
 //----------------------------------------------------------------------------

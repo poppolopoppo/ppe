@@ -12,17 +12,17 @@ POOL_TAG_DEF(XML);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void XMLStartup::Start() {
+void FXMLStartup::Start() {
     POOL_TAG(XML)::Start();
-    XML::Name::Start(256);
+    XML::FName::Start(256);
 }
 //----------------------------------------------------------------------------
-void XMLStartup::Shutdown() {
-    XML::Name::Shutdown();
+void FXMLStartup::Shutdown() {
+    XML::FName::Shutdown();
     POOL_TAG(XML)::Shutdown();
 }
 //----------------------------------------------------------------------------
-void XMLStartup::ClearAll_UnusedMemory() {
+void FXMLStartup::ClearAll_UnusedMemory() {
     POOL_TAG(XML)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------

@@ -67,7 +67,7 @@ FORCE_INLINE static bool BoxLessHeuristic_(const float2& extents0, const float2&
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool BinPacking2D(float2& binsize, const MemoryView<float2>& offsets, const MemoryView<const float2>& boxes) {
+bool BinPacking2D(float2& binsize, const TMemoryView<float2>& offsets, const TMemoryView<const float2>& boxes) {
     Assert(offsets.size() == boxes.size());
 
     binsize = float2(0);

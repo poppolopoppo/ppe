@@ -15,21 +15,21 @@ namespace Engine {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(RenderSurfaceRelative);
-class RenderSurfaceRelative : public AbstractRenderSurface {
+class FRenderSurfaceRelative : public FAbstractRenderSurface {
 public:
-    RenderSurfaceRelative(  String&& name, const float2& ratio, // relative to backbuffer
-                            const Graphics::SurfaceFormat *renderTargetFormatIFN,
-                            const Graphics::SurfaceFormat *depthStencilFormatIFN = nullptr);
-    RenderSurfaceRelative(  String&& name, const float2& ratio, AbstractRenderSurface *relative,
-                            const Graphics::SurfaceFormat *renderTargetFormatIFN,
-                            const Graphics::SurfaceFormat *depthStencilFormatIFN = nullptr );
-    virtual ~RenderSurfaceRelative();
+    FRenderSurfaceRelative(  FString&& name, const float2& ratio, // relative to backbuffer
+                            const Graphics::FSurfaceFormat *renderTargetFormatIFN,
+                            const Graphics::FSurfaceFormat *depthStencilFormatIFN = nullptr);
+    FRenderSurfaceRelative(  FString&& name, const float2& ratio, FAbstractRenderSurface *relative,
+                            const Graphics::FSurfaceFormat *renderTargetFormatIFN,
+                            const Graphics::FSurfaceFormat *depthStencilFormatIFN = nullptr );
+    virtual ~FRenderSurfaceRelative();
 
     const float2& Ratio() const { return _ratio; }
-    const AbstractRenderSurface *Relative() const { return _relative.get(); }
+    const FAbstractRenderSurface *Relative() const { return _relative.get(); }
 
-    const Graphics::SurfaceFormat *RenderTargetFormat() const { return _renderTargetFormat; }
-    const Graphics::SurfaceFormat *DepthStencilFormat() const { return _depthStencilFormat; }
+    const Graphics::FSurfaceFormat *RenderTargetFormat() const { return _renderTargetFormat; }
+    const Graphics::FSurfaceFormat *DepthStencilFormat() const { return _depthStencilFormat; }
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
@@ -46,8 +46,8 @@ private:
     float2 _ratio;
     PAbstractRenderSurface _relative;
 
-    const Graphics::SurfaceFormat *_renderTargetFormat;
-    const Graphics::SurfaceFormat *_depthStencilFormat;
+    const Graphics::FSurfaceFormat *_renderTargetFormat;
+    const Graphics::FSurfaceFormat *_depthStencilFormat;
 
     PRenderSurfaceLock _relativeLock;
 };

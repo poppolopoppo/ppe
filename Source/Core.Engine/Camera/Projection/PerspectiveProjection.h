@@ -8,20 +8,20 @@
 #include "Core/Memory/RefPtr.h"
 
 namespace Core {
-class Timeline;
+class FTimeline;
 namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(PerspectiveProjection)
-class PerspectiveProjection : public ICameraProjection {
+class FPerspectiveProjection : public ICameraProjection {
 public:
     PerspectiveCamera(float fov/* rad */);
 
     float Fov() const { return _fov; }
     void SetFov(float value);
 
-    virtual float4x4 ProjectionMatrix(  const Timeline& time,
+    virtual float4x4 ProjectionMatrix(  const FTimeline& time,
                                         float znear, float zfar,
                                         const ViewportF& viewport ) override;
 

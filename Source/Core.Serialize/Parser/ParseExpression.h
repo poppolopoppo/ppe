@@ -17,102 +17,102 @@ namespace Parser {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ParseContext;
+class FParseContext;
 FWD_REFPTR(ParseExpression);
 FWD_REFPTR(ParseStatement);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ParseExpression : public ParseItem {
+class FParseExpression : public FParseItem {
 public:
-    ParseExpression(const Lexer::Location& site);
-    virtual ~ParseExpression();
+    FParseExpression(const FLexer::FLocation& site);
+    virtual ~FParseExpression();
 
-    virtual RTTI::MetaAtom *Eval(ParseContext *context) const = 0;
-    virtual void Invoke(ParseContext *context) const override { Eval(context); }
+    virtual RTTI::FMetaAtom *Eval(FParseContext *context) const = 0;
+    virtual void Invoke(FParseContext *context) const override { Eval(context); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-class Literal : public ParseExpression {
+class TLiteral : public FParseExpression {
 public:
-    typedef typename RTTI::MetaAtomWrapper< T >::type atom_type;
+    typedef typename RTTI::TMetaAtomWrapper< T >::type atom_type;
 
-    explicit Literal(T&& rvalue, const Lexer::Location& site);
-    virtual ~Literal();
+    explicit TLiteral(T&& rvalue, const FLexer::FLocation& site);
+    virtual ~TLiteral();
 
-    virtual RTTI::MetaAtom *Eval(ParseContext *context) const override;
-    virtual String ToString() const override;
+    virtual RTTI::FMetaAtom *Eval(FParseContext *context) const override;
+    virtual FString ToString() const override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    RefPtr< atom_type > _literal;
+    TRefPtr< atom_type > _literal;
 };
 //----------------------------------------------------------------------------
 template <typename T>
-Literal<T> *MakeLiteral(T&& rvalue, const Lexer::Location& site) {
-    return new Literal<T>(std::move(rvalue), site);
+TLiteral<T> *MakeLiteral(T&& rvalue, const FLexer::FLocation& site) {
+    return new TLiteral<T>(std::move(rvalue), site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class VariableExport : public ParseExpression {
+class FVariableExport : public FParseExpression {
 public:
-    enum Flags {
+    enum EFlags {
         Public,
         Private,
         Global,
     };
 
-    explicit VariableExport(const RTTI::Name& name, const PCParseExpression& value, const Flags scope, const Lexer::Location& site);
-    virtual ~VariableExport();
+    explicit FVariableExport(const RTTI::FName& name, const PCParseExpression& value, const EFlags scope, const FLexer::FLocation& site);
+    virtual ~FVariableExport();
 
-    virtual RTTI::MetaAtom *Eval(ParseContext *context) const override;
-    virtual String ToString() const override;
+    virtual RTTI::FMetaAtom *Eval(FParseContext *context) const override;
+    virtual FString ToString() const override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    RTTI::Name _name;
+    RTTI::FName _name;
     PCParseExpression _value;
-    Flags _scope;
+    EFlags _scope;
 };
 //----------------------------------------------------------------------------
-inline VariableExport *MakeVariableExport(const RTTI::Name& name, const PCParseExpression& value, const VariableExport::Flags scope, const Lexer::Location& site) {
-    return new VariableExport(name, value, scope, site);
+inline FVariableExport *MakeVariableExport(const RTTI::FName& name, const PCParseExpression& value, const FVariableExport::EFlags scope, const FLexer::FLocation& site) {
+    return new FVariableExport(name, value, scope, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class VariableReference : public ParseExpression {
+class FVariableReference : public FParseExpression {
 public:
-    explicit VariableReference(const RTTI::Name& name, const Lexer::Location& site);
-    virtual ~VariableReference();
+    explicit FVariableReference(const RTTI::FName& name, const FLexer::FLocation& site);
+    virtual ~FVariableReference();
 
-    virtual RTTI::MetaAtom *Eval(ParseContext *context) const override;
-    virtual String ToString() const override;
+    virtual RTTI::FMetaAtom *Eval(FParseContext *context) const override;
+    virtual FString ToString() const override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    RTTI::Name _name;
+    RTTI::FName _name;
 };
 //----------------------------------------------------------------------------
-inline VariableReference *MakeVariableReference(const RTTI::Name& name, const Lexer::Location& site) {
-    return new VariableReference(name, site);
+inline FVariableReference *MakeVariableReference(const RTTI::FName& name, const FLexer::FLocation& site) {
+    return new FVariableReference(name, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Functor>
-class UnaryFunction : public ParseExpression {
+class TUnaryFunction : public FParseExpression {
 public:
-    explicit UnaryFunction(_Functor&& functor, const ParseExpression *expr, const Lexer::Location& site);
-    virtual ~UnaryFunction();
+    explicit TUnaryFunction(_Functor&& functor, const FParseExpression *expr, const FLexer::FLocation& site);
+    virtual ~TUnaryFunction();
 
-    virtual RTTI::MetaAtom *Eval(ParseContext *context) const override;
+    virtual RTTI::FMetaAtom *Eval(FParseContext *context) const override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
@@ -122,19 +122,19 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename T>
-UnaryFunction<T> *MakeUnaryFunction(T&& functor, const ParseExpression *expr, const Lexer::Location& site) {
-    return new UnaryFunction<T>(std::move(functor), expr, site);
+TUnaryFunction<T> *MakeUnaryFunction(T&& functor, const FParseExpression *expr, const FLexer::FLocation& site) {
+    return new TUnaryFunction<T>(std::move(functor), expr, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Functor>
-class BinaryFunction : public ParseExpression {
+class TBinaryFunction : public FParseExpression {
 public:
-    explicit BinaryFunction(_Functor&& functor, const ParseExpression *lhs, const ParseExpression *rhs, const Lexer::Location& site);
-    virtual ~BinaryFunction();
+    explicit TBinaryFunction(_Functor&& functor, const FParseExpression *lhs, const FParseExpression *rhs, const FLexer::FLocation& site);
+    virtual ~TBinaryFunction();
 
-    virtual RTTI::MetaAtom *Eval(ParseContext *context) const override;
+    virtual RTTI::FMetaAtom *Eval(FParseContext *context) const override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
@@ -145,19 +145,19 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename T>
-BinaryFunction<T> *MakeBinaryFunction(T&& functor, const ParseExpression *lhs, const ParseExpression *rhs, const Lexer::Location& site) {
-    return new BinaryFunction<T>(std::move(functor), lhs, rhs, site);
+TBinaryFunction<T> *MakeBinaryFunction(T&& functor, const FParseExpression *lhs, const FParseExpression *rhs, const FLexer::FLocation& site) {
+    return new TBinaryFunction<T>(std::move(functor), lhs, rhs, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Test>
-class Ternary : public ParseExpression {
+class TTernary : public FParseExpression {
 public:
-    explicit Ternary(_Test&& test, const ParseExpression *pif, const ParseExpression *ptrue, const ParseExpression *pfalse, const Lexer::Location& site);
-    virtual ~Ternary();
+    explicit TTernary(_Test&& test, const FParseExpression *pif, const FParseExpression *ptrue, const FParseExpression *pfalse, const FLexer::FLocation& site);
+    virtual ~TTernary();
 
-    virtual RTTI::MetaAtom *Eval(ParseContext *context) const override;
+    virtual RTTI::FMetaAtom *Eval(FParseContext *context) const override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
@@ -169,77 +169,77 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename _Test>
-Ternary<_Test> *MakeTernary(_Test&& test, const ParseExpression *pif, const ParseExpression *ptrue, const ParseExpression *pfalse, const Lexer::Location& site) {
-    return new Ternary<_Test>(std::move(test), pif, ptrue, pfalse, site);
+TTernary<_Test> *MakeTernary(_Test&& test, const FParseExpression *pif, const FParseExpression *ptrue, const FParseExpression *pfalse, const FLexer::FLocation& site) {
+    return new TTernary<_Test>(std::move(test), pif, ptrue, pfalse, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ObjectDefinition : public ParseExpression {
+class FObjectDefinition : public FParseExpression {
 public:
-    explicit ObjectDefinition(const RTTI::Name& name, const Lexer::Location& site);
-    virtual ~ObjectDefinition();
+    explicit FObjectDefinition(const RTTI::FName& name, const FLexer::FLocation& site);
+    virtual ~FObjectDefinition();
 
-    void AddStatement(const ParseStatement *statement);
+    void AddStatement(const FParseStatement *statement);
 
     template <typename _It>
     void AddStatements(_It&& begin, _It&& end) {
         _statements.insert(_statements.end(), begin, end);
     }
 
-    virtual RTTI::MetaAtom *Eval(ParseContext *context) const override;
-    virtual String ToString() const override;
+    virtual RTTI::FMetaAtom *Eval(FParseContext *context) const override;
+    virtual FString ToString() const override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    RTTI::Name _name;
+    RTTI::FName _name;
     VECTOR(Parser, PCParseStatement) _statements;
 };
 //----------------------------------------------------------------------------
 template <typename _It>
-inline ObjectDefinition *MakeObjectDefinition(
-    const RTTI::Name& name,
-    const Lexer::Location& site,
+inline FObjectDefinition *MakeObjectDefinition(
+    const RTTI::FName& name,
+    const FLexer::FLocation& site,
     _It&& statementsBegin, _It&& statementsEnd) {
-    ObjectDefinition *const def = new ObjectDefinition(name, site);
+    FObjectDefinition *const def = new FObjectDefinition(name, site);
     def->AddStatements(statementsBegin, statementsEnd);
     return def;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PropertyReference : public ParseExpression {
+class FPropertyReference : public FParseExpression {
 public:
-    explicit PropertyReference(const PCParseExpression& object, const RTTI::Name& member, const Lexer::Location& site);
-    virtual ~PropertyReference();
+    explicit FPropertyReference(const PCParseExpression& object, const RTTI::FName& member, const FLexer::FLocation& site);
+    virtual ~FPropertyReference();
 
-    virtual RTTI::MetaAtom *Eval(ParseContext *context) const override;
-    virtual String ToString() const override;
+    virtual RTTI::FMetaAtom *Eval(FParseContext *context) const override;
+    virtual FString ToString() const override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     PCParseExpression _object;
-    RTTI::Name _member;
+    RTTI::FName _member;
 };
 //----------------------------------------------------------------------------
-inline PropertyReference *MakePropertyReference(
+inline FPropertyReference *MakePropertyReference(
     const PCParseExpression& object,
-    const RTTI::Name& member,
-    const Lexer::Location& site) {
-    return new PropertyReference(object, member, site);
+    const RTTI::FName& member,
+    const FLexer::FLocation& site) {
+    return new FPropertyReference(object, member, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Pair : public ParseExpression {
+class TPair : public FParseExpression {
 public:
-    explicit Pair(const PCParseExpression& lhs, const PCParseExpression& rhs, const Lexer::Location& site);
-    virtual ~Pair();
+    explicit TPair(const PCParseExpression& lhs, const PCParseExpression& rhs, const FLexer::FLocation& site);
+    virtual ~TPair();
 
-    virtual RTTI::MetaAtom *Eval(ParseContext *context) const override;
-    virtual String ToString() const override;
+    virtual RTTI::FMetaAtom *Eval(FParseContext *context) const override;
+    virtual FString ToString() const override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
@@ -248,28 +248,28 @@ private:
     PCParseExpression _rhs;
 };
 //----------------------------------------------------------------------------
-inline Parser::Pair *MakePair(
+inline Parser::TPair *MakePair(
     const PCParseExpression& lhs,
     const PCParseExpression& rhs,
-    const Lexer::Location& site) {
-    return new Parser::Pair(lhs, rhs, site);
+    const FLexer::FLocation& site) {
+    return new Parser::TPair(lhs, rhs, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Array : public ParseExpression {
+class TArray : public FParseExpression {
 public:
-    explicit Array(const Lexer::Location& site);
-    Array(const MemoryView<const PCParseExpression>& items, const Lexer::Location& site);
-    virtual ~Array();
+    explicit TArray(const FLexer::FLocation& site);
+    TArray(const TMemoryView<const PCParseExpression>& items, const FLexer::FLocation& site);
+    virtual ~TArray();
 
     size_t size() const { return _items.size(); }
     bool empty() const { return _items.empty(); }
     void reserve(size_t capacity) { return _items.reserve(capacity); }
     void push_back(const PCParseExpression& expr) { _items.push_back(expr); }
 
-    virtual RTTI::MetaAtom *Eval(ParseContext *context) const override;
-    virtual String ToString() const override;
+    virtual RTTI::FMetaAtom *Eval(FParseContext *context) const override;
+    virtual FString ToString() const override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
@@ -277,27 +277,27 @@ private:
     VECTOR_THREAD_LOCAL(Parser, PCParseExpression) _items;
 };
 //----------------------------------------------------------------------------
-inline Parser::Array *MakeArray(
-    const MemoryView<const PCParseExpression>& items,
-    const Lexer::Location& site) {
-    return new Parser::Array(items, site);
+inline Parser::TArray *MakeArray(
+    const TMemoryView<const PCParseExpression>& items,
+    const FLexer::FLocation& site) {
+    return new Parser::TArray(items, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Dictionary : public ParseExpression {
+class TDictionary : public FParseExpression {
 public:
-    explicit Dictionary(const Lexer::Location& site);
-    Dictionary(const MemoryView<const Core::Pair<PCParseExpression, PCParseExpression>>& items, const Lexer::Location& site);
-    virtual ~Dictionary();
+    explicit TDictionary(const FLexer::FLocation& site);
+    TDictionary(const TMemoryView<const Core::TPair<PCParseExpression, PCParseExpression>>& items, const FLexer::FLocation& site);
+    virtual ~TDictionary();
 
     size_t size() const { return _items.size(); }
     bool empty() const { return _items.empty(); }
     void reserve(size_t capacity) { return _items.reserve(capacity); }
     void insert(const PCParseExpression& key, const PCParseExpression& value) { _items.Insert_AssertUnique(key, value); }
 
-    virtual RTTI::MetaAtom *Eval(ParseContext *context) const override;
-    virtual String ToString() const override;
+    virtual RTTI::FMetaAtom *Eval(FParseContext *context) const override;
+    virtual FString ToString() const override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
@@ -305,31 +305,31 @@ private:
     ASSOCIATIVE_VECTOR_THREAD_LOCAL(Parser, PCParseExpression, PCParseExpression) _items;
 };
 //----------------------------------------------------------------------------
-inline Parser::Dictionary *MakeDictionary(
-    const MemoryView<const Core::Pair<PCParseExpression, PCParseExpression>>& items,
-    const Lexer::Location& site) {
-    return new Parser::Dictionary(items, site);
+inline Parser::TDictionary *MakeDictionary(
+    const TMemoryView<const Core::TPair<PCParseExpression, PCParseExpression>>& items,
+    const FLexer::FLocation& site) {
+    return new Parser::TDictionary(items, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class CastExpr : public ParseExpression {
+class FCastExpr : public FParseExpression {
 public:
-    CastExpr(RTTI::MetaTypeId typeId, const ParseExpression* expr, const Lexer::Location& site);
-    virtual ~CastExpr();
+    FCastExpr(RTTI::FMetaTypeId typeId, const FParseExpression* expr, const FLexer::FLocation& site);
+    virtual ~FCastExpr();
 
-    virtual RTTI::MetaAtom *Eval(ParseContext *context) const override;
-    virtual String ToString() const override;
+    virtual RTTI::FMetaAtom *Eval(FParseContext *context) const override;
+    virtual FString ToString() const override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    RTTI::MetaTypeId _typeId;
+    RTTI::FMetaTypeId _typeId;
     PCParseExpression _expr;
 };
 //----------------------------------------------------------------------------
-inline CastExpr *MakeCastExpr(RTTI::MetaTypeId typeId, const ParseExpression* expr, const Lexer::Location& site) {
-    return new CastExpr(typeId, expr, site);
+inline FCastExpr *MakeCastExpr(RTTI::FMetaTypeId typeId, const FParseExpression* expr, const FLexer::FLocation& site) {
+    return new FCastExpr(typeId, expr, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -13,13 +13,13 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ThreadContext {
+class FThreadContext {
 public:
-    ThreadContext(const char* name, size_t tag);
-    ~ThreadContext();
+    FThreadContext(const char* name, size_t tag);
+    ~FThreadContext();
 
-    ThreadContext(const ThreadContext&) = delete;
-    ThreadContext& operator =(const ThreadContext&) = delete;
+    FThreadContext(const FThreadContext&) = delete;
+    FThreadContext& operator =(const FThreadContext&) = delete;
 
     const char *Name() const { return _name; }
     size_t Tag() const { return _tag; }
@@ -36,7 +36,7 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const ThreadContext& CurrentThreadContext();
+const FThreadContext& CurrentThreadContext();
 //----------------------------------------------------------------------------
 inline bool IsInMainThread() {
     return (CORE_THREADTAG_MAIN == CurrentThreadContext().Tag());
@@ -54,19 +54,19 @@ inline bool IsInWorkerThread() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// ThreadContextStartup is the entry and exit point for every thread.
+// FThreadContextStartup is the entry and exit point for every thread.
 // Constructed with the same lifetime than every thread associated with.
 //----------------------------------------------------------------------------
-class ThreadContextStartup {
+class FThreadContextStartup {
 public:
     static void Start(const char* name, size_t tag);
     static void Start_MainThread();
     static void Shutdown();
 
-    ThreadContextStartup(const char* name, size_t tag) { Start(name, tag); }
-    ~ThreadContextStartup() { Shutdown(); }
+    FThreadContextStartup(const char* name, size_t tag) { Start(name, tag); }
+    ~FThreadContextStartup() { Shutdown(); }
 
-    const ThreadContext& Context() const { return CurrentThreadContext(); }
+    const FThreadContext& Context() const { return CurrentThreadContext(); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -7,25 +7,25 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarBoundingBox<T, _Dim>::ScalarBoundingBox()
-:   ScalarBoundingBox(ScalarBoundingBox::DefaultValue()) {}
+TScalarBoundingBox<T, _Dim>::TScalarBoundingBox()
+:   TScalarBoundingBox(TScalarBoundingBox::DefaultValue()) {}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarBoundingBox<T, _Dim>::ScalarBoundingBox(Meta::noinit_tag) {}
+TScalarBoundingBox<T, _Dim>::TScalarBoundingBox(Meta::noinit_tag) {}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarBoundingBox<T, _Dim>::ScalarBoundingBox(const vector_type& min, const vector_type& max)
+TScalarBoundingBox<T, _Dim>::TScalarBoundingBox(const vector_type& min, const vector_type& max)
 :   _min(min), _max(max) {}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarBoundingBox<T, _Dim>::~ScalarBoundingBox() {}
+TScalarBoundingBox<T, _Dim>::~TScalarBoundingBox() {}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarBoundingBox<T, _Dim>::ScalarBoundingBox(const ScalarBoundingBox& other)
+TScalarBoundingBox<T, _Dim>::TScalarBoundingBox(const TScalarBoundingBox& other)
 :   _min(other._min), _max(other._max) {}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-auto ScalarBoundingBox<T, _Dim>::operator =(const ScalarBoundingBox& other) -> ScalarBoundingBox& {
+auto TScalarBoundingBox<T, _Dim>::operator =(const TScalarBoundingBox& other) -> TScalarBoundingBox& {
     _min = other._min;
     _max = other._max;
     return *this;
@@ -33,29 +33,29 @@ auto ScalarBoundingBox<T, _Dim>::operator =(const ScalarBoundingBox& other) -> S
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 template <typename U>
-ScalarBoundingBox<T, _Dim>::ScalarBoundingBox(const ScalarBoundingBox<U, _Dim>& other)
+TScalarBoundingBox<T, _Dim>::TScalarBoundingBox(const TScalarBoundingBox<U, _Dim>& other)
 :   _min(other._min), _max(other._max) {}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 template <typename U>
-auto ScalarBoundingBox<T, _Dim>::operator =(const ScalarBoundingBox<U, _Dim>& other) -> ScalarBoundingBox& {
+auto TScalarBoundingBox<T, _Dim>::operator =(const TScalarBoundingBox<U, _Dim>& other) -> TScalarBoundingBox& {
     _min = other._min;
     _max = other._max;
     return *this;
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-auto ScalarBoundingBox<T, _Dim>::Center() const -> vector_type {
+auto TScalarBoundingBox<T, _Dim>::Center() const -> vector_type {
     return (_max + _min) / 2;
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-auto ScalarBoundingBox<T, _Dim>::Extents() const -> vector_type {
+auto TScalarBoundingBox<T, _Dim>::Extents() const -> vector_type {
     return _max - _min;
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-bool ScalarBoundingBox<T, _Dim>::HasPositiveExtents() const {
+bool TScalarBoundingBox<T, _Dim>::HasPositiveExtents() const {
     for (size_t i = 0; i < _Dim; ++i)
         if (_min[i] > _max[i])
             return false;
@@ -63,7 +63,7 @@ bool ScalarBoundingBox<T, _Dim>::HasPositiveExtents() const {
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-bool ScalarBoundingBox<T, _Dim>::HasPositiveExtentsStrict() const {
+bool TScalarBoundingBox<T, _Dim>::HasPositiveExtentsStrict() const {
     for (size_t i = 0; i < _Dim; ++i)
         if (_min[i] >= _max[i])
             return false;
@@ -71,49 +71,49 @@ bool ScalarBoundingBox<T, _Dim>::HasPositiveExtentsStrict() const {
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-void ScalarBoundingBox<T, _Dim>::Add(const vector_type& v) {
+void TScalarBoundingBox<T, _Dim>::Add(const vector_type& v) {
     _min = Core::Min(_min, v);
     _max = Core::Max(_max, v);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-void ScalarBoundingBox<T, _Dim>::Add(const ScalarBoundingBox& other) {
+void TScalarBoundingBox<T, _Dim>::Add(const TScalarBoundingBox& other) {
     _min = Core::Min(_min, other._min);
     _max = Core::Max(_max, other._max);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-bool ScalarBoundingBox<T, _Dim>::Contains(const vector_type& v) const {
+bool TScalarBoundingBox<T, _Dim>::Contains(const vector_type& v) const {
     return _min.AllLessOrEqual(v) && _max.AllGreaterOrEqual(v);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-bool ScalarBoundingBox<T, _Dim>::ContainsStrict(const vector_type& v) const {
+bool TScalarBoundingBox<T, _Dim>::ContainsStrict(const vector_type& v) const {
     return _min.AllLessThan(v) && _max.AllGreaterThan(v);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-bool ScalarBoundingBox<T, _Dim>::ContainsMaxStrict(const vector_type& v) const {
+bool TScalarBoundingBox<T, _Dim>::ContainsMaxStrict(const vector_type& v) const {
     return _min.AllLessOrEqual(v) && _max.AllGreaterThan(v);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-bool ScalarBoundingBox<T, _Dim>::Contains(const ScalarBoundingBox& other) const {
+bool TScalarBoundingBox<T, _Dim>::Contains(const TScalarBoundingBox& other) const {
     return _min.AllLessOrEqual(other._min) && _max.AllGreaterOrEqual(other._max);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-bool ScalarBoundingBox<T, _Dim>::ContainsStrict(const ScalarBoundingBox& other) const {
+bool TScalarBoundingBox<T, _Dim>::ContainsStrict(const TScalarBoundingBox& other) const {
     return _min.AllLessThan(other._min) && _max.AllGreaterThan(other._max);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-bool ScalarBoundingBox<T, _Dim>::ContainsMaxStrict(const ScalarBoundingBox& other) const {
+bool TScalarBoundingBox<T, _Dim>::ContainsMaxStrict(const TScalarBoundingBox& other) const {
     return _min.AllLessOrEqual(other._min) && _max.AllGreaterThan(other._max);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-bool ScalarBoundingBox<T, _Dim>::Intersects(const ScalarBoundingBox& other, bool *inside) const {
+bool TScalarBoundingBox<T, _Dim>::Intersects(const TScalarBoundingBox& other, bool *inside) const {
     const vector_type c0 = Center();
     const vector_type c1 = other.Center();
 
@@ -136,24 +136,24 @@ bool ScalarBoundingBox<T, _Dim>::Intersects(const ScalarBoundingBox& other, bool
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 template <size_t _Dim2>
-void ScalarBoundingBox<T, _Dim>::GetCorners(vector_type (&points)[_Dim2]) const {
+void TScalarBoundingBox<T, _Dim>::GetCorners(vector_type (&points)[_Dim2]) const {
     return GetCorners(MakeView(points));
 }
 //----------------------------------------------------------------------------
 namespace details {
 template <typename T, size_t _Dim>
-struct GetCornersAABB_;
+struct TGetCornersAABB_;
 template <typename T>
-struct GetCornersAABB_<T, 1> {
-    void operator ()(const MemoryView<ScalarVector<T, 1>>& points, const ScalarVector<T, 1>& min, const ScalarVector<T, 1>& max) const {
+struct TGetCornersAABB_<T, 1> {
+    void operator ()(const TMemoryView<TScalarVector<T, 1>>& points, const TScalarVector<T, 1>& min, const TScalarVector<T, 1>& max) const {
         Assert(points.size() == 2);
         points[0].x() = min.x();
         points[1].x() = max.x();
     }
 };
 template <typename T>
-struct GetCornersAABB_<T, 2> {
-    void operator ()(const MemoryView<ScalarVector<T, 2>>& points, const ScalarVector<T, 2>& min, const ScalarVector<T, 2>& max) const {
+struct TGetCornersAABB_<T, 2> {
+    void operator ()(const TMemoryView<TScalarVector<T, 2>>& points, const TScalarVector<T, 2>& min, const TScalarVector<T, 2>& max) const {
         Assert(points.size() == 4);
         points[0].x() = min.x();
         points[0].y() = min.y();
@@ -169,8 +169,8 @@ struct GetCornersAABB_<T, 2> {
     }
 };
 template <typename T>
-struct GetCornersAABB_<T, 3> {
-    void operator ()(const MemoryView<ScalarVector<T, 3>>& points, const ScalarVector<T, 3>& min, const ScalarVector<T, 3>& max) const {
+struct TGetCornersAABB_<T, 3> {
+    void operator ()(const TMemoryView<TScalarVector<T, 3>>& points, const TScalarVector<T, 3>& min, const TScalarVector<T, 3>& max) const {
         Assert(points.size() == 8);
         points[0].x() = min.x();
         points[0].y() = min.y();
@@ -208,60 +208,60 @@ struct GetCornersAABB_<T, 3> {
 } //!details
 
 template <typename T, size_t _Dim>
-void ScalarBoundingBox<T, _Dim>::GetCorners(const MemoryView<vector_type>& points) const {
-    details::GetCornersAABB_<T, _Dim>()(points, _min, _max);
+void TScalarBoundingBox<T, _Dim>::GetCorners(const TMemoryView<vector_type>& points) const {
+    details::TGetCornersAABB_<T, _Dim>()(points, _min, _max);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 template <typename U>
-auto ScalarBoundingBox<T, _Dim>::Lerp(U f) const -> vector_type {
+auto TScalarBoundingBox<T, _Dim>::Lerp(U f) const -> vector_type {
     return Core::Lerp(_min, _max, f);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 template <typename U>
-auto ScalarBoundingBox<T, _Dim>::Lerp(const ScalarVector<U, _Dim>& f) const -> vector_type {
+auto TScalarBoundingBox<T, _Dim>::Lerp(const TScalarVector<U, _Dim>& f) const -> vector_type {
     return Core::Lerp(_min, _max, f);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 template <typename U>
-auto ScalarBoundingBox<T, _Dim>::SLerp(U f) const -> vector_type {
+auto TScalarBoundingBox<T, _Dim>::SLerp(U f) const -> vector_type {
     return Core::SLerp(_min, _max, f);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 template <typename U>
-auto ScalarBoundingBox<T, _Dim>::SLerp(const ScalarVector<U, _Dim>& f) const -> vector_type {
+auto TScalarBoundingBox<T, _Dim>::SLerp(const TScalarVector<U, _Dim>& f) const -> vector_type {
     return Core::SLerp(_min, _max, f);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-auto ScalarBoundingBox<T, _Dim>::ClipAbove(size_t axis, T value) const -> ScalarBoundingBox {
+auto TScalarBoundingBox<T, _Dim>::ClipAbove(size_t axis, T value) const -> TScalarBoundingBox {
     Assert(_min[axis] <= value && _max[axis] >= value);
-    ScalarBoundingBox result = *this;
+    TScalarBoundingBox result = *this;
     result._min[axis] = value;
     return result;
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-auto ScalarBoundingBox<T, _Dim>::ClipBelow(size_t axis, T value) const -> ScalarBoundingBox {
+auto TScalarBoundingBox<T, _Dim>::ClipBelow(size_t axis, T value) const -> TScalarBoundingBox {
     Assert(_min[axis] <= value && _max[axis] >= value);
-    ScalarBoundingBox result = *this;
+    TScalarBoundingBox result = *this;
     result._max[axis] = value;
     return result;
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-void ScalarBoundingBox<T, _Dim>::Swap(ScalarBoundingBox& other) {
+void TScalarBoundingBox<T, _Dim>::Swap(TScalarBoundingBox& other) {
     _min.Swap(other._min);
     _max.Swap(other._max);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 template <typename U>
-ScalarBoundingBox<U, _Dim> ScalarBoundingBox<T, _Dim>::Cast() const {
-    return ScalarBoundingBox<U, _Dim>(_min.Cast<U>(), _max.Cast<U>());
+TScalarBoundingBox<U, _Dim> TScalarBoundingBox<T, _Dim>::Cast() const {
+    return TScalarBoundingBox<U, _Dim>(_min.Cast<U>(), _max.Cast<U>());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -6,13 +6,13 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Ray Ray::FromSegment(const float3& a, const float3& b) {
+FRay FRay::FromSegment(const float3& a, const float3& b) {
     Assert(LengthSq3(a - b) > F_Epsilon);
 
     const float3& origin = a;
     const float3 direction = Normalize3(b - origin);
 
-    return Ray(origin, direction);
+    return FRay(origin, direction);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

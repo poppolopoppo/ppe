@@ -13,14 +13,14 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Graphics::IndexBuffer *BasicMeshLoader::CreateIndexBuffer_(
+Graphics::IndexBuffer *FBasicMeshLoader::CreateIndexBuffer_(
     Graphics::IDeviceAPIEncapsulator *device,
     const char *resourceName,
-    const MemoryView<const u8>& data) const {
+    const TMemoryView<const u8>& data) const {
     Assert(resourceName);
     Assert(data.SizeInBytes() == _header.IndexCount * _header.IndexStride);
 
-    Graphics::IndexBuffer *indices = new Graphics::IndexBuffer(Graphics::IndexElementSize(_header.IndexStride), _header.IndexCount, Graphics::BufferMode::None, Graphics::BufferUsage::Default);
+    Graphics::IndexBuffer *indices = new Graphics::IndexBuffer(Graphics::IndexElementSize(_header.IndexStride), _header.IndexCount, Graphics::EBufferMode::None, Graphics::EBufferUsage::Default);
     indices->SetResourceName(resourceName);
     indices->Freeze();
 
@@ -35,16 +35,16 @@ Graphics::IndexBuffer *BasicMeshLoader::CreateIndexBuffer_(
     return indices;
 }
 //----------------------------------------------------------------------------
-Graphics::VertexBuffer *BasicMeshLoader::CreateVertexBuffer_(
+Graphics::FVertexBuffer *FBasicMeshLoader::CreateVertexBuffer_(
     Graphics::IDeviceAPIEncapsulator *device,
     const char *resourceName,
-    const Graphics::VertexDeclaration *declaration,
-    const MemoryView<const u8>& data) const {
+    const Graphics::FVertexDeclaration *declaration,
+    const TMemoryView<const u8>& data) const {
     Assert(resourceName);
     Assert(declaration);
     Assert(data.SizeInBytes() == _header.VertexCount * declaration->SizeInBytes());
 
-    Graphics::VertexBuffer *vertices = new Graphics::VertexBuffer(declaration, _header.VertexCount, Graphics::BufferMode::None, Graphics::BufferUsage::Default);
+    Graphics::FVertexBuffer *vertices = new Graphics::FVertexBuffer(declaration, _header.VertexCount, Graphics::EBufferMode::None, Graphics::EBufferUsage::Default);
     vertices->SetResourceName(resourceName);
     vertices->Freeze();
 
@@ -53,7 +53,7 @@ Graphics::VertexBuffer *BasicMeshLoader::CreateVertexBuffer_(
     return vertices;
 }
 //----------------------------------------------------------------------------
-void BasicMeshLoader::ResetHeader_() {
+void FBasicMeshLoader::ResetHeader_() {
     memset(&_header, 0xCD, sizeof(_header));
 }
 //----------------------------------------------------------------------------

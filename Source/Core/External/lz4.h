@@ -1,6 +1,6 @@
 /*
    LZ4 - Fast LZ compression algorithm
-   Header File
+   FHeader File
    Copyright (C) 2011-2015, Yann Collet.
 
    BSD 2-Clause License (http://www.opensource.org/licenses/bsd-license.php)

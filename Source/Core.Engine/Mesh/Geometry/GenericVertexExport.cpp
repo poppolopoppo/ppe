@@ -17,7 +17,7 @@ namespace Engine {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void ExportVertices(
-    GenericVertex& vertices,
+    FGenericVertex& vertices,
 
     const GeometricPrimitive::Positions *positions0,
     const GeometricPrimitive::Positions *positions1,
@@ -51,29 +51,29 @@ void ExportVertices(
             tangents0||tangents1||tangents2||
             binormals0||binormals1||binormals2 );
 
-    const GenericVertex::SubPart sp_positions0 = positions0 ? vertices.Position3f(0) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_positions1 = positions1 ? vertices.Position3f(1) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_positions2 = positions2 ? vertices.Position3f(2) : GenericVertex::SubPart::Null();
+    const FGenericVertex::FSubPart sp_positions0 = positions0 ? vertices.Position3f(0) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_positions1 = positions1 ? vertices.Position3f(1) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_positions2 = positions2 ? vertices.Position3f(2) : FGenericVertex::FSubPart::Null();
 
-    const GenericVertex::SubPart sp_colors0 = colors0 ? vertices.Color4b(0) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_colors1 = colors1 ? vertices.Color4b(1) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_colors2 = colors2 ? vertices.Color4b(2) : GenericVertex::SubPart::Null();
+    const FGenericVertex::FSubPart sp_colors0 = colors0 ? vertices.Color4b(0) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_colors1 = colors1 ? vertices.Color4b(1) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_colors2 = colors2 ? vertices.Color4b(2) : FGenericVertex::FSubPart::Null();
 
-    const GenericVertex::SubPart sp_texcoords0 = texCoords0 ? vertices.TexCoord2f(0) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_texcoords1 = texCoords1 ? vertices.TexCoord2f(1) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_texcoords2 = texCoords2 ? vertices.TexCoord2f(2) : GenericVertex::SubPart::Null();
+    const FGenericVertex::FSubPart sp_texcoords0 = texCoords0 ? vertices.TexCoord2f(0) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_texcoords1 = texCoords1 ? vertices.TexCoord2f(1) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_texcoords2 = texCoords2 ? vertices.TexCoord2f(2) : FGenericVertex::FSubPart::Null();
 
-    const GenericVertex::SubPart sp_normals0 = normals0 ? vertices.Normal3f(0) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_normals1 = normals1 ? vertices.Normal3f(1) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_normals2 = normals2 ? vertices.Normal3f(2) : GenericVertex::SubPart::Null();
+    const FGenericVertex::FSubPart sp_normals0 = normals0 ? vertices.Normal3f(0) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_normals1 = normals1 ? vertices.Normal3f(1) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_normals2 = normals2 ? vertices.Normal3f(2) : FGenericVertex::FSubPart::Null();
 
-    const GenericVertex::SubPart sp_tangents0 = tangents0 ? vertices.Tangent3f(0) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_tangents1 = tangents1 ? vertices.Tangent3f(1) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_tangents2 = tangents2 ? vertices.Tangent3f(2) : GenericVertex::SubPart::Null();
+    const FGenericVertex::FSubPart sp_tangents0 = tangents0 ? vertices.Tangent3f(0) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_tangents1 = tangents1 ? vertices.Tangent3f(1) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_tangents2 = tangents2 ? vertices.Tangent3f(2) : FGenericVertex::FSubPart::Null();
 
-    const GenericVertex::SubPart sp_birnormals0 = binormals0 ? vertices.Binormal3f(0) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_birnormals1 = binormals1 ? vertices.Binormal3f(1) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_birnormals2 = binormals2 ? vertices.Binormal3f(2) : GenericVertex::SubPart::Null();
+    const FGenericVertex::FSubPart sp_birnormals0 = binormals0 ? vertices.Binormal3f(0) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_birnormals1 = binormals1 ? vertices.Binormal3f(1) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_birnormals2 = binormals2 ? vertices.Binormal3f(2) : FGenericVertex::FSubPart::Null();
 
     size_t i = 0;
     do {
@@ -111,7 +111,7 @@ void ExportVertices(
 }
 //----------------------------------------------------------------------------
 void ExportVertices(
-    GenericVertex& vertices,
+    FGenericVertex& vertices,
 
     const GeometricPrimitive::Positions *positions0,
     const GeometricPrimitive::Colors *colors0,
@@ -122,12 +122,12 @@ void ExportVertices(
     Assert(vertices.VertexCountRemaining());
     Assert( positions0||colors0||texCoords0||normals0||tangents0||binormals0 );
 
-    const GenericVertex::SubPart sp_positions0 = positions0 ? vertices.Position3f(0) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_colors0 = colors0 ? vertices.Color4b(0) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_texcoords0 = texCoords0 ? vertices.TexCoord2f(0) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_normals0 = normals0 ? vertices.Normal3f(0) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_tangents0 = tangents0 ? vertices.Tangent3f(0) : GenericVertex::SubPart::Null();
-    const GenericVertex::SubPart sp_birnormals0 = binormals0 ? vertices.Binormal3f(0) : GenericVertex::SubPart::Null();
+    const FGenericVertex::FSubPart sp_positions0 = positions0 ? vertices.Position3f(0) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_colors0 = colors0 ? vertices.Color4b(0) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_texcoords0 = texCoords0 ? vertices.TexCoord2f(0) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_normals0 = normals0 ? vertices.Normal3f(0) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_tangents0 = tangents0 ? vertices.Tangent3f(0) : FGenericVertex::FSubPart::Null();
+    const FGenericVertex::FSubPart sp_birnormals0 = binormals0 ? vertices.Binormal3f(0) : FGenericVertex::FSubPart::Null();
 
     size_t i = 0;
     do {
@@ -171,17 +171,17 @@ static void ComputeTriangleBasis_(
     *pBinormal = ((pos20 * tex10.x()) - (pos10 * tex20.x())) * f;
 }
 //----------------------------------------------------------------------------
-void ComputeTangentSpace(GenericVertex& vertices, const MemoryView<const u32>& indices) {
+void ComputeTangentSpace(FGenericVertex& vertices, const TMemoryView<const u32>& indices) {
     const size_t indexCount = indices.size();
     const size_t vertexCount = vertices.VertexCountWritten();
     Assert(0 == (indexCount % 3)); // only triangle list
 
-    const GenericVertex::SubPart sp_positions0 = vertices.Position3f(0);
-    const GenericVertex::SubPart sp_texcoords0 = vertices.TexCoord2f(0);
-    const GenericVertex::SubPart sp_normals0 = vertices.Normal3f(0);
-    const GenericVertex::SubPart sp_tangents0 = vertices.Tangent3f(0);
-    const GenericVertex::SubPart sp_birnormals0 = vertices.Binormal3f(0);
-    const GenericVertex::SubPart sp_packedTangents0 = vertices.Tangent4f(0);
+    const FGenericVertex::FSubPart sp_positions0 = vertices.Position3f(0);
+    const FGenericVertex::FSubPart sp_texcoords0 = vertices.TexCoord2f(0);
+    const FGenericVertex::FSubPart sp_normals0 = vertices.Normal3f(0);
+    const FGenericVertex::FSubPart sp_tangents0 = vertices.Tangent3f(0);
+    const FGenericVertex::FSubPart sp_birnormals0 = vertices.Binormal3f(0);
+    const FGenericVertex::FSubPart sp_packedTangents0 = vertices.Tangent4f(0);
 
     Assert(sp_positions0);
     Assert(sp_texcoords0);

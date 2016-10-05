@@ -9,30 +9,30 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MountingPoint : public FileSystemToken {
+class FMountingPoint : public FFileSystemToken {
 public:
-    typedef FileSystemToken parent_type;
+    typedef FFileSystemToken parent_type;
 
-    MountingPoint() {}
-    ~MountingPoint() {}
+    FMountingPoint() {}
+    ~FMountingPoint() {}
 
-    MountingPoint(const FileSystem::StringView& content);
-    MountingPoint& operator =(const FileSystem::StringView& content);
+    FMountingPoint(const FileSystem::FStringView& content);
+    FMountingPoint& operator =(const FileSystem::FStringView& content);
 
     template <typename _CharTraits, typename _Allocator>
-    MountingPoint(const std::basic_string<typename FileSystem::char_type, _CharTraits, _Allocator>& content)
-        : MountingPoint(MakeStringView(content)) {}
+    FMountingPoint(const std::basic_string<typename FileSystem::char_type, _CharTraits, _Allocator>& content)
+        : FMountingPoint(MakeStringView(content)) {}
 
-    MountingPoint(const MountingPoint& other);
-    MountingPoint& operator =(const MountingPoint& other);
+    FMountingPoint(const FMountingPoint& other);
+    FMountingPoint& operator =(const FMountingPoint& other);
 
-    MountingPoint(const FileSystemToken& token);
-    MountingPoint& operator =(const FileSystemToken& token);
+    FMountingPoint(const FFileSystemToken& token);
+    FMountingPoint& operator =(const FFileSystemToken& token);
 
-    void Swap(MountingPoint& other);
+    void Swap(FMountingPoint& other);
 };
 //----------------------------------------------------------------------------
-inline void swap(MountingPoint& lhs, MountingPoint& rhs) {
+inline void swap(FMountingPoint& lhs, FMountingPoint& rhs) {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------

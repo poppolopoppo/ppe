@@ -67,12 +67,12 @@ struct IsCacheLineAligned {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, bool _Defined = Meta::has_destructor<T>::value >
-struct AlignmentOfIFP {
+struct TAlignmentOfIFP {
     enum : size_t { value = std::alignment_of<T>::value };
 };
 //----------------------------------------------------------------------------
 template <typename T>
-struct AlignmentOfIFP<T, false> {
+struct TAlignmentOfIFP<T, false> {
     enum : size_t { value = sizeof(size_t) };
 };
 //----------------------------------------------------------------------------

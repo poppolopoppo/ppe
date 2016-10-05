@@ -8,63 +8,63 @@ namespace RTTI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-bool AssignMove(T *dst, MetaAtom *src) {
+bool AssignMove(T *dst, FMetaAtom *src) {
     Assert(dst);
     Assert(src);
 
     typedef typename std::decay< T >::type dst_type;
 
-    typename MetaAtomWrapper< dst_type >::type tmp;
-    if (!MetaTypeTraits< dst_type >::VirtualTraits()->AssignMove(&tmp, src))
+    typename TMetaAtomWrapper< dst_type >::type tmp;
+    if (!TMetaTypeTraits< dst_type >::VirtualTraits()->AssignMove(&tmp, src))
         return false;
 
-    MetaTypeTraits< dst_type >::UnwrapMove(*dst, std::move(tmp.Wrapper()));
+    TMetaTypeTraits< dst_type >::UnwrapMove(*dst, std::move(tmp.Wrapper()));
     return true;
 }
 //----------------------------------------------------------------------------
 template <typename T>
-bool AssignCopy(T *dst, const MetaAtom *src) {
+bool AssignCopy(T *dst, const FMetaAtom *src) {
     Assert(dst);
     Assert(src);
 
     typedef typename std::decay< T >::type dst_type;
 
-    typename MetaAtomWrapper< dst_type >::type tmp;
-    if (!MetaTypeTraits< dst_type >::VirtualTraits()->AssignCopy(&tmp, src))
+    typename TMetaAtomWrapper< dst_type >::type tmp;
+    if (!TMetaTypeTraits< dst_type >::VirtualTraits()->AssignCopy(&tmp, src))
         return false;
 
-    MetaTypeTraits< dst_type >::UnwrapMove(*dst, std::move(tmp.Wrapper()));
+    TMetaTypeTraits< dst_type >::UnwrapMove(*dst, std::move(tmp.Wrapper()));
     return true;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-bool AssignMove(MetaAtom *dst, T *src) {
+bool AssignMove(FMetaAtom *dst, T *src) {
     Assert(dst);
     Assert(src);
 
     typedef typename std::decay< T >::type src_type;
 
-    typename MetaAtomWrapper< src_type >::type tmp;
-    MetaTypeTraits< src_type >::WrapMove(tmp.Wrapper(), std::move(*src));
+    typename TMetaAtomWrapper< src_type >::type tmp;
+    TMetaTypeTraits< src_type >::WrapMove(tmp.Wrapper(), std::move(*src));
 
     if (dst->Traits()->AssignMove(dst, &tmp))
         return true;
 
-    MetaTypeTraits< src_type >::UnwrapMove(*src, std::move(tmp.Wrapper()));
+    TMetaTypeTraits< src_type >::UnwrapMove(*src, std::move(tmp.Wrapper()));
     return false;
 }
 //----------------------------------------------------------------------------
 template <typename T>
-bool AssignCopy(MetaAtom *dst, const T *src) {
+bool AssignCopy(FMetaAtom *dst, const T *src) {
     Assert(dst);
     Assert(src);
 
     typedef typename std::decay< T >::type src_type;
 
-    typename MetaAtomWrapper< src_type >::type tmp;
-    MetaTypeTraits< src_type >::WrapCopy(tmp.Wrapper(), *src);
+    typename TMetaAtomWrapper< src_type >::type tmp;
+    TMetaTypeTraits< src_type >::WrapCopy(tmp.Wrapper(), *src);
 
     return dst->Traits()->AssignMove(dst, &tmp);
 }
@@ -99,16 +99,16 @@ bool AssignMove(_Dst *dst, _Src *src) {
     typedef typename std::decay< _Dst >::type dst_type;
     typedef typename std::decay< _Src >::type src_type;
 
-    typename MetaAtomWrapper< src_type >::type tmp_src;
-    MetaTypeTraits< src_type >::WrapMove(tmp_src.Wrapper(), std::move(*src));
+    typename TMetaAtomWrapper< src_type >::type tmp_src;
+    TMetaTypeTraits< src_type >::WrapMove(tmp_src.Wrapper(), std::move(*src));
 
-    typename MetaAtomWrapper< dst_type >::type tmp_dst;
-    if (MetaTypeTraits< dst_type >::VirtualTraits()->AssignMove(&tmp_dst, &tmp_src)) {
-        MetaTypeTraits< dst_type >::UnwrapMove(*dst, std::move(tmp_dst.Wrapper()));
+    typename TMetaAtomWrapper< dst_type >::type tmp_dst;
+    if (TMetaTypeTraits< dst_type >::VirtualTraits()->AssignMove(&tmp_dst, &tmp_src)) {
+        TMetaTypeTraits< dst_type >::UnwrapMove(*dst, std::move(tmp_dst.Wrapper()));
         return true;
     }
     else {
-        MetaTypeTraits< src_type >::UnwrapMove(*src, std::move(tmp_src.Wrapper()));
+        TMetaTypeTraits< src_type >::UnwrapMove(*src, std::move(tmp_src.Wrapper()));
         return false;
     }
 }
@@ -121,14 +121,14 @@ bool AssignCopy(_Dst *dst, const _Src *src) {
     typedef typename std::decay< _Dst >::type dst_type;
     typedef typename std::decay< _Src >::type src_type;
 
-    typename MetaAtomWrapper< src_type >::type tmp_src;
-    MetaTypeTraits< src_type >::WrapCopy(tmp_src.Wrapper(), *src);
+    typename TMetaAtomWrapper< src_type >::type tmp_src;
+    TMetaTypeTraits< src_type >::WrapCopy(tmp_src.Wrapper(), *src);
 
-    typename MetaAtomWrapper< dst_type >::type tmp_dst;
-    if (!MetaTypeTraits< dst_type >::VirtualTraits()->AssignMove(&tmp_dst, &tmp_src))
+    typename TMetaAtomWrapper< dst_type >::type tmp_dst;
+    if (!TMetaTypeTraits< dst_type >::VirtualTraits()->AssignMove(&tmp_dst, &tmp_src))
         return false;
 
-    MetaTypeTraits< dst_type >::UnwrapMove(*dst, std::move(tmp_dst.Wrapper()));
+    TMetaTypeTraits< dst_type >::UnwrapMove(*dst, std::move(tmp_dst.Wrapper()));
     return true;
 }
 //----------------------------------------------------------------------------

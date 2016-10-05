@@ -11,9 +11,9 @@ namespace Meta {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Index, size_t _Count>
-struct BitField {
+struct TBitField {
     static_assert(_Count > 0, "_Count must be superior to 0");
-    static_assert(_Index + _Count <= BitCount<T>::value, "overflow");
+    static_assert(_Index + _Count <= TBitCount<T>::value, "overflow");
 
     enum : T {
         Index = _Index,
@@ -50,18 +50,18 @@ struct BitField {
 };
 //----------------------------------------------------------------------------
 template <typename T, size_t _Index, size_t _Count>
-FORCE_INLINE T BitField<T, _Index, _Count>::Set(T flags, T value) {
+FORCE_INLINE T TBitField<T, _Index, _Count>::Set(T flags, T value) {
     Assert(Get(Format(value)) == value);
     return (Clear(flags) | Format(value));
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Index, size_t _Count>
-FORCE_INLINE T BitField<T, _Index, _Count>::Get(T flags) {
+FORCE_INLINE T TBitField<T, _Index, _Count>::Get(T flags) {
     return ((flags & Mask) >> Index);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Index, size_t _Count>
-FORCE_INLINE T BitField<T, _Index, _Count>::Inc(T flags, T value) {
+FORCE_INLINE T TBitField<T, _Index, _Count>::Inc(T flags, T value) {
     Assert(Get(Format(value)) == value);
     return (Clear(flags) | Format(Get(flags) + value));
 }
@@ -69,8 +69,8 @@ FORCE_INLINE T BitField<T, _Index, _Count>::Inc(T flags, T value) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Index>
-struct BitField<T, _Index, 1> {
-    static_assert(_Index + 1 <= BitCount<T>::value, "overflow");
+struct TBitField<T, _Index, 1> {
+    static_assert(_Index + 1 <= TBitCount<T>::value, "overflow");
 
     enum : T {
         Index = _Index,
@@ -97,40 +97,40 @@ struct BitField<T, _Index, 1> {
 };
 //----------------------------------------------------------------------------
 template <typename T, size_t _Index>
-FORCE_INLINE T BitField<T, _Index, 1>::Set(T flags, bool value) {
+FORCE_INLINE T TBitField<T, _Index, 1>::Set(T flags, bool value) {
     Assert(Get(Format(value)) == value);
     return (Clear(flags) | Format(value));
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Index>
-FORCE_INLINE bool BitField<T, _Index, 1>::Get(T flags) {
+FORCE_INLINE bool TBitField<T, _Index, 1>::Get(T flags) {
     return ((flags & Mask) ? true : false);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-struct Bit {
-    enum { Capacity = BitCount<T>::value };
+struct TBit {
+    enum { Capacity = TBitCount<T>::value };
 
     template <size_t _Index, typename _Field>
-    struct Field {
-        typedef BitField<T, _Index, BitCount<_Field>::value> type;
+    struct TField {
+        typedef TBitField<T, _Index, TBitCount<_Field>::value> type;
     };
 
     template <size_t _Count>
-    struct First {
-        typedef BitField<T, 0, _Count> type;
+    struct TFirst {
+        typedef TBitField<T, 0, _Count> type;
     };
 
     template <typename _BitField>
-    struct After {
+    struct TAfter {
         template <size_t _Count>
-        struct Field {
-            typedef BitField<T, _BitField::End, _Count> type;
+        struct TField {
+            typedef TBitField<T, _BitField::End, _Count> type;
         };
-        struct Remain {
-            typedef BitField<T, _BitField::End, Capacity - _BitField::End> type;
+        struct FRemain {
+            typedef TBitField<T, _BitField::End, Capacity - _BitField::End> type;
         };
     };
 
@@ -144,7 +144,7 @@ struct Bit {
 };
 //----------------------------------------------------------------------------
 template <typename T>
-T BitSetsCount(T bits) { return Bit<T>::SetsCount(bits); }
+T BitSetsCount(T bits) { return TBit<T>::SetsCount(bits); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

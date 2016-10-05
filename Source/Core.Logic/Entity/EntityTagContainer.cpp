@@ -10,14 +10,14 @@ namespace Logic {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-EntityTagContainer::EntityTagContainer() {
+FEntityTagContainer::FEntityTagContainer() {
     _tagToIDs.reserve(32);
 }
 //----------------------------------------------------------------------------
-EntityTagContainer::~EntityTagContainer() {}
+FEntityTagContainer::~FEntityTagContainer() {}
 //----------------------------------------------------------------------------
-void EntityTagContainer::AddTag(EntityID id, const EntityTag& tag) {
-    Assert(Entity::InvalidID != id);
+void FEntityTagContainer::AddTag(EntityID id, const FEntityTag& tag) {
+    Assert(FEntity::InvalidID != id);
     Assert(!tag.empty());
 
     _idToTags.emplace(id, tag);
@@ -26,8 +26,8 @@ void EntityTagContainer::AddTag(EntityID id, const EntityTag& tag) {
     bag.push_back(id);
 }
 //----------------------------------------------------------------------------
-void EntityTagContainer::RemoveTag(EntityID id, const EntityTag& tag) {
-    Assert(Entity::InvalidID != id);
+void FEntityTagContainer::RemoveTag(EntityID id, const FEntityTag& tag) {
+    Assert(FEntity::InvalidID != id);
     Assert(!tag.empty());
 
     RemoveKeyValue_AssertExists(_idToTags, id, tag);
@@ -36,11 +36,11 @@ void EntityTagContainer::RemoveTag(EntityID id, const EntityTag& tag) {
     Remove_DontPreserveOrder(bag, id);
 }
 //----------------------------------------------------------------------------
-bool EntityTagContainer::HasTag(EntityID id, const EntityTag& tag) const {
-    Assert(Entity::InvalidID != id);
+bool FEntityTagContainer::HasTag(EntityID id, const FEntityTag& tag) const {
+    Assert(FEntity::InvalidID != id);
     Assert(!tag.empty());
 
-    const Pair<EntityToTags::const_iterator, EntityToTags::const_iterator> range = _idToTags.equal_range(id);
+    const TPair<EntityToTags::const_iterator, EntityToTags::const_iterator> range = _idToTags.equal_range(id);
     for (EntityToTags::const_iterator it = range.first; it != range.second; ++it)
         if (it->second == tag)
             return true;
@@ -48,10 +48,10 @@ bool EntityTagContainer::HasTag(EntityID id, const EntityTag& tag) const {
     return false;
 }
 //----------------------------------------------------------------------------
-void EntityTagContainer::RemoveEntity(EntityID id) {
-    Assert(Entity::InvalidID != id);
+void FEntityTagContainer::RemoveEntity(EntityID id) {
+    Assert(FEntity::InvalidID != id);
 
-    const Pair<EntityToTags::const_iterator, EntityToTags::const_iterator> range = _idToTags.equal_range(id);
+    const TPair<EntityToTags::const_iterator, EntityToTags::const_iterator> range = _idToTags.equal_range(id);
     Assert(range.first != range.second);
     Assert(range.first != _idToTags.end());
 
@@ -63,16 +63,16 @@ void EntityTagContainer::RemoveEntity(EntityID id) {
     _idToTags.erase(range.first, range.second);
 }
 //----------------------------------------------------------------------------
-size_t EntityTagContainer::EntityTags(EntityTag *pTags, size_t capacity, EntityID id) const {
-    Assert(Entity::InvalidID != id);
+size_t FEntityTagContainer::EntityTags(FEntityTag *pTags, size_t capacity, EntityID id) const {
+    Assert(FEntity::InvalidID != id);
 
     return FillMatchingValues_ReturnCount(pTags, capacity, _idToTags, id);
 }
 //----------------------------------------------------------------------------
-void EntityTagContainer::EntityTags(VECTOR_THREAD_LOCAL(Entity, EntityTag)& outTags, EntityID id) const {
-    Assert(Entity::InvalidID != id);
+void FEntityTagContainer::EntityTags(VECTOR_THREAD_LOCAL(FEntity, FEntityTag)& outTags, EntityID id) const {
+    Assert(FEntity::InvalidID != id);
 
-    const Pair<EntityToTags::const_iterator, EntityToTags::const_iterator> range = _idToTags.equal_range(id);
+    const TPair<EntityToTags::const_iterator, EntityToTags::const_iterator> range = _idToTags.equal_range(id);
     Assert(range.first != range.second);
     Assert(range.first != _idToTags.end());
 
@@ -82,13 +82,13 @@ void EntityTagContainer::EntityTags(VECTOR_THREAD_LOCAL(Entity, EntityTag)& outT
         outTags.push_back(it->second);
 }
 //----------------------------------------------------------------------------
-const VECTOR(Entity, EntityID)& EntityTagContainer::TagEntities(const EntityTag& tag) const {
+const VECTOR(FEntity, EntityID)& FEntityTagContainer::TagEntities(const FEntityTag& tag) const {
     Assert(!tag.empty());
 
     return _tagToIDs.at(tag);
 }
 //----------------------------------------------------------------------------
-void EntityTagContainer::Clear() {
+void FEntityTagContainer::Clear() {
 
     _idToTags.clear();
     _tagToIDs.clear();

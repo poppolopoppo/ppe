@@ -16,59 +16,59 @@ FWD_REFPTR(Model);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ModelBuilder {
+class FModelBuilder {
 public:
     template <typename _Tag, typename _N = u32>
-    struct TypedIndex {
-        _N Value;
-        TypedIndex() : Value(0) {}
-        TypedIndex(_N value) : Value(value) {}
-        TypedIndex& operator =(_N value) { Value = value; return *this; }
+    struct TTypedIndex {
+        _N FValue;
+        TTypedIndex() : FValue(0) {}
+        TTypedIndex(_N value) : FValue(value) {}
+        TTypedIndex& operator =(_N value) { FValue = value; return *this; }
         STATIC_CONST_INTEGRAL(_N, InvalidValue, 0xFEE1DEAD);
-        operator _N () const { Assert(InvalidValue != Value); return Value; }
+        operator _N () const { Assert(InvalidValue != FValue); return FValue; }
 #ifdef WITH_CORE_ASSERT
-        static void Uninitialized(TypedIndex (&dst)[4]) { dst[0] = dst[1] = dst[2] = dst[3] = _N(InvalidValue); }
-        static void Assign(TypedIndex (&dst)[4], const TypedIndex (&src)[3]) { dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2]; dst[3] = _N(InvalidValue); }
+        static void Uninitialized(TTypedIndex (&dst)[4]) { dst[0] = dst[1] = dst[2] = dst[3] = _N(InvalidValue); }
+        static void Assign(TTypedIndex (&dst)[4], const TTypedIndex (&src)[3]) { dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2]; dst[3] = _N(InvalidValue); }
 #else
-        static void Uninitialized(TypedIndex (&)[4]) { }
-        static void Assign(TypedIndex (&dst)[4], const TypedIndex (&src)[3]) { dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2]; }
+        static void Uninitialized(TTypedIndex (&)[4]) { }
+        static void Assign(TTypedIndex (&dst)[4], const TTypedIndex (&src)[3]) { dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2]; }
 #endif
-        static void Assign(TypedIndex (&dst)[4], const TypedIndex (&src)[4]) { dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2]; dst[3] = src[3]; }
+        static void Assign(TTypedIndex (&dst)[4], const TTypedIndex (&src)[4]) { dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2]; dst[3] = src[3]; }
     };
 
-    struct PositionTag  {};
-    struct NormalTag    {};
-    struct TexcoordTag  {};
+    struct FPositionTag  {};
+    struct FNormalTag    {};
+    struct FTexcoordTag  {};
 
-    using PositionIndex = TypedIndex<PositionTag>;
-    using NormalIndex   = TypedIndex<NormalTag>;
-    using TexcoordIndex = TypedIndex<TexcoordTag>;
+    using FPositionIndex = TTypedIndex<FPositionTag>;
+    using FNormalIndex   = TTypedIndex<FNormalTag>;
+    using FTexcoordIndex = TTypedIndex<FTexcoordTag>;
 
-    struct Face {
-        PositionIndex   P[4];
-        NormalIndex     N[4];
-        TexcoordIndex   T[4];
+    struct EFace {
+        FPositionIndex   P[4];
+        FNormalIndex     N[4];
+        FTexcoordIndex   T[4];
 
-        Face(const PositionIndex (&pos)[3]);
-        Face(const PositionIndex (&pos)[3], const TexcoordIndex (&texcoords)[3]);
-        Face(const PositionIndex (&pos)[3], const TexcoordIndex (&texcoords)[3], const NormalIndex (&normals)[3]);
-        Face(const PositionIndex (&pos)[3], const NormalIndex (&normals)[3]);
+        EFace(const FPositionIndex (&pos)[3]);
+        EFace(const FPositionIndex (&pos)[3], const FTexcoordIndex (&texcoords)[3]);
+        EFace(const FPositionIndex (&pos)[3], const FTexcoordIndex (&texcoords)[3], const FNormalIndex (&normals)[3]);
+        EFace(const FPositionIndex (&pos)[3], const FNormalIndex (&normals)[3]);
 
-        Face(const PositionIndex (&pos)[4]);
-        Face(const PositionIndex (&pos)[4], const TexcoordIndex (&texcoords)[4]);
-        Face(const PositionIndex (&pos)[4], const TexcoordIndex (&texcoords)[4], const NormalIndex (&normals)[4]);
-        Face(const PositionIndex (&pos)[4], const NormalIndex (&normals)[4]);
+        EFace(const FPositionIndex (&pos)[4]);
+        EFace(const FPositionIndex (&pos)[4], const FTexcoordIndex (&texcoords)[4]);
+        EFace(const FPositionIndex (&pos)[4], const FTexcoordIndex (&texcoords)[4], const FNormalIndex (&normals)[4]);
+        EFace(const FPositionIndex (&pos)[4], const FNormalIndex (&normals)[4]);
     };
 
-    struct Bone {
-        String Name;
+    struct FBone {
+        FString FName;
         float4x4 Transform;
 
-        Bone(String&& name, const float4x4& transform) : Name(std::move(name)), Transform(transform) { Assert(Name.size()); }
+        FBone(FString&& name, const float4x4& transform) : FName(std::move(name)), Transform(transform) { Assert(FName.size()); }
     };
 
-    struct Group {
-        enum Flags : u32 {
+    struct FGroup {
+        enum EFlags : u32 {
             Default     = 0,
 
             Normals     = 1<<0,
@@ -77,7 +77,7 @@ public:
 
             Texcoords_Normals = Texcoords|Normals,
 
-            Triangle = Default,
+            FTriangle = Default,
             Triangle_Normals = Default|Normals,
             Triangle_Texcoords = Default|Texcoords,
             Triangle_Texcoords_Normals = Triangle_Texcoords|Normals,
@@ -87,28 +87,28 @@ public:
             Quad_Texcoords_Normals = Quad_Texcoords|Normals,
         };
 
-        String Name;
-        u32 Mode;
+        FString FName;
+        u32 EMode;
 
-        u32 Bone;
-        u32 Material;
+        u32 FBone;
+        u32 FMaterial;
 
         u32 FaceStart;
         u32 FaceCount;
 
-        bool HasFlag(Flags flag) const { return flag == (Mode & flag); }
-        void SetFlag(Flags flag) { Mode |= flag; }
-        void RemoveFlag(Flags flag) { Mode &= ~flag; }
+        bool HasFlag(EFlags flag) const { return flag == (EMode & flag); }
+        void SetFlag(EFlags flag) { EMode |= flag; }
+        void RemoveFlag(EFlags flag) { EMode &= ~flag; }
 
-        void SetMode_CheckCoherency(Flags mode) { Assert(Default == Mode || mode == Mode); Mode = mode; }
+        void SetMode_CheckCoherency(EFlags mode) { Assert(Default == EMode || mode == EMode); EMode = mode; }
 
-        Group(String&& name) :  Name(std::move(name)), Mode(Default)
-                             ,  Bone(UINT32_MAX), Material(UINT32_MAX)
-                             ,  FaceStart(UINT32_MAX), FaceCount(UINT32_MAX) { Assert(Name.size()); }
+        FGroup(FString&& name) :  FName(std::move(name)), EMode(Default)
+                             ,  FBone(UINT32_MAX), FMaterial(UINT32_MAX)
+                             ,  FaceStart(UINT32_MAX), FaceCount(UINT32_MAX) { Assert(FName.size()); }
     };
 
-    struct Material {
-        enum Flags : u32 {
+    struct FMaterial {
+        enum EFlags : u32 {
             Default         = 0,
 
             Ambient         = 1<<0,
@@ -127,7 +127,7 @@ public:
             _InUse          = 1<<30,
         };
 
-        String Name;
+        FString FName;
 
         ColorRGBAF AmbientColor;
         ColorRGBAF DiffuseColor;
@@ -138,23 +138,23 @@ public:
         float RefractiveIndex;
         float SpecularExponent;
 
-        Filename AlphaMap;
-        Filename AmbientMap;
-        Filename DiffuseMap;
-        Filename DisplacementMap;
-        Filename EmissiveMap;
-        Filename NormalMap;
-        Filename ReflectionMap;
-        Filename SpecularColorMap;
-        Filename SpecularPowerMap;
+        FFilename AlphaMap;
+        FFilename AmbientMap;
+        FFilename DiffuseMap;
+        FFilename DisplacementMap;
+        FFilename EmissiveMap;
+        FFilename NormalMap;
+        FFilename ReflectionMap;
+        FFilename SpecularColorMap;
+        FFilename SpecularPowerMap;
 
-        u32 Mode;
+        u32 EMode;
 
-        bool HasFlag(Flags flag) const { return flag == (Mode & flag); }
-        void SetFlag(Flags flag) { Mode |= flag; }
-        void RemoveFlag(Flags flag) { Mode &= ~flag; }
+        bool HasFlag(EFlags flag) const { return flag == (EMode & flag); }
+        void SetFlag(EFlags flag) { EMode |= flag; }
+        void RemoveFlag(EFlags flag) { EMode &= ~flag; }
 
-        Material(String&& name) : Name(std::move(name))
+        FMaterial(FString&& name) : FName(std::move(name))
             , AmbientColor(-1)
             , DiffuseColor(-1)
             , EmissiveColor(-1)
@@ -162,13 +162,13 @@ public:
             , SpecularColor(-1)
             , RefractiveIndex(-1)
             , SpecularExponent(-1)
-            , Mode(Default) { Assert(Name.size()); }
+            , EMode(Default) { Assert(FName.size()); }
     };
 
-    ModelBuilder();
-    ~ModelBuilder();
+    FModelBuilder();
+    ~FModelBuilder();
 
-    const String& Name() const { return _name; }
+    const FString& FName() const { return _name; }
 
     bool empty() const { return _positions.empty(); }
 
@@ -177,13 +177,13 @@ public:
     const VECTOR_THREAD_LOCAL(MeshGeneration, float3)& Texcoords() const { return _texcoords; }
     const VECTOR_THREAD_LOCAL(MeshGeneration, float3)& Normals() const { return _normals; }
 
-    const VECTOR_THREAD_LOCAL(MeshGeneration, Bone)& Bones() const { return _bones; }
-    const VECTOR_THREAD_LOCAL(MeshGeneration, Face)& Faces() const { return _faces; }
-    const VECTOR_THREAD_LOCAL(MeshGeneration, Group)& Groups() const { return _groups; }
-    const VECTOR_THREAD_LOCAL(MeshGeneration, Material)& Materials() const { return _materials; }
+    const VECTOR_THREAD_LOCAL(MeshGeneration, FBone)& Bones() const { return _bones; }
+    const VECTOR_THREAD_LOCAL(MeshGeneration, EFace)& Faces() const { return _faces; }
+    const VECTOR_THREAD_LOCAL(MeshGeneration, FGroup)& Groups() const { return _groups; }
+    const VECTOR_THREAD_LOCAL(MeshGeneration, FMaterial)& Materials() const { return _materials; }
 
-    void SetName(const char *name) { SetName(String(name)); }
-    void SetName(String&& name);
+    void SetName(const char *name) { SetName(FString(name)); }
+    void SetName(FString&& name);
 
     void AddPosition(const float3& xyz);
     void AddPosition(const float4& xyzw);
@@ -192,41 +192,41 @@ public:
     void AddTexCoord(const float3& uvw);
     void AddNormal(const float3& value);
 
-    void AddTriangle(const PositionIndex (&pos)[3]);
-    void AddTriangle(const PositionIndex (&pos)[3], const TexcoordIndex (&texcoords)[3]);
-    void AddTriangle(const PositionIndex (&pos)[3], const TexcoordIndex (&texcoords)[3], const NormalIndex (&normals)[3]);
-    void AddTriangle(const PositionIndex (&pos)[3], const NormalIndex (&normals)[3]);
+    void AddTriangle(const FPositionIndex (&pos)[3]);
+    void AddTriangle(const FPositionIndex (&pos)[3], const FTexcoordIndex (&texcoords)[3]);
+    void AddTriangle(const FPositionIndex (&pos)[3], const FTexcoordIndex (&texcoords)[3], const FNormalIndex (&normals)[3]);
+    void AddTriangle(const FPositionIndex (&pos)[3], const FNormalIndex (&normals)[3]);
 
-    void AddQuad(const PositionIndex (&pos)[4]);
-    void AddQuad(const PositionIndex (&pos)[4], const TexcoordIndex (&texcoords)[4]);
-    void AddQuad(const PositionIndex (&pos)[4], const TexcoordIndex (&texcoords)[4], const NormalIndex (&normals)[4]);
-    void AddQuad(const PositionIndex (&pos)[4], const NormalIndex (&normals)[4]);
+    void AddQuad(const FPositionIndex (&pos)[4]);
+    void AddQuad(const FPositionIndex (&pos)[4], const FTexcoordIndex (&texcoords)[4]);
+    void AddQuad(const FPositionIndex (&pos)[4], const FTexcoordIndex (&texcoords)[4], const FNormalIndex (&normals)[4]);
+    void AddQuad(const FPositionIndex (&pos)[4], const FNormalIndex (&normals)[4]);
 
-    void AddBone(const char *name, const float4x4& transform) { AddBone(String(name), transform); }
-    void AddBone(String&& name, const float4x4& transform);
+    void AddBone(const char *name, const float4x4& transform) { AddBone(FString(name), transform); }
+    void AddBone(FString&& name, const float4x4& transform);
 
-    Group *OpenGroup(const char *name) { return OpenGroup(String(name)); }
-    Group *OpenGroup(String&& name);
-    const Group& OpenedGroup() const { Assert(_openGroup); return _groups.back(); }
-    void CloseGroup(Group *group);
+    FGroup *OpenGroup(const char *name) { return OpenGroup(FString(name)); }
+    FGroup *OpenGroup(FString&& name);
+    const FGroup& OpenedGroup() const { Assert(_openGroup); return _groups.back(); }
+    void CloseGroup(FGroup *group);
 
-    Material *OpenMaterial(const char *name) { return OpenMaterial(String(name)); }
-    Material *OpenMaterial(String&& name);
-    const Material& OpenedMaterial() const { Assert(_openMaterial); return _materials.back(); }
-    void CloseMaterial(Material *material);
+    FMaterial *OpenMaterial(const char *name) { return OpenMaterial(FString(name)); }
+    FMaterial *OpenMaterial(FString&& name);
+    const FMaterial& OpenedMaterial() const { Assert(_openMaterial); return _materials.back(); }
+    void CloseMaterial(FMaterial *material);
 
-    bool MaterialIndexFromName(size_t *pIndex, const StringView& name) const;
-    bool MaterialIndexFromName(size_t *pIndex, const String& name) const { return MaterialIndexFromName(pIndex, StringView(name.c_str(), name.size())); }
-    bool MaterialIndexFromName(size_t *pIndex, const char *name) const { return MaterialIndexFromName(pIndex, StringView(name, Length(name)) ); }
+    bool MaterialIndexFromName(size_t *pIndex, const FStringView& name) const;
+    bool MaterialIndexFromName(size_t *pIndex, const FString& name) const { return MaterialIndexFromName(pIndex, FStringView(name.c_str(), name.size())); }
+    bool MaterialIndexFromName(size_t *pIndex, const char *name) const { return MaterialIndexFromName(pIndex, FStringView(name, Length(name)) ); }
 
     PModel CreateModel();
     void Clear();
 
 private:
-    Group& OpenedGroup_() { Assert(_openGroup); return _groups.back(); }
-    Material& OpenedMaterial_() { Assert(_openMaterial); return _materials.back(); }
+    FGroup& OpenedGroup_() { Assert(_openGroup); return _groups.back(); }
+    FMaterial& OpenedMaterial_() { Assert(_openMaterial); return _materials.back(); }
 
-    String _name;
+    FString _name;
 
 #ifdef WITH_CORE_ASSERT
     bool _openGroup     : 1;
@@ -238,10 +238,10 @@ private:
     VECTOR_THREAD_LOCAL(MeshGeneration, float3) _texcoords;
     VECTOR_THREAD_LOCAL(MeshGeneration, float3) _normals;
 
-    VECTOR_THREAD_LOCAL(MeshGeneration, Bone) _bones;
-    VECTOR_THREAD_LOCAL(MeshGeneration, Face) _faces;
-    VECTOR_THREAD_LOCAL(MeshGeneration, Group) _groups;
-    VECTOR_THREAD_LOCAL(MeshGeneration, Material) _materials;
+    VECTOR_THREAD_LOCAL(MeshGeneration, FBone) _bones;
+    VECTOR_THREAD_LOCAL(MeshGeneration, EFace) _faces;
+    VECTOR_THREAD_LOCAL(MeshGeneration, FGroup) _groups;
+    VECTOR_THREAD_LOCAL(MeshGeneration, FMaterial) _materials;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -6,21 +6,21 @@
 #include "Core/Maths/ScalarMatrix_fwd.h"
 
 namespace Core {
-class Quaternion;
+class FQuaternion;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class AffineTransform {
+class FAffineTransform {
 public:
-    AffineTransform();
-    ~AffineTransform();
+    FAffineTransform();
+    ~FAffineTransform();
 
-    AffineTransform(const float3& position,
+    FAffineTransform(const float3& position,
                     const float3& direction,
                     const float3& scale );
 
-    AffineTransform(const AffineTransform& other);
-    AffineTransform& operator =(const AffineTransform& other);
+    FAffineTransform(const FAffineTransform& other);
+    FAffineTransform& operator =(const FAffineTransform& other);
 
     const float3& Position() const { return _position; }
     const float3& Direction() const { return _direction; }
@@ -30,20 +30,20 @@ public:
     void SetDirection(const float3& value) { _direction = value; }
     void SetScale(const float3& value) { _scale = value; }
 
-    Quaternion MakeQuaternion() const;
+    FQuaternion MakeQuaternion() const;
     float4x4 MakeTransformMatrix() const;
     void SetFromMatrix(const float4x4& parMatrix);
 
-    void Transform(const Quaternion& rotation);
+    void Transform(const FQuaternion& rotation);
     void Transform(const float4x4& transform);
 
-    bool operator ==(const AffineTransform& other) const {
+    bool operator ==(const FAffineTransform& other) const {
         return  _position == other._position &&
                 _direction == other._direction &&
                 _scale == other._scale; 
     }
 
-    bool operator !=(const AffineTransform& other) const { return !operator ==(other); }
+    bool operator !=(const FAffineTransform& other) const { return !operator ==(other); }
 
 private:
     float3 _position;

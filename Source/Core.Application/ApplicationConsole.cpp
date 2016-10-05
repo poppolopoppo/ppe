@@ -21,22 +21,22 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ApplicationConsole::ApplicationConsole(const wchar_t *appname)
-:   ApplicationBase(appname) {}
+FApplicationConsole::FApplicationConsole(const wchar_t *appname)
+:   FApplicationBase(appname) {}
 //----------------------------------------------------------------------------
-ApplicationConsole::~ApplicationConsole() {}
+FApplicationConsole::~FApplicationConsole() {}
 //----------------------------------------------------------------------------
-void ApplicationConsole::Start() {
-    ApplicationBase::Start();
+void FApplicationConsole::Start() {
+    FApplicationBase::Start();
 
     RedirectIOToConsole();
 }
 //----------------------------------------------------------------------------
-void ApplicationConsole::Shutdown() {
-    ApplicationBase::Shutdown();
+void FApplicationConsole::Shutdown() {
+    FApplicationBase::Shutdown();
 }
 //----------------------------------------------------------------------------
-void ApplicationConsole::RedirectIOToConsole() {
+void FApplicationConsole::RedirectIOToConsole() {
 
     LOG(Info, L"[Application] RedirectIOToConsole()");
 

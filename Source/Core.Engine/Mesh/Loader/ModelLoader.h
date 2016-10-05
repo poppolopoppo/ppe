@@ -6,17 +6,17 @@
 #include "Core/Memory/RefPtr.h"
 
 namespace Core {
-class Filename;
+class FFilename;
 template <typename T, typename _Allocator>
-class RawStorage;
+class TRawStorage;
 namespace Engine {
 FWD_REFPTR(Model);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-typedef RawStorage<char, THREAD_LOCAL_ALLOCATOR(MeshGeneration, char)> ModelStream;
+typedef TRawStorage<char, THREAD_LOCAL_ALLOCATOR(MeshGeneration, char)> ModelStream;
 //----------------------------------------------------------------------------
-bool LoadModel(PModel& pModel, const Filename& filename);
+bool LoadModel(PModel& pModel, const FFilename& filename);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

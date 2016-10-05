@@ -16,52 +16,52 @@ FWD_REFPTR(Element);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(Document);
-class Document : public RefCountable {
+class FDocument : public FRefCountable {
 public:
-    typedef STRINGVIEW_HASHMAP(XML, SElement, Case::Sensitive) byidentifier_type;
+    typedef STRINGVIEW_HASHMAP(XML, SElement, ECase::Sensitive) byidentifier_type;
 
-    Document();
-    ~Document();
+    FDocument();
+    ~FDocument();
 
-    Document(const Document& ) = delete;
-    Document& operator =(const Document& ) = delete;
+    FDocument(const FDocument& ) = delete;
+    FDocument& operator =(const FDocument& ) = delete;
 
-    Element* Root() { return _root.get(); }
-    const Element* Root() const { return _root.get(); }
-    void SetRoot(Element* element) { _root.reset(element); }
+    FElement* Root() { return _root.get(); }
+    const FElement* Root() const { return _root.get(); }
+    void SetRoot(FElement* element) { _root.reset(element); }
 
-    const String& Version() const { return _version; }
-    void Version(String&& value) { _version = std::move(value); }
+    const FString& Version() const { return _version; }
+    void Version(FString&& value) { _version = std::move(value); }
 
-    const String& Encoding() const { return _encoding; }
-    void Encoding(String&& encoding) { _encoding = std::move(encoding); }
+    const FString& Encoding() const { return _encoding; }
+    void Encoding(FString&& encoding) { _encoding = std::move(encoding); }
 
     const byidentifier_type& ByIdentifier() const { return _byIdentifier; }
 
-    const Element* FindById(const StringView& Id) const;
+    const FElement* FindById(const FStringView& Id) const;
 
     bool empty() const { return (nullptr != _root); }
 
     void ToStream(std::basic_ostream<char>& oss) const;
 
-    const Element* XPath(const MemoryView<const Name>& path) const;
-    size_t XPath(const MemoryView<const Name>& path, const std::function<void(const Element&)>& functor) const;
+    const FElement* XPath(const TMemoryView<const FName>& path) const;
+    size_t XPath(const TMemoryView<const FName>& path, const std::function<void(const FElement&)>& functor) const;
 
-    static bool Load(Document* document, const Filename& filename);
-    static bool Load(Document* document, const Filename& filename, IStreamReader* input);
-    static bool Load(Document* document, const Filename& filename, const StringView& content);
+    static bool Load(FDocument* document, const FFilename& filename);
+    static bool Load(FDocument* document, const FFilename& filename, IStreamReader* input);
+    static bool Load(FDocument* document, const FFilename& filename, const FStringView& content);
 
 private:
     PElement _root;
 
-    String _version;
-    String _encoding;
-    String _standalone;
+    FString _version;
+    FString _encoding;
+    FString _standalone;
 
     byidentifier_type _byIdentifier;
 };
 //----------------------------------------------------------------------------
-inline std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const Document& doc) {
+inline std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const FDocument& doc) {
     doc.ToStream(oss);
     return oss;
 }

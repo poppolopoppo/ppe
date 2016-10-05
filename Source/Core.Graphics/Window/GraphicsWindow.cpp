@@ -14,26 +14,26 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-GraphicsWindow::GraphicsWindow(
+FGraphicsWindow::FGraphicsWindow(
     const wchar_t *title,
     int left, int top,
     size_t width, size_t height,
-    BasicWindow *parent /* = nullptr */)
-:   BasicWindow(title, left, top, width, height, parent)
+    FBasicWindow *parent /* = nullptr */)
+:   FBasicWindow(title, left, top, width, height, parent)
 ,   _fixedTimeStep(false) {}
 //----------------------------------------------------------------------------
-GraphicsWindow::~GraphicsWindow() {}
+FGraphicsWindow::~FGraphicsWindow() {}
 //----------------------------------------------------------------------------
-void GraphicsWindow::RenderLoop(DeviceEncapsulator *deviceEncapsulator) {
+void FGraphicsWindow::RenderLoop(FDeviceEncapsulator *deviceEncapsulator) {
     Assert(deviceEncapsulator);
 
-    Timeline clock = Timeline::StartNow();
-    Timeline realtime = clock;
+    FTimeline clock = FTimeline::StartNow();
+    FTimeline realtime = clock;
 
     Initialize(clock);
     LoadContent();
 
-    LOG(Info, L"[GraphicsWindow] Start render loop");
+    LOG(Info, L"[FGraphicsWindow] Start render loop");
 
     IDeviceAPIEncapsulator *const device = deviceEncapsulator->Device();
     device->SetRenderTarget(device->BackBufferRenderTarget(),
@@ -65,33 +65,33 @@ void GraphicsWindow::RenderLoop(DeviceEncapsulator *deviceEncapsulator) {
 
     Update_AfterDispatch();
 
-    LOG(Info, L"[GraphicsWindow] Stop render loop");
+    LOG(Info, L"[FGraphicsWindow] Stop render loop");
 
     UnloadContent();
     Destroy();
 }
 //----------------------------------------------------------------------------
-void GraphicsWindow::Initialize(const Timeline&/* time */) {
-    LOG(Info, L"[GraphicsWindow] Initialize()");
+void FGraphicsWindow::Initialize(const FTimeline&/* time */) {
+    LOG(Info, L"[FGraphicsWindow] Initialize()");
 }
 //----------------------------------------------------------------------------
-void GraphicsWindow::Destroy() {
-    LOG(Info, L"[GraphicsWindow] Destroy()");
+void FGraphicsWindow::Destroy() {
+    LOG(Info, L"[FGraphicsWindow] Destroy()");
 }
 //----------------------------------------------------------------------------
-void GraphicsWindow::LoadContent() {
-    LOG(Info, L"[GraphicsWindow] LoadContent()");
+void FGraphicsWindow::LoadContent() {
+    LOG(Info, L"[FGraphicsWindow] LoadContent()");
 }
 //----------------------------------------------------------------------------
-void GraphicsWindow::UnloadContent() {
-    LOG(Info, L"[GraphicsWindow] UnloadContent()");
+void FGraphicsWindow::UnloadContent() {
+    LOG(Info, L"[FGraphicsWindow] UnloadContent()");
 }
 //----------------------------------------------------------------------------
-void GraphicsWindow::Update(const Timeline&/* time */) {}
+void FGraphicsWindow::Update(const FTimeline&/* time */) {}
 //----------------------------------------------------------------------------
-void GraphicsWindow::Draw(const Timeline&/* time */) {}
+void FGraphicsWindow::Draw(const FTimeline&/* time */) {}
 //----------------------------------------------------------------------------
-void GraphicsWindow::Present() {}
+void FGraphicsWindow::Present() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

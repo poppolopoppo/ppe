@@ -15,32 +15,32 @@ using namespace Core::Graphics;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-struct ValueSizeInBytes_ {
+struct TValueSizeInBytes_ {
     size_t operator ()() const { return sizeof(T); }
 };
 template <>
-struct ValueSizeInBytes_<void> {
+struct TValueSizeInBytes_<void> {
     size_t operator ()() const { return 0; }
 };
 //----------------------------------------------------------------------------
 template <typename U, typename V = U, typename = std::enable_if< std::is_constructible<U, const V&>::value >::type >
-struct ValueCopy_ {
-    void operator ()(const MemoryView<u8>& dst, const MemoryView<const u8>& src) const {
+struct TValueCopy_ {
+    void operator ()(const TMemoryView<u8>& dst, const TMemoryView<const u8>& src) const {
         Assert(dst.SizeInBytes() >= sizeof(U));
         Assert(src.SizeInBytes() >= sizeof(V));
         *reinterpret_cast<U*>(dst.data()) = *reinterpret_cast<const V*>(src.data());
     }
 };
 template <>
-struct ValueCopy_<void, void, void> {
-    void operator ()(const MemoryView<u8>& , const MemoryView<const u8>& ) {
+struct TValueCopy_<void, void, void> {
+    void operator ()(const TMemoryView<u8>& , const TMemoryView<const u8>& ) {
         AssertNotReached();
     }
 };
 //----------------------------------------------------------------------------
 template <typename U, typename V = U, typename = std::enable_if< std::is_constructible<U, const V&>::value >::type >
-struct ValueCopyArray_ {
-    void operator ()(const MemoryView<u8>& dst, size_t dstStride, const MemoryView<const u8>& src, size_t srcStride, size_t count) const {
+struct TValueCopyArray_ {
+    void operator ()(const TMemoryView<u8>& dst, size_t dstStride, const TMemoryView<const u8>& src, size_t srcStride, size_t count) const {
         Assert(dst.SizeInBytes() >= dstStride * count + sizeof(U));
         Assert(src.SizeInBytes() >= srcStride * count + sizeof(V));
 
@@ -57,61 +57,61 @@ struct ValueCopyArray_ {
     }
 };
 template <>
-struct ValueCopyArray_<void, void, void> {
-    void operator ()(const MemoryView<u8>& , size_t , const MemoryView<const u8>& , size_t , size_t ) {
+struct TValueCopyArray_<void, void, void> {
+    void operator ()(const TMemoryView<u8>& , size_t , const TMemoryView<const u8>& , size_t , size_t ) {
         AssertNotReached();
     }
 };
 //----------------------------------------------------------------------------
 template <typename T>
-struct ValueDefault_ {
-    void operator ()(const MemoryView<u8>& dst) const {
+struct TValueDefault_ {
+    void operator ()(const TMemoryView<u8>& dst) const {
         Assert(dst.SizeInBytes() >= sizeof(T));
         *reinterpret_cast<T*>(dst.data()) = T();
     }
 };
 template <>
-struct ValueDefault_<void> {
-    void operator ()(const MemoryView<u8>& ) const {
+struct TValueDefault_<void> {
+    void operator ()(const TMemoryView<u8>& ) const {
         AssertNotReached();
     }
 };
 //----------------------------------------------------------------------------
 template <typename T>
-struct ValueEquals_ {
-    bool operator ()(const MemoryView<const u8>& lhs, const MemoryView<const u8>& rhs) const {
+struct TValueEquals_ {
+    bool operator ()(const TMemoryView<const u8>& lhs, const TMemoryView<const u8>& rhs) const {
         Assert(lhs.SizeInBytes() >= sizeof(T));
         Assert(rhs.SizeInBytes() >= sizeof(T));
         return (*reinterpret_cast<const T*>(lhs.data()) == *reinterpret_cast<const T*>(rhs.data()) );
     }
 };
 template <>
-struct ValueEquals_<void> {
-    bool operator ()(const MemoryView<const u8>& , const MemoryView<const u8>& ) const {
+struct TValueEquals_<void> {
+    bool operator ()(const TMemoryView<const u8>& , const TMemoryView<const u8>& ) const {
         AssertNotReached();
         return false;
     }
 };
 //----------------------------------------------------------------------------
 template <typename T>
-struct ValueHash_ {
-    size_t operator ()(const MemoryView<const u8>& data) const {
+struct TValueHash_ {
+    size_t operator ()(const TMemoryView<const u8>& data) const {
         Assert(data.SizeInBytes() >= sizeof(T));
         using Core::hash_value;
         return hash_value(*reinterpret_cast<const T*>(data.data()));
     }
 };
 template <>
-struct ValueHash_<void> {
-    size_t operator ()(const MemoryView<const u8>& ) const {
+struct TValueHash_<void> {
+    size_t operator ()(const TMemoryView<const u8>& ) const {
         AssertNotReached();
         return 0;
     }
 };
 //----------------------------------------------------------------------------
 template <typename T>
-struct ValueLerp_ {
-    void operator ()(const MemoryView<u8>& dst, const MemoryView<const u8>& a, const MemoryView<const u8>& b, float t) const {
+struct TValueLerp_ {
+    void operator ()(const TMemoryView<u8>& dst, const TMemoryView<const u8>& a, const TMemoryView<const u8>& b, float t) const {
         Assert(dst.SizeInBytes() >= sizeof(T));
         Assert(a.SizeInBytes() >= sizeof(T));
         Assert(b.SizeInBytes() >= sizeof(T));
@@ -123,15 +123,15 @@ struct ValueLerp_ {
     }
 };
 template <>
-struct ValueLerp_<void> {
-    void operator ()(const MemoryView<u8>& , const MemoryView<const u8>& , const MemoryView<const u8>& , float ) const {
+struct TValueLerp_<void> {
+    void operator ()(const TMemoryView<u8>& , const TMemoryView<const u8>& , const TMemoryView<const u8>& , float ) const {
         AssertNotReached();
     }
 };
 //----------------------------------------------------------------------------
 template <typename T>
-struct ValueLerpArray_ {
-    void operator ()(const MemoryView<u8>& dst, size_t dstStride, const MemoryView<const u8>& a, const MemoryView<const u8>& b, const MemoryView<const float>& ts) const {
+struct TValueLerpArray_ {
+    void operator ()(const TMemoryView<u8>& dst, size_t dstStride, const TMemoryView<const u8>& a, const TMemoryView<const u8>& b, const TMemoryView<const float>& ts) const {
         Assert(dst.SizeInBytes() >= dstStride * ts.size() + sizeof(T));
         Assert(dstStride >= sizeof(T));
         Assert(a.SizeInBytes() >= sizeof(T));
@@ -150,15 +150,15 @@ struct ValueLerpArray_ {
     }
 };
 template <>
-struct ValueLerpArray_<void> {
-    void operator ()(const MemoryView<u8>& , size_t , const MemoryView<const u8>& , const MemoryView<const u8>& , const MemoryView<const float>& ) {
+struct TValueLerpArray_<void> {
+    void operator ()(const TMemoryView<u8>& , size_t , const TMemoryView<const u8>& , const TMemoryView<const u8>& , const TMemoryView<const float>& ) {
         AssertNotReached();
     }
 };
 //----------------------------------------------------------------------------
 template <typename T>
-struct ValueBarycentricLerp_ {
-    void operator ()(const MemoryView<u8>& dst, const MemoryView<const u8>& a, const MemoryView<const u8>& b, const MemoryView<const u8>& c, const float3& uvw) const {
+struct TValueBarycentricLerp_ {
+    void operator ()(const TMemoryView<u8>& dst, const TMemoryView<const u8>& a, const TMemoryView<const u8>& b, const TMemoryView<const u8>& c, const float3& uvw) const {
         Assert(dst.SizeInBytes() >= sizeof(T));
         Assert(a.SizeInBytes() >= sizeof(T));
         Assert(b.SizeInBytes() >= sizeof(T));
@@ -173,15 +173,15 @@ struct ValueBarycentricLerp_ {
     }
 };
 template <>
-struct ValueBarycentricLerp_<void> {
-    void operator ()(const MemoryView<u8>& , const MemoryView<const u8>& , const MemoryView<const u8>& , const MemoryView<const u8>& , const float3& ) const {
+struct TValueBarycentricLerp_<void> {
+    void operator ()(const TMemoryView<u8>& , const TMemoryView<const u8>& , const TMemoryView<const u8>& , const TMemoryView<const u8>& , const float3& ) const {
         AssertNotReached();
     }
 };
 //----------------------------------------------------------------------------
 template <typename T>
-struct ValueBarycentricLerpArray_ {
-    void operator ()(const MemoryView<u8>& dst, size_t dstStride, const MemoryView<const u8>& a, const MemoryView<const u8>& b, const MemoryView<const u8>& c, const MemoryView<const float3>& uvws) const {
+struct TValueBarycentricLerpArray_ {
+    void operator ()(const TMemoryView<u8>& dst, size_t dstStride, const TMemoryView<const u8>& a, const TMemoryView<const u8>& b, const TMemoryView<const u8>& c, const TMemoryView<const float3>& uvws) const {
         Assert(dst.SizeInBytes() >= dstStride * uvws.size() + sizeof(T));
         Assert(dstStride >= sizeof(T));
         Assert(a.SizeInBytes() >= sizeof(T));
@@ -202,37 +202,37 @@ struct ValueBarycentricLerpArray_ {
     }
 };
 template <>
-struct ValueBarycentricLerpArray_<void> {
-    void operator ()(const MemoryView<u8>& , size_t , const MemoryView<const u8>& , const MemoryView<const u8>& , const MemoryView<const u8>& , const MemoryView<const float3>& ) {
+struct TValueBarycentricLerpArray_<void> {
+    void operator ()(const TMemoryView<u8>& , size_t , const TMemoryView<const u8>& , const TMemoryView<const u8>& , const TMemoryView<const u8>& , const TMemoryView<const float3>& ) {
         AssertNotReached();
     }
 };
 //----------------------------------------------------------------------------
 template <typename U, typename V>
-struct ValueDoNothing_ {
+struct FValueDoNothing_ {
     FORCE_INLINE void operator ()() const {}
 };
 //----------------------------------------------------------------------------
 template <template <typename... > class _Functor, typename... _Args>
-static bool ValuePromote_(ValueType dst, ValueType src, _Args&&... args) {
+static bool ValuePromote_(EValueType dst, EValueType src, _Args&&... args) {
     switch (src)
     {
-    case Core::Graphics::ValueType::Float2:
+    case Core::Graphics::EValueType::Float2:
         switch (dst)
         {
-        case Core::Graphics::ValueType::Half2:
+        case Core::Graphics::EValueType::Half2:
             _Functor< half2, float2 >()(std::forward<_Args>(args)...);
             return true;
-        case Core::Graphics::ValueType::Byte2N:
+        case Core::Graphics::EValueType::Byte2N:
             _Functor< byte2n, float2 >()(std::forward<_Args>(args)...);
             return true;
-        case Core::Graphics::ValueType::UByte2N:
+        case Core::Graphics::EValueType::UByte2N:
             _Functor< ubyte2n, float2 >()(std::forward<_Args>(args)...);
             return true;
-        case Core::Graphics::ValueType::Short2N:
+        case Core::Graphics::EValueType::Short2N:
             _Functor< short2n, float2 >()(std::forward<_Args>(args)...);
             return true;
-        case Core::Graphics::ValueType::UShort2N:
+        case Core::Graphics::EValueType::UShort2N:
             _Functor< ushort2n, float2 >()(std::forward<_Args>(args)...);
             return true;
         default:
@@ -240,42 +240,42 @@ static bool ValuePromote_(ValueType dst, ValueType src, _Args&&... args) {
         }
         break;
 
-    case Core::Graphics::ValueType::Half2:
-        if (Core::Graphics::ValueType::Float2 == dst) {
+    case Core::Graphics::EValueType::Half2:
+        if (Core::Graphics::EValueType::Float2 == dst) {
             _Functor< float2, half2 >()(std::forward<_Args>(args)...);
             return true;
         }
         break;
 
-    case Core::Graphics::ValueType::Byte2N:
-        if (Core::Graphics::ValueType::Float2 == dst) {
+    case Core::Graphics::EValueType::Byte2N:
+        if (Core::Graphics::EValueType::Float2 == dst) {
             _Functor< float2, byte2n >()(std::forward<_Args>(args)...);
             return true;
         }
         break;
-    case Core::Graphics::ValueType::UByte2N:
-        if (Core::Graphics::ValueType::Float2 == dst) {
+    case Core::Graphics::EValueType::UByte2N:
+        if (Core::Graphics::EValueType::Float2 == dst) {
             _Functor< float2, ubyte2n >()(std::forward<_Args>(args)...);
             return true;
         }
         break;
-    case Core::Graphics::ValueType::Short2N:
-        if (Core::Graphics::ValueType::Float2 == dst) {
+    case Core::Graphics::EValueType::Short2N:
+        if (Core::Graphics::EValueType::Float2 == dst) {
             _Functor< float2, short2n >()(std::forward<_Args>(args)...);
             return true;
         }
         break;
-    case Core::Graphics::ValueType::UShort2N:
-        if (Core::Graphics::ValueType::Float2 == dst) {
+    case Core::Graphics::EValueType::UShort2N:
+        if (Core::Graphics::EValueType::Float2 == dst) {
             _Functor< float2, ushort2n >()(std::forward<_Args>(args)...);
             return true;
         }
         break;
 
-    case Core::Graphics::ValueType::Float3:
+    case Core::Graphics::EValueType::Float3:
         switch (dst)
         {
-        case Core::Graphics::ValueType::UX10Y10Z10W2N:
+        case Core::Graphics::EValueType::UX10Y10Z10W2N:
             _Functor< UX10Y10Z10W2N, float3 >()(std::forward<_Args>(args)...);
             return true;
         default:
@@ -283,25 +283,25 @@ static bool ValuePromote_(ValueType dst, ValueType src, _Args&&... args) {
         }
         break;
 
-    case Core::Graphics::ValueType::Float4:
+    case Core::Graphics::EValueType::Float4:
         switch (dst)
         {
-        case Core::Graphics::ValueType::Half4:
+        case Core::Graphics::EValueType::Half4:
             _Functor< half4, float4 >()(std::forward<_Args>(args)...);
             return true;
-        case Core::Graphics::ValueType::Byte4N:
+        case Core::Graphics::EValueType::Byte4N:
             _Functor< byte4n, float4 >()(std::forward<_Args>(args)...);
             return true;
-        case Core::Graphics::ValueType::UByte4N:
+        case Core::Graphics::EValueType::UByte4N:
             _Functor< ubyte4n, float4 >()(std::forward<_Args>(args)...);
             return true;
-        case Core::Graphics::ValueType::Short4N:
+        case Core::Graphics::EValueType::Short4N:
             _Functor< short4n, float4 >()(std::forward<_Args>(args)...);
             return true;
-        case Core::Graphics::ValueType::UShort4N:
+        case Core::Graphics::EValueType::UShort4N:
             _Functor< ushort4n, float4 >()(std::forward<_Args>(args)...);
             return true;
-        case Core::Graphics::ValueType::UX10Y10Z10W2N:
+        case Core::Graphics::EValueType::UX10Y10Z10W2N:
             _Functor< UX10Y10Z10W2N, float4 >()(std::forward<_Args>(args)...);
             return true;
         default:
@@ -309,43 +309,43 @@ static bool ValuePromote_(ValueType dst, ValueType src, _Args&&... args) {
         }
         break;
 
-    case Core::Graphics::ValueType::Half4:
-        if (Core::Graphics::ValueType::Float4 == dst) {
+    case Core::Graphics::EValueType::Half4:
+        if (Core::Graphics::EValueType::Float4 == dst) {
             _Functor< float4, half4 >()(std::forward<_Args>(args)...);
             return true;
         }
         break;
-    case Core::Graphics::ValueType::Byte4N:
-        if (Core::Graphics::ValueType::Float4 == dst) {
+    case Core::Graphics::EValueType::Byte4N:
+        if (Core::Graphics::EValueType::Float4 == dst) {
             _Functor< float4, byte4n >()(std::forward<_Args>(args)...);
             return true;
         }
         break;
-    case Core::Graphics::ValueType::UByte4N:
-        if (Core::Graphics::ValueType::Float4 == dst) {
+    case Core::Graphics::EValueType::UByte4N:
+        if (Core::Graphics::EValueType::Float4 == dst) {
             _Functor< float4, ubyte4n >()(std::forward<_Args>(args)...);
             return true;
         }
         break;
-    case Core::Graphics::ValueType::Short4N:
-        if (Core::Graphics::ValueType::Float4 == dst) {
+    case Core::Graphics::EValueType::Short4N:
+        if (Core::Graphics::EValueType::Float4 == dst) {
             _Functor< float4, short4n >()(std::forward<_Args>(args)...);
             return true;
         }
         break;
-    case Core::Graphics::ValueType::UShort4N:
-        if (Core::Graphics::ValueType::Float4 == dst) {
+    case Core::Graphics::EValueType::UShort4N:
+        if (Core::Graphics::EValueType::Float4 == dst) {
             _Functor< float4, ushort4n >()(std::forward<_Args>(args)...);
             return true;
         }
         break;
 
-    case Core::Graphics::ValueType::UX10Y10Z10W2N:
-        if (Core::Graphics::ValueType::Float3 == dst) {
+    case Core::Graphics::EValueType::UX10Y10Z10W2N:
+        if (Core::Graphics::EValueType::Float3 == dst) {
             _Functor< float3, UX10Y10Z10W2N >()(std::forward<_Args>(args)...);
             return true;
         }
-        if (Core::Graphics::ValueType::Float4 == dst) {
+        if (Core::Graphics::EValueType::Float4 == dst) {
             _Functor< float4, UX10Y10Z10W2N >()(std::forward<_Args>(args)...);
             return true;
         }
@@ -358,8 +358,8 @@ static bool ValuePromote_(ValueType dst, ValueType src, _Args&&... args) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-struct ValueSwap_ {
-    void operator ()(const MemoryView<u8>& lhs, const MemoryView<u8>& rhs) const {
+struct TValueSwap_ {
+    void operator ()(const TMemoryView<u8>& lhs, const TMemoryView<u8>& rhs) const {
         Assert(lhs.SizeInBytes() >= sizeof(T));
         Assert(rhs.SizeInBytes() >= sizeof(T));
         using std::swap;
@@ -369,23 +369,23 @@ struct ValueSwap_ {
     }
 };
 template <>
-struct ValueSwap_<void> {
-    void operator ()(const MemoryView<u8>& , const MemoryView<u8>& ) {
+struct TValueSwap_<void> {
+    void operator ()(const TMemoryView<u8>& , const TMemoryView<u8>& ) {
         AssertNotReached();
     }
 };
 //----------------------------------------------------------------------------
 template <typename _Ret, template < typename... > class _Functor, typename... _Args>
-_Ret SwitchValue_(ValueType value, _Args&&... args) {
+_Ret SwitchValue_(EValueType value, _Args&&... args) {
     switch (value)
     {
 #define VALUETYPE_SWITCHVALUE_DEF(_Name, T, _TypeId, _Unused) \
-    case Core::Graphics::ValueType::_Name: \
+    case Core::Graphics::EValueType::_Name: \
         return _Functor< T >()(std::forward<_Args>(args)...);
     FOREACH_CORE_GRAPHIC_VALUETYPE(VALUETYPE_SWITCHVALUE_DEF)
 #undef VALUETYPE_SWITCHVALUE_DEF
 
-    case Core::Graphics::ValueType::Void:
+    case Core::Graphics::EValueType::Void:
         AssertNotReached();
         break;
     }
@@ -402,178 +402,178 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-StringView ValueTypeToCStr(ValueType value) {
+FStringView ValueTypeToCStr(EValueType value) {
     switch (value)
     {
-    case Core::Graphics::ValueType::Void:
+    case Core::Graphics::EValueType::Void:
         return "void";
-    case Core::Graphics::ValueType::Float:
+    case Core::Graphics::EValueType::Float:
         return "float";
-    case Core::Graphics::ValueType::Float2:
+    case Core::Graphics::EValueType::Float2:
         return "float2";
-    case Core::Graphics::ValueType::Float3:
+    case Core::Graphics::EValueType::Float3:
         return "float3";
-    case Core::Graphics::ValueType::Float4:
+    case Core::Graphics::EValueType::Float4:
         return "float4";
-    case Core::Graphics::ValueType::Float3x3:
+    case Core::Graphics::EValueType::Float3x3:
         return "float3x3";
-    case Core::Graphics::ValueType::Float4x3:
+    case Core::Graphics::EValueType::Float4x3:
         return "float4x3";
-    case Core::Graphics::ValueType::Float4x4:
+    case Core::Graphics::EValueType::Float4x4:
         return "float4x4";
-    case Core::Graphics::ValueType::Bool:
+    case Core::Graphics::EValueType::Bool:
         return "bool";
-    case Core::Graphics::ValueType::Byte:
+    case Core::Graphics::EValueType::Byte:
         return "byte";
-    case Core::Graphics::ValueType::Byte2:
+    case Core::Graphics::EValueType::Byte2:
         return "byte2";
-    case Core::Graphics::ValueType::Byte4:
+    case Core::Graphics::EValueType::Byte4:
         return "byte4";
-    case Core::Graphics::ValueType::UByte:
+    case Core::Graphics::EValueType::UByte:
         return "ubyte";
-    case Core::Graphics::ValueType::UByte2:
+    case Core::Graphics::EValueType::UByte2:
         return "ubyte2";
-    case Core::Graphics::ValueType::UByte4:
+    case Core::Graphics::EValueType::UByte4:
         return "ubyte4";
-    case Core::Graphics::ValueType::Short:
+    case Core::Graphics::EValueType::Short:
         return "short";
-    case Core::Graphics::ValueType::Short2:
+    case Core::Graphics::EValueType::Short2:
         return "short2";
-    case Core::Graphics::ValueType::Short4:
+    case Core::Graphics::EValueType::Short4:
         return "short4";
-    case Core::Graphics::ValueType::UShort:
+    case Core::Graphics::EValueType::UShort:
         return "ushort";
-    case Core::Graphics::ValueType::UShort2:
+    case Core::Graphics::EValueType::UShort2:
         return "ushort2";
-    case Core::Graphics::ValueType::UShort4:
+    case Core::Graphics::EValueType::UShort4:
         return "ushort4";
-    case Core::Graphics::ValueType::Word:
+    case Core::Graphics::EValueType::Word:
         return "word";
-    case Core::Graphics::ValueType::Word2:
+    case Core::Graphics::EValueType::Word2:
         return "word2";
-    case Core::Graphics::ValueType::Word3:
+    case Core::Graphics::EValueType::Word3:
         return "word3";
-    case Core::Graphics::ValueType::Word4:
+    case Core::Graphics::EValueType::Word4:
         return "word4";
-    case Core::Graphics::ValueType::UWord:
+    case Core::Graphics::EValueType::UWord:
         return "uword";
-    case Core::Graphics::ValueType::UWord2:
+    case Core::Graphics::EValueType::UWord2:
         return "uword2";
-    case Core::Graphics::ValueType::UWord3:
+    case Core::Graphics::EValueType::UWord3:
         return "uword3";
-    case Core::Graphics::ValueType::UWord4:
+    case Core::Graphics::EValueType::UWord4:
         return "uword4";
-    case Core::Graphics::ValueType::Half:
+    case Core::Graphics::EValueType::Half:
         return "half";
-    case Core::Graphics::ValueType::Half2:
+    case Core::Graphics::EValueType::Half2:
         return "half2";
-    case Core::Graphics::ValueType::Half4:
+    case Core::Graphics::EValueType::Half4:
         return "half4";
-    case Core::Graphics::ValueType::Byte2N:
+    case Core::Graphics::EValueType::Byte2N:
         return "byte2n";
-    case Core::Graphics::ValueType::Byte4N:
+    case Core::Graphics::EValueType::Byte4N:
         return "byte4n";
-    case Core::Graphics::ValueType::UByte2N:
+    case Core::Graphics::EValueType::UByte2N:
         return "ubyte2n";
-    case Core::Graphics::ValueType::UByte4N:
+    case Core::Graphics::EValueType::UByte4N:
         return "ubyte4n";
-    case Core::Graphics::ValueType::Short2N:
+    case Core::Graphics::EValueType::Short2N:
         return "short2n";
-    case Core::Graphics::ValueType::Short4N:
+    case Core::Graphics::EValueType::Short4N:
         return "short4n";
-    case Core::Graphics::ValueType::UShort2N:
+    case Core::Graphics::EValueType::UShort2N:
         return "ushort2n";
-    case Core::Graphics::ValueType::UShort4N:
+    case Core::Graphics::EValueType::UShort4N:
         return "ushort4n";
-    case Core::Graphics::ValueType::UX10Y10Z10W2N:
+    case Core::Graphics::EValueType::UX10Y10Z10W2N:
         return "UX10Y10Z10W2N";
     }
     AssertNotImplemented();
-    return StringView();
+    return FStringView();
 }
 //----------------------------------------------------------------------------
-size_t ValueSizeInBytes(ValueType value) {
-    return SwitchValue_<size_t, ValueSizeInBytes_>(value);
+size_t ValueSizeInBytes(EValueType value) {
+    return SwitchValue_<size_t, TValueSizeInBytes_>(value);
 }
 //----------------------------------------------------------------------------
-void ValueCopy(ValueType type, const MemoryView<u8>& dst, const MemoryView<const u8>& src) {
-    SwitchValue_<void, ValueCopy_>(type, dst, src);
+void ValueCopy(EValueType type, const TMemoryView<u8>& dst, const TMemoryView<const u8>& src) {
+    SwitchValue_<void, TValueCopy_>(type, dst, src);
 }
 //----------------------------------------------------------------------------
-void ValueDefault(ValueType type, const MemoryView<u8>& dst) {
-    SwitchValue_<void, ValueDefault_>(type, dst);
+void ValueDefault(EValueType type, const TMemoryView<u8>& dst) {
+    SwitchValue_<void, TValueDefault_>(type, dst);
 }
 //----------------------------------------------------------------------------
-bool ValueEquals(ValueType type, const MemoryView<const u8>& lhs, const MemoryView<const u8>& rhs) {
-    return SwitchValue_<bool, ValueEquals_>(type, lhs, rhs);
+bool ValueEquals(EValueType type, const TMemoryView<const u8>& lhs, const TMemoryView<const u8>& rhs) {
+    return SwitchValue_<bool, TValueEquals_>(type, lhs, rhs);
 }
 //----------------------------------------------------------------------------
-hash_t ValueHash(ValueType type, const MemoryView<const u8>& data) {
-    return SwitchValue_<size_t, ValueHash_>(type, data);
+hash_t ValueHash(EValueType type, const TMemoryView<const u8>& data) {
+    return SwitchValue_<size_t, TValueHash_>(type, data);
 }
 //----------------------------------------------------------------------------
-void ValueLerp(ValueType type, const MemoryView<u8>& dst, const MemoryView<const u8>& a, const MemoryView<const u8>& b, float t) {
-    SwitchValue_<void, ValueLerp_>(type, dst, a, b, t);
+void ValueLerp(EValueType type, const TMemoryView<u8>& dst, const TMemoryView<const u8>& a, const TMemoryView<const u8>& b, float t) {
+    SwitchValue_<void, TValueLerp_>(type, dst, a, b, t);
 }
 //----------------------------------------------------------------------------
-void ValueLerpArray(ValueType type,
-                    const MemoryView<u8>& dst, size_t dstStride,
-                    const MemoryView<const u8>& a,
-                    const MemoryView<const u8>& b,
-                    const MemoryView<const float>& ts ) {
-    SwitchValue_<void, ValueLerpArray_>(type, dst, dstStride, a, b, ts);
+void ValueLerpArray(EValueType type,
+                    const TMemoryView<u8>& dst, size_t dstStride,
+                    const TMemoryView<const u8>& a,
+                    const TMemoryView<const u8>& b,
+                    const TMemoryView<const float>& ts ) {
+    SwitchValue_<void, TValueLerpArray_>(type, dst, dstStride, a, b, ts);
 }
 //----------------------------------------------------------------------------
-void ValueBarycentricLerp(  ValueType type, const MemoryView<u8>& dst,
-                            const MemoryView<const u8>& a,
-                            const MemoryView<const u8>& b,
-                            const MemoryView<const u8>& c,
+void ValueBarycentricLerp(  EValueType type, const TMemoryView<u8>& dst,
+                            const TMemoryView<const u8>& a,
+                            const TMemoryView<const u8>& b,
+                            const TMemoryView<const u8>& c,
                             const float3& uvw ) {
-    SwitchValue_<void, ValueBarycentricLerp_>(type, dst, a, b, c, uvw);
+    SwitchValue_<void, TValueBarycentricLerp_>(type, dst, a, b, c, uvw);
 }
 //----------------------------------------------------------------------------
-void ValueBarycentricLerpArray( ValueType type,
-                                const MemoryView<u8>& dst, size_t dstStride,
-                                const MemoryView<const u8>& a,
-                                const MemoryView<const u8>& b,
-                                const MemoryView<const u8>& c,
-                                const MemoryView<const float3>& uvws ) {
-    SwitchValue_<void, ValueBarycentricLerpArray_>(type, dst, dstStride, a, b, c, uvws);
+void ValueBarycentricLerpArray( EValueType type,
+                                const TMemoryView<u8>& dst, size_t dstStride,
+                                const TMemoryView<const u8>& a,
+                                const TMemoryView<const u8>& b,
+                                const TMemoryView<const u8>& c,
+                                const TMemoryView<const float3>& uvws ) {
+    SwitchValue_<void, TValueBarycentricLerpArray_>(type, dst, dstStride, a, b, c, uvws);
 }
 //----------------------------------------------------------------------------
-bool ValueIsPromotable(ValueType dst, ValueType src) {
-    return (src == dst || ValuePromote_<ValueDoNothing_>(dst, src));
+bool ValueIsPromotable(EValueType dst, EValueType src) {
+    return (src == dst || ValuePromote_<FValueDoNothing_>(dst, src));
 }
 //----------------------------------------------------------------------------
-bool ValuePromote(ValueType output, const MemoryView<u8>& dst, ValueType input, const MemoryView<const u8>& src) {
+bool ValuePromote(EValueType output, const TMemoryView<u8>& dst, EValueType input, const TMemoryView<const u8>& src) {
     return (output == input)
         ? ValueCopy(output, dst, src), true
-        : ValuePromote_<ValueCopy_>(output, input, dst, src);
+        : ValuePromote_<TValueCopy_>(output, input, dst, src);
 }
 //----------------------------------------------------------------------------
-bool ValuePromoteArray( ValueType output, const MemoryView<u8>& dst, size_t dstStride,
-                        ValueType input, const MemoryView<const u8>& src, size_t srcStride,
+bool ValuePromoteArray( EValueType output, const TMemoryView<u8>& dst, size_t dstStride,
+                        EValueType input, const TMemoryView<const u8>& src, size_t srcStride,
                         size_t count ) {
     Assert(0 != count);
     return (output == input)
-        ? SwitchValue_<void, ValueCopyArray_>(output, dst, dstStride, src, srcStride, count), true
-        : ValuePromote_<ValueCopyArray_>(output, input, dst, dstStride, src, srcStride, count);
+        ? SwitchValue_<void, TValueCopyArray_>(output, dst, dstStride, src, srcStride, count), true
+        : ValuePromote_<TValueCopyArray_>(output, input, dst, dstStride, src, srcStride, count);
 }
 //----------------------------------------------------------------------------
-void ValueSwap(ValueType type, const MemoryView<u8>& lhs, const MemoryView<u8>& rhs) {
-    SwitchValue_<void, ValueSwap_>(type, lhs, rhs);
+void ValueSwap(EValueType type, const TMemoryView<u8>& lhs, const TMemoryView<u8>& rhs) {
+    SwitchValue_<void, TValueSwap_>(type, lhs, rhs);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const Value& value) {
+std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const FValue& value) {
     switch (value.Type()) {
-    case ValueType::Void:
+    case EValueType::Void:
         oss << "void";
         break;
 
 #define VALUETYPE_TO_OSS(_Name, T, _TypeId, _Unused) \
-    case ValueType::_Name: \
+    case EValueType::_Name: \
         oss << value.Get< T >(); \
         break;
     FOREACH_CORE_GRAPHIC_VALUETYPE(VALUETYPE_TO_OSS)
@@ -582,14 +582,14 @@ std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const Value
     return oss;
 }
 //----------------------------------------------------------------------------
-std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const Value& value) {
+std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const FValue& value) {
     switch (value.Type()) {
-    case ValueType::Void:
+    case EValueType::Void:
         oss << L"void";
         break;
 
 #define VALUETYPE_TO_OSS(_Name, T, _TypeId, _Unused) \
-    case ValueType::_Name: \
+    case EValueType::_Name: \
         oss << value.Get< T >(); \
         break;
     FOREACH_CORE_GRAPHIC_VALUETYPE(VALUETYPE_TO_OSS)
@@ -615,69 +615,69 @@ namespace RTTI {
 namespace {
 //----------------------------------------------------------------------------
 template <typename T>
-struct ValueToMetaAtom_ {
-    void operator ()(RTTI::PMetaAtom& dst, const Graphics::Value& src) const {
+struct TValueToMetaAtom_ {
+    void operator ()(RTTI::PMetaAtom& dst, const Graphics::FValue& src) const {
         dst = RTTI::MakeAtom(src.Get<T>());
     }
 };
 template <>
-struct ValueToMetaAtom_<void> {
-    void operator ()(RTTI::PMetaAtom& dst, const Graphics::Value& src) const {
+struct TValueToMetaAtom_<void> {
+    void operator ()(RTTI::PMetaAtom& dst, const Graphics::FValue& src) const {
         AssertNotReached();
         dst.reset();
     }
 };
 //----------------------------------------------------------------------------
-class MetaAtomToValueVisitor_ : public IMetaAtomConstVisitor {
+class FMetaAtomToValueVisitor_ : public IMetaAtomConstVisitor {
 public:
-    MetaAtomToValueVisitor_(Graphics::Value* pvalue) : _pvalue(pvalue) { Assert(_pvalue); }
-    virtual ~MetaAtomToValueVisitor_() {}
+    FMetaAtomToValueVisitor_(Graphics::FValue* pvalue) : _pvalue(pvalue) { Assert(_pvalue); }
+    virtual ~FMetaAtomToValueVisitor_() {}
 
     virtual void Visit(const IMetaAtomPair* ) override { AssertNotImplemented(); }
     virtual void Visit(const IMetaAtomVector* ) override { AssertNotImplemented(); }
     virtual void Visit(const IMetaAtomDictionary* ) override { AssertNotImplemented(); }
 
 #define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
-    virtual void Visit(const MetaTypedAtom<T>* scalar) override { Visit_(scalar); }
+    virtual void Visit(const TMetaTypedAtom<T>* scalar) override { Visit_(scalar); }
     FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
 #undef DEF_METATYPE_SCALAR
 
 private:
     template <typename T>
-    void Unwrap_(const MetaTypedAtom<T>* scalar, std::true_type) {
+    void Unwrap_(const TMetaTypedAtom<T>* scalar, std::true_type) {
         *_pvalue = scalar->Wrapper();
     }
 
     template <typename T>
-    void Unwrap_(const MetaTypedAtom<T>* scalar, std::false_type) {
+    void Unwrap_(const TMetaTypedAtom<T>* scalar, std::false_type) {
         AssertNotImplemented();
     }
 
     template <typename T>
-    void Visit_(const MetaTypedAtom<T>* scalar) {
+    void Visit_(const TMetaTypedAtom<T>* scalar) {
         typedef typename std::integral_constant< bool,
-            (Graphics::ValueTraits<T>::TypeId != Graphics::ValueType::Void) >::type
+            (Graphics::TValueTraits<T>::ETypeId != Graphics::EValueType::Void) >::type
             boolean_type;
 
         Unwrap_(scalar, boolean_type());
     }
 
-    Graphics::Value* _pvalue;
+    Graphics::FValue* _pvalue;
 };
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void GraphicsValueToAtom(RTTI::PMetaAtom& dst, const Graphics::Value& src) {
+void GraphicsValueToAtom(RTTI::PMetaAtom& dst, const Graphics::FValue& src) {
     Assert(!src.empty());
-    SwitchValue_<void, ValueToMetaAtom_>(src.Type(), dst, src);
+    SwitchValue_<void, TValueToMetaAtom_>(src.Type(), dst, src);
 }
 //----------------------------------------------------------------------------
-void AtomToGraphicsValue(Graphics::Value& dst, const RTTI::PMetaAtom& src) {
+void AtomToGraphicsValue(Graphics::FValue& dst, const RTTI::PMetaAtom& src) {
     Assert(src);
     dst.clear();
-    MetaAtomToValueVisitor_ visitor(&dst);
+    FMetaAtomToValueVisitor_ visitor(&dst);
     src->Accept(&visitor);
     AssertRelease(!dst.empty());
 }

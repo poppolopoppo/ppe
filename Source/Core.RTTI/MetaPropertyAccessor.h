@@ -8,58 +8,58 @@
 
 namespace Core {
 namespace RTTI {
-class MetaObject;
+class FMetaObject;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-class MetaFieldAccessor {
+class TMetaFieldAccessor {
 public:
-    MetaFieldAccessor(ptrdiff_t fieldOffset, size_t fieldSize);
+    TMetaFieldAccessor(ptrdiff_t fieldOffset, size_t fieldSize);
 
-    T& GetReference(MetaObject *object) const;
-    const T& GetReference(const MetaObject *object) const;
+    T& GetReference(FMetaObject *object) const;
+    const T& GetReference(const FMetaObject *object) const;
 
-    void GetCopy(const MetaObject *object, T& dst) const;
-    void GetMove(MetaObject *object, T& dst) const;
+    void GetCopy(const FMetaObject *object, T& dst) const;
+    void GetMove(FMetaObject *object, T& dst) const;
 
-    void SetMove(MetaObject *object, T&& src) const;
-    void SetCopy(MetaObject *object, const T& src) const;
+    void SetMove(FMetaObject *object, T&& src) const;
+    void SetCopy(FMetaObject *object, const T& src) const;
 
 private:
-    T& FieldRef_(MetaObject *object) const;
-    const T& FieldRef_(const MetaObject *object) const;
+    T& FieldRef_(FMetaObject *object) const;
+    const T& FieldRef_(const FMetaObject *object) const;
 
     ptrdiff_t _fieldOffset;
 };
 //----------------------------------------------------------------------------
 template <typename _Class, typename T>
-MetaFieldAccessor<T> MakeFieldAccessor(T _Class::* field) {
-    static_assert(  std::is_base_of<MetaObject, _Class>::value,
-                    "_Class must be derived from RTTI::MetaObject");
+TMetaFieldAccessor<T> MakeFieldAccessor(T _Class::* field) {
+    static_assert(  std::is_base_of<FMetaObject, _Class>::value,
+                    "_Class must be derived from RTTI::FMetaObject");
 
     const ptrdiff_t offset = (ptrdiff_t)&(((_Class*)0)->*field);
-    return MetaFieldAccessor<T>(offset, sizeof(T));
+    return TMetaFieldAccessor<T>(offset, sizeof(T));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Class>
-class MetaMemberAccessor {
+class TMetaMemberAccessor {
 public:
     typedef const T& (_Class::* getter_type)() const;
     typedef void (_Class::* setter_type)(const T& );
 
-    MetaMemberAccessor(getter_type getter, setter_type setter);
+    TMetaMemberAccessor(getter_type getter, setter_type setter);
 
-    T& GetReference(MetaObject *object) const;
-    const T& GetReference(const MetaObject *object) const;
+    T& GetReference(FMetaObject *object) const;
+    const T& GetReference(const FMetaObject *object) const;
 
-    void GetCopy(const MetaObject *object, T& dst) const;
-    void GetMove(MetaObject *object, T& dst) const;
+    void GetCopy(const FMetaObject *object, T& dst) const;
+    void GetMove(FMetaObject *object, T& dst) const;
 
-    void SetMove(MetaObject *object, T&& src) const;
-    void SetCopy(MetaObject *object, const T& src) const;
+    void SetMove(FMetaObject *object, T&& src) const;
+    void SetCopy(FMetaObject *object, const T& src) const;
 
 private:
     getter_type _getter;
@@ -67,36 +67,36 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Class>
-MetaMemberAccessor<T, _Class> MakeMemberAccessor(
+TMetaMemberAccessor<T, _Class> MakeMemberAccessor(
     const T& (_Class::* getter)() const,
     void (_Class::* setter)(const T& ) ) {
-    static_assert(  std::is_base_of<MetaObject, _Class>::value,
-                    "_Class must be derived from RTTI::MetaObject");
-    return MetaMemberAccessor<T, _Class>(getter, setter);
+    static_assert(  std::is_base_of<FMetaObject, _Class>::value,
+                    "_Class must be derived from RTTI::FMetaObject");
+    return TMetaMemberAccessor<T, _Class>(getter, setter);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Class>
-class MetaDelegateAccessor {
+class TMetaDelegateAccessor {
 public:
-    static_assert(  std::is_base_of<MetaObject, _Class>::value,
-                    "_Class must be derived from RTTI::MetaObject");
+    static_assert(  std::is_base_of<FMetaObject, _Class>::value,
+                    "_Class must be derived from RTTI::FMetaObject");
 
-    typedef Delegate<T&   (*)(_Class* )> getter_type;
-    typedef Delegate<void (*)(_Class*, T&& )> mover_type;
-    typedef Delegate<void (*)(_Class*, const T& )> setter_type;
+    typedef TDelegate<T&   (*)(_Class* )> getter_type;
+    typedef TDelegate<void (*)(_Class*, T&& )> mover_type;
+    typedef TDelegate<void (*)(_Class*, const T& )> setter_type;
 
-    MetaDelegateAccessor(getter_type&& getter, mover_type&& mover, setter_type&& setter);
+    TMetaDelegateAccessor(getter_type&& getter, mover_type&& mover, setter_type&& setter);
 
-    T& GetReference(MetaObject *object) const;
-    const T& GetReference(const MetaObject *object) const;
+    T& GetReference(FMetaObject *object) const;
+    const T& GetReference(const FMetaObject *object) const;
 
-    void GetCopy(const MetaObject *object, T& dst) const;
-    void GetMove(MetaObject *object, T& dst) const;
+    void GetCopy(const FMetaObject *object, T& dst) const;
+    void GetMove(FMetaObject *object, T& dst) const;
 
-    void SetMove(MetaObject *object, T&& src) const;
-    void SetCopy(MetaObject *object, const T& src) const;
+    void SetMove(FMetaObject *object, T&& src) const;
+    void SetCopy(FMetaObject *object, const T& src) const;
 
 private:
     getter_type _getter;
@@ -105,40 +105,40 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Class>
-MetaDelegateAccessor<T, _Class> MakeDelegateAccessor(
-    Delegate<T&   (*)(_Class* )>&& getter,
-    Delegate<void (*)(_Class*, T&& )>&& mover,
-    Delegate<void (*)(_Class*, const T& )>&& setter) {
-    return MetaDelegateAccessor<T, _Class>(std::move(getter), std::move(mover), std::move(setter));
+TMetaDelegateAccessor<T, _Class> MakeDelegateAccessor(
+    TDelegate<T&   (*)(_Class* )>&& getter,
+    TDelegate<void (*)(_Class*, T&& )>&& mover,
+    TDelegate<void (*)(_Class*, const T& )>&& setter) {
+    return TMetaDelegateAccessor<T, _Class>(std::move(getter), std::move(mover), std::move(setter));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Class>
-class MetaDeprecatedAccessor {
+class TMetaDeprecatedAccessor {
 public:
-    static_assert(  std::is_base_of<MetaObject, _Class>::value,
-                    "_Class must be derived from RTTI::MetaObject");
+    static_assert(  std::is_base_of<FMetaObject, _Class>::value,
+                    "_Class must be derived from RTTI::FMetaObject");
 
-    MetaDeprecatedAccessor() {}
+    TMetaDeprecatedAccessor() {}
 
-    T& GetReference(MetaObject *object) const { throw PropertyException("deprecated"); }
-    const T& GetReference(const MetaObject *object) const { throw PropertyException("deprecated"); }
+    T& GetReference(FMetaObject *object) const { throw FPropertyException("deprecated"); }
+    const T& GetReference(const FMetaObject *object) const { throw FPropertyException("deprecated"); }
 
-    void GetCopy(const MetaObject *object, T& dst) const { throw PropertyException("deprecated"); }
-    void GetMove(MetaObject *object, T& dst) const { throw PropertyException("deprecated"); }
+    void GetCopy(const FMetaObject *object, T& dst) const { throw FPropertyException("deprecated"); }
+    void GetMove(FMetaObject *object, T& dst) const { throw FPropertyException("deprecated"); }
 
-    void SetMove(MetaObject *object, T&& src) const {
+    void SetMove(FMetaObject *object, T&& src) const {
         UNUSED(object);
         // still moves the value on this stack, will be freed on return
         const T value(std::move(src)); // <- maintains coherency with default properties
     }
-    void SetCopy(MetaObject *object, const T& src) const { UNUSED(object); UNUSED(src); }
+    void SetCopy(FMetaObject *object, const T& src) const { UNUSED(object); UNUSED(src); }
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Class>
-MetaDeprecatedAccessor<T, _Class> MakeDeprecatedAccessor() {
-    return MetaDeprecatedAccessor<T, _Class>();
+TMetaDeprecatedAccessor<T, _Class> MakeDeprecatedAccessor() {
+    return TMetaDeprecatedAccessor<T, _Class>();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

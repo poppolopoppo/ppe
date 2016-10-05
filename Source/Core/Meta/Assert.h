@@ -25,10 +25,10 @@ typedef bool (*AssertionHandler)(const char *msg, const wchar_t *file, unsigned 
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_ASSERT
 //----------------------------------------------------------------------------
-class AssertException : public Exception {
+class FAssertException : public FException {
 public:
-    AssertException(const char *msg, const wchar_t *file, unsigned line);
-    virtual ~AssertException();
+    FAssertException(const char *msg, const wchar_t *file, unsigned line);
+    virtual ~FAssertException();
 
     const wchar_t *File() const { return _file; }
     unsigned Line() const { return _line; }
@@ -67,10 +67,10 @@ typedef bool (*AssertionReleaseHandler)(const char *msg, const wchar_t *file, un
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_ASSERT_RELEASE
 //----------------------------------------------------------------------------
-class AssertReleaseException : public Exception {
+class FAssertReleaseException : public FException {
 public:
-    AssertReleaseException(const char *msg, const wchar_t *file, unsigned line);
-    virtual ~AssertReleaseException();
+    FAssertReleaseException(const char *msg, const wchar_t *file, unsigned line);
+    virtual ~FAssertReleaseException();
 
     const wchar_t *File() const { return _file; }
     unsigned Line() const { return _line; }

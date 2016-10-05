@@ -10,44 +10,44 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, MaterialParameterVariable<T>, template <typename T>);
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, TMaterialParameterVariable<T>, template <typename T>);
 //----------------------------------------------------------------------------
-CONSTANTFIELD_EXTERNALTEMPLATE_DEF(MaterialParameterVariable, );
+CONSTANTFIELD_EXTERNALTEMPLATE_DEF(TMaterialParameterVariable, );
 //----------------------------------------------------------------------------
 template <typename T>
-MaterialParameterVariable<T>::MaterialParameterVariable(T&& rvalue)
+TMaterialParameterVariable<T>::TMaterialParameterVariable(T&& rvalue)
 :   _value(std::move(rvalue)) {}
 //----------------------------------------------------------------------------
 template <typename T>
-MaterialParameterVariable<T>::MaterialParameterVariable(const T& value)
+TMaterialParameterVariable<T>::TMaterialParameterVariable(const T& value)
 :   _value(value) {}
 //----------------------------------------------------------------------------
 template <typename T>
-MaterialParameterVariable<T>::~MaterialParameterVariable() {}
+TMaterialParameterVariable<T>::~TMaterialParameterVariable() {}
 //----------------------------------------------------------------------------
 template <typename T>
-const T& MaterialParameterVariable<T>::Value() const {
+const T& TMaterialParameterVariable<T>::FValue() const {
     return _value;
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void MaterialParameterVariable<T>::SetValue(const T& value) {
+void TMaterialParameterVariable<T>::SetValue(const T& value) {
     Assert(IsInMainThread());
 
     _value = value;
 }
 //----------------------------------------------------------------------------
 template <typename T>
-MaterialParameterInfo MaterialParameterVariable<T>::Info() const {
-    const MaterialParameterInfo info{
-        ITypedMaterialParameter<T>::Type(), 
-        MaterialVariability::Always
+FMaterialParameterInfo TMaterialParameterVariable<T>::Info() const {
+    const FMaterialParameterInfo info{
+        ITypedMaterialParameter<T>::EType(), 
+        EMaterialVariability::Always
     };
     return info;
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void MaterialParameterVariable<T>::Eval(const MaterialParameterContext& , void *dst, size_t sizeInBytes) {
+void TMaterialParameterVariable<T>::Eval(const FMaterialParameterContext& , void *dst, size_t sizeInBytes) {
     Assert(dst);
     Assert(sizeInBytes == sizeof(T));
 

@@ -12,30 +12,30 @@ namespace Logic {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DelayedProcessingSystem::DelayedProcessingSystem() {}
+FDelayedProcessingSystem::FDelayedProcessingSystem() {}
 //----------------------------------------------------------------------------
-DelayedProcessingSystem::~DelayedProcessingSystem() {
+FDelayedProcessingSystem::~FDelayedProcessingSystem() {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(_entities.empty());
 }
 //----------------------------------------------------------------------------
-void DelayedProcessingSystem::Initialize(EntityManager& /* manager */) {
+void FDelayedProcessingSystem::Initialize(FEntityManager& /* manager */) {
     THIS_THREADRESOURCE_CHECKACCESS();
 }
 //----------------------------------------------------------------------------
-void DelayedProcessingSystem::Destroy(EntityManager& /* manager */) {
+void FDelayedProcessingSystem::Destroy(FEntityManager& /* manager */) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     Assert(_entities.empty());
     _entities.clear();
 }
 //----------------------------------------------------------------------------
-void DelayedProcessingSystem::Update(const Timeline& timeline) {
+void FDelayedProcessingSystem::Update(const FTimeline& timeline) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    const Timepoint& now = timeline.Now();
+    const FTimepoint& now = timeline.Now();
 
-    for (VECTOR(System, DelayedProcess)::const_iterator it = _entities.begin(); it != _entities.end(); )
+    for (VECTOR(System, FDelayedProcess)::const_iterator it = _entities.begin(); it != _entities.end(); )
         if (it->Date <= now) {
             ProcessEntity(timeline, it->ID);
             Erase_DontPreserveOrder(_entities, it);
@@ -44,27 +44,27 @@ void DelayedProcessingSystem::Update(const Timeline& timeline) {
             ++it;
 }
 //----------------------------------------------------------------------------
-void DelayedProcessingSystem::Queue(const DelayedProcess& data)
+void FDelayedProcessingSystem::Queue(const FDelayedProcess& data)
 {
     _entities.push_back(data);
 }
 //----------------------------------------------------------------------------
-void DelayedProcessingSystem::Queue(const Timepoint& date, EntityID id)
+void FDelayedProcessingSystem::Queue(const FTimepoint& date, EntityID id)
 {
     _entities.emplace_back(date, id);
 }
 //----------------------------------------------------------------------------
-void DelayedProcessingSystem::OnEntityDeleted(const Entity& entity) {
+void FDelayedProcessingSystem::OnEntityDeleted(const FEntity& entity) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    for (VECTOR(System, DelayedProcess)::const_iterator it = _entities.begin(); it != _entities.end(); ) 
+    for (VECTOR(System, FDelayedProcess)::const_iterator it = _entities.begin(); it != _entities.end(); ) 
         if (it->ID == entity.ID())
             Erase_DontPreserveOrder(_entities, it);
         else
             ++it;
 }
 //----------------------------------------------------------------------------
-void DelayedProcessingSystem::OnEntityRefresh(const Entity& /* entity */, ComponentFlag /* previousComponents */) {
+void FDelayedProcessingSystem::OnEntityRefresh(const FEntity& /* entity */, ComponentFlag /* previousComponents */) {
     THIS_THREADRESOURCE_CHECKACCESS();
 }
 //----------------------------------------------------------------------------

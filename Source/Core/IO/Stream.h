@@ -15,47 +15,47 @@ namespace Core {
 //----------------------------------------------------------------------------
 #define STACKLOCAL_BASICOCSTRSTREAM(_CHAR, _NAME, _COUNT) \
     MALLOCA(_CHAR, CONCAT(_Alloca_, _NAME), _COUNT); \
-    Core::BasicOCStrStream<_CHAR, std::char_traits<_CHAR> > _NAME( CONCAT(_Alloca_, _NAME).MakeView() )
+    Core::TBasicOCStrStream<_CHAR, std::char_traits<_CHAR> > _NAME( CONCAT(_Alloca_, _NAME).MakeView() )
 //----------------------------------------------------------------------------
-#define STACKLOCAL_OCSTRSTREAM(_NAME, _COUNT) STACKLOCAL_BASICOCSTRSTREAM(char, _NAME, _COUNT)
-#define STACKLOCAL_WOCSTRSTREAM(_NAME, _COUNT) STACKLOCAL_BASICOCSTRSTREAM(wchar_t, _NAME, _COUNT)
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-typedef std::basic_istream<char, std::char_traits<char> > IStream;
-typedef std::basic_istream<wchar_t, std::char_traits<wchar_t> > WIStream;
-//----------------------------------------------------------------------------
-typedef std::basic_ostream<char, std::char_traits<char> > OStream;
-typedef std::basic_ostream<wchar_t, std::char_traits<wchar_t> > WOStream;
+#define STACKLOCAL_OCSTRSTREAM(_NAME, _COUNT)   STACKLOCAL_BASICOCSTRSTREAM(char, _NAME, _COUNT)
+#define STACKLOCAL_WOCSTRSTREAM(_NAME, _COUNT)  STACKLOCAL_BASICOCSTRSTREAM(wchar_t, _NAME, _COUNT)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-typedef std::basic_ifstream<char, std::char_traits<char> > IFStream;
-typedef std::basic_ifstream<wchar_t, std::char_traits<wchar_t> > WIFStream;
+typedef std::basic_istream<char, std::char_traits<char> >           FIStream;
+typedef std::basic_istream<wchar_t, std::char_traits<wchar_t> >     FWIStream;
 //----------------------------------------------------------------------------
-typedef std::basic_ofstream<char, std::char_traits<char> > OFStream;
-typedef std::basic_ofstream<wchar_t, std::char_traits<wchar_t> > WOFStream;
+typedef std::basic_ostream<char, std::char_traits<char> >           FOStream;
+typedef std::basic_ostream<wchar_t, std::char_traits<wchar_t> >     FWOStream;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+typedef std::basic_ifstream<char, std::char_traits<char> >          FIFStream;
+typedef std::basic_ifstream<wchar_t, std::char_traits<wchar_t> >    FWIFStream;
+//----------------------------------------------------------------------------
+typedef std::basic_ofstream<char, std::char_traits<char> >          FOFStream;
+typedef std::basic_ofstream<wchar_t, std::char_traits<wchar_t> >    FWOFStream;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Allow to create a std::basic_ostream<> from a non-growable (char|wchar_t) buffer
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits = std::char_traits<_Char> >
-class BasicOCStrStreamBuffer : public std::basic_streambuf<_Char, _Traits> {
+class TBasicOCStrStreamBuffer : public std::basic_streambuf<_Char, _Traits> {
 public:
     typedef std::basic_streambuf<_Char, _Traits> parent_type;
 
     using typename parent_type::int_type;
     using typename parent_type::traits_type;
 
-    BasicOCStrStreamBuffer(_Char* storage, std::streamsize capacity);
-    virtual ~BasicOCStrStreamBuffer(); // _storage is only null-terminated here
+    TBasicOCStrStreamBuffer(_Char* storage, std::streamsize capacity);
+    virtual ~TBasicOCStrStreamBuffer(); // _storage is only null-terminated here
 
-    BasicOCStrStreamBuffer(BasicOCStrStreamBuffer&& rvalue);
-    BasicOCStrStreamBuffer& operator =(BasicOCStrStreamBuffer&& rvalue);
+    TBasicOCStrStreamBuffer(TBasicOCStrStreamBuffer&& rvalue);
+    TBasicOCStrStreamBuffer& operator =(TBasicOCStrStreamBuffer&& rvalue);
 
-    BasicOCStrStreamBuffer(const BasicOCStrStreamBuffer&) = delete;
-    BasicOCStrStreamBuffer& operator =(const BasicOCStrStreamBuffer&) = delete;
+    TBasicOCStrStreamBuffer(const TBasicOCStrStreamBuffer&) = delete;
+    TBasicOCStrStreamBuffer& operator =(const TBasicOCStrStreamBuffer&) = delete;
 
     const _Char* storage() const { return _storage; }
     std::streamsize capacity() const { return _capacity; }
@@ -66,7 +66,7 @@ public:
     void RemoveEOS();
     void Reset();
 
-    void swap(BasicOCStrStreamBuffer& other);
+    void swap(TBasicOCStrStreamBuffer& other);
 
 private:
     _Char* _storage;
@@ -74,38 +74,38 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits = std::char_traits<_Char> >
-void swap(BasicOCStrStreamBuffer<_Char, _Traits>& lhs, BasicOCStrStreamBuffer<_Char, _Traits>& rhs) {
+void swap(TBasicOCStrStreamBuffer<_Char, _Traits>& lhs, TBasicOCStrStreamBuffer<_Char, _Traits>& rhs) {
     lhs.swap(rhs);
 }
 //----------------------------------------------------------------------------
-typedef BasicOCStrStreamBuffer<char, std::char_traits<char> > OCStrStreamBuffer;
-typedef BasicOCStrStreamBuffer<wchar_t, std::char_traits<wchar_t> > WOCStrStreamBuffer;
+typedef TBasicOCStrStreamBuffer<char, std::char_traits<char> >          FOCStrStreamBuffer;
+typedef TBasicOCStrStreamBuffer<wchar_t, std::char_traits<wchar_t> >    FWOCStrStreamBuffer;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits = std::char_traits<_Char> >
-class BasicOCStrStream :
-    private BasicOCStrStreamBuffer<_Char, _Traits>
+class TBasicOCStrStream :
+    private TBasicOCStrStreamBuffer<_Char, _Traits>
 ,   public std::basic_ostream<_Char, _Traits> {
 public:
-    typedef BasicOCStrStreamBuffer<_Char, _Traits> buffer_type;
+    typedef TBasicOCStrStreamBuffer<_Char, _Traits> buffer_type;
     typedef std::basic_ostream<_Char, _Traits> stream_type;
 
-    BasicOCStrStream(_Char* storage, std::streamsize capacity);
-    virtual ~BasicOCStrStream();
+    TBasicOCStrStream(_Char* storage, std::streamsize capacity);
+    virtual ~TBasicOCStrStream();
 
-    explicit BasicOCStrStream(const MemoryView<_Char>& view)
-        : BasicOCStrStream(view.Pointer(), view.size()) {}
+    explicit TBasicOCStrStream(const TMemoryView<_Char>& view)
+        : TBasicOCStrStream(view.Pointer(), view.size()) {}
 
     template <size_t _Capacity>
-    explicit BasicOCStrStream(_Char(&staticArray)[_Capacity])
-        : BasicOCStrStream(staticArray, _Capacity) {}
+    explicit TBasicOCStrStream(_Char(&staticArray)[_Capacity])
+        : TBasicOCStrStream(staticArray, _Capacity) {}
 
-    BasicOCStrStream(BasicOCStrStream&& rvalue);
-    BasicOCStrStream& operator =(BasicOCStrStream&& rvalue);
+    TBasicOCStrStream(TBasicOCStrStream&& rvalue);
+    TBasicOCStrStream& operator =(TBasicOCStrStream&& rvalue);
 
-    BasicOCStrStream(const BasicOCStrStream&) = delete;
-    BasicOCStrStream& operator =(const BasicOCStrStream&) = delete;
+    TBasicOCStrStream(const TBasicOCStrStream&) = delete;
+    TBasicOCStrStream& operator =(const TBasicOCStrStream&) = delete;
 
     const _Char *storage() const { return buffer_type::storage(); }
     std::streamsize capacity() const { return buffer_type::capacity(); }
@@ -125,38 +125,38 @@ public:
     const _Char* NullTerminatedStr();
     const _Char* c_str() { return NullTerminatedStr(); }
 
-    MemoryView<const _Char> MakeView() const;
-    MemoryView<const _Char> MakeView_NullTerminated();
+    TMemoryView<const _Char> MakeView() const;
+    TMemoryView<const _Char> MakeView_NullTerminated();
 
-    void swap(BasicOCStrStream& other);
+    void swap(TBasicOCStrStream& other);
 };
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits = std::char_traits<_Char> >
-void swap(BasicOCStrStream<_Char, _Traits>& lhs, BasicOCStrStream<_Char, _Traits>& rhs) {
+void swap(TBasicOCStrStream<_Char, _Traits>& lhs, TBasicOCStrStream<_Char, _Traits>& rhs) {
     lhs.swap(rhs);
 }
 //----------------------------------------------------------------------------
-typedef BasicOCStrStream<char, std::char_traits<char> > OCStrStream;
-typedef BasicOCStrStream<wchar_t, std::char_traits<wchar_t> > WOCStrStream;
+typedef TBasicOCStrStream<char, std::char_traits<char> >        FOCStrStream;
+typedef TBasicOCStrStream<wchar_t, std::char_traits<wchar_t> >  FWOCStrStream;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Allocator = ALLOCATOR(String, _Char), typename _Traits = std::char_traits<_Char> >
-using BasicIStringStream = std::basic_istringstream<_Char, _Traits, _Allocator>;
+using TBasicIStringStream = std::basic_istringstream<_Char, _Traits, _Allocator>;
 template <typename _Char, typename _Allocator = ALLOCATOR(String, _Char), typename _Traits = std::char_traits<_Char> >
-using BasicOStringStream = std::basic_ostringstream<_Char, _Traits, _Allocator>;
+using TBasicOStringStream = std::basic_ostringstream<_Char, _Traits, _Allocator>;
 //----------------------------------------------------------------------------
-typedef BasicIStringStream<char> IStringStream;
-typedef BasicIStringStream<wchar_t> WIStringStream;
+typedef TBasicIStringStream<char>       FIStringStream;
+typedef TBasicIStringStream<wchar_t>    FWIStringStream;
 //----------------------------------------------------------------------------
-typedef BasicOStringStream<char> OStringStream;
-typedef BasicOStringStream<wchar_t> WOStringStream;
+typedef TBasicOStringStream<char>       FOStringStream;
+typedef TBasicOStringStream<wchar_t>    FWOStringStream;
 //----------------------------------------------------------------------------
-typedef BasicIStringStream<char, THREAD_LOCAL_ALLOCATOR(String, char)> ThreadLocalIStringStream;
-typedef BasicIStringStream<wchar_t, THREAD_LOCAL_ALLOCATOR(String, wchar_t)> ThreadLocalWIStringStream;
+typedef TBasicIStringStream<char, THREAD_LOCAL_ALLOCATOR(String, char)>         FThreadLocalIStringStream;
+typedef TBasicIStringStream<wchar_t, THREAD_LOCAL_ALLOCATOR(String, wchar_t)>   FThreadLocalWIStringStream;
 //----------------------------------------------------------------------------
-typedef BasicOStringStream<char, THREAD_LOCAL_ALLOCATOR(String, char)> ThreadLocalOStringStream;
-typedef BasicOStringStream<wchar_t, THREAD_LOCAL_ALLOCATOR(String, wchar_t)> ThreadLocalWOStringStream;
+typedef TBasicOStringStream<char, THREAD_LOCAL_ALLOCATOR(String, char)>         FThreadLocalOStringStream;
+typedef TBasicOStringStream<wchar_t, THREAD_LOCAL_ALLOCATOR(String, wchar_t)>   FThreadLocalWOStringStream;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -10,39 +10,39 @@
 
 namespace Core {
 template <typename T>
-class MemoryView;
+class TMemoryView;
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct ColorShuffleRGBA { static constexpr size_t R = 0, G = 1, B = 2, A = 3; };
+struct FColorShuffleRGBA { static constexpr size_t R = 0, G = 1, B = 2, A = 3; };
 //----------------------------------------------------------------------------
-struct ColorShuffleBGRA { static constexpr size_t B = 0, G = 1, R = 2, A = 3; };
+struct FColorShuffleBGRA { static constexpr size_t B = 0, G = 1, R = 2, A = 3; };
 //----------------------------------------------------------------------------
 template <typename T, typename _Shuffle>
-class BasicColor {
+class TBasicColor {
 public:
-    BasicColor();
-    ~BasicColor();
+    TBasicColor();
+    ~TBasicColor();
 
-    BasicColor(T broadcast);
-    BasicColor(T x, T y, T z, T w);
-    BasicColor(const BasicColorData<T>& data);
-    BasicColor(const ScalarVector<float, 3>& xyz, float alpha);
+    TBasicColor(T broadcast);
+    TBasicColor(T x, T y, T z, T w);
+    TBasicColor(const TBasicColorData<T>& data);
+    TBasicColor(const TScalarVector<float, 3>& xyz, float alpha);
 
-    BasicColor(const BasicColor& other);
-    BasicColor& operator =(const BasicColor& other);
+    TBasicColor(const TBasicColor& other);
+    TBasicColor& operator =(const TBasicColor& other);
 
     template <typename U, typename _Shuffle2>
-    BasicColor(const BasicColor<U, _Shuffle2>& other);
+    TBasicColor(const TBasicColor<U, _Shuffle2>& other);
     template <typename U, typename _Shuffle2>
-    BasicColor& operator =(const BasicColor<U, _Shuffle2>& other);
+    TBasicColor& operator =(const TBasicColor<U, _Shuffle2>& other);
 
-    operator BasicColorData<T>& () { return _data; }
-    operator const BasicColorData<T>& () const { return _data; }
+    operator TBasicColorData<T>& () { return _data; }
+    operator const TBasicColorData<T>& () const { return _data; }
 
-    BasicColorData<T>& Data() { return _data; }
-    const BasicColorData<T>& Data() const { return _data; }
+    TBasicColorData<T>& Data() { return _data; }
+    const TBasicColorData<T>& Data() const { return _data; }
 
     T *Pointer() { return _data._data; }
     const T *Pointer() const { return _data._data; }
@@ -60,35 +60,35 @@ public:
     T& operator [](size_t i) { return _data[i]; }
     T operator [](size_t i) const { return _data[i]; }
 
-    BasicColor AlphaBlend(const BasicColor& other) const;
-    BasicColor Fade(T alpha) const;
+    TBasicColor AlphaBlend(const TBasicColor& other) const;
+    TBasicColor Fade(T alpha) const;
 
-    void FromRGB(const ScalarVector<T, 3>& rgb) { r() = rgb.x(); g() = rgb.y(); b() = rgb.z(); }
-    ScalarVector<T, 3> ToRGB() const {  return ScalarVector<T, 3>(r(), g(), b()); }
+    void FromRGB(const TScalarVector<T, 3>& rgb) { r() = rgb.x(); g() = rgb.y(); b() = rgb.z(); }
+    TScalarVector<T, 3> ToRGB() const {  return TScalarVector<T, 3>(r(), g(), b()); }
 
-    BasicColor<T, ColorShuffleRGBA> ToRGBA() const;
-    BasicColor<T, ColorShuffleBGRA> ToBGRA() const;
+    TBasicColor<T, FColorShuffleRGBA> ToRGBA() const;
+    TBasicColor<T, FColorShuffleBGRA> ToBGRA() const;
 
-    BasicColor ToSRGB() const;
-    BasicColor ToLinear() const;
+    TBasicColor ToSRGB() const;
+    TBasicColor ToLinear() const;
 
-    bool operator ==(const BasicColor& other) const { return _data == other._data; }
-    bool operator !=(const BasicColor& other) const { return !operator ==(other); }
+    bool operator ==(const TBasicColor& other) const { return _data == other._data; }
+    bool operator !=(const TBasicColor& other) const { return !operator ==(other); }
 
 private:
-    BasicColorData<T> _data;
+    TBasicColorData<T> _data;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-extern template class BasicColor< UNorm<u8>, ColorShuffleBGRA >;
-extern template class BasicColor< UNorm<u8>, ColorShuffleRGBA >;
+extern template class TBasicColor< TUNorm<u8>, FColorShuffleBGRA >;
+extern template class TBasicColor< TUNorm<u8>, FColorShuffleRGBA >;
 //----------------------------------------------------------------------------
-extern template class BasicColor< UNorm<u16>, ColorShuffleBGRA >;
-extern template class BasicColor< UNorm<u16>, ColorShuffleRGBA >;
+extern template class TBasicColor< TUNorm<u16>, FColorShuffleBGRA >;
+extern template class TBasicColor< TUNorm<u16>, FColorShuffleRGBA >;
 //----------------------------------------------------------------------------
-extern template class BasicColor< float, ColorShuffleBGRA >;
-extern template class BasicColor< float, ColorShuffleRGBA >;
+extern template class TBasicColor< float, FColorShuffleBGRA >;
+extern template class TBasicColor< float, FColorShuffleRGBA >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -100,10 +100,10 @@ FORCE_INLINE float Linear_to_SRGB(float lin);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-BasicColorData<T> SRGB_to_Linear(const BasicColorData<T>& srgb);
+TBasicColorData<T> SRGB_to_Linear(const TBasicColorData<T>& srgb);
 //----------------------------------------------------------------------------
 template <typename T>
-BasicColorData<T> Linear_to_SRGB(const BasicColorData<T>& linear);
+TBasicColorData<T> Linear_to_SRGB(const TBasicColorData<T>& linear);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -123,16 +123,16 @@ float3 RGB_to_YCoCg(const float3& rgb);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-BasicColorData<T> HSV_to_RGB(const BasicColorData<T>& hsv);
+TBasicColorData<T> HSV_to_RGB(const TBasicColorData<T>& hsv);
 //----------------------------------------------------------------------------
 template <typename T>
-BasicColorData<T> RGB_to_HSV(const BasicColorData<T>& rgb);
+TBasicColorData<T> RGB_to_HSV(const TBasicColorData<T>& rgb);
 //----------------------------------------------------------------------------
 template <typename T>
-BasicColorData<T> HSL_to_RGB(const BasicColorData<T>& hsl);
+TBasicColorData<T> HSL_to_RGB(const TBasicColorData<T>& hsl);
 //----------------------------------------------------------------------------
 template <typename T>
-BasicColorData<T> RGB_to_HSL(const BasicColorData<T>& rgb);
+TBasicColorData<T> RGB_to_HSL(const TBasicColorData<T>& rgb);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -7,14 +7,14 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
-TernarySearchNodeBase<_Key, _Value>::TernarySearchNodeBase(_Key&& rkey)
+TTernarySearchNodeBase<_Key, _Value>::TTernarySearchNodeBase(_Key&& rkey)
     : _key(std::move(rkey))
     , _left(nullptr), _center(nullptr), _right(nullptr) {
     _parent_hasvalue.Reset(nullptr, false);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
-TernarySearchNodeBase<_Key, _Value>::TernarySearchNodeBase(const _Key& key)
+TTernarySearchNodeBase<_Key, _Value>::TTernarySearchNodeBase(const _Key& key)
     : _key(key)
     , _left(nullptr), _center(nullptr), _right(nullptr) {
     _parent_hasvalue.Reset(nullptr, false);
@@ -23,14 +23,14 @@ TernarySearchNodeBase<_Key, _Value>::TernarySearchNodeBase(const _Key& key)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Less, typename _EqualTo, typename _Allocator>
-TernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::~TernarySearchTree() {
+TTernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::~TTernarySearchTree() {
     Clear();
     Assert(nullptr == _root);
     Assert(0 == _size);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Less, typename _EqualTo, typename _Allocator>
-TernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::TernarySearchTree(TernarySearchTree&& rvalue)
+TTernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::TTernarySearchTree(TTernarySearchTree&& rvalue)
     :   allocator_type(std::move(rvalue))
     ,   _root(nullptr), _size(0) {
     std::swap(rvalue._root, _root);
@@ -38,7 +38,7 @@ TernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::TernarySearchTree(
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Less, typename _EqualTo, typename _Allocator>
-bool TernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::Insert_ReturnIfExists(node_type** pnode, const sequence_type& keys) {
+bool TTernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::Insert_ReturnIfExists(node_type** pnode, const sequence_type& keys) {
     Assert(pnode);
     Assert(false == keys.empty());
 
@@ -87,7 +87,7 @@ bool TernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::Insert_Return
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Less, typename _EqualTo, typename _Allocator>
-auto TernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::Insert_AssertUnique(const sequence_type& keys) -> node_type* {
+auto TTernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::Insert_AssertUnique(const sequence_type& keys) -> node_type* {
     node_type* node = nullptr;
     if (true == Insert_ReturnIfExists(&node, keys))
         AssertNotReached();
@@ -97,7 +97,7 @@ auto TernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::Insert_Assert
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Less, typename _EqualTo, typename _Allocator>
-auto TernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::Find(const sequence_type& keys, const node_type* hint /* = nullptr */) const -> const node_type* {
+auto TTernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::Find(const sequence_type& keys, const node_type* hint /* = nullptr */) const -> const node_type* {
     Assert(false == keys.empty());
 
     const size_type n = keys.size();
@@ -125,7 +125,7 @@ auto TernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::Find(const se
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Less, typename _EqualTo, typename _Allocator>
-bool TernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::Contains(const sequence_type& keys) const {
+bool TTernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::Contains(const sequence_type& keys) const {
     const node_type* node = Find(keys);
     return (nullptr != node &&
             node->HasValue() &&
@@ -133,7 +133,7 @@ bool TernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::Contains(cons
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Less, typename _EqualTo, typename _Allocator>
-void TernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::Clear() {
+void TTernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::Clear() {
     if (nullptr == _root) {
         Assert(0 == _size);
         return;
@@ -167,7 +167,7 @@ void TernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::Clear() {
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Less, typename _EqualTo, typename _Allocator>
-void TernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::Swap(TernarySearchTree& other) {
+void TTernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::Swap(TTernarySearchTree& other) {
     AssertRelease(static_cast<allocator_type&>(other) == static_cast<allocator_type&>(*this));
     std::swap(other._root, _root);
     std::swap(other._size, _size);

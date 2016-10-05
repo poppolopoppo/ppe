@@ -1,5 +1,5 @@
 
-// Here goes the list of all types supported by Graphics::Value
+// Here goes the list of all types supported by Graphics::FValue
 
 #define FOREACH_CORE_GRAPHIC_VALUETYPE(_Macro, ...)                           \
     COMMA_PROTECT(_Macro(Float          , float                 ,  1, ##__VA_ARGS__)) \

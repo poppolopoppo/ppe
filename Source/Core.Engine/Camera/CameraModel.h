@@ -14,20 +14,20 @@ class ICameraController;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class CameraRay {
+enum class ECameraRay {
     LeftTop = 0,
     LeftBottom,
     RightBottom,
     RightTop
 };
 //----------------------------------------------------------------------------
-class CameraModel {
+class FCameraModel {
 public:
-    CameraModel();
-    ~CameraModel();
+    FCameraModel();
+    ~FCameraModel();
 
-    CameraModel(const CameraModel& ) = delete;
-    CameraModel& operator =(const CameraModel& ) = delete;
+    FCameraModel(const FCameraModel& ) = delete;
+    FCameraModel& operator =(const FCameraModel& ) = delete;
 
     const float4x4& View() const { return _view; }
     const float4x4& Projection() const { return _projection; }
@@ -37,17 +37,17 @@ public:
     const float4x4& InvertProjection() const { return _invertView; }
     const float4x4& InvertViewProjection() const { return _invertViewProjection; }
 
-    const Core::Frustum& Frustum() const { return _frustum; }
-    MemoryView<const float3> FrustumCorners() const { return MakeView(_frustumCorners); }
+    const Core::FFrustum& FFrustum() const { return _frustum; }
+    TMemoryView<const float3> FrustumCorners() const { return MakeView(_frustumCorners); }
 
-    const FrustumCameraParams& Parameters() const { return _parameters; }
+    const FFrustumCameraParams& Parameters() const { return _parameters; }
 
     void GetFrustumRays(float3 (&rays)[4]) const { return GetFrustumRays(MakeView(rays)); }
-    void GetFrustumRays(const MemoryView<float3>& rays) const;
+    void GetFrustumRays(const TMemoryView<float3>& rays) const;
 
     void Update(const float4x4& view, const float4x4& projection);
-    void CopyTo(CameraModel *dst) const;
-    bool Equals(const CameraModel& other) const;
+    void CopyTo(FCameraModel *dst) const;
+    bool Equals(const FCameraModel& other) const;
 
 private:
     float4x4 _view;
@@ -58,10 +58,10 @@ private:
     float4x4 _invertProjection;
     float4x4 _invertViewProjection;
 
-    Core::Frustum _frustum;
+    Core::FFrustum _frustum;
     float3 _frustumCorners[8];
 
-    FrustumCameraParams _parameters;
+    FFrustumCameraParams _parameters;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

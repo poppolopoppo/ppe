@@ -15,46 +15,46 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Dirpath;
-class FileStat;
+class FDirpath;
+class FFileStat;
 FWD_REFPTR(VirtualFileSystemComponent);
 //----------------------------------------------------------------------------
-class VirtualFileSystemTrie {
+class FVirtualFileSystemTrie {
 public:
-    typedef ASSOCIATIVE_VECTORINSITU(FileSystem, MountingPoint, PVirtualFileSystemComponent, 8) nodes_type;
+    typedef ASSOCIATIVE_VECTORINSITU(FileSystem, FMountingPoint, PVirtualFileSystemComponent, 8) nodes_type;
 
-    VirtualFileSystemTrie();
-    ~VirtualFileSystemTrie();
+    FVirtualFileSystemTrie();
+    ~FVirtualFileSystemTrie();
 
-    VirtualFileSystemTrie(const VirtualFileSystemTrie& other) = delete;
-    VirtualFileSystemTrie& operator =(const VirtualFileSystemTrie& other) = delete;
+    FVirtualFileSystemTrie(const FVirtualFileSystemTrie& other) = delete;
+    FVirtualFileSystemTrie& operator =(const FVirtualFileSystemTrie& other) = delete;
 
-    bool DirectoryExists(const Dirpath& dirpath, ExistPolicy::Mode policy = ExistPolicy::Exists) const;
-    bool FileExists(const Filename& filename, ExistPolicy::Mode policy = ExistPolicy::Exists) const;
-    bool FileStats(FileStat* pstat, const Filename& filename) const;
+    bool DirectoryExists(const FDirpath& dirpath, ExistPolicy::EMode policy = ExistPolicy::Exists) const;
+    bool FileExists(const FFilename& filename, ExistPolicy::EMode policy = ExistPolicy::Exists) const;
+    bool FileStats(FFileStat* pstat, const FFilename& filename) const;
 
-    size_t EnumerateFiles(const Dirpath& dirpath, bool recursive, const std::function<void(const Filename&)>& foreach) const;
-    size_t GlobFiles(const Dirpath& dirpath, const WStringView& pattern, bool recursive, const std::function<void(const Filename&)>& foreach) const;
+    size_t EnumerateFiles(const FDirpath& dirpath, bool recursive, const std::function<void(const FFilename&)>& foreach) const;
+    size_t GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const std::function<void(const FFilename&)>& foreach) const;
 
-    bool TryCreateDirectory(const Dirpath& dirpath) const;
+    bool TryCreateDirectory(const FDirpath& dirpath) const;
 
-    UniquePtr<IVirtualFileSystemIStream> OpenReadable(const Filename& filename, AccessPolicy::Mode policy = AccessPolicy::None) const;
-    UniquePtr<IVirtualFileSystemOStream> OpenWritable(const Filename& filename, AccessPolicy::Mode policy = AccessPolicy::None) const;
-    UniquePtr<IVirtualFileSystemIOStream> OpenReadWritable(const Filename& filename, AccessPolicy::Mode policy = AccessPolicy::None) const;
+    TUniquePtr<IVirtualFileSystemIStream> OpenReadable(const FFilename& filename, AccessPolicy::EMode policy = AccessPolicy::None) const;
+    TUniquePtr<IVirtualFileSystemOStream> OpenWritable(const FFilename& filename, AccessPolicy::EMode policy = AccessPolicy::None) const;
+    TUniquePtr<IVirtualFileSystemIOStream> OpenReadWritable(const FFilename& filename, AccessPolicy::EMode policy = AccessPolicy::None) const;
 
-    WString Unalias(const Filename& aliased) const;
+    FWString Unalias(const FFilename& aliased) const;
 
     void Clear();
 
-    void Mount(VirtualFileSystemComponent* component);
-    void Unmount(VirtualFileSystemComponent* component);
+    void Mount(FVirtualFileSystemComponent* component);
+    void Unmount(FVirtualFileSystemComponent* component);
 
-    VirtualFileSystemComponent* MountNativePath(const Dirpath& alias, const wchar_t *nativepPath);
-    VirtualFileSystemComponent* MountNativePath(const Dirpath& alias, WString&& nativepPath);
-    VirtualFileSystemComponent* MountNativePath(const Dirpath& alias, const WString& nativepPath);
+    FVirtualFileSystemComponent* MountNativePath(const FDirpath& alias, const wchar_t *nativepPath);
+    FVirtualFileSystemComponent* MountNativePath(const FDirpath& alias, FWString&& nativepPath);
+    FVirtualFileSystemComponent* MountNativePath(const FDirpath& alias, const FWString& nativepPath);
 
 private:
-    ReadWriteLock _barrier;
+    FReadWriteLock _barrier;
     nodes_type _nodes;
 };
 //----------------------------------------------------------------------------

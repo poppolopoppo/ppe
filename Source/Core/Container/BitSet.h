@@ -11,18 +11,18 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define STACKLOCAL_POD_BITSET(_NAME, _COUNT) \
-    MALLOCA(Core::BitSet::word_t, CONCAT(CONCAT(_, _NAME), CONCAT(_Alloca, __LINE__)), Core::BitSet::WordCapacity(_COUNT)); \
-    Core::BitSet _NAME(CONCAT(CONCAT(_, _NAME), CONCAT(_Alloca, __LINE__)).RawData, _COUNT)
+    MALLOCA(Core::FBitSet::word_t, CONCAT(CONCAT(_, _NAME), CONCAT(_Alloca, __LINE__)), Core::FBitSet::WordCapacity(_COUNT)); \
+    Core::FBitSet _NAME(CONCAT(CONCAT(_, _NAME), CONCAT(_Alloca, __LINE__)).RawData, _COUNT)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class BitSet {
+class FBitSet {
 public:
     typedef size_t word_t;
-    STATIC_CONST_INTEGRAL(word_t, WordBitCount, Meta::BitCount<word_t>::value);
+    STATIC_CONST_INTEGRAL(word_t, WordBitCount, Meta::TBitCount<word_t>::value);
     STATIC_CONST_INTEGRAL(word_t, WordBitMask, WordBitCount - 1);
 
-    BitSet(word_t *storage, size_t size);
+    FBitSet(word_t *storage, size_t size);
 
     size_t size() const { return _size; }
 
@@ -42,7 +42,7 @@ public:
 
     void ResetAll(bool value);
 
-    void CopyTo(BitSet* other) const;
+    void CopyTo(FBitSet* other) const;
 
     static size_t WordCapacity(size_t size) { return ((size + WordBitCount - 1) / WordBitCount); }
 

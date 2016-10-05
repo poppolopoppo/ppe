@@ -16,14 +16,14 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, ModelMesh, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, FModelMesh, );
 //----------------------------------------------------------------------------
-ModelMesh::ModelMesh(
+FModelMesh::FModelMesh(
     u32 indexCount,
     u32 vertexCount,
-    Graphics::PrimitiveType primitiveType,
+    Graphics::EPrimitiveType primitiveType,
     Graphics::IndexElementSize indexType,
-    const Graphics::VertexDeclaration *vertexDeclaration,
+    const Graphics::FVertexDeclaration *vertexDeclaration,
     MeshRawData&& indices,
     MeshRawData&& vertices,
     VECTOR(Mesh, PModelMeshSubPart)&& subParts )
@@ -44,18 +44,18 @@ ModelMesh::ModelMesh(
     Assert(vertexCount == (_vertices.SizeInBytes() / vertexDeclaration->SizeInBytes()) );
 }
 //----------------------------------------------------------------------------
-ModelMesh::~ModelMesh() {
+FModelMesh::~FModelMesh() {
     Assert(!_indexBuffer); // Destroy() must be called before destruction
     Assert(!_vertexBuffer);
 }
 //----------------------------------------------------------------------------
-void ModelMesh::Create(Graphics::IDeviceAPIEncapsulator *device) {
+void FModelMesh::Create(Graphics::IDeviceAPIEncapsulator *device) {
     Assert(!_indexBuffer);
     Assert(!_vertexBuffer);
     Assert(_indices.size());
     Assert(_vertices.size());
 
-    _indexBuffer = new Graphics::IndexBuffer(_indexType, _indexCount, Graphics::BufferMode::None, Graphics::BufferUsage::Immutable);
+    _indexBuffer = new Graphics::IndexBuffer(_indexType, _indexCount, Graphics::EBufferMode::None, Graphics::EBufferUsage::Immutable);
     _indexBuffer->Freeze();
     if (Graphics::IndexElementSize::ThirtyTwoBits == _indexType) {
         _indexBuffer->Create(device, _indices.MakeConstView().Cast<const u32>());
@@ -65,12 +65,12 @@ void ModelMesh::Create(Graphics::IDeviceAPIEncapsulator *device) {
         _indexBuffer->Create(device, _indices.MakeConstView().Cast<const u16>());
     }
 
-    _vertexBuffer = new Graphics::VertexBuffer(_vertexDeclaration.get(), _vertexCount, Graphics::BufferMode::None, Graphics::BufferUsage::Immutable);
+    _vertexBuffer = new Graphics::FVertexBuffer(_vertexDeclaration.get(), _vertexCount, Graphics::EBufferMode::None, Graphics::EBufferUsage::Immutable);
     _vertexBuffer->Freeze();
     _vertexBuffer->Create(device, _vertices.MakeConstView());
 }
 //----------------------------------------------------------------------------
-void ModelMesh::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
+void FModelMesh::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
     Assert(_indexBuffer);
     Assert(_vertexBuffer);
 
@@ -81,7 +81,7 @@ void ModelMesh::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
     RemoveRef_AssertReachZero(_vertexBuffer);
 }
 //----------------------------------------------------------------------------
-void ModelMesh::ReleaseCpuMemory() {
+void FModelMesh::ReleaseCpuMemory() {
     _indices.Clear_ReleaseMemory();
     _vertices.Clear_ReleaseMemory();
 }

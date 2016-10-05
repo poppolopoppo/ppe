@@ -171,8 +171,8 @@
       When processing wide images, break processing into tiles so data fits in L1 cache
       Installable filters?
       Resize that respects alpha test coverage
-         (Reference code: FloatImage::alphaTestCoverage and FloatImage::scaleAlphaToCoverage:
-         https://code.google.com/p/nvidia-texture-tools/source/browse/trunk/src/nvimage/FloatImage.cpp )
+         (Reference code: FFloatImage::alphaTestCoverage and FFloatImage::scaleAlphaToCoverage:
+         https://code.google.com/p/nvidia-texture-tools/source/browse/trunk/src/nvimage/FFloatImage.cpp )
 */
 
 #ifndef STBIR_INCLUDE_STB_IMAGE_RESIZE_H
@@ -229,7 +229,7 @@ STBIRDEF int stbir_resize_float(     const float *input_pixels , int input_w , i
 
 // The following functions interpret image data as gamma-corrected sRGB. 
 // Specify STBIR_ALPHA_CHANNEL_NONE if you have no alpha channel,
-// or otherwise provide the index of the alpha channel. Flags value
+// or otherwise provide the index of the alpha channel. EFlags value
 // of 0 will probably do the right thing if you're not sure what
 // the flags mean.
 
@@ -477,7 +477,7 @@ typedef struct
 // When downsampling, the contributors are which destination pixels are contributed to.
 typedef struct
 {
-    int n0; // First contributing pixel
+    int n0; // TFirst contributing pixel
     int n1; // Last contributing pixel
 } stbir__contributors;
 

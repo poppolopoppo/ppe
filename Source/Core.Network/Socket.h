@@ -12,33 +12,33 @@ namespace Network {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Socket {
+class FSocket {
 public:
-    friend class Listener;
+    friend class FListener;
 
-    Socket();
-    Socket(Address&& remote, Address&& local);
-    Socket(const Address& remote, const Address& local)
-        : Socket(std::move(Address(remote)), std::move(Address(local))) {}
-    explicit Socket(Address&& remote)
-        : Socket(std::move(remote), Address()) {}
-    explicit Socket(const Address& remote)
-        : Socket(std::move(Address(remote)), Address()) {}
-    ~Socket();
+    FSocket();
+    FSocket(FAddress&& remote, FAddress&& local);
+    FSocket(const FAddress& remote, const FAddress& local)
+        : FSocket(std::move(FAddress(remote)), std::move(FAddress(local))) {}
+    explicit FSocket(FAddress&& remote)
+        : FSocket(std::move(remote), FAddress()) {}
+    explicit FSocket(const FAddress& remote)
+        : FSocket(std::move(FAddress(remote)), FAddress()) {}
+    ~FSocket();
 
-    Socket(const Socket& ) = delete;
-    Socket& operator =(const Socket& ) = delete;
+    FSocket(const FSocket& ) = delete;
+    FSocket& operator =(const FSocket& ) = delete;
 
-    Socket(Socket&& rvalue) : Socket() { operator =(std::move(rvalue)); }
-    Socket& operator =(Socket&& rvalue);
+    FSocket(FSocket&& rvalue) : FSocket() { operator =(std::move(rvalue)); }
+    FSocket& operator =(FSocket&& rvalue);
 
     void* Handle() const { return _handle; }
 
     void* UserData() const { return _userData; }
     void SetUserData(void* ptr) { _userData = ptr; }
 
-    const Address& Local() const { return _local; }
-    const Address& Remote() const { return _remote; }
+    const FAddress& Local() const { return _local; }
+    const FAddress& Remote() const { return _remote; }
 
     bool Connect();
     bool Disconnect(bool gracefully = false);
@@ -51,37 +51,37 @@ public:
     bool IsConnected() const;
     bool IsReadable(const Milliseconds& timeout) const;
 
-    size_t Read(const MemoryView<u8>& rawData);
-    size_t Read(const MemoryView<u8>& rawData, const Milliseconds& timeout);
-    size_t Write(const MemoryView<const u8>& rawData);
+    size_t Read(const TMemoryView<u8>& rawData);
+    size_t Read(const TMemoryView<u8>& rawData, const Milliseconds& timeout);
+    size_t Write(const TMemoryView<const u8>& rawData);
 
     static void Start();
     static void Shutdown();
 
-    static bool MakeConnection(Socket& socket, const Address& remoteHostnameOrIP);
+    static bool MakeConnection(FSocket& socket, const FAddress& remoteHostnameOrIP);
 
 private:
     void* _handle;
     void* _userData;
 
-    Address _local;
-    Address _remote;
+    FAddress _local;
+    FAddress _remote;
 };
 //----------------------------------------------------------------------------
-struct ConnectionScope {
+struct FConnectionScope {
 
-    explicit ConnectionScope(Socket& socket, bool graceful = true)
+    explicit FConnectionScope(FSocket& socket, bool graceful = true)
         : PSocket(&socket), Graceful(graceful) {
         Assert(false == PSocket->IsConnected());
         PSocket->Connect();
     }
 
-    ~ConnectionScope() {
+    ~FConnectionScope() {
         Assert(true == PSocket->IsConnected());
         PSocket->Disconnect(Graceful);
     }
 
-    Socket* const PSocket;
+    FSocket* const PSocket;
     const bool Graceful;
 };
 //----------------------------------------------------------------------------

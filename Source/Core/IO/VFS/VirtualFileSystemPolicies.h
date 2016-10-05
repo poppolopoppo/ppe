@@ -7,7 +7,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace AccessPolicy {
-    enum Mode {
+    enum EMode {
         None        = 0,
         Text        = 0, // default behavior
         Create      = 1 << 0,
@@ -22,17 +22,17 @@ namespace AccessPolicy {
         Truncate_Binary = Truncate|Binary,
     };
 }
-ENUM_FLAGS(AccessPolicy::Mode)
+ENUM_FLAGS(AccessPolicy::EMode)
 //----------------------------------------------------------------------------
 namespace ExistPolicy {
-    enum Mode {
+    enum EMode {
         Exists      = 0,
         WriteOnly   = 2,
         ReadOnly    = 4,
         ReadWrite   = 6,
     };
 }
-ENUM_FLAGS(ExistPolicy::Mode)
+ENUM_FLAGS(ExistPolicy::EMode)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

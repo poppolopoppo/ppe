@@ -6,78 +6,78 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline Quaternion::Quaternion()
+inline FQuaternion::FQuaternion()
 :   _value(0.0f, 0.0f, 0.0f, 1.0f) {}
 //----------------------------------------------------------------------------
-inline Quaternion::Quaternion(Meta::noinit_tag) {}
+inline FQuaternion::FQuaternion(Meta::noinit_tag) {}
 //----------------------------------------------------------------------------
-inline Quaternion::Quaternion(float broadcast)
+inline FQuaternion::FQuaternion(float broadcast)
 :   _value(broadcast) {}
 //----------------------------------------------------------------------------
-inline Quaternion::Quaternion(const float4& value)
+inline FQuaternion::FQuaternion(const float4& value)
 :   _value(value) {}
 //----------------------------------------------------------------------------
-inline Quaternion::Quaternion(const float3& value, float w)
+inline FQuaternion::FQuaternion(const float3& value, float w)
 :   _value(value, w) {}
 //----------------------------------------------------------------------------
-inline Quaternion::Quaternion(const float2& xy, float z, float w)
+inline FQuaternion::FQuaternion(const float2& xy, float z, float w)
 :   _value(xy.x(), xy.y(), z, w) {}
 //----------------------------------------------------------------------------
-inline Quaternion::Quaternion(float x, float y, float z, float w)
+inline FQuaternion::FQuaternion(float x, float y, float z, float w)
 :   _value(x, y, z, w) {}
 //----------------------------------------------------------------------------
-inline Quaternion::Quaternion(const Quaternion& other)
+inline FQuaternion::FQuaternion(const FQuaternion& other)
 :   _value(other._value) {}
 //----------------------------------------------------------------------------
-inline Quaternion& Quaternion::operator =(const Quaternion& other) {
+inline FQuaternion& FQuaternion::operator =(const FQuaternion& other) {
     _value = other._value;
     return *this;
 }
 //----------------------------------------------------------------------------
-inline float Quaternion::Length() const {
+inline float FQuaternion::Length() const {
     return Length4(_value);
 }
 //----------------------------------------------------------------------------
-inline float Quaternion::LengthSq() const {
+inline float FQuaternion::LengthSq() const {
     return LengthSq4(_value);
 }
 //----------------------------------------------------------------------------
-inline Quaternion Quaternion::Conjugate() const {
-    return Quaternion(-x(), -y(), -z(), w());
+inline FQuaternion FQuaternion::Conjugate() const {
+    return FQuaternion(-x(), -y(), -z(), w());
 }
 //----------------------------------------------------------------------------
-inline Quaternion Quaternion::Negate() const {
-    return Quaternion(-_value);
+inline FQuaternion FQuaternion::Negate() const {
+    return FQuaternion(-_value);
 }
 //----------------------------------------------------------------------------
-inline Quaternion& Quaternion::operator +=(const Quaternion& other) {
+inline FQuaternion& FQuaternion::operator +=(const FQuaternion& other) {
     _value += other._value;
     return *this;
 }
 //----------------------------------------------------------------------------
-inline Quaternion& Quaternion::operator -=(const Quaternion& other) {
+inline FQuaternion& FQuaternion::operator -=(const FQuaternion& other) {
     _value -= other._value;
     return *this;
 }
 //----------------------------------------------------------------------------
-inline Quaternion Quaternion::operator +(const Quaternion& other) const {
-    return Quaternion(_value + other._value);
+inline FQuaternion FQuaternion::operator +(const FQuaternion& other) const {
+    return FQuaternion(_value + other._value);
 }
 //----------------------------------------------------------------------------
-inline Quaternion Quaternion::operator -(const Quaternion& other) const {
-    return Quaternion(_value - other._value);
+inline FQuaternion FQuaternion::operator -(const FQuaternion& other) const {
+    return FQuaternion(_value - other._value);
 }
 //----------------------------------------------------------------------------
-inline Quaternion& Quaternion::operator *=(float scale) {
+inline FQuaternion& FQuaternion::operator *=(float scale) {
     _value *= scale;
     return *this;
 }
 //----------------------------------------------------------------------------
-inline Quaternion Quaternion::operator *(float scale) const {
-    return Quaternion(_value * scale);
+inline FQuaternion FQuaternion::operator *(float scale) const {
+    return FQuaternion(_value * scale);
 }
 //----------------------------------------------------------------------------
-inline Quaternion operator *(float scale, const Quaternion& quaternion) {
+inline FQuaternion operator *(float scale, const FQuaternion& quaternion) {
     return quaternion * scale;
 }
 //----------------------------------------------------------------------------

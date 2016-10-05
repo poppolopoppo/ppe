@@ -5,132 +5,135 @@
 #include "Core/Memory/RefPtr.h"
 #include "Core/Meta/ThreadResource.h"
 
-#define FWD_WEAKPTR(T) \
-    class T; \
-    typedef Core::WeakPtr<T> CONCAT(W, T); \
-    typedef Core::WeakPtr<const T> CONCAT(WC, T)
+#define _FWD_WEAKPTR_IMPL(T, _PREFIX)                                   \
+    class CONCAT(_PREFIX, T);                                           \
+    typedef Core::TWeakPtr<CONCAT(_PREFIX, T)>           CONCAT(W,  T); \
+    typedef Core::TWeakPtr<const CONCAT(_PREFIX, T)>     CONCAT(WC, T)
+
+#define FWD_WEAKPTR(T_WITHOUT_F)            _FWD_WEAKPTR_IMPL(T_WITHOUT_F, F)
+#define FWD_INTERFACE_WEAKPTR(T_WITHOUT_I)  _FWD_WEAKPTR_IMPL(T_WITHOUT_I, I)
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-class WeakPtr;
+class TWeakPtr;
 //----------------------------------------------------------------------------
-class WeakPtrBase;
+class FWeakPtrBase;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class WeakAndRefCountable : public RefCountable, public Meta::ThreadResource {
+class FWeakAndRefCountable : public FRefCountable, public Meta::FThreadResource {
 public:
-    WeakAndRefCountable();
-    ~WeakAndRefCountable();
+    FWeakAndRefCountable();
+    ~FWeakAndRefCountable();
 
-    WeakAndRefCountable(WeakAndRefCountable&& );
-    WeakAndRefCountable& operator =(WeakAndRefCountable&& );
+    FWeakAndRefCountable(FWeakAndRefCountable&& );
+    FWeakAndRefCountable& operator =(FWeakAndRefCountable&& );
 
-    WeakAndRefCountable(const WeakAndRefCountable& );
-    WeakAndRefCountable& operator =(const WeakAndRefCountable& );
+    FWeakAndRefCountable(const FWeakAndRefCountable& );
+    FWeakAndRefCountable& operator =(const FWeakAndRefCountable& );
 
 private:
-    friend class WeakPtrBase;
+    friend class FWeakPtrBase;
 
-    mutable WeakPtrBase *_weakPtrs = nullptr;
+    mutable FWeakPtrBase *_weakPtrs = nullptr;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class WeakPtrBase {
+class FWeakPtrBase {
 public:
-    ~WeakPtrBase();
+    ~FWeakPtrBase();
 
 protected:
-    WeakPtrBase(void **pptr);
+    FWeakPtrBase(void **pptr);
 
     template <typename T>
     void set_(T *ptr);
 
 private:
-    friend class WeakAndRefCountable;
+    friend class FWeakAndRefCountable;
 
     void **_pptr;
-    WeakPtrBase *_next, *_prev;
+    FWeakPtrBase *_next, *_prev;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-class WeakPtr : public WeakPtrBase {
+class TWeakPtr : public FWeakPtrBase {
 public:
     template <typename U>
-    friend class WeakPtr;
+    friend class TWeakPtr;
 
-    WeakPtr();
-    WeakPtr(T* ptr);
-    ~WeakPtr();
+    TWeakPtr();
+    TWeakPtr(T* ptr);
+    ~TWeakPtr();
 
-    WeakPtr(WeakPtr&& rvalue);
-    WeakPtr& operator =(WeakPtr&& rvalue);
+    TWeakPtr(TWeakPtr&& rvalue);
+    TWeakPtr& operator =(TWeakPtr&& rvalue);
 
-    WeakPtr(const WeakPtr& other);
-    WeakPtr& operator =(const WeakPtr& other);
-
-    template <typename U>
-    WeakPtr(const WeakPtr<U>& other);
-    template <typename U>
-    WeakPtr& operator =(const WeakPtr<U>& other);
+    TWeakPtr(const TWeakPtr& other);
+    TWeakPtr& operator =(const TWeakPtr& other);
 
     template <typename U>
-    WeakPtr(WeakPtr<U>&& rvalue);
+    TWeakPtr(const TWeakPtr<U>& other);
     template <typename U>
-    WeakPtr& operator =(WeakPtr<U>&& rvalue);
+    TWeakPtr& operator =(const TWeakPtr<U>& other);
+
+    template <typename U>
+    TWeakPtr(TWeakPtr<U>&& rvalue);
+    template <typename U>
+    TWeakPtr& operator =(TWeakPtr<U>&& rvalue);
 
     void reset(T* ptr = nullptr);
 
     template <typename U>
-    bool TryLock(RefPtr<U> *pLocked) const;
+    bool TryLock(TRefPtr<U> *pLocked) const;
 
     template <typename U>
-    void Swap(WeakPtr<U>& other);
+    void Swap(TWeakPtr<U>& other);
 
 private:
     T *_ptr;
 };
 //----------------------------------------------------------------------------
 template <typename T>
-hash_t hash_value(const WeakPtr<T>& weakPtr) {
+hash_t hash_value(const TWeakPtr<T>& weakPtr) {
     return hash_value(weakPtr.get());
 }
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs>
-void swap(const WeakPtr<_Lhs>& lhs, const WeakPtr<_Rhs>& rhs) {
+void swap(const TWeakPtr<_Lhs>& lhs, const TWeakPtr<_Rhs>& rhs) {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs>
-bool operator ==(const WeakPtr<_Lhs>& lhs, const WeakPtr<_Rhs>& rhs) {
+bool operator ==(const TWeakPtr<_Lhs>& lhs, const TWeakPtr<_Rhs>& rhs) {
     return (lhs.get() == reinterpret_cast<_Lhs*>(rhs.get()) );
 }
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs>
-bool operator !=(const WeakPtr<_Lhs>& lhs, const WeakPtr<_Rhs>& rhs) {
+bool operator !=(const TWeakPtr<_Lhs>& lhs, const TWeakPtr<_Rhs>& rhs) {
     return !operator ==(lhs, rhs);
 }
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs>
-bool operator <(const WeakPtr<_Lhs>& lhs, const WeakPtr<_Rhs>& rhs) {
+bool operator <(const TWeakPtr<_Lhs>& lhs, const TWeakPtr<_Rhs>& rhs) {
     return (lhs.get() < reinterpret_cast<_Lhs*>(rhs.get()) );
 }
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs>
-bool operator >=(const WeakPtr<_Lhs>& lhs, const WeakPtr<_Rhs>& rhs) {
+bool operator >=(const TWeakPtr<_Lhs>& lhs, const TWeakPtr<_Rhs>& rhs) {
     return !operator <(lhs, rhs);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template < typename T, typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const WeakPtr<T>& weakPtr) {
+std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const TWeakPtr<T>& weakPtr) {
     return oss << weakPtr.get();
 }
 //----------------------------------------------------------------------------

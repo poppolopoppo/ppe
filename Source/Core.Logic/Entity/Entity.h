@@ -10,19 +10,19 @@ namespace Logic {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Entity {
+class FEntity {
 public:
-    friend class EntityManager;
+    friend class FEntityManager;
 
     STATIC_CONST_INTEGRAL(EntityID::value_type, InvalidID, -1);
     STATIC_CONST_INTEGRAL(EntityUID::value_type, InvalidUID, -1);
 
-    Entity(EntityID id, EntityUID uid) 
+    FEntity(EntityID id, EntityUID uid) 
     :   _id(id)
     ,   _enabled(true), _deleting(false), _refreshing(false)
     ,   _componentFlags(0)
     ,   _uid(uid) {}
-    Entity() : Entity(EntityID(InvalidID), EntityUID(InvalidUID)) {}
+    FEntity() : FEntity(EntityID(InvalidID), EntityUID(InvalidUID)) {}
 
     EntityID ID() const { return EntityID(_id); }
     EntityUID UID() const { return _uid; }
@@ -38,7 +38,7 @@ public:
     void Enable() { _enabled = true; }
     void Disable() { _enabled = false; }
 
-    void Swap(Entity& other);
+    void Swap(FEntity& other);
 
     static void Start();
     static void Shutdown();
@@ -54,9 +54,9 @@ private:
     EntityUID _uid;
 };
 //----------------------------------------------------------------------------
-STATIC_ASSERT(sizeof(Entity) == sizeof(EntityID)+sizeof(ComponentFlag)+sizeof(EntityUID) );
+STATIC_ASSERT(sizeof(FEntity) == sizeof(EntityID)+sizeof(ComponentFlag)+sizeof(EntityUID) );
 //----------------------------------------------------------------------------
-inline void swap(Entity& lhs, Entity& rhs) { lhs.Swap(rhs); }
+inline void swap(FEntity& lhs, FEntity& rhs) { lhs.Swap(rhs); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

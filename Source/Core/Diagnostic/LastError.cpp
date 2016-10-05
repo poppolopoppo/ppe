@@ -19,38 +19,38 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-String GetLastErrorToString(long errorCode) {
+FString GetLastErrorToString(long errorCode) {
 #ifdef OS_WINDOWS
     _com_error com(errorCode);
     return ToString(MakeStringView(com.ErrorMessage(), Meta::noinit_tag()));
 
 #else
-    return String();
+    return FString();
 
 #endif
 }
 //----------------------------------------------------------------------------
-WString GetLastErrorToWString(long errorCode) {
+FWString GetLastErrorToWString(long errorCode) {
 #ifdef OS_WINDOWS
     _com_error com(errorCode);
     return ToWString(MakeStringView(com.ErrorMessage(), Meta::noinit_tag()));
 
 #else
-    return WString();
+    return FWString();
 
 #endif
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-LastErrorException::LastErrorException()
-:   LastErrorException(GetLastError()) {}
+FLastErrorException::FLastErrorException()
+:   FLastErrorException(GetLastError()) {}
 //----------------------------------------------------------------------------
-LastErrorException::LastErrorException(long errorCode)
-:   Exception(GetLastErrorToString(errorCode).c_str())
+FLastErrorException::FLastErrorException(long errorCode)
+:   FException(GetLastErrorToString(errorCode).c_str())
 ,   _errorCode(errorCode) {}
 //----------------------------------------------------------------------------
-LastErrorException::~LastErrorException() {}
+FLastErrorException::~FLastErrorException() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

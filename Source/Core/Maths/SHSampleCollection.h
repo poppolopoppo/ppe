@@ -9,18 +9,18 @@
 #include "Core/Memory/MemoryView.h"
 
 namespace Core {
-class RandomGenerator;
+class FRandomGenerator;
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class SHSampleCollection {
+class FSHSampleCollection {
 public:
-    explicit SHSampleCollection(size_t bands);
-    ~SHSampleCollection();
+    explicit FSHSampleCollection(size_t bands);
+    ~FSHSampleCollection();
 
-    SHSampleCollection(const SHSampleCollection& ) = delete;
-    SHSampleCollection& operator =(const SHSampleCollection& ) = delete;
+    FSHSampleCollection(const FSHSampleCollection& ) = delete;
+    FSHSampleCollection& operator =(const FSHSampleCollection& ) = delete;
 
     size_t Bands() const { return _bands; }
     size_t SampleCount() const { return _sampleCount; }
@@ -29,9 +29,9 @@ public:
     const RAWSTORAGE(Maths, SHDirection)& Direction() const { return _direction; }
     const RAWSTORAGE(Maths, SHScalar)& Coefficients() const { return _coefficients; }
 
-    void GenerateSphericalSamples_JiterredStratification(size_t sampleCount, RandomGenerator& random);
+    void GenerateSphericalSamples_JiterredStratification(size_t sampleCount, FRandomGenerator& random);
 
-    void Sample(SHSample *sample, size_t i) const {
+    void Sample(FSHSample *sample, size_t i) const {
         Assert(sample);
         Assert(i < _sampleCount);
         sample->ThetaPhi = _thetaPhi[i];
@@ -39,7 +39,7 @@ public:
         sample->Coefficients = SampleCoefficients(i);
     }
 
-    MemoryView<const SHScalar> SampleCoefficients(size_t i) const {
+    TMemoryView<const SHScalar> SampleCoefficients(size_t i) const {
         const size_t shCoeffCount = _bands * _bands;
         const SHScalar *shCoeffsPtr = &_coefficients[shCoeffCount * i];
         return MakeView(shCoeffsPtr, shCoeffsPtr + shCoeffCount);

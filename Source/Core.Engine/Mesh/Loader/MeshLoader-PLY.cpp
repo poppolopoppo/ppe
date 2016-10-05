@@ -19,16 +19,16 @@ namespace PLY {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-enum class Token : u32 {
+enum class EToken : u32 {
     Ply = 0,
     Format,
     Comment,
-    Element,
+    FElement,
     Vertex,
     VertexIndices,
-    Face,
-    Property,
-    List,
+    EFace,
+    EProperty,
+    TList,
     EndHeader,
 
     Char,
@@ -101,7 +101,7 @@ static const char *gTokenToCStr[] = {
     "texture_v",
 };
 //----------------------------------------------------------------------------
-enum class Property : u32 {
+enum class EProperty : u32 {
     PositionX   = 1<<0,
     PositionY   = 1<<1,
     PositionZ   = 1<<2,
@@ -127,32 +127,32 @@ enum class Property : u32 {
     Position_Normal_Color_UV = PositionXYZ|NormalXYZ|ColorRGBA|TextureUV,
 };
 //----------------------------------------------------------------------------
-static bool ScalarTypeSizeInBytes(u32 *size, Token type) {
+static bool ScalarTypeSizeInBytes(u32 *size, EToken type) {
     Assert(size);
     switch (type)
     {
-    case Token::Char:
+    case EToken::Char:
         *size = 1;
         return true;
-    case Token::UChar:
+    case EToken::UChar:
         *size = 1;
         return true;
-    case Token::Short:
+    case EToken::Short:
         *size = 2;
         return true;
-    case Token::UShort:
+    case EToken::UShort:
         *size = 2;
         return true;
-    case Token::Int:
+    case EToken::Int:
         *size = 4;
         return true;
-    case Token::UInt:
+    case EToken::UInt:
         *size = 4;
         return true;
-    case Token::Float:
+    case EToken::Float:
         *size = 4;
         return true;
-    case Token::Double:
+    case EToken::Double:
         *size = 8;
         return true;
 
@@ -162,7 +162,7 @@ static bool ScalarTypeSizeInBytes(u32 *size, Token type) {
     return false;
 }
 //----------------------------------------------------------------------------
-static bool ReadToken(Token *token, IVirtualFileSystemIStream *stream) {
+static bool ReadToken(EToken *token, IVirtualFileSystemIStream *stream) {
     Assert(token);
     Assert(stream);
 
@@ -178,7 +178,7 @@ static bool ReadToken(Token *token, IVirtualFileSystemIStream *stream) {
 
     for (size_t i = 0; i < lengthof(gTokenToCStr); ++i)
         if (0 == CompareNI(cstr, gTokenToCStr[i], length - 1)) {
-            *token = Token(i);
+            *token = EToken(i);
             return true;
         }
 
@@ -186,11 +186,11 @@ static bool ReadToken(Token *token, IVirtualFileSystemIStream *stream) {
     return false;
 }
 //----------------------------------------------------------------------------
-static bool ReadToken_SkipCommentIFN(Token *token, IVirtualFileSystemIStream *stream) {
+static bool ReadToken_SkipCommentIFN(EToken *token, IVirtualFileSystemIStream *stream) {
     if (!ReadToken(token, stream))
         return false;
 
-    if (*token != Token::Comment)
+    if (*token != EToken::Comment)
         return true;
 
     if (!stream->SeekI_FirstOf('\n')) // skip the rest of the line
@@ -212,27 +212,27 @@ static bool ReadInt(u32 *value, IVirtualFileSystemIStream *stream) {
     return true;
 }
 //----------------------------------------------------------------------------
-struct Vertex_Position_Normal_Color {
+struct FVertex_Position_Normal_Color {
     float3 Position;
     float3 Normal;
     ColorRGBA Color;
 };
-STATIC_ASSERT(sizeof(Vertex_Position_Normal_Color) == 3*4+3*4+4);
+STATIC_ASSERT(sizeof(FVertex_Position_Normal_Color) == 3*4+3*4+4);
 //----------------------------------------------------------------------------
-struct Vertex_Position_Normal_Color_UV {
+struct FVertex_Position_Normal_Color_UV {
     float3 Position;
     float3 Normal;
     ColorRGBA Color;
     float2 UV;
 };
-STATIC_ASSERT(sizeof(Vertex_Position_Normal_Color_UV) == 3*4+3*4+4+2*4);
+STATIC_ASSERT(sizeof(FVertex_Position_Normal_Color_UV) == 3*4+3*4+4+2*4);
 //----------------------------------------------------------------------------
-struct Face_Triangle {
+struct FFace_Triangle {
     u32 A;
     u32 B;
     u32 C;
 };
-STATIC_ASSERT(sizeof(Face_Triangle) == 3*4);
+STATIC_ASSERT(sizeof(FFace_Triangle) == 3*4);
 //----------------------------------------------------------------------------
 static void SanitizeNormal3_(float3& normal) {
     const float length = Length3(normal);
@@ -243,40 +243,40 @@ static void SanitizeNormal3_(float3& normal) {
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
-bool ReadMeshHeader(MeshHeader& header, IVirtualFileSystemIStream *stream) {
+bool ReadMeshHeader(FMeshHeader& header, IVirtualFileSystemIStream *stream) {
     Assert(stream);
 
-    Token token;
+    EToken token;
 
-    if (!ReadToken(&token, stream) || Token::Ply != token)
+    if (!ReadToken(&token, stream) || EToken::Ply != token)
         return false;
 
-    if (!ReadToken_SkipCommentIFN(&token, stream) || Token::Format != token)
+    if (!ReadToken_SkipCommentIFN(&token, stream) || EToken::Format != token)
         return false;
-    if (!ReadToken(&token, stream) || Token::BinaryLittleEndian != token)
+    if (!ReadToken(&token, stream) || EToken::BinaryLittleEndian != token)
         return false;
     if (!stream->SeekI_FirstOf('\n'))
         return false;
 
-    if (!ReadToken_SkipCommentIFN(&token, stream) || Token::Element != token)
+    if (!ReadToken_SkipCommentIFN(&token, stream) || EToken::FElement != token)
         return false;
-    if (!ReadToken(&token, stream) || Token::Vertex != token)
+    if (!ReadToken(&token, stream) || EToken::Vertex != token)
         return false;
     if (!ReadInt(&header.VertexCount, stream))
         return false;
 
     header.VertexStride = 0;
-    Property vertexProperties = Property(0);
+    EProperty vertexProperties = EProperty(0);
     for (;;) {
         if (!ReadToken_SkipCommentIFN(&token, stream))
             return false;
 
-        if (Token::Property != token) {
-            Assert(Token::Element == token);
+        if (EToken::EProperty != token) {
+            Assert(EToken::FElement == token);
             break;
         }
 
-        Token propertyType;
+        EToken propertyType;
         u32 propertySize;
         if (!ReadToken(&propertyType, stream) || !ScalarTypeSizeInBytes(&propertySize, propertyType))
             return false;
@@ -284,73 +284,73 @@ bool ReadMeshHeader(MeshHeader& header, IVirtualFileSystemIStream *stream) {
         if (!ReadToken(&token, stream))
             return false;
 
-        Property propertySemantic;
+        EProperty propertySemantic;
         switch (token)
         {
-        case Token::X:
-            AssertRelease(propertyType == Token::Float);
-            propertySemantic = Property::PositionX;
+        case EToken::X:
+            AssertRelease(propertyType == EToken::Float);
+            propertySemantic = EProperty::PositionX;
             break;
-        case Token::Y:
-            AssertRelease(propertyType == Token::Float);
-            propertySemantic = Property::PositionY;
+        case EToken::Y:
+            AssertRelease(propertyType == EToken::Float);
+            propertySemantic = EProperty::PositionY;
             break;
-        case Token::Z:
-            AssertRelease(propertyType == Token::Float);
-            propertySemantic = Property::PositionZ;
+        case EToken::Z:
+            AssertRelease(propertyType == EToken::Float);
+            propertySemantic = EProperty::PositionZ;
             break;
-        case Token::NX:
-            AssertRelease(propertyType == Token::Float);
-            propertySemantic = Property::NormalX;
+        case EToken::NX:
+            AssertRelease(propertyType == EToken::Float);
+            propertySemantic = EProperty::NormalX;
             break;
-        case Token::NY:
-            AssertRelease(propertyType == Token::Float);
-            propertySemantic = Property::NormalY;
+        case EToken::NY:
+            AssertRelease(propertyType == EToken::Float);
+            propertySemantic = EProperty::NormalY;
             break;
-        case Token::NZ:
-            AssertRelease(propertyType == Token::Float);
-            propertySemantic = Property::NormalZ;
+        case EToken::NZ:
+            AssertRelease(propertyType == EToken::Float);
+            propertySemantic = EProperty::NormalZ;
             break;
-        case Token::Red:
-            AssertRelease(propertyType == Token::UChar);
-            propertySemantic = Property::ColorR;
+        case EToken::Red:
+            AssertRelease(propertyType == EToken::UChar);
+            propertySemantic = EProperty::ColorR;
             break;
-        case Token::Green:
-            AssertRelease(propertyType == Token::UChar);
-            propertySemantic = Property::ColorG;
+        case EToken::Green:
+            AssertRelease(propertyType == EToken::UChar);
+            propertySemantic = EProperty::ColorG;
             break;
-        case Token::Blue:
-            AssertRelease(propertyType == Token::UChar);
-            propertySemantic = Property::ColorB;
+        case EToken::Blue:
+            AssertRelease(propertyType == EToken::UChar);
+            propertySemantic = EProperty::ColorB;
             break;
-        case Token::Alpha:
-            AssertRelease(propertyType == Token::UChar);
-            propertySemantic = Property::ColorA;
+        case EToken::Alpha:
+            AssertRelease(propertyType == EToken::UChar);
+            propertySemantic = EProperty::ColorA;
             break;
-        case Token::TextureU:
-            AssertRelease(propertyType == Token::Float);
-            propertySemantic = Property::TextureU;
+        case EToken::TextureU:
+            AssertRelease(propertyType == EToken::Float);
+            propertySemantic = EProperty::TextureU;
             break;
-        case Token::TextureV:
-            AssertRelease(propertyType == Token::Float);
-            propertySemantic = Property::TextureV;
+        case EToken::TextureV:
+            AssertRelease(propertyType == EToken::Float);
+            propertySemantic = EProperty::TextureV;
             break;
         default:
             return false;
         }
 
         header.VertexStride += propertySize;
-        vertexProperties = Property(u32(vertexProperties)|u32(propertySemantic));
+        vertexProperties = EProperty(u32(vertexProperties)|u32(propertySemantic));
     }
 
-    AssertRelease( (sizeof(Vertex_Position_Normal_Color) == header.VertexStride &&
-                        Property::Position_Normal_Color == vertexProperties) ||
-                   (sizeof(Vertex_Position_Normal_Color_UV) == header.VertexStride &&
-                        Property::Position_Normal_Color_UV == vertexProperties ));
+    AssertRelease( (sizeof(FVertex_Position_Normal_Color) == header.VertexStride &&
+                        EProperty::Position_Normal_Color == vertexProperties) ||
+                   (sizeof(FVertex_Position_Normal_Color_UV) == header.VertexStride &&
+                        EProperty::Position_Normal_Color_UV == vertexProperties ));
 
-    if (Token::Element != token)
+    if (EToken::FElement != token)
         return false;
-    if (!ReadToken(&token, stream) || Token::Face != token)
+    if (!ReadToken(&token, stream) || EToken::EFace != token)
         return false;
     u32 faceCount;
     if (!ReadInt(&faceCount, stream))
@@ -359,40 +359,40 @@ bool ReadMeshHeader(MeshHeader& header, IVirtualFileSystemIStream *stream) {
     header.IndexCount = faceCount * 3 /* assuming triangles */;
     header.IndexStride = u32(Graphics::IndexElementSize::ThirtyTwoBits);
 
-    if (!ReadToken_SkipCommentIFN(&token, stream) || Token::Property != token)
+    if (!ReadToken_SkipCommentIFN(&token, stream) || EToken::EProperty != token)
         return false;
-    if (!ReadToken(&token, stream) || Token::List != token)
+    if (!ReadToken(&token, stream) || EToken::TList != token)
         return false;
-    if (!ReadToken(&token, stream) || Token::UChar != token)
+    if (!ReadToken(&token, stream) || EToken::UChar != token)
         return false;
-    if (!ReadToken(&token, stream) || Token::Int != token)
+    if (!ReadToken(&token, stream) || EToken::Int != token)
         return false;
-    if (!ReadToken(&token, stream) || Token::VertexIndices != token)
+    if (!ReadToken(&token, stream) || EToken::VertexIndices != token)
         return false;
 
-    if (!ReadToken_SkipCommentIFN(&token, stream) || Token::EndHeader != token)
+    if (!ReadToken_SkipCommentIFN(&token, stream) || EToken::EndHeader != token)
         return false;
 
     return true;
 }
 //----------------------------------------------------------------------------
-bool ReadMeshData(const MeshHeader& header, const MemoryView<u8>& indices, GenericVertex& vertices, IVirtualFileSystemIStream *stream) {
+bool ReadMeshData(const FMeshHeader& header, const TMemoryView<u8>& indices, FGenericVertex& vertices, IVirtualFileSystemIStream *stream) {
     Assert(stream);
     Assert(indices.SizeInBytes() == header.IndexCount * header.IndexStride);
     Assert(vertices.VertexCountRemaining() == header.VertexCount);
-    Assert( sizeof(Vertex_Position_Normal_Color) == header.VertexStride ||
-            sizeof(Vertex_Position_Normal_Color_UV) == header.VertexStride );
+    Assert( sizeof(FVertex_Position_Normal_Color) == header.VertexStride ||
+            sizeof(FVertex_Position_Normal_Color_UV) == header.VertexStride );
 
-    const GenericVertex::SubPart sp_positions0 = vertices.Position3f(0);
-    const GenericVertex::SubPart sp_colors0 = vertices.Color4b(0);
-    const GenericVertex::SubPart sp_normals0 = vertices.Normal3f(0);
+    const FGenericVertex::FSubPart sp_positions0 = vertices.Position3f(0);
+    const FGenericVertex::FSubPart sp_colors0 = vertices.Color4b(0);
+    const FGenericVertex::FSubPart sp_normals0 = vertices.Normal3f(0);
 
     Assert(sp_positions0);
     Assert(sp_colors0);
     Assert(sp_normals0);
 
-    if (sizeof(Vertex_Position_Normal_Color) == header.VertexStride) {
-        Vertex_Position_Normal_Color vertexData;
+    if (sizeof(FVertex_Position_Normal_Color) == header.VertexStride) {
+        FVertex_Position_Normal_Color vertexData;
         for (size_t i = 0; i < header.VertexCount; ++i) {
             if (!stream->ReadPOD(&vertexData))
                 return false;
@@ -408,10 +408,10 @@ bool ReadMeshData(const MeshHeader& header, const MemoryView<u8>& indices, Gener
         }
     }
     else {
-        const GenericVertex::SubPart sp_texcoord0 = vertices.TexCoord2f(0);
+        const FGenericVertex::FSubPart sp_texcoord0 = vertices.TexCoord2f(0);
         Assert(sp_texcoord0);
 
-        Vertex_Position_Normal_Color_UV vertexData;
+        FVertex_Position_Normal_Color_UV vertexData;
         for (size_t i = 0; i < header.VertexCount; ++i) {
             if (!stream->ReadPOD(&vertexData))
                 return false;
@@ -431,10 +431,10 @@ bool ReadMeshData(const MeshHeader& header, const MemoryView<u8>& indices, Gener
     }
 
     Assert(header.IndexStride == u32(Graphics::IndexElementSize::ThirtyTwoBits));
-    const MemoryView<u32> indicesU32 = indices.Cast<u32>();
+    const TMemoryView<u32> indicesU32 = indices.Cast<u32>();
     Assert(indicesU32.size() == header.IndexCount);
 
-    Face_Triangle faceData;
+    FFace_Triangle faceData;
 
     for (size_t i = 0; i < header.IndexCount; i += 3) {
         u8 faceCount;

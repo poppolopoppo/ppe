@@ -10,18 +10,18 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define READSCOPELOCK(_ReadWriteLock) \
-    const auto CONCAT(readScopeLock_, __LINE__) = static_cast<const ReadWriteLock&>(_ReadWriteLock).Read()
+    const auto CONCAT(readScopeLock_, __LINE__) = static_cast<const FReadWriteLock&>(_ReadWriteLock).Read()
 //----------------------------------------------------------------------------
 #define WRITESCOPELOCK(_ReadWriteLock) \
-    const auto CONCAT(writeScopeLock_, __LINE__) = static_cast<ReadWriteLock&>(_ReadWriteLock).Write()
+    const auto CONCAT(writeScopeLock_, __LINE__) = static_cast<FReadWriteLock&>(_ReadWriteLock).Write()
 //----------------------------------------------------------------------------
 #define DEFERREDREADSCOPELOCK(_ReadWriteLock) \
-    const auto CONCAT(readScopeLock_, __LINE__) = static_cast<const ReadWriteLock&>(_ReadWriteLock).DeferredRead()
+    const auto CONCAT(readScopeLock_, __LINE__) = static_cast<const FReadWriteLock&>(_ReadWriteLock).DeferredRead()
 //----------------------------------------------------------------------------
 #define DEFERREDWRITESCOPELOCK(_ReadWriteLock) \
-    const auto CONCAT(writeScopeLock_, __LINE__) = static_cast<ReadWriteLock&>(_ReadWriteLock).DeferredWrite()
+    const auto CONCAT(writeScopeLock_, __LINE__) = static_cast<FReadWriteLock&>(_ReadWriteLock).DeferredWrite()
 //----------------------------------------------------------------------------
-struct ReadWriteLock {
+struct FReadWriteLock {
     typedef std::shared_timed_mutex mutex_type;
 
     typedef std::shared_lock<mutex_type> readscope_type;

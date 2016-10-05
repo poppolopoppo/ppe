@@ -8,17 +8,17 @@
 #include "Core/Memory/RefPtr.h"
 
 namespace Core {
-class Timeline;
+class FTimeline;
 
 namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(FreeLookView);
-class FreeLookView : public ICameraView {
+class FFreeLookView : public ICameraView {
 public:
-    FreeLookView(const float3& position, float heading/* rad */, float pitch/* rad */);
-    virtual ~FreeLookView();
+    FFreeLookView(const float3& position, float heading/* rad */, float pitch/* rad */);
+    virtual ~FFreeLookView();
 
     const float3& Position() const { return _position; }
     float Heading() const { return _heading; }
@@ -30,7 +30,7 @@ public:
 
     void LookAt(const float3& position, float heading/* rad */, float pitch/* rad */);
 
-    virtual float4x4 ViewMatrix(const Timeline& time) override;
+    virtual float4x4 ViewMatrix(const FTimeline& time) override;
 
 private:
     float3 _position;

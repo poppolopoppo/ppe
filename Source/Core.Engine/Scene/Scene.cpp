@@ -15,14 +15,14 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Scene::Scene(
+FScene::FScene(
     const char *name,
     ICamera *camera,
-    const Engine::World *world,
-    const Engine::MaterialDatabase *materialDatabase
+    const Engine::FWorld *world,
+    const Engine::FMaterialDatabase *materialDatabase
     )
 :   _name(name)
-,   _status(SceneStatus::Invalid)
+,   _status(ESceneStatus::Invalid)
 ,   _camera(camera)
 ,   _world(world)
 ,   _materialDatabase(materialDatabase)
@@ -32,35 +32,35 @@ Scene::Scene(
     Assert(world);
 }
 //----------------------------------------------------------------------------
-Scene::~Scene() {
+FScene::~FScene() {
     THIS_THREADRESOURCE_CHECKACCESS();
 }
 //----------------------------------------------------------------------------
-void Scene::Initialize(Graphics::IDeviceAPIEncapsulator *device) {
+void FScene::Initialize(Graphics::IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    LOG(Info, L"[Scene] Initialize scene \"{0}\" ...", _name.c_str());
+    LOG(Info, L"[FScene] Initialize scene \"{0}\" ...", _name.c_str());
 
-    ChangeStatus_(SceneStatus::BeforeInitialize);
+    ChangeStatus_(ESceneStatus::BeforeInitialize);
     {
-        ChangeStatus_(SceneStatus::Update);
+        ChangeStatus_(ESceneStatus::Update);
         /**********************************************************************/
 
         _sharedConstantBufferFactory.Start(device);
 
         /**********************************************************************/
     }
-    ChangeStatus_(SceneStatus::AfterInitialize);
+    ChangeStatus_(ESceneStatus::AfterInitialize);
 }
 //----------------------------------------------------------------------------
-void Scene::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
+void FScene::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    LOG(Info, L"[Scene] Destroy scene \"{0}\" ...", _name.c_str());
+    LOG(Info, L"[FScene] Destroy scene \"{0}\" ...", _name.c_str());
 
-    ChangeStatus_(SceneStatus::BeforeDestroy);
+    ChangeStatus_(ESceneStatus::BeforeDestroy);
     {
-        ChangeStatus_(SceneStatus::Destroy);
+        ChangeStatus_(ESceneStatus::Destroy);
         /**********************************************************************/
 
         _renderTree.Destroy(device);
@@ -68,72 +68,72 @@ void Scene::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
 
         /**********************************************************************/
     }
-    ChangeStatus_(SceneStatus::AfterDestroy);
+    ChangeStatus_(ESceneStatus::AfterDestroy);
 }
 //----------------------------------------------------------------------------
-void Scene::Update(const Timeline& timeline) {
+void FScene::Update(const FTimeline& timeline) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    ChangeStatus_(SceneStatus::BeforeUpdate);
+    ChangeStatus_(ESceneStatus::BeforeUpdate);
     {
-        ChangeStatus_(SceneStatus::Update);
+        ChangeStatus_(ESceneStatus::Update);
         /**********************************************************************/
 
         _camera->Update(timeline);
 
         /**********************************************************************/
     }
-    ChangeStatus_(SceneStatus::AfterUpdate);
+    ChangeStatus_(ESceneStatus::AfterUpdate);
 }
 //----------------------------------------------------------------------------
-void Scene::Prepare(Graphics::IDeviceAPIEncapsulator *device, VariabilitySeed *seeds) {
+void FScene::Prepare(Graphics::IDeviceAPIEncapsulator *device, FVariabilitySeed *seeds) {
     Assert(device);
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    ChangeStatus_(SceneStatus::BeforePrepare);
+    ChangeStatus_(ESceneStatus::BeforePrepare);
     {
-        ChangeStatus_(SceneStatus::Prepare);
+        ChangeStatus_(ESceneStatus::Prepare);
         /**********************************************************************/
 
-        seeds[size_t(MaterialVariability::Scene)].Next();
+        seeds[size_t(EMaterialVariability::FScene)].Next();
 
         _renderTree.Prepare(device, &_materialDatabase, seeds);
 
         /**********************************************************************/
     }
-    ChangeStatus_(SceneStatus::AfterPrepare);
+    ChangeStatus_(ESceneStatus::AfterPrepare);
 }
 //----------------------------------------------------------------------------
-void Scene::Render(Graphics::IDeviceAPIContext *context) {
+void FScene::Render(Graphics::IDeviceAPIContext *context) {
     Assert(context);
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    ChangeStatus_(SceneStatus::BeforeRender);
+    ChangeStatus_(ESceneStatus::BeforeRender);
     {
-        ChangeStatus_(SceneStatus::Render);
+        ChangeStatus_(ESceneStatus::Render);
         /**********************************************************************/
 
         _renderTree.Render(context);
 
         /**********************************************************************/
     }
-    ChangeStatus_(SceneStatus::AfterRender);
+    ChangeStatus_(ESceneStatus::AfterRender);
 }
 //----------------------------------------------------------------------------
-void Scene::ChangeStatus_(SceneStatus value) {
+void FScene::ChangeStatus_(ESceneStatus value) {
     _status = value;
     switch (value)
     {
-    case SceneStatus::BeforeInitialize: _onBeforeInitialize(this); break;
-    case SceneStatus::AfterInitialize: _onAfterInitialize(this); break;
-    case SceneStatus::BeforeUpdate: _onBeforeUpdate(this); break;
-    case SceneStatus::AfterUpdate: _onAfterUpdate(this); break;
-    case SceneStatus::BeforePrepare: _onBeforePrepare(this); break;
-    case SceneStatus::AfterPrepare: _onAfterPrepare(this); break;
-    case SceneStatus::BeforeRender: _onBeforeRender(this); break;
-    case SceneStatus::AfterRender: _onAfterRender(this); break;
-    case SceneStatus::BeforeDestroy: _onBeforeDestroy(this); break;
-    case SceneStatus::AfterDestroy: _onAfterDestroy(this); break;
+    case ESceneStatus::BeforeInitialize: _onBeforeInitialize(this); break;
+    case ESceneStatus::AfterInitialize: _onAfterInitialize(this); break;
+    case ESceneStatus::BeforeUpdate: _onBeforeUpdate(this); break;
+    case ESceneStatus::AfterUpdate: _onAfterUpdate(this); break;
+    case ESceneStatus::BeforePrepare: _onBeforePrepare(this); break;
+    case ESceneStatus::AfterPrepare: _onAfterPrepare(this); break;
+    case ESceneStatus::BeforeRender: _onBeforeRender(this); break;
+    case ESceneStatus::AfterRender: _onAfterRender(this); break;
+    case ESceneStatus::BeforeDestroy: _onBeforeDestroy(this); break;
+    case ESceneStatus::AfterDestroy: _onAfterDestroy(this); break;
     default:
         break;
     }

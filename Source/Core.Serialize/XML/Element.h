@@ -16,24 +16,24 @@ namespace XML {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(Element);
-class Element : public RefCountable {
+class FElement : public FRefCountable {
 public:
-    typedef ASSOCIATIVE_VECTORINSITU(XML, Name, String, 1) attributes_type;
+    typedef ASSOCIATIVE_VECTORINSITU(XML, FName, FString, 1) attributes_type;
     typedef VECTORINSITU(XML, PElement, 1) children_type;
 
-    Element();
-    ~Element();
+    FElement();
+    ~FElement();
 
-    Element(const Element& ) = delete;
-    Element& operator =(const Element& ) = delete;
+    FElement(const FElement& ) = delete;
+    FElement& operator =(const FElement& ) = delete;
 
-    const Name& Type() const { return _type; }
-    void SetType(Name&& rvalue) { _type = std::move(rvalue); }
-    void SetType(const Name& value) { _type = value; }
+    const FName& Type() const { return _type; }
+    void SetType(FName&& rvalue) { _type = std::move(rvalue); }
+    void SetType(const FName& value) { _type = value; }
 
-    const String& Text() const { return _text; }
-    void SetText(String&& rvalue) { _text = std::move(rvalue); }
-    void SetText(const StringView& value) { _text = ToString(value); }
+    const FString& Text() const { return _text; }
+    void SetText(FString&& rvalue) { _text = std::move(rvalue); }
+    void SetText(const FStringView& value) { _text = ToString(value); }
 
     attributes_type& Attributes() { return _attributes; }
     const attributes_type& Attributes() const { return _attributes; }
@@ -41,33 +41,33 @@ public:
     children_type& Children() { return _children; }
     const children_type& Children() const { return _children; }
 
-    Element* Parent() { return _parent.get(); }
-    const Element* Parent() const { return _parent.get(); }
-    void SetParent(Element* value) { _parent.reset(value); }
+    FElement* Parent() { return _parent.get(); }
+    const FElement* Parent() const { return _parent.get(); }
+    void SetParent(FElement* value) { _parent.reset(value); }
 
-    Element* NextSibling() { return _nextSibling.get(); }
-    const Element* NextSibling() const { return _nextSibling.get(); }
-    void SetNextSibling(Element* value) { _nextSibling.reset(value); }
+    FElement* NextSibling() { return _nextSibling.get(); }
+    const FElement* NextSibling() const { return _nextSibling.get(); }
+    void SetNextSibling(FElement* value) { _nextSibling.reset(value); }
 
-    Element* PrevSibling() { return _prevSibling.get(); }
-    const Element* PrevSibling() const { return _prevSibling.get(); }
-    void SetPrevSibling(Element* value) { _prevSibling.reset(value); }
+    FElement* PrevSibling() { return _prevSibling.get(); }
+    const FElement* PrevSibling() const { return _prevSibling.get(); }
+    void SetPrevSibling(FElement* value) { _prevSibling.reset(value); }
 
     void ToStream(std::basic_ostream<char>& oss) const;
 
-    StringView operator [](const XML::Name& name) const; // return the attribute IFP
+    FStringView operator [](const XML::FName& name) const; // return the attribute IFP
 
-    const Element* XPath(const MemoryView<const Name>& path) const;
-    size_t XPath(const MemoryView<const Name>& path, const std::function<void(const Element&)>& functor) const;
+    const FElement* XPath(const TMemoryView<const FName>& path) const;
+    size_t XPath(const TMemoryView<const FName>& path, const std::function<void(const FElement&)>& functor) const;
 
-    const Element* ChildXPath(const MemoryView<const Name>& path) const;
-    size_t ChildXPath(const MemoryView<const Name>& path, const std::function<void(const Element&)>& functor) const;
+    const FElement* ChildXPath(const TMemoryView<const FName>& path) const;
+    size_t ChildXPath(const TMemoryView<const FName>& path, const std::function<void(const FElement&)>& functor) const;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    Name _type;
-    String _text;
+    FName _type;
+    FString _text;
     attributes_type _attributes;
 
     SElement _parent;
@@ -77,7 +77,7 @@ private:
     children_type _children;
 };
 //----------------------------------------------------------------------------
-inline std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const Element& elt) {
+inline std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const FElement& elt) {
     elt.ToStream(oss);
     return oss;
 }

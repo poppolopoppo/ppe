@@ -13,50 +13,50 @@ FWD_REFPTR(VertexDeclaration);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct VertexBufferBinding {
+struct FVertexBufferBinding {
     size_t InstanceFrequency;
     size_t VertexOffset;
-    const Graphics::VertexBuffer *VertexBuffer;
+    const Graphics::FVertexBuffer *VertexBuffer;
 
     void Set(   size_t instanceFrequency,
                 size_t vertexOffset,
-                const Graphics::VertexBuffer *vertexBuffer);
+                const Graphics::FVertexBuffer *vertexBuffer);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class VertexBuffer : public DeviceResourceSharable {
+class FVertexBuffer : public FDeviceResourceSharable {
 public:
-    VertexBuffer(   const Graphics::VertexDeclaration *vertexDeclaration, size_t vertexCount,
-                    BufferMode mode, BufferUsage usage,
+    FVertexBuffer(   const Graphics::FVertexDeclaration *vertexDeclaration, size_t vertexCount,
+                    EBufferMode mode, EBufferUsage usage,
                     bool sharable );
-    virtual ~VertexBuffer();
+    virtual ~FVertexBuffer();
 
     virtual bool Available() const override { return _buffer.Available(); }
-    virtual DeviceAPIDependantEntity *TerminalEntity() const override { return _buffer.DeviceAPIDependantBuffer().get(); }
+    virtual FDeviceAPIDependantEntity *TerminalEntity() const override { return _buffer.DeviceAPIDependantBuffer().get(); }
 
     size_t VertexCount() const { return _buffer.Count(); }
     const PCVertexDeclaration& VertexDeclaration() const { return _vertexDeclaration; }
-    const DeviceResourceBuffer& Buffer() const { return _buffer; }
+    const FDeviceResourceBuffer& Buffer() const { return _buffer; }
 
     void SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count);
 
     template <typename T>
-    void Create(IDeviceAPIEncapsulator *device, const MemoryView<const T>& optionalData);
-    void Create(IDeviceAPIEncapsulator *device, const MemoryView<const u8>& optionalRawData);
+    void Create(IDeviceAPIEncapsulator *device, const TMemoryView<const T>& optionalData);
+    void Create(IDeviceAPIEncapsulator *device, const TMemoryView<const u8>& optionalRawData);
     void Destroy(IDeviceAPIEncapsulator *device);
 
 protected:
     virtual size_t VirtualSharedKeyHashValue() const override;
-    virtual bool VirtualMatchTerminalEntity(const DeviceAPIDependantEntity *entity) const override;
+    virtual bool VirtualMatchTerminalEntity(const FDeviceAPIDependantEntity *entity) const override;
 
 private:
     PCVertexDeclaration _vertexDeclaration;
-    DeviceResourceBuffer _buffer;
+    FDeviceResourceBuffer _buffer;
 };
 //----------------------------------------------------------------------------
 template <typename T>
-void VertexBuffer::Create(IDeviceAPIEncapsulator *device, const MemoryView<const T>& optionalData) {
+void FVertexBuffer::Create(IDeviceAPIEncapsulator *device, const TMemoryView<const T>& optionalData) {
     Create(device, optionalData.Cast<const u8>());
 }
 //----------------------------------------------------------------------------

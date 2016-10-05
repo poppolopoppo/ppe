@@ -10,12 +10,12 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Result>
-class TaskFuture : public Task {
+class TTaskFuture : public FTask {
 public:
     typedef std::function<_Result()> function_type;
 
-    TaskFuture(function_type&& func);
-    ~TaskFuture();
+    TTaskFuture(function_type&& func);
+    ~TTaskFuture();
 
     bool Available() const { return _available; }
     const _Result& Result() const;// will wait for the result if not available
@@ -34,26 +34,26 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename _Lambda>
-TaskFuture< decltype(std::declval<_Lambda>()()) >*
+TTaskFuture< decltype(std::declval<_Lambda>()()) >*
     MakeFuture(_Lambda&& func);
 //----------------------------------------------------------------------------
 template <typename _Result>
-using PFuture = RefPtr< const TaskFuture<_Result> >;
+using PFuture = TRefPtr< const TTaskFuture<_Result> >;
 //----------------------------------------------------------------------------
 template <typename _Lambda>
-TaskFuture< decltype(std::declval<_Lambda>()()) >*
-    Future(TaskManager& manager, _Lambda&& func, TaskPriority priority = TaskPriority::Normal);
+TTaskFuture< decltype(std::declval<_Lambda>()()) >*
+    FFuture(FTaskManager& manager, _Lambda&& func, ETaskPriority priority = ETaskPriority::Normal);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class TaskProcedure : public Task {
+class FTaskProcedure : public FTask {
 public:
     typedef std::function<void(ITaskContext& ctx)> function_type;
 
-    TaskProcedure(function_type&& func);
+    FTaskProcedure(function_type&& func);
 
-    TaskProcedure(const TaskProcedure& ) = delete;
-    TaskProcedure& operator=(const TaskProcedure& ) = delete;
+    FTaskProcedure(const FTaskProcedure& ) = delete;
+    FTaskProcedure& operator=(const FTaskProcedure& ) = delete;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
@@ -64,28 +64,28 @@ private:
     function_type _func;
 };
 //----------------------------------------------------------------------------
-TaskProcedure* MakeAsync(std::function<void()>&& fireAndForget);
-TaskProcedure* MakeAsync(std::function<void(ITaskContext&)>&& fireAndForget);
+FTaskProcedure* MakeAsync(std::function<void()>&& fireAndForget);
+FTaskProcedure* MakeAsync(std::function<void(ITaskContext&)>&& fireAndForget);
 //----------------------------------------------------------------------------
-void ASync(TaskManager& manager, std::function<void()>&& fireAndForget, TaskPriority priority = TaskPriority::Normal);
-void ASync(TaskManager& manager, std::function<void(ITaskContext&)>&& fireAndForget, TaskPriority priority = TaskPriority::Normal);
+void ASync(FTaskManager& manager, std::function<void()>&& fireAndForget, ETaskPriority priority = ETaskPriority::Normal);
+void ASync(FTaskManager& manager, std::function<void(ITaskContext&)>&& fireAndForget, ETaskPriority priority = ETaskPriority::Normal);
 //----------------------------------------------------------------------------
 template <typename _It, typename _Lambda>
 void ParallelForRange(
-    TaskManager& manager,
+    FTaskManager& manager,
     _It first, _It last, _Lambda&& lambda,
-    TaskPriority priority = TaskPriority::Normal );
+    ETaskPriority priority = ETaskPriority::Normal );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define async(...) \
-    Core::ASync(Core::GlobalThreadPool::Instance(), __VA_ARGS__)
+    Core::ASync(Core::FGlobalThreadPool::Instance(), __VA_ARGS__)
 //----------------------------------------------------------------------------
 #define future(...) \
-    Core::Future(Core::GlobalThreadPool::Instance(), __VA_ARGS__)
+    Core::FFuture(Core::FGlobalThreadPool::Instance(), __VA_ARGS__)
 //----------------------------------------------------------------------------
 #define parallel_for(_First, _Last, ...) \
-    Core::ParallelForRange(Core::GlobalThreadPool::Instance(), _First, _Last, __VA_ARGS__)
+    Core::ParallelForRange(Core::FGlobalThreadPool::Instance(), _First, _Last, __VA_ARGS__)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

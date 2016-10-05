@@ -19,28 +19,28 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, EffectProgram, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, FEffectProgram, );
 //----------------------------------------------------------------------------
-EffectProgram::EffectProgram(Graphics::ShaderProfileType profile, Graphics::ShaderProgramType type)
-:   ShaderProgram(profile, type) {}
+FEffectProgram::FEffectProgram(Graphics::EShaderProfileType profile, Graphics::EShaderProgramType type)
+:   FShaderProgram(profile, type) {}
 //----------------------------------------------------------------------------
-EffectProgram::~EffectProgram() {
+FEffectProgram::~FEffectProgram() {
     Assert(_constants.empty());
     Assert(_textures.empty());
 }
 //----------------------------------------------------------------------------
-void EffectProgram::LinkReflectedData( 
-    VECTOR(Effect, PSharedConstantBuffer)& sharedBuffers,
-    SharedConstantBufferFactory *sharedBufferFactory,
+void FEffectProgram::LinkReflectedData( 
+    VECTOR(FEffect, PSharedConstantBuffer)& sharedBuffers,
+    FSharedConstantBufferFactory *sharedBufferFactory,
     Graphics::IDeviceAPIShaderCompiler *compiler) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(_constants.empty());
     Assert(_textures.empty());
 
-    ASSOCIATIVE_VECTOR(Shader, Graphics::BindName, Graphics::PCConstantBufferLayout) layouts;
-    ShaderProgram::Reflect(compiler, layouts, _textures);
+    ASSOCIATIVE_VECTOR(Shader, Graphics::FBindName, Graphics::PCConstantBufferLayout) layouts;
+    FShaderProgram::Reflect(compiler, layouts, _textures);
 
-    for (const Pair<Graphics::BindName, Graphics::PCConstantBufferLayout>& it : layouts) {
+    for (const TPair<Graphics::FBindName, Graphics::PCConstantBufferLayout>& it : layouts) {
         const size_t sharedBuffersCount = sharedBuffers.size();
         EffectSharedBufferIndex sharedBufferIndex = sharedBuffersCount;
         forrange(i, 0, sharedBuffersCount)
@@ -57,20 +57,20 @@ void EffectProgram::LinkReflectedData(
     }
 }
 //----------------------------------------------------------------------------
-void EffectProgram::UnlinkReflectedData() {
+void FEffectProgram::UnlinkReflectedData() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     _textures.clear();
     _constants.clear();
 }
 //----------------------------------------------------------------------------
-void EffectProgram::Set(Graphics::IDeviceAPIContext *context, const Effect *effect) const {
-    const Graphics::ShaderProgramType stage = ShaderProgram::ProgramType();
+void FEffectProgram::Set(Graphics::IDeviceAPIContext *context, const FEffect *effect) const {
+    const Graphics::EShaderProgramType stage = FShaderProgram::ProgramType();
 
-    const Graphics::ConstantBuffer *stagePrograms[14];
+    const Graphics::FConstantBuffer *stagePrograms[14];
     AssertRelease(_constants.size() <= lengthof(stagePrograms));
 
-    const VECTOR(Effect, PSharedConstantBuffer)& sharedBuffers = effect->SharedBuffers();
+    const VECTOR(FEffect, PSharedConstantBuffer)& sharedBuffers = effect->SharedBuffers();
     forrange(i, 0, _constants.size()) {
         const EffectSharedBufferIndex sharedBufferIndex = _constants.Vector()[i].second;
         const PSharedConstantBuffer& sharedBuffer = sharedBuffers[sharedBufferIndex];

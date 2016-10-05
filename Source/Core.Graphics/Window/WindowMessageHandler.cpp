@@ -9,11 +9,11 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void IWindowMessageHandler::RegisterMessageDelegate(BasicWindow *wnd, WindowMessage msg, Delegate member) {
+void IWindowMessageHandler::RegisterMessageDelegate(FBasicWindow *wnd, EWindowMessage msg, TDelegate member) {
     wnd->RegisterMessageDelegate_(msg, this, member);
 }
 //----------------------------------------------------------------------------
-void IWindowMessageHandler::UnregisterMessageDelegate(BasicWindow *wnd, WindowMessage msg, Delegate member) {
+void IWindowMessageHandler::UnregisterMessageDelegate(FBasicWindow *wnd, EWindowMessage msg, TDelegate member) {
     wnd->UnregisterMessageDelegate_(msg, this, member);
 }
 //----------------------------------------------------------------------------

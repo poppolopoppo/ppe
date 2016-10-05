@@ -15,49 +15,49 @@ POOL_TAG_DECL(RTTI);
 //----------------------------------------------------------------------------
 FWD_REFPTR(MetaAtom);
 template <typename T>
-class MetaTypedAtom;
+class TMetaTypedAtom;
 class IMetaAtomPair;
 class IMetaAtomVector;
 class IMetaAtomDictionary;
 class IMetaAtomVisitor;
 class IMetaAtomConstVisitor;
 //----------------------------------------------------------------------------
-class MetaClass;
-class MetaClassHashMap;
-class MetaClassName;
+class FMetaClass;
+class FMetaClassHashMap;
+class FMetaClassName;
 //----------------------------------------------------------------------------
 FWD_REFPTR(MetaObject);
 //----------------------------------------------------------------------------
-class MetaProperty;
+class FMetaProperty;
 template <typename T>
-class MetaTypedProperty;
+class TMetaTypedProperty;
 template <typename T>
-class MetaFieldAccessor;
+class TMetaFieldAccessor;
 template <typename T, typename _Accessor >
-class MetaWrappedProperty;
+class TMetaWrappedProperty;
 //----------------------------------------------------------------------------
 template <typename T>
-struct MetaType;
-enum class MetaTypeFlags : u32;
+struct TMetaType;
+enum class EMetaTypeFlags : u32;
 template <typename _From, typename _To>
-struct MetaTypePromote;
+struct TMetaTypePromote;
 template <typename T>
-struct MetaTypeTraits;
+struct TMetaTypeTraits;
 template <typename T, typename _Enabled = void>
-struct MetaTypeTraitsImpl;
+struct TMetaTypeTraitsImpl;
 class IMetaTypeVirtualTraits;
-class AbstractMetaTypeScalarTraits;
+class FAbstractMetaTypeScalarTraits;
 template <typename T>
-class MetaTypeScalarTraits;
-class AbstractMetaTypePairTraits;
+class TMetaTypeScalarTraits;
+class FAbstractMetaTypePairTraits;
 template <typename _First, typename _Second>
-class MetaTypePairTraits;
-class AbstractMetaTypeVectorTraits;
+class TMetaTypePairTraits;
+class FAbstractMetaTypeVectorTraits;
 template <typename T>
-class MetaTypeVectorTraits;
-class AbstractMetaTypeDictionaryTraits;
+class TMetaTypeVectorTraits;
+class FAbstractMetaTypeDictionaryTraits;
 template <typename _Key, typename _Value>
-class MetaTypeDictionaryTraits;
+class TMetaTypeDictionaryTraits;
 //----------------------------------------------------------------------------
 FWD_REFPTR(MetaTransaction);
 //----------------------------------------------------------------------------

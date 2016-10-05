@@ -13,30 +13,30 @@
 namespace Core {
 namespace Application {
 POOL_TAG_DECL(Application);
-class ApplicationBase;
+class FApplicationBase;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ApplicationStartup {
+class FApplicationStartup {
 public:
     static void Start();
     static void Shutdown();
 
     static void ClearAll_UnusedMemory();
 
-    ApplicationStartup() { Start(); }
-    ~ApplicationStartup() { Shutdown(); }
+    FApplicationStartup() { Start(); }
+    ~FApplicationStartup() { Shutdown(); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ApplicationContext {
+class FApplicationContext {
 public:
-    ApplicationContext();
-    ~ApplicationContext();
+    FApplicationContext();
+    ~FApplicationContext();
 };
 //----------------------------------------------------------------------------
-int LaunchApplication(const ApplicationContext& context, ApplicationBase* app);
+int LaunchApplication(const FApplicationContext& context, FApplicationBase* app);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

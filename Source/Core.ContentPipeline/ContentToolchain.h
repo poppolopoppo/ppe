@@ -17,10 +17,10 @@ namespace ContentPipeline {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Input, typename _Output>
-class ContentToolchain;
+class FContentToolchain;
 //----------------------------------------------------------------------------
 FWD_INTERFACE_REFPTR(ContentToolchain);
-class IContentToolchain : public RTTI::MetaObject {
+class IContentToolchain : public RTTI::FMetaObject {
 public:
     IContentToolchain();
     IContentToolchain(  const IContentImporter* importer,
@@ -35,16 +35,16 @@ public:
     const IContentProcessor* Processor() const { return _processor.get(); }
     const IContentSerializer* Serializer() const { return _serializer.get(); }
 
-    virtual bool Build( ContentImporterContext& importerContext,
-                        ContentProcessorContext& processContext,
-                        ContentSerializerContext& serializerContext ) const = 0;
+    virtual bool Build( FContentImporterContext& importerContext,
+                        FContentProcessorContext& processContext,
+                        FContentSerializerContext& serializerContext ) const = 0;
 
     template <typename _Asset>
-    bool Load(ContentSerializerContext& serializerContext, _Asset& asset) const {
+    bool Load(FContentSerializerContext& serializerContext, _Asset& asset) const {
         return Serializer()->Deserialize(context, asset);
     }
 
-    RTTI_CLASS_HEADER(IContentToolchain, RTTI::MetaObject);
+    RTTI_CLASS_HEADER(IContentToolchain, RTTI::FMetaObject);
 
 protected:
 #ifdef WITH_RTTI_VERIFY_PREDICATES
@@ -58,23 +58,23 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename _Input, typename _Output>
-class ContentToolchain : public IContentToolchain {
+class FContentToolchain : public IContentToolchain {
 public:
-    typedef ContentImporter<_Input> importer_type;
-    typedef ContentProcessor<_Input, _Output> processor_type;
-    typedef ContentSerializer<_Output> serializer_type;
+    typedef TContentImporter<_Input> importer_type;
+    typedef TContentProcessor<_Input, _Output> processor_type;
+    typedef TContentSerializer<_Output> serializer_type;
 
-    ContentToolchain() {}
-    ContentToolchain(   const importer_type* importer,
+    FContentToolchain() {}
+    FContentToolchain(   const importer_type* importer,
                         const processor_type* processor,
                         const serializer_type* serializer )
         : _importer(importer)
         , _processor(processor)
         , _serializer(serializer) {}
 
-    virtual bool Build( ContentImporterContext& importerContext,
-                        ContentProcessorContext& processContext,
-                        ContentSerializerContext& serializerContext ) const override {
+    virtual bool Build( FContentImporterContext& importerContext,
+                        FContentProcessorContext& processContext,
+                        FContentSerializerContext& serializerContext ) const override {
         _Output asset;
         {
             _Input intermediate;
@@ -90,7 +90,7 @@ public:
 protected:
 #ifdef WITH_RTTI_VERIFY_PREDICATES
     virtual void RTTI_VerifyPredicates() const override {
-        MetaClass::parent_type::RTTI_VerifyPredicates();
+        FMetaClass::parent_type::RTTI_VerifyPredicates();
         RTTI_VerifyPredicate(dynamic_cast<const importer_type*>(Importer()));
         RTTI_VerifyPredicate(dynamic_cast<const processor_type*>(Processor()));
         RTTI_VerifyPredicate(dynamic_cast<const serializer_type*>(Serializer()));

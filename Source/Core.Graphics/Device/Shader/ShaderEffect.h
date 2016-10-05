@@ -17,13 +17,13 @@ FWD_REFPTR(VertexDeclaration);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(ShaderEffect);
-class ShaderEffect : public DeviceResource {
+class FShaderEffect : public FDeviceResource {
 public:
-    explicit ShaderEffect(const Graphics::VertexDeclaration *vertexDeclaration);
-    virtual ~ShaderEffect();
+    explicit FShaderEffect(const Graphics::FVertexDeclaration *vertexDeclaration);
+    virtual ~FShaderEffect();
 
     virtual bool Available() const override;
-    virtual DeviceAPIDependantEntity *TerminalEntity() const override;
+    virtual FDeviceAPIDependantEntity *TerminalEntity() const override;
 
     const PDeviceAPIDependantShaderEffect& DeviceAPIDependantEffect() const {
         Assert(Frozen()); return _deviceAPIDependantEffect;
@@ -31,28 +31,28 @@ public:
 
     const PCVertexDeclaration& VertexDeclaration() const { return _vertexDeclaration; }
 
-    ShaderProgram *StageProgram(ShaderProgramType stage) { return _stagePrograms[size_t(stage)].get(); }
-    const ShaderProgram *StageProgram(ShaderProgramType stage) const { return _stagePrograms[size_t(stage)].get(); }
+    FShaderProgram *StageProgram(EShaderProgramType stage) { return _stagePrograms[size_t(stage)].get(); }
+    const FShaderProgram *StageProgram(EShaderProgramType stage) const { return _stagePrograms[size_t(stage)].get(); }
 
-    void SetStageProgram(ShaderProgramType stage, PShaderProgram&& program);
-    void ResetStageProgram(ShaderProgramType stage);
+    void SetStageProgram(EShaderProgramType stage, PShaderProgram&& program);
+    void ResetStageProgram(EShaderProgramType stage);
 
     virtual void Create(IDeviceAPIEncapsulator *device);
     virtual void Destroy(IDeviceAPIEncapsulator *device);
 
 private:
     PCVertexDeclaration _vertexDeclaration;
-    PShaderProgram _stagePrograms[size_t(ShaderProgramType::__Count)];
+    PShaderProgram _stagePrograms[size_t(EShaderProgramType::__Count)];
 
     PDeviceAPIDependantShaderEffect _deviceAPIDependantEffect;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DeviceAPIDependantShaderEffect : public TypedDeviceAPIDependantEntity<ShaderEffect> {
+class FDeviceAPIDependantShaderEffect : public TTypedDeviceAPIDependantEntity<FShaderEffect> {
 public:
-    DeviceAPIDependantShaderEffect(IDeviceAPIEncapsulator *device, const ShaderEffect *resource);
-    virtual ~DeviceAPIDependantShaderEffect();
+    FDeviceAPIDependantShaderEffect(IDeviceAPIEncapsulator *device, const FShaderEffect *resource);
+    virtual ~FDeviceAPIDependantShaderEffect();
 
     virtual size_t VideoMemorySizeInBytes() const override;
 };

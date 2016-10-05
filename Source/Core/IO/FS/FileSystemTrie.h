@@ -18,25 +18,25 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(FileSystemNode);
-class FileSystemNode : public RefCountable {
-    friend class FileSystemTrie;
+class FFileSystemNode : public FRefCountable {
+    friend class FFileSystemTrie;
 public:
-    FileSystemNode(const FileSystemNode *parent, const FileSystemToken& token);
-    ~FileSystemNode();
+    FFileSystemNode(const FFileSystemNode *parent, const FFileSystemToken& token);
+    ~FFileSystemNode();
 
-    FileSystemNode(const FileSystemNode& ) = delete;
-    FileSystemNode& operator =(const FileSystemNode& ) = delete;
+    FFileSystemNode(const FFileSystemNode& ) = delete;
+    FFileSystemNode& operator =(const FFileSystemNode& ) = delete;
 
-    const FileSystemNode *Parent() const { return _parent.get(); }
-    const FileSystemNode *Child() const { return _child.get(); }
-    const FileSystemNode *Sibbling() const { return _sibbling.get(); }
+    const FFileSystemNode *Parent() const { return _parent.get(); }
+    const FFileSystemNode *Child() const { return _child.get(); }
+    const FFileSystemNode *Sibbling() const { return _sibbling.get(); }
 
-    const FileSystemToken& Token() const { return _token; }
+    const FFileSystemToken& Token() const { return _token; }
 
     size_t Depth() const { return _depth; }
     size_t HashValue() const { return _hashValue; }
 
-    bool IsChildOf(const FileSystemNode *parent) const;
+    bool IsChildOf(const FFileSystemNode *parent) const;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
@@ -44,41 +44,41 @@ private:
     SCFileSystemNode _parent;
     PFileSystemNode _child;
     PFileSystemNode _sibbling;
-    FileSystemToken _token;
+    FFileSystemToken _token;
     size_t _depth;
     size_t _hashValue;
 };
 //----------------------------------------------------------------------------
-class FileSystemTrie {
+class FFileSystemTrie {
 public:
-    FileSystemTrie();
-    ~FileSystemTrie();
+    FFileSystemTrie();
+    ~FFileSystemTrie();
 
     // _root is const, no need to lock to be thread safe
-    const FileSystemNode *Root() const { return _root.get(); }
+    const FFileSystemNode *Root() const { return _root.get(); }
 
-    const FileSystemNode *GetIFP(const MemoryView<const FileSystemToken>& path) const;
-    const FileSystemNode *Concat(const FileSystemNode *basedir, const FileSystemToken& append);
-    const FileSystemNode *Concat(const FileSystemNode *basedir, const MemoryView<const FileSystemToken>& path);
-    const FileSystemNode *GetOrCreate(const MemoryView<const FileSystemToken>& path) { return Concat(nullptr, path); }
+    const FFileSystemNode *GetIFP(const TMemoryView<const FFileSystemToken>& path) const;
+    const FFileSystemNode *Concat(const FFileSystemNode *basedir, const FFileSystemToken& append);
+    const FFileSystemNode *Concat(const FFileSystemNode *basedir, const TMemoryView<const FFileSystemToken>& path);
+    const FFileSystemNode *GetOrCreate(const TMemoryView<const FFileSystemToken>& path) { return Concat(nullptr, path); }
 
-    const FileSystemNode* RootNode(const FileSystemNode *pnode) const;
+    const FFileSystemNode* RootNode(const FFileSystemNode *pnode) const;
 
-    size_t Expand(const MemoryView<FileSystemToken>& tokens, const FileSystemNode *pnode) const; // returns actual tokens count
-    size_t Expand(const MemoryView<FileSystemToken>& tokens, const FileSystemNode *pbegin, const FileSystemNode *pend) const; // returns actual tokens count
+    size_t Expand(const TMemoryView<FFileSystemToken>& tokens, const FFileSystemNode *pnode) const; // returns actual tokens count
+    size_t Expand(const TMemoryView<FFileSystemToken>& tokens, const FFileSystemNode *pbegin, const FFileSystemNode *pend) const; // returns actual tokens count
 
     void Clear();
 
 private:
-    ReadWriteLock _barrier;
+    FReadWriteLock _barrier;
     PFileSystemNode _root;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FileSystemPath : Meta::Singleton<FileSystemTrie, FileSystemPath> {
+class FFileSystemPath : Meta::TSingleton<FFileSystemTrie, FFileSystemPath> {
 public:
-    typedef Meta::Singleton<FileSystemTrie, FileSystemPath> parent_type;
+    typedef Meta::TSingleton<FFileSystemTrie, FFileSystemPath> parent_type;
 
     using parent_type::Instance;
     using parent_type::HasInstance;

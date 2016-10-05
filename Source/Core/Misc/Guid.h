@@ -14,7 +14,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ALIGN(16) struct Guid {
+ALIGN(16) struct FGuid {
     ALIGN(16) union {
         u64 as_u64[2];
         u32 as_u32[4];
@@ -34,39 +34,39 @@ ALIGN(16) struct Guid {
 
     u64 ToUID() const { return Data.as_u64[0] ^ Data.as_u64[1]; }
 
-    static Guid Zero() { Guid v; v.Data.as_u64[0] = v.Data.as_u64[1] = 0; return v; }
+    static FGuid Zero() { FGuid v; v.Data.as_u64[0] = v.Data.as_u64[1] = 0; return v; }
 
-    static Guid Generate();
-    static bool TryParse(const StringView& str, Guid *guid);
+    static FGuid Generate();
+    static bool TryParse(const FStringView& str, FGuid *guid);
 
-    static bool TryParse(const char *str, Guid *guid) { return TryParse(StringView(str, Length(str)), guid); }
+    static bool TryParse(const char *str, FGuid *guid) { return TryParse(FStringView(str, Length(str)), guid); }
     template <size_t _Dim>
-    static bool TryParse(const char(&cstr)[_Dim], Guid *guid) { return TryParse(MakeStringView(cstr), guid); }
+    static bool TryParse(const char(&cstr)[_Dim], FGuid *guid) { return TryParse(MakeStringView(cstr), guid); }
 
     template <size_t _Dim>
-    static Guid FromCStr(const char(&cstr)[_Dim]) {
-        Guid r = Zero();
+    static FGuid FromCStr(const char(&cstr)[_Dim]) {
+        FGuid r = Zero();
         for (size_t i = 0; i < lengthof(r.Data.as_u8); ++i)
             r.Data.as_u8[i] = cstr[i];
         return r;
     }
 };
-STATIC_ASSERT(sizeof(Guid) == 16);
+STATIC_ASSERT(sizeof(FGuid) == 16);
 //----------------------------------------------------------------------------
-inline bool Guid::empty() const {
+inline bool FGuid::empty() const {
     return  0 == Data.as_u64[0] && 0 == Data.as_u64[1];
 }
 //----------------------------------------------------------------------------
-inline bool operator ==(const Guid& lhs, const Guid& rhs) {
+inline bool operator ==(const FGuid& lhs, const FGuid& rhs) {
     return  lhs.Data.as_u64[0] == rhs.Data.as_u64[0] &&
             lhs.Data.as_u64[1] == rhs.Data.as_u64[1];
 }
 //----------------------------------------------------------------------------
-inline bool operator !=(const Guid& lhs, const Guid& rhs) {
+inline bool operator !=(const FGuid& lhs, const FGuid& rhs) {
     return !operator ==(lhs, rhs);
 }
 //----------------------------------------------------------------------------
-inline bool operator < (const Guid& lhs, const Guid& rhs) {
+inline bool operator < (const FGuid& lhs, const FGuid& rhs) {
     if (lhs.Data.as_u64[0] < rhs.Data.as_u64[0])
         return true;
     else if (lhs.Data.as_u64[0] > rhs.Data.as_u64[0])
@@ -77,18 +77,18 @@ inline bool operator < (const Guid& lhs, const Guid& rhs) {
         return false;
 }
 //----------------------------------------------------------------------------
-inline bool operator >=(const Guid& lhs, const Guid& rhs) {
+inline bool operator >=(const FGuid& lhs, const FGuid& rhs) {
     return !operator < (lhs, rhs);
 }
 //----------------------------------------------------------------------------
-inline hash_t hash_value(const Guid& guid) {
+inline hash_t hash_value(const FGuid& guid) {
     return hash_as_pod(guid.Data.as_u64);
 }
 //----------------------------------------------------------------------------
 template <typename _Traits>
 std::basic_ostream<char, _Traits>& operator <<(
     std::basic_ostream<char, _Traits>& oss,
-    const Guid& guid ) {
+    const FGuid& guid ) {
     Format( oss, "{{0:#8X}-{1:#4X}-{2:#4X}-{3:#4X}-{4:#12X}}",
             guid.Data.as_rfc.G0,
             guid.Data.as_rfc.G1,
@@ -101,7 +101,7 @@ std::basic_ostream<char, _Traits>& operator <<(
 template <typename _Traits>
 std::basic_ostream<wchar_t, _Traits>& operator <<(
     std::basic_ostream<wchar_t, _Traits>& oss,
-    const Guid& guid ) {
+    const FGuid& guid ) {
     Format( oss, L"{{0:#8X}-{1:#4X}-{2:#4X}-{3:#4X}-{4:#12X}}",
             guid.Data.as_rfc.G0,
             guid.Data.as_rfc.G1,

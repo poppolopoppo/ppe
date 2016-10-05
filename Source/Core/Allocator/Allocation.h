@@ -16,35 +16,35 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define DEFAULT_ALLOCATOR ::Core::Mallocator
+#define DEFAULT_ALLOCATOR ::Core::TMallocator
 //----------------------------------------------------------------------------
 #ifdef USE_MEMORY_DOMAINS
 template <typename _Allocator, typename _Tag>
-using DecorateAllocator = TrackingAllocator< _Tag, _Allocator >;
+using TDecorateAllocator = TTrackingAllocator< _Tag, _Allocator >;
 #else
 template <typename _Allocator, typename _Tag>
-using DecorateAllocator = _Allocator;
+using TDecorateAllocator = _Allocator;
 #endif
 //----------------------------------------------------------------------------
 template <typename T, typename _Tag = MEMORY_DOMAIN_TAG(Global)>
-using Allocator = DecorateAllocator< DEFAULT_ALLOCATOR<T>, _Tag >;
+using TAllocator = TDecorateAllocator< DEFAULT_ALLOCATOR<T>, _Tag >;
 //----------------------------------------------------------------------------
 #define DECORATE_ALLOCATOR(_Domain, _Allocator) \
-    ::Core::DecorateAllocator< COMMA_PROTECT(_Allocator), MEMORY_DOMAIN_TAG(_Domain) >
+    ::Core::TDecorateAllocator< COMMA_PROTECT(_Allocator), MEMORY_DOMAIN_TAG(_Domain) >
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define ALLOCATOR(_Domain, T) \
-    ::Core::Allocator<COMMA_PROTECT(T), MEMORY_DOMAIN_TAG(_Domain) >
+    ::Core::TAllocator<COMMA_PROTECT(T), MEMORY_DOMAIN_TAG(_Domain) >
 //----------------------------------------------------------------------------
 #define ALIGNED_ALLOCATOR(_Domain, T, _Alignment) \
-    DECORATE_ALLOCATOR(_Domain, ::Core::Mallocator<COMMA_PROTECT(T) COMMA _Alignment>)
+    DECORATE_ALLOCATOR(_Domain, ::Core::TMallocator<COMMA_PROTECT(T) COMMA _Alignment>)
 //----------------------------------------------------------------------------
 #define BUDDY_ALLOCATOR(_Domain, T) \
-    DECORATE_ALLOCATOR(_Domain, ::Core::BuddyAllocator<COMMA_PROTECT(T)>)
+    DECORATE_ALLOCATOR(_Domain, ::Core::TBuddyAllocator<COMMA_PROTECT(T)>)
 //----------------------------------------------------------------------------
 #define THREAD_LOCAL_ALLOCATOR(_Domain, T) \
-    DECORATE_ALLOCATOR(_Domain, ::Core::ThreadLocalAllocator<COMMA_PROTECT(T)>)
+    DECORATE_ALLOCATOR(_Domain, ::Core::TThreadLocalAllocator<COMMA_PROTECT(T)>)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

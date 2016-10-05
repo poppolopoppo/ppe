@@ -19,13 +19,14 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MetaObject;
+class FMetaObject;
 template <typename T>
-class MetaTypedProperty;
+class TMetaTypedProperty;
 //----------------------------------------------------------------------------
-class MetaProperty {
+FWD_UNIQUEPTR(MetaProperty);
+class FMetaProperty {
 public:
-    enum Flags {
+    enum EFlags {
         Public       = 1<<0,
         Protected    = 1<<1,
         Private      = 1<<2,
@@ -34,14 +35,14 @@ public:
         Dynamic      = 1<<5,
     };
 
-    MetaProperty(const RTTI::Name& name, Flags attributes);
-    virtual ~MetaProperty();
+    FMetaProperty(const FName& name, EFlags attributes);
+    virtual ~FMetaProperty();
 
-    MetaProperty(const MetaProperty&) = delete;
-    MetaProperty& operator =(const MetaProperty&) = delete;
+    FMetaProperty(const FMetaProperty&) = delete;
+    FMetaProperty& operator =(const FMetaProperty&) = delete;
 
-    const RTTI::Name& Name() const { return _name; }
-    Flags Attributes() const { return _attributes; }
+    const FName& Name() const { return _name; }
+    EFlags Attributes() const { return _attributes; }
 
     bool IsPublic()     const { return Meta::HasFlag(_attributes, Public); }
     bool IsProtected()  const { return Meta::HasFlag(_attributes, Protected); }
@@ -51,180 +52,180 @@ public:
     bool IsDynamic()    const { return Meta::HasFlag(_attributes, Dynamic); }
     bool IsWritable()   const { return false == (IsReadOnly() || IsDeprecated()); }
 
-    virtual MetaTypeInfo TypeInfo() const = 0;
+    virtual FMetaTypeInfo TypeInfo() const = 0;
     virtual const IMetaTypeVirtualTraits *Traits() const = 0;
 
-    virtual bool IsDefaultValue(const MetaObject *object) const = 0;
+    virtual bool IsDefaultValue(const FMetaObject *object) const = 0;
 
-    virtual MetaAtom *WrapMove(MetaObject *src) const = 0;
-    virtual MetaAtom *WrapCopy(const MetaObject *src) const = 0;
+    virtual FMetaAtom *WrapMove(FMetaObject *src) const = 0;
+    virtual FMetaAtom *WrapCopy(const FMetaObject *src) const = 0;
 
-    virtual bool UnwrapMove(MetaObject *dst, MetaAtom *src) const = 0;
-    virtual bool UnwrapCopy(MetaObject *dst, const MetaAtom *src) const = 0;
+    virtual bool UnwrapMove(FMetaObject *dst, FMetaAtom *src) const = 0;
+    virtual bool UnwrapCopy(FMetaObject *dst, const FMetaAtom *src) const = 0;
 
-    virtual void MoveTo(MetaObject *object, MetaAtom *atom) const = 0;
-    virtual void CopyTo(const MetaObject *object, MetaAtom *atom) const = 0;
+    virtual void MoveTo(FMetaObject *object, FMetaAtom *atom) const = 0;
+    virtual void CopyTo(const FMetaObject *object, FMetaAtom *atom) const = 0;
 
-    virtual void MoveFrom(MetaObject *object, MetaAtom *atom) const = 0;
-    virtual void CopyFrom(MetaObject *object, const MetaAtom *atom) const = 0;
+    virtual void MoveFrom(FMetaObject *object, FMetaAtom *atom) const = 0;
+    virtual void CopyFrom(FMetaObject *object, const FMetaAtom *atom) const = 0;
 
-    virtual void Move(MetaObject *dst, MetaObject *src) const = 0;
-    virtual void Copy(MetaObject *dst, const MetaObject *src) const = 0;
+    virtual void Move(FMetaObject *dst, FMetaObject *src) const = 0;
+    virtual void Copy(FMetaObject *dst, const FMetaObject *src) const = 0;
 
-    virtual void Swap(MetaObject *lhs, MetaObject *rhs) const = 0;
+    virtual void Swap(FMetaObject *lhs, FMetaObject *rhs) const = 0;
 
-    virtual bool Equals(const MetaObject *lhs, const MetaObject *rhs) const = 0;
-    virtual bool DeepEquals(const MetaObject *lhs, const MetaObject *rhs) const = 0;
+    virtual bool Equals(const FMetaObject *lhs, const FMetaObject *rhs) const = 0;
+    virtual bool DeepEquals(const FMetaObject *lhs, const FMetaObject *rhs) const = 0;
 
-    virtual void *RawPtr(MetaObject *obj) const = 0;
-    virtual const void *RawPtr(const MetaObject *obj) const = 0;
+    virtual void *RawPtr(FMetaObject *obj) const = 0;
+    virtual const void *RawPtr(const FMetaObject *obj) const = 0;
 
-    virtual size_t HashValue(const MetaObject *object) const = 0;
+    virtual size_t HashValue(const FMetaObject *object) const = 0;
 
     template <typename T>
-    MetaTypedProperty< typename MetaTypeTraits<T>::wrapper_type > *Cast() {
-        return checked_cast<MetaTypedProperty< typename MetaTypeTraits<T>::wrapper_type > *>(this);
+    TMetaTypedProperty< typename TMetaTypeTraits<T>::wrapper_type > *Cast() {
+        return checked_cast<TMetaTypedProperty< typename TMetaTypeTraits<T>::wrapper_type > *>(this);
     }
 
     template <typename T>
-    const MetaTypedProperty< typename MetaTypeTraits<T>::wrapper_type > *Cast() const {
-        return checked_cast<const MetaTypedProperty< typename MetaTypeTraits<T>::wrapper_type > *>(this);
+    const TMetaTypedProperty< typename TMetaTypeTraits<T>::wrapper_type > *Cast() const {
+        return checked_cast<const TMetaTypedProperty< typename TMetaTypeTraits<T>::wrapper_type > *>(this);
     }
 
     template <typename T>
-    MetaTypedProperty< typename MetaTypeTraits<T>::wrapper_type > *As() {
-        return dynamic_cast<MetaTypedProperty< typename MetaTypeTraits<T>::wrapper_type > *>(this);
+    TMetaTypedProperty< typename TMetaTypeTraits<T>::wrapper_type > *As() {
+        return dynamic_cast<TMetaTypedProperty< typename TMetaTypeTraits<T>::wrapper_type > *>(this);
     }
 
     template <typename T>
-    const MetaTypedProperty< typename MetaTypeTraits<T>::wrapper_type > *As() const {
-        return dynamic_cast<const MetaTypedProperty< typename MetaTypeTraits<T>::wrapper_type > *>(this);
+    const TMetaTypedProperty< typename TMetaTypeTraits<T>::wrapper_type > *As() const {
+        return dynamic_cast<const TMetaTypedProperty< typename TMetaTypeTraits<T>::wrapper_type > *>(this);
     }
 
 protected:
-    RTTI::Name _name;
-    Flags _attributes;
+    FName _name;
+    EFlags _attributes;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-class MetaTypedProperty : public MetaProperty {
+class TMetaTypedProperty : public FMetaProperty {
 public:
-    typedef MetaType<T> meta_type;
+    typedef TMetaType<T> meta_type;
     static_assert(meta_type::TypeId, "T is not supported by RTTI");
 
-    MetaTypedProperty(const RTTI::Name& name, Flags attributes);
-    virtual ~MetaTypedProperty();
+    TMetaTypedProperty(const FName& name, EFlags attributes);
+    virtual ~TMetaTypedProperty();
 
-    virtual MetaTypeInfo TypeInfo() const override;
+    virtual FMetaTypeInfo TypeInfo() const override;
 
-    virtual void GetCopy(const MetaObject *object, T& dst) const = 0;
-    virtual void GetMove(MetaObject *object, T& dst) const = 0;
+    virtual void GetCopy(const FMetaObject *object, T& dst) const = 0;
+    virtual void GetMove(FMetaObject *object, T& dst) const = 0;
 
-    virtual void SetMove(MetaObject *object, T&& src) const = 0;
-    virtual void SetCopy(MetaObject *object, const T& src) const = 0;
+    virtual void SetMove(FMetaObject *object, T&& src) const = 0;
+    virtual void SetCopy(FMetaObject *object, const T& src) const = 0;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Accessor >
-class MetaWrappedProperty :
-    public MetaTypedProperty< typename MetaTypeTraits<T>::wrapper_type >
+class TMetaWrappedProperty :
+    public TMetaTypedProperty< typename TMetaTypeTraits<T>::wrapper_type >
 ,   private _Accessor {
 public:
-    typedef MetaTypeTraits< T > meta_type_traits;
+    typedef TMetaTypeTraits< T > meta_type_traits;
 
     typedef typename meta_type_traits::meta_type meta_type;
     typedef typename meta_type_traits::wrapped_type wrapped_type;
     typedef typename meta_type_traits::wrapper_type wrapper_type;
 
-    typedef MetaTypedAtom< wrapper_type > typed_atom_type;
-    typedef MetaTypedProperty< wrapper_type > typed_property_type;
+    typedef TMetaTypedAtom< wrapper_type > typed_atom_type;
+    typedef TMetaTypedProperty< wrapper_type > typed_property_type;
 
     typedef _Accessor accessor_type;
 
-    using MetaProperty::Flags;
+    using FMetaProperty::EFlags;
 
-    MetaWrappedProperty(const RTTI::Name& name, Flags attributes, accessor_type&& accessor);
-    virtual ~MetaWrappedProperty();
+    TMetaWrappedProperty(const FName& name, EFlags attributes, accessor_type&& accessor);
+    virtual ~TMetaWrappedProperty();
 
     virtual const IMetaTypeVirtualTraits *Traits() const override { return meta_type_traits::VirtualTraits(); }
 
-    virtual bool IsDefaultValue(const MetaObject *object) const override;
+    virtual bool IsDefaultValue(const FMetaObject *object) const override;
 
-    virtual void GetCopy(const MetaObject *object, wrapper_type& dst) const override;
-    virtual void GetMove(MetaObject *object, wrapper_type& dst) const override;
+    virtual void GetCopy(const FMetaObject *object, wrapper_type& dst) const override;
+    virtual void GetMove(FMetaObject *object, wrapper_type& dst) const override;
 
-    virtual void SetMove(MetaObject *object, wrapper_type&& src) const override;
-    virtual void SetCopy(MetaObject *object, const wrapper_type& src) const override;
+    virtual void SetMove(FMetaObject *object, wrapper_type&& src) const override;
+    virtual void SetCopy(FMetaObject *object, const wrapper_type& src) const override;
 
-    virtual MetaAtom *WrapMove(MetaObject *src) const override;
-    virtual MetaAtom *WrapCopy(const MetaObject *src) const override;
+    virtual FMetaAtom *WrapMove(FMetaObject *src) const override;
+    virtual FMetaAtom *WrapCopy(const FMetaObject *src) const override;
 
-    virtual bool UnwrapMove(MetaObject *dst, MetaAtom *src) const override;
-    virtual bool UnwrapCopy(MetaObject *dst, const MetaAtom *src) const override;
+    virtual bool UnwrapMove(FMetaObject *dst, FMetaAtom *src) const override;
+    virtual bool UnwrapCopy(FMetaObject *dst, const FMetaAtom *src) const override;
 
-    virtual void MoveTo(MetaObject *object, MetaAtom *atom) const override;
-    virtual void CopyTo(const MetaObject *object, MetaAtom *atom) const override;
+    virtual void MoveTo(FMetaObject *object, FMetaAtom *atom) const override;
+    virtual void CopyTo(const FMetaObject *object, FMetaAtom *atom) const override;
 
-    virtual void MoveFrom(MetaObject *object, MetaAtom *atom) const override;
-    virtual void CopyFrom(MetaObject *object, const MetaAtom *atom) const override;
+    virtual void MoveFrom(FMetaObject *object, FMetaAtom *atom) const override;
+    virtual void CopyFrom(FMetaObject *object, const FMetaAtom *atom) const override;
 
-    virtual void Move(MetaObject *dst, MetaObject *src) const override;
-    virtual void Copy(MetaObject *dst, const MetaObject *src) const override;
+    virtual void Move(FMetaObject *dst, FMetaObject *src) const override;
+    virtual void Copy(FMetaObject *dst, const FMetaObject *src) const override;
 
-    virtual void Swap(MetaObject *lhs, MetaObject *rhs) const override;
+    virtual void Swap(FMetaObject *lhs, FMetaObject *rhs) const override;
 
-    virtual bool Equals(const MetaObject *lhs, const MetaObject *rhs) const override;
-    virtual bool DeepEquals(const MetaObject *lhs, const MetaObject *rhs) const override;
+    virtual bool Equals(const FMetaObject *lhs, const FMetaObject *rhs) const override;
+    virtual bool DeepEquals(const FMetaObject *lhs, const FMetaObject *rhs) const override;
 
-    virtual void *RawPtr(MetaObject *obj) const override;
-    virtual const void *RawPtr(const MetaObject *obj) const override;
+    virtual void *RawPtr(FMetaObject *obj) const override;
+    virtual const void *RawPtr(const FMetaObject *obj) const override;
 
-    virtual size_t HashValue(const MetaObject *object) const override;
+    virtual size_t HashValue(const FMetaObject *object) const override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    using MetaProperty::_name;
-    using MetaProperty::_attributes;
+    using FMetaProperty::_name;
+    using FMetaProperty::_attributes;
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Class>
-MetaWrappedProperty<T, MetaFieldAccessor<T> > *MakeProperty(
-    const RTTI::Name& name, MetaProperty::Flags attributes, T _Class::* field) {
-    return new MetaWrappedProperty<T, MetaFieldAccessor<T> >(
+TMetaWrappedProperty<T, TMetaFieldAccessor<T> > *MakeProperty(
+    const FName& name, FMetaProperty::EFlags attributes, T _Class::* field) {
+    return new TMetaWrappedProperty<T, TMetaFieldAccessor<T> >(
         name, attributes,
         MakeFieldAccessor(field) );
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Class>
-MetaWrappedProperty<T, MetaMemberAccessor<T, _Class> > *MakeProperty(
-    const RTTI::Name& name, MetaProperty::Flags attributes,
+TMetaWrappedProperty<T, TMetaMemberAccessor<T, _Class> > *MakeProperty(
+    const FName& name, FMetaProperty::EFlags attributes,
     const T& (_Class::* getter)() const,
     void (_Class::* setter)(const T& ) ) {
-    return new MetaWrappedProperty<T, MetaMemberAccessor<T, _Class> >(
+    return new TMetaWrappedProperty<T, TMetaMemberAccessor<T, _Class> >(
         name, attributes,
         MakeMemberAccessor(getter, setter) );
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Class>
-MetaWrappedProperty<T, MetaDelegateAccessor<T, _Class> > *MakeProperty(
-    const RTTI::Name& name, MetaProperty::Flags attributes,
-    Delegate<T&   (*)(_Class* )>&& getter,
-    Delegate<void (*)(_Class*, T&& )>&& mover,
-    Delegate<void (*)(_Class*, const T& )>&& setter ) {
-    return new MetaWrappedProperty<T, MetaDelegateAccessor<T, _Class> >(
+TMetaWrappedProperty<T, TMetaDelegateAccessor<T, _Class> > *MakeProperty(
+    const FName& name, FMetaProperty::EFlags attributes,
+    TDelegate<T&   (*)(_Class* )>&& getter,
+    TDelegate<void (*)(_Class*, T&& )>&& mover,
+    TDelegate<void (*)(_Class*, const T& )>&& setter ) {
+    return new TMetaWrappedProperty<T, TMetaDelegateAccessor<T, _Class> >(
         name, attributes,
         MakeDelegateAccessor(std::move(getter), std::move(mover), std::move(setter)) );
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Class>
-MetaWrappedProperty<T, MetaDeprecatedAccessor<T, _Class> > *MakeDeprecatedProperty(
-    const RTTI::Name& name, MetaProperty::Flags attributes ) {
-    return new MetaWrappedProperty<T, MetaDeprecatedAccessor<T, _Class> >(
-        name, MetaProperty::Flags(attributes | MetaProperty::Deprecated | MetaProperty::ReadOnly),
+TMetaWrappedProperty<T, TMetaDeprecatedAccessor<T, _Class> > *MakeDeprecatedProperty(
+    const FName& name, FMetaProperty::EFlags attributes ) {
+    return new TMetaWrappedProperty<T, TMetaDeprecatedAccessor<T, _Class> >(
+        name, FMetaProperty::EFlags(attributes | FMetaProperty::Deprecated | FMetaProperty::ReadOnly),
         MakeDeprecatedAccessor<T, _Class>() );
 }
 //----------------------------------------------------------------------------

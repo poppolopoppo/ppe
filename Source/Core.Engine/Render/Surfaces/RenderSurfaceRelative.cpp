@@ -13,19 +13,19 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, RenderSurfaceRelative, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, FRenderSurfaceRelative, );
 //----------------------------------------------------------------------------
-RenderSurfaceRelative::RenderSurfaceRelative(
-    String&& name, const float2& ratio,
-    const Graphics::SurfaceFormat *renderTargetFormatIFN,
-    const Graphics::SurfaceFormat *depthStencilFormatIFN )
-:   RenderSurfaceRelative(std::move(name), ratio, nullptr, renderTargetFormatIFN, depthStencilFormatIFN) {}
+FRenderSurfaceRelative::FRenderSurfaceRelative(
+    FString&& name, const float2& ratio,
+    const Graphics::FSurfaceFormat *renderTargetFormatIFN,
+    const Graphics::FSurfaceFormat *depthStencilFormatIFN )
+:   FRenderSurfaceRelative(std::move(name), ratio, nullptr, renderTargetFormatIFN, depthStencilFormatIFN) {}
 //----------------------------------------------------------------------------
-RenderSurfaceRelative::RenderSurfaceRelative(
-    String&& name, const float2& ratio, AbstractRenderSurface *relative,
-    const Graphics::SurfaceFormat *renderTargetFormatIFN,
-    const Graphics::SurfaceFormat *depthStencilFormatIFN )
-:   AbstractRenderSurface(std::move(name))
+FRenderSurfaceRelative::FRenderSurfaceRelative(
+    FString&& name, const float2& ratio, FAbstractRenderSurface *relative,
+    const Graphics::FSurfaceFormat *renderTargetFormatIFN,
+    const Graphics::FSurfaceFormat *depthStencilFormatIFN )
+:   FAbstractRenderSurface(std::move(name))
 ,   _ratio(ratio)
 ,   _relative(relative)
 ,   _renderTargetFormat(renderTargetFormatIFN)
@@ -37,11 +37,11 @@ RenderSurfaceRelative::RenderSurfaceRelative(
             depthStencilFormatIFN->IsDepth() );
 }
 //----------------------------------------------------------------------------
-RenderSurfaceRelative::~RenderSurfaceRelative() {
+FRenderSurfaceRelative::~FRenderSurfaceRelative() {
     Assert(!_relativeLock);
 }
 //----------------------------------------------------------------------------
-void RenderSurfaceRelative::CreateResources_(
+void FRenderSurfaceRelative::CreateResources_(
     Graphics::IDeviceAPIEncapsulator *device,
     Graphics::PCRenderTarget& pRenderTarget,
     Graphics::PCDepthStencil& pDepthStencil ) {
@@ -52,8 +52,8 @@ void RenderSurfaceRelative::CreateResources_(
     Graphics::PRenderTarget rt;
     Graphics::PDepthStencil ds;
 
-    const Graphics::RenderTarget *relativeRT = nullptr;
-    const Graphics::DepthStencil *relativeDS = nullptr;
+    const Graphics::FRenderTarget *relativeRT = nullptr;
+    const Graphics::FDepthStencil *relativeDS = nullptr;
 
     if (_relative) {
         _relative->Prepare(device, _relativeLock);
@@ -64,7 +64,7 @@ void RenderSurfaceRelative::CreateResources_(
         relativeDS = device->BackBufferDepthStencil();
     }
 
-    const Graphics::Texture2D *relativeTex2D = relativeRT;
+    const Graphics::FTexture2D *relativeTex2D = relativeRT;
     if (!relativeTex2D)
         relativeTex2D = relativeDS;
     Assert(relativeTex2D);
@@ -75,13 +75,13 @@ void RenderSurfaceRelative::CreateResources_(
     Assert(relativeHeight > 0);
 
     if (_renderTargetFormat) {
-        rt = new Graphics::RenderTarget(relativeWidth, relativeHeight, _renderTargetFormat);
+        rt = new Graphics::FRenderTarget(relativeWidth, relativeHeight, _renderTargetFormat);
         rt->Freeze();
         rt->Create(device);
     }
 
     if (_depthStencilFormat) {
-        ds = new Graphics::DepthStencil(relativeWidth, relativeHeight, _depthStencilFormat);
+        ds = new Graphics::FDepthStencil(relativeWidth, relativeHeight, _depthStencilFormat);
         ds->Freeze();
         ds->Create(device);
     }
@@ -90,7 +90,7 @@ void RenderSurfaceRelative::CreateResources_(
     pDepthStencil = ds;
 }
 //----------------------------------------------------------------------------
-void RenderSurfaceRelative::DestroyResources_(
+void FRenderSurfaceRelative::DestroyResources_(
     Graphics::IDeviceAPIEncapsulator *device,
     Graphics::PCRenderTarget& pRenderTarget,
     Graphics::PCDepthStencil& pDepthStencil ) {
@@ -100,12 +100,12 @@ void RenderSurfaceRelative::DestroyResources_(
         _relative->Destroy(device, _relativeLock);
 
     if (_renderTargetFormat) {
-        const_cast<Graphics::RenderTarget *>(pRenderTarget.get())->Destroy(device);
+        const_cast<Graphics::FRenderTarget *>(pRenderTarget.get())->Destroy(device);
         RemoveRef_AssertReachZero(pRenderTarget);
     }
 
     if (_depthStencilFormat) {
-        const_cast<Graphics::DepthStencil *>(pDepthStencil.get())->Destroy(device);
+        const_cast<Graphics::FDepthStencil *>(pDepthStencil.get())->Destroy(device);
         RemoveRef_AssertReachZero(pDepthStencil);
     }
 }

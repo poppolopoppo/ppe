@@ -10,9 +10,9 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Alignment = sizeof(ptrdiff_t) >
-class Mallocator : public AllocatorBase<T> {
+class TMallocator : public TAllocatorBase<T> {
 public:
-    typedef AllocatorBase<T> base_type;
+    typedef TAllocatorBase<T> base_type;
 
     using typename base_type::pointer;
     using typename base_type::size_type;
@@ -30,18 +30,18 @@ public:
     template<typename U>
     struct rebind
     {
-        typedef Mallocator<U> other;
+        typedef TMallocator<U> other;
     };
 
-    Mallocator() noexcept {}
+    TMallocator() noexcept {}
 
-    Mallocator(const Mallocator& ) noexcept {}
+    TMallocator(const TMallocator& ) noexcept {}
     template <typename U>
-    Mallocator(const Mallocator<U>&) noexcept {}
+    TMallocator(const TMallocator<U>&) noexcept {}
 
-    Mallocator& operator=(const Mallocator& ) noexcept { return *this; }
+    TMallocator& operator=(const TMallocator& ) noexcept { return *this; }
     template <typename U>
-    Mallocator& operator=(const Mallocator<U>&) noexcept { return *this; }
+    TMallocator& operator=(const TMallocator<U>&) noexcept { return *this; }
 
     pointer allocate(size_type n);
     pointer allocate(size_type n, const void* /*hint*/) { return allocate(n); }
@@ -52,9 +52,9 @@ public:
 };
 //----------------------------------------------------------------------------
 template <typename T, size_t _Alignment>
-auto Mallocator<T, _Alignment>::allocate(size_type n) -> pointer {
+auto TMallocator<T, _Alignment>::allocate(size_type n) -> pointer {
     // The return value of allocate(0) is unspecified.
-    // Mallocator returns NULL in order to avoid depending
+    // TMallocator returns NULL in order to avoid depending
     // on malloc(0)'s implementation-defined behavior
     // (the implementation can define malloc(0) to return NULL,
     // in which case the bad_alloc check below would fire).
@@ -66,9 +66,9 @@ auto Mallocator<T, _Alignment>::allocate(size_type n) -> pointer {
     // The Standardization Committee recommends that std::length_error
     // be thrown in the case of integer overflow.
     if (n > max_size())
-        throw std::length_error("Mallocator<T>::allocate() - Integer overflow.");
+        throw std::length_error("TMallocator<T>::allocate() - Integer overflow.");
 
-    // Mallocator wraps malloc().
+    // TMallocator wraps malloc().
     void * const pv = Core::malloc<_Alignment>(n * sizeof(T));
 
     // Allocators should throw std::bad_alloc in the case of memory allocation failure.
@@ -79,17 +79,17 @@ auto Mallocator<T, _Alignment>::allocate(size_type n) -> pointer {
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Alignment>
-void Mallocator<T, _Alignment>::deallocate(void* p, size_type n) {
+void TMallocator<T, _Alignment>::deallocate(void* p, size_type n) {
     UNUSED(n);
-    // Mallocator wraps malloc().
+    // TMallocator wraps malloc().
     Core::free<_Alignment>(p);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Alignment>
-void* Mallocator<T, _Alignment>::relocate(void* p, size_type newSize, size_type oldSize) {
+void* TMallocator<T, _Alignment>::relocate(void* p, size_type newSize, size_type oldSize) {
     UNUSED(oldSize);
 
-    // Mallocator wraps malloc()
+    // TMallocator wraps malloc()
     void* const newp = Core::realloc<_Alignment>(p, newSize * sizeof(T));
     if (nullptr == newp && newSize)
         throw std::bad_alloc();
@@ -100,12 +100,12 @@ void* Mallocator<T, _Alignment>::relocate(void* p, size_type newSize, size_type 
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t A, typename U, size_t B>
-bool operator ==(const Mallocator<T, A>&/* lhs */, const Mallocator<U, B>&/* rhs */) {
+bool operator ==(const TMallocator<T, A>&/* lhs */, const TMallocator<U, B>&/* rhs */) {
     return A == B;
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t A, typename U, size_t B>
-bool operator !=(const Mallocator<T, A>& lhs, const Mallocator<U, B>& rhs) {
+bool operator !=(const TMallocator<T, A>& lhs, const TMallocator<U, B>& rhs) {
     return !operator ==(lhs, rhs);
 }
 //----------------------------------------------------------------------------

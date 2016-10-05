@@ -3,17 +3,17 @@
 #include "Core/Core.h"
 
 namespace Core {
-class MemoryTrackingData;
+class FMemoryTrackingData;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void* (malloc)(MemoryTrackingData& trackingData, size_t size);
+void* (malloc)(FMemoryTrackingData& trackingData, size_t size);
 //----------------------------------------------------------------------------
-void  (free)(MemoryTrackingData& trackingData, void *ptr);
+void  (free)(FMemoryTrackingData& trackingData, void *ptr);
 //----------------------------------------------------------------------------
-void* (calloc)(MemoryTrackingData& trackingData, size_t nmemb, size_t size);
+void* (calloc)(FMemoryTrackingData& trackingData, size_t nmemb, size_t size);
 //----------------------------------------------------------------------------
-void* (realloc)(MemoryTrackingData& trackingData, void *ptr, size_t size);
+void* (realloc)(FMemoryTrackingData& trackingData, void *ptr, size_t size);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -34,7 +34,7 @@ void* tracking_realloc(void *ptr, size_t size);
 #ifdef USE_MEMORY_DOMAINS
 //----------------------------------------------------------------------------
 #define CLASS_MEMORY_TRACKING_DEF(T, _Domain) \
-    static Core::MemoryTrackingData& Class_TrackingData() { \
+    static Core::FMemoryTrackingData& Class_TrackingData() { \
         return MEMORY_DOMAIN_TRACKING_DATA(_Domain); \
     } \
     \
@@ -60,7 +60,7 @@ void* tracking_realloc(void *ptr, size_t size);
 #else
 //----------------------------------------------------------------------------
 #define CLASS_MEMORY_TRACKING_DEF(T, _Domain) \
-    static MemoryTrackingData& Class_TrackingData() { \
+    static FMemoryTrackingData& Class_TrackingData() { \
         return MEMORY_DOMAIN_TRACKING_DATA(_Domain); \
     }
 //----------------------------------------------------------------------------

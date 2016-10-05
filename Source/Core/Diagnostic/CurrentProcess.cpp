@@ -8,9 +8,9 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-CurrentProcess::CurrentProcess(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t **argv)
-:   _args(NewArray<WString>(argc - 1)), _exitCode(0), _appIcon(0)
-,   _startedAt(Timepoint::Now()) {
+FCurrentProcess::FCurrentProcess(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t **argv)
+:   _args(NewArray<FWString>(argc - 1)), _exitCode(0), _appIcon(0)
+,   _startedAt(FTimepoint::Now()) {
     Assert(argc); // current process name at least
 
     for (size_t i = 1; i < argc; ++i) {
@@ -22,7 +22,7 @@ CurrentProcess::CurrentProcess(void *applicationHandle, int nShowCmd, size_t arg
 
     size_t dirSep = _fileName.size();
     for (; dirSep > 0 && _fileName[dirSep - 1] != L'/' && _fileName[dirSep - 1] != L'\\'; --dirSep);
-    _directory = WString(_fileName.begin(), _fileName.begin() + dirSep);
+    _directory = FWString(_fileName.begin(), _fileName.begin() + dirSep);
 
     _applicationHandle = applicationHandle;
     _nShowCmd = nShowCmd;
@@ -36,7 +36,7 @@ CurrentProcess::CurrentProcess(void *applicationHandle, int nShowCmd, size_t arg
 #endif
 }
 //----------------------------------------------------------------------------
-CurrentProcess::~CurrentProcess() {
+FCurrentProcess::~FCurrentProcess() {
     LOG(Info, L"[Process] Exit with code = {0}.", _exitCode);
 }
 //----------------------------------------------------------------------------

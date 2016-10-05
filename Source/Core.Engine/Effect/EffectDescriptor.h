@@ -14,9 +14,9 @@
 
 namespace Core {
 namespace Graphics {
-class BindName;
-enum class ShaderProfileType;
-enum class ShaderProgramType;
+class FBindName;
+enum class EShaderProfileType;
+enum class EShaderProgramType;
 FWD_REFPTR(VertexDeclaration);
 }
 
@@ -26,92 +26,92 @@ FWD_REFPTR(RenderState);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class EffectDescriptor : public IEffectPasses {
+class FEffectDescriptor : public IEffectPasses {
 public:
-    EffectDescriptor();
-    virtual ~EffectDescriptor();
+    FEffectDescriptor();
+    virtual ~FEffectDescriptor();
 
-    EffectDescriptor(   const char *name,
-                        const Engine::RenderState *renderState,
-                        const Filename& hs,
-                        const Filename& ds,
-                        const Filename& gs,
-                        const Filename& vs,
-                        const Filename& ps,
-                        const Filename& cs,
-                        Graphics::ShaderProfileType shaderProfile,
-                        const Graphics::VertexDeclaration *vertexDeclaration,
-                        const MemoryView<const Pair<String, String>>& defines,
-                        const MemoryView<const Pair<Graphics::BindName, String>>& substitutions,
-                        const MemoryView<const Pair<Graphics::BindName, PMaterialParameter>>& parameters,
-                        const MemoryView<const Pair<Graphics::BindName, Filename>>& textures );
+    FEffectDescriptor(   const char *name,
+                        const Engine::FRenderState *renderState,
+                        const FFilename& hs,
+                        const FFilename& ds,
+                        const FFilename& gs,
+                        const FFilename& vs,
+                        const FFilename& ps,
+                        const FFilename& cs,
+                        Graphics::EShaderProfileType shaderProfile,
+                        const Graphics::FVertexDeclaration *vertexDeclaration,
+                        const TMemoryView<const TPair<FString, FString>>& defines,
+                        const TMemoryView<const TPair<Graphics::FBindName, FString>>& substitutions,
+                        const TMemoryView<const TPair<Graphics::FBindName, PMaterialParameter>>& parameters,
+                        const TMemoryView<const TPair<Graphics::FBindName, FFilename>>& textures );
 
-    const Engine::RenderState *RenderState() const { return _renderState.get(); }
-    void SetRenderState(const Engine::RenderState *value);
+    const Engine::FRenderState *FRenderState() const { return _renderState.get(); }
+    void SetRenderState(const Engine::FRenderState *value);
 
-    const Filename& HS() const { return _hs; }
-    const Filename& DS() const { return _ds; }
-    const Filename& GS() const { return _gs; }
-    const Filename& VS() const { return _vs; }
-    const Filename& PS() const { return _ps; }
-    const Filename& CS() const { return _cs; }
+    const FFilename& HS() const { return _hs; }
+    const FFilename& DS() const { return _ds; }
+    const FFilename& GS() const { return _gs; }
+    const FFilename& VS() const { return _vs; }
+    const FFilename& PS() const { return _ps; }
+    const FFilename& CS() const { return _cs; }
 
-    void SetHS(const Filename& filename) { _hs = filename; }
-    void SetDS(const Filename& filename) { _ds = filename; }
-    void SetGS(const Filename& filename) { _gs = filename; }
-    void SetVS(const Filename& filename) { _vs = filename; }
-    void SetPS(const Filename& filename) { _ps = filename; }
-    void SetCS(const Filename& filename) { _cs = filename; }
+    void SetHS(const FFilename& filename) { _hs = filename; }
+    void SetDS(const FFilename& filename) { _ds = filename; }
+    void SetGS(const FFilename& filename) { _gs = filename; }
+    void SetVS(const FFilename& filename) { _vs = filename; }
+    void SetPS(const FFilename& filename) { _ps = filename; }
+    void SetCS(const FFilename& filename) { _cs = filename; }
 
-    const String& Name() const { return _name; }
+    const FString& FName() const { return _name; }
     void SetName(const char *name);
 
-    const Filename& ProgramFilename(Graphics::ShaderProgramType programType) const;
-    void SetProgramFilename(Graphics::ShaderProgramType, const Filename& filename);
+    const FFilename& ProgramFilename(Graphics::EShaderProgramType programType) const;
+    void SetProgramFilename(Graphics::EShaderProgramType, const FFilename& filename);
 
-    Graphics::ShaderProfileType ShaderProfile() const { return _shaderProfile; }
-    void SetShaderProfile(Graphics::ShaderProfileType value) { _shaderProfile = value; }
+    Graphics::EShaderProfileType ShaderProfile() const { return _shaderProfile; }
+    void SetShaderProfile(Graphics::EShaderProfileType value) { _shaderProfile = value; }
 
-    const VECTOR(Effect, Graphics::PCVertexDeclaration)& VertexDeclarations() const { return _vertexDeclarations; }
+    const VECTOR(FEffect, Graphics::PCVertexDeclaration)& VertexDeclarations() const { return _vertexDeclarations; }
 
-    const ASSOCIATIVE_VECTOR(Effect, String, String)& Defines() const { return _defines; }
-    const ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, String)& Substitutions() const { return _substitutions; }
-    const ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, PMaterialParameter)& Parameters() const { return _parameters; }
-    const ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, Filename)& Textures() const { return _textures; }
+    const ASSOCIATIVE_VECTOR(FEffect, FString, FString)& Defines() const { return _defines; }
+    const ASSOCIATIVE_VECTOR(FEffect, Graphics::FBindName, FString)& Substitutions() const { return _substitutions; }
+    const ASSOCIATIVE_VECTOR(FEffect, Graphics::FBindName, PMaterialParameter)& Parameters() const { return _parameters; }
+    const ASSOCIATIVE_VECTOR(FEffect, Graphics::FBindName, FFilename)& Textures() const { return _textures; }
 
     size_t RenderLayerOffset() const { return _renderLayerOffset; }
     void SetRenderLayerOffset(size_t value);
 
-    void AddVertexDeclaration(const Graphics::VertexDeclaration *declaration);
-    void AddDefine(const String& name, const String& value);
-    void AddSubstitution(const Graphics::BindName& tag, const String& defines);
-    void AddTexture(const Graphics::BindName& name, const Filename& filename);
-    void AddParameter(const Graphics::BindName& name, IMaterialParameter *parameter);
+    void AddVertexDeclaration(const Graphics::FVertexDeclaration *declaration);
+    void AddDefine(const FString& name, const FString& value);
+    void AddSubstitution(const Graphics::FBindName& tag, const FString& defines);
+    void AddTexture(const Graphics::FBindName& name, const FFilename& filename);
+    void AddParameter(const Graphics::FBindName& name, IMaterialParameter *parameter);
 
-    virtual size_t FillEffectPasses(const EffectDescriptor **pOutPasses, const size_t capacity) const override;
+    virtual size_t FillEffectPasses(const FEffectDescriptor **pOutPasses, const size_t capacity) const override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    String _name;
+    FString _name;
 
     PCRenderState _renderState;
 
-    Filename _hs;
-    Filename _ds;
-    Filename _gs;
-    Filename _vs;
-    Filename _ps;
-    Filename _cs;
+    FFilename _hs;
+    FFilename _ds;
+    FFilename _gs;
+    FFilename _vs;
+    FFilename _ps;
+    FFilename _cs;
 
-    Graphics::ShaderProfileType _shaderProfile;
+    Graphics::EShaderProfileType _shaderProfile;
 
-    VECTOR(Effect, Graphics::PCVertexDeclaration) _vertexDeclarations;
+    VECTOR(FEffect, Graphics::PCVertexDeclaration) _vertexDeclarations;
 
-    ASSOCIATIVE_VECTOR(Effect, String, String) _defines;
-    ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, String) _substitutions;
-    ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, Filename) _textures;
-    ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, PMaterialParameter) _parameters;
+    ASSOCIATIVE_VECTOR(FEffect, FString, FString) _defines;
+    ASSOCIATIVE_VECTOR(FEffect, Graphics::FBindName, FString) _substitutions;
+    ASSOCIATIVE_VECTOR(FEffect, Graphics::FBindName, FFilename) _textures;
+    ASSOCIATIVE_VECTOR(FEffect, Graphics::FBindName, PMaterialParameter) _parameters;
 
     size_t _renderLayerOffset;
 };

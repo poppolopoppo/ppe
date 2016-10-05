@@ -16,11 +16,11 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-hash_t hash_value(const FileStat& s) {
+hash_t hash_value(const FFileStat& s) {
     return hash_as_pod(s);
 }
 //----------------------------------------------------------------------------
-void swap(FileStat& lhs, FileStat& rhs) {
+void swap(FFileStat& lhs, FFileStat& rhs) {
     using std::swap;
     swap(lhs.UID, rhs.UID);
     swap(lhs.GID, rhs.GID);
@@ -32,13 +32,13 @@ void swap(FileStat& lhs, FileStat& rhs) {
     swap(lhs.LastModified, rhs.LastModified);
 }
 //----------------------------------------------------------------------------
-bool FileStat::FromNativePath(FileStat* pstat, const wchar_t* nativeFilename) {
+bool FFileStat::FromNativePath(FFileStat* pstat, const wchar_t* nativeFilename) {
     Assert(pstat);
     Assert(nativeFilename);
 
     struct ::_stat64 fs;
     if (0 != ::_wstat64(nativeFilename, &fs)) {
-        *pstat = FileStat();
+        *pstat = FFileStat();
         return false;
     }
 

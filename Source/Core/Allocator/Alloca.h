@@ -43,7 +43,7 @@ FORCE_INLINE T *TypedRelocateAlloca(T* ptr, size_t count, bool keepData) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-struct AllocaBlock {
+struct TAllocaBlock {
     T* RawData;
 
 #ifdef ARCH_X64
@@ -54,9 +54,9 @@ struct AllocaBlock {
     u32 UsingSysAlloca : 1;
 #endif
 
-    AllocaBlock() : RawData(nullptr), Count(0), UsingSysAlloca(0) {}
+    TAllocaBlock() : RawData(nullptr), Count(0), UsingSysAlloca(0) {}
 
-    AllocaBlock(T* rawData, size_t count)
+    TAllocaBlock(T* rawData, size_t count)
     :   RawData(rawData), Count(count), UsingSysAlloca(1) {
         if (nullptr == RawData) {
             RawData = TypedAlloca< T >(Count);
@@ -65,7 +65,7 @@ struct AllocaBlock {
         Assert(RawData);
     }
 
-    ~AllocaBlock() {
+    ~TAllocaBlock() {
         if (not UsingSysAlloca && RawData)
             FreeAlloca(RawData);
     }
@@ -84,7 +84,7 @@ struct AllocaBlock {
             Relocate(newCount, keepData);
     }
 
-    MemoryView<T> MakeView() const { return MemoryView<T>(RawData, Count); }
+    TMemoryView<T> MakeView() const { return TMemoryView<T>(RawData, Count); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -97,23 +97,23 @@ struct AllocaBlock {
 //----------------------------------------------------------------------------
 #define MALLOCA(T, _NAME, _COUNT) \
     const size_t CONCAT(_Count_, _NAME) = (_COUNT); \
-    const Core::AllocaBlock<T> _NAME( static_cast< T* >( \
+    const Core::TAllocaBlock<T> _NAME( static_cast< T* >( \
         SYSALLOCA_IFP(sizeof(T) * CONCAT(_Count_, _NAME))), \
         CONCAT(_Count_, _NAME) )
 //----------------------------------------------------------------------------
 #define STACKLOCAL_POD_ARRAY(T, _NAME, _COUNT) \
     MALLOCA(T, CONCAT(_Alloca_, _NAME), _COUNT ); \
-    const Core::MemoryView< T > _NAME( CONCAT(_Alloca_, _NAME).MakeView() )
+    const Core::TMemoryView< T > _NAME( CONCAT(_Alloca_, _NAME).MakeView() )
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class AllocaStartup {
+class FAllocaStartup {
 public:
     static void Start(bool mainThread);
     static void Shutdown();
 
-    AllocaStartup(bool mainThread) { Start(mainThread); }
-    ~AllocaStartup() { Shutdown(); }
+    FAllocaStartup(bool mainThread) { Start(mainThread); }
+    ~FAllocaStartup() { Shutdown(); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

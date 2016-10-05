@@ -18,27 +18,27 @@ namespace Engine {
 //----------------------------------------------------------------------------
 ENGINESERVICE_GUID_DEF(IRenderSurfaceService);
 //----------------------------------------------------------------------------
-DefaultRenderSurfaceService::DefaultRenderSurfaceService()
+FDefaultRenderSurfaceService::FDefaultRenderSurfaceService()
 :   IRenderSurfaceService(ENGINESERVICE_CONSTRUCT(IRenderSurfaceService))
 ,   _manager(CORE_RENDERSURFACE_VIRTUALDIRW, CORE_RENDERSURFACE_RENDERTARGETBASENAMEW, CORE_RENDERSURFACE_DEPTHSTENCILBASENAMEW){}
 //----------------------------------------------------------------------------
-DefaultRenderSurfaceService::~DefaultRenderSurfaceService() {}
+FDefaultRenderSurfaceService::~FDefaultRenderSurfaceService() {}
 //----------------------------------------------------------------------------
-Engine::RenderSurfaceManager *DefaultRenderSurfaceService::Manager() {
+Engine::FRenderSurfaceManager *FDefaultRenderSurfaceService::Manager() {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(ServiceAvailable());
 
     return &_manager;
 }
 //----------------------------------------------------------------------------
-const Engine::RenderSurfaceManager *DefaultRenderSurfaceService::Manager() const {
+const Engine::FRenderSurfaceManager *FDefaultRenderSurfaceService::Manager() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(ServiceAvailable());
 
     return &_manager;
 }
 //----------------------------------------------------------------------------
-void DefaultRenderSurfaceService::Start(IServiceProvider *provider, const Guid& guid) {
+void FDefaultRenderSurfaceService::Start(IServiceProvider *provider, const FGuid& guid) {
     IRenderSurfaceService::Start(provider, guid);
 
     ENGINESERVICE_PROVIDE(IDeviceEncapsulatorService, deviceService, provider);
@@ -46,7 +46,7 @@ void DefaultRenderSurfaceService::Start(IServiceProvider *provider, const Guid& 
     _manager.Start(deviceService->DeviceEncapsulator()->Device());
 }
 //----------------------------------------------------------------------------
-void DefaultRenderSurfaceService::Shutdown(IServiceProvider *provider, const Guid& guid) {
+void FDefaultRenderSurfaceService::Shutdown(IServiceProvider *provider, const FGuid& guid) {
     IRenderSurfaceService::Shutdown(provider, guid);
 
     ENGINESERVICE_PROVIDE(IDeviceEncapsulatorService, deviceService, provider);

@@ -6,13 +6,13 @@
 
 namespace Core {
 namespace Engine {
-class MaterialDatabase;
+class FMaterialDatabase;
 
 #define EACH_MATERIALPARAMETER_TIME(_Macro) \
-    _Macro(MaterialVariability::World, float,   WorldElapsedSeconds) \
-    _Macro(MaterialVariability::World, float,   WorldTotalSeconds) \
+    _Macro(EMaterialVariability::FWorld, float,   WorldElapsedSeconds) \
+    _Macro(EMaterialVariability::FWorld, float,   WorldTotalSeconds) \
     \
-    _Macro(MaterialVariability::Frame, float,   ProcessTotalSeconds)
+    _Macro(EMaterialVariability::FFrame, float,   ProcessTotalSeconds)
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -21,7 +21,7 @@ namespace MaterialParameterTime {
 //----------------------------------------------------------------------------
 EACH_MATERIALPARAMETER_TIME(MATERIALPARAMETER_FN_DECL)
 //----------------------------------------------------------------------------
-void RegisterMaterialParameters(MaterialDatabase *database);
+void RegisterMaterialParameters(FMaterialDatabase *database);
 //----------------------------------------------------------------------------
 } //!MaterialParameterTime
 //----------------------------------------------------------------------------

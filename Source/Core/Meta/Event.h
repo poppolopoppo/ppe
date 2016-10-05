@@ -13,15 +13,15 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Delegate>
-class Event {
+class TEvent {
 public:
-    Event() { static_assert(false, "Event<T> accepts only delegates"); }
+    TEvent() { static_assert(false, "TEvent<T> accepts only delegates"); }
 };
 //----------------------------------------------------------------------------
 template <typename _Ret, typename... _Args >
-class Event< Delegate<_Ret (*)(_Args... )> > : public Meta::ThreadResource {
+class TEvent< TDelegate<_Ret (*)(_Args... )> > : public Meta::FThreadResource {
 public:
-    typedef Delegate<_Ret (*)(_Args... )> delegate_type;
+    typedef TDelegate<_Ret (*)(_Args... )> delegate_type;
     typedef VECTORINSITU(Event, delegate_type, 3) vector_type;
 
     bool empty() const { return _delegates.empty(); }
@@ -40,11 +40,11 @@ public:
     void clear();
     void reserve(size_t capacity);
 
-    Event& operator +=(const delegate_type& d) { Add(d); return *this; }
-    Event& operator -=(const delegate_type& d) { Remove(d); return *this; }
+    TEvent& operator +=(const delegate_type& d) { Add(d); return *this; }
+    TEvent& operator -=(const delegate_type& d) { Remove(d); return *this; }
 
-    Event& operator <<(const delegate_type& d) { Add(d); return *this; }
-    Event& operator >>(const delegate_type& d) { Remove(d); return *this; }
+    TEvent& operator <<(const delegate_type& d) { Add(d); return *this; }
+    TEvent& operator >>(const delegate_type& d) { Remove(d); return *this; }
 
     void Invoke(_Args... args) const;
     void operator ()(_Args... args) const { Invoke(std::forward<_Args>(args)...); }
@@ -54,14 +54,14 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename _Ret, typename... _Args >
-void Event< Delegate<_Ret (*)(_Args... )> >::Add(const delegate_type& d) {
+void TEvent< TDelegate<_Ret (*)(_Args... )> >::Add(const delegate_type& d) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(_delegates.end() == std::find(_delegates.begin(), _delegates.end(), d));
     _delegates.push_back(d);
 }
 //----------------------------------------------------------------------------
 template <typename _Ret, typename... _Args >
-void Event< Delegate<_Ret (*)(_Args... )> >::Remove(const delegate_type& d) {
+void TEvent< TDelegate<_Ret (*)(_Args... )> >::Remove(const delegate_type& d) {
     THIS_THREADRESOURCE_CHECKACCESS();
     const auto it = std::find(_delegates.begin(), _delegates.end(), d);
     Assert(_delegates.end() != it);
@@ -70,7 +70,7 @@ void Event< Delegate<_Ret (*)(_Args... )> >::Remove(const delegate_type& d) {
 //----------------------------------------------------------------------------
 template <typename _Ret, typename... _Args >
 template <typename _It>
-void Event< Delegate<_Ret (*)(_Args... )> >::Add(_It begin, _It end) {
+void TEvent< TDelegate<_Ret (*)(_Args... )> >::Add(_It begin, _It end) {
     THIS_THREADRESOURCE_CHECKACCESS();
 #ifdef WITH_CORE_ASSERT
     for (auto it = begin; it != end; ++it)
@@ -81,19 +81,19 @@ void Event< Delegate<_Ret (*)(_Args... )> >::Add(_It begin, _It end) {
 }
 //----------------------------------------------------------------------------
 template <typename _Ret, typename... _Args >
-void Event< Delegate<_Ret (*)(_Args... )> >::clear() {
+void TEvent< TDelegate<_Ret (*)(_Args... )> >::clear() {
     THIS_THREADRESOURCE_CHECKACCESS();
     _delegates.clear();
 }
 //----------------------------------------------------------------------------
 template <typename _Ret, typename... _Args >
-void Event< Delegate<_Ret (*)(_Args... )> >::reserve(size_t capacity) {
+void TEvent< TDelegate<_Ret (*)(_Args... )> >::reserve(size_t capacity) {
     THIS_THREADRESOURCE_CHECKACCESS();
     _delegates.reserve(capacity);
 }
 //----------------------------------------------------------------------------
 template <typename _Ret, typename... _Args >
-void Event< Delegate<_Ret (*)(_Args... )> >::Invoke(_Args... args) const {
+void TEvent< TDelegate<_Ret (*)(_Args... )> >::Invoke(_Args... args) const {
     THIS_THREADRESOURCE_CHECKACCESS();
     for (const delegate_type& d : _delegates)
         d.Invoke(std::forward<_Args>(args)...);
@@ -103,16 +103,16 @@ void Event< Delegate<_Ret (*)(_Args... )> >::Invoke(_Args... args) const {
 //----------------------------------------------------------------------------
 // Public interface of event, hides owner-only methods
 // ex :
-//      PublicEvent<Delegate> Event() { return _event; }
-//      Event<Delegate> _event;
+//      TPublicEvent<TDelegate> TEvent() { return _event; }
+//      TEvent<TDelegate> _event;
 //----------------------------------------------------------------------------
 template <typename _Delegate>
-class PublicEvent {
+class TPublicEvent {
 public:
     typedef _Delegate delegate_type;
-    typedef Event<_Delegate> event_type;
+    typedef TEvent<_Delegate> event_type;
 
-    PublicEvent(event_type& owner) : _owner(owner) {}
+    TPublicEvent(event_type& owner) : _owner(owner) {}
 
     void Add(const delegate_type& d) { _owner.Add(d); }
     void Remove(const delegate_type& d) { _owner.Remove(d); }

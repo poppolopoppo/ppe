@@ -13,7 +13,7 @@
 #include "Core.Engine/Scene/SceneObserver.h"
 
 namespace Core {
-class Timeline;
+class FTimeline;
 
 namespace Graphics {
 class IDeviceAPIEncapsulator;
@@ -25,74 +25,74 @@ namespace Engine {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class ICamera;
-typedef RefPtr<ICamera> PCamera;
-struct VariabilitySeed;
+typedef TRefPtr<ICamera> PCamera;
+struct FVariabilitySeed;
 FWD_REFPTR(World);
 //----------------------------------------------------------------------------
-class Scene : public RefCountable, Meta::ThreadResource {
+class FScene : public FRefCountable, Meta::FThreadResource {
 public:
-    Scene(  const char *name,
+    FScene(  const char *name,
             ICamera *camera,
-            const Engine::World *world,
-            const Engine::MaterialDatabase *materialDatabase );
-    ~Scene();
+            const Engine::FWorld *world,
+            const Engine::FMaterialDatabase *materialDatabase );
+    ~FScene();
 
-    const String& Name() const { THIS_THREADRESOURCE_CHECKACCESS(); return _name; }
-    SceneStatus Status() const { THIS_THREADRESOURCE_CHECKACCESS(); return _status; }
+    const FString& FName() const { THIS_THREADRESOURCE_CHECKACCESS(); return _name; }
+    ESceneStatus Status() const { THIS_THREADRESOURCE_CHECKACCESS(); return _status; }
 
-    const ICamera *Camera() const { THIS_THREADRESOURCE_CHECKACCESS(); return _camera.get(); }
-    const Engine::World *World() const { THIS_THREADRESOURCE_CHECKACCESS(); return _world.get(); }
+    const ICamera *FCamera() const { THIS_THREADRESOURCE_CHECKACCESS(); return _camera.get(); }
+    const Engine::FWorld *FWorld() const { THIS_THREADRESOURCE_CHECKACCESS(); return _world.get(); }
 
-    Engine::MaterialDatabase *MaterialDatabase() { THIS_THREADRESOURCE_CHECKACCESS(); return &_materialDatabase; }
-    const Engine::MaterialDatabase *MaterialDatabase() const { THIS_THREADRESOURCE_CHECKACCESS(); return &_materialDatabase; }
+    Engine::FMaterialDatabase *FMaterialDatabase() { THIS_THREADRESOURCE_CHECKACCESS(); return &_materialDatabase; }
+    const Engine::FMaterialDatabase *FMaterialDatabase() const { THIS_THREADRESOURCE_CHECKACCESS(); return &_materialDatabase; }
 
-    Engine::RenderTree *RenderTree() { THIS_THREADRESOURCE_CHECKACCESS(); return &_renderTree; }
-    const Engine::RenderTree *RenderTree() const { THIS_THREADRESOURCE_CHECKACCESS(); return &_renderTree; }
+    Engine::FRenderTree *FRenderTree() { THIS_THREADRESOURCE_CHECKACCESS(); return &_renderTree; }
+    const Engine::FRenderTree *FRenderTree() const { THIS_THREADRESOURCE_CHECKACCESS(); return &_renderTree; }
 
-    Engine::SharedConstantBufferFactory *SharedConstantBufferFactory() { THIS_THREADRESOURCE_CHECKACCESS(); return &_sharedConstantBufferFactory; }
-    const Engine::SharedConstantBufferFactory *SharedConstantBufferFactory() const { THIS_THREADRESOURCE_CHECKACCESS(); return &_sharedConstantBufferFactory; }
+    Engine::FSharedConstantBufferFactory *FSharedConstantBufferFactory() { THIS_THREADRESOURCE_CHECKACCESS(); return &_sharedConstantBufferFactory; }
+    const Engine::FSharedConstantBufferFactory *FSharedConstantBufferFactory() const { THIS_THREADRESOURCE_CHECKACCESS(); return &_sharedConstantBufferFactory; }
 
     void Initialize(Graphics::IDeviceAPIEncapsulator *device);
     void Destroy(Graphics::IDeviceAPIEncapsulator *device);
 
-    void Update(const Timeline& timeline);
-    void Prepare(Graphics::IDeviceAPIEncapsulator *device, VariabilitySeed *seeds);
+    void Update(const FTimeline& timeline);
+    void Prepare(Graphics::IDeviceAPIEncapsulator *device, FVariabilitySeed *seeds);
     void Render(Graphics::IDeviceAPIContext *context);
     
-    SceneEvent& OnBeforeInitialize() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onBeforeInitialize; }
-    SceneEvent& OnAfterInitialize() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onAfterInitialize; }
-    SceneEvent& OnBeforeUpdate() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onBeforeUpdate; }
-    SceneEvent& OnAfterUpdate() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onAfterUpdate; }
-    SceneEvent& OnBeforePrepare() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onBeforePrepare; }
-    SceneEvent& OnAfterPrepare() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onAfterPrepare; }
-    SceneEvent& OnBeforeRender() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onBeforeRender; }
-    SceneEvent& OnAfterRender() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onAfterRender; }
-    SceneEvent& OnBeforeDestroy() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onBeforeDestroy; }
-    SceneEvent& OnAfterDestroy() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onAfterDestroy; }
+    FSceneEvent& OnBeforeInitialize() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onBeforeInitialize; }
+    FSceneEvent& OnAfterInitialize() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onAfterInitialize; }
+    FSceneEvent& OnBeforeUpdate() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onBeforeUpdate; }
+    FSceneEvent& OnAfterUpdate() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onAfterUpdate; }
+    FSceneEvent& OnBeforePrepare() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onBeforePrepare; }
+    FSceneEvent& OnAfterPrepare() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onAfterPrepare; }
+    FSceneEvent& OnBeforeRender() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onBeforeRender; }
+    FSceneEvent& OnAfterRender() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onAfterRender; }
+    FSceneEvent& OnBeforeDestroy() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onBeforeDestroy; }
+    FSceneEvent& OnAfterDestroy() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onAfterDestroy; }
 
 private:
-    void ChangeStatus_(SceneStatus value);
+    void ChangeStatus_(ESceneStatus value);
 
-    String _name;
-    SceneStatus _status;
+    FString _name;
+    ESceneStatus _status;
 
     PCamera _camera;
     PCWorld _world;
 
-    Engine::MaterialDatabase _materialDatabase;
-    Engine::RenderTree _renderTree;
-    Engine::SharedConstantBufferFactory _sharedConstantBufferFactory;
+    Engine::FMaterialDatabase _materialDatabase;
+    Engine::FRenderTree _renderTree;
+    Engine::FSharedConstantBufferFactory _sharedConstantBufferFactory;
 
-    mutable SceneEvent _onBeforeInitialize;
-    mutable SceneEvent _onAfterInitialize;
-    mutable SceneEvent _onBeforeUpdate;
-    mutable SceneEvent _onAfterUpdate;
-    mutable SceneEvent _onBeforePrepare;
-    mutable SceneEvent _onAfterPrepare;
-    mutable SceneEvent _onBeforeRender;
-    mutable SceneEvent _onAfterRender;
-    mutable SceneEvent _onBeforeDestroy;
-    mutable SceneEvent _onAfterDestroy;
+    mutable FSceneEvent _onBeforeInitialize;
+    mutable FSceneEvent _onAfterInitialize;
+    mutable FSceneEvent _onBeforeUpdate;
+    mutable FSceneEvent _onAfterUpdate;
+    mutable FSceneEvent _onBeforePrepare;
+    mutable FSceneEvent _onAfterPrepare;
+    mutable FSceneEvent _onBeforeRender;
+    mutable FSceneEvent _onAfterRender;
+    mutable FSceneEvent _onBeforeDestroy;
+    mutable FSceneEvent _onAfterDestroy;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

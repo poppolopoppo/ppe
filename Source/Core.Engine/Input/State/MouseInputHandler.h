@@ -12,12 +12,12 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MouseState {
+class FMouseState {
 public:
-    friend class MouseInputHandler;
+    friend class FMouseInputHandler;
 
-    MouseState();
-    ~MouseState();
+    FMouseState();
+    ~FMouseState();
 
     int X() const { return _x; }
     int Y() const { return _y; }
@@ -38,21 +38,21 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MouseInputHandler : public Graphics::IWindowMessageHandler {
+class FMouseInputHandler : public Graphics::IWindowMessageHandler {
 public:
-    MouseInputHandler();
-    virtual ~MouseInputHandler();
+    FMouseInputHandler();
+    virtual ~FMouseInputHandler();
 
-    MouseInputHandler(const MouseInputHandler& ) = delete;
-    MouseInputHandler& operator =(const MouseInputHandler& ) = delete;
+    FMouseInputHandler(const FMouseInputHandler& ) = delete;
+    FMouseInputHandler& operator =(const FMouseInputHandler& ) = delete;
 
-    const MouseState& State() const { return _state; }
+    const FMouseState& State() const { return _state; }
 
-    virtual void RegisterMessageDelegates(Graphics::BasicWindow *wnd) override;
-    virtual void UnregisterMessageDelegates(Graphics::BasicWindow *wnd) override;
+    virtual void RegisterMessageDelegates(Graphics::FBasicWindow *wnd) override;
+    virtual void UnregisterMessageDelegates(Graphics::FBasicWindow *wnd) override;
 
-    virtual void UpdateBeforeDispatch(Graphics::BasicWindow *wnd) override;
-    virtual void UpdateAfterDispatch(Graphics::BasicWindow *wnd) override;
+    virtual void UpdateBeforeDispatch(Graphics::FBasicWindow *wnd) override;
+    virtual void UpdateAfterDispatch(Graphics::FBasicWindow *wnd) override;
 
     int ClientX() const { return _state.X(); }
     int ClientY() const { return _state.Y(); }
@@ -60,23 +60,23 @@ public:
     float RelativeX() const { return _relativeX; }
     float RelativeY() const { return _relativeY; }
 
-    bool IsButtonDown(MouseButton btn) const { return _state._buttonsDown.Contains(btn); }
-    bool IsButtonPressed(MouseButton btn) const { return _state._buttonsPressed.Contains(btn); }
-    bool IsButtonUp(MouseButton btn) const { return _state._buttonsUp.Contains(btn); }
+    bool IsButtonDown(EMouseButton btn) const { return _state._buttonsDown.Contains(btn); }
+    bool IsButtonPressed(EMouseButton btn) const { return _state._buttonsPressed.Contains(btn); }
+    bool IsButtonUp(EMouseButton btn) const { return _state._buttonsUp.Contains(btn); }
 
     void ClearState() { _state.Clear(); }
 
 protected:
-    static Graphics::MessageResult OnMouseMove_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);
-    static Graphics::MessageResult OnMouseLButtonDown_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);
-    static Graphics::MessageResult OnMouseLButtonUp_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);
-    static Graphics::MessageResult OnMouseRButtonDown_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);
-    static Graphics::MessageResult OnMouseRButtonUp_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);
-    static Graphics::MessageResult OnMouseMButtonDown_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);
-    static Graphics::MessageResult OnMouseMButtonUp_(Graphics::IWindowMessageHandler *handler, Graphics::BasicWindow *wnd, Graphics::WindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);
+    static Graphics::MessageResult OnMouseMove_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);
+    static Graphics::MessageResult OnMouseLButtonDown_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);
+    static Graphics::MessageResult OnMouseLButtonUp_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);
+    static Graphics::MessageResult OnMouseRButtonDown_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);
+    static Graphics::MessageResult OnMouseRButtonUp_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);
+    static Graphics::MessageResult OnMouseMButtonDown_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);
+    static Graphics::MessageResult OnMouseMButtonUp_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);
 
 private:
-    MouseState _state;
+    FMouseState _state;
     float _relativeX;
     float _relativeY;
 };

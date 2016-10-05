@@ -22,12 +22,12 @@ namespace Engine {
 namespace {
 //----------------------------------------------------------------------------
 static const char *SelectRenderLayerName_(
-    const Material *parMaterial,
-    const MemoryView<const Pair<Graphics::BindName, const char *>>& parTagToRenderLayerName,
+    const FMaterial *parMaterial,
+    const TMemoryView<const TPair<Graphics::FBindName, const char *>>& parTagToRenderLayerName,
     const char *parFallbackRenderLayerName ) {
     Assert(parMaterial);
 
-    for (const Pair<Graphics::BindName, const char *>& it : parTagToRenderLayerName)
+    for (const TPair<Graphics::FBindName, const char *>& it : parTagToRenderLayerName)
         if (Contains(parMaterial->Tags(), it.first)) {
             Assert(it.second);
             return it.second;
@@ -41,10 +41,10 @@ static const char *SelectRenderLayerName_(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, Model, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, FModel, );
 //----------------------------------------------------------------------------
-Model::Model(
-    const MeshName& name,
+FModel::FModel(
+    const FMeshName& name,
     const AABB3f& boundingBox,
     VECTOR(Mesh, PModelBone)&& bones,
     VECTOR(Mesh, PModelMesh)&& meshes )
@@ -71,9 +71,9 @@ Model::Model(
 #endif
 }
 //----------------------------------------------------------------------------
-Model::~Model() {}
+FModel::~FModel() {}
 //----------------------------------------------------------------------------
-bool Model::TryGetBone(const ModelBone **pbone, const MeshName& name) const {
+bool FModel::TryGetBone(const FModelBone **pbone, const FMeshName& name) const {
     Assert(pbone);
     Assert(!name.empty());
 
@@ -86,40 +86,40 @@ bool Model::TryGetBone(const ModelBone **pbone, const MeshName& name) const {
     return false;
 }
 //----------------------------------------------------------------------------
-const ModelBone *Model::Bone(const MeshName& name) const {
-    const ModelBone *bone = nullptr;
+const FModelBone *FModel::FBone(const FMeshName& name) const {
+    const FModelBone *bone = nullptr;
     if (!TryGetBone(&bone, name))
         AssertNotReached();
     Assert(bone);
     return bone;
 }
 //----------------------------------------------------------------------------
-void Model::Create(Graphics::IDeviceAPIEncapsulator *device) {
+void FModel::Create(Graphics::IDeviceAPIEncapsulator *device) {
     for (const PModelMesh& pmesh : _meshes)
         pmesh->Create(device);
 }
 //----------------------------------------------------------------------------
-void Model::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
+void FModel::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
     for (const PModelMesh& pmesh : _meshes)
         pmesh->Destroy(device);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, ModelRenderCommand, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, FModelRenderCommand, );
 //----------------------------------------------------------------------------
 bool AcquireModelRenderCommand( UModelRenderCommand& pModelCommand,
                                 Graphics::IDeviceAPIEncapsulator *device,
-                                RenderTree *renderTree,
-                                const MemoryView<const Pair<Graphics::BindName, const char *>>& parTagToRenderLayerName,
+                                FRenderTree *renderTree,
+                                const TMemoryView<const TPair<Graphics::FBindName, const char *>>& parTagToRenderLayerName,
                                 const char *parFallbackRenderLayerName,
-                                const Model *model ) {
+                                const FModel *model ) {
     Assert(!pModelCommand);
     Assert(device);
     Assert(model);
     Assert(parTagToRenderLayerName.size() || parFallbackRenderLayerName);
 
-    ModelRenderCommand *result = new ModelRenderCommand();
+    FModelRenderCommand *result = new FModelRenderCommand();
     result->Model = model;
 
     size_t subPartCount = 0;
@@ -163,27 +163,27 @@ bool AcquireModelRenderCommand( UModelRenderCommand& pModelCommand,
 //----------------------------------------------------------------------------
 bool AcquireModelRenderCommand( UModelRenderCommand& pModelCommand,
                                 Graphics::IDeviceAPIEncapsulator *device,
-                                RenderTree *renderTree,
+                                FRenderTree *renderTree,
                                 const char *parRenderLayerName,
-                                const Model *model ) {
+                                const FModel *model ) {
     Assert(parRenderLayerName);
     return AcquireModelRenderCommand(
         pModelCommand, 
         device, 
         renderTree, 
-        MemoryView<const Pair<Graphics::BindName, const char *>>(),
+        TMemoryView<const TPair<Graphics::FBindName, const char *>>(),
         parRenderLayerName,
         model );
 }
 //----------------------------------------------------------------------------
 void ReleaseModelRenderCommand( UModelRenderCommand& pModelCommand,
                                 Graphics::IDeviceAPIEncapsulator *device,
-                                const Model *model ) {
+                                const FModel *model ) {
     Assert(pModelCommand);
     Assert(model);
     Assert(pModelCommand->Model.get() == model);
 
-    for (URenderCommand& pCommand : const_cast<ModelRenderCommand *>(pModelCommand.get())->RenderCommands) {
+    for (URenderCommand& pCommand : const_cast<FModelRenderCommand *>(pModelCommand.get())->RenderCommands) {
         Assert(pCommand);
         ReleaseRenderCommand(pCommand, device);
         Assert(!pCommand);

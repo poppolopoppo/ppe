@@ -22,48 +22,48 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct MeshHeader {
+struct FMeshHeader {
     u32 IndexStride;
     u32 IndexCount;
     u32 VertexStride;
     u32 VertexCount;
 };
 //----------------------------------------------------------------------------
-class BasicMeshLoader {
+class FBasicMeshLoader {
 public:
-    ~BasicMeshLoader() {}
+    ~FBasicMeshLoader() {}
 
-    BasicMeshLoader(const BasicMeshLoader& ) = delete;
-    BasicMeshLoader& operator =(const BasicMeshLoader& ) = delete;
+    FBasicMeshLoader(const FBasicMeshLoader& ) = delete;
+    FBasicMeshLoader& operator =(const FBasicMeshLoader& ) = delete;
 
-    const MeshHeader& Header() const { return _header; }
+    const FMeshHeader& FHeader() const { return _header; }
 
 protected:
-    BasicMeshLoader() { ResetHeader_(); }
+    FBasicMeshLoader() { ResetHeader_(); }
 
     Graphics::IndexBuffer *CreateIndexBuffer_(  Graphics::IDeviceAPIEncapsulator *device,
                                                 const char *resourceName,
-                                                const MemoryView<const u8>& data) const;
+                                                const TMemoryView<const u8>& data) const;
 
-    Graphics::VertexBuffer *CreateVertexBuffer_(Graphics::IDeviceAPIEncapsulator *device,
+    Graphics::FVertexBuffer *CreateVertexBuffer_(Graphics::IDeviceAPIEncapsulator *device,
                                                 const char *resourceName,
-                                                const Graphics::VertexDeclaration *declaration,
-                                                const MemoryView<const u8>& data) const;
+                                                const Graphics::FVertexDeclaration *declaration,
+                                                const TMemoryView<const u8>& data) const;
 
     void ResetHeader_();
 
-    MeshHeader _header;
+    FMeshHeader _header;
 };
 //----------------------------------------------------------------------------
 template <typename _Index, typename _Vertex>
-class MeshLoader : public BasicMeshLoader {
+class TMeshLoader : public FBasicMeshLoader {
 public:
-    MeshLoader() {}
-    ~MeshLoader() {}
+    TMeshLoader() {}
+    ~TMeshLoader() {}
 
-    static const Graphics::VertexDeclaration *VertexDeclaration() { return _Vertex::Declaration; }
+    static const Graphics::FVertexDeclaration *FVertexDeclaration() { return _Vertex::Declaration; }
 
-    bool Read(const Filename& filename);
+    bool Read(const FFilename& filename);
     void Clear();
 
     RAWSTORAGE_ALIGNED(Geometry, _Index, 16)& Indices() { return _indices; }
@@ -74,7 +74,7 @@ public:
 
     Graphics::IndexBuffer *CreateIndexBuffer(   Graphics::IDeviceAPIEncapsulator *device,
                                                 const char *resourceName ) const;
-    Graphics::VertexBuffer *CreateVertexBuffer( Graphics::IDeviceAPIEncapsulator *device,
+    Graphics::FVertexBuffer *CreateVertexBuffer( Graphics::IDeviceAPIEncapsulator *device,
                                                 const char *resourceName ) const;
 
 private:
@@ -86,15 +86,15 @@ template <typename _Index, typename _Vertex>
 bool LoadMesh(  Graphics::IDeviceAPIEncapsulator *device,
                 Graphics::PIndexBuffer *pindices,
                 Graphics::PVertexBuffer *pvertices,
-                const Filename& filename );
+                const FFilename& filename );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace PLY {
 //----------------------------------------------------------------------------
-bool ReadMeshHeader(MeshHeader& header, IVirtualFileSystemIStream *stream);
+bool ReadMeshHeader(FMeshHeader& header, IVirtualFileSystemIStream *stream);
 //----------------------------------------------------------------------------
-bool ReadMeshData(const MeshHeader& header, const MemoryView<u8>& indices, GenericVertex& vertices, IVirtualFileSystemIStream *stream);
+bool ReadMeshData(const FMeshHeader& header, const TMemoryView<u8>& indices, FGenericVertex& vertices, IVirtualFileSystemIStream *stream);
 //----------------------------------------------------------------------------
 } //!namespace PLY
 //----------------------------------------------------------------------------

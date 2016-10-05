@@ -12,7 +12,7 @@ namespace Random {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct XorShift64Star {
+struct FXorShift64Star {
 
     u64 X;
 
@@ -20,7 +20,7 @@ struct XorShift64Star {
     u64  NextU64();
 };
 //----------------------------------------------------------------------------
-struct XorShift128Plus {
+struct FXorShift128Plus {
 
     u64 States[2];
 
@@ -28,7 +28,7 @@ struct XorShift128Plus {
     u64  NextU64();
 };
 //----------------------------------------------------------------------------
-struct XorShift1024Star {
+struct FXorShift1024Star {
 
     u64 N;
     u64 States[16];
@@ -40,12 +40,12 @@ struct XorShift1024Star {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Generator>
-class Rng {
+class TRng {
 public:
     typedef _Generator generator_type;
 
-    Rng();
-    Rng(u64 seed);
+    TRng();
+    TRng(u64 seed);
 
     void Reset(u64 seed);
 
@@ -77,7 +77,7 @@ public:
     void Randomize(double& d) { d = static_cast<double>(NextFloatM11()); }
 
     template <typename T, size_t _Dim>
-    void Randomize(ScalarVector<T, _Dim>& v) {
+    void Randomize(TScalarVector<T, _Dim>& v) {
         for (size_t i = 0; i < _Dim; ++i)
             Randomize(v[i]);
     }
@@ -86,8 +86,8 @@ private:
     generator_type _generator;
 };
 //----------------------------------------------------------------------------
-typedef Rng< XorShift1024Star > StableRng;
-typedef Rng< XorShift128Plus >  FastRng;
+typedef TRng< FXorShift1024Star > StableRng;
+typedef TRng< FXorShift128Plus >  FastRng;
 //----------------------------------------------------------------------------
 u64 MakeSeed(u64 salt = 0);
 //----------------------------------------------------------------------------
@@ -100,8 +100,8 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// using a struct instead of typedef to be able to fwd declare RandomGenerator
-INSTANTIATE_CLASS_TYPEDEF(RandomGenerator, ::Core::Random::StableRng);
+// using a struct instead of typedef to be able to fwd declare FRandomGenerator
+INSTANTIATE_CLASS_TYPEDEF(FRandomGenerator, ::Core::Random::StableRng);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

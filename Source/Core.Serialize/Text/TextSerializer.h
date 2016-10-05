@@ -10,21 +10,21 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class TextSerializerException : public SerializeException {
+class FTextSerializerException : public FSerializeException {
 public:
-    TextSerializerException(const char* what) : SerializeException(what) {}
+    FTextSerializerException(const char* what) : FSerializeException(what) {}
 };
 //----------------------------------------------------------------------------
-class TextSerializer : public ISerializer {
+class FTextSerializer : public ISerializer {
 public:
-    TextSerializer();
-    virtual ~TextSerializer();
+    FTextSerializer();
+    virtual ~FTextSerializer();
 
     using ISerializer::Deserialize;
     using ISerializer::Serialize;
 
-    virtual void Deserialize(RTTI::MetaTransaction* transaction, IStreamReader* input, const wchar_t *sourceName = nullptr) override;
-    virtual void Serialize(IStreamWriter* output, const RTTI::MetaTransaction* transaction) override;
+    virtual void Deserialize(RTTI::FMetaTransaction* transaction, IStreamReader* input, const wchar_t *sourceName = nullptr) override;
+    virtual void Serialize(IStreamWriter* output, const RTTI::FMetaTransaction* transaction) override;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -33,20 +33,20 @@ static_assert(sizeof(size_t) == sizeof(uint32_t), "incoherent define");
 #   error "unknown architecture !"
 #endif
 //----------------------------------------------------------------------------
-STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, Mallocator<int>)>::propagate_on_container_copy_assignment::value);
-STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, Mallocator<int>)>::propagate_on_container_move_assignment::value);
-STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, Mallocator<int>)>::propagate_on_container_swap::value);
-STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, Mallocator<int>)>::is_always_equal::value);
+STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, TMallocator<int>)>::propagate_on_container_copy_assignment::value);
+STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, TMallocator<int>)>::propagate_on_container_move_assignment::value);
+STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, TMallocator<int>)>::propagate_on_container_swap::value);
+STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, TMallocator<int>)>::is_always_equal::value);
 //----------------------------------------------------------------------------
-STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, HeapAllocator<int>)>::propagate_on_container_copy_assignment::value);
-STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, HeapAllocator<int>)>::propagate_on_container_move_assignment::value);
-STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, HeapAllocator<int>)>::propagate_on_container_swap::value);
-STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, HeapAllocator<int>)>::is_always_equal::value);
+STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, THeapAllocator<int>)>::propagate_on_container_copy_assignment::value);
+STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, THeapAllocator<int>)>::propagate_on_container_move_assignment::value);
+STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, THeapAllocator<int>)>::propagate_on_container_swap::value);
+STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, THeapAllocator<int>)>::is_always_equal::value);
 //----------------------------------------------------------------------------
-STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, SingletonPoolAllocator<int>)>::propagate_on_container_copy_assignment::value);
-STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, SingletonPoolAllocator<int>)>::propagate_on_container_move_assignment::value);
-STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, SingletonPoolAllocator<int>)>::propagate_on_container_swap::value);
-STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, SingletonPoolAllocator<int>)>::is_always_equal::value);
+STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, TSingletonPoolAllocator<int>)>::propagate_on_container_copy_assignment::value);
+STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, TSingletonPoolAllocator<int>)>::propagate_on_container_move_assignment::value);
+STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, TSingletonPoolAllocator<int>)>::propagate_on_container_swap::value);
+STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, TSingletonPoolAllocator<int>)>::is_always_equal::value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -54,25 +54,25 @@ void CoreStartup::Start(void *applicationHandle, int nShowCmd, size_t argc, cons
     CORE_MODULE_START(Core);
 
     // 1 - diagnostics
-    DiagnosticsStartup::Start(applicationHandle, nShowCmd, argc, argv);
+    FDiagnosticsStartup::Start(applicationHandle, nShowCmd, argc, argv);
     // 2 - main thread context
-    ThreadContextStartup::Start_MainThread();
+    FThreadContextStartup::Start_MainThread();
     // 3 - heap allocators
-    Heaps::Process::Create(Heap::current_process_t());
+    Heaps::Process::Create(FHeap::current_process_t());
     // 4 - pool allocators
     POOL_TAG(Default)::Start();
     POOL_TAG(NodeBasedContainer)::Start();
     // 5 - auto singleton manager
-    Meta::AutoSingletonManager::Start();
+    Meta::FAutoSingletonManager::Start();
     // 6 - thread pool
-    ThreadPoolStartup::Start();
+    FThreadPoolStartup::Start();
     // 7 - file system
-    FileSystemStartup::Start();
+    FFileSystemStartup::Start();
     // 8 - virtual file system
-    VirtualFileSystemStartup::Start();
+    FVirtualFileSystemStartup::Start();
     // 9 - logger
 #ifdef USE_DEBUG_LOGGER
-    LoggerStartup::Start();
+    FLoggerStartup::Start();
 #endif
 }
 //----------------------------------------------------------------------------
@@ -81,31 +81,31 @@ void CoreStartup::Shutdown() {
 
     // 9 - logger
 #ifdef USE_DEBUG_LOGGER
-    LoggerStartup::Shutdown();
+    FLoggerStartup::Shutdown();
 #endif
     // 8 - virtual file system
-    VirtualFileSystemStartup::Shutdown();
+    FVirtualFileSystemStartup::Shutdown();
     // 7 - file system
-    FileSystemStartup::Shutdown();
+    FFileSystemStartup::Shutdown();
     // 6 - thread pool
-    ThreadPoolStartup::Shutdown();
+    FThreadPoolStartup::Shutdown();
     // 5 - auto singleton manager
-    Meta::AutoSingletonManager::Shutdown();
+    Meta::FAutoSingletonManager::Shutdown();
     // 4 - pool allocators
     POOL_TAG(NodeBasedContainer)::Shutdown();
     POOL_TAG(Default)::Shutdown();
     // 3 - heap allocators
     Heaps::Process::Destroy();
     // 2 - main thread context
-    ThreadContextStartup::Shutdown();
+    FThreadContextStartup::Shutdown();
     // 1 - logger
-    DiagnosticsStartup::Shutdown();
+    FDiagnosticsStartup::Shutdown();
 }
 //----------------------------------------------------------------------------
 void CoreStartup::ClearAll_UnusedMemory() {
     CORE_MODULE_CLEARALL(Core);
 
-    POOL_TAG(VirtualFileSystem)::ClearAll_UnusedMemory();
+    POOL_TAG(FVirtualFileSystem)::ClearAll_UnusedMemory();
     POOL_TAG(FileSystem)::ClearAll_UnusedMemory();
     POOL_TAG(NodeBasedContainer)::ClearAll_UnusedMemory();
     POOL_TAG(Default)::ClearAll_UnusedMemory();

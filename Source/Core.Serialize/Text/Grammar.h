@@ -9,7 +9,7 @@
 
 namespace Core { namespace Parser {
     FWD_REFPTR(ParseItem);
-    class ParseList;
+    class FParseList;
 }}
 
 namespace Core {
@@ -17,17 +17,17 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class GrammarStartup {
+class FGrammarStartup {
 public:
     static void Start();
     static void Shutdown();
 
     static void ClearAll_UnusedMemory();
 
-    static Parser::PCParseItem Parse(Parser::ParseList& input);
+    static Parser::PCParseItem Parse(Parser::FParseList& input);
 
-    GrammarStartup()  { Start(); }
-    ~GrammarStartup() { Shutdown(); }
+    FGrammarStartup()  { Start(); }
+    ~FGrammarStartup() { Shutdown(); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

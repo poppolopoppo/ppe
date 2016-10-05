@@ -17,57 +17,57 @@ FWD_INTERFACE_REFPTR(ContentImporter);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ContentImporterContext {
+class FContentImporterContext {
 public:
-    explicit ContentImporterContext(const Filename& filename) : _source(filename) {}
-    virtual ~ContentImporterContext() {}
+    explicit FContentImporterContext(const FFilename& filename) : _source(filename) {}
+    virtual ~FContentImporterContext() {}
 
-    ContentImporterContext(const ContentImporterContext&) = delete;
-    ContentImporterContext& operator=(const ContentImporterContext&) = delete;
+    FContentImporterContext(const FContentImporterContext&) = delete;
+    FContentImporterContext& operator=(const FContentImporterContext&) = delete;
 
-    ContentIdentity& Source() { return _source; }
-    const ContentIdentity& Source() const { return _source; }
+    FContentIdentity& Source() { return _source; }
+    const FContentIdentity& Source() const { return _source; }
 
     virtual ILogger* Logger() const = 0;
 
-    virtual const Dirname& IntermediateDir() const = 0;
-    virtual const Dirname& OutputDir() const = 0;
+    virtual const FDirname& IntermediateDir() const = 0;
+    virtual const FDirname& OutputDir() const = 0;
 
-    virtual void AddDependency(const Filename& filename) = 0;
+    virtual void AddDependency(const FFilename& filename) = 0;
 
 private:
-    ContentIdentity _source;
+    FContentIdentity _source;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Import>
-class ContentImporter;
+class TContentImporter;
 //----------------------------------------------------------------------------
-class IContentImporter : public ContentPipelineNode {
+class IContentImporter : public FContentPipelineNode {
 public:
     virtual ~IContentImporter() {}
 
     template <typename _Import>
-    bool Import(ContentImporterContext& ctx, _Import& dst) const {
-        const ContentImporter<_Import>* const importer = dynamic_cast<const ContentImporter<_Import>*>(this);
+    bool Import(FContentImporterContext& ctx, _Import& dst) const {
+        const TContentImporter<_Import>* const importer = dynamic_cast<const TContentImporter<_Import>*>(this);
         if (nullptr == importer)
-            throw ContentImporterException("invalid importer type", ctx.Identity(), this);
+            throw FContentImporterException("invalid importer type", ctx.Identity(), this);
         else
             return importer->Import(ctx, dst);
     }
 
-    RTTI_CLASS_HEADER(IContentImporter, ContentPipelineNode);
+    RTTI_CLASS_HEADER(IContentImporter, FContentPipelineNode);
 };
 //----------------------------------------------------------------------------
 template <typename _Import>
-class ContentImporter : public IContentImporter {
+class TContentImporter : public IContentImporter {
 public:
     typedef _Import import_type;
 
-    virtual ~ContentImporter() {}
+    virtual ~TContentImporter() {}
 
-    virtual bool Import(ContentImporterContext& ctx, import_type& dst) const = 0;
+    virtual bool Import(FContentImporterContext& ctx, import_type& dst) const = 0;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

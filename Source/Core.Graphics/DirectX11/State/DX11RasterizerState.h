@@ -13,30 +13,30 @@ class IDeviceAPIEncapsulator;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DX11RasterizerState : public DeviceAPIDependantRasterizerState {
+class FDX11RasterizerState : public FDeviceAPIDependantRasterizerState {
 public:
-    DX11RasterizerState(IDeviceAPIEncapsulator *device, RasterizerState *owner);
-    virtual ~DX11RasterizerState();
+    FDX11RasterizerState(IDeviceAPIEncapsulator *device, FRasterizerState *owner);
+    virtual ~FDX11RasterizerState();
 
     ::ID3D11RasterizerState *Entity() const { return _entity.Get(); }
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    ComPtr<::ID3D11RasterizerState> _entity;
+    TComPtr<::ID3D11RasterizerState> _entity;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-D3D11_CULL_MODE CullModeToDX11CullMode(CullMode value);
+D3D11_CULL_MODE CullModeToDX11CullMode(ECullMode value);
 //----------------------------------------------------------------------------
-CullMode DX11CullModeToCullMode(D3D11_CULL_MODE value);
+ECullMode DX11CullModeToCullMode(D3D11_CULL_MODE value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-D3D11_FILL_MODE FillModeToDX11FillMode(FillMode value);
+D3D11_FILL_MODE FillModeToDX11FillMode(EFillMode value);
 //----------------------------------------------------------------------------
-FillMode DX11FillModeToFillMode(D3D11_FILL_MODE value);
+EFillMode DX11FillModeToFillMode(D3D11_FILL_MODE value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

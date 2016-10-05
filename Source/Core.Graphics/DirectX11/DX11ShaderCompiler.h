@@ -10,32 +10,32 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DX11ShaderCompiler : public IDeviceAPIShaderCompiler {
+class FDX11ShaderCompiler : public IDeviceAPIShaderCompiler {
 public:
-    DX11ShaderCompiler();
-    virtual ~DX11ShaderCompiler();
+    FDX11ShaderCompiler();
+    virtual ~FDX11ShaderCompiler();
 
-    virtual ShaderCompiled *CompileShaderSource(
-        const ShaderSource *source,
-        const VertexDeclaration *vertexDeclaration,
-        ShaderProgramType programType,
-        ShaderProfileType profileType,
-        ShaderCompilerFlags flags,
+    virtual FShaderCompiled *CompileShaderSource(
+        const FShaderSource *source,
+        const FVertexDeclaration *vertexDeclaration,
+        EShaderProgramType programType,
+        EShaderProfileType profileType,
+        EShaderCompilerFlags flags,
         const char *entryPoint ) override;
 
     virtual void PreprocessShaderSource(
         RAWSTORAGE(Shader, char)& output,
-        const ShaderSource *source,
-        const VertexDeclaration *vertexDeclaration) override;
+        const FShaderSource *source,
+        const FVertexDeclaration *vertexDeclaration) override;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-UINT ShaderCompilerFlagsToD3D11CompileFlags(ShaderCompilerFlags value);
+UINT ShaderCompilerFlagsToD3D11CompileFlags(EShaderCompilerFlags value);
 //----------------------------------------------------------------------------
-ShaderCompilerFlags D3D11CompileFlagsToShaderCompilerFlags(UINT  value);
+EShaderCompilerFlags D3D11CompileFlagsToShaderCompilerFlags(UINT  value);
 //----------------------------------------------------------------------------
-LPCSTR ShaderProfileTypeToD3D11Target(ShaderProgramType program, ShaderProfileType profile);
+LPCSTR ShaderProfileTypeToD3D11Target(EShaderProgramType program, EShaderProfileType profile);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

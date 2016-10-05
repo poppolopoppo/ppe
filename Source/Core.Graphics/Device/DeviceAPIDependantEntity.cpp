@@ -11,7 +11,7 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceAPIDependantEntity::DeviceAPIDependantEntity(const AbstractDeviceAPIEncapsulator *encapsulator, const DeviceResource *resource)
+FDeviceAPIDependantEntity::FDeviceAPIDependantEntity(const FAbstractDeviceAPIEncapsulator *encapsulator, const FDeviceResource *resource)
 :   _apiAndResourceType(0)
 ,   _resource(resource)
 ,   _createdAt(InvalidDeviceRevision())
@@ -21,7 +21,7 @@ DeviceAPIDependantEntity::DeviceAPIDependantEntity(const AbstractDeviceAPIEncaps
     bitresourcetype_type::InplaceSet(_apiAndResourceType, (u32)_resource->ResourceType() );
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantEntity::DeviceAPIDependantEntity(const AbstractDeviceAPIEncapsulator *encapsulator, DeviceResourceType resourceType)
+FDeviceAPIDependantEntity::FDeviceAPIDependantEntity(const FAbstractDeviceAPIEncapsulator *encapsulator, EDeviceResourceType resourceType)
 :   _apiAndResourceType(0)
 ,   _resource(nullptr)
 ,   _createdAt(InvalidDeviceRevision())
@@ -30,14 +30,14 @@ DeviceAPIDependantEntity::DeviceAPIDependantEntity(const AbstractDeviceAPIEncaps
     bitresourcetype_type::InplaceSet(_apiAndResourceType, (u32)resourceType );
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantEntity::~DeviceAPIDependantEntity() {}
+FDeviceAPIDependantEntity::~FDeviceAPIDependantEntity() {}
 //----------------------------------------------------------------------------
-bool DeviceAPIDependantEntity::MatchDevice(const IDeviceAPIEncapsulator *device) const {
+bool FDeviceAPIDependantEntity::MatchDevice(const IDeviceAPIEncapsulator *device) const {
     Assert(device);
     return device->APIEncapsulator()->API() == API();
 }
 //----------------------------------------------------------------------------
-void DeviceAPIDependantEntity::AttachResource(const DeviceResource *resource) {
+void FDeviceAPIDependantEntity::AttachResource(const FDeviceResource *resource) {
     Assert(nullptr != resource);
     Assert(resource->Frozen());
     Assert(!resource->Available());
@@ -49,7 +49,7 @@ void DeviceAPIDependantEntity::AttachResource(const DeviceResource *resource) {
     _resource.reset(resource);
 }
 //----------------------------------------------------------------------------
-void DeviceAPIDependantEntity::DetachResource(const DeviceResource *resource) {
+void FDeviceAPIDependantEntity::DetachResource(const FDeviceResource *resource) {
     UNUSED(resource);
     Assert(nullptr != resource);
     Assert(resource == _resource);
@@ -59,14 +59,14 @@ void DeviceAPIDependantEntity::DetachResource(const DeviceResource *resource) {
     _resource.reset(nullptr);
 }
 //----------------------------------------------------------------------------
-void DeviceAPIDependantEntity::SetCreatedAt(DeviceRevision revision) {
+void FDeviceAPIDependantEntity::SetCreatedAt(DeviceRevision revision) {
     Assert(_resource);
     Assert(revision != InvalidDeviceRevision());
 
     _createdAt = revision;
 }
 //----------------------------------------------------------------------------
-void DeviceAPIDependantEntity::SetLastUsed(DeviceRevision revision) {
+void FDeviceAPIDependantEntity::SetLastUsed(DeviceRevision revision) {
     Assert(_resource);
     Assert(revision != InvalidDeviceRevision());
 

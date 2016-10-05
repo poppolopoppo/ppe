@@ -13,12 +13,12 @@ namespace Logic {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ComponentContainer {
+class FComponentContainer {
 public:
     STATIC_CONST_INTEGRAL(size_t, ComponentCapacity, (sizeof(ComponentID)<<3));
 
-    ComponentContainer();
-    ~ComponentContainer();
+    FComponentContainer();
+    ~FComponentContainer();
 
     void Register(IComponent *component);
     void Unregister(IComponent *component);
@@ -38,13 +38,13 @@ public:
         return checked_cast<ITypedComponent<T> *>(GetByID(id));
     }
 
-    void RemoveEntity(const Entity& entity);
+    void RemoveEntity(const FEntity& entity);
 
     void Clear();
 
 private:
-    VECTOR(Entity, PComponent) _components;
-    HASHMAP(Entity, ComponentTag, ComponentID) _tagToID;
+    VECTOR(FEntity, PComponent) _components;
+    HASHMAP(FEntity, ComponentTag, ComponentID) _tagToID;
 
     ComponentFlag _reservedFlags;
 };

@@ -8,18 +8,18 @@ namespace Logic {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-void EntityManager::AddComponent(EntityID id, T&& data) {
-    const ComponentTag componentTag = Component<T>::Tag();
+void FEntityManager::AddComponent(EntityID id, T&& data) {
+    const ComponentTag componentTag = TComponent<T>::Tag();
     const ComponentID componentID = _components.TagToID(name);
 
     AddComponent<T>(componentID, id, std::move(data));
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void EntityManager::AddComponent(ComponentID componentID, EntityID entityID, T&& data) {
-    Assert(componentID == _components.TagToID(Component<T>::Tag()) );
+void FEntityManager::AddComponent(ComponentID componentID, EntityID entityID, T&& data) {
+    Assert(componentID == _components.TagToID(TComponent<T>::Tag()) );
 
-    Entity& entity = _entities.Get(entityID);
+    FEntity& entity = _entities.Get(entityID);
     Assert(0 == (entity._componentFlags & (1<<componentID)) );
 
     const ComponentFlag previousComponents = entity._componentFlags;

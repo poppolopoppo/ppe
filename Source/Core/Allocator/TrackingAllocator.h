@@ -13,7 +13,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Domain, typename _Allocator>
-class TrackingAllocator;
+class TTrackingAllocator;
 //----------------------------------------------------------------------------
 namespace Meta {
 //----------------------------------------------------------------------------
@@ -22,7 +22,7 @@ struct IsATrackingAllocator {
     enum : bool { value = false };
 };
 template <typename _Domain, typename _Allocator>
-struct IsATrackingAllocator< TrackingAllocator<_Domain, _Allocator> > {
+struct IsATrackingAllocator< TTrackingAllocator<_Domain, _Allocator> > {
     enum : bool { value = true };
 };
 //----------------------------------------------------------------------------
@@ -44,7 +44,7 @@ public:
     using typename _Allocator::size_type;
     using typename _Allocator::value_type;
     void* relocate(void* p, size_type newSize, size_type oldSize) {
-        auto pself = static_cast<TrackingAllocator<_Domain, _Allocator>* >(this);
+        auto pself = static_cast<TTrackingAllocator<_Domain, _Allocator>* >(this);
 
         if (p && pself->TrackingData())
             pself->TrackingData()->Deallocate(oldSize, sizeof(value_type));
@@ -60,7 +60,7 @@ public:
 } //!details
 //----------------------------------------------------------------------------
 template <typename _Domain, typename _Allocator>
-class TrackingAllocator : public details::fwd_realloc_semantic_for_tracking<_Domain, _Allocator> {
+class TTrackingAllocator : public details::fwd_realloc_semantic_for_tracking<_Domain, _Allocator> {
 public:
     STATIC_ASSERT(!Meta::IsATrackingAllocator< _Allocator >::value);
 
@@ -88,33 +88,33 @@ public:
 
     template<typename U>
     struct rebind {
-        typedef TrackingAllocator< _Domain, typename traits_type::template rebind_alloc<U> > other;
+        typedef TTrackingAllocator< _Domain, typename traits_type::template rebind_alloc<U> > other;
     };
 
-    TrackingAllocator() throw() {
-        STATIC_ASSERT(  allocator_has_realloc<TrackingAllocator>::value ==
+    TTrackingAllocator() throw() {
+        STATIC_ASSERT(  allocator_has_realloc<TTrackingAllocator>::value ==
                         allocator_has_realloc<base_type>::value );
     }
-    explicit TrackingAllocator(const base_type& allocator) throw() : base_type(allocator) {}
+    explicit TTrackingAllocator(const base_type& allocator) throw() : base_type(allocator) {}
 
-    TrackingAllocator(const TrackingAllocator& other) throw() = default;
+    TTrackingAllocator(const TTrackingAllocator& other) throw() = default;
     template<typename _D, typename _A>
-    TrackingAllocator(const TrackingAllocator<_D, _A>& other) throw() : base_type(other) {}
+    TTrackingAllocator(const TTrackingAllocator<_D, _A>& other) throw() : base_type(other) {}
 
-    TrackingAllocator& operator =(const TrackingAllocator& other) = default;
+    TTrackingAllocator& operator =(const TTrackingAllocator& other) = default;
     template<typename _D, typename _A>
-    TrackingAllocator& operator =(const TrackingAllocator<_D, _A>& other) {
+    TTrackingAllocator& operator =(const TTrackingAllocator<_D, _A>& other) {
         base_type::operator =(other);
         return *this;
     }
 
-    MemoryTrackingData* TrackingData() const { return &(domain_type::TrackingData); }
+    FMemoryTrackingData* TrackingData() const { return &(domain_type::TrackingData); }
 
     size_type max_size() const { return base_type::max_size(); }
 
     pointer allocate(size_type n, const void* /*hint*/) { return allocate(n); }
     pointer allocate(size_type n) {
-        if (MemoryTrackingData* const trackingData = TrackingData())
+        if (FMemoryTrackingData* const trackingData = TrackingData())
             trackingData->Allocate(n, sizeof(value_type));
 
         return traits_type::allocate(*this, n);
@@ -123,17 +123,17 @@ public:
     void deallocate(void* p, size_type n) {
         traits_type::deallocate(*this, pointer(p), n);
 
-        if (MemoryTrackingData* const trackingData = TrackingData())
+        if (FMemoryTrackingData* const trackingData = TrackingData())
             trackingData->Deallocate(n, sizeof(value_type));
     }
 
     template<typename _D, typename _A>
-    friend bool operator ==(const TrackingAllocator& lhs, const TrackingAllocator<_D, _A>& rhs) {
-        return  operator ==(static_cast<const base_type&>(lhs), static_cast<const typename TrackingAllocator<_D, _A>::base_type&>(rhs));
+    friend bool operator ==(const TTrackingAllocator& lhs, const TTrackingAllocator<_D, _A>& rhs) {
+        return  operator ==(static_cast<const base_type&>(lhs), static_cast<const typename TTrackingAllocator<_D, _A>::base_type&>(rhs));
     }
 
     template<typename _D, typename _A>
-    friend bool operator !=(const TrackingAllocator& lhs, const TrackingAllocator<_D, _A>& rhs) {
+    friend bool operator !=(const TTrackingAllocator& lhs, const TTrackingAllocator<_D, _A>& rhs) {
         return !operator ==(lhs, rhs);
     }
 };

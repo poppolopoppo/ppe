@@ -10,17 +10,17 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class KeyboardState {
+class FKeyboardState {
 public:
-    friend class KeyboardInputHandler;
+    friend class FKeyboardInputHandler;
 
     const KeyboardKeyState& KeysDown() const { return _keysDown; }
     const KeyboardKeyState& KeysPressed() const { return _keysPressed; }
     const KeyboardKeyState& KeysUp() const { return _keysUp; }
 
-    bool IsKeyDown(KeyboardKey key) const { return _keysDown.Contains(key); }
-    bool IsKeyPressed(KeyboardKey key) const { return _keysPressed.Contains(key); }
-    bool IsKeyUp(KeyboardKey key) const { return _keysUp.Contains(key); }
+    bool IsKeyDown(EKeyboardKey key) const { return _keysDown.Contains(key); }
+    bool IsKeyPressed(EKeyboardKey key) const { return _keysPressed.Contains(key); }
+    bool IsKeyUp(EKeyboardKey key) const { return _keysUp.Contains(key); }
 
     void Clear() {
         _keysDown.Clear();
@@ -34,7 +34,7 @@ private:
     KeyboardKeyState _keysUp;
 };
 //----------------------------------------------------------------------------
-typedef IInputStateProvider<KeyboardState> IKeyboardService;
+typedef IInputStateProvider<FKeyboardState> IKeyboardService;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

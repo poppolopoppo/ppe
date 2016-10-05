@@ -9,45 +9,45 @@
 
 namespace Core {
 namespace RTTI {
-class MetaAtomHashMap;
-class MetaClassHashMap;
-class MetaLoadContext;
-class MetaUnloadContext;
+class FMetaAtomHashMap;
+class FMetaClassHashMap;
+class FMetaLoadContext;
+class FMetaUnloadContext;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(MetaAtom);
 FWD_REFPTR(MetaObject);
-class MetaClass;
+class FMetaClass;
 //----------------------------------------------------------------------------
-class MetaTransaction : public RefCountable {
+class FMetaTransaction : public FRefCountable {
 public:
-    MetaTransaction();
-    explicit MetaTransaction(VECTOR(RTTI, PMetaObject)&& objects);
-    ~MetaTransaction();
+    FMetaTransaction();
+    explicit FMetaTransaction(VECTOR(RTTI, PMetaObject)&& objects);
+    ~FMetaTransaction();
 
-    MetaTransaction(const MetaTransaction&) = delete;
-    MetaTransaction& operator =(const MetaTransaction&) = delete;
+    FMetaTransaction(const FMetaTransaction&) = delete;
+    FMetaTransaction& operator =(const FMetaTransaction&) = delete;
 
     bool IsLoaded() const { return _loaded; }
     bool IsUnloaded() const { return _unloaded; }
 
-    void Add(MetaObject* object);
-    void Remove(MetaObject* object);
-    bool Contains(const MetaObject* object) const;
+    void Add(FMetaObject* object);
+    void Remove(FMetaObject* object);
+    bool Contains(const FMetaObject* object) const;
 
-    void Load(MetaLoadContext* context);
-    void Unload(MetaUnloadContext* context);
+    void Load(FMetaLoadContext* context);
+    void Unload(FMetaUnloadContext* context);
 
     bool empty() const { return _objects.empty(); }
     size_t size() const { return _objects.size(); }
     size_t capacity() const { return _objects.capacity(); }
     void reserve(size_t count) { _objects.reserve(count); }
 
-    MemoryView<const PMetaObject> MakeView() const { return Core::MakeView(_objects); }
+    TMemoryView<const PMetaObject> MakeView() const { return Core::MakeView(_objects); }
 
-    bool Equals(const MetaTransaction& other) const;
-    bool DeepEquals(const MetaTransaction& other) const;
+    bool Equals(const FMetaTransaction& other) const;
+    bool DeepEquals(const FMetaTransaction& other) const;
 
 private:
     VECTOR(RTTI, PMetaObject) _objects;

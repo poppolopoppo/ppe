@@ -11,17 +11,17 @@
 #endif
 
 namespace Core {
-struct Guid;
+struct FGuid;
 namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class IService;
 class IServiceProvider;
-typedef RefPtr<IService> PService;
-typedef RefPtr<const IService> PCService;
+typedef TRefPtr<IService> PService;
+typedef TRefPtr<const IService> PCService;
 //----------------------------------------------------------------------------
-class IService : public RefCountable, public Meta::ThreadResource {
+class IService : public FRefCountable, public Meta::FThreadResource {
 protected:
     IService(const char *serviceName, int servicePriority);
 public:
@@ -44,13 +44,13 @@ public:
     int ServicePriority() const { return _servicePriority; }
 
     // should be virtual pure, but debug is inserted inside
-    virtual void Start(IServiceProvider *provider, const Guid& guid);
-    virtual void Shutdown(IServiceProvider *provider, const Guid& guid);
+    virtual void Start(IServiceProvider *provider, const FGuid& guid);
+    virtual void Shutdown(IServiceProvider *provider, const FGuid& guid);
 
 private:
     int _servicePriority;
 #ifdef WITH_CORE_ENGINE_SERVICE_DEBUG
-    String _serviceName;
+    FString _serviceName;
     const IServiceProvider *_serviceProvider;
 #endif
 };
@@ -65,10 +65,10 @@ private:
     _Name::ServiceGuid
 //----------------------------------------------------------------------------
 #define ENGINESERVICE_GUID_DECL(_Name) \
-    static const Guid ServiceGuid
+    static const FGuid ServiceGuid
 //----------------------------------------------------------------------------
 #define ENGINESERVICE_GUID_DEF(_Name) \
-    const Guid _Name::ServiceGuid = Guid::FromCStr(STRINGIZE(_Name))
+    const FGuid _Name::ServiceGuid = FGuid::FromCStr(STRINGIZE(_Name))
 //----------------------------------------------------------------------------
 #define ENGINESERVICE_CONSTRUCT(_Name) \
     ENGINESERVICE_NAME(_Name), Core::Engine::ServicePriority::_Name

@@ -11,7 +11,7 @@ namespace Meta {
 //----------------------------------------------------------------------------
 namespace details {
 template <typename T, typename _Tag, bool _ThreadLocal>
-class SingletonStorage_ {
+class TSingletonStorage_ {
 public:
     static bool gHasInstance;
     static T& Ref() {
@@ -20,9 +20,9 @@ public:
     }
 };
 template <typename T, typename _Tag, bool _ThreadLocal>
-bool SingletonStorage_<T, _Tag, _ThreadLocal>::gHasInstance = false;
+bool TSingletonStorage_<T, _Tag, _ThreadLocal>::gHasInstance = false;
 template <typename T, typename _Tag>
-class SingletonStorage_<T, _Tag, true> {
+class TSingletonStorage_<T, _Tag, true> {
 public:
     static THREAD_LOCAL bool gHasInstance;
     static T& Ref() {
@@ -31,21 +31,21 @@ public:
     }
 };
 template <typename T, typename _Tag>
-THREAD_LOCAL bool SingletonStorage_<T, _Tag, true>::gHasInstance = false;
+THREAD_LOCAL bool TSingletonStorage_<T, _Tag, true>::gHasInstance = false;
 } //!details
 //----------------------------------------------------------------------------
 template <typename T, typename _Tag = T, bool _ThreadLocal = false>
-class Singleton : details::SingletonStorage_<T, _Tag, _ThreadLocal> {
-    typedef details::SingletonStorage_<T, _Tag, _ThreadLocal> storage_type;
+class TSingleton : details::TSingletonStorage_<T, _Tag, _ThreadLocal> {
+    typedef details::TSingletonStorage_<T, _Tag, _ThreadLocal> storage_type;
 protected:
-    Singleton() = default;
+    TSingleton() = default;
 
 public:
-    Singleton(const Singleton& ) = delete;
-    Singleton& operator =(const Singleton& ) = delete;
+    TSingleton(const TSingleton& ) = delete;
+    TSingleton& operator =(const TSingleton& ) = delete;
 
-    Singleton(Singleton&& ) = delete;
-    Singleton& operator =(Singleton&& ) = delete;
+    TSingleton(TSingleton&& ) = delete;
+    TSingleton& operator =(TSingleton&& ) = delete;
 
     static bool HasInstance() {
         return storage_type::gHasInstance;
@@ -71,7 +71,7 @@ public:
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Tag = T>
-using ThreadLocalSingleton = Singleton<T, _Tag, true>;
+using TThreadLocalSingleton = TSingleton<T, _Tag, true>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

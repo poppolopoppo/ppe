@@ -6,19 +6,19 @@
 
 namespace Core {
 namespace Engine {
-class KeyboardInputHandler;
-class MouseInputHandler;
+class FKeyboardInputHandler;
+class FMouseInputHandler;
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(KeyboardMouseCameraController);
-class KeyboardMouseCameraController : public Engine::FreeLookCameraController {
+class FKeyboardMouseCameraController : public Engine::FreeLookCameraController {
 public:
-    KeyboardMouseCameraController(  const float3& position, float heading/* rad */, float pitch/* rad */,
-                                    const KeyboardInputHandler *keyboard,
-                                    const MouseInputHandler *mouse);
-    virtual ~KeyboardMouseCameraController();
+    FKeyboardMouseCameraController(  const float3& position, float heading/* rad */, float pitch/* rad */,
+                                    const FKeyboardInputHandler *keyboard,
+                                    const FMouseInputHandler *mouse);
+    virtual ~FKeyboardMouseCameraController();
 
     float Acceleration() const { return _acceleration; }
     float Inertia() const { return _inertia; }
@@ -53,11 +53,11 @@ public:
     void SetStrafeSpeed(float v) { _strafeSpeed = v; }
 
 protected:
-    virtual void UpdateImpl(float4x4 *view, const Timeline& time) override;
+    virtual void UpdateImpl(float4x4 *view, const FTimeline& time) override;
 
 private:
-    const KeyboardInputHandler *_keyboard;
-    const MouseInputHandler *_mouse;
+    const FKeyboardInputHandler *_keyboard;
+    const FMouseInputHandler *_mouse;
 
     float _acceleration;
     float _inertia;

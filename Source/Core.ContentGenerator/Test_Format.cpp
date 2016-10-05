@@ -13,14 +13,14 @@ namespace {
 //----------------------------------------------------------------------------
 template <size_t _Dim, size_t _Dim2, typename... _Args>
 static void TestFormat_(const char (&expected)[_Dim], const char (&format)[_Dim2], _Args&&... args) {
-    const String str = StringFormat(format, std::forward<_Args>(args)...);
+    const FString str = StringFormat(format, std::forward<_Args>(args)...);
 
     const bool match = (expected == str);
 
     std::cout
         << "==================================================================" << std::endl
         << "Format      = '" << format << "'" << std::endl
-        << "Result      = '" << str << "'" << std::endl
+        << "EResult      = '" << str << "'" << std::endl
         << "Expected    = '" << expected << "' => " << std::boolalpha << match << std::endl;
 
     AssertRelease(match);
@@ -28,14 +28,14 @@ static void TestFormat_(const char (&expected)[_Dim], const char (&format)[_Dim2
 //----------------------------------------------------------------------------
 template <size_t _Dim, size_t _Dim2, typename... _Args>
 static void TestFormat_(const wchar_t (&expected)[_Dim], const wchar_t (&format)[_Dim2], _Args&&... args) {
-    const WString wstr = StringFormat(format, std::forward<_Args>(args)...);
+    const FWString wstr = StringFormat(format, std::forward<_Args>(args)...);
 
     const bool match = (expected == wstr);
 
     std::wcout
         << L"==================================================================" << std::endl
         << L"Format      = '" << format << L"'" << std::endl
-        << L"Result      = '" << wstr << L"'" << std::endl
+        << L"EResult      = '" << wstr << L"'" << std::endl
         << L"Expected    = '" << expected << L"' => " << std::boolalpha << match << std::endl;
 
     AssertRelease(match);
@@ -52,7 +52,7 @@ void Test_Format() {
         std::cout << buffer;
     }
     {
-        WString wstr = StringFormat(L"num={0} alphabool={0:a}", true);
+        FWString wstr = StringFormat(L"num={0} alphabool={0:a}", true);
         std::wcout << wstr << std::endl;
     }
 

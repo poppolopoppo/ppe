@@ -64,14 +64,14 @@ namespace Core {
 namespace {
 //----------------------------------------------------------------------------
 static void MountGameDataPath_() {
-    VirtualFileSystem::Instance().MountNativePath(
+    FVirtualFileSystem::Instance().MountNativePath(
         L"GameData:\\", 
-        CurrentProcess::Instance().Directory() + L"\\..\\..\\Data\\" );
+        FCurrentProcess::Instance().Directory() + L"\\..\\..\\Data\\" );
 }
 //----------------------------------------------------------------------------
-static Engine::Model *CreatePBRTestModel_() {
+static Engine::FModel *CreatePBRTestModel_() {
     Engine::PModel referenceModel;
-    if (!Engine::LoadModel(referenceModel, L"GameData:/Models/Test/Sphere.obj"))
+    if (!Engine::LoadModel(referenceModel, L"GameData:/Models/Test/FSphere.obj"))
         AssertNotReached();
 
     const Engine::PModelMesh modelMesh = referenceModel->Meshes().front();
@@ -104,30 +104,30 @@ static Engine::Model *CreatePBRTestModel_() {
 
     for (size_t i = 0; i < rows; ++i) {
         const float fx = i*dr;
-        const float roughness = Lerp(roughnessRange.x(), roughnessRange.y(), fx);
+        const float roughness = TLerp(roughnessRange.x(), roughnessRange.y(), fx);
         const float x = positionRange.x() * fx - positionRange.x() * 0.5f;
 
         for (size_t j = 0; j < columns; ++j) {
             const float fy = j*dc;
-            const float metallic = Lerp(metallicRange.x(), metallicRange.y(), fy);
+            const float metallic = TLerp(metallicRange.x(), metallicRange.y(), fy);
             const float y = positionRange.y() * fy - positionRange.y() * 0.5f;
 
             for (size_t k = 0; k < depths; ++k) {
                 const float fz = k*dd;
-                const float refractiveIndex = Lerp(refractiveIndexRange.x(), refractiveIndexRange.y(), fz);
+                const float refractiveIndex = TLerp(refractiveIndexRange.x(), refractiveIndexRange.y(), fz);
                 const float z = positionRange.z() * fz - positionRange.z() * 0.5f;
 
                 const float3 translation(x, y, z);
                 const float4x4 world = MakeTranslationMatrix(translation);
                 const AABB3f boundingBox(meshBoundingBox.Min()+translation, meshBoundingBox.Max()+translation);
 
-                Engine::Material *const newMaterial = new Engine::Material(*material);
-                newMaterial->SetParameter(Engine::MaterialConstNames::Metallic(), new Engine::MaterialParameterBlock<float>(metallic));
-                newMaterial->SetParameter(Engine::MaterialConstNames::Roughness(), new Engine::MaterialParameterBlock<float>(roughness));
-                newMaterial->SetParameter(Engine::MaterialConstNames::RefractiveIndex(), new Engine::MaterialParameterBlock<float>(refractiveIndex));
-                newMaterial->SetParameter(Engine::MaterialConstNames::World(), new Engine::MaterialParameterBlock<float4x4>(world));
+                Engine::FMaterial *const newMaterial = new Engine::FMaterial(*material);
+                newMaterial->SetParameter(Engine::FMaterialConstNames::Metallic(), new Engine::TMaterialParameterBlock<float>(metallic));
+                newMaterial->SetParameter(Engine::FMaterialConstNames::Roughness(), new Engine::TMaterialParameterBlock<float>(roughness));
+                newMaterial->SetParameter(Engine::FMaterialConstNames::RefractiveIndex(), new Engine::TMaterialParameterBlock<float>(refractiveIndex));
+                newMaterial->SetParameter(Engine::FMaterialConstNames::FWorld(), new Engine::TMaterialParameterBlock<float4x4>(world));
 
-                newModelMeshSubParts.push_back(new Engine::ModelMeshSubPart(
+                newModelMeshSubParts.push_back(new Engine::FModelMeshSubPart(
                     modelMeshSubPart->Name(),
                     modelMeshSubPart->BoneIndex(),
                     modelMeshSubPart->BaseVertex(),
@@ -148,7 +148,7 @@ static Engine::Model *CreatePBRTestModel_() {
     newModelBones.push_back(referenceModel->Bones().front());
 
     VECTOR(Mesh, Engine::PModelMesh) newModelMeshes;
-    newModelMeshes.push_back(new Engine::ModelMesh(
+    newModelMeshes.push_back(new Engine::FModelMesh(
         modelMesh->IndexCount(), 
         modelMesh->VertexCount(),
         modelMesh->PrimitiveType(),
@@ -158,36 +158,36 @@ static Engine::Model *CreatePBRTestModel_() {
         std::move(vertices),
         std::move(newModelMeshSubParts) ));
 
-    return new Engine::Model(referenceModel->Name(), newBoundingBox, std::move(newModelBones), std::move(newModelMeshes));
+    return new Engine::FModel(referenceModel->Name(), newBoundingBox, std::move(newModelBones), std::move(newModelMeshes));
 }
 //----------------------------------------------------------------------------
-static Engine::MaterialEffect *DeferredShadeEffect_(Engine::EffectCompiler *effectCompiler) {
+static Engine::FMaterialEffect *DeferredShadeEffect_(Engine::FEffectCompiler *effectCompiler) {
     Assert(effectCompiler);
 
     using namespace Engine;
     using namespace Graphics;
 
-    PCVertexDeclaration const vertexDecl = Vertex::Position0_Float3__TexCoord0_Half2::Declaration;
+    PCVertexDeclaration const vertexDecl = Vertex::FPosition0_Float3__TexCoord0_Half2::Declaration;
 
-    PEffectDescriptor const descriptor = new EffectDescriptor();
+    PEffectDescriptor const descriptor = new FEffectDescriptor();
     descriptor->SetName("DeferredShade");
     descriptor->SetRenderState(
-        new RenderState(RenderState::Blending::Opaque,
-                        RenderState::Culling::None,
-                        RenderState::DepthTest::None,
-                        RenderState::FillMode::Solid ));
+        new FRenderState(FRenderState::EBlending::Opaque,
+                        FRenderState::ECulling::None,
+                        FRenderState::EDepthTest::None,
+                        FRenderState::EFillMode::Solid ));
     descriptor->SetVS(L"GameData:/Shaders/DeferredShade.fx");
     descriptor->SetPS(L"GameData:/Shaders/DeferredShade.fx");
-    descriptor->SetShaderProfile(ShaderProfileType::ShaderModel4_1);
+    descriptor->SetShaderProfile(EShaderProfileType::ShaderModel4_1);
     descriptor->AddVertexDeclaration(vertexDecl);
 
-    PMaterial const material = new Material("DeferredShade");
+    PMaterial const material = new FMaterial("DeferredShade");
     material->AddTexture("GBuffer0",    L"VirtualData:/Surfaces/GBuffer0/RT");
     material->AddTexture("GBuffer1",    L"VirtualData:/Surfaces/GBuffer1/RT");
     material->AddTexture("GBuffer2",    L"VirtualData:/Surfaces/GBuffer2/RT");
     material->AddTexture("DepthBuffer", L"VirtualData:/Surfaces/DepthBuffer/DS");
 
-    MaterialEffect *const effect = effectCompiler->CreateMaterialEffect(descriptor, vertexDecl, material);
+    FMaterialEffect *const effect = effectCompiler->CreateMaterialEffect(descriptor, vertexDecl, material);
 
     return effect;
 }
@@ -196,40 +196,40 @@ static Engine::MaterialEffect *DeferredShadeEffect_(Engine::EffectCompiler *effe
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-GameTest4::GameTest4(const wchar_t *appname)
+FGameTest4::FGameTest4(const wchar_t *appname)
 :   parent_type(
     appname,
-    Graphics::DeviceAPI::DirectX11,
-    Graphics::PresentationParameters(
+    Graphics::EDeviceAPI::DirectX11,
+    Graphics::FPresentationParameters(
         //640, 480,
         1600, 900,
-        Graphics::SurfaceFormat::R8G8B8A8_SRGB,
-        Graphics::SurfaceFormat::D24S8,
+        Graphics::FSurfaceFormat::R8G8B8A8_SRGB,
+        Graphics::FSurfaceFormat::D24S8,
         false,
         true,
         0,
-        Graphics::PresentInterval::Default ),
+        Graphics::EPresentInterval::Default ),
     10, 10) {
 #if 1
 #ifndef FINAL_RELEASE
     // creates a command window to show stdout messages
-    Application::ApplicationConsole::RedirectIOToConsole();
+    Application::FApplicationConsole::RedirectIOToConsole();
 #endif
 #endif
 }
 //----------------------------------------------------------------------------
-GameTest4::~GameTest4() {}
+FGameTest4::~FGameTest4() {}
 //----------------------------------------------------------------------------
-void GameTest4::Start() {
+void FGameTest4::Start() {
     using namespace Engine;
 
     Assert(!_context);
-    _context = new RenderContext(parent_type::Services(), 512/* mo */<< 20);
+    _context = new FRenderContext(parent_type::Services(), 512/* mo */<< 20);
 
     parent_type::Start();
 }
 //----------------------------------------------------------------------------
-void GameTest4::Shutdown() {
+void FGameTest4::Shutdown() {
     using namespace Engine;
 
     parent_type::Shutdown();
@@ -238,35 +238,35 @@ void GameTest4::Shutdown() {
     RemoveRef_AssertReachZero(_context);
 }
 //----------------------------------------------------------------------------
-void GameTest4::Initialize(const Timeline& time) {
+void FGameTest4::Initialize(const FTimeline& time) {
     parent_type::Initialize(time);
 
     using namespace Engine;
     using namespace Graphics;
 
-    IDeviceAPIEncapsulator *const device = DeviceEncapsulator().Device();
-    const ViewportF& viewport = DeviceEncapsulator().Parameters().Viewport();
+    IDeviceAPIEncapsulator *const device = FDeviceEncapsulator().Device();
+    const ViewportF& viewport = FDeviceEncapsulator().Parameters().Viewport();
 
-    EffectCompiler *const effectCompiler = _context->EffectCompilerService()->EffectCompiler();
-    RenderSurfaceManager *const renderSurfaceManager = _context->RenderSurfaceService()->Manager();
-    TextureCache *const textureCache = _context->TextureCacheService()->TextureCache();
+    FEffectCompiler *const effectCompiler = _context->EffectCompilerService()->EffectCompiler();
+    FRenderSurfaceManager *const renderSurfaceManager = _context->RenderSurfaceService()->Manager();
+    FTextureCache *const textureCache = _context->TextureCacheService()->TextureCache();
 
     MountGameDataPath_();
 
     textureCache->SetFallbackTexture2D(L"GameData:/Textures/Tech/error2D.dds");
     textureCache->SetFallbackTextureCube(L"GameData:/Textures/Tech/errorCube.dds");
 
-    _world = new World("Test world", Services());
+    _world = new FWorld("Test world", Services());
     _world->Initialize();
 
-    _cameraController = new KeyboardMouseCameraController(float3(0.0f, 3.0f, -6.0f), 0.0f, 0.5f*F_PIOver3, &Keyboard(), &Mouse());
+    _cameraController = new FKeyboardMouseCameraController(float3(0.0f, 3.0f, -6.0f), 0.0f, 0.5f*F_PIOver3, &Keyboard(), &Mouse());
     _camera = new PerspectiveCamera(F_PIOver3, 1.0f, 1000.0f, viewport);
     _camera->SetController(_cameraController);
 
     // Main scene
 
-    const PAbstractRenderSurface backBuffer = new RenderSurfaceBackBuffer("BackBuffer", RenderSurfaceBackBuffer::RenderTarget);
-    const PAbstractRenderSurface depthBuffer = new RenderSurfaceBackBuffer("DepthBuffer", RenderSurfaceBackBuffer::DepthStencil);
+    const PAbstractRenderSurface backBuffer = new FRenderSurfaceBackBuffer("BackBuffer", FRenderSurfaceBackBuffer::FRenderTarget);
+    const PAbstractRenderSurface depthBuffer = new FRenderSurfaceBackBuffer("DepthBuffer", FRenderSurfaceBackBuffer::FDepthStencil);
 
     renderSurfaceManager->Register(backBuffer);
     renderSurfaceManager->Register(depthBuffer);
@@ -277,39 +277,39 @@ void GameTest4::Initialize(const Timeline& time) {
     // (2) Normal RGB
 
     const PAbstractRenderSurface gbuffer[] = {
-        new RenderSurfaceRelative("GBuffer0", float2::One(), SurfaceFormat::R10G10B10A2),
-        new RenderSurfaceRelative("GBuffer1", float2::One(), SurfaceFormat::R8G8B8A8),
-        new RenderSurfaceRelative("GBuffer2", float2::One(), SurfaceFormat::R10G10B10A2)
+        new FRenderSurfaceRelative("GBuffer0", float2::One(), FSurfaceFormat::R10G10B10A2),
+        new FRenderSurfaceRelative("GBuffer1", float2::One(), FSurfaceFormat::R8G8B8A8),
+        new FRenderSurfaceRelative("GBuffer2", float2::One(), FSurfaceFormat::R10G10B10A2)
     };
 
     renderSurfaceManager->Register(gbuffer[0]);
     renderSurfaceManager->Register(gbuffer[1]);
     renderSurfaceManager->Register(gbuffer[2]);
 
-    _mainScene = new Scene("Main scene", _camera, _world, _context->MaterialDatabase());
+    _mainScene = new FScene("Main scene", _camera, _world, _context->MaterialDatabase());
 
     // gbuffer rendering
-    _mainScene->RenderTree()->Add(new RenderLayerSetRenderTarget(MakeConstView(gbuffer), depthBuffer));
-    _mainScene->RenderTree()->Add(new RenderLayerClear(gbuffer[0],  Color::Black));
-    _mainScene->RenderTree()->Add(new RenderLayerClear(gbuffer[1],  Color::Transparent));
-    _mainScene->RenderTree()->Add(new RenderLayerClear(gbuffer[2],  Color::Blue));
-    _mainScene->RenderTree()->Add(new RenderLayerClear(depthBuffer, Color::Black));
-    _mainScene->RenderTree()->Add(new RenderLayer("Opaque_Objects"));
+    _mainScene->RenderTree()->Add(new FRenderLayerSetRenderTarget(MakeConstView(gbuffer), depthBuffer));
+    _mainScene->RenderTree()->Add(new FRenderLayerClear(gbuffer[0],  Color::Black));
+    _mainScene->RenderTree()->Add(new FRenderLayerClear(gbuffer[1],  Color::Transparent));
+    _mainScene->RenderTree()->Add(new FRenderLayerClear(gbuffer[2],  Color::Blue));
+    _mainScene->RenderTree()->Add(new FRenderLayerClear(depthBuffer, Color::Black));
+    _mainScene->RenderTree()->Add(new FRenderLayer("Opaque_Objects"));
 
     // deferred shade
-    _mainScene->RenderTree()->Add(new RenderLayerSetRenderTarget(backBuffer));
-    _mainScene->RenderTree()->Add(new RenderLayerClear(backBuffer, Color::Black));
-    _mainScene->RenderTree()->Add(new RenderLayerDrawRect(DeferredShadeEffect_(effectCompiler)));
+    _mainScene->RenderTree()->Add(new FRenderLayerSetRenderTarget(backBuffer));
+    _mainScene->RenderTree()->Add(new FRenderLayerClear(backBuffer, Color::Black));
+    _mainScene->RenderTree()->Add(new FRenderLayerDrawRect(DeferredShadeEffect_(effectCompiler)));
 
 
     _mainScene->Initialize(device);
 }
 //----------------------------------------------------------------------------
-void GameTest4::Destroy() {
+void FGameTest4::Destroy() {
     using namespace Engine;
     using namespace Graphics;
 
-    IDeviceAPIEncapsulator *const device = DeviceEncapsulator().Device();
+    IDeviceAPIEncapsulator *const device = FDeviceEncapsulator().Device();
 
     _mainScene->Destroy(device);
     RemoveRef_AssertReachZero(_mainScene);
@@ -326,35 +326,35 @@ void GameTest4::Destroy() {
     parent_type::Destroy();
 }
 //----------------------------------------------------------------------------
-void GameTest4::LoadContent() {
+void FGameTest4::LoadContent() {
     parent_type::LoadContent();
 
     using namespace Engine;
     using namespace Graphics;
 
-    IDeviceAPIEncapsulator *const device = DeviceEncapsulator().Device();
+    IDeviceAPIEncapsulator *const device = FDeviceEncapsulator().Device();
 
-    EffectDescriptor *const stdEffectDescriptor = new EffectDescriptor();
+    FEffectDescriptor *const stdEffectDescriptor = new FEffectDescriptor();
     stdEffectDescriptor->SetName("DeferredStandardEffect");
     stdEffectDescriptor->SetRenderState(
-        new RenderState(RenderState::Blending::Opaque,
-                        RenderState::Culling::CounterClockwise,
-                        RenderState::DepthTest::Default ));
+        new FRenderState(FRenderState::EBlending::Opaque,
+                        FRenderState::ECulling::CounterClockwise,
+                        FRenderState::EDepthTest::Default ));
     stdEffectDescriptor->SetVS(L"GameData:/Shaders/DeferredStandard.fx");
     stdEffectDescriptor->SetPS(L"GameData:/Shaders/DeferredStandard.fx");
-    stdEffectDescriptor->SetShaderProfile(ShaderProfileType::ShaderModel4_1);
-    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N::Declaration);
-    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N::Declaration);
-    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N::Declaration);
-    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N::Declaration);
-    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__TexCoord0_Float2__Normal0_Float3::Declaration);
-    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Half2::Declaration);
-    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Color0_UByte4N__Normal0_UX10Y10Z10W2N::Declaration);
-    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Normal0_UX10Y10Z10W2N::Declaration);
-    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3__Color0_UByte4N::Declaration);
-    stdEffectDescriptor->AddVertexDeclaration(Vertex::Position0_Float3::Declaration);
-    stdEffectDescriptor->AddSubstitution(MaterialConstNames::BumpMapping(), "WITH_BUMP_MAPPING");
-    stdEffectDescriptor->AddSubstitution(MaterialConstNames::SeparateAlpha(), "WITH_SEPARATE_ALPHA");
+    stdEffectDescriptor->SetShaderProfile(EShaderProfileType::ShaderModel4_1);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N::Declaration);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N::Declaration);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N::Declaration);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N::Declaration);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3__TexCoord0_Float2__Normal0_Float3::Declaration);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2::Declaration);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3__Color0_UByte4N__Normal0_UX10Y10Z10W2N::Declaration);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3__Normal0_UX10Y10Z10W2N::Declaration);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3__Color0_UByte4N::Declaration);
+    stdEffectDescriptor->AddVertexDeclaration(Vertex::FPosition0_Float3::Declaration);
+    stdEffectDescriptor->AddSubstitution(FMaterialConstNames::BumpMapping(), "WITH_BUMP_MAPPING");
+    stdEffectDescriptor->AddSubstitution(FMaterialConstNames::SeparateAlpha(), "WITH_SEPARATE_ALPHA");
 
     _mainScene->MaterialDatabase()->BindEffect("Standard", stdEffectDescriptor);
     _mainScene->MaterialDatabase()->BindTexture("IrradianceMap", L"GameData:/Textures/CubeMaps/Test/Irradiance.dds");
@@ -379,11 +379,11 @@ void GameTest4::LoadContent() {
         AssertNotReached();
 }
 //----------------------------------------------------------------------------
-void GameTest4::UnloadContent() {
+void FGameTest4::UnloadContent() {
     using namespace Engine;
     using namespace Graphics;
 
-    IDeviceAPIEncapsulator *const device = DeviceEncapsulator().Device();
+    IDeviceAPIEncapsulator *const device = FDeviceEncapsulator().Device();
 
     ReleaseModelRenderCommand(_renderCommand, device, _model);
 
@@ -393,78 +393,78 @@ void GameTest4::UnloadContent() {
     parent_type::UnloadContent();
 }
 //----------------------------------------------------------------------------
-void GameTest4::Update(const Timeline& time) {
+void FGameTest4::Update(const FTimeline& time) {
     parent_type::Update(time);
 
     using namespace Engine;
     using namespace Graphics;
     using namespace Application;
 
-    const Graphics::DeviceEncapsulator& encapsulator = DeviceEncapsulator();
+    const Graphics::FDeviceEncapsulator& encapsulator = FDeviceEncapsulator();
 
     IDeviceAPIEncapsulator *const device = encapsulator.Device();
     IDeviceAPIContext *const context = encapsulator.Context();
 
     // texture reloading
-    if (Keyboard().IsKeyPressed(KeyboardKey::Control) &&
-        Keyboard().IsKeyUp(KeyboardKey::F7)) {
+    if (Keyboard().IsKeyPressed(EKeyboardKey::Control) &&
+        Keyboard().IsKeyUp(EKeyboardKey::F7)) {
         _context->TextureCacheService()->TextureCache()->ReloadAllTextures();
     }
     // shader compilation
-    if (Keyboard().IsKeyPressed(KeyboardKey::Control) &&
-        Keyboard().IsKeyUp(KeyboardKey::F8)) {
+    if (Keyboard().IsKeyPressed(EKeyboardKey::Control) &&
+        Keyboard().IsKeyUp(EKeyboardKey::F8)) {
         _context->EffectCompilerService()->EffectCompiler()->RegenerateEffects();
     }
 
     // sunlight control
-    if (Keyboard().IsKeyPressed(KeyboardKey::Control)) {
+    if (Keyboard().IsKeyPressed(EKeyboardKey::Control)) {
         const float angularSpeed = Units::Time::Seconds(time.Elapsed()).Value() * F_PI * 0.1;
-        DirectionalLight& sun = _world->Lighting()->Sun();
+        FDirectionalLight& sun = _world->Lighting()->Sun();
         const float3& sunDirection = sun.Direction();
-        if (Keyboard().IsKeyPressed(KeyboardKey::L))
+        if (Keyboard().IsKeyPressed(EKeyboardKey::L))
             sun.SetDirection(MakeAxisQuaternion(float3::Up(), angularSpeed).Transform(sunDirection));
-        if (Keyboard().IsKeyPressed(KeyboardKey::J))
+        if (Keyboard().IsKeyPressed(EKeyboardKey::J))
             sun.SetDirection(MakeAxisQuaternion(float3::Up(), -angularSpeed).Transform(sunDirection));
-        if (Keyboard().IsKeyPressed(KeyboardKey::I))
+        if (Keyboard().IsKeyPressed(EKeyboardKey::I))
             sun.SetDirection(MakeAxisQuaternion(float3::Right(), angularSpeed).Transform(sunDirection));
-        if (Keyboard().IsKeyPressed(KeyboardKey::K))
+        if (Keyboard().IsKeyPressed(EKeyboardKey::K))
             sun.SetDirection(MakeAxisQuaternion(float3::Right(), -angularSpeed).Transform(sunDirection));
     }
 
     // wireframe
-    if (Keyboard().IsKeyUp(KeyboardKey::F11))
-        Effect::SwitchAutomaticFillMode();
+    if (Keyboard().IsKeyUp(EKeyboardKey::F11))
+        FEffect::SwitchAutomaticFillMode();
 
     // world time speed
-    if (Keyboard().IsKeyUp(KeyboardKey::Add))
+    if (Keyboard().IsKeyUp(EKeyboardKey::Add))
         _world->SetSpeed(std::max(1.0f, _world->Speed() * 2));
-    if (Keyboard().IsKeyUp(KeyboardKey::Subtract) && !_world->IsPaused() )
+    if (Keyboard().IsKeyUp(EKeyboardKey::Subtract) && !_world->IsPaused() )
         _world->SetSpeed(_world->Speed() * 0.5f);
-    if (Keyboard().IsKeyUp(KeyboardKey::Multiply))
+    if (Keyboard().IsKeyUp(EKeyboardKey::Multiply))
         _world->TogglePause();
 
-    Scene *const scenes[] = { _mainScene.get() };
+    FScene *const scenes[] = { _mainScene.get() };
     _context->UpdateAndPrepare(device, time, _world, MakeView(scenes));
 }
 //----------------------------------------------------------------------------
-void GameTest4::Draw(const Timeline& time) {
+void FGameTest4::Draw(const FTimeline& time) {
     parent_type::Draw(time);
 
     using namespace Engine;
     using namespace Graphics;
 
-    const Graphics::DeviceEncapsulator& encapsulator = DeviceEncapsulator();
+    const Graphics::FDeviceEncapsulator& encapsulator = FDeviceEncapsulator();
 
     IDeviceAPIEncapsulator *const device = encapsulator.Device();
     IDeviceAPIContext *const context = encapsulator.Context();
 
     _context->FrameTick();
 
-    Scene *const scenes[] = { _mainScene.get() };
+    FScene *const scenes[] = { _mainScene.get() };
     _context->Render(context, MakeView(scenes));
 }
 //----------------------------------------------------------------------------
-void GameTest4::Present() {
+void FGameTest4::Present() {
     parent_type::Present();
 }
 //----------------------------------------------------------------------------

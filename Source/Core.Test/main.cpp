@@ -18,19 +18,19 @@
 
 #if   (0 == APPLICATION_TYPE)
 #   include "ApplicationTest.h"
-typedef Core::ApplicationTest application_type;
+typedef Core::FApplicationTest application_type;
 #elif (1 == APPLICATION_TYPE)
 #   include "GameTest.h"
-typedef Core::GameTest application_type;
+typedef Core::FGameTest application_type;
 #elif (2 == APPLICATION_TYPE)
 #   include "GameTest2.h"
-typedef Core::GameTest2 application_type;
+typedef Core::FGameTest2 application_type;
 #elif (3 == APPLICATION_TYPE)
 #   include "GameTest3.h"
-typedef Core::GameTest3 application_type;
+typedef Core::FGameTest3 application_type;
 #elif (4 == APPLICATION_TYPE)
 #   include "GameTest4.h"
-typedef Core::GameTest4 application_type;
+typedef Core::FGameTest4 application_type;
 #else
 #   error "unknown application type"
 #endif
@@ -47,7 +47,7 @@ typedef Core::GameTest4 application_type;
 #   include "resource.h"
 #endif
 
-static void PrintMemStats(const Core::CrtMemoryStats& memoryStats) {
+static void PrintMemStats(const Core::FCrtMemoryStats& memoryStats) {
     STACKLOCAL_OCSTRSTREAM(4096, oss);
     oss << "Memory statistics :" << std::endl
         << " - Total free size          = " << memoryStats.TotalFreeSize << std::endl
@@ -74,10 +74,10 @@ static int Bootstrap(void *applicationHandle, int nShowCmd, int argc, const wcha
     Serialize::SerializeStartup startupSerialize;
     Graphics::GraphicsStartup startupGraphics;
     Logic::LogicStartup startupLogic;
-    Engine::EngineStartup startupEngine;
+    Engine::FEngineStartup startupEngine;
 
 #if defined(OS_WINDOWS) && CORE_RESOURCES
-    CurrentProcess::Instance().SetAppIcon(IDI_WINDOW_ICON);
+    FCurrentProcess::Instance().SetAppIcon(IDI_WINDOW_ICON);
 #endif
 
 #ifdef WITH_APPLICATION_TRY_CATCH
@@ -90,8 +90,8 @@ static int Bootstrap(void *applicationHandle, int nShowCmd, int argc, const wcha
 #ifdef WITH_APPLICATION_TRY_CATCH
     catch (const std::exception& e)
     {
-        const WString wwhat = ToWString(e.what());
-        Dialog::Ok(wwhat.c_str(), L"Exception caught !", Dialog::Icon::Exclamation);
+        const FWString wwhat = ToWString(e.what());
+        Dialog::Ok(wwhat.c_str(), L"FException caught !", Dialog::Icon::Exclamation);
         AssertNotReached();
     }
 #endif
@@ -100,7 +100,7 @@ static int Bootstrap(void *applicationHandle, int nShowCmd, int argc, const wcha
     ReportAllTrackingData();
 #endif
 
-    return CurrentProcess::Instance().ExitCode();
+    return FCurrentProcess::Instance().ExitCode();
 }
 
 #ifdef OS_WINDOWS
@@ -139,7 +139,7 @@ int main(int argc, const wchar_t* argv[]) {
         result = Bootstrap<application_type>(hInstance, nCmdShow, argc, const_cast<const wchar_t**>(&argv[0]));
 
 #if defined(OS_WINDOWS) && !defined(FINAL_RELEASE)
-        CrtMemoryStats memoryStats;
+        FCrtMemoryStats memoryStats;
         CrtDumpMemoryStats(&memoryStats);
         PrintMemStats(memoryStats);
 #endif

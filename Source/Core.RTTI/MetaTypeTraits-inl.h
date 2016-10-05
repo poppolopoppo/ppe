@@ -8,53 +8,53 @@ namespace RTTI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-void MetaTypeTraitsImpl< RefPtr<T>, typename std::enable_if<std::is_base_of<RTTI::MetaObject, T>::value>::type >::WrapMove(wrapper_type& dst, wrapped_type&& src) {
-    typedef RefPtr< typename std::remove_const<T>::type > refptr_type;
+void TMetaTypeTraitsImpl< TRefPtr<T>, typename std::enable_if<std::is_base_of<RTTI::FMetaObject, T>::value>::type >::WrapMove(wrapper_type& dst, wrapped_type&& src) {
+    typedef TRefPtr< typename std::remove_const<T>::type > refptr_type;
     dst = std::move(*reinterpret_cast<refptr_type*>(&src)); // const objects are considered non const internally
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void MetaTypeTraitsImpl< RefPtr<T>, typename std::enable_if<std::is_base_of<RTTI::MetaObject, T>::value>::type >::WrapCopy(wrapper_type& dst, const wrapped_type& src) {
-    typedef RefPtr< typename std::remove_const<T>::type > refptr_type;
+void TMetaTypeTraitsImpl< TRefPtr<T>, typename std::enable_if<std::is_base_of<RTTI::FMetaObject, T>::value>::type >::WrapCopy(wrapper_type& dst, const wrapped_type& src) {
+    typedef TRefPtr< typename std::remove_const<T>::type > refptr_type;
     dst = *reinterpret_cast<const refptr_type*>(&src); // const objects are considered non const internally
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void MetaTypeTraitsImpl< RefPtr<T>, typename std::enable_if<std::is_base_of<RTTI::MetaObject, T>::value>::type >::UnwrapMove(wrapped_type& dst, wrapper_type&& src) {
+void TMetaTypeTraitsImpl< TRefPtr<T>, typename std::enable_if<std::is_base_of<RTTI::FMetaObject, T>::value>::type >::UnwrapMove(wrapped_type& dst, wrapper_type&& src) {
     dst = std::move(src);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void MetaTypeTraitsImpl< RefPtr<T>, typename std::enable_if<std::is_base_of<RTTI::MetaObject, T>::value>::type >::UnwrapCopy(wrapped_type& dst, const wrapper_type& src) {
+void TMetaTypeTraitsImpl< TRefPtr<T>, typename std::enable_if<std::is_base_of<RTTI::FMetaObject, T>::value>::type >::UnwrapCopy(wrapped_type& dst, const wrapper_type& src) {
     dst = src;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator>
-void MetaTypeTraitsImpl< Core::Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> >::WrapMove(wrapper_type& dst, wrapped_type&& src) {
+template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits, typename _Allocator>
+void TMetaTypeTraitsImpl< Core::EToken<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> >::WrapMove(wrapper_type& dst, wrapped_type&& src) {
     dst = src.c_str();
 }
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator>
-void MetaTypeTraitsImpl< Core::Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> >::WrapCopy(wrapper_type& dst, const wrapped_type& src) {
+template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits, typename _Allocator>
+void TMetaTypeTraitsImpl< Core::EToken<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> >::WrapCopy(wrapper_type& dst, const wrapped_type& src) {
     dst = src.c_str();
 }
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator>
-void MetaTypeTraitsImpl< Core::Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> >::UnwrapMove(wrapped_type& dst, wrapper_type&& src) {
+template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits, typename _Allocator>
+void TMetaTypeTraitsImpl< Core::EToken<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> >::UnwrapMove(wrapped_type& dst, wrapper_type&& src) {
     dst = src;
 }
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, Case _Sensitive, typename _TokenTraits, typename _Allocator>
-void MetaTypeTraitsImpl< Core::Token<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> >::UnwrapCopy(wrapped_type& dst, const wrapper_type& src) {
+template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits, typename _Allocator>
+void TMetaTypeTraitsImpl< Core::EToken<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> >::UnwrapCopy(wrapped_type& dst, const wrapper_type& src) {
     dst = src;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-bool MetaTypeTraitsImpl< Core::Vector<T, _Allocator> >::DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) {
+bool TMetaTypeTraitsImpl< Core::TVector<T, _Allocator> >::DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) {
     if (lhs.size() != rhs.size())
         return false;
 
@@ -67,7 +67,7 @@ bool MetaTypeTraitsImpl< Core::Vector<T, _Allocator> >::DeepEquals(const wrapped
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void MetaTypeTraitsImpl< Core::Vector<T, _Allocator> >::WrapMove(wrapper_type& dst, wrapped_type&& src) {
+void TMetaTypeTraitsImpl< Core::TVector<T, _Allocator> >::WrapMove(wrapper_type& dst, wrapped_type&& src) {
     const size_t k = src.size();
     dst.reserve(k);
 
@@ -79,7 +79,7 @@ void MetaTypeTraitsImpl< Core::Vector<T, _Allocator> >::WrapMove(wrapper_type& d
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void MetaTypeTraitsImpl< Core::Vector<T, _Allocator> >::WrapCopy(wrapper_type& dst, const wrapped_type& src) {
+void TMetaTypeTraitsImpl< Core::TVector<T, _Allocator> >::WrapCopy(wrapper_type& dst, const wrapped_type& src) {
     const size_t k = src.size();
     dst.reserve(k);
 
@@ -90,7 +90,7 @@ void MetaTypeTraitsImpl< Core::Vector<T, _Allocator> >::WrapCopy(wrapper_type& d
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void MetaTypeTraitsImpl< Core::Vector<T, _Allocator> >::UnwrapMove(wrapped_type& dst, wrapper_type&& src) {
+void TMetaTypeTraitsImpl< Core::TVector<T, _Allocator> >::UnwrapMove(wrapped_type& dst, wrapper_type&& src) {
     const size_t k = src.size();
     dst.reserve(k);
 
@@ -102,7 +102,7 @@ void MetaTypeTraitsImpl< Core::Vector<T, _Allocator> >::UnwrapMove(wrapped_type&
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void MetaTypeTraitsImpl< Core::Vector<T, _Allocator> >::UnwrapCopy(wrapped_type& dst, const wrapper_type& src) {
+void TMetaTypeTraitsImpl< Core::TVector<T, _Allocator> >::UnwrapCopy(wrapped_type& dst, const wrapper_type& src) {
     const size_t k = src.size();
     dst.reserve(k);
 
@@ -115,7 +115,7 @@ void MetaTypeTraitsImpl< Core::Vector<T, _Allocator> >::UnwrapCopy(wrapped_type&
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _InSituCount, typename _Allocator>
-bool MetaTypeTraitsImpl< Core::VectorInSitu<T, _InSituCount, _Allocator> >::DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) {
+bool TMetaTypeTraitsImpl< Core::TVectorInSitu<T, _InSituCount, _Allocator> >::DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) {
     if (lhs.size() != rhs.size())
         return false;
 
@@ -128,7 +128,7 @@ bool MetaTypeTraitsImpl< Core::VectorInSitu<T, _InSituCount, _Allocator> >::Deep
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _InSituCount, typename _Allocator>
-void MetaTypeTraitsImpl< Core::VectorInSitu<T, _InSituCount, _Allocator> >::WrapMove(wrapper_type& dst, wrapped_type&& src) {
+void TMetaTypeTraitsImpl< Core::TVectorInSitu<T, _InSituCount, _Allocator> >::WrapMove(wrapper_type& dst, wrapped_type&& src) {
     const size_t k = src.size();
     dst.reserve(k);
 
@@ -140,7 +140,7 @@ void MetaTypeTraitsImpl< Core::VectorInSitu<T, _InSituCount, _Allocator> >::Wrap
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _InSituCount, typename _Allocator>
-void MetaTypeTraitsImpl< Core::VectorInSitu<T, _InSituCount, _Allocator> >::WrapCopy(wrapper_type& dst, const wrapped_type& src) {
+void TMetaTypeTraitsImpl< Core::TVectorInSitu<T, _InSituCount, _Allocator> >::WrapCopy(wrapper_type& dst, const wrapped_type& src) {
     const size_t k = src.size();
     dst.reserve(k);
 
@@ -151,7 +151,7 @@ void MetaTypeTraitsImpl< Core::VectorInSitu<T, _InSituCount, _Allocator> >::Wrap
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _InSituCount, typename _Allocator>
-void MetaTypeTraitsImpl< Core::VectorInSitu<T, _InSituCount, _Allocator> >::UnwrapMove(wrapped_type& dst, wrapper_type&& src) {
+void TMetaTypeTraitsImpl< Core::TVectorInSitu<T, _InSituCount, _Allocator> >::UnwrapMove(wrapped_type& dst, wrapper_type&& src) {
     const size_t k = src.size();
     dst.reserve(k);
 
@@ -163,7 +163,7 @@ void MetaTypeTraitsImpl< Core::VectorInSitu<T, _InSituCount, _Allocator> >::Unwr
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _InSituCount, typename _Allocator>
-void MetaTypeTraitsImpl< Core::VectorInSitu<T, _InSituCount, _Allocator> >::UnwrapCopy(wrapped_type& dst, const wrapper_type& src) {
+void TMetaTypeTraitsImpl< Core::TVectorInSitu<T, _InSituCount, _Allocator> >::UnwrapCopy(wrapped_type& dst, const wrapper_type& src) {
     const size_t k = src.size();
     dst.reserve(k);
 
@@ -176,25 +176,25 @@ void MetaTypeTraitsImpl< Core::VectorInSitu<T, _InSituCount, _Allocator> >::Unwr
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
-void MetaTypeTraitsImpl< Core::Pair<_Key, _Value> >::WrapMove(wrapper_type& dst, wrapped_type&& src) {
+void TMetaTypeTraitsImpl< Core::TPair<_Key, _Value> >::WrapMove(wrapper_type& dst, wrapped_type&& src) {
     first_traits::WrapMove(dst.first, std::move(src.first));
     second_traits::WrapMove(dst.second, std::move(src.second));
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
-void MetaTypeTraitsImpl< Core::Pair<_Key, _Value> >::WrapCopy(wrapper_type& dst, const wrapped_type& src) {
+void TMetaTypeTraitsImpl< Core::TPair<_Key, _Value> >::WrapCopy(wrapper_type& dst, const wrapped_type& src) {
     first_traits::WrapCopy(dst.first, src.first);
     second_traits::WrapCopy(dst.second, src.second);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
-void MetaTypeTraitsImpl< Core::Pair<_Key, _Value> >::UnwrapMove(wrapped_type& dst, wrapper_type&& src) {
+void TMetaTypeTraitsImpl< Core::TPair<_Key, _Value> >::UnwrapMove(wrapped_type& dst, wrapper_type&& src) {
     first_traits::UnwrapMove(dst.first, std::move(src.first));
     second_traits::UnwrapMove(dst.second, std::move(src.second));
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
-void MetaTypeTraitsImpl< Core::Pair<_Key, _Value> >::UnwrapCopy(wrapped_type& dst, const wrapper_type& src) {
+void TMetaTypeTraitsImpl< Core::TPair<_Key, _Value> >::UnwrapCopy(wrapped_type& dst, const wrapper_type& src) {
     first_traits::UnwrapCopy(dst.first, src.first);
     second_traits::UnwrapCopy(dst.second, src.second);
 }
@@ -202,7 +202,7 @@ void MetaTypeTraitsImpl< Core::Pair<_Key, _Value> >::UnwrapCopy(wrapped_type& ds
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-bool MetaTypeTraitsImpl< Core::AssociativeVector<_Key, _Value, _EqualTo, _Vector> >::DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) {
+bool TMetaTypeTraitsImpl< Core::TAssociativeVector<_Key, _Value, _EqualTo, _Vector> >::DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) {
     if (lhs.size() != rhs.size())
         return false;
 
@@ -220,7 +220,7 @@ bool MetaTypeTraitsImpl< Core::AssociativeVector<_Key, _Value, _EqualTo, _Vector
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-void MetaTypeTraitsImpl< Core::AssociativeVector<_Key, _Value, _EqualTo, _Vector> >::WrapMove(wrapper_type& dst, wrapped_type&& src) {
+void TMetaTypeTraitsImpl< Core::TAssociativeVector<_Key, _Value, _EqualTo, _Vector> >::WrapMove(wrapper_type& dst, wrapped_type&& src) {
     typedef typename wrapper_type::vector_type wrapper_vector;
     typedef typename wrapped_type::vector_type wrapped_vector;
 
@@ -231,7 +231,7 @@ void MetaTypeTraitsImpl< Core::AssociativeVector<_Key, _Value, _EqualTo, _Vector
     dst_vector.reserve(k);
 
     for (size_t i = 0; i < k; ++i) {
-        Pair<_Key, _Value>& dst_it = dst_vector.push_back_Default();
+        TPair<_Key, _Value>& dst_it = dst_vector.push_back_Default();
         key_traits::WrapMove(dst_it.first, std::move(src_vector[i].first));
         value_traits::WrapMove(dst_it.second, std::move(src_vector[i].second));
     }
@@ -243,7 +243,7 @@ void MetaTypeTraitsImpl< Core::AssociativeVector<_Key, _Value, _EqualTo, _Vector
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-void MetaTypeTraitsImpl< Core::AssociativeVector<_Key, _Value, _EqualTo, _Vector> >::WrapCopy(wrapper_type& dst, const wrapped_type& src) {
+void TMetaTypeTraitsImpl< Core::TAssociativeVector<_Key, _Value, _EqualTo, _Vector> >::WrapCopy(wrapper_type& dst, const wrapped_type& src) {
     typedef typename wrapper_type::vector_type wrapper_vector;
     typedef typename wrapped_type::vector_type wrapped_vector;
 
@@ -254,7 +254,7 @@ void MetaTypeTraitsImpl< Core::AssociativeVector<_Key, _Value, _EqualTo, _Vector
     dst_vector.reserve(k);
 
     for (size_t i = 0; i < k; ++i) {
-        Pair<_Key, _Value>& dst_it = dst_vector.push_back_Default();
+        TPair<_Key, _Value>& dst_it = dst_vector.push_back_Default();
         key_traits::WrapCopy(dst_it.first, src_vector[i].first);
         value_traits::WrapCopy(dst_it.second, src_vector[i].second);
     }
@@ -264,7 +264,7 @@ void MetaTypeTraitsImpl< Core::AssociativeVector<_Key, _Value, _EqualTo, _Vector
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-void MetaTypeTraitsImpl< Core::AssociativeVector<_Key, _Value, _EqualTo, _Vector> >::UnwrapMove(wrapped_type& dst, wrapper_type&& src) {
+void TMetaTypeTraitsImpl< Core::TAssociativeVector<_Key, _Value, _EqualTo, _Vector> >::UnwrapMove(wrapped_type& dst, wrapper_type&& src) {
     typedef typename wrapper_type::vector_type wrapper_vector;
     typedef typename wrapped_type::vector_type wrapped_vector;
 
@@ -276,7 +276,7 @@ void MetaTypeTraitsImpl< Core::AssociativeVector<_Key, _Value, _EqualTo, _Vector
     dst_vector.reserve(k);
 
     for (size_t i = 0; i < k; ++i) {
-        Pair<_Key, _Value>& dst_it = dst_vector.push_back_Default();
+        TPair<_Key, _Value>& dst_it = dst_vector.push_back_Default();
         key_traits::UnwrapMove(dst_it.first, std::move(src_vector[i].first));
         value_traits::UnwrapMove(dst_it.second, std::move(src_vector[i].second));
     }
@@ -288,7 +288,7 @@ void MetaTypeTraitsImpl< Core::AssociativeVector<_Key, _Value, _EqualTo, _Vector
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-void MetaTypeTraitsImpl< Core::AssociativeVector<_Key, _Value, _EqualTo, _Vector> >::UnwrapCopy(wrapped_type& dst, const wrapper_type& src) {
+void TMetaTypeTraitsImpl< Core::TAssociativeVector<_Key, _Value, _EqualTo, _Vector> >::UnwrapCopy(wrapped_type& dst, const wrapper_type& src) {
     typedef typename wrapper_type::vector_type wrapper_vector;
     typedef typename wrapped_type::vector_type wrapped_vector;
 
@@ -299,7 +299,7 @@ void MetaTypeTraitsImpl< Core::AssociativeVector<_Key, _Value, _EqualTo, _Vector
     dst_vector.reserve(k);
 
     for (size_t i = 0; i < k; ++i) {
-        Pair<_Key, _Value>& dst_it = dst_vector.push_back_Default();
+        TPair<_Key, _Value>& dst_it = dst_vector.push_back_Default();
         key_traits::UnwrapCopy(dst_it.first, src_vector[i].first);
         value_traits::UnwrapCopy(dst_it.second, src_vector[i].second);
     }
@@ -311,14 +311,14 @@ void MetaTypeTraitsImpl< Core::AssociativeVector<_Key, _Value, _EqualTo, _Vector
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
-bool MetaTypeTraitsImpl< Core::HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator> >::DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) {
+bool TMetaTypeTraitsImpl< Core::THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator> >::DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) {
     if (lhs.size() != rhs.size())
         return false;
 
     const size_t k = lhs.size();
-    for (const Pair<_Key, _Value>& plhs : lhs) {
+    for (const TPair<_Key, _Value>& plhs : lhs) {
         bool found = false;
-        for (const Pair<_Key, _Value>& prhs : rhs) {
+        for (const TPair<_Key, _Value>& prhs : rhs) {
             if (key_traits::DeepEquals(plhs.first, prhs.first)) {
                 found = true;
                 if (false == value_traits::DeepEquals(plhs.second, prhs.second))
@@ -334,7 +334,7 @@ bool MetaTypeTraitsImpl< Core::HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocat
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
-void MetaTypeTraitsImpl< Core::HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator> >::WrapMove(wrapper_type& dst, wrapped_type&& src) {
+void TMetaTypeTraitsImpl< Core::THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator> >::WrapMove(wrapper_type& dst, wrapped_type&& src) {
     typedef typename wrapper_type::vector_type wrapper_vector;
 
     const size_t k = src.size();
@@ -350,7 +350,7 @@ void MetaTypeTraitsImpl< Core::HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocat
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
-void MetaTypeTraitsImpl< Core::HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator> >::WrapCopy(wrapper_type& dst, const wrapped_type& src) {
+void TMetaTypeTraitsImpl< Core::THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator> >::WrapCopy(wrapper_type& dst, const wrapped_type& src) {
     typedef typename wrapper_type::vector_type wrapper_vector;
 
     const size_t k = src.size();
@@ -365,7 +365,7 @@ void MetaTypeTraitsImpl< Core::HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocat
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
-void MetaTypeTraitsImpl< Core::HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator> >::UnwrapMove(wrapped_type& dst, wrapper_type&& src) {
+void TMetaTypeTraitsImpl< Core::THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator> >::UnwrapMove(wrapped_type& dst, wrapper_type&& src) {
     typedef typename wrapper_type::vector_type wrapper_vector;
 
     wrapper_vector& src_vector = src.Vector();
@@ -375,7 +375,7 @@ void MetaTypeTraitsImpl< Core::HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocat
     dst.reserve(k);
 
     for (auto& src_pair : src) {
-        Pair<_Key, _Value> dst_pair;
+        TPair<_Key, _Value> dst_pair;
         pair_traits::UnwrapMove(dst_pair, std::move(src_pair));
         dst.emplace(std::move(dst_pair));
     }
@@ -384,7 +384,7 @@ void MetaTypeTraitsImpl< Core::HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocat
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
-void MetaTypeTraitsImpl< Core::HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator> >::UnwrapCopy(wrapped_type& dst, const wrapper_type& src) {
+void TMetaTypeTraitsImpl< Core::THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator> >::UnwrapCopy(wrapped_type& dst, const wrapper_type& src) {
     typedef typename wrapper_type::vector_type wrapper_vector;
 
     const wrapper_vector& src_vector = src.Vector();
@@ -394,7 +394,7 @@ void MetaTypeTraitsImpl< Core::HashMap<_Key, _Value, _Hasher, _EqualTo, _Allocat
     dst.reserve(k);
 
     for (const auto& src_pair : src) {
-        Pair<_Key, _Value> dst_pair;
+        TPair<_Key, _Value> dst_pair;
         pair_traits::UnwrapCopy(dst_pair, std::move(src_pair));
         dst.emplace(std::move(dst_pair));
     }

@@ -12,38 +12,38 @@ namespace Meta {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class AutoSingletonManagerImpl {
+class FAutoSingletonManagerImpl {
 public:
-    AutoSingletonManagerImpl();
-    ~AutoSingletonManagerImpl();
+    FAutoSingletonManagerImpl();
+    ~FAutoSingletonManagerImpl();
 
     void Start();
     void Shutdown();
 
-    void Register(AbstractAutoSingleton *singleton);
-    void Unregister(AbstractAutoSingleton *singleton);
+    void Register(FAbstractAutoSingleton *singleton);
+    void Unregister(FAbstractAutoSingleton *singleton);
 
 private:
-    AbstractAutoSingleton *_head;
+    FAbstractAutoSingleton *_head;
 #ifdef WITH_CORE_ASSERT
     bool _isStarted = false;
 #endif
 };
 //----------------------------------------------------------------------------
-AutoSingletonManagerImpl::AutoSingletonManagerImpl()
+FAutoSingletonManagerImpl::FAutoSingletonManagerImpl()
 :   _head(nullptr) {}
 //----------------------------------------------------------------------------
-AutoSingletonManagerImpl::~AutoSingletonManagerImpl() {
+FAutoSingletonManagerImpl::~FAutoSingletonManagerImpl() {
     Assert(nullptr == _head);
 }
 //----------------------------------------------------------------------------
-void AutoSingletonManagerImpl::Start() {
+void FAutoSingletonManagerImpl::Start() {
     Assert(!_isStarted);
     ONLY_IF_ASSERT(_isStarted = true;);
     Assert(nullptr == _head);
 }
 //----------------------------------------------------------------------------
-void AutoSingletonManagerImpl::Shutdown() {
+void FAutoSingletonManagerImpl::Shutdown() {
     Assert(_isStarted);
     ONLY_IF_ASSERT(_isStarted = false;);
 
@@ -51,7 +51,7 @@ void AutoSingletonManagerImpl::Shutdown() {
         checked_delete(_head);
 }
 //----------------------------------------------------------------------------
-void AutoSingletonManagerImpl::Register(AbstractAutoSingleton *singleton) {
+void FAutoSingletonManagerImpl::Register(FAbstractAutoSingleton *singleton) {
     Assert(singleton);
     Assert(nullptr == singleton->_pnext);
     Assert(nullptr == singleton->_pprev);
@@ -63,7 +63,7 @@ void AutoSingletonManagerImpl::Register(AbstractAutoSingleton *singleton) {
     _head = singleton;
 }
 //----------------------------------------------------------------------------
-void AutoSingletonManagerImpl::Unregister(AbstractAutoSingleton *singleton) {
+void FAutoSingletonManagerImpl::Unregister(FAbstractAutoSingleton *singleton) {
     Assert(singleton);
     Assert(_head);
 
@@ -82,81 +82,81 @@ void AutoSingletonManagerImpl::Unregister(AbstractAutoSingleton *singleton) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class AutoSingletonManagerImplThreadSafe : public AutoSingletonManagerImpl {
+class FAutoSingletonManagerImplThreadSafe : public FAutoSingletonManagerImpl {
 public:
     void Start();
     void Shutdown();
 
-    void Register(AbstractAutoSingleton *singleton);
-    void Unregister(AbstractAutoSingleton *singleton);
+    void Register(FAbstractAutoSingleton *singleton);
+    void Unregister(FAbstractAutoSingleton *singleton);
 
 private:
     std::mutex _barrier;
 };
 //----------------------------------------------------------------------------
-void AutoSingletonManagerImplThreadSafe::Start() {
+void FAutoSingletonManagerImplThreadSafe::Start() {
     std::lock_guard<std::mutex> scopeLock(_barrier);
-    AutoSingletonManagerImpl::Start();
+    FAutoSingletonManagerImpl::Start();
 }
 //----------------------------------------------------------------------------
-void AutoSingletonManagerImplThreadSafe::Shutdown() {
+void FAutoSingletonManagerImplThreadSafe::Shutdown() {
     std::lock_guard<std::mutex> scopeLock(_barrier);
-    AutoSingletonManagerImpl::Shutdown();
+    FAutoSingletonManagerImpl::Shutdown();
 }
 //----------------------------------------------------------------------------
-void AutoSingletonManagerImplThreadSafe::Register(AbstractAutoSingleton *singleton) {
+void FAutoSingletonManagerImplThreadSafe::Register(FAbstractAutoSingleton *singleton) {
     std::lock_guard<std::mutex> scopeLock(_barrier);
-    AutoSingletonManagerImpl::Register(singleton);
+    FAutoSingletonManagerImpl::Register(singleton);
 }
 //----------------------------------------------------------------------------
-void AutoSingletonManagerImplThreadSafe::Unregister(AbstractAutoSingleton *singleton) {
+void FAutoSingletonManagerImplThreadSafe::Unregister(FAbstractAutoSingleton *singleton) {
     std::lock_guard<std::mutex> scopeLock(_barrier);
-    AutoSingletonManagerImpl::Unregister(singleton);
+    FAutoSingletonManagerImpl::Unregister(singleton);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-static AutoSingletonManagerImpl& AutoSingletonManager_() {
-    ONE_TIME_DEFAULT_INITIALIZE(AutoSingletonManagerImplThreadSafe, sInstance);
+static FAutoSingletonManagerImpl& AutoSingletonManager_() {
+    ONE_TIME_DEFAULT_INITIALIZE(FAutoSingletonManagerImplThreadSafe, sInstance);
     return sInstance;
 }
 //----------------------------------------------------------------------------
-void AutoSingletonManager::Start() {
+void FAutoSingletonManager::Start() {
     AutoSingletonManager_().Start();
 }
 //----------------------------------------------------------------------------
-void AutoSingletonManager::Shutdown() {
+void FAutoSingletonManager::Shutdown() {
     AutoSingletonManager_().Shutdown();
 }
 //----------------------------------------------------------------------------
-void AutoSingletonManager::Register(AbstractAutoSingleton *pinstance) {
+void FAutoSingletonManager::Register(FAbstractAutoSingleton *pinstance) {
     AutoSingletonManager_().Register(pinstance);
 }
 //----------------------------------------------------------------------------
-void AutoSingletonManager::Unregister(AbstractAutoSingleton *pinstance) {
+void FAutoSingletonManager::Unregister(FAbstractAutoSingleton *pinstance) {
     AutoSingletonManager_().Unregister(pinstance);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-static AutoSingletonManagerImpl& ThreadLocalAutoSingletonManager_() {
-    ONE_TIME_DEFAULT_INITIALIZE_THREAD_LOCAL(AutoSingletonManagerImpl, sTlsInstance);
+static FAutoSingletonManagerImpl& ThreadLocalAutoSingletonManager_() {
+    ONE_TIME_DEFAULT_INITIALIZE_THREAD_LOCAL(FAutoSingletonManagerImpl, sTlsInstance);
     return sTlsInstance;
 }
 //----------------------------------------------------------------------------
-void ThreadLocalAutoSingletonManager::Start() {
+void FThreadLocalAutoSingletonManager::Start() {
     ThreadLocalAutoSingletonManager_().Start();
 }
 //----------------------------------------------------------------------------
-void ThreadLocalAutoSingletonManager::Shutdown() {
+void FThreadLocalAutoSingletonManager::Shutdown() {
     ThreadLocalAutoSingletonManager_().Shutdown();
 }
 //----------------------------------------------------------------------------
-void ThreadLocalAutoSingletonManager::Register(AbstractAutoSingleton *pinstance) {
+void FThreadLocalAutoSingletonManager::Register(FAbstractAutoSingleton *pinstance) {
     ThreadLocalAutoSingletonManager_().Register(pinstance);
 }
 //----------------------------------------------------------------------------
-void ThreadLocalAutoSingletonManager::Unregister(AbstractAutoSingleton *pinstance) {
+void FThreadLocalAutoSingletonManager::Unregister(FAbstractAutoSingleton *pinstance) {
     ThreadLocalAutoSingletonManager_().Unregister(pinstance);
 }
 //----------------------------------------------------------------------------

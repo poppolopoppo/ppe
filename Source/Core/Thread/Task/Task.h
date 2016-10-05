@@ -9,14 +9,14 @@
 
 namespace Core {
 class ITaskContext;
-class TaskManager;
+class FTaskManager;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 typedef void (*TaskFunc)(ITaskContext& context);
-typedef Delegate<TaskFunc> TaskDelegate;
+typedef TDelegate<TaskFunc> TaskDelegate;
 //----------------------------------------------------------------------------
-enum class TaskPriority : u32 {
+enum class ETaskPriority : u32 {
     High = 0,
     Normal,
     Low,
@@ -27,11 +27,11 @@ enum class TaskPriority : u32 {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(Task);
-class Task : public RefCountable {
+class FTask : public FRefCountable {
 public:
     // Won't be deleted if the task was never run !
 
-    virtual ~Task() {}
+    virtual ~FTask() {}
 
     operator TaskDelegate ();
 

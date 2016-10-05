@@ -13,56 +13,56 @@
 
 namespace Core {
 namespace Graphics {
-class ShaderProgram;
-class VertexDeclaration;
+class FShaderProgram;
+class FVertexDeclaration;
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(ShaderSource);
-class ShaderSource : public RefCountable {
+class FShaderSource : public FRefCountable {
 public:
-    ShaderSource(   const char *sourceName,
-                    const Core::Filename& filename,
-                    const MemoryView<const char>& sourceCode,
-                    const MemoryView<const Pair<String, String>>& defines);
+    FShaderSource(   const char *sourceName,
+                    const Core::FFilename& filename,
+                    const TMemoryView<const char>& sourceCode,
+                    const TMemoryView<const TPair<FString, FString>>& defines);
 
-    ShaderSource(   String&& sourceName,
-                    const Core::Filename& filename,
+    FShaderSource(   FString&& sourceName,
+                    const Core::FFilename& filename,
                     RAWSTORAGE_THREAD_LOCAL(Shader, char)&& sourceCode,
-                    ASSOCIATIVE_VECTOR_THREAD_LOCAL(Shader, String, String)&& defines);
+                    ASSOCIATIVE_VECTOR_THREAD_LOCAL(Shader, FString, FString)&& defines);
 
-    ~ShaderSource();
+    ~FShaderSource();
 
-    ShaderSource(const ShaderSource& ) = delete;
-    ShaderSource& operator =(const ShaderSource& ) = delete;
+    FShaderSource(const FShaderSource& ) = delete;
+    FShaderSource& operator =(const FShaderSource& ) = delete;
 
-    const String& SourceName() const { return _sourceName; }
-    const Core::Filename& Filename() const { return _filename; }
-    MemoryView<const char> SourceCode() const { return MakeView(_sourceCode); }
-    MemoryView<const Pair<String, String>> Defines() const { return MakeView(_defines); }
+    const FString& SourceName() const { return _sourceName; }
+    const Core::FFilename& Filename() const { return _filename; }
+    TMemoryView<const char> SourceCode() const { return MakeView(_sourceCode); }
+    TMemoryView<const TPair<FString, FString>> Defines() const { return MakeView(_defines); }
 
     void Preprocess(RAWSTORAGE_THREAD_LOCAL(Shader, char)& preprocessed,
-                    const ShaderProgram *program,
-                    const VertexDeclaration *vertexDeclaration) const;
+                    const FShaderProgram *program,
+                    const FVertexDeclaration *vertexDeclaration) const;
 
-    void FillSubstitutions( VECTOR_THREAD_LOCAL(Shader, Pair<String COMMA String>)& substitutions,
-                            const VertexDeclaration *vertexDeclaration) const;
+    void FillSubstitutions( VECTOR_THREAD_LOCAL(Shader, TPair<FString COMMA FString>)& substitutions,
+                            const FVertexDeclaration *vertexDeclaration) const;
 
-    static ShaderSource *LoadFromFileIFP(   const Core::Filename& filename,
-                                            const MemoryView<const Pair<String, String>>& defines);
+    static FShaderSource *LoadFromFileIFP(   const Core::FFilename& filename,
+                                            const TMemoryView<const TPair<FString, FString>>& defines);
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
-    static StringView AppIn_SubstitutionName();
-    static StringView AppIn_VertexDefinitionName();
-    static FileSystem::StringView SystemDirpath();
+    static FStringView AppIn_SubstitutionName();
+    static FStringView AppIn_VertexDefinitionName();
+    static FileSystem::FStringView SystemDirpath();
 
 private:
-    String _sourceName;
-    Core::Filename _filename;
+    FString _sourceName;
+    Core::FFilename _filename;
     RAWSTORAGE_THREAD_LOCAL(Shader, char) _sourceCode;
-    ASSOCIATIVE_VECTOR_THREAD_LOCAL(Shader, String, String) _defines;
+    ASSOCIATIVE_VECTOR_THREAD_LOCAL(Shader, FString, FString) _defines;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

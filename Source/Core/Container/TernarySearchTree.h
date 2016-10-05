@@ -11,7 +11,7 @@
 #include <algorithm>
 #include <type_traits>
 
-// String storage
+// FString storage
 // https://en.wikipedia.org/wiki/Ternary_search_tree
 
 namespace Core {
@@ -19,12 +19,12 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define TERNARYSEARCHTREE(_DOMAIN, _KEY, _VALUE) \
-    ::Core::TernarySearchTree<_KEY, _VALUE, ::Core::Meta::Less<_KEY>, ::Core::Meta::EqualTo<_KEY>, \
-        NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, COMMA_PROTECT(::Core::TernarySearchNode<_KEY COMMA _VALUE>)) >
+    ::Core::TTernarySearchTree<_KEY, _VALUE, ::Core::Meta::TLess<_KEY>, ::Core::Meta::TEqualTo<_KEY>, \
+        NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, COMMA_PROTECT(::Core::TTernarySearchNode<_KEY COMMA _VALUE>)) >
 //----------------------------------------------------------------------------
 #define TERNARYSEARCHTREE_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE) \
-    ::Core::TernarySearchTree<_KEY, _VALUE, ::Core::Meta::Less<_KEY>, ::Core::Meta::EqualTo<_KEY>, \
-        THREAD_LOCAL_NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, COMMA_PROTECT(::Core::TernarySearchNode<_KEY COMMA _VALUE>)) >
+    ::Core::TTernarySearchTree<_KEY, _VALUE, ::Core::Meta::TLess<_KEY>, ::Core::Meta::TEqualTo<_KEY>, \
+        THREAD_LOCAL_NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, COMMA_PROTECT(::Core::TTernarySearchNode<_KEY COMMA _VALUE>)) >
 //----------------------------------------------------------------------------
 #define TERNARYSEARCHSET(_DOMAIN, _KEY) TERNARYSEARCHTREE(_DOMAIN, _KEY, void)
 #define TERNARYSEARCHSET_THREAD_LOCAL(_DOMAIN, _KEY) TERNARYSEARCHTREE_THREAD_LOCAL(_DOMAIN, _KEY, void)
@@ -35,24 +35,24 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
-class TernarySearchNode;
+class TTernarySearchNode;
 template <typename _Key, typename _Value, typename _Less, typename _EqualTo, typename _Allocator >
-class TernarySearchTree;
+class TTernarySearchTree;
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
-class TernarySearchNodeBase {
+class TTernarySearchNodeBase {
 public:
     template <typename _K, typename _V, typename _L, typename _E, typename _A>
-    friend class TernarySearchTree;
+    friend class TTernarySearchTree;
 
-    typedef TernarySearchNode<_Key, _Value> node_type;
+    typedef TTernarySearchNode<_Key, _Value> node_type;
 
-    explicit TernarySearchNodeBase(_Key&& rkey);
-    explicit TernarySearchNodeBase(const _Key& key);
-    ~TernarySearchNodeBase() {}
+    explicit TTernarySearchNodeBase(_Key&& rkey);
+    explicit TTernarySearchNodeBase(const _Key& key);
+    ~TTernarySearchNodeBase() {}
 
-    TernarySearchNodeBase(const TernarySearchNodeBase& other) = delete;
-    TernarySearchNodeBase& operator=(const TernarySearchNodeBase& other) = delete;
+    TTernarySearchNodeBase(const TTernarySearchNodeBase& other) = delete;
+    TTernarySearchNodeBase& operator=(const TTernarySearchNodeBase& other) = delete;
 
     const _Key& Key() const { return _key; }
     bool HasValue() const { return _parent_hasvalue.Flag0(); }
@@ -71,21 +71,21 @@ private:
     node_type* _left;
     node_type* _center;
     node_type* _right;
-    Meta::PointerWFlags<node_type> _parent_hasvalue;
+    Meta::TPointerWFlags<node_type> _parent_hasvalue;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
-class TernarySearchNode : public TernarySearchNodeBase<_Key, _Value> {
+class TTernarySearchNode : public TTernarySearchNodeBase<_Key, _Value> {
 public:
-    typedef TernarySearchNodeBase<_Key, _Value> parent_type;
+    typedef TTernarySearchNodeBase<_Key, _Value> parent_type;
 
-    explicit TernarySearchNode(_Key&& rkey) : parent_type(std::move(rkey)) {}
-    explicit TernarySearchNode(const _Key& key) : parent_type(key) {}
-    ~TernarySearchNode() {}
+    explicit TTernarySearchNode(_Key&& rkey) : parent_type(std::move(rkey)) {}
+    explicit TTernarySearchNode(const _Key& key) : parent_type(key) {}
+    ~TTernarySearchNode() {}
 
-    const _Value& Value() const { Assert(HasValue()); return _value; }
+    const _Value& FValue() const { Assert(HasValue()); return _value; }
 
     void SetValue(_Value&& rvalue) { Assert(HasValue()); _value = std::move(rvalue); }
     void SetValue(const _Value& value) { Assert(HasValue()); _value = value; }
@@ -95,13 +95,13 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename _Key>
-class TernarySearchNode<_Key, void> : public TernarySearchNodeBase<_Key, void> {
+class TTernarySearchNode<_Key, void> : public TTernarySearchNodeBase<_Key, void> {
 public:
-    typedef TernarySearchNodeBase<_Key, void> parent_type;
+    typedef TTernarySearchNodeBase<_Key, void> parent_type;
 
-    explicit TernarySearchNode(_Key&& rkey) : parent_type(std::move(rkey)) {}
-    explicit TernarySearchNode(const _Key& key) : parent_type(key) {}
-    ~TernarySearchNode() {}
+    explicit TTernarySearchNode(_Key&& rkey) : parent_type(std::move(rkey)) {}
+    explicit TTernarySearchNode(const _Key& key) : parent_type(key) {}
+    ~TTernarySearchNode() {}
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -109,10 +109,10 @@ public:
 template <
     typename _Key,
     typename _Value,
-    typename _Less = Meta::Less<_Key>,
-    typename _EqualTo = Meta::EqualTo<_Key>,
-    typename _Allocator = NODEBASED_CONTAINER_ALLOCATOR(Container, TernarySearchNode<_Key COMMA _Value>)
->   class TernarySearchTree : _Allocator {
+    typename _Less = Meta::TLess<_Key>,
+    typename _EqualTo = Meta::TEqualTo<_Key>,
+    typename _Allocator = NODEBASED_CONTAINER_ALLOCATOR(Container, TTernarySearchNode<_Key COMMA _Value>)
+>   class TTernarySearchTree : _Allocator {
 public:
     typedef _Allocator allocator_type;
     typedef std::allocator_traits<allocator_type> allocator_traits;
@@ -120,8 +120,8 @@ public:
     typedef _Key key_type;
     typedef _Value value_type;
 
-    typedef TernarySearchNode<_Key, _Value> node_type;
-    typedef MemoryView<const _Key> sequence_type;
+    typedef TTernarySearchNode<_Key, _Value> node_type;
+    typedef TMemoryView<const _Key> sequence_type;
 
     typedef _Less less_functor;
     typedef _EqualTo equal_to_functor;
@@ -134,14 +134,14 @@ public:
 
     typedef const node_type* iterator;
 
-    TernarySearchTree() : _root(nullptr), _size(0) {}
-    ~TernarySearchTree();
+    TTernarySearchTree() : _root(nullptr), _size(0) {}
+    ~TTernarySearchTree();
 
-    TernarySearchTree(const TernarySearchTree&) = delete;
-    TernarySearchTree& operator =(const TernarySearchTree&) = delete;
+    TTernarySearchTree(const TTernarySearchTree&) = delete;
+    TTernarySearchTree& operator =(const TTernarySearchTree&) = delete;
 
-    TernarySearchTree(TernarySearchTree&& rvalue);
-    TernarySearchTree& operator =(TernarySearchTree&& rvalue) = delete;
+    TTernarySearchTree(TTernarySearchTree&& rvalue);
+    TTernarySearchTree& operator =(TTernarySearchTree&& rvalue) = delete;
 
     size_type size() const { return _size; }
     size_type max_size() const { return std::numeric_limits<size_type>::max(); }
@@ -158,8 +158,8 @@ public:
 
     void Clear();
 
-    void Swap(TernarySearchTree& other);
-    friend void swap(TernarySearchTree& lhs, TernarySearchTree& rhs) { lhs.Swap(rhs); }
+    void Swap(TTernarySearchTree& other);
+    friend void swap(TTernarySearchTree& lhs, TTernarySearchTree& rhs) { lhs.Swap(rhs); }
 
 private:
     node_type* _root;

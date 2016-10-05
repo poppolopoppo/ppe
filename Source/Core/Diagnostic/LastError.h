@@ -9,15 +9,15 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-String GetLastErrorToString(long errorCode);
+FString GetLastErrorToString(long errorCode);
 //----------------------------------------------------------------------------
-WString GetLastErrorToWString(long errorCode);
+FWString GetLastErrorToWString(long errorCode);
 //----------------------------------------------------------------------------
-class LastErrorException : public Exception {
+class FLastErrorException : public FException {
 public:
-    LastErrorException();
-    LastErrorException(long errorCode);
-    virtual ~LastErrorException();
+    FLastErrorException();
+    FLastErrorException(long errorCode);
+    virtual ~FLastErrorException();
 
     long ErrorCode() const { return _errorCode; }
 private:

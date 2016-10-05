@@ -11,27 +11,27 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class SHRotation {
+class FSHRotation {
 public:
-    explicit SHRotation(size_t bands);
-    ~SHRotation();
+    explicit FSHRotation(size_t bands);
+    ~FSHRotation();
 
-    SHRotation(const SHRotation& ) = delete;
-    SHRotation& operator =(const SHRotation& ) = delete;
+    FSHRotation(const FSHRotation& ) = delete;
+    FSHRotation& operator =(const FSHRotation& ) = delete;
 
     size_t Bands() const { return _bands; }
 
-    MemoryView<SHScalar> Matrices() { return MakeView(_matrices.begin(), _matrices.end()); }
+    TMemoryView<SHScalar> Matrices() { return MakeView(_matrices.begin(), _matrices.end()); }
     const RAWSTORAGE(Maths, SHScalar)& Matrices() const { return _matrices; }
 
-    void Transform(SHVector<1> *dst, const SHVector<1>& src) const;
-    void Transform(SHVector<2> *dst, const SHVector<2>& src) const;
-    void Transform(SHVector<3> *dst, const SHVector<3>& src) const;
-    void Transform(SHVector<4> *dst, const SHVector<4>& src) const;
+    void Transform(TSHVector<1> *dst, const TSHVector<1>& src) const;
+    void Transform(TSHVector<2> *dst, const TSHVector<2>& src) const;
+    void Transform(TSHVector<3> *dst, const TSHVector<3>& src) const;
+    void Transform(TSHVector<4> *dst, const TSHVector<4>& src) const;
 
-    static void AroundX(SHRotation *rotation, SHScalar radians);
-    static void AroundY(SHRotation *rotation, SHScalar radians);
-    static void AroundZ(SHRotation *rotation, SHScalar radians);
+    static void AroundX(FSHRotation *rotation, SHScalar radians);
+    static void AroundY(FSHRotation *rotation, SHScalar radians);
+    static void AroundZ(FSHRotation *rotation, SHScalar radians);
 
 private:
     size_t _bands;

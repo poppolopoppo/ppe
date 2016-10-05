@@ -19,15 +19,15 @@ POOL_TAG_DECL(FileSystem);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FileSystemStartup {
+class FFileSystemStartup {
 public:
     static void Start();
     static void Shutdown();
 
     static void Clear();
 
-    FileSystemStartup() { Start(); }
-    ~FileSystemStartup() { Shutdown(); }
+    FFileSystemStartup() { Start(); }
+    ~FFileSystemStartup() { Shutdown(); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

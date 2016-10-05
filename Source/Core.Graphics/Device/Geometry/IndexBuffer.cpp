@@ -9,8 +9,8 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-IndexBuffer::IndexBuffer(Graphics::IndexElementSize indexElementSize, size_t indexCount, BufferMode mode, BufferUsage usage, bool sharable)
-:   DeviceResourceSharable(DeviceResourceType::Indices, sharable)
+IndexBuffer::IndexBuffer(Graphics::IndexElementSize indexElementSize, size_t indexCount, EBufferMode mode, EBufferUsage usage, bool sharable)
+:   FDeviceResourceSharable(EDeviceResourceType::Indices, sharable)
 ,   _buffer(size_t(indexElementSize), indexCount, mode, usage) {
     Assert( sizeof(u16) == size_t(indexElementSize) ||
             sizeof(u32) == size_t(indexElementSize) );
@@ -30,19 +30,19 @@ size_t IndexBuffer::VirtualSharedKeyHashValue() const {
     return _buffer.HashValue();
 }
 //----------------------------------------------------------------------------
-bool IndexBuffer::VirtualMatchTerminalEntity(const DeviceAPIDependantEntity *entity) const {
-    const DeviceAPIDependantResourceBuffer *resourceBuffer = 
-        checked_cast<const DeviceAPIDependantResourceBuffer *>(entity);
+bool IndexBuffer::VirtualMatchTerminalEntity(const FDeviceAPIDependantEntity *entity) const {
+    const FDeviceAPIDependantResourceBuffer *resourceBuffer =
+        checked_cast<const FDeviceAPIDependantResourceBuffer *>(entity);
     return _buffer.Match(*resourceBuffer);
 }
 //----------------------------------------------------------------------------
-void IndexBuffer::Create_(IDeviceAPIEncapsulator *device, const MemoryView<const u8>& optionalRawData) {
+void IndexBuffer::Create_(IDeviceAPIEncapsulator *device, const TMemoryView<const u8>& optionalRawData) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(device);
     Assert(optionalRawData.SizeInBytes() == size_t(IndexElementSize()) * IndexCount());
 
-    DeviceAPIDependantResourceBuffer *const resourceBuffer = device->CreateIndexBuffer(this, &_buffer, optionalRawData);
+    FDeviceAPIDependantResourceBuffer *const resourceBuffer = device->CreateIndexBuffer(this, &_buffer, optionalRawData);
     Assert(resourceBuffer);
 
     _buffer.Create(device, this, resourceBuffer);

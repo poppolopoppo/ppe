@@ -13,25 +13,25 @@ POOL_TAG_DEF(FileSystem);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FileSystemStartup::Start() {
+void FFileSystemStartup::Start() {
     POOL_TAG(FileSystem)::Start();
-    FileSystemToken::Start(1024);
-    FileSystemPath::Create();
-    FileSystemConstNames::Start();
+    FFileSystemToken::Start(1024);
+    FFileSystemPath::Create();
+    FFileSystemConstNames::Start();
 }
 //----------------------------------------------------------------------------
-void FileSystemStartup::Shutdown() {
-    FileSystemConstNames::Shutdown();
-    FileSystemPath::Destroy();
-    FileSystemToken::Shutdown();
+void FFileSystemStartup::Shutdown() {
+    FFileSystemConstNames::Shutdown();
+    FFileSystemPath::Destroy();
+    FFileSystemToken::Shutdown();
     POOL_TAG(FileSystem)::Shutdown();
 }
 //----------------------------------------------------------------------------
-void FileSystemStartup::Clear() {
-    FileSystemConstNames::Shutdown();
-    FileSystemPath::Instance().Clear();
-    FileSystemToken::Clear();
-    FileSystemConstNames::Start();
+void FFileSystemStartup::Clear() {
+    FFileSystemConstNames::Shutdown();
+    FFileSystemPath::Instance().Clear();
+    FFileSystemToken::Clear();
+    FFileSystemConstNames::Start();
     POOL_TAG(FileSystem)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------

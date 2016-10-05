@@ -18,28 +18,28 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, EffectDescriptor, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, FEffectDescriptor, );
 //----------------------------------------------------------------------------
-EffectDescriptor::EffectDescriptor() 
+FEffectDescriptor::FEffectDescriptor() 
 :   _renderLayerOffset(0) {}
 //----------------------------------------------------------------------------
-EffectDescriptor::~EffectDescriptor() {}
+FEffectDescriptor::~FEffectDescriptor() {}
 //----------------------------------------------------------------------------
-EffectDescriptor::EffectDescriptor(
+FEffectDescriptor::FEffectDescriptor(
     const char *name,
-    const Engine::RenderState *renderState,
-    const Filename& hs,
-    const Filename& ds,
-    const Filename& gs,
-    const Filename& vs,
-    const Filename& ps,
-    const Filename& cs,
-    Graphics::ShaderProfileType shaderProfile,
-    const Graphics::VertexDeclaration *vertexDeclaration,
-    const MemoryView<const Pair<String, String>>& defines,
-    const MemoryView<const Pair<Graphics::BindName, String>>& substitutions,
-    const MemoryView<const Pair<Graphics::BindName, PMaterialParameter>>& parameters,
-    const MemoryView<const Pair<Graphics::BindName, Filename>>& textures )
+    const Engine::FRenderState *renderState,
+    const FFilename& hs,
+    const FFilename& ds,
+    const FFilename& gs,
+    const FFilename& vs,
+    const FFilename& ps,
+    const FFilename& cs,
+    Graphics::EShaderProfileType shaderProfile,
+    const Graphics::FVertexDeclaration *vertexDeclaration,
+    const TMemoryView<const TPair<FString, FString>>& defines,
+    const TMemoryView<const TPair<Graphics::FBindName, FString>>& substitutions,
+    const TMemoryView<const TPair<Graphics::FBindName, PMaterialParameter>>& parameters,
+    const TMemoryView<const TPair<Graphics::FBindName, FFilename>>& textures )
 :   _name(name)
 ,   _renderState(renderState)
 ,   _hs(hs)
@@ -64,29 +64,29 @@ EffectDescriptor::EffectDescriptor(
     AddVertexDeclaration(vertexDeclaration);
 }
 //----------------------------------------------------------------------------
-void EffectDescriptor::SetName(const char *name) {
+void FEffectDescriptor::SetName(const char *name) {
     Assert(name);
     _name = name;
 }
 //----------------------------------------------------------------------------
-void EffectDescriptor::SetRenderState(const Engine::RenderState *value) {
+void FEffectDescriptor::SetRenderState(const Engine::FRenderState *value) {
     _renderState = value;
 }
 //----------------------------------------------------------------------------
-const Filename& EffectDescriptor::ProgramFilename(Graphics::ShaderProgramType programType) const {
+const FFilename& FEffectDescriptor::ProgramFilename(Graphics::EShaderProgramType programType) const {
     switch (programType)
     {
-    case Core::Graphics::ShaderProgramType::Vertex:
+    case Core::Graphics::EShaderProgramType::Vertex:
         return _vs;
-    case Core::Graphics::ShaderProgramType::Hull:
+    case Core::Graphics::EShaderProgramType::Hull:
         return _hs;
-    case Core::Graphics::ShaderProgramType::Domain:
+    case Core::Graphics::EShaderProgramType::Domain:
         return _ds;
-    case Core::Graphics::ShaderProgramType::Pixel:
+    case Core::Graphics::EShaderProgramType::Pixel:
         return _ps;
-    case Core::Graphics::ShaderProgramType::Geometry:
+    case Core::Graphics::EShaderProgramType::Geometry:
         return _gs;
-    case Core::Graphics::ShaderProgramType::Compute:
+    case Core::Graphics::EShaderProgramType::Compute:
         return _cs;
     default:
         AssertNotImplemented();
@@ -94,25 +94,25 @@ const Filename& EffectDescriptor::ProgramFilename(Graphics::ShaderProgramType pr
     }
 }
 //----------------------------------------------------------------------------
-void EffectDescriptor::SetProgramFilename(Graphics::ShaderProgramType programType, const Filename& filename) {
+void FEffectDescriptor::SetProgramFilename(Graphics::EShaderProgramType programType, const FFilename& filename) {
     switch (programType)
     {
-    case Core::Graphics::ShaderProgramType::Vertex:
+    case Core::Graphics::EShaderProgramType::Vertex:
         _vs = filename;
         break;
-    case Core::Graphics::ShaderProgramType::Hull:
+    case Core::Graphics::EShaderProgramType::Hull:
         _hs = filename;
         break;
-    case Core::Graphics::ShaderProgramType::Domain:
+    case Core::Graphics::EShaderProgramType::Domain:
         _ds = filename;
         break;
-    case Core::Graphics::ShaderProgramType::Pixel:
+    case Core::Graphics::EShaderProgramType::Pixel:
         _ps = filename;
         break;
-    case Core::Graphics::ShaderProgramType::Geometry:
+    case Core::Graphics::EShaderProgramType::Geometry:
         _gs = filename;
         break;
-    case Core::Graphics::ShaderProgramType::Compute:
+    case Core::Graphics::EShaderProgramType::Compute:
         _cs = filename;
         break;
     default:
@@ -120,11 +120,11 @@ void EffectDescriptor::SetProgramFilename(Graphics::ShaderProgramType programTyp
     }
 }
 //----------------------------------------------------------------------------
-void EffectDescriptor::SetRenderLayerOffset(size_t value) {
+void FEffectDescriptor::SetRenderLayerOffset(size_t value) {
     _renderLayerOffset = value;
 }
 //----------------------------------------------------------------------------
-void EffectDescriptor::AddVertexDeclaration(const Graphics::VertexDeclaration *declaration) {
+void FEffectDescriptor::AddVertexDeclaration(const Graphics::FVertexDeclaration *declaration) {
     Assert(declaration);
 
     Graphics::PCVertexDeclaration pdeclaration(declaration);
@@ -133,35 +133,35 @@ void EffectDescriptor::AddVertexDeclaration(const Graphics::VertexDeclaration *d
     _vertexDeclarations.emplace_back(std::move(pdeclaration));
 }
 //----------------------------------------------------------------------------
-void EffectDescriptor::AddDefine(const String& name, const String& value) {
+void FEffectDescriptor::AddDefine(const FString& name, const FString& value) {
     Assert(!name.empty());
     Assert(!value.empty());
 
     _defines.Insert_AssertUnique(name, value);
 }
 //----------------------------------------------------------------------------
-void EffectDescriptor::AddSubstitution(const Graphics::BindName& tag, const String& defines) {
+void FEffectDescriptor::AddSubstitution(const Graphics::FBindName& tag, const FString& defines) {
     Assert(!tag.empty());
     Assert(!defines.empty());
 
     _substitutions.Insert_AssertUnique(tag, defines);
 }
 //----------------------------------------------------------------------------
-void EffectDescriptor::AddTexture(const Graphics::BindName& name, const Filename& filename) {
+void FEffectDescriptor::AddTexture(const Graphics::FBindName& name, const FFilename& filename) {
     Assert(!name.empty());
     Assert(!filename.empty());
 
     _textures.Insert_AssertUnique(name, filename);
 }
 //----------------------------------------------------------------------------
-void EffectDescriptor::AddParameter(const Graphics::BindName& name, IMaterialParameter *parameter) {
+void FEffectDescriptor::AddParameter(const Graphics::FBindName& name, IMaterialParameter *parameter) {
     Assert(!name.empty());
     Assert(parameter);
 
     _parameters.Insert_AssertUnique(name, parameter);
 }
 //----------------------------------------------------------------------------
-size_t EffectDescriptor::FillEffectPasses(const EffectDescriptor **pOutPasses, const size_t capacity) const {
+size_t FEffectDescriptor::FillEffectPasses(const FEffectDescriptor **pOutPasses, const size_t capacity) const {
     Assert(pOutPasses);
     Assert(capacity > 0);
 

@@ -6,31 +6,31 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Dirname::Dirname(const FileSystem::StringView& content)
+FDirname::FDirname(const FileSystem::FStringView& content)
 :   parent_type(content) {}
 //----------------------------------------------------------------------------
-Dirname& Dirname::operator =(const FileSystem::StringView& content) {
+FDirname& FDirname::operator =(const FileSystem::FStringView& content) {
     parent_type::operator =(content);
     return *this;
 }
 //----------------------------------------------------------------------------
-Dirname::Dirname(const Dirname& other)
+FDirname::FDirname(const FDirname& other)
 :   parent_type(other) {}
 //----------------------------------------------------------------------------
-Dirname& Dirname::operator =(const Dirname& other) {
+FDirname& FDirname::operator =(const FDirname& other) {
     parent_type::operator =(other);
     return *this;
 }
 //----------------------------------------------------------------------------
-Dirname::Dirname(const FileSystemToken& token)
+FDirname::FDirname(const FFileSystemToken& token)
 :   parent_type(token) {}
 //----------------------------------------------------------------------------
-Dirname& Dirname::operator =(const FileSystemToken& token) {
+FDirname& FDirname::operator =(const FFileSystemToken& token) {
     parent_type::operator =(token);
     return *this;
 }
 //----------------------------------------------------------------------------
-void Dirname::Swap(Dirname& other) {
+void FDirname::Swap(FDirname& other) {
     parent_type::Swap(other);
 }
 //----------------------------------------------------------------------------

@@ -7,7 +7,7 @@
 #include "Core/Meta/ThreadResource.h"
 
 /*
-// Intrusive ref counting for Component Object Model (COM)
+// Intrusive ref counting for TComponent Object FModel (COM)
 */
 
 namespace Core {
@@ -15,18 +15,18 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _ComInterface>
-class ComPtr : private Meta::ThreadResource {
+class TComPtr : private Meta::FThreadResource {
 public:
-    ComPtr();
-    ~ComPtr();
+    TComPtr();
+    ~TComPtr();
 
-    ComPtr(_ComInterface* comObject);
+    TComPtr(_ComInterface* comObject);
 
-    ComPtr(ComPtr&& rvalue);
-    ComPtr& operator =(ComPtr&& rvalue);
+    TComPtr(TComPtr&& rvalue);
+    TComPtr& operator =(TComPtr&& rvalue);
 
-    ComPtr(const ComPtr& other);
-    ComPtr& operator =(const ComPtr& other);
+    TComPtr(const TComPtr& other);
+    TComPtr& operator =(const TComPtr& other);
 
     _ComInterface *Get() const;
 
@@ -41,7 +41,7 @@ public:
     u32 RefCount() const;
     void CheckThreadAccess() const;
 
-    void Swap(ComPtr& other);
+    void Swap(TComPtr& other);
 
 private:
     void IncRefCountIFP() const;
@@ -51,17 +51,17 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs>
-void swap(const ComPtr<_Lhs>& lhs, const ComPtr<_Rhs>& rhs) {
+void swap(const TComPtr<_Lhs>& lhs, const TComPtr<_Rhs>& rhs) {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-size_t ComRefCount(const ComPtr<T>& p) {
+size_t ComRefCount(const TComPtr<T>& p) {
     return p.RefCount();
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void ReleaseComRef(ComPtr<T>& p) {
+void ReleaseComRef(TComPtr<T>& p) {
     if (!p.Get())
         return;
 

@@ -14,11 +14,11 @@
 
 namespace Core {
 template <typename T>
-class MemoryView;
+class TMemoryView;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MemoryTrackingData;
+class FMemoryTrackingData;
 //----------------------------------------------------------------------------
 #define MEMORY_DOMAIN_NAME(_Name) CONCAT(_, _Name)
 #define MEMORY_DOMAIN_TAG(_Name) Core::Domain::MEMORY_DOMAIN_NAME(_Name)
@@ -26,7 +26,7 @@ class MemoryTrackingData;
 //----------------------------------------------------------------------------
 namespace Domain {
     struct MEMORY_DOMAIN_NAME(Global) {
-        static MemoryTrackingData& TrackingData;
+        static FMemoryTrackingData& TrackingData;
     };
 }
 //----------------------------------------------------------------------------
@@ -34,7 +34,7 @@ namespace Domain {
 #   define MEMORY_DOMAIN_IMPL(_Name, _Parent) \
     namespace Domain { \
         struct MEMORY_DOMAIN_NAME(_Name) { \
-            static MemoryTrackingData& TrackingData; \
+            static FMemoryTrackingData& TrackingData; \
         }; \
     }
 #else
@@ -59,30 +59,30 @@ namespace Domain {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Domain>
-class MemoryTracking {
+class TMemoryTracking {
 public:
-    MemoryTracking();
-    ~MemoryTracking();
+    TMemoryTracking();
+    ~TMemoryTracking();
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Domain>
-MemoryTracking<T, _Domain>::MemoryTracking() {
+TMemoryTracking<T, _Domain>::TMemoryTracking() {
     _Domain::TrackingData.Allocate(1, sizeof(T));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Domain>
-MemoryTracking<T, _Domain>::~MemoryTracking() {
+TMemoryTracking<T, _Domain>::~TMemoryTracking() {
     _Domain::TrackingData.Deallocate(1, sizeof(T));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-MemoryView<MemoryTrackingData *> EachDomainTrackingData();
+TMemoryView<FMemoryTrackingData *> EachDomainTrackingData();
 //----------------------------------------------------------------------------
 void ReportDomainTrackingData();
 //----------------------------------------------------------------------------
-void RegisterAdditionalTrackingData(MemoryTrackingData *pTrackingData);
-void UnregisterAdditionalTrackingData(MemoryTrackingData *pTrackingData);
+void RegisterAdditionalTrackingData(FMemoryTrackingData *pTrackingData);
+void UnregisterAdditionalTrackingData(FMemoryTrackingData *pTrackingData);
 //----------------------------------------------------------------------------
 void ReportAdditionalTrackingData();
 //----------------------------------------------------------------------------
@@ -93,13 +93,13 @@ inline void ReportAllTrackingData() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MemoryDomainStartup {
+class FMemoryDomainStartup {
 public:
     static void Start();
     static void Shutdown();
 
-    MemoryDomainStartup() { Start(); }
-    ~MemoryDomainStartup() { Shutdown(); }
+    FMemoryDomainStartup() { Start(); }
+    ~FMemoryDomainStartup() { Shutdown(); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

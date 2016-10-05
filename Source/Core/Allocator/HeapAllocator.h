@@ -10,9 +10,9 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _HeapSingleton = Heaps::Process >
-class HeapAllocator : public AllocatorBase<T> {
+class THeapAllocator : public TAllocatorBase<T> {
 public:
-    typedef AllocatorBase<T> base_type;
+    typedef TAllocatorBase<T> base_type;
     typedef _HeapSingleton heapsingleton_type;
 
     using typename base_type::pointer;
@@ -31,20 +31,20 @@ public:
     template<typename U>
     struct rebind
     {
-        typedef HeapAllocator<U, heapsingleton_type> other;
+        typedef THeapAllocator<U, heapsingleton_type> other;
     };
 
-    static Heap& HeapInstance() { return heapsingleton_type::Instance(); }
+    static FHeap& HeapInstance() { return heapsingleton_type::Instance(); }
 
-    HeapAllocator() throw() {}
+    THeapAllocator() throw() {}
 
-    HeapAllocator(const HeapAllocator&) throw() {}
+    THeapAllocator(const THeapAllocator&) throw() {}
     template <typename U>
-    HeapAllocator(const HeapAllocator<U, _HeapSingleton>&) throw() {}
+    THeapAllocator(const THeapAllocator<U, _HeapSingleton>&) throw() {}
 
-    HeapAllocator& operator =(const HeapAllocator&) { return *this; }
+    THeapAllocator& operator =(const THeapAllocator&) { return *this; }
     template <typename U>
-    HeapAllocator& operator =(const HeapAllocator<U, _HeapSingleton>&) { return *this; }
+    THeapAllocator& operator =(const THeapAllocator<U, _HeapSingleton>&) { return *this; }
 
     pointer allocate(size_type n);
     pointer allocate(size_type n, const void* /*hint*/) { return allocate(n); }
@@ -54,22 +54,22 @@ public:
     void* relocate(void* p, size_type newSize, size_type oldSize);
 
     template <typename U>
-    friend bool operator ==(const HeapAllocator&/* lhs */, const HeapAllocator<U, _HeapSingleton>&/* rhs */) {
+    friend bool operator ==(const THeapAllocator&/* lhs */, const THeapAllocator<U, _HeapSingleton>&/* rhs */) {
         return true;
     }
 
     template <typename U>
-    friend bool operator !=(const HeapAllocator& lhs, const HeapAllocator<U, _HeapSingleton>& rhs) {
+    friend bool operator !=(const THeapAllocator& lhs, const THeapAllocator<U, _HeapSingleton>& rhs) {
         return !operator ==(lhs, rhs);
     }
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _HeapSingleton >
-auto HeapAllocator<T, _HeapSingleton>::allocate(size_type n) -> pointer {
+auto THeapAllocator<T, _HeapSingleton>::allocate(size_type n) -> pointer {
     enum { Alignment = std::alignment_of<T>::value };
 
     // The return value of allocate(0) is unspecified.
-    // Mallocator returns NULL in order to avoid depending
+    // TMallocator returns NULL in order to avoid depending
     // on malloc(0)'s implementation-defined behavior
     // (the implementation can define malloc(0) to return NULL,
     // in which case the bad_alloc check below would fire).
@@ -81,9 +81,9 @@ auto HeapAllocator<T, _HeapSingleton>::allocate(size_type n) -> pointer {
     // The Standardization Committee recommends that std::length_error
     // be thrown in the case of integer overflow.
     if (n > max_size())
-        throw std::length_error("HeapAllocator<T, _HeapSingleton>::allocate() - Integer overflow.");
+        throw std::length_error("THeapAllocator<T, _HeapSingleton>::allocate() - Integer overflow.");
 
-    // HeapAllocator wraps Heap.
+    // THeapAllocator wraps FHeap.
     void * const pv = HeapInstance().Malloc<Alignment>(n * sizeof(T));
 
     // Allocators should throw std::bad_alloc in the case of memory allocation failure.
@@ -94,20 +94,20 @@ auto HeapAllocator<T, _HeapSingleton>::allocate(size_type n) -> pointer {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _HeapSingleton >
-void HeapAllocator<T, _HeapSingleton>::deallocate(void* p, size_type n) {
+void THeapAllocator<T, _HeapSingleton>::deallocate(void* p, size_type n) {
     enum { Alignment = std::alignment_of<T>::value };
     UNUSED(n);
 
-    // HeapAllocator wraps Heap.
+    // THeapAllocator wraps FHeap.
     HeapInstance().Free<Alignment>(p);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _HeapSingleton >
-void* HeapAllocator<T, _HeapSingleton>::relocate(void* p, size_type newSize, size_type oldSize) {
+void* THeapAllocator<T, _HeapSingleton>::relocate(void* p, size_type newSize, size_type oldSize) {
     enum { Alignment = std::alignment_of<T>::value };
     UNUSED(oldSize);
 
-    // HeapAllocator wraps Heap.
+    // THeapAllocator wraps FHeap.
     void* const newp = HeapInstance().Realloc<Alignment>(p, newSize * sizeof(T));
     if (nullptr == newp && newSize)
         throw std::bad_alloc();

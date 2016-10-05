@@ -9,34 +9,34 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class BasenameNoExt : public FileSystemToken {
+class FBasenameNoExt : public FFileSystemToken {
 public:
-    typedef FileSystemToken parent_type;
+    typedef FFileSystemToken parent_type;
 
-    BasenameNoExt() {}
-    ~BasenameNoExt() {}
+    FBasenameNoExt() {}
+    ~FBasenameNoExt() {}
 
-    BasenameNoExt(const FileSystem::StringView& content);
-    BasenameNoExt& operator =(const FileSystem::StringView& content);
+    FBasenameNoExt(const FileSystem::FStringView& content);
+    FBasenameNoExt& operator =(const FileSystem::FStringView& content);
 
     template <typename _CharTraits, typename _Allocator>
-    BasenameNoExt(const std::basic_string<typename FileSystem::char_type, _CharTraits, _Allocator>& content)
-        : BasenameNoExt(content.c_str(), content.size()) {}
+    FBasenameNoExt(const std::basic_string<typename FileSystem::char_type, _CharTraits, _Allocator>& content)
+        : FBasenameNoExt(content.c_str(), content.size()) {}
 
-    BasenameNoExt(const FileSystemToken& token);
-    BasenameNoExt& operator =(const FileSystemToken& token);
+    FBasenameNoExt(const FFileSystemToken& token);
+    FBasenameNoExt& operator =(const FFileSystemToken& token);
 
-    BasenameNoExt(const BasenameNoExt& other);
-    BasenameNoExt& operator =(const BasenameNoExt& other);
+    FBasenameNoExt(const FBasenameNoExt& other);
+    FBasenameNoExt& operator =(const FBasenameNoExt& other);
 
-    void Swap(BasenameNoExt& other);
+    void Swap(FBasenameNoExt& other);
 };
 //----------------------------------------------------------------------------
-inline void swap(BasenameNoExt& lhs, BasenameNoExt& rhs) {
+inline void swap(FBasenameNoExt& lhs, FBasenameNoExt& rhs) {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
-inline hash_t hash_value(const BasenameNoExt& token) {
+inline hash_t hash_value(const FBasenameNoExt& token) {
     return token.HashValue();
 }
 //----------------------------------------------------------------------------

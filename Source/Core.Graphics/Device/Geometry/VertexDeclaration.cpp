@@ -18,26 +18,26 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, VertexDeclaration, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, FVertexDeclaration, );
 //----------------------------------------------------------------------------
-VertexDeclaration::VertexDeclaration()
-:   DeviceResource(DeviceResourceType::VertexDeclaration) {}
+FVertexDeclaration::FVertexDeclaration()
+:   FDeviceResource(EDeviceResourceType::FVertexDeclaration) {}
 //----------------------------------------------------------------------------
-VertexDeclaration::~VertexDeclaration() {
+FVertexDeclaration::~FVertexDeclaration() {
     Assert(!_deviceAPIDependantDeclaration);
 }
 //----------------------------------------------------------------------------
-bool VertexDeclaration::Available() const {
+bool FVertexDeclaration::Available() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     return nullptr != _deviceAPIDependantDeclaration;
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantEntity *VertexDeclaration::TerminalEntity() const {
+FDeviceAPIDependantEntity *FVertexDeclaration::TerminalEntity() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     return _deviceAPIDependantDeclaration.get();
 }
 //----------------------------------------------------------------------------
-void VertexDeclaration::AddSubPart(const VertexSemantic& semantic, size_t index, ValueType type, size_t offset) {
+void FVertexDeclaration::AddSubPart(const FVertexSemantic& semantic, size_t index, EValueType type, size_t offset) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!Frozen());
     Assert(!SubPartBySemanticIFP(semantic, index));
@@ -46,24 +46,24 @@ void VertexDeclaration::AddSubPart(const VertexSemantic& semantic, size_t index,
     _block.Add(semantic, type, offset, index);
 }
 //----------------------------------------------------------------------------
-const ValueBlock::Field& VertexDeclaration::SubPartBySemantic(const VertexSemantic& semantic, size_t index) const {
+const FValueBlock::TField& FVertexDeclaration::SubPartBySemantic(const FVertexSemantic& semantic, size_t index) const {
     return _block.FindByNameAndIndex(semantic, index);
 }
 //----------------------------------------------------------------------------
-const ValueBlock::Field* VertexDeclaration::SubPartBySemanticIFP(const VertexSemantic& semantic, size_t index) const {
+const FValueBlock::TField* FVertexDeclaration::SubPartBySemanticIFP(const FVertexSemantic& semantic, size_t index) const {
     return _block.FindByNameAndIndexIFP(semantic, index);
 }
 //----------------------------------------------------------------------------
-void VertexDeclaration::CopyVertex(const MemoryView<u8>& dst, const MemoryView<const u8>& src) const {
+void FVertexDeclaration::CopyVertex(const TMemoryView<u8>& dst, const TMemoryView<const u8>& src) const {
     Assert(Frozen());
     _block.Copy(dst, src);
 }
 //----------------------------------------------------------------------------
-void VertexDeclaration::FillSubstitutions(VECTOR_THREAD_LOCAL(Shader, Pair<String COMMA String>)& substitutions) const {
+void FVertexDeclaration::FillSubstitutions(VECTOR_THREAD_LOCAL(Shader, TPair<FString COMMA FString>)& substitutions) const {
     UNUSED(substitutions);
 }
 //----------------------------------------------------------------------------
-void VertexDeclaration::Create(IDeviceAPIEncapsulator *device) {
+void FVertexDeclaration::Create(IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(!_deviceAPIDependantDeclaration);
@@ -73,7 +73,7 @@ void VertexDeclaration::Create(IDeviceAPIEncapsulator *device) {
     Assert(_deviceAPIDependantDeclaration);
 }
 //----------------------------------------------------------------------------
-void VertexDeclaration::Destroy(IDeviceAPIEncapsulator *device) {
+void FVertexDeclaration::Destroy(IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(_deviceAPIDependantDeclaration);
@@ -85,12 +85,12 @@ void VertexDeclaration::Destroy(IDeviceAPIEncapsulator *device) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceAPIDependantVertexDeclaration::DeviceAPIDependantVertexDeclaration(IDeviceAPIEncapsulator *device, const VertexDeclaration *resource)
-:   TypedDeviceAPIDependantEntity<VertexDeclaration>(device->APIEncapsulator(), resource) {
+FDeviceAPIDependantVertexDeclaration::FDeviceAPIDependantVertexDeclaration(IDeviceAPIEncapsulator *device, const FVertexDeclaration *resource)
+:   TTypedDeviceAPIDependantEntity<FVertexDeclaration>(device->APIEncapsulator(), resource) {
     Assert(resource);
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantVertexDeclaration::~DeviceAPIDependantVertexDeclaration() {}
+FDeviceAPIDependantVertexDeclaration::~FDeviceAPIDependantVertexDeclaration() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -103,24 +103,24 @@ DeviceAPIDependantVertexDeclaration::~DeviceAPIDependantVertexDeclaration() {}
     _Macro(Binormal)
 //----------------------------------------------------------------------------
 #define DEF_VERTEXSEMANTIC_ACCESSOR(_Name) \
-    const VertexSemantic VertexSemantic::_Name;
+    const FVertexSemantic FVertexSemantic::_Name;
 FOREACH_VERTEXSEMANTIC_NAME(DEF_VERTEXSEMANTIC_ACCESSOR)
 #undef DEF_VERTEXSEMANTIC_ACCESSOR
 //----------------------------------------------------------------------------
-void VertexDeclaration::Start() {
+void FVertexDeclaration::Start() {
 #define DEF_VERTEXSEMANTIC_START(_Name) \
-    new ((void*)&VertexSemantic::_Name) VertexSemantic(STRINGIZE(_Name));
+    new ((void*)&FVertexSemantic::_Name) FVertexSemantic(STRINGIZE(_Name));
     FOREACH_VERTEXSEMANTIC_NAME(DEF_VERTEXSEMANTIC_START)
 #undef DEF_VERTEXSEMANTIC_START
 
     VertexTypes_Start();
 }
 //----------------------------------------------------------------------------
-void VertexDeclaration::Shutdown() {
+void FVertexDeclaration::Shutdown() {
     VertexTypes_Shutdown();
 
 #define DEF_VERTEXSEMANTIC_SHUTDOWN(_Name) \
-    remove_const(&VertexSemantic::_Name)->~VertexSemantic();
+    remove_const(&FVertexSemantic::_Name)->~FVertexSemantic();
     FOREACH_VERTEXSEMANTIC_NAME(DEF_VERTEXSEMANTIC_SHUTDOWN)
 #undef DEF_VERTEXSEMANTIC_SHUTDOWN
 }
@@ -129,11 +129,11 @@ void VertexDeclaration::Shutdown() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void VertexDeclaration::OnDeviceCreate(DeviceEncapsulator *device) {
+void FVertexDeclaration::OnDeviceCreate(FDeviceEncapsulator *device) {
     VertexTypes_OnDeviceCreate(device);
 }
 //----------------------------------------------------------------------------
-void VertexDeclaration::OnDeviceDestroy(DeviceEncapsulator *device) {
+void FVertexDeclaration::OnDeviceDestroy(FDeviceEncapsulator *device) {
     VertexTypes_OnDeviceDestroy(device);
 }
 //----------------------------------------------------------------------------

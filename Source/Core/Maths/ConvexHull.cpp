@@ -15,7 +15,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-size_t LeastImportantEdge_(const MemoryView<const float2>& hull, float2& collapsed) {
+size_t LeastImportantEdge_(const TMemoryView<const float2>& hull, float2& collapsed) {
     Assert(hull.size() > 3);
     const size_t n = hull.size();
 
@@ -42,7 +42,7 @@ size_t LeastImportantEdge_(const MemoryView<const float2>& hull, float2& collaps
     return edgeIndex;
 }
 //----------------------------------------------------------------------------
-size_t LongestEdge_(const MemoryView<const float2>& hull, float2& center) {
+size_t LongestEdge_(const TMemoryView<const float2>& hull, float2& center) {
     Assert(hull.size() > 3);
     const size_t n = hull.size();
 
@@ -70,7 +70,7 @@ size_t LongestEdge_(const MemoryView<const float2>& hull, float2& center) {
 //----------------------------------------------------------------------------
 // https://en.wikibooks.org/wiki/Algorithm_Implementation/Geometry/Convex_hull/Monotone_chain#C.2B.2B
 //----------------------------------------------------------------------------
-size_t ConvexHull2D_MonotoneChain(const MemoryView<size_t>& hull, const MemoryView<const float2>& points) {
+size_t ConvexHull2D_MonotoneChain(const TMemoryView<size_t>& hull, const TMemoryView<const float2>& points) {
     AssertRelease(points.size() > 2);
     Assert(hull.size() == points.size());
 
@@ -115,7 +115,7 @@ size_t ConvexHull2D_MonotoneChain(const MemoryView<size_t>& hull, const MemoryVi
     return count;
 }
 //----------------------------------------------------------------------------
-void ConvexHull2D_FixedSize(const MemoryView<float2>& hull, const MemoryView<const float2>& points) {
+void ConvexHull2D_FixedSize(const TMemoryView<float2>& hull, const TMemoryView<const float2>& points) {
     AssertRelease(hull.size() <= points.size());
     Assert(hull.size() > 2);
 

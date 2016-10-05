@@ -6,7 +6,7 @@
 
 namespace Core {
 namespace Graphics {
-class BasicWindow;
+class FBasicWindow;
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -16,28 +16,28 @@ public:
     IWindowMessageHandler() : _window(nullptr) {}
     virtual ~IWindowMessageHandler() {}
 
-    const BasicWindow *Window() const { return _window; }
-    void SetWindow(const BasicWindow *wnd) { _window = wnd; }
+    const FBasicWindow *Window() const { return _window; }
+    void SetWindow(const FBasicWindow *wnd) { _window = wnd; }
 
-    virtual void RegisterMessageDelegates(BasicWindow *wnd) = 0;
-    virtual void UnregisterMessageDelegates(BasicWindow *wnd) = 0;
+    virtual void RegisterMessageDelegates(FBasicWindow *wnd) = 0;
+    virtual void UnregisterMessageDelegates(FBasicWindow *wnd) = 0;
 
-    virtual void UpdateBeforeDispatch(BasicWindow *wnd) = 0;
-    virtual void UpdateAfterDispatch(BasicWindow *wnd) = 0;
+    virtual void UpdateBeforeDispatch(FBasicWindow *wnd) = 0;
+    virtual void UpdateAfterDispatch(FBasicWindow *wnd) = 0;
 
-    typedef MessageResult (*Delegate)(
+    typedef MessageResult (*TDelegate)(
         IWindowMessageHandler *handler,
-        BasicWindow *wnd,
-        WindowMessage msg,
+        FBasicWindow *wnd,
+        EWindowMessage msg,
         MessageLParam lparam,
         MessageWParam wparam );
 
 protected:
-    void RegisterMessageDelegate(BasicWindow *wnd, WindowMessage msg, Delegate member);
-    void UnregisterMessageDelegate(BasicWindow *wnd, WindowMessage msg, Delegate member);
+    void RegisterMessageDelegate(FBasicWindow *wnd, EWindowMessage msg, TDelegate member);
+    void UnregisterMessageDelegate(FBasicWindow *wnd, EWindowMessage msg, TDelegate member);
 
 private:
-    const BasicWindow *_window;
+    const FBasicWindow *_window;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

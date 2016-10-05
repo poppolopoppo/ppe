@@ -11,31 +11,31 @@ namespace RTTI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-MetaTypedProperty<T>::MetaTypedProperty(const RTTI::Name& name, Flags attributes)
-:   MetaProperty(name, attributes) {}
+TMetaTypedProperty<T>::TMetaTypedProperty(const FName& name, EFlags attributes)
+:   FMetaProperty(name, attributes) {}
 //----------------------------------------------------------------------------
 template <typename T>
-MetaTypedProperty<T>::~MetaTypedProperty() {}
+TMetaTypedProperty<T>::~TMetaTypedProperty() {}
 //----------------------------------------------------------------------------
 template <typename T>
-MetaTypeInfo MetaTypedProperty<T>::TypeInfo() const {
+FMetaTypeInfo TMetaTypedProperty<T>::TypeInfo() const {
     return RTTI::TypeInfo< T >();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(RTTI, MetaWrappedProperty<T COMMA _Accessor>, template <typename T COMMA typename _Accessor>)
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(RTTI, TMetaWrappedProperty<T COMMA _Accessor>, template <typename T COMMA typename _Accessor>)
 //----------------------------------------------------------------------------
 template <typename T, typename _Accessor>
-MetaWrappedProperty<T, _Accessor>::MetaWrappedProperty(const RTTI::Name& name, Flags attributes, accessor_type&& accessor)
+TMetaWrappedProperty<T, _Accessor>::TMetaWrappedProperty(const FName& name, EFlags attributes, accessor_type&& accessor)
 :   typed_property_type(name, attributes)
 ,   accessor_type(std::move(accessor)) {}
 //----------------------------------------------------------------------------
 template <typename T, typename _Accessor>
-MetaWrappedProperty<T, _Accessor>::~MetaWrappedProperty() {}
+TMetaWrappedProperty<T, _Accessor>::~TMetaWrappedProperty() {}
 //----------------------------------------------------------------------------
 template <typename T, typename _Accessor>
-bool MetaWrappedProperty<T, _Accessor>::IsDefaultValue(const MetaObject *object) const {
+bool TMetaWrappedProperty<T, _Accessor>::IsDefaultValue(const FMetaObject *object) const {
     Assert(object);
 
     const wrapped_type& wrapped = accessor_type::GetReference(object);
@@ -43,7 +43,7 @@ bool MetaWrappedProperty<T, _Accessor>::IsDefaultValue(const MetaObject *object)
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Accessor>
-void MetaWrappedProperty<T, _Accessor>::GetCopy(const MetaObject *object, wrapper_type& dst) const {
+void TMetaWrappedProperty<T, _Accessor>::GetCopy(const FMetaObject *object, wrapper_type& dst) const {
     Assert(object);
 
     T value;
@@ -52,8 +52,8 @@ void MetaWrappedProperty<T, _Accessor>::GetCopy(const MetaObject *object, wrappe
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Accessor>
-void MetaWrappedProperty<T, _Accessor>::GetMove(MetaObject *object, wrapper_type& dst) const {
-    Assert(!(MetaProperty::ReadOnly & _attributes));
+void TMetaWrappedProperty<T, _Accessor>::GetMove(FMetaObject *object, wrapper_type& dst) const {
+    Assert(!(FMetaProperty::ReadOnly & _attributes));
     Assert(object);
 
     T value;
@@ -62,8 +62,8 @@ void MetaWrappedProperty<T, _Accessor>::GetMove(MetaObject *object, wrapper_type
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Accessor>
-void MetaWrappedProperty<T, _Accessor>::SetMove(MetaObject *object, wrapper_type&& src) const {
-    Assert(!(MetaProperty::ReadOnly & _attributes));
+void TMetaWrappedProperty<T, _Accessor>::SetMove(FMetaObject *object, wrapper_type&& src) const {
+    Assert(!(FMetaProperty::ReadOnly & _attributes));
     Assert(object);
 
     T value;
@@ -72,8 +72,8 @@ void MetaWrappedProperty<T, _Accessor>::SetMove(MetaObject *object, wrapper_type
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Accessor>
-void MetaWrappedProperty<T, _Accessor>::SetCopy(MetaObject *object, const wrapper_type& src) const {
-    Assert(!(MetaProperty::ReadOnly & _attributes));
+void TMetaWrappedProperty<T, _Accessor>::SetCopy(FMetaObject *object, const wrapper_type& src) const {
+    Assert(!(FMetaProperty::ReadOnly & _attributes));
     Assert(object);
 
     T value;
@@ -82,8 +82,8 @@ void MetaWrappedProperty<T, _Accessor>::SetCopy(MetaObject *object, const wrappe
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Accessor>
-MetaAtom *MetaWrappedProperty<T, _Accessor>::WrapMove(MetaObject *src) const {
-    Assert(!(MetaProperty::ReadOnly & _attributes));
+FMetaAtom *TMetaWrappedProperty<T, _Accessor>::WrapMove(FMetaObject *src) const {
+    Assert(!(FMetaProperty::ReadOnly & _attributes));
     Assert(src);
 
     T value;
@@ -92,7 +92,7 @@ MetaAtom *MetaWrappedProperty<T, _Accessor>::WrapMove(MetaObject *src) const {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Accessor>
-MetaAtom *MetaWrappedProperty<T, _Accessor>::WrapCopy(const MetaObject *src) const {
+FMetaAtom *TMetaWrappedProperty<T, _Accessor>::WrapCopy(const FMetaObject *src) const {
     Assert(src);
 
     T value;
@@ -101,11 +101,11 @@ MetaAtom *MetaWrappedProperty<T, _Accessor>::WrapCopy(const MetaObject *src) con
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Accessor>
-bool MetaWrappedProperty<T, _Accessor>::UnwrapMove(MetaObject *dst, MetaAtom *src) const {
+bool TMetaWrappedProperty<T, _Accessor>::UnwrapMove(FMetaObject *dst, FMetaAtom *src) const {
     Assert(dst);
     Assert(src);
 
-    typename MetaAtomWrapper<T>::type tmp;
+    typename TMetaAtomWrapper<T>::type tmp;
     if (false == Traits()->AssignMove(&tmp, src))
         return false;
 
@@ -117,11 +117,11 @@ bool MetaWrappedProperty<T, _Accessor>::UnwrapMove(MetaObject *dst, MetaAtom *sr
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Accessor>
-bool MetaWrappedProperty<T, _Accessor>::UnwrapCopy(MetaObject *dst, const MetaAtom *src) const {
+bool TMetaWrappedProperty<T, _Accessor>::UnwrapCopy(FMetaObject *dst, const FMetaAtom *src) const {
     Assert(dst);
     Assert(src);
 
-    typename MetaAtomWrapper<T>::type tmp;
+    typename TMetaAtomWrapper<T>::type tmp;
     if (false == Traits()->AssignCopy(&tmp, src))
         return false;
 
@@ -133,8 +133,8 @@ bool MetaWrappedProperty<T, _Accessor>::UnwrapCopy(MetaObject *dst, const MetaAt
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Accessor>
-void MetaWrappedProperty<T, _Accessor>::MoveTo(MetaObject *object, MetaAtom *atom) const {
-    Assert(!(MetaProperty::ReadOnly & _attributes));
+void TMetaWrappedProperty<T, _Accessor>::MoveTo(FMetaObject *object, FMetaAtom *atom) const {
+    Assert(!(FMetaProperty::ReadOnly & _attributes));
     Assert(object);
     Assert(atom);
     Assert(atom->TypeInfo().Id == meta_type::TypeId);
@@ -147,7 +147,7 @@ void MetaWrappedProperty<T, _Accessor>::MoveTo(MetaObject *object, MetaAtom *ato
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Accessor>
-void MetaWrappedProperty<T, _Accessor>::CopyTo(const MetaObject *object, MetaAtom *atom) const {
+void TMetaWrappedProperty<T, _Accessor>::CopyTo(const FMetaObject *object, FMetaAtom *atom) const {
     Assert(object);
     Assert(atom);
     Assert(atom->TypeInfo().Id == meta_type::TypeId);
@@ -160,8 +160,8 @@ void MetaWrappedProperty<T, _Accessor>::CopyTo(const MetaObject *object, MetaAto
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Accessor>
-void MetaWrappedProperty<T, _Accessor>::MoveFrom(MetaObject *object, MetaAtom *atom) const {
-    Assert(!(MetaProperty::ReadOnly & _attributes));
+void TMetaWrappedProperty<T, _Accessor>::MoveFrom(FMetaObject *object, FMetaAtom *atom) const {
+    Assert(!(FMetaProperty::ReadOnly & _attributes));
     Assert(object);
     Assert(atom);
     Assert(atom->TypeInfo().Id == meta_type::TypeId);
@@ -174,8 +174,8 @@ void MetaWrappedProperty<T, _Accessor>::MoveFrom(MetaObject *object, MetaAtom *a
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Accessor>
-void MetaWrappedProperty<T, _Accessor>::CopyFrom(MetaObject *object, const MetaAtom *atom) const {
-    Assert(!(MetaProperty::ReadOnly & _attributes));
+void TMetaWrappedProperty<T, _Accessor>::CopyFrom(FMetaObject *object, const FMetaAtom *atom) const {
+    Assert(!(FMetaProperty::ReadOnly & _attributes));
     Assert(object);
     Assert(atom);
     Assert(atom->TypeInfo().Id == meta_type::TypeId);
@@ -188,7 +188,7 @@ void MetaWrappedProperty<T, _Accessor>::CopyFrom(MetaObject *object, const MetaA
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Accessor>
-void MetaWrappedProperty<T, _Accessor>::Move(MetaObject *dst, MetaObject *src) const {
+void TMetaWrappedProperty<T, _Accessor>::Move(FMetaObject *dst, FMetaObject *src) const {
     Assert(src);
     Assert(dst);
 
@@ -196,7 +196,7 @@ void MetaWrappedProperty<T, _Accessor>::Move(MetaObject *dst, MetaObject *src) c
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Accessor>
-void MetaWrappedProperty<T, _Accessor>::Copy(MetaObject *dst, const MetaObject *src) const {
+void TMetaWrappedProperty<T, _Accessor>::Copy(FMetaObject *dst, const FMetaObject *src) const {
     Assert(src);
     Assert(dst);
 
@@ -207,7 +207,7 @@ void MetaWrappedProperty<T, _Accessor>::Copy(MetaObject *dst, const MetaObject *
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Accessor>
-void MetaWrappedProperty<T, _Accessor>::Swap(MetaObject *lhs, MetaObject *rhs) const {
+void TMetaWrappedProperty<T, _Accessor>::Swap(FMetaObject *lhs, FMetaObject *rhs) const {
     Assert(lhs);
     Assert(rhs);
 
@@ -220,7 +220,7 @@ void MetaWrappedProperty<T, _Accessor>::Swap(MetaObject *lhs, MetaObject *rhs) c
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Accessor>
-bool MetaWrappedProperty<T, _Accessor>::Equals(const MetaObject *lhs, const MetaObject *rhs) const {
+bool TMetaWrappedProperty<T, _Accessor>::Equals(const FMetaObject *lhs, const FMetaObject *rhs) const {
     Assert(lhs);
     Assert(rhs);
 
@@ -231,7 +231,7 @@ bool MetaWrappedProperty<T, _Accessor>::Equals(const MetaObject *lhs, const Meta
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Accessor>
-bool MetaWrappedProperty<T, _Accessor>::DeepEquals(const MetaObject *lhs, const MetaObject *rhs) const {
+bool TMetaWrappedProperty<T, _Accessor>::DeepEquals(const FMetaObject *lhs, const FMetaObject *rhs) const {
     Assert(lhs);
     Assert(rhs);
 
@@ -242,21 +242,21 @@ bool MetaWrappedProperty<T, _Accessor>::DeepEquals(const MetaObject *lhs, const 
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Accessor>
-void *MetaWrappedProperty<T, _Accessor>::RawPtr(MetaObject *obj) const {
+void *TMetaWrappedProperty<T, _Accessor>::RawPtr(FMetaObject *obj) const {
     Assert(obj);
 
     return &accessor_type::GetReference(obj);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Accessor>
-const void *MetaWrappedProperty<T, _Accessor>::RawPtr(const MetaObject *obj) const {
+const void *TMetaWrappedProperty<T, _Accessor>::RawPtr(const FMetaObject *obj) const {
     Assert(obj);
 
     return &accessor_type::GetReference(obj);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Accessor>
-size_t MetaWrappedProperty<T, _Accessor>::HashValue(const MetaObject *object) const {
+size_t TMetaWrappedProperty<T, _Accessor>::HashValue(const FMetaObject *object) const {
     Assert(object);
 
     const T& value = accessor_type::GetReference(object);

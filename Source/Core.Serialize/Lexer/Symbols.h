@@ -7,92 +7,92 @@
 #include "Core/Meta/Singleton.h"
 
 namespace Core {
-namespace Lexer {
-class Symbol;
+namespace FLexer {
+class FSymbol;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Symbols : Meta::Singleton<Symbols>, Meta::ThreadResource {
+class FSymbols : Meta::TSingleton<FSymbols>, Meta::FThreadResource {
 public:
     STATIC_CONST_INTEGRAL(size_t, MaxLength, 32);
-    typedef STRINGVIEW_HASHMAP(Lexer, Symbol, Case::Sensitive) hashmap_type;
+    typedef STRINGVIEW_HASHMAP(Lexer, FSymbol, ECase::Sensitive) hashmap_type;
 private:
-    friend class Meta::Singleton<Symbols>;
-    typedef Meta::Singleton<Symbols> singleton_type;
+    friend class Meta::TSingleton<FSymbols>;
+    typedef Meta::TSingleton<FSymbols> singleton_type;
 
     hashmap_type _symbols;
 
-    Symbols();
+    FSymbols();
 public:
-    ~Symbols();
+    ~FSymbols();
 
     using singleton_type::HasInstance;
     using singleton_type::Destroy;
 
     static void Create() { singleton_type::Create(); }
-    static const Symbols& Instance() { return singleton_type::Instance(); }
+    static const FSymbols& Instance() { return singleton_type::Instance(); }
 
     const hashmap_type& All() const { THIS_THREADRESOURCE_CHECKACCESS(); return _symbols; }
 
-    bool IsPrefix(const Symbol** psymbol, const StringView& cstr) const;
+    bool IsPrefix(const FSymbol** psymbol, const FStringView& cstr) const;
 
 public:
-    static const Symbol *Invalid;
+    static const FSymbol *Invalid;
 
-    static const Symbol *Eof;
+    static const FSymbol *Eof;
 
-    static const Symbol *Int;
-    static const Symbol *Float;
-    static const Symbol *String;
-    static const Symbol *Identifier;
+    static const FSymbol *Int;
+    static const FSymbol *Float;
+    static const FSymbol *FString;
+    static const FSymbol *Identifier;
 
-    static const Symbol *True;
-    static const Symbol *False;
-    static const Symbol *Nil;
-    static const Symbol *Is;
-    static const Symbol *Extern;
-    static const Symbol *Export;
-    static const Symbol *LBrace;
-    static const Symbol *RBrace;
-    static const Symbol *LBracket;
-    static const Symbol *RBracket;
-    static const Symbol *LParenthese;
-    static const Symbol *RParenthese;
-    static const Symbol *Comma;
-    static const Symbol *Colon;
-    static const Symbol *SemiColon;
-    static const Symbol *Dot;
-    static const Symbol *Dollar;
-    static const Symbol *Question;
-    static const Symbol *Add;
-    static const Symbol *Sub;
-    static const Symbol *Mul;
-    static const Symbol *Div;
-    static const Symbol *Mod;
-    static const Symbol *Pow;
-    static const Symbol *Increment;
-    static const Symbol *Decrement;
-    static const Symbol *LShift;
-    static const Symbol *RShift;
-    static const Symbol *And;
-    static const Symbol *Or;
-    static const Symbol *Not;
-    static const Symbol *Xor;
-    static const Symbol *Complement;
-    static const Symbol *Assignment;
-    static const Symbol *Equals;
-    static const Symbol *NotEquals;
-    static const Symbol *Less;
-    static const Symbol *LessOrEqual;
-    static const Symbol *Greater;
-    static const Symbol *GreaterOrEqual;
-    static const Symbol *DotDot;
-    static const Symbol *Sharp;
+    static const FSymbol *True;
+    static const FSymbol *False;
+    static const FSymbol *Nil;
+    static const FSymbol *Is;
+    static const FSymbol *Extern;
+    static const FSymbol *Export;
+    static const FSymbol *LBrace;
+    static const FSymbol *RBrace;
+    static const FSymbol *LBracket;
+    static const FSymbol *RBracket;
+    static const FSymbol *LParenthese;
+    static const FSymbol *RParenthese;
+    static const FSymbol *Comma;
+    static const FSymbol *Colon;
+    static const FSymbol *SemiColon;
+    static const FSymbol *Dot;
+    static const FSymbol *Dollar;
+    static const FSymbol *Question;
+    static const FSymbol *Add;
+    static const FSymbol *Sub;
+    static const FSymbol *Mul;
+    static const FSymbol *Div;
+    static const FSymbol *Mod;
+    static const FSymbol *Pow;
+    static const FSymbol *Increment;
+    static const FSymbol *Decrement;
+    static const FSymbol *LShift;
+    static const FSymbol *RShift;
+    static const FSymbol *And;
+    static const FSymbol *Or;
+    static const FSymbol *TNot;
+    static const FSymbol *Xor;
+    static const FSymbol *Complement;
+    static const FSymbol *Assignment;
+    static const FSymbol *Equals;
+    static const FSymbol *NotEquals;
+    static const FSymbol *TLess;
+    static const FSymbol *LessOrEqual;
+    static const FSymbol *TGreater;
+    static const FSymbol *GreaterOrEqual;
+    static const FSymbol *DotDot;
+    static const FSymbol *Sharp;
 
-    static const Symbol *Typename;
+    static const FSymbol *Typename;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace Lexer
+} //!namespace FLexer
 } //!namespace Core

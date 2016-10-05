@@ -20,19 +20,19 @@ STATIC_CONST_INTEGRAL(size_t, ConstantBufferStride, 4);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ConstantBuffer::ConstantBuffer(const ConstantBufferLayout *layout, bool sharable)
-:   DeviceResourceSharable(DeviceResourceType::Constants, sharable)
-,   _buffer(ConstantBufferStride, layout->SizeInBytes(), BufferMode::WriteDiscard, BufferUsage::Dynamic)
+FConstantBuffer::FConstantBuffer(const FConstantBufferLayout *layout, bool sharable)
+:   FDeviceResourceSharable(EDeviceResourceType::Constants, sharable)
+,   _buffer(ConstantBufferStride, layout->SizeInBytes(), EBufferMode::WriteDiscard, EBufferUsage::Dynamic)
 ,   _layout(layout) {
     Assert(_layout);
     Assert(0 == (_layout->SizeInBytes() % ConstantBufferStride));
 }
 //----------------------------------------------------------------------------
-ConstantBuffer::~ConstantBuffer() {
+FConstantBuffer::~FConstantBuffer() {
     Assert(!_deviceAPIDependantWriter);
 }
 //----------------------------------------------------------------------------
-void ConstantBuffer::SetData(IDeviceAPIEncapsulator *device, const MemoryView<const u8>& rawData) {
+void FConstantBuffer::SetData(IDeviceAPIEncapsulator *device, const TMemoryView<const u8>& rawData) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
 
@@ -43,7 +43,7 @@ void ConstantBuffer::SetData(IDeviceAPIEncapsulator *device, const MemoryView<co
     _buffer.SetData(device, 0, deviceAPIDependantRawData.Pointer(), deviceAPIDependantRawData.size());
 }
 //----------------------------------------------------------------------------
-void ConstantBuffer::SetData(IDeviceAPIEncapsulator *device, const MemoryView<const void *>& fieldsData) {
+void FConstantBuffer::SetData(IDeviceAPIEncapsulator *device, const TMemoryView<const void *>& fieldsData) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
 
@@ -54,13 +54,13 @@ void ConstantBuffer::SetData(IDeviceAPIEncapsulator *device, const MemoryView<co
     _buffer.SetData(device, 0, deviceAPIDependantRawData.Pointer(), deviceAPIDependantRawData.size());
 }
 //----------------------------------------------------------------------------
-void ConstantBuffer::Create(IDeviceAPIEncapsulator *device) {
+void FConstantBuffer::Create(IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(device);
     Assert(!_deviceAPIDependantWriter);
 
-    DeviceAPIDependantResourceBuffer *const resourceBuffer = device->CreateConstantBuffer(this, &_buffer);
+    FDeviceAPIDependantResourceBuffer *const resourceBuffer = device->CreateConstantBuffer(this, &_buffer);
     Assert(resourceBuffer);
     Assert(_deviceAPIDependantWriter);
 
@@ -70,7 +70,7 @@ void ConstantBuffer::Create(IDeviceAPIEncapsulator *device) {
     _buffer.Create(device, this, resourceBuffer);
 }
 //----------------------------------------------------------------------------
-void ConstantBuffer::Destroy(IDeviceAPIEncapsulator *device) {
+void FConstantBuffer::Destroy(IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(device);
@@ -84,25 +84,25 @@ void ConstantBuffer::Destroy(IDeviceAPIEncapsulator *device) {
     Assert(!_deviceAPIDependantWriter);
 }
 //----------------------------------------------------------------------------
-size_t ConstantBuffer::VirtualSharedKeyHashValue() const {
+size_t FConstantBuffer::VirtualSharedKeyHashValue() const {
     return _buffer.HashValue();
 }
 //----------------------------------------------------------------------------
-bool ConstantBuffer::VirtualMatchTerminalEntity(const DeviceAPIDependantEntity *entity) const {
-    const DeviceAPIDependantResourceBuffer *resourceBuffer =
-        checked_cast<const DeviceAPIDependantResourceBuffer *>(entity);
+bool FConstantBuffer::VirtualMatchTerminalEntity(const FDeviceAPIDependantEntity *entity) const {
+    const FDeviceAPIDependantResourceBuffer *resourceBuffer =
+        checked_cast<const FDeviceAPIDependantResourceBuffer *>(entity);
     // no restriction on _layout or _deviceAPIDependantWriter :
     return _buffer.Match(*resourceBuffer);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceAPIDependantConstantWriter::DeviceAPIDependantConstantWriter(IDeviceAPIEncapsulator *device)
-:   DeviceAPIDependantEntity(device->APIEncapsulator(), DeviceResourceType::Constants) {}
+FDeviceAPIDependantConstantWriter::FDeviceAPIDependantConstantWriter(IDeviceAPIEncapsulator *device)
+:   FDeviceAPIDependantEntity(device->APIEncapsulator(), EDeviceResourceType::Constants) {}
 //----------------------------------------------------------------------------
-DeviceAPIDependantConstantWriter::~DeviceAPIDependantConstantWriter() {}
+FDeviceAPIDependantConstantWriter::~FDeviceAPIDependantConstantWriter() {}
 //----------------------------------------------------------------------------
-size_t DeviceAPIDependantConstantWriter::VideoMemorySizeInBytes() const {
+size_t FDeviceAPIDependantConstantWriter::VideoMemorySizeInBytes() const {
     return 0;
 }
 //----------------------------------------------------------------------------

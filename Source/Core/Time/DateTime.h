@@ -8,14 +8,14 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Timestamp;
-class DateTime {
+class FTimestamp;
+class FDateTime {
 public:
-    DateTime() : DateTime(0) {}
-    explicit DateTime(u64 ord) { *reinterpret_cast<u64*>(this) = ord; }
+    FDateTime() : FDateTime(0) {}
+    explicit FDateTime(u64 ord) { *reinterpret_cast<u64*>(this) = ord; }
 
-    DateTime(const DateTime& other) { *reinterpret_cast<u64*>(this) = other.Ord(); }
-    DateTime& operator =(const DateTime& other) { *reinterpret_cast<u64*>(this) = other.Ord(); return *this; }
+    FDateTime(const FDateTime& other) { *reinterpret_cast<u64*>(this) = other.Ord(); }
+    FDateTime& operator =(const FDateTime& other) { *reinterpret_cast<u64*>(this) = other.Ord(); return *this; }
 
     u64 DayOfYear   : 9;
     u64 DayOfWeek   : 3;
@@ -30,20 +30,20 @@ public:
 
     u64 Ord() const { return *reinterpret_cast<const u64*>(this); }
 
-    static DateTime Now();
-    static DateTime FromLocalTime(const Timestamp& t);
-    static DateTime FromTimeUTC(const Timestamp& t);
+    static FDateTime Now();
+    static FDateTime FromLocalTime(const FTimestamp& t);
+    static FDateTime FromTimeUTC(const FTimestamp& t);
 
-    friend hash_t hash_value(const DateTime& d) { return hash_as_pod(d.Ord()); }
-    friend void swap(DateTime& lhs, DateTime& rhs) { std::swap(*reinterpret_cast<u64*>(&lhs), *reinterpret_cast<u64*>(&rhs)); }
+    friend hash_t hash_value(const FDateTime& d) { return hash_as_pod(d.Ord()); }
+    friend void swap(FDateTime& lhs, FDateTime& rhs) { std::swap(*reinterpret_cast<u64*>(&lhs), *reinterpret_cast<u64*>(&rhs)); }
 
-    friend bool operator ==(const DateTime& lhs, const DateTime& rhs) { return lhs.Ord() == rhs.Ord(); }
-    friend bool operator !=(const DateTime& lhs, const DateTime& rhs) { return lhs.Ord() != rhs.Ord(); }
+    friend bool operator ==(const FDateTime& lhs, const FDateTime& rhs) { return lhs.Ord() == rhs.Ord(); }
+    friend bool operator !=(const FDateTime& lhs, const FDateTime& rhs) { return lhs.Ord() != rhs.Ord(); }
 };
-STATIC_ASSERT(sizeof(DateTime) == sizeof(u64));
+STATIC_ASSERT(sizeof(FDateTime) == sizeof(u64));
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const DateTime& d) {
+std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const FDateTime& d) {
     const _Char f = oss.fill();
     const std::streamsize w = oss.width();
     return oss << std::setfill('0')

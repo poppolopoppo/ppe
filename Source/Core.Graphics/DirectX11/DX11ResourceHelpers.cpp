@@ -22,19 +22,19 @@ bool DX11ResourceGetData(
     IDeviceAPIEncapsulator *device,
     ::ID3D11Resource *resource, size_t subResource,
     size_t offset, void *const dst, size_t stride, size_t count,
-    BufferMode bufferMode,
-    BufferUsage bufferUsage ) {
+    EBufferMode bufferMode,
+    EBufferUsage bufferUsage ) {
     UNUSED(bufferMode);
     UNUSED(bufferUsage);
-    AssertRelease(BufferUsage::Staging == bufferUsage);
+    AssertRelease(EBufferUsage::Staging == bufferUsage);
 
-    const DX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
+    const FDX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
 
-    Assert(BufferUsage::Immutable != bufferUsage);
-    Assert(Meta::HasFlag(bufferMode, BufferMode::Read) );
+    Assert(EBufferUsage::Immutable != bufferUsage);
+    Assert(Meta::HasFlag(bufferMode, EBufferMode::Read) );
 
     if (!DX11MapRead(wrapper->ImmediateContext(), resource, subResource, offset, dst, stride, count))
-        CORE_THROW_IT(DeviceEncapsulatorException("DX11: failed to map resource buffer for reading", device));
+        CORE_THROW_IT(FDeviceEncapsulatorException("DX11: failed to map resource buffer for reading", device));
 
     return true;
 }
@@ -43,34 +43,34 @@ bool DX11ResourceSetData(
     IDeviceAPIEncapsulator *device,
     ::ID3D11Resource *resource, size_t subResource,
     size_t offset, const void *src, size_t stride, size_t count,
-    Graphics::BufferMode bufferMode,
-    Graphics::BufferUsage bufferUsage ) {
+    Graphics::EBufferMode bufferMode,
+    Graphics::EBufferUsage bufferUsage ) {
 
-    const DX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
+    const FDX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
 
-    Assert(BufferUsage::Immutable != bufferUsage);
+    Assert(EBufferUsage::Immutable != bufferUsage);
 
     const size_t rowPitch = 0; // TODO : RTFM ...
     const size_t depthPitch = 0; // TODO
 
     switch (bufferUsage)
     {
-    case Core::Graphics::BufferUsage::Default:
+    case Core::Graphics::EBufferUsage::Default:
         if (!DX11UpdateResource(wrapper->ImmediateContext(), resource, subResource, src, rowPitch, depthPitch))
-            CORE_THROW_IT(DeviceEncapsulatorException("DX11: failed to update resource buffer", device));
+            CORE_THROW_IT(FDeviceEncapsulatorException("DX11: failed to update resource buffer", device));
         break;
 
-    case Core::Graphics::BufferUsage::Dynamic:
-    case Core::Graphics::BufferUsage::Staging:
-        Assert(Meta::HasFlag(bufferMode, BufferMode::Write) );
+    case Core::Graphics::EBufferUsage::Dynamic:
+    case Core::Graphics::EBufferUsage::Staging:
+        Assert(Meta::HasFlag(bufferMode, EBufferMode::Write) );
         if (!DX11MapWrite(  wrapper->ImmediateContext(), resource, subResource, offset, src, stride, count,
-                            Meta::HasFlag(bufferMode, BufferMode::Discard),
-                            Meta::HasFlag(bufferMode, BufferMode::DoNotWait) ))
-            CORE_THROW_IT(DeviceEncapsulatorException("DX11: failed to map resource buffer for writing", device));
+                            Meta::HasFlag(bufferMode, EBufferMode::Discard),
+                            Meta::HasFlag(bufferMode, EBufferMode::DoNotWait) ))
+            CORE_THROW_IT(FDeviceEncapsulatorException("DX11: failed to map resource buffer for writing", device));
         break;
 
-    case Core::Graphics::BufferUsage::Immutable:
-        CORE_THROW_IT(DeviceEncapsulatorException("DX11: immutable buffer can't be muted", device));
+    case Core::Graphics::EBufferUsage::Immutable:
+        CORE_THROW_IT(FDeviceEncapsulatorException("DX11: immutable buffer can't be muted", device));
 
     default:
         AssertNotImplemented();
@@ -86,7 +86,7 @@ bool DX11CopyResource(IDeviceAPIEncapsulator *device, ::ID3D11Resource *dst, ::I
     Assert(dst);
     Assert(src);
 
-    const DX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
+    const FDX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
 
     wrapper->ImmediateContext()->CopyResource(dst, src);
     return true;
@@ -99,7 +99,7 @@ bool DX11CopyResourceSubRegion(
     Assert(dst);
     Assert(src);
 
-    const DX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
+    const FDX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
 
     ::D3D11_BOX dx11SrcBox;
 

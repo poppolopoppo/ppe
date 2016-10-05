@@ -17,7 +17,7 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-RenderTree::RenderTree(const Engine::Scene *scene, IServiceProvider *serviceProvider)
+FRenderTree::FRenderTree(const Engine::FScene *scene, IServiceProvider *serviceProvider)
 :   _scene(scene)
 ,   _renderSurfaceService(ENGINESERVICE_PTR(IRenderSurfaceService, serviceProvider))
 ,   _effectCompilerService(ENGINESERVICE_PTR(IEffectCompilerService, serviceProvider))
@@ -25,23 +25,23 @@ RenderTree::RenderTree(const Engine::Scene *scene, IServiceProvider *serviceProv
     Assert(scene);
 }
 //----------------------------------------------------------------------------
-RenderTree::~RenderTree() {
+FRenderTree::~FRenderTree() {
     THIS_THREADRESOURCE_CHECKACCESS();
 }
 //----------------------------------------------------------------------------
-Engine::RenderSurfaceManager *RenderTree::RenderSurfaceManager() const {
+Engine::FRenderSurfaceManager *FRenderTree::FRenderSurfaceManager() const {
     return _renderSurfaceService->Manager();
 }
 //----------------------------------------------------------------------------
-Engine::EffectCompiler *RenderTree::EffectCompiler() const {
+Engine::FEffectCompiler *FRenderTree::FEffectCompiler() const {
     return _effectCompilerService->EffectCompiler();
 }
 //----------------------------------------------------------------------------
-TextureCache *RenderTree::TextureCache() const {
+FTextureCache *FRenderTree::FTextureCache() const {
     return _textureCacheService->TextureCache();
 }
 //----------------------------------------------------------------------------
-void RenderTree::Add(AbstractRenderLayer *layer) {
+void FRenderTree::Add(FAbstractRenderLayer *layer) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(layer);
 
@@ -55,7 +55,7 @@ void RenderTree::Add(AbstractRenderLayer *layer) {
     _layers.emplace_back(layer);
 }
 //----------------------------------------------------------------------------
-void RenderTree::Remove(AbstractRenderLayer *layer) {
+void FRenderTree::Remove(FAbstractRenderLayer *layer) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(layer);
 
@@ -65,7 +65,7 @@ void RenderTree::Remove(AbstractRenderLayer *layer) {
     _layers.erase(it);
 }
 //----------------------------------------------------------------------------
-bool RenderTree::TryGet(const char *name, AbstractRenderLayer **layer) const {
+bool FRenderTree::TryGet(const char *name, FAbstractRenderLayer **layer) const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(name);
     Assert(layer);
@@ -79,15 +79,15 @@ bool RenderTree::TryGet(const char *name, AbstractRenderLayer **layer) const {
     return false;
 }
 //----------------------------------------------------------------------------
-bool RenderTree::TryGet(const char *name, PAbstractRenderLayer& player) const {
-    AbstractRenderLayer *layer = nullptr;
+bool FRenderTree::TryGet(const char *name, PAbstractRenderLayer& player) const {
+    FAbstractRenderLayer *layer = nullptr;
     const bool result = TryGet(name, &layer);
 
     player = layer;
     return result;
 }
 //----------------------------------------------------------------------------
-void RenderTree::Prepare(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase,  VariabilitySeed *seeds) {
+void FRenderTree::Prepare(Graphics::IDeviceAPIEncapsulator *device, FMaterialDatabase *materialDatabase,  FVariabilitySeed *seeds) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(device);
 
@@ -95,10 +95,10 @@ void RenderTree::Prepare(Graphics::IDeviceAPIEncapsulator *device, MaterialDatab
         layer->Prepare(device, materialDatabase, this, seeds);
 
     // tries to fetch possibly loaded textures after each prepare :
-    TextureCache()->Update();
+    FTextureCache()->Update();
 }
 //----------------------------------------------------------------------------
-void RenderTree::Render(Graphics::IDeviceAPIContext *context) {
+void FRenderTree::Render(Graphics::IDeviceAPIContext *context) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(context);
 
@@ -110,7 +110,7 @@ void RenderTree::Render(Graphics::IDeviceAPIContext *context) {
     GRAPHICS_DIAGNOSTICS_ENDEVENT(context->Diagnostics());
 }
 //----------------------------------------------------------------------------
-void RenderTree::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
+void FRenderTree::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(device);
 

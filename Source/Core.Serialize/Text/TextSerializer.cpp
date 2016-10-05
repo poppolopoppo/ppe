@@ -27,33 +27,33 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-class TextSerialize_ {
+class FTextSerialize_ {
 public:
-    TextSerialize_(const TextSerializer* owner)
+    FTextSerialize_(const FTextSerializer* owner)
         : _newline(false), _indent(0), _owner(owner) {
         Assert(owner);
     }
 
-    TextSerialize_(const TextSerialize_& ) = delete;
-    TextSerialize_& operator =(const TextSerialize_& ) = delete;
+    FTextSerialize_(const FTextSerialize_& ) = delete;
+    FTextSerialize_& operator =(const FTextSerialize_& ) = delete;
 
-    const TextSerializer* Owner() const { return _owner; }
+    const FTextSerializer* Owner() const { return _owner; }
 
-    void Append(const RTTI::MetaObject* object, bool topObject = true);
-    void Append(const MemoryView<const RTTI::PMetaObject>& objects, bool topObject = true);
+    void Append(const RTTI::FMetaObject* object, bool topObject = true);
+    void Append(const TMemoryView<const RTTI::PMetaObject>& objects, bool topObject = true);
     void Finalize(IStreamWriter* writer);
 
 private:
-    class AtomWriter_ : public RTTI::MetaAtomWrapCopyVisitor {
+    class FAtomWriter_ : public RTTI::FMetaAtomWrapCopyVisitor {
     public:
-        typedef RTTI::MetaAtomWrapCopyVisitor parent_type;
-        AtomWriter_(TextSerialize_* owner) : _owner(owner) {}
+        typedef RTTI::FMetaAtomWrapCopyVisitor parent_type;
+        FAtomWriter_(FTextSerialize_* owner) : _owner(owner) {}
 
         using parent_type::Append;
         using parent_type::Inspect;
         using parent_type::Visit;
 
-        virtual void Inspect(const RTTI::IMetaAtomPair* ppair, const RTTI::Pair<RTTI::PMetaAtom, RTTI::PMetaAtom>& pair) override {
+        virtual void Inspect(const RTTI::IMetaAtomPair* ppair, const RTTI::TPair<RTTI::PMetaAtom, RTTI::PMetaAtom>& pair) override {
             UNUSED(ppair);
             _owner->Print("(");
             Append(pair.first.get());
@@ -62,7 +62,7 @@ private:
             _owner->Print(")");
         }
 
-        virtual void Inspect(const RTTI::IMetaAtomVector* pvector, const RTTI::Vector<RTTI::PMetaAtom>& vector) override {
+        virtual void Inspect(const RTTI::IMetaAtomVector* pvector, const RTTI::TVector<RTTI::PMetaAtom>& vector) override {
             UNUSED(pvector);
             if (vector.empty()) {
                 _owner->Print("[]");
@@ -79,7 +79,7 @@ private:
             }
         }
 
-        virtual void Inspect(const RTTI::IMetaAtomDictionary* pdictionary, const RTTI::Dictionary<RTTI::PMetaAtom, RTTI::PMetaAtom>& dictionary) override {
+        virtual void Inspect(const RTTI::IMetaAtomDictionary* pdictionary, const RTTI::TDictionary<RTTI::PMetaAtom, RTTI::PMetaAtom>& dictionary) override {
             UNUSED(pdictionary);
             if (dictionary.empty()) {
                 _owner->Print("{}");
@@ -87,7 +87,7 @@ private:
             else {
                 _owner->Puts("{");
                 _owner->IncIndent();
-                for(const RTTI::Pair<RTTI::PMetaAtom, RTTI::PMetaAtom>& pair : dictionary) {
+                for(const RTTI::TPair<RTTI::PMetaAtom, RTTI::PMetaAtom>& pair : dictionary) {
                     _owner->Print("(");
                     Append(pair.first.get()); // do not call Visit(pair) !
                     _owner->Print(", ");
@@ -100,7 +100,7 @@ private:
         }
 
 #define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
-        virtual void Visit(const RTTI::MetaTypedAtom<T>* scalar) override { \
+        virtual void Visit(const RTTI::TMetaTypedAtom<T>* scalar) override { \
             Assert(scalar); \
             Assert(_TypeId == scalar->TypeInfo().Id); \
             WriteValue_(scalar->Wrapper()); \
@@ -129,7 +129,7 @@ private:
             _owner->PrintFormat(Numeric_(value));
         }
 
-        void WriteValue_(const String& str) {
+        void WriteValue_(const FString& str) {
             static char const* const hexdig = "0123456789ABCDEF";
             _owner->Print("\"");
             for (char c : str) {
@@ -154,13 +154,13 @@ private:
             _owner->Print("\"");
         }
 
-        void WriteValue_(const WString& wstr) {
-            const String str = ToString(wstr);
+        void WriteValue_(const FWString& wstr) {
+            const FString str = ToString(wstr);
             WriteValue_(str);
         }
 
-        void WriteValue_(const RTTI::Name& name) {
-            _owner->Print("Name:\"");
+        void WriteValue_(const RTTI::FName& name) {
+            _owner->Print("FName:\"");
             _owner->Print(name.MakeView());
             _owner->Print("\"");
         }
@@ -194,7 +194,7 @@ private:
             else {
                 _owner->Puts("OpaqueData:{");
                 _owner->IncIndent();
-                for(const RTTI::Pair<RTTI::Name, RTTI::PMetaAtom>& pair : opaqueData) {
+                for(const RTTI::TPair<RTTI::FName, RTTI::PMetaAtom>& pair : opaqueData) {
                     _owner->Print("(");
                     WriteValue_(pair.first);
                     _owner->Print(", ");
@@ -207,8 +207,8 @@ private:
         }
 
         template <typename T, size_t _Dim>
-        void WriteValue_(const ScalarVector<T, _Dim>& v) {
-            const RTTI::MetaTypeInfo type = RTTI::TypeInfo<ScalarVector<T, _Dim>>();
+        void WriteValue_(const TScalarVector<T, _Dim>& v) {
+            const RTTI::FMetaTypeInfo type = RTTI::TypeInfo<TScalarVector<T, _Dim>>();
             _owner->Print(type.Name);
             _owner->Print(":[");
             _owner->PrintFormat(Numeric_(v._data[0]));
@@ -220,8 +220,8 @@ private:
         }
 
         template <typename T, size_t _Width, size_t _Height>
-        void WriteValue_(const ScalarMatrix<T, _Width, _Height>& v) {
-            const RTTI::MetaTypeInfo type = RTTI::TypeInfo<ScalarMatrix<T, _Width, _Height>>();
+        void WriteValue_(const TScalarMatrix<T, _Width, _Height>& v) {
+            const RTTI::FMetaTypeInfo type = RTTI::TypeInfo<TScalarMatrix<T, _Width, _Height>>();
             _owner->Print(type.Name);
             _owner->Print(":[");
             _owner->PrintFormat(Numeric_(v.data().raw[0]));
@@ -234,7 +234,7 @@ private:
 
         void WriteValue_(const RTTI::PMetaAtom& atom) {
             if (atom) {
-                const RTTI::MetaTypeId typeId = atom->TypeInfo().Id;
+                const RTTI::FMetaTypeId typeId = atom->TypeInfo().Id;
                 switch(typeId)
                 {
 #define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) case _TypeId:
@@ -244,7 +244,7 @@ private:
                     break;
 
                 default:
-                    CORE_THROW_IT(TextSerializerException("no support for abstract RTTI atoms serialization"));
+                    CORE_THROW_IT(FTextSerializerException("no support for abstract RTTI atoms serialization"));
                 }
             }
             else
@@ -261,18 +261,18 @@ private:
             }
         }
 
-        TextSerialize_* _owner;
+        FTextSerialize_* _owner;
     };
 
     void IncIndent() { ++_indent; }
     void DecIndent() { Assert(0 < _indent); --_indent; }
     void Indent_();
 
-    void Print(const StringView& str);
+    void Print(const FStringView& str);
     template <size_t _Dim>
     void Print(const char (&cstr)[_Dim]) { Print(MakeStringView(cstr)); }
 
-    void Puts(const StringView& str);
+    void Puts(const FStringView& str);
     template <size_t _Dim>
     void Puts(const char (&cstr)[_Dim]) { Puts(MakeStringView(cstr)); }
 
@@ -284,25 +284,25 @@ private:
     }
 
     void ProcessQueue_();
-    void QueueObject_(const RTTI::MetaObject* object);
-    void WriteObject_(AtomWriter_& writer, const RTTI::MetaObject* object);
+    void QueueObject_(const RTTI::FMetaObject* object);
+    void WriteObject_(FAtomWriter_& writer, const RTTI::FMetaObject* object);
 
     bool _newline;
     size_t _indent;
-    const TextSerializer* _owner;
+    const FTextSerializer* _owner;
     MEMORYSTREAM_THREAD_LOCAL(Serialize) _oss;
     VECTOR_THREAD_LOCAL(Serialize, RTTI::PCMetaObject) _queue;
     HASHSET_THREAD_LOCAL(Serialize, RTTI::PCMetaObject) _exported;
 };
 //----------------------------------------------------------------------------
-void TextSerialize_::Append(const RTTI::MetaObject* object, bool topObject /* = true */) {
+void FTextSerialize_::Append(const RTTI::FMetaObject* object, bool topObject /* = true */) {
     UNUSED(topObject);
     Assert(false == topObject || nullptr != object);
     QueueObject_(object);
     ProcessQueue_();
 }
 //----------------------------------------------------------------------------
-void TextSerialize_::Append(const MemoryView<const RTTI::PMetaObject>& objects, bool topObject /* = true */) {
+void FTextSerialize_::Append(const TMemoryView<const RTTI::PMetaObject>& objects, bool topObject /* = true */) {
     UNUSED(topObject);
     for (const RTTI::PMetaObject& object : objects) {
         QueueObject_(object.get());
@@ -310,12 +310,12 @@ void TextSerialize_::Append(const MemoryView<const RTTI::PMetaObject>& objects, 
     ProcessQueue_();
 }
 //----------------------------------------------------------------------------
-void TextSerialize_::Finalize(IStreamWriter* writer) {
+void FTextSerialize_::Finalize(IStreamWriter* writer) {
     Assert(writer);
     writer->WriteView(_oss.MakeView());
 }
 //----------------------------------------------------------------------------
-void TextSerialize_::QueueObject_(const RTTI::MetaObject* object) {
+void FTextSerialize_::QueueObject_(const RTTI::FMetaObject* object) {
     if (object) {
         if (object->RTTI_IsExported()) {
             const auto it = _exported.insert(object);
@@ -326,7 +326,7 @@ void TextSerialize_::QueueObject_(const RTTI::MetaObject* object) {
     }
 }
 //----------------------------------------------------------------------------
-void TextSerialize_::WriteObject_(AtomWriter_& writer, const RTTI::MetaObject* object) {
+void FTextSerialize_::WriteObject_(FAtomWriter_& writer, const RTTI::FMetaObject* object) {
     if (object) {
         if (object->RTTI_IsExported()) {
             Print("export ");
@@ -334,7 +334,7 @@ void TextSerialize_::WriteObject_(AtomWriter_& writer, const RTTI::MetaObject* o
             Print(" ");
         }
 
-        const RTTI::MetaClass* metaClass = object->RTTI_MetaClass();
+        const RTTI::FMetaClass* metaClass = object->RTTI_MetaClass();
         Assert(metaClass);
 
         Print(metaClass->Name().MakeView());
@@ -366,8 +366,8 @@ void TextSerialize_::WriteObject_(AtomWriter_& writer, const RTTI::MetaObject* o
     }
 }
 //----------------------------------------------------------------------------
-void TextSerialize_::ProcessQueue_() {
-    AtomWriter_ writer(this);
+void FTextSerialize_::ProcessQueue_() {
+    FAtomWriter_ writer(this);
     while (_queue.size()) {
         RTTI::PCMetaObject object = _queue.back();
         _queue.pop_back();
@@ -377,7 +377,7 @@ void TextSerialize_::ProcessQueue_() {
     }
 }
 //----------------------------------------------------------------------------
-void TextSerialize_::Indent_() {
+void FTextSerialize_::Indent_() {
     if (_newline) {
         _newline = false;
         forrange(i, 0, _indent)
@@ -385,12 +385,12 @@ void TextSerialize_::Indent_() {
     }
 }
 //----------------------------------------------------------------------------
-void TextSerialize_::Print(const StringView& str) {
+void FTextSerialize_::Print(const FStringView& str) {
     Indent_();
     _oss.WriteView(str);
 }
 //----------------------------------------------------------------------------
-void TextSerialize_::Puts(const StringView& str) {
+void FTextSerialize_::Puts(const FStringView& str) {
     Indent_();
     _oss.WriteView(str);
     _oss.WriteCStr("\r\n");
@@ -401,21 +401,21 @@ void TextSerialize_::Puts(const StringView& str) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-TextSerializer::TextSerializer() {}
+FTextSerializer::FTextSerializer() {}
 //----------------------------------------------------------------------------
-TextSerializer::~TextSerializer() {}
+FTextSerializer::~FTextSerializer() {}
 //----------------------------------------------------------------------------
-void TextSerializer::Deserialize(RTTI::MetaTransaction* transaction, IStreamReader* input, const wchar_t *sourceName /* = nullptr */) {
+void FTextSerializer::Deserialize(RTTI::FMetaTransaction* transaction, IStreamReader* input, const wchar_t *sourceName /* = nullptr */) {
     Assert(transaction);
     Assert(input);
 
-    Lexer::Lexer lexer(input, MakeStringView(sourceName, Meta::noinit_tag()), true);
+    FLexer::FLexer lexer(input, MakeStringView(sourceName, Meta::noinit_tag()), true);
 
-    Parser::ParseList parseList(&lexer);
-    Parser::ParseContext parseContext;
+    Parser::FParseList parseList(&lexer);
+    Parser::FParseContext parseContext;
 
-    while (Parser::PCParseItem result = GrammarStartup::Parse(parseList)) {
-        const Parser::ParseExpression *expr = result->As<Parser::ParseExpression>();
+    while (Parser::PCParseItem result = FGrammarStartup::Parse(parseList)) {
+        const Parser::FParseExpression *expr = result->As<Parser::FParseExpression>();
         if (expr) {
             const RTTI::PMetaAtom atom = expr->Eval(&parseContext);
             const auto* object = atom->As<RTTI::PMetaObject>();
@@ -427,11 +427,11 @@ void TextSerializer::Deserialize(RTTI::MetaTransaction* transaction, IStreamRead
     }
 }
 //----------------------------------------------------------------------------
-void TextSerializer::Serialize(IStreamWriter* output, const RTTI::MetaTransaction* transaction) {
+void FTextSerializer::Serialize(IStreamWriter* output, const RTTI::FMetaTransaction* transaction) {
     Assert(output);
     Assert(transaction);
 
-    TextSerialize_ serialize(this);
+    FTextSerialize_ serialize(this);
     serialize.Append(transaction->MakeView());
     serialize.Finalize(output);
 }

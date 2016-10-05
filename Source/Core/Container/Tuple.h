@@ -12,7 +12,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename... _Args>
-using Tuple = std::tuple<_Args...>;
+using TTuple = std::tuple<_Args...>;
 //----------------------------------------------------------------------------
 template <typename... _Args>
 std::tuple<typename std::remove_reference<_Args>::type... > MakeTuple(_Args&&... args) {
@@ -22,9 +22,9 @@ std::tuple<typename std::remove_reference<_Args>::type... > MakeTuple(_Args&&...
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs>
-struct TupleMerger {
+struct TTupleMerger {
     template <typename T>
-    struct TupleWrap {
+    struct TTupleWrap {
         typedef std::tuple< typename std::remove_reference<T>::type > type;
         type operator ()(typename std::remove_reference<T>::type&& value) const {
             return std::make_tuple(std::forward<T>(value));
@@ -32,7 +32,7 @@ struct TupleMerger {
     };
 
     template <typename... _Args>
-    struct TupleWrap< std::tuple<_Args...> > {
+    struct TTupleWrap< std::tuple<_Args...> > {
         typedef std::tuple<_Args...> type;
         type operator ()(type&& value) const {
             return std::forward<type>(value);
@@ -40,17 +40,17 @@ struct TupleMerger {
     };
 
     template <typename U, typename V>
-    struct TupleMerged {};
+    struct TTupleMerged {};
 
     template <typename... _LhsArgs, typename... _RhsArgs>
-    struct TupleMerged< std::tuple<_LhsArgs...>, std::tuple<_RhsArgs...> > {
+    struct TTupleMerged< std::tuple<_LhsArgs...>, std::tuple<_RhsArgs...> > {
         typedef std::tuple<_LhsArgs..., _RhsArgs...> type;
     };
 
-    typedef TupleWrap< typename std::remove_reference<_Lhs>::type > lhs_tuple;
-    typedef TupleWrap< typename std::remove_reference<_Rhs>::type > rhs_tuple;
+    typedef TTupleWrap< typename std::remove_reference<_Lhs>::type > lhs_tuple;
+    typedef TTupleWrap< typename std::remove_reference<_Rhs>::type > rhs_tuple;
 
-    typedef typename TupleMerged<
+    typedef typename TTupleMerged<
         typename lhs_tuple::type,
         typename rhs_tuple::type
     >::type type;
@@ -63,21 +63,21 @@ struct TupleMerger {
 };
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs>
-typename TupleMerger<_Lhs, _Rhs>::type MergeTuple(_Lhs&& lhs, _Rhs&& rhs) {
-    return TupleMerger<_Lhs, _Rhs>()(std::forward<_Lhs>(lhs), std::forward<_Rhs>(rhs));
+typename TTupleMerger<_Lhs, _Rhs>::type MergeTuple(_Lhs&& lhs, _Rhs&& rhs) {
+    return TTupleMerger<_Lhs, _Rhs>()(std::forward<_Lhs>(lhs), std::forward<_Rhs>(rhs));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace details {
 template<typename _Return, typename... _Args, size_t... _Index>
-_Return CallHelper_(_Return (*func)(_Args...), const Tuple<_Args...>& args, std::index_sequence<_Index...>) {
+_Return CallHelper_(_Return (*func)(_Args...), const TTuple<_Args...>& args, std::index_sequence<_Index...>) {
     return func(std::get<_Index>(args)...);
 }
 } //!details
 //----------------------------------------------------------------------------
 template<typename _Return, typename... _Args>
-_Return Call(_Return (*func)(_Args...), const Tuple<_Args...>& args) {
+_Return Call(_Return (*func)(_Args...), const TTuple<_Args...>& args) {
     return details::CallHelper_(func, args, std::index_sequence_for<_Args...>{});
 }
 //----------------------------------------------------------------------------

@@ -11,14 +11,14 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-RenderTarget::RenderTarget(size_t width, size_t height, const SurfaceFormat *format, bool sharable)
-:   Texture2D(width, height, 1, format, BufferMode::None, BufferUsage::Default, sharable) {
+FRenderTarget::FRenderTarget(size_t width, size_t height, const FSurfaceFormat *format, bool sharable)
+:   FTexture2D(width, height, 1, format, EBufferMode::None, EBufferUsage::Default, sharable) {
     Assert(format->SupportRenderTarget());
 }
 //----------------------------------------------------------------------------
-RenderTarget::~RenderTarget() {}
+FRenderTarget::~FRenderTarget() {}
 //----------------------------------------------------------------------------
-void RenderTarget::Create_(IDeviceAPIEncapsulator *device, const MemoryView<const u8>& optionalRawData) {
+void FRenderTarget::Create_(IDeviceAPIEncapsulator *device, const TMemoryView<const u8>& optionalRawData) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(device);
@@ -30,13 +30,13 @@ void RenderTarget::Create_(IDeviceAPIEncapsulator *device, const MemoryView<cons
     Assert(_deviceAPIDependantTexture2D);
 }
 //----------------------------------------------------------------------------
-void RenderTarget::Destroy(IDeviceAPIEncapsulator *device) {
+void FRenderTarget::Destroy(IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(device);
     Assert(_deviceAPIDependantTexture2D);
 
-    PDeviceAPIDependantRenderTarget rt = checked_cast<Graphics::DeviceAPIDependantRenderTarget *>(_deviceAPIDependantTexture2D.get());
+    PDeviceAPIDependantRenderTarget rt = checked_cast<Graphics::FDeviceAPIDependantRenderTarget *>(_deviceAPIDependantTexture2D.get());
     _deviceAPIDependantTexture2D.reset();
 
     device->DestroyRenderTarget(this, rt);
@@ -44,7 +44,7 @@ void RenderTarget::Destroy(IDeviceAPIEncapsulator *device) {
     Assert(!rt);
 }
 //----------------------------------------------------------------------------
-void RenderTarget::StealRenderTarget(Graphics::DeviceAPIDependantRenderTarget* rt) {
+void FRenderTarget::StealRenderTarget(Graphics::FDeviceAPIDependantRenderTarget* rt) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(rt);
@@ -55,10 +55,10 @@ void RenderTarget::StealRenderTarget(Graphics::DeviceAPIDependantRenderTarget* r
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceAPIDependantRenderTarget::DeviceAPIDependantRenderTarget(IDeviceAPIEncapsulator *device, const RenderTarget *resource, const MemoryView<const u8>& optionalData)
-:   DeviceAPIDependantTexture2D(device, resource, optionalData) {}
+FDeviceAPIDependantRenderTarget::FDeviceAPIDependantRenderTarget(IDeviceAPIEncapsulator *device, const FRenderTarget *resource, const TMemoryView<const u8>& optionalData)
+:   FDeviceAPIDependantTexture2D(device, resource, optionalData) {}
 //----------------------------------------------------------------------------
-DeviceAPIDependantRenderTarget::~DeviceAPIDependantRenderTarget() {}
+FDeviceAPIDependantRenderTarget::~FDeviceAPIDependantRenderTarget() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

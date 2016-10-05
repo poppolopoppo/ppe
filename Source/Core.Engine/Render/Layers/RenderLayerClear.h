@@ -15,36 +15,36 @@ namespace Engine {
 //----------------------------------------------------------------------------
 FWD_REFPTR(AbstractRenderSurface);
 FWD_REFPTR(RenderSurfaceLock);
-struct VariabilitySeed;
+struct FVariabilitySeed;
 //----------------------------------------------------------------------------
-class RenderLayerClear : public AbstractRenderLayer {
+class FRenderLayerClear : public FAbstractRenderLayer {
 public:
-    explicit RenderLayerClear(  AbstractRenderSurface *surface,
+    explicit FRenderLayerClear(  FAbstractRenderSurface *surface,
                                 const ColorRGBAF& color,
-                                Graphics::ClearOptions options = Graphics::ClearOptions::DepthStencil,
+                                Graphics::EClearOptions options = Graphics::EClearOptions::FDepthStencil,
                                 float depth = 1.0f,
                                 u8 stencil = 0 );
-    virtual ~RenderLayerClear();
+    virtual ~FRenderLayerClear();
 
-    const AbstractRenderSurface *Surface() const { return _surface; }
+    const FAbstractRenderSurface *Surface() const { return _surface; }
 
     const ColorRGBAF& Color() const { return _color; }
-    Graphics::ClearOptions Options() const { return _options; }
+    Graphics::EClearOptions Options() const { return _options; }
     float Depth() const { return _depth; }
     u8 Stencil() const { return _stencil; }
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 protected:
-    virtual void PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, const RenderTree *renderTree, VariabilitySeed *seeds) override;
+    virtual void PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, FMaterialDatabase *materialDatabase, const FRenderTree *renderTree, FVariabilitySeed *seeds) override;
     virtual void RenderImpl_(Graphics::IDeviceAPIContext *context) override;
-    virtual void DestroyImpl_(Graphics::IDeviceAPIEncapsulator *device, const RenderTree *renderTree) override;
+    virtual void DestroyImpl_(Graphics::IDeviceAPIEncapsulator *device, const FRenderTree *renderTree) override;
 
 private:
     PAbstractRenderSurface _surface;
 
     ColorRGBAF _color;
-    Graphics::ClearOptions _options;
+    Graphics::EClearOptions _options;
     float _depth;
     u8 _stencil;
 

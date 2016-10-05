@@ -20,7 +20,7 @@ namespace Engine {
     _Macro(Roughness) \
     _Macro(SpecularColor) \
     _Macro(SpecularExponent) \
-    _Macro(World) \
+    _Macro(FWorld) \
     \
     _Macro(Ambient) \
     _Macro(BumpMapping) \
@@ -50,7 +50,7 @@ namespace Engine {
 namespace {
 //----------------------------------------------------------------------------
 namespace MaterialConstNamesID {
-    enum Type : size_t {
+    enum EType : size_t {
 #define DEF_MATERIALCONSTNAMES_ENUM(_Name) _Name,
         FOREACH_MATERIALCONSTNAMES_NAME(DEF_MATERIALCONSTNAMES_ENUM)
 #undef DEF_MATERIALCONSTNAMES_ENUM
@@ -58,14 +58,14 @@ namespace MaterialConstNamesID {
     };
 } //!MaterialConstNamesID
 //----------------------------------------------------------------------------
-static Graphics::BindName *gMaterialConstNamesArray = nullptr;
+static Graphics::FBindName *gMaterialConstNamesArray = nullptr;
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define DEF_MATERIALCONSTNAMES_ACCESSOR(_Name) \
-    const Graphics::BindName& MaterialConstNames::_Name() { \
+    const Graphics::FBindName& FMaterialConstNames::_Name() { \
         return gMaterialConstNamesArray[MaterialConstNamesID::_Name]; \
     }
 FOREACH_MATERIALCONSTNAMES_NAME(DEF_MATERIALCONSTNAMES_ACCESSOR)
@@ -73,9 +73,9 @@ FOREACH_MATERIALCONSTNAMES_NAME(DEF_MATERIALCONSTNAMES_ACCESSOR)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void MaterialConstNames::Start() {
+void FMaterialConstNames::Start() {
     AssertRelease(!gMaterialConstNamesArray);
-    gMaterialConstNamesArray = new Graphics::BindName[MaterialConstNamesID::_Count] {
+    gMaterialConstNamesArray = new Graphics::FBindName[MaterialConstNamesID::_Count] {
 #define DEF_MATERIALCONSTNAMES_STARTUP(_Name) STRINGIZE(_Name),
         FOREACH_MATERIALCONSTNAMES_NAME(DEF_MATERIALCONSTNAMES_STARTUP)
 #undef DEF_MATERIALCONSTNAMES_STARTUP
@@ -84,7 +84,7 @@ void MaterialConstNames::Start() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void MaterialConstNames::Shutdown() {
+void FMaterialConstNames::Shutdown() {
     AssertRelease(gMaterialConstNamesArray);
 
     delete[] gMaterialConstNamesArray;

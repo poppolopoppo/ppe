@@ -9,22 +9,22 @@
 
 namespace Core {
 namespace Graphics {
-class DeviceAPIDependantEntity;
-class DeviceEncapsulator;
-class DeviceResource;
+class FDeviceAPIDependantEntity;
+class FDeviceEncapsulator;
+class FDeviceResource;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class AbstractDeviceAPIEncapsulator {
+class FAbstractDeviceAPIEncapsulator {
 public:
-    AbstractDeviceAPIEncapsulator(const AbstractDeviceAPIEncapsulator&) = delete;
-    AbstractDeviceAPIEncapsulator& operator =(const AbstractDeviceAPIEncapsulator&) = delete;
+    FAbstractDeviceAPIEncapsulator(const FAbstractDeviceAPIEncapsulator&) = delete;
+    FAbstractDeviceAPIEncapsulator& operator =(const FAbstractDeviceAPIEncapsulator&) = delete;
 
-    virtual ~AbstractDeviceAPIEncapsulator();
+    virtual ~FAbstractDeviceAPIEncapsulator();
 
-    DeviceAPI API() const { return _api; }
-    DeviceEncapsulator *Owner() const { return _owner; }
-    const PresentationParameters& Parameters() const { return _parameters; }
+    EDeviceAPI API() const { return _api; }
+    FDeviceEncapsulator *Owner() const { return _owner; }
+    const FPresentationParameters& Parameters() const { return _parameters; }
 
     virtual IDeviceAPIEncapsulator *Device() const = 0;
     virtual IDeviceAPIContext *Immediate() const = 0;
@@ -33,23 +33,23 @@ public:
     virtual IDeviceAPIDiagnostics *Diagnostics() const = 0;
 #endif
 
-    virtual void Reset(const PresentationParameters& pp) = 0;
+    virtual void Reset(const FPresentationParameters& pp) = 0;
     virtual void Present() = 0;
     virtual void ClearState() = 0;
 
-    virtual void OnCreateEntity(const DeviceResource *resource, DeviceAPIDependantEntity *entity);
-    virtual void OnDestroyEntity(const DeviceResource *resource, DeviceAPIDependantEntity *entity);
+    virtual void OnCreateEntity(const FDeviceResource *resource, FDeviceAPIDependantEntity *entity);
+    virtual void OnDestroyEntity(const FDeviceResource *resource, FDeviceAPIDependantEntity *entity);
 
 protected:
-    AbstractDeviceAPIEncapsulator(DeviceAPI api, DeviceEncapsulator *owner, const PresentationParameters& pp);
+    FAbstractDeviceAPIEncapsulator(EDeviceAPI api, FDeviceEncapsulator *owner, const FPresentationParameters& pp);
 
 private:
-    DeviceAPI _api;
+    EDeviceAPI _api;
 
-    DeviceEncapsulator *_owner;
-    PresentationParameters _parameters;
+    FDeviceEncapsulator *_owner;
+    FPresentationParameters _parameters;
 
-    MemoryTrackingData _usedMemory;
+    FMemoryTrackingData _usedMemory;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

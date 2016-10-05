@@ -15,47 +15,47 @@ class IDeviceAPIEncapsulator;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DX11TextureCubeContent : public DX11AbstractTextureContent {
+class FDX11TextureCubeContent : public FDX11AbstractTextureContent {
 public:
-    DX11TextureCubeContent(IDeviceAPIEncapsulator *device, TextureCube *owner, const MemoryView<const u8>& optionalData);
-    DX11TextureCubeContent(IDeviceAPIEncapsulator *device, TextureCube *owner, const MemoryView<const u8>& optionalData, ::D3D11_BIND_FLAG bindFlags);
-    DX11TextureCubeContent(::ID3D11Texture2D *texture, ::ID3D11ShaderResourceView *shaderView);
-    virtual ~DX11TextureCubeContent();
+    FDX11TextureCubeContent(IDeviceAPIEncapsulator *device, FTextureCube *owner, const TMemoryView<const u8>& optionalData);
+    FDX11TextureCubeContent(IDeviceAPIEncapsulator *device, FTextureCube *owner, const TMemoryView<const u8>& optionalData, ::D3D11_BIND_FLAG bindFlags);
+    FDX11TextureCubeContent(::ID3D11Texture2D *texture, ::ID3D11ShaderResourceView *shaderView);
+    virtual ~FDX11TextureCubeContent();
 
     ::ID3D11Texture2D *Texture() const { return _texture.Get(); }
 
-    void GetContent(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count, BufferMode mode, BufferUsage usage);
-    void SetContent(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count, BufferMode mode, BufferUsage usage);
+    void GetContent(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count, EBufferMode mode, EBufferUsage usage);
+    void SetContent(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count, EBufferMode mode, EBufferUsage usage);
 
-    void CopyFrom(IDeviceAPIEncapsulator *device, const DeviceAPIDependantTextureCube *psource);
+    void CopyFrom(IDeviceAPIEncapsulator *device, const FDeviceAPIDependantTextureCube *psource);
 
     void CopySubPart(   IDeviceAPIEncapsulator *device,
-                        const DeviceAPIDependantTextureCube *dst, TextureCube::Face dstFace, size_t dstLevel, const uint2& dstPos,
-                        const DeviceAPIDependantTextureCube *src, TextureCube::Face srcFace, size_t srcLevel, const AABB2u& srcBox );
+                        const FDeviceAPIDependantTextureCube *dst, FTextureCube::EFace dstFace, size_t dstLevel, const uint2& dstPos,
+                        const FDeviceAPIDependantTextureCube *src, FTextureCube::EFace srcFace, size_t srcLevel, const AABB2u& srcBox );
 
 private:
-    ComPtr<::ID3D11Texture2D> _texture;
+    TComPtr<::ID3D11Texture2D> _texture;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DX11TextureCube :
-    public DeviceAPIDependantTextureCube
-,   public DX11TextureCubeContent {
+class FDX11TextureCube :
+    public FDeviceAPIDependantTextureCube
+,   public FDX11TextureCubeContent {
 public:
-    DX11TextureCube(IDeviceAPIEncapsulator *device, TextureCube *owner, const MemoryView<const u8>& optionalData);
-    DX11TextureCube(IDeviceAPIEncapsulator *device, TextureCube *owner, const MemoryView<const u8>& optionalData, ::D3D11_BIND_FLAG bindFlags);
-    DX11TextureCube(IDeviceAPIEncapsulator *device, TextureCube *owner, ::ID3D11Texture2D *texture, ::ID3D11ShaderResourceView *shaderView);
-    virtual ~DX11TextureCube();
+    FDX11TextureCube(IDeviceAPIEncapsulator *device, FTextureCube *owner, const TMemoryView<const u8>& optionalData);
+    FDX11TextureCube(IDeviceAPIEncapsulator *device, FTextureCube *owner, const TMemoryView<const u8>& optionalData, ::D3D11_BIND_FLAG bindFlags);
+    FDX11TextureCube(IDeviceAPIEncapsulator *device, FTextureCube *owner, ::ID3D11Texture2D *texture, ::ID3D11ShaderResourceView *shaderView);
+    virtual ~FDX11TextureCube();
 
     virtual void GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) override;
     virtual void SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) override;
 
-    virtual void CopyFrom(IDeviceAPIEncapsulator *device, const DeviceAPIDependantTextureCube *psource) override;
+    virtual void CopyFrom(IDeviceAPIEncapsulator *device, const FDeviceAPIDependantTextureCube *psource) override;
 
     virtual void CopySubPart(   IDeviceAPIEncapsulator *device,
-                                TextureCube::Face dstFace, size_t dstLevel, const uint2& dstPos,
-                                const DeviceAPIDependantTextureCube *src, TextureCube::Face srcFace, size_t srcLevel, const AABB2u& srcBox ) override;
+                                FTextureCube::EFace dstFace, size_t dstLevel, const uint2& dstPos,
+                                const FDeviceAPIDependantTextureCube *src, FTextureCube::EFace srcFace, size_t srcLevel, const AABB2u& srcBox ) override;
 
     virtual const IDeviceAPIDependantAbstractTextureContent *Content() const override { return this; }
 

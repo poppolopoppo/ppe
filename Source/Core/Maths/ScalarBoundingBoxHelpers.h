@@ -11,33 +11,33 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-T Area(const ScalarBoundingBox<T, 2>& aabb);
+T Area(const TScalarBoundingBox<T, 2>& aabb);
 //----------------------------------------------------------------------------
 template <typename T>
-T Area(const ScalarBoxWExtent<T, 2>& aabb);
+T Area(const TScalarBoxWExtent<T, 2>& aabb);
 //----------------------------------------------------------------------------
 template <typename T>
-T Volume(const ScalarBoundingBox<T, 3>& aabb);
+T Volume(const TScalarBoundingBox<T, 3>& aabb);
 //----------------------------------------------------------------------------
 template <typename T>
-T Volume(const ScalarBoxWExtent<T, 3>& aabb);
+T Volume(const TScalarBoxWExtent<T, 3>& aabb);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarVector<float, _Dim> LinearStep(const ScalarBoundingBox<T, _Dim>& aabb, const ScalarVector<T, _Dim>& value);
+TScalarVector<float, _Dim> LinearStep(const TScalarBoundingBox<T, _Dim>& aabb, const TScalarVector<T, _Dim>& value);
 //----------------------------------------------------------------------------
 template <typename U, typename T, size_t _Dim>
-ScalarVector<U, _Dim> QuantizeCeil(const ScalarBoundingBox<T, _Dim>& aabb, const ScalarVector<T, _Dim>& value);
+TScalarVector<U, _Dim> QuantizeCeil(const TScalarBoundingBox<T, _Dim>& aabb, const TScalarVector<T, _Dim>& value);
 //----------------------------------------------------------------------------
 template <typename U, typename T, size_t _Dim>
-ScalarVector<U, _Dim> QuantizeFloor(const ScalarBoundingBox<T, _Dim>& aabb, const ScalarVector<T, _Dim>& value);
+TScalarVector<U, _Dim> QuantizeFloor(const TScalarBoundingBox<T, _Dim>& aabb, const TScalarVector<T, _Dim>& value);
 //----------------------------------------------------------------------------
 template <typename U, typename T, size_t _Dim>
-ScalarVector<U, _Dim> QuantizeRound(const ScalarBoundingBox<T, _Dim>& aabb, const ScalarVector<T, _Dim>& value);
+TScalarVector<U, _Dim> QuantizeRound(const TScalarBoundingBox<T, _Dim>& aabb, const TScalarVector<T, _Dim>& value);
 //----------------------------------------------------------------------------
 template <typename U, typename T, size_t _Dim>
-ScalarVector<T, _Dim> Unquantize(const ScalarBoundingBox<T, _Dim>& aabb, const ScalarVector<U, _Dim>& quantized);
+TScalarVector<T, _Dim> Unquantize(const TScalarBoundingBox<T, _Dim>& aabb, const TScalarVector<U, _Dim>& quantized);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

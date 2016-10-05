@@ -19,38 +19,38 @@ POOL_TAG_DECL(Parser);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ParserException : public Core::Serialize::SerializeException {
+class FParserException : public Core::Serialize::FSerializeException {
 public:
-    typedef Core::Serialize::SerializeException parent_type;
+    typedef Core::Serialize::FSerializeException parent_type;
 
-    ParserException(const char *what, Lexer::Location site)
+    FParserException(const char *what, FLexer::FLocation site)
         : parent_type(what), _site(site), _item(nullptr) {}
 
-    ParserException(const char *what, const ParseItem *item)
+    FParserException(const char *what, const FParseItem *item)
         : parent_type(what), _site(item->Site()), _item(item) {}
 
-    ParserException(const char *what, Lexer::Location site, const ParseItem *item)
+    FParserException(const char *what, FLexer::FLocation site, const FParseItem *item)
         : parent_type(what), _site(site), _item(item) {}
 
-    virtual ~ParserException() {}
+    virtual ~FParserException() {}
 
-    const Lexer::Location& Site() const { return _site; }
-    const ParseItem *Item() const { return _item.get(); }
+    const FLexer::FLocation& Site() const { return _site; }
+    const FParseItem *Item() const { return _item.get(); }
 
 private:
-    Lexer::Location _site;
+    FLexer::FLocation _site;
     PCParseItem _item;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct ParserStartup {
+struct FParserStartup {
     static void Start();
     static void Shutdown();
     static void ClearAll_UnusedMemory();
 
-    ParserStartup() { Start(); }
-    ~ParserStartup() { Shutdown(); }
+    FParserStartup() { Start(); }
+    ~FParserStartup() { Shutdown(); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

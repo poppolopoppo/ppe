@@ -14,16 +14,16 @@ namespace Core {
 //----------------------------------------------------------------------------
 #define STACKLOCAL_POD_RINGBUFFER(T, _NAME, _COUNT) \
     MALLOCA(T, CONCAT(_Alloca_, _NAME), _COUNT); \
-    Core::PodRingBuffer<T> _NAME( CONCAT(_Alloca_, _NAME).MakeView() )
+    Core::TPodRingBuffer<T> _NAME( CONCAT(_Alloca_, _NAME).MakeView() )
 //----------------------------------------------------------------------------
 #define STACKLOCAL_RINGBUFFER(T, _NAME, _COUNT) \
     MALLOCA(T, CONCAT(_Alloca_, _NAME), _COUNT); \
-    Core::RingBuffer<T> _NAME( CONCAT(_Alloca_, _NAME).MakeView() )
+    Core::TRingBuffer<T> _NAME( CONCAT(_Alloca_, _NAME).MakeView() )
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod = std::is_pod<T>::value >
-class RingBuffer {
+class TRingBuffer {
 public:
     typedef T value_type;
 
@@ -37,10 +37,10 @@ public:
 
     typedef typename std::random_access_iterator_tag iterator_category;
 
-    RingBuffer();
-    RingBuffer(pointer storage, size_type capacity);
-    explicit RingBuffer(const MemoryView<T>& storage);
-    ~RingBuffer() { clear(); }
+    TRingBuffer();
+    TRingBuffer(pointer storage, size_type capacity);
+    explicit TRingBuffer(const TMemoryView<T>& storage);
+    ~TRingBuffer() { clear(); }
 
     size_type capacity() const { return _capacity; }
     size_type size() const;
@@ -73,7 +73,7 @@ public:
 
     void clear();
 
-    void Swap(RingBuffer& other);
+    void Swap(TRingBuffer& other);
 
 private:
     size_type _begin;
@@ -84,27 +84,27 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-RingBuffer<T, _IsPod>::RingBuffer()
+TRingBuffer<T, _IsPod>::TRingBuffer()
 :   _begin(0), _size(0), _capacity(0), _storage(nullptr) {}
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-RingBuffer<T, _IsPod>::RingBuffer(pointer storage, size_type capacity)
+TRingBuffer<T, _IsPod>::TRingBuffer(pointer storage, size_type capacity)
 :   _begin(0), _size(0), _capacity(capacity), _storage(storage) {
     Assert(0 == _capacity || _storage);
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-RingBuffer<T, _IsPod>::RingBuffer(const MemoryView<T>& storage)
-:   RingBuffer(storage.Pointer(), storage.size()) {}
+TRingBuffer<T, _IsPod>::TRingBuffer(const TMemoryView<T>& storage)
+:   TRingBuffer(storage.Pointer(), storage.size()) {}
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-auto RingBuffer<T, _IsPod>::size() const -> size_type {
+auto TRingBuffer<T, _IsPod>::size() const -> size_type {
     return _size;
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
 template <typename _Arg0, typename... _Args>
-void RingBuffer<T, _IsPod>::push_back(_Arg0&& arg0, _Args&&... args) {
+void TRingBuffer<T, _IsPod>::push_back(_Arg0&& arg0, _Args&&... args) {
     Assert(_storage);
     Assert(_size < _capacity);
 
@@ -113,7 +113,7 @@ void RingBuffer<T, _IsPod>::push_back(_Arg0&& arg0, _Args&&... args) {
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
 template <typename _Arg0, typename... _Args>
-bool RingBuffer<T, _IsPod>::push_back_OverflowIFN(_Arg0&& arg0, _Args&&... args) {
+bool TRingBuffer<T, _IsPod>::push_back_OverflowIFN(_Arg0&& arg0, _Args&&... args) {
     Assert(_storage);
 
     const bool overflow = (_size == _capacity);
@@ -129,7 +129,7 @@ bool RingBuffer<T, _IsPod>::push_back_OverflowIFN(_Arg0&& arg0, _Args&&... args)
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
 template <typename _Arg0, typename... _Args>
-void RingBuffer<T, _IsPod>::push_front(_Arg0&& arg0, _Args&&... args) {
+void TRingBuffer<T, _IsPod>::push_front(_Arg0&& arg0, _Args&&... args) {
     Assert(_storage);
     Assert(_size < _capacity);
 
@@ -139,7 +139,7 @@ void RingBuffer<T, _IsPod>::push_front(_Arg0&& arg0, _Args&&... args) {
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
 template <typename _Arg0, typename... _Args>
-bool RingBuffer<T, _IsPod>::push_front_OverflowIFN(_Arg0&& arg0, _Args&&... args) {
+bool TRingBuffer<T, _IsPod>::push_front_OverflowIFN(_Arg0&& arg0, _Args&&... args) {
     Assert(_storage);
 
     const bool overflow = (_size == _capacity);
@@ -154,7 +154,7 @@ bool RingBuffer<T, _IsPod>::push_front_OverflowIFN(_Arg0&& arg0, _Args&&... args
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-bool RingBuffer<T, _IsPod>::pop_front(pointer pvalue) {
+bool TRingBuffer<T, _IsPod>::pop_front(pointer pvalue) {
     Assert(pvalue);
 
     if (0 == _size)
@@ -176,7 +176,7 @@ bool RingBuffer<T, _IsPod>::pop_front(pointer pvalue) {
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-bool RingBuffer<T, _IsPod>::pop_back(pointer pvalue) {
+bool TRingBuffer<T, _IsPod>::pop_back(pointer pvalue) {
     Assert(pvalue);
 
     if (0 == _size)
@@ -197,7 +197,7 @@ bool RingBuffer<T, _IsPod>::pop_back(pointer pvalue) {
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-void RingBuffer<T, _IsPod>::clear() {
+void TRingBuffer<T, _IsPod>::clear() {
     if (false == _IsPod) {
         forrange(i, 0, _size)
             _storage[(_begin + i) % _capacity].~T();
@@ -206,7 +206,7 @@ void RingBuffer<T, _IsPod>::clear() {
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-void RingBuffer<T, _IsPod>::Swap(RingBuffer& other) {
+void TRingBuffer<T, _IsPod>::Swap(TRingBuffer& other) {
     std::swap(_begin,   other._begin);
     std::swap(_size,    other._size);
     std::swap(_capacity,other._capacity);
@@ -214,21 +214,21 @@ void RingBuffer<T, _IsPod>::Swap(RingBuffer& other) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void swap(RingBuffer<T>& lhs, RingBuffer<T>& rhs) {
+void swap(TRingBuffer<T>& lhs, TRingBuffer<T>& rhs) {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-using PodRingBuffer = RingBuffer<T, true>;
+using TPodRingBuffer = TRingBuffer<T, true>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Capacity, size_t _Alignment = std::alignment_of<T>::value >
-class FixedSizeRingBuffer : public RingBuffer<T> {
+class TFixedSizeRingBuffer : public TRingBuffer<T> {
 public:
-    typedef RingBuffer<T> parent_type;
+    typedef TRingBuffer<T> parent_type;
 
     using typename parent_type::value_type;
     using typename parent_type::pointer;
@@ -239,15 +239,15 @@ public:
     using typename parent_type::size_type;
     using typename parent_type::difference_type;
 
-    FixedSizeRingBuffer() : parent_type(reinterpret_cast<pointer>(&_insitu), _Capacity) {}
+    TFixedSizeRingBuffer() : parent_type(reinterpret_cast<pointer>(&_insitu), _Capacity) {}
 
-    FixedSizeRingBuffer(FixedSizeRingBuffer&& ) = delete;
-    FixedSizeRingBuffer& operator =(FixedSizeRingBuffer&& rvalue) = delete;
+    TFixedSizeRingBuffer(TFixedSizeRingBuffer&& ) = delete;
+    TFixedSizeRingBuffer& operator =(TFixedSizeRingBuffer&& rvalue) = delete;
 
-    FixedSizeRingBuffer(const FixedSizeRingBuffer& other) = delete;
-    FixedSizeRingBuffer& operator =(const FixedSizeRingBuffer& other) = delete;
+    TFixedSizeRingBuffer(const TFixedSizeRingBuffer& other) = delete;
+    TFixedSizeRingBuffer& operator =(const TFixedSizeRingBuffer& other) = delete;
 
-    void Swap(RingBuffer<T>& other) = delete;
+    void Swap(TRingBuffer<T>& other) = delete;
 
 private:
     // /!\ won't call any ctor or dtor, values are considered as undefined

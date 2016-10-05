@@ -7,24 +7,24 @@
 #include "Core.RTTI/MetaType.Definitions-inl.h"
 
 namespace Core {
-namespace Lexer {
+namespace FLexer {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static const Symbol* InsertSymbol_(
-    Symbols::hashmap_type& symbols,
-    Symbol::TypeId type, const StringView& cstr, u64 ord ) {
+static const FSymbol* InsertSymbol_(
+    FSymbols::hashmap_type& symbols,
+    FSymbol::ETypeId type, const FStringView& cstr, u64 ord ) {
     Assert(not cstr.empty());
 
-    const Symbol* result = &(symbols[cstr] = Symbol(type, cstr, ord));
+    const FSymbol* result = &(symbols[cstr] = FSymbol(type, cstr, ord));
 
     forrange(i, 1, cstr.size()) {
-        const StringView prefix = cstr.CutBefore(i);
-        Symbol& symbol = symbols[prefix];
+        const FStringView prefix = cstr.CutBefore(i);
+        FSymbol& symbol = symbols[prefix];
         if (not symbol.IsValid()) {
-            symbol = Symbol(Symbol::TypeId(Symbol::Prefix|symbol.Type()|type), prefix);
+            symbol = FSymbol(FSymbol::ETypeId(FSymbol::Prefix|symbol.Type()|type), prefix);
             Assert(symbol.IsPrefix());
             Assert(not symbol.IsValid());
         }
@@ -39,28 +39,28 @@ static const Symbol* InsertSymbol_(
 //----------------------------------------------------------------------------
 template <size_t _Dim>
 static void RegisterSymbol_(
-    const Symbol** psymbol,
-    typename Symbols::hashmap_type& symbols,
-    typename Symbol::TypeId type, const char (&cstr)[_Dim], u64 ord = 0) {
+    const FSymbol** psymbol,
+    typename FSymbols::hashmap_type& symbols,
+    typename FSymbol::ETypeId type, const char (&cstr)[_Dim], u64 ord = 0) {
     Assert(nullptr == *psymbol);
     *psymbol = InsertSymbol_(symbols, type, MakeStringView(cstr), ord);
 }
 //----------------------------------------------------------------------------
-static void RegisterRTTITypenames_(Symbols::hashmap_type& symbols) {
+static void RegisterRTTITypenames_(FSymbols::hashmap_type& symbols) {
 #define RTTI_INSERT_TYPENAME(_Name, T, _TypeId, _Unused) \
-    InsertSymbol_(symbols, Symbol::Typename, MakeStringView(STRINGIZE(_Name)), _TypeId);
+    InsertSymbol_(symbols, FSymbol::Typename, MakeStringView(STRINGIZE(_Name)), _TypeId);
     FOREACH_CORE_RTTI_NATIVE_TYPES(RTTI_INSERT_TYPENAME)
 #undef RTTI_INSERT_TYPENAME
 }
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_ASSERT
-static const Symbol* FindSymbol_(const Symbols::hashmap_type& symbols, const StringView& cstr) {
+static const FSymbol* FindSymbol_(const FSymbols::hashmap_type& symbols, const FStringView& cstr) {
     const auto it = symbols.find(cstr);
     return (symbols.end() != it ? &it->second : nullptr);
 }
 #endif
 //----------------------------------------------------------------------------
-static void UnregisterSymbol_(const Symbols::hashmap_type& symbols, const Symbol** psymbol) {
+static void UnregisterSymbol_(const FSymbols::hashmap_type& symbols, const FSymbol** psymbol) {
     UNUSED(symbols);
     Assert(nullptr != *psymbol);
     Assert(*psymbol == FindSymbol_(symbols, (*psymbol)->CStr()));
@@ -68,9 +68,9 @@ static void UnregisterSymbol_(const Symbols::hashmap_type& symbols, const Symbol
 }
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_ASSERT
-static void CheckSymbol_(const Symbols::hashmap_type& symbols, const Symbol* symbol) {
+static void CheckSymbol_(const FSymbols::hashmap_type& symbols, const FSymbol* symbol) {
     Assert(symbol);
-    const Symbol* stored = FindSymbol_(symbols, symbol->CStr());
+    const FSymbol* stored = FindSymbol_(symbols, symbol->CStr());
     Assert(stored == symbol);
     Assert(symbol->IsValid());
     Assert(not symbol->IsPrefix());
@@ -81,7 +81,7 @@ static void CheckSymbol_(const Symbols::hashmap_type& symbols, const Symbol* sym
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool Symbols::IsPrefix(const Symbol** psymbol, const StringView& cstr) const {
+bool FSymbols::IsPrefix(const FSymbol** psymbol, const FStringView& cstr) const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(psymbol);
     Assert(not cstr.empty());
@@ -98,110 +98,110 @@ bool Symbols::IsPrefix(const Symbol** psymbol, const StringView& cstr) const {
     }
 }
 //----------------------------------------------------------------------------
-Symbols::Symbols() {
+FSymbols::FSymbols() {
 
     _symbols.reserve(256);
 
-    RegisterSymbol_(&True, _symbols, Symbol::True, "true");
-    RegisterSymbol_(&False, _symbols, Symbol::False, "false");
-    RegisterSymbol_(&Nil, _symbols, Symbol::Nil, "nil");
-    RegisterSymbol_(&Is, _symbols, Symbol::Is, "is");
-    RegisterSymbol_(&Extern, _symbols, Symbol::Extern, "extern");
-    RegisterSymbol_(&Export, _symbols, Symbol::Export, "export");
-    RegisterSymbol_(&LBrace, _symbols, Symbol::LBrace, "{");
-    RegisterSymbol_(&RBrace, _symbols, Symbol::RBrace, "}");
-    RegisterSymbol_(&LBracket, _symbols, Symbol::LBracket, "[");
-    RegisterSymbol_(&RBracket, _symbols, Symbol::RBracket, "]");
-    RegisterSymbol_(&LParenthese, _symbols, Symbol::LParenthese, "(");
-    RegisterSymbol_(&RParenthese, _symbols, Symbol::RParenthese, ")");
-    RegisterSymbol_(&Comma, _symbols, Symbol::Comma, ",");
-    RegisterSymbol_(&Colon, _symbols, Symbol::Colon, ":");
-    RegisterSymbol_(&SemiColon, _symbols, Symbol::SemiColon, ";");
-    RegisterSymbol_(&Dot, _symbols, Symbol::Dot, ".");
-    RegisterSymbol_(&Dollar, _symbols, Symbol::Dollar, "$");
-    RegisterSymbol_(&Question, _symbols, Symbol::Question, "?");
-    RegisterSymbol_(&Add, _symbols, Symbol::Add, "+");
-    RegisterSymbol_(&Sub, _symbols, Symbol::Sub, "-");
-    RegisterSymbol_(&Mul, _symbols, Symbol::Mul, "*");
-    RegisterSymbol_(&Div, _symbols, Symbol::Div, "/");
-    RegisterSymbol_(&Mod, _symbols, Symbol::Mod, "%");
-    RegisterSymbol_(&Pow, _symbols, Symbol::Pow, "**");
-    RegisterSymbol_(&Increment, _symbols, Symbol::Increment, "++");
-    RegisterSymbol_(&Decrement, _symbols, Symbol::Decrement, "--");
-    RegisterSymbol_(&LShift, _symbols, Symbol::LShift, "<<");
-    RegisterSymbol_(&RShift, _symbols, Symbol::RShift, ">>");
-    RegisterSymbol_(&And, _symbols, Symbol::And, "&");
-    RegisterSymbol_(&Or, _symbols, Symbol::Or, "|");
-    RegisterSymbol_(&Not, _symbols, Symbol::Not, "!");
-    RegisterSymbol_(&Xor, _symbols, Symbol::Xor, "^");
-    RegisterSymbol_(&Complement, _symbols, Symbol::Complement, "~");
-    RegisterSymbol_(&Assignment, _symbols, Symbol::Assignment, "=");
-    RegisterSymbol_(&Equals, _symbols, Symbol::Equals, "==");
-    RegisterSymbol_(&NotEquals, _symbols, Symbol::NotEquals, "!=");
-    RegisterSymbol_(&Less, _symbols, Symbol::Less, "<");
-    RegisterSymbol_(&LessOrEqual, _symbols, Symbol::LessOrEqual, "<=");
-    RegisterSymbol_(&Greater, _symbols, Symbol::Greater, ">");
-    RegisterSymbol_(&GreaterOrEqual, _symbols, Symbol::GreaterOrEqual, ">=");
-    RegisterSymbol_(&DotDot, _symbols, Symbol::DotDot, "..");
-    RegisterSymbol_(&Sharp, _symbols, Symbol::Sharp, "#");
+    RegisterSymbol_(&True, _symbols, FSymbol::True, "true");
+    RegisterSymbol_(&False, _symbols, FSymbol::False, "false");
+    RegisterSymbol_(&Nil, _symbols, FSymbol::Nil, "nil");
+    RegisterSymbol_(&Is, _symbols, FSymbol::Is, "is");
+    RegisterSymbol_(&Extern, _symbols, FSymbol::Extern, "extern");
+    RegisterSymbol_(&Export, _symbols, FSymbol::Export, "export");
+    RegisterSymbol_(&LBrace, _symbols, FSymbol::LBrace, "{");
+    RegisterSymbol_(&RBrace, _symbols, FSymbol::RBrace, "}");
+    RegisterSymbol_(&LBracket, _symbols, FSymbol::LBracket, "[");
+    RegisterSymbol_(&RBracket, _symbols, FSymbol::RBracket, "]");
+    RegisterSymbol_(&LParenthese, _symbols, FSymbol::LParenthese, "(");
+    RegisterSymbol_(&RParenthese, _symbols, FSymbol::RParenthese, ")");
+    RegisterSymbol_(&Comma, _symbols, FSymbol::Comma, ",");
+    RegisterSymbol_(&Colon, _symbols, FSymbol::Colon, ":");
+    RegisterSymbol_(&SemiColon, _symbols, FSymbol::SemiColon, ";");
+    RegisterSymbol_(&Dot, _symbols, FSymbol::Dot, ".");
+    RegisterSymbol_(&Dollar, _symbols, FSymbol::Dollar, "$");
+    RegisterSymbol_(&Question, _symbols, FSymbol::Question, "?");
+    RegisterSymbol_(&Add, _symbols, FSymbol::Add, "+");
+    RegisterSymbol_(&Sub, _symbols, FSymbol::Sub, "-");
+    RegisterSymbol_(&Mul, _symbols, FSymbol::Mul, "*");
+    RegisterSymbol_(&Div, _symbols, FSymbol::Div, "/");
+    RegisterSymbol_(&Mod, _symbols, FSymbol::Mod, "%");
+    RegisterSymbol_(&Pow, _symbols, FSymbol::Pow, "**");
+    RegisterSymbol_(&Increment, _symbols, FSymbol::Increment, "++");
+    RegisterSymbol_(&Decrement, _symbols, FSymbol::Decrement, "--");
+    RegisterSymbol_(&LShift, _symbols, FSymbol::LShift, "<<");
+    RegisterSymbol_(&RShift, _symbols, FSymbol::RShift, ">>");
+    RegisterSymbol_(&And, _symbols, FSymbol::And, "&");
+    RegisterSymbol_(&Or, _symbols, FSymbol::Or, "|");
+    RegisterSymbol_(&TNot, _symbols, FSymbol::TNot, "!");
+    RegisterSymbol_(&Xor, _symbols, FSymbol::Xor, "^");
+    RegisterSymbol_(&Complement, _symbols, FSymbol::Complement, "~");
+    RegisterSymbol_(&Assignment, _symbols, FSymbol::Assignment, "=");
+    RegisterSymbol_(&Equals, _symbols, FSymbol::Equals, "==");
+    RegisterSymbol_(&NotEquals, _symbols, FSymbol::NotEquals, "!=");
+    RegisterSymbol_(&TLess, _symbols, FSymbol::TLess, "<");
+    RegisterSymbol_(&LessOrEqual, _symbols, FSymbol::LessOrEqual, "<=");
+    RegisterSymbol_(&TGreater, _symbols, FSymbol::TGreater, ">");
+    RegisterSymbol_(&GreaterOrEqual, _symbols, FSymbol::GreaterOrEqual, ">=");
+    RegisterSymbol_(&DotDot, _symbols, FSymbol::DotDot, "..");
+    RegisterSymbol_(&Sharp, _symbols, FSymbol::Sharp, "#");
 
-    Symbols::Invalid = new Symbol(Symbol::Invalid, "%invalid%");
-    Symbols::Eof = new Symbol(Symbol::Eof, "Eof");
-    Symbols::Int = new Symbol(Symbol::Int, "Int");
-    Symbols::Float = new Symbol(Symbol::Float, "Float");
-    Symbols::String = new Symbol(Symbol::String, "String");
-    Symbols::Identifier = new Symbol(Symbol::Identifier, "Identifier");
-    Symbols::Typename = new Symbol(Symbol::Typename, "Typename");
+    FSymbols::Invalid = new FSymbol(FSymbol::Invalid, "%invalid%");
+    FSymbols::Eof = new FSymbol(FSymbol::Eof, "Eof");
+    FSymbols::Int = new FSymbol(FSymbol::Int, "Int");
+    FSymbols::Float = new FSymbol(FSymbol::Float, "Float");
+    FSymbols::FString = new FSymbol(FSymbol::FString, "FString");
+    FSymbols::Identifier = new FSymbol(FSymbol::Identifier, "Identifier");
+    FSymbols::Typename = new FSymbol(FSymbol::Typename, "Typename");
 
     RegisterRTTITypenames_(_symbols);
 
 #ifdef WITH_CORE_ASSERT
-    CheckSymbol_(_symbols, Symbols::True);
-    CheckSymbol_(_symbols, Symbols::False);
-    CheckSymbol_(_symbols, Symbols::Nil);
-    CheckSymbol_(_symbols, Symbols::Is);
-    CheckSymbol_(_symbols, Symbols::Extern);
-    CheckSymbol_(_symbols, Symbols::Export);
-    CheckSymbol_(_symbols, Symbols::LBrace);
-    CheckSymbol_(_symbols, Symbols::RBrace);
-    CheckSymbol_(_symbols, Symbols::LBracket);
-    CheckSymbol_(_symbols, Symbols::RBracket);
-    CheckSymbol_(_symbols, Symbols::LParenthese);
-    CheckSymbol_(_symbols, Symbols::RParenthese);
-    CheckSymbol_(_symbols, Symbols::Comma);
-    CheckSymbol_(_symbols, Symbols::Colon);
-    CheckSymbol_(_symbols, Symbols::SemiColon);
-    CheckSymbol_(_symbols, Symbols::Dot);
-    CheckSymbol_(_symbols, Symbols::Dollar);
-    CheckSymbol_(_symbols, Symbols::Question);
-    CheckSymbol_(_symbols, Symbols::Add);
-    CheckSymbol_(_symbols, Symbols::Sub);
-    CheckSymbol_(_symbols, Symbols::Mul);
-    CheckSymbol_(_symbols, Symbols::Div);
-    CheckSymbol_(_symbols, Symbols::Mod);
-    CheckSymbol_(_symbols, Symbols::Pow);
-    CheckSymbol_(_symbols, Symbols::Increment);
-    CheckSymbol_(_symbols, Symbols::Decrement);
-    CheckSymbol_(_symbols, Symbols::LShift);
-    CheckSymbol_(_symbols, Symbols::RShift);
-    CheckSymbol_(_symbols, Symbols::And);
-    CheckSymbol_(_symbols, Symbols::Or);
-    CheckSymbol_(_symbols, Symbols::Not);
-    CheckSymbol_(_symbols, Symbols::Xor);
-    CheckSymbol_(_symbols, Symbols::Complement);
-    CheckSymbol_(_symbols, Symbols::Assignment);
-    CheckSymbol_(_symbols, Symbols::Equals);
-    CheckSymbol_(_symbols, Symbols::NotEquals);
-    CheckSymbol_(_symbols, Symbols::Less);
-    CheckSymbol_(_symbols, Symbols::LessOrEqual);
-    CheckSymbol_(_symbols, Symbols::Greater);
-    CheckSymbol_(_symbols, Symbols::GreaterOrEqual);
-    CheckSymbol_(_symbols, Symbols::DotDot);
-    CheckSymbol_(_symbols, Symbols::Sharp);
+    CheckSymbol_(_symbols, FSymbols::True);
+    CheckSymbol_(_symbols, FSymbols::False);
+    CheckSymbol_(_symbols, FSymbols::Nil);
+    CheckSymbol_(_symbols, FSymbols::Is);
+    CheckSymbol_(_symbols, FSymbols::Extern);
+    CheckSymbol_(_symbols, FSymbols::Export);
+    CheckSymbol_(_symbols, FSymbols::LBrace);
+    CheckSymbol_(_symbols, FSymbols::RBrace);
+    CheckSymbol_(_symbols, FSymbols::LBracket);
+    CheckSymbol_(_symbols, FSymbols::RBracket);
+    CheckSymbol_(_symbols, FSymbols::LParenthese);
+    CheckSymbol_(_symbols, FSymbols::RParenthese);
+    CheckSymbol_(_symbols, FSymbols::Comma);
+    CheckSymbol_(_symbols, FSymbols::Colon);
+    CheckSymbol_(_symbols, FSymbols::SemiColon);
+    CheckSymbol_(_symbols, FSymbols::Dot);
+    CheckSymbol_(_symbols, FSymbols::Dollar);
+    CheckSymbol_(_symbols, FSymbols::Question);
+    CheckSymbol_(_symbols, FSymbols::Add);
+    CheckSymbol_(_symbols, FSymbols::Sub);
+    CheckSymbol_(_symbols, FSymbols::Mul);
+    CheckSymbol_(_symbols, FSymbols::Div);
+    CheckSymbol_(_symbols, FSymbols::Mod);
+    CheckSymbol_(_symbols, FSymbols::Pow);
+    CheckSymbol_(_symbols, FSymbols::Increment);
+    CheckSymbol_(_symbols, FSymbols::Decrement);
+    CheckSymbol_(_symbols, FSymbols::LShift);
+    CheckSymbol_(_symbols, FSymbols::RShift);
+    CheckSymbol_(_symbols, FSymbols::And);
+    CheckSymbol_(_symbols, FSymbols::Or);
+    CheckSymbol_(_symbols, FSymbols::TNot);
+    CheckSymbol_(_symbols, FSymbols::Xor);
+    CheckSymbol_(_symbols, FSymbols::Complement);
+    CheckSymbol_(_symbols, FSymbols::Assignment);
+    CheckSymbol_(_symbols, FSymbols::Equals);
+    CheckSymbol_(_symbols, FSymbols::NotEquals);
+    CheckSymbol_(_symbols, FSymbols::TLess);
+    CheckSymbol_(_symbols, FSymbols::LessOrEqual);
+    CheckSymbol_(_symbols, FSymbols::TGreater);
+    CheckSymbol_(_symbols, FSymbols::GreaterOrEqual);
+    CheckSymbol_(_symbols, FSymbols::DotDot);
+    CheckSymbol_(_symbols, FSymbols::Sharp);
 #endif
 }
 //----------------------------------------------------------------------------
-Symbols::~Symbols() {
+FSymbols::~FSymbols() {
     UnregisterSymbol_(_symbols, &True);
     UnregisterSymbol_(_symbols, &False);
     UnregisterSymbol_(_symbols, &Nil);
@@ -232,95 +232,95 @@ Symbols::~Symbols() {
     UnregisterSymbol_(_symbols, &RShift);
     UnregisterSymbol_(_symbols, &And);
     UnregisterSymbol_(_symbols, &Or);
-    UnregisterSymbol_(_symbols, &Not);
+    UnregisterSymbol_(_symbols, &TNot);
     UnregisterSymbol_(_symbols, &Xor);
     UnregisterSymbol_(_symbols, &Complement);
     UnregisterSymbol_(_symbols, &Assignment);
     UnregisterSymbol_(_symbols, &Equals);
     UnregisterSymbol_(_symbols, &NotEquals);
-    UnregisterSymbol_(_symbols, &Less);
+    UnregisterSymbol_(_symbols, &TLess);
     UnregisterSymbol_(_symbols, &LessOrEqual);
-    UnregisterSymbol_(_symbols, &Greater);
+    UnregisterSymbol_(_symbols, &TGreater);
     UnregisterSymbol_(_symbols, &GreaterOrEqual);
     UnregisterSymbol_(_symbols, &DotDot);
     UnregisterSymbol_(_symbols, &Sharp);
 
-    Assert(nullptr != Symbols::Invalid);
-    Assert(nullptr != Symbols::Eof);
-    Assert(nullptr != Symbols::Int);
-    Assert(nullptr != Symbols::Float);
-    Assert(nullptr != Symbols::String);
-    Assert(nullptr != Symbols::Identifier);
-    Assert(nullptr != Symbols::Typename);
+    Assert(nullptr != FSymbols::Invalid);
+    Assert(nullptr != FSymbols::Eof);
+    Assert(nullptr != FSymbols::Int);
+    Assert(nullptr != FSymbols::Float);
+    Assert(nullptr != FSymbols::FString);
+    Assert(nullptr != FSymbols::Identifier);
+    Assert(nullptr != FSymbols::Typename);
 
-    checked_delete(Symbols::Invalid);
-    checked_delete(Symbols::Eof);
-    checked_delete(Symbols::Int);
-    checked_delete(Symbols::Float);
-    checked_delete(Symbols::String);
-    checked_delete(Symbols::Identifier);
-    checked_delete(Symbols::Typename);
+    checked_delete(FSymbols::Invalid);
+    checked_delete(FSymbols::Eof);
+    checked_delete(FSymbols::Int);
+    checked_delete(FSymbols::Float);
+    checked_delete(FSymbols::FString);
+    checked_delete(FSymbols::Identifier);
+    checked_delete(FSymbols::Typename);
 
     Invalid = nullptr;
     Eof = nullptr;
     Int = nullptr;
     Float = nullptr;
-    String = nullptr;
+    FString = nullptr;
     Identifier = nullptr;
     Typename = nullptr;
 }
 //----------------------------------------------------------------------------
-const Symbol *Symbols::Invalid = nullptr;
-const Symbol *Symbols::Eof = nullptr;
-const Symbol *Symbols::Int = nullptr;
-const Symbol *Symbols::Float = nullptr;
-const Symbol *Symbols::String = nullptr;
-const Symbol *Symbols::Identifier = nullptr;
-const Symbol *Symbols::True = nullptr;
-const Symbol *Symbols::False = nullptr;
-const Symbol *Symbols::Nil = nullptr;
-const Symbol *Symbols::Is = nullptr;
-const Symbol *Symbols::Extern = nullptr;
-const Symbol *Symbols::Export = nullptr;
-const Symbol *Symbols::LBrace = nullptr;
-const Symbol *Symbols::RBrace = nullptr;
-const Symbol *Symbols::LBracket = nullptr;
-const Symbol *Symbols::RBracket = nullptr;
-const Symbol *Symbols::LParenthese = nullptr;
-const Symbol *Symbols::RParenthese = nullptr;
-const Symbol *Symbols::Comma = nullptr;
-const Symbol *Symbols::Colon = nullptr;
-const Symbol *Symbols::SemiColon = nullptr;
-const Symbol *Symbols::Dot = nullptr;
-const Symbol *Symbols::Dollar = nullptr;
-const Symbol *Symbols::Question = nullptr;
-const Symbol *Symbols::Add = nullptr;
-const Symbol *Symbols::Sub = nullptr;
-const Symbol *Symbols::Mul = nullptr;
-const Symbol *Symbols::Div = nullptr;
-const Symbol *Symbols::Mod = nullptr;
-const Symbol *Symbols::Pow = nullptr;
-const Symbol *Symbols::Increment = nullptr;
-const Symbol *Symbols::Decrement = nullptr;
-const Symbol *Symbols::LShift = nullptr;
-const Symbol *Symbols::RShift = nullptr;
-const Symbol *Symbols::And = nullptr;
-const Symbol *Symbols::Or = nullptr;
-const Symbol *Symbols::Not = nullptr;
-const Symbol *Symbols::Xor = nullptr;
-const Symbol *Symbols::Complement = nullptr;
-const Symbol *Symbols::Assignment = nullptr;
-const Symbol *Symbols::Equals = nullptr;
-const Symbol *Symbols::NotEquals = nullptr;
-const Symbol *Symbols::Less = nullptr;
-const Symbol *Symbols::LessOrEqual = nullptr;
-const Symbol *Symbols::Greater = nullptr;
-const Symbol *Symbols::GreaterOrEqual = nullptr;
-const Symbol *Symbols::DotDot = nullptr;
-const Symbol *Symbols::Sharp = nullptr;
-const Symbol *Symbols::Typename = nullptr;
+const FSymbol *FSymbols::Invalid = nullptr;
+const FSymbol *FSymbols::Eof = nullptr;
+const FSymbol *FSymbols::Int = nullptr;
+const FSymbol *FSymbols::Float = nullptr;
+const FSymbol *FSymbols::FString = nullptr;
+const FSymbol *FSymbols::Identifier = nullptr;
+const FSymbol *FSymbols::True = nullptr;
+const FSymbol *FSymbols::False = nullptr;
+const FSymbol *FSymbols::Nil = nullptr;
+const FSymbol *FSymbols::Is = nullptr;
+const FSymbol *FSymbols::Extern = nullptr;
+const FSymbol *FSymbols::Export = nullptr;
+const FSymbol *FSymbols::LBrace = nullptr;
+const FSymbol *FSymbols::RBrace = nullptr;
+const FSymbol *FSymbols::LBracket = nullptr;
+const FSymbol *FSymbols::RBracket = nullptr;
+const FSymbol *FSymbols::LParenthese = nullptr;
+const FSymbol *FSymbols::RParenthese = nullptr;
+const FSymbol *FSymbols::Comma = nullptr;
+const FSymbol *FSymbols::Colon = nullptr;
+const FSymbol *FSymbols::SemiColon = nullptr;
+const FSymbol *FSymbols::Dot = nullptr;
+const FSymbol *FSymbols::Dollar = nullptr;
+const FSymbol *FSymbols::Question = nullptr;
+const FSymbol *FSymbols::Add = nullptr;
+const FSymbol *FSymbols::Sub = nullptr;
+const FSymbol *FSymbols::Mul = nullptr;
+const FSymbol *FSymbols::Div = nullptr;
+const FSymbol *FSymbols::Mod = nullptr;
+const FSymbol *FSymbols::Pow = nullptr;
+const FSymbol *FSymbols::Increment = nullptr;
+const FSymbol *FSymbols::Decrement = nullptr;
+const FSymbol *FSymbols::LShift = nullptr;
+const FSymbol *FSymbols::RShift = nullptr;
+const FSymbol *FSymbols::And = nullptr;
+const FSymbol *FSymbols::Or = nullptr;
+const FSymbol *FSymbols::TNot = nullptr;
+const FSymbol *FSymbols::Xor = nullptr;
+const FSymbol *FSymbols::Complement = nullptr;
+const FSymbol *FSymbols::Assignment = nullptr;
+const FSymbol *FSymbols::Equals = nullptr;
+const FSymbol *FSymbols::NotEquals = nullptr;
+const FSymbol *FSymbols::TLess = nullptr;
+const FSymbol *FSymbols::LessOrEqual = nullptr;
+const FSymbol *FSymbols::TGreater = nullptr;
+const FSymbol *FSymbols::GreaterOrEqual = nullptr;
+const FSymbol *FSymbols::DotDot = nullptr;
+const FSymbol *FSymbols::Sharp = nullptr;
+const FSymbol *FSymbols::Typename = nullptr;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace Lexer
+} //!namespace FLexer
 } //!namespace Core

@@ -12,97 +12,97 @@
 
 namespace Core {
 namespace Graphics {
-enum class TextureAddressMode;
-enum class TextureDimension;
-enum class TextureFilter;
+enum class ETextureAddressMode;
+enum class ETextureDimension;
+enum class ETextureFilter;
 }
 
 namespace Lattice {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct GenericTextureSampler {
-    Filename Filename;
-    Graphics::TextureDimension Dimension;
-    Graphics::TextureAddressMode AddressMode;
-    Graphics::TextureFilter Filter;
+struct FGenericTextureSampler {
+    FFilename Filename;
+    Graphics::ETextureDimension Dimension;
+    Graphics::ETextureAddressMode AddressMode;
+    Graphics::ETextureFilter Filter;
 };
 //----------------------------------------------------------------------------
 FWD_REFPTR(GenericMaterial);
-class GenericMaterial : public RefCountable {
+class FGenericMaterial : public FRefCountable {
 public:
-    typedef VECTORINSITU(GenericMaterial, String, 3) TagVector;
-    typedef ASSOCIATIVE_VECTORINSITU(GenericMaterial, String, Graphics::Value, 3) ParameterMap;
-    typedef ASSOCIATIVE_VECTORINSITU(GenericMaterial, String, GenericTextureSampler, 3) TextureMap;
+    typedef VECTORINSITU(GenericMaterial, FString, 3) FTagVector;
+    typedef ASSOCIATIVE_VECTORINSITU(GenericMaterial, FString, Graphics::FValue, 3) FParameterMap;
+    typedef ASSOCIATIVE_VECTORINSITU(GenericMaterial, FString, FGenericTextureSampler, 3) FTextureMap;
 
-    GenericMaterial();
-    GenericMaterial(String&& name,
-                    String&& technique,
-                    TagVector&& tags,
-                    ParameterMap&& parameters,
-                    TextureMap&& textures );
-    ~GenericMaterial();
+    FGenericMaterial();
+    FGenericMaterial(FString&& name,
+                     FString&& technique,
+                     FTagVector&& tags,
+                     FParameterMap&& parameters,
+                     FTextureMap&& textures );
+    ~FGenericMaterial();
 
-    GenericMaterial(GenericMaterial&& rvalue) = default;
-    GenericMaterial& operator =(GenericMaterial&& rvalue) = default;
+    FGenericMaterial(FGenericMaterial&& rvalue) = default;
+    FGenericMaterial& operator =(FGenericMaterial&& rvalue) = default;
 
-    GenericMaterial(const GenericMaterial& ) = delete;
-    GenericMaterial& operator =(const GenericMaterial& ) = delete;
+    FGenericMaterial(const FGenericMaterial& ) = delete;
+    FGenericMaterial& operator =(const FGenericMaterial& ) = delete;
 
-    const String& Name() const { return _name; }
-    void SetName(String&& rvalue) { Assert(!rvalue.empty()); _name = std::move(rvalue); }
-    void SetName(const String& value) { Assert(!value.empty()); _name = value; }
-    void SetName(const StringView& value) { Assert(!value.empty()); _name = ToString(value); }
+    const FString& Name() const { return _name; }
+    void SetName(FString&& rvalue) { Assert(!rvalue.empty()); _name = std::move(rvalue); }
+    void SetName(const FString& value) { Assert(!value.empty()); _name = value; }
+    void SetName(const FStringView& value) { Assert(!value.empty()); _name = ToString(value); }
 
-    const String& Technique() const { return _technique; }
-    void SetTechnique(String&& rvalue) { Assert(!rvalue.empty()); _technique = std::move(rvalue); }
-    void SetTechnique(const String& value) { Assert(!value.empty()); _technique = value; }
-    void SetTechnique(const StringView& value) { Assert(!value.empty()); _technique = ToString(value); }
+    const FString& Technique() const { return _technique; }
+    void SetTechnique(FString&& rvalue) { Assert(!rvalue.empty()); _technique = std::move(rvalue); }
+    void SetTechnique(const FString& value) { Assert(!value.empty()); _technique = value; }
+    void SetTechnique(const FStringView& value) { Assert(!value.empty()); _technique = ToString(value); }
 
-    const ParameterMap& Parameters() const { return _parameters; }
-    void SetParameters(ParameterMap&& rvalue) { _parameters = std::move(rvalue); }
+    const FParameterMap& Parameters() const { return _parameters; }
+    void SetParameters(FParameterMap&& rvalue) { _parameters = std::move(rvalue); }
 
-    const TextureMap& Textures() const { return _textures; }
-    void SetTextures(TextureMap&& rvalue) { _textures = std::move(rvalue); }
+    const FTextureMap& Textures() const { return _textures; }
+    void SetTextures(FTextureMap&& rvalue) { _textures = std::move(rvalue); }
 
-    void AddTag(const StringView& tag);
-    bool HasTag(const StringView& tag) const;
-    bool RemoveTag(const StringView& tag);
+    void AddTag(const FStringView& tag);
+    bool HasTag(const FStringView& tag) const;
+    bool RemoveTag(const FStringView& tag);
 
-    void AddParameter(const StringView& key, const Graphics::Value& value); // must be unique
-    void SetParameter(const StringView& key, const Graphics::Value& value); // will override existing value
-    Graphics::Value& GetParameterValue(const StringView& key);
-    Graphics::Value* GetParameterValueIFP(const StringView& key);
-    const Graphics::Value& GetParameterValue(const StringView& key) const { return remove_const(this)->GetParameterValue(key); }
-    const Graphics::Value* GetParameterValueIFP(const StringView& key) const { return remove_const(this)->GetParameterValueIFP(key); }
-    bool RemoveParameter(const StringView& key);
+    void AddParameter(const FStringView& key, const Graphics::FValue& value); // must be unique
+    void SetParameter(const FStringView& key, const Graphics::FValue& value); // will override existing value
+    Graphics::FValue& GetParameterValue(const FStringView& key);
+    Graphics::FValue* GetParameterValueIFP(const FStringView& key);
+    const Graphics::FValue& GetParameterValue(const FStringView& key) const { return remove_const(this)->GetParameterValue(key); }
+    const Graphics::FValue* GetParameterValueIFP(const FStringView& key) const { return remove_const(this)->GetParameterValueIFP(key); }
+    bool RemoveParameter(const FStringView& key);
 
-    template <typename T> T& GetParameter(const StringView& key) { return GetParameterValue(key).Get<T>(); }
-    template <typename T> T* GetParameterIFP(const StringView& key) { return auto v = GetParameterValueIFP(key), (v ? v->Get<T>() : nullptr); }
-    template <typename T> const T& GetParameter(const StringView& key) const { return GetParameterValue(key).Get<T>(); }
-    template <typename T> const T* GetParameterIFP(const StringView& key) const { return auto v = GetParameterValueIFP(key), (v ? v->Get<T>() : nullptr); }
+    template <typename T> T& GetParameter(const FStringView& key) { return GetParameterValue(key).Get<T>(); }
+    template <typename T> T* GetParameterIFP(const FStringView& key) { return auto v = GetParameterValueIFP(key), (v ? v->Get<T>() : nullptr); }
+    template <typename T> const T& GetParameter(const FStringView& key) const { return GetParameterValue(key).Get<T>(); }
+    template <typename T> const T* GetParameterIFP(const FStringView& key) const { return auto v = GetParameterValueIFP(key), (v ? v->Get<T>() : nullptr); }
 
-    void AddTexture(const StringView& key,
-                    const Filename& filename,
-                    Graphics::TextureDimension dimension,
-                    Graphics::TextureAddressMode addressMode,
-                    Graphics::TextureFilter filter );
-    void AddTexture2D(const StringView& key, const Filename& filename);
-    void AddTexture3D(const StringView& key, const Filename& filename);
-    void AddTextureCube(const StringView& key, const Filename& filename);
-    void AddTexture(const StringView& key, const GenericTextureSampler& sampler);
-    const GenericTextureSampler& GetTexture(const StringView& key) const;
-    const GenericTextureSampler* GetTextureIFP(const StringView& key) const;
-    bool RemoveTexture(const StringView& key);
+    void AddTexture(const FStringView& key,
+                    const FFilename& filename,
+                    Graphics::ETextureDimension dimension,
+                    Graphics::ETextureAddressMode addressMode,
+                    Graphics::ETextureFilter filter );
+    void AddTexture2D(const FStringView& key, const FFilename& filename);
+    void AddTexture3D(const FStringView& key, const FFilename& filename);
+    void AddTextureCube(const FStringView& key, const FFilename& filename);
+    void AddTexture(const FStringView& key, const FGenericTextureSampler& sampler);
+    const FGenericTextureSampler& GetTexture(const FStringView& key) const;
+    const FGenericTextureSampler* GetTextureIFP(const FStringView& key) const;
+    bool RemoveTexture(const FStringView& key);
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    String _name;
-    String _technique;
-    TagVector _tags;
-    ParameterMap _parameters;
-    TextureMap _textures;
+    FString _name;
+    FString _technique;
+    FTagVector _tags;
+    FParameterMap _parameters;
+    FTextureMap _textures;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

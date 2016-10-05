@@ -11,14 +11,14 @@ namespace Core {
 namespace {
 //----------------------------------------------------------------------------
 template <size_t _Dim>
-static void SHRotation_Transform_(size_t bands, const SHScalar *matrices, SHVector<_Dim> *dst, const SHVector<_Dim>& src) {
+static void SHRotation_Transform_(size_t bands, const SHScalar *matrices, TSHVector<_Dim> *dst, const TSHVector<_Dim>& src) {
     Assert(dst);
     Assert(dst->Bands() == src.Bands());
 
     dst->Reset(); // set to zero
 
-    SHCoefficient<_Dim> *dstCoeffs = dst->Coefficients().Pointer();
-    const SHCoefficient<_Dim> *srcCoeffs = src.Coefficients().Pointer();
+    TSHCoefficient<_Dim> *dstCoeffs = dst->Coefficients().Pointer();
+    const TSHCoefficient<_Dim> *srcCoeffs = src.Coefficients().Pointer();
 
     const SHScalar *m = matrices;
 
@@ -43,7 +43,7 @@ static void SHRotation_Transform_(size_t bands, const SHScalar *matrices, SHVect
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SHRotation::SHRotation(size_t bands)
+FSHRotation::FSHRotation(size_t bands)
 :   _bands(bands) {
     Assert(0 < bands);
 
@@ -54,25 +54,25 @@ SHRotation::SHRotation(size_t bands)
     _matrices.Resize_DiscardData(scalarCount);
 }
 //----------------------------------------------------------------------------
-SHRotation::~SHRotation() {}
+FSHRotation::~FSHRotation() {}
 //----------------------------------------------------------------------------
-void SHRotation::Transform(SHVector<1> *dst, const SHVector<1>& src) const {
+void FSHRotation::Transform(TSHVector<1> *dst, const TSHVector<1>& src) const {
     SHRotation_Transform_(_bands, _matrices.Pointer(), dst, src);
 }
 //----------------------------------------------------------------------------
-void SHRotation::Transform(SHVector<2> *dst, const SHVector<2>& src) const {
+void FSHRotation::Transform(TSHVector<2> *dst, const TSHVector<2>& src) const {
     SHRotation_Transform_(_bands, _matrices.Pointer(), dst, src);
 }
 //----------------------------------------------------------------------------
-void SHRotation::Transform(SHVector<3> *dst, const SHVector<3>& src) const {
+void FSHRotation::Transform(TSHVector<3> *dst, const TSHVector<3>& src) const {
     SHRotation_Transform_(_bands, _matrices.Pointer(), dst, src);
 }
 //----------------------------------------------------------------------------
-void SHRotation::Transform(SHVector<4> *dst, const SHVector<4>& src) const {
+void FSHRotation::Transform(TSHVector<4> *dst, const TSHVector<4>& src) const {
     SHRotation_Transform_(_bands, _matrices.Pointer(), dst, src);
 }
 //----------------------------------------------------------------------------
-void SHRotation::AroundX(SHRotation *rotation, SHScalar radians) {
+void FSHRotation::AroundX(FSHRotation *rotation, SHScalar radians) {
     Assert(rotation);
     AssertRelease(rotation->_bands <= 2); // not supported, todo ?
 
@@ -92,7 +92,7 @@ void SHRotation::AroundX(SHRotation *rotation, SHScalar radians) {
     m[8] =  1;
 }
 //----------------------------------------------------------------------------
-void SHRotation::AroundY(SHRotation *rotation, SHScalar radians) {
+void FSHRotation::AroundY(FSHRotation *rotation, SHScalar radians) {
     Assert(rotation);
     AssertRelease(rotation->_bands <= 2);
 
@@ -112,7 +112,7 @@ void SHRotation::AroundY(SHRotation *rotation, SHScalar radians) {
     m[8] =  cos1a;
 }
 //----------------------------------------------------------------------------
-void SHRotation::AroundZ(SHRotation *rotation, SHScalar radians) {
+void FSHRotation::AroundZ(FSHRotation *rotation, SHScalar radians) {
     Assert(rotation);
     // supports any band count
 

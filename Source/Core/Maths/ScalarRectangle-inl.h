@@ -7,47 +7,47 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarRectangle<T, _Dim>::ScalarRectangle() {}
+TScalarRectangle<T, _Dim>::TScalarRectangle() {}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarRectangle<T, _Dim>::ScalarRectangle(T left, T top, T width, T height)
-:   aabb_type(  ScalarVector<T, 2>(left, top),
-                ScalarVector<T, 2>(left + width, top + height) ) {
+TScalarRectangle<T, _Dim>::TScalarRectangle(T left, T top, T width, T height)
+:   aabb_type(  TScalarVector<T, 2>(left, top),
+                TScalarVector<T, 2>(left + width, top + height) ) {
     STATIC_ASSERT(_Dim == 2);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarRectangle<T, _Dim>::ScalarRectangle(T left, T top, T width, T height, T znear, T zfar)
-:   aabb_type(  ScalarVector<T, 3>(left, top, znear),
-                ScalarVector<T, 3>(left + width, top + height, zfar) ) {
+TScalarRectangle<T, _Dim>::TScalarRectangle(T left, T top, T width, T height, T znear, T zfar)
+:   aabb_type(  TScalarVector<T, 3>(left, top, znear),
+                TScalarVector<T, 3>(left + width, top + height, zfar) ) {
     STATIC_ASSERT(_Dim == 3);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarRectangle<T, _Dim>::ScalarRectangle(const aabb_type& aabb)
+TScalarRectangle<T, _Dim>::TScalarRectangle(const aabb_type& aabb)
 :   aabb_type(aabb) {}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarRectangle<T, _Dim>::~ScalarRectangle() {}
+TScalarRectangle<T, _Dim>::~TScalarRectangle() {}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-ScalarRectangle<T, _Dim>::ScalarRectangle(const ScalarRectangle& other)
+TScalarRectangle<T, _Dim>::TScalarRectangle(const TScalarRectangle& other)
 :   aabb_type(other) {}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-auto ScalarRectangle<T, _Dim>::operator =(const ScalarRectangle& other) -> ScalarRectangle& {
+auto TScalarRectangle<T, _Dim>::operator =(const TScalarRectangle& other) -> TScalarRectangle& {
     aabb_type::operator =(other);
     return *this;
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 template <typename U>
-ScalarRectangle<T, _Dim>::ScalarRectangle(const ScalarRectangle<U, _Dim>& other)
+TScalarRectangle<T, _Dim>::TScalarRectangle(const TScalarRectangle<U, _Dim>& other)
 :   aabb_type(other) {}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 template <typename U>
-auto ScalarRectangle<T, _Dim>::operator =(const ScalarRectangle<U, _Dim>& other) -> ScalarRectangle& {
+auto TScalarRectangle<T, _Dim>::operator =(const TScalarRectangle<U, _Dim>& other) -> TScalarRectangle& {
     aabb_type::operator =(other);
     return *this;
 }

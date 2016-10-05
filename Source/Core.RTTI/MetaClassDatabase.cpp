@@ -10,26 +10,26 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-MetaClassHashMap::MetaClassHashMap() {
+FMetaClassHashMap::FMetaClassHashMap() {
     _classes.reserve(128);
 }
 //----------------------------------------------------------------------------
-MetaClassHashMap::~MetaClassHashMap() {
+FMetaClassHashMap::~FMetaClassHashMap() {
     Clear();
 }
 //----------------------------------------------------------------------------
-void MetaClassHashMap::Add(const MetaClass *metaClass) {
+void FMetaClassHashMap::Add(const FMetaClass *metaClass) {
     Assert(metaClass);
     Assert(!metaClass->Name().empty());
 
     WRITESCOPELOCK(_barrier);
-    const MetaClass *& slot = _classes[metaClass->Name()];
+    const FMetaClass *& slot = _classes[metaClass->Name()];
 
     AssertRelease(nullptr == slot);
     slot = metaClass;
 }
 //----------------------------------------------------------------------------
-void MetaClassHashMap::Remove(const MetaClass *metaClass) {
+void FMetaClassHashMap::Remove(const FMetaClass *metaClass) {
     Assert(metaClass);
     Assert(!metaClass->Name().empty());
 
@@ -42,7 +42,7 @@ void MetaClassHashMap::Remove(const MetaClass *metaClass) {
     _classes.erase(it);
 }
 //----------------------------------------------------------------------------
-const MetaClass *MetaClassHashMap::GetIFP(const RTTI::Name& name) const {
+const FMetaClass *FMetaClassHashMap::GetIFP(const FName& name) const {
     Assert(!name.empty());
 
     READSCOPELOCK(_barrier);
@@ -51,7 +51,7 @@ const MetaClass *MetaClassHashMap::GetIFP(const RTTI::Name& name) const {
     return (_classes.end() == it) ? nullptr : it->second;
 }
 //----------------------------------------------------------------------------
-void MetaClassHashMap::Clear() {
+void FMetaClassHashMap::Clear() {
     WRITESCOPELOCK(_barrier);
 
     _classes.clear();

@@ -16,27 +16,27 @@ namespace Logic {
 //----------------------------------------------------------------------------
 FWD_REFPTR(QueueProcessingSystem);
 //----------------------------------------------------------------------------
-class QueueProcessingSystem : public ISystem, Meta::ThreadResource {
+class FQueueProcessingSystem : public ISystem, Meta::FThreadResource {
 public:
-    QueueProcessingSystem();
-    virtual ~QueueProcessingSystem();
+    FQueueProcessingSystem();
+    virtual ~FQueueProcessingSystem();
 
     const VECTOR(System, EntityID)& Entities() const { return _entities; }
 
     virtual bool Enabled() const override { return true; }
     
-    virtual void Initialize(EntityManager& manager) override;
-    virtual void Destroy(EntityManager& manager) override;
+    virtual void Initialize(FEntityManager& manager) override;
+    virtual void Destroy(FEntityManager& manager) override;
 
-    virtual void Update(const Timeline& timeline) override;
+    virtual void Update(const FTimeline& timeline) override;
 
-    virtual void OnEntityDeleted(const Entity& entity) override;
-    virtual void OnEntityRefresh(const Entity& entity, ComponentFlag previousComponents) override;
+    virtual void OnEntityDeleted(const FEntity& entity) override;
+    virtual void OnEntityRefresh(const FEntity& entity, ComponentFlag previousComponents) override;
 
     void Queue(EntityID id);
 
 protected:
-    virtual void ProcessEntity(const Timeline& timeline, EntityID entityID) = 0;
+    virtual void ProcessEntity(const FTimeline& timeline, EntityID entityID) = 0;
 
 private:
     VECTOR(System, EntityID) _entities;

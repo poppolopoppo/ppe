@@ -11,16 +11,16 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, ModelMeshSubPart, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, FModelMeshSubPart, );
 //----------------------------------------------------------------------------
-ModelMeshSubPart::ModelMeshSubPart(
-    const MeshName& name,
+FModelMeshSubPart::FModelMeshSubPart(
+    const FMeshName& name,
     u32 boneIndex,
     u32 baseVertex,
     u32 firstIndex,
     u32 indexCount,
     const AABB3f& boundingBox,
-    const Engine::Material *material )
+    const Engine::FMaterial *material )
 :   _name(name)
 ,   _boneIndex(boneIndex)
 ,   _baseVertex(baseVertex)
@@ -34,7 +34,7 @@ ModelMeshSubPart::ModelMeshSubPart(
     Assert(boundingBox.HasPositiveExtents());
 }
 //----------------------------------------------------------------------------
-ModelMeshSubPart::~ModelMeshSubPart() {}
+FModelMeshSubPart::~FModelMeshSubPart() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

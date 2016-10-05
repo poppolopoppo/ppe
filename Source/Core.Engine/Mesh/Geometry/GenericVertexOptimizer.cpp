@@ -19,11 +19,11 @@ namespace Engine {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-struct VertexCache {
+struct FVertexCache {
     static const size_t Size = 32;
     static const size_t MaxValence = 15;
 
-    struct Entry {
+    struct FEntry {
         u32 CachePos;           // its position in the cache (UINT32_MAX if not in)
         u32 Score;              // its score (higher=better)
         u32 TrianglesLeft;      // # of not-yet-used tris
@@ -31,7 +31,7 @@ struct VertexCache {
         u32 OpenPos;            // position in "open vertex" list
     };
 
-    struct Triangle {
+    struct FTriangle {
         u32 Score;              // current score (UINT32_MAX if already done)
         u32 Indices[3];         // vertex indices
     };
@@ -41,7 +41,7 @@ struct VertexCache {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void MergeDuplicateVertices(GenericVertex& vertices, const MemoryView<u32>& indices) {
+void MergeDuplicateVertices(FGenericVertex& vertices, const TMemoryView<u32>& indices) {
     Assert(0 == (indices.size() % 3));
 
     const size_t vertexCount = vertices.VertexCountWritten();
@@ -103,13 +103,13 @@ void MergeDuplicateVertices(GenericVertex& vertices, const MemoryView<u32>& indi
         index = vertexReindexation[index];
 }
 //----------------------------------------------------------------------------
-void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
+void OptimizeIndicesOrder(const TMemoryView<u32>& indices, size_t vertexCount) {
     Assert(indices.size() >= 3);
     Assert(0 == (indices.size() % 3));
 
     // prepare triangles
-    const auto entries = MALLOCA_VIEW(VertexCache::Entry, vertexCount);
-    for (VertexCache::Entry& entry : entries) {
+    const auto entries = MALLOCA_VIEW(FVertexCache::FEntry, vertexCount);
+    for (FVertexCache::FEntry& entry : entries) {
         entry.CachePos = UINT32_MAX;
         entry.Score = 0;
         entry.TrianglesLeft = 0;
@@ -119,11 +119,11 @@ void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
 
     // alloc space for entry triangle indices
     const size_t triangleCount = indices.size() / 3;
-    const auto triangles = MALLOCA_VIEW(VertexCache::Triangle, triangleCount);
+    const auto triangles = MALLOCA_VIEW(FVertexCache::FTriangle, triangleCount);
     {
         const u32 *pIndex = &indices[0];
         for (size_t i = 0; i < triangleCount; ++i) {
-            VertexCache::Triangle& triangle = triangles[i];
+            FVertexCache::FTriangle& triangle = triangles[i];
             triangle.Score = 0;
             for (size_t j = 0; j < 3; ++j) {
                 const u32 index = *pIndex++;
@@ -139,7 +139,7 @@ void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
         const u32 *pTriListEnd = adjacencies.Pointer() + adjacencies.size();
 
         for (size_t i = 0; i < vertexCount; ++i) {
-            VertexCache::Entry& entry = entries[i];
+            FVertexCache::FEntry& entry = entries[i];
             entry.TriangleList = pTriList;
             pTriList += entry.TrianglesLeft;
             Assert(pTriList <= pTriListEnd);
@@ -147,10 +147,10 @@ void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
         }
 
         for (size_t i = 0; i < triangleCount; ++i) {
-            const VertexCache::Triangle& triangle = triangles[i];
+            const FVertexCache::FTriangle& triangle = triangles[i];
             for (size_t j = 0; j < 3; ++j) {
                 const u32 index = triangle.Indices[j];
-                VertexCache::Entry& entry = entries[index];
+                FVertexCache::FEntry& entry = entries[index];
                 entry.TriangleList[entry.TrianglesLeft++] = u32(i);
             }
         }
@@ -161,12 +161,12 @@ void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
     size_t openCount = 0;
 
     // the cache
-    u32 cache[VertexCache::Size + 3] = {UINT32_MAX};
-    u32 pos2score[VertexCache::Size];
-    u32 val2score[VertexCache::Size + 1];
+    u32 cache[FVertexCache::Size + 3] = {UINT32_MAX};
+    u32 pos2score[FVertexCache::Size];
+    u32 val2score[FVertexCache::Size + 1];
 
-    for (size_t i = 0; i < VertexCache::Size; ++i) {
-        const float score = (i < 3) ? 0.75f : std::pow(1.0f - (i - 3)/float(VertexCache::Size - 3), 1.5f);
+    for (size_t i = 0; i < FVertexCache::Size; ++i) {
+        const float score = (i < 3) ? 0.75f : std::pow(1.0f - (i - 3)/float(FVertexCache::Size - 3), 1.5f);
         pos2score[i] = static_cast<u32>(score * 65536.0f + 0.5f);
     }
 
@@ -188,11 +188,11 @@ void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
         // if there are open vertices, search them for the seed triangle
         // which maximum score.
         for (size_t i = 0; i < openCount; ++i) {
-            const VertexCache::Entry &entry = entries[openVertices[i]];
+            const FVertexCache::FEntry &entry = entries[openVertices[i]];
 
             for (size_t j = 0; j < entry.TrianglesLeft; ++j) {
                 const u32 index = entry.TriangleList[j];
-                const VertexCache::Triangle& triangle = triangles[index];
+                const FVertexCache::FTriangle& triangle = triangles[index];
 
                 if (triangle.Score > seedScore) {
                     seedScore = triangle.Score;
@@ -215,7 +215,7 @@ void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
 
         u32 bestTriangle = seedTriangle;
         while (bestTriangle != UINT32_MAX) {
-            VertexCache::Triangle& triangle = triangles[bestTriangle];
+            FVertexCache::FTriangle& triangle = triangles[bestTriangle];
 
             // mark this triangle as used, remove it from the "remaining tris"
             // list of the vertices it uses, and add it to the index buffer.
@@ -225,7 +225,7 @@ void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
                 const u32 index = triangle.Indices[j];
                 *pIndex++ = index;
 
-                VertexCache::Entry& entry = entries[index];
+                FVertexCache::FEntry& entry = entries[index];
 
                 // find this triangles' entry
                 u32 k = 0;
@@ -245,11 +245,11 @@ void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
             }
 
             // update cache status
-            cache[VertexCache::Size] = cache[VertexCache::Size + 1] = cache[VertexCache::Size + 2] = UINT32_MAX;
+            cache[FVertexCache::Size] = cache[FVertexCache::Size + 1] = cache[FVertexCache::Size + 2] = UINT32_MAX;
 
             for(size_t j = 0; j < 3 ; ++j) {
                 const u32 index = triangle.Indices[j];
-                cache[VertexCache::Size + 2] = index;
+                cache[FVertexCache::Size + 2] = index;
 
                 // find vertex index
                 u32 pos = 0;
@@ -263,20 +263,20 @@ void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
                 cache[0] = index;
 
                 // remove sentinel if it wasn't used
-                if(pos != VertexCache::Size + 2)
-                    cache[VertexCache::Size + 2] = UINT32_MAX;
+                if(pos != FVertexCache::Size + 2)
+                    cache[FVertexCache::Size + 2] = UINT32_MAX;
             }
 
             // update vertex scores
-            for (size_t i = 0; i < VertexCache::Size + 3; ++i) {
+            for (size_t i = 0; i < FVertexCache::Size + 3; ++i) {
                 const u32 index = cache[i];
                 if (UINT32_MAX == index)
                     continue;
 
-                VertexCache::Entry& entry = entries[index];
+                FVertexCache::FEntry& entry = entries[index];
 
-                entry.Score = val2score[std::min(entry.TrianglesLeft, u32(VertexCache::MaxValence))];
-                if (i < VertexCache::Size) {
+                entry.Score = val2score[std::min(entry.TrianglesLeft, u32(FVertexCache::MaxValence))];
+                if (i < FVertexCache::Size) {
                     entry.CachePos = checked_cast<u32>(i);
                     entry.Score += pos2score[i];
                 }
@@ -295,15 +295,15 @@ void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
             u32 bestScore = 0;
             bestTriangle = UINT32_MAX;
 
-            for (size_t i = 0; i < VertexCache::Size; ++i) {
+            for (size_t i = 0; i < FVertexCache::Size; ++i) {
                 if (cache[i] == UINT32_MAX)
                     continue;
 
-                const VertexCache::Entry& entry = entries[cache[i]];
+                const FVertexCache::FEntry& entry = entries[cache[i]];
 
                 for (size_t j = 0; j < entry.TrianglesLeft; ++j) {
                     const u32 index = entry.TriangleList[j];
-                    VertexCache::Triangle& tri = triangles[index];
+                    FVertexCache::FTriangle& tri = triangles[index];
 
                     Assert(tri.Score != UINT32_MAX);
 
@@ -322,7 +322,7 @@ void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
     } //!for (;;)
 }
 //----------------------------------------------------------------------------
-void OptimizeVerticesOrder(GenericVertex& vertices, const MemoryView<u32>& indices) {
+void OptimizeVerticesOrder(FGenericVertex& vertices, const TMemoryView<u32>& indices) {
     Assert(vertices.VertexCountWritten() >= 3);
     Assert(indices.size() >= 3);
 
@@ -351,12 +351,12 @@ void OptimizeVerticesOrder(GenericVertex& vertices, const MemoryView<u32>& indic
     }
 }
 //----------------------------------------------------------------------------
-void OptimizeIndicesAndVerticesOrder(GenericVertex& vertices, const MemoryView<u32>& indices) {
+void OptimizeIndicesAndVerticesOrder(FGenericVertex& vertices, const TMemoryView<u32>& indices) {
     OptimizeIndicesOrder(indices, vertices.VertexCountWritten());
     OptimizeVerticesOrder(vertices, indices);
 }
 //----------------------------------------------------------------------------
-float VertexAverageCacheMissRate(const MemoryView<u32>& indices, bool fifo/* = true */, size_t cacheSize/* = 16 */) {
+float VertexAverageCacheMissRate(const TMemoryView<u32>& indices, bool fifo/* = true */, size_t cacheSize/* = 16 */) {
     Assert(cacheSize > 1);
 
     if (indices.empty())

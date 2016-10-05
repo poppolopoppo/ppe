@@ -6,15 +6,15 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-WeakAndRefCountable::~WeakAndRefCountable() {
+FWeakAndRefCountable::~FWeakAndRefCountable() {
     THIS_THREADRESOURCE_CHECKACCESS();
     
-    WeakPtrBase *prev = nullptr;
+    FWeakPtrBase *prev = nullptr;
     while (_weakPtrs) {
         Assert(_weakPtrs);
         Assert(prev == _weakPtrs->_prev);
 
-        WeakPtrBase *const next = _weakPtrs->_next;
+        FWeakPtrBase *const next = _weakPtrs->_next;
 
         *_weakPtrs->_pptr = nullptr;
         _weakPtrs->_prev = _weakPtrs->_next = nullptr;

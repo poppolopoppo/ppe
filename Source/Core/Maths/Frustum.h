@@ -9,12 +9,12 @@
 
 namespace Core {
 template <typename T>
-class MemoryView;
+class TMemoryView;
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class FrustumPlane {
+enum class EFrustumPlane {
     Near = 0,
     Far,
     Left,
@@ -23,7 +23,7 @@ enum class FrustumPlane {
     Bottom
 };
 //----------------------------------------------------------------------------
-enum class FrustumCorner {
+enum class EFrustumCorner {
     Near_LeftTop = 0,
     Near_LeftBottom,
     Near_RightBottom,
@@ -35,7 +35,7 @@ enum class FrustumCorner {
     Far_RightTop,
 };
 //----------------------------------------------------------------------------
-struct FrustumCameraParams {
+struct FFrustumCameraParams {
     float3  Position;
     float3  LookAtDir;
     float3  UpDir;
@@ -45,45 +45,45 @@ struct FrustumCameraParams {
     float   AspectRatio;
 };
 //----------------------------------------------------------------------------
-class Frustum {
+class FFrustum {
 public:
-    Frustum();
-    explicit Frustum(float4x4& viewProjection);
+    FFrustum();
+    explicit FFrustum(float4x4& viewProjection);
 
-    Frustum(const Frustum& other);
-    Frustum& operator =(const Frustum& other);
+    FFrustum(const FFrustum& other);
+    FFrustum& operator =(const FFrustum& other);
 
     void SetMatrix(const float4x4& viewProjection);
     const float4x4& Matrix() const { return _matrix; }
 
-    const Plane& Near() const { return _planes[size_t(FrustumPlane::Near)]; }
-    const Plane& Far() const { return _planes[size_t(FrustumPlane::Far)]; }
+    const FPlane& Near() const { return _planes[size_t(EFrustumPlane::Near)]; }
+    const FPlane& Far() const { return _planes[size_t(EFrustumPlane::Far)]; }
 
-    const Plane& Left() const { return _planes[size_t(FrustumPlane::Left)]; }
-    const Plane& Right() const { return _planes[size_t(FrustumPlane::Right)]; }
+    const FPlane& Left() const { return _planes[size_t(EFrustumPlane::Left)]; }
+    const FPlane& Right() const { return _planes[size_t(EFrustumPlane::Right)]; }
 
-    const Plane& Top() const { return _planes[size_t(FrustumPlane::Top)]; }
-    const Plane& Bottom() const { return _planes[size_t(FrustumPlane::Bottom)]; }
+    const FPlane& Top() const { return _planes[size_t(EFrustumPlane::Top)]; }
+    const FPlane& Bottom() const { return _planes[size_t(EFrustumPlane::Bottom)]; }
 
     bool IsOrthographic() const;
 
     void GetCorners(float3 (&points)[8]) const;
-    void GetCorners(const MemoryView<float3>& points) const;
-    void GetCameraParams(FrustumCameraParams& params) const;
+    void GetCorners(const TMemoryView<float3>& points) const;
+    void GetCameraParams(FFrustumCameraParams& params) const;
 
-    ContainmentType Contains(const float3& point) const;
-    ContainmentType Contains(const MemoryView<const float3>& points) const;
-    ContainmentType Contains(const BoundingBox& box) const;
-    ContainmentType Contains(const Sphere& sphere) const;
-    ContainmentType Contains(const Frustum& frustum) const;
+    EContainmentType Contains(const float3& point) const;
+    EContainmentType Contains(const TMemoryView<const float3>& points) const;
+    EContainmentType Contains(const BoundingBox& box) const;
+    EContainmentType Contains(const FSphere& sphere) const;
+    EContainmentType Contains(const FFrustum& frustum) const;
 
-    PlaneIntersectionType Intersects(const Plane& plane) const;
+    EPlaneIntersectionType Intersects(const FPlane& plane) const;
     bool Intersects(const BoundingBox& box) const;
-    bool Intersects(const Sphere& sphere) const;
-    bool Intersects(const Frustum& frustum) const;
+    bool Intersects(const FSphere& sphere) const;
+    bool Intersects(const FFrustum& frustum) const;
 
-    bool Intersects(const Ray& ray) const;
-    bool Intersects(const Ray& ray, float& in, float& out) const;
+    bool Intersects(const FRay& ray) const;
+    bool Intersects(const FRay& ray, float& in, float& out) const;
 
     float GetWidthAtDepth(float depth) const;
     float GetHeightAtDepth(float depth) const;
@@ -92,18 +92,18 @@ public:
     // so all the passed points will fit in the current view.
     // if the returned value is poistive, the camera will move toward the lookat direction (ZoomIn).
     // if the returned value is negative, the camera will move in the revers direction of the lookat direction (ZoomOut).
-    float GetZoomToExtentsShiftDistance(const MemoryView<const float3>& points) const;
+    float GetZoomToExtentsShiftDistance(const TMemoryView<const float3>& points) const;
     float GetZoomToExtentsShiftDistance(const BoundingBox& box);
 
-    float3 GetZoomToExtentsShiftVector(const MemoryView<const float3>& points);
+    float3 GetZoomToExtentsShiftVector(const TMemoryView<const float3>& points);
     float3 GetZoomToExtentsShiftVector(const BoundingBox& box);
 
-    static Frustum FromCameraParams(const FrustumCameraParams& params);
-    static Frustum FromCamera(const float3& cameraPos, const float3& lookDir, const float3& upDir, float fov, float znear, float zfar, float aspect);
+    static FFrustum FromCameraParams(const FFrustumCameraParams& params);
+    static FFrustum FromCamera(const float3& cameraPos, const float3& lookDir, const float3& upDir, float fov, float znear, float zfar, float aspect);
 
 private:
     float4x4 _matrix;
-    Plane _planes[6];
+    FPlane _planes[6];
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

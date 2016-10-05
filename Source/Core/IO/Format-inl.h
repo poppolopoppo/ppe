@@ -44,25 +44,25 @@ struct _FormatFunctor {
     }
 };
 //----------------------------------------------------------------------------
-void _FormatArgs(std::basic_ostream<char>& oss, const StringView& format, const MemoryView<const _FormatFunctor<char>>& args);
-void _FormatArgs(std::basic_ostream<wchar_t>& oss, const WStringView& format, const MemoryView<const _FormatFunctor<wchar_t>>& args);
+void _FormatArgs(std::basic_ostream<char>& oss, const FStringView& format, const TMemoryView<const _FormatFunctor<char>>& args);
+void _FormatArgs(std::basic_ostream<wchar_t>& oss, const FWStringView& format, const TMemoryView<const _FormatFunctor<wchar_t>>& args);
 //----------------------------------------------------------------------------
 } //!namespace details
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits = std::char_traits<_Char> >
-using BasicFormatArgList = MemoryView< const details::_FormatFunctor<_Char, _Traits> >;
-typedef BasicFormatArgList<char>    FormatArgList;
-typedef BasicFormatArgList<wchar_t> FormatArgListW;
+using TBasicFormatArgList = TMemoryView< const details::_FormatFunctor<_Char, _Traits> >;
+typedef TBasicFormatArgList<char>    FormatArgList;
+typedef TBasicFormatArgList<wchar_t> FormatArgListW;
 //----------------------------------------------------------------------------
 template <typename _Char>
-void FormatArgs(std::basic_ostream<_Char>& oss, const BasicStringView<_Char>& format, const BasicFormatArgList<_Char>& args) {
+void FormatArgs(std::basic_ostream<_Char>& oss, const TBasicStringView<_Char>& format, const TBasicFormatArgList<_Char>& args) {
     details::_FormatArgs(oss, format, args);
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits, typename _Arg0, typename... _Args>
-void Format(std::basic_ostream<_Char, _Traits>& oss, const BasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
+void Format(std::basic_ostream<_Char, _Traits>& oss, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
     // args are always passed by pointer, wrapped in a void *
     // this avoids unintended copies and decorrelates from actual types (_FormatArgs is defined in Format.cpp)
     const details::_FormatFunctor<_Char, _Traits> functors[] = {
@@ -74,11 +74,11 @@ void Format(std::basic_ostream<_Char, _Traits>& oss, const BasicStringView<_Char
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Arg0, typename... _Args>
-size_t Format(_Char* result, size_t capacity, const BasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
+size_t Format(_Char* result, size_t capacity, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
     Assert(result);
     Assert(capacity);
 
-    BasicOCStrStream<_Char, std::char_traits<_Char>> oss(result, checked_cast<std::streamsize>(capacity));
+    TBasicOCStrStream<_Char, std::char_traits<_Char>> oss(result, checked_cast<std::streamsize>(capacity));
     Format(oss, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
     oss.ForceEOS();
 
@@ -86,7 +86,7 @@ size_t Format(_Char* result, size_t capacity, const BasicStringView<_Char>& form
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits, typename _Arg0, typename... _Args>
-void Format(BasicString<_Char, _Traits>& result, const BasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
+void Format(TBasicString<_Char, _Traits>& result, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
     STACKLOCAL_BASICOCSTRSTREAM(_Char, oss, 2048);
     Format(oss, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
     result.assign(oss.Pointer(), checked_cast<size_t>(oss.size()) );
@@ -95,17 +95,17 @@ void Format(BasicString<_Char, _Traits>& result, const BasicStringView<_Char>& f
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Arg>
-String ToString(_Arg&& arg) {
+FString ToString(_Arg&& arg) {
     STACKLOCAL_OCSTRSTREAM(oss, 2048);
     oss << arg;
-    return String(oss.Pointer(), checked_cast<size_t>(oss.size()) );
+    return FString(oss.Pointer(), checked_cast<size_t>(oss.size()) );
 }
 //----------------------------------------------------------------------------
 template <typename _Arg>
-WString ToWString(_Arg&& arg) {
+FWString ToWString(_Arg&& arg) {
     STACKLOCAL_WOCSTRSTREAM(oss, 2048);
     oss << arg;
-    return WString(oss.Pointer(), checked_cast<size_t>(oss.size()) );
+    return FWString(oss.Pointer(), checked_cast<size_t>(oss.size()) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

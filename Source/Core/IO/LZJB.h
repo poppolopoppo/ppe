@@ -7,15 +7,15 @@
 namespace Core {
 class IStreamWriter;
 template <typename T>
-class MemoryView;
+class TMemoryView;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace LZJB {
 //----------------------------------------------------------------------------
-void CompressMemory(IStreamWriter* dst, const MemoryView<const u8>& src);
-bool DecompressMemory(RAWSTORAGE(Stream, u8)* dst, const MemoryView<const u8>& src);
-bool DecompressMemory(RAWSTORAGE_THREAD_LOCAL(Stream, u8)* dst, const MemoryView<const u8>& src);
+void CompressMemory(IStreamWriter* dst, const TMemoryView<const u8>& src);
+bool DecompressMemory(RAWSTORAGE(Stream, u8)* dst, const TMemoryView<const u8>& src);
+bool DecompressMemory(RAWSTORAGE_THREAD_LOCAL(Stream, u8)* dst, const TMemoryView<const u8>& src);
 //----------------------------------------------------------------------------
 } //!LZJB
 //----------------------------------------------------------------------------

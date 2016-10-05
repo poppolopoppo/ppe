@@ -12,29 +12,29 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceEncapsulatorException::DeviceEncapsulatorException(
+FDeviceEncapsulatorException::FDeviceEncapsulatorException(
     const char *what,
     const IDeviceAPIEncapsulator *encapsulator,
-    const DeviceResource *optionalResource/* = nullptr */)
-:   GraphicsException(what)
+    const FDeviceResource *optionalResource/* = nullptr */)
+:   FGraphicsException(what)
 ,   _encapsulator(encapsulator)
 ,   _optionalResource(optionalResource)
 {}
 //----------------------------------------------------------------------------
-DeviceEncapsulatorException::~DeviceEncapsulatorException() {}
+FDeviceEncapsulatorException::~FDeviceEncapsulatorException() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ShaderCompilerException::ShaderCompilerException(
+FShaderCompilerException::FShaderCompilerException(
     const char *what,
     const IDeviceAPIShaderCompiler *encapsulator,
-    const Graphics::ShaderSource *shaderSource)
-:   GraphicsException(what)
+    const Graphics::FShaderSource *shaderSource)
+:   FGraphicsException(what)
 ,   _encapsulator(encapsulator)
 ,   _shaderSource(shaderSource)
 {}
 //----------------------------------------------------------------------------
-ShaderCompilerException::~ShaderCompilerException() {}
+FShaderCompilerException::~FShaderCompilerException() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -37,70 +37,70 @@ RTTI_TAG_DECL(Test);
 RTTI_TAG_DEF(Test);
 //----------------------------------------------------------------------------
 FWD_REFPTR(ContentIdentity);
-class ContentIdentity : public RTTI::MetaObject {
+class FContentIdentity : public RTTI::FMetaObject {
 public:
-    RTTI_CLASS_HEADER(ContentIdentity, RTTI::MetaObject);
+    RTTI_CLASS_HEADER(FContentIdentity, RTTI::FMetaObject);
 
-    ContentIdentity() {}
-    ContentIdentity(const Filename& sourceFile, const DateTime& lastModified)
+    FContentIdentity() {}
+    FContentIdentity(const FFilename& sourceFile, const FDateTime& lastModified)
         : _sourceFile(sourceFile), _lastModified(lastModified) {}
 
-    const Filename& SourceFile() const { return _sourceFile; }
-    const DateTime& LastModified() const { return _lastModified; }
+    const FFilename& SourceFile() const { return _sourceFile; }
+    const FDateTime& LastModified() const { return _lastModified; }
 
 private:
-    Filename _sourceFile;
-    DateTime _lastModified;
+    FFilename _sourceFile;
+    FDateTime _lastModified;
 };
-RTTI_CLASS_BEGIN(Test, ContentIdentity, Concrete)
+RTTI_CLASS_BEGIN(Test, FContentIdentity, Concrete)
 RTTI_PROPERTY_PRIVATE_FIELD(_sourceFile)
 RTTI_PROPERTY_PRIVATE_FIELD(_lastModified)
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------
 FWD_REFPTR(RTTITest2_);
-class RTTITest2_ : public RTTI::MetaObject {
+class FRTTITest2_ : public RTTI::FMetaObject {
 public:
-    RTTI_CLASS_HEADER(RTTITest2_, RTTI::MetaObject);
+    RTTI_CLASS_HEADER(FRTTITest2_, RTTI::FMetaObject);
 
-    RTTITest2_() {}
+    FRTTITest2_() {}
 
 private:
     float3 _position;
-    RTTI::Vector<RTTI::PMetaAtom> _atomVector;
+    RTTI::TVector<RTTI::PMetaAtom> _atomVector;
 };
-RTTI_CLASS_BEGIN(Test, RTTITest2_, Concrete)
+RTTI_CLASS_BEGIN(Test, FRTTITest2_, Concrete)
     RTTI_PROPERTY_PRIVATE_FIELD(_position)
     RTTI_PROPERTY_PRIVATE_FIELD(_atomVector)
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------
 FWD_REFPTR(RTTITestParent_);
-class RTTITestParent_ : public RTTI::MetaObject {
+class FRTTITestParent_ : public RTTI::FMetaObject {
 public:
-    enum class TestEnum32 : u32 {
+    enum class ETestEnum32 : u32 {
         A = 0, B, C
     };
 
-    enum class TestEnum64 : u64 {
+    enum class ETestEnum64 : u64 {
         A = 1<<0, B=1<<1, C = 1<<2
     };
 
-    RTTI_CLASS_HEADER(RTTITestParent_, RTTI::MetaObject);
+    RTTI_CLASS_HEADER(FRTTITestParent_, RTTI::FMetaObject);
 
-    RTTITestParent_() {}
+    FRTTITestParent_() {}
 
-    const TestEnum32& Enum32() const { return _testEnum32; }
-    void SetEnum32(const TestEnum32& value) { _testEnum32 = value; }
+    const ETestEnum32& Enum32() const { return _testEnum32; }
+    void SetEnum32(const ETestEnum32& value) { _testEnum32 = value; }
 
-    const TestEnum64& Enum64() const { return _testEnum64; }
-    void SetEnum64(const TestEnum64& value) { _testEnum64 = value; }
+    const ETestEnum64& Enum64() const { return _testEnum64; }
+    void SetEnum64(const ETestEnum64& value) { _testEnum64 = value; }
 
 private:
     PContentIdentity _identity;
-    WString _sourceName;
-    TestEnum32 _testEnum32;
-    TestEnum64 _testEnum64;
+    FWString _sourceName;
+    ETestEnum32 _testEnum32;
+    ETestEnum64 _testEnum64;
 };
-RTTI_CLASS_BEGIN(Test, RTTITestParent_, Concrete)
+RTTI_CLASS_BEGIN(Test, FRTTITestParent_, Concrete)
     RTTI_PROPERTY_PRIVATE_FIELD(_identity)
     RTTI_PROPERTY_PRIVATE_FIELD(_sourceName)
     RTTI_PROPERTY_MEMBER(Enum32)
@@ -108,17 +108,17 @@ RTTI_CLASS_BEGIN(Test, RTTITestParent_, Concrete)
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------
 FWD_REFPTR(RTTITest_);
-class RTTITest_ : public RTTITestParent_ {
+class FRTTITest_ : public FRTTITestParent_ {
 public:
-    RTTI_CLASS_HEADER(RTTITest_, RTTITestParent_);
+    RTTI_CLASS_HEADER(FRTTITest_, FRTTITestParent_);
 
-    RTTITest_()
+    FRTTITest_()
     :   _dummy(0)
     ,   _half(0.0f)
     ,   _UX10Y10Z10W2N(0)
 #define DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId, _Unused) \
-    ,   _ ## _Name ## Scalar(RTTI::MetaTypeTraits<T>::meta_type::DefaultValue()) \
-    ,   _ ## _Name ## Pair(RTTI::MetaTypeTraits<T>::meta_type::DefaultValue(), RTTI::MetaTypeTraits<T>::meta_type::DefaultValue())
+    ,   _ ## _Name ## Scalar(RTTI::TMetaTypeTraits<T>::meta_type::DefaultValue()) \
+    ,   _ ## _Name ## TPair(RTTI::TMetaTypeTraits<T>::meta_type::DefaultValue(), RTTI::TMetaTypeTraits<T>::meta_type::DefaultValue())
     FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR_IMPL_)
 #undef DEF_METATYPE_SCALAR_IMPL_
     {}
@@ -132,7 +132,7 @@ public:
     UX10Y10Z10W2N _UX10Y10Z10W2N;
 
     template <typename T>
-    using yolo_pair_type = Pair<T, T>;
+    using yolo_pair_type = TPair<T, T>;
     template <typename T>
     using yolo_dict_type = HASHMAP_THREAD_LOCAL(Container, T, T);
     template <typename T>
@@ -142,14 +142,14 @@ public:
 
 #define DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId, _Unused) \
     T _ ## _Name ## Scalar; \
-    RTTI::Vector<T> _ ## _Name ## Vec; \
-    RTTI::Pair<T, T> _ ## _Name ## Pair; \
-    RTTI::Dictionary<T, T> _ ## _Name ## Dico; \
+    RTTI::TVector<T> _ ## _Name ## Vec; \
+    RTTI::TPair<T, T> _ ## _Name ## TPair; \
+    RTTI::TDictionary<T, T> _ ## _Name ## Dico; \
     //yolo_type<T> _ ## _Name ## Yolo;
     FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR_IMPL_)
 #undef DEF_METATYPE_SCALAR_IMPL_
 };
-RTTI_CLASS_BEGIN(Test, RTTITest_, Concrete)
+RTTI_CLASS_BEGIN(Test, FRTTITest_, Concrete)
     RTTI_PROPERTY_PRIVATE_FIELD(_dummy)
     RTTI_PROPERTY_PRIVATE_FIELD(_half)
     RTTI_PROPERTY_PRIVATE_FIELD(_byte4n)
@@ -159,7 +159,7 @@ RTTI_CLASS_BEGIN(Test, RTTITest_, Concrete)
 #define DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId, _Unused) \
     RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Scalar) \
     RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Vec) \
-    RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Pair) \
+    RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## TPair) \
     RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Dico) \
     //RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Yolo)
     FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR_IMPL_)
@@ -173,20 +173,20 @@ RTTI_CLASS_END()
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-class RTTIAtomRandomizer_ : protected RTTI::MetaAtomWrapMoveVisitor {
-    typedef RTTI::MetaAtomWrapMoveVisitor parent_type;
+class FRTTIAtomRandomizer_ : protected RTTI::FMetaAtomWrapMoveVisitor {
+    typedef RTTI::FMetaAtomWrapMoveVisitor parent_type;
 public:
-    RTTIAtomRandomizer_(size_t maxDim, u64 seed) : _maxDim(maxDim), _depth(0), _rand(seed) {
+    FRTTIAtomRandomizer_(size_t maxDim, u64 seed) : _maxDim(maxDim), _depth(0), _rand(seed) {
         AssertRelease(_maxDim > 0);
     }
 
-    void Randomize(RTTI::MetaObject* pobject);
+    void Randomize(RTTI::FMetaObject* pobject);
 
 protected:
     using parent_type::Inspect;
     using parent_type::Visit;
 
-    virtual void Inspect(RTTI::IMetaAtomPair* ppair, RTTI::Pair<RTTI::PMetaAtom, RTTI::PMetaAtom>& pair) override {
+    virtual void Inspect(RTTI::IMetaAtomPair* ppair, RTTI::TPair<RTTI::PMetaAtom, RTTI::PMetaAtom>& pair) override {
         if (nullptr == pair.first)
             pair.first = ppair->FirstTraits()->CreateDefaultValue();
 
@@ -199,7 +199,7 @@ protected:
         parent_type::Inspect(ppair, pair);
     }
 
-    virtual void Inspect(RTTI::IMetaAtomVector* pvector, RTTI::Vector<RTTI::PMetaAtom>& vector) override {
+    virtual void Inspect(RTTI::IMetaAtomVector* pvector, RTTI::TVector<RTTI::PMetaAtom>& vector) override {
         const RTTI::IMetaTypeVirtualTraits* traits = pvector->ValueTraits();
         const size_t count = NextRandomDim_();
         vector.reserve(count);
@@ -209,7 +209,7 @@ protected:
         parent_type::Inspect(pvector, vector);
     }
 
-    virtual void Inspect(RTTI::IMetaAtomDictionary* pdictionary, RTTI::Dictionary<RTTI::PMetaAtom, RTTI::PMetaAtom>& dictionary) override {
+    virtual void Inspect(RTTI::IMetaAtomDictionary* pdictionary, RTTI::TDictionary<RTTI::PMetaAtom, RTTI::PMetaAtom>& dictionary) override {
         const RTTI::IMetaTypeVirtualTraits* keyTraits = pdictionary->KeyTraits();
         const RTTI::IMetaTypeVirtualTraits* valueTraits = pdictionary->ValueTraits();
         const size_t count = NextRandomDim_();
@@ -223,7 +223,7 @@ protected:
     }
 
 #define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
-    virtual void Visit(RTTI::MetaTypedAtom<T>* scalar) override { \
+    virtual void Visit(RTTI::TMetaTypedAtom<T>* scalar) override { \
         Assert(_TypeId == scalar->TypeInfo().Id); \
         RandomizeDispatch_(scalar); \
         /*parent_type::Visit(scalar);*/ \
@@ -234,14 +234,14 @@ protected:
 private:
     const size_t _maxDim;
     size_t _depth;
-    RandomGenerator _rand;
+    FRandomGenerator _rand;
 
     template <typename T>
-    void RandomizeDispatch_(RTTI::MetaTypedAtom<T>* scalar) {
+    void RandomizeDispatch_(RTTI::TMetaTypedAtom<T>* scalar) {
         Randomize_(scalar->Wrapper());
     }
 
-    void RandomizeDispatch_(RTTI::MetaTypedAtom<RTTI::PMetaObject>* scalar) {
+    void RandomizeDispatch_(RTTI::TMetaTypedAtom<RTTI::PMetaObject>* scalar) {
         UNUSED(scalar);
         // can't do anything since we don't know the metaclass, this is no trivial task ...
         /*
@@ -251,7 +251,7 @@ private:
             return;
         RTTI::PMetaObject& object = scalar->Wrapper();
         if (nullptr == object) {
-            const RTTI::MetaClass* metaClass = scalar->Traits()->GetMetaClassIFP();
+            const RTTI::TMetaClass* metaClass = scalar->Traits()->GetMetaClassIFP();
             Assert(metaClass);
             object = metaClass->CreateInstance();
         }
@@ -267,33 +267,33 @@ private:
     }
 
     template <typename T, size_t _Width, size_t _Height>
-    void Randomize_(ScalarMatrix<T, _Width, _Height>& value) {
+    void Randomize_(TScalarMatrix<T, _Width, _Height>& value) {
         ScalarMatrixData<T, _Width, _Height>& data = value.data();
         const size_t dim = _Width*_Height;
         for (size_t i = 0; i < dim; ++i)
             _rand.Randomize(data.raw[i]);
     }
 
-    void Randomize_(String& str) {
+    void Randomize_(FString& str) {
         const size_t count = NextRandomDim_();
         str.resize(count);
         forrange(i, 0, count)
             str[i] = (char)(_rand.Next('a'+0, 'z'+1));
     }
 
-    void Randomize_(WString& wstr) {
+    void Randomize_(FWString& wstr) {
         const size_t count = NextRandomDim_();
         wstr.resize(count);
         forrange(i, 0, count)
             wstr[i] = (wchar_t)(_rand.Next(L'a'+0, L'z'+1));
     }
 
-    void Randomize_(RTTI::Name& name) {
+    void Randomize_(RTTI::FName& name) {
         const size_t count = NextRandomDim_();
-        STACKLOCAL_POD_ARRAY(RTTI::Name::char_type, cstr, count);
+        STACKLOCAL_POD_ARRAY(RTTI::FName::char_type, cstr, count);
         forrange(i, 0, count)
             cstr[i] = (char)(_rand.Next('a'+0, 'z'+1));
-        name = RTTI::Name(MakeStringView(cstr));
+        name = RTTI::FName(MakeStringView(cstr));
     }
 
     void Randomize_(RTTI::BinaryData& rawdata) {
@@ -307,7 +307,7 @@ private:
         const size_t count = NextRandomDim_()*10;
         opaqueData.reserve(count);
         forrange(i, 0, count) {
-            RTTI::Name key;
+            RTTI::FName key;
             Randomize_(key);
 
             RTTI::PMetaAtom value;
@@ -332,12 +332,12 @@ private:
     }
 };
 //----------------------------------------------------------------------------
-void RTTIAtomRandomizer_::Randomize(RTTI::MetaObject* pobject) {
+void FRTTIAtomRandomizer_::Randomize(RTTI::FMetaObject* pobject) {
     Assert(pobject);
 
     ++_depth;
 
-    const RTTI::MetaClass* metaClass = pobject->RTTI_MetaClass();
+    const RTTI::FMetaClass* metaClass = pobject->RTTI_MetaClass();
 
     while (metaClass) {
         for (const RTTI::UCMetaProperty& prop : metaClass->Properties()) {
@@ -359,20 +359,20 @@ void RTTIAtomRandomizer_::Randomize(RTTI::MetaObject* pobject) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void Test_RTTI() {
-    typedef RTTITest_ test_type;
-    //typedef RTTITest2_ test_type;
+    typedef FRTTITest_ test_type;
+    //typedef FRTTITest2_ test_type;
     static const size_t test_count = 4;
 
     RTTI_TAG(Test)::Start();
     {
-        const Filename filename = L"Tmp:/robotapp.bin";
-        const Filename filename2 = L"Tmp:/robotapp.raw";
+        const FFilename filename = L"Tmp:/robotapp.bin";
+        const FFilename filename2 = L"Tmp:/robotapp.raw";
 
-        RTTI::MetaTransaction input;
+        RTTI::FMetaTransaction input;
         {
-            RTTIAtomRandomizer_ rand(4, 0xabadcafedeadbeefull);
+            FRTTIAtomRandomizer_ rand(4, 0xabadcafedeadbeefull);
             forrange(i, 0, test_count) {
-                RefPtr<test_type> t = new test_type();
+                TRefPtr<test_type> t = new test_type();
                 rand.Randomize(t.get());
                 input.Add(t.get());
             }
@@ -380,13 +380,13 @@ void Test_RTTI() {
 
         {
 
-            Serialize::TextSerializer s;
+            Serialize::FTextSerializer s;
             auto oss = StdoutWriter();
             s.Serialize(&oss, &input);
         }
 
-        RTTI::MetaTransaction transaction;
-        Serialize::BinarySerializer serializer;
+        RTTI::FMetaTransaction transaction;
+        Serialize::FBinarySerializer serializer;
 
         MEMORYSTREAM_THREAD_LOCAL(Serialize) uncompressed;
         {
@@ -398,7 +398,7 @@ void Test_RTTI() {
             RAWSTORAGE_THREAD_LOCAL(Serialize, u8) compressed;
             const size_t compressedSizeInBytes = Compression::CompressMemory(compressed, uncompressed.MakeView(), Compression::HighCompression);
             Assert(compressedSizeInBytes <= compressed.SizeInBytes());
-            const MemoryView<const u8> compressedView = compressed.MakeView().SubRange(0, compressedSizeInBytes);
+            const TMemoryView<const u8> compressedView = compressed.MakeView().SubRange(0, compressedSizeInBytes);
 
             RAWSTORAGE_THREAD_LOCAL(Stream, u8) decompressed;
             if (false == Compression::DecompressMemory(decompressed, compressedView))
@@ -425,7 +425,7 @@ void Test_RTTI() {
 #endif
         }
 
-        RTTI::MetaTransaction output;
+        RTTI::FMetaTransaction output;
 
         {
             RAWSTORAGE_THREAD_LOCAL(FileSystem, u8) compressed;
@@ -449,7 +449,7 @@ void Test_RTTI() {
             AssertNotReached();
     }
     {
-        Parser::ParseContext globalContext;
+        Parser::FParseContext globalContext;
         do
         {
             std::cout << "$ ";
@@ -457,7 +457,7 @@ void Test_RTTI() {
             char buffer[1024];
             std::cin.getline(buffer, lengthof(buffer));
 
-            const StringView line = MakeStringView(buffer, Meta::noinit_tag());
+            const FStringView line = MakeStringView(buffer, Meta::noinit_tag());
 
             if (0 == CompareI(MakeStringView("exit"), line))
                 break;
@@ -465,22 +465,22 @@ void Test_RTTI() {
             const wchar_t filename[] = L"@in_memory";
 
             try {
-                MemoryViewReader reader(line.Cast<const u8>());
-                Lexer::Lexer lexer(&reader, filename, true);
-                Parser::ParseList input(&lexer);
+                FMemoryViewReader reader(line.Cast<const u8>());
+                FLexer::FLexer lexer(&reader, filename, true);
+                Parser::FParseList input(&lexer);
 
-                Parser::PCParseItem item = Serialize::GrammarStartup::Parse(input);
+                Parser::PCParseItem item = Serialize::FGrammarStartup::Parse(input);
                 AssertRelease(item);
 
                 item->Invoke(&globalContext);
             }
-            catch (const Parser::ParserException& e) {
+            catch (const Parser::FParserException& e) {
                 if (e.Item())
                     Format(std::cerr, "parser error : <{0}> {1}, {2}.\n", e.Item()->ToString(), e.what(), e.Site());
                 else
                     Format(std::cerr, "parser error : {0}, {1}.\n", e.what(), e.Site());
             }
-            catch (const Lexer::LexerException& e) {
+            catch (const FLexer::FLexerException& e) {
                 Format(std::cerr, "lexer error : <{0}>: {1}, {2}.\n", e.Match().Symbol()->CStr(), e.what(), e.Match().Site());
             }
         } while (true);

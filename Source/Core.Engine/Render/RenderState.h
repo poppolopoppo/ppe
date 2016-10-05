@@ -14,50 +14,50 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class RenderState : public RefCountable {
+class FRenderState : public FRefCountable {
 public:
-    enum class Blending {
+    enum class EBlending {
         Opaque = 0,
         Additive,
         AlphaBlend,
         NonPremultiplied,
     };
 
-    enum class Culling {
+    enum class ECulling {
         None = 0,
         Clockwise,
         CounterClockwise,
     };
 
-    enum class DepthTest {
+    enum class EDepthTest {
         None = 0,
         Default,
         Read,
     };
 
-    enum class FillMode {
+    enum class EFillMode {
         Automatic = 0,
         Solid,
         Wireframe,
     };
 
-    RenderState();
-    ~RenderState();
+    FRenderState();
+    ~FRenderState();
 
-    RenderState(Blending blend, Culling cull, DepthTest depth,
-                FillMode fill = FillMode::Automatic);
+    FRenderState(EBlending blend, ECulling cull, EDepthTest depth,
+                EFillMode fill = EFillMode::Automatic);
 
-    Blending Blend() const { return _blend; }
-    Culling Cull() const { return _cull; }
-    DepthTest Depth() const { return _depth; }
-    FillMode Fill() const { return _fill; }
+    EBlending EBlend() const { return _blend; }
+    ECulling Cull() const { return _cull; }
+    EDepthTest Depth() const { return _depth; }
+    EFillMode Fill() const { return _fill; }
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    Blending _blend;
-    Culling _cull;
-    DepthTest _depth;
-    FillMode _fill;
+    EBlending _blend;
+    ECulling _cull;
+    EDepthTest _depth;
+    EFillMode _fill;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

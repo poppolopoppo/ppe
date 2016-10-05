@@ -5,7 +5,7 @@
 #include "NetworkIncludes.h"
 #include "Socket.h"
 
-// Socket implementation adapted/updated from C++ DLib
+// FSocket implementation adapted/updated from C++ DLib
 // http://dlib.net/files/dlib-19.1.zip
 // http://dlib.net/dlib/sockets/sockets_kernel_1.h.html
 
@@ -14,19 +14,19 @@ namespace Network {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Listener::Listener() : _handle(nullptr) {}
+FListener::FListener() : _handle(nullptr) {}
 //----------------------------------------------------------------------------
-Listener::Listener(Address&& listening)
+FListener::FListener(FAddress&& listening)
 :   _handle(nullptr)
 ,   _listening(std::move(listening)) {
     Assert(_listening.IsIPv4());
 }
 //----------------------------------------------------------------------------
-Listener::~Listener() {
+FListener::~FListener() {
     Assert(!IsConnected());
 }
 //----------------------------------------------------------------------------
-Listener& Listener::operator =(Listener&& rvalue) {
+FListener& FListener::operator =(FListener&& rvalue) {
     if (IsConnected())
         Disconnect();
 
@@ -38,7 +38,7 @@ Listener& Listener::operator =(Listener&& rvalue) {
     return *this;
 }
 //----------------------------------------------------------------------------
-bool Listener::Connect() {
+bool FListener::Connect() {
     Assert(!IsConnected());
 
     ::sockaddr_in sa;  // local socket structure
@@ -103,7 +103,7 @@ bool Listener::Connect() {
     return true;
 }
 //----------------------------------------------------------------------------
-bool Listener::Disconnect() {
+bool FListener::Disconnect() {
     Assert(IsConnected());
 
     ::SOCKET sock = UnpackSocket_(_handle);
@@ -117,11 +117,11 @@ bool Listener::Disconnect() {
     return true;
 }
 //----------------------------------------------------------------------------
-bool Listener::IsConnected() const {
+bool FListener::IsConnected() const {
     return (nullptr != _handle && INVALID_SOCKET != UnpackSocket_(_handle));
 }
 //----------------------------------------------------------------------------
-bool Listener::Accept(Socket& socket, const Milliseconds& timeout) {
+bool FListener::Accept(FSocket& socket, const Milliseconds& timeout) {
     Assert(IsConnected());
     Assert(!socket.IsConnected());
     Assert(timeout.Value() >= 0);
@@ -167,7 +167,7 @@ bool Listener::Accept(Socket& socket, const Milliseconds& timeout) {
     int foreign_port = ::ntohs(incomingAddr.sin_port);
 
     // get the IP of the foreign host into foreign_ip
-    String foreign_ip;
+    FString foreign_ip;
     {
         char temp[17];
         const char* real_foreign_ip = ::inet_ntop(AF_INET, &incomingAddr.sin_addr, temp, lengthof(temp));
@@ -182,7 +182,7 @@ bool Listener::Accept(Socket& socket, const Milliseconds& timeout) {
     }
 
     // get the local ip
-    String local_ip;
+    FString local_ip;
     if (_listening.empty()) {
         ::sockaddr_in local_info;
         length = sizeof(::sockaddr_in);

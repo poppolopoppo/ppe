@@ -6,47 +6,47 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-STATIC_ASSERT(0 == size_t(LogCategory::Info));
-STATIC_ASSERT(1 == size_t(LogCategory::Warning));
-STATIC_ASSERT(2 == size_t(LogCategory::Error));
-STATIC_ASSERT(3 == size_t(LogCategory::Exception));
-STATIC_ASSERT(4 == size_t(LogCategory::Debug));
-STATIC_ASSERT(5 == size_t(LogCategory::Assertion));
-STATIC_ASSERT(6 == size_t(LogCategory::Profiling));
-STATIC_ASSERT(7 == size_t(LogCategory::Callstack));
+STATIC_ASSERT(0 == size_t(ELogCategory::Info));
+STATIC_ASSERT(1 == size_t(ELogCategory::Warning));
+STATIC_ASSERT(2 == size_t(ELogCategory::Error));
+STATIC_ASSERT(3 == size_t(ELogCategory::FException));
+STATIC_ASSERT(4 == size_t(ELogCategory::Debug));
+STATIC_ASSERT(5 == size_t(ELogCategory::Assertion));
+STATIC_ASSERT(6 == size_t(ELogCategory::Profiling));
+STATIC_ASSERT(7 == size_t(ELogCategory::FCallstack));
 //----------------------------------------------------------------------------
 namespace {
-    static const LogCategory sCategories[] = {
-        LogCategory::Info,
-        LogCategory::Warning,
-        LogCategory::Error,
-        LogCategory::Exception,
-        LogCategory::Debug,
-        LogCategory::Assertion,
-        LogCategory::Profiling,
-        LogCategory::Callstack,
+    static const ELogCategory sCategories[] = {
+        ELogCategory::Info,
+        ELogCategory::Warning,
+        ELogCategory::Error,
+        ELogCategory::FException,
+        ELogCategory::Debug,
+        ELogCategory::Assertion,
+        ELogCategory::Profiling,
+        ELogCategory::FCallstack,
     };
 
     static const wchar_t* sCategoriesWCStr[] = {
         L"Info",
         L"Warning",
         L"Error",
-        L"Exception",
+        L"FException",
         L"Debug",
         L"Assertion",
         L"Profiling",
-        L"Callstack",
+        L"FCallstack",
     };
 
     STATIC_ASSERT(lengthof(sCategoriesWCStr) == lengthof(sCategories));
     STATIC_ASSERT(8 == lengthof(sCategories));
 }
 //----------------------------------------------------------------------------
-MemoryView<const LogCategory> EachLogCategory() {
+TMemoryView<const ELogCategory> EachLogCategory() {
     return MakeView(sCategories);
 }
 //----------------------------------------------------------------------------
-const wchar_t* LogCategoryToWCStr(LogCategory category) {
+const wchar_t* LogCategoryToWCStr(ELogCategory category) {
     Assert(size_t(category) < lengthof(sCategoriesWCStr));
     return sCategoriesWCStr[size_t(category)];
 }
@@ -77,16 +77,16 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-class BasicLogger_ : public ILogger {
+class FBasicLogger_ : public ILogger {
 public:
-    BasicLogger_(const WStringView& prefix) : _prefix(prefix) {}
+    FBasicLogger_(const FWStringView& prefix) : _prefix(prefix) {}
 
     // Used before main, no dependencies on allocators
-    virtual void Log(LogCategory category, const WStringView& text, const FormatArgListW& args) override {
+    virtual void Log(ELogCategory category, const FWStringView& text, const FormatArgListW& args) override {
         wchar_t buffer[2048];
-        WOCStrStream oss(buffer);
-        if (LogCategory::Callstack != category &&
-            LogCategory::Info != category ) {
+        FWOCStrStream oss(buffer);
+        if (ELogCategory::FCallstack != category &&
+            ELogCategory::Info != category ) {
             Format(oss, L"[{0}][{1}]", _prefix, category);
         }
         else {
@@ -98,48 +98,48 @@ public:
     }
 
 private:
-    WStringView _prefix;
+    FWStringView _prefix;
 };
-static const BasicLogger_ gLoggerBeforeMain (L"BEFORE_MAIN");
-static const BasicLogger_ gLoggerAfterMain  (L"AFTER_MAIN");
+static const FBasicLogger_ gLoggerBeforeMain (L"BEFORE_MAIN");
+static const FBasicLogger_ gLoggerAfterMain  (L"AFTER_MAIN");
 //----------------------------------------------------------------------------
-static AtomicSpinLock gLoggerSpinLock;
+static FAtomicSpinLock gLoggerSpinLock;
 static std::atomic<ILogger*> gLoggerCurrentImpl = remove_const(&gLoggerBeforeMain);
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 ILogger* SetLoggerImpl(ILogger* logger) { // return previous handler
     Assert(logger);
-    const AtomicSpinLock::Scope scopeLock(gLoggerSpinLock);
+    const FAtomicSpinLock::FScope scopeLock(gLoggerSpinLock);
     return gLoggerCurrentImpl.exchange(logger);
 }
 //----------------------------------------------------------------------------
-void Log(LogCategory category, const WStringView& text) {
+void Log(ELogCategory category, const FWStringView& text) {
     Assert(text.size());
     Assert('\0' == text.data()[text.size()]); // text must be null terminated !
-    const AtomicSpinLock::Scope scopeLock(gLoggerSpinLock);
+    const FAtomicSpinLock::FScope scopeLock(gLoggerSpinLock);
     gLoggerCurrentImpl.load()->Log(category, text, FormatArgListW());
 }
 //----------------------------------------------------------------------------
-void LogArgs(LogCategory category, const WStringView& format, const FormatArgListW& args) {
+void LogArgs(ELogCategory category, const FWStringView& format, const FormatArgListW& args) {
     Assert(format.size());
     Assert('\0' == format.data()[format.size()]); // text must be null terminated !
-    const AtomicSpinLock::Scope scopeLock(gLoggerSpinLock);
+    const FAtomicSpinLock::FScope scopeLock(gLoggerSpinLock);
     gLoggerCurrentImpl.load()->Log(category, format, args);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void OutputDebugLogger::Log(LogCategory category, const WStringView& text, const FormatArgListW& args) {
-    ThreadLocalWOStringStream oss;
+void FOutputDebugLogger::Log(ELogCategory category, const FWStringView& text, const FormatArgListW& args) {
+    FThreadLocalWOStringStream oss;
 
 #if 0
-    if (LogCategory::Callstack != category) {
-        Format(oss, L"[{0:12f7}][{1}]", CurrentProcess::ElapsedSeconds(), category);
+    if (ELogCategory::FCallstack != category) {
+        Format(oss, L"[{0:12f7}][{1}]", FCurrentProcess::ElapsedSeconds(), category);
     }
 #else
-    if (LogCategory::Callstack != category &&
-        LogCategory::Info != category ) {
+    if (ELogCategory::FCallstack != category &&
+        ELogCategory::Info != category ) {
         Format(oss, L"[{0}]", category);
     }
 #endif
@@ -154,9 +154,9 @@ void OutputDebugLogger::Log(LogCategory category, const WStringView& text, const
     OutputDebugStringW(oss.str().c_str());
 }
 //----------------------------------------------------------------------------
-void StdcoutLogger::Log(LogCategory category, const WStringView& text, const FormatArgListW& args) {
-    if (LogCategory::Callstack != category)
-        Format(std::wcout, L"[{0:12f}][{1}]", CurrentProcess::ElapsedSeconds(), category);
+void FStdcoutLogger::Log(ELogCategory category, const FWStringView& text, const FormatArgListW& args) {
+    if (ELogCategory::FCallstack != category)
+        Format(std::wcout, L"[{0:12f}][{1}]", FCurrentProcess::ElapsedSeconds(), category);
 
     if (args.empty())
         std::wcout << text;
@@ -166,9 +166,9 @@ void StdcoutLogger::Log(LogCategory category, const WStringView& text, const For
     std::wcout << std::endl;
 }
 //----------------------------------------------------------------------------
-void StderrLogger::Log(LogCategory category, const WStringView& text, const FormatArgListW& args) {
-    if (LogCategory::Callstack != category)
-        Format(std::wcerr, L"[{0:12f}][{1}]", CurrentProcess::ElapsedSeconds(), category);
+void FStderrLogger::Log(ELogCategory category, const FWStringView& text, const FormatArgListW& args) {
+    if (ELogCategory::FCallstack != category)
+        Format(std::wcerr, L"[{0:12f}][{1}]", FCurrentProcess::ElapsedSeconds(), category);
 
     if (args.empty())
         std::wcerr << text;
@@ -180,12 +180,12 @@ void StderrLogger::Log(LogCategory category, const WStringView& text, const Form
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void LoggerStartup::Start() {
+void FLoggerStartup::Start() {
     Assert(&gLoggerBeforeMain == gLoggerCurrentImpl.load());
-    SetLoggerImpl(new OutputDebugLogger);
+    SetLoggerImpl(new FOutputDebugLogger);
 }
 //----------------------------------------------------------------------------
-void LoggerStartup::Shutdown() {
+void FLoggerStartup::Shutdown() {
     ILogger* logger = SetLoggerImpl(remove_const(&gLoggerAfterMain));
     Assert(logger);
     Assert(logger != &gLoggerBeforeMain);

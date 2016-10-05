@@ -25,20 +25,20 @@ namespace {
 //----------------------------------------------------------------------------
 constexpr float AlphaCutoff = 0.33333f;
 //----------------------------------------------------------------------------
-static void Test_ExpandAlphaMask_(const Filename& input) {
-    const Dirpath output = L"Process:/";
+static void Test_ExpandAlphaMask_(const FFilename& input) {
+    const FDirpath output = L"Process:/";
 
     Pixmap::Image img;
     if (false == Pixmap::Load(&img, input))
         AssertNotReached();
 
-    Pixmap::PFloatImage intermediate = new Pixmap::FloatImage();
+    Pixmap::PFloatImage intermediate = new Pixmap::FFloatImage();
     img.ConvertTo(intermediate.get());
 
     const bool hasAlpha = intermediate->HasAlpha();
 
     if (hasAlpha) {
-        Pixmap::FloatImage cpy = *intermediate;
+        Pixmap::FFloatImage cpy = *intermediate;
         cpy.DiscardAlpha();
         img.ConvertFrom(&cpy);
         if (false == Pixmap::Save(&img, StringFormat(L"{0}/{1}_DiscardAlpha.png", output, input.BasenameNoExt())) )
@@ -49,14 +49,14 @@ static void Test_ExpandAlphaMask_(const Filename& input) {
         Pixmap::ExpandColorToTransparentPixels(intermediate.get(), AlphaCutoff);
 
     if (hasAlpha) {
-        Pixmap::FloatImage cpy = *intermediate;
+        Pixmap::FFloatImage cpy = *intermediate;
         cpy.DiscardAlpha();
         img.ConvertFrom(&cpy);
         if (false == Pixmap::Save(&img, StringFormat(L"{0}/{1}_ExpandAlphaColor.png", output, input.BasenameNoExt())) )
             AssertNotReached();
     }
 
-    Pixmap::MipMapChain mipMaps;
+    Pixmap::FMipMapChain mipMaps;
     mipMaps.Generate(intermediate.get(), true);
 
     if (hasAlpha)
@@ -72,12 +72,12 @@ static void Test_ExpandAlphaMask_(const Filename& input) {
     }
 }
 //----------------------------------------------------------------------------
-static void Test_DistanceField(const Filename& input) {
+static void Test_DistanceField(const FFilename& input) {
     Pixmap::Image img;
     if (false == Pixmap::Load(&img, input))
         AssertNotReached();
 
-    Pixmap::FloatImage tmp;
+    Pixmap::FFloatImage tmp;
     img.ConvertTo(&tmp);
 
     Pixmap::DistanceField_DRA(&img, &tmp, AlphaCutoff);
@@ -86,21 +86,21 @@ static void Test_DistanceField(const Filename& input) {
         AssertNotReached();
 }
 //----------------------------------------------------------------------------
-static void Test_DXTCompression_(const Filename& input) {
+static void Test_DXTCompression_(const FFilename& input) {
     Pixmap::Image img;
     if (false == Pixmap::Load(&img, input))
         AssertNotReached();
 
-    Pixmap::DXTImage compressed;
-    Pixmap::Compress(&compressed, &img, Pixmap::DXTImage::Quality::HighQuality);
+    Pixmap::FDXTImage compressed;
+    Pixmap::Compress(&compressed, &img, Pixmap::FDXTImage::EQuality::HighQuality);
 }
 //----------------------------------------------------------------------------
-static void Test_ConvexHull_(const Filename& input) {
+static void Test_ConvexHull_(const FFilename& input) {
     Pixmap::Image img;
     if (false == Pixmap::Load(&img, input))
         AssertNotReached();
 
-    Pixmap::FloatImage convexhull;
+    Pixmap::FFloatImage convexhull;
     img.ConvertTo(&convexhull);
 
     if (not convexhull.HasAlpha())
@@ -133,12 +133,12 @@ void Test_Binpacking() {
 
     STACKLOCAL_POD_ARRAY(float2, boxes, COUNT);
 
-    RandomGenerator rng;
+    FRandomGenerator rng;
     forrange(i, 0, COUNT) {
         float2 box;
 #if 0
-        box.x() = float(ROUND_TO_NEXT_32(size_t(Lerp(minSize.x(), maxSize.x(), rng.NextFloat01()))));
-        box.y() = float(ROUND_TO_NEXT_32(size_t(Lerp(minSize.y(), maxSize.y(), rng.NextFloat01()))));
+        box.x() = float(ROUND_TO_NEXT_32(size_t(TLerp(minSize.x(), maxSize.x(), rng.NextFloat01()))));
+        box.y() = float(ROUND_TO_NEXT_32(size_t(TLerp(minSize.y(), maxSize.y(), rng.NextFloat01()))));
 #else
         box.x() = float(Max(1 << ((1 + rng.NextU32()) & 7), 8));
         box.y() = float(Max(1 << ((1 + rng.NextU32()) & 7), 8));
@@ -156,7 +156,7 @@ void Test_Binpacking() {
     Assert(binsize.x() > 0 && binsize.y() > 0);
     const float2 dUdV = Rcp(binsize);
 
-    Pixmap::FloatImage intermediate(
+    Pixmap::FFloatImage intermediate(
         size_t(binsize.x()),
         size_t(binsize.y()),
         Color::Transparent() );
@@ -191,7 +191,7 @@ void Test_Binpacking() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void Test_Pixmap() {
-    const Filename inputs[] = {
+    const FFilename inputs[] = {
         L"Data:/Textures/Tech/Flower.png",
         L"Data:/Textures/Tech/Flower2.png",
         L"Data:/Textures/Tech/Chain.png",
@@ -201,19 +201,19 @@ void Test_Pixmap() {
 
     Test_Binpacking();
 
-    parallel_for(std::begin(inputs), std::end(inputs), [](const Filename& fname) {
+    parallel_for(std::begin(inputs), std::end(inputs), [](const FFilename& fname) {
         Test_ConvexHull_(fname);
     });
 
-    parallel_for(std::begin(inputs), std::end(inputs), [](const Filename& fname) {
+    parallel_for(std::begin(inputs), std::end(inputs), [](const FFilename& fname) {
         Test_ExpandAlphaMask_(fname);
     });
 
-    parallel_for(std::begin(inputs), std::end(inputs), [](const Filename& fname) {
+    parallel_for(std::begin(inputs), std::end(inputs), [](const FFilename& fname) {
         Test_DistanceField(fname);
     });
 
-    parallel_for(std::begin(inputs), std::end(inputs), [](const Filename& fname) {
+    parallel_for(std::begin(inputs), std::end(inputs), [](const FFilename& fname) {
         Test_DXTCompression_(fname);
     });
 }

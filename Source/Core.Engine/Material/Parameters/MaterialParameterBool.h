@@ -11,10 +11,10 @@
 
 namespace Core {
 namespace Engine {
-class MaterialDatabase;
+class FMaterialDatabase;
 
 #define EACH_MATERIALPARAMETER_BOOL(_Macro) \
-    // _Macro(MaterialVariability::World, float,   WorldElapsedSeconds) \
+    // _Macro(EMaterialVariability::FWorld, float,   WorldElapsedSeconds) \
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -23,7 +23,7 @@ namespace MaterialParameterBool {
 //----------------------------------------------------------------------------
 EACH_MATERIALPARAMETER_BOOL(MATERIALPARAMETER_FN_DECL)
 //----------------------------------------------------------------------------
-void RegisterMaterialParameters(MaterialDatabase *database);
+void RegisterMaterialParameters(FMaterialDatabase *database);
 //----------------------------------------------------------------------------
 } //!MaterialParameterBool
 //----------------------------------------------------------------------------
@@ -32,25 +32,25 @@ void RegisterMaterialParameters(MaterialDatabase *database);
 namespace MaterialParameterBool {
 //----------------------------------------------------------------------------
 template <typename T>
-struct Not {
-    STypedMaterialParameter<T> Source;
-    Not(ITypedMaterialParameter<T> *source);
+struct TNot {
+    TSTypedMaterialParameter<T> Source;
+    TNot(ITypedMaterialParameter<T> *source);
 
     typedef T value_type;
-    MaterialVariability Variability() const { return Source->Info().Variability; }
-    void TypedEval(const MaterialParameterContext& context, T& dst);
+    EMaterialVariability Variability() const { return Source->Info().Variability; }
+    void TypedEval(const FMaterialParameterContext& context, T& dst);
 };
 template <typename T>
-using Memoizer_Not = MaterialParameterMemoizer<Not<T> >;
-extern template class MaterialParameterMemoizer<Not<bool> >;
-extern template class MaterialParameterMemoizer<Not<i32> >;
-extern template class MaterialParameterMemoizer<Not<u32> >;
+using TMemoizer_Not = TMaterialParameterMemoizer<TNot<T> >;
+extern template class TMaterialParameterMemoizer<TNot<bool> >;
+extern template class TMaterialParameterMemoizer<TNot<i32> >;
+extern template class TMaterialParameterMemoizer<TNot<u32> >;
 //----------------------------------------------------------------------------
 bool TryCreateMaterialParameter(
     PMaterialParameter *param,
-    const MaterialParameterMutableContext& context,
-    const Graphics::BindName& name,
-    const Graphics::ConstantField& field );
+    const FMaterialParameterMutableContext& context,
+    const Graphics::FBindName& name,
+    const Graphics::FConstantField& field );
 //----------------------------------------------------------------------------
 } //!MaterialParameterBool
 //----------------------------------------------------------------------------

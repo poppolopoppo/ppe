@@ -8,57 +8,57 @@
 
 namespace Core {
 namespace ContentPipeline {
-FWD_INTERFACE_REFPTR(ContentImporter);
-FWD_INTERFACE_REFPTR(ContentProcessor);
-FWD_INTERFACE_REFPTR(ContentSerializer);
-FWD_INTERFACE_REFPTR(ContentToolchain);
+FWD_INTERFACE_REFPTR(TContentImporter);
+FWD_INTERFACE_REFPTR(TContentProcessor);
+FWD_INTERFACE_REFPTR(TContentSerializer);
+FWD_INTERFACE_REFPTR(FContentToolchain);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ContentPipelineException : public Exception {
+class FContentPipelineException : public FException {
 public:
-    ContentPipelineException(const char* what, const Filename& sourceFilename);
-    ~ContentPipelineException();
-    const Filename& SourceFilename() const { return _sourceFilename; }
+    FContentPipelineException(const char* what, const FFilename& sourceFilename);
+    ~FContentPipelineException();
+    const FFilename& SourceFilename() const { return _sourceFilename; }
 private:
-    Filename _sourceFilename;
+    FFilename _sourceFilename;
 };
 //----------------------------------------------------------------------------
-class ContentImporterException : public ContentPipelineException {
+class FContentImporterException : public FContentPipelineException {
 public:
-    ContentImporterException(const char* what, const ContentIdentity& source, const IContentImporter* importer);
-    ~ContentImporterException();
-    const ContentIdentity& Source() const { return _source; }
+    FContentImporterException(const char* what, const FContentIdentity& source, const IContentImporter* importer);
+    ~FContentImporterException();
+    const FContentIdentity& Source() const { return _source; }
     const IContentImporter* Importer() const { return _importer.get(); }
 private:
-    ContentIdentity _source;
+    FContentIdentity _source;
     PCContentImporter _importer;
 };
 //----------------------------------------------------------------------------
-class ContentProcessorException : public ContentPipelineException {
+class FContentProcessorException : public FContentPipelineException {
 public:
-    ContentProcessorException(const char* what, const ContentIdentity& source, const IContentProcessor* processor);
-    ~ContentProcessorException();
-    const ContentIdentity& Source() const { return _source; }
+    FContentProcessorException(const char* what, const FContentIdentity& source, const IContentProcessor* processor);
+    ~FContentProcessorException();
+    const FContentIdentity& Source() const { return _source; }
     const IContentProcessor* Processor() const { return _processor.get(); }
 private:
-    ContentIdentity _source;
+    FContentIdentity _source;
     PCContentProcessor _processor;
 };
 //----------------------------------------------------------------------------
-class ContentSerializerException : public ContentPipelineException {
+class FContentSerializerException : public FContentPipelineException {
 public:
-    ContentSerializerException(const char* what, const Filename& sourceFilename, const IContentSerializer* serializer);
-    ~ContentSerializerException();
+    FContentSerializerException(const char* what, const FFilename& sourceFilename, const IContentSerializer* serializer);
+    ~FContentSerializerException();
     const IContentSerializer* Serializer() const { return _serializer.get(); }
 private:
     PCContentSerializer _serializer;
 };
 //----------------------------------------------------------------------------
-class ContentToolchainException : public ContentPipelineException {
+class FContentToolchainException : public FContentPipelineException {
 public:
-    ContentToolchainException(const char* what, const Filename& sourceFilename, const IContentToolchain* serializer);
-    ~ContentToolchainException();
+    FContentToolchainException(const char* what, const FFilename& sourceFilename, const IContentToolchain* serializer);
+    ~FContentToolchainException();
     const IContentToolchain* Toolchain() const { return _toolchain.get(); }
 private:
     PCContentToolchain _toolchain;

@@ -8,10 +8,10 @@
 // http://blog.coldflake.com/posts/C++-delegates-on-steroids/
 //
 // 4 different usages :
-// * Non const member function  :  Delegate(&Obj::NonConstMember, &obj)
-// * Const member function      :  Delegate(&Obj::ConstMember, &obj)
-// * Function with argument     :  Delegate(&FunctionWArg, arg)
-// * Function without argument  :  Delegate(&FunctionWOArg, nullptr)
+// * Non const member function  :  TDelegate(&Obj::NonConstMember, &obj)
+// * Const member function      :  TDelegate(&Obj::ConstMember, &obj)
+// * Function with argument     :  TDelegate(&FunctionWArg, arg)
+// * Function without argument  :  TDelegate(&FunctionWOArg, nullptr)
 //
 
 namespace Core {
@@ -19,20 +19,20 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-class Delegate {
+class TDelegate {
 public:
-    Delegate() { static_assert(false, "Delegate<T> accepts only function pointers"); }
+    TDelegate() { static_assert(false, "TDelegate<T> accepts only function pointers"); }
 };
 //----------------------------------------------------------------------------
-class BaseDelegate {
+class FBaseDelegate {
 public:
-    BaseDelegate() : BaseDelegate(nullptr, nullptr) {}
-    BaseDelegate(void* pcallback, void*pcallee)
+    FBaseDelegate() : FBaseDelegate(nullptr, nullptr) {}
+    FBaseDelegate(void* pcallback, void*pcallee)
     :   _pcallee(pcallee)
     ,   _pcallback(pcallback) {}
 
-    BaseDelegate(const BaseDelegate& other) { operator =(other); }
-    BaseDelegate& operator =(const BaseDelegate& other) {
+    FBaseDelegate(const FBaseDelegate& other) { operator =(other); }
+    FBaseDelegate& operator =(const FBaseDelegate& other) {
         _pcallee = other._pcallee;
         _pcallback = other._pcallback;
         return *this;
@@ -42,16 +42,16 @@ public:
     operator void* () const { return _pcallback; }
 
     template <typename _Func>
-    const Delegate<_Func>& Cast() const {
-        return *static_cast<const Delegate<_Func>*>(this);
+    const TDelegate<_Func>& Cast() const {
+        return *static_cast<const TDelegate<_Func>*>(this);
     }
 
-    friend bool operator ==(const BaseDelegate& lhs, const BaseDelegate& rhs) {
+    friend bool operator ==(const FBaseDelegate& lhs, const FBaseDelegate& rhs) {
         return  lhs._pcallback == rhs._pcallback &&
                 lhs._pcallee == rhs._pcallee;
     }
 
-    friend bool operator !=(const BaseDelegate& lhs, const BaseDelegate& rhs) {
+    friend bool operator !=(const FBaseDelegate& lhs, const FBaseDelegate& rhs) {
         return (not operator ==(lhs, rhs));
     }
 
@@ -61,19 +61,19 @@ protected:
 };
 //----------------------------------------------------------------------------
 template <typename _Ret, typename... _Args >
-class Delegate<_Ret (*)(_Args... )> : public BaseDelegate {
+class TDelegate<_Ret (*)(_Args... )> : public FBaseDelegate {
 public:
     typedef _Ret return_type;
     typedef return_type (*func_type)(_Args... );
     typedef return_type (*callback_type)(void*, _Args... );
 
-    Delegate() : BaseDelegate(nullptr, nullptr) {}
-    Delegate(callback_type pcallback, void* pcallee = nullptr)
-        : BaseDelegate(reinterpret_cast<void*>(pcallback), pcallee) {}
+    TDelegate() : FBaseDelegate(nullptr, nullptr) {}
+    TDelegate(callback_type pcallback, void* pcallee = nullptr)
+        : FBaseDelegate(reinterpret_cast<void*>(pcallback), pcallee) {}
 
-    Delegate(const Delegate& other) : BaseDelegate(other) {}
-    Delegate& operator =(const Delegate& other) {
-        BaseDelegate::operator =(other);
+    TDelegate(const TDelegate& other) : FBaseDelegate(other) {}
+    TDelegate& operator =(const TDelegate& other) {
+        FBaseDelegate::operator =(other);
         return *this;
     }
 
@@ -92,7 +92,7 @@ public:
 namespace details {
 //----------------------------------------------------------------------------
 template <typename _Callee, typename _Bind >
-struct BindDelegate {};
+struct TBindDelegate {};
 //----------------------------------------------------------------------------
 } //!namespace details
 //----------------------------------------------------------------------------
@@ -102,14 +102,14 @@ struct BindDelegate {};
 
 #include "Delegate-inl.h"
 
-#define Delegate(_pMemberOrFunc, _pCalleeOrArg0) \
-    ::Core::details::BindDelegate< \
+#define TDelegate(_pMemberOrFunc, _pCalleeOrArg0) \
+    ::Core::details::TBindDelegate< \
             decltype( _pCalleeOrArg0 ) \
         ,   decltype( _pMemberOrFunc ) \
         >::get< _pMemberOrFunc >( _pCalleeOrArg0 )
 
 #define DelegateType(_pMemberOrFunc, _pCalleeOrArg0) \
-    ::Core::details::BindDelegate< \
+    ::Core::details::TBindDelegate< \
             decltype( _pCalleeOrArg0 ) \
         ,   decltype( _pMemberOrFunc ) \
         >::type

@@ -7,7 +7,7 @@
 #include "Core.Engine/Service/Service_fwd.h"
 
 namespace Core {
-struct Guid;
+struct FGuid;
 namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -19,25 +19,25 @@ protected:
 public:
     virtual ~ISharedConstantBufferFactoryService() {}
 
-    virtual Engine::SharedConstantBufferFactory *SharedConstantBufferFactory() = 0;
-    virtual const Engine::SharedConstantBufferFactory *SharedConstantBufferFactory() const = 0;
+    virtual Engine::FSharedConstantBufferFactory *FSharedConstantBufferFactory() = 0;
+    virtual const Engine::FSharedConstantBufferFactory *FSharedConstantBufferFactory() const = 0;
 
     ENGINESERVICE_GUID_DECL(ISharedConstantBufferFactoryService);
 };
 //----------------------------------------------------------------------------
-class DefaultSharedConstantBufferFactoryService : public ISharedConstantBufferFactoryService {
+class FDefaultSharedConstantBufferFactoryService : public ISharedConstantBufferFactoryService {
 public:
-    DefaultSharedConstantBufferFactoryService();
-    virtual ~DefaultSharedConstantBufferFactoryService();
+    FDefaultSharedConstantBufferFactoryService();
+    virtual ~FDefaultSharedConstantBufferFactoryService();
 
-    virtual Engine::SharedConstantBufferFactory *SharedConstantBufferFactory() override;
-    virtual const Engine::SharedConstantBufferFactory *SharedConstantBufferFactory() const override;
+    virtual Engine::FSharedConstantBufferFactory *FSharedConstantBufferFactory() override;
+    virtual const Engine::FSharedConstantBufferFactory *FSharedConstantBufferFactory() const override;
 
-    virtual void Start(IServiceProvider *provider, const Guid& guid) override;
-    virtual void Shutdown(IServiceProvider *provider, const Guid& guid) override;
+    virtual void Start(IServiceProvider *provider, const FGuid& guid) override;
+    virtual void Shutdown(IServiceProvider *provider, const FGuid& guid) override;
 
 private:
-    Engine::SharedConstantBufferFactory _sharedConstantBufferFactory;
+    Engine::FSharedConstantBufferFactory _sharedConstantBufferFactory;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

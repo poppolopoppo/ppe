@@ -11,7 +11,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DbghelpWrapper::DbghelpWrapper()
+FDbghelpWrapper::FDbghelpWrapper()
 :   _symInitializeW(nullptr)
 ,   _symCleanup(nullptr)
 ,   _symSetOptions(nullptr)
@@ -45,7 +45,7 @@ DbghelpWrapper::DbghelpWrapper()
     }
 }
 //----------------------------------------------------------------------------
-DbghelpWrapper::~DbghelpWrapper() {
+FDbghelpWrapper::~FDbghelpWrapper() {
     if (_library) {
         ::FreeLibrary(_library);
     }

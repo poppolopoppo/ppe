@@ -21,30 +21,30 @@ namespace Engine {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(MaterialEffect);
-class RenderTree;
-struct VariabilitySeed;
+class FRenderTree;
+struct FVariabilitySeed;
 //----------------------------------------------------------------------------
-class RenderLayerDrawRect : public AbstractRenderLayer {
+class FRenderLayerDrawRect : public FAbstractRenderLayer {
 public:
-    explicit RenderLayerDrawRect(Engine::MaterialEffect *materialEffect);
-    RenderLayerDrawRect(Engine::MaterialEffect *materialEffect, const RectangleF& viewport);
-    virtual ~RenderLayerDrawRect();
+    explicit FRenderLayerDrawRect(Engine::FMaterialEffect *materialEffect);
+    FRenderLayerDrawRect(Engine::FMaterialEffect *materialEffect, const RectangleF& viewport);
+    virtual ~FRenderLayerDrawRect();
 
-    const Engine::MaterialEffect *MaterialEffect() const { return _materialEffect.get(); }
+    const Engine::FMaterialEffect *FMaterialEffect() const { return _materialEffect.get(); }
     const RectangleF& Viewport() const { return _viewport; }
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 protected:
-    virtual void PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, const RenderTree *renderTree, VariabilitySeed *seeds) override;
+    virtual void PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, FMaterialDatabase *materialDatabase, const FRenderTree *renderTree, FVariabilitySeed *seeds) override;
     virtual void RenderImpl_(Graphics::IDeviceAPIContext *context) override;
-    virtual void DestroyImpl_(Graphics::IDeviceAPIEncapsulator *device, const RenderTree *renderTree) override;
+    virtual void DestroyImpl_(Graphics::IDeviceAPIEncapsulator *device, const FRenderTree *renderTree) override;
 
 private:
     PMaterialEffect _materialEffect;
     RectangleF _viewport;
     Graphics::PVertexBuffer _vertices;
-    VariabilitySeed _effectVariability;
+    FVariabilitySeed _effectVariability;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

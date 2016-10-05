@@ -11,7 +11,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <size_t _SizeInBytes>
-class InSituStorage : Meta::ThreadResource {
+class InSituStorage : Meta::FThreadResource {
 public:
     InSituStorage() noexcept
         : _insituPtr(reinterpret_cast<u8*>(&_insituData))
@@ -223,8 +223,8 @@ void* InSituAllocator<T, _SizeInBytes, _Allocator>::relocate(void* p, size_type 
             return result;
 
         return (_insitu.Contains(p))
-            ? Relocate_AssumeNoRealloc(*this, MemoryView<value_type>(static_cast<pointer>(p), oldSize), newSize, oldSize)
-            : Relocate_AssumePod(static_cast<fallback_type&>(*this), MemoryView<value_type>(static_cast<pointer>(p), oldSize), newSize, oldSize);
+            ? Relocate_AssumeNoRealloc(*this, TMemoryView<value_type>(static_cast<pointer>(p), oldSize), newSize, oldSize)
+            : Relocate_AssumePod(static_cast<fallback_type&>(*this), TMemoryView<value_type>(static_cast<pointer>(p), oldSize), newSize, oldSize);
     }
 }
 //----------------------------------------------------------------------------

@@ -13,21 +13,21 @@ namespace Engine {
 //----------------------------------------------------------------------------
 FWD_REFPTR(AbstractRenderSurface);
 FWD_REFPTR(RenderSurfaceLock);
-struct VariabilitySeed;
+struct FVariabilitySeed;
 //----------------------------------------------------------------------------
-class RenderLayerSetRenderTarget : public AbstractRenderLayer {
+class FRenderLayerSetRenderTarget : public FAbstractRenderLayer {
 public:
-    explicit RenderLayerSetRenderTarget(AbstractRenderSurface *surface);
-    explicit RenderLayerSetRenderTarget(const MemoryView<const PAbstractRenderSurface>& surfaces);
-    RenderLayerSetRenderTarget(const MemoryView<const PAbstractRenderSurface>& surfaces, const PAbstractRenderSurface& depthStencil);
-    virtual ~RenderLayerSetRenderTarget();
+    explicit FRenderLayerSetRenderTarget(FAbstractRenderSurface *surface);
+    explicit FRenderLayerSetRenderTarget(const TMemoryView<const PAbstractRenderSurface>& surfaces);
+    FRenderLayerSetRenderTarget(const TMemoryView<const PAbstractRenderSurface>& surfaces, const PAbstractRenderSurface& depthStencil);
+    virtual ~FRenderLayerSetRenderTarget();
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 protected:
-    virtual void PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, const RenderTree *renderTree, VariabilitySeed *seeds) override;
+    virtual void PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, FMaterialDatabase *materialDatabase, const FRenderTree *renderTree, FVariabilitySeed *seeds) override;
     virtual void RenderImpl_(Graphics::IDeviceAPIContext *context) override;
-    virtual void DestroyImpl_(Graphics::IDeviceAPIEncapsulator *device, const RenderTree *renderTree) override;
+    virtual void DestroyImpl_(Graphics::IDeviceAPIEncapsulator *device, const FRenderTree *renderTree) override;
 
 private:
     STATIC_CONST_INTEGRAL(size_t, MaxSurface, 8);

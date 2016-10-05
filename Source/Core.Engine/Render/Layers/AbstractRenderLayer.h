@@ -21,51 +21,51 @@ namespace Engine {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(AbstractRenderLayer);
-class MaterialDatabase;
-class RenderBatch;
-class RenderTree;
-struct VariabilitySeed;
+class FMaterialDatabase;
+class FRenderBatch;
+class FRenderTree;
+struct FVariabilitySeed;
 //----------------------------------------------------------------------------
-class AbstractRenderLayer : public RefCountable {
+class FAbstractRenderLayer : public FRefCountable {
 protected:
-    AbstractRenderLayer(String&& name, bool enabled = true, bool exported = false, AbstractRenderLayer *next = nullptr);
+    FAbstractRenderLayer(FString&& name, bool enabled = true, bool exported = false, FAbstractRenderLayer *next = nullptr);
 
 public:
-    virtual ~AbstractRenderLayer();
+    virtual ~FAbstractRenderLayer();
 
-    AbstractRenderLayer(const AbstractRenderLayer& ) = delete;
-    AbstractRenderLayer& operator =(const AbstractRenderLayer& ) = delete;
+    FAbstractRenderLayer(const FAbstractRenderLayer& ) = delete;
+    FAbstractRenderLayer& operator =(const FAbstractRenderLayer& ) = delete;
 
-    const String& Name() const { return _name; }
-    void SetName(String&& name);
+    const FString& FName() const { return _name; }
+    void SetName(FString&& name);
 
     bool Enabled() const { return _nextWFlags.Flag0(); }
     void SetEnabled(bool value);
 
     bool Exported() const { return _nextWFlags.Flag1(); }
 
-    AbstractRenderLayer *Next() const { return _nextWFlags.Get(); }
-    void SetNext(AbstractRenderLayer *value);
-    AbstractRenderLayer *NextLayer(size_t offset) const;
+    FAbstractRenderLayer *Next() const { return _nextWFlags.Get(); }
+    void SetNext(FAbstractRenderLayer *value);
+    FAbstractRenderLayer *NextLayer(size_t offset) const;
 
-    RenderBatch *RenderBatchIFP();
-    const RenderBatch *RenderBatchIFP() const;
+    FRenderBatch *RenderBatchIFP();
+    const FRenderBatch *RenderBatchIFP() const;
 
-    void Prepare(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, const RenderTree *renderTree, VariabilitySeed *seeds);
+    void Prepare(Graphics::IDeviceAPIEncapsulator *device, FMaterialDatabase *materialDatabase, const FRenderTree *renderTree, FVariabilitySeed *seeds);
     void Render(Graphics::IDeviceAPIContext *context);
-    void Destroy(Graphics::IDeviceAPIEncapsulator *device, const RenderTree *renderTree);
+    void Destroy(Graphics::IDeviceAPIEncapsulator *device, const FRenderTree *renderTree);
 
 protected:
-    virtual RenderBatch *RenderBatchIFPImpl_() { return nullptr; }
-    virtual const RenderBatch *RenderBatchIFPImpl_() const { return nullptr; }
+    virtual FRenderBatch *RenderBatchIFPImpl_() { return nullptr; }
+    virtual const FRenderBatch *RenderBatchIFPImpl_() const { return nullptr; }
 
-    virtual void PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, MaterialDatabase *materialDatabase, const RenderTree *renderTree, VariabilitySeed *seeds) = 0;
+    virtual void PrepareImpl_(Graphics::IDeviceAPIEncapsulator *device, FMaterialDatabase *materialDatabase, const FRenderTree *renderTree, FVariabilitySeed *seeds) = 0;
     virtual void RenderImpl_(Graphics::IDeviceAPIContext *context) = 0;
-    virtual void DestroyImpl_(Graphics::IDeviceAPIEncapsulator *device, const RenderTree *renderTree) = 0;
+    virtual void DestroyImpl_(Graphics::IDeviceAPIEncapsulator *device, const FRenderTree *renderTree) = 0;
 
 private:
-    String _name;
-    Meta::PointerWFlags<AbstractRenderLayer> _nextWFlags;
+    FString _name;
+    Meta::TPointerWFlags<FAbstractRenderLayer> _nextWFlags;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -15,26 +15,26 @@ namespace Engine {
 //----------------------------------------------------------------------------
 ENGINESERVICE_GUID_DEF(IEffectCompilerService);
 //----------------------------------------------------------------------------
-DefaultEffectCompilerService::DefaultEffectCompilerService()
+FDefaultEffectCompilerService::FDefaultEffectCompilerService()
 :   IEffectCompilerService(ENGINESERVICE_CONSTRUCT(IEffectCompilerService)) {}
 //----------------------------------------------------------------------------
-DefaultEffectCompilerService::~DefaultEffectCompilerService() {}
+FDefaultEffectCompilerService::~FDefaultEffectCompilerService() {}
 //----------------------------------------------------------------------------
-Engine::EffectCompiler *DefaultEffectCompilerService::EffectCompiler() {
+Engine::FEffectCompiler *FDefaultEffectCompilerService::FEffectCompiler() {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(ServiceAvailable());
 
     return &_effectCompiler;
 }
 //----------------------------------------------------------------------------
-const Engine::EffectCompiler *DefaultEffectCompilerService::EffectCompiler() const {
+const Engine::FEffectCompiler *FDefaultEffectCompilerService::FEffectCompiler() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(ServiceAvailable());
 
     return &_effectCompiler;
 }
 //----------------------------------------------------------------------------
-void DefaultEffectCompilerService::Start(IServiceProvider *provider, const Guid& guid) {
+void FDefaultEffectCompilerService::Start(IServiceProvider *provider, const FGuid& guid) {
     IEffectCompilerService::Start(provider, guid);
 
     ENGINESERVICE_PROVIDE(IDeviceEncapsulatorService, deviceService, provider);
@@ -44,7 +44,7 @@ void DefaultEffectCompilerService::Start(IServiceProvider *provider, const Guid&
                             sharedConstantBufferFactoryService->SharedConstantBufferFactory() );
 }
 //----------------------------------------------------------------------------
-void DefaultEffectCompilerService::Shutdown(IServiceProvider *provider, const Guid& guid) {
+void FDefaultEffectCompilerService::Shutdown(IServiceProvider *provider, const FGuid& guid) {
     IEffectCompilerService::Shutdown(provider, guid);
 
     ENGINESERVICE_PROVIDE(IDeviceEncapsulatorService, deviceService, provider);

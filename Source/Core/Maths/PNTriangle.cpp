@@ -19,11 +19,11 @@ FORCE_INLINE float3 ProjectToPlane_(const float3& p, const float3& plane, const 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PNTriangle::PNTriangle() {}
+FPNTriangle::FPNTriangle() {}
 //----------------------------------------------------------------------------
-PNTriangle::~PNTriangle() {}
+FPNTriangle::~FPNTriangle() {}
 //----------------------------------------------------------------------------
-float3 PNTriangle::LerpPosition(float u, float v, float w) const {
+float3 FPNTriangle::LerpPosition(float u, float v, float w) const {
     return _p300 * (w * w * w) +
            _p030 * (u * u * u) +
            _p003 * (v * v * v) +
@@ -36,7 +36,7 @@ float3 PNTriangle::LerpPosition(float u, float v, float w) const {
            _p111 * (6.0f * w * u * v);
 }
 //----------------------------------------------------------------------------
-float3 PNTriangle::LerpNormal(float u, float v, float w) const {
+float3 FPNTriangle::LerpNormal(float u, float v, float w) const {
     return Normalize3(
            _n200 * (w * w) +
            _n020 * (u * u) +
@@ -46,8 +46,8 @@ float3 PNTriangle::LerpNormal(float u, float v, float w) const {
            _n101 * (w * v) );
 }
 //----------------------------------------------------------------------------
-void PNTriangle::FromTriangle(
-    PNTriangle& pn,
+void FPNTriangle::FromTriangle(
+    FPNTriangle& pn,
     const float3& p0, const float3& n0,
     const float3& p1, const float3& n1,
     const float3& p2, const float3& n2 ) {

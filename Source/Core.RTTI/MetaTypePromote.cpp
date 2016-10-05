@@ -17,7 +17,7 @@ namespace RTTI {
 namespace {
 //----------------------------------------------------------------------------
 #define METATYPE_PROMOTE_BEGIN_FROM(_Src) \
-    case MetaType<_Src>::TypeId: { \
+    case TMetaType<_Src>::TypeId: { \
         typedef _Src src_type; \
         switch (dstTypeId) {
 //----------------------------------------------------------------------------
@@ -27,7 +27,7 @@ namespace {
     break;
 //----------------------------------------------------------------------------
 #define METATYPE_PROMOTE_TO(_Dst) \
-        case MetaType<_Dst>::TypeId: \
+        case TMetaType<_Dst>::TypeId: \
             return _Impl<src_type, _Dst>()(std::forward<_Args>(args)...);
 //----------------------------------------------------------------------------
 #define METATYPE_PROMOTE_TO_INTEGRAL() \
@@ -45,18 +45,18 @@ namespace {
     METATYPE_PROMOTE_TO(double)
 //----------------------------------------------------------------------------
 #define METATYPE_PROMOTE_TO_STRING() \
-    METATYPE_PROMOTE_TO(String) \
-    METATYPE_PROMOTE_TO(WString)
+    METATYPE_PROMOTE_TO(FString) \
+    METATYPE_PROMOTE_TO(FWString)
 //----------------------------------------------------------------------------
 template <template <typename, typename> class _Impl>
-struct PromoteTest_ {
+struct TPromoteTest_ {
     template <typename... _Args>
-    bool operator ()(const MetaTypeId srcTypeId, const MetaTypeId dstTypeId, _Args&&... args) const;
+    bool operator ()(const FMetaTypeId srcTypeId, const FMetaTypeId dstTypeId, _Args&&... args) const;
 };
 //----------------------------------------------------------------------------
 template <template <typename, typename> class _Impl>
 template <typename... _Args>
-bool PromoteTest_<_Impl>::operator ()(const MetaTypeId srcTypeId, const MetaTypeId dstTypeId, _Args&&... args) const {
+bool TPromoteTest_<_Impl>::operator ()(const FMetaTypeId srcTypeId, const FMetaTypeId dstTypeId, _Args&&... args) const {
     switch (srcTypeId)
     {
         METATYPE_PROMOTE_BEGIN_FROM(int8_t)
@@ -113,7 +113,7 @@ bool PromoteTest_<_Impl>::operator ()(const MetaTypeId srcTypeId, const MetaType
         METATYPE_PROMOTE_TO_STRING()
         METATYPE_PROMOTE_END_FROM()
 
-        METATYPE_PROMOTE_BEGIN_FROM(RTTI::Vector<PMetaAtom>)
+        METATYPE_PROMOTE_BEGIN_FROM(RTTI::TVector<PMetaAtom>)
         METATYPE_PROMOTE_TO(byte2)
         METATYPE_PROMOTE_TO(byte4)
         METATYPE_PROMOTE_TO(ubyte2)
@@ -135,37 +135,37 @@ bool PromoteTest_<_Impl>::operator ()(const MetaTypeId srcTypeId, const MetaType
         METATYPE_PROMOTE_TO(float4x4)
         METATYPE_PROMOTE_END_FROM()
 
-        METATYPE_PROMOTE_BEGIN_FROM(RTTI::Vector<byte>)
+        METATYPE_PROMOTE_BEGIN_FROM(RTTI::TVector<byte>)
         METATYPE_PROMOTE_TO(byte2)
         METATYPE_PROMOTE_TO(byte4)
         METATYPE_PROMOTE_END_FROM()
 
-        METATYPE_PROMOTE_BEGIN_FROM(RTTI::Vector<ubyte>)
+        METATYPE_PROMOTE_BEGIN_FROM(RTTI::TVector<ubyte>)
         METATYPE_PROMOTE_TO(ubyte2)
         METATYPE_PROMOTE_TO(ubyte4)
         METATYPE_PROMOTE_END_FROM()
 
-        METATYPE_PROMOTE_BEGIN_FROM(RTTI::Vector<i16>)
+        METATYPE_PROMOTE_BEGIN_FROM(RTTI::TVector<i16>)
         METATYPE_PROMOTE_TO(short2)
         METATYPE_PROMOTE_TO(short4)
         METATYPE_PROMOTE_END_FROM()
 
-        METATYPE_PROMOTE_BEGIN_FROM(RTTI::Vector<u16>)
+        METATYPE_PROMOTE_BEGIN_FROM(RTTI::TVector<u16>)
         METATYPE_PROMOTE_TO(ushort2)
         METATYPE_PROMOTE_TO(ushort4)
         METATYPE_PROMOTE_END_FROM()
 
-        METATYPE_PROMOTE_BEGIN_FROM(RTTI::Vector<i32>)
+        METATYPE_PROMOTE_BEGIN_FROM(RTTI::TVector<i32>)
         METATYPE_PROMOTE_TO(word2)
         METATYPE_PROMOTE_TO(word4)
         METATYPE_PROMOTE_END_FROM()
 
-        METATYPE_PROMOTE_BEGIN_FROM(RTTI::Vector<u32>)
+        METATYPE_PROMOTE_BEGIN_FROM(RTTI::TVector<u32>)
         METATYPE_PROMOTE_TO(uword2)
         METATYPE_PROMOTE_TO(uword4)
         METATYPE_PROMOTE_END_FROM()
 
-        METATYPE_PROMOTE_BEGIN_FROM(RTTI::Vector<float>)
+        METATYPE_PROMOTE_BEGIN_FROM(RTTI::TVector<float>)
         METATYPE_PROMOTE_TO(float2)
         METATYPE_PROMOTE_TO(float3)
         METATYPE_PROMOTE_TO(float4)
@@ -175,7 +175,7 @@ bool PromoteTest_<_Impl>::operator ()(const MetaTypeId srcTypeId, const MetaType
         METATYPE_PROMOTE_TO(float4x4)
         METATYPE_PROMOTE_END_FROM()
 
-        METATYPE_PROMOTE_BEGIN_FROM(RTTI::Vector<i64>)
+        METATYPE_PROMOTE_BEGIN_FROM(RTTI::TVector<i64>)
         METATYPE_PROMOTE_TO(byte2)
         METATYPE_PROMOTE_TO(byte4)
         METATYPE_PROMOTE_TO(ubyte2)
@@ -197,12 +197,12 @@ bool PromoteTest_<_Impl>::operator ()(const MetaTypeId srcTypeId, const MetaType
         METATYPE_PROMOTE_TO(float4x4)
         METATYPE_PROMOTE_END_FROM()
 
-        METATYPE_PROMOTE_BEGIN_FROM(String)
-        METATYPE_PROMOTE_TO(Name)
+        METATYPE_PROMOTE_BEGIN_FROM(FString)
+        METATYPE_PROMOTE_TO(FName)
         METATYPE_PROMOTE_TO(BinaryData)
         METATYPE_PROMOTE_END_FROM()
 
-        METATYPE_PROMOTE_BEGIN_FROM(RTTI::Dictionary<PMetaAtom COMMA PMetaAtom>)
+        METATYPE_PROMOTE_BEGIN_FROM(RTTI::TDictionary<PMetaAtom COMMA PMetaAtom>)
         METATYPE_PROMOTE_TO(OpaqueData)
         METATYPE_PROMOTE_END_FROM()
     }
@@ -223,55 +223,55 @@ bool PromoteTest_<_Impl>::operator ()(const MetaTypeId srcTypeId, const MetaType
 namespace {
 //----------------------------------------------------------------------------
 template <typename _From, typename _To>
-struct PromoteMoveImpl_ {
-    bool operator ()(MetaAtom *dst, MetaAtom *src) const {
+struct FPromoteMoveImpl_ {
+    bool operator ()(FMetaAtom *dst, FMetaAtom *src) const {
         return PromoteMove(dst->Cast<_To>()->Wrapper(), std::move(src->Cast<_From>()->Wrapper()) );
     }
 
-    bool operator ()(MetaAtom *dst, void *src, MetaTypeId srcTypeId) const {
+    bool operator ()(FMetaAtom *dst, void *src, FMetaTypeId srcTypeId) const {
         UNUSED(srcTypeId);
-        Assert(srcTypeId == MetaType<_From>::TypeId);
+        Assert(srcTypeId == TMetaType<_From>::TypeId);
         return PromoteMove(dst->Cast<_To>()->Wrapper(), std::move(*reinterpret_cast<_From *>(src)));
     }
 
-    bool operator ()(MetaTypeId dstTypeId, void *dst, MetaAtom *src) const {
+    bool operator ()(FMetaTypeId dstTypeId, void *dst, FMetaAtom *src) const {
         UNUSED(dstTypeId);
-        Assert(dstTypeId == MetaType<_To>::TypeId);
+        Assert(dstTypeId == TMetaType<_To>::TypeId);
         return PromoteMove(*reinterpret_cast<_To *>(dst), std::move(src->Cast<_From>()->Wrapper()));
     }
 };
 //----------------------------------------------------------------------------
 template <typename _From, typename _To>
-struct PromoteCopyImpl_ {
-    bool operator ()(MetaAtom *dst, const MetaAtom *src) const {
+struct FPromoteCopyImpl_ {
+    bool operator ()(FMetaAtom *dst, const FMetaAtom *src) const {
         return PromoteCopy(dst->Cast<_To>()->Wrapper(), src->Cast<_From>()->Wrapper());
     }
 
-    bool operator ()(MetaAtom *dst, const void *src, MetaTypeId srcTypeId) const {
+    bool operator ()(FMetaAtom *dst, const void *src, FMetaTypeId srcTypeId) const {
         UNUSED(srcTypeId);
-        Assert(srcTypeId == MetaType<_From>::TypeId);
+        Assert(srcTypeId == TMetaType<_From>::TypeId);
         return PromoteCopy(dst->Cast<_To>()->Wrapper(), *reinterpret_cast<const _From *>(src));
     }
 
-    bool operator ()(MetaTypeId dstTypeId, void *dst, const MetaAtom *src) const {
+    bool operator ()(FMetaTypeId dstTypeId, void *dst, const FMetaAtom *src) const {
         UNUSED(dstTypeId);
-        Assert(dstTypeId == MetaType<_To>::TypeId);
+        Assert(dstTypeId == TMetaType<_To>::TypeId);
         return PromoteCopy(*reinterpret_cast<_To *>(dst), src->Cast<_From>()->Wrapper());
     }
 };
 //----------------------------------------------------------------------------
-static constexpr MetaTypeId AtomTypeId = MetaType<PMetaAtom>::TypeId;
+static constexpr FMetaTypeId AtomTypeId = TMetaType<PMetaAtom>::TypeId;
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool PromoteMove(MetaAtom *dst, MetaAtom *src) {
+bool PromoteMove(FMetaAtom *dst, FMetaAtom *src) {
     Assert(dst);
     Assert(src);
 
-    const MetaTypeId dstTypeId = dst->TypeInfo().Id;
-    const MetaTypeId srcTypeId = src->TypeInfo().Id;
+    const FMetaTypeId dstTypeId = dst->TypeInfo().Id;
+    const FMetaTypeId srcTypeId = src->TypeInfo().Id;
 
     if (srcTypeId == dstTypeId) {
         dst->MoveFrom(src);
@@ -287,16 +287,16 @@ bool PromoteMove(MetaAtom *dst, MetaAtom *src) {
         return (srcAtom ? PromoteMove(dst, srcAtom.get()) : false);
     }
     else {
-        return PromoteTest_<PromoteMoveImpl_>()(srcTypeId, dstTypeId, dst, src);
+        return TPromoteTest_<FPromoteMoveImpl_>()(srcTypeId, dstTypeId, dst, src);
     }
 }
 //----------------------------------------------------------------------------
-bool PromoteCopy(MetaAtom *dst, const MetaAtom *src) {
+bool PromoteCopy(FMetaAtom *dst, const FMetaAtom *src) {
     Assert(dst);
     Assert(src);
 
-    const MetaTypeId dstTypeId = dst->TypeInfo().Id;
-    const MetaTypeId srcTypeId = src->TypeInfo().Id;
+    const FMetaTypeId dstTypeId = dst->TypeInfo().Id;
+    const FMetaTypeId srcTypeId = src->TypeInfo().Id;
 
     if (srcTypeId == dstTypeId) {
         dst->CopyFrom(src);
@@ -312,68 +312,68 @@ bool PromoteCopy(MetaAtom *dst, const MetaAtom *src) {
         return (srcAtom ? PromoteCopy(dst, srcAtom.get()) : false);
     }
     else {
-        return PromoteTest_<PromoteCopyImpl_>()(srcTypeId, dstTypeId, dst, src);
+        return TPromoteTest_<FPromoteCopyImpl_>()(srcTypeId, dstTypeId, dst, src);
     }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool PromoteMove(MetaAtom *dst, void *src, MetaTypeId srcTypeId) {
+bool PromoteMove(FMetaAtom *dst, void *src, FMetaTypeId srcTypeId) {
     Assert(dst);
     Assert(src);
 
-    const MetaTypeId dstTypeId = dst->TypeInfo().Id;
+    const FMetaTypeId dstTypeId = dst->TypeInfo().Id;
 
     // must be handled before :
     Assert(srcTypeId != dstTypeId);
     Assert(srcTypeId != AtomTypeId);
     Assert(dstTypeId != AtomTypeId);
 
-    return PromoteTest_<PromoteMoveImpl_>()(srcTypeId, dstTypeId, dst, src, srcTypeId);
+    return TPromoteTest_<FPromoteMoveImpl_>()(srcTypeId, dstTypeId, dst, src, srcTypeId);
 }
 //----------------------------------------------------------------------------
-bool PromoteCopy(MetaAtom *dst, const void *src, MetaTypeId srcTypeId) {
+bool PromoteCopy(FMetaAtom *dst, const void *src, FMetaTypeId srcTypeId) {
     Assert(dst);
     Assert(src);
 
-    const MetaTypeId dstTypeId = dst->TypeInfo().Id;
+    const FMetaTypeId dstTypeId = dst->TypeInfo().Id;
 
     // must be handled before :
     Assert(srcTypeId != dstTypeId);
     Assert(srcTypeId != AtomTypeId);
     Assert(dstTypeId != AtomTypeId);
 
-    return PromoteTest_<PromoteCopyImpl_>()(srcTypeId, dstTypeId, dst, src, srcTypeId);
+    return TPromoteTest_<FPromoteCopyImpl_>()(srcTypeId, dstTypeId, dst, src, srcTypeId);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool PromoteMove(MetaTypeId dstTypeId, void *dst, MetaAtom *src) {
+bool PromoteMove(FMetaTypeId dstTypeId, void *dst, FMetaAtom *src) {
     Assert(dst);
     Assert(src);
 
-    const MetaTypeId srcTypeId = src->TypeInfo().Id;
+    const FMetaTypeId srcTypeId = src->TypeInfo().Id;
 
     // must be handled before :
     Assert(srcTypeId != dstTypeId);
     Assert(srcTypeId != AtomTypeId);
     Assert(dstTypeId != AtomTypeId);
 
-    return PromoteTest_<PromoteMoveImpl_>()(srcTypeId, dstTypeId, dstTypeId, dst, src);
+    return TPromoteTest_<FPromoteMoveImpl_>()(srcTypeId, dstTypeId, dstTypeId, dst, src);
 }
 //----------------------------------------------------------------------------
-bool PromoteCopy(MetaTypeId dstTypeId, void *dst, const MetaAtom *src) {
+bool PromoteCopy(FMetaTypeId dstTypeId, void *dst, const FMetaAtom *src) {
     Assert(dst);
     Assert(src);
 
-    const MetaTypeId srcTypeId = src->TypeInfo().Id;
+    const FMetaTypeId srcTypeId = src->TypeInfo().Id;
 
     // must be handled before :
     Assert(srcTypeId != dstTypeId);
     Assert(srcTypeId != AtomTypeId);
     Assert(dstTypeId != AtomTypeId);
 
-    return PromoteTest_<PromoteCopyImpl_>()(srcTypeId, dstTypeId, dstTypeId, dst, src);
+    return TPromoteTest_<FPromoteCopyImpl_>()(srcTypeId, dstTypeId, dstTypeId, dst, src);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

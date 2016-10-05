@@ -8,37 +8,37 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FileSystemConstNames {
+class FFileSystemConstNames {
 private:
-    FileSystemConstNames();
+    FFileSystemConstNames();
 
 public:
     // Tokens :
-    static const Dirname& DotDot();
+    static const FDirname& DotDot();
 
     // Extnames :
-    static const Extname& DaeExt();
-    static const Extname& FxExt();
-    static const Extname& ObjExt();
-    static const Extname& PlyExt();
+    static const FExtname& DaeExt();
+    static const FExtname& FxExt();
+    static const FExtname& ObjExt();
+    static const FExtname& PlyExt();
 
-    static const Extname& BmpExt();
-    static const Extname& DdsExt();
-    static const Extname& GifExt();
-    static const Extname& HdrExt();
-    static const Extname& JpgExt();
-    static const Extname& PgmExt();
-    static const Extname& PngExt();
-    static const Extname& PpmExt();
-    static const Extname& PicExt();
-    static const Extname& PsdExt();
-    static const Extname& TgaExt();
+    static const FExtname& BmpExt();
+    static const FExtname& DdsExt();
+    static const FExtname& GifExt();
+    static const FExtname& HdrExt();
+    static const FExtname& JpgExt();
+    static const FExtname& PgmExt();
+    static const FExtname& PngExt();
+    static const FExtname& PpmExt();
+    static const FExtname& PicExt();
+    static const FExtname& PsdExt();
+    static const FExtname& TgaExt();
 
     // Mounting points :
-    static const MountingPoint& GameDataDir();
-    static const MountingPoint& ProcessDir();
-    static const MountingPoint& TmpDir();
-    static const MountingPoint& VirtualDataDir();
+    static const FMountingPoint& GameDataDir();
+    static const FMountingPoint& ProcessDir();
+    static const FMountingPoint& TmpDir();
+    static const FMountingPoint& VirtualDataDir();
 
     static void Start();
     static void Shutdown();

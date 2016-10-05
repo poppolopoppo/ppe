@@ -9,22 +9,22 @@ namespace Network {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Address::Address() : _port(DefaultPort) {}
+FAddress::FAddress() : _port(DefaultPort) {}
 //----------------------------------------------------------------------------
-Address::Address(const StringView& host, size_t port) : Address(ToString(host), port) {}
+FAddress::FAddress(const FStringView& host, size_t port) : FAddress(ToString(host), port) {}
 //----------------------------------------------------------------------------
-Address::Address(String&& host, size_t port) : _host(std::move(host)), _port(port) {
-    Assert(String::npos == _host.find_first_of(':'));
+FAddress::FAddress(FString&& host, size_t port) : _host(std::move(host)), _port(port) {
+    Assert(FString::npos == _host.find_first_of(':'));
 }
 //----------------------------------------------------------------------------
-Address::~Address() {}
+FAddress::~FAddress() {}
 //----------------------------------------------------------------------------
-bool Address::IsIPv4() const {
+bool FAddress::IsIPv4() const {
     u8 ipV4[4];
     return ParseIPv4(ipV4, *this);
 }
 //----------------------------------------------------------------------------
-bool Address::IP(Address* paddr, const StringView& hostname, size_t port/* = DefaultPort */) {
+bool FAddress::IP(FAddress* paddr, const FStringView& hostname, size_t port/* = DefaultPort */) {
     Assert(paddr);
     Assert(!hostname.empty());
 
@@ -35,7 +35,7 @@ bool Address::IP(Address* paddr, const StringView& hostname, size_t port/* = Def
     return true;
 }
 //----------------------------------------------------------------------------
-bool Address::Localhost(Address* paddr, size_t port/* = DefaultPort */) {
+bool FAddress::Localhost(FAddress* paddr, size_t port/* = DefaultPort */) {
     Assert(paddr);
 
     if (not LocalHostName(paddr->_host))
@@ -45,7 +45,7 @@ bool Address::Localhost(Address* paddr, size_t port/* = DefaultPort */) {
     return true;
 }
 //----------------------------------------------------------------------------
-bool Address::Parse(Address* paddr, const StringView& input) {
+bool FAddress::Parse(FAddress* paddr, const FStringView& input) {
     Assert(paddr);
     Assert(!input.empty());
 
@@ -54,7 +54,7 @@ bool Address::Parse(Address* paddr, const StringView& input) {
         return false;
 
     const size_t length = std::distance(input.rbegin(), it);
-    const StringView inputPort(std::addressof(*it), length);
+    const FStringView inputPort(std::addressof(*it), length);
     Assert(!inputPort.empty());
 
     if (not Atoi(&paddr->_port, inputPort, 10))
@@ -65,7 +65,7 @@ bool Address::Parse(Address* paddr, const StringView& input) {
     return true;
 }
 //----------------------------------------------------------------------------
-bool Address::ParseIPv4(u8 (&ipV4)[4], const Address& addr) {
+bool FAddress::ParseIPv4(u8 (&ipV4)[4], const FAddress& addr) {
     Assert(!addr.empty());
 
     size_t slot = 0;
@@ -97,7 +97,7 @@ bool Address::ParseIPv4(u8 (&ipV4)[4], const Address& addr) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool LocalHostName(String& hostname) {
+bool LocalHostName(FString& hostname) {
     char temp[NI_MAXHOST];
     if (::gethostname(temp, NI_MAXHOST) == SOCKET_ERROR)
         return false;
@@ -108,7 +108,7 @@ bool LocalHostName(String& hostname) {
     return true;
 }
 //----------------------------------------------------------------------------
-bool HostnameToIP(String& ip, const StringView& hostname, size_t n/* = 0 */) {
+bool HostnameToIP(FString& ip, const FStringView& hostname, size_t n/* = 0 */) {
     Assert(!hostname.empty());
     Assert(hostname.size() < NI_MAXHOST);
 
@@ -147,7 +147,7 @@ bool HostnameToIP(String& ip, const StringView& hostname, size_t n/* = 0 */) {
     return true;
 }
 //----------------------------------------------------------------------------
-bool IPToHostname(String& hostname, const StringView& ip) {
+bool IPToHostname(FString& hostname, const FStringView& ip) {
     Assert(!ip.empty());
 
     char temp[NI_MAXHOST]; // hostname must be a null terminated string

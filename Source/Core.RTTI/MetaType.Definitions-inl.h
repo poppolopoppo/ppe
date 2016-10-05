@@ -1,6 +1,6 @@
 
 // Here goes the list of all BASIC types supported by RTTI
-// Use MetaTypeTraits.h to project your custom type to one of these
+// Use TMetaTypeTraits.h to project your custom type to one of these
 
 #define FOREACH_CORE_RTTI_NATIVE_TYPES(_Macro, ...) \
     COMMA_PROTECT(_Macro(bool,       bool,                           1, ##__VA_ARGS__)) \
@@ -35,10 +35,10 @@
     COMMA_PROTECT(_Macro(float3x3,   Core::float3x3,                30, ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(float4x3,   Core::float4x3,                31, ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(float4x4,   Core::float4x4,                32, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(String,     Core::String,                  33, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(WString,    Core::WString,                 34, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(MetaAtom,   Core::RTTI::PMetaAtom,         35, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(MetaObject, Core::RTTI::PMetaObject,       36, ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(Name,       Core::RTTI::Name,              37, ##__VA_ARGS__)) \
+    COMMA_PROTECT(_Macro(FString,    Core::FString,                 33, ##__VA_ARGS__)) \
+    COMMA_PROTECT(_Macro(FWString,   Core::FWString,                34, ##__VA_ARGS__)) \
+    COMMA_PROTECT(_Macro(FMetaAtom,  Core::RTTI::PMetaAtom,         35, ##__VA_ARGS__)) \
+    COMMA_PROTECT(_Macro(FMetaObject,Core::RTTI::PMetaObject,       36, ##__VA_ARGS__)) \
+    COMMA_PROTECT(_Macro(FName,      Core::RTTI::FName,             37, ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(BinaryData, Core::RTTI::BinaryData,        38, ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(OpaqueData, Core::RTTI::OpaqueData,        39, ##__VA_ARGS__))

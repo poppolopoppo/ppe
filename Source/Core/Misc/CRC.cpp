@@ -377,14 +377,14 @@ static u32 CRC32_SlicingBy8_(const u8* buf, size_t len) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-CRC32_t::CRC32_t() : _crc32(CRCINIT) {}
+FCRC32_t::FCRC32_t() : _crc32(CRCINIT) {}
 //----------------------------------------------------------------------------
-void CRC32_t::Update(const MemoryView<const u8>& rawData) {
+void FCRC32_t::Update(const TMemoryView<const u8>& rawData) {
     for (u8 byte : rawData)
         _crc32 = ( _crc32 >> 8 ) ^ g_CRC32Table[ ( _crc32 ^ byte ) & 0x000000FF ];
 }
 //----------------------------------------------------------------------------
-void CRC32_t::UpdateI(const MemoryView<const u8>& rawData) {
+void FCRC32_t::UpdateI(const TMemoryView<const u8>& rawData) {
     for (u8 byte : rawData) {
         if ( ( byte >= 'A' ) && ( byte <= 'Z' ) )
 			byte = 'a' + ( byte - 'A' );
@@ -392,11 +392,11 @@ void CRC32_t::UpdateI(const MemoryView<const u8>& rawData) {
     }
 }
 //----------------------------------------------------------------------------
-u32 CRC32_t::Finalize() {
+u32 FCRC32_t::Finalize() {
     return ( _crc32 ^ CRCINIT );
 }
 //----------------------------------------------------------------------------
-u32 CRC32(const MemoryView<const u8>& rawData) {
+u32 CRC32(const TMemoryView<const u8>& rawData) {
     return CRC32_SlicingBy8_(rawData.Pointer(), rawData.SizeInBytes() );
 }
 //----------------------------------------------------------------------------

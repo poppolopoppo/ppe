@@ -18,7 +18,7 @@ namespace Engine {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Functor>
-class MaterialParameterMemoizer : public ITypedMaterialParameter<typename _Functor::value_type>, private _Functor {
+class TMaterialParameterMemoizer : public ITypedMaterialParameter<typename _Functor::value_type>, private _Functor {
 public:
     typedef ITypedMaterialParameter<typename _Functor::value_type> parent_type;
     typedef _Functor functor_type;
@@ -28,35 +28,35 @@ public:
     using functor_type::TypedEval;
 
     template <typename... _Args>
-    MaterialParameterMemoizer(_Args&&... args) : functor_type(std::forward<_Args>(args)...) {}
-    virtual ~MaterialParameterMemoizer() {}
+    TMaterialParameterMemoizer(_Args&&... args) : functor_type(std::forward<_Args>(args)...) {}
+    virtual ~TMaterialParameterMemoizer() {}
 
-    MaterialParameterMemoizer(_Functor&& functor) : functor_type(std::move(functor)) {}
-    MaterialParameterMemoizer(const _Functor& functor) : functor_type(functor) {}
+    TMaterialParameterMemoizer(_Functor&& functor) : functor_type(std::move(functor)) {}
+    TMaterialParameterMemoizer(const _Functor& functor) : functor_type(functor) {}
 
-    virtual MaterialParameterInfo Info() const override;
+    virtual FMaterialParameterInfo Info() const override;
 
-    virtual void Eval(const MaterialParameterContext& context, void *dst, size_t sizeInBytes) override;
+    virtual void Eval(const FMaterialParameterContext& context, void *dst, size_t sizeInBytes) override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <MaterialVariability _Variability, typename T, void (&_Fn)(const MaterialParameterContext& , T& )>
-struct MaterialFunctor {
+template <EMaterialVariability _Variability, typename T, void (&_Fn)(const FMaterialParameterContext& , T& )>
+struct TMaterialFunctor {
     typedef T value_type;
-    MaterialVariability Variability() const { return _Variability; }
-    void TypedEval(const MaterialParameterContext& context, T& dst) {
+    EMaterialVariability Variability() const { return _Variability; }
+    void TypedEval(const FMaterialParameterContext& context, T& dst) {
         _Fn(context, dst);
     }
 };
 //----------------------------------------------------------------------------
 #define MATERIALPARAMETER_FN(_Variability, _Type, _Fn) \
-    Core::Engine::MaterialParameterMemoizer< Core::Engine::MaterialFunctor<_Variability, _Type, _Fn> >
+    Core::Engine::TMaterialParameterMemoizer< Core::Engine::TMaterialFunctor<_Variability, _Type, _Fn> >
 //----------------------------------------------------------------------------
 #define MATERIALPARAMETER_FN_DECL(_Variability, _Type, _Name) \
-    void _Name(const MaterialParameterContext& context, _Type& dst); \
+    void _Name(const FMaterialParameterContext& context, _Type& dst); \
     extern template class MATERIALPARAMETER_FN(_Variability, _Type, _Name);
 //----------------------------------------------------------------------------
 #define MATERIALPARAMETER_FN_DEF(_Variability, _Type, _Name) \

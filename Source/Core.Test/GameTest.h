@@ -28,29 +28,29 @@ FWD_REFPTR(PerspectiveCamera);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class GameTest : public Core::Application::ApplicationWindow {
+class FGameTest : public Core::Application::FApplicationWindow {
 public:
-    typedef Core::Application::ApplicationWindow parent_type;
+    typedef Core::Application::FApplicationWindow parent_type;
 
-    GameTest() : GameTest(L"Core Game Window Test Pipo Bimbo") {}
-    explicit GameTest(const wchar_t *appname);
-    virtual ~GameTest();
+    FGameTest() : FGameTest(L"Core Game Window Test Pipo Bimbo") {}
+    explicit FGameTest(const wchar_t *appname);
+    virtual ~FGameTest();
 
 protected:
-    virtual void Initialize(const Timeline& time) override;
+    virtual void Initialize(const FTimeline& time) override;
     virtual void Destroy() override;
 
     virtual void LoadContent() override;
     virtual void UnloadContent() override;
 
-    virtual void Update(const Timeline& time) override;
-    virtual void Draw(const Timeline& time) override;
+    virtual void Update(const FTimeline& time) override;
+    virtual void Draw(const FTimeline& time) override;
 
     virtual void Present() override;
 
 private:
-    Timely::PulsarSmoothstep<float4> _clearColor;
-    Timely::PulsarSmoothstep<float> _rotationAngle;
+    Timely::TPulsarSmoothstep<float4> _clearColor;
+    Timely::TPulsarSmoothstep<float> _rotationAngle;
 
     Engine::PPerspectiveCamera _camera;
     Engine::PKeyboardMouseCameraController _cameraController;

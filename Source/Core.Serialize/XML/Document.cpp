@@ -20,10 +20,10 @@ namespace  {
 namespace Token_ {
 STATIC_CONST_INTEGRAL(char, Assignment, '=');
 STATIC_CONST_INTEGRAL(char, Div,        '/');
-STATIC_CONST_INTEGRAL(char, Greater,    '>');
-STATIC_CONST_INTEGRAL(char, Less,       '<');
+STATIC_CONST_INTEGRAL(char, TGreater,    '>');
+STATIC_CONST_INTEGRAL(char, TLess,       '<');
 STATIC_CONST_INTEGRAL(char, Minus,      '-');
-STATIC_CONST_INTEGRAL(char, Not,        '!');
+STATIC_CONST_INTEGRAL(char, TNot,        '!');
 STATIC_CONST_INTEGRAL(char, Question,   '?');
 STATIC_CONST_INTEGRAL(char, Quote,      '"');
 } //!Token_
@@ -32,18 +32,18 @@ static bool IsIdentifierCharset_(char ch) {
     return (IsAlnum(ch) || '_' == ch);
 }
 //----------------------------------------------------------------------------
-static void ExpectChar_(Lexer::LookAheadReader& reader, char expected) {
+static void ExpectChar_(FLexer::FLookAheadReader& reader, char expected) {
     Assert(0 != expected);
 
     reader.EatWhiteSpaces();
 
     if (expected != reader.Peek())
-        CORE_THROW_IT(XMLException("unexpected token", reader.SourceSite()));
+        CORE_THROW_IT(FXMLException("unexpected token", reader.SourceSite()));
 
     reader.Read();
 }
 //----------------------------------------------------------------------------
-static void ExpectToken_(Lexer::LookAheadReader& reader, const StringView& id) {
+static void ExpectToken_(FLexer::FLookAheadReader& reader, const FStringView& id) {
     Assert(id.size());
 
     reader.EatWhiteSpaces();
@@ -51,11 +51,11 @@ static void ExpectToken_(Lexer::LookAheadReader& reader, const StringView& id) {
     bool succeed = true;
     forrange(i, 0, id.size()) {
         if (not EqualsI(reader.Read(), id[i]))
-            CORE_THROW_IT(XMLException("unexpected idenitifier", reader.SourceSite()));
+            CORE_THROW_IT(FXMLException("unexpected idenitifier", reader.SourceSite()));
     }
 }
 //----------------------------------------------------------------------------
-static bool ReadIdentifier_(Lexer::LookAheadReader& reader, String& id) {
+static bool ReadIdentifier_(FLexer::FLookAheadReader& reader, FString& id) {
     Assert(id.empty());
 
     reader.EatWhiteSpaces();
@@ -70,13 +70,13 @@ static bool ReadIdentifier_(Lexer::LookAheadReader& reader, String& id) {
     return true;
 }
 //----------------------------------------------------------------------------
-static void ExpectIdentifier_(Lexer::LookAheadReader& reader, String& id) {
-    const Lexer::Location site = reader.SourceSite();
+static void ExpectIdentifier_(FLexer::FLookAheadReader& reader, FString& id) {
+    const FLexer::FLocation site = reader.SourceSite();
     if (false == ReadIdentifier_(reader, id))
-        CORE_THROW_IT(XMLException("expected an identitfer", site));
+        CORE_THROW_IT(FXMLException("expected an identitfer", site));
 }
 //----------------------------------------------------------------------------
-static bool ReadString_(Lexer::LookAheadReader& reader, String& str) {
+static bool ReadString_(FLexer::FLookAheadReader& reader, FString& str) {
     Assert(str.empty());
 
     reader.EatWhiteSpaces();
@@ -84,7 +84,7 @@ static bool ReadString_(Lexer::LookAheadReader& reader, String& str) {
     if (reader.Peek() != Token_::Quote)
         return false;
 
-    const Lexer::Location site = reader.SourceSite();
+    const FLexer::FLocation site = reader.SourceSite();
 
     reader.SeekFwd(1);
 
@@ -92,30 +92,30 @@ static bool ReadString_(Lexer::LookAheadReader& reader, String& str) {
         str += reader.Read();
 
     if (reader.Read() != Token_::Quote)
-        CORE_THROW_IT(XMLException("unclosed string", site));
+        CORE_THROW_IT(FXMLException("unclosed string", site));
 
     return true;
 }
 //----------------------------------------------------------------------------
-static void ExpectString_(Lexer::LookAheadReader& reader, String& str) {
-    const Lexer::Location site = reader.SourceSite();
+static void ExpectString_(FLexer::FLookAheadReader& reader, FString& str) {
+    const FLexer::FLocation site = reader.SourceSite();
     if (false == ReadString_(reader, str))
-        CORE_THROW_IT(XMLException("expected a string value", site));
+        CORE_THROW_IT(FXMLException("expected a string value", site));
 }
 //----------------------------------------------------------------------------
-static char PeekChar_(Lexer::LookAheadReader& reader) {
+static char PeekChar_(FLexer::FLookAheadReader& reader) {
     reader.EatWhiteSpaces();
     return reader.Peek();
 }
 //----------------------------------------------------------------------------
-static void ReadHeader_(Lexer::LookAheadReader& reader, String& version, String& encoding, String& standalone) {
-    ExpectChar_(reader, Token_::Less);
+static void ReadHeader_(FLexer::FLookAheadReader& reader, FString& version, FString& encoding, FString& standalone) {
+    ExpectChar_(reader, Token_::TLess);
     ExpectChar_(reader, Token_::Question);
     ExpectToken_(reader, "xml");
 
-    String eaten;
+    FString eaten;
     while (ReadIdentifier_(reader, eaten) ) {
-        String* pValue = nullptr;
+        FString* pValue = nullptr;
         if (EqualsI("version", eaten.MakeView())) {
             pValue = &version;
         }
@@ -126,7 +126,7 @@ static void ReadHeader_(Lexer::LookAheadReader& reader, String& version, String&
             pValue = &standalone;
         }
         else {
-            CORE_THROW_IT(XMLException("invalid document attribute", reader.SourceSite()));
+            CORE_THROW_IT(FXMLException("invalid document attribute", reader.SourceSite()));
         }
 
         Assert(pValue);
@@ -141,36 +141,36 @@ static void ReadHeader_(Lexer::LookAheadReader& reader, String& version, String&
     }
 
     ExpectChar_(reader, Token_::Question);
-    ExpectChar_(reader, Token_::Greater);
+    ExpectChar_(reader, Token_::TGreater);
 }
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Document::Document() {}
+FDocument::FDocument() {}
 //----------------------------------------------------------------------------
-Document::~Document() {}
+FDocument::~FDocument() {}
 //----------------------------------------------------------------------------
-const Element* Document::FindById(const StringView& Id) const {
+const FElement* FDocument::FindById(const FStringView& Id) const {
     Assert(!Id.empty());
 
     // some exporter append a leading '#'
-    const StringView query = ('#' == Id.front() ? Id.ShiftFront() : Id);
+    const FStringView query = ('#' == Id.front() ? Id.ShiftFront() : Id);
 
     SElement elt;
     return (TryGetValue(_byIdentifier, query, &elt) ? elt.get() : nullptr);
 }
 //----------------------------------------------------------------------------
-const Element* Document::XPath(const MemoryView<const Name>& path) const {
+const FElement* FDocument::XPath(const TMemoryView<const FName>& path) const {
     return (_root ? _root->XPath(path) : nullptr );
 }
 //----------------------------------------------------------------------------
-size_t Document::XPath(const MemoryView<const Name>& path, const std::function<void(const Element&)>& functor) const {
+size_t FDocument::XPath(const TMemoryView<const FName>& path, const std::function<void(const FElement&)>& functor) const {
     return (_root ? _root->XPath(path, functor) : 0 );
 }
 //----------------------------------------------------------------------------
-bool Document::Load(Document* document, const Filename& filename) {
+bool FDocument::Load(FDocument* document, const FFilename& filename) {
     Assert(document);
     Assert(not filename.empty());
 
@@ -181,7 +181,7 @@ bool Document::Load(Document* document, const Filename& filename) {
     return Load(document, filename, content.MakeConstView().Cast<const char>() );
 }
 //----------------------------------------------------------------------------
-bool Document::Load(Document* document, const Filename& filename, IStreamReader* input) {
+bool FDocument::Load(FDocument* document, const FFilename& filename, IStreamReader* input) {
     Assert(document);
     Assert(input);
 
@@ -191,8 +191,8 @@ bool Document::Load(Document* document, const Filename& filename, IStreamReader*
     document->_standalone.clear();
     document->_byIdentifier.clear();
 
-    const WString filenameStr(filename.ToWString());
-    Lexer::LookAheadReader reader(input, filenameStr.c_str());
+    const FWString filenameStr(filename.ToWString());
+    FLexer::FLookAheadReader reader(input, filenameStr.c_str());
     ReadHeader_(reader, document->_version, document->_encoding, document->_standalone);
 
     if (document->_version.empty())
@@ -202,64 +202,64 @@ bool Document::Load(Document* document, const Filename& filename, IStreamReader*
     if (document->_standalone.empty())
         document->_standalone = "yes";
 
-    const XML::Name keyId("id");
+    const XML::FName keyId("id");
 
-    struct ReadElement_ {
+    struct FReadElement_ {
         PElement Element;
-        Lexer::Location Site;
+        FLexer::FLocation Site;
 
-        void RegisterIFN(const XML::Name& key, byidentifier_type& ids) {
+        void RegisterIFN(const XML::FName& key, byidentifier_type& ids) {
             const auto elementId = Element->Attributes().Find(key);
             if (Element->Attributes().end() != elementId) {
                 if (Insert_ReturnIfExists(  ids,
                                             MakeStringView(elementId->second),
                                             SElement(Element.get())) ) {
-                    CORE_THROW_IT(XMLException("an element with the same id alread exists", Site));
+                    CORE_THROW_IT(FXMLException("an element with the same id alread exists", Site));
                 }
             }
         }
 
-        ReadElement_() {}
-        ReadElement_(const String& start, const Lexer::Location& site)
-            : Element(new XML::Element())
+        FReadElement_() {}
+        FReadElement_(const FString& start, const FLexer::FLocation& site)
+            : Element(new XML::FElement())
             , Site(site) {
-            Element->SetType(XML::Name(start.MakeView()) );
+            Element->SetType(XML::FName(start.MakeView()) );
         }
     };
 
-    VECTORINSITU_THREAD_LOCAL(XML, ReadElement_, 32) visited;
+    VECTORINSITU_THREAD_LOCAL(XML, FReadElement_, 32) visited;
     visited.reserve(32);
 
-    String eaten;
+    FString eaten;
     while (char poken = PeekChar_(reader)) {
-        if (poken != Token_::Less) {
+        if (poken != Token_::TLess) {
             // XML inner text
-            const Lexer::Location site = reader.SourceSite();
+            const FLexer::FLocation site = reader.SourceSite();
             if (visited.empty())
-                CORE_THROW_IT(XMLException("text without tag", site));
+                CORE_THROW_IT(FXMLException("text without tag", site));
 
             if (not reader.ReadUntil(eaten, '<'))
-                CORE_THROW_IT(XMLException("unterminated text", site));
+                CORE_THROW_IT(FXMLException("unterminated text", site));
 
             visited.back().Element->SetText(std::move(eaten));
         }
         else {
-            ExpectChar_(reader, Token_::Less);
+            ExpectChar_(reader, Token_::TLess);
 
             // XML comment
-            if (PeekChar_(reader) == Token_::Not) {
-                ExpectChar_(reader, Token_::Not);
+            if (PeekChar_(reader) == Token_::TNot) {
+                ExpectChar_(reader, Token_::TNot);
                 ExpectChar_(reader, Token_::Minus);
                 ExpectChar_(reader, Token_::Minus);
 
-                const Lexer::Location site = reader.SourceSite();
+                const FLexer::FLocation site = reader.SourceSite();
 
                 if (not reader.SkipUntil(Token_::Minus))
-                    CORE_THROW_IT(XMLException("unterminated comment", site));
+                    CORE_THROW_IT(FXMLException("unterminated comment", site));
 
                 ExpectChar_(reader, Token_::Minus);
                 ExpectChar_(reader, Token_::Minus);
-                ExpectChar_(reader, Token_::Greater);
+                ExpectChar_(reader, Token_::TGreater);
 
                 continue;
             }
@@ -269,31 +269,31 @@ bool Document::Load(Document* document, const Filename& filename, IStreamReader*
                 ExpectChar_(reader, Token_::Div);
 
                 if (visited.empty())
-                    CORE_THROW_IT(XMLException("no opened tag", reader.SourceSite()));
+                    CORE_THROW_IT(FXMLException("no opened tag", reader.SourceSite()));
 
                 ExpectIdentifier_(reader, eaten);
 
                 if (not EqualsI(visited.back().Element->Type().MakeView(), eaten.MakeView()) )
-                    CORE_THROW_IT(XMLException("mismatching closing tag", reader.SourceSite()) );
+                    CORE_THROW_IT(FXMLException("mismatching closing tag", reader.SourceSite()) );
 
                 eaten.clear();
 
                 visited.back().RegisterIFN(keyId, document->_byIdentifier);
                 visited.pop_back();
 
-                ExpectChar_(reader, Token_::Greater);
+                ExpectChar_(reader, Token_::TGreater);
 
                 continue;
             }
 
             ExpectIdentifier_(reader, eaten);
 
-            ReadElement_ it(eaten, reader.SourceSite());
+            FReadElement_ it(eaten, reader.SourceSite());
             eaten.clear();
 
             // Attach new element to parent and siblings IFP
             if (visited.size()) {
-                Element* const parent = visited.back().Element.get();
+                FElement* const parent = visited.back().Element.get();
                 it.Element->SetParent(parent);
 
                 auto& children = parent->Children();
@@ -311,13 +311,13 @@ bool Document::Load(Document* document, const Filename& filename, IStreamReader*
 
             // XML attributes
             while (ReadIdentifier_(reader, eaten)) {
-                const XML::Name key(eaten.MakeView());
+                const XML::FName key(eaten.MakeView());
                 eaten.clear();
 
                 bool added = false;
                 auto value = it.Element->Attributes().FindOrAdd(key, &added);
                 if (not added)
-                    CORE_THROW_IT(XMLException("redefining block attribute", reader.SourceSite()) );
+                    CORE_THROW_IT(FXMLException("redefining block attribute", reader.SourceSite()) );
 
                 ExpectChar_(reader, Token_::Assignment);
                 ExpectString_(reader, eaten);
@@ -330,35 +330,35 @@ bool Document::Load(Document* document, const Filename& filename, IStreamReader*
             if (Token_::Div == poken) {
                 // XML short tag
                 ExpectChar_(reader, Token_::Div);
-                ExpectChar_(reader, Token_::Greater);
+                ExpectChar_(reader, Token_::TGreater);
 
                 it.RegisterIFN(keyId, document->_byIdentifier);
 
                 RemoveRef_AssertGreaterThanZero(it.Element);
             }
-            else if (Token_::Greater == poken) {
+            else if (Token_::TGreater == poken) {
                 // XML unclosed tag
-                ExpectChar_(reader, Token_::Greater);
+                ExpectChar_(reader, Token_::TGreater);
                 visited.emplace_back(std::move(it));
             }
             else {
-                CORE_THROW_IT(XMLException("unterminated xml tag", reader.SourceSite()) );
+                CORE_THROW_IT(FXMLException("unterminated xml tag", reader.SourceSite()) );
             }
         }
     }
 
     if (visited.size())
-        CORE_THROW_IT(XMLException("unterminated xml block", visited.back().Site));
+        CORE_THROW_IT(FXMLException("unterminated xml block", visited.back().Site));
 
     return true;
 }
 //----------------------------------------------------------------------------
-bool Document::Load(Document* document, const Filename& filename, const StringView& content) {
-    MemoryViewReader reader(content.Cast<const u8>());
+bool FDocument::Load(FDocument* document, const FFilename& filename, const FStringView& content) {
+    FMemoryViewReader reader(content.Cast<const u8>());
     return Load(document, filename, &reader);
 }
 //----------------------------------------------------------------------------
-void Document::ToStream(std::basic_ostream<char>& oss) const {
+void FDocument::ToStream(std::basic_ostream<char>& oss) const {
     oss << "<?xml version=\"" << _version
         << "\" encoding=\"" << _encoding
         << "\" standalone=\"" << _standalone

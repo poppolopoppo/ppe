@@ -31,86 +31,86 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class TextureCache : Meta::ThreadResource {
+class FTextureCache : Meta::FThreadResource {
 public:
-    typedef BuddyAllocator<u8, ThreadSafeBuddyHeap >
+    typedef TBuddyAllocator<u8, FThreadSafeBuddyHeap >
             TexturePixelsAllocator;
-    typedef RawStorage<u8, DECORATE_ALLOCATOR(Texture, TexturePixelsAllocator) >
+    typedef TRawStorage<u8, DECORATE_ALLOCATOR(FTexture, TexturePixelsAllocator) >
             TexturePixels;
 
-    class TextureData {
+    class FTextureData {
     public:
-        TextureData(TextureCache *cache);
-        ~TextureData();
+        FTextureData(FTextureCache *cache);
+        ~FTextureData();
 
-        TextureHeader& Header() { return _header; }
+        FTextureHeader& FHeader() { return _header; }
         TexturePixels& Pixels() { return _pixels; }
 
-        const TextureHeader& Header() const { return _header; }
+        const FTextureHeader& FHeader() const { return _header; }
         const TexturePixels& Pixels() const { return _pixels; }
 
         SINGLETON_POOL_ALLOCATED_DECL();
 
     private:
-        TextureHeader _header;
+        FTextureHeader _header;
         TexturePixels _pixels;
     };
 
-    class TextureEntry {
+    class FTextureEntry {
     public:
-        friend class TextureCache;
-        friend class TextureEntryAsyncJob;
+        friend class FTextureCache;
+        friend class FTextureEntryAsyncJob;
 
-        TextureEntry(const Core::Filename& filename, bool useSRGB, bool keepData);
-        ~TextureEntry();
+        FTextureEntry(const Core::FFilename& filename, bool useSRGB, bool keepData);
+        ~FTextureEntry();
 
-        TextureEntry(const TextureEntry& ) = delete;
-        TextureEntry& operator =(const TextureEntry& ) = delete;
+        FTextureEntry(const FTextureEntry& ) = delete;
+        FTextureEntry& operator =(const FTextureEntry& ) = delete;
 
-        const Core::Filename& Filename() const { return _filename; }
+        const Core::FFilename& FFilename() const { return _filename; }
 
         bool UseSRGB() const {return _nextWFlags.Flag0(); }
         bool KeepData() const {return _nextWFlags.Flag1(); }
 
-        TextureEntry *Next() { return _nextWFlags.Get(); }
-        TextureEntry *Prev() { return _prev; }
+        FTextureEntry *Next() { return _nextWFlags.Get(); }
+        FTextureEntry *Prev() { return _prev; }
 
-        const TextureEntry *Next() const { return _nextWFlags.Get(); }
-        const TextureEntry *Prev() const { return _prev; }
+        const FTextureEntry *Next() const { return _nextWFlags.Get(); }
+        const FTextureEntry *Prev() const { return _prev; }
 
-        void SetNext(TextureEntry *entry) { _nextWFlags.Set(entry); }
-        void SetPrev(TextureEntry *entry) { _prev = entry; }
+        void SetNext(FTextureEntry *entry) { _nextWFlags.Set(entry); }
+        void SetPrev(FTextureEntry *entry) { _prev = entry; }
 
         bool Available() const { return nullptr != _texture.get(); }
 
-        const TextureData *Data() const { return _data.get(); }
-        const Graphics::Texture *Texture() const { return _texture.get(); }
+        const FTextureData *Data() const { return _data.get(); }
+        const Graphics::FTexture *FTexture() const { return _texture.get(); }
 
-        const Graphics::Texture2D *AsTexture2D() const;
-        const Graphics::TextureCube *AsTextureCube() const;
+        const Graphics::FTexture2D *AsTexture2D() const;
+        const Graphics::FTextureCube *AsTextureCube() const;
 
         SINGLETON_POOL_ALLOCATED_DECL();
 
     private:
-        void SetData_(const TextureData *data);
-        void SetTexture_(Graphics::Texture *texture);
+        void SetData_(const FTextureData *data);
+        void SetTexture_(Graphics::FTexture *texture);
         void SetKeepData_(bool value);
 
-        const Core::Filename _filename;
+        const Core::FFilename _filename;
 
         Graphics::PTexture _texture;
-        UniquePtr<const TextureData> _data;
+        TUniquePtr<const FTextureData> _data;
 
-        Meta::PointerWFlags<TextureEntry> _nextWFlags;
-        TextureEntry *_prev;
+        Meta::TPointerWFlags<FTextureEntry> _nextWFlags;
+        FTextureEntry *_prev;
     };
 
     FWD_REFPTR(TextureEntryAsyncJob);
-    class TextureEntryAsyncJob : public ITask {
+    class FTextureEntryAsyncJob : public ITask {
     public:
-        explicit TextureEntryAsyncJob(TextureCache *cache, TextureCache::TextureEntry *pentry)
+        explicit FTextureEntryAsyncJob(FTextureCache *cache, FTextureCache::FTextureEntry *pentry)
         :   _cache(cache), _pentry(pentry) {}
-        virtual ~TextureEntryAsyncJob() {}
+        virtual ~FTextureEntryAsyncJob() {}
 
         virtual TaskResult Invoke(const TaskContext& ctx) override;
         void Finalize_MainThread(Graphics::IDeviceAPIEncapsulator *device) const;
@@ -118,36 +118,36 @@ public:
         SINGLETON_POOL_ALLOCATED_DECL();
 
     private:
-        TextureCache *_cache;
-        TextureCache::TextureEntry *_pentry;
+        FTextureCache *_cache;
+        FTextureCache::FTextureEntry *_pentry;
     };
 
-    explicit TextureCache(size_t capacityInBytes);
-    ~TextureCache();
+    explicit FTextureCache(size_t capacityInBytes);
+    ~FTextureCache();
 
-    TextureCache(const TextureCache& ) = delete;
-    TextureCache& operator =(const TextureCache& ) = delete;
+    FTextureCache(const FTextureCache& ) = delete;
+    FTextureCache& operator =(const FTextureCache& ) = delete;
 
     size_t Count() const { return _textures.size(); }
-    const ThreadSafeBuddyHeap *Heap() const { return &_heap; }
+    const FThreadSafeBuddyHeap *FHeap() const { return &_heap; }
 
-    void SetFallbackTexture2D(const Filename& path);
-    void SetFallbackTexture2D(Graphics::Texture2D *texture);
+    void SetFallbackTexture2D(const FFilename& path);
+    void SetFallbackTexture2D(Graphics::FTexture2D *texture);
 
-    void SetFallbackTextureCube(const Filename& path);
-    void SetFallbackTextureCube(Graphics::TextureCube *texture);
+    void SetFallbackTextureCube(const FFilename& path);
+    void SetFallbackTextureCube(Graphics::FTextureCube *texture);
 
     void Update();
 
-    void PrepareTexture(const Filename& filename, bool useSRGB = false, bool asynchronous = true);
+    void PrepareTexture(const FFilename& filename, bool useSRGB = false, bool asynchronous = true);
 
-    bool FetchTexture2D(const Filename& filename, const Graphics::Texture2D **texture) const;
-    const Graphics::Texture2D *FetchTexture2D_Fallback(const Filename& filename) const;
+    bool FetchTexture2D(const FFilename& filename, const Graphics::FTexture2D **texture) const;
+    const Graphics::FTexture2D *FetchTexture2D_Fallback(const FFilename& filename) const;
 
-    bool FetchTextureCube(const Filename& filename, const Graphics::TextureCube **texture) const;
-    const Graphics::TextureCube *FetchTextureCube_Fallback(const Filename& filename) const;
+    bool FetchTextureCube(const FFilename& filename, const Graphics::FTextureCube **texture) const;
+    const Graphics::FTextureCube *FetchTextureCube_Fallback(const FFilename& filename) const;
 
-    void UnloadTexture(const Filename& filename);
+    void UnloadTexture(const FFilename& filename);
     void UnloadLRUTextures();
 
     void Clear();
@@ -157,26 +157,26 @@ public:
     void Shutdown(Graphics::IDeviceAPIEncapsulator *device);
 
 private:
-    bool FetchTextureImpl_(const Filename& filename, const Graphics::Texture **texture) const;
-    TextureEntry *LoadTexture_Sync_(const Filename& filename, bool useSRGB, bool keepData);
-    TextureEntry *LoadTexture_ASync_(const Filename& filename, bool useSRGB, bool keepData);
-    void UnloadTextureEntry_(UniquePtr<TextureEntry>& pentry);
+    bool FetchTextureImpl_(const FFilename& filename, const Graphics::FTexture **texture) const;
+    FTextureEntry *LoadTexture_Sync_(const FFilename& filename, bool useSRGB, bool keepData);
+    FTextureEntry *LoadTexture_ASync_(const FFilename& filename, bool useSRGB, bool keepData);
+    void UnloadTextureEntry_(TUniquePtr<FTextureEntry>& pentry);
 
 private:
     Graphics::IDeviceAPIEncapsulator *_device;
 
-    ThreadSafeBuddyHeap _heap;
+    FThreadSafeBuddyHeap _heap;
     TaskCompletionPort _completionPort;
-    HASHMAP_THREAD_LOCAL(Texture, Filename, UniquePtr<TextureEntry>) _textures;
+    HASHMAP_THREAD_LOCAL(FTexture, FFilename, TUniquePtr<FTextureEntry>) _textures;
 
-    TextureEntry *_lru;
-    TextureEntry *_mru;
+    FTextureEntry *_lru;
+    FTextureEntry *_mru;
 
     Graphics::PTexture2D _fallbackTexture2D;
     Graphics::PTextureCube _fallbackTextureCube;
 
     std::mutex _barrier;
-    VECTOR(Texture, PCTextureEntryAsyncJob) _pjobs;
+    VECTOR(FTexture, PCTextureEntryAsyncJob) _pjobs;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

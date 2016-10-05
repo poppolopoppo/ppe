@@ -11,7 +11,7 @@
 
 namespace Core {
 namespace Graphics {
-class BindName;
+class FBindName;
 class IDeviceAPIEncapsulator;
 FWD_REFPTR(VertexDeclaration);
 }
@@ -24,38 +24,38 @@ FWD_REFPTR(Effect);
 FWD_REFPTR(EffectDescriptor);
 FWD_REFPTR(Material);
 FWD_REFPTR(MaterialEffect);
-class SharedConstantBufferFactory;
+class FSharedConstantBufferFactory;
 //----------------------------------------------------------------------------
-struct EffectCompilerKey;
+struct FEffectCompilerKey;
 //----------------------------------------------------------------------------
-class EffectCompiler : public Meta::ThreadResource {
+class FEffectCompiler : public Meta::FThreadResource {
 public:
-    EffectCompiler();
-    ~EffectCompiler();
+    FEffectCompiler();
+    ~FEffectCompiler();
 
-    VariabilitySeed Variability() const { return _variability; }
+    FVariabilitySeed Variability() const { return _variability; }
 
-    Effect *GetOrCreateEffect(  const EffectDescriptor *descriptor, 
-                                const Graphics::VertexDeclaration *vertexDeclaration,
-                                const MemoryView<const Graphics::BindName>& tags );
+    FEffect *GetOrCreateEffect(  const FEffectDescriptor *descriptor, 
+                                const Graphics::FVertexDeclaration *vertexDeclaration,
+                                const TMemoryView<const Graphics::FBindName>& tags );
 
-    MaterialEffect *CreateMaterialEffect(   const EffectDescriptor *descriptor,
-                                            const Graphics::VertexDeclaration *vertexDeclaration,
-                                            const Material *material);
+    FMaterialEffect *CreateMaterialEffect(   const FEffectDescriptor *descriptor,
+                                            const Graphics::FVertexDeclaration *vertexDeclaration,
+                                            const FMaterial *material);
 
     void RegenerateEffects();
     void Clear();
 
-    void Start(Graphics::IDeviceAPIEncapsulator *device, SharedConstantBufferFactory *sharedBufferFactory);
-    void Shutdown(Graphics::IDeviceAPIEncapsulator *device, SharedConstantBufferFactory *sharedBufferFactory);
+    void Start(Graphics::IDeviceAPIEncapsulator *device, FSharedConstantBufferFactory *sharedBufferFactory);
+    void Shutdown(Graphics::IDeviceAPIEncapsulator *device, FSharedConstantBufferFactory *sharedBufferFactory);
 
 private:
     Graphics::IDeviceAPIEncapsulator *_device;
-    SharedConstantBufferFactory *_sharedBufferFactory;
+    FSharedConstantBufferFactory *_sharedBufferFactory;
 
-    VariabilitySeed _variability;
+    FVariabilitySeed _variability;
 
-    HASHMAP(Effect, EffectCompilerKey, PEffect) _effects;
+    HASHMAP(FEffect, FEffectCompilerKey, PEffect) _effects;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

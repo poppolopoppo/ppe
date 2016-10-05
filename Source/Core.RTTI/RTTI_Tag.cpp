@@ -18,29 +18,29 @@ RTTI_TAG_DEF(Default);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void MetaClassDeclList::Insert(const MetaClassBaseDecl* pdecl) {
+void FMetaClassDeclList::Insert(const FMetaClassBaseDecl* pdecl) {
     Assert(pdecl);
-    const AtomicSpinLock::Scope scopeLock(Lock);
-    Decls.PushFront(const_cast<MetaClassBaseDecl*>(pdecl));
+    const FAtomicSpinLock::FScope scopeLock(Lock);
+    Decls.PushFront(const_cast<FMetaClassBaseDecl*>(pdecl));
 }
 //----------------------------------------------------------------------------
-void MetaClassDeclList::Remove(const MetaClassBaseDecl* pdecl) {
+void FMetaClassDeclList::Remove(const FMetaClassBaseDecl* pdecl) {
     Assert(pdecl);
-    const AtomicSpinLock::Scope scopeLock(Lock);
-    Decls.Erase(const_cast<MetaClassBaseDecl*>(pdecl));
+    const FAtomicSpinLock::FScope scopeLock(Lock);
+    Decls.Erase(const_cast<FMetaClassBaseDecl*>(pdecl));
 }
 //----------------------------------------------------------------------------
-void MetaClassDeclList::Start() const {
-    const AtomicSpinLock::Scope scopeLock(Lock);
-    typedef INTRUSIVELIST_ACCESSOR(&MetaClassBaseDecl::Node) accessor_type;
-    for (MetaClassBaseDecl* node = Decls.Tail(); node; node = accessor_type::Prev(node))
+void FMetaClassDeclList::Start() const {
+    const FAtomicSpinLock::FScope scopeLock(Lock);
+    typedef INTRUSIVELIST_ACCESSOR(&FMetaClassBaseDecl::Node) accessor_type;
+    for (FMetaClassBaseDecl* node = Decls.Tail(); node; node = accessor_type::Prev(node))
         node->Create();
 }
 //----------------------------------------------------------------------------
-void MetaClassDeclList::Shutdown() const {
-    const AtomicSpinLock::Scope scopeLock(Lock);
-    typedef INTRUSIVELIST_ACCESSOR(&MetaClassBaseDecl::Node) accessor_type;
-    for (MetaClassBaseDecl* node = Decls.Head(); node; node = accessor_type::Next(node))
+void FMetaClassDeclList::Shutdown() const {
+    const FAtomicSpinLock::FScope scopeLock(Lock);
+    typedef INTRUSIVELIST_ACCESSOR(&FMetaClassBaseDecl::Node) accessor_type;
+    for (FMetaClassBaseDecl* node = Decls.Head(); node; node = accessor_type::Next(node))
         node->Destroy();
 }
 //----------------------------------------------------------------------------

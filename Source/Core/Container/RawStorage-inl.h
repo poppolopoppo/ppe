@@ -7,22 +7,22 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-RawStorage<T, _Allocator>::RawStorage()
+TRawStorage<T, _Allocator>::TRawStorage()
 :   _storage(nullptr), _size(0) {}
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-RawStorage<T, _Allocator>::RawStorage(size_type size)
-:   RawStorage() {
+TRawStorage<T, _Allocator>::TRawStorage(size_type size)
+:   TRawStorage() {
     Resize_DiscardData(size);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-RawStorage<T, _Allocator>::RawStorage(allocator_type&& allocator)
+TRawStorage<T, _Allocator>::TRawStorage(allocator_type&& allocator)
 :   allocator_type(std::move(allocator))
 ,   _storage(nullptr), _size(0) {}
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-RawStorage<T, _Allocator>::RawStorage(size_type size, allocator_type&& allocator)
+TRawStorage<T, _Allocator>::TRawStorage(size_type size, allocator_type&& allocator)
 :   allocator_type(std::move(allocator))
 ,   _storage(nullptr), _size(0) {
     Resize_DiscardData(size);
@@ -30,18 +30,18 @@ RawStorage<T, _Allocator>::RawStorage(size_type size, allocator_type&& allocator
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 template <typename _It>
-RawStorage<T, _Allocator>::RawStorage(_It&& begin, _It&& end)
+TRawStorage<T, _Allocator>::TRawStorage(_It&& begin, _It&& end)
 :   _storage(nullptr), _size(0) {
     insert(this->end(), begin, end);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-RawStorage<T, _Allocator>::~RawStorage() {
+TRawStorage<T, _Allocator>::~TRawStorage() {
     Clear_ReleaseMemory();
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-RawStorage<T, _Allocator>::RawStorage(RawStorage&& rvalue)
+TRawStorage<T, _Allocator>::TRawStorage(TRawStorage&& rvalue)
 :   allocator_type(std::move(rvalue))
 ,   _storage(std::move(rvalue._storage))
 ,   _size(std::move(rvalue._size)) {
@@ -50,7 +50,7 @@ RawStorage<T, _Allocator>::RawStorage(RawStorage&& rvalue)
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-RawStorage<T, _Allocator>& RawStorage<T, _Allocator>::operator =(RawStorage&& rvalue) {
+TRawStorage<T, _Allocator>& TRawStorage<T, _Allocator>::operator =(TRawStorage&& rvalue) {
     Clear_ReleaseMemory();
     allocator_type::operator =(std::move(rvalue));
     _storage = std::move(rvalue._storage);
@@ -61,13 +61,13 @@ RawStorage<T, _Allocator>& RawStorage<T, _Allocator>::operator =(RawStorage&& rv
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-RawStorage<T, _Allocator>::RawStorage(const RawStorage& other)
-:   RawStorage(other.begin(), other.end() ) {
+TRawStorage<T, _Allocator>::TRawStorage(const TRawStorage& other)
+:   TRawStorage(other.begin(), other.end() ) {
     allocator_type::operator =(other);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-RawStorage<T, _Allocator>& RawStorage<T, _Allocator>::operator =(const RawStorage& other) {
+TRawStorage<T, _Allocator>& TRawStorage<T, _Allocator>::operator =(const TRawStorage& other) {
     Clear_ReleaseMemory();
     allocator_type::operator =(other);
     insert(end(), other.begin(), other.end());
@@ -75,31 +75,31 @@ RawStorage<T, _Allocator>& RawStorage<T, _Allocator>::operator =(const RawStorag
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-auto RawStorage<T, _Allocator>::at(size_type index) -> reference {
+auto TRawStorage<T, _Allocator>::at(size_type index) -> reference {
     Assert(index < _size);
     return _storage[index];
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-auto RawStorage<T, _Allocator>::at(size_type index) const -> const_reference {
+auto TRawStorage<T, _Allocator>::at(size_type index) const -> const_reference {
     Assert(index < _size);
     return _storage[index];
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void RawStorage<T, _Allocator>::CopyFrom(const MemoryView<const T>& src) {
+void TRawStorage<T, _Allocator>::CopyFrom(const TMemoryView<const T>& src) {
     Resize_DiscardData(src.size());
     src.CopyTo(MakeView());
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void RawStorage<T, _Allocator>::Swap(RawStorage& other) {
+void TRawStorage<T, _Allocator>::Swap(TRawStorage& other) {
     std::swap(other._storage, _storage);
     std::swap(other._size, _size);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void RawStorage<T, _Allocator>::Clear_StealData(pointer p, size_type size) {
+void TRawStorage<T, _Allocator>::Clear_StealData(pointer p, size_type size) {
     if (0 != _size)
         Clear_ReleaseMemory();
 
@@ -108,7 +108,7 @@ void RawStorage<T, _Allocator>::Clear_StealData(pointer p, size_type size) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void RawStorage<T, _Allocator>::Resize(size_type size, bool keepData) {
+void TRawStorage<T, _Allocator>::Resize(size_type size, bool keepData) {
     if (_size == size)
         return;
 
@@ -120,7 +120,7 @@ void RawStorage<T, _Allocator>::Resize(size_type size, bool keepData) {
             allocator_type::deallocate(storage, _size);
     }
     else if (keepData) {
-        _storage = Relocate_AssumePod(static_cast<allocator_type&>(*this), MemoryView<T>(storage, _size), size, _size);
+        _storage = Relocate_AssumePod(static_cast<allocator_type&>(*this), TMemoryView<T>(storage, _size), size, _size);
         AssertRelease(_storage);
     }
     else {
@@ -136,7 +136,7 @@ void RawStorage<T, _Allocator>::Resize(size_type size, bool keepData) {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 template <typename _It>
-void RawStorage<T, _Allocator>::insert(iterator after, _It&& begin, _It&& end) {
+void TRawStorage<T, _Allocator>::insert(iterator after, _It&& begin, _It&& end) {
     Assert(after >= this->begin() && after <= this->end());
 
     const size_t insertCount = std::distance(begin, end);
@@ -150,7 +150,7 @@ void RawStorage<T, _Allocator>::insert(iterator after, _It&& begin, _It&& end) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void RawStorage<T, _Allocator>::Clear_ReleaseMemory() {
+void TRawStorage<T, _Allocator>::Clear_ReleaseMemory() {
     if (nullptr == _storage) {
         Assert(0 == _size);
         return;
@@ -162,7 +162,7 @@ void RawStorage<T, _Allocator>::Clear_ReleaseMemory() {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-bool RawStorage<T, _Allocator>::Equals(const RawStorage& other) const {
+bool TRawStorage<T, _Allocator>::Equals(const TRawStorage& other) const {
     if (_size != other._size)
         return false;
     else if (_storage == other._storage)

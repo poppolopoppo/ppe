@@ -1589,7 +1589,7 @@ bool Test(int offset, int len = 0) {
 
 #define IsAlive(x) do { alive += IsNonZero(x); } while (0)
 
-  // After the following line is where the uses of "Check" and such will go.
+  // TAfter the following line is where the uses of "Check" and such will go.
   static int index = 0;
 if (offset == -1) { int alive = 0; IsAlive(farmhashcc::Hash32WithSeed(data, len++, SEED)); IsAlive(farmhashcc::Hash32(data, len++)); { uint128_t u = farmhashcc::Fingerprint128(data, len++); uint64_t h = Uint128Low64(u); IsAlive(h >> 32); IsAlive((h << 32) >> 32); h = Uint128High64(u); IsAlive(h >> 32); IsAlive((h << 32) >> 32); } len -= 3; return alive > 0; }
 Check(farmhashcc::Hash32WithSeed(data + offset, len, SEED));
@@ -1625,7 +1625,7 @@ int RunTest() {
 
 #else
 
-// After the following line is where the code to print hash codes will go.
+// TAfter the following line is where the code to print hash codes will go.
 void Dump(int offset, int len) {
 cout << farmhashcc::Hash32WithSeed(data + offset, len, SEED) << "u," << endl;
 cout << farmhashcc::Hash32(data + offset, len) << "u," << endl;
@@ -2489,7 +2489,7 @@ bool Test(int offset, int len = 0) {
 
 #define IsAlive(x) do { alive += IsNonZero(x); } while (0)
 
-  // After the following line is where the uses of "Check" and such will go.
+  // TAfter the following line is where the uses of "Check" and such will go.
   static int index = 0;
 if (offset == -1) { int alive = 0; IsAlive(farmhashmk::Hash32WithSeed(data, len++, SEED)); IsAlive(farmhashmk::Hash32(data, len++)); IsAlive(farmhashmk::Hash32(data, len++)); len -= 3; return alive > 0; }
 Check(farmhashmk::Hash32WithSeed(data + offset, len, SEED));
@@ -2523,7 +2523,7 @@ int RunTest() {
 
 #else
 
-// After the following line is where the code to print hash codes will go.
+// TAfter the following line is where the code to print hash codes will go.
 void Dump(int offset, int len) {
 cout << farmhashmk::Hash32WithSeed(data + offset, len, SEED) << "u," << endl;
 cout << farmhashmk::Hash32(data + offset, len) << "u," << endl;
@@ -3747,7 +3747,7 @@ bool Test(int offset, int len = 0) {
 
 #define IsAlive(x) do { alive += IsNonZero(x); } while (0)
 
-  // After the following line is where the uses of "Check" and such will go.
+  // TAfter the following line is where the uses of "Check" and such will go.
   static int index = 0;
 if (offset == -1) { int alive = 0; { uint64_t h = farmhashna::Hash64WithSeeds(data, len++, SEED0, SEED1); IsAlive(h >> 32); IsAlive((h << 32) >> 32); } { uint64_t h = farmhashna::Hash64WithSeed(data, len++, SEED); IsAlive(h >> 32); IsAlive((h << 32) >> 32); } { uint64_t h = farmhashna::Hash64(data, len++); IsAlive(h >> 32); IsAlive((h << 32) >> 32); } len -= 3; return alive > 0; }
 { uint64_t h = farmhashna::Hash64WithSeeds(data + offset, len, SEED0, SEED1); Check(h >> 32); Check((h << 32) >> 32); }
@@ -3782,7 +3782,7 @@ int RunTest() {
 
 #else
 
-// After the following line is where the code to print hash codes will go.
+// TAfter the following line is where the code to print hash codes will go.
 void Dump(int offset, int len) {
 { uint64_t h = farmhashna::Hash64WithSeeds(data + offset, len, SEED0, SEED1); cout << (h >> 32) << "u, " << ((h << 32) >> 32) << "u," << endl; }
 { uint64_t h = farmhashna::Hash64WithSeed(data + offset, len, SEED); cout << (h >> 32) << "u, " << ((h << 32) >> 32) << "u," << endl; }
@@ -4645,7 +4645,7 @@ bool Test(int offset, int len = 0) {
 
 #define IsAlive(x) do { alive += IsNonZero(x); } while (0)
 
-  // After the following line is where the uses of "Check" and such will go.
+  // TAfter the following line is where the uses of "Check" and such will go.
   static int index = 0;
 if (offset == -1) { int alive = 0; IsAlive(farmhashnt::Hash32WithSeed(data, len++, SEED)); IsAlive(farmhashnt::Hash32(data, len++)); IsAlive(farmhashnt::Hash32(data, len++)); len -= 3; return alive > 0; }
 Check(farmhashnt::Hash32WithSeed(data + offset, len, SEED));
@@ -4679,7 +4679,7 @@ int RunTest() {
 
 #else
 
-// After the following line is where the code to print hash codes will go.
+// TAfter the following line is where the code to print hash codes will go.
 void Dump(int offset, int len) {
 cout << farmhashnt::Hash32WithSeed(data + offset, len, SEED) << "u," << endl;
 cout << farmhashnt::Hash32(data + offset, len) << "u," << endl;
@@ -5541,7 +5541,7 @@ bool Test(int offset, int len = 0) {
 
 #define IsAlive(x) do { alive += IsNonZero(x); } while (0)
 
-  // After the following line is where the uses of "Check" and such will go.
+  // TAfter the following line is where the uses of "Check" and such will go.
   static int index = 0;
 if (offset == -1) { int alive = 0; IsAlive(farmhashsa::Hash32WithSeed(data, len++, SEED)); IsAlive(farmhashsa::Hash32(data, len++)); IsAlive(farmhashsa::Hash32(data, len++)); len -= 3; return alive > 0; }
 Check(farmhashsa::Hash32WithSeed(data + offset, len, SEED));
@@ -5575,7 +5575,7 @@ int RunTest() {
 
 #else
 
-// After the following line is where the code to print hash codes will go.
+// TAfter the following line is where the code to print hash codes will go.
 void Dump(int offset, int len) {
 cout << farmhashsa::Hash32WithSeed(data + offset, len, SEED) << "u," << endl;
 cout << farmhashsa::Hash32(data + offset, len) << "u," << endl;
@@ -6437,7 +6437,7 @@ bool Test(int offset, int len = 0) {
 
 #define IsAlive(x) do { alive += IsNonZero(x); } while (0)
 
-  // After the following line is where the uses of "Check" and such will go.
+  // TAfter the following line is where the uses of "Check" and such will go.
   static int index = 0;
 if (offset == -1) { int alive = 0; IsAlive(farmhashsu::Hash32WithSeed(data, len++, SEED)); IsAlive(farmhashsu::Hash32(data, len++)); IsAlive(farmhashsu::Hash32(data, len++)); len -= 3; return alive > 0; }
 Check(farmhashsu::Hash32WithSeed(data + offset, len, SEED));
@@ -6471,7 +6471,7 @@ int RunTest() {
 
 #else
 
-// After the following line is where the code to print hash codes will go.
+// TAfter the following line is where the code to print hash codes will go.
 void Dump(int offset, int len) {
 cout << farmhashsu::Hash32WithSeed(data + offset, len, SEED) << "u," << endl;
 cout << farmhashsu::Hash32(data + offset, len) << "u," << endl;
@@ -7695,7 +7695,7 @@ bool Test(int offset, int len = 0) {
 
 #define IsAlive(x) do { alive += IsNonZero(x); } while (0)
 
-  // After the following line is where the uses of "Check" and such will go.
+  // TAfter the following line is where the uses of "Check" and such will go.
   static int index = 0;
 if (offset == -1) { int alive = 0; { uint64_t h = farmhashte::Hash64WithSeeds(data, len++, SEED0, SEED1); IsAlive(h >> 32); IsAlive((h << 32) >> 32); } { uint64_t h = farmhashte::Hash64WithSeed(data, len++, SEED); IsAlive(h >> 32); IsAlive((h << 32) >> 32); } { uint64_t h = farmhashte::Hash64(data, len++); IsAlive(h >> 32); IsAlive((h << 32) >> 32); } len -= 3; return alive > 0; }
 { uint64_t h = farmhashte::Hash64WithSeeds(data + offset, len, SEED0, SEED1); Check(h >> 32); Check((h << 32) >> 32); }
@@ -7730,7 +7730,7 @@ int RunTest() {
 
 #else
 
-// After the following line is where the code to print hash codes will go.
+// TAfter the following line is where the code to print hash codes will go.
 void Dump(int offset, int len) {
 { uint64_t h = farmhashte::Hash64WithSeeds(data + offset, len, SEED0, SEED1); cout << (h >> 32) << "u, " << ((h << 32) >> 32) << "u," << endl; }
 { uint64_t h = farmhashte::Hash64WithSeed(data + offset, len, SEED); cout << (h >> 32) << "u, " << ((h << 32) >> 32) << "u," << endl; }
@@ -8593,7 +8593,7 @@ bool Test(int offset, int len = 0) {
 
 #define IsAlive(x) do { alive += IsNonZero(x); } while (0)
 
-  // After the following line is where the uses of "Check" and such will go.
+  // TAfter the following line is where the uses of "Check" and such will go.
   static int index = 0;
 if (offset == -1) { int alive = 0; { uint64_t h = farmhashuo::Hash64WithSeed(data, len++, SEED); IsAlive(h >> 32); IsAlive((h << 32) >> 32); } { uint64_t h = farmhashuo::Hash64(data, len++); IsAlive(h >> 32); IsAlive((h << 32) >> 32); } { uint64_t h = farmhashuo::Hash64(data, len++); IsAlive(h >> 32); IsAlive((h << 32) >> 32); } len -= 3; return alive > 0; }
 { uint64_t h = farmhashuo::Hash64WithSeed(data + offset, len, SEED); Check(h >> 32); Check((h << 32) >> 32); }
@@ -8627,7 +8627,7 @@ int RunTest() {
 
 #else
 
-// After the following line is where the code to print hash codes will go.
+// TAfter the following line is where the code to print hash codes will go.
 void Dump(int offset, int len) {
 { uint64_t h = farmhashuo::Hash64WithSeed(data + offset, len, SEED); cout << (h >> 32) << "u, " << ((h << 32) >> 32) << "u," << endl; }
 { uint64_t h = farmhashuo::Hash64(data + offset, len); cout << (h >> 32) << "u, " << ((h << 32) >> 32) << "u," << endl; }
@@ -9851,7 +9851,7 @@ bool Test(int offset, int len = 0) {
 
 #define IsAlive(x) do { alive += IsNonZero(x); } while (0)
 
-  // After the following line is where the uses of "Check" and such will go.
+  // TAfter the following line is where the uses of "Check" and such will go.
   static int index = 0;
 if (offset == -1) { int alive = 0; { uint64_t h = farmhashxo::Hash64WithSeeds(data, len++, SEED0, SEED1); IsAlive(h >> 32); IsAlive((h << 32) >> 32); } { uint64_t h = farmhashxo::Hash64WithSeed(data, len++, SEED); IsAlive(h >> 32); IsAlive((h << 32) >> 32); } { uint64_t h = farmhashxo::Hash64(data, len++); IsAlive(h >> 32); IsAlive((h << 32) >> 32); } len -= 3; return alive > 0; }
 { uint64_t h = farmhashxo::Hash64WithSeeds(data + offset, len, SEED0, SEED1); Check(h >> 32); Check((h << 32) >> 32); }
@@ -9886,7 +9886,7 @@ int RunTest() {
 
 #else
 
-// After the following line is where the code to print hash codes will go.
+// TAfter the following line is where the code to print hash codes will go.
 void Dump(int offset, int len) {
 { uint64_t h = farmhashxo::Hash64WithSeeds(data + offset, len, SEED0, SEED1); cout << (h >> 32) << "u, " << ((h << 32) >> 32) << "u," << endl; }
 { uint64_t h = farmhashxo::Hash64WithSeed(data + offset, len, SEED); cout << (h >> 32) << "u, " << ((h << 32) >> 32) << "u," << endl; }

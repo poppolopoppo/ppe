@@ -21,7 +21,7 @@ namespace MaterialParameterTime {
 //----------------------------------------------------------------------------
 EACH_MATERIALPARAMETER_TIME(MATERIALPARAMETER_FN_DEF)
 //----------------------------------------------------------------------------
-void RegisterMaterialParameters(MaterialDatabase *database) {
+void RegisterMaterialParameters(FMaterialDatabase *database) {
     Assert(database);
 
 #define BIND_MATERIALPARAMETER(_Variability, _Type, _Name) \
@@ -38,14 +38,14 @@ void RegisterMaterialParameters(MaterialDatabase *database) {
 //----------------------------------------------------------------------------
 namespace MaterialParameterTime {
 //----------------------------------------------------------------------------
-// World Time
+// FWorld Time
 //----------------------------------------------------------------------------
-void WorldElapsedSeconds(const MaterialParameterContext& context, float& dst) {
+void WorldElapsedSeconds(const FMaterialParameterContext& context, float& dst) {
     const Units::Time::Seconds t = context.Scene->World()->Time().Elapsed();
     dst = static_cast<float>(t.Value());
 }
 //----------------------------------------------------------------------------
-void WorldTotalSeconds(const MaterialParameterContext& context, float& dst) {
+void WorldTotalSeconds(const FMaterialParameterContext& context, float& dst) {
     const Units::Time::Seconds t = context.Scene->World()->Time().Total();
     dst = static_cast<float>(t.Value());
 }
@@ -58,7 +58,7 @@ namespace MaterialParameterTime {
 //----------------------------------------------------------------------------
 // Process Time
 //----------------------------------------------------------------------------
-void ProcessTotalSeconds(const MaterialParameterContext& , float& dst) {
+void ProcessTotalSeconds(const FMaterialParameterContext& , float& dst) {
     const Units::Time::Seconds t = ProcessTime::TotalSeconds();
     dst = static_cast<float>(t.Value());
 }

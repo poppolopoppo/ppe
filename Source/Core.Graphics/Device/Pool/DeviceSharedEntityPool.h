@@ -12,47 +12,47 @@
 
 namespace Core {
 namespace Graphics {
-class DeviceResourceSharable;
+class FDeviceResourceSharable;
 FWD_REFPTR(DeviceAPIDependantEntity);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DeviceSharedEntityPool {
+class FDeviceSharedEntityPool {
 public:
-    struct SharedEntity {
-        DeviceSharedEntityKey Key;
+    struct FSharedEntity {
+        FDeviceSharedEntityKey Key;
         PDeviceAPIDependantEntity Entity;
-        IntrusiveListNode<SharedEntity> Global;
-        IntrusiveListNode<SharedEntity> Local;
+        IntrusiveListNode<FSharedEntity> Global;
+        IntrusiveListNode<FSharedEntity> Local;
         u32 LockCount;
         SINGLETON_POOL_ALLOCATED_DECL();
     };
 
-    typedef INTRUSIVELIST_ACCESSOR(&SharedEntity::Global) global_lru_type;
-    typedef INTRUSIVELIST_ACCESSOR(&SharedEntity::Local)  local_lru_type;
+    typedef INTRUSIVELIST_ACCESSOR(&FSharedEntity::Global) global_lru_type;
+    typedef INTRUSIVELIST_ACCESSOR(&FSharedEntity::Local)  local_lru_type;
 
-    explicit DeviceSharedEntityPool(MemoryTrackingData *globalVideoMemory);
-    ~DeviceSharedEntityPool();
+    explicit FDeviceSharedEntityPool(FMemoryTrackingData *globalVideoMemory);
+    ~FDeviceSharedEntityPool();
 
-    const MemoryTrackingData& UsedMemory() const { return _usedMemory; }
+    const FMemoryTrackingData& UsedMemory() const { return _usedMemory; }
 
-    bool Acquire_Cooperative(PCDeviceAPIDependantEntity *pEntity, const DeviceResourceSharable& resource);
-    void Release_Cooperative(const DeviceSharedEntityKey& key, PCDeviceAPIDependantEntity& entity);
+    bool Acquire_Cooperative(PCDeviceAPIDependantEntity *pEntity, const FDeviceResourceSharable& resource);
+    void Release_Cooperative(const FDeviceSharedEntityKey& key, PCDeviceAPIDependantEntity& entity);
 
-    bool Acquire_Exclusive(PDeviceAPIDependantEntity *pEntity, const DeviceResourceSharable& resource);
-    void Release_Exclusive(const DeviceSharedEntityKey& key, PDeviceAPIDependantEntity& entity);
+    bool Acquire_Exclusive(PDeviceAPIDependantEntity *pEntity, const FDeviceResourceSharable& resource);
+    void Release_Exclusive(const FDeviceSharedEntityKey& key, PDeviceAPIDependantEntity& entity);
 
     size_t ReleaseLRU_ReturnRealSize(size_t targetSizeInBytes);
     size_t ReleaseAll_ReturnRealSize() { return ReleaseLRU_ReturnRealSize(0); }
 
 private:
-    typedef HASHMAP(Graphics, DeviceSharedEntityKey, SharedEntity*) map_type;
+    typedef HASHMAP(Graphics, FDeviceSharedEntityKey, FSharedEntity*) map_type;
 
-    SharedEntity *_mru;
-    SharedEntity *_lru;
+    FSharedEntity *_mru;
+    FSharedEntity *_lru;
 
     map_type _map;
-    MemoryTrackingData _usedMemory;
+    FMemoryTrackingData _usedMemory;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

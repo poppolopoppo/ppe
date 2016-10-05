@@ -22,33 +22,33 @@ POOL_TAG_DEF(Engine);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void EngineStartup::Start() {
+void FEngineStartup::Start() {
     // 0 - Pool allocator tag
     POOL_TAG(Engine)::Start();
-    // 1 - Effect
-    Effect::Start();
-    // 2 - Material
-    MaterialConstNames::Start();
+    // 1 - FEffect
+    FEffect::Start();
+    // 2 - FMaterial
+    FMaterialConstNames::Start();
     // 3 - Mesh
-    MeshName::Start(256);
-    // 4 - World
-    World::Start();
+    FMeshName::Start(256);
+    // 4 - FWorld
+    FWorld::Start();
 }
 //----------------------------------------------------------------------------
-void EngineStartup::Shutdown() {
-    // 4 - World
-    World::Shutdown();
+void FEngineStartup::Shutdown() {
+    // 4 - FWorld
+    FWorld::Shutdown();
     // 3 - Mesh
-    MeshName::Shutdown();
-    // 2 - Material
-    MaterialConstNames::Shutdown();
-    // 1 - Effect
-    Effect::Shutdown();
+    FMeshName::Shutdown();
+    // 2 - FMaterial
+    FMaterialConstNames::Shutdown();
+    // 1 - FEffect
+    FEffect::Shutdown();
     // 0 - Pool allocator tag
     POOL_TAG(Engine)::Shutdown();
 }
 //----------------------------------------------------------------------------
-void EngineStartup::ClearAll_UnusedMemory() {
+void FEngineStartup::ClearAll_UnusedMemory() {
     POOL_TAG(Engine)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------

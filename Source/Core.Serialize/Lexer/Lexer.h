@@ -14,53 +14,53 @@
 
 namespace Core {
 class IStreamReader;
-namespace Lexer {
-POOL_TAG_DECL(Lexer);
+namespace FLexer {
+POOL_TAG_DECL(FLexer);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class LexerException : public Core::Serialize::SerializeException {
+class FLexerException : public Core::Serialize::FSerializeException {
 public:
-    typedef Core::Serialize::SerializeException parent_type;
+    typedef Core::Serialize::FSerializeException parent_type;
 
-    LexerException(const char *what, Match&& match)
+    FLexerException(const char *what, FMatch&& match)
         :   parent_type(what)
         ,   _match(std::move(match)) {}
 
-    virtual ~LexerException() {}
+    virtual ~FLexerException() {}
 
-    const Core::Lexer::Match& Match() const { return _match; }
+    const Core::FLexer::FMatch& Match() const { return _match; }
 
 private:
-    Core::Lexer::Match _match;
+    Core::FLexer::FMatch _match;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Lexer {
+class FLexer {
 public:
-    Lexer(IStreamReader* input, const WStringView& sourceFileName, bool allowTypenames);
-    ~Lexer();
+    FLexer(IStreamReader* input, const FWStringView& sourceFileName, bool allowTypenames);
+    ~FLexer();
 
-    const Match *Peek();
-    const Match *Peek(const Symbol* symbol);
+    const FMatch *Peek();
+    const FMatch *Peek(const FSymbol* symbol);
 
-    bool Read(Match& match);
-    bool ReadUntil(Match& match, const char ch);
+    bool Read(FMatch& match);
+    bool ReadUntil(FMatch& match, const char ch);
     bool SkipUntil(const char ch);
 
-    bool Expect(Match& match, const Core::Lexer::Symbol* expected);
+    bool Expect(FMatch& match, const Core::FLexer::FSymbol* expected);
 
-    const WString& SourceFileName() { return _sourceFileName; }
+    const FWString& SourceFileName() { return _sourceFileName; }
 
 private:
-    bool NextMatch_(Match& match);
+    bool NextMatch_(FMatch& match);
 
-    WString _sourceFileName;
-    LookAheadReader _reader;
+    FWString _sourceFileName;
+    FLookAheadReader _reader;
 
-    String _lexing;
-    Match _peek;
+    FString _lexing;
+    FMatch _peek;
 
     bool _allowTypenames;
     bool _peeking;
@@ -68,16 +68,16 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct LexerStartup {
+struct FLexerStartup {
     static void Start();
     static void Shutdown();
     static void ClearAll_UnusedMemory();
 
-    LexerStartup() { Start(); }
-    ~LexerStartup() { Shutdown(); }
+    FLexerStartup() { Start(); }
+    ~FLexerStartup() { Shutdown(); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace Lexer
+} //!namespace FLexer
 } //!namespace Core

@@ -9,11 +9,11 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ApplicationConsole : public ApplicationBase
+class FApplicationConsole : public FApplicationBase
 {
 public:
-    ApplicationConsole(const wchar_t *appname);
-    virtual ~ApplicationConsole();
+    FApplicationConsole(const wchar_t *appname);
+    virtual ~FApplicationConsole();
 
     virtual void Start() override;
     virtual void Shutdown() override;

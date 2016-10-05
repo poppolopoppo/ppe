@@ -13,44 +13,44 @@ FWD_REFPTR(DeviceAPIDependantRenderTarget);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(RenderTarget);
-class RenderTarget : public Texture2D {
+class FRenderTarget : public FTexture2D {
 public:
-    RenderTarget(size_t width, size_t height, const SurfaceFormat *format, bool sharable);
-    virtual ~RenderTarget();
+    FRenderTarget(size_t width, size_t height, const FSurfaceFormat *format, bool sharable);
+    virtual ~FRenderTarget();
 
-    const Graphics::DeviceAPIDependantRenderTarget *DeviceAPIDependantRenderTarget() const {
-        return checked_cast<const Graphics::DeviceAPIDependantRenderTarget *>(Texture2D::DeviceAPIDependantTexture2D().get());
+    const Graphics::FDeviceAPIDependantRenderTarget *FDeviceAPIDependantRenderTarget() const {
+        return checked_cast<const Graphics::FDeviceAPIDependantRenderTarget *>(FTexture2D::DeviceAPIDependantTexture2D().get());
     }
 
     template <typename T>
-    void Create(IDeviceAPIEncapsulator *device, const MemoryView<const T>& optionalData);
-    void Create(IDeviceAPIEncapsulator *device) { Create_(device, MemoryView<const u8>()); }
+    void Create(IDeviceAPIEncapsulator *device, const TMemoryView<const T>& optionalData);
+    void Create(IDeviceAPIEncapsulator *device) { Create_(device, TMemoryView<const u8>()); }
 
     void Destroy(IDeviceAPIEncapsulator *device);
 
-    void StealRenderTarget(Graphics::DeviceAPIDependantRenderTarget* rt);
+    void StealRenderTarget(Graphics::FDeviceAPIDependantRenderTarget* rt);
 
 private:
-    void Create_(IDeviceAPIEncapsulator *device, const MemoryView<const u8>& optionalRawData);
+    void Create_(IDeviceAPIEncapsulator *device, const TMemoryView<const u8>& optionalRawData);
 };
 //----------------------------------------------------------------------------
 template <typename T>
-void RenderTarget::Create(IDeviceAPIEncapsulator *device, const MemoryView<const T>& optionalData) {
+void FRenderTarget::Create(IDeviceAPIEncapsulator *device, const TMemoryView<const T>& optionalData) {
     Create_(device, optionalData.Cast<const u8>());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DeviceAPIDependantRenderTarget : public Graphics::DeviceAPIDependantTexture2D {
+class FDeviceAPIDependantRenderTarget : public Graphics::FDeviceAPIDependantTexture2D {
 public:
-    DeviceAPIDependantRenderTarget(IDeviceAPIEncapsulator *device, const RenderTarget *resource, const MemoryView<const u8>& optionalData);
-    virtual ~DeviceAPIDependantRenderTarget();
+    FDeviceAPIDependantRenderTarget(IDeviceAPIEncapsulator *device, const FRenderTarget *resource, const TMemoryView<const u8>& optionalData);
+    virtual ~FDeviceAPIDependantRenderTarget();
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct RenderTargetBinding {
-    const RenderTarget *RT;
+struct FRenderTargetBinding {
+    const FRenderTarget *RT;
     size_t Slot;
 };
 //----------------------------------------------------------------------------

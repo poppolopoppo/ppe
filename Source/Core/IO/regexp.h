@@ -15,19 +15,19 @@ template <
     typename _Char,
     typename _Traits = std::regex_traits<_Char>
 >
-using BasicRegexp = std::basic_regex<_Char, _Traits>;
+using TBasicRegexp = std::basic_regex<_Char, _Traits>;
 //----------------------------------------------------------------------------
-typedef BasicRegexp<char>       Regexp;
-typedef BasicRegexp<wchar_t>    WRegexp;
+typedef TBasicRegexp<char>       Regexp;
+typedef TBasicRegexp<wchar_t>    WRegexp;
 //----------------------------------------------------------------------------
-Regexp MakeRegexp(const StringView& str);
-WRegexp MakeRegexp(const WStringView& wstr);
+Regexp MakeRegexp(const FStringView& str);
+WRegexp MakeRegexp(const FWStringView& wstr);
 //----------------------------------------------------------------------------
-Regexp MakeRegexpI(const StringView& str);
-WRegexp MakeRegexpI(const WStringView& wstr);
+Regexp MakeRegexpI(const FStringView& str);
+WRegexp MakeRegexpI(const FWStringView& wstr);
 //----------------------------------------------------------------------------
-bool Match(const Regexp& exp, const StringView& str);
-bool Match(const WRegexp& exp, const WStringView& wstr);
+bool FMatch(const Regexp& exp, const FStringView& str);
+bool FMatch(const WRegexp& exp, const FWStringView& wstr);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

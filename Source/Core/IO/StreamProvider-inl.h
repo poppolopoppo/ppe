@@ -17,8 +17,8 @@ bool IStreamReader::ReadArray(T(&staticArray)[_Dim]) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void IStreamReader::ReadAll(RawStorage<T, _Allocator>& dst) {
-    typedef typename RawStorage<T, _Allocator>::size_type size_type;
+void IStreamReader::ReadAll(TRawStorage<T, _Allocator>& dst) {
+    typedef typename TRawStorage<T, _Allocator>::size_type size_type;
     const std::streamsize s = SizeInBytes();
 
     Assert(0 == (s % sizeof(T)) );
@@ -30,7 +30,7 @@ void IStreamReader::ReadAll(RawStorage<T, _Allocator>& dst) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-bool IStreamReader::ReadView(const MemoryView<T>& dst) {
+bool IStreamReader::ReadView(const TMemoryView<T>& dst) {
     return Read(dst.data(), dst.SizeInBytes());
 }
 //----------------------------------------------------------------------------
@@ -44,7 +44,7 @@ bool IStreamReader::ExpectPOD(const T& pod) {
     if (*reinterpret_cast<const T*>(&read) == pod)
         return true;
 
-    SeekI(off, SeekOrigin::Begin);
+    SeekI(off, ESeekOrigin::Begin);
     return false;
 }
 //----------------------------------------------------------------------------
@@ -71,7 +71,7 @@ void IStreamWriter::WriteCStr(const wchar_t (&wcstr)[_Dim]) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void IStreamWriter::WriteView(const MemoryView<T>& data) {
+void IStreamWriter::WriteView(const TMemoryView<T>& data) {
     WriteSome(data.Pointer(), sizeof(T), data.size());
 }
 //----------------------------------------------------------------------------

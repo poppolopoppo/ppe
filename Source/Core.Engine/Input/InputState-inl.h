@@ -86,8 +86,8 @@ void InputState<T, _Capacity>::Clear() {
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Capacity>
-MemoryView<const T> InputState<T, _Capacity>::MakeView() const {
-    return MemoryView<const T>(_events, _size);
+TMemoryView<const T> InputState<T, _Capacity>::MakeView() const {
+    return TMemoryView<const T>(_events, _size);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

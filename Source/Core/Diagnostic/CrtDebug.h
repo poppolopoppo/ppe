@@ -15,20 +15,20 @@ namespace Core {
 //----------------------------------------------------------------------------
 #ifdef USE_CRT_DEBUG
 //----------------------------------------------------------------------------
-class CrtCheckMemoryLeaksImpl;
+class FCrtCheckMemoryLeaksImpl;
 //----------------------------------------------------------------------------
-class CrtCheckMemoryLeaks {
+class FCrtCheckMemoryLeaks {
 public:
-    CrtCheckMemoryLeaks();
-    ~CrtCheckMemoryLeaks();
+    FCrtCheckMemoryLeaks();
+    ~FCrtCheckMemoryLeaks();
 private:
-    UniquePtr<CrtCheckMemoryLeaksImpl> _pimpl;
+    TUniquePtr<FCrtCheckMemoryLeaksImpl> _pimpl;
 };
 //----------------------------------------------------------------------------
-class CrtSkipMemoryLeaks {
+class FCrtSkipMemoryLeaks {
 public:
-    CrtSkipMemoryLeaks();
-    ~CrtSkipMemoryLeaks();
+    FCrtSkipMemoryLeaks();
+    ~FCrtSkipMemoryLeaks();
 private:
     bool _prev;
 };
@@ -36,10 +36,10 @@ private:
 void CrtCheckGlobalMemoryLeaks(bool enabled);
 //----------------------------------------------------------------------------
 #define CHECK_MEMORY_LEAKS_IN_SCOPE() \
-    const ::Core::CrtCheckMemoryLeaks CONCAT(checkMemoryLeaksScope_, __LINE__)
+    const ::Core::FCrtCheckMemoryLeaks CONCAT(checkMemoryLeaksScope_, __LINE__)
 //----------------------------------------------------------------------------
 #define SKIP_MEMORY_LEAKS_IN_SCOPE() \
-    const ::Core::CrtSkipMemoryLeaks CONCAT(skipMemoryLeaksScope_, __LINE__)
+    const ::Core::FCrtSkipMemoryLeaks CONCAT(skipMemoryLeaksScope_, __LINE__)
 //----------------------------------------------------------------------------
 #define GLOBAL_CHECK_MEMORY_LEAKS(_Enabled) \
     ::Core::CrtCheckGlobalMemoryLeaks(_Enabled)
@@ -58,7 +58,7 @@ void CrtCheckGlobalMemoryLeaks(bool enabled);
 //----------------------------------------------------------------------------
 #ifdef OS_WINDOWS
 //----------------------------------------------------------------------------
-class CrtMemoryStats {
+class FCrtMemoryStats {
 public:
     SizeInBytes TotalUsedSize;
     SizeInBytes LargestUsedBlockSize;
@@ -72,7 +72,7 @@ public:
     }
 };
 //----------------------------------------------------------------------------
-bool CrtDumpMemoryStats(CrtMemoryStats* memoryStats, void* heapHandle = nullptr);
+bool CrtDumpMemoryStats(FCrtMemoryStats* memoryStats, void* heapHandle = nullptr);
 //----------------------------------------------------------------------------
 #define BREAKPOINT() __debugbreak()
 //----------------------------------------------------------------------------

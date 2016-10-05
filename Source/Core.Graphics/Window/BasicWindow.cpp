@@ -19,25 +19,25 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct BasicWindowHelper {
-    static void SetWindowHandle(BasicWindow *wnd, void *handle);
-    static void SetWindowFocus(BasicWindow *wnd, void *handle, bool hasFocus);
-    static void SetWindowSize(BasicWindow *wnd, void *handle, size_t width, size_t height);
+struct FBasicWindowHelper {
+    static void SetWindowHandle(FBasicWindow *wnd, void *handle);
+    static void SetWindowFocus(FBasicWindow *wnd, void *handle, bool hasFocus);
+    static void SetWindowSize(FBasicWindow *wnd, void *handle, size_t width, size_t height);
 };
 //----------------------------------------------------------------------------
-void BasicWindowHelper::SetWindowHandle(BasicWindow *wnd, void *handle) {
+void FBasicWindowHelper::SetWindowHandle(FBasicWindow *wnd, void *handle) {
     Assert(handle);
     wnd->_handle = handle;
 }
 //----------------------------------------------------------------------------
-void BasicWindowHelper::SetWindowFocus(BasicWindow *wnd, void *handle, bool hasFocus) {
+void FBasicWindowHelper::SetWindowFocus(FBasicWindow *wnd, void *handle, bool hasFocus) {
     UNUSED(handle);
     Assert(wnd);
     Assert(wnd->_handle == handle);
     wnd->_wantFocus = hasFocus;
 }
 //----------------------------------------------------------------------------
-void BasicWindowHelper::SetWindowSize(BasicWindow *wnd, void *handle, size_t width, size_t height) {
+void FBasicWindowHelper::SetWindowSize(FBasicWindow *wnd, void *handle, size_t width, size_t height) {
     UNUSED(handle);
     Assert(wnd);
     Assert(wnd->_handle == handle);
@@ -52,14 +52,14 @@ namespace {
 #define BASICWINDOW_CLASNAME L"Core::Graphics::BasicWindowClass"
 //----------------------------------------------------------------------------
 static LRESULT CALLBACK BasicWindowProc_(HWND handle, UINT msg, WPARAM wparam, LPARAM lparam) {
-    BasicWindow *wnd = nullptr;
+    FBasicWindow *wnd = nullptr;
 
     if (WM_NCCREATE == msg) {
-        wnd = reinterpret_cast<BasicWindow *>(((LPCREATESTRUCT)lparam)->lpCreateParams);
+        wnd = reinterpret_cast<FBasicWindow *>(((LPCREATESTRUCT)lparam)->lpCreateParams);
         ::SetWindowLongPtr(handle, GWLP_USERDATA, checked_cast<LONG_PTR>(wnd));
-        BasicWindowHelper::SetWindowHandle(wnd, handle);
+        FBasicWindowHelper::SetWindowHandle(wnd, handle);
 
-        const size_t appIcon = CurrentProcess::Instance().AppIcon();
+        const size_t appIcon = FCurrentProcess::Instance().AppIcon();
         if (appIcon) { // set window icon from current process resources
             HMODULE module = ::GetModuleHandle(0);
 
@@ -73,7 +73,7 @@ static LRESULT CALLBACK BasicWindowProc_(HWND handle, UINT msg, WPARAM wparam, L
         }
     }
     else {
-        wnd = reinterpret_cast<BasicWindow *>(::GetWindowLongPtr(handle, GWLP_USERDATA));
+        wnd = reinterpret_cast<FBasicWindow *>(::GetWindowLongPtr(handle, GWLP_USERDATA));
     }
 
     HDC hdc;
@@ -91,20 +91,20 @@ static LRESULT CALLBACK BasicWindowProc_(HWND handle, UINT msg, WPARAM wparam, L
         return 0;
 
     case WM_SETFOCUS:
-        BasicWindowHelper::SetWindowFocus(wnd, handle, true);
+        FBasicWindowHelper::SetWindowFocus(wnd, handle, true);
         return 0;
 
     case WM_KILLFOCUS:
-        BasicWindowHelper::SetWindowFocus(wnd, handle, false);
+        FBasicWindowHelper::SetWindowFocus(wnd, handle, false);
         return 0;
 
     case WM_SIZE:
-        BasicWindowHelper::SetWindowSize(wnd, handle, LOWORD(lparam), HIWORD(lparam));
+        FBasicWindowHelper::SetWindowSize(wnd, handle, LOWORD(lparam), HIWORD(lparam));
         return 0;
     }
 
     MessageResult result;
-    if (wnd && wnd->DispatchMessageIFP(static_cast<WindowMessage>(msg), lparam, wparam, &result))
+    if (wnd && wnd->DispatchMessageIFP(static_cast<EWindowMessage>(msg), lparam, wparam, &result))
         return result;
     else
         return DefWindowProc(handle, msg, wparam, lparam);
@@ -118,31 +118,31 @@ static void CreateBasicWindowClass_() {
     wc.cbSize = sizeof(WNDCLASSEX);
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc = BasicWindowProc_;
-    wc.hInstance = reinterpret_cast<HINSTANCE>(CurrentProcess::Instance().ApplicationHandle());
+    wc.hInstance = reinterpret_cast<HINSTANCE>(FCurrentProcess::Instance().ApplicationHandle());
     wc.hCursor = ::LoadCursor(NULL, IDC_ARROW);
     wc.hbrBackground = (HBRUSH)COLOR_WINDOW;
     wc.lpszClassName = BASICWINDOW_CLASNAME;
 
     if (!RegisterClassEx(&wc))
-        CORE_THROW_IT(LastErrorException());
+        CORE_THROW_IT(FLastErrorException());
 }
 //----------------------------------------------------------------------------
 static void DestroyBasicWindowClass_() {
-    if (!UnregisterClass(BASICWINDOW_CLASNAME, reinterpret_cast<HINSTANCE>(CurrentProcess::Instance().ApplicationHandle())))
-        CORE_THROW_IT(LastErrorException());
+    if (!UnregisterClass(BASICWINDOW_CLASNAME, reinterpret_cast<HINSTANCE>(FCurrentProcess::Instance().ApplicationHandle())))
+        CORE_THROW_IT(FLastErrorException());
 }
 //----------------------------------------------------------------------------
 static HWND CreateBasicWindowHandle_(
-    BasicWindow *wnd,
+    FBasicWindow *wnd,
     const wchar_t *title,
     int left, int top,
     size_t width, size_t height,
-    BasicWindow *parent) {
+    FBasicWindow *parent) {
     const DWORD windowStyle = WS_OVERLAPPEDWINDOW;
 
     RECT size = { 0, 0, checked_cast<LONG>(width), checked_cast<LONG>(height) };
     if (!::AdjustWindowRect(&size, windowStyle, FALSE))
-        CORE_THROW_IT(LastErrorException());
+        CORE_THROW_IT(FLastErrorException());
 
     HWND handle = ::CreateWindowEx(
         NULL,
@@ -155,11 +155,11 @@ static HWND CreateBasicWindowHandle_(
         size.bottom - size.top,
         reinterpret_cast<HWND>((parent) ? parent->Handle() : NULL),
         NULL,
-        reinterpret_cast<HINSTANCE>(CurrentProcess::Instance().ApplicationHandle()),
+        reinterpret_cast<HINSTANCE>(FCurrentProcess::Instance().ApplicationHandle()),
         checked_cast<LPVOID>(wnd));
 
     if (!handle)
-        CORE_THROW_IT(LastErrorException());
+        CORE_THROW_IT(FLastErrorException());
 
     return handle;
 }
@@ -168,11 +168,11 @@ static HWND CreateBasicWindowHandle_(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-BasicWindow::BasicWindow(
+FBasicWindow::FBasicWindow(
     const wchar_t *title,
     int left, int top,
     size_t width, size_t height,
-    BasicWindow *parent/* = nullptr */)
+    FBasicWindow *parent/* = nullptr */)
 :   _handle(nullptr)
 ,   _title(title)
 ,   _width(width)
@@ -190,7 +190,7 @@ BasicWindow::BasicWindow(
         title, left, top, width, height, _handle);
 }
 //----------------------------------------------------------------------------
-BasicWindow::~BasicWindow() {
+FBasicWindow::~FBasicWindow() {
     Assert(_handle);
 
     LOG(Info, L"[Window] Destroy window {0}", _handle);
@@ -198,7 +198,7 @@ BasicWindow::~BasicWindow() {
     ::DestroyWindow(reinterpret_cast<HWND>(_handle));
 }
 //----------------------------------------------------------------------------
-void BasicWindow::RegisterMessageHandler(IWindowMessageHandler *handler) {
+void FBasicWindow::RegisterMessageHandler(IWindowMessageHandler *handler) {
     Assert(handler);
     Assert(nullptr == handler->Window());
 
@@ -208,7 +208,7 @@ void BasicWindow::RegisterMessageHandler(IWindowMessageHandler *handler) {
     handler->RegisterMessageDelegates(this);
 }
 //----------------------------------------------------------------------------
-void BasicWindow::UnregisterMessageHandler(IWindowMessageHandler *handler) {
+void FBasicWindow::UnregisterMessageHandler(IWindowMessageHandler *handler) {
     Assert(handler);
     Assert(this == handler->Window());
 
@@ -218,11 +218,11 @@ void BasicWindow::UnregisterMessageHandler(IWindowMessageHandler *handler) {
     Remove_AssertExists(_handlers, handler);
 }
 //----------------------------------------------------------------------------
-void BasicWindow::Update_BeforeDispatch() {
+void FBasicWindow::Update_BeforeDispatch() {
     UpdateMessageHandlers_BeforeDispatch_();
 }
 //----------------------------------------------------------------------------
-void BasicWindow::Update_AfterDispatch() {
+void FBasicWindow::Update_AfterDispatch() {
     UpdateMessageHandlers_AfterDispatch_();
 
     if (_wantFocus != _hasFocus) {
@@ -237,7 +237,7 @@ void BasicWindow::Update_AfterDispatch() {
         OnResize(_wantedWidth, _wantedHeight);
 }
 //----------------------------------------------------------------------------
-bool BasicWindow::DispatchMessageIFP(WindowMessage msg, MessageLParam lparam, MessageWParam wparam, MessageResult *result) {
+bool FBasicWindow::DispatchMessageIFP(EWindowMessage msg, MessageLParam lparam, MessageWParam wparam, MessageResult *result) {
     Assert(result);
 
     WindowMessageHandlerDelegate handlerDelegate;
@@ -254,15 +254,15 @@ bool BasicWindow::DispatchMessageIFP(WindowMessage msg, MessageLParam lparam, Me
     }
 }
 //----------------------------------------------------------------------------
-void BasicWindow::Show() {
+void FBasicWindow::Show() {
     Assert(_handle);
 
     LOG(Info, L"[Window] Show window {0}", _handle);
 
-    ::ShowWindow(reinterpret_cast<HWND>(_handle), CurrentProcess::Instance().nShowCmd());
+    ::ShowWindow(reinterpret_cast<HWND>(_handle), FCurrentProcess::Instance().nShowCmd());
 }
 //----------------------------------------------------------------------------
-void BasicWindow::Close() {
+void FBasicWindow::Close() {
     Assert(_handle);
 
     LOG(Info, L"[Window] Close window {0}", _handle);
@@ -270,7 +270,7 @@ void BasicWindow::Close() {
     ::CloseWindow(reinterpret_cast<HWND>(_handle));
 }
 //----------------------------------------------------------------------------
-bool BasicWindow::PumpMessage(WindowMessage& msg, MessageLParam& lparam, MessageWParam& wparam) {
+bool FBasicWindow::PumpMessage(EWindowMessage& msg, MessageLParam& lparam, MessageWParam& wparam) {
     Assert(_handle);
 
     MSG windowMsg;
@@ -279,12 +279,12 @@ bool BasicWindow::PumpMessage(WindowMessage& msg, MessageLParam& lparam, Message
         ::TranslateMessage(&windowMsg);
         ::DispatchMessage(&windowMsg);
 
-        msg = static_cast<WindowMessage>(windowMsg.message);
+        msg = static_cast<EWindowMessage>(windowMsg.message);
         lparam = windowMsg.lParam;
         wparam = windowMsg.wParam;
 
         /*
-        LOG(Info, L"[BasicWindow] Received window message #{0} <{1}>",
+        LOG(Info, L"[FBasicWindow] Received window message #{0} <{1}>",
             size_t(msg), WindowMessageToCStr(msg));
             */
 
@@ -294,41 +294,41 @@ bool BasicWindow::PumpMessage(WindowMessage& msg, MessageLParam& lparam, Message
     return false;
 }
 //----------------------------------------------------------------------------
-bool BasicWindow::PumpAllMessages_ReturnIfQuit() {
+bool FBasicWindow::PumpAllMessages_ReturnIfQuit() {
     bool quit = false;
 
-    WindowMessage msg;
+    EWindowMessage msg;
     MessageLParam lparam;
     MessageWParam wparam;
     while (PumpMessage(msg, lparam, wparam))
-        quit |= (msg == WindowMessage::Quit);
+        quit |= (msg == EWindowMessage::Quit);
 
     return quit;
 }
 //----------------------------------------------------------------------------
-void BasicWindow::Start() {
+void FBasicWindow::Start() {
     CreateBasicWindowClass_();
 }
 //----------------------------------------------------------------------------
-void BasicWindow::Shutdown() {
+void FBasicWindow::Shutdown() {
     DestroyBasicWindowClass_();
 }
 //----------------------------------------------------------------------------
-void BasicWindow::OnSetFocus() {
+void FBasicWindow::OnSetFocus() {
     Assert(true == _wantFocus);
     LOG(Info, L"[Window] Window {0} set focus", _handle);
 
     _hasFocus = true;
 }
 //----------------------------------------------------------------------------
-void BasicWindow::OnLoseFocus() {
+void FBasicWindow::OnLoseFocus() {
     Assert(false == _wantFocus);
     LOG(Info, L"[Window] Window {0} lose focus", _handle);
 
     _hasFocus = false;
 }
 //----------------------------------------------------------------------------
-void BasicWindow::OnResize(size_t width, size_t height) {
+void FBasicWindow::OnResize(size_t width, size_t height) {
     LOG(Info, L"[Window] Window {0} resize from {1}x{2} -> {3}x{4}", _handle, _width, _height, width, height);
 
     // overwrites _wantedWidth/Height to enable child impl to pass a different size
@@ -336,7 +336,7 @@ void BasicWindow::OnResize(size_t width, size_t height) {
     _height = _wantedHeight = height;
 }
 //----------------------------------------------------------------------------
-void BasicWindow::RegisterMessageDelegate_(WindowMessage msg, IWindowMessageHandler *handler, IWindowMessageHandler::Delegate member) {
+void FBasicWindow::RegisterMessageDelegate_(EWindowMessage msg, IWindowMessageHandler *handler, IWindowMessageHandler::TDelegate member) {
     Assert(handler);
     Assert(member);
     Assert(Contains(_handlers, handler));
@@ -344,10 +344,10 @@ void BasicWindow::RegisterMessageDelegate_(WindowMessage msg, IWindowMessageHand
 
     LOG(Info, L"[Window] Register {1} message handler for window '{0}'", _title, msg);
 
-    _dispatch.Insert_AssertUnique(std::forward<WindowMessage>(msg), MakePair(handler, member));
+    _dispatch.Insert_AssertUnique(std::forward<EWindowMessage>(msg), MakePair(handler, member));
 }
 //----------------------------------------------------------------------------
-void BasicWindow::UnregisterMessageDelegate_(WindowMessage msg, IWindowMessageHandler *handler, IWindowMessageHandler::Delegate member) {
+void FBasicWindow::UnregisterMessageDelegate_(EWindowMessage msg, IWindowMessageHandler *handler, IWindowMessageHandler::TDelegate member) {
     UNUSED(handler);
     UNUSED(member);
     Assert(handler);
@@ -365,17 +365,17 @@ void BasicWindow::UnregisterMessageDelegate_(WindowMessage msg, IWindowMessageHa
     _dispatch.Erase(it);
 }
 //----------------------------------------------------------------------------
-void BasicWindow::UpdateMessageHandlers_BeforeDispatch_() {
+void FBasicWindow::UpdateMessageHandlers_BeforeDispatch_() {
     for (IWindowMessageHandler *handler : _handlers)
         handler->UpdateBeforeDispatch(this);
 }
 //----------------------------------------------------------------------------
-void BasicWindow::UpdateMessageHandlers_AfterDispatch_() {
+void FBasicWindow::UpdateMessageHandlers_AfterDispatch_() {
     for (IWindowMessageHandler *handler : _handlers)
         handler->UpdateAfterDispatch(this);
 }
 //----------------------------------------------------------------------------
-void BasicWindow::ScreenToClient(int *x, int *y) const {
+void FBasicWindow::ScreenToClient(int *x, int *y) const {
     Assert(x);
     Assert(y);
 
@@ -386,7 +386,7 @@ void BasicWindow::ScreenToClient(int *x, int *y) const {
     *y = checked_cast<int>(pt.y);
 }
 //----------------------------------------------------------------------------
-void BasicWindow::ClientToScreen(int *x, int *y) const {
+void FBasicWindow::ClientToScreen(int *x, int *y) const {
     Assert(x);
     Assert(y);
 
@@ -397,7 +397,7 @@ void BasicWindow::ClientToScreen(int *x, int *y) const {
     *y = checked_cast<int>(pt.y);
 }
 //----------------------------------------------------------------------------
-void BasicWindow::SetCursorCapture(bool enabled) const {
+void FBasicWindow::SetCursorCapture(bool enabled) const {
     if (enabled)
         ::SetCapture(reinterpret_cast<HWND>(_handle));
     else
@@ -406,7 +406,7 @@ void BasicWindow::SetCursorCapture(bool enabled) const {
     ::ShowCursor(!enabled);
 }
 //----------------------------------------------------------------------------
-void BasicWindow::SetCursorPositionOnScreenCenter() const {
+void FBasicWindow::SetCursorPositionOnScreenCenter() const {
     ::POINT pt = {checked_cast<LONG>(_width/2), checked_cast<LONG>(_height/2)};
     ::ClientToScreen(reinterpret_cast<HWND>(_handle), &pt);
     ::SetCursorPos(pt.x, pt.y);

@@ -18,19 +18,19 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, DX11ShaderProgram, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, FDX11ShaderProgram, );
 //----------------------------------------------------------------------------
-DX11ShaderProgram::DX11ShaderProgram(IDeviceAPIEncapsulator* device, const ShaderProgram* resource)
-:   DeviceAPIDependantShaderProgram(device, resource) {
+FDX11ShaderProgram::FDX11ShaderProgram(IDeviceAPIEncapsulator* device, const FShaderProgram* resource)
+:   FDeviceAPIDependantShaderProgram(device, resource) {
 
-    const DX11DeviceWrapper* wrapper = DX11GetDeviceWrapper(device);
-    const ShaderCompiled* compiled = Compiled();
+    const FDX11DeviceWrapper* wrapper = DX11GetDeviceWrapper(device);
+    const FShaderCompiled* compiled = Compiled();
 
     switch (ProgramType())
     {
-    case Core::Graphics::ShaderProgramType::Vertex:
+    case Core::Graphics::EShaderProgramType::Vertex:
         {
-            ComPtr<::ID3D11VertexShader> vertexShader;
+            TComPtr<::ID3D11VertexShader> vertexShader;
             DX11_THROW_IF_FAILED(device, resource, (
                 wrapper->Device()->CreateVertexShader(
                     compiled->Blob().Pointer(),
@@ -41,9 +41,9 @@ DX11ShaderProgram::DX11ShaderProgram(IDeviceAPIEncapsulator* device, const Shade
             _abstractShader = vertexShader.Get();
         }
         break;
-    case Core::Graphics::ShaderProgramType::Hull:
+    case Core::Graphics::EShaderProgramType::Hull:
         {
-            ComPtr<::ID3D11HullShader> hullShader;
+            TComPtr<::ID3D11HullShader> hullShader;
             DX11_THROW_IF_FAILED(device, resource, (
                 wrapper->Device()->CreateHullShader(
                     compiled->Blob().Pointer(),
@@ -54,9 +54,9 @@ DX11ShaderProgram::DX11ShaderProgram(IDeviceAPIEncapsulator* device, const Shade
             _abstractShader = hullShader.Get();
         }
         break;
-    case Core::Graphics::ShaderProgramType::Domain:
+    case Core::Graphics::EShaderProgramType::Domain:
         {
-            ComPtr<::ID3D11DomainShader> domainShader;
+            TComPtr<::ID3D11DomainShader> domainShader;
             DX11_THROW_IF_FAILED(device, resource, (
                 wrapper->Device()->CreateDomainShader(
                     compiled->Blob().Pointer(),
@@ -67,9 +67,9 @@ DX11ShaderProgram::DX11ShaderProgram(IDeviceAPIEncapsulator* device, const Shade
             _abstractShader = domainShader.Get();
         }
         break;
-    case Core::Graphics::ShaderProgramType::Pixel:
+    case Core::Graphics::EShaderProgramType::Pixel:
         {
-            ComPtr<::ID3D11PixelShader> pixelShader;
+            TComPtr<::ID3D11PixelShader> pixelShader;
             DX11_THROW_IF_FAILED(device, resource, (
                 wrapper->Device()->CreatePixelShader(
                     compiled->Blob().Pointer(),
@@ -80,9 +80,9 @@ DX11ShaderProgram::DX11ShaderProgram(IDeviceAPIEncapsulator* device, const Shade
             _abstractShader = pixelShader.Get();
         }
         break;
-    case Core::Graphics::ShaderProgramType::Geometry:
+    case Core::Graphics::EShaderProgramType::Geometry:
         {
-            ComPtr<::ID3D11GeometryShader> geometryShader;
+            TComPtr<::ID3D11GeometryShader> geometryShader;
             DX11_THROW_IF_FAILED(device, resource, (
                 wrapper->Device()->CreateGeometryShader(
                     compiled->Blob().Pointer(),
@@ -93,9 +93,9 @@ DX11ShaderProgram::DX11ShaderProgram(IDeviceAPIEncapsulator* device, const Shade
             _abstractShader = geometryShader.Get();
         }
         break;
-    case Core::Graphics::ShaderProgramType::Compute:
+    case Core::Graphics::EShaderProgramType::Compute:
         {
-            ComPtr<::ID3D11ComputeShader> computeShader;
+            TComPtr<::ID3D11ComputeShader> computeShader;
             DX11_THROW_IF_FAILED(device, resource, (
                 wrapper->Device()->CreateComputeShader(
                     compiled->Blob().Pointer(),
@@ -115,11 +115,11 @@ DX11ShaderProgram::DX11ShaderProgram(IDeviceAPIEncapsulator* device, const Shade
     DX11SetDeviceResourceNameIFP(_abstractShader, resource);
 }
 //----------------------------------------------------------------------------
-DX11ShaderProgram::~DX11ShaderProgram() {
+FDX11ShaderProgram::~FDX11ShaderProgram() {
     ReleaseComRef(_abstractShader);
 }
 //----------------------------------------------------------------------------
-size_t DX11ShaderProgram::VideoMemorySizeInBytes() const {
+size_t FDX11ShaderProgram::VideoMemorySizeInBytes() const {
     return Compiled()->Blob().SizeInBytes();
 }
 //----------------------------------------------------------------------------

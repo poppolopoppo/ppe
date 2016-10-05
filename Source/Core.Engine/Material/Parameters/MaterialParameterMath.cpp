@@ -25,13 +25,13 @@ static IMaterialParameter *CreateInvertParam_(IMaterialParameter *source) {
     Assert(source);
 
     switch (source->Info().Type) {
-    case Graphics::ConstantFieldType::Float3x3:
-        return new MaterialParameterMath::Memoizer_Invert<float3x3>(source->Cast<float3x3>());
-    case Graphics::ConstantFieldType::Float4x4:
-        return new MaterialParameterMath::Memoizer_Invert<float4x4>(source->Cast<float4x4>());
+    case Graphics::EConstantFieldType::Float3x3:
+        return new MaterialParameterMath::TMemoizer_Invert<float3x3>(source->Cast<float3x3>());
+    case Graphics::EConstantFieldType::Float4x4:
+        return new MaterialParameterMath::TMemoizer_Invert<float4x4>(source->Cast<float4x4>());
 
-    case Graphics::ConstantFieldType::Float4x3:
-    case Graphics::ConstantFieldType::Float3x4:
+    case Graphics::EConstantFieldType::Float4x3:
+    case Graphics::EConstantFieldType::Float3x4:
         break; // no support
 
     default:
@@ -44,13 +44,13 @@ static IMaterialParameter *CreateInvertTranposeParam_(IMaterialParameter *source
     Assert(source);
 
     switch (source->Info().Type) {
-    case Graphics::ConstantFieldType::Float3x3:
-        return new MaterialParameterMath::Memoizer_InvertTranspose<float3x3>(source->Cast<float3x3>());
-    case Graphics::ConstantFieldType::Float4x4:
-        return new MaterialParameterMath::Memoizer_InvertTranspose<float4x4>(source->Cast<float4x4>());
+    case Graphics::EConstantFieldType::Float3x3:
+        return new MaterialParameterMath::TMemoizer_InvertTranspose<float3x3>(source->Cast<float3x3>());
+    case Graphics::EConstantFieldType::Float4x4:
+        return new MaterialParameterMath::TMemoizer_InvertTranspose<float4x4>(source->Cast<float4x4>());
 
-    case Graphics::ConstantFieldType::Float4x3:
-    case Graphics::ConstantFieldType::Float3x4:
+    case Graphics::EConstantFieldType::Float4x3:
+    case Graphics::EConstantFieldType::Float3x4:
         break; // no support
 
     default:
@@ -63,13 +63,13 @@ static IMaterialParameter *CreateTranposeParam_(IMaterialParameter *source) {
     Assert(source);
 
     switch (source->Info().Type) {
-    case Graphics::ConstantFieldType::Float3x3:
-        return new MaterialParameterMath::Memoizer_Transpose<float3x3>(source->Cast<float3x3>());
-    case Graphics::ConstantFieldType::Float4x4:
-        return new MaterialParameterMath::Memoizer_Transpose<float4x4>(source->Cast<float4x4>());
+    case Graphics::EConstantFieldType::Float3x3:
+        return new MaterialParameterMath::TMemoizer_Transpose<float3x3>(source->Cast<float3x3>());
+    case Graphics::EConstantFieldType::Float4x4:
+        return new MaterialParameterMath::TMemoizer_Transpose<float4x4>(source->Cast<float4x4>());
 
-    case Graphics::ConstantFieldType::Float4x3:
-    case Graphics::ConstantFieldType::Float3x4:
+    case Graphics::EConstantFieldType::Float4x3:
+    case Graphics::EConstantFieldType::Float3x4:
         break; // no support
 
     default:
@@ -82,14 +82,14 @@ static IMaterialParameter *CreateRcpParam_(IMaterialParameter *source) {
     Assert(source);
 
     switch (source->Info().Type) {
-    case Graphics::ConstantFieldType::Float:
-        return new MaterialParameterMath::Memoizer_Rcp<float>(source->Cast<float>());
-    case Graphics::ConstantFieldType::Float2:
-        return new MaterialParameterMath::Memoizer_Rcp<float2>(source->Cast<float2>());
-    case Graphics::ConstantFieldType::Float3:
-        return new MaterialParameterMath::Memoizer_Rcp<float3>(source->Cast<float3>());
-    case Graphics::ConstantFieldType::Float4:
-        return new MaterialParameterMath::Memoizer_Rcp<float4>(source->Cast<float4>());
+    case Graphics::EConstantFieldType::Float:
+        return new MaterialParameterMath::TMemoizer_Rcp<float>(source->Cast<float>());
+    case Graphics::EConstantFieldType::Float2:
+        return new MaterialParameterMath::TMemoizer_Rcp<float2>(source->Cast<float2>());
+    case Graphics::EConstantFieldType::Float3:
+        return new MaterialParameterMath::TMemoizer_Rcp<float3>(source->Cast<float3>());
+    case Graphics::EConstantFieldType::Float4:
+        return new MaterialParameterMath::TMemoizer_Rcp<float4>(source->Cast<float4>());
 
     default:
         AssertNotImplemented();
@@ -101,9 +101,9 @@ static IMaterialParameter *CreateSRGBParam_(IMaterialParameter *source) {
     Assert(source);
 
     switch (source->Info().Type) {
-    case Graphics::ConstantFieldType::Float3:
+    case Graphics::EConstantFieldType::Float3:
         return new MaterialParameterMath::Memoizer_SRGB(source->Cast<float3>());
-    case Graphics::ConstantFieldType::Float4:
+    case Graphics::EConstantFieldType::Float4:
         return new MaterialParameterMath::Memoizer_SRGBA(source->Cast<float4>());
 
     default:
@@ -120,7 +120,7 @@ namespace MaterialParameterMath {
 //----------------------------------------------------------------------------
 EACH_MATERIALPARAMETER_MATH(MATERIALPARAMETER_FN_DEF)
 //----------------------------------------------------------------------------
-void RegisterMaterialParameters(MaterialDatabase *database) {
+void RegisterMaterialParameters(FMaterialDatabase *database) {
     Assert(database);
 
 #define BIND_MATERIALPARAMETER(_Variability, _Type, _Name) \
@@ -143,14 +143,14 @@ template <typename T>
 Invert<T>::Invert(ITypedMaterialParameter<T> *source) : Source(source) { Assert(source); }
 //----------------------------------------------------------------------------
 template <typename T>
-void Invert<T>::TypedEval(const MaterialParameterContext& context, T& dst) {
+void Invert<T>::TypedEval(const FMaterialParameterContext& context, T& dst) {
     T original;
     Source->TypedEval(context, original);
     dst = Invert(original);
 }
 //----------------------------------------------------------------------------
-template class MaterialParameterMemoizer<Invert<float3x3> >;
-template class MaterialParameterMemoizer<Invert<float4x4> >;
+template class TMaterialParameterMemoizer<Invert<float3x3> >;
+template class TMaterialParameterMemoizer<Invert<float4x4> >;
 //----------------------------------------------------------------------------
 // InvertTranspose
 //----------------------------------------------------------------------------
@@ -158,46 +158,46 @@ template <typename T>
 InvertTranspose<T>::InvertTranspose(ITypedMaterialParameter<T> *source) : Source(source) { Assert(source); }
 //----------------------------------------------------------------------------
 template <typename T>
-void InvertTranspose<T>::TypedEval(const MaterialParameterContext& context, T& dst) {
+void InvertTranspose<T>::TypedEval(const FMaterialParameterContext& context, T& dst) {
     T original;
     Source->TypedEval(context, original);
     dst = InvertTranspose(original);
 }
 //----------------------------------------------------------------------------
-template class MaterialParameterMemoizer<InvertTranspose<float3x3> >;
-template class MaterialParameterMemoizer<InvertTranspose<float4x4> >;
+template class TMaterialParameterMemoizer<InvertTranspose<float3x3> >;
+template class TMaterialParameterMemoizer<InvertTranspose<float4x4> >;
 //----------------------------------------------------------------------------
-// Transpose
-//----------------------------------------------------------------------------
-template <typename T>
-Transpose<T>::Transpose(ITypedMaterialParameter<T> *source) : Source(source) { Assert(source); }
+// TTranspose
 //----------------------------------------------------------------------------
 template <typename T>
-void Transpose<T>::TypedEval(const MaterialParameterContext& context, T& dst) {
+TTranspose<T>::TTranspose(ITypedMaterialParameter<T> *source) : Source(source) { Assert(source); }
+//----------------------------------------------------------------------------
+template <typename T>
+void TTranspose<T>::TypedEval(const FMaterialParameterContext& context, T& dst) {
     T original;
     Source->TypedEval(context, original);
     dst = original.Transpose();
 }
 //----------------------------------------------------------------------------
-template class MaterialParameterMemoizer<Transpose<float3x3> >;
-template class MaterialParameterMemoizer<Transpose<float4x4> >;
+template class TMaterialParameterMemoizer<TTranspose<float3x3> >;
+template class TMaterialParameterMemoizer<TTranspose<float4x4> >;
 //----------------------------------------------------------------------------
-// Rcp
-//----------------------------------------------------------------------------
-template <typename T>
-Rcp<T>::Rcp(ITypedMaterialParameter<T> *source) : Source(source) { Assert(source); }
+// TRcp
 //----------------------------------------------------------------------------
 template <typename T>
-void Rcp<T>::TypedEval(const MaterialParameterContext& context, T& dst) {
+TRcp<T>::TRcp(ITypedMaterialParameter<T> *source) : Source(source) { Assert(source); }
+//----------------------------------------------------------------------------
+template <typename T>
+void TRcp<T>::TypedEval(const FMaterialParameterContext& context, T& dst) {
     T original;
     Source->TypedEval(context, original);
-    dst = Rcp(original);
+    dst = TRcp(original);
 }
 //----------------------------------------------------------------------------
-template class MaterialParameterMemoizer<Rcp<float> >;
-template class MaterialParameterMemoizer<Rcp<float2> >;
-template class MaterialParameterMemoizer<Rcp<float3> >;
-template class MaterialParameterMemoizer<Rcp<float4> >;
+template class TMaterialParameterMemoizer<TRcp<float> >;
+template class TMaterialParameterMemoizer<TRcp<float2> >;
+template class TMaterialParameterMemoizer<TRcp<float3> >;
+template class TMaterialParameterMemoizer<TRcp<float4> >;
 //----------------------------------------------------------------------------
 } //!MaterialParameterMath
 //----------------------------------------------------------------------------
@@ -212,7 +212,7 @@ SRGB::SRGB(ITypedMaterialParameter<float3> *source)
     Assert(source);
 }
 //----------------------------------------------------------------------------
-void SRGB::TypedEval(const MaterialParameterContext& context, float3& dst) {
+void SRGB::TypedEval(const FMaterialParameterContext& context, float3& dst) {
     float3 original;
     Source->TypedEval(context, original);
 
@@ -220,7 +220,7 @@ void SRGB::TypedEval(const MaterialParameterContext& context, float3& dst) {
     dst = srgb.ToLinear().Data().xyz();
 }
 //----------------------------------------------------------------------------
-template class MaterialParameterMemoizer<SRGB>;
+template class TMaterialParameterMemoizer<SRGB>;
 //----------------------------------------------------------------------------
 // SRGBA
 //----------------------------------------------------------------------------
@@ -229,7 +229,7 @@ SRGBA::SRGBA(ITypedMaterialParameter<float4> *source)
     Assert(source);
 }
 //----------------------------------------------------------------------------
-void SRGBA::TypedEval(const MaterialParameterContext& context, float4& dst) {
+void SRGBA::TypedEval(const FMaterialParameterContext& context, float4& dst) {
     float4 original;
     Source->TypedEval(context, original);
 
@@ -237,7 +237,7 @@ void SRGBA::TypedEval(const MaterialParameterContext& context, float4& dst) {
     dst = srgb.ToLinear().Data();
 }
 //----------------------------------------------------------------------------
-template class MaterialParameterMemoizer<SRGBA>;
+template class TMaterialParameterMemoizer<SRGBA>;
 //----------------------------------------------------------------------------
 } //!MaterialParameterMath
 //----------------------------------------------------------------------------
@@ -247,9 +247,9 @@ namespace MaterialParameterMath {
 //----------------------------------------------------------------------------
 bool TryCreateMaterialParameter(
     PMaterialParameter *param,
-    const MaterialParameterMutableContext& context,
-    const Graphics::BindName& name,
-    const Graphics::ConstantField& field ) {
+    const FMaterialParameterMutableContext& context,
+    const Graphics::FBindName& name,
+    const Graphics::FConstantField& field ) {
     Assert(param);
     Assert(context.MaterialEffect);
     Assert(context.Database);
@@ -265,7 +265,7 @@ bool TryCreateMaterialParameter(
     static const char uniSRGB[] = "uniSRGB_";
 
     IMaterialParameter *(*paramFunc)(IMaterialParameter *) = nullptr;
-    Graphics::BindName parameterName;
+    Graphics::FBindName parameterName;
 
     if (StartsWith(cstr, uniInvertTranspose)) {
         paramFunc = &CreateInvertTranposeParam_;

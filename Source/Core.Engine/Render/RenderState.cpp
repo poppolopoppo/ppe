@@ -9,15 +9,15 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-RenderState::RenderState()
-:   RenderState(Blending::Opaque, Culling::Clockwise, DepthTest::Default) {}
+FRenderState::FRenderState()
+:   FRenderState(EBlending::Opaque, ECulling::Clockwise, EDepthTest::Default) {}
 //----------------------------------------------------------------------------
-RenderState::~RenderState() {}
+FRenderState::~FRenderState() {}
 //----------------------------------------------------------------------------
-RenderState::RenderState(Blending blend, Culling cull, DepthTest depth, FillMode fill)
+FRenderState::FRenderState(EBlending blend, ECulling cull, EDepthTest depth, EFillMode fill)
 :   _blend(blend), _cull(cull), _depth(depth), _fill(fill) {}
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, RenderState, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, FRenderState, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

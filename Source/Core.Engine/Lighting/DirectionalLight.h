@@ -11,12 +11,12 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DirectionalLight {
+class FDirectionalLight {
 public:
-    DirectionalLight();
-    ~DirectionalLight();
+    FDirectionalLight();
+    ~FDirectionalLight();
 
-    DirectionalLight(   const ColorRGBA& color,
+    FDirectionalLight(   const ColorRGBA& color,
                         const float3& direction,
                         float intensity );
 

@@ -9,7 +9,7 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class WindowMessage : unsigned int {
+enum class EWindowMessage : unsigned int {
     Null                = 0x0000,
     Create              = 0x0001,
     Destroy             = 0x0002,
@@ -53,13 +53,13 @@ typedef long    MessageResult;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-StringView WindowMessageToCStr(WindowMessage msg);
+FStringView WindowMessageToCStr(EWindowMessage msg);
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
-    WindowMessage msg) {
-    const StringView cstr = WindowMessageToCStr(msg);
+    EWindowMessage msg) {
+    const FStringView cstr = WindowMessageToCStr(msg);
     return (nullptr == cstr.data())
         ? oss << "0x" << std::hex << (unsigned int)msg
         : oss << cstr;

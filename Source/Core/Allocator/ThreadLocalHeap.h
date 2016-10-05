@@ -9,10 +9,10 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Heap& GetThreadLocalHeap();
+FHeap& GetThreadLocalHeap();
 //----------------------------------------------------------------------------
 template <typename T, typename _MemoryDomain>
-struct ThreadLocalHeapFree {
+struct TThreadLocalHeapFree {
     typedef void result_type;
     typedef T * argument_type;
     void operator ()(T * x) const {
@@ -23,17 +23,17 @@ struct ThreadLocalHeapFree {
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _MemoryDomain>
-using ThreadLocalPtr = UniquePtr<T, ThreadLocalHeapFree<T, _MemoryDomain> >;
+using TThreadLocalPtr = TUniquePtr<T, TThreadLocalHeapFree<T, _MemoryDomain> >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ThreadLocalHeapStartup {
+class FThreadLocalHeapStartup {
 public:
     static void Start(bool mainThread);
     static void Shutdown();
 
-    ThreadLocalHeapStartup(bool mainThread) { Start(mainThread); }
-    ~ThreadLocalHeapStartup() { Shutdown(); }
+    FThreadLocalHeapStartup(bool mainThread) { Start(mainThread); }
+    ~FThreadLocalHeapStartup() { Shutdown(); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -14,43 +14,43 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-RenderSurfaceLock::RenderSurfaceLock(const AbstractRenderSurface *owner)
+FRenderSurfaceLock::FRenderSurfaceLock(const FAbstractRenderSurface *owner)
 :   _state(0) {
     Assert(Owner() == owner); // deduced from this address
 }
 //----------------------------------------------------------------------------
-RenderSurfaceLock::~RenderSurfaceLock() {
+FRenderSurfaceLock::~FRenderSurfaceLock() {
     Assert(!Owner()->InUse());
 }
 //----------------------------------------------------------------------------
-const AbstractRenderSurface *RenderSurfaceLock::Owner() const {
-    return reinterpret_cast<const AbstractRenderSurface *>((const u8 *)this - offsetof(AbstractRenderSurface, _lock) );
+const FAbstractRenderSurface *FRenderSurfaceLock::Owner() const {
+    return reinterpret_cast<const FAbstractRenderSurface *>((const u8 *)this - offsetof(FAbstractRenderSurface, _lock) );
 }
 //----------------------------------------------------------------------------
-void RenderSurfaceLock::Acquire(
-    const Graphics::RenderTarget **pRenderTarget,
-    const Graphics::DepthStencil **pDepthStencil ) const {
+void FRenderSurfaceLock::Acquire(
+    const Graphics::FRenderTarget **pRenderTarget,
+    const Graphics::FDepthStencil **pDepthStencil ) const {
     Assert(pRenderTarget);
     Assert(pDepthStencil);
 
     Owner()->AcquireFromLock_(this, pRenderTarget, pDepthStencil);
 }
 //----------------------------------------------------------------------------
-void RenderSurfaceLock::Release(
+void FRenderSurfaceLock::Release(
     Graphics::IDeviceAPIEncapsulator *device,
     PRenderSurfaceLock& plockSelf) {
     Assert(plockSelf == this);
 
-    AbstractRenderSurface *const owner = reinterpret_cast<AbstractRenderSurface *>((u8 *)this - offsetof(AbstractRenderSurface, _lock) );
+    FAbstractRenderSurface *const owner = reinterpret_cast<FAbstractRenderSurface *>((u8 *)this - offsetof(FAbstractRenderSurface, _lock) );
     owner->Destroy(device, plockSelf);
 }
 //----------------------------------------------------------------------------
-void RenderSurfaceLock::Bind(Graphics::ShaderProgramType stage, size_t slot) {
+void FRenderSurfaceLock::Bind(Graphics::EShaderProgramType stage, size_t slot) {
     stage_field::InplaceBitOr(_state, 1 << size_t(stage));
     slots_field::InplaceBitOr(_state, 1 << size_t(slot));
 }
 //----------------------------------------------------------------------------
-void RenderSurfaceLock::Unbind(Graphics::IDeviceAPIContext *context) {
+void FRenderSurfaceLock::Unbind(Graphics::IDeviceAPIContext *context) {
     if (0 == _state)
         return;
 
@@ -59,30 +59,30 @@ void RenderSurfaceLock::Unbind(Graphics::IDeviceAPIContext *context) {
     Assert(stage);
     Assert(slots);
 
-    for (size_t st = 0; st < size_t(Graphics::ShaderProgramType::__Count); ++st)
+    for (size_t st = 0; st < size_t(Graphics::EShaderProgramType::__Count); ++st)
         if ((UINT64_C(1) << st) & stage)
             for (size_t sl = 0; (UINT64_C(1) << sl) <= slots; ++sl)
                 if ((UINT64_C(1) << sl) & slots)
-                    context->SetTexture(Graphics::ShaderProgramType(st), sl, nullptr);
+                    context->SetTexture(Graphics::EShaderProgramType(st), sl, nullptr);
 
     _state  = 0; // reset state
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-AbstractRenderSurface::AbstractRenderSurface(String&& name)
+FAbstractRenderSurface::FAbstractRenderSurface(FString&& name)
 :   _name(std::move(name))
 ,   _lock(this) {
     Assert(!_name.empty());
     AddRef(&_lock); // lifetime is manually handled to count actives references to this surface
 }
 //----------------------------------------------------------------------------
-AbstractRenderSurface::~AbstractRenderSurface() {
-    RenderSurfaceLock *plock = &_lock; // remove the reference manually added in the ctor
+FAbstractRenderSurface::~FAbstractRenderSurface() {
+    FRenderSurfaceLock *plock = &_lock; // remove the reference manually added in the ctor
     RemoveRef_AssertReachZero_NoDelete(plock); // if reference count is not 0 then someone is leaking a lock to this render surface
 }
 //----------------------------------------------------------------------------
-void AbstractRenderSurface::Prepare(Graphics::IDeviceAPIEncapsulator *device, PRenderSurfaceLock& plock) {
+void FAbstractRenderSurface::Prepare(Graphics::IDeviceAPIEncapsulator *device, PRenderSurfaceLock& plock) {
     Assert(!plock || &_lock == plock.get());
 
     if (1 == _lock.RefCount()) {
@@ -98,7 +98,7 @@ void AbstractRenderSurface::Prepare(Graphics::IDeviceAPIEncapsulator *device, PR
     Assert(_lock.RefCount() > 1);
 }
 //----------------------------------------------------------------------------
-void AbstractRenderSurface::Destroy(Graphics::IDeviceAPIEncapsulator *device, PRenderSurfaceLock& plock) {
+void FAbstractRenderSurface::Destroy(Graphics::IDeviceAPIEncapsulator *device, PRenderSurfaceLock& plock) {
     Assert(&_lock == plock);
     Assert(_lock.RefCount() > 1);
     Assert(_renderTarget || _depthStencil);
@@ -109,10 +109,10 @@ void AbstractRenderSurface::Destroy(Graphics::IDeviceAPIEncapsulator *device, PR
         DestroyResources_(device, _renderTarget, _depthStencil);
 }
 //----------------------------------------------------------------------------
-void AbstractRenderSurface::AcquireFromLock_(
-    const RenderSurfaceLock *plock,
-    const Graphics::RenderTarget **pRenderTarget,
-    const Graphics::DepthStencil **pDepthStencil ) const {
+void FAbstractRenderSurface::AcquireFromLock_(
+    const FRenderSurfaceLock *plock,
+    const Graphics::FRenderTarget **pRenderTarget,
+    const Graphics::FDepthStencil **pDepthStencil ) const {
     Assert(plock == &_lock);
     Assert(_lock.RefCount() > 1);
     Assert(_renderTarget || _depthStencil);

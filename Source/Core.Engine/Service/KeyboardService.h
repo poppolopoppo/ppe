@@ -8,7 +8,7 @@
 #include "Core.Engine/Input/State/KeyboardInputHandler.h"
 
 namespace Core {
-struct Guid;
+struct FGuid;
 
 namespace Graphics {
 FWD_REFPTR(GraphicsWindow);
@@ -25,28 +25,28 @@ protected:
 public:
     virtual ~IKeyboardService() {}
 
-    virtual Engine::KeyboardInputHandler *KeyboardInputHandler() = 0;
-    virtual const Engine::KeyboardInputHandler *KeyboardInputHandler() const = 0;
+    virtual Engine::FKeyboardInputHandler *FKeyboardInputHandler() = 0;
+    virtual const Engine::FKeyboardInputHandler *FKeyboardInputHandler() const = 0;
 
     ENGINESERVICE_GUID_DECL(IKeyboardService);
 };
 //----------------------------------------------------------------------------
-class DefaultKeyboardService : public IKeyboardService {
+class FDefaultKeyboardService : public IKeyboardService {
 public:
-    explicit DefaultKeyboardService(Graphics::GraphicsWindow *window);
-    virtual ~DefaultKeyboardService();
+    explicit FDefaultKeyboardService(Graphics::FGraphicsWindow *window);
+    virtual ~FDefaultKeyboardService();
 
-    const Graphics::GraphicsWindow *Window() const { return _window.get(); }
+    const Graphics::FGraphicsWindow *Window() const { return _window.get(); }
 
-    virtual Engine::KeyboardInputHandler *KeyboardInputHandler() override;
-    virtual const Engine::KeyboardInputHandler *KeyboardInputHandler() const override;
+    virtual Engine::FKeyboardInputHandler *FKeyboardInputHandler() override;
+    virtual const Engine::FKeyboardInputHandler *FKeyboardInputHandler() const override;
 
-    virtual void Start(IServiceProvider *provider, const Guid& guid) override;
-    virtual void Shutdown(IServiceProvider *provider, const Guid& guid) override;
+    virtual void Start(IServiceProvider *provider, const FGuid& guid) override;
+    virtual void Shutdown(IServiceProvider *provider, const FGuid& guid) override;
 
 private:
     Graphics::SGraphicsWindow _window;
-    Engine::KeyboardInputHandler _KeyboardInputHandler;
+    Engine::FKeyboardInputHandler _KeyboardInputHandler;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

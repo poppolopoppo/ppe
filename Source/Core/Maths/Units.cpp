@@ -9,7 +9,7 @@ namespace Core {
 #define UNITS_BEGIN(NAME)
 #define UNITS_END()
 #define UNITS_DECL(TAG, SYMBOL, NAME, RATIO, SMALLER) \
-    template class Core::Units::Unit< Core::Units::UnitTraits<Core::Units::TAG::_Tag, RATIO, SMALLER> >;
+    template class Core::Units::TUnit< Core::Units::TUnitTraits<Core::Units::TAG::_Tag, RATIO, SMALLER> >;
 //----------------------------------------------------------------------------
 #include "Units.Definitions-inl.h"
 //----------------------------------------------------------------------------

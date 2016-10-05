@@ -12,7 +12,7 @@
 
 namespace Core {
 namespace Graphics {
-class DeviceEncapsulator;
+class FDeviceEncapsulator;
 POOL_TAG_DECL(Graphics);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -28,8 +28,8 @@ public:
     static void ClearAll_UnusedMemory();
 
     // necessary for static graphics resources (fail ?)
-    static void OnDeviceCreate(DeviceEncapsulator *device);
-    static void OnDeviceDestroy(DeviceEncapsulator *device);
+    static void OnDeviceCreate(FDeviceEncapsulator *device);
+    static void OnDeviceDestroy(FDeviceEncapsulator *device);
 
     GraphicsStartup()  { Start(); }
     ~GraphicsStartup() { Shutdown(); }

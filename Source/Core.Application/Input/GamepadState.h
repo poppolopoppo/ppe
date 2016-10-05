@@ -12,11 +12,11 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class GamepadState {
+class FGamepadState {
 public:
-    friend class GamepadInputHandler;
+    friend class FGamepadInputHandler;
 
-    explicit GamepadState()
+    explicit FGamepadState()
         : _connected(false)
         , _onConnect(false)
         , _onDisconnect(false)
@@ -75,16 +75,16 @@ private:
     GamepadButtonState _buttonsUp;
 };
 //----------------------------------------------------------------------------
-class MultiGamepadState {
+class FMultiGamepadState {
 public:
     STATIC_CONST_INTEGRAL(size_t, MaxConnected, 8);
 
-    MultiGamepadState() {}
+    FMultiGamepadState() {}
 
-    const GamepadState& First() const { return _gamepads[0]; }
+    const FGamepadState& First() const { return _gamepads[0]; }
 
-    MemoryView<GamepadState> Gamepads() { return MakeView(_gamepads); }
-    MemoryView<const GamepadState> Gamepads() const { return MakeView(_gamepads); }
+    TMemoryView<FGamepadState> Gamepads() { return MakeView(_gamepads); }
+    TMemoryView<const FGamepadState> Gamepads() const { return MakeView(_gamepads); }
 
     void Clear() {
         forrange(i, 0, MaxConnected)
@@ -92,10 +92,10 @@ public:
     }
 
 private:
-    GamepadState _gamepads[MaxConnected];
+    FGamepadState _gamepads[MaxConnected];
 };
 //----------------------------------------------------------------------------
-typedef IInputStateProvider<MultiGamepadState> IGamepadService;
+typedef IInputStateProvider<FMultiGamepadState> IGamepadService;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

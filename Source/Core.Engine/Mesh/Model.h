@@ -12,14 +12,14 @@
 
 namespace Core {
 namespace Graphics {
-class BindName;
+class FBindName;
 class IDeviceAPIEncapsulator;
 }
 
 namespace Engine {
-struct RenderCommandRegistration;
-typedef UniquePtr<const RenderCommandRegistration> URenderCommand;
-class RenderTree;
+struct FRenderCommandRegistration;
+typedef TUniquePtr<const FRenderCommandRegistration> URenderCommand;
+class FRenderTree;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -27,24 +27,24 @@ FWD_REFPTR(ModelBone);
 FWD_REFPTR(ModelMesh);
 //----------------------------------------------------------------------------
 FWD_REFPTR(Model);
-class Model : public RefCountable {
+class FModel : public FRefCountable {
 public:
-    Model(  const MeshName& name,
+    FModel(  const FMeshName& name,
             const AABB3f& boundingBox,
             VECTOR(Mesh, PModelBone)&& bones,
             VECTOR(Mesh, PModelMesh)&& meshes );
-    ~Model();
+    ~FModel();
 
-    Model(const Model& ) = delete;
-    Model& operator =(const Model& ) = delete;
+    FModel(const FModel& ) = delete;
+    FModel& operator =(const FModel& ) = delete;
 
-    const MeshName& Name() const { return _name; }
+    const FMeshName& FName() const { return _name; }
     const AABB3f& BoundingBox() const { return _boundingBox; }
     const VECTOR(Mesh, PModelBone)& Bones() const { return _bones; }
     const VECTOR(Mesh, PModelMesh)& Meshes() const { return _meshes; }
 
-    bool TryGetBone(const ModelBone **pbone, const MeshName& name) const;
-    const ModelBone *Bone(const MeshName& name) const;
+    bool TryGetBone(const FModelBone **pbone, const FMeshName& name) const;
+    const FModelBone *FBone(const FMeshName& name) const;
 
     void Create(Graphics::IDeviceAPIEncapsulator *device);
     void Destroy(Graphics::IDeviceAPIEncapsulator *device);
@@ -52,7 +52,7 @@ public:
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    MeshName _name;
+    FMeshName _name;
     AABB3f _boundingBox;
     VECTOR(Mesh, PModelBone) _bones;
     VECTOR(Mesh, PModelMesh) _meshes;
@@ -60,30 +60,30 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct ModelRenderCommand {
-    SCModel Model;
+struct FModelRenderCommand {
+    SCModel FModel;
     VECTOR(Mesh, URenderCommand) RenderCommands;
     SINGLETON_POOL_ALLOCATED_DECL();
 };
 //----------------------------------------------------------------------------
-typedef UniquePtr<const ModelRenderCommand> UModelRenderCommand;
+typedef TUniquePtr<const FModelRenderCommand> UModelRenderCommand;
 //----------------------------------------------------------------------------
 bool AcquireModelRenderCommand( UModelRenderCommand& pModelCommand,
                                 Graphics::IDeviceAPIEncapsulator *device,
-                                RenderTree *renderTree,
-                                const MemoryView<const Pair<Graphics::BindName, const char *>>& parTagToRenderLayerName,
+                                FRenderTree *renderTree,
+                                const TMemoryView<const TPair<Graphics::FBindName, const char *>>& parTagToRenderLayerName,
                                 const char *parFallbackRenderLayerName,
-                                const Model *model );
+                                const FModel *model );
 //----------------------------------------------------------------------------
 bool AcquireModelRenderCommand( UModelRenderCommand& pModelCommand,
                                 Graphics::IDeviceAPIEncapsulator *device,
-                                RenderTree *renderTree,
+                                FRenderTree *renderTree,
                                 const char *parRenderLayerName,
-                                const Model *model );
+                                const FModel *model );
 //----------------------------------------------------------------------------
 void ReleaseModelRenderCommand( UModelRenderCommand& pModelCommand,
                                 Graphics::IDeviceAPIEncapsulator *device,
-                                const Model *model );
+                                const FModel *model );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

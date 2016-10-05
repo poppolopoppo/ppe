@@ -74,7 +74,7 @@ constexpr T Rcp(T f) {
 //----------------------------------------------------------------------------
 template <typename T>
 constexpr T RSqrt(T f) {
-    return Rcp(std::sqrt(f));
+    return TRcp(std::sqrt(f));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename U>

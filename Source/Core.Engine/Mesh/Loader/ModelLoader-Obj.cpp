@@ -28,13 +28,13 @@ namespace Engine {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-struct LineTokens_Obj_ {
+struct FLineTokens_Obj_ {
     STATIC_CONST_INTEGRAL(size_t, Capacity, 5);
     size_t Count;
-    MemoryView<const char> Slices[Capacity];
+    TMemoryView<const char> Slices[Capacity];
 };
 //----------------------------------------------------------------------------
-static bool ReadLine_Obj_ReturnEOF_(LineTokens_Obj_ *pTokens, const ModelStream& modelStream, size_t& offset) {
+static bool ReadLine_Obj_ReturnEOF_(FLineTokens_Obj_ *pTokens, const ModelStream& modelStream, size_t& offset) {
     Assert(pTokens);
 
     bool comment = false;
@@ -45,8 +45,8 @@ static bool ReadLine_Obj_ReturnEOF_(LineTokens_Obj_ *pTokens, const ModelStream&
         if (IsSpace(modelStream[offset])) {
             if (!comment && tokenStart != offset) {
                 Assert(offset - tokenStart > 0);
-                Assert(pTokens->Count < LineTokens_Obj_::Capacity);
-                pTokens->Slices[pTokens->Count++] = MemoryView<const char>(modelStream.Pointer() + tokenStart, offset - tokenStart);
+                Assert(pTokens->Count < FLineTokens_Obj_::Capacity);
+                pTokens->Slices[pTokens->Count++] = TMemoryView<const char>(modelStream.Pointer() + tokenStart, offset - tokenStart);
             }
             tokenStart = ++offset;
         }
@@ -60,8 +60,8 @@ static bool ReadLine_Obj_ReturnEOF_(LineTokens_Obj_ *pTokens, const ModelStream&
 
     if (!comment && tokenStart != offset) {
         Assert(offset - tokenStart > 0);
-        Assert(pTokens->Count < LineTokens_Obj_::Capacity);
-        pTokens->Slices[pTokens->Count++] = MemoryView<const char>(modelStream.Pointer() + tokenStart, offset - tokenStart);
+        Assert(pTokens->Count < FLineTokens_Obj_::Capacity);
+        pTokens->Slices[pTokens->Count++] = TMemoryView<const char>(modelStream.Pointer() + tokenStart, offset - tokenStart);
     }
 
     if ('\n' == modelStream[offset])
@@ -70,7 +70,7 @@ static bool ReadLine_Obj_ReturnEOF_(LineTokens_Obj_ *pTokens, const ModelStream&
     return (modelStream.SizeInBytes() == offset);
 }
 //----------------------------------------------------------------------------
-static size_t ParseFloat4_Obj_ReturnDim_(float4 *pValues, const LineTokens_Obj_& tokens) {
+static size_t ParseFloat4_Obj_ReturnDim_(float4 *pValues, const FLineTokens_Obj_& tokens) {
     if      (tokens.Count > 1 && !Atof(&pValues->_data[0], tokens.Slices[1]) )
         return 0;
     else if (tokens.Count > 2 && !Atof(&pValues->_data[1], tokens.Slices[2]) )
@@ -83,10 +83,10 @@ static size_t ParseFloat4_Obj_ReturnDim_(float4 *pValues, const LineTokens_Obj_&
         return tokens.Count - 1;
 }
 //----------------------------------------------------------------------------
-static size_t ParseU323_Obj_ReturnDim_(u323 *pValues, const MemoryView<const char>& token) {
+static size_t ParseU323_Obj_ReturnDim_(u323 *pValues, const TMemoryView<const char>& token) {
 
     size_t index = 0;
-    StringView slice;
+    FStringView slice;
 
     const char *cstr = token.Pointer();
     size_t length = token.size();
@@ -104,15 +104,15 @@ static size_t ParseU323_Obj_ReturnDim_(u323 *pValues, const MemoryView<const cha
     return index;
 }
 //----------------------------------------------------------------------------
-static bool LoadMaterial_Mtl_(ModelBuilder& builder, const Filename& filename) {
+static bool LoadMaterial_Mtl_(FModelBuilder& builder, const FFilename& filename) {
 
     RAWSTORAGE_THREAD_LOCAL(MeshGeneration, char) materialStream;
-    if (!VirtualFileSystem::Instance().ReadAll(filename, materialStream))
+    if (!FVirtualFileSystem::Instance().ReadAll(filename, materialStream))
         return false;
 
-    ModelBuilder::Material *pMaterialMB = nullptr;
+    FModelBuilder::FMaterial *pMaterialMB = nullptr;
 
-    LineTokens_Obj_ tokens;
+    FLineTokens_Obj_ tokens;
     bool eof = false;
     size_t offset = 0;
     do {
@@ -120,7 +120,7 @@ static bool LoadMaterial_Mtl_(ModelBuilder& builder, const Filename& filename) {
         if (0 == tokens.Count)
             continue;
 
-        const MemoryView<const char>& firstToken = tokens.Slices[0];
+        const TMemoryView<const char>& firstToken = tokens.Slices[0];
         Assert(firstToken.size());
 
         if (0 == CompareNI("newmtl", firstToken.Pointer(), firstToken.size())) {
@@ -130,7 +130,7 @@ static bool LoadMaterial_Mtl_(ModelBuilder& builder, const Filename& filename) {
             if (tokens.Count != 2  || tokens.Slices[1].empty())
                 return false;
 
-            String name(tokens.Slices[1].Pointer(), tokens.Slices[1].size());
+            FString name(tokens.Slices[1].Pointer(), tokens.Slices[1].size());
             pMaterialMB = builder.OpenMaterial(std::move(name));
         }
         // parameters
@@ -157,7 +157,7 @@ static bool LoadMaterial_Mtl_(ModelBuilder& builder, const Filename& filename) {
 
             Assert(pMaterialMB);
             pMaterialMB->EmissiveColor = color;
-            pMaterialMB->SetFlag(ModelBuilder::Material::Emissive);
+            pMaterialMB->SetFlag(FModelBuilder::FMaterial::Emissive);
         }
         else if (0 == CompareNI("Ks", firstToken.Pointer(), firstToken.size())) {
             float4 color(0,0,0,1);
@@ -211,43 +211,43 @@ static bool LoadMaterial_Mtl_(ModelBuilder& builder, const Filename& filename) {
             u32 mode = 0;
             switch (illum) {
             case 0:
-                mode = ModelBuilder::Material::Color;
+                mode = FModelBuilder::FMaterial::Color;
                 break;
             case 1:
-                mode = ModelBuilder::Material::Ambient|ModelBuilder::Material::Color;
+                mode = FModelBuilder::FMaterial::Ambient|FModelBuilder::FMaterial::Color;
                 break;
             case 2:
-                mode = ModelBuilder::Material::Highlight;
+                mode = FModelBuilder::FMaterial::Highlight;
                 break;
             case 3:
-                mode = ModelBuilder::Material::Reflection;
+                mode = FModelBuilder::FMaterial::Reflection;
                 break;
             case 4:
-                mode = ModelBuilder::Material::Glass|ModelBuilder::Material::Reflection|ModelBuilder::Material::Transparency;
+                mode = FModelBuilder::FMaterial::Glass|FModelBuilder::FMaterial::Reflection|FModelBuilder::FMaterial::Transparency;
                 break;
             case 5:
-                mode = ModelBuilder::Material::Fresnel|ModelBuilder::Material::Reflection;
+                mode = FModelBuilder::FMaterial::Fresnel|FModelBuilder::FMaterial::Reflection;
                 break;
             case 6:
-                mode = ModelBuilder::Material::Refraction|ModelBuilder::Material::Transparency;
+                mode = FModelBuilder::FMaterial::Refraction|FModelBuilder::FMaterial::Transparency;
                 break;
             case 7:
-                mode = ModelBuilder::Material::Fresnel|ModelBuilder::Material::Reflection|ModelBuilder::Material::Refraction|ModelBuilder::Material::Transparency;
+                mode = FModelBuilder::FMaterial::Fresnel|FModelBuilder::FMaterial::Reflection|FModelBuilder::FMaterial::Refraction|FModelBuilder::FMaterial::Transparency;
                 break;
             case 8:
-                mode = ModelBuilder::Material::Reflection;
+                mode = FModelBuilder::FMaterial::Reflection;
                 break;
             case 9:
-                mode = ModelBuilder::Material::Glass|ModelBuilder::Material::Reflection|ModelBuilder::Material::Transparency;
+                mode = FModelBuilder::FMaterial::Glass|FModelBuilder::FMaterial::Reflection|FModelBuilder::FMaterial::Transparency;
                 break;
             case 10:
-                mode = ModelBuilder::Material::CastShadows;
+                mode = FModelBuilder::FMaterial::CastShadows;
                 break;
             default:
                 return false;
             }
 
-            mode |= ModelBuilder::Material::CastShadows; //default?
+            mode |= FModelBuilder::FMaterial::CastShadows; //default?
 
             Assert(pMaterialMB);
             pMaterialMB->Mode = mode;
@@ -257,8 +257,8 @@ static bool LoadMaterial_Mtl_(ModelBuilder& builder, const Filename& filename) {
             if (tokens.Count != 2  || tokens.Slices[1].empty())
                 return false;
 
-            const WString relfilename = ToWString(tokens.Slices[1]);
-            const Filename textureFilename(filename.Dirpath(), relfilename.c_str(), relfilename.size());
+            const FWString relfilename = ToWString(tokens.Slices[1]);
+            const FFilename textureFilename(filename.Dirpath(), relfilename.c_str(), relfilename.size());
 
             Assert(pMaterialMB);
             pMaterialMB->AmbientMap = textureFilename;
@@ -267,8 +267,8 @@ static bool LoadMaterial_Mtl_(ModelBuilder& builder, const Filename& filename) {
             if (tokens.Count != 2  || tokens.Slices[1].empty())
                 return false;
 
-            const WString relfilename = ToWString(tokens.Slices[1]);
-            const Filename textureFilename(filename.Dirpath(), relfilename.c_str(), relfilename.size());
+            const FWString relfilename = ToWString(tokens.Slices[1]);
+            const FFilename textureFilename(filename.Dirpath(), relfilename.c_str(), relfilename.size());
 
             Assert(pMaterialMB);
             pMaterialMB->DiffuseMap = textureFilename;
@@ -277,8 +277,8 @@ static bool LoadMaterial_Mtl_(ModelBuilder& builder, const Filename& filename) {
             if (tokens.Count != 2  || tokens.Slices[1].empty())
                 return false;
 
-            const WString relfilename = ToWString(tokens.Slices[1]);
-            const Filename textureFilename(filename.Dirpath(), relfilename.c_str(), relfilename.size());
+            const FWString relfilename = ToWString(tokens.Slices[1]);
+            const FFilename textureFilename(filename.Dirpath(), relfilename.c_str(), relfilename.size());
 
             Assert(pMaterialMB);
             pMaterialMB->EmissiveMap = textureFilename;
@@ -287,8 +287,8 @@ static bool LoadMaterial_Mtl_(ModelBuilder& builder, const Filename& filename) {
             if (tokens.Count != 2  || tokens.Slices[1].empty())
                 return false;
 
-            const WString relfilename = ToWString(tokens.Slices[1]);
-            const Filename textureFilename(filename.Dirpath(), relfilename.c_str(), relfilename.size());
+            const FWString relfilename = ToWString(tokens.Slices[1]);
+            const FFilename textureFilename(filename.Dirpath(), relfilename.c_str(), relfilename.size());
 
             Assert(pMaterialMB);
             pMaterialMB->SpecularColorMap = textureFilename;
@@ -297,8 +297,8 @@ static bool LoadMaterial_Mtl_(ModelBuilder& builder, const Filename& filename) {
             if (tokens.Count != 2  || tokens.Slices[1].empty())
                 return false;
 
-            const WString relfilename = ToWString(tokens.Slices[1]);
-            const Filename textureFilename(filename.Dirpath(), relfilename.c_str(), relfilename.size());
+            const FWString relfilename = ToWString(tokens.Slices[1]);
+            const FFilename textureFilename(filename.Dirpath(), relfilename.c_str(), relfilename.size());
 
             Assert(pMaterialMB);
             pMaterialMB->SpecularPowerMap = textureFilename;
@@ -307,13 +307,13 @@ static bool LoadMaterial_Mtl_(ModelBuilder& builder, const Filename& filename) {
             if (tokens.Count != 2  || tokens.Slices[1].empty())
                 return false;
 
-            const WString relfilename = ToWString(tokens.Slices[1]);
-            const Filename textureFilename(filename.Dirpath(), relfilename.c_str(), relfilename.size());
+            const FWString relfilename = ToWString(tokens.Slices[1]);
+            const FFilename textureFilename(filename.Dirpath(), relfilename.c_str(), relfilename.size());
             Assert(!textureFilename.empty());
 
             Assert(pMaterialMB);
             pMaterialMB->AlphaMap = textureFilename;
-            pMaterialMB->SetFlag(ModelBuilder::Material::SeparateAlpha);
+            pMaterialMB->SetFlag(FModelBuilder::FMaterial::SeparateAlpha);
         }
         else if (0 == CompareNI("map_bump", firstToken.Pointer(), firstToken.size()) ||
                  0 == CompareNI("bump", firstToken.Pointer(), firstToken.size()) ) {
@@ -321,8 +321,8 @@ static bool LoadMaterial_Mtl_(ModelBuilder& builder, const Filename& filename) {
                 return false;
 
             if (2 == tokens.Count) {
-                const WString relfilename = ToWString(tokens.Slices[1]);
-                const Filename textureFilename(filename.Dirpath(), relfilename.c_str(), relfilename.size());
+                const FWString relfilename = ToWString(tokens.Slices[1]);
+                const FFilename textureFilename(filename.Dirpath(), relfilename.c_str(), relfilename.size());
 
                 Assert(pMaterialMB);
                 pMaterialMB->NormalMap = textureFilename;
@@ -336,8 +336,8 @@ static bool LoadMaterial_Mtl_(ModelBuilder& builder, const Filename& filename) {
                 if (!Atof(&normalDepth, tokens.Slices[2]))
                     return false;
 
-                const WString relfilename = ToWString(tokens.Slices[3]);
-                const Filename textureFilename(filename.Dirpath(), relfilename.c_str(), relfilename.size());
+                const FWString relfilename = ToWString(tokens.Slices[3]);
+                const FFilename textureFilename(filename.Dirpath(), relfilename.c_str(), relfilename.size());
 
                 Assert(pMaterialMB);
                 pMaterialMB->NormalMap = textureFilename;
@@ -347,14 +347,14 @@ static bool LoadMaterial_Mtl_(ModelBuilder& builder, const Filename& filename) {
                 return false;
 
             Assert(!pMaterialMB->NormalMap.empty());
-            pMaterialMB->SetFlag(ModelBuilder::Material::BumpMapping);
+            pMaterialMB->SetFlag(FModelBuilder::FMaterial::BumpMapping);
         }
         else if (0 == CompareNI("disp", firstToken.Pointer(), firstToken.size()) ) {
             if (tokens.Count != 2  || tokens.Slices[1].empty())
                 return false;
 
-            const WString relfilename = ToWString(tokens.Slices[1]);
-            const Filename textureFilename(filename.Dirpath(), relfilename.c_str(), relfilename.size());
+            const FWString relfilename = ToWString(tokens.Slices[1]);
+            const FFilename textureFilename(filename.Dirpath(), relfilename.c_str(), relfilename.size());
 
             Assert(pMaterialMB);
             pMaterialMB->DisplacementMap = textureFilename;
@@ -363,8 +363,8 @@ static bool LoadMaterial_Mtl_(ModelBuilder& builder, const Filename& filename) {
             if (tokens.Count != 2  || tokens.Slices[1].empty())
                 return false;
 
-            const WString relfilename = ToWString(tokens.Slices[1]);
-            const Filename textureFilename(filename.Dirpath(), relfilename.c_str(), relfilename.size());
+            const FWString relfilename = ToWString(tokens.Slices[1]);
+            const FFilename textureFilename(filename.Dirpath(), relfilename.c_str(), relfilename.size());
 
             Assert(pMaterialMB);
             pMaterialMB->ReflectionMap = textureFilename;
@@ -381,22 +381,22 @@ static bool LoadMaterial_Mtl_(ModelBuilder& builder, const Filename& filename) {
     return true;
 }
 //----------------------------------------------------------------------------
-static bool LoadModel_Obj_(PModel& pModel, const Filename& filename, const ModelStream& modelStream) {
+static bool LoadModel_Obj_(PModel& pModel, const FFilename& filename, const ModelStream& modelStream) {
 
-    ModelBuilder builder;
+    FModelBuilder builder;
     {
-        String name = ToString(filename.BasenameNoExt().c_str());
+        FString name = ToString(filename.BasenameNoExt().c_str());
         builder.SetName(std::move(name));
         builder.AddBone("noname", float4x4::Identity()); // obj file format does not support animations
     }
 
-    ModelBuilder::Group *pGroupMB = nullptr;
+    FModelBuilder::FGroup *pGroupMB = nullptr;
 
     bool smoothGroup = false;
     u32 selectedSmoothGroup = 0;
     u32 selectedMaterial = UINT32_MAX;
 
-    LineTokens_Obj_ tokens;
+    FLineTokens_Obj_ tokens;
     bool eof = false;
     size_t offset = 0;
     do {
@@ -404,7 +404,7 @@ static bool LoadModel_Obj_(PModel& pModel, const Filename& filename, const Model
         if (0 == tokens.Count)
             continue;
 
-        const MemoryView<const char>& firstToken = tokens.Slices[0];
+        const TMemoryView<const char>& firstToken = tokens.Slices[0];
 
         if (1 == firstToken.size()) {
             const char ch = ToLower(firstToken[0]);
@@ -454,18 +454,18 @@ static bool LoadModel_Obj_(PModel& pModel, const Filename& filename, const Model
                     v3 -= 1;
 
                     if (1 == dim0) { // position
-                        const ModelBuilder::PositionIndex pos[4] = {v0.x(),v1.x(),v2.x(),v3.x()};
+                        const FModelBuilder::FPositionIndex pos[4] = {v0.x(),v1.x(),v2.x(),v3.x()};
                         builder.AddQuad(pos);
                     }
                     else if (2 == dim0) { // position/texcoords
-                        const ModelBuilder::PositionIndex pos[4] = {v0.x(),v1.x(),v2.x(),v3.x()};
-                        const ModelBuilder::TexcoordIndex uv[4] = {v0.y(),v1.y(),v2.y(),v3.y()};
+                        const FModelBuilder::FPositionIndex pos[4] = {v0.x(),v1.x(),v2.x(),v3.x()};
+                        const FModelBuilder::FTexcoordIndex uv[4] = {v0.y(),v1.y(),v2.y(),v3.y()};
                         builder.AddQuad(pos, uv);
                     }
                     else if (3 == dim0) { // position/texcoords/normal
-                        const ModelBuilder::PositionIndex pos[4] = {v0.x(),v1.x(),v2.x(),v3.x()};
-                        const ModelBuilder::TexcoordIndex uv[4] = {v0.y(),v1.y(),v2.y(),v3.y()};
-                        const ModelBuilder::NormalIndex nrm[4] = {v0.z(),v1.z(),v2.z(),v3.z()};
+                        const FModelBuilder::FPositionIndex pos[4] = {v0.x(),v1.x(),v2.x(),v3.x()};
+                        const FModelBuilder::FTexcoordIndex uv[4] = {v0.y(),v1.y(),v2.y(),v3.y()};
+                        const FModelBuilder::FNormalIndex nrm[4] = {v0.z(),v1.z(),v2.z(),v3.z()};
                         builder.AddQuad(pos, uv, nrm);
                     }
                     else
@@ -476,18 +476,18 @@ static bool LoadModel_Obj_(PModel& pModel, const Filename& filename, const Model
                         return false;
 
                     if (1 == dim0) { // position
-                        const ModelBuilder::PositionIndex pos[3] = {v0.x(),v1.x(),v2.x()};
+                        const FModelBuilder::FPositionIndex pos[3] = {v0.x(),v1.x(),v2.x()};
                         builder.AddTriangle(pos);
                     }
                     else if (2 == dim0) { // position/texcoords
-                        const ModelBuilder::PositionIndex pos[3] = {v0.x(),v1.x(),v2.x()};
-                        const ModelBuilder::TexcoordIndex uv[3] = {v0.y(),v1.y(),v2.y()};
+                        const FModelBuilder::FPositionIndex pos[3] = {v0.x(),v1.x(),v2.x()};
+                        const FModelBuilder::FTexcoordIndex uv[3] = {v0.y(),v1.y(),v2.y()};
                         builder.AddTriangle(pos, uv);
                     }
                     else if (3 == dim0) { // position/texcoords/normal
-                        const ModelBuilder::PositionIndex pos[3] = {v0.x(),v1.x(),v2.x()};
-                        const ModelBuilder::TexcoordIndex uv[3] = {v0.y(),v1.y(),v2.y()};
-                        const ModelBuilder::NormalIndex nrm[3] = {v0.z(),v1.z(),v2.z()};
+                        const FModelBuilder::FPositionIndex pos[3] = {v0.x(),v1.x(),v2.x()};
+                        const FModelBuilder::FTexcoordIndex uv[3] = {v0.y(),v1.y(),v2.y()};
+                        const FModelBuilder::FNormalIndex nrm[3] = {v0.z(),v1.z(),v2.z()};
                         builder.AddTriangle(pos, uv, nrm);
                     }
                     else
@@ -499,7 +499,7 @@ static bool LoadModel_Obj_(PModel& pModel, const Filename& filename, const Model
                 if (tokens.Count != 2  || tokens.Slices[1].empty())
                     return false;
 
-                String name(tokens.Slices[1].Pointer(), tokens.Slices[1].size());
+                FString name(tokens.Slices[1].Pointer(), tokens.Slices[1].size());
                 builder.SetName(std::move(name));
             }
             else if ('g' == ch) {
@@ -511,7 +511,7 @@ static bool LoadModel_Obj_(PModel& pModel, const Filename& filename, const Model
                     builder.CloseGroup(pGroupMB);
                 }
 
-                String name(tokens.Slices[1].Pointer(), tokens.Slices[1].size());
+                FString name(tokens.Slices[1].Pointer(), tokens.Slices[1].size());
                 pGroupMB = builder.OpenGroup(std::move(name));
                 pGroupMB->Bone = 0;
                 pGroupMB->Material = UINT32_MAX;
@@ -565,8 +565,8 @@ static bool LoadModel_Obj_(PModel& pModel, const Filename& filename, const Model
         }
         else {
             if (0 == CompareNI(tokens.Slices[0].Pointer(), "mtllib", tokens.Slices[0].size())) {
-                const WString relfilename = ToWString(tokens.Slices[1]);
-                const Filename materialFilename(filename.Dirpath(), relfilename.c_str(), relfilename.size());
+                const FWString relfilename = ToWString(tokens.Slices[1]);
+                const FFilename materialFilename(filename.Dirpath(), relfilename.c_str(), relfilename.size());
 
                 if (!LoadMaterial_Mtl_(builder, materialFilename))
                     return false;
@@ -588,7 +588,7 @@ static bool LoadModel_Obj_(PModel& pModel, const Filename& filename, const Model
                         builder.CloseGroup(pGroupMB);
                         Assert(pGroupMB->FaceCount > 0);
 
-                        String name(pGroupMB->Name);
+                        FString name(pGroupMB->Name);
                         const size_t bone = pGroupMB->Bone;
                         pGroupMB = builder.OpenGroup(std::move(name));
                         pGroupMB->Bone = checked_cast<u32>(bone);
@@ -618,7 +618,7 @@ static bool LoadModel_Obj_(PModel& pModel, const Filename& filename, const Model
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool LoadModel_Obj(PModel& pModel, const Filename& filename, const ModelStream& modelStream) {
+bool LoadModel_Obj(PModel& pModel, const FFilename& filename, const ModelStream& modelStream) {
     Assert(!pModel);
     Assert(!filename.empty());
     Assert(modelStream.size());

@@ -13,10 +13,10 @@
 
 namespace Core {
 namespace Engine {
-class MaterialDatabase;
+class FMaterialDatabase;
 
 #define EACH_MATERIALPARAMETER_MATH(_Macro) \
-    // _Macro(MaterialVariability::World, float,   WorldElapsedSeconds) \
+    // _Macro(EMaterialVariability::FWorld, float,   WorldElapsedSeconds) \
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -25,7 +25,7 @@ namespace MaterialParameterMath {
 //----------------------------------------------------------------------------
 EACH_MATERIALPARAMETER_MATH(MATERIALPARAMETER_FN_DECL)
 //----------------------------------------------------------------------------
-void RegisterMaterialParameters(MaterialDatabase *database);
+void RegisterMaterialParameters(FMaterialDatabase *database);
 //----------------------------------------------------------------------------
 } //!MaterialParameterMath
 //----------------------------------------------------------------------------
@@ -35,89 +35,89 @@ namespace MaterialParameterMath {
 //----------------------------------------------------------------------------
 template <typename T>
 struct Invert {
-    STypedMaterialParameter<T> Source;
+    TSTypedMaterialParameter<T> Source;
     Invert(ITypedMaterialParameter<T> *source);
 
     typedef T value_type;
-    MaterialVariability Variability() const { return Source->Info().Variability; }
-    void TypedEval(const MaterialParameterContext& context, T& dst);
+    EMaterialVariability Variability() const { return Source->Info().Variability; }
+    void TypedEval(const FMaterialParameterContext& context, T& dst);
 };
 template <typename T>
-using Memoizer_Invert = MaterialParameterMemoizer<Invert<T> >;
-extern template class MaterialParameterMemoizer<Invert<float3x3> >;
-extern template class MaterialParameterMemoizer<Invert<float4x4> >;
+using TMemoizer_Invert = TMaterialParameterMemoizer<Invert<T> >;
+extern template class TMaterialParameterMemoizer<Invert<float3x3> >;
+extern template class TMaterialParameterMemoizer<Invert<float4x4> >;
 //----------------------------------------------------------------------------
 template <typename T>
 struct InvertTranspose {
-    STypedMaterialParameter<T> Source;
+    TSTypedMaterialParameter<T> Source;
     InvertTranspose(ITypedMaterialParameter<T> *source);
 
     typedef T value_type;
-    MaterialVariability Variability() const { return Source->Info().Variability; }
-    void TypedEval(const MaterialParameterContext& context, T& dst);
+    EMaterialVariability Variability() const { return Source->Info().Variability; }
+    void TypedEval(const FMaterialParameterContext& context, T& dst);
 };
 template <typename T>
-using Memoizer_InvertTranspose = MaterialParameterMemoizer<InvertTranspose<T> >;
-extern template class MaterialParameterMemoizer<InvertTranspose<float3x3> >;
-extern template class MaterialParameterMemoizer<InvertTranspose<float4x4> >;
+using TMemoizer_InvertTranspose = TMaterialParameterMemoizer<InvertTranspose<T> >;
+extern template class TMaterialParameterMemoizer<InvertTranspose<float3x3> >;
+extern template class TMaterialParameterMemoizer<InvertTranspose<float4x4> >;
 //----------------------------------------------------------------------------
 template <typename T>
-struct Transpose {
-    STypedMaterialParameter<T> Source;
-    Transpose(ITypedMaterialParameter<T> *source);
+struct TTranspose {
+    TSTypedMaterialParameter<T> Source;
+    TTranspose(ITypedMaterialParameter<T> *source);
 
     typedef T value_type;
-    MaterialVariability Variability() const { return Source->Info().Variability; }
-    void TypedEval(const MaterialParameterContext& context, T& dst);
+    EMaterialVariability Variability() const { return Source->Info().Variability; }
+    void TypedEval(const FMaterialParameterContext& context, T& dst);
 };
 template <typename T>
-using Memoizer_Transpose = MaterialParameterMemoizer<Transpose<T> >;
-extern template class MaterialParameterMemoizer<Transpose<float3x3> >;
-extern template class MaterialParameterMemoizer<Transpose<float4x4> >;
+using TMemoizer_Transpose = TMaterialParameterMemoizer<TTranspose<T> >;
+extern template class TMaterialParameterMemoizer<TTranspose<float3x3> >;
+extern template class TMaterialParameterMemoizer<TTranspose<float4x4> >;
 //----------------------------------------------------------------------------
 template <typename T>
-struct Rcp {
-    STypedMaterialParameter<T> Source;
-    Rcp(ITypedMaterialParameter<T> *source);
+struct TRcp {
+    TSTypedMaterialParameter<T> Source;
+    TRcp(ITypedMaterialParameter<T> *source);
 
     typedef T value_type;
-    MaterialVariability Variability() const { return Source->Info().Variability; }
-    void TypedEval(const MaterialParameterContext& context, T& dst);
+    EMaterialVariability Variability() const { return Source->Info().Variability; }
+    void TypedEval(const FMaterialParameterContext& context, T& dst);
 };
 template <typename T>
-using Memoizer_Rcp = MaterialParameterMemoizer<Rcp<T> >;
-extern template class MaterialParameterMemoizer<Rcp<float> >;
-extern template class MaterialParameterMemoizer<Rcp<float2> >;
-extern template class MaterialParameterMemoizer<Rcp<float3> >;
-extern template class MaterialParameterMemoizer<Rcp<float4> >;
+using TMemoizer_Rcp = TMaterialParameterMemoizer<TRcp<T> >;
+extern template class TMaterialParameterMemoizer<TRcp<float> >;
+extern template class TMaterialParameterMemoizer<TRcp<float2> >;
+extern template class TMaterialParameterMemoizer<TRcp<float3> >;
+extern template class TMaterialParameterMemoizer<TRcp<float4> >;
 //----------------------------------------------------------------------------
 struct SRGB {
-    STypedMaterialParameter<float3> Source;
+    TSTypedMaterialParameter<float3> Source;
     SRGB(ITypedMaterialParameter<float3> *source);
 
     typedef float3 value_type;
-    MaterialVariability Variability() const { return Source->Info().Variability; }
-    void TypedEval(const MaterialParameterContext& context, float3& dst);
+    EMaterialVariability Variability() const { return Source->Info().Variability; }
+    void TypedEval(const FMaterialParameterContext& context, float3& dst);
 };
-typedef MaterialParameterMemoizer<SRGB> Memoizer_SRGB;
-extern template class MaterialParameterMemoizer<SRGB>;
+typedef TMaterialParameterMemoizer<SRGB> Memoizer_SRGB;
+extern template class TMaterialParameterMemoizer<SRGB>;
 //----------------------------------------------------------------------------
 struct SRGBA {
-    STypedMaterialParameter<float4> Source;
+    TSTypedMaterialParameter<float4> Source;
     SRGBA(ITypedMaterialParameter<float4> *source);
 
     typedef float4 value_type;
-    MaterialVariability Variability() const { return Source->Info().Variability; }
-    void TypedEval(const MaterialParameterContext& context, float4& dst);
+    EMaterialVariability Variability() const { return Source->Info().Variability; }
+    void TypedEval(const FMaterialParameterContext& context, float4& dst);
 };
-typedef MaterialParameterMemoizer<SRGBA> Memoizer_SRGBA;
-extern template class MaterialParameterMemoizer<SRGBA>;
+typedef TMaterialParameterMemoizer<SRGBA> Memoizer_SRGBA;
+extern template class TMaterialParameterMemoizer<SRGBA>;
 //----------------------------------------------------------------------------
 bool TryCreateMaterialParameter(
     PMaterialParameter *param,
-    const MaterialParameterMutableContext& context,
-    const Graphics::BindName& name,
-    const Graphics::ConstantField& field );
+    const FMaterialParameterMutableContext& context,
+    const Graphics::FBindName& name,
+    const Graphics::FConstantField& field );
 //----------------------------------------------------------------------------
 } //!MaterialParameterMath
 //----------------------------------------------------------------------------

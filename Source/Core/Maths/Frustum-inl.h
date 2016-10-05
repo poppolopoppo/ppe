@@ -6,39 +6,39 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline Frustum::Frustum() {
+inline FFrustum::FFrustum() {
     SetMatrix(float4x4::Identity());
 }
 //----------------------------------------------------------------------------
-inline Frustum::Frustum(float4x4& viewProjection) {
+inline FFrustum::FFrustum(float4x4& viewProjection) {
     SetMatrix(viewProjection);
 }
 //----------------------------------------------------------------------------
-inline void Frustum::GetCorners(float3 (&points)[8]) const {
+inline void FFrustum::GetCorners(float3 (&points)[8]) const {
     return GetCorners(MakeView(points));
 }
 //----------------------------------------------------------------------------
-inline bool Frustum::Intersects(const BoundingBox& box) const {
-    return Contains(box) != ContainmentType::Disjoint;
+inline bool FFrustum::Intersects(const BoundingBox& box) const {
+    return Contains(box) != EContainmentType::Disjoint;
 }
 //----------------------------------------------------------------------------
-inline bool Frustum::Intersects(const Sphere& sphere) const {
-    return Contains(sphere) != ContainmentType::Disjoint;
+inline bool FFrustum::Intersects(const FSphere& sphere) const {
+    return Contains(sphere) != EContainmentType::Disjoint;
 }
 //----------------------------------------------------------------------------
-inline bool Frustum::Intersects(const Frustum& frustum) const {
-    return Contains(frustum) != ContainmentType::Disjoint;
+inline bool FFrustum::Intersects(const FFrustum& frustum) const {
+    return Contains(frustum) != EContainmentType::Disjoint;
 }
 //----------------------------------------------------------------------------
-inline float3 Frustum::GetZoomToExtentsShiftVector(const MemoryView<const float3>& points) {
+inline float3 FFrustum::GetZoomToExtentsShiftVector(const TMemoryView<const float3>& points) {
     return Near().Normal() *  GetZoomToExtentsShiftDistance(points);
 }
 //----------------------------------------------------------------------------
-inline float3 Frustum::GetZoomToExtentsShiftVector(const BoundingBox& box) {
+inline float3 FFrustum::GetZoomToExtentsShiftVector(const BoundingBox& box) {
     return Near().Normal() *  GetZoomToExtentsShiftDistance(box);
 }
 //----------------------------------------------------------------------------
-inline Frustum Frustum::FromCameraParams(const FrustumCameraParams& params) {
+inline FFrustum FFrustum::FromCameraParams(const FFrustumCameraParams& params) {
     return FromCamera(  params.Position,
                         params.LookAtDir,
                         params.UpDir,

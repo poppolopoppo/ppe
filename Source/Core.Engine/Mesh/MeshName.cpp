@@ -9,32 +9,32 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool MeshTokenTraits::IsAllowedChar(char ch) const {
+bool FMeshTokenTraits::IsAllowedChar(char ch) const {
     return IsAlnum(ch) || ch == '_' || ch == '-' || ch == '.';
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-MeshName::MeshName(const char *content)
+FMeshName::FMeshName(const char *content)
 :   parent_type(content) {}
 //----------------------------------------------------------------------------
-MeshName::MeshName(const char *content, size_t length)
+FMeshName::FMeshName(const char *content, size_t length)
 :   parent_type(content, length) {}
 //----------------------------------------------------------------------------
-MeshName& MeshName::operator =(const char *content) {
+FMeshName& FMeshName::operator =(const char *content) {
     parent_type::operator =(content);
     return *this;
 }
 //----------------------------------------------------------------------------
-MeshName::MeshName(const MeshName& other)
+FMeshName::FMeshName(const FMeshName& other)
 :   parent_type(other) {}
 //----------------------------------------------------------------------------
-MeshName& MeshName::operator =(const MeshName& other) {
+FMeshName& FMeshName::operator =(const FMeshName& other) {
     parent_type::operator =(other);
     return *this;
 }
 //----------------------------------------------------------------------------
-void MeshName::Swap(MeshName& other) {
+void FMeshName::Swap(FMeshName& other) {
     parent_type::Swap(other);
 }
 //----------------------------------------------------------------------------

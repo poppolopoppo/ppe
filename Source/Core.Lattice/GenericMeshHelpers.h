@@ -8,40 +8,40 @@
 
 namespace Core {
 namespace Lattice {
-class GenericMesh;
+class FGenericMesh;
 template <typename T>
-class GenericVertexSubPart;
+class TGenericVertexSubPart;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool ComputeNormals(GenericMesh& mesh, size_t index);
-void ComputeNormals(const GenericMesh& mesh, const Positions3f& positions, const Normals3f& normals);
-void ComputeNormals(const GenericMesh& mesh, const Positions4f& positions, const Normals3f& normals);
+bool ComputeNormals(FGenericMesh& mesh, size_t index);
+void ComputeNormals(const FGenericMesh& mesh, const FPositions3f& positions, const FNormals3f& normals);
+void ComputeNormals(const FGenericMesh& mesh, const FPositions4f& positions, const FNormals3f& normals);
 //----------------------------------------------------------------------------
-bool ComputeTangentSpace(GenericMesh& mesh, size_t index, bool packHandedness = false);
-void ComputeTangentSpace(const GenericMesh& mesh, const Positions3f& positions, const TexCoords2f& uv, const Normals3f& normals, const Tangents3f& tangents, const Binormals3f& binormals);
-void ComputeTangentSpace(const GenericMesh& mesh, const Positions4f& positions, const TexCoords2f& uv, const Normals3f& normals, const Tangents3f& tangents, const Binormals3f& binormals);
-void ComputeTangentSpace(const GenericMesh& mesh, const Positions3f& positions, const TexCoords2f& uv, const Normals3f& normals, const Tangents4f& tangents);
-void ComputeTangentSpace(const GenericMesh& mesh, const Positions4f& positions, const TexCoords2f& uv, const Normals3f& normals, const Tangents4f& tangents);
+bool ComputeTangentSpace(FGenericMesh& mesh, size_t index, bool packHandedness = false);
+void ComputeTangentSpace(const FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords2f& uv, const FNormals3f& normals, const FTangents3f& tangents, const FBinormals3f& binormals);
+void ComputeTangentSpace(const FGenericMesh& mesh, const FPositions4f& positions, const FTexCoords2f& uv, const FNormals3f& normals, const FTangents3f& tangents, const FBinormals3f& binormals);
+void ComputeTangentSpace(const FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords2f& uv, const FNormals3f& normals, const FTangents4f& tangents);
+void ComputeTangentSpace(const FGenericMesh& mesh, const FPositions4f& positions, const FTexCoords2f& uv, const FNormals3f& normals, const FTangents4f& tangents);
 //----------------------------------------------------------------------------
-bool MergeDuplicateVertices(GenericMesh& mesh);
+bool MergeDuplicateVertices(FGenericMesh& mesh);
 //----------------------------------------------------------------------------
-bool PNTriangles(GenericMesh& mesh, size_t index, size_t recursions);
-void PNTriangles(GenericMesh& mesh, const Positions3f& positions, const Normals3f& normals, size_t recursions);
+bool PNTriangles(FGenericMesh& mesh, size_t index, size_t recursions);
+void PNTriangles(FGenericMesh& mesh, const FPositions3f& positions, const FNormals3f& normals, size_t recursions);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // http://fgiesen.wordpress.com/2013/12/14/simple-lossless-index-buffer-compression/
 //----------------------------------------------------------------------------
-void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount);
-void OptimizeIndicesOrder(GenericMesh& mesh);
+void OptimizeIndicesOrder(const TMemoryView<u32>& indices, size_t vertexCount);
+void OptimizeIndicesOrder(FGenericMesh& mesh);
 //----------------------------------------------------------------------------
-void OptimizeVerticesOrder(GenericMesh& mesh);
+void OptimizeVerticesOrder(FGenericMesh& mesh);
 //----------------------------------------------------------------------------
-void OptimizeIndicesAndVerticesOrder(GenericMesh& mesh);
+void OptimizeIndicesAndVerticesOrder(FGenericMesh& mesh);
 //----------------------------------------------------------------------------
-float VertexAverageCacheMissRate(const MemoryView<u32>& indices, bool fifo = true, size_t cacheSize = 16);
-float VertexAverageCacheMissRate(const GenericMesh& mesh, bool fifo = true, size_t cacheSize = 16);
+float VertexAverageCacheMissRate(const TMemoryView<u32>& indices, bool fifo = true, size_t cacheSize = 16);
+float VertexAverageCacheMissRate(const FGenericMesh& mesh, bool fifo = true, size_t cacheSize = 16);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

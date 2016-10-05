@@ -10,19 +10,19 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Fiber {
+class FFiber {
 public:
     typedef void (STDCALL *callback_t)(void *arg);
 
-    Fiber() : Fiber(nullptr) {}
-    Fiber(void* pimpl) : _pimpl(pimpl) {}
-    ~Fiber();
+    FFiber() : FFiber(nullptr) {}
+    FFiber(void* pimpl) : _pimpl(pimpl) {}
+    ~FFiber();
 
-    Fiber(const Fiber& ) = delete;
-    Fiber& operator =(const Fiber& ) = delete;
+    FFiber(const FFiber& ) = delete;
+    FFiber& operator =(const FFiber& ) = delete;
 
-    Fiber(Fiber&& rvalue);
-    Fiber& operator =(Fiber&& rvalue);
+    FFiber(FFiber&& rvalue);
+    FFiber& operator =(FFiber&& rvalue);
 
     void* Pimpl() const { return _pimpl; }
 
@@ -34,8 +34,8 @@ public:
 
     operator void *() const { return _pimpl; }
 
-    bool operator ==(const Fiber& other) const { return _pimpl == other._pimpl; }
-    bool operator !=(const Fiber& other) const { return !operator ==(other); }
+    bool operator ==(const FFiber& other) const { return _pimpl == other._pimpl; }
+    bool operator !=(const FFiber& other) const { return !operator ==(other); }
 
     static void Start();
     static void Shutdown();
@@ -46,9 +46,9 @@ public:
 
     static bool IsInFiber();
 
-    struct ThreadScope {
-        ThreadScope() { Start(); }
-        ~ThreadScope() { Shutdown(); }
+    struct FThreadScope {
+        FThreadScope() { Start(); }
+        ~FThreadScope() { Shutdown(); }
     };
 
 private:

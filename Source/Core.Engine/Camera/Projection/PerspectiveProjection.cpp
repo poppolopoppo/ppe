@@ -12,20 +12,20 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PerspectiveProjection::PerspectiveProjection(float fov, const ViewportF& viewport)
+FPerspectiveProjection::FPerspectiveProjection(float fov, const ViewportF& viewport)
 :   _fov(0) {
     SetFov(fov);
 }
 //----------------------------------------------------------------------------
-PerspectiveProjection::~PerspectiveProjection() {}
+FPerspectiveProjection::~FPerspectiveProjection() {}
 //----------------------------------------------------------------------------
-void PerspectiveProjection::SetFov(float value) {
+void FPerspectiveProjection::SetFov(float value) {
     Assert(0 < fov && F_2PI >= fov);
     _fov = value;
 }
 //----------------------------------------------------------------------------
-virtual float4x4 PerspectiveProjection::ProjectionMatrix(
-    const Timeline& ,
+virtual float4x4 FPerspectiveProjection::ProjectionMatrix(
+    const FTimeline& ,
     float znear, float zfar,
     const ViewportF& viewport ) {
     Assert(znear < zfar);

@@ -7,25 +7,25 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class DeviceResourceType {
+enum class EDeviceResourceType {
     Constants = 0,
     Indices,
-    BlendState,
-    DepthStencilState,
-    RasterizerState,
-    RenderTarget,
-    SamplerState,
-    ShaderEffect,
-    ShaderProgram,
-    Texture2D,
-    TextureCube,
-    VertexDeclaration,
+    FBlendState,
+    FDepthStencilState,
+    FRasterizerState,
+    FRenderTarget,
+    FSamplerState,
+    FShaderEffect,
+    FShaderProgram,
+    FTexture2D,
+    FTextureCube,
+    FVertexDeclaration,
     Vertices,
 
     _Count
 };
 //----------------------------------------------------------------------------
-StringView ResourceTypeToCStr(DeviceResourceType type);
+FStringView ResourceTypeToCStr(EDeviceResourceType type);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

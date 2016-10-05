@@ -14,26 +14,26 @@ namespace Engine {
 //----------------------------------------------------------------------------
 ENGINESERVICE_GUID_DEF(ISharedConstantBufferFactoryService);
 //----------------------------------------------------------------------------
-DefaultSharedConstantBufferFactoryService::DefaultSharedConstantBufferFactoryService()
+FDefaultSharedConstantBufferFactoryService::FDefaultSharedConstantBufferFactoryService()
 :   ISharedConstantBufferFactoryService(ENGINESERVICE_CONSTRUCT(ISharedConstantBufferFactoryService)) {}
 //----------------------------------------------------------------------------
-DefaultSharedConstantBufferFactoryService::~DefaultSharedConstantBufferFactoryService() {}
+FDefaultSharedConstantBufferFactoryService::~FDefaultSharedConstantBufferFactoryService() {}
 //----------------------------------------------------------------------------
-Engine::SharedConstantBufferFactory *DefaultSharedConstantBufferFactoryService::SharedConstantBufferFactory() {
+Engine::FSharedConstantBufferFactory *FDefaultSharedConstantBufferFactoryService::FSharedConstantBufferFactory() {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(ServiceAvailable());
 
     return &_sharedConstantBufferFactory;
 }
 //----------------------------------------------------------------------------
-const Engine::SharedConstantBufferFactory *DefaultSharedConstantBufferFactoryService::SharedConstantBufferFactory() const {
+const Engine::FSharedConstantBufferFactory *FDefaultSharedConstantBufferFactoryService::FSharedConstantBufferFactory() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(ServiceAvailable());
 
     return &_sharedConstantBufferFactory;
 }
 //----------------------------------------------------------------------------
-void DefaultSharedConstantBufferFactoryService::Start(IServiceProvider *provider, const Guid& guid) {
+void FDefaultSharedConstantBufferFactoryService::Start(IServiceProvider *provider, const FGuid& guid) {
     ISharedConstantBufferFactoryService::Start(provider, guid);
 
     ENGINESERVICE_PROVIDE(IDeviceEncapsulatorService, deviceService, provider);
@@ -41,7 +41,7 @@ void DefaultSharedConstantBufferFactoryService::Start(IServiceProvider *provider
     _sharedConstantBufferFactory.Start(deviceService->DeviceEncapsulator()->Device());
 }
 //----------------------------------------------------------------------------
-void DefaultSharedConstantBufferFactoryService::Shutdown(IServiceProvider *provider, const Guid& guid) {
+void FDefaultSharedConstantBufferFactoryService::Shutdown(IServiceProvider *provider, const FGuid& guid) {
     ISharedConstantBufferFactoryService::Shutdown(provider, guid);
 
     ENGINESERVICE_PROVIDE(IDeviceEncapsulatorService, deviceService, provider);

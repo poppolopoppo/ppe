@@ -72,12 +72,12 @@ u32 FloatM11_to_UWord(float value) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void HalfFloat::Pack(float value) {
+void FHalfFloat::Pack(float value) {
     Assert(IsConvertible(value));
     _data = FP32_to_FP16(value);
 }
 //----------------------------------------------------------------------------
-float HalfFloat::Unpack() const {
+float FHalfFloat::Unpack() const {
     const float f = FP16_to_FP32(_data);
     Assert(std::isfinite(f));
     return f;

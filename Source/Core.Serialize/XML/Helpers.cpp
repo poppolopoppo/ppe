@@ -15,9 +15,9 @@ namespace XML {
 namespace {
 //----------------------------------------------------------------------------
 template <typename T, typename _Functor>
-static bool ParseArray_(Array< T >& dst, const StringView& str, _Functor&& functor) {
-    StringView input = Strip(str);
-    StringView value;
+static bool ParseArray_(TArray< T >& dst, const FStringView& str, _Functor&& functor) {
+    FStringView input = Strip(str);
+    FStringView value;
 
     while (Split(input, ' ', value)) {
         Assert(!value.empty());
@@ -32,9 +32,9 @@ static bool ParseArray_(Array< T >& dst, const StringView& str, _Functor&& funct
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Functor>
-static bool ParseArray_(const MemoryView< T >& dst, const StringView& str, _Functor&& functor) {
-    StringView input = Strip(str);
-    StringView value;
+static bool ParseArray_(const TMemoryView< T >& dst, const FStringView& str, _Functor&& functor) {
+    FStringView input = Strip(str);
+    FStringView value;
 
     size_t count = 0;
     while (Split(input, ' ', value)) {
@@ -54,15 +54,15 @@ static bool ParseArray_(const MemoryView< T >& dst, const StringView& str, _Func
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool ParseEnumArray(Array<StringView>& dst, const StringView& str) {
-    return ParseArray_(dst, str, [](StringView& dst, const StringView& src) {
+bool ParseEnumArray(TArray<FStringView>& dst, const FStringView& str) {
+    return ParseArray_(dst, str, [](FStringView& dst, const FStringView& src) {
         dst = src;
         return true;
     });
 }
 //----------------------------------------------------------------------------
-bool ParseEnumArray(MemoryView<StringView>& dst, const StringView& str) {
-    return ParseArray_(dst, str, [](StringView& dst, const StringView& src) {
+bool ParseEnumArray(TMemoryView<FStringView>& dst, const FStringView& str) {
+    return ParseArray_(dst, str, [](FStringView& dst, const FStringView& src) {
         dst = src;
         return true;
     });
@@ -70,10 +70,10 @@ bool ParseEnumArray(MemoryView<StringView>& dst, const StringView& str) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool Parse(bool* dst, const StringView& str) {
+bool Parse(bool* dst, const FStringView& str) {
     Assert(dst);
 
-    const StringView input = Strip(str);
+    const FStringView input = Strip(str);
 
     if (EqualsI(input, "true")) {
         *dst = true;
@@ -88,11 +88,11 @@ bool Parse(bool* dst, const StringView& str) {
     }
 }
 //----------------------------------------------------------------------------
-bool Parse(BitSet& dst, const StringView& str) {
+bool Parse(FBitSet& dst, const FStringView& str) {
     Assert(dst.size());
 
-    StringView input = Strip(str); // special case for booleans and bitset
-    StringView value;
+    FStringView input = Strip(str); // special case for booleans and bitset
+    FStringView value;
 
     size_t count = 0;
     while (Split(input, ' ', value)) {
@@ -112,184 +112,184 @@ bool Parse(BitSet& dst, const StringView& str) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool Parse(i32* dst, const StringView& str) {
+bool Parse(i32* dst, const FStringView& str) {
     return Atoi32(dst, Strip(str), 10);
 }
 //----------------------------------------------------------------------------
-bool Parse(Array<i32>& dst, const StringView& str) {
-    return ParseArray_(dst, str, [](i32& dst, const StringView& src) {
+bool Parse(TArray<i32>& dst, const FStringView& str) {
+    return ParseArray_(dst, str, [](i32& dst, const FStringView& src) {
         return Atoi32(&dst, src, 10);
     });
 }
 //----------------------------------------------------------------------------
-bool Parse(const MemoryView<i32>& dst, const StringView& str) {
-    return ParseArray_(dst, str, [](i32& dst, const StringView& src) {
+bool Parse(const TMemoryView<i32>& dst, const FStringView& str) {
+    return ParseArray_(dst, str, [](i32& dst, const FStringView& src) {
         return Atoi32(&dst, src, 10);
     });
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool Parse(float* dst, const StringView& str) {
+bool Parse(float* dst, const FStringView& str) {
     return Atof(dst, Strip(str));
 }
 //----------------------------------------------------------------------------
-bool Parse(Array<float>& dst, const StringView& str) {
-    return ParseArray_(dst, str, [](float& dst, const StringView& src) {
+bool Parse(TArray<float>& dst, const FStringView& str) {
+    return ParseArray_(dst, str, [](float& dst, const FStringView& src) {
         return Atof(&dst, src);
     });
 }
 //----------------------------------------------------------------------------
-bool Parse(const MemoryView<float>& dst, const StringView& str) {
-    return ParseArray_(dst, str, [](float& dst, const StringView& src) {
+bool Parse(const TMemoryView<float>& dst, const FStringView& str) {
+    return ParseArray_(dst, str, [](float& dst, const FStringView& src) {
         return Atof(&dst, src);
     });
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool Parse(word2* dst, const StringView& str) {
+bool Parse(word2* dst, const FStringView& str) {
     Assert(dst);
     return Parse(dst->MakeView(), str);
 }
 //----------------------------------------------------------------------------
-bool Parse(float2* dst, const StringView& str) {
+bool Parse(float2* dst, const FStringView& str) {
     Assert(dst);
     return Parse(dst->MakeView(), str);
 }
 //----------------------------------------------------------------------------
-bool Parse(Array<word2>& dst, const StringView& str) {
-    return ParseArray_(dst, str, [](word2& dst, const StringView& src) {
+bool Parse(TArray<word2>& dst, const FStringView& str) {
+    return ParseArray_(dst, str, [](word2& dst, const FStringView& src) {
         return Parse(&dst, src);
     });
 }
 //----------------------------------------------------------------------------
-bool Parse(Array<float2>& dst, const StringView& str) {
-    return ParseArray_(dst, str, [](float2& dst, const StringView& src) {
+bool Parse(TArray<float2>& dst, const FStringView& str) {
+    return ParseArray_(dst, str, [](float2& dst, const FStringView& src) {
         return Parse(&dst, src);
     });
 }
 //----------------------------------------------------------------------------
-bool Parse(const MemoryView<word2>& dst, const StringView& str) {
+bool Parse(const TMemoryView<word2>& dst, const FStringView& str) {
     return Parse(dst.Cast<i32>(), str);
 }
 //----------------------------------------------------------------------------
-bool Parse(const MemoryView<float2>& dst, const StringView& str) {
+bool Parse(const TMemoryView<float2>& dst, const FStringView& str) {
     return Parse(dst.Cast<float>(), str);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool Parse(word3* dst, const StringView& str) {
+bool Parse(word3* dst, const FStringView& str) {
     Assert(dst);
     return Parse(dst->MakeView(), str);
 }
 //----------------------------------------------------------------------------
-bool Parse(float3* dst, const StringView& str) {
+bool Parse(float3* dst, const FStringView& str) {
     Assert(dst);
     return Parse(dst->MakeView(), str);
 }
 //----------------------------------------------------------------------------
-bool Parse(Array<word3>& dst, const StringView& str) {
-    return ParseArray_(dst, str, [](word3& dst, const StringView& src) {
+bool Parse(TArray<word3>& dst, const FStringView& str) {
+    return ParseArray_(dst, str, [](word3& dst, const FStringView& src) {
         return Parse(&dst, src);
     });
 }
 //----------------------------------------------------------------------------
-bool Parse(Array<float3>& dst, const StringView& str) {
-    return ParseArray_(dst, str, [](float3& dst, const StringView& src) {
+bool Parse(TArray<float3>& dst, const FStringView& str) {
+    return ParseArray_(dst, str, [](float3& dst, const FStringView& src) {
         return Parse(&dst, src);
     });
 }
 //----------------------------------------------------------------------------
-bool Parse(const MemoryView<word3>& dst, const StringView& str) {
+bool Parse(const TMemoryView<word3>& dst, const FStringView& str) {
     return Parse(dst.Cast<i32>(), str);
 }
 //----------------------------------------------------------------------------
-bool Parse(const MemoryView<float3>& dst, const StringView& str) {
+bool Parse(const TMemoryView<float3>& dst, const FStringView& str) {
     return Parse(dst.Cast<float>(), str);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool Parse(word4* dst, const StringView& str) {
+bool Parse(word4* dst, const FStringView& str) {
     Assert(dst);
     return Parse(dst->MakeView(), str);
 }
 //----------------------------------------------------------------------------
-bool Parse(float4* dst, const StringView& str) {
+bool Parse(float4* dst, const FStringView& str) {
     Assert(dst);
     return Parse(dst->MakeView(), str);
 }
 //----------------------------------------------------------------------------
-bool Parse(Array<word4>& dst, const StringView& str) {
-    return ParseArray_(dst, str, [](word4& dst, const StringView& src) {
+bool Parse(TArray<word4>& dst, const FStringView& str) {
+    return ParseArray_(dst, str, [](word4& dst, const FStringView& src) {
         return Parse(&dst, src);
     });
 }
 //----------------------------------------------------------------------------
-bool Parse(Array<float4>& dst, const StringView& str) {
-    return ParseArray_(dst, str, [](float4& dst, const StringView& src) {
+bool Parse(TArray<float4>& dst, const FStringView& str) {
+    return ParseArray_(dst, str, [](float4& dst, const FStringView& src) {
         return Parse(&dst, src);
     });
 }
 //----------------------------------------------------------------------------
-bool Parse(const MemoryView<word4>& dst, const StringView& str) {
+bool Parse(const TMemoryView<word4>& dst, const FStringView& str) {
     return Parse(dst.Cast<i32>(), str);
 }
 //----------------------------------------------------------------------------
-bool Parse(const MemoryView<float4>& dst, const StringView& str) {
+bool Parse(const TMemoryView<float4>& dst, const FStringView& str) {
     return Parse(dst.Cast<float>(), str);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool Parse(float2x2* dst, const StringView& str) {
+bool Parse(float2x2* dst, const FStringView& str) {
     Assert(dst);
     return Parse(dst->MakeView(), str);
 }
 //----------------------------------------------------------------------------
-bool Parse(Array<float2x2>& dst, const StringView& str) {
-    return ParseArray_(dst, str, [](float2x2& dst, const StringView& src) {
+bool Parse(TArray<float2x2>& dst, const FStringView& str) {
+    return ParseArray_(dst, str, [](float2x2& dst, const FStringView& src) {
         return Parse(&dst, src);
     });
 }
 //----------------------------------------------------------------------------
-bool Parse(const MemoryView<float2x2>& dst, const StringView& str) {
+bool Parse(const TMemoryView<float2x2>& dst, const FStringView& str) {
     return Parse(dst.Cast<float>(), str);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool Parse(float3x3* dst, const StringView& str)  {
+bool Parse(float3x3* dst, const FStringView& str)  {
     Assert(dst);
     return Parse(dst->MakeView(), str);
 }
 //----------------------------------------------------------------------------
-bool Parse(Array<float3x3>& dst, const StringView& str)  {
-    return ParseArray_(dst, str, [](float3x3& dst, const StringView& src) {
+bool Parse(TArray<float3x3>& dst, const FStringView& str)  {
+    return ParseArray_(dst, str, [](float3x3& dst, const FStringView& src) {
         return Parse(&dst, src);
     });
 }
 //----------------------------------------------------------------------------
-bool Parse(const MemoryView<float3x3>& dst, const StringView& str) {
+bool Parse(const TMemoryView<float3x3>& dst, const FStringView& str) {
     return Parse(dst.Cast<float>(), str);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool Parse(float4x4* dst, const StringView& str) {
+bool Parse(float4x4* dst, const FStringView& str) {
     Assert(dst);
     return Parse(dst->MakeView(), str);
 }
 //----------------------------------------------------------------------------
-bool Parse(Array<float4x4>& dst, const StringView& str) {
-    return ParseArray_(dst, str, [](float4x4& dst, const StringView& src) {
+bool Parse(TArray<float4x4>& dst, const FStringView& str) {
+    return ParseArray_(dst, str, [](float4x4& dst, const FStringView& src) {
         return Parse(&dst, src);
     });
 }
 //----------------------------------------------------------------------------
-bool Parse(const MemoryView<float4x4>& dst, const StringView& str) {
+bool Parse(const TMemoryView<float4x4>& dst, const FStringView& str) {
     return Parse(dst.Cast<float>(), str);
 }
 //----------------------------------------------------------------------------

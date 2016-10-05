@@ -29,22 +29,22 @@ namespace RTTI {
 FWD_REFPTR(MetaAtom);
 FWD_REFPTR(MetaObject);
 //----------------------------------------------------------------------------
-typedef u32 MetaTypeId;
+typedef u32 FMetaTypeId;
 //----------------------------------------------------------------------------
-enum class MetaTypeFlags : u32 {
+enum class EMetaTypeFlags : u32 {
     Scalar      = 0,
-    Vector      = 1,
-    Pair        = 2,
-    Dictionary  = 3
+    TVector      = 1,
+    TPair        = 2,
+    TDictionary  = 3
 };
 //----------------------------------------------------------------------------
 template <typename T>
-struct MetaType {
-    enum : MetaTypeId { TypeId = 0 };
+struct TMetaType {
+    enum : FMetaTypeId { TypeId = 0 };
     static constexpr bool Enabled = false;
-    static constexpr MetaTypeId Id() = delete;
-    static constexpr MetaTypeFlags Flags() = delete;
-    static StringView Name() = delete;
+    static constexpr FMetaTypeId Id() = delete;
+    static constexpr EMetaTypeFlags Flags() = delete;
+    static FStringView Name() = delete;
     static T DefaultValue() = delete;
     static bool IsDefaultValue(const T& value) = delete;
     static hash_t HashValue(const T& value) = delete;
@@ -52,25 +52,25 @@ struct MetaType {
 };
 //----------------------------------------------------------------------------
 template <typename... _Args>
-constexpr MetaTypeId hash_MetaTypeId_constexpr(_Args... args) {
-    STATIC_ASSERT(sizeof(MetaTypeId) == sizeof(u32));
-    return hash_u32_constexpr(MetaTypeId(args)...);
+constexpr FMetaTypeId hash_MetaTypeId_constexpr(_Args... args) {
+    STATIC_ASSERT(sizeof(FMetaTypeId) == sizeof(u32));
+    return hash_u32_constexpr(FMetaTypeId(args)...);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
-    template <> struct MetaType< T > { \
-        enum : MetaTypeId { TypeId = _TypeId }; \
+    template <> struct TMetaType< T > { \
+        enum : FMetaTypeId { TypeId = _TypeId }; \
         static constexpr bool Enabled = true; \
-        static constexpr MetaTypeId Id() { return _TypeId; } \
-        static constexpr MetaTypeFlags Flags() { return MetaTypeFlags::Scalar; } \
-        static StringView Name(); \
+        static constexpr FMetaTypeId Id() { return _TypeId; } \
+        static constexpr EMetaTypeFlags Flags() { return EMetaTypeFlags::Scalar; } \
+        static FStringView Name(); \
         static T DefaultValue(); \
         static bool IsDefaultValue(const T& value); \
         static hash_t HashValue(const T& value); \
         static bool DeepEquals(const T& lhs, const T& rhs); \
-        static const MetaTypeScalarTraits< T >* VirtualTraits(); \
+        static const TMetaTypeScalarTraits< T >* VirtualTraits(); \
     };
 //----------------------------------------------------------------------------
 FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
@@ -79,90 +79,90 @@ FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const AbstractMetaTypeScalarTraits* ScalarTraitsFromTypeId(MetaTypeId typeId);
+const FAbstractMetaTypeScalarTraits* ScalarTraitsFromTypeId(FMetaTypeId typeId);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define CORE_RTTI_METATYPE_NAMETYPE StaticFormat<char, CORE_RTTI_METATYPE_NAME_CAPACITY>
+#define CORE_RTTI_METATYPE_NAMETYPE FStaticFormat<char, CORE_RTTI_METATYPE_NAME_CAPACITY>
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
-struct MetaType< RTTI::Pair<_First, _Second> > {
-    typedef MetaType< typename std::decay< _First >::type >     first_meta_type;
-    typedef MetaType< typename std::decay< _Second >::type >    second_meta_type;
+struct TMetaType< RTTI::TPair<_First, _Second> > {
+    typedef TMetaType< typename std::decay< _First >::type >     first_meta_type;
+    typedef TMetaType< typename std::decay< _Second >::type >    second_meta_type;
 
-    enum : MetaTypeId {
-        TypeId = hash_MetaTypeId_constexpr(MetaTypeFlags::Pair, first_meta_type::TypeId, second_meta_type::TypeId)
+    enum : FMetaTypeId {
+        TypeId = hash_MetaTypeId_constexpr(EMetaTypeFlags::TPair, first_meta_type::TypeId, second_meta_type::TypeId)
     };
 
     static constexpr bool Enabled = first_meta_type::Enabled && second_meta_type::Enabled;
 
-    static constexpr MetaTypeId Id() { return TypeId; }
-    static constexpr MetaTypeFlags Flags() { return MetaTypeFlags::Pair; }
+    static constexpr FMetaTypeId Id() { return TypeId; }
+    static constexpr EMetaTypeFlags Flags() { return EMetaTypeFlags::TPair; }
 
-    NO_INLINE static StringView Name() {
+    NO_INLINE static FStringView Name() {
         ONE_TIME_INITIALIZE(const CORE_RTTI_METATYPE_NAMETYPE, gName,
-            "Pair<{0}, {1}>", first_meta_type::Name(), second_meta_type::Name() );
+            "TPair<{0}, {1}>", first_meta_type::Name(), second_meta_type::Name() );
         return gName.MakeView();
     }
 
-    static RTTI::Pair<_First, _Second> DefaultValue() {
-        return RTTI::Pair<_First, _Second>(first_meta_type::DefaultValue(), second_meta_type::DefaultValue());
+    static RTTI::TPair<_First, _Second> DefaultValue() {
+        return RTTI::TPair<_First, _Second>(first_meta_type::DefaultValue(), second_meta_type::DefaultValue());
     }
 
-    static bool IsDefaultValue(const RTTI::Pair<_First, _Second>& pair) {
+    static bool IsDefaultValue(const RTTI::TPair<_First, _Second>& pair) {
         return  first_meta_type::IsDefaultValue(pair.first) &&
                 second_meta_type::IsDefaultValue(pair.second);
     }
 
-    static hash_t HashValue(const RTTI::Pair<_First, _Second>& pair) {
+    static hash_t HashValue(const RTTI::TPair<_First, _Second>& pair) {
         return hash_tuple(hash_t(TypeId), first_meta_type::HashValue(pair.first), first_meta_type::HashValue(pair.second));
     }
 
-    static bool DeepEquals(const RTTI::Pair<_First, _Second>& lhs, const RTTI::Pair<_First, _Second>& rhs) {
+    static bool DeepEquals(const RTTI::TPair<_First, _Second>& lhs, const RTTI::TPair<_First, _Second>& rhs) {
         return  first_meta_type::DeepEquals(lhs.first, rhs.first) &&
                 second_meta_type::DeepEquals(lhs.second, rhs.second);
     }
 
-    static const MetaTypePairTraits< _First, _Second >* VirtualTraits() {
-        return MetaTypePairTraits< _First, _Second >::Instance();
+    static const TMetaTypePairTraits< _First, _Second >* VirtualTraits() {
+        return TMetaTypePairTraits< _First, _Second >::Instance();
     }
 };
 //----------------------------------------------------------------------------
 template <typename T>
-struct MetaType< RTTI::Vector<T> > {
-    typedef MetaType< typename std::decay< T >::type >  value_meta_type;
+struct TMetaType< RTTI::TVector<T> > {
+    typedef TMetaType< typename std::decay< T >::type >  value_meta_type;
 
-    enum : MetaTypeId {
-        TypeId = hash_MetaTypeId_constexpr(MetaTypeFlags::Vector, value_meta_type::TypeId)
+    enum : FMetaTypeId {
+        TypeId = hash_MetaTypeId_constexpr(EMetaTypeFlags::TVector, value_meta_type::TypeId)
     };
 
     static constexpr bool Enabled = value_meta_type::Enabled;
 
-    static constexpr MetaTypeId Id() { return TypeId; }
-    static constexpr MetaTypeFlags Flags() { return MetaTypeFlags::Vector; }
+    static constexpr FMetaTypeId Id() { return TypeId; }
+    static constexpr EMetaTypeFlags Flags() { return EMetaTypeFlags::TVector; }
 
-    NO_INLINE static StringView Name() {
+    NO_INLINE static FStringView Name() {
         ONE_TIME_INITIALIZE(const CORE_RTTI_METATYPE_NAMETYPE, gName,
-            "Vector<{0}>", value_meta_type::Name() );
+            "TVector<{0}>", value_meta_type::Name() );
         return gName.MakeView();
     }
 
-    static RTTI::Vector<T> DefaultValue() {
-        return RTTI::Vector<T>();
+    static RTTI::TVector<T> DefaultValue() {
+        return RTTI::TVector<T>();
     }
 
-    static bool IsDefaultValue(const RTTI::Vector<T>& vector)  {
+    static bool IsDefaultValue(const RTTI::TVector<T>& vector)  {
         return vector.empty();
     }
 
-    static hash_t HashValue(const RTTI::Vector<T>& vector) {
+    static hash_t HashValue(const RTTI::TVector<T>& vector) {
         hash_t result = hash_t(TypeId);
         for (const T& value : vector)
             hash_combine(result, value_meta_type::HashValue(value));
         return result;
     }
 
-    static bool DeepEquals(const RTTI::Vector<T>& lhs, const RTTI::Vector<T>& rhs) {
+    static bool DeepEquals(const RTTI::TVector<T>& lhs, const RTTI::TVector<T>& rhs) {
         if (lhs.size() != rhs.size())
             return false;
         const size_t k = lhs.size();
@@ -172,47 +172,47 @@ struct MetaType< RTTI::Vector<T> > {
         return true;
     }
 
-    static const MetaTypeVectorTraits< T >* VirtualTraits() {
-        return MetaTypeVectorTraits< T >::Instance();
+    static const TMetaTypeVectorTraits< T >* VirtualTraits() {
+        return TMetaTypeVectorTraits< T >::Instance();
     }
 };
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
-struct MetaType< RTTI::Dictionary<_Key, _Value> > {
-    typedef MetaType< typename std::decay< _Key >::type >   key_meta_type;
-    typedef MetaType< typename std::decay< _Value >::type > value_meta_type;
+struct TMetaType< RTTI::TDictionary<_Key, _Value> > {
+    typedef TMetaType< typename std::decay< _Key >::type >   key_meta_type;
+    typedef TMetaType< typename std::decay< _Value >::type > value_meta_type;
 
-    enum : MetaTypeId {
-        TypeId = hash_MetaTypeId_constexpr(MetaTypeFlags::Dictionary, key_meta_type::TypeId, value_meta_type::TypeId)
+    enum : FMetaTypeId {
+        TypeId = hash_MetaTypeId_constexpr(EMetaTypeFlags::TDictionary, key_meta_type::TypeId, value_meta_type::TypeId)
     };
 
     static constexpr bool Enabled = key_meta_type::Enabled && value_meta_type::Enabled;
 
-    static constexpr MetaTypeId Id() { return TypeId; }
-    static constexpr MetaTypeFlags Flags() { return MetaTypeFlags::Dictionary; }
+    static constexpr FMetaTypeId Id() { return TypeId; }
+    static constexpr EMetaTypeFlags Flags() { return EMetaTypeFlags::TDictionary; }
 
-    NO_INLINE static StringView Name() {
+    NO_INLINE static FStringView Name() {
         ONE_TIME_INITIALIZE(const CORE_RTTI_METATYPE_NAMETYPE, gName,
-            "Dictionary<{0}, {1}>", key_meta_type::Name(), value_meta_type::Name() );
+            "TDictionary<{0}, {1}>", key_meta_type::Name(), value_meta_type::Name() );
         return gName.MakeView();
     }
 
-    static RTTI::Dictionary<_Key, _Value> DefaultValue() {
-        return RTTI::Dictionary<_Key, _Value>();
+    static RTTI::TDictionary<_Key, _Value> DefaultValue() {
+        return RTTI::TDictionary<_Key, _Value>();
     }
 
-    static bool IsDefaultValue(const RTTI::Dictionary<_Key, _Value>& dico)  {
+    static bool IsDefaultValue(const RTTI::TDictionary<_Key, _Value>& dico)  {
         return dico.empty();
     }
 
-    static hash_t HashValue(const RTTI::Dictionary<_Key, _Value>& dico) {
+    static hash_t HashValue(const RTTI::TDictionary<_Key, _Value>& dico) {
         hash_t result = hash_t(TypeId);
         for (const auto& it : dico)
             result = hash_tuple(result, key_meta_type::HashValue(it.first), key_meta_type::HashValue(it.second));
         return result;
     }
 
-    static bool DeepEquals(const RTTI::Dictionary<_Key, _Value>& lhs, const RTTI::Dictionary<_Key, _Value>& rhs) {
+    static bool DeepEquals(const RTTI::TDictionary<_Key, _Value>& lhs, const RTTI::TDictionary<_Key, _Value>& rhs) {
         if (lhs.size() != rhs.size())
             return false;
         const size_t k = lhs.size();
@@ -225,32 +225,32 @@ struct MetaType< RTTI::Dictionary<_Key, _Value> > {
         return true;
     }
 
-    static const MetaTypeDictionaryTraits< _Key, _Value >* VirtualTraits() {
-        return MetaTypeDictionaryTraits< _Key, _Value >::Instance();
+    static const TMetaTypeDictionaryTraits< _Key, _Value >* VirtualTraits() {
+        return TMetaTypeDictionaryTraits< _Key, _Value >::Instance();
     }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct MetaTypeInfo {
-    MetaTypeId Id;
-    MetaTypeFlags Flags;
-    StringView Name;
+struct FMetaTypeInfo {
+    FMetaTypeId Id;
+    EMetaTypeFlags Flags;
+    FStringView Name;
 
-    bool operator ==(const MetaTypeInfo& other) const { return Id == other.Id; }
-    bool operator !=(const MetaTypeInfo& other) const { return Id != other.Id; }
+    bool operator ==(const FMetaTypeInfo& other) const { return Id == other.Id; }
+    bool operator !=(const FMetaTypeInfo& other) const { return Id != other.Id; }
 
-    inline friend hash_t hash_value(const MetaTypeInfo& typeInfo) {
+    inline friend hash_t hash_value(const FMetaTypeInfo& typeInfo) {
         return static_cast<size_t>(typeInfo.Id);
     }
 };
 //----------------------------------------------------------------------------
-MetaTypeInfo ScalarTypeInfoFromTypeId(MetaTypeId typeId);
+FMetaTypeInfo ScalarTypeInfoFromTypeId(FMetaTypeId typeId);
 //----------------------------------------------------------------------------
 template <typename T>
-MetaTypeInfo TypeInfo() {
-    typedef MetaType<T> meta_type;
-    return MetaTypeInfo{ meta_type::Id(), meta_type::Flags(), meta_type::Name() };
+FMetaTypeInfo TypeInfo() {
+    typedef TMetaType<T> meta_type;
+    return FMetaTypeInfo{ meta_type::Id(), meta_type::Flags(), meta_type::Name() };
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -262,12 +262,12 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-String ToString(const RTTI::Name& name);
+FString ToString(const RTTI::FName& name);
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
-    const RTTI::Name& name) {
+    const RTTI::FName& name) {
     return oss << ToString(name);
 }
 //----------------------------------------------------------------------------
@@ -275,7 +275,7 @@ std::basic_ostream<_Char, _Traits>& operator <<(
 //----------------------------------------------------------------------------
 hash_t hash_value(const RTTI::BinaryData& rawdata);
 //----------------------------------------------------------------------------
-String ToString(const RTTI::BinaryData& rawdata);
+FString ToString(const RTTI::BinaryData& rawdata);
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(
@@ -286,7 +286,7 @@ std::basic_ostream<_Char, _Traits>& operator <<(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-String ToString(const RTTI::OpaqueData& opaqueData);
+FString ToString(const RTTI::OpaqueData& opaqueData);
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(
@@ -300,7 +300,7 @@ std::basic_ostream<_Char, _Traits>& operator <<(
 template <typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
-    const RTTI::MetaTypeInfo& typeInfo) {
+    const RTTI::FMetaTypeInfo& typeInfo) {
     return oss << typeInfo.Name;
 }
 //----------------------------------------------------------------------------

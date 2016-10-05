@@ -53,23 +53,23 @@ void Diagnostics_EndEvent(IDeviceAPIDiagnostics *diagnostics) {
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
 //----------------------------------------------------------------------------
-void Diagnostics_BeginEvent(const AbstractDeviceAPIEncapsulator *encapsulator, const char *cstr) {
+void Diagnostics_BeginEvent(const FAbstractDeviceAPIEncapsulator *encapsulator, const char *cstr) {
     Diagnostics_BeginEvent(encapsulator->Diagnostics(), cstr);
 }
 //----------------------------------------------------------------------------
-void Diagnostics_SetMarker(const AbstractDeviceAPIEncapsulator *encapsulator, const char *cstr) {
+void Diagnostics_SetMarker(const FAbstractDeviceAPIEncapsulator *encapsulator, const char *cstr) {
     Diagnostics_SetMarker(encapsulator->Diagnostics(), cstr);
 }
 //----------------------------------------------------------------------------
-void Diagnostics_BeginEvent(const AbstractDeviceAPIEncapsulator *encapsulator, const wchar_t *wcstr) {
+void Diagnostics_BeginEvent(const FAbstractDeviceAPIEncapsulator *encapsulator, const wchar_t *wcstr) {
     Diagnostics_BeginEvent(encapsulator->Diagnostics(), wcstr);
 }
 //----------------------------------------------------------------------------
-void Diagnostics_SetMarker(const AbstractDeviceAPIEncapsulator *encapsulator, const wchar_t *wcstr) {
+void Diagnostics_SetMarker(const FAbstractDeviceAPIEncapsulator *encapsulator, const wchar_t *wcstr) {
     Diagnostics_SetMarker(encapsulator->Diagnostics(), wcstr);
 }
 //----------------------------------------------------------------------------
-void Diagnostics_EndEvent(const AbstractDeviceAPIEncapsulator *encapsulator) {
+void Diagnostics_EndEvent(const FAbstractDeviceAPIEncapsulator *encapsulator) {
     Diagnostics_EndEvent(encapsulator->Diagnostics());
 }
 //----------------------------------------------------------------------------

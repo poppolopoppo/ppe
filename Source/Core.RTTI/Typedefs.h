@@ -19,35 +19,35 @@ FWD_REFPTR(MetaAtom);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class NameTokenTraits {
+class FNameTokenTraits {
 public:
     const std::locale& Locale() const { return std::locale::classic(); }
-    bool NameTokenTraits::IsAllowedChar(char ch) const {
+    bool FNameTokenTraits::IsAllowedChar(char ch) const {
         return IsAlnum(ch) || ch == '_' || ch == '-' || ch == '.';
     }
 };
 //----------------------------------------------------------------------------
-BASICTOKEN_CLASS_DEF(Name, char, Case::Insensitive, NameTokenTraits);
+BASICTOKEN_CLASS_DEF(FName, char, ECase::Insensitive, FNameTokenTraits);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-using Vector = VECTORINSITU(Container, T, 4);
+using TVector = VECTORINSITU(Container, T, 4);
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
-using Pair = Core::Pair<_Key, _Value>;
+using TPair = Core::TPair<_Key, _Value>;
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
-using Dictionary = Core::AssociativeVector<
+using TDictionary = Core::TAssociativeVector<
     _Key,
     _Value,
-    Meta::EqualTo<_Key>,
-    RTTI::Vector<RTTI::Pair<_Key COMMA _Value> >
+    Meta::TEqualTo<_Key>,
+    RTTI::TVector<RTTI::TPair<_Key COMMA _Value> >
 >;
 //----------------------------------------------------------------------------
 INSTANTIATE_CLASS_TYPEDEF(BinaryData, RAWSTORAGE_ALIGNED(RTTI, u8, 16));
 //----------------------------------------------------------------------------
-INSTANTIATE_CLASS_TYPEDEF(OpaqueData, Dictionary<Name, PMetaAtom>);
+INSTANTIATE_CLASS_TYPEDEF(OpaqueData, TDictionary<FName, PMetaAtom>);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

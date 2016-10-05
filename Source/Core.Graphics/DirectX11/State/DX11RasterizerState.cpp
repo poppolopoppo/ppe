@@ -13,9 +13,9 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DX11RasterizerState::DX11RasterizerState(IDeviceAPIEncapsulator *device, RasterizerState *owner)
-:   DeviceAPIDependantRasterizerState(device, owner) {
-    const DX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
+FDX11RasterizerState::FDX11RasterizerState(IDeviceAPIEncapsulator *device, FRasterizerState *owner)
+:   FDeviceAPIDependantRasterizerState(device, owner) {
+    const FDX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
 
     ::D3D11_RASTERIZER_DESC rasterizerStateDesc;
     ::SecureZeroMemory(&rasterizerStateDesc, sizeof(rasterizerStateDesc));
@@ -45,66 +45,66 @@ DX11RasterizerState::DX11RasterizerState(IDeviceAPIEncapsulator *device, Rasteri
     DX11SetDeviceResourceNameIFP(_entity, owner);
 }
 //----------------------------------------------------------------------------
-DX11RasterizerState::~DX11RasterizerState() {
+FDX11RasterizerState::~FDX11RasterizerState() {
     ReleaseComRef(_entity);
 }
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, DX11RasterizerState, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, FDX11RasterizerState, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-D3D11_CULL_MODE CullModeToDX11CullMode(CullMode value) {
+D3D11_CULL_MODE CullModeToDX11CullMode(ECullMode value) {
     switch (value)
     {
-    case Core::Graphics::CullMode::CullClockwiseFace:
+    case Core::Graphics::ECullMode::CullClockwiseFace:
         return D3D11_CULL_BACK;
-    case Core::Graphics::CullMode::CullCounterClockwiseFace:
+    case Core::Graphics::ECullMode::CullCounterClockwiseFace:
         return D3D11_CULL_FRONT;
-    case Core::Graphics::CullMode::None:
+    case Core::Graphics::ECullMode::None:
         return D3D11_CULL_NONE;
     }
     AssertNotImplemented();
     return static_cast<D3D11_CULL_MODE>(-1);
 }
 //----------------------------------------------------------------------------
-CullMode DX11CullModeToCullMode(D3D11_CULL_MODE value) {
+ECullMode DX11CullModeToCullMode(D3D11_CULL_MODE value) {
     switch (value)
     {
     case D3D11_CULL_BACK:
-        return Core::Graphics::CullMode::CullClockwiseFace;
+        return Core::Graphics::ECullMode::CullClockwiseFace;
     case D3D11_CULL_FRONT:
-        return Core::Graphics::CullMode::CullCounterClockwiseFace;
+        return Core::Graphics::ECullMode::CullCounterClockwiseFace;
     case D3D11_CULL_NONE:
-        return Core::Graphics::CullMode::None;
+        return Core::Graphics::ECullMode::None;
     }
     AssertNotImplemented();
-    return static_cast<Graphics::CullMode>(-1);
+    return static_cast<Graphics::ECullMode>(-1);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-D3D11_FILL_MODE FillModeToDX11FillMode(FillMode value) {
+D3D11_FILL_MODE FillModeToDX11FillMode(EFillMode value) {
     switch (value)
     {
-    case Core::Graphics::FillMode::Solid:
+    case Core::Graphics::EFillMode::Solid:
         return D3D11_FILL_SOLID;
-    case Core::Graphics::FillMode::WireFrame:
+    case Core::Graphics::EFillMode::WireFrame:
         return D3D11_FILL_WIREFRAME;
     }
     AssertNotImplemented();
     return static_cast<D3D11_FILL_MODE>(-1);
 }
 //----------------------------------------------------------------------------
-FillMode DX11FillModeToFillMode(D3D11_FILL_MODE value) {
+EFillMode DX11FillModeToFillMode(D3D11_FILL_MODE value) {
     switch (value)
     {
     case D3D11_FILL_SOLID:
-        return Core::Graphics::FillMode::Solid;
+        return Core::Graphics::EFillMode::Solid;
     case D3D11_FILL_WIREFRAME:
-        return Core::Graphics::FillMode::WireFrame;
+        return Core::Graphics::EFillMode::WireFrame;
     }
     AssertNotImplemented();
-    return static_cast<Graphics::FillMode>(-1);
+    return static_cast<Graphics::EFillMode>(-1);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

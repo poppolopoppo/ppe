@@ -11,7 +11,7 @@
 #include "Core/Time/Timepoint.h"
 
 namespace Core {
-class Timepoint;
+class FTimepoint;
 
 namespace Logic {
 //----------------------------------------------------------------------------
@@ -19,40 +19,40 @@ namespace Logic {
 //----------------------------------------------------------------------------
 FWD_REFPTR(DelayedProcessingSystem);
 //----------------------------------------------------------------------------
-class DelayedProcessingSystem : public ISystem, Meta::ThreadResource {
+class FDelayedProcessingSystem : public ISystem, Meta::FThreadResource {
 public:
-    struct DelayedProcess {
-        Timepoint   Date;
+    struct FDelayedProcess {
+        FTimepoint   Date;
         EntityID    ID;
 
-        DelayedProcess() {}
-        DelayedProcess(const Timepoint& date, EntityID id)
+        FDelayedProcess() {}
+        FDelayedProcess(const FTimepoint& date, EntityID id)
         :   Date(date), ID(id) {}
     };
 
-    DelayedProcessingSystem();
-    virtual ~DelayedProcessingSystem();
+    FDelayedProcessingSystem();
+    virtual ~FDelayedProcessingSystem();
 
-    const VECTOR(System, DelayedProcess)& Entities() const { return _entities; }
+    const VECTOR(System, FDelayedProcess)& Entities() const { return _entities; }
 
     virtual bool Enabled() const override { return true; }
 
-    virtual void Initialize(EntityManager& manager) override;
-    virtual void Destroy(EntityManager& manager) override;
+    virtual void Initialize(FEntityManager& manager) override;
+    virtual void Destroy(FEntityManager& manager) override;
 
-    virtual void Update(const Timeline& timeline) override;
+    virtual void Update(const FTimeline& timeline) override;
 
-    virtual void OnEntityDeleted(const Entity& entity) override;
-    virtual void OnEntityRefresh(const Entity& entity, ComponentFlag previousComponents) override;
+    virtual void OnEntityDeleted(const FEntity& entity) override;
+    virtual void OnEntityRefresh(const FEntity& entity, ComponentFlag previousComponents) override;
 
-    void Queue(const DelayedProcess& data);
-    void Queue(const Timepoint& date, EntityID id);
+    void Queue(const FDelayedProcess& data);
+    void Queue(const FTimepoint& date, EntityID id);
 
 protected:
-    virtual void ProcessEntity(const Timeline& timeline, EntityID entityID) = 0;
+    virtual void ProcessEntity(const FTimeline& timeline, EntityID entityID) = 0;
 
 private:
-    VECTOR(System, DelayedProcess) _entities;
+    VECTOR(System, FDelayedProcess) _entities;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -13,30 +13,30 @@ class IDeviceAPIEncapsulator;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DX11DepthStencilState : public DeviceAPIDependantDepthStencilState {
+class FDX11DepthStencilState : public FDeviceAPIDependantDepthStencilState {
 public:
-    DX11DepthStencilState(IDeviceAPIEncapsulator *device, DepthStencilState *owner);
-    virtual ~DX11DepthStencilState();
+    FDX11DepthStencilState(IDeviceAPIEncapsulator *device, FDepthStencilState *owner);
+    virtual ~FDX11DepthStencilState();
 
     ::ID3D11DepthStencilState *Entity() const { return _entity.Get(); }
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    ComPtr<::ID3D11DepthStencilState> _entity;
+    TComPtr<::ID3D11DepthStencilState> _entity;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-D3D11_COMPARISON_FUNC CompareFunctionToDX11ComparisonFunc(CompareFunction value);
+D3D11_COMPARISON_FUNC CompareFunctionToDX11ComparisonFunc(ECompareFunction value);
 //----------------------------------------------------------------------------
-CompareFunction DX11ComparisonFuncToCompareFunction(D3D11_COMPARISON_FUNC value);
+ECompareFunction DX11ComparisonFuncToCompareFunction(D3D11_COMPARISON_FUNC value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-D3D11_STENCIL_OP StencilOperationToDX11StencilOp(StencilOperation value);
+D3D11_STENCIL_OP StencilOperationToDX11StencilOp(EStencilOperation value);
 //----------------------------------------------------------------------------
-StencilOperation DX11StencilOpToStencilOperation(D3D11_STENCIL_OP value);
+EStencilOperation DX11StencilOpToStencilOperation(D3D11_STENCIL_OP value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

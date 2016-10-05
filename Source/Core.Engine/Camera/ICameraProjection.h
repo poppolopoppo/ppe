@@ -7,20 +7,20 @@
 #include "Core/Memory/RefPtr.h"
 
 namespace Core {
-class Timeline;
+class FTimeline;
 namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_INTERFACE_REFPTR(CameraProjection)
-class ICameraProjection : public RefCountable {
+class ICameraProjection : public FRefCountable {
 public:
     virtual ~ICameraProjection() {}
 
     ICameraProjection(const ICameraProjection& ) = delete;
     ICameraProjection& operator =(const ICameraProjection& ) = delete;
 
-    virtual float4x4 ProjectionMatrix(const Timeline& time, float znear, float zfar) = 0;
+    virtual float4x4 ProjectionMatrix(const FTimeline& time, float znear, float zfar) = 0;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

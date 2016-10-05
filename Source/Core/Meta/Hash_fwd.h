@@ -6,7 +6,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct hash_t { // see Hash.h, this is fwd declared here to avoid including Hash.h everywhere
+struct hash_t { // see THash.h, this is fwd declared here to avoid including THash.h everywhere
 public:
     size_t _value;
 

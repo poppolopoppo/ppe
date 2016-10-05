@@ -8,20 +8,20 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(TaskFuture<_Result>, template <typename _Result>);
+SINGLETON_POOL_ALLOCATED_DEF(TTaskFuture<_Result>, template <typename _Result>);
 //----------------------------------------------------------------------------
 template <typename _Result>
-TaskFuture<_Result>::TaskFuture(function_type&& func)
+TTaskFuture<_Result>::TTaskFuture(function_type&& func)
 :   _func(std::move(func))
 ,   _available(false) {}
 //----------------------------------------------------------------------------
 template <typename _Result>
-TaskFuture<_Result>::~TaskFuture() {
+TTaskFuture<_Result>::~TTaskFuture() {
     Assert(_available);
 }
 //----------------------------------------------------------------------------
 template <typename _Result>
-const _Result& TaskFuture<_Result>::Result() const {
+const _Result& TTaskFuture<_Result>::Result() const {
     while (false == _available)
         ::_mm_pause();
     Assert(_available);
@@ -29,7 +29,7 @@ const _Result& TaskFuture<_Result>::Result() const {
 }
 //----------------------------------------------------------------------------
 template <typename _Result>
-void TaskFuture<_Result>::Run(ITaskContext& ctx) {
+void TTaskFuture<_Result>::Run(ITaskContext& ctx) {
     UNUSED(ctx);
     Assert(false == _available);
     _result = _func();
@@ -42,15 +42,15 @@ void TaskFuture<_Result>::Run(ITaskContext& ctx) {
 }
 //----------------------------------------------------------------------------
 template <typename _Lambda>
-TaskFuture< decltype(std::declval<_Lambda>()()) >*
+TTaskFuture< decltype(std::declval<_Lambda>()()) >*
     MakeFuture(_Lambda&& func) {
     typedef decltype(std::declval<_Lambda>()()) return_type;
-    return new TaskFuture<return_type>(std::move(func));// will be deleted by RunAndSuicide()
+    return new TTaskFuture<return_type>(std::move(func));// will be deleted by RunAndSuicide()
 }
 //----------------------------------------------------------------------------
 template <typename _Lambda>
-TaskFuture< decltype(std::declval<_Lambda>()()) >*
-    Future(TaskManager& manager, _Lambda&& func, TaskPriority priority/* = TaskPriority::Normal */) {
+TTaskFuture< decltype(std::declval<_Lambda>()()) >*
+    FFuture(FTaskManager& manager, _Lambda&& func, ETaskPriority priority/* = ETaskPriority::Normal */) {
     auto* const task = MakeFuture(std::move(func));
     manager.Run(*task, priority);
     return task;
@@ -60,9 +60,9 @@ TaskFuture< decltype(std::declval<_Lambda>()()) >*
 //----------------------------------------------------------------------------
 template <typename _It, typename _Lambda>
 void ParallelForRange(
-    TaskManager& manager,
+    FTaskManager& manager,
     _It first, _It last, _Lambda&& lambda,
-    TaskPriority priority/* = TaskPriority::Normal */) {
+    ETaskPriority priority/* = ETaskPriority::Normal */) {
     const size_t count = std::distance(first, last);
     if (0 == count) {
         // skip completly empty sequences
@@ -77,7 +77,7 @@ void ParallelForRange(
         STACKLOCAL_STACK(TaskDelegate, tasks, count);
 
         forrange(it, first, last) {
-            auto* const task = new TaskProcedure(std::bind(lambda, std::cref(*it)));
+            auto* const task = new FTaskProcedure(std::bind(lambda, std::cref(*it)));
             tasks.Push(*task/* will be deleted by RunAndSuicide() */);
         }
 

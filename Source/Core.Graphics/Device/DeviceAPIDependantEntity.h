@@ -11,36 +11,36 @@
 
 namespace Core {
 namespace Graphics {
-class AbstractDeviceAPIEncapsulator;
-enum class DeviceAPI;
+class FAbstractDeviceAPIEncapsulator;
+enum class EDeviceAPI;
 FWD_REFPTR(DeviceResource);
-enum class DeviceResourceType;
+enum class EDeviceResourceType;
 class IDeviceAPIEncapsulator;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(DeviceAPIDependantEntity);
-class DeviceAPIDependantEntity : public RefCountable {
+class FDeviceAPIDependantEntity : public FRefCountable {
 protected:
-    DeviceAPIDependantEntity(const AbstractDeviceAPIEncapsulator *encapsulator, const DeviceResource *resource);
-    DeviceAPIDependantEntity(const AbstractDeviceAPIEncapsulator *encapsulator, DeviceResourceType resourceType);
+    FDeviceAPIDependantEntity(const FAbstractDeviceAPIEncapsulator *encapsulator, const FDeviceResource *resource);
+    FDeviceAPIDependantEntity(const FAbstractDeviceAPIEncapsulator *encapsulator, EDeviceResourceType resourceType);
 
 public:
-    virtual ~DeviceAPIDependantEntity();
+    virtual ~FDeviceAPIDependantEntity();
 
-    DeviceAPIDependantEntity(const DeviceAPIDependantEntity& ) = delete;
-    DeviceAPIDependantEntity& operator =(const DeviceAPIDependantEntity& ) = delete;
+    FDeviceAPIDependantEntity(const FDeviceAPIDependantEntity& ) = delete;
+    FDeviceAPIDependantEntity& operator =(const FDeviceAPIDependantEntity& ) = delete;
 
-    DeviceAPI API() const { return static_cast<DeviceAPI>(bitdevicapi_type::Get(_apiAndResourceType)); }
-    DeviceResourceType ResourceType() const { return static_cast<DeviceResourceType>(bitresourcetype_type::Get(_apiAndResourceType)); }
+    EDeviceAPI API() const { return static_cast<EDeviceAPI>(bitdevicapi_type::Get(_apiAndResourceType)); }
+    EDeviceResourceType ResourceType() const { return static_cast<EDeviceResourceType>(bitresourcetype_type::Get(_apiAndResourceType)); }
 
     bool MatchDevice(const IDeviceAPIEncapsulator *device) const;
 
-    //const DeviceResource *Resource() const { return _resource.get(); }
+    //const FDeviceResource *Resource() const { return _resource.get(); }
     bool IsAttachedToResource() const { return nullptr != _resource; }
 
-    void AttachResource(const DeviceResource *resource);
-    void DetachResource(const DeviceResource *resource);
+    void AttachResource(const FDeviceResource *resource);
+    void DetachResource(const FDeviceResource *resource);
 
     DeviceRevision CreatedAt() const { return _createdAt; }
     DeviceRevision LastUsed() const { return _lastUsed; }
@@ -51,8 +51,8 @@ public:
     virtual size_t VideoMemorySizeInBytes() const = 0;
 
 private:
-    typedef Meta::Bit<u32>::First<3>::type bitdevicapi_type;
-    typedef Meta::Bit<u32>::After<bitdevicapi_type>::Remain::type bitresourcetype_type;
+    typedef Meta::TBit<u32>::TFirst<3>::type bitdevicapi_type;
+    typedef Meta::TBit<u32>::TAfter<bitdevicapi_type>::FRemain::type bitresourcetype_type;
 
     u32 _apiAndResourceType;
     SCDeviceResource _resource;
@@ -64,14 +64,14 @@ private:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-class TypedDeviceAPIDependantEntity : public DeviceAPIDependantEntity {
+class TTypedDeviceAPIDependantEntity : public FDeviceAPIDependantEntity {
 protected:
-    STATIC_ASSERT(std::is_base_of<DeviceResource, T>::value);
-    TypedDeviceAPIDependantEntity(const AbstractDeviceAPIEncapsulator *encapsulator, const T *resource)
-        : DeviceAPIDependantEntity(encapsulator, resource) {}
+    STATIC_ASSERT(std::is_base_of<FDeviceResource, T>::value);
+    TTypedDeviceAPIDependantEntity(const FAbstractDeviceAPIEncapsulator *encapsulator, const T *resource)
+        : FDeviceAPIDependantEntity(encapsulator, resource) {}
 
 public:
-    const T *TypedResource() const { return checked_cast<const T *>(DeviceAPIDependantEntity::Resource()); }
+    const T *TypedResource() const { return checked_cast<const T *>(FDeviceAPIDependantEntity::Resource()); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

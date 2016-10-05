@@ -16,9 +16,9 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static VirtualFileSystemComponent* VFSComponent_(
-    const MountingPoint& mountingPoint,
-    const VirtualFileSystemTrie::nodes_type& nodes ) {
+static FVirtualFileSystemComponent* VFSComponent_(
+    const FMountingPoint& mountingPoint,
+    const FVirtualFileSystemTrie::nodes_type& nodes ) {
     Assert(false == mountingPoint.empty());
     const auto it = nodes.Find(mountingPoint);
     if (nodes.end() == it)
@@ -28,23 +28,23 @@ static VirtualFileSystemComponent* VFSComponent_(
 }
 //----------------------------------------------------------------------------
 static IVirtualFileSystemComponentReadable* ReadableComponent_(
-    const MountingPoint& mountingPoint,
-    const VirtualFileSystemTrie::nodes_type& nodes ) {
-    VirtualFileSystemComponent* const p = VFSComponent_(mountingPoint, nodes);
+    const FMountingPoint& mountingPoint,
+    const FVirtualFileSystemTrie::nodes_type& nodes ) {
+    FVirtualFileSystemComponent* const p = VFSComponent_(mountingPoint, nodes);
     return (p ? p->Readable() : nullptr);
 }
 //----------------------------------------------------------------------------
 static IVirtualFileSystemComponentWritable* WritableComponent_(
-    const MountingPoint& mountingPoint,
-    const VirtualFileSystemTrie::nodes_type& nodes ) {
-    VirtualFileSystemComponent* const p = VFSComponent_(mountingPoint, nodes);
+    const FMountingPoint& mountingPoint,
+    const FVirtualFileSystemTrie::nodes_type& nodes ) {
+    FVirtualFileSystemComponent* const p = VFSComponent_(mountingPoint, nodes);
     return (p ? p->Writable() : nullptr);
 }
 //----------------------------------------------------------------------------
 static IVirtualFileSystemComponentReadWritable* ReadWritableComponent_(
-    const MountingPoint& mountingPoint,
-    const VirtualFileSystemTrie::nodes_type& nodes ) {
-    VirtualFileSystemComponent* const p = VFSComponent_(mountingPoint, nodes);
+    const FMountingPoint& mountingPoint,
+    const FVirtualFileSystemTrie::nodes_type& nodes ) {
+    FVirtualFileSystemComponent* const p = VFSComponent_(mountingPoint, nodes);
     return (p ? p->ReadWritable() : nullptr);
 }
 //----------------------------------------------------------------------------
@@ -52,11 +52,11 @@ static IVirtualFileSystemComponentReadWritable* ReadWritableComponent_(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-VirtualFileSystemTrie::VirtualFileSystemTrie() {}
+FVirtualFileSystemTrie::FVirtualFileSystemTrie() {}
 //----------------------------------------------------------------------------
-VirtualFileSystemTrie::~VirtualFileSystemTrie() { Clear(); }
+FVirtualFileSystemTrie::~FVirtualFileSystemTrie() { Clear(); }
 //----------------------------------------------------------------------------
-bool VirtualFileSystemTrie::DirectoryExists(const Dirpath& dirpath, ExistPolicy::Mode policy) const {
+bool FVirtualFileSystemTrie::DirectoryExists(const FDirpath& dirpath, ExistPolicy::EMode policy) const {
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentReadable* const readable = ReadableComponent_(dirpath.MountingPoint(), _nodes);
     return (readable)
@@ -64,7 +64,7 @@ bool VirtualFileSystemTrie::DirectoryExists(const Dirpath& dirpath, ExistPolicy:
         : false;
 }
 //----------------------------------------------------------------------------
-bool VirtualFileSystemTrie::FileExists(const Filename& filename, ExistPolicy::Mode policy) const {
+bool FVirtualFileSystemTrie::FileExists(const FFilename& filename, ExistPolicy::EMode policy) const {
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentReadable* const readable = ReadableComponent_(filename.MountingPoint(), _nodes);
     return (readable)
@@ -72,7 +72,7 @@ bool VirtualFileSystemTrie::FileExists(const Filename& filename, ExistPolicy::Mo
         : false;
 }
 //----------------------------------------------------------------------------
-bool VirtualFileSystemTrie::FileStats(FileStat* pstat, const Filename& filename) const {
+bool FVirtualFileSystemTrie::FileStats(FFileStat* pstat, const FFilename& filename) const {
     Assert(pstat);
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentReadable* const readable = ReadableComponent_(filename.MountingPoint(), _nodes);
@@ -81,7 +81,7 @@ bool VirtualFileSystemTrie::FileStats(FileStat* pstat, const Filename& filename)
         : false;
 }
 //----------------------------------------------------------------------------
-size_t VirtualFileSystemTrie::EnumerateFiles(const Dirpath& dirpath, bool recursive, const std::function<void(const Filename&)>& foreach) const {
+size_t FVirtualFileSystemTrie::EnumerateFiles(const FDirpath& dirpath, bool recursive, const std::function<void(const FFilename&)>& foreach) const {
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentReadable* const readable = ReadableComponent_(dirpath.MountingPoint(), _nodes);
     return (readable)
@@ -89,7 +89,7 @@ size_t VirtualFileSystemTrie::EnumerateFiles(const Dirpath& dirpath, bool recurs
         : 0;
 }
 //----------------------------------------------------------------------------
-size_t VirtualFileSystemTrie::GlobFiles(const Dirpath& dirpath, const WStringView& pattern, bool recursive, const std::function<void(const Filename&)>& foreach) const {
+size_t FVirtualFileSystemTrie::GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const std::function<void(const FFilename&)>& foreach) const {
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentReadable* const readable = ReadableComponent_(dirpath.MountingPoint(), _nodes);
     return (readable)
@@ -97,7 +97,7 @@ size_t VirtualFileSystemTrie::GlobFiles(const Dirpath& dirpath, const WStringVie
         : 0;
 }
 //----------------------------------------------------------------------------
-bool VirtualFileSystemTrie::TryCreateDirectory(const Dirpath& dirpath) const {
+bool FVirtualFileSystemTrie::TryCreateDirectory(const FDirpath& dirpath) const {
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentWritable* const writable = WritableComponent_(dirpath.MountingPoint(), _nodes);
     return (writable)
@@ -105,51 +105,51 @@ bool VirtualFileSystemTrie::TryCreateDirectory(const Dirpath& dirpath) const {
         : false;
 }
 //----------------------------------------------------------------------------
-UniquePtr<IVirtualFileSystemIStream> VirtualFileSystemTrie::OpenReadable(const Filename& filename, AccessPolicy::Mode policy) const {
+TUniquePtr<IVirtualFileSystemIStream> FVirtualFileSystemTrie::OpenReadable(const FFilename& filename, AccessPolicy::EMode policy) const {
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentReadable* const readable = ReadableComponent_(filename.MountingPoint(), _nodes);
-    UniquePtr<IVirtualFileSystemIStream> result;
+    TUniquePtr<IVirtualFileSystemIStream> result;
     if (readable)
         result = readable->OpenReadable(filename, policy);
     return result;
 }
 //----------------------------------------------------------------------------
-UniquePtr<IVirtualFileSystemOStream> VirtualFileSystemTrie::OpenWritable(const Filename& filename, AccessPolicy::Mode policy) const {
+TUniquePtr<IVirtualFileSystemOStream> FVirtualFileSystemTrie::OpenWritable(const FFilename& filename, AccessPolicy::EMode policy) const {
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentWritable* const writable = WritableComponent_(filename.MountingPoint(), _nodes);
-    UniquePtr<IVirtualFileSystemOStream> result;
+    TUniquePtr<IVirtualFileSystemOStream> result;
     if (writable)
         result = writable->OpenWritable(filename, policy);
     return result;
 }
 //----------------------------------------------------------------------------
-UniquePtr<IVirtualFileSystemIOStream> VirtualFileSystemTrie::OpenReadWritable(const Filename& filename, AccessPolicy::Mode policy) const {
+TUniquePtr<IVirtualFileSystemIOStream> FVirtualFileSystemTrie::OpenReadWritable(const FFilename& filename, AccessPolicy::EMode policy) const {
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentReadWritable* const readWritable = ReadWritableComponent_(filename.MountingPoint(), _nodes);
-    UniquePtr<IVirtualFileSystemIOStream> result;
+    TUniquePtr<IVirtualFileSystemIOStream> result;
     if (readWritable)
         result = readWritable->OpenReadWritable(filename, policy);
     return result;
 }
 //----------------------------------------------------------------------------
-WString VirtualFileSystemTrie::Unalias(const Filename& aliased) const {
+FWString FVirtualFileSystemTrie::Unalias(const FFilename& aliased) const {
     READSCOPELOCK(_barrier);
-    VirtualFileSystemComponent* const component = VFSComponent_(aliased.MountingPoint(), _nodes);
-    WString result;
+    FVirtualFileSystemComponent* const component = VFSComponent_(aliased.MountingPoint(), _nodes);
+    FWString result;
     if (component)
         result = component->Unalias(aliased);
     return result;
 }
 //----------------------------------------------------------------------------
-void VirtualFileSystemTrie::Clear() {
+void FVirtualFileSystemTrie::Clear() {
     WRITESCOPELOCK(_barrier);
-    for (Pair<MountingPoint, PVirtualFileSystemComponent>& it : _nodes)
+    for (TPair<FMountingPoint, PVirtualFileSystemComponent>& it : _nodes)
         RemoveRef_AssertReachZero(it.second);
 
     _nodes.Clear_ReleaseMemory();
 }
 //----------------------------------------------------------------------------
-void VirtualFileSystemTrie::Mount(VirtualFileSystemComponent* component) {
+void FVirtualFileSystemTrie::Mount(FVirtualFileSystemComponent* component) {
     Assert(component);
     Assert(component->Alias().HasMountingPoint());
     LOG(Info, L"[VFS] Mount component '{0}'", component->Alias());
@@ -157,7 +157,7 @@ void VirtualFileSystemTrie::Mount(VirtualFileSystemComponent* component) {
     _nodes.Insert_AssertUnique(component->Alias().MountingPoint(), component);
 }
 //----------------------------------------------------------------------------
-void VirtualFileSystemTrie::Unmount(VirtualFileSystemComponent* component) {
+void FVirtualFileSystemTrie::Unmount(FVirtualFileSystemComponent* component) {
     Assert(component);
     Assert(component->Alias().HasMountingPoint());
     LOG(Info, L"[VFS] Unmount component '{0}'", component->Alias());
@@ -165,23 +165,23 @@ void VirtualFileSystemTrie::Unmount(VirtualFileSystemComponent* component) {
     _nodes.Remove_AssertExists(component->Alias().MountingPoint(), component);
 }
 //----------------------------------------------------------------------------
-VirtualFileSystemComponent* VirtualFileSystemTrie::MountNativePath(const Dirpath& alias, const wchar_t *nativepPath) {
+FVirtualFileSystemComponent* FVirtualFileSystemTrie::MountNativePath(const FDirpath& alias, const wchar_t *nativepPath) {
     Assert(nativepPath);
-    const SVirtualFileSystemComponent component = new VirtualFileSystemNativeComponent(alias, nativepPath);
+    const SVirtualFileSystemComponent component = new FVirtualFileSystemNativeComponent(alias, nativepPath);
     Mount(component);
     return component;
 }
 //----------------------------------------------------------------------------
-VirtualFileSystemComponent *VirtualFileSystemTrie::MountNativePath(const Dirpath& alias, WString&& nativepPath) {
+FVirtualFileSystemComponent *FVirtualFileSystemTrie::MountNativePath(const FDirpath& alias, FWString&& nativepPath) {
     Assert(nativepPath.size());
-    VirtualFileSystemComponent *component = new VirtualFileSystemNativeComponent(alias, std::move(nativepPath));
+    FVirtualFileSystemComponent *component = new FVirtualFileSystemNativeComponent(alias, std::move(nativepPath));
     Mount(component);
     return component;
 }
 //----------------------------------------------------------------------------
-VirtualFileSystemComponent *VirtualFileSystemTrie::MountNativePath(const Dirpath& alias, const WString& nativepPath) {
+FVirtualFileSystemComponent *FVirtualFileSystemTrie::MountNativePath(const FDirpath& alias, const FWString& nativepPath) {
     Assert(nativepPath.size());
-    VirtualFileSystemComponent *component = new VirtualFileSystemNativeComponent(alias, nativepPath);
+    FVirtualFileSystemComponent *component = new FVirtualFileSystemNativeComponent(alias, nativepPath);
     Mount(component);
     return component;
 }

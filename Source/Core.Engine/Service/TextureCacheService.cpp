@@ -14,27 +14,27 @@ namespace Engine {
 //----------------------------------------------------------------------------
 ENGINESERVICE_GUID_DEF(ITextureCacheService);
 //----------------------------------------------------------------------------
-DefaultTextureCacheService::DefaultTextureCacheService(size_t capacityInBytes)
+FDefaultTextureCacheService::FDefaultTextureCacheService(size_t capacityInBytes)
 :   ITextureCacheService(ENGINESERVICE_CONSTRUCT(ITextureCacheService))
 ,   _textureCache(capacityInBytes) {}
 //----------------------------------------------------------------------------
-DefaultTextureCacheService::~DefaultTextureCacheService() {}
+FDefaultTextureCacheService::~FDefaultTextureCacheService() {}
 //----------------------------------------------------------------------------
-Engine::TextureCache *DefaultTextureCacheService::TextureCache() {
+Engine::FTextureCache *FDefaultTextureCacheService::FTextureCache() {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(ServiceAvailable());
 
     return &_textureCache;
 }
 //----------------------------------------------------------------------------
-const Engine::TextureCache *DefaultTextureCacheService::TextureCache() const {
+const Engine::FTextureCache *FDefaultTextureCacheService::FTextureCache() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(ServiceAvailable());
 
     return &_textureCache;
 }
 //----------------------------------------------------------------------------
-void DefaultTextureCacheService::Start(IServiceProvider *provider, const Guid& guid) {
+void FDefaultTextureCacheService::Start(IServiceProvider *provider, const FGuid& guid) {
     ITextureCacheService::Start(provider, guid);
 
     ENGINESERVICE_PROVIDE(IDeviceEncapsulatorService, deviceService, provider);
@@ -42,7 +42,7 @@ void DefaultTextureCacheService::Start(IServiceProvider *provider, const Guid& g
     _textureCache.Start(deviceService->DeviceEncapsulator()->Device());
 }
 //----------------------------------------------------------------------------
-void DefaultTextureCacheService::Shutdown(IServiceProvider *provider, const Guid& guid) {
+void FDefaultTextureCacheService::Shutdown(IServiceProvider *provider, const FGuid& guid) {
     ITextureCacheService::Shutdown(provider, guid);
 
     ENGINESERVICE_PROVIDE(IDeviceEncapsulatorService, deviceService, provider);

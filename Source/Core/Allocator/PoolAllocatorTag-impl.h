@@ -11,10 +11,10 @@ namespace Core {
 //----------------------------------------------------------------------------
 #define POOL_TAG_DEF(_Name) \
     namespace PoolTag { \
-        typedef Core::Meta::Singleton< Core::MemoryPoolBaseList, _Name > CONCAT(_Name, _type); \
+        typedef Core::Meta::TSingleton< Core::FMemoryPoolBaseList, _Name > CONCAT(_Name, _type); \
         \
-        void _Name::Register(MemoryPoolBase* ppool) { CONCAT(_Name, _type)::Instance().Insert(ppool); } \
-        void _Name::Unregister(MemoryPoolBase* ppool) { CONCAT(_Name, _type)::Instance().Remove(ppool); } \
+        void _Name::Register(FMemoryPoolBase* ppool) { CONCAT(_Name, _type)::Instance().Insert(ppool); } \
+        void _Name::Unregister(FMemoryPoolBase* ppool) { CONCAT(_Name, _type)::Instance().Remove(ppool); } \
         \
         void _Name::Start() { CONCAT(_Name, _type)::Create(); } \
         void _Name::Shutdown() { CONCAT(_Name, _type)::Destroy(); } \

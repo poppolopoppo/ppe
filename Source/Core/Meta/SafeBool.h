@@ -10,53 +10,53 @@ namespace Meta {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class SafeBoolBase {
+class FSafeBoolBase {
 protected:
-    typedef void (SafeBoolBase::*bool_type)() const;
+    typedef void (FSafeBoolBase::*bool_type)() const;
     void this_type_does_not_support_comparisons() const {}
 
-    SafeBoolBase() {}
-    SafeBoolBase(const SafeBoolBase& ) {}
-    SafeBoolBase& operator=(const SafeBoolBase& ) { return *this; }
-    ~SafeBoolBase() {}
+    FSafeBoolBase() {}
+    FSafeBoolBase(const FSafeBoolBase& ) {}
+    FSafeBoolBase& operator=(const FSafeBoolBase& ) { return *this; }
+    ~FSafeBoolBase() {}
 };
 //----------------------------------------------------------------------------
 template <typename T = void>
-class SafeBoolImpl : public SafeBoolBase {
+class TSafeBoolImpl : public FSafeBoolBase {
     static_assert(!std::has_virtual_destructor<T>::value, "T should not be virtual");
 protected:
-    ~SafeBoolImpl() {}
+    ~TSafeBoolImpl() {}
 
 public:
     operator bool_type () const {
         return static_cast<const T*>(this)->boolean_test()
-            ? &SafeBoolBase::this_type_does_not_support_comparisons
+            ? &FSafeBoolBase::this_type_does_not_support_comparisons
             : nullptr;
     }
 };
 //----------------------------------------------------------------------------
 template <>
-class SafeBoolImpl<void> : public SafeBoolBase {
+class TSafeBoolImpl<void> : public FSafeBoolBase {
 protected:
-    virtual ~SafeBoolImpl() {}
+    virtual ~TSafeBoolImpl() {}
     virtual bool boolean_test() const=0;
 
 public:
     operator bool_type () const {
         return boolean_test()
-            ? &SafeBoolBase::this_type_does_not_support_comparisons
+            ? &FSafeBoolBase::this_type_does_not_support_comparisons
             : nullptr;
     }
 };
 //----------------------------------------------------------------------------
 template <typename T, typename U>
-void operator ==(const SafeBoolImpl<T>& lhs,const SafeBoolImpl<U>& rhs) {
+void operator ==(const TSafeBoolImpl<T>& lhs,const TSafeBoolImpl<U>& rhs) {
     lhs.this_type_does_not_support_comparisons();
     return false;
 }
 //----------------------------------------------------------------------------
 template <typename T,typename U>
-void operator !=(const SafeBoolImpl<T>& lhs,const SafeBoolImpl<U>& rhs) {
+void operator !=(const TSafeBoolImpl<T>& lhs,const TSafeBoolImpl<U>& rhs) {
     lhs.this_type_does_not_support_comparisons();
     return false;
 }
@@ -64,11 +64,11 @@ void operator !=(const SafeBoolImpl<T>& lhs,const SafeBoolImpl<U>& rhs) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-struct SafeBool {
+struct FSafeBool {
     typedef typename std::conditional<
         std::has_virtual_destructor<T>::value,
-        SafeBoolImpl<void>,
-        SafeBoolImpl<T>
+        TSafeBoolImpl<void>,
+        TSafeBoolImpl<T>
     >   type;
 };
 //----------------------------------------------------------------------------

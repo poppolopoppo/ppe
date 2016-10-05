@@ -17,7 +17,7 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class ValueType : u32 {
+enum class EValueType : u32 {
     Void = 0,
 
 #define VALUETYPE_ENUM_DEF(_Name, T, _TypeId, _Unused) _Name = (_TypeId),
@@ -25,58 +25,58 @@ FOREACH_CORE_GRAPHIC_VALUETYPE(VALUETYPE_ENUM_DEF)
 #undef VALUETYPE_ENUM_DEF
 };
 //----------------------------------------------------------------------------
-StringView ValueTypeToCStr(ValueType value);
-size_t ValueSizeInBytes(ValueType value);
+FStringView ValueTypeToCStr(EValueType value);
+size_t ValueSizeInBytes(EValueType value);
 //----------------------------------------------------------------------------
-void ValueCopy(ValueType type, const MemoryView<u8>& dst, const MemoryView<const u8>& src);
+void ValueCopy(EValueType type, const TMemoryView<u8>& dst, const TMemoryView<const u8>& src);
 
-void ValueDefault(ValueType type, const MemoryView<u8>& dst);
+void ValueDefault(EValueType type, const TMemoryView<u8>& dst);
 
-bool ValueEquals(ValueType type, const MemoryView<const u8>& lhs, const MemoryView<const u8>& rhs);
+bool ValueEquals(EValueType type, const TMemoryView<const u8>& lhs, const TMemoryView<const u8>& rhs);
 
-hash_t ValueHash(ValueType type, const MemoryView<const u8>& data);
+hash_t ValueHash(EValueType type, const TMemoryView<const u8>& data);
 
-void ValueLerp( ValueType type,
-                const MemoryView<u8>& dst,
-                const MemoryView<const u8>& a,
-                const MemoryView<const u8>& b,
+void ValueLerp( EValueType type,
+                const TMemoryView<u8>& dst,
+                const TMemoryView<const u8>& a,
+                const TMemoryView<const u8>& b,
                 float t );
-void ValueLerpArray(ValueType type,
-                    const MemoryView<u8>& dst, size_t dstStride,
-                    const MemoryView<const u8>& a,
-                    const MemoryView<const u8>& b,
-                    const MemoryView<const float>& ts );
+void ValueLerpArray(EValueType type,
+                    const TMemoryView<u8>& dst, size_t dstStride,
+                    const TMemoryView<const u8>& a,
+                    const TMemoryView<const u8>& b,
+                    const TMemoryView<const float>& ts );
 
-void ValueBarycentricLerp(  ValueType type, const MemoryView<u8>& dst,
-                            const MemoryView<const u8>& a,
-                            const MemoryView<const u8>& b,
-                            const MemoryView<const u8>& c,
+void ValueBarycentricLerp(  EValueType type, const TMemoryView<u8>& dst,
+                            const TMemoryView<const u8>& a,
+                            const TMemoryView<const u8>& b,
+                            const TMemoryView<const u8>& c,
                             const float3& uvw );
-void ValueBarycentricLerpArray( ValueType type,
-                                const MemoryView<u8>& dst, size_t dstStride,
-                                const MemoryView<const u8>& a,
-                                const MemoryView<const u8>& b,
-                                const MemoryView<const u8>& c,
-                                const MemoryView<const float3>& uvws );
+void ValueBarycentricLerpArray( EValueType type,
+                                const TMemoryView<u8>& dst, size_t dstStride,
+                                const TMemoryView<const u8>& a,
+                                const TMemoryView<const u8>& b,
+                                const TMemoryView<const u8>& c,
+                                const TMemoryView<const float3>& uvws );
 
-bool ValueIsPromotable(ValueType dst, ValueType src);
+bool ValueIsPromotable(EValueType dst, EValueType src);
 
-bool ValuePromote(ValueType output, const MemoryView<u8>& dst, ValueType input, const MemoryView<const u8>& src);
+bool ValuePromote(EValueType output, const TMemoryView<u8>& dst, EValueType input, const TMemoryView<const u8>& src);
 
-bool ValuePromoteArray( ValueType output, const MemoryView<u8>& dst, size_t dstStride,
-                        ValueType input, const MemoryView<const u8>& src, size_t srcStride,
+bool ValuePromoteArray( EValueType output, const TMemoryView<u8>& dst, size_t dstStride,
+                        EValueType input, const TMemoryView<const u8>& src, size_t srcStride,
                         size_t count );
 
-void ValueSwap(ValueType type, const MemoryView<u8>& lhs, const MemoryView<u8>& rhs);
+void ValueSwap(EValueType type, const TMemoryView<u8>& lhs, const TMemoryView<u8>& rhs);
 //----------------------------------------------------------------------------
 template <typename T>
-struct ValueTraits { STATIC_CONST_INTEGRAL(ValueType, TypeId, ValueType::Void); };
-template <ValueType _Type>
-struct ValueTraitsReverse { typedef void type; };
+struct TValueTraits { STATIC_CONST_INTEGRAL(EValueType, ETypeId, EValueType::Void); };
+template <EValueType _Type>
+struct TValueTraitsReverse { typedef void type; };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Value {
+class FValue {
 public:
     union udata_type {
 #define VALUETYPE_UNION_DEF(_Name, T, _TypeId, _Unused) T _Name;
@@ -87,27 +87,27 @@ FOREACH_CORE_GRAPHIC_VALUETYPE(VALUETYPE_UNION_DEF)
         ~udata_type() {}
     };
 
-    Value() : _type(ValueType::Void) {}
+    FValue() : _type(EValueType::Void) {}
 
-    Value(const Value& other) { operator =(other); }
-    Value& operator =(const Value& other) {
+    FValue(const FValue& other) { operator =(other); }
+    FValue& operator =(const FValue& other) {
         _type = other._type;
         ValueCopy(_type, MakeView(), other.MakeView());
         return *this;
     };
 
     template <typename T>
-    Value(const T& value) { Set(value); }
+    FValue(const T& value) { Set(value); }
     template <typename T>
-    Value& operator =(const T& value) { Set(value); return (*this); }
+    FValue& operator =(const T& value) { Set(value); return (*this); }
 
-    ValueType Type() const { return _type; }
+    EValueType Type() const { return _type; }
 
-    bool empty() const { return (_type == ValueType::Void); }
-    void clear()  { _type = ValueType::Void; }
+    bool empty() const { return (_type == EValueType::Void); }
+    void clear()  { _type = EValueType::Void; }
 
-    MemoryView<u8> MakeView() { return MemoryView<u8>((u8*)&_data, ValueSizeInBytes(_type)); }
-    MemoryView<const u8> MakeView() const { return MemoryView<const u8>((const u8*)&_data, ValueSizeInBytes(_type)); }
+    TMemoryView<u8> MakeView() { return TMemoryView<u8>((u8*)&_data, ValueSizeInBytes(_type)); }
+    TMemoryView<const u8> MakeView() const { return TMemoryView<const u8>((const u8*)&_data, ValueSizeInBytes(_type)); }
 
     template <typename T>
     T& Get();
@@ -118,79 +118,79 @@ FOREACH_CORE_GRAPHIC_VALUETYPE(VALUETYPE_UNION_DEF)
     template <typename T>
     T Lerp(const T& other, float f) const;
 
-    void SetRaw(ValueType type, const MemoryView<const u8>& rawData) {
-        Assert(ValueType::Void != type);
+    void SetRaw(EValueType type, const TMemoryView<const u8>& rawData) {
+        Assert(EValueType::Void != type);
         Assert(ValueSizeInBytes(type) == rawData.SizeInBytes());
         _type = type;
         memcpy(&_data, rawData.data(), rawData.SizeInBytes());
     }
 
-    friend hash_t hash_value(const Value& value) {
+    friend hash_t hash_value(const FValue& value) {
         return ValueHash(value._type, value.MakeView());
     }
 
-    friend bool operator ==(const Value& lhs, const Value& rhs) {
+    friend bool operator ==(const FValue& lhs, const FValue& rhs) {
         return (lhs._type == rhs._type &&
                 ValueEquals(lhs._type, lhs.MakeView(), rhs.MakeView()) );
     }
 
-    friend bool operator !=(const Value& lhs, const Value& rhs) {
+    friend bool operator !=(const FValue& lhs, const FValue& rhs) {
         return not operator ==(lhs, rhs);
     }
 
-    friend std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const Value& value);
-    friend std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const Value& value);
+    friend std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const FValue& value);
+    friend std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const FValue& value);
 
 private:
-    ValueType _type;
+    EValueType _type;
     udata_type _data;
 };
 //----------------------------------------------------------------------------
-inline Value Lerp(const Value& v0, const Value& v1, float t) {
+inline FValue Lerp(const FValue& v0, const FValue& v1, float t) {
     Assert(v0.Type() == v1.Type());
-    Value result(v0);
+    FValue result(v0);
     ValueLerp(v0.Type(), result.MakeView(), v0.MakeView(), v1.MakeView(), t);
     return result;
 }
 //----------------------------------------------------------------------------
 #define VALUETYPE_TRAITS_DEF(_Name, T, _TypeId, _Unused) \
-    template <> struct ValueTraits< T > { \
-        STATIC_ASSERT(size_t(ValueType::_Name) == (_TypeId)); \
-        STATIC_CONST_INTEGRAL(ValueType, TypeId, ValueType::_Name); \
-        static T& Get(Value::udata_type& data) { return data._Name; } \
+    template <> struct TValueTraits< T > { \
+        STATIC_ASSERT(size_t(EValueType::_Name) == (_TypeId)); \
+        STATIC_CONST_INTEGRAL(EValueType, ETypeId, EValueType::_Name); \
+        static T& Get(FValue::udata_type& data) { return data._Name; } \
     }; \
-    template <> struct ValueTraitsReverse< ValueType::_Name > { \
+    template <> struct TValueTraitsReverse< EValueType::_Name > { \
         typedef T type; \
     };
 FOREACH_CORE_GRAPHIC_VALUETYPE(VALUETYPE_TRAITS_DEF)
 #undef VALUETYPE_TRAITS_DEF
 //----------------------------------------------------------------------------
 template <typename T>
-T& Value::Get() {
-    STATIC_ASSERT(ValueTraits<T>::TypeId != ValueType::Void);
-    Assert(_type == ValueTraits<T>::TypeId);
-    return ValueTraits<T>::Get(_data);
+T& FValue::Get() {
+    STATIC_ASSERT(TValueTraits<T>::ETypeId != EValueType::Void);
+    Assert(_type == TValueTraits<T>::ETypeId);
+    return TValueTraits<T>::Get(_data);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-const T& Value::Get() const {
-    STATIC_ASSERT(ValueTraits<T>::TypeId != ValueType::Void);
-    Assert(_type == ValueTraits<T>::TypeId);
-    return ValueTraits<T>::Get(const_cast<udata_type&>(_data));
+const T& FValue::Get() const {
+    STATIC_ASSERT(TValueTraits<T>::ETypeId != EValueType::Void);
+    Assert(_type == TValueTraits<T>::ETypeId);
+    return TValueTraits<T>::Get(const_cast<udata_type&>(_data));
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void Value::Set(const T& value) {
-    STATIC_ASSERT(ValueTraits<T>::TypeId != ValueType::Void);
-    _type = ValueTraits<T>::TypeId;
-    new ((void*)&ValueTraits<T>::Get(_data)) T(value);
+void FValue::Set(const T& value) {
+    STATIC_ASSERT(TValueTraits<T>::ETypeId != EValueType::Void);
+    _type = TValueTraits<T>::ETypeId;
+    new ((void*)&TValueTraits<T>::Get(_data)) T(value);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-T Value::Lerp(const T& other, float f) const {
-    STATIC_ASSERT(ValueTraits<T>::TypeId != ValueType::Void);
-    Assert(ValueTraits<T>::TypeId == _type);
-    return Lerp(ValueTraits<T>::Get(_data), other, f);
+T FValue::Lerp(const T& other, float f) const {
+    STATIC_ASSERT(TValueTraits<T>::ETypeId != EValueType::Void);
+    Assert(TValueTraits<T>::ETypeId == _type);
+    return Lerp(TValueTraits<T>::Get(_data), other, f);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -205,19 +205,19 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Value RTTI Wrapping :
+// FValue RTTI Wrapping :
 //----------------------------------------------------------------------------
-void GraphicsValueToAtom(RTTI::PMetaAtom& dst, const Graphics::Value& src);
-void AtomToGraphicsValue(Graphics::Value& dst, const RTTI::PMetaAtom& src);
+void GraphicsValueToAtom(RTTI::PMetaAtom& dst, const Graphics::FValue& src);
+void AtomToGraphicsValue(Graphics::FValue& dst, const RTTI::PMetaAtom& src);
 //----------------------------------------------------------------------------
 template <>
-struct MetaTypeTraitsImpl< Graphics::Value > {
-    typedef Graphics::Value wrapped_type;
+struct TMetaTypeTraitsImpl< Graphics::FValue > {
+    typedef Graphics::FValue wrapped_type;
     typedef RTTI::PMetaAtom wrapper_type;
 
-    typedef MetaType< wrapper_type > meta_type;
+    typedef TMetaType< wrapper_type > meta_type;
 
-    static const MetaTypeScalarTraits< wrapper_type > *VirtualTraits();
+    static const TMetaTypeScalarTraits< wrapper_type > *VirtualTraits();
 
     static bool IsDefaultValue(const wrapped_type& value) { return value.empty(); }
 

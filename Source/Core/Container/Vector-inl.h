@@ -7,7 +7,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-auto Vector<T, _Allocator>::operator=(const Vector& other) -> Vector& {
+auto TVector<T, _Allocator>::operator=(const TVector& other) -> TVector& {
     if (this == &other)
         return *this;
 
@@ -19,7 +19,7 @@ auto Vector<T, _Allocator>::operator=(const Vector& other) -> Vector& {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-auto Vector<T, _Allocator>::operator=(Vector&& rvalue) noexcept -> Vector& {
+auto TVector<T, _Allocator>::operator=(TVector&& rvalue) noexcept -> TVector& {
     if (this == &rvalue)
         return *this;
 
@@ -31,7 +31,7 @@ auto Vector<T, _Allocator>::operator=(Vector&& rvalue) noexcept -> Vector& {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Vector<T, _Allocator>::allocator_copy_(const allocator_type& other, std::true_type ) {
+void TVector<T, _Allocator>::allocator_copy_(const allocator_type& other, std::true_type ) {
     if (allocator_() != other) {
         clear_ReleaseMemory();
         Assert(nullptr == _data);
@@ -42,7 +42,7 @@ void Vector<T, _Allocator>::allocator_copy_(const allocator_type& other, std::tr
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Vector<T, _Allocator>::allocator_move_(allocator_type&& rvalue, std::true_type ) {
+void TVector<T, _Allocator>::allocator_move_(allocator_type&& rvalue, std::true_type ) {
     if (allocator_() != rvalue) {
         clear_ReleaseMemory();
         Assert(nullptr == _data);
@@ -53,13 +53,13 @@ void Vector<T, _Allocator>::allocator_move_(allocator_type&& rvalue, std::true_t
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Vector<T, _Allocator>::assign(Vector&& rvalue) {
+void TVector<T, _Allocator>::assign(TVector&& rvalue) {
     typedef typename allocator_traits::propagate_on_container_move_assignment propagate_type;
     assign_rvalue_(std::move(rvalue), propagate_type());
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Vector<T, _Allocator>::assign_rvalue_(Vector&& rvalue, std::true_type ) {
+void TVector<T, _Allocator>::assign_rvalue_(TVector&& rvalue, std::true_type ) {
     clear_ReleaseMemory();
     Assert(nullptr == _data);
     Assert(0 == _size);
@@ -71,7 +71,7 @@ void Vector<T, _Allocator>::assign_rvalue_(Vector&& rvalue, std::true_type ) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Vector<T, _Allocator>::assign_rvalue_(Vector&& rvalue, std::false_type ) {
+void TVector<T, _Allocator>::assign_rvalue_(TVector&& rvalue, std::false_type ) {
     if (allocator_() == rvalue.allocator_())
         assign_rvalue_(std::move(rvalue), std::true_type());
     else
@@ -80,7 +80,7 @@ void Vector<T, _Allocator>::assign_rvalue_(Vector&& rvalue, std::false_type ) {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 template <typename _It>
-auto Vector<T, _Allocator>::assign(_It first, _It last)
+auto TVector<T, _Allocator>::assign(_It first, _It last)
     -> typename std::enable_if<Meta::is_iterator<_It>::value>::type {
     typedef typename std::iterator_traits<_It>::iterator_category iterator_category;
     assign_(first, last, iterator_category());
@@ -89,7 +89,7 @@ auto Vector<T, _Allocator>::assign(_It first, _It last)
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 template <typename _It>
-void Vector<T, _Allocator>::assign_(_It first, _It last, std::input_iterator_tag ) {
+void TVector<T, _Allocator>::assign_(_It first, _It last, std::input_iterator_tag ) {
     size_type count = 0;
     for (; count < _size && first != last; ++count, ++first)
         _data[count] = *first;
@@ -115,7 +115,7 @@ void Vector<T, _Allocator>::assign_(_It first, _It last, std::input_iterator_tag
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 template <typename _It, typename _ItCat>
-void Vector<T, _Allocator>::assign_(_It first, _It last, _ItCat ) {
+void TVector<T, _Allocator>::assign_(_It first, _It last, _ItCat ) {
     const size_type count = checked_cast<size_type>(std::distance(first, last));
     if (_size >= count) {
         Assert(count <= _capacity);
@@ -139,7 +139,7 @@ void Vector<T, _Allocator>::assign_(_It first, _It last, _ItCat ) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Vector<T, _Allocator>::assign(size_type count, const T& value) {
+void TVector<T, _Allocator>::assign(size_type count, const T& value) {
     if (_size >= count) {
         Assert(count <= _capacity);
         for (size_type i = _size; i < count; ++i)
@@ -158,7 +158,7 @@ void Vector<T, _Allocator>::assign(size_type count, const T& value) {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 template <class... _Args>
-auto Vector<T, _Allocator>::emplace(const_iterator pos, _Args&&... args) -> iterator {
+auto TVector<T, _Allocator>::emplace(const_iterator pos, _Args&&... args) -> iterator {
     Assert(pos.AliasesToContainer(*this));
     const size_type i = std::distance<const_iterator>(begin(), pos);
     emplace_back(std::forward<_Args>(args)...);
@@ -168,14 +168,14 @@ auto Vector<T, _Allocator>::emplace(const_iterator pos, _Args&&... args) -> iter
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 template <class... _Args>
-void Vector<T, _Allocator>::emplace_back(_Args&&... args) {
+void TVector<T, _Allocator>::emplace_back(_Args&&... args) {
     reserve_Additional(1);
     Assert(_size < _capacity);
     allocator_traits::construct(*this, &_data[_size++], std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Vector<T, _Allocator>::emplace_back(const T& value) {
+void TVector<T, _Allocator>::emplace_back(const T& value) {
     if (AliasesToContainer(&value)) {
         T tmp(value); // value points to something in this container
         reserve_Additional(1);
@@ -190,7 +190,7 @@ void Vector<T, _Allocator>::emplace_back(const T& value) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Vector<T, _Allocator>::emplace_back(T&& rvalue) {
+void TVector<T, _Allocator>::emplace_back(T&& rvalue) {
     if (AliasesToContainer(&rvalue)) {
         T tmp(std::move(rvalue)); // value points to something in this container
         reserve_Additional(1);
@@ -205,7 +205,7 @@ void Vector<T, _Allocator>::emplace_back(T&& rvalue) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-auto Vector<T, _Allocator>::erase(const_iterator pos) -> iterator {
+auto TVector<T, _Allocator>::erase(const_iterator pos) -> iterator {
     Assert(pos.AliasesToContainer(*this));
     iterator p(const_cast<pointer>(pos.data()));
     std::rotate(p, p + 1, end());
@@ -214,7 +214,7 @@ auto Vector<T, _Allocator>::erase(const_iterator pos) -> iterator {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-auto Vector<T, _Allocator>::erase(const_iterator first, const_iterator last) -> iterator {
+auto TVector<T, _Allocator>::erase(const_iterator first, const_iterator last) -> iterator {
     Assert(first.AliasesToContainer(*this));
     Assert(last.AliasesToContainer(*this));
     Assert(first <= last);
@@ -231,7 +231,7 @@ auto Vector<T, _Allocator>::erase(const_iterator first, const_iterator last) -> 
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Vector<T, _Allocator>::erase_DontPreserveOrder(const_iterator pos) {
+void TVector<T, _Allocator>::erase_DontPreserveOrder(const_iterator pos) {
     Assert(pos.AliasesToContainer(*this));
     Assert(_size > 0);
     iterator p(const_cast<pointer>(pos.data()));
@@ -243,7 +243,7 @@ void Vector<T, _Allocator>::erase_DontPreserveOrder(const_iterator pos) {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 template <typename _It>
-auto Vector<T, _Allocator>::insert(const_iterator pos, _It first, _It last)
+auto TVector<T, _Allocator>::insert(const_iterator pos, _It first, _It last)
     -> typename std::enable_if<Meta::is_iterator<_It>::value, iterator>::type  {
     typedef typename std::iterator_traits<_It>::iterator_category iterator_category;
     const iterator it = insert_(pos, first, last, iterator_category());
@@ -253,7 +253,7 @@ auto Vector<T, _Allocator>::insert(const_iterator pos, _It first, _It last)
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 template <typename _It>
-auto Vector<T, _Allocator>::insert_(const_iterator pos, _It first, _It last, std::input_iterator_tag ) -> iterator {
+auto TVector<T, _Allocator>::insert_(const_iterator pos, _It first, _It last, std::input_iterator_tag ) -> iterator {
     Assert(pos.AliasesToContainer(*this));
     const size_type p = std::distance<const_iterator>(begin(), pos);
     const size_type o = _size;
@@ -274,7 +274,7 @@ auto Vector<T, _Allocator>::insert_(const_iterator pos, _It first, _It last, std
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 template <typename _It, typename _ItCat>
-auto Vector<T, _Allocator>::insert_(const_iterator pos, _It first, _It last, _ItCat ) -> iterator {
+auto TVector<T, _Allocator>::insert_(const_iterator pos, _It first, _It last, _ItCat ) -> iterator {
     Assert(pos.AliasesToContainer(*this));
     const size_type p = std::distance<const_iterator>(begin(), pos);
     const size_type count = std::distance(first, last);
@@ -290,7 +290,7 @@ auto Vector<T, _Allocator>::insert_(const_iterator pos, _It first, _It last, _It
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-auto Vector<T, _Allocator>::insert(const_iterator pos, size_type count, const T& value) -> iterator {
+auto TVector<T, _Allocator>::insert(const_iterator pos, size_type count, const T& value) -> iterator {
     Assert(pos.AliasesToContainer(*this));
     reserve_Additional(count);
     const size_type p = std::distance<const_iterator>(begin(), pos);
@@ -302,20 +302,20 @@ auto Vector<T, _Allocator>::insert(const_iterator pos, size_type count, const T&
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Vector<T, _Allocator>::pop_back() {
+void TVector<T, _Allocator>::pop_back() {
     AssertRelease(_size > 0);
     allocator_traits::destroy(*this, &_data[--_size]);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Vector<T, _Allocator>::clear() {
+void TVector<T, _Allocator>::clear() {
     for (size_type i = 0; i < _size; ++i)
         allocator_traits::destroy(*this, &_data[i]);
     _size = 0;
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Vector<T, _Allocator>::clear_ReleaseMemory() {
+void TVector<T, _Allocator>::clear_ReleaseMemory() {
     clear();
     Assert(0 == _size);
     if (nullptr != _data) {
@@ -328,13 +328,13 @@ void Vector<T, _Allocator>::clear_ReleaseMemory() {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Vector<T, _Allocator>::reserve(size_type count) {
+void TVector<T, _Allocator>::reserve(size_type count) {
     if (_capacity < count)
         reserve_Exactly(count);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Vector<T, _Allocator>::reserve_AtLeast(size_type count) {
+void TVector<T, _Allocator>::reserve_AtLeast(size_type count) {
     if (_capacity < count) {
         size_type newCapacity = (0 == _capacity ? 1  : _capacity);
         while (newCapacity < count) { newCapacity = newCapacity<<1; }
@@ -343,7 +343,7 @@ void Vector<T, _Allocator>::reserve_AtLeast(size_type count) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Vector<T, _Allocator>::reserve_AssumeEmpty(size_type count) {
+void TVector<T, _Allocator>::reserve_AssumeEmpty(size_type count) {
     Assert(0 == _size);
     if (_capacity < count) {
         if (_data) {
@@ -357,12 +357,12 @@ void Vector<T, _Allocator>::reserve_AssumeEmpty(size_type count) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Vector<T, _Allocator>::reserve_Exactly(size_type count) {
+void TVector<T, _Allocator>::reserve_Exactly(size_type count) {
     if (_capacity == count)
         return;
     AssertRelease(count >= _size);
 #if 1 //%TODO
-    _data = Relocate(allocator_(), MemoryView<value_type>(_data, _size), count, _capacity);
+    _data = Relocate(allocator_(), TMemoryView<value_type>(_data, _size), count, _capacity);
     _capacity = count;
 #else
     T* newdata = nullptr;
@@ -392,7 +392,7 @@ void Vector<T, _Allocator>::reserve_Exactly(size_type count) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Vector<T, _Allocator>::resize(size_type count) {
+void TVector<T, _Allocator>::resize(size_type count) {
     if (_size == count)
         return;
     reserve(count);
@@ -409,7 +409,7 @@ void Vector<T, _Allocator>::resize(size_type count) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Vector<T, _Allocator>::resize(size_type count, const_reference value) {
+void TVector<T, _Allocator>::resize(size_type count, const_reference value) {
     if (_size == count)
         return;
     reserve(count);
@@ -425,7 +425,7 @@ void Vector<T, _Allocator>::resize(size_type count, const_reference value) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Vector<T, _Allocator>::resize_AssumeEmpty(size_type count) {
+void TVector<T, _Allocator>::resize_AssumeEmpty(size_type count) {
     reserve_AssumeEmpty(count);
     Assert(0 == _size);
     Assert(count <= _capacity);
@@ -435,7 +435,7 @@ void Vector<T, _Allocator>::resize_AssumeEmpty(size_type count) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Vector<T, _Allocator>::resize_AssumeEmpty(size_type count, const_reference value) {
+void TVector<T, _Allocator>::resize_AssumeEmpty(size_type count, const_reference value) {
     reserve_AssumeEmpty(count);
     Assert(0 == _size);
     Assert(count <= _capacity);
@@ -444,14 +444,14 @@ void Vector<T, _Allocator>::resize_AssumeEmpty(size_type count, const_reference 
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Vector<T, _Allocator>::swap(Vector& other) {
+void TVector<T, _Allocator>::swap(TVector& other) {
     typedef typename allocator_traits::propagate_on_container_swap propagate_type;
     if (this != &other)
         swap_(other, propagate_type());
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Vector<T, _Allocator>::swap_(Vector& other, std::true_type ) {
+void TVector<T, _Allocator>::swap_(TVector& other, std::true_type ) {
     std::swap(_data, other._data);
     std::swap(_size, other._size);
     std::swap(_capacity, other._capacity);
@@ -459,9 +459,9 @@ void Vector<T, _Allocator>::swap_(Vector& other, std::true_type ) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Vector<T, _Allocator>::swap_(Vector& other, std::false_type ) {
-    Vector* plhs = nullptr;
-    Vector* prhs = nullptr;
+void TVector<T, _Allocator>::swap_(TVector& other, std::false_type ) {
+    TVector* plhs = nullptr;
+    TVector* prhs = nullptr;
     if (_size < other._size) {
         plhs = this;
         prhs = &other;
@@ -490,7 +490,7 @@ void Vector<T, _Allocator>::swap_(Vector& other, std::false_type ) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-bool Vector<T, _Allocator>::CheckInvariants() const {
+bool TVector<T, _Allocator>::CheckInvariants() const {
 #ifndef NDEBUG
     if (nullptr == _data && (_size || _capacity))
         return false;
@@ -503,20 +503,20 @@ bool Vector<T, _Allocator>::CheckInvariants() const {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-bool operator==(const Vector<T, _Allocator>& lhs, const Vector<T, _Allocator>& rhs) {
-    typedef typename Vector<T, _Allocator>::const_pointer const_pointer;
+bool operator==(const TVector<T, _Allocator>& lhs, const TVector<T, _Allocator>& rhs) {
+    typedef typename TVector<T, _Allocator>::const_pointer const_pointer;
     return (lhs.size() == rhs.size())
         ? std::equal(lhs.begin(), lhs.end(), MakeCheckedIterator(rhs.data(), rhs.size(), 0))
         : false;
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-bool operator!=(const Vector<T, _Allocator>& lhs, const Vector<T, _Allocator>& rhs) {
+bool operator!=(const TVector<T, _Allocator>& lhs, const TVector<T, _Allocator>& rhs) {
     return false == operator==(lhs, rhs);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-bool operator< (const Vector<T, _Allocator>& lhs, const Vector<T, _Allocator>& rhs) {
+bool operator< (const TVector<T, _Allocator>& lhs, const TVector<T, _Allocator>& rhs) {
     const size_type k = std::min(lhs.size(), rhs.size());
     const T* plhs = lhs.data();
     const T* prhs = rhs.data();
@@ -527,12 +527,12 @@ bool operator< (const Vector<T, _Allocator>& lhs, const Vector<T, _Allocator>& r
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-bool operator>=(const Vector<T, _Allocator>& lhs, const Vector<T, _Allocator>& rhs) {
+bool operator>=(const TVector<T, _Allocator>& lhs, const TVector<T, _Allocator>& rhs) {
     return false == operator< (lhs, rhs);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-bool operator> (const Vector<T, _Allocator>& lhs, const Vector<T, _Allocator>& rhs) {
+bool operator> (const TVector<T, _Allocator>& lhs, const TVector<T, _Allocator>& rhs) {
     const size_type k = std::min(lhs.size(), rhs.size());
     const T* plhs = lhs.data();
     const T* prhs = rhs.data();
@@ -543,29 +543,29 @@ bool operator> (const Vector<T, _Allocator>& lhs, const Vector<T, _Allocator>& r
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-bool operator<=(const Vector<T, _Allocator>& lhs, const Vector<T, _Allocator>& rhs) {
+bool operator<=(const TVector<T, _Allocator>& lhs, const TVector<T, _Allocator>& rhs) {
     return false == operator> (lhs, rhs);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Append(Vector<T, _Allocator>& v, const MemoryView<const T>& elts) {
+void Append(TVector<T, _Allocator>& v, const TMemoryView<const T>& elts) {
     v.insert(v.end(), elts.begin(), elts.end());
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-typename Vector<T, _Allocator>::const_iterator Find(const Vector<T, _Allocator>& v, const T& elt) {
+typename TVector<T, _Allocator>::const_iterator Find(const TVector<T, _Allocator>& v, const T& elt) {
     return std::find(v.begin(), v.end(), elt);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-bool Contains(const Vector<T, _Allocator>& v, const T& elt) {
+bool Contains(const TVector<T, _Allocator>& v, const T& elt) {
     return (v.end() != std::find(v.begin(), v.end(), elt));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-bool FindElementIndexIFP(size_t *pIndex, Vector<T, _Allocator>& v, const T& elt) {
+bool FindElementIndexIFP(size_t *pIndex, TVector<T, _Allocator>& v, const T& elt) {
     Assert(pIndex);
     const auto it = std::find(v.begin(), v.end(), elt);
     if (v.end() != it) {
@@ -578,7 +578,7 @@ bool FindElementIndexIFP(size_t *pIndex, Vector<T, _Allocator>& v, const T& elt)
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator, typename _Pred>
-bool FindPredicateIndexIFP(size_t *pIndex, Vector<T, _Allocator>& v, const _Pred& pred) {
+bool FindPredicateIndexIFP(size_t *pIndex, TVector<T, _Allocator>& v, const _Pred& pred) {
     Assert(pIndex);
     const auto it = std::find_first_of(v.begin(), v.end(), pred);
     if (v.end() != it) {
@@ -591,26 +591,26 @@ bool FindPredicateIndexIFP(size_t *pIndex, Vector<T, _Allocator>& v, const _Pred
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Add_AssertUnique(Vector<T, _Allocator>& v, const T& elt) {
+void Add_AssertUnique(TVector<T, _Allocator>& v, const T& elt) {
     Assert(!Contains(v, elt));
     v.emplace_back(elt);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Add_AssertUnique(Vector<T, _Allocator>& v, T&& elt) {
+void Add_AssertUnique(TVector<T, _Allocator>& v, T&& elt) {
     Assert(!Contains(v, elt));
     v.emplace_back(std::move(elt));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Remove_AssertExists(Vector<T, _Allocator>& v, const T& elt) {
+void Remove_AssertExists(TVector<T, _Allocator>& v, const T& elt) {
     auto it = std::find(v.begin(), v.end(), elt);
     Assert(it != v.end());
     v.erase(it);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-bool Remove_ReturnIfExists(Vector<T, _Allocator>& v, const T& elt) {
+bool Remove_ReturnIfExists(TVector<T, _Allocator>& v, const T& elt) {
     auto it = std::find(v.begin(), v.end(), elt);
     if (it == v.end())
         return false;
@@ -620,14 +620,14 @@ bool Remove_ReturnIfExists(Vector<T, _Allocator>& v, const T& elt) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Remove_DontPreserveOrder(Vector<T, _Allocator>& v, const T& elt) {
+void Remove_DontPreserveOrder(TVector<T, _Allocator>& v, const T& elt) {
     auto it = std::find(v.begin(), v.end(), elt);
     Assert(v.end() != it);
     v.erase_DontPreserveOrder(it);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-bool Remove_ReturnIfExists_DontPreserveOrder(Vector<T, _Allocator>& v, const T& elt) {
+bool Remove_ReturnIfExists_DontPreserveOrder(TVector<T, _Allocator>& v, const T& elt) {
     auto it = std::find(v.begin(), v.end(), elt);
     if (v.end() != it) {
         v.erase_DontPreserveOrder(it);
@@ -640,23 +640,23 @@ bool Remove_ReturnIfExists_DontPreserveOrder(Vector<T, _Allocator>& v, const T& 
 //----------------------------------------------------------------------------
 // Fast erase : swap last elem with elem to erase and pop_back() the vector
 template <typename T, typename _Allocator>
-void Erase_DontPreserveOrder(Vector<T, _Allocator>& v, size_t index) {
+void Erase_DontPreserveOrder(TVector<T, _Allocator>& v, size_t index) {
     v.erase(v.begin() + index);
 }
 //----------------------------------------------------------------------------
 // Fast erase : swap last elem with elem to erase and pop_back() the vector
 template <typename T, typename _Allocator>
-void Erase_DontPreserveOrder(Vector<T, _Allocator>& v, const typename Vector<T, _Allocator>::const_iterator& it) {
+void Erase_DontPreserveOrder(TVector<T, _Allocator>& v, const typename TVector<T, _Allocator>::const_iterator& it) {
     v.erase(it);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Clear_ReleaseMemory(Vector<T, _Allocator>& v) {
+void Clear_ReleaseMemory(TVector<T, _Allocator>& v) {
     v.clear_ReleaseMemory();
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-hash_t hash_value(const Vector<T, _Allocator>& vector) {
+hash_t hash_value(const TVector<T, _Allocator>& vector) {
     hash_t h(CORE_HASH_VALUE_SEED);
     for (const T& it : vector)
         hash_combine(h, hash_value(it));
@@ -671,7 +671,7 @@ template <
     typename _Char,
     typename _Traits
 >
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const Core::Vector<T, _Allocator>& vector) {
+std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const Core::TVector<T, _Allocator>& vector) {
     if (vector.empty()) {
         return oss << "[]";
     }

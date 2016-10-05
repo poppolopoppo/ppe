@@ -14,24 +14,24 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-hash_t hash_value(const SharedConstantBufferKey& key) {
+hash_t hash_value(const FSharedConstantBufferKey& key) {
     return Core::hash_value(key.Name, *key.Layout);
 }
 //----------------------------------------------------------------------------
-bool operator ==(const SharedConstantBufferKey& lhs, const SharedConstantBufferKey& rhs) {
+bool operator ==(const FSharedConstantBufferKey& lhs, const FSharedConstantBufferKey& rhs) {
     return lhs.Name == rhs.Name && lhs.Layout->Equals(*rhs.Layout);
 }
 //----------------------------------------------------------------------------
-bool operator !=(const SharedConstantBufferKey& lhs, const SharedConstantBufferKey& rhs) {
+bool operator !=(const FSharedConstantBufferKey& lhs, const FSharedConstantBufferKey& rhs) {
     return !operator ==(lhs, rhs);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, SharedConstantBuffer, )
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, FSharedConstantBuffer, )
 //----------------------------------------------------------------------------
-SharedConstantBuffer::SharedConstantBuffer(const SharedConstantBufferKey& sharedKey)
-:   Graphics::ConstantBuffer(sharedKey.Layout)
+FSharedConstantBuffer::FSharedConstantBuffer(const FSharedConstantBufferKey& sharedKey)
+:   Graphics::FConstantBuffer(sharedKey.Layout)
 ,   _sharedKey(sharedKey)
 ,   _headerHashValue(0)
 ,   _dataHashValue(0) {
@@ -39,13 +39,13 @@ SharedConstantBuffer::SharedConstantBuffer(const SharedConstantBufferKey& shared
     Assert(_sharedKey.Layout);
 }
 //----------------------------------------------------------------------------
-SharedConstantBuffer::~SharedConstantBuffer() {}
+FSharedConstantBuffer::~FSharedConstantBuffer() {}
 //----------------------------------------------------------------------------
-bool SharedConstantBuffer::SetData_OnlyIfChanged( 
+bool FSharedConstantBuffer::SetData_OnlyIfChanged( 
     Graphics::IDeviceAPIEncapsulator *device, 
     size_t headerHashValue,
     size_t dataHashValue,
-    const MemoryView<const u8>& rawData ) {
+    const TMemoryView<const u8>& rawData ) {
     Assert(headerHashValue);
     Assert(dataHashValue);
     Assert(!rawData.empty());
@@ -54,15 +54,15 @@ bool SharedConstantBuffer::SetData_OnlyIfChanged(
     if (dataHashValue == _dataHashValue)
         return false;
 
-    ConstantBuffer::SetData(device, rawData);
+    FConstantBuffer::SetData(device, rawData);
     _dataHashValue = dataHashValue;
 
     return true;
 }
 //----------------------------------------------------------------------------
-bool SharedConstantBuffer::Mergeable( 
-    const Graphics::BindName& name,
-    const Graphics::ConstantBufferLayout *layout ) const {
+bool FSharedConstantBuffer::Mergeable( 
+    const Graphics::FBindName& name,
+    const Graphics::FConstantBufferLayout *layout ) const {
     Assert(!name.empty());
     Assert(layout);
 

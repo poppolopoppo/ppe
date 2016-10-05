@@ -43,19 +43,19 @@ std::basic_ostream<_Char, _Traits>& operator <<(
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Count>
-struct Repeater {
+struct TRepeater {
     const T *Value;
 };
 //----------------------------------------------------------------------------
 template <size_t _Count, typename T>
-Repeater<T, _Count> Repeat(const T& value) {
-    return Repeater<T, _Count>{ &value };
+TRepeater<T, _Count> Repeat(const T& value) {
+    return TRepeater<T, _Count>{ &value };
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits, typename T, size_t _Count>
 std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
-    const Repeater<T, _Count>& repeat) {
+    const TRepeater<T, _Count>& repeat) {
     for (size_t i = 0; i < _Count; ++i)
         oss << *repeat.Value;
     return oss;
@@ -63,15 +63,15 @@ std::basic_ostream<_Char, _Traits>& operator <<(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct HexDump {
-    MemoryView<const u8> RawData;
+struct FHexDump {
+    TMemoryView<const u8> RawData;
     size_t BytesPerRow;
-    HexDump(const MemoryView<const u8>& rawData, size_t bytesPerRow = 16)
+    FHexDump(const TMemoryView<const u8>& rawData, size_t bytesPerRow = 16)
         : RawData(rawData), BytesPerRow(bytesPerRow) {}
 };
 //----------------------------------------------------------------------------
-std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const HexDump& hexDump);
-std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const HexDump& hexDump);
+std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const FHexDump& hexDump);
+std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const FHexDump& hexDump);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

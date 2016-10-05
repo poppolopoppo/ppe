@@ -13,36 +13,36 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, RenderSurfaceProxy, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, FRenderSurfaceProxy, );
 //----------------------------------------------------------------------------
-RenderSurfaceProxy::RenderSurfaceProxy(
-    String&& name,
-    AbstractRenderSurface *renderTargetSurfaceIFN,
-    AbstractRenderSurface *depthStencilSurfaceIFN )
-:   AbstractRenderSurface(std::move(name))
+FRenderSurfaceProxy::FRenderSurfaceProxy(
+    FString&& name,
+    FAbstractRenderSurface *renderTargetSurfaceIFN,
+    FAbstractRenderSurface *depthStencilSurfaceIFN )
+:   FAbstractRenderSurface(std::move(name))
 ,   _renderTargetSurface(renderTargetSurfaceIFN)
 ,   _depthStencilSurface(depthStencilSurfaceIFN) {
     Assert( renderTargetSurfaceIFN || // at least one or nothing to do :p
             depthStencilSurfaceIFN );
 }
 //----------------------------------------------------------------------------
-RenderSurfaceProxy::~RenderSurfaceProxy() {}
+FRenderSurfaceProxy::~FRenderSurfaceProxy() {}
 //----------------------------------------------------------------------------
-void RenderSurfaceProxy::CreateResources_(
+void FRenderSurfaceProxy::CreateResources_(
     Graphics::IDeviceAPIEncapsulator *device,
     Graphics::PCRenderTarget& pRenderTarget,
     Graphics::PCDepthStencil& pDepthStencil ) {
     Assert(!pRenderTarget);
     Assert(!pDepthStencil);
 
-    const Graphics::RenderTarget *proxyRT = nullptr;
-    const Graphics::DepthStencil *proxyDS = nullptr;
+    const Graphics::FRenderTarget *proxyRT = nullptr;
+    const Graphics::FDepthStencil *proxyDS = nullptr;
 
     if (_renderTargetSurface) {
         _renderTargetSurface->Prepare(device, _renderTargetLock);
 
-        const Graphics::RenderTarget *rt = nullptr;
-        const Graphics::DepthStencil *ds = nullptr;
+        const Graphics::FRenderTarget *rt = nullptr;
+        const Graphics::FDepthStencil *ds = nullptr;
         _renderTargetLock->Acquire(&rt, &ds);
 
         Assert(rt);
@@ -52,8 +52,8 @@ void RenderSurfaceProxy::CreateResources_(
     if (_depthStencilSurface) {
         _depthStencilSurface->Prepare(device, _depthStencilLock);
 
-        const Graphics::RenderTarget *rt = nullptr;
-        const Graphics::DepthStencil *ds = nullptr;
+        const Graphics::FRenderTarget *rt = nullptr;
+        const Graphics::FDepthStencil *ds = nullptr;
         _depthStencilLock->Acquire(&rt, &ds);
 
         Assert(ds);
@@ -61,7 +61,7 @@ void RenderSurfaceProxy::CreateResources_(
     }
 }
 //----------------------------------------------------------------------------
-void RenderSurfaceProxy::DestroyResources_(
+void FRenderSurfaceProxy::DestroyResources_(
     Graphics::IDeviceAPIEncapsulator *device,
     Graphics::PCRenderTarget& pRenderTarget,
     Graphics::PCDepthStencil& pDepthStencil ) {

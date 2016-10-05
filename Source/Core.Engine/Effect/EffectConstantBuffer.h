@@ -17,24 +17,24 @@ class IDeviceAPIEncapsulator;
 }
 
 namespace Engine {
-class MaterialDatabase;
+class FMaterialDatabase;
 FWD_REFPTR(SharedConstantBuffer);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(EffectConstantBuffer);
-class EffectConstantBuffer : public RefCountable {
+class FEffectConstantBuffer : public FRefCountable {
 public:
-    explicit EffectConstantBuffer(SharedConstantBuffer *sharedBuffer);
-    virtual ~EffectConstantBuffer();
+    explicit FEffectConstantBuffer(FSharedConstantBuffer *sharedBuffer);
+    virtual ~FEffectConstantBuffer();
 
-    const SharedConstantBuffer *SharedBuffer() const { return _sharedBuffer.get(); }
+    const FSharedConstantBuffer *SharedBuffer() const { return _sharedBuffer.get(); }
 
-    const MaterialVariabilitySeed& Variability() const { return _variability; }
-    const VECTOR(Effect, PMaterialParameter)& Parameters() const { return _parameters; }
+    const FMaterialVariabilitySeed& Variability() const { return _variability; }
+    const VECTOR(FEffect, PMaterialParameter)& Parameters() const { return _parameters; }
 
-    void Prepare(const MaterialParameterMutableContext& context);
-    void Eval(const MaterialParameterContext& context, const VariabilitySeeds& seeds);
+    void Prepare(const FMaterialParameterMutableContext& context);
+    void Eval(const FMaterialParameterContext& context, const VariabilitySeeds& seeds);
     void SetDataIFN(Graphics::IDeviceAPIEncapsulator *device) const;
     void Clear();
 
@@ -44,11 +44,11 @@ private:
     PSharedConstantBuffer _sharedBuffer;
 
     size_t _headerHashValue;
-    MaterialVariabilitySeed _variability;
-    VECTOR(Effect, PMaterialParameter) _parameters;
+    FMaterialVariabilitySeed _variability;
+    VECTOR(FEffect, PMaterialParameter) _parameters;
 
     size_t _dataHashValue;
-    RAWSTORAGE_ALIGNED(Effect, u8, 16) _rawData;
+    RAWSTORAGE_ALIGNED(FEffect, u8, 16) _rawData;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

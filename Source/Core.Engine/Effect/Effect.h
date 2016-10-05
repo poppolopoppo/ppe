@@ -8,7 +8,7 @@
 
 namespace Core {
 namespace Graphics {
-class BindName;
+class FBindName;
 FWD_REFPTR(BlendState);
 FWD_REFPTR(DepthStencilState);
 FWD_REFPTR(RasterizerState);
@@ -18,43 +18,43 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class EffectProgram;
-struct MaterialContext;
+class FEffectProgram;
+struct FMaterialContext;
 FWD_REFPTR(Effect);
 FWD_REFPTR(EffectDescriptor);
 FWD_REFPTR(SharedConstantBuffer);
-class SharedConstantBufferFactory;
+class FSharedConstantBufferFactory;
 //----------------------------------------------------------------------------
-class Effect : public Graphics::ShaderEffect {
+class FEffect : public Graphics::FShaderEffect {
 public:
-    Effect( const EffectDescriptor *descriptor,
-            const Graphics::VertexDeclaration *vertexDeclaration,
-            const MemoryView<const Graphics::BindName>& tags );
-    virtual ~Effect();
+    FEffect( const FEffectDescriptor *descriptor,
+            const Graphics::FVertexDeclaration *vertexDeclaration,
+            const TMemoryView<const Graphics::FBindName>& tags );
+    virtual ~FEffect();
 
     const PCEffectDescriptor& Descriptor() const { return _descriptor; }
 
-    const VECTOR(Effect, Graphics::BindName)& Tags() const { return _tags; }
-    const VECTOR(Effect, PSharedConstantBuffer)& SharedBuffers() const { return _sharedBuffers; }
+    const VECTOR(FEffect, Graphics::FBindName)& Tags() const { return _tags; }
+    const VECTOR(FEffect, PSharedConstantBuffer)& SharedBuffers() const { return _sharedBuffers; }
 
-    const Graphics::BlendState *BlendState() const { return _blendState.get(); }
-    const Graphics::DepthStencilState *DepthStencilState() const { return _depthStencilState.get(); }
-    const Graphics::RasterizerState *RasterizerState() const;
+    const Graphics::FBlendState *FBlendState() const { return _blendState.get(); }
+    const Graphics::FDepthStencilState *FDepthStencilState() const { return _depthStencilState.get(); }
+    const Graphics::FRasterizerState *FRasterizerState() const;
 
-    EffectProgram *StageProgram(Graphics::ShaderProgramType stage);
-    const EffectProgram *StageProgram(Graphics::ShaderProgramType stage) const;
+    FEffectProgram *StageProgram(Graphics::EShaderProgramType stage);
+    const FEffectProgram *StageProgram(Graphics::EShaderProgramType stage) const;
 
     virtual void Create(Graphics::IDeviceAPIEncapsulator *device) override;
     virtual void Destroy(Graphics::IDeviceAPIEncapsulator *device) override;
 
-    void LinkReflectedData( SharedConstantBufferFactory *sharedBufferFactory,
+    void LinkReflectedData( FSharedConstantBufferFactory *sharedBufferFactory,
                             Graphics::IDeviceAPIShaderCompiler *compiler);
-    void UnlinkReflectedData(SharedConstantBufferFactory *sharedBufferFactory);
+    void UnlinkReflectedData(FSharedConstantBufferFactory *sharedBufferFactory);
 
     void Set(Graphics::IDeviceAPIContext *context) const;
 
-    static const Graphics::RasterizerState *AutomaticRasterizerState;
-    static const Graphics::RasterizerState *DefaultRasterizerState;
+    static const Graphics::FRasterizerState *AutomaticRasterizerState;
+    static const Graphics::FRasterizerState *DefaultRasterizerState;
 
     static void SwitchAutomaticFillMode();
 
@@ -66,8 +66,8 @@ public:
 private:
     PCEffectDescriptor _descriptor;
 
-    VECTOR(Effect, Graphics::BindName) _tags;
-    VECTOR(Effect, PSharedConstantBuffer) _sharedBuffers;
+    VECTOR(FEffect, Graphics::FBindName) _tags;
+    VECTOR(FEffect, PSharedConstantBuffer) _sharedBuffers;
 
     Graphics::PCBlendState _blendState;
     Graphics::PCDepthStencilState _depthStencilState;

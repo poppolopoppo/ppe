@@ -15,26 +15,26 @@ namespace Core {
 template <
     typename _Key,
     typename _Value,
-    typename _Predicate = Meta::Less<_Key>,
-    typename _Allocator = NODEBASED_CONTAINER_ALLOCATOR(Container, Pair<_Key COMMA _Value>)
+    typename _Predicate = Meta::TLess<_Key>,
+    typename _Allocator = NODEBASED_CONTAINER_ALLOCATOR(Container, TPair<_Key COMMA _Value>)
 >
-using MultiMap = std::multimap<_Key, _Value, _Predicate, _Allocator >;
+using TMultiMap = std::multimap<_Key, _Value, _Predicate, _Allocator >;
 //----------------------------------------------------------------------------
 #define MULTIMAP(_DOMAIN, _KEY, _VALUE) \
-    ::Core::MultiMap<_KEY, _VALUE, ::Core::Meta::Less<_KEY>, NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, ::Core::Pair<_KEY COMMA _VALUE>) >
+    ::Core::TMultiMap<_KEY, _VALUE, ::Core::Meta::TLess<_KEY>, NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, ::Core::TPair<_KEY COMMA _VALUE>) >
 //----------------------------------------------------------------------------
 #define MULTIMAP_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE) \
-    ::Core::MultiMap<_KEY, _VALUE, ::Core::Meta::Less<_KEY>, THREAD_LOCAL_NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, ::Core::Pair<_KEY COMMA _VALUE>) >
+    ::Core::TMultiMap<_KEY, _VALUE, ::Core::Meta::TLess<_KEY>, THREAD_LOCAL_NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, ::Core::TPair<_KEY COMMA _VALUE>) >
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Pred, typename _Allocator>
-hash_t hash_value(const MultiMap<_Key, _Value, _Pred, _Allocator>& multiMap) {
+hash_t hash_value(const TMultiMap<_Key, _Value, _Pred, _Allocator>& multiMap) {
     return hash_range(multiMap.begin(), multiMap.end());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Pred, typename _Allocator>
-bool TryGetValue(const MultiMap<_Key, _Value, _Pred, _Allocator>& multiMap, const _Key& key, _Value *value) {
+bool TryGetValue(const TMultiMap<_Key, _Value, _Pred, _Allocator>& multiMap, const _Key& key, _Value *value) {
     Assert(value);
 
     const auto it = multiMap.find(key);
@@ -46,7 +46,7 @@ bool TryGetValue(const MultiMap<_Key, _Value, _Pred, _Allocator>& multiMap, cons
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Pred, typename _Allocator>
-bool Insert_ReturnIfExists(MultiMap<_Key, _Value, _Pred, _Allocator>& multiMap, const _Key& key, const _Value& value) {
+bool Insert_ReturnIfExists(TMultiMap<_Key, _Value, _Pred, _Allocator>& multiMap, const _Key& key, const _Value& value) {
     const auto it = multiMap.find(key);
     if (multiMap.end() == it) {
         multiMap.insert(std::make_pair(key, value));
@@ -59,13 +59,13 @@ bool Insert_ReturnIfExists(MultiMap<_Key, _Value, _Pred, _Allocator>& multiMap, 
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Pred, typename _Allocator>
-void Insert_AssertUnique(MultiMap<_Key, _Value, _Pred, _Allocator>& multiMap, const _Key& key, const _Value& value) {
+void Insert_AssertUnique(TMultiMap<_Key, _Value, _Pred, _Allocator>& multiMap, const _Key& key, const _Value& value) {
     if (Insert_ReturnIfExists(multiMap, key, value))
         AssertNotReached();
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Pred, typename _Allocator>
-bool Remove_ReturnIfExists(MultiMap<_Key, _Value, _Pred, _Allocator>& multiMap, const _Key& key) {
+bool Remove_ReturnIfExists(TMultiMap<_Key, _Value, _Pred, _Allocator>& multiMap, const _Key& key) {
     const auto it = multiMap.find(key);
     if (multiMap.end() == it) {
         return false;
@@ -77,13 +77,13 @@ bool Remove_ReturnIfExists(MultiMap<_Key, _Value, _Pred, _Allocator>& multiMap, 
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Pred, typename _Allocator>
-void Remove_AssertExists(MultiMap<_Key, _Value, _Pred, _Allocator>& multiMap, const _Key& key) {
+void Remove_AssertExists(TMultiMap<_Key, _Value, _Pred, _Allocator>& multiMap, const _Key& key) {
     if (!Remove_ReturnIfExists(multiMap, key))
         AssertNotReached();
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Pred, typename _Allocator>
-void RemoveKeyValue_AssertExists(MultiMap<_Key, _Value, _Pred, _Allocator>& multiMap, const _Key& key, const _Value& value) {
+void RemoveKeyValue_AssertExists(TMultiMap<_Key, _Value, _Pred, _Allocator>& multiMap, const _Key& key, const _Value& value) {
 
     const auto range = multiMap.equal_range(key);
     if (multiMap.end() == range.first) {
@@ -102,7 +102,7 @@ void RemoveKeyValue_AssertExists(MultiMap<_Key, _Value, _Pred, _Allocator>& mult
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Pred, typename _Allocator>
-size_t FillMatchingValues_ReturnCount(_Value *pValues, size_t capacity, const MultiMap<_Key, _Value, _Pred, _Allocator>& multiMap, const _Key& key) {
+size_t FillMatchingValues_ReturnCount(_Value *pValues, size_t capacity, const TMultiMap<_Key, _Value, _Pred, _Allocator>& multiMap, const _Key& key) {
     Assert(pValues);
     Assert(capacity > 0);
 
@@ -131,7 +131,7 @@ template <
     typename _Char,
     typename _Traits
 >
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const MultiMap<_Key, _Value, _Pred, _Allocator>& multiMap) {
+std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const TMultiMap<_Key, _Value, _Pred, _Allocator>& multiMap) {
     oss << "{ ";
     for (const auto& it : multiMap)
         oss << '(' << it.first << ", " << it.second << "), ";

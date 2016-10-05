@@ -12,52 +12,52 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ShaderCompilerEncapsulator
-:   private Meta::ThreadResource
+class FShaderCompilerEncapsulator
+:   private Meta::FThreadResource
 ,   private IDeviceAPIShaderCompiler {
 public:
-    ShaderCompilerEncapsulator();
-    virtual ~ShaderCompilerEncapsulator();
+    FShaderCompilerEncapsulator();
+    virtual ~FShaderCompilerEncapsulator();
 
-    DeviceAPI API() const { return _api; }
+    EDeviceAPI API() const { return _api; }
     IDeviceAPIShaderCompiler* Compiler() const;
 
-    void Create(DeviceAPI api);
+    void Create(EDeviceAPI api);
     void Destroy();
 
 private: // IDeviceAPIShaderCompiler
 
-    virtual ShaderCompiled *CompileShaderSource(
-        const ShaderSource *source,
-        const VertexDeclaration *vertexDeclaration,
-        ShaderProgramType programType,
-        ShaderProfileType profileType,
-        ShaderCompilerFlags flags,
+    virtual FShaderCompiled *CompileShaderSource(
+        const FShaderSource *source,
+        const FVertexDeclaration *vertexDeclaration,
+        EShaderProgramType programType,
+        EShaderProfileType profileType,
+        EShaderCompilerFlags flags,
         const char *entryPoint ) override;
 
     virtual void PreprocessShaderSource(
         RAWSTORAGE(Shader, char)& output,
-        const ShaderSource *source,
-        const VertexDeclaration *vertexDeclaration) override;
+        const FShaderSource *source,
+        const FVertexDeclaration *vertexDeclaration) override;
 
 private:
-    DeviceAPI _api;
-    UniquePtr< IDeviceAPIShaderCompiler > _deviceAPIShaderCompiler;
+    EDeviceAPI _api;
+    TUniquePtr< IDeviceAPIShaderCompiler > _deviceAPIShaderCompiler;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void ShaderCompilerFlagsToCStr(char *cstr, size_t capacity, ShaderCompilerFlags flags);
+void ShaderCompilerFlagsToCStr(char *cstr, size_t capacity, EShaderCompilerFlags flags);
 //----------------------------------------------------------------------------
 PShaderCompiled CompileShaderSource(
-    const ShaderCompilerEncapsulator* encapsulator,
-    const Filename& filename,
-    const VertexDeclaration *vertexDeclaration,
-    ShaderProgramType programType,
-    ShaderProfileType profileType,
-    ShaderCompilerFlags flags,
+    const FShaderCompilerEncapsulator* encapsulator,
+    const FFilename& filename,
+    const FVertexDeclaration *vertexDeclaration,
+    EShaderProgramType programType,
+    EShaderProfileType profileType,
+    EShaderCompilerFlags flags,
     const char *entryPoint,
-    const MemoryView<const Pair<String, String>>& defines );
+    const TMemoryView<const TPair<FString, FString>>& defines );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

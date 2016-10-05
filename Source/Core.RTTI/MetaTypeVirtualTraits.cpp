@@ -11,17 +11,17 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool AbstractMetaTypeScalarTraits::AssignMove(MetaAtom *dst, MetaAtom *src) const {
+bool FAbstractMetaTypeScalarTraits::AssignMove(FMetaAtom *dst, FMetaAtom *src) const {
     return PromoteMove(dst, src);
 }
 //----------------------------------------------------------------------------
-bool AbstractMetaTypeScalarTraits::AssignCopy(MetaAtom *dst, const MetaAtom *src) const {
+bool FAbstractMetaTypeScalarTraits::AssignCopy(FMetaAtom *dst, const FMetaAtom *src) const {
     return PromoteCopy(dst, src);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool AbstractMetaTypePairTraits::AssignMove(MetaAtom *dst, MetaAtom *src) const {
+bool FAbstractMetaTypePairTraits::AssignMove(FMetaAtom *dst, FMetaAtom *src) const {
     Assert(dst);
     Assert(src);
 
@@ -31,7 +31,7 @@ bool AbstractMetaTypePairTraits::AssignMove(MetaAtom *dst, MetaAtom *src) const 
     if (!(dst_pair && src_pair))
         return false;
 
-    RTTI::Pair<PMetaAtom, PMetaAtom> tmp;
+    RTTI::TPair<PMetaAtom, PMetaAtom> tmp;
     src_pair->WrapMoveTo(tmp);
 
     if (dst_pair->UnwrapMoveFrom(tmp))
@@ -42,7 +42,7 @@ bool AbstractMetaTypePairTraits::AssignMove(MetaAtom *dst, MetaAtom *src) const 
     return false;
 }
 //----------------------------------------------------------------------------
-bool AbstractMetaTypePairTraits::AssignCopy(MetaAtom *dst, const MetaAtom *src) const {
+bool FAbstractMetaTypePairTraits::AssignCopy(FMetaAtom *dst, const FMetaAtom *src) const {
     Assert(dst);
     Assert(src);
 
@@ -52,7 +52,7 @@ bool AbstractMetaTypePairTraits::AssignCopy(MetaAtom *dst, const MetaAtom *src) 
     if (!(dst_pair && src_pair))
         return false;
 
-    RTTI::Pair<PMetaAtom, PMetaAtom> tmp;
+    RTTI::TPair<PMetaAtom, PMetaAtom> tmp;
     src_pair->WrapCopyTo(tmp);
 
     return dst_pair->UnwrapMoveFrom(tmp);
@@ -60,7 +60,7 @@ bool AbstractMetaTypePairTraits::AssignCopy(MetaAtom *dst, const MetaAtom *src) 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool AbstractMetaTypeVectorTraits::AssignMove(MetaAtom *dst, MetaAtom *src) const {
+bool FAbstractMetaTypeVectorTraits::AssignMove(FMetaAtom *dst, FMetaAtom *src) const {
     Assert(dst);
     Assert(src);
 
@@ -70,7 +70,7 @@ bool AbstractMetaTypeVectorTraits::AssignMove(MetaAtom *dst, MetaAtom *src) cons
     if (!(dst_vector && src_vector))
         return false;
 
-    RTTI::Vector<PMetaAtom> tmp;
+    RTTI::TVector<PMetaAtom> tmp;
     src_vector->WrapMoveTo(tmp);
 
     if (dst_vector->UnwrapMoveFrom(tmp))
@@ -81,7 +81,7 @@ bool AbstractMetaTypeVectorTraits::AssignMove(MetaAtom *dst, MetaAtom *src) cons
     return false;
 }
 //----------------------------------------------------------------------------
-bool AbstractMetaTypeVectorTraits::AssignCopy(MetaAtom *dst, const MetaAtom *src) const {
+bool FAbstractMetaTypeVectorTraits::AssignCopy(FMetaAtom *dst, const FMetaAtom *src) const {
     Assert(dst);
     Assert(src);
 
@@ -91,7 +91,7 @@ bool AbstractMetaTypeVectorTraits::AssignCopy(MetaAtom *dst, const MetaAtom *src
     if (!(dst_vector && src_vector))
         return false;
 
-    RTTI::Vector<PMetaAtom> tmp;
+    RTTI::TVector<PMetaAtom> tmp;
     src_vector->WrapCopyTo(tmp);
 
     return dst_vector->UnwrapMoveFrom(tmp);
@@ -99,7 +99,7 @@ bool AbstractMetaTypeVectorTraits::AssignCopy(MetaAtom *dst, const MetaAtom *src
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool AbstractMetaTypeDictionaryTraits::AssignMove(MetaAtom *dst, MetaAtom *src) const {
+bool FAbstractMetaTypeDictionaryTraits::AssignMove(FMetaAtom *dst, FMetaAtom *src) const {
     Assert(dst);
     Assert(src);
 
@@ -109,7 +109,7 @@ bool AbstractMetaTypeDictionaryTraits::AssignMove(MetaAtom *dst, MetaAtom *src) 
     if (!(dst_dict && src_dict))
         return false;
 
-    RTTI::Dictionary<PMetaAtom, PMetaAtom> tmp;
+    RTTI::TDictionary<PMetaAtom, PMetaAtom> tmp;
     src_dict->WrapMoveTo(tmp);
 
     if (dst_dict->UnwrapMoveFrom(tmp))
@@ -120,7 +120,7 @@ bool AbstractMetaTypeDictionaryTraits::AssignMove(MetaAtom *dst, MetaAtom *src) 
     return false;
 }
 //----------------------------------------------------------------------------
-bool AbstractMetaTypeDictionaryTraits::AssignCopy(MetaAtom *dst, const MetaAtom *src) const {
+bool FAbstractMetaTypeDictionaryTraits::AssignCopy(FMetaAtom *dst, const FMetaAtom *src) const {
     Assert(dst);
     Assert(src);
 
@@ -130,7 +130,7 @@ bool AbstractMetaTypeDictionaryTraits::AssignCopy(MetaAtom *dst, const MetaAtom 
     if (!(dst_dict && src_dict))
         return false;
 
-    RTTI::Dictionary<PMetaAtom, PMetaAtom> tmp;
+    RTTI::TDictionary<PMetaAtom, PMetaAtom> tmp;
     src_dict->WrapCopyTo(tmp);
 
     return dst_dict->UnwrapMoveFrom(tmp);
@@ -138,13 +138,13 @@ bool AbstractMetaTypeDictionaryTraits::AssignCopy(MetaAtom *dst, const MetaAtom 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool AssignMove(MetaAtom *dst, MetaAtom *src) {
+bool AssignMove(FMetaAtom *dst, FMetaAtom *src) {
     Assert(dst);
     Assert(dst->Traits());
     return dst->Traits()->AssignMove(dst, src);
 }
 //----------------------------------------------------------------------------
-bool AssignCopy(MetaAtom *dst, const MetaAtom *src) {
+bool AssignCopy(FMetaAtom *dst, const FMetaAtom *src) {
     Assert(dst);
     Assert(dst->Traits());
     return dst->Traits()->AssignCopy(dst, src);

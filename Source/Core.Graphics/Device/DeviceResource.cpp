@@ -7,58 +7,58 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DeviceResource::DeviceResource(DeviceResourceType resourceType)
+FDeviceResource::FDeviceResource(EDeviceResourceType resourceType)
 :   _flagsAndResourceType(0) {
     bitfrozen_type::InplaceFalse(_flagsAndResourceType);
     bitresourcetype_type::InplaceSet(_flagsAndResourceType, static_cast<u32>(resourceType));
 }
 //----------------------------------------------------------------------------
-DeviceResource::~DeviceResource() {}
+FDeviceResource::~FDeviceResource() {}
 //----------------------------------------------------------------------------
-void DeviceResource::OnDeviceCreate(DeviceEncapsulator *device) {
+void FDeviceResource::OnDeviceCreate(FDeviceEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     VirtualOnDeviceCreate(device);
 }
 //----------------------------------------------------------------------------
-void DeviceResource::OnDeviceReset(DeviceEncapsulator *device) {
+void FDeviceResource::OnDeviceReset(FDeviceEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     VirtualOnDeviceReset(device);
 }
 //----------------------------------------------------------------------------
-void DeviceResource::OnDeviceLost(DeviceEncapsulator *device) {
+void FDeviceResource::OnDeviceLost(FDeviceEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     VirtualOnDeviceLost(device);
 }
 //----------------------------------------------------------------------------
-void DeviceResource::OnDeviceDestroy(DeviceEncapsulator *device) {
+void FDeviceResource::OnDeviceDestroy(FDeviceEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     VirtualOnDeviceDestroy(device);
 }
 //----------------------------------------------------------------------------
-void DeviceResource::Freeze() {
+void FDeviceResource::Freeze() {
     Assert(!Frozen());
     THIS_THREADRESOURCE_CHECKACCESS();
     bitfrozen_type::InplaceTrue(_flagsAndResourceType);
     FreezeImpl();
 }
 //----------------------------------------------------------------------------
-void DeviceResource::Unfreeze() {
+void FDeviceResource::Unfreeze() {
     Assert(Frozen());
     THIS_THREADRESOURCE_CHECKACCESS();
     bitfrozen_type::InplaceFalse(_flagsAndResourceType);
     UnfreezeImpl();
 }
 //----------------------------------------------------------------------------
-StringView DeviceResource::ResourceName() const {
+FStringView FDeviceResource::ResourceName() const {
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
     THIS_THREADRESOURCE_CHECKACCESS();
     return MakeStringView(_resourceName);
 #else
-    return StringView();
+    return FStringView();
 #endif
 }
 //----------------------------------------------------------------------------
-void DeviceResource::SetResourceName(const char *name) {
+void FDeviceResource::SetResourceName(const char *name) {
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
     Assert(!Frozen());
     THIS_THREADRESOURCE_CHECKACCESS();
@@ -69,7 +69,7 @@ void DeviceResource::SetResourceName(const char *name) {
 #endif
 }
 //----------------------------------------------------------------------------
-void DeviceResource::SetResourceName(const StringView& name) {
+void FDeviceResource::SetResourceName(const FStringView& name) {
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
     Assert(!Frozen());
     THIS_THREADRESOURCE_CHECKACCESS();
@@ -80,7 +80,7 @@ void DeviceResource::SetResourceName(const StringView& name) {
 #endif
 }
 //----------------------------------------------------------------------------
-void DeviceResource::SetResourceName(String&& name) {
+void FDeviceResource::SetResourceName(FString&& name) {
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
     Assert(!Frozen());
     THIS_THREADRESOURCE_CHECKACCESS();

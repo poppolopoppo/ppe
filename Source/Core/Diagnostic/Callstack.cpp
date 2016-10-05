@@ -35,7 +35,7 @@ static void GetSymbolsPath_(wchar_t* out_symbol_path, size_t max_length) {
         L"_NT_ALTERNATE_SYMBOL_PATH"
     };
 
-    WOCStrStream oss{ out_symbol_path, checked_cast<std::streamsize>(max_length) };
+    FWOCStrStream oss{ out_symbol_path, checked_cast<std::streamsize>(max_length) };
     oss << L".;";
 
     wchar_t temp_buffer[MAX_PATH];
@@ -90,7 +90,7 @@ static void GetSymbolsPath_(wchar_t* out_symbol_path, size_t max_length) {
         wchar_t webSymbolsPath[MAX_PATH];
         {
             const wchar_t* webSymbolsDir = L"\\symcache";
-            WOCStrStream tmp{ webSymbolsPath, checked_cast<std::streamsize>(lengthof(webSymbolsPath)) };
+            FWOCStrStream tmp{ webSymbolsPath, checked_cast<std::streamsize>(lengthof(webSymbolsPath)) };
             tmp << temp_buffer << webSymbolsDir;
         }
 
@@ -105,7 +105,7 @@ static void GetSymbolsPath_(wchar_t* out_symbol_path, size_t max_length) {
 }
 //----------------------------------------------------------------------------
 // Fetch all symbols for modules currently loaded by this process
-static void LoadModules_(const DbghelpWrapper::Locked& dbghelp) {
+static void LoadModules_(const FDbghelpWrapper::FLocked& dbghelp) {
     HANDLE  process = ::GetCurrentProcess();
     DWORD   process_id = ::GetCurrentProcessId();
     HANDLE  snap = ::CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, process_id);
@@ -131,7 +131,7 @@ static void LoadModules_(const DbghelpWrapper::Locked& dbghelp) {
             0);
 #pragma warning( pop )
 
-        LOG(Info, L"[Symbols] {0} for \"{1}\"",
+        LOG(Info, L"[FSymbols] {0} for \"{1}\"",
             succeed ? L"Loaded" : L"Failed to load",
             module_entry.szExePath);
         UNUSED(succeed);
@@ -142,7 +142,7 @@ static void LoadModules_(const DbghelpWrapper::Locked& dbghelp) {
     ::CloseHandle(snap);
 }
 //----------------------------------------------------------------------------
-static void InitializeSymbols_(const DbghelpWrapper::Locked& dbghelp) {
+static void InitializeSymbols_(const FDbghelpWrapper::FLocked& dbghelp) {
     DWORD options = dbghelp.SymGetOptions()();
     options |= SYMOPT_LOAD_LINES;
     options |= SYMOPT_FAIL_CRITICAL_ERRORS;
@@ -160,7 +160,7 @@ static void InitializeSymbols_(const DbghelpWrapper::Locked& dbghelp) {
     HANDLE process = ::GetCurrentProcess();
     BOOL succeed = dbghelp.SymInitializeW()(process, symbol_path, FALSE);
 
-    LOG(Info, L"[Symbols] Path = '{0}' -> succeed = {1:A}", symbol_path, (FALSE != succeed));
+    LOG(Info, L"[FSymbols] Path = '{0}' -> succeed = {1:A}", symbol_path, (FALSE != succeed));
 
     std::free(symbol_path);
 
@@ -174,24 +174,24 @@ static void InitializeSymbols_(const DbghelpWrapper::Locked& dbghelp) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Callstack::Callstack()
+FCallstack::FCallstack()
 : _hash(0), _depth(0) {
     memset(_frames, 0xCD, sizeof(_frames));
 }
 //----------------------------------------------------------------------------
-Callstack::Callstack(size_t framesToSkip, size_t framesToCapture)
-: Callstack() {
+FCallstack::FCallstack(size_t framesToSkip, size_t framesToCapture)
+: FCallstack() {
     Capture(this, framesToSkip, framesToCapture);
 }
 //----------------------------------------------------------------------------
-Callstack::~Callstack() {}
+FCallstack::~FCallstack() {}
 //----------------------------------------------------------------------------
-Callstack::Callstack(const Callstack& other)
+FCallstack::FCallstack(const FCallstack& other)
 : _hash(other._hash), _depth(other._depth) {
     memcpy(_frames, other._frames, sizeof(_frames));
 }
 //----------------------------------------------------------------------------
-Callstack& Callstack::operator =(const Callstack& other) {
+FCallstack& FCallstack::operator =(const FCallstack& other) {
     if (this != &other) {
         _hash = other._hash;
         _depth = other._depth;
@@ -200,14 +200,14 @@ Callstack& Callstack::operator =(const Callstack& other) {
     return *this;
 }
 //----------------------------------------------------------------------------
-void Callstack::Decode(DecodedCallstack* decoded) const {
+void FCallstack::Decode(FDecodedCallstack* decoded) const {
     Decode(decoded, _hash, Frames());
 }
 //----------------------------------------------------------------------------
-void Callstack::Decode(DecodedCallstack* decoded, size_t hash, const MemoryView<void* const>& frames) {
+void FCallstack::Decode(FDecodedCallstack* decoded, size_t hash, const TMemoryView<void* const>& frames) {
     Assert(decoded);
 
-    const auto dbghelp(DbghelpWrapper::Instance().Lock());
+    const auto dbghelp(FDbghelpWrapper::Instance().Lock());
 
     static const wchar_t* kUnknown = L"?????????????????????";
 
@@ -227,7 +227,7 @@ void Callstack::Decode(DecodedCallstack* decoded, size_t hash, const MemoryView<
 #pragma warning( push )
 #pragma warning( disable : 4826 ) // warning C4826: La conversion de 'unsigned char *const ' en 'DWORD64' est de type signe étendu.
     void* const* address = frames.data();
-    auto frame = reinterpret_cast<DecodedCallstack::Frame *>(&decoded->_frames);
+    auto frame = reinterpret_cast<FDecodedCallstack::FFrame *>(&decoded->_frames);
     for (size_t i = 0; i < frames.size(); ++i, ++frame, ++address) {
         const wchar_t *symbol = NULL;
         const wchar_t *filename = NULL;
@@ -254,12 +254,12 @@ void Callstack::Decode(DecodedCallstack* decoded, size_t hash, const MemoryView<
             }
         }
 
-        ::new ((void*)frame) DecodedCallstack::Frame(*address, symbol, filename, line);
+        ::new ((void*)frame) FDecodedCallstack::FFrame(*address, symbol, filename, line);
     }
 #pragma warning( pop )
 }
 //----------------------------------------------------------------------------
-void Callstack::Capture(Callstack* callstack, size_t framesToSkip, size_t framesToCapture) {
+void FCallstack::Capture(FCallstack* callstack, size_t framesToSkip, size_t framesToCapture) {
     Assert(callstack);
     callstack->_depth = Capture(
         MakeView(&callstack->_frames[0], &callstack->_frames[MaxDepth]),
@@ -268,8 +268,8 @@ void Callstack::Capture(Callstack* callstack, size_t framesToSkip, size_t frames
         framesToCapture);
 }
 //----------------------------------------------------------------------------
-size_t Callstack::Capture(
-    const MemoryView<void*>& frames,
+size_t FCallstack::Capture(
+    const TMemoryView<void*>& frames,
     size_t* backtraceHash,
     size_t framesToSkip,
     size_t framesToCapture) {
@@ -298,20 +298,20 @@ size_t Callstack::Capture(
     return checked_cast<size_t>(rtlDepth);
 }
 //----------------------------------------------------------------------------
-void Callstack::Start() {
-    const DbghelpWrapper::Locked dbghelp = DbghelpWrapper::Instance().Lock();
+void FCallstack::Start() {
+    const FDbghelpWrapper::FLocked dbghelp = FDbghelpWrapper::Instance().Lock();
 
     InitializeSymbols_(dbghelp);
 }
 //----------------------------------------------------------------------------
-void Callstack::ReloadSymbols() {
-    const DbghelpWrapper::Locked dbghelp = DbghelpWrapper::Instance().Lock();
+void FCallstack::ReloadSymbols() {
+    const FDbghelpWrapper::FLocked dbghelp = FDbghelpWrapper::Instance().Lock();
 
     LoadModules_(dbghelp);
 }
 //----------------------------------------------------------------------------
-void Callstack::Shutdown() {
-    const DbghelpWrapper::Locked dbghelp = DbghelpWrapper::Instance().Lock();
+void FCallstack::Shutdown() {
+    const FDbghelpWrapper::FLocked dbghelp = FDbghelpWrapper::Instance().Lock();
 
     HANDLE hProcess = ::GetCurrentProcess();
 

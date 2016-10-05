@@ -9,27 +9,27 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-StringView MaterialVariabilityToCStr(MaterialVariability value) {
+FStringView MaterialVariabilityToCStr(EMaterialVariability value) {
     switch (value)
     {
-    case Core::Engine::MaterialVariability::Always:
+    case Core::Engine::EMaterialVariability::Always:
         return MakeStringView("Always");
-    case Core::Engine::MaterialVariability::Batch:
+    case Core::Engine::EMaterialVariability::Batch:
         return MakeStringView("Batch");
-    case Core::Engine::MaterialVariability::Material:
-        return MakeStringView("Material");
-    case Core::Engine::MaterialVariability::Scene:
-        return MakeStringView("Scene");
-    case Core::Engine::MaterialVariability::World:
-        return MakeStringView("World");
-    case Core::Engine::MaterialVariability::Frame:
-        return MakeStringView("Frame");
-    case Core::Engine::MaterialVariability::Once:
+    case Core::Engine::EMaterialVariability::FMaterial:
+        return MakeStringView("FMaterial");
+    case Core::Engine::EMaterialVariability::FScene:
+        return MakeStringView("FScene");
+    case Core::Engine::EMaterialVariability::FWorld:
+        return MakeStringView("FWorld");
+    case Core::Engine::EMaterialVariability::FFrame:
+        return MakeStringView("FFrame");
+    case Core::Engine::EMaterialVariability::Once:
         return MakeStringView("Once");
     default:
         AssertNotImplemented();
     }
-    return StringView();
+    return FStringView();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -10,22 +10,22 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-using BasicColorData = ScalarVector<T, 4>;
+using TBasicColorData = TScalarVector<T, 4>;
 //----------------------------------------------------------------------------
 template <typename T, typename _Shuffle>
-class BasicColor;
+class TBasicColor;
 //----------------------------------------------------------------------------
-struct ColorShuffleRGBA;
-struct ColorShuffleBGRA;
+struct FColorShuffleRGBA;
+struct FColorShuffleBGRA;
 //----------------------------------------------------------------------------
-typedef BasicColor< UNorm<u8>, ColorShuffleBGRA > ColorBGRA;
-typedef BasicColor< UNorm<u8>, ColorShuffleRGBA > ColorRGBA;
+typedef TBasicColor< TUNorm<u8>, FColorShuffleBGRA > ColorBGRA;
+typedef TBasicColor< TUNorm<u8>, FColorShuffleRGBA > ColorRGBA;
 //----------------------------------------------------------------------------
-typedef BasicColor< UNorm<u16>, ColorShuffleBGRA > ColorBGRA16;
-typedef BasicColor< UNorm<u16>, ColorShuffleRGBA > ColorRGBA16;
+typedef TBasicColor< TUNorm<u16>, FColorShuffleBGRA > ColorBGRA16;
+typedef TBasicColor< TUNorm<u16>, FColorShuffleRGBA > ColorRGBA16;
 //----------------------------------------------------------------------------
-typedef BasicColor< float, ColorShuffleBGRA > ColorBGRAF;
-typedef BasicColor< float, ColorShuffleRGBA > ColorRGBAF;
+typedef TBasicColor< float, FColorShuffleBGRA > ColorBGRAF;
+typedef TBasicColor< float, FColorShuffleRGBA > ColorRGBAF;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

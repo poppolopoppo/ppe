@@ -6,36 +6,36 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Extname::Extname(const FileSystem::StringView& content)
+FExtname::FExtname(const FileSystem::FStringView& content)
 :   parent_type(content) {
     Assert(content.size() && L'.' == content[0]);
 }
 //----------------------------------------------------------------------------
-Extname& Extname::operator =(const FileSystem::StringView& content) {
+FExtname& FExtname::operator =(const FileSystem::FStringView& content) {
     parent_type::operator =(content);
     return *this;
 }
 //----------------------------------------------------------------------------
-Extname::Extname(const Extname& other)
+FExtname::FExtname(const FExtname& other)
 :   parent_type(other) {}
 //----------------------------------------------------------------------------
-Extname& Extname::operator =(const Extname& other) {
+FExtname& FExtname::operator =(const FExtname& other) {
     parent_type::operator =(other);
     return *this;
 }
 //----------------------------------------------------------------------------
-Extname::Extname(const FileSystemToken& token)
+FExtname::FExtname(const FFileSystemToken& token)
 :   parent_type(token) {
     Assert(token.empty() || L':' == *token.c_str());
 }
 //----------------------------------------------------------------------------
-Extname& Extname::operator =(const FileSystemToken& token) {
+FExtname& FExtname::operator =(const FFileSystemToken& token) {
     parent_type::operator =(token);
     Assert(token.empty() || L':' == *token.c_str());
     return *this;
 }
 //----------------------------------------------------------------------------
-void Extname::Swap(Extname& other) {
+void FExtname::Swap(FExtname& other) {
     parent_type::Swap(other);
 }
 //----------------------------------------------------------------------------

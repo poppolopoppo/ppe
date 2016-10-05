@@ -20,43 +20,43 @@ namespace Engine {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(Material);
-class Material : public RefCountable {
+class FMaterial : public FRefCountable {
 public:
-    explicit Material(const Graphics::BindName& name);
-    Material(   const Graphics::BindName& name,
-                const String& description,
-                VECTOR(Material, Graphics::BindName)&& tags,
-                ASSOCIATIVE_VECTOR(Material, Graphics::BindName, Filename)&& textures,
-                ASSOCIATIVE_VECTOR(Material, Graphics::BindName, PMaterialParameter)&& parameters );
-    ~Material();
+    explicit FMaterial(const Graphics::FBindName& name);
+    FMaterial(   const Graphics::FBindName& name,
+                const FString& description,
+                VECTOR(FMaterial, Graphics::FBindName)&& tags,
+                ASSOCIATIVE_VECTOR(FMaterial, Graphics::FBindName, FFilename)&& textures,
+                ASSOCIATIVE_VECTOR(FMaterial, Graphics::FBindName, PMaterialParameter)&& parameters );
+    ~FMaterial();
 
-    const Graphics::BindName& Name() const { return _name; }
-    const String& Description() const { return _description; }
+    const Graphics::FBindName& FName() const { return _name; }
+    const FString& Description() const { return _description; }
 
-    const VECTOR(Material, Graphics::BindName)& Tags() const { return _tags; }
-    const ASSOCIATIVE_VECTOR(Material, Graphics::BindName, Filename)& Textures() const { return _textures; }
-    const ASSOCIATIVE_VECTOR(Material, Graphics::BindName, PMaterialParameter)& Parameters() const { return _parameters; }
+    const VECTOR(FMaterial, Graphics::FBindName)& Tags() const { return _tags; }
+    const ASSOCIATIVE_VECTOR(FMaterial, Graphics::FBindName, FFilename)& Textures() const { return _textures; }
+    const ASSOCIATIVE_VECTOR(FMaterial, Graphics::FBindName, PMaterialParameter)& Parameters() const { return _parameters; }
 
-    void AddTag(const Graphics::BindName& name);
-    void AddTexture(const Graphics::BindName& name, const Filename& filename);
-    void AddParameter(const Graphics::BindName& name, const PMaterialParameter& parameter);
+    void AddTag(const Graphics::FBindName& name);
+    void AddTexture(const Graphics::FBindName& name, const FFilename& filename);
+    void AddParameter(const Graphics::FBindName& name, const PMaterialParameter& parameter);
 
-    void SetTexture(const Graphics::BindName& name, const Filename& filename);
-    void SetParameter(const Graphics::BindName& name, const PMaterialParameter& parameter);
+    void SetTexture(const Graphics::FBindName& name, const FFilename& filename);
+    void SetParameter(const Graphics::FBindName& name, const PMaterialParameter& parameter);
 
-    bool Equals(const Material& other) const;
+    bool Equals(const FMaterial& other) const;
 
-    bool operator ==(const Material& other) const { return Equals(other); }
-    bool operator !=(const Material& other) const { return !operator ==(other); }
+    bool operator ==(const FMaterial& other) const { return Equals(other); }
+    bool operator !=(const FMaterial& other) const { return !operator ==(other); }
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    Graphics::BindName _name;
-    String _description;
-    VECTOR(Material, Graphics::BindName) _tags;
-    ASSOCIATIVE_VECTOR(Material, Graphics::BindName, Filename) _textures;
-    ASSOCIATIVE_VECTOR(Material, Graphics::BindName, PMaterialParameter) _parameters;
+    Graphics::FBindName _name;
+    FString _description;
+    VECTOR(FMaterial, Graphics::FBindName) _tags;
+    ASSOCIATIVE_VECTOR(FMaterial, Graphics::FBindName, FFilename) _textures;
+    ASSOCIATIVE_VECTOR(FMaterial, Graphics::FBindName, PMaterialParameter) _parameters;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -7,37 +7,37 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-D3D11_PRIMITIVE_TOPOLOGY PrimitiveTypeToDX11PrimitiveTopology(PrimitiveType value) {
+D3D11_PRIMITIVE_TOPOLOGY PrimitiveTypeToDX11PrimitiveTopology(EPrimitiveType value) {
     switch (value)
     {
-    case Core::Graphics::PrimitiveType::LineList:
+    case Core::Graphics::EPrimitiveType::LineList:
         return D3D11_PRIMITIVE_TOPOLOGY_LINELIST;
-    case Core::Graphics::PrimitiveType::LineStrip:
+    case Core::Graphics::EPrimitiveType::LineStrip:
         return D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP;
-    case Core::Graphics::PrimitiveType::TriangleList:
+    case Core::Graphics::EPrimitiveType::TriangleList:
         return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-    case Core::Graphics::PrimitiveType::TriangleStrip:
+    case Core::Graphics::EPrimitiveType::TriangleStrip:
         return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
     }
     AssertNotImplemented();
     return static_cast<D3D11_PRIMITIVE_TOPOLOGY>(-1);
 }
 //----------------------------------------------------------------------------
-PrimitiveType DX11PrimitiveTopologyToPrimitiveType(D3D11_PRIMITIVE_TOPOLOGY value) {
+EPrimitiveType DX11PrimitiveTopologyToPrimitiveType(D3D11_PRIMITIVE_TOPOLOGY value) {
     switch (value)
     {
     case D3D11_PRIMITIVE_TOPOLOGY_LINELIST:
-        return Core::Graphics::PrimitiveType::LineList;
+        return Core::Graphics::EPrimitiveType::LineList;
     case D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP:
-        return Core::Graphics::PrimitiveType::LineStrip;
+        return Core::Graphics::EPrimitiveType::LineStrip;
     case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST:
-        return Core::Graphics::PrimitiveType::TriangleList;
+        return Core::Graphics::EPrimitiveType::TriangleList;
     case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP:
-        return Core::Graphics::PrimitiveType::TriangleStrip;
+        return Core::Graphics::EPrimitiveType::TriangleStrip;
     default:
         AssertNotImplemented();
     }
-    return static_cast<Graphics::PrimitiveType>(-1);
+    return static_cast<Graphics::EPrimitiveType>(-1);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

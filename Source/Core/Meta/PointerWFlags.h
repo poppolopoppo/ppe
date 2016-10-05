@@ -10,11 +10,11 @@ namespace Meta {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// use a macro instead of inheritance to keep PointerWFlags<> as a pod
+// use a macro instead of inheritance to keep TPointerWFlags<> as a pod
 #define POINTERWFLAGS_BASE_DEF() \
-    typedef Bit<size_t>::First<2>::type field_Flag01; \
-    typedef Bit<size_t>::First<1>::type field_Flag0; \
-    typedef Bit<size_t>::After<field_Flag0>::Field<1>::type field_Flag1; \
+    typedef TBit<size_t>::TFirst<2>::type field_Flag01; \
+    typedef TBit<size_t>::TFirst<1>::type field_Flag0; \
+    typedef TBit<size_t>::TAfter<field_Flag0>::TField<1>::type field_Flag1; \
     \
     size_t Flag01() const { return field_Flag01::Get(_pFlags); } \
     void SetFlag01(size_t value) { field_Flag01::InplaceSet(_pFlags, value); } \
@@ -34,18 +34,18 @@ namespace Meta {
         _pFlags = (_pFlags & field_Flag01::Mask) | size_t(ptr); \
     } \
     \
-    friend inline bool operator ==(const PointerWFlags& lhs, const PointerWFlags& rhs) { \
+    friend inline bool operator ==(const TPointerWFlags& lhs, const TPointerWFlags& rhs) { \
         return (lhs._pFlags == rhs._pFlags); \
     } \
     \
-    friend inline bool operator !=(const PointerWFlags& lhs, const PointerWFlags& rhs) { \
+    friend inline bool operator !=(const TPointerWFlags& lhs, const TPointerWFlags& rhs) { \
         return (lhs._pFlags != rhs._pFlags); \
     } \
     \
     size_t  _pFlags
 //----------------------------------------------------------------------------
 template <typename T>
-struct PointerWFlags {
+struct TPointerWFlags {
     POINTERWFLAGS_BASE_DEF();
 
     FORCE_INLINE T *Get() const { return reinterpret_cast<T*>(RawPointer()); }
@@ -75,7 +75,7 @@ struct PointerWFlags {
 };
 //----------------------------------------------------------------------------
 template <typename T>
-struct PointerWFlags<T *> {
+struct TPointerWFlags<T *> {
     POINTERWFLAGS_BASE_DEF();
 
     FORCE_INLINE T *Get() const { return reinterpret_cast<T*>(RawPointer()); }
@@ -105,7 +105,7 @@ struct PointerWFlags<T *> {
 };
 //----------------------------------------------------------------------------
 template <>
-struct PointerWFlags<void> {
+struct TPointerWFlags<void> {
     POINTERWFLAGS_BASE_DEF();
 
     FORCE_INLINE void *Get() const { return RawPointer(); }
@@ -127,8 +127,8 @@ struct PointerWFlags<void> {
 //----------------------------------------------------------------------------
 #undef POINTERWFLAGS_BASE_DEF
 //----------------------------------------------------------------------------
-static_assert(std::is_pod< PointerWFlags<int> >::value, "PointerWFlags<int> must be a POD type" );
-static_assert(std::is_pod< PointerWFlags<void> >::value, "PointerWFlags<void> must be a POD type");
+static_assert(std::is_pod< TPointerWFlags<int> >::value, "TPointerWFlags<int> must be a POD type" );
+static_assert(std::is_pod< TPointerWFlags<void> >::value, "TPointerWFlags<void> must be a POD type");
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

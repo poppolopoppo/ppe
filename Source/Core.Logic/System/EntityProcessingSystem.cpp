@@ -15,40 +15,40 @@ namespace Logic {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-EntityProcessingSystem::EntityProcessingSystem(const SystemAspect& aspect)
+FEntityProcessingSystem::FEntityProcessingSystem(const FSystemAspect& aspect)
 :   _aspect(aspect) {}
 //----------------------------------------------------------------------------
-EntityProcessingSystem::~EntityProcessingSystem() {
+FEntityProcessingSystem::~FEntityProcessingSystem() {
     THIS_THREADRESOURCE_CHECKACCESS();
 }
 //----------------------------------------------------------------------------
-void EntityProcessingSystem::Initialize(EntityManager& manager) {
+void FEntityProcessingSystem::Initialize(FEntityManager& manager) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    const EntityContainer& entities = manager.Entities();
+    const FEntityContainer& entities = manager.Entities();
 
     for (EntityID id : entities.UsedIDs()) {
-        const Entity& entity = entities.Get(id);
+        const FEntity& entity = entities.Get(id);
         if (_aspect.Matches(entity.ComponentFlags()))
             _entities.push_back(id);
     }
 }
 //----------------------------------------------------------------------------
-void EntityProcessingSystem::Destroy(EntityManager& /* manager */) {
+void FEntityProcessingSystem::Destroy(FEntityManager& /* manager */) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     _entities.clear();
     _entities.shrink_to_fit();
 }
 //----------------------------------------------------------------------------
-void EntityProcessingSystem::Update(const Timeline& timeline) {
+void FEntityProcessingSystem::Update(const FTimeline& timeline) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     for (EntityID entityID : _entities)
         ProcessEntity(timeline, entityID);
 }
 //----------------------------------------------------------------------------
-void EntityProcessingSystem::OnEntityDeleted(const Entity& entity) {
+void FEntityProcessingSystem::OnEntityDeleted(const FEntity& entity) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     const bool matches = _aspect.Matches(entity.ComponentFlags());
@@ -59,7 +59,7 @@ void EntityProcessingSystem::OnEntityDeleted(const Entity& entity) {
         Assert(!Contains(_entities, entity.ID()));
 }
 //----------------------------------------------------------------------------
-void EntityProcessingSystem::OnEntityRefresh(const Entity& entity, ComponentFlag previousComponents) {
+void FEntityProcessingSystem::OnEntityRefresh(const FEntity& entity, ComponentFlag previousComponents) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     const bool matches = _aspect.Matches(entity.ComponentFlags());

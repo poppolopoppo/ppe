@@ -4,7 +4,7 @@
 
 #include "NetworkIncludes.h"
 
-// Socket implementation adapted/updated from C++ DLib
+// FSocket implementation adapted/updated from C++ DLib
 // http://dlib.net/files/dlib-19.1.zip
 // http://dlib.net/dlib/sockets/sockets_kernel_1.h.html
 
@@ -13,9 +13,9 @@ namespace Network {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Socket::Socket() : Socket(Address(), Address()) {}
+FSocket::FSocket() : FSocket(FAddress(), FAddress()) {}
 //----------------------------------------------------------------------------
-Socket::Socket(Address&& remote, Address&& local)
+FSocket::FSocket(FAddress&& remote, FAddress&& local)
 :   _handle(nullptr)
 ,   _userData(nullptr)
 ,   _remote(std::move(remote))
@@ -24,11 +24,11 @@ Socket::Socket(Address&& remote, Address&& local)
     Assert(_remote.IsIPv4());
 }
 //----------------------------------------------------------------------------
-Socket::~Socket() {
+FSocket::~FSocket() {
     Assert(!IsConnected());
 }
 //----------------------------------------------------------------------------
-Socket& Socket::operator =(Socket&& rvalue) {
+FSocket& FSocket::operator =(FSocket&& rvalue) {
     if (IsConnected())
         Disconnect();
 
@@ -41,7 +41,7 @@ Socket& Socket::operator =(Socket&& rvalue) {
     return *this;
 }
 //----------------------------------------------------------------------------
-bool Socket::Connect() {
+bool FSocket::Connect() {
     Assert(!IsConnected());
     Assert(!_remote.empty());
 
@@ -104,7 +104,7 @@ bool Socket::Connect() {
     // and used_local_port
     ::u_short used_local_port;
     ::sockaddr_in local_info;
-    String used_local_ip;
+    FString used_local_ip;
     if (0 == _local.Port()) {
         int length = sizeof(::sockaddr_in);
         if (SOCKET_ERROR == ::getsockname(sock, reinterpret_cast<::sockaddr*>(&local_info), &length)) {
@@ -154,13 +154,13 @@ bool Socket::Connect() {
     }
 
     _handle = PackSocket_(sock);
-    _remote = Address(std::move(used_local_ip), used_local_port);
+    _remote = FAddress(std::move(used_local_ip), used_local_port);
 
     Assert(IsConnected());
     return true;
 }
 //----------------------------------------------------------------------------
-bool Socket::Disconnect(bool gracefully/* = false */) {
+bool FSocket::Disconnect(bool gracefully/* = false */) {
     Assert(IsConnected());
 
     ::SOCKET sock = UnpackSocket_(_handle);
@@ -183,7 +183,7 @@ bool Socket::Disconnect(bool gracefully/* = false */) {
     return true;
 }
 //----------------------------------------------------------------------------
-bool Socket::DisableNagle() {
+bool FSocket::DisableNagle() {
     Assert(IsConnected());
 
     int flag = 1;
@@ -192,7 +192,7 @@ bool Socket::DisableNagle() {
     return (SOCKET_ERROR != status);
 }
 //----------------------------------------------------------------------------
-bool Socket::ShutdownOutgoing() {
+bool FSocket::ShutdownOutgoing() {
     Assert(IsConnected());
 
     const int status = ::shutdown(UnpackSocket_(_handle), SD_SEND);
@@ -200,11 +200,11 @@ bool Socket::ShutdownOutgoing() {
     return (status != -1);
 }
 //----------------------------------------------------------------------------
-bool Socket::IsConnected() const {
+bool FSocket::IsConnected() const {
     return (nullptr != _handle && INVALID_SOCKET != UnpackSocket_(_handle));
 }
 //----------------------------------------------------------------------------
-bool Socket::IsReadable(const Milliseconds& timeout) const {
+bool FSocket::IsReadable(const Milliseconds& timeout) const {
     Assert(IsConnected());
     Assert(timeout.Value() >= 0);
 
@@ -231,7 +231,7 @@ bool Socket::IsReadable(const Milliseconds& timeout) const {
     return true;
 }
 //----------------------------------------------------------------------------
-size_t Socket::Read(const MemoryView<u8>& rawData) {
+size_t FSocket::Read(const TMemoryView<u8>& rawData) {
     Assert(!rawData.empty());
     Assert(IsConnected());
 
@@ -245,7 +245,7 @@ size_t Socket::Read(const MemoryView<u8>& rawData) {
     return (SOCKET_ERROR == status ? 0 : status);
 }
 //----------------------------------------------------------------------------
-size_t Socket::Read(const MemoryView<u8>& rawData, const Milliseconds& timeout) {
+size_t FSocket::Read(const TMemoryView<u8>& rawData, const Milliseconds& timeout) {
     Assert(!rawData.empty());
 
     if (not IsReadable(timeout))
@@ -254,7 +254,7 @@ size_t Socket::Read(const MemoryView<u8>& rawData, const Milliseconds& timeout) 
         return Read(rawData);
 }
 //----------------------------------------------------------------------------
-size_t Socket::Write(const MemoryView<const u8>& rawData) {
+size_t FSocket::Write(const TMemoryView<const u8>& rawData) {
     Assert(!rawData.empty());
     Assert(IsConnected());
 
@@ -276,28 +276,28 @@ size_t Socket::Write(const MemoryView<const u8>& rawData) {
     return rawData.size();
 }
 //----------------------------------------------------------------------------
-bool Socket::MakeConnection(Socket& socket, const Address& remoteHostnameOrIP) {
+bool FSocket::MakeConnection(FSocket& socket, const FAddress& remoteHostnameOrIP) {
     Assert(!socket.IsConnected());
     Assert(!remoteHostnameOrIP.empty());
 
-    socket._local = Address();
+    socket._local = FAddress();
 
     if (remoteHostnameOrIP.IsIPv4()) {
         socket._remote = remoteHostnameOrIP;
     }
     else {
-        String ip;
+        FString ip;
         if (not HostnameToIP(ip, MakeView(remoteHostnameOrIP.Host())) )
             return false;
 
-        socket._remote = std::move( Address(std::move(ip), remoteHostnameOrIP.Port()) );
+        socket._remote = std::move( FAddress(std::move(ip), remoteHostnameOrIP.Port()) );
     }
     Assert(socket._remote.IsIPv4());
 
     return socket.Connect();
 }
 //----------------------------------------------------------------------------
-void Socket::Start() {
+void FSocket::Start() {
 #ifdef OS_WINDOWS
     ::WSADATA wsaData;
     if (0 != ::WSAStartup(MAKEWORD(2,2), &wsaData))
@@ -305,7 +305,7 @@ void Socket::Start() {
 #endif
 }
 //----------------------------------------------------------------------------
-void Socket::Shutdown() {
+void FSocket::Shutdown() {
 #ifdef OS_WINDOWS
     ::WSACleanup();
 #endif

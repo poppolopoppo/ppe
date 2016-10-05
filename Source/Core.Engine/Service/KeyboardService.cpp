@@ -15,35 +15,35 @@ namespace Engine {
 //----------------------------------------------------------------------------
 ENGINESERVICE_GUID_DEF(IKeyboardService);
 //----------------------------------------------------------------------------
-DefaultKeyboardService::DefaultKeyboardService(Graphics::GraphicsWindow *window)
+FDefaultKeyboardService::FDefaultKeyboardService(Graphics::FGraphicsWindow *window)
 :   IKeyboardService(ENGINESERVICE_CONSTRUCT(IKeyboardService)) 
 ,   _window(window) {
     Assert(_window);
 }
 //----------------------------------------------------------------------------
-DefaultKeyboardService::~DefaultKeyboardService() {}
+FDefaultKeyboardService::~FDefaultKeyboardService() {}
 //----------------------------------------------------------------------------
-Engine::KeyboardInputHandler *DefaultKeyboardService::KeyboardInputHandler() {
+Engine::FKeyboardInputHandler *FDefaultKeyboardService::FKeyboardInputHandler() {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(ServiceAvailable());
 
     return &_KeyboardInputHandler;
 }
 //----------------------------------------------------------------------------
-const Engine::KeyboardInputHandler *DefaultKeyboardService::KeyboardInputHandler() const {
+const Engine::FKeyboardInputHandler *FDefaultKeyboardService::FKeyboardInputHandler() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(ServiceAvailable());
 
     return &_KeyboardInputHandler;
 }
 //----------------------------------------------------------------------------
-void DefaultKeyboardService::Start(IServiceProvider *provider, const Guid& guid) {
+void FDefaultKeyboardService::Start(IServiceProvider *provider, const FGuid& guid) {
     IKeyboardService::Start(provider, guid);
 
     _window->RegisterMessageHandler(&_KeyboardInputHandler);
 }
 //----------------------------------------------------------------------------
-void DefaultKeyboardService::Shutdown(IServiceProvider *provider, const Guid& guid) {
+void FDefaultKeyboardService::Shutdown(IServiceProvider *provider, const FGuid& guid) {
     IKeyboardService::Shutdown(provider, guid);
 
     _window->UnregisterMessageHandler(&_KeyboardInputHandler);

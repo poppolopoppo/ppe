@@ -13,8 +13,8 @@
 namespace Core {
 
 namespace Logic {
-class EntityManager;
-typedef UniquePtr<EntityManager> UEntityManager;
+class FEntityManager;
+typedef TUniquePtr<FEntityManager> UEntityManager;
 }
 
 namespace Engine {
@@ -24,26 +24,26 @@ namespace Engine {
 class IServiceProvider;
 FWD_REFPTR(LightingEnvironment);
 //----------------------------------------------------------------------------
-class World : public RefCountable, Meta::ThreadResource {
+class FWorld : public FRefCountable, Meta::FThreadResource {
 public:
-    World(const char *name, IServiceProvider *serviceProvider);
-    ~World();
+    FWorld(const char *name, IServiceProvider *serviceProvider);
+    ~FWorld();
 
-    const String& Name() const { THIS_THREADRESOURCE_CHECKACCESS(); return _name; }
+    const FString& FName() const { THIS_THREADRESOURCE_CHECKACCESS(); return _name; }
 
-    WorldStatus Status() const { THIS_THREADRESOURCE_CHECKACCESS(); return _status; }
+    EWorldStatus Status() const { THIS_THREADRESOURCE_CHECKACCESS(); return _status; }
 
     size_t Revision() const { return _revision; }
 
     float Speed() const { return _timespeed; }
-    const Timeline& Time() const { return _timeline; }
+    const FTimeline& Time() const { return _timeline; }
 
-    LightingEnvironment *Lighting() { THIS_THREADRESOURCE_CHECKACCESS(); return _lighting.get(); }
-    const LightingEnvironment *Lighting() const { THIS_THREADRESOURCE_CHECKACCESS(); return _lighting.get(); }
-    void SetLighting(LightingEnvironment *lighting);
+    FLightingEnvironment *Lighting() { THIS_THREADRESOURCE_CHECKACCESS(); return _lighting.get(); }
+    const FLightingEnvironment *Lighting() const { THIS_THREADRESOURCE_CHECKACCESS(); return _lighting.get(); }
+    void SetLighting(FLightingEnvironment *lighting);
 
-    Logic::EntityManager& EntityManager() { THIS_THREADRESOURCE_CHECKACCESS(); return *_logic; }
-    const Logic::EntityManager& EntityManager() const { THIS_THREADRESOURCE_CHECKACCESS(); return *_logic; }
+    Logic::FEntityManager& FEntityManager() { THIS_THREADRESOURCE_CHECKACCESS(); return *_logic; }
+    const Logic::FEntityManager& FEntityManager() const { THIS_THREADRESOURCE_CHECKACCESS(); return *_logic; }
 
     IServiceProvider *ServiceProvider() const { return _serviceProvider; }
 
@@ -55,38 +55,38 @@ public:
     void Initialize();
     void Destroy();
 
-    void Update(const Timeline& timeline);
+    void Update(const FTimeline& timeline);
 
-    WorldEvent& OnBeforeInitialize() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onBeforeInitialize; }
-    WorldEvent& OnAfterInitialize() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onAfterInitialize; }
-    WorldEvent& OnBeforeUpdate() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onBeforeUpdate; }
-    WorldEvent& OnAfterUpdate() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onAfterUpdate; }
-    WorldEvent& OnBeforeDestroy() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onBeforeDestroy; }
-    WorldEvent& OnAfterDestroy() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onAfterDestroy; }
+    FWorldEvent& OnBeforeInitialize() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onBeforeInitialize; }
+    FWorldEvent& OnAfterInitialize() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onAfterInitialize; }
+    FWorldEvent& OnBeforeUpdate() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onBeforeUpdate; }
+    FWorldEvent& OnAfterUpdate() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onAfterUpdate; }
+    FWorldEvent& OnBeforeDestroy() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onBeforeDestroy; }
+    FWorldEvent& OnAfterDestroy() const { THIS_THREADRESOURCE_CHECKACCESS(); return _onAfterDestroy; }
 
     static void Start();
     static void Shutdown();
 
 private:
-    void ChangeStatus_(WorldStatus value);
+    void ChangeStatus_(EWorldStatus value);
 
-    String _name;
-    WorldStatus _status;
+    FString _name;
+    EWorldStatus _status;
     size_t _revision;
 
     float _timespeed;
-    Timeline _timeline;
+    FTimeline _timeline;
 
     Logic::UEntityManager _logic;
     PLightingEnvironment _lighting;
     IServiceProvider *const _serviceProvider;
 
-    mutable WorldEvent _onBeforeInitialize;
-    mutable WorldEvent _onAfterInitialize;
-    mutable WorldEvent _onBeforeUpdate;
-    mutable WorldEvent _onAfterUpdate;
-    mutable WorldEvent _onBeforeDestroy;
-    mutable WorldEvent _onAfterDestroy;
+    mutable FWorldEvent _onBeforeInitialize;
+    mutable FWorldEvent _onAfterInitialize;
+    mutable FWorldEvent _onBeforeUpdate;
+    mutable FWorldEvent _onAfterUpdate;
+    mutable FWorldEvent _onBeforeDestroy;
+    mutable FWorldEvent _onAfterDestroy;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

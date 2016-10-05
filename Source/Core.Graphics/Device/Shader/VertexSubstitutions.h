@@ -13,12 +13,12 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-StringView VertexFormatToShaderFormat(VertexFormat format);
+FStringView VertexFormatToShaderFormat(FVertexFormat format);
 //----------------------------------------------------------------------------
-StringView VertexSemanticToShaderSemantic(const Graphics::Name& semantic);
+FStringView VertexSemanticToShaderSemantic(const Graphics::FName& semantic);
 //----------------------------------------------------------------------------
-void FillVertexSubstitutions(   VECTOR_THREAD_LOCAL(Shader, Pair<String COMMA String>)& defines,
-                                const VertexDeclaration *declaration );
+void FillVertexSubstitutions(   VECTOR_THREAD_LOCAL(Shader, TPair<FString COMMA FString>)& defines,
+                                const FVertexDeclaration *declaration );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

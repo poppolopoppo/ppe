@@ -10,15 +10,15 @@ POOL_TAG_DECL(Engine);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class EngineStartup {
+class FEngineStartup {
 public:
     static void Start();
     static void Shutdown();
 
     static void ClearAll_UnusedMemory();
 
-    EngineStartup()  { Start(); }
-    ~EngineStartup() { Shutdown(); }
+    FEngineStartup()  { Start(); }
+    ~FEngineStartup() { Shutdown(); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

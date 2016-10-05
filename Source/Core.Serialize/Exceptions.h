@@ -9,9 +9,9 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class SerializeException : public Exception {
+class FSerializeException : public FException {
 public:
-    SerializeException(const char* what) : Exception(what) {}
+    FSerializeException(const char* what) : FException(what) {}
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

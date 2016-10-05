@@ -61,7 +61,7 @@ static void DestroyHeap_(void* handle) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Heap::Heap(const char* nameForDebug, bool locked, size_t maximumSize/* = 0 */)
+FHeap::FHeap(const char* nameForDebug, bool locked, size_t maximumSize/* = 0 */)
 :   _handle(nullptr)
 #ifdef USE_MEMORY_DOMAINS
 ,   _trackingData(nameForDebug)
@@ -73,7 +73,7 @@ Heap::Heap(const char* nameForDebug, bool locked, size_t maximumSize/* = 0 */)
     _handle = CreateHeap_(locked, maximumSize, maximumSize);
 }
 //----------------------------------------------------------------------------
-Heap::Heap(current_process_t)
+FHeap::FHeap(current_process_t)
 :   _handle(nullptr)
 #ifdef USE_MEMORY_DOMAINS
 ,   _trackingData("Heap__current_process_t")
@@ -83,17 +83,17 @@ Heap::Heap(current_process_t)
     Assert(_handle);
 }
 //----------------------------------------------------------------------------
-Heap::Heap(Heap&& rvalue)
+FHeap::FHeap(FHeap&& rvalue)
 :   _handle(nullptr) {
     std::swap(rvalue._handle, _handle);
 }
 //----------------------------------------------------------------------------
-Heap::~Heap() {
+FHeap::~FHeap() {
     if (nullptr != _handle && GetProcessHeap() != _handle)
         DestroyHeap_(_handle);
 }
 //----------------------------------------------------------------------------
-void* Heap::Malloc(size_t size, MemoryTrackingData& trackingData) {
+void* FHeap::Malloc(size_t size, FMemoryTrackingData& trackingData) {
     if (0 == size)
         return nullptr;
 
@@ -106,7 +106,7 @@ void* Heap::Malloc(size_t size, MemoryTrackingData& trackingData) {
     return ::HeapAlloc(_handle, 0, size);
 }
 //----------------------------------------------------------------------------
-void Heap::Free(void *ptr, MemoryTrackingData& trackingData) {
+void FHeap::Free(void *ptr, FMemoryTrackingData& trackingData) {
     if (nullptr == ptr)
         return;
 
@@ -121,7 +121,7 @@ void Heap::Free(void *ptr, MemoryTrackingData& trackingData) {
     ::HeapFree(_handle, 0, ptr);
 }
 //----------------------------------------------------------------------------
-void* Heap::Calloc(size_t nmemb, size_t size, MemoryTrackingData& trackingData) {
+void* FHeap::Calloc(size_t nmemb, size_t size, FMemoryTrackingData& trackingData) {
     if (nmemb*size == 0)
         return nullptr;
 
@@ -134,7 +134,7 @@ void* Heap::Calloc(size_t nmemb, size_t size, MemoryTrackingData& trackingData) 
     return ::HeapAlloc(_handle, HEAP_ZERO_MEMORY, nmemb * size);
 }
 //----------------------------------------------------------------------------
-void* Heap::Realloc(void *ptr, size_t size, MemoryTrackingData& trackingData) {
+void* FHeap::Realloc(void *ptr, size_t size, FMemoryTrackingData& trackingData) {
     if (nullptr == ptr)
         return this->Malloc(size, trackingData);
 
@@ -159,7 +159,7 @@ void* Heap::Realloc(void *ptr, size_t size, MemoryTrackingData& trackingData) {
         return nullptr;
 }
 //----------------------------------------------------------------------------
-void* Heap::AlignedMalloc(size_t size, size_t alignment, MemoryTrackingData& trackingData) {
+void* FHeap::AlignedMalloc(size_t size, size_t alignment, FMemoryTrackingData& trackingData) {
     if (0 == size)
         return nullptr;
 
@@ -176,7 +176,7 @@ void* Heap::AlignedMalloc(size_t size, size_t alignment, MemoryTrackingData& tra
     return aligned;
 }
 //----------------------------------------------------------------------------
-void Heap::AlignedFree(void *ptr, MemoryTrackingData& trackingData) {
+void FHeap::AlignedFree(void *ptr, FMemoryTrackingData& trackingData) {
     if (nullptr == ptr)
         return;
 
@@ -193,7 +193,7 @@ void Heap::AlignedFree(void *ptr, MemoryTrackingData& trackingData) {
     ::HeapFree(_handle, 0, block);
 }
 //----------------------------------------------------------------------------
-void* Heap::AlignedCalloc(size_t nmemb, size_t size, size_t alignment, MemoryTrackingData& trackingData) {
+void* FHeap::AlignedCalloc(size_t nmemb, size_t size, size_t alignment, FMemoryTrackingData& trackingData) {
     if (nmemb*size == 0)
         return nullptr;
 
@@ -210,7 +210,7 @@ void* Heap::AlignedCalloc(size_t nmemb, size_t size, size_t alignment, MemoryTra
     return aligned;
 }
 //----------------------------------------------------------------------------
-void* Heap::AlignedRealloc(void *ptr, size_t size, size_t alignment, MemoryTrackingData& trackingData) {
+void* FHeap::AlignedRealloc(void *ptr, size_t size, size_t alignment, FMemoryTrackingData& trackingData) {
     if (nullptr == ptr)
         return this->AlignedMalloc(size, alignment, trackingData);
 

@@ -13,14 +13,14 @@
 #include <locale>
 
 namespace Core {
-namespace Lexer {
-POOL_TAG_DEF(Lexer);
+namespace FLexer {
+POOL_TAG_DEF(FLexer);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static bool ReadCharset_(bool(&charset)(const char), LookAheadReader& reader, String& value) {
+static bool ReadCharset_(bool(&charset)(const char), FLookAheadReader& reader, FString& value) {
     Assert(value.empty());
 
     char ch = reader.Peek(0);
@@ -65,7 +65,7 @@ static bool Until_(const char ch) {
 namespace {
 //----------------------------------------------------------------------------
 template <size_t _Base>
-static void Itoa_(int64_t value, String& str) {
+static void Itoa_(int64_t value, FString& str) {
     static_assert(1 < _Base && _Base <= 16, "invalid _Base");
     Assert(str.empty());
 
@@ -101,7 +101,7 @@ static bool IsTokenChar_(char ch) {
     return IsAlnum(ch) || '_' == ch;
 }
 //----------------------------------------------------------------------------
-static void Lex_Comments_(LookAheadReader& reader) {
+static void Lex_Comments_(FLookAheadReader& reader) {
     char ch = reader.Peek(0);
 
     while ('/' == ch && '/' == reader.Peek(1))
@@ -121,23 +121,23 @@ static void Lex_Comments_(LookAheadReader& reader) {
     }
 }
 //----------------------------------------------------------------------------
-static bool Lex_Symbol_(LookAheadReader& reader, const Symbol **psymbol, bool allowTypenames) {
+static bool Lex_Symbol_(FLookAheadReader& reader, const FSymbol **psymbol, bool allowTypenames) {
     Assert(psymbol);
-    Assert(Symbols::Invalid == *psymbol);
+    Assert(FSymbols::Invalid == *psymbol);
 
     size_t offset = 0;
     size_t toss = 0;
 
-    const Symbols& symbols = Symbols::Instance();
+    const FSymbols& symbols = FSymbols::Instance();
 
-    STACKLOCAL_POD_STACK(char, poken, Symbols::MaxLength);
+    STACKLOCAL_POD_STACK(char, poken, FSymbols::MaxLength);
 
-    const Symbol* result = nullptr;
+    const FSymbol* result = nullptr;
     do {
         poken.Push(reader.Peek(offset++));
         if (symbols.IsPrefix(&result, MakeConstView(poken))) {
             Assert(result);
-            Assert(Symbol::Invalid != result->Type());
+            Assert(FSymbol::Invalid != result->Type());
             if (result->IsValid()) {
                 *psymbol = result;
                 toss = offset;
@@ -154,35 +154,35 @@ static bool Lex_Symbol_(LookAheadReader& reader, const Symbol **psymbol, bool al
 
     if (0 != toss) {
         Assert(*psymbol);
-        Assert((*psymbol)->Type() != Symbol::Invalid);
+        Assert((*psymbol)->Type() != FSymbol::Invalid);
 
         const char ch0 = reader.Peek(toss - 1);
         const char ch1 = reader.Peek(toss);
         if (IsTokenChar_(ch0) && IsTokenChar_(ch1)) {
             // incomplete token
-            *psymbol = Symbols::Invalid;
+            *psymbol = FSymbols::Invalid;
             return false;
         }
         else {
-            if ((*psymbol)->Type() == Symbol::Typename &&
+            if ((*psymbol)->Type() == FSymbol::Typename &&
                 not allowTypenames ) {
-                *psymbol = Symbols::Invalid;
+                *psymbol = FSymbols::Invalid;
                 return false;
             }
             else {
-                Assert(Symbols::Invalid != *psymbol);
+                Assert(FSymbols::Invalid != *psymbol);
                 reader.SeekFwd(toss);
                 return true;
             }
         }
     }
     else {
-        Assert(Symbols::Invalid == *psymbol);
+        Assert(FSymbols::Invalid == *psymbol);
         return false;
     }
 }
 //----------------------------------------------------------------------------
-static bool Lex_Numeric_(LookAheadReader& reader, const Symbol **psymbol, String& value) {
+static bool Lex_Numeric_(FLookAheadReader& reader, const FSymbol **psymbol, FString& value) {
     Assert(psymbol);
     Assert(value.empty());
 
@@ -199,10 +199,10 @@ static bool Lex_Numeric_(LookAheadReader& reader, const Symbol **psymbol, String
             ch = reader.Read();
             Assert('x' == ch);
 
-            *psymbol = Symbols::Int;
+            *psymbol = FSymbols::Int;
 
             if (!ReadCharset_(Hexadecimal_, reader, value))
-                CORE_THROW_IT(LexerException("invalid hexadecimal int", Match(Symbols::Int, std::move(value), reader.SourceSite(), reader.Tell()) ));
+                CORE_THROW_IT(FLexerException("invalid hexadecimal int", FMatch(FSymbols::Int, std::move(value), reader.SourceSite(), reader.Tell()) ));
 
             int64_t numeric;
             if (!Atoi64(&numeric, MakeStringView(value), 16)) {
@@ -220,10 +220,10 @@ static bool Lex_Numeric_(LookAheadReader& reader, const Symbol **psymbol, String
             ch = reader.Read();
             Assert('0' == ch);
 
-            *psymbol = Symbols::Int;
+            *psymbol = FSymbols::Int;
 
             if (!ReadCharset_(Octal_, reader, value))
-                CORE_THROW_IT(LexerException("invalid octal int", Match(Symbols::Int, std::move(value), reader.SourceSite(), reader.Tell() )));
+                CORE_THROW_IT(FLexerException("invalid octal int", FMatch(FSymbols::Int, std::move(value), reader.SourceSite(), reader.Tell() )));
 
             int64_t numeric;
             if (!Atoi64(&numeric, MakeStringView(value), 8)) {
@@ -241,26 +241,26 @@ static bool Lex_Numeric_(LookAheadReader& reader, const Symbol **psymbol, String
     {
         // decimal or float
         if (!ReadCharset_(Float_, reader, value))
-            CORE_THROW_IT(LexerException("invalid float", Match(Symbols::Float, std::move(value), reader.SourceSite(), reader.Tell() )));
+            CORE_THROW_IT(FLexerException("invalid float", FMatch(FSymbols::Float, std::move(value), reader.SourceSite(), reader.Tell() )));
 
         Assert(value.size());
 
         // if '.' found then it is a float
         const size_t n = value.find_first_of('.');
         *psymbol = (n < value.size())
-            ? Symbols::Float
-            : Symbols::Int;
+            ? FSymbols::Float
+            : FSymbols::Int;
 
         return true;
     }
 
-    *psymbol = Symbols::Invalid;
+    *psymbol = FSymbols::Invalid;
     Assert(value.empty());
 
     return false;
 }
 //----------------------------------------------------------------------------
-static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String& value) {
+static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FString& value) {
     Assert(psymbol);
     Assert(value.empty());
 
@@ -272,24 +272,24 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
         ch = reader.Read();
         Assert('\'' == ch);
 
-        *psymbol = Symbols::String;
+        *psymbol = FSymbols::FString;
 
         ReadCharset_(Until_<'\''>, reader, value);
 
         if ('\'' != (ch = reader.Read()))
-            CORE_THROW_IT(LexerException("unterminated strong quoted string", Match(Symbols::String, std::move(value), reader.SourceSite(), reader.Tell() )));
+            CORE_THROW_IT(FLexerException("unterminated strong quoted string", FMatch(FSymbols::FString, std::move(value), reader.SourceSite(), reader.Tell() )));
 
         return true;
     }
     else if ('"' == ch)
     {
-        OStringStream oss;
+        FOStringStream oss;
 
         // weak quoting
         ch = reader.Read();
         Assert('"' == ch);
 
-        *psymbol = Symbols::String;
+        *psymbol = FSymbols::FString;
 
         bool inQuote = true;
         bool escaped = false;
@@ -324,7 +324,7 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
                     d1 = ToLower(reader.Read());
 
                     if (!(Octal_(d0) && Octal_(d1)))
-                        CORE_THROW_IT(LexerException("invalid octal character escaping", Match(Symbols::String, std::move(value), reader.SourceSite(), reader.Tell() )));
+                        CORE_THROW_IT(FLexerException("invalid octal character escaping", FMatch(FSymbols::FString, std::move(value), reader.SourceSite(), reader.Tell() )));
 
                     ch = (char)((d0 - '0') * 8 + (d1 - '0') );
 
@@ -337,7 +337,7 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
                     d1 = ToLower(reader.Read());
 
                     if (!(Hexadecimal_(d0) && Hexadecimal_(d1)))
-                        CORE_THROW_IT(LexerException("invalid hexadecimal character escaping", Match(Symbols::String, std::move(value), reader.SourceSite(), reader.Tell() )));
+                        CORE_THROW_IT(FLexerException("invalid hexadecimal character escaping", FMatch(FSymbols::FString, std::move(value), reader.SourceSite(), reader.Tell() )));
 
                     ch = (char)((d0 <= '9' ? d0 - '0' : d0 - 'a') * 16 +
                                 (d1 <= '9' ? d1 - '0' : d1 - 'a') );
@@ -347,10 +347,10 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
                     break;
 
                 case '\0':
-                    CORE_THROW_IT(LexerException("unterminated weak quoted string", Match(Symbols::String, std::move(value), reader.SourceSite(), reader.Tell() )));
+                    CORE_THROW_IT(FLexerException("unterminated weak quoted string", FMatch(FSymbols::FString, std::move(value), reader.SourceSite(), reader.Tell() )));
 
                 default:
-                    CORE_THROW_IT(LexerException("invalid character escaping", Match(Symbols::String, std::move(value), reader.SourceSite(), reader.Tell() )));
+                    CORE_THROW_IT(FLexerException("invalid character escaping", FMatch(FSymbols::FString, std::move(value), reader.SourceSite(), reader.Tell() )));
                 }
             }
             else
@@ -361,7 +361,7 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
                 case '\\': escaped = true; break;
 
                 case '\0':
-                    CORE_THROW_IT(LexerException("unterminated weak quoted string", Match(Symbols::String, std::move(value), reader.SourceSite(), reader.Tell() )));
+                    CORE_THROW_IT(FLexerException("unterminated weak quoted string", FMatch(FSymbols::FString, std::move(value), reader.SourceSite(), reader.Tell() )));
 
                 default:
                     oss.put(ch);
@@ -374,13 +374,13 @@ static bool Lex_String_(LookAheadReader& reader, const Symbol **psymbol, String&
         return true;
     }
 
-    *psymbol = Symbols::Invalid;
+    *psymbol = FSymbols::Invalid;
     Assert(value.empty());
 
     return false;
 }
 //----------------------------------------------------------------------------
-static bool Lex_Identifier_(LookAheadReader& reader, const Symbol **psymbol, String& value) {
+static bool Lex_Identifier_(FLookAheadReader& reader, const FSymbol **psymbol, FString& value) {
     Assert(psymbol);
     Assert(value.empty());
 
@@ -388,11 +388,11 @@ static bool Lex_Identifier_(LookAheadReader& reader, const Symbol **psymbol, Str
 
     if (IsAlpha(ch) || ('_' == ch))
     {
-        *psymbol = Symbols::Identifier;
+        *psymbol = FSymbols::Identifier;
         return ReadCharset_(Identifier_, reader, value);
     }
 
-    *psymbol = Symbols::Invalid;
+    *psymbol = FSymbols::Invalid;
     Assert(value.empty());
 
     return false;
@@ -402,7 +402,7 @@ static bool Lex_Identifier_(LookAheadReader& reader, const Symbol **psymbol, Str
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Lexer::Lexer(IStreamReader* input, const WStringView& sourceFileName, bool allowTypenames)
+FLexer::FLexer(IStreamReader* input, const FWStringView& sourceFileName, bool allowTypenames)
 :   _sourceFileName(sourceFileName.begin(), sourceFileName.end())
 ,   _reader(input, _sourceFileName.c_str())
 ,   _allowTypenames(allowTypenames)
@@ -410,9 +410,9 @@ Lexer::Lexer(IStreamReader* input, const WStringView& sourceFileName, bool allow
     _lexing.reserve(512);
 }
 //----------------------------------------------------------------------------
-Lexer::~Lexer() {}
+FLexer::~FLexer() {}
 //----------------------------------------------------------------------------
-const Match *Lexer::Peek() {
+const FMatch *FLexer::Peek() {
     if (!_peeking) {
         Assert(!_peek.Valid());
         _peeking = NextMatch_(_peek);
@@ -420,22 +420,22 @@ const Match *Lexer::Peek() {
     return ((_peek.Valid()) ? &_peek : nullptr);
 }
 //----------------------------------------------------------------------------
-const Match* Lexer::Peek(const Symbol* symbol) {
+const FMatch* FLexer::Peek(const FSymbol* symbol) {
     Assert(symbol);
-    const Match* poken = Peek();
+    const FMatch* poken = Peek();
     return (poken && poken->Symbol() == symbol) ? poken : nullptr;
 }
 //----------------------------------------------------------------------------
-bool Lexer::Read(Match& match) {
+bool FLexer::Read(FMatch& match) {
     return NextMatch_(match);
 }
 //----------------------------------------------------------------------------
-bool Lexer::ReadUntil(Match& match, const char ch) {
+bool FLexer::ReadUntil(FMatch& match, const char ch) {
     Assert('\0' != ch);
 
     if (_peeking) {
         _peeking = false;
-        _peek = Match();
+        _peek = FMatch();
     }
 
     _reader.EatWhiteSpaces();
@@ -444,7 +444,7 @@ bool Lexer::ReadUntil(Match& match, const char ch) {
     match._offset = _reader.Tell();
     match._value.clear();
 
-    OStringStream oss;
+    FOStringStream oss;
 
     char poken = _reader.Peek(0);
     while ('\0' != poken && ch != poken) {
@@ -453,23 +453,23 @@ bool Lexer::ReadUntil(Match& match, const char ch) {
     }
 
     if (poken == '\0') {
-        match._symbol = Symbols::Eof;
+        match._symbol = FSymbols::Eof;
         return false;
     }
     else {
         Assert(ch == poken);
-        match._symbol = Symbols::String;
+        match._symbol = FSymbols::FString;
         match._value = oss.str();
         return true;
     }
 }
 //----------------------------------------------------------------------------
-bool Lexer::SkipUntil(const char ch) {
+bool FLexer::SkipUntil(const char ch) {
     Assert('\0' != ch);
 
     if (_peeking) {
         _peeking = false;
-        _peek = Match();
+        _peek = FMatch();
     }
 
     char poken = _reader.Peek(0);
@@ -479,23 +479,23 @@ bool Lexer::SkipUntil(const char ch) {
     return (ch == poken);
 }
 //----------------------------------------------------------------------------
-bool Lexer::Expect(Match& match, const Core::Lexer::Symbol* expected) {
+bool FLexer::Expect(FMatch& match, const Core::FLexer::FSymbol* expected) {
     Assert(expected);
     return (NextMatch_(match) && match.Symbol() == expected);
 }
 //----------------------------------------------------------------------------
-bool Lexer::NextMatch_(Match& match) {
+bool FLexer::NextMatch_(FMatch& match) {
     if (_peeking) {
         _peeking = false;
         match = std::move(_peek);
-        _peek = Match();
-        return (Symbol::Eof != match.Symbol()->Type());
+        _peek = FMatch();
+        return (FSymbol::Eof != match.Symbol()->Type());
     }
 
     _reader.EatWhiteSpaces();
 
     if ('\0' == _reader.Peek(0)) {
-        match._symbol = Symbols::Eof;
+        match._symbol = FSymbols::Eof;
         match._value.clear();
         match._site = _reader.SourceSite();
         match._offset = _reader.Tell();
@@ -507,7 +507,7 @@ bool Lexer::NextMatch_(Match& match) {
     match._site = _reader.SourceSite();
     match._offset = _reader.Tell();
 
-    const Symbol *psymbol = nullptr;
+    const FSymbol *psymbol = nullptr;
     Assert(_lexing.empty());
 
     // by priority order :
@@ -517,8 +517,8 @@ bool Lexer::NextMatch_(Match& match) {
         Lex_Identifier_(_reader, &psymbol, _lexing)
         ) {
         Assert(psymbol);
-        Assert(Symbol::Eof != psymbol->Type());
-        Assert(Symbol::Invalid != psymbol->Type());
+        Assert(FSymbol::Eof != psymbol->Type());
+        Assert(FSymbol::Invalid != psymbol->Type());
 
         match._symbol = psymbol;
         match._value = std::move(_lexing);
@@ -528,7 +528,7 @@ bool Lexer::NextMatch_(Match& match) {
         return true;
     }
     else {
-        match._symbol = Symbols::Invalid;
+        match._symbol = FSymbols::Invalid;
         match._value.clear();
 
         _lexing.clear();
@@ -539,21 +539,21 @@ bool Lexer::NextMatch_(Match& match) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void LexerStartup::Start() {
-    POOL_TAG(Lexer)::Start();
-    Symbols::Create();
+void FLexerStartup::Start() {
+    POOL_TAG(FLexer)::Start();
+    FSymbols::Create();
 }
 //----------------------------------------------------------------------------
-void LexerStartup::Shutdown() {
-    Symbols::Destroy();
-    POOL_TAG(Lexer)::Shutdown();
+void FLexerStartup::Shutdown() {
+    FSymbols::Destroy();
+    POOL_TAG(FLexer)::Shutdown();
 }
 //----------------------------------------------------------------------------
-void LexerStartup::ClearAll_UnusedMemory() {
-    POOL_TAG(Lexer)::ClearAll_UnusedMemory();
+void FLexerStartup::ClearAll_UnusedMemory() {
+    POOL_TAG(FLexer)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace Lexer
+} //!namespace FLexer
 } //!namespace Core

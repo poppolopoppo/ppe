@@ -11,7 +11,7 @@ namespace XML {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static void PrintElement_(std::basic_ostream<char>& oss, const XML::Element* elt, size_t level = 0) {
+static void PrintElement_(std::basic_ostream<char>& oss, const XML::FElement* elt, size_t level = 0) {
     forrange(i, 0, level)
         oss << "  ";
     oss << "<" << elt->Type();
@@ -41,7 +41,7 @@ static void PrintElement_(std::basic_ostream<char>& oss, const XML::Element* elt
 }
 //----------------------------------------------------------------------------
 template <typename _It>
-static size_t XPath_(_It first, _It last, const XML::Element& elt, const std::function<void(const Element&)>& functor) {
+static size_t XPath_(_It first, _It last, const XML::FElement& elt, const std::function<void(const FElement&)>& functor) {
     Assert(first != last);
 
     if (*first != elt.Type())
@@ -68,11 +68,11 @@ static size_t XPath_(_It first, _It last, const XML::Element& elt, const std::fu
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(XML, Element, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(XML, FElement, );
 //----------------------------------------------------------------------------
-Element::Element() {}
+FElement::FElement() {}
 //----------------------------------------------------------------------------
-Element::~Element() {
+FElement::~FElement() {
     // Detach from sibling linked list before deleting (needed for safe counting)
     if (_prevSibling) {
         Assert(this == _prevSibling->_nextSibling);
@@ -84,36 +84,36 @@ Element::~Element() {
     }
 }
 //----------------------------------------------------------------------------
-void Element::ToStream(std::basic_ostream<char>& oss) const {
+void FElement::ToStream(std::basic_ostream<char>& oss) const {
     PrintElement_(oss, this);
 }
 //----------------------------------------------------------------------------
-StringView Element::operator [](const XML::Name& name) const {
+FStringView FElement::operator [](const XML::FName& name) const {
     Assert(!name.empty());
 
-    const String* pvalue = _attributes.GetIFP(name);
-    return (pvalue ? MakeStringView(*pvalue) : StringView());
+    const FString* pvalue = _attributes.GetIFP(name);
+    return (pvalue ? MakeStringView(*pvalue) : FStringView());
 }
 //----------------------------------------------------------------------------
-const Element* Element::XPath(const MemoryView<const Name>& path) const {
+const FElement* FElement::XPath(const TMemoryView<const FName>& path) const {
     Assert(!path.empty());
 
-    const Element* result = nullptr;
-    XPath_(path.begin(), path.end(), *this, [&result](const Element& elt) {
+    const FElement* result = nullptr;
+    XPath_(path.begin(), path.end(), *this, [&result](const FElement& elt) {
         result = &elt;
     });
 
     return result;
 }
 //----------------------------------------------------------------------------
-size_t Element::XPath(const MemoryView<const Name>& path, const std::function<void(const Element&)>& functor) const {
+size_t FElement::XPath(const TMemoryView<const FName>& path, const std::function<void(const FElement&)>& functor) const {
     Assert(!path.empty());
 
     return XPath_(path.begin(), path.end(), *this, functor);
 }
 //----------------------------------------------------------------------------
-const Element* Element::ChildXPath(const MemoryView<const Name>& path) const {
-    const Element* result = nullptr;
+const FElement* FElement::ChildXPath(const TMemoryView<const FName>& path) const {
+    const FElement* result = nullptr;
     for (const PElement& child : _children) {
         result = child->XPath(path);
         if (result)
@@ -122,7 +122,7 @@ const Element* Element::ChildXPath(const MemoryView<const Name>& path) const {
     return result;
 }
 //----------------------------------------------------------------------------
-size_t Element::ChildXPath(const MemoryView<const Name>& path, const std::function<void(const Element&)>& functor) const {
+size_t FElement::ChildXPath(const TMemoryView<const FName>& path, const std::function<void(const FElement&)>& functor) const {
     size_t count = 0;
     for (const PElement& child : _children) {
         count += child->XPath(path, functor);

@@ -11,18 +11,18 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Quaternion {
+class FQuaternion {
 public:
-    Quaternion();
-    explicit Quaternion(Meta::noinit_tag);
-    explicit Quaternion(float broadcast);
-    explicit Quaternion(const float4& value);
-    Quaternion(const float3& value, float w);
-    Quaternion(const float2& xy, float z, float w);
-    Quaternion(float x, float y, float z, float w);
+    FQuaternion();
+    explicit FQuaternion(Meta::noinit_tag);
+    explicit FQuaternion(float broadcast);
+    explicit FQuaternion(const float4& value);
+    FQuaternion(const float3& value, float w);
+    FQuaternion(const float2& xy, float z, float w);
+    FQuaternion(float x, float y, float z, float w);
 
-    Quaternion(const Quaternion& other);
-    Quaternion& operator =(const Quaternion& other);
+    FQuaternion(const FQuaternion& other);
+    FQuaternion& operator =(const FQuaternion& other);
 
     const float4& Value() const { return _value; }
 
@@ -45,39 +45,39 @@ public:
     float Length() const;
     float LengthSq() const;
 
-    Quaternion Conjugate() const;
-    Quaternion Exponential() const;
-    Quaternion Logarithm() const;
-    Quaternion Invert() const;
-    Quaternion Negate() const;
-    Quaternion Normalize() const;
+    FQuaternion Conjugate() const;
+    FQuaternion Exponential() const;
+    FQuaternion Logarithm() const;
+    FQuaternion Invert() const;
+    FQuaternion Negate() const;
+    FQuaternion Normalize() const;
 
     float3 Transform(const float3& value) const;
 
-    bool operator ==(const Quaternion& other) const { return _value == other._value; }
-    bool operator !=(const Quaternion& other) const { return !operator ==(other); }
+    bool operator ==(const FQuaternion& other) const { return _value == other._value; }
+    bool operator !=(const FQuaternion& other) const { return !operator ==(other); }
 
-    Quaternion& operator +=(const Quaternion& other);
-    Quaternion& operator -=(const Quaternion& other);
+    FQuaternion& operator +=(const FQuaternion& other);
+    FQuaternion& operator -=(const FQuaternion& other);
 
-    Quaternion operator +(const Quaternion& other) const;
-    Quaternion operator -(const Quaternion& other) const;
+    FQuaternion operator +(const FQuaternion& other) const;
+    FQuaternion operator -(const FQuaternion& other) const;
 
-    Quaternion& operator *=(float scale);
-    Quaternion operator *(float scale) const;
+    FQuaternion& operator *=(float scale);
+    FQuaternion operator *(float scale) const;
 
-    Quaternion& operator *=(const Quaternion& other);
-    Quaternion operator *(const Quaternion& other) const;
+    FQuaternion& operator *=(const FQuaternion& other);
+    FQuaternion operator *(const FQuaternion& other) const;
 
-    FORCE_INLINE static Quaternion Identity() { return Quaternion(0,0,0,1); }
-    FORCE_INLINE static Quaternion One() { return Quaternion(1,1,1,1); }
-    FORCE_INLINE static Quaternion Zero() { return Quaternion(0,0,0,0); }
+    FORCE_INLINE static FQuaternion Identity() { return FQuaternion(0,0,0,1); }
+    FORCE_INLINE static FQuaternion One() { return FQuaternion(1,1,1,1); }
+    FORCE_INLINE static FQuaternion Zero() { return FQuaternion(0,0,0,0); }
 
 private:
     float4 _value;
 };
 //----------------------------------------------------------------------------
-Quaternion operator *(float scale, const Quaternion& quaternion);
+FQuaternion operator *(float scale, const FQuaternion& quaternion);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

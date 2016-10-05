@@ -15,21 +15,21 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-MetaTransaction::MetaTransaction()
+FMetaTransaction::FMetaTransaction()
 :   _loaded(false)
 ,   _unloaded(true) {}
 //----------------------------------------------------------------------------
-MetaTransaction::MetaTransaction(VECTOR(RTTI, PMetaObject)&& objects)
+FMetaTransaction::FMetaTransaction(VECTOR(RTTI, PMetaObject)&& objects)
 :   _objects(std::move(objects))
 ,   _loaded(false)
 ,   _unloaded(true) {}
 //----------------------------------------------------------------------------
-MetaTransaction::~MetaTransaction() {
+FMetaTransaction::~FMetaTransaction() {
     Assert(false == _loaded);
     Assert(_unloaded);
 }
 //----------------------------------------------------------------------------
-void MetaTransaction::Add(MetaObject* object) {
+void FMetaTransaction::Add(FMetaObject* object) {
     Assert(false == _loaded);
     Assert(true == _unloaded);
 
@@ -41,7 +41,7 @@ void MetaTransaction::Add(MetaObject* object) {
     Add_AssertUnique(_objects, std::move(o));
 }
 //----------------------------------------------------------------------------
-void MetaTransaction::Remove(MetaObject* object) {
+void FMetaTransaction::Remove(FMetaObject* object) {
     Assert(false == _loaded);
     Assert(true == _unloaded);
 
@@ -53,7 +53,7 @@ void MetaTransaction::Remove(MetaObject* object) {
     Remove_AssertExists(_objects, o);
 }
 //----------------------------------------------------------------------------
-bool MetaTransaction::Contains(const MetaObject* object) const {
+bool FMetaTransaction::Contains(const FMetaObject* object) const {
     Assert(object);
     for (const PMetaObject& o : _objects)
         if (o.get() == object)
@@ -61,13 +61,13 @@ bool MetaTransaction::Contains(const MetaObject* object) const {
     return false;
 }
 //----------------------------------------------------------------------------
-void MetaTransaction::Load(MetaLoadContext *context) {
+void FMetaTransaction::Load(FMetaLoadContext *context) {
     Assert(false == _loaded);
     Assert(true == _unloaded);
 
     _unloaded = false;
 
-    MetaAtomHashMap& db = MetaAtomDatabase::Instance();
+    FMetaAtomHashMap& db = FMetaAtomDatabase::Instance();
 
     for (const PMetaObject& o : _objects) {
         o->RTTI_Load(context);
@@ -79,13 +79,13 @@ void MetaTransaction::Load(MetaLoadContext *context) {
     _loaded = true;
 }
 //----------------------------------------------------------------------------
-void MetaTransaction::Unload(MetaUnloadContext *context) {
+void FMetaTransaction::Unload(FMetaUnloadContext *context) {
     Assert(true == _loaded);
     Assert(false == _unloaded);
 
     _loaded = false;
 
-    MetaAtomHashMap& db = MetaAtomDatabase::Instance();
+    FMetaAtomHashMap& db = FMetaAtomDatabase::Instance();
 
     for (const PMetaObject& o : _objects) {
         if (o->RTTI_IsExported())
@@ -97,11 +97,11 @@ void MetaTransaction::Unload(MetaUnloadContext *context) {
     _unloaded = true;
 }
 //----------------------------------------------------------------------------
-bool MetaTransaction::Equals(const MetaTransaction& other) const {
+bool FMetaTransaction::Equals(const FMetaTransaction& other) const {
     return (_objects == other._objects);
 }
 //----------------------------------------------------------------------------
-bool MetaTransaction::DeepEquals(const MetaTransaction& other) const {
+bool FMetaTransaction::DeepEquals(const FMetaTransaction& other) const {
     if (_objects.size() != other._objects.size())
         return false;
 

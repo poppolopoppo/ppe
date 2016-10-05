@@ -45,7 +45,7 @@ namespace {
 #ifdef WITH_CORE_MATHS_UNITTESTS
 using namespace DirectX;
 //----------------------------------------------------------------------------
-struct RawMatrix {
+struct FRawMatrix {
     union
     {
         struct
@@ -61,7 +61,7 @@ struct RawMatrix {
 };
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-static bool Equals_(const XMVECTOR& lhs, const ScalarVector<T, _Dim>& rhs) {
+static bool Equals_(const XMVECTOR& lhs, const TScalarVector<T, _Dim>& rhs) {
     float lhs_d[_Dim];
     memcpy(lhs_d, &lhs, sizeof(lhs_d));
     float rhs_d[_Dim];
@@ -75,7 +75,7 @@ static bool Equals_(const XMVECTOR& lhs, const ScalarVector<T, _Dim>& rhs) {
 }
 
 template <typename T, size_t _Width, size_t _Height>
-static bool Equals_(const ScalarMatrix<T, _Width, _Height>& lhs, const ScalarMatrix<T, _Width, _Height>& rhs) {
+static bool Equals_(const TScalarMatrix<T, _Width, _Height>& lhs, const TScalarMatrix<T, _Width, _Height>& rhs) {
     const ScalarMatrixData<T, _Width, _Height>& lhsData = lhs.data();
     const ScalarMatrixData<T, _Width, _Height>& rhsData = rhs.data();
     for (size_t i = 0; i < _Width*_Height; ++i)
@@ -87,11 +87,11 @@ static bool Equals_(const ScalarMatrix<T, _Width, _Height>& lhs, const ScalarMat
 
 static bool Equals_(const XMMATRIX& lhs, const float4x4& rhs) {
     STATIC_ASSERT(sizeof(lhs) == sizeof(rhs));
-    STATIC_ASSERT(sizeof(RawMatrix) == sizeof(lhs));
+    STATIC_ASSERT(sizeof(FRawMatrix) == sizeof(lhs));
 
-    RawMatrix lhs_d;
+    FRawMatrix lhs_d;
     memcpy(&lhs_d, &lhs, sizeof(lhs_d));
-    RawMatrix rhs_d;
+    FRawMatrix rhs_d;
     memcpy(&rhs_d, &rhs, sizeof(rhs_d));
 
     Assert(NearlyEquals(rhs_d.data._23, rhs_d.data.m[1][2]));
@@ -156,7 +156,7 @@ static void MatrixUnitTests_() {
     XMVECTOR x_vtr;
     XMMatrixDecompose(&x_vsc, &x_vqt, &x_vtr, x_af);
     float3 scale;
-    Quaternion rot = Quaternion::Identity();
+    FQuaternion rot = FQuaternion::Identity();
     float3 translate;
     Decompose(c_af, scale, rot, translate);
     Assert(Equals_(x_vsc, scale));
@@ -173,7 +173,7 @@ static void MatrixUnitTests_() {
     XMVECTOR x_det;
     const XMMATRIX x_af_inv = XMMatrixInverse(&x_det, x_af);
     const float c_det = Det(c_af);
-    Assert(Equals_(x_det, ScalarVector<float, 1>(c_det)));
+    Assert(Equals_(x_det, TScalarVector<float, 1>(c_det)));
     const float4x4 c_af_inv = Invert(c_af);
     Assert(Equals_(x_af_inv, c_af_inv));
 
@@ -293,40 +293,40 @@ void GraphicsStartup::Start() {
     // 0 - pool allocator tag
     POOL_TAG(Graphics)::Start();
     // 1 - Graphics Names
-    Name::Start(256);
+    FName::Start(256);
     // 2 - Global video memory
-    GlobalVideoMemory::Create();
+    FGlobalVideoMemory::Create();
     // 3 - Register basic window class
-    BasicWindow::Start();
+    FBasicWindow::Start();
     // 4 - Surface format builtin-types
-    SurfaceFormat::Start();
+    FSurfaceFormat::Start();
     // 5 - Vertex declaration builtin-types
-    VertexDeclaration::Start();
+    FVertexDeclaration::Start();
     // 6 - Device states
-    BlendState::Start();
-    DepthStencilState::Start();
-    RasterizerState::Start();
-    SamplerState::Start();
+    FBlendState::Start();
+    FDepthStencilState::Start();
+    FRasterizerState::Start();
+    FSamplerState::Start();
 }
 //----------------------------------------------------------------------------
 void GraphicsStartup::Shutdown() {
     CORE_MODULE_SHUTDOWN(Graphics);
 
     // 6 - Device states
-    SamplerState::Shutdown();
-    RasterizerState::Shutdown();
-    DepthStencilState::Shutdown();
-    BlendState::Shutdown();
+    FSamplerState::Shutdown();
+    FRasterizerState::Shutdown();
+    FDepthStencilState::Shutdown();
+    FBlendState::Shutdown();
     // 5 - Vertex declaration builtin-types
-    VertexDeclaration::Shutdown();
+    FVertexDeclaration::Shutdown();
     // 4 - Surface format builtin-types
-    SurfaceFormat::Shutdown();
+    FSurfaceFormat::Shutdown();
     // 3 - Unregister basic window class
-    BasicWindow::Shutdown();
+    FBasicWindow::Shutdown();
     // 2 - Global video memory
-    GlobalVideoMemory::Destroy();
+    FGlobalVideoMemory::Destroy();
     // 1 - Graphic Names
-    Name::Shutdown();
+    FName::Shutdown();
     // 0 - pool allocator tag
     POOL_TAG(Graphics)::Shutdown();
 }
@@ -339,28 +339,28 @@ void GraphicsStartup::ClearAll_UnusedMemory() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void GraphicsStartup::OnDeviceCreate(DeviceEncapsulator *device) {
+void GraphicsStartup::OnDeviceCreate(FDeviceEncapsulator *device) {
     // 1 - Surface format builtin-types
-    SurfaceFormat::OnDeviceCreate(device);
+    FSurfaceFormat::OnDeviceCreate(device);
     // 2 - Vertex declaration builtin-types
-    VertexDeclaration::OnDeviceCreate(device);
+    FVertexDeclaration::OnDeviceCreate(device);
     // 3 - Device states
-    BlendState::OnDeviceCreate(device);
-    DepthStencilState::OnDeviceCreate(device);
-    RasterizerState::OnDeviceCreate(device);
-    SamplerState::OnDeviceCreate(device);
+    FBlendState::OnDeviceCreate(device);
+    FDepthStencilState::OnDeviceCreate(device);
+    FRasterizerState::OnDeviceCreate(device);
+    FSamplerState::OnDeviceCreate(device);
 }
 //----------------------------------------------------------------------------
-void GraphicsStartup::OnDeviceDestroy(DeviceEncapsulator *device) {
+void GraphicsStartup::OnDeviceDestroy(FDeviceEncapsulator *device) {
     // 3 - Device states
-    SamplerState::OnDeviceDestroy(device);
-    RasterizerState::OnDeviceDestroy(device);
-    DepthStencilState::OnDeviceDestroy(device);
-    BlendState::OnDeviceDestroy(device);
+    FSamplerState::OnDeviceDestroy(device);
+    FRasterizerState::OnDeviceDestroy(device);
+    FDepthStencilState::OnDeviceDestroy(device);
+    FBlendState::OnDeviceDestroy(device);
     // 2 - Vertex declaration builtin-types
-    VertexDeclaration::OnDeviceDestroy(device);
+    FVertexDeclaration::OnDeviceDestroy(device);
     // 1 - Surface format builtin-types
-    SurfaceFormat::OnDeviceDestroy(device);
+    FSurfaceFormat::OnDeviceDestroy(device);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

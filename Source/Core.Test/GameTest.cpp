@@ -58,32 +58,32 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static Graphics::ShaderEffect *CompileEffect_VS_PS_(
+static Graphics::FShaderEffect *CompileEffect_VS_PS_(
     Graphics::IDeviceAPIEncapsulator *device,
     Graphics::IDeviceAPIShaderCompiler *compiler,
-    const Graphics::VertexDeclaration *vertexDeclaration,
-    const Filename& sourceName ) {
+    const Graphics::FVertexDeclaration *vertexDeclaration,
+    const FFilename& sourceName ) {
     using namespace Graphics;
 
-    const MemoryView<const Pair<String, String>> defines;
-    const ShaderCompilerFlags compilerFlags =
+    const TMemoryView<const TPair<FString, FString>> defines;
+    const EShaderCompilerFlags compilerFlags =
 #ifdef _DEBUG
-        ShaderCompilerFlags::DefaultForDebug;
+        EShaderCompilerFlags::DefaultForDebug;
 #else
-        ShaderCompilerFlags::Default;
+        EShaderCompilerFlags::Default;
 #endif
 
-    PShaderProgram vertexProgram = new ShaderProgram(ShaderProfileType::ShaderModel4_1, ShaderProgramType::Vertex);
+    PShaderProgram vertexProgram = new FShaderProgram(EShaderProfileType::ShaderModel4_1, EShaderProgramType::Vertex);
     vertexProgram->Freeze();
     CompileShaderProgram(compiler, vertexProgram, "VSMain", compilerFlags, sourceName, vertexDeclaration, defines);
 
-    PShaderProgram pixelProgram = new ShaderProgram(ShaderProfileType::ShaderModel4_1, ShaderProgramType::Pixel);
+    PShaderProgram pixelProgram = new FShaderProgram(EShaderProfileType::ShaderModel4_1, EShaderProgramType::Pixel);
     pixelProgram->Freeze();
     CompileShaderProgram(compiler, pixelProgram, "PSMain", compilerFlags, sourceName, vertexDeclaration, defines);
 
-    ShaderEffect *const effect = new ShaderEffect(vertexDeclaration);
-    effect->SetStageProgram(ShaderProgramType::Vertex, std::move(vertexProgram));
-    effect->SetStageProgram(ShaderProgramType::Pixel, std::move(pixelProgram));
+    FShaderEffect *const effect = new FShaderEffect(vertexDeclaration);
+    effect->SetStageProgram(EShaderProgramType::Vertex, std::move(vertexProgram));
+    effect->SetStageProgram(EShaderProgramType::Pixel, std::move(pixelProgram));
     effect->Freeze();
     effect->Create(device);
 
@@ -94,18 +94,18 @@ static Graphics::ShaderEffect *CompileEffect_VS_PS_(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-GameTest::GameTest(const wchar_t *appname)
+FGameTest::FGameTest(const wchar_t *appname)
 :   parent_type(
     appname,
-    Graphics::DeviceAPI::DirectX11,
-    Graphics::PresentationParameters(
+    Graphics::EDeviceAPI::DirectX11,
+    Graphics::FPresentationParameters(
         1024, 768,
-        Graphics::SurfaceFormat::R8G8B8A8_SRGB,
-        Graphics::SurfaceFormat::D24S8,
+        Graphics::FSurfaceFormat::R8G8B8A8_SRGB,
+        Graphics::FSurfaceFormat::D24S8,
         false,
         true,
         0,
-        Graphics::PresentInterval::Default ),
+        Graphics::EPresentInterval::Default ),
     10, 10)
 ,   _clearColor(
         RGB_to_HSV(Color::IndianRed.Data()),
@@ -114,12 +114,12 @@ GameTest::GameTest(const wchar_t *appname)
 ,   _rotationAngle(-F_PI, F_PI)
 { }
 //----------------------------------------------------------------------------
-GameTest::~GameTest() {}
+FGameTest::~FGameTest() {}
 //----------------------------------------------------------------------------
-void GameTest::Initialize(const Timeline& time) {
+void FGameTest::Initialize(const FTimeline& time) {
     parent_type::Initialize(time);
 
-    VirtualFileSystem::Instance().MountNativePath(L"GameData:/", L"D:/Dropbox/code/cpp/DXCPP/Core/Data");
+    FVirtualFileSystem::Instance().MountNativePath(L"GameData:/", L"D:/Dropbox/code/cpp/DXCPP/Core/Data");
 
     using namespace Engine;
     using namespace Graphics;
@@ -127,16 +127,16 @@ void GameTest::Initialize(const Timeline& time) {
     _clearColor.Start(time, Units::Time::Seconds(3));
     _rotationAngle.Start(time, Units::Time::Minutes(0.5));
 
-    const ViewportF& viewport = DeviceEncapsulator().Parameters().Viewport();
+    const ViewportF& viewport = FDeviceEncapsulator().Parameters().Viewport();
 
     _camera = new PerspectiveCamera(F_PIOver3, 0.01f, 100.0f, viewport);
-    _cameraController = new Engine::KeyboardMouseCameraController(float3(0.0f, 3.0f, -6.0f), 0.0f, 0.5f*F_PIOver3, &Keyboard(), &Mouse());
+    _cameraController = new Engine::FKeyboardMouseCameraController(float3(0.0f, 3.0f, -6.0f), 0.0f, 0.5f*F_PIOver3, &Keyboard(), &Mouse());
     _camera->SetController(_cameraController);
 
     _sunLightDirection = Normalize3(float3( 0,1,-3));
 }
 //----------------------------------------------------------------------------
-void GameTest::Destroy() {
+void FGameTest::Destroy() {
     parent_type::Destroy();
 
     _camera->SetController(nullptr);
@@ -144,7 +144,7 @@ void GameTest::Destroy() {
     RemoveRef_AssertReachZero(_camera);
 }
 //----------------------------------------------------------------------------
-void GameTest::LoadContent() {
+void FGameTest::LoadContent() {
     parent_type::LoadContent();
 
     Assert(!_shaderEffect);
@@ -152,29 +152,29 @@ void GameTest::LoadContent() {
     using namespace Engine;
     using namespace Graphics;
 
-    IDeviceAPIEncapsulator *const device = DeviceEncapsulator().Device();
-    IDeviceAPIShaderCompiler *const compiler = DeviceEncapsulator().Compiler();
+    IDeviceAPIEncapsulator *const device = FDeviceEncapsulator().Device();
+    IDeviceAPIShaderCompiler *const compiler = FDeviceEncapsulator().Compiler();
 
-    const VertexDeclaration *vertexDeclaration = Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Float2__Normal0_UX10Y10Z10W2N::Declaration;
+    const FVertexDeclaration *vertexDeclaration = Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Float2__Normal0_UX10Y10Z10W2N::Declaration;
 
     _shaderEffect = CompileEffect_VS_PS_(device, compiler, vertexDeclaration, L"GameData:/Shaders/Basic_old.fx");
 
-    ConstantBufferLayout *const layoutPerFrame = new ConstantBufferLayout();
-    layoutPerFrame->AddField("View", ConstantFieldType::Float4x4);
-    layoutPerFrame->AddField("Projection", ConstantFieldType::Float4x4);
-    layoutPerFrame->AddField("EyePosition", ConstantFieldType::Float3);
-    layoutPerFrame->AddField("LightDir", ConstantFieldType::Float3);
+    FConstantBufferLayout *const layoutPerFrame = new FConstantBufferLayout();
+    layoutPerFrame->AddField("View", EConstantFieldType::Float4x4);
+    layoutPerFrame->AddField("Projection", EConstantFieldType::Float4x4);
+    layoutPerFrame->AddField("EyePosition", EConstantFieldType::Float3);
+    layoutPerFrame->AddField("LightDir", EConstantFieldType::Float3);
 
-    _perFrameBuffer = new ConstantBuffer(layoutPerFrame);
+    _perFrameBuffer = new FConstantBuffer(layoutPerFrame);
     _perFrameBuffer->SetResourceName("PerFrameBuffer");
     _perFrameBuffer->Freeze();
     _perFrameBuffer->Create(device);
 
-    ConstantBufferLayout *const layoutPerObject = new ConstantBufferLayout();
-    layoutPerObject->AddField("World", ConstantFieldType::Float4x4);
-    layoutPerObject->AddField("WorldInvertT", ConstantFieldType::Float4x4);
+    FConstantBufferLayout *const layoutPerObject = new FConstantBufferLayout();
+    layoutPerObject->AddField("FWorld", EConstantFieldType::Float4x4);
+    layoutPerObject->AddField("WorldInvertT", EConstantFieldType::Float4x4);
 
-    _perObjectBuffer = new ConstantBuffer(layoutPerObject);
+    _perObjectBuffer = new FConstantBuffer(layoutPerObject);
     _perObjectBuffer->SetResourceName("PerObjectBuffer");
     _perObjectBuffer->Freeze();
     _perObjectBuffer->Create(device);
@@ -201,7 +201,7 @@ void GameTest::LoadContent() {
     colors.resize(positions.size());
 
     {
-        RandomGenerator rnd;
+        FRandomGenerator rnd;
         for (ColorRGBA& color : colors)
             color = ColorRGBAF(rnd.NextFloat01(),rnd.NextFloat01(),rnd.NextFloat01(),1);
     }
@@ -209,7 +209,7 @@ void GameTest::LoadContent() {
     RAWSTORAGE_ALIGNED(Geometry, u8, 16) exportVertices;
     ExportVertices(
         exportVertices,
-        Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Float2__Normal0_UX10Y10Z10W2N::Declaration,
+        Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Float2__Normal0_UX10Y10Z10W2N::Declaration,
         vertexCount,
         &positions,
         &colors,
@@ -222,7 +222,7 @@ void GameTest::LoadContent() {
 
     OptimizeIndicesAndVerticesOrder(
         exportVertices,
-        Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Float2__Normal0_UX10Y10Z10W2N::Declaration,
+        Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Float2__Normal0_UX10Y10Z10W2N::Declaration,
         vertexCount,
         MakeView(indices) );
 
@@ -235,18 +235,18 @@ void GameTest::LoadContent() {
     for (size_t i = 0; i < indexCount; ++i)
         exportIndices[i] = checked_cast<u16>(indices[i]);
 
-    _vertexBuffer = new VertexBuffer(   Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Float2__Normal0_UX10Y10Z10W2N::Declaration,
-                                        vertexCount, BufferMode::None, BufferUsage::Default );
+    _vertexBuffer = new FVertexBuffer(   Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Float2__Normal0_UX10Y10Z10W2N::Declaration,
+                                        vertexCount, EBufferMode::None, EBufferUsage::Default );
     _vertexBuffer->Freeze();
     _vertexBuffer->Create(device, exportVertices.MakeView().Cast<const u8>());
 
-    _indexBuffer = new IndexBuffer(IndexElementSize::SixteenBits, indexCount, BufferMode::None, BufferUsage::Default);
+    _indexBuffer = new IndexBuffer(IndexElementSize::SixteenBits, indexCount, EBufferMode::None, EBufferUsage::Default);
     _indexBuffer->Freeze();
     _indexBuffer->Create(device, exportIndices.MakeView().Cast<const u16>());
 
 #else
 
-    MeshLoader<u32, Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Float2__Normal0_UX10Y10Z10W2N> mesh;
+    TMeshLoader<u32, Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Float2__Normal0_UX10Y10Z10W2N> mesh;
     if (!mesh.Read(L"GameData:/Models/dragon_40k.ply"))
         AssertNotReached();
 
@@ -269,51 +269,51 @@ void GameTest::LoadContent() {
 
 #endif
 
-    _diffuseTexture = checked_cast<Texture2D *>(Texture2DLoader::Load(device, L"GameData:/Models/dragon_40k_ao.dds", true));
+    _diffuseTexture = checked_cast<FTexture2D *>(FTexture2DLoader::Load(device, L"GameData:/Models/dragon_40k_ao.dds", true));
     AssertRelease(_diffuseTexture);
 
-    _bumpTexture = checked_cast<Texture2D *>(Texture2DLoader::Load(device, L"GameData:/Models/dragon_40k_bump.dds", false));
+    _bumpTexture = checked_cast<FTexture2D *>(FTexture2DLoader::Load(device, L"GameData:/Models/dragon_40k_bump.dds", false));
     AssertRelease(_bumpTexture);
 
-    _screenDuDvTexture = checked_cast<Texture2D *>(Texture2DLoader::Load(device, L"GameData:/Textures/GrassDuDv.dds", false));
+    _screenDuDvTexture = checked_cast<FTexture2D *>(FTexture2DLoader::Load(device, L"GameData:/Textures/GrassDuDv.dds", false));
     AssertRelease(_screenDuDvTexture);
 
-    const ViewportF& viewport = DeviceEncapsulator().Parameters().Viewport();
+    const ViewportF& viewport = FDeviceEncapsulator().Parameters().Viewport();
 
-    _renderTarget = new RenderTarget(size_t(viewport.Width()), size_t(viewport.Height()), SurfaceFormat::R16G16B16A16_F);
+    _renderTarget = new FRenderTarget(size_t(viewport.Width()), size_t(viewport.Height()), FSurfaceFormat::R16G16B16A16_F);
     _renderTarget->SetResourceName("SceneBuffer");
     _renderTarget->Freeze();
     _renderTarget->Create(device);
 
-    ALIGN(16) const Vertex::Position0_Half2 fullscreenVertices[] = {
-        {half2(HalfFloat::MinusOne, HalfFloat::MinusOne)},
-        {half2(HalfFloat::MinusOne, HalfFloat::One)},
-        {half2(HalfFloat::One,      HalfFloat::MinusOne)},
-        {half2(HalfFloat::One,      HalfFloat::One)},
+    ALIGN(16) const Vertex::FPosition0_Half2 fullscreenVertices[] = {
+        {half2(FHalfFloat::MinusOne, FHalfFloat::MinusOne)},
+        {half2(FHalfFloat::MinusOne, FHalfFloat::One)},
+        {half2(FHalfFloat::One,      FHalfFloat::MinusOne)},
+        {half2(FHalfFloat::One,      FHalfFloat::One)},
     };
 
-    _fullscreenQuadVertexBuffer = new VertexBuffer(Vertex::Position0_Half2::Declaration, lengthof(fullscreenVertices), BufferMode::None, BufferUsage::Default);
+    _fullscreenQuadVertexBuffer = new FVertexBuffer(Vertex::FPosition0_Half2::Declaration, lengthof(fullscreenVertices), EBufferMode::None, EBufferUsage::Default);
     _fullscreenQuadVertexBuffer->Freeze();
     _fullscreenQuadVertexBuffer->Create(device, MakeView(fullscreenVertices));
 
-    _postProcessEffect = CompileEffect_VS_PS_(device, compiler, Vertex::Position0_Half2::Declaration, L"GameData:/Shaders/Postprocess.fx");
+    _postProcessEffect = CompileEffect_VS_PS_(device, compiler, Vertex::FPosition0_Half2::Declaration, L"GameData:/Shaders/Postprocess.fx");
 
-    ConstantBufferLayout *const layoutPostProcess = new ConstantBufferLayout();
-    layoutPostProcess->AddField("SceneTexture_DuDvDimensions", ConstantFieldType::Float4);
-    layoutPostProcess->AddField("TimelineInSeconds", ConstantFieldType::Float);
+    FConstantBufferLayout *const layoutPostProcess = new FConstantBufferLayout();
+    layoutPostProcess->AddField("SceneTexture_DuDvDimensions", EConstantFieldType::Float4);
+    layoutPostProcess->AddField("TimelineInSeconds", EConstantFieldType::Float);
 
-    _postProcessParams = new ConstantBuffer(layoutPostProcess);
+    _postProcessParams = new FConstantBuffer(layoutPostProcess);
     _postProcessParams->SetResourceName("PostProcessParams");
     _postProcessParams->Freeze();
     _postProcessParams->Create(device);
 }
 //----------------------------------------------------------------------------
-void GameTest::UnloadContent() {
+void FGameTest::UnloadContent() {
     parent_type::UnloadContent();
 
     using namespace Graphics;
 
-    IDeviceAPIEncapsulator *const device = DeviceEncapsulator().Device();
+    IDeviceAPIEncapsulator *const device = FDeviceEncapsulator().Device();
 
     Assert(_screenDuDvTexture);
     _screenDuDvTexture->Destroy(device);
@@ -364,20 +364,20 @@ void GameTest::UnloadContent() {
     RemoveRef_AssertReachZero(_shaderEffect);
 }
 //----------------------------------------------------------------------------
-void GameTest::Update(const Timeline& time) {
+void FGameTest::Update(const FTimeline& time) {
     parent_type::Update(time);
 
     using namespace Graphics;
     using namespace Engine;
     using namespace Application;
 
-    const Graphics::DeviceEncapsulator& encapsulator = DeviceEncapsulator();
+    const Graphics::FDeviceEncapsulator& encapsulator = FDeviceEncapsulator();
 
     IDeviceAPIEncapsulator *const device = encapsulator.Device();
     IDeviceAPIContext *const context = encapsulator.Context();
 
-    if (Keyboard().IsKeyPressed(KeyboardKey::Control) &&
-        Keyboard().IsKeyUp(KeyboardKey::F8)) {
+    if (Keyboard().IsKeyPressed(EKeyboardKey::Control) &&
+        Keyboard().IsKeyUp(EKeyboardKey::F8)) {
         LOG(Info, L"[Shaders] recompile effect ...");
 
         Assert(_shaderEffect);
@@ -387,17 +387,17 @@ void GameTest::Update(const Timeline& time) {
         _shaderEffect = CompileEffect_VS_PS_(
             device,
             encapsulator.Compiler(),
-            Vertex::Position0_Float3__Color0_UByte4N__TexCoord0_Float2__Normal0_UX10Y10Z10W2N::Declaration,
+            Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Float2__Normal0_UX10Y10Z10W2N::Declaration,
             L"GameData:/Shaders/Basic_old.fx");
 
         Assert(_postProcessEffect);
         _postProcessEffect->Destroy(device);
         RemoveRef_AssertReachZero(_postProcessEffect);
 
-        _postProcessEffect = CompileEffect_VS_PS_(device, encapsulator.Compiler(), Vertex::Position0_Half2::Declaration, L"GameData:/Shaders/Postprocess.fx");
+        _postProcessEffect = CompileEffect_VS_PS_(device, encapsulator.Compiler(), Vertex::FPosition0_Half2::Declaration, L"GameData:/Shaders/Postprocess.fx");
     }
 
-    if (Keyboard().IsKeyUp(KeyboardKey::F11)) {
+    if (Keyboard().IsKeyUp(EKeyboardKey::F11)) {
         LOG(Info, L"[Shaders] toggle wireframe {0:A} -> {1:A}", _wireframe, !_wireframe);
         _wireframe = !_wireframe;
     }
@@ -423,12 +423,12 @@ void GameTest::Update(const Timeline& time) {
     }
 }
 //----------------------------------------------------------------------------
-void GameTest::Draw(const Timeline& time) {
+void FGameTest::Draw(const FTimeline& time) {
     parent_type::Draw(time);
 
     using namespace Graphics;
 
-    const Graphics::DeviceEncapsulator& encapsulator = DeviceEncapsulator();
+    const Graphics::FDeviceEncapsulator& encapsulator = FDeviceEncapsulator();
 
     IDeviceAPIEncapsulator *const device = encapsulator.Device();
     IDeviceAPIContext *const context = encapsulator.Context();
@@ -437,22 +437,22 @@ void GameTest::Draw(const Timeline& time) {
     {
         context->Clear(device->BackBufferRenderTarget(), HSV_to_RGB(_clearColor.Eval(time)));
         //context->Clear(_renderTarget, HSV_to_RGB(_clearColor.Eval(time)));
-        context->Clear(device->BackBufferDepthStencil(), ClearOptions::DepthStencil, 1, 0);
+        context->Clear(device->BackBufferDepthStencil(), EClearOptions::FDepthStencil, 1, 0);
 
-        context->SetBlendState(BlendState::Opaque);
-        context->SetDepthStencilState(DepthStencilState::Default);
-        context->SetRasterizerState(_wireframe ? RasterizerState::Wireframe : RasterizerState::CullCounterClockwise);
+        context->SetBlendState(FBlendState::Opaque);
+        context->SetDepthStencilState(FDepthStencilState::Default);
+        context->SetRasterizerState(_wireframe ? FRasterizerState::Wireframe : FRasterizerState::CullCounterClockwise);
 
         context->SetShaderEffect(_shaderEffect);
 
-        context->SetConstantBuffer(ShaderProgramType::Vertex, 0, _perFrameBuffer);
-        context->SetConstantBuffer(ShaderProgramType::Pixel, 0, _perFrameBuffer);
+        context->SetConstantBuffer(EShaderProgramType::Vertex, 0, _perFrameBuffer);
+        context->SetConstantBuffer(EShaderProgramType::Pixel, 0, _perFrameBuffer);
 
-        context->SetSamplerState(ShaderProgramType::Pixel, 0, SamplerState::LinearClamp);
-        context->SetTexture(ShaderProgramType::Pixel, 0, _diffuseTexture);
+        context->SetSamplerState(EShaderProgramType::Pixel, 0, FSamplerState::LinearClamp);
+        context->SetTexture(EShaderProgramType::Pixel, 0, _diffuseTexture);
 
-        context->SetSamplerState(ShaderProgramType::Pixel, 1, SamplerState::LinearClamp);
-        context->SetTexture(ShaderProgramType::Pixel, 1, _bumpTexture);
+        context->SetSamplerState(EShaderProgramType::Pixel, 1, FSamplerState::LinearClamp);
+        context->SetTexture(EShaderProgramType::Pixel, 1, _bumpTexture);
 
         float4x4 world = Make3DRotationMatrix(Normalize3(float3(0,30,1)), _rotationAngle.Eval(time));
         float4x4 worldIT = InvertTranspose(world);
@@ -460,33 +460,33 @@ void GameTest::Draw(const Timeline& time) {
         const void *constantBufferData[] = {&world, &worldIT};
         _perObjectBuffer->SetData(device, MakeView(constantBufferData));
 
-        context->SetConstantBuffer(ShaderProgramType::Vertex, 1, _perObjectBuffer);
-        context->SetConstantBuffer(ShaderProgramType::Pixel, 1, _perObjectBuffer);
+        context->SetConstantBuffer(EShaderProgramType::Vertex, 1, _perObjectBuffer);
+        context->SetConstantBuffer(EShaderProgramType::Pixel, 1, _perObjectBuffer);
 
         context->SetIndexBuffer(_indexBuffer);
         context->SetVertexBuffer(_vertexBuffer);
 
-        context->DrawIndexedPrimitives(PrimitiveType::TriangleList, 0, 0, _indexBuffer->IndexCount() / 3);
+        context->DrawIndexedPrimitives(EPrimitiveType::TriangleList, 0, 0, _indexBuffer->IndexCount() / 3);
     }
     /*context->SetRenderTarget(device->BackBufferRenderTarget(), nullptr);
     {
-        context->SetBlendState(BlendState::Opaque);
-        context->SetDepthStencilState(DepthStencilState::None);
-        context->SetRasterizerState(RasterizerState::CullNone);
+        context->SetBlendState(FBlendState::Opaque);
+        context->SetDepthStencilState(FDepthStencilState::None);
+        context->SetRasterizerState(FRasterizerState::CullNone);
 
         context->SetVertexBuffer(_fullscreenQuadVertexBuffer);
         context->SetShaderEffect(_postProcessEffect);
 
-        context->SetConstantBuffer(ShaderProgramType::Pixel, 0, _postProcessParams);
+        context->SetConstantBuffer(EShaderProgramType::Pixel, 0, _postProcessParams);
 
-        context->SetTexture(ShaderProgramType::Pixel, 0, _renderTarget);
-        context->SetTexture(ShaderProgramType::Pixel, 1, _screenDuDvTexture);
+        context->SetTexture(EShaderProgramType::Pixel, 0, _renderTarget);
+        context->SetTexture(EShaderProgramType::Pixel, 1, _screenDuDvTexture);
 
-        context->DrawPrimitives(PrimitiveType::TriangleStrip, 0, 2);
+        context->DrawPrimitives(EPrimitiveType::TriangleStrip, 0, 2);
     }*/
 }
 //----------------------------------------------------------------------------
-void GameTest::Present() {
+void FGameTest::Present() {
     parent_type::Present();
 }
 //----------------------------------------------------------------------------

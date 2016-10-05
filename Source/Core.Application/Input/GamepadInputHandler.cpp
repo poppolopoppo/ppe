@@ -32,7 +32,7 @@ namespace {
 //----------------------------------------------------------------------------
 #ifdef OS_WINDOWS
 static void GamepadTestButton_(
-    GamepadButton btn,
+    EGamepadButton btn,
     GamepadButtonState& ups,
     GamepadButtonState& presseds,
     GamepadButtonState& downs,
@@ -73,23 +73,23 @@ static float GamepadNormalizeTrigger_(BYTE axis, BYTE deadzone) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-GamepadInputHandler::GamepadInputHandler() {}
+FGamepadInputHandler::FGamepadInputHandler() {}
 //----------------------------------------------------------------------------
-GamepadInputHandler::~GamepadInputHandler() {}
+FGamepadInputHandler::~FGamepadInputHandler() {}
 //----------------------------------------------------------------------------
-void GamepadInputHandler::RegisterMessageDelegates(Graphics::BasicWindow *wnd) {
+void FGamepadInputHandler::RegisterMessageDelegates(Graphics::FBasicWindow *wnd) {
     UNUSED(wnd); // uses XInput instead
 }
 //----------------------------------------------------------------------------
-void GamepadInputHandler::UnregisterMessageDelegates(Graphics::BasicWindow *wnd) {
+void FGamepadInputHandler::UnregisterMessageDelegates(Graphics::FBasicWindow *wnd) {
     UNUSED(wnd); // uses XInput instead
 }
 //----------------------------------------------------------------------------
-void GamepadInputHandler::UpdateBeforeDispatch(Graphics::BasicWindow *wnd) {
+void FGamepadInputHandler::UpdateBeforeDispatch(Graphics::FBasicWindow *wnd) {
     UNUSED(wnd);
 
     int gamepadIndex = 0;
-    for (GamepadState& gamepad : _state.Gamepads()) {
+    for (FGamepadState& gamepad : _state.Gamepads()) {
         gamepad._buttonsDown.Clear();
         gamepad._buttonsUp.Clear();
 
@@ -116,20 +116,20 @@ void GamepadInputHandler::UpdateBeforeDispatch(Graphics::BasicWindow *wnd) {
                 gamepad._buttonsUp, gamepad._buttonsPressed, gamepad._buttonsDown, \
                 stateXInput, _XINPUTBTN )
 
-            TEST_XINPUT_BTN(GamepadButton::DPadUp,          XINPUT_GAMEPAD_DPAD_UP );
-            TEST_XINPUT_BTN(GamepadButton::DPadDown,        XINPUT_GAMEPAD_DPAD_DOWN );
-            TEST_XINPUT_BTN(GamepadButton::DPadLeft,        XINPUT_GAMEPAD_DPAD_LEFT );
-            TEST_XINPUT_BTN(GamepadButton::DPadRight,       XINPUT_GAMEPAD_DPAD_RIGHT );
-            TEST_XINPUT_BTN(GamepadButton::Start,           XINPUT_GAMEPAD_START );
-            TEST_XINPUT_BTN(GamepadButton::Back,            XINPUT_GAMEPAD_BACK );
-            TEST_XINPUT_BTN(GamepadButton::LeftThumb,       XINPUT_GAMEPAD_LEFT_THUMB );
-            TEST_XINPUT_BTN(GamepadButton::RightThumb,      XINPUT_GAMEPAD_RIGHT_THUMB );
-            TEST_XINPUT_BTN(GamepadButton::LeftShoulder,    XINPUT_GAMEPAD_LEFT_SHOULDER );
-            TEST_XINPUT_BTN(GamepadButton::RightShoulder,   XINPUT_GAMEPAD_RIGHT_SHOULDER );
-            TEST_XINPUT_BTN(GamepadButton::A,               XINPUT_GAMEPAD_A );
-            TEST_XINPUT_BTN(GamepadButton::B,               XINPUT_GAMEPAD_B );
-            TEST_XINPUT_BTN(GamepadButton::X,               XINPUT_GAMEPAD_X );
-            TEST_XINPUT_BTN(GamepadButton::Y,               XINPUT_GAMEPAD_Y );
+            TEST_XINPUT_BTN(EGamepadButton::DPadUp,          XINPUT_GAMEPAD_DPAD_UP );
+            TEST_XINPUT_BTN(EGamepadButton::DPadDown,        XINPUT_GAMEPAD_DPAD_DOWN );
+            TEST_XINPUT_BTN(EGamepadButton::DPadLeft,        XINPUT_GAMEPAD_DPAD_LEFT );
+            TEST_XINPUT_BTN(EGamepadButton::DPadRight,       XINPUT_GAMEPAD_DPAD_RIGHT );
+            TEST_XINPUT_BTN(EGamepadButton::Start,           XINPUT_GAMEPAD_START );
+            TEST_XINPUT_BTN(EGamepadButton::Back,            XINPUT_GAMEPAD_BACK );
+            TEST_XINPUT_BTN(EGamepadButton::LeftThumb,       XINPUT_GAMEPAD_LEFT_THUMB );
+            TEST_XINPUT_BTN(EGamepadButton::RightThumb,      XINPUT_GAMEPAD_RIGHT_THUMB );
+            TEST_XINPUT_BTN(EGamepadButton::LeftShoulder,    XINPUT_GAMEPAD_LEFT_SHOULDER );
+            TEST_XINPUT_BTN(EGamepadButton::RightShoulder,   XINPUT_GAMEPAD_RIGHT_SHOULDER );
+            TEST_XINPUT_BTN(EGamepadButton::A,               XINPUT_GAMEPAD_A );
+            TEST_XINPUT_BTN(EGamepadButton::B,               XINPUT_GAMEPAD_B );
+            TEST_XINPUT_BTN(EGamepadButton::X,               XINPUT_GAMEPAD_X );
+            TEST_XINPUT_BTN(EGamepadButton::Y,               XINPUT_GAMEPAD_Y );
 
 #   undef TEST_XINPUT_BTN
         }
@@ -154,9 +154,9 @@ void GamepadInputHandler::UpdateBeforeDispatch(Graphics::BasicWindow *wnd) {
         }
 
 #ifdef WITH_GAMEPADSTATE_VERBOSE
-        for (GamepadButton btn : gamepad.ButtonsDown().MakeView())
+        for (EGamepadButton btn : gamepad.ButtonsDown().MakeView())
             LOG(Info, L"[Gamepad] Controller#{0}: button <{1}> down", gamepadIndex, GamepadButtonToXBoxCStr(btn));
-        for (GamepadButton btn : gamepad.ButtonsUp().MakeView())
+        for (EGamepadButton btn : gamepad.ButtonsUp().MakeView())
             LOG(Info, L"[Gamepad] Controller#{0}: button <{1}> up", gamepadIndex, GamepadButtonToXBoxCStr(btn));
 #endif
 
@@ -164,7 +164,7 @@ void GamepadInputHandler::UpdateBeforeDispatch(Graphics::BasicWindow *wnd) {
     }
 }
 //----------------------------------------------------------------------------
-void GamepadInputHandler::UpdateAfterDispatch(Graphics::BasicWindow *wnd) {
+void FGamepadInputHandler::UpdateAfterDispatch(Graphics::FBasicWindow *wnd) {
     UNUSED(wnd);
 }
 //----------------------------------------------------------------------------

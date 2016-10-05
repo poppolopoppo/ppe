@@ -11,8 +11,8 @@ namespace Core
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-class ThreadLocalHeap : Meta::ThreadLocalSingleton<Heap, ThreadLocalHeap> {
-    typedef Meta::ThreadLocalSingleton<Heap, ThreadLocalHeap> parent_type;
+class FThreadLocalHeap : Meta::TThreadLocalSingleton<FHeap, FThreadLocalHeap> {
+    typedef Meta::TThreadLocalSingleton<FHeap, FThreadLocalHeap> parent_type;
 public:
     using parent_type::Instance;
     using parent_type::HasInstance;
@@ -22,33 +22,33 @@ public:
     static void CreateMainThread();
 };
 //----------------------------------------------------------------------------
-void ThreadLocalHeap::Create() {
-    parent_type::Create("ThreadLocalHeap", false /* not locked since accessed by only one thread */);
+void FThreadLocalHeap::Create() {
+    parent_type::Create("FThreadLocalHeap", false /* not locked since accessed by only one thread */);
 }
 //----------------------------------------------------------------------------
-void ThreadLocalHeap::CreateMainThread() {
-    parent_type::Create(Heap::current_process_t() /* thread local in main thread <=> process heap */);
+void FThreadLocalHeap::CreateMainThread() {
+    parent_type::Create(FHeap::current_process_t() /* thread local in main thread <=> process heap */);
 }
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Heap& GetThreadLocalHeap() {
-    return ThreadLocalHeap::Instance();
+FHeap& GetThreadLocalHeap() {
+    return FThreadLocalHeap::Instance();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void ThreadLocalHeapStartup::Start(bool mainThread) {
+void FThreadLocalHeapStartup::Start(bool mainThread) {
     if (mainThread)
-        ThreadLocalHeap::CreateMainThread();
+        FThreadLocalHeap::CreateMainThread();
     else
-        ThreadLocalHeap::Create();
+        FThreadLocalHeap::Create();
 }
 //----------------------------------------------------------------------------
-void ThreadLocalHeapStartup::Shutdown() {
-    ThreadLocalHeap::Destroy();
+void FThreadLocalHeapStartup::Shutdown() {
+    FThreadLocalHeap::Destroy();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

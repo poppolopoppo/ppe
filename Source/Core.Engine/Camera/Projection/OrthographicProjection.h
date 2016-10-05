@@ -8,15 +8,15 @@
 #include "Core/Memory/RefPtr.h"
 
 namespace Core {
-class Timeline;
+class FTimeline;
 namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(OrthographicProjection)
-class OrthographicProjection : public ICameraProjection {
+class FOrthographicProjection : public ICameraProjection {
 public:
-    virtual float4x4 ProjectionMatrix(  const Timeline& time,
+    virtual float4x4 ProjectionMatrix(  const FTimeline& time,
                                         float znear, float zfar,
                                         const ViewportF& viewport ) override;
 };

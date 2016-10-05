@@ -46,25 +46,25 @@ namespace Pixmap {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-template <ColorDepth _Depth, ColorSpace _Space>
-struct ChannelTraits_ {};
+template <EColorDepth _Depth, EColorSpace _Space>
+struct TChannelTraits_ {};
 //----------------------------------------------------------------------------
-template <ColorSpace _Space>
-struct ChannelTraits_<ColorDepth::_8bits, _Space> {
+template <EColorSpace _Space>
+struct TChannelTraits_<EColorDepth::_8bits, _Space> {
     typedef ubyten type;
     static float SRGB_to_Linear(const type& srgb) {
         return Core::SRGB_to_Linear(srgb._data);
     }
 };
-template <ColorSpace _Space>
-struct ChannelTraits_<ColorDepth::_16bits, _Space> {
+template <EColorSpace _Space>
+struct TChannelTraits_<EColorDepth::_16bits, _Space> {
     typedef ushortn type;
     static float SRGB_to_Linear(const type& srgb) {
         return Core::SRGB_to_Linear(srgb.Normalized());
     }
 };
-template <ColorSpace _Space>
-struct ChannelTraits_<ColorDepth::_32bits, _Space> {
+template <EColorSpace _Space>
+struct TChannelTraits_<EColorDepth::_32bits, _Space> {
     typedef uwordn type;
     static float SRGB_to_Linear(const type& srgb) {
         return Core::SRGB_to_Linear(srgb.Normalized());
@@ -72,15 +72,15 @@ struct ChannelTraits_<ColorDepth::_32bits, _Space> {
 };
 //----------------------------------------------------------------------------
 template <>
-struct ChannelTraits_<ColorDepth::_8bits, ColorSpace::Float> {
+struct TChannelTraits_<EColorDepth::_8bits, EColorSpace::Float> {
     typedef ubyten type;
 };
 template <>
-struct ChannelTraits_<ColorDepth::_16bits, ColorSpace::Float> {
+struct TChannelTraits_<EColorDepth::_16bits, EColorSpace::Float> {
     typedef half type;
 };
 template <>
-struct ChannelTraits_<ColorDepth::_32bits, ColorSpace::Float> {
+struct TChannelTraits_<EColorDepth::_32bits, EColorSpace::Float> {
     typedef float type;
 };
 //----------------------------------------------------------------------------
@@ -90,17 +90,17 @@ struct ChannelTraits_<ColorDepth::_32bits, ColorSpace::Float> {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-template <ColorDepth _Depth, ColorMask _Mask, ColorSpace _Space>
-struct PixelTraits_ {
-    typedef typename ChannelTraits_<_Depth, _Space>::type channel_type;
+template <EColorDepth _Depth, EColorMask _Mask, EColorSpace _Space>
+struct TPixelTraits_ {
+    typedef typename TChannelTraits_<_Depth, _Space>::type channel_type;
     typedef channel_type raw_type[size_t(_Mask)];
 
-    static void float_to_raw(raw_type* dst, const FloatImage::color_type* src) {
+    static void float_to_raw(raw_type* dst, const FFloatImage::color_type* src) {
         for (size_t i = 0; i < size_t(_Mask); ++i)
             (*dst)[i] = src->Data()._data[i];
     }
 
-    static void raw_to_float(FloatImage::color_type* dst, const raw_type* src) {
+    static void raw_to_float(FFloatImage::color_type* dst, const raw_type* src) {
         for (size_t i = 0; i < size_t(_Mask); ++i)
             dst->Data()._data[i] = (*src)[i];
         for (size_t i = size_t(_Mask); i < 3; ++i)
@@ -110,18 +110,18 @@ struct PixelTraits_ {
     }
 };
 //----------------------------------------------------------------------------
-template <ColorDepth _Depth, ColorMask _Mask>
-struct PixelTraits_<_Depth, _Mask, ColorSpace::sRGB> {
-    typedef ChannelTraits_<_Depth, ColorSpace::sRGB> channel_traits;
+template <EColorDepth _Depth, EColorMask _Mask>
+struct TPixelTraits_<_Depth, _Mask, EColorSpace::sRGB> {
+    typedef TChannelTraits_<_Depth, EColorSpace::sRGB> channel_traits;
     typedef typename channel_traits::type channel_type;
     typedef channel_type raw_type[size_t(_Mask)];
 
-    static void float_to_raw(raw_type* dst, const FloatImage::color_type* src) {
+    static void float_to_raw(raw_type* dst, const FFloatImage::color_type* src) {
         for (size_t i = 0; i < size_t(_Mask); ++i)
             (*dst)[i] = Saturate(Linear_to_SRGB(src->Data()._data[i]));
     }
 
-    static void raw_to_float(FloatImage::color_type* dst, const raw_type* src) {
+    static void raw_to_float(FFloatImage::color_type* dst, const raw_type* src) {
         for (size_t i = 0; i < size_t(_Mask); ++i)
             dst->Data()._data[i] = channel_traits::SRGB_to_Linear((*src)[i]);
         for (size_t i = size_t(_Mask); i < 3; ++i)
@@ -131,37 +131,37 @@ struct PixelTraits_<_Depth, _Mask, ColorSpace::sRGB> {
     }
 };
 //----------------------------------------------------------------------------
-template <ColorDepth _Depth>
-struct PixelTraits_<_Depth, ColorMask::RGBA, ColorSpace::sRGB> {
-    typedef ChannelTraits_<_Depth, ColorSpace::sRGB> channel_traits;
+template <EColorDepth _Depth>
+struct TPixelTraits_<_Depth, EColorMask::RGBA, EColorSpace::sRGB> {
+    typedef TChannelTraits_<_Depth, EColorSpace::sRGB> channel_traits;
     typedef typename channel_traits::type channel_type;
     typedef channel_type raw_type[4];
 
-    static void float_to_raw(raw_type* dst, const FloatImage::color_type* src) {
+    static void float_to_raw(raw_type* dst, const FFloatImage::color_type* src) {
         for (size_t i = 0; i < 3; ++i)
             (*dst)[i] = Saturate(Linear_to_SRGB(src->Data()._data[i]));
         (*dst)[3] = Saturate(src->Data()._data[3]);
     }
 
-    static void raw_to_float(FloatImage::color_type* dst, const raw_type* src) {
+    static void raw_to_float(FFloatImage::color_type* dst, const raw_type* src) {
         for (size_t i = 0; i < 3; ++i)
             dst->Data()._data[i] = channel_traits::SRGB_to_Linear((*src)[i]);
         dst->Data()._data[3] = (*src)[3];
     }
 };
 //----------------------------------------------------------------------------
-template <ColorDepth _Depth>
-struct PixelTraits_<_Depth, ColorMask::RGB, ColorSpace::YCoCg> {
-    typedef typename ChannelTraits_<_Depth, ColorSpace::YCoCg>::type channel_type;
+template <EColorDepth _Depth>
+struct TPixelTraits_<_Depth, EColorMask::RGB, EColorSpace::YCoCg> {
+    typedef typename TChannelTraits_<_Depth, EColorSpace::YCoCg>::type channel_type;
     typedef channel_type raw_type[3];
 
-    static void float_to_raw(raw_type* dst, const FloatImage::color_type* src) {
+    static void float_to_raw(raw_type* dst, const FFloatImage::color_type* src) {
         const float3 yCoCg = RGB_to_YCoCg(*reinterpret_cast<const float3*>(src));
         for (size_t i = 0; i < 3; ++i)
             (*dst)[i] = yCoCg._data[i];
     }
 
-    static void raw_to_float(FloatImage::color_type* dst, const raw_type* src) {
+    static void raw_to_float(FFloatImage::color_type* dst, const raw_type* src) {
         float3 yCoCg;
         for (size_t i = 0; i < 3; ++i)
             yCoCg._data[i] = (*src)[i];
@@ -180,24 +180,24 @@ struct PixelTraits_<_Depth, ColorMask::RGB, ColorSpace::YCoCg> {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-template <template <typename> class _Functor, typename _Dst, typename _Src, ColorDepth _Depth, ColorMask _Mask, ColorSpace _Space>
+template <template <typename> class _Functor, typename _Dst, typename _Src, EColorDepth _Depth, EColorMask _Mask, EColorSpace _Space>
 static void TypedMaskSpaceConvert_(_Dst* dst, const _Src* src) {
-    typedef PixelTraits_<_Depth, _Mask, _Space> pixel_traits;
+    typedef TPixelTraits_<_Depth, _Mask, _Space> pixel_traits;
     _Functor<pixel_traits>()(dst, src);
 }
 //----------------------------------------------------------------------------
-template <template <typename> class _Functor, typename _Dst, typename _Src, ColorDepth _Depth, ColorMask _Mask >
-static void TypedMaskConvert_(_Dst* dst, const _Src* src, ColorSpace space ) {
+template <template <typename> class _Functor, typename _Dst, typename _Src, EColorDepth _Depth, EColorMask _Mask >
+static void TypedMaskConvert_(_Dst* dst, const _Src* src, EColorSpace space ) {
     switch (space)
     {
-    case Core::Pixmap::ColorSpace::Linear:
-        TypedMaskSpaceConvert_<_Functor, _Dst, _Src, _Depth, _Mask, ColorSpace::Linear>(dst, src);
+    case Core::Pixmap::EColorSpace::Linear:
+        TypedMaskSpaceConvert_<_Functor, _Dst, _Src, _Depth, _Mask, EColorSpace::Linear>(dst, src);
         break;
-    case Core::Pixmap::ColorSpace::sRGB:
-        TypedMaskSpaceConvert_<_Functor, _Dst, _Src, _Depth, _Mask, ColorSpace::sRGB>(dst, src);
+    case Core::Pixmap::EColorSpace::sRGB:
+        TypedMaskSpaceConvert_<_Functor, _Dst, _Src, _Depth, _Mask, EColorSpace::sRGB>(dst, src);
         break;
-    case Core::Pixmap::ColorSpace::YCoCg:
-        TypedMaskSpaceConvert_<_Functor, _Dst, _Src, _Depth, _Mask, ColorSpace::YCoCg>(dst, src);
+    case Core::Pixmap::EColorSpace::YCoCg:
+        TypedMaskSpaceConvert_<_Functor, _Dst, _Src, _Depth, _Mask, EColorSpace::YCoCg>(dst, src);
         break;
     default:
         AssertNotImplemented();
@@ -205,21 +205,21 @@ static void TypedMaskConvert_(_Dst* dst, const _Src* src, ColorSpace space ) {
     }
 }
 //----------------------------------------------------------------------------
-template <template <typename> class _Functor, typename _Dst, typename _Src, ColorDepth _Depth >
-static void TypedConvert_(_Dst* dst, const _Src* src, ColorMask mask, ColorSpace space ) {
+template <template <typename> class _Functor, typename _Dst, typename _Src, EColorDepth _Depth >
+static void TypedConvert_(_Dst* dst, const _Src* src, EColorMask mask, EColorSpace space ) {
     switch (mask)
     {
-    case Core::Pixmap::ColorMask::R:
-        TypedMaskConvert_<_Functor, _Dst, _Src, _Depth, ColorMask::R>(dst, src, space);
+    case Core::Pixmap::EColorMask::R:
+        TypedMaskConvert_<_Functor, _Dst, _Src, _Depth, EColorMask::R>(dst, src, space);
         break;
-    case Core::Pixmap::ColorMask::RG:
-        TypedMaskConvert_<_Functor, _Dst, _Src, _Depth, ColorMask::RG>(dst, src, space);
+    case Core::Pixmap::EColorMask::RG:
+        TypedMaskConvert_<_Functor, _Dst, _Src, _Depth, EColorMask::RG>(dst, src, space);
         break;
-    case Core::Pixmap::ColorMask::RGB:
-        TypedMaskConvert_<_Functor, _Dst, _Src, _Depth, ColorMask::RGB>(dst, src, space);
+    case Core::Pixmap::EColorMask::RGB:
+        TypedMaskConvert_<_Functor, _Dst, _Src, _Depth, EColorMask::RGB>(dst, src, space);
         break;
-    case Core::Pixmap::ColorMask::RGBA:
-        TypedMaskConvert_<_Functor, _Dst, _Src, _Depth, ColorMask::RGBA>(dst, src, space);
+    case Core::Pixmap::EColorMask::RGBA:
+        TypedMaskConvert_<_Functor, _Dst, _Src, _Depth, EColorMask::RGBA>(dst, src, space);
         break;
     default:
         AssertNotImplemented();
@@ -228,17 +228,17 @@ static void TypedConvert_(_Dst* dst, const _Src* src, ColorMask mask, ColorSpace
 }
 //----------------------------------------------------------------------------
 template <template <typename> class _Functor, typename _Dst, typename _Src>
-static void Convert_(_Dst* dst, const _Src* src, ColorDepth depth, ColorMask mask, ColorSpace space ) {
+static void Convert_(_Dst* dst, const _Src* src, EColorDepth depth, EColorMask mask, EColorSpace space ) {
     switch (depth)
     {
-    case Core::Pixmap::ColorDepth::_8bits:
-        TypedConvert_<_Functor, _Dst, _Src, ColorDepth::_8bits>(dst, src, mask, space);
+    case Core::Pixmap::EColorDepth::_8bits:
+        TypedConvert_<_Functor, _Dst, _Src, EColorDepth::_8bits>(dst, src, mask, space);
         break;
-    case Core::Pixmap::ColorDepth::_16bits:
-        TypedConvert_<_Functor, _Dst, _Src, ColorDepth::_16bits>(dst, src, mask, space);
+    case Core::Pixmap::EColorDepth::_16bits:
+        TypedConvert_<_Functor, _Dst, _Src, EColorDepth::_16bits>(dst, src, mask, space);
         break;
-    case Core::Pixmap::ColorDepth::_32bits:
-        TypedConvert_<_Functor, _Dst, _Src, ColorDepth::_32bits>(dst, src, mask, space);
+    case Core::Pixmap::EColorDepth::_32bits:
+        TypedConvert_<_Functor, _Dst, _Src, EColorDepth::_32bits>(dst, src, mask, space);
         break;
     default:
         AssertNotImplemented();
@@ -253,15 +253,15 @@ static void Convert_(_Dst* dst, const _Src* src, ColorDepth depth, ColorMask mas
 namespace {
 //----------------------------------------------------------------------------
 template <typename _PixelTraits>
-struct RawToFloat_ {
-    void operator ()(FloatImage* dst, const Image* src) const {
+struct FRawToFloat_ {
+    void operator ()(FFloatImage* dst, const Image* src) const {
         typedef typename _PixelTraits::raw_type raw_type;
         Assert(sizeof(raw_type) == src->PixelSizeInBytes());
 
         forrange(y, 0, src->Height()) {
             const raw_type* srcPixel = reinterpret_cast<const raw_type*>(src->Scanline(y).data());
 
-            for (FloatImage::color_type& dstPixel : dst->Scanline(y)) {
+            for (FFloatImage::color_type& dstPixel : dst->Scanline(y)) {
                 _PixelTraits::raw_to_float(&dstPixel, srcPixel);
                 srcPixel++;
             }
@@ -270,15 +270,15 @@ struct RawToFloat_ {
 };
 //----------------------------------------------------------------------------
 template <typename _PixelTraits>
-struct FloatToRaw_ {
-    void operator ()(Image* dst, const FloatImage* src) const {
+struct FFloatToRaw_ {
+    void operator ()(Image* dst, const FFloatImage* src) const {
         typedef typename _PixelTraits::raw_type raw_type;
         Assert(sizeof(raw_type) == dst->PixelSizeInBytes());
 
         forrange(y, 0, src->Height()) {
             raw_type* dstPixel = reinterpret_cast<raw_type*>(dst->Scanline(y).data());
 
-            for (const FloatImage::color_type& srcPixel : src->Scanline(y)) {
+            for (const FFloatImage::color_type& srcPixel : src->Scanline(y)) {
                 _PixelTraits::float_to_raw(dstPixel, &srcPixel);
                 dstPixel++;
             }
@@ -295,24 +295,24 @@ SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Pixmap, Image, )
 Image::Image()
 :   _width(0)
 ,   _height(0)
-,   _depth(ColorDepth::_8bits)
-,   _mask(ColorMask::RGBA)
-,   _space(ColorSpace::sRGB) {
+,   _depth(EColorDepth::_8bits)
+,   _mask(EColorMask::RGBA)
+,   _space(EColorSpace::sRGB) {
     Assert((0 != _width) == (0 != _height));
 }
 //----------------------------------------------------------------------------
 Image::Image(
     size_t width, size_t height,
-    ColorDepth depth /* = ColorDepth::_8bits */,
-    ColorMask mask /* = ColorMask::RGBA */,
-    ColorSpace space /* = ColorSpace::sRGB */ )
+    EColorDepth depth /* = EColorDepth::_8bits */,
+    EColorMask mask /* = EColorMask::RGBA */,
+    EColorSpace space /* = EColorSpace::sRGB */ )
 :   _width(width)
 ,   _height(height)
 ,   _depth(depth)
 ,   _mask(mask)
 ,   _space(space) {
     Assert((0 != _width) == (0 != _height));
-    Assert((space == ColorSpace::YCoCg) == (mask == ColorMask::RGBA));
+    Assert((space == EColorSpace::YCoCg) == (mask == EColorMask::RGBA));
 
     const size_t sizeInBytes = (PixelSizeInBytes() * _width * _height);
     _data.Resize_DiscardData(sizeInBytes);
@@ -321,9 +321,9 @@ Image::Image(
 Image::Image(
     raw_data_type&& rdata,
     size_t width, size_t height,
-    ColorDepth depth /* = ColorDepth::_8bits */,
-    ColorMask mask /* = ColorMask::RGBA */,
-    ColorSpace space /* = ColorSpace::sRGB */ )
+    EColorDepth depth /* = EColorDepth::_8bits */,
+    EColorMask mask /* = EColorMask::RGBA */,
+    EColorSpace space /* = EColorSpace::sRGB */ )
 :   _width(width)
 ,   _height(height)
 ,   _depth(depth)
@@ -331,7 +331,7 @@ Image::Image(
 ,   _space(space)
 ,   _data(std::move(rdata)) {
     Assert((0 != _width) == (0 != _height));
-    Assert((space == ColorSpace::YCoCg) == (mask == ColorMask::RGBA));
+    Assert((space == EColorSpace::YCoCg) == (mask == EColorMask::RGBA));
 
 #ifdef WITH_CORE_ASSERT_RELEASE
     const size_t sizeInBytes = (PixelSizeInBytes() * _width * _height);
@@ -352,12 +352,12 @@ size_t Image::PixelSizeInBytes() const {
     return (channelCount * channelSizeInBytes);
 }
 //----------------------------------------------------------------------------
-MemoryView<u8> Image::Scanline(size_t row) {
+TMemoryView<u8> Image::Scanline(size_t row) {
     const size_t scanlineSizeInBytes = (PixelSizeInBytes() * _width);
     return _data.MakeView().SubRange(scanlineSizeInBytes * row, scanlineSizeInBytes);
 }
 //----------------------------------------------------------------------------
-MemoryView<const u8> Image::Scanline(size_t row) const {
+TMemoryView<const u8> Image::Scanline(size_t row) const {
     const size_t scanlineSizeInBytes = (PixelSizeInBytes() * _width);
     return _data.MakeConstView().SubRange(scanlineSizeInBytes * row, scanlineSizeInBytes);
 }
@@ -376,9 +376,9 @@ void Image::Resize_DiscardData(size_t width, size_t height) {
     _data.Resize_DiscardData(sizeInBytes);
 }
 //----------------------------------------------------------------------------
-void Image::Resize_DiscardData(size_t width, size_t height, ColorDepth depth, ColorMask mask, ColorSpace space) {
+void Image::Resize_DiscardData(size_t width, size_t height, EColorDepth depth, EColorMask mask, EColorSpace space) {
     Assert((0 != _width) == (0 != _height));
-    Assert((space == ColorSpace::YCoCg) == (mask == ColorMask::RGBA));
+    Assert((space == EColorSpace::YCoCg) == (mask == EColorMask::RGBA));
 
     if (_width == width &&
         _height == height &&
@@ -397,23 +397,23 @@ void Image::Resize_DiscardData(size_t width, size_t height, ColorDepth depth, Co
     _data.Resize_DiscardData(sizeInBytes);
 }
 //----------------------------------------------------------------------------
-void Image::ConvertFrom(const FloatImage* src) {
+void Image::ConvertFrom(const FFloatImage* src) {
     Assert(nullptr != src);
 
     Resize_DiscardData(src->Width(), src->Height());
-    Convert_<FloatToRaw_>(this, src, _depth, _mask, _space);
+    Convert_<FFloatToRaw_>(this, src, _depth, _mask, _space);
 }
 //----------------------------------------------------------------------------
-void Image::ConvertTo(FloatImage* dst) const {
+void Image::ConvertTo(FFloatImage* dst) const {
     Assert(nullptr != dst);
 
     dst->Resize_DiscardData(_width, _height);
-    Convert_<RawToFloat_>(dst, this, _depth, _mask, _space);
+    Convert_<FRawToFloat_>(dst, this, _depth, _mask, _space);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool Load(Image* dst, const Filename& filename) {
+bool Load(Image* dst, const FFilename& filename) {
     RAWSTORAGE_THREAD_LOCAL(FileSystem, u8) content;
     if (false == VFS_ReadAll(&content, filename, AccessPolicy::Binary))
         return false;
@@ -421,30 +421,30 @@ bool Load(Image* dst, const Filename& filename) {
     return Load(dst, filename, content.MakeConstView());
 }
 //----------------------------------------------------------------------------
-bool Load(Image* dst, const Filename& filename, const MemoryView<const u8>& content) {
+bool Load(Image* dst, const FFilename& filename, const TMemoryView<const u8>& content) {
     Assert(dst);
     Assert(filename.HasExtname());
 
     // supported image file types :
-    const Extname ext = filename.Extname();
-    if (FileSystemConstNames::BmpExt() != ext &&
-        FileSystemConstNames::GifExt() != ext &&
-        FileSystemConstNames::HdrExt() != ext &&
-        FileSystemConstNames::JpgExt() != ext &&
-        FileSystemConstNames::PgmExt() != ext &&
-        FileSystemConstNames::PngExt() != ext &&
-        FileSystemConstNames::PpmExt() != ext &&
-        FileSystemConstNames::PicExt() != ext &&
-        FileSystemConstNames::PsdExt() != ext &&
-        FileSystemConstNames::TgaExt() != ext )
+    const FExtname ext = filename.Extname();
+    if (FFileSystemConstNames::BmpExt() != ext &&
+        FFileSystemConstNames::GifExt() != ext &&
+        FFileSystemConstNames::HdrExt() != ext &&
+        FFileSystemConstNames::JpgExt() != ext &&
+        FFileSystemConstNames::PgmExt() != ext &&
+        FFileSystemConstNames::PngExt() != ext &&
+        FFileSystemConstNames::PpmExt() != ext &&
+        FFileSystemConstNames::PicExt() != ext &&
+        FFileSystemConstNames::PsdExt() != ext &&
+        FFileSystemConstNames::TgaExt() != ext )
         return false;
 
-    if (FileSystemConstNames::HdrExt() == ext) {
+    if (FFileSystemConstNames::HdrExt() == ext) {
         // import .hdr images in a 32bits float buffer :
         const int len = checked_cast<int>(content.size());
 
         int x, y, comp;
-        const ThreadLocalPtr<float, MEMORY_DOMAIN_TAG(Image)> decoded(
+        const TThreadLocalPtr<float, MEMORY_DOMAIN_TAG(Image)> decoded(
             ::stbi_loadf_from_memory(content.data(), len, &x, &y, &comp, 0) );
 
         if (nullptr == decoded)
@@ -452,22 +452,22 @@ bool Load(Image* dst, const Filename& filename, const MemoryView<const u8>& cont
 
         dst->_width = checked_cast<size_t>(x);
         dst->_height = checked_cast<size_t>(y);
-        dst->_depth = ColorDepth::_32bits;
-        dst->_space = ColorSpace::Float;
+        dst->_depth = EColorDepth::_32bits;
+        dst->_space = EColorSpace::Float;
 
         switch (comp)
         {
         case 1:
-            dst->_mask = ColorMask::R;
+            dst->_mask = EColorMask::R;
             break;
         case 2:
-            dst->_mask = ColorMask::RG;
+            dst->_mask = EColorMask::RG;
             break;
         case 3:
-            dst->_mask = ColorMask::RGB;
+            dst->_mask = EColorMask::RGB;
             break;
         case 4:
-            dst->_mask = ColorMask::RGBA;
+            dst->_mask = EColorMask::RGBA;
             break;
 
         default:
@@ -486,29 +486,29 @@ bool Load(Image* dst, const Filename& filename, const MemoryView<const u8>& cont
         const int len = checked_cast<int>(content.size());
 
         int x, y, comp;
-        const ThreadLocalPtr<::stbi_uc, MEMORY_DOMAIN_TAG(Image)> decoded(
+        const TThreadLocalPtr<::stbi_uc, MEMORY_DOMAIN_TAG(Image)> decoded(
             ::stbi_load_from_memory(content.data(), len, &x, &y, &comp, 0) );
         if (nullptr == decoded)
             return false;
 
         dst->_width = checked_cast<size_t>(x);
         dst->_height = checked_cast<size_t>(y);
-        dst->_depth = ColorDepth::_8bits; // sadly stbi doesn't handle 16 bits per channel...
-        dst->_space = ColorSpace::sRGB;
+        dst->_depth = EColorDepth::_8bits; // sadly stbi doesn't handle 16 bits per channel...
+        dst->_space = EColorSpace::sRGB;
 
         switch (comp)
         {
         case 1:
-            dst->_mask = ColorMask::R;
+            dst->_mask = EColorMask::R;
             break;
         case 2:
-            dst->_mask = ColorMask::RG;
+            dst->_mask = EColorMask::RG;
             break;
         case 3:
-            dst->_mask = ColorMask::RGB;
+            dst->_mask = EColorMask::RGB;
             break;
         case 4:
-            dst->_mask = ColorMask::RGBA;
+            dst->_mask = EColorMask::RGBA;
             break;
 
         default:
@@ -538,7 +538,7 @@ static void WriteFuncForSTBIW_(void *context, void *data, int size) {
 }
 } //!namespace
 //----------------------------------------------------------------------------
-bool Save(const Image* src, const Filename& filename) {
+bool Save(const Image* src, const FFilename& filename) {
     MEMORYSTREAM_THREAD_LOCAL(Image) writer;
     if (false == Save(src, filename, &writer))
         return false;
@@ -549,7 +549,7 @@ bool Save(const Image* src, const Filename& filename) {
     return true;
 }
 //----------------------------------------------------------------------------
-bool Save(const Image* src, const Filename& filename, IStreamWriter* writer) {
+bool Save(const Image* src, const FFilename& filename, IStreamWriter* writer) {
     Assert(src);
     Assert(writer);
     Assert(filename.HasExtname());
@@ -564,22 +564,22 @@ bool Save(const Image* src, const Filename& filename, IStreamWriter* writer) {
     const int y = checked_cast<int>(src->_height);
     const int comp = int(src->_mask);
 
-    const Extname ext = filename.Extname();
-    if (FileSystemConstNames::PngExt() == ext) {
-        AssertRelease(ColorDepth::_8bits == src->_depth);
+    const FExtname ext = filename.Extname();
+    if (FFileSystemConstNames::PngExt() == ext) {
+        AssertRelease(EColorDepth::_8bits == src->_depth);
         result = ::stbi_write_png_to_func(&WriteFuncForSTBIW_, writer, x, y, comp, src->_data.data(), 0);
     }
-    else if (FileSystemConstNames::TgaExt() == ext) {
-        AssertRelease(ColorDepth::_8bits == src->_depth);
+    else if (FFileSystemConstNames::TgaExt() == ext) {
+        AssertRelease(EColorDepth::_8bits == src->_depth);
         result = ::stbi_write_tga_to_func(&WriteFuncForSTBIW_, writer, x, y, comp, src->_data.data());
     }
-    else if (FileSystemConstNames::HdrExt() == ext) {
-        AssertRelease(ColorDepth::_32bits == src->_depth);
-        AssertRelease(ColorSpace::Float == src->_space);
+    else if (FFileSystemConstNames::HdrExt() == ext) {
+        AssertRelease(EColorDepth::_32bits == src->_depth);
+        AssertRelease(EColorSpace::Float == src->_space);
         result = ::stbi_write_hdr_to_func(&WriteFuncForSTBIW_, writer, x, y, comp, reinterpret_cast<const float*>(src->_data.data()));
     }
-    else if (FileSystemConstNames::BmpExt() == ext) {
-        AssertRelease(ColorDepth::_8bits == src->_depth);
+    else if (FFileSystemConstNames::BmpExt() == ext) {
+        AssertRelease(EColorDepth::_8bits == src->_depth);
         result = ::stbi_write_bmp_to_func(&WriteFuncForSTBIW_, writer, x, y, comp, src->_data.data());
     }
     else {

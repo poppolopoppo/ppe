@@ -19,29 +19,29 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-hash_t hash_value(const String& str) {
+hash_t hash_value(const FString& str) {
     return hash_string(MakeStringView(str));
 }
 //----------------------------------------------------------------------------
-hash_t hash_value(const WString& wstr) {
+hash_t hash_value(const FWString& wstr) {
     return hash_string(MakeStringView(wstr));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-int Compare(const String& lhs, const String& rhs) {
+int Compare(const FString& lhs, const FString& rhs) {
     return Compare(MakeStringView(lhs), MakeStringView(rhs));
 }
 //----------------------------------------------------------------------------
-int Compare(const WString& lhs, const WString& rhs) {
+int Compare(const FWString& lhs, const FWString& rhs) {
     return Compare(MakeStringView(lhs), MakeStringView(rhs));
 }
 //----------------------------------------------------------------------------
-int CompareI(const String& lhs, const String& rhs) {
+int CompareI(const FString& lhs, const FString& rhs) {
     return CompareI(MakeStringView(lhs), MakeStringView(rhs));
 }
 //----------------------------------------------------------------------------
-int CompareI(const WString& lhs, const WString& rhs) {
+int CompareI(const FWString& lhs, const FWString& rhs) {
     return CompareI(MakeStringView(lhs), MakeStringView(rhs));
 }
 //----------------------------------------------------------------------------
@@ -69,7 +69,7 @@ size_t ToCStr(char *dst, size_t capacity, const wchar_t *wcstr) {
     return ToCStr(dst, capacity, wcstr, ::wcslen(wcstr));
 }
 //----------------------------------------------------------------------------
-size_t ToCStr(char *dst, size_t capacity, const WString& wstr) {
+size_t ToCStr(char *dst, size_t capacity, const FWString& wstr) {
     return ToCStr(dst, capacity, wstr.c_str(), wstr.size());
 }
 //----------------------------------------------------------------------------
@@ -95,15 +95,15 @@ size_t ToWCStr(wchar_t *dst, size_t capacity, const char *cstr) {
     return ToWCStr(dst, capacity, cstr, ::strlen(cstr));
 }
 //----------------------------------------------------------------------------
-size_t ToWCStr(wchar_t *dst, size_t capacity, const String& str) {
+size_t ToWCStr(wchar_t *dst, size_t capacity, const FString& str) {
     return ToWCStr(dst, capacity, str.c_str(), str.size());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-String ToString(const wchar_t *wcstr, size_t length) {
+FString ToString(const wchar_t *wcstr, size_t length) {
     if (0 == length)
-        return String();
+        return FString();
 
     Assert(wcstr);
     STACKLOCAL_POD_ARRAY(char, buffer, (length * 3)/2);
@@ -113,21 +113,21 @@ String ToString(const wchar_t *wcstr, size_t length) {
         AssertNotReached();
 
     Assert(written >= length);
-    return String(buffer.Pointer());
+    return FString(buffer.Pointer());
 }
 //----------------------------------------------------------------------------
-String ToString(const wchar_t *wcstr) {
+FString ToString(const wchar_t *wcstr) {
     Assert(wcstr);
     return ToString(wcstr, ::wcslen(wcstr));
 }
 //----------------------------------------------------------------------------
-String ToString(const WString& wstr) {
+FString ToString(const FWString& wstr) {
     return ToString(wstr.c_str(), wstr.size());
 }
 //----------------------------------------------------------------------------
-WString ToWString(const char *cstr, size_t length) {
+FWString ToWString(const char *cstr, size_t length) {
     if (0 == length)
-        return WString();
+        return FWString();
 
     Assert(cstr);
     STACKLOCAL_POD_ARRAY(wchar_t, buffer, (length * 3)/2);
@@ -137,15 +137,15 @@ WString ToWString(const char *cstr, size_t length) {
         AssertNotReached();
 
     Assert(written >= length);
-    return WString(buffer.Pointer());
+    return FWString(buffer.Pointer());
 }
 //----------------------------------------------------------------------------
-WString ToWString(const char *cstr) {
+FWString ToWString(const char *cstr) {
     Assert(cstr);
     return ToWString(cstr, ::strlen(cstr));
 }
 //----------------------------------------------------------------------------
-WString ToWString(const String& str) {
+FWString ToWString(const FString& str) {
     return ToWString(str.c_str(), str.size());
 }
 //----------------------------------------------------------------------------

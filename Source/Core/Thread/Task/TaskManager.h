@@ -16,30 +16,30 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(TaskCounter);
-class TaskManager;
-class TaskManagerImpl;
+class FTaskManager;
+class FTaskManagerImpl;
 //----------------------------------------------------------------------------
-class TaskWaitHandle {
+class FTaskWaitHandle {
 public:
-    friend class TaskManagerImpl;
+    friend class FTaskManagerImpl;
 
-    TaskWaitHandle();
-    TaskWaitHandle(TaskPriority priority, TaskCounter* counter);
-    ~TaskWaitHandle();
+    FTaskWaitHandle();
+    FTaskWaitHandle(ETaskPriority priority, FTaskCounter* counter);
+    ~FTaskWaitHandle();
 
-    TaskWaitHandle(const TaskWaitHandle& other) = delete;
-    TaskWaitHandle& operator =(const TaskWaitHandle& other) = delete;
+    FTaskWaitHandle(const FTaskWaitHandle& other) = delete;
+    FTaskWaitHandle& operator =(const FTaskWaitHandle& other) = delete;
 
-    TaskWaitHandle(TaskWaitHandle&& rvalue);
-    TaskWaitHandle& operator =(TaskWaitHandle&& rvalue);
+    FTaskWaitHandle(FTaskWaitHandle&& rvalue);
+    FTaskWaitHandle& operator =(FTaskWaitHandle&& rvalue);
 
-    TaskPriority Priority() const { return _priority; }
-    const TaskCounter* Counter() const { return _counter.get(); }
+    ETaskPriority Priority() const { return _priority; }
+    const FTaskCounter* Counter() const { return _counter.get(); }
 
     bool Valid() const { return (nullptr != _counter); }
 
 private:
-    TaskPriority _priority;
+    ETaskPriority _priority;
     PTaskCounter _counter;
 };
 //----------------------------------------------------------------------------
@@ -47,46 +47,46 @@ class ITaskContext {
 public:
     virtual ~ITaskContext() {}
 
-    virtual void Run(TaskWaitHandle* phandle, const MemoryView<const TaskDelegate>& tasks, TaskPriority priority = TaskPriority::Normal) = 0;
-    virtual void WaitFor(TaskWaitHandle& handle) = 0;
-    virtual void RunAndWaitFor(const MemoryView<const TaskDelegate>& tasks, TaskPriority priority = TaskPriority::Normal) = 0;
+    virtual void Run(FTaskWaitHandle* phandle, const TMemoryView<const TaskDelegate>& tasks, ETaskPriority priority = ETaskPriority::Normal) = 0;
+    virtual void WaitFor(FTaskWaitHandle& handle) = 0;
+    virtual void RunAndWaitFor(const TMemoryView<const TaskDelegate>& tasks, ETaskPriority priority = ETaskPriority::Normal) = 0;
 
-    void RunOne(TaskWaitHandle* phandle, const TaskDelegate& task, TaskPriority priority) {
+    void RunOne(FTaskWaitHandle* phandle, const TaskDelegate& task, ETaskPriority priority) {
         Run(phandle, MakeView(&task, &task+1), priority);
     }
 };
 //----------------------------------------------------------------------------
-class TaskManager {
+class FTaskManager {
 public:
-    TaskManager(const char *name, size_t threadTag, size_t workerCount);
-    ~TaskManager();
+    FTaskManager(const char *name, size_t threadTag, size_t workerCount);
+    ~FTaskManager();
 
-    TaskManager(const TaskManager& ) = delete;
-    TaskManager& operator =(const TaskManager& ) = delete;
+    FTaskManager(const FTaskManager& ) = delete;
+    FTaskManager& operator =(const FTaskManager& ) = delete;
 
     const char* Name() const { return _name; }
     size_t ThreadTag() const { return _threadTag; }
     size_t WorkerCount() const { return _workerCount; }
 
-    void Start(const MemoryView<const size_t>& threadAffinities);
+    void Start(const TMemoryView<const size_t>& threadAffinities);
     void Shutdown();
 
-    void Run(const MemoryView<const TaskDelegate>& tasks, TaskPriority priority = TaskPriority::Normal) const;
-    void RunAndWaitFor(const MemoryView<const TaskDelegate>& tasks, TaskPriority priority = TaskPriority::Normal) const;
-    void RunAndWaitFor(const MemoryView<Task* const>& tasks, TaskPriority priority = TaskPriority::Normal) const;
+    void Run(const TMemoryView<const TaskDelegate>& tasks, ETaskPriority priority = ETaskPriority::Normal) const;
+    void RunAndWaitFor(const TMemoryView<const TaskDelegate>& tasks, ETaskPriority priority = ETaskPriority::Normal) const;
+    void RunAndWaitFor(const TMemoryView<FTask* const>& tasks, ETaskPriority priority = ETaskPriority::Normal) const;
 
-    void Run(const TaskDelegate& task, TaskPriority priority = TaskPriority::Normal) const {
+    void Run(const TaskDelegate& task, ETaskPriority priority = ETaskPriority::Normal) const {
         Run(MakeView(&task, &task+1), priority);
     }
 
-    void RunAndWaitFor(const TaskDelegate& task, TaskPriority priority = TaskPriority::Normal) const {
+    void RunAndWaitFor(const TaskDelegate& task, ETaskPriority priority = ETaskPriority::Normal) const {
         RunAndWaitFor(MakeView(&task, &task+1), priority);
     }
 
-    TaskManagerImpl* Pimpl() const { return _pimpl.get(); }
+    FTaskManagerImpl* Pimpl() const { return _pimpl.get(); }
 
 private:
-    UniquePtr<TaskManagerImpl> _pimpl;
+    TUniquePtr<FTaskManagerImpl> _pimpl;
 
     const char* _name;
     const size_t _threadTag;

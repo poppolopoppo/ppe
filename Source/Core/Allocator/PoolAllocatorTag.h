@@ -9,7 +9,7 @@
 #endif
 
 namespace Core {
-class MemoryPoolBase;
+class FMemoryPoolBase;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -17,10 +17,10 @@ class MemoryPoolBase;
     namespace PoolTag { \
         struct _NameId { \
         public: \
-            static const char* Name() { return (_NameStr); } \
+            static const char* FName() { return (_NameStr); } \
             \
-            static void Register(MemoryPoolBase* ppool); \
-            static void Unregister(MemoryPoolBase* ppool); \
+            static void Register(FMemoryPoolBase* ppool); \
+            static void Unregister(FMemoryPoolBase* ppool); \
             \
             static void Start(); \
             static void Shutdown(); \

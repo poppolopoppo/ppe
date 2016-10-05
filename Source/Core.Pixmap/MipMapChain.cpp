@@ -17,7 +17,7 @@ namespace Pixmap {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static float AlphaTestCoverage_(const FloatImage* img, float cutoff, float scale = 1.0f) {
+static float AlphaTestCoverage_(const FFloatImage* img, float cutoff, float scale = 1.0f) {
     Assert(img);
     Assert(img->Width() > 1);
     Assert(img->Height() > 1);
@@ -64,7 +64,7 @@ static float AlphaTestCoverage_(const FloatImage* img, float cutoff, float scale
     return coverage;
 }
 //----------------------------------------------------------------------------
-static void ScaleAlphaTestCoverage_(FloatImage* img, float cutoff, float desiredCoverage) {
+static void ScaleAlphaTestCoverage_(FFloatImage* img, float cutoff, float desiredCoverage) {
     float minAlphaScale = 0.0f;
     float maxAlphaScale = 4.0f;
     float alphaScale = 1.0f;
@@ -93,12 +93,12 @@ static void ScaleAlphaTestCoverage_(FloatImage* img, float cutoff, float desired
         currentCoverage = AlphaTestCoverage_(img, cutoff, alphaScale);
     }
 
-    LOG(Info, L"[Pixmap] Upscaling alpha coverage of a {0}x{1} FloatImage from {2} to {3}, desired = {4} (x{5})",
+    LOG(Info, L"[Pixmap] Upscaling alpha coverage of a {0}x{1} FFloatImage from {2} to {3}, desired = {4} (x{5})",
         img->Width(), img->Height(),
         initialCoverage, currentCoverage, desiredCoverage, alphaScale );
 
     forrange(y, 0, img->Height()) {
-        const MemoryView<FloatImage::color_type> scanline = img->Scanline(y);
+        const TMemoryView<FFloatImage::color_type> scanline = img->Scanline(y);
         forrange(x, 0, img->Width()) {
             float& alpha = scanline[x].a();
             alpha = Saturate(alpha * alphaScale);
@@ -110,27 +110,27 @@ static void ScaleAlphaTestCoverage_(FloatImage* img, float cutoff, float desired
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Pixmap, MipMapChain, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Pixmap, FMipMapChain, );
 //----------------------------------------------------------------------------
-MipMapChain::MipMapChain() {}
+FMipMapChain::FMipMapChain() {}
 //----------------------------------------------------------------------------
-MipMapChain::~MipMapChain() {}
+FMipMapChain::~FMipMapChain() {}
 //----------------------------------------------------------------------------
-void MipMapChain::Generate(FloatImage* topMip, bool hq/* = false */) {
+void FMipMapChain::Generate(FFloatImage* topMip, bool hq/* = false */) {
     Assert(topMip);
     Assert( topMip->Width() >= 4 &&
             topMip->Height() >= 4 );
 
     const size_t mipCount = Meta::FloorLog2(Min(topMip->Width(), topMip->Height())) - 1;
 
-    LOG(Info, L"[Pixmap] Generating {2} mips from a FloatImage {0}x{1}",
+    LOG(Info, L"[Pixmap] Generating {2} mips from a FFloatImage {0}x{1}",
         topMip->Width(), topMip->Height(),
         mipCount );
 
     _chain.clear();
     _chain.Push(topMip);
 
-    const FloatImage* src = topMip;
+    const FFloatImage* src = topMip;
 
     size_t w = src->Width();
     size_t h = src->Height();
@@ -139,7 +139,7 @@ void MipMapChain::Generate(FloatImage* topMip, bool hq/* = false */) {
         w = w>>1;
         h = h>>1;
 
-        PFloatImage dst = new FloatImage(w, h);
+        PFloatImage dst = new FFloatImage(w, h);
         Resize(dst.get(), src);
 
         if (false == hq)
@@ -151,7 +151,7 @@ void MipMapChain::Generate(FloatImage* topMip, bool hq/* = false */) {
     Assert(_chain.size() == mipCount);
 }
 //----------------------------------------------------------------------------
-void MipMapChain::PreserveAlphaTestCoverage(float cutoff) {
+void FMipMapChain::PreserveAlphaTestCoverage(float cutoff) {
     if (_chain.size() < 2)
         return;
 

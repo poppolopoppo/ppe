@@ -20,32 +20,32 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, MaterialParameterConstant<T>, template <typename T>);
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, TMaterialParameterConstant<T>, template <typename T>);
 //----------------------------------------------------------------------------
-CONSTANTFIELD_EXTERNALTEMPLATE_DEF(MaterialParameterConstant, );
+CONSTANTFIELD_EXTERNALTEMPLATE_DEF(TMaterialParameterConstant, );
 //----------------------------------------------------------------------------
 template <typename T>
-MaterialParameterConstant<T>::MaterialParameterConstant(T&& rvalue)
+TMaterialParameterConstant<T>::TMaterialParameterConstant(T&& rvalue)
 :   _value(std::move(rvalue)) {}
 //----------------------------------------------------------------------------
 template <typename T>
-MaterialParameterConstant<T>::MaterialParameterConstant(const T& value)
+TMaterialParameterConstant<T>::TMaterialParameterConstant(const T& value)
 :   _value(value) {}
 //----------------------------------------------------------------------------
 template <typename T>
-MaterialParameterConstant<T>::~MaterialParameterConstant() {}
+TMaterialParameterConstant<T>::~TMaterialParameterConstant() {}
 //----------------------------------------------------------------------------
 template <typename T>
-MaterialParameterInfo MaterialParameterConstant<T>::Info() const {
-    const MaterialParameterInfo info{
-        ITypedMaterialParameter<T>::Type(), 
-        MaterialVariability::Batch
+FMaterialParameterInfo TMaterialParameterConstant<T>::Info() const {
+    const FMaterialParameterInfo info{
+        ITypedMaterialParameter<T>::EType(), 
+        EMaterialVariability::Batch
     };
     return info;
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void MaterialParameterConstant<T>::Eval(const MaterialParameterContext& , void *dst, size_t sizeInBytes) {
+void TMaterialParameterConstant<T>::Eval(const FMaterialParameterContext& , void *dst, size_t sizeInBytes) {
     Assert(dst);
     Assert(sizeInBytes == sizeof(T));
 
@@ -54,47 +54,47 @@ void MaterialParameterConstant<T>::Eval(const MaterialParameterContext& , void *
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-static IMaterialParameter *CreateOptionalParameter_(Graphics::ConstantFieldType type) {
+static IMaterialParameter *CreateOptionalParameter_(Graphics::EConstantFieldType type) {
     switch (type)
     {
-    case Graphics::ConstantFieldType::Bool:
-        return new MaterialParameterConstant<bool>(bool(0));
+    case Graphics::EConstantFieldType::Bool:
+        return new TMaterialParameterConstant<bool>(bool(0));
 
-    case Graphics::ConstantFieldType::Int:
-        return new MaterialParameterConstant<i32>(i32(0));
-    case Graphics::ConstantFieldType::Int2:
-        return new MaterialParameterConstant<i322>(i322(0));
-    case Graphics::ConstantFieldType::Int3:
-        return new MaterialParameterConstant<i323>(i323(0));
-    case Graphics::ConstantFieldType::Int4:
-        return new MaterialParameterConstant<i324>(i324(0));
+    case Graphics::EConstantFieldType::Int:
+        return new TMaterialParameterConstant<i32>(i32(0));
+    case Graphics::EConstantFieldType::Int2:
+        return new TMaterialParameterConstant<i322>(i322(0));
+    case Graphics::EConstantFieldType::Int3:
+        return new TMaterialParameterConstant<i323>(i323(0));
+    case Graphics::EConstantFieldType::Int4:
+        return new TMaterialParameterConstant<i324>(i324(0));
 
-    case Graphics::ConstantFieldType::UInt:
-        return new MaterialParameterConstant<u32>(u32(0));
-    case Graphics::ConstantFieldType::UInt2:
-        return new MaterialParameterConstant<u322>(u322(0));
-    case Graphics::ConstantFieldType::UInt3:
-        return new MaterialParameterConstant<u323>(u323(0));
-    case Graphics::ConstantFieldType::UInt4:
-        return new MaterialParameterConstant<u324>(u324(0));
+    case Graphics::EConstantFieldType::UInt:
+        return new TMaterialParameterConstant<u32>(u32(0));
+    case Graphics::EConstantFieldType::UInt2:
+        return new TMaterialParameterConstant<u322>(u322(0));
+    case Graphics::EConstantFieldType::UInt3:
+        return new TMaterialParameterConstant<u323>(u323(0));
+    case Graphics::EConstantFieldType::UInt4:
+        return new TMaterialParameterConstant<u324>(u324(0));
 
-    case Graphics::ConstantFieldType::Float:
-        return new MaterialParameterConstant<float>(float(0));
-    case Graphics::ConstantFieldType::Float2:
-        return new MaterialParameterConstant<float2>(float2(0));
-    case Graphics::ConstantFieldType::Float3:
-        return new MaterialParameterConstant<float3>(float3(0));
-    case Graphics::ConstantFieldType::Float4:
-        return new MaterialParameterConstant<float4>(float4(0));
+    case Graphics::EConstantFieldType::Float:
+        return new TMaterialParameterConstant<float>(float(0));
+    case Graphics::EConstantFieldType::Float2:
+        return new TMaterialParameterConstant<float2>(float2(0));
+    case Graphics::EConstantFieldType::Float3:
+        return new TMaterialParameterConstant<float3>(float3(0));
+    case Graphics::EConstantFieldType::Float4:
+        return new TMaterialParameterConstant<float4>(float4(0));
 
-    case Graphics::ConstantFieldType::Float3x3:
-        return new MaterialParameterConstant<float3x3>(float3x3::Identity());
-    case Graphics::ConstantFieldType::Float4x3:
-        return new MaterialParameterConstant<float4x3>(float4x3::Identity());
-    case Graphics::ConstantFieldType::Float3x4:
-        return new MaterialParameterConstant<float3x4>(float3x4::Identity());
-    case Graphics::ConstantFieldType::Float4x4:
-        return new MaterialParameterConstant<float4x4>(float4x4::Identity());
+    case Graphics::EConstantFieldType::Float3x3:
+        return new TMaterialParameterConstant<float3x3>(float3x3::Identity());
+    case Graphics::EConstantFieldType::Float4x3:
+        return new TMaterialParameterConstant<float4x3>(float4x3::Identity());
+    case Graphics::EConstantFieldType::Float3x4:
+        return new TMaterialParameterConstant<float3x4>(float3x4::Identity());
+    case Graphics::EConstantFieldType::Float4x4:
+        return new TMaterialParameterConstant<float4x4>(float4x4::Identity());
 
     default:
         AssertNotImplemented();
@@ -104,9 +104,9 @@ static IMaterialParameter *CreateOptionalParameter_(Graphics::ConstantFieldType 
 //----------------------------------------------------------------------------
 bool TryCreateOptionalMaterialParameter(
     PMaterialParameter *param,
-    const MaterialParameterMutableContext& context,
-    const Graphics::BindName& name,
-    const Graphics::ConstantField& field ) {
+    const FMaterialParameterMutableContext& context,
+    const Graphics::FBindName& name,
+    const Graphics::FConstantField& field ) {
     Assert(param);
     Assert(context.Scene);
     Assert(context.MaterialEffect);
@@ -122,7 +122,7 @@ bool TryCreateOptionalMaterialParameter(
         return false;
     }
 
-    const Graphics::BindName parameterName(&cstr[lengthof(uniOptional) - 1]);
+    const Graphics::FBindName parameterName(&cstr[lengthof(uniOptional) - 1]);
 
     PMaterialParameter source;
     if (GetOrCreateMaterialParameter(&source, context, parameterName, field))

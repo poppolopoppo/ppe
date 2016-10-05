@@ -26,7 +26,7 @@ static bool IsDefaultValue_(const PMetaAtom& atom) {
     return (nullptr == atom || atom->IsDefaultValue() );
 }
 //----------------------------------------------------------------------------
-static bool IsDefaultValue_(const Name& name) {
+static bool IsDefaultValue_(const FName& name) {
     return name.empty();
 }
 //----------------------------------------------------------------------------
@@ -94,12 +94,12 @@ static bool DeepEquals_(const OpaqueData& lhs, const OpaqueData& rhs) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
-    StringView MetaType< T >::Name() { return MakeStringView(STRINGIZE(_Name)); } \
-    T MetaType< T >::DefaultValue() { return T(); } \
-    bool MetaType< T >::IsDefaultValue(const T& value) { return IsDefaultValue_(value); } \
-    hash_t MetaType< T >::HashValue(const T& value) { return HashValue_(value); } \
-    bool MetaType< T >::DeepEquals(const T& lhs, const T& rhs) { return DeepEquals_(lhs, rhs); } \
-    const MetaTypeScalarTraits< T >* MetaType< T >::VirtualTraits() { return MetaTypeScalarTraits< T >::Instance(); }
+    FStringView TMetaType< T >::Name() { return MakeStringView(STRINGIZE(_Name)); } \
+    T TMetaType< T >::DefaultValue() { return T(); } \
+    bool TMetaType< T >::IsDefaultValue(const T& value) { return IsDefaultValue_(value); } \
+    hash_t TMetaType< T >::HashValue(const T& value) { return HashValue_(value); } \
+    bool TMetaType< T >::DeepEquals(const T& lhs, const T& rhs) { return DeepEquals_(lhs, rhs); } \
+    const TMetaTypeScalarTraits< T >* TMetaType< T >::VirtualTraits() { return TMetaTypeScalarTraits< T >::Instance(); }
 //----------------------------------------------------------------------------
 FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
 //----------------------------------------------------------------------------
@@ -107,10 +107,10 @@ FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const AbstractMetaTypeScalarTraits* ScalarTraitsFromTypeId(MetaTypeId typeId) {
+const FAbstractMetaTypeScalarTraits* ScalarTraitsFromTypeId(FMetaTypeId typeId) {
     switch (typeId) {
 #define CASE_METATYPE_ID(_Name, T, _TypeId, _Unused) \
-    case _TypeId: return MetaType< T >::VirtualTraits();
+    case _TypeId: return TMetaType< T >::VirtualTraits();
 FOREACH_CORE_RTTI_NATIVE_TYPES(CASE_METATYPE_ID)
 #undef CASE_METATYPE_ID
 
@@ -121,7 +121,7 @@ FOREACH_CORE_RTTI_NATIVE_TYPES(CASE_METATYPE_ID)
     return nullptr;
 }
 //----------------------------------------------------------------------------
-MetaTypeInfo ScalarTypeInfoFromTypeId(MetaTypeId typeId) {
+FMetaTypeInfo ScalarTypeInfoFromTypeId(FMetaTypeId typeId) {
     switch (typeId) {
 #define CASE_METATYPE_ID(_Name, T, _TypeId, _Unused) \
     case _TypeId: return TypeInfo< T >();
@@ -132,7 +132,7 @@ FOREACH_CORE_RTTI_NATIVE_TYPES(CASE_METATYPE_ID)
         break;
     }
     AssertNotReached(); // typeId is not a native scalar !
-    return MetaTypeInfo();
+    return FMetaTypeInfo();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -144,8 +144,8 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-String ToString(const RTTI::Name& name) {
-    return StringFormat("Name:#{0}", name.MakeView());
+FString ToString(const RTTI::FName& name) {
+    return StringFormat("FName:#{0}", name.MakeView());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -154,15 +154,15 @@ hash_t hash_value(const RTTI::BinaryData& rawdata) {
     return hash_mem(rawdata.MakeConstView());
 }
 //----------------------------------------------------------------------------
-String ToString(const RTTI::BinaryData& rawdata) {
+FString ToString(const RTTI::BinaryData& rawdata) {
     return StringFormat("BinaryData:#{0}", rawdata.SizeInBytes());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-String ToString(const RTTI::OpaqueData& opaqueData) {
+FString ToString(const RTTI::OpaqueData& opaqueData) {
     return StringFormat("OpaqueData:#{0}",
-        static_cast<const RTTI::Dictionary<RTTI::Name, RTTI::PMetaAtom>&>(opaqueData));
+        static_cast<const RTTI::TDictionary<RTTI::FName, RTTI::PMetaAtom>&>(opaqueData));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

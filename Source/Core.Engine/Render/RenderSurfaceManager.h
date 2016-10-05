@@ -19,26 +19,26 @@ namespace Engine {
 //----------------------------------------------------------------------------
 FWD_REFPTR(AbstractRenderSurface);
 //----------------------------------------------------------------------------
-class RenderSurfaceManager : public Meta::ThreadResource {
+class FRenderSurfaceManager : public Meta::FThreadResource {
 public:
-    RenderSurfaceManager(   const FileSystem::char_type *virtualDir,
+    FRenderSurfaceManager(   const FileSystem::char_type *virtualDir,
                             const FileSystem::char_type *renderTargetName,
                             const FileSystem::char_type *depthStencilName );
-    ~RenderSurfaceManager();
+    ~FRenderSurfaceManager();
 
-    RenderSurfaceManager(const RenderSurfaceManager& ) = delete;
-    RenderSurfaceManager& operator =(const RenderSurfaceManager& ) = delete;
+    FRenderSurfaceManager(const FRenderSurfaceManager& ) = delete;
+    FRenderSurfaceManager& operator =(const FRenderSurfaceManager& ) = delete;
 
-    const Dirpath& VirtualDir() const { return _virtualDir; }
-    const Basename& RenderTargetName() const { return _renderTargetName; }
-    const Basename& DepthStencilName() const { return _depthStencilName; }
+    const FDirpath& VirtualDir() const { return _virtualDir; }
+    const FBasename& RenderTargetName() const { return _renderTargetName; }
+    const FBasename& DepthStencilName() const { return _depthStencilName; }
 
-    void Register(AbstractRenderSurface *renderSurface);
-    void Unregister(AbstractRenderSurface *renderSurface);
+    void Register(FAbstractRenderSurface *renderSurface);
+    void Unregister(FAbstractRenderSurface *renderSurface);
 
-    Dirpath Alias(const AbstractRenderSurface *renderSurface) const;
-    bool TryUnalias(const Dirpath& dirpath, PAbstractRenderSurface *renderSurface) const;
-    AbstractRenderSurface *Unalias(const Dirpath& dirpath) const;
+    FDirpath Alias(const FAbstractRenderSurface *renderSurface) const;
+    bool TryUnalias(const FDirpath& dirpath, PAbstractRenderSurface *renderSurface) const;
+    FAbstractRenderSurface *Unalias(const FDirpath& dirpath) const;
 
     void Clear();
 
@@ -46,11 +46,11 @@ public:
     void Shutdown(Graphics::IDeviceAPIEncapsulator *device);
 
 private:
-    const Dirpath _virtualDir;
-    const Basename _renderTargetName;
-    const Basename _depthStencilName;
+    const FDirpath _virtualDir;
+    const FBasename _renderTargetName;
+    const FBasename _depthStencilName;
 
-    HASHMAP(Service, Dirname, PAbstractRenderSurface) _surfaces;
+    HASHMAP(TService, FDirname, PAbstractRenderSurface) _surfaces;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

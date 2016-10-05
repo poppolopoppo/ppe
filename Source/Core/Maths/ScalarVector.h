@@ -19,38 +19,38 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-class ScalarVector {
+class TScalarVector {
 public:
     template <typename U, size_t _Dim2>
-    friend class ScalarVector;
+    friend class TScalarVector;
     template <typename U, size_t _Width, size_t _Height>
-    friend class ScalarMatrix;
+    friend class TScalarMatrix;
 
-    ScalarVector();
-    explicit ScalarVector(Meta::noinit_tag);
-    ~ScalarVector();
+    TScalarVector();
+    explicit TScalarVector(Meta::noinit_tag);
+    ~TScalarVector();
 
-    ScalarVector(T broadcast);
+    TScalarVector(T broadcast);
     template <typename U>
-    ScalarVector(U broadcast) : ScalarVector(checked_cast<T>(broadcast)) {}
-    ScalarVector(std::initializer_list<T> values);
+    TScalarVector(U broadcast) : TScalarVector(checked_cast<T>(broadcast)) {}
+    TScalarVector(std::initializer_list<T> values);
 
-    FORCE_INLINE ScalarVector(T v0, T v1);
-    FORCE_INLINE ScalarVector(T v0, T v1, T v2);
-    FORCE_INLINE ScalarVector(T v0, T v1, T v2, T v3);
+    FORCE_INLINE TScalarVector(T v0, T v1);
+    FORCE_INLINE TScalarVector(T v0, T v1, T v2);
+    FORCE_INLINE TScalarVector(T v0, T v1, T v2, T v3);
 
-    ScalarVector(T extend, const ScalarVector<T, _Dim - 1>& other);
-    ScalarVector(const ScalarVector<T, _Dim - 1>& other, T extend);
+    TScalarVector(T extend, const TScalarVector<T, _Dim - 1>& other);
+    TScalarVector(const TScalarVector<T, _Dim - 1>& other, T extend);
 
-    ScalarVector(const MemoryView<const T>& data);
+    TScalarVector(const TMemoryView<const T>& data);
 
-    ScalarVector(const ScalarVector& other);
-    ScalarVector& operator =(const ScalarVector& other);
+    TScalarVector(const TScalarVector& other);
+    TScalarVector& operator =(const TScalarVector& other);
 
     template <typename U>
-    ScalarVector(const ScalarVector<U, _Dim>& other);
+    TScalarVector(const TScalarVector<U, _Dim>& other);
     template <typename U>
-    ScalarVector& operator =(const ScalarVector<U, _Dim>& other);
+    TScalarVector& operator =(const TScalarVector<U, _Dim>& other);
 
     template <size_t _Idx>
     FORCE_INLINE const T& get() const { STATIC_ASSERT(_Idx < _Dim); return _data[_Idx]; }
@@ -71,16 +71,16 @@ public:
     FORCE_INLINE T& operator [](size_t i);
 
 #define DECL_SCALARVECTOR_OP_SELF_LHS(_Op) \
-    ScalarVector&   operator _Op (T scalar); \
-    ScalarVector&   operator _Op (const ScalarVector& other); \
+    TScalarVector&   operator _Op (T scalar); \
+    TScalarVector&   operator _Op (const TScalarVector& other); \
     template <typename U> \
-    ScalarVector&   operator _Op (const ScalarVector<U, _Dim>& other);
+    TScalarVector&   operator _Op (const TScalarVector<U, _Dim>& other);
 
 #define DECL_SCALARVECTOR_OP_LHS(_Op) \
-    ScalarVector    operator _Op (T scalar) const; \
-    ScalarVector    operator _Op (const ScalarVector& other) const; \
+    TScalarVector    operator _Op (T scalar) const; \
+    TScalarVector    operator _Op (const TScalarVector& other) const; \
     template <typename U> \
-    ScalarVector    operator _Op (const ScalarVector<U, _Dim>& other) const;
+    TScalarVector    operator _Op (const TScalarVector<U, _Dim>& other) const;
 
     DECL_SCALARVECTOR_OP_SELF_LHS(+=)
     DECL_SCALARVECTOR_OP_SELF_LHS(-=)
@@ -96,66 +96,66 @@ public:
     DECL_SCALARVECTOR_OP_LHS(^)
     DECL_SCALARVECTOR_OP_LHS(%)
 
-    ScalarVector    operator -() const;
+    TScalarVector    operator -() const;
 
 #undef DECL_SCALARVECTOR_OP_SELF_LHS
 #undef DECL_SCALARVECTOR_OP_LHS
 
-    bool operator ==(const ScalarVector& other) const;
-    bool operator !=(const ScalarVector& other) const { return !operator ==(other); }
+    bool operator ==(const TScalarVector& other) const;
+    bool operator !=(const TScalarVector& other) const { return !operator ==(other); }
 
     void Broadcast(T scalar);
 
-    void Swap(ScalarVector& other);
+    void Swap(TScalarVector& other);
 
-    MemoryView<T> MakeView() { return Core::MakeView(_data); }
-    MemoryView<const T> MakeView() const { return Core::MakeView(_data); }
+    TMemoryView<T> MakeView() { return Core::MakeView(_data); }
+    TMemoryView<const T> MakeView() const { return Core::MakeView(_data); }
 
-    friend hash_t hash_value(const ScalarVector& v) { return hash_as_pod(v._data); }
+    friend hash_t hash_value(const TScalarVector& v) { return hash_as_pod(v._data); }
 
-    ScalarVector<T, _Dim - 1> Dehomogenize() const;
-    ScalarVector<T, _Dim + 1> Extend(T value) const;
+    TScalarVector<T, _Dim - 1> Dehomogenize() const;
+    TScalarVector<T, _Dim + 1> Extend(T value) const;
 
-    FORCE_INLINE ScalarVector<T, _Dim + 1> OneExtend() const { return Extend(T(1)); }
-    FORCE_INLINE ScalarVector<T, _Dim + 1> ZeroExtend() const { return Extend(T(0)); }
+    FORCE_INLINE TScalarVector<T, _Dim + 1> OneExtend() const { return Extend(T(1)); }
+    FORCE_INLINE TScalarVector<T, _Dim + 1> ZeroExtend() const { return Extend(T(0)); }
 
-    bool AllLessThan(const ScalarVector& other) const;
-    bool AllLessOrEqual(const ScalarVector& other) const;
-    bool AllGreaterThan(const ScalarVector& other) const;
-    bool AllGreaterOrEqual(const ScalarVector& other) const;
+    bool AllLessThan(const TScalarVector& other) const;
+    bool AllLessOrEqual(const TScalarVector& other) const;
+    bool AllGreaterThan(const TScalarVector& other) const;
+    bool AllGreaterOrEqual(const TScalarVector& other) const;
 
     template <typename U>
-    ScalarVector<U, _Dim> Cast() const;
+    TScalarVector<U, _Dim> Cast() const;
 
-    static ScalarVector MinusOne() { return ScalarVector(T(-1)); }
-    static ScalarVector One() { return ScalarVector(T(1)); }
-    static ScalarVector Zero() { return ScalarVector(T(0)); }
+    static TScalarVector MinusOne() { return TScalarVector(T(-1)); }
+    static TScalarVector One() { return TScalarVector(T(1)); }
+    static TScalarVector Zero() { return TScalarVector(T(0)); }
 
-    static ScalarVector MaxValue() { return ScalarVector(NumericLimits<T>::MaxValue()); }
-    static ScalarVector MinValue() { return ScalarVector(NumericLimits<T>::MinValue()); }
+    static TScalarVector MaxValue() { return TScalarVector(TNumericLimits<T>::MaxValue()); }
+    static TScalarVector MinValue() { return TScalarVector(TNumericLimits<T>::MinValue()); }
 
-    static ScalarVector Homogeneous() { ScalarVector r(0); r._data[_Dim - 1] = 1; return r; }
+    static TScalarVector Homogeneous() { TScalarVector r(0); r._data[_Dim - 1] = 1; return r; }
 
-    static ScalarVector X() { ScalarVector r(0); r.get<0>() = 1; return r; }
-    static ScalarVector Y() { ScalarVector r(0); r.get<1>() = 1; return r; }
-    static ScalarVector Z() { ScalarVector r(0); r.get<2>() = 1; return r; }
-    static ScalarVector W() { ScalarVector r(0); r.get<3>() = 1; return r; }
+    static TScalarVector X() { TScalarVector r(0); r.get<0>() = 1; return r; }
+    static TScalarVector Y() { TScalarVector r(0); r.get<1>() = 1; return r; }
+    static TScalarVector Z() { TScalarVector r(0); r.get<2>() = 1; return r; }
+    static TScalarVector W() { TScalarVector r(0); r.get<3>() = 1; return r; }
 
-    static ScalarVector Left() { STATIC_ASSERT(3 == _Dim); return ScalarVector(-1,0,0); }
-    static ScalarVector Right() { STATIC_ASSERT(3 == _Dim); return ScalarVector(1,0,0); }
+    static TScalarVector Left() { STATIC_ASSERT(3 == _Dim); return TScalarVector(-1,0,0); }
+    static TScalarVector Right() { STATIC_ASSERT(3 == _Dim); return TScalarVector(1,0,0); }
 
-    static ScalarVector Up() { STATIC_ASSERT(3 == _Dim); return ScalarVector(0,1,0); }
-    static ScalarVector Down() { STATIC_ASSERT(3 == _Dim); return ScalarVector(0,-1,0); }
+    static TScalarVector Up() { STATIC_ASSERT(3 == _Dim); return TScalarVector(0,1,0); }
+    static TScalarVector Down() { STATIC_ASSERT(3 == _Dim); return TScalarVector(0,-1,0); }
 
-    static ScalarVector Forward() { STATIC_ASSERT(3 == _Dim); return ScalarVector(0,0,1); }
-    static ScalarVector Backward() { STATIC_ASSERT(3 == _Dim); return ScalarVector(0,0,-1); }
+    static TScalarVector Forward() { STATIC_ASSERT(3 == _Dim); return TScalarVector(0,0,1); }
+    static TScalarVector Backward() { STATIC_ASSERT(3 == _Dim); return TScalarVector(0,0,-1); }
 
     template <size_t _0, size_t _1>
-    ScalarVector<T, 2> Shuffle2() const { return ScalarVector<T, 2>(get<_0>(), get<_1>()); }
+    TScalarVector<T, 2> Shuffle2() const { return TScalarVector<T, 2>(get<_0>(), get<_1>()); }
     template <size_t _0, size_t _1, size_t _2>
-    ScalarVector<T, 3> Shuffle3() const { return ScalarVector<T, 3>(get<_0>(), get<_1>(), get<_2>()); }
+    TScalarVector<T, 3> Shuffle3() const { return TScalarVector<T, 3>(get<_0>(), get<_1>(), get<_2>()); }
     template <size_t _0, size_t _1, size_t _2, size_t _3>
-    ScalarVector<T, 4> Shuffle4() const { return ScalarVector<T, 4>(get<_0>(), get<_1>(), get<_2>(), get<_3>()); }
+    TScalarVector<T, 4> Shuffle4() const { return TScalarVector<T, 4>(get<_0>(), get<_1>(), get<_2>(), get<_3>()); }
 
 public:
     STATIC_CONST_INTEGRAL(size_t, Dim, _Dim);
@@ -166,11 +166,11 @@ public:
     // All shuffle specializations :
 
 #define DEF_SCALARVECTOR_SHUFFLE2(_Name, _0, _1) \
-    ScalarVector<T, 2> _Name() const { return Shuffle2<_0, _1>(); }
+    TScalarVector<T, 2> _Name() const { return Shuffle2<_0, _1>(); }
 #define DEF_SCALARVECTOR_SHUFFLE3(_Name, _0, _1, _2) \
-    ScalarVector<T, 3> _Name() const { return Shuffle3<_0, _1, _2>(); }
+    TScalarVector<T, 3> _Name() const { return Shuffle3<_0, _1, _2>(); }
 #define DEF_SCALARVECTOR_SHUFFLE4(_Name, _0, _1, _2, _3) \
-    ScalarVector<T, 4> _Name() const { return Shuffle4<_0, _1, _2, _3>(); }
+    TScalarVector<T, 4> _Name() const { return Shuffle4<_0, _1, _2, _3>(); }
 
 #   include "Core/Maths/ScalarVector.Shuffle-inl.h"
 
@@ -181,9 +181,9 @@ public:
 //----------------------------------------------------------------------------
 #define DECL_SCALARVECTOR_OP_RHS(_Op) \
     template <typename T, size_t _Dim> \
-    ScalarVector<T, _Dim> operator _Op(T lhs, const ScalarVector<T, _Dim>& rhs); \
+    TScalarVector<T, _Dim> operator _Op(T lhs, const TScalarVector<T, _Dim>& rhs); \
     template <typename U, typename T, size_t _Dim> \
-    ScalarVector<T, _Dim> operator _Op(U lhs, const ScalarVector<T, _Dim>& rhs);
+    TScalarVector<T, _Dim> operator _Op(U lhs, const TScalarVector<T, _Dim>& rhs);
 //----------------------------------------------------------------------------
 DECL_SCALARVECTOR_OP_RHS(+)
 DECL_SCALARVECTOR_OP_RHS(-)
@@ -199,7 +199,7 @@ DECL_SCALARVECTOR_OP_RHS(%)
 template <typename _Char, typename _Traits, typename T, size_t _Dim >
 std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
-    const ScalarVector<T, _Dim>& v) {
+    const TScalarVector<T, _Dim>& v) {
     oss << '[' << v._data[0];
     forrange(i, 1, _Dim)
         oss << ", " << v._data[i];
@@ -208,14 +208,14 @@ std::basic_ostream<_Char, _Traits>& operator <<(
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-void swap(ScalarVector<T, _Dim>& lhs, ScalarVector<T, _Dim>& rhs) {
+void swap(TScalarVector<T, _Dim>& lhs, TScalarVector<T, _Dim>& rhs) {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-struct NumericLimits< ScalarVector<T, _Dim> > {
-    typedef ScalarVector<T, _Dim> value_type;
-    typedef NumericLimits<T> scalar_type;
+struct TNumericLimits< TScalarVector<T, _Dim> > {
+    typedef TScalarVector<T, _Dim> value_type;
+    typedef TNumericLimits<T> scalar_type;
 
     STATIC_CONST_INTEGRAL(bool, is_integer, scalar_type::is_integer);
     STATIC_CONST_INTEGRAL(bool, is_modulo,  scalar_type::is_modulo);

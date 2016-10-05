@@ -6,13 +6,13 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-BitSet::BitSet(word_t *storage, size_t size)
+FBitSet::FBitSet(word_t *storage, size_t size)
 :   _storage(storage)
 ,   _size(size) {
     Assert(_storage || 0 == _size);
 }
 //----------------------------------------------------------------------------
-bool BitSet::AllTrue() const {
+bool FBitSet::AllTrue() const {
     const size_t wordCount = WordCapacity(_size);
     Assert(wordCount);
 
@@ -32,7 +32,7 @@ bool BitSet::AllTrue() const {
     }
 }
 //----------------------------------------------------------------------------
-bool BitSet::AllFalse() const {
+bool FBitSet::AllFalse() const {
     const size_t wordCount = WordCapacity(_size);
     Assert(wordCount);
 
@@ -50,7 +50,7 @@ bool BitSet::AllFalse() const {
     }
 }
 //----------------------------------------------------------------------------
-bool BitSet::AnyTrue() const {
+bool FBitSet::AnyTrue() const {
     const size_t wordCount = WordCapacity(_size);
     Assert(wordCount);
 
@@ -68,7 +68,7 @@ bool BitSet::AnyTrue() const {
     }
 }
 //----------------------------------------------------------------------------
-bool BitSet::AnyFalse() const {
+bool FBitSet::AnyFalse() const {
     const size_t wordCount = WordCapacity(_size);
     Assert(wordCount);
 
@@ -87,7 +87,7 @@ bool BitSet::AnyFalse() const {
     }
 }
 //----------------------------------------------------------------------------
-void BitSet::ResetAll(bool value) {
+void FBitSet::ResetAll(bool value) {
     const size_t wordCount = WordCapacity(_size);
     Assert(wordCount);
 
@@ -103,7 +103,7 @@ void BitSet::ResetAll(bool value) {
     }
 }
 //----------------------------------------------------------------------------
-void BitSet::CopyTo(BitSet* other) const {
+void FBitSet::CopyTo(FBitSet* other) const {
     Assert(other);
     Assert(other->_size == _size);
 

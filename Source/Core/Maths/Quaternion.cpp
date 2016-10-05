@@ -6,30 +6,30 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool Quaternion::IsIdentity() const {
+bool FQuaternion::IsIdentity() const {
     return  _value.x() == 0 &&
             _value.y() == 0 &&
             _value.z() == 0 &&
             _value.w() == 1;
 }
 //----------------------------------------------------------------------------
-bool Quaternion::IsNormalized() const {
+bool FQuaternion::IsNormalized() const {
     return std::abs(LengthSq() - 1) <= F_Epsilon;
 }
 //----------------------------------------------------------------------------
-float Quaternion::Angle() const {
+float FQuaternion::Angle() const {
     Assert(std::abs(Dot3(_value, _value)) > F_Epsilon);
     return (2.0f * std::acos(_value.w()));
 }
 //----------------------------------------------------------------------------
-float3 Quaternion::Axis() const {
+float3 FQuaternion::Axis() const {
     const float length = Dot3(_value, _value);
     Assert(std::abs(length) > F_Epsilon);
     const float inv = 1.0f / length;
     return float3(inv * _value.x(), inv * _value.y(), inv * _value.z());
 }
 //----------------------------------------------------------------------------
-Quaternion Quaternion::Exponential() const {
+FQuaternion FQuaternion::Exponential() const {
     float angle = Angle();
     float fsin = std::sin(angle);
 
@@ -46,10 +46,10 @@ Quaternion Quaternion::Exponential() const {
     }
 
     result.w() = std::cos(angle);
-    return Quaternion(result);
+    return FQuaternion(result);
 }
 //----------------------------------------------------------------------------
-Quaternion Quaternion::Logarithm() const {
+FQuaternion FQuaternion::Logarithm() const {
     float4 result;
 
     if (std::abs(_value.w()) < 1.0f) {
@@ -71,26 +71,26 @@ Quaternion Quaternion::Logarithm() const {
     }
 
     result.w() = 0.0f;
-    return Quaternion(result);
+    return FQuaternion(result);
 }
 //----------------------------------------------------------------------------
-Quaternion Quaternion::Invert() const {
+FQuaternion FQuaternion::Invert() const {
     float lengthSq = LengthSq();
     Assert(lengthSq > F_Epsilon);
 
     float inv = 1.0f / lengthSq;
-    return Quaternion(-x() * inv, -y() * inv, -z() * inv, w() * inv);
+    return FQuaternion(-x() * inv, -y() * inv, -z() * inv, w() * inv);
 }
 //----------------------------------------------------------------------------
-Quaternion Quaternion::Normalize() const {
+FQuaternion FQuaternion::Normalize() const {
     float length = Length();
     Assert(length > F_Epsilon);
 
     float inv = 1.0f / length;
-    return Quaternion(_value * inv);
+    return FQuaternion(_value * inv);
 }
 //----------------------------------------------------------------------------
-float3 Quaternion::Transform(const float3& value) const {
+float3 FQuaternion::Transform(const float3& value) const {
     float3 vector;
     float x = _value.x() + _value.x();
     float y = _value.y() + _value.y();
@@ -112,7 +112,7 @@ float3 Quaternion::Transform(const float3& value) const {
     return vector;
 }
 //----------------------------------------------------------------------------
-Quaternion& Quaternion::operator *=(const Quaternion& other) {
+FQuaternion& FQuaternion::operator *=(const FQuaternion& other) {
     float lx = _value.x();
     float ly = _value.y();
     float lz = _value.z();
@@ -131,7 +131,7 @@ Quaternion& Quaternion::operator *=(const Quaternion& other) {
     return *this;
 }
 //----------------------------------------------------------------------------
-Quaternion Quaternion::operator *(const Quaternion& other) const {
+FQuaternion FQuaternion::operator *(const FQuaternion& other) const {
     float lx = _value.x();
     float ly = _value.y();
     float lz = _value.z();
@@ -142,7 +142,7 @@ Quaternion Quaternion::operator *(const Quaternion& other) const {
     float rz = other._value.z();
     float rw = other._value.w();
 
-    return Quaternion(  (rx * lw + lx * rw + ry * lz) - (rz * ly),
+    return FQuaternion(  (rx * lw + lx * rw + ry * lz) - (rz * ly),
                         (ry * lw + ly * rw + rz * lx) - (rx * lz),
                         (rz * lw + lz * rw + rx * ly) - (ry * lx),
                         (rw * lw) - (rx * lx + ry * ly + rz * lz) );

@@ -10,25 +10,25 @@
 
 namespace Core {
 namespace Graphics {
-class DeviceResource;
+class FDeviceResource;
 class IDeviceAPIEncapsulator;
-class PresentationParameters;
+class FPresentationParameters;
 
 FWD_REFPTR(RenderTarget);
 FWD_REFPTR(DepthStencil);
 
-class DX11DeviceAPIEncapsulator;
+class FDX11DeviceAPIEncapsulator;
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class DX11DeviceWrapper {
+class FDX11DeviceWrapper {
 public:
-    DX11DeviceWrapper();
-    ~DX11DeviceWrapper();
+    FDX11DeviceWrapper();
+    ~FDX11DeviceWrapper();
 
-    DX11DeviceWrapper(const DX11DeviceWrapper& ) = delete;
-    DX11DeviceWrapper& operator =(const DX11DeviceWrapper& ) = delete;
+    FDX11DeviceWrapper(const FDX11DeviceWrapper& ) = delete;
+    FDX11DeviceWrapper& operator =(const FDX11DeviceWrapper& ) = delete;
 
     ::IDXGISwapChain *SwapChain() const { return _dx11SwapChain.Get(); }
     ::ID3D11Device *Device() const { return _dx11Device.Get(); }
@@ -42,15 +42,15 @@ public:
     const PRenderTarget& BackBufferRenderTarget() const { return _backBufferRenderTarget; }
     const PDepthStencil& BackBufferDepthStencil() const { return _backBufferDepthStencil; }
 
-    void Create(DX11DeviceAPIEncapsulator *device, void *windowHandle, const PresentationParameters& presentationParameters);
-    void Destroy(DX11DeviceAPIEncapsulator *device);
+    void Create(FDX11DeviceAPIEncapsulator *device, void *windowHandle, const FPresentationParameters& presentationParameters);
+    void Destroy(FDX11DeviceAPIEncapsulator *device);
 
-    void CheckDeviceErrors(const DX11DeviceAPIEncapsulator *device) const;
+    void CheckDeviceErrors(const FDX11DeviceAPIEncapsulator *device) const;
 
 private:
-    ComPtr<::ID3D11DeviceContext> _dx11ImmediateContext;
-    ComPtr<::ID3D11Device> _dx11Device;
-    ComPtr<::IDXGISwapChain> _dx11SwapChain;
+    TComPtr<::ID3D11DeviceContext> _dx11ImmediateContext;
+    TComPtr<::ID3D11Device> _dx11Device;
+    TComPtr<::IDXGISwapChain> _dx11SwapChain;
 
     PRenderTarget _backBufferRenderTarget;
     PDepthStencil _backBufferDepthStencil;
@@ -63,7 +63,7 @@ private:
 #endif
 
 #ifdef WITH_DIRECTX11_DEBUG_MARKERS
-    ComPtr<::ID3DUserDefinedAnnotation> _dx11UserDefinedAnnotation;
+    TComPtr<::ID3DUserDefinedAnnotation> _dx11UserDefinedAnnotation;
 #endif
 };
 //----------------------------------------------------------------------------
@@ -72,7 +72,7 @@ private:
 void DX11ThrowIfFailed(
     const IDeviceAPIEncapsulator *encapsulator,
     HRESULT result,
-    const DeviceResource *optionalResource,
+    const FDeviceResource *optionalResource,
     const char *call,
     const char *file, const size_t line,
     const char *func);
@@ -88,7 +88,7 @@ void DX11ThrowIfFailed(
     }
 //----------------------------------------------------------------------------
 void DX11SetDeviceResourceName(::ID3D11DeviceChild *deviceChild, const char *name, size_t length);
-void DX11SetDeviceResourceNameIFP(::ID3D11DeviceChild *deviceChild, const DeviceResource *owner);
+void DX11SetDeviceResourceNameIFP(::ID3D11DeviceChild *deviceChild, const FDeviceResource *owner);
 //----------------------------------------------------------------------------
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
 template <size_t _Dim>

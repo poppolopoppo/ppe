@@ -10,7 +10,7 @@ namespace RTTI {
     FWD_REFPTR(MetaAtom);
     FWD_REFPTR(MetaObject);
     FWD_REFPTR(MetaTransaction);
-    class Name;
+    class FName;
 }}
 
 namespace Core {
@@ -19,33 +19,33 @@ FWD_REFPTR(ParseExpression);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ParseContext {
+class FParseContext {
 public:
-    explicit ParseContext(const ParseContext *parent = nullptr);
-    virtual ~ParseContext();
+    explicit FParseContext(const FParseContext *parent = nullptr);
+    virtual ~FParseContext();
 
-    const ParseContext *Parent() const { return _parent; }
+    const FParseContext *Parent() const { return _parent; }
 
-    RTTI::MetaObject *ScopeObject() const { return _scopeObject.get(); }
-    void SetScopeObject(RTTI::MetaObject *object);
+    RTTI::FMetaObject *ScopeObject() const { return _scopeObject.get(); }
+    void SetScopeObject(RTTI::FMetaObject *object);
 
-    RTTI::MetaAtom *GetLocal(const RTTI::Name& name) const;
+    RTTI::FMetaAtom *GetLocal(const RTTI::FName& name) const;
 
-    void AddLocal(const ParseExpression* expr, const RTTI::Name& name, RTTI::MetaAtom *value);
-    void RemoveLocal(const ParseExpression* expr, const RTTI::Name& name, RTTI::MetaAtom *value);
+    void AddLocal(const FParseExpression* expr, const RTTI::FName& name, RTTI::FMetaAtom *value);
+    void RemoveLocal(const FParseExpression* expr, const RTTI::FName& name, RTTI::FMetaAtom *value);
 
-    RTTI::MetaAtom *GetGlobal(const RTTI::Name& name) const;
+    RTTI::FMetaAtom *GetGlobal(const RTTI::FName& name) const;
 
-    void AddGlobal(const ParseExpression* expr, const RTTI::Name& name, RTTI::MetaAtom *value);
-    void RemoveGlobal(const ParseExpression* expr, const RTTI::Name& name, RTTI::MetaAtom *value);
+    void AddGlobal(const FParseExpression* expr, const RTTI::FName& name, RTTI::FMetaAtom *value);
+    void RemoveGlobal(const FParseExpression* expr, const RTTI::FName& name, RTTI::FMetaAtom *value);
 
-    RTTI::MetaAtom *GetAny(const RTTI::Name& name) const;
+    RTTI::FMetaAtom *GetAny(const RTTI::FName& name) const;
 
 private:
-    const ParseContext *_parent;
+    const FParseContext *_parent;
     RTTI::PMetaObject _scopeObject;
-    HASHMAP_THREAD_LOCAL(Parser, RTTI::Name, RTTI::PMetaAtom) _localScope;
-    mutable HASHMAP_THREAD_LOCAL(Parser, RTTI::Name, RTTI::PMetaAtom) _globalScope;
+    HASHMAP_THREAD_LOCAL(Parser, RTTI::FName, RTTI::PMetaAtom) _localScope;
+    mutable HASHMAP_THREAD_LOCAL(Parser, RTTI::FName, RTTI::PMetaAtom) _globalScope;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -11,22 +11,22 @@ FWD_REFPTR(EffectDescriptor);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class IEffectPasses : public RefCountable {
+class IEffectPasses : public FRefCountable {
 public:
     virtual ~IEffectPasses() {}
 
-    virtual size_t FillEffectPasses(const EffectDescriptor **pOutPasses, const size_t capacity) const = 0;
+    virtual size_t FillEffectPasses(const FEffectDescriptor **pOutPasses, const size_t capacity) const = 0;
 
     template <size_t _Dim>
-    size_t FillEffectPasses(const EffectDescriptor *(&pOutPasses)[_Dim]) const {
+    size_t FillEffectPasses(const FEffectDescriptor *(&pOutPasses)[_Dim]) const {
         return FillEffectPasses(pOutPasses, _Dim);
     }
 };
 //----------------------------------------------------------------------------
-typedef Core::RefPtr<IEffectPasses> PEffectPasses;
-typedef Core::RefPtr<const IEffectPasses> PCEffectPasses;
-typedef Core::SafePtr<IEffectPasses> SEffectPasses;
-typedef Core::SafePtr<const IEffectPasses> SCEffectPasses;
+typedef Core::TRefPtr<IEffectPasses> PEffectPasses;
+typedef Core::TRefPtr<const IEffectPasses> PCEffectPasses;
+typedef Core::TSafePtr<IEffectPasses> SEffectPasses;
+typedef Core::TSafePtr<const IEffectPasses> SCEffectPasses;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

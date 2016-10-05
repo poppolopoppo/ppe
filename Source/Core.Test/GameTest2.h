@@ -24,38 +24,38 @@ FWD_REFPTR(AbstractRenderSurface);
 FWD_REFPTR(KeyboardMouseCameraController);
 FWD_REFPTR(Material);
 FWD_REFPTR(PerspectiveCamera);
-struct RenderCommandRegistration;
-typedef UniquePtr<const RenderCommandRegistration> URenderCommand;
+struct FRenderCommandRegistration;
+typedef TUniquePtr<const FRenderCommandRegistration> URenderCommand;
 FWD_REFPTR(RenderContext);
 FWD_REFPTR(Scene);
 FWD_REFPTR(World);
 template <typename T>
-class MaterialParameterBlock;
+class TMaterialParameterBlock;
 }
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class GameTest2 : public Core::Application::ApplicationWindow {
+class FGameTest2 : public Core::Application::FApplicationWindow {
 public:
-    typedef Core::Application::ApplicationWindow parent_type;
+    typedef Core::Application::FApplicationWindow parent_type;
 
-    GameTest2() : GameTest2(L"Core Game Window Test Pipa Bimba 2") {}
-    explicit GameTest2(const wchar_t *appname);
-    virtual ~GameTest2();
+    FGameTest2() : FGameTest2(L"Core Game Window Test Pipa Bimba 2") {}
+    explicit FGameTest2(const wchar_t *appname);
+    virtual ~FGameTest2();
 
     virtual void Start() override;
     virtual void Shutdown() override;
 
 protected:
-    virtual void Initialize(const Timeline& time) override;
+    virtual void Initialize(const FTimeline& time) override;
     virtual void Destroy() override;
 
     virtual void LoadContent() override;
     virtual void UnloadContent() override;
 
-    virtual void Update(const Timeline& time) override;
-    virtual void Draw(const Timeline& time) override;
+    virtual void Update(const FTimeline& time) override;
+    virtual void Draw(const FTimeline& time) override;
 
     virtual void Present() override;
 
@@ -73,7 +73,7 @@ private:
 
     Engine::PMaterial _materials[3];
     Engine::URenderCommand _commands[3];
-    RefPtr<Engine::MaterialParameterBlock<float4x4> > _transforms[3];
+    TRefPtr<Engine::TMaterialParameterBlock<float4x4> > _transforms[3];
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

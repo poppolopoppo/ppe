@@ -15,33 +15,33 @@ namespace Parser {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-class ParseResult {
+class TParseResult {
 public:
     typedef T value_type;
 
-    ParseResult()
-        : _succeed(false), _message(nullptr), _site(Lexer::Location::None()) {}
+    TParseResult()
+        : _succeed(false), _message(nullptr), _site(FLexer::FLocation::None()) {}
 
-    ParseResult(T&& rvalue, const Lexer::Location& site)
+    TParseResult(T&& rvalue, const FLexer::FLocation& site)
         : _succeed(true), _value(std::move(rvalue)), _message(nullptr), _site(site) {
         Assert(_site.FileName);
     }
 
-    ParseResult(const char *message, Lexer::Symbol::TypeId expected, const Lexer::Location& site)
+    TParseResult(const char *message, FLexer::FSymbol::ETypeId expected, const FLexer::FLocation& site)
         : _succeed(false), _message(message), _expected(expected), _site(site) {
         Assert(_site.FileName);
     }
 
-    ~ParseResult() {}
+    ~TParseResult() {}
 
-    ParseResult(ParseResult&& rvalue)
+    TParseResult(TParseResult&& rvalue)
         :   _succeed(std::move(rvalue._succeed))
         ,   _value(std::move(rvalue._value))
         ,   _message(std::move(rvalue._message))
         ,   _expected(std::move(rvalue._expected))
         ,   _site(std::move(rvalue._site)) {}
 
-    ParseResult& operator =(ParseResult&& rvalue) {
+    TParseResult& operator =(TParseResult&& rvalue) {
         _succeed = std::move(rvalue._succeed);
         _value = std::move(rvalue._value);
         _message = std::move(rvalue._message);
@@ -56,25 +56,25 @@ public:
     const T& Value() const { Assert(_succeed); return _value; }
 
     const char *Message() const { Assert(!_succeed); return _message; }
-    Lexer::Symbol::TypeId Expected() const { Assert(!_succeed); return _expected; }
+    FLexer::FSymbol::ETypeId Expected() const { Assert(!_succeed); return _expected; }
 
-    const Lexer::Location& Site() const { return _site; }
+    const FLexer::FLocation& Site() const { return _site; }
 
-    static ParseResult Success(T&& rvalue, const Lexer::Location& site) {
-        return ParseResult(std::move(rvalue), site);
+    static TParseResult Success(T&& rvalue, const FLexer::FLocation& site) {
+        return TParseResult(std::move(rvalue), site);
     }
 
-    static ParseResult Success(const T& value, const Lexer::Location& site) {
+    static TParseResult Success(const T& value, const FLexer::FLocation& site) {
         T rvalue(value);
-        return ParseResult(std::move(rvalue), site);
+        return TParseResult(std::move(rvalue), site);
     }
 
-    static ParseResult Failure(const char *message, Lexer::Symbol::TypeId expected, const Lexer::Location& site) {
-        return ParseResult(message, expected, site);
+    static TParseResult Failure(const char *message, FLexer::FSymbol::ETypeId expected, const FLexer::FLocation& site) {
+        return TParseResult(message, expected, site);
     }
 
-    static ParseResult Unexpected(Lexer::Symbol::TypeId expected, const Lexer::Match *found, const ParseList& input) {
-        return ParseResult("unexpected match", expected, found ? found->Site() : input.Site());
+    static TParseResult Unexpected(FLexer::FSymbol::ETypeId expected, const FLexer::FMatch *found, const FParseList& input) {
+        return TParseResult("unexpected match", expected, found ? found->Site() : input.Site());
     }
 
 private:
@@ -83,9 +83,9 @@ private:
     T _value;
 
     const char *_message;
-    Lexer::Symbol::TypeId _expected;
+    FLexer::FSymbol::ETypeId _expected;
 
-    Lexer::Location _site;
+    FLexer::FLocation _site;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

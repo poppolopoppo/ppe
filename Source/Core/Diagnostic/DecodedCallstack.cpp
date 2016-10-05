@@ -8,15 +8,15 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DecodedCallstack::Frame::Frame()
+FDecodedCallstack::FFrame::FFrame()
 : _address(nullptr), _line(0) {}
 //----------------------------------------------------------------------------
-DecodedCallstack::Frame::Frame(void* address, const wchar_t* symbol, const wchar_t* filename, size_t line)
+FDecodedCallstack::FFrame::FFrame(void* address, const wchar_t* symbol, const wchar_t* filename, size_t line)
 : _address(address), _symbol(symbol), _filename(filename), _line(line) {}
 //----------------------------------------------------------------------------
-DecodedCallstack::Frame::~Frame() {}
+FDecodedCallstack::FFrame::~FFrame() {}
 //----------------------------------------------------------------------------
-DecodedCallstack::Frame::Frame(Frame&& rvalue)
+FDecodedCallstack::FFrame::FFrame(FFrame&& rvalue)
 :   _address(rvalue._address)
 ,   _symbol(std::move(rvalue._symbol))
 ,   _filename(std::move(rvalue._filename))
@@ -25,7 +25,7 @@ DecodedCallstack::Frame::Frame(Frame&& rvalue)
     rvalue._line = 0;
 }
 //----------------------------------------------------------------------------
-DecodedCallstack::Frame& DecodedCallstack::Frame::operator =(Frame&& rvalue) {
+FDecodedCallstack::FFrame& FDecodedCallstack::FFrame::operator =(FFrame&& rvalue) {
     _address = rvalue._address;
     _symbol = std::move(rvalue._symbol);
     _filename = std::move(rvalue._filename);
@@ -39,41 +39,41 @@ DecodedCallstack::Frame& DecodedCallstack::Frame::operator =(Frame&& rvalue) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DecodedCallstack::DecodedCallstack()
+FDecodedCallstack::FDecodedCallstack()
 : _hash(0), _depth(0) {}
 //----------------------------------------------------------------------------
-DecodedCallstack::DecodedCallstack(const Callstack& callstack)
+FDecodedCallstack::FDecodedCallstack(const FCallstack& callstack)
 : _hash(0), _depth(0) {
     callstack.Decode(this);
 }
 //----------------------------------------------------------------------------
-DecodedCallstack::~DecodedCallstack() {
+FDecodedCallstack::~FDecodedCallstack() {
     // manually call the destructor since it's a raw storage
-    Frame* p = reinterpret_cast<Frame *>(&_frames);
+    FFrame* p = reinterpret_cast<FFrame *>(&_frames);
     for (size_t i = 0; i < _depth; ++i, ++p)
-        p->~Frame();
+        p->~FFrame();
 }
 //----------------------------------------------------------------------------
-DecodedCallstack::DecodedCallstack(DecodedCallstack&& rvalue)
+FDecodedCallstack::FDecodedCallstack(FDecodedCallstack&& rvalue)
 : _hash(0), _depth(0) {
     operator =(std::move(rvalue));
 }
 //----------------------------------------------------------------------------
-DecodedCallstack& DecodedCallstack::operator = (DecodedCallstack&& rvalue) {
+FDecodedCallstack& FDecodedCallstack::operator = (FDecodedCallstack&& rvalue) {
     // manually call the destructor since it's a raw storage
-    Frame* p = reinterpret_cast<Frame *>(&_frames);
+    FFrame* p = reinterpret_cast<FFrame *>(&_frames);
     for (size_t i = 0; i < _depth; ++i, ++p)
-        p->~Frame();
+        p->~FFrame();
 
     _hash = rvalue._hash;
     _depth = rvalue._depth;
 
     // manually move the objects since it's a raw storage
-    Frame* dst = reinterpret_cast<Frame *>(&_frames);
-    Frame* src = reinterpret_cast<Frame *>(&rvalue._frames);
+    FFrame* dst = reinterpret_cast<FFrame *>(&_frames);
+    FFrame* src = reinterpret_cast<FFrame *>(&rvalue._frames);
     for (size_t i = 0; i < _depth; ++i, ++dst, ++src) {
-        new ((void*)dst) Frame(std::move(*src));
-        src->~Frame();
+        new ((void*)dst) FFrame(std::move(*src));
+        src->~FFrame();
     }
 
     rvalue._hash = 0;

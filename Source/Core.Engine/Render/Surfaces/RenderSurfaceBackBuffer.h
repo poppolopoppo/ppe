@@ -14,18 +14,18 @@ namespace Engine {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(RenderSurfaceBackBuffer);
-class RenderSurfaceBackBuffer : public AbstractRenderSurface {
+class FRenderSurfaceBackBuffer : public FAbstractRenderSurface {
 public:
-    enum Flags {
-        RenderTarget = 1,
-        DepthStencil = 2,
+    enum EFlags {
+        FRenderTarget = 1,
+        FDepthStencil = 2,
         RenderTarget_DepthStencil = 3,
     };
 
-    RenderSurfaceBackBuffer(String&& name, Flags selected);
-    virtual ~RenderSurfaceBackBuffer();
+    FRenderSurfaceBackBuffer(FString&& name, EFlags selected);
+    virtual ~FRenderSurfaceBackBuffer();
 
-    Flags Selected() const { return _selected; }
+    EFlags Selected() const { return _selected; }
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
@@ -39,7 +39,7 @@ protected:
                                     Graphics::PCDepthStencil& pDepthStencil ) override;
 
 private:
-    Flags _selected;
+    EFlags _selected;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -11,77 +11,77 @@ namespace Timely {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Normalized {
+class FNormalized {
 public:
-    Normalized();
-    ~Normalized();
+    FNormalized();
+    ~FNormalized();
 
-    Normalized(const Timeline& time, const Timespan& duration);
-    Normalized(const Timepoint& start, const Timespan& duration);
+    FNormalized(const FTimeline& time, const Timespan& duration);
+    FNormalized(const FTimepoint& start, const Timespan& duration);
 
-    void Start(const Timeline& time, const Timespan& duration);
-    void Start(const Timepoint& start, const Timespan& duration);
+    void Start(const FTimeline& time, const Timespan& duration);
+    void Start(const FTimepoint& start, const Timespan& duration);
 
-    float Eval(const Timeline& time) const;
+    float Eval(const FTimeline& time) const;
 
 private:
-    Timepoint _start;
-    Timepoint _stop;
+    FTimepoint _start;
+    FTimepoint _stop;
 };
 //----------------------------------------------------------------------------
-class Pulsar {
+class FPulsar {
 public:
-    Pulsar();
-    ~Pulsar();
+    FPulsar();
+    ~FPulsar();
 
-    Pulsar(const Timeline& time, const Timespan& duration);
-    Pulsar(const Timepoint& start, const Timespan& duration);
+    FPulsar(const FTimeline& time, const Timespan& duration);
+    FPulsar(const FTimepoint& start, const Timespan& duration);
 
-    void Start(const Timeline& time, const Timespan& duration);
-    void Start(const Timepoint& start, const Timespan& duration);
+    void Start(const FTimeline& time, const Timespan& duration);
+    void Start(const FTimepoint& start, const Timespan& duration);
 
-    float Eval(const Timeline& time) const;
+    float Eval(const FTimeline& time) const;
 
 private:
-    Timepoint _start;
-    Timepoint _stop;
+    FTimepoint _start;
+    FTimepoint _stop;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, typename _Eval = Normalized>
-class Lerp : private _Eval {
+template <typename T, typename _Eval = FNormalized>
+class TLerp : private _Eval {
 public:
-    Lerp(const T& v0, const T& v1);
-    ~Lerp();
+    TLerp(const T& v0, const T& v1);
+    ~TLerp();
 
-    Lerp(const T& v0, const T& v1, const Timeline& time, const Timespan& duration);
-    Lerp(const T& v0, const T& v1, const Timepoint& start, const Timespan& duration);
+    TLerp(const T& v0, const T& v1, const FTimeline& time, const Timespan& duration);
+    TLerp(const T& v0, const T& v1, const FTimepoint& start, const Timespan& duration);
 
     using _Eval::Start;
 
     void SetRange(const T& v0, const T& v1);
 
-    T Eval(const Timeline& time) const;
+    T Eval(const FTimeline& time) const;
 
 private:
     T _v0, _v1;
 };
 //----------------------------------------------------------------------------
-template <typename T, typename _Eval = Normalized>
-class Smoothstep : private _Eval {
+template <typename T, typename _Eval = FNormalized>
+class TSmoothstep : private _Eval {
 public:
-    Smoothstep(const T& v0, const T& v1);
-    ~Smoothstep();
+    TSmoothstep(const T& v0, const T& v1);
+    ~TSmoothstep();
 
-    Smoothstep(const T& v0, const T& v1, const Timeline& time, const Timespan& duration);
-    Smoothstep(const T& v0, const T& v1, const Timepoint& start, const Timespan& duration);
+    TSmoothstep(const T& v0, const T& v1, const FTimeline& time, const Timespan& duration);
+    TSmoothstep(const T& v0, const T& v1, const FTimepoint& start, const Timespan& duration);
 
     using _Eval::Start;
 
     void SetRange(const T& v0, const T& v1);
 
-    T Eval(const Timeline& time) const;
+    T Eval(const FTimeline& time) const;
 
 private:
     T _v0, _v1;
@@ -90,16 +90,16 @@ private:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-using NormalizedLerp = Lerp<T, Normalized>;
+using TNormalizedLerp = TLerp<T, FNormalized>;
 //----------------------------------------------------------------------------
 template <typename T>
-using NormalizedSmoothstep = Smoothstep<T, Normalized>;
+using TNormalizedSmoothstep = TSmoothstep<T, FNormalized>;
 //----------------------------------------------------------------------------
 template <typename T>
-using PulsarLerp = Lerp<T, Pulsar>;
+using TPulsarLerp = TLerp<T, FPulsar>;
 //----------------------------------------------------------------------------
 template <typename T>
-using PulsarSmoothstep = Smoothstep<T, Pulsar>;
+using TPulsarSmoothstep = TSmoothstep<T, FPulsar>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

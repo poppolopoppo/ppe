@@ -8,7 +8,7 @@
 #include "Core/Memory/RefPtr.h"
 
 namespace Core {
-class Timeline;
+class FTimeline;
 
 namespace Engine {
 FWD_INTERFACE_REFPTR(CameraProjection);
@@ -17,15 +17,15 @@ FWD_INTERFACE_REFPTR(CameraView);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(Camera);
-class Camera : public RefCountable {
+class FCamera : public FRefCountable {
 public:
-    Camera(float znear, float zfar);
+    FCamera(float znear, float zfar);
 
-    Camera(const ICamera& ) = delete;
-    Camera& operator =(const ICamera& ) = delete;
+    FCamera(const ICamera& ) = delete;
+    FCamera& operator =(const ICamera& ) = delete;
 
-    const CameraModel& CurrentState() const { return _currentState; }
-    const CameraModel& PreviousState() const { return _previousState; }
+    const FCameraModel& CurrentState() const { return _currentState; }
+    const FCameraModel& PreviousState() const { return _previousState; }
 
     float ZNear() const { return _znear; }
     float ZFar() const { return _zfar; }
@@ -39,10 +39,10 @@ public:
     void SetView(ICameraView *view);
     void SetProjection(ICameraProjection *projection);
 
-    void Update(const Timeline& time, const ViewportF& viewport);
+    void Update(const FTimeline& time, const ViewportF& viewport);
 
 private:
-    CameraModel _currentState;
+    FCameraModel _currentState;
 
     float _znear;
     float _zfar;
@@ -50,7 +50,7 @@ private:
     PCameraView _view;
     PCameraProjection _projection;
 
-    CameraModel _previousState;
+    FCameraModel _previousState;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

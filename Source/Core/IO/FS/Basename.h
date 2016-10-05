@@ -15,88 +15,88 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class Basename {
+class FBasename {
 public:
-    Basename() {}
-    ~Basename() {}
+    FBasename() {}
+    ~FBasename() {}
 
-    Basename(const Core::BasenameNoExt& basenameNoExt, const Core::Extname& extname);
+    FBasename(const FBasenameNoExt& basenameNoExt, const FExtname& extname);
 
-    Basename(const Basename& other);
-    Basename& operator =(const Basename& other);
+    FBasename(const FBasename& other);
+    FBasename& operator =(const FBasename& other);
 
-    Basename(const FileSystem::StringView& content);
-    Basename& operator =(const FileSystem::StringView& content);
+    FBasename(const FileSystem::FStringView& content);
+    FBasename& operator =(const FileSystem::FStringView& content);
 
     template <size_t _Dim>
-    Basename(const FileSystem::char_type (&content)[_Dim]) : Basename(MakeStringView(content)) {}
+    FBasename(const FileSystem::char_type (&content)[_Dim]) : FBasename(MakeStringView(content)) {}
     template <size_t _Dim>
-    Basename& operator =(const FileSystem::char_type (&content)[_Dim]) { return operator =(MakeStringView(content)); }
+    FBasename& operator =(const FileSystem::char_type (&content)[_Dim]) { return operator =(MakeStringView(content)); }
 
     template <typename _CharTraits, typename _Allocator>
-    Basename(const std::basic_string<FileSystem::char_type, _CharTraits, _Allocator>& content)
-        : Basename(MakeStringView(content)) {}
+    FBasename(const std::basic_string<FileSystem::char_type, _CharTraits, _Allocator>& content)
+        : FBasename(MakeStringView(content)) {}
 
     bool empty() const { return _basenameNoExt.empty() && _extname.empty(); }
 
-    const Core::BasenameNoExt& BasenameNoExt() const { return _basenameNoExt; }
-    const Core::Extname& Extname() const { return _extname; }
+    const FBasenameNoExt& BasenameNoExt() const { return _basenameNoExt; }
+    const FExtname& Extname() const { return _extname; }
 
-    void SetBasenameNoExt(const Core::BasenameNoExt& basenameNoExt) { _basenameNoExt = basenameNoExt; }
-    void SetExtname(const Core::Extname& extName) { _extname = extName; }
+    void SetBasenameNoExt(const FBasenameNoExt& basenameNoExt) { _basenameNoExt = basenameNoExt; }
+    void SetExtname(const FExtname& extName) { _extname = extName; }
 
     bool HasExtname() const { return !_extname.empty(); }
 
-    bool Equals(const Basename& other) const;
-    bool Less(const Basename& other) const;
+    bool Equals(const FBasename& other) const;
+    bool Less(const FBasename& other) const;
 
-    String ToString() const;
-    WString ToWString() const;
+    FString ToString() const;
+    FWString ToWString() const;
 
     size_t ToCStr(char *dst, size_t capacity) const;
     size_t ToWCStr(wchar_t *dst, size_t capacity) const;
 
-    void Swap(Basename& other);
+    void Swap(FBasename& other);
 
     size_t HashValue() const;
 
 private:
-    Core::BasenameNoExt _basenameNoExt;
-    Core::Extname _extname;
+    FBasenameNoExt _basenameNoExt;
+    FExtname _extname;
 };
 //----------------------------------------------------------------------------
-inline bool Basename::Equals(const Basename& other) const {
+inline bool FBasename::Equals(const FBasename& other) const {
     return  _basenameNoExt == other._basenameNoExt &&
             _extname == other._extname;
 }
 //----------------------------------------------------------------------------
-inline bool Basename::Less(const Basename& other) const {
+inline bool FBasename::Less(const FBasename& other) const {
     return (_basenameNoExt == other._basenameNoExt)
         ? _extname < other._extname
         : _basenameNoExt < other._basenameNoExt;
 }
 //----------------------------------------------------------------------------
-inline bool operator ==(const Basename& lhs, const Basename& rhs) {
+inline bool operator ==(const FBasename& lhs, const FBasename& rhs) {
     return lhs.Equals(rhs);
 }
 //----------------------------------------------------------------------------
-inline bool operator !=(const Basename& lhs, const Basename& rhs) {
+inline bool operator !=(const FBasename& lhs, const FBasename& rhs) {
     return !operator ==(lhs, rhs);
 }
 //----------------------------------------------------------------------------
-inline bool operator <(const Basename& lhs, const Basename& rhs) {
+inline bool operator <(const FBasename& lhs, const FBasename& rhs) {
     return lhs.Less(rhs);
 }
 //----------------------------------------------------------------------------
-inline bool operator >=(const Basename& lhs, const Basename& rhs) {
+inline bool operator >=(const FBasename& lhs, const FBasename& rhs) {
     return !operator <(lhs, rhs);
 }
 //----------------------------------------------------------------------------
-inline void swap(Basename& lhs, Basename& rhs) {
+inline void swap(FBasename& lhs, FBasename& rhs) {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
-inline hash_t hash_value(const Basename& token) {
+inline hash_t hash_value(const FBasename& token) {
     return token.HashValue();
 }
 //----------------------------------------------------------------------------
@@ -105,7 +105,7 @@ inline hash_t hash_value(const Basename& token) {
 template <typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
-    const Core::Basename& basename) {
+    const Core::FBasename& basename) {
     return oss << basename.BasenameNoExt() << basename.Extname();
 }
 //----------------------------------------------------------------------------

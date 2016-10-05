@@ -24,11 +24,11 @@ namespace {
 //----------------------------------------------------------------------------
 // http://fgiesen.wordpress.com/2013/12/14/simple-lossless-index-buffer-compression/
 // https://github.com/rygorous/simple-ib-compress/blob/master/main.cpp
-struct VertexCache {
+struct FVertexCache {
     static const size_t Size = 32;
     static const size_t MaxValence = 15;
 
-    struct Entry {
+    struct FEntry {
         u32 CachePos;           // its position in the cache (UINT32_MAX if not in)
         u32 Score;              // its score (higher=better)
         u32 TrianglesLeft;      // # of not-yet-used tris
@@ -36,7 +36,7 @@ struct VertexCache {
         u32 OpenPos;            // position in "open vertex" list
     };
 
-    struct Triangle {
+    struct FTriangle {
         u32 Score;              // current score (UINT32_MAX if already done)
         u32 Indices[3];         // vertex indices
     };
@@ -127,10 +127,10 @@ static void ComputeTriangleBasis_(
 //----------------------------------------------------------------------------
 namespace {
 static void ComputeNormals_(
-    const GenericMesh& mesh,
-    const Positions3f& sp_position3f,
-    const Positions4f& sp_position4f,
-    const Normals3f& sp_normal3f ) {
+    const FGenericMesh& mesh,
+    const FPositions3f& sp_position3f,
+    const FPositions4f& sp_position4f,
+    const FNormals3f& sp_normal3f ) {
     Assert((!sp_position3f) ^ (!sp_position4f));
 
     const size_t indexCount = mesh.IndexCount();
@@ -139,8 +139,8 @@ static void ComputeNormals_(
     Assert(!sp_position3f || sp_position3f.size() == vertexCount);
     Assert(!sp_position4f || sp_position4f.size() == vertexCount);
 
-    const MemoryView<const u32> indices = mesh.Indices();
-    const MemoryView<float3> normals3f = sp_normal3f.Resize(vertexCount);
+    const TMemoryView<const u32> indices = mesh.Indices();
+    const TMemoryView<float3> normals3f = sp_normal3f.Resize(vertexCount);
 
     const float3 zero = float3::Zero();
     for (float3& n : normals3f)
@@ -148,7 +148,7 @@ static void ComputeNormals_(
 
     if (sp_position4f) {
         Assert(!sp_position3f);
-        const MemoryView<const float4> positions4f = sp_position4f.MakeView();
+        const TMemoryView<const float4> positions4f = sp_position4f.MakeView();
         Assert(positions4f.size() == mesh.VertexCount());
 
         for (size_t t = 0; t < indexCount; t += 3) {
@@ -168,7 +168,7 @@ static void ComputeNormals_(
     }
     else {
         Assert(!sp_position4f);
-        const MemoryView<const float3> positions3f = sp_position3f.MakeView();
+        const TMemoryView<const float3> positions3f = sp_position3f.MakeView();
 
         for (size_t t = 0; t < indexCount; t += 3) {
             const size_t i0 = indices[t + 0];
@@ -191,13 +191,13 @@ static void ComputeNormals_(
 }
 } //!namespace
 //----------------------------------------------------------------------------
-bool ComputeNormals(GenericMesh& mesh, size_t index) {
-    const GenericVertexSubPart<float3> sp_position3f = mesh.Position3f_IFP(index);
-    const GenericVertexSubPart<float4> sp_position4f = mesh.Position4f_IFP(index);
+bool ComputeNormals(FGenericMesh& mesh, size_t index) {
+    const TGenericVertexSubPart<float3> sp_position3f = mesh.Position3f_IFP(index);
+    const TGenericVertexSubPart<float4> sp_position4f = mesh.Position4f_IFP(index);
     if (!sp_position3f && !sp_position4f)
         return false;
 
-    GenericVertexSubPart<float3> sp_normal3f = mesh.Normal3f(index);
+    TGenericVertexSubPart<float3> sp_normal3f = mesh.Normal3f(index);
     Assert(sp_normal3f);
 
     ComputeNormals_(mesh, sp_position3f, sp_position4f, sp_normal3f);
@@ -205,32 +205,32 @@ bool ComputeNormals(GenericMesh& mesh, size_t index) {
     return true;
 }
 //----------------------------------------------------------------------------
-void ComputeNormals(const GenericMesh& mesh, const Positions3f& positions, const Normals3f& normals) {
+void ComputeNormals(const FGenericMesh& mesh, const FPositions3f& positions, const FNormals3f& normals) {
     Assert(positions);
     Assert(normals);
 
-    ComputeNormals_(mesh, positions, Positions4f(), normals);
+    ComputeNormals_(mesh, positions, FPositions4f(), normals);
 }
 //----------------------------------------------------------------------------
-void ComputeNormals(const GenericMesh& mesh, const Positions4f& positions, const Normals3f& normals) {
+void ComputeNormals(const FGenericMesh& mesh, const FPositions4f& positions, const FNormals3f& normals) {
     Assert(positions);
     Assert(normals);
 
-    ComputeNormals_(mesh, Positions3f(), positions, normals);
+    ComputeNormals_(mesh, FPositions3f(), positions, normals);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
 static void ComputeTangentSpace_(
-    const GenericMesh& mesh,
-    const Positions3f& sp_position3f,
-    const Positions4f& sp_position4f,
-    const TexCoords2f& sp_texcoord2f,
-    const Normals3f& sp_normal3f,
-    const Tangents3f& sp_tangent3f,
-    const Tangents4f& sp_tangent4f,
-    const Binormals3f& sp_binormal3f ) {
+    const FGenericMesh& mesh,
+    const FPositions3f& sp_position3f,
+    const FPositions4f& sp_position4f,
+    const FTexCoords2f& sp_texcoord2f,
+    const FNormals3f& sp_normal3f,
+    const FTangents3f& sp_tangent3f,
+    const FTangents4f& sp_tangent4f,
+    const FBinormals3f& sp_binormal3f ) {
     Assert((!sp_position3f) ^ (!sp_position4f));
     Assert((!sp_tangent4f) ^ (!sp_tangent3f));
 
@@ -242,19 +242,19 @@ static void ComputeTangentSpace_(
     Assert(sp_texcoord2f.size() == vertexCount);
     Assert(sp_normal3f.size() == vertexCount);
 
-    const MemoryView<const u32> indices = mesh.Indices();
+    const TMemoryView<const u32> indices = mesh.Indices();
 
-    const MemoryView<const float3> positions3f = sp_position3f.MakeView();
-    const MemoryView<const float4> positions4f = sp_position4f.MakeView();
-    const MemoryView<const float2> texcoords2f = sp_texcoord2f.MakeView();
-    const MemoryView<const float3> normals3f = sp_normal3f.MakeView();
+    const TMemoryView<const float3> positions3f = sp_position3f.MakeView();
+    const TMemoryView<const float4> positions4f = sp_position4f.MakeView();
+    const TMemoryView<const float2> texcoords2f = sp_texcoord2f.MakeView();
+    const TMemoryView<const float3> normals3f = sp_normal3f.MakeView();
 
     VECTOR_THREAD_LOCAL(GenericMesh, float3) tmpTangents3f;
     VECTOR_THREAD_LOCAL(GenericMesh, float3) tmpBinormals3f;
 
-    MemoryView<float3> tangents3f;
-    MemoryView<float4> tangents4f;
-    MemoryView<float3> binormals3f;
+    TMemoryView<float3> tangents3f;
+    TMemoryView<float4> tangents4f;
+    TMemoryView<float3> binormals3f;
     if (sp_tangent4f) {
         tmpTangents3f.resize_AssumeEmpty(vertexCount);
         tmpBinormals3f.reserve_AssumeEmpty(vertexCount);
@@ -344,25 +344,25 @@ static void ComputeTangentSpace_(
 }
 } //!namespace
 //----------------------------------------------------------------------------
-bool ComputeTangentSpace(GenericMesh& mesh, size_t index, bool packHandedness/* = false */) {
-    const GenericVertexSubPart<float3> sp_position3f = mesh.Position3f_IFP(index);
-    const GenericVertexSubPart<float4> sp_position4f = mesh.Position4f_IFP(index);
+bool ComputeTangentSpace(FGenericMesh& mesh, size_t index, bool packHandedness/* = false */) {
+    const TGenericVertexSubPart<float3> sp_position3f = mesh.Position3f_IFP(index);
+    const TGenericVertexSubPart<float4> sp_position4f = mesh.Position4f_IFP(index);
     if (!sp_position3f && !sp_position4f)
         return false;
 
     Assert(!sp_position3f ^ !sp_position4f);
 
-    const GenericVertexSubPart<float2> sp_texcoord2f = mesh.TexCoord2f_IFP(index);
+    const TGenericVertexSubPart<float2> sp_texcoord2f = mesh.TexCoord2f_IFP(index);
     if (!sp_texcoord2f)
         return false;
 
-    const GenericVertexSubPart<float3> sp_normal3f = mesh.Normal3f_IFP(index);
+    const TGenericVertexSubPart<float3> sp_normal3f = mesh.Normal3f_IFP(index);
     if (!sp_normal3f)
         return false;
 
-    GenericVertexSubPart<float3> sp_tangent3f;
-    GenericVertexSubPart<float4> sp_tangent4f;
-    GenericVertexSubPart<float3> sp_binormal3f;
+    TGenericVertexSubPart<float3> sp_tangent3f;
+    TGenericVertexSubPart<float4> sp_tangent4f;
+    TGenericVertexSubPart<float3> sp_binormal3f;
 
     if (packHandedness) {
         sp_tangent4f = mesh.Tangent4f(index);
@@ -382,25 +382,25 @@ bool ComputeTangentSpace(GenericMesh& mesh, size_t index, bool packHandedness/* 
     return true;
 }
 //----------------------------------------------------------------------------
-void ComputeTangentSpace(const GenericMesh& mesh, const Positions3f& positions, const TexCoords2f& uv, const Normals3f& normals, const Tangents3f& tangents, const Binormals3f& binormals) {
-    ComputeTangentSpace_(mesh, positions, Positions4f(), uv, normals, tangents, Tangents4f(), binormals);
+void ComputeTangentSpace(const FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords2f& uv, const FNormals3f& normals, const FTangents3f& tangents, const FBinormals3f& binormals) {
+    ComputeTangentSpace_(mesh, positions, FPositions4f(), uv, normals, tangents, FTangents4f(), binormals);
 }
 //----------------------------------------------------------------------------
-void ComputeTangentSpace(const GenericMesh& mesh, const Positions4f& positions, const TexCoords2f& uv, const Normals3f& normals, const Tangents3f& tangents, const Binormals3f& binormals) {
-    ComputeTangentSpace_(mesh, Positions3f(), positions, uv, normals, tangents, Tangents4f(), binormals);
+void ComputeTangentSpace(const FGenericMesh& mesh, const FPositions4f& positions, const FTexCoords2f& uv, const FNormals3f& normals, const FTangents3f& tangents, const FBinormals3f& binormals) {
+    ComputeTangentSpace_(mesh, FPositions3f(), positions, uv, normals, tangents, FTangents4f(), binormals);
 }
 //----------------------------------------------------------------------------
-void ComputeTangentSpace(const GenericMesh& mesh, const Positions3f& positions, const TexCoords2f& uv, const Normals3f& normals, const Tangents4f& tangents) {
-    ComputeTangentSpace_(mesh, positions, Positions4f(), uv, normals, Tangents3f(), tangents, Binormals3f());
+void ComputeTangentSpace(const FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords2f& uv, const FNormals3f& normals, const FTangents4f& tangents) {
+    ComputeTangentSpace_(mesh, positions, FPositions4f(), uv, normals, FTangents3f(), tangents, FBinormals3f());
 }
 //----------------------------------------------------------------------------
-void ComputeTangentSpace(const GenericMesh& mesh, const Positions4f& positions, const TexCoords2f& uv, const Normals3f& normals, const Tangents4f& tangents) {
-    ComputeTangentSpace_(mesh, Positions3f(), positions, uv, normals, Tangents3f(), tangents, Binormals3f());
+void ComputeTangentSpace(const FGenericMesh& mesh, const FPositions4f& positions, const FTexCoords2f& uv, const FNormals3f& normals, const FTangents4f& tangents) {
+    ComputeTangentSpace_(mesh, FPositions3f(), positions, uv, normals, FTangents3f(), tangents, FBinormals3f());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool MergeDuplicateVertices(GenericMesh& mesh) {
+bool MergeDuplicateVertices(FGenericMesh& mesh) {
     const size_t vertexCount = mesh.VertexCount();
     if (0 == vertexCount)
         return false;
@@ -409,8 +409,8 @@ bool MergeDuplicateVertices(GenericMesh& mesh) {
 
     STACKLOCAL_POD_ARRAY(hash_t, hashes, vertexCount);
     STACKLOCAL_POD_ARRAY(u32, tmp, vertexCount*2);
-    const MemoryView<u32> sorteds = tmp.SubRange(0*vertexCount, vertexCount);
-    const MemoryView<u32> reindexation = tmp.SubRange(1*vertexCount, vertexCount);
+    const TMemoryView<u32> sorteds = tmp.SubRange(0*vertexCount, vertexCount);
+    const TMemoryView<u32> reindexation = tmp.SubRange(1*vertexCount, vertexCount);
 
     // Init vertex hash value and sort index
     forrange(v, 0, vertexCount) {
@@ -419,11 +419,11 @@ bool MergeDuplicateVertices(GenericMesh& mesh) {
     }
 
     // Compute each vertex hash value subpart by supart
-    for (const GenericVertexData& subpart : mesh.Vertices()) {
+    for (const FGenericVertexData& subpart : mesh.Vertices()) {
         Assert(subpart.VertexCount() == vertexCount);
 
-        const MemoryView<const u8> rawData = subpart.MakeView();
-        const Graphics::ValueType type = subpart.Type();
+        const TMemoryView<const u8> rawData = subpart.MakeView();
+        const Graphics::EValueType type = subpart.Type();
         const size_t strideInBytes = subpart.StrideInBytes();
 
         forrange(v, 0, vertexCount) {
@@ -481,7 +481,7 @@ bool MergeDuplicateVertices(GenericMesh& mesh) {
     }
 
     // Compact each subpart data with the reindexation
-    for (GenericVertexData& subpart : mesh.Vertices()) {
+    for (FGenericVertexData& subpart : mesh.Vertices()) {
         forrange(i, 1, finalCount) {
             if (i != reindexation[i]) {
                 Assert(i < reindexation[i]);
@@ -503,8 +503,8 @@ namespace {
 static void PNTesselateRecursive_(
     u32* pBaseIndex,
     u32* pBaseVertex,
-    const MemoryView<u32>& indices,
-    const MemoryView<float3>& vertices,
+    const TMemoryView<u32>& indices,
+    const TMemoryView<float3>& vertices,
     const float3& uvw00, u32 i00,
     const float3& uvw11, u32 i11,
     const float3& uvw22, u32 i22,
@@ -534,15 +534,15 @@ static void PNTesselateRecursive_(
 //----------------------------------------------------------------------------
 // The generated indices order will be very inefficient, better call OptimizeIndices() afterwards
 static void PNTriangles_(
-    GenericMesh& mesh,
-    const Positions3f& sp_position3f,
-    const Normals3f& sp_normal3f,
+    FGenericMesh& mesh,
+    const FPositions3f& sp_position3f,
+    const FNormals3f& sp_normal3f,
     size_t recursions ) {
     if (0 == recursions)
         return;
 
-    FixedSizeStack<GenericVertexData*, 6> sp_lerps;
-    for (GenericVertexData& vertices : mesh.Vertices()) {
+    TFixedSizeStack<FGenericVertexData*, 6> sp_lerps;
+    for (FGenericVertexData& vertices : mesh.Vertices()) {
         if (&vertices != sp_position3f.Data() &&
             &vertices != sp_normal3f.Data() ) {
             sp_lerps.Push(&vertices);
@@ -566,12 +566,12 @@ static void PNTriangles_(
     const size_t nextVertexCount = baseVertex + verticesPerTriangle * triangleCount;
     mesh.Resize(nextIndexCount, nextVertexCount);
 
-    const MemoryView<float3> positions3f = sp_position3f.MakeView();
-    const MemoryView<float3> normals3f = sp_normal3f.MakeView();
+    const TMemoryView<float3> positions3f = sp_position3f.MakeView();
+    const TMemoryView<float3> normals3f = sp_normal3f.MakeView();
     Assert(positions3f.size() == nextVertexCount);
     Assert(normals3f.size() == nextVertexCount);
 
-    PNTriangle pn;
+    FPNTriangle pn;
 
     u32 nextIndex = 0;
     u32 nextVertex = baseVertex;
@@ -594,7 +594,7 @@ static void PNTriangles_(
             float3(0,0,1), i2,
             recursions );
 
-        PNTriangle::FromTriangle(pn,
+        FPNTriangle::FromTriangle(pn,
             positions3f[i0], normals3f[i0],
             positions3f[i1], normals3f[i1],
             positions3f[i2], normals3f[i2] );
@@ -608,7 +608,7 @@ static void PNTriangles_(
         forrange(j, startVertex, nextVertex)
             normals3f[j] = pn.LerpNormal(barycentrics[j]);
 
-        for (GenericVertexData* pData : sp_lerps) {
+        for (FGenericVertexData* pData : sp_lerps) {
             Graphics::ValueBarycentricLerpArray(
                 pData->Type(),
                 pData->SubRange(startVertex, verticesPerTriangle),
@@ -626,12 +626,12 @@ static void PNTriangles_(
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
-bool PNTriangles(GenericMesh& mesh, size_t index, size_t recursions) {
-    const GenericVertexSubPart<float3> sp_position3f = mesh.Position3f_IFP(index);
+bool PNTriangles(FGenericMesh& mesh, size_t index, size_t recursions) {
+    const TGenericVertexSubPart<float3> sp_position3f = mesh.Position3f_IFP(index);
     if (!sp_position3f)
         return false;
 
-    const GenericVertexSubPart<float3> sp_normal3f = mesh.Normal3f_IFP(index);
+    const TGenericVertexSubPart<float3> sp_normal3f = mesh.Normal3f_IFP(index);
     if (!sp_normal3f)
         return false;
 
@@ -648,19 +648,19 @@ bool PNTriangles(GenericMesh& mesh, size_t index, size_t recursions) {
     return true;
 }
 //----------------------------------------------------------------------------
-void PNTriangles(GenericMesh& mesh, const Positions3f& positions, const Normals3f& normals, size_t recursions) {
+void PNTriangles(FGenericMesh& mesh, const FPositions3f& positions, const FNormals3f& normals, size_t recursions) {
     PNTriangles_(mesh, positions, normals, recursions);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
+void OptimizeIndicesOrder(const TMemoryView<u32>& indices, size_t vertexCount) {
     Assert(indices.size() >= 3);
     Assert(0 == (indices.size() % 3));
 
     // prepare triangles
-    STACKLOCAL_POD_ARRAY(VertexCache::Entry, entries, vertexCount);
-    for (VertexCache::Entry& entry : entries) {
+    STACKLOCAL_POD_ARRAY(FVertexCache::FEntry, entries, vertexCount);
+    for (FVertexCache::FEntry& entry : entries) {
         entry.CachePos = UINT32_MAX;
         entry.Score = 0;
         entry.TrianglesLeft = 0;
@@ -670,11 +670,11 @@ void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
 
     // alloc space for entry triangle indices
     const size_t triangleCount = indices.size() / 3;
-    STACKLOCAL_POD_ARRAY(VertexCache::Triangle, triangles, triangleCount);
+    STACKLOCAL_POD_ARRAY(FVertexCache::FTriangle, triangles, triangleCount);
     {
         const u32 *pIndex = &indices[0];
         for (size_t i = 0; i < triangleCount; ++i) {
-            VertexCache::Triangle& triangle = triangles[i];
+            FVertexCache::FTriangle& triangle = triangles[i];
             triangle.Score = 0;
             for (size_t j = 0; j < 3; ++j) {
                 const u32 index = *pIndex++;
@@ -690,7 +690,7 @@ void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
         const u32 *pTriListEnd = adjacencies.Pointer() + adjacencies.size();
 
         for (size_t i = 0; i < vertexCount; ++i) {
-            VertexCache::Entry& entry = entries[i];
+            FVertexCache::FEntry& entry = entries[i];
             entry.TriangleList = pTriList;
             pTriList += entry.TrianglesLeft;
             Assert(pTriList <= pTriListEnd);
@@ -698,10 +698,10 @@ void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
         }
 
         for (size_t i = 0; i < triangleCount; ++i) {
-            const VertexCache::Triangle& triangle = triangles[i];
+            const FVertexCache::FTriangle& triangle = triangles[i];
             for (size_t j = 0; j < 3; ++j) {
                 const u32 index = triangle.Indices[j];
-                VertexCache::Entry& entry = entries[index];
+                FVertexCache::FEntry& entry = entries[index];
                 entry.TriangleList[entry.TrianglesLeft++] = u32(i);
             }
         }
@@ -712,12 +712,12 @@ void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
     size_t openCount = 0;
 
     // the cache
-    u32 cache[VertexCache::Size + 3] = {UINT32_MAX};
-    u32 pos2score[VertexCache::Size];
-    u32 val2score[VertexCache::Size + 1];
+    u32 cache[FVertexCache::Size + 3] = {UINT32_MAX};
+    u32 pos2score[FVertexCache::Size];
+    u32 val2score[FVertexCache::Size + 1];
 
-    for (size_t i = 0; i < VertexCache::Size; ++i) {
-        const float score = (i < 3) ? 0.75f : std::pow(1.0f - (i - 3)/float(VertexCache::Size - 3), 1.5f);
+    for (size_t i = 0; i < FVertexCache::Size; ++i) {
+        const float score = (i < 3) ? 0.75f : std::pow(1.0f - (i - 3)/float(FVertexCache::Size - 3), 1.5f);
         pos2score[i] = static_cast<u32>(score * 65536.0f + 0.5f);
     }
 
@@ -739,11 +739,11 @@ void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
         // if there are open vertices, search them for the seed triangle
         // which maximum score.
         for (size_t i = 0; i < openCount; ++i) {
-            const VertexCache::Entry &entry = entries[openVertices[i]];
+            const FVertexCache::FEntry &entry = entries[openVertices[i]];
 
             for (size_t j = 0; j < entry.TrianglesLeft; ++j) {
                 const u32 index = entry.TriangleList[j];
-                const VertexCache::Triangle& triangle = triangles[index];
+                const FVertexCache::FTriangle& triangle = triangles[index];
 
                 if (triangle.Score > seedScore) {
                     seedScore = triangle.Score;
@@ -766,7 +766,7 @@ void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
 
         u32 bestTriangle = seedTriangle;
         while (bestTriangle != UINT32_MAX) {
-            VertexCache::Triangle& triangle = triangles[bestTriangle];
+            FVertexCache::FTriangle& triangle = triangles[bestTriangle];
 
             // mark this triangle as used, remove it from the "remaining tris"
             // list of the vertices it uses, and add it to the index buffer.
@@ -776,7 +776,7 @@ void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
                 const u32 index = triangle.Indices[j];
                 *pIndex++ = index;
 
-                VertexCache::Entry& entry = entries[index];
+                FVertexCache::FEntry& entry = entries[index];
 
                 // find this triangles' entry
                 u32 k = 0;
@@ -796,11 +796,11 @@ void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
             }
 
             // update cache status
-            cache[VertexCache::Size] = cache[VertexCache::Size + 1] = cache[VertexCache::Size + 2] = UINT32_MAX;
+            cache[FVertexCache::Size] = cache[FVertexCache::Size + 1] = cache[FVertexCache::Size + 2] = UINT32_MAX;
 
             for(size_t j = 0; j < 3 ; ++j) {
                 const u32 index = triangle.Indices[j];
-                cache[VertexCache::Size + 2] = index;
+                cache[FVertexCache::Size + 2] = index;
 
                 // find vertex index
                 u32 pos = 0;
@@ -814,20 +814,20 @@ void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
                 cache[0] = index;
 
                 // remove sentinel if it wasn't used
-                if(pos != VertexCache::Size + 2)
-                    cache[VertexCache::Size + 2] = UINT32_MAX;
+                if(pos != FVertexCache::Size + 2)
+                    cache[FVertexCache::Size + 2] = UINT32_MAX;
             }
 
             // update vertex scores
-            for (size_t i = 0; i < VertexCache::Size + 3; ++i) {
+            for (size_t i = 0; i < FVertexCache::Size + 3; ++i) {
                 const u32 index = cache[i];
                 if (UINT32_MAX == index)
                     continue;
 
-                VertexCache::Entry& entry = entries[index];
+                FVertexCache::FEntry& entry = entries[index];
 
-                entry.Score = val2score[std::min(entry.TrianglesLeft, u32(VertexCache::MaxValence))];
-                if (i < VertexCache::Size) {
+                entry.Score = val2score[std::min(entry.TrianglesLeft, u32(FVertexCache::MaxValence))];
+                if (i < FVertexCache::Size) {
                     entry.CachePos = checked_cast<u32>(i);
                     entry.Score += pos2score[i];
                 }
@@ -846,15 +846,15 @@ void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
             u32 bestScore = 0;
             bestTriangle = UINT32_MAX;
 
-            for (size_t i = 0; i < VertexCache::Size; ++i) {
+            for (size_t i = 0; i < FVertexCache::Size; ++i) {
                 if (cache[i] == UINT32_MAX)
                     continue;
 
-                const VertexCache::Entry& entry = entries[cache[i]];
+                const FVertexCache::FEntry& entry = entries[cache[i]];
 
                 for (size_t j = 0; j < entry.TrianglesLeft; ++j) {
                     const u32 index = entry.TriangleList[j];
-                    VertexCache::Triangle& tri = triangles[index];
+                    FVertexCache::FTriangle& tri = triangles[index];
 
                     Assert(tri.Score != UINT32_MAX);
 
@@ -873,17 +873,17 @@ void OptimizeIndicesOrder(const MemoryView<u32>& indices, size_t vertexCount) {
     } //!for (;;)
 }
 //----------------------------------------------------------------------------
-void OptimizeIndicesOrder(GenericMesh& mesh) {
+void OptimizeIndicesOrder(FGenericMesh& mesh) {
     OptimizeIndicesOrder(mesh.Indices(), mesh.VertexCount());
 }
 //----------------------------------------------------------------------------
-void OptimizeVerticesOrder(GenericMesh& mesh) { // also removes unused vertices as a side effect
+void OptimizeVerticesOrder(FGenericMesh& mesh) { // also removes unused vertices as a side effect
     const size_t vertexCount = mesh.VertexCount();
 
     STACKLOCAL_POD_ARRAY(u32, tmpData, vertexCount*3);
-    const MemoryView<u32> old2new = tmpData.SubRange(0, vertexCount);
-    const MemoryView<u32> reindexation = tmpData.SubRange(vertexCount, vertexCount);
-    const MemoryView<u32> tmp = tmpData.SubRange(2*vertexCount, vertexCount);
+    const TMemoryView<u32> old2new = tmpData.SubRange(0, vertexCount);
+    const TMemoryView<u32> reindexation = tmpData.SubRange(vertexCount, vertexCount);
+    const TMemoryView<u32> tmp = tmpData.SubRange(2*vertexCount, vertexCount);
     memset(old2new.Pointer(), 0xFF, old2new.SizeInBytes());
 
     u32 sortedCount = 0;
@@ -908,8 +908,8 @@ void OptimizeVerticesOrder(GenericMesh& mesh) { // also removes unused vertices 
     Assert(sortedCount <= vertexCount);
 
     // Reorder each vertex subpart
-    Graphics::Value x;
-    for (GenericVertexData& subpart : mesh.Vertices()) {
+    Graphics::FValue x;
+    for (FGenericVertexData& subpart : mesh.Vertices()) {
         Copy(tmp, reindexation);
 
         forrange(i, 0, vertexCount) {
@@ -935,12 +935,12 @@ void OptimizeVerticesOrder(GenericMesh& mesh) { // also removes unused vertices 
         mesh.Resize(mesh.IndexCount(), sortedCount);
 }
 //----------------------------------------------------------------------------
-void OptimizeIndicesAndVerticesOrder(GenericMesh& mesh) {
+void OptimizeIndicesAndVerticesOrder(FGenericMesh& mesh) {
     OptimizeIndicesOrder(mesh);
     OptimizeVerticesOrder(mesh);
 }
 //----------------------------------------------------------------------------
-float VertexAverageCacheMissRate(const MemoryView<const u32>& indices, bool fifo/* = true */, size_t cacheSize/* = 16 */) {
+float VertexAverageCacheMissRate(const TMemoryView<const u32>& indices, bool fifo/* = true */, size_t cacheSize/* = 16 */) {
     Assert(cacheSize > 1);
 
     if (indices.empty())
@@ -987,7 +987,7 @@ float VertexAverageCacheMissRate(const MemoryView<const u32>& indices, bool fifo
     return ACMR;
 }
 //----------------------------------------------------------------------------
-float VertexAverageCacheMissRate(const GenericMesh& mesh, bool fifo/* = true */, size_t cacheSize/* = 16 */) {
+float VertexAverageCacheMissRate(const FGenericMesh& mesh, bool fifo/* = true */, size_t cacheSize/* = 16 */) {
     return VertexAverageCacheMissRate(mesh.Indices(), fifo, cacheSize);
 }
 //----------------------------------------------------------------------------

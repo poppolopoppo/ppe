@@ -38,21 +38,21 @@ namespace {
 //----------------------------------------------------------------------------
 static void CreateEffectProgramIFN_(
     PEffectProgram *pprogram,
-    Effect *owner,
-    Graphics::ShaderProgramType stage,
+    FEffect *owner,
+    Graphics::EShaderProgramType stage,
     const Graphics::PCVertexDeclaration& vertexDeclaration,
-    const EffectDescriptor *effectDescriptor,
-    Graphics::ShaderCompilerFlags compilerFlags,
-    const MemoryView<const Pair<String, String>>& defines,
+    const FEffectDescriptor *effectDescriptor,
+    Graphics::EShaderCompilerFlags compilerFlags,
+    const TMemoryView<const TPair<FString, FString>>& defines,
     Graphics::IDeviceAPIShaderCompiler *compiler) {
     Assert(pprogram);
     Assert(!*pprogram);
 
-    const Filename& filename = effectDescriptor->ProgramFilename(stage);
+    const FFilename& filename = effectDescriptor->ProgramFilename(stage);
     if (filename.empty())
         return;
 
-    *pprogram = new EffectProgram(owner, effectDescriptor->ShaderProfile(), stage);
+    *pprogram = new FEffectProgram(owner, effectDescriptor->ShaderProfile(), stage);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
     (*pprogram)->SetResourceName(StringFormat("{0}_{1}", effectDescriptor->Name(), ShaderProgramTypeToCStr(stage)));
 #endif
@@ -73,66 +73,66 @@ static void CreateEffectProgramIFN_(
     Assert((*pprogram)->Available());
 }
 //----------------------------------------------------------------------------
-static const Graphics::BlendState *BlendStateFromRenderState_(const RenderState *renderState) {
+static const Graphics::FBlendState *BlendStateFromRenderState_(const FRenderState *renderState) {
     switch (renderState->Blend())
     {
-    case RenderState::Blending::Additive:
-        return Graphics::BlendState::Additive;
-    case RenderState::Blending::AlphaBlend:
-        return Graphics::BlendState::AlphaBlend;
-    case RenderState::Blending::NonPremultiplied:
-        return Graphics::BlendState::NonPremultiplied;
-    case RenderState::Blending::Opaque:
-        return Graphics::BlendState::Opaque;
+    case FRenderState::EBlending::Additive:
+        return Graphics::FBlendState::Additive;
+    case FRenderState::EBlending::AlphaBlend:
+        return Graphics::FBlendState::AlphaBlend;
+    case FRenderState::EBlending::NonPremultiplied:
+        return Graphics::FBlendState::NonPremultiplied;
+    case FRenderState::EBlending::Opaque:
+        return Graphics::FBlendState::Opaque;
     }
     AssertNotImplemented();
     return nullptr;
 }
 //----------------------------------------------------------------------------
-static const Graphics::DepthStencilState *DepthStencilStateFromRenderState_(const RenderState *renderState) {
+static const Graphics::FDepthStencilState *DepthStencilStateFromRenderState_(const FRenderState *renderState) {
     switch (renderState->Depth())
     {
-    case RenderState::DepthTest::Default:
-        return Graphics::DepthStencilState::Default;
-    case RenderState::DepthTest::None:
-        return Graphics::DepthStencilState::None;
-    case RenderState::DepthTest::Read:
-        return Graphics::DepthStencilState::DepthRead;
+    case FRenderState::EDepthTest::Default:
+        return Graphics::FDepthStencilState::Default;
+    case FRenderState::EDepthTest::None:
+        return Graphics::FDepthStencilState::None;
+    case FRenderState::EDepthTest::Read:
+        return Graphics::FDepthStencilState::DepthRead;
     }
     AssertNotImplemented();
     return nullptr;
 }
 //----------------------------------------------------------------------------
-static const Graphics::RasterizerState *RasterizerStateFromRenderState_(const RenderState *renderState) {
+static const Graphics::FRasterizerState *RasterizerStateFromRenderState_(const FRenderState *renderState) {
     switch (renderState->Fill())
     {
-    case RenderState::FillMode::Automatic:
-        return nullptr; // accessed every time from Effect::AutomaticRasterizerState
-    case RenderState::FillMode::Wireframe:
-        return Graphics::RasterizerState::Wireframe;
+    case FRenderState::EFillMode::Automatic:
+        return nullptr; // accessed every time from FEffect::AutomaticRasterizerState
+    case FRenderState::EFillMode::Wireframe:
+        return Graphics::FRasterizerState::Wireframe;
     default:
         break;
     }
 
     switch (renderState->Cull())
     {
-    case RenderState::Culling::Clockwise:
-        return Graphics::RasterizerState::CullClockwise;
-    case RenderState::Culling::CounterClockwise:
-        return Graphics::RasterizerState::CullCounterClockwise;
-    case RenderState::Culling::None:
-        return Graphics::RasterizerState::CullNone;
+    case FRenderState::ECulling::Clockwise:
+        return Graphics::FRasterizerState::CullClockwise;
+    case FRenderState::ECulling::CounterClockwise:
+        return Graphics::FRasterizerState::CullCounterClockwise;
+    case FRenderState::ECulling::None:
+        return Graphics::FRasterizerState::CullNone;
     }
     AssertNotImplemented();
     return nullptr;
 }
 //----------------------------------------------------------------------------
 static void AppendTagSubstitutions_(
-    VECTOR_THREAD_LOCAL(Effect, Pair<String COMMA String>)& defines, 
-    const ASSOCIATIVE_VECTOR(Effect, Graphics::BindName, String)& substitutions,
-    const VECTOR(Effect, Graphics::BindName)& tags ) {
+    VECTOR_THREAD_LOCAL(FEffect, TPair<FString COMMA FString>)& defines, 
+    const ASSOCIATIVE_VECTOR(FEffect, Graphics::FBindName, FString)& substitutions,
+    const VECTOR(FEffect, Graphics::FBindName)& tags ) {
 
-    for (const Pair<Graphics::BindName, String>& substitution : substitutions) {
+    for (const TPair<Graphics::FBindName, FString>& substitution : substitutions) {
         if (!Contains(tags, substitution.first))
             continue;
 
@@ -140,7 +140,7 @@ static void AppendTagSubstitutions_(
         const char *cstr = substitution.second.c_str();
         size_t size = substitution.second.size();
 
-        StringView define;
+        FStringView define;
         while (Split(&cstr, &size, ';', define)) {
             Assert(!define.empty());
 
@@ -153,12 +153,12 @@ static void AppendTagSubstitutions_(
                 }
 
             if (pValue) {
-                String key(define.Pointer(), std::distance(define.Pointer(), pValue) - 1);
-                String value(pValue, std::distance(pValue, define.end()));
+                FString key(define.Pointer(), std::distance(define.Pointer(), pValue) - 1);
+                FString value(pValue, std::distance(pValue, define.end()));
                 defines.emplace_back(std::move(key), std::move(value));
             }
             else {
-                String key(define.Pointer(), define.size());
+                FString key(define.Pointer(), define.size());
                 defines.emplace_back(std::move(key), "1");
             }
         }
@@ -169,15 +169,15 @@ static void AppendTagSubstitutions_(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, Effect, );
+SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, FEffect, );
 //----------------------------------------------------------------------------
-const Graphics::RasterizerState *Effect::AutomaticRasterizerState = nullptr;
-const Graphics::RasterizerState *Effect::DefaultRasterizerState = nullptr;
+const Graphics::FRasterizerState *FEffect::AutomaticRasterizerState = nullptr;
+const Graphics::FRasterizerState *FEffect::DefaultRasterizerState = nullptr;
 //----------------------------------------------------------------------------
-Effect::Effect( const EffectDescriptor *descriptor,
-                const Graphics::VertexDeclaration *vertexDeclaration,
-                const MemoryView<const Graphics::BindName>& tags )
-:   ShaderEffect(vertexDeclaration)
+FEffect::FEffect( const FEffectDescriptor *descriptor,
+                const Graphics::FVertexDeclaration *vertexDeclaration,
+                const TMemoryView<const Graphics::FBindName>& tags )
+:   FShaderEffect(vertexDeclaration)
 ,   _descriptor(descriptor)
 ,   _tags(tags.begin(), tags.end())
 ,   _blendState(BlendStateFromRenderState_(descriptor->RenderState()) )
@@ -189,93 +189,93 @@ Effect::Effect( const EffectDescriptor *descriptor,
     Freeze();
 }
 //----------------------------------------------------------------------------
-Effect::~Effect() {}
+FEffect::~FEffect() {}
 //----------------------------------------------------------------------------
-const Graphics::RasterizerState *Effect::RasterizerState() const {
+const Graphics::FRasterizerState *FEffect::FRasterizerState() const {
     return  _rasterizerState
         ?   _rasterizerState.get()
         :   AutomaticRasterizerState;
 }
 //----------------------------------------------------------------------------
-EffectProgram *Effect::StageProgram(Graphics::ShaderProgramType stage) {
-     return checked_cast<EffectProgram *>(Graphics::ShaderEffect::StageProgram(stage));
+FEffectProgram *FEffect::StageProgram(Graphics::EShaderProgramType stage) {
+     return checked_cast<FEffectProgram *>(Graphics::FShaderEffect::StageProgram(stage));
 }
 //----------------------------------------------------------------------------
-const EffectProgram *Effect::StageProgram(Graphics::ShaderProgramType stage) const {
-     return checked_cast<const EffectProgram *>(Graphics::ShaderEffect::StageProgram(stage));
+const FEffectProgram *FEffect::StageProgram(Graphics::EShaderProgramType stage) const {
+     return checked_cast<const FEffectProgram *>(Graphics::FShaderEffect::StageProgram(stage));
 }
 //----------------------------------------------------------------------------
-void Effect::Create(Graphics::IDeviceAPIEncapsulator *device) {
+void FEffect::Create(Graphics::IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
 
     using namespace Graphics;
 
     Graphics::IDeviceAPIShaderCompiler *const compiler = device->Encapsulator()->Compiler();
-    const Graphics::ShaderCompilerFlags compilerFlags =
+    const Graphics::EShaderCompilerFlags compilerFlags =
 #ifdef _DEBUG
-        Graphics::ShaderCompilerFlags::DefaultForDebug
+        Graphics::EShaderCompilerFlags::DefaultForDebug
 #else
-        Graphics::ShaderCompilerFlags::Default
+        Graphics::EShaderCompilerFlags::Default
 #endif
         ;
 
-    const Graphics::VertexDeclaration *vertexDeclaration = this->VertexDeclaration();
+    const Graphics::FVertexDeclaration *vertexDeclaration = this->VertexDeclaration();
 
-    VECTOR_THREAD_LOCAL(Effect, Pair<String COMMA String>) defines;
+    VECTOR_THREAD_LOCAL(FEffect, TPair<FString COMMA FString>) defines;
     defines.reserve(_descriptor->Defines().size() + _tags.size());
     defines.insert(defines.end(), _descriptor->Defines().begin(), _descriptor->Defines().end());
     AppendTagSubstitutions_(defines, _descriptor->Substitutions(), _tags);
 
-    Unfreeze(); // enables ShaderEffect::SetStageProgram()
+    Unfreeze(); // enables FShaderEffect::SetStageProgram()
 
-    for (ShaderProgramType stage : EachShaderProgramType()) {
+    for (EShaderProgramType stage : EachShaderProgramType()) {
         PEffectProgram program;
         CreateEffectProgramIFN_(&program, this, stage, vertexDeclaration, _descriptor, compilerFlags, MakeConstView(defines), compiler);
 
         if (program)
-            ShaderEffect::SetStageProgram(stage, std::move(program));
+            FShaderEffect::SetStageProgram(stage, std::move(program));
     }
 
-    Freeze(); // disables ShaderEffect::SetStageProgram()
+    Freeze(); // disables FShaderEffect::SetStageProgram()
 
-    ShaderEffect::Create(device);
+    FShaderEffect::Create(device);
 }
 //----------------------------------------------------------------------------
-void Effect::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
+void FEffect::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
 
     using namespace Graphics;
 
-    ShaderEffect::Destroy(device);
+    FShaderEffect::Destroy(device);
 
-    for (ShaderProgramType stage : EachShaderProgramType())
-        ShaderEffect::ResetStageProgram(stage);
+    for (EShaderProgramType stage : EachShaderProgramType())
+        FShaderEffect::ResetStageProgram(stage);
 }
 //----------------------------------------------------------------------------
-void Effect::LinkReflectedData(
-    SharedConstantBufferFactory *sharedBufferFactory, 
+void FEffect::LinkReflectedData(
+    FSharedConstantBufferFactory *sharedBufferFactory, 
     Graphics::IDeviceAPIShaderCompiler *compiler) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(_sharedBuffers.empty());
 
     using namespace Graphics;
 
-    for (ShaderProgramType stage : EachShaderProgramType()) {
-        EffectProgram *const program = StageProgram(stage);
+    for (EShaderProgramType stage : EachShaderProgramType()) {
+        FEffectProgram *const program = StageProgram(stage);
         if (program)
             program->LinkReflectedData(_sharedBuffers, sharedBufferFactory, compiler);
     }
 }
 //----------------------------------------------------------------------------
-void Effect::UnlinkReflectedData(SharedConstantBufferFactory *sharedBufferFactory) {
+void FEffect::UnlinkReflectedData(FSharedConstantBufferFactory *sharedBufferFactory) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     using namespace Graphics;
 
-    for (ShaderProgramType stage : EachShaderProgramType()) {
-        EffectProgram *const program = StageProgram(stage);
+    for (EShaderProgramType stage : EachShaderProgramType()) {
+        FEffectProgram *const program = StageProgram(stage);
         if (program)
             program->UnlinkReflectedData();
     }
@@ -286,7 +286,7 @@ void Effect::UnlinkReflectedData(SharedConstantBufferFactory *sharedBufferFactor
     _sharedBuffers.clear();
 }
 //----------------------------------------------------------------------------
-void Effect::Set(Graphics::IDeviceAPIContext *context) const {
+void FEffect::Set(Graphics::IDeviceAPIContext *context) const {
     context->SetBlendState(this->BlendState());
     context->SetDepthStencilState(this->DepthStencilState());
     context->SetRasterizerState(this->RasterizerState());
@@ -294,29 +294,29 @@ void Effect::Set(Graphics::IDeviceAPIContext *context) const {
 
     using namespace Graphics;
 
-    for (ShaderProgramType stage : EachShaderProgramType()) {
-        const EffectProgram *const program = StageProgram(stage);
+    for (EShaderProgramType stage : EachShaderProgramType()) {
+        const FEffectProgram *const program = StageProgram(stage);
         if (program)
             program->Set(context, this);
     }
 }
 //----------------------------------------------------------------------------
-void Effect::SwitchAutomaticFillMode() {
+void FEffect::SwitchAutomaticFillMode() {
     const bool wireframe = (AutomaticRasterizerState == DefaultRasterizerState);
-    LOG(Info, L"[Effect] Toggle {0} fill mode for automatic rasterizer state ...",
+    LOG(Info, L"[FEffect] Toggle {0} fill mode for automatic rasterizer state ...",
         wireframe ? "wireframe" : "solid");
 
     AutomaticRasterizerState = (wireframe)
-        ? Graphics::RasterizerState::Wireframe
+        ? Graphics::FRasterizerState::Wireframe
         : DefaultRasterizerState;
 }
 //----------------------------------------------------------------------------
-void Effect::Start() {
-    DefaultRasterizerState = Graphics::RasterizerState::CullCounterClockwise;
+void FEffect::Start() {
+    DefaultRasterizerState = Graphics::FRasterizerState::CullCounterClockwise;
     AutomaticRasterizerState = DefaultRasterizerState;
 }
 //----------------------------------------------------------------------------
-void Effect::Shutdown() {
+void FEffect::Shutdown() {
     AutomaticRasterizerState = nullptr;
     DefaultRasterizerState = nullptr;
 }

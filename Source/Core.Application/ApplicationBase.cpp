@@ -9,16 +9,16 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ApplicationBase::ApplicationBase(const wchar_t *appname)
+FApplicationBase::FApplicationBase(const wchar_t *appname)
 :   _appname(appname) {}
 //----------------------------------------------------------------------------
-ApplicationBase::~ApplicationBase() {}
+FApplicationBase::~FApplicationBase() {}
 //----------------------------------------------------------------------------
-void ApplicationBase::Start() {
+void FApplicationBase::Start() {
     LOG(Info, L"[Application] Start <{0}>", _appname);
 }
 //----------------------------------------------------------------------------
-void ApplicationBase::Shutdown() {
+void FApplicationBase::Shutdown() {
     LOG(Info, L"[Application] Shutdown <{0}>", _appname);
 }
 //----------------------------------------------------------------------------

@@ -42,9 +42,9 @@ namespace {
 //----------------------------------------------------------------------------
 template <typename _Entity>
 static bool TryPoolAllocate_Cooperative_(
-    RefPtr<const _Entity>& dst,
-    const DeviceResourceSharable& resource,
-    DeviceSharedEntityPool& pool ) {
+    TRefPtr<const _Entity>& dst,
+    const FDeviceResourceSharable& resource,
+    FDeviceSharedEntityPool& pool ) {
     Assert(!dst);
 
     if (resource.Sharable() == false)
@@ -61,9 +61,9 @@ static bool TryPoolAllocate_Cooperative_(
 //----------------------------------------------------------------------------
 template <typename _Entity>
 static bool TryPoolDeallocate_Cooperative_(
-    RefPtr<const _Entity>& dst,
-    const DeviceResourceSharable& resource,
-    DeviceSharedEntityPool& pool ) {
+    TRefPtr<const _Entity>& dst,
+    const FDeviceResourceSharable& resource,
+    FDeviceSharedEntityPool& pool ) {
     Assert(dst);
 
     if (resource.Sharable() == false)
@@ -84,9 +84,9 @@ namespace {
 //----------------------------------------------------------------------------
 template <typename _Entity>
 static bool TryPoolAllocate_Exclusive_(
-    RefPtr<_Entity>& dst,
-    const DeviceResourceSharable& resource,
-    DeviceSharedEntityPool& pool ) {
+    TRefPtr<_Entity>& dst,
+    const FDeviceResourceSharable& resource,
+    FDeviceSharedEntityPool& pool ) {
     Assert(!dst);
 
     if (resource.Sharable() == false)
@@ -103,9 +103,9 @@ static bool TryPoolAllocate_Exclusive_(
 //----------------------------------------------------------------------------
 template <typename _Entity>
 static bool TryPoolDeallocate_Exclusive_(
-    RefPtr<_Entity>& dst,
-    const DeviceResourceSharable& resource,
-    DeviceSharedEntityPool& pool ) {
+    TRefPtr<_Entity>& dst,
+    const FDeviceResourceSharable& resource,
+    FDeviceSharedEntityPool& pool ) {
     Assert(dst);
 
     if (resource.Sharable() == false)
@@ -124,14 +124,14 @@ static bool TryPoolDeallocate_Exclusive_(
 //----------------------------------------------------------------------------
 // Viewport
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetViewport(const ViewportF& viewport) {
+void FDeviceEncapsulator::SetViewport(const ViewportF& viewport) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(viewport.HasPositiveExtentsStrict());
 
     _deviceAPIEncapsulator->Device()->SetViewport(viewport);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetViewports(const MemoryView<const ViewportF>& viewports) {
+void FDeviceEncapsulator::SetViewports(const TMemoryView<const ViewportF>& viewports) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(viewports.size());
 
@@ -143,20 +143,20 @@ void DeviceEncapsulator::SetViewports(const MemoryView<const ViewportF>& viewpor
     _deviceAPIEncapsulator->Device()->SetViewports(viewports);
 }
 //----------------------------------------------------------------------------
-// BlendState
+// FBlendState
 //----------------------------------------------------------------------------
-DeviceAPIDependantBlendState *DeviceEncapsulator::CreateBlendState(BlendState *state) {
+FDeviceAPIDependantBlendState *FDeviceEncapsulator::CreateBlendState(FBlendState *state) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(state);
     Assert(state->Frozen());
 
-    DeviceAPIDependantBlendState *const entity = _deviceAPIEncapsulator->Device()->CreateBlendState(state);
+    FDeviceAPIDependantBlendState *const entity = _deviceAPIEncapsulator->Device()->CreateBlendState(state);
     _deviceAPIEncapsulator->OnCreateEntity(state, entity);
 
     return entity;
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DestroyBlendState(BlendState *state, PDeviceAPIDependantBlendState& entity) {
+void FDeviceEncapsulator::DestroyBlendState(FBlendState *state, PDeviceAPIDependantBlendState& entity) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(state);
     Assert(state->Frozen());
@@ -167,20 +167,20 @@ void DeviceEncapsulator::DestroyBlendState(BlendState *state, PDeviceAPIDependan
     _deviceAPIEncapsulator->Device()->DestroyBlendState(state, entity);
 }
 //----------------------------------------------------------------------------
-// RasterizerState
+// FRasterizerState
 //----------------------------------------------------------------------------
-DeviceAPIDependantRasterizerState *DeviceEncapsulator::CreateRasterizerState(RasterizerState *state) {
+FDeviceAPIDependantRasterizerState *FDeviceEncapsulator::CreateRasterizerState(FRasterizerState *state) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(state);
     Assert(state->Frozen());
 
-    DeviceAPIDependantRasterizerState *const entity = _deviceAPIEncapsulator->Device()->CreateRasterizerState(state);
+    FDeviceAPIDependantRasterizerState *const entity = _deviceAPIEncapsulator->Device()->CreateRasterizerState(state);
     _deviceAPIEncapsulator->OnCreateEntity(state, entity);
 
     return entity;
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DestroyRasterizerState(RasterizerState *state, PDeviceAPIDependantRasterizerState& entity) {
+void FDeviceEncapsulator::DestroyRasterizerState(FRasterizerState *state, PDeviceAPIDependantRasterizerState& entity) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(state);
     Assert(state->Frozen());
@@ -191,20 +191,20 @@ void DeviceEncapsulator::DestroyRasterizerState(RasterizerState *state, PDeviceA
     _deviceAPIEncapsulator->Device()->DestroyRasterizerState(state, entity);
 }
 //----------------------------------------------------------------------------
-// DepthStencilState
+// FDepthStencilState
 //----------------------------------------------------------------------------
-DeviceAPIDependantDepthStencilState *DeviceEncapsulator::CreateDepthStencilState(DepthStencilState *state) {
+FDeviceAPIDependantDepthStencilState *FDeviceEncapsulator::CreateDepthStencilState(FDepthStencilState *state) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(state);
     Assert(state->Frozen());
 
-    DeviceAPIDependantDepthStencilState *const entity = _deviceAPIEncapsulator->Device()->CreateDepthStencilState(state);
+    FDeviceAPIDependantDepthStencilState *const entity = _deviceAPIEncapsulator->Device()->CreateDepthStencilState(state);
     _deviceAPIEncapsulator->OnCreateEntity(state, entity);
 
     return entity;
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DestroyDepthStencilState(DepthStencilState *state, PDeviceAPIDependantDepthStencilState& entity) {
+void FDeviceEncapsulator::DestroyDepthStencilState(FDepthStencilState *state, PDeviceAPIDependantDepthStencilState& entity) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(state);
     Assert(state->Frozen());
@@ -215,20 +215,20 @@ void DeviceEncapsulator::DestroyDepthStencilState(DepthStencilState *state, PDev
     _deviceAPIEncapsulator->Device()->DestroyDepthStencilState(state, entity);
 }
 //----------------------------------------------------------------------------
-// SamplerState
+// FSamplerState
 //----------------------------------------------------------------------------
-DeviceAPIDependantSamplerState *DeviceEncapsulator::CreateSamplerState(SamplerState *state) {
+FDeviceAPIDependantSamplerState *FDeviceEncapsulator::CreateSamplerState(FSamplerState *state) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(state);
     Assert(state->Frozen());
 
-    DeviceAPIDependantSamplerState *const entity = _deviceAPIEncapsulator->Device()->CreateSamplerState(state);
+    FDeviceAPIDependantSamplerState *const entity = _deviceAPIEncapsulator->Device()->CreateSamplerState(state);
     _deviceAPIEncapsulator->OnCreateEntity(state, entity);
 
     return entity;
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DestroySamplerState(SamplerState *state, PDeviceAPIDependantSamplerState& entity) {
+void FDeviceEncapsulator::DestroySamplerState(FSamplerState *state, PDeviceAPIDependantSamplerState& entity) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(state);
     Assert(state->Frozen());
@@ -239,20 +239,20 @@ void DeviceEncapsulator::DestroySamplerState(SamplerState *state, PDeviceAPIDepe
     _deviceAPIEncapsulator->Device()->DestroySamplerState(state, entity);
 }
 //----------------------------------------------------------------------------
-// VertexDeclaration
+// FVertexDeclaration
 //----------------------------------------------------------------------------
-DeviceAPIDependantVertexDeclaration *DeviceEncapsulator::CreateVertexDeclaration(VertexDeclaration *declaration) {
+FDeviceAPIDependantVertexDeclaration *FDeviceEncapsulator::CreateVertexDeclaration(FVertexDeclaration *declaration) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(declaration);
     Assert(declaration->Frozen());
 
-    DeviceAPIDependantVertexDeclaration *const entity = _deviceAPIEncapsulator->Device()->CreateVertexDeclaration(declaration);
+    FDeviceAPIDependantVertexDeclaration *const entity = _deviceAPIEncapsulator->Device()->CreateVertexDeclaration(declaration);
     _deviceAPIEncapsulator->OnCreateEntity(declaration, entity);
 
     return entity;
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DestroyVertexDeclaration(VertexDeclaration *declaration, PDeviceAPIDependantVertexDeclaration& entity) {
+void FDeviceEncapsulator::DestroyVertexDeclaration(FVertexDeclaration *declaration, PDeviceAPIDependantVertexDeclaration& entity) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(declaration);
     Assert(declaration->Frozen());
@@ -265,13 +265,13 @@ void DeviceEncapsulator::DestroyVertexDeclaration(VertexDeclaration *declaration
 //----------------------------------------------------------------------------
 // IndexBuffer
 //----------------------------------------------------------------------------
-DeviceAPIDependantResourceBuffer *DeviceEncapsulator::CreateIndexBuffer(IndexBuffer *indexBuffer, DeviceResourceBuffer *resourceBuffer, const MemoryView<const u8>& optionalData) {
+FDeviceAPIDependantResourceBuffer *FDeviceEncapsulator::CreateIndexBuffer(IndexBuffer *indexBuffer, FDeviceResourceBuffer *resourceBuffer, const TMemoryView<const u8>& optionalData) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(indexBuffer);
     Assert(indexBuffer->Frozen());
     Assert(resourceBuffer);
     Assert(&indexBuffer->Buffer() == resourceBuffer);
-    Assert(resourceBuffer->Usage() != BufferUsage::Immutable || optionalData.SizeInBytes() == resourceBuffer->SizeInBytes());
+    Assert(resourceBuffer->Usage() != EBufferUsage::Immutable || optionalData.SizeInBytes() == resourceBuffer->SizeInBytes());
 
     PDeviceAPIDependantResourceBuffer entity;
     if (false == TryPoolAllocate_Exclusive_(entity, *indexBuffer, *_deviceSharedEntityPool))
@@ -283,7 +283,7 @@ DeviceAPIDependantResourceBuffer *DeviceEncapsulator::CreateIndexBuffer(IndexBuf
     return RemoveRef_AssertReachZero_KeepAlive(entity);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DestroyIndexBuffer(IndexBuffer *indexBuffer, PDeviceAPIDependantResourceBuffer& entity) {
+void FDeviceEncapsulator::DestroyIndexBuffer(IndexBuffer *indexBuffer, PDeviceAPIDependantResourceBuffer& entity) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(indexBuffer);
     Assert(indexBuffer->Frozen());
@@ -296,15 +296,15 @@ void DeviceEncapsulator::DestroyIndexBuffer(IndexBuffer *indexBuffer, PDeviceAPI
         _deviceAPIEncapsulator->Device()->DestroyIndexBuffer(indexBuffer, entity);
 }
 //---------------------------------------------------------------------------
-// VertexBuffer
+// FVertexBuffer
 //----------------------------------------------------------------------------
-DeviceAPIDependantResourceBuffer *DeviceEncapsulator::CreateVertexBuffer(VertexBuffer *vertexBuffer, DeviceResourceBuffer *resourceBuffer, const MemoryView<const u8>& optionalData) {
+FDeviceAPIDependantResourceBuffer *FDeviceEncapsulator::CreateVertexBuffer(FVertexBuffer *vertexBuffer, FDeviceResourceBuffer *resourceBuffer, const TMemoryView<const u8>& optionalData) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(vertexBuffer);
     Assert(vertexBuffer->Frozen());
     Assert(resourceBuffer);
     Assert(&vertexBuffer->Buffer() == resourceBuffer);
-    Assert(resourceBuffer->Usage() != BufferUsage::Immutable || optionalData.SizeInBytes() == resourceBuffer->SizeInBytes());
+    Assert(resourceBuffer->Usage() != EBufferUsage::Immutable || optionalData.SizeInBytes() == resourceBuffer->SizeInBytes());
 
     PDeviceAPIDependantResourceBuffer entity;
     if (false == TryPoolAllocate_Exclusive_(entity, *vertexBuffer, *_deviceSharedEntityPool))
@@ -316,7 +316,7 @@ DeviceAPIDependantResourceBuffer *DeviceEncapsulator::CreateVertexBuffer(VertexB
     return RemoveRef_AssertReachZero_KeepAlive(entity);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DestroyVertexBuffer(VertexBuffer *vertexBuffer, PDeviceAPIDependantResourceBuffer& entity) {
+void FDeviceEncapsulator::DestroyVertexBuffer(FVertexBuffer *vertexBuffer, PDeviceAPIDependantResourceBuffer& entity) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(vertexBuffer);
     Assert(vertexBuffer->Frozen());
@@ -329,15 +329,15 @@ void DeviceEncapsulator::DestroyVertexBuffer(VertexBuffer *vertexBuffer, PDevice
         _deviceAPIEncapsulator->Device()->DestroyVertexBuffer(vertexBuffer, entity);
 }
 //----------------------------------------------------------------------------
-// ConstantBuffer
+// FConstantBuffer
 //----------------------------------------------------------------------------
-const DeviceAPIDependantConstantWriter *DeviceEncapsulator::ConstantWriter() const {
+const FDeviceAPIDependantConstantWriter *FDeviceEncapsulator::ConstantWriter() const {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     return _deviceAPIEncapsulator->Device()->ConstantWriter();
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantResourceBuffer *DeviceEncapsulator::CreateConstantBuffer(ConstantBuffer *constantBuffer, DeviceResourceBuffer *resourceBuffer) {
+FDeviceAPIDependantResourceBuffer *FDeviceEncapsulator::CreateConstantBuffer(FConstantBuffer *constantBuffer, FDeviceResourceBuffer *resourceBuffer) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(constantBuffer);
     Assert(constantBuffer->Frozen());
@@ -354,7 +354,7 @@ DeviceAPIDependantResourceBuffer *DeviceEncapsulator::CreateConstantBuffer(Const
     return RemoveRef_AssertReachZero_KeepAlive(entity);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DestroyConstantBuffer(ConstantBuffer *constantBuffer, PDeviceAPIDependantResourceBuffer& entity) {
+void FDeviceEncapsulator::DestroyConstantBuffer(FConstantBuffer *constantBuffer, PDeviceAPIDependantResourceBuffer& entity) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(constantBuffer);
     Assert(constantBuffer->Frozen());
@@ -367,9 +367,9 @@ void DeviceEncapsulator::DestroyConstantBuffer(ConstantBuffer *constantBuffer, P
         _deviceAPIEncapsulator->Device()->DestroyConstantBuffer(constantBuffer, entity);
 }
 //----------------------------------------------------------------------------
-// ShaderProgram
+// FShaderProgram
 //----------------------------------------------------------------------------
-DeviceAPIDependantShaderProgram* DeviceEncapsulator::CreateShaderProgram(ShaderProgram* program) {
+FDeviceAPIDependantShaderProgram* FDeviceEncapsulator::CreateShaderProgram(FShaderProgram* program) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(program);
     Assert(program->Frozen());
@@ -384,7 +384,7 @@ DeviceAPIDependantShaderProgram* DeviceEncapsulator::CreateShaderProgram(ShaderP
     return RemoveRef_AssertReachZero_KeepAlive(entity);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DestroyShaderProgram(ShaderProgram* program, PDeviceAPIDependantShaderProgram& entity) {
+void FDeviceEncapsulator::DestroyShaderProgram(FShaderProgram* program, PDeviceAPIDependantShaderProgram& entity) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(program);
     Assert(program->Frozen());
@@ -397,20 +397,20 @@ void DeviceEncapsulator::DestroyShaderProgram(ShaderProgram* program, PDeviceAPI
         _deviceAPIEncapsulator->Device()->DestroyShaderProgram(program, entity);
 }
 //----------------------------------------------------------------------------
-// ShaderEffect
+// FShaderEffect
 //----------------------------------------------------------------------------
-DeviceAPIDependantShaderEffect *DeviceEncapsulator::CreateShaderEffect(ShaderEffect *effect) {
+FDeviceAPIDependantShaderEffect *FDeviceEncapsulator::CreateShaderEffect(FShaderEffect *effect) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(effect);
     Assert(effect->Frozen());
 
-    DeviceAPIDependantShaderEffect *const entity = _deviceAPIEncapsulator->Device()->CreateShaderEffect(effect);
+    FDeviceAPIDependantShaderEffect *const entity = _deviceAPIEncapsulator->Device()->CreateShaderEffect(effect);
     _deviceAPIEncapsulator->OnCreateEntity(effect, entity);
 
     return entity;
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DestroyShaderEffect(ShaderEffect *effect, PDeviceAPIDependantShaderEffect& entity) {
+void FDeviceEncapsulator::DestroyShaderEffect(FShaderEffect *effect, PDeviceAPIDependantShaderEffect& entity) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(effect);
     Assert(effect->Frozen());
@@ -421,13 +421,13 @@ void DeviceEncapsulator::DestroyShaderEffect(ShaderEffect *effect, PDeviceAPIDep
     _deviceAPIEncapsulator->Device()->DestroyShaderEffect(effect, entity);
 }
 //----------------------------------------------------------------------------
-// Texture2D
+// FTexture2D
 //----------------------------------------------------------------------------
-DeviceAPIDependantTexture2D *DeviceEncapsulator::CreateTexture2D(Texture2D *texture, const MemoryView<const u8>& optionalData) {
+FDeviceAPIDependantTexture2D *FDeviceEncapsulator::CreateTexture2D(FTexture2D *texture, const TMemoryView<const u8>& optionalData) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(texture);
     Assert(texture->Frozen());
-    Assert(texture->Usage() != BufferUsage::Immutable || optionalData.SizeInBytes() == texture->SizeInBytes());
+    Assert(texture->Usage() != EBufferUsage::Immutable || optionalData.SizeInBytes() == texture->SizeInBytes());
 
     PDeviceAPIDependantTexture2D entity;
     if (false == TryPoolAllocate_Exclusive_(entity, *texture, *_deviceSharedEntityPool))
@@ -439,7 +439,7 @@ DeviceAPIDependantTexture2D *DeviceEncapsulator::CreateTexture2D(Texture2D *text
     return RemoveRef_AssertReachZero_KeepAlive(entity);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DestroyTexture2D(Texture2D *texture, PDeviceAPIDependantTexture2D& entity) {
+void FDeviceEncapsulator::DestroyTexture2D(FTexture2D *texture, PDeviceAPIDependantTexture2D& entity) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(texture);
     Assert(texture->Frozen());
@@ -452,13 +452,13 @@ void DeviceEncapsulator::DestroyTexture2D(Texture2D *texture, PDeviceAPIDependan
         _deviceAPIEncapsulator->Device()->DestroyTexture2D(texture, entity);
 }
 //----------------------------------------------------------------------------
-// TextureCube
+// FTextureCube
 //----------------------------------------------------------------------------
-DeviceAPIDependantTextureCube *DeviceEncapsulator::CreateTextureCube(TextureCube *texture, const MemoryView<const u8>& optionalData) {
+FDeviceAPIDependantTextureCube *FDeviceEncapsulator::CreateTextureCube(FTextureCube *texture, const TMemoryView<const u8>& optionalData) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(texture);
     Assert(texture->Frozen());
-    Assert(texture->Usage() != BufferUsage::Immutable || optionalData.SizeInBytes() == texture->SizeInBytes());
+    Assert(texture->Usage() != EBufferUsage::Immutable || optionalData.SizeInBytes() == texture->SizeInBytes());
 
     PDeviceAPIDependantTextureCube entity;
     if (false == TryPoolAllocate_Exclusive_(entity, *texture, *_deviceSharedEntityPool))
@@ -470,7 +470,7 @@ DeviceAPIDependantTextureCube *DeviceEncapsulator::CreateTextureCube(TextureCube
     return RemoveRef_AssertReachZero_KeepAlive(entity);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DestroyTextureCube(TextureCube *texture, PDeviceAPIDependantTextureCube& entity) {
+void FDeviceEncapsulator::DestroyTextureCube(FTextureCube *texture, PDeviceAPIDependantTextureCube& entity) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(texture);
     Assert(texture->Frozen());
@@ -485,25 +485,25 @@ void DeviceEncapsulator::DestroyTextureCube(TextureCube *texture, PDeviceAPIDepe
 //----------------------------------------------------------------------------
 // BackBuffer
 //----------------------------------------------------------------------------
-RenderTarget *DeviceEncapsulator::BackBufferRenderTarget() {
+FRenderTarget *FDeviceEncapsulator::BackBufferRenderTarget() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     return _deviceAPIEncapsulator->Device()->BackBufferRenderTarget();
 }
 //----------------------------------------------------------------------------
-DepthStencil *DeviceEncapsulator::BackBufferDepthStencil() {
+FDepthStencil *FDeviceEncapsulator::BackBufferDepthStencil() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     return _deviceAPIEncapsulator->Device()->BackBufferDepthStencil();
 }
 //----------------------------------------------------------------------------
-const RenderTarget *DeviceEncapsulator::BackBufferRenderTarget() const {
+const FRenderTarget *FDeviceEncapsulator::BackBufferRenderTarget() const {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     return _deviceAPIEncapsulator->Device()->BackBufferRenderTarget();
 }
 //----------------------------------------------------------------------------
-const DepthStencil *DeviceEncapsulator::BackBufferDepthStencil() const {
+const FDepthStencil *FDeviceEncapsulator::BackBufferDepthStencil() const {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     return _deviceAPIEncapsulator->Device()->BackBufferDepthStencil();
@@ -511,7 +511,7 @@ const DepthStencil *DeviceEncapsulator::BackBufferDepthStencil() const {
 //----------------------------------------------------------------------------
 // Render Target
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetRenderTarget(const RenderTarget *renderTarget, const DepthStencil *depthStencil) {
+void FDeviceEncapsulator::SetRenderTarget(const FRenderTarget *renderTarget, const FDepthStencil *depthStencil) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!renderTarget || (renderTarget->Frozen() && renderTarget->Available()));
     Assert(!depthStencil || (depthStencil->Frozen() && depthStencil->Available()));
@@ -519,13 +519,13 @@ void DeviceEncapsulator::SetRenderTarget(const RenderTarget *renderTarget, const
     _deviceAPIEncapsulator->Device()->SetRenderTarget(renderTarget, depthStencil);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::SetRenderTargets(const MemoryView<const RenderTargetBinding>& bindings, const DepthStencil *depthStencil) {
+void FDeviceEncapsulator::SetRenderTargets(const TMemoryView<const FRenderTargetBinding>& bindings, const FDepthStencil *depthStencil) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!depthStencil || (depthStencil->Frozen() && depthStencil->Available()));
 
 #ifdef WITH_CORE_ASSERT
     Assert(bindings.size());
-    for (const RenderTargetBinding& b : bindings) {
+    for (const FRenderTargetBinding& b : bindings) {
         Assert(b.RT);
         Assert(b.RT->Frozen());
         Assert(b.RT->Available());
@@ -536,7 +536,7 @@ void DeviceEncapsulator::SetRenderTargets(const MemoryView<const RenderTargetBin
     _deviceAPIEncapsulator->Device()->SetRenderTargets(bindings, depthStencil);
 }
 //----------------------------------------------------------------------------
-DeviceAPIDependantRenderTarget *DeviceEncapsulator::CreateRenderTarget(RenderTarget *renderTarget, const MemoryView<const u8>& optionalData) {
+FDeviceAPIDependantRenderTarget *FDeviceEncapsulator::CreateRenderTarget(FRenderTarget *renderTarget, const TMemoryView<const u8>& optionalData) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(renderTarget);
     Assert(renderTarget->Frozen());
@@ -551,7 +551,7 @@ DeviceAPIDependantRenderTarget *DeviceEncapsulator::CreateRenderTarget(RenderTar
     return RemoveRef_AssertReachZero_KeepAlive(entity);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DestroyRenderTarget(RenderTarget *renderTarget, PDeviceAPIDependantRenderTarget& entity) {
+void FDeviceEncapsulator::DestroyRenderTarget(FRenderTarget *renderTarget, PDeviceAPIDependantRenderTarget& entity) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(renderTarget);
     Assert(renderTarget->Frozen());
@@ -563,9 +563,9 @@ void DeviceEncapsulator::DestroyRenderTarget(RenderTarget *renderTarget, PDevice
         _deviceAPIEncapsulator->Device()->DestroyRenderTarget(renderTarget, entity);
 }
 //----------------------------------------------------------------------------
-// DepthStencil
+// FDepthStencil
 //----------------------------------------------------------------------------
-DeviceAPIDependantDepthStencil *DeviceEncapsulator::CreateDepthStencil(DepthStencil *depthStencil, const MemoryView<const u8>& optionalData) {
+FDeviceAPIDependantDepthStencil *FDeviceEncapsulator::CreateDepthStencil(FDepthStencil *depthStencil, const TMemoryView<const u8>& optionalData) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(depthStencil);
     Assert(depthStencil->Frozen());
@@ -580,7 +580,7 @@ DeviceAPIDependantDepthStencil *DeviceEncapsulator::CreateDepthStencil(DepthSten
     return RemoveRef_AssertReachZero_KeepAlive(entity);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::DestroyDepthStencil(DepthStencil *depthStencil, PDeviceAPIDependantDepthStencil& entity) {
+void FDeviceEncapsulator::DestroyDepthStencil(FDepthStencil *depthStencil, PDeviceAPIDependantDepthStencil& entity) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(depthStencil);
     Assert(depthStencil->Frozen());
@@ -594,7 +594,7 @@ void DeviceEncapsulator::DestroyDepthStencil(DepthStencil *depthStencil, PDevice
 //----------------------------------------------------------------------------
 // Clear
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::Clear(const RenderTarget *renderTarget, const ColorRGBAF& color) {
+void FDeviceEncapsulator::Clear(const FRenderTarget *renderTarget, const ColorRGBAF& color) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(renderTarget);
     Assert(renderTarget->Frozen());
@@ -603,7 +603,7 @@ void DeviceEncapsulator::Clear(const RenderTarget *renderTarget, const ColorRGBA
     _deviceAPIEncapsulator->Device()->Clear(renderTarget, color);
 }
 //----------------------------------------------------------------------------
-void DeviceEncapsulator::Clear(const Graphics::DepthStencil *depthStencil, ClearOptions opts, float depth, u8 stencil) {
+void FDeviceEncapsulator::Clear(const Graphics::FDepthStencil *depthStencil, EClearOptions opts, float depth, u8 stencil) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(depthStencil);
     Assert(depthStencil->Frozen());

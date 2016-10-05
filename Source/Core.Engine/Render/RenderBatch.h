@@ -12,41 +12,41 @@ class IDeviceAPIContext;
 }
 
 namespace Engine {
-struct RenderCommandCriteria;
-struct RenderCommandParams;
-struct RenderCommandRegistration;
+struct FRenderCommandCriteria;
+struct FRenderCommandParams;
+struct FRenderCommandRegistration;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class MaterialDatabase;
+class FMaterialDatabase;
 FWD_REFPTR(MaterialEffect);
-class RenderTree;
-struct VariabilitySeed;
+class FRenderTree;
+struct FVariabilitySeed;
 //----------------------------------------------------------------------------
-class RenderBatch {
+class FRenderBatch {
 public:
-    RenderBatch();
-    ~RenderBatch();
+    FRenderBatch();
+    ~FRenderBatch();
 
-    void Add(   RenderCommandRegistration *registration, 
-                const RenderCommandCriteria& criteria, 
-                const RenderCommandParams& params );
-    RenderCommandCriteria Remove(const RenderCommandRegistration *registration);
+    void Add(   FRenderCommandRegistration *registration, 
+                const FRenderCommandCriteria& criteria, 
+                const FRenderCommandParams& params );
+    FRenderCommandCriteria Remove(const FRenderCommandRegistration *registration);
 
     void Prepare(   Graphics::IDeviceAPIEncapsulator *device,
-                    MaterialDatabase *materialDatabase,
-                    const RenderTree *renderTree,
-                    VariabilitySeed *seeds);
+                    FMaterialDatabase *materialDatabase,
+                    const FRenderTree *renderTree,
+                    FVariabilitySeed *seeds);
     void Render(Graphics::IDeviceAPIContext *context);
     void Destroy(Graphics::IDeviceAPIEncapsulator *device);
 
 private:
-    VECTOR_THREAD_LOCAL(Shader, RenderCommandCriteria) _criterias;
-    VECTOR_THREAD_LOCAL(Shader, RenderCommandParams) _params;
+    VECTOR_THREAD_LOCAL(Shader, FRenderCommandCriteria) _criterias;
+    VECTOR_THREAD_LOCAL(Shader, FRenderCommandParams) _params;
 
     bool _needSort;
 
-    VECTOR_THREAD_LOCAL(Shader, const RenderCommandRegistration *) _registrations;
+    VECTOR_THREAD_LOCAL(Shader, const FRenderCommandRegistration *) _registrations;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -7,16 +7,16 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class ShaderProfileType {
+enum class EShaderProfileType {
     ShaderModel5 = 0,
     ShaderModel4_1,
     ShaderModel4,
     ShaderModel3,
 };
 //----------------------------------------------------------------------------
-StringView ShaderProfileTypeToCStr(ShaderProfileType profile);
+FStringView ShaderProfileTypeToCStr(EShaderProfileType profile);
 //----------------------------------------------------------------------------
-enum class ShaderProgramType {
+enum class EShaderProgramType {
     Vertex = 0,
     Hull,
     Domain,
@@ -27,9 +27,9 @@ enum class ShaderProgramType {
     __Count,
 };
 //----------------------------------------------------------------------------
-MemoryView<const ShaderProgramType> EachShaderProgramType();
-StringView ShaderProgramTypeToCStr(ShaderProgramType program);
-StringView ShaderProgramTypeToEntryPoint(ShaderProgramType program);
+TMemoryView<const EShaderProgramType> EachShaderProgramType();
+FStringView ShaderProgramTypeToCStr(EShaderProgramType program);
+FStringView ShaderProgramTypeToEntryPoint(EShaderProgramType program);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

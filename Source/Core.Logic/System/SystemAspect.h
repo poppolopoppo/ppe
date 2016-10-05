@@ -7,16 +7,16 @@
 
 namespace Core {
 namespace Logic {
-class ComponentContainer;
+class FComponentContainer;
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class SystemAspect {
+class FSystemAspect {
 public:
-    SystemAspect(ComponentFlag all, ComponentFlag any, ComponentFlag none) 
+    FSystemAspect(ComponentFlag all, ComponentFlag any, ComponentFlag none) 
     :   _all(all), _any(any), _none(none) {}
-    SystemAspect() : SystemAspect(ComponentFlag(0), ComponentFlag(0), ComponentFlag(0) ) {}
+    FSystemAspect() : FSystemAspect(ComponentFlag(0), ComponentFlag(0), ComponentFlag(0) ) {}
 
     ComponentFlag All() const { return _all; }
     ComponentFlag Any() const { return _any; }
@@ -32,33 +32,33 @@ public:
                (0 == (_none & components));
     }
 
-    bool operator ==(const SystemAspect& other) const { return _all == other._all && _any == other._any && _none == other._none; }
-    bool operator !=(const SystemAspect& other) const { return !operator ==(other); }
+    bool operator ==(const FSystemAspect& other) const { return _all == other._all && _any == other._any && _none == other._none; }
+    bool operator !=(const FSystemAspect& other) const { return !operator ==(other); }
 
-    static SystemAspect Everything() { return SystemAspect(ComponentFlag(0), ComponentFlag(ComponentFlag::value_type(-1)), ComponentFlag(0)); }
-    static SystemAspect Nothing()    { return SystemAspect(ComponentFlag(0), ComponentFlag(0), ComponentFlag(ComponentFlag::value_type(-1))); }
-
-    template <typename T0, typename... TN>
-    static SystemAspect MatchAll(const ComponentContainer& components, ComponentFlag any = 0, ComponentFlag none = 0);
-    template <typename T0, typename... TN>
-    static SystemAspect MatchAny(const ComponentContainer& components, ComponentFlag all = 0, ComponentFlag none = 0);
-    template <typename T0, typename... TN>
-    static SystemAspect MatchNone(const ComponentContainer& components, ComponentFlag all = 0, ComponentFlag any = 0);
+    static FSystemAspect Everything() { return FSystemAspect(ComponentFlag(0), ComponentFlag(ComponentFlag::value_type(-1)), ComponentFlag(0)); }
+    static FSystemAspect Nothing()    { return FSystemAspect(ComponentFlag(0), ComponentFlag(0), ComponentFlag(ComponentFlag::value_type(-1))); }
 
     template <typename T0, typename... TN>
-    static ComponentFlag MakeFlags(const ComponentContainer& components);
+    static FSystemAspect MatchAll(const FComponentContainer& components, ComponentFlag any = 0, ComponentFlag none = 0);
+    template <typename T0, typename... TN>
+    static FSystemAspect MatchAny(const FComponentContainer& components, ComponentFlag all = 0, ComponentFlag none = 0);
+    template <typename T0, typename... TN>
+    static FSystemAspect MatchNone(const FComponentContainer& components, ComponentFlag all = 0, ComponentFlag any = 0);
+
+    template <typename T0, typename... TN>
+    static ComponentFlag MakeFlags(const FComponentContainer& components);
 
 private:
     template <typename T0, typename... TN>
-    struct MergedTags_ {
-        FORCE_INLINE static ComponentFlag value(const ComponentContainer& components) { 
-            return container.Flag<T0>() | MergedTags_<TN...>::value(container); 
+    struct TMergedTags_ {
+        FORCE_INLINE static ComponentFlag value(const FComponentContainer& components) { 
+            return container.Flag<T0>() | TMergedTags_<TN...>::value(container); 
         }
     };
 
     template <typename T>
-    struct MergedTags_<T> {
-        FORCE_INLINE static ComponentFlag value(const ComponentContainer& components) { 
+    struct TMergedTags_<T> {
+        FORCE_INLINE static ComponentFlag value(const FComponentContainer& components) { 
             return container.Flag<T>(); 
         }
     };
@@ -69,23 +69,23 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename T0, typename... TN> 
-SystemAspect SystemAspect::MatchAll(const ComponentContainer& components, ComponentFlag any/* = 0 */, ComponentFlag none/* = 0 */) {
-    return SystemAspect(MakeFlags<T0, TN...>(components), any, none); 
+FSystemAspect FSystemAspect::MatchAll(const FComponentContainer& components, ComponentFlag any/* = 0 */, ComponentFlag none/* = 0 */) {
+    return FSystemAspect(MakeFlags<T0, TN...>(components), any, none); 
 }
 //----------------------------------------------------------------------------
 template <typename T0, typename... TN> 
-SystemAspect SystemAspect::MatchAny(const ComponentContainer& components, ComponentFlag all/* = 0 */, ComponentFlag none/* = 0 */) {
-    return SystemAspect(all, MakeFlags<T0, TN...>(components), none); 
+FSystemAspect FSystemAspect::MatchAny(const FComponentContainer& components, ComponentFlag all/* = 0 */, ComponentFlag none/* = 0 */) {
+    return FSystemAspect(all, MakeFlags<T0, TN...>(components), none); 
 }
 //----------------------------------------------------------------------------
 template <typename T0, typename... TN> 
-SystemAspect SystemAspect::MatchNone(const ComponentContainer& components, ComponentFlag all/* = 0 */, ComponentFlag any/* = 0 */) {
-    return SystemAspect(all, any, MakeFlags<T0, TN...>(components));
+FSystemAspect FSystemAspect::MatchNone(const FComponentContainer& components, ComponentFlag all/* = 0 */, ComponentFlag any/* = 0 */) {
+    return FSystemAspect(all, any, MakeFlags<T0, TN...>(components));
 }
 //----------------------------------------------------------------------------
 template <typename T0, typename... TN>
-ComponentFlag SystemAspect::MakeFlags(const ComponentContainer& components) {
-    return MergedTags_<T0, TN...>::value(components);
+ComponentFlag FSystemAspect::MakeFlags(const FComponentContainer& components) {
+    return TMergedTags_<T0, TN...>::value(components);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

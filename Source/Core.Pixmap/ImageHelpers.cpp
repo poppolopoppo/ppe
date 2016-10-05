@@ -22,7 +22,7 @@ namespace Pixmap {
 // http://thomasdiewald.com/blog/?p=1994
 // http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.102.7988&rep=rep1&type=pdf
 //----------------------------------------------------------------------------
-void DistanceField_CDT(Image* dst, const FloatImage* src, float alphaCutoff) {
+void DistanceField_CDT(Image* dst, const FFloatImage* src, float alphaCutoff) {
     Assert(dst);
     Assert(src);
     Assert(alphaCutoff >= 0.f && alphaCutoff < 1.f);
@@ -34,10 +34,10 @@ void DistanceField_CDT(Image* dst, const FloatImage* src, float alphaCutoff) {
 
     const float DISTMAX = float(w*w + h*h) + 1;
 
-    dst->Resize_DiscardData(w, h, ColorDepth::_32bits, ColorMask::R, ColorSpace::Float);
+    dst->Resize_DiscardData(w, h, EColorDepth::_32bits, EColorMask::R, EColorSpace::Float);
 
-    const MemoryView<const FloatImage::color_type> srcData = src->MakeConstView();
-    const MemoryView<float> dstData = dst->MakeView().Cast<float>();
+    const TMemoryView<const FFloatImage::color_type> srcData = src->MakeConstView();
+    const TMemoryView<float> dstData = dst->MakeView().Cast<float>();
 
     STACKLOCAL_POD_ARRAY(ushort2, nearest, w*h);
 
@@ -127,7 +127,7 @@ void DistanceField_CDT(Image* dst, const FloatImage* src, float alphaCutoff) {
 // http://thomasdiewald.com/blog/?p=1994
 // http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.102.7988&rep=rep1&type=pdf
 //----------------------------------------------------------------------------
-void DistanceField_DRA(Image* dst, const FloatImage* src, float alphaCutoff) {
+void DistanceField_DRA(Image* dst, const FFloatImage* src, float alphaCutoff) {
     Assert(dst);
     Assert(src);
     Assert(alphaCutoff >= 0.f && alphaCutoff < 1.f);
@@ -139,10 +139,10 @@ void DistanceField_DRA(Image* dst, const FloatImage* src, float alphaCutoff) {
 
     const float DISTMAX = float(w*w + h*h) + 1;
 
-    dst->Resize_DiscardData(w, h, ColorDepth::_32bits, ColorMask::R, ColorSpace::Float);
+    dst->Resize_DiscardData(w, h, EColorDepth::_32bits, EColorMask::R, EColorSpace::Float);
 
-    const MemoryView<const FloatImage::color_type> srcData = src->MakeConstView();
-    const MemoryView<float> dstData = dst->MakeView().Cast<float>();
+    const TMemoryView<const FFloatImage::color_type> srcData = src->MakeConstView();
+    const TMemoryView<float> dstData = dst->MakeView().Cast<float>();
 
     STACKLOCAL_POD_ARRAY(ushort2, nearest, w*h);
 
@@ -169,7 +169,7 @@ void DistanceField_DRA(Image* dst, const FloatImage* src, float alphaCutoff) {
     constexpr float d1 = 1;
     constexpr float d2 = (d1*d1 + d1*d1);
 
-    struct DistanceSq_ {
+    struct FDistanceSq_ {
         float operator()(size_t x0, size_t y0, size_t x1, size_t y1) {
             const size_t xx = (x0 < x1 ? x1 - x0 : x0 - x1);
             const size_t yy = (y0 < y1 ? y1 - y0 : y0 - y1);
@@ -192,22 +192,22 @@ void DistanceField_DRA(Image* dst, const FloatImage* src, float alphaCutoff) {
 
                 if (x > 0 && d1 + dstData[index - 1] < nd) { // 0
                     nn = nearest[index - 1];
-                    nd = DistanceSq_()(x, y, nn.x(), nn.y());
+                    nd = FDistanceSq_()(x, y, nn.x(), nn.y());
                 }
 
                 if (x > 0 && y > 0 && d2 + dstData[index - 1 - w] < nd) { // 1
                     nn = nearest[index - 1 - w];
-                    nd = DistanceSq_()(x, y, nn.x(), nn.y());
+                    nd = FDistanceSq_()(x, y, nn.x(), nn.y());
                 }
 
                 if (y > 0 && d1 + dstData[index - w] < nd) { // 2
                     nn = nearest[index - w];
-                    nd = DistanceSq_()(x, y, nn.x(), nn.y());
+                    nd = FDistanceSq_()(x, y, nn.x(), nn.y());
                 }
 
                 if (x + 1 < w && y > 0 && d2 + dstData[index - w + 1] < nd) { // 2
                     nn = nearest[index - w + 1];
-                    nd = DistanceSq_()(x, y, nn.x(), nn.y());
+                    nd = FDistanceSq_()(x, y, nn.x(), nn.y());
                 }
 
                 nearest[index] = nn;
@@ -230,22 +230,22 @@ void DistanceField_DRA(Image* dst, const FloatImage* src, float alphaCutoff) {
 
                 if (x + 1 < w && d1 + dstData[index + 1] < nd) { // 4
                     nn = nearest[index + 1];
-                    nd = DistanceSq_()(x, y, nn.x(), nn.y());
+                    nd = FDistanceSq_()(x, y, nn.x(), nn.y());
                 }
 
                 if (x > 0 && y + 1 < h && d2 + dstData[index + w - 1] < nd) { // 5
                     nn = nearest[index + w - 1];
-                    nd = DistanceSq_()(x, y, nn.x(), nn.y());
+                    nd = FDistanceSq_()(x, y, nn.x(), nn.y());
                 }
 
                 if (y + 1 < h && d1 + dstData[index + w] < nd) { // 6
                     nn = nearest[index + w];
-                    nd = DistanceSq_()(x, y, nn.x(), nn.y());
+                    nd = FDistanceSq_()(x, y, nn.x(), nn.y());
                 }
 
                 if (x + 1 < w && y + 1 < h && d2 + dstData[index + w + 1] < nd) { // 7
                     nn = nearest[index + w + 1];
-                    nd = DistanceSq_()(x, y, nn.x(), nn.y());
+                    nd = FDistanceSq_()(x, y, nn.x(), nn.y());
                 }
 
                 nearest[index] = nn;
@@ -265,7 +265,7 @@ void DistanceField_DRA(Image* dst, const FloatImage* src, float alphaCutoff) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void ExpandColorToTransparentPixels(FloatImage* img, float alphaCutoff) {
+void ExpandColorToTransparentPixels(FFloatImage* img, float alphaCutoff) {
     Assert(img);
     Assert(alphaCutoff >= 0.f && alphaCutoff < 1.f);
 
@@ -274,10 +274,10 @@ void ExpandColorToTransparentPixels(FloatImage* img, float alphaCutoff) {
     if (w == 0 || h == 0)
         return;
 
-    typedef FloatImage::color_type color_type;
+    typedef FFloatImage::color_type color_type;
 
     const float DISTMAX = float(w*w + h*h) + 1;
-    const MemoryView<color_type> colors = img->MakeView();
+    const TMemoryView<color_type> colors = img->MakeView();
 
     STACKLOCAL_POD_ARRAY(float, distance, w*h);
 
@@ -419,12 +419,12 @@ void ExpandColorToTransparentPixels(FloatImage* img, float alphaCutoff) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool BoundingBox(AABB2f& uvs, const FloatImage* img, float alphaCutoff) {
+bool BoundingBox(AABB2f& uvs, const FFloatImage* img, float alphaCutoff) {
     Assert(img);
     Assert(img->Width() > 1 && img->Height() > 1);
     Assert(alphaCutoff >= 0.f && alphaCutoff < 1.f);
 
-    typedef FloatImage::color_type color_type;
+    typedef FFloatImage::color_type color_type;
 
     const size_t w = img->Width();
     const size_t h = img->Height();
@@ -435,7 +435,7 @@ bool BoundingBox(AABB2f& uvs, const FloatImage* img, float alphaCutoff) {
 
     forrange(y, 0, h) {
         const float v = y * dUdV.y();
-        const MemoryView<const color_type> scanline = img->Scanline(y);
+        const TMemoryView<const color_type> scanline = img->Scanline(y);
 
         size_t xMin = w;
         size_t xMax = 0;
@@ -465,13 +465,13 @@ bool BoundingBox(AABB2f& uvs, const FloatImage* img, float alphaCutoff) {
     return true;
 }
 //----------------------------------------------------------------------------
-bool ConvexHull(const MemoryView<float2>& uvs, const FloatImage* img, float alphaCutoff) {
+bool ConvexHull(const TMemoryView<float2>& uvs, const FFloatImage* img, float alphaCutoff) {
     Assert(img);
     Assert(img->Width() > 1 && img->Height() > 1);
     Assert(uvs.size() > 2);
     Assert(alphaCutoff >= 0.f && alphaCutoff < 1.f);
 
-    typedef FloatImage::color_type color_type;
+    typedef FFloatImage::color_type color_type;
 
     const size_t w = img->Width();
     const size_t h = img->Height();
@@ -481,7 +481,7 @@ bool ConvexHull(const MemoryView<float2>& uvs, const FloatImage* img, float alph
     constexpr size_t BORDER = 4;
 
     forrange(y, 0, h) {
-        const MemoryView<const color_type> scanline = img->Scanline(y);
+        const TMemoryView<const color_type> scanline = img->Scanline(y);
 
         size_t xMin = w;
         size_t xMax = 0;
@@ -516,9 +516,9 @@ bool ConvexHull(const MemoryView<float2>& uvs, const FloatImage* img, float alph
     points.insert(points.begin(), topBorder);
     points.push_back(bottomBorder);
 
-    const float2 DuDv = img->DuDv();
+    const float2 FDuDv = img->DuDv();
     for (float2& p : points)
-        p *= DuDv;
+        p *= FDuDv;
 
     ConvexHull2D_FixedSize(uvs, MakeView(points));
 

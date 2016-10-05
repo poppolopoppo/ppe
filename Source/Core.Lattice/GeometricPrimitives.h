@@ -11,29 +11,29 @@ namespace Lattice {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void Cube(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords);
-void Cube(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords, const float4x4& transform);
+void Cube(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords);
+void Cube(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords, const float4x4& transform);
 //----------------------------------------------------------------------------
-void Pyramid(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords);
-void Pyramid(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords, const float4x4& transform);
+void Pyramid(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords);
+void Pyramid(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords, const float4x4& transform);
 //----------------------------------------------------------------------------
-void Octahedron(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords);
-void Octahedron(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords, const float4x4& transform);
+void Octahedron(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords);
+void Octahedron(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords, const float4x4& transform);
 //----------------------------------------------------------------------------
-void Icosahedron(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords);
-void Icosahedron(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords, const float4x4& transform);
+void Icosahedron(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords);
+void Icosahedron(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords, const float4x4& transform);
 //----------------------------------------------------------------------------
-void ContellatedTetraHedron(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords);
-void ContellatedTetraHedron(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords, const float4x4& transform);
+void ContellatedTetraHedron(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords);
+void ContellatedTetraHedron(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords, const float4x4& transform);
 //----------------------------------------------------------------------------
-void HemiContellatedTetraHedron(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords);
-void HemiContellatedTetraHedron(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords, const float4x4& transform);
+void HemiContellatedTetraHedron(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords);
+void HemiContellatedTetraHedron(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords, const float4x4& transform);
 //----------------------------------------------------------------------------
-void Geosphere(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords, size_t divisions);
-void Geosphere(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords, size_t divisions, const float4x4& transform);
+void Geosphere(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords, size_t divisions);
+void Geosphere(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords, size_t divisions, const float4x4& transform);
 //----------------------------------------------------------------------------
-void HemiGeosphere(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords, size_t divisions);
-void HemiGeosphere(GenericMesh& mesh, const Positions3f& positions, const TexCoords3f& texcoords, size_t divisions, const float4x4& transform);
+void HemiGeosphere(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords, size_t divisions);
+void HemiGeosphere(FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords3f& texcoords, size_t divisions, const float4x4& transform);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

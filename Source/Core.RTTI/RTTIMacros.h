@@ -11,23 +11,23 @@
 //----------------------------------------------------------------------------
 #define RTTI_CLASS_HEADER(_Name, _Parent) \
 public: \
-    virtual const Core::RTTI::MetaClass *RTTI_MetaClass() const override { \
-        return _Name::MetaClass::Instance(); \
+    virtual const Core::RTTI::FMetaClass *RTTI_MetaClass() const override { \
+        return _Name::FMetaClass::Instance(); \
     } \
     \
-    class MetaClass : public Core::RTTI::DefaultMetaClass<_Name> { \
+    class FMetaClass : public Core::RTTI::TDefaultMetaClass<_Name> { \
     public: \
         typedef _Name object_type; \
         typedef _Parent parent_type; \
         \
-        MetaClass(); \
-        virtual ~MetaClass(); \
+        FMetaClass(); \
+        virtual ~FMetaClass(); \
         \
         static void Create(); \
         static void Destroy(); \
         \
         static bool HasInstance(); \
-        static const MetaClass *Instance(); \
+        static const FMetaClass *Instance(); \
     }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

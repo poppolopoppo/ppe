@@ -23,14 +23,14 @@ namespace Core {
 */
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator = ALLOCATOR(Container, T) >
-class ConcurentQueue : _Allocator {
+class TConcurentQueue : _Allocator {
 public:
-    explicit ConcurentQueue(size_t capacity);
-    ConcurentQueue(size_t capacity, const _Allocator& allocator);
-    ~ConcurentQueue();
+    explicit TConcurentQueue(size_t capacity);
+    TConcurentQueue(size_t capacity, const _Allocator& allocator);
+    ~TConcurentQueue();
 
-    ConcurentQueue(const ConcurentQueue& ) = delete;
-    ConcurentQueue& operator =(const ConcurentQueue& ) = delete;
+    TConcurentQueue(const TConcurentQueue& ) = delete;
+    TConcurentQueue& operator =(const TConcurentQueue& ) = delete;
 
     void Produce(T&& rvalue);
     void Consume(T* pvalue);
@@ -51,25 +51,25 @@ private:
 };
 //----------------------------------------------------------------------------
 #define CONCURRENT_QUEUE(_DOMAIN, T) \
-    ::Core::ConcurentQueue<T, ALLOCATOR(_DOMAIN, T)>
+    ::Core::TConcurentQueue<T, ALLOCATOR(_DOMAIN, T)>
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 /*
 // Naive concurrent priority queue
-// The queue uses a Vector<> and can grow, based on std::push_heap()/pop_heap().
-// Not using std::priority_queue<> since it is too restrictive (no non-const reference to top, no reserve()).
+// The queue uses a TVector<> and can grow, based on std::push_heap()/pop_heap().
+// TNot using std::priority_queue<> since it is too restrictive (no non-const reference to top, no reserve()).
 */
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator = ALLOCATOR(Container, T) >
-class ConcurentPriorityQueue {
+class TConcurentPriorityQueue {
 public:
-    explicit ConcurentPriorityQueue(size_t capacity);
-    ConcurentPriorityQueue(size_t capacity, const _Allocator& allocator);
-    ~ConcurentPriorityQueue();
+    explicit TConcurentPriorityQueue(size_t capacity);
+    TConcurentPriorityQueue(size_t capacity, const _Allocator& allocator);
+    ~TConcurentPriorityQueue();
 
-    ConcurentPriorityQueue(const ConcurentPriorityQueue& ) = delete;
-    ConcurentPriorityQueue& operator =(const ConcurentPriorityQueue& ) = delete;
+    TConcurentPriorityQueue(const TConcurentPriorityQueue& ) = delete;
+    TConcurentPriorityQueue& operator =(const TConcurentPriorityQueue& ) = delete;
 
     void Produce(int priority, T&& rvalue); // lower is higher priority
     void Consume(T* pvalue);
@@ -79,14 +79,14 @@ private:
     std::condition_variable _empty;
     std::mutex _barrier;
 
-    typedef Pair<int, T> item_type;
+    typedef TPair<int, T> item_type;
 
-    typedef Vector<
+    typedef TVector<
         item_type,
         typename _Allocator::template rebind<item_type>::other
     >   vector_type;
 
-    struct Greater_ {
+    struct FGreater_ {
         bool operator ()(const item_type& lhs, const item_type& rhs) const {
             return (lhs.first > rhs.first); // ordered from min to max
         }
@@ -96,7 +96,7 @@ private:
 };
 //----------------------------------------------------------------------------
 #define CONCURRENT_PRIORITY_QUEUE(_DOMAIN, T) \
-    ::Core::ConcurentPriorityQueue<T, ALLOCATOR(_DOMAIN, T)>
+    ::Core::TConcurentPriorityQueue<T, ALLOCATOR(_DOMAIN, T)>
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

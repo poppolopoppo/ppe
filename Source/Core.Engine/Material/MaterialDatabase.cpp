@@ -12,14 +12,14 @@ namespace Engine {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-MaterialDatabase::MaterialDatabase(const MaterialDatabase *parent /* = nullptr */)
+FMaterialDatabase::FMaterialDatabase(const FMaterialDatabase *parent /* = nullptr */)
 :   _parent(parent) {}
 //----------------------------------------------------------------------------
-MaterialDatabase::~MaterialDatabase() {
+FMaterialDatabase::~FMaterialDatabase() {
     THIS_THREADRESOURCE_CHECKACCESS();
 }
 //----------------------------------------------------------------------------
-void MaterialDatabase::BindParameter(const Graphics::BindName& name, IMaterialParameter *parameter, bool allowOverride) {
+void FMaterialDatabase::BindParameter(const Graphics::FBindName& name, IMaterialParameter *parameter, bool allowOverride) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!name.empty());
     Assert(parameter);
@@ -30,7 +30,7 @@ void MaterialDatabase::BindParameter(const Graphics::BindName& name, IMaterialPa
     _parameters[name] = parameter;
 }
 //----------------------------------------------------------------------------
-void MaterialDatabase::UnbindParameter(const Graphics::BindName& name, const IMaterialParameter *parameter) {
+void FMaterialDatabase::UnbindParameter(const Graphics::FBindName& name, const IMaterialParameter *parameter) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!name.empty());
     Assert(parameter);
@@ -42,7 +42,7 @@ void MaterialDatabase::UnbindParameter(const Graphics::BindName& name, const IMa
     _parameters.erase(it);
 }
 //----------------------------------------------------------------------------
-bool MaterialDatabase::TryGetParameter(const Graphics::BindName& name, IMaterialParameter **parameter) const {
+bool FMaterialDatabase::TryGetParameter(const Graphics::FBindName& name, IMaterialParameter **parameter) const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!name.empty());
     Assert(parameter);
@@ -59,7 +59,7 @@ bool MaterialDatabase::TryGetParameter(const Graphics::BindName& name, IMaterial
     return true;
 }
 //----------------------------------------------------------------------------
-bool MaterialDatabase::TryGetParameter(const Graphics::BindName& name, PMaterialParameter& parameter) const {
+bool FMaterialDatabase::TryGetParameter(const Graphics::FBindName& name, PMaterialParameter& parameter) const {
     IMaterialParameter *p = nullptr;
     const bool result = TryGetParameter(name, &p);
 
@@ -67,7 +67,7 @@ bool MaterialDatabase::TryGetParameter(const Graphics::BindName& name, PMaterial
     return result;
 }
 //----------------------------------------------------------------------------
-void MaterialDatabase::BindTexture( const Graphics::BindName& name, const Filename& path,
+void FMaterialDatabase::BindTexture( const Graphics::FBindName& name, const FFilename& path,
                                     bool allowOverride /* = false */) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!name.empty());
@@ -79,7 +79,7 @@ void MaterialDatabase::BindTexture( const Graphics::BindName& name, const Filena
     _textures[name] = path;
 }
 //----------------------------------------------------------------------------
-void MaterialDatabase::UnbindTexture(const Graphics::BindName& name, const Filename& path) {
+void FMaterialDatabase::UnbindTexture(const Graphics::FBindName& name, const FFilename& path) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!name.empty());
     Assert(!path.empty());
@@ -91,7 +91,7 @@ void MaterialDatabase::UnbindTexture(const Graphics::BindName& name, const Filen
     _textures.erase(it);
 }
 //----------------------------------------------------------------------------
-bool MaterialDatabase::TryGetTexture(const Graphics::BindName& name, Filename *path) const {
+bool FMaterialDatabase::TryGetTexture(const Graphics::FBindName& name, FFilename *path) const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!name.empty());
     Assert(path);
@@ -108,7 +108,7 @@ bool MaterialDatabase::TryGetTexture(const Graphics::BindName& name, Filename *p
     return true;
 }
 //----------------------------------------------------------------------------
-void MaterialDatabase::BindEffect(const Graphics::BindName& name, const IEffectPasses *effect, bool allowOverride /* = false */) {
+void FMaterialDatabase::BindEffect(const Graphics::FBindName& name, const IEffectPasses *effect, bool allowOverride /* = false */) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!name.empty());
     Assert(effect);
@@ -119,7 +119,7 @@ void MaterialDatabase::BindEffect(const Graphics::BindName& name, const IEffectP
     _effects[name] = effect;
 }
 //----------------------------------------------------------------------------
-void MaterialDatabase::UnbindEffect(const Graphics::BindName& name, const IEffectPasses *effect) {
+void FMaterialDatabase::UnbindEffect(const Graphics::FBindName& name, const IEffectPasses *effect) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!name.empty());
     Assert(effect);
@@ -131,7 +131,7 @@ void MaterialDatabase::UnbindEffect(const Graphics::BindName& name, const IEffec
     _effects.erase(it);
 }
 //----------------------------------------------------------------------------
-bool MaterialDatabase::TryGetEffect(const Graphics::BindName& name, const IEffectPasses **effect) const {
+bool FMaterialDatabase::TryGetEffect(const Graphics::FBindName& name, const IEffectPasses **effect) const {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!name.empty());
     Assert(effect);
@@ -148,7 +148,7 @@ bool MaterialDatabase::TryGetEffect(const Graphics::BindName& name, const IEffec
     return true;
 }
 //----------------------------------------------------------------------------
-bool MaterialDatabase::TryGetEffect(const Graphics::BindName& name, PCEffectPasses& effect) const {
+bool FMaterialDatabase::TryGetEffect(const Graphics::FBindName& name, PCEffectPasses& effect) const {
     const IEffectPasses *e = nullptr;
     const bool result = TryGetEffect(name, &e);
 
@@ -156,7 +156,7 @@ bool MaterialDatabase::TryGetEffect(const Graphics::BindName& name, PCEffectPass
     return result;
 }
 //----------------------------------------------------------------------------
-void MaterialDatabase::Clear() {
+void FMaterialDatabase::Clear() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     _effects.clear();

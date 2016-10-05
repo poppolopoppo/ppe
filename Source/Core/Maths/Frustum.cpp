@@ -23,13 +23,13 @@ namespace {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-Frustum::Frustum(const Frustum& other)
+FFrustum::FFrustum(const FFrustum& other)
 :   _matrix(other._matrix) {
     for (size_t i = 0; i < 6; ++i)
         _planes[i] = other._planes[i];
 }
 //----------------------------------------------------------------------------
-Frustum& Frustum::operator =(const Frustum& other) {
+FFrustum& FFrustum::operator =(const FFrustum& other) {
     _matrix = other._matrix;
     for (size_t i = 0; i < 6; ++i)
         _planes[i] = other._planes[i];
@@ -37,19 +37,19 @@ Frustum& Frustum::operator =(const Frustum& other) {
     return *this;
 }
 //----------------------------------------------------------------------------
-void Frustum::SetMatrix(const float4x4& viewProjection) {
+void FFrustum::SetMatrix(const float4x4& viewProjection) {
     //http://www.chadvernon.com/blog/resources/directx9/frustum-culling/
 
     _matrix = viewProjection;
 
-    Plane& ptop = _planes[size_t(FrustumPlane::Top)];
-    Plane& pbottom = _planes[size_t(FrustumPlane::Bottom)];
+    FPlane& ptop = _planes[size_t(EFrustumPlane::Top)];
+    FPlane& pbottom = _planes[size_t(EFrustumPlane::Bottom)];
 
-    Plane& pleft = _planes[size_t(FrustumPlane::Left)];
-    Plane& pright = _planes[size_t(FrustumPlane::Right)];
+    FPlane& pleft = _planes[size_t(EFrustumPlane::Left)];
+    FPlane& pright = _planes[size_t(EFrustumPlane::Right)];
 
-    Plane& pnear = _planes[size_t(FrustumPlane::Near)];
-    Plane& pfar = _planes[size_t(FrustumPlane::Far)];
+    FPlane& pnear = _planes[size_t(EFrustumPlane::Near)];
+    FPlane& pfar = _planes[size_t(EFrustumPlane::Far)];
 
     // Left plane
     pleft.Normal().x()  = _matrix._14() + _matrix._11();
@@ -94,43 +94,43 @@ void Frustum::SetMatrix(const float4x4& viewProjection) {
     pfar = pfar.Normalize();
 }
 //----------------------------------------------------------------------------
-void Frustum::GetCorners(const MemoryView<float3>& points) const {
+void FFrustum::GetCorners(const TMemoryView<float3>& points) const {
     Assert(points.size() == 8);
 
-    const Plane& ptop = _planes[size_t(FrustumPlane::Top)];
-    const Plane& pbottom = _planes[size_t(FrustumPlane::Bottom)];
+    const FPlane& ptop = _planes[size_t(EFrustumPlane::Top)];
+    const FPlane& pbottom = _planes[size_t(EFrustumPlane::Bottom)];
 
-    const Plane& pleft = _planes[size_t(FrustumPlane::Left)];
-    const Plane& pright = _planes[size_t(FrustumPlane::Right)];
+    const FPlane& pleft = _planes[size_t(EFrustumPlane::Left)];
+    const FPlane& pright = _planes[size_t(EFrustumPlane::Right)];
 
-    const Plane& pnear = _planes[size_t(FrustumPlane::Near)];
-    const Plane& pfar = _planes[size_t(FrustumPlane::Far)];
+    const FPlane& pnear = _planes[size_t(EFrustumPlane::Near)];
+    const FPlane& pfar = _planes[size_t(EFrustumPlane::Far)];
 
-    points[size_t(FrustumCorner::Near_LeftTop)]     = Plane::Get3PlanesInterPoint(pnear, pleft, ptop);
-    points[size_t(FrustumCorner::Near_LeftBottom)]  = Plane::Get3PlanesInterPoint(pnear, pleft, pbottom);
-    points[size_t(FrustumCorner::Near_RightBottom)] = Plane::Get3PlanesInterPoint(pnear, pright, pbottom);
-    points[size_t(FrustumCorner::Near_RightTop)]    = Plane::Get3PlanesInterPoint(pnear, pright, ptop);
+    points[size_t(EFrustumCorner::Near_LeftTop)]     = FPlane::Get3PlanesInterPoint(pnear, pleft, ptop);
+    points[size_t(EFrustumCorner::Near_LeftBottom)]  = FPlane::Get3PlanesInterPoint(pnear, pleft, pbottom);
+    points[size_t(EFrustumCorner::Near_RightBottom)] = FPlane::Get3PlanesInterPoint(pnear, pright, pbottom);
+    points[size_t(EFrustumCorner::Near_RightTop)]    = FPlane::Get3PlanesInterPoint(pnear, pright, ptop);
 
-    points[size_t(FrustumCorner::Far_LeftTop)]      = Plane::Get3PlanesInterPoint(pfar, pleft, ptop);
-    points[size_t(FrustumCorner::Far_LeftBottom)]   = Plane::Get3PlanesInterPoint(pfar, pleft, pbottom);
-    points[size_t(FrustumCorner::Far_RightBottom)]  = Plane::Get3PlanesInterPoint(pfar, pright, pbottom);
-    points[size_t(FrustumCorner::Far_RightTop)]     = Plane::Get3PlanesInterPoint(pfar, pright, ptop);
+    points[size_t(EFrustumCorner::Far_LeftTop)]      = FPlane::Get3PlanesInterPoint(pfar, pleft, ptop);
+    points[size_t(EFrustumCorner::Far_LeftBottom)]   = FPlane::Get3PlanesInterPoint(pfar, pleft, pbottom);
+    points[size_t(EFrustumCorner::Far_RightBottom)]  = FPlane::Get3PlanesInterPoint(pfar, pright, pbottom);
+    points[size_t(EFrustumCorner::Far_RightTop)]     = FPlane::Get3PlanesInterPoint(pfar, pright, ptop);
 }
 //----------------------------------------------------------------------------
-void Frustum::GetCameraParams(FrustumCameraParams& params) const {
+void FFrustum::GetCameraParams(FFrustumCameraParams& params) const {
     float3 corners[8];
     GetCorners(MakeView(corners));
 
-    const Plane& ptop = _planes[size_t(FrustumPlane::Top)];
-    //const Plane& pbottom = _planes[size_t(FrustumPlane::Bottom)];
+    const FPlane& ptop = _planes[size_t(EFrustumPlane::Top)];
+    //const FPlane& pbottom = _planes[size_t(EFrustumPlane::Bottom)];
 
-    const Plane& pleft = _planes[size_t(FrustumPlane::Left)];
-    const Plane& pright = _planes[size_t(FrustumPlane::Right)];
+    const FPlane& pleft = _planes[size_t(EFrustumPlane::Left)];
+    const FPlane& pright = _planes[size_t(EFrustumPlane::Right)];
 
-    const Plane& pnear = _planes[size_t(FrustumPlane::Near)];
-    const Plane& pfar = _planes[size_t(FrustumPlane::Far)];
+    const FPlane& pnear = _planes[size_t(EFrustumPlane::Near)];
+    const FPlane& pfar = _planes[size_t(EFrustumPlane::Far)];
 
-    params.Position = Plane::Get3PlanesInterPoint(pright, ptop, pleft);
+    params.Position = FPlane::Get3PlanesInterPoint(pright, ptop, pleft);
     params.LookAtDir = pnear.Normal();
     params.UpDir = Normalize3(Cross(pright.Normal(), pnear.Normal()));
     params.FOV = (F_HalfPi - std::acos(Dot3(pnear.Normal(), ptop.Normal()))) * 2;
@@ -139,104 +139,104 @@ void Frustum::GetCameraParams(FrustumCameraParams& params) const {
     params.ZFar = fabsf(pfar.DistanceToPoint(params.Position));
 }
 //----------------------------------------------------------------------------
-ContainmentType Frustum::Contains(const float3& point) const {
-    PlaneIntersectionType result = PlaneIntersectionType::Front;
+EContainmentType FFrustum::Contains(const float3& point) const {
+    EPlaneIntersectionType result = EPlaneIntersectionType::Front;
 
-    for (const Plane& plane : _planes) {
-        const PlaneIntersectionType planeResult = plane.Intersects(point);
+    for (const FPlane& plane : _planes) {
+        const EPlaneIntersectionType planeResult = plane.Intersects(point);
 
-        if (PlaneIntersectionType::Back == planeResult)
-            return ContainmentType::Disjoint;
-        else if (PlaneIntersectionType::Intersecting == planeResult)
-            result = PlaneIntersectionType::Intersecting;
+        if (EPlaneIntersectionType::Back == planeResult)
+            return EContainmentType::Disjoint;
+        else if (EPlaneIntersectionType::Intersecting == planeResult)
+            result = EPlaneIntersectionType::Intersecting;
     }
 
-    return (PlaneIntersectionType::Intersecting == result)
-        ? ContainmentType::Intersects
-        : ContainmentType::Contains;
+    return (EPlaneIntersectionType::Intersecting == result)
+        ? EContainmentType::Intersects
+        : EContainmentType::Contains;
 }
 //----------------------------------------------------------------------------
-ContainmentType Frustum::Contains(const MemoryView<const float3>& points) const {
+EContainmentType FFrustum::Contains(const TMemoryView<const float3>& points) const {
     bool containsAll = true;
     bool containsAny = false;
 
     for (const float3& point : points) {
-        const ContainmentType pointResult = Contains(point);
-        if (ContainmentType::Intersects == pointResult ||
-            ContainmentType::Contains == pointResult )
+        const EContainmentType pointResult = Contains(point);
+        if (EContainmentType::Intersects == pointResult ||
+            EContainmentType::Contains == pointResult )
             containsAny = true;
         else
             containsAll = false;
     }
 
     if (containsAny)
-        return containsAll ? ContainmentType::Contains : ContainmentType::Intersects;
+        return containsAll ? EContainmentType::Contains : EContainmentType::Intersects;
     else
-        return ContainmentType::Disjoint;
+        return EContainmentType::Disjoint;
 }
 //----------------------------------------------------------------------------
-ContainmentType Frustum::Contains(const BoundingBox& box) const {
+EContainmentType FFrustum::Contains(const BoundingBox& box) const {
     float3 corners[8];
     box.GetCorners(corners);
 
     return Contains(MakeView<const float3>(corners));
 }
 //----------------------------------------------------------------------------
-ContainmentType Frustum::Contains(const Sphere& sphere) const {
-    PlaneIntersectionType result = PlaneIntersectionType::Front;
+EContainmentType FFrustum::Contains(const FSphere& sphere) const {
+    EPlaneIntersectionType result = EPlaneIntersectionType::Front;
 
-    for (const Plane& plane : _planes) {
-        const PlaneIntersectionType planeResult = plane.Intersects(sphere);
+    for (const FPlane& plane : _planes) {
+        const EPlaneIntersectionType planeResult = plane.Intersects(sphere);
 
-        if (PlaneIntersectionType::Back == planeResult)
-            return ContainmentType::Disjoint;
-        else if (PlaneIntersectionType::Intersecting == planeResult)
-            result = PlaneIntersectionType::Intersecting;
+        if (EPlaneIntersectionType::Back == planeResult)
+            return EContainmentType::Disjoint;
+        else if (EPlaneIntersectionType::Intersecting == planeResult)
+            result = EPlaneIntersectionType::Intersecting;
     }
 
-    return (PlaneIntersectionType::Intersecting == result)
-        ? ContainmentType::Intersects
-        : ContainmentType::Contains;
+    return (EPlaneIntersectionType::Intersecting == result)
+        ? EContainmentType::Intersects
+        : EContainmentType::Contains;
 }
 //----------------------------------------------------------------------------
-ContainmentType Frustum::Contains(const Frustum& frustum) const {
+EContainmentType FFrustum::Contains(const FFrustum& frustum) const {
     float3 corners[8];
     frustum.GetCorners(corners);
 
     return Contains(MakeView<const float3>(corners));
 }
 //----------------------------------------------------------------------------
-PlaneIntersectionType Frustum::Intersects(const Plane& plane) const {
+EPlaneIntersectionType FFrustum::Intersects(const FPlane& plane) const {
     float3 corners[8];
     GetCorners(corners);
 
-    return Plane::PointsIntersection(plane, MakeView<const float3>(corners));
+    return FPlane::PointsIntersection(plane, MakeView<const float3>(corners));
 }
 //----------------------------------------------------------------------------
-bool Frustum::Intersects(const Ray& ray) const {
-    for (const Plane& plane : _planes)
+bool FFrustum::Intersects(const FRay& ray) const {
+    for (const FPlane& plane : _planes)
         if (plane.Intersects(ray))
             return true;
 
     return false;
 }
 //----------------------------------------------------------------------------
-bool Frustum::Intersects(const Ray& ray, float& in, float& out) const {
+bool FFrustum::Intersects(const FRay& ray, float& in, float& out) const {
     bool result = false;
     in = -1;
     out = -1;
 
-    Frustum ioFrsutrum(*this);
-    ioFrsutrum._planes[size_t(FrustumPlane::Top)].Normal() = -Top().Normal();
-    ioFrsutrum._planes[size_t(FrustumPlane::Bottom)].Normal() = -Bottom().Normal();
+    FFrustum ioFrsutrum(*this);
+    ioFrsutrum._planes[size_t(EFrustumPlane::Top)].Normal() = -Top().Normal();
+    ioFrsutrum._planes[size_t(EFrustumPlane::Bottom)].Normal() = -Bottom().Normal();
 
-    ioFrsutrum._planes[size_t(FrustumPlane::Left)].Normal() = -Left().Normal();
-    ioFrsutrum._planes[size_t(FrustumPlane::Right)].Normal() = -Right().Normal();
+    ioFrsutrum._planes[size_t(EFrustumPlane::Left)].Normal() = -Left().Normal();
+    ioFrsutrum._planes[size_t(EFrustumPlane::Right)].Normal() = -Right().Normal();
 
-    ioFrsutrum._planes[size_t(FrustumPlane::Near)].Normal() = -Near().Normal();
-    ioFrsutrum._planes[size_t(FrustumPlane::Far)].Normal() = -Far().Normal();
+    ioFrsutrum._planes[size_t(EFrustumPlane::Near)].Normal() = -Near().Normal();
+    ioFrsutrum._planes[size_t(EFrustumPlane::Far)].Normal() = -Far().Normal();
 
-    for (const Plane& plane : ioFrsutrum._planes) {
+    for (const FPlane& plane : ioFrsutrum._planes) {
         float planeDistance;
         const bool planeResult = plane.Intersects(ray, planeDistance);
 
@@ -271,17 +271,17 @@ bool Frustum::Intersects(const Ray& ray, float& in, float& out) const {
     return result;
 }
 //----------------------------------------------------------------------------
-float Frustum::GetWidthAtDepth(float depth) const {
+float FFrustum::GetWidthAtDepth(float depth) const {
     float hAngle = (F_HalfPi - std::acos(Dot3(Near().Normal(), Left().Normal())) );
     return std::tan(hAngle) * depth * 2;
 }
 //----------------------------------------------------------------------------
-float Frustum::GetHeightAtDepth(float depth) const {
+float FFrustum::GetHeightAtDepth(float depth) const {
     float vAngle = (F_HalfPi - std::acos(Dot3(Near().Normal(), Top().Normal())) );
     return std::tan(vAngle) * depth * 2;
 }
 //----------------------------------------------------------------------------
-float Frustum::GetZoomToExtentsShiftDistance(const MemoryView<const float3>& points) const {
+float FFrustum::GetZoomToExtentsShiftDistance(const TMemoryView<const float3>& points) const {
     float vAngle = (F_HalfPi - std::acos(Dot3(Near().Normal(), Top().Normal())) );
     float vSin = std::sin(vAngle);
     Assert(std::abs(vSin) > F_Epsilon);
@@ -291,15 +291,15 @@ float Frustum::GetZoomToExtentsShiftDistance(const MemoryView<const float3>& poi
 
     float horizontalToVerticalMapping = vSin / hSin;
 
-    Frustum ioFrsutrum(*this);
-    ioFrsutrum._planes[size_t(FrustumPlane::Top)].Normal() = -Top().Normal();
-    ioFrsutrum._planes[size_t(FrustumPlane::Bottom)].Normal() = -Bottom().Normal();
+    FFrustum ioFrsutrum(*this);
+    ioFrsutrum._planes[size_t(EFrustumPlane::Top)].Normal() = -Top().Normal();
+    ioFrsutrum._planes[size_t(EFrustumPlane::Bottom)].Normal() = -Bottom().Normal();
 
-    ioFrsutrum._planes[size_t(FrustumPlane::Left)].Normal() = -Left().Normal();
-    ioFrsutrum._planes[size_t(FrustumPlane::Right)].Normal() = -Right().Normal();
+    ioFrsutrum._planes[size_t(EFrustumPlane::Left)].Normal() = -Left().Normal();
+    ioFrsutrum._planes[size_t(EFrustumPlane::Right)].Normal() = -Right().Normal();
 
-    ioFrsutrum._planes[size_t(FrustumPlane::Near)].Normal() = -Near().Normal();
-    ioFrsutrum._planes[size_t(FrustumPlane::Far)].Normal() = -Far().Normal();
+    ioFrsutrum._planes[size_t(EFrustumPlane::Near)].Normal() = -Near().Normal();
+    ioFrsutrum._planes[size_t(EFrustumPlane::Far)].Normal() = -Far().Normal();
 
     float maxPointDist = FLT_MIN;
     for (const float3& point : points)
@@ -315,14 +315,14 @@ float Frustum::GetZoomToExtentsShiftDistance(const MemoryView<const float3>& poi
     return -maxPointDist / vSin;
 }
 //----------------------------------------------------------------------------
-float Frustum::GetZoomToExtentsShiftDistance(const BoundingBox& box) {
+float FFrustum::GetZoomToExtentsShiftDistance(const BoundingBox& box) {
     float3 corners[8];
     box.GetCorners(corners);
 
     return GetZoomToExtentsShiftDistance(MakeView<const float3>(corners));
 }
 //----------------------------------------------------------------------------
-Frustum Frustum::FromCamera(const float3& cameraPos, const float3& lookDir, const float3& upDir, float fov, float znear, float zfar, float aspect) {
+FFrustum FFrustum::FromCamera(const float3& cameraPos, const float3& lookDir, const float3& upDir, float fov, float znear, float zfar, float aspect) {
     //http://knol.google.com/k/view-frustum
 
     Assert(IsNormalized(lookDir));
@@ -345,17 +345,17 @@ Frustum Frustum::FromCamera(const float3& cameraPos, const float3& lookDir, cons
     float3 Far3 = farCenter + farHalfHeight * upDir - farHalfWidth * rightDir;
     float3 Far4 = farCenter - farHalfHeight * upDir - farHalfWidth * rightDir;
 
-    Frustum result;
+    FFrustum result;
 
     result._matrix =    MakeLookAtLHMatrix(cameraPos, cameraPos + lookDir * 10, upDir) *
                         MakePerspectiveFovLHMatrix(fov, aspect, znear, zfar);
 
-    result._planes[size_t(FrustumPlane::Near)]      = Plane::FromTriangle(Near1, Near2, Near3).Normalize();
-    result._planes[size_t(FrustumPlane::Far)]       = Plane::FromTriangle(Far3, Far2, Far1).Normalize();
-    result._planes[size_t(FrustumPlane::Left)]      = Plane::FromTriangle(Near4, Near3, Far3).Normalize();
-    result._planes[size_t(FrustumPlane::Right)]     = Plane::FromTriangle(Far1, Far2, Near2).Normalize();
-    result._planes[size_t(FrustumPlane::Top)]       = Plane::FromTriangle(Near2, Far2, Far3).Normalize();
-    result._planes[size_t(FrustumPlane::Bottom)]    = Plane::FromTriangle(Far4, Far1, Near1).Normalize();
+    result._planes[size_t(EFrustumPlane::Near)]      = FPlane::FromTriangle(Near1, Near2, Near3).Normalize();
+    result._planes[size_t(EFrustumPlane::Far)]       = FPlane::FromTriangle(Far3, Far2, Far1).Normalize();
+    result._planes[size_t(EFrustumPlane::Left)]      = FPlane::FromTriangle(Near4, Near3, Far3).Normalize();
+    result._planes[size_t(EFrustumPlane::Right)]     = FPlane::FromTriangle(Far1, Far2, Near2).Normalize();
+    result._planes[size_t(EFrustumPlane::Top)]       = FPlane::FromTriangle(Near2, Far2, Far3).Normalize();
+    result._planes[size_t(EFrustumPlane::Bottom)]    = FPlane::FromTriangle(Far4, Far1, Near1).Normalize();
 
     return result;
 }

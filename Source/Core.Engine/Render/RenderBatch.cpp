@@ -31,7 +31,7 @@ namespace Engine {
 namespace {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-static void Reindex_(Vector<T, _Allocator>& v, const MemoryView<const u32>& indices) {
+static void Reindex_(TVector<T, _Allocator>& v, const TMemoryView<const u32>& indices) {
     Assert(v.size() == indices.size());
     using std::swap;
 
@@ -48,9 +48,9 @@ static void Reindex_(Vector<T, _Allocator>& v, const MemoryView<const u32>& indi
 }
 //----------------------------------------------------------------------------
 static void SortBatch_(
-    VECTOR_THREAD_LOCAL(Shader, RenderCommandCriteria)& criterias,
-    VECTOR_THREAD_LOCAL(Shader, RenderCommandParams)& params,
-    VECTOR_THREAD_LOCAL(Shader, const RenderCommandRegistration *)& registrations
+    VECTOR_THREAD_LOCAL(Shader, FRenderCommandCriteria)& criterias,
+    VECTOR_THREAD_LOCAL(Shader, FRenderCommandParams)& params,
+    VECTOR_THREAD_LOCAL(Shader, const FRenderCommandRegistration *)& registrations
     ) {
     Assert(criterias.size() == params.size());
     Assert(params.size() == registrations.size());
@@ -75,19 +75,19 @@ static void SortBatch_(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-RenderBatch::RenderBatch() 
+FRenderBatch::FRenderBatch() 
 :   _needSort(false) {}
 //----------------------------------------------------------------------------
-RenderBatch::~RenderBatch() {
+FRenderBatch::~FRenderBatch() {
     Assert(_criterias.empty());
     Assert(_params.empty());
     Assert(_registrations.empty());
 }
 //----------------------------------------------------------------------------
-void RenderBatch::Add(
-    RenderCommandRegistration *registration,
-    const RenderCommandCriteria& criteria,
-    const RenderCommandParams& params ) {
+void FRenderBatch::Add(
+    FRenderCommandRegistration *registration,
+    const FRenderCommandCriteria& criteria,
+    const FRenderCommandParams& params ) {
     Assert(registration);
     Assert(nullptr == registration->Batch);
     Assert(criteria.MaterialEffect());
@@ -105,7 +105,7 @@ void RenderBatch::Add(
     _needSort = true;
 }
 //----------------------------------------------------------------------------
-RenderCommandCriteria RenderBatch::Remove(const RenderCommandRegistration *registration) {
+FRenderCommandCriteria FRenderBatch::Remove(const FRenderCommandRegistration *registration) {
     Assert(registration);
     Assert(this == registration->Batch);
 
@@ -114,22 +114,22 @@ RenderCommandCriteria RenderBatch::Remove(const RenderCommandRegistration *regis
 
     const size_t index = std::distance(_registrations.begin(), it);
 
-    const RenderCommandCriteria criteria = _criterias[index];
+    const FRenderCommandCriteria criteria = _criterias[index];
 
     _registrations.erase(it);
     _criterias.erase(_criterias.begin() + index);
     _params.erase(_params.begin() + index);
 
-    const_cast<RenderCommandRegistration *>(registration)->Batch = nullptr;
+    const_cast<FRenderCommandRegistration *>(registration)->Batch = nullptr;
 
     return criteria;
 }
 //----------------------------------------------------------------------------
-void RenderBatch::Prepare(
+void FRenderBatch::Prepare(
     Graphics::IDeviceAPIEncapsulator *device,
-    MaterialDatabase *materialDatabase,
-    const RenderTree *renderTree,
-    VariabilitySeed *seeds) {
+    FMaterialDatabase *materialDatabase,
+    const FRenderTree *renderTree,
+    FVariabilitySeed *seeds) {
     if (_criterias.empty()) {
         Assert(!_needSort);
         Assert(_params.empty());
@@ -142,14 +142,14 @@ void RenderBatch::Prepare(
         _needSort = false;
     }
 
-    const Scene *scene = renderTree->Scene();
+    const FScene *scene = renderTree->Scene();
     const size_t count = _criterias.size();
 
-    const RenderCommandCriteria *pred = nullptr;
+    const FRenderCommandCriteria *pred = nullptr;
     forrange(i, 0, count) {
-        seeds[size_t(MaterialVariability::Batch)].Next();
+        seeds[size_t(EMaterialVariability::Batch)].Next();
 
-        RenderCommandCriteria& criteria = _criterias[i];
+        FRenderCommandCriteria& criteria = _criterias[i];
 
         if (!pred || pred->MaterialEffect() != criteria.MaterialEffect()) {
             if (!criteria.Ready()) {
@@ -157,7 +157,7 @@ void RenderBatch::Prepare(
                 criteria.SetReady();
             }
 
-            seeds[size_t(MaterialVariability::Material)].Next();
+            seeds[size_t(EMaterialVariability::FMaterial)].Next();
             criteria.MaterialEffect()->Prepare(device, scene, seeds);
         }
 
@@ -165,12 +165,12 @@ void RenderBatch::Prepare(
     }
 }
 //----------------------------------------------------------------------------
-void RenderBatch::Render(Graphics::IDeviceAPIContext *context) {
+void FRenderBatch::Render(Graphics::IDeviceAPIContext *context) {
     const size_t count = _criterias.size();
 
-    const RenderCommandCriteria *pred = nullptr;
+    const FRenderCommandCriteria *pred = nullptr;
     forrange(i, 0, count) {
-        const RenderCommandCriteria& criteria = _criterias[i];
+        const FRenderCommandCriteria& criteria = _criterias[i];
         Assert(criteria.Ready());
 
         GRAPHICS_DIAGNOSTICS_BEGINEVENT(context->Diagnostics(), criteria.MaterialEffect()->Material()->Name().c_str());
@@ -195,7 +195,7 @@ void RenderBatch::Render(Graphics::IDeviceAPIContext *context) {
             criteria.MaterialEffect()->Set(context);
         }
 
-        const RenderCommandParams& params = _params[i];
+        const FRenderCommandParams& params = _params[i];
 
         context->DrawIndexedPrimitives( params.PrimitiveType(),
                                         params.BaseVertex,
@@ -208,7 +208,7 @@ void RenderBatch::Render(Graphics::IDeviceAPIContext *context) {
     }
 }
 //----------------------------------------------------------------------------
-void RenderBatch::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
+void FRenderBatch::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
     Assert(_criterias.empty());
     Assert(_params.empty());
     Assert(_registrations.empty());

@@ -7,12 +7,12 @@ namespace ContentGenerator {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class RobotApp : public Application::ApplicationGraphics {
-    typedef Application::ApplicationGraphics parent_type;
+class FRobotApp : public Application::FApplicationGraphics {
+    typedef Application::FApplicationGraphics parent_type;
 public:
-    RobotApp();
+    FRobotApp();
     virtual void Start() override;
-    virtual void Draw(const Timeline& time) override;
+    virtual void Draw(const FTimeline& time) override;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

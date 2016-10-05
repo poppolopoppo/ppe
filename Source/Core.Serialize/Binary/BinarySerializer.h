@@ -12,21 +12,21 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class BinarySerializerException : public SerializeException {
+class FBinarySerializerException : public FSerializeException {
 public:
-    BinarySerializerException(const char* what) : SerializeException(what) {}
+    FBinarySerializerException(const char* what) : FSerializeException(what) {}
 };
 //----------------------------------------------------------------------------
-class BinarySerializer : public ISerializer {
+class FBinarySerializer : public ISerializer {
 public:
-    BinarySerializer();
-    virtual ~BinarySerializer();
+    FBinarySerializer();
+    virtual ~FBinarySerializer();
 
     using ISerializer::Deserialize;
     using ISerializer::Serialize;
 
-    virtual void Deserialize(RTTI::MetaTransaction* transaction, IStreamReader* input, const wchar_t *sourceName = nullptr) override;
-    virtual void Serialize(IStreamWriter* output, const RTTI::MetaTransaction* transaction) override;
+    virtual void Deserialize(RTTI::FMetaTransaction* transaction, IStreamReader* input, const wchar_t *sourceName = nullptr) override;
+    virtual void Serialize(IStreamWriter* output, const RTTI::FMetaTransaction* transaction) override;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

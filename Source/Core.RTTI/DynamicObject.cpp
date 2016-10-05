@@ -19,135 +19,135 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(RTTI, DynamicProperty, )
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(RTTI, FDynamicProperty, )
 //----------------------------------------------------------------------------
-DynamicProperty::DynamicProperty(const RTTI::Name& name)
-    : MetaProperty(name, MetaProperty::Dynamic) {}
+FDynamicProperty::FDynamicProperty(const FName& name)
+    : FMetaProperty(name, FMetaProperty::Dynamic) {}
 //----------------------------------------------------------------------------
-DynamicProperty::~DynamicProperty() {}/*
+FDynamicProperty::~FDynamicProperty() {}/*
 //----------------------------------------------------------------------------
-MetaTypeInfo DynamicProperty::TypeInfo() const {
+FMetaTypeInfo FDynamicProperty::TypeInfo() const {
 
 }
 //----------------------------------------------------------------------------
-const IMetaTypeVirtualTraits *DynamicProperty::Traits() const {
+const IMetaTypeVirtualTraits *FDynamicProperty::Traits() const {
 
 }
 //----------------------------------------------------------------------------
-bool DynamicProperty::IsDefaultValue(const MetaObject *object) const {
+bool FDynamicProperty::IsDefaultValue(const FMetaObject *object) const {
 
 }
 //----------------------------------------------------------------------------
-MetaAtom *DynamicProperty::WrapMove(MetaObject *src) const {
+FMetaAtom *FDynamicProperty::WrapMove(FMetaObject *src) const {
 
 }
 //----------------------------------------------------------------------------
-MetaAtom *DynamicProperty::WrapCopy(const MetaObject *src) const {
+FMetaAtom *FDynamicProperty::WrapCopy(const FMetaObject *src) const {
 
 }
 //----------------------------------------------------------------------------
-bool DynamicProperty::UnwrapMove(MetaObject *dst, MetaAtom *src) const {
+bool FDynamicProperty::UnwrapMove(FMetaObject *dst, FMetaAtom *src) const {
 
 }
 //----------------------------------------------------------------------------
-bool DynamicProperty::UnwrapCopy(MetaObject *dst, const MetaAtom *src) const {
+bool FDynamicProperty::UnwrapCopy(FMetaObject *dst, const FMetaAtom *src) const {
 
 }
 //----------------------------------------------------------------------------
-void DynamicProperty::MoveTo(MetaObject *object, MetaAtom *atom) const {
+void FDynamicProperty::MoveTo(FMetaObject *object, FMetaAtom *atom) const {
 
 }
 //----------------------------------------------------------------------------
-void DynamicProperty::CopyTo(const MetaObject *object, MetaAtom *atom) const {}
+void FDynamicProperty::CopyTo(const FMetaObject *object, FMetaAtom *atom) const {}
 //----------------------------------------------------------------------------
-void DynamicProperty::MoveFrom(MetaObject *object, MetaAtom *atom) const {}
+void FDynamicProperty::MoveFrom(FMetaObject *object, FMetaAtom *atom) const {}
 //----------------------------------------------------------------------------
-void DynamicProperty::CopyFrom(MetaObject *object, const MetaAtom *atom) const {}
+void FDynamicProperty::CopyFrom(FMetaObject *object, const FMetaAtom *atom) const {}
 //----------------------------------------------------------------------------
-void DynamicProperty::Move(MetaObject *dst, MetaObject *src) const {}
+void FDynamicProperty::Move(FMetaObject *dst, FMetaObject *src) const {}
 //----------------------------------------------------------------------------
-void DynamicProperty::Copy(MetaObject *dst, const MetaObject *src) const {}
+void FDynamicProperty::Copy(FMetaObject *dst, const FMetaObject *src) const {}
 //----------------------------------------------------------------------------
-void DynamicProperty::Swap(MetaObject *lhs, MetaObject *rhs) const {}
+void FDynamicProperty::Swap(FMetaObject *lhs, FMetaObject *rhs) const {}
 //----------------------------------------------------------------------------
-bool DynamicProperty::Equals(const MetaObject *lhs, const MetaObject *rhs) const {}
+bool FDynamicProperty::Equals(const FMetaObject *lhs, const FMetaObject *rhs) const {}
 //----------------------------------------------------------------------------
-bool DynamicProperty::DeepEquals(const MetaObject *lhs, const MetaObject *rhs) const {}
+bool FDynamicProperty::DeepEquals(const FMetaObject *lhs, const FMetaObject *rhs) const {}
 //----------------------------------------------------------------------------
-void *DynamicProperty::RawPtr(MetaObject *obj) const {}
+void *FDynamicProperty::RawPtr(FMetaObject *obj) const {}
 //----------------------------------------------------------------------------
-const void *DynamicProperty::RawPtr(const MetaObject *obj) const {}
+const void *FDynamicProperty::RawPtr(const FMetaObject *obj) const {}
 //----------------------------------------------------------------------------
-size_t DynamicProperty::HashValue(const MetaObject *object) const {} */
+size_t FDynamicProperty::HashValue(const FMetaObject *object) const {} */
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(RTTI, DynamicObject, )
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(RTTI, FDynamicObject, )
 //----------------------------------------------------------------------------
-DynamicObject::DynamicObject() {}
+FDynamicObject::FDynamicObject() {}
 //----------------------------------------------------------------------------
-DynamicObject::~DynamicObject() {}
+FDynamicObject::~FDynamicObject() {}
 //----------------------------------------------------------------------------
-MetaAtom* DynamicObject::GetValue(const RTTI::Name& name) {
+FMetaAtom* FDynamicObject::GetValue(const FName& name) {
     return _values[name].get();
 }
 //----------------------------------------------------------------------------
-const MetaAtom* DynamicObject::GetValue(const RTTI::Name& name) const {
+const FMetaAtom* FDynamicObject::GetValue(const FName& name) const {
     return _values[name].get();
 }
 //----------------------------------------------------------------------------
-MetaAtom* DynamicObject::TryGetValue(const RTTI::Name& name) {
+FMetaAtom* FDynamicObject::TryGetValue(const FName& name) {
     PMetaAtom value;
     return (_values.TryGet(name, &value) ? value.get() : nullptr);
 }
 //----------------------------------------------------------------------------
-const MetaAtom* DynamicObject::TryGetValue(const RTTI::Name& name) const {
+const FMetaAtom* FDynamicObject::TryGetValue(const FName& name) const {
     PMetaAtom value;
     return (_values.TryGet(name, &value) ? value.get() : nullptr);
 }
 //----------------------------------------------------------------------------
-void DynamicObject::SetValue(const RTTI::Name& name, const PMetaAtom& value) {
+void FDynamicObject::SetValue(const FName& name, const PMetaAtom& value) {
     _values[name] = value;
 }
 //----------------------------------------------------------------------------
-void DynamicObject::ClearValues() {
+void FDynamicObject::ClearValues() {
     _values.clear();
 }
 //----------------------------------------------------------------------------
-const RTTI::MetaClass *DynamicObject::RTTI_MetaClass() const {
+const RTTI::FMetaClass *FDynamicObject::RTTI_MetaClass() const {
     return &_metaClass;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DynamicObject::MetaClass::MetaClass()
-:   RTTI::InScopeMetaClass("DynamicObject", RTTI::MetaClass::Dynamic)
+FDynamicObject::FMetaClass::FMetaClass()
+:   RTTI::InScopeMetaClass("FDynamicObject", RTTI::FMetaClass::Dynamic)
 {}
 //----------------------------------------------------------------------------
-DynamicObject::MetaClass::~MetaClass() {}
+FDynamicObject::FMetaClass::~FMetaClass() {}
 //----------------------------------------------------------------------------
-const RTTI::MetaClass* DynamicObject::MetaClass::VirtualParent() const {
+const RTTI::FMetaClass* FDynamicObject::FMetaClass::VirtualParent() const {
     return nullptr;
 }
 //----------------------------------------------------------------------------
-MetaObject* DynamicObject::MetaClass::VirtualCreateInstance() const {
-    return new DynamicObject();
+FMetaObject* FDynamicObject::FMetaClass::VirtualCreateInstance() const {
+    return new FDynamicObject();
 }
 //----------------------------------------------------------------------------
-void DynamicObject::MetaClass::Create() {
-    Core::RTTI::MetaClassSingleton< DynamicObject >::Create();
+void FDynamicObject::FMetaClass::Create() {
+    Core::RTTI::TMetaClassSingleton< FDynamicObject >::Create();
 }
 //----------------------------------------------------------------------------
-void DynamicObject::MetaClass::Destroy() {
-    Core::RTTI::MetaClassSingleton< DynamicObject >::Destroy();
+void FDynamicObject::FMetaClass::Destroy() {
+    Core::RTTI::TMetaClassSingleton< FDynamicObject >::Destroy();
 }
 //----------------------------------------------------------------------------
-bool DynamicObject::MetaClass::HasInstance() {
-    return Core::RTTI::MetaClassSingleton< DynamicObject >::HasInstance();
+bool FDynamicObject::FMetaClass::HasInstance() {
+    return Core::RTTI::TMetaClassSingleton< FDynamicObject >::HasInstance();
 }
 //----------------------------------------------------------------------------
-const DynamicObject::MetaClass *DynamicObject::MetaClass::Instance() {
-    return &Core::RTTI::MetaClassSingleton< DynamicObject >::Instance();
+const FDynamicObject::FMetaClass *FDynamicObject::FMetaClass::Instance() {
+    return &Core::RTTI::TMetaClassSingleton< FDynamicObject >::Instance();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
