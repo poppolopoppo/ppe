@@ -61,13 +61,13 @@ static bool AppendRelname_(FDirpath& dirpath, FBasename& basename, const FileSys
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FFilename::FFilename(Core::FDirpath&& dirpath, Core::FBasename&& basename)
+FFilename::FFilename(FDirpath&& dirpath, FBasename&& basename)
 :   _dirpath(std::move(dirpath)), _basename(std::move(basename)) {}
 //----------------------------------------------------------------------------
-FFilename::FFilename(const Core::FDirpath& dirpath, const Core::FBasename& basename)
+FFilename::FFilename(const FDirpath& dirpath, const FBasename& basename)
 :   _dirpath(dirpath), _basename(basename) {}
 //----------------------------------------------------------------------------
-FFilename::FFilename(const Core::FDirpath& dirpath, const FileSystem::FStringView& relfilename)
+FFilename::FFilename(const FDirpath& dirpath, const FileSystem::FStringView& relfilename)
 :   _dirpath(dirpath) {
     if (!AppendRelname_(_dirpath, _basename, relfilename))
         AssertNotReached();
@@ -104,31 +104,31 @@ FFilename& FFilename::operator =(const FileSystem::FStringView& content) {
     return *this;
 }
 //----------------------------------------------------------------------------
-void FFilename::SetMountingPoint(const Core::FMountingPoint& mountingPoint) {
-    Core::FMountingPoint oldMountingPoint;
+void FFilename::SetMountingPoint(const FMountingPoint& mountingPoint) {
+    FMountingPoint oldMountingPoint;
     STACKLOCAL_POD_ARRAY(FDirname, dirnames, _dirpath.Depth());
     const size_t k = _dirpath.ExpandPath(oldMountingPoint, dirnames);
     Assert(_dirpath.Depth() == k);
     UNUSED(k);
-    _dirpath = Core::FDirpath(mountingPoint, dirnames);
+    _dirpath = FDirpath(mountingPoint, dirnames);
 }
 //----------------------------------------------------------------------------
-FFilename FFilename::WithReplacedExtension(const Core::FExtname& ext) const {
+FFilename FFilename::WithReplacedExtension(const FExtname& ext) const {
     FFilename cpy(*this);
     cpy.ReplaceExtension(ext);
     return cpy;
 }
 //----------------------------------------------------------------------------
-bool FFilename::Absolute(FFilename* absolute, const Core::FDirpath& origin) const {
+bool FFilename::Absolute(FFilename* absolute, const FDirpath& origin) const {
     Assert(absolute);
-    Core::FDirpath dirpath;
-    if (false == Core::FDirpath::Absolute(&dirpath, origin, _dirpath))
+    FDirpath dirpath;
+    if (false == FDirpath::Absolute(&dirpath, origin, _dirpath))
         return false;
     *absolute = FFilename(dirpath, _basename);
     return true;
 }
 //----------------------------------------------------------------------------
-FFilename FFilename::Absolute(const Core::FDirpath& origin) const {
+FFilename FFilename::Absolute(const FDirpath& origin) const {
     FFilename result;
     if (not Absolute(&result, origin))
         AssertNotReached();
@@ -137,8 +137,8 @@ FFilename FFilename::Absolute(const Core::FDirpath& origin) const {
 //----------------------------------------------------------------------------
 bool FFilename::Normalize(FFilename* normalized) const {
     Assert(normalized);
-    Core::FDirpath dirpath;
-    if (false == Core::FDirpath::Normalize(&dirpath, _dirpath))
+    FDirpath dirpath;
+    if (false == FDirpath::Normalize(&dirpath, _dirpath))
         return false;
     *normalized = FFilename(dirpath, _basename);
     return true;
@@ -151,16 +151,16 @@ FFilename FFilename::Normalized() const {
     return result;
 }
 //----------------------------------------------------------------------------
-bool FFilename::Relative(FFilename* relative, const Core::FDirpath& origin) const {
+bool FFilename::Relative(FFilename* relative, const FDirpath& origin) const {
     Assert(relative);
-    Core::FDirpath dirpath;
-    if (false == Core::FDirpath::Relative(&dirpath, origin, _dirpath))
+    FDirpath dirpath;
+    if (false == FDirpath::Relative(&dirpath, origin, _dirpath))
         return false;
     *relative = FFilename(dirpath, _basename);
     return true;
 }
 //----------------------------------------------------------------------------
-FFilename FFilename::Relative(const Core::FDirpath& origin) const {
+FFilename FFilename::Relative(const FDirpath& origin) const {
     FFilename result;
     if (not Relative(&result, origin))
         AssertNotReached();

@@ -102,7 +102,7 @@ FDirpath& FDirpath::operator =(const FDirpath& other) {
     return *this;
 }
 //----------------------------------------------------------------------------
-FDirpath::FDirpath(const Core::FMountingPoint& mountingPoint, const TMemoryView<const FDirname>& path) {
+FDirpath::FDirpath(const FMountingPoint& mountingPoint, const TMemoryView<const FDirname>& path) {
     _path = DirpathNode_(mountingPoint, path);
 }
 //----------------------------------------------------------------------------
@@ -140,32 +140,32 @@ size_t FDirpath::Depth() const {
     return (nullptr == _path) ? 0 : _path->Depth();
 }
 //----------------------------------------------------------------------------
-Core::FMountingPoint FDirpath::MountingPoint() const {
+FMountingPoint FDirpath::MountingPoint() const {
     if (nullptr == _path)
-        return Core::FMountingPoint();
+        return FMountingPoint();
 
     const FFileSystemNode* pparent = FFileSystemPath::Instance().RootNode(_path);
     Assert(pparent);
     Assert(false == pparent->Token().empty());
 
     if (L':' != pparent->Token().MakeView().back())
-        return Core::FMountingPoint();
+        return FMountingPoint();
 
-    return Core::FMountingPoint(pparent->Token());
+    return FMountingPoint(pparent->Token());
 }
 //----------------------------------------------------------------------------
-Core::FDirname FDirpath::LastDirname() const {
+FDirname FDirpath::LastDirname() const {
     if (nullptr == _path)
-        return Core::FDirname();
+        return FDirname();
 
     const FFileSystemToken& token = _path->Token();
     if (L':' == token.MakeView().back())
-        return Core::FDirname();
+        return FDirname();
 
-    return Core::FDirname(token);
+    return FDirname(token);
 }
 //----------------------------------------------------------------------------
-size_t FDirpath::ExpandPath(Core::FMountingPoint& mountingPoint, const TMemoryView<FDirname>& dirnames) const {
+size_t FDirpath::ExpandPath(FMountingPoint& mountingPoint, const TMemoryView<FDirname>& dirnames) const {
     if (nullptr == _path)
         return 0;
 
@@ -186,7 +186,7 @@ size_t FDirpath::ExpandPath(Core::FMountingPoint& mountingPoint, const TMemoryVi
 }
 //----------------------------------------------------------------------------
 bool FDirpath::HasMountingPoint() const {
-    return !FMountingPoint().empty();
+    return (not MountingPoint().empty());
 }
 //----------------------------------------------------------------------------
 void FDirpath::Concat(const FDirname& append) {
@@ -284,7 +284,7 @@ bool FDirpath::Absolute(FDirpath* absolute, const FDirpath& origin, const FDirpa
 
     STACKLOCAL_POD_ARRAY(FDirname, dirnames, origin.Depth()+relative.Depth());
 
-    Core::FMountingPoint origin_mp, relative_mp;
+    FMountingPoint origin_mp, relative_mp;
     const size_t origin_s = origin.ExpandPath(origin_mp, dirnames.SubRange(0, origin.Depth()));
     const size_t relative_s = relative.ExpandPath(relative_mp, dirnames.SubRange(origin_s, relative.Depth()));
 
@@ -308,7 +308,7 @@ bool FDirpath::Normalize(FDirpath* normalized, const FDirpath& path) {
         return true;
     }
 
-    Core::FMountingPoint mountingPoint;
+    FMountingPoint mountingPoint;
     STACKLOCAL_POD_ARRAY(FDirname, dirnames, path.Depth());
     const size_t n = path.ExpandPath(mountingPoint, dirnames);
     Assert(path.Depth() >= n);
@@ -339,7 +339,7 @@ bool FDirpath::Relative(FDirpath* relative, const FDirpath& origin, const FDirpa
     TMemoryView<FDirname> origin_dirs = dirnames.SubRange(0, origin.Depth());
     TMemoryView<FDirname> other_dirs = dirnames.SubRange(origin.Depth(), other.Depth());
 
-    Core::FMountingPoint origin_mp, other_mp;
+    FMountingPoint origin_mp, other_mp;
     size_t origin_s = origin.ExpandPath(origin_mp, origin_dirs);
     size_t other_s = other.ExpandPath(other_mp, other_dirs);
 
@@ -370,7 +370,7 @@ bool FDirpath::Relative(FDirpath* relative, const FDirpath& origin, const FDirpa
 
     Assert(relative_dirs.size() == relative_dirs.capacity());
 
-    *relative = FDirpath(Core::FMountingPoint(), relative_dirs.MakeView());
+    *relative = FDirpath(FMountingPoint(), relative_dirs.MakeView());
     return true;
 }
 //----------------------------------------------------------------------------
