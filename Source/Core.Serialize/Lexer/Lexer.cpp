@@ -69,14 +69,12 @@ static void Itoa_(int64_t value, FString& str) {
     static_assert(1 < _Base && _Base <= 16, "invalid _Base");
     Assert(str.empty());
 
-    static const char BASE_FMT[16+1] = "0123456789ABCDEF";
-
     const bool neg = (value < 0);
     value = std::abs(value);
 
     do {
         const int64_t d = value % _Base;
-        const char ch = BASE_FMT[d];
+        const char ch = checked_cast<char>(d + (d > 9 ? ('A'-10) : '0'));
 
         str += ch;
 
