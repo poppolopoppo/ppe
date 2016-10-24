@@ -2,13 +2,14 @@
 
 #include "Core.Network/Network.h"
 
-#include "Core.Network/Address.h"
+#include "Core.Network/Socket/Address.h"
 
 #include "Core/Maths/Units.h"
 
 namespace Core {
 namespace Network {
 class FSocket;
+class FSocketBuffered;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -36,6 +37,19 @@ public:
     bool IsConnected() const;
 
     bool Accept(FSocket& socket, const Milliseconds& timeout);
+    bool Accept(FSocketBuffered& socket, const Milliseconds& timeout);
+
+    static FListener Localhost(size_t port);
+
+    struct FConnectionScope {
+        FListener& Listener;
+        FConnectionScope(FListener& listener) : Listener(listener) {
+            Listener.Connect();
+        }
+        ~FConnectionScope() {
+            Listener.Disconnect();
+        }
+    };
 
 private:
     void* _handle;

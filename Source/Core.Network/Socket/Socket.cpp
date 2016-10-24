@@ -13,7 +13,9 @@ namespace Network {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FSocket::FSocket() : FSocket(FAddress(), FAddress()) {}
+FSocket::FSocket()
+:   _handle(nullptr)
+,   _userData(nullptr) {}
 //----------------------------------------------------------------------------
 FSocket::FSocket(FAddress&& remote, FAddress&& local)
 :   _handle(nullptr)
@@ -164,7 +166,6 @@ bool FSocket::Disconnect(bool gracefully/* = false */) {
     Assert(IsConnected());
 
     ::SOCKET sock = UnpackSocket_(_handle);
-    _handle = nullptr;
 
     if (gracefully) {
         // shutdown every outgoing packets
@@ -178,6 +179,8 @@ bool FSocket::Disconnect(bool gracefully/* = false */) {
     const int status = ::closesocket(sock);
     if (status == -1)
         return false;
+
+    _handle = nullptr;
 
     Assert(!IsConnected());
     return true;
@@ -208,6 +211,9 @@ bool FSocket::IsReadable(const Milliseconds& timeout) const {
     Assert(IsConnected());
     Assert(timeout.Value() >= 0);
 
+    if (timeout.Value() == 0)
+        return true;
+
     ::fd_set read_set;
     // initialize read_set
     FD_ZERO(&read_set);
@@ -231,7 +237,7 @@ bool FSocket::IsReadable(const Milliseconds& timeout) const {
     return true;
 }
 //----------------------------------------------------------------------------
-size_t FSocket::Read(const TMemoryView<u8>& rawData) {
+size_t FSocket::Read(const TMemoryView<u8>& rawData, bool block/* = false */) {
     Assert(!rawData.empty());
     Assert(IsConnected());
 
@@ -240,18 +246,14 @@ size_t FSocket::Read(const TMemoryView<u8>& rawData) {
     // can't possibly get upset about it being large.
     const int length = (int)Min(MaxRecvLength_, rawData.size());
 
-    const int status = ::recv(UnpackSocket_(_handle), (char*)rawData.data(), length, 0);
+    const int flags = (block ? MSG_WAITALL : 0);
+    const int status = ::recv(UnpackSocket_(_handle), (char*)rawData.data(), length, flags);
 
     return (SOCKET_ERROR == status ? 0 : status);
 }
 //----------------------------------------------------------------------------
 size_t FSocket::Read(const TMemoryView<u8>& rawData, const Milliseconds& timeout) {
-    Assert(!rawData.empty());
-
-    if (not IsReadable(timeout))
-        return 0;
-    else
-        return Read(rawData);
+    return (IsReadable(timeout) ? Read(rawData) : 0);
 }
 //----------------------------------------------------------------------------
 size_t FSocket::Write(const TMemoryView<const u8>& rawData) {
@@ -260,7 +262,8 @@ size_t FSocket::Write(const TMemoryView<const u8>& rawData) {
 
     ::SOCKET sock = UnpackSocket_(_handle);
 
-    for (size_t offset = 0; offset < rawData.size(); ) {
+    size_t offset = 0;
+    while (offset < rawData.size()) {
         // Make sure to cap the max value num can take on so that if it is
         // really large (it might be big on 64bit platforms) so that the OS
         // can't possibly get upset about it being large.
@@ -268,12 +271,12 @@ size_t FSocket::Write(const TMemoryView<const u8>& rawData) {
 
         const int status = ::send(sock, (const char*)rawData.data() + offset, length, 0);
         if (SOCKET_ERROR == status)
-            return false;
+            return offset;
 
         offset += checked_cast<size_t>(status);
     }
 
-    return rawData.size();
+    return offset;
 }
 //----------------------------------------------------------------------------
 bool FSocket::MakeConnection(FSocket& socket, const FAddress& remoteHostnameOrIP) {

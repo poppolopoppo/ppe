@@ -35,14 +35,8 @@ bool FAddress::IP(FAddress* paddr, const FStringView& hostname, size_t port/* = 
     return true;
 }
 //----------------------------------------------------------------------------
-bool FAddress::Localhost(FAddress* paddr, size_t port/* = DefaultPort */) {
-    Assert(paddr);
-
-    if (not LocalHostName(paddr->_host))
-        return false;
-
-    paddr->_port = port;
-    return true;
+FAddress FAddress::Localhost(size_t port/* = DefaultPort */) {
+    return FAddress("127.0.0.1", port);
 }
 //----------------------------------------------------------------------------
 bool FAddress::Parse(FAddress* paddr, const FStringView& input) {
@@ -72,8 +66,8 @@ bool FAddress::ParseIPv4(u8 (&ipV4)[4], const FAddress& addr) {
 
     auto first = addr._host.begin();
     const auto last = addr._host.end();
-    for (auto it = first; first < last; ++it) {
-        if (*it == '.' || it == last) {
+    for (auto it = first; first != last; ) {
+        if (it == last || *it == '.') {
             if (it == first || slot == 4)
                 return false;
 
@@ -84,11 +78,15 @@ bool FAddress::ParseIPv4(u8 (&ipV4)[4], const FAddress& addr) {
             if (n < 0 || n > 255)
                 return false;
 
-            first = it + 1;
             ipV4[slot++] = u8(n);
+
+            first = (it == last) ? last : ++it;
         }
         else if (!IsDigit(*it)) {
             return false;
+        }
+        else {
+            ++it;
         }
     }
 
@@ -183,4 +181,20 @@ bool IPToHostname(FString& hostname, const FStringView& ip) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Network
+} //!namespace Core
+
+namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const Network::FAddress& addr ) {
+    return oss << addr.Host() << ':' << addr.Port();
+}
+//----------------------------------------------------------------------------
+std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const Network::FAddress& addr ) {
+    return oss << addr.Host() << L':' << addr.Port();
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Core

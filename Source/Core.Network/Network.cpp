@@ -3,7 +3,7 @@
 #include "Network.h"
 #include "Network_fwd.h"
 
-#include "Socket.h"
+#include "Socket/Socket.h"
 
 #include "Core/Allocator/PoolAllocatorTag-impl.h"
 

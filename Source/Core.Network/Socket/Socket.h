@@ -2,7 +2,7 @@
 
 #include "Core.Network/Network.h"
 
-#include "Core.Network/Address.h"
+#include "Core.Network/Socket/Address.h"
 
 #include "Core/Maths/Units.h"
 #include "Core/Memory/MemoryView.h"
@@ -51,7 +51,7 @@ public:
     bool IsConnected() const;
     bool IsReadable(const Milliseconds& timeout) const;
 
-    size_t Read(const TMemoryView<u8>& rawData);
+    size_t Read(const TMemoryView<u8>& rawData, bool block = false);
     size_t Read(const TMemoryView<u8>& rawData, const Milliseconds& timeout);
     size_t Write(const TMemoryView<const u8>& rawData);
 
@@ -60,29 +60,22 @@ public:
 
     static bool MakeConnection(FSocket& socket, const FAddress& remoteHostnameOrIP);
 
+    struct FConnectionScope {
+        FSocket& Socket;
+        FConnectionScope(FSocket& socket) : Socket(socket) {
+            Socket.Connect();
+        }
+        ~FConnectionScope() {
+            Socket.Disconnect(true);
+        }
+    };
+
 private:
     void* _handle;
     void* _userData;
 
     FAddress _local;
     FAddress _remote;
-};
-//----------------------------------------------------------------------------
-struct FConnectionScope {
-
-    explicit FConnectionScope(FSocket& socket, bool graceful = true)
-        : PSocket(&socket), Graceful(graceful) {
-        Assert(false == PSocket->IsConnected());
-        PSocket->Connect();
-    }
-
-    ~FConnectionScope() {
-        Assert(true == PSocket->IsConnected());
-        PSocket->Disconnect(Graceful);
-    }
-
-    FSocket* const PSocket;
-    const bool Graceful;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

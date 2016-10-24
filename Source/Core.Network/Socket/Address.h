@@ -36,12 +36,15 @@ public:
     void SetPort(size_t value) { _port = value; }
 
     bool IsIPv4() const;
+    // TODO: bool IsIPv6() const;
 
     static bool IP(FAddress* paddr, const FStringView& hostname, size_t port = DefaultPort);
-    static bool Localhost(FAddress* paddr, size_t port = DefaultPort);
     static bool Parse(FAddress* paddr, const FStringView& input);
 
+    static FAddress Localhost(size_t port = DefaultPort);
+
     static bool ParseIPv4(u8 (&ipV4)[4], const FAddress& addr);
+    // TODO: static bool ParseIPv6(u8 (&ipV6)[4], const FAddress& addr);
 
     inline friend bool operator ==(const FAddress& lhs, const FAddress& rhs) {
         return (lhs.Port() == rhs.Port() && lhs.Host() == rhs.Host());
@@ -79,4 +82,16 @@ bool IPToHostname(FString& hostname, const FStringView& ip);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Network
+} //!namespace Core
+
+namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const Network::FAddress& addr );
+//----------------------------------------------------------------------------
+std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const Network::FAddress& addr );
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Core

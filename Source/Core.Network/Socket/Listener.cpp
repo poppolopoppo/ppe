@@ -4,6 +4,9 @@
 
 #include "NetworkIncludes.h"
 #include "Socket.h"
+#include "SocketBuffered.h"
+
+#include "Core/Diagnostic/Logger.h"
 
 // FSocket implementation adapted/updated from C++ DLib
 // http://dlib.net/files/dlib-19.1.zip
@@ -99,6 +102,8 @@ bool FListener::Connect() {
 
     _handle = PackSocket_(sock);
 
+    LOG(Info, L"[Network] Started listening to {0}", _listening);
+
     Assert(IsConnected());
     return true;
 }
@@ -112,6 +117,8 @@ bool FListener::Disconnect() {
     const int status = ::closesocket(sock);
     if (status == -1)
         return false;
+
+    LOG(Info, L"[Network] Stopped listening to {0}", _listening);
 
     Assert(!IsConnected());
     return true;
@@ -221,8 +228,18 @@ bool FListener::Accept(FSocket& socket, const Milliseconds& timeout) {
     socket._remote.SetHost(std::move(foreign_ip));
     socket._remote.SetPort(foreign_port);
 
+    LOG(Info, L"[Network] Accept socket from {0} to {1}", socket._local, socket._remote );
+
     Assert(socket.IsConnected());
-    return 0;
+    return true;
+}
+//----------------------------------------------------------------------------
+bool FListener::Accept(FSocketBuffered& socket, const Milliseconds& timeout) {
+    return FSocketBuffered::Accept(socket, *this, timeout);
+}
+//----------------------------------------------------------------------------
+FListener FListener::Localhost(size_t port) {
+    return FListener(FAddress::Localhost(port));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
