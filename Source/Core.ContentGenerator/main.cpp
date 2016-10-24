@@ -6,6 +6,7 @@
 #include "Core.Serialize/Serialize.h"
 #include "Core.Graphics/Graphics.h"
 #include "Core.Lattice/Lattice.h"
+#include "Core.Network/Network.h"
 #include "Core.Pixmap/Pixmap.h"
 #include "Core.ContentPipeline/ContentPipeline.h"
 #include "Core.Application/Application.h"
@@ -39,6 +40,7 @@ static int Bootstrap(void *appHandle, int nShowCmd, int argc, const wchar_t**arg
     const Serialize::SerializeStartup startupSerialize;
     const Graphics::GraphicsStartup startupGraphics;
     const Lattice::LatticeStartup startupLattice;
+    const Network::NetworkStartup startupNetwork;
     const Pixmap::PixmapStartup startupPixmap;
     const ContentPipeline::ContentPipelineStartup startupContentPipeline;
     const Application::FApplicationStartup startupApplication;
