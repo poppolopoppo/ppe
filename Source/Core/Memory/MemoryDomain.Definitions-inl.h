@@ -54,6 +54,10 @@ MEMORY_DOMAIN_COLLAPSABLE_IMPL(DXTImage,                Pixmap)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(FloatImage,              Pixmap)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(Image,                   Pixmap)
 //------------------------------------------------------------------------------
+MEMORY_DOMAIN_IMPL(Network,                             Core)
+MEMORY_DOMAIN_COLLAPSABLE_IMPL(HTTP,                    Network)
+MEMORY_DOMAIN_COLLAPSABLE_IMPL(URI,                     Network)
+//------------------------------------------------------------------------------
 MEMORY_DOMAIN_IMPL(ContentPipeline,                     Core)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(Generation,              ContentPipeline)
 //------------------------------------------------------------------------------
