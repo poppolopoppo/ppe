@@ -13,7 +13,12 @@
 #include <utility>
 #include <type_traits>
 
+// Ideas from
 // https://gist.github.com/ssylvan/5538011
+
+// TODO: Need to implement erase() with bubble down
+// TODO: Probing might be too expansive for small to medium sized tables ... but improves a lot negative search
+// TODO: Analytic solution for ProbeDistance() instead of for loop should be a huge win
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -98,13 +103,17 @@ struct FHashValueWIndex64_ {
         return FHashValueWIndex64_{ u32(hashValue), checked_cast<u32>(dataIndex)};
     }
 };
-static constexpr size_t HashTableCapacityForHash_[32] = {
+// Hashes are separated from key/values, which allows to allocate more space for hash and thus increase enthropy
+// while consumming less memory than allocating the same count of key/values.
+// One important downside for small or medium sized tables is the cache miss added which looking for the key/value
+// pair after searching in the hash values.
+static constexpr u32 HashTableCapacityForHash_[32] = {
    0x00000000,0x00000003,0x0000000b,0x00000017,0x00000035,0x00000061,0x000000c1,0x00000185,
    0x00000301,0x00000607,0x00000c07,0x00001807,0x00003001,0x00006011,0x0000c005,0x0001800d,
    0x00030005,0x00060019,0x000c0001,0x00180005,0x0030000b,0x0060000d,0x00c00005,0x01800013,
    0x03000005,0x06000017,0x0c000013,0x18000005,0x30000059,0x60000005,0xc0000001,0xfffffffb,
 };
-static constexpr size_t HashTableCapacityForValue_[32] = {
+static constexpr u32 HashTableCapacityForValue_[32] = {
    0x00000000,0x00000003,0x00000009,0x00000012,0x00000029,0x0000004b,0x00000095,0x0000012c,
    0x00000250,0x000004a4,0x00000943,0x00001281,0x000024f7,0x000049f9,0x000093db,0x000127b8,
    0x00024f60,0x00049ecc,0x00093d72,0x00127ae5,0x0024f5cb,0x0049eb8f,0x0093d70e,0x0127ae23,
@@ -528,7 +537,7 @@ private:
     }
 
     template <typename _KeyLike0, typename _KeyLike1>
-    static bool KeyEqual_(const _KeyLike0& lhs, const _KeyLike1& rhs) {
+    FORCE_INLINE static bool KeyEqual_(const _KeyLike0& lhs, const _KeyLike1& rhs) {
         return key_equal()(table_traits::Key(lhs), table_traits::Key(rhs));
     }
 
