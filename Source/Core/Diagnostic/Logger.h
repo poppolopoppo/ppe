@@ -19,11 +19,11 @@ enum class ELogCategory {
     Info = 0,
     Warning,
     Error,
-    FException,
+    Exception,
     Debug,
     Assertion,
     Profiling,
-    FCallstack,
+    Callstack,
 };
 //----------------------------------------------------------------------------
 TMemoryView<const ELogCategory> EachLogCategory();

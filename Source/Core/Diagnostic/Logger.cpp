@@ -9,33 +9,33 @@ namespace Core {
 STATIC_ASSERT(0 == size_t(ELogCategory::Info));
 STATIC_ASSERT(1 == size_t(ELogCategory::Warning));
 STATIC_ASSERT(2 == size_t(ELogCategory::Error));
-STATIC_ASSERT(3 == size_t(ELogCategory::FException));
+STATIC_ASSERT(3 == size_t(ELogCategory::Exception));
 STATIC_ASSERT(4 == size_t(ELogCategory::Debug));
 STATIC_ASSERT(5 == size_t(ELogCategory::Assertion));
 STATIC_ASSERT(6 == size_t(ELogCategory::Profiling));
-STATIC_ASSERT(7 == size_t(ELogCategory::FCallstack));
+STATIC_ASSERT(7 == size_t(ELogCategory::Callstack));
 //----------------------------------------------------------------------------
 namespace {
     static const ELogCategory sCategories[] = {
         ELogCategory::Info,
         ELogCategory::Warning,
         ELogCategory::Error,
-        ELogCategory::FException,
+        ELogCategory::Exception,
         ELogCategory::Debug,
         ELogCategory::Assertion,
         ELogCategory::Profiling,
-        ELogCategory::FCallstack,
+        ELogCategory::Callstack,
     };
 
     static const wchar_t* sCategoriesWCStr[] = {
         L"Info",
         L"Warning",
         L"Error",
-        L"FException",
+        L"Exception",
         L"Debug",
         L"Assertion",
         L"Profiling",
-        L"FCallstack",
+        L"Callstack",
     };
 
     STATIC_ASSERT(lengthof(sCategoriesWCStr) == lengthof(sCategories));
@@ -85,7 +85,7 @@ public:
     virtual void Log(ELogCategory category, const FWStringView& text, const FormatArgListW& args) override {
         wchar_t buffer[2048];
         FWOCStrStream oss(buffer);
-        if (ELogCategory::FCallstack != category &&
+        if (ELogCategory::Callstack != category &&
             ELogCategory::Info != category ) {
             Format(oss, L"[{0}][{1}]", _prefix, category);
         }
@@ -134,11 +134,11 @@ void FOutputDebugLogger::Log(ELogCategory category, const FWStringView& text, co
     FThreadLocalWOStringStream oss;
 
 #if 0
-    if (ELogCategory::FCallstack != category) {
+    if (ELogCategory::Callstack != category) {
         Format(oss, L"[{0:12f7}][{1}]", FCurrentProcess::ElapsedSeconds(), category);
     }
 #else
-    if (ELogCategory::FCallstack != category &&
+    if (ELogCategory::Callstack != category &&
         ELogCategory::Info != category ) {
         Format(oss, L"[{0}]", category);
     }
@@ -155,7 +155,7 @@ void FOutputDebugLogger::Log(ELogCategory category, const FWStringView& text, co
 }
 //----------------------------------------------------------------------------
 void FStdcoutLogger::Log(ELogCategory category, const FWStringView& text, const FormatArgListW& args) {
-    if (ELogCategory::FCallstack != category)
+    if (ELogCategory::Callstack != category)
         Format(std::wcout, L"[{0:12f}][{1}]", FCurrentProcess::ElapsedSeconds(), category);
 
     if (args.empty())
@@ -167,7 +167,7 @@ void FStdcoutLogger::Log(ELogCategory category, const FWStringView& text, const 
 }
 //----------------------------------------------------------------------------
 void FStderrLogger::Log(ELogCategory category, const FWStringView& text, const FormatArgListW& args) {
-    if (ELogCategory::FCallstack != category)
+    if (ELogCategory::Callstack != category)
         Format(std::wcerr, L"[{0:12f}][{1}]", FCurrentProcess::ElapsedSeconds(), category);
 
     if (args.empty())
@@ -180,16 +180,19 @@ void FStderrLogger::Log(ELogCategory category, const FWStringView& text, const F
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+static FOutputDebugLogger gLoggerDefault;
+//----------------------------------------------------------------------------
 void FLoggerStartup::Start() {
     Assert(&gLoggerBeforeMain == gLoggerCurrentImpl.load());
-    SetLoggerImpl(new FOutputDebugLogger);
+    SetLoggerImpl(&gLoggerDefault);
 }
 //----------------------------------------------------------------------------
 void FLoggerStartup::Shutdown() {
     ILogger* logger = SetLoggerImpl(remove_const(&gLoggerAfterMain));
     Assert(logger);
     Assert(logger != &gLoggerBeforeMain);
-    checked_delete(logger);
+    if (logger != &gLoggerDefault)
+        checked_delete(logger);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
