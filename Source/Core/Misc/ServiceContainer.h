@@ -104,7 +104,7 @@ void FServiceContainer::Register(T* service) {
 #endif
     );
 
-    LOG(Info, L"[TService] Register <{0}> with <{1}> (id={2:x})",
+    LOG(Info, L"[Service] Register <{0}> with <{1}> (id={2:x})",
         name, typeid(T).name(), hash_t(serviceId) );
 
     _Interface* const pimpl = service; // important before casting to (void*)
@@ -121,7 +121,7 @@ void FServiceContainer::Unregister(T* service) {
     WRITESCOPELOCK(_barrierRW);
     Assert(nullptr != service);
 
-    LOG(Info, L"[TService] Unregister <{0}> with <{1}> (id={2})",
+    LOG(Info, L"[Service] Unregister <{0}> with <{1}> (id={2})",
         typeid(_Interface).name(), typeid(T).name(), hash_t(serviceId) );
 
 #ifdef WITH_CORE_ASSERT
@@ -151,7 +151,7 @@ _Interface* FServiceContainer::GetIFP() const {
     const auto it = Find_(serviceId);
 
     if (_services.end() == it) {
-        LOG(Warning, L"[TService] Unknown service <{0}> ! (id={1})",
+        LOG(Warning, L"[Service] Unknown service <{0}> ! (id={1})",
             typeid(_Interface).name(), hash_t(serviceId) );
 
         return nullptr;

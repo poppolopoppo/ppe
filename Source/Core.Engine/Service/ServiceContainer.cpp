@@ -37,11 +37,11 @@ FServiceContainer::~FServiceContainer() {
     Assert(!_started);
 
     for (TPair<FGuid, PService>& service : _services) {
-        LOG(Info, L"[TService] Removing reference for unregistered service <{0}> with guid {1} ...",
+        LOG(Info, L"[Service] Removing reference for unregistered service <{0}> with guid {1} ...",
             service.second->ServiceName(), service.first );
 
         if (service.second->RefCount() > 1)
-            LOG(Warning, L"[TService] Unregistered service <{0}> will survive ({1} references)",
+            LOG(Warning, L"[Service] Unregistered service <{0}> will survive ({1} references)",
                 service.second->ServiceName(), service.first, service.second->RefCount() - 1 );
 
         service.second = nullptr;
@@ -59,7 +59,7 @@ void FServiceContainer::RegisterService(const FGuid& guid, IService *service) {
 #ifdef WITH_CORE_ENGINE_SERVICE_DEBUG
     Assert(!_started);
 
-    LOG(Info, L"[TService] Register service <{0}> with guid {1} ...",
+    LOG(Info, L"[Service] Register service <{0}> with guid {1} ...",
         service->ServiceName(), guid );
 #endif
 
@@ -74,7 +74,7 @@ void FServiceContainer::UnregisterService(const FGuid& guid, IService *service) 
 #ifdef WITH_CORE_ENGINE_SERVICE_DEBUG
     Assert(!_started);
 
-    LOG(Info, L"[TService] Unregister service <{0}> with guid {1} ...",
+    LOG(Info, L"[Service] Unregister service <{0}> with guid {1} ...",
         service->ServiceName(), guid );
 #endif
 
