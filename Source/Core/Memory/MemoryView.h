@@ -91,6 +91,9 @@ public:
     TMemoryView<T> SubRange(size_t offset, size_t count) const;
     TMemoryView< typename std::add_const<T>::type > SubRangeConst(size_t offset, size_t count) const;
 
+    TMemoryView<T> SubRange(iterator first, iterator last) const;
+    TMemoryView< typename std::add_const<T>::type > SubRangeConst(iterator first, iterator last) const;
+
     TMemoryView<T> CutStartingAt(size_t offset) const { return SubRange(offset, _size - offset); }
     TMemoryView< typename std::add_const<T>::type > CutStartingAtConst(size_t offset) const { return SubRangeConst(offset, _size - offset); }
 
@@ -124,6 +127,9 @@ public:
     TMemoryView<T> FirstNElements(size_t count) const { return CutBefore(count); }
     TMemoryView<T> LastNElements(size_t count) const { Assert(_size >= count); return CutStartingAt(_size - count); }
 
+    TMemoryView<T> TrimFirstNElements(size_t count) const { return CutStartingAt(count); }
+    TMemoryView<T> TrimLastNElements(size_t count) const { Assert(_size >= count); return CutBefore(_size - count); }
+
     TMemoryView<T> ShiftBack() const { Assert(_size > 0); return TMemoryView<T>(_storage, _size - 1); }
     TMemoryView<T> ShiftFront() const { Assert(_size > 0); return TMemoryView<T>(_storage + 1, _size - 1); }
 
@@ -137,6 +143,8 @@ public:
     }
 
     iterator Find(const T& elem) const { return std::find(begin(), end(), elem); }
+    reverse_iterator FindR(const T& elem) const { return std::find(rbegin(), rend(), elem); }
+
     bool Contains(const T& elem) const { return (end() != Find(elem)); }
 
     template <typename _Pred>
@@ -199,106 +207,6 @@ protected:
     pointer _storage;
     size_type _size;
 };
-//----------------------------------------------------------------------------
-template <typename T>
-TMemoryView<T>::TMemoryView()
-: _storage(nullptr), _size(0) {}
-//----------------------------------------------------------------------------
-template <typename T>
-TMemoryView<T>::TMemoryView(pointer storage, size_type size)
-: _storage(storage), _size(size) {
-    Assert(storage || 0 == size);
-}
-//----------------------------------------------------------------------------
-template <typename T>
-TMemoryView<T>::~TMemoryView() {}
-//----------------------------------------------------------------------------
-template <typename T>
-TMemoryView<T>::TMemoryView(TMemoryView&& rvalue)
-:   _storage(std::move(rvalue._storage))
-,   _size(std::move(rvalue._size)) {
-    rvalue._storage = nullptr;
-    rvalue._size = 0;
-}
-//----------------------------------------------------------------------------
-template <typename T>
-TMemoryView<T>& TMemoryView<T>::operator =(TMemoryView&& rvalue) {
-    _storage = std::move(rvalue._storage);
-    _size = std::move(rvalue._size);
-    rvalue._storage = nullptr;
-    rvalue._size = 0;
-    return (*this);
-}
-//----------------------------------------------------------------------------
-template <typename T>
-TMemoryView<T>::TMemoryView(const TMemoryView& other)
-:   _storage(other._storage), _size(other._size) {}
-//----------------------------------------------------------------------------
-template <typename T>
-TMemoryView<T>& TMemoryView<T>::operator =(const TMemoryView& other) {
-    _storage = other._storage;
-    _size = other._size;
-    return (*this);
-}
-//----------------------------------------------------------------------------
-template <typename T>
-template <typename U>
-TMemoryView<T>::TMemoryView(const TMemoryView<U>& other)
-:   _storage(other._storage), _size(other._size) {}
-//----------------------------------------------------------------------------
-template <typename T>
-template <typename U>
-TMemoryView<T>& TMemoryView<T>::operator =(const TMemoryView<U>& other) {
-    _storage = other._storage;
-    _size = other._size;
-    return (*this);
-}
-//----------------------------------------------------------------------------
-template <typename T>
-auto TMemoryView<T>::at(size_type index) const -> reference {
-    Assert(index < _size);
-    return _storage[index];
-}
-//----------------------------------------------------------------------------
-template <typename T>
-auto TMemoryView<T>::FindSubRange(const TMemoryView<T>& subrange) const -> iterator {
-    Assert(!subrange.empty());
-    const auto last = end();
-    for (auto it = begin(); it != last; ++it) {
-        if (std::equal(begin(), end(), subrange.begin(), subrange.end()))
-            return it;
-    }
-    return last;
-}
-//----------------------------------------------------------------------------
-template <typename T>
-void TMemoryView<T>::CopyTo(const TMemoryView<typename std::remove_const<T>::type>& dst) const {
-    Assert(dst.size() == size());
-    std::copy(begin(), end(), dst.begin());
-}
-//----------------------------------------------------------------------------
-template <typename T>
-TMemoryView<T> TMemoryView<T>::SubRange(size_t offset, size_t count) const {
-    Assert(offset <= _size);
-    Assert(offset + count <= _size);
-    return TMemoryView(_storage + offset, count);
-}
-//----------------------------------------------------------------------------
-template <typename T>
-TMemoryView< typename std::add_const<T>::type > TMemoryView<T>::SubRangeConst(size_t offset, size_t count) const {
-    Assert(offset <= _size);
-    Assert(offset + count <= _size);
-    return TMemoryView< typename std::add_const<T>::type >(_storage + offset, count);
-}
-//----------------------------------------------------------------------------
-template <typename T>
-template <typename U>
-TMemoryView<U> TMemoryView<T>::Cast() const {
-    STATIC_ASSERT(  (0 == (sizeof(T) % sizeof(U)) ) ||
-                    (0 == (sizeof(U) % sizeof(T)) ) );
-
-    return TMemoryView<U>(reinterpret_cast<U *>(_storage), (_size * sizeof(T)) / sizeof(U));
-}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -396,3 +304,5 @@ std::basic_ostream<_Char, _Traits>& operator <<(
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Core
+
+#include "Core/Memory/MemoryView-inl.h"
