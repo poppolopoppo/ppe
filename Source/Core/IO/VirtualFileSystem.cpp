@@ -94,15 +94,16 @@ bool FVirtualFileSystem::WriteAll(const FFilename& filename, const TMemoryView<c
 void FVirtualFileSystemStartup::Start() {
     POOL_TAG(FVirtualFileSystem)::Start();
     FVirtualFileSystem::Create();
+    auto& VFS = FVirtualFileSystem::Instance();
     // current process directory
     {
-        FVirtualFileSystem::Instance().MountNativePath(MakeStringView(L"Process:/"), FCurrentProcess::Instance().Directory());
+        VFS.MountNativePath(L"Process:/", FCurrentProcess::Instance().Directory());
     }
     // data directory
     {
         FWString path;
         Format(path, L"{0}/../../Data", FCurrentProcess::Instance().Directory());
-        FVirtualFileSystem::Instance().MountNativePath(MakeStringView(L"Data:/"), path);
+        VFS.MountNativePath(MakeStringView(L"Data:/"), path);
     }
     // system temporary path
     {
@@ -110,7 +111,7 @@ void FVirtualFileSystemStartup::Start() {
         if (!FileSystem::SystemTemporaryDirectory(tmpPath, lengthof(tmpPath)) )
             AssertNotReached();
 
-        FVirtualFileSystem::Instance().MountNativePath(MakeStringView(L"Tmp:/"), tmpPath);
+        VFS.MountNativePath(L"Tmp:/", tmpPath);
     }
     // user profile path
     {
@@ -128,7 +129,7 @@ void FVirtualFileSystemStartup::Start() {
 #   error "unsupported platform"
 #endif
         AssertRelease(userPath);
-        FVirtualFileSystem::Instance().MountNativePath(MakeStringView(L"User:/"), userPath);
+        VFS.MountNativePath(L"User:/", userPath);
 #if defined(OS_WINDOWS)
         free(userPath); // must free() the string allocated by _wdupenv_s()
 #endif
