@@ -2,7 +2,7 @@
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
   <!-- https://code.msdn.microsoft.com/windowsdesktop/Writing-type-visualizers-2eae77a2 -->
 
-  <Type Name="Core::Meta::PointerWFlags&lt;*&gt;">
+  <Type Name="Core::Meta::TPointerWFlags&lt;*&gt;">
     <DisplayString>{{ ptr={($T1*)(size_t(_pFlags)&amp;~3)} flag0={(_pFlags&amp;1)!=0} flag1={(_pFlags&amp;2)!=0} flag01={_pFlags&amp;3} }}</DisplayString>
     <Expand>
       <Item Name="Pointer">($T1*)(size_t(_pFlags)&amp;~3)</Item>
@@ -12,18 +12,18 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::BasicStringView&lt;char&gt;">
+  <Type Name="Core::TBasicStringView&lt;char&gt;">
     <DisplayString Condition="_size == 0">empty</DisplayString>
     <DisplayString>{_storage,[_size]s} [{_size}]</DisplayString>
     <StringView>_storage,[_size]s</StringView>
   </Type>
-  <Type Name="Core::BasicStringView&lt;wchar_t&gt;">
+  <Type Name="Core::TBasicStringView&lt;wchar_t&gt;">
     <DisplayString Condition="_size == 0">empty</DisplayString>
     <DisplayString>{_storage,[_size]su} [{_size}]</DisplayString>
     <StringView>_storage,[_size]su</StringView>
   </Type>
 
-  <Type Name="Core::MemoryView&lt;*&gt;">
+  <Type Name="Core::TMemoryView&lt;*&gt;">
     <DisplayString Condition="_size == 0">empty</DisplayString>
     <DisplayString>[{_size}]</DisplayString>
     <Expand>
@@ -35,7 +35,7 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::VectorInSitu&lt;*, *, *&gt;">
+  <Type Name="Core::TVectorInSitu&lt;*, *, *&gt;">
     <DisplayString>{{ size={_size}, capacity={_capacity}, insitu={_insituPtr - _insituData} }}</DisplayString>
     <Expand>
       <Item Name="Size">_size</Item>
@@ -47,7 +47,7 @@
       </ArrayItems>
     </Expand>
   </Type>
-  <Type Name="Core::Vector&lt;*, *&gt;">
+  <Type Name="Core::TVector&lt;*, *&gt;">
     <DisplayString>{{ size={_size}, capacity={_capacity} }}</DisplayString>
     <Expand>
       <Item Name="Size">_size</Item>
@@ -59,7 +59,7 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::HashTable&lt;*, *, *, *, *&gt;">
+  <Type Name="Core::THashTable&lt;*, *, *, *, *&gt;">
     <DisplayString>{{ size={_size_capacityIndex>>5}, capacity={Core::details::HashTableCapacityForValue_[_size_capacityIndex&amp;31]} }}</DisplayString>
     <Expand>
       <Item Name="Size">_size_capacityIndex>>5</Item>
@@ -72,7 +72,7 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::RawStorage&lt;*, *&gt;">
+  <Type Name="Core::TRawStorage&lt;*, *&gt;">
     <DisplayString>{{ size={_size} }}</DisplayString>
     <Expand>
       <Item Name="size">_size</Item>
@@ -83,7 +83,7 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::RingBuffer&lt;*, *&gt;">
+  <Type Name="Core::TRingBuffer&lt;*, *&gt;">
     <DisplayString>{{ begin={_begin}, size={_size}, capacity={_capacity} }}</DisplayString>
     <Expand>
       <Item Name="Begin">_begin</Item>
@@ -96,7 +96,7 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::Stack&lt;*, *&gt;">
+  <Type Name="Core::TStack&lt;*, *&gt;">
     <DisplayString>{{ size={_size}, capacity={_capacity} }}</DisplayString>
     <Expand>
       <Item Name="size">_size</Item>
@@ -108,7 +108,7 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::ScalarVector&lt;*, 1&gt;">
+  <Type Name="Core::TScalarVector&lt;*, 1&gt;">
     <DisplayString>{{ X={_data[0]} }}[1]</DisplayString>
     <Expand>
       <Item Name="Dim">1</Item>
@@ -118,7 +118,7 @@
       </ArrayItems>
     </Expand>
   </Type>
-  <Type Name="Core::ScalarVector&lt;*, 2&gt;">
+  <Type Name="Core::TScalarVector&lt;*, 2&gt;">
     <DisplayString>{{ X={_data[0]}, Y={_data[1]} }}[2]</DisplayString>
     <Expand>
       <Item Name="Dim">2</Item>
@@ -128,7 +128,7 @@
       </ArrayItems>
     </Expand>
   </Type>
-  <Type Name="Core::ScalarVector&lt;*, 3&gt;">
+  <Type Name="Core::TScalarVector&lt;*, 3&gt;">
     <DisplayString>{{ X={_data[0]}, Y={_data[1]}, Z={_data[2]} }}[3]</DisplayString>
     <Expand>
       <Item Name="Dim">3</Item>
@@ -138,7 +138,7 @@
       </ArrayItems>
     </Expand>
   </Type>
-  <Type Name="Core::ScalarVector&lt;*, 4&gt;">
+  <Type Name="Core::TScalarVector&lt;*, 4&gt;">
     <DisplayString>{{ X={_data[0]}, Y={_data[1]}, Z={_data[2]}, W={_data[3]} }}[4]</DisplayString>
     <Expand>
       <Item Name="Dim">4</Item>
@@ -149,7 +149,7 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::ScalarMatrix&lt;*, *, *&gt;">
+  <Type Name="Core::TScalarMatrix&lt;*, *, *&gt;">
     <Expand>
       <ArrayItems>
         <Direction>Forward</Direction>
@@ -160,7 +160,7 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::Token&lt;*, char, *, *, * &gt;">
+  <Type Name="Core::TToken&lt;*, char, *, *, * &gt;">
     <DisplayString>{_data.Ptr,[(int)_data.Ptr[-1]]s}</DisplayString>
     <StringView>_data.Ptr,[(int)_data.Ptr[-1]]s</StringView>
     <Expand>
@@ -168,7 +168,7 @@
       <Item Name="Length">(int)_data.Ptr[-1]</Item>
     </Expand>
   </Type>
-  <Type Name="Core::Token&lt;*, wchar_t, *, *, * &gt;">
+  <Type Name="Core::TToken&lt;*, wchar_t, *, *, * &gt;">
     <DisplayString>{_data.Ptr,[(int)_data.Ptr[-1]]su}</DisplayString>
     <StringView>_data.Ptr,[(int)_data.Ptr[-1]]su</StringView>
     <Expand>
@@ -177,7 +177,7 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::FileSystemNode">
+  <Type Name="Core::FFileSystemNode">
     <DisplayString>{_token}</DisplayString>
     <Expand>
       <Item Name="Depth">_depth</Item>
@@ -190,10 +190,10 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::Basename">
+  <Type Name="Core::FBasename">
     <DisplayString>{_basenameNoExt} {_extname}</DisplayString>
   </Type>
-  <Type Name="Core::Dirpath">
+  <Type Name="Core::FDirpath">
     <DisplayString Condition="_path._ptr != nullptr">[{_path._ptr->_depth}] {*_path._ptr}"</DisplayString>
     <Expand>
       <Item Name="Depth">_path._ptr->_depth</Item>
@@ -201,14 +201,14 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::RTTI::MetaTypeAtom&lt;* &gt;">
+  <Type Name="Core::RTTI::TMetaTypeAtom&lt;* &gt;">
     <DisplayString>{_wrapper}</DisplayString>
     <Expand>
       <ExpandedItem>_wrapper</ExpandedItem>
     </Expand>
   </Type>
 
-  <Type Name="Core::RefPtr&lt;* &gt;">
+  <Type Name="Core::TRefPtr&lt;* &gt;">
     <DisplayString>{_ptr}</DisplayString>
     <Expand>
       <Item Name="RefCount" Condition="_ptr != nullptr">_ptr->_refCount</Item>
@@ -216,7 +216,7 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::SafePtr&lt;* &gt;">
+  <Type Name="Core::TSafePtr&lt;* &gt;">
     <DisplayString>{_ptr}</DisplayString>
     <Expand>
       <Item Name="RefCount" Condition="_ptr != nullptr">_ptr->_refCount</Item>
