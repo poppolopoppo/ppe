@@ -45,6 +45,9 @@ public:
     TBasicStringView(parent_type&& rvalue) : parent_type(std::move(rvalue)) {}
     TBasicStringView& operator =(parent_type&& rvalue) { parent_type::operator =(std::move(rvalue)); return *this; }
 
+    TBasicStringView(const TMemoryView<_Char>& other) : parent_type(other) {}
+    TBasicStringView& operator =(const TMemoryView<_Char>& other) { parent_type::operator =(other); return *this; }
+
     template <size_t _Dim>
     TBasicStringView(const _Char (&staticChars)[_Dim])
         : parent_type(staticChars, _Dim - 1/* assume null terminated string */) {
@@ -58,6 +61,8 @@ public:
         CopyTo(dst);
         dst[size()] = _Char(0);
     }
+
+    const parent_type& MakeView() const { return *this; }
 };
 //----------------------------------------------------------------------------
 typedef TBasicStringView<char>      FStringView;
@@ -175,6 +180,9 @@ FORCE_INLINE bool IsXDigit(wchar_t wch) { return 0 != std::iswxdigit(wch); }
 FORCE_INLINE bool IsAlnum(char ch) { return IsAlpha(ch) || IsDigit(ch); }
 FORCE_INLINE bool IsAlnum(wchar_t wch) { return 0 != std::iswalnum(wch); }
 //----------------------------------------------------------------------------
+FORCE_INLINE bool IsIdentifier(char ch) { return (IsAlnum(ch) || ch == '_' || ch == '.'); }
+FORCE_INLINE bool IsIdentifier(wchar_t wch) { return (IsAlnum(wch) || wch == L'_' || wch == L'.'); }
+//----------------------------------------------------------------------------
 FORCE_INLINE bool IsPrint(char ch) { return 0 != std::isprint(int(unsigned char(ch))); }
 FORCE_INLINE bool IsPrint(wchar_t wch) { return 0 != std::iswprint(wch); }
 //----------------------------------------------------------------------------
@@ -197,6 +205,9 @@ bool IsDigit(const FWStringView& wstr);
 //----------------------------------------------------------------------------
 bool IsXDigit(const FStringView& str);
 bool IsXDigit(const FWStringView& wstr);
+//----------------------------------------------------------------------------
+bool IsIdentifier(const FStringView& str);
+bool IsIdentifier(const FWStringView& wstr);
 //----------------------------------------------------------------------------
 bool IsPrint(const FStringView& str);
 bool IsPrint(const FWStringView& wstr);
@@ -248,6 +259,20 @@ inline bool EqualsI(const FWStringView& lhs, const FWStringView& rhs) { return (
 //----------------------------------------------------------------------------
 inline bool EqualsI(char lhs, char rhs) { return (ToUpper(lhs) == ToUpper(rhs)); }
 inline bool EqualsI(wchar_t lhs, wchar_t rhs) { return (ToUpper(lhs) == ToUpper(rhs)); }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+bool StartsWith(const FStringView& str, const FStringView& prefix);
+bool StartsWith(const FWStringView& wstr, const FWStringView& wprefix);
+//----------------------------------------------------------------------------
+bool StartsWithI(const FStringView& str, const FStringView& prefix);
+bool StartsWithI(const FWStringView& wstr, const FWStringView& wprefix);
+//----------------------------------------------------------------------------
+bool EndsWith(const FStringView& str, const FStringView& suffix);
+bool EndsWith(const FWStringView& wstr, const FWStringView& wsuffix);
+//----------------------------------------------------------------------------
+bool EndsWithI(const FStringView& str, const FStringView& suffix);
+bool EndsWithI(const FWStringView& wstr, const FWStringView& wsuffix);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

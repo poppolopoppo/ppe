@@ -255,6 +255,34 @@ typename TBasicStringView<_Char>::iterator StrStr_(const TBasicStringView<_Char>
     return str.FindSubRange(firstOccurence);
 }
 //----------------------------------------------------------------------------
+template <typename _Char>
+bool StartsWith_(const TBasicStringView<_Char>& str, const TBasicStringView<_Char>& prefix) {
+    Assert(str.size());
+    Assert(prefix.size());
+    return (str.size() >= prefix.size() && Equals(str.CutBefore(prefix.size()), prefix) );
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+bool StartsWithI_(const TBasicStringView<_Char>& str, const TBasicStringView<_Char>& prefix) {
+    Assert(str.size());
+    Assert(prefix.size());
+    return (str.size() >= prefix.size() && EqualsI(str.CutBefore(prefix.size()), prefix) );
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+bool EndsWith_(const TBasicStringView<_Char>& str, const TBasicStringView<_Char>& suffix) {
+    Assert(str.size());
+    Assert(suffix.size());
+    return (str.size() >= suffix.size() && Equals(str.LastNElements(suffix.size()), suffix) );
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+bool EndsWithI_(const TBasicStringView<_Char>& str, const TBasicStringView<_Char>& suffix) {
+    Assert(str.size());
+    Assert(suffix.size());
+    return (str.size() >= suffix.size() && EqualsI(str.LastNElements(suffix.size()), suffix) );
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -281,6 +309,9 @@ bool IsDigit(const FWStringView& wstr) { return IsAll_(wstr, &IsDigit); }
 //----------------------------------------------------------------------------
 bool IsXDigit(const FStringView& str) { return IsAll_(str, &IsXDigit); }
 bool IsXDigit(const FWStringView& wstr) { return IsAll_(wstr, &IsXDigit); }
+//----------------------------------------------------------------------------
+bool IsIdentifier(const FStringView& str) { return IsAll_(str, &IsIdentifier); }
+bool IsIdentifier(const FWStringView& wstr) { return IsAll_(wstr, &IsIdentifier); }
 //----------------------------------------------------------------------------
 bool IsPrint(const FStringView& str) { return IsAll_(str, &IsPrint); }
 bool IsPrint(const FWStringView& wstr) { return IsAll_(wstr, &IsPrint); }
@@ -383,6 +414,40 @@ int CompareI(const FWStringView& lhs, const FWStringView& rhs) {
         return 0;
     else
         return (lhs.size() < rhs.size() ? -1 : 1);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+bool StartsWith(const FStringView& str, const FStringView& prefix) {
+    return StartsWith_(str, prefix);
+}
+//----------------------------------------------------------------------------
+bool StartsWith(const FWStringView& wstr, const FWStringView& wprefix) {
+    return StartsWith_(wstr, wprefix);
+}
+//----------------------------------------------------------------------------
+bool StartsWithI(const FStringView& str, const FStringView& prefix) {
+    return StartsWithI_(str, prefix);
+}
+//----------------------------------------------------------------------------
+bool StartsWithI(const FWStringView& wstr, const FWStringView& wprefix) {
+    return StartsWithI_(wstr, wprefix);
+}
+//----------------------------------------------------------------------------
+bool EndsWith(const FStringView& str, const FStringView& suffix) {
+    return EndsWith_(str, suffix);
+}
+//----------------------------------------------------------------------------
+bool EndsWith(const FWStringView& wstr, const FWStringView& wsuffix) {
+    return EndsWith_(wstr, wsuffix);
+}
+//----------------------------------------------------------------------------
+bool EndsWithI(const FStringView& str, const FStringView& suffix) {
+    return EndsWithI_(str, suffix);
+}
+//----------------------------------------------------------------------------
+bool EndsWithI(const FWStringView& wstr, const FWStringView& wsuffix) {
+    return EndsWithI_(wstr, wsuffix);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

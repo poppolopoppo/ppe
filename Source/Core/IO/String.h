@@ -4,6 +4,7 @@
 
 #include "Core/Allocator/Allocation.h"
 #include "Core/IO/Stream.h"
+#include "Core/IO/StringView.h"
 #include "Core/Memory/MemoryView.h"
 
 extern template class std::basic_string<char, std::char_traits<char>, std::allocator<char>>;
@@ -102,6 +103,16 @@ FString ToString(const std::basic_string<_Char, _Traits, _Allocator>& str) {
 template <typename _Char, typename _Traits, typename _Allocator>
 FWString ToWString(const std::basic_string<_Char, _Traits, _Allocator>& str) {
     return ToWString(str.c_str(), str.size());
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+FString ToString(const TBasicStringView<_Char>& str) {
+    return ToString(str.MakeView());
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+FWString ToWString(const TBasicStringView<_Char>& str) {
+    return ToWString(str.MakeView());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
