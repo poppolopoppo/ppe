@@ -314,6 +314,7 @@
     <CustomBuild Include="Memory\MemoryStream.h" />
     <CustomBuild Include="Memory\MemoryTracking.cpp" />
     <CustomBuild Include="Memory\MemoryTracking.h" />
+    <CustomBuild Include="Memory\MemoryView-inl.h" />
     <CustomBuild Include="Memory\MemoryView.h" />
     <CustomBuild Include="Memory\RefPtr-inl.h" />
     <CustomBuild Include="Memory\RefPtr.h" />

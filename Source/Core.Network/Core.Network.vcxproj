@@ -43,22 +43,26 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="Address.cpp" />
-    <CustomBuild Include="Address.h" />
+    <CustomBuild Include="Socket\Address.cpp" />
+    <CustomBuild Include="Socket\Address.h" />
+    <CustomBuild Include="Socket\Listener.cpp" />
+    <CustomBuild Include="Socket\Listener.h" />
+    <CustomBuild Include="Socket\Socket.cpp" />
+    <CustomBuild Include="Socket\Socket.h" />
+    <CustomBuild Include="Socket\SocketBuffered.cpp" />
+    <CustomBuild Include="Socket\SocketBuffered.h" />
     <CustomBuild Include="Core.Network.bff" />
-    <CustomBuild Include="Listener.cpp" />
-    <CustomBuild Include="Listener.h" />
     <CustomBuild Include="Network.cpp" />
     <CustomBuild Include="Network.h" />
     <CustomBuild Include="NetworkIncludes.h" />
     <CustomBuild Include="Network_extern.cpp" />
     <CustomBuild Include="Network_extern.h" />
     <CustomBuild Include="Network_fwd.h" />
-    <CustomBuild Include="Socket.cpp" />
-    <CustomBuild Include="Socket.h" />
     <CustomBuild Include="stdafx.cpp" />
     <CustomBuild Include="stdafx.h" />
     <CustomBuild Include="targetver.h" />
+    <CustomBuild Include="Uri.cpp" />
+    <CustomBuild Include="Uri.h" />
   </ItemGroup>
   <ItemGroup>
   </ItemGroup>

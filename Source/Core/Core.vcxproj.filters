@@ -814,6 +814,9 @@
     <CustomBuild Include="Memory\MemoryTracking.h">
       <Filter>Memory</Filter>
     </CustomBuild>
+    <CustomBuild Include="Memory\MemoryView-inl.h">
+      <Filter>Memory</Filter>
+    </CustomBuild>
     <CustomBuild Include="Memory\MemoryView.h">
       <Filter>Memory</Filter>
     </CustomBuild>
