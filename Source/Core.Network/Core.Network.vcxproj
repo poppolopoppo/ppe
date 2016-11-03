@@ -43,6 +43,19 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <CustomBuild Include="Http\ConstNames.cpp" />
+    <CustomBuild Include="Http\ConstNames.h" />
+    <CustomBuild Include="Http\Exceptions.h" />
+    <CustomBuild Include="Http\Header.cpp" />
+    <CustomBuild Include="Http\Header.h" />
+    <CustomBuild Include="Http\Method.cpp" />
+    <CustomBuild Include="Http\Method.h" />
+    <CustomBuild Include="Http\Request.cpp" />
+    <CustomBuild Include="Http\Request.h" />
+    <CustomBuild Include="Http\Response.cpp" />
+    <CustomBuild Include="Http\Response.h" />
+    <CustomBuild Include="Http\Status.cpp" />
+    <CustomBuild Include="Http\Status.h" />
     <CustomBuild Include="Socket\Address.cpp" />
     <CustomBuild Include="Socket\Address.h" />
     <CustomBuild Include="Socket\Listener.cpp" />
@@ -52,6 +65,9 @@
     <CustomBuild Include="Socket\SocketBuffered.cpp" />
     <CustomBuild Include="Socket\SocketBuffered.h" />
     <CustomBuild Include="Core.Network.bff" />
+    <CustomBuild Include="Exceptions.h" />
+    <CustomBuild Include="Name.cpp" />
+    <CustomBuild Include="Name.h" />
     <CustomBuild Include="Network.cpp" />
     <CustomBuild Include="Network.h" />
     <CustomBuild Include="NetworkIncludes.h" />

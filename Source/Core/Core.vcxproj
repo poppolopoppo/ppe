@@ -153,6 +153,8 @@
     <CustomBuild Include="IO\FS\Basename.h" />
     <CustomBuild Include="IO\FS\BasenameNoExt.cpp" />
     <CustomBuild Include="IO\FS\BasenameNoExt.h" />
+    <CustomBuild Include="IO\FS\ConstNames.cpp" />
+    <CustomBuild Include="IO\FS\ConstNames.h" />
     <CustomBuild Include="IO\FS\Dirname.cpp" />
     <CustomBuild Include="IO\FS\Dirname.h" />
     <CustomBuild Include="IO\FS\Dirpath.cpp" />
@@ -183,8 +185,6 @@
     <CustomBuild Include="IO\VFS\VirtualFileSystemTrie.h" />
     <CustomBuild Include="IO\FileSystem.cpp" />
     <CustomBuild Include="IO\FileSystem.h" />
-    <CustomBuild Include="IO\FileSystemConstNames.cpp" />
-    <CustomBuild Include="IO\FileSystemConstNames.h" />
     <CustomBuild Include="IO\FileSystem_fwd.h" />
     <CustomBuild Include="IO\Format-inl.h" />
     <CustomBuild Include="IO\Format.cpp" />

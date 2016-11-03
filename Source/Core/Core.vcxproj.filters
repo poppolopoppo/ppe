@@ -331,6 +331,12 @@
     <CustomBuild Include="IO\FS\BasenameNoExt.h">
       <Filter>IO\FS</Filter>
     </CustomBuild>
+    <CustomBuild Include="IO\FS\ConstNames.cpp">
+      <Filter>IO\FS</Filter>
+    </CustomBuild>
+    <CustomBuild Include="IO\FS\ConstNames.h">
+      <Filter>IO\FS</Filter>
+    </CustomBuild>
     <CustomBuild Include="IO\FS\Dirname.cpp">
       <Filter>IO\FS</Filter>
     </CustomBuild>
@@ -419,12 +425,6 @@
       <Filter>IO</Filter>
     </CustomBuild>
     <CustomBuild Include="IO\FileSystem.h">
-      <Filter>IO</Filter>
-    </CustomBuild>
-    <CustomBuild Include="IO\FileSystemConstNames.cpp">
-      <Filter>IO</Filter>
-    </CustomBuild>
-    <CustomBuild Include="IO\FileSystemConstNames.h">
       <Filter>IO</Filter>
     </CustomBuild>
     <CustomBuild Include="IO\FileSystem_fwd.h">

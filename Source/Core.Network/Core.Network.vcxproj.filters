@@ -1,6 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <CustomBuild Include="Http\ConstNames.cpp">
+      <Filter>Http</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Http\ConstNames.h">
+      <Filter>Http</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Http\Exceptions.h">
+      <Filter>Http</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Http\Header.cpp">
+      <Filter>Http</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Http\Header.h">
+      <Filter>Http</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Http\Method.cpp">
+      <Filter>Http</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Http\Method.h">
+      <Filter>Http</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Http\Request.cpp">
+      <Filter>Http</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Http\Request.h">
+      <Filter>Http</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Http\Response.cpp">
+      <Filter>Http</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Http\Response.h">
+      <Filter>Http</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Http\Status.cpp">
+      <Filter>Http</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Http\Status.h">
+      <Filter>Http</Filter>
+    </CustomBuild>
     <CustomBuild Include="Socket\Address.cpp">
       <Filter>Socket</Filter>
     </CustomBuild>
@@ -27,6 +66,12 @@
     </CustomBuild>
     <CustomBuild Include="Core.Network.bff">
     </CustomBuild>
+    <CustomBuild Include="Exceptions.h">
+    </CustomBuild>
+    <CustomBuild Include="Name.cpp">
+    </CustomBuild>
+    <CustomBuild Include="Name.h">
+    </CustomBuild>
     <CustomBuild Include="Network.cpp">
     </CustomBuild>
     <CustomBuild Include="Network.h">
@@ -49,6 +94,11 @@
     </CustomBuild>
     <CustomBuild Include="Uri.h">
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Http">
+      <UniqueIdentifier>{374aa28c-6c94-4f93-bc2a-7f5284b7d434}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Socket">
