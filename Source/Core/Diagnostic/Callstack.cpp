@@ -131,7 +131,7 @@ static void LoadModules_(const FDbghelpWrapper::FLocked& dbghelp) {
             0);
 #pragma warning( pop )
 
-        LOG(Info, L"[FSymbols] {0} for \"{1}\"",
+        LOG(Info, L"[PDB] {0} for \"{1}\"",
             succeed ? L"Loaded" : L"Failed to load",
             module_entry.szExePath);
         UNUSED(succeed);
@@ -160,7 +160,7 @@ static void InitializeSymbols_(const FDbghelpWrapper::FLocked& dbghelp) {
     HANDLE process = ::GetCurrentProcess();
     BOOL succeed = dbghelp.SymInitializeW()(process, symbol_path, FALSE);
 
-    LOG(Info, L"[FSymbols] Path = '{0}' -> succeed = {1:A}", symbol_path, (FALSE != succeed));
+    LOG(Info, L"[PDB] Path = '{0}' -> succeed = {1:A}", symbol_path, (FALSE != succeed));
 
     std::free(symbol_path);
 
