@@ -12,7 +12,7 @@ class FMetaProperty;
 //----------------------------------------------------------------------------
 class FRTTIException : public FException {
 public:
-    FRTTIException(const char* what) : FException(what) {}
+    explicit FRTTIException(const char* what) : FException(what) {}
 };
 //----------------------------------------------------------------------------
 class FPropertyException : public FRTTIException {
