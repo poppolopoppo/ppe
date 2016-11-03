@@ -36,11 +36,11 @@
   </Type>
 
   <Type Name="Core::TVectorInSitu&lt;*, *, *&gt;">
-    <DisplayString>{{ size={_size}, capacity={_capacity}, insitu={_insituPtr - _insituData} }}</DisplayString>
+    <DisplayString>{{ size={_size}, capacity={_capacity}, insitu={((intptr_t)_insituPtr - (intptr_t)&amp;_insituData)/sizeof(value_type)} }}</DisplayString>
     <Expand>
       <Item Name="Size">_size</Item>
       <Item Name="Capacity">_capacity</Item>
-      <Item Name="Insitu">_insituPtr - _insituData</Item>
+      <Item Name="Insitu">((intptr_t)_insituPtr - (intptr_t)&amp;_insituData)/sizeof(value_type)</Item>
       <ArrayItems>
         <Size>_size</Size>
         <ValuePointer>_data</ValuePointer>
