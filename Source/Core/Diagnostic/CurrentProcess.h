@@ -40,10 +40,10 @@ public:
         parent_type::Create(applicationHandle, nShowCmd, argc, argv);
     }
 
-    static Units::Time::Seconds ElapsedSeconds() {
+    static FSeconds ElapsedSeconds() {
         return HasInstance()
-            ? Units::Time::Seconds(FTimepoint::ElapsedSince(Instance().StartedAt()))
-            : Units::Time::Seconds(0);
+            ? FSeconds(FTimepoint::ElapsedSince(Instance().StartedAt()))
+            : FSeconds(0);
     }
 
 private:
