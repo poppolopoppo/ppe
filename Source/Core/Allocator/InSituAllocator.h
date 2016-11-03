@@ -11,23 +11,23 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <size_t _SizeInBytes>
-class InSituStorage : Meta::FThreadResource {
+class TInSituStorage : Meta::FThreadResource {
 public:
-    InSituStorage() noexcept
+    TInSituStorage() noexcept
         : _insituPtr(reinterpret_cast<u8*>(&_insituData))
         , _insituCount(0) {}
 
-    ~InSituStorage() {
+    ~TInSituStorage() {
         Assert(0 == _insituCount);
         Assert(InSituEmpty());
         _insituPtr = nullptr;
     }
 
-    InSituStorage(const InSituStorage& ) = delete;
-    InSituStorage& operator=(const InSituStorage& ) = delete;
+    TInSituStorage(const TInSituStorage& ) = delete;
+    TInSituStorage& operator=(const TInSituStorage& ) = delete;
 
-    InSituStorage(InSituStorage&& ) = delete;
-    InSituStorage& operator=(InSituStorage&& ) = delete;
+    TInSituStorage(TInSituStorage&& ) = delete;
+    TInSituStorage& operator=(TInSituStorage&& ) = delete;
 
     const u8* InsituData() const { return reinterpret_cast<const u8*>(&_insituData); }
 
@@ -53,7 +53,7 @@ private:
 };
 //----------------------------------------------------------------------------
 template <size_t _SizeInBytes>
-void* InSituStorage<_SizeInBytes>::AllocateIFP(size_t sizeInBytes) {
+void* TInSituStorage<_SizeInBytes>::AllocateIFP(size_t sizeInBytes) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Contains(_insituPtr));
     if (Contains(_insituPtr + sizeInBytes)) {
@@ -69,7 +69,7 @@ void* InSituStorage<_SizeInBytes>::AllocateIFP(size_t sizeInBytes) {
 }
 //----------------------------------------------------------------------------
 template <size_t _SizeInBytes>
-bool InSituStorage<_SizeInBytes>::DeallocateIFP(void* ptr, size_t sizeInBytes) noexcept {
+bool TInSituStorage<_SizeInBytes>::DeallocateIFP(void* ptr, size_t sizeInBytes) noexcept {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Contains(_insituPtr));
     u8* p = reinterpret_cast<u8*>(ptr);
@@ -95,7 +95,7 @@ bool InSituStorage<_SizeInBytes>::DeallocateIFP(void* ptr, size_t sizeInBytes) n
 }
 //----------------------------------------------------------------------------
 template <size_t _SizeInBytes>
-void* InSituStorage<_SizeInBytes>::ReallocateIFP(void* ptr, size_t newSizeInBytes, size_t oldSizeInBytes) {
+void* TInSituStorage<_SizeInBytes>::ReallocateIFP(void* ptr, size_t newSizeInBytes, size_t oldSizeInBytes) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Contains(_insituPtr));
     u8* p = reinterpret_cast<u8*>(ptr);
@@ -122,10 +122,10 @@ void* InSituStorage<_SizeInBytes>::ReallocateIFP(void* ptr, size_t newSizeInByte
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _SizeInBytes, typename _Allocator>
-class InSituAllocator : public _Allocator {
+class TInSituAllocator : public _Allocator {
 public:
     template <typename U, size_t N, typename A>
-    friend class InSituAllocator;
+    friend class TInSituAllocator;
 
     typedef _Allocator fallback_type;
 
@@ -138,27 +138,27 @@ public:
     typedef std::false_type propagate_on_container_swap;
     typedef std::false_type is_always_equal;
 
-    typedef InSituStorage<_SizeInBytes> storage_type;
+    typedef TInSituStorage<_SizeInBytes> storage_type;
 
     enum : size_t { InSitu = (_SizeInBytes/sizeof(value_type)) };
 
     template<typename U>
     struct rebind {
-        typedef InSituAllocator<
+        typedef TInSituAllocator<
             U, _SizeInBytes,
             typename _Allocator::template rebind<U>::other
         >   other;
     };
 
-    InSituAllocator(storage_type& insitu) noexcept : _insitu(insitu) {}
+    TInSituAllocator(storage_type& insitu) noexcept : _insitu(insitu) {}
     template <typename U, typename A>
-    InSituAllocator(const InSituAllocator<U, _SizeInBytes, A>& other) noexcept : _insitu(other._insitu) {}
+    TInSituAllocator(const TInSituAllocator<U, _SizeInBytes, A>& other) noexcept : _insitu(other._insitu) {}
 
-    InSituAllocator(const InSituAllocator&) = delete;
-    InSituAllocator& operator=(const InSituAllocator&) = delete;
+    TInSituAllocator(const TInSituAllocator&) = delete;
+    TInSituAllocator& operator=(const TInSituAllocator&) = delete;
 
-    InSituAllocator(InSituAllocator&& rvalue) : InSituAllocator(rvalue._insitu) {}
-    InSituAllocator& operator=(InSituAllocator&&) = delete;
+    TInSituAllocator(TInSituAllocator&& rvalue) : TInSituAllocator(rvalue._insitu) {}
+    TInSituAllocator& operator=(TInSituAllocator&&) = delete;
 
     pointer allocate(size_type n);
     pointer allocate(size_type n, const void* /*hint*/) { return allocate(n); }
@@ -168,13 +168,13 @@ public:
     void* relocate(void* p, size_type newSize, size_type oldSize);
 
     template <typename U, size_t N>
-    friend bool operator ==(const InSituAllocator& lhs, const InSituAllocator<U, N, _Allocator>& rhs) noexcept {
+    friend bool operator ==(const TInSituAllocator& lhs, const TInSituAllocator<U, N, _Allocator>& rhs) noexcept {
         return (((N == _SizeInBytes) && (&lhs._insitu == &rhs._insitu)) ||
                 (lhs._insitu.InSituEmpty() && rhs._insitu.InSituEmpty()) );
     }
 
     template <typename U, size_t N>
-    friend bool operator !=(const InSituAllocator& lhs, const InSituAllocator<U, N, _Allocator>& rhs) noexcept {
+    friend bool operator !=(const TInSituAllocator& lhs, const TInSituAllocator<U, N, _Allocator>& rhs) noexcept {
         return !operator ==(lhs, rhs);
     }
 
@@ -183,7 +183,7 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename T, size_t _SizeInBytes, typename _Allocator>
-auto InSituAllocator<T, _SizeInBytes, _Allocator>::allocate(size_type n) -> pointer {
+auto TInSituAllocator<T, _SizeInBytes, _Allocator>::allocate(size_type n) -> pointer {
     Assert(n > 0);
     Assert(n < fallback_type::max_size());
 
@@ -196,7 +196,7 @@ auto InSituAllocator<T, _SizeInBytes, _Allocator>::allocate(size_type n) -> poin
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _SizeInBytes, typename _Allocator>
-void InSituAllocator<T, _SizeInBytes, _Allocator>::deallocate(pointer p, size_type n) noexcept {
+void TInSituAllocator<T, _SizeInBytes, _Allocator>::deallocate(pointer p, size_type n) noexcept {
     Assert(p);
     Assert(n > 0);
     Assert(n < fallback_type::max_size());
@@ -206,7 +206,7 @@ void InSituAllocator<T, _SizeInBytes, _Allocator>::deallocate(pointer p, size_ty
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _SizeInBytes, typename _Allocator>
-void* InSituAllocator<T, _SizeInBytes, _Allocator>::relocate(void* p, size_type newSize, size_type oldSize) {
+void* TInSituAllocator<T, _SizeInBytes, _Allocator>::relocate(void* p, size_type newSize, size_type oldSize) {
     STATIC_ASSERT(std::is_pod<value_type>::value);
     Assert(nullptr == p || 0 < oldSize);
 
@@ -226,6 +226,13 @@ void* InSituAllocator<T, _SizeInBytes, _Allocator>::relocate(void* p, size_type 
             ? Relocate_AssumeNoRealloc(*this, TMemoryView<value_type>(static_cast<pointer>(p), oldSize), newSize, oldSize)
             : Relocate_AssumePod(static_cast<fallback_type&>(*this), TMemoryView<value_type>(static_cast<pointer>(p), oldSize), newSize, oldSize);
     }
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, size_t _SizeInBytes, typename _Allocator>
+typename TAllocatorBase<T>::size_type AllocationMinSize(const TInSituAllocator<T, _SizeInBytes, _Allocator>& ) {
+    return (_SizeInBytes / sizeof(T));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

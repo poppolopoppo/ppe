@@ -341,12 +341,12 @@ hash_t hash_value(const TVector<T, _Allocator>& vector);
 //----------------------------------------------------------------------------
 template <typename T, size_t _InSitu, typename _Allocator = ALLOCATOR(Container, T) >
 class TVectorInSitu :
-    private InSituAllocator<T, sizeof(T) * _InSitu, _Allocator>::storage_type
-,   public TVector<T, InSituAllocator<T, sizeof(T) * _InSitu, _Allocator> > {
+    private TInSituAllocator<T, sizeof(T) * _InSitu, _Allocator>::storage_type
+,   public TVector<T, TInSituAllocator<T, sizeof(T) * _InSitu, _Allocator> > {
 public:
     static_assert(_InSitu > 0, "insitu size must be greater than 0");
 
-    typedef InSituAllocator<T, sizeof(T) * _InSitu, _Allocator> allocator_type;
+    typedef TInSituAllocator<T, sizeof(T) * _InSitu, _Allocator> allocator_type;
     typedef TVector<T, allocator_type> vector_type;
 
     static_assert(std::is_same<allocator_type, typename vector_type::allocator_type>::value, "");

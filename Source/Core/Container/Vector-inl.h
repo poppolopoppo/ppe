@@ -336,7 +336,8 @@ void TVector<T, _Allocator>::reserve(size_type count) {
 template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::reserve_AtLeast(size_type count) {
     if (_capacity < count) {
-        size_type newCapacity = (0 == _capacity ? 1  : _capacity);
+        size_type newCapacity = (0 == _capacity ? 1 : _capacity);
+        newCapacity = Max(AllocationMinSize(static_cast<const allocator_type&>(*this)), newCapacity);
         while (newCapacity < count) { newCapacity = newCapacity<<1; }
         reserve_Exactly(newCapacity);
     }
@@ -350,7 +351,7 @@ void TVector<T, _Allocator>::reserve_AssumeEmpty(size_type count) {
             Assert(0 < _capacity);
             allocator_traits::deallocate(*this, _data, _capacity);
         }
-        _capacity = count;
+        _capacity = Max(AllocationMinSize(static_cast<const allocator_type&>(*this)), count);
         _data = allocator_traits::allocate(*this, count);
     }
     Assert(nullptr != _data);
@@ -361,6 +362,7 @@ void TVector<T, _Allocator>::reserve_Exactly(size_type count) {
     if (_capacity == count)
         return;
     AssertRelease(count >= _size);
+    count = Max(AllocationMinSize(static_cast<const allocator_type&>(*this)), count);
 #if 1 //%TODO
     _data = Relocate(allocator_(), TMemoryView<value_type>(_data, _size), count, _capacity);
     _capacity = count;
