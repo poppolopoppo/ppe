@@ -12,7 +12,7 @@
 
 #include "Core/Container/AssociativeVector.h"
 #include "Core/IO/FileSystem.h"
-#include "Core/IO/FileSystemConstNames.h"
+#include "Core/IO/FS/ConstNames.h"
 #include "Core/Memory/AlignedStorage.h"
 
 namespace Core {
@@ -265,14 +265,14 @@ bool FCollada::ImportMaterials(TArray<PGenericMaterial>& materials) const {
 }
 //----------------------------------------------------------------------------
 bool FCollada::Load(FCollada* pdst, const FFilename& filename) {
-    Assert(filename.Extname() == FFileSystemConstNames::DaeExt());
+    Assert(filename.Extname() == FFSConstNames::DaeExt());
 
     pdst->_xml = new XML::FDocument();
     return XML::FDocument::Load(pdst->_xml.get(), filename);
 }
 //----------------------------------------------------------------------------
 bool FCollada::Load(FCollada* pdst, const FFilename& filename, const FStringView& content) {
-    Assert(filename.Extname() == FFileSystemConstNames::DaeExt());
+    Assert(filename.Extname() == FFSConstNames::DaeExt());
 
     pdst->_xml = new XML::FDocument();
     return XML::FDocument::Load(pdst->_xml.get(), filename, content);

@@ -2,7 +2,7 @@
 
 #include "FileSystem.h"
 
-#include "FileSystemConstNames.h"
+#include "FS/ConstNames.h"
 #include "FS/FileSystemToken.h"
 #include "FS/FileSystemTrie.h"
 
@@ -17,21 +17,21 @@ void FFileSystemStartup::Start() {
     POOL_TAG(FileSystem)::Start();
     FFileSystemToken::Start(1024);
     FFileSystemPath::Create();
-    FFileSystemConstNames::Start();
+    FFSConstNames::Start();
 }
 //----------------------------------------------------------------------------
 void FFileSystemStartup::Shutdown() {
-    FFileSystemConstNames::Shutdown();
+    FFSConstNames::Shutdown();
     FFileSystemPath::Destroy();
     FFileSystemToken::Shutdown();
     POOL_TAG(FileSystem)::Shutdown();
 }
 //----------------------------------------------------------------------------
 void FFileSystemStartup::Clear() {
-    FFileSystemConstNames::Shutdown();
+    FFSConstNames::Shutdown();
     FFileSystemPath::Instance().Clear();
     FFileSystemToken::Clear();
-    FFileSystemConstNames::Start();
+    FFSConstNames::Start();
     POOL_TAG(FileSystem)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------

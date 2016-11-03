@@ -9,7 +9,7 @@
 
 #include "Allocator/Alloca.h"
 #include "Container/Token.h"
-#include "IO/FileSystemConstNames.h"
+#include "IO/FS/ConstNames.h"
 #include "Memory/UniqueView.h"
 
 #include <algorithm>
@@ -23,7 +23,7 @@ namespace {
 static bool NormalizePath_(size_t* plength, const TMemoryView<FDirname>& dirnames) {
     Assert(plength);
 
-    const FDirname dotdot = FFileSystemConstNames::DotDot();
+    const FDirname dotdot = FFSConstNames::DotDot();
     if (dirnames.front() == dotdot)
         return false;
 
@@ -359,7 +359,7 @@ bool FDirpath::Relative(FDirpath* relative, const FDirpath& origin, const FDirpa
             origin_dirs[begin] == other_dirs[begin] )
         begin++;
 
-    const FDirname dotdot = FFileSystemConstNames::DotDot();
+    const FDirname dotdot = FFSConstNames::DotDot();
     STACKLOCAL_POD_STACK(FDirname, relative_dirs, (origin_s-begin)+(other_s-begin));
 
     forrange(i, begin, origin_s)

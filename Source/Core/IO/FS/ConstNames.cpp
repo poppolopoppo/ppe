@@ -1,9 +1,9 @@
 #include "stdafx.h"
 
-#include "FileSystemConstNames.h"
+#include "ConstNames.h"
 
-#include "FileSystem.h"
-#include "../Memory/AlignedStorage.h"
+#include "../FileSystem.h"
+#include "../../Memory/AlignedStorage.h"
 
 #define FOREACH_FILESYSTEMCONSTNAMES(_Macro) \
     _Macro(FDirname,         DotDot,         L"..") \
@@ -46,13 +46,13 @@ FOREACH_FILESYSTEMCONSTNAMES(DEF_FILESYSTEMCONSTNAMES_STORAGE)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define DEF_FILESYSTEMCONSTNAMES_ACCESSOR(_Type, _Name, _Content) \
-    const _Type& FFileSystemConstNames::_Name() { return *reinterpret_cast<const _Type *>(&CONCAT(gPod_##_Type##_, _Name)); }
+    const _Type& FFSConstNames::_Name() { return *reinterpret_cast<const _Type *>(&CONCAT(gPod_##_Type##_, _Name)); }
 FOREACH_FILESYSTEMCONSTNAMES(DEF_FILESYSTEMCONSTNAMES_ACCESSOR)
 #undef DEF_FILESYSTEMCONSTNAMES_ACCESSOR
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FFileSystemConstNames::Start() {
+void FFSConstNames::Start() {
 #define DEF_FILESYSTEMCONSTNAMES_STARTUP(_Type, _Name, _Content) \
     new ((void *)&CONCAT(gPod_##_Type##_, _Name)) _Type(MakeStringView(_Content));
     FOREACH_FILESYSTEMCONSTNAMES(DEF_FILESYSTEMCONSTNAMES_STARTUP)
@@ -61,7 +61,7 @@ void FFileSystemConstNames::Start() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FFileSystemConstNames::Shutdown() {
+void FFSConstNames::Shutdown() {
 #define DEF_FILESYSTEMCONSTNAMES_SHUTDOWN(_Type, _Name, _Content) \
     reinterpret_cast<const _Type *>(&CONCAT(gPod_##_Type##_, _Name))->~_Type();
     FOREACH_FILESYSTEMCONSTNAMES(DEF_FILESYSTEMCONSTNAMES_SHUTDOWN)
