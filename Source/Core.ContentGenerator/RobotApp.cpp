@@ -59,7 +59,7 @@ void FRobotApp::Start() {
 void FRobotApp::Draw(const FTimeline& time) {
     parent_type::Draw(time);
 
-    const double totalSeconds = Units::Time::Seconds(time.Total()).Value();
+    const double totalSeconds = FSeconds(time.Total()).Value();
     float3 hsv(float(Frac(totalSeconds*0.1)), 1.0f, 0.5f);
 
     const auto* gamepadService = Services().Get<Application::IGamepadService>();
