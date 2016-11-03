@@ -18,24 +18,24 @@ void Format(char *buffer, size_t capacity, SizeInBytes size) {
     oss.precision(2);
     oss.flags(std::ios_base::fixed);
 
-    const Units::Storage::Bytes bytes(static_cast<double>(size));
+    const Units::Storage::FBytes bytes(static_cast<double>(size));
 
-    const Units::Storage::Petabytes pb(0.8);
-    const Units::Storage::Terabytes tb(0.8);
-    const Units::Storage::Gigabytes gb(0.8);
-    const Units::Storage::Megabytes mb(0.8);
-    const Units::Storage::Kilobytes kb(0.8);
+    const Units::Storage::FPetabytes pb(0.8);
+    const Units::Storage::FTerabytes tb(0.8);
+    const Units::Storage::FGigabytes gb(0.8);
+    const Units::Storage::FMegabytes mb(0.8);
+    const Units::Storage::FKilobytes kb(0.8);
 
     if (bytes > pb)
-        oss << Units::Storage::Petabytes(bytes);
+        oss << Units::Storage::FPetabytes(bytes);
     else if (bytes > tb)
-        oss << Units::Storage::Terabytes(bytes);
+        oss << Units::Storage::FTerabytes(bytes);
     else if (bytes > gb)
-        oss << Units::Storage::Gigabytes(bytes);
+        oss << Units::Storage::FGigabytes(bytes);
     else if (bytes > mb)
-        oss << Units::Storage::Megabytes(bytes);
+        oss << Units::Storage::FMegabytes(bytes);
     else if (bytes > kb)
-        oss << Units::Storage::Kilobytes(bytes);
+        oss << Units::Storage::FKilobytes(bytes);
     else
         oss << bytes;
 }
@@ -45,24 +45,24 @@ void Format(wchar_t *buffer, size_t capacity, SizeInBytes size) {
     oss.precision(2);
     oss.flags(std::ios_base::fixed);
 
-    const Units::Storage::Bytes bytes(static_cast<double>(size));
+    const Units::Storage::FBytes bytes(static_cast<double>(size));
 
-    const Units::Storage::Petabytes pb(0.8);
-    const Units::Storage::Terabytes tb(0.8);
-    const Units::Storage::Gigabytes gb(0.8);
-    const Units::Storage::Megabytes mb(0.8);
-    const Units::Storage::Kilobytes kb(0.8);
+    const Units::Storage::FPetabytes pb(0.8);
+    const Units::Storage::FTerabytes tb(0.8);
+    const Units::Storage::FGigabytes gb(0.8);
+    const Units::Storage::FMegabytes mb(0.8);
+    const Units::Storage::FKilobytes kb(0.8);
 
     if (bytes > pb)
-        oss << Units::Storage::Petabytes(bytes);
+        oss << Units::Storage::FPetabytes(bytes);
     else if (bytes > tb)
-        oss << Units::Storage::Terabytes(bytes);
+        oss << Units::Storage::FTerabytes(bytes);
     else if (bytes > gb)
-        oss << Units::Storage::Gigabytes(bytes);
+        oss << Units::Storage::FGigabytes(bytes);
     else if (bytes > mb)
-        oss << Units::Storage::Megabytes(bytes);
+        oss << Units::Storage::FMegabytes(bytes);
     else if (bytes > kb)
-        oss << Units::Storage::Kilobytes(bytes);
+        oss << Units::Storage::FKilobytes(bytes);
     else
         oss << bytes;
 }

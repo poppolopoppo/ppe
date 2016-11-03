@@ -100,28 +100,28 @@ namespace Units {
 namespace Time {
     struct _Tag {
         typedef double value_type;
-        typedef Days largest_type;
+        typedef FDays largest_type;
     };
 }
 //----------------------------------------------------------------------------
 namespace Distance {
     struct _Tag {
         typedef double value_type;
-        typedef Kilometers largest_type;
+        typedef FKilometers largest_type;
     };
 }
 //----------------------------------------------------------------------------
 namespace Mass {
     struct _Tag {
         typedef double value_type;
-        typedef Tonnes largest_type;
+        typedef FTonnes largest_type;
     };
 }
 //----------------------------------------------------------------------------
 namespace Storage {
     struct _Tag {
         typedef double value_type;
-        typedef Petabytes largest_type;
+        typedef FPetabytes largest_type;
     };
 }
 //----------------------------------------------------------------------------
