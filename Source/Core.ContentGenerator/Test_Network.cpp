@@ -1,5 +1,10 @@
 #include "stdafx.h"
 
+#include "Core.Network/Http/Exceptions.h"
+#include "Core.Network/Http/Method.h"
+#include "Core.Network/Http/Status.h"
+#include "Core.Network/Http/Request.h"
+#include "Core.Network/Http/Response.h"
 #include "Core.Network/Socket/Address.h"
 #include "Core.Network/Socket/Listener.h"
 #include "Core.Network/Socket/SocketBuffered.h"
@@ -62,20 +67,55 @@ static void Test_SocketAccept_() {
 
     const FListener::FConnectionScope connection(listener);
 
+    const size_t maxContentLength = size_t(FMegabytes(10).Value());
+
     bool succeed = false;
     forrange(i, 0, 20) {
-        FSocket socket;
+        FSocketBuffered socket;
+        socket.SetTimeout(FSeconds(0.3));
 
         std::cout << "Listening on '" << listener.Listening() << "' ..." << std::endl;
 
-        if (listener.Accept(socket, Seconds(5))) {
+        if (FSocketBuffered::Accept(socket, listener, FSeconds(5))) {
             succeed = true;
             std::cout << "Accepted from '" << socket.Local() << "' to '" << socket.Remote() << "' :)" << std::endl;
 
-            u8 buffer[2048];
-            const size_t read = socket.Read(buffer, true);
+            CORE_TRY
+            {
+                FHttpRequest request;
+                FHttpRequest::Read(&request, socket, maxContentLength);
 
-            std:: cout << "Read[" << read << "] = '" << FStringView((const char*)buffer, read) << "'" << std::endl;
+                std::cout << "Method: " << request.Method() << std::endl;
+                std::cout << "Uri: " << request.Uri() << std::endl;
+
+                std::cout << "Headers:" << std::endl;
+                for (const auto& it : request.Headers())
+                    std::cout << " - '" << it.first << "' : '" << it.second << "'" << std::endl;
+
+                FHttpRequest::FCookieMap cookies;
+                if (FHttpRequest::UnpackCookie(&cookies, request)) {
+                    std::cout << "Cookies:" << std::endl;
+                    for (const auto& it : cookies)
+                        std::cout << " - '" << it.first << "' : '" << it.second << "'" << std::endl;
+                }
+
+                FHttpResponse response;
+
+                if (EndsWithI(request.Uri().Path(), "favicon.ico")) {
+                    response.SetStatus(EHttpStatus::NotFound);
+                }
+                else {
+                    response.SetStatus(EHttpStatus::OK);
+                    response.Body().WriteView(MakeStringView("<marquee width='100%'>Coming soon <b>bitches</b> !</marquee>"));
+                    response.UpdateContentHeaders("text/html; charset=UTF-8");
+                }
+
+                FHttpResponse::Write(&socket, response);
+            }
+            CORE_CATCH(FHttpException e)
+            {
+                CORE_CATCH_BLOCK(std::cerr << e.Status() << std::endl << e.what() << std::endl;)
+            }
 
             socket.Disconnect(true);
             break;

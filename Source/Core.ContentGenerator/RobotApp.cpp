@@ -18,6 +18,7 @@ namespace ContentGenerator {
 
 extern void Test_Format();
 extern void Test_Containers();
+extern void Test_Network();
 extern void Test_Pixmap();
 extern void Test_RTTI();
 extern void Test_Thread();
@@ -44,6 +45,7 @@ FRobotApp::FRobotApp()
 
     Test_Format();
     Test_Containers();
+    Test_Network();
     Test_Pixmap();
     Test_RTTI();
     Test_Thread();
