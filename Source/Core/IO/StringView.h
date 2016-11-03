@@ -27,9 +27,10 @@ class TBasicStringView : public TMemoryView< typename std::add_const<_Char>::typ
 public:
     typedef TMemoryView< typename std::add_const<_Char>::type > parent_type;
 
+    using typename parent_type::value_type;
+    using typename parent_type::pointer;
+    using typename parent_type::size_type;
     using typename parent_type::iterator;
-    using parent_type::parent_type;
-    using parent_type::operator=;
 
     TBasicStringView() = default;
 
@@ -47,6 +48,10 @@ public:
 
     TBasicStringView(const TMemoryView<_Char>& other) : parent_type(other) {}
     TBasicStringView& operator =(const TMemoryView<_Char>& other) { parent_type::operator =(other); return *this; }
+
+    TBasicStringView(std::initializer_list<value_type> list) : parent_type(list) {}
+    TBasicStringView(const iterator& first, const iterator& last) : parent_type(first, last) {}
+    TBasicStringView(pointer storage, size_type size) : parent_type(storage, size) {}
 
     template <size_t _Dim>
     TBasicStringView(const _Char (&staticChars)[_Dim])

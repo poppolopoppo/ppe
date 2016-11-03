@@ -46,8 +46,8 @@ public:
     TBasicString(parent_type&& rvalue) : parent_type(std::move(rvalue)) {}
     TBasicString& operator =(parent_type&& rvalue) { parent_type::operator =(std::move(rvalue)); return *this; }
 
-    TMemoryView<const _Char> MakeView() const { return TMemoryView<const _Char>(c_str(), size()); }
-    operator TMemoryView<const _Char> () const { return MakeView(); }
+    FStringView MakeView() const { return FStringView(c_str(), size()); }
+    operator FStringView () const { return MakeView(); }
 };
 //----------------------------------------------------------------------------
 typedef TBasicString<char>      FString;
