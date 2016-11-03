@@ -11,7 +11,7 @@ namespace Network {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static bool DontRequireURICoding_(char ch) {
+static bool DontRequireURIEncoding_(char ch) {
     return (IsAlnum(ch) || '-' == ch || '_' == ch || '.' == ch || '~' == ch);
 }
 //----------------------------------------------------------------------------
@@ -52,7 +52,7 @@ static bool UriDecode_(FOStream& oss, const FStringView& str) {
             oss << char(d0 << 4 | d1);
             i += 2;
         }
-        else if (DontRequireURICoding_(ch)) {
+        else if (DontRequireURIEncoding_(ch)) {
             oss << ch;
         }
         else {
@@ -64,7 +64,7 @@ static bool UriDecode_(FOStream& oss, const FStringView& str) {
 //----------------------------------------------------------------------------
 static bool UriEncode_(FOStream& oss, const FStringView& str) {
     for (char ch : str) {
-        if (DontRequireURICoding_(ch)) {
+        if (DontRequireURIEncoding_(ch)) {
             oss << ch;
         }
         else if (IsSpace(ch)) {
@@ -140,10 +140,10 @@ bool FUri::Pack(
         for (const auto& it : query) {
             oss << prefix;
 
-            if (not IsIdentifier(MakeStringView(it.first)) )
+            if (not UriEncode_(oss, MakeStringView(it.first)) )
                 return false;
 
-            oss << it.first << '=';
+            oss << '=';
 
             if (not UriEncode_(oss, MakeStringView(it.second)) )
                 return false;
@@ -196,13 +196,17 @@ bool FUri::Unpack(FQueryMap& dst, const FUri& src) {
         if (key.empty())
             return false;
 
-        const FStringView value = decl.CutStartingAt(it + 1);
-
-        FString decoded;
-        if (not Decode(decoded, value))
+        FString decodedKey;
+        if (not Decode(decodedKey, key))
             return false;
 
-        dst.Insert_AssertUnique(ToString(key), std::move(decoded));
+        const FStringView value = decl.CutStartingAt(it + 1);
+
+        FString decodedValue;
+        if (not Decode(decodedValue, value))
+            return false;
+
+        dst.Insert_AssertUnique(std::move(decodedKey), std::move(decodedValue));
     }
 
     return true;
@@ -294,7 +298,7 @@ bool FUri::Decode(FString& dst, const FStringView& src) {
     FOStringStream oss;
 
     if (UriDecode_(oss, src)) {
-        dst = oss.str();
+        dst = std::move(oss.str());
         return true;
     }
     else {
@@ -306,12 +310,20 @@ bool FUri::Encode(FString& dst, const FStringView& src) {
     FOStringStream oss;
 
     if (UriEncode_(oss, src)) {
-        dst = oss.str();
+        dst = std::move(oss.str());
         return true;
     }
     else {
         return false;
     }
+}
+//----------------------------------------------------------------------------
+bool FUri::Decode(FOStream& dst, const FStringView& src) {
+    return UriDecode_(dst, src);
+}
+//----------------------------------------------------------------------------
+bool FUri::Encode(FOStream& dst, const FStringView& src) {
+    return UriEncode_(dst, src);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

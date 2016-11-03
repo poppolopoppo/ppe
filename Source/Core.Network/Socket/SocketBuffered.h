@@ -28,22 +28,45 @@ public:
 
     const FSocket& Socket() const { return _socket; }
 
+    void* Handle() const { return _socket.Handle(); }
+
+    void* UserData() const { return _socket.UserData(); }
+    void SetUserData(void* ptr) { _socket.SetUserData(ptr); }
+
+    const FAddress& Local() const { return _socket.Local(); }
+    const FAddress& Remote() const { return _socket.Remote(); }
+
+    const FMilliseconds& Timeout() const { return _socket.Timeout(); }
+    bool SetTimeout(const FMilliseconds& timeout) { return _socket.SetTimeout(timeout); }
+
     bool Connect();
     bool Disconnect(bool gracefully = false);
     bool ShutdownOutgoing();
 
     bool IsConnected() const;
-    bool IsReadable(const Milliseconds& timeout) const;
+    bool IsReadable(const FMilliseconds& timeout) const;
 
     size_t Read(const TMemoryView<u8>& rawData);
-    size_t Read(const TMemoryView<u8>& rawData, const Milliseconds& timeout);
+    size_t Read(const TMemoryView<u8>& rawData, const FMilliseconds& timeout);
+
     size_t Write(const TMemoryView<const u8>& rawData);
+    size_t Write(const FStringView& str) { return Write(str.Cast<const u8>()); }
+
+    template <typename T> bool ReadPOD(T& assumePOD);
+    template <typename T> bool PeekPOD(T& assumePOD);
+    template <typename T> bool WritePOD(const T& assumePOD);
+
+    bool Get(char& ch) { return ReadPOD(ch); }
+    bool Peek(char& ch) { return PeekPOD(ch); }
+    bool Put(char ch) { return WritePOD(ch); }
+
+    void EatWhiteSpaces();
 
     void FlushRead();
-    void FlushRead(const Milliseconds& timeout);
+    void FlushRead(const FMilliseconds& timeout);
     void FlushWrite();
 
-    static bool Accept(FSocketBuffered& buffered, FListener& listener, const Milliseconds& timeout);
+    static bool Accept(FSocketBuffered& buffered, FListener& listener, const FMilliseconds& timeout);
     static bool MakeConnection(FSocketBuffered& buffered, const FAddress& remoteHostnameOrIP);
 
 private:
@@ -60,6 +83,29 @@ private:
 
     size_t _bufferCapacity;
 };
+//----------------------------------------------------------------------------
+template <typename T>
+bool FSocketBuffered::ReadPOD(T& assumePOD) {
+    return (sizeof(T) == Read(MakeRawView(assumePOD)) );
+}
+//----------------------------------------------------------------------------
+template <typename T>
+bool FSocketBuffered::PeekPOD(T& assumePOD) {
+    if (_offsetI + sizeof(T) > _sizeI)
+        FlushRead();
+
+    if (_offsetI + sizeof(T) <= _sizeI) {
+        assumePOD = *reinterpret_cast<T*>(&_bufferI[_offsetI]);
+        return true;
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
+template <typename T>
+bool FSocketBuffered::WritePOD(const T& assumePOD) {
+    return (sizeof(T) == Write(MakeRawView(assumePOD)) );
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

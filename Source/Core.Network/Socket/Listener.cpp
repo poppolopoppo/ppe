@@ -128,7 +128,7 @@ bool FListener::IsConnected() const {
     return (nullptr != _handle && INVALID_SOCKET != UnpackSocket_(_handle));
 }
 //----------------------------------------------------------------------------
-bool FListener::Accept(FSocket& socket, const Milliseconds& timeout) {
+bool FListener::Accept(FSocket& socket, const FMilliseconds& timeout) {
     Assert(IsConnected());
     Assert(!socket.IsConnected());
     Assert(timeout.Value() >= 0);
@@ -228,13 +228,15 @@ bool FListener::Accept(FSocket& socket, const Milliseconds& timeout) {
     socket._remote.SetHost(std::move(foreign_ip));
     socket._remote.SetPort(foreign_port);
 
+    socket.SetTimeout(socket.Timeout()); // force set the SO_RCVTIMEO socket option
+
     LOG(Info, L"[Network] Accept socket from {0} to {1}", socket._local, socket._remote );
 
     Assert(socket.IsConnected());
     return true;
 }
 //----------------------------------------------------------------------------
-bool FListener::Accept(FSocketBuffered& socket, const Milliseconds& timeout) {
+bool FListener::Accept(FSocketBuffered& socket, const FMilliseconds& timeout) {
     return FSocketBuffered::Accept(socket, *this, timeout);
 }
 //----------------------------------------------------------------------------

@@ -75,15 +75,15 @@ bool FSocketBuffered::IsConnected() const {
     return _socket.IsConnected();
 }
 //----------------------------------------------------------------------------
-bool FSocketBuffered::IsReadable(const Milliseconds& timeout) const {
+bool FSocketBuffered::IsReadable(const FMilliseconds& timeout) const {
     return (not _bufferI.empty() || _socket.IsReadable(timeout));
 }
 //----------------------------------------------------------------------------
 size_t FSocketBuffered::Read(const TMemoryView<u8>& rawData) {
-    return Read(rawData, Milliseconds(0)/* no timeout, no wait */);
+    return Read(rawData, FMilliseconds(0)/* no timeout, no wait */);
 }
 //----------------------------------------------------------------------------
-size_t FSocketBuffered::Read(const TMemoryView<u8>& rawData, const Milliseconds& timeout) {
+size_t FSocketBuffered::Read(const TMemoryView<u8>& rawData, const FMilliseconds& timeout) {
     Assert(rawData.size());
 
     size_t read = 0;
@@ -124,6 +124,9 @@ size_t FSocketBuffered::Write(const TMemoryView<const u8>& rawData) {
         if (toWrite > _bufferCapacity - _sizeO)
             FlushWrite();
 
+        if (nullptr == _bufferO)
+            _bufferO = NewArray<u8>(_bufferCapacity);
+
         Assert(toWrite <= _bufferCapacity - _sizeO);
 
         memcpy(_bufferO.data() + _sizeO, rawData.data(), toWrite);
@@ -133,11 +136,17 @@ size_t FSocketBuffered::Write(const TMemoryView<const u8>& rawData) {
     }
 }
 //----------------------------------------------------------------------------
-void FSocketBuffered::FlushRead() {
-    FlushRead(Milliseconds(0));
+void FSocketBuffered::EatWhiteSpaces() {
+    char ch;
+    while (Peek(ch) && IsSpace(ch))
+        ++_offsetI;
 }
 //----------------------------------------------------------------------------
-void FSocketBuffered::FlushRead(const Milliseconds& timeout) {
+void FSocketBuffered::FlushRead() {
+    FlushRead(FMilliseconds(0));
+}
+//----------------------------------------------------------------------------
+void FSocketBuffered::FlushRead(const FMilliseconds& timeout) {
     if (_offsetI < _sizeI) {
         Assert(_bufferI);
 
@@ -152,7 +161,7 @@ void FSocketBuffered::FlushRead(const Milliseconds& timeout) {
         _bufferI = NewArray<u8>(_bufferCapacity);
     }
 
-    _offsetI += _socket.Read(_bufferI.CutStartingAt(_offsetI), timeout);
+    _sizeI += _socket.Read(_bufferI.CutStartingAt(_offsetI), timeout);
 }
 //----------------------------------------------------------------------------
 void FSocketBuffered::FlushWrite() {
@@ -165,15 +174,17 @@ void FSocketBuffered::FlushWrite() {
     _sizeO = 0;
 }
 //----------------------------------------------------------------------------
-bool FSocketBuffered::Accept(FSocketBuffered& buffered, FListener& listener, const Milliseconds& timeout) {
+bool FSocketBuffered::Accept(FSocketBuffered& buffered, FListener& listener, const FMilliseconds& timeout) {
     Assert(false == buffered.IsConnected());
 
+    buffered._offsetI = buffered._sizeI = buffered._sizeO = 0;
     return listener.Accept(buffered._socket, timeout);
 }
 //----------------------------------------------------------------------------
 bool FSocketBuffered::MakeConnection(FSocketBuffered& buffered, const FAddress& remoteHostnameOrIP) {
     Assert(false == buffered.IsConnected());
 
+    buffered._offsetI = buffered._sizeI = buffered._sizeO = 0;
     return FSocket::MakeConnection(buffered._socket, remoteHostnameOrIP);
 }
 //----------------------------------------------------------------------------

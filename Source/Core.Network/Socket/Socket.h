@@ -16,6 +16,8 @@ class FSocket {
 public:
     friend class FListener;
 
+    STATIC_CONST_INTEGRAL(size_t, DefaultTimeoutInMs, 100);
+
     FSocket();
     FSocket(FAddress&& remote, FAddress&& local);
     FSocket(const FAddress& remote, const FAddress& local)
@@ -40,6 +42,9 @@ public:
     const FAddress& Local() const { return _local; }
     const FAddress& Remote() const { return _remote; }
 
+    const FMilliseconds& Timeout() const { return _timeout; }
+    bool SetTimeout(const FMilliseconds& timeout);
+
     bool Connect();
     bool Disconnect(bool gracefully = false);
 
@@ -49,10 +54,10 @@ public:
     bool ShutdownOutgoing();
 
     bool IsConnected() const;
-    bool IsReadable(const Milliseconds& timeout) const;
+    bool IsReadable(const FMilliseconds& timeout) const;
 
     size_t Read(const TMemoryView<u8>& rawData, bool block = false);
-    size_t Read(const TMemoryView<u8>& rawData, const Milliseconds& timeout);
+    size_t Read(const TMemoryView<u8>& rawData, const FMilliseconds& timeout);
     size_t Write(const TMemoryView<const u8>& rawData);
 
     static void Start();
@@ -76,6 +81,8 @@ private:
 
     FAddress _local;
     FAddress _remote;
+
+    FMilliseconds _timeout;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

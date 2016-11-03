@@ -48,7 +48,10 @@ public:
     static bool Parse(FUri& dst, const FStringView& strview);
 
     static bool Decode(FString& dst, const FStringView& src);
+    static bool Decode(FOStream& dst, const FStringView& src);
+
     static bool Encode(FString& dst, const FStringView& src);
+    static bool Encode(FOStream& dst, const FStringView& src);
 
 private:
     FStringView _scheme;

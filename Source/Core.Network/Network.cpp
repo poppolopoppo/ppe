@@ -3,6 +3,8 @@
 #include "Network.h"
 #include "Network_fwd.h"
 
+#include "Name.h"
+#include "Http/ConstNames.h"
 #include "Socket/Socket.h"
 
 #include "Core/Allocator/PoolAllocatorTag-impl.h"
@@ -30,6 +32,8 @@ void NetworkStartup::Start() {
 
     POOL_TAG(Network)::Start();
 
+    FName::Start(256);
+    FHttpConstNames::Start();
     FSocket::Start();
 }
 //----------------------------------------------------------------------------
@@ -37,6 +41,8 @@ void NetworkStartup::Shutdown() {
     CORE_MODULE_SHUTDOWN(Network);
 
     FSocket::Shutdown();
+    FHttpConstNames::Shutdown();
+    FName::Shutdown();
 
     POOL_TAG(Network)::Shutdown();
 }

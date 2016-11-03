@@ -36,8 +36,8 @@ public:
 
     bool IsConnected() const;
 
-    bool Accept(FSocket& socket, const Milliseconds& timeout);
-    bool Accept(FSocketBuffered& socket, const Milliseconds& timeout);
+    bool Accept(FSocket& socket, const FMilliseconds& timeout);
+    bool Accept(FSocketBuffered& socket, const FMilliseconds& timeout);
 
     static FListener Localhost(size_t port);
 
