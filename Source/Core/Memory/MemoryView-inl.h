@@ -68,11 +68,14 @@ TMemoryView<T>& TMemoryView<T>::operator =(const TMemoryView& other) {
 template <typename T>
 template <typename U>
 TMemoryView<T>::TMemoryView(const TMemoryView<U>& other)
-:   _storage(other._storage), _size(other._size) {}
+:   _storage(other._storage), _size(other._size) {
+    STATIC_ASSERT(sizeof(T) == sizeof(U));
+}
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
 TMemoryView<T>& TMemoryView<T>::operator =(const TMemoryView<U>& other) {
+    STATIC_ASSERT(sizeof(T) == sizeof(U));
     _storage = other._storage;
     _size = other._size;
     return (*this);
