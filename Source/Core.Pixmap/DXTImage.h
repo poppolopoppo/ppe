@@ -10,7 +10,7 @@
 
 namespace Core {
 namespace Pixmap {
-class Image;
+FWD_REFPTR(Image);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -54,7 +54,7 @@ public:
         HighQuality, // Better refinement, 30-40% slower
     };
 
-    friend void Compress(FDXTImage* dst, const Image* src, EQuality quality);
+    friend void Compress(FDXTImage* dst, const FImage* src, EQuality quality);
 
     SINGLETON_POOL_ALLOCATED_DECL();
 

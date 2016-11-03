@@ -17,22 +17,22 @@ class FFloatImage;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(Image);
-class Image : public FRefCountable {
+class FImage : public FRefCountable {
 public:
     // raw data stores pixel data in rgba order by default :
     typedef PIXELSTORAGE(Image, u8) raw_data_type;
 
-    Image();
-    Image(  size_t width, size_t height,
+    FImage();
+    FImage( size_t width, size_t height,
             EColorDepth depth = EColorDepth::_8bits,
             EColorMask mask = EColorMask::RGBA,
             EColorSpace space = EColorSpace::sRGB );
-    Image(  raw_data_type&& rdata,
+    FImage( raw_data_type&& rdata,
             size_t width, size_t height,
             EColorDepth depth = EColorDepth::_8bits,
             EColorMask mask = EColorMask::RGBA,
             EColorSpace space = EColorSpace::sRGB );
-    ~Image();
+    ~FImage();
 
     size_t Width() const { return _width; }
     size_t Height() const { return _height; }
@@ -59,11 +59,11 @@ public:
     void ConvertFrom(const FFloatImage* src);
     void ConvertTo(FFloatImage* dst) const;
 
-    friend bool Load(Image* dst, const FFilename& filename);
-    friend bool Load(Image* dst, const FFilename& filename, const TMemoryView<const u8>& content);
+    friend bool Load(FImage* dst, const FFilename& filename);
+    friend bool Load(FImage* dst, const FFilename& filename, const TMemoryView<const u8>& content);
 
-    friend bool Save(const Image* src, const FFilename& filename);
-    friend bool Save(const Image* src, const FFilename& filename, IStreamWriter* writer);
+    friend bool Save(const FImage* src, const FFilename& filename);
+    friend bool Save(const FImage* src, const FFilename& filename, IStreamWriter* writer);
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
@@ -82,7 +82,7 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename T>
-void Image::Fill(T value) {
+void FImage::Fill(T value) {
     Assert(sizeof(T) == PixelSizeInBytes());
     u8* const pend = pdata + _data.size();
     for (u8* pdata = _data.data(); pdata < pend; pdata += sizeof(T))

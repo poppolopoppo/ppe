@@ -30,14 +30,14 @@ STATIC_ASSERT(sizeof(rawblock_type) == 4*4*4);
 //----------------------------------------------------------------------------
 template <EBlockFormat _Format, EColorSpace _Space>
 struct TBlockTraits_ {
-    static void fill_block(rawblock_type& dst, const Image* src, size_t x, size_t y) {
+    static void fill_block(rawblock_type& dst, const FImage* src, size_t x, size_t y) {
         AssertNotImplemented();
     }
 };
 //----------------------------------------------------------------------------
 template <EColorSpace _Space>
 struct TBlockTraits_<EBlockFormat::DXT1, _Space> {
-    static void fill_block(rawblock_type& dst, const Image* src, size_t x, size_t y) {
+    static void fill_block(rawblock_type& dst, const FImage* src, size_t x, size_t y) {
         Assert(src->PixelSizeInBytes() == sizeof(rgb8_type));
         const auto* input = reinterpret_cast<const rgb8_type*>(src->MakeConstView().data());
 
@@ -55,7 +55,7 @@ struct TBlockTraits_<EBlockFormat::DXT1, _Space> {
 //----------------------------------------------------------------------------
 template <EColorSpace _Space>
 struct TBlockTraits_<EBlockFormat::DXT5, _Space> {
-    static void fill_block(rawblock_type& dst, const Image* src, size_t x, size_t y) {
+    static void fill_block(rawblock_type& dst, const FImage* src, size_t x, size_t y) {
         Assert(src->PixelSizeInBytes() == sizeof(rgba8_type));
         const auto* input = reinterpret_cast<const rgba8_type*>(src->MakeConstView().data());
 
@@ -73,7 +73,7 @@ struct TBlockTraits_<EBlockFormat::DXT5, _Space> {
 //----------------------------------------------------------------------------
 template <>
 struct TBlockTraits_<EBlockFormat::DXT5, EColorSpace::YCoCg> {
-    static void fill_block(rawblock_type& dst, const Image* src, size_t x, size_t y) {
+    static void fill_block(rawblock_type& dst, const FImage* src, size_t x, size_t y) {
         Assert(src->PixelSizeInBytes() == sizeof(rgb8_type));
         const auto* input = reinterpret_cast<const rgb8_type*>(src->MakeConstView().data());
 
@@ -96,7 +96,7 @@ struct TBlockTraits_<EBlockFormat::DXT5, EColorSpace::YCoCg> {
 namespace {
 //----------------------------------------------------------------------------
 template <EBlockFormat _Format, EColorSpace _Space>
-static void BlockSpaceCompress_(FDXTImage* dst, const Image* src, FDXTImage::EQuality quality) {
+static void BlockSpaceCompress_(FDXTImage* dst, const FImage* src, FDXTImage::EQuality quality) {
     typedef TBlockTraits_<_Format, _Space> traits_type;
 
     STATIC_ASSERT(STB_DXT_NORMAL == size_t(FDXTImage::EQuality::Default));
@@ -127,7 +127,7 @@ static void BlockSpaceCompress_(FDXTImage* dst, const Image* src, FDXTImage::EQu
 }
 //----------------------------------------------------------------------------
 template <EBlockFormat _Format>
-static void BlockCompress_(FDXTImage* dst, const Image* src, FDXTImage::EQuality quality) {
+static void BlockCompress_(FDXTImage* dst, const FImage* src, FDXTImage::EQuality quality) {
     switch (dst->Space())
     {
     case EColorSpace::Linear:
@@ -148,7 +148,7 @@ static void BlockCompress_(FDXTImage* dst, const Image* src, FDXTImage::EQuality
     }
 }
 //----------------------------------------------------------------------------
-static void Compress_(FDXTImage* dst, const Image* src, FDXTImage::EQuality quality) {
+static void Compress_(FDXTImage* dst, const FImage* src, FDXTImage::EQuality quality) {
     switch (dst->Format())
     {
     case EBlockFormat::DXT1:
@@ -222,7 +222,7 @@ void FDXTImage::Resize_DiscardData(size_t width, size_t height, EBlockFormat for
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void Compress(FDXTImage* dst, const Image* src, FDXTImage::EQuality quality) {
+void Compress(FDXTImage* dst, const FImage* src, FDXTImage::EQuality quality) {
     Assert(dst);
     Assert(src);
     AssertRelease(src->Depth() == EColorDepth::_8bits);

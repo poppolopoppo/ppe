@@ -10,7 +10,7 @@
 #include "Core/Color/Color.h"
 #include "Core/Diagnostic/Logger.h"
 #include "Core/IO/FileSystem.h"
-#include "Core/IO/FileSystemConstNames.h"
+#include "Core/IO/FS/ConstNames.h"
 #include "Core/IO/VirtualFileSystem.h"
 #include "Core/Maths/ScalarVector.h"
 #include "Core/Memory/MemoryStream.h"
@@ -254,7 +254,7 @@ namespace {
 //----------------------------------------------------------------------------
 template <typename _PixelTraits>
 struct FRawToFloat_ {
-    void operator ()(FFloatImage* dst, const Image* src) const {
+    void operator ()(FFloatImage* dst, const FImage* src) const {
         typedef typename _PixelTraits::raw_type raw_type;
         Assert(sizeof(raw_type) == src->PixelSizeInBytes());
 
@@ -271,7 +271,7 @@ struct FRawToFloat_ {
 //----------------------------------------------------------------------------
 template <typename _PixelTraits>
 struct FFloatToRaw_ {
-    void operator ()(Image* dst, const FFloatImage* src) const {
+    void operator ()(FImage* dst, const FFloatImage* src) const {
         typedef typename _PixelTraits::raw_type raw_type;
         Assert(sizeof(raw_type) == dst->PixelSizeInBytes());
 
@@ -290,9 +290,9 @@ struct FFloatToRaw_ {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Pixmap, Image, )
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Pixmap, FImage, )
 //----------------------------------------------------------------------------
-Image::Image()
+FImage::FImage()
 :   _width(0)
 ,   _height(0)
 ,   _depth(EColorDepth::_8bits)
@@ -301,7 +301,7 @@ Image::Image()
     Assert((0 != _width) == (0 != _height));
 }
 //----------------------------------------------------------------------------
-Image::Image(
+FImage::FImage(
     size_t width, size_t height,
     EColorDepth depth /* = EColorDepth::_8bits */,
     EColorMask mask /* = EColorMask::RGBA */,
@@ -318,7 +318,7 @@ Image::Image(
     _data.Resize_DiscardData(sizeInBytes);
 }
 //----------------------------------------------------------------------------
-Image::Image(
+FImage::FImage(
     raw_data_type&& rdata,
     size_t width, size_t height,
     EColorDepth depth /* = EColorDepth::_8bits */,
@@ -339,30 +339,30 @@ Image::Image(
 #endif
 }
 //----------------------------------------------------------------------------
-Image::~Image() {
+FImage::~FImage() {
 #ifdef WITH_CORE_ASSERT
     const size_t sizeInBytes = (PixelSizeInBytes() * _width * _height);
     Assert(_data.size() == sizeInBytes);
 #endif
 }
 //----------------------------------------------------------------------------
-size_t Image::PixelSizeInBytes() const {
+size_t FImage::PixelSizeInBytes() const {
     const size_t channelCount = size_t(_mask);
     const size_t channelSizeInBytes = (size_t(_depth) >> 3);
     return (channelCount * channelSizeInBytes);
 }
 //----------------------------------------------------------------------------
-TMemoryView<u8> Image::Scanline(size_t row) {
+TMemoryView<u8> FImage::Scanline(size_t row) {
     const size_t scanlineSizeInBytes = (PixelSizeInBytes() * _width);
     return _data.MakeView().SubRange(scanlineSizeInBytes * row, scanlineSizeInBytes);
 }
 //----------------------------------------------------------------------------
-TMemoryView<const u8> Image::Scanline(size_t row) const {
+TMemoryView<const u8> FImage::Scanline(size_t row) const {
     const size_t scanlineSizeInBytes = (PixelSizeInBytes() * _width);
     return _data.MakeConstView().SubRange(scanlineSizeInBytes * row, scanlineSizeInBytes);
 }
 //----------------------------------------------------------------------------
-void Image::Resize_DiscardData(size_t width, size_t height) {
+void FImage::Resize_DiscardData(size_t width, size_t height) {
     Assert((0 != _width) == (0 != _height));
 
     if (_width == width &&
@@ -376,7 +376,7 @@ void Image::Resize_DiscardData(size_t width, size_t height) {
     _data.Resize_DiscardData(sizeInBytes);
 }
 //----------------------------------------------------------------------------
-void Image::Resize_DiscardData(size_t width, size_t height, EColorDepth depth, EColorMask mask, EColorSpace space) {
+void FImage::Resize_DiscardData(size_t width, size_t height, EColorDepth depth, EColorMask mask, EColorSpace space) {
     Assert((0 != _width) == (0 != _height));
     Assert((space == EColorSpace::YCoCg) == (mask == EColorMask::RGBA));
 
@@ -397,14 +397,14 @@ void Image::Resize_DiscardData(size_t width, size_t height, EColorDepth depth, E
     _data.Resize_DiscardData(sizeInBytes);
 }
 //----------------------------------------------------------------------------
-void Image::ConvertFrom(const FFloatImage* src) {
+void FImage::ConvertFrom(const FFloatImage* src) {
     Assert(nullptr != src);
 
     Resize_DiscardData(src->Width(), src->Height());
     Convert_<FFloatToRaw_>(this, src, _depth, _mask, _space);
 }
 //----------------------------------------------------------------------------
-void Image::ConvertTo(FFloatImage* dst) const {
+void FImage::ConvertTo(FFloatImage* dst) const {
     Assert(nullptr != dst);
 
     dst->Resize_DiscardData(_width, _height);
@@ -413,7 +413,7 @@ void Image::ConvertTo(FFloatImage* dst) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool Load(Image* dst, const FFilename& filename) {
+bool Load(FImage* dst, const FFilename& filename) {
     RAWSTORAGE_THREAD_LOCAL(FileSystem, u8) content;
     if (false == VFS_ReadAll(&content, filename, AccessPolicy::Binary))
         return false;
@@ -421,25 +421,25 @@ bool Load(Image* dst, const FFilename& filename) {
     return Load(dst, filename, content.MakeConstView());
 }
 //----------------------------------------------------------------------------
-bool Load(Image* dst, const FFilename& filename, const TMemoryView<const u8>& content) {
+bool Load(FImage* dst, const FFilename& filename, const TMemoryView<const u8>& content) {
     Assert(dst);
     Assert(filename.HasExtname());
 
     // supported image file types :
     const FExtname ext = filename.Extname();
-    if (FFileSystemConstNames::BmpExt() != ext &&
-        FFileSystemConstNames::GifExt() != ext &&
-        FFileSystemConstNames::HdrExt() != ext &&
-        FFileSystemConstNames::JpgExt() != ext &&
-        FFileSystemConstNames::PgmExt() != ext &&
-        FFileSystemConstNames::PngExt() != ext &&
-        FFileSystemConstNames::PpmExt() != ext &&
-        FFileSystemConstNames::PicExt() != ext &&
-        FFileSystemConstNames::PsdExt() != ext &&
-        FFileSystemConstNames::TgaExt() != ext )
+    if (FFSConstNames::BmpExt() != ext &&
+        FFSConstNames::GifExt() != ext &&
+        FFSConstNames::HdrExt() != ext &&
+        FFSConstNames::JpgExt() != ext &&
+        FFSConstNames::PgmExt() != ext &&
+        FFSConstNames::PngExt() != ext &&
+        FFSConstNames::PpmExt() != ext &&
+        FFSConstNames::PicExt() != ext &&
+        FFSConstNames::PsdExt() != ext &&
+        FFSConstNames::TgaExt() != ext )
         return false;
 
-    if (FFileSystemConstNames::HdrExt() == ext) {
+    if (FFSConstNames::HdrExt() == ext) {
         // import .hdr images in a 32bits float buffer :
         const int len = checked_cast<int>(content.size());
 
@@ -538,7 +538,7 @@ static void WriteFuncForSTBIW_(void *context, void *data, int size) {
 }
 } //!namespace
 //----------------------------------------------------------------------------
-bool Save(const Image* src, const FFilename& filename) {
+bool Save(const FImage* src, const FFilename& filename) {
     MEMORYSTREAM_THREAD_LOCAL(Image) writer;
     if (false == Save(src, filename, &writer))
         return false;
@@ -549,7 +549,7 @@ bool Save(const Image* src, const FFilename& filename) {
     return true;
 }
 //----------------------------------------------------------------------------
-bool Save(const Image* src, const FFilename& filename, IStreamWriter* writer) {
+bool Save(const FImage* src, const FFilename& filename, IStreamWriter* writer) {
     Assert(src);
     Assert(writer);
     Assert(filename.HasExtname());
@@ -565,20 +565,20 @@ bool Save(const Image* src, const FFilename& filename, IStreamWriter* writer) {
     const int comp = int(src->_mask);
 
     const FExtname ext = filename.Extname();
-    if (FFileSystemConstNames::PngExt() == ext) {
+    if (FFSConstNames::PngExt() == ext) {
         AssertRelease(EColorDepth::_8bits == src->_depth);
         result = ::stbi_write_png_to_func(&WriteFuncForSTBIW_, writer, x, y, comp, src->_data.data(), 0);
     }
-    else if (FFileSystemConstNames::TgaExt() == ext) {
+    else if (FFSConstNames::TgaExt() == ext) {
         AssertRelease(EColorDepth::_8bits == src->_depth);
         result = ::stbi_write_tga_to_func(&WriteFuncForSTBIW_, writer, x, y, comp, src->_data.data());
     }
-    else if (FFileSystemConstNames::HdrExt() == ext) {
+    else if (FFSConstNames::HdrExt() == ext) {
         AssertRelease(EColorDepth::_32bits == src->_depth);
         AssertRelease(EColorSpace::Float == src->_space);
         result = ::stbi_write_hdr_to_func(&WriteFuncForSTBIW_, writer, x, y, comp, reinterpret_cast<const float*>(src->_data.data()));
     }
-    else if (FFileSystemConstNames::BmpExt() == ext) {
+    else if (FFSConstNames::BmpExt() == ext) {
         AssertRelease(EColorDepth::_8bits == src->_depth);
         result = ::stbi_write_bmp_to_func(&WriteFuncForSTBIW_, writer, x, y, comp, src->_data.data());
     }
@@ -592,14 +592,14 @@ bool Save(const Image* src, const FFilename& filename, IStreamWriter* writer) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void Image::Start() {
+void FImage::Start() {
     // TODO: remove when fixed in an updated version
     // Workaround for thread safety of stb_image
     // https://github.com/nothings/stb/issues/309
     ::stbi__init_zdefaults();
 }
 //----------------------------------------------------------------------------
-void Image::Shutdown() {
+void FImage::Shutdown() {
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

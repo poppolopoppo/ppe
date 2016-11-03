@@ -24,13 +24,13 @@ void PixmapStartup::Start() {
     CORE_MODULE_START(Pixmap);
 
     POOL_TAG(Pixmap)::Start();
-    Image::Start();
+    FImage::Start();
 }
 //----------------------------------------------------------------------------
 void PixmapStartup::Shutdown() {
     CORE_MODULE_SHUTDOWN(Pixmap);
 
-    Image::Shutdown();
+    FImage::Shutdown();
     POOL_TAG(Pixmap)::Shutdown();
 }
 //----------------------------------------------------------------------------

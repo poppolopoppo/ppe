@@ -11,9 +11,9 @@ namespace Pixmap {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void DistanceField_CDT(Image* dst, const FFloatImage* src, float alphaCutoff);
+void DistanceField_CDT(FImage* dst, const FFloatImage* src, float alphaCutoff);
 //----------------------------------------------------------------------------
-void DistanceField_DRA(Image* dst, const FFloatImage* src, float alphaCutoff);
+void DistanceField_DRA(FImage* dst, const FFloatImage* src, float alphaCutoff);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

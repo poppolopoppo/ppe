@@ -22,7 +22,7 @@ namespace Pixmap {
 // http://thomasdiewald.com/blog/?p=1994
 // http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.102.7988&rep=rep1&type=pdf
 //----------------------------------------------------------------------------
-void DistanceField_CDT(Image* dst, const FFloatImage* src, float alphaCutoff) {
+void DistanceField_CDT(FImage* dst, const FFloatImage* src, float alphaCutoff) {
     Assert(dst);
     Assert(src);
     Assert(alphaCutoff >= 0.f && alphaCutoff < 1.f);
@@ -127,7 +127,7 @@ void DistanceField_CDT(Image* dst, const FFloatImage* src, float alphaCutoff) {
 // http://thomasdiewald.com/blog/?p=1994
 // http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.102.7988&rep=rep1&type=pdf
 //----------------------------------------------------------------------------
-void DistanceField_DRA(Image* dst, const FFloatImage* src, float alphaCutoff) {
+void DistanceField_DRA(FImage* dst, const FFloatImage* src, float alphaCutoff) {
     Assert(dst);
     Assert(src);
     Assert(alphaCutoff >= 0.f && alphaCutoff < 1.f);

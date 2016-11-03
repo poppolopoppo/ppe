@@ -28,7 +28,7 @@ constexpr float AlphaCutoff = 0.33333f;
 static void Test_ExpandAlphaMask_(const FFilename& input) {
     const FDirpath output = L"Process:/";
 
-    Pixmap::Image img;
+    Pixmap::FImage img;
     if (false == Pixmap::Load(&img, input))
         AssertNotReached();
 
@@ -73,7 +73,7 @@ static void Test_ExpandAlphaMask_(const FFilename& input) {
 }
 //----------------------------------------------------------------------------
 static void Test_DistanceField(const FFilename& input) {
-    Pixmap::Image img;
+    Pixmap::FImage img;
     if (false == Pixmap::Load(&img, input))
         AssertNotReached();
 
@@ -87,7 +87,7 @@ static void Test_DistanceField(const FFilename& input) {
 }
 //----------------------------------------------------------------------------
 static void Test_DXTCompression_(const FFilename& input) {
-    Pixmap::Image img;
+    Pixmap::FImage img;
     if (false == Pixmap::Load(&img, input))
         AssertNotReached();
 
@@ -96,7 +96,7 @@ static void Test_DXTCompression_(const FFilename& input) {
 }
 //----------------------------------------------------------------------------
 static void Test_ConvexHull_(const FFilename& input) {
-    Pixmap::Image img;
+    Pixmap::FImage img;
     if (false == Pixmap::Load(&img, input))
         AssertNotReached();
 
@@ -180,7 +180,7 @@ void Test_Binpacking() {
         Pixmap::FillBoundingBox(&intermediate, box, color.ToLinear());
     }
 
-    Pixmap::Image img;
+    Pixmap::FImage img;
     img.ConvertFrom(&intermediate);
     if (false == Pixmap::Save(&img, L"Process:/BinPacking.png"))
         AssertNotReached();
