@@ -52,7 +52,7 @@ auto TToken<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::operator =(const
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits, typename _Allocator >
 size_t TToken<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::HashValue() const {
-    return hash_as_pod(intptr_t(_data.Ptr));
+    return hash_ptr(_data.Ptr);
 }
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits, typename _Allocator >
