@@ -42,7 +42,7 @@ void FGraphicsWindow::RenderLoop(FDeviceEncapsulator *deviceEncapsulator) {
     Update_BeforeDispatch();
 
     while (false == PumpAllMessages_ReturnIfQuit()) {
-        Timespan elapsed;
+        FTimespan elapsed;
         bool run = true;
         if (_fixedTimeStep)
             run = clock.Tick_Target60FPS(elapsed);

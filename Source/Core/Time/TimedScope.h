@@ -14,7 +14,7 @@ public:
     FTimedScope() : _startedAt(FTimepoint::Now()) {}
 
     const FTimepoint& StartedAt() const { return _startedAt; }
-    Timespan Elapsed() const { return FTimepoint::ElapsedSince(_startedAt); }
+    FTimespan Elapsed() const { return FTimepoint::ElapsedSince(_startedAt); }
 
 private:
     FTimepoint _startedAt;

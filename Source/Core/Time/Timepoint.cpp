@@ -34,12 +34,12 @@ FTimepoint FTimepoint::Now() {
     return *reinterpret_cast<const value_type *>(&now);
 }
 //----------------------------------------------------------------------------
-FTimepoint::value_type FTimepoint::Ticks(const Timespan& duration) {
+FTimepoint::value_type FTimepoint::Ticks(const FTimespan& duration) {
     const double d = (duration.Value() * gQPC_Context.Frequency.QuadPart)/1000000;
     return static_cast<FTimepoint::value_type>(d);
 }
 //----------------------------------------------------------------------------
-Timespan FTimepoint::Duration(const FTimepoint& start, const FTimepoint& stop) {
+FTimespan FTimepoint::Duration(const FTimepoint& start, const FTimepoint& stop) {
     LARGE_INTEGER elapsedMicroS;
     elapsedMicroS.QuadPart = reinterpret_cast<const LARGE_INTEGER *>(&stop)->QuadPart -
                              reinterpret_cast<const LARGE_INTEGER *>(&start)->QuadPart;
@@ -47,7 +47,7 @@ Timespan FTimepoint::Duration(const FTimepoint& start, const FTimepoint& stop) {
     elapsedMicroS.QuadPart *= 1000000;
     elapsedMicroS.QuadPart /= gQPC_Context.Frequency.QuadPart;
 
-    return Units::Time::Microseconds(static_cast<double>(elapsedMicroS.QuadPart));
+    return FMicroseconds(static_cast<double>(elapsedMicroS.QuadPart));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
