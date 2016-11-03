@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,400italic">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" type="text/css" href="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.1/angular-material.css">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <title>Test Editor</title>
+</head>
+<body ng-app="MyApp" layout="column">
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js" crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular-animate.min.js" crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular-aria.min.js" crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.1/angular-material.min.js" crossorigin="anonymous"></script>
+
+    <md-toolbar layout="row">
+        <md-button class="menu" aria-label="Show menu" hide-gt-sm>
+            <i class="material-icons md-24" style="color: white;">menu</i>
+        </md-button>
+        <h3>My test toolbar</h1>
+    </md-toolbar>
+
+    <div class="container" layout="row" flex>
+        <md-sidenav id="sidenav" md-is-locked-open="$mdMedia('gt-sm')" class="md-whiteframe-4dp">
+             <md-list>
+                <md-list-item>
+                    <i class="material-icons md-36" style="color: orange;">camera_alt</i>
+                    <md-button >Camera</md-button>
+                </md-list-item>
+                <md-list-item>
+                    <i class="material-icons md-36" style="color: lightblue;">layers</i>
+                    <md-button >Render layers</md-button>
+                </md-list-item>
+                <md-list-item>
+                    <i class="material-icons md-36" style="color: red;">grid_on</i>
+                    <md-button >Models</md-button>
+                </md-list-item>
+                <md-list-item>
+                    <i class="material-icons md-36" style="color: green;">brush</i>
+                    <md-button >Materials</md-button>
+                </md-list-item>
+                <md-list-item>
+                    <i class="material-icons md-36" style="color: blue;">photo</i>
+                    <md-button >Textures</md-button>
+                </md-list-item>
+                <md-list-item>
+                    <i class="material-icons md-36" style="color: gray;">build</i>
+                    <md-button >Diagnostics</md-button>
+                </md-list-item>
+            </md-list>
+        </md-sidenav>
+        <md-content id="content" flex>
+            <h2>
+                <i class="material-icons md-36 avatar" style="color: purple;">all_inclusive</i>
+                Content
+            </h2>
+            <p>
+                Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
+                tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
+                quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
+                consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
+                cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
+                proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            </p>
+        </md-content>
+    </div>
+
+    <script>
+        var app = angular.module('MyApp', ['ngMaterial']);
+        app.config(function($mdThemingProvider) {
+            $mdThemingProvider.theme('default');
+        });
+        app.run(function(){
+            console.log('MyApp is ready !');
+        });
+    </script>
+</body>
+</html>
