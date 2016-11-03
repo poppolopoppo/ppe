@@ -62,7 +62,7 @@ void DistanceField_CDT(FImage* dst, const FFloatImage* src, float alphaCutoff) {
         return;
 
     constexpr float d1 = 1;
-    constexpr float d2 = (d1*d1 + d1*d1);
+    constexpr float d2 = 1.4142135623730951f; // sqrt(2)
 
     //    1  2  3
     //    0  i  4
@@ -82,7 +82,7 @@ void DistanceField_CDT(FImage* dst, const FFloatImage* src, float alphaCutoff) {
                     nd = d;
                 if (y > 0 && (d = d1 + dstData[index - w]) < nd) // 2
                     nd = d;
-                if (x + 1 < w && y > 0 && (d = d2 + dstData[index - w + 1]) < nd) // 2
+                if (x + 1 < w && y > 0 && (d = d2 + dstData[index - w + 1]) < nd) // 3
                     nd = d;
 
                 dstData[index] = nd;
@@ -301,7 +301,7 @@ void ExpandColorToTransparentPixels(FFloatImage* img, float alphaCutoff) {
         return;
 
     constexpr float d1 = 1;
-    constexpr float d2 = (d1*d1 + d1*d1);
+    constexpr float d2 = 1.4142135623730951f; // sqrt(2)
 
     //    1  2  3
     //    0  i  4
