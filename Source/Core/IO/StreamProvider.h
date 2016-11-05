@@ -32,7 +32,7 @@ public: // virtual interface
     virtual std::streamsize SizeInBytes() const = 0;
 
     virtual bool Read(void* storage, std::streamsize sizeInBytes) = 0;
-    virtual std::streamsize ReadSome(void* storage, size_t eltsize, std::streamsize count) = 0;
+    virtual size_t ReadSome(void* storage, size_t eltsize, size_t count) = 0;
 
     virtual bool Peek(char& ch) = 0;
     virtual bool Peek(wchar_t& ch) = 0;
@@ -81,7 +81,7 @@ public: // virtual interface
     virtual bool SeekO(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) = 0;
 
     virtual bool Write(const void* storage, std::streamsize sizeInBytes) = 0;
-    virtual bool WriteSome(const void* storage, size_t eltsize, std::streamsize count) = 0;
+    virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) = 0;
 
 public: // helpers
     template <typename T>
@@ -90,10 +90,8 @@ public: // helpers
     template <typename T, size_t _Dim>
     void WriteArray(const T(&staticArray)[_Dim]);
 
-    template <size_t _Dim>
-    void WriteCStr(const char (&cstr)[_Dim]);
-    template <size_t _Dim>
-    void WriteCStr(const wchar_t (&wcstr)[_Dim]);
+    void WriteView(const FStringView& str);
+    void WriteView(const FWStringView& wstr);
 
     template <typename T>
     void WriteView(const TMemoryView<T>& data);
@@ -140,9 +138,9 @@ public:
         return (false == _iss.bad());
     }
 
-    virtual std::streamsize ReadSome(void* storage, size_t eltsize, std::streamsize count) override {
+    virtual size_t ReadSome(void* storage, size_t eltsize, size_t count) override {
         Assert(!_iss.bad());
-        return _iss.readsome((_Char*)storage, (count*eltsize)/(sizeof(_Char)));
+        return checked_cast<size_t>(_iss.readsome((_Char*)storage, std::streamsize((count*eltsize)/(sizeof(_Char))) ) / sizeof(_Char) );
     }
 
     virtual bool Peek(char& ch) override {
@@ -190,14 +188,14 @@ public:
 
     virtual bool Write(const void* storage, std::streamsize sizeInBytes) override {
         Assert(!_oss.bad());
-        _oss.write((const _Char*)storage, (sizeInBytes)/(sizeof(_Char)));
+        _oss.write((const _Char*)storage, (sizeInBytes)/(sizeof(_Char)) );
         return (false == _oss.bad());
     }
 
-    virtual bool WriteSome(const void* storage, size_t eltsize, std::streamsize count) override {
+    virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) override {
         Assert(!_oss.bad());
-        _oss.write((const _Char*)storage, (eltsize*count)/(sizeof(_Char)));
-        return (false == _oss.bad());
+        _oss.write((const _Char*)storage, (eltsize*count)/(sizeof(_Char)) );
+        return (_oss.bad() ? 0 : eltsize);
     }
 
 private:

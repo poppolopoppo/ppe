@@ -125,16 +125,17 @@ bool FVirtualFileSystemNativeFileIStream::SeekI(std::streamoff offset, ESeekOrig
 }
 //----------------------------------------------------------------------------
 bool FVirtualFileSystemNativeFileIStream::Read(void* storage, std::streamsize sizeInBytes) {
-    return (sizeInBytes == FVirtualFileSystemNativeFileIStream::ReadSome(storage, 1, sizeInBytes));
+    const size_t count = checked_cast<size_t>(sizeInBytes);
+    return (count == FVirtualFileSystemNativeFileIStream::ReadSome(storage, 1, count) );
 }
 //----------------------------------------------------------------------------
-std::streamsize FVirtualFileSystemNativeFileIStream::ReadSome(void* storage, size_t eltsize, std::streamsize count) {
+size_t FVirtualFileSystemNativeFileIStream::ReadSome(void* storage, size_t eltsize, size_t count) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(IsValidFileHandle_(_handle));
     Assert(storage);
     Assert(count);
 
-    const std::streamsize read = checked_cast<std::streamsize>(fread(storage, eltsize, checked_cast<size_t>(count), _handle));
+    const size_t read = fread(storage, eltsize, count, _handle);
 
     Assert(IsValidFileHandle_(_handle));
     return read;
@@ -244,20 +245,20 @@ bool FVirtualFileSystemNativeFileOStream::SeekO(std::streamoff offset, ESeekOrig
 }
 //----------------------------------------------------------------------------
 bool FVirtualFileSystemNativeFileOStream::Write(const void* storage, std::streamsize sizeInBytes) {
-    return FVirtualFileSystemNativeFileOStream::WriteSome(storage, 1, sizeInBytes);
+    const size_t count = checked_cast<size_t>(sizeInBytes);
+    return (count == FVirtualFileSystemNativeFileOStream::WriteSome(storage, 1, count) );
 }
 //----------------------------------------------------------------------------
-bool FVirtualFileSystemNativeFileOStream::WriteSome(const void* storage, size_t eltsize, std::streamsize count) {
+size_t FVirtualFileSystemNativeFileOStream::WriteSome(const void* storage, size_t eltsize, size_t count) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(IsValidFileHandle_(_handle));
     Assert(storage);
     Assert(count);
 
-    if (count != checked_cast<std::streamsize>(fwrite(storage, eltsize, checked_cast<size_t>(count), _handle)))
-        return false;
+    const size_t written = fwrite(storage, eltsize, count, _handle);
 
     Assert(IsValidFileHandle_(_handle));
-    return true;
+    return written;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

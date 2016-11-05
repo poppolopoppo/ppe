@@ -72,7 +72,7 @@ public: // IStreamReader
     virtual std::streamsize SizeInBytes() const override;
 
     virtual bool Read(void* storage, std::streamsize sizeInBytes) override;
-    virtual std::streamsize ReadSome(void* storage, size_t eltsize, std::streamsize count) override;
+    virtual size_t ReadSome(void* storage, size_t eltsize, size_t count) override;
 
     virtual bool Peek(char& ch) override;
     virtual bool Peek(wchar_t& ch) override;
@@ -84,7 +84,7 @@ public: // IStreamWriter
     virtual bool SeekO(std::streamoff offset, ESeekOrigin policy = ESeekOrigin::Begin) override;
 
     virtual bool Write(const void* storage, std::streamsize sizeInBytes) override;
-    virtual bool WriteSome(const void* storage, size_t eltsize, std::streamsize count) override;
+    virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) override;
 
 private:
     size_t _size;
@@ -240,13 +240,15 @@ bool TMemoryStream<_Allocator>::Read(void* storage, std::streamsize sizeInBytes)
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-std::streamsize TMemoryStream<_Allocator>::ReadSome(void* storage, size_t eltsize, std::streamsize count) {
+size_t TMemoryStream<_Allocator>::ReadSome(void* storage, size_t eltsize, size_t count) {
     Assert(_size >= _offsetI);
     Assert(eltsize > 0);
-    const std::streamsize remaining = checked_cast<std::streamsize>(_size - _offsetI);
-    const std::streamsize wantedsize = eltsize*count;
-    const std::streamsize realsize = remaining < wantedsize ? remaining : wantedsize;
-    return (TMemoryStream::Read(storage, eltsize * count) ) ? realsize : 0;
+
+    const size_t remaining = (_size - _offsetI);
+    const size_t wantedsize = eltsize*count;
+    const size_t realsize = remaining < wantedsize ? remaining : wantedsize;
+
+    return (TMemoryStream::Read(storage, realsize) ? (realsize/eltsize) : 0 );
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
@@ -315,8 +317,8 @@ bool TMemoryStream<_Allocator>::Write(const void* storage, std::streamsize sizeI
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-bool TMemoryStream<_Allocator>::WriteSome(const void* storage, size_t eltsize, std::streamsize count) {
-    return TMemoryStream::Write(storage, eltsize * count);
+size_t TMemoryStream<_Allocator>::WriteSome(const void* storage, size_t eltsize, size_t count) {
+    return (TMemoryStream::Write(storage, eltsize * count) ? count : 0);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

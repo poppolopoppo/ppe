@@ -52,27 +52,30 @@ bool IStreamReader::ExpectPOD(const T& pod) {
 //----------------------------------------------------------------------------
 template <typename T>
 void IStreamWriter::WritePOD(const T& pod) {
-    Write(&pod, sizeof(T));
+    if (not Write(&pod, sizeof(T)) )
+        AssertNotReached();
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 void IStreamWriter::WriteArray(const T(&staticArray)[_Dim]) {
-    WriteSome(staticArray, sizeof(T), _Dim);
+    if (not Write(staticArray, sizeof(T)*_Dim) )
+        AssertNotReached();
 }
 //----------------------------------------------------------------------------
-template <size_t _Dim>
-void IStreamWriter::WriteCStr(const char (&cstr)[_Dim]) {
-    WriteSome(cstr, sizeof(char), (_Dim - 1));
+inline void IStreamWriter::WriteView(const FStringView& str) {
+    if (not Write(str.data(), str.SizeInBytes()) )
+        AssertNotReached();
 }
 //----------------------------------------------------------------------------
-template <size_t _Dim>
-void IStreamWriter::WriteCStr(const wchar_t (&wcstr)[_Dim]) {
-    WriteSome(wcstr, sizeof(wchar_t), (_Dim - 1));
+inline void IStreamWriter::WriteView(const FWStringView& wstr) {
+    if (not Write(wstr.data(), wstr.SizeInBytes()) )
+        AssertNotReached();
 }
 //----------------------------------------------------------------------------
 template <typename T>
 void IStreamWriter::WriteView(const TMemoryView<T>& data) {
-    WriteSome(data.Pointer(), sizeof(T), data.size());
+    if (not Write(data.Pointer(), data.SizeInBytes()) )
+        AssertNotReached();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -117,8 +117,8 @@ void FLookAheadReader::Flush() {
 
     const size_t bufferToFill = (BufferCapacity - _bufferSize);
     if (bufferToFill) {
-        const std::streamsize read = _input->ReadSome(&_bufferData[_bufferSize], 1, bufferToFill);
-        _bufferSize += checked_cast<size_t>(read);
+        const size_t read = _input->ReadSome(&_bufferData[_bufferSize], 1, bufferToFill);
+        _bufferSize += read;
     }
 }
 //----------------------------------------------------------------------------

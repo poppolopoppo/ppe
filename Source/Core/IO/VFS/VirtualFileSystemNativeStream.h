@@ -35,7 +35,7 @@ public:
     virtual bool SeekI(std::streamoff offset, ESeekOrigin policy) override;
 
     virtual bool Read(void* storage, std::streamsize sizeInBytes) override;
-    virtual std::streamsize ReadSome(void* storage, size_t eltsize, std::streamsize count) override;
+    virtual size_t ReadSome(void* storage, size_t eltsize, size_t count) override;
 
     virtual bool Peek(char& ch) override;
     virtual bool Peek(wchar_t& ch) override;
@@ -68,7 +68,7 @@ public:
     virtual bool SeekO(std::streamoff offset, ESeekOrigin policy) override;
 
     virtual bool Write(const void* storage, std::streamsize sizeInBytes) override;
-    virtual bool WriteSome(const void* storage, size_t eltsize, std::streamsize count) override;
+    virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) override;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 

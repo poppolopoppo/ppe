@@ -46,13 +46,15 @@ bool FMemoryViewReader::Read(void* storage, std::streamsize sizeInBytes) {
     return true;
 }
 //----------------------------------------------------------------------------
-std::streamsize FMemoryViewReader::ReadSome(void* storage, size_t eltsize, std::streamsize count) {
+size_t FMemoryViewReader::ReadSome(void* storage, size_t eltsize, size_t count) {
     Assert(_rawData.SizeInBytes() >= _offsetI);
     Assert(eltsize > 0);
-    const std::streamsize remaining = checked_cast<std::streamsize>(_rawData.SizeInBytes() - _offsetI);
-    const std::streamsize wantedsize = eltsize*count;
-    const std::streamsize realsize = remaining < wantedsize ? remaining : wantedsize;
-    return (FMemoryViewReader::Read(storage, realsize) ) ? realsize : 0;
+
+    const size_t remaining = (_rawData.SizeInBytes() - _offsetI);
+    const size_t wantedsize = eltsize*count;
+    const size_t realsize = remaining < wantedsize ? remaining : wantedsize;
+
+    return (FMemoryViewReader::Read(storage, realsize) ? (realsize/eltsize) : 0);
 }
 //----------------------------------------------------------------------------
 bool FMemoryViewReader::Peek(char& ch) {
@@ -124,8 +126,8 @@ bool FMemoryViewWriter::Write(const void* storage, std::streamsize sizeInBytes) 
     return true;
 }
 //----------------------------------------------------------------------------
-bool FMemoryViewWriter::WriteSome(const void* storage, size_t eltsize, std::streamsize count) {
-    return FMemoryViewWriter::Write(storage, eltsize * count);
+size_t FMemoryViewWriter::WriteSome(const void* storage, size_t eltsize, size_t count) {
+    return (FMemoryViewWriter::Write(storage, eltsize * count) ? count : 0);
 }
 //----------------------------------------------------------------------------
 bool FMemoryViewWriter::WriteAligned(const void* storage, std::streamsize sizeInBytes, size_t boundary) {

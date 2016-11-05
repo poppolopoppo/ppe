@@ -269,12 +269,7 @@ private:
     void Indent_();
 
     void Print(const FStringView& str);
-    template <size_t _Dim>
-    void Print(const char (&cstr)[_Dim]) { Print(MakeStringView(cstr)); }
-
     void Puts(const FStringView& str);
-    template <size_t _Dim>
-    void Puts(const char (&cstr)[_Dim]) { Puts(MakeStringView(cstr)); }
 
     template <typename T>
     void PrintFormat(const T& value) {
@@ -381,7 +376,7 @@ void FTextSerialize_::Indent_() {
     if (_newline) {
         _newline = false;
         forrange(i, 0, _indent)
-            _oss.WriteCStr("    ");
+            _oss.WriteView("    ");
     }
 }
 //----------------------------------------------------------------------------
@@ -393,7 +388,7 @@ void FTextSerialize_::Print(const FStringView& str) {
 void FTextSerialize_::Puts(const FStringView& str) {
     Indent_();
     _oss.WriteView(str);
-    _oss.WriteCStr("\r\n");
+    _oss.WriteView("\r\n");
     _newline = true;
 }
 //----------------------------------------------------------------------------

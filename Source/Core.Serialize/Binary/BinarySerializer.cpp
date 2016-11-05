@@ -175,7 +175,7 @@ static void SerializePODs_(IStreamWriter* writer, const TMemoryView<T>& pods) {
     const u32 n = checked_cast<u32>(pods.size());
     writer->WritePOD(n);
     if (n)
-        writer->WriteSome(pods.Pointer(), sizeof(T), n);
+        writer->Write(pods.data(), pods.SizeInBytes());
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
