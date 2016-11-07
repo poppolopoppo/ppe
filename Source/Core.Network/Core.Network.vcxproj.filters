@@ -64,6 +64,12 @@
     <CustomBuild Include="Socket\SocketBuffered.h">
       <Filter>Socket</Filter>
     </CustomBuild>
+    <CustomBuild Include="Socket\SocketStream.cpp">
+      <Filter>Socket</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Socket\SocketStream.h">
+      <Filter>Socket</Filter>
+    </CustomBuild>
     <CustomBuild Include="Core.Network.bff">
     </CustomBuild>
     <CustomBuild Include="Exceptions.h">

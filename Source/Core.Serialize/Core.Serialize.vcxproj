@@ -85,6 +85,8 @@
     <CustomBuild Include="XML\Name.h" />
     <CustomBuild Include="XML\XML.cpp" />
     <CustomBuild Include="XML\XML.h" />
+    <CustomBuild Include="XML\XMLSerializer.cpp" />
+    <CustomBuild Include="XML\XMLSerializer.h" />
     <CustomBuild Include="Core.Serialize.bff" />
     <CustomBuild Include="Exceptions.h" />
     <CustomBuild Include="ISerializer.cpp" />

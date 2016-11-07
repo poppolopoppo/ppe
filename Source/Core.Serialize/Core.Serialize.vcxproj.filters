@@ -127,6 +127,12 @@
     <CustomBuild Include="XML\XML.h">
       <Filter>XML</Filter>
     </CustomBuild>
+    <CustomBuild Include="XML\XMLSerializer.cpp">
+      <Filter>XML</Filter>
+    </CustomBuild>
+    <CustomBuild Include="XML\XMLSerializer.h">
+      <Filter>XML</Filter>
+    </CustomBuild>
     <CustomBuild Include="Core.Serialize.bff">
     </CustomBuild>
     <CustomBuild Include="Exceptions.h">

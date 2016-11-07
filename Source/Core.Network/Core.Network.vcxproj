@@ -64,6 +64,8 @@
     <CustomBuild Include="Socket\Socket.h" />
     <CustomBuild Include="Socket\SocketBuffered.cpp" />
     <CustomBuild Include="Socket\SocketBuffered.h" />
+    <CustomBuild Include="Socket\SocketStream.cpp" />
+    <CustomBuild Include="Socket\SocketStream.h" />
     <CustomBuild Include="Core.Network.bff" />
     <CustomBuild Include="Exceptions.h" />
     <CustomBuild Include="Name.cpp" />
