@@ -80,4 +80,89 @@ void IStreamWriter::WriteView(const TMemoryView<T>& data) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename _Char, typename _Traits>
+std::streamoff TBasicStreamReader<_Char, _Traits>::TellI() const {
+    Assert(!_iss.bad());
+    return _iss.tellg();
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits>
+bool TBasicStreamReader<_Char, _Traits>::SeekI(std::streamoff offset, ESeekOrigin origin/* = ESeekOrigin::Begin */) {
+    Assert(!_iss.bad());
+    _iss.seekg(offset, int(origin));
+    Assert(!_iss.bad());
+    return true;
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits>
+std::streamsize TBasicStreamReader<_Char, _Traits>::SizeInBytes() const {
+    Assert(!_iss.bad());
+    const std::streamoff off = _iss.tellg();
+    _iss.seekg(0, int(ESeekOrigin::End));
+    const std::streamsize sz(_iss.tellg());
+    _iss.seekg(off, int(ESeekOrigin::Begin));
+    return sz;
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits>
+bool TBasicStreamReader<_Char, _Traits>::Read(void* storage, std::streamsize sizeInBytes) {
+    Assert(!_iss.bad());
+    _iss.read((_Char*)storage, sizeInBytes/(sizeof(_Char)));
+    return (false == _iss.bad());
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits>
+size_t TBasicStreamReader<_Char, _Traits>::ReadSome(void* storage, size_t eltsize, size_t count) {
+    Assert(!_iss.bad());
+    return checked_cast<size_t>(_iss.readsome((_Char*)storage, std::streamsize((count*eltsize)/(sizeof(_Char))) ) / sizeof(_Char) );
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits>
+bool TBasicStreamReader<_Char, _Traits>::Peek(char& ch) {
+    Assert(!_iss.bad());
+    const auto read = _iss.peek();
+    ch = char(read);
+    return (read != Eof_);
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits>
+bool TBasicStreamReader<_Char, _Traits>::Peek(wchar_t& wch) {
+    Assert(!_iss.bad());
+    const auto read = _iss.peek();
+    wch = wchar_t(read);
+    return (read != Eof_);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits>
+std::streamoff TBasicStreamWriter<_Char, _Traits>::TellO() const {
+    Assert(!_oss.bad());
+    return _oss.tellp();
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits>
+bool TBasicStreamWriter<_Char, _Traits>::SeekO(std::streamoff offset, ESeekOrigin policy/* = ESeekOrigin::Begin */) {
+    Assert(!_oss.bad());
+    _oss.seekp(offset, int(policy));
+    Assert(!_oss.bad());
+    return true;
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits>
+bool TBasicStreamWriter<_Char, _Traits>::Write(const void* storage, std::streamsize sizeInBytes) {
+    Assert(!_oss.bad());
+    _oss.write((const _Char*)storage, (sizeInBytes)/(sizeof(_Char)) );
+    return (false == _oss.bad());
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits>
+size_t TBasicStreamWriter<_Char, _Traits>::WriteSome(const void* storage, size_t eltsize, size_t count) {
+    Assert(!_oss.bad());
+    _oss.write((const _Char*)storage, (eltsize*count)/(sizeof(_Char)) );
+    return (_oss.bad() ? 0 : eltsize);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Core
