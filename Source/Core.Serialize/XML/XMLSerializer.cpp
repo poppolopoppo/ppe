@@ -20,6 +20,43 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
+struct FXMLEscaped_ {
+    FStringView Str;
+
+    template <typename _OStream>
+    void Serialize(_OStream& oss) const {
+        for (char ch : Str) {
+            if (IsAlnum(ch) || '-' == ch || '_' == ch || '.' == ch || '~' == ch) {
+                oss(ch);
+            }
+            else if (IsSpace(ch)) {
+                oss('+');
+            }
+            else {
+                const size_t x0 = unsigned char(ch) >> 4;
+                const size_t x1 = unsigned char(ch) & 15;
+
+                oss('%');
+                oss(char(x0 + (x0 > 9 ? 'A' - 10 : '0')));
+                oss(char(x1 + (x1 > 9 ? 'A' - 10 : '0')));
+            }
+        }
+    }
+
+    inline friend void operator <<(
+        IStreamWriter& output,
+        const FXMLEscaped_& escaped ) {
+        escaped.Serialize([&output](char  ch) { output.WritePOD(ch); });
+    }
+
+    inline friend std::basic_ostream<char>& operator <<(
+        std::basic_ostream<char>& oss,
+        const FXMLEscaped_& escaped ) {
+        escaped.Serialize([&oss](char  ch) { oss.put(ch); });
+        return oss;
+    }
+};
+//----------------------------------------------------------------------------
 class FXMLSerialize_ : private RTTI::FMetaAtomWrapCopyVisitor {
 public:
     FXMLSerialize_(IStreamWriter* output, const RTTI::FMetaTransaction* transaction)
@@ -40,12 +77,12 @@ private: // FMetaAtomWrapCopyVisitor
     virtual void Inspect(const RTTI::IMetaAtomPair* ppair, const RTTI::TPair<RTTI::PMetaAtom, RTTI::PMetaAtom>& pair) override {
         Puts("<pair>");
         IncIndent();
-            Puts("<first class='{0}'>", ppair->FirstTypeInfo().Name);
+            Puts("<first class='{0}'>", FXMLEscaped_{ppair->FirstTypeInfo().Name} );
             IncIndent();
                 Append(pair.first.get());
             DecIndent();
             Puts("</first>");
-            Puts("<second class='{0}'>", ppair->SecondTypeInfo().Name);
+            Puts("<second class='{0}'>", FXMLEscaped_{ppair->SecondTypeInfo().Name} );
             IncIndent();
                 Append(pair.second.get());
             DecIndent();
@@ -56,10 +93,10 @@ private: // FMetaAtomWrapCopyVisitor
 
     virtual void Inspect(const RTTI::IMetaAtomVector* pvector, const RTTI::TVector<RTTI::PMetaAtom>& vector) override {
         if (vector.empty()) {
-            Puts("<vector class='{0}' size='0' />", pvector->ValueTypeInfo().Name);
+            Puts("<vector class='{0}' size='0' />", FXMLEscaped_{pvector->ValueTypeInfo().Name} );
         }
         else {
-            Puts("<vector class='{0}' size='{1}'>", pvector->ValueTypeInfo().Name, vector.size());
+            Puts("<vector class='{0}' size='{1}'>", FXMLEscaped_{pvector->ValueTypeInfo().Name}, vector.size());
             IncIndent();
                 for(const RTTI::PMetaAtom& atom : vector)
                     Append(atom.get());
@@ -70,16 +107,21 @@ private: // FMetaAtomWrapCopyVisitor
 
     virtual void Inspect(const RTTI::IMetaAtomDictionary* pdictionary, const RTTI::TDictionary<RTTI::PMetaAtom, RTTI::PMetaAtom>& dictionary) override {
         if (dictionary.empty()) {
-            Puts("<dictionary class='{0};{1}' size='0' />", pdictionary->KeyTypeInfo().Name, pdictionary->ValueTypeInfo().Name);
+            Puts("<dictionary class='{0};{1}' size='0' />",
+                FXMLEscaped_{pdictionary->KeyTypeInfo().Name},
+                FXMLEscaped_{pdictionary->ValueTypeInfo().Name} );
         }
         else {
-            Puts("<dictionary class='{0};{1}' size='{2}'>", pdictionary->KeyTypeInfo().Name, pdictionary->ValueTypeInfo().Name, dictionary.size());
+            Puts("<dictionary class='{0};{1}' size='{2}'>",
+                FXMLEscaped_{pdictionary->KeyTypeInfo().Name},
+                FXMLEscaped_{pdictionary->ValueTypeInfo().Name},
+                dictionary.size() );
             IncIndent();
                 for(const RTTI::TPair<RTTI::PMetaAtom, RTTI::PMetaAtom>& pair : dictionary) {
                     Puts("<pair>");
                     IncIndent();
                         if (pair.first) {
-                            Puts("<first class='{0}'>", pair.first->TypeInfo().Name);
+                            Puts("<first class='{0}'>", FXMLEscaped_{pair.first->TypeInfo().Name} );
                                 IncIndent();
                                 Append(pair.first.get());
                                 DecIndent();
@@ -89,7 +131,7 @@ private: // FMetaAtomWrapCopyVisitor
                             Puts("<first />");
                         }
                         if (pair.second) {
-                            Puts("<second class='{0}'>", pair.second->TypeInfo().Name);
+                            Puts("<second class='{0}'>", FXMLEscaped_{pair.second->TypeInfo().Name} );
                                 IncIndent();
                                 Append(pair.second.get());
                                 DecIndent();
@@ -134,32 +176,11 @@ private:
 
     template <typename T>
     void WriteValue_(const T& value) {
-        Puts("<numeric class='{0}' value='{1}' />", RTTI::TypeInfo<T>().Name, Numeric_(value));
-    }
-
-    void WriteURIEncode_(const TMemoryView<const char>& rawData) {
-        for (char ch : rawData) {
-            if (IsAlnum(ch) || '-' == ch || '_' == ch || '.' == ch || '~' == ch) {
-                Print(ch);
-            }
-            else if (IsSpace(ch)) {
-                Print('+');
-            }
-            else {
-                const size_t x0 = unsigned char(ch) >> 4;
-                const size_t x1 = unsigned char(ch) & 15;
-
-                Print('%');
-                Print(char(x0 + (x0 > 9 ? 'A' - 10 : '0')));
-                Print(char(x1 + (x1 > 9 ? 'A' - 10 : '0')));
-            }
-        }
+        Puts("<numeric class='{0}' value='{1}' />", FXMLEscaped_{RTTI::TypeInfo<T>().Name}, Numeric_(value) );
     }
 
     void WriteValue_(const FString& str) {
-        Print("<string value='", str.size());
-        WriteURIEncode_(str.MakeView());
-        Puts("' />");
+        Puts("<string value='{0}' />", FXMLEscaped_{str.MakeView()} );
     }
 
     void WriteValue_(const FWString& wstr) {
@@ -168,13 +189,13 @@ private:
     }
 
     void WriteValue_(const RTTI::FName& name) {
-        Puts("<name value='{0}' />", name.MakeView());
+        Puts("<name value='{0}' />", FXMLEscaped_{name.MakeView()} );
     }
 
     void WriteValue_(const RTTI::FBinaryData& rawdata) {
         if (rawdata.size()) {
             Print("<binarydata size='{0}'>", rawdata.size());
-            WriteURIEncode_(rawdata.MakeView().Cast<const char>());
+            *_output << FXMLEscaped_{rawdata.MakeView().Cast<const char>()};
             Puts("</binarydata>");
         }
         else {
@@ -189,13 +210,13 @@ private:
                 for(const RTTI::TPair<RTTI::FName, RTTI::PMetaAtom>& pair : opaqueData) {
                     Puts("<pair>");
                     IncIndent();
-                        Puts("<first>");
+                        Puts("<first class='{0}'>", FXMLEscaped_{RTTI::TypeInfo<RTTI::FName>().Name} );
                         IncIndent();
                             WriteValue_(pair.first);
                         DecIndent();
                         Puts("</first>");
                         if (pair.second) {
-                            Puts("<second class='{0}'>", pair.second->TypeInfo().Name);
+                            Puts("<second class='{0}'>", FXMLEscaped_{pair.second->TypeInfo().Name} );
                             IncIndent();
                                 Append(pair.second.get());
                             DecIndent();
@@ -217,21 +238,21 @@ private:
 
     template <typename T>
     void WriteValue_(const TScalarVector<T, 2>& v) {
-        Puts("<scalarvector class='{0}' dim='2' x='{1}' y='{2}' />", RTTI::TypeInfo<T>().Name, Numeric_(v.x()), Numeric_(v.y()) );
+        Puts("<scalarvector class='{0}' dim='2' x='{1}' y='{2}' />", FXMLEscaped_{RTTI::TypeInfo<T>().Name}, Numeric_(v.x()), Numeric_(v.y()) );
     }
     template <typename T>
     void WriteValue_(const TScalarVector<T, 3>& v) {
-        Puts("<scalarvector class='{0}' dim='3' x='{1}' y='{2}' z='{3}' />", RTTI::TypeInfo<T>().Name, Numeric_(v.x()), Numeric_(v.y()), Numeric_(v.z()) );
+        Puts("<scalarvector class='{0}' dim='3' x='{1}' y='{2}' z='{3}' />", FXMLEscaped_{RTTI::TypeInfo<T>().Name}, Numeric_(v.x()), Numeric_(v.y()), Numeric_(v.z()) );
     }
 
     template <typename T>
     void WriteValue_(const TScalarVector<T, 4>& v) {
-        Puts("<scalarvector class='{0}' dim='4' x='{1}' y='{2}' z='{3}' w='{4}' />", RTTI::TypeInfo<T>().Name, Numeric_(v.x()), Numeric_(v.y()), Numeric_(v.z()), Numeric_(v.w()) );
+        Puts("<scalarvector class='{0}' dim='4' x='{1}' y='{2}' z='{3}' w='{4}' />", FXMLEscaped_{RTTI::TypeInfo<T>().Name}, Numeric_(v.x()), Numeric_(v.y()), Numeric_(v.z()), Numeric_(v.w()) );
     }
 
     template <typename T, size_t _Width, size_t _Height>
     void WriteValue_(const TScalarMatrix<T, _Width, _Height>& v) {
-        Puts("<scalarmatrix class='{0}' width='{1}' height='{2}'>", RTTI::TypeInfo<T>().Name, _Width, _Height);
+        Puts("<scalarmatrix class='{0}' width='{1}' height='{2}'>", FXMLEscaped_{RTTI::TypeInfo<T>().Name}, _Width, _Height);
         IncIndent();
             forrange(row, 0, _Height) {
                 WriteValue_(v.Row(row));
@@ -265,7 +286,7 @@ private:
             if (_transaction->Contains(object.get())) {
                 if (object->RTTI_IsExported()) {
                     QueueObject(object.get());
-                    Puts("<object name='{0}' />", object->RTTI_Name().MakeView());
+                    Puts("<object name='{0}' />", FXMLEscaped_{object->RTTI_Name().MakeView()} );
                 }
                 else {
                     WriteObject(object.get());
@@ -273,7 +294,9 @@ private:
             }
             else {
                 const RTTI::FMetaClass* metaClass = object->RTTI_MetaClass();
-                Puts("<externalreference class='{0}' name='{1}' />", metaClass->Name().MakeView(), object->RTTI_Name().MakeView());
+                Puts("<externalreference class='{0}' name='{1}' />",
+                    FXMLEscaped_{metaClass->Name().MakeView()},
+                    FXMLEscaped_{object->RTTI_Name().MakeView()} );
             }
         }
         else {
@@ -353,7 +376,7 @@ void FXMLSerialize_::WriteObject(const RTTI::FMetaObject* object) {
     Assert(metaClass);
 
     if (object->RTTI_IsExported())
-        Puts("<object class='{0}' name='{1}'>",  metaClass->Name().MakeView(), object->RTTI_Name().MakeView());
+        Puts("<object class='{0}' name='{1}'>",  FXMLEscaped_{metaClass->Name().MakeView()}, FXMLEscaped_{object->RTTI_Name().MakeView()} );
     else
         Puts("<object class='{0}'>",  metaClass->Name().MakeView());
 
@@ -364,7 +387,7 @@ void FXMLSerialize_::WriteObject(const RTTI::FMetaObject* object) {
             if (prop->IsDefaultValue(object) )
                 continue;
 
-            Puts("<property name='{0}' class='{1}'>", prop->Name().MakeView(), prop->TypeInfo().Name);
+            Puts("<property name='{0}' class='{1}'>", FXMLEscaped_{prop->Name().MakeView()}, FXMLEscaped_{prop->TypeInfo().Name} );
             IncIndent();
 
                 const RTTI::PMetaAtom atom = prop->WrapCopy(object);
