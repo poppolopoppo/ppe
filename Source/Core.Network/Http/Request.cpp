@@ -25,7 +25,7 @@ static void ReadUntil_(std::ostream* poss, FSocketBuffered& socket, const char d
         socket.Peek(ch) && ch != delim && ch != '\n';
         ++len ) {
         if (len == maxLength)
-            throw FHttpException(EHttpStatus::RequestURITooLong, "HTTP field from client is too long");
+            CORE_THROW_IT(FHttpException(EHttpStatus::RequestURITooLong, "HTTP field from client is too long"));
 
         if (not socket.Get(ch))
             AssertNotReached();
@@ -34,7 +34,7 @@ static void ReadUntil_(std::ostream* poss, FSocketBuffered& socket, const char d
     }
 
     if (not socket.Peek(ch))
-        throw FHttpException(EHttpStatus::RequestURITooLong, "HTTP field from client terminated incorrectly");
+        CORE_THROW_IT(FHttpException(EHttpStatus::RequestURITooLong, "HTTP field from client terminated incorrectly"));
 
     socket.EatWhiteSpaces();
 }
@@ -66,7 +66,7 @@ void FHttpRequest::Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t 
 
         FStringView requestMethod = oss.MakeView();
         if (not HttpMethodFromCStr(&prequest->_method, requestMethod))
-            throw FHttpException(EHttpStatus::MethodNotAllowed, "HTTP invalid method requested");
+            CORE_THROW_IT(FHttpException(EHttpStatus::MethodNotAllowed, "HTTP invalid method requested"));
 
         oss.Reset();
     }
@@ -76,7 +76,7 @@ void FHttpRequest::Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t 
         ReadUntil_(&oss, socket, ' ');
 
         if (not FUri::Parse(prequest->_uri, oss.MakeView()))
-            throw FHttpException(EHttpStatus::BadRequest, "HTTP failed to parse requested path");
+            CORE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP failed to parse requested path"));
 
         oss.Reset();
     }
@@ -103,7 +103,7 @@ void FHttpRequest::Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t 
 
             if (line.end() == doublePoint) {
                 if (line.size())
-                    throw FHttpException(EHttpStatus::BadRequest, "HTTP malformed header field");
+                    CORE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP malformed header field"));
 
                 break;
             }
@@ -112,7 +112,7 @@ void FHttpRequest::Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t 
                 const FStringView value = Strip(line.CutStartingAt(doublePoint+1));
 
                 if (key.empty())
-                    throw FHttpException(EHttpStatus::BadRequest, "HTTP failed to parse header key");
+                    CORE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP failed to parse header key"));
 
                 prequest->Add(FName(key), ToString(value));
 
@@ -129,15 +129,15 @@ void FHttpRequest::Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t 
         if (contentLengthCStr.size()) {
             i64 contentLengthI = 0;
             if (not Atoi64(&contentLengthI, contentLengthCStr, 10))
-                throw FHttpException(EHttpStatus::BadRequest, "HTTP invalid content length");
+                CORE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP invalid content length"));
 
             const size_t contentLength = checked_cast<size_t>(contentLengthI);
             if (contentLength > maxContentLength)
-                throw FHttpException(EHttpStatus::RequestEntityTooLarge, "HTTP content length is too large");
+                CORE_THROW_IT(FHttpException(EHttpStatus::RequestEntityTooLarge, "HTTP content length is too large"));
 
             prequest->_body.Resize_DiscardData(contentLength);
             if (contentLength != socket.Read(prequest->_body.MakeView().Cast<u8>()) )
-                throw FHttpException(EHttpStatus::BadRequest, "HTTP failed to read all content");
+                CORE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP failed to read all content"));
         }
 
         oss.Reset();
@@ -158,18 +158,18 @@ bool FHttpRequest::UnpackCookie(FCookieMap* pcookie, FHttpRequest& request) {
         FStringView encodedKey;
         FStringView encodedValue = cookieLine;
         if (not Split(encodedValue, '=', encodedKey) || encodedKey.empty())
-            throw FHttpException(EHttpStatus::BadRequest, "HTTP malformed cookie entry");
+            CORE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP malformed cookie entry"));
 
         encodedKey = Strip(encodedKey);
         encodedValue = Strip(encodedValue);
 
         FString decodedKey;
         if (not FUri::Decode(decodedKey, encodedKey))
-            throw FHttpException(EHttpStatus::BadRequest, "HTTP could not decode cookie key");
+            CORE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP could not decode cookie key"));
 
         FString decodedValue;
         if (not FUri::Decode(decodedValue, encodedValue))
-            throw FHttpException(EHttpStatus::BadRequest, "HTTP could not decode cookie value");
+            CORE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP could not decode cookie value"));
 
         pcookie->Insert_AssertUnique(std::move(decodedKey), std::move(decodedValue));
     }
