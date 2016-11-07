@@ -12,13 +12,13 @@ class FSocketBuffered;
 //----------------------------------------------------------------------------
 class FSocketStreamWriter : public IStreamWriter {
 public:
-    explicit FSocketStreamWriter(FSocketBuffered* psocket);
+    explicit FSocketStreamWriter(FSocketBuffered& socket);
     ~FSocketStreamWriter();
 
     FSocketStreamWriter(const FSocketStreamWriter& ) = delete;
     FSocketStreamWriter& operator =(const FSocketStreamWriter& ) = delete;
 
-    const FSocketBuffered& Socket() const { return *_psocket; }
+    const FSocketBuffered& Socket() const { return _socket; }
 
 public: // IStreamWriter
     virtual bool IsSeekableO(ESeekOrigin ) const override { return false; }
@@ -30,8 +30,8 @@ public: // IStreamWriter
     virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) override;
 
 private:
+    FSocketBuffered& _socket;
     std::streamoff _tellO;
-    FSocketBuffered* _psocket;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

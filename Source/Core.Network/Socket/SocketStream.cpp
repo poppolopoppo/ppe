@@ -9,11 +9,10 @@ namespace Network {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FSocketStreamWriter::FSocketStreamWriter(FSocketBuffered* psocket)
+FSocketStreamWriter::FSocketStreamWriter(FSocketBuffered& socket)
 :   _tellO(0)
-,   _psocket(psocket) {
-    Assert(_psocket);
-    Assert(_psocket->IsConnected());
+,   _socket(socket) {
+    Assert(_socket.IsConnected());
 }
 //----------------------------------------------------------------------------
 FSocketStreamWriter::~FSocketStreamWriter() {}
@@ -33,19 +32,18 @@ bool FSocketStreamWriter::Write(const void* storage, std::streamsize sizeInBytes
 }
 //----------------------------------------------------------------------------
 size_t FSocketStreamWriter::WriteSome(const void* storage, size_t eltsize, size_t count) {
-    Assert(_psocket);
-    Assert(_psocket->IsConnected());
+    Assert(_socket.IsConnected());
     Assert(eltsize > 0);
 
     if (0 == count)
         return 0;
 
     const TMemoryView<const u8> rawData(static_cast<const u8*>(storage), eltsize*count);
-    const size_t written = _psocket->Write(rawData);
+    const size_t written = _socket.Write(rawData);
 
     _tellO += written;
 
-    Assert(_psocket->IsConnected());
+    Assert(_socket.IsConnected());
     return (written/eltsize);
 }
 //----------------------------------------------------------------------------
