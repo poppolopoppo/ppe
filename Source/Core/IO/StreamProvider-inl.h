@@ -8,12 +8,12 @@ namespace Core {
 //----------------------------------------------------------------------------
 template <typename T>
 bool IStreamReader::ReadPOD(T* pod) {
-    return sizeof(T) == ReadSome(pod, sizeof(T), 1);
+    return (1 == ReadSome(pod, sizeof(T), 1));
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 bool IStreamReader::ReadArray(T(&staticArray)[_Dim]) {
-    return (_Dim * sizeof(T)) == ReadSome(staticArray, sizeof(T), _Dim);
+    return (_Dim == ReadSome(staticArray, sizeof(T), _Dim));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
