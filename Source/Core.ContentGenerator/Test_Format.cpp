@@ -20,7 +20,7 @@ static void TestFormat_(const char (&expected)[_Dim], const char (&format)[_Dim2
     std::cout
         << "==================================================================" << std::endl
         << "Format      = '" << format << "'" << std::endl
-        << "EResult      = '" << str << "'" << std::endl
+        << "Result      = '" << str << "'" << std::endl
         << "Expected    = '" << expected << "' => " << std::boolalpha << match << std::endl;
 
     AssertRelease(match);
@@ -35,7 +35,7 @@ static void TestFormat_(const wchar_t (&expected)[_Dim], const wchar_t (&format)
     std::wcout
         << L"==================================================================" << std::endl
         << L"Format      = '" << format << L"'" << std::endl
-        << L"EResult      = '" << wstr << L"'" << std::endl
+        << L"Result      = '" << wstr << L"'" << std::endl
         << L"Expected    = '" << expected << L"' => " << std::boolalpha << match << std::endl;
 
     AssertRelease(match);
