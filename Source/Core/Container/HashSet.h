@@ -32,6 +32,64 @@ template <typename T, typename _Hasher, typename _EqualTo, typename _Allocator>
 hash_t hash_value(const THashSet<T, _Hasher, _EqualTo, _Allocator>& hashSet) {
     return hash_range(hashSet.begin(), hashSet.end());
 }
+
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, typename _Hasher, typename _EqualTo, typename _Allocator>
+bool Insert_ReturnIfExists(THashSet<T, _Hasher, _EqualTo, _Allocator>& hashset, const T& elt) {
+    const auto it = hashset.lower_bound(elt);
+    if (it != hashset.end() && !(hashset.key_comp()(elt, *it)) ) {
+        return true;
+    }
+    else {
+        hashset.insert(it, elt);
+        return false;
+    }
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Hasher, typename _EqualTo, typename _Allocator>
+void Insert_AssertUnique(THashSet<T, _Hasher, _EqualTo, _Allocator>& hashset, const T& elt) {
+#ifdef WITH_CORE_ASSERT
+    const auto it = hashset.lower_bound(elt);
+    if (it != hashset.end() && !(hashset.key_comp()(elt, *it)) )
+        AssertNotReached();
+    else
+        hashset.insert(it, elt);
+#else
+    hashset.insert(elt);
+#endif
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Hasher, typename _EqualTo, typename _Allocator>
+bool Remove_ReturnIfExists(THashSet<T, _Hasher, _EqualTo, _Allocator>& hashset, const T& elt) {
+    const auto it = hashset.find(elt);
+    if (hashset.end() == it) {
+        return false;
+    }
+    else {
+        hashset.erase(it);
+        return true;
+    }
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Hasher, typename _EqualTo, typename _Allocator>
+void Remove_AssertExists(THashSet<T, _Hasher, _EqualTo, _Allocator>& hashset, const T& elt) {
+    if (!Remove_ReturnIfExists(hashset, elt))
+        AssertNotReached();
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Hasher, typename _EqualTo, typename _Allocator>
+void Remove_AssertExistsAndSameValue(THashSet<T, _Hasher, _EqualTo, _Allocator>& hashset, const T& elt) {
+    const auto it = hashset.find(key);
+    if (hashset.end() == it) {
+        AssertNotReached();
+    }
+    else {
+        Assert(it->second == value);
+        hashset.erase(it);
+    }
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
