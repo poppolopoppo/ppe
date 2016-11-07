@@ -212,9 +212,9 @@ struct TMetaTypePromote<FString, FName> {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <>
-struct TMetaTypePromote<RTTI::TDictionary<PMetaAtom, PMetaAtom>, RTTI::OpaqueData> {
+struct TMetaTypePromote<RTTI::TDictionary<PMetaAtom, PMetaAtom>, RTTI::FOpaqueData> {
     typedef std::true_type enabled;
-    bool operator ()(RTTI::OpaqueData* dst, const RTTI::TDictionary<PMetaAtom, PMetaAtom>& value) const {
+    bool operator ()(RTTI::FOpaqueData* dst, const RTTI::TDictionary<PMetaAtom, PMetaAtom>& value) const {
         dst->reserve(value.size());
 
         for (const TPair<PMetaAtom, PMetaAtom>& it : value) {
@@ -233,9 +233,9 @@ struct TMetaTypePromote<RTTI::TDictionary<PMetaAtom, PMetaAtom>, RTTI::OpaqueDat
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <>
-struct TMetaTypePromote<FString, RTTI::BinaryData> {
+struct TMetaTypePromote<FString, RTTI::FBinaryData> {
     typedef std::true_type enabled;
-    bool operator ()(RTTI::BinaryData* dst, const FString& value) const {
+    bool operator ()(RTTI::FBinaryData* dst, const FString& value) const {
         dst->Resize_DiscardData(value.size());
         Assert(dst->SizeInBytes() == value.size());
         memcpy(dst->data(), value.c_str(), dst->SizeInBytes());

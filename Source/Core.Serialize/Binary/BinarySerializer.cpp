@@ -469,7 +469,7 @@ private:
             return true;
         }
 
-        bool ReadValue_(RTTI::BinaryData& rawdata) {
+        bool ReadValue_(RTTI::FBinaryData& rawdata) {
             u32 rawsize;
             if (_reader->ReadPOD(&rawsize)) {
                 if (0 == rawsize) {
@@ -485,7 +485,7 @@ private:
             }
         }
 
-        bool ReadValue_(RTTI::OpaqueData& opaqueData) {
+        bool ReadValue_(RTTI::FOpaqueData& opaqueData) {
             u32 count;
             if (_reader->ReadPOD(&count)) {
                 if (0 == count) {
@@ -933,13 +933,13 @@ private:
             WriteValue_(ToString(name.MakeView()));
         }
 
-        void WriteValue_(const RTTI::BinaryData& rawdata) {
+        void WriteValue_(const RTTI::FBinaryData& rawdata) {
             WritePOD(checked_cast<u32>(rawdata.size()));
             if (rawdata.size())
                 _owner->_objectStream.Write(rawdata.data(), rawdata.SizeInBytes());
         }
 
-        void WriteValue_(const RTTI::OpaqueData& opaqueData) {
+        void WriteValue_(const RTTI::FOpaqueData& opaqueData) {
             WritePOD(checked_cast<u32>(opaqueData.size()));
             for (const auto& it : opaqueData) {
                 WriteValue_(it.first);

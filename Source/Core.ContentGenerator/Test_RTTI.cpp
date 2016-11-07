@@ -25,6 +25,7 @@
 #include "Core.Serialize/Text/Grammar.h"
 #include "Core.Serialize/Lexer/Lexer.h"
 #include "Core.Serialize/Parser/Parser.h"
+#include "Core.Serialize/XML/XMLSerializer.h"
 
 namespace Core {
 namespace ContentGenerator {
@@ -296,14 +297,14 @@ private:
         name = RTTI::FName(MakeStringView(cstr));
     }
 
-    void Randomize_(RTTI::BinaryData& rawdata) {
+    void Randomize_(RTTI::FBinaryData& rawdata) {
         const size_t count = NextRandomDim_()*10;
         rawdata.Resize_DiscardData(count);
         forrange(i, 0, count)
             rawdata[i] = u8(_rand.Next());
     }
 
-    void Randomize_(RTTI::OpaqueData& opaqueData) {
+    void Randomize_(RTTI::FOpaqueData& opaqueData) {
         const size_t count = NextRandomDim_()*10;
         opaqueData.reserve(count);
         forrange(i, 0, count) {
@@ -379,8 +380,13 @@ void Test_RTTI() {
         }
 
         {
-
             Serialize::FTextSerializer s;
+            auto oss = StdoutWriter();
+            s.Serialize(&oss, &input);
+        }
+
+        {
+            Serialize::FXMLSerializer s;
             auto oss = StdoutWriter();
             s.Serialize(&oss, &input);
         }

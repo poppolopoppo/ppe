@@ -45,9 +45,9 @@ using TDictionary = Core::TAssociativeVector<
     RTTI::TVector<RTTI::TPair<_Key COMMA _Value> >
 >;
 //----------------------------------------------------------------------------
-INSTANTIATE_CLASS_TYPEDEF(BinaryData, RAWSTORAGE_ALIGNED(RTTI, u8, 16));
+INSTANTIATE_CLASS_TYPEDEF(FBinaryData, RAWSTORAGE_ALIGNED(RTTI, u8, 16));
 //----------------------------------------------------------------------------
-INSTANTIATE_CLASS_TYPEDEF(OpaqueData, TDictionary<FName, PMetaAtom>);
+INSTANTIATE_CLASS_TYPEDEF(FOpaqueData, TDictionary<FName, PMetaAtom>);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -199,11 +199,11 @@ bool TPromoteTest_<_Impl>::operator ()(const FMetaTypeId srcTypeId, const FMetaT
 
         METATYPE_PROMOTE_BEGIN_FROM(FString)
         METATYPE_PROMOTE_TO(FName)
-        METATYPE_PROMOTE_TO(BinaryData)
+        METATYPE_PROMOTE_TO(FBinaryData)
         METATYPE_PROMOTE_END_FROM()
 
         METATYPE_PROMOTE_BEGIN_FROM(RTTI::TDictionary<PMetaAtom COMMA PMetaAtom>)
-        METATYPE_PROMOTE_TO(OpaqueData)
+        METATYPE_PROMOTE_TO(FOpaqueData)
         METATYPE_PROMOTE_END_FROM()
     }
 

@@ -30,11 +30,11 @@ static bool IsDefaultValue_(const FName& name) {
     return name.empty();
 }
 //----------------------------------------------------------------------------
-static bool IsDefaultValue_(const BinaryData& rawdata) {
+static bool IsDefaultValue_(const FBinaryData& rawdata) {
     return rawdata.empty();
 }
 //----------------------------------------------------------------------------
-static bool IsDefaultValue_(const OpaqueData& opaqueData) {
+static bool IsDefaultValue_(const FOpaqueData& opaqueData) {
     return opaqueData.empty();
 }
 //----------------------------------------------------------------------------
@@ -73,7 +73,7 @@ static bool DeepEquals_(const PMetaObject& lhs, const PMetaObject& rhs) {
         : lhs == rhs;
 }
 //----------------------------------------------------------------------------
-static bool DeepEquals_(const OpaqueData& lhs, const OpaqueData& rhs) {
+static bool DeepEquals_(const FOpaqueData& lhs, const FOpaqueData& rhs) {
     if (lhs.size() != rhs.size())
         return false;
 
@@ -145,22 +145,22 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FString ToString(const RTTI::FName& name) {
-    return StringFormat("FName:#{0}", name.MakeView());
+    return StringFormat("Name:#{0}", name.MakeView());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-hash_t hash_value(const RTTI::BinaryData& rawdata) {
+hash_t hash_value(const RTTI::FBinaryData& rawdata) {
     return hash_mem(rawdata.MakeConstView());
 }
 //----------------------------------------------------------------------------
-FString ToString(const RTTI::BinaryData& rawdata) {
+FString ToString(const RTTI::FBinaryData& rawdata) {
     return StringFormat("BinaryData:#{0}", rawdata.SizeInBytes());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FString ToString(const RTTI::OpaqueData& opaqueData) {
+FString ToString(const RTTI::FOpaqueData& opaqueData) {
     return StringFormat("OpaqueData:#{0}",
         static_cast<const RTTI::TDictionary<RTTI::FName, RTTI::PMetaAtom>&>(opaqueData));
 }

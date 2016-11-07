@@ -273,25 +273,25 @@ std::basic_ostream<_Char, _Traits>& operator <<(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-hash_t hash_value(const RTTI::BinaryData& rawdata);
+hash_t hash_value(const RTTI::FBinaryData& rawdata);
 //----------------------------------------------------------------------------
-FString ToString(const RTTI::BinaryData& rawdata);
+FString ToString(const RTTI::FBinaryData& rawdata);
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
-    const RTTI::BinaryData& rawdata) {
+    const RTTI::FBinaryData& rawdata) {
     return oss << ToString(rawdata);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FString ToString(const RTTI::OpaqueData& opaqueData);
+FString ToString(const RTTI::FOpaqueData& opaqueData);
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
-    const RTTI::OpaqueData& opaqueData) {
+    const RTTI::FOpaqueData& opaqueData) {
     return oss << ToString(opaqueData);
 }
 //----------------------------------------------------------------------------

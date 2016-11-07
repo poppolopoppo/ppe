@@ -160,12 +160,12 @@ private:
         }
 
         void WriteValue_(const RTTI::FName& name) {
-            _owner->Print("FName:\"");
+            _owner->Print("Name:\"");
             _owner->Print(name.MakeView());
             _owner->Print("\"");
         }
 
-        void WriteValue_(const RTTI::BinaryData& rawdata) {
+        void WriteValue_(const RTTI::FBinaryData& rawdata) {
             if (rawdata.empty()) {
                 _owner->Print("BinaryData:\"\"");
             }
@@ -187,7 +187,7 @@ private:
             }
         }
 
-        void WriteValue_(const RTTI::OpaqueData& opaqueData) {
+        void WriteValue_(const RTTI::FOpaqueData& opaqueData) {
             if (opaqueData.empty()) {
                 _owner->Print("OpaqueData:{}");
             }
