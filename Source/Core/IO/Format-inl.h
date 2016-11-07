@@ -82,7 +82,9 @@ size_t Format(_Char* result, size_t capacity, const TBasicStringView<_Char>& for
     Format(oss, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
     oss.ForceEOS();
 
-    return checked_cast<size_t>(oss.size());
+    const size_t n = checked_cast<size_t>(oss.size());
+    Assert('\0' == result[n - 1]);
+    return (n - 1); // skip EOS
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits, typename _Arg0, typename... _Args>
