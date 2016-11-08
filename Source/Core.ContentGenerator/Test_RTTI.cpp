@@ -5,6 +5,7 @@
 #include "Core/IO/FileSystem.h"
 #include "Core/IO/StringView.h"
 #include "Core/IO/VirtualFileSystem.h"
+#include "Core/IO/VFS/VirtualFileSystemStream.h"
 #include "Core/Maths/Maths.h"
 #include "Core/Maths/RandomGenerator.h"
 #include "Core/Memory/Compression.h"
@@ -381,14 +382,14 @@ void Test_RTTI() {
 
         {
             Serialize::FTextSerializer s;
-            auto oss = StdoutWriter();
-            s.Serialize(&oss, &input);
+            auto oss = VFS_OpenBinaryWritable(L"Process:/robotapp.cdf", AccessPolicy::Truncate);
+            s.Serialize(oss.get(), &input);
         }
 
         {
             Serialize::FXMLSerializer s;
-            auto oss = StdoutWriter();
-            s.Serialize(&oss, &input);
+            auto oss = VFS_OpenBinaryWritable(L"Process:/robotapp.xml", AccessPolicy::Truncate);
+            s.Serialize(oss.get(), &input);
         }
 
         RTTI::FMetaTransaction transaction;
