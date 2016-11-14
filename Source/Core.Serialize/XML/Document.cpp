@@ -193,7 +193,9 @@ bool FDocument::Load(FDocument* document, const FFilename& filename, IStreamRead
 
     const FWString filenameStr(filename.ToWString());
     FLexer::FLookAheadReader reader(input, filenameStr.c_str());
-    ReadHeader_(reader, document->_version, document->_encoding, document->_standalone);
+
+    if (reader.Peek(0) == '<' && reader.Peek(1) == '?')
+        ReadHeader_(reader, document->_version, document->_encoding, document->_standalone);
 
     if (document->_version.empty())
         document->_version = "1.0";
