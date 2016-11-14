@@ -144,6 +144,27 @@ void FSocketBuffered::EatWhiteSpaces() {
             break;
     }
 }
+//----------------------------------------------------------------------------
+bool FSocketBuffered::ReadUntil(std::ostream* poss, char delim) {
+    constexpr size_t maxLength = 64 * 1024;
+
+    char ch;
+    for(size_t len = 0;
+        Peek(ch) && ch != delim && ch != '\n';
+        ++len ) {
+        if (len == maxLength)
+            return false;
+
+        if (not Get(ch))
+            AssertNotReached();
+
+        poss->put(ch);
+    }
+
+    if (not Peek(ch))
+        return false;
+
+    return true;
 }
 //----------------------------------------------------------------------------
 void FSocketBuffered::FlushRead() {

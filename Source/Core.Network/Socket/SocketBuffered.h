@@ -61,6 +61,7 @@ public:
     bool Put(char ch) { return WritePOD(ch); }
 
     void EatWhiteSpaces();
+    bool ReadUntil(std::ostream* poss, char delim);
 
     void FlushRead();
     void FlushRead(const FMilliseconds& timeout);
