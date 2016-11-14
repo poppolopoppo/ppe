@@ -32,6 +32,9 @@ public:
     const FString& Str() const { return _str; }
     FStringView MakeView() const { return MakeStringView(_str); }
 
+    bool IsAbsolute() const { return (not IsRelative()); }
+    bool IsRelative() const { return (_hostname.empty()); }
+
     static bool Pack(
         FUri& dst,
         const FStringView& scheme,
