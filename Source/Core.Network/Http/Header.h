@@ -12,6 +12,7 @@ namespace Core {
 namespace Network {
 enum class EHttpMethod;
 enum class EHttpStatus;
+class FSocketBuffered;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -36,6 +37,10 @@ public:
     FStringView operator[](const FName& key) const { return GetIFP(key); }
 
     void Clear();
+
+    static bool Read(FHttpHeader* pheader, FSocketBuffered& socket);
+
+    static FStringView ProtocolVersion();
 
 private:
     FEntries _headers;

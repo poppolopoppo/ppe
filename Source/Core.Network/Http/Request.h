@@ -35,6 +35,8 @@ public:
     void SetBody(FBody&& body) { _body = std::move(body); }
 
     static void Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t maxContentLength);
+    static void Write(FSocketBuffered* psocket, const FHttpRequest& request);
+
     static bool UnpackCookie(FCookieMap* pcookie, FHttpRequest& request);
 
 private:

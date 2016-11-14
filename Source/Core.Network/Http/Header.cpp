@@ -2,8 +2,26 @@
 
 #include "Header.h"
 
+#include "../Socket/SocketBuffered.h"
+
 namespace Core {
 namespace Network {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+static bool HeaderReadUntil_(std::ostream* poss, FSocketBuffered& socket, const char delim = '\n') {
+    if (socket.ReadUntil(poss, delim)) {
+        socket.EatWhiteSpaces();
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+//----------------------------------------------------------------------------
+} //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -39,6 +57,45 @@ FStringView FHttpHeader::GetIFP(const FName& key) const {
 //----------------------------------------------------------------------------
 void FHttpHeader::Clear() {
     _headers.clear();
+}
+//----------------------------------------------------------------------------
+bool FHttpHeader::Read(FHttpHeader* pheader, FSocketBuffered& socket) {
+    Assert(pheader);
+    Assert(socket.IsConnected());
+
+    STACKLOCAL_OCSTRSTREAM(oss, 1024);
+
+    char ch;
+    while (socket.Peek(ch)) {
+        HeaderReadUntil_(&oss, socket);
+
+        const FStringView line = Strip(oss.MakeView());
+        const auto doublePoint = line.Find(':');
+
+        if (line.end() == doublePoint) {
+            if (line.size())
+                return false;
+
+            break;
+        }
+        else {
+            const FStringView key = Strip(line.CutBefore(doublePoint));
+            const FStringView value = Strip(line.CutStartingAt(doublePoint+1));
+
+            if (key.empty())
+                return false;
+
+            pheader->Add(FName(key), ToString(value));
+
+            oss.Reset();
+        }
+    }
+
+    return true;
+}
+//----------------------------------------------------------------------------
+FStringView FHttpHeader::ProtocolVersion() {
+    return "HTTP/1.1";
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

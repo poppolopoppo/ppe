@@ -18,6 +18,7 @@ public:
     static const FName& Accept();
     static const FName& AcceptCharset();
     static const FName& AcceptEncoding();
+    static const FName& AcceptLanguage();
     static const FName& CacheControl();
     static const FName& Connection();
     static const FName& Cookie();
@@ -25,6 +26,8 @@ public:
     static const FName& ContentLength();
     static const FName& ContentType();
     static const FName& Date();
+    static const FName& Host();
+    static const FName& KeepAlive();
     static const FName& Location();
     static const FName& Referer();
     static const FName& RetryAfter();

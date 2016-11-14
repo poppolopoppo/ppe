@@ -39,7 +39,9 @@ public:
 
     void UpdateContentHeaders(const FStringView& mimeType);
 
+    static void Read(FHttpResponse* presponse, FSocketBuffered& socket, size_t maxContentLength);
     static void Write(FSocketBuffered* psocket, const FHttpResponse& response);
+
     static bool PackCookie(FHttpResponse* presponse, const FCookieMap& cookie);
 
 private:

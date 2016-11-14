@@ -17,23 +17,8 @@ namespace Network {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static void ReadUntil_(std::ostream* poss, FSocketBuffered& socket, const char delim = '\n') {
-    constexpr size_t maxLength = 64 * 1024;
-
-    char ch;
-    for(size_t len = 0;
-        socket.Peek(ch) && ch != delim && ch != '\n';
-        ++len ) {
-        if (len == maxLength)
-            CORE_THROW_IT(FHttpException(EHttpStatus::RequestURITooLong, "HTTP field from client is too long"));
-
-        if (not socket.Get(ch))
-            AssertNotReached();
-
-        poss->put(ch);
-    }
-
-    if (not socket.Peek(ch))
+static void RequestReadUntil_(std::ostream* poss, FSocketBuffered& socket, const char delim = '\n') {
+    if (not socket.ReadUntil(poss, delim))
         CORE_THROW_IT(FHttpException(EHttpStatus::RequestURITooLong, "HTTP field from client terminated incorrectly"));
 
     socket.EatWhiteSpaces();
@@ -62,7 +47,7 @@ void FHttpRequest::Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t 
 
     // request type
     {
-        ReadUntil_(&oss, socket, ' ');
+        RequestReadUntil_(&oss, socket, ' ');
 
         FStringView requestMethod = oss.MakeView();
         if (not HttpMethodFromCStr(&prequest->_method, requestMethod))
@@ -73,7 +58,7 @@ void FHttpRequest::Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t 
 
     // request path
     {
-        ReadUntil_(&oss, socket, ' ');
+        RequestReadUntil_(&oss, socket, ' ');
 
         if (not FUri::Parse(prequest->_uri, oss.MakeView()))
             CORE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP failed to parse requested path"));
@@ -83,10 +68,10 @@ void FHttpRequest::Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t 
 
     // protocol version
     {
-        ReadUntil_(&oss, socket);
+        RequestReadUntil_(&oss, socket);
 
         const FStringView protocol = Strip(oss.MakeView());
-        if (not EqualsI(protocol, "HTTP/1.1"))
+        if (not EqualsI(protocol, FHttpHeader::ProtocolVersion()) )
             throw FHttpException(EHttpStatus::HTTPVersionNotSupported, "HTTP invalid protocol version, expected HTTP/1.1");
 
         oss.Reset();
@@ -94,38 +79,14 @@ void FHttpRequest::Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t 
 
     // headers
     {
-        char ch;
-        while (socket.Peek(ch)) {
-            ReadUntil_(&oss, socket);
-
-            const FStringView line = Strip(oss.MakeView());
-            const auto doublePoint = line.Find(':');
-
-            if (line.end() == doublePoint) {
-                if (line.size())
-                    CORE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP malformed header field"));
-
-                break;
-            }
-            else {
-                const FStringView key = Strip(line.CutBefore(doublePoint));
-                const FStringView value = Strip(line.CutStartingAt(doublePoint+1));
-
-                if (key.empty())
-                    CORE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP failed to parse header key"));
-
-                prequest->Add(FName(key), ToString(value));
-
-                oss.Reset();
-            }
-        }
-
-        oss.Reset();
+        if (not FHttpHeader::Read(prequest, socket))
+            CORE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP malformed header field"));
     }
 
     // body
     {
         const FStringView contentLengthCStr = prequest->GetIFP(FHttpConstNames::ContentLength());
+
         if (contentLengthCStr.size()) {
             i64 contentLengthI = 0;
             if (not Atoi64(&contentLengthI, contentLengthCStr, 10))
@@ -142,6 +103,47 @@ void FHttpRequest::Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t 
 
         oss.Reset();
     }
+}
+//----------------------------------------------------------------------------
+void FHttpRequest::Write(FSocketBuffered* psocket, const FHttpRequest& request) {
+    Assert(psocket);
+    Assert(psocket->IsConnected());
+
+    // method :
+    psocket->Write(HttpMethodToCStr(request._method));
+    psocket->Put(' ');
+
+    // path :
+    if (request._uri.Path().size()) {
+        psocket->Write(request._uri.Path());
+    }
+    else {
+        psocket->Put('/');
+    }
+    if (request._uri.Query().size()) {
+        psocket->Put('?');
+        psocket->Write(request._uri.Query());
+    }
+    psocket->Put(' ');
+
+    // protocol :
+    psocket->Write(FHttpHeader::ProtocolVersion());
+    psocket->Write("\r\n");
+
+    // headers :
+    for (const auto& it : request.Headers()) {
+        psocket->Write(it.first.MakeView());
+        psocket->Write(": ");
+        psocket->Write(it.second.MakeView());
+        psocket->Write("\r\n");
+    }
+
+    psocket->Write("\r\n");
+
+    if (not request._body.empty())
+        psocket->Write(FStringView(request._body.MakeConstView()));
+
+    psocket->FlushWrite();
 }
 //----------------------------------------------------------------------------
 bool FHttpRequest::UnpackCookie(FCookieMap* pcookie, FHttpRequest& request) {

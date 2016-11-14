@@ -8,6 +8,7 @@
     _Macro(FName,           Accept,             "Accept") \
     _Macro(FName,           AcceptCharset,      "Accept-Charset") \
     _Macro(FName,           AcceptEncoding,     "Accept-Encoding") \
+    _Macro(FName,           AcceptLanguage,     "Accept-Language") \
     _Macro(FName,           CacheControl,       "Cache-Control") \
     _Macro(FName,           Connection,         "Connection") \
     _Macro(FName,           Cookie,             "Cookie") \
@@ -15,6 +16,8 @@
     _Macro(FName,           ContentLength,      "Content-Length") \
     _Macro(FName,           ContentType,        "Content-Type") \
     _Macro(FName,           Date,               "Date") \
+    _Macro(FName,           Host,               "Host") \
+    _Macro(FName,           KeepAlive,          "Keep-Alive") \
     _Macro(FName,           Location,           "Location") \
     _Macro(FName,           Referer,            "Referer") \
     _Macro(FName,           RetryAfter,         "RetryAfter") \
