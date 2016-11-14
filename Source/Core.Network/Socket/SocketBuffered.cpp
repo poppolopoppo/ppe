@@ -138,8 +138,12 @@ size_t FSocketBuffered::Write(const TMemoryView<const u8>& rawData) {
 //----------------------------------------------------------------------------
 void FSocketBuffered::EatWhiteSpaces() {
     char ch;
-    while (Peek(ch) && IsSpace(ch))
+    while (Peek(ch) && IsSpace(ch)) {
         ++_offsetI;
+        if (ch == '\n')
+            break;
+    }
+}
 }
 //----------------------------------------------------------------------------
 void FSocketBuffered::FlushRead() {
