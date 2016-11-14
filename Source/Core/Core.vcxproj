@@ -104,6 +104,7 @@
     <CustomBuild Include="Container\RawStorage-inl.h" />
     <CustomBuild Include="Container\RawStorage.h" />
     <CustomBuild Include="Container\RingBuffer.h" />
+    <CustomBuild Include="Container\SparseArray.h" />
     <CustomBuild Include="Container\Stack.h" />
     <CustomBuild Include="Container\StringHashMap.h" />
     <CustomBuild Include="Container\StringHashSet.h" />

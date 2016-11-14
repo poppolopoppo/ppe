@@ -184,6 +184,9 @@
     <CustomBuild Include="Container\RingBuffer.h">
       <Filter>Container</Filter>
     </CustomBuild>
+    <CustomBuild Include="Container\SparseArray.h">
+      <Filter>Container</Filter>
+    </CustomBuild>
     <CustomBuild Include="Container\Stack.h">
       <Filter>Container</Filter>
     </CustomBuild>

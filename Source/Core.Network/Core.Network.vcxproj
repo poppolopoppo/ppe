@@ -43,6 +43,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <CustomBuild Include="Http\Client.cpp" />
+    <CustomBuild Include="Http\Client.h" />
     <CustomBuild Include="Http\ConstNames.cpp" />
     <CustomBuild Include="Http\ConstNames.h" />
     <CustomBuild Include="Http\Exceptions.h" />
