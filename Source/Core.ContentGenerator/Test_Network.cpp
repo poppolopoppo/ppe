@@ -1,5 +1,6 @@
 #include "stdafx.h"
 
+#include "Core.Network/Http/Client.h"
 #include "Core.Network/Http/Exceptions.h"
 #include "Core.Network/Http/Method.h"
 #include "Core.Network/Http/Status.h"
@@ -9,6 +10,9 @@
 #include "Core.Network/Socket/Listener.h"
 #include "Core.Network/Socket/SocketBuffered.h"
 #include "Core.Network/Uri.h"
+
+#include "Core.Serialize/XML/Document.h"
+#include "Core.Serialize/XML/Element.h"
 
 namespace Core {
 namespace ContentGenerator {
@@ -126,6 +130,33 @@ static void Test_SocketAccept_() {
         std::cout << "No incomming connection :'(" << std::endl;
 }
 //----------------------------------------------------------------------------
+static void Test_HttpGet_() {
+    FUri uri;
+    if (not FUri::Parse(uri, "http://freegeoip.net/xml/poppolopoppo.ddns.net"))
+        AssertNotReached();
+
+    FHttpResponse response;
+    if (not HttpGet(&response, uri))
+        AssertNotReached();
+
+    std::cout << "Status: " << response.Status() << std::endl;
+    std::cout << "Reason: " << response.Reason() << std::endl;
+
+    std::cout << "Headers:" << std::endl;
+    for (const auto& it : response.Headers())
+        std::cout << " - '" << it.first << "' : '" << it.second << "'" << std::endl;
+
+    std::cout << "Body:" << std::endl;
+    std::cout << response.Body().MakeView() << std::endl;
+
+    XML::FDocument xml;
+    if (not XML::FDocument::Load(&xml, L"network.tmp", &response.Body()))
+        AssertNotReached();
+
+    std::cout << "XML:" << std::endl;
+    std::cout << xml << std::endl;
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -133,6 +164,7 @@ static void Test_SocketAccept_() {
 void Test_Network() {
     Test_ParseUri_();
     Test_SocketAccept_();
+    Test_HttpGet_();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
