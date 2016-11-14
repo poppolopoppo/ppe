@@ -12,8 +12,6 @@ namespace Network {
 //----------------------------------------------------------------------------
 class FAddress {
 public:
-    STATIC_CONST_INTEGRAL(size_t, DefaultPort, 80);
-
     FAddress();
     FAddress(const FStringView& host, size_t port);
     FAddress(FString&& host, size_t port);
@@ -38,10 +36,10 @@ public:
     bool IsIPv4() const;
     // TODO: bool IsIPv6() const;
 
-    static bool IP(FAddress* paddr, const FStringView& hostname, size_t port = DefaultPort);
+    static bool IP(FAddress* paddr, const FStringView& hostname, size_t port);
     static bool Parse(FAddress* paddr, const FStringView& input);
 
-    static FAddress Localhost(size_t port = DefaultPort);
+    static FAddress Localhost(size_t port);
 
     static bool ParseIPv4(u8 (&ipV4)[4], const FAddress& addr);
     // TODO: static bool ParseIPv6(u8 (&ipV6)[4], const FAddress& addr);

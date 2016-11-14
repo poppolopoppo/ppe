@@ -9,7 +9,7 @@ namespace Network {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FAddress::FAddress() : _port(DefaultPort) {}
+FAddress::FAddress() : _port(80) {}
 //----------------------------------------------------------------------------
 FAddress::FAddress(const FStringView& host, size_t port) : FAddress(ToString(host), port) {}
 //----------------------------------------------------------------------------
@@ -113,10 +113,17 @@ bool HostnameToIP(FString& ip, const FStringView& hostname, size_t n/* = 0 */) {
     char nodeName[NI_MAXHOST]; // hostname must be a null terminated string
     hostname.ToNullTerminatedCStr(nodeName);
 
-    const char* serviceName = "http"; // use http as default port
+    const char* serviceName = "80"; // use http as default port
+
+    struct addrinfo hints;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+    hints.ai_flags = AI_NUMERICSERV;
 
     ::ADDRINFOA* address;
-    if (0 != ::getaddrinfo(nodeName, serviceName, nullptr, &address))
+    if (0 != ::getaddrinfo(nodeName, serviceName, &hints, &address))
         return false;
 
     // find the nth address
@@ -131,8 +138,8 @@ bool HostnameToIP(FString& ip, const FStringView& hostname, size_t n/* = 0 */) {
         }
     }
 
-    char temp_ip[17];
-    const char* resolved_ip = ::inet_ntop(nth_addr->ai_family, nth_addr->ai_addr, temp_ip, lengthof(temp_ip));
+    char temp_ip[INET_ADDRSTRLEN];
+    const char* resolved_ip = ::inet_ntop(nth_addr->ai_family,  &((struct sockaddr_in *)nth_addr->ai_addr)->sin_addr, temp_ip, sizeof(temp_ip));
 
     ::freeaddrinfo(address);
 
