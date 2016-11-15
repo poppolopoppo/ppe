@@ -20,7 +20,8 @@ namespace Network {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
-static void HttpTypicalHeaders_(FHttpRequest* request) {
+//----------------------------------------------------------------------------
+static void HttpTypicalRequestHeaders_(FHttpRequest* request) {
     request->Add(FHttpConstNames::UserAgent(),      "Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5 (.NET CLR 3.5.30729)");
     request->Add(FHttpConstNames::Accept(),         "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
     request->Add(FHttpConstNames::AcceptLanguage(), "en-us,en;q=0.5");
@@ -28,6 +29,22 @@ static void HttpTypicalHeaders_(FHttpRequest* request) {
     request->Add(FHttpConstNames::AcceptCharset(),  "utf-8");
     request->Add(FHttpConstNames::KeepAlive(),      "300");
     request->Add(FHttpConstNames::CacheControl(),   "no-cache");
+}
+//----------------------------------------------------------------------------
+static void HttpMakeRequest_(
+    FHttpRequest* prequest,
+    EHttpMethod method,
+    const FStringView& hostname,
+    const FUri& uri,
+    const FHttpClient::FCookieMap& cookie ) {
+    prequest->SetMethod(method);
+    prequest->SetUri(FUri(uri));
+    prequest->Add(FHttpConstNames::Host(), ToString(hostname));
+
+    HttpTypicalRequestHeaders_(prequest);
+
+    if (cookie.size())
+        FHttpRequest::PackCookie(prequest, cookie);
 }
 //----------------------------------------------------------------------------
 template <typename _Method>
@@ -72,24 +89,23 @@ FHttpClient::~FHttpClient() {
 //----------------------------------------------------------------------------
 void FHttpClient::Get(FHttpResponse* presponse, const FUri& uri) {
     FHttpRequest request;
-
-    request.SetMethod(EHttpMethod::Get);
-    request.SetUri(FUri(uri));
-    request.Add(FHttpConstNames::Host(), FString(_address.Host()) );
-
-    HttpTypicalHeaders_(&request);
+    HttpMakeRequest_(&request, EHttpMethod::Get, _address.Host(), uri, _cookie);
 
     Process(presponse, request);
 }
 //----------------------------------------------------------------------------
 void FHttpClient::Head(FHttpResponse* presponse, const FUri& uri) {
     FHttpRequest request;
+    HttpMakeRequest_(&request, EHttpMethod::Head, _address.Host(), uri, _cookie);
 
-    request.SetMethod(EHttpMethod::Head);
-    request.SetUri(FUri(uri));
-    request.Add(FHttpConstNames::Host(), FString(_address.Host()) );
+    Process(presponse, request);
+}
+//----------------------------------------------------------------------------
+void FHttpClient::Post(FHttpResponse* presponse, const FUri& uri, const FPostMap& post) {
+    FHttpRequest request;
+    HttpMakeRequest_(&request, EHttpMethod::Post, _address.Host(), uri, _cookie);
 
-    HttpTypicalHeaders_(&request);
+    FHttpHeader::PackPost(&request, post);
 
     Process(presponse, request);
 }
@@ -100,6 +116,8 @@ void FHttpClient::Process(FHttpResponse* presponse, const FHttpRequest& request)
 
     FHttpRequest::Write(&_socket, request);
     FHttpResponse::Read(presponse, _socket, _maxContentLength);
+
+    FHttpHeader::UnpackCookie(&_cookie, *presponse);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -113,6 +131,12 @@ bool HttpGet(FHttpResponse* presponse, const FUri& uri) {
 bool HttpHead(FHttpResponse* presponse, const FUri& uri) {
     return SafeHttpClient_(uri, [=](const FUri& uri, FHttpClient& cli) {
         cli.Head(presponse, uri);
+    });
+}
+//----------------------------------------------------------------------------
+bool HttpPost(FHttpResponse* presponse, const FUri& uri, const FHttpClient::FPostMap& post) {
+    return SafeHttpClient_(uri, [presponse, &post](const FUri& uri, FHttpClient& cli) {
+        cli.Post(presponse, uri, post);
     });
 }
 //----------------------------------------------------------------------------

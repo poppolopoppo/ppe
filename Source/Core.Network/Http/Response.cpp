@@ -43,7 +43,7 @@ bool FHttpResponse::Succeed() const {
 //----------------------------------------------------------------------------
 void FHttpResponse::UpdateContentHeaders(const FStringView& mimeType) {
     STACKLOCAL_OCSTRSTREAM(oss, 32);
-    oss << _body.SizeInBytes();
+    oss << Body().SizeInBytes();
 
     Add(FHttpConstNames::ContentType(), ToString(mimeType) );
     Add(FHttpConstNames::ContentLength(), ToString(oss.MakeView()) );
@@ -111,7 +111,7 @@ void FHttpResponse::Read(FHttpResponse* presponse, FSocketBuffered& socket, size
             if (contentLength > maxContentLength)
                 CORE_THROW_IT(FHttpException(EHttpStatus::RequestEntityTooLarge, "HTTP content length is too large"));
 
-            if (contentLength != socket.Read(presponse->_body.Append(contentLength)) )
+            if (contentLength != socket.Read(presponse->Body().Append(contentLength)) )
                 CORE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP failed to read all content"));
         }
 
@@ -143,40 +143,10 @@ void FHttpResponse::Write(FSocketBuffered* psocket, const FHttpResponse& respons
 
     psocket->Write("\r\n");
 
-    if (not response._body.empty())
-        psocket->Write(response._body.MakeView());
+    if (not response.Body().empty())
+        psocket->Write(response.Body().MakeView());
 
     psocket->FlushWrite();
-}
-//----------------------------------------------------------------------------
-bool FHttpResponse::PackCookie(FHttpResponse* presponse, const FCookieMap& cookie) {
-    Assert(presponse);
-
-    FOStringStream oss;
-
-    bool first = true;
-
-    for (const auto& it : cookie) {
-        if (first)
-            first = false;
-        else
-            oss << " ; ";
-
-        const FStringView key = MakeStringView(it.first);
-        const FStringView value = MakeStringView(it.second);
-
-        if (not FUri::Encode(oss, key))
-            return false;
-
-        oss << '=';
-
-        if (not FUri::Encode(oss, value))
-            return false;
-    }
-
-    presponse->Add(FHttpConstNames::Cookie(), std::move(oss.str()) );
-
-    return true;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

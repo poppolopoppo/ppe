@@ -2,7 +2,12 @@
 
 #include "Header.h"
 
+#include "ConstNames.h"
+#include "Exceptions.h"
+#include "Status.h"
+
 #include "../Socket/SocketBuffered.h"
+#include "../Uri.h"
 
 namespace Core {
 namespace Network {
@@ -26,6 +31,8 @@ static bool HeaderReadUntil_(std::ostream* poss, FSocketBuffered& socket, const 
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FHttpHeader::FHttpHeader() {}
+//----------------------------------------------------------------------------
+FHttpHeader::FHttpHeader(FBody&& body) : _body(std::move(body)) {}
 //----------------------------------------------------------------------------
 FHttpHeader::~FHttpHeader() {}
 //----------------------------------------------------------------------------
@@ -89,6 +96,118 @@ bool FHttpHeader::Read(FHttpHeader* pheader, FSocketBuffered& socket) {
 
             oss.Reset();
         }
+    }
+
+    return true;
+}
+
+//----------------------------------------------------------------------------
+void FHttpHeader::PackCookie(FHttpHeader* pheader, const FCookieMap& cookie) {
+    Assert(pheader);
+
+    FOStringStream oss;
+
+    bool many = false;
+    for (const auto& it : cookie) {
+        if (many) {
+            oss.put(';');
+            oss.put(' ');
+        }
+
+        FUri::Encode(oss, it.first.MakeView());
+        oss.put('=');
+        FUri::Encode(oss, it.second.MakeView());
+
+        many = true;
+    }
+
+    pheader->Add(FHttpConstNames::Cookie(), std::move(oss.str()) );
+}
+//----------------------------------------------------------------------------
+bool FHttpHeader::UnpackCookie(FCookieMap* pcookie, const FHttpHeader& header) {
+    Assert(pcookie);
+
+    pcookie->clear();
+
+    FStringView cookieCStr = header.GetIFP(FHttpConstNames::Cookie());
+    if (cookieCStr.empty())
+        return false;
+
+    FStringView cookieLine;
+    while (Split(cookieCStr, ';', cookieLine)) {
+        FStringView encodedKey;
+        FStringView encodedValue = cookieLine;
+        if (not Split(encodedValue, '=', encodedKey) || encodedKey.empty())
+            CORE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP malformed cookie entry"));
+
+        encodedKey = Strip(encodedKey);
+        encodedValue = Strip(encodedValue);
+
+        FString decodedKey;
+        if (not FUri::Decode(decodedKey, encodedKey))
+            CORE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP could not decode cookie key"));
+
+        FString decodedValue;
+        if (not FUri::Decode(decodedValue, encodedValue))
+            CORE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP could not decode cookie value"));
+
+        pcookie->Insert_AssertUnique(std::move(decodedKey), std::move(decodedValue));
+    }
+
+    return true;
+}
+//----------------------------------------------------------------------------
+void FHttpHeader::PackPost(FHttpHeader* pheader, const FPostMap& post) {
+    Assert(pheader);
+
+    pheader->_body.clear();
+
+    STACKLOCAL_OCSTRSTREAM(oss, 1024);
+
+    bool many = false;
+    for (const auto& it : post) {
+        if (many)
+            oss.put('&');
+
+        FUri::Encode(oss, it.first.MakeView());
+        oss.put('=');
+        FUri::Encode(oss, it.second.MakeView());
+
+        pheader->_body.WriteView(oss.MakeView());
+        oss.Reset();
+    }
+
+    pheader->Add(FHttpConstNames::ContentType(), "application/x-www-form-urlencoded");
+}
+//----------------------------------------------------------------------------
+bool FHttpHeader::UnpackPost(FPostMap* ppost, const FHttpHeader& header) {
+    Assert(ppost);
+
+    ppost->clear();
+
+    FStringView body = header._body.MakeView().Cast<const char>();
+    if (body.empty())
+        return false;
+
+    FStringView postkv;
+    while (Split(body, '&', postkv)) {
+        FStringView encodedKey;
+        FStringView encodedValue = postkv;
+        if (not Split(encodedValue, '=', encodedKey) || encodedKey.empty())
+            CORE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP malformed POST entry"));
+
+        encodedKey = Strip(encodedKey);
+        encodedValue = Strip(encodedValue);
+
+        FString decodedKey;
+        if (not FUri::Decode(decodedKey, encodedKey))
+            CORE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP could not decode POST key"));
+
+        FString decodedValue;
+        if (not FUri::Decode(decodedValue, encodedValue))
+            CORE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP could not decode POST value"));
+
+        ppost->Insert_AssertUnique(std::move(decodedKey), std::move(decodedValue));
     }
 
     return true;

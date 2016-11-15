@@ -6,7 +6,7 @@
 #include "Core.Network/Uri.h"
 
 #include "Core/Container/AssociativeVector.h"
-#include "Core/Container/RawStorage.h"
+#include "Core/Memory/MemoryStream.h"
 
 namespace Core {
 namespace Network {
@@ -17,9 +17,6 @@ class FSocketBuffered;
 //----------------------------------------------------------------------------
 class FHttpRequest : public FHttpHeader {
 public:
-    typedef RAWSTORAGE(HTTP, char) FBody;
-    typedef ASSOCIATIVE_VECTORINSITU(HTTP, FString, FString, 3) FCookieMap;
-
     FHttpRequest();
     ~FHttpRequest();
 
@@ -31,18 +28,12 @@ public:
     const FUri& Uri() const { return _uri; }
     void SetUri(FUri&& uri) { _uri = std::move(uri); }
 
-    FStringView Body() const { return _body.MakeConstView(); }
-    void SetBody(FBody&& body) { _body = std::move(body); }
-
     static void Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t maxContentLength);
     static void Write(FSocketBuffered* psocket, const FHttpRequest& request);
-
-    static bool UnpackCookie(FCookieMap* pcookie, FHttpRequest& request);
 
 private:
     EHttpMethod _method;
     FUri _uri;
-    RAWSTORAGE(HTTP, char) _body;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

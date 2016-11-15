@@ -33,9 +33,9 @@ FHttpRequest::FHttpRequest() : _method(EHttpMethod::Get) {}
 FHttpRequest::~FHttpRequest() {}
 //----------------------------------------------------------------------------
 FHttpRequest::FHttpRequest(EHttpMethod method, FUri&& uri, FBody&& body)
-:   _method(method)
-,   _uri(std::move(uri))
-,   _body(std::move(body)) {}
+:   FHttpHeader(std::move(body))
+,   _method(method)
+,   _uri(std::move(uri)) {}
 //----------------------------------------------------------------------------
 void FHttpRequest::Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t maxContentLength) {
     Assert(prequest);
@@ -96,8 +96,8 @@ void FHttpRequest::Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t 
             if (contentLength > maxContentLength)
                 CORE_THROW_IT(FHttpException(EHttpStatus::RequestEntityTooLarge, "HTTP content length is too large"));
 
-            prequest->_body.Resize_DiscardData(contentLength);
-            if (contentLength != socket.Read(prequest->_body.MakeView().Cast<u8>()) )
+            const TMemoryView<u8> read = prequest->Body().Append(contentLength);
+            if (contentLength != socket.Read(read) )
                 CORE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP failed to read all content"));
         }
 
@@ -138,45 +138,24 @@ void FHttpRequest::Write(FSocketBuffered* psocket, const FHttpRequest& request) 
         psocket->Write("\r\n");
     }
 
-    psocket->Write("\r\n");
+    // add content-length header if omitted :
+    if (request.GetIFP(FHttpConstNames::ContentLength()).empty()) {
+        char tmp[32];
+        const size_t len = Format(tmp, "{0}", request.Body().SizeInBytes());
 
-    if (not request._body.empty())
-        psocket->Write(FStringView(request._body.MakeConstView()));
-
-    psocket->FlushWrite();
-}
-//----------------------------------------------------------------------------
-bool FHttpRequest::UnpackCookie(FCookieMap* pcookie, FHttpRequest& request) {
-    Assert(pcookie);
-
-    pcookie->clear();
-
-    FStringView cookieCStr = request.GetIFP(FHttpConstNames::Cookie());
-    if (cookieCStr.empty())
-        return false;
-
-    FStringView cookieLine;
-    while (Split(cookieCStr, ';', cookieLine)) {
-        FStringView encodedKey;
-        FStringView encodedValue = cookieLine;
-        if (not Split(encodedValue, '=', encodedKey) || encodedKey.empty())
-            CORE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP malformed cookie entry"));
-
-        encodedKey = Strip(encodedKey);
-        encodedValue = Strip(encodedValue);
-
-        FString decodedKey;
-        if (not FUri::Decode(decodedKey, encodedKey))
-            CORE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP could not decode cookie key"));
-
-        FString decodedValue;
-        if (not FUri::Decode(decodedValue, encodedValue))
-            CORE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP could not decode cookie value"));
-
-        pcookie->Insert_AssertUnique(std::move(decodedKey), std::move(decodedValue));
+        psocket->Write(FHttpConstNames::ContentLength().MakeView());
+        psocket->Write(": ");
+        psocket->Write(FStringView(tmp, len));
+        psocket->Write("\r\n");
     }
 
-    return true;
+    psocket->Write("\r\n");
+
+    // body :
+    if (not request.Body().empty())
+        psocket->Write(request.Body().MakeView());
+
+    psocket->FlushWrite();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
