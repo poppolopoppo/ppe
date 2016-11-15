@@ -80,24 +80,38 @@ FORCE_INLINE TBasicStringView<_Char> MakeStringView(const std::basic_string<_Cha
     return TBasicStringView<_Char>(str.c_str(), str.size());
 }
 //----------------------------------------------------------------------------
-template <typename _Char, size_t _Dim>
-FORCE_INLINE TBasicStringView<_Char> MakeStringView(const _Char(&cstr)[_Dim]) {
-    return TBasicStringView<_Char>(cstr);
+template <size_t _Dim>
+FORCE_INLINE FStringView MakeStringView(const char(&cstr)[_Dim]) {
+    return FStringView(cstr);
 }
 //----------------------------------------------------------------------------
-template <typename _Char>
-FORCE_INLINE TBasicStringView<_Char> MakeStringView(const TMemoryView<const _Char>& view) {
-    return TBasicStringView<_Char>(view);
+template <size_t _Dim>
+FORCE_INLINE FWStringView MakeStringView(const wchar_t(&cstr)[_Dim]) {
+    return FWStringView(cstr);
 }
 //----------------------------------------------------------------------------
-template <typename _Char>
-FORCE_INLINE TBasicStringView<_Char> MakeStringView(const TMemoryView<_Char>& view) {
-    return TBasicStringView<_Char>(view.AddConst());
+FORCE_INLINE FStringView MakeStringView(const TMemoryView<const char>& view) {
+    return FStringView(view.data(), view.size());
 }
 //----------------------------------------------------------------------------
-template <typename _Char>
-FORCE_INLINE TBasicStringView<_Char> MakeStringView(const TBasicStringView<_Char>& slice) {
-    return slice;
+FORCE_INLINE FWStringView MakeStringView(const TMemoryView<const wchar_t>& view) {
+    return FWStringView(view.data(), view.size());
+}
+//----------------------------------------------------------------------------
+FORCE_INLINE FStringView MakeStringView(const TMemoryView<char>& view) {
+    return FStringView(view.data(), view.size());
+}
+//----------------------------------------------------------------------------
+FORCE_INLINE FWStringView MakeStringView(const TMemoryView<wchar_t>& view) {
+    return FWStringView(view.data(), view.size());
+}
+//----------------------------------------------------------------------------
+FORCE_INLINE const FStringView& MakeStringView(const FStringView& view) {
+    return view;
+}
+//----------------------------------------------------------------------------
+FORCE_INLINE const FWStringView& MakeStringView(const FWStringView& view) {
+    return view;
 }
 //----------------------------------------------------------------------------
 template <typename _It>
