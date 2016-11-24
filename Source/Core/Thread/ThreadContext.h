@@ -13,6 +13,14 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+enum class EThreadPriority {
+    Highest = 0,
+    AboveNormal,
+    Normal,
+    BelowNormal,
+    Lowest,
+};
+//----------------------------------------------------------------------------
 class FThreadContext {
 public:
     FThreadContext(const char* name, size_t tag);
@@ -27,6 +35,9 @@ public:
 
     size_t AffinityMask() const;
     void SetAffinityMask(size_t mask) const;
+
+    EThreadPriority Priority() const;
+    void SetPriority(EThreadPriority priority) const;
 
 private:
     char _name[64];

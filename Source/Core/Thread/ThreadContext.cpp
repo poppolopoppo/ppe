@@ -116,24 +116,20 @@ FThreadContext::FThreadContext(const char* name, size_t tag)
 
     SetWin32ThreadName_(_name);
     GuaranteeStackSizeForStackOverflowRecovery_();
-
-    LOG(Info, L"[Thread] Start '{0}' with tag = {1} (id:{2})", _name, _tag, _threadId);
 }
 //----------------------------------------------------------------------------
-FThreadContext::~FThreadContext() {
-    LOG(Info, L"[Thread] Stop '{0}' with tag = {1} (id:{2})", _name, _tag, _threadId);
-}
+FThreadContext::~FThreadContext() {}
 //----------------------------------------------------------------------------
 size_t FThreadContext::AffinityMask() const {
     Assert(std::this_thread::get_id() == _threadId);
 #ifdef OS_WINDOWS
-    HANDLE currentThread = ::GetCurrentThread();
-    DWORD_PTR affinityMask = ::SetThreadAffinityMask(currentThread, 0xFFul);
+    HANDLE hThread = ::GetCurrentThread();
+    DWORD_PTR affinityMask = ::SetThreadAffinityMask(hThread, 0xFFul);
     if (0 == affinityMask) {
         FLastErrorException e;
         CORE_THROW_IT(e);
     }
-    if (0 == ::SetThreadAffinityMask(currentThread, affinityMask)) {
+    if (0 == ::SetThreadAffinityMask(hThread, affinityMask)) {
         FLastErrorException e;
         CORE_THROW_IT(e);
     }
@@ -148,13 +144,75 @@ void FThreadContext::SetAffinityMask(size_t mask) const {
     Assert(std::this_thread::get_id() == _threadId);
 
 #ifdef OS_WINDOWS
-    HANDLE currentThread = ::GetCurrentThread();
-    DWORD_PTR affinityMask = ::SetThreadAffinityMask(currentThread, mask);
+    HANDLE hThread = ::GetCurrentThread();
+    DWORD_PTR affinityMask = ::SetThreadAffinityMask(hThread, mask);
     if (0 == affinityMask) {
         FLastErrorException e;
         CORE_THROW_IT(e);
     }
     Assert(mask == AffinityMask());
+#else
+#   error "platform not supported"
+#endif
+}
+//----------------------------------------------------------------------------
+EThreadPriority FThreadContext::Priority() const {
+    Assert(std::this_thread::get_id() == _threadId);
+
+#ifdef OS_WINDOWS
+    HANDLE hThread = ::GetCurrentThread();
+    switch (::GetThreadPriority(hThread))
+    {
+    case THREAD_PRIORITY_HIGHEST:
+        return EThreadPriority::Highest;
+    case THREAD_PRIORITY_ABOVE_NORMAL:
+        return EThreadPriority::AboveNormal;
+    case THREAD_PRIORITY_NORMAL:
+        return EThreadPriority::Normal;
+    case THREAD_PRIORITY_BELOW_NORMAL:
+        return EThreadPriority::BelowNormal;
+    case THREAD_PRIORITY_LOWEST:
+        return EThreadPriority::Lowest;
+    case THREAD_PRIORITY_ERROR_RETURN:
+        AssertNotReached();
+        break;
+    default:
+        AssertNotImplemented();
+        break;
+    }
+    return EThreadPriority::Normal;
+#else
+#   error "platform not supported"
+#endif
+}
+//----------------------------------------------------------------------------
+void FThreadContext::SetPriority(EThreadPriority priority) const {
+Assert(std::this_thread::get_id() == _threadId);
+
+#ifdef OS_WINDOWS
+    HANDLE hThread = ::GetCurrentThread();
+    int priorityWin32;
+    switch (priority)
+    {
+    case Core::EThreadPriority::Highest:
+        priorityWin32 = THREAD_PRIORITY_HIGHEST;
+        break;
+    case Core::EThreadPriority::AboveNormal:
+        priorityWin32 = THREAD_PRIORITY_ABOVE_NORMAL;
+        break;
+    case Core::EThreadPriority::Normal:
+        priorityWin32 = THREAD_PRIORITY_NORMAL;
+        break;
+    case Core::EThreadPriority::BelowNormal:
+        priorityWin32 = THREAD_PRIORITY_BELOW_NORMAL;
+        break;
+    case Core::EThreadPriority::Lowest:
+        priorityWin32 = THREAD_PRIORITY_LOWEST;
+        break;
+    }
+
+    if (0 == ::SetThreadPriority(hThread, priorityWin32))
+        AssertNotReached();
 #else
 #   error "platform not supported"
 #endif
@@ -170,19 +228,28 @@ const FThreadContext& CurrentThreadContext() {
 //----------------------------------------------------------------------------
 void FThreadContextStartup::Start(const char* name, size_t tag) {
     FThreadLocalContext_::Create(name, tag);
-    FThreadLocalHeapStartup::Start(false);
     Meta::FThreadLocalAutoSingletonManager::Start();
+    FThreadLocalHeapStartup::Start(false);
     FAllocaStartup::Start(false);
+
+    const FThreadContext& ctx = CurrentThreadContext();
+    LOG(Info, L"[Thread] Start '{0}' with tag = {1} (id:{2})", ctx.Name(), ctx.Tag(), ctx.ThreadId());
 }
 //----------------------------------------------------------------------------
 void FThreadContextStartup::Start_MainThread() {
-    Meta::FThreadLocalAutoSingletonManager::Start();
     FThreadLocalContext_::CreateMainThread();
+    Meta::FThreadLocalAutoSingletonManager::Start();
     FThreadLocalHeapStartup::Start(true);
     FAllocaStartup::Start(true);
+
+    const FThreadContext& ctx = CurrentThreadContext();
+    LOG(Info, L"[Thread] Start '{0}' with tag = {1} (id:{2}) <MainThread>", ctx.Name(), ctx.Tag(), ctx.ThreadId());
 }
 //----------------------------------------------------------------------------
 void FThreadContextStartup::Shutdown() {
+    const FThreadContext& ctx = CurrentThreadContext();
+    LOG(Info, L"[Thread] Stop '{0}' with tag = {1} (id:{2})", ctx.Name(), ctx.Tag(), ctx.ThreadId());
+
     FAllocaStartup::Shutdown();
     FThreadLocalHeapStartup::Shutdown();
     FThreadLocalContext_::Destroy();
