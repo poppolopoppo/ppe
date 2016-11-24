@@ -1,8 +1,11 @@
 #include "stdafx.h"
 
 #include "Core/IO/Format.h"
+#include "Core/IO/StreamProvider.h"
 #include "Core/IO/String.h"
 #include "Core/IO/StringView.h"
+
+#include "Core/Memory/MemoryStream.h"
 
 namespace Core {
 namespace ContentGenerator {
@@ -72,6 +75,12 @@ void Test_Format() {
                 "This a neg test {0:#4*4} = {1:-30} ({2:5f2})", 42, "test aligned", 1.23456f);
     TestFormat_(L"This a neg test 0042004200420042 = test aligned                   ( 1.23)",
                 L"This a neg test {0:#4*4} = {1:-30} ({2:5f2})", 42, "test aligned", 1.23456f);
+
+
+    MEMORYSTREAM_THREAD_LOCAL(Stream) mem;
+    FStreamWriterOStream oss(&mem);
+    oss << "Yolo!" << 42 << std::endl;
+    Format(oss, "This a neg test {0:#4*4} = {1:-30} ({2:5f2})", 42, "test aligned", 1.23456f);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
