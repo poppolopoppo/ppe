@@ -64,6 +64,7 @@ FStringView FHttpHeader::GetIFP(const FName& key) const {
 //----------------------------------------------------------------------------
 void FHttpHeader::Clear() {
     _headers.clear();
+    _body.clear();
 }
 //----------------------------------------------------------------------------
 bool FHttpHeader::Read(FHttpHeader* pheader, FSocketBuffered& socket) {
@@ -100,7 +101,6 @@ bool FHttpHeader::Read(FHttpHeader* pheader, FSocketBuffered& socket) {
 
     return true;
 }
-
 //----------------------------------------------------------------------------
 void FHttpHeader::PackCookie(FHttpHeader* pheader, const FCookieMap& cookie) {
     Assert(pheader);
@@ -162,7 +162,7 @@ void FHttpHeader::PackPost(FHttpHeader* pheader, const FPostMap& post) {
 
     pheader->_body.clear();
 
-    STACKLOCAL_OCSTRSTREAM(oss, 1024);
+    FStreamWriterOStream oss(&pheader->_body);
 
     bool many = false;
     for (const auto& it : post) {
@@ -173,8 +173,7 @@ void FHttpHeader::PackPost(FHttpHeader* pheader, const FPostMap& post) {
         oss.put('=');
         FUri::Encode(oss, it.second.MakeView());
 
-        pheader->_body.WriteView(oss.MakeView());
-        oss.Reset();
+        many = true;
     }
 
     pheader->Add(FHttpConstNames::ContentType(), "application/x-www-form-urlencoded");

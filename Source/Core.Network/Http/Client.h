@@ -12,6 +12,7 @@ namespace Network {
 class FUri;
 class FHttpRequest;
 class FHttpResponse;
+enum class EHttpStatus;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -53,11 +54,11 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool HttpGet(FHttpResponse* presponse, const FUri& uri);
+EHttpStatus HttpGet(FHttpResponse* presponse, const FUri& uri);
 //----------------------------------------------------------------------------
-bool HttpHead(FHttpResponse* presponse, const FUri& uri);
+EHttpStatus HttpHead(FHttpResponse* presponse, const FUri& uri);
 //----------------------------------------------------------------------------
-bool HttpPost(FHttpResponse* presponse, const FUri& uri, const FHttpClient::FPostMap& post);
+EHttpStatus HttpPost(FHttpResponse* presponse, const FUri& uri, const FHttpClient::FPostMap& post);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

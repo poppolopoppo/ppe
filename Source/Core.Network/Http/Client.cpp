@@ -48,7 +48,7 @@ static void HttpMakeRequest_(
 }
 //----------------------------------------------------------------------------
 template <typename _Method>
-static bool SafeHttpClient_(const FUri& uri, const _Method& method) {
+static EHttpStatus SafeHttpClient_(const FUri& uri, const _Method& method) {
     Assert(uri.IsAbsolute());
     CORE_TRY {
         FHttpClient cli(uri.Hostname(), FHttpClient::DefaultPort);
@@ -57,9 +57,9 @@ static bool SafeHttpClient_(const FUri& uri, const _Method& method) {
     CORE_CATCH(FHttpException e)
     CORE_CATCH_BLOCK({
         LOG(Error, L"[HTTP] {0}: {1}, {2}",  uri.Str(), e.Status(), e.what());
-        return false;
+        return e.Status();
     })
-    return true;
+    return EHttpStatus::OK;
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -122,19 +122,19 @@ void FHttpClient::Process(FHttpResponse* presponse, const FHttpRequest& request)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool HttpGet(FHttpResponse* presponse, const FUri& uri) {
+EHttpStatus HttpGet(FHttpResponse* presponse, const FUri& uri) {
     return SafeHttpClient_(uri, [=](const FUri& uri, FHttpClient& cli) {
         cli.Get(presponse, uri);
     });
 }
 //----------------------------------------------------------------------------
-bool HttpHead(FHttpResponse* presponse, const FUri& uri) {
+EHttpStatus HttpHead(FHttpResponse* presponse, const FUri& uri) {
     return SafeHttpClient_(uri, [=](const FUri& uri, FHttpClient& cli) {
         cli.Head(presponse, uri);
     });
 }
 //----------------------------------------------------------------------------
-bool HttpPost(FHttpResponse* presponse, const FUri& uri, const FHttpClient::FPostMap& post) {
+EHttpStatus HttpPost(FHttpResponse* presponse, const FUri& uri, const FHttpClient::FPostMap& post) {
     return SafeHttpClient_(uri, [presponse, &post](const FUri& uri, FHttpClient& cli) {
         cli.Post(presponse, uri, post);
     });
