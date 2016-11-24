@@ -74,7 +74,7 @@ void ParallelForRange(
     }
     else {
         // creates tasks for multi-threaded completion
-        STACKLOCAL_STACK(TaskDelegate, tasks, count);
+        STACKLOCAL_STACK(FTaskDelegate, tasks, count);
 
         forrange(it, first, last) {
             auto* const task = new FTaskProcedure(std::bind(lambda, std::cref(*it)));

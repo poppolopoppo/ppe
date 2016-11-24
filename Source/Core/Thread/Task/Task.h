@@ -13,13 +13,15 @@ class FTaskManager;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-typedef void (*TaskFunc)(ITaskContext& context);
-typedef TDelegate<TaskFunc> TaskDelegate;
+typedef void (*FTaskFunc)(ITaskContext& context);
+typedef TDelegate<FTaskFunc> FTaskDelegate;
 //----------------------------------------------------------------------------
 enum class ETaskPriority : u32 {
     High = 0,
     Normal,
     Low,
+
+    _Reserved, // used internally, do not use for userland tasks
 
     _Count
 };
@@ -33,7 +35,7 @@ public:
 
     virtual ~FTask() {}
 
-    operator TaskDelegate ();
+    operator FTaskDelegate ();
 
     void RunAndSuicide(ITaskContext& ctx);
 
