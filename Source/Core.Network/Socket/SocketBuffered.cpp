@@ -26,10 +26,8 @@ FSocketBuffered::FSocketBuffered(FSocket&& socket, size_t capacity/* = DefaultBu
 //----------------------------------------------------------------------------
 FSocketBuffered::~FSocketBuffered() {}
 //----------------------------------------------------------------------------
-FSocketBuffered::FSocketBuffered(FSocketBuffered&& rvalue)
-:   _socket(std::move(rvalue._socket))
-,   _bufferI(std::move(rvalue._bufferI))
-,   _bufferO(std::move(rvalue._bufferO)) {
+FSocketBuffered::FSocketBuffered(FSocketBuffered&& rvalue) {
+    operator =(std::move(rvalue));
 }
 //----------------------------------------------------------------------------
 FSocketBuffered& FSocketBuffered::operator =(FSocketBuffered&& rvalue) {
@@ -75,15 +73,15 @@ bool FSocketBuffered::IsConnected() const {
     return _socket.IsConnected();
 }
 //----------------------------------------------------------------------------
+bool FSocketBuffered::IsReadable() const {
+    return IsReadable(Timeout());
+}
+//----------------------------------------------------------------------------
 bool FSocketBuffered::IsReadable(const FMilliseconds& timeout) const {
     return (not _bufferI.empty() || _socket.IsReadable(timeout));
 }
 //----------------------------------------------------------------------------
 size_t FSocketBuffered::Read(const TMemoryView<u8>& rawData) {
-    return Read(rawData, FMilliseconds(0)/* no timeout, no wait */);
-}
-//----------------------------------------------------------------------------
-size_t FSocketBuffered::Read(const TMemoryView<u8>& rawData, const FMilliseconds& timeout) {
     Assert(rawData.size());
 
     size_t read = 0;
@@ -98,11 +96,11 @@ size_t FSocketBuffered::Read(const TMemoryView<u8>& rawData, const FMilliseconds
         if (rawData.size() - read > _bufferCapacity)
         {
             // fallback to unbuffered read when we query a block larger than buffer capacity
-            read += _socket.Read(rawData.CutStartingAt(read), timeout);
+            read += _socket.Read(rawData.CutStartingAt(read));
         }
         else
         {
-            FlushRead(timeout); // refill the buffer
+            FlushRead(); // refill the buffer
             read += ReadFromBuffer_(rawData);
         }
     }
@@ -167,11 +165,7 @@ bool FSocketBuffered::ReadUntil(std::ostream* poss, char delim) {
     return true;
 }
 //----------------------------------------------------------------------------
-void FSocketBuffered::FlushRead() {
-    FlushRead(FMilliseconds(0));
-}
-//----------------------------------------------------------------------------
-void FSocketBuffered::FlushRead(const FMilliseconds& timeout) {
+void FSocketBuffered::FlushRead(bool block/* = false */) {
     if (_offsetI < _sizeI) {
         Assert(_bufferI);
 
@@ -186,7 +180,9 @@ void FSocketBuffered::FlushRead(const FMilliseconds& timeout) {
         _bufferI = NewArray<u8>(_bufferCapacity);
     }
 
-    _sizeI += _socket.Read(_bufferI.CutStartingAt(_offsetI), timeout);
+    const TMemoryView<u8> rawData = _bufferI.CutStartingAt(_offsetI);
+    if (rawData.size())
+        _sizeI += _socket.Read(rawData, block);
 }
 //----------------------------------------------------------------------------
 void FSocketBuffered::FlushWrite() {

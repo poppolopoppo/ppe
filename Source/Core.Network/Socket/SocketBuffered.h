@@ -44,10 +44,10 @@ public:
     bool ShutdownOutgoing();
 
     bool IsConnected() const;
+    bool IsReadable() const;
     bool IsReadable(const FMilliseconds& timeout) const;
 
     size_t Read(const TMemoryView<u8>& rawData);
-    size_t Read(const TMemoryView<u8>& rawData, const FMilliseconds& timeout);
 
     size_t Write(const TMemoryView<const u8>& rawData);
     size_t Write(const FStringView& str) { return Write(str.Cast<const u8>()); }
@@ -63,8 +63,7 @@ public:
     void EatWhiteSpaces();
     bool ReadUntil(std::ostream* poss, char delim);
 
-    void FlushRead();
-    void FlushRead(const FMilliseconds& timeout);
+    void FlushRead(bool block = false);
     void FlushWrite();
 
     static bool Accept(FSocketBuffered& buffered, FListener& listener, const FMilliseconds& timeout);
