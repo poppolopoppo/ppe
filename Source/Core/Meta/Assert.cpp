@@ -25,8 +25,8 @@ namespace Core {
 static Dialog::EResult AssertAbortRetryIgnore_(const FWStringView& title, const char *msg, const wchar_t *file, unsigned line) {
     FThreadLocalWOStringStream oss;
 
-    oss << title << L"\r\n"
-        << L"----------------------------------------------------------------\r\n"
+    oss << title << crlf
+        << L"----------------------------------------------------------------" << crlf
         << file << L'(' << line << L"): " << msg;
 
     return Dialog::AbortRetryIgnore(MakeStringView(oss.str()), title);

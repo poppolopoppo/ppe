@@ -297,14 +297,14 @@ static LRESULT CALLBACK Template_DialogProc_(HWND hwndDlg, UINT message, WPARAM 
                 Assert(ctx);
 
                 FThreadLocalWOStringStream oss;
-                oss << ctx->Text << L"\r\n"
-                    << L"\r\n"
-                    << L"----------------------------------------------------------------\r\n"
-                    << L"FCallstack:" << L"\r\n"
-                    << L"----------------------------------------------------------------\r\n";
+                oss << ctx->Text << crlf
+                    << crlf
+                    << L"----------------------------------------------------------------" << crlf
+                    << L"FCallstack:" << crlf
+                    << L"----------------------------------------------------------------" << crlf;
 
                 for (const FWString& frame : ctx->CallstackFrames)
-                    oss << frame << L"\r\n";
+                    oss << frame << crlf;
 
                 SetClipboard_(hwndDlg, MakeStringView(oss.str()));
             }

@@ -131,7 +131,7 @@ public:
     void swap(TBasicOCStrStream& other);
 };
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits = std::char_traits<_Char> >
+template <typename _Char, typename _Traits>
 void swap(TBasicOCStrStream<_Char, _Traits>& lhs, TBasicOCStrStream<_Char, _Traits>& rhs) {
     lhs.swap(rhs);
 }
@@ -157,6 +157,23 @@ typedef TBasicIStringStream<wchar_t, THREAD_LOCAL_ALLOCATOR(String, wchar_t)>   
 //----------------------------------------------------------------------------
 typedef TBasicOStringStream<char, THREAD_LOCAL_ALLOCATOR(String, char)>         FThreadLocalOStringStream;
 typedef TBasicOStringStream<wchar_t, THREAD_LOCAL_ALLOCATOR(String, wchar_t)>   FThreadLocalWOStringStream;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Replaces std::endl which will cause almost always unneeded/unwanted flush of the stream !
+template<class _Elem, class _Traits>
+std::basic_ostream<_Elem, _Traits>& eol(std::basic_ostream<_Elem, _Traits>& oss) {
+    oss.put(oss.widen('\n'));
+    return (oss);
+}
+//----------------------------------------------------------------------------
+// Same than eol but with a CRLF
+template<class _Elem, class _Traits>
+std::basic_ostream<_Elem, _Traits>& crlf(std::basic_ostream<_Elem, _Traits>& oss) {
+    oss.put(oss.widen('\r'));
+    oss.put(oss.widen('\n'));
+    return (oss);
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
