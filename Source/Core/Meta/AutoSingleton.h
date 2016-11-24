@@ -64,10 +64,10 @@ public:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-class FAutoSingleton : public FAbstractAutoSingleton {
+class TAutoSingleton : public FAbstractAutoSingleton {
 protected:
-    FAutoSingleton() { FAutoSingletonManager::Register(this); }
-    virtual ~FAutoSingleton() { FAutoSingletonManager::Unregister(this); }
+    TAutoSingleton() { FAutoSingletonManager::Register(this); }
+    virtual ~TAutoSingleton() { FAutoSingletonManager::Unregister(this); }
 
 public:
     static T& Instance() {
@@ -77,10 +77,10 @@ public:
 };
 //----------------------------------------------------------------------------
 template <typename T>
-class FThreadLocalAutoSingleton : public FAbstractAutoSingleton {
+class TThreadLocalAutoSingleton : public FAbstractAutoSingleton {
 protected:
-    FThreadLocalAutoSingleton() { FThreadLocalAutoSingletonManager::Register(this); }
-    virtual ~FThreadLocalAutoSingleton() { FThreadLocalAutoSingletonManager::Unregister(this); }
+    TThreadLocalAutoSingleton() { FThreadLocalAutoSingletonManager::Register(this); }
+    virtual ~TThreadLocalAutoSingleton() { FThreadLocalAutoSingletonManager::Unregister(this); }
 
 public:
     static T& Instance() {
