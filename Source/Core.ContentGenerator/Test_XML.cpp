@@ -19,7 +19,7 @@ using namespace Core::Serialize;
 static void Test_XMLLoad_Simple_() {
     XML::FDocument xml;
     if (XML::FDocument::Load(&xml, L"Data:/Models/sample.xml"))
-        std::cout << xml << std::endl;
+        std::cout << xml << eol;
 }
 //----------------------------------------------------------------------------
 static void Test_XMLLoad_Collada_() {
@@ -33,19 +33,19 @@ static void Test_XMLLoad_Collada_() {
 
     for (const Lattice::PGenericMaterial& m : materials) {
         std::cout
-            << Repeat<80>('-') << std::endl
-            << "FName = " << m->Name() << std::endl
-            << "Technique = " << m->Technique() << std::endl;
+            << Repeat<80>('-') << eol
+            << "FName = " << m->Name() << eol
+            << "Technique = " << m->Technique() << eol;
 
-        std::cout << "Parameters (" << m->Parameters().size() << ")" << std::endl;
+        std::cout << "Parameters (" << m->Parameters().size() << ")" << eol;
         for (const auto& it : m->Parameters())
-            std::cout << "  * '" << it.first << "' = " << it.second << std::endl;
+            std::cout << "  * '" << it.first << "' = " << it.second << eol;
 
-        std::cout << "Textures (" << m->Textures().size() << ")" << std::endl;
+        std::cout << "Textures (" << m->Textures().size() << ")" << eol;
         for (const auto& it : m->Textures())
-            std::cout << "  * '" << it.first << "' = " << it.second.Filename << std::endl;
+            std::cout << "  * '" << it.first << "' = " << it.second.Filename << eol;
 
-        std::cout << std::endl;
+        std::cout << eol;
     }
 }
 //----------------------------------------------------------------------------

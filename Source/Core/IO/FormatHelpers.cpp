@@ -112,7 +112,7 @@ std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const FHexD
         offset = origin;
         for (size_t row = 0; row < hexDump.BytesPerRow && offset < totalBytes; ++row, ++offset)
             oss << (IsPrint(char(hexDump.RawData[offset])) ? char(hexDump.RawData[offset]) : '.');
-        oss << std::endl;
+        oss << eol;
     }
     return oss;
 }
@@ -132,7 +132,7 @@ std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const
         offset = origin;
         for (size_t row = 0; row < hexDump.BytesPerRow && offset < totalBytes; ++row, ++offset)
             oss << (IsPrint(char(hexDump.RawData[offset])) ? char(hexDump.RawData[offset]) : '.');
-        oss << std::endl;
+        oss << eol;
     }
     return oss;
 }

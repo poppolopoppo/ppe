@@ -93,7 +93,7 @@ public:
             Format(oss, L"[{0}]", _prefix);
         }
         FormatArgs(oss, text, args);
-        oss << std::endl;
+        oss << eol;
         OutputDebugStringW(oss.NullTerminatedStr());
     }
 
@@ -149,7 +149,7 @@ void FOutputDebugLogger::Log(ELogCategory category, const FWStringView& text, co
     else
         FormatArgs(oss, text, args);
 
-    oss << std::endl;
+    oss << eol;
 
     OutputDebugStringW(oss.str().c_str());
 }
@@ -163,7 +163,7 @@ void FStdcoutLogger::Log(ELogCategory category, const FWStringView& text, const 
     else
         FormatArgs(std::wcout, text, args);
 
-    std::wcout << std::endl;
+    std::wcout << eol;
 }
 //----------------------------------------------------------------------------
 void FStderrLogger::Log(ELogCategory category, const FWStringView& text, const FormatArgListW& args) {
@@ -175,7 +175,7 @@ void FStderrLogger::Log(ELogCategory category, const FWStringView& text, const F
     else
         FormatArgs(std::wcerr, text, args);
 
-    std::wcerr << std::endl;
+    std::wcerr << eol;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

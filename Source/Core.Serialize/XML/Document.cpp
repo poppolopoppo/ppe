@@ -364,7 +364,7 @@ void FDocument::ToStream(std::basic_ostream<char>& oss) const {
     oss << "<?xml version=\"" << _version
         << "\" encoding=\"" << _encoding
         << "\" standalone=\"" << _standalone
-        << "\" ?>" << std::endl;
+        << "\" ?>" << eol;
 
     if (_root)
         _root->ToStream(oss);

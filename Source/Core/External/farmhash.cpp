@@ -44,7 +44,7 @@
 
 using std::cout;
 using std::cerr;
-using std::endl;
+using eol;
 using std::hex;
 
 static const uint64_t kSeed0 = 1234567;
@@ -1668,7 +1668,7 @@ int main(int argc, char** argv) {
 
 using std::cout;
 using std::cerr;
-using std::endl;
+using eol;
 using std::hex;
 
 static const uint64_t kSeed0 = 1234567;
@@ -2564,7 +2564,7 @@ int main(int argc, char** argv) {
 
 using std::cout;
 using std::cerr;
-using std::endl;
+using eol;
 using std::hex;
 
 static const uint64_t kSeed0 = 1234567;
@@ -3824,7 +3824,7 @@ int main(int argc, char** argv) {
 
 using std::cout;
 using std::cerr;
-using std::endl;
+using eol;
 using std::hex;
 
 static const uint64_t kSeed0 = 1234567;
@@ -4720,7 +4720,7 @@ int main(int argc, char** argv) {
 
 using std::cout;
 using std::cerr;
-using std::endl;
+using eol;
 using std::hex;
 
 static const uint64_t kSeed0 = 1234567;
@@ -5616,7 +5616,7 @@ int main(int argc, char** argv) {
 
 using std::cout;
 using std::cerr;
-using std::endl;
+using eol;
 using std::hex;
 
 static const uint64_t kSeed0 = 1234567;
@@ -6512,7 +6512,7 @@ int main(int argc, char** argv) {
 
 using std::cout;
 using std::cerr;
-using std::endl;
+using eol;
 using std::hex;
 
 static const uint64_t kSeed0 = 1234567;
@@ -7772,7 +7772,7 @@ int main(int argc, char** argv) {
 
 using std::cout;
 using std::cerr;
-using std::endl;
+using eol;
 using std::hex;
 
 static const uint64_t kSeed0 = 1234567;
@@ -8668,7 +8668,7 @@ int main(int argc, char** argv) {
 
 using std::cout;
 using std::cerr;
-using std::endl;
+using eol;
 using std::hex;
 
 static const uint64_t kSeed0 = 1234567;

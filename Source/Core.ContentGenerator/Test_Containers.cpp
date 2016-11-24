@@ -430,26 +430,26 @@ void Test_Containers() {
         const FFilename filename = L"Tmp:/koala/a/Test/../robocop/4/../3/2/1/../a/b/c/../robotapp.bin";
         const FFilename filename2 = L"Tmp:/Test/toto/../chimpanzee/../../koala/a/b/../c/1/../2/3/robotapp.raw";
 
-        std::cout << filename << std::endl;
-        std::cout << filename2 << std::endl;
+        std::cout << filename << eol;
+        std::cout << filename2 << eol;
 
         FFilename normalized = filename.Normalized();
         FFilename normalized2 = filename2.Normalized();
 
-        std::cout << normalized << std::endl;
-        std::cout << normalized2 << std::endl;
+        std::cout << normalized << eol;
+        std::cout << normalized2 << eol;
 
         FFilename relative = filename.Relative(filename2.Dirpath());
         FFilename relative2 = filename2.Relative(filename.Dirpath());
 
-        std::cout << relative << std::endl;
-        std::cout << relative2 << std::endl;
+        std::cout << relative << eol;
+        std::cout << relative2 << eol;
 
         FFilename absolute = relative.Absolute(filename2.Dirpath());
         FFilename absolute2 = relative2.Absolute(filename.Dirpath());
 
-        std::cout << absolute << std::endl;
-        std::cout << absolute2 << std::endl;
+        std::cout << absolute << eol;
+        std::cout << absolute2 << eol;
 
         Assert(absolute == normalized);
         Assert(absolute2 == normalized2);

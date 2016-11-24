@@ -46,14 +46,14 @@ static void PrintMemStats_(const Core::FCrtMemoryStats& memoryStats) {
 #else
     std::cerr
 #endif
-        << "Memory statistics :" << std::endl
-        << " - Total free size          = " << memoryStats.TotalFreeSize << std::endl
-        << " - Largest free block       = " << memoryStats.LargestFreeBlockSize << std::endl
-        << " - Total used size          = " << memoryStats.TotalUsedSize << std::endl
-        << " - Largest used block       = " << memoryStats.LargestUsedBlockSize << std::endl
-        << " - Total overhead size      = " << memoryStats.TotalOverheadSize << std::endl
-        << " - Total comitted size      = " << Core::SizeInBytes{ memoryStats.TotalOverheadSize.Value + memoryStats.TotalFreeSize.Value + memoryStats.TotalUsedSize.Value } << std::endl
-        << " - External fragmentation   = " << (memoryStats.ExternalFragmentation() * 100) << "%" << std::endl;
+        << "Memory statistics :" << eol
+        << " - Total free size          = " << memoryStats.TotalFreeSize << eol
+        << " - Largest free block       = " << memoryStats.LargestFreeBlockSize << eol
+        << " - Total used size          = " << memoryStats.TotalUsedSize << eol
+        << " - Largest used block       = " << memoryStats.LargestUsedBlockSize << eol
+        << " - Total overhead size      = " << memoryStats.TotalOverheadSize << eol
+        << " - Total comitted size      = " << Core::SizeInBytes{ memoryStats.TotalOverheadSize.Value + memoryStats.TotalFreeSize.Value + memoryStats.TotalUsedSize.Value } << eol
+        << " - External fragmentation   = " << (memoryStats.ExternalFragmentation() * 100) << "%" << eol;
 }
 #endif
 //----------------------------------------------------------------------------

@@ -160,7 +160,7 @@ typedef TBasicOStringStream<wchar_t, THREAD_LOCAL_ALLOCATOR(String, wchar_t)>   
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Replaces std::endl which will cause almost always unneeded/unwanted flush of the stream !
+// Replaces eol which will cause almost always unneeded/unwanted flush of the stream !
 template<class _Elem, class _Traits>
 std::basic_ostream<_Elem, _Traits>& eol(std::basic_ostream<_Elem, _Traits>& oss) {
     oss.put(oss.widen('\n'));

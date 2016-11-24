@@ -49,14 +49,14 @@ typedef Core::FGameTest4 application_type;
 
 static void PrintMemStats(const Core::FCrtMemoryStats& memoryStats) {
     STACKLOCAL_OCSTRSTREAM(4096, oss);
-    oss << "Memory statistics :" << std::endl
-        << " - Total free size          = " << memoryStats.TotalFreeSize << std::endl
-        << " - Largest free block       = " << memoryStats.LargestFreeBlockSize << std::endl
-        << " - Total used size          = " << memoryStats.TotalUsedSize << std::endl
-        << " - Largest used block       = " << memoryStats.LargestUsedBlockSize << std::endl
-        << " - Total overhead size      = " << memoryStats.TotalOverheadSize << std::endl
-        << " - Total comitted size      = " << Core::SizeInBytes{ memoryStats.TotalOverheadSize.Value + memoryStats.TotalFreeSize.Value + memoryStats.TotalUsedSize.Value } << std::endl
-        << " - External fragmentation   = " << (memoryStats.ExternalFragmentation() * 100) << "%" << std::endl;
+    oss << "Memory statistics :" << eol
+        << " - Total free size          = " << memoryStats.TotalFreeSize << eol
+        << " - Largest free block       = " << memoryStats.LargestFreeBlockSize << eol
+        << " - Total used size          = " << memoryStats.TotalUsedSize << eol
+        << " - Largest used block       = " << memoryStats.LargestUsedBlockSize << eol
+        << " - Total overhead size      = " << memoryStats.TotalOverheadSize << eol
+        << " - Total comitted size      = " << Core::SizeInBytes{ memoryStats.TotalOverheadSize.Value + memoryStats.TotalFreeSize.Value + memoryStats.TotalUsedSize.Value } << eol
+        << " - External fragmentation   = " << (memoryStats.ExternalFragmentation() * 100) << "%" << eol;
 #ifdef OS_WINDOWS
     ::OutputDebugStringA(oss.NullTerminatedStr());
 #else

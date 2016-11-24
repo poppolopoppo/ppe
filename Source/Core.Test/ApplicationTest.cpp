@@ -91,14 +91,14 @@
 #endif
 
 static void Print(const Core::FCrtMemoryStats& memoryStats) {
-    std::cerr << "Memory statistics :" << std::endl
-        << " - Total free size          = " << memoryStats.TotalFreeSize << std::endl
-        << " - Largest free block       = " << memoryStats.LargestFreeBlockSize << std::endl
-        << " - Total used size          = " << memoryStats.TotalUsedSize << std::endl
-        << " - Largest used block       = " << memoryStats.LargestUsedBlockSize << std::endl
-        << " - Total overhead size      = " << memoryStats.TotalOverheadSize << std::endl
-        << " - Total comitted size      = " << Core::SizeInBytes{ memoryStats.TotalOverheadSize.Value + memoryStats.TotalFreeSize.Value + memoryStats.TotalUsedSize.Value } << std::endl
-        << " - External fragmentation   = " << (memoryStats.ExternalFragmentation() * 100) << "%" << std::endl;
+    std::cerr << "Memory statistics :" << eol
+        << " - Total free size          = " << memoryStats.TotalFreeSize << eol
+        << " - Largest free block       = " << memoryStats.LargestFreeBlockSize << eol
+        << " - Total used size          = " << memoryStats.TotalUsedSize << eol
+        << " - Largest used block       = " << memoryStats.LargestUsedBlockSize << eol
+        << " - Total overhead size      = " << memoryStats.TotalOverheadSize << eol
+        << " - Total comitted size      = " << Core::SizeInBytes{ memoryStats.TotalOverheadSize.Value + memoryStats.TotalFreeSize.Value + memoryStats.TotalUsedSize.Value } << eol
+        << " - External fragmentation   = " << (memoryStats.ExternalFragmentation() * 100) << "%" << eol;
 }
 
 void TestCallstack_() {
@@ -109,9 +109,9 @@ void TestCallstack_() {
 
     std::cout << "FCallstack[" << decoded.Depth() << "] #"
         << std::hex << decoded.Hash() << std::dec
-        << std::endl;
+        << eol;
 
-    std::cout << decoded << std::endl;
+    std::cout << decoded << eol;
 }
 
 void TestStrings_() {
@@ -128,7 +128,7 @@ void TestStrings_() {
     const char* s = test;
     FStringView p;
     while (Split(&s, ',', p))
-        std::cout << p << std::endl;
+        std::cout << p << eol;
 
     Format(std::cout, "string = {0:10U} {0:-10U}, decimal = {1:8X} {1:#8x}, float = {2:f3} {2:10f4}\n", "test", 0xBADCAFE, -0.123456f);
 
@@ -193,7 +193,7 @@ void TestPointers_() {
     AssertRelease(b == c);
     AssertRelease(a != b);
 
-    std::cout << c->Value() << std::endl;
+    std::cout << c->Value() << eol;
 }
 
 int fib(int x) {
@@ -210,7 +210,7 @@ void TestThreads_() {
 
     FThreadContext& context = FThreadLocalContext_::Instance();
 
-    std::cout << context.Name() << ", " << context.Tag() << " = " << context.Id() << std::endl;
+    std::cout << context.Name() << ", " << context.Tag() << " = " << context.Id() << eol;
 
     LockFreeCircularQueue_SingleProducer<const wchar_t*> queue(128);
 
@@ -220,7 +220,7 @@ void TestThreads_() {
     if (!queue.Consume(str))
         AssertRelease(0);
 
-    std::cout << str << std::endl;
+    std::cout << str << eol;
 
     {
         TaskEvaluator evaluator("GlobalEvaluator", std::thread::hardware_concurrency(), 90);
@@ -230,7 +230,7 @@ void TestThreads_() {
 
         const PTask task = new LambdaTask([](const TaskContext& ctx) {
             std::cout   << "[" << ctx.Worker()->ThreadIndex() << "] "
-                        << fib(15) << "!" << std::endl;
+                        << fib(15) << "!" << eol;
             return TaskResult::Succeed;
         });
 
@@ -238,13 +238,13 @@ void TestThreads_() {
             completionPort.Produce(task);
 
         completionPort.WaitAll();
-        std::cout << "done!" << std::endl;
+        std::cout << "done!" << eol;
 
         for (size_t i = 0; i < 100; ++i)
             completionPort.Produce(task);
 
         while (completionPort.WaitOne())
-            std::cout << "done!" << std::endl;
+            std::cout << "done!" << eol;
 
         evaluator.Shutdown();
     }
@@ -277,10 +277,10 @@ void TestTokens_() {
     token_type q = "";
 
     THash<token_type> h;
-    std::cout << h(t) << std::endl;
-    std::cout << h(v) << std::endl;
-    std::cout << h(e) << std::endl;
-    std::cout << h(q) << std::endl;
+    std::cout << h(t) << eol;
+    std::cout << h(v) << eol;
+    std::cout << h(e) << eol;
+    std::cout << h(q) << eol;
 }
 
 void TestFileSystem_() {
@@ -288,63 +288,63 @@ void TestFileSystem_() {
 
     FExtname ext = L".jpg";
 
-    std::cout << ext << " (" << hash_value(ext) << ")" << std::endl;
-    std::cout << FExtname(L".jPG") << std::endl;
+    std::cout << ext << " (" << hash_value(ext) << ")" << eol;
+    std::cout << FExtname(L".jPG") << eol;
 
     FExtname e{ FWString(L".Jpg") };
     AssertRelease(e == ext);
     AssertRelease(e.c_str() == ext.c_str());
-    std::cout << e << " (" << hash_value(e) << ")" << std::endl;
+    std::cout << e << " (" << hash_value(e) << ")" << eol;
 
     std::cout
-        << "Size of filesystem classes :" << std::endl
-        << " * FMountingPoint    = " << sizeof(FMountingPoint)    << std::endl
-        << " * FDirpath          = " << sizeof(FDirpath)          << std::endl
-        << " * FBasename         = " << sizeof(FBasename)         << std::endl
-        << " * FExtname          = " << sizeof(FExtname)          << std::endl
-        << " * FFilename         = " << sizeof(FFilename)         << std::endl
-        << " * TVector<int>      = " << sizeof(std::vector<int>) << std::endl
-        << " * TVector<FDirname>  = " << sizeof(std::vector<FDirname>) << std::endl
-        << " * TRawStorage<int>  = " << sizeof(RAWSTORAGE(FTask, int)) << std::endl
-        << std::endl;
+        << "Size of filesystem classes :" << eol
+        << " * FMountingPoint    = " << sizeof(FMountingPoint)    << eol
+        << " * FDirpath          = " << sizeof(FDirpath)          << eol
+        << " * FBasename         = " << sizeof(FBasename)         << eol
+        << " * FExtname          = " << sizeof(FExtname)          << eol
+        << " * FFilename         = " << sizeof(FFilename)         << eol
+        << " * TVector<int>      = " << sizeof(std::vector<int>) << eol
+        << " * TVector<FDirname>  = " << sizeof(std::vector<FDirname>) << eol
+        << " * TRawStorage<int>  = " << sizeof(RAWSTORAGE(FTask, int)) << eol
+        << eol;
 
     FMountingPoint mount(L"Data:");
     FDirpath path = { L"Data:", L"Assets", L"3D", L"Models" };
     FBasename basename(L"Test", L".JPG");
     FFilename filename{ path, basename };
 
-    std::cout << filename << " (" << hash_value(filename) << ")" << std::endl;
+    std::cout << filename << " (" << hash_value(filename) << ")" << eol;
 
     FFilename f = L"data:/assets/3d/models/test.jpg";
-    std::cout << f << " (" << hash_value(f) << ")" << std::endl;
+    std::cout << f << " (" << hash_value(f) << ")" << eol;
     f = L"test.jpg";
-    std::cout << f << " (" << hash_value(f) << ")" << " (basename: " << hash_value(f.Basename()) << ")" << std::endl;
+    std::cout << f << " (" << hash_value(f) << ")" << " (basename: " << hash_value(f.Basename()) << ")" << eol;
     f = L"models/test.jpg";
-    std::cout << f << " (" << hash_value(f) << ")" << std::endl;
+    std::cout << f << " (" << hash_value(f) << ")" << eol;
     f = L"data:/assets/3d/models/";
-    std::cout << f << " (" << hash_value(f) << ")" << std::endl;
+    std::cout << f << " (" << hash_value(f) << ")" << eol;
     f = L"DATA:/ASSETS/3D/MODELS/TEST.JPG";
-    std::cout << f << " (" << hash_value(f) << ")" << std::endl;
+    std::cout << f << " (" << hash_value(f) << ")" << eol;
 
-    std::cout << f.Basename() << hash_value(f.Basename()) << std::endl;
-    std::cout << basename << hash_value(basename) << std::endl;
+    std::cout << f.Basename() << hash_value(f.Basename()) << eol;
+    std::cout << basename << hash_value(basename) << eol;
 
-    std::cout << f.BasenameNoExt() << hash_value(f.BasenameNoExt()) << std::endl;
-    std::cout << basename.BasenameNoExt() << hash_value(basename.BasenameNoExt()) << std::endl;
+    std::cout << f.BasenameNoExt() << hash_value(f.BasenameNoExt()) << eol;
+    std::cout << basename.BasenameNoExt() << hash_value(basename.BasenameNoExt()) << eol;
 
-    std::cout << f.Extname() << hash_value(f.Extname()) << std::endl;
-    std::cout << basename.Extname() << hash_value(basename.Extname()) << std::endl;
+    std::cout << f.Extname() << hash_value(f.Extname()) << eol;
+    std::cout << basename.Extname() << hash_value(basename.Extname()) << eol;
 
     AssertRelease(hash_value(f) == hash_value(filename));
     AssertRelease(hash_value(e) == hash_value(filename.Extname()));
     AssertRelease(hash_value(e) == hash_value(basename.Extname()));
 
     FDirpath p = L"data:/assets/3d";
-    std::cout << p << " (" << hash_value(p) << ")" << std::endl;
+    std::cout << p << " (" << hash_value(p) << ")" << eol;
     p = L"data:";
-    std::cout << p << " (" << hash_value(p) << ")" << std::endl;
+    std::cout << p << " (" << hash_value(p) << ")" << eol;
     p = L"data:/assets";
-    std::cout << p << " (" << hash_value(p) << ")" << std::endl;
+    std::cout << p << " (" << hash_value(p) << ")" << eol;
 }
 
 void TestVirtualFileSystem_() {
@@ -370,14 +370,14 @@ void TestVirtualFileSystem_() {
         auto oss = vfs.OpenReadable(L"Process:/tmp/1/2/test.txt");
         RAWSTORAGE(FileSystem, wchar_t) read;
         oss->ReadAll(read);
-        std::cout << read.Pointer() << std::endl;
+        std::cout << read.Pointer() << eol;
     }
 
     if (!vfs.FileExists(L"procesS:/tEsT.tXT"))
         AssertRelease(false);
 
     vfs.EnumerateFiles(L"process:/", true, [](const Core::FFilename& filename) {
-        std::cout << filename << std::endl;
+        std::cout << filename << eol;
     });
 }
 
@@ -526,7 +526,7 @@ static void TestRTTI_() {
     RTTI::PMetaAtom atom = prop->WrapCopy(t);
     std::cout << *atom->Cast<int>()
         << " (" << atom->HashValue() << ")"
-        << std::endl;
+        << eol;
 
     prop = metaClass->PropertyIFP("_tities");
     atom = prop->WrapCopy(t);
@@ -681,13 +681,13 @@ static void TestMaths_() {
 
     w = w.xzy();
 
-    std::cout << w.OneExtend().Dehomogenize().yxyz() << std::endl;
+    std::cout << w.OneExtend().Dehomogenize().yxyz() << eol;
 
     w = 1.0f + w;
 
     float3 x = TLerp(w, 2 * w, 0.5f);
 
-    std::cout << (w == x) << std::endl;
+    std::cout << (w == x) << eol;
 
     x = Saturate(x) + 1.0f;
     x = TRcp(x);
@@ -937,7 +937,7 @@ static void TestTime_() {
     {
         Timespan elapased;
         if (time.Tick_Target15FPS(elapased)) {
-            std::cout  << "Tick " << time.Total() << " !" << std::endl;
+            std::cout  << "Tick " << time.Total() << " !" << eol;
             ++actualTickCount;
         }
     }
@@ -946,7 +946,7 @@ static void TestTime_() {
     std::cout << L"Total = " << Units::Time::Seconds(time.Total()) << " seconds -> "
         << actualTickCount << "/"
         << wantedTickCount << " ticks"
-        << std::endl;
+        << eol;
 }
 
 namespace Core {
@@ -1105,7 +1105,7 @@ void TestInputs_() {
     using namespace Core;
     using namespace Core::Engine;
 
-    std::cout << "static const u8 gVirtualKey_to_KeyboardKey[0xFF] = {" << std::endl;
+    std::cout << "static const u8 gVirtualKey_to_KeyboardKey[0xFF] = {" << eol;
 
     u8 virtualKeyToKeyboardKey[0xFF];
     memset(virtualKeyToKeyboardKey, 0xFF, sizeof(virtualKeyToKeyboardKey));
@@ -1178,11 +1178,11 @@ void TestInputs_() {
 
     for (size_t i = 0; i < 0xFF; ++i)
         if (virtualKeyToKeyboardKey[i] == 0xFF)
-            std::cout << "    0xFF," << std::endl;
+            std::cout << "    0xFF," << eol;
         else
-            std::cout << "    u8(EKeyboardKey::" << KeyboardKeyToCStr(EKeyboardKey(virtualKeyToKeyboardKey[i])) << ")," << std::endl;
+            std::cout << "    u8(EKeyboardKey::" << KeyboardKeyToCStr(EKeyboardKey(virtualKeyToKeyboardKey[i])) << ")," << eol;
 
-    std::cout << "};" << std::endl;
+    std::cout << "};" << eol;
 }
 
 void Tests() {
@@ -1202,7 +1202,7 @@ void Tests() {
     {
         VECTOR_THREAD_LOCAL(Container, int) z = { 1, 4, 5, 3, 2, 0 };
         std::sort(z.begin(), z.end());
-        std::cout << MakeView(z) << std::endl;
+        std::cout << MakeView(z) << eol;
     }
 
     {
@@ -1264,7 +1264,7 @@ void Tests() {
         std::vector<int, allocator_type> x(u.begin(), u.end());
         x.reserve(1024);
 
-        std::cout << "FHeap size = " << heap.Size() << std::endl;
+        std::cout << "FHeap size = " << heap.Size() << eol;
 
         CrtDumpMemoryStats(&memStats, heap.Handle());
         Print(memStats);
@@ -1276,7 +1276,7 @@ void Tests() {
         FHeap heap{ "stack", false };
         void* p = heap.malloc<16>(100);
 
-        std::cout << "FHeap size = " << heap.Size() << std::endl;
+        std::cout << "FHeap size = " << heap.Size() << eol;
 
         FCrtMemoryStats memStats;
         CrtDumpMemoryStats(&memStats, heap.Handle());

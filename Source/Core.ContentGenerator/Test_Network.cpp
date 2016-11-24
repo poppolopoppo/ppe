@@ -29,30 +29,30 @@ static bool ParseUri_(const FStringView& str) {
         return false;
 
     std::cout
-        << str << std::endl
-        << "    Scheme: " << uri.Scheme() << std::endl
-        << "    Username: " << uri.Username() << std::endl
-        << "    Hostname: " << uri.Hostname() << std::endl
-        << "    Port: " << uri.Port() << std::endl
-        << "    Path: " << uri.Path() << std::endl
-        << "    Query: " << uri.Query() << std::endl
-        << "    Anchor: " << uri.Anchor() << std::endl
-        << std::endl;
+        << str << eol
+        << "    Scheme: " << uri.Scheme() << eol
+        << "    Username: " << uri.Username() << eol
+        << "    Hostname: " << uri.Hostname() << eol
+        << "    Port: " << uri.Port() << eol
+        << "    Path: " << uri.Path() << eol
+        << "    Query: " << uri.Query() << eol
+        << "    Anchor: " << uri.Anchor() << eol
+        << eol;
 
     FUri::FQueryMap args;
     if (not FUri::Unpack(args, uri))
         return false;
 
-    std::cout << "Args[" << args.size() << "]:" << std::endl;
+    std::cout << "Args[" << args.size() << "]:" << eol;
     for (const auto& it : args)
-        std::cout << "    " << it.first << " = " << it.second << std::endl;
+        std::cout << "    " << it.first << " = " << it.second << eol;
 
     FUri test;
     if (not FUri::Pack(test, uri.Scheme(), uri.Username(), uri.Port(), uri.Hostname(), uri.Path(), args, uri.Anchor()) )
         return false;
 
-    std::cout << uri << std::endl;
-    std::cout << test << std::endl;
+    std::cout << uri << eol;
+    std::cout << test << eol;
 
     if (test.Str() != uri.Str())
         return false;
@@ -79,29 +79,29 @@ static void Test_SocketAccept_() {
         FSocketBuffered socket;
         socket.SetTimeout(FSeconds(0.3));
 
-        std::cout << "Listening on '" << listener.Listening() << "' ..." << std::endl;
+        std::cout << "Listening on '" << listener.Listening() << "' ..." << eol;
 
         if (FSocketBuffered::Accept(socket, listener, FSeconds(5))) {
             succeed = true;
-            std::cout << "Accepted from '" << socket.Local() << "' to '" << socket.Remote() << "' :)" << std::endl;
+            std::cout << "Accepted from '" << socket.Local() << "' to '" << socket.Remote() << "' :)" << eol;
 
             CORE_TRY
             {
                 FHttpRequest request;
                 FHttpRequest::Read(&request, socket, maxContentLength);
 
-                std::cout << "Method: " << request.Method() << std::endl;
-                std::cout << "Uri: " << request.Uri() << std::endl;
+                std::cout << "Method: " << request.Method() << eol;
+                std::cout << "Uri: " << request.Uri() << eol;
 
-                std::cout << "Headers:" << std::endl;
+                std::cout << "Headers:" << eol;
                 for (const auto& it : request.Headers())
-                    std::cout << " - '" << it.first << "' : '" << it.second << "'" << std::endl;
+                    std::cout << " - '" << it.first << "' : '" << it.second << "'" << eol;
 
                 FHttpRequest::FCookieMap cookies;
                 if (FHttpRequest::UnpackCookie(&cookies, request)) {
-                    std::cout << "Cookies:" << std::endl;
+                    std::cout << "Cookies:" << eol;
                     for (const auto& it : cookies)
-                        std::cout << " - '" << it.first << "' : '" << it.second << "'" << std::endl;
+                        std::cout << " - '" << it.first << "' : '" << it.second << "'" << eol;
                 }
 
                 FHttpResponse response;
@@ -119,7 +119,7 @@ static void Test_SocketAccept_() {
             }
             CORE_CATCH(FHttpException e)
             {
-                CORE_CATCH_BLOCK(std::cerr << e.Status() << std::endl << e.what() << std::endl;)
+                CORE_CATCH_BLOCK(std::cerr << e.Status() << eol << e.what() << eol;)
             }
 
             socket.Disconnect(true);
@@ -128,7 +128,7 @@ static void Test_SocketAccept_() {
     }
 
     if (not succeed)
-        std::cout << "No incomming connection :'(" << std::endl;
+        std::cout << "No incomming connection :'(" << eol;
 }
 //----------------------------------------------------------------------------
 static void Test_HttpGet_() {
@@ -140,22 +140,22 @@ static void Test_HttpGet_() {
     if (EHttpStatus::OK != HttpGet(&response, uri))
         AssertNotReached();
 
-    std::cout << "Status: " << response.Status() << std::endl;
-    std::cout << "Reason: " << response.Reason() << std::endl;
+    std::cout << "Status: " << response.Status() << eol;
+    std::cout << "Reason: " << response.Reason() << eol;
 
-    std::cout << "Headers:" << std::endl;
+    std::cout << "Headers:" << eol;
     for (const auto& it : response.Headers())
-        std::cout << " - '" << it.first << "' : '" << it.second << "'" << std::endl;
+        std::cout << " - '" << it.first << "' : '" << it.second << "'" << eol;
 
-    std::cout << "Body:" << std::endl;
-    std::cout << response.Body().MakeView() << std::endl;
+    std::cout << "Body:" << eol;
+    std::cout << response.Body().MakeView() << eol;
 
     XML::FDocument xml;
     if (not XML::FDocument::Load(&xml, L"network.tmp", &response.Body()))
         AssertNotReached();
 
-    std::cout << "XML:" << std::endl;
-    std::cout << xml << std::endl;
+    std::cout << "XML:" << eol;
+    std::cout << xml << eol;
 }
 //----------------------------------------------------------------------------
 static void Test_HttpPost_() {
@@ -174,15 +174,15 @@ static void Test_HttpPost_() {
     if (EHttpStatus::OK != HttpPost(&response, uri, post))
         AssertNotReached();
 
-    std::cout << "Status: " << response.Status() << std::endl;
-    std::cout << "Reason: " << response.Reason() << std::endl;
+    std::cout << "Status: " << response.Status() << eol;
+    std::cout << "Reason: " << response.Reason() << eol;
 
-    std::cout << "Headers:" << std::endl;
+    std::cout << "Headers:" << eol;
     for (const auto& it : response.Headers())
-        std::cout << " - '" << it.first << "' : '" << it.second << "'" << std::endl;
+        std::cout << " - '" << it.first << "' : '" << it.second << "'" << eol;
 
-    std::cout << "Body:" << std::endl;
-    std::cout << response.Body().MakeView() << std::endl;
+    std::cout << "Body:" << eol;
+    std::cout << response.Body().MakeView() << eol;
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -209,23 +209,23 @@ private:
 
         FStreamWriterOStream oss(&response.Body());
 
-        oss << "<html>" << std::endl
-            << "    <body>" << std::endl;
+        oss << "<html>" << eol
+            << "    <body>" << eol;
 
-        oss << "Method: " << request.Method() << "<br/>" << std::endl;
-        oss << "Uri   : " << request.Uri() << "<br/>" << std::endl;
+        oss << "Method: " << request.Method() << "<br/>" << eol;
+        oss << "Uri   : " << request.Uri() << "<br/>" << eol;
 
-        oss << "Headers:" << "<br/>" << std::endl;
+        oss << "Headers:" << "<br/>" << eol;
         for (const auto& it : request.Headers())
-            oss << " - '" << it.first << "' : '" << it.second << "'" << "<br/>" << std::endl;
+            oss << " - '" << it.first << "' : '" << it.second << "'" << "<br/>" << eol;
 
-        oss << "<br/>" << std::endl;
+        oss << "<br/>" << eol;
 
-        oss << "Body:" << "<br/>" << std::endl;
-        oss << request.Body().MakeView() << "<br/>" << std::endl;
+        oss << "Body:" << "<br/>" << eol;
+        oss << request.Body().MakeView() << "<br/>" << eol;
 
-        oss << "    </body>" << std::endl
-            << "</html>" << std::endl;
+        oss << "    </body>" << eol
+            << "</html>" << eol;
 
         FHttpResponse::Write(&socket, response);
     }

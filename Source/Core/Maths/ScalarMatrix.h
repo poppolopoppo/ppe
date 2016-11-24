@@ -239,7 +239,7 @@ std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
     const TScalarMatrix<T, _Width, _Height>& v) {
     for (size_t i = 0; i < _Height; ++i)
-        oss << v.Row(i) << std::endl;
+        oss << v.Row(i) << eol;
     return oss;
 }
 //----------------------------------------------------------------------------

@@ -37,7 +37,7 @@ std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Trait
     return oss << static_cast<const std::runtime_error&>(e)
 #if WITH_CORE_EXCEPTION_CALLSTACK
         << " (#0x" << std::hex << std::setfill('0') << std::setw(8) << e.SiteHash()
-        << ")" << std::dec << std::setfill(' ') << std::setw(0) << std::endl
+        << ")" << std::dec << std::setfill(' ') << std::setw(0) << eol
         << e.Callstack()
 #endif
         ;

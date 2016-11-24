@@ -173,7 +173,7 @@ void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
                             const TMemoryView<const FMemoryTrackingData *>& datas ) {
     Assert(header);
 
-    oss << L"Reporting trackings data :" << std::endl;
+    oss << L"Reporting trackings data :" << eol;
 
     STACKLOCAL_POD_ARRAY(const FMemoryTrackingData *, sortedDatas, datas.size());
     memcpy(sortedDatas.Pointer(), datas.Pointer(), datas.SizeInBytes());
@@ -194,16 +194,16 @@ void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
     const size_t width = 109;
     const wchar_t fmt[] = L" {0:-40}|{1:8} {2:10} |{3:8} {4:11} |{5:11} {6:11}\n";
 
-    oss << Repeat<width>(L"-") << std::endl
-        << "    " << header << L" (" << datas.size() << L" elements)" << std::endl
-        << Repeat<width>(L"-") << std::endl;
+    oss << Repeat<width>(L"-") << eol
+        << "    " << header << L" (" << datas.size() << L" elements)" << eol
+        << Repeat<width>(L"-") << eol;
 
     Format(oss, fmt,    L"Tracking Data FName",
                         L"FBlock", "Max",
                         L"Alloc", "Max",
                         L"Total", "Max" );
 
-    oss << Repeat<width>(L"-") << std::endl;
+    oss << Repeat<width>(L"-") << eol;
 
     STACKLOCAL_OCSTRSTREAM(tmp, 256);
     for (const FMemoryTrackingData *data : datas) {
@@ -219,7 +219,7 @@ void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
                             data->MaxTotalSizeInBytes() );
     }
 
-    oss << Repeat<width>(L"-") << std::endl;
+    oss << Repeat<width>(L"-") << eol;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

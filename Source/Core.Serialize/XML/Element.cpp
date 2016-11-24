@@ -21,22 +21,22 @@ static void PrintElement_(std::basic_ostream<char>& oss, const XML::FElement* el
 
     if (elt->Children().empty()) {
         if (elt->Text().size()) {
-            oss << ">" << elt->Text() << "</" << elt->Type() << ">" << std::endl;
+            oss << ">" << elt->Text() << "</" << elt->Type() << ">" << eol;
         }
         else {
-            oss << "/>" << std::endl;
+            oss << "/>" << eol;
         }
     }
     else {
         Assert(elt->Text().empty());
-        oss << ">" << std::endl;
+        oss << ">" << eol;
 
         for (const XML::PElement& child : elt->Children())
             PrintElement_(oss, child.get(), level + 1);
 
         forrange(i, 0, level)
             oss << "  ";
-        oss << "</" << elt->Type() << ">" << std::endl;
+        oss << "</" << elt->Type() << ">" << eol;
     }
 }
 //----------------------------------------------------------------------------

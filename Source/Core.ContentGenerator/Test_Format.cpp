@@ -21,10 +21,10 @@ static void TestFormat_(const char (&expected)[_Dim], const char (&format)[_Dim2
     const bool match = (expected == str);
 
     std::cout
-        << "==================================================================" << std::endl
-        << "Format      = '" << format << "'" << std::endl
-        << "Result      = '" << str << "'" << std::endl
-        << "Expected    = '" << expected << "' => " << std::boolalpha << match << std::endl;
+        << "==================================================================" << eol
+        << "Format      = '" << format << "'" << eol
+        << "Result      = '" << str << "'" << eol
+        << "Expected    = '" << expected << "' => " << std::boolalpha << match << eol;
 
     AssertRelease(match);
 }
@@ -36,10 +36,10 @@ static void TestFormat_(const wchar_t (&expected)[_Dim], const wchar_t (&format)
     const bool match = (expected == wstr);
 
     std::wcout
-        << L"==================================================================" << std::endl
-        << L"Format      = '" << format << L"'" << std::endl
-        << L"Result      = '" << wstr << L"'" << std::endl
-        << L"Expected    = '" << expected << L"' => " << std::boolalpha << match << std::endl;
+        << L"==================================================================" << eol
+        << L"Format      = '" << format << L"'" << eol
+        << L"Result      = '" << wstr << L"'" << eol
+        << L"Expected    = '" << expected << L"' => " << std::boolalpha << match << eol;
 
     AssertRelease(match);
 }
@@ -56,7 +56,7 @@ void Test_Format() {
     }
     {
         FWString wstr = StringFormat(L"num={0} alphabool={0:a}", true);
-        std::wcout << wstr << std::endl;
+        std::wcout << wstr << eol;
     }
 
     TestFormat_("----------------",
@@ -79,7 +79,7 @@ void Test_Format() {
 
     MEMORYSTREAM_THREAD_LOCAL(Stream) mem;
     FStreamWriterOStream oss(&mem);
-    oss << "Yolo!" << 42 << std::endl;
+    oss << "Yolo!" << 42 << eol;
     Format(oss, "This a neg test {0:#4*4} = {1:-30} ({2:5f2})", 42, "test aligned", 1.23456f);
 }
 //----------------------------------------------------------------------------
