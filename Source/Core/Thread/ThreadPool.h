@@ -20,22 +20,26 @@ public:
 
     static void Create();
     static void Destroy();
+
+    static TMemoryView<const size_t> ThreadAffinities();
 };
 //----------------------------------------------------------------------------
-void AsyncWork(const TaskDelegate& task, ETaskPriority priority = ETaskPriority::Normal);
+void AsyncWork(const FTaskDelegate& task, ETaskPriority priority = ETaskPriority::Normal);
 //----------------------------------------------------------------------------
-class IOThreadPool : Meta::TSingleton<FTaskManager, IOThreadPool> {
+class FIOThreadPool : Meta::TSingleton<FTaskManager, FIOThreadPool> {
 public:
-    typedef Meta::TSingleton<FTaskManager, IOThreadPool> parent_type;
+    typedef Meta::TSingleton<FTaskManager, FIOThreadPool> parent_type;
 
     using parent_type::Instance;
     using parent_type::HasInstance;
 
     static void Create();
     static void Destroy();
+
+    static TMemoryView<const size_t> ThreadAffinities();
 };
 //----------------------------------------------------------------------------
-void AsyncIO(const TaskDelegate& task, ETaskPriority priority = ETaskPriority::Normal);
+void AsyncIO(const FTaskDelegate& task, ETaskPriority priority = ETaskPriority::Normal);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
