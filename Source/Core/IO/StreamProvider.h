@@ -5,6 +5,8 @@
 #include "Core/Memory/AlignedStorage.h"
 #include "Core/Memory/MemoryView.h"
 
+#include <streambuf>
+
 namespace Core {
 template <typename T, typename _Allocator>
 class TRawStorage;
@@ -156,6 +158,78 @@ inline TBasicStreamWriter<char> StderrWriter() { return TBasicStreamWriter<char>
 inline TBasicStreamReader<wchar_t> WStdinReader() { return TBasicStreamReader<wchar_t>(std::wcin); }
 inline TBasicStreamWriter<wchar_t> WStdoutWriter() { return TBasicStreamWriter<wchar_t>(std::wcout); }
 inline TBasicStreamWriter<wchar_t> WStderrWriter() { return TBasicStreamWriter<wchar_t>(std::wcerr); }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits = std::char_traits<_Char> >
+class TStreamWriterBasicStreamBuffer : public std::basic_streambuf<_Char, _Traits> {
+public:
+    typedef std::basic_streambuf<_Char, _Traits> parent_type;
+
+    explicit TStreamWriterBasicStreamBuffer(IStreamWriter* writer) : _writer(writer) {
+        Assert(nullptr != writer);
+    }
+
+    IStreamWriter* Writer() { return _writer; }
+    const IStreamWriter* Writer() const { return _writer; }
+
+    void swap(TStreamWriterBasicStreamBuffer& other) {
+        parent_type::swap(other);
+        std::swap(_writer, other._writer);
+    }
+
+protected:
+    virtual std::streambuf* setbuf(_Char *, std::streamsize) override { AssertNotReached(); return nullptr; }
+
+    virtual int underflow() override { AssertNotReached(); return _Traits::eof(); }
+    virtual std::streamsize xsgetn(_Char* , std::streamsize ) override { AssertNotReached(); return 0; }
+
+    virtual int overflow(int ch) override { _writer->WritePOD(_Char(ch)); return 0; }
+    virtual std::streamsize xsputn(const _Char* ptr, std::streamsize count) override {
+        _writer->WriteView(TMemoryView<const _Char>(ptr, checked_cast<size_t>(count)));
+        return count;
+    }
+
+private:
+    IStreamWriter* _writer;
+};
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits = std::char_traits<_Char> >
+class TStreamWriterBasicOStream :
+    private TStreamWriterBasicStreamBuffer<_Char, _Traits>
+,   public std::basic_ostream<_Char, _Traits> {
+public:
+    typedef TStreamWriterBasicStreamBuffer<_Char, _Traits> buffer_type;
+    typedef std::basic_ostream<_Char, _Traits> stream_type;
+
+    explicit TStreamWriterBasicOStream(IStreamWriter* writer)
+        : buffer_type(writer)
+        , stream_type(this) {}
+
+    virtual ~TStreamWriterBasicOStream() {}
+
+    TStreamWriterBasicOStream(TStreamWriterBasicOStream&& rvalue) = default;
+    TStreamWriterBasicOStream& operator =(TStreamWriterBasicOStream&& rvalue) = default;
+
+    TStreamWriterBasicOStream(const TStreamWriterBasicOStream&) = delete;
+    TStreamWriterBasicOStream& operator =(const TStreamWriterBasicOStream&) = delete;
+
+    IStreamWriter* Writer() { return buffer_type::Writer(); }
+    const IStreamWriter* Writer() const { return buffer_type::Writer(); }
+
+    void swap(TStreamWriterBasicOStream& other) {
+        buffer_type::swap(other);
+        stream_type::swap(other);
+    }
+};
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits>
+void swap(TStreamWriterBasicOStream<_Char, _Traits>& lhs, TStreamWriterBasicOStream<_Char, _Traits>& rhs) {
+    lhs.swap(rhs);
+}
+//----------------------------------------------------------------------------
+typedef TStreamWriterBasicOStream<char>     FStreamWriterOStream;
+typedef TStreamWriterBasicOStream<wchar_t>  FStreamWriterWOStream;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
