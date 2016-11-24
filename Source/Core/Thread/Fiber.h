@@ -32,6 +32,8 @@ public:
 
     void Reset(void* pimpl = nullptr);
 
+    void Swap(FFiber& other) { std::swap(_pimpl, other._pimpl); }
+
     operator void *() const { return _pimpl; }
 
     bool operator ==(const FFiber& other) const { return _pimpl == other._pimpl; }
