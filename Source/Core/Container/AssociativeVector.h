@@ -149,7 +149,7 @@ public:
     void Remove_AssertExists(const _Key& key, const _Value& valueForDebug);
     void Remove_AssertExists(const _Key& key);
 
-    _Value& operator [](const _Key& key) { return Get(key); }
+    _Value& operator [](const _Key& key) { return GetOrAdd(key); }
     const _Value& operator [](const _Key& key) const { return At(key); }
 
     template <typename _It>
