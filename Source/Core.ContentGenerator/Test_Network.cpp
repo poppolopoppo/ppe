@@ -3,6 +3,7 @@
 #include "Core.Network/Http/Client.h"
 #include "Core.Network/Http/Exceptions.h"
 #include "Core.Network/Http/Method.h"
+#include "Core.Network/Http/Server.h"
 #include "Core.Network/Http/Status.h"
 #include "Core.Network/Http/Request.h"
 #include "Core.Network/Http/Response.h"
@@ -136,7 +137,7 @@ static void Test_HttpGet_() {
         AssertNotReached();
 
     FHttpResponse response;
-    if (not HttpGet(&response, uri))
+    if (EHttpStatus::OK != HttpGet(&response, uri))
         AssertNotReached();
 
     std::cout << "Status: " << response.Status() << std::endl;
@@ -157,6 +158,90 @@ static void Test_HttpGet_() {
     std::cout << xml << std::endl;
 }
 //----------------------------------------------------------------------------
+static void Test_HttpPost_() {
+    FUri uri;
+    if (not FUri::Parse(uri, "http://www.w3schools.com/php/demo_form_validation_complete.php"))
+        AssertNotReached();
+
+    FHttpClient::FPostMap post = {
+        { "name",       "Tom Cum von Bernardo $"},
+        { "email",      "tom.cum@gmail.com"     },
+        { "website",    "www.tom-cum.com"       },
+        { "gender",     "don't be so tacky"     },
+    };
+
+    FHttpResponse response;
+    if (EHttpStatus::OK != HttpPost(&response, uri, post))
+        AssertNotReached();
+
+    std::cout << "Status: " << response.Status() << std::endl;
+    std::cout << "Reason: " << response.Reason() << std::endl;
+
+    std::cout << "Headers:" << std::endl;
+    for (const auto& it : response.Headers())
+        std::cout << " - '" << it.first << "' : '" << it.second << "'" << std::endl;
+
+    std::cout << "Body:" << std::endl;
+    std::cout << response.Body().MakeView() << std::endl;
+}
+//----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+class FTestHttpServer : public FHttpServer {
+public:
+    FTestHttpServer() : FHttpServer("localhost", FAddress::Localhost(8126)) {}
+
+private:
+    virtual void OnAccept(FSocketBuffered& socket) const override {
+        LOG(Info, L"[{0}] Accept connection on test server : {1}", socket.Local(), socket.Remote());
+    }
+
+    virtual void OnRequest(FSocketBuffered& socket, const FHttpRequest& request) const CORE_THROW() override {
+        LOG(Info, L"[{0}] {1} requested : {2}", socket.Local(), socket.Remote(), request.Uri());
+
+        FHttpResponse response;
+        response.SetStatus(EHttpStatus::OK);
+        response.SetReason("OK");
+
+        FStreamWriterOStream oss(&response.Body());
+
+        oss << "<html>" << std::endl
+            << "    <body>" << std::endl;
+
+        oss << "Method: " << request.Method() << "<br/>" << std::endl;
+        oss << "Uri   : " << request.Uri() << "<br/>" << std::endl;
+
+        oss << "Headers:" << "<br/>" << std::endl;
+        for (const auto& it : request.Headers())
+            oss << " - '" << it.first << "' : '" << it.second << "'" << "<br/>" << std::endl;
+
+        oss << "<br/>" << std::endl;
+
+        oss << "Body:" << "<br/>" << std::endl;
+        oss << request.Body().MakeView() << "<br/>" << std::endl;
+
+        oss << "    </body>" << std::endl
+            << "</html>" << std::endl;
+
+        FHttpResponse::Write(&socket, response);
+    }
+
+    virtual void OnDisconnect(FSocketBuffered& socket) const override{
+        LOG(Info, L"[{0}] Disconnected from test server : {1}", socket.Local(), socket.Remote());
+    }
+};
+//----------------------------------------------------------------------------
+static void Test_HttpServer_() {
+    FTestHttpServer srv;
+    srv.Start();
+    std::this_thread::sleep_for(std::chrono::seconds(30));
+    srv.Stop();
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -165,6 +250,8 @@ void Test_Network() {
     Test_ParseUri_();
     Test_SocketAccept_();
     Test_HttpGet_();
+    Test_HttpPost_();
+    Test_HttpServer_();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
