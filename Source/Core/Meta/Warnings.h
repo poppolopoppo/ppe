@@ -9,3 +9,17 @@
 #pragma warning(disable: 6385) // Lecture de données non valides depuis 'XXX' : la taille lisible est 'XXX' octets, mais 'XXX' octets sont peut-être lus.
 #pragma warning(disable: 4714) // Fonction 'XXX' marquée comme __forceinline non inline
 #endif
+
+#define CORE_MESSAGE(_Message) \
+    __pragma(message(__FILE__ "(" STRINGIZE(__LINE__) ") : " _Message))
+
+#define CORE_WARNING(_Code, _Message) CORE_MESSAGE("WARNING " _Code ": " _Message)
+
+#if     defined(CPP_VISUALSTUDIO)
+#   define CORE_DEPRECATED __declspec(deprecated)
+#elif   defined(CPP_GCC) || defined(CPP_CLANG)
+#   define CORE_DEPRECATED __attribute__((deprecated))
+#else
+    CORE_WARNING("Core", "You need to implement CORE_DEPRECATED for this compiler")
+#   define CORE_DEPRECATED
+#endif
