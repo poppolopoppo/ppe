@@ -66,9 +66,11 @@ public:
         : _vector(begin, end) {}
 #endif
 
-    template <typename U>
-    TAssociativeVector(std::initializer_list<U> values)
-        : TAssociativeVector(values.begin(), values.end()) {}
+    TAssociativeVector(std::initializer_list<value_type> values) : _vector(values) {}
+    TAssociativeVector& operator =(std::initializer_list<value_type> values) {
+        _vector.assign(values.begin(), values.end());
+        return *this;
+    }
 
     explicit TAssociativeVector(vector_type&& vector);
     TAssociativeVector& operator =(vector_type&& vector);
