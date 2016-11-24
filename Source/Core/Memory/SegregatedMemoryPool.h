@@ -79,7 +79,7 @@ struct TPoolTracking {
 template <  typename _Tag
 ,           size_t _BlockSize
 ,           typename _MemoryPool = TMemoryPool<true>
-,           template <class > class _AutoSingleton = Meta::FAutoSingleton >
+,           template <class > class _AutoSingleton = Meta::TAutoSingleton >
 class TSegregatedMemoryPool :
     private _MemoryPool
 ,   private _AutoSingleton<TSegregatedMemoryPool<_Tag, _BlockSize, _MemoryPool, _AutoSingleton> > {
@@ -137,8 +137,8 @@ public:
     enum : size_t { BlockSize = SNAP_SIZE_FOR_POOL_SEGREGATION(T) };
 
     typedef typename std::conditional<_ThreadLocal,
-        TSegregatedMemoryPool<_Tag, BlockSize, TMemoryPool<false, THREAD_LOCAL_ALLOCATOR(Pool, size_t) >, Meta::FThreadLocalAutoSingleton >,
-        TSegregatedMemoryPool<_Tag, BlockSize, TMemoryPool<true , ALLOCATOR(Pool, size_t)              >, Meta::FAutoSingleton >
+        TSegregatedMemoryPool<_Tag, BlockSize, TMemoryPool<false, THREAD_LOCAL_ALLOCATOR(Pool, size_t) >, Meta::TThreadLocalAutoSingleton >,
+        TSegregatedMemoryPool<_Tag, BlockSize, TMemoryPool<true , ALLOCATOR(Pool, size_t)              >, Meta::TAutoSingleton >
     >::type     segregatedpool_type;
 
     FORCE_INLINE static void* Allocate() { return segregatedpool_type::Instance().Allocate(TrackingData()); }

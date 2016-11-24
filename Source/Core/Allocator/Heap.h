@@ -41,22 +41,22 @@ public:
     void*   AlignedRealloc(void *ptr, size_t size, size_t alignment, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global());
 
     template <size_t _Alignment>
-    void*   Malloc(size_t size, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global(), typename std::enable_if< IsNaturalyAligned<_Alignment>::value >::type* = 0);
+    void*   Malloc(size_t size, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global(), typename std::enable_if< TIsNaturalyAligned<_Alignment>::value >::type* = 0);
     template <size_t _Alignment>
-    void    Free(void *ptr, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global(), typename std::enable_if< IsNaturalyAligned<_Alignment>::value >::type* = 0);
+    void    Free(void *ptr, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global(), typename std::enable_if< TIsNaturalyAligned<_Alignment>::value >::type* = 0);
     template <size_t _Alignment>
-    void*   Calloc(size_t nmemb, size_t size, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global(), typename std::enable_if< IsNaturalyAligned<_Alignment>::value >::type* = 0);
+    void*   Calloc(size_t nmemb, size_t size, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global(), typename std::enable_if< TIsNaturalyAligned<_Alignment>::value >::type* = 0);
     template <size_t _Alignment>
-    void*   Realloc(void *ptr, size_t size, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global(), typename std::enable_if< IsNaturalyAligned<_Alignment>::value >::type* = 0);
+    void*   Realloc(void *ptr, size_t size, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global(), typename std::enable_if< TIsNaturalyAligned<_Alignment>::value >::type* = 0);
 
     template <size_t _Alignment>
-    void*   Malloc(size_t size, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global(), typename std::enable_if< !IsNaturalyAligned<_Alignment>::value >::type* = 0);
+    void*   Malloc(size_t size, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global(), typename std::enable_if< !TIsNaturalyAligned<_Alignment>::value >::type* = 0);
     template <size_t _Alignment>
-    void    Free(void *ptr, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global(), typename std::enable_if< !IsNaturalyAligned<_Alignment>::value >::type* = 0);
+    void    Free(void *ptr, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global(), typename std::enable_if< !TIsNaturalyAligned<_Alignment>::value >::type* = 0);
     template <size_t _Alignment>
-    void*   Calloc(size_t nmemb, size_t size, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global(), typename std::enable_if< !IsNaturalyAligned<_Alignment>::value >::type* = 0);
+    void*   Calloc(size_t nmemb, size_t size, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global(), typename std::enable_if< !TIsNaturalyAligned<_Alignment>::value >::type* = 0);
     template <size_t _Alignment>
-    void*   Realloc(void *ptr, size_t size, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global(), typename std::enable_if< !IsNaturalyAligned<_Alignment>::value >::type* = 0);
+    void*   Realloc(void *ptr, size_t size, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global(), typename std::enable_if< !TIsNaturalyAligned<_Alignment>::value >::type* = 0);
 
     void    Swap(FHeap& other);
 

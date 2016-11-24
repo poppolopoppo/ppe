@@ -47,7 +47,7 @@ namespace Core {
 // By default std allocations are already aligned on size_t (pointer size).
 // Aligned allocations induce overhead so this will prevent us from calling it systematically.
 template <size_t _Alignment>
-struct IsNaturalyAligned {
+struct TIsNaturalyAligned {
     // Power of 2 assertion guarantees <= test correctness :
     // if aligned on 8, also aligned on 4, 2 & 1
     static_assert(_Alignment && 0 == (_Alignment & (_Alignment - 1)), "_Alignment must be a power of 2");
@@ -57,7 +57,7 @@ struct IsNaturalyAligned {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <size_t _Alignment>
-struct IsCacheLineAligned {
+struct TIsCacheLineAligned {
     // Power of 2 assertion guarantees <= test correctness :
     // if aligned on 8, also aligned on 4, 2 & 1
     static_assert(_Alignment && 0 == (_Alignment & (_Alignment - 1)), "_Alignment must be a power of 2");
