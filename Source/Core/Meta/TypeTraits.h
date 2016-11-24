@@ -42,14 +42,14 @@ struct has_destructor
 };
 //----------------------------------------------------------------------------
 template <typename T>
-using IsDefined = has_destructor<T>;
+using TIsDefined = has_destructor<T>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define INSTANTIATE_CLASS_TYPEDEF(_NAME, ...) \
     class _NAME : public __VA_ARGS__ { \
         typedef __VA_ARGS__ parent_type; \
-        STATIC_ASSERT(Core::Meta::IsDefined<parent_type>::value); \
+        STATIC_ASSERT(Core::Meta::TIsDefined<parent_type>::value); \
     public: \
         using parent_type::parent_type; \
         using parent_type::operator=; \
