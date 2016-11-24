@@ -124,6 +124,6 @@ public:
 
 #else
 
-#define LOG(_Category, ...) NOOP
+#define LOG(_Category, ...) NOOP()
 
 #endif //!#ifdef USE_DEBUG_LOGGER

@@ -31,17 +31,17 @@
 #   if WITH_RTTI_BINARYSERIALIZER_LOG
 #       define BINARYSERIALIZER_LOG(...) LOG(__VA_ARGS__)
 #   else
-#       define BINARYSERIALIZER_LOG(...) NOOP
+#       define BINARYSERIALIZER_LOG(...) NOOP()
 #   endif
 
 #   if WITH_RTTI_BINARYSERIALIZER_DATALOG
 #       define BINARYSERIALIZER_DATALOG(...) LOG(Warning, __VA_ARGS__)
 #   else
-#       define BINARYSERIALIZER_DATALOG(...) NOOP
+#       define BINARYSERIALIZER_DATALOG(...) NOOP()
 #   endif
 #else
-#   define BINARYSERIALIZER_LOG(...) NOOP
-#   define BINARYSERIALIZER_DATALOG(...) NOOP
+#   define BINARYSERIALIZER_LOG(...) NOOP()
+#   define BINARYSERIALIZER_DATALOG(...) NOOP()
 #endif
 
 namespace Core {

@@ -67,7 +67,7 @@
 #define CONCAT_OO(_ARGS) CONCAT_I ## _ARGS
 #define CONCAT(_X, _Y) CONCAT_I(_X, _Y) //CONCAT_OO((_X, _Y))
 //----------------------------------------------------------------------------
-#define NOOP        (void)0
+#define NOOP(...)   __noop(__VA_ARGS__)
 #define UNUSED(x)   (void)(x)
 //----------------------------------------------------------------------------
 #define lengthof(_ARRAY) ((sizeof(_ARRAY))/(sizeof(_ARRAY[0])))
@@ -218,7 +218,7 @@ struct CORE_API OnModuleStart {
 #define CORE_MODULE_START(_Name) \
     const Core::OnModuleStart onModuleStart(WSTRINGIZE(_Name))
 #else
-#define CORE_MODULE_START(_Name) NOOP
+#define CORE_MODULE_START(_Name) NOOP()
 #endif
 //----------------------------------------------------------------------------
 // Called for each module on shutdown
@@ -231,7 +231,7 @@ struct CORE_API OnModuleShutdown {
 #define CORE_MODULE_SHUTDOWN(_Name) \
     const Core::OnModuleShutdown onModuleShutdown(WSTRINGIZE(_Name))
 #else
-#define CORE_MODULE_SHUTDOWN(_Name) NOOP
+#define CORE_MODULE_SHUTDOWN(_Name) NOOP()
 #endif
 //----------------------------------------------------------------------------
 // Called for each module on ClearAll_UnusedMemory
@@ -244,7 +244,7 @@ struct CORE_API OnModuleClearAll {
 #define CORE_MODULE_CLEARALL(_Name) \
     const Core::OnModuleClearAll onModuleClearAll(WSTRINGIZE(_Name))
 #else
-#define CORE_MODULE_CLEARALL(_Name) NOOP
+#define CORE_MODULE_CLEARALL(_Name) NOOP()
 #endif
 //----------------------------------------------------------------------------
 #ifndef FINAL_RELEASE

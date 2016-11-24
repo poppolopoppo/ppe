@@ -40,7 +40,7 @@ private:
 #ifdef WITH_CORE_THREADRESOURCE_CHECKS
 #   define THREADRESOURCE_CHECKACCESS(_pResource) (_pResource)->OwnedByThisThread()
 #else
-#   define THREADRESOURCE_CHECKACCESS(_pResource) NOOP
+#   define THREADRESOURCE_CHECKACCESS(_pResource) NOOP()
 #endif
 //----------------------------------------------------------------------------
 #define THIS_THREADRESOURCE_CHECKACCESS() THREADRESOURCE_CHECKACCESS(this)

@@ -91,7 +91,7 @@ void SetAssertionReleaseHandler(AssertionReleaseHandler handler);
 inline void AssertionReleaseFailed(const char *, const wchar_t *, unsigned ) {}
 inline void SetAssertionReleaseHandler(AssertionReleaseHandler ) {}
 //----------------------------------------------------------------------------
-#   define AssertReleaseMessage(_Expression, _Message)  NOOP
+#   define AssertReleaseMessage(_Expression, _Message)  NOOP()
 //----------------------------------------------------------------------------
 #endif //!WITH_CORE_ASSERT_RELEASE
 //----------------------------------------------------------------------------
@@ -106,13 +106,13 @@ inline void SetAssertionReleaseHandler(AssertionReleaseHandler ) {}
 #ifdef WITH_CORE_ASSERT
 #   define ONLY_IF_ASSERT(_Code) _Code
 #else
-#   define ONLY_IF_ASSERT(_Code) NOOP
+#   define ONLY_IF_ASSERT(_Code) NOOP()
 #endif
 
 #ifdef WITH_CORE_ASSERT_RELEASE
 #   define ONLY_IF_ASSERT_RELEASE(_Code) _Code
 #else
-#   define ONLY_IF_ASSERT_RELEASE(_Code) NOOP
+#   define ONLY_IF_ASSERT_RELEASE(_Code) NOOP()
 #endif
 
 namespace Core {

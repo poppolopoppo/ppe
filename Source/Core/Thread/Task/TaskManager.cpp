@@ -464,7 +464,7 @@ struct FWaitForAll_ {
     std::mutex Barrier;
     std::condition_variable OnFinished;
 
-    static void Noop(ITaskContext& ) { NOOP; }
+    static void Noop(ITaskContext& ) { NOOP(); }
 
     static void Task(ITaskContext& context, FWaitForAll_* pArgs) {
         Assert(pArgs);

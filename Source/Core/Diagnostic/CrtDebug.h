@@ -46,11 +46,11 @@ void CrtCheckGlobalMemoryLeaks(bool enabled);
 //----------------------------------------------------------------------------
 #else  // USE_CRT_DEBUG
 //----------------------------------------------------------------------------
-#define CHECK_MEMORY_LEAKS_IN_SCOPE() NOOP
+#define CHECK_MEMORY_LEAKS_IN_SCOPE() NOOP()
 //----------------------------------------------------------------------------
-#define SKIP_MEMORY_LEAKS_IN_SCOPE() NOOP
+#define SKIP_MEMORY_LEAKS_IN_SCOPE() NOOP()
 //----------------------------------------------------------------------------
-#define GLOBAL_CHECK_MEMORY_LEAKS(_Enabled) NOOP
+#define GLOBAL_CHECK_MEMORY_LEAKS(_Enabled) NOOP()
 //----------------------------------------------------------------------------
 #endif //!USE_CRT_DEBUG
 //----------------------------------------------------------------------------
@@ -78,7 +78,7 @@ bool CrtDumpMemoryStats(FCrtMemoryStats* memoryStats, void* heapHandle = nullptr
 //----------------------------------------------------------------------------
 #else  // OS_WINDOWS
 //----------------------------------------------------------------------------
-#define BREAKPOINT() NOOP
+#define BREAKPOINT() NOOP()
 //----------------------------------------------------------------------------
 #endif //!OS_WINDOWS
 //----------------------------------------------------------------------------
