@@ -8,10 +8,10 @@
 
 namespace Core {
 namespace ContentPipeline {
-FWD_INTERFACE_REFPTR(TContentImporter);
-FWD_INTERFACE_REFPTR(TContentProcessor);
-FWD_INTERFACE_REFPTR(TContentSerializer);
-FWD_INTERFACE_REFPTR(FContentToolchain);
+FWD_INTERFACE_REFPTR(ContentImporter);
+FWD_INTERFACE_REFPTR(ContentProcessor);
+FWD_INTERFACE_REFPTR(ContentSerializer);
+FWD_INTERFACE_REFPTR(ContentToolchain);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

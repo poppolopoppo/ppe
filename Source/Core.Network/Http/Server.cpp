@@ -3,6 +3,7 @@
 #include "Server.h"
 
 #include "Exceptions.h"
+#include "Method.h"
 #include "Request.h"
 #include "Response.h"
 #include "Status.h"

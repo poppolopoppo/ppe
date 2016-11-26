@@ -21,13 +21,13 @@ public:
     FMouseInputHandler(const FMouseInputHandler& ) = delete;
     FMouseInputHandler& operator =(const FMouseInputHandler& ) = delete;
 
-    virtual const FMouseState& State() const override { return _state; }
+    virtual const FMouseState& State() const override final { return _state; }
 
-    virtual void RegisterMessageDelegates(Graphics::FBasicWindow *wnd) override;
-    virtual void UnregisterMessageDelegates(Graphics::FBasicWindow *wnd) override;
+    virtual void RegisterMessageDelegates(Graphics::FBasicWindow *wnd) override final;
+    virtual void UnregisterMessageDelegates(Graphics::FBasicWindow *wnd) override final;
 
-    virtual void UpdateBeforeDispatch(Graphics::FBasicWindow *wnd) override;
-    virtual void UpdateAfterDispatch(Graphics::FBasicWindow *wnd) override;
+    virtual void UpdateBeforeDispatch(Graphics::FBasicWindow *wnd) override final;
+    virtual void UpdateAfterDispatch(Graphics::FBasicWindow *wnd) override final;
 
 protected:
     static Graphics::MessageResult OnMouseMove_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam);

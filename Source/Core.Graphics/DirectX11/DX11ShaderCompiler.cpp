@@ -48,8 +48,8 @@ public:
     FDX11ShaderIncludeHandler_(const FDX11ShaderIncludeHandler_& ) = delete;
     FDX11ShaderIncludeHandler_& operator =(const FDX11ShaderIncludeHandler_& ) = delete;
 
-    HRESULT STDCALL Open(::D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID *ppData, UINT *pBytes) override;
-    HRESULT STDCALL Close(LPCVOID pData) override;
+    HRESULT STDCALL Open(::D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID *ppData, UINT *pBytes) override final;
+    HRESULT STDCALL Close(LPCVOID pData) override final;
 
 private:
     void Open_(const FFilename& filename, LPCVOID *ppData, UINT *pBytes);

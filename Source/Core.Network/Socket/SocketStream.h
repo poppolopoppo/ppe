@@ -21,13 +21,13 @@ public:
     const FSocketBuffered& Socket() const { return _socket; }
 
 public: // IStreamWriter
-    virtual bool IsSeekableO(ESeekOrigin ) const override { return false; }
+    virtual bool IsSeekableO(ESeekOrigin ) const override final { return false; }
 
-    virtual std::streamoff TellO() const override;
-    virtual bool SeekO(std::streamoff offset, ESeekOrigin policy = ESeekOrigin::Begin) override;
+    virtual std::streamoff TellO() const override final;
+    virtual bool SeekO(std::streamoff offset, ESeekOrigin policy = ESeekOrigin::Begin) override final;
 
-    virtual bool Write(const void* storage, std::streamsize sizeInBytes) override;
-    virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) override;
+    virtual bool Write(const void* storage, std::streamsize sizeInBytes) override final;
+    virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) override final;
 
 private:
     FSocketBuffered& _socket;

@@ -111,10 +111,10 @@ protected:
     void RegisterProperty(UCMetaProperty&& prop);
 
 private:
-    virtual TMemoryView<const UCMetaProperty> VirtualProperties() const override;
+    virtual TMemoryView<const UCMetaProperty> VirtualProperties() const override final;
 
-    virtual const FMetaProperty *VirtualPropertyIFP(const FStringView& name, size_t attributes) const override;
-    virtual const FMetaProperty *VirtualPropertyIFP(const FName& name, size_t attributes) const override;
+    virtual const FMetaProperty *VirtualPropertyIFP(const FStringView& name, size_t attributes) const override final;
+    virtual const FMetaProperty *VirtualPropertyIFP(const FName& name, size_t attributes) const override final;
 
     VECTOR(RTTI, UCMetaProperty) _properties;
 };
@@ -128,13 +128,13 @@ public:
     }
 
 protected:
-    virtual const FMetaClass* VirtualParent() const override {
+    virtual const FMetaClass* VirtualParent() const override final {
         typedef typename T::FMetaClass metaclass_type;
         typedef typename metaclass_type::parent_type parent_type;
         return GetMetaClass<parent_type>();
     }
 
-    virtual FMetaObject* VirtualCreateInstance() const override {
+    virtual FMetaObject* VirtualCreateInstance() const override final {
         typedef typename std::is_default_constructible<T>::type constructible_type;
         return CreateInstance_<T>(constructible_type());
     }

@@ -62,29 +62,29 @@ public:
     }
 
 public: // IStreamReader
-    virtual bool Eof() const override;
+    virtual bool Eof() const override final;
 
-    virtual bool IsSeekableI(ESeekOrigin ) const override { return true; }
+    virtual bool IsSeekableI(ESeekOrigin ) const override final { return true; }
 
-    virtual std::streamoff TellI() const override;
-    virtual bool SeekI(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override;
+    virtual std::streamoff TellI() const override final;
+    virtual bool SeekI(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final;
 
-    virtual std::streamsize SizeInBytes() const override;
+    virtual std::streamsize SizeInBytes() const override final;
 
-    virtual bool Read(void* storage, std::streamsize sizeInBytes) override;
-    virtual size_t ReadSome(void* storage, size_t eltsize, size_t count) override;
+    virtual bool Read(void* storage, std::streamsize sizeInBytes) override final;
+    virtual size_t ReadSome(void* storage, size_t eltsize, size_t count) override final;
 
-    virtual bool Peek(char& ch) override;
-    virtual bool Peek(wchar_t& ch) override;
+    virtual bool Peek(char& ch) override final;
+    virtual bool Peek(wchar_t& ch) override final;
 
 public: // IStreamWriter
-    virtual bool IsSeekableO(ESeekOrigin ) const override { return true; }
+    virtual bool IsSeekableO(ESeekOrigin ) const override final { return true; }
 
-    virtual std::streamoff TellO() const override;
-    virtual bool SeekO(std::streamoff offset, ESeekOrigin policy = ESeekOrigin::Begin) override;
+    virtual std::streamoff TellO() const override final;
+    virtual bool SeekO(std::streamoff offset, ESeekOrigin policy = ESeekOrigin::Begin) override final;
 
-    virtual bool Write(const void* storage, std::streamsize sizeInBytes) override;
-    virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) override;
+    virtual bool Write(const void* storage, std::streamsize sizeInBytes) override final;
+    virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) override final;
 
 private:
     size_t _size;

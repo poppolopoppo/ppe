@@ -2,6 +2,7 @@
 
 #include "Core/Core.h"
 
+#include "Core/IO/StringView.h"
 #include "Core/Memory/AlignedStorage.h"
 #include "Core/Memory/MemoryView.h"
 
@@ -109,20 +110,20 @@ public:
     explicit TBasicStreamReader(stream_type& iss) : _iss(iss) { Assert(!_iss.bad()); }
     virtual ~TBasicStreamReader() { Assert(!_iss.bad()); }
 
-    virtual bool Eof() const override { return _iss.eof(); }
+    virtual bool Eof() const override final { return _iss.eof(); }
 
-    virtual bool IsSeekableI(ESeekOrigin ) const override { return true; }
+    virtual bool IsSeekableI(ESeekOrigin ) const override final { return true; }
 
-    virtual std::streamoff TellI() const override;
-    virtual bool SeekI(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override;
+    virtual std::streamoff TellI() const override final;
+    virtual bool SeekI(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final;
 
-    virtual std::streamsize SizeInBytes() const override;
+    virtual std::streamsize SizeInBytes() const override final;
 
-    virtual bool Read(void* storage, std::streamsize sizeInBytes) override;
-    virtual size_t ReadSome(void* storage, size_t eltsize, size_t count) override;
+    virtual bool Read(void* storage, std::streamsize sizeInBytes) override final;
+    virtual size_t ReadSome(void* storage, size_t eltsize, size_t count) override final;
 
-    virtual bool Peek(char& ch) override;
-    virtual bool Peek(wchar_t& wch) override;
+    virtual bool Peek(char& ch) override final;
+    virtual bool Peek(wchar_t& wch) override final;
 
 private:
     typedef typename stream_type::traits_type traits_type;
@@ -139,13 +140,13 @@ public:
     explicit TBasicStreamWriter(stream_type& oss) : _oss(oss) { Assert(!_oss.bad()); }
     virtual ~TBasicStreamWriter() { Assert(!_oss.bad()); }
 
-    virtual bool IsSeekableO(ESeekOrigin ) const override { return true; }
+    virtual bool IsSeekableO(ESeekOrigin ) const override final { return true; }
 
-    virtual std::streamoff TellO() const override;
+    virtual std::streamoff TellO() const override final;
     virtual bool SeekO(std::streamoff offset, ESeekOrigin policy = ESeekOrigin::Begin);
 
-    virtual bool Write(const void* storage, std::streamsize sizeInBytes) override;
-    virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) override;
+    virtual bool Write(const void* storage, std::streamsize sizeInBytes) override final;
+    virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) override final;
 
 private:
     stream_type& _oss;
@@ -179,13 +180,13 @@ public:
     }
 
 protected:
-    virtual std::streambuf* setbuf(_Char *, std::streamsize) override { AssertNotReached(); return nullptr; }
+    virtual std::streambuf* setbuf(_Char *, std::streamsize) override final { AssertNotReached(); return nullptr; }
 
-    virtual int underflow() override { AssertNotReached(); return _Traits::eof(); }
-    virtual std::streamsize xsgetn(_Char* , std::streamsize ) override { AssertNotReached(); return 0; }
+    virtual int underflow() override final { AssertNotReached(); return _Traits::eof(); }
+    virtual std::streamsize xsgetn(_Char* , std::streamsize ) override final { AssertNotReached(); return 0; }
 
-    virtual int overflow(int ch) override { _writer->WritePOD(_Char(ch)); return 0; }
-    virtual std::streamsize xsputn(const _Char* ptr, std::streamsize count) override {
+    virtual int overflow(int ch) override final { _writer->WritePOD(_Char(ch)); return 0; }
+    virtual std::streamsize xsputn(const _Char* ptr, std::streamsize count) override final {
         _writer->WriteView(TMemoryView<const _Char>(ptr, checked_cast<size_t>(count)));
         return count;
     }

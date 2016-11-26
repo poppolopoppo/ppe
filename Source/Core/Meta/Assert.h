@@ -49,7 +49,7 @@ void SetAssertionHandler(AssertionHandler handler);
 inline void AssertionFailed(const wchar_t *, const wchar_t *, unsigned ) {}
 inline void SetAssertionHandler(AssertionHandler ) {}
 //----------------------------------------------------------------------------
-#   define AssertMessage(_Expression, _Message)  NOOP
+#   define AssertMessage(_Expression, _Message) NOOP()
 //----------------------------------------------------------------------------
 #endif //!WITH_CORE_ASSERT
 //----------------------------------------------------------------------------

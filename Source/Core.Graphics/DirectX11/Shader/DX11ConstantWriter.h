@@ -19,13 +19,13 @@ public:
         IDeviceAPIEncapsulator *device,
         const FConstantBuffer *resource,
         const TMemoryView<const u8>& rawData,
-        const TMemoryView<u8>& output) const override;
+        const TMemoryView<u8>& output) const override final;
 
     virtual void SetData(
         IDeviceAPIEncapsulator *device,
         const FConstantBuffer *resource,
         const TMemoryView<const void *>& fieldsData,
-        const TMemoryView<u8>& output) const override;
+        const TMemoryView<u8>& output) const override final;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -70,8 +70,8 @@ STATIC_ASSERT(sizeof(FBuddyBlock) <= HeaderFootprint);
 #   define CORE_BUDDYCHUNK_CANARY_SET(_BLOCK)   BuddyBlock_SetCanary_(_BLOCK)
 #   define CORE_BUDDYCHUNK_CANARY_CHECK(_BLOCK) BuddyBlock_CheckCanary_(_BLOCK)
 #else
-#   define CORE_BUDDYCHUNK_CANARY_SET(_BLOCK)   NOOP
-#   define CORE_BUDDYCHUNK_CANARY_CHECK(_BLOCK) NOOP
+#   define CORE_BUDDYCHUNK_CANARY_SET(_BLOCK)   NOOP()
+#   define CORE_BUDDYCHUNK_CANARY_CHECK(_BLOCK) NOOP()
 #endif
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_BUDDYCHUNK_CANARY

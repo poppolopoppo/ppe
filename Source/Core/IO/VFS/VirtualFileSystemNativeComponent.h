@@ -30,32 +30,32 @@ public:
     const FWString& Target() const { return _target; }
 
     // FVirtualFileSystemComponent
-    virtual IVirtualFileSystemComponentReadable* Readable() override;
-    virtual IVirtualFileSystemComponentWritable* Writable() override;
-    virtual IVirtualFileSystemComponentReadWritable* ReadWritable() override;
+    virtual IVirtualFileSystemComponentReadable* Readable() override final;
+    virtual IVirtualFileSystemComponentWritable* Writable() override final;
+    virtual IVirtualFileSystemComponentReadWritable* ReadWritable() override final;
 
-    virtual FWString Unalias(const FFilename& aliased) const override;
+    virtual FWString Unalias(const FFilename& aliased) const override final;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     // IVirtualFileSystemComponentReadable
-    virtual bool DirectoryExists(const FDirpath& dirpath, ExistPolicy::EMode policy) override;
-    virtual bool FileExists(const FFilename& filename, ExistPolicy::EMode policy) override;
-    virtual bool FileStats(FFileStat* pstat, const FFilename& filename) override;
+    virtual bool DirectoryExists(const FDirpath& dirpath, ExistPolicy::EMode policy) override final;
+    virtual bool FileExists(const FFilename& filename, ExistPolicy::EMode policy) override final;
+    virtual bool FileStats(FFileStat* pstat, const FFilename& filename) override final;
 
-    virtual size_t EnumerateFiles(const FDirpath& dirpath, bool recursive, const std::function<void(const FFilename&)>& foreach) override;
-    virtual size_t GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const std::function<void(const FFilename&)>& foreach) override;
+    virtual size_t EnumerateFiles(const FDirpath& dirpath, bool recursive, const std::function<void(const FFilename&)>& foreach) override final;
+    virtual size_t GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const std::function<void(const FFilename&)>& foreach) override final;
 
-    virtual TUniquePtr<IVirtualFileSystemIStream> OpenReadable(const FFilename& filename, AccessPolicy::EMode policy) override;
+    virtual TUniquePtr<IVirtualFileSystemIStream> OpenReadable(const FFilename& filename, AccessPolicy::EMode policy) override final;
 
     // IVirtualFileSystemComponentWritable
-    virtual bool TryCreateDirectory(const FDirpath& dirpath) override;
+    virtual bool TryCreateDirectory(const FDirpath& dirpath) override final;
 
-    virtual TUniquePtr<IVirtualFileSystemOStream> OpenWritable(const FFilename& filename, AccessPolicy::EMode policy) override;
+    virtual TUniquePtr<IVirtualFileSystemOStream> OpenWritable(const FFilename& filename, AccessPolicy::EMode policy) override final;
 
     // IVirtualFileSystemComponentReadWritable
-    virtual TUniquePtr<IVirtualFileSystemIOStream> OpenReadWritable(const FFilename& filename, AccessPolicy::EMode policy) override;
+    virtual TUniquePtr<IVirtualFileSystemIOStream> OpenReadWritable(const FFilename& filename, AccessPolicy::EMode policy) override final;
 
 private:
     const EOpenMode _mode;

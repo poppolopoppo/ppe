@@ -20,35 +20,35 @@ public:
     explicit FDynamicProperty(const FName& name);
     virtual ~FDynamicProperty();
     /*
-    virtual FMetaTypeInfo TypeInfo() const override;
-    virtual const IMetaTypeVirtualTraits *Traits() const override;
+    virtual FMetaTypeInfo TypeInfo() const override final;
+    virtual const IMetaTypeVirtualTraits *Traits() const override final;
 
-    virtual bool IsDefaultValue(const FMetaObject *object) const override;
+    virtual bool IsDefaultValue(const FMetaObject *object) const override final;
 
-    virtual FMetaAtom *WrapMove(FMetaObject *src) const override;
-    virtual FMetaAtom *WrapCopy(const FMetaObject *src) const override;
+    virtual FMetaAtom *WrapMove(FMetaObject *src) const override final;
+    virtual FMetaAtom *WrapCopy(const FMetaObject *src) const override final;
 
-    virtual bool UnwrapMove(FMetaObject *dst, FMetaAtom *src) const override;
-    virtual bool UnwrapCopy(FMetaObject *dst, const FMetaAtom *src) const override;
+    virtual bool UnwrapMove(FMetaObject *dst, FMetaAtom *src) const override final;
+    virtual bool UnwrapCopy(FMetaObject *dst, const FMetaAtom *src) const override final;
 
-    virtual void MoveTo(FMetaObject *object, FMetaAtom *atom) const override;
-    virtual void CopyTo(const FMetaObject *object, FMetaAtom *atom) const override;
+    virtual void MoveTo(FMetaObject *object, FMetaAtom *atom) const override final;
+    virtual void CopyTo(const FMetaObject *object, FMetaAtom *atom) const override final;
 
-    virtual void MoveFrom(FMetaObject *object, FMetaAtom *atom) const override;
-    virtual void CopyFrom(FMetaObject *object, const FMetaAtom *atom) const override;
+    virtual void MoveFrom(FMetaObject *object, FMetaAtom *atom) const override final;
+    virtual void CopyFrom(FMetaObject *object, const FMetaAtom *atom) const override final;
 
-    virtual void Move(FMetaObject *dst, FMetaObject *src) const override;
-    virtual void Copy(FMetaObject *dst, const FMetaObject *src) const override;
+    virtual void Move(FMetaObject *dst, FMetaObject *src) const override final;
+    virtual void Copy(FMetaObject *dst, const FMetaObject *src) const override final;
 
-    virtual void Swap(FMetaObject *lhs, FMetaObject *rhs) const override;
+    virtual void Swap(FMetaObject *lhs, FMetaObject *rhs) const override final;
 
-    virtual bool Equals(const FMetaObject *lhs, const FMetaObject *rhs) const override;
-    virtual bool DeepEquals(const FMetaObject *lhs, const FMetaObject *rhs) const override;
+    virtual bool Equals(const FMetaObject *lhs, const FMetaObject *rhs) const override final;
+    virtual bool DeepEquals(const FMetaObject *lhs, const FMetaObject *rhs) const override final;
 
-    virtual void *RawPtr(FMetaObject *obj) const override;
-    virtual const void *RawPtr(const FMetaObject *obj) const override;
+    virtual void *RawPtr(FMetaObject *obj) const override final;
+    virtual const void *RawPtr(const FMetaObject *obj) const override final;
 
-    virtual size_t HashValue(const FMetaObject *object) const override;
+    virtual size_t HashValue(const FMetaObject *object) const override final;
     */
     SINGLETON_POOL_ALLOCATED_DECL();
 };
@@ -68,7 +68,7 @@ public:
 
     void ClearValues();
 
-    virtual const RTTI::FMetaClass *RTTI_MetaClass() const override;
+    virtual const RTTI::FMetaClass *RTTI_MetaClass() const override final;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
@@ -87,11 +87,11 @@ public:
         static const FMetaClass *Instance();
 
     protected:
-        //virtual const FMetaProperty *VirtualPropertyIFP(const char *name, size_t attributes) const override;
-        //virtual const FMetaProperty *VirtualPropertyIFP(const FName& name, size_t attributes) const override;
+        //virtual const FMetaProperty *VirtualPropertyIFP(const char *name, size_t attributes) const override final;
+        //virtual const FMetaProperty *VirtualPropertyIFP(const FName& name, size_t attributes) const override final;
 
-        virtual const RTTI::FMetaClass* VirtualParent() const override;
-        virtual FMetaObject* VirtualCreateInstance() const override;
+        virtual const RTTI::FMetaClass* VirtualParent() const override final;
+        virtual FMetaObject* VirtualCreateInstance() const override final;
     };
 
 private:

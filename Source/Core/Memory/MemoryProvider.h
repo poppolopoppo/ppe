@@ -29,20 +29,20 @@ public:
         return true;
     }
 
-    virtual bool Eof() const override { return _offsetI >= _rawData.SizeInBytes(); }
+    virtual bool Eof() const override final { return _offsetI >= _rawData.SizeInBytes(); }
 
-    virtual bool IsSeekableI(ESeekOrigin ) const override { return true; }
+    virtual bool IsSeekableI(ESeekOrigin ) const override final { return true; }
 
-    virtual std::streamoff TellI() const override { return checked_cast<std::streamsize>(_offsetI); }
-    virtual bool SeekI(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override;
+    virtual std::streamoff TellI() const override final { return checked_cast<std::streamsize>(_offsetI); }
+    virtual bool SeekI(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final;
 
-    virtual std::streamsize SizeInBytes() const override { return checked_cast<std::streamsize>(_rawData.SizeInBytes()); }
+    virtual std::streamsize SizeInBytes() const override final { return checked_cast<std::streamsize>(_rawData.SizeInBytes()); }
 
-    virtual bool Read(void* storage, std::streamsize sizeInBytes) override;
-    virtual size_t ReadSome(void* storage, size_t eltsize, size_t count) override;
+    virtual bool Read(void* storage, std::streamsize sizeInBytes) override final;
+    virtual size_t ReadSome(void* storage, size_t eltsize, size_t count) override final;
 
-    virtual bool Peek(char& ch) override;
-    virtual bool Peek(wchar_t& wch) override;
+    virtual bool Peek(char& ch) override final;
+    virtual bool Peek(wchar_t& wch) override final;
 
     FMemoryViewReader SubRange(size_t offset, size_t sizeInBytes) const {
         return FMemoryViewReader(_rawData.SubRange(offset, sizeInBytes));
@@ -60,13 +60,13 @@ public:
     FMemoryViewWriter() : _size(0), _offsetO(0) {}
     FMemoryViewWriter(const TMemoryView<u8>& rawData) : _size(0), _offsetO(0), _rawData(rawData) {}
 
-    virtual bool IsSeekableO(ESeekOrigin ) const override { return true; }
+    virtual bool IsSeekableO(ESeekOrigin ) const override final { return true; }
 
-    virtual std::streamoff TellO() const override;
-    virtual bool SeekO(std::streamoff offset, ESeekOrigin policy = ESeekOrigin::Begin) override;
+    virtual std::streamoff TellO() const override final;
+    virtual bool SeekO(std::streamoff offset, ESeekOrigin policy = ESeekOrigin::Begin) override final;
 
-    virtual bool Write(const void* storage, std::streamsize sizeInBytes) override;
-    virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) override;
+    virtual bool Write(const void* storage, std::streamsize sizeInBytes) override final;
+    virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) override final;
 
     TMemoryView<u8> Written() const { return _rawData.CutBefore(_size); }
 

@@ -23,7 +23,7 @@ public:
     SINGLETON_POOL_ALLOCATED_DECL();
 
 protected:
-    virtual void Run(ITaskContext& ctx) override;
+    virtual void Run(ITaskContext& ctx) override final;
 
 private:
     const function_type _func;
@@ -58,7 +58,7 @@ public:
     SINGLETON_POOL_ALLOCATED_DECL();
 
 protected:
-    virtual void Run(ITaskContext& ctx) override;
+    virtual void Run(ITaskContext& ctx) override final;
 
 private:
     function_type _func;

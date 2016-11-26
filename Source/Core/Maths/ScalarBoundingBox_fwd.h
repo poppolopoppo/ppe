@@ -36,25 +36,25 @@ typedef AABB3f BoundingBox;
 template <typename T, size_t _Dim>
 class TScalarBoxWExtent;
 //----------------------------------------------------------------------------
-typedef TScalarBoxWExtent<int, 1> BoxWExtent1i;
-typedef TScalarBoxWExtent<int, 2> BoxWExtent2i;
-typedef TScalarBoxWExtent<int, 3> BoxWExtent3i;
-typedef TScalarBoxWExtent<int, 4> BoxWExtent4i;
+typedef TScalarBoxWExtent<int, 1> FBoxWExtent1i;
+typedef TScalarBoxWExtent<int, 2> FBoxWExtent2i;
+typedef TScalarBoxWExtent<int, 3> FBoxWExtent3i;
+typedef TScalarBoxWExtent<int, 4> FBoxWExtent4i;
 //----------------------------------------------------------------------------
-typedef TScalarBoxWExtent<unsigned int, 1> BoxWExtent1u;
-typedef TScalarBoxWExtent<unsigned int, 2> BoxWExtent2u;
-typedef TScalarBoxWExtent<unsigned int, 3> BoxWExtent3u;
-typedef TScalarBoxWExtent<unsigned int, 4> BoxWExtent4u;
+typedef TScalarBoxWExtent<unsigned int, 1> FBoxWExtent1u;
+typedef TScalarBoxWExtent<unsigned int, 2> FBoxWExtent2u;
+typedef TScalarBoxWExtent<unsigned int, 3> FBoxWExtent3u;
+typedef TScalarBoxWExtent<unsigned int, 4> FBoxWExtent4u;
 //----------------------------------------------------------------------------
-typedef TScalarBoxWExtent<float, 1> BoxWExtent1f;
-typedef TScalarBoxWExtent<float, 2> BoxWExtent2f;
-typedef TScalarBoxWExtent<float, 3> BoxWExtent3f;
-typedef TScalarBoxWExtent<float, 4> BoxWExtent4f;
+typedef TScalarBoxWExtent<float, 1> FBoxWExtent1f;
+typedef TScalarBoxWExtent<float, 2> FBoxWExtent2f;
+typedef TScalarBoxWExtent<float, 3> FBoxWExtent3f;
+typedef TScalarBoxWExtent<float, 4> FBoxWExtent4f;
 //----------------------------------------------------------------------------
-typedef TScalarBoxWExtent<double, 1> BoxWExtent1d;
-typedef TScalarBoxWExtent<double, 2> BoxWExtent2d;
-typedef TScalarBoxWExtent<double, 3> BoxWExtent3d;
-typedef TScalarBoxWExtent<double, 4> BoxWExtent4d;
+typedef TScalarBoxWExtent<double, 1> FBoxWExtent1d;
+typedef TScalarBoxWExtent<double, 2> FBoxWExtent2d;
+typedef TScalarBoxWExtent<double, 3> FBoxWExtent3d;
+typedef TScalarBoxWExtent<double, 4> FBoxWExtent4d;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

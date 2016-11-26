@@ -48,16 +48,16 @@ public:
     FDX11TextureCube(IDeviceAPIEncapsulator *device, FTextureCube *owner, ::ID3D11Texture2D *texture, ::ID3D11ShaderResourceView *shaderView);
     virtual ~FDX11TextureCube();
 
-    virtual void GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) override;
-    virtual void SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) override;
+    virtual void GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) override final;
+    virtual void SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) override final;
 
-    virtual void CopyFrom(IDeviceAPIEncapsulator *device, const FDeviceAPIDependantTextureCube *psource) override;
+    virtual void CopyFrom(IDeviceAPIEncapsulator *device, const FDeviceAPIDependantTextureCube *psource) override final;
 
     virtual void CopySubPart(   IDeviceAPIEncapsulator *device,
                                 FTextureCube::EFace dstFace, size_t dstLevel, const uint2& dstPos,
-                                const FDeviceAPIDependantTextureCube *src, FTextureCube::EFace srcFace, size_t srcLevel, const AABB2u& srcBox ) override;
+                                const FDeviceAPIDependantTextureCube *src, FTextureCube::EFace srcFace, size_t srcLevel, const AABB2u& srcBox ) override final;
 
-    virtual const IDeviceAPIDependantAbstractTextureContent *Content() const override { return this; }
+    virtual const IDeviceAPIDependantAbstractTextureContent *Content() const override final { return this; }
 
     SINGLETON_POOL_ALLOCATED_DECL();
 };

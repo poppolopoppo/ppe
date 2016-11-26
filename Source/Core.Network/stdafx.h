@@ -16,6 +16,8 @@
 #include "Core/Allocator/Heap.h"
 #include "Core/Allocator/PoolAllocator.h"
 
+#include "Core/Maths/Units.h"
+
 #include "Core/Memory/MemoryView.h"
 #include "Core/Memory/RefPtr.h"
 #include "Core/Memory/UniqueView.h"

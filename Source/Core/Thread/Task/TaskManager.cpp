@@ -122,9 +122,9 @@ public:
     void Start(const TMemoryView<const size_t>& threadAffinities);
     void Shutdown();
 
-    virtual void Run(FTaskWaitHandle* phandle, const TMemoryView<const FTaskDelegate>& tasks, ETaskPriority priority) override;
-    virtual void WaitFor(FTaskWaitHandle& handle, ITaskContext* resume) override;
-    virtual void RunAndWaitFor(const TMemoryView<const FTaskDelegate>& tasks, ETaskPriority priority, ITaskContext* resume) override;
+    virtual void Run(FTaskWaitHandle* phandle, const TMemoryView<const FTaskDelegate>& tasks, ETaskPriority priority) override final;
+    virtual void WaitFor(FTaskWaitHandle& handle, ITaskContext* resume) override final;
+    virtual void RunAndWaitFor(const TMemoryView<const FTaskDelegate>& tasks, ETaskPriority priority, ITaskContext* resume) override final;
 
 private:
     TaskPriorityQueue_ _queue;

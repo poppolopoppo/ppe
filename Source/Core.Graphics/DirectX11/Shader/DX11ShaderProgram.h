@@ -26,7 +26,7 @@ public:
     ::ID3D11PixelShader*    PixelShader()   const { Assert(EShaderProgramType::Pixel    == ProgramType()); return static_cast<::ID3D11PixelShader*>(_abstractShader.Get()); }
     ::ID3D11ComputeShader*  ComputeShader() const { Assert(EShaderProgramType::Compute  == ProgramType()); return static_cast<::ID3D11ComputeShader*>(_abstractShader.Get()); }
 
-    virtual size_t VideoMemorySizeInBytes() const override;
+    virtual size_t VideoMemorySizeInBytes() const override final;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 

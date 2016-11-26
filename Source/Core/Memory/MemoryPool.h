@@ -182,9 +182,9 @@ public:
     void *Allocate(FMemoryTrackingData *trackingData = nullptr);
     void Deallocate(void *ptr, FMemoryTrackingData *trackingData = nullptr);
 
-    virtual void Clear_AssertCompletelyFree() override;
-    virtual void Clear_IgnoreLeaks() override;
-    virtual void Clear_UnusedMemory() override;
+    virtual void Clear_AssertCompletelyFree() override final;
+    virtual void Clear_IgnoreLeaks() override final;
+    virtual void Clear_UnusedMemory() override final;
 
 private:
     FMemoryPoolChunk *AllocateChunk_();

@@ -48,16 +48,16 @@ public:
     FDX11Texture2D(IDeviceAPIEncapsulator *device, FTexture2D *owner, ::ID3D11Texture2D *texture, ::ID3D11ShaderResourceView *shaderView);
     virtual ~FDX11Texture2D();
 
-    virtual void GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) override;
-    virtual void SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) override;
+    virtual void GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) override final;
+    virtual void SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) override final;
 
-    virtual void CopyFrom(IDeviceAPIEncapsulator *device, const FDeviceAPIDependantTexture2D *psource) override;
+    virtual void CopyFrom(IDeviceAPIEncapsulator *device, const FDeviceAPIDependantTexture2D *psource) override final;
 
     virtual void CopySubPart(   IDeviceAPIEncapsulator *device,
                                 size_t dstLevel, const uint2& dstPos,
-                                const FDeviceAPIDependantTexture2D *psource, size_t srcLevel, const AABB2u& srcBox ) override;
+                                const FDeviceAPIDependantTexture2D *psource, size_t srcLevel, const AABB2u& srcBox ) override final;
 
-    virtual const IDeviceAPIDependantAbstractTextureContent *Content() const override { return this; }
+    virtual const IDeviceAPIDependantAbstractTextureContent *Content() const override final { return this; }
 
     SINGLETON_POOL_ALLOCATED_DECL();
 };

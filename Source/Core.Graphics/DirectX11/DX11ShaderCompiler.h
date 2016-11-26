@@ -21,12 +21,12 @@ public:
         EShaderProgramType programType,
         EShaderProfileType profileType,
         EShaderCompilerFlags flags,
-        const char *entryPoint ) override;
+        const char *entryPoint ) override final;
 
     virtual void PreprocessShaderSource(
         RAWSTORAGE(Shader, char)& output,
         const FShaderSource *source,
-        const FVertexDeclaration *vertexDeclaration) override;
+        const FVertexDeclaration *vertexDeclaration) override final;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

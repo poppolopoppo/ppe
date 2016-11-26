@@ -10,6 +10,7 @@
 #include "Core/Memory/RefPtr.h"
 
 namespace Core {
+class IStreamReader;
 namespace XML {
 FWD_REFPTR(Element);
 //----------------------------------------------------------------------------

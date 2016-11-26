@@ -200,25 +200,25 @@ public:
     T& Wrapper() { return _wrapper; }
     const T& Wrapper() const { return _wrapper; }
 
-    virtual FMetaTypeInfo TypeInfo() const override;
-    virtual const IMetaTypeVirtualTraits *Traits() const override;
+    virtual FMetaTypeInfo TypeInfo() const override final;
+    virtual const IMetaTypeVirtualTraits *Traits() const override final;
 
-    virtual bool IsDefaultValue() const override;
+    virtual bool IsDefaultValue() const override final;
 
-    virtual void MoveTo(FMetaAtom *atom) override;
-    virtual void CopyTo(FMetaAtom *atom) const override;
+    virtual void MoveTo(FMetaAtom *atom) override final;
+    virtual void CopyTo(FMetaAtom *atom) const override final;
 
-    virtual FMetaAtom *WrapMoveTo() override;
-    virtual FMetaAtom *WrapCopyTo() const override;
+    virtual FMetaAtom *WrapMoveTo() override final;
+    virtual FMetaAtom *WrapCopyTo() const override final;
 
-    virtual void MoveFrom(FMetaAtom *atom) override;
-    virtual void CopyFrom(const FMetaAtom *atom) override;
+    virtual void MoveFrom(FMetaAtom *atom) override final;
+    virtual void CopyFrom(const FMetaAtom *atom) override final;
 
-    virtual bool Equals(const FMetaAtom *atom) const override;
-    virtual bool DeepEquals(const FMetaAtom *atom) const override;
+    virtual bool Equals(const FMetaAtom *atom) const override final;
+    virtual bool DeepEquals(const FMetaAtom *atom) const override final;
 
-    virtual size_t HashValue() const override;
-    virtual FString ToString() const override;
+    virtual size_t HashValue() const override final;
+    virtual FString ToString() const override final;
 
     void Swap(T& wrapper);
 
@@ -249,17 +249,17 @@ public:
     TMetaTypedAtom(const TMetaTypedAtom& other) : impl_type(other) {}
     TMetaTypedAtom& operator =(const TMetaTypedAtom& other) { impl_type::operator =(other); return *this; }
 
-    virtual IMetaAtomPair *AsPair() override { return nullptr; }
-    virtual const IMetaAtomPair *AsPair() const override { return nullptr; }
+    virtual IMetaAtomPair *AsPair() override final { return nullptr; }
+    virtual const IMetaAtomPair *AsPair() const override final { return nullptr; }
 
-    virtual IMetaAtomVector *AsVector() override { return nullptr; }
-    virtual const IMetaAtomVector *AsVector() const override { return nullptr; }
+    virtual IMetaAtomVector *AsVector() override final { return nullptr; }
+    virtual const IMetaAtomVector *AsVector() const override final { return nullptr; }
 
-    virtual IMetaAtomDictionary *AsDictionary() override { return nullptr; }
-    virtual const IMetaAtomDictionary *AsDictionary() const override { return nullptr; }
+    virtual IMetaAtomDictionary *AsDictionary() override final { return nullptr; }
+    virtual const IMetaAtomDictionary *AsDictionary() const override final { return nullptr; }
 
-    virtual void Accept(IMetaAtomVisitor* visitor) override { visitor->Visit(this); }
-    virtual void Accept(IMetaAtomConstVisitor* visitor) const override { visitor->Visit(this); }
+    virtual void Accept(IMetaAtomVisitor* visitor) override final { visitor->Visit(this); }
+    virtual void Accept(IMetaAtomConstVisitor* visitor) const override final { visitor->Visit(this); }
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
@@ -288,14 +288,14 @@ public:
     TMetaTypedAtom(const TMetaTypedAtom& other) : impl_type(other) {}
     TMetaTypedAtom& operator =(const TMetaTypedAtom& other) { impl_type::operator =(other); return *this; }
 
-    virtual IMetaAtomPair *AsPair() override { return this; }
-    virtual const IMetaAtomPair *AsPair() const override { return this; }
+    virtual IMetaAtomPair *AsPair() override final { return this; }
+    virtual const IMetaAtomPair *AsPair() const override final { return this; }
 
-    virtual IMetaAtomVector *AsVector() override { return nullptr; }
-    virtual const IMetaAtomVector *AsVector() const override { return nullptr; }
+    virtual IMetaAtomVector *AsVector() override final { return nullptr; }
+    virtual const IMetaAtomVector *AsVector() const override final { return nullptr; }
 
-    virtual IMetaAtomDictionary *AsDictionary() override { return nullptr; }
-    virtual const IMetaAtomDictionary *AsDictionary() const override { return nullptr; }
+    virtual IMetaAtomDictionary *AsDictionary() override final { return nullptr; }
+    virtual const IMetaAtomDictionary *AsDictionary() const override final { return nullptr; }
 
     using impl_type::IsDefaultValue;
     using impl_type::MoveTo;
@@ -306,8 +306,8 @@ public:
     using impl_type::CopyFrom;
     using impl_type::Equals;
 
-    virtual void Accept(IMetaAtomVisitor* visitor) override { visitor->Visit(this); }
-    virtual void Accept(IMetaAtomConstVisitor* visitor) const override { visitor->Visit(this); }
+    virtual void Accept(IMetaAtomVisitor* visitor) override final { visitor->Visit(this); }
+    virtual void Accept(IMetaAtomConstVisitor* visitor) const override final { visitor->Visit(this); }
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
@@ -316,27 +316,27 @@ public:
 private:
     using impl_type::_wrapper;
 
-    virtual const FMetaAtom* Atom() const override { return this; }
+    virtual const FMetaAtom* Atom() const override final { return this; }
 
-    virtual FMetaTypeInfo FirstTypeInfo() const override { return RTTI::TypeInfo< _First >(); }
-    virtual FMetaTypeInfo SecondTypeInfo() const override { return RTTI::TypeInfo< _Second >(); }
+    virtual FMetaTypeInfo FirstTypeInfo() const override final { return RTTI::TypeInfo< _First >(); }
+    virtual FMetaTypeInfo SecondTypeInfo() const override final { return RTTI::TypeInfo< _Second >(); }
 
-    virtual const IMetaTypeVirtualTraits *FirstTraits() const override { return TMetaTypeTraits< _First >::VirtualTraits(); }
-    virtual const IMetaTypeVirtualTraits *SecondTraits() const override { return TMetaTypeTraits< _Second >::VirtualTraits(); }
+    virtual const IMetaTypeVirtualTraits *FirstTraits() const override final { return TMetaTypeTraits< _First >::VirtualTraits(); }
+    virtual const IMetaTypeVirtualTraits *SecondTraits() const override final { return TMetaTypeTraits< _Second >::VirtualTraits(); }
 
-    virtual void MoveTo(RTTI::TPair<PMetaAtom, PMetaAtom>& pair) override;
-    virtual void CopyTo(RTTI::TPair<PMetaAtom, PMetaAtom>& pair) const override;
+    virtual void MoveTo(RTTI::TPair<PMetaAtom, PMetaAtom>& pair) override final;
+    virtual void CopyTo(RTTI::TPair<PMetaAtom, PMetaAtom>& pair) const override final;
 
-    virtual void WrapMoveTo(RTTI::TPair<PMetaAtom, PMetaAtom>& pair) override;
-    virtual void WrapCopyTo(RTTI::TPair<PMetaAtom, PMetaAtom>& pair) const override;
+    virtual void WrapMoveTo(RTTI::TPair<PMetaAtom, PMetaAtom>& pair) override final;
+    virtual void WrapCopyTo(RTTI::TPair<PMetaAtom, PMetaAtom>& pair) const override final;
 
-    virtual void MoveFrom(const RTTI::TPair<PMetaAtom, PMetaAtom>& pair) override;
-    virtual void CopyFrom(const RTTI::TPair<PMetaAtom, PMetaAtom>& pair) override;
+    virtual void MoveFrom(const RTTI::TPair<PMetaAtom, PMetaAtom>& pair) override final;
+    virtual void CopyFrom(const RTTI::TPair<PMetaAtom, PMetaAtom>& pair) override final;
 
-    virtual bool UnwrapMoveFrom(const RTTI::TPair<PMetaAtom, PMetaAtom>& pair) override;
-    virtual bool UnwrapCopyFrom(const RTTI::TPair<PMetaAtom, PMetaAtom>& pair) override;
+    virtual bool UnwrapMoveFrom(const RTTI::TPair<PMetaAtom, PMetaAtom>& pair) override final;
+    virtual bool UnwrapCopyFrom(const RTTI::TPair<PMetaAtom, PMetaAtom>& pair) override final;
 
-    virtual bool Equals(const RTTI::TPair<PMetaAtom, PMetaAtom>& pair) const override;
+    virtual bool Equals(const RTTI::TPair<PMetaAtom, PMetaAtom>& pair) const override final;
 };
 //----------------------------------------------------------------------------
 template <typename T>
@@ -360,14 +360,14 @@ public:
     TMetaTypedAtom(const TMetaTypedAtom& other) : impl_type(other) {}
     TMetaTypedAtom& operator =(const TMetaTypedAtom& other) { impl_type::operator =(other); return *this; }
 
-    virtual IMetaAtomPair *AsPair() override { return nullptr; }
-    virtual const IMetaAtomPair *AsPair() const override { return nullptr; }
+    virtual IMetaAtomPair *AsPair() override final { return nullptr; }
+    virtual const IMetaAtomPair *AsPair() const override final { return nullptr; }
 
-    virtual IMetaAtomVector *AsVector() override { return this; }
-    virtual const IMetaAtomVector *AsVector() const override { return this; }
+    virtual IMetaAtomVector *AsVector() override final { return this; }
+    virtual const IMetaAtomVector *AsVector() const override final { return this; }
 
-    virtual IMetaAtomDictionary *AsDictionary() override { return nullptr; }
-    virtual const IMetaAtomDictionary *AsDictionary() const override { return nullptr; }
+    virtual IMetaAtomDictionary *AsDictionary() override final { return nullptr; }
+    virtual const IMetaAtomDictionary *AsDictionary() const override final { return nullptr; }
 
     using impl_type::IsDefaultValue;
     using impl_type::MoveTo;
@@ -378,8 +378,8 @@ public:
     using impl_type::CopyFrom;
     using impl_type::Equals;
 
-    virtual void Accept(IMetaAtomVisitor* visitor) override { visitor->Visit(this); }
-    virtual void Accept(IMetaAtomConstVisitor* visitor) const override { visitor->Visit(this); }
+    virtual void Accept(IMetaAtomVisitor* visitor) override final { visitor->Visit(this); }
+    virtual void Accept(IMetaAtomConstVisitor* visitor) const override final { visitor->Visit(this); }
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
@@ -388,24 +388,24 @@ public:
 private:
     using impl_type::_wrapper;
 
-    virtual const FMetaAtom* Atom() const override { return this; }
+    virtual const FMetaAtom* Atom() const override final { return this; }
 
-    virtual FMetaTypeInfo ValueTypeInfo() const override { return RTTI::TypeInfo< T >(); }
-    virtual const IMetaTypeVirtualTraits *ValueTraits() const override { return TMetaTypeTraits< T >::VirtualTraits(); }
+    virtual FMetaTypeInfo ValueTypeInfo() const override final { return RTTI::TypeInfo< T >(); }
+    virtual const IMetaTypeVirtualTraits *ValueTraits() const override final { return TMetaTypeTraits< T >::VirtualTraits(); }
 
-    virtual void MoveTo(RTTI::TVector<PMetaAtom>& vector) override;
-    virtual void CopyTo(RTTI::TVector<PMetaAtom>& vector) const override;
+    virtual void MoveTo(RTTI::TVector<PMetaAtom>& vector) override final;
+    virtual void CopyTo(RTTI::TVector<PMetaAtom>& vector) const override final;
 
-    virtual void WrapMoveTo(RTTI::TVector<PMetaAtom>& vector) override;
-    virtual void WrapCopyTo(RTTI::TVector<PMetaAtom>& vector) const override;
+    virtual void WrapMoveTo(RTTI::TVector<PMetaAtom>& vector) override final;
+    virtual void WrapCopyTo(RTTI::TVector<PMetaAtom>& vector) const override final;
 
-    virtual void MoveFrom(const RTTI::TVector<PMetaAtom>& vector) override;
-    virtual void CopyFrom(const RTTI::TVector<PMetaAtom>& vector) override;
+    virtual void MoveFrom(const RTTI::TVector<PMetaAtom>& vector) override final;
+    virtual void CopyFrom(const RTTI::TVector<PMetaAtom>& vector) override final;
 
-    virtual bool UnwrapMoveFrom(const RTTI::TVector<PMetaAtom>& vector) override;
-    virtual bool UnwrapCopyFrom(const RTTI::TVector<PMetaAtom>& vector) override;
+    virtual bool UnwrapMoveFrom(const RTTI::TVector<PMetaAtom>& vector) override final;
+    virtual bool UnwrapCopyFrom(const RTTI::TVector<PMetaAtom>& vector) override final;
 
-    virtual bool Equals(const RTTI::TVector<PMetaAtom>& vector) const override;
+    virtual bool Equals(const RTTI::TVector<PMetaAtom>& vector) const override final;
 };
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
@@ -429,14 +429,14 @@ public:
     TMetaTypedAtom(const TMetaTypedAtom& other) : impl_type(other) {}
     TMetaTypedAtom& operator =(const TMetaTypedAtom& other) { impl_type::operator =(other); return *this; }
 
-    virtual IMetaAtomPair *AsPair() override { return nullptr; }
-    virtual const IMetaAtomPair *AsPair() const override { return nullptr; }
+    virtual IMetaAtomPair *AsPair() override final { return nullptr; }
+    virtual const IMetaAtomPair *AsPair() const override final { return nullptr; }
 
-    virtual IMetaAtomVector *AsVector() override { return nullptr; }
-    virtual const IMetaAtomVector *AsVector() const override { return nullptr; }
+    virtual IMetaAtomVector *AsVector() override final { return nullptr; }
+    virtual const IMetaAtomVector *AsVector() const override final { return nullptr; }
 
-    virtual IMetaAtomDictionary *AsDictionary() override { return this; }
-    virtual const IMetaAtomDictionary *AsDictionary() const override { return this; }
+    virtual IMetaAtomDictionary *AsDictionary() override final { return this; }
+    virtual const IMetaAtomDictionary *AsDictionary() const override final { return this; }
 
     using impl_type::IsDefaultValue;
     using impl_type::MoveTo;
@@ -447,8 +447,8 @@ public:
     using impl_type::CopyFrom;
     using impl_type::Equals;
 
-    virtual void Accept(IMetaAtomVisitor* visitor) override { visitor->Visit(this); }
-    virtual void Accept(IMetaAtomConstVisitor* visitor) const override { visitor->Visit(this); }
+    virtual void Accept(IMetaAtomVisitor* visitor) override final { visitor->Visit(this); }
+    virtual void Accept(IMetaAtomConstVisitor* visitor) const override final { visitor->Visit(this); }
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
@@ -457,27 +457,27 @@ public:
 private:
     using impl_type::_wrapper;
 
-    virtual const FMetaAtom* Atom() const override { return this; }
+    virtual const FMetaAtom* Atom() const override final { return this; }
 
-    virtual FMetaTypeInfo KeyTypeInfo() const override { return RTTI::TypeInfo< _Key >(); }
-    virtual FMetaTypeInfo ValueTypeInfo() const override { return RTTI::TypeInfo< _Value >(); }
+    virtual FMetaTypeInfo KeyTypeInfo() const override final { return RTTI::TypeInfo< _Key >(); }
+    virtual FMetaTypeInfo ValueTypeInfo() const override final { return RTTI::TypeInfo< _Value >(); }
 
-    virtual const IMetaTypeVirtualTraits *KeyTraits() const override { return TMetaTypeTraits< _Key >::VirtualTraits(); }
-    virtual const IMetaTypeVirtualTraits *ValueTraits() const override { return TMetaTypeTraits< _Value >::VirtualTraits(); }
+    virtual const IMetaTypeVirtualTraits *KeyTraits() const override final { return TMetaTypeTraits< _Key >::VirtualTraits(); }
+    virtual const IMetaTypeVirtualTraits *ValueTraits() const override final { return TMetaTypeTraits< _Value >::VirtualTraits(); }
 
-    virtual void MoveTo(RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) override;
-    virtual void CopyTo(RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) const override;
+    virtual void MoveTo(RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) override final;
+    virtual void CopyTo(RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) const override final;
 
-    virtual void WrapMoveTo(RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) override;
-    virtual void WrapCopyTo(RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) const override;
+    virtual void WrapMoveTo(RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) override final;
+    virtual void WrapCopyTo(RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) const override final;
 
-    virtual void MoveFrom(const RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) override;
-    virtual void CopyFrom(const RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) override;
+    virtual void MoveFrom(const RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) override final;
+    virtual void CopyFrom(const RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) override final;
 
-    virtual bool UnwrapMoveFrom(const RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) override;
-    virtual bool UnwrapCopyFrom(const RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) override;
+    virtual bool UnwrapMoveFrom(const RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) override final;
+    virtual bool UnwrapCopyFrom(const RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) override final;
 
-    virtual bool Equals(const RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) const override;
+    virtual bool Equals(const RTTI::TDictionary<PMetaAtom, PMetaAtom>& dict) const override final;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

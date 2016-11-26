@@ -118,7 +118,7 @@ public:
     TMetaTypedProperty(const FName& name, EFlags attributes);
     virtual ~TMetaTypedProperty();
 
-    virtual FMetaTypeInfo TypeInfo() const override;
+    virtual FMetaTypeInfo TypeInfo() const override final;
 
     virtual void GetCopy(const FMetaObject *object, T& dst) const = 0;
     virtual void GetMove(FMetaObject *object, T& dst) const = 0;
@@ -150,40 +150,40 @@ public:
     TMetaWrappedProperty(const FName& name, EFlags attributes, accessor_type&& accessor);
     virtual ~TMetaWrappedProperty();
 
-    virtual const IMetaTypeVirtualTraits *Traits() const override { return meta_type_traits::VirtualTraits(); }
+    virtual const IMetaTypeVirtualTraits *Traits() const override final { return meta_type_traits::VirtualTraits(); }
 
-    virtual bool IsDefaultValue(const FMetaObject *object) const override;
+    virtual bool IsDefaultValue(const FMetaObject *object) const override final;
 
-    virtual void GetCopy(const FMetaObject *object, wrapper_type& dst) const override;
-    virtual void GetMove(FMetaObject *object, wrapper_type& dst) const override;
+    virtual void GetCopy(const FMetaObject *object, wrapper_type& dst) const override final;
+    virtual void GetMove(FMetaObject *object, wrapper_type& dst) const override final;
 
-    virtual void SetMove(FMetaObject *object, wrapper_type&& src) const override;
-    virtual void SetCopy(FMetaObject *object, const wrapper_type& src) const override;
+    virtual void SetMove(FMetaObject *object, wrapper_type&& src) const override final;
+    virtual void SetCopy(FMetaObject *object, const wrapper_type& src) const override final;
 
-    virtual FMetaAtom *WrapMove(FMetaObject *src) const override;
-    virtual FMetaAtom *WrapCopy(const FMetaObject *src) const override;
+    virtual FMetaAtom *WrapMove(FMetaObject *src) const override final;
+    virtual FMetaAtom *WrapCopy(const FMetaObject *src) const override final;
 
-    virtual bool UnwrapMove(FMetaObject *dst, FMetaAtom *src) const override;
-    virtual bool UnwrapCopy(FMetaObject *dst, const FMetaAtom *src) const override;
+    virtual bool UnwrapMove(FMetaObject *dst, FMetaAtom *src) const override final;
+    virtual bool UnwrapCopy(FMetaObject *dst, const FMetaAtom *src) const override final;
 
-    virtual void MoveTo(FMetaObject *object, FMetaAtom *atom) const override;
-    virtual void CopyTo(const FMetaObject *object, FMetaAtom *atom) const override;
+    virtual void MoveTo(FMetaObject *object, FMetaAtom *atom) const override final;
+    virtual void CopyTo(const FMetaObject *object, FMetaAtom *atom) const override final;
 
-    virtual void MoveFrom(FMetaObject *object, FMetaAtom *atom) const override;
-    virtual void CopyFrom(FMetaObject *object, const FMetaAtom *atom) const override;
+    virtual void MoveFrom(FMetaObject *object, FMetaAtom *atom) const override final;
+    virtual void CopyFrom(FMetaObject *object, const FMetaAtom *atom) const override final;
 
-    virtual void Move(FMetaObject *dst, FMetaObject *src) const override;
-    virtual void Copy(FMetaObject *dst, const FMetaObject *src) const override;
+    virtual void Move(FMetaObject *dst, FMetaObject *src) const override final;
+    virtual void Copy(FMetaObject *dst, const FMetaObject *src) const override final;
 
-    virtual void Swap(FMetaObject *lhs, FMetaObject *rhs) const override;
+    virtual void Swap(FMetaObject *lhs, FMetaObject *rhs) const override final;
 
-    virtual bool Equals(const FMetaObject *lhs, const FMetaObject *rhs) const override;
-    virtual bool DeepEquals(const FMetaObject *lhs, const FMetaObject *rhs) const override;
+    virtual bool Equals(const FMetaObject *lhs, const FMetaObject *rhs) const override final;
+    virtual bool DeepEquals(const FMetaObject *lhs, const FMetaObject *rhs) const override final;
 
-    virtual void *RawPtr(FMetaObject *obj) const override;
-    virtual const void *RawPtr(const FMetaObject *obj) const override;
+    virtual void *RawPtr(FMetaObject *obj) const override final;
+    virtual const void *RawPtr(const FMetaObject *obj) const override final;
 
-    virtual size_t HashValue(const FMetaObject *object) const override;
+    virtual size_t HashValue(const FMetaObject *object) const override final;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
