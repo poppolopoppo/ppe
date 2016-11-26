@@ -56,6 +56,8 @@
     <CustomBuild Include="Http\Request.h" />
     <CustomBuild Include="Http\Response.cpp" />
     <CustomBuild Include="Http\Response.h" />
+    <CustomBuild Include="Http\Server.cpp" />
+    <CustomBuild Include="Http\Server.h" />
     <CustomBuild Include="Http\Status.cpp" />
     <CustomBuild Include="Http\Status.h" />
     <CustomBuild Include="Socket\Address.cpp" />

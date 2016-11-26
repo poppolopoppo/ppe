@@ -40,6 +40,12 @@
     <CustomBuild Include="Http\Response.h">
       <Filter>Http</Filter>
     </CustomBuild>
+    <CustomBuild Include="Http\Server.cpp">
+      <Filter>Http</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Http\Server.h">
+      <Filter>Http</Filter>
+    </CustomBuild>
     <CustomBuild Include="Http\Status.cpp">
       <Filter>Http</Filter>
     </CustomBuild>
