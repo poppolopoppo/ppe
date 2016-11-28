@@ -355,7 +355,7 @@ void FWorkerContext_::YieldFiber() {
     fiber.Reset(); // forget fiber pimpl to prevent destruction (the fiber is already recycled or destroyed)
 }
 //----------------------------------------------------------------------------
-FWorkerContext_& FWorkerContext_::Instance() {
+NO_INLINE FWorkerContext_& FWorkerContext_::Instance() {
     Assert(FFiber::IsInFiber());
     Assert(nullptr != _gInstanceTLS);
     THREADRESOURCE_CHECKACCESS(_gInstanceTLS);
@@ -373,6 +373,7 @@ void FWorkerContext_::ExitWorkerTask(ITaskContext& ctx) {
     UNUSED(ctx);
     FFiber resume(FFiber::ThreadFiber());
     Instance().QueueResumeFiber(resume);
+    resume.Reset();
 }
 //----------------------------------------------------------------------------
 void STDCALL FWorkerContext_::WorkerEntryPoint_(void* pArg) {
