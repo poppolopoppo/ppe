@@ -475,6 +475,9 @@ int stbi_write_tga(char const *filename, int x, int y, int comp, const void *dat
 // *************************************************************************************************
 // Radiance RGBE HDR writer
 // by Baldur Karlsson
+// CORE BEGIN - wrong scope
+//#ifndef STBI_WRITE_NO_STDIO
+// CORE END
 
 #define stbiw__max(a, b)  ((a) > (b) ? (a) : (b))
 
@@ -629,7 +632,9 @@ int stbi_write_hdr_to_func(stbi_write_func *func, void *context, int x, int y, i
    return stbi_write_hdr_core(&s, x, y, comp, (float *) data);
 }
 
+// CORE BEGIN - wrong scope
 #ifndef STBI_WRITE_NO_STDIO
+// CORE END
 int stbi_write_hdr(char const *filename, int x, int y, int comp, const float *data)
 {
    stbi__write_context s;
