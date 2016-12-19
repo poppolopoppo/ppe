@@ -1,0 +1,308 @@
+#once
+
+; __      ___                 _   ___   ___  __ ______
+; \ \    / (_)               | | |__ \ / _ \/_ |____  |
+;  \ \  / / _ ___ _   _  __ _| |    ) | | | || |   / /
+;   \ \/ / | / __| | | |/ _` | |   / /| | | || |  / /
+;    \  /  | \__ \ |_| | (_| | |  / /_| |_| || | / /
+;     \/   |_|___/\__,_|\__,_|_| |____|\___/ |_|/_/
+;
+
+; utilise la toolchain 64 bits pour compiler en 32
+#define USE_VISUAL2017_NATIVE_ENVIRONMENT
+; 2X Faster Links, mais TODO: les versions ne doivent pas utiliser ça
+#define USE_VISUAL2017_DEBUG_FASTLINK
+; activer la protection du flux de controle
+#define USE_VISUAL2017_GUARD_CF
+; active l'utilisation des Pre-Compiled Headers (/Yu, /Yc)
+#define USE_PRECOMPILED_HEADERS
+; utilise les .obj plutôt que les .lib comme input du linker
+#define USE_LIBRARY_DEPENDENCY_INPUT
+; utilise le linker incremental en profiling
+#define USE_LTCG_INCREMENTAL_LINKER_IN_PROFILING
+
+; choix du SDK de Windows 10
+#define USE_WINDOWS10_SDK_10
+
+#include "MSVCBase.bff"
+
+//------------------------------------------------------------------------------
+// Global Properties
+//------------------------------------------------------------------------------
+
+.MSVC2017PlatformToolset = 'v141'
+
+; TODO : %VS141COMNTOOLS% n'est pas défini dans la RC, fix quand la version finale de VS2017 sera sortie (voir fbuild.rb)
+.MSVC2017BinPath = "$VS141COMNTOOLS$..\..\VC\Tools\MSVC\14.10.24728\bin"
+Print( "Using Visual 2017 installation found in $MSVC2017BinPath$" )
+
+.PATH   = "$VS141COMNTOOLS$..\IDE;"
+        + "$MSVC2017BinPath$\HostX86\x86;"
+        + "$MSVC2017BinPath$\HostX64\x64;"
+#if USE_VISUAL2017_NATIVE_ENVIRONMENT
+        + "$MSVC2017BinPath$\HostX64\x86;"
+#endif
+        + .PATH
+
+.MSVC2017BasePath =
+[
+    .LocalisationUID    = '$VS141CLUID$' ; code zone pour le language (EN)
+    Print( "Using Visual 2017 with localisation uid $LocalisationUID$" )
+    .VSBasePath         = '$VS141COMNTOOLS$..\..'
+    .VSToolsVersion     = '14.10.24728'
+    Print( "Using Visual 2017 with tools version $VSToolsVersion$" )
+    .WindowsSDKBasePath10 = 'C:\Program Files (x86)\Windows Kits\10'
+#if USE_WINDOWS10_SDK_10
+    .WindowsSDKVersion10  = '10.0.14393.0'
+#endif
+    Print( "Using Visual 2017 with Windows 10 SDK $WindowsSDKVersion10$" )
+]
+
+Print( "Using Visual 2017 with platform toolset $MSVC2017PlatformToolset$" )
+
+//------------------------------------------------------------------------------
+// Microsoft Visual Studio 2017 (x86)
+//------------------------------------------------------------------------------
+Compiler( 'Compiler-MSVC2017-x86' )
+{
+    Using( .MSVC2017BasePath )
+
+    .Root       = '$MSVC2017BinPath$\HostX86\x86'
+    .Executable = '$Root$\cl.exe'
+    .ExtraFiles =
+    {
+        '$Root$\$LocalisationUID$\clui.dll',
+        '$Root$\c1.dll',
+        '$Root$\c1xx.dll',
+        '$Root$\c2.dll',
+        '$Root$\msobj140.dll',
+        '$Root$\mspdb140.dll',
+        '$Root$\mspdbcore.dll',
+        '$Root$\mspdbst.dll',
+        '$Root$\mspdbsrv.exe',
+        '$Root$\mspft140.dll',
+        '$Root$\msvcdis140.dll',
+        '$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\concrt140.dll',
+        '$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\msvcp140.dll',
+        '$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\vccorlib140.dll',
+        '$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\vcruntime140.dll',
+    }
+}
+
+//------------------------------------------------------------------------------
+// Microsoft Visual Studio 2017 (x64)
+//------------------------------------------------------------------------------
+Compiler( 'Compiler-MSVC2017-x64' )
+{
+    Using( .MSVC2017BasePath )
+
+    .Root       = '$MSVC2017BinPath$\HostX64\x64'
+    .Executable = '$Root$\cl.exe'
+    .ExtraFiles =
+    {
+        '$Root$\$LocalisationUID$\clui.dll',
+        '$Root$\c1.dll',
+        '$Root$\c1xx.dll',
+        '$Root$\c2.dll',
+        '$Root$\msobj140.dll',
+        '$Root$\mspdb140.dll',
+        '$Root$\mspdbcore.dll',
+        '$Root$\mspdbst.dll',
+        '$Root$\mspdbsrv.exe',
+        '$Root$\mspft140.dll',
+        '$Root$\msvcdis140.dll',
+        '$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x64\Microsoft.VC150.CRT\concrt140.dll',
+        '$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x64\Microsoft.VC150.CRT\msvcp140.dll',
+        '$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x64\Microsoft.VC150.CRT\vccorlib140.dll',
+        '$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x64\Microsoft.VC150.CRT\vcruntime140.dll',
+    }
+}
+
+#if USE_VISUAL2017_NATIVE_ENVIRONMENT
+//------------------------------------------------------------------------------
+// Microsoft Visual Studio 2017 (x64 cross compiler for x86)
+//------------------------------------------------------------------------------
+Compiler( 'Compiler-MSVC2017-x64_x86' )
+{
+    Using( .MSVC2017BasePath )
+
+    .Root       = '$MSVC2017BinPath$\HostX64\x86'
+    .RootX86    = '$MSVC2017BinPath$\HostX86\x86'
+    .Executable = '$Root$\cl.exe'
+    .ExtraFiles =
+    {
+        '$Root$\$LocalisationUID$\clui.dll'
+        '$Root$\c1.dll'
+        '$Root$\c1xx.dll',
+        '$Root$\c2.dll',
+        '$RootX86$\msobj140.dll',
+        '$RootX86$\mspdb140.dll',
+        '$RootX86$\mspdbcore.dll',
+        '$RootX86$\mspdbst.dll',
+        '$RootX86$\mspdbsrv.exe',
+        '$RootX86$\mspft140.dll',
+        '$RootX86$\msvcdis140.dll',
+        '$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\concrt140.dll',
+        '$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\msvcp140.dll',
+        '$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\vccorlib140.dll',
+        '$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\vcruntime140.dll',
+    }
+}
+#endif
+
+//------------------------------------------------------------------------------
+// Resource Compiler
+//------------------------------------------------------------------------------
+.MSVC2017ResourceCompiler =
+[
+    Using( .MSVC2017BasePath )
+
+    .Compiler                   = '$WindowsSDKBasePath10$\Bin\x86\RC.exe'
+    .CompilerOutputExtension    = '.res'
+    .CompilerOptions            = '/nologo /fo"%2" %1'
+]
+
+//------------------------------------------------------------------------------
+// Pre-Compiled Headers Configurations
+//------------------------------------------------------------------------------
+
+.MSVC2017PCHEnabled     = .MSVCBasePCHEnabled
+.MSVC2017PCHDisabled    = .MSVCBasePCHDisabled
+
+//------------------------------------------------------------------------------
+// Base Config
+//------------------------------------------------------------------------------
+.MSVC2017BaseConfig =
+[
+    Using( .MSVC2017BasePath )
+
+    .Defines = {}
+    .CompilerOptions = ''
+    + ' /Zo'                    ; https://msdn.microsoft.com/fr-fr/library/dn785163.aspx
+    + ' /Zc:inline'             ; https://msdn.microsoft.com/fr-fr/library/dn642448.aspx
+    + ' /Zc:implicitNoexcept'   ; https://msdn.microsoft.com/fr-fr/library/dn818588.aspx
+    + ' /Zc:rvalueCast'         ; https://msdn.microsoft.com/fr-fr/library/dn449507.aspx
+    + ' /Zc:strictStrings'      ; https://msdn.microsoft.com/fr-fr/library/dn449508.aspx
+    + ' /cgthreads4'            ; https://msdn.microsoft.com/fr-fr/library/dn631956.aspx
+
+    .IncludePaths =
+    {
+        '$VSBasePath$\VC\Tools\MSVC\$VSToolsVersion$\include',
+        '$VSBasePath$\VC\Auxiliary\VS\include',
+        '$WindowsSDKBasePath10$\Include\$WindowsSDKVersion10$\ucrt',
+        '$WindowsSDKBasePath10$\Include\$WindowsSDKVersion10$\um',
+        '$WindowsSDKBasePath10$\Include\$WindowsSDKVersion10$\shared',
+    }
+]
+
+.MSVC2017DebugFastLink =
+[
+#if USE_VISUAL2017_DEBUG_FASTLINK
+    Print( "Using Visual 2017 debug fast link : pdb references built objs" )
+    ; utilise un lien symbolique vers les obj plutot que de les copier dans le pdb
+    ; TODO: pour l'instant je n'arrive pas a debug correctement quand c'est activé
+    .LinkerOptions      = ' /DEBUG:FASTLINK'
+#endif
+]
+
+.MSVC2017LinkTimeCodeGenerationIncremental =
+[
+    ; Link Time Code Generation (LTCG) incrémental pour accélérer les builds en FINAL
+    .LinkerOptions      = ' /LTCG:incremental'
+    .LibrarianOptions   = ' /LTCG'
+]
+
+.MSVC2017GenerateProfilingInfos =
+[
+    .LinkerOptions      = ' /PROFILE'
+]
+
+#if USE_LTCG_INCREMENTAL_LINKER_IN_PROFILING
+Print( "Using Visual 2017 incremental LTCG for profiling : no profiling informations" )
+.MSVC2017GenerateProfilingInfos = [] ; /PROFILE silently disable the incremental linker
+#endif
+
+.MSVC2015GuardCF =
+[
+#if USE_VISUAL2017_GUARD_CF
+    Print( "Using Visual 2017 guard CF : control flow protection" )
+    ; https://msdn.microsoft.com/fr-fr/library/dn919635.aspx
+    .CompilerOptions    = ' /guard:cf'
+#endif
+]
+
+//------------------------------------------------------------------------------
+// Platforms
+//------------------------------------------------------------------------------
+.MSVC2017PlatformWin32 =
+[
+    Using( .MSVC2017BaseConfig )
+
+    .Compiler           = 'Compiler-MSVC2017-x86'
+    .ToolsBasePath      = '$MSVC2017BinPath$\HostX86\x86'
+
+#if USE_VISUAL2017_NATIVE_ENVIRONMENT
+    Print( "Using Visual 2017 native environment : cross compile x86 from x64" )
+    .Compiler           = 'Compiler-MSVC2017-x64_x86'
+    .ToolsBasePath      = '$MSVC2017BinPath$\HostX64\x86'
+#endif
+
+    .Librarian          = '$ToolsBasePath$\lib.exe'
+    .Linker             = '$ToolsBasePath$\link.exe'
+
+    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath10$\Lib\$WindowsSDKVersion10$\ucrt\x86"'
+                        + ' /LIBPATH:"$WindowsSDKBasePath10$\Lib\$WindowsSDKVersion10$\um\x86"'
+                        + ' /LIBPATH:"$VSBasePath$\VC\Tools\MSVC\$VSToolsVersion$\lib\x86"'
+                        + ' /LIBPATH:"$VSBasePath$\VC\Auxiliary\VS\lib\x86"'
+]
+.MSVC2017PlatformWin32 + .MSVCBasePlatformWin32
+
+.MSVC2017PlatformX64 =
+[
+    Using( .MSVC2017BaseConfig )
+
+    .Compiler           = 'Compiler-MSVC2017-x64'
+    .ToolsBasePath      = '$MSVC2017BinPath$\HostX64\x64'
+
+    .Librarian          = '$ToolsBasePath$\lib.exe'
+    .Linker             = '$ToolsBasePath$\link.exe'
+
+    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath10$\Lib\$WindowsSDKVersion10$\ucrt\x64"'
+                        + ' /LIBPATH:"$WindowsSDKBasePath10$\Lib\$WindowsSDKVersion10$\um\x64"'
+                        + ' /LIBPATH:"$VSBasePath$\VC\Tools\MSVC\$VSToolsVersion$\lib\x64"'
+                        + ' /LIBPATH:"$VSBasePath$\VC\Auxiliary\VS\lib\x64"'
+]
+.MSVC2017PlatformX64 + .MSVCBasePlatformX64
+
+//------------------------------------------------------------------------------
+// Configurations
+//------------------------------------------------------------------------------
+
+.MSVC2017_Win32Debug         = .MSVC2017PlatformWin32   + .MSVCBaseDebugConfig          + .MSVC2017DebugFastLink    + .MSVC2015GuardCF
+.MSVC2017_Win32FastDebug     = .MSVC2017PlatformWin32   + .MSVCBaseFastDebugConfig      + .MSVC2017DebugFastLink    + .MSVC2015GuardCF
+.MSVC2017_Win32Release       = .MSVC2017PlatformWin32   + .MSVCBaseReleaseConfig        + .MSVC2017DebugFastLink
+.MSVC2017_Win32Profiling     = .MSVC2017PlatformWin32   + .MSVCBaseProfilingConfig      + .MSVC2017LinkTimeCodeGenerationIncremental + .MSVC2017GenerateProfilingInfos
+.MSVC2017_Win32Final         = .MSVC2017PlatformWin32   + .MSVCBaseFinalConfig          + .MSVC2017LinkTimeCodeGenerationIncremental
+
+.MSVC2017_X64Debug           = .MSVC2017PlatformX64     + .MSVCBaseDebugConfig          + .MSVC2017DebugFastLink    + .MSVC2015GuardCF
+.MSVC2017_X64FastDebug       = .MSVC2017PlatformX64     + .MSVCBaseFastDebugConfig      + .MSVC2017DebugFastLink    + .MSVC2015GuardCF
+.MSVC2017_X64Release         = .MSVC2017PlatformX64     + .MSVCBaseReleaseConfig        + .MSVC2017DebugFastLink
+.MSVC2017_X64Profiling       = .MSVC2017PlatformX64     + .MSVCBaseProfilingConfig      + .MSVC2017LinkTimeCodeGenerationIncremental + .MSVC2017GenerateProfilingInfos
+.MSVC2017_X64Final           = .MSVC2017PlatformX64     + .MSVCBaseFinalConfig          + .MSVC2017LinkTimeCodeGenerationIncremental
+
+.MSVC2017CompileConfigs =
+{
+    // Win32
+    .MSVC2017_Win32Debug,
+    .MSVC2017_Win32FastDebug,
+    .MSVC2017_Win32Release,
+    .MSVC2017_Win32Profiling,
+    .MSVC2017_Win32Final,
+
+    // X64
+    .MSVC2017_X64Debug,
+    .MSVC2017_X64FastDebug,
+    .MSVC2017_X64Release,
+    .MSVC2017_X64Profiling,
+    .MSVC2017_X64Final,
+}

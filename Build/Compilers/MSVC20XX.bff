@@ -10,7 +10,8 @@
 
 ;#define USE_VISUALSTUDIO_2012
 ;#define USE_VISUALSTUDIO_2013
-#define USE_VISUALSTUDIO_2015
+;#define USE_VISUALSTUDIO_2015
+#define USE_VISUALSTUDIO_2017
 
 //------------------------------------------------------------------------------
 // Visual Studio 20XX
@@ -41,4 +42,13 @@
     .MSVC20XXCompileConfigs     = .MSVC2015CompileConfigs
     .MSVC20XXPCHEnabled         = .MSVC2015PCHEnabled
     .MSVC20XXPCHDisabled        = .MSVC2015PCHDisabled
+#endif //!USE_VISUALSTUDIO_2015
+
+#if USE_VISUALSTUDIO_2017
+#   include "MSVC/MSVC2017.bff"
+    .MSVC20XXPlatformToolset    = .MSVC2017PlatformToolset
+    .MSVC20XXResourceCompiler   = .MSVC2017ResourceCompiler
+    .MSVC20XXCompileConfigs     = .MSVC2017CompileConfigs
+    .MSVC20XXPCHEnabled         = .MSVC2017PCHEnabled
+    .MSVC20XXPCHDisabled        = .MSVC2017PCHDisabled
 #endif //!USE_VISUALSTUDIO_2015

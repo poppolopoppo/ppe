@@ -59,6 +59,7 @@
     + ' /fp:precise'        ; opération virgule flottante précises, NECESSAIRE POUR LE DETERMINISME
     + ' /bigobj'            ; augmente le nombre des sections qu'un fichier objet peut contenir (les obj peuvent être plus gros)
     + ' /openmp-'           ; désactivation du support de openmp (parallèlisation automatique)
+    ;+ ' /Za'                ; désactivation des extensions C++ de Visual non ANSI (https://msdn.microsoft.com/fr-fr/library/0k0w269d.aspx) FAIT PETER WINDOWS SDK :/
     + ' /Zc:wchar_t'        ; active le support de wchar_t comme type natif
     + ' /Zc:forScope'       ; interdit d'acceder à l'iterateur d'un for en dehors de son scope (comportement std)
     ;+ ' /errorreport:prompt'; affiche une boite de dialogue en cas de crash du compilo
