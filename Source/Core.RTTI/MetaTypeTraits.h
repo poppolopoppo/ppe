@@ -29,7 +29,7 @@ namespace RTTI {
 template <typename T>
 struct TMetaTypeTraits;
 //----------------------------------------------------------------------------
-template <typename T, typename _Enabled>
+template <typename T, typename _Enabled = void >
 struct TMetaTypeTraitsImpl {
     typedef T wrapped_type;
     typedef T wrapper_type;

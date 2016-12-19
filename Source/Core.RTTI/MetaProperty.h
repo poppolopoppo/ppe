@@ -3,7 +3,6 @@
 #include "Core.RTTI/RTTI.h"
 
 #include "Core.RTTI/MetaPropertyAccessor.h"
-#include "Core.RTTI/MetaType.h"
 
 #include "Core.RTTI/MetaAtom.h"
 #include "Core.RTTI/MetaType.h"
@@ -11,8 +10,6 @@
 #include "Core.RTTI/MetaTypeVirtualTraits.h"
 
 #include "Core/Allocator/PoolAllocator.h"
-
-#include <type_traits>
 
 namespace Core {
 namespace RTTI {

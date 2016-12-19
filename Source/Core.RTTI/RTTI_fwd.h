@@ -43,7 +43,7 @@ template <typename _From, typename _To>
 struct TMetaTypePromote;
 template <typename T>
 struct TMetaTypeTraits;
-template <typename T, typename _Enabled = void>
+template <typename T, typename _Enabled>
 struct TMetaTypeTraitsImpl;
 class IMetaTypeVirtualTraits;
 class FAbstractMetaTypeScalarTraits;
