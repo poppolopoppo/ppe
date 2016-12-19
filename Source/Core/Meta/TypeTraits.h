@@ -94,5 +94,19 @@ using TRemoveConst = typename std::remove_const<T>::type;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// TODO: use C++17 fold expressions when available
+// http://stackoverflow.com/questions/17339789/how-to-call-a-function-on-all-variadic-template-args?lq=1
+namespace details {
+struct FFoldExpression {
+    template <typename... T>
+    FFoldExpression(T&&...) {}
+};
+} //!details
+//----------------------------------------------------------------------------
+#define FOLD_EXPR(_PATTERN) \
+    Core::Meta::details::FFoldExpression{ 0, ((_PATTERN), void(), 0)... }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Meta
 } //!namespace Core
