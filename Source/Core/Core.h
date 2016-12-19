@@ -98,7 +98,7 @@
 #else
 #   error "unsupported compiler"
 #endif
-#define FORCE_INLINE    __forceinline
+#define FORCE_INLINE    __forceinline //__attribute__((always_inline))
 #define NO_INLINE       __declspec(noinline)
 //----------------------------------------------------------------------------
 #ifdef _MSC_VER
