@@ -33,6 +33,12 @@
     </CustomBuild>
     <CustomBuild Include="MetaClassSingleton.h">
     </CustomBuild>
+    <CustomBuild Include="MetaFunction-inl.h">
+    </CustomBuild>
+    <CustomBuild Include="MetaFunction.cpp">
+    </CustomBuild>
+    <CustomBuild Include="MetaFunction.h">
+    </CustomBuild>
     <CustomBuild Include="MetaObject.cpp">
     </CustomBuild>
     <CustomBuild Include="MetaObject.h">
