@@ -82,6 +82,9 @@ public:
         return FMetaObject::FMetaClass::Instance();
     }
 
+    template <typename T> bool RTTI_InheritsFrom() const { return RTTI_MetaClass()->InheritsFrom<T>(); }
+    template <typename T> bool RTTI_IsAssignableFrom() const { return RTTI_MetaClass()->IsAssignableFrom<T>(); }
+
 private:
     FName _name;
     mutable EFlags _state;

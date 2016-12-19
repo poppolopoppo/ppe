@@ -49,6 +49,18 @@ public:
     bool InheritsFrom(const FMetaClass *parent) const;
     bool IsAssignableFrom(const FMetaClass *child) const;
 
+    template <typename T>
+    bool InheritsFrom() const {
+        typedef typename T::FMetaClass metaclass_type;
+        return InheritsFrom(metaclass_type::Instance());
+    }
+
+    template <typename T>
+    bool IsAssignableFrom() const {
+        typedef typename T::FMetaClass metaclass_type;
+        return IsAssignableFrom(metaclass_type::Instance());
+    }
+
     void Register(FMetaClassHashMap& database) const;
     void Unregister(FMetaClassHashMap& database) const;
 
