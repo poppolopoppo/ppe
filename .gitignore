@@ -93,6 +93,7 @@ ipch/
 *.sdf
 *.cachefile
 *.VC.opendb
+Core.VC.db
 .vs/
 
 # Visual Studio profiler
