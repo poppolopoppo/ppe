@@ -11,8 +11,8 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(FVirtualFileSystem, FVirtualFileSystemNativeFileIStream, );
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(FVirtualFileSystem, FVirtualFileSystemNativeFileOStream, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(VirtualFileSystem, FVirtualFileSystemNativeFileIStream, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(VirtualFileSystem, FVirtualFileSystemNativeFileOStream, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

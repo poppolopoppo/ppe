@@ -105,7 +105,7 @@ void CoreStartup::Shutdown() {
 void CoreStartup::ClearAll_UnusedMemory() {
     CORE_MODULE_CLEARALL(Core);
 
-    POOL_TAG(FVirtualFileSystem)::ClearAll_UnusedMemory();
+    POOL_TAG(VirtualFileSystem)::ClearAll_UnusedMemory();
     POOL_TAG(FileSystem)::ClearAll_UnusedMemory();
     POOL_TAG(NodeBasedContainer)::ClearAll_UnusedMemory();
     POOL_TAG(Default)::ClearAll_UnusedMemory();

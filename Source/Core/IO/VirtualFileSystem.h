@@ -15,7 +15,7 @@
 namespace Core {
 template <typename T, typename _Allocator>
 class TRawStorage;
-POOL_TAG_DECL(FVirtualFileSystem);
+POOL_TAG_DECL(VirtualFileSystem);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
