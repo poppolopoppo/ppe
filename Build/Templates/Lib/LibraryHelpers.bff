@@ -91,6 +91,11 @@ ForEach( .CompileConfig in .AllCompileConfigs )
                 ^CompilerOptions            + ' $CompilerIncludeFlag$"$path$"'
                 ^PreprocessorOptions        + ' $CompilerIncludeFlag$"$path$"'
             }
+
+#if USE_VISUALSTUDIO
+            // PDB output path
+            .CompilerOptions                + ' /Fd"$IntermediateDirectory$\$PlatformToolset$.pdb"'
+#endif
         ]
 
         // Project Unity
