@@ -3,6 +3,9 @@
 // increment to force regeneration
 // global version : 001
 
+; Utilisé aussi par les options du compilo
+;#define USE_FASTBUILD_CACHE
+
 #include "_solution_path.bff" ; généré par fbuild.bat, permet d'avoir le rep du sln
 
 //------------------------------------------------------------------------------
@@ -19,7 +22,7 @@
 // Default Unity Options
 //------------------------------------------------------------------------------
 .UnityNumFiles = 5 ; peut être override par projet
-.UnityInputIsolateWritableFiles = false ; passer à true désactive l'utilisation des unity builds
+.UnityInputIsolateWritableFiles = true ; passer à true désactive l'utilisation des unity builds %NOCOMMIT%
 
 //------------------------------------------------------------------------------
 // Default Visual Options
@@ -29,9 +32,13 @@
 ;+ ' -showcmds'     ; affiche les commandes de compile, pratique pour debug
 + ' -summary'       ; affiche un rapport à la fin de la compilation
 .VSBuildOptions     = .VSBaseOptions
+#if USE_FASTBUILD_CACHE
 + ' -cache'         ; utilisation du cache depuis Visual
+#endif
 .VSRebuildOptions   = .VSBaseOptions
+#if USE_FASTBUILD_CACHE
 + ' -cache'         ; utilisation du cache depuis Visual
+#endif
 .VSCleanOptions     = .VSBaseOptions
 
 //------------------------------------------------------------------------------

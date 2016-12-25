@@ -3,8 +3,6 @@
 ; The Visual C++ Linker best practices: Developer Iteration
 ; http://blogs.msdn.com/b/vcblog/archive/2015/10/30/the-visual-c-linker-best-practices-developer-iteration.aspx
 
-; set les bonnes options pour tirer parti du cache
-#define USE_FASTBUILD_CACHE
 ; active le debugging des iterator pour les containers de la STL
 #define USE_STL_ITERATOR_DEBUGGING
 ; active l'utilisation des guardes de securité au runtime
@@ -255,6 +253,7 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .CompilerWithCache          = .CompilerWithoutCache
 
 #if !USE_CLANG_WINDOWS
+    .CompilerWithCache          + ' /FS' ; nécessaire pour lancer plusieurs CL.exe en meme temps sans le cache (https://msdn.microsoft.com/fr-fr/library/dn502518.aspx)
 #if USE_FASTBUILD_CACHE
     Print( "Using FBuild cache : compiling with /Z7 instead of /Zi" )
     .CompilerWithCache          = ' /Z7' ; Produit un fichier .obj contenant des informations de débogage complètes
