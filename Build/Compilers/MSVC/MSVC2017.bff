@@ -16,8 +16,8 @@
 #define USE_VISUAL2017_GUARD_CF
 ; active l'utilisation des Pre-Compiled Headers (/Yu, /Yc)
 #define USE_PRECOMPILED_HEADERS
-; utilise les .obj plutôt que les .lib comme input du linker
-#define USE_LIBRARY_DEPENDENCY_INPUT
+; utilise les .obj plutôt que les .lib comme input du linker (encore nécessaire ?)
+;#define USE_LIBRARY_DEPENDENCY_INPUT
 ; utilise le linker incremental en profiling
 #define USE_LTCG_INCREMENTAL_LINKER_IN_PROFILING
 
@@ -34,7 +34,7 @@
 
 ; TODO : %VS141COMNTOOLS% n'est pas défini dans la RC, fix quand la version finale de VS2017 sera sortie (voir fbuild.rb)
 .MSVC2017BinPath = "$VS141COMNTOOLS$..\..\VC\Tools\MSVC\14.10.24728\bin"
-Print( "Using Visual 2017 installation found in $MSVC2017BinPath$" )
+Print( "Using Visual 2017 installation found in '$MSVC2017BinPath$'" )
 
 .PATH   = "$VS141COMNTOOLS$..\IDE;"
         + "$MSVC2017BinPath$\HostX86\x86;"
