@@ -26,10 +26,16 @@ typedef i32 word;
 typedef u32 uword;
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs>
-decltype(std::declval<_Lhs>()+std::declval<_Rhs>()) Max(_Lhs lhs, _Rhs rhs) { return lhs < rhs ? rhs : lhs; }
+constexpr decltype(std::declval<_Lhs>()+std::declval<_Rhs>()) Max(_Lhs lhs, _Rhs rhs) { return (lhs < rhs) ? rhs : lhs; }
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs>
-decltype(std::declval<_Lhs>()+std::declval<_Rhs>()) Min(_Lhs lhs, _Rhs rhs) { return lhs < rhs ? lhs : rhs; }
+constexpr decltype(std::declval<_Lhs>()+std::declval<_Rhs>()) Min(_Lhs lhs, _Rhs rhs) { return (lhs < rhs) ? lhs : rhs; }
+//----------------------------------------------------------------------------
+template <typename _A, typename _B, typename _C>
+constexpr decltype(std::declval<_A>() + std::declval<_B>() + std::declval<_C>()) Max3(_A a, _B b, _C c) { return (a < b) ? (b < c ? c : b) : (a < c ? c : a); }
+//----------------------------------------------------------------------------
+template <typename _A, typename _B, typename _C>
+constexpr decltype(std::declval<_A>() + std::declval<_B>() + std::declval<_C>()) Min3(_A a, _B b, _C c) { return (a < b) ? (a < c ? a : c) : (b < c ? b : c); }
 //----------------------------------------------------------------------------
 typedef struct uint128_t {
     u64 lo, hi;
