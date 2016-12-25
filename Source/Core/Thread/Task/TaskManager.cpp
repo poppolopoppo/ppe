@@ -389,6 +389,7 @@ void STDCALL FWorkerContext_::WorkerEntryPoint_(void* pArg) {
     FTaskQueued_ task;
     while (true) {
         Instance().ReleaseFiberIFP();
+        Instance().ResumeFiberIFP();
 
 #if WITH_CORE_NONBLOCKING_TASKPRIORITYQUEUE
         while (not impl.Queue().Consume(&task))
@@ -409,8 +410,6 @@ void STDCALL FWorkerContext_::WorkerEntryPoint_(void* pArg) {
 
             task = FTaskQueued_(); // reset to release reference to counter
         }
-
-        Instance().ResumeFiberIFP();
     }
 }
 //----------------------------------------------------------------------------
