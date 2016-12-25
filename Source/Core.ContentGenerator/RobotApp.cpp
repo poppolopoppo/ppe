@@ -45,11 +45,11 @@ FRobotApp::FRobotApp()
 
     Test_Format();
     Test_Containers();
-    Test_Network();
     Test_Pixmap();
     Test_RTTI();
     Test_Thread();
     Test_XML();
+    Test_Network();
 }
 //----------------------------------------------------------------------------
 void FRobotApp::Start() {
