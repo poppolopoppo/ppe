@@ -3,6 +3,7 @@
 #include "MetaClass.h"
 
 #include "MetaClassDatabase.h"
+#include "MetaFunction.h"
 #include "MetaProperty.h"
 
 #include "Core/IO/String.h"
@@ -18,6 +19,11 @@ FMetaClass::FMetaClass(const FName& name, EFlags attributes)
 ,   _attributes(attributes) {}
 //----------------------------------------------------------------------------
 FMetaClass::~FMetaClass() {}
+//----------------------------------------------------------------------------
+bool FMetaClass::CastTo(const FMetaClass *other) const {
+    Assert(other);
+    return (IsAssignableFrom(other) || other->IsAssignableFrom(this));
+}
 //----------------------------------------------------------------------------
 bool FMetaClass::InheritsFrom(const FMetaClass *parent) const {
     Assert(parent);
@@ -48,8 +54,36 @@ const FMetaClass* FMetaClass::Parent() const {
     return VirtualParent();
 }
 //----------------------------------------------------------------------------
+TMemoryView<const UCMetaFunction> FMetaClass::Functions() const {
+    return VirtualFunctions();
+}
+//----------------------------------------------------------------------------
 TMemoryView<const UCMetaProperty> FMetaClass::Properties() const {
     return VirtualProperties();
+}
+//----------------------------------------------------------------------------
+const FMetaFunction *FMetaClass::FunctionIFP(const FStringView& name, size_t attributes /* = 0 */, bool inherited /* = true */) const {
+    Assert(not name.empty());
+
+    const FMetaFunction* result = VirtualFunctionIFP(name, attributes);
+    if (result)
+        return result;
+
+    return (inherited && Parent())
+        ? Parent()->FunctionIFP(name, attributes, true)
+        : nullptr;
+}
+//----------------------------------------------------------------------------
+const FMetaFunction *FMetaClass::FunctionIFP(const FName& name, size_t attributes /* = 0 */, bool inherited /* = true */) const {
+    Assert(not name.empty());
+
+    const FMetaFunction* result = VirtualFunctionIFP(name, attributes);
+    if (result)
+        return result;
+
+    return (inherited && Parent())
+        ? Parent()->FunctionIFP(name, attributes, true)
+        : nullptr;
 }
 //----------------------------------------------------------------------------
 const FMetaProperty *FMetaClass::PropertyIFP(const FStringView& name, size_t attributes /* = 0 */, bool inherited /* = true */) const {
@@ -83,16 +117,38 @@ FMetaObject* FMetaClass::CreateInstance() const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-InScopeMetaClass::InScopeMetaClass(const FName& name, EFlags attributes)
+FInScopeMetaClass::FInScopeMetaClass(const FName& name, EFlags attributes)
 :   FMetaClass(name, attributes) {}
 //----------------------------------------------------------------------------
-InScopeMetaClass::~InScopeMetaClass() {}
+FInScopeMetaClass::~FInScopeMetaClass() {}
 //----------------------------------------------------------------------------
-TMemoryView<const UCMetaProperty> InScopeMetaClass::VirtualProperties() const {
+TMemoryView<const UCMetaFunction> FInScopeMetaClass::VirtualFunctions() const {
+    return MakeView(_functions);
+}
+//----------------------------------------------------------------------------
+TMemoryView<const UCMetaProperty> FInScopeMetaClass::VirtualProperties() const {
     return MakeView(_properties);
 }
 //----------------------------------------------------------------------------
-const FMetaProperty *InScopeMetaClass::VirtualPropertyIFP(const FStringView& name, size_t attributes) const {
+const FMetaFunction *FInScopeMetaClass::VirtualFunctionIFP(const FStringView& name, size_t attributes) const {
+    for (const UCMetaFunction& f : _functions)
+        if ((f->Attributes() & attributes) == attributes &&
+            (0 == Compare(f->Name().MakeView(), name)))
+            return f.get();
+
+    return nullptr;
+}
+//----------------------------------------------------------------------------
+const FMetaFunction *FInScopeMetaClass::VirtualFunctionIFP(const FName& name, size_t attributes) const {
+    for (const UCMetaFunction& f : _functions)
+        if ((f->Attributes() & attributes) == attributes &&
+            (f->Name() == name))
+            return f.get();
+
+    return nullptr;
+}
+//----------------------------------------------------------------------------
+const FMetaProperty *FInScopeMetaClass::VirtualPropertyIFP(const FStringView& name, size_t attributes) const {
     for (const UCMetaProperty& p : _properties)
         if ((p->Attributes() & attributes) == attributes &&
             (0 == Compare(p->Name().MakeView(), name)) )
@@ -101,7 +157,7 @@ const FMetaProperty *InScopeMetaClass::VirtualPropertyIFP(const FStringView& nam
     return nullptr;
 }
 //----------------------------------------------------------------------------
-const FMetaProperty *InScopeMetaClass::VirtualPropertyIFP(const FName& name, size_t attributes) const {
+const FMetaProperty *FInScopeMetaClass::VirtualPropertyIFP(const FName& name, size_t attributes) const {
     for (const UCMetaProperty& p : _properties)
         if ((p->Attributes() & attributes) == attributes &&
             (p->Name() == name) )
@@ -110,7 +166,22 @@ const FMetaProperty *InScopeMetaClass::VirtualPropertyIFP(const FName& name, siz
     return nullptr;
 }
 //----------------------------------------------------------------------------
-void InScopeMetaClass::RegisterProperty(UCMetaProperty&& prop) {
+void FInScopeMetaClass::RegisterFunction(UCMetaFunction&& func) {
+    Assert(func);
+    Assert(not func->Name().empty());
+
+#ifdef WITH_CORE_ASSERT
+    {
+        const FName name = func->Name();
+        for (const UCMetaFunction& f : _functions)
+            Assert(f->Name() != name);
+    }
+#endif
+
+    _functions.emplace_back(std::move(func));
+}
+//----------------------------------------------------------------------------
+void FInScopeMetaClass::RegisterProperty(UCMetaProperty&& prop) {
     Assert(prop);
     Assert(not prop->Name().empty());
 

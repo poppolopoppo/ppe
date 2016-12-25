@@ -85,6 +85,9 @@ public:
     template <typename T> bool RTTI_InheritsFrom() const { return RTTI_MetaClass()->InheritsFrom<T>(); }
     template <typename T> bool RTTI_IsAssignableFrom() const { return RTTI_MetaClass()->IsAssignableFrom<T>(); }
 
+    template <typename T> T* RTTI_Cast() { return (RTTI_MetaClass()->CastTo<T>() ? reinterpret_cast<T*>(this) : nullptr); }
+    template <typename T> const T* RTTI_Cast() const { return (RTTI_MetaClass()->CastTo<T>() ? reinterpret_cast<const T*>(this) : nullptr); }
+
 private:
     FName _name;
     mutable EFlags _state;

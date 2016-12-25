@@ -66,11 +66,16 @@ public:
 
     FRTTITest2_() {}
 
+    const float3& GetPosition() const { return _position; }
+    void UpdatePosition(const float3& value) { _position = value;  }
+
 private:
     float3 _position;
     RTTI::TVector<RTTI::PMetaAtom> _atomVector;
 };
 RTTI_CLASS_BEGIN(Test, FRTTITest2_, Concrete)
+    RTTI_FUNCTION(GetPosition)
+    RTTI_FUNCTION(UpdatePosition)
     RTTI_PROPERTY_PRIVATE_FIELD(_position)
     RTTI_PROPERTY_PRIVATE_FIELD(_atomVector)
 RTTI_CLASS_END()
@@ -441,7 +446,7 @@ void Test_RTTI() {
 
             RAWSTORAGE_THREAD_LOCAL(Stream, u8) decompressed;
             if (false == Compression::DecompressMemory(decompressed, compressed.MakeConstView()))
-                AssertNotReached();;
+                AssertNotReached();
 
             Assert(checked_cast<size_t>(uncompressed.SizeInBytes()) == decompressed.SizeInBytes());
             const size_t k = decompressed.SizeInBytes();

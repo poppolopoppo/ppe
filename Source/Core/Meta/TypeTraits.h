@@ -92,6 +92,9 @@ using TDecay = typename std::decay<T>::type;
 template <typename T>
 using TRemoveConst = typename std::remove_const<T>::type;
 //----------------------------------------------------------------------------
+template <typename T>
+using TRemoveReference = typename std::remove_reference<T>::type;
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // TODO: use C++17 fold expressions when available
@@ -103,8 +106,8 @@ struct FFoldExpression {
 };
 } //!details
 //----------------------------------------------------------------------------
-#define FOLD_EXPR(_PATTERN) \
-    Core::Meta::details::FFoldExpression{ 0, ((_PATTERN), void(), 0)... }
+#define FOLD_EXPR(...) \
+    Core::Meta::details::FFoldExpression{ 0, ((__VA_ARGS__), void(), 0)... }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

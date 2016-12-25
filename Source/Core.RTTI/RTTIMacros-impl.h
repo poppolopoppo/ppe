@@ -11,6 +11,7 @@
 #include "Core.RTTI/MetaClassDatabase.h"
 #include "Core.RTTI/MetaClassSingleton.h"
 #include "Core.RTTI/MetaObject.h"
+#include "Core.RTTI/MetaFunction.h"
 #include "Core.RTTI/MetaProperty.h"
 #include "Core.RTTI/MetaType.h"
 
@@ -56,6 +57,17 @@
                 Core::RTTI::FMetaClass::_Attributes ) {
 //----------------------------------------------------------------------------
 #define RTTI_CLASS_END() }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Internal helper
+#define _RTTI_FUNCTION_IMPL(_Name, _Flags, _Args) { \
+        Core::RTTI::UCMetaFunction func(Core::RTTI::MakeFunction(_Name, _Flags, _Args )); \
+        RegisterFunction(std::move(func)); \
+    }
+//----------------------------------------------------------------------------
+#define RTTI_FUNCTION(_Name) \
+    _RTTI_FUNCTION_IMPL(STRINGIZE(_Name), Core::RTTI::FMetaFunction::Public, &object_type::_Name )
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -74,11 +74,20 @@ template<typename _Return, typename... _Args, size_t... _Index>
 _Return CallHelper_(_Return (*func)(_Args...), const TTuple<_Args...>& args, std::index_sequence<_Index...>) {
     return func(std::get<_Index>(args)...);
 }
+template<typename _Return, typename _Class, typename... _Args, size_t... _Index>
+_Return CallHelper_(_Return (_Class::*member)(_Args...), _Class* src, const TTuple<_Args...>& args, std::index_sequence<_Index...>) {
+    return src->member(std::get<_Index>(args)...);
+}
 } //!details
 //----------------------------------------------------------------------------
 template<typename _Return, typename... _Args>
-_Return Call(_Return (*func)(_Args...), const TTuple<_Args...>& args) {
+_Return Call(_Return (*func)(_Args...), const TTuple< Meta::TDecay<_Args>...>& args) {
     return details::CallHelper_(func, args, std::index_sequence_for<_Args...>{});
+}
+//----------------------------------------------------------------------------
+template<typename _Return, typename _Class, typename... _Args>
+_Return Call(_Return (_Class::*member)(_Args...), _Class* src, const TTuple< Meta::TDecay<_Args>...>& args) {
+    return details::CallHelper_(member, src, args, std::index_sequence_for<_Args...>{});
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

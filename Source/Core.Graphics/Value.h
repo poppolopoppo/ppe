@@ -211,7 +211,7 @@ void GraphicsValueToAtom(RTTI::PMetaAtom& dst, const Graphics::FValue& src);
 void AtomToGraphicsValue(Graphics::FValue& dst, const RTTI::PMetaAtom& src);
 //----------------------------------------------------------------------------
 template <>
-struct TMetaTypeTraitsImpl< Graphics::FValue > {
+struct TMetaTypeTraitsImpl< Graphics::FValue, void > {
     typedef Graphics::FValue wrapped_type;
     typedef RTTI::PMetaAtom wrapper_type;
 

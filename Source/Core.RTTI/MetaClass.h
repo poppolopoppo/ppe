@@ -15,6 +15,7 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 class FMetaClassHashMap;
 class FMetaObject;
+FWD_UNIQUEPTR(MetaFunction);
 FWD_UNIQUEPTR(MetaProperty);
 //----------------------------------------------------------------------------
 class FMetaClass {
@@ -46,8 +47,15 @@ public:
     bool IsMergeable()  const { return Meta::HasFlag(_attributes, Mergeable); }
     bool IsDeprecated() const { return Meta::HasFlag(_attributes, Deprecated); }
 
+    bool CastTo(const FMetaClass *other) const;
     bool InheritsFrom(const FMetaClass *parent) const;
     bool IsAssignableFrom(const FMetaClass *child) const;
+
+    template <typename T>
+    bool CastTo() const {
+        typedef typename T::FMetaClass metaclass_type;
+        return CastTo(metaclass_type::Instance());
+    }
 
     template <typename T>
     bool InheritsFrom() const {
@@ -66,7 +74,11 @@ public:
 
     const FMetaClass *Parent() const;
 
+    TMemoryView<const UCMetaFunction> Functions() const;
     TMemoryView<const UCMetaProperty> Properties() const;
+
+    const FMetaFunction *FunctionIFP(const FStringView& name, size_t attributes = 0, bool inherited = true) const;
+    const FMetaFunction *FunctionIFP(const FName& name, size_t attributes = 0, bool inherited = true) const;
 
     const FMetaProperty *PropertyIFP(const FStringView& name, size_t attributes = 0, bool inherited = true) const;
     const FMetaProperty *PropertyIFP(const FName& name, size_t attributes = 0, bool inherited = true) const;
@@ -76,7 +88,11 @@ public:
 protected:
     virtual const FMetaClass* VirtualParent() const = 0;
 
+    virtual TMemoryView<const UCMetaFunction> VirtualFunctions() const = 0;
     virtual TMemoryView<const UCMetaProperty> VirtualProperties() const = 0;
+
+    virtual const FMetaFunction *VirtualFunctionIFP(const FStringView& name, size_t attributes) const = 0;
+    virtual const FMetaFunction *VirtualFunctionIFP(const FName& name, size_t attributes) const = 0;
 
     virtual const FMetaProperty *VirtualPropertyIFP(const FStringView& name, size_t attributes) const = 0;
     virtual const FMetaProperty *VirtualPropertyIFP(const FName& name, size_t attributes) const = 0;
@@ -114,28 +130,34 @@ const FMetaProperty* FindProperty(const FMetaClass* metaClass, const _Pred& pred
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class InScopeMetaClass : public FMetaClass {
+class FInScopeMetaClass : public FMetaClass {
 public:
-    InScopeMetaClass(const FName& name, EFlags attributes);
-    virtual ~InScopeMetaClass();
+    FInScopeMetaClass(const FName& name, EFlags attributes);
+    virtual ~FInScopeMetaClass();
 
 protected:
+    void RegisterFunction(UCMetaFunction&& func);
     void RegisterProperty(UCMetaProperty&& prop);
 
 private:
+    virtual TMemoryView<const UCMetaFunction> VirtualFunctions() const override final;
     virtual TMemoryView<const UCMetaProperty> VirtualProperties() const override final;
+
+    virtual const FMetaFunction *VirtualFunctionIFP(const FStringView& name, size_t attributes) const override final;
+    virtual const FMetaFunction *VirtualFunctionIFP(const FName& name, size_t attributes) const override final;
 
     virtual const FMetaProperty *VirtualPropertyIFP(const FStringView& name, size_t attributes) const override final;
     virtual const FMetaProperty *VirtualPropertyIFP(const FName& name, size_t attributes) const override final;
 
-    VECTOR(RTTI, UCMetaProperty) _properties;
+    VECTORINSITU(RTTI, UCMetaFunction, 3) _functions;
+    VECTORINSITU(RTTI, UCMetaProperty, 3) _properties;
 };
 //----------------------------------------------------------------------------
 template <typename T>
-class TDefaultMetaClass : public InScopeMetaClass {
+class TDefaultMetaClass : public FInScopeMetaClass {
 public:
     TDefaultMetaClass(const FName& name, EFlags attributes)
-        : InScopeMetaClass(name, attributes) {
+        : FInScopeMetaClass(name, attributes) {
         STATIC_ASSERT(not std::is_abstract<TDefaultMetaClass>::value);
     }
 

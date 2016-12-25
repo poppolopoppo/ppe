@@ -121,7 +121,7 @@ const RTTI::FMetaClass *FDynamicObject::RTTI_MetaClass() const {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FDynamicObject::FMetaClass::FMetaClass()
-:   RTTI::InScopeMetaClass("FDynamicObject", RTTI::FMetaClass::Dynamic)
+:   RTTI::FInScopeMetaClass("FDynamicObject", RTTI::FMetaClass::Dynamic)
 {}
 //----------------------------------------------------------------------------
 FDynamicObject::FMetaClass::~FMetaClass() {}

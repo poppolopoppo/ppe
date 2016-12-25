@@ -11,7 +11,7 @@
 
 #include <iosfwd>
 
-#define CORE_RTTI_METATYPE_NAME_CAPACITY 128
+#define CORE_RTTI_METATYPE_NAME_CAPACITY 48
 
 #include "Core.RTTI/MetaType.Definitions-inl.h"
 #include "Core.RTTI/MetaTypeVirtualTraits.h"

@@ -72,7 +72,7 @@ public:
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
-    class FMetaClass : public RTTI::InScopeMetaClass {
+    class FMetaClass : public RTTI::FInScopeMetaClass {
     public:
         typedef FMetaObject object_type;
         typedef void parent_type;

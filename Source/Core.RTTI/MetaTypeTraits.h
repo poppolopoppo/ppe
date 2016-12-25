@@ -474,9 +474,9 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 namespace details {
 template <typename T, typename _Enabled = void>
-struct bind_traits_ { typedef TMetaTypeTraitsImpl< typename std::decay<T>::type > type; };
+struct bind_traits_ { typedef TMetaTypeTraitsImpl< Meta::TDecay<T> > type; };
 template <typename T >
-struct bind_traits_<T, typename std::enable_if< TMetaType< typename std::decay<T>::type >::Enabled >::type> { typedef TMetaTypeTraitsDefault< typename std::decay<T>::type > type; };
+struct bind_traits_<T, typename std::enable_if< TMetaType< Meta::TDecay<T> >::Enabled >::type> { typedef TMetaTypeTraitsDefault< Meta::TDecay<T> > type; };
 } //!details
 //----------------------------------------------------------------------------
 template <typename T>
