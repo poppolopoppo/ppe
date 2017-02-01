@@ -135,8 +135,8 @@ private:
 
 #ifdef WITH_CORE_ASSERT
 public: // public since this is complicated to friend FWorkerContext_ in an anonymous namespace ...
-    std::atomic<int> _countersInUse = 0;
-    std::atomic<int> _fibersInUse = 0;
+    std::atomic<int> _countersInUse;
+    std::atomic<int> _fibersInUse;
 #endif
 };
 //----------------------------------------------------------------------------
@@ -177,8 +177,8 @@ public:
     static void ExitWorkerTask(ITaskContext& ctx);
 
 private:
-    STATIC_CONST_INTEGRAL(size_t, CacheSize, 32);
-    STATIC_CONST_INTEGRAL(size_t, StackSize, 1024<<10);
+    STATIC_CONST_INTEGRAL(size_t, CacheSize, 32); // 32 kb
+    STATIC_CONST_INTEGRAL(size_t, StackSize, 1024<<10); // 1 mb
 
     FFiber _resumingFiber;
     FFiber _releasedFiber;
@@ -273,7 +273,7 @@ void FWorkerContext_::CreateFiber(FFiber* pFiber) {
 #endif
 
     if (not _fibers.pop_back(pFiber))
-        pFiber->Create(&WorkerEntryPoint_, &_manager);
+        pFiber->Create(&WorkerEntryPoint_, &_manager, StackSize);
 }
 //----------------------------------------------------------------------------
 void FWorkerContext_::DestroyFiber(FFiber& fiber) {
@@ -494,7 +494,12 @@ struct FWaitForAll_ {
 FTaskManagerImpl::FTaskManagerImpl(FTaskManager& manager)
 :   _queue(FiberQueueCapacity_)
 ,   _manager(manager)
-,   _taskRunningCount(0) {
+,   _taskRunningCount(0)
+#ifdef WITH_CORE_ASSERT
+,   _countersInUse(0)
+,   _fibersInUse(0)
+#endif
+{
     _threads.reserve(_manager.WorkerCount());
 }
 //----------------------------------------------------------------------------
