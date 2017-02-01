@@ -11,7 +11,8 @@
 
 ;#define USE_CLANG_37
 ;#define USE_CLANG_38
-#define USE_CLANG_39
+;#define USE_CLANG_39
+#define USE_CLANG_40
 
 //------------------------------------------------------------------------------
 // CLang Windows XX
@@ -42,4 +43,13 @@
     .CLangWindowsXXResourceCompiler = .CLangWindows39ResourceCompiler
     .CLangWindowsXXPCHEnabled       = .CLangWindows39PCHEnabled
     .CLangWindowsXXPCHDisabled      = .CLangWindows39PCHDisabled
+#endif //!USE_CLANG_39
+
+#if USE_CLANG_40
+#   include "CLang/CLangWindows40.bff" ; TODO: Experimental
+    .CLangWindowsXXCompileConfigs   = .CLangWindows40CompileConfigs
+    .CLangWindowsXXPlatformToolset  = .CLangWindows40PlatformToolset
+    .CLangWindowsXXResourceCompiler = .CLangWindows40ResourceCompiler
+    .CLangWindowsXXPCHEnabled       = .CLangWindows40PCHEnabled
+    .CLangWindowsXXPCHDisabled      = .CLangWindows40PCHDisabled
 #endif //!USE_CLANG_39

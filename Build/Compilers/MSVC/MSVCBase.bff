@@ -237,6 +237,7 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     + ' /Oi'                ; active les fonctions intrinsics
     + ' /Oy-'               ; n'empêche pas la création des pointeurs de frame sur la pile des appels
     + ' /GS-'               ; vérification de la sécurité de la mémoire tampon
+    + ' /GA'                ; optimisation d'accès aux variables thread-local
 
     .FinalOptimisations = ''
     + ' /MD'                ; MultiThreaded dll
@@ -247,6 +248,7 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     + ' /GS-'               ; vérification de la sécurité de la mémoire tampon
     + ' /Gw'                ; optimisations des données globales
     + ' /GL'                ; optimisations du programme globales
+    + ' /GA'                ; optimisation d'accès aux variables thread-local
 
     ; FastBuild n'utilise le cache qu'en Z7
     .CompilerWithoutCache       = ' /Zi' ; produit une base de données de programme (PDB)
@@ -374,4 +376,5 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .LinkerOptions      = ' /LTCG'          ; link time code generation
                         + ' /OPT:REF'       ; supprime le code non référencé
                         + ' /OPT:ICF=4'     ; COMDAT folding (4 itérations)
+                        + ' /INCREMENTAL:NO'
 ]

@@ -179,7 +179,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         // Dynamic library
         DLL( '$ProjectName$-Dll-$Platform$-$Config$' )
         {
-            .LinkerOutput       = '$BinaryDirectory$\$ProjectName$.$Config$.$Platform$.dll'
+            .LinkerOutput       = '$BinaryDirectory$\$ProjectName$.$Config$.$Platform$.$CompilerDllExtension$'
             .LinkerOptions      = "$DllOptions$ $LinkerOptions$"
 
             .Libraries          = { '$ProjectName$-Lib-$Platform$-$Config$' }
@@ -217,7 +217,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         }
 
         // Override project directories for visual studio ONLY
-        .Output                 = "$VisualStudioOutputDirectory$\$ProjectName$.$Config$.$Platform$.exe"
+        .Output                 = "$VisualStudioOutputDirectory$\$ProjectName$.$Config$.$Platform$.$CompilerBinaryExtension$"
         .OutputDirectory        = .VisualStudioOutputDirectory
         .IntermediateDirectory  = .VisualStudioIntermediateDirectory
     ]

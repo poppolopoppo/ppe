@@ -1,6 +1,6 @@
 #!/bin/env ruby
 
-VERSION='1.1'
+VERSION='1.11'
 VERSION_HEADER="; Version = <#{VERSION}>"
 
 SOLUTION_ROOT = File.absolute_path(File.dirname(__FILE__))
@@ -36,7 +36,10 @@ if regen
     VS110BIN = File.join(VS110COMNTOOLS, '..', '..', 'VC', 'bin')
     VS120BIN = File.join(VS120COMNTOOLS, '..', '..', 'VC', 'bin')
     VS140BIN = File.join(VS140COMNTOOLS, '..', '..', 'VC', 'bin')
-    VS141BIN = File.join(VS141COMNTOOLS, '..', '..', 'VC', 'Tools', 'MSVC', '14.10.24728', 'bin', 'HostX64')
+
+    # still in RC stage :
+    VS141VERSION = Dir.entries(File.join(VS141COMNTOOLS, '..', '..', 'VC', 'Tools', 'MSVC')).last
+    VS141BIN = File.join(VS141COMNTOOLS, '..', '..', 'VC', 'Tools', 'MSVC', VS141VERSION, 'bin', 'HostX64')
 
     vs110cluid = nil
     vs120cluid = nil
@@ -72,6 +75,7 @@ if regen
         f.puts ";VS120COMNTOOLS = '#{VS120COMNTOOLS}'"
         f.puts ";VS140COMNTOOLS = '#{VS140COMNTOOLS}'"
         f.puts ".VS141COMNTOOLS = '#{VS141COMNTOOLS}'"
+        f.puts ".VS141VERSION   = '#{VS141VERSION  }'"
         f.puts
         f.puts ".LLVMBasePathX86 = '#{llvm_x86}'"
         f.puts ".LLVMBasePathX64 = '#{llvm_x64}'"

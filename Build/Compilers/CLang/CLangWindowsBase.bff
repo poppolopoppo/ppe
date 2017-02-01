@@ -2,6 +2,9 @@
 
 #include "../MSVC/MSVCBase.bff"
 
+; Fallback to cl.exe when clang-cl.exe failed (http://blog.llvm.org/2013/11/the-clang-cl-fallback-mode.html)
+#define USE_CLANGCL_FALLBACK
+
 //------------------------------------------------------------------------------
 // Common CLang Configuration
 //------------------------------------------------------------------------------

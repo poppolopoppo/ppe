@@ -197,9 +197,8 @@ Compiler( 'Compiler-MSVC2015-x64_x86' )
     {
         '$VSBasePath$\VC\Include',
         '$WindowsSDKBasePath10$\Include\$WindowsSDKVersion10$\ucrt',
-        '$WindowsSDKBasePath81$\Include\um',
-        '$WindowsSDKBasePath81$\Include\shared',
-    ;'$WindowsSDKBasePath81$\Include\winrt',
+        '$WindowsSDKBasePath10$\Include\$WindowsSDKVersion10$\um',
+        '$WindowsSDKBasePath10$\Include\$WindowsSDKVersion10$\shared',
     }
 ]
 
@@ -249,7 +248,7 @@ Print( "Using Visual 2015 incremental LTCG for profiling : no profiling informat
     .Librarian          = '$ToolsBasePath$\lib.exe'
     .Linker             = '$ToolsBasePath$\link.exe'
     .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath10$\Lib\$WindowsSDKVersion10$\ucrt\x86"'
-                        + ' /LIBPATH:"$WindowsSDKBasePath81$\Lib\$WindowsSDKVersion81$\um\x86"'
+                        + ' /LIBPATH:"$WindowsSDKBasePath10$\Lib\$WindowsSDKVersion10$\um\x86"'
                         + ' /LIBPATH:"$VSBasePath$\VC\lib"'
 ]
 .MSVC2015PlatformWin32 + .MSVCBasePlatformWin32
@@ -263,7 +262,7 @@ Print( "Using Visual 2015 incremental LTCG for profiling : no profiling informat
     .Librarian          = '$ToolsBasePath$\lib.exe'
     .Linker             = '$ToolsBasePath$\link.exe'
     .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath10$\Lib\$WindowsSDKVersion10$\ucrt\x64"'
-                        + ' /LIBPATH:"$WindowsSDKBasePath81$\Lib\$WindowsSDKVersion81$\um\x64"'
+                        + ' /LIBPATH:"$WindowsSDKBasePath10$\Lib\$WindowsSDKVersion10$\um\x64"'
                         + ' /LIBPATH:"$VSBasePath$\VC\lib\amd64"'
 ]
 .MSVC2015PlatformX64 + .MSVCBasePlatformX64

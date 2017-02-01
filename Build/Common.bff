@@ -22,7 +22,7 @@
 // Default Unity Options
 //------------------------------------------------------------------------------
 .UnityNumFiles = 5 ; peut être override par projet
-.UnityInputIsolateWritableFiles = true ; passer à true désactive l'utilisation des unity builds %NOCOMMIT%
+.UnityInputIsolateWritableFiles = false ; passer à true désactive l'utilisation des unity builds
 
 //------------------------------------------------------------------------------
 // Default Visual Options
