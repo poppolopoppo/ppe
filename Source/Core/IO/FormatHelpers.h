@@ -64,6 +64,31 @@ std::basic_ostream<_Char, _Traits>& operator <<(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename _Elt, typename _Sep>
+struct TJoin {
+    TMemoryView<_Elt> Data;
+    _Sep Separator;
+    TJoin(const TMemoryView<_Elt>& data, _Sep separator)
+        : Data(data), Separator(separator) {}
+};
+//----------------------------------------------------------------------------
+template <typename T>
+TJoin<T, const char*> CommaSeparated(const TMemoryView<T>& data) {
+    return TJoin<T, const char*>(data, ", ");
+};
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Elt, typename _Sep>
+std::basic_ostream<_Char>& operator <<(std::basic_ostream<_Char>& oss, const TJoin<_Elt, _Sep>& join) {
+    if (join.Data.size()) {
+        oss << join.Data.front();
+        forrange(i, 1, join.Data.size())
+            oss << join.Separator << join.Data[i];
+    }
+    return oss;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 struct FHexDump {
     TMemoryView<const u8> RawData;
     size_t BytesPerRow;
