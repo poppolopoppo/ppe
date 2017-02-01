@@ -22,9 +22,7 @@ FWD_REFPTR(MetaAtom);
 class FNameTokenTraits {
 public:
     const std::locale& Locale() const { return std::locale::classic(); }
-    bool FNameTokenTraits::IsAllowedChar(char ch) const {
-        return IsAlnum(ch) || ch == '_' || ch == '-' || ch == '.';
-    }
+    bool IsAllowedChar(char ch) const { return IsAlnum(ch) || ch == '_' || ch == '-' || ch == '.'; }
 };
 //----------------------------------------------------------------------------
 BASICTOKEN_CLASS_DEF(FName, char, ECase::Insensitive, FNameTokenTraits);

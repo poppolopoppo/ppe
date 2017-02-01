@@ -279,7 +279,7 @@ METATYPE_STRINGIZE_PROMOTE(double);
 //----------------------------------------------------------------------------
 template <typename T>
 bool PromoteMove(FMetaAtom *dst, T *src) {
-    static_assert(TMetaType<T>::Enabled, "T is not a valid rtti type");
+    static_assert(TMetaType<T>::Enabled, "T is not a valid rtti type"); // TODO: use TMetaTypeTraits<>
 
     const FMetaTypeId dstTypeId = dst->TypeInfo().Id;
     constexpr FMetaTypeId srcTypeId = TMetaType<T>::TypeId;
@@ -304,7 +304,7 @@ bool PromoteMove(FMetaAtom *dst, T *src) {
 //----------------------------------------------------------------------------
 template <typename T>
 bool PromoteCopy(FMetaAtom *dst, const T *src) {
-    static_assert(TMetaType<T>::Enabled, "T is not a valid rtti type");
+    static_assert(TMetaType<T>::Enabled, "T is not a valid rtti type"); // TODO: use TMetaTypeTraits<>
 
     const FMetaTypeId dstTypeId = dst->TypeInfo().Id;
     constexpr FMetaTypeId srcTypeId = TMetaType<T>::TypeId;
@@ -329,7 +329,7 @@ bool PromoteCopy(FMetaAtom *dst, const T *src) {
 //----------------------------------------------------------------------------
 template <typename T>
 bool PromoteMove(T *dst, FMetaAtom *src) {
-    static_assert(TMetaType<T>::Enabled, "T is not a valid rtti type");
+    static_assert(TMetaType<T>::Enabled, "T is not a valid rtti type"); // TODO: use TMetaTypeTraits<>
 
     constexpr FMetaTypeId dstTypeId = TMetaType<T>::TypeId;
     const FMetaTypeId srcTypeId = src->TypeInfo().Id;
@@ -344,7 +344,7 @@ bool PromoteMove(T *dst, FMetaAtom *src) {
         return (dstAtom ? PromoteMove(dstAtom.get(), src) : false);
     }
     else if (srcTypeId == TMetaType<PMetaAtom>::TypeId) {
-        const PMetaAtom& srcAtom = src->Cast<PMetaAtom>()->Wrapper()
+        const PMetaAtom& srcAtom = src->Cast<PMetaAtom>()->Wrapper();
         return (srcAtom ? PromoteMove(dst, srcAtom.get()) : false);
     }
     else {
@@ -354,7 +354,7 @@ bool PromoteMove(T *dst, FMetaAtom *src) {
 //----------------------------------------------------------------------------
 template <typename T>
 bool PromoteCopy(T *dst, const FMetaAtom *src) {
-    static_assert(TMetaType<T>::Enabled, "T is not a valid rtti type");
+    static_assert(TMetaType<T>::Enabled, "T is not a valid rtti type"); // TODO: use TMetaTypeTraits<>
 
     constexpr FMetaTypeId dstTypeId = TMetaType<T>::TypeId;
     const FMetaTypeId srcTypeId = src->TypeInfo().Id;

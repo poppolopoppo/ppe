@@ -231,7 +231,7 @@ void TMetaTypeTraitsImpl< Core::TAssociativeVector<_Key, _Value, _EqualTo, _Vect
     dst_vector.reserve(k);
 
     for (size_t i = 0; i < k; ++i) {
-        TPair<_Key, _Value>& dst_it = dst_vector.push_back_Default();
+        auto& dst_it = dst_vector.push_back_Default();
         key_traits::WrapMove(dst_it.first, std::move(src_vector[i].first));
         value_traits::WrapMove(dst_it.second, std::move(src_vector[i].second));
     }
@@ -254,7 +254,7 @@ void TMetaTypeTraitsImpl< Core::TAssociativeVector<_Key, _Value, _EqualTo, _Vect
     dst_vector.reserve(k);
 
     for (size_t i = 0; i < k; ++i) {
-        TPair<_Key, _Value>& dst_it = dst_vector.push_back_Default();
+        auto& dst_it = dst_vector.push_back_Default();
         key_traits::WrapCopy(dst_it.first, src_vector[i].first);
         value_traits::WrapCopy(dst_it.second, src_vector[i].second);
     }
@@ -315,7 +315,6 @@ bool TMetaTypeTraitsImpl< Core::THashMap<_Key, _Value, _Hasher, _EqualTo, _Alloc
     if (lhs.size() != rhs.size())
         return false;
 
-    const size_t k = lhs.size();
     for (const TPair<_Key, _Value>& plhs : lhs) {
         bool found = false;
         for (const TPair<_Key, _Value>& prhs : rhs) {

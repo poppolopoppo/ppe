@@ -22,11 +22,12 @@ FWD_UNIQUEPTR(MetaFunction);
 class FMetaFunction {
 public:
     enum EFlags {
-        Public       = 1<<0,
-        Protected    = 1<<1,
-        Private      = 1<<2,
-        Const        = 1<<3,
-        Deprecated   = 1<<4,
+        Public          = 1<<0,
+        Protected       = 1<<1,
+        Private         = 1<<2,
+        Const           = 1<<3,
+        Deprecated      = 1<<4,
+        Procedure       = 1<<5,
     };
 
     FMetaFunction(const FName& name, EFlags attributes, size_t argCount);
@@ -45,23 +46,26 @@ public:
     bool IsPrivate()    const { return Meta::HasFlag(Attributes(), Private); }
     bool IsConst()      const { return Meta::HasFlag(Attributes(), Const); }
     bool IsDeprecated() const { return Meta::HasFlag(Attributes(), Deprecated); }
+    bool IsProcedure()  const { return Meta::HasFlag(Attributes(), Procedure); }
 
     bool IsOutput(size_t argIndex) const {
         Assert(argIndex < ArgCount());
-        return (outputflags_type::Get(_data) & (1<<argIndex));
+        return (0 != (outputflags_type::Get(_data) & (1<<argIndex)) );
     }
 
+    // The first entry is the return type
     virtual TMemoryView<const FMetaTypeInfo> SignatureInfos() const = 0;
     virtual TMemoryView<const IMetaTypeVirtualTraits* const> SignatureTraits() const = 0;
 
     virtual bool Invoke(FMetaObject* src, PMetaAtom& presult, const TMemoryView<const PMetaAtom>& args) const = 0;
+    virtual bool PromoteInvoke(FMetaObject* src, PMetaAtom& presult, const TMemoryView<const PMetaAtom>& args) const = 0;
 
 protected:
     void SetOutputFlags_(size_t value);
 
 private:
     typedef Meta::TBit<u32>::TFirst<5>::type attributes_type;
-    typedef Meta::TBit<u32>::TAfter<attributes_type>::TField<4>::type argscount_type;
+    typedef Meta::TBit<u32>::TAfter<attributes_type>::TField<5>::type argscount_type;
     typedef Meta::TBit<u32>::TAfter<argscount_type>::TField<15>::type outputflags_type;
 
     FName _name;
@@ -76,6 +80,8 @@ public:
 template <typename _Result, typename... _Args>
 class TMetaFunctionImpl : public FMetaFunction {
 public:
+    using typename FMetaFunction::EFlags;
+
     TMetaFunctionImpl(const FName& name, EFlags attributes, size_t argCount)
         : FMetaFunction(name, attributes, argCount) {}
 
@@ -85,22 +91,30 @@ public:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+namespace details {
+template <typename T>
+struct TMetaFunctionArg_;
+} //!details
+//----------------------------------------------------------------------------
 template <typename _Result, typename _Class, typename... _Args>
 class TMetaTypedFunction : public TMetaFunctionImpl<
-    typename TMetaTypeTraits< Meta::TDecay<_Result> >::wrapper_type,
-    typename TMetaTypeTraits< Meta::TDecay<_Args>   >::wrapper_type...
+    typename details::TMetaFunctionArg_< Meta::TDecay<_Result> >::wrapper_type,
+    typename details::TMetaFunctionArg_< Meta::TDecay<_Args>   >::wrapper_type...
 > {
 public:
     typedef TMetaFunctionImpl<
-        typename TMetaTypeTraits< Meta::TDecay<_Result> >::wrapper_type,
-        typename TMetaTypeTraits< Meta::TDecay<_Args>   >::wrapper_type...
+        typename details::TMetaFunctionArg_< Meta::TDecay<_Result> >::wrapper_type,
+        typename details::TMetaFunctionArg_< Meta::TDecay<_Args>   >::wrapper_type...
     >   parent_type;
+
+    using typename parent_type::EFlags;
 
     typedef _Result (_Class::* func_type)(_Args...);
 
     TMetaTypedFunction(const FName& name, EFlags attributes, func_type func);
 
     virtual bool Invoke(FMetaObject* src, PMetaAtom& presult, const TMemoryView<const PMetaAtom>& args) const override final;
+    virtual bool PromoteInvoke(FMetaObject* src, PMetaAtom& presult, const TMemoryView<const PMetaAtom>& args) const override final;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 

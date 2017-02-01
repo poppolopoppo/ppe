@@ -4,7 +4,10 @@
 
 #include "Core.RTTI/RTTIMacros.h"
 
+#include "Core.RTTI/MetaType.h"
 #include "Core.RTTI/MetaTypePromote.h"
+#include "Core.RTTI/MetaTypeTraits.h"
+
 #include "Core.RTTI/MetaAtom.h"
 #include "Core.RTTI/MetaAtomDatabase.h"
 #include "Core.RTTI/MetaClass.h"
@@ -13,7 +16,6 @@
 #include "Core.RTTI/MetaObject.h"
 #include "Core.RTTI/MetaFunction.h"
 #include "Core.RTTI/MetaProperty.h"
-#include "Core.RTTI/MetaType.h"
 
 #include "Core.RTTI/RTTI_extern.h"
 
@@ -53,7 +55,7 @@
     _RTTI_CLASS_DESTRUCTOR(_Name) \
     _Name::FMetaClass::FMetaClass() \
         :   Core::RTTI::TDefaultMetaClass<_Name>( \
-                STRINGIZE(_Name), \
+                Core::RTTI::FName(STRINGIZE(_Name)), \
                 Core::RTTI::FMetaClass::_Attributes ) {
 //----------------------------------------------------------------------------
 #define RTTI_CLASS_END() }
@@ -62,7 +64,7 @@
 //----------------------------------------------------------------------------
 // Internal helper
 #define _RTTI_FUNCTION_IMPL(_Name, _Flags, _Args) { \
-        Core::RTTI::UCMetaFunction func(Core::RTTI::MakeFunction(_Name, _Flags, _Args )); \
+        Core::RTTI::UCMetaFunction func(Core::RTTI::MakeFunction(Core::RTTI::FName(_Name), _Flags, _Args )); \
         RegisterFunction(std::move(func)); \
     }
 //----------------------------------------------------------------------------
@@ -73,7 +75,7 @@
 //----------------------------------------------------------------------------
 // Internal helper
 #define _RTTI_PROPERTY_IMPL(_Name, _Flags, _Args) { \
-        Core::RTTI::UCMetaProperty prop(Core::RTTI::MakeProperty(_Name, _Flags, _Args )); \
+        Core::RTTI::UCMetaProperty prop(Core::RTTI::MakeProperty(Core::RTTI::FName(_Name), _Flags, _Args )); \
         RegisterProperty(std::move(prop)); \
     }
 //----------------------------------------------------------------------------
@@ -105,8 +107,12 @@
 //----------------------------------------------------------------------------
 // Add a deprecated property "SomeName" of type T, these are write-only : you can't read from them
 #define RTTI_PROPERTY_DEPRECATED(_Type, _Name) { \
-        Core::RTTI::UCMetaProperty prop = Core::RTTI::MakeDeprecatedProperty<_Type, object_type>( \
-            STRINGIZE(_Name), Core::RTTI::FMetaProperty::Private ); \
+        Core::RTTI::UCMetaProperty prop( \
+            Core::RTTI::MakeDeprecatedProperty<_Type, object_type>( \
+                Core::RTTI::FName(STRINGIZE(_Name)), \
+                Core::RTTI::FMetaProperty::Private  \
+            ) \
+        ); \
         RegisterProperty(std::move(prop)); \
     }
 //----------------------------------------------------------------------------
