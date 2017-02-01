@@ -126,7 +126,7 @@ namespace {
 template <typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
-    const details::_FormatFunctor<_Char, _Traits>& functor ) {
+    const details::TFormatFunctor_<_Char, _Traits>& functor ) {
     functor._helper(oss, functor._pArg);
     return oss;
 }
@@ -318,7 +318,7 @@ template <typename _Char, typename _Traits>
 static void FormatArgs_(
     std::basic_ostream<_Char, _Traits>& oss,
     const TBasicStringView<_Char>& format,
-    const TMemoryView<const details::_FormatFunctor<_Char, _Traits>>& args ) {
+    const TMemoryView<const details::TFormatFunctor_<_Char, _Traits>>& args ) {
     Assert(format.Pointer());
     Assert(!oss.bad());
 
@@ -356,11 +356,11 @@ static void FormatArgs_(
 //----------------------------------------------------------------------------
 namespace details {
 //----------------------------------------------------------------------------
-void _FormatArgs(std::basic_ostream<char>& oss, const FStringView& format, const TMemoryView<const _FormatFunctor<char>>& args) {
+void _FormatArgs(std::basic_ostream<char>& oss, const FStringView& format, const TMemoryView<const TFormatFunctor_<char>>& args) {
     FormatArgs_(oss, format, args);
 }
 //----------------------------------------------------------------------------
-void _FormatArgs(std::basic_ostream<wchar_t>& oss, const FWStringView& format, const TMemoryView<const _FormatFunctor<wchar_t>>& args) {
+void _FormatArgs(std::basic_ostream<wchar_t>& oss, const FWStringView& format, const TMemoryView<const TFormatFunctor_<wchar_t>>& args) {
     FormatArgs_(oss, format, args);
 }
 //----------------------------------------------------------------------------

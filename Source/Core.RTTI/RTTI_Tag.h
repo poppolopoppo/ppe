@@ -55,13 +55,17 @@ struct TMetaClassDecl : public FMetaClassBaseDecl {
     namespace RTTI_Tag { \
         struct _NameId { \
         public: \
-            static const char* FName() { return (_NameStr); } \
+            static const char* Name() { return (_NameStr); } \
             \
             static void Register(const Core::RTTI::FMetaClassBaseDecl* pdecl); \
             static void Unregister(const Core::RTTI::FMetaClassBaseDecl* pdecl); \
             \
             static void Start(); \
             static void Shutdown(); \
+            \
+            _NameId() { Start(); } \
+            ~_NameId() { Shutdown(); } \
+            \
         }; \
     }
 //----------------------------------------------------------------------------

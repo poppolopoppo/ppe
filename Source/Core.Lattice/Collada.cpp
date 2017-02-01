@@ -31,13 +31,13 @@ namespace {
     COMMA_PROTECT(_Macro(Bind_Material                    , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Bind_Vertex_Input                , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Bump                             , ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(FCollada                          , ##__VA_ARGS__)) \
+    COMMA_PROTECT(_Macro(Collada                          , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Color                            , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Contributor                      , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Count                            , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Created                          , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Diffuse                          , ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(FEffect                           , ##__VA_ARGS__)) \
+    COMMA_PROTECT(_Macro(Effect                           , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Emission                         , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Encoding                         , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Extra                            , ##__VA_ARGS__)) \
@@ -62,12 +62,12 @@ namespace {
     COMMA_PROTECT(_Macro(Library_Images                   , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Library_Materials                , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Library_Visual_Scenes            , ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(FMaterial                         , ##__VA_ARGS__)) \
+    COMMA_PROTECT(_Macro(Material                         , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Matrix                           , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Mesh                             , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Meter                            , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Modified                         , ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(FName                             , ##__VA_ARGS__)) \
+    COMMA_PROTECT(_Macro(Name                             , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Newparam                         , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Node                             , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Offset                           , ##__VA_ARGS__)) \
@@ -79,7 +79,7 @@ namespace {
     COMMA_PROTECT(_Macro(Reflective                       , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Reflectivity                     , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Sampler2d                        , ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(FScene                            , ##__VA_ARGS__)) \
+    COMMA_PROTECT(_Macro(Scene                            , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Semantic                         , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Set                              , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Sid                              , ##__VA_ARGS__)) \
@@ -87,14 +87,14 @@ namespace {
     COMMA_PROTECT(_Macro(Specular                         , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Stride                           , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Surface                          , ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(FSymbol                           , ##__VA_ARGS__)) \
+    COMMA_PROTECT(_Macro(Symbol                           , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Target                           , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Technique                        , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Technique_Common                 , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Texcoord                         , ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(FTexture                          , ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(EType                             , ##__VA_ARGS__)) \
-    COMMA_PROTECT(_Macro(TUnit                             , ##__VA_ARGS__)) \
+    COMMA_PROTECT(_Macro(Texture                          , ##__VA_ARGS__)) \
+    COMMA_PROTECT(_Macro(Type                             , ##__VA_ARGS__)) \
+    COMMA_PROTECT(_Macro(Unit                             , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Up_Axis                          , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Url                              , ##__VA_ARGS__)) \
     COMMA_PROTECT(_Macro(Vcount                           , ##__VA_ARGS__)) \
@@ -148,11 +148,11 @@ bool FCollada::ImportMaterials(TArray<PGenericMaterial>& materials) const {
     bool succeed = true;
     const XML::FDocument& doc = *_xml;
 
-    doc.XPath({ DAE::FCollada, DAE::Library_Materials, DAE::FMaterial }, [&doc, &materials, &succeed](const XML::FElement& elt) {
+    doc.XPath({ DAE::Collada, DAE::Library_Materials, DAE::Material }, [&doc, &materials, &succeed](const XML::FElement& elt) {
         materials.emplace_back(new FGenericMaterial());
         FGenericMaterial& m = *materials.back();
 
-        m.SetName(elt[DAE::FName]);
+        m.SetName(elt[DAE::Name]);
         if (m.Name().empty()) {
             succeed = false;
             return;
@@ -219,8 +219,8 @@ bool FCollada::ImportMaterials(TArray<PGenericMaterial>& materials) const {
 
         // Textures
 
-        if (const XML::FElement* texture = technique->ChildXPath({ XML::FName::Any, DAE::Diffuse, DAE::FTexture })) {
-            const XML::FElement* sampler = doc.FindById((*texture)[DAE::FTexture]);
+        if (const XML::FElement* texture = technique->ChildXPath({ XML::FName::Any, DAE::Diffuse, DAE::Texture })) {
+            const XML::FElement* sampler = doc.FindById((*texture)[DAE::Texture]);
             if (nullptr == sampler) {
                 succeed = false;
                 return;

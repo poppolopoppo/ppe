@@ -9,13 +9,13 @@ namespace Core {
 namespace details {
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits = std::char_traits<_Char> >
-struct _FormatFunctor {
+struct TFormatFunctor_ {
     typedef void (*helper_type)(std::basic_ostream<_Char, _Traits>& , const void * );
 
     helper_type _helper;
     const void *_pArg;
 
-    _FormatFunctor(helper_type helper, const void *pArg)
+    TFormatFunctor_(helper_type helper, const void *pArg)
         : _helper(helper), _pArg(pArg) {}
 
     template <typename _Value>
@@ -32,27 +32,27 @@ struct _FormatFunctor {
     template <typename T>
     static typename std::enable_if<
         not std::is_pointer<T>::value,
-        _FormatFunctor
+        TFormatFunctor_
     >::type Make(const T& value) {
         typedef typename std::remove_reference<T>::type value_type;
-        return _FormatFunctor(&FromValue<value_type>, &value);
+        return TFormatFunctor_(&FromValue<value_type>, &value);
     }
 
     template <typename T>
-    static _FormatFunctor Make(const T* pointer) {
-        return _FormatFunctor(&FromPointer<const T*>, pointer);
+    static TFormatFunctor_ Make(const T* pointer) {
+        return TFormatFunctor_(&FromPointer<const T*>, pointer);
     }
 };
 //----------------------------------------------------------------------------
-void _FormatArgs(std::basic_ostream<char>& oss, const FStringView& format, const TMemoryView<const _FormatFunctor<char>>& args);
-void _FormatArgs(std::basic_ostream<wchar_t>& oss, const FWStringView& format, const TMemoryView<const _FormatFunctor<wchar_t>>& args);
+void _FormatArgs(std::basic_ostream<char>& oss, const FStringView& format, const TMemoryView<const TFormatFunctor_<char>>& args);
+void _FormatArgs(std::basic_ostream<wchar_t>& oss, const FWStringView& format, const TMemoryView<const TFormatFunctor_<wchar_t>>& args);
 //----------------------------------------------------------------------------
 } //!namespace details
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits = std::char_traits<_Char> >
-using TBasicFormatArgList = TMemoryView< const details::_FormatFunctor<_Char, _Traits> >;
+using TBasicFormatArgList = TMemoryView< const details::TFormatFunctor_<_Char, _Traits> >;
 typedef TBasicFormatArgList<char>    FormatArgList;
 typedef TBasicFormatArgList<wchar_t> FormatArgListW;
 //----------------------------------------------------------------------------
@@ -65,9 +65,9 @@ template <typename _Char, typename _Traits, typename _Arg0, typename... _Args>
 void Format(std::basic_ostream<_Char, _Traits>& oss, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
     // args are always passed by pointer, wrapped in a void *
     // this avoids unintended copies and decorrelates from actual types (_FormatArgs is defined in Format.cpp)
-    const details::_FormatFunctor<_Char, _Traits> functors[] = {
-        details::_FormatFunctor<_Char, _Traits>::Make(std::forward<_Arg0>(arg0)),
-        details::_FormatFunctor<_Char, _Traits>::Make(std::forward<_Args>(args))...
+    const details::TFormatFunctor_<_Char, _Traits> functors[] = {
+        details::TFormatFunctor_<_Char, _Traits>::Make(std::forward<_Arg0>(arg0)),
+        details::TFormatFunctor_<_Char, _Traits>::Make(std::forward<_Args>(args))...
     };
 
     details::_FormatArgs(oss, format, MakeView(functors));

@@ -33,9 +33,9 @@ typedef u32 FMetaTypeId;
 //----------------------------------------------------------------------------
 enum class EMetaTypeFlags : u32 {
     Scalar      = 0,
-    TVector      = 1,
-    TPair        = 2,
-    TDictionary  = 3
+    Vector      = 1,
+    Pair        = 2,
+    Dictionary  = 3
 };
 //----------------------------------------------------------------------------
 template <typename T>
@@ -91,13 +91,13 @@ struct TMetaType< RTTI::TPair<_First, _Second> > {
     typedef TMetaType< typename std::decay< _Second >::type >    second_meta_type;
 
     enum : FMetaTypeId {
-        TypeId = hash_MetaTypeId_constexpr(EMetaTypeFlags::TPair, first_meta_type::TypeId, second_meta_type::TypeId)
+        TypeId = hash_MetaTypeId_constexpr(EMetaTypeFlags::Pair, first_meta_type::TypeId, second_meta_type::TypeId)
     };
 
     static constexpr bool Enabled = first_meta_type::Enabled && second_meta_type::Enabled;
 
     static constexpr FMetaTypeId Id() { return TypeId; }
-    static constexpr EMetaTypeFlags Flags() { return EMetaTypeFlags::TPair; }
+    static constexpr EMetaTypeFlags Flags() { return EMetaTypeFlags::Pair; }
 
     NO_INLINE static FStringView Name() {
         ONE_TIME_INITIALIZE(const CORE_RTTI_METATYPE_NAMETYPE, gName,
@@ -133,13 +133,13 @@ struct TMetaType< RTTI::TVector<T> > {
     typedef TMetaType< typename std::decay< T >::type >  value_meta_type;
 
     enum : FMetaTypeId {
-        TypeId = hash_MetaTypeId_constexpr(EMetaTypeFlags::TVector, value_meta_type::TypeId)
+        TypeId = hash_MetaTypeId_constexpr(EMetaTypeFlags::Vector, value_meta_type::TypeId)
     };
 
     static constexpr bool Enabled = value_meta_type::Enabled;
 
     static constexpr FMetaTypeId Id() { return TypeId; }
-    static constexpr EMetaTypeFlags Flags() { return EMetaTypeFlags::TVector; }
+    static constexpr EMetaTypeFlags Flags() { return EMetaTypeFlags::Vector; }
 
     NO_INLINE static FStringView Name() {
         ONE_TIME_INITIALIZE(const CORE_RTTI_METATYPE_NAMETYPE, gName,
@@ -183,13 +183,13 @@ struct TMetaType< RTTI::TDictionary<_Key, _Value> > {
     typedef TMetaType< typename std::decay< _Value >::type > value_meta_type;
 
     enum : FMetaTypeId {
-        TypeId = hash_MetaTypeId_constexpr(EMetaTypeFlags::TDictionary, key_meta_type::TypeId, value_meta_type::TypeId)
+        TypeId = hash_MetaTypeId_constexpr(EMetaTypeFlags::Dictionary, key_meta_type::TypeId, value_meta_type::TypeId)
     };
 
     static constexpr bool Enabled = key_meta_type::Enabled && value_meta_type::Enabled;
 
     static constexpr FMetaTypeId Id() { return TypeId; }
-    static constexpr EMetaTypeFlags Flags() { return EMetaTypeFlags::TDictionary; }
+    static constexpr EMetaTypeFlags Flags() { return EMetaTypeFlags::Dictionary; }
 
     NO_INLINE static FStringView Name() {
         ONE_TIME_INITIALIZE(const CORE_RTTI_METATYPE_NAMETYPE, gName,

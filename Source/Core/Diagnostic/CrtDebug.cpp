@@ -34,27 +34,27 @@ static THREAD_LOCAL bool gEnableCrtAllocationHook = true;
 //----------------------------------------------------------------------------
 class FCrtAllocationCallstackLogger {
 public:
-    struct FTAllocation {
+    struct FAllocation {
         enum { MaxDepth = 31 };
         size_t RequestNumber;
         void* Backtrace[MaxDepth];
     };
 
-    struct FTPoolChunk {
-        enum { ChunkSize = (4*1024*1024/*4mo*/-sizeof(size_t))/sizeof(FTAllocation) };
-        FTAllocation Allocations[ChunkSize];
-        FTPoolChunk* Next;
+    struct FPoolChunk {
+        enum { ChunkSize = (4*1024*1024/*4mo*/-sizeof(size_t))/sizeof(FAllocation) };
+        FAllocation Allocations[ChunkSize];
+        FPoolChunk* Next;
     };
 
     explicit FCrtAllocationCallstackLogger();
     ~FCrtAllocationCallstackLogger();
 
     void Allocate(long requestNumber);
-    const FTAllocation* FCallstack(long requestNumber) const;
+    const FAllocation* FCallstack(long requestNumber) const;
 
     size_t AllocationCount() const { return _allocationCount; }
     size_t ChunkCount() const { return _chunkCount; }
-    SizeInBytes TotalSizeInBytes() const { return SizeInBytes{ _chunkCount * sizeof(FTPoolChunk) }; }
+    SizeInBytes TotalSizeInBytes() const { return SizeInBytes{ _chunkCount * sizeof(FPoolChunk) }; }
 
     static FCrtAllocationCallstackLogger* Instance;
 
@@ -63,10 +63,10 @@ protected:
     void AllocatePoolChunk_();
     void DestroyPoolChunks_();
 
-    static const FTAllocation* FindRequestAllocation_(
+    static const FAllocation* FindRequestAllocation_(
         size_t requestNumber,
-        const FTAllocation* begin,
-        const FTAllocation* end
+        const FAllocation* begin,
+        const FAllocation* end
         );
 
 private:
@@ -74,8 +74,8 @@ private:
     std::atomic<bool> _enabled;
     size_t _chunkCount;
     size_t _allocationCount;
-    FTPoolChunk* _chunks;
-    FTAllocation* _freeAllocation;
+    FPoolChunk* _chunks;
+    FAllocation* _freeAllocation;
 };
 //----------------------------------------------------------------------------
 FCrtAllocationCallstackLogger* FCrtAllocationCallstackLogger::Instance = nullptr;
@@ -102,32 +102,32 @@ void FCrtAllocationCallstackLogger::Allocate(long requestNumber) {
     if (NeedNewPoolChunk_())
         AllocatePoolChunk_();
 
-    FTAllocation* const alloc = _freeAllocation;
+    FAllocation* const alloc = _freeAllocation;
     ++_freeAllocation;
     ++_allocationCount;
 
     alloc->RequestNumber = requestNumber;
 
-    const size_t depth = Core::FCallstack::Capture(MakeView(alloc->Backtrace), nullptr, 6, FTAllocation::MaxDepth);
-    if (depth < FTAllocation::MaxDepth)
+    const size_t depth = Core::FCallstack::Capture(MakeView(alloc->Backtrace), nullptr, 6, FAllocation::MaxDepth);
+    if (depth < FAllocation::MaxDepth)
         alloc->Backtrace[depth] = nullptr;
 
     _enabled = true;
 }
 //----------------------------------------------------------------------------
-auto FCrtAllocationCallstackLogger::FCallstack(long requestNumber) const -> const FTAllocation*{
+auto FCrtAllocationCallstackLogger::FCallstack(long requestNumber) const -> const FAllocation*{
     READSCOPELOCK(_barrier);
 
     if (nullptr == _chunks)
         return nullptr;
 
-    const FTAllocation* result = nullptr;
+    const FAllocation* result = nullptr;
     if (_freeAllocation > &_chunks->Allocations[0] &&
         nullptr != (result = FindRequestAllocation_(requestNumber, &_chunks->Allocations[0], _freeAllocation)) )
         return result;
 
-    for (const FTPoolChunk* chunk = _chunks->Next; chunk; chunk = chunk->Next)
-        if (nullptr != (result = FindRequestAllocation_(requestNumber, &chunk->Allocations[0], &chunk->Allocations[FTPoolChunk::ChunkSize])) )
+    for (const FPoolChunk* chunk = _chunks->Next; chunk; chunk = chunk->Next)
+        if (nullptr != (result = FindRequestAllocation_(requestNumber, &chunk->Allocations[0], &chunk->Allocations[FPoolChunk::ChunkSize])) )
             return result;
 
     return nullptr;
@@ -139,9 +139,9 @@ bool FCrtAllocationCallstackLogger::NeedNewPoolChunk_() const {
 }
 //----------------------------------------------------------------------------
 void FCrtAllocationCallstackLogger::AllocatePoolChunk_() {
-    FTPoolChunk* const new_chunk = (FTPoolChunk*)VirtualAlloc(
+    FPoolChunk* const new_chunk = (FPoolChunk*)VirtualAlloc(
         nullptr,
-        sizeof(FTPoolChunk),
+        sizeof(FPoolChunk),
         MEM_COMMIT | MEM_RESERVE,
         PAGE_READWRITE
         );
@@ -155,7 +155,7 @@ void FCrtAllocationCallstackLogger::AllocatePoolChunk_() {
 void FCrtAllocationCallstackLogger::DestroyPoolChunks_() {
     _freeAllocation = nullptr;
     while (_chunks) {
-        FTPoolChunk* const next = _chunks->Next;
+        FPoolChunk* const next = _chunks->Next;
         //_free_dbg(_chunks, _CRT_BLOCK);
         VirtualFree(_chunks, 0, MEM_RELEASE);
         _chunks = next;
@@ -164,9 +164,9 @@ void FCrtAllocationCallstackLogger::DestroyPoolChunks_() {
 //----------------------------------------------------------------------------
 auto FCrtAllocationCallstackLogger::FindRequestAllocation_(
     size_t requestNumber,
-    const FTAllocation* begin,
-    const FTAllocation* end
-    ) -> const FTAllocation* {
+    const FAllocation* begin,
+    const FAllocation* end
+    ) -> const FAllocation* {
     Assert(begin <= end);
 
     if (begin->RequestNumber > requestNumber ||
@@ -174,7 +174,7 @@ auto FCrtAllocationCallstackLogger::FindRequestAllocation_(
         return nullptr;
 
      while (begin + 1 < end) {
-        const FTAllocation* pivot = begin + ((end - begin - 1) >> 1);
+        const FAllocation* pivot = begin + ((end - begin - 1) >> 1);
         Assert(pivot < end);
         if (pivot->RequestNumber < requestNumber)
             begin = pivot + 1;
@@ -271,11 +271,11 @@ static int __cdecl ReportHook_(int nRptType, char *szMsg, int *retVal) {
 
         auto const* log = FCrtAllocationCallstackLogger::Instance;
         if (log) {
-            const FCrtAllocationCallstackLogger::FTAllocation* alloc = log->Callstack(requestNumber);
+            const FCrtAllocationCallstackLogger::FAllocation* alloc = log->Callstack(requestNumber);
             if (alloc)
             {
                 size_t depth = 0;
-                for (; depth < FCrtAllocationCallstackLogger::FTAllocation::MaxDepth && alloc->Backtrace[depth]; ++depth)
+                for (; depth < FCrtAllocationCallstackLogger::FAllocation::MaxDepth && alloc->Backtrace[depth]; ++depth)
                     ;
 
                 FDecodedCallstack decoded;

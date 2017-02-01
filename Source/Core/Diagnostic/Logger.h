@@ -66,7 +66,7 @@ void LogArgs(ELogCategory category, const FWStringView& format, const FormatArgL
 //----------------------------------------------------------------------------
 template <typename _Arg0, typename... _Args>
 void Log(ELogCategory category, const FWStringView& format, _Arg0&& arg0, _Args&&... args) {
-    typedef details::_FormatFunctor<wchar_t> formatfunctor_t;
+    typedef details::TFormatFunctor_<wchar_t> formatfunctor_t;
     const formatfunctor_t functors[] = {
         formatfunctor_t::Make(std::forward<_Arg0>(arg0)),
         formatfunctor_t::Make(std::forward<_Args>(args))...
