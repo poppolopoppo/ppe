@@ -27,7 +27,8 @@ FLookAheadReader::FLookAheadReader(IStreamReader* input, const wchar_t *sourceFi
 FLookAheadReader::~FLookAheadReader() {}
 //----------------------------------------------------------------------------
 bool FLookAheadReader::Eof() const {
-    return (_bufferPos == _bufferPos && _input->Eof());
+    Assert(_bufferPos < _bufferSize);
+    return (_bufferPos == _bufferSize && _input->Eof());
 }
 //----------------------------------------------------------------------------
 size_t FLookAheadReader::Tell() const {
