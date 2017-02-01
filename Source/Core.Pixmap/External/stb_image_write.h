@@ -1,4 +1,4 @@
-/* stb_image_write - v1.02 - public domain - http://nothings.org/stb/stb_image_write.h
+/* stb_image_write - v1.03 - public domain - http://nothings.org/stb/stb_image_write.h
    writes out PNG/BMP/TGA images to C stdio - Sean Barrett 2010-2015
                                      no warranty implied; use at your own risk
 
@@ -103,7 +103,8 @@ CREDITS:
       Jonas Karlsson
       Filip Wasil
       Thatcher Ulrich
-
+      github:poppolopoppo
+      
 LICENSE
 
 This software is dual-licensed to the public domain and under the following
@@ -475,9 +476,6 @@ int stbi_write_tga(char const *filename, int x, int y, int comp, const void *dat
 // *************************************************************************************************
 // Radiance RGBE HDR writer
 // by Baldur Karlsson
-// CORE BEGIN - wrong scope
-//#ifndef STBI_WRITE_NO_STDIO
-// CORE END
 
 #define stbiw__max(a, b)  ((a) > (b) ? (a) : (b))
 
@@ -615,7 +613,7 @@ static int stbi_write_hdr_core(stbi__write_context *s, int x, int y, int comp, f
       char header[] = "#?RADIANCE\n# Written by stb_image_write.h\nFORMAT=32-bit_rle_rgbe\n";
       s->func(s->context, header, sizeof(header)-1);
 
-      len = sprintf_s(buffer, "EXPOSURE=          1.0000000000000\n\n-Y %d +X %d\n", y, x);
+      len = /*sprintf*/sprintf_s(buffer, "EXPOSURE=          1.0000000000000\n\n-Y %d +X %d\n", y, x);
       s->func(s->context, buffer, len);
 
       for(i=0; i < y; i++)
@@ -632,9 +630,7 @@ int stbi_write_hdr_to_func(stbi_write_func *func, void *context, int x, int y, i
    return stbi_write_hdr_core(&s, x, y, comp, (float *) data);
 }
 
-// CORE BEGIN - wrong scope
 #ifndef STBI_WRITE_NO_STDIO
-// CORE END
 int stbi_write_hdr(char const *filename, int x, int y, int comp, const float *data)
 {
    stbi__write_context s;
