@@ -23,8 +23,22 @@ namespace {
 struct FXMLEscaped_ {
     FStringView Str;
 
+    inline friend void operator <<(
+        IStreamWriter& output,
+        const FXMLEscaped_& escaped ) {
+        escaped.Serialize_([&output](char  ch) { output.WritePOD(ch); });
+    }
+
+    inline friend std::basic_ostream<char>& operator <<(
+        std::basic_ostream<char>& oss,
+        const FXMLEscaped_& escaped ) {
+        escaped.Serialize_([&oss](char  ch) { oss.put(ch); });
+        return oss;
+    }
+
+private:
     template <typename _OStream>
-    void Serialize(_OStream& oss) const {
+    void Serialize_(const _OStream& oss) const {
         for (char ch : Str) {
             if (IsAlnum(ch) || '-' == ch || '_' == ch || '.' == ch || '~' == ch) {
                 oss(ch);
@@ -33,27 +47,14 @@ struct FXMLEscaped_ {
                 oss('+');
             }
             else {
-                const size_t x0 = unsigned char(ch) >> 4;
-                const size_t x1 = unsigned char(ch) & 15;
+                const size_t x0 = ((unsigned char)ch) >> 4;
+                const size_t x1 = ((unsigned char)ch) & 15;
 
                 oss('%');
                 oss(char(x0 + (x0 > 9 ? 'A' - 10 : '0')));
                 oss(char(x1 + (x1 > 9 ? 'A' - 10 : '0')));
             }
         }
-    }
-
-    inline friend void operator <<(
-        IStreamWriter& output,
-        const FXMLEscaped_& escaped ) {
-        escaped.Serialize([&output](char  ch) { output.WritePOD(ch); });
-    }
-
-    inline friend std::basic_ostream<char>& operator <<(
-        std::basic_ostream<char>& oss,
-        const FXMLEscaped_& escaped ) {
-        escaped.Serialize([&oss](char  ch) { oss.put(ch); });
-        return oss;
     }
 };
 //----------------------------------------------------------------------------
@@ -248,7 +249,7 @@ private:
     void WriteValue_(const TScalarMatrix<T, _Width, _Height>& m) {
         typedef typename TNumericTraits_<T>::type numeric_type;
         Print("<Matrix class='{0}' width='{1}' height='{2}'>", FXMLEscaped_{ RTTI::TypeInfo<T>().Name }, _Width, _Height);
-        Print("{0}", numeric_type(m.at<0,0>()) );
+        Print("{0}", static_cast<numeric_type>(m.at(0,0)) );
         for (T num : m.MakeView().ShiftFront()) {
             Print(";{0}", numeric_type(num));
         }
@@ -326,17 +327,17 @@ private:
         _newLine = true;
     }
 
-    template <typename _Arg0, typename... _Args>
-    void Print(const FStringView& fmt, _Arg0&& arg0, _Args&&... args) {
+    template <typename... _Args>
+    void Print(const FStringView& fmt, _Args&&... args) {
         char buffer[1024];
-        const size_t n = Format(buffer, fmt, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+        const size_t n = Format(buffer, fmt, std::forward<_Args>(args)...);
         Print(FStringView(buffer, n));
     }
 
-    template <typename _Arg0, typename... _Args>
-    void Puts(const FStringView& fmt, _Arg0&& arg0, _Args&&... args) {
+    template <typename... _Args>
+    void Puts(const FStringView& fmt, _Args&&... args) {
         char buffer[1024];
-        const size_t n = Format(buffer, fmt, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+        const size_t n = Format(buffer, fmt, std::forward<_Args>(args)...);
         Puts(FStringView(buffer, n));
     }
 

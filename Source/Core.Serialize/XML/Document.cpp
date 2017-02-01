@@ -48,7 +48,6 @@ static void ExpectToken_(FLexer::FLookAheadReader& reader, const FStringView& id
 
     reader.EatWhiteSpaces();
 
-    bool succeed = true;
     forrange(i, 0, id.size()) {
         if (not EqualsI(reader.Read(), id[i]))
             CORE_THROW_IT(FXMLException("unexpected idenitifier", reader.SourceSite()));
@@ -156,7 +155,7 @@ const FElement* FDocument::FindById(const FStringView& Id) const {
     Assert(!Id.empty());
 
     // some exporter append a leading '#'
-    const FStringView query = ('#' == Id.front() ? Id.ShiftFront() : Id);
+    const FStringView query = ('#' == Id.front() ? FStringView(Id.ShiftFront()) : Id);
 
     SElement elt;
     return (TryGetValue(_byIdentifier, query, &elt) ? elt.get() : nullptr);
