@@ -202,10 +202,10 @@ FORCE_INLINE bool IsAlnum(wchar_t wch) { return 0 != std::iswalnum(wch); }
 FORCE_INLINE bool IsIdentifier(char ch) { return (IsAlnum(ch) || ch == '_' || ch == '.'); }
 FORCE_INLINE bool IsIdentifier(wchar_t wch) { return (IsAlnum(wch) || wch == L'_' || wch == L'.'); }
 //----------------------------------------------------------------------------
-FORCE_INLINE bool IsPrint(char ch) { return 0 != std::isprint(int(unsigned char(ch))); }
+FORCE_INLINE bool IsPrint(char ch) { return 0 != std::isprint((int)((unsigned char)ch)); }
 FORCE_INLINE bool IsPrint(wchar_t wch) { return 0 != std::iswprint(wch); }
 //----------------------------------------------------------------------------
-FORCE_INLINE bool IsPunct(char ch) { return 0 != std::ispunct(int(unsigned char(ch))); }
+FORCE_INLINE bool IsPunct(char ch) { return 0 != std::ispunct((int)((unsigned char)ch)); }
 FORCE_INLINE bool IsPunct(wchar_t wch) { return 0 != std::iswpunct(wch); }
 //----------------------------------------------------------------------------
 FORCE_INLINE bool IsSpace(char ch) { return ( ch == ' ' || ch == '\f' || ch == '\n' || ch == '\r' || ch == '\t' || ch == '\v' ); }
