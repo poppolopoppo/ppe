@@ -81,6 +81,12 @@ private:
     raw_data_type _data;
 };
 //----------------------------------------------------------------------------
+bool Load(FImage* dst, const FFilename& filename);
+bool Load(FImage* dst, const FFilename& filename, const TMemoryView<const u8>& content);
+//----------------------------------------------------------------------------
+bool Save(const FImage* src, const FFilename& filename);
+bool Save(const FImage* src, const FFilename& filename, IStreamWriter* writer);
+//----------------------------------------------------------------------------
 template <typename T>
 void FImage::Fill(T value) {
     Assert(sizeof(T) == PixelSizeInBytes());
