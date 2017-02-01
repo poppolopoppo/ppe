@@ -23,7 +23,7 @@ struct TValueSizeInBytes_<void> {
     size_t operator ()() const { return 0; }
 };
 //----------------------------------------------------------------------------
-template <typename U, typename V = U, typename = std::enable_if< std::is_constructible<U, const V&>::value >::type >
+template <typename U, typename V = U, typename = typename std::enable_if< std::is_constructible<U, const V&>::value >::type >
 struct TValueCopy_ {
     void operator ()(const TMemoryView<u8>& dst, const TMemoryView<const u8>& src) const {
         Assert(dst.SizeInBytes() >= sizeof(U));
@@ -38,7 +38,7 @@ struct TValueCopy_<void, void, void> {
     }
 };
 //----------------------------------------------------------------------------
-template <typename U, typename V = U, typename = std::enable_if< std::is_constructible<U, const V&>::value >::type >
+template <typename U, typename V = U, typename = typename std::enable_if< std::is_constructible<U, const V&>::value >::type >
 struct TValueCopyArray_ {
     void operator ()(const TMemoryView<u8>& dst, size_t dstStride, const TMemoryView<const u8>& src, size_t srcStride, size_t count) const {
         Assert(dst.SizeInBytes() >= dstStride * count + sizeof(U));
