@@ -211,7 +211,7 @@ typename std::enable_if<
 // Must be overloaded by each allocator, used to correctly handle insitu allocations
 //----------------------------------------------------------------------------
 template <typename T>
-typename size_t AllocationMinSize(const std::allocator<T>& ) {
+size_t AllocationMinSize(const std::allocator<T>& ) {
     return 0;
 }
 //----------------------------------------------------------------------------
