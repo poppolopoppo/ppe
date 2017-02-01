@@ -19,8 +19,10 @@
     }
     .ProjectIsolatedFiles =
     {
+        'main.cpp',
         'Test_Containers.cpp',
         'Test_Format.cpp',
+        'Test_Network.cpp',
         'Test_Pixmap.cpp',
         'Test_RTTI.cpp',
         'Test_Thread.cpp',

@@ -58,10 +58,10 @@ static int Bootstrap(void *appHandle, int nShowCmd, int argc, const wchar_t**arg
 #   include <shellapi.h>
 #   include <tchar.h>
 int APIENTRY _tWinMain(
-    HINSTANCE hInstance,
-    HINSTANCE hPrevInstance,
-    LPTSTR    lpCmdLine,
-    int       nCmdShow) {
+    _In_ HINSTANCE      hInstance,
+    _In_opt_ HINSTANCE  hPrevInstance,
+    _In_ LPWSTR         lpCmdLine,
+    _In_ int            nCmdShow ) {
     UNUSED(hPrevInstance);
 #else
 int main(int argc, const wchar_t* argv[]) {
