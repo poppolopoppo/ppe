@@ -34,7 +34,7 @@ public:
     FSocket(FSocket&& rvalue) : FSocket() { operator =(std::move(rvalue)); }
     FSocket& operator =(FSocket&& rvalue);
 
-    void* Handle() const { return _handle; }
+    intptr_t Handle() const { return _handle; }
 
     void* UserData() const { return _userData; }
     void SetUserData(void* ptr) { _userData = ptr; }
@@ -76,7 +76,7 @@ public:
     };
 
 private:
-    void* _handle;
+    intptr_t _handle;
     void* _userData;
 
     FAddress _local;

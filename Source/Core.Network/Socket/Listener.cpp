@@ -17,10 +17,10 @@ namespace Network {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FListener::FListener() : _handle(nullptr) {}
+FListener::FListener() : _handle(0) {}
 //----------------------------------------------------------------------------
 FListener::FListener(FAddress&& listening)
-:   _handle(nullptr)
+:   _handle(0)
 ,   _listening(std::move(listening)) {
     Assert(_listening.IsIPv4());
 }
@@ -36,7 +36,7 @@ FListener& FListener::operator =(FListener&& rvalue) {
     _handle = rvalue._handle;
     _listening = std::move(rvalue._listening);
 
-    rvalue._handle = nullptr;
+    rvalue._handle = 0;
 
     return *this;
 }
@@ -112,7 +112,7 @@ bool FListener::Disconnect() {
     Assert(IsConnected());
 
     ::SOCKET sock = UnpackSocket_(_handle);
-    _handle = nullptr;
+    _handle = 0;
 
     const int status = ::closesocket(sock);
     if (status == -1)
@@ -125,7 +125,7 @@ bool FListener::Disconnect() {
 }
 //----------------------------------------------------------------------------
 bool FListener::IsConnected() const {
-    return (nullptr != _handle && INVALID_SOCKET != UnpackSocket_(_handle));
+    return (0 != _handle && INVALID_SOCKET != UnpackSocket_(_handle));
 }
 //----------------------------------------------------------------------------
 bool FListener::Accept(FSocket& socket, const FMilliseconds& timeout) {

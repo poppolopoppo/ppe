@@ -40,14 +40,13 @@ STATIC_CONST_INTEGRAL(size_t, MaxSendLength_, 1024*1024*100);
 STATIC_ASSERT(sizeof(::SOCKET) <= sizeof(void*));
 STATIC_ASSERT(std::is_pod<::SOCKET>::value);
 //----------------------------------------------------------------------------
-static void* PackSocket_(::SOCKET socket) {
-    return reinterpret_cast<void*>(socket);
+constexpr intptr_t PackSocket_(::SOCKET socket) {
+    return static_cast<intptr_t>(socket);
 }
 //----------------------------------------------------------------------------
-static ::SOCKET UnpackSocket_(void* handle) {
-    Assert(handle);
+constexpr ::SOCKET UnpackSocket_(intptr_t handle) {
     STATIC_ASSERT(sizeof(::SOCKET) <= sizeof(handle));
-    return reinterpret_cast<::SOCKET>(handle);
+    return static_cast<::SOCKET>(handle);
 }
 //----------------------------------------------------------------------------
 } //!namespace

@@ -25,7 +25,7 @@ static ::timeval MakeTimeval(const FMilliseconds& duration) {
     return time_to_wait;
 }
 //----------------------------------------------------------------------------
-static constexpr void* gInvalidSocket_ = (void*)(INVALID_SOCKET);
+static constexpr intptr_t gInvalidSocket_ = PackSocket_(INVALID_SOCKET);
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------

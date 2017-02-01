@@ -28,7 +28,7 @@ public:
 
     const FSocket& Socket() const { return _socket; }
 
-    void* Handle() const { return _socket.Handle(); }
+    intptr_t Handle() const { return _socket.Handle(); }
 
     void* UserData() const { return _socket.UserData(); }
     void SetUserData(void* ptr) { _socket.SetUserData(ptr); }

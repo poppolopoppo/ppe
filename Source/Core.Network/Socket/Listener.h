@@ -18,7 +18,7 @@ public:
     FListener();
     explicit FListener(FAddress&& listening);
     explicit FListener(const FAddress& listening)
-        : FListener(std::move(FAddress(listening))) {}
+        : FListener(FAddress(listening)) {}
     ~FListener();
 
     FListener(FListener&& rvalue) : FListener() { operator =(std::move(rvalue)); }
@@ -27,7 +27,7 @@ public:
     FListener(const FListener& ) = delete;
     FListener& operator =(const FListener& ) = delete;
 
-    void* Handle() const { return _handle; }
+    intptr_t Handle() const { return _handle; }
 
     const FAddress& Listening() const { return _listening; }
 
@@ -52,7 +52,7 @@ public:
     };
 
 private:
-    void* _handle;
+    intptr_t _handle;
 
     FAddress _listening;
 };
