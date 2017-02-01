@@ -15,9 +15,9 @@ class FValueBlock {
 public:
     class TField {
     public:
-        TField() : _type(0), _index(0), _offset(0), _inUse(0) {}
+        TField() : _index(0), _type(0), _inUse(0), _offset(0) {}
         TField(Graphics::FName name, EValueType type, size_t offset, size_t index = 0, bool inUse = false)
-            : _name(name), _index(u32(index)), _type(u32(type)), _offset(u32(offset)), _inUse(inUse?1:0) {
+            : _name(name), _index(u32(index)), _type(u32(type)), _inUse(inUse?1:0), _offset(u32(offset)) {
             Assert(EValueType::Void != type);
             Assert(index == _index);
             Assert(u32(type) == _type);
