@@ -28,7 +28,7 @@ public:
     FHeap& operator =(const FHeap&) = delete;
 
     void*   Handle() const { return _handle; }
-    SizeInBytes Size() const { return TrackingData().TotalSizeInBytes(); }
+    FSizeInBytes Size() const { return TrackingData().TotalSizeInBytes(); }
 
     void*   Malloc(size_t size, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global());
     void    Free(void *ptr, FMemoryTrackingData& trackingData = FMemoryTrackingData::Global());

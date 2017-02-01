@@ -13,7 +13,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void Format(char *buffer, size_t capacity, SizeInBytes size) {
+void Format(char *buffer, size_t capacity, FSizeInBytes size) {
     TBasicOCStrStream<char> oss(buffer, capacity);
     oss.precision(2);
     oss.flags(std::ios_base::fixed);
@@ -40,7 +40,7 @@ void Format(char *buffer, size_t capacity, SizeInBytes size) {
         oss << bytes;
 }
 //----------------------------------------------------------------------------
-void Format(wchar_t *buffer, size_t capacity, SizeInBytes size) {
+void Format(wchar_t *buffer, size_t capacity, FSizeInBytes size) {
     TBasicOCStrStream<wchar_t> oss(buffer, capacity);
     oss.precision(2);
     oss.flags(std::ios_base::fixed);
@@ -69,7 +69,7 @@ void Format(wchar_t *buffer, size_t capacity, SizeInBytes size) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void Format(char *buffer, size_t capacity, CountOfElements count) {
+void Format(char *buffer, size_t capacity, FCountOfElements count) {
     TBasicOCStrStream<char> oss(buffer, capacity);
     oss.precision(2);
     oss.flags(std::ios_base::fixed);
@@ -82,7 +82,7 @@ void Format(char *buffer, size_t capacity, CountOfElements count) {
         oss << count.Value;
 }
 //----------------------------------------------------------------------------
-void Format(wchar_t *buffer, size_t capacity, CountOfElements count) {
+void Format(wchar_t *buffer, size_t capacity, FCountOfElements count) {
     TBasicOCStrStream<wchar_t> oss(buffer, capacity);
     oss.precision(2);
     oss.flags(std::ios_base::fixed);

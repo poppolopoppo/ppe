@@ -82,7 +82,7 @@ FMemoryPoolBase::FMemoryPoolBase(size_t blockSize, size_t minChunkSize, size_t m
     LOG(Info,
         L"[Pool] New pool with block size = {0}, {1} = {2} per chunk",
         _blockSize,
-        SizeInBytes{ _currentChunksize },
+        FSizeInBytes{ _currentChunksize },
         BlockCountPerChunk(_currentChunksize) );
 }
 //----------------------------------------------------------------------------
@@ -96,7 +96,7 @@ FMemoryPoolBase::~FMemoryPoolBase() {
     LOG(Info,
         L"[Pool] Delete pool with block size = {0}, {1} = {2} per chunk",
         _blockSize,
-        SizeInBytes{ _currentChunksize },
+        FSizeInBytes{ _currentChunksize },
         BlockCountPerChunk(_currentChunksize) );
 }
 //----------------------------------------------------------------------------
@@ -108,11 +108,11 @@ void FMemoryPoolBase::GrowChunkSizeIFP() {
         LOG(Info,
             L"[Pool] Grow pool with block size = {0}, {3} used pages, {1} = {2} per chunk ({4}/{5})",
             _blockSize,
-            SizeInBytes{ _currentChunksize },
+            FSizeInBytes{ _currentChunksize },
             BlockCountPerChunk(_currentChunksize),
             _chunkCount,
-            SizeInBytes{ _usedSize },
-            SizeInBytes{ _totalSize });
+            FSizeInBytes{ _usedSize },
+            FSizeInBytes{ _totalSize });
     }
 }
 //----------------------------------------------------------------------------
@@ -274,10 +274,10 @@ FMemoryPoolChunk *FMemoryPoolBase::ReleaseChunk_() {
         LOG(Info,
             L"[Pool] Release chunk with block size = {0}, page size = {4} ({5} blocs), {3} remaining pages, {1} = {2} per chunk ({6:f2}%)",
             _blockSize,
-            SizeInBytes{ _currentChunksize },
+            FSizeInBytes{ _currentChunksize },
             BlockCountPerChunk(_currentChunksize),
             _chunkCount,
-            SizeInBytes{ release->ChunkSize() },
+            FSizeInBytes{ release->ChunkSize() },
             BlockCountPerChunk(release->ChunkSize()),
             (100.0f*_usedSize)/_totalSize );
 

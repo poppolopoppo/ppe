@@ -52,7 +52,7 @@ static void PrintMemStats_(const Core::FCrtMemoryStats& memoryStats) {
         << " - Total used size          = " << memoryStats.TotalUsedSize << eol
         << " - Largest used block       = " << memoryStats.LargestUsedBlockSize << eol
         << " - Total overhead size      = " << memoryStats.TotalOverheadSize << eol
-        << " - Total comitted size      = " << Core::SizeInBytes{ memoryStats.TotalOverheadSize.Value + memoryStats.TotalFreeSize.Value + memoryStats.TotalUsedSize.Value } << eol
+        << " - Total comitted size      = " << Core::FSizeInBytes{ memoryStats.TotalOverheadSize.Value + memoryStats.TotalFreeSize.Value + memoryStats.TotalUsedSize.Value } << eol
         << " - External fragmentation   = " << (memoryStats.ExternalFragmentation() * 100) << "%" << eol;
 }
 #endif

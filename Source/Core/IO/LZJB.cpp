@@ -235,7 +235,7 @@ void CompressMemory(IStreamWriter* dst, const TMemoryView<const u8>& src) {
     }
 
     LOG(Info, L"[LZJB] Compression ratio : {0} -> {1} = {2:f2}%",
-        SizeInBytes(src.SizeInBytes()), SizeInBytes(writer.TellO()), writer.TellO()*100.0f/src.SizeInBytes() );
+        FSizeInBytes(src.SizeInBytes()), FSizeInBytes(writer.TellO()), writer.TellO()*100.0f/src.SizeInBytes() );
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>

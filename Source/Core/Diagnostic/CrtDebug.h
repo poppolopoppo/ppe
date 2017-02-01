@@ -60,11 +60,11 @@ void CrtCheckGlobalMemoryLeaks(bool enabled);
 //----------------------------------------------------------------------------
 class FCrtMemoryStats {
 public:
-    SizeInBytes TotalUsedSize;
-    SizeInBytes LargestUsedBlockSize;
-    SizeInBytes TotalFreeSize;
-    SizeInBytes LargestFreeBlockSize;
-    SizeInBytes TotalOverheadSize;
+    FSizeInBytes TotalUsedSize;
+    FSizeInBytes LargestUsedBlockSize;
+    FSizeInBytes TotalFreeSize;
+    FSizeInBytes LargestFreeBlockSize;
+    FSizeInBytes TotalOverheadSize;
 
     // http://en.wikipedia.org/wiki/Fragmentation_(computing)#External_fragmentation
     float ExternalFragmentation() const {

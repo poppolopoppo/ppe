@@ -23,13 +23,13 @@ public:
     FMemoryTrackingData* Parent() { return _parent; }
     const FMemoryTrackingData* Parent() const { return _parent; }
 
-    CountOfElements BlockCount() const { return CountOfElements{ _blockCount }; }
-    CountOfElements AllocationCount() const { return CountOfElements{ _allocationCount }; }
-    SizeInBytes TotalSizeInBytes() const { return SizeInBytes{ _totalSizeInBytes }; }
+    FCountOfElements BlockCount() const { return FCountOfElements{ _blockCount }; }
+    FCountOfElements AllocationCount() const { return FCountOfElements{ _allocationCount }; }
+    FSizeInBytes TotalSizeInBytes() const { return FSizeInBytes{ _totalSizeInBytes }; }
 
-    CountOfElements MaxBlockCount() const { return CountOfElements{ _maxBlockCount }; }
-    CountOfElements MaxAllocationCount() const { return CountOfElements{ _maxAllocationCount }; }
-    SizeInBytes MaxTotalSizeInBytes() const { return SizeInBytes{ _maxTotalSizeInBytes }; }
+    FCountOfElements MaxBlockCount() const { return FCountOfElements{ _maxBlockCount }; }
+    FCountOfElements MaxAllocationCount() const { return FCountOfElements{ _maxAllocationCount }; }
+    FSizeInBytes MaxTotalSizeInBytes() const { return FSizeInBytes{ _maxTotalSizeInBytes }; }
 
     void Allocate(size_t blockCount, size_t strideInBytes);
     void Deallocate(size_t blockCount, size_t strideInBytes);

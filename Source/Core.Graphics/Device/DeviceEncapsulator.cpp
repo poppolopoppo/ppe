@@ -127,7 +127,7 @@ void FDeviceEncapsulator::Destroy() {
     Assert(nullptr != _deviceSharedEntityPool);
     const size_t poolSizeInBytes = _deviceSharedEntityPool->ReleaseAll_ReturnRealSize();
     if (0 != poolSizeInBytes) {
-        LOG(Error, L"[FDeviceSharedEntityPool] There is still {0} used in the pool !", SizeInBytes(poolSizeInBytes));
+        LOG(Error, L"[FDeviceSharedEntityPool] There is still {0} used in the pool !", FSizeInBytes(poolSizeInBytes));
         AssertNotReached();
     }
     _deviceSharedEntityPool.reset();
