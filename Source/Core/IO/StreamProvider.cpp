@@ -29,8 +29,7 @@ TMemoryView<_Char> StreamLookup_(  IStreamReader& iss,
         }
     }
     else {
-        for (   const std::streamsize offset = iss.TellI();
-                read < capacity && iss.Peek(storage[read]); ) {
+        for ( ; read < capacity && iss.Peek(storage[read]); ) {
             iss.ReadPOD(&storage[read]);
             read++;
             if (pred(storage[read - 1]))
