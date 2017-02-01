@@ -12,7 +12,7 @@
 */
 
 #if defined(_MSC_VER)
-#   if _MSC_VER == 1900 // Visual supports "Magic Statics" only since 2015
+#   if _MSC_VER >= 1900 // Visual supports "Magic Statics" only since 2015
 //  https://blogs.msdn.microsoft.com/vcblog/2014/11/17/c111417-features-in-vs-2015-preview/
 #   define CORE_HAS_MAGIC_STATICS
 #   endif
