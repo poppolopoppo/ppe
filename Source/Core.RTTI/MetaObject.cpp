@@ -26,7 +26,7 @@ namespace RTTI {
 _RTTI_CLASS_AUTOREGISTER(Default, FMetaObject);
 //----------------------------------------------------------------------------
 FMetaObject::FMetaClass::FMetaClass()
-:   RTTI::TDefaultMetaClass<FMetaObject>("FMetaObject", RTTI::FMetaClass::Abstract)
+:   RTTI::TDefaultMetaClass<FMetaObject>(FName("FMetaObject"), RTTI::FMetaClass::Abstract)
 {}
 //----------------------------------------------------------------------------
 FMetaObject::FMetaClass::~FMetaClass() {}

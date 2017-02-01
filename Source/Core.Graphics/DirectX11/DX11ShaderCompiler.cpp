@@ -355,7 +355,7 @@ static void DX11ReflectShaderBlob_(
 
             const EValueType type = DX11ShaderTypeToValueType_(dx11TypeDesc);
 
-            layout->AddField(   dx11VariableDesc.Name,
+            layout->AddField(   FName(dx11VariableDesc.Name),
                                 type,
                                 dx11VariableDesc.StartOffset,
                                 dx11VariableDesc.Size,
@@ -364,7 +364,7 @@ static void DX11ReflectShaderBlob_(
 
         Assert(layout->Block().size() > 0);
         AssertRelease(checked_cast<size_t>(dx11ConstantDesc.Size) == layout->Block().SizeInBytes());
-        constants.Insert_AssertUnique(dx11ConstantDesc.Name, layout);
+        constants.Insert_AssertUnique(FName(dx11ConstantDesc.Name), layout);
     }
 
     for (UINT i = 0; i < dx11ShaderDesc.BoundResources; ++i) {

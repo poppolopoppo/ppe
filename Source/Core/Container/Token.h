@@ -123,14 +123,16 @@ public:
 
     TToken() : _data{nullptr} {}
 
-    TToken(const _Char* content);
+    explicit TToken(const _Char* content);
     TToken& operator =(const _Char* content);
 
-    TToken(const TBasicStringView<_Char>& content);
+    explicit TToken(const TBasicStringView<_Char>& content);
+    TToken& operator =(const TBasicStringView<_Char>& content);
+
     TToken(const _Char* content, size_t length);
 
     template <typename _CharTraits, typename _Allocator>
-    TToken(const std::basic_string<_Char, _CharTraits, _Allocator>& content)
+    explicit TToken(const std::basic_string<_Char, _CharTraits, _Allocator>& content)
         : TToken(content.c_str(), content.size()) {}
 
     TToken(const TToken& token);

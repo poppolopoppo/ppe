@@ -36,6 +36,12 @@ TToken<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::TToken(const TBasicSt
 :   _data(factory_type::Instance().template GetOrCreate<_TokenTraits>(content)) {}
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits, typename _Allocator >
+auto TToken<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::operator =(const TBasicStringView<_Char>& content) -> TToken&  {
+    _data = factory_type::Instance().template GetOrCreate<_TokenTraits>(content);
+    return *this;
+}
+//----------------------------------------------------------------------------
+template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits, typename _Allocator >
 TToken<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator>::TToken(const _Char* cstr, size_t length)
 :   _data(factory_type::Instance().template GetOrCreate<_TokenTraits>(cstr, length)) {}
 //----------------------------------------------------------------------------

@@ -515,7 +515,7 @@ FGrammarImpl::FGrammarImpl()
 ,   _variable(
         Parser::Expect(FLexer::FSymbol::Identifier).Select<Parser::PCParseExpression>([](const FLexer::FMatch *&& m) -> Parser::PCParseExpression {
         Assert(m && m->Value().size());
-        return Parser::MakeVariableReference(m->Value(), m->Site());
+        return Parser::MakeVariableReference(RTTI::FName(m->Value()), m->Site());
     })
     .Or(        Parser::Expect(FLexer::FSymbol::Dollar)
             .Or(Parser::Expect(FLexer::FSymbol::Complement))
@@ -540,7 +540,7 @@ FGrammarImpl::FGrammarImpl()
                 oss << '/' << std::get<1>(it)->Value();
             }
 
-            return Parser::MakeVariableReference(oss.NullTerminatedStr(), root->Site());
+            return Parser::MakeVariableReference(RTTI::FName(oss.MakeView_NullTerminated()), root->Site());
         })
     ))
 
@@ -552,12 +552,12 @@ FGrammarImpl::FGrammarImpl()
             .Many() )
     .And(   Parser::Expect(FLexer::FSymbol::RParenthese))
     .Select<Parser::PCParseExpression>([](const TTuple<const FLexer::FMatch *, const FLexer::FMatch *, const Parser::TEnumerable<Parser::PCParseStatement>, const FLexer::FMatch *>& args) -> Parser::PCParseExpression {
-        const FLexer::FMatch *FName = std::get<0>(args);
+        const FLexer::FMatch *name = std::get<0>(args);
         const Parser::TEnumerable<Parser::PCParseStatement>& statements = std::get<2>(args);
 
-        Assert(FName);
+        Assert(name);
 
-        return Parser::MakeObjectDefinition(FName->Value(), FName->Site(), statements.begin(), statements.end());
+        return Parser::MakeObjectDefinition(RTTI::FName(name->Value()), name->Site(), statements.begin(), statements.end());
     }))
 
 ,   _rvalue(
@@ -591,7 +591,7 @@ FGrammarImpl::FGrammarImpl()
                 Assert(dot);
                 Assert(member);
 
-                result = Parser::MakePropertyReference(result, member->Value(), dot->Site());
+                result = Parser::MakePropertyReference(result, RTTI::FName(member->Value()), dot->Site());
             }
 
             return result;
@@ -1029,7 +1029,7 @@ FGrammarImpl::FGrammarImpl()
                 ? Parser::FVariableExport::Global
                 : Parser::FVariableExport::Public;
 
-            return Parser::MakeVariableExport(name->Value(), value, scope, name->Site());
+            return Parser::MakeVariableExport(RTTI::FName(name->Value()), value, scope, name->Site());
         })
     )
 
@@ -1048,7 +1048,7 @@ FGrammarImpl::FGrammarImpl()
             Assert(name);
             Assert(value);
 
-            return Parser::MakePropertyAssignment(name->Value(), value);
+            return Parser::MakePropertyAssignment(RTTI::FName(name->Value()), value);
         })
     )
 
