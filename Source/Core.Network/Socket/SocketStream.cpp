@@ -10,8 +10,8 @@ namespace Network {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FSocketStreamWriter::FSocketStreamWriter(FSocketBuffered& socket)
-:   _tellO(0)
-,   _socket(socket) {
+:   _socket(socket)
+,   _tellO(0) {
     Assert(_socket.IsConnected());
 }
 //----------------------------------------------------------------------------

@@ -39,8 +39,8 @@ FSocket::FSocket()
 FSocket::FSocket(FAddress&& remote, FAddress&& local)
 :   _handle(gInvalidSocket_)
 ,   _userData(nullptr)
-,   _remote(std::move(remote))
 ,   _local(std::move(local))
+,   _remote(std::move(remote))
 ,   _timeout(double(DefaultTimeoutInMs)) {
     Assert(_local.empty() || _local.IsIPv4());
     Assert(_remote.IsIPv4());
@@ -347,7 +347,7 @@ bool FSocket::MakeConnection(FSocket& socket, const FAddress& remoteHostnameOrIP
         if (not HostnameToIP(ip, MakeView(remoteHostnameOrIP.Host())) )
             return false;
 
-        socket._remote = std::move( FAddress(std::move(ip), remoteHostnameOrIP.Port()) );
+        socket._remote = FAddress(std::move(ip), remoteHostnameOrIP.Port());
     }
     Assert(socket._remote.IsIPv4());
 

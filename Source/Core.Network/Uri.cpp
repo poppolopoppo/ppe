@@ -71,7 +71,7 @@ static bool UriEncode_(FOStream& oss, const FStringView& str) {
             oss << '+';
         }
         else {
-            const size_t x = unsigned char(ch);
+            const size_t x = (unsigned char)ch;
             oss << '%' << ToHex_(x >> 4) << ToHex_(x & 15);
         }
     }
@@ -298,7 +298,7 @@ bool FUri::Decode(FString& dst, const FStringView& src) {
     FOStringStream oss;
 
     if (UriDecode_(oss, src)) {
-        dst = std::move(oss.str());
+        dst = oss.str();
         return true;
     }
     else {
@@ -310,7 +310,7 @@ bool FUri::Encode(FString& dst, const FStringView& src) {
     FOStringStream oss;
 
     if (UriEncode_(oss, src)) {
-        dst = std::move(oss.str());
+        dst = oss.str();
         return true;
     }
     else {

@@ -121,7 +121,7 @@ void FHttpHeader::PackCookie(FHttpHeader* pheader, const FCookieMap& cookie) {
         many = true;
     }
 
-    pheader->Add(FHttpConstNames::Cookie(), std::move(oss.str()) );
+    pheader->Add(FHttpConstNames::Cookie(), oss.str() );
 }
 //----------------------------------------------------------------------------
 bool FHttpHeader::UnpackCookie(FCookieMap* pcookie, const FHttpHeader& header) {

@@ -21,11 +21,11 @@ public:
     FSocket();
     FSocket(FAddress&& remote, FAddress&& local);
     FSocket(const FAddress& remote, const FAddress& local)
-        : FSocket(std::move(FAddress(remote)), std::move(FAddress(local))) {}
+        : FSocket(FAddress(remote), FAddress(local)) {}
     explicit FSocket(FAddress&& remote)
         : FSocket(std::move(remote), FAddress()) {}
     explicit FSocket(const FAddress& remote)
-        : FSocket(std::move(FAddress(remote)), FAddress()) {}
+        : FSocket(FAddress(remote), FAddress()) {}
     ~FSocket();
 
     FSocket(const FSocket& ) = delete;
