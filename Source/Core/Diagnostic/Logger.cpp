@@ -104,7 +104,7 @@ static const FBasicLogger_ gLoggerBeforeMain (L"BEFORE_MAIN");
 static const FBasicLogger_ gLoggerAfterMain  (L"AFTER_MAIN");
 //----------------------------------------------------------------------------
 static FAtomicSpinLock gLoggerSpinLock;
-static std::atomic<ILogger*> gLoggerCurrentImpl = remove_const(&gLoggerBeforeMain);
+static std::atomic<ILogger*> gLoggerCurrentImpl(remove_const(&gLoggerBeforeMain));
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
