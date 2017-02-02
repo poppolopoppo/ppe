@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "DXTImage.h"
+#include "CompressedImage.h"
 
 #include "Image.h"
 #include "Pixmap_fwd.h"
@@ -96,12 +96,12 @@ struct TBlockTraits_<EBlockFormat::DXT5, EColorSpace::YCoCg> {
 namespace {
 //----------------------------------------------------------------------------
 template <EBlockFormat _Format, EColorSpace _Space>
-static void BlockSpaceCompress_(FDXTImage* dst, const FImage* src, FDXTImage::EQuality quality) {
+static void BlockSpaceCompress_(FCompressedImage* dst, const FImage* src, FCompressedImage::EQuality quality) {
     typedef TBlockTraits_<_Format, _Space> traits_type;
 
-    STATIC_ASSERT(STB_DXT_NORMAL == size_t(FDXTImage::EQuality::Default));
-    STATIC_ASSERT(STB_DXT_DITHER == size_t(FDXTImage::EQuality::Dithering));
-    STATIC_ASSERT(STB_DXT_HIGHQUAL == size_t(FDXTImage::EQuality::HighQuality));
+    STATIC_ASSERT(STB_DXT_NORMAL == size_t(FCompressedImage::EQuality::Default));
+    STATIC_ASSERT(STB_DXT_DITHER == size_t(FCompressedImage::EQuality::Dithering));
+    STATIC_ASSERT(STB_DXT_HIGHQUAL == size_t(FCompressedImage::EQuality::HighQuality));
 
     const int alpha = (_Format == EBlockFormat::DXT5 ? 1 : 0);
     const size_t blockSizeInBytes = size_t(_Format);
@@ -127,7 +127,7 @@ static void BlockSpaceCompress_(FDXTImage* dst, const FImage* src, FDXTImage::EQ
 }
 //----------------------------------------------------------------------------
 template <EBlockFormat _Format>
-static void BlockCompress_(FDXTImage* dst, const FImage* src, FDXTImage::EQuality quality) {
+static void BlockCompress_(FCompressedImage* dst, const FImage* src, FCompressedImage::EQuality quality) {
     switch (dst->Space())
     {
     case EColorSpace::Linear:
@@ -148,7 +148,7 @@ static void BlockCompress_(FDXTImage* dst, const FImage* src, FDXTImage::EQualit
     }
 }
 //----------------------------------------------------------------------------
-static void Compress_(FDXTImage* dst, const FImage* src, FDXTImage::EQuality quality) {
+static void Compress_(FCompressedImage* dst, const FImage* src, FCompressedImage::EQuality quality) {
     switch (dst->Format())
     {
     case EBlockFormat::DXT1:
@@ -166,26 +166,26 @@ static void Compress_(FDXTImage* dst, const FImage* src, FDXTImage::EQuality qua
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Pixmap, FDXTImage, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Pixmap, FCompressedImage, );
 //----------------------------------------------------------------------------
-FDXTImage::FDXTImage()
+FCompressedImage::FCompressedImage()
 :   _width(0)
 ,   _height(0)
 ,   _format(EBlockFormat::DXT1)
 ,   _space(EColorSpace::sRGB) {}
 //----------------------------------------------------------------------------
-FDXTImage::FDXTImage(size_t width, size_t height, EBlockFormat format, EColorSpace space)
-:   FDXTImage() {
+FCompressedImage::FCompressedImage(size_t width, size_t height, EBlockFormat format, EColorSpace space)
+:   FCompressedImage() {
     Resize_DiscardData(width, height, format, space);
 }
 //----------------------------------------------------------------------------
-FDXTImage::~FDXTImage() {}
+FCompressedImage::~FCompressedImage() {}
 //----------------------------------------------------------------------------
-uint2 FDXTImage::WidthHeight() const {
+uint2 FCompressedImage::WidthHeight() const {
     return uint2(checked_cast<unsigned>(_width), checked_cast<unsigned>(_height));
 }
 //----------------------------------------------------------------------------
-void FDXTImage::CopyTo(FDXTImage* dst) const {
+void FCompressedImage::CopyTo(FCompressedImage* dst) const {
     Assert(dst);
 
     dst->Resize_DiscardData(_width, _height, _format, _space);
@@ -195,11 +195,11 @@ void FDXTImage::CopyTo(FDXTImage* dst) const {
     ::memcpy(dst->_data.data(), _data.data(), _data.size());
 }
 //----------------------------------------------------------------------------
-void FDXTImage::Resize_DiscardData(const uint2& size, EBlockFormat format, EColorSpace space) {
+void FCompressedImage::Resize_DiscardData(const uint2& size, EBlockFormat format, EColorSpace space) {
     Resize_DiscardData(size.x(), size.y(), format, space);
 }
 //----------------------------------------------------------------------------
-void FDXTImage::Resize_DiscardData(size_t width, size_t height, EBlockFormat format, EColorSpace space) {
+void FCompressedImage::Resize_DiscardData(size_t width, size_t height, EBlockFormat format, EColorSpace space) {
     AssertRelease( // DXT images must be aligned on 4 !
         (width % 4) == 0 &&
         (height % 4) == 0 );
@@ -222,7 +222,7 @@ void FDXTImage::Resize_DiscardData(size_t width, size_t height, EBlockFormat for
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void Compress(FDXTImage* dst, const FImage* src, FDXTImage::EQuality quality) {
+void Compress(FCompressedImage* dst, const FImage* src, FCompressedImage::EQuality quality) {
     Assert(dst);
     Assert(src);
     AssertRelease(src->Depth() == EColorDepth::_8bits);

@@ -5,7 +5,7 @@
 #include "Core/Thread/Task.h"
 
 #include "Core.Pixmap/Drawing.h"
-#include "Core.Pixmap/DXTImage.h"
+#include "Core.Pixmap/CompressedImage.h"
 #include "Core.Pixmap/FloatImage.h"
 #include "Core.Pixmap/Image.h"
 #include "Core.Pixmap/ImageHelpers.h"
@@ -91,8 +91,8 @@ static void Test_DXTCompression_(const FFilename& input) {
     if (false == Pixmap::Load(&img, input))
         AssertNotReached();
 
-    Pixmap::FDXTImage compressed;
-    Pixmap::Compress(&compressed, &img, Pixmap::FDXTImage::EQuality::HighQuality);
+    Pixmap::FCompressedImage compressed;
+    Pixmap::Compress(&compressed, &img, Pixmap::FCompressedImage::EQuality::HighQuality);
 }
 //----------------------------------------------------------------------------
 static void Test_ConvexHull_(const FFilename& input) {

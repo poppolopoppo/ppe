@@ -50,7 +50,7 @@ MEMORY_DOMAIN_COLLAPSABLE_IMPL(GenericMesh,             Lattice)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(GenericMaterial,         Lattice)
 //------------------------------------------------------------------------------
 MEMORY_DOMAIN_IMPL(Pixmap,                              Core)
-MEMORY_DOMAIN_COLLAPSABLE_IMPL(DXTImage,                Pixmap)
+MEMORY_DOMAIN_COLLAPSABLE_IMPL(CompressedImage,         Pixmap)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(FloatImage,              Pixmap)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(Image,                   Pixmap)
 //------------------------------------------------------------------------------

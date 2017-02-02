@@ -14,16 +14,16 @@ FWD_REFPTR(Image);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// FDXTImage : contains a DXT1 or a DXT5 compressed image
+// FCompressedImage : contains a DXT1 or a DXT5 compressed image
 //----------------------------------------------------------------------------
-FWD_REFPTR(DXTImage);
-class FDXTImage : public FRefCountable {
+FWD_REFPTR(CompressedImage);
+class FCompressedImage : public FRefCountable {
 public:
-    typedef PIXELSTORAGE(DXTImage, u8) compressed_data_type;
+    typedef PIXELSTORAGE(CompressedImage, u8) compressed_data_type;
 
-    FDXTImage();
-    FDXTImage(size_t width, size_t height, EBlockFormat format, EColorSpace space);
-    ~FDXTImage();
+    FCompressedImage();
+    FCompressedImage(size_t width, size_t height, EBlockFormat format, EColorSpace space);
+    ~FCompressedImage();
 
     size_t Width() const { return _width; }
     size_t Height() const { return _height; }
@@ -40,7 +40,7 @@ public:
     TMemoryView<u8> MakeView() { return _data.MakeView(); }
     TMemoryView<const u8> MakeConstView() const { return _data.MakeConstView(); }
 
-    void CopyTo(FDXTImage* dst) const;
+    void CopyTo(FCompressedImage* dst) const;
 
     void Resize_DiscardData(const uint2& size, EBlockFormat format, EColorSpace space);
     void Resize_DiscardData(size_t width, size_t height, EBlockFormat format, EColorSpace space);
@@ -54,7 +54,7 @@ public:
         HighQuality, // Better refinement, 30-40% slower
     };
 
-    friend void Compress(FDXTImage* dst, const FImage* src, EQuality quality);
+    friend void Compress(FCompressedImage* dst, const FImage* src, EQuality quality);
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
@@ -68,7 +68,7 @@ private:
     compressed_data_type _data;
 };
 //----------------------------------------------------------------------------
-void Compress(FDXTImage* dst, const FImage* src, FDXTImage::EQuality quality);
+void Compress(FCompressedImage* dst, const FImage* src, FCompressedImage::EQuality quality);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
