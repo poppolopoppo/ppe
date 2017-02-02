@@ -68,6 +68,12 @@ public:
     }
 
     const parent_type& MakeView() const { return *this; }
+
+    friend bool operator ==(const TBasicStringView& lhs, const TBasicStringView& rhs) { return Equals(lhs, rhs); }
+    friend bool operator !=(const TBasicStringView& lhs, const TBasicStringView& rhs) { return not operator ==(lhs, rhs); }
+
+    friend bool operator < (const TBasicStringView& lhs, const TBasicStringView& rhs) { return Compare(lhs, rhs); }
+    friend bool operator >=(const TBasicStringView& lhs, const TBasicStringView& rhs) { return not operator < (lhs, rhs); }
 };
 //----------------------------------------------------------------------------
 typedef TBasicStringView<char>      FStringView;
@@ -270,11 +276,11 @@ int CompareI(const FWStringView& lhs, const FWStringView& rhs);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline bool Equals(const FStringView& lhs, const FStringView& rhs) { return (0 == Compare(lhs, rhs)); }
-inline bool Equals(const FWStringView& lhs, const FWStringView& rhs) { return (0 == Compare(lhs, rhs)); }
+bool Equals(const FStringView& lhs, const FStringView& rhs);
+bool Equals(const FWStringView& lhs, const FWStringView& rhs);
 //----------------------------------------------------------------------------
-inline bool EqualsI(const FStringView& lhs, const FStringView& rhs) { return (0 == CompareI(lhs, rhs)); }
-inline bool EqualsI(const FWStringView& lhs, const FWStringView& rhs) { return (0 == CompareI(lhs, rhs)); }
+bool EqualsI(const FStringView& lhs, const FStringView& rhs);
+bool EqualsI(const FWStringView& lhs, const FWStringView& rhs);
 //----------------------------------------------------------------------------
 inline bool EqualsI(char lhs, char rhs) { return (ToUpper(lhs) == ToUpper(rhs)); }
 inline bool EqualsI(wchar_t lhs, wchar_t rhs) { return (ToUpper(lhs) == ToUpper(rhs)); }

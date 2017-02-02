@@ -418,6 +418,32 @@ int CompareI(const FWStringView& lhs, const FWStringView& rhs) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+bool Equals(const FStringView& lhs, const FStringView& rhs) {
+    return (lhs.size() == rhs.size())
+        ? ( (lhs.data() == rhs.data()) || (::strncmp(lhs.data(), rhs.data(), lhs.size()) == 0) )
+        : false;
+}
+//----------------------------------------------------------------------------
+bool Equals(const FWStringView& lhs, const FWStringView& rhs) {
+    return (lhs.size() == rhs.size())
+        ? ( (lhs.data() == rhs.data()) || (::wcsncmp(lhs.data(), rhs.data(), lhs.size()) == 0) )
+        : false;
+}
+//----------------------------------------------------------------------------
+bool EqualsI(const FStringView& lhs, const FStringView& rhs) {
+    return (lhs.size() == rhs.size())
+        ? ( (lhs.data() == rhs.data()) || (::_strnicmp(lhs.data(), rhs.data(), lhs.size()) == 0) )
+        : false;
+}
+//----------------------------------------------------------------------------
+bool EqualsI(const FWStringView& lhs, const FWStringView& rhs) {
+    return (lhs.size() == rhs.size())
+        ? ( (lhs.data() == rhs.data()) || (::_wcsnicmp(lhs.data(), rhs.data(), lhs.size()) == 0) )
+        : false;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 bool StartsWith(const FStringView& str, const FStringView& prefix) {
     return StartsWith_(str, prefix);
 }
