@@ -15,15 +15,9 @@
 ; active l'utilisation des Pre-Compiled Headers (/Yu, /Yc)
 #define USE_PRECOMPILED_HEADERS
 ; utilise les .obj plutôt que les .lib comme input du linker
-#define USE_LIBRARY_DEPENDENCY_INPUT
+;#define USE_LIBRARY_DEPENDENCY_INPUT
 ; utilise le linker incremental en profiling
 #define USE_LTCG_INCREMENTAL_LINKER_IN_PROFILING
-
-; choix du SDK de Windows 10 (#cestlebordel)
-;#define USE_WINDOWS10_SDK_10
-;#define USE_WINDOWS10_SDK_11 ; utilisé par Visual 2015 Update 2
-;#define USE_WINDOWS10_SDK_20 ; utilisé par Visual 2015 Update 3
-#define USE_WINDOWS10_SDK_21 ; utilisé par Visual 2015 Update 3.1
 
 #include "MSVCBase.bff"
 
@@ -53,23 +47,9 @@
     .LocalisationUID    = '$VS140CLUID$' ; code zone pour le language (EN)
     Print( "Using Visual 2015 with localisation uid $LocalisationUID$" )
     .VSBasePath         = '$VS140COMNTOOLS$..\..'
-    .WindowsSDKBasePath81 = 'C:\Program Files (x86)\Windows Kits\8.1'
-    .WindowsSDKVersion81  = 'winv6.3'
-    Print( "Using Visual 2015 with Windows 8.1 SDK $WindowsSDKVersion81$" )
-    .WindowsSDKBasePath10 = 'C:\Program Files (x86)\Windows Kits\10'
-#if USE_WINDOWS10_SDK_10
-    .WindowsSDKVersion10  = '10.0.10150.0'
-#endif
-#if USE_WINDOWS10_SDK_11
-    .WindowsSDKVersion10  = '10.0.10240.0'
-#endif
-#if USE_WINDOWS10_SDK_20
-    .WindowsSDKVersion10  = '10.0.10586.0'
-#endif
-#if USE_WINDOWS10_SDK_21
-    .WindowsSDKVersion10  = '10.0.14393.0'
-#endif
-    Print( "Using Visual 2015 with Windows 10 SDK $WindowsSDKVersion10$" )
+    .WindowsSDKBasePath = .WindowsSDKBasePath10
+    .WindowsSDKVersion  = .WindowsSDKVersion10
+    Print( "Using Visual 2015 with Windows 10 SDK $WindowsSDKVersion$" )
 ]
 
 Print( "Using Visual 2015 with platform toolset $MSVC2015PlatformToolset$" )
@@ -165,7 +145,7 @@ Compiler( 'Compiler-MSVC2015-x64_x86' )
 [
     Using( .MSVC2015BasePath )
 
-    .Compiler                   = '$WindowsSDKBasePath81$\Bin\x86\RC.exe'
+    .Compiler                   = '$WindowsSDKBasePath$\Bin\x86\RC.exe'
     .CompilerOutputExtension    = '.res'
     .CompilerOptions            = '/nologo /fo"%2" %1'
 ]
@@ -196,9 +176,9 @@ Compiler( 'Compiler-MSVC2015-x64_x86' )
     .IncludePaths =
     {
         '$VSBasePath$\VC\Include',
-        '$WindowsSDKBasePath10$\Include\$WindowsSDKVersion10$\ucrt',
-        '$WindowsSDKBasePath10$\Include\$WindowsSDKVersion10$\um',
-        '$WindowsSDKBasePath10$\Include\$WindowsSDKVersion10$\shared',
+        '$WindowsSDKBasePath$\Include\$WindowsSDKVersion$\ucrt',
+        '$WindowsSDKBasePath$\Include\$WindowsSDKVersion$\um',
+        '$WindowsSDKBasePath$\Include\$WindowsSDKVersion$\shared',
     }
 ]
 
@@ -232,7 +212,7 @@ Print( "Using Visual 2015 incremental LTCG for profiling : no profiling informat
 //------------------------------------------------------------------------------
 // Platforms
 //------------------------------------------------------------------------------
-.MSVC2015PlatformWin32 =
+.MSVC2015PlatformX86 =
 [
     Using( .MSVC2015BaseConfig )
 
@@ -247,11 +227,11 @@ Print( "Using Visual 2015 incremental LTCG for profiling : no profiling informat
 
     .Librarian          = '$ToolsBasePath$\lib.exe'
     .Linker             = '$ToolsBasePath$\link.exe'
-    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath10$\Lib\$WindowsSDKVersion10$\ucrt\x86"'
-                        + ' /LIBPATH:"$WindowsSDKBasePath10$\Lib\$WindowsSDKVersion10$\um\x86"'
+    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\ucrt\x86"'
+                        + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x86"'
                         + ' /LIBPATH:"$VSBasePath$\VC\lib"'
 ]
-.MSVC2015PlatformWin32 + .MSVCBasePlatformWin32
+.MSVC2015PlatformX86 + .MSVCBasePlatformX86
 
 .MSVC2015PlatformX64 =
 [
@@ -261,8 +241,8 @@ Print( "Using Visual 2015 incremental LTCG for profiling : no profiling informat
     .ToolsBasePath      = '$VSBasePath$\VC\bin\amd64'
     .Librarian          = '$ToolsBasePath$\lib.exe'
     .Linker             = '$ToolsBasePath$\link.exe'
-    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath10$\Lib\$WindowsSDKVersion10$\ucrt\x64"'
-                        + ' /LIBPATH:"$WindowsSDKBasePath10$\Lib\$WindowsSDKVersion10$\um\x64"'
+    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\ucrt\x64"'
+                        + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x64"'
                         + ' /LIBPATH:"$VSBasePath$\VC\lib\amd64"'
 ]
 .MSVC2015PlatformX64 + .MSVCBasePlatformX64
@@ -271,11 +251,11 @@ Print( "Using Visual 2015 incremental LTCG for profiling : no profiling informat
 // Configurations
 //------------------------------------------------------------------------------
 
-.MSVC2015_Win32Debug         = .MSVC2015PlatformWin32   + .MSVCBaseDebugConfig          + .MSVC2015DebugFastLink
-.MSVC2015_Win32FastDebug     = .MSVC2015PlatformWin32   + .MSVCBaseFastDebugConfig      + .MSVC2015DebugFastLink
-.MSVC2015_Win32Release       = .MSVC2015PlatformWin32   + .MSVCBaseReleaseConfig        + .MSVC2015DebugFastLink
-.MSVC2015_Win32Profiling     = .MSVC2015PlatformWin32   + .MSVCBaseProfilingConfig      + .MSVC2015LinkTimeCodeGenerationIncremental + .MSVC2015GenerateProfilingInfos
-.MSVC2015_Win32Final         = .MSVC2015PlatformWin32   + .MSVCBaseFinalConfig          + .MSVC2015LinkTimeCodeGenerationIncremental
+.MSVC2015_X86Debug         = .MSVC2015PlatformX86   + .MSVCBaseDebugConfig          + .MSVC2015DebugFastLink
+.MSVC2015_X86FastDebug     = .MSVC2015PlatformX86   + .MSVCBaseFastDebugConfig      + .MSVC2015DebugFastLink
+.MSVC2015_X86Release       = .MSVC2015PlatformX86   + .MSVCBaseReleaseConfig        + .MSVC2015DebugFastLink
+.MSVC2015_X86Profiling     = .MSVC2015PlatformX86   + .MSVCBaseProfilingConfig      + .MSVC2015LinkTimeCodeGenerationIncremental + .MSVC2015GenerateProfilingInfos
+.MSVC2015_X86Final         = .MSVC2015PlatformX86   + .MSVCBaseFinalConfig          + .MSVC2015LinkTimeCodeGenerationIncremental
 
 .MSVC2015_X64Debug           = .MSVC2015PlatformX64     + .MSVCBaseDebugConfig          + .MSVC2015DebugFastLink
 .MSVC2015_X64FastDebug       = .MSVC2015PlatformX64     + .MSVCBaseFastDebugConfig      + .MSVC2015DebugFastLink
@@ -285,12 +265,12 @@ Print( "Using Visual 2015 incremental LTCG for profiling : no profiling informat
 
 .MSVC2015CompileConfigs =
 {
-    // Win32
-    .MSVC2015_Win32Debug,
-    .MSVC2015_Win32FastDebug,
-    .MSVC2015_Win32Release,
-    .MSVC2015_Win32Profiling,
-    .MSVC2015_Win32Final,
+    // X86
+    .MSVC2015_X86Debug,
+    .MSVC2015_X86FastDebug,
+    .MSVC2015_X86Release,
+    .MSVC2015_X86Profiling,
+    .MSVC2015_X86Final,
 
     // X64
     .MSVC2015_X64Debug,

@@ -18,11 +18,6 @@
 ; choix entre la version 32-bit ou 64-bit de LLVM
 #define USE_LLVM_39_X64
 
-; choix du SDK de Windows 10 (#cestlebordel)
-;#define USE_WINDOWS10_SDK_10
-#define USE_WINDOWS10_SDK_11 ; utilisé par Visual 2015 Update 2
-;#define USE_WINDOWS10_SDK_20
-
 //------------------------------------------------------------------------------
 // Global Properties
 //------------------------------------------------------------------------------
@@ -35,27 +30,20 @@
 
 .CLangWindows39BasePath =
 [
+#if WITH_LLVMFORWINDOWS_X86
+    .LLVMBasePath         = '$LLVMBasePathX86$'
+#endif
+#if WITH_LLVMFORWINDOWS_X64
+#   if USE_LLVM_39_X64
+    Print( "Using CLang 3.9 64-bit version" )
+    .LLVMBasePath         = '$LLVMBasePathX64$'
+#   endif
+#endif
     .LocalisationUID      = '$VS140CLUID$' ; code zone pour le language (EN)
     Print( "Using CLang 3.9 with localisation uid $LocalisationUID$" )
     .VSBasePath           = '$VS140COMNTOOLS$..\..'
-    .LLVMBasePath         = '$LLVMBasePathX86$'
-#if USE_LLVM_39_X64
-    Print( "Using CLang 3.9 64-bit version" )
-    .LLVMBasePath         = '$LLVMBasePathX64$'
-#endif
-    .WindowsSDKBasePath81 = 'C:\Program Files (x86)\Windows Kits\8.1'
-    .WindowsSDKVersion81  = 'winv6.3'
-    Print( "Using CLang 3.9 with Windows 8.1 SDK $WindowsSDKVersion81$" )
-    .WindowsSDKBasePath10 = 'C:\Program Files (x86)\Windows Kits\10'
-#if USE_WINDOWS10_SDK_10
-    .WindowsSDKVersion10  = '10.0.10150.0'
-#endif
-#if USE_WINDOWS10_SDK_11
-    .WindowsSDKVersion10  = '10.0.10240.0'
-#endif
-#if USE_WINDOWS10_SDK_20
-    .WindowsSDKVersion10  = '10.0.10586.0'
-#endif
+    .WindowsSDKBasePath   = .WindowsSDKBasePath10
+    .WindowsSDKVersion    = .WindowsSDKVersion10
     Print( "Using CLang 3.9 with Windows 10 SDK $WindowsSDKVersion10$" )
 ]
 
@@ -80,7 +68,7 @@ Compiler( 'Compiler-CLangWindows39' )
 [
     Using( .CLangWindows39BasePath )
 
-    .Compiler                   = '$WindowsSDKBasePath81$\Bin\x86\RC.exe'
+    .Compiler                   = '$WindowsSDKBasePath$\Bin\x86\RC.exe'
     .CompilerOutputExtension    = '.res'
     .CompilerOptions            = '/nologo /fo"%2" %1'
 ]
@@ -105,17 +93,16 @@ Compiler( 'Compiler-CLangWindows39' )
     .IncludePaths =
     {
         '$VSBasePath$\VC\Include',
-        '$WindowsSDKBasePath10$\Include\$WindowsSDKVersion10$\ucrt',
-        '$WindowsSDKBasePath81$\Include\um',
-        '$WindowsSDKBasePath81$\Include\shared',
-    ;'$WindowsSDKBasePath81$\Include\winrt',
+        '$WindowsSDKBasePath$\Include\$WindowsSDKVersion$\ucrt',
+        '$WindowsSDKBasePath$\Include\$WindowsSDKVersion$\um',
+        '$WindowsSDKBasePath$\Include\$WindowsSDKVersion$\shared',
     }
 ]
 
 //------------------------------------------------------------------------------
 // Platforms
 //------------------------------------------------------------------------------
-.CLangWindows39PlatformWin32 =
+.CLangWindows39PlatformX86 =
 [
     Using( .CLangWindows39BaseConfig )
 
@@ -123,11 +110,11 @@ Compiler( 'Compiler-CLangWindows39' )
     .ToolsBasePath      = '$LLVMBasePath$\bin'
     .Librarian          = '$ToolsBasePath$\llvm-lib.exe'
     .Linker             = '$ToolsBasePath$\lld-link.exe'
-    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath10$\Lib\$WindowsSDKVersion10$\ucrt\x86"'
-                        + ' /LIBPATH:"$WindowsSDKBasePath81$\Lib\$WindowsSDKVersion81$\um\x86"'
+    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\ucrt\x86"'
+                        + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x86"'
                         + ' /LIBPATH:"$VSBasePath$\VC\lib"'
 ]
-.CLangWindows39PlatformWin32 + .CLangBasePlatformWin32
+.CLangWindows39PlatformX86 + .CLangBasePlatformX86
 
 .CLangWindows39PlatformX64 =
 [
@@ -137,8 +124,8 @@ Compiler( 'Compiler-CLangWindows39' )
     .ToolsBasePath      = '$LLVMBasePath$\bin'
     .Librarian          = '$ToolsBasePath$\llvm-lib.exe'
     .Linker             = '$ToolsBasePath$\lld-link.exe'
-    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath10$\Lib\$WindowsSDKVersion10$\ucrt\x64"'
-                        + ' /LIBPATH:"$WindowsSDKBasePath81$\Lib\$WindowsSDKVersion81$\um\x64"'
+    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\ucrt\x64"'
+                        + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x64"'
                         + ' /LIBPATH:"$VSBasePath$\VC\lib\amd64"'
 ]
 .CLangWindows39PlatformX64 + .CLangBasePlatformX64
@@ -146,11 +133,11 @@ Compiler( 'Compiler-CLangWindows39' )
 //------------------------------------------------------------------------------
 // Configurations
 //------------------------------------------------------------------------------
-.CLangWindows39_Win32Debug         = .CLangWindows39PlatformWin32   + .CLangBaseDebugConfig
-.CLangWindows39_Win32FastDebug     = .CLangWindows39PlatformWin32   + .CLangBaseFastDebugConfig
-.CLangWindows39_Win32Release       = .CLangWindows39PlatformWin32   + .CLangBaseReleaseConfig
-.CLangWindows39_Win32Profiling     = .CLangWindows39PlatformWin32   + .CLangBaseProfilingConfig
-.CLangWindows39_Win32Final         = .CLangWindows39PlatformWin32   + .CLangBaseFinalConfig
+.CLangWindows39_X86Debug         = .CLangWindows39PlatformX86   + .CLangBaseDebugConfig
+.CLangWindows39_X86FastDebug     = .CLangWindows39PlatformX86   + .CLangBaseFastDebugConfig
+.CLangWindows39_X86Release       = .CLangWindows39PlatformX86   + .CLangBaseReleaseConfig
+.CLangWindows39_X86Profiling     = .CLangWindows39PlatformX86   + .CLangBaseProfilingConfig
+.CLangWindows39_X86Final         = .CLangWindows39PlatformX86   + .CLangBaseFinalConfig
 
 .CLangWindows39_X64Debug           = .CLangWindows39PlatformX64     + .CLangBaseDebugConfig
 .CLangWindows39_X64FastDebug       = .CLangWindows39PlatformX64     + .CLangBaseFastDebugConfig
@@ -160,12 +147,12 @@ Compiler( 'Compiler-CLangWindows39' )
 
 .CLangWindows39CompileConfigs =
 {
-    // Win32
-    .CLangWindows39_Win32Debug,
-    .CLangWindows39_Win32FastDebug,
-    .CLangWindows39_Win32Release,
-    .CLangWindows39_Win32Profiling,
-    .CLangWindows39_Win32Final,
+    // X86
+    .CLangWindows39_X86Debug,
+    .CLangWindows39_X86FastDebug,
+    .CLangWindows39_X86Release,
+    .CLangWindows39_X86Profiling,
+    .CLangWindows39_X86Final,
 
     // X64
     .CLangWindows39_X64Debug,

@@ -14,7 +14,7 @@
 ; active l'utilisation des Pre-Compiled Headers (/Yu, /Yc)
 #define USE_PRECOMPILED_HEADERS
 ; utilise les .obj plutôt que les .lib comme input du linker
-;#define USE_LIBRARY_DEPENDENCY_INPUT
+#define USE_LIBRARY_DEPENDENCY_INPUT
 ; choix entre la version 32-bit ou 64-bit de LLVM
 #define USE_LLVM_40_X64
 
@@ -24,29 +24,44 @@
 
 #import VS140COMNTOOLS
 
+#if WITH_VISUALSTUDIO_TOOLSET_140
+.CLangWindows40PlatformToolset = 'v140'
+#endif
+#if WITH_VISUALSTUDIO_TOOLSET_141
+//#import VS141COMNTOOLS ; TODO
 .CLangWindows40PlatformToolset = 'v141'
+#endif
+Print( "Using CLang 4.0 with platform toolset $CLangWindows40PlatformToolset$" )
 
 #import VS140COMNTOOLS
 
 .CLangWindows40BasePath =
 [
+#if WITH_LLVMFORWINDOWS_X86
     .LLVMBasePath         = '$LLVMBasePathX86$'
-#if USE_LLVM_40_X64
+#endif
+#if WITH_LLVMFORWINDOWS_X64
+#   if USE_LLVM_40_X64
     Print( "Using CLang 4.0 64-bit version" )
     .LLVMBasePath         = '$LLVMBasePathX64$'
+#   endif
 #endif
     Print( "Using CLang 4.0 installed in $LLVMBasePath$" )
-    .LocalisationUID      = '$VS141CLUID$' ; code zone pour le language (EN)
-    Print( "Using CLang 4.0 with localisation uid $LocalisationUID$" )
+#if WITH_VISUALSTUDIO_TOOLSET_140
+    .LocalisationUID      = '$VS140CLUID$'
+    .VSBasePath           = '$VS140COMNTOOLS$..\..'
+#endif
+#if WITH_VISUALSTUDIO_TOOLSET_141
+    .LocalisationUID      = '$VS141CLUID$'
     .VSBasePath           = '$VS141COMNTOOLS$..\..'
-    .VSToolsVersion       = '14.10.24728'
-    Print( "Using CLang 4.0 with tools version $VSToolsVersion$" )
-    .WindowsSDKBasePath10 = 'C:\Program Files (x86)\Windows Kits\10'
-    .WindowsSDKVersion10  = '10.0.14393.0'
+    .VSToolsVersion       = '$VS141VERSION$'
+    Print( "Using CLang 4.0 with platform toolset 141 version $VSToolsVersion$" )
+#endif
+    Print( "Using CLang 4.0 with localisation uid $LocalisationUID$" )
+    .WindowsSDKBasePath   = .WindowsSDKBasePath10
+    .WindowsSDKVersion    = .WindowsSDKVersion10
     Print( "Using CLang 4.0 with Windows 10 SDK $WindowsSDKVersion10$" )
 ]
-
-Print( "Using CLang 4.0 with platform toolset $CLangWindows40PlatformToolset$" )
 
 //------------------------------------------------------------------------------
 // Windows LLVM CLang
@@ -67,7 +82,7 @@ Compiler( 'Compiler-CLangWindows40' )
 [
     Using( .CLangWindows40BasePath )
 
-    .Compiler                   = '$WindowsSDKBasePath10$\Bin\x86\RC.exe'
+    .Compiler                   = '$WindowsSDKBasePath$\Bin\x86\RC.exe'
     .CompilerOutputExtension    = '.res'
     .CompilerOptions            = '/nologo /fo"%2" %1'
 ]
@@ -86,25 +101,42 @@ Compiler( 'Compiler-CLangWindows40' )
     Using( .CLangWindows40BasePath )
 
     .Defines = {}
-    .CompilerOptions = ''
-        + ' -fmsc-version=1910' // version reportée par CLANG
-        + ' -Wno-dllimport-static-field-def'
-        + ' -Wno-microsoft-template'
 
+    // version reportée par CLANG pour les headers systèmes :
+#if WITH_VISUALSTUDIO_TOOLSET_140
+    .CompilerOptions  = ' -fmsc-version=1900'
+#endif
+#if WITH_VISUALSTUDIO_TOOLSET_141
+    .CompilerOptions  = ' -fmsc-version=1910'
+#endif
+    .CompilerOptions  + ' -Wno-dllimport-static-field-def'
+                      + ' -Wno-microsoft-template'
+
+#if WITH_VISUALSTUDIO_TOOLSET_140
+    .IncludePaths =
+    {
+        '$VSBasePath$\VC\Include',
+    }
+#endif
+#if WITH_VISUALSTUDIO_TOOLSET_141
     .IncludePaths =
     {
         '$VSBasePath$\VC\Tools\MSVC\$VSToolsVersion$\include',
         '$VSBasePath$\VC\Auxiliary\VS\include',
-        '$WindowsSDKBasePath10$\Include\$WindowsSDKVersion10$\ucrt',
-        '$WindowsSDKBasePath10$\Include\$WindowsSDKVersion10$\um',
-        '$WindowsSDKBasePath10$\Include\$WindowsSDKVersion10$\shared',
+    }
+#endif
+    .IncludePaths +
+    {
+        '$WindowsSDKBasePath$\Include\$WindowsSDKVersion$\ucrt',
+        '$WindowsSDKBasePath$\Include\$WindowsSDKVersion$\um',
+        '$WindowsSDKBasePath$\Include\$WindowsSDKVersion$\shared',
     }
 ]
 
 //------------------------------------------------------------------------------
 // Platforms
 //------------------------------------------------------------------------------
-.CLangWindows40PlatformWin32 =
+.CLangWindows40PlatformX86 =
 [
     Using( .CLangWindows40BaseConfig )
 
@@ -113,12 +145,17 @@ Compiler( 'Compiler-CLangWindows40' )
     .Librarian          = '$ToolsBasePath$\llvm-lib.exe'
     .Linker             = '$ToolsBasePath$\lld-link.exe'
 
-    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath10$\Lib\$WindowsSDKVersion10$\ucrt\x86"'
-                        + ' /LIBPATH:"$WindowsSDKBasePath10$\Lib\$WindowsSDKVersion10$\um\x86"'
-                        + ' /LIBPATH:"$VSBasePath$\VC\Tools\MSVC\$VSToolsVersion$\lib\x86"'
+#if WITH_VISUALSTUDIO_TOOLSET_140
+    .LinkerOptions      = ' /LIBPATH:"$VSBasePath$\VC\lib"'
+#endif
+#if WITH_VISUALSTUDIO_TOOLSET_141
+    .LinkerOptions      = ' /LIBPATH:"$VSBasePath$\VC\Tools\MSVC\$VSToolsVersion$\lib\x86"'
                         + ' /LIBPATH:"$VSBasePath$\VC\Auxiliary\VS\lib\x86"'
+#endif
+    .LinkerOptions      + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\ucrt\x86"'
+                        + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x86"'
 ]
-.CLangWindows40PlatformWin32 + .CLangBasePlatformWin32
+.CLangWindows40PlatformX86 + .CLangBasePlatformX86
 
 .CLangWindows40PlatformX64 =
 [
@@ -130,21 +167,26 @@ Compiler( 'Compiler-CLangWindows40' )
     .Librarian          = '$ToolsBasePath$\llvm-lib.exe'
     .Linker             = '$ToolsBasePath$\lld-link.exe'
 
-    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath10$\Lib\$WindowsSDKVersion10$\ucrt\x64"'
-                        + ' /LIBPATH:"$WindowsSDKBasePath10$\Lib\$WindowsSDKVersion10$\um\x64"'
-                        + ' /LIBPATH:"$VSBasePath$\VC\Tools\MSVC\$VSToolsVersion$\lib\x64"'
+#if WITH_VISUALSTUDIO_TOOLSET_140
+    .LinkerOptions      = ' /LIBPATH:"$VSBasePath$\VC\lib\amd64"'
+#endif
+#if WITH_VISUALSTUDIO_TOOLSET_141
+    .LinkerOptions      = ' /LIBPATH:"$VSBasePath$\VC\Tools\MSVC\$VSToolsVersion$\lib\x64"'
                         + ' /LIBPATH:"$VSBasePath$\VC\Auxiliary\VS\lib\x64"'
+#endif
+    .LinkerOptions      + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\ucrt\x64"'
+                        + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x64"'
 ]
 .CLangWindows40PlatformX64 + .CLangBasePlatformX64
 
 //------------------------------------------------------------------------------
 // Configurations
 //------------------------------------------------------------------------------
-.CLangWindows40_Win32Debug         = .CLangWindows40PlatformWin32   + .CLangBaseDebugConfig
-.CLangWindows40_Win32FastDebug     = .CLangWindows40PlatformWin32   + .CLangBaseFastDebugConfig
-.CLangWindows40_Win32Release       = .CLangWindows40PlatformWin32   + .CLangBaseReleaseConfig
-.CLangWindows40_Win32Profiling     = .CLangWindows40PlatformWin32   + .CLangBaseProfilingConfig
-.CLangWindows40_Win32Final         = .CLangWindows40PlatformWin32   + .CLangBaseFinalConfig
+.CLangWindows40_X86Debug         = .CLangWindows40PlatformX86   + .CLangBaseDebugConfig
+.CLangWindows40_X86FastDebug     = .CLangWindows40PlatformX86   + .CLangBaseFastDebugConfig
+.CLangWindows40_X86Release       = .CLangWindows40PlatformX86   + .CLangBaseReleaseConfig
+.CLangWindows40_X86Profiling     = .CLangWindows40PlatformX86   + .CLangBaseProfilingConfig
+.CLangWindows40_X86Final         = .CLangWindows40PlatformX86   + .CLangBaseFinalConfig
 
 .CLangWindows40_X64Debug           = .CLangWindows40PlatformX64     + .CLangBaseDebugConfig
 .CLangWindows40_X64FastDebug       = .CLangWindows40PlatformX64     + .CLangBaseFastDebugConfig
@@ -154,12 +196,12 @@ Compiler( 'Compiler-CLangWindows40' )
 
 .CLangWindows40CompileConfigs =
 {
-    // Win32
-    .CLangWindows40_Win32Debug,
-    .CLangWindows40_Win32FastDebug,
-    .CLangWindows40_Win32Release,
-    .CLangWindows40_Win32Profiling,
-    .CLangWindows40_Win32Final,
+    // X86
+    .CLangWindows40_X86Debug,
+    .CLangWindows40_X86FastDebug,
+    .CLangWindows40_X86Release,
+    .CLangWindows40_X86Profiling,
+    .CLangWindows40_X86Final,
 
     // X64
     .CLangWindows40_X64Debug,

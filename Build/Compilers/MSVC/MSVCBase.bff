@@ -142,9 +142,9 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
 //------------------------------------------------------------------------------
 // MSVC Base Platforms
 //------------------------------------------------------------------------------
-.MSVCBasePlatformWin32 =
+.MSVCBasePlatformX86 =
 [
-    Using( .SharedPlatformWin32 )
+    Using( .SharedPlatformX86 )
     Using( .MSVCBase )
 
     .Defines            + .PlatformDefines

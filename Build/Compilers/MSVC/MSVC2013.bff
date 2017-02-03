@@ -37,8 +37,8 @@
     .LocalisationUID    = '$VS120CLUID$' ; code zone pour le language (messages std FR)
     Print( "Using Visual 2013 with localisation uid $LocalisationUID$" )
     .VSBasePath         = '$VS120COMNTOOLS$..\..'
-    .WindowsSDKBasePath = 'C:\Program Files (x86)\Windows Kits\8.1'
-    .WindowsSDKVersion  = 'winv6.3'
+    .WindowsSDKBasePath = .WindowsSDKBasePath81
+    .WindowsSDKVersion  = .WindowsSDKVersion81
 ]
 
 Print( "Using Visual 2013 with platform toolset $MSVC2013PlatformToolset$" )
@@ -178,7 +178,7 @@ Compiler( 'Compiler-MSVC2013-x64_x86' )
 //------------------------------------------------------------------------------
 // Platforms
 //------------------------------------------------------------------------------
-.MSVC2013PlatformWin32 =
+.MSVC2013PlatformX86 =
 [
     Using( .MSVC2013BaseConfig )
 
@@ -196,7 +196,7 @@ Compiler( 'Compiler-MSVC2013-x64_x86' )
     .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x86"'
                         + ' /LIBPATH:"$VSBasePath$\VC\lib"'
 ]
-.MSVC2013PlatformWin32 + .MSVCBasePlatformWin32
+.MSVC2013PlatformX86 + .MSVCBasePlatformX86
 
 .MSVC2013PlatformX64 =
 [
@@ -215,11 +215,11 @@ Compiler( 'Compiler-MSVC2013-x64_x86' )
 // Configurations
 //------------------------------------------------------------------------------
 
-.MSVC2013_Win32Debug         = .MSVC2013PlatformWin32   + .MSVCBaseDebugConfig
-.MSVC2013_Win32FastDebug     = .MSVC2013PlatformWin32   + .MSVCBaseFastDebugConfig
-.MSVC2013_Win32Release       = .MSVC2013PlatformWin32   + .MSVCBaseReleaseConfig
-.MSVC2013_Win32Profiling     = .MSVC2013PlatformWin32   + .MSVCBaseProfilingConfig + .MSVC2013GenerateProfilingInfos
-.MSVC2013_Win32Final         = .MSVC2013PlatformWin32   + .MSVCBaseFinalConfig
+.MSVC2013_X86Debug         = .MSVC2013PlatformX86   + .MSVCBaseDebugConfig
+.MSVC2013_X86FastDebug     = .MSVC2013PlatformX86   + .MSVCBaseFastDebugConfig
+.MSVC2013_X86Release       = .MSVC2013PlatformX86   + .MSVCBaseReleaseConfig
+.MSVC2013_X86Profiling     = .MSVC2013PlatformX86   + .MSVCBaseProfilingConfig + .MSVC2013GenerateProfilingInfos
+.MSVC2013_X86Final         = .MSVC2013PlatformX86   + .MSVCBaseFinalConfig
 
 .MSVC2013_X64Debug           = .MSVC2013PlatformX64     + .MSVCBaseDebugConfig
 .MSVC2013_X64FastDebug       = .MSVC2013PlatformX64     + .MSVCBaseFastDebugConfig
@@ -229,12 +229,12 @@ Compiler( 'Compiler-MSVC2013-x64_x86' )
 
 .MSVC2013CompileConfigs =
 {
-    // Win32
-    .MSVC2013_Win32Debug,
-    .MSVC2013_Win32FastDebug,
-    .MSVC2013_Win32Release,
-    .MSVC2013_Win32Profiling,
-    .MSVC2013_Win32Final,
+    // X86
+    .MSVC2013_X86Debug,
+    .MSVC2013_X86FastDebug,
+    .MSVC2013_X86Release,
+    .MSVC2013_X86Profiling,
+    .MSVC2013_X86Final,
 
     // X64
     .MSVC2013_X64Debug,

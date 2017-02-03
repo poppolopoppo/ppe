@@ -17,9 +17,9 @@
 ]
 
 //------------------------------------------------------------------------------
-// Shared Win32 Platform
+// Shared X86 Platform
 //------------------------------------------------------------------------------
-.SharedPlatformWin32 =
+.SharedPlatformX86 =
 [
     Using( .SharedPlatformWindowsBase )
     Using( .SharedArchX86 )
@@ -27,7 +27,7 @@
     .Platform = 'Win32'
     .PlatformDefines + { '_WIN32' } + .ArchDefines
 ]
-.AllSharedPlatforms = { .SharedPlatformWin32 }
+.AllSharedPlatforms = { .SharedPlatformX86 }
 
 //------------------------------------------------------------------------------
 // Shared X64 Platform
@@ -37,7 +37,7 @@
     Using( .SharedPlatformWindowsBase )
     Using( .SharedArchX64 )
 
-    .Platform = 'x64'
+    .Platform = 'Win64'
     .PlatformDefines + { '_WIN64' } + .ArchDefines
 ]
 .AllSharedPlatforms + .SharedPlatformX64

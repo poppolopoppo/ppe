@@ -22,7 +22,7 @@
     [
         .PerfSDKRelativePath    = 'Team Tools\Performance Tools\PerfSDK'
     ]
-    .PerfSDK_x64 =
+    .PerfSDK_Win64 =
     [
         .PerfSDKRelativePath    = 'Team Tools\Performance Tools\x64\PerfSDK'
     ]

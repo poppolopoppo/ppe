@@ -32,7 +32,8 @@
     .LocalisationUID    = '$VS110CLUID$' ; code zone pour le language (messages std FR)
     Print( "Using Visual 2012 with localisation uid $LocalisationUID$" )
     .VSBasePath         = '$VS110COMNTOOLS$..\..'
-    .WindowsSDKBasePath = 'C:\Program Files (x86)\Windows Kits\8.0'
+    .WindowsSDKBasePath = .WindowsSDKBasePath81
+    .WindowsSDKVersion  = .WindowsSDKVersion81
 ]
 
 Print( "Using Visual 2012 with platform toolset $MSVC2012PlatformToolset$" )
@@ -141,7 +142,7 @@ Compiler( 'Compiler-MSVC2012-x64' )
 //------------------------------------------------------------------------------
 // Platforms
 //------------------------------------------------------------------------------
-.MSVC2012PlatformWin32 =
+.MSVC2012PlatformX86 =
 [
     Using( .MSVC2012BaseConfig )
 
@@ -149,10 +150,10 @@ Compiler( 'Compiler-MSVC2012-x64' )
     .ToolsBasePath      = '$VSBasePath$\VC\bin'
     .Librarian          = '$ToolsBasePath$\lib.exe'
     .Linker             = '$ToolsBasePath$\link.exe'
-    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$\Lib\win8\um\x86"'
+    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x86"'
                         + ' /LIBPATH:"$VSBasePath$\VC\lib"'
 ]
-.MSVC2012PlatformWin32 + .MSVCBasePlatformWin32
+.MSVC2012PlatformX86 + .MSVCBasePlatformX86
 
 .MSVC2012PlatformX64 =
 [
@@ -162,7 +163,7 @@ Compiler( 'Compiler-MSVC2012-x64' )
     .ToolsBasePath      = '$VSBasePath$\VC\bin\amd64'
     .Librarian          = '$ToolsBasePath$\lib.exe'
     .Linker             = '$ToolsBasePath$\link.exe'
-    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$\Lib\win8\um\x64"'
+    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x64"'
                         + ' /LIBPATH:"$VSBasePath$\VC\lib\amd64"'
                         + ' /LIBPATH:"$PerfSDKPath$"'
 ]
@@ -172,11 +173,11 @@ Compiler( 'Compiler-MSVC2012-x64' )
 // Configurations
 //------------------------------------------------------------------------------
 
-.MSVC2012_Win32Debug         = .MSVC2012PlatformWin32   + .MSVCBaseDebugConfig
-.MSVC2012_Win32FastDebug     = .MSVC2012PlatformWin32   + .MSVCBaseFastDebugConfig
-.MSVC2012_Win32Release       = .MSVC2012PlatformWin32   + .MSVCBaseReleaseConfig
-.MSVC2012_Win32Profiling     = .MSVC2012PlatformWin32   + .MSVCBaseProfilingConfig + .MSVC2012GenerateProfilingInfos
-.MSVC2012_Win32Final         = .MSVC2012PlatformWin32   + .MSVCBaseFinalConfig
+.MSVC2012_X86Debug         = .MSVC2012PlatformX86   + .MSVCBaseDebugConfig
+.MSVC2012_X86FastDebug     = .MSVC2012PlatformX86   + .MSVCBaseFastDebugConfig
+.MSVC2012_X86Release       = .MSVC2012PlatformX86   + .MSVCBaseReleaseConfig
+.MSVC2012_X86Profiling     = .MSVC2012PlatformX86   + .MSVCBaseProfilingConfig + .MSVC2012GenerateProfilingInfos
+.MSVC2012_X86Final         = .MSVC2012PlatformX86   + .MSVCBaseFinalConfig
 
 .MSVC2012_X64Debug           = .MSVC2012PlatformX64     + .MSVCBaseDebugConfig
 .MSVC2012_X64FastDebug       = .MSVC2012PlatformX64     + .MSVCBaseFastDebugConfig
@@ -186,12 +187,12 @@ Compiler( 'Compiler-MSVC2012-x64' )
 
 .MSVC2012CompileConfigs =
 {
-    // Win32
-    .MSVC2012_Win32Debug,
-    .MSVC2012_Win32FastDebug,
-    .MSVC2012_Win32Release,
-    .MSVC2012_Win32Profiling,
-    .MSVC2012_Win32Final,
+    // X86
+    .MSVC2012_X86Debug,
+    .MSVC2012_X86FastDebug,
+    .MSVC2012_X86Release,
+    .MSVC2012_X86Profiling,
+    .MSVC2012_X86Final,
 
     // X64
     .MSVC2012_X64Debug,

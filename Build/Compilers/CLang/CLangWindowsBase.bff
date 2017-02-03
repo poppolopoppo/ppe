@@ -53,9 +53,9 @@
 //------------------------------------------------------------------------------
 // CLang Base Platforms
 //------------------------------------------------------------------------------
-.CLangBasePlatformWin32 =
+.CLangBasePlatformX86 =
 [
-    .Inherited  = .MSVCBasePlatformWin32
+    .Inherited  = .MSVCBasePlatformX86
                 + .CLangWindowsBase
 
     Using( .Inherited )
@@ -242,9 +242,9 @@
 ; //------------------------------------------------------------------------------
 ; // CLang Base Platforms
 ; //------------------------------------------------------------------------------
-; .CLangWindowsBasePlatformWin32 =
+; .CLangWindowsBasePlatformX86 =
 ; [
-;     Using( .SharedPlatformWin32 )
+;     Using( .SharedPlatformX86 )
 ;     Using( .CLangWindowsBase )
 ;
 ;     .Defines            + .PlatformDefines

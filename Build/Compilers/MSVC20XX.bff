@@ -11,7 +11,7 @@
 ;#define USE_VISUALSTUDIO_2012
 ;#define USE_VISUALSTUDIO_2013
 ;#define USE_VISUALSTUDIO_2015
-#define USE_VISUALSTUDIO_2017
+;#define USE_VISUALSTUDIO_2017
 
 //------------------------------------------------------------------------------
 // Visual Studio 20XX

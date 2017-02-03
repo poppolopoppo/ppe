@@ -28,7 +28,7 @@
     .LocalisationUID    = '1033' ; code zone pour le language (messages std FR)
     .LLVMBasePath       = 'C:\Program Files (x86)\LLVM'
     .VSBasePath         = '$VS120COMNTOOLS$..\..'
-    .WindowsSDKBasePath = 'C:\Program Files (x86)\Windows Kits\8.1'
+    .WindowsSDKBasePath = .WindowsSDKBasePath81
 ]
 
 Print( "Using CLang 3.7 with platform toolset $CLangWindows37PlatformToolset$" )
@@ -98,14 +98,14 @@ Compiler( 'Compiler-CLangWindows37-x86' )
     .CompilerOptions    = ' -fmsc-version=1800'
 ]
 
-.CLangWindows37PlatformWin32 =
+.CLangWindows37PlatformX86 =
 [
     Using( .CLangWindows37BasePlatform )
 
     .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$\Lib\win8\um\x86"'
                         + ' /LIBPATH:"$VSBasePath$\VC\lib"'
 ]
-.CLangWindows37PlatformWin32 + .CLangWindowsBasePlatformWin32
+.CLangWindows37PlatformX86 + .CLangWindowsBasePlatformX86
 
 .CLangWindows37PlatformX64 =
 [
@@ -120,11 +120,11 @@ Compiler( 'Compiler-CLangWindows37-x86' )
 // Configurations
 //------------------------------------------------------------------------------
 
-.CLangWindows37_Win32Debug         = .CLangWindows37PlatformWin32   + .CLangWindowsBaseDebugConfig
-.CLangWindows37_Win32FastDebug     = .CLangWindows37PlatformWin32   + .CLangWindowsBaseFastDebugConfig
-.CLangWindows37_Win32Release       = .CLangWindows37PlatformWin32   + .CLangWindowsBaseReleaseConfig
-.CLangWindows37_Win32Profiling     = .CLangWindows37PlatformWin32   + .CLangWindowsBaseProfilingConfig
-.CLangWindows37_Win32Final         = .CLangWindows37PlatformWin32   + .CLangWindowsBaseFinalConfig
+.CLangWindows37_X86Debug         = .CLangWindows37PlatformX86   + .CLangWindowsBaseDebugConfig
+.CLangWindows37_X86FastDebug     = .CLangWindows37PlatformX86   + .CLangWindowsBaseFastDebugConfig
+.CLangWindows37_X86Release       = .CLangWindows37PlatformX86   + .CLangWindowsBaseReleaseConfig
+.CLangWindows37_X86Profiling     = .CLangWindows37PlatformX86   + .CLangWindowsBaseProfilingConfig
+.CLangWindows37_X86Final         = .CLangWindows37PlatformX86   + .CLangWindowsBaseFinalConfig
 
 .CLangWindows37_X64Debug           = .CLangWindows37PlatformX64     + .CLangWindowsBaseDebugConfig
 .CLangWindows37_X64FastDebug       = .CLangWindows37PlatformX64     + .CLangWindowsBaseFastDebugConfig
@@ -134,12 +134,12 @@ Compiler( 'Compiler-CLangWindows37-x86' )
 
 .CLangWindows37CompileConfigs =
 {
-    // Win32
-    .CLangWindows37_Win32Debug,
-    .CLangWindows37_Win32FastDebug,
-    .CLangWindows37_Win32Release,
-    .CLangWindows37_Win32Profiling,
-    .CLangWindows37_Win32Final,
+    // X86
+    .CLangWindows37_X86Debug,
+    .CLangWindows37_X86FastDebug,
+    .CLangWindows37_X86Release,
+    .CLangWindows37_X86Profiling,
+    .CLangWindows37_X86Final,
 
     // X64
     .CLangWindows37_X64Debug,

@@ -34,8 +34,8 @@
     .LLVMBasePath       = 'C:\Program Files\LLVM'
 #endif
     .VSBasePath         = '$VS120COMNTOOLS$..\..'
-    .WindowsSDKBasePath = 'C:\Program Files (x86)\Windows Kits\8.1'
-    .WindowsSDKVersion  = 'winv6.3'
+    .WindowsSDKBasePath = .WindowsSDKBasePath81
+    .WindowsSDKVersion  = .WindowsSDKVersion81
 ]
 
 Print( "Using CLang 3.8 with platform toolset $CLangWindows38PlatformToolset$" )
@@ -105,14 +105,14 @@ Compiler( 'Compiler-CLangWindows38-x86' )
     .CompilerOptions    = '';' -fmsc-version=1800'
 ]
 
-.CLangWindows38PlatformWin32 =
+.CLangWindows38PlatformX86 =
 [
     Using( .CLangWindows38BasePlatform )
 
     .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x86"'
                         + ' /LIBPATH:"$VSBasePath$\VC\lib"'
 ]
-.CLangWindows38PlatformWin32 + .CLangWindowsBasePlatformWin32
+.CLangWindows38PlatformX86 + .CLangWindowsBasePlatformX86
 
 .CLangWindows38PlatformX64 =
 [
@@ -127,11 +127,11 @@ Compiler( 'Compiler-CLangWindows38-x86' )
 // Configurations
 //------------------------------------------------------------------------------
 
-.CLangWindows38_Win32Debug         = .CLangWindows38PlatformWin32   + .CLangWindowsBaseDebugConfig
-.CLangWindows38_Win32FastDebug     = .CLangWindows38PlatformWin32   + .CLangWindowsBaseFastDebugConfig
-.CLangWindows38_Win32Release       = .CLangWindows38PlatformWin32   + .CLangWindowsBaseReleaseConfig
-.CLangWindows38_Win32Profiling     = .CLangWindows38PlatformWin32   + .CLangWindowsBaseProfilingConfig
-.CLangWindows38_Win32Final         = .CLangWindows38PlatformWin32   + .CLangWindowsBaseFinalConfig
+.CLangWindows38_X86Debug         = .CLangWindows38PlatformX86   + .CLangWindowsBaseDebugConfig
+.CLangWindows38_X86FastDebug     = .CLangWindows38PlatformX86   + .CLangWindowsBaseFastDebugConfig
+.CLangWindows38_X86Release       = .CLangWindows38PlatformX86   + .CLangWindowsBaseReleaseConfig
+.CLangWindows38_X86Profiling     = .CLangWindows38PlatformX86   + .CLangWindowsBaseProfilingConfig
+.CLangWindows38_X86Final         = .CLangWindows38PlatformX86   + .CLangWindowsBaseFinalConfig
 
 .CLangWindows38_X64Debug           = .CLangWindows38PlatformX64     + .CLangWindowsBaseDebugConfig
 .CLangWindows38_X64FastDebug       = .CLangWindows38PlatformX64     + .CLangWindowsBaseFastDebugConfig
@@ -141,12 +141,12 @@ Compiler( 'Compiler-CLangWindows38-x86' )
 
 .CLangWindows38CompileConfigs =
 {
-    // Win32
-    .CLangWindows38_Win32Debug,
-    .CLangWindows38_Win32FastDebug,
-    .CLangWindows38_Win32Release,
-    .CLangWindows38_Win32Profiling,
-    .CLangWindows38_Win32Final,
+    // X86
+    .CLangWindows38_X86Debug,
+    .CLangWindows38_X86FastDebug,
+    .CLangWindows38_X86Release,
+    .CLangWindows38_X86Profiling,
+    .CLangWindows38_X86Final,
 
     // X64
     .CLangWindows38_X64Debug,
