@@ -176,7 +176,7 @@ struct TProduction : public std::unary_function<FParseList&, TParseResult<T> > {
 };
 //----------------------------------------------------------------------------
 inline TProduction<const FLexer::FMatch *> Expect(FLexer::FSymbol::ETypeId symbol, const char *message = nullptr) {
-    return TProduction<const FLexer::FMatch *>{[symbol, message](FParseList& input) -> TParseResult<const FLexer::FMatch *> {
+    return TProduction<const FLexer::FMatch *>{[symbol](FParseList& input) -> TParseResult<const FLexer::FMatch *> {
         const FLexer::FMatch *match = input.Read();
 
         return (match && match->Symbol()->Type() == symbol)
@@ -186,7 +186,7 @@ inline TProduction<const FLexer::FMatch *> Expect(FLexer::FSymbol::ETypeId symbo
 }
 //----------------------------------------------------------------------------
 inline TProduction<const FLexer::FMatch *> ExpectMask(uint64_t symbolMask, const char *message = nullptr) {
-    return TProduction<const FLexer::FMatch *>{[symbolMask, message](FParseList& input) -> TParseResult<const FLexer::FMatch *> {
+    return TProduction<const FLexer::FMatch *>{[symbolMask](FParseList& input) -> TParseResult<const FLexer::FMatch *> {
         const FLexer::FMatch *match = input.Read();
 
         return (match && match->Symbol()->Type() & symbolMask)
