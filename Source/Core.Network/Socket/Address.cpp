@@ -36,7 +36,7 @@ bool FAddress::IP(FAddress* paddr, const FStringView& hostname, size_t port/* = 
 }
 //----------------------------------------------------------------------------
 FAddress FAddress::Localhost(size_t port/* = DefaultPort */) {
-    return FAddress("127.0.0.1", port);
+    return FAddress(MakeStringView("127.0.0.1"), port);
 }
 //----------------------------------------------------------------------------
 bool FAddress::Parse(FAddress* paddr, const FStringView& input) {
