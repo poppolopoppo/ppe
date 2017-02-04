@@ -1,6 +1,6 @@
 #!/bin/env ruby
 
-VERSION='2.0'
+VERSION='2.01'
 VERSION_HEADER="; Version = <#{VERSION}>"
 
 def absolute_path(path)
@@ -149,6 +149,7 @@ private
         libpath = File.join(sdkpath, 'lib')
         return false unless Dir.exists?(libpath)
         sdkversions = Dir.entries(libpath)
+        sdkversions.delete_if {|p| !Dir.exists?(File.join(libpath, p, 'um')) }
         raise "Can't find Windows SDK #{@winver} version !" if sdkversions.empty?
         @version = sdkversions.sort.last
         return true
