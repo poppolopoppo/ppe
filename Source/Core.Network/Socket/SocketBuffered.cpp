@@ -87,10 +87,14 @@ size_t FSocketBuffered::Read(const TMemoryView<u8>& rawData) {
     size_t read = 0;
 
     if (_offsetI < _sizeI)
+    {
         read += ReadFromBuffer_(rawData);
+        Assert(read <= rawData.size());
+    }
 
     if (rawData.size() != read) // if there is still some data to read
     {
+        Assert(read < rawData.size());
         Assert(_sizeI == _offsetI); // the buffer must be empty
 
         if (rawData.size() - read > _bufferCapacity)
@@ -101,9 +105,10 @@ size_t FSocketBuffered::Read(const TMemoryView<u8>& rawData) {
         else
         {
             FlushRead(); // refill the buffer
-            read += ReadFromBuffer_(rawData);
+            read += ReadFromBuffer_(rawData.CutStartingAt(read));
         }
     }
+    Assert(rawData.size() == read);
 
     return read;
 }
@@ -212,7 +217,7 @@ bool FSocketBuffered::MakeConnection(FSocketBuffered& buffered, const FAddress& 
 size_t FSocketBuffered::ReadFromBuffer_(const TMemoryView<u8>& rawData) {
     const size_t read = Min(rawData.SizeInBytes(), _sizeI - _offsetI);
 
-    _bufferI.SubRange(_offsetI, read).CopyTo(rawData);
+    _bufferI.SubRange(_offsetI, read).CopyTo(rawData.CutBefore(read));
     _offsetI += read;
 
     return read;
