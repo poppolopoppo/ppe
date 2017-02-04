@@ -31,7 +31,7 @@
 
 ; TODO : %VS141COMNTOOLS% n'est pas défini dans la RC, fix quand la version finale de VS2017 sera sortie (voir fbuild.rb)
 ; #import VS141COMNTOOLS
-.MSVC2017BinPath = "$VS141COMNTOOLS$..\..\VC\Tools\MSVC\$VS141VERSION$\bin"
+.MSVC2017BinPath = "$VS141COMNTOOLS$..\..\VC\Tools\MSVC\$VS141VERSIONRC$\bin"
 Print( "Using Visual 2017 installation found in '$MSVC2017BinPath$'" )
 
 .PATH   = "$VS141COMNTOOLS$..\IDE;"
