@@ -9,7 +9,7 @@ FOR %%D IN (x86-debug x86-release x86-profiling x86-final x86-clang-debug x64-de
     rmdir /S /Q "%~dp0\%%D" >> "%~dp0\dist_clean.log"
 )
 
-FOR %%D IN (Binary Intermediate Resources Unity ..\Doc\Doxygen) DO (
+FOR %%D IN (Binary Intermediate Resources Unity Projects ..\Doc\Doxygen) DO (
     echo Deleting directory '%~dp0%%D' >> "%~dp0\dist_clean.log"
     rmdir /S /Q "%~dp0\%%D" >> "%~dp0\dist_clean.log"
 )

@@ -44,7 +44,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
 
         // For VCXProj
         .PreprocessorDefinitions    = ''
-        .IncludeSearchPath          = '^$(ProjectDir);^$(SolutionDir)\Source'
+        .IncludeSearchPath          = '$SourceDiretory$;$ProjectPath$'
 
         // Project compiled config
         .ProjectCompileConfig =
@@ -68,7 +68,6 @@ ForEach( .CompileConfig in .AllCompileConfigs )
 
             // Project and System includes (project includes first, then system includes)
             .SystemIncludes     = .IncludePaths
-            .ProjectIncludes    + '.' // current dir
 
             // Only for VCXProj
             ForEach( .path in .ProjectIncludes )
@@ -231,5 +230,5 @@ VCXProject( '$ProjectName$-Proj' )
 
     .ProjectBasePath    = .ProjectPath
     .ProjectInputPaths  = .ProjectPath
-    .ProjectOutput      = '$ProjectPath$/$ProjectName$.vcxproj'
+    .ProjectOutput      = '$SolutionPath$/Output/Projects/$ProjectName$.vcxproj'
 }

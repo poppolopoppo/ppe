@@ -142,7 +142,7 @@ Alias( 'proj' )
 //------------------------------------------------------------------------------
 VSSolution( 'sln' )
 {
-    .SolutionOutput = '$SolutionPath$/$SolutionName$.sln'
+    .SolutionOutput = '$OutputDirectory$/$SolutionName$.sln'
     .SolutionConfigs = .AllCompileConfigs
     .SolutionProjects = {}
 
