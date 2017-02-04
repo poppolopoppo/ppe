@@ -216,9 +216,12 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         }
 
         // Override project directories for visual studio ONLY
+#if __WINDOWS__
+        .Platform               = .SolutionPlatform
         .Output                 = "$VisualStudioOutputDirectory$\$ProjectName$.$Config$.$Platform$.$CompilerBinaryExtension$"
         .OutputDirectory        = .VisualStudioOutputDirectory
         .IntermediateDirectory  = .VisualStudioIntermediateDirectory
+#endif
     ]
 
     ^ProjectConfigs + .ProjectConfig

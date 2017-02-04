@@ -143,9 +143,19 @@ Alias( 'proj' )
 VSSolution( 'sln' )
 {
     .SolutionOutput = '$OutputDirectory$/$SolutionName$.sln'
-    .SolutionConfigs = .AllCompileConfigs
-    .SolutionProjects = {}
+    .SolutionConfigs = {}
+    ForEach( .CompileConfig in .AllCompileConfigs )
+    {
+        .SolutionConfig =
+        [
+            Using( .CompileConfig )
+            .Platform = .SolutionPlatform
+        ]
 
+        ^SolutionConfigs + .SolutionConfig
+    }
+
+    .SolutionProjects = {}
     ForEach( .ProjectName in .ProjectList )
     {
         ^SolutionProjects + '$ProjectName$-Proj'

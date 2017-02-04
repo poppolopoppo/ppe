@@ -26,6 +26,9 @@
 
     .Platform = 'Win32'
     .PlatformDefines + { '_WIN32' } + .ArchDefines
+
+    ; For visual studio
+    .SolutionPlatform = 'Win32'
 ]
 .AllSharedPlatforms = { .SharedPlatformX86 }
 
@@ -39,5 +42,8 @@
 
     .Platform = 'Win64'
     .PlatformDefines + { '_WIN64' } + .ArchDefines
+
+    ; For visual studio
+    .SolutionPlatform = 'x64'
 ]
 .AllSharedPlatforms + .SharedPlatformX64
