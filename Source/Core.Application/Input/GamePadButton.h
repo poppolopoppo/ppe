@@ -7,7 +7,7 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class EGamepadButton : u32 {
+enum class EGamepadButton : u8 {
     Button0 = 0,
     Button1,
     Button2,
@@ -18,6 +18,11 @@ enum class EGamepadButton : u32 {
     Button7,
     Button8,
     Button9,
+
+    DPadUp,
+    DPadLeft,
+    DPadRight,
+    DPadDown,
 
     A = Button0,
     B = Button1,
@@ -38,11 +43,6 @@ enum class EGamepadButton : u32 {
 
     LS = LeftShoulder,
     RS = RightShoulder,
-
-    DPadUp = '^',
-    DPadLeft = '<',
-    DPadRight = '>',
-    DPadDown = 'v',
 };
 //----------------------------------------------------------------------------
 FStringView GamepadButtonToCStr(EGamepadButton value);

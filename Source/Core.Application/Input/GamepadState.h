@@ -32,11 +32,17 @@ public:
     float LeftStickX() const { return _leftStickX; }
     float LeftStickY() const { return _leftStickY; }
 
+    float2 LeftStick() const { return float2(_leftStickX, _leftStickY); }
+
     float RightStickX() const { return _rightStickX; }
     float RightStickY() const { return _rightStickY; }
 
+    float2 RightStick() const { return float2(_rightStickX, _rightStickY); }
+
     float LeftTrigger() const { return _leftTrigger; }
     float RightTrigger() const { return _rightTrigger; }
+
+    float2 Triggers() const { return float2(_leftTrigger, _rightTrigger); }
 
     const GamepadButtonState& ButtonsDown() const { return _buttonsDown; }
     const GamepadButtonState& ButtonsPressed() const { return _buttonsPressed; }
