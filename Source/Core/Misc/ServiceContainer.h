@@ -59,18 +59,18 @@ private:
 
     class TService {
     public:
-        TService() : TService(0, nullptr, nullptr) {}
-        TService(ServiceId id, void* pimpl, const char*name)
+        TService() : TService(0, nullptr, FStringView()) {}
+        TService(ServiceId id, void* pimpl, const FStringView& name)
             : _id(id), _pimpl(pimpl), _name(name) {}
 
         ServiceId Id() const { return _id; }
         void* Pimpl() const { return _pimpl; }
-        const char* FName() const { return _name; }
+        const FStringView& FName() const { return _name; }
 
     private:
         ServiceId _id;
         void* _pimpl;
-        const char* _name;
+        FStringView _name;
     };
 
     typedef VECTORINSITU(Internal, TService, 8) services_type;
