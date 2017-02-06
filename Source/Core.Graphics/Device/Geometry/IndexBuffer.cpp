@@ -9,7 +9,7 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-IndexBuffer::IndexBuffer(Graphics::IndexElementSize indexElementSize, size_t indexCount, EBufferMode mode, EBufferUsage usage, bool sharable)
+IndexBuffer::IndexBuffer(Graphics::EIndexElementSize indexElementSize, size_t indexCount, EBufferMode mode, EBufferUsage usage, bool sharable)
 :   FDeviceResourceSharable(EDeviceResourceType::Indices, sharable)
 ,   _buffer(size_t(indexElementSize), indexCount, mode, usage) {
     Assert( sizeof(u16) == size_t(indexElementSize) ||

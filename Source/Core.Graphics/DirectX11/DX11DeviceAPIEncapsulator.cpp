@@ -292,9 +292,10 @@ void FDX11DeviceAPIEncapsulator::SetIndexBuffer(const IndexBuffer *indexBuffer, 
 
     _wrapper.ImmediateContext()->IASetIndexBuffer(
         dx11Buffer,
-        indexBuffer->IndexElementSize() == IndexElementSize::ThirtyTwoBits
-            ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT,
-        checked_cast<UINT>(offset)
+        indexBuffer->IndexElementSize() == EIndexElementSize::ThirtyTwoBits
+            ? DXGI_FORMAT_R32_UINT
+            : DXGI_FORMAT_R16_UINT,
+            checked_cast<UINT>(offset)
         );
 
     CHECK_DIRECTX11_ERROR();

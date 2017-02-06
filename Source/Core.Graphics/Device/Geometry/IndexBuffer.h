@@ -9,14 +9,13 @@
 namespace Core {
 namespace Graphics {
 class IDeviceAPIEncapsulator;
-
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(IndexBuffer);
 class IndexBuffer : public FDeviceResourceSharable {
 public:
-    IndexBuffer(Graphics::IndexElementSize indexElementSize, size_t indexCount,
+    IndexBuffer(Graphics::EIndexElementSize indexElementSize, size_t indexCount,
                 EBufferMode mode, EBufferUsage usage,
                 bool sharable );
     virtual ~IndexBuffer();
@@ -25,7 +24,7 @@ public:
     virtual FDeviceAPIDependantEntity *TerminalEntity() const override { return _buffer.DeviceAPIDependantBuffer().get(); }
 
     size_t IndexCount() const { return _buffer.Count(); }
-    Graphics::IndexElementSize IndexElementSize() const { return static_cast<Graphics::IndexElementSize>(_buffer.Stride()); }
+    Graphics::EIndexElementSize IndexElementSize() const { return static_cast<Graphics::EIndexElementSize>(_buffer.Stride()); }
     const FDeviceResourceBuffer& Buffer() const { return _buffer; }
 
     void SetData(IDeviceAPIEncapsulator *device, size_t offset, const u16 *src, size_t count);
@@ -47,22 +46,22 @@ private:
 };
 //----------------------------------------------------------------------------
 inline void IndexBuffer::SetData(IDeviceAPIEncapsulator *device, size_t offset, const u16 *src, size_t count) {
-    Assert(Graphics::IndexElementSize::SixteenBits == IndexElementSize());
+    Assert(Graphics::EIndexElementSize::SixteenBits == IndexElementSize());
     SetData_(device, offset, src, sizeof(u16), count);
 }
 //----------------------------------------------------------------------------
 inline void IndexBuffer::SetData(IDeviceAPIEncapsulator *device, size_t offset, const u32 *src, size_t count) {
-    Assert(Graphics::IndexElementSize::ThirtyTwoBits == IndexElementSize());
+    Assert(Graphics::EIndexElementSize::ThirtyTwoBits == IndexElementSize());
     SetData_(device, offset, src, sizeof(u32), count);
 }
 //----------------------------------------------------------------------------
 inline void IndexBuffer::Create(IDeviceAPIEncapsulator *device, const TMemoryView<const u16>& optionalData) {
-    Assert(Graphics::IndexElementSize::SixteenBits == IndexElementSize());
+    Assert(Graphics::EIndexElementSize::SixteenBits == IndexElementSize());
     Create_(device, optionalData.Cast<const u8>());
 }
 //----------------------------------------------------------------------------
 inline void IndexBuffer::Create(IDeviceAPIEncapsulator *device, const TMemoryView<const u32>& optionalData) {
-    Assert(Graphics::IndexElementSize::ThirtyTwoBits == IndexElementSize());
+    Assert(Graphics::EIndexElementSize::ThirtyTwoBits == IndexElementSize());
     Create_(device, optionalData.Cast<const u8>());
 }
 //----------------------------------------------------------------------------

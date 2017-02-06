@@ -11,7 +11,7 @@ namespace Core {
 namespace Graphics {
 class IDeviceAPIEncapsulator;
 FWD_REFPTR(IndexBuffer);
-enum class IndexElementSize;
+enum class EIndexElementSize;
 enum class EPrimitiveType;
 FWD_REFPTR(VertexBuffer);
 FWD_REFPTR(VertexDeclaration);

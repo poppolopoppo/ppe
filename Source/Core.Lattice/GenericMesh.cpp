@@ -196,17 +196,17 @@ void FGenericMesh::Reserve(size_t indexCount, size_t vertexCount, bool additiona
 }
 //----------------------------------------------------------------------------
 bool FGenericMesh::ExportIndices(const TMemoryView<u16>& dst) const {
-    return ExportIndices(Graphics::IndexElementSize::SixteenBits, dst.Cast<u8>());
+    return ExportIndices(Graphics::EIndexElementSize::SixteenBits, dst.Cast<u8>());
 }
 //----------------------------------------------------------------------------
 bool FGenericMesh::ExportIndices(const TMemoryView<u32>& dst) const {
-    return ExportIndices(Graphics::IndexElementSize::ThirtyTwoBits, dst.Cast<u8>());
+    return ExportIndices(Graphics::EIndexElementSize::ThirtyTwoBits, dst.Cast<u8>());
 }
 //----------------------------------------------------------------------------
-bool FGenericMesh::ExportIndices(Graphics::IndexElementSize eltSize, const TMemoryView<u8>& dst) const  {
+bool FGenericMesh::ExportIndices(Graphics::EIndexElementSize eltSize, const TMemoryView<u8>& dst) const  {
     Assert(dst.SizeInBytes() == size_t(eltSize) * _indexCount);
 
-    if (Graphics::IndexElementSize::SixteenBits == eltSize) {
+    if (Graphics::EIndexElementSize::SixteenBits == eltSize) {
         if (_indexCount > TNumericLimits<u16>::MaxValue())
             return false;
 
@@ -218,7 +218,7 @@ bool FGenericMesh::ExportIndices(Graphics::IndexElementSize eltSize, const TMemo
             *pdst++ = checked_cast<u16>(*psrc++);
     }
     else {
-        Assert(Graphics::IndexElementSize::ThirtyTwoBits == eltSize);
+        Assert(Graphics::EIndexElementSize::ThirtyTwoBits == eltSize);
 
         Copy(dst.Cast<u32>(), _indices.MakeView().Cast<const u32>());
     }

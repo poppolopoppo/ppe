@@ -13,7 +13,7 @@
 
 namespace Core {
 namespace Graphics {
-enum class IndexElementSize;
+enum class EIndexElementSize;
 FWD_REFPTR(VertexDeclaration);
 class FVertexSemantic;
 }
@@ -165,7 +165,7 @@ public:
 
     bool ExportIndices(const TMemoryView<u16>& dst) const;
     bool ExportIndices(const TMemoryView<u32>& dst) const;
-    bool ExportIndices(Graphics::IndexElementSize eltSize, const TMemoryView<u8>& dst) const;
+    bool ExportIndices(Graphics::EIndexElementSize eltSize, const TMemoryView<u8>& dst) const;
     bool ExportVertices(const Graphics::FVertexDeclaration* vdecl, const TMemoryView<u8>& dst) const;
 
     template <typename _Allocator>
@@ -181,7 +181,7 @@ public:
     }
 
     template <typename _Allocator>
-    void ExportIndices(Graphics::IndexElementSize eltSize, TRawStorage<u8, _Allocator>& dst) const {
+    void ExportIndices(Graphics::EIndexElementSize eltSize, TRawStorage<u8, _Allocator>& dst) const {
         dst.Resize_DiscardData(size_t(eltSize) * IndexCount());
         ExportIndices(eltSize, dst.MakeView());
     }
