@@ -25,7 +25,7 @@ public:
     static void Create() {
         AssertIsMainThread();
         Assert(nullptr == _gInstance);
-        _gInstance.reset(new metaclass_type());
+        _gInstance = new metaclass_type();
         _gInstance->Register(FMetaClassDatabase::Instance());
     }
 
@@ -33,15 +33,16 @@ public:
         AssertIsMainThread();
         Assert(nullptr != _gInstance);
         _gInstance->Unregister(FMetaClassDatabase::Instance());
-        _gInstance.reset(nullptr);
+        checked_delete(_gInstance);
+        _gInstance = nullptr;
     }
 
 private:
-    static TUniquePtr<const metaclass_type> _gInstance;
+    static const metaclass_type* _gInstance;
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Enabled >
-TUniquePtr<const typename T::FMetaClass > TMetaClassSingleton<T, _Enabled>::_gInstance = nullptr;
+const typename T::FMetaClass* TMetaClassSingleton<T, _Enabled>::_gInstance = nullptr;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
