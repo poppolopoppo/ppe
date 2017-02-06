@@ -104,29 +104,17 @@ private:
     EFlags _attributes;
 };
 //----------------------------------------------------------------------------
+template <typename _Visitor = void(*)(const FMetaClass* metaClass, const FMetaFunction* func) >
+void ForEachFunction(const FMetaClass* metaClass, const _Visitor& visitor);
+//----------------------------------------------------------------------------
+template <typename _Pred = bool(*)(const FMetaClass* metaClass, const FMetaFunction* func) >
+const FMetaFunction* FindFunction(const FMetaClass* metaClass, const _Pred& pred);
+//----------------------------------------------------------------------------
 template <typename _Visitor = void (*)(const FMetaClass* metaClass, const FMetaProperty* prop) >
-void ForEachProperty(const FMetaClass* metaClass, const _Visitor& visitor) {
-    while (nullptr != metaClass) {
-        for (const UCMetaProperty& prop : metaClass->Properties()) {
-            Assert(prop);
-            visitor(metaClass, prop.get());
-        }
-        metaClass = metaClass->Parent();
-    }
-}
+void ForEachProperty(const FMetaClass* metaClass, const _Visitor& visitor);
 //----------------------------------------------------------------------------
 template <typename _Pred = bool (*)(const FMetaClass* metaClass, const FMetaProperty* prop) >
-const FMetaProperty* FindProperty(const FMetaClass* metaClass, const _Pred& pred) {
-    while (nullptr != metaClass) {
-        for (const UCMetaProperty& prop : metaClass->Properties()) {
-            Assert(prop);
-            if (pred(metaClass, prop.get()))
-                return prop.get();
-        }
-        metaClass = metaClass->Parent();
-    }
-    return nullptr;
-}
+const FMetaProperty* FindProperty(const FMetaClass* metaClass, const _Pred& pred);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -193,3 +181,5 @@ private:
 //----------------------------------------------------------------------------
 } //!namespace RTTI
 } //!namespace Core
+
+#include "Core.RTTI/MetaClass-inl.h"
