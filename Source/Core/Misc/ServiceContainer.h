@@ -96,20 +96,18 @@ void FServiceContainer::Register(T* service) {
     Assert(nullptr != service);
     Assert(_services.end() == Find_(serviceId));
 
-    const char* name(
+    const FStringView serviceName(
 #ifdef USE_DEBUG_LOGGER
-        typeid(_Interface).name()
-#else
-        nullptr
+        MakeStringView(typeid(_Interface).name(), Meta::noinit_tag{})
 #endif
     );
 
     LOG(Info, L"[Service] Register <{0}> with <{1}> (id={2:x})",
-        name, typeid(T).name(), hash_t(serviceId) );
+        serviceName, typeid(T).name(), hash_t(serviceId) );
 
     _Interface* const pimpl = service; // important before casting to (void*)
 
-    _services.emplace_back(serviceId, (void*)pimpl, name);
+    _services.emplace_back(serviceId, (void*)pimpl, serviceName);
 }
 //----------------------------------------------------------------------------
 template <typename _Interface, typename T>
