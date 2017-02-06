@@ -89,8 +89,9 @@ struct FSerializedObject_ {
     u32 NameIndex;
     u32 DataOffset;
 };
+STATIC_ASSERT(sizeof(FSerializedObject_) == 4 * sizeof(u32));
 //----------------------------------------------------------------------------
-template <typename T> struct TObjectTraits_  { T proxy_(const T& p) const { return p; } };
+template <typename T> struct TObjectTraits_   { T proxy_(const T& p) const { return p; } };
 template <> struct TObjectTraits_< FString >  { FStringView proxy_(const FString& s) const { return MakeStringView(s); } };
 template <> struct TObjectTraits_< FWString > { FWStringView proxy_(const FWString& s) const { return MakeStringView(s); } };
 //----------------------------------------------------------------------------

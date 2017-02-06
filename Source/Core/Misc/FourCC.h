@@ -4,6 +4,7 @@
 
 #include "Core/Memory/HashFunctions.h"
 #include "Core/Memory/MemoryView.h"
+#include "Core/Misc/Endianness.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -12,6 +13,7 @@ namespace Core {
 class FFourCC {
 public:
     FFourCC() : _asU32(0) {}
+    explicit FFourCC(u32 value) { _asU32 = value; }
 
     FFourCC(const FFourCC& other) : _asU32(other._asU32) {}
     FFourCC& operator =(const FFourCC& other) { _asU32 = other._asU32; return *this; }
@@ -27,16 +29,9 @@ public:
         _asChars[2] = c2;
         _asChars[3] = c3;
     }
-    FFourCC(const char* cstr) {
-        Assert('\0' != cstr[0]);
-        Assert('\0' != cstr[1]);
-        Assert('\0' != cstr[2]);
-        Assert('\0' != cstr[3]);
 
-        _asChars[0] = cstr[0];
-        _asChars[1] = cstr[1];
-        _asChars[2] = cstr[2];
-        _asChars[3] = cstr[3];
+    FFourCC(const char (&cstr)[5]) : FFourCC(cstr[0], cstr[1], cstr[2], cstr[3]) {
+        Assert('\0' == cstr[4]);
     }
 
     u32 AsU32() const { return _asU32; }
@@ -57,6 +52,10 @@ private:
         char    _asChars[4];
     };
 };
+//----------------------------------------------------------------------------
+inline FFourCC SwapEndianness(const FFourCC& value) {
+    return FFourCC(SwapEndianness(value.AsU32()));
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -12,6 +12,14 @@ namespace Core {
 enum class EEndianness {
     LittleEndian    = 0,
     BigEndian       = 1,
+
+#if     defined(ARCH_X86)
+    Current = LittleEndian,
+#elif   defined(ARCH_X64)
+    Current = LittleEndian,
+#else
+#   error "unsupported architecture"
+#endif
 };
 //----------------------------------------------------------------------------
 enum class ETargetPlatform {
@@ -19,9 +27,12 @@ enum class ETargetPlatform {
     PS4             = 1<<1,
     XONE            = 1<<2,
     MAC             = 1<<3,
+    LINUX           = 1<<4,
 
-#if defined(OS_WINDOWS)
+#if     defined(OS_WINDOWS)
     Current         = PC,
+#elif   defined(OS_LINUX)
+    Current         = LINUX,
 #else
 #   error "unsupported os"
 #endif

@@ -6,6 +6,8 @@
 #include "Core/Maths/ScalarVector.h"
 #include "Core/Maths/ScalarVectorHelpers.h"
 
+#include "Core/Misc/Endianness.h"
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -38,6 +40,16 @@ TScalarVector<U, _Dim> QuantizeRound(const TScalarBoundingBox<T, _Dim>& aabb, co
 //----------------------------------------------------------------------------
 template <typename U, typename T, size_t _Dim>
 TScalarVector<T, _Dim> Unquantize(const TScalarBoundingBox<T, _Dim>& aabb, const TScalarVector<U, _Dim>& quantized);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+TScalarBoundingBox<T, _Dim> SwapEndianness(const TScalarBoundingBox<T, _Dim>& value) {
+    return TScalarBoundingBox<T, _Dim>(
+        SwapEndianness(value.Min()),
+        SwapEndianness(value.Max())
+        );
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

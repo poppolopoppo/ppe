@@ -6,6 +6,8 @@
 #include "Core/Maths/MathHelpers.h"
 #include "Core/Maths/PackingHelpers.h"
 
+#include "Core/Misc/Endianness.h"
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -221,6 +223,16 @@ TScalarVector<u16, _Dim> FloatM11_to_UShort065535(const TScalarVector<float, _Di
 FORCE_INLINE TScalarVector<u8, 4> Float3M11_to_UByte4N(const TScalarVector<float, 3>& value);
 //----------------------------------------------------------------------------
 FORCE_INLINE TScalarVector<float, 3> UByte4N_to_Float3M11(const TScalarVector<u8, 4>& value);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+TScalarVector<T, _Dim> SwapEndianness(const TScalarVector<T, _Dim>& value) {
+    TScalarVector<T, _Dim> r;
+    forrange(i, 0, _Dim)
+        r._data[i] = SwapEndianness(value._data[i]);
+    return r;
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
