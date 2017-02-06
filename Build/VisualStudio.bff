@@ -4,21 +4,19 @@
 // Visual Studio Base Config
 //------------------------------------------------------------------------------
 
-.VisualStudioOutputDirectory        = '^$(SolutionDir)\Binary'
-.VisualStudioIntermediateDirectory  = '^$(SolutionDir)\Intermediate\^$(Platform)\^$(Configuration)\^$(ProjectName)'
-
-.VisualStudioFBuildCommand          = 'cd "^$(SolutionDir)\.." &amp; fbuild.rb -config fbuild.bff -vs'
-.VisualStudioFBuildTarget           = '^$(ProjectName)-^$(Platform)-^$(Configuration)'
-
+;.VisualStudioOutputDirectory        =
+;.VisualStudioIntermediateDirectory  = '^$(SolutionDir)\Intermediate\^$(Platform)\^$(Configuration)\^$(ProjectName)'
+;
+.VisualStudioFBuildCommand      = 'cd "^$(SolutionDir)\.." &amp; fbuild.rb -config fbuild.bff -vs'
+;.VisualStudioFBuildTarget           = '^$(LocalDebuggerCommand)' ;'^$(ProjectName)-^$(Platform)-^$(Configuration)'
+;
 .VisualStudioBaseConfig =
 [
-    .ProjectBuildCommand    = '$VisualStudioFBuildCommand$ $VSBuildOptions$ $VisualStudioFBuildTarget$'
-    .ProjectRebuildCommand  = '$VisualStudioFBuildCommand$ $VSRebuildOptions$ -clean $VisualStudioFBuildTarget$'
-    .ProjectCleanCommand    = '$VisualStudioFBuildCommand$ $VSCleanOptions$ -clean $VisualStudioFBuildTarget$-Purge'
-
-    .OutputDirectory        = .VisualStudioOutputDirectory
-    .IntermediateDirectory  = .VisualStudioIntermediateDirectory
-
-    .LocalDebuggerCommand   = '$VisualStudioOutputDirectory$\^$(ProjectName).^$(Configuration).^$(Platform).exe'
-    .LocalDebuggerWorkingDirectory = .VisualStudioOutputDirectory
+;    .ProjectBuildCommand    = '$VisualStudioFBuildCommand$ $VSBuildOptions$ $VisualStudioFBuildTarget$'
+;    .ProjectRebuildCommand  = '$VisualStudioFBuildCommand$ $VSRebuildOptions$ -clean $VisualStudioFBuildTarget$'
+;    .ProjectCleanCommand    = '$VisualStudioFBuildCommand$ $VSCleanOptions$ -clean $VisualStudioFBuildTarget$-Purge'
+;
+;    .OutputDirectory        = .VisualStudioOutputDirectory
+;    .IntermediateDirectory  = .VisualStudioIntermediateDirectory
+    .LocalDebuggerWorkingDirectory  = '^$(SolutionDir)\Binary'
 ]

@@ -217,10 +217,14 @@ ForEach( .CompileConfig in .AllCompileConfigs )
 
         // Override project directories for visual studio ONLY
 #if __WINDOWS__
+        .ProjectBasePath        = "$ProjectPath$"
+        .Output                 = "$BinaryDirectory$\$ProjectName$.$Config$.$Platform$.$CompilerBinaryExtension$"
+        .OutputDirectory        = "$BinaryDirectory$"
+        .IntermediateDirectory  = "$IntermediateDirectory$"
+        .ProjectBuildCommand    = '$VisualStudioFBuildCommand$ $VSBuildOptions$ "$ProjectName$-$Platform$-$Config$"'
+        .ProjectRebuildCommand  = '$VisualStudioFBuildCommand$ $VSRebuildOptions$ -clean "$ProjectName$-$Platform$-$Config$"'
+        .ProjectCleanCommand    = '$VisualStudioFBuildCommand$ $VSCleanOptions$ -clean "$ProjectName$-Purge-$Platform$-$Config$"'
         .Platform               = .SolutionPlatform
-        .Output                 = "$VisualStudioOutputDirectory$\$ProjectName$.$Config$.$Platform$.$CompilerBinaryExtension$"
-        .OutputDirectory        = .VisualStudioOutputDirectory
-        .IntermediateDirectory  = .VisualStudioIntermediateDirectory
 #endif
     ]
 
