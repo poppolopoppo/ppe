@@ -24,7 +24,7 @@ FStringView ShaderProfileTypeToCStr(EShaderProfileType profile) {
 }
 //----------------------------------------------------------------------------
 namespace {
-    static const EShaderProgramType gShaderProgramTypes[size_t(EShaderProgramType::__Count)] = {
+    static constexpr EShaderProgramType gShaderProgramTypes[size_t(EShaderProgramType::__Count)] = {
         EShaderProgramType::Vertex,
         EShaderProgramType::Hull,
         EShaderProgramType::Domain,

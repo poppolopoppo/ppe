@@ -491,9 +491,9 @@ void Test_Containers() {
         std::random_shuffle(search.begin(), search.end());
 
 #ifdef WITH_CORE_ASSERT
-        static const size_t loops = 10;
+        static constexpr size_t loops = 10;
 #else
-        static const size_t loops = 100;
+        static constexpr size_t loops = 100;
 #endif
 
         /*{

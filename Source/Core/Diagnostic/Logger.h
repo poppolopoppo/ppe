@@ -27,7 +27,7 @@ enum class ELogCategory {
 };
 //----------------------------------------------------------------------------
 TMemoryView<const ELogCategory> EachLogCategory();
-const wchar_t* LogCategoryToWCStr(ELogCategory category);
+FWStringView LogCategoryToWCStr(ELogCategory category);
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits >
 std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, ELogCategory category) {

@@ -9,7 +9,7 @@ namespace Application {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static const EKeyboardKey gEachKeyboardKeys[] = {
+static constexpr EKeyboardKey gEachKeyboardKeys[] = {
     // TNumeric
 
     EKeyboardKey::_0,

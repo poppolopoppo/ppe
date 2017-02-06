@@ -32,8 +32,8 @@ namespace {
 } //!namespace
 //----------------------------------------------------------------------------
 float FP16_to_FP32(u16 value) {
-    static const FP32 magic = { 113 << 23 };
-    static const u32 shifted_exp = 0x7c00 << 13; // exponent mask after shift
+    static constexpr FP32 magic = { 113 << 23 };
+    static constexpr u32 shifted_exp = 0x7c00 << 13; // exponent mask after shift
 
     FP16 h;
     h.u = value;
@@ -59,11 +59,11 @@ float FP16_to_FP32(u16 value) {
 u16 FP32_to_FP16(float value) {
     Assert(FHalfFloat::IsConvertible(value));
 
-    static const FP32 f32infty = { 255 << 23 };
-    static const FP32 f16infty = { 31 << 23 };
-    static const FP32 magic = { 15 << 23 };
-    static const u32 sign_mask = 0x80000000u;
-    static const u32 round_mask = ~0xfffu;
+    static constexpr FP32 f32infty = { 255 << 23 };
+    static constexpr FP32 f16infty = { 31 << 23 };
+    static constexpr FP32 magic = { 15 << 23 };
+    static constexpr u32 sign_mask = 0x80000000u;
+    static constexpr u32 round_mask = ~0xfffu;
 
     FP32 f;
     f.f = value;

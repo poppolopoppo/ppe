@@ -36,11 +36,11 @@ static size_t IOWorkerCount_() {
         Min(MaxIOWorkerCount_, std::thread::hardware_concurrency() - GlobalWorkerCount_()));
 }
 //----------------------------------------------------------------------------
-static const size_t GlobalWorkerThreadAffinities[] = {
+static constexpr size_t GlobalWorkerThreadAffinities[] = {
     1<<2, 1<<3, 1<<4, 1<<5, 1<<6, 1<<7, 1<<8, 1<<9, 1<<10, 1<<11 // from 3rd to 12th core
 };
 //----------------------------------------------------------------------------
-static const size_t IOWorkerThreadAffinities[] = {
+static constexpr size_t IOWorkerThreadAffinities[] = {
     (1<<0)|(1<<1), (1<<0)|(1<<1), (1<<0)|(1<<1), (1<<0)|(1<<1) // 1th and 2nd core, allowed to change threads
 };
 //----------------------------------------------------------------------------

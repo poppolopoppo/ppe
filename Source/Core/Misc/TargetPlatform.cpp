@@ -8,11 +8,12 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static const ETargetPlatform gTargetPlatforms[] = {
+static constexpr ETargetPlatform gTargetPlatforms[] = {
     ETargetPlatform::PC,
     ETargetPlatform::PS4,
     ETargetPlatform::XONE,
-    ETargetPlatform::MAC
+    ETargetPlatform::MAC,
+    ETargetPlatform::LINUX
 };
 //----------------------------------------------------------------------------
 } //!namespace

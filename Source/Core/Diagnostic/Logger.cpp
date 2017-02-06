@@ -16,7 +16,7 @@ STATIC_ASSERT(6 == size_t(ELogCategory::Profiling));
 STATIC_ASSERT(7 == size_t(ELogCategory::Callstack));
 //----------------------------------------------------------------------------
 namespace {
-    static const ELogCategory sCategories[] = {
+    static constexpr ELogCategory sCategories[] = {
         ELogCategory::Info,
         ELogCategory::Warning,
         ELogCategory::Error,
@@ -27,18 +27,6 @@ namespace {
         ELogCategory::Callstack,
     };
 
-    static const wchar_t* sCategoriesWCStr[] = {
-        L"Info",
-        L"Warning",
-        L"Error",
-        L"Exception",
-        L"Debug",
-        L"Assertion",
-        L"Profiling",
-        L"Callstack",
-    };
-
-    STATIC_ASSERT(lengthof(sCategoriesWCStr) == lengthof(sCategories));
     STATIC_ASSERT(8 == lengthof(sCategories));
 }
 //----------------------------------------------------------------------------
@@ -46,14 +34,33 @@ TMemoryView<const ELogCategory> EachLogCategory() {
     return MakeView(sCategories);
 }
 //----------------------------------------------------------------------------
-const wchar_t* LogCategoryToWCStr(ELogCategory category) {
-    Assert(size_t(category) < lengthof(sCategoriesWCStr));
-    return sCategoriesWCStr[size_t(category)];
+FWStringView LogCategoryToWCStr(ELogCategory category) {
+    switch (category)
+    {
+    case Core::ELogCategory::Info:
+        return L"Info";
+    case Core::ELogCategory::Warning:
+        return L"Warning";
+    case Core::ELogCategory::Error:
+        return L"Error";
+    case Core::ELogCategory::Exception:
+        return L"Exception";
+    case Core::ELogCategory::Debug:
+        return L"Debug";
+    case Core::ELogCategory::Assertion:
+        return L"Assertion";
+    case Core::ELogCategory::Profiling:
+        return L"Profiling";
+    case Core::ELogCategory::Callstack:
+        return L"Callstack";
+    }
+    AssertNotImplemented();
+    return FWStringView();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!naemspace Core
+} //!namespace Core
 
 #ifdef USE_DEBUG_LOGGER
 

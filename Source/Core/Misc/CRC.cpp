@@ -12,7 +12,7 @@ namespace {
 //----------------------------------------------------------------------------
 // CRC32 polynomial table
 //----------------------------------------------------------------------------
-static const u32 g_CRC32Table[ 256 ] =
+static constexpr u32 g_CRC32Table[ 256 ] =
 {
    0x00000000,0x77073096,0xEE0E612C,0x990951BA,0x076DC419,0x706AF48F,0xE963A535,
    0x9E6495A3,0x0EDB8832,0x79DCB8A4,0xE0D5E91E,0x97D2D988,0x09B64C2B,0x7EB17CBD,
@@ -60,7 +60,7 @@ static const u32 g_CRC32Table[ 256 ] =
 #define CRCPOLY 0xEDB88320
 #define CRCINIT 0xFFFFFFFF
 //----------------------------------------------------------------------------
-const u32 g_CRC32SlicingBy8[8][256] = {
+constexpr u32 g_CRC32SlicingBy8[8][256] = {
 { 0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f, 0xe963a535, 0x9e6495a3
 , 0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988, 0x09b64c2b, 0x7eb17cbd, 0xe7b82d07, 0x90bf1d91
 , 0x1db71064, 0x6ab020f2, 0xf3b97148, 0x84be41de, 0x1adad47d, 0x6ddde4eb, 0xf4d4b551, 0x83d385c7

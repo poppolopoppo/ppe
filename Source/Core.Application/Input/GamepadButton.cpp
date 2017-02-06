@@ -9,7 +9,7 @@ namespace Application {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static const EGamepadButton gEachGamepadButtons[] = {
+static constexpr EGamepadButton gEachGamepadButtons[] = {
     EGamepadButton::Button0,
     EGamepadButton::Button1,
     EGamepadButton::Button2,

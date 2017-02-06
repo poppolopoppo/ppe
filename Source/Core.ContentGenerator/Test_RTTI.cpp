@@ -368,7 +368,7 @@ void FRTTIAtomRandomizer_::Randomize(RTTI::FMetaObject* pobject) {
 void Test_RTTI() {
     typedef FRTTITest_ test_type;
     //typedef FRTTITest2_ test_type;
-    static const size_t test_count = 4;
+    static constexpr size_t test_count = 4;
 
     RTTI_TAG(Test)::Start();
     {

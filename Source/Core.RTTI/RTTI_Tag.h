@@ -55,7 +55,7 @@ struct TMetaClassDecl : public FMetaClassBaseDecl {
     namespace RTTI_Tag { \
         struct _NameId { \
         public: \
-            static const char* Name() { return (_NameStr); } \
+            static FStringView Name() { return (_NameStr); } \
             \
             static void Register(const Core::RTTI::FMetaClassBaseDecl* pdecl); \
             static void Unregister(const Core::RTTI::FMetaClassBaseDecl* pdecl); \
