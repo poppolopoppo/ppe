@@ -89,12 +89,9 @@ inline size_t FServiceContainer::size() const {
 template <typename _Interface, typename T>
 void FServiceContainer::Register(T* service) {
     STATIC_ASSERT(std::is_base_of<_Interface, T>::value);
+    Assert(nullptr != service);
 
     const ServiceId serviceId = StaticServiceId<_Interface>();
-
-    WRITESCOPELOCK(_barrierRW);
-    Assert(nullptr != service);
-    Assert(_services.end() == Find_(serviceId));
 
     const FStringView serviceName(
 #ifdef USE_DEBUG_LOGGER
@@ -102,22 +99,24 @@ void FServiceContainer::Register(T* service) {
 #endif
     );
 
-    LOG(Info, L"[Service] Register <{0}> with <{1}> (id={2:x})",
-        serviceName, typeid(T).name(), hash_t(serviceId) );
+    WRITESCOPELOCK(_barrierRW);
+    Assert(_services.end() == Find_(serviceId));
 
     _Interface* const pimpl = service; // important before casting to (void*)
-
     _services.emplace_back(serviceId, (void*)pimpl, serviceName);
+
+    LOG(Info, L"[Service] Register <{0}> with <{1}> (id={2:x})",
+        serviceName, typeid(T).name(), hash_t(serviceId));
 }
 //----------------------------------------------------------------------------
 template <typename _Interface, typename T>
 void FServiceContainer::Unregister(T* service) {
     STATIC_ASSERT(std::is_base_of<_Interface, T>::value);
+    Assert(nullptr != service);
 
     const ServiceId serviceId = StaticServiceId<_Interface>();
 
     WRITESCOPELOCK(_barrierRW);
-    Assert(nullptr != service);
 
     LOG(Info, L"[Service] Unregister <{0}> with <{1}> (id={2})",
         typeid(_Interface).name(), typeid(T).name(), hash_t(serviceId) );
