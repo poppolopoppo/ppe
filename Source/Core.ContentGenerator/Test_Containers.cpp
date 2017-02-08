@@ -1,6 +1,9 @@
 #include "stdafx.h"
 
+#include "Core/Container/AssociativeVector.h"
 #include "Core/Container/BurstTrie.h"
+#include "Core/Container/FlatMap.h"
+#include "Core/Container/FlatSet.h"
 #include "Core/Container/HashTable.h"
 #include "Core/Container/StringHashSet.h"
 
@@ -352,9 +355,9 @@ public:
         size_type inc = 1 + (h>>16) % Min(5, _capacity - 1);
         */
         size_type bucket = size_type(h & (_capacity - 1));
-        size_type inc = 1 + ((h>>16) & Min(5ul, _capacity - 1));
+        size_type inc = 1;// +((h >> 16) & Min(5ul, _capacity - 1));
 
-        const value_type empty_key;
+        const value_type empty_key{};
 
         while (not key_equal()(_values[bucket], empty_key) &&
                not key_equal()(_values[bucket], value) )
@@ -379,9 +382,9 @@ public:
         size_type inc = 1 + (h>>16) % Min(5, _capacity - 1);
         */
         size_type bucket = size_type(h & (_capacity - 1));
-        size_type inc = 1 + ((h>>16) & Min(5ul, _capacity - 1));
+        size_type inc = 1;// +((h >> 16) & Min(5ul, _capacity - 1));
 
-        const value_type empty_key;
+        const value_type empty_key{};
 
         while ( not key_equal()(_values[bucket], value) &&
                 not key_equal()(_values[bucket], empty_key) )
@@ -416,6 +419,10 @@ private:
     size_type _capacity;
     size_type _size;
 };
+//----------------------------------------------------------------------------
+template class TAssociativeVector<FString, int>;
+template class TFlatMap<FString, int>;
+template class TFlatSet<FString>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -455,6 +462,9 @@ void Test_Containers() {
         Assert(absolute2 == normalized2);
     }
     {
+        LOG(Info, L"{0}", Repeat<20>(L">>="));
+        LOG(Info, L"FStringView collection");
+
         const FFilename filename = L"Process:/dico.txt";
 
         VECTOR_THREAD_LOCAL(Container, FString) words;
@@ -475,6 +485,7 @@ void Test_Containers() {
         }
 
         //words.resize((UINT16_MAX*80)/100);
+        //words.resize(8);
 
         VECTOR_THREAD_LOCAL(Container, FStringView) all;
         all.reserve(words.size());
@@ -546,6 +557,7 @@ void Test_Containers() {
         }*/
         {
             LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
+
             const FBenchmarkScope bench("TCompactHashSet");
 
             typedef TCompactHashSet<
@@ -553,7 +565,6 @@ void Test_Containers() {
                 TStringViewHasher<char, ECase::Sensitive>,
                 TStringViewEqualTo<char, ECase::Sensitive>
             >   hashtable_type;
-
 
             hashtable_type set;
             {
@@ -593,7 +604,6 @@ void Test_Containers() {
                 TStringViewEqualTo<char, ECase::Sensitive>
             >   hashtable_type;
 
-
             hashtable_type set;
             {
                 const FBenchmarkScope subbench("THashTable construction");
@@ -603,18 +613,18 @@ void Test_Containers() {
                 for (const FStringView& word : input) {
                     set.insert(word);
                     count++;
-                    Assert(set.size() == count);
+Assert(set.size() == count);
                 }
             }
             Assert(set.size() == input.size());
 #ifndef PROFILING_ENABLED
             FHashTableStats stats = set.ProbingStats();
-            LOG(Info,   L"[HASHTABLE] Probing stats =\n"
-                        L"    Min : {0}\n"
-                        L"    Max : {1}\n"
-                        L"    Mean: {2}\n"
-                        L"    Dev : {3}\n",
-                stats.MinProbe, stats.MaxProbe, stats.MeanProbe, stats.DevProbe );
+            LOG(Info, L"[HASHTABLE] Probing stats =\n"
+                L"    Min : {0}\n"
+                L"    Max : {1}\n"
+                L"    Mean: {2}\n"
+                L"    Dev : {3}\n",
+                stats.MinProbe, stats.MaxProbe, stats.MeanProbe, stats.DevProbe);
 #endif
             {
                 const FBenchmarkScope subbench("THashTable search");
@@ -623,7 +633,7 @@ void Test_Containers() {
                     for (const FStringView& word : search)
                         if (set.end() == set.find(word))
                             AssertNotReached();
-                    }
+                }
             }
             {
                 const FBenchmarkScope subbench("THashTable negative search");
@@ -632,8 +642,43 @@ void Test_Containers() {
                     for (const FStringView& word : negative)
                         if (set.end() != set.find(word))
                             AssertNotReached();
-                    }
+                }
             }
+        }
+        {
+        LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
+        const FBenchmarkScope bench("TFlatSet");
+
+        TFlatSet<
+            FStringView,
+            TStringViewEqualTo<char, ECase::Sensitive>,
+            TStringViewLess<char, ECase::Sensitive>
+        >   set;
+        {
+            const FBenchmarkScope subbench("TFlatSet construction");
+            PROFILING_SCOPE(Global, 3, "TFlatSet construction");
+            set.reserve(input.size());
+            set.insert(input.begin(), input.end());
+        }
+        Assert(set.size() == input.size());
+        {
+            const FBenchmarkScope subbench("TFlatSet search");
+            PROFILING_SCOPE(Global, 4, "TFlatSet search");
+            forrange(i, 0, loops) {
+                for (const FStringView& word : search)
+                    if (set.end() == set.find(word))
+                        AssertNotReached();
+            }
+        }
+        {
+            const FBenchmarkScope subbench("TFlatSet negative search");
+            PROFILING_SCOPE(Global, 4, "TFlatSet negative search");
+            forrange(i, 0, loops) {
+                for (const FStringView& word : negative)
+                    if (set.end() != set.find(word))
+                        AssertNotReached();
+            }
+        }
         }
         {
             LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
@@ -644,8 +689,7 @@ void Test_Containers() {
                 const FBenchmarkScope subbench("THashSet construction");
                 PROFILING_SCOPE(Global, 3, "THashSet construction");
                 set.reserve(input.size());
-                for (const FStringView& word : input)
-                    set.insert(word);
+                set.insert(input.begin(), input.end());
             }
             Assert(set.size() == input.size());
             {
@@ -655,7 +699,7 @@ void Test_Containers() {
                     for (const FStringView& word : search)
                         if (set.end() == set.find(word))
                             AssertNotReached();
-                    }
+                }
             }
             {
                 const FBenchmarkScope subbench("THashSet negative search");
@@ -664,7 +708,180 @@ void Test_Containers() {
                     for (const FStringView& word : negative)
                         if (set.end() != set.find(word))
                             AssertNotReached();
+                }
+            }
+        }
+
+    }
+    {
+        LOG(Info, L"{0}", Repeat<20>(L">>="));
+        LOG(Info, L"Integer collection");
+
+        typedef double value_type;
+
+        const size_t COUNT = 8192;
+
+        VECTOR_THREAD_LOCAL(Container, value_type) all;
+        all.reserve(COUNT);
+        forrange(i, 1, COUNT+1)
+            all.push_back((value_type)(i/value_type(COUNT)));
+
+        std::random_shuffle(all.begin(), all.end());
+
+        const size_t k = (all.size() * 80) / 100;
+
+        const auto input = all.MakeConstView().CutBefore(k);
+        const auto negative = all.MakeConstView().CutStartingAt(k);
+
+        VECTOR_THREAD_LOCAL(Container, value_type) search(input);
+        std::random_shuffle(search.begin(), search.end());
+
+#ifdef WITH_CORE_ASSERT
+        static constexpr size_t loops = 100;
+#else
+        static constexpr size_t loops = 1000;
+#endif
+        {
+            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
+            const FBenchmarkScope bench("TCompactHashSet");
+
+            typedef TCompactHashSet<value_type>   hashtable_type;
+
+            hashtable_type set;
+            {
+                const FBenchmarkScope subbench("TCompactHashSet construction");
+                PROFILING_SCOPE(Global, 3, "TCompactHashSet construction");
+                set.resize(input.size());
+                for (const auto& word : input)
+                    set.insert(word);
+            }
+            Assert(set.size() == input.size());
+            {
+                const FBenchmarkScope subbench("TCompactHashSet search");
+                PROFILING_SCOPE(Global, 4, "TCompactHashSet search");
+                forrange(i, 0, loops) {
+                    for (const auto& word : search)
+                        if (nullptr == set.find(word))
+                            AssertNotReached();
                     }
+            }
+            {
+                const FBenchmarkScope subbench("TCompactHashSet negative search");
+                PROFILING_SCOPE(Global, 4, "TCompactHashSet negative search");
+                forrange(i, 0, loops) {
+                    for (const auto& word : negative)
+                        if (nullptr != set.find(word))
+                            AssertNotReached();
+                    }
+            }
+        }
+        {
+            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
+            const FBenchmarkScope bench("THashTable");
+
+            typedef THashTable<value_type, void>   hashtable_type;
+
+            hashtable_type set;
+            {
+                const FBenchmarkScope subbench("THashTable construction");
+                PROFILING_SCOPE(Global, 3, "THashTable construction");
+                set.reserve(input.size());
+                size_t count = 0;
+                for (const auto& word : input) {
+                    set.insert(word);
+                    count++;
+Assert(set.size() == count);
+                }
+            }
+            Assert(set.size() == input.size());
+#ifndef PROFILING_ENABLED
+            FHashTableStats stats = set.ProbingStats();
+            LOG(Info, L"[HASHTABLE] Probing stats =\n"
+                L"    Min : {0}\n"
+                L"    Max : {1}\n"
+                L"    Mean: {2}\n"
+                L"    Dev : {3}\n",
+                stats.MinProbe, stats.MaxProbe, stats.MeanProbe, stats.DevProbe);
+#endif
+            {
+                const FBenchmarkScope subbench("THashTable search");
+                PROFILING_SCOPE(Global, 4, "THashTable search");
+                forrange(i, 0, loops) {
+                    for (const auto& word : search)
+                        if (set.end() == set.find(word))
+                            AssertNotReached();
+                }
+            }
+            {
+                const FBenchmarkScope subbench("THashTable negative search");
+                PROFILING_SCOPE(Global, 4, "THashTable negative search");
+                forrange(i, 0, loops) {
+                    for (const auto& word : negative)
+                        if (set.end() != set.find(word))
+                            AssertNotReached();
+                }
+            }
+        }
+        {
+            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
+            const FBenchmarkScope bench("TFlatSet");
+
+            TFlatSet<value_type> set;
+            {
+                const FBenchmarkScope subbench("TFlatSet construction");
+                PROFILING_SCOPE(Global, 3, "TFlatSet construction");
+                set.reserve(input.size());
+                set.insert(input.begin(), input.end());
+            }
+            Assert(set.size() == input.size());
+            {
+                const FBenchmarkScope subbench("TFlatSet search");
+                PROFILING_SCOPE(Global, 4, "TFlatSet search");
+                forrange(i, 0, loops) {
+                    for (const auto& word : search)
+                        if (set.end() == set.find(word))
+                            AssertNotReached();
+                }
+            }
+            {
+                const FBenchmarkScope subbench("TFlatSet negative search");
+                PROFILING_SCOPE(Global, 4, "TFlatSet negative search");
+                forrange(i, 0, loops) {
+                    for (const auto& word : negative)
+                        if (set.end() != set.find(word))
+                            AssertNotReached();
+                }
+            }
+        }
+        {
+            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
+            const FBenchmarkScope bench("THashSet");
+
+            THashSet<value_type> set;
+            {
+                const FBenchmarkScope subbench("THashSet construction");
+                PROFILING_SCOPE(Global, 3, "THashSet construction");
+                set.reserve(input.size());
+                set.insert(input.begin(), input.end());
+            }
+            Assert(set.size() == input.size());
+            {
+                const FBenchmarkScope subbench("THashSet search");
+                PROFILING_SCOPE(Global, 4, "THashSet search");
+                forrange(i, 0, loops) {
+                    for (const auto& word : search)
+                        if (set.end() == set.find(word))
+                            AssertNotReached();
+                }
+            }
+            {
+                const FBenchmarkScope subbench("THashSet negative search");
+                PROFILING_SCOPE(Global, 4, "THashSet negative search");
+                forrange(i, 0, loops) {
+                    for (const auto& word : negative)
+                        if (set.end() != set.find(word))
+                            AssertNotReached();
+                }
             }
         }
 

@@ -11,17 +11,17 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define ASSOCIATIVE_VECTOR(_DOMAIN, _KEY, _VALUE) \
-    ::Core::TAssociativeVector<_KEY, _VALUE, ::Core::Meta::TEqualTo<_KEY>, VECTOR(_DOMAIN, ::Core::TPair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>) >
+#define FLAT_MAP(_DOMAIN, _KEY, _VALUE) \
+    ::Core::TFlatMap<_KEY, _VALUE, ::Core::Meta::TEqualTo<_KEY>, ::Core::Meta::TLess<_KEY>, VECTOR(_DOMAIN, ::Core::TPair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>) >
 //----------------------------------------------------------------------------
-#define ASSOCIATIVE_VECTOR_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE) \
-    ::Core::TAssociativeVector<_KEY, _VALUE, ::Core::Meta::TEqualTo<_KEY>, VECTOR_THREAD_LOCAL(_DOMAIN, ::Core::TPair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>) >
+#define FLAT_MAP_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE) \
+    ::Core::TFlatMap<_KEY, _VALUE, ::Core::Meta::TEqualTo<_KEY>, ::Core::Meta::TLess<_KEY>, VECTOR_THREAD_LOCAL(_DOMAIN, ::Core::TPair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>) >
 //----------------------------------------------------------------------------
-#define ASSOCIATIVE_VECTORINSITU(_DOMAIN, _KEY, _VALUE, _InSituCount) \
-    ::Core::TAssociativeVector<_KEY, _VALUE, ::Core::Meta::TEqualTo<_KEY>, VECTORINSITU(_DOMAIN, ::Core::TPair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>, _InSituCount) >
+#define FLAT_MAPINSITU(_DOMAIN, _KEY, _VALUE, _InSituCount) \
+    ::Core::TFlatMap<_KEY, _VALUE, ::Core::Meta::TEqualTo<_KEY>, ::Core::Meta::TLess<_KEY>, VECTORINSITU(_DOMAIN, ::Core::TPair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>, _InSituCount) >
 //----------------------------------------------------------------------------
-#define ASSOCIATIVE_VECTORINSITU_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE, _InSituCount) \
-    ::Core::TAssociativeVector<_KEY, _VALUE, ::Core::Meta::TEqualTo<_KEY>, VECTORINSITU_THREAD_LOCAL(_DOMAIN, ::Core::TPair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>, _InSituCount) >
+#define FLAT_MAPINSITU_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE, _InSituCount) \
+    ::Core::TFlatMap<_KEY, _VALUE, ::Core::Meta::TEqualTo<_KEY>, ::Core::Meta::TLess<_KEY>, VECTORINSITU_THREAD_LOCAL(_DOMAIN, ::Core::TPair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>, _InSituCount) >
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -29,13 +29,15 @@ template <
     typename _Key,
     typename _Value,
     typename _EqualTo = Meta::TEqualTo<_Key>,
+    typename _Less = Meta::TLess<_Key>,
     typename _Vector = TVector<TPair<_Key COMMA _Value>> >
-class TAssociativeVector {
+class TFlatMap {
 public:
     typedef _Key key_type;
     typedef _Value mapped_type;
     typedef TPair<_Key, _Value> value_type;
     typedef _EqualTo key_equal;
+    typedef _Less key_less;
     typedef _Vector vector_type;
 
     typedef typename vector_type::pointer pointer;
@@ -54,40 +56,25 @@ public:
 
     typedef typename std::random_access_iterator_tag iterator_category;
 
-    TAssociativeVector();
-    explicit TAssociativeVector(size_type capacity);
-    ~TAssociativeVector();
+    TFlatMap();
+    explicit TFlatMap(size_type capacity);
+    ~TFlatMap();
+
+    TFlatMap(TFlatMap&& rvalue);
+    TFlatMap& operator =(TFlatMap&& rvalue);
+
+    TFlatMap(const TFlatMap& other);
+    TFlatMap& operator =(const TFlatMap& other);
+
+    TFlatMap(std::initializer_list<value_type> values);
+    TFlatMap& operator =(std::initializer_list<value_type> values);
 
     template <typename _It>
-    TAssociativeVector(_It&& begin, _It&& end)
-#ifdef _DEBUG
-        { insert(begin, end); }
-#else
-        : _vector(begin, end) {}
-#endif
+    TFlatMap(_It&& begin, _It&& end) { insert(begin, end); }
 
-    TAssociativeVector(std::initializer_list<value_type> values) : _vector(values) {}
-    TAssociativeVector& operator =(std::initializer_list<value_type> values) {
-        _vector.assign(values.begin(), values.end());
-        return *this;
-    }
+    bool operator ==(const TFlatMap& other) const { return _vector == other._vector; }
+    bool operator !=(const TFlatMap& other) const { return !operator ==(other); }
 
-    explicit TAssociativeVector(vector_type&& vector);
-    TAssociativeVector& operator =(vector_type&& vector);
-
-    explicit TAssociativeVector(const vector_type& vector);
-    TAssociativeVector& operator =(const vector_type& vector);
-
-    TAssociativeVector(TAssociativeVector&& rvalue);
-    TAssociativeVector& operator =(TAssociativeVector&& rvalue);
-
-    TAssociativeVector(const TAssociativeVector& other);
-    TAssociativeVector& operator =(const TAssociativeVector& other);
-
-    bool operator ==(const TAssociativeVector& other) const { return _vector == other._vector; }
-    bool operator !=(const TAssociativeVector& other) const { return !operator ==(other); }
-
-    vector_type& Vector() { return _vector; }
     const vector_type& Vector() const { return _vector; }
 
     size_type capacity() const { return _vector.capacity(); }
@@ -153,22 +140,14 @@ public:
     const _Value& operator [](const _Key& key) const { return At(key); }
 
     template <typename _It>
-    void insert(_It&& begin, _It&& end) {
-#ifdef _DEBUG
-        reserve(std::distance(begin, end));
-        for (auto it = begin; end != it; ++it)
-            Insert_AssertUnique(it->first, it->second);
-#else
-        _vector.insert(_vector.end(), begin, end);
-#endif
-    }
+    void insert(_It&& begin, _It&& end);
 
     size_t HashValue() const { return hash_value(_vector); }
 
     TMemoryView<value_type> MakeView() { return _vector.MakeView(); }
     TMemoryView<const value_type> MakeView() const { return _vector.MakeView(); }
 
-    friend void swap(TAssociativeVector& lhs, TAssociativeVector& rhs) {
+    friend void swap(TFlatMap& lhs, TFlatMap& rhs) {
         swap(lhs._vector, rhs._vector);
     }
 
@@ -179,12 +158,18 @@ private:
         }
     };
 
+    struct FKeyLess_ : key_less {
+        bool operator ()(const value_type& val, const key_type& key) const {
+            return key_less::operator ()(val.first, key);
+        }
+    };
+
     vector_type _vector;
 };
 //----------------------------------------------------------------------------
-template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-hash_t hash_value(const TAssociativeVector<_Key, _Value, _EqualTo, _Vector>& associativeVector) {
-    return associativeVector.HashValue();
+template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
+hash_t hash_value(const TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>& flatMap) {
+    return flatMap.HashValue();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -193,19 +178,20 @@ template <
     typename _Key,
     typename _Value,
     typename _EqualTo,
+    typename _Less,
     typename _Vector,
     typename _Char,
     typename _Traits
 >
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const TAssociativeVector<_Key, _Value, _EqualTo, _Vector>& associativeVector) {
-    if (associativeVector.empty()) {
+std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>& flatMap) {
+    if (flatMap.empty()) {
         return oss << "{}";
     }
     else {
-        auto it = associativeVector.begin();
+        auto it = flatMap.begin();
         oss << "{(" << it->first << ", " << it->second << ')';
         ++it;
-        for (const auto end = associativeVector.end(); it != end; ++it)
+        for (const auto end = flatMap.end(); it != end; ++it)
             oss << ",(" << it->first << ", " << it->second << ')';
         return oss << '}';
     }
@@ -215,4 +201,4 @@ std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Trait
 //----------------------------------------------------------------------------
 } //!namespace Core
 
-#include "Core/Container/AssociativeVector-inl.h"
+#include "Core/Container/FlatMap-inl.h"
