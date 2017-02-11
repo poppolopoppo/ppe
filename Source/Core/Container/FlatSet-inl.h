@@ -9,10 +9,13 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
-TFlatSet<_Key, _EqualTo, _Less, _Vector>::TFlatSet() {}
+TFlatSet<_Key, _EqualTo, _Less, _Vector>::TFlatSet() {
+    typedef typename std::iterator_traits< iterator >::iterator_category iterator_category;
+    STATIC_ASSERT(std::is_same< iterator_category, std::random_access_iterator_tag >::value);
+};
 //----------------------------------------------------------------------------
 template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
-TFlatSet<_Key, _EqualTo, _Less, _Vector>::TFlatSet(size_type capacity) {
+TFlatSet<_Key, _EqualTo, _Less, _Vector>::TFlatSet(size_type capacity) : TFlatSet() {
     _vector.reserve(capacity);
 }
 //----------------------------------------------------------------------------
