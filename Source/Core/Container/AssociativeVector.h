@@ -163,6 +163,12 @@ public:
 #endif
     }
 
+    void insert(_Key&& key, _Value&& value) { Insert_KeepOldIFN(std::move(key), std::move(value)); }
+    void insert(const _Key& key, const _Value& value) { Insert_KeepOldIFN(key, value); }
+
+    iterator find(const _Key& key) { return Find(key); }
+    const_iterator find(const _Key& key) const { return Find(key); }
+
     size_t HashValue() const { return hash_value(_vector); }
 
     TMemoryView<value_type> MakeView() { return _vector.MakeView(); }
