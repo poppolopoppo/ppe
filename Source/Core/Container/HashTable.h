@@ -31,10 +31,14 @@ namespace Core {
     ::Core::details::HashTable_<_KEY, _VALUE, ::Core::THash<_KEY>, ::Core::Meta::TEqualTo<_KEY>, THREAD_LOCAL_ALLOCATOR(_DOMAIN, ::Core::TPair<_KEY COMMA _VALUE>)>
 //----------------------------------------------------------------------------
 #define HASHTABLE_SET(_DOMAIN, _KEY) HASHTABLE(_DOMAIN, _KEY, void)
-#define HASHTABLE_SET_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE) HASHTABLE_THREAD_LOCAL(_DOMAIN, _KEY, void)
+#define HASHTABLE_SET_THREAD_LOCAL(_DOMAIN, _KEY) HASHTABLE_THREAD_LOCAL(_DOMAIN, _KEY, void)
+#define HASHTABLE_SET_MEMOIZE(_DOMAIN, _KEY) HASHTABLE_SET(_DOMAIN, ::Core::THashMemoizer<_KEY>)
+#define HASHTABLE_SET_MEMOIZE_THREAD_LOCAL(_DOMAIN, _KEY) HASHTABLE_SET_THREAD_LOCAL(_DOMAIN, ::Core::THashMemoizer<_KEY>)
 //----------------------------------------------------------------------------
 #define HASHTABLE_MAP(_DOMAIN, _KEY, _VALUE) HASHTABLE(_DOMAIN, _KEY, _VALUE)
 #define HASHTABLE_MAP_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE) HASHTABLE_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE)
+#define HASHTABLE_MAP_MEMOIZE(_DOMAIN, _KEY, _VALUE) HASHTABLE_MAP(_DOMAIN, ::Core::THashMemoizer<_KEY>, _VALUE)
+#define HASHTABLE_MAP_MEMOIZE_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE) HASHTABLE_MAP_THREAD_LOCAL(_DOMAIN, ::Core::THashMemoizer<_KEY>, _VALUE)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

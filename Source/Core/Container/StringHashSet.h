@@ -15,7 +15,7 @@ template <
     ECase _Sensitive,
     typename _Allocator = ALLOCATOR(Container, TBasicStringView<_Char>)
 >
-using BasicStringViewHashSet = THashSet<
+using TBasicStringViewHashSet = THashSet<
     TBasicStringView<_Char>,
     TStringViewHasher<_Char, _Sensitive>,
     TStringViewEqualTo<_Char, _Sensitive>,
@@ -23,16 +23,37 @@ using BasicStringViewHashSet = THashSet<
 >;
 //----------------------------------------------------------------------------
 #define STRINGVIEW_HASHSET(_DOMAIN, _CASE_SENSITIVE) \
-    ::Core::BasicStringViewHashSet<char, _CASE_SENSITIVE, ALLOCATOR(_DOMAIN, ::Core::TBasicStringView<char>)>
+    ::Core::TBasicStringViewHashSet<char, _CASE_SENSITIVE, ALLOCATOR(_DOMAIN, ::Core::TBasicStringView<char>)>
 //----------------------------------------------------------------------------
-#define STRINGVIEW_HASHSET_THREAD_LOCAL(_DOMAIN, _VALUE, _CASE_SENSITIVE) \
-    ::Core::BasicStringViewHashSet<char, _CASE_SENSITIVE, THREAD_LOCAL_ALLOCATOR(_DOMAIN, ::Core::TBasicStringView<char>)>
+#define STRINGVIEW_HASHSET_THREAD_LOCAL(_DOMAIN, _CASE_SENSITIVE) \
+    ::Core::TBasicStringViewHashSet<char, _CASE_SENSITIVE, THREAD_LOCAL_ALLOCATOR(_DOMAIN, ::Core::TBasicStringView<char>)>
 //----------------------------------------------------------------------------
-#define WSTRINGVIEW_HASHSET(_DOMAIN, _VALUE, _CASE_SENSITIVE) \
-    ::Core::BasicStringViewHashSet<wchar_t, _CASE_SENSITIVE, ALLOCATOR(_DOMAIN, ::Core::TBasicStringView<wchar_t>)>
+#define WSTRINGVIEW_HASHSET(_DOMAIN, _CASE_SENSITIVE) \
+    ::Core::TBasicStringViewHashSet<wchar_t, _CASE_SENSITIVE, ALLOCATOR(_DOMAIN, ::Core::TBasicStringView<wchar_t>)>
 //----------------------------------------------------------------------------
-#define WSTRINGVIEW_HASHSET_THREAD_LOCAL(_DOMAIN, _VALUE, _CASE_SENSITIVE) \
-    ::Core::BasicStringViewHashSet<wchar_t, _CASE_SENSITIVE, THREAD_LOCAL_ALLOCATOR(_DOMAIN, ::Core::TBasicStringView<wchar_t>)>
+#define WSTRINGVIEW_HASHSET_THREAD_LOCAL(_DOMAIN, _CASE_SENSITIVE) \
+    ::Core::TBasicStringViewHashSet<wchar_t, _CASE_SENSITIVE, THREAD_LOCAL_ALLOCATOR(_DOMAIN, ::Core::TBasicStringView<wchar_t>)>
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _Char, ECase _Sensitive>
+using TBasicStringViewHashMemoizer = THashMemoizer<
+    TBasicStringView<_Char>,
+    TStringViewHasher<_Char, _Sensitive>,
+    TStringViewEqualTo<_Char, _Sensitive>
+>;
+//----------------------------------------------------------------------------
+#define STRINGVIEW_HASHSET_MEMOIZE(_DOMAIN, _CASE_SENSITIVE) \
+    HASHSET(_DOMAIN, ::Core::TBasicStringViewHashMemoizer<char COMMA _CASE_SENSITIVE>)
+//----------------------------------------------------------------------------
+#define STRINGVIEW_HASHSET_MEMOIZE_THREAD_LOCAL(_DOMAIN, _CASE_SENSITIVE) \
+    HASHSET_THREAD_LOCAL(_DOMAIN, ::Core::TBasicStringViewHashMemoizer<char COMMA _CASE_SENSITIVE>)
+//----------------------------------------------------------------------------
+#define WSTRINGVIEW_HASHSET_MEMOIZE(_DOMAIN, _VALUE, _CASE_SENSITIVE) \
+    HASHSET(_DOMAIN, ::Core::TBasicStringViewHashMemoizer<wchar_t COMMA _CASE_SENSITIVE>)
+//----------------------------------------------------------------------------
+#define WSTRINGVIEW_HASHSET_MEMOIZE_THREAD_LOCAL(_DOMAIN, _VALUE, _CASE_SENSITIVE) \
+    HASHSET_THREAD_LOCAL(_DOMAIN, ::Core::TBasicStringViewHashMemoizer<wchar_t COMMA _CASE_SENSITIVE>)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

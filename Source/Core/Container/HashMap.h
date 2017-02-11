@@ -15,6 +15,7 @@
 // http://codecapsule.com/2013/08/11/hopscotch-hashing/
 // http://www.sebastiansylvan.com/post/robin-hood-hashing-should-be-your-default-hash-table-implementation/
 // http://stackoverflow.com/questions/245878/how-do-i-choose-between-a-hash-table-and-a-trie-prefix-tree
+// http://www.ilikebigbits.com/blog/2016/8/28/designing-a-fast-hash-table
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -34,6 +35,12 @@ using THashMap = std::unordered_map<_Key, _Value, _Hasher, _EqualTo, _Allocator>
 //----------------------------------------------------------------------------
 #define HASHMAP_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE) \
     ::Core::THashMap<_KEY, _VALUE, ::Core::THash<_KEY>, ::Core::Meta::TEqualTo<_KEY>, THREAD_LOCAL_ALLOCATOR(_DOMAIN, ::Core::TPair<_KEY COMMA _VALUE>)>
+//----------------------------------------------------------------------------
+#define HASHMAP_MEMOIZE(_DOMAIN, _KEY, _VALUE) \
+    HASHMAP(_DOMAIN, ::Core::THashMemoizer<_KEY>, _VALUE)
+//----------------------------------------------------------------------------
+#define HASHMAP_MEMOIZE_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE) \
+    HASHMAP_THREAD_LOCAL(_DOMAIN, ::Core::THashMemoizer<_KEY>, _VALUE)
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
 hash_t hash_value(const THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashMap) {

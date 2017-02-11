@@ -28,11 +28,16 @@ using THashSet = std::unordered_set<T, _Hasher, _EqualTo, _Allocator>;
 #define HASHSET_THREAD_LOCAL(_DOMAIN, T) \
     ::Core::THashSet<T, THash<T>, ::Core::Meta::TEqualTo<T>, THREAD_LOCAL_ALLOCATOR(_DOMAIN, T)>
 //----------------------------------------------------------------------------
+#define HASHSET_MEMOIZE(_DOMAIN, T) \
+    HASHSET(_DOMAIN, ::Core::THashMemoizer<T>)
+//----------------------------------------------------------------------------
+#define HASHSET_MEMOIZE_THREAD_LOCAL(_DOMAIN, T) \
+    HASHSET_THREAD_LOCAL(_DOMAIN, ::Core::THashMemoizer<T>)
+//----------------------------------------------------------------------------
 template <typename T, typename _Hasher, typename _EqualTo, typename _Allocator>
 hash_t hash_value(const THashSet<T, _Hasher, _EqualTo, _Allocator>& hashSet) {
     return hash_range(hashSet.begin(), hashSet.end());
 }
-
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
