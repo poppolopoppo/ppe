@@ -176,10 +176,50 @@ EContainmentType FFrustum::Contains(const TMemoryView<const float3>& points) con
 }
 //----------------------------------------------------------------------------
 EContainmentType FFrustum::Contains(const BoundingBox& box) const {
-    float3 corners[8];
-    box.GetCorners(corners);
+    // http://www.iquilezles.org/www/articles/frustumcorrect/frustumcorrect.htm
+    size_t inside = 0;
 
-    return Contains(MakeView<const float3>(corners));
+    // check box outside/inside of frustum
+    for (const FPlane& plane : _planes)
+    {
+        size_t out = 0;
+
+        out += (plane.DistanceToPoint(float3(box.Min().x(), box.Min().y(), box.Min().z())) < 0.0f ? 1 : 0);
+        out += (plane.DistanceToPoint(float3(box.Max().x(), box.Min().y(), box.Min().z())) < 0.0f ? 1 : 0);
+        out += (plane.DistanceToPoint(float3(box.Min().x(), box.Max().y(), box.Min().z())) < 0.0f ? 1 : 0);
+        out += (plane.DistanceToPoint(float3(box.Max().x(), box.Max().y(), box.Min().z())) < 0.0f ? 1 : 0);
+
+        out += (plane.DistanceToPoint(float3(box.Min().x(), box.Min().y(), box.Max().z())) < 0.0f ? 1 : 0);
+        out += (plane.DistanceToPoint(float3(box.Max().x(), box.Min().y(), box.Max().z())) < 0.0f ? 1 : 0);
+        out += (plane.DistanceToPoint(float3(box.Min().x(), box.Max().y(), box.Max().z())) < 0.0f ? 1 : 0);
+        out += (plane.DistanceToPoint(float3(box.Max().x(), box.Max().y(), box.Max().z())) < 0.0f ? 1 : 0);
+
+        if (8 == out)
+            return EContainmentType::Disjoint;
+        else if (0 == out)
+            inside++;
+    }
+
+    if (6 == inside)
+        return EContainmentType::Contains;
+
+    // TODO: create a class to speedup frustum collision
+    float3 frustumCorners[8];
+    GetCorners(frustumCorners);
+
+    // check frustum outside/inside box
+    size_t out;
+
+    out=0; for (const float3& p : frustumCorners) out += ((p.x() > box.Max().x()) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
+    out=0; for (const float3& p : frustumCorners) out += ((p.x() < box.Min().x()) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
+
+    out=0; for (const float3& p : frustumCorners) out += ((p.y() > box.Max().y()) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
+    out=0; for (const float3& p : frustumCorners) out += ((p.y() < box.Min().y()) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
+
+    out=0; for (const float3& p : frustumCorners) out += ((p.z() > box.Max().z()) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
+    out=0; for (const float3& p : frustumCorners) out += ((p.z() < box.Min().z()) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
+
+    return EContainmentType::Intersects;
 }
 //----------------------------------------------------------------------------
 EContainmentType FFrustum::Contains(const FSphere& sphere) const {
