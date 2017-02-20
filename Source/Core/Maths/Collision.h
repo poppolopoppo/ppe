@@ -30,7 +30,7 @@ float3 ClosestPointPointTriangle(const float3& point, const float3& vertex1, con
 //----------------------------------------------------------------------------
 float3 ClosestPointPlanePoint(const FPlane& plane, const float3& point);
 //----------------------------------------------------------------------------
-float3 ClosestPointBoxPoint(const BoundingBox& box, const float3& point);
+float3 ClosestPointBoxPoint(const FBoundingBox& box, const float3& point);
 //----------------------------------------------------------------------------
 float3 ClosestPointSpherePoint(const FSphere& sphere, const float3& point);
 //----------------------------------------------------------------------------
@@ -40,9 +40,9 @@ float3 ClosestPointSphereSphere(const FSphere& sphere1, const FSphere& sphere2);
 //----------------------------------------------------------------------------
 float DistancePlanePoint(const FPlane& plane, const float3& point);
 //----------------------------------------------------------------------------
-float DistanceBoxPoint(const BoundingBox& box, const float3& point);
+float DistanceBoxPoint(const FBoundingBox& box, const float3& point);
 //----------------------------------------------------------------------------
-float DistanceBoxBox(const BoundingBox& box1, const BoundingBox& box2);
+float DistanceBoxBox(const FBoundingBox& box1, const FBoundingBox& box2);
 //----------------------------------------------------------------------------
 float DistanceSpherePoint(const FSphere& sphere, const float3& point);
 //----------------------------------------------------------------------------
@@ -72,9 +72,9 @@ bool RayIntersectsTriangle(const FRay& ray, const float3& vertex1, const float3&
 //----------------------------------------------------------------------------
 bool RayIntersectsTriangle(const FRay& ray, const float3& vertex1, const float3& vertex2, const float3& vertex3, float3& point);
 //----------------------------------------------------------------------------
-bool RayIntersectsBox(const FRay& ray, const BoundingBox& box, float& distance);
+bool RayIntersectsBox(const FRay& ray, const FBoundingBox& box, float& distance);
 //----------------------------------------------------------------------------
-bool RayIntersectsBox(const FRay& ray, const BoundingBox& box, float3& point);
+bool RayIntersectsBox(const FRay& ray, const FBoundingBox& box, float3& point);
 //----------------------------------------------------------------------------
 bool RayIntersectsSphere(const FRay& ray, const FSphere& sphere, float& distance);
 //----------------------------------------------------------------------------
@@ -90,17 +90,17 @@ bool PlaneIntersectsPlane(const FPlane& plane1, const FPlane& plane2, FRay& line
 //----------------------------------------------------------------------------
 EPlaneIntersectionType PlaneIntersectsTriangle(const FPlane& plane, const float3& vertex1, const float3& vertex2, const float3& vertex3);
 //----------------------------------------------------------------------------
-EPlaneIntersectionType PlaneIntersectsBox(const FPlane& plane, const BoundingBox& box);
+EPlaneIntersectionType PlaneIntersectsBox(const FPlane& plane, const FBoundingBox& box);
 //----------------------------------------------------------------------------
 EPlaneIntersectionType PlaneIntersectsSphere(const FPlane& plane, const FSphere& sphere);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool BoxIntersectsTriangle(const BoundingBox& box, const float3& vertex1, const float3& vertex2, const float3& vertex3);
+bool BoxIntersectsTriangle(const FBoundingBox& box, const float3& vertex1, const float3& vertex2, const float3& vertex3);
 //----------------------------------------------------------------------------
-bool BoxIntersectsBox(const BoundingBox& box1, const BoundingBox& box2);
+bool BoxIntersectsBox(const FBoundingBox& box1, const FBoundingBox& box2);
 //----------------------------------------------------------------------------
-bool BoxIntersectsSphere(const BoundingBox& box, const FSphere& sphere);
+bool BoxIntersectsSphere(const FBoundingBox& box, const FSphere& sphere);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -110,13 +110,13 @@ bool SphereIntersectsSphere(const FSphere& sphere1, const FSphere& sphere2);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-EContainmentType BoxContainsPoint(const BoundingBox& box, const float3& point);
+EContainmentType BoxContainsPoint(const FBoundingBox& box, const float3& point);
 //----------------------------------------------------------------------------
-EContainmentType BoxContainsTriangle(const BoundingBox& box, const float3& vertex1, const float3& vertex2, const float3& vertex3);
+EContainmentType BoxContainsTriangle(const FBoundingBox& box, const float3& vertex1, const float3& vertex2, const float3& vertex3);
 //----------------------------------------------------------------------------
-EContainmentType BoxContainsBox(const BoundingBox& box1, const BoundingBox& box2);
+EContainmentType BoxContainsBox(const FBoundingBox& box1, const FBoundingBox& box2);
 //----------------------------------------------------------------------------
-EContainmentType BoxContainsSphere(const BoundingBox& box, const FSphere& sphere);
+EContainmentType BoxContainsSphere(const FBoundingBox& box, const FSphere& sphere);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -124,7 +124,7 @@ EContainmentType SphereContainsPoint(const FSphere& sphere, const float3& point)
 //----------------------------------------------------------------------------
 EContainmentType SphereContainsTriangle(const FSphere& sphere, const float3& vertex1, const float3& vertex2, const float3& vertex3);
 //----------------------------------------------------------------------------
-EContainmentType SphereContainsBox(const FSphere& sphere, const BoundingBox& box);
+EContainmentType SphereContainsBox(const FSphere& sphere, const FBoundingBox& box);
 //----------------------------------------------------------------------------
 EContainmentType SphereContainsSphere(const FSphere& sphere1, const FSphere& sphere2);
 //----------------------------------------------------------------------------

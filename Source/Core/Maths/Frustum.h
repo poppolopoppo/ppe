@@ -28,7 +28,7 @@ enum class EFrustumCorner {
     Near_LeftBottom,
     Near_RightBottom,
     Near_RightTop,
-    
+
     Far_LeftTop,
     Far_LeftBottom,
     Far_RightBottom,
@@ -73,12 +73,12 @@ public:
 
     EContainmentType Contains(const float3& point) const;
     EContainmentType Contains(const TMemoryView<const float3>& points) const;
-    EContainmentType Contains(const BoundingBox& box) const;
+    EContainmentType Contains(const FBoundingBox& box) const;
     EContainmentType Contains(const FSphere& sphere) const;
     EContainmentType Contains(const FFrustum& frustum) const;
 
     EPlaneIntersectionType Intersects(const FPlane& plane) const;
-    bool Intersects(const BoundingBox& box) const;
+    bool Intersects(const FBoundingBox& box) const;
     bool Intersects(const FSphere& sphere) const;
     bool Intersects(const FFrustum& frustum) const;
 
@@ -93,10 +93,10 @@ public:
     // if the returned value is poistive, the camera will move toward the lookat direction (ZoomIn).
     // if the returned value is negative, the camera will move in the revers direction of the lookat direction (ZoomOut).
     float GetZoomToExtentsShiftDistance(const TMemoryView<const float3>& points) const;
-    float GetZoomToExtentsShiftDistance(const BoundingBox& box);
+    float GetZoomToExtentsShiftDistance(const FBoundingBox& box);
 
     float3 GetZoomToExtentsShiftVector(const TMemoryView<const float3>& points);
-    float3 GetZoomToExtentsShiftVector(const BoundingBox& box);
+    float3 GetZoomToExtentsShiftVector(const FBoundingBox& box);
 
     static FFrustum FromCameraParams(const FFrustumCameraParams& params);
     static FFrustum FromCamera(const float3& cameraPos, const float3& lookDir, const float3& upDir, float fov, float znear, float zfar, float aspect);

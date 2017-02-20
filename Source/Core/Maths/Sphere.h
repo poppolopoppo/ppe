@@ -35,12 +35,12 @@ public:
 
     EContainmentType Contains(const float3& point) const;
     EContainmentType Contains(const float3& triangle1, const float3& triangle2, const float3& triangle3) const;
-    EContainmentType Contains(const BoundingBox& box) const;
+    EContainmentType Contains(const FBoundingBox& box) const;
     EContainmentType Contains(const FSphere& sphere) const;
 
     static FSphere FromSegment(const float3& a, const float3& b);
     static FSphere FromPoints(const TMemoryView<const float3>& points);
-    static FSphere FromBox(const BoundingBox& box);
+    static FSphere FromBox(const FBoundingBox& box);
 
     static FSphere Merge(const FSphere& lhs, const FSphere& rhs);
 

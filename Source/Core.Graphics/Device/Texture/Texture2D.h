@@ -57,7 +57,7 @@ public:
 
     void CopySubPart(   IDeviceAPIEncapsulator *device,
                         size_t dstLevel, const uint2& dstPos,
-                        const FTexture2D *psource2D, size_t srcLevel, const AABB2u& srcBox );
+                        const FTexture2D *psource2D, size_t srcLevel, const FAabb2u& srcBox );
 
 protected:
     void Create_(IDeviceAPIEncapsulator *device, const TMemoryView<const u8>& optionalRawData);
@@ -93,7 +93,7 @@ public:
 
     virtual void CopySubPart(   IDeviceAPIEncapsulator *device,
                                 size_t dstLevel, const uint2& dstPos,
-                                const FDeviceAPIDependantTexture2D *psource, size_t srcLevel, const AABB2u& srcBox ) = 0;
+                                const FDeviceAPIDependantTexture2D *psource, size_t srcLevel, const FAabb2u& srcBox ) = 0;
 
     virtual size_t VideoMemorySizeInBytes() const override;
 

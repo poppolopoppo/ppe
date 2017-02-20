@@ -139,7 +139,7 @@ void FTextureCube::CopyFrom(IDeviceAPIEncapsulator *device, const FTextureCube *
 void FTextureCube::CopySubPart(
     IDeviceAPIEncapsulator *device,
     EFace dstFace, size_t dstLevel, const uint2& dstPos,
-    const FTextureCube *psourceCube, EFace srcFace, size_t srcLevel, const AABB2u& srcBox ) {
+    const FTextureCube *psourceCube, EFace srcFace, size_t srcLevel, const FAabb2u& srcBox ) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(Available());

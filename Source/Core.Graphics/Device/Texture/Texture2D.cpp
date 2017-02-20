@@ -144,7 +144,7 @@ void FTexture2D::CopyFrom(IDeviceAPIEncapsulator *device, const FTexture2D *psou
 void FTexture2D::CopySubPart(
     IDeviceAPIEncapsulator *device,
     size_t dstLevel, const uint2& dstPos,
-    const FTexture2D *psource2D, size_t srcLevel, const AABB2u& srcBox ) {
+    const FTexture2D *psource2D, size_t srcLevel, const FAabb2u& srcBox ) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(Available());

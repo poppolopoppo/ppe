@@ -32,7 +32,7 @@ bool DX11CopyResource(IDeviceAPIEncapsulator *device, ::ID3D11Resource *dst, ::I
 //----------------------------------------------------------------------------
 bool DX11CopyResourceSubRegion( IDeviceAPIEncapsulator *device,
                                 ::ID3D11Resource *dst, size_t dstSubResource, const uint3& dstPos,
-                                ::ID3D11Resource *src, size_t srcSubResource, const AABB3u& srcBox );
+                                ::ID3D11Resource *src, size_t srcSubResource, const FAabb3u& srcBox );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

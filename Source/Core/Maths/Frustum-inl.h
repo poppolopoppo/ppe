@@ -18,7 +18,7 @@ inline void FFrustum::GetCorners(float3 (&points)[8]) const {
     return GetCorners(MakeView(points));
 }
 //----------------------------------------------------------------------------
-inline bool FFrustum::Intersects(const BoundingBox& box) const {
+inline bool FFrustum::Intersects(const FBoundingBox& box) const {
     return Contains(box) != EContainmentType::Disjoint;
 }
 //----------------------------------------------------------------------------
@@ -34,7 +34,7 @@ inline float3 FFrustum::GetZoomToExtentsShiftVector(const TMemoryView<const floa
     return Near().Normal() *  GetZoomToExtentsShiftDistance(points);
 }
 //----------------------------------------------------------------------------
-inline float3 FFrustum::GetZoomToExtentsShiftVector(const BoundingBox& box) {
+inline float3 FFrustum::GetZoomToExtentsShiftVector(const FBoundingBox& box) {
     return Near().Normal() *  GetZoomToExtentsShiftDistance(box);
 }
 //----------------------------------------------------------------------------

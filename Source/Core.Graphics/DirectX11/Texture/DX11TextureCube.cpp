@@ -45,14 +45,14 @@ void FDX11TextureCubeContent::CopyFrom(IDeviceAPIEncapsulator *device, const FDe
 void FDX11TextureCubeContent::CopySubPart(
     IDeviceAPIEncapsulator *device,
     const FDeviceAPIDependantTextureCube *dst, FTextureCube::EFace dstFace, size_t dstLevel, const uint2& dstPos,
-    const FDeviceAPIDependantTextureCube *src, FTextureCube::EFace srcFace, size_t srcLevel, const AABB2u& srcBox ) {
+    const FDeviceAPIDependantTextureCube *src, FTextureCube::EFace srcFace, size_t srcLevel, const FAabb2u& srcBox ) {
 
     const size_t dstSubResource = ::D3D11CalcSubresource(checked_cast<UINT>(dstLevel), UINT(dstFace), checked_cast<UINT>(dst->LevelCount()) );
     const uint3 dstPos3u(dstPos, 0);
 
     const FDX11TextureCube *psourceDX11 = checked_cast<const FDX11TextureCube *>(src);
     const size_t srcSubResource = ::D3D11CalcSubresource(checked_cast<UINT>(srcLevel), UINT(srcFace), checked_cast<UINT>(src->LevelCount()) );
-    const AABB3u srcBox3u(uint3(srcBox.Min(), 0), uint3(srcBox.Max(), 1));
+    const FAabb3u srcBox3u(uint3(srcBox.Min(), 0), uint3(srcBox.Max(), 1));
 
     DX11CopyResourceSubRegion(device, _texture.Get(), dstSubResource, dstPos3u, psourceDX11->Texture(), srcSubResource, srcBox3u);
 }
@@ -88,7 +88,7 @@ void FDX11TextureCube::CopyFrom(IDeviceAPIEncapsulator *device, const FDeviceAPI
 void FDX11TextureCube::CopySubPart(
     IDeviceAPIEncapsulator *device,
     FTextureCube::EFace dstFace, size_t dstLevel, const uint2& dstPos,
-    const FDeviceAPIDependantTextureCube *psource, FTextureCube::EFace srcFace, size_t srcLevel, const AABB2u& srcBox ) {
+    const FDeviceAPIDependantTextureCube *psource, FTextureCube::EFace srcFace, size_t srcLevel, const FAabb2u& srcBox ) {
     FDX11TextureCubeContent::CopySubPart(device, this, dstFace, dstLevel, dstPos, psource, srcFace, srcLevel, srcBox);
 }
 //----------------------------------------------------------------------------

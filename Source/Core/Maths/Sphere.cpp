@@ -46,7 +46,7 @@ FSphere FSphere::FromPoints(const TMemoryView<const float3>& points) {
     return FSphere(center, radius);
 }
 //----------------------------------------------------------------------------
-FSphere FSphere::FromBox(const BoundingBox& box) {
+FSphere FSphere::FromBox(const FBoundingBox& box) {
     float3 center = box.Center();
 
     float x = box.Min().x() - box.Max().x();

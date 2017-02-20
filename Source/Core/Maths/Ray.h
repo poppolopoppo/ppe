@@ -33,9 +33,9 @@ public:
     bool Intersects(const float3& triangle1, const float3& triangle2, const float3& triangle3, float& distance) const;
     bool Intersects(const float3& triangle1, const float3& triangle2, const float3& triangle3, float3& point) const;
 
-    bool Intersects(const BoundingBox& box) const;
-    bool Intersects(const BoundingBox& box, float& distance) const;
-    bool Intersects(const BoundingBox& box, float3& point) const;
+    bool Intersects(const FBoundingBox& box) const;
+    bool Intersects(const FBoundingBox& box, float& distance) const;
+    bool Intersects(const FBoundingBox& box, float3& point) const;
 
     bool Intersects(const FSphere& sphere) const;
     bool Intersects(const FSphere& sphere, float& distance) const;

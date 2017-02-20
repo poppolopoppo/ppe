@@ -33,7 +33,7 @@ public:
 
     virtual void CopySubPart(   IDeviceAPIEncapsulator *device,
                                 size_t dstLevel, const uint2& dstPos,
-                                const FDeviceAPIDependantTexture2D *psource, size_t srcLevel, const AABB2u& srcBox ) override final;
+                                const FDeviceAPIDependantTexture2D *psource, size_t srcLevel, const FAabb2u& srcBox ) override final;
 
     virtual const IDeviceAPIDependantAbstractTextureContent *Content() const override final { return this; }
 

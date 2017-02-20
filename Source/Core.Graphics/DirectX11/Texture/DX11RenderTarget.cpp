@@ -68,7 +68,7 @@ void FDX11RenderTarget::CopyFrom(IDeviceAPIEncapsulator *device, const FDeviceAP
 void FDX11RenderTarget::CopySubPart(
     IDeviceAPIEncapsulator *device,
     size_t dstLevel, const uint2& dstPos,
-    const FDeviceAPIDependantTexture2D *psource, size_t srcLevel, const AABB2u& srcBox ) {
+    const FDeviceAPIDependantTexture2D *psource, size_t srcLevel, const FAabb2u& srcBox ) {
     FDX11Texture2DContent::CopySubPart(device, this, dstLevel, dstPos, psource, srcLevel, srcBox);
 }
 //----------------------------------------------------------------------------

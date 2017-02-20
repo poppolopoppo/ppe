@@ -92,7 +92,7 @@ float3 ClosestPointPlanePoint(const FPlane& plane, const float3& point) {
     return point - (t * plane.Normal());
 }
 //----------------------------------------------------------------------------
-float3 ClosestPointBoxPoint(const AABB3f& box, const float3& point) {
+float3 ClosestPointBoxPoint(const FBoundingBox& box, const float3& point) {
     //Source: Real-Time Collision Detection by Christer Ericson
     //Reference: Page 130
 
@@ -144,7 +144,7 @@ float DistancePlanePoint(const FPlane& plane, const float3& point) {
     return dot + plane.D();
 }
 //----------------------------------------------------------------------------
-float DistanceBoxPoint(const AABB3f& box, const float3& point) {
+float DistanceBoxPoint(const FBoundingBox& box, const float3& point) {
     //Source: Real-Time Collision Detection by Christer Ericson
     //Reference: Page 131
 
@@ -165,10 +165,10 @@ float DistanceBoxPoint(const AABB3f& box, const float3& point) {
     if (point.z() > box.Max().z())
         distance += (point.z() - box.Max().z()) * (point.z() - box.Max().z());
 
-    return std::sqrt(distance);
+    return Sqrt(distance);
 }
 //----------------------------------------------------------------------------
-float DistanceBoxBox(const AABB3f& box1, const AABB3f& box2) {
+float DistanceBoxBox(const FBoundingBox& box1, const FBoundingBox& box2) {
     //Source:
     //Reference:
 
@@ -210,7 +210,7 @@ float DistanceBoxBox(const AABB3f& box1, const AABB3f& box2) {
         distance += delta * delta;
     }
 
-    return std::sqrt(distance);
+    return Sqrt(distance);
 }
 //----------------------------------------------------------------------------
 float DistanceSpherePoint(const FSphere& sphere, const float3& point) {
@@ -299,12 +299,12 @@ bool RayIntersectsRay(const FRay& ray1, const FRay& ray2, float3& point) {
     float denominator = Length3(cross);
 
     //Lines are parallel.
-    if (std::abs(denominator) < F_Epsilon)
+    if (Abs(denominator) < F_Epsilon)
     {
         //Lines are parallel and on top of each other.
-        if (std::abs(ray2.Origin().x() - ray1.Origin().x()) < F_Epsilon &&
-            std::abs(ray2.Origin().y() - ray1.Origin().y()) < F_Epsilon &&
-            std::abs(ray2.Origin().z() - ray1.Origin().z()) < F_Epsilon)
+        if (Abs(ray2.Origin().x() - ray1.Origin().x()) < F_Epsilon &&
+            Abs(ray2.Origin().y() - ray1.Origin().y()) < F_Epsilon &&
+            Abs(ray2.Origin().z() - ray1.Origin().z()) < F_Epsilon)
         {
             point = float3::Zero();
             return true;
@@ -356,9 +356,9 @@ bool RayIntersectsRay(const FRay& ray1, const FRay& ray2, float3& point) {
     float3 point2 = ray2.Origin() + (t * ray2.Direction());
 
     //If the points are not equal, no intersection has occured.
-    if (std::abs(point2.x() - point1.x()) > F_Epsilon ||
-        std::abs(point2.y() - point1.y()) > F_Epsilon ||
-        std::abs(point2.z() - point1.z()) > F_Epsilon)
+    if (Abs(point2.x() - point1.x()) > F_Epsilon ||
+        Abs(point2.y() - point1.y()) > F_Epsilon ||
+        Abs(point2.z() - point1.z()) > F_Epsilon)
     {
         point = float3::Zero();
         return false;
@@ -374,7 +374,7 @@ bool RayIntersectsPlane(const FRay& ray, const FPlane& plane, float& distance) {
 
     float direction = Dot3(plane.Normal(), ray.Direction());
 
-    if (std::abs(direction) < F_Epsilon)
+    if (Abs(direction) < F_Epsilon)
     {
         distance = 0.0f;
         return false;
@@ -513,14 +513,14 @@ bool RayIntersectsTriangle(const FRay& ray, const float3& vertex1, const float3&
     return true;
 }
 //----------------------------------------------------------------------------
-bool RayIntersectsBox(const FRay& ray, const AABB3f& box, float& distance) {
+bool RayIntersectsBox(const FRay& ray, const FBoundingBox& box, float& distance) {
     //Source: Real-Time Collision Detection by Christer Ericson
     //Reference: Page 179
 
     distance = 0.0f;
     float tmax = FLT_MAX;
 
-    if (std::abs(ray.Direction().x()) < F_Epsilon)
+    if (Abs(ray.Direction().x()) < F_Epsilon)
     {
         if (ray.Origin().x() < box.Min().x() || ray.Origin().x() > box.Max().x())
         {
@@ -551,7 +551,7 @@ bool RayIntersectsBox(const FRay& ray, const AABB3f& box, float& distance) {
         }
     }
 
-    if (std::abs(ray.Direction().y()) < F_Epsilon)
+    if (Abs(ray.Direction().y()) < F_Epsilon)
     {
         if (ray.Origin().y() < box.Min().y() || ray.Origin().y() > box.Max().y())
         {
@@ -582,7 +582,7 @@ bool RayIntersectsBox(const FRay& ray, const AABB3f& box, float& distance) {
         }
     }
 
-    if (std::abs(ray.Direction().z()) < F_Epsilon)
+    if (Abs(ray.Direction().z()) < F_Epsilon)
     {
         if (ray.Origin().z() < box.Min().z() || ray.Origin().z() > box.Max().z())
         {
@@ -616,7 +616,7 @@ bool RayIntersectsBox(const FRay& ray, const AABB3f& box, float& distance) {
     return true;
 }
 //----------------------------------------------------------------------------
-bool RayIntersectsBox(const FRay& ray, const AABB3f& box, float3& point) {
+bool RayIntersectsBox(const FRay& ray, const FBoundingBox& box, float3& point) {
     float distance;
     if (!RayIntersectsBox(ray, box, distance))
     {
@@ -651,7 +651,7 @@ bool RayIntersectsSphere(const FRay& ray, const FSphere& sphere, float& distance
         return false;
     }
 
-    distance = -b - std::sqrt(discriminant);
+    distance = -b - Sqrt(discriminant);
 
     if (distance < 0.0f)
         distance = 0.0f;
@@ -693,7 +693,7 @@ bool PlaneIntersectsPlane(const FPlane& plane1, const FPlane& plane2) {
     //coincident. It is not an intersection. The dot product will tell us.
     float denominator = Dot3(direction, direction);
 
-    if (std::abs(denominator) < F_Epsilon)
+    if (Abs(denominator) < F_Epsilon)
         return false;
 
     return true;
@@ -712,7 +712,7 @@ bool PlaneIntersectsPlane(const FPlane& plane1, const FPlane& plane2, FRay& line
     //We assume the planes are normalized, therefore the denominator
     //only serves as a parallel and coincident check. Otherwise we need
     //to deivide the point by the denominator.
-    if (std::abs(denominator) < F_Epsilon)
+    if (Abs(denominator) < F_Epsilon)
     {
         return false;
     }
@@ -742,7 +742,7 @@ EPlaneIntersectionType PlaneIntersectsTriangle(const FPlane& plane, const float3
     return EPlaneIntersectionType::Intersecting;
 }
 //----------------------------------------------------------------------------
-EPlaneIntersectionType PlaneIntersectsBox(const FPlane& plane, const AABB3f& box) {
+EPlaneIntersectionType PlaneIntersectsBox(const FPlane& plane, const FBoundingBox& box) {
     //Source: Real-Time Collision Detection by Christer Ericson
     //Reference: Page 161
 
@@ -787,7 +787,7 @@ EPlaneIntersectionType PlaneIntersectsSphere(const FPlane& plane, const FSphere&
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool BoxIntersectsTriangle(const AABB3f& box, const float3& vertex1, const float3& vertex2, const float3& vertex3) {
+bool BoxIntersectsTriangle(const FBoundingBox& box, const float3& vertex1, const float3& vertex2, const float3& vertex3) {
     if (BoxContainsPoint(box, vertex1) == EContainmentType::Contains)
         return true;
 
@@ -800,7 +800,7 @@ bool BoxIntersectsTriangle(const AABB3f& box, const float3& vertex1, const float
     return false;
 }
 //----------------------------------------------------------------------------
-bool BoxIntersectsBox(const AABB3f& box1, const AABB3f& box2) {
+bool BoxIntersectsBox(const FBoundingBox& box1, const FBoundingBox& box2) {
     if (box1.Min().x() > box2.Max().x() || box2.Min().x() > box1.Max().x())
         return false;
 
@@ -813,7 +813,7 @@ bool BoxIntersectsBox(const AABB3f& box1, const AABB3f& box2) {
     return true;
 }
 //----------------------------------------------------------------------------
-bool BoxIntersectsSphere(const AABB3f& box, const FSphere& sphere) {
+bool BoxIntersectsSphere(const FBoundingBox& box, const FSphere& sphere) {
     //Source: Real-Time Collision Detection by Christer Ericson
     //Reference: Page 166
 
@@ -844,7 +844,7 @@ bool SphereIntersectsSphere(const FSphere& sphere1, const FSphere& sphere2) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-EContainmentType BoxContainsPoint(const AABB3f& box, const float3& point) {
+EContainmentType BoxContainsPoint(const FBoundingBox& box, const float3& point) {
     if (box.Min().x() <= point.x() && box.Max().x() >= point.x() &&
         box.Min().y() <= point.y() && box.Max().y() >= point.y() &&
         box.Min().z() <= point.z() && box.Max().z() >= point.z())
@@ -855,7 +855,7 @@ EContainmentType BoxContainsPoint(const AABB3f& box, const float3& point) {
     return EContainmentType::Disjoint;
 }
 //----------------------------------------------------------------------------
-EContainmentType BoxContainsTriangle(const AABB3f& box, const float3& vertex1, const float3& vertex2, const float3& vertex3) {
+EContainmentType BoxContainsTriangle(const FBoundingBox& box, const float3& vertex1, const float3& vertex2, const float3& vertex3) {
     EContainmentType test1 = BoxContainsPoint(box, vertex1);
     EContainmentType test2 = BoxContainsPoint(box, vertex2);
     EContainmentType test3 = BoxContainsPoint(box, vertex3);
@@ -869,7 +869,7 @@ EContainmentType BoxContainsTriangle(const AABB3f& box, const float3& vertex1, c
     return EContainmentType::Disjoint;
 }
 //----------------------------------------------------------------------------
-EContainmentType BoxContainsBox(const AABB3f& box1, const AABB3f& box2) {
+EContainmentType BoxContainsBox(const FBoundingBox& box1, const FBoundingBox& box2) {
     if (box1.Max().x() < box2.Min().x() || box1.Min().x() > box2.Max().x())
         return EContainmentType::Disjoint;
 
@@ -889,7 +889,7 @@ EContainmentType BoxContainsBox(const AABB3f& box1, const AABB3f& box2) {
     return EContainmentType::Intersects;
 }
 //----------------------------------------------------------------------------
-EContainmentType BoxContainsSphere(const AABB3f& box, const FSphere& sphere) {
+EContainmentType BoxContainsSphere(const FBoundingBox& box, const FSphere& sphere) {
     float3 vector = Clamp(sphere.Center(), box.Min(), box.Max());
     float distance = DistanceSq3(sphere.Center(), vector);
 
@@ -932,7 +932,7 @@ EContainmentType SphereContainsTriangle(const FSphere& sphere, const float3& ver
     return EContainmentType::Disjoint;
 }
 //----------------------------------------------------------------------------
-EContainmentType SphereContainsBox(const FSphere& sphere, const AABB3f& box) {
+EContainmentType SphereContainsBox(const FSphere& sphere, const FBoundingBox& box) {
     float3 vector;
 
     if (!BoxIntersectsSphere(box, sphere))

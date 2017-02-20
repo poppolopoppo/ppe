@@ -26,8 +26,18 @@ inline bool BarycentricLerp(bool v0, bool v1, bool v2, float f0, float f1, float
 }
 //----------------------------------------------------------------------------
 template <typename T>
+constexpr T Ceil(T f) {
+    return std::ceil(f);
+}
+//----------------------------------------------------------------------------
+template <typename T>
 constexpr T Clamp(T value, T vmin, T vmax) {
     return std::min(vmax, std::max(vmin, value));
+}
+//----------------------------------------------------------------------------
+template <typename T>
+constexpr T Floor(T f) {
+    return std::floor(f);
 }
 //----------------------------------------------------------------------------
 template <typename T>

@@ -41,7 +41,7 @@ void DrawLine(FFloatImage* img, int x0, int y0, int x1, int y1, const ColorRGBAF
         ColorRGBAF c = color;
         float yy = float(y0);
         forrange(x, x0, x1) {
-            const int y = int(std::floor(yy));
+            const int y = int(Floor(yy));
             const float fy = yy - y;
             c.a() = color.a() * (1.0f - fy);
             DrawPoint(img, x, y, c);
@@ -61,7 +61,7 @@ void DrawLine(FFloatImage* img, int x0, int y0, int x1, int y1, const ColorRGBAF
         ColorRGBAF c = color;
         float xx = float(x0);
         forrange(y, y0, y1) {
-            const int x = int(std::floor(xx));
+            const int x = int(Floor(xx));
             const float fx = xx - x;
             c.a() = color.a() * (1.0f - fx);
             DrawPoint(img, x, y, c);
@@ -88,13 +88,13 @@ void DrawLine(FFloatImage* img, const float2& uv0, const float2& uv1, const Colo
         color );
 }
 //----------------------------------------------------------------------------
-void DrawBoundingBox(FFloatImage* img, const AABB2i& box, const ColorRGBAF& color) {
+void DrawBoundingBox(FFloatImage* img, const FAabb2i& box, const ColorRGBAF& color) {
     int2 corners[4];
     box.GetCorners(corners);
     DrawPolygon(img, corners, color);
 }
 //----------------------------------------------------------------------------
-void DrawBoundingBox(FFloatImage* img, const AABB2f& uvs, const ColorRGBAF& color) {
+void DrawBoundingBox(FFloatImage* img, const FAabb2f& uvs, const ColorRGBAF& color) {
     float2 corners[4];
     uvs.GetCorners(corners);
     DrawPolygon(img, corners, color);
@@ -120,7 +120,7 @@ void DrawPolygon(FFloatImage* img, const TMemoryView<const float2>& uvs, const C
     DrawLine(img, uvs.back(), uvs.front(), color);
 }
 //----------------------------------------------------------------------------
-void FillBoundingBox(FFloatImage* img, const AABB2i& box, const ColorRGBAF& color) {
+void FillBoundingBox(FFloatImage* img, const FAabb2i& box, const ColorRGBAF& color) {
     ColorRGBAF border = color;
     border.a() = 1.0f;
 
@@ -140,10 +140,10 @@ void FillBoundingBox(FFloatImage* img, const AABB2i& box, const ColorRGBAF& colo
         DrawPoint(img, x, box.Max().y() - 1, border);
 }
 //----------------------------------------------------------------------------
-void FillBoundingBox(FFloatImage* img, const AABB2f& uvs, const ColorRGBAF& color) {
+void FillBoundingBox(FFloatImage* img, const FAabb2f& uvs, const ColorRGBAF& color) {
     const int w = checked_cast<int>(img->Width());
     const int h = checked_cast<int>(img->Height());
-    FillBoundingBox(img, AABB2i(
+    FillBoundingBox(img, FAabb2i(
         int2(int(uvs.Min().x() * w), int(uvs.Min().y() * h)),
         int2(int(uvs.Max().x() * w), int(uvs.Max().y() * h)) ),
         color );

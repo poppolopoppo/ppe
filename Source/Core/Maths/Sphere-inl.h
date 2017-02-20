@@ -53,7 +53,7 @@ inline EContainmentType FSphere::Contains(const float3& triangle1, const float3&
     return Collision::SphereContainsTriangle(*this, triangle1, triangle2, triangle3);
 }
 //----------------------------------------------------------------------------
-inline EContainmentType FSphere::Contains(const BoundingBox& box) const {
+inline EContainmentType FSphere::Contains(const FBoundingBox& box) const {
     return Collision::SphereContainsBox(*this, box);
 }
 //----------------------------------------------------------------------------

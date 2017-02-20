@@ -75,7 +75,7 @@ inline EPlaneIntersectionType FPlane::Intersects(const float3& triangle1, const 
     return Collision::PlaneIntersectsTriangle(*this, triangle1, triangle2, triangle3);
 }
 //----------------------------------------------------------------------------
-inline EPlaneIntersectionType FPlane::Intersects(const BoundingBox& box) const {
+inline EPlaneIntersectionType FPlane::Intersects(const FBoundingBox& box) const {
     return Collision::PlaneIntersectsBox(*this, box);
 }
 //----------------------------------------------------------------------------

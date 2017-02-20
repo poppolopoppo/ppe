@@ -90,7 +90,7 @@ void FDX11ResourceBuffer::CopySubPart(
     const FDX11ResourceBuffer *psourceDX11 = checked_cast<const FDX11ResourceBuffer *>(psource);
 
     const uint3 dstPos(checked_cast<u32>(dstOffset), 0, 0);
-    const AABB3u srcBox(uint3(checked_cast<u32>(srcOffset), 0, 0),
+    const FAabb3u srcBox(uint3(checked_cast<u32>(srcOffset), 0, 0),
                         uint3(checked_cast<u32>(srcOffset + length), 0, 1) );
 
     DX11CopyResourceSubRegion(device, _entity.Get(), 0, dstPos, psourceDX11->Entity(), 0, srcBox);

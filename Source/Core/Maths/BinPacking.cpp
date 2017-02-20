@@ -17,9 +17,9 @@ namespace Core {
 namespace {
 //----------------------------------------------------------------------------
 static void Split_(
-    AABB2f& right,
-    AABB2f& bottom,
-    const AABB2f& parent,
+    FAabb2f& right,
+    FAabb2f& bottom,
+    const FAabb2f& parent,
     const float2& box ) {
     Assert(parent.HasPositiveExtentsStrict());
     Assert(parent.Extents().AllGreaterOrEqual(box));
@@ -92,10 +92,10 @@ bool BinPacking2D(float2& binsize, const TMemoryView<float2>& offsets, const TMe
     });
 
     // Initial size if the size of the biggest box
-    AABB2f root(float2(0), boxes[indices[0]]);
+    FAabb2f root(float2(0), boxes[indices[0]]);
 
     // Fill recursively the bins with the sorted boxes
-    VECTOR_THREAD_LOCAL(Maths, AABB2f) bins;
+    VECTOR_THREAD_LOCAL(Maths, FAabb2f) bins;
     bins.reserve(n);
     bins.push_back(root);
 
@@ -105,7 +105,7 @@ bool BinPacking2D(float2& binsize, const TMemoryView<float2>& offsets, const TMe
 
         bool found = false;
         forrange(j, 0, bins.size()) {
-            AABB2f bin = bins[j];
+            FAabb2f bin = bins[j];
             const float2 binExtents = bin.Extents();
             Assert(binExtents.AllGreaterThan(float2(0)));
 
@@ -115,7 +115,7 @@ bool BinPacking2D(float2& binsize, const TMemoryView<float2>& offsets, const TMe
                 offsets[i] = bin.Min();
                 binsize = Max(bin.Min() + box, binsize);
 
-                AABB2f right, bottom;
+                FAabb2f right, bottom;
                 Split_(right, bottom, bin, box);
 
                 if (right.HasPositiveExtentsStrict()) {
@@ -180,13 +180,13 @@ bool BinPacking2D(float2& binsize, const TMemoryView<float2>& offsets, const TMe
                 }
             }
 
-            AABB2f growth;
+            FAabb2f growth;
             if (willGrowRight) {
-                growth = AABB2f(
+                growth = FAabb2f(
                     float2(root.Max().x(), root.Min().y()),
                     float2(root.Max().x() + box.x(), root.Max().y()) );
 
-                AABB2f right, bottom;
+                FAabb2f right, bottom;
                 Split_(right, bottom, growth, box);
 
                 Assert(not right.HasPositiveExtentsStrict());
@@ -194,11 +194,11 @@ bool BinPacking2D(float2& binsize, const TMemoryView<float2>& offsets, const TMe
                     bins.push_back(bottom);
             }
             else if (willGrowDown) {
-                growth = AABB2f(
+                growth = FAabb2f(
                     float2(root.Min().x(), root.Max().y()),
                     float2(root.Max().x(), root.Max().y() + box.y()) );
 
-                AABB2f right, bottom;
+                FAabb2f right, bottom;
                 Split_(right, bottom, growth, box);
 
                 Assert(not bottom.HasPositiveExtentsStrict());
@@ -212,7 +212,7 @@ bool BinPacking2D(float2& binsize, const TMemoryView<float2>& offsets, const TMe
             offsets[i] = growth.Min();
             binsize = Max(growth.Min() + box, binsize);
 
-            root = AABB2f(root.Min(), growth.Max());
+            root = FAabb2f(root.Min(), growth.Max());
         }
     }
 

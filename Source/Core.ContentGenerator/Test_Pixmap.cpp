@@ -106,7 +106,7 @@ static void Test_ConvexHull_(const FFilename& input) {
     if (not convexhull.HasAlpha())
         return;
 
-    AABB2f aabb;
+    FAabb2f aabb;
     if (not Pixmap::BoundingBox(aabb, &convexhull, AlphaCutoff))
         AssertNotReached();
 
@@ -164,7 +164,7 @@ void Test_Binpacking() {
     forrange(i, 0, COUNT) {
         const float2 pos = offsets[i].xy();
 
-        const AABB2f box(
+        const FAabb2f box(
             (pos) * dUdV,
             (pos + boxes[i]) * dUdV );
 

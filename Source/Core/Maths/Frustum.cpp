@@ -175,7 +175,7 @@ EContainmentType FFrustum::Contains(const TMemoryView<const float3>& points) con
         return EContainmentType::Disjoint;
 }
 //----------------------------------------------------------------------------
-EContainmentType FFrustum::Contains(const BoundingBox& box) const {
+EContainmentType FFrustum::Contains(const FBoundingBox& box) const {
     // http://www.iquilezles.org/www/articles/frustumcorrect/frustumcorrect.htm
     size_t inside = 0;
 
@@ -355,7 +355,7 @@ float FFrustum::GetZoomToExtentsShiftDistance(const TMemoryView<const float3>& p
     return -maxPointDist / vSin;
 }
 //----------------------------------------------------------------------------
-float FFrustum::GetZoomToExtentsShiftDistance(const BoundingBox& box) {
+float FFrustum::GetZoomToExtentsShiftDistance(const FBoundingBox& box) {
     float3 corners[8];
     box.GetCorners(corners);
 

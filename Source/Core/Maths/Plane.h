@@ -47,7 +47,7 @@ public:
     bool Intersects(const FPlane& plane, FRay& line) const;
 
     EPlaneIntersectionType Intersects(const float3& triangle1, const float3& triangle2, const float3& triangle3) const;
-    EPlaneIntersectionType Intersects(const BoundingBox& box) const;
+    EPlaneIntersectionType Intersects(const FBoundingBox& box) const;
     EPlaneIntersectionType Intersects(const FSphere& sphere) const;
 
     static FPlane FromTriangle(const float3& a, const float3& b, const float3& c);

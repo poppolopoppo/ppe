@@ -59,16 +59,16 @@ inline bool FRay::Intersects(const float3& triangle1, const float3& triangle2, c
     return Collision::RayIntersectsTriangle(*this, triangle1, triangle2, triangle3, point);
 }
 //----------------------------------------------------------------------------
-inline bool FRay::Intersects(const BoundingBox& box) const {
+inline bool FRay::Intersects(const FBoundingBox& box) const {
     float distance;
     return Collision::RayIntersectsBox(*this, box, distance);
 }
 //----------------------------------------------------------------------------
-inline bool FRay::Intersects(const BoundingBox& box, float& distance) const {
+inline bool FRay::Intersects(const FBoundingBox& box, float& distance) const {
     return Collision::RayIntersectsBox(*this, box, distance);
 }
 //----------------------------------------------------------------------------
-inline bool FRay::Intersects(const BoundingBox& box, float3& point) const {
+inline bool FRay::Intersects(const FBoundingBox& box, float3& point) const {
     return Collision::RayIntersectsBox(*this, box, point);
 }
 //----------------------------------------------------------------------------

@@ -419,7 +419,7 @@ void ExpandColorToTransparentPixels(FFloatImage* img, float alphaCutoff) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool BoundingBox(AABB2f& uvs, const FFloatImage* img, float alphaCutoff) {
+bool BoundingBox(FAabb2f& uvs, const FFloatImage* img, float alphaCutoff) {
     Assert(img);
     Assert(img->Width() > 1 && img->Height() > 1);
     Assert(alphaCutoff >= 0.f && alphaCutoff < 1.f);
@@ -431,7 +431,7 @@ bool BoundingBox(AABB2f& uvs, const FFloatImage* img, float alphaCutoff) {
 
     const float2 dUdV = img->DuDv();
 
-    uvs = AABB2f();
+    uvs = FAabb2f();
 
     forrange(y, 0, h) {
         const float v = y * dUdV.y();

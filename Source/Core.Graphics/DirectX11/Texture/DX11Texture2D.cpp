@@ -45,14 +45,14 @@ void FDX11Texture2DContent::CopyFrom(IDeviceAPIEncapsulator *device, const FDevi
 void FDX11Texture2DContent::CopySubPart(
     IDeviceAPIEncapsulator *device,
     const FDeviceAPIDependantTexture2D *dst, size_t dstLevel, const uint2& dstPos,
-    const FDeviceAPIDependantTexture2D *src, size_t srcLevel, const AABB2u& srcBox ) {
+    const FDeviceAPIDependantTexture2D *src, size_t srcLevel, const FAabb2u& srcBox ) {
 
     const size_t dstSubResource = ::D3D11CalcSubresource(checked_cast<UINT>(dstLevel), 0, checked_cast<UINT>(dst->LevelCount()) );
     const uint3 dstPos3u(dstPos, 0);
 
     const FDX11Texture2D *psourceDX11 = checked_cast<const FDX11Texture2D *>(src);
     const size_t srcSubResource = ::D3D11CalcSubresource(checked_cast<UINT>(srcLevel), 0, checked_cast<UINT>(src->LevelCount()) );
-    const AABB3u srcBox3u(uint3(srcBox.Min(), 0), uint3(srcBox.Max(), 1));
+    const FAabb3u srcBox3u(uint3(srcBox.Min(), 0), uint3(srcBox.Max(), 1));
 
     DX11CopyResourceSubRegion(device, _texture.Get(), dstSubResource, dstPos3u, psourceDX11->Texture(), srcSubResource, srcBox3u);
 }
@@ -88,7 +88,7 @@ void FDX11Texture2D::CopyFrom(IDeviceAPIEncapsulator *device, const FDeviceAPIDe
 void FDX11Texture2D::CopySubPart(
     IDeviceAPIEncapsulator *device,
     size_t dstLevel, const uint2& dstPos,
-    const FDeviceAPIDependantTexture2D *psource, size_t srcLevel, const AABB2u& srcBox ) {
+    const FDeviceAPIDependantTexture2D *psource, size_t srcLevel, const FAabb2u& srcBox ) {
     FDX11Texture2DContent::CopySubPart(device, this, dstLevel, dstPos, psource, srcLevel, srcBox);
 }
 //----------------------------------------------------------------------------

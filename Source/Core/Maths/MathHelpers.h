@@ -25,10 +25,16 @@ template <typename T, typename U>
 constexpr T BarycentricLerp(T v0, T v1, T v2, U f0, U f1, U f2);
 //----------------------------------------------------------------------------
 template <typename T>
+constexpr T Ceil(T f);
+//----------------------------------------------------------------------------
+template <typename T>
 constexpr T Clamp(T value, T vmin, T vmax);
 //----------------------------------------------------------------------------
 template <typename T>
 constexpr T Frac(T f);
+//----------------------------------------------------------------------------
+template <typename T>
+constexpr T Floor(T f);
 //----------------------------------------------------------------------------
 template <typename T, typename U>
 constexpr T Lerp(T v0, T v1, U f);

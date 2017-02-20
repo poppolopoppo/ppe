@@ -21,7 +21,7 @@ void ExpandColorToTransparentPixels(FFloatImage* img, float alphaCutoff);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool BoundingBox(AABB2f& uvs, const FFloatImage* img, float alphaCutoff);
+bool BoundingBox(FAabb2f& uvs, const FFloatImage* img, float alphaCutoff);
 //----------------------------------------------------------------------------
 bool ConvexHull(const TMemoryView<float2>& uvs, const FFloatImage* img, float alphaCutoff);
 //----------------------------------------------------------------------------

@@ -31,7 +31,7 @@ public:
 
     void CopySubPart(   IDeviceAPIEncapsulator *device,
                         const FDeviceAPIDependantTextureCube *dst, FTextureCube::EFace dstFace, size_t dstLevel, const uint2& dstPos,
-                        const FDeviceAPIDependantTextureCube *src, FTextureCube::EFace srcFace, size_t srcLevel, const AABB2u& srcBox );
+                        const FDeviceAPIDependantTextureCube *src, FTextureCube::EFace srcFace, size_t srcLevel, const FAabb2u& srcBox );
 
 private:
     TComPtr<::ID3D11Texture2D> _texture;
@@ -55,7 +55,7 @@ public:
 
     virtual void CopySubPart(   IDeviceAPIEncapsulator *device,
                                 FTextureCube::EFace dstFace, size_t dstLevel, const uint2& dstPos,
-                                const FDeviceAPIDependantTextureCube *src, FTextureCube::EFace srcFace, size_t srcLevel, const AABB2u& srcBox ) override final;
+                                const FDeviceAPIDependantTextureCube *src, FTextureCube::EFace srcFace, size_t srcLevel, const FAabb2u& srcBox ) override final;
 
     virtual const IDeviceAPIDependantAbstractTextureContent *Content() const override final { return this; }
 

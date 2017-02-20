@@ -57,7 +57,7 @@ public:
 
     void CopySubPart(   IDeviceAPIEncapsulator *device,
                         EFace dstFace, size_t dstLevel, const uint2& dstPos,
-                        const FTextureCube *psourceCube, EFace srcFace, size_t srcLevel, const AABB2u& srcBox );
+                        const FTextureCube *psourceCube, EFace srcFace, size_t srcLevel, const FAabb2u& srcBox );
 
 
 protected:
@@ -98,7 +98,7 @@ public:
 
     virtual void CopySubPart(   IDeviceAPIEncapsulator *device,
                                 FTextureCube::EFace dstFace, size_t dstLevel, const uint2& dstPos,
-                                const FDeviceAPIDependantTextureCube *psource, FTextureCube::EFace srcFace, size_t srcLevel, const AABB2u& srcBox ) = 0;
+                                const FDeviceAPIDependantTextureCube *psource, FTextureCube::EFace srcFace, size_t srcLevel, const FAabb2u& srcBox ) = 0;
 
     virtual size_t VideoMemorySizeInBytes() const override;
 
