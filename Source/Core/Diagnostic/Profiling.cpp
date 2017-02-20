@@ -61,7 +61,7 @@ static POD_STORAGE(FProfiler) _gProfilerPOD_Thread;
 static FProfiler* _gProfilerPtr_Thread = nullptr;
 }
 //----------------------------------------------------------------------------
-void FProfiler::FStartup() {
+void FProfiler::Start() {
     Assert(nullptr == _gProfilerPtr_Global);
     Assert(nullptr == _gProfilerPtr_Process);
     Assert(nullptr == _gProfilerPtr_Thread);

@@ -20,7 +20,7 @@ namespace MiniDump
         return EResult::NotAvailable;
     }
 
-    void FStartup() {}
+    void Start() {}
     void Shutdown() {}
 
     const char *ResultMessage(EResult code) { return "MiniDump: unsupported platform"; }

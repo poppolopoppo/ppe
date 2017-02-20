@@ -38,7 +38,7 @@ public:
     void Mark(u32 data) const;
     void MarkAndComment(u32 data, const char* cstr) const;
 
-    static void FStartup();
+    static void Start();
     static void Shutdown();
 
     static const FProfiler* Global();
