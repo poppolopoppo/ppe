@@ -44,6 +44,11 @@ TScalarVector<T, _Dim> Unquantize(const TScalarBoundingBox<T, _Dim>& aabb, const
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
+TScalarBoundingBox<T, _Dim> MakeBoundingBox(const TMemoryView<const TScalarVector<T, _Dim>>& points);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
 TScalarBoundingBox<T, _Dim> SwapEndianness(const TScalarBoundingBox<T, _Dim>& value) {
     return TScalarBoundingBox<T, _Dim>(
         SwapEndianness(value.Min()),
