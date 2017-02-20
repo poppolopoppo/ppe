@@ -14,10 +14,6 @@ inline FFrustum::FFrustum(float4x4& viewProjection) {
     SetMatrix(viewProjection);
 }
 //----------------------------------------------------------------------------
-inline void FFrustum::GetCorners(float3 (&points)[8]) const {
-    return GetCorners(MakeView(points));
-}
-//----------------------------------------------------------------------------
 inline bool FFrustum::Intersects(const FBoundingBox& box) const {
     return Contains(box) != EContainmentType::Disjoint;
 }

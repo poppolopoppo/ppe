@@ -67,8 +67,9 @@ public:
 
     bool IsOrthographic() const;
 
-    void GetCorners(float3 (&points)[8]) const;
-    void GetCorners(const TMemoryView<float3>& points) const;
+    TMemoryView<const float3> GetCorners() const { return MakeView(_corners); }
+    const FBoundingBox& GetBoundingBox() const { return _box; }
+
     void GetCameraParams(FFrustumCameraParams& params) const;
 
     EContainmentType Contains(const float3& point) const;
@@ -76,6 +77,8 @@ public:
     EContainmentType Contains(const FBoundingBox& box) const;
     EContainmentType Contains(const FSphere& sphere) const;
     EContainmentType Contains(const FFrustum& frustum) const;
+
+    EContainmentType ContainsConvexCube(const float3 (&points)[8]) const;
 
     EPlaneIntersectionType Intersects(const FPlane& plane) const;
     bool Intersects(const FBoundingBox& box) const;
@@ -104,6 +107,10 @@ public:
 private:
     float4x4 _matrix;
     FPlane _planes[6];
+    float3 _corners[8];
+    FBoundingBox _box;
+
+    void InitProperties_();
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

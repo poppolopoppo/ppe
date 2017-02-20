@@ -19,20 +19,86 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
+static void ComputeFrustumCorners_(const FPlane (&planes)[6], float3 (&points)[8]) {
+    const FPlane& ptop = planes[size_t(EFrustumPlane::Top)];
+    const FPlane& pbottom = planes[size_t(EFrustumPlane::Bottom)];
+
+    const FPlane& pleft = planes[size_t(EFrustumPlane::Left)];
+    const FPlane& pright = planes[size_t(EFrustumPlane::Right)];
+
+    const FPlane& pnear = planes[size_t(EFrustumPlane::Near)];
+    const FPlane& pfar = planes[size_t(EFrustumPlane::Far)];
+
+    points[size_t(EFrustumCorner::Near_LeftTop)]     = FPlane::Get3PlanesInterPoint(pnear, pleft, ptop);
+    points[size_t(EFrustumCorner::Near_LeftBottom)]  = FPlane::Get3PlanesInterPoint(pnear, pleft, pbottom);
+    points[size_t(EFrustumCorner::Near_RightBottom)] = FPlane::Get3PlanesInterPoint(pnear, pright, pbottom);
+    points[size_t(EFrustumCorner::Near_RightTop)]    = FPlane::Get3PlanesInterPoint(pnear, pright, ptop);
+
+    points[size_t(EFrustumCorner::Far_LeftTop)]      = FPlane::Get3PlanesInterPoint(pfar, pleft, ptop);
+    points[size_t(EFrustumCorner::Far_LeftBottom)]   = FPlane::Get3PlanesInterPoint(pfar, pleft, pbottom);
+    points[size_t(EFrustumCorner::Far_RightBottom)]  = FPlane::Get3PlanesInterPoint(pfar, pright, pbottom);
+    points[size_t(EFrustumCorner::Far_RightTop)]     = FPlane::Get3PlanesInterPoint(pfar, pright, ptop);
+}
+//----------------------------------------------------------------------------
+static EContainmentType FrustumContainsConvexVolume_(
+    const FPlane (&frustumPlanes)[6], const float3 (&frustumCorners)[8],
+    const FBoundingBox& convexBounds, const float3 (&convexCorners)[8]
+    ) {
+    // http://www.iquilezles.org/www/articles/frustumcorrect/frustumcorrect.htm
+    size_t inside = 0;
+
+    // check box outside/inside of frustum
+    for (const FPlane& plane : frustumPlanes)
+    {
+        size_t out = 0;
+
+        for (const float3& p : convexCorners)
+          out += (plane.DistanceToPoint(p) < 0.0f ? 1 : 0);
+
+        if (8 == out)
+            return EContainmentType::Disjoint;
+        else if (0 == out)
+            inside++;
+    }
+
+    if (6 == inside)
+        return EContainmentType::Contains;
+
+    // check frustum outside/inside box
+    size_t out;
+
+    out=0; for (const float3& p : frustumCorners) out += ((p.x() > convexBounds.Max().x()) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
+    out=0; for (const float3& p : frustumCorners) out += ((p.x() < convexBounds.Min().x()) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
+
+    out=0; for (const float3& p : frustumCorners) out += ((p.y() > convexBounds.Max().y()) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
+    out=0; for (const float3& p : frustumCorners) out += ((p.y() < convexBounds.Min().y()) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
+
+    out=0; for (const float3& p : frustumCorners) out += ((p.z() > convexBounds.Max().z()) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
+    out=0; for (const float3& p : frustumCorners) out += ((p.z() < convexBounds.Min().z()) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
+
+    return EContainmentType::Intersects;
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FFrustum::FFrustum(const FFrustum& other)
-:   _matrix(other._matrix) {
+:   _matrix(other._matrix)
+,   _box(other._box) {
     for (size_t i = 0; i < 6; ++i)
         _planes[i] = other._planes[i];
+    for (size_t i = 0; i < 8; ++i)
+        _corners[i] = other._corners[i];
 }
 //----------------------------------------------------------------------------
 FFrustum& FFrustum::operator =(const FFrustum& other) {
     _matrix = other._matrix;
+    _box = other._box;
     for (size_t i = 0; i < 6; ++i)
         _planes[i] = other._planes[i];
+    for (size_t i = 0; i < 8; ++i)
+        _corners[i] = other._corners[i];
 
     return *this;
 }
@@ -92,35 +158,11 @@ void FFrustum::SetMatrix(const float4x4& viewProjection) {
     pfar.Normal().z()   = _matrix._34() - _matrix._33();
     pfar.D()            = _matrix._44() - _matrix._43();
     pfar = pfar.Normalize();
-}
-//----------------------------------------------------------------------------
-void FFrustum::GetCorners(const TMemoryView<float3>& points) const {
-    Assert(points.size() == 8);
 
-    const FPlane& ptop = _planes[size_t(EFrustumPlane::Top)];
-    const FPlane& pbottom = _planes[size_t(EFrustumPlane::Bottom)];
-
-    const FPlane& pleft = _planes[size_t(EFrustumPlane::Left)];
-    const FPlane& pright = _planes[size_t(EFrustumPlane::Right)];
-
-    const FPlane& pnear = _planes[size_t(EFrustumPlane::Near)];
-    const FPlane& pfar = _planes[size_t(EFrustumPlane::Far)];
-
-    points[size_t(EFrustumCorner::Near_LeftTop)]     = FPlane::Get3PlanesInterPoint(pnear, pleft, ptop);
-    points[size_t(EFrustumCorner::Near_LeftBottom)]  = FPlane::Get3PlanesInterPoint(pnear, pleft, pbottom);
-    points[size_t(EFrustumCorner::Near_RightBottom)] = FPlane::Get3PlanesInterPoint(pnear, pright, pbottom);
-    points[size_t(EFrustumCorner::Near_RightTop)]    = FPlane::Get3PlanesInterPoint(pnear, pright, ptop);
-
-    points[size_t(EFrustumCorner::Far_LeftTop)]      = FPlane::Get3PlanesInterPoint(pfar, pleft, ptop);
-    points[size_t(EFrustumCorner::Far_LeftBottom)]   = FPlane::Get3PlanesInterPoint(pfar, pleft, pbottom);
-    points[size_t(EFrustumCorner::Far_RightBottom)]  = FPlane::Get3PlanesInterPoint(pfar, pright, pbottom);
-    points[size_t(EFrustumCorner::Far_RightTop)]     = FPlane::Get3PlanesInterPoint(pfar, pright, ptop);
+    InitProperties_();
 }
 //----------------------------------------------------------------------------
 void FFrustum::GetCameraParams(FFrustumCameraParams& params) const {
-    float3 corners[8];
-    GetCorners(MakeView(corners));
-
     const FPlane& ptop = _planes[size_t(EFrustumPlane::Top)];
     //const FPlane& pbottom = _planes[size_t(EFrustumPlane::Bottom)];
 
@@ -134,7 +176,7 @@ void FFrustum::GetCameraParams(FFrustumCameraParams& params) const {
     params.LookAtDir = pnear.Normal();
     params.UpDir = Normalize3(Cross(pright.Normal(), pnear.Normal()));
     params.FOV = (F_HalfPi - std::acos(Dot3(pnear.Normal(), ptop.Normal()))) * 2;
-    params.AspectRatio = Length3(corners[6] - corners[5]) / Length3(corners[4] - corners[5]);
+    params.AspectRatio = Length3(_corners[6] - _corners[5]) / Length3(_corners[4] - _corners[5]);
     params.ZNear = fabsf(pnear.DistanceToPoint(params.Position));
     params.ZFar = fabsf(pfar.DistanceToPoint(params.Position));
 }
@@ -176,50 +218,9 @@ EContainmentType FFrustum::Contains(const TMemoryView<const float3>& points) con
 }
 //----------------------------------------------------------------------------
 EContainmentType FFrustum::Contains(const FBoundingBox& box) const {
-    // http://www.iquilezles.org/www/articles/frustumcorrect/frustumcorrect.htm
-    size_t inside = 0;
-
-    // check box outside/inside of frustum
-    for (const FPlane& plane : _planes)
-    {
-        size_t out = 0;
-
-        out += (plane.DistanceToPoint(float3(box.Min().x(), box.Min().y(), box.Min().z())) < 0.0f ? 1 : 0);
-        out += (plane.DistanceToPoint(float3(box.Max().x(), box.Min().y(), box.Min().z())) < 0.0f ? 1 : 0);
-        out += (plane.DistanceToPoint(float3(box.Min().x(), box.Max().y(), box.Min().z())) < 0.0f ? 1 : 0);
-        out += (plane.DistanceToPoint(float3(box.Max().x(), box.Max().y(), box.Min().z())) < 0.0f ? 1 : 0);
-
-        out += (plane.DistanceToPoint(float3(box.Min().x(), box.Min().y(), box.Max().z())) < 0.0f ? 1 : 0);
-        out += (plane.DistanceToPoint(float3(box.Max().x(), box.Min().y(), box.Max().z())) < 0.0f ? 1 : 0);
-        out += (plane.DistanceToPoint(float3(box.Min().x(), box.Max().y(), box.Max().z())) < 0.0f ? 1 : 0);
-        out += (plane.DistanceToPoint(float3(box.Max().x(), box.Max().y(), box.Max().z())) < 0.0f ? 1 : 0);
-
-        if (8 == out)
-            return EContainmentType::Disjoint;
-        else if (0 == out)
-            inside++;
-    }
-
-    if (6 == inside)
-        return EContainmentType::Contains;
-
-    // TODO: create a class to speedup frustum collision
-    float3 frustumCorners[8];
-    GetCorners(frustumCorners);
-
-    // check frustum outside/inside box
-    size_t out;
-
-    out=0; for (const float3& p : frustumCorners) out += ((p.x() > box.Max().x()) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
-    out=0; for (const float3& p : frustumCorners) out += ((p.x() < box.Min().x()) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
-
-    out=0; for (const float3& p : frustumCorners) out += ((p.y() > box.Max().y()) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
-    out=0; for (const float3& p : frustumCorners) out += ((p.y() < box.Min().y()) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
-
-    out=0; for (const float3& p : frustumCorners) out += ((p.z() > box.Max().z()) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
-    out=0; for (const float3& p : frustumCorners) out += ((p.z() < box.Min().z()) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
-
-    return EContainmentType::Intersects;
+    float3 boxCorners[8];
+    box.GetCorners(boxCorners);
+    return FrustumContainsConvexVolume_(_planes, _corners, box, boxCorners);
 }
 //----------------------------------------------------------------------------
 EContainmentType FFrustum::Contains(const FSphere& sphere) const {
@@ -240,17 +241,16 @@ EContainmentType FFrustum::Contains(const FSphere& sphere) const {
 }
 //----------------------------------------------------------------------------
 EContainmentType FFrustum::Contains(const FFrustum& frustum) const {
-    float3 corners[8];
-    frustum.GetCorners(corners);
-
-    return Contains(MakeView<const float3>(corners));
+    return FrustumContainsConvexVolume_(_planes, _corners, frustum._box, frustum._corners);
+}
+//----------------------------------------------------------------------------
+EContainmentType FFrustum::ContainsConvexCube(const float3 (&points)[8]) const {
+    FBoundingBox box = MakeBoundingBox(MakeView(points));
+    return FrustumContainsConvexVolume_(_planes, _corners, box, points);
 }
 //----------------------------------------------------------------------------
 EPlaneIntersectionType FFrustum::Intersects(const FPlane& plane) const {
-    float3 corners[8];
-    GetCorners(corners);
-
-    return FPlane::PointsIntersection(plane, MakeView<const float3>(corners));
+    return FPlane::PointsIntersection(plane, _corners);
 }
 //----------------------------------------------------------------------------
 bool FFrustum::Intersects(const FRay& ray) const {
@@ -356,10 +356,9 @@ float FFrustum::GetZoomToExtentsShiftDistance(const TMemoryView<const float3>& p
 }
 //----------------------------------------------------------------------------
 float FFrustum::GetZoomToExtentsShiftDistance(const FBoundingBox& box) {
-    float3 corners[8];
-    box.GetCorners(corners);
-
-    return GetZoomToExtentsShiftDistance(MakeView<const float3>(corners));
+    float3 boxCorners[8];
+    box.GetCorners(boxCorners);
+    return GetZoomToExtentsShiftDistance(boxCorners);
 }
 //----------------------------------------------------------------------------
 FFrustum FFrustum::FromCamera(const float3& cameraPos, const float3& lookDir, const float3& upDir, float fov, float znear, float zfar, float aspect) {
@@ -397,7 +396,14 @@ FFrustum FFrustum::FromCamera(const float3& cameraPos, const float3& lookDir, co
     result._planes[size_t(EFrustumPlane::Top)]       = FPlane::FromTriangle(Near2, Far2, Far3).Normalize();
     result._planes[size_t(EFrustumPlane::Bottom)]    = FPlane::FromTriangle(Far4, Far1, Near1).Normalize();
 
+    result.InitProperties_();
+
     return result;
+}
+//----------------------------------------------------------------------------
+void FFrustum::InitProperties_() {
+    ComputeFrustumCorners_(_planes, _corners);
+    _box = MakeBoundingBox(MakeConstView(_corners));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
