@@ -23,9 +23,9 @@ enum class ECase : bool {
 };
 //----------------------------------------------------------------------------
 template <typename _Char>
-class TBasicStringView : public TMemoryView< typename std::add_const<_Char>::type > {
+class TBasicStringView : public TMemoryView< Meta::TAddConst<_Char> > {
 public:
-    typedef TMemoryView< typename std::add_const<_Char>::type > parent_type;
+    typedef TMemoryView< Meta::TAddConst<_Char> > parent_type;
 
     using typename parent_type::value_type;
     using typename parent_type::pointer;

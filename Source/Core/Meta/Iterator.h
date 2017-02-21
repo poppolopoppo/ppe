@@ -2,6 +2,7 @@
 
 #include <iterator>
 
+#include "Core/Meta/TypeTraits.h"
 #include "Core/Meta/Warnings.h"
 
 namespace Core {
@@ -11,7 +12,7 @@ namespace Core {
 #if 0 != _SECURE_SCL
 //----------------------------------------------------------------------------
 template <typename T>
-using TCheckedArrayIterator = stdext::checked_array_iterator<typename std::add_pointer<T>::type>;
+using TCheckedArrayIterator = stdext::checked_array_iterator< Meta::TAddPointer<T> >;
 //----------------------------------------------------------------------------
 template <typename T>
 TCheckedArrayIterator<T> MakeCheckedIterator(T* ptr, size_t count, size_t index) {
@@ -21,7 +22,7 @@ TCheckedArrayIterator<T> MakeCheckedIterator(T* ptr, size_t count, size_t index)
 #else
 //----------------------------------------------------------------------------
 template <typename T>
-using TCheckedArrayIterator = typename std::add_pointer<T>::type;
+using TCheckedArrayIterator = Meta::TAddPointer<T>;
 //----------------------------------------------------------------------------
 template <typename T>
 TCheckedArrayIterator<T> MakeCheckedIterator(T* ptr, size_t count, size_t index) {

@@ -28,10 +28,10 @@ public:
     typedef _Allocator allocator_type;
 
     typedef T value_type;
-    typedef typename std::add_pointer<T>::type pointer;
-    typedef typename std::add_pointer<const T>::type const_pointer;
-    typedef typename std::add_lvalue_reference<T>::type reference;
-    typedef typename std::add_lvalue_reference<const T>::type const_reference;
+    typedef Meta::TAddPointer<T> pointer;
+    typedef Meta::TAddPointer<const T> const_pointer;
+    typedef Meta::TAddReference<T> reference;
+    typedef Meta::TAddReference<const T> const_reference;
 
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;

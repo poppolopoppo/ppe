@@ -87,8 +87,8 @@ const FAbstractMetaTypeScalarTraits* ScalarTraitsFromTypeId(FMetaTypeId typeId);
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
 struct TMetaType< RTTI::TPair<_First, _Second> > {
-    typedef TMetaType< typename std::decay< _First >::type >     first_meta_type;
-    typedef TMetaType< typename std::decay< _Second >::type >    second_meta_type;
+    typedef TMetaType< Meta::TDecay< _First > >     first_meta_type;
+    typedef TMetaType< Meta::TDecay< _Second > >    second_meta_type;
 
     enum : FMetaTypeId {
         TypeId = hash_MetaTypeId_constexpr(EMetaTypeFlags::Pair, first_meta_type::TypeId, second_meta_type::TypeId)
@@ -130,7 +130,7 @@ struct TMetaType< RTTI::TPair<_First, _Second> > {
 //----------------------------------------------------------------------------
 template <typename T>
 struct TMetaType< RTTI::TVector<T> > {
-    typedef TMetaType< typename std::decay< T >::type >  value_meta_type;
+    typedef TMetaType< Meta::TDecay< T > >  value_meta_type;
 
     enum : FMetaTypeId {
         TypeId = hash_MetaTypeId_constexpr(EMetaTypeFlags::Vector, value_meta_type::TypeId)
@@ -179,8 +179,8 @@ struct TMetaType< RTTI::TVector<T> > {
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
 struct TMetaType< RTTI::TDictionary<_Key, _Value> > {
-    typedef TMetaType< typename std::decay< _Key >::type >   key_meta_type;
-    typedef TMetaType< typename std::decay< _Value >::type > value_meta_type;
+    typedef TMetaType< Meta::TDecay< _Key > >   key_meta_type;
+    typedef TMetaType< Meta::TDecay< _Value > > value_meta_type;
 
     enum : FMetaTypeId {
         TypeId = hash_MetaTypeId_constexpr(EMetaTypeFlags::Dictionary, key_meta_type::TypeId, value_meta_type::TypeId)

@@ -15,10 +15,10 @@ class ITypedComponent : public IComponent {
 public:
     virtual ~ITypedComponent() {}
 
-    typedef typename std::add_pointer<T>::type pointer;
-    typedef typename std::add_pointer<const T>::type const_pointer;
-    typedef typename std::add_lvalue_reference<T>::type reference;
-    typedef typename std::add_lvalue_reference<const T>::type const_reference;
+    typedef TAddPointer<T> pointer;
+    typedef TAddPointer<const T> const_pointer;
+    typedef TAddReference<T> reference;
+    typedef TAddReference<const T> const_reference;
     typedef T value_type;
 
     virtual ComponentTag Tag() const { return ComponentTag<T>::Tag(); }

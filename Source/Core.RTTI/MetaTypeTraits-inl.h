@@ -9,13 +9,13 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 template <typename T>
 void TMetaTypeTraitsImpl< TRefPtr<T>, typename std::enable_if<std::is_base_of<RTTI::FMetaObject, T>::value>::type >::WrapMove(wrapper_type& dst, wrapped_type&& src) {
-    typedef TRefPtr< typename std::remove_const<T>::type > refptr_type;
+    typedef TRefPtr< Meta::TRemoveConst<T> > refptr_type;
     dst = std::move(*reinterpret_cast<refptr_type*>(&src)); // const objects are considered non const internally
 }
 //----------------------------------------------------------------------------
 template <typename T>
 void TMetaTypeTraitsImpl< TRefPtr<T>, typename std::enable_if<std::is_base_of<RTTI::FMetaObject, T>::value>::type >::WrapCopy(wrapper_type& dst, const wrapped_type& src) {
-    typedef TRefPtr< typename std::remove_const<T>::type > refptr_type;
+    typedef TRefPtr< Meta::TRemoveConst<T> > refptr_type;
     dst = *reinterpret_cast<const refptr_type*>(&src); // const objects are considered non const internally
 }
 //----------------------------------------------------------------------------

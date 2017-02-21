@@ -107,7 +107,7 @@ auto TMemoryView<T>::FindSubRange(const TMemoryView<T>& subrange) const -> itera
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void TMemoryView<T>::CopyTo(const TMemoryView<typename std::remove_const<T>::type>& dst) const {
+void TMemoryView<T>::CopyTo(const TMemoryView<Meta::TRemoveConst<T>>& dst) const {
     Assert(dst.size() == size());
     std::copy(begin(), end(), dst.begin());
 }
@@ -120,10 +120,10 @@ TMemoryView<T> TMemoryView<T>::SubRange(size_t offset, size_t count) const {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TMemoryView< typename std::add_const<T>::type > TMemoryView<T>::SubRangeConst(size_t offset, size_t count) const {
+TMemoryView< Meta::TAddConst<T> > TMemoryView<T>::SubRangeConst(size_t offset, size_t count) const {
     Assert(offset <= _size);
     Assert(offset + count <= _size);
-    return TMemoryView< typename std::add_const<T>::type >(_storage + offset, count);
+    return TMemoryView< Meta::TAddConst<T> >(_storage + offset, count);
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -135,7 +135,7 @@ TMemoryView<T> TMemoryView<T>::SubRange(iterator first, iterator last) const {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TMemoryView< typename std::add_const<T>::type > TMemoryView<T>::SubRangeConst(iterator first, iterator last) const {
+TMemoryView< Meta::TAddConst<T> > TMemoryView<T>::SubRangeConst(iterator first, iterator last) const {
     Assert(AliasesToContainer(first));
     Assert(AliasesToContainer(last));
     Assert(first <= last);

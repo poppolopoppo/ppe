@@ -14,8 +14,8 @@ template <typename _Key, typename _Value>
 using TPair = std::pair<_Key, _Value>;
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
-FORCE_INLINE TPair< typename std::remove_reference<_Key>::type, typename std::remove_reference<_Value>::type > MakePair(_Key&& key, _Value&& value) {
-    typedef TPair< typename std::remove_reference<_Key>::type, typename std::remove_reference<_Value>::type > pair_type;
+FORCE_INLINE TPair< Meta::TRemoveReference<_Key>, Meta::TRemoveReference<_Value> > MakePair(_Key&& key, _Value&& value) {
+    typedef TPair< Meta::TRemoveReference<_Key>, Meta::TRemoveReference<_Value> > pair_type;
     return pair_type(std::forward<_Key>(key), std::forward<_Value>(value));
 }
 //----------------------------------------------------------------------------

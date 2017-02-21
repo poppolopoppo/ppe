@@ -12,7 +12,7 @@ bool AssignMove(T *dst, FMetaAtom *src) {
     Assert(dst);
     Assert(src);
 
-    typedef typename std::decay< T >::type dst_type;
+    typedef Meta::TDecay< T > dst_type;
 
     typename TMetaAtomWrapper< dst_type >::type tmp;
     if (!TMetaTypeTraits< dst_type >::VirtualTraits()->AssignMove(&tmp, src))
@@ -27,7 +27,7 @@ bool AssignCopy(T *dst, const FMetaAtom *src) {
     Assert(dst);
     Assert(src);
 
-    typedef typename std::decay< T >::type dst_type;
+    typedef Meta::TDecay< T > dst_type;
 
     typename TMetaAtomWrapper< dst_type >::type tmp;
     if (!TMetaTypeTraits< dst_type >::VirtualTraits()->AssignCopy(&tmp, src))
@@ -44,7 +44,7 @@ bool AssignMove(FMetaAtom *dst, T *src) {
     Assert(dst);
     Assert(src);
 
-    typedef typename std::decay< T >::type src_type;
+    typedef Meta::TDecay< T > src_type;
 
     typename TMetaAtomWrapper< src_type >::type tmp;
     TMetaTypeTraits< src_type >::WrapMove(tmp.Wrapper(), std::move(*src));
@@ -61,7 +61,7 @@ bool AssignCopy(FMetaAtom *dst, const T *src) {
     Assert(dst);
     Assert(src);
 
-    typedef typename std::decay< T >::type src_type;
+    typedef Meta::TDecay< T > src_type;
 
     typename TMetaAtomWrapper< src_type >::type tmp;
     TMetaTypeTraits< src_type >::WrapCopy(tmp.Wrapper(), *src);
@@ -96,8 +96,8 @@ bool AssignMove(_Dst *dst, _Src *src) {
     Assert(dst);
     Assert(src);
 
-    typedef typename std::decay< _Dst >::type dst_type;
-    typedef typename std::decay< _Src >::type src_type;
+    typedef Meta::TDecay< _Dst > dst_type;
+    typedef Meta::TDecay< _Src > src_type;
 
     typename TMetaAtomWrapper< src_type >::type tmp_src;
     TMetaTypeTraits< src_type >::WrapMove(tmp_src.Wrapper(), std::move(*src));
@@ -118,8 +118,8 @@ bool AssignCopy(_Dst *dst, const _Src *src) {
     Assert(dst);
     Assert(src);
 
-    typedef typename std::decay< _Dst >::type dst_type;
-    typedef typename std::decay< _Src >::type src_type;
+    typedef Meta::TDecay< _Dst > dst_type;
+    typedef Meta::TDecay< _Src > src_type;
 
     typename TMetaAtomWrapper< src_type >::type tmp_src;
     TMetaTypeTraits< src_type >::WrapCopy(tmp_src.Wrapper(), *src);

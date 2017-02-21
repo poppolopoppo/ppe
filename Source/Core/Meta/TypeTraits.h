@@ -90,10 +90,25 @@ template <typename T>
 using TDecay = typename std::decay<T>::type;
 //----------------------------------------------------------------------------
 template <typename T>
+using TAddConst = typename std::add_const<T>::type;
+//----------------------------------------------------------------------------
+template <typename T, bool _Const>
+using TAddConstIFN = typename std::conditional<_Const, TAddConst<T>, T>::type;
+//----------------------------------------------------------------------------
+template <typename T>
 using TRemoveConst = typename std::remove_const<T>::type;
 //----------------------------------------------------------------------------
 template <typename T>
+using TAddReference = typename std::add_lvalue_reference<T>::type;
+//----------------------------------------------------------------------------
+template <typename T>
 using TRemoveReference = typename std::remove_reference<T>::type;
+//----------------------------------------------------------------------------
+template <typename T>
+using TAddPointer = typename std::add_pointer<T>::type;
+//----------------------------------------------------------------------------
+template <typename T>
+using TRemovePointer = typename std::remove_pointer<T>::type;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

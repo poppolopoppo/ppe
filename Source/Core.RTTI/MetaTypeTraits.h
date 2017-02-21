@@ -287,8 +287,8 @@ template <typename _First, typename _Second>
 struct TMetaTypeTraitsImpl< Core::TPair<_First, _Second> > {
     typedef Core::TPair<_First, _Second> wrapped_type;
 
-    typedef TMetaTypeTraits< typename std::decay<_First>::type > first_traits;
-    typedef TMetaTypeTraits< typename std::decay<_Second>::type > second_traits;
+    typedef TMetaTypeTraits< Meta::TDecay<_First> > first_traits;
+    typedef TMetaTypeTraits< Meta::TDecay<_Second> > second_traits;
 
     typedef typename first_traits::wrapper_type first_wrapper_type;
     typedef typename second_traits::wrapper_type second_wrapper_type;
@@ -326,8 +326,8 @@ template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 struct TMetaTypeTraitsImpl< Core::TAssociativeVector<_Key, _Value, _EqualTo, _Vector> > {
     typedef Core::TAssociativeVector<_Key, _Value, _EqualTo, _Vector> wrapped_type;
 
-    typedef TMetaTypeTraits< typename std::decay<_Key>::type > key_traits;
-    typedef TMetaTypeTraits< typename std::decay<_Value>::type > value_traits;
+    typedef TMetaTypeTraits< Meta::TDecay<_Key> > key_traits;
+    typedef TMetaTypeTraits< Meta::TDecay<_Value> > value_traits;
 
     typedef typename key_traits::wrapper_type key_wrapper_type;
     typedef typename value_traits::wrapper_type value_wrapper_type;
@@ -355,8 +355,8 @@ template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, t
 struct TMetaTypeTraitsImpl< Core::THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator> > {
     typedef Core::THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator> wrapped_type;
 
-    typedef TMetaTypeTraits< typename std::decay<_Key>::type > key_traits;
-    typedef TMetaTypeTraits< typename std::decay<_Value>::type > value_traits;
+    typedef TMetaTypeTraits< Meta::TDecay<_Key> > key_traits;
+    typedef TMetaTypeTraits< Meta::TDecay<_Value> > value_traits;
     typedef TMetaTypeTraits< TPair<_Key, _Value> > pair_traits;
 
     typedef typename key_traits::wrapper_type key_wrapper_type;

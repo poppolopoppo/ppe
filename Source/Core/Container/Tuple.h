@@ -18,7 +18,7 @@ template <typename... _Args>
 using TTupleDecay = TTuple< Meta::TDecay<_Args>... >;
 //----------------------------------------------------------------------------
 template <typename... _Args>
-std::tuple<typename std::remove_reference<_Args>::type... > MakeTuple(_Args&&... args) {
+std::tuple<Meta::TRemoveReference<_Args>... > MakeTuple(_Args&&... args) {
     return std::make_tuple(std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
@@ -28,15 +28,15 @@ template <typename _Lhs, typename _Rhs>
 struct TTupleMerger {
     template <typename T>
     struct TTupleWrap {
-        typedef std::tuple< typename std::remove_reference<T>::type > type;
-        type operator ()(typename std::remove_reference<T>::type&& value) const {
+        typedef TTuple< Meta::TRemoveReference<T> > type;
+        type operator ()(Meta::TRemoveReference<T>&& value) const {
             return std::make_tuple(std::forward<T>(value));
         }
     };
 
     template <typename... _Args>
-    struct TTupleWrap< std::tuple<_Args...> > {
-        typedef std::tuple<_Args...> type;
+    struct TTupleWrap< TTuple<_Args...> > {
+        typedef TTuple<_Args...> type;
         type operator ()(type&& value) const {
             return std::forward<type>(value);
         }
@@ -46,12 +46,12 @@ struct TTupleMerger {
     struct TTupleMerged {};
 
     template <typename... _LhsArgs, typename... _RhsArgs>
-    struct TTupleMerged< std::tuple<_LhsArgs...>, std::tuple<_RhsArgs...> > {
+    struct TTupleMerged< TTuple<_LhsArgs...>, TTuple<_RhsArgs...> > {
         typedef std::tuple<_LhsArgs..., _RhsArgs...> type;
     };
 
-    typedef TTupleWrap< typename std::remove_reference<_Lhs>::type > lhs_tuple;
-    typedef TTupleWrap< typename std::remove_reference<_Rhs>::type > rhs_tuple;
+    typedef TTupleWrap< Meta::TRemoveReference<_Lhs> > lhs_tuple;
+    typedef TTupleWrap< Meta::TRemoveReference<_Rhs> > rhs_tuple;
 
     typedef typename TTupleMerged<
         typename lhs_tuple::type,

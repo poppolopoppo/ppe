@@ -20,7 +20,7 @@ struct TFormatFunctor_ {
 
     template <typename _Value>
     static void FromValue(std::basic_ostream<_Char, _Traits>& oss, const void *pArg) {
-        typedef typename std::add_const<_Value>::type value_type;
+        typedef Meta::TAddConst<_Value> value_type;
         oss << *reinterpret_cast<value_type *>(pArg); // operator <<() resolved through KDL
     }
 
@@ -34,7 +34,7 @@ struct TFormatFunctor_ {
         not std::is_pointer<T>::value,
         TFormatFunctor_
     >::type Make(const T& value) {
-        typedef typename std::remove_reference<T>::type value_type;
+        typedef Meta::TRemoveReference<T> value_type;
         return TFormatFunctor_(&FromValue<value_type>, &value);
     }
 

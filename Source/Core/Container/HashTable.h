@@ -56,7 +56,7 @@ namespace details {
 template <typename _Key, typename _Value>
 struct THashTableTraits_ {
     typedef TPair<_Key, _Value> value_type;
-    typedef TPair<typename std::add_const<_Key>::type, _Value> public_type;
+    typedef TPair<Meta::TAddConst<_Key>, _Value> public_type;
     typedef _Value& mapped_reference;
     typedef const _Value& mapped_const_reference;
     static const _Key& Key(const _Key& key) { return key; }
@@ -74,7 +74,7 @@ struct THashTableTraits_ {
 template <typename _Key>
 struct THashTableTraits_<_Key, void> {
     typedef _Key value_type;
-    typedef typename std::add_const<_Key>::type public_type;
+    typedef Meta::TAddConst<_Key> public_type;
     typedef const _Key& mapped_reference;
     typedef const _Key& mapped_const_reference;
     static const _Key& Key(const value_type& value) { return value; }
@@ -190,8 +190,8 @@ public:
 
     typedef value_type& reference;
     typedef const value_type& const_reference;
-    typedef typename std::add_pointer<value_type>::type pointer;
-    typedef typename std::add_pointer<const value_type>::type const_pointer;
+    typedef Meta::TAddPointer<value_type> pointer;
+    typedef Meta::TAddPointer<const value_type> const_pointer;
 
     typedef typename TMemoryView<public_type>::iterator iterator;
     typedef typename TMemoryView<const value_type>::iterator const_iterator;

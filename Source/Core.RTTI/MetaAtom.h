@@ -484,7 +484,7 @@ private:
 //----------------------------------------------------------------------------
 template <typename T>
 struct TMetaAtomWrapper {
-    typedef TMetaTypeTraits< typename std::decay<T>::type > trais_type;
+    typedef TMetaTypeTraits< Meta::TDecay<T> > trais_type;
     typedef typename std::is_same<
         typename trais_type::wrapper_type,
         typename trais_type::wrapped_type

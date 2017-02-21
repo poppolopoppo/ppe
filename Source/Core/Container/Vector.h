@@ -90,6 +90,9 @@ public:
 
         reference operator[](difference_type n) const { return _p[n]; }
 
+        void swap(iterator_& other) { std::swap(_p, other_p); }
+        inline friend void swap(iterator_& lhs, iterator_& rhs) { lhs.swap(rhs); }
+
         bool AliasesToContainer(const TVector& v) const { return v.AliasesToContainer(_p); }
 
         template <typename _V, typename _P, typename _R>
@@ -253,7 +256,7 @@ public:
     friend void swap(TVector& lhs, TVector& rhs) { lhs.swap(rhs); }
 
     TMemoryView<value_type> MakeView() const { return TMemoryView<value_type>(_data, _size); }
-    TMemoryView<typename std::add_const<value_type>::type> MakeConstView() const { return TMemoryView<typename std::add_const<value_type>::type>(_data, _size); }
+    TMemoryView<Meta::TAddConst<value_type>> MakeConstView() const { return TMemoryView<Meta::TAddConst<value_type>>(_data, _size); }
 
     bool CheckInvariants() const;
     bool AliasesToContainer(const_pointer p) const { return ((p >= _data) && (p <= _data + _size)); }

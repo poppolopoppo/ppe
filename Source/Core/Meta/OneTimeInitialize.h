@@ -56,7 +56,7 @@
     \
     if(CORE_INTERLOCKEDCOMPAREEXCHANGE_32(_Name##_OneTimeState, 0, 0) != _ONE_TIME_INITIALIZE_INIT_READY) { \
         if (CORE_INTERLOCKEDCOMPAREEXCHANGE_32(_Name##_OneTimeState, _ONE_TIME_INITIALIZE_INIT_CREATING, _ONE_TIME_INITIALIZE_INIT_INVALID) == _ONE_TIME_INITIALIZE_INIT_INVALID) { \
-            auto *const _onetime_pdata = new (reinterpret_cast<void *>(&_Name##_OneTimeStorage)) _TypenameIfInTemplate std::remove_const<_Type>::type _Initializer; \
+            auto *const _onetime_pdata = new (reinterpret_cast<void *>(&_Name##_OneTimeStorage)) _TypenameIfInTemplate TRemoveConst<_Type> _Initializer; \
             CORE_INTERLOCKEDEXCHANGE_PTR(_Name##_OneTimePData, _onetime_pdata); \
             CORE_INTERLOCKEDEXCHANGE_32(_Name##_OneTimeState, _ONE_TIME_INITIALIZE_INIT_READY); \
         } \

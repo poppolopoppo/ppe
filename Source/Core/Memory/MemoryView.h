@@ -19,10 +19,10 @@ public:
     friend class TMemoryView;
 
     typedef T value_type;
-    typedef typename std::add_pointer<T>::type pointer;
-    typedef typename std::add_pointer<const T>::type const_pointer;
-    typedef typename std::add_lvalue_reference<T>::type reference;
-    typedef typename std::add_lvalue_reference<const T>::type const_reference;
+    typedef Meta::TAddPointer<T> pointer;
+    typedef Meta::TAddPointer<const T> const_pointer;
+    typedef Meta::TAddReference<T> reference;
+    typedef Meta::TAddReference<const T> const_reference;
 
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;
@@ -80,22 +80,22 @@ public:
     reference front() const { return at(0); }
     reference back() const { return at(_size - 1); }
 
-    void CopyTo(const TMemoryView<typename std::remove_const<T>::type>& dst) const;
+    void CopyTo(const TMemoryView<Meta::TRemoveConst<T>>& dst) const;
 
     template <size_t _Dim>
-    void CopyTo(typename std::remove_const<T>::type (&dst)[_Dim]) const {
+    void CopyTo(Meta::TRemoveConst<T> (&dst)[_Dim]) const {
         Assert(_Dim >= _size);
         CopyTo(MakeView(dst).CutBefore(_size));
     }
 
     TMemoryView<T> SubRange(size_t offset, size_t count) const;
-    TMemoryView< typename std::add_const<T>::type > SubRangeConst(size_t offset, size_t count) const;
+    TMemoryView< Meta::TAddConst<T> > SubRangeConst(size_t offset, size_t count) const;
 
     TMemoryView<T> SubRange(iterator first, iterator last) const;
-    TMemoryView< typename std::add_const<T>::type > SubRangeConst(iterator first, iterator last) const;
+    TMemoryView< Meta::TAddConst<T> > SubRangeConst(iterator first, iterator last) const;
 
     TMemoryView<T> CutStartingAt(size_t offset) const { return SubRange(offset, _size - offset); }
-    TMemoryView< typename std::add_const<T>::type > CutStartingAtConst(size_t offset) const { return SubRangeConst(offset, _size - offset); }
+    TMemoryView< Meta::TAddConst<T> > CutStartingAtConst(size_t offset) const { return SubRangeConst(offset, _size - offset); }
 
     TMemoryView<T> CutStartingAt(const iterator& it) const {
         Assert(AliasesToContainer(it));
@@ -112,7 +112,7 @@ public:
     }
 
     TMemoryView<T> CutBefore(size_t offset) const { return SubRange(0, offset); }
-    TMemoryView< typename std::add_const<T>::type > CutBeforeConst(size_t offset) const { return SubRangeConst(0, offset); }
+    TMemoryView< Meta::TAddConst<T> > CutBeforeConst(size_t offset) const { return SubRangeConst(0, offset); }
 
     TMemoryView<T> CutBefore(const iterator& it) const {
         Assert(AliasesToContainer(it));
@@ -180,12 +180,12 @@ public:
     template <typename U>
     TMemoryView<U> Cast() const;
 
-    TMemoryView<typename std::add_const<value_type>::type> AddConst() const {
-        return TMemoryView<typename std::add_const<value_type>::type>(_storage, _size);
+    TMemoryView<Meta::TAddConst<value_type>> AddConst() const {
+        return TMemoryView<Meta::TAddConst<value_type>>(_storage, _size);
     }
 
-    TMemoryView<typename std::remove_const<value_type>::type> RemoveConst() const {
-        typedef TMemoryView<typename std::remove_const<value_type>::type> nonconst_type;
+    TMemoryView<Meta::TRemoveConst<value_type>> RemoveConst() const {
+        typedef TMemoryView<Meta::TRemoveConst<value_type>> nonconst_type;
         return nonconst_type(const_cast<typename nonconst_type::pointer>(_storage), _size);
     }
 
@@ -216,8 +216,8 @@ TMemoryView<T> MakeView(T(&staticArray)[_Dim]) {
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-TMemoryView<typename std::add_const<T>::type > MakeConstView(T(&staticArray)[_Dim]) {
-    return TMemoryView<typename std::add_const<T>::type >(&staticArray[0], _Dim);
+TMemoryView<Meta::TAddConst<T> > MakeConstView(T(&staticArray)[_Dim]) {
+    return TMemoryView<Meta::TAddConst<T> >(&staticArray[0], _Dim);
 }
 //----------------------------------------------------------------------------
 template <typename _It>
@@ -261,9 +261,9 @@ TMemoryView< T > MakeView(T* pbegin, T* pend) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TMemoryView<typename std::add_const<T>::type > MakeConstView(T* pbegin, T* pend) {
+TMemoryView<Meta::TAddConst<T> > MakeConstView(T* pbegin, T* pend) {
     Assert(pend >= pbegin);
-    return TMemoryView<typename std::add_const<T>::type >(pbegin, std::distance(pbegin, pend));
+    return TMemoryView<Meta::TAddConst<T> >(pbegin, std::distance(pbegin, pend));
 }
 //----------------------------------------------------------------------------
 template <typename T>

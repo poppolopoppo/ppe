@@ -19,8 +19,17 @@ namespace Core {
 class FBitSet {
 public:
     typedef size_t word_t;
-    STATIC_CONST_INTEGRAL(word_t, WordBitCount, Meta::TBitCount<word_t>::value);
-    STATIC_CONST_INTEGRAL(word_t, WordBitMask, WordBitCount - 1);
+#if     defined(ARCH_64BIT)
+    STATIC_CONST_INTEGRAL(word_t, WordBitCount, 64);
+    STATIC_CONST_INTEGRAL(word_t, WordBitMask,  63);
+    STATIC_CONST_INTEGRAL(word_t, WordBitShift,  6);
+#elif   defined(ARCH_32BIT)
+    STATIC_CONST_INTEGRAL(word_t, WordBitCount, 32);
+    STATIC_CONST_INTEGRAL(word_t, WordBitMask,  31);
+    STATIC_CONST_INTEGRAL(word_t, WordBitShift,  5);
+#else
+#   error "unsupported architecture !"
+#endif
 
     FBitSet(word_t *storage, size_t size);
 
@@ -44,13 +53,14 @@ public:
 
     void CopyTo(FBitSet* other) const;
 
-    static size_t WordCapacity(size_t size) { return ((size + WordBitCount - 1) / WordBitCount); }
+    static size_t WordCapacity(size_t size) { return ((size + WordBitMask) >> WordBitShift); }
+
+protected:
+    FORCE_INLINE static constexpr size_t IndexFlag_(size_t index) { return (size_t(1) << (index & WordBitMask)); }
+    word_t& Word_(size_t index) { Assert(index < _size); return _storage[index >> WordBitShift]; }
+    const word_t& Word_(size_t index) const { Assert(index < _size); return _storage[index >> WordBitShift]; }
 
 private:
-    FORCE_INLINE static constexpr size_t IndexFlag_(size_t index) { return (size_t(1) << (index & WordBitMask)); }
-    word_t& Word_(size_t index) { Assert(index < _size); return _storage[index / WordBitCount]; }
-    const word_t& Word_(size_t index) const { Assert(index < _size); return _storage[index / WordBitCount]; }
-
     word_t *_storage;
     size_t _size;
 };
@@ -74,11 +84,11 @@ public:
         return (0 != (_data & (size_t(1) << _Index)));
     }
 
-    bool Get(size_t index) const { Assert(index < _size); return (0 != (_data & (size_t(1) <<index))); }
+    bool Get(size_t index) const { Assert(index < _size); return (0 != (_data & (size_t(1) << index))); }
     void Set(size_t index, bool value) { if (value) SetTrue(index); else SetFalse(index); }
 
-    void SetTrue(size_t index) { Assert(index < _size); _data |= size_t(1) <<index; }
-    void SetFalse(size_t index) { Assert(index < _size); _data &= ~(size_t(1) <<index); }
+    void SetTrue(size_t index) { Assert(index < _size); _data |= size_t(1) << index; }
+    void SetFalse(size_t index) { Assert(index < _size); _data &= ~(size_t(1) << index); }
 
     bool operator [](size_t index) const { return Get(index); }
 

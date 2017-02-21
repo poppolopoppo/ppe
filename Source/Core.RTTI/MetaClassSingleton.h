@@ -48,7 +48,7 @@ const typename T::FMetaClass* TMetaClassSingleton<T, _Enabled>::_gInstance = nul
 //----------------------------------------------------------------------------
 template <typename T> // valid RTTI parent
 static const RTTI::FMetaClass *GetMetaClass(typename std::enable_if< std::is_base_of<RTTI::FMetaObject, T>::value >::type* = 0) {
-    typedef typename std::decay<T>::type metaobject_type;
+    typedef Meta::TDecay<T> metaobject_type;
     return &TMetaClassSingleton<metaobject_type>::Instance();
 }
 //----------------------------------------------------------------------------
