@@ -1877,7 +1877,7 @@ namespace NAMESPACE_FOR_HASH_FUNCTIONS {
 
 // BASIC STRING HASHING
 
-// THash function for a byte array.  See also THash(), below.
+// Hash function for a byte array.  See also Hash(), below.
 // May change from time to time, may differ on different platforms, may differ
 // depending on NDEBUG.
 FARMHASH_INLINE uint32_t Hash32(const char* s, size_t len) {
@@ -1888,7 +1888,7 @@ FARMHASH_INLINE uint32_t Hash32(const char* s, size_t len) {
       farmhashmk::Hash32(s, len));
 }
 
-// THash function for a byte array.  For convenience, a 32-bit seed is also
+// Hash function for a byte array.  For convenience, a 32-bit seed is also
 // hashed into the result.
 // May change from time to time, may differ on different platforms, may differ
 // depending on NDEBUG.
@@ -1900,8 +1900,8 @@ FARMHASH_INLINE uint32_t Hash32WithSeed(const char* s, size_t len, uint32_t seed
       farmhashmk::Hash32WithSeed(s, len, seed));
 }
 
-// THash function for a byte array.  For convenience, a 64-bit seed is also
-// hashed into the result.  See also THash(), below.
+// Hash function for a byte array.  For convenience, a 64-bit seed is also
+// hashed into the result.  See also Hash(), below.
 // May change from time to time, may differ on different platforms, may differ
 // depending on NDEBUG.
 FARMHASH_INLINE uint64_t Hash64(const char* s, size_t len) {
@@ -1911,14 +1911,14 @@ FARMHASH_INLINE uint64_t Hash64(const char* s, size_t len) {
       farmhashxo::Hash64(s, len));
 }
 
-// THash function for a byte array.
+// Hash function for a byte array.
 // May change from time to time, may differ on different platforms, may differ
 // depending on NDEBUG.
-FARMHASH_INLINE size_t THash(const char* s, size_t len) {
+FARMHASH_INLINE size_t Hash(const char* s, size_t len) {
   return sizeof(size_t) == 8 ? Hash64(s, len) : Hash32(s, len);
 }
 
-// THash function for a byte array.  For convenience, a 64-bit seed is also
+// Hash function for a byte array.  For convenience, a 64-bit seed is also
 // hashed into the result.
 // May change from time to time, may differ on different platforms, may differ
 // depending on NDEBUG.
@@ -1926,7 +1926,7 @@ FARMHASH_INLINE uint64_t Hash64WithSeed(const char* s, size_t len, uint64_t seed
   return DebugTweak(farmhashna::Hash64WithSeed(s, len, seed));
 }
 
-// THash function for a byte array.  For convenience, two seeds are also
+// Hash function for a byte array.  For convenience, two seeds are also
 // hashed into the result.
 // May change from time to time, may differ on different platforms, may differ
 // depending on NDEBUG.
@@ -1934,14 +1934,14 @@ FARMHASH_INLINE uint64_t Hash64WithSeeds(const char* s, size_t len, uint64_t see
   return DebugTweak(farmhashna::Hash64WithSeeds(s, len, seed0, seed1));
 }
 
-// THash function for a byte array.
+// Hash function for a byte array.
 // May change from time to time, may differ on different platforms, may differ
 // depending on NDEBUG.
 FARMHASH_INLINE uint128_t Hash128(const char* s, size_t len) {
   return DebugTweak(farmhashcc::Fingerprint128(s, len));
 }
 
-// THash function for a byte array.  For convenience, a 128-bit seed is also
+// Hash function for a byte array.  For convenience, a 128-bit seed is also
 // hashed into the result.
 // May change from time to time, may differ on different platforms, may differ
 // depending on NDEBUG.
