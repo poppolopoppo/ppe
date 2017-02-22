@@ -101,7 +101,7 @@ public:
 
 	FStackLocalLoggerStream(ELogCategory category)
 		: FWOCStrStream(_localBuffer), _category(category) {}
-	~FStackLocalLoggerStream() { Log(_category, FWOCStrStream::MakeView()); }
+	~FStackLocalLoggerStream() { Log(_category, FWOCStrStream::MakeView_NullTerminated()); }
 
 private:
 	ELogCategory _category;
