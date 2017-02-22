@@ -49,6 +49,17 @@ std::basic_ostream<_Char, _Traits>& operator <<(
     return TargetPlatformToCStr(platform);
 }
 //----------------------------------------------------------------------------
+struct FPlatform {
+#ifndef FINAL_RELEASE
+static void CheckMemory();
+static void DebugBreak();
+static void DebugBreakAttach();
+static bool IsDebuggerAttached();
+#endif
+static void OutputDebug(const char* text);
+static void OutputDebug(const wchar_t* text);
+};
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Core

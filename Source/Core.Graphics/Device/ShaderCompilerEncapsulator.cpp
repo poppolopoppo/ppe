@@ -11,6 +11,7 @@
 #include "Core/Diagnostic/DialogBox.h"
 #include "Core/Diagnostic/Logger.h"
 #include "Core/IO/FileSystem.h"
+#include "Core/Misc/TargetPlatform.h"
 
 #include "DirectX11/DX11ShaderCompiler.h"
 
@@ -193,7 +194,7 @@ PShaderCompiled CompileShaderSource(
             {
                 RAWSTORAGE(Shader, char) preprocess;
                 deviceAPIShaderCompiler->PreprocessShaderSource(preprocess, source.get(), vertexDeclaration);
-                BREAKPOINT();
+                FPlatform::DebugBreak();
             }
             //break;
         case Dialog::EResult::Retry:

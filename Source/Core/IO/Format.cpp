@@ -331,8 +331,10 @@ static void FormatArgs_(
 
     size_t index = size_t(-1);
     while (FormatParser_(formatIt, &outp, &index, props)) {
-        if (outp.size())
+        if (outp.size()) {
             oss.write(outp.Pointer(), outp.size());
+			Assert(!oss.bad());
+		}
 
         if (size_t(-1) != index) {
             AssertRelease(index < args.size()); // detects invalid user input
@@ -340,10 +342,9 @@ static void FormatArgs_(
             for (size_t n = 0; n < props.Repeat; ++n) {
                 props.To(oss);
                 oss << args[index];
+				Assert(!oss.bad());
             }
         }
-
-        Assert(!oss.bad());
 
         original.To(oss); // restores original state
         props = original;

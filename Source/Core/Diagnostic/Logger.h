@@ -6,6 +6,7 @@
 #include "Core/IO/StringView.h"
 
 #include <iosfwd>
+#include <mutex>
 
 #if !defined(FINAL_RELEASE) && !defined(PROFILING_ENABLED)
 #   define USE_DEBUG_LOGGER
@@ -40,6 +41,16 @@ class ILogger {
 public:
     virtual ~ILogger() {}
     virtual void Log(ELogCategory category, const FWStringView& format, const FormatArgListW& args) = 0;
+};
+//----------------------------------------------------------------------------
+class FAbstractThreadSafeLogger : public ILogger {
+public:
+	virtual ~FAbstractThreadSafeLogger() {}
+	virtual void Log(ELogCategory category, const FWStringView& format, const FormatArgListW& args) override;
+protected:
+	virtual void LogThreadSafe(ELogCategory category, const FWStringView& format, const FormatArgListW& args) = 0;
+private:
+	std::recursive_mutex _barrier;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -84,24 +95,34 @@ private:
     ELogCategory _category;
 };
 //----------------------------------------------------------------------------
+class FStackLocalLoggerStream : public FWOCStrStream {
+public:
+	STATIC_CONST_INTEGRAL(size_t, Capacity, 2048);
+
+	FStackLocalLoggerStream(ELogCategory category)
+		: FWOCStrStream(_localBuffer), _category(category) {}
+	~FStackLocalLoggerStream() { Log(_category, FWOCStrStream::MakeView()); }
+
+private:
+	ELogCategory _category;
+	wchar_t _localBuffer[Capacity];
+};
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FOutputDebugLogger : public ILogger {
-public:
-    virtual ~FOutputDebugLogger() {}
-    virtual void Log(ELogCategory category, const FWStringView& format, const FormatArgListW& args) override;
+class FOutputDebugLogger : public FAbstractThreadSafeLogger {
+protected:
+    virtual void LogThreadSafe(ELogCategory category, const FWStringView& format, const FormatArgListW& args) override;
 };
 //----------------------------------------------------------------------------
-class FStdcoutLogger : public ILogger {
-public:
-    virtual ~FStdcoutLogger() {}
-    virtual void Log(ELogCategory category, const FWStringView& format, const FormatArgListW& args) override;
+class FStdoutLogger : public FAbstractThreadSafeLogger {
+protected:
+    virtual void LogThreadSafe(ELogCategory category, const FWStringView& format, const FormatArgListW& args) override;
 };
 //----------------------------------------------------------------------------
-class FStderrLogger : public ILogger {
-public:
-    virtual ~FStderrLogger() {}
-    virtual void Log(ELogCategory category, const FWStringView& format, const FormatArgListW& args) override;
+class FStderrLogger : public FAbstractThreadSafeLogger {
+protected:
+    virtual void LogThreadSafe(ELogCategory category, const FWStringView& format, const FormatArgListW& args) override;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

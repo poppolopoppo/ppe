@@ -2,6 +2,10 @@
 
 #include "TargetPlatform.h"
 
+#ifdef OS_WINDOWS
+#   include <windows.h>
+#endif
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -56,6 +60,67 @@ EEndianness TargetPlatformEndianness(ETargetPlatform platform) {
         AssertNotImplemented();
     }
     return EEndianness::LittleEndian;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+#ifndef FINAL_RELEASE
+void FPlatform::CheckMemory() {
+#ifdef OS_WINDOWS
+    _CrtCheckMemory();
+#else
+#   error "no support"
+#endif
+}
+#endif
+//----------------------------------------------------------------------------
+#ifndef FINAL_RELEASE
+void FPlatform::DebugBreak() {
+#ifdef OS_WINDOWS
+    ::DebugBreak();
+#else
+#   error "no support"
+#endif
+}
+#endif
+//----------------------------------------------------------------------------
+#ifndef FINAL_RELEASE
+void FPlatform::DebugBreakAttach() {
+#ifdef OS_WINDOWS
+    if (::IsDebuggerPresent())
+    {
+        ::DebugBreak();
+    }
+#else
+#   error "no support"
+#endif
+}
+#endif
+//----------------------------------------------------------------------------
+#ifndef FINAL_RELEASE
+bool FPlatform::IsDebuggerAttached() {
+#ifdef OS_WINDOWS
+    return ::IsDebuggerPresent() ? true : false;
+#else
+#   error "no support"
+#endif
+}
+#endif
+//----------------------------------------------------------------------------
+void FPlatform::OutputDebug(const char* text) {
+#ifdef OS_WINDOWS
+    return ::OutputDebugStringA(text);
+#else
+#   error "no support"
+#endif
+}
+//----------------------------------------------------------------------------
+void FPlatform::OutputDebug(const wchar_t* text) {
+#ifdef OS_WINDOWS
+    return ::OutputDebugStringW(text);
+#else
+#   error "no support"
+#endif
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

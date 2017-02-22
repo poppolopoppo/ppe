@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "Logger.h"
+#include "Misc/TargetPlatform.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -74,10 +75,6 @@ FWStringView LogCategoryToWCStr(ELogCategory category) {
 #include <iostream>
 #include <sstream>
 
-#ifdef CPP_VISUALSTUDIO
-#   include <Windows.h>
-#endif
-
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -101,7 +98,7 @@ public:
         }
         FormatArgs(oss, text, args);
         oss << eol;
-        OutputDebugStringW(oss.NullTerminatedStr());
+        FPlatform::OutputDebug(oss.NullTerminatedStr());
     }
 
 private:
@@ -110,34 +107,37 @@ private:
 static const FBasicLogger_ gLoggerBeforeMain (L"BEFORE_MAIN");
 static const FBasicLogger_ gLoggerAfterMain  (L"AFTER_MAIN");
 //----------------------------------------------------------------------------
-static FAtomicSpinLock gLoggerSpinLock;
 static std::atomic<ILogger*> gLoggerCurrentImpl(remove_const(&gLoggerBeforeMain));
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 ILogger* SetLoggerImpl(ILogger* logger) { // return previous handler
     Assert(logger);
-    const FAtomicSpinLock::FScope scopeLock(gLoggerSpinLock);
     return gLoggerCurrentImpl.exchange(logger);
 }
 //----------------------------------------------------------------------------
 void Log(ELogCategory category, const FWStringView& text) {
     Assert(text.size());
     Assert('\0' == text.data()[text.size()]); // text must be null terminated !
-    const FAtomicSpinLock::FScope scopeLock(gLoggerSpinLock);
     gLoggerCurrentImpl.load()->Log(category, text, FormatArgListW());
 }
 //----------------------------------------------------------------------------
 void LogArgs(ELogCategory category, const FWStringView& format, const FormatArgListW& args) {
     Assert(format.size());
     Assert('\0' == format.data()[format.size()]); // text must be null terminated !
-    const FAtomicSpinLock::FScope scopeLock(gLoggerSpinLock);
     gLoggerCurrentImpl.load()->Log(category, format, args);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FOutputDebugLogger::Log(ELogCategory category, const FWStringView& text, const FormatArgListW& args) {
+void FAbstractThreadSafeLogger::Log(ELogCategory category, const FWStringView& format, const FormatArgListW& args) {
+    const std::unique_lock<std::recursive_mutex> scopeLock(_barrier);
+    LogThreadSafe(category, format, args);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+void FOutputDebugLogger::LogThreadSafe(ELogCategory category, const FWStringView& text, const FormatArgListW& args) {
     FThreadLocalWOStringStream oss;
 
 #if 0
@@ -158,10 +158,10 @@ void FOutputDebugLogger::Log(ELogCategory category, const FWStringView& text, co
 
     oss << eol;
 
-    OutputDebugStringW(oss.str().c_str());
+    FPlatform::OutputDebug(oss.str().c_str());
 }
 //----------------------------------------------------------------------------
-void FStdcoutLogger::Log(ELogCategory category, const FWStringView& text, const FormatArgListW& args) {
+void FStdoutLogger::LogThreadSafe(ELogCategory category, const FWStringView& text, const FormatArgListW& args) {
     if (ELogCategory::Callstack != category)
         Format(std::wcout, L"[{0:12f}][{1}]", FCurrentProcess::ElapsedSeconds(), category);
 
@@ -169,11 +169,12 @@ void FStdcoutLogger::Log(ELogCategory category, const FWStringView& text, const 
         std::wcout << text;
     else
         FormatArgs(std::wcout, text, args);
+    Assert(!std::wcout.bad());
 
     std::wcout << eol;
 }
 //----------------------------------------------------------------------------
-void FStderrLogger::Log(ELogCategory category, const FWStringView& text, const FormatArgListW& args) {
+void FStderrLogger::LogThreadSafe(ELogCategory category, const FWStringView& text, const FormatArgListW& args) {
     if (ELogCategory::Callstack != category)
         Format(std::wcerr, L"[{0:12f}][{1}]", FCurrentProcess::ElapsedSeconds(), category);
 
@@ -181,24 +182,42 @@ void FStderrLogger::Log(ELogCategory category, const FWStringView& text, const F
         std::wcerr << text;
     else
         FormatArgs(std::wcerr, text, args);
+    Assert(!std::wcerr.bad());
 
     std::wcerr << eol;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-static FOutputDebugLogger gLoggerDefault;
+STATIC_ASSERT(sizeof(FAbstractThreadSafeLogger) == sizeof(FOutputDebugLogger));
+STATIC_ASSERT(sizeof(FAbstractThreadSafeLogger) == sizeof(FStdoutLogger));
+STATIC_ASSERT(sizeof(FAbstractThreadSafeLogger) == sizeof(FStderrLogger));
+static POD_STORAGE(FAbstractThreadSafeLogger) gLoggerDefaultStorage;
 //----------------------------------------------------------------------------
 void FLoggerStartup::Start() {
     Assert(&gLoggerBeforeMain == gLoggerCurrentImpl.load());
-    SetLoggerImpl(&gLoggerDefault);
+
+    ILogger* logger = nullptr;
+
+    if (FPlatform::IsDebuggerAttached())
+        logger = new ((void*)&gLoggerDefaultStorage) FOutputDebugLogger();
+    else
+        logger = new ((void*)&gLoggerDefaultStorage) FStdoutLogger();
+
+    Assert(logger == (ILogger*)&gLoggerDefaultStorage);
+
+    SetLoggerImpl(logger);
 }
 //----------------------------------------------------------------------------
 void FLoggerStartup::Shutdown() {
     ILogger* logger = SetLoggerImpl(remove_const(&gLoggerAfterMain));
+
     Assert(logger);
     Assert(logger != &gLoggerBeforeMain);
-    if (logger != &gLoggerDefault)
+
+    if (logger == (ILogger*)&gLoggerDefaultStorage)
+        logger->~ILogger();
+    else
         checked_delete(logger);
 }
 //----------------------------------------------------------------------------

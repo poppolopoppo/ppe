@@ -103,7 +103,7 @@ static void SetClipboard_(HWND hwndDlg, const FWStringView& content)
 static void ExternalEditor_(const FWStringView& filename, size_t line) {
     Assert(not filename.empty());
 
-	STACKLOCAL_OCSTRSTREAM(oss, 4096);
+	  STACKLOCAL_OCSTRSTREAM(oss, 2048);
     Format(oss, "\"{0}\" \"{1}:{2}\"",
         "C:\\Program Files\\Sublime Text 3\\sublime_text.exe", // TODO: handle other editors ?
         filename,

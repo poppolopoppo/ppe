@@ -4,6 +4,7 @@
 
 #include "Core/Maths/Collision.h"
 #include "Core/Maths/Plane.h"
+#include "Core/Maths/ScalarBoundingBox.h"
 #include "Core/Maths/ScalarVector_fwd.h"
 #include "Core/Maths/ScalarMatrix.h"
 

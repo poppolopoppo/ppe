@@ -10,24 +10,12 @@
 #include "Core/Diagnostic/DialogBox.h"
 #include "Core/Diagnostic/Logger.h"
 #include "Core/IO/Stream.h"
-
-#ifdef OS_WINDOWS
-#   include <sstream>
-#   include <windows.h>
-
-    class FOutputDebugStream : public std::wstringstream {
-    public:
-        ~FOutputDebugStream() { ::OutputDebugStringW(str().c_str()); }
-    };
-
-#endif
-
-#include <sstream>
+#include "Core/Misc/TargetPlatform.h"
 
 #define WITH_APPLICATION_TRY_CATCH 0 //%_NOCOMMIT%
 
 #ifdef CPP_VISUALSTUDIO
-#   pragma warning(disable: 4073) // initialiseurs placés dans la zone d'initialisation d'une bibliothèque
+#   pragma warning(disable: 4073) // initialiseurs placÃ©s dans la zone d'initialisation d'une bibliothÃ¨que
 #   pragma init_seg(lib)
 #else
 #   error "missing compiler specific command"
@@ -41,11 +29,7 @@ POOL_TAG_DEF(Application);
 //----------------------------------------------------------------------------
 #ifndef FINAL_RELEASE
 static void PrintMemStats_(const Core::FCrtMemoryStats& memoryStats) {
-#ifdef USE_DEBUG_LOGGER
-    FOutputDebugStream()
-#else
-    std::cerr
-#endif
+	FStackLocalLoggerStream(ELogCategory::Info)
         << "Memory statistics :" << eol
         << " - Total free size          = " << memoryStats.TotalFreeSize << eol
         << " - Largest free block       = " << memoryStats.LargestFreeBlockSize << eol

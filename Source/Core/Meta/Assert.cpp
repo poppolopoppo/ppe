@@ -4,10 +4,6 @@
 
 #if defined(WITH_CORE_ASSERT) || defined(WITH_CORE_ASSERT_RELEASE)
 
-#ifdef OS_WINDOWS
-#   include <windows.h>
-#endif
-
 #include "Diagnostic/CrtDebug.h"
 #include "Diagnostic/DialogBox.h"
 #include "Diagnostic/Exception.h"
@@ -15,6 +11,8 @@
 
 #include "IO/Stream.h"
 #include "IO/StringView.h"
+
+#include "Misc/TargetPlatform.h"
 
 #include <atomic>
 
@@ -30,14 +28,6 @@ static Dialog::EResult AssertAbortRetryIgnore_(const FWStringView& title, const 
         << file << L'(' << line << L"): " << msg;
 
     return Dialog::AbortRetryIgnore(MakeStringView(oss.str()), title);
-}
-//----------------------------------------------------------------------------
-static bool IsDebuggerAttached_() {
-#ifdef OS_WINDOWS
-    return ::IsDebuggerPresent() ? true : false;
-#else
-#   error "no support"
-#endif
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -87,8 +77,8 @@ void AssertionFailed(const char *msg, const wchar_t *file, unsigned line) {
     if (handler) {
         failure = (*handler)(msg, file, line);
     }
-    else if (IsDebuggerAttached_()) {
-        BREAKPOINT();
+    else if (FPlatform::IsDebuggerAttached()) {
+        FPlatform::DebugBreak();
     }
     else {
         switch (AssertAbortRetryIgnore_(MakeStringView(L"Assert debug failed !"), msg, file, line)) {
@@ -96,8 +86,8 @@ void AssertionFailed(const char *msg, const wchar_t *file, unsigned line) {
             failure = true;
             break;
         case Dialog::EResult::Retry:
-            if (IsDebuggerAttached_())
-                BREAKPOINT();
+            if (FPlatform::IsDebuggerAttached())
+                FPlatform::DebugBreak();
             break;
         case Dialog::EResult::Ignore:
             failure = false;
@@ -163,8 +153,8 @@ void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line)
     if (handler) {
         failure = (*handler)(msg, file, line);
     }
-    else if (IsDebuggerAttached_()) {
-        BREAKPOINT();
+    else if (FPlatform::IsDebuggerAttached()) {
+        FPlatform::DebugBreak();
     }
     else {
         switch (AssertAbortRetryIgnore_(MakeStringView(L"Assert release failed !"), msg, file, line)) {
@@ -172,8 +162,8 @@ void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line)
             failure = true;
             break;
         case Dialog::EResult::Retry:
-            if (IsDebuggerAttached_())
-                BREAKPOINT();
+            if (FPlatform::IsDebuggerAttached())
+                FPlatform::DebugBreak();
             break;
         case Dialog::EResult::Ignore:
             failure = false;

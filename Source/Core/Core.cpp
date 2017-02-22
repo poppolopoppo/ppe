@@ -11,6 +11,7 @@
 #include "IO/FileSystem.h"
 #include "IO/VirtualFileSystem.h"
 #include "Meta/AutoSingleton.h"
+#include "Misc/TargetPlatform.h"
 #include "Thread/ThreadContext.h"
 #include "Thread/ThreadPool.h"
 
@@ -115,7 +116,7 @@ void CoreStartup::ClearAll_UnusedMemory() {
 //----------------------------------------------------------------------------
 #ifndef FINAL_RELEASE
 //----------------------------------------------------------------------------
-void CheckMemory() {
+static void CheckMemory_() {
     static THREAD_LOCAL bool bInScope = false;
     if (bInScope)
         return;
@@ -127,40 +128,40 @@ void CheckMemory() {
     AssertRelease(!std::wcerr.bad());
     AssertRelease(!std::cin.bad());
     AssertRelease(!std::wcin.bad());
-#ifdef OS_WINDOWS
-    _CrtCheckMemory();
-#endif
+
+    FPlatform::CheckMemory();
+
     bInScope = false;
 }
 //----------------------------------------------------------------------------
 OnModuleStart::OnModuleStart(const wchar_t* moduleName) : ModuleName(moduleName) {
     LOG(Info, L"[{0}] Begin start module", ModuleName);
-    CheckMemory();
+    CheckMemory_();
 }
 //----------------------------------------------------------------------------
 OnModuleStart::~OnModuleStart() {
     LOG(Info, L"[{0}] End start module", ModuleName);
-    CheckMemory();
+    CheckMemory_();
 }
 //----------------------------------------------------------------------------
 OnModuleShutdown::OnModuleShutdown(const wchar_t* moduleName) : ModuleName(moduleName) {
     LOG(Info, L"[{0}] Begin shutdown module", ModuleName);
-    CheckMemory();
+    CheckMemory_();
 }
 //----------------------------------------------------------------------------
 OnModuleShutdown::~OnModuleShutdown() {
     LOG(Info, L"[{0}] End shutdown module", ModuleName);
-    CheckMemory();
+    CheckMemory_();
 }
 //----------------------------------------------------------------------------
 OnModuleClearAll::OnModuleClearAll(const wchar_t* moduleName) : ModuleName(moduleName) {
     LOG(Info, L"[{0}] Begin clear all module", ModuleName);
-    CheckMemory();
+    CheckMemory_();
 }
 //----------------------------------------------------------------------------
 OnModuleClearAll::~OnModuleClearAll() {
     LOG(Info, L"[{0}] End clear all module", ModuleName);
-    CheckMemory();
+    CheckMemory_();
 }
 //----------------------------------------------------------------------------
 #endif //!FINAL_RELEASE
