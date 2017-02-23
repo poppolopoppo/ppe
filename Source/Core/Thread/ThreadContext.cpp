@@ -50,8 +50,8 @@ inline void FThreadLocalContext_::CreateMainThread() {
 namespace {
 //----------------------------------------------------------------------------
 #pragma warning(push)
-#pragma warning(disable: 6320) // L'expression de filtre d'exception correspond à la constante EXCEPTION_EXECUTE_HANDLER.
-                               // Cela risque de masquer les exceptions qui n'étaient pas destinées à être gérées.
+#pragma warning(disable: 6320) // L'expression de filtre d'exception correspond ï¿½ la constante EXCEPTION_EXECUTE_HANDLER.
+                               // Cela risque de masquer les exceptions qui n'ï¿½taient pas destinï¿½es ï¿½ ï¿½tre gï¿½rï¿½es.
 #pragma warning(disable: 6322) // bloc empty _except.
 static void SetWin32ThreadName_(const char* name) {
 #ifdef WITH_CORE_THREADCONTEXT_NAME
@@ -126,12 +126,11 @@ size_t FThreadContext::AffinityMask() const {
     HANDLE hThread = ::GetCurrentThread();
     DWORD_PTR affinityMask = ::SetThreadAffinityMask(hThread, 0xFFul);
     if (0 == affinityMask) {
-        FLastErrorException e;
-        CORE_THROW_IT(e);
+        CORE_THROW_IT(FLastErrorException());
     }
     if (0 == ::SetThreadAffinityMask(hThread, affinityMask)) {
         FLastErrorException e;
-        CORE_THROW_IT(e);
+        CORE_THROW_IT(FLastErrorException());
     }
     return checked_cast<size_t>(affinityMask);
 #else
@@ -147,8 +146,7 @@ void FThreadContext::SetAffinityMask(size_t mask) const {
     HANDLE hThread = ::GetCurrentThread();
     DWORD_PTR affinityMask = ::SetThreadAffinityMask(hThread, mask);
     if (0 == affinityMask) {
-        FLastErrorException e;
-        CORE_THROW_IT(e);
+        CORE_THROW_IT(FLastErrorException());
     }
     Assert(mask == AffinityMask());
 #else
