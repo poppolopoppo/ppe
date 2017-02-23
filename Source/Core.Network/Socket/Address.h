@@ -10,13 +10,45 @@ namespace Network {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+enum class EServiceName : size_t {
+    Any 		= 0, // Special value when we don't care about which port we want
+
+    FTP			= 21,
+    SSH			= 22,
+    Telnet		= 23,
+    SMTP		= 25,
+    HTTP		= 80,
+    POP2		= 109,
+    POP3		= 110,
+    SFTP		= 115,
+    NNTP		= 119,
+    HTTPS		= 443,
+    SMB			= 445,
+    DHCP		= 546,
+    RSync		= 873,
+    IMAP		= 993,
+    OpenVPN		= 1194,
+    DDNS		= 2164,
+    Jabber		= 5222,
+    VNC			= 5900,
+    IRC			= 6667,
+    Minecraft	= 25565,
+    Steam		= 27000,
+};
+//----------------------------------------------------------------------------
 class FAddress {
 public:
     FAddress();
-    FAddress(const FStringView& host, size_t port);
-    FAddress(FString&& host, size_t port);
-    explicit FAddress(size_t port) : FAddress(FString(), port) {}
     ~FAddress();
+
+    FAddress(const FStringView& host, size_t port);
+    FAddress(const FStringView& host, EServiceName service) : FAddress(host, size_t(service)) {}
+
+    FAddress(FString&& host, size_t port);
+    FAddress(FString&& host, EServiceName service) : FAddress(std::move(host), size_t(service)) {}
+
+    explicit FAddress(size_t port) : FAddress(FString(), port) {}
+    explicit FAddress(EServiceName service) : FAddress(FString(), size_t(service)) {}
 
     FAddress(const FAddress& ) = default;
     FAddress& operator =(const FAddress& ) = default;
@@ -36,7 +68,7 @@ public:
     bool IsIPv4() const;
     // TODO: bool IsIPv6() const;
 
-    static bool IP(FAddress* paddr, const FStringView& hostname, size_t port);
+    static bool IPv4(FAddress* paddr, const FStringView& hostname, size_t port);
     static bool Parse(FAddress* paddr, const FStringView& input);
 
     static FAddress Localhost(size_t port);
@@ -73,9 +105,10 @@ private:
 //----------------------------------------------------------------------------
 bool LocalHostName(FString& hostname);
 //----------------------------------------------------------------------------
-bool HostnameToIP(FString& ip, const FStringView& hostname, size_t n = 0);
+bool HostnameToIPv4(FString& ip, const FStringView& hostname, size_t port);
+bool HostnameToIPv4(FString& ip, const FStringView& hostname, EServiceName service);
 //----------------------------------------------------------------------------
-bool IPToHostname(FString& hostname, const FStringView& ip);
+bool IPv4ToHostname(FString& hostname, const FStringView& ip);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -4,12 +4,16 @@
 
 #include "NetworkIncludes.h"
 
+#include "Core/Diagnostic/LastError.h"
+
 namespace Core {
 namespace Network {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FAddress::FAddress() : _port(80) {}
+FAddress::FAddress() : _port(size_t(EServiceName::Any)) {}
+//----------------------------------------------------------------------------
+FAddress::~FAddress() {}
 //----------------------------------------------------------------------------
 FAddress::FAddress(const FStringView& host, size_t port) : FAddress(ToString(host), port) {}
 //----------------------------------------------------------------------------
@@ -17,18 +21,16 @@ FAddress::FAddress(FString&& host, size_t port) : _host(std::move(host)), _port(
     Assert(FString::npos == _host.find_first_of(':'));
 }
 //----------------------------------------------------------------------------
-FAddress::~FAddress() {}
-//----------------------------------------------------------------------------
 bool FAddress::IsIPv4() const {
     u8 ipV4[4];
     return ParseIPv4(ipV4, *this);
 }
 //----------------------------------------------------------------------------
-bool FAddress::IP(FAddress* paddr, const FStringView& hostname, size_t port/* = DefaultPort */) {
+bool FAddress::IPv4(FAddress* paddr, const FStringView& hostname, size_t port/* = DefaultPort */) {
     Assert(paddr);
     Assert(!hostname.empty());
 
-    if (not HostnameToIP(paddr->_host, hostname))
+    if (not HostnameToIPv4(paddr->_host, hostname, paddr->_port))
         return false;
 
     paddr->_port = port;
@@ -97,62 +99,72 @@ bool FAddress::ParseIPv4(u8 (&ipV4)[4], const FAddress& addr) {
 //----------------------------------------------------------------------------
 bool LocalHostName(FString& hostname) {
     char temp[NI_MAXHOST];
-    if (::gethostname(temp, NI_MAXHOST) == SOCKET_ERROR)
+    if (::gethostname(temp, NI_MAXHOST) == SOCKET_ERROR) {
+        LOG_LAST_ERROR(L"gethostname");
         return false;
-
-    hostname.assign(temp);
-
-    Assert(hostname.size());
-    return true;
+    }
+    else {
+        hostname.assign(temp);
+        Assert(hostname.size());
+        return true;
+    }
 }
 //----------------------------------------------------------------------------
-bool HostnameToIP(FString& ip, const FStringView& hostname, size_t n/* = 0 */) {
+bool HostnameToIPv4(FString& ip, const FStringView& hostname, size_t port) {
     Assert(!hostname.empty());
     Assert(hostname.size() < NI_MAXHOST);
 
     char nodeName[NI_MAXHOST]; // hostname must be a null terminated string
     hostname.ToNullTerminatedCStr(nodeName);
 
-    const char* serviceName = "80"; // use http as default port
+    char serviceName[16];
+    FOCStrStream(serviceName) << port;
 
-    struct addrinfo hints;
+    struct ::addrinfo hints;
     memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_INET;
+    hints.ai_family = AF_INET; // IP v4
     hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
-    hints.ai_flags = AI_NUMERICSERV;
+    hints.ai_flags = AI_NUMERICSERV; // Port is a string containing a number
 
-    ::ADDRINFOA* address;
-    if (0 != ::getaddrinfo(nodeName, serviceName, &hints, &address))
+    struct ::addrinfo* serviceInfo = nullptr;
+    if (int errorCode = ::getaddrinfo(nodeName, serviceName, &hints, &serviceInfo)) {
+        LOG(Error, L"[getaddrinfo] error code: {0}, {1}", errorCode, ::gai_strerror(errorCode));
         return false;
+    }
+    Assert(serviceInfo);
 
-    // find the nth address
-    ::addrinfo* nth_addr = address;
-    for (size_t i = 1; i <= n; ++i) {
-        nth_addr = nth_addr->ai_next;
+    STATIC_ASSERT(INET_ADDRSTRLEN <= sizeof(nodeName)); // recycle nodeName buffer
 
-        // if there is no nth address then return error
-        if (nullptr == nth_addr) {
-            ::freeaddrinfo(address);
-            return false;
+    bool succeed = false;
+    for (struct ::addrinfo* p = serviceInfo; p; p = p->ai_next) {
+        Assert(AF_INET == p->ai_family);
+        Assert(p->ai_addr);
+
+        struct ::sockaddr_in* serviceAddr = reinterpret_cast<struct ::sockaddr_in*>(p->ai_addr);
+
+        const char* resolvedIpV4 = ::inet_ntop(
+            p->ai_family,
+            &serviceAddr->sin_addr,
+            nodeName, sizeof(nodeName) );
+
+        if (resolvedIpV4) {
+            ip.assign(resolvedIpV4);
+            Assert(ip.size());
+            LOG(Info, L"[HostnameToIPv4] Resolved IPv4 : {0}:{1} -> {2}", hostname, port, ip);
+            succeed = true;
         }
     }
 
-    char temp_ip[INET_ADDRSTRLEN];
-    const char* resolved_ip = ::inet_ntop(nth_addr->ai_family,  &((struct sockaddr_in *)nth_addr->ai_addr)->sin_addr, temp_ip, sizeof(temp_ip));
+    ::freeaddrinfo(serviceInfo);
 
-    ::freeaddrinfo(address);
-
-    if (nullptr == resolved_ip)
-        return false;
-
-    ip.assign(resolved_ip);
-
-    Assert(ip.size());
-    return true;
+    return succeed;
 }
 //----------------------------------------------------------------------------
-bool IPToHostname(FString& hostname, const FStringView& ip) {
+bool HostnameToIPv4(FString& ip, const FStringView& hostname, EServiceName service) {
+    return HostnameToIPv4(ip, hostname, size_t(service));
+}
+//----------------------------------------------------------------------------
+bool IPv4ToHostname(FString& hostname, const FStringView& ip) {
     Assert(!ip.empty());
 
     char temp[NI_MAXHOST]; // hostname must be a null terminated string
@@ -163,21 +175,25 @@ bool IPToHostname(FString& hostname, const FStringView& ip) {
     sa.sin_port = ::htons(80);
 
     // if inet_pton couldn't convert ip then return an error
-    if (1 != ::inet_pton(AF_INET, temp, &sa.sin_addr) )
+    if (1 != ::inet_pton(AF_INET, temp, &sa.sin_addr) ) {
+        LOG_LAST_ERROR(L"inet_pton");
         return false;
+    }
 
     char hostinfo[NI_MAXHOST];
     char servInfo[NI_MAXSERV];
 
     const DWORD ret = ::getnameinfo(
         (struct sockaddr *)&sa, sizeof(sa),
-            hostinfo, NI_MAXHOST,
-            servInfo, NI_MAXSERV,
-            NI_NUMERICSERV );
+        hostinfo, NI_MAXHOST,
+        servInfo, NI_MAXSERV,
+        NI_NUMERICSERV );
 
     // check if gethostbyaddr returned an error
-    if (0 != ret)
+    if (0 != ret) {
+        LOG_LAST_ERROR(L"getnameinfo");
         return false;
+    }
 
     hostname.assign(hostinfo);
 
