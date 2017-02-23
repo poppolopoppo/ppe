@@ -67,30 +67,34 @@ FSocket& FSocket::operator =(FSocket&& rvalue) {
 bool FSocket::Connect() {
     Assert(!IsConnected());
     Assert(!_remote.empty());
+    Assert(_remote.Port() != size_t(EServiceName::Any));
+
+    // TODO : clearly handle IPv6
+    const short ai_family = (_remote.IsIPv4() ? AF_INET : AF_INET6);
 
     ::sockaddr_in local_sa;     // local socket structure
     ::sockaddr_in foreign_sa;   // foreign socket structure
     ::ZeroMemory(&local_sa, sizeof(sockaddr_in));   // initialize local_sa
     ::ZeroMemory(&foreign_sa, sizeof(sockaddr_in)); // initialize foreign_sa
 
-    ::SOCKET sockfd = ::socket(AF_INET, SOCK_STREAM, 0);  // get a new socket
+    ::SOCKET sockfd = ::socket(ai_family, SOCK_STREAM, 0);  // get a new socket
 
     // if socket() returned an error then return OTHER_ERROR
     if (INVALID_SOCKET == sockfd)
         return false;
 
     // set the foreign socket structure
-    foreign_sa.sin_family = AF_INET;
+    foreign_sa.sin_family = ai_family;
     foreign_sa.sin_port = ::htons(checked_cast<::u_short>(_remote.Port()));
 
     // if inet_pton couldn't convert the ip then return an error
-    if (1 != ::inet_pton(AF_INET, _remote.Host().c_str(), &foreign_sa.sin_addr.S_un.S_addr) ) {
+    if (1 != ::inet_pton(ai_family, _remote.Host().c_str(), &foreign_sa.sin_addr.S_un.S_addr) ) {
         ::closesocket(sockfd);
         return false;
     }
 
     // set up the local socket structure
-    local_sa.sin_family = AF_INET;
+    local_sa.sin_family = ai_family;
 
     // set the local ip
     if (_local.empty()) {
@@ -98,11 +102,11 @@ bool FSocket::Connect() {
         local_sa.sin_addr.S_un.S_addr = ::htons(INADDR_ANY);
     }
     else {
-        Assert(_local.IsIPv4());
+        Assert(_local.IsIPv4()); // TODO : clearly handle IPv6
 
         // if there is a specific ip to listen on
         // if inet_pton couldn't convert the ip then return an error
-        if (1 != ::inet_pton(AF_INET, _local.Host().c_str(), &local_sa.sin_addr.S_un.S_addr) ) {
+        if (1 != ::inet_pton(ai_family, _local.Host().c_str(), &local_sa.sin_addr.S_un.S_addr) ) {
             ::closesocket(sockfd);
             return false;
         }
@@ -112,9 +116,11 @@ bool FSocket::Connect() {
     local_sa.sin_port = ::htons(checked_cast<::u_short>(_local.Port()));
 
     // bind the new socket to the requested local port and local ip
-    if (SOCKET_ERROR == ::bind(sockfd, reinterpret_cast<sockaddr*>(&local_sa), sizeof(sockaddr_in)) ) {
-        ::closesocket(sockfd);
-        return false;
+    if (_local.Port() != size_t(EServiceName::Any)) {
+        if (SOCKET_ERROR == ::bind(sockfd, reinterpret_cast<sockaddr*>(&local_sa), sizeof(sockaddr_in)) ) {
+            ::closesocket(sockfd);
+            return false;
+        }
     }
 
     // connect the socket
@@ -128,7 +134,7 @@ bool FSocket::Connect() {
     ::u_short used_local_port;
     ::sockaddr_in local_info;
     FString used_local_ip;
-    if (0 == _local.Port()) {
+    if (_local.Port() == size_t(EServiceName::Any)) {
         int length = sizeof(::sockaddr_in);
         if (SOCKET_ERROR == ::getsockname(sockfd, reinterpret_cast<::sockaddr*>(&local_info), &length)) {
             ::closesocket(sockfd);
@@ -152,8 +158,9 @@ bool FSocket::Connect() {
             }
         }
 
-        char temp[17];
-        const char* real_local_ip = ::inet_ntop(AF_INET, &local_info.sin_addr, temp, lengthof(temp));
+        char temp[INET6_ADDRSTRLEN];
+        STATIC_ASSERT(INET_ADDRSTRLEN < INET6_ADDRSTRLEN); // should handle both ip categories
+        const char* real_local_ip = ::inet_ntop(ai_family, &local_info.sin_addr, temp, lengthof(temp));
 
         // check if inet_ntop returned an error
         if (nullptr == real_local_ip) {
@@ -343,11 +350,11 @@ bool FSocket::MakeConnection(FSocket& socket, const FAddress& remoteHostnameOrIP
         socket._remote = remoteHostnameOrIP;
     }
     else {
-        FString ip;
-        if (not HostnameToIP(ip, MakeView(remoteHostnameOrIP.Host())) )
+        FString ipv4;
+        if (not HostnameToIPv4(ipv4, remoteHostnameOrIP.Host(), remoteHostnameOrIP.Port()) )
             return false;
 
-        socket._remote = FAddress(std::move(ip), remoteHostnameOrIP.Port());
+        socket._remote = FAddress(std::move(ipv4), remoteHostnameOrIP.Port());
     }
     Assert(socket._remote.IsIPv4());
 

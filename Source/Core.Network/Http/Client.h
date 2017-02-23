@@ -21,12 +21,14 @@ public:
     typedef ASSOCIATIVE_VECTORINSITU(HTTP, FString, FString, 3) FCookieMap;
     typedef ASSOCIATIVE_VECTORINSITU(HTTP, FString, FString, 3) FPostMap;
 
-    STATIC_CONST_INTEGRAL(size_t, DefaultPort, 80);
     STATIC_CONST_INTEGRAL(size_t, DefaultMaxContentLength, 10*1024*1024);
 
     explicit FHttpClient(FAddress&& address, size_t maxContentLength = DefaultMaxContentLength);
     explicit FHttpClient(const FAddress& address, size_t maxContentLength = DefaultMaxContentLength);
-    FHttpClient(const FStringView& hostname, size_t port = DefaultPort, size_t maxContentLength = DefaultMaxContentLength);
+
+    FHttpClient(const FStringView& hostname, size_t port = size_t(EServiceName::HTTP), size_t maxContentLength = DefaultMaxContentLength);
+    FHttpClient(const FStringView& hostname, EServiceName service = EServiceName::HTTP, size_t maxContentLength = DefaultMaxContentLength);
+
     ~FHttpClient();
 
     FHttpClient(const FHttpClient& ) = delete;

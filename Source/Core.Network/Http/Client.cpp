@@ -51,7 +51,7 @@ template <typename _Method>
 static EHttpStatus SafeHttpClient_(const FUri& uri, const _Method& method) {
     Assert(uri.IsAbsolute());
     CORE_TRY {
-        FHttpClient cli(uri.Hostname(), FHttpClient::DefaultPort);
+        FHttpClient cli(uri.Hostname(), EServiceName::HTTP);
         method(uri, cli);
     }
     CORE_CATCH(FHttpException e)
@@ -79,8 +79,11 @@ FHttpClient::FHttpClient(FAddress&& address, size_t maxContentLength/* = Default
 FHttpClient::FHttpClient(const FAddress& address, size_t maxContentLength/* = DefaultMaxContentLength */)
 :   FHttpClient(FAddress(address), maxContentLength) {}
 //----------------------------------------------------------------------------
-FHttpClient::FHttpClient(const FStringView& hostname, size_t port/* = DefaultPort */, size_t maxContentLength/* = DefaultMaxContentLength */)
+FHttpClient::FHttpClient(const FStringView& hostname, size_t port/* = size_t(EServiceName::HTTP) */, size_t maxContentLength/* = DefaultMaxContentLength */)
 :   FHttpClient(FAddress(hostname, port), maxContentLength) {}
+//----------------------------------------------------------------------------
+FHttpClient::FHttpClient(const FStringView& hostname, EServiceName service/* = size_t(EServiceName::HTTP) */, size_t maxContentLength/* = DefaultMaxContentLength */)
+    : FHttpClient(FAddress(hostname, service), maxContentLength) {}
 //----------------------------------------------------------------------------
 FHttpClient::~FHttpClient() {
     if (_socket.IsConnected())
