@@ -101,6 +101,8 @@ public:
         FPlatform::OutputDebug(oss.NullTerminatedStr());
     }
 
+    virtual void Flush() override {}
+
 private:
     FWStringView _prefix;
 };
@@ -114,6 +116,10 @@ static std::atomic<ILogger*> gLoggerCurrentImpl(remove_const(&gLoggerBeforeMain)
 ILogger* SetLoggerImpl(ILogger* logger) { // return previous handler
     Assert(logger);
     return gLoggerCurrentImpl.exchange(logger);
+}
+//----------------------------------------------------------------------------
+void FlushLog() {
+    gLoggerCurrentImpl.load()->Flush();
 }
 //----------------------------------------------------------------------------
 void Log(ELogCategory category, const FWStringView& text) {
@@ -131,8 +137,13 @@ void LogArgs(ELogCategory category, const FWStringView& format, const FormatArgL
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FAbstractThreadSafeLogger::Log(ELogCategory category, const FWStringView& format, const FormatArgListW& args) {
-    const std::unique_lock<std::recursive_mutex> scopeLock(_barrier);
+    const std::lock_guard<std::recursive_mutex> scopeLock(_barrier);
     LogThreadSafe(category, format, args);
+}
+//----------------------------------------------------------------------------
+void FAbstractThreadSafeLogger::Flush() {
+    const std::lock_guard<std::recursive_mutex> scopeLock(_barrier);
+    FlushThreadSafe();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -161,6 +172,8 @@ void FOutputDebugLogger::LogThreadSafe(ELogCategory category, const FWStringView
     FPlatform::OutputDebug(oss.str().c_str());
 }
 //----------------------------------------------------------------------------
+void FOutputDebugLogger::FlushThreadSafe() {}
+//----------------------------------------------------------------------------
 void FStdoutLogger::LogThreadSafe(ELogCategory category, const FWStringView& text, const FormatArgListW& args) {
     if (ELogCategory::Callstack != category)
         Format(std::wcout, L"[{0:12f}][{1}]", FCurrentProcess::ElapsedSeconds(), category);
@@ -174,6 +187,10 @@ void FStdoutLogger::LogThreadSafe(ELogCategory category, const FWStringView& tex
     std::wcout << eol;
 }
 //----------------------------------------------------------------------------
+void FStdoutLogger::FlushThreadSafe() {
+    std::wcout.flush();
+}
+//----------------------------------------------------------------------------
 void FStderrLogger::LogThreadSafe(ELogCategory category, const FWStringView& text, const FormatArgListW& args) {
     if (ELogCategory::Callstack != category)
         Format(std::wcerr, L"[{0:12f}][{1}]", FCurrentProcess::ElapsedSeconds(), category);
@@ -185,6 +202,10 @@ void FStderrLogger::LogThreadSafe(ELogCategory category, const FWStringView& tex
     Assert(!std::wcerr.bad());
 
     std::wcerr << eol;
+}
+//----------------------------------------------------------------------------
+void FStderrLogger::FlushThreadSafe() {
+    std::wcerr.flush(); // shouldn't be necessary for cerr which is unbuffered by default, but just in case ...
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

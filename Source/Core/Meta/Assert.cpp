@@ -63,6 +63,8 @@ void AssertionFailed(const char *msg, const wchar_t *file, unsigned line) {
     if (gIgnoreAllAsserts || gIgnoreAssertsInThisThread)
         return;
 
+    FLUSH_LOG(); // flush log before continuing to get eventual log messages
+
     if (gIsInAssertion)
         CORE_THROW_IT(FAssertException("Assert reentrancy !", WIDESTRING(__FILE__), __LINE__));
 
@@ -138,6 +140,8 @@ void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line)
     static std::atomic<bool> gIgnoreAllAsserts = ATOMIC_VAR_INIT(false);
     if (gIgnoreAllAsserts || gIgnoreAssertsInThisThread)
         return;
+
+    FLUSH_LOG(); // flush log before continuing to get eventual log messages
 
     if (gIsInAssertion)
         CORE_THROW_IT(FAssertReleaseException("Assert release reentrancy !", WIDESTRING(__FILE__), __LINE__));

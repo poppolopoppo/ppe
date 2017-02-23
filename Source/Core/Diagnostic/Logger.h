@@ -41,14 +41,17 @@ class ILogger {
 public:
     virtual ~ILogger() {}
     virtual void Log(ELogCategory category, const FWStringView& format, const FormatArgListW& args) = 0;
+    virtual void Flush() = 0;
 };
 //----------------------------------------------------------------------------
 class FAbstractThreadSafeLogger : public ILogger {
 public:
 	virtual ~FAbstractThreadSafeLogger() {}
 	virtual void Log(ELogCategory category, const FWStringView& format, const FormatArgListW& args) override;
+    virtual void Flush() override;
 protected:
 	virtual void LogThreadSafe(ELogCategory category, const FWStringView& format, const FormatArgListW& args) = 0;
+    virtual void FlushThreadSafe() = 0;
 private:
 	std::recursive_mutex _barrier;
 };
@@ -70,6 +73,8 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 ILogger* SetLoggerImpl(ILogger* logger);
+//----------------------------------------------------------------------------
+void FlushLog();
 //----------------------------------------------------------------------------
 void Log(ELogCategory category, const FWStringView& text);
 //----------------------------------------------------------------------------
@@ -113,16 +118,19 @@ private:
 class FOutputDebugLogger : public FAbstractThreadSafeLogger {
 protected:
     virtual void LogThreadSafe(ELogCategory category, const FWStringView& format, const FormatArgListW& args) override;
+    virtual void FlushThreadSafe() override;
 };
 //----------------------------------------------------------------------------
 class FStdoutLogger : public FAbstractThreadSafeLogger {
 protected:
     virtual void LogThreadSafe(ELogCategory category, const FWStringView& format, const FormatArgListW& args) override;
+    virtual void FlushThreadSafe() override;
 };
 //----------------------------------------------------------------------------
 class FStderrLogger : public FAbstractThreadSafeLogger {
 protected:
     virtual void LogThreadSafe(ELogCategory category, const FWStringView& format, const FormatArgListW& args) override;
+    virtual void FlushThreadSafe() override;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -141,10 +149,13 @@ public:
 } //!namespace Core
 
 #define LOG(_Category, ...) \
-    Core::Log(Core::ELogCategory::_Category, __VA_ARGS__)
+    ::Core::Log(Core::ELogCategory::_Category, __VA_ARGS__)
+#define FLUSH_LOG() \
+    ::Core::FlushLog()
 
 #else
 
 #define LOG(_Category, ...) NOOP()
+#define FLUSH_LOG() NOOP()
 
 #endif //!#ifdef USE_DEBUG_LOGGER
