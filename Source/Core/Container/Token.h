@@ -259,11 +259,11 @@ public:
     void Clear();
 
 private:
-    typedef std::unordered_set<
+    typedef THashSet<
         TBasicStringView<_Char>,
         TStringViewHasher<_Char, _Sensitive>,
         TStringViewEqualTo<_Char, _Sensitive>,
-        typename _Allocator::template rebind< TTokenData<_Char> >::other
+        typename _Allocator::template rebind< TBasicStringView<_Char> >::other
     >   set_type;
 
     std::mutex _barrier;

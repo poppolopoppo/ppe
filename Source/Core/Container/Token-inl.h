@@ -167,7 +167,7 @@ auto TTokenSetSlot<_Char, _Sensitive, _Allocator>::GetOrCreate(const TBasicStrin
 
     TTokenData<_Char> result;
     {
-        std::lock_guard<std::mutex> scopeLock(_barrier);
+        const std::unique_lock<std::mutex> scopeLock(_barrier);
 
         const auto it = _set.find(content);
         if (it == _set.end()) {
@@ -217,7 +217,7 @@ bool TTokenSetSlot<_Char, _Sensitive, _Allocator>::Validate(const TBasicStringVi
 template <typename _Char, ECase _Sensitive, typename _Allocator>
 void TTokenSetSlot<_Char, _Sensitive, _Allocator>::Clear() {
     // invalidates all tokens !
-    std::lock_guard<std::mutex> scopeLock(_barrier);
+    const std::unique_lock<std::mutex> scopeLock(_barrier);
     _set.clear();
     parent_type::Clear();
 }

@@ -36,13 +36,6 @@ using TBasicStringViewHashSet = THashSet<
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, ECase _Sensitive>
-using TBasicStringViewHashMemoizer = THashMemoizer<
-    TBasicStringView<_Char>,
-    TStringViewHasher<_Char, _Sensitive>,
-    TStringViewEqualTo<_Char, _Sensitive>
->;
-//----------------------------------------------------------------------------
 #define STRINGVIEW_HASHSET_MEMOIZE(_DOMAIN, _CASE_SENSITIVE) \
     HASHSET(_DOMAIN, ::Core::TBasicStringViewHashMemoizer<char COMMA _CASE_SENSITIVE>)
 //----------------------------------------------------------------------------

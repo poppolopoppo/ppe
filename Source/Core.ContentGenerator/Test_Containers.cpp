@@ -16,6 +16,7 @@
 
 #include <bitset>
 #include <fstream>
+#include <unordered_set>
 
 namespace Core {
 namespace ContentGenerator {
@@ -559,80 +560,6 @@ void Test_Containers() {
         }*/
         {
             LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
-            const FBenchmarkScope bench("THashSet2");
-
-            THashSet2<
-                FStringView,
-                TStringViewHasher<char, ECase::Sensitive>,
-                TStringViewEqualTo<char, ECase::Sensitive>
-            >   set;
-            {
-                const FBenchmarkScope subbench("THashSet2 construction");
-                PROFILING_SCOPE(Global, 3, "THashSet2 construction");
-                set.reserve(input.size());
-                set.insert(input.begin(), input.end());
-            }
-            LOG(Info, L"THashSet2 load factor = {0:2f2}% max probe dist = {1}", set.load_factor()*100, set.max_probe_dist());
-            Assert(set.size() == input.size());
-            {
-                const FBenchmarkScope subbench("THashSet2 search");
-                PROFILING_SCOPE(Global, 4, "THashSet2 search");
-                const auto end = set.end();
-                forrange(i, 0, loops) {
-                    for (const FStringView& word : search)
-                        if (end == set.find(word))
-                            AssertNotReached();
-                }
-            }
-            {
-                const FBenchmarkScope subbench("THashSet2 negative search");
-                PROFILING_SCOPE(Global, 4, "THashSet2 negative search");
-                const auto end = set.end();
-                forrange(i, 0, loops) {
-                    for (const FStringView& word : negative)
-                        if (end != set.find(word))
-                            AssertNotReached();
-                }
-            }
-        }
-        {
-            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
-            const FBenchmarkScope bench("THashSet2 Memoize");
-
-            THashSet2<
-                THashMemoizer<FStringView, TStringViewHasher<char, ECase::Sensitive>, TStringViewEqualTo<char, ECase::Sensitive> >
-            >   set;
-            {
-                const FBenchmarkScope subbench("THashSet2 Memoize construction");
-                PROFILING_SCOPE(Global, 3, "THashSet2 Memoize construction");
-                set.reserve(input.size());
-                set.insert(input.begin(), input.end());
-            }
-            LOG(Info, L"THashSet2 load factor = {0:2f2}% max probe dist = {1}", set.load_factor() * 100, set.max_probe_dist());
-            Assert(set.size() == input.size());
-            {
-                const FBenchmarkScope subbench("THashSet2 Memoize search");
-                PROFILING_SCOPE(Global, 4, "THashSet2 Memoize search");
-                const auto end = set.end();
-                forrange(i, 0, loops) {
-                    for (const FStringView& word : search)
-                        if (end == set.find(word))
-                            AssertNotReached();
-                }
-            }
-            {
-                const FBenchmarkScope subbench("THashSet2 Memoize negative search");
-                PROFILING_SCOPE(Global, 4, "THashSet2 Memoize negative search");
-                const auto end = set.end();
-                forrange(i, 0, loops) {
-                    for (const FStringView& word : negative)
-                        if (end != set.find(word))
-                            AssertNotReached();
-                }
-            }
-        }
-        {
-            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
 
             const FBenchmarkScope bench("TCompactHashSet");
 
@@ -711,112 +638,7 @@ void Test_Containers() {
                 }
             }
         }
-        {
-            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
-            const FBenchmarkScope bench("THashTable");
-
-            typedef THashTable<
-                FStringView, void,
-                TStringViewHasher<char, ECase::Sensitive>,
-                TStringViewEqualTo<char, ECase::Sensitive>
-            >   hashtable_type;
-
-            hashtable_type set;
-            {
-                const FBenchmarkScope subbench("THashTable construction");
-                PROFILING_SCOPE(Global, 3, "THashTable construction");
-                set.reserve(input.size());
-                size_t count = 0;
-                for (const FStringView& word : input) {
-                    set.insert(word);
-                    count++;
-Assert(set.size() == count);
-                }
-            }
-            Assert(set.size() == input.size());
-#ifndef PROFILING_ENABLED
-            FHashTableStats stats = set.ProbingStats();
-            LOG(Info, L"[HASHTABLE] Probing stats =\n"
-                L"    Min : {0}\n"
-                L"    Max : {1}\n"
-                L"    Mean: {2}\n"
-                L"    Dev : {3}\n",
-                stats.MinProbe, stats.MaxProbe, stats.MeanProbe, stats.DevProbe);
-#endif
-            {
-                const FBenchmarkScope subbench("THashTable search");
-                PROFILING_SCOPE(Global, 4, "THashTable search");
-                forrange(i, 0, loops) {
-                    for (const FStringView& word : search)
-                        if (set.end() == set.find(word))
-                            AssertNotReached();
-                }
-            }
-            {
-                const FBenchmarkScope subbench("THashTable negative search");
-                PROFILING_SCOPE(Global, 4, "THashTable negative search");
-                forrange(i, 0, loops) {
-                    for (const FStringView& word : negative)
-                        if (set.end() != set.find(word))
-                            AssertNotReached();
-                }
-            }
-        }
-        {
-            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
-            const FBenchmarkScope bench("THashTable Memoize");
-
-            typedef THashTable<
-                THashMemoizer<
-                    FStringView,
-                    TStringViewHasher<char, ECase::Sensitive>,
-                    TStringViewEqualTo<char, ECase::Sensitive>
-                >,
-                void
-            >   hashtable_type;
-
-            hashtable_type set;
-            {
-                const FBenchmarkScope subbench("THashTable Memoize construction");
-                PROFILING_SCOPE(Global, 3, "THashTable Memoize construction");
-                set.reserve(input.size());
-                size_t count = 0;
-                for (const FStringView& word : input) {
-                    set.insert(word);
-                    count++;
-                    Assert(set.size() == count);
-                }
-            }
-            Assert(set.size() == input.size());
-#ifndef PROFILING_ENABLED
-            FHashTableStats stats = set.ProbingStats();
-            LOG(Info, L"[HASHTABLE] Probing stats =\n"
-                L"    Min : {0}\n"
-                L"    Max : {1}\n"
-                L"    Mean: {2}\n"
-                L"    Dev : {3}\n",
-                stats.MinProbe, stats.MaxProbe, stats.MeanProbe, stats.DevProbe);
-#endif
-            {
-                const FBenchmarkScope subbench("THashTable Memoize search");
-                PROFILING_SCOPE(Global, 4, "THashTable Memoize search");
-                forrange(i, 0, loops) {
-                    for (const FStringView& word : search)
-                        if (set.end() == set.find(word))
-                            AssertNotReached();
-                }
-            }
-            {
-                const FBenchmarkScope subbench("THashTable Memoize negative search");
-                PROFILING_SCOPE(Global, 4, "THashTable Memoize negative search");
-                forrange(i, 0, loops) {
-                    for (const FStringView& word : negative)
-                        if (set.end() != set.find(word))
-                            AssertNotReached();
-                }
-            }
-        }
-        {
+        /*{
             LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
             const FBenchmarkScope bench("TFlatSet");
 
@@ -850,7 +672,7 @@ Assert(set.size() == count);
                             AssertNotReached();
                 }
             }
-        }
+        }*/
         {
             LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
             const FBenchmarkScope bench("THashSet");
@@ -862,6 +684,7 @@ Assert(set.size() == count);
                 set.reserve(input.size());
                 set.insert(input.begin(), input.end());
             }
+            LOG(Info, L"THashSet load_factor = {0:#f2}% max probe dist = {1}", set.load_factor(), set.max_probe_dist());
             Assert(set.size() == input.size());
             {
                 const FBenchmarkScope subbench("THashSet search");
@@ -893,6 +716,7 @@ Assert(set.size() == count);
                 set.reserve(input.size());
                 set.insert(input.begin(), input.end());
             }
+            LOG(Info, L"THashSet Memoize load_factor = {0:#f2}% max probe dist = {1}", set.load_factor(), set.max_probe_dist());
             Assert(set.size() == input.size());
             {
                 const FBenchmarkScope subbench("THashSet Memoize search");
@@ -913,7 +737,75 @@ Assert(set.size() == count);
                 }
             }
         }
+        {
+            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
+            const FBenchmarkScope bench("std::unordered_set");
 
+            std::unordered_set<
+                FStringView,
+                TStringViewHasher<char, ECase::Sensitive>,
+                TStringViewEqualTo<char, ECase::Sensitive>
+            >   set;
+            {
+                const FBenchmarkScope subbench("std::unordered_set construction");
+                PROFILING_SCOPE(Global, 3, "std::unordered_set construction");
+                set.reserve(input.size());
+                set.insert(input.begin(), input.end());
+            }
+            Assert(set.size() == input.size());
+            {
+                const FBenchmarkScope subbench("std::unordered_set search");
+                PROFILING_SCOPE(Global, 4, "std::unordered_set search");
+                forrange(i, 0, loops) {
+                    for (const FStringView& word : search)
+                        if (set.end() == set.find(word))
+                            AssertNotReached();
+                }
+            }
+            {
+                const FBenchmarkScope subbench("std::unordered_set negative search");
+                PROFILING_SCOPE(Global, 4, "std::unordered_set negative search");
+                forrange(i, 0, loops) {
+                    for (const FStringView& word : negative)
+                        if (set.end() != set.find(word))
+                            AssertNotReached();
+                }
+            }
+        }
+        {
+            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
+            const FBenchmarkScope bench("std::unordered_set Memoize");
+
+            std::unordered_set<
+                TBasicStringViewHashMemoizer<char, ECase::Sensitive>,
+                THash< TBasicStringViewHashMemoizer<char, ECase::Sensitive> >
+            >   set;
+            {
+                const FBenchmarkScope subbench("std::unordered_set Memoize construction");
+                PROFILING_SCOPE(Global, 3, "std::unordered_set Memoize construction");
+                set.reserve(input.size());
+                set.insert(input.begin(), input.end());
+            }
+            Assert(set.size() == input.size());
+            {
+                const FBenchmarkScope subbench("std::unordered_set Memoize search");
+                PROFILING_SCOPE(Global, 4, "std::unordered_set Memoize search");
+                forrange(i, 0, loops) {
+                    for (const FStringView& word : search)
+                        if (set.end() == set.find(word))
+                            AssertNotReached();
+                }
+            }
+            {
+                const FBenchmarkScope subbench("std::unordered_set Memoize negative search");
+                PROFILING_SCOPE(Global, 4, "std::unordered_set Memoize negative search");
+                forrange(i, 0, loops) {
+                    for (const FStringView& word : negative)
+                        if (set.end() != set.find(word))
+                            AssertNotReached();
+                }
+            }
+        }
     }
     {
         LOG(Info, L"{0}", Repeat<20>(L">>="));
@@ -941,45 +833,8 @@ Assert(set.size() == count);
 #ifdef WITH_CORE_ASSERT
         static constexpr size_t loops = 100;
 #else
-        static constexpr size_t loops = 1000;
+        static constexpr size_t loops = 10000;
 #endif
-        {
-            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
-            const FBenchmarkScope bench("THashSet2");
-
-            typedef THashSet2<value_type> hashtable_type;
-
-            hashtable_type set;
-            {
-                const FBenchmarkScope subbench("THashSet2 construction");
-                PROFILING_SCOPE(Global, 3, "THashSet2 construction");
-                set.reserve(input.size());
-                for (const auto& word : input)
-                    set.insert(word);
-            }
-            LOG(Info, L"THashSet2 load factor = {0:2f2}% max probe dist = {1}", set.load_factor() * 100, set.max_probe_dist());
-            Assert(set.size() == input.size());
-            {
-                const FBenchmarkScope subbench("THashSet2 search");
-                PROFILING_SCOPE(Global, 4, "THashSet2 search");
-                const auto end = set.end();
-                forrange(i, 0, loops) {
-                    for (const auto& word : search)
-                        if (end == set.find(word))
-                            AssertNotReached();
-                }
-            }
-            {
-                const FBenchmarkScope subbench("THashSet2 negative search");
-                PROFILING_SCOPE(Global, 4, "THashSet2 negative search");
-                const auto end = set.end();
-                forrange(i, 0, loops) {
-                    for (const auto& word : negative)
-                        if (end != set.find(word))
-                            AssertNotReached();
-                }
-            }
-        }
         {
             LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
             const FBenchmarkScope bench("TCompactHashSet");
@@ -1012,53 +867,6 @@ Assert(set.size() == count);
                         if (nullptr != set.find(word))
                             AssertNotReached();
                     }
-            }
-        }
-        {
-            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
-            const FBenchmarkScope bench("THashTable");
-
-            typedef THashTable<value_type, void>   hashtable_type;
-
-            hashtable_type set;
-            {
-                const FBenchmarkScope subbench("THashTable construction");
-                PROFILING_SCOPE(Global, 3, "THashTable construction");
-                set.reserve(input.size());
-                size_t count = 0;
-                for (const auto& word : input) {
-                    set.insert(word);
-                    count++;
-Assert(set.size() == count);
-                }
-            }
-            Assert(set.size() == input.size());
-#ifndef PROFILING_ENABLED
-            FHashTableStats stats = set.ProbingStats();
-            LOG(Info, L"[HASHTABLE] Probing stats =\n"
-                L"    Min : {0}\n"
-                L"    Max : {1}\n"
-                L"    Mean: {2}\n"
-                L"    Dev : {3}\n",
-                stats.MinProbe, stats.MaxProbe, stats.MeanProbe, stats.DevProbe);
-#endif
-            {
-                const FBenchmarkScope subbench("THashTable search");
-                PROFILING_SCOPE(Global, 4, "THashTable search");
-                forrange(i, 0, loops) {
-                    for (const auto& word : search)
-                        if (set.end() == set.find(word))
-                            AssertNotReached();
-                }
-            }
-            {
-                const FBenchmarkScope subbench("THashTable negative search");
-                PROFILING_SCOPE(Global, 4, "THashTable negative search");
-                forrange(i, 0, loops) {
-                    for (const auto& word : negative)
-                        if (set.end() != set.find(word))
-                            AssertNotReached();
-                }
             }
         }
         {
@@ -1103,6 +911,7 @@ Assert(set.size() == count);
                 set.reserve(input.size());
                 set.insert(input.begin(), input.end());
             }
+            LOG(Info, L"THashSet load_factor = {0:#f2}% max probe dist = {1}", set.load_factor(), set.max_probe_dist());
             Assert(set.size() == input.size());
             {
                 const FBenchmarkScope subbench("THashSet search");
@@ -1116,6 +925,37 @@ Assert(set.size() == count);
             {
                 const FBenchmarkScope subbench("THashSet negative search");
                 PROFILING_SCOPE(Global, 4, "THashSet negative search");
+                forrange(i, 0, loops) {
+                    for (const auto& word : negative)
+                        if (set.end() != set.find(word))
+                            AssertNotReached();
+                }
+            }
+        }
+        {
+            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
+            const FBenchmarkScope bench("std::unordered_set");
+
+            std::unordered_set<value_type, THash<value_type>> set;
+            {
+                const FBenchmarkScope subbench("std::unordered_set construction");
+                PROFILING_SCOPE(Global, 3, "std::unordered_set construction");
+                set.reserve(input.size());
+                set.insert(input.begin(), input.end());
+            }
+            Assert(set.size() == input.size());
+            {
+                const FBenchmarkScope subbench("std::unordered_set search");
+                PROFILING_SCOPE(Global, 4, "std::unordered_set search");
+                forrange(i, 0, loops) {
+                    for (const auto& word : search)
+                        if (set.end() == set.find(word))
+                            AssertNotReached();
+                }
+            }
+            {
+                const FBenchmarkScope subbench("std::unordered_set negative search");
+                PROFILING_SCOPE(Global, 4, "std::unordered_set negative search");
                 forrange(i, 0, loops) {
                     for (const auto& word : negative)
                         if (set.end() != set.find(word))
