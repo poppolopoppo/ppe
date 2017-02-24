@@ -2,6 +2,7 @@
 
 #include "Core/Core.h"
 
+#include "Core/Container/Hash.h"
 #include "Core/Memory/MemoryView.h"
 
 #include <cctype>
@@ -11,7 +12,6 @@
 #include <string>
 #include <string.h>
 #include <wchar.h>
-#include <xhash>
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -392,13 +392,13 @@ struct TCharCase<_Char, ECase::Insensitive> : public std::unary_function<const _
 template <typename _Char, ECase _Sensitive>
 struct TStringViewEqualTo {
     bool operator ()(const TBasicStringView<_Char>& lhs, const TBasicStringView<_Char>& rhs) const {
-        return (0 == Compare(lhs, rhs));
+        return (Equals(lhs, rhs));
     }
 };
 template <typename _Char>
 struct TStringViewEqualTo<_Char, ECase::Insensitive> {
     bool operator ()(const TBasicStringView<_Char>& lhs, const TBasicStringView<_Char>& rhs) const {
-        return (0 == CompareI(lhs, rhs));
+        return (EqualsI(lhs, rhs));
     }
 };
 //----------------------------------------------------------------------------
@@ -427,6 +427,13 @@ struct TStringViewHasher<_Char, ECase::Insensitive> {
         return hash_stringI(str);
     }
 };
+//----------------------------------------------------------------------------
+template <typename _Char, ECase _Sensitive>
+using TBasicStringViewHashMemoizer = THashMemoizer<
+    TBasicStringView<_Char>,
+    TStringViewHasher<_Char, _Sensitive>,
+    TStringViewEqualTo<_Char, _Sensitive>
+>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
