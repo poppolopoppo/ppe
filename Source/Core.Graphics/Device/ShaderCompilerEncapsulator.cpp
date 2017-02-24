@@ -194,7 +194,9 @@ PShaderCompiled CompileShaderSource(
             {
                 RAWSTORAGE(Shader, char) preprocess;
                 deviceAPIShaderCompiler->PreprocessShaderSource(preprocess, source.get(), vertexDeclaration);
+#ifndef FINAL_RELEASE
                 FPlatform::DebugBreak();
+#endif
             }
             //break;
         case Dialog::EResult::Retry:

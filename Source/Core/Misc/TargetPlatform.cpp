@@ -107,6 +107,7 @@ bool FPlatform::IsDebuggerAttached() {
 }
 #endif
 //----------------------------------------------------------------------------
+#ifndef FINAL_RELEASE
 void FPlatform::OutputDebug(const char* text) {
 #ifdef OS_WINDOWS
     return ::OutputDebugStringA(text);
@@ -114,7 +115,9 @@ void FPlatform::OutputDebug(const char* text) {
 #   error "no support"
 #endif
 }
+#endif
 //----------------------------------------------------------------------------
+#ifndef FINAL_RELEASE
 void FPlatform::OutputDebug(const wchar_t* text) {
 #ifdef OS_WINDOWS
     return ::OutputDebugStringW(text);
@@ -122,6 +125,7 @@ void FPlatform::OutputDebug(const wchar_t* text) {
 #   error "no support"
 #endif
 }
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
