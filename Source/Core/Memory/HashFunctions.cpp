@@ -61,11 +61,11 @@ u128 Fingerprint128(const void *ptr, size_t sizeInBytes) {
 }
 //----------------------------------------------------------------------------
 u64 Fingerprint64(const void *ptr, size_t sizeInBytes) {
-    return FarmHash::Fingerprint64(reinterpret_cast<const char *>(ptr), sizeInBytes);;
+    return FarmHash::Fingerprint64(reinterpret_cast<const char *>(ptr), sizeInBytes);
 }
 //----------------------------------------------------------------------------
 u32 Fingerprint32(const void *ptr, size_t sizeInBytes) {
-    return FarmHash::Fingerprint32(reinterpret_cast<const char *>(ptr), sizeInBytes);;
+    return FarmHash::Fingerprint32(reinterpret_cast<const char *>(ptr), sizeInBytes);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

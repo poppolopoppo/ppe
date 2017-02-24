@@ -24,8 +24,16 @@ HASH_AS_POD_DEF(inline, i64)
 HASH_AS_POD_DEF(inline, u64)
 HASH_AS_POD_DEF(inline, u128)
 HASH_AS_POD_DEF(inline, u256)
-HASH_AS_POD_DEF(inline, float)
-HASH_AS_POD_DEF(inline, double)
+//----------------------------------------------------------------------------
+inline hash_t hash_value(float value) {
+    // -0.0 and 0.0 should return same hash
+    return (0 == value ? hash_t(0) : hash_as_pod(value));
+}
+//----------------------------------------------------------------------------
+inline hash_t hash_value(double value) {
+    // -0.0 and 0.0 should return same hash
+    return (0 == value ? hash_t(0) : hash_as_pod(value));
+}
 //----------------------------------------------------------------------------
 template <typename T>
 typename std::enable_if<std::is_enum<T>::value, hash_t>::type hash_value(T value) {
