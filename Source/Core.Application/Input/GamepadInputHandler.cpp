@@ -77,6 +77,11 @@ FGamepadInputHandler::FGamepadInputHandler() {}
 //----------------------------------------------------------------------------
 FGamepadInputHandler::~FGamepadInputHandler() {}
 //----------------------------------------------------------------------------
+const FMultiGamepadState& FGamepadInputHandler::State() const {
+	AssertIsMainThread();
+	return _state;
+}
+//----------------------------------------------------------------------------
 void FGamepadInputHandler::RegisterMessageDelegates(Graphics::FBasicWindow *wnd) {
     UNUSED(wnd); // uses XInput instead
 }
@@ -86,6 +91,7 @@ void FGamepadInputHandler::UnregisterMessageDelegates(Graphics::FBasicWindow *wn
 }
 //----------------------------------------------------------------------------
 void FGamepadInputHandler::UpdateBeforeDispatch(Graphics::FBasicWindow *wnd) {
+	AssertIsMainThread();
     UNUSED(wnd);
 
     int gamepadIndex = 0;

@@ -21,7 +21,7 @@ public:
     FGamepadInputHandler(const FGamepadInputHandler& ) = delete;
     FGamepadInputHandler& operator =(const FGamepadInputHandler& ) = delete;
 
-    virtual const FMultiGamepadState& State() const override final { return _state; }
+    virtual const FMultiGamepadState& State() const override final;
 
     virtual void RegisterMessageDelegates(Graphics::FBasicWindow *wnd) override final;
     virtual void UnregisterMessageDelegates(Graphics::FBasicWindow *wnd) override final;

@@ -21,7 +21,7 @@ public:
     FMouseInputHandler(const FMouseInputHandler& ) = delete;
     FMouseInputHandler& operator =(const FMouseInputHandler& ) = delete;
 
-    virtual const FMouseState& State() const override final { return _state; }
+    virtual const FMouseState& State() const override final;
 
     virtual void RegisterMessageDelegates(Graphics::FBasicWindow *wnd) override final;
     virtual void UnregisterMessageDelegates(Graphics::FBasicWindow *wnd) override final;

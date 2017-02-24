@@ -21,7 +21,7 @@ public:
     FKeyboardInputHandler(const FKeyboardInputHandler& ) = delete;
     FKeyboardInputHandler& operator =(const FKeyboardInputHandler& ) = delete;
 
-    virtual const FKeyboardState& State() const override final { return _state; }
+    virtual const FKeyboardState& State() const override final;
 
     virtual void RegisterMessageDelegates(Graphics::FBasicWindow *wnd) override final;
     virtual void UnregisterMessageDelegates(Graphics::FBasicWindow *wnd) override final;
