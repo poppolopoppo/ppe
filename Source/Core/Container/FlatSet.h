@@ -93,8 +93,7 @@ public:
 
     void reserve(size_type capacity);
     void clear();
-
-    void Clear_ReleaseMemory();
+    void clear_ReleaseMemory();
 
     iterator Find(const _Key& key);
     iterator FindOrAdd(const _Key& key, bool* pAdded);

@@ -65,7 +65,7 @@ void TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::clear() {
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
-void TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::Clear_ReleaseMemory() {
+void TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::clear_ReleaseMemory() {
     _vector.clear();
     _vector.shrink_to_fit();
 }

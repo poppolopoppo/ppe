@@ -65,7 +65,7 @@ void TFlatSet<_Key, _EqualTo, _Less, _Vector>::clear() {
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
-void TFlatSet<_Key, _EqualTo, _Less, _Vector>::Clear_ReleaseMemory() {
+void TFlatSet<_Key, _EqualTo, _Less, _Vector>::clear_ReleaseMemory() {
     _vector.clear();
     _vector.shrink_to_fit();
 }

@@ -2,7 +2,7 @@
 
 #include "Core/Core.h"
 
-#include "Core/Container/Vector.h"
+#include "Core/Container/FlatMap.h"
 #include "Core/Diagnostic/Logger.h"
 #include "Core/Memory/UniquePtr.h"
 #include "Core/Meta/TypeHash.h"
@@ -50,32 +50,30 @@ public:
     }
 
 private:
-    typedef size_t ServiceId;
+    typedef size_t FServiceId;
 
     template <typename _Interface>
-    static constexpr ServiceId  StaticServiceId() {
+    static constexpr FServiceId  StaticServiceId() {
         return Meta::TTypeHash<_Interface>::value();
     }
 
     class TService {
     public:
         TService() : TService(0, nullptr, FStringView()) {}
-        TService(ServiceId id, void* pimpl, const FStringView& name)
+        TService(FServiceId id, void* pimpl, const FStringView& name)
             : _id(id), _pimpl(pimpl), _name(name) {}
 
-        ServiceId Id() const { return _id; }
+		FServiceId Id() const { return _id; }
         void* Pimpl() const { return _pimpl; }
-        const FStringView& FName() const { return _name; }
+        const FStringView& Name() const { return _name; }
 
     private:
-        ServiceId _id;
+		FServiceId _id;
         void* _pimpl;
         FStringView _name;
     };
 
-    typedef VECTORINSITU(Internal, TService, 8) services_type;
-
-    services_type::const_iterator Find_(ServiceId serviceId) const;
+    typedef FLAT_MAPINSITU(Internal, FServiceId, TService, 8) services_type;
 
     FReadWriteLock _barrierRW;
     services_type _services;
@@ -91,19 +89,18 @@ void FServiceContainer::Register(T* service) {
     STATIC_ASSERT(std::is_base_of<_Interface, T>::value);
     Assert(nullptr != service);
 
-    const ServiceId serviceId = StaticServiceId<_Interface>();
+    const FServiceId serviceId = StaticServiceId<_Interface>();
 
-    const FStringView serviceName(
+    const FStringView serviceName{
 #ifdef USE_DEBUG_LOGGER
         MakeStringView(typeid(_Interface).name(), Meta::noinit_tag{})
 #endif
-    );
+	};
 
     WRITESCOPELOCK(_barrierRW);
-    Assert(_services.end() == Find_(serviceId));
 
     _Interface* const pimpl = service; // important before casting to (void*)
-    _services.emplace_back(serviceId, (void*)pimpl, serviceName);
+	_services.Emplace_AssertUnique(serviceId, serviceId, (void*)pimpl, serviceName);
 
     LOG(Info, L"[Service] Register <{0}> with <{1}> (id={2:x})",
         serviceName, typeid(T).name(), hash_t(serviceId));
@@ -114,7 +111,7 @@ void FServiceContainer::Unregister(T* service) {
     STATIC_ASSERT(std::is_base_of<_Interface, T>::value);
     Assert(nullptr != service);
 
-    const ServiceId serviceId = StaticServiceId<_Interface>();
+    const FServiceId serviceId = StaticServiceId<_Interface>();
 
     WRITESCOPELOCK(_barrierRW);
 
@@ -125,11 +122,8 @@ void FServiceContainer::Unregister(T* service) {
     _Interface* const pimpl = service; // important before casting to (void*)
 #endif
 
-    const auto it = Find_(serviceId);
-    Assert(_services.end() != it);
-    Assert((void*)pimpl == it->Pimpl());
-
-    _services.erase_DontPreserveOrder(it);
+    if (not _services.Erase(serviceId))
+		AssertNotReached(); // service should have beed registered !
 }
 //----------------------------------------------------------------------------
 template <typename _Interface>
@@ -141,11 +135,11 @@ _Interface* FServiceContainer::Get() const {
 //----------------------------------------------------------------------------
 template <typename _Interface>
 _Interface* FServiceContainer::GetIFP() const {
-    const ServiceId serviceId = StaticServiceId<_Interface>();
+    const FServiceId serviceId = StaticServiceId<_Interface>();
 
     READSCOPELOCK(_barrierRW);
 
-    const auto it = Find_(serviceId);
+    const auto it = _services.Find(serviceId);
 
     if (_services.end() == it) {
         LOG(Warning, L"[Service] Unknown service <{0}> ! (id={1})",
@@ -155,7 +149,7 @@ _Interface* FServiceContainer::GetIFP() const {
     }
     else {
         Assert(it->Pimpl());
-        return static_cast<_Interface*>(it->Pimpl());
+        return static_cast<_Interface*>(it->second.Pimpl());
     }
 }
 //----------------------------------------------------------------------------

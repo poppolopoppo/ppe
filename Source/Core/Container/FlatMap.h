@@ -95,8 +95,7 @@ public:
 
     void reserve(size_type capacity);
     void clear();
-
-    void Clear_ReleaseMemory();
+    void clear_ReleaseMemory();
 
     iterator Find(const _Key& key);
     iterator FindOrAdd(const _Key& key, bool* pAdded);
@@ -113,6 +112,13 @@ public:
     void Emplace_KeepOldIFN(_Key&& key, _Args&&... args);
     template <class... _Args>
     void Emplace_AssertUnique(_Key&& key, _Args&&... args);
+
+	template <class... _Args>
+	bool Emplace_ReturnIfExists(const _Key& key, _Args&&... args) { return Emplace_ReturnIfExists(_Key(key), std::forward<_Args>(args)...); }
+	template <class... _Args>
+	void Emplace_KeepOldIFN(const _Key& key, _Args&&... args) { Emplace_KeepOldIFN(_Key(key), std::forward<_Args>(args)...); }
+	template <class... _Args>
+	void Emplace_AssertUnique(const _Key& key, _Args&&... args) { Emplace_AssertUnique(_Key(key), std::forward<_Args>(args)...); }
 
     bool Insert_ReturnIfExists(_Key&& key, _Value&& rvalue);
     void Insert_KeepOldIFN(_Key&& key, _Value&& rvalue);

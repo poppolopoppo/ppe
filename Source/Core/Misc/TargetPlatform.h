@@ -55,9 +55,9 @@ static void CheckMemory();
 static void DebugBreak();
 static void DebugBreakAttach();
 static bool IsDebuggerAttached();
-#endif
 static void OutputDebug(const char* text);
 static void OutputDebug(const wchar_t* text);
+#endif
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
