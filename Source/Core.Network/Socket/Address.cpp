@@ -152,6 +152,7 @@ bool HostnameToIPv4(FString& ip, const FStringView& hostname, size_t port) {
             Assert(ip.size());
             LOG(Info, L"[HostnameToIPv4] Resolved IPv4 : {0}:{1} -> {2}", hostname, port, ip);
             succeed = true;
+            break;
         }
     }
 
