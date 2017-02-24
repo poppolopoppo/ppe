@@ -150,12 +150,17 @@ static void Test_HttpGet_() {
     std::cout << "Body:" << eol;
     std::cout << response.Body().MakeView() << eol;
 
-    XML::FDocument xml;
-    if (not XML::FDocument::Load(&xml, L"network.tmp", &response.Body()))
-        AssertNotReached();
+	if (response.Status() == Network::EHttpStatus::OK) {
+		XML::FDocument xml;
+		if (not XML::FDocument::Load(&xml, L"network.tmp", &response.Body()))
+			AssertNotReached();
 
-    std::cout << "XML:" << eol;
-    std::cout << xml << eol;
+		std::cout << "XML:" << eol;
+		std::cout << xml << eol;
+	}
+	else {
+		LOG(Error, L"[Http] Request to '{0}' failed : {1}", uri, response.Status());
+	}
 }
 //----------------------------------------------------------------------------
 static void Test_HttpPost_() {
