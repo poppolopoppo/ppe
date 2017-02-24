@@ -63,7 +63,7 @@ public:
     void SetPS(const FFilename& filename) { _ps = filename; }
     void SetCS(const FFilename& filename) { _cs = filename; }
 
-    const FString& FName() const { return _name; }
+    const FString& Name() const { return _name; }
     void SetName(const char *name);
 
     const FFilename& ProgramFilename(Graphics::EShaderProgramType programType) const;

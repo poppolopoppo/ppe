@@ -95,7 +95,7 @@ public:
 
     explicit TPatriciaNode(const sequence_type& keys) : parent_type(keys) {}
 
-    const _Value& FValue() const { Assert(HasValue()); return _value; }
+    const _Value& Value() const { Assert(HasValue()); return _value; }
 
     void SetValue(_Value&& rvalue) { Assert(HasValue()); _value = std::move(rvalue); }
     void SetValue(const _Value& value) { Assert(HasValue()); _value = value; }

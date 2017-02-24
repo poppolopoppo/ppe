@@ -54,8 +54,8 @@ public:
     FPropertyAssignment(const RTTI::FName& name, const Parser::PCParseExpression& value);
     virtual  ~FPropertyAssignment();
 
-    const RTTI::FName& FName() const { return _name; }
-    const Parser::PCParseExpression& FValue() const { return _value; }
+    const RTTI::FName& Name() const { return _name; }
+    const Parser::PCParseExpression& Value() const { return _value; }
 
     virtual void Execute(FParseContext *context) const override;
     virtual FString ToString() const override;

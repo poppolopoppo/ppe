@@ -30,7 +30,7 @@ public:
                 ASSOCIATIVE_VECTOR(FMaterial, Graphics::FBindName, PMaterialParameter)&& parameters );
     ~FMaterial();
 
-    const Graphics::FBindName& FName() const { return _name; }
+    const Graphics::FBindName& Name() const { return _name; }
     const FString& Description() const { return _description; }
 
     const VECTOR(FMaterial, Graphics::FBindName)& Tags() const { return _tags; }

@@ -25,8 +25,8 @@ public:
     FModelBone(const FModelBone& ) = delete;
     FModelBone& operator =(const FModelBone& ) = delete;
 
-    const FMeshName& FName() const { return _name; }
-    const FMeshName& FGroup() const { return _group; }
+    const FMeshName& Name() const { return _name; }
+    const FMeshName& Group() const { return _group; }
     const float4x4& Transform() const { return _transform; }
     const AABB3f& BoundingBox() const { return _boundingBox; }
 

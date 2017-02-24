@@ -85,7 +85,7 @@ public:
     explicit TTernarySearchNode(const _Key& key) : parent_type(key) {}
     ~TTernarySearchNode() {}
 
-    const _Value& FValue() const { Assert(HasValue()); return _value; }
+    const _Value& Value() const { Assert(HasValue()); return _value; }
 
     void SetValue(_Value&& rvalue) { Assert(HasValue()); _value = std::move(rvalue); }
     void SetValue(const _Value& value) { Assert(HasValue()); _value = value; }

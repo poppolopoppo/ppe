@@ -38,7 +38,7 @@ public:
     FModel(const FModel& ) = delete;
     FModel& operator =(const FModel& ) = delete;
 
-    const FMeshName& FName() const { return _name; }
+    const FMeshName& Name() const { return _name; }
     const AABB3f& BoundingBox() const { return _boundingBox; }
     const VECTOR(Mesh, PModelBone)& Bones() const { return _bones; }
     const VECTOR(Mesh, PModelMesh)& Meshes() const { return _meshes; }

@@ -113,7 +113,7 @@ public:
     TSegregatedMemoryPool()
     :   memorypool_type(PoolBlockSize, PoolMinChunkSize, PoolMaxChunkSize)
 #ifdef WITH_CORE_POOL_ALLOCATOR_TRACKING
-    ,   _poolTracking(_Tag::FName())
+    ,   _poolTracking(_Tag::Name())
 #endif
     {
         _Tag::Register(this);

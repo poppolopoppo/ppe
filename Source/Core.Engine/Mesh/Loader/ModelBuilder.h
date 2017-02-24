@@ -168,7 +168,7 @@ public:
     FModelBuilder();
     ~FModelBuilder();
 
-    const FString& FName() const { return _name; }
+    const FString& Name() const { return _name; }
 
     bool empty() const { return _positions.empty(); }
 

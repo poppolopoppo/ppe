@@ -30,7 +30,7 @@ public:
     FModelMeshSubPart(const FModelMeshSubPart& ) = delete;
     FModelMeshSubPart& operator =(const FModelMeshSubPart& ) = delete;
 
-    const FMeshName& FName() const { return _name; }
+    const FMeshName& Name() const { return _name; }
 
     u32 BoneIndex() const { return _boneIndex; }
     u32 BaseVertex() const { return _baseVertex; }

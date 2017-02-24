@@ -174,13 +174,13 @@ class B : public Core::FRefCountable {
 public:
     B() {}
     virtual ~B() {}
-    virtual int FValue() const { return 0; }
+    virtual int Value() const { return 0; }
 };
 class C : public B {
 public:
     C() {}
     virtual ~C() {}
-    virtual int FValue() const override { return 42; }
+    virtual int Value() const override { return 42; }
 };
 
 void TestPointers_() {
@@ -447,47 +447,47 @@ static void TestRTTI_() {
 
     Format(std::cout, "Id = {0}, FName = {1}, Default = {2}, EFlags = {3}\n",
         RTTI::TMetaType< int32_t >::Id(),
-        RTTI::TMetaType< int32_t >::FName(),
+        RTTI::TMetaType< int32_t >::Name(),
         RTTI::TMetaType< int32_t >::DefaultValue(),
         (size_t)RTTI::TMetaType< int32_t >::EFlags()
         );
 
     Format(std::cout, "Id = {0}, FName = {1}, Default = {2}, EFlags = {3}\n",
         RTTI::TMetaType< int >::Id(),
-        RTTI::TMetaType< int >::FName(),
+        RTTI::TMetaType< int >::Name(),
         RTTI::TMetaType< int >::DefaultValue(),
         (size_t)RTTI::TMetaType< int >::EFlags()
         );
 
     Format(std::cout, "Id = {0}, FName = {1}, Default = {2}, EFlags = {3}\n",
         RTTI::TMetaType< size_t >::Id(),
-        RTTI::TMetaType< size_t >::FName(),
+        RTTI::TMetaType< size_t >::Name(),
         RTTI::TMetaType< size_t >::DefaultValue(),
         (size_t)RTTI::TMetaType< size_t >::EFlags()
         );
 
     Format(std::cout, "Id = {0}, FName = {1}, Default = {2}, EFlags = {3}\n",
         RTTI::TMetaType< FString >::Id(),
-        RTTI::TMetaType< FString >::FName(),
+        RTTI::TMetaType< FString >::Name(),
         RTTI::TMetaType< FString >::DefaultValue(),
         (size_t)RTTI::TMetaType< FString >::EFlags()
         );
 
     Format(std::cout, "Id = {0}, FName = {1}, Default = {2}, EFlags = {3}\n",
         RTTI::TMetaType< VECTOR(RTTI, int) >::Id(),
-        RTTI::TMetaType< VECTOR(RTTI, int) >::FName(),
+        RTTI::TMetaType< VECTOR(RTTI, int) >::Name(),
         RTTI::TMetaType< VECTOR(RTTI, int) >::DefaultValue(),
         (size_t)RTTI::TMetaType< VECTOR(RTTI, int) >::EFlags()
         );
 
     Format(std::cout, "Id = {0}, FName = {1}, Default = {2}, EFlags = {3}\n",
         RTTI::TMetaType< TPair<float, int> >::Id(),
-        RTTI::TMetaType< TPair<float, int> >::FName(),
+        RTTI::TMetaType< TPair<float, int> >::Name(),
         RTTI::TMetaType< TPair<float, int> >::DefaultValue(),
         (size_t)RTTI::TMetaType< TPair<float, int> >::EFlags()
         );
 
-    RTTI::TMetaTypeTraits< int >::meta_type::FName();
+    RTTI::TMetaTypeTraits< int >::meta_type::Name();
 
     int i = 0;
     RTTI::TMetaTypeTraits< int >::UnwrapCopy(i, 42);
