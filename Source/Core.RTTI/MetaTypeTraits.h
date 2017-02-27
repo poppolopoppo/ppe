@@ -7,6 +7,7 @@
 #include "Core.RTTI/MetaTypeVirtualTraits.h"
 
 #include "Core/Container/HashMap.h"
+#include "Core/Container/Token_fwd.h"
 #include "Core/IO/FS/Basename.h"
 #include "Core/IO/FS/Dirpath.h"
 #include "Core/IO/FS/Filename.h"
@@ -19,9 +20,6 @@
 #include <type_traits>
 
 namespace Core {
-template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits, typename _Allocator>
-class EToken;
-
 namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -202,8 +200,8 @@ struct TMetaTypeTraitsImpl< std::basic_string<_Char, _Traits, _Allocator> > {
 };
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits, typename _Allocator>
-struct TMetaTypeTraitsImpl< Core::EToken<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> > {
-    typedef Core::EToken<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> wrapped_type;
+struct TMetaTypeTraitsImpl< Core::TToken<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> > {
+    typedef Core::TToken<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> wrapped_type;
     typedef TBasicString<_Char> wrapper_type;
 
     typedef TMetaType< wrapper_type > meta_type;

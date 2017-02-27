@@ -16,7 +16,7 @@ public:
 };
 //----------------------------------------------------------------------------
 template <typename _Tag>
-using MeshToken = Core::EToken<
+using TMeshToken = Core::TToken<
     _Tag,
     char,
     CaseSensitive::False,

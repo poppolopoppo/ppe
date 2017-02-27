@@ -32,22 +32,22 @@ void TMetaTypeTraitsImpl< TRefPtr<T>, typename std::enable_if<std::is_base_of<RT
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits, typename _Allocator>
-void TMetaTypeTraitsImpl< Core::EToken<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> >::WrapMove(wrapper_type& dst, wrapped_type&& src) {
+void TMetaTypeTraitsImpl< Core::TToken<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> >::WrapMove(wrapper_type& dst, wrapped_type&& src) {
     dst = src.c_str();
 }
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits, typename _Allocator>
-void TMetaTypeTraitsImpl< Core::EToken<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> >::WrapCopy(wrapper_type& dst, const wrapped_type& src) {
+void TMetaTypeTraitsImpl< Core::TToken<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> >::WrapCopy(wrapper_type& dst, const wrapped_type& src) {
     dst = src.c_str();
 }
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits, typename _Allocator>
-void TMetaTypeTraitsImpl< Core::EToken<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> >::UnwrapMove(wrapped_type& dst, wrapper_type&& src) {
+void TMetaTypeTraitsImpl< Core::TToken<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> >::UnwrapMove(wrapped_type& dst, wrapper_type&& src) {
     dst = src;
 }
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits, typename _Allocator>
-void TMetaTypeTraitsImpl< Core::EToken<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> >::UnwrapCopy(wrapped_type& dst, const wrapper_type& src) {
+void TMetaTypeTraitsImpl< Core::TToken<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> >::UnwrapCopy(wrapped_type& dst, const wrapper_type& src) {
     dst = src;
 }
 //----------------------------------------------------------------------------

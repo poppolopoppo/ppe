@@ -22,8 +22,8 @@ public:
     struct FSharedEntity {
         FDeviceSharedEntityKey Key;
         PDeviceAPIDependantEntity Entity;
-        IntrusiveListNode<FSharedEntity> Global;
-        IntrusiveListNode<FSharedEntity> Local;
+        TIntrusiveListNode<FSharedEntity> Global;
+        TIntrusiveListNode<FSharedEntity> Local;
         u32 LockCount;
         SINGLETON_POOL_ALLOCATED_DECL();
     };

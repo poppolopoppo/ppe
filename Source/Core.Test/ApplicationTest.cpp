@@ -252,13 +252,13 @@ void TestThreads_() {
 
 struct FTestToken {};
 
-class FTestToken2 : public Core::EToken<FTestToken2, char, Core::CaseSensitive::False> {
+class FTestToken2 : public Core::TToken<FTestToken2, char, Core::CaseSensitive::False> {
 };
 
 void TestTokens_() {
     using namespace Core;
 
-    typedef EToken<FTestToken, char, CaseSensitive::False> token_type;
+    typedef TToken<FTestToken, char, CaseSensitive::False> token_type;
     token_type::FStartup tokenStartup(32);
 
     token_type t("toto");

@@ -1,19 +1,19 @@
-#include "stdafx.h"
-
-#include "RTTIProperties.h"
-
-#include "Core/Container/Token.h"
+#pragma once
 
 namespace Core {
-namespace RTTI {
+enum class ECase : bool;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool TTokenTraits::IsAllowedChar(char ch) const {
-    return IsAlnum(ch) || '_' == ch;
-}
+template <
+    typename        _Tag,
+    typename        _Char,
+    ECase            _Sensitive,
+    typename        _TokenTraits,
+    typename        _Allocator
+>
+class TToken;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace RTTI
 } //!namespace Core

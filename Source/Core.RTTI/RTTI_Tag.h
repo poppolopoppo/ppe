@@ -31,7 +31,7 @@ struct FMetaClassBaseDecl {
     FMetaClassBaseDecl(const FMetaClassBaseDecl& ) = delete;
     FMetaClassBaseDecl& operator=(const FMetaClassBaseDecl& ) = delete;
 
-    mutable IntrusiveListNode<FMetaClassBaseDecl> Node;
+    mutable TIntrusiveListNode<FMetaClassBaseDecl> Node;
 };
 //----------------------------------------------------------------------------
 template <typename _Tag>

@@ -8,8 +8,6 @@
 #   define CORE_RTTI_API DLL_IMPORT
 #endif
 
-#include "Core.RTTI/RTTIProperties.h"
-
 namespace Core {
 namespace RTTI {
 //----------------------------------------------------------------------------

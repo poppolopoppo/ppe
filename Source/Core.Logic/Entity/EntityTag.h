@@ -16,7 +16,7 @@ public:
 };
 //----------------------------------------------------------------------------
 template <typename _Tag>
-using EntityTagToken = Core::EToken<
+using EntityTagToken = Core::TToken<
     _Tag,
     char,
     ECase::Sensitive,
