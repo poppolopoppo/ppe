@@ -13,6 +13,8 @@
 //------------------------------------------------------------------------------
 Settings
 {
+    .RootPath = '$SolutionPath$'
+    Print( "FastBuild root path = '$RootPath$'" )
     .Environment = { "PATH=$PATH$;%PATH%" }
 #if __WINDOWS__
     .Environment +
