@@ -148,7 +148,7 @@ _Interface* FServiceContainer::GetIFP() const {
         return nullptr;
     }
     else {
-        Assert(it->Pimpl());
+        Assert(it->second.Pimpl());
         return static_cast<_Interface*>(it->second.Pimpl());
     }
 }
