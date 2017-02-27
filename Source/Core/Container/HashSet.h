@@ -51,13 +51,12 @@ std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Trait
 //----------------------------------------------------------------------------
 template <typename T, typename _Hasher, typename _EqualTo, typename _Allocator>
 bool Insert_ReturnIfExists(THashSet<T, _Hasher, _EqualTo, _Allocator>& hashset, const T& elt) {
-    return (not hashset.insert(elt).second);
+    return hashset.insert_ReturnIfExists(elt);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Hasher, typename _EqualTo, typename _Allocator>
 void Insert_AssertUnique(THashSet<T, _Hasher, _EqualTo, _Allocator>& hashset, const T& elt) {
-    if (not hashset.insert(elt).second)
-        AssertNotReached();
+    hashset.insert_AssertUnique(elt);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Hasher, typename _EqualTo, typename _Allocator>
@@ -67,8 +66,7 @@ bool Remove_ReturnIfExists(THashSet<T, _Hasher, _EqualTo, _Allocator>& hashset, 
 //----------------------------------------------------------------------------
 template <typename T, typename _Hasher, typename _EqualTo, typename _Allocator>
 void Remove_AssertExists(THashSet<T, _Hasher, _EqualTo, _Allocator>& hashset, const T& elt) {
-    if (!Remove_ReturnIfExists(hashset, elt))
-        AssertNotReached();
+    hashset.erase_AssertExists(elt);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Hasher, typename _EqualTo, typename _Allocator>
