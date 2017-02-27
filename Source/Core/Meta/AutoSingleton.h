@@ -12,6 +12,7 @@
 //
 */
 
+#include "Core/Container/IntrusiveList.h"
 #include "Core/Meta/OneTimeInitialize.h"
 
 namespace Core {
@@ -21,12 +22,12 @@ namespace Meta {
 //----------------------------------------------------------------------------
 class FAbstractAutoSingleton {
 protected:
-    FAbstractAutoSingleton() : _pnext(nullptr), _pprev(nullptr) {}
+    FAbstractAutoSingleton() {}
 
 public:
     virtual ~FAbstractAutoSingleton() { // must be virtual to allow delete()
-        Assert(nullptr == _pnext);
-        Assert(nullptr == _pprev);
+        Assert(nullptr == _node.Prev);
+        Assert(nullptr == _node.Next);
     }
 
     FAbstractAutoSingleton(FAbstractAutoSingleton&&) = delete;
@@ -37,8 +38,7 @@ public:
 
 private:
     friend class FAutoSingletonManagerImpl;
-    FAbstractAutoSingleton *_pnext;
-    FAbstractAutoSingleton *_pprev;
+    TIntrusiveListNode<FAbstractAutoSingleton> _node;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -36,7 +36,7 @@ public:
     size_t ChunkSize() const { return _chunkSize; }
     size_t BlockCount() const { return _blockCount; }
 
-    IntrusiveListNode<FMemoryPoolChunk>& Node() { return _node; }
+    TIntrusiveListNode<FMemoryPoolChunk>& Node() { return _node; }
 
     size_t BlockUsed() const { return _blockUsed; }
 
@@ -62,7 +62,7 @@ private:
 
     const size_t _chunkSize;
 
-    IntrusiveListNode<FMemoryPoolChunk> _node;
+    TIntrusiveListNode<FMemoryPoolChunk> _node;
 };
 //----------------------------------------------------------------------------
 STATIC_ASSERT(IS_ALIGNED(16, sizeof(FMemoryPoolChunk)));
@@ -99,7 +99,7 @@ public:
     virtual void Clear_IgnoreLeaks() = 0;
     virtual void Clear_UnusedMemory() = 0;
 
-    const IntrusiveListNode<FMemoryPoolBase>& Node() const { return _node; }
+    const TIntrusiveListNode<FMemoryPoolBase>& Node() const { return _node; }
 
 protected:
     void GrowChunkSizeIFP();
@@ -134,7 +134,7 @@ private:
     const size_t _minChunkSize;
     const size_t _maxChunkSize;
 
-    IntrusiveListNode<FMemoryPoolBase> _node;
+    TIntrusiveListNode<FMemoryPoolBase> _node;
 };
 //----------------------------------------------------------------------------
 class FMemoryPoolBaseList {

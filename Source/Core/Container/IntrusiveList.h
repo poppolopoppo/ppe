@@ -7,32 +7,32 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define INTRUSIVELIST_ACCESSOR(_Member) \
-    ::Core::details::IntrusiveListTraits< decltype(_Member) >::accessor< _Member >::type
+    ::Core::details::TIntrusiveListTraits< decltype(_Member) >::accessor< _Member >::type
 //----------------------------------------------------------------------------
 #define INTRUSIVELIST(_Member) \
-    ::Core::details::IntrusiveListTraits< decltype(_Member) >::list< _Member >::type
+    ::Core::details::TIntrusiveListTraits< decltype(_Member) >::list< _Member >::type
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-struct IntrusiveListNode {
+struct TIntrusiveListNode {
     T* Next = nullptr;
     T* Prev = nullptr;
 };
 //----------------------------------------------------------------------------
 namespace details {
-template <typename T, IntrusiveListNode<T> T::*_Member>
-struct IntrusiveListAccessor;
+template <typename T, TIntrusiveListNode<T> T::*_Member>
+struct TIntrusiveListAccessor;
 } //!details
 //----------------------------------------------------------------------------
-template <typename T, IntrusiveListNode<T> T::*_Member>
-class IntrusiveList {
+template <typename T, TIntrusiveListNode<T> T::*_Member>
+class TIntrusiveList {
 public:
-    typedef details::IntrusiveListAccessor<T, _Member> traits_type;
+    typedef details::TIntrusiveListAccessor<T, _Member> traits_type;
     typedef typename traits_type::node_type node_type;
 
-    IntrusiveList() : _head(nullptr), _tail(nullptr) {}
-    ~IntrusiveList() { Assert(nullptr == _head); Assert(nullptr == _tail); }
+    TIntrusiveList() : _head(nullptr), _tail(nullptr) {}
+    ~TIntrusiveList() { Assert(nullptr == _head); Assert(nullptr == _tail); }
 
     bool empty() const {
         Assert((nullptr == _tail) == (nullptr == _head));
@@ -71,17 +71,17 @@ private:
 //----------------------------------------------------------------------------
 namespace details {
 //----------------------------------------------------------------------------
-template <typename T> struct IntrusiveListTraits {};
-template <typename T> struct IntrusiveListTraits< IntrusiveListNode<T> T::* > {
-    template <IntrusiveListNode<T> T::*_Member>
-    struct list { typedef IntrusiveList<T, _Member> type; };
-    template <IntrusiveListNode<T> T::*_Member>
-    struct accessor { typedef IntrusiveListAccessor<T, _Member> type; };
+template <typename T> struct TIntrusiveListTraits {};
+template <typename T> struct TIntrusiveListTraits< TIntrusiveListNode<T> T::* > {
+    template <TIntrusiveListNode<T> T::*_Member>
+    struct list { typedef TIntrusiveList<T, _Member> type; };
+    template <TIntrusiveListNode<T> T::*_Member>
+    struct accessor { typedef TIntrusiveListAccessor<T, _Member> type; };
 };
 //----------------------------------------------------------------------------
-template <typename T, IntrusiveListNode<T> T::*_Member>
-struct IntrusiveListAccessor {
-    typedef IntrusiveListNode< T > node_type;
+template <typename T, TIntrusiveListNode<T> T::*_Member>
+struct TIntrusiveListAccessor {
+    typedef TIntrusiveListNode< T > node_type;
 
     static FORCE_INLINE node_type& Node(T* ptr) { return ptr->*_Member; }
     static FORCE_INLINE const node_type& Node(const T* ptr) { return ptr->*_Member; }
@@ -110,8 +110,8 @@ struct IntrusiveListAccessor {
     }
 };
 //----------------------------------------------------------------------------
-template <typename T, IntrusiveListNode<T> T::*_Member>
-T* IntrusiveListAccessor<T, _Member>::PopHead(T** pHead, T** pTailIFP) {
+template <typename T, TIntrusiveListNode<T> T::*_Member>
+T* TIntrusiveListAccessor<T, _Member>::PopHead(T** pHead, T** pTailIFP) {
     Assert(pHead);
 
     if (nullptr == *pHead) {
@@ -128,8 +128,8 @@ T* IntrusiveListAccessor<T, _Member>::PopHead(T** pHead, T** pTailIFP) {
     }
 }
 //----------------------------------------------------------------------------
-template <typename T, IntrusiveListNode<T> T::*_Member>
-T* IntrusiveListAccessor<T, _Member>::PopTail(T** pHead, T** pTail) {
+template <typename T, TIntrusiveListNode<T> T::*_Member>
+T* TIntrusiveListAccessor<T, _Member>::PopTail(T** pHead, T** pTail) {
     Assert(pHead);
     Assert(pTail);
 
@@ -146,8 +146,8 @@ T* IntrusiveListAccessor<T, _Member>::PopTail(T** pHead, T** pTail) {
     }
 }
 //----------------------------------------------------------------------------
-template <typename T, IntrusiveListNode<T> T::*_Member>
-void IntrusiveListAccessor<T, _Member>::PushFront(T** pHead, T** pTailIFP, T* value) {
+template <typename T, TIntrusiveListNode<T> T::*_Member>
+void TIntrusiveListAccessor<T, _Member>::PushFront(T** pHead, T** pTailIFP, T* value) {
     Assert(pHead);
     Assert(value);
 
@@ -168,8 +168,8 @@ void IntrusiveListAccessor<T, _Member>::PushFront(T** pHead, T** pTailIFP, T* va
     *pHead = value;
 }
 //----------------------------------------------------------------------------
-template <typename T, IntrusiveListNode<T> T::*_Member>
-void IntrusiveListAccessor<T, _Member>::Erase(T** pHead, T** pTailIFP, T* value) {
+template <typename T, TIntrusiveListNode<T> T::*_Member>
+void TIntrusiveListAccessor<T, _Member>::Erase(T** pHead, T** pTailIFP, T* value) {
     Assert(pHead);
     Assert(value);
     Assert(*pHead);
@@ -207,9 +207,9 @@ void IntrusiveListAccessor<T, _Member>::Erase(T** pHead, T** pTailIFP, T* value)
     node.Prev = node.Next = nullptr;
 }
 //----------------------------------------------------------------------------
-template <typename T, IntrusiveListNode<T> T::*_Member>
+template <typename T, TIntrusiveListNode<T> T::*_Member>
 template <typename _Less>
-void IntrusiveListAccessor<T, _Member>::Insert(T** pHead, T** pTailIFP, T* value, const _Less& pred) {
+void TIntrusiveListAccessor<T, _Member>::Insert(T** pHead, T** pTailIFP, T* value, const _Less& pred) {
     Assert(pHead);
     Assert(value);
 

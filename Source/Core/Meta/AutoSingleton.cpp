@@ -24,60 +24,42 @@ public:
     void Unregister(FAbstractAutoSingleton *singleton);
 
 private:
-    FAbstractAutoSingleton *_head;
+    INTRUSIVELIST(&FAbstractAutoSingleton::_node) _instances;
 #ifdef WITH_CORE_ASSERT
     bool _isStarted = false;
 #endif
 };
 //----------------------------------------------------------------------------
-FAutoSingletonManagerImpl::FAutoSingletonManagerImpl()
-:   _head(nullptr) {}
+FAutoSingletonManagerImpl::FAutoSingletonManagerImpl() {}
 //----------------------------------------------------------------------------
 FAutoSingletonManagerImpl::~FAutoSingletonManagerImpl() {
-    Assert(nullptr == _head);
+    Assert(_instances.empty());
 }
 //----------------------------------------------------------------------------
 void FAutoSingletonManagerImpl::Start() {
     Assert(!_isStarted);
     ONLY_IF_ASSERT(_isStarted = true;);
-    Assert(nullptr == _head);
+    Assert(_instances.empty());
 }
 //----------------------------------------------------------------------------
 void FAutoSingletonManagerImpl::Shutdown() {
     Assert(_isStarted);
     ONLY_IF_ASSERT(_isStarted = false;);
 
-    while (_head)
-        checked_delete(_head);
+    while (FAbstractAutoSingleton* pnode = _instances.PopHead())
+        checked_delete(pnode);
 }
 //----------------------------------------------------------------------------
 void FAutoSingletonManagerImpl::Register(FAbstractAutoSingleton *singleton) {
     Assert(singleton);
-    Assert(nullptr == singleton->_pnext);
-    Assert(nullptr == singleton->_pprev);
 
-    singleton->_pnext = _head;
-    if (_head)
-        _head->_pprev = singleton;
-
-    _head = singleton;
+    _instances.PushFront(singleton);
 }
 //----------------------------------------------------------------------------
 void FAutoSingletonManagerImpl::Unregister(FAbstractAutoSingleton *singleton) {
     Assert(singleton);
-    Assert(_head);
 
-    if (singleton->_pnext)
-        singleton->_pnext->_pprev = singleton->_pprev;
-    if (singleton->_pprev)
-        singleton->_pprev->_pnext = singleton->_pnext;
-
-    if (singleton == _head) {
-        Assert(nullptr == singleton->_pprev);
-        _head = singleton->_pnext;
-    }
-
-    singleton->_pnext = singleton->_pprev = nullptr;
+    _instances.Erase(singleton);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
