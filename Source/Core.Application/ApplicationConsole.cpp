@@ -41,16 +41,17 @@ void FApplicationConsole::RedirectIOToConsole() {
     LOG(Info, L"[Application] RedirectIOToConsole()");
 
     ::AllocConsole();
+    ::SetConsoleOutputCP(65001/* UTF-8 */);
 
     FILE* fp = nullptr;
 
-    if (0 != ::freopen_s(&fp, "conin$","r",stdin))
+    if (0 != ::freopen_s(&fp, "conin$","r", stdin))
         AssertNotReached();
 
-    if (0 != ::freopen_s(&fp, "conout$","w",stdout))
+    if (0 != ::freopen_s(&fp, "conout$","w", stdout))
         AssertNotReached();
 
-    if (0 != ::freopen_s(&fp, "conout$","w",stderr))
+    if (0 != ::freopen_s(&fp, "conout$","w", stderr))
         AssertNotReached();
 }
 //----------------------------------------------------------------------------
