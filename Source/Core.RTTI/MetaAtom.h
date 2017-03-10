@@ -67,22 +67,25 @@ public:
 
     template <typename T>
     TMetaTypedAtom< typename TMetaTypeTraits<T>::wrapper_type > *Cast() {
+        typedef typename TMetaTypeTraits<T>::meta_type meta_type;
+        Assert(TypeInfo().Id == meta_type::TypeId);
         return checked_cast<TMetaTypedAtom< typename TMetaTypeTraits<T>::wrapper_type > *>(this);
     }
 
     template <typename T>
     const TMetaTypedAtom< typename TMetaTypeTraits<T>::wrapper_type > *Cast() const {
-        return checked_cast<const TMetaTypedAtom< typename TMetaTypeTraits<T>::wrapper_type > *>(this);
+        return const_cast<FMetaAtom*>(this)->Cast<T>();
     }
 
     template <typename T>
     TMetaTypedAtom< typename TMetaTypeTraits<T>::wrapper_type > *As() {
-        return dynamic_cast<TMetaTypedAtom< typename TMetaTypeTraits<T>::wrapper_type > *>(this);
+        typedef typename TMetaTypeTraits<T>::meta_type meta_type;
+        return (TypeInfo().Id == meta_type::TypeId ? Cast<T>() : nullptr);
     }
 
     template <typename T>
     const TMetaTypedAtom< typename TMetaTypeTraits<T>::wrapper_type > *As() const {
-        return dynamic_cast<const TMetaTypedAtom< typename TMetaTypeTraits<T>::wrapper_type > *>(this);
+        return const_cast<FMetaAtom*>(this)->As<T>();
     }
 };
 //----------------------------------------------------------------------------
@@ -492,8 +495,6 @@ struct TMetaAtomWrapper {
     typedef std::integral_constant<bool, false == dont_need_wrapper::value> need_wrapper;
     typedef TMetaTypedAtom< typename trais_type::wrapper_type > type;
 };
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 /*inline FMetaAtom* MakeAtom(FMetaAtom* atom) { return atom; }
 inline const FMetaAtom* MakeAtom(const FMetaAtom* atom) { return atom; }

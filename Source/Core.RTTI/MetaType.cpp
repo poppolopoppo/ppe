@@ -145,7 +145,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FString ToString(const RTTI::FName& name) {
-    return StringFormat("Name:#{0}", name.MakeView());
+    return StringFormat("Name:{0}", name.MakeView());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -155,13 +155,13 @@ hash_t hash_value(const RTTI::FBinaryData& rawdata) {
 }
 //----------------------------------------------------------------------------
 FString ToString(const RTTI::FBinaryData& rawdata) {
-    return StringFormat("BinaryData:#{0}", rawdata.SizeInBytes());
+    return StringFormat("BinaryData:{0}", rawdata.SizeInBytes());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FString ToString(const RTTI::FOpaqueData& opaqueData) {
-    return StringFormat("OpaqueData:#{0}",
+    return StringFormat("OpaqueData:{0}",
         static_cast<const RTTI::TDictionary<RTTI::FName, RTTI::PMetaAtom>&>(opaqueData));
 }
 //----------------------------------------------------------------------------

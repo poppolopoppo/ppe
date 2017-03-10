@@ -8,7 +8,6 @@
     {
         'RTTI.cpp',
         'RTTI_extern.cpp',
-        'RTTI_Tag.cpp',
     }
     #include "../../Build/Templates/Library.bff"
 }

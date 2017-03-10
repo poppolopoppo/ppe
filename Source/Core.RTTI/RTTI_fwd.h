@@ -22,9 +22,10 @@ class IMetaAtomDictionary;
 class IMetaAtomVisitor;
 class IMetaAtomConstVisitor;
 //----------------------------------------------------------------------------
+class FMetaNamespace;
+//----------------------------------------------------------------------------
 class FMetaClass;
-class FMetaClassHashMap;
-class FMetaClassName;
+class FMetaClassHandle;
 //----------------------------------------------------------------------------
 FWD_REFPTR(MetaObject);
 //----------------------------------------------------------------------------

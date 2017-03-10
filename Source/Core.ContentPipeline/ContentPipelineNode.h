@@ -3,7 +3,7 @@
 #include "Core.ContentPipeline/ContentPipeline.h"
 
 #include "Core/IO/String.h"
-#include "Core.RTTI/RTTIMacros.h"
+#include "Core.RTTI/RTTI_Macros.h"
 
 namespace Core {
 namespace ContentPipeline {

@@ -13,10 +13,10 @@
 #include "Core/Memory/MemoryStream.h"
 
 #include "Core.RTTI/RTTI.h"
-#include "Core.RTTI/RTTIMacros.h"
-#include "Core.RTTI/RTTIMacros-impl.h"
-#include "Core.RTTI/RTTI_Tag.h"
-#include "Core.RTTI/RTTI_Tag-impl.h"
+#include "Core.RTTI/RTTI_Macros.h"
+#include "Core.RTTI/RTTI_Macros-impl.h"
+#include "Core.RTTI/RTTI_Namespace.h"
+#include "Core.RTTI/RTTI_Namespace-impl.h"
 #include "Core.RTTI/MetaAtomVisitor.h"
 #include "Core.RTTI/MetaTransaction.h"
 #include "Core.RTTI/MetaType.Definitions-inl.h"
@@ -35,8 +35,8 @@ namespace ContentGenerator {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-RTTI_TAG_DECL(Test);
-RTTI_TAG_DEF(Test);
+RTTI_NAMESPACE_DECL(, Test);
+RTTI_NAMESPACE_DEF(, Test);
 //----------------------------------------------------------------------------
 FWD_REFPTR(ContentIdentity);
 class FContentIdentity : public RTTI::FMetaObject {
@@ -370,7 +370,7 @@ void Test_RTTI() {
     //typedef FRTTITest2_ test_type;
     static constexpr size_t test_count = 4;
 
-    RTTI_TAG(Test)::Start();
+    RTTI_NAMESPACE(Test).Start();
     {
         const FFilename filename = L"Tmp:/robotapp.bin";
         const FFilename filename2 = L"Tmp:/robotapp.raw";
@@ -498,7 +498,7 @@ void Test_RTTI() {
         } while (true);
 
     }
-    RTTI_TAG(Test)::Shutdown();
+    RTTI_NAMESPACE(Test).Shutdown();
 
     Serialize::SerializeStartup::ClearAll_UnusedMemory();
     RTTI::RTTIStartup::ClearAll_UnusedMemory();

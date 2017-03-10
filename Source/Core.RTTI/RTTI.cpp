@@ -2,10 +2,10 @@
 
 #include "RTTI.h"
 #include "RTTI_fwd.h"
-#include "RTTI_Tag.h"
+#include "RTTI_Namespace.h"
+#include "RTTI_Namespace-impl.h"
 
-#include "MetaAtomDatabase.h"
-#include "MetaClassDatabase.h"
+#include "MetaDatabase.h"
 #include "MetaObject.h"
 #include "MetaObjectHelpers.h"
 #include "MetaType.h"
@@ -21,6 +21,7 @@ PRAGMA_INITSEG_LIB
 namespace Core {
 namespace RTTI {
 POOL_TAG_DEF(RTTI);
+RTTI_NAMESPACE_DEF(CORE_RTTI_API, RTTI);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -34,11 +35,9 @@ void RTTIStartup::Start() {
 
     FName::Start(2048);
 
-    FMetaClassDatabase::Create();
-    FMetaAtomDatabase::Create();
+    FMetaDatabase::Create();
 
-    RTTI_TAG(Default)::Start();
-
+    RTTI_NAMESPACE(RTTI).Start();
 
 #ifdef WITH_RTTI_UNITTESTS
     RTTI_UnitTests();
@@ -48,10 +47,9 @@ void RTTIStartup::Start() {
 void RTTIStartup::Shutdown() {
     CORE_MODULE_SHUTDOWN(RTTI);
 
-    RTTI_TAG(Default)::Shutdown();
+    RTTI_NAMESPACE(RTTI).Shutdown();
 
-    FMetaAtomDatabase::Destroy();
-    FMetaClassDatabase::Destroy();
+    FMetaDatabase::Destroy();
 
     FName::Shutdown();
 
@@ -60,9 +58,6 @@ void RTTIStartup::Shutdown() {
 //----------------------------------------------------------------------------
 void RTTIStartup::Clear() {
     CORE_MODULE_CLEARALL(RTTI);
-
-    FMetaAtomDatabase::Instance().Clear();
-    FMetaClassDatabase::Instance().Clear();
 
     FName::Clear();
 
@@ -83,12 +78,12 @@ void RTTIStartup::ClearAll_UnusedMemory() {
 #ifdef WITH_RTTI_UNITTESTS
 
 #include "RTTI_fwd.h"
-#include "RTTI_Tag-impl.h"
+#include "RTTI_Namespace-impl.h"
 #include "MetaAtom.h"
 #include "MetaObject.h"
 #include "MetaProperty.h"
-#include "RTTIMacros.h"
-#include "RTTIMacros-impl.h"
+#include "RTTI_Macros.h"
+#include "RTTI_Macros-impl.h"
 
 #include "Core/IO/String.h"
 
@@ -100,8 +95,8 @@ namespace Core {
 //----------------------------------------------------------------------------
 //namespace {
 //----------------------------------------------------------------------------
-RTTI_TAG_DECL(RTTI_UnitTest);
-RTTI_TAG_DEF(RTTI_UnitTest);
+RTTI_NAMESPACE_DECL(, RTTI_UnitTest);
+RTTI_NAMESPACE_DEF(, RTTI_UnitTest);
 //----------------------------------------------------------------------------
 FWD_REFPTR(Titi);
 class FTiti : public Core::RTTI::FMetaObject {
@@ -199,7 +194,7 @@ static void TestRTTIWrap_() {
 static void TestRTTI_() {
     using namespace Core;
 
-    const RTTI_TAG(RTTI_UnitTest) TagScope;
+    RTTI_NAMESPACE(RTTI_UnitTest).Start();
 
     LOG(Debug, L"[RTTI] Id = {0}, Name = {1}, Default = {2}, EFlags = {3}",
         RTTI::TMetaType< int32_t >::Id(),
@@ -322,7 +317,7 @@ static void TestRTTI_() {
     }
 
     RTTI::PMetaAtom args2[] = {
-        RTTI::MakeAtom(42) ,
+        RTTI::MakeAtom(42.f) ,
         RTTI::MakeAtom(FString("string"))
     };
     if (not func->PromoteInvoke(t.get(), result, args2))
@@ -334,6 +329,8 @@ static void TestRTTI_() {
     const int v = wrongAtom2->Wrapper(); // crash !
     LOG(Info, L"[RTTI] wrong atom = {0}", v);
 #endif
+
+    RTTI_NAMESPACE(RTTI_UnitTest).Shutdown();
 }
 //----------------------------------------------------------------------------
 //} //!namespace

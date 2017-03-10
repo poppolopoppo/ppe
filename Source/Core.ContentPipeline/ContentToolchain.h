@@ -6,7 +6,7 @@
 #include "Core.ContentPipeline/ContentProcessor.h"
 #include "Core.ContentPipeline/ContentSerializer.h"
 
-#include "Core.RTTI/RTTIMacros.h"
+#include "Core.RTTI/RTTI_Macros.h"
 #include "Core.RTTI/MetaObject.h"
 
 #include "Core/Allocator/PoolAllocator.h"

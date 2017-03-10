@@ -2,8 +2,7 @@
 
 #include "DynamicObject.h"
 
-#include "MetaClassDatabase.h"
-#include "MetaClassSingleton.h"
+#include "MetaDatabase.h"
 #include "MetaProperty.h"
 #include "MetaType.h"
 
@@ -82,6 +81,7 @@ size_t FDynamicProperty::HashValue(const FMetaObject *object) const {} */
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+/*
 SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(RTTI, FDynamicObject, )
 //----------------------------------------------------------------------------
 FDynamicObject::FDynamicObject() {}
@@ -148,7 +148,7 @@ bool FDynamicObject::FMetaClass::HasInstance() {
 //----------------------------------------------------------------------------
 const FDynamicObject::FMetaClass *FDynamicObject::FMetaClass::Instance() {
     return &Core::RTTI::TMetaClassSingleton< FDynamicObject >::Instance();
-}
+}*/
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

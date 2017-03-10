@@ -10,7 +10,7 @@
 #include "Core/IO/FS/Filename.h"
 #include "Core/Misc/TargetPlatform.h"
 
-#include "Core.RTTI/RTTIMacros.h"
+#include "Core.RTTI/RTTI_Macros.h"
 
 namespace Core {
 namespace ContentPipeline {

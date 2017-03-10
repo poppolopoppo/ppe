@@ -2,7 +2,7 @@
 
 #include "ContentImporter.h"
 
-#include "Core.RTTI/RTTIMacros-impl.h"
+#include "Core.RTTI/RTTI_Macros-impl.h"
 
 namespace Core {
 namespace ContentPipeline {

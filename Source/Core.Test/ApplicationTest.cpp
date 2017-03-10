@@ -46,8 +46,8 @@
 #include "Core.RTTI/Type/MetaTypeTraits.h"
 
 #include "Core.RTTI/RTTI.h"
-#include "Core.RTTI/RTTIMacros-impl.h"
-#include "Core.RTTI/RTTIMacros.h"
+#include "Core.RTTI/RTTI_Macros-impl.h"
+#include "Core.RTTI/RTTI_Macros.h"
 
 #include "Core.Serialize/Lexer/Lexer.h"
 #include "Core.Serialize/Lexer/Symbols.h"

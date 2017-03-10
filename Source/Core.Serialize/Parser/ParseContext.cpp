@@ -5,8 +5,8 @@
 #include "Parser.h"
 
 #include "Core.RTTI/MetaAtom.h"
-#include "Core.RTTI/MetaAtomDatabase.h"
 #include "Core.RTTI/MetaClass.h"
+#include "Core.RTTI/MetaDatabase.h"
 #include "Core.RTTI/MetaObject.h"
 #include "Core.RTTI/MetaTransaction.h"
 #include "Core.RTTI/Typedefs.h"

@@ -2,198 +2,161 @@
 
 #include "MetaClass.h"
 
-#include "MetaClassDatabase.h"
 #include "MetaFunction.h"
+#include "MEtaNamespace.h"
 #include "MetaProperty.h"
 
 #include "Core/IO/String.h"
-#include "Core/Memory/SegregatedMemoryPool.h"
 
 namespace Core {
 namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FMetaClass::FMetaClass(const FName& name, EFlags attributes)
-:   _name(name)
-,   _attributes(attributes) {}
+namespace {
 //----------------------------------------------------------------------------
-FMetaClass::~FMetaClass() {}
-//----------------------------------------------------------------------------
-bool FMetaClass::CastTo(const FMetaClass *other) const {
-    Assert(other);
-    return (IsAssignableFrom(other) || other->IsAssignableFrom(this));
+static TPair<FName, const FMetaFunction*> MetaFunctionPair_(const UCMetaFunction& f) {
+    Assert(f);
+    return MakePair(f->Name(), f.get());
+}
+template <typename _It>
+static auto MakeMetaFunctionPair_(_It it) {
+    return MakeOutputIterator(it, &MetaFunctionPair_);
 }
 //----------------------------------------------------------------------------
-bool FMetaClass::InheritsFrom(const FMetaClass *parent) const {
-    Assert(parent);
-
-    if (parent == this)
-        return true;
-
-    const FMetaClass* _parent = Parent();
-    return (nullptr != _parent)
-        ? _parent->InheritsFrom(parent)
-        : false;
+static TPair<FName, const FMetaProperty*> MetaPropertyPair_(const UCMetaProperty& p) {
+    Assert(p);
+    return MakePair(p->Name(), p.get());
+}
+template <typename _It>
+static auto MakeMetaPropertyPair_(_It it) {
+    return MakeOutputIterator(it, &MetaPropertyPair_);
 }
 //----------------------------------------------------------------------------
-bool FMetaClass::IsAssignableFrom(const FMetaClass *child) const {
-    Assert(child);
-    return child->InheritsFrom(this);
+template <typename T>
+static decltype(std::declval<const T>().get()) FindMemberIFP_(const FName& name, size_t attributes, const VECTOR(RTTI, T)& items) {
+    for (const T& pItem : items) {
+        if ((pItem->Name() == name) &&
+            (pItem->Attributes() & attributes) == attributes)
+            return pItem.get();
+    }
+    return nullptr;
 }
 //----------------------------------------------------------------------------
-void FMetaClass::Register(FMetaClassHashMap& database) const {
-    database.Add(this);
-}
-//----------------------------------------------------------------------------
-void FMetaClass::Unregister(FMetaClassHashMap& database) const {
-    database.Remove(this);
-}
-//----------------------------------------------------------------------------
-const FMetaClass* FMetaClass::Parent() const {
-    return VirtualParent();
-}
-//----------------------------------------------------------------------------
-TMemoryView<const UCMetaFunction> FMetaClass::Functions() const {
-    return VirtualFunctions();
-}
-//----------------------------------------------------------------------------
-TMemoryView<const UCMetaProperty> FMetaClass::Properties() const {
-    return VirtualProperties();
-}
-//----------------------------------------------------------------------------
-const FMetaFunction *FMetaClass::FunctionIFP(const FStringView& name, size_t attributes /* = 0 */, bool inherited /* = true */) const {
-    Assert(not name.empty());
-
-    const FMetaFunction* result = VirtualFunctionIFP(name, attributes);
-    if (result)
-        return result;
-
-    return (inherited && Parent())
-        ? Parent()->FunctionIFP(name, attributes, true)
+template <typename T>
+static const T* FindMemberIFP_(const FName& name, size_t attributes, const HASHMAP(RTTI, FName, const T*)& items) {
+    const auto it = items.find(name);
+    return (it != items.end())
+        ? ((it->second->Attributes() & attributes) == attributes ? it->second : nullptr)
         : nullptr;
 }
 //----------------------------------------------------------------------------
-const FMetaFunction *FMetaClass::FunctionIFP(const FName& name, size_t attributes /* = 0 */, bool inherited /* = true */) const {
-    Assert(not name.empty());
-
-    const FMetaFunction* result = VirtualFunctionIFP(name, attributes);
-    if (result)
-        return result;
-
-    return (inherited && Parent())
-        ? Parent()->FunctionIFP(name, attributes, true)
-        : nullptr;
+} //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// FMetaClassGuid contains a linear combination of prime numbers
+//----------------------------------------------------------------------------
+bool FMetaClassGuid::InheritsFrom(FMetaClassGuid parent) const {
+    Assert(_value != 0);
+    Assert(parent._value != 0);
+    return ((_value / parent._value) * parent._value == _value);
 }
 //----------------------------------------------------------------------------
-const FMetaProperty *FMetaClass::PropertyIFP(const FStringView& name, size_t attributes /* = 0 */, bool inherited /* = true */) const {
-    Assert(not name.empty());
-
-    const FMetaProperty* result = VirtualPropertyIFP(name, attributes);
-    if (result)
-        return result;
-
-    return (inherited && Parent())
-        ? Parent()->PropertyIFP(name, attributes, true)
-        : nullptr;
-}
-//----------------------------------------------------------------------------
-const FMetaProperty *FMetaClass::PropertyIFP(const FName& name, size_t attributes /* = 0 */, bool inherited /* = true */) const {
-    Assert(name.size());
-
-    const FMetaProperty* result = VirtualPropertyIFP(name, attributes);
-    if (result)
-        return result;
-
-    return (inherited && Parent())
-        ? Parent()->PropertyIFP(name, attributes, true)
-        : nullptr;
-}
-//----------------------------------------------------------------------------
-FMetaObject* FMetaClass::CreateInstance() const {
-    Assert(not IsAbstract());
-    return VirtualCreateInstance();
+FMetaClassGuid FMetaClassGuid::Combine(FMetaClassGuid other) const {
+    const FMetaClassGuid combined(_value * other._value);
+    // Check for overflows :
+    Assert(combined.InheritsFrom(_value));
+    Assert(combined.InheritsFrom(other._value));
+    return combined;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FInScopeMetaClass::FInScopeMetaClass(const FName& name, EFlags attributes)
-:   FMetaClass(name, attributes) {}
-//----------------------------------------------------------------------------
-FInScopeMetaClass::~FInScopeMetaClass() {}
-//----------------------------------------------------------------------------
-TMemoryView<const UCMetaFunction> FInScopeMetaClass::VirtualFunctions() const {
-    return MakeView(_functions);
+FMetaClass::FMetaClass(
+    FMetaClassGuid guid,
+    EFlags attributes,
+    const FName& name,
+    const FMetaNamespace* metaNamespace )
+:   _guid(guid)
+,   _attributes(attributes)
+,   _name(name)
+,   _namespace(metaNamespace) {
+    Assert(not _name.empty());
+    Assert(nullptr != _namespace);
 }
 //----------------------------------------------------------------------------
-TMemoryView<const UCMetaProperty> FInScopeMetaClass::VirtualProperties() const {
-    return MakeView(_properties);
-}
+FMetaClass::~FMetaClass() {}
 //----------------------------------------------------------------------------
-const FMetaFunction *FInScopeMetaClass::VirtualFunctionIFP(const FStringView& name, size_t attributes) const {
-    for (const UCMetaFunction& f : _functions)
-        if ((f->Attributes() & attributes) == attributes &&
-            (0 == Compare(f->Name().MakeView(), name)))
-            return f.get();
+const FMetaFunction *FMetaClass::FunctionIFP(const FName& name, size_t attributes /* = 0 */, bool inherited /* = true */) const {
+    Assert(not name.empty());
 
-    return nullptr;
+    if (inherited)
+        return FindMemberIFP_(name, attributes, _functionsInherited);
+    else
+        return FindMemberIFP_(name, attributes, _functions);
 }
 //----------------------------------------------------------------------------
-const FMetaFunction *FInScopeMetaClass::VirtualFunctionIFP(const FName& name, size_t attributes) const {
-    for (const UCMetaFunction& f : _functions)
-        if ((f->Attributes() & attributes) == attributes &&
-            (f->Name() == name))
-            return f.get();
+const FMetaFunction *FMetaClass::FunctionIFP(const FStringView& name, size_t attributes /* = 0 */, bool inherited /* = true */) const {
+    Assert(not name.empty());
+    // TODO: better method ?
+    return FunctionIFP(FName(name), attributes, inherited);
+}
+//----------------------------------------------------------------------------
+const FMetaProperty *FMetaClass::PropertyIFP(const FName& name, size_t attributes /* = 0 */, bool inherited /* = true */) const {
+    Assert(not name.empty());
 
-    return nullptr;
+    if (inherited)
+        return FindMemberIFP_(name, attributes, _propertiesInherited);
+    else
+        return FindMemberIFP_(name, attributes, _properties);
 }
 //----------------------------------------------------------------------------
-const FMetaProperty *FInScopeMetaClass::VirtualPropertyIFP(const FStringView& name, size_t attributes) const {
-    for (const UCMetaProperty& p : _properties)
-        if ((p->Attributes() & attributes) == attributes &&
-            (0 == Compare(p->Name().MakeView(), name)) )
-            return p.get();
+const FMetaProperty *FMetaClass::PropertyIFP(const FStringView& name, size_t attributes /* = 0 */, bool inherited /* = true */) const {
+    Assert(not name.empty());
+    // TODO: better method ?
+    return PropertyIFP(FName(name), attributes, inherited);
+}
+//----------------------------------------------------------------------------
+void FMetaClass::Initialize() {
+    Assert(_functionsInherited.empty());
+    Assert(_propertiesInherited.empty());
 
-    return nullptr;
-}
-//----------------------------------------------------------------------------
-const FMetaProperty *FInScopeMetaClass::VirtualPropertyIFP(const FName& name, size_t attributes) const {
-    for (const UCMetaProperty& p : _properties)
-        if ((p->Attributes() & attributes) == attributes &&
-            (p->Name() == name) )
-            return p.get();
+    if (const FMetaClass* parent = Parent()) {
+        _guid = _guid.Combine(parent->_guid);
 
-    return nullptr;
+        _functionsInherited.reserve(parent->_functionsInherited.size() + _functions.size());
+        _functionsInherited.append(parent->_functionsInherited);
+
+        _propertiesInherited.reserve(parent->_propertiesInherited.size() + _properties.size());
+        _propertiesInherited.append(parent->_propertiesInherited);
+    }
+    else {
+        _functionsInherited.reserve(_functions.size());
+        _propertiesInherited.reserve(_properties.size());
+    }
+
+    _functionsInherited.insert_AssertUnique(
+        MakeMetaFunctionPair_(_functions.begin()),
+        MakeMetaFunctionPair_(_functions.end()) );
+
+    _propertiesInherited.insert_AssertUnique(
+        MakeMetaPropertyPair_(_properties.begin()),
+        MakeMetaPropertyPair_(_properties.end()) );
 }
 //----------------------------------------------------------------------------
-void FInScopeMetaClass::RegisterFunction(UCMetaFunction&& func) {
+void FMetaClass::RegisterFunction(UCMetaFunction&& func) {
     Assert(func);
-    Assert(not func->Name().empty());
+    Assert(nullptr == FunctionIFP(func->Name(), 0, false));
 
-#ifdef WITH_CORE_ASSERT
-    {
-        const FName name = func->Name();
-        for (const UCMetaFunction& f : _functions)
-            Assert(f->Name() != name);
-    }
-#endif
-
-    _functions.emplace_back(std::move(func));
+    _functions.push_back(std::move(func));
 }
 //----------------------------------------------------------------------------
-void FInScopeMetaClass::RegisterProperty(UCMetaProperty&& prop) {
+void FMetaClass::RegisterProperty(UCMetaProperty&& prop) {
     Assert(prop);
-    Assert(not prop->Name().empty());
+    Assert(nullptr == PropertyIFP(prop->Name(), 0, false));
 
-#ifdef WITH_CORE_ASSERT
-    {
-        const FName name = prop->Name();
-        for (const UCMetaProperty& p : _properties)
-            Assert(p->Name() != name);
-    }
-#endif
-
-    _properties.emplace_back(std::move(prop));
+    _properties.push_back(std::move(prop));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

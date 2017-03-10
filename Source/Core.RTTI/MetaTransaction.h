@@ -9,8 +9,6 @@
 
 namespace Core {
 namespace RTTI {
-class FMetaAtomHashMap;
-class FMetaClassHashMap;
 class FMetaLoadContext;
 class FMetaUnloadContext;
 //----------------------------------------------------------------------------

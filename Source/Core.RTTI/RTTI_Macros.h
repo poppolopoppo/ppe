@@ -15,19 +15,22 @@ public: \
         return _Name::FMetaClass::Instance(); \
     } \
     \
-    class FMetaClass : public Core::RTTI::TDefaultMetaClass<_Name> { \
+    class FMetaClass : public Core::RTTI::TInScopeMetaClass<_Name> { \
+        friend class Core::RTTI::TInScopeMetaClass<_Name>; \
+        typedef Core::RTTI::TInScopeMetaClass<_Name> metaclass_type; \
+        \
     public: \
         typedef _Name object_type; \
         typedef _Parent parent_type; \
         \
-        FMetaClass(); \
-        virtual ~FMetaClass(); \
+        using metaclass_type::HasInstance; \
+        using metaclass_type::Instance; \
+        using metaclass_type::Handle; \
         \
-        static void Create(); \
-        static void Destroy(); \
+        static Core::RTTI::FMetaNamespace& Namespace(); \
         \
-        static bool HasInstance(); \
-        static const FMetaClass *Instance(); \
+    private: \
+        FMetaClass(Core::RTTI::FMetaClassGuid guid, const Core::RTTI::FMetaNamespace* metaNamespace); \
     }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

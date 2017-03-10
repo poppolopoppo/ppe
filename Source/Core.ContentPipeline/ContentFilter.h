@@ -2,7 +2,7 @@
 
 #include "Core.ContentPipeline/ContentPipeline.h"
 
-#include "Core.RTTI/RTTIMacros.h"
+#include "Core.RTTI/RTTI_Macros.h"
 
 #include "Core/Allocator/PoolAllocator.h"
 #include "Core/Container/Vector.h"

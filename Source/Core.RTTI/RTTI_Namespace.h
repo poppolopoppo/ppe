@@ -1,18 +1,23 @@
-#include "stdafx.h"
+#pragma once
 
-#include "ContentSerializer.h"
+#include "Core.RTTI/RTTI.h"
 
-#include "Core.RTTI/RTTI_Macros-impl.h"
+#include "Core.RTTI/RTTI_fwd.h"
 
 namespace Core {
-namespace ContentPipeline {
+namespace RTTI {
+class FMetaNamespace;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-RTTI_CLASS_BEGIN(ContentPipeline, IContentSerializer, Abstract)
-RTTI_CLASS_END()
+#define RTTI_NAMESPACE_DECL(_Api, _Name) \
+    extern _Api class Core::RTTI::FMetaNamespace RTTI_ ## _Name
+//----------------------------------------------------------------------------
+#define RTTI_NAMESPACE(_Name) (RTTI_ ## _Name)
+//----------------------------------------------------------------------------
+RTTI_NAMESPACE_DECL(CORE_RTTI_API, RTTI);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace ContentPipeline
+} //!namespace RTTI
 } //!namespace Core

@@ -12,12 +12,12 @@
 #include "Core/IO/FileSystem_fwd.h"
 #include "Core/IO/FS/Filename.h"
 
-#include "Core.RTTI/RTTI_Tag.h"
+#include "Core.RTTI/RTTI_Namespace.h"
 
 namespace Core {
 namespace ContentPipeline {
 POOL_TAG_DECL(ContentPipeline);
-RTTI_TAG_DECL(ContentPipeline);
+RTTI_NAMESPACE_DECL(CORE_CONTENTPIPELINE_API, ContentPipeline);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

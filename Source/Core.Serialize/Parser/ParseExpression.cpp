@@ -5,7 +5,7 @@
 #include "ParseExpression.h"
 
 #include "Core.RTTI/MetaClass.h"
-#include "Core.RTTI/MetaClassDatabase.h"
+#include "Core.RTTI/MetaDatabase.h"
 #include "Core.RTTI/MetaObject.h"
 #include "Core.RTTI/MetaProperty.h"
 
@@ -111,7 +111,7 @@ void FObjectDefinition::AddStatement(const FParseStatement *statement) {
 RTTI::FMetaAtom *FObjectDefinition::Eval(FParseContext *context) const {
     Assert(context);
 
-    const RTTI::FMetaClass *metaclass = RTTI::FMetaClassDatabase::Instance().GetIFP(_name);
+    const RTTI::FMetaClass *metaclass = RTTI::MetaDB().FindClassIFP(_name);
     if (!metaclass)
         CORE_THROW_IT(FParserException("unknown metaclass", this));
 

@@ -31,6 +31,7 @@ public:
         Deprecated   = 1<<4,
         Dynamic      = 1<<5,
     };
+    ENUM_FLAGS_FRIEND(EFlags);
 
     FMetaProperty(const FName& name, EFlags attributes);
     virtual ~FMetaProperty();
@@ -41,12 +42,12 @@ public:
     const FName& Name() const { return _name; }
     EFlags Attributes() const { return _attributes; }
 
-    bool IsPublic()     const { return Meta::HasFlag(_attributes, Public); }
-    bool IsProtected()  const { return Meta::HasFlag(_attributes, Protected); }
-    bool IsPrivate()    const { return Meta::HasFlag(_attributes, Private); }
-    bool IsReadOnly()   const { return Meta::HasFlag(_attributes, ReadOnly); }
-    bool IsDeprecated() const { return Meta::HasFlag(_attributes, Deprecated); }
-    bool IsDynamic()    const { return Meta::HasFlag(_attributes, Dynamic); }
+    bool IsPublic()     const { return (_attributes ^ Public); }
+    bool IsProtected()  const { return (_attributes ^ Protected); }
+    bool IsPrivate()    const { return (_attributes ^ Private); }
+    bool IsReadOnly()   const { return (_attributes ^ ReadOnly); }
+    bool IsDeprecated() const { return (_attributes ^ Deprecated); }
+    bool IsDynamic()    const { return (_attributes ^ Dynamic); }
     bool IsWritable()   const { return false == (IsReadOnly() || IsDeprecated()); }
 
     virtual FMetaTypeInfo TypeInfo() const = 0;
@@ -81,22 +82,25 @@ public:
 
     template <typename T>
     TMetaTypedProperty< typename TMetaTypeTraits<T>::wrapper_type > *Cast() {
+        typedef typename TMetaTypeTraits<T>::meta_type meta_type;
+        Assert(TypeInfo().Id == meta_type::TypeId);
         return checked_cast<TMetaTypedProperty< typename TMetaTypeTraits<T>::wrapper_type > *>(this);
     }
 
     template <typename T>
     const TMetaTypedProperty< typename TMetaTypeTraits<T>::wrapper_type > *Cast() const {
-        return checked_cast<const TMetaTypedProperty< typename TMetaTypeTraits<T>::wrapper_type > *>(this);
+        return const_cast<FMetaProperty*>(this)->Cast<T>();
     }
 
     template <typename T>
     TMetaTypedProperty< typename TMetaTypeTraits<T>::wrapper_type > *As() {
-        return dynamic_cast<TMetaTypedProperty< typename TMetaTypeTraits<T>::wrapper_type > *>(this);
+        typedef typename TMetaTypeTraits<T>::meta_type meta_type;
+        return (TypeInfo().Id == meta_type::TypeId ? Cast<T>() : nullptr);
     }
 
     template <typename T>
     const TMetaTypedProperty< typename TMetaTypeTraits<T>::wrapper_type > *As() const {
-        return dynamic_cast<const TMetaTypedProperty< typename TMetaTypeTraits<T>::wrapper_type > *>(this);
+        return const_cast<FMetaProperty*>(this)->As<T>();
     }
 
 protected:
@@ -222,7 +226,7 @@ template <typename T, typename _Class>
 TMetaWrappedProperty<T, TMetaDeprecatedAccessor<T, _Class> > *MakeDeprecatedProperty(
     const FName& name, FMetaProperty::EFlags attributes ) {
     return new TMetaWrappedProperty<T, TMetaDeprecatedAccessor<T, _Class> >(
-        name, FMetaProperty::EFlags(attributes | FMetaProperty::Deprecated | FMetaProperty::ReadOnly),
+        name, attributes | FMetaProperty::Deprecated | FMetaProperty::ReadOnly,
         MakeDeprecatedAccessor<T, _Class>() );
 }
 //----------------------------------------------------------------------------

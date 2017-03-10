@@ -3,9 +3,8 @@
 #include "MetaTransaction.h"
 
 #include "MetaAtom.h"
-#include "MetaAtomDatabase.h"
 #include "MetaClass.h"
-#include "MetaClassDatabase.h"
+#include "MetaDatabase.h"
 #include "MetaObject.h"
 #include "MetaObjectHelpers.h"
 #include "MetaType.h"
@@ -67,13 +66,13 @@ void FMetaTransaction::Load(FMetaLoadContext *context) {
 
     _unloaded = false;
 
-    FMetaAtomHashMap& db = FMetaAtomDatabase::Instance();
+    FMetaDatabase& db = RTTI::MetaDB();
 
     for (const PMetaObject& o : _objects) {
         o->RTTI_Load(context);
 
         if (o->RTTI_IsExported())
-            db.Add(o.get());
+            db.RegisterObject(o.get());
     }
 
     _loaded = true;
@@ -85,11 +84,11 @@ void FMetaTransaction::Unload(FMetaUnloadContext *context) {
 
     _loaded = false;
 
-    FMetaAtomHashMap& db = FMetaAtomDatabase::Instance();
+    FMetaDatabase& db = RTTI::MetaDB();
 
     for (const PMetaObject& o : _objects) {
         if (o->RTTI_IsExported())
-            db.Remove(o.get());
+            db.UnregisterObject(o.get());
 
         o->RTTI_Unload(context);
     }

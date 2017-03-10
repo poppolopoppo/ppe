@@ -13,10 +13,9 @@
 
 #include "Core.RTTI/RTTI_fwd.h"
 #include "Core.RTTI/MetaAtom.h"
-#include "Core.RTTI/MetaAtomDatabase.h"
 #include "Core.RTTI/MetaAtomVisitor.h"
 #include "Core.RTTI/MetaClass.h"
-#include "Core.RTTI/MetaClassDatabase.h"
+#include "Core.RTTI/MetaDatabase.h"
 #include "Core.RTTI/MetaObject.h"
 #include "Core.RTTI/MetaProperty.h"
 #include "Core.RTTI/MetaTransaction.h"
@@ -76,6 +75,8 @@ static const FFourCC TAG_OBJECT_METACLASS_       ("OMTC");
 static const FFourCC TAG_OBJECT_END_             ("OEND");
 //----------------------------------------------------------------------------
 static const FFourCC TAG_ATOM_NULL_              ("ANUL");
+//----------------------------------------------------------------------------
+STATIC_ASSERT(sizeof(FFourCC) == sizeof(u32));
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
@@ -642,7 +643,7 @@ const RTTI::FMetaClass* FBinaryDeserialize_::RetrieveMetaClass_(const FStringVie
     const RTTI::FName name(str);
     Assert(!name.empty());
 
-    const RTTI::FMetaClass* metaClass = RTTI::FMetaClassDatabase::Instance().GetIFP(name);
+    const RTTI::FMetaClass* metaClass = RTTI::MetaDB().FindClassIFP(name);
     if (nullptr == metaClass)
         CORE_THROW_IT(FBinarySerializerException("unknown RTTI metaclass"));
 
@@ -702,7 +703,7 @@ RTTI::FMetaObject* FBinaryDeserialize_::CreateObjectFromHeader_(const FSerialize
 
             BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize imported object <{0}> '{1}'", metaClass->Name(), name);
 
-            const RTTI::FMetaAtom* patom = RTTI::FMetaAtomDatabase::Instance().GetIFP(name);
+            const RTTI::FMetaAtom* patom = RTTI::MetaDB().FindAtomIFP(name);
             if (nullptr == patom ||
                 nullptr == patom->As<RTTI::PMetaObject>() )
                 CORE_THROW_IT(FBinarySerializerException("failed to import RTTI object from database"));

@@ -1073,14 +1073,15 @@ static const FGrammarImpl *sGrammarImpl = nullptr;
 void FGrammarStartup::Start() {
     AssertIsMainThread();
     AssertRelease(nullptr == sGrammarImpl);
+
     sGrammarImpl = new FGrammarImpl();
 }
 //----------------------------------------------------------------------------
 void FGrammarStartup::Shutdown() {
     AssertIsMainThread();
     AssertRelease(nullptr != sGrammarImpl);
-    checked_delete(sGrammarImpl);
-    sGrammarImpl = nullptr;
+
+    checked_delete_ref(sGrammarImpl);
 }
 //----------------------------------------------------------------------------
 void FGrammarStartup::ClearAll_UnusedMemory() {

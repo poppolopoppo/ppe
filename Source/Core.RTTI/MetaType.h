@@ -40,7 +40,7 @@ enum class EMetaTypeFlags : u32 {
 //----------------------------------------------------------------------------
 template <typename T>
 struct TMetaType {
-    enum : FMetaTypeId { TypeId = 0 };
+    STATIC_CONST_INTEGRAL(FMetaTypeId, TypeId, 0); \
     static constexpr bool Enabled = false;
     static constexpr FMetaTypeId Id() = delete;
     static constexpr EMetaTypeFlags Flags() = delete;
@@ -61,7 +61,7 @@ constexpr FMetaTypeId hash_MetaTypeId_constexpr(_Args... args) {
 //----------------------------------------------------------------------------
 #define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
     template <> struct TMetaType< T > { \
-        enum : FMetaTypeId { TypeId = _TypeId }; \
+        STATIC_CONST_INTEGRAL(FMetaTypeId, TypeId, _TypeId); \
         static constexpr bool Enabled = true; \
         static constexpr FMetaTypeId Id() { return _TypeId; } \
         static constexpr EMetaTypeFlags Flags() { return EMetaTypeFlags::Scalar; } \

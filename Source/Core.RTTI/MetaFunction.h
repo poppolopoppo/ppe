@@ -29,6 +29,7 @@ public:
         Deprecated      = 1<<4,
         Procedure       = 1<<5,
     };
+    ENUM_FLAGS_FRIEND(EFlags);
 
     FMetaFunction(const FName& name, EFlags attributes, size_t argCount);
     virtual ~FMetaFunction();
@@ -41,12 +42,12 @@ public:
     EFlags Attributes() const { return EFlags(attributes_type::Get(_data)); }
     FWordBitSet OutputFlags() const { return FWordBitSet(outputflags_type::Get(_data), ArgCount()); }
 
-    bool IsPublic()     const { return Meta::HasFlag(Attributes(), Public); }
-    bool IsProtected()  const { return Meta::HasFlag(Attributes(), Protected); }
-    bool IsPrivate()    const { return Meta::HasFlag(Attributes(), Private); }
-    bool IsConst()      const { return Meta::HasFlag(Attributes(), Const); }
-    bool IsDeprecated() const { return Meta::HasFlag(Attributes(), Deprecated); }
-    bool IsProcedure()  const { return Meta::HasFlag(Attributes(), Procedure); }
+    bool IsPublic()     const { return (Attributes() ^ Public); }
+    bool IsProtected()  const { return (Attributes() ^ Protected); }
+    bool IsPrivate()    const { return (Attributes() ^ Private); }
+    bool IsConst()      const { return (Attributes() ^ Const); }
+    bool IsDeprecated() const { return (Attributes() ^ Deprecated); }
+    bool IsProcedure()  const { return (Attributes() ^ Procedure); }
 
     bool IsOutput(size_t argIndex) const {
         Assert(argIndex < ArgCount());

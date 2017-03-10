@@ -16,16 +16,16 @@ namespace RTTI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define _DEF_METATYPE_SCALAR_EXTERN_TEMPLATE(T) \
-    extern template struct  TMetaType<T>; \
-    extern template struct  TMetaTypeTraits<T>; \
-    extern template class   TMetaTypeScalarTraits<T>; \
-    /*extern template class   TMetaTypePairTraits<T, T>;*/ \
-    extern template class   TMetaTypeVectorTraits<T>; \
-    /*extern template class   TMetaTypeDictionaryTraits<T, T>;*/ \
-    extern template class   TMetaTypedAtom<T>; \
-    extern template class   TMetaTypedProperty<T>; \
-    extern template class   TMetaFieldAccessor<T>; \
-    extern template class   TMetaWrappedProperty<T, TMetaFieldAccessor<T> >;
+    extern CORE_RTTI_API template struct  TMetaType<T>; \
+    extern CORE_RTTI_API template struct  TMetaTypeTraits<T>; \
+    extern CORE_RTTI_API template class   TMetaTypeScalarTraits<T>; \
+    /*extern CORE_RTTI_API template class   TMetaTypePairTraits<T, T>;*/ \
+    extern CORE_RTTI_API template class   TMetaTypeVectorTraits<T>; \
+    /*extern CORE_RTTI_API template class   TMetaTypeDictionaryTraits<T, T>;*/ \
+    extern CORE_RTTI_API template class   TMetaTypedAtom<T>; \
+    extern CORE_RTTI_API template class   TMetaTypedProperty<T>; \
+    extern CORE_RTTI_API template class   TMetaFieldAccessor<T>; \
+    extern CORE_RTTI_API template class   TMetaWrappedProperty<T, TMetaFieldAccessor<T> >;
 
 #define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
     _DEF_METATYPE_SCALAR_EXTERN_TEMPLATE(T)

@@ -53,6 +53,7 @@ public:
     SINGLETON_POOL_ALLOCATED_DECL();
 };
 //----------------------------------------------------------------------------
+/*
 class FDynamicObject : public FMetaObject {
 public:
     FDynamicObject();
@@ -72,7 +73,7 @@ public:
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
-    class FMetaClass : public RTTI::FInScopeMetaClass {
+    class FMetaClass : public RTTI::TInScopeMetaClass<FDynamicObject> {
     public:
         typedef FMetaObject object_type;
         typedef void parent_type;
@@ -98,6 +99,7 @@ private:
     FMetaClass _metaClass;
     ASSOCIATIVE_VECTOR(RTTI, FName, PMetaAtom) _values;
 };
+*/
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

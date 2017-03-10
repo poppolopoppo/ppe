@@ -6,7 +6,7 @@
 #include "ContentProcessor.h"
 #include "ContentSerializer.h"
 
-#include "Core.RTTI/RTTIMacros-impl.h"
+#include "Core.RTTI/RTTI_Macros-impl.h"
 
 #include "Core/Allocator/PoolAllocatorTag-impl.h"
 #include "Core/Memory/HashFunctions.h"

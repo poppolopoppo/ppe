@@ -5,7 +5,6 @@
 #include "MetaObject.h"
 
 #include "MetaAtom.h"
-#include "MetaAtomDatabase.h"
 #include "MetaAtomVisitor.h"
 #include "MetaClass.h"
 #include "MetaProperty.h"
