@@ -25,6 +25,12 @@ inline void checked_delete(T * x) {
 }
 //----------------------------------------------------------------------------
 template<class T>
+inline void checked_delete_ref(T *& x) {
+    checked_delete(x);
+    x = nullptr;
+}
+//----------------------------------------------------------------------------
+template<class T>
 inline void checked_array_delete(T * x) {
     typedef char type_must_be_complete[sizeof(T) ? 1 : -1];
     (void) sizeof(type_must_be_complete);

@@ -157,8 +157,7 @@ void FMemoryDomainStartup::Start() {
 void FMemoryDomainStartup::Shutdown() {
 #ifdef USE_MEMORY_DOMAINS
     Assert(nullptr != gAllAdditionalTrackingData);
-    checked_delete(gAllAdditionalTrackingData);
-    gAllAdditionalTrackingData = nullptr;
+    checked_delete_ref(gAllAdditionalTrackingData);
 #endif
 }
 //----------------------------------------------------------------------------
