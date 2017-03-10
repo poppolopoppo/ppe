@@ -62,6 +62,8 @@ public:
 
     void Poke(T* value) { traits_type::Poke(&_head, &_tail, value); }
 
+    void Clear() { _head = _tail = nullptr; }
+
 private:
     T* _head;
     T* _tail;
