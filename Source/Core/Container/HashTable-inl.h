@@ -323,6 +323,24 @@ bool TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::AliasesToContainer
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
+bool TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::operator ==(const TBasicHashTable& other) const {
+    if (size() != other.size())
+        return false;
+
+    const_pointer buckets = _data.GetBuckets();
+    forrange(i, 0, capacity()) {
+        if (_data.GetState(i) == EBucketState::Filled) {
+            const value_type& elt = buckets[i];
+            const auto it = other.find(table_traits::Key(elt));
+            if (other.end() == it || table_traits::Value(*it) != table_traits::Value(elt))
+                return false;
+        }
+    }
+
+    return true;
+}
+//----------------------------------------------------------------------------
+template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::allocator_copy_(const allocator_type& other, std::true_type ) {
     if (allocator_() != other) {
         clear_ReleaseMemory();
@@ -601,6 +619,12 @@ auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::TIterator_<T>::Got
     Assert(_p);
     Assert(_m);
     Assert(_m->AliasesToContainer(reinterpret_cast<const_pointer>(_p)));
+
+    STATIC_ASSERT(std::is_same<
+        typename parent_type::difference_type,
+        typename TBasicHashTable::difference_type
+    >::value);
+
     const pointer buckets = (pointer)_m->_data.GetBuckets();
     _p = buckets + _m->_data.NextBucket(size_type(std::distance(buckets, _p) + 1));
     return *this;

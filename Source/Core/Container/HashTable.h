@@ -43,6 +43,8 @@ struct THashMapTraits_ {
     static value_type Make(const _Key& key, const _Value& value) { return value_type(key, value); }
     static value_type Make(const _Key& key, _Value&& rvalue) { return value_type(key, std::move(rvalue)); }
     static value_type Make(_Key&& rkey, _Value&& rvalue) { return value_type(std::move(rkey), std::move(rvalue)); }
+    template <typename _It> static TKeyIterator<_It> MakeKeyIterator(_It&& it) { return Core::MakeKeyIterator(std::move(it)); }
+    template <typename _It> static TValueIterator<_It> MakeValueIterator(_It&& it) { return Core::MakeValueIterator(std::move(it)); }
 };
 template <typename _Key>
 struct THashSetTraits_ {
@@ -58,6 +60,8 @@ struct THashSetTraits_ {
     static const mapped_type& Value(const value_type& value) { return value; }
     template <typename... _Args>
     static value_type Make(_Args&&... args) { return value_type(std::forward<_Args>(args)...); }
+    template <typename _It> static const _It& MakeKeyIterator(const _It& it) { return it; }
+    template <typename _It> static const _It& MakeValueIterator(const _It& it) { return it; }
 };
 } //!details
 //----------------------------------------------------------------------------
@@ -78,12 +82,7 @@ public:
         using typename parent_type::difference_type;
         using typename parent_type::iterator_category;
 
-        STATIC_ASSERT(std::is_same<
-            typename parent_type::difference_type,
-            typename TBasicHashTable::difference_type
-        >::value);
-
-        TIterator_() noexcept : _m(nullptr), _p(nullptr) {}
+        TIterator_() NOEXCEPT : _m(nullptr), _p(nullptr) {}
         TIterator_(const TBasicHashTable& m, pointer p) : _m(&m), _p(p) {}
 
         template <typename U>
@@ -150,7 +149,7 @@ public:
     typedef TIterator_<public_type> iterator;
     typedef TIterator_<Meta::TAddConst<public_type>> const_iterator;
 
-    TBasicHashTable() noexcept { STATIC_ASSERT(sizeof(*this) == sizeof(u32) * 2 + sizeof(intptr_t)); }
+    TBasicHashTable() NOEXCEPT { STATIC_ASSERT(sizeof(*this) == sizeof(u32) * 2 + sizeof(intptr_t)); }
     ~TBasicHashTable() { Assert(CheckInvariants()); clear_ReleaseMemory(); }
 
     explicit TBasicHashTable(allocator_type&& alloc) : allocator_type(std::move(alloc)) {}
@@ -163,9 +162,9 @@ public:
     TBasicHashTable(const TBasicHashTable& other, const allocator_type& alloc) : TBasicHashTable(alloc) { assign(other.begin(), other.end()); }
     TBasicHashTable& operator=(const TBasicHashTable& other);
 
-    TBasicHashTable(TBasicHashTable&& rvalue) noexcept : TBasicHashTable(static_cast<allocator_type&&>(rvalue)) { assign(std::move(rvalue)); }
-    TBasicHashTable(TBasicHashTable&& rvalue, const allocator_type& alloc) noexcept : TBasicHashTable(alloc) { assign_rvalue_(std::move(rvalue), std::false_type()); }
-    TBasicHashTable& operator=(TBasicHashTable&& rvalue) noexcept;
+    TBasicHashTable(TBasicHashTable&& rvalue) NOEXCEPT : TBasicHashTable(static_cast<allocator_type&&>(rvalue)) { assign(std::move(rvalue)); }
+    TBasicHashTable(TBasicHashTable&& rvalue, const allocator_type& alloc) NOEXCEPT : TBasicHashTable(alloc) { assign_rvalue_(std::move(rvalue), std::false_type()); }
+    TBasicHashTable& operator=(TBasicHashTable&& rvalue) NOEXCEPT;
 
     TBasicHashTable(std::initializer_list<value_type> ilist) : TBasicHashTable() { assign(ilist.begin(), ilist.end()); }
     TBasicHashTable(std::initializer_list<value_type> ilist, const allocator_type& alloc) : TBasicHashTable(alloc) { assign(ilist.begin(), ilist.end()); }
@@ -190,6 +189,12 @@ public:
     const_iterator cbegin() const { return begin(); }
     const_iterator cend() const { return end(); }
 
+    auto Keys() { return MakeIterable(table_traits::MakeKeyIterator(begin()), table_traits::MakeKeyIterator(end())); }
+    auto Keys() const { return MakeIterable(table_traits::MakeKeyIterator(cbegin()), table_traits::MakeKeyIterator(cend())); }
+
+    auto Values() { return MakeIterable(table_traits::MakeValueIterator(begin()), table_traits::MakeValueIterator(end())); }
+    auto Values() const { return MakeIterable(table_traits::MakeValueIterator(cbegin()), table_traits::MakeValueIterator(cend())); }
+
     void assign(std::initializer_list<value_type> ilist) { assign(ilist.begin(), ilist.end()); }
     void assign(TBasicHashTable&& rvalue);
     template <typename _It>
@@ -199,6 +204,14 @@ public:
         typedef typename std::iterator_traits<_It>::iterator_category iterator_category;
         clear();
         insert_(first, last, iterator_category());
+    }
+
+    void append(const TBasicHashTable& other) {
+        insert(other.begin(), other.end());
+    }
+    void append_AssertUnique(const TBasicHashTable& other) {
+        reserve_Additional(other.size());
+        insert_AssertUnique(other.begin(), other.end());
     }
 
     iterator find(const key_type& key);
@@ -226,12 +239,23 @@ public:
     }
 
     void insert(std::initializer_list<value_type> ilist) { insert(ilist.begin(), ilist.end()); }
+
     template <typename _It>
     typename std::enable_if< Meta::is_iterator<_It>::value >::type
         insert(_It first, _It last) {
         typedef std::iterator_traits<_It> iterator_traits;
         typedef typename std::iterator_traits<_It>::iterator_category iterator_category;
         insert_(first, last, iterator_category());
+    }
+
+    template <typename _It>
+    void insert_AssertUnique(_It first, _It last) {
+#ifdef WITH_CORE_ASSERT
+        for (; first != last; ++first)
+            insert_AssertUnique(*first);
+#else
+        insert(first, last);
+#endif
     }
 
     TPair<iterator, bool> insert_or_assign(const value_type& value);
@@ -304,6 +328,9 @@ public:
 
     bool CheckInvariants() const;
     bool AliasesToContainer(const_pointer p) const;
+
+    bool operator ==(const TBasicHashTable& other) const;
+    bool operator !=(const TBasicHashTable& other) const { return (not operator ==(other)); }
 
 private:
     STATIC_CONST_INTEGRAL(size_type, NoIndex, size_type(-1));

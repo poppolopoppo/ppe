@@ -106,6 +106,18 @@ public:
     const_reverse_iterator rbegin() const { return _vector.rbegin(); }
     const_reverse_iterator rend() const { return _vector.rend(); }
 
+    typedef TKeyIterator<iterator> key_iterator;
+    typedef TKeyIterator<const_iterator> key_const_iterator;
+
+    TIterable<key_iterator> Keys() { return MakeIterable(MakeKeyIterator(begin()), MakeKeyIterator(end())); }
+    TIterable<key_const_iterator> Keys() const { return MakeIterable(MakeKeyIterator(begin()), MakeKeyIterator(end())); }
+
+    typedef TValueIterator<iterator> value_iterator;
+    typedef TValueIterator<const_iterator> value_const_iterator;
+
+    TIterable<value_iterator> Values() { return MakeIterable(MakeValueIterator(begin()), MakeValueIterator(end())); }
+    TIterable<value_const_iterator> Values() const { return MakeIterable(MakeValueIterator(begin()), MakeValueIterator(end())); }
+
     void reserve(size_type capacity);
     void clear();
 
