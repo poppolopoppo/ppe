@@ -605,6 +605,12 @@ void Add_AssertUnique(TVector<T, _Allocator>& v, T&& elt) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
+void Add_Unique(TVector<T, _Allocator>& v, T&& elt) {
+    if (not Contains(v, elt))
+        v.emplace_back(std::move(elt));
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
 void Remove_AssertExists(TVector<T, _Allocator>& v, const T& elt) {
     auto it = std::find(v.begin(), v.end(), elt);
     Assert(it != v.end());

@@ -313,6 +313,9 @@ template <typename T, typename _Allocator>
 void Add_AssertUnique(TVector<T, _Allocator>& v, T&& elt);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
+void Add_Unique(TVector<T, _Allocator>& v, T&& elt);
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
 void Remove_AssertExists(TVector<T, _Allocator>& v, const T& elt);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
