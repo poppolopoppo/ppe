@@ -50,7 +50,6 @@
     + ' /W3'                ; tous les warnings de level 4 sont reportés
     + ' /WX'                ; les warnings génèrent des erreurs !
     + ' /Gm-'               ; minimal rebuild est incompatible avec FastBuild qui gère cette feature lui même
-    + ' /GR'                ; active le support des RTTI std de C++ (RunTime Type Information, nécessaire pour dynamic_cast<> par ex)
     + ' /GF'                ; fusion des chaînes de caractères identiques (string pooling)
     + ' /GT'                ; fiber safe optimizations (https://msdn.microsoft.com/fr-fr/library/6e298fy4.aspx)
     + ' /EHsc'              ; active le support des exceptions
@@ -254,6 +253,10 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .CompilerWithoutCache       = ' /Zi' ; produit une base de données de programme (PDB)
     .CompilerWithCache          = .CompilerWithoutCache
 
+    ; On désactive le support du RTTI c++ en non debug (dynamic_cast<> est utilisé par certains assert)
+    .CompilerWithoutRTTI        = ' /GR-' ; désactive le support des RTTI std de C++
+    .CompilerWithRTTI           = ' /GR'  ; active le support des RTTI std de C++ (RunTime Type Information, nécessaire pour dynamic_cast<> par ex)
+
 #if !USE_CLANG_WINDOWS
     .CompilerWithCache          + ' /FS' ; nécessaire pour lancer plusieurs CL.exe en meme temps sans le cache (https://msdn.microsoft.com/fr-fr/library/dn502518.aspx)
 #if USE_FASTBUILD_CACHE
@@ -286,6 +289,7 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
                         + .DebugDefines
 
     .CompilerOptions    = .ConfigOptions
+                        + .CompilerWithRTTI
 
     .LinkerOptions      = ' /INCREMENTAL'   ; active le linker incrémental
 ]
@@ -305,6 +309,7 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
                         + .DebugDefines
 
     .CompilerOptions    = .ConfigOptions
+                        + .CompilerWithRTTI
 
     .LinkerOptions      = ' /INCREMENTAL'   ; active le linker incrémental
 ]
@@ -326,6 +331,7 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
                         + .ReleaseDefines
 
     .CompilerOptions    = .ConfigOptions
+                        + .CompilerWithoutRTTI
 
     .LinkerOptions      = ' /INCREMENTAL'   ; active le linker incrémental
 ]
@@ -347,6 +353,7 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
                         + .ReleaseDefines
 
     .CompilerOptions    = .ConfigOptions
+                        + .CompilerWithoutRTTI
 
     .LibrarianOptions   = ' /LTCG'          ; link time code generation
 
@@ -370,6 +377,7 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
                         + .ReleaseDefines
 
     .CompilerOptions    = .FinalOptimisations
+                        + .CompilerWithoutRTTI
 
     .LibrarianOptions   = ' /LTCG'          ; link time code generation
 
