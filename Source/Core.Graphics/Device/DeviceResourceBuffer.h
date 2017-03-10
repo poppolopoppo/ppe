@@ -31,7 +31,7 @@ enum class EBufferMode : u32 {
     WriteDiscard    = Write|Discard,
     WriteDoNotWait  = Write|DoNotWait,
 };
-ENUM_FLAGS(EBufferMode)
+ENUM_FLAGS(EBufferMode);
 //----------------------------------------------------------------------------
 // http://amd-dev.wpengine.netdna-cdn.com/wordpress/media/2012/10/Ultimate%20Graphics%20Performance%20for%20DirectX%2010%20Hardware%20-%20Develop%202008.pdf
 // https://developer.nvidia.com/sites/default/files/akamai/gamedev/files/gdc12/Efficient_Buffer_Management_McDonald.pdf

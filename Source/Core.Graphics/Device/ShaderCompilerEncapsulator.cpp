@@ -98,15 +98,15 @@ void FShaderCompilerEncapsulator::PreprocessShaderSource(
 //----------------------------------------------------------------------------
 void ShaderCompilerFlagsToCStr(char *cstr, size_t capacity, EShaderCompilerFlags flags) {
     FOCStrStream oss(cstr, capacity);
-    if (Meta::HasFlag(flags, EShaderCompilerFlags::Debug))
+    if (flags ^ EShaderCompilerFlags::Debug)
         oss << "Debug,";
-    if (Meta::HasFlag(flags, EShaderCompilerFlags::Optimize))
+    if (flags ^ EShaderCompilerFlags::Optimize)
         oss << "Optimize,";
-    if (Meta::HasFlag(flags, EShaderCompilerFlags::NoOptimize))
+    if (flags ^ EShaderCompilerFlags::NoOptimize)
         oss << "NoOptimize,";
-    if (Meta::HasFlag(flags, EShaderCompilerFlags::Pedantic))
+    if (flags ^ EShaderCompilerFlags::Pedantic)
         oss << "Pedantic,";
-    if (Meta::HasFlag(flags, EShaderCompilerFlags::WError))
+    if (flags ^ EShaderCompilerFlags::WError)
         oss << "WError,";
 }
 //----------------------------------------------------------------------------

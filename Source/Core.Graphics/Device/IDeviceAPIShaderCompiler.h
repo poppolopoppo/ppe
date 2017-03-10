@@ -24,6 +24,7 @@ enum class EShaderCompilerFlags {
     Default = Optimize|Pedantic|WError,
     DefaultForDebug = Debug|NoOptimize|Pedantic|WError,
 };
+ENUM_FLAGS(EShaderCompilerFlags);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

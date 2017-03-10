@@ -699,9 +699,9 @@ void FDX11DeviceAPIEncapsulator::Clear(const FDepthStencil *depthStencil, EClear
     Assert(dx11DepthStencil);
 
     UINT dx11ClearFlags = 0;
-    if (Meta::HasFlag(opts, EClearOptions::Depth) )
+    if (opts ^ EClearOptions::Depth)
         dx11ClearFlags |= D3D11_CLEAR_DEPTH;
-    if (Meta::HasFlag(opts, EClearOptions::Stencil) )
+    if (opts ^ EClearOptions::Stencil)
         dx11ClearFlags |= D3D11_CLEAR_STENCIL;
 
     context->ClearDepthStencilView(dx11DepthStencil, dx11ClearFlags, depth, stencil);

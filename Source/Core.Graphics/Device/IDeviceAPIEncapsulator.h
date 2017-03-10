@@ -23,6 +23,7 @@ enum class EClearOptions {
     FDepthStencil    = Depth|Stencil,
     DepthStencil_NotRenderTarget = FDepthStencil|NotRenderTarget,
 };
+ENUM_FLAGS(EClearOptions);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -31,7 +31,7 @@ bool DX11ResourceGetData(
     const FDX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
 
     Assert(EBufferUsage::Immutable != bufferUsage);
-    Assert(Meta::HasFlag(bufferMode, EBufferMode::Read) );
+    Assert(bufferMode ^ EBufferMode::Read);
 
     if (!DX11MapRead(wrapper->ImmediateContext(), resource, subResource, offset, dst, stride, count))
         CORE_THROW_IT(FDeviceEncapsulatorException("DX11: failed to map resource buffer for reading", device));
@@ -62,10 +62,10 @@ bool DX11ResourceSetData(
 
     case Core::Graphics::EBufferUsage::Dynamic:
     case Core::Graphics::EBufferUsage::Staging:
-        Assert(Meta::HasFlag(bufferMode, EBufferMode::Write) );
+        Assert(bufferMode ^ EBufferMode::Write);
         if (!DX11MapWrite(  wrapper->ImmediateContext(), resource, subResource, offset, src, stride, count,
-                            Meta::HasFlag(bufferMode, EBufferMode::Discard),
-                            Meta::HasFlag(bufferMode, EBufferMode::DoNotWait) ))
+                            bufferMode ^ EBufferMode::Discard,
+                            bufferMode ^ EBufferMode::DoNotWait ))
             CORE_THROW_IT(FDeviceEncapsulatorException("DX11: failed to map resource buffer for writing", device));
         break;
 

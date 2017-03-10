@@ -412,7 +412,7 @@ static void DX11StripShaderBlobIFN_(
     const FShaderSource *source,
     EShaderCompilerFlags flags ) {
 
-    if (Meta::HasFlag(flags, EShaderCompilerFlags::NoOptimize) )
+    if (flags ^ EShaderCompilerFlags::NoOptimize)
         return; // shader is not stripped when NoOptimize is set (debug)
 
     TComPtr<::ID3DBlob> striped = nullptr;
@@ -514,15 +514,15 @@ void FDX11ShaderCompiler::PreprocessShaderSource(
 //----------------------------------------------------------------------------
 UINT ShaderCompilerFlagsToD3D11CompileFlags(EShaderCompilerFlags value) {
     UINT result = 0;
-    if (Meta::HasFlag(value, EShaderCompilerFlags::Debug) )
+    if (value ^ EShaderCompilerFlags::Debug)
         result |= D3DCOMPILE_DEBUG;
-    if (Meta::HasFlag(value, EShaderCompilerFlags::Optimize) )
+    if (value ^ EShaderCompilerFlags::Optimize)
         result |= D3DCOMPILE_OPTIMIZATION_LEVEL3;
-    else if (Meta::HasFlag(value, EShaderCompilerFlags::NoOptimize) )
+    else if (value ^ EShaderCompilerFlags::NoOptimize)
         result |= D3DCOMPILE_SKIP_OPTIMIZATION;
-    if (Meta::HasFlag(value, EShaderCompilerFlags::Pedantic) )
+    if (value ^ EShaderCompilerFlags::Pedantic)
         result |= D3DCOMPILE_ENABLE_STRICTNESS;
-    if (Meta::HasFlag(value, EShaderCompilerFlags::WError) )
+    if (value ^ EShaderCompilerFlags::WError)
         result |= D3DCOMPILE_WARNINGS_ARE_ERRORS;
     return result;
 }

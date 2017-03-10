@@ -22,7 +22,7 @@ namespace AccessPolicy {
         Truncate_Binary = Truncate|Binary,
     };
 }
-ENUM_FLAGS(AccessPolicy::EMode)
+ENUM_FLAGS(AccessPolicy::EMode);
 //----------------------------------------------------------------------------
 namespace ExistPolicy {
     enum EMode {
@@ -32,7 +32,7 @@ namespace ExistPolicy {
         ReadWrite   = 6,
     };
 }
-ENUM_FLAGS(ExistPolicy::EMode)
+ENUM_FLAGS(ExistPolicy::EMode);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
