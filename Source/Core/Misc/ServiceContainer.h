@@ -119,11 +119,18 @@ void FServiceContainer::Unregister(T* service) {
         typeid(_Interface).name(), typeid(T).name(), hash_t(serviceId) );
 
 #ifdef WITH_CORE_ASSERT
-    _Interface* const pimpl = service; // important before casting to (void*)
-#endif
+    const auto it = _services.Find(serviceId);
+    if (_services.end() == it)
+        AssertNotReached();
 
+    _Interface* const pimpl = service; // important before casting to (void*)
+    Assert(it->second.Pimpl() == pimpl);
+
+    _services.Erase(it);
+#else
     if (not _services.Erase(serviceId))
 		AssertNotReached(); // service should have beed registered !
+#endif
 }
 //----------------------------------------------------------------------------
 template <typename _Interface>
