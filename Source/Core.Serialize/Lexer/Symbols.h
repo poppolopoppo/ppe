@@ -43,7 +43,7 @@ public:
 
     static const FSymbol *Int;
     static const FSymbol *Float;
-    static const FSymbol *FString;
+    static const FSymbol *String;
     static const FSymbol *Identifier;
 
     static const FSymbol *True;
@@ -82,9 +82,9 @@ public:
     static const FSymbol *Assignment;
     static const FSymbol *Equals;
     static const FSymbol *NotEquals;
-    static const FSymbol *TLess;
+    static const FSymbol *Less;
     static const FSymbol *LessOrEqual;
-    static const FSymbol *TGreater;
+    static const FSymbol *Greater;
     static const FSymbol *GreaterOrEqual;
     static const FSymbol *DotDot;
     static const FSymbol *Sharp;

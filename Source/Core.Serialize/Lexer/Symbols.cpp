@@ -138,9 +138,9 @@ FSymbols::FSymbols() {
     RegisterSymbol_(&Assignment, _symbols, FSymbol::Assignment, "=");
     RegisterSymbol_(&Equals, _symbols, FSymbol::Equals, "==");
     RegisterSymbol_(&NotEquals, _symbols, FSymbol::NotEquals, "!=");
-    RegisterSymbol_(&TLess, _symbols, FSymbol::TLess, "<");
+    RegisterSymbol_(&Less, _symbols, FSymbol::Less, "<");
     RegisterSymbol_(&LessOrEqual, _symbols, FSymbol::LessOrEqual, "<=");
-    RegisterSymbol_(&TGreater, _symbols, FSymbol::TGreater, ">");
+    RegisterSymbol_(&Greater, _symbols, FSymbol::Greater, ">");
     RegisterSymbol_(&GreaterOrEqual, _symbols, FSymbol::GreaterOrEqual, ">=");
     RegisterSymbol_(&DotDot, _symbols, FSymbol::DotDot, "..");
     RegisterSymbol_(&Sharp, _symbols, FSymbol::Sharp, "#");
@@ -149,7 +149,7 @@ FSymbols::FSymbols() {
     FSymbols::Eof = new FSymbol(FSymbol::Eof, "Eof");
     FSymbols::Int = new FSymbol(FSymbol::Int, "Int");
     FSymbols::Float = new FSymbol(FSymbol::Float, "Float");
-    FSymbols::FString = new FSymbol(FSymbol::FString, "FString");
+    FSymbols::String = new FSymbol(FSymbol::String, "String");
     FSymbols::Identifier = new FSymbol(FSymbol::Identifier, "Identifier");
     FSymbols::Typename = new FSymbol(FSymbol::Typename, "Typename");
 
@@ -192,9 +192,9 @@ FSymbols::FSymbols() {
     CheckSymbol_(_symbols, FSymbols::Assignment);
     CheckSymbol_(_symbols, FSymbols::Equals);
     CheckSymbol_(_symbols, FSymbols::NotEquals);
-    CheckSymbol_(_symbols, FSymbols::TLess);
+    CheckSymbol_(_symbols, FSymbols::Less);
     CheckSymbol_(_symbols, FSymbols::LessOrEqual);
-    CheckSymbol_(_symbols, FSymbols::TGreater);
+    CheckSymbol_(_symbols, FSymbols::Greater);
     CheckSymbol_(_symbols, FSymbols::GreaterOrEqual);
     CheckSymbol_(_symbols, FSymbols::DotDot);
     CheckSymbol_(_symbols, FSymbols::Sharp);
@@ -238,9 +238,9 @@ FSymbols::~FSymbols() {
     UnregisterSymbol_(_symbols, &Assignment);
     UnregisterSymbol_(_symbols, &Equals);
     UnregisterSymbol_(_symbols, &NotEquals);
-    UnregisterSymbol_(_symbols, &TLess);
+    UnregisterSymbol_(_symbols, &Less);
     UnregisterSymbol_(_symbols, &LessOrEqual);
-    UnregisterSymbol_(_symbols, &TGreater);
+    UnregisterSymbol_(_symbols, &Greater);
     UnregisterSymbol_(_symbols, &GreaterOrEqual);
     UnregisterSymbol_(_symbols, &DotDot);
     UnregisterSymbol_(_symbols, &Sharp);
@@ -249,32 +249,24 @@ FSymbols::~FSymbols() {
     Assert(nullptr != FSymbols::Eof);
     Assert(nullptr != FSymbols::Int);
     Assert(nullptr != FSymbols::Float);
-    Assert(nullptr != FSymbols::FString);
+    Assert(nullptr != FSymbols::String);
     Assert(nullptr != FSymbols::Identifier);
     Assert(nullptr != FSymbols::Typename);
 
-    checked_delete(FSymbols::Invalid);
-    checked_delete(FSymbols::Eof);
-    checked_delete(FSymbols::Int);
-    checked_delete(FSymbols::Float);
-    checked_delete(FSymbols::FString);
-    checked_delete(FSymbols::Identifier);
-    checked_delete(FSymbols::Typename);
-
-    Invalid = nullptr;
-    Eof = nullptr;
-    Int = nullptr;
-    Float = nullptr;
-    FString = nullptr;
-    Identifier = nullptr;
-    Typename = nullptr;
+    checked_delete_ref(FSymbols::Invalid);
+    checked_delete_ref(FSymbols::Eof);
+    checked_delete_ref(FSymbols::Int);
+    checked_delete_ref(FSymbols::Float);
+    checked_delete_ref(FSymbols::String);
+    checked_delete_ref(FSymbols::Identifier);
+    checked_delete_ref(FSymbols::Typename);
 }
 //----------------------------------------------------------------------------
 const FSymbol *FSymbols::Invalid = nullptr;
 const FSymbol *FSymbols::Eof = nullptr;
 const FSymbol *FSymbols::Int = nullptr;
 const FSymbol *FSymbols::Float = nullptr;
-const FSymbol *FSymbols::FString = nullptr;
+const FSymbol *FSymbols::String = nullptr;
 const FSymbol *FSymbols::Identifier = nullptr;
 const FSymbol *FSymbols::True = nullptr;
 const FSymbol *FSymbols::False = nullptr;
@@ -312,9 +304,9 @@ const FSymbol *FSymbols::Complement = nullptr;
 const FSymbol *FSymbols::Assignment = nullptr;
 const FSymbol *FSymbols::Equals = nullptr;
 const FSymbol *FSymbols::NotEquals = nullptr;
-const FSymbol *FSymbols::TLess = nullptr;
+const FSymbol *FSymbols::Less = nullptr;
 const FSymbol *FSymbols::LessOrEqual = nullptr;
-const FSymbol *FSymbols::TGreater = nullptr;
+const FSymbol *FSymbols::Greater = nullptr;
 const FSymbol *FSymbols::GreaterOrEqual = nullptr;
 const FSymbol *FSymbols::DotDot = nullptr;
 const FSymbol *FSymbols::Sharp = nullptr;

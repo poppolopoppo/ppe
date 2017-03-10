@@ -22,7 +22,7 @@ public:
 
         Int             = 1ull<< 1,   // 42 or 033 or 0xFE
         Float           = 1ull<< 2,   // 0.5 or 1e5
-        FString          = 1ull<< 3,   // "dsf\"dsfs" or 'sdfdsf'
+        String          = 1ull<< 3,   // "dsf\"dsfs" or 'sdfdsf'
         Identifier      = 1ull<< 4,   // [_a-zA-Z][\w\d]*
 
         True            = 1ull<< 5,   // true
@@ -76,10 +76,10 @@ public:
         Equals          = 1ull<<39,   // ==
         NotEquals       = 1ull<<40,   // !=
 
-        TLess            = 1ull<<41,   // <
+        Less            = 1ull<<41,   // <
         LessOrEqual     = 1ull<<42,   // <=
 
-        TGreater         = 1ull<<43,   // >
+        Greater         = 1ull<<43,   // >
         GreaterOrEqual  = 1ull<<44,   // >=
 
         DotDot          = 1ull<<45,   // ..
@@ -89,12 +89,13 @@ public:
 
         Prefix          = 1ull<<63,   // for FSymbols class
     };
+    ENUM_FLAGS_FRIEND(ETypeId);
 
     FSymbol() : _type(Invalid), _ord(0) {}
     FSymbol(ETypeId type, const FStringView& cstr, u64 ord = 0) : _type(type), _cstr(cstr), _ord(ord) {}
 
     bool IsValid() const { return (Meta::CountBitsSet(uint64_t(_type)) == 1); }
-    bool IsPrefix() const { return Meta::HasFlag(_type, Prefix); }
+    bool IsPrefix() const { return (_type ^ Prefix); }
 
     ETypeId Type() const { return _type; }
     const FStringView& CStr() const { return _cstr; }

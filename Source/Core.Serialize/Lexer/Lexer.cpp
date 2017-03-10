@@ -270,12 +270,12 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
         ch = reader.Read();
         Assert('\'' == ch);
 
-        *psymbol = FSymbols::FString;
+        *psymbol = FSymbols::String;
 
         ReadCharset_(Until_<'\''>, reader, value);
 
         if ('\'' != (ch = reader.Read()))
-            CORE_THROW_IT(FLexerException("unterminated strong quoted string", FMatch(FSymbols::FString, std::move(value), reader.SourceSite(), reader.Tell() )));
+            CORE_THROW_IT(FLexerException("unterminated strong quoted string", FMatch(FSymbols::String, std::move(value), reader.SourceSite(), reader.Tell() )));
 
         return true;
     }
@@ -287,7 +287,7 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
         ch = reader.Read();
         Assert('"' == ch);
 
-        *psymbol = FSymbols::FString;
+        *psymbol = FSymbols::String;
 
         bool inQuote = true;
         bool escaped = false;
@@ -322,7 +322,7 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
                     d1 = ToLower(reader.Read());
 
                     if (!(Octal_(d0) && Octal_(d1)))
-                        CORE_THROW_IT(FLexerException("invalid octal character escaping", FMatch(FSymbols::FString, std::move(value), reader.SourceSite(), reader.Tell() )));
+                        CORE_THROW_IT(FLexerException("invalid octal character escaping", FMatch(FSymbols::String, std::move(value), reader.SourceSite(), reader.Tell() )));
 
                     ch = (char)((d0 - '0') * 8 + (d1 - '0') );
 
@@ -335,7 +335,7 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
                     d1 = ToLower(reader.Read());
 
                     if (!(Hexadecimal_(d0) && Hexadecimal_(d1)))
-                        CORE_THROW_IT(FLexerException("invalid hexadecimal character escaping", FMatch(FSymbols::FString, std::move(value), reader.SourceSite(), reader.Tell() )));
+                        CORE_THROW_IT(FLexerException("invalid hexadecimal character escaping", FMatch(FSymbols::String, std::move(value), reader.SourceSite(), reader.Tell() )));
 
                     ch = (char)((d0 <= '9' ? d0 - '0' : d0 - 'a') * 16 +
                                 (d1 <= '9' ? d1 - '0' : d1 - 'a') );
@@ -345,10 +345,10 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
                     break;
 
                 case '\0':
-                    CORE_THROW_IT(FLexerException("unterminated weak quoted string", FMatch(FSymbols::FString, std::move(value), reader.SourceSite(), reader.Tell() )));
+                    CORE_THROW_IT(FLexerException("unterminated weak quoted string", FMatch(FSymbols::String, std::move(value), reader.SourceSite(), reader.Tell() )));
 
                 default:
-                    CORE_THROW_IT(FLexerException("invalid character escaping", FMatch(FSymbols::FString, std::move(value), reader.SourceSite(), reader.Tell() )));
+                    CORE_THROW_IT(FLexerException("invalid character escaping", FMatch(FSymbols::String, std::move(value), reader.SourceSite(), reader.Tell() )));
                 }
             }
             else
@@ -359,7 +359,7 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
                 case '\\': escaped = true; break;
 
                 case '\0':
-                    CORE_THROW_IT(FLexerException("unterminated weak quoted string", FMatch(FSymbols::FString, std::move(value), reader.SourceSite(), reader.Tell() )));
+                    CORE_THROW_IT(FLexerException("unterminated weak quoted string", FMatch(FSymbols::String, std::move(value), reader.SourceSite(), reader.Tell() )));
 
                 default:
                     oss.put(ch);
@@ -456,7 +456,7 @@ bool FLexer::ReadUntil(FMatch& match, const char ch) {
     }
     else {
         Assert(ch == poken);
-        match._symbol = FSymbols::FString;
+        match._symbol = FSymbols::String;
         match._value = oss.str();
         return true;
     }

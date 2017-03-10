@@ -506,7 +506,7 @@ FGrammarImpl::FGrammarImpl()
         const double value = atof(m->Value().c_str());
         return Parser::MakeLiteral(value, m->Site());
     }))
-    .Or(Parser::Expect(FLexer::FSymbol::FString).Select<Parser::PCParseExpression>([](const FLexer::FMatch *&& m) -> Parser::PCParseExpression {
+    .Or(Parser::Expect(FLexer::FSymbol::String).Select<Parser::PCParseExpression>([](const FLexer::FMatch *&& m) -> Parser::PCParseExpression {
         Assert(m/* && m->Value().size()*//* strings can be empty */);
         return Parser::MakeLiteral(m->Value(), m->Site());
     }))
@@ -746,9 +746,9 @@ FGrammarImpl::FGrammarImpl()
 
 ,   _compare(
     _lshRsh.Ref().And(Parser::ExpectMask(
-        FLexer::FSymbol::TLess
+        FLexer::FSymbol::Less
     |   FLexer::FSymbol::LessOrEqual
-    |   FLexer::FSymbol::TGreater
+    |   FLexer::FSymbol::Greater
     |   FLexer::FSymbol::GreaterOrEqual).And(_lshRsh.Ref()).Many())
     .Select<Parser::PCParseExpression>([](const TTuple<Parser::PCParseExpression, Parser::TEnumerable<TTuple<const FLexer::FMatch *, Parser::PCParseExpression> > >& args) -> Parser::PCParseExpression {
         const Parser::PCParseExpression& lhs = std::get<0>(args);
@@ -762,7 +762,7 @@ FGrammarImpl::FGrammarImpl()
 
             switch (op->Symbol()->Type())
             {
-            case FLexer::FSymbol::TLess:
+            case FLexer::FSymbol::Less:
                 result = Parser::MakeBinaryFunction(TBinaryOp<FCmpOp_Less>(), result.get(), rhs.get(), op->Site());
                 break;
 
@@ -770,7 +770,7 @@ FGrammarImpl::FGrammarImpl()
                 result = Parser::MakeBinaryFunction(TBinaryOp<FCmpOp_LessOrEqual>(), result.get(), rhs.get(), op->Site());
                 break;
 
-            case FLexer::FSymbol::TGreater:
+            case FLexer::FSymbol::Greater:
                 result = Parser::MakeBinaryFunction(TBinaryOp<FCmpOp_Greater>(), result.get(), rhs.get(), op->Site());
                 break;
 
