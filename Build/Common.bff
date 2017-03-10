@@ -13,7 +13,9 @@
 //------------------------------------------------------------------------------
 .OutputDirectory        = '$SolutionPath$/Output'
 .SourceDiretory         = '$SolutionPath$/Source'
-.TemplateDirectory      = '$SolutionPath$/Build/Templates'
+
+.BuildDirectory         = '$SolutionPath$/Build'
+.TemplateDirectory      = '$BuildDirectory$/Templates'
 
 .BinaryDirectory        = '$OutputDirectory$/Binary'
 .IntermediateDirectory  = '$OutputDirectory$/Intermediate'
@@ -22,7 +24,8 @@
 // Default Unity Options
 //------------------------------------------------------------------------------
 .UnityNumFiles = 5 ; peut être override par projet
-.UnityInputIsolateWritableFiles = false ; passer à true désactive l'utilisation des unity builds
+.UnityInputIsolateWritableFiles = false ; %_NOCOMMIT% ; passer à true désactive l'utilisation des unity builds
+.UnityInputIsolateListFile = '$BuildDirectory$/.modified_files'
 
 //------------------------------------------------------------------------------
 // Default Visual Options
