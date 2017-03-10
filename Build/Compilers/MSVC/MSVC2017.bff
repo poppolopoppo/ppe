@@ -78,10 +78,10 @@ Compiler( 'Compiler-MSVC2017-x86' )
         '$Root$\mspdbsrv.exe',
         '$Root$\mspft140.dll',
         '$Root$\msvcdis140.dll',
-        '$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\concrt140.dll',
-        '$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\msvcp140.dll',
-        '$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\vccorlib140.dll',
-        '$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\vcruntime140.dll',
+        ;'$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\concrt140.dll',
+        ;'$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\msvcp140.dll',
+        ;'$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\vccorlib140.dll',
+        ;'$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\vcruntime140.dll',
     }
 }
 
@@ -107,10 +107,10 @@ Compiler( 'Compiler-MSVC2017-x64' )
         '$Root$\mspdbsrv.exe',
         '$Root$\mspft140.dll',
         '$Root$\msvcdis140.dll',
-        '$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x64\Microsoft.VC150.CRT\concrt140.dll',
-        '$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x64\Microsoft.VC150.CRT\msvcp140.dll',
-        '$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x64\Microsoft.VC150.CRT\vccorlib140.dll',
-        '$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x64\Microsoft.VC150.CRT\vcruntime140.dll',
+        ;'$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x64\Microsoft.VC150.CRT\concrt140.dll',
+        ;'$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x64\Microsoft.VC150.CRT\msvcp140.dll',
+        ;'$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x64\Microsoft.VC150.CRT\vccorlib140.dll',
+        ;'$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x64\Microsoft.VC150.CRT\vcruntime140.dll',
     }
 }
 
@@ -138,10 +138,10 @@ Compiler( 'Compiler-MSVC2017-x64_x86' )
         '$RootX86$\mspdbsrv.exe',
         '$RootX86$\mspft140.dll',
         '$RootX86$\msvcdis140.dll',
-        '$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\concrt140.dll',
-        '$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\msvcp140.dll',
-        '$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\vccorlib140.dll',
-        '$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\vcruntime140.dll',
+        ;'$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\concrt140.dll',
+        ;'$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\msvcp140.dll',
+        ;'$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\vccorlib140.dll',
+        ;'$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\vcruntime140.dll',
     }
 }
 #endif
