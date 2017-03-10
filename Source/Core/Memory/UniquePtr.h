@@ -21,6 +21,11 @@ namespace Core {
 template <typename T, typename _Deleter = checked_deleter<T> >
 using TUniquePtr = std::unique_ptr<T, _Deleter>;
 //----------------------------------------------------------------------------
+template <typename T, typename _Deleter = checked_deleter<T> >
+TUniquePtr<T, _Deleter> MakeUnique(T* ptr) {
+    return TUniquePtr<T, _Deleter>(ptr);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Core
