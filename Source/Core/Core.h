@@ -161,6 +161,29 @@
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#if defined(CPP_VISUALSTUDIO)
+#   define PRAGMA(x) __pragma(x)
+#else
+#   define PRAGMA(x) _Pragma(#x)
+#endif
+//----------------------------------------------------------------------------
+#if defined(CPP_VISUALSTUDIO)
+#   define PRAGMA_DISABLE_OPTIMIZATION _Pragma(optimize("", off))
+#   define PRAGMA_ENABLE_OPTIMIZATION  _Pragma(optimize("", on ))
+#elif
+#   error "need to implement pragma optimize !"
+#endif
+//----------------------------------------------------------------------------
+#if defined(CPP_VISUALSTUDIO)
+#   define PRAGMA_INITSEG_LIB \
+    PRAGMA(warning(disable: 4073)) \
+    PRAGMA(init_seg(lib))
+#else
+#   error "need to implement pragma initseg lib !"
+#endif
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 
 #ifdef EXPORT_CORE
 #   define CORE_API DLL_EXPORT

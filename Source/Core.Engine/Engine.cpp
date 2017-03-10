@@ -9,12 +9,7 @@
 
 #include "Core/Allocator/PoolAllocator-impl.h"
 
-#ifdef OS_WINDOWS
-#   pragma warning(disable: 4073) // initialiseurs placés dans la zone d'initialisation d'une bibliothèque
-#   pragma init_seg(lib)
-#else
-#   error "missing compiler specific command"
-#endif
+PRAGMA_INITSEG_LIB
 
 namespace Core {
 namespace Engine {

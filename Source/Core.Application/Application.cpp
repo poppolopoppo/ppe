@@ -14,12 +14,7 @@
 
 #define WITH_APPLICATION_TRY_CATCH 0 //%_NOCOMMIT%
 
-#ifdef CPP_VISUALSTUDIO
-#   pragma warning(disable: 4073) // initialiseurs placés dans la zone d'initialisation d'une bibliothèque
-#   pragma init_seg(lib)
-#else
-#   error "missing compiler specific command"
-#endif
+PRAGMA_INITSEG_LIB
 
 namespace Core {
 namespace Application {
