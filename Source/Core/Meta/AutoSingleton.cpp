@@ -38,16 +38,18 @@ FAutoSingletonManagerImpl::~FAutoSingletonManagerImpl() {
 //----------------------------------------------------------------------------
 void FAutoSingletonManagerImpl::Start() {
     Assert(!_isStarted);
-    ONLY_IF_ASSERT(_isStarted = true;);
+    ONLY_IF_ASSERT(_isStarted = true);
     Assert(_instances.empty());
 }
 //----------------------------------------------------------------------------
 void FAutoSingletonManagerImpl::Shutdown() {
     Assert(_isStarted);
-    ONLY_IF_ASSERT(_isStarted = false;);
+    ONLY_IF_ASSERT(_isStarted = false);
 
-    while (FAbstractAutoSingleton* pnode = _instances.PopHead())
-        checked_delete(pnode);
+    while (FAbstractAutoSingleton* pHead = _instances.Head()) {
+        checked_delete(pHead);
+        Assert(pHead != _instances.Head());
+    }
 }
 //----------------------------------------------------------------------------
 void FAutoSingletonManagerImpl::Register(FAbstractAutoSingleton *singleton) {
