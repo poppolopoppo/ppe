@@ -22,14 +22,14 @@ class TContentToolchain;
 FWD_REFPTR(AbstractToolchain);
 class FAbstractContentToolchain : public RTTI::FMetaObject {
 public:
-	FAbstractContentToolchain();
-	FAbstractContentToolchain(	const IContentImporter* importer,
-								const IContentProcessor* processor,
-								const IContentSerializer* serializer );
+    FAbstractContentToolchain();
+    FAbstractContentToolchain(  const IContentImporter* importer,
+                                const IContentProcessor* processor,
+                                const IContentSerializer* serializer );
     virtual ~FAbstractContentToolchain();
 
-	FAbstractContentToolchain(const FAbstractContentToolchain& ) = delete;
-	FAbstractContentToolchain& operator =(const FAbstractContentToolchain& ) = delete;
+    FAbstractContentToolchain(const FAbstractContentToolchain& ) = delete;
+    FAbstractContentToolchain& operator =(const FAbstractContentToolchain& ) = delete;
 
     const IContentImporter* Importer() const { return _importer.get(); }
     const IContentProcessor* Processor() const { return _processor.get(); }
@@ -64,8 +64,8 @@ public:
     typedef TContentProcessor<_Input, _Output> processor_type;
     typedef TContentSerializer<_Output> serializer_type;
 
-	TContentToolchain() {}
-	TContentToolchain(  const importer_type* importer,
+    TContentToolchain() {}
+    TContentToolchain(  const importer_type* importer,
                         const processor_type* processor,
                         const serializer_type* serializer )
         : FAbstractContentToolchain(importer, processor, serializer) {}
@@ -73,16 +73,16 @@ public:
     virtual bool Build( FContentImporterContext& importerContext,
                         FContentProcessorContext& processorContext,
                         FContentSerializerContext& serializerContext ) const override {
-		_Output asset;
-		{
-			_Input intermediate;
-			if (not _importer->Import(importerContext, intermediate))
-				return false;
+        _Output asset;
+        {
+            _Input intermediate;
+            if (not _importer->Import(importerContext, intermediate))
+                return false;
 
-			if (not _processor->Process(processorContext, asset, intermediate))
-				return false;
-		}
-		return _serializer->Serialize(serializerContext, asset);
+            if (not _processor->Process(processorContext, asset, intermediate))
+                return false;
+        }
+        return _serializer->Serialize(serializerContext, asset);
     }
 
 protected:

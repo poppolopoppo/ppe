@@ -62,18 +62,18 @@ namespace {
  * match length field, which extends the maximum match from 63 to 66 bytes.
  * Thus the 2-byte encoding for a copy item is as follows:
  *
- *	byte[0] = ((length - 3) << 2) | (offset >> 8);
- *	byte[1] = (uint8_t)offset;
+ *  byte[0] = ((length - 3) << 2) | (offset >> 8);
+ *  byte[1] = (uint8_t)offset;
  *
  * In our example above, an offset of 6 with length 11 would be encoded as:
  *
- *	byte[0] = ((11 - 3) << 2) | (6 >> 8) = 0x20
- *	byte[1] = (uint8_t)6 = 0x6
+ *  byte[0] = ((11 - 3) << 2) | (6 >> 8) = 0x20
+ *  byte[1] = (uint8_t)6 = 0x6
  *
  * Similarly, an offset of 5 with length 10 would be encoded as:
  *
- *	byte[0] = ((10 - 3) << 2) | (5 >> 8) = 0x1c
- *	byte[1] = (uint8_t)5 = 0x5
+ *  byte[0] = ((10 - 3) << 2) | (5 >> 8) = 0x1c
+ *  byte[1] = (uint8_t)5 = 0x5
  *
  * Putting it all together, the actual LZJB output for our example is:
  *

@@ -78,8 +78,8 @@ FGamepadInputHandler::FGamepadInputHandler() {}
 FGamepadInputHandler::~FGamepadInputHandler() {}
 //----------------------------------------------------------------------------
 const FMultiGamepadState& FGamepadInputHandler::State() const {
-	AssertIsMainThread();
-	return _state;
+    AssertIsMainThread();
+    return _state;
 }
 //----------------------------------------------------------------------------
 void FGamepadInputHandler::RegisterMessageDelegates(Graphics::FBasicWindow *wnd) {
@@ -91,7 +91,7 @@ void FGamepadInputHandler::UnregisterMessageDelegates(Graphics::FBasicWindow *wn
 }
 //----------------------------------------------------------------------------
 void FGamepadInputHandler::UpdateBeforeDispatch(Graphics::FBasicWindow *wnd) {
-	AssertIsMainThread();
+    AssertIsMainThread();
     UNUSED(wnd);
 
     int gamepadIndex = 0;

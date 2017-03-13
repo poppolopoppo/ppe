@@ -63,12 +63,12 @@ private:
         TService(FServiceId id, void* pimpl, const FStringView& name)
             : _id(id), _pimpl(pimpl), _name(name) {}
 
-		FServiceId Id() const { return _id; }
+        FServiceId Id() const { return _id; }
         void* Pimpl() const { return _pimpl; }
         const FStringView& Name() const { return _name; }
 
     private:
-		FServiceId _id;
+        FServiceId _id;
         void* _pimpl;
         FStringView _name;
     };
@@ -95,12 +95,12 @@ void FServiceContainer::Register(T* service) {
 #ifdef USE_DEBUG_LOGGER
         MakeStringView(typeid(_Interface).name(), Meta::noinit_tag{})
 #endif
-	};
+    };
 
     WRITESCOPELOCK(_barrierRW);
 
     _Interface* const pimpl = service; // important before casting to (void*)
-	_services.Emplace_AssertUnique(serviceId, serviceId, (void*)pimpl, serviceName);
+    _services.Emplace_AssertUnique(serviceId, serviceId, (void*)pimpl, serviceName);
 
     LOG(Info, L"[Service] Register <{0}> with <{1}> (id={2:x})",
         serviceName, typeid(T).name(), hash_t(serviceId));
@@ -129,7 +129,7 @@ void FServiceContainer::Unregister(T* service) {
     _services.Erase(it);
 #else
     if (not _services.Erase(serviceId))
-		AssertNotReached(); // service should have beed registered !
+        AssertNotReached(); // service should have beed registered !
 #endif
 }
 //----------------------------------------------------------------------------

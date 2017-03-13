@@ -27,12 +27,12 @@ FMouseInputHandler::FMouseInputHandler() {}
 FMouseInputHandler::~FMouseInputHandler() {}
 //----------------------------------------------------------------------------
 const FMouseState& FMouseInputHandler::State() const {
-	AssertIsMainThread();
-	return _state;
+    AssertIsMainThread();
+    return _state;
 }
 //----------------------------------------------------------------------------
 void FMouseInputHandler::RegisterMessageDelegates(Graphics::FBasicWindow *wnd) {
-	AssertIsMainThread();
+    AssertIsMainThread();
     Assert(wnd);
 
     RegisterMessageDelegate(wnd, Graphics::EWindowMessage::MouseMove, &FMouseInputHandler::OnMouseMove_);
@@ -45,7 +45,7 @@ void FMouseInputHandler::RegisterMessageDelegates(Graphics::FBasicWindow *wnd) {
 }
 //----------------------------------------------------------------------------
 void FMouseInputHandler::UnregisterMessageDelegates(Graphics::FBasicWindow *wnd) {
-	AssertIsMainThread();
+    AssertIsMainThread();
     Assert(wnd);
 
     UnregisterMessageDelegate(wnd, Graphics::EWindowMessage::MouseMove, &FMouseInputHandler::OnMouseMove_);
@@ -58,7 +58,7 @@ void FMouseInputHandler::UnregisterMessageDelegates(Graphics::FBasicWindow *wnd)
 }
 //----------------------------------------------------------------------------
 void FMouseInputHandler::UpdateBeforeDispatch(Graphics::FBasicWindow *wnd) {
-	AssertIsMainThread();
+    AssertIsMainThread();
     UNUSED(wnd);
 
     _state._buttonsDown.Clear();
@@ -66,7 +66,7 @@ void FMouseInputHandler::UpdateBeforeDispatch(Graphics::FBasicWindow *wnd) {
 }
 //----------------------------------------------------------------------------
 void FMouseInputHandler::UpdateAfterDispatch(Graphics::FBasicWindow *wnd) {
-	AssertIsMainThread();
+    AssertIsMainThread();
     UNUSED(wnd);
 
     for (EMouseButton btn : _state._buttonsUp.MakeView()) {
@@ -86,7 +86,7 @@ void FMouseInputHandler::UpdateAfterDispatch(Graphics::FBasicWindow *wnd) {
 }
 //----------------------------------------------------------------------------
 Graphics::MessageResult FMouseInputHandler::OnMouseMove_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
-	AssertIsMainThread();
+    AssertIsMainThread();
     UNUSED(msg);
     UNUSED(wparam);
 
@@ -101,7 +101,7 @@ Graphics::MessageResult FMouseInputHandler::OnMouseMove_(Graphics::IWindowMessag
 }
 //----------------------------------------------------------------------------
 Graphics::MessageResult FMouseInputHandler::OnMouseLButtonDown_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
-	AssertIsMainThread();
+    AssertIsMainThread();
     UNUSED(wnd);
     UNUSED(msg);
     UNUSED(lparam);
@@ -113,7 +113,7 @@ Graphics::MessageResult FMouseInputHandler::OnMouseLButtonDown_(Graphics::IWindo
 }
 //----------------------------------------------------------------------------
 Graphics::MessageResult FMouseInputHandler::OnMouseLButtonUp_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
-	AssertIsMainThread();
+    AssertIsMainThread();
     UNUSED(wnd);
     UNUSED(msg);
     UNUSED(lparam);
@@ -125,7 +125,7 @@ Graphics::MessageResult FMouseInputHandler::OnMouseLButtonUp_(Graphics::IWindowM
 }
 //----------------------------------------------------------------------------
 Graphics::MessageResult FMouseInputHandler::OnMouseRButtonDown_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
-	AssertIsMainThread();
+    AssertIsMainThread();
     UNUSED(wnd);
     UNUSED(msg);
     UNUSED(lparam);
@@ -137,7 +137,7 @@ Graphics::MessageResult FMouseInputHandler::OnMouseRButtonDown_(Graphics::IWindo
 }
 //----------------------------------------------------------------------------
 Graphics::MessageResult FMouseInputHandler::OnMouseRButtonUp_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
-	AssertIsMainThread();
+    AssertIsMainThread();
     UNUSED(wnd);
     UNUSED(msg);
     UNUSED(lparam);
@@ -149,7 +149,7 @@ Graphics::MessageResult FMouseInputHandler::OnMouseRButtonUp_(Graphics::IWindowM
 }
 //----------------------------------------------------------------------------
 Graphics::MessageResult FMouseInputHandler::OnMouseMButtonDown_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
-	AssertIsMainThread();
+    AssertIsMainThread();
     UNUSED(wnd);
     UNUSED(msg);
     UNUSED(lparam);
@@ -161,7 +161,7 @@ Graphics::MessageResult FMouseInputHandler::OnMouseMButtonDown_(Graphics::IWindo
 }
 //----------------------------------------------------------------------------
 Graphics::MessageResult FMouseInputHandler::OnMouseMButtonUp_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
-	AssertIsMainThread();
+    AssertIsMainThread();
     UNUSED(wnd);
     UNUSED(msg);
     UNUSED(lparam);

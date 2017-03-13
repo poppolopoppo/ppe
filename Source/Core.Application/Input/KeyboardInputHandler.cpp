@@ -298,12 +298,12 @@ FKeyboardInputHandler::FKeyboardInputHandler() {}
 FKeyboardInputHandler::~FKeyboardInputHandler() {}
 //----------------------------------------------------------------------------
 const FKeyboardState& FKeyboardInputHandler::State() const {
-	AssertIsMainThread();
-	return _state;
+    AssertIsMainThread();
+    return _state;
 }
 //----------------------------------------------------------------------------
 void FKeyboardInputHandler::RegisterMessageDelegates(Graphics::FBasicWindow *wnd) {
-	AssertIsMainThread();
+    AssertIsMainThread();
     Assert(wnd);
 
     RegisterMessageDelegate(wnd, Graphics::EWindowMessage::KeyDown, &FKeyboardInputHandler::OnKeyboardKeyDown_);
@@ -313,7 +313,7 @@ void FKeyboardInputHandler::RegisterMessageDelegates(Graphics::FBasicWindow *wnd
 }
 //----------------------------------------------------------------------------
 void FKeyboardInputHandler::UnregisterMessageDelegates(Graphics::FBasicWindow *wnd) {
-	AssertIsMainThread();
+    AssertIsMainThread();
     Assert(wnd);
 
     UnregisterMessageDelegate(wnd, Graphics::EWindowMessage::KeyDown, &FKeyboardInputHandler::OnKeyboardKeyDown_);
@@ -323,7 +323,7 @@ void FKeyboardInputHandler::UnregisterMessageDelegates(Graphics::FBasicWindow *w
 }
 //----------------------------------------------------------------------------
 void FKeyboardInputHandler::UpdateBeforeDispatch(Graphics::FBasicWindow *wnd) {
-	AssertIsMainThread();
+    AssertIsMainThread();
 
     _state._keysDown.Clear();
     _state._keysUp.Clear();
@@ -333,7 +333,7 @@ void FKeyboardInputHandler::UpdateBeforeDispatch(Graphics::FBasicWindow *wnd) {
 }
 //----------------------------------------------------------------------------
 void FKeyboardInputHandler::UpdateAfterDispatch(Graphics::FBasicWindow *wnd) {
-	AssertIsMainThread();
+    AssertIsMainThread();
     UNUSED(wnd);
 
     for (EKeyboardKey key : _state._keysUp.MakeView()) {
@@ -353,7 +353,7 @@ void FKeyboardInputHandler::UpdateAfterDispatch(Graphics::FBasicWindow *wnd) {
 }
 //----------------------------------------------------------------------------
 Graphics::MessageResult FKeyboardInputHandler::OnKeyboardKeyDown_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
-	AssertIsMainThread();
+    AssertIsMainThread();
     UNUSED(wnd);
     UNUSED(msg);
     UNUSED(lparam);
@@ -364,7 +364,7 @@ Graphics::MessageResult FKeyboardInputHandler::OnKeyboardKeyDown_(Graphics::IWin
 }
 //----------------------------------------------------------------------------
 Graphics::MessageResult FKeyboardInputHandler::OnKeyboardKeyUp_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
-	AssertIsMainThread();
+    AssertIsMainThread();
     UNUSED(wnd);
     UNUSED(msg);
     UNUSED(lparam);
@@ -375,7 +375,7 @@ Graphics::MessageResult FKeyboardInputHandler::OnKeyboardKeyUp_(Graphics::IWindo
 }
 //----------------------------------------------------------------------------
 Graphics::MessageResult FKeyboardInputHandler::OnKeyboardSysKeyDown_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
-	AssertIsMainThread();
+    AssertIsMainThread();
     UNUSED(wnd);
     UNUSED(msg);
     UNUSED(lparam);
@@ -386,7 +386,7 @@ Graphics::MessageResult FKeyboardInputHandler::OnKeyboardSysKeyDown_(Graphics::I
 }
 //----------------------------------------------------------------------------
 Graphics::MessageResult FKeyboardInputHandler::OnKeyboardSysKeyUp_(Graphics::IWindowMessageHandler *handler, Graphics::FBasicWindow *wnd, Graphics::EWindowMessage msg, Graphics::MessageLParam lparam, Graphics::MessageWParam wparam) {
-	AssertIsMainThread();
+    AssertIsMainThread();
     UNUSED(wnd);
     UNUSED(msg);
     UNUSED(lparam);

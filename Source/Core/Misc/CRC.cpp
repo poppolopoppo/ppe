@@ -322,55 +322,55 @@ constexpr u32 g_CRC32SlicingBy8[8][256] = {
 // CRC32_SlicingInit_() was used to fill g_CRC32SlicingBy8
 /*
 static void CRC32_SlicingInit_() {
-	for (u32 i = 0; i <= 0xFF; i++) {
-		u32 x = i;
-		for (u32 j = 0; j < 8; j++)
-			x = (x>>1) ^ (CRCPOLY & (-(i32)(x & 1)));
-		g_CRC32SlicingBy8[0][i] = x;
-	}
+    for (u32 i = 0; i <= 0xFF; i++) {
+        u32 x = i;
+        for (u32 j = 0; j < 8; j++)
+            x = (x>>1) ^ (CRCPOLY & (-(i32)(x & 1)));
+        g_CRC32SlicingBy8[0][i] = x;
+    }
 
-	for (u32 i = 0; i <= 0xFF; i++) {
-		u32 c = g_CRC32SlicingBy8[0][i];
-		for (u32 j = 1; j < 8; j++) {
-			c = g_CRC32SlicingBy8[0][c & 0xFF] ^ (c >> 8);
-			g_CRC32SlicingBy8[j][i] = c;
-		}
-	}
+    for (u32 i = 0; i <= 0xFF; i++) {
+        u32 c = g_CRC32SlicingBy8[0][i];
+        for (u32 j = 1; j < 8; j++) {
+            c = g_CRC32SlicingBy8[0][c & 0xFF] ^ (c >> 8);
+            g_CRC32SlicingBy8[j][i] = c;
+        }
+    }
 }
 */
 //----------------------------------------------------------------------------
 static u32 CRC32_SlicingBy8_(const u8* buf, size_t len) {
     u32 crc = CRCINIT;
 
-	// Align to DWORD boundary
-	size_t align = (sizeof(u32) - (size_t)buf) & (sizeof(u32) - 1);
-	align = Min(align, len);
-	len -= align;
-	for (; align; align--)
-		crc = g_CRC32SlicingBy8[0][(crc ^ *buf++) & 0xFF] ^ (crc >> 8);
+    // Align to DWORD boundary
+    size_t align = (sizeof(u32) - (size_t)buf) & (sizeof(u32) - 1);
+    align = Min(align, len);
+    len -= align;
+    for (; align; align--)
+        crc = g_CRC32SlicingBy8[0][(crc ^ *buf++) & 0xFF] ^ (crc >> 8);
 
-	size_t nqwords = len / (sizeof(u32) + sizeof(u32));
-	for (; nqwords; nqwords--) {
-		crc ^= *(u32*)buf;
-		buf += sizeof(u32);
-		u32 next = *(u32*)buf;
-		buf += sizeof(u32);
-		crc =
-			g_CRC32SlicingBy8[7][(crc      ) & 0xFF] ^
-			g_CRC32SlicingBy8[6][(crc >>  8) & 0xFF] ^
-			g_CRC32SlicingBy8[5][(crc >> 16) & 0xFF] ^
-			g_CRC32SlicingBy8[4][(crc >> 24)] ^
-			g_CRC32SlicingBy8[3][(next      ) & 0xFF] ^
-			g_CRC32SlicingBy8[2][(next >>  8) & 0xFF] ^
-			g_CRC32SlicingBy8[1][(next >> 16) & 0xFF] ^
-			g_CRC32SlicingBy8[0][(next >> 24)];
-	}
+    size_t nqwords = len / (sizeof(u32) + sizeof(u32));
+    for (; nqwords; nqwords--) {
+        crc ^= *(u32*)buf;
+        buf += sizeof(u32);
+        u32 next = *(u32*)buf;
+        buf += sizeof(u32);
+        crc =
+            g_CRC32SlicingBy8[7][(crc      ) & 0xFF] ^
+            g_CRC32SlicingBy8[6][(crc >>  8) & 0xFF] ^
+            g_CRC32SlicingBy8[5][(crc >> 16) & 0xFF] ^
+            g_CRC32SlicingBy8[4][(crc >> 24)] ^
+            g_CRC32SlicingBy8[3][(next      ) & 0xFF] ^
+            g_CRC32SlicingBy8[2][(next >>  8) & 0xFF] ^
+            g_CRC32SlicingBy8[1][(next >> 16) & 0xFF] ^
+            g_CRC32SlicingBy8[0][(next >> 24)];
+    }
 
-	len &= sizeof(u32) * 2 - 1;
-	for (; len; len--)
-		crc = g_CRC32SlicingBy8[0][(crc ^ *buf++) & 0xFF] ^ (crc >> 8);
+    len &= sizeof(u32) * 2 - 1;
+    for (; len; len--)
+        crc = g_CRC32SlicingBy8[0][(crc ^ *buf++) & 0xFF] ^ (crc >> 8);
 
-	return ~crc;
+    return ~crc;
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -387,7 +387,7 @@ void FCRC32_t::Update(const TMemoryView<const u8>& rawData) {
 void FCRC32_t::UpdateI(const TMemoryView<const u8>& rawData) {
     for (u8 byte : rawData) {
         if ( ( byte >= 'A' ) && ( byte <= 'Z' ) )
-			byte = 'a' + ( byte - 'A' );
+            byte = 'a' + ( byte - 'A' );
         _crc32 = ( _crc32 >> 8 ) ^ g_CRC32Table[ ( _crc32 ^ byte ) & 0x000000FF ];
     }
 }

@@ -69,7 +69,7 @@ public:
 
     virtual bool Import(FContentImporterContext& ctx, import_type& dst) const = 0;
 
-	META_DYNAMIC_CASTABLE_IMPL(TContentImporter);
+    META_DYNAMIC_CASTABLE_IMPL(TContentImporter);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

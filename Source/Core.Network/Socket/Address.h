@@ -11,29 +11,29 @@ namespace Network {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 enum class EServiceName : size_t {
-    Any 		= 0, // Special value when we don't care about which port we want
+    Any         = 0, // Special value when we don't care about which port we want
 
-    FTP			= 21,
-    SSH			= 22,
-    Telnet		= 23,
-    SMTP		= 25,
-    HTTP		= 80,
-    POP2		= 109,
-    POP3		= 110,
-    SFTP		= 115,
-    NNTP		= 119,
-    HTTPS		= 443,
-    SMB			= 445,
-    DHCP		= 546,
-    RSync		= 873,
-    IMAP		= 993,
-    OpenVPN		= 1194,
-    DDNS		= 2164,
-    Jabber		= 5222,
-    VNC			= 5900,
-    IRC			= 6667,
-    Minecraft	= 25565,
-    Steam		= 27000,
+    FTP         = 21,
+    SSH         = 22,
+    Telnet      = 23,
+    SMTP        = 25,
+    HTTP        = 80,
+    POP2        = 109,
+    POP3        = 110,
+    SFTP        = 115,
+    NNTP        = 119,
+    HTTPS       = 443,
+    SMB         = 445,
+    DHCP        = 546,
+    RSync       = 873,
+    IMAP        = 993,
+    OpenVPN     = 1194,
+    DDNS        = 2164,
+    Jabber      = 5222,
+    VNC         = 5900,
+    IRC         = 6667,
+    Minecraft   = 25565,
+    Steam       = 27000,
 };
 //----------------------------------------------------------------------------
 class FAddress {

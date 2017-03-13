@@ -119,7 +119,7 @@ float SRGB_to_Linear(float srgb) {
 #elif 0
     return std::pow(srgb, 2.2f);
 #else
-	return (srgb > 0.04045f)
+    return (srgb > 0.04045f)
         ? std::pow(srgb * (1.0f / 1.055f) + 0.0521327f, 2.4f)
         : srgb * (1.0f / 12.92f);
 #endif

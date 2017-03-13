@@ -46,14 +46,14 @@ public:
 //----------------------------------------------------------------------------
 class FAbstractThreadSafeLogger : public ILogger {
 public:
-	virtual ~FAbstractThreadSafeLogger() {}
-	virtual void Log(ELogCategory category, const FWStringView& format, const FormatArgListW& args) override;
+    virtual ~FAbstractThreadSafeLogger() {}
+    virtual void Log(ELogCategory category, const FWStringView& format, const FormatArgListW& args) override;
     virtual void Flush() override;
 protected:
-	virtual void LogThreadSafe(ELogCategory category, const FWStringView& format, const FormatArgListW& args) = 0;
+    virtual void LogThreadSafe(ELogCategory category, const FWStringView& format, const FormatArgListW& args) = 0;
     virtual void FlushThreadSafe() = 0;
 private:
-	std::recursive_mutex _barrier;
+    std::recursive_mutex _barrier;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -102,15 +102,15 @@ private:
 //----------------------------------------------------------------------------
 class FStackLocalLoggerStream : public FWOCStrStream {
 public:
-	STATIC_CONST_INTEGRAL(size_t, Capacity, 2048);
+    STATIC_CONST_INTEGRAL(size_t, Capacity, 2048);
 
-	FStackLocalLoggerStream(ELogCategory category)
-		: FWOCStrStream(_localBuffer), _category(category) {}
-	~FStackLocalLoggerStream() { Log(_category, FWOCStrStream::MakeView_NullTerminated()); }
+    FStackLocalLoggerStream(ELogCategory category)
+        : FWOCStrStream(_localBuffer), _category(category) {}
+    ~FStackLocalLoggerStream() { Log(_category, FWOCStrStream::MakeView_NullTerminated()); }
 
 private:
-	ELogCategory _category;
-	wchar_t _localBuffer[Capacity];
+    ELogCategory _category;
+    wchar_t _localBuffer[Capacity];
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -24,7 +24,7 @@ POOL_TAG_DEF(Application);
 //----------------------------------------------------------------------------
 #ifndef FINAL_RELEASE
 static void PrintMemStats_(const Core::FCrtMemoryStats& memoryStats) {
-	FStackLocalLoggerStream(ELogCategory::Info)
+    FStackLocalLoggerStream(ELogCategory::Info)
         << "Memory statistics :" << eol
         << " - Total free size          = " << memoryStats.TotalFreeSize << eol
         << " - Largest free block       = " << memoryStats.LargestFreeBlockSize << eol

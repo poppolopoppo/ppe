@@ -103,7 +103,7 @@ static void SetClipboard_(HWND hwndDlg, const FWStringView& content)
 static void ExternalEditor_(const FWStringView& filename, size_t line) {
     Assert(not filename.empty());
 
-	  STACKLOCAL_OCSTRSTREAM(oss, 2048);
+      STACKLOCAL_OCSTRSTREAM(oss, 2048);
     Format(oss, "\"{0}\" \"{1}:{2}\"",
         "C:\\Program Files\\Sublime Text 3\\sublime_text.exe", // TODO: handle other editors ?
         filename,
@@ -164,16 +164,16 @@ static void Template_AddCaption_(FMemoryViewWriter& writer, const FWStringView& 
 }
 //----------------------------------------------------------------------------
 static void Template_AddButton_(
-	FMemoryViewWriter& writer,
-	size_t x, size_t y,
-	size_t cx, size_t cy,
-	size_t id,
-	const FWStringView& caption ) {
-	Template_AddItem_(writer, x, y, cx, cy,
-		id,
-		WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, EAtomClass_::Button);
-	Template_AddCaption_(writer, caption);
-	writer.WritePOD(WORD(0)); // no creation data
+    FMemoryViewWriter& writer,
+    size_t x, size_t y,
+    size_t cx, size_t cy,
+    size_t id,
+    const FWStringView& caption ) {
+    Template_AddItem_(writer, x, y, cx, cy,
+        id,
+        WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, EAtomClass_::Button);
+    Template_AddCaption_(writer, caption);
+    writer.WritePOD(WORD(0)); // no creation data
 }
 //----------------------------------------------------------------------------
 struct FTemplate_DialogContext_ {
@@ -354,8 +354,8 @@ static Dialog::EResult Template_CreateDialogBox_(
     Dialog::EType buttons,
     const FWStringView& text,
     const FWStringView& caption ) {
-	STATIC_ASSERT(sizeof(u16) == sizeof(WORD));
-	STATIC_ASSERT(sizeof(u32) == sizeof(DWORD));
+    STATIC_ASSERT(sizeof(u16) == sizeof(WORD));
+    STATIC_ASSERT(sizeof(u32) == sizeof(DWORD));
 
     FTemplate_DialogContext_ ctx;
     ctx.Text = text;
@@ -424,35 +424,35 @@ static Dialog::EResult Template_CreateDialogBox_(
             const size_t w = buttonWidthPadding*2 + buttonWidthPerChar*buttonCaption.size();
             buttonRight -= buttonWidthPadding + w;
 
-			Template_AddButton_(writer, buttonRight, buttonTop, w, buttonHeight, ResultToID_(button), buttonCaption);
+            Template_AddButton_(writer, buttonRight, buttonTop, w, buttonHeight, ResultToID_(button), buttonCaption);
             tpl->cdit++;
         }
 
-		Template_AddButton_(writer, 5, buttonTop, 32, buttonHeight, DIALOG_ID_COPY, L"Copy");
+        Template_AddButton_(writer, 5, buttonTop, 32, buttonHeight, DIALOG_ID_COPY, L"Copy");
         tpl->cdit++;
 
-		Template_AddButton_(writer, 40, buttonTop, 32, buttonHeight, DIALOG_ID_BREAK, L"Break");
+        Template_AddButton_(writer, 40, buttonTop, 32, buttonHeight, DIALOG_ID_BREAK, L"Break");
         tpl->cdit++;
 
-		Template_AddButton_(writer, 75, buttonTop, 55, buttonHeight, DIALOG_ID_MINIDUMP, L"Minidump");
+        Template_AddButton_(writer, 75, buttonTop, 55, buttonHeight, DIALOG_ID_MINIDUMP, L"Minidump");
         tpl->cdit++;
 
         Template_AddItem_(writer, 15, 10, 32, 32,
-			DIALOG_ID_ICON,
+            DIALOG_ID_ICON,
             WS_CHILD | WS_VISIBLE | SS_ICON | SS_LEFT, EAtomClass_::Static);
         writer.WritePOD(WORD(0)); // no caption text
         writer.WritePOD(WORD(0)); // no creation data
         tpl->cdit++;
 
-		Template_AddItem_(writer, 45, 8, 350, 47,
-			DIALOG_ID_TEXT,
-			WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_MULTILINE | ES_READONLY, EAtomClass_::Edit);
+        Template_AddItem_(writer, 45, 8, 350, 47,
+            DIALOG_ID_TEXT,
+            WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_MULTILINE | ES_READONLY, EAtomClass_::Edit);
         Template_AddCaption_(writer, text);
         writer.WritePOD(WORD(0)); // no creation data
         tpl->cdit++;
 
         Template_AddItem_(writer, 5, 5+50+5, 390, 127,
-			DIALOG_ID_STACK,
+            DIALOG_ID_STACK,
             WS_BORDER | WS_HSCROLL | WS_VSCROLL | WS_CHILD | WS_VISIBLE, EAtomClass_::ListBox);
         writer.WritePOD(WORD(0));
         tpl->cdit++;

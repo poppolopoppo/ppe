@@ -83,11 +83,11 @@ std::basic_ostream<char, _Traits>& operator <<(
 //----------------------------------------------------------------------------
 template <typename _Traits>
 std::basic_ostream<wchar_t, _Traits>& operator <<(
-	std::basic_ostream<wchar_t, _Traits>& oss,
-	const FDecodedCallstack::FFrame& frame) {
-	return oss << frame.Symbol() << eol
-		<< L"    " << frame.Filename()
-		<< L'(' << frame.Line() << L')';
+    std::basic_ostream<wchar_t, _Traits>& oss,
+    const FDecodedCallstack::FFrame& frame) {
+    return oss << frame.Symbol() << eol
+        << L"    " << frame.Filename()
+        << L'(' << frame.Line() << L')';
 }
 //----------------------------------------------------------------------------
 template <typename _Traits>
@@ -102,12 +102,12 @@ std::basic_ostream<char, _Traits>& operator <<(
 //----------------------------------------------------------------------------
 template <typename _Traits>
 std::basic_ostream<wchar_t, _Traits>& operator <<(
-	std::basic_ostream<wchar_t, _Traits>& oss,
-	const FDecodedCallstack& decoded) {
-	const TMemoryView<const FDecodedCallstack::FFrame> frames = decoded.Frames();
-	for (size_t i = 0; i < frames.size(); ++i)
-		oss << L'[' << i << L"] " << frames[i] << eol;
-	return oss;
+    std::basic_ostream<wchar_t, _Traits>& oss,
+    const FDecodedCallstack& decoded) {
+    const TMemoryView<const FDecodedCallstack::FFrame> frames = decoded.Frames();
+    for (size_t i = 0; i < frames.size(); ++i)
+        oss << L'[' << i << L"] " << frames[i] << eol;
+    return oss;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
