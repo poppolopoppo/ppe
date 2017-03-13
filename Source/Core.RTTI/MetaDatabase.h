@@ -22,7 +22,7 @@ class FMetaNamespace;
 class FMetaDatabase : Meta::TSingleton<FMetaDatabase> {
 private:
     typedef Meta::TSingleton<FMetaDatabase> singleton_type;
-    friend class singleton_type;
+    friend class Meta::TSingleton<FMetaDatabase>;
 
     FMetaDatabase();
     ~FMetaDatabase();
@@ -60,11 +60,17 @@ public:
     FMetaObject* FindObject(const FName& name) const;
     FMetaObject* FindObjectIFP(const FName& name) const;
     void AllObjects(TCollector<PMetaObject>& instances) const;
-    void FindObjectByClass(const FMetaClass* metaClass, TCollector<PMetaObject>& instances) const;
+    void FindObjectsByClass(const FMetaClass* metaClass, TCollector<PMetaObject>& instances) const;
+    void FindObjectsInheritingClass(const FMetaClass* metaClass, TCollector<PMetaObject>& instances) const;
 
     template <typename _MetaClass>
-    void FindObjectByClass(TCollector<PMetaObject>& instances) const {
-        FindObjectByClass(GetMetaClass<_MetaClass>(), instances);
+    void FindObjectsByClass(TCollector<PMetaObject>& instances) const {
+        FindObjectsByClass(GetMetaClass<_MetaClass>(), instances);
+    }
+
+    template <typename _MetaClass>
+    void FindObjectsInheritingClass(TCollector<PMetaObject>& instances) const {
+        FindObjectsInheritingClass(GetMetaClass<_MetaClass>(), instances);
     }
 
 private:

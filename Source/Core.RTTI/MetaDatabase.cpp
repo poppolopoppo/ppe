@@ -98,9 +98,9 @@ const FMetaNamespace* FMetaDatabase::FindNamespaceIFP(const FName& name) const {
 //----------------------------------------------------------------------------
 void FMetaDatabase::AllNamespaces(TCollector<const FMetaNamespace*>& instances) const {
     READSCOPELOCK(_barrier);
-    for (const auto& it : _namespaces) {
-        instances.push_back(it.second);
-    }
+    instances.assign(
+        MakeValueIterator(_namespaces.begin()),
+        MakeValueIterator(_namespaces.end()) );
 }
 //----------------------------------------------------------------------------
 void FMetaDatabase::RegisterAtom(const FName& name, FMetaAtom* metaAtom, bool allowOverride) {
@@ -143,7 +143,7 @@ FMetaAtom* FMetaDatabase::FindAtomIFP(const FName& name) const {
 //----------------------------------------------------------------------------
 void FMetaDatabase::AllAtoms(TCollector<PMetaAtom>& instances) const {
     READSCOPELOCK(_barrier);
-    instances.insert(instances.end(),
+    instances.assign(
         MakeValueIterator(_atoms.begin()),
         MakeValueIterator(_atoms.end()) );
 }
@@ -203,7 +203,7 @@ void FMetaDatabase::AllObjects(TCollector<PMetaObject>& instances) const {
     }
 }
 //----------------------------------------------------------------------------
-void FMetaDatabase::FindObjectByClass(const FMetaClass* metaClass, TCollector<PMetaObject>& instances) const {
+void FMetaDatabase::FindObjectsByClass(const FMetaClass* metaClass, TCollector<PMetaObject>& instances) const {
     Assert(metaClass);
 
     READSCOPELOCK(_barrier);
@@ -212,6 +212,19 @@ void FMetaDatabase::FindObjectByClass(const FMetaClass* metaClass, TCollector<PM
         MakeOutputIterator(_atoms.begin(), &CastAtomToObject_),
         MakeOutputIterator(_atoms.end(), &CastAtomToObject_) ) {
         if (*it != nullptr && (*it)->RTTI_MetaClass() == metaClass)
+            instances.emplace_back(*it);
+    }
+}
+//----------------------------------------------------------------------------
+void FMetaDatabase::FindObjectsInheritingClass(const FMetaClass* metaClass, TCollector<PMetaObject>& instances) const {
+    Assert(metaClass);
+
+    READSCOPELOCK(_barrier);
+
+    forrange(it,
+        MakeOutputIterator(_atoms.begin(), &CastAtomToObject_),
+        MakeOutputIterator(_atoms.end(), &CastAtomToObject_)) {
+        if (*it != nullptr && (*it)->RTTI_MetaClass()->InheritsFrom(metaClass))
             instances.emplace_back(*it);
     }
 }
