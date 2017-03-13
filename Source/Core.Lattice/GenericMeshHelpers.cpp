@@ -581,7 +581,7 @@ static void PNTriangles_(
         const u32 i1 = baseIndices[i + 1];
         const u32 i2 = baseIndices[i + 2];
 
-        const u32 startIndex = nextIndex;
+        ONLY_IF_ASSERT(const u32 startIndex = nextIndex);
         const u32 startVertex = nextVertex;
 
         PNTesselateRecursive_(
@@ -687,7 +687,7 @@ void OptimizeIndicesOrder(const TMemoryView<u32>& indices, size_t vertexCount) {
     STACKLOCAL_POD_ARRAY(u32, adjacencies, triangleCount*3);
     {
         u32 *pTriList = adjacencies.Pointer();
-        const u32 *pTriListEnd = adjacencies.Pointer() + adjacencies.size();
+        ONLY_IF_ASSERT(const u32 *pTriListEnd = adjacencies.Pointer() + adjacencies.size());
 
         for (size_t i = 0; i < vertexCount; ++i) {
             FVertexCache::FEntry& entry = entries[i];
