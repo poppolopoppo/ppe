@@ -33,13 +33,19 @@
     .Defines =
     {
         "_MT", "_DLL",                  ; https://msdn.microsoft.com/fr-fr/library/abx4dbyh.aspx
+
         "STRICT",                       ; https://msdn.microsoft.com/en-us/library/windows/desktop/aa383681(v=vs.85).aspx
         "NOMINMAX",                     ; https://support.microsoft.com/en-us/kb/143208
         "VC_EXTRALEAN",                 ; https://support.microsoft.com/en-us/kb/166474
         "WIN32_LEAN_AND_MEAN",          ; https://support.microsoft.com/en-us/kb/166474
+
+        "_NO_W32_PSEUDO_MODIFIERS",     ; Prevent windows from #defining IN or OUT (undocumented)
+
         "DBGHELP_TRANSLATE_TCHAR",      ; https://msdn.microsoft.com/en-us/library/windows/desktop/ms679294(v=vs.85).aspx
         "_UNICODE", "UNICODE",          ; https://msdn.microsoft.com/fr-fr/library/dybsewaf.aspx
-        "_NO_W32_PSEUDO_MODIFIERS",     ; Prevent windows from #defining IN or OUT (undocumented)
+
+        "_HAS_EXCEPTIONS=0",            ; Disable STL exceptions
+        ;"_STATIC_CPPLIB",               ; http://stackoverflow.com/questions/553103/can-i-disable-exceptions-in-stl
     }
 
     .IncludePaths = {}
