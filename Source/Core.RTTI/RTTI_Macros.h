@@ -11,6 +11,8 @@
 //----------------------------------------------------------------------------
 #define RTTI_CLASS_HEADER(_Name, _Parent) \
 public: \
+    typedef _Parent RTTI_parent_type; \
+    \
     virtual const Core::RTTI::FMetaClass *RTTI_MetaClass() const override { \
         return _Name::FMetaClass::Instance(); \
     } \
