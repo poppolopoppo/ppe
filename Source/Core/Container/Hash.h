@@ -27,12 +27,12 @@ HASH_AS_POD_DEF(inline, u256)
 //----------------------------------------------------------------------------
 inline hash_t hash_value(float value) {
     // -0.0 and 0.0 should return same hash
-    return (0 == value ? hash_t(0) : hash_as_pod(value));
+    return (0.f == value ? 0 : hash_as_pod(value));
 }
 //----------------------------------------------------------------------------
 inline hash_t hash_value(double value) {
     // -0.0 and 0.0 should return same hash
-    return (0 == value ? hash_t(0) : hash_as_pod(value));
+    return (0.0 == value ? 0 : hash_as_pod(value));
 }
 //----------------------------------------------------------------------------
 template <typename T>
