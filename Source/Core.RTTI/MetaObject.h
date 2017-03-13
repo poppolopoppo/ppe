@@ -12,7 +12,7 @@
 #endif
 
 #ifdef WITH_RTTI_VERIFY_PREDICATES
-#   define RTTI_VerifyPredicate(_COND) AssertRelease(_COND)
+#   define RTTI_VerifyPredicate(...) AssertRelease(COMMA_PROTECT(__VA_ARGS__))
 #endif
 
 namespace Core {
