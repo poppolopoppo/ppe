@@ -46,7 +46,7 @@ FContentSerializerException::~FContentSerializerException() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FContentToolchainException::FContentToolchainException(const char* what, const FFilename& sourceFilename, const IContentToolchain* toolchain)
+FContentToolchainException::FContentToolchainException(const char* what, const FFilename& sourceFilename, const FAbstractContentToolchain* toolchain)
     : FContentPipelineException(what, sourceFilename)
     , _toolchain(toolchain) {}
 //----------------------------------------------------------------------------

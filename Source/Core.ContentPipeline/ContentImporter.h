@@ -44,13 +44,13 @@ private:
 template <typename _Import>
 class TContentImporter;
 //----------------------------------------------------------------------------
-class IContentImporter : public FContentPipelineNode {
+class IContentImporter : public FContentPipelineNode, public Meta::TDynamicCastable<TContentImporter> {
 public:
     virtual ~IContentImporter() {}
 
     template <typename _Import>
     bool Import(FContentImporterContext& ctx, _Import& dst) const {
-        const TContentImporter<_Import>* const importer = dynamic_cast<const TContentImporter<_Import>*>(this);
+        const TContentImporter<_Import>* const importer = As<_Import>();
         if (nullptr == importer)
             throw FContentImporterException("invalid importer type", ctx.Identity(), this);
         else
@@ -68,6 +68,8 @@ public:
     virtual ~TContentImporter() {}
 
     virtual bool Import(FContentImporterContext& ctx, import_type& dst) const = 0;
+
+	META_DYNAMIC_CASTABLE_IMPL(TContentImporter);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

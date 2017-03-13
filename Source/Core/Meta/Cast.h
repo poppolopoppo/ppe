@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Core/Meta/TypeHash.h"
+
 #include <type_traits>
 
 namespace Core {
@@ -72,4 +74,53 @@ FORCE_INLINE NOALIAS T* remove_const(const T* pvalue) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+} //!namespace Core
+
+namespace Core {
+namespace Meta {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <template <typename... > class _Typed>
+class TDynamicCastable {
+public:
+    virtual ~TDynamicCastable() {}
+
+    virtual hash_t InnerTypeHash() const = 0;
+
+    template <typename... _Args>
+    bool IsA() const { 
+        return (InnerTypeHash() == _Typed<_Args...>::StaticInnerTypeHash);
+    }
+
+    template <typename... _Args>
+    _Typed<_Args...>* Cast() {
+        AssertRelease(IsA<_Args...>());
+        return checked_cast<_Typed<_Args...>*>(this);
+    }
+
+    template <typename... _Args>
+    const _Typed<_Args...>* Cast() const {
+        AssertRelease(IsA<_Args...>());
+        return checked_cast<const _Typed<_Args...>*>(this);
+    }
+
+    template <typename... _Args>
+    _Typed<_Args...>* As() {
+        return (IsA<_Args...>() ? checked_cast<_Typed<_Args...>*>(this) : nullptr);
+    }
+
+    template <typename... _Args>
+    const _Typed<_Args...>* As() const {
+        return (IsA<_Args...>() ? checked_cast<const _Typed<_Args...>*>(this) : nullptr);
+    }
+};
+//----------------------------------------------------------------------------
+#define META_DYNAMIC_CASTABLE_IMPL(_SELF_TYPE) \
+    virtual ::Core::hash_t InnerTypeHash() const override final { return StaticInnerTypeHash; } \
+    STATIC_CONST_INTEGRAL(size_t, StaticInnerTypeHash, ::Core::Meta::TTypeHash<_SELF_TYPE>::value())
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace Meta
 } //!namespace Core

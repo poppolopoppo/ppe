@@ -30,7 +30,7 @@ FContentFilterGlob::FContentFilterGlob(pattern_type&& pattern)
 //----------------------------------------------------------------------------
 #ifdef WITH_RTTI_VERIFY_PREDICATES
 void FContentFilterGlob::RTTI_VerifyPredicates() const {
-    FMetaClass::parent_type::RTTI_VerifyPredicates();
+    RTTI_parent_type::RTTI_VerifyPredicates();
     RTTI_VerifyPredicate(not _pattern.empty());
 }
 #endif
@@ -59,7 +59,7 @@ FContentFilterGroup::~FContentFilterGroup() {}
 //----------------------------------------------------------------------------
 #ifdef WITH_RTTI_VERIFY_PREDICATES
 void FContentFilterGroup::RTTI_VerifyPredicates() const {
-    FMetaClass::parent_type::RTTI_VerifyPredicates();
+    RTTI_parent_type::RTTI_VerifyPredicates();
     RTTI_VerifyPredicate(not _group.empty());
 }
 #endif
@@ -95,7 +95,7 @@ void FContentFilterRegexp::RTTI_Load(RTTI::FMetaLoadContext* context) {
 //----------------------------------------------------------------------------
 #ifdef WITH_RTTI_VERIFY_PREDICATES
 void FContentFilterRegexp::RTTI_VerifyPredicates() const {
-    FMetaClass::parent_type::RTTI_VerifyPredicates();
+    RTTI_parent_type::RTTI_VerifyPredicates();
 }
 #endif
 //----------------------------------------------------------------------------

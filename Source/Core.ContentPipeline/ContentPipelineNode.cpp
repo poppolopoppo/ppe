@@ -29,7 +29,7 @@ void FContentPipelineNode::RefreshFingerPrint_() const {
 }
 //----------------------------------------------------------------------------
 void FContentPipelineNode::RTTI_Load(RTTI::FMetaLoadContext *context) {
-    FMetaClass::parent_type::RTTI_Load(context);
+    RTTI_parent_type::RTTI_Load(context);
     RefreshFingerPrint_();
 }
 //----------------------------------------------------------------------------

@@ -16,15 +16,15 @@ namespace ContentPipeline {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-RTTI_CLASS_BEGIN(ContentPipeline, IContentToolchain, Abstract)
+RTTI_CLASS_BEGIN(ContentPipeline, FAbstractContentToolchain, Abstract)
 RTTI_PROPERTY_PRIVATE_FIELD(_importer)
 RTTI_PROPERTY_PRIVATE_FIELD(_processor)
 RTTI_PROPERTY_PRIVATE_FIELD(_serializer)
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------
-IContentToolchain::IContentToolchain() {}
+FAbstractContentToolchain::FAbstractContentToolchain() {}
 //----------------------------------------------------------------------------
-IContentToolchain::IContentToolchain(
+FAbstractContentToolchain::FAbstractContentToolchain(
     const IContentImporter* importer,
     const IContentProcessor* processor,
     const IContentSerializer* serializer )
@@ -32,11 +32,11 @@ IContentToolchain::IContentToolchain(
     , _processor(processor)
     , _serializer(serializer) {}
 //----------------------------------------------------------------------------
-IContentToolchain::~IContentToolchain() {}
+FAbstractContentToolchain::~FAbstractContentToolchain() {}
 //----------------------------------------------------------------------------
 #ifdef WITH_RTTI_VERIFY_PREDICATES
-void IContentToolchain::RTTI_VerifyPredicates() const {
-    FMetaClass::parent_type::RTTI_VerifyPredicates();
+void FAbstractContentToolchain::RTTI_VerifyPredicates() const {
+    RTTI_parent_type::RTTI_VerifyPredicates();
     RTTI_VerifyPredicate(nullptr != _importer);
     RTTI_VerifyPredicate(nullptr != _processor);
     RTTI_VerifyPredicate(nullptr != _serializer);

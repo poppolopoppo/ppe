@@ -17,19 +17,19 @@ namespace ContentPipeline {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Input, typename _Output>
-class FContentToolchain;
+class TContentToolchain;
 //----------------------------------------------------------------------------
-FWD_INTERFACE_REFPTR(ContentToolchain);
-class IContentToolchain : public RTTI::FMetaObject {
+FWD_REFPTR(AbstractToolchain);
+class FAbstractContentToolchain : public RTTI::FMetaObject {
 public:
-    IContentToolchain();
-    IContentToolchain(  const IContentImporter* importer,
-                        const IContentProcessor* processor,
-                        const IContentSerializer* serializer );
-    virtual ~IContentToolchain();
+	FAbstractContentToolchain();
+	FAbstractContentToolchain(	const IContentImporter* importer,
+								const IContentProcessor* processor,
+								const IContentSerializer* serializer );
+    virtual ~FAbstractContentToolchain();
 
-    IContentToolchain(const IContentToolchain& ) = delete;
-    IContentToolchain& operator =(const IContentToolchain& ) = delete;
+	FAbstractContentToolchain(const FAbstractContentToolchain& ) = delete;
+	FAbstractContentToolchain& operator =(const FAbstractContentToolchain& ) = delete;
 
     const IContentImporter* Importer() const { return _importer.get(); }
     const IContentProcessor* Processor() const { return _processor.get(); }
@@ -44,7 +44,7 @@ public:
         return Serializer()->Deserialize(context, asset);
     }
 
-    RTTI_CLASS_HEADER(IContentToolchain, RTTI::FMetaObject);
+    RTTI_CLASS_HEADER(FAbstractContentToolchain, RTTI::FMetaObject);
 
 protected:
 #ifdef WITH_RTTI_VERIFY_PREDICATES
@@ -58,42 +58,40 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename _Input, typename _Output>
-class FContentToolchain : public IContentToolchain {
+class TContentToolchain : public FAbstractContentToolchain {
 public:
     typedef TContentImporter<_Input> importer_type;
     typedef TContentProcessor<_Input, _Output> processor_type;
     typedef TContentSerializer<_Output> serializer_type;
 
-    FContentToolchain() {}
-    FContentToolchain(   const importer_type* importer,
+	TContentToolchain() {}
+	TContentToolchain(  const importer_type* importer,
                         const processor_type* processor,
                         const serializer_type* serializer )
-        : _importer(importer)
-        , _processor(processor)
-        , _serializer(serializer) {}
+        : FAbstractContentToolchain(importer, processor, serializer) {}
 
     virtual bool Build( FContentImporterContext& importerContext,
-                        FContentProcessorContext& processContext,
+                        FContentProcessorContext& processorContext,
                         FContentSerializerContext& serializerContext ) const override {
-        _Output asset;
-        {
-            _Input intermediate;
-            if (not _importer->Import(importerContext, intermediate))
-                return false;
+		_Output asset;
+		{
+			_Input intermediate;
+			if (not _importer->Import(importerContext, intermediate))
+				return false;
 
-            if (not _processor->Process(processContext, asset, intermediate))
-                return false;
-        }
-        return _serializer->Serialize(serializerContext, asset);
+			if (not _processor->Process(processorContext, asset, intermediate))
+				return false;
+		}
+		return _serializer->Serialize(serializerContext, asset);
     }
 
 protected:
 #ifdef WITH_RTTI_VERIFY_PREDICATES
     virtual void RTTI_VerifyPredicates() const override {
-        FMetaClass::parent_type::RTTI_VerifyPredicates();
-        RTTI_VerifyPredicate(dynamic_cast<const importer_type*>(Importer()));
-        RTTI_VerifyPredicate(dynamic_cast<const processor_type*>(Processor()));
-        RTTI_VerifyPredicate(dynamic_cast<const serializer_type*>(Serializer()));
+        RTTI_parent_type::RTTI_VerifyPredicates();
+        RTTI_VerifyPredicate(Importer()->IsA<_Input>());
+        RTTI_VerifyPredicate(Processor()->IsA<_Input, _Output>());
+        RTTI_VerifyPredicate(Serializer()->IsA<_Output>());
     }
 #endif
 };

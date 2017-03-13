@@ -53,13 +53,13 @@ private:
 template <typename _Input, typename _Output>
 class TContentProcessor;
 //----------------------------------------------------------------------------
-class IContentProcessor : public FContentPipelineNode {
+class IContentProcessor : public FContentPipelineNode, public Meta::TDynamicCastable<TContentProcessor> {
 public:
     virtual ~IContentProcessor() {}
 
     template <typename _Input, typename _Output>
     bool Process(FContentProcessorContext& ctx, _Output& dst, const _Input& src) const {
-        const TContentProcessor<_Input, _Output>* const processor = dynamic_cast<const TContentProcessor<_Input, _Output>*>(this);
+        const TContentProcessor<_Input, _Output>* const processor = As<_Input, _Output>();
         if (nullptr == processor)
             throw FContentProcessorException("invalid processor type", ctx.Identity(), this);
         else
@@ -78,6 +78,8 @@ public:
     virtual ~TContentProcessor() {}
 
     virtual bool Process(FContentProcessorContext& ctx, output_type& dst, const input_type& src) const = 0;
+
+    META_DYNAMIC_CASTABLE_IMPL(TContentProcessor);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

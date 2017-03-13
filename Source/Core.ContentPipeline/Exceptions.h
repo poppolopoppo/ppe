@@ -11,7 +11,7 @@ namespace ContentPipeline {
 FWD_INTERFACE_REFPTR(ContentImporter);
 FWD_INTERFACE_REFPTR(ContentProcessor);
 FWD_INTERFACE_REFPTR(ContentSerializer);
-FWD_INTERFACE_REFPTR(ContentToolchain);
+FWD_REFPTR(AbstractContentToolchain);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -57,11 +57,11 @@ private:
 //----------------------------------------------------------------------------
 class FContentToolchainException : public FContentPipelineException {
 public:
-    FContentToolchainException(const char* what, const FFilename& sourceFilename, const IContentToolchain* serializer);
+    FContentToolchainException(const char* what, const FFilename& sourceFilename, const FAbstractContentToolchain* serializer);
     ~FContentToolchainException();
-    const IContentToolchain* Toolchain() const { return _toolchain.get(); }
+    const FAbstractContentToolchain* Toolchain() const { return _toolchain.get(); }
 private:
-    PCContentToolchain _toolchain;
+    PCAbstractContentToolchain _toolchain;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -38,13 +38,13 @@ private:
 template <typename _Asset>
 class TContentSerializer;
 //----------------------------------------------------------------------------
-class IContentSerializer : public FContentPipelineNode {
+class IContentSerializer : public FContentPipelineNode, public Meta::TDynamicCastable<TContentSerializer> {
 public:
     virtual ~IContentSerializer() {}
 
     template <typename _Asset>
     bool Serialize(FContentSerializerContext& ctx, const _Asset& src) const {
-        const TContentSerializer<_Asset>* const serializer = dynamic_cast<const TContentSerializer<_Asset>*>(this);
+        const TContentSerializer<_Asset>* const serializer = As<_Asset>();
         if (nullptr == serializer)
             throw FContentSerializerException("invalid serializer type", ctx.OutputFilename(), this);
         else
@@ -53,7 +53,7 @@ public:
 
     template <typename _Asset>
     bool Deserialize(FContentSerializerContext& ctx, _Asset& dst) const {
-        const TContentSerializer<_Asset>* const serializer = dynamic_cast<const TContentSerializer<_Asset>*>(this);
+        const TContentSerializer<_Asset>* const serializer = As<_Asset>();
         if (nullptr == serializer)
             throw FContentSerializerException("invalid serializer type", ctx.OutputFilename(), this);
         else
@@ -72,6 +72,8 @@ public:
 
     virtual bool Serialize(FContentSerializerContext& ctx, const asset_type& src) const = 0;
     virtual bool Deserialize(FContentSerializerContext& ctx, asset_type& dst) const = 0;
+
+    META_DYNAMIC_CASTABLE_IMPL(TContentSerializer);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
