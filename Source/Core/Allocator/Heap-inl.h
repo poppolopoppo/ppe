@@ -57,7 +57,7 @@ void* FHeap::Calloc(size_t nmemb, size_t size, FMemoryTrackingData& trackingData
 template <size_t _Alignment>
 FORCE_INLINE
 void* FHeap::Realloc(void *ptr, size_t size, FMemoryTrackingData& trackingData, typename std::enable_if< !TIsNaturalyAligned<_Alignment>::value >::type*) {
-    return this->AlignedRealloc(ptr, size, trackingData);
+    return this->AlignedRealloc(ptr, size, _Alignment, trackingData);
 }
 //----------------------------------------------------------------------------
 inline void FHeap::Swap(FHeap& other) {
