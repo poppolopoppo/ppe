@@ -88,6 +88,20 @@ FMetaClass::FMetaClass(
 //----------------------------------------------------------------------------
 FMetaClass::~FMetaClass() {}
 //----------------------------------------------------------------------------
+const FMetaFunction* FMetaClass::Function(const FName& name, size_t attributes /* = 0 */, bool inherited /* = true */) const {
+    const FMetaFunction* func = FunctionIFP(name, attributes, inherited);
+    if (nullptr == func && IsDynamic())
+        func = OnMissingFunction(name, attributes);
+    AssertRelease(nullptr != func);
+    return func;
+}
+//----------------------------------------------------------------------------
+const FMetaFunction* FMetaClass::Function(const FStringView& name, size_t attributes /* = 0 */, bool inherited /* = true */) const {
+    Assert(not name.empty());
+    // TODO: better method ?
+    return Function(FName(name), attributes, inherited);
+}
+//----------------------------------------------------------------------------
 const FMetaFunction *FMetaClass::FunctionIFP(const FName& name, size_t attributes /* = 0 */, bool inherited /* = true */) const {
     Assert(not name.empty());
 
@@ -101,6 +115,20 @@ const FMetaFunction *FMetaClass::FunctionIFP(const FStringView& name, size_t att
     Assert(not name.empty());
     // TODO: better method ?
     return FunctionIFP(FName(name), attributes, inherited);
+}
+//----------------------------------------------------------------------------
+const FMetaProperty* FMetaClass::Property(const FName& name, size_t attributes /* = 0 */, bool inherited /* = true */) const {
+    const FMetaProperty* prop = PropertyIFP(name, attributes, inherited);
+    if (nullptr == prop && IsDynamic())
+        prop = OnMissingProperty(name, attributes);
+    AssertRelease(nullptr != prop);
+    return prop;
+}
+//----------------------------------------------------------------------------
+const FMetaProperty* FMetaClass::Property(const FStringView& name, size_t attributes /* = 0 */, bool inherited /* = true */) const {
+    Assert(not name.empty());
+    // TODO: better method ?
+    return Property(FName(name), attributes, inherited);
 }
 //----------------------------------------------------------------------------
 const FMetaProperty *FMetaClass::PropertyIFP(const FName& name, size_t attributes /* = 0 */, bool inherited /* = true */) const {

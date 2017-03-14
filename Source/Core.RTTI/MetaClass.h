@@ -61,8 +61,6 @@ static const RTTI::FMetaClass *MetaClass(typename std::enable_if< std::is_void<T
 //----------------------------------------------------------------------------
 class FMetaClass {
 public:
-    friend class FMetaClassList;
-
     enum EFlags {
         Concrete    = 1<<0,
         Abstract    = 1<<1,
@@ -115,8 +113,14 @@ public:
     TMemoryView<const UCMetaFunction> Functions() const { return _functions.MakeConstView(); }
     TMemoryView<const UCMetaProperty> Properties() const { return _properties.MakeConstView(); }
 
+    const FMetaFunction* Function(const FName& name, size_t attributes = 0, bool inherited = true) const;
+    const FMetaFunction* Function(const FStringView& name, size_t attributes = 0, bool inherited = true) const;
+
     const FMetaFunction* FunctionIFP(const FName& name, size_t attributes = 0, bool inherited = true) const;
     const FMetaFunction* FunctionIFP(const FStringView& name, size_t attributes = 0, bool inherited = true) const;
+
+    const FMetaProperty* Property(const FName& name, size_t attributes = 0, bool inherited = true) const;
+    const FMetaProperty* Property(const FStringView& name, size_t attributes = 0, bool inherited = true) const;
 
     const FMetaProperty* PropertyIFP(const FName& name, size_t attributes = 0, bool inherited = true) const;
     const FMetaProperty* PropertyIFP(const FStringView& name, size_t attributes = 0, bool inherited = true) const;
@@ -129,6 +133,10 @@ public:
 protected:
     void RegisterFunction(UCMetaFunction&& func);
     void RegisterProperty(UCMetaProperty&& prop);
+
+    // Only available for dynamic metaclasses
+    virtual const FMetaFunction* OnMissingFunction(const FName& name, size_t attributes = 0) const = 0;
+    virtual const FMetaProperty* OnMissingProperty(const FName& name, size_t attributes = 0) const = 0;
 
 private:
     FMetaClassGuid _guid;
@@ -192,6 +200,9 @@ protected:
         const FName& name,
         const FMetaNamespace* metaNamespace )
         : FMetaClass(guid, InferAttributes_(attributes), name, metaNamespace) {}
+
+    virtual const FMetaFunction* OnMissingFunction(const FName& , size_t ) const override { AssertNotReached(); return nullptr; }
+    virtual const FMetaProperty* OnMissingProperty(const FName& , size_t ) const override { AssertNotReached(); return nullptr; }
 
 private:
     static EFlags InferAttributes_(EFlags attributes) {
