@@ -288,8 +288,8 @@ private:
     void swap_(TVector& other, std::false_type );
 
     pointer _data;
-    size_type _size;
-    size_type _capacity;
+    u32 _size;
+    u32 _capacity;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

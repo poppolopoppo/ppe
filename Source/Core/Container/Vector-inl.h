@@ -108,7 +108,7 @@ void TVector<T, _Allocator>::assign_(_It first, _It last, std::input_iterator_ta
         Assert(_size >= count);
         for (size_type i = count; i < _size; ++i)
             allocator_traits::destroy(*this, _data + i);
-        _size = count;
+        _size = checked_cast<u32>(count);
     }
     Assert(_size == count);
 }
@@ -135,7 +135,7 @@ void TVector<T, _Allocator>::assign_(_It first, _It last, _ItCat ) {
         std::copy(first, pivot, MakeCheckedIterator(_data, count, 0));
         std::uninitialized_copy(pivot, last, MakeCheckedIterator(_data, count, _size));
     }
-    _size = count;
+    _size = checked_cast<u32>(count);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
@@ -153,7 +153,7 @@ void TVector<T, _Allocator>::assign(size_type count, const T& value) {
         std::fill_n(MakeCheckedIterator(_data, count, 0), _size, value);
         std::uninitialized_fill_n(MakeCheckedIterator(_data, count, _size), count - _size, value);
     }
-    _size = count;
+    _size = checked_cast<u32>(count);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
@@ -351,7 +351,7 @@ void TVector<T, _Allocator>::reserve_AssumeEmpty(size_type count) {
             Assert(0 < _capacity);
             allocator_traits::deallocate(*this, _data, _capacity);
         }
-        _capacity = Max(AllocationMinSize(static_cast<const allocator_type&>(*this)), count);
+        _capacity = checked_cast<u32>(Max(AllocationMinSize(static_cast<const allocator_type&>(*this)), count));
         _data = allocator_traits::allocate(*this, count);
     }
     Assert(nullptr != _data);
@@ -365,7 +365,7 @@ void TVector<T, _Allocator>::reserve_Exactly(size_type count) {
     count = Max(AllocationMinSize(static_cast<const allocator_type&>(*this)), count);
 #if 1 //%TODO
     _data = Relocate(allocator_(), TMemoryView<value_type>(_data, _size), count, _capacity);
-    _capacity = count;
+    _capacity = checked_cast<u32>(count);
 #else
     T* newdata = nullptr;
     try {
@@ -406,7 +406,7 @@ void TVector<T, _Allocator>::resize(size_type count) {
         for (size_type i = _size; i < count; ++i)
             allocator_traits::construct(*this, &_data[i]);
     }
-    _size = count;
+    _size = checked_cast<u32>(count);
     Assert(_size <= _capacity);
 }
 //----------------------------------------------------------------------------
@@ -422,7 +422,7 @@ void TVector<T, _Allocator>::resize(size_type count, const_reference value) {
     else {
         std::uninitialized_fill_n(MakeCheckedIterator(_data, _capacity, _size), _capacity - _size, value);
     }
-    _size = count;
+    _size = checked_cast<u32>(count);
     Assert(_size <= _capacity);
 }
 //----------------------------------------------------------------------------
@@ -433,7 +433,7 @@ void TVector<T, _Allocator>::resize_AssumeEmpty(size_type count) {
     Assert(count <= _capacity);
     for (size_type i = 0; i < count; ++i)
         allocator_traits::construct(*this, &_data[i]);
-    _size = count;
+    _size = checked_cast<u32>(count);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
@@ -442,7 +442,7 @@ void TVector<T, _Allocator>::resize_AssumeEmpty(size_type count, const_reference
     Assert(0 == _size);
     Assert(count <= _capacity);
     std::uninitialized_fill_n(MakeCheckedIterator(_data, _capacity, 0), count, value);
-    _size = count;
+    _size = checked_cast<u32>(count);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
