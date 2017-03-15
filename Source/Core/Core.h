@@ -11,20 +11,6 @@
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#if     defined(_MSC_VER)
-#   define OS_WINDOWS
-#   define CPP_VISUALSTUDIO
-#elif   defined(__GNUC__)
-#   define CPP_GCC
-#   define OS_LINUX
-#elif   defined(__CLANG__)
-#   define CPP_CLANG
-#else
-#   error "unsupported compiler"
-#endif
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 #if     defined(ARCH_X64)
 #   ifndef _M_X64
 #       error "invalid architecture"
@@ -36,11 +22,6 @@
 #else
 #   error "unknown architecture !"
 #endif
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// VS2013 and VS2015 are still not C++-11 compliant ...
-//static_assert(__cplusplus > 199711L, "Program requires C++11 capable compiler");
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -74,21 +55,21 @@
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#if defined(__clang__)
+#if defined(CPP_CLANG)
 #   define NOALIAS
 #   define NOEXCEPT     noexcept
 #   define RESTRICT     __declspec(restrict)
 #   define STDCALL      __stdcall
 #   define THREAD_LOCAL thread_local
 #   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, _DEFAULT_VALUE) static constexpr _TYPE _NAME = (_TYPE)(_DEFAULT_VALUE)
-#elif defined(_MSC_VER) && _MSC_VER >= 1900
+#elif defined(CPP_VISUALSTUDIO) && _MSC_VER >= 1900
 #   define NOALIAS      __declspec(noalias)
 #   define NOEXCEPT     noexcept
 #   define RESTRICT     __declspec(restrict)
 #   define STDCALL      __stdcall
 #   define THREAD_LOCAL thread_local
 #   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, _DEFAULT_VALUE) static constexpr _TYPE _NAME = (_TYPE)(_DEFAULT_VALUE)
-#elif defined (_MSC_VER)
+#elif defined (CPP_VISUALSTUDIO)
 #   define NOALIAS      __declspec(noalias)
 #   define NOEXCEPT     __declspec(nothrow)
 #   define RESTRICT     __declspec(restrict)
@@ -101,10 +82,10 @@
 #define FORCE_INLINE    __forceinline //__attribute__((always_inline))
 #define NO_INLINE       __declspec(noinline)
 //----------------------------------------------------------------------------
-#ifdef _MSC_VER
-#   define Assume(expr) __assume((expr))
-#elif ((__GNUC__ * 100 + __GNUC_MINOR__) >= 302) || (__INTEL_COMPILER >= 800) || defined(__clang__)
+#if ((__GNUC__ * 100 + __GNUC_MINOR__) >= 302) || (__INTEL_COMPILER >= 800) || defined(__clang__)
 #   define Assume(expr)    (__builtin_expect ((expr),1) )
+#elif defined(CPP_VISUALSTUDIO)
+#   define Assume(expr) __assume((expr))
 #else
 #   error "unsupported compiler"
 #endif
@@ -143,10 +124,10 @@
 #   define DLL_IMPORT
 #   define DLL_EXPORT
 #elif   defined(DYNAMIC_LINK)
-#   if     defined(CPP_VISUALSTUDIO)
+#   if     defined(CPP_CLANG)
 #       define DLL_IMPORT __declspec(dllimport)
 #       define DLL_EXPORT __declspec(dllexport)
-#   elif   defined(CPP_CLANG)
+#   elif   defined(CPP_VISUALSTUDIO)
 #       define DLL_IMPORT __declspec(dllimport)
 #       define DLL_EXPORT __declspec(dllexport)
 #   elif   defined(CPP_GCC)
@@ -161,13 +142,17 @@
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#if defined(CPP_VISUALSTUDIO)
-#   define PRAGMA(x) __pragma(x)
-#else
+#if     defined(CPP_CLANG)
 #   define PRAGMA(x) _Pragma(#x)
+#elif   defined(CPP_VISUALSTUDIO)
+#   define PRAGMA(x) __pragma(x)
+#elif   defined(CPP_GCC)
+#   define PRAGMA(x) _Pragma(#x)
+#else
+#   error "unsupported compiler"
 #endif
 //----------------------------------------------------------------------------
-#if defined(CPP_VISUALSTUDIO)
+#if     defined(CPP_VISUALSTUDIO)
 #   define PRAGMA_DISABLE_OPTIMIZATION _Pragma(optimize("", off))
 #   define PRAGMA_ENABLE_OPTIMIZATION  _Pragma(optimize("", on ))
 #elif

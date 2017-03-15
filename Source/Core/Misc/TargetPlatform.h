@@ -29,9 +29,9 @@ enum class ETargetPlatform {
     MAC             = 1<<3,
     LINUX           = 1<<4,
 
-#if     defined(OS_WINDOWS)
+#if     defined(PLATFORM_WINDOWS)
     Current         = PC,
-#elif   defined(OS_LINUX)
+#elif   defined(PLATFORM_LINUX)
     Current         = LINUX,
 #else
 #   error "unsupported os"

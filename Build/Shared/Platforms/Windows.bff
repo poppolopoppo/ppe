@@ -10,7 +10,7 @@
     .PlatformDefines +
     {
         'PLATFORM_PC',
-        'PLATFORM_WIN',
+        'PLATFORM_WINDOWS',
         'WIN32',
         '__WINDOWS__',
     }

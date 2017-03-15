@@ -21,6 +21,9 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// VS2013 and VS2015 are still not C++-11 compliant ...
+//static_assert(__cplusplus > 199711L, "Program requires C++11 capable compiler");
+//----------------------------------------------------------------------------
 #if     defined(ARCH_X64)
 static_assert(sizeof(size_t) == sizeof(uint64_t), "incoherent define");
 #elif   defined(ARCH_X86)

@@ -16,7 +16,7 @@
 
 #include "Core/Allocator/PoolAllocatorTag-impl.h"
 
-#if defined(_DEBUG) && defined(OS_WINDOWS)
+#if defined(_DEBUG) && defined(PLATFORM_WINDOWS)
 #   define WITH_CORE_MATHS_UNITTESTS
 #endif
 #ifdef WITH_CORE_MATHS_UNITTESTS

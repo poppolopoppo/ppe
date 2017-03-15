@@ -31,7 +31,7 @@
 #include "Core/Diagnostic/Logger.h"
 #include "Core/Memory/ComPtr.h"
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 #   include "DirectX11/DX11DeviceAPIEncapsulator.h"
 #endif
 

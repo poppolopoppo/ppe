@@ -7,7 +7,7 @@
 
 #include <thread>
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 #   include <windows.h>
 #endif
 

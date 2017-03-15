@@ -5,7 +5,7 @@
 #include "IO/Stream.h"
 #include "IO/StringView.h"
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 
 #   ifndef UNICODE
 #       error "invalid TCHAR format"
@@ -20,7 +20,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FString GetLastErrorToString(long errorCode) {
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
     _com_error com(errorCode);
     return ToString(MakeStringView(com.ErrorMessage(), Meta::noinit_tag()));
 
@@ -31,7 +31,7 @@ FString GetLastErrorToString(long errorCode) {
 }
 //----------------------------------------------------------------------------
 FWString GetLastErrorToWString(long errorCode) {
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
     _com_error com(errorCode);
     return ToWString(MakeStringView(com.ErrorMessage(), Meta::noinit_tag()));
 

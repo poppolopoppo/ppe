@@ -15,13 +15,13 @@
 
 typedef Core::ContentGenerator::FRobotApp application_type;
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 #   define CORE_RESOURCES 1
 #else
 #   define CORE_RESOURCES 0
 #endif
 
-#if defined(OS_WINDOWS) && CORE_RESOURCES
+#if defined(PLATFORM_WINDOWS) && CORE_RESOURCES
 //  Retrieves application icon for windows
 #   include <windows.h>
 #   include "resource.h"
@@ -45,7 +45,7 @@ static int Bootstrap(void *appHandle, int nShowCmd, int argc, const wchar_t**arg
     const ContentPipeline::ContentPipelineStartup startupContentPipeline;
     const Application::FApplicationStartup startupApplication;
 
-#if defined(OS_WINDOWS) && CORE_RESOURCES
+#if defined(PLATFORM_WINDOWS) && CORE_RESOURCES
     FCurrentProcess::Instance().SetAppIcon(IDI_WINDOW_ICON);
 #endif
 
@@ -53,7 +53,7 @@ static int Bootstrap(void *appHandle, int nShowCmd, int argc, const wchar_t**arg
     return Application::LaunchApplication(appContext, &app);
 }
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 #   include <Windows.h>
 #   include <shellapi.h>
 #   include <tchar.h>
@@ -67,7 +67,7 @@ int APIENTRY _tWinMain(
 int main(int argc, const wchar_t* argv[]) {
 #endif
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 #   ifdef _DEBUG
     int debugHeapFlag = _CRTDBG_ALLOC_MEM_DF |
                         _CRTDBG_CHECK_EVERY_1024_DF |

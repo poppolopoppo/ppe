@@ -2,7 +2,7 @@
 
 #include "Timepoint.h"
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 #   include <Windows.h>
 #else
 #   error "no support !"

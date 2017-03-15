@@ -2,7 +2,7 @@
 
 #include "FileSystemProperties.h"
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 #   include <windows.h>
 #else
 #   error "not implemented"
@@ -20,7 +20,7 @@ bool TTokenTraits::IsAllowedChar(wchar_t ch) const {
 size_t SystemTemporaryDirectory(char_type *path, size_t capacity) {
     Assert(path);
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
     Assert(capacity >= MAX_PATH);
     return checked_cast<size_t>(GetTempPathW(checked_cast<DWORD>(capacity), path));
 

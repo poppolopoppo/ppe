@@ -5,7 +5,7 @@
 #include "Core/Memory/MemoryView.h"
 #include "Core/Misc/TargetPlatform.h"
 
-#if     defined(OS_WINDOWS)
+#if     defined(PLATFORM_WINDOWS)
 #   define WITH_VISUAL_INTRINSIC_BYTESWAP
 #   include <intrin.h>
 #elif   defined(CPP_GCC) || defined (CPP_CLANG)

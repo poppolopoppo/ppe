@@ -5,7 +5,7 @@
 #include "Core/IO/FormatHelpers.h"
 #include "Core/Memory/UniquePtr.h"
 
-#if defined(OS_WINDOWS) && defined(_DEBUG)
+#if defined(PLATFORM_WINDOWS) && defined(_DEBUG)
 //#   define USE_CRT_DEBUG %_NOCOMMIT%
 #endif
 
@@ -56,7 +56,7 @@ void CrtCheckGlobalMemoryLeaks(bool enabled);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 //----------------------------------------------------------------------------
 class FCrtMemoryStats {
 public:
@@ -74,7 +74,7 @@ public:
 //----------------------------------------------------------------------------
 bool CrtDumpMemoryStats(FCrtMemoryStats* memoryStats, void* heapHandle = nullptr);
 //----------------------------------------------------------------------------
-#endif //!OS_WINDOWS
+#endif //!PLATFORM_WINDOWS
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

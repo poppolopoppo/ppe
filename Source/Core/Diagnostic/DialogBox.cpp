@@ -15,7 +15,7 @@
 #include "IO/VirtualFileSystem.h"
 #include "Memory/MemoryProvider.h"
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 #   include <Windows.h>
 #   include <Windowsx.h> // Edit_GetSel()
 #else
@@ -27,7 +27,7 @@ namespace Dialog {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 namespace {
 //----------------------------------------------------------------------------
 static LPCWSTR SystemIcon_(Dialog::Icon iconType) {
@@ -472,14 +472,14 @@ static Dialog::EResult Template_CreateDialogBox_(
 }
 //----------------------------------------------------------------------------
 } //!namespace
-#endif //!OS_WINDOWS
+#endif //!PLATFORM_WINDOWS
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 Dialog::EResult Show(const FWStringView& text, const FWStringView& caption, Dialog::EType dialogType, Dialog::Icon iconType) {
     Assert(not text.empty());
     Assert(not caption.empty());
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
     return Template_CreateDialogBox_(iconType, dialogType, text, caption);
 #else
     AssertNotImplemented();

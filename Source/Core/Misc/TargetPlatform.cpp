@@ -2,7 +2,7 @@
 
 #include "TargetPlatform.h"
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 #   include <windows.h>
 #endif
 
@@ -66,7 +66,7 @@ EEndianness TargetPlatformEndianness(ETargetPlatform platform) {
 //----------------------------------------------------------------------------
 #ifndef FINAL_RELEASE
 void FPlatform::CheckMemory() {
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
     _CrtCheckMemory();
 #else
 #   error "no support"
@@ -76,7 +76,7 @@ void FPlatform::CheckMemory() {
 //----------------------------------------------------------------------------
 #ifndef FINAL_RELEASE
 void FPlatform::DebugBreak() {
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
     ::DebugBreak();
 #else
 #   error "no support"
@@ -86,7 +86,7 @@ void FPlatform::DebugBreak() {
 //----------------------------------------------------------------------------
 #ifndef FINAL_RELEASE
 void FPlatform::DebugBreakAttach() {
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
     if (::IsDebuggerPresent())
     {
         ::DebugBreak();
@@ -99,7 +99,7 @@ void FPlatform::DebugBreakAttach() {
 //----------------------------------------------------------------------------
 #ifndef FINAL_RELEASE
 bool FPlatform::IsDebuggerAttached() {
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
     return ::IsDebuggerPresent() ? true : false;
 #else
 #   error "no support"
@@ -109,7 +109,7 @@ bool FPlatform::IsDebuggerAttached() {
 //----------------------------------------------------------------------------
 #ifndef FINAL_RELEASE
 void FPlatform::OutputDebug(const char* text) {
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
     return ::OutputDebugStringA(text);
 #else
 #   error "no support"
@@ -119,7 +119,7 @@ void FPlatform::OutputDebug(const char* text) {
 //----------------------------------------------------------------------------
 #ifndef FINAL_RELEASE
 void FPlatform::OutputDebug(const wchar_t* text) {
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
     return ::OutputDebugStringW(text);
 #else
 #   error "no support"

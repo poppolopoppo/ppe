@@ -11,14 +11,14 @@
 #   include "Core/Diagnostic/Logger.h"
 #endif
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 #   include <Windows.h>
 #else
 #   error "no support"
 #endif
 
 #pragma warning( push )
-#pragma warning( disable : 4100 ) // C4100 'XXX' : paramètre formel non référencé
+#pragma warning( disable : 4100 ) // C4100 'XXX'ï¿½: paramï¿½tre formel non rï¿½fï¿½rencï¿½
 
 namespace Core {
 namespace Engine {

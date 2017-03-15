@@ -4,7 +4,7 @@
 
 #ifdef WITH_CORE_PROFILING
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 #   include <VSPerf.h>
 #else
 #   error "unsuppored platform"

@@ -2,7 +2,7 @@
 
 #include "Core/Core.h"
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 
 #include "DbgHelpWrapper.h"
 #include "Logger.h"
@@ -55,4 +55,4 @@ FDbghelpWrapper::~FDbghelpWrapper() {
 //----------------------------------------------------------------------------
 } //!namespace Core
 
-#endif //!OS_WINDOWS
+#endif //!PLATFORM_WINDOWS

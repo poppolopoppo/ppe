@@ -16,7 +16,7 @@
 
 #include <chrono>
 
-#if defined(OS_WINDOWS)
+#if defined(PLATFORM_WINDOWS)
 #   include <stdlib.h>
 #   include <wchar.h>
 #endif
@@ -115,12 +115,12 @@ void FVirtualFileSystemStartup::Start() {
     }
     // user profile path
     {
-#if defined(OS_WINDOWS)
+#if defined(PLATFORM_WINDOWS)
         wchar_t* userPath = nullptr;
         size_t userPathLen = 0;
         if (0 != _wdupenv_s(&userPath, &userPathLen, L"USERPROFILE"))
             AssertNotReached();
-#elif defined(OS_LINUX)
+#elif defined(PLATFORM_LINUX)
         const wchar_t* userPath = nullptr;
         const char* userPathA = std::getenv("HOME");
         FWString userPathW = ToWString(userPath);
@@ -130,7 +130,7 @@ void FVirtualFileSystemStartup::Start() {
 #endif
         AssertRelease(userPath);
         VFS.MountNativePath(L"User:/", userPath);
-#if defined(OS_WINDOWS)
+#if defined(PLATFORM_WINDOWS)
         free(userPath); // must free() the string allocated by _wdupenv_s()
 #endif
     }

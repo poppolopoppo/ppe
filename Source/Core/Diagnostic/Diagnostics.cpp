@@ -10,7 +10,7 @@
 
 #include "Memory/MemoryDomain.h"
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 #   include "DbghelpWrapper.h"
 #endif
 
@@ -20,7 +20,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 void FDiagnosticsStartup::Start(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t** argv) {
     FCurrentProcess::Create(applicationHandle, nShowCmd, argc, argv);
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
     FDbghelpWrapper::Create();
 #endif
     FCallstack::Start();
@@ -40,7 +40,7 @@ void FDiagnosticsStartup::Shutdown() {
     MiniDump::Shutdown();
     FMemoryDomainStartup::Shutdown();
     FCallstack::Shutdown();
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
     FDbghelpWrapper::Destroy();
 #endif
     FCurrentProcess::Destroy();

@@ -11,7 +11,7 @@
 #   include "Core/Diagnostic/Logger.h"
 #endif
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 #   include <Windows.h>
 #else
 #   error "no support"

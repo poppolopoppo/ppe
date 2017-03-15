@@ -2,7 +2,7 @@
 
 #include "Fiber.h"
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 #   include <windows.h>
 #else
 #   error "OS not yet supported"

@@ -32,6 +32,8 @@
 
     .Defines =
     {
+        'CPP_VISUALSTUDIO',             ; identification du compiler dans les sources (custom)
+        
         "_MT", "_DLL",                  ; https://msdn.microsoft.com/fr-fr/library/abx4dbyh.aspx
 
         "STRICT",                       ; https://msdn.microsoft.com/en-us/library/windows/desktop/aa383681(v=vs.85).aspx

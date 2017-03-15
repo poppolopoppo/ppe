@@ -2,7 +2,7 @@
 
 #include "ApplicationConsole.h"
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 #   include <windows.h>
 #else
 #   error "no support"

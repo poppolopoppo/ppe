@@ -4,7 +4,7 @@
 
 #include "IO/String.h"
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 #   include <Objbase.h>
 #else
 #   error "no support !"
@@ -16,7 +16,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 FGuid FGuid::Generate() {
     FGuid result;
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
     HRESULT ret = ::CoCreateGuid(reinterpret_cast<::GUID *>(&result));
     Assert(S_OK == ret);
     UNUSED(ret);

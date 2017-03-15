@@ -4,7 +4,7 @@
 
 #include "Core/Memory/HashFunctions.h"
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 #   include <sys/types.h>
 #   include <sys/stat.h>
 #   include <wchar.h>

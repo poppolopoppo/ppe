@@ -13,7 +13,7 @@
 #   include "Core/Diagnostic/Logger.h"
 #endif
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 #   include <Windows.h>
 #   include <XInput.h>
 
@@ -30,7 +30,7 @@ namespace Application {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 static void GamepadTestButton_(
     EGamepadButton btn,
     GamepadButtonState& ups,
@@ -49,7 +49,7 @@ static void GamepadTestButton_(
 }
 #endif
 //----------------------------------------------------------------------------
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 static float GamepadNormalizeAxis_(SHORT axis, SHORT deadzone) {
     if (axis <= -deadzone)
         return float(axis + deadzone)/(32768 - deadzone);
@@ -60,7 +60,7 @@ static float GamepadNormalizeAxis_(SHORT axis, SHORT deadzone) {
 }
 #endif
 //----------------------------------------------------------------------------
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 static float GamepadNormalizeTrigger_(BYTE axis, BYTE deadzone) {
     if (axis >= deadzone)
         return float(axis - deadzone)/(255 - deadzone);
@@ -101,7 +101,7 @@ void FGamepadInputHandler::UpdateBeforeDispatch(Graphics::FBasicWindow *wnd) {
 
         const bool wasConnected = gamepad.IsConnected();
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
         ::XINPUT_STATE stateXInput;
         ::ZeroMemory(&stateXInput, sizeof(::XINPUT_STATE));
 

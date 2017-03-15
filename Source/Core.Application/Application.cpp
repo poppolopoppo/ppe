@@ -36,7 +36,7 @@ static void PrintMemStats_(const Core::FCrtMemoryStats& memoryStats) {
 }
 #endif
 //----------------------------------------------------------------------------
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 static void ConfigureCRTHeapForDebugging_() {
 #   ifdef _DEBUG
     constexpr int debugHeapEnabled  = _CRTDBG_ALLOC_MEM_DF;
@@ -84,14 +84,14 @@ void FApplicationStartup::ClearAll_UnusedMemory() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FApplicationContext::FApplicationContext() {
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
     ConfigureCRTHeapForDebugging_();
 #endif
 }
 //----------------------------------------------------------------------------
 FApplicationContext::~FApplicationContext() {
 #ifndef FINAL_RELEASE
-#if defined(OS_WINDOWS)
+#if defined(PLATFORM_WINDOWS)
     FCrtMemoryStats memoryStats;
     CrtDumpMemoryStats(&memoryStats);
 #endif

@@ -20,7 +20,7 @@
 #include <wchar.h>
 
 // EnumerateFiles()
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 #   include <windows.h>
 #   include <tchar.h>
 #   include <stdio.h>
@@ -172,7 +172,7 @@ static size_t GlobFiles_(
         FDirpath dirpath(std::move(subDirectories.back()) );
         subDirectories.pop_back();
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
         total += GlobFiles_Windows_(
             dirpath,
             alias, destination,

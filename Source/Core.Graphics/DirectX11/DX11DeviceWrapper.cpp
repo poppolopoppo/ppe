@@ -18,7 +18,7 @@
 #include "Core/IO/Format.h"
 #include "Core/IO/String.h"
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 //#   include <DxErr.h>
 //#   pragma comment(lib, "DxErr.lib")
 #   include <DXGIDebug.h>

@@ -1,13 +1,13 @@
 #pragma once
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 #pragma warning(disable: 4127) // L'expression conditionnelle est une constante
-#pragma warning(disable: 4201) // Extension non standard utilisée : struct/union sans nom.
-#pragma warning(disable: 4503) // Longueur du nom décoré dépassée, le nom a été tronqué
-#pragma warning(disable: 6011) // Suppression de la référence du pointeur NULL 'XXX'.
-#pragma warning(disable: 6255) // _alloca signale un échec en levant une exception de dépassement de capacité de la pile. Utilisez _malloca à la place.
-#pragma warning(disable: 6385) // Lecture de données non valides depuis 'XXX' : la taille lisible est 'XXX' octets, mais 'XXX' octets sont peut-être lus.
-#pragma warning(disable: 4714) // Fonction 'XXX' marquée comme __forceinline non inline
+#pragma warning(disable: 4201) // Extension non standard utilisï¿½eï¿½: struct/union sans nom.
+#pragma warning(disable: 4503) // Longueur du nom dï¿½corï¿½ dï¿½passï¿½e, le nom a ï¿½tï¿½ tronquï¿½
+#pragma warning(disable: 6011) // Suppression de la rï¿½fï¿½rence du pointeur NULL 'XXX'.
+#pragma warning(disable: 6255) // _alloca signale un ï¿½chec en levant une exception de dï¿½passement de capacitï¿½ de la pile. Utilisez _malloca ï¿½ la place.
+#pragma warning(disable: 6385) // Lecture de donnï¿½es non valides depuis 'XXX'ï¿½: la taille lisible est 'XXX' octets, mais 'XXX' octets sont peut-ï¿½tre lus.
+#pragma warning(disable: 4714) // Fonction 'XXX' marquï¿½e comme __forceinline non inline
 #endif
 
 #define CORE_MESSAGE(_Message) \

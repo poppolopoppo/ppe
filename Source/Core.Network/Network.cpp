@@ -11,7 +11,7 @@
 
 PRAGMA_INITSEG_LIB
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 //  Link with WinSock2 library
 #   pragma comment(lib, "ws2_32.lib")
 #endif

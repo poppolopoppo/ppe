@@ -4,7 +4,7 @@
 
 #include "Core.Graphics/DirectX11/DX11Includes.h"
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 #   include <d3dcompiler.h>
 
 //  include the Direct3D Shader Compiler Library file

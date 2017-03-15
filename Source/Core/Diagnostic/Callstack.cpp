@@ -15,7 +15,7 @@
 // https://blogs.msdn.microsoft.com/vcblog/2010/01/05/dia-based-stack-walking/
 // https://msdn.microsoft.com/en-us/library/hd8h6f46.aspx
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 #   include "DbghelpWrapper.h"
 #   include <TlHelp32.h>
 #   include <wchar.h>
@@ -117,7 +117,7 @@ static void LoadModules_(const FDbghelpWrapper::FLocked& dbghelp) {
         return;
 
 #pragma warning( push )
-#pragma warning( disable : 4826 ) // warning C4826: La conversion de 'unsigned char *const ' en 'DWORD64' est de type signe étendu.
+#pragma warning( disable : 4826 ) // warning C4826: La conversion de 'unsigned char *const ' en 'DWORD64' est de type signe ï¿½tendu.
     BOOL module_found = ::Module32First(snap, &module_entry);
     while (module_found) {
         DWORD64 succeed = dbghelp.SymLoadModuleExW()(
@@ -225,7 +225,7 @@ void FCallstack::Decode(FDecodedCallstack* decoded, size_t hash, const TMemoryVi
     line64.SizeOfStruct = sizeof(IMAGEHLP_LINEW64);
 
 #pragma warning( push )
-#pragma warning( disable : 4826 ) // warning C4826: La conversion de 'unsigned char *const ' en 'DWORD64' est de type signe étendu.
+#pragma warning( disable : 4826 ) // warning C4826: La conversion de 'unsigned char *const ' en 'DWORD64' est de type signe ï¿½tendu.
     void* const* address = frames.data();
     auto frame = reinterpret_cast<FDecodedCallstack::FFrame *>(&decoded->_frames);
     for (size_t i = 0; i < frames.size(); ++i, ++frame, ++address) {

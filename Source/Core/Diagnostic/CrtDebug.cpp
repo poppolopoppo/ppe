@@ -2,7 +2,7 @@
 
 #include "CrtDebug.h"
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 
 #include "Callstack.h"
 #include "DecodedCallstack.h"
@@ -445,4 +445,4 @@ bool CrtDumpMemoryStats(FCrtMemoryStats* memoryStats, void* heapHandle/* = nullp
 //----------------------------------------------------------------------------
 } //!namespace Core
 
-#endif //!OS_WINDOWS
+#endif //!PLATFORM_WINDOWS

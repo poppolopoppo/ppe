@@ -13,7 +13,7 @@
 #   define WITH_CORE_THREADCONTEXT_NAME
 #endif
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 #   include <Windows.h>
 #endif
 
@@ -90,7 +90,7 @@ static void SetWin32ThreadName_(const char* name) {
 #pragma warning(pop)
 //----------------------------------------------------------------------------
 static NO_INLINE void GuaranteeStackSizeForStackOverflowRecovery_() {
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
     ULONG stackSizeInBytes = 0;
     if(::SetThreadStackGuarantee(&stackSizeInBytes)) {
         stackSizeInBytes += 64*1024;
@@ -122,7 +122,7 @@ FThreadContext::~FThreadContext() {}
 //----------------------------------------------------------------------------
 size_t FThreadContext::AffinityMask() const {
     Assert(std::this_thread::get_id() == _threadId);
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
     HANDLE hThread = ::GetCurrentThread();
     DWORD_PTR affinityMask = ::SetThreadAffinityMask(hThread, 0xFFul);
     if (0 == affinityMask) {
@@ -142,7 +142,7 @@ void FThreadContext::SetAffinityMask(size_t mask) const {
     Assert(0 != mask);
     Assert(std::this_thread::get_id() == _threadId);
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
     HANDLE hThread = ::GetCurrentThread();
     DWORD_PTR affinityMask = ::SetThreadAffinityMask(hThread, mask);
     if (0 == affinityMask) {
@@ -157,7 +157,7 @@ void FThreadContext::SetAffinityMask(size_t mask) const {
 EThreadPriority FThreadContext::Priority() const {
     Assert(std::this_thread::get_id() == _threadId);
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
     HANDLE hThread = ::GetCurrentThread();
     switch (::GetThreadPriority(hThread))
     {
@@ -187,7 +187,7 @@ EThreadPriority FThreadContext::Priority() const {
 void FThreadContext::SetPriority(EThreadPriority priority) const {
 Assert(std::this_thread::get_id() == _threadId);
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
     HANDLE hThread = ::GetCurrentThread();
     int priorityWin32;
     switch (priority)

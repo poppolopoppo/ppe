@@ -6,7 +6,7 @@
 #   error "This file should not be included outside of Core.Network"
 #endif
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 
 #   ifndef _MSC_VER
 #       error "This source file is intended for Visual Studio"

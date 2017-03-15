@@ -2,7 +2,7 @@
 
 #include "Core/Core.h"
 
-#ifndef OS_WINDOWS
+#ifndef PLATFORM_WINDOWS
 #   error "invalid include !"
 #endif
 
@@ -11,7 +11,7 @@
 #include <mutex>
 
 #pragma warning(push)
-#pragma warning(disable: 4091) // 'typedef ' : ignoré à gauche de '' quand aucune variable n'est déclarée
+#pragma warning(disable: 4091) // 'typedef 'ï¿½: ignorï¿½ ï¿½ gauche de '' quand aucune variable n'est dï¿½clarï¿½e
 
 
 #include <Windows.h>

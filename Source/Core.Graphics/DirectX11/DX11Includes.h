@@ -17,7 +17,7 @@
 #   define WITH_DIRECTX11_DEBUG_MARKERS
 #endif
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 #   include <d3d11.h>
 #   include <dxgi.h>
 #   include <d3dx11.h>

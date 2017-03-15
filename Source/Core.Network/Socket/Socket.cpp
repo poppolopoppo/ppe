@@ -316,7 +316,7 @@ bool FSocket::SetTimeout(const FMilliseconds& timeout) {
     if (IsConnected()) {
         ::SOCKET sockfd = UnpackSocket_(_handle);
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
         // setup a DWORD in milliseconds
         DWORD time_to_wait = DWORD(_timeout.Value());
 
@@ -362,7 +362,7 @@ bool FSocket::MakeConnection(FSocket& socket, const FAddress& remoteHostnameOrIP
 }
 //----------------------------------------------------------------------------
 void FSocket::Start() {
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
     ::WSADATA wsaData;
     if (0 != ::WSAStartup(MAKEWORD(2,2), &wsaData))
         AssertNotReached();
@@ -370,7 +370,7 @@ void FSocket::Start() {
 }
 //----------------------------------------------------------------------------
 void FSocket::Shutdown() {
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
     ::WSACleanup();
 #endif
 }

@@ -84,7 +84,7 @@
 #include <iostream>
 #include <vector>
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 #   include <Windows.h>
 #else
 #   error "no support"

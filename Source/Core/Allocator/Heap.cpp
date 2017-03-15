@@ -2,7 +2,7 @@
 
 #include "Heap.h"
 
-#ifdef OS_WINDOWS
+#ifdef PLATFORM_WINDOWS
 #   include <windows.h>
 #   include <HeapApi.h>
 #else
