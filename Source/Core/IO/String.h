@@ -151,6 +151,65 @@ std::basic_ostream<_Char, _Traits>& operator <<(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename _Char, ECase _Sensitive>
+struct TCharEqualTo : public std::binary_function<const _Char, const _Char, bool> {
+    bool operator ()(const _Char& lhs, const _Char& rhs) const { return lhs == rhs; }
+};
+template <typename _Char>
+struct TCharEqualTo<_Char, ECase::Insensitive> : public std::binary_function<const _Char, const _Char, bool> {
+    bool operator ()(const _Char& lhs, const _Char& rhs) const { return ToLower(lhs) == ToLower(rhs); }
+};
+//----------------------------------------------------------------------------
+template <typename _Char, ECase _Sensitive>
+struct TCharLess : public std::binary_function<const _Char, const _Char, bool> {
+    bool operator ()(const _Char& lhs, const _Char& rhs) const { return lhs < rhs; }
+};
+template <typename _Char>
+struct TCharLess<_Char, ECase::Insensitive> : public std::binary_function<const _Char, const _Char, bool> {
+    bool operator ()(const _Char& lhs, const _Char& rhs) const { return ToLower(lhs) < ToLower(rhs); }
+};
+//----------------------------------------------------------------------------
+template <typename _Char, ECase _Sensitive>
+struct TCharCase : public std::unary_function<const _Char, _Char> {
+    _Char operator ()(const _Char& ch) const { return ch; }
+};
+template <typename _Char>
+struct TCharCase<_Char, ECase::Insensitive> : public std::unary_function<const _Char, _Char> {
+    _Char operator ()(const _Char& ch) const { return ToLower(ch); }
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _Char, ECase _Sensitive>
+struct TStringEqualTo : TStringViewEqualTo <_Char, _Sensitive> {
+    bool operator ()(const TBasicString<_Char>& lhs, const TBasicString<_Char>& rhs) const {
+        return TStringViewEqualTo <_Char, _Sensitive>::operator ()(lhs.MakeView(), rhs.MakeView());
+    }
+};
+//----------------------------------------------------------------------------
+template <typename _Char, ECase _Sensitive>
+struct TStringLess : TStringViewLess <_Char, _Sensitive> {
+    bool operator ()(const TBasicString<_Char>& lhs, const TBasicString<_Char>& rhs) const {
+        return TStringViewLess <_Char, _Sensitive>::operator ()(lhs.MakeView(), rhs.MakeView());
+    }
+};
+//----------------------------------------------------------------------------
+template <typename _Char, ECase _Sensitive>
+struct TStringHasher : TStringViewHasher<_Char, _Sensitive> {
+    size_t operator ()(const TBasicString<_Char>& str) const {
+        return TStringViewHasher<_Char, _Sensitive>::operator ()(str.MakeView());
+    }
+};
+//----------------------------------------------------------------------------
+template <typename _Char, ECase _Sensitive>
+using TBasicStringHashMemoizer = THashMemoizer<
+    TBasicString<_Char>,
+    TStringHasher<_Char, _Sensitive>,
+    TStringEqualTo<_Char, _Sensitive>
+>;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Core
 
 #include "Core/IO/String-inl.h"
