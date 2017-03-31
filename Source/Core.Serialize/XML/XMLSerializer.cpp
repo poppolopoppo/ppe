@@ -351,7 +351,6 @@ private:
     HASHSET_THREAD_LOCAL(Serialize, RTTI::PCMetaObject) _exported;
     VECTORINSITU_THREAD_LOCAL(Serialize, RTTI::PCMetaObject, 8) _queue;
 };
-
 //----------------------------------------------------------------------------
 void FXMLSerialize_::QueueObject(const RTTI::FMetaObject* object) {
     AssertRelease(object);

@@ -100,7 +100,7 @@ void FContentFilterRegexp::RTTI_VerifyPredicates() const {
 #endif
 //----------------------------------------------------------------------------
 bool FContentFilterRegexp::Matches(const FWStringView& sourceFilename) const {
-    return FMatch(_compiled, sourceFilename);
+    return Match(_compiled, sourceFilename);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

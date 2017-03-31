@@ -20,15 +20,15 @@ class FXMLException : public Core::Serialize::FSerializeException {
 public:
     typedef Core::Serialize::FSerializeException parent_type;
 
-    FXMLException(const char *what, const FLexer::FLocation& site)
+    FXMLException(const char *what, const Lexer::FLocation& site)
         : parent_type(what), _site(site) {}
 
     virtual ~FXMLException() {}
 
-    const FLexer::FLocation& Site() const { return _site; }
+    const Lexer::FLocation& Site() const { return _site; }
 
 private:
-    FLexer::FLocation _site;
+    Lexer::FLocation _site;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

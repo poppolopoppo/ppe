@@ -550,16 +550,16 @@ static void TestLexerParser_() {
     Parser::FParserStartup parserStartup;
 
     Parser::TProduction< Parser::TEnumerable<
-        TTuple<  const FLexer::FMatch *,
-        const FLexer::FMatch *,
-        const FLexer::FMatch *>
+        TTuple<  const Lexer::FMatch *,
+        const Lexer::FMatch *,
+        const Lexer::FMatch *>
     > > p =
-    Parser::Expect(FLexer::FSymbol::Int)
-    .And(Parser::Expect(FLexer::FSymbol::Add)
-    .Or(Parser::Expect(FLexer::FSymbol::Sub))
-    .Or(Parser::Expect(FLexer::FSymbol::Mul))
-    .Or(Parser::Expect(FLexer::FSymbol::Div)))
-    .And(Parser::Expect(FLexer::FSymbol::Int))
+    Parser::Expect(Lexer::FSymbol::Int)
+    .And(Parser::Expect(Lexer::FSymbol::Add)
+    .Or(Parser::Expect(Lexer::FSymbol::Sub))
+    .Or(Parser::Expect(Lexer::FSymbol::Mul))
+    .Or(Parser::Expect(Lexer::FSymbol::Div)))
+    .And(Parser::Expect(Lexer::FSymbol::Int))
     .Many();
 
     VirtualFileSystemRoot& vfs = FVirtualFileSystem::Instance();
