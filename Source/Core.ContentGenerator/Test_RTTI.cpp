@@ -27,6 +27,7 @@
 #include "Core.Serialize/Lexer/Lexer.h"
 #include "Core.Serialize/Parser/Parser.h"
 #include "Core.Serialize/XML/XMLSerializer.h"
+#include "Core.Serialize/JSON/JSONSerializer.h"
 
 namespace Core {
 namespace ContentGenerator {
@@ -368,16 +369,16 @@ void FRTTIAtomRandomizer_::Randomize(RTTI::FMetaObject* pobject) {
 void Test_RTTI() {
     typedef FRTTITest_ test_type;
     //typedef FRTTITest2_ test_type;
-    static constexpr size_t test_count = 4;
+    static constexpr size_t test_count = 5;
 
     RTTI_NAMESPACE(Test).Start();
     {
-        const FFilename filename = L"Tmp:/robotapp.bin";
-        const FFilename filename2 = L"Tmp:/robotapp.raw";
+        const FFilename filename = L"Process:/robotapp.bin";
+        const FFilename filename2 = L"Process:/robotapp.raw";
 
         RTTI::FMetaTransaction input;
         {
-            FRTTIAtomRandomizer_ rand(4, 0xabadcafedeadbeefull);
+            FRTTIAtomRandomizer_ rand(test_count, 0xabadcafedeadbeefull);
             forrange(i, 0, test_count) {
                 TRefPtr<test_type> t = new test_type();
                 rand.Randomize(t.get());
@@ -394,6 +395,12 @@ void Test_RTTI() {
         {
             Serialize::FXMLSerializer s;
             auto oss = VFS_OpenBinaryWritable(L"Process:/robotapp.xml", AccessPolicy::Truncate);
+            s.Serialize(oss.get(), &input);
+        }
+
+        {
+            Serialize::FJSONSerializer s;
+            auto oss = VFS_OpenBinaryWritable(L"Process:/robotapp.json", AccessPolicy::Truncate);
             s.Serialize(oss.get(), &input);
         }
 
@@ -478,7 +485,7 @@ void Test_RTTI() {
 
             try {
                 FMemoryViewReader reader(line.Cast<const u8>());
-                FLexer::FLexer lexer(&reader, filename, true);
+                Lexer::FLexer lexer(&reader, filename, true);
                 Parser::FParseList input(&lexer);
 
                 Parser::PCParseItem item = Serialize::FGrammarStartup::Parse(input);
@@ -492,7 +499,7 @@ void Test_RTTI() {
                 else
                     Format(std::cerr, "parser error : {0}, {1}.\n", e.what(), e.Site());
             }
-            catch (const FLexer::FLexerException& e) {
+            catch (const Lexer::FLexerException& e) {
                 Format(std::cerr, "lexer error : <{0}>: {1}, {2}.\n", e.Match().Symbol()->CStr(), e.what(), e.Match().Site());
             }
         } while (true);

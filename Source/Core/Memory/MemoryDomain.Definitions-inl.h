@@ -29,6 +29,7 @@ MEMORY_DOMAIN_IMPL(Token,                               Core)
 //------------------------------------------------------------------------------
 MEMORY_DOMAIN_IMPL(Serialize,                           Core)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(Grammar,                 Serialize)
+MEMORY_DOMAIN_COLLAPSABLE_IMPL(JSON,                    Serialize)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(Lexer,                   Serialize)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(Parser,                  Serialize)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(Serializer,              Serialize)
