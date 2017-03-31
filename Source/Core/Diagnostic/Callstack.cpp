@@ -151,9 +151,8 @@ static void InitializeSymbols_(const FDbghelpWrapper::FLocked& dbghelp) {
     dbghelp.SymSetOptions()(options);
 
     // Force standard malloc, this is called at a very early stage for custom allocators
-    STATIC_CONST_INTEGRAL(size_t, SYMBOL_PATH_CAPACITY, 32 * MAX_PATH);
-    wchar_t *const symbol_path = (wchar_t*)std::malloc(SYMBOL_PATH_CAPACITY * sizeof(wchar_t));
-    memset(symbol_path, 0x0, SYMBOL_PATH_CAPACITY * sizeof(wchar_t));
+    STATIC_CONST_INTEGRAL(size_t, SYMBOL_PATH_CAPACITY, 8 * MAX_PATH);
+    wchar_t symbol_path[SYMBOL_PATH_CAPACITY] = { 0 };
 
     GetSymbolsPath_(symbol_path, SYMBOL_PATH_CAPACITY);
 
@@ -161,8 +160,6 @@ static void InitializeSymbols_(const FDbghelpWrapper::FLocked& dbghelp) {
     BOOL succeed = dbghelp.SymInitializeW()(process, symbol_path, FALSE);
 
     LOG(Info, L"[PDB] Path = '{0}' -> succeed = {1:A}", symbol_path, (FALSE != succeed));
-
-    std::free(symbol_path);
 
     if (FALSE == succeed)
         return;
@@ -278,8 +275,7 @@ size_t FCallstack::Capture(
     Assert(framesToSkip + framesToCapture <= 64 /* see RtlCaptureStackBackTrace() */);
     Assert(framesToCapture <= frames.size());
 
-    if (framesToCapture > MaxDepth)
-    {
+    if (framesToCapture > MaxDepth) {
         Assert(false);
         framesToCapture = MaxDepth;
     }
