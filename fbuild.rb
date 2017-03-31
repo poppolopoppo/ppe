@@ -227,10 +227,9 @@ SOURCE_FILES_PATTERN=/\.cpp$/
 MODIFIED_FILES_SRC=File.join(SOLUTION_ROOT, 'Source')
 MODIFIED_FILES_LIST=File.join(SOLUTION_ROOT, 'Build', '.modified_files')
 def git_modified_files()
-    outp = `git status --porcelain=v1 "#{MODIFIED_FILES_SRC}"`
+    outp = `git status --porcelain=v1 -u normal "#{MODIFIED_FILES_SRC}"`
     return outp.split("\n").collect! do |l|
         l.chomp!
-        status = l[0..1]
         fname = l[3..-1]
         next unless fname =~ SOURCE_FILES_PATTERN
         fname = File.join(SOLUTION_ROOT, fname)
