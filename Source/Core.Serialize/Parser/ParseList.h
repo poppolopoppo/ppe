@@ -9,7 +9,7 @@
 #include "Core/Container/Vector.h"
 
 namespace Core {
-namespace FLexer {
+namespace Lexer {
     class FLexer;
 }
 
@@ -19,7 +19,7 @@ namespace Parser {
 //----------------------------------------------------------------------------
 class FParseList {
 public:
-    FParseList(FLexer::FLexer *lexer);
+    FParseList(Lexer::FLexer *lexer);
     ~FParseList();
 
     FParseList(FParseList&& rvalue);
@@ -30,21 +30,21 @@ public:
 
     bool empty() const { return _matches.empty(); }
 
-    const FLexer::FLocation& Site() const { return _site; }
+    const Lexer::FLocation& Site() const { return _site; }
 
-    const FLexer::FMatch *Peek() const { return _current; }
-    FLexer::FSymbol::ETypeId PeekType() const { return (_current) ? _current->Symbol()->Type() : FLexer::FSymbol::Eof; }
+    const Lexer::FMatch *Peek() const { return _current; }
+    Lexer::FSymbol::ETypeId PeekType() const { return (_current) ? _current->Symbol()->Type() : Lexer::FSymbol::Eof; }
 
-    const VECTOR(Parser, FLexer::FMatch)& Matches() const { return _matches; }
+    const VECTOR(Parser, Lexer::FMatch)& Matches() const { return _matches; }
 
     void Reset();
-    void Seek(const FLexer::FMatch *match);
-    const FLexer::FMatch *Read();
+    void Seek(const Lexer::FMatch *match);
+    const Lexer::FMatch *Read();
 
 private:
-    FLexer::FLocation _site;
-    const FLexer::FMatch *_current;
-    VECTOR(Parser, FLexer::FMatch) _matches;
+    Lexer::FLocation _site;
+    const Lexer::FMatch *_current;
+    VECTOR(Parser, Lexer::FMatch) _matches;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

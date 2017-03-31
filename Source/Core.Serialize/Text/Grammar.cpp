@@ -484,59 +484,59 @@ private:
 //----------------------------------------------------------------------------
 FGrammarImpl::FGrammarImpl()
 :   _literal(
-        Parser::Expect(FLexer::FSymbol::Nil).Select<Parser::PCParseExpression>([](const FLexer::FMatch *&& m) -> Parser::PCParseExpression {
+        Parser::Expect(Lexer::FSymbol::Nil).Select<Parser::PCParseExpression>([](const Lexer::FMatch *&& m) -> Parser::PCParseExpression {
         Assert(m);
         return Parser::MakeLiteral(FParseObject(), m->Site());
     })
-    .Or(Parser::Expect(FLexer::FSymbol::True).Select<Parser::PCParseExpression>([](const FLexer::FMatch *&& m) -> Parser::PCParseExpression {
+    .Or(Parser::Expect(Lexer::FSymbol::True).Select<Parser::PCParseExpression>([](const Lexer::FMatch *&& m) -> Parser::PCParseExpression {
         Assert(m);
         return Parser::MakeLiteral(true, m->Site());
     }))
-    .Or(Parser::Expect(FLexer::FSymbol::False).Select<Parser::PCParseExpression>([](const FLexer::FMatch *&& m) -> Parser::PCParseExpression {
+    .Or(Parser::Expect(Lexer::FSymbol::False).Select<Parser::PCParseExpression>([](const Lexer::FMatch *&& m) -> Parser::PCParseExpression {
         Assert(m);
         return Parser::MakeLiteral(false, m->Site());
     }))
-    .Or(Parser::Expect(FLexer::FSymbol::Int).Select<Parser::PCParseExpression>([](const FLexer::FMatch *&& m) -> Parser::PCParseExpression {
+    .Or(Parser::Expect(Lexer::FSymbol::Int).Select<Parser::PCParseExpression>([](const Lexer::FMatch *&& m) -> Parser::PCParseExpression {
         Assert(m && m->Value().size());
         const int64_t value = atoll(m->Value().c_str());
         return Parser::MakeLiteral(value, m->Site());
     }))
-    .Or(Parser::Expect(FLexer::FSymbol::Float).Select<Parser::PCParseExpression>([](const FLexer::FMatch *&& m) -> Parser::PCParseExpression {
+    .Or(Parser::Expect(Lexer::FSymbol::Float).Select<Parser::PCParseExpression>([](const Lexer::FMatch *&& m) -> Parser::PCParseExpression {
         Assert(m && m->Value().size());
         const double value = atof(m->Value().c_str());
         return Parser::MakeLiteral(value, m->Site());
     }))
-    .Or(Parser::Expect(FLexer::FSymbol::String).Select<Parser::PCParseExpression>([](const FLexer::FMatch *&& m) -> Parser::PCParseExpression {
+    .Or(Parser::Expect(Lexer::FSymbol::String).Select<Parser::PCParseExpression>([](const Lexer::FMatch *&& m) -> Parser::PCParseExpression {
         Assert(m/* && m->Value().size()*//* strings can be empty */);
         return Parser::MakeLiteral(m->Value(), m->Site());
     }))
     )
 
 ,   _variable(
-        Parser::Expect(FLexer::FSymbol::Identifier).Select<Parser::PCParseExpression>([](const FLexer::FMatch *&& m) -> Parser::PCParseExpression {
+        Parser::Expect(Lexer::FSymbol::Identifier).Select<Parser::PCParseExpression>([](const Lexer::FMatch *&& m) -> Parser::PCParseExpression {
         Assert(m && m->Value().size());
         return Parser::MakeVariableReference(RTTI::FName(m->Value()), m->Site());
     })
-    .Or(        Parser::Expect(FLexer::FSymbol::Dollar)
-            .Or(Parser::Expect(FLexer::FSymbol::Complement))
-        .And(  (    Parser::Expect(FLexer::FSymbol::Div)
-            .And(   Parser::Expect(FLexer::FSymbol::Identifier))
+    .Or(        Parser::Expect(Lexer::FSymbol::Dollar)
+            .Or(Parser::Expect(Lexer::FSymbol::Complement))
+        .And(  (    Parser::Expect(Lexer::FSymbol::Div)
+            .And(   Parser::Expect(Lexer::FSymbol::Identifier))
                ).AtLeastOnce())
-        .Select<Parser::PCParseExpression>([](const TTuple<const FLexer::FMatch *, Parser::TEnumerable<TTuple<const FLexer::FMatch *, const FLexer::FMatch *> > >& args) -> Parser::PCParseExpression {
-            const FLexer::FMatch *root = std::get<0>(args);
-            const Parser::TEnumerable<TTuple<const FLexer::FMatch *, const FLexer::FMatch *> >& path = std::get<1>(args);
+        .Select<Parser::PCParseExpression>([](const TTuple<const Lexer::FMatch *, Parser::TEnumerable<TTuple<const Lexer::FMatch *, const Lexer::FMatch *> > >& args) -> Parser::PCParseExpression {
+            const Lexer::FMatch *root = std::get<0>(args);
+            const Parser::TEnumerable<TTuple<const Lexer::FMatch *, const Lexer::FMatch *> >& path = std::get<1>(args);
 
             STACKLOCAL_OCSTRSTREAM(oss, 256);
 
-            if (FLexer::FSymbol::Dollar == root->Symbol()->Type())
+            if (Lexer::FSymbol::Dollar == root->Symbol()->Type())
                 oss << '$';
-            else if (FLexer::FSymbol::Complement == root->Symbol()->Type())
+            else if (Lexer::FSymbol::Complement == root->Symbol()->Type())
                 oss << '~'; // TODO : namespace name
             else
                 Assert(false);
 
             for (const auto& it : path) {
-                Assert(FLexer::FSymbol::Div == std::get<0>(it)->Symbol()->Type());
+                Assert(Lexer::FSymbol::Div == std::get<0>(it)->Symbol()->Type());
                 oss << '/' << std::get<1>(it)->Value();
             }
 
@@ -545,14 +545,14 @@ FGrammarImpl::FGrammarImpl()
     ))
 
 ,   _object(
-            Parser::Expect(FLexer::FSymbol::Identifier)
-    .And(   Parser::Expect(FLexer::FSymbol::LParenthese))
+            Parser::Expect(Lexer::FSymbol::Identifier)
+    .And(   Parser::Expect(Lexer::FSymbol::LParenthese))
     .And(       _property.Ref()
             .Or(_statement.Ref())
             .Many() )
-    .And(   Parser::Expect(FLexer::FSymbol::RParenthese))
-    .Select<Parser::PCParseExpression>([](const TTuple<const FLexer::FMatch *, const FLexer::FMatch *, const Parser::TEnumerable<Parser::PCParseStatement>, const FLexer::FMatch *>& args) -> Parser::PCParseExpression {
-        const FLexer::FMatch *name = std::get<0>(args);
+    .And(   Parser::Expect(Lexer::FSymbol::RParenthese))
+    .Select<Parser::PCParseExpression>([](const TTuple<const Lexer::FMatch *, const Lexer::FMatch *, const Parser::TEnumerable<Parser::PCParseStatement>, const Lexer::FMatch *>& args) -> Parser::PCParseExpression {
+        const Lexer::FMatch *name = std::get<0>(args);
         const Parser::TEnumerable<Parser::PCParseStatement>& statements = std::get<2>(args);
 
         Assert(name);
@@ -564,20 +564,20 @@ FGrammarImpl::FGrammarImpl()
     _literal.Ref()
     .Or(_object.Ref())
     .Or(_variable.Ref())
-    .Or(Parser::Expect(FLexer::FSymbol::LParenthese).And(_expr.Ref()).And(Parser::Expect(FLexer::FSymbol::RParenthese))
-        .Select<Parser::PCParseExpression>([](const TTuple<const FLexer::FMatch *, Parser::PCParseExpression, const FLexer::FMatch *>& args) -> Parser::PCParseExpression {
+    .Or(Parser::Expect(Lexer::FSymbol::LParenthese).And(_expr.Ref()).And(Parser::Expect(Lexer::FSymbol::RParenthese))
+        .Select<Parser::PCParseExpression>([](const TTuple<const Lexer::FMatch *, Parser::PCParseExpression, const Lexer::FMatch *>& args) -> Parser::PCParseExpression {
             return std::get<1>(args);
         })
     ))
 
 ,   _member(
             _rvalue.Ref()
-    .And(       Parser::Expect(FLexer::FSymbol::Dot)
-        .And(   Parser::Expect(FLexer::FSymbol::Identifier))
+    .And(       Parser::Expect(Lexer::FSymbol::Dot)
+        .And(   Parser::Expect(Lexer::FSymbol::Identifier))
         .Many())
-        .Select<Parser::PCParseExpression>([](const TTuple<Parser::PCParseExpression, Parser::TEnumerable<TTuple<const FLexer::FMatch *, const FLexer::FMatch *> > >& args) -> Parser::PCParseExpression {
+        .Select<Parser::PCParseExpression>([](const TTuple<Parser::PCParseExpression, Parser::TEnumerable<TTuple<const Lexer::FMatch *, const Lexer::FMatch *> > >& args) -> Parser::PCParseExpression {
             const Parser::PCParseExpression& rvalue = std::get<0>(args);
-            const Parser::TEnumerable<TTuple<const FLexer::FMatch *, const FLexer::FMatch *> >& members = std::get<1>(args);
+            const Parser::TEnumerable<TTuple<const Lexer::FMatch *, const Lexer::FMatch *> >& members = std::get<1>(args);
 
             Assert(rvalue);
             if (members.empty())
@@ -585,8 +585,8 @@ FGrammarImpl::FGrammarImpl()
 
             Parser::PCParseExpression result = rvalue;
             for (const auto& it : members) {
-                const FLexer::FMatch *dot = std::get<0>(it);
-                const FLexer::FMatch *member = std::get<1>(it);
+                const Lexer::FMatch *dot = std::get<0>(it);
+                const Lexer::FMatch *member = std::get<1>(it);
 
                 Assert(dot);
                 Assert(member);
@@ -599,18 +599,18 @@ FGrammarImpl::FGrammarImpl()
     )
 
 ,   _pow(
-    _member.Ref().And(Parser::Expect(FLexer::FSymbol::Pow).And(_member.Ref()).Many())
-        .Select<Parser::PCParseExpression>([](const TTuple<Parser::PCParseExpression, Parser::TEnumerable<TTuple<const FLexer::FMatch *, Parser::PCParseExpression> > >& args) -> Parser::PCParseExpression {
+    _member.Ref().And(Parser::Expect(Lexer::FSymbol::Pow).And(_member.Ref()).Many())
+        .Select<Parser::PCParseExpression>([](const TTuple<Parser::PCParseExpression, Parser::TEnumerable<TTuple<const Lexer::FMatch *, Parser::PCParseExpression> > >& args) -> Parser::PCParseExpression {
             const Parser::PCParseExpression& lhs = std::get<0>(args);
-            const Parser::TEnumerable<TTuple<const FLexer::FMatch *, Parser::PCParseExpression> >& ops = std::get<1>(args);
+            const Parser::TEnumerable<TTuple<const Lexer::FMatch *, Parser::PCParseExpression> >& ops = std::get<1>(args);
 
             Parser::PCParseExpression result = lhs;
 
             for (const auto& it : ops) {
-                const FLexer::FMatch *op = std::get<0>(it);
+                const Lexer::FMatch *op = std::get<0>(it);
                 const Parser::PCParseExpression& rhs = std::get<1>(it);
 
-                Assert(FLexer::FSymbol::Pow == op->Symbol()->Type());
+                Assert(Lexer::FSymbol::Pow == op->Symbol()->Type());
                 result = Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Pow>(), result.get(), rhs.get(), op->Site());
             }
 
@@ -620,34 +620,34 @@ FGrammarImpl::FGrammarImpl()
 
 ,   _unary(
     Parser::ExpectMask(
-        FLexer::FSymbol::Add
-    |   FLexer::FSymbol::Sub
-    |   FLexer::FSymbol::TNot
-    |   FLexer::FSymbol::Complement)
+        Lexer::FSymbol::Add
+    |   Lexer::FSymbol::Sub
+    |   Lexer::FSymbol::TNot
+    |   Lexer::FSymbol::Complement)
     .Many()
     .And(_pow.Ref())
-        .Select<Parser::PCParseExpression>([](const TTuple<Parser::TEnumerable<const FLexer::FMatch *>, Parser::PCParseExpression>& args) -> Parser::PCParseExpression {
-            const Parser::TEnumerable<const FLexer::FMatch *>& ops = std::get<0>(args);
+        .Select<Parser::PCParseExpression>([](const TTuple<Parser::TEnumerable<const Lexer::FMatch *>, Parser::PCParseExpression>& args) -> Parser::PCParseExpression {
+            const Parser::TEnumerable<const Lexer::FMatch *>& ops = std::get<0>(args);
             const Parser::PCParseExpression& expr = std::get<1>(args);
 
             Parser::PCParseExpression result = expr;
 
-            for (const FLexer::FMatch *op : ops) {
+            for (const Lexer::FMatch *op : ops) {
                 switch (op->Symbol()->Type())
                 {
-                case FLexer::FSymbol::Add:
+                case Lexer::FSymbol::Add:
                     return expr;
 
-                case FLexer::FSymbol::Sub:
+                case Lexer::FSymbol::Sub:
                     result = Parser::MakeUnaryFunction(TUnaryOp<TUnOp_Sub>(), result.get(), op->Site());
                     break;
 
-                case FLexer::FSymbol::TNot:
+                case Lexer::FSymbol::TNot:
                     result = Parser::MakeUnaryFunction(TUnaryOp<TUnOp_Not>(), result.get(), op->Site());
                     break;
 
                 default:
-                    Assert(FLexer::FSymbol::Complement == op->Symbol()->Type());
+                    Assert(Lexer::FSymbol::Complement == op->Symbol()->Type());
                     result = Parser::MakeUnaryFunction(TUnaryOp<TUnOp_Cpl>(), result.get(), op->Site());
                     break;
                 }
@@ -659,31 +659,31 @@ FGrammarImpl::FGrammarImpl()
 
 ,   _mulDivMod(
     _unary.Ref().And(Parser::ExpectMask(
-        FLexer::FSymbol::Mul
-    |   FLexer::FSymbol::Div
-    |   FLexer::FSymbol::Mod).And(_unary.Ref()).Many())
-    .Select<Parser::PCParseExpression>([](const TTuple<Parser::PCParseExpression, Parser::TEnumerable<TTuple<const FLexer::FMatch *, Parser::PCParseExpression> > >& args) -> Parser::PCParseExpression {
+        Lexer::FSymbol::Mul
+    |   Lexer::FSymbol::Div
+    |   Lexer::FSymbol::Mod).And(_unary.Ref()).Many())
+    .Select<Parser::PCParseExpression>([](const TTuple<Parser::PCParseExpression, Parser::TEnumerable<TTuple<const Lexer::FMatch *, Parser::PCParseExpression> > >& args) -> Parser::PCParseExpression {
         const Parser::PCParseExpression& lhs = std::get<0>(args);
-        const Parser::TEnumerable<TTuple<const FLexer::FMatch *, Parser::PCParseExpression> >& ops = std::get<1>(args);
+        const Parser::TEnumerable<TTuple<const Lexer::FMatch *, Parser::PCParseExpression> >& ops = std::get<1>(args);
 
         Parser::PCParseExpression result = lhs;
 
         for (const auto& it : ops) {
-            const FLexer::FMatch *op = std::get<0>(it);
+            const Lexer::FMatch *op = std::get<0>(it);
             const Parser::PCParseExpression& rhs = std::get<1>(it);
 
             switch (op->Symbol()->Type())
             {
-            case FLexer::FSymbol::Mul:
+            case Lexer::FSymbol::Mul:
                 result = Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Mul>(), result.get(), rhs.get(), op->Site());
                 break;
 
-            case FLexer::FSymbol::Div:
+            case Lexer::FSymbol::Div:
                 result = Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Div>(), result.get(), rhs.get(), op->Site());
                 break;
 
             default:
-                Assert(FLexer::FSymbol::Mod == op->Symbol()->Type());
+                Assert(Lexer::FSymbol::Mod == op->Symbol()->Type());
                 result = Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Mod>(), result.get(), rhs.get(), op->Site());
                 break;
             }
@@ -694,23 +694,23 @@ FGrammarImpl::FGrammarImpl()
 
 ,   _addSub(
     _mulDivMod.Ref().And(Parser::ExpectMask(
-        FLexer::FSymbol::Add
-    |   FLexer::FSymbol::Sub).And(_mulDivMod.Ref()).Many())
-    .Select<Parser::PCParseExpression>([](const TTuple<Parser::PCParseExpression, Parser::TEnumerable<TTuple<const FLexer::FMatch *, Parser::PCParseExpression> > >& args) -> Parser::PCParseExpression {
+        Lexer::FSymbol::Add
+    |   Lexer::FSymbol::Sub).And(_mulDivMod.Ref()).Many())
+    .Select<Parser::PCParseExpression>([](const TTuple<Parser::PCParseExpression, Parser::TEnumerable<TTuple<const Lexer::FMatch *, Parser::PCParseExpression> > >& args) -> Parser::PCParseExpression {
         const Parser::PCParseExpression& lhs = std::get<0>(args);
-        const Parser::TEnumerable<TTuple<const FLexer::FMatch *, Parser::PCParseExpression> >& ops = std::get<1>(args);
+        const Parser::TEnumerable<TTuple<const Lexer::FMatch *, Parser::PCParseExpression> >& ops = std::get<1>(args);
 
         Parser::PCParseExpression result = lhs;
 
         for (const auto& it : ops) {
-            const FLexer::FMatch *op = std::get<0>(it);
+            const Lexer::FMatch *op = std::get<0>(it);
             const Parser::PCParseExpression& rhs = std::get<1>(it);
 
-            if (op->Symbol()->Type() == FLexer::FSymbol::Add) {
+            if (op->Symbol()->Type() == Lexer::FSymbol::Add) {
                 result = Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Add>(), result.get(), rhs.get(), op->Site());
             }
             else {
-                Assert(op->Symbol()->Type() == FLexer::FSymbol::Sub);
+                Assert(op->Symbol()->Type() == Lexer::FSymbol::Sub);
                 result = Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Sub>(), result.get(), rhs.get(), op->Site());
             }
         }
@@ -720,23 +720,23 @@ FGrammarImpl::FGrammarImpl()
 
 ,   _lshRsh(
     _addSub.Ref().And(Parser::ExpectMask(
-        FLexer::FSymbol::LShift
-    |   FLexer::FSymbol::RShift).And(_addSub.Ref()).Many())
-    .Select<Parser::PCParseExpression>([](const TTuple<Parser::PCParseExpression, Parser::TEnumerable<TTuple<const FLexer::FMatch *, Parser::PCParseExpression> > >& args) -> Parser::PCParseExpression {
+        Lexer::FSymbol::LShift
+    |   Lexer::FSymbol::RShift).And(_addSub.Ref()).Many())
+    .Select<Parser::PCParseExpression>([](const TTuple<Parser::PCParseExpression, Parser::TEnumerable<TTuple<const Lexer::FMatch *, Parser::PCParseExpression> > >& args) -> Parser::PCParseExpression {
         const Parser::PCParseExpression& lhs = std::get<0>(args);
-        const Parser::TEnumerable<TTuple<const FLexer::FMatch *, Parser::PCParseExpression> >& ops = std::get<1>(args);
+        const Parser::TEnumerable<TTuple<const Lexer::FMatch *, Parser::PCParseExpression> >& ops = std::get<1>(args);
 
         Parser::PCParseExpression result = lhs;
 
         for (const auto& it : ops) {
-            const FLexer::FMatch *op = std::get<0>(it);
+            const Lexer::FMatch *op = std::get<0>(it);
             const Parser::PCParseExpression& rhs = std::get<1>(it);
 
-            if (op->Symbol()->Type() == FLexer::FSymbol::LShift) {
+            if (op->Symbol()->Type() == Lexer::FSymbol::LShift) {
                 result = Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Lsh>(), result.get(), rhs.get(), op->Site());
             }
             else {
-                Assert(op->Symbol()->Type() == FLexer::FSymbol::RShift);
+                Assert(op->Symbol()->Type() == Lexer::FSymbol::RShift);
                 result = Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Rsh>(), result.get(), rhs.get(), op->Site());
             }
         }
@@ -746,36 +746,36 @@ FGrammarImpl::FGrammarImpl()
 
 ,   _compare(
     _lshRsh.Ref().And(Parser::ExpectMask(
-        FLexer::FSymbol::Less
-    |   FLexer::FSymbol::LessOrEqual
-    |   FLexer::FSymbol::Greater
-    |   FLexer::FSymbol::GreaterOrEqual).And(_lshRsh.Ref()).Many())
-    .Select<Parser::PCParseExpression>([](const TTuple<Parser::PCParseExpression, Parser::TEnumerable<TTuple<const FLexer::FMatch *, Parser::PCParseExpression> > >& args) -> Parser::PCParseExpression {
+        Lexer::FSymbol::Less
+    |   Lexer::FSymbol::LessOrEqual
+    |   Lexer::FSymbol::Greater
+    |   Lexer::FSymbol::GreaterOrEqual).And(_lshRsh.Ref()).Many())
+    .Select<Parser::PCParseExpression>([](const TTuple<Parser::PCParseExpression, Parser::TEnumerable<TTuple<const Lexer::FMatch *, Parser::PCParseExpression> > >& args) -> Parser::PCParseExpression {
         const Parser::PCParseExpression& lhs = std::get<0>(args);
-        const Parser::TEnumerable<TTuple<const FLexer::FMatch *, Parser::PCParseExpression> >& ops = std::get<1>(args);
+        const Parser::TEnumerable<TTuple<const Lexer::FMatch *, Parser::PCParseExpression> >& ops = std::get<1>(args);
 
         Parser::PCParseExpression result = lhs;
 
         for (const auto& it : ops) {
-            const FLexer::FMatch *op = std::get<0>(it);
+            const Lexer::FMatch *op = std::get<0>(it);
             const Parser::PCParseExpression& rhs = std::get<1>(it);
 
             switch (op->Symbol()->Type())
             {
-            case FLexer::FSymbol::Less:
+            case Lexer::FSymbol::Less:
                 result = Parser::MakeBinaryFunction(TBinaryOp<FCmpOp_Less>(), result.get(), rhs.get(), op->Site());
                 break;
 
-            case FLexer::FSymbol::LessOrEqual:
+            case Lexer::FSymbol::LessOrEqual:
                 result = Parser::MakeBinaryFunction(TBinaryOp<FCmpOp_LessOrEqual>(), result.get(), rhs.get(), op->Site());
                 break;
 
-            case FLexer::FSymbol::Greater:
+            case Lexer::FSymbol::Greater:
                 result = Parser::MakeBinaryFunction(TBinaryOp<FCmpOp_Greater>(), result.get(), rhs.get(), op->Site());
                 break;
 
             default:
-                Assert(op->Symbol()->Type() == FLexer::FSymbol::GreaterOrEqual);
+                Assert(op->Symbol()->Type() == Lexer::FSymbol::GreaterOrEqual);
                 result = Parser::MakeBinaryFunction(TBinaryOp<FCmpOp_GreaterOrEqual>(), result.get(), rhs.get(), op->Site());
                 break;
             }
@@ -786,23 +786,23 @@ FGrammarImpl::FGrammarImpl()
 
 ,   _equalsNotEquals(
     _compare.Ref().And(Parser::ExpectMask(
-        FLexer::FSymbol::Equals
-    |   FLexer::FSymbol::NotEquals).And(_compare.Ref()).Many())
-    .Select<Parser::PCParseExpression>([](const TTuple<Parser::PCParseExpression, Parser::TEnumerable<TTuple<const FLexer::FMatch *, Parser::PCParseExpression> > >& args) -> Parser::PCParseExpression {
+        Lexer::FSymbol::Equals
+    |   Lexer::FSymbol::NotEquals).And(_compare.Ref()).Many())
+    .Select<Parser::PCParseExpression>([](const TTuple<Parser::PCParseExpression, Parser::TEnumerable<TTuple<const Lexer::FMatch *, Parser::PCParseExpression> > >& args) -> Parser::PCParseExpression {
         const Parser::PCParseExpression& lhs = std::get<0>(args);
-        const Parser::TEnumerable<TTuple<const FLexer::FMatch *, Parser::PCParseExpression> >& ops = std::get<1>(args);
+        const Parser::TEnumerable<TTuple<const Lexer::FMatch *, Parser::PCParseExpression> >& ops = std::get<1>(args);
 
         Parser::PCParseExpression result = lhs;
 
         for (const auto& it : ops) {
-            const FLexer::FMatch *op = std::get<0>(it);
+            const Lexer::FMatch *op = std::get<0>(it);
             const Parser::PCParseExpression& rhs = std::get<1>(it);
 
-            if (op->Symbol()->Type() == FLexer::FSymbol::Equals) {
+            if (op->Symbol()->Type() == Lexer::FSymbol::Equals) {
                 result = Parser::MakeBinaryFunction(TBinaryOp<FCmpOp_Equals>(), result.get(), rhs.get(), op->Site());
             }
             else {
-                Assert(op->Symbol()->Type() == FLexer::FSymbol::NotEquals);
+                Assert(op->Symbol()->Type() == Lexer::FSymbol::NotEquals);
                 result = Parser::MakeBinaryFunction(TBinaryOp<FCmpOp_NotEquals>(), result.get(), rhs.get(), op->Site());
             }
         }
@@ -811,18 +811,18 @@ FGrammarImpl::FGrammarImpl()
     }))
 
 ,   _and(
-    _equalsNotEquals.Ref().And(Parser::Expect(FLexer::FSymbol::And).And(_equalsNotEquals.Ref()).Many())
-    .Select<Parser::PCParseExpression>([](const TTuple<Parser::PCParseExpression, Parser::TEnumerable<TTuple<const FLexer::FMatch *, Parser::PCParseExpression> > >& args) -> Parser::PCParseExpression {
+    _equalsNotEquals.Ref().And(Parser::Expect(Lexer::FSymbol::And).And(_equalsNotEquals.Ref()).Many())
+    .Select<Parser::PCParseExpression>([](const TTuple<Parser::PCParseExpression, Parser::TEnumerable<TTuple<const Lexer::FMatch *, Parser::PCParseExpression> > >& args) -> Parser::PCParseExpression {
         const Parser::PCParseExpression& lhs = std::get<0>(args);
-        const Parser::TEnumerable<TTuple<const FLexer::FMatch *, Parser::PCParseExpression> >& ops = std::get<1>(args);
+        const Parser::TEnumerable<TTuple<const Lexer::FMatch *, Parser::PCParseExpression> >& ops = std::get<1>(args);
 
         Parser::PCParseExpression result = lhs;
 
         for (const auto& it : ops) {
-            const FLexer::FMatch *op = std::get<0>(it);
+            const Lexer::FMatch *op = std::get<0>(it);
             const Parser::PCParseExpression& rhs = std::get<1>(it);
 
-            Assert(op->Symbol()->Type() == FLexer::FSymbol::And);
+            Assert(op->Symbol()->Type() == Lexer::FSymbol::And);
             result = Parser::MakeBinaryFunction(TBinaryOp<TBinOp_And>(), result.get(), rhs.get(), op->Site());
         }
 
@@ -830,18 +830,18 @@ FGrammarImpl::FGrammarImpl()
     }))
 
 ,   _xor(
-    _and.Ref().And(Parser::Expect(FLexer::FSymbol::Xor).And(_and.Ref()).Many())
-    .Select<Parser::PCParseExpression>([](const TTuple<Parser::PCParseExpression, Parser::TEnumerable<TTuple<const FLexer::FMatch *, Parser::PCParseExpression> > >& args) -> Parser::PCParseExpression {
+    _and.Ref().And(Parser::Expect(Lexer::FSymbol::Xor).And(_and.Ref()).Many())
+    .Select<Parser::PCParseExpression>([](const TTuple<Parser::PCParseExpression, Parser::TEnumerable<TTuple<const Lexer::FMatch *, Parser::PCParseExpression> > >& args) -> Parser::PCParseExpression {
         const Parser::PCParseExpression& lhs = std::get<0>(args);
-        const Parser::TEnumerable<TTuple<const FLexer::FMatch *, Parser::PCParseExpression> >& ops = std::get<1>(args);
+        const Parser::TEnumerable<TTuple<const Lexer::FMatch *, Parser::PCParseExpression> >& ops = std::get<1>(args);
 
         Parser::PCParseExpression result = lhs;
 
         for (const auto& it : ops) {
-            const FLexer::FMatch *op = std::get<0>(it);
+            const Lexer::FMatch *op = std::get<0>(it);
             const Parser::PCParseExpression& rhs = std::get<1>(it);
 
-            Assert(op->Symbol()->Type() == FLexer::FSymbol::Xor);
+            Assert(op->Symbol()->Type() == Lexer::FSymbol::Xor);
             result = Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Xor>(), result.get(), rhs.get(), op->Site());
         }
 
@@ -849,18 +849,18 @@ FGrammarImpl::FGrammarImpl()
     }))
 
 ,   _or(
-    _xor.Ref().And(Parser::Expect(FLexer::FSymbol::Or).And(_xor.Ref()).Many())
-    .Select<Parser::PCParseExpression>([](const TTuple<Parser::PCParseExpression, Parser::TEnumerable<TTuple<const FLexer::FMatch *, Parser::PCParseExpression> > >& args) -> Parser::PCParseExpression {
+    _xor.Ref().And(Parser::Expect(Lexer::FSymbol::Or).And(_xor.Ref()).Many())
+    .Select<Parser::PCParseExpression>([](const TTuple<Parser::PCParseExpression, Parser::TEnumerable<TTuple<const Lexer::FMatch *, Parser::PCParseExpression> > >& args) -> Parser::PCParseExpression {
         const Parser::PCParseExpression& lhs = std::get<0>(args);
-        const Parser::TEnumerable<TTuple<const FLexer::FMatch *, Parser::PCParseExpression> >& ops = std::get<1>(args);
+        const Parser::TEnumerable<TTuple<const Lexer::FMatch *, Parser::PCParseExpression> >& ops = std::get<1>(args);
 
         Parser::PCParseExpression result = lhs;
 
         for (const auto& it : ops) {
-            const FLexer::FMatch *op = std::get<0>(it);
+            const Lexer::FMatch *op = std::get<0>(it);
             const Parser::PCParseExpression& rhs = std::get<1>(it);
 
-            Assert(op->Symbol()->Type() == FLexer::FSymbol::Or);
+            Assert(op->Symbol()->Type() == Lexer::FSymbol::Or);
             result = Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Or>(), result.get(), rhs.get(), op->Site());
         }
 
@@ -869,23 +869,23 @@ FGrammarImpl::FGrammarImpl()
 
 ,   _ternary(
     _or.And(
-                Parser::Expect(FLexer::FSymbol::Question)
+                Parser::Expect(Lexer::FSymbol::Question)
         .And(   _or.Ref())
-        .And(   Parser::Expect(FLexer::FSymbol::Colon))
+        .And(   Parser::Expect(Lexer::FSymbol::Colon))
         .And(   _or.Ref())
         .Many() )
-    .Select<Parser::PCParseExpression>([](const TTuple<Parser::PCParseExpression, Parser::TEnumerable<TTuple<const FLexer::FMatch *, Parser::PCParseExpression, const FLexer::FMatch *, Parser::PCParseExpression> > >& args) -> Parser::PCParseExpression {
+    .Select<Parser::PCParseExpression>([](const TTuple<Parser::PCParseExpression, Parser::TEnumerable<TTuple<const Lexer::FMatch *, Parser::PCParseExpression, const Lexer::FMatch *, Parser::PCParseExpression> > >& args) -> Parser::PCParseExpression {
         const Parser::PCParseExpression& lhs = std::get<0>(args);
-        const Parser::TEnumerable<TTuple<const FLexer::FMatch *, Parser::PCParseExpression, const FLexer::FMatch *, Parser::PCParseExpression> >& ops = std::get<1>(args);
+        const Parser::TEnumerable<TTuple<const Lexer::FMatch *, Parser::PCParseExpression, const Lexer::FMatch *, Parser::PCParseExpression> >& ops = std::get<1>(args);
 
         Parser::PCParseExpression result = lhs;
 
         for (const auto& it : ops) {
-            const FLexer::FMatch *question = std::get<0>(it);
-            const FLexer::FMatch *colon = std::get<2>(it);
+            const Lexer::FMatch *question = std::get<0>(it);
+            const Lexer::FMatch *colon = std::get<2>(it);
 
-            Assert(question && question->Symbol()->Type() == FLexer::FSymbol::Question);
-            Assert(colon && colon->Symbol()->Type() == FLexer::FSymbol::Colon);
+            Assert(question && question->Symbol()->Type() == Lexer::FSymbol::Question);
+            Assert(colon && colon->Symbol()->Type() == Lexer::FSymbol::Colon);
             UNUSED(colon);
 
             const Parser::PCParseExpression& ptrue = std::get<1>(it);
@@ -898,12 +898,12 @@ FGrammarImpl::FGrammarImpl()
     }))
 
     , _pair(
-                Parser::Expect(FLexer::FSymbol::LParenthese)
+                Parser::Expect(Lexer::FSymbol::LParenthese)
         .And(   _expr.Ref())
-        .And(   Parser::Expect(FLexer::FSymbol::Comma))
+        .And(   Parser::Expect(Lexer::FSymbol::Comma))
         .And(   _expr.Ref())
-        .And(   Parser::Expect(FLexer::FSymbol::RParenthese))
-    .Select<Parser::PCParseExpression>([](const TTuple<const FLexer::FMatch *, Parser::PCParseExpression, const FLexer::FMatch *, Parser::PCParseExpression, const FLexer::FMatch *> & args) -> Parser::PCParseExpression {
+        .And(   Parser::Expect(Lexer::FSymbol::RParenthese))
+    .Select<Parser::PCParseExpression>([](const TTuple<const Lexer::FMatch *, Parser::PCParseExpression, const Lexer::FMatch *, Parser::PCParseExpression, const Lexer::FMatch *> & args) -> Parser::PCParseExpression {
         const Parser::PCParseExpression& lhs = std::get<1>(args);
         const Parser::PCParseExpression& rhs = std::get<3>(args);
 
@@ -911,21 +911,21 @@ FGrammarImpl::FGrammarImpl()
     }))
 
 ,   _array(
-            Parser::Expect(FLexer::FSymbol::LBracket)
-    .And(   Parser::Expect(FLexer::FSymbol::RBracket))
-    .Select<Parser::PCParseExpression>([](const TTuple<const FLexer::FMatch *, const FLexer::FMatch *>& args) -> Parser::PCParseExpression {
-        const FLexer::FMatch *lbracket = std::get<0>(args);
+            Parser::Expect(Lexer::FSymbol::LBracket)
+    .And(   Parser::Expect(Lexer::FSymbol::RBracket))
+    .Select<Parser::PCParseExpression>([](const TTuple<const Lexer::FMatch *, const Lexer::FMatch *>& args) -> Parser::PCParseExpression {
+        const Lexer::FMatch *lbracket = std::get<0>(args);
 
         return Parser::MakeArray(TMemoryView<const Parser::PCParseExpression>(), lbracket->Site());
     })
-    .Or(    Parser::Expect(FLexer::FSymbol::LBracket)
+    .Or(    Parser::Expect(Lexer::FSymbol::LBracket)
     .And(   _expr.Ref())
-    .And(   Parser::Expect(FLexer::FSymbol::Comma).And(_expr.Ref()).Many() )
-    .And(   Parser::Expect(FLexer::FSymbol::RBracket))
-    .Select<Parser::PCParseExpression>([](const TTuple<const FLexer::FMatch *, Parser::PCParseExpression, Parser::TEnumerable<TTuple<const FLexer::FMatch *, Parser::PCParseExpression> >, const FLexer::FMatch *>& args) -> Parser::PCParseExpression {
-        const FLexer::FMatch *lbracket = std::get<0>(args);
+    .And(   Parser::Expect(Lexer::FSymbol::Comma).And(_expr.Ref()).Many() )
+    .And(   Parser::Expect(Lexer::FSymbol::RBracket))
+    .Select<Parser::PCParseExpression>([](const TTuple<const Lexer::FMatch *, Parser::PCParseExpression, Parser::TEnumerable<TTuple<const Lexer::FMatch *, Parser::PCParseExpression> >, const Lexer::FMatch *>& args) -> Parser::PCParseExpression {
+        const Lexer::FMatch *lbracket = std::get<0>(args);
         const Parser::PCParseExpression& item0 = std::get<1>(args);
-        const Parser::TEnumerable<TTuple<const FLexer::FMatch *, Parser::PCParseExpression> >& item1N = std::get<2>(args);
+        const Parser::TEnumerable<TTuple<const Lexer::FMatch *, Parser::PCParseExpression> >& item1N = std::get<2>(args);
 
         Parser::TArray *array = new Parser::TArray(lbracket->Site());
         array->reserve(1 + item1N.size());
@@ -942,21 +942,21 @@ FGrammarImpl::FGrammarImpl()
     ))
 
 ,   _dictionary(
-            Parser::Expect(FLexer::FSymbol::LBrace)
-    .And(   Parser::Expect(FLexer::FSymbol::RBrace))
-    .Select<Parser::PCParseExpression>([](const TTuple<const FLexer::FMatch *, const FLexer::FMatch *>& args) -> Parser::PCParseExpression {
-        const FLexer::FMatch *lbracket = std::get<0>(args);
+            Parser::Expect(Lexer::FSymbol::LBrace)
+    .And(   Parser::Expect(Lexer::FSymbol::RBrace))
+    .Select<Parser::PCParseExpression>([](const TTuple<const Lexer::FMatch *, const Lexer::FMatch *>& args) -> Parser::PCParseExpression {
+        const Lexer::FMatch *lbracket = std::get<0>(args);
 
         return Parser::MakeDictionary(TMemoryView<const TPair<Parser::PCParseExpression, Parser::PCParseExpression>>(), lbracket->Site());
     })
-        .Or(Parser::Expect(FLexer::FSymbol::LBrace)
+        .Or(Parser::Expect(Lexer::FSymbol::LBrace)
     .And(
-                Parser::Expect(FLexer::FSymbol::LParenthese)
+                Parser::Expect(Lexer::FSymbol::LParenthese)
         .And(   _expr.Ref())
-        .And(   Parser::Expect(FLexer::FSymbol::Comma))
+        .And(   Parser::Expect(Lexer::FSymbol::Comma))
         .And(   _expr.Ref())
-        .And(   Parser::Expect(FLexer::FSymbol::RParenthese))
-        .Select<TTuple<Parser::PCParseExpression, Parser::PCParseExpression> >([](const TTuple<const FLexer::FMatch *, Parser::PCParseExpression, const FLexer::FMatch *, Parser::PCParseExpression, const FLexer::FMatch *>& args) -> TTuple<Parser::PCParseExpression, Parser::PCParseExpression> {
+        .And(   Parser::Expect(Lexer::FSymbol::RParenthese))
+        .Select<TTuple<Parser::PCParseExpression, Parser::PCParseExpression> >([](const TTuple<const Lexer::FMatch *, Parser::PCParseExpression, const Lexer::FMatch *, Parser::PCParseExpression, const Lexer::FMatch *>& args) -> TTuple<Parser::PCParseExpression, Parser::PCParseExpression> {
             const Parser::PCParseExpression& lhs = std::get<1>(args);
             const Parser::PCParseExpression& rhs = std::get<3>(args);
 
@@ -964,13 +964,13 @@ FGrammarImpl::FGrammarImpl()
         })
         )
     .And(
-                Parser::Expect(FLexer::FSymbol::Comma)
-        .And(   Parser::Expect(FLexer::FSymbol::LParenthese))
+                Parser::Expect(Lexer::FSymbol::Comma)
+        .And(   Parser::Expect(Lexer::FSymbol::LParenthese))
         .And(   _expr.Ref())
-        .And(   Parser::Expect(FLexer::FSymbol::Comma))
+        .And(   Parser::Expect(Lexer::FSymbol::Comma))
         .And(   _expr.Ref())
-        .And(   Parser::Expect(FLexer::FSymbol::RParenthese))
-        .Select<TTuple<Parser::PCParseExpression, Parser::PCParseExpression> >([](const TTuple<const FLexer::FMatch *, const FLexer::FMatch *, Parser::PCParseExpression, const FLexer::FMatch *, Parser::PCParseExpression, const FLexer::FMatch *>& args) -> TTuple<Parser::PCParseExpression, Parser::PCParseExpression> {
+        .And(   Parser::Expect(Lexer::FSymbol::RParenthese))
+        .Select<TTuple<Parser::PCParseExpression, Parser::PCParseExpression> >([](const TTuple<const Lexer::FMatch *, const Lexer::FMatch *, Parser::PCParseExpression, const Lexer::FMatch *, Parser::PCParseExpression, const Lexer::FMatch *>& args) -> TTuple<Parser::PCParseExpression, Parser::PCParseExpression> {
             const Parser::PCParseExpression& lhs = std::get<2>(args);
             const Parser::PCParseExpression& rhs = std::get<4>(args);
 
@@ -978,9 +978,9 @@ FGrammarImpl::FGrammarImpl()
         })
         .Many()
         )
-    .And(   Parser::Expect(FLexer::FSymbol::RBrace))
-    .Select<Parser::PCParseExpression>([](const TTuple<const FLexer::FMatch *, Parser::PCParseExpression, Parser::PCParseExpression, Parser::TEnumerable<TTuple<Parser::PCParseExpression, Parser::PCParseExpression> >, const FLexer::FMatch *>& args) -> Parser::PCParseExpression {
-        const FLexer::FMatch *lbracket = std::get<0>(args);
+    .And(   Parser::Expect(Lexer::FSymbol::RBrace))
+    .Select<Parser::PCParseExpression>([](const TTuple<const Lexer::FMatch *, Parser::PCParseExpression, Parser::PCParseExpression, Parser::TEnumerable<TTuple<Parser::PCParseExpression, Parser::PCParseExpression> >, const Lexer::FMatch *>& args) -> Parser::PCParseExpression {
+        const Lexer::FMatch *lbracket = std::get<0>(args);
         const Parser::PCParseExpression& key0 = std::get<1>(args);
         const Parser::PCParseExpression& value0 = std::get<2>(args);
         const Parser::TEnumerable<TTuple<Parser::PCParseExpression, Parser::PCParseExpression> >& item1N = std::get<3>(args);
@@ -998,11 +998,11 @@ FGrammarImpl::FGrammarImpl()
     ))
 
 ,   _cast(
-            Parser::Expect(FLexer::FSymbol::Typename)
-    .And(   Parser::Expect(FLexer::FSymbol::Colon))
+            Parser::Expect(Lexer::FSymbol::Typename)
+    .And(   Parser::Expect(Lexer::FSymbol::Colon))
     .And(   _pair.Ref().Or(_array.Ref()).Or(_dictionary.Ref()).Or(_ternary.Ref()).Or(_cast.Ref()) )
-        .Select<Parser::PCParseExpression>([](const TTuple<const FLexer::FMatch *, const FLexer::FMatch *, Parser::PCParseExpression>& args) -> Parser::PCParseExpression {
-            const FLexer::FMatch *typename_ = std::get<0>(args);
+        .Select<Parser::PCParseExpression>([](const TTuple<const Lexer::FMatch *, const Lexer::FMatch *, Parser::PCParseExpression>& args) -> Parser::PCParseExpression {
+            const Lexer::FMatch *typename_ = std::get<0>(args);
             const Parser::PCParseExpression& value = std::get<2>(args);
 
             Assert(typename_);
@@ -1013,13 +1013,13 @@ FGrammarImpl::FGrammarImpl()
     )
 
 ,   _export(
-            Parser::Optional(FLexer::FSymbol::Export)
-    .And(   Parser::Expect(FLexer::FSymbol::Identifier))
-    .And(   Parser::Expect(FLexer::FSymbol::Is))
+            Parser::Optional(Lexer::FSymbol::Export)
+    .And(   Parser::Expect(Lexer::FSymbol::Identifier))
+    .And(   Parser::Expect(Lexer::FSymbol::Is))
     .And(   _cast.Ref().Or(_pair.Ref()).Or(_array.Ref()).Or(_dictionary.Ref()).Or(_ternary.Ref()))
-        .Select<Parser::PCParseExpression>([](const TTuple<const FLexer::FMatch *, const FLexer::FMatch *, const FLexer::FMatch *, Parser::PCParseExpression>& args) -> Parser::PCParseExpression {
-            const FLexer::FMatch *exportIFP = std::get<0>(args);
-            const FLexer::FMatch *name = std::get<1>(args);
+        .Select<Parser::PCParseExpression>([](const TTuple<const Lexer::FMatch *, const Lexer::FMatch *, const Lexer::FMatch *, Parser::PCParseExpression>& args) -> Parser::PCParseExpression {
+            const Lexer::FMatch *exportIFP = std::get<0>(args);
+            const Lexer::FMatch *name = std::get<1>(args);
             const Parser::PCParseExpression& value = std::get<3>(args);
 
             Assert(name);
@@ -1038,11 +1038,11 @@ FGrammarImpl::FGrammarImpl()
         )
 
 ,   _property(
-            Parser::Expect(FLexer::FSymbol::Identifier)
-    .And(   Parser::Expect(FLexer::FSymbol::Assignment))
+            Parser::Expect(Lexer::FSymbol::Identifier)
+    .And(   Parser::Expect(Lexer::FSymbol::Assignment))
     .And(   _expr.Ref())
-        .Select<Parser::PCParseStatement>([](const TTuple<const FLexer::FMatch *, const FLexer::FMatch *, Parser::PCParseExpression>& args) {
-            const FLexer::FMatch *name = std::get<0>(args);
+        .Select<Parser::PCParseStatement>([](const TTuple<const Lexer::FMatch *, const Lexer::FMatch *, Parser::PCParseExpression>& args) {
+            const Lexer::FMatch *name = std::get<0>(args);
             const Parser::PCParseExpression& value = std::get<2>(args);
 
             Assert(name);
@@ -1085,7 +1085,7 @@ void FGrammarStartup::Shutdown() {
 }
 //----------------------------------------------------------------------------
 void FGrammarStartup::ClearAll_UnusedMemory() {
-    FLexer::FLexerStartup::ClearAll_UnusedMemory();
+    Lexer::FLexerStartup::ClearAll_UnusedMemory();
     Parser::FParserStartup::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------

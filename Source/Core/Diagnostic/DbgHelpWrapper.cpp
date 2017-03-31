@@ -22,14 +22,14 @@ FDbghelpWrapper::FDbghelpWrapper()
 
     _library = ::LoadLibraryA("Dbghelp.dll");
     if (_library) {
-        _symInitializeW = (SymInitializeW_t)::GetProcAddress(_library, "SymInitializeW");
-        _symCleanup = (SymCleanup_t)::GetProcAddress(_library, "SymCleanup");
-        _symGetOptions = (SymGetOptions_t)::GetProcAddress(_library, "SymGetOptions");
-        _symSetOptions = (SymSetOptions_t)::GetProcAddress(_library, "SymSetOptions");
-        _symLoadModuleExW = (SymLoadModuleExW_t)::GetProcAddress(_library, "SymLoadModuleExW");
-        _symFromAddrW = (SymFromAddrW_t)::GetProcAddress(_library, "SymFromAddrW");
-        _symGetLineFromAddrW64 = (SymGetLineFromAddrW64_t)::GetProcAddress(_library, "SymGetLineFromAddrW64");
-        _miniDumpWriteDump = (MiniDumpWriteDump_t)::GetProcAddress(_library, "MiniDumpWriteDump");
+        _symInitializeW = (FSymInitializeW)::GetProcAddress(_library, "SymInitializeW");
+        _symCleanup = (FSymCleanup)::GetProcAddress(_library, "SymCleanup");
+        _symGetOptions = (FSymGetOptions)::GetProcAddress(_library, "SymGetOptions");
+        _symSetOptions = (FSymSetOptions)::GetProcAddress(_library, "SymSetOptions");
+        _symLoadModuleExW = (FSymLoadModuleExW)::GetProcAddress(_library, "SymLoadModuleExW");
+        _symFromAddrW = (FSymFromAddrW)::GetProcAddress(_library, "SymFromAddrW");
+        _symGetLineFromAddrW64 = (FSymGetLineFromAddrW64)::GetProcAddress(_library, "SymGetLineFromAddrW64");
+        _miniDumpWriteDump = (FMiniDumpWriteDump)::GetProcAddress(_library, "MiniDumpWriteDump");
 
         Assert(_symInitializeW);
         Assert(_symCleanup);

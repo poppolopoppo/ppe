@@ -22,7 +22,7 @@ public:
 
 #if WITH_CORE_EXCEPTION_CALLSTACK
     size_t SiteHash() const { return _siteHash; }
-    FDecodedCallstack FCallstack() const;
+    FDecodedCallstack Callstack() const;
 #endif
 
 private:

@@ -20,10 +20,10 @@ namespace  {
 namespace Token_ {
 STATIC_CONST_INTEGRAL(char, Assignment, '=');
 STATIC_CONST_INTEGRAL(char, Div,        '/');
-STATIC_CONST_INTEGRAL(char, TGreater,    '>');
-STATIC_CONST_INTEGRAL(char, TLess,       '<');
+STATIC_CONST_INTEGRAL(char, Greater,    '>');
+STATIC_CONST_INTEGRAL(char, Less,       '<');
 STATIC_CONST_INTEGRAL(char, Minus,      '-');
-STATIC_CONST_INTEGRAL(char, TNot,        '!');
+STATIC_CONST_INTEGRAL(char, Not,        '!');
 STATIC_CONST_INTEGRAL(char, Question,   '?');
 STATIC_CONST_INTEGRAL(char, Quote,      '"');
 } //!Token_
@@ -32,7 +32,7 @@ static bool IsIdentifierCharset_(char ch) {
     return (IsAlnum(ch) || '_' == ch);
 }
 //----------------------------------------------------------------------------
-static void ExpectChar_(FLexer::FLookAheadReader& reader, char expected) {
+static void ExpectChar_(Lexer::FLookAheadReader& reader, char expected) {
     Assert(0 != expected);
 
     reader.EatWhiteSpaces();
@@ -43,7 +43,7 @@ static void ExpectChar_(FLexer::FLookAheadReader& reader, char expected) {
     reader.Read();
 }
 //----------------------------------------------------------------------------
-static void ExpectToken_(FLexer::FLookAheadReader& reader, const FStringView& id) {
+static void ExpectToken_(Lexer::FLookAheadReader& reader, const FStringView& id) {
     Assert(id.size());
 
     reader.EatWhiteSpaces();
@@ -54,7 +54,7 @@ static void ExpectToken_(FLexer::FLookAheadReader& reader, const FStringView& id
     }
 }
 //----------------------------------------------------------------------------
-static bool ReadIdentifier_(FLexer::FLookAheadReader& reader, FString& id) {
+static bool ReadIdentifier_(Lexer::FLookAheadReader& reader, FString& id) {
     Assert(id.empty());
 
     reader.EatWhiteSpaces();
@@ -69,13 +69,13 @@ static bool ReadIdentifier_(FLexer::FLookAheadReader& reader, FString& id) {
     return true;
 }
 //----------------------------------------------------------------------------
-static void ExpectIdentifier_(FLexer::FLookAheadReader& reader, FString& id) {
-    const FLexer::FLocation site = reader.SourceSite();
+static void ExpectIdentifier_(Lexer::FLookAheadReader& reader, FString& id) {
+    const Lexer::FLocation site = reader.SourceSite();
     if (false == ReadIdentifier_(reader, id))
         CORE_THROW_IT(FXMLException("expected an identitfer", site));
 }
 //----------------------------------------------------------------------------
-static bool ReadString_(FLexer::FLookAheadReader& reader, FString& str) {
+static bool ReadString_(Lexer::FLookAheadReader& reader, FString& str) {
     Assert(str.empty());
 
     reader.EatWhiteSpaces();
@@ -83,7 +83,7 @@ static bool ReadString_(FLexer::FLookAheadReader& reader, FString& str) {
     if (reader.Peek() != Token_::Quote)
         return false;
 
-    const FLexer::FLocation site = reader.SourceSite();
+    const Lexer::FLocation site = reader.SourceSite();
 
     reader.SeekFwd(1);
 
@@ -96,19 +96,19 @@ static bool ReadString_(FLexer::FLookAheadReader& reader, FString& str) {
     return true;
 }
 //----------------------------------------------------------------------------
-static void ExpectString_(FLexer::FLookAheadReader& reader, FString& str) {
-    const FLexer::FLocation site = reader.SourceSite();
+static void ExpectString_(Lexer::FLookAheadReader& reader, FString& str) {
+    const Lexer::FLocation site = reader.SourceSite();
     if (false == ReadString_(reader, str))
         CORE_THROW_IT(FXMLException("expected a string value", site));
 }
 //----------------------------------------------------------------------------
-static char PeekChar_(FLexer::FLookAheadReader& reader) {
+static char PeekChar_(Lexer::FLookAheadReader& reader) {
     reader.EatWhiteSpaces();
     return reader.Peek();
 }
 //----------------------------------------------------------------------------
-static void ReadHeader_(FLexer::FLookAheadReader& reader, FString& version, FString& encoding, FString& standalone) {
-    ExpectChar_(reader, Token_::TLess);
+static void ReadHeader_(Lexer::FLookAheadReader& reader, FString& version, FString& encoding, FString& standalone) {
+    ExpectChar_(reader, Token_::Less);
     ExpectChar_(reader, Token_::Question);
     ExpectToken_(reader, "xml");
 
@@ -140,7 +140,7 @@ static void ReadHeader_(FLexer::FLookAheadReader& reader, FString& version, FStr
     }
 
     ExpectChar_(reader, Token_::Question);
-    ExpectChar_(reader, Token_::TGreater);
+    ExpectChar_(reader, Token_::Greater);
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -191,7 +191,7 @@ bool FDocument::Load(FDocument* document, const FFilename& filename, IStreamRead
     document->_byIdentifier.clear();
 
     const FWString filenameStr(filename.ToWString());
-    FLexer::FLookAheadReader reader(input, filenameStr.c_str());
+    Lexer::FLookAheadReader reader(input, filenameStr.c_str());
 
     if (reader.Peek(0) == '<' && reader.Peek(1) == '?')
         ReadHeader_(reader, document->_version, document->_encoding, document->_standalone);
@@ -207,7 +207,7 @@ bool FDocument::Load(FDocument* document, const FFilename& filename, IStreamRead
 
     struct FReadElement_ {
         PElement Element;
-        FLexer::FLocation Site;
+        Lexer::FLocation Site;
 
         void RegisterIFN(const XML::FName& key, byidentifier_type& ids) {
             const auto elementId = Element->Attributes().Find(key);
@@ -221,7 +221,7 @@ bool FDocument::Load(FDocument* document, const FFilename& filename, IStreamRead
         }
 
         FReadElement_() {}
-        FReadElement_(const FString& start, const FLexer::FLocation& site)
+        FReadElement_(const FString& start, const Lexer::FLocation& site)
             : Element(new XML::FElement())
             , Site(site) {
             Element->SetType(XML::FName(start.MakeView()) );
@@ -233,9 +233,9 @@ bool FDocument::Load(FDocument* document, const FFilename& filename, IStreamRead
 
     FString eaten;
     while (char poken = PeekChar_(reader)) {
-        if (poken != Token_::TLess) {
+        if (poken != Token_::Less) {
             // XML inner text
-            const FLexer::FLocation site = reader.SourceSite();
+            const Lexer::FLocation site = reader.SourceSite();
             if (visited.empty())
                 CORE_THROW_IT(FXMLException("text without tag", site));
 
@@ -245,22 +245,22 @@ bool FDocument::Load(FDocument* document, const FFilename& filename, IStreamRead
             visited.back().Element->SetText(std::move(eaten));
         }
         else {
-            ExpectChar_(reader, Token_::TLess);
+            ExpectChar_(reader, Token_::Less);
 
             // XML comment
-            if (PeekChar_(reader) == Token_::TNot) {
-                ExpectChar_(reader, Token_::TNot);
+            if (PeekChar_(reader) == Token_::Not) {
+                ExpectChar_(reader, Token_::Not);
                 ExpectChar_(reader, Token_::Minus);
                 ExpectChar_(reader, Token_::Minus);
 
-                const FLexer::FLocation site = reader.SourceSite();
+                const Lexer::FLocation site = reader.SourceSite();
 
                 if (not reader.SkipUntil(Token_::Minus))
                     CORE_THROW_IT(FXMLException("unterminated comment", site));
 
                 ExpectChar_(reader, Token_::Minus);
                 ExpectChar_(reader, Token_::Minus);
-                ExpectChar_(reader, Token_::TGreater);
+                ExpectChar_(reader, Token_::Greater);
 
                 continue;
             }
@@ -282,7 +282,7 @@ bool FDocument::Load(FDocument* document, const FFilename& filename, IStreamRead
                 visited.back().RegisterIFN(keyId, document->_byIdentifier);
                 visited.pop_back();
 
-                ExpectChar_(reader, Token_::TGreater);
+                ExpectChar_(reader, Token_::Greater);
 
                 continue;
             }
@@ -331,15 +331,15 @@ bool FDocument::Load(FDocument* document, const FFilename& filename, IStreamRead
             if (Token_::Div == poken) {
                 // XML short tag
                 ExpectChar_(reader, Token_::Div);
-                ExpectChar_(reader, Token_::TGreater);
+                ExpectChar_(reader, Token_::Greater);
 
                 it.RegisterIFN(keyId, document->_byIdentifier);
 
                 RemoveRef_AssertGreaterThanZero(it.Element);
             }
-            else if (Token_::TGreater == poken) {
+            else if (Token_::Greater == poken) {
                 // XML unclosed tag
-                ExpectChar_(reader, Token_::TGreater);
+                ExpectChar_(reader, Token_::Greater);
                 visited.emplace_back(std::move(it));
             }
             else {

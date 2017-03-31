@@ -20,7 +20,7 @@ namespace Parser {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FParseStatement::FParseStatement(const FLexer::FLocation& site)
+FParseStatement::FParseStatement(const Lexer::FLocation& site)
 :   FParseItem(site) {}
 //----------------------------------------------------------------------------
 FParseStatement::~FParseStatement() {}

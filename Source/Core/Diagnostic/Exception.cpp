@@ -23,7 +23,7 @@ FException::FException(const char* what) noexcept
 }
 //----------------------------------------------------------------------------
 #if WITH_CORE_EXCEPTION_CALLSTACK
-FDecodedCallstack FException::FCallstack() const {
+FDecodedCallstack FException::Callstack() const {
     size_t depth = 0;
     forrange(i, 0, lengthof(_callstack))
         if (nullptr == _callstack[depth])

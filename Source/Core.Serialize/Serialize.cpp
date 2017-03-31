@@ -21,7 +21,7 @@ void SerializeStartup::Start() {
     CORE_MODULE_START(Serialize);
 
     POOL_TAG(Serialize)::Start();
-    FLexer::FLexerStartup::Start();
+    Lexer::FLexerStartup::Start();
     Parser::FParserStartup::Start();
     FGrammarStartup::Start();
     XML::FXMLStartup::Start();
@@ -33,14 +33,14 @@ void SerializeStartup::Shutdown() {
     XML::FXMLStartup::Shutdown();
     FGrammarStartup::Shutdown();
     Parser::FParserStartup::Shutdown();
-    FLexer::FLexerStartup::Shutdown();
+    Lexer::FLexerStartup::Shutdown();
     POOL_TAG(Serialize)::Shutdown();
 }
 //----------------------------------------------------------------------------
 void SerializeStartup::ClearAll_UnusedMemory() {
     CORE_MODULE_CLEARALL(Serialize);
 
-    FLexer::FLexerStartup::ClearAll_UnusedMemory();
+    Lexer::FLexerStartup::ClearAll_UnusedMemory();
     Parser::FParserStartup::ClearAll_UnusedMemory();
     FGrammarStartup::ClearAll_UnusedMemory();
     XML::FXMLStartup::ClearAll_UnusedMemory();

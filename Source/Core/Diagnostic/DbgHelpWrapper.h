@@ -25,17 +25,17 @@ namespace Core {
 //----------------------------------------------------------------------------
 class FDbghelpWrapper : Meta::TSingleton<FDbghelpWrapper> {
 public:
-    typedef BOOL (WINAPI *SymInitializeW_t)(
+    typedef BOOL (WINAPI *FSymInitializeW)(
         _In_ HANDLE hProcess,
         _In_opt_ PCWSTR UserSearchPath,
         _In_ BOOL fInvadeProcess
         );
-    typedef BOOL (WINAPI *SymCleanup_t)(_In_ HANDLE hProcess);
+    typedef BOOL (WINAPI *FSymCleanup)(_In_ HANDLE hProcess);
 
-    typedef DWORD (WINAPI *SymGetOptions_t)(VOID);
-    typedef DWORD (WINAPI *SymSetOptions_t)(_In_ DWORD SymOptions);
+    typedef DWORD (WINAPI *FSymGetOptions)(VOID);
+    typedef DWORD (WINAPI *FSymSetOptions)(_In_ DWORD SymOptions);
 
-    typedef DWORD64 (WINAPI *SymLoadModuleExW_t)(
+    typedef DWORD64 (WINAPI *FSymLoadModuleExW)(
         _In_ HANDLE hProcess,
         _In_opt_ HANDLE hFile,
         _In_opt_ PCWSTR ImageName,
@@ -46,20 +46,20 @@ public:
         _In_opt_ DWORD EFlags
         );
 
-    typedef BOOL (WINAPI *SymGetLineFromAddrW64_t)(
+    typedef BOOL (WINAPI *FSymGetLineFromAddrW64)(
         _In_ HANDLE hProcess,
         _In_ DWORD64 dwAddr,
         _Out_ PDWORD pdwDisplacement,
         _Out_ PIMAGEHLP_LINEW64 Line
         );
-    typedef BOOL (WINAPI *SymFromAddrW_t)(
+    typedef BOOL (WINAPI *FSymFromAddrW)(
         _In_ HANDLE hProcess,
         _In_ DWORD64 FAddress,
         _Out_opt_ PDWORD64 Displacement,
         _Inout_ PSYMBOL_INFOW FSymbol
         );
 
-    typedef BOOL (WINAPI *MiniDumpWriteDump_t)(
+    typedef BOOL (WINAPI *FMiniDumpWriteDump)(
         HANDLE hProcess,
         DWORD ProcessId,
         HANDLE hFile,
@@ -77,18 +77,18 @@ public:
             Assert(_owner->Available());
         }
 
-        SymInitializeW_t SymInitializeW() const { return _owner->_symInitializeW; }
-        SymCleanup_t SymCleanup() const { return _owner->_symCleanup; }
+        FSymInitializeW SymInitializeW() const { return _owner->_symInitializeW; }
+        FSymCleanup SymCleanup() const { return _owner->_symCleanup; }
 
-        SymGetOptions_t SymGetOptions() const { return _owner->_symGetOptions; }
-        SymSetOptions_t SymSetOptions() const { return _owner->_symSetOptions; }
+        FSymGetOptions SymGetOptions() const { return _owner->_symGetOptions; }
+        FSymSetOptions SymSetOptions() const { return _owner->_symSetOptions; }
 
-        SymLoadModuleExW_t SymLoadModuleExW() const { return _owner->_symLoadModuleExW; }
+        FSymLoadModuleExW SymLoadModuleExW() const { return _owner->_symLoadModuleExW; }
 
-        SymFromAddrW_t SymFromAddrW() const { return _owner->_symFromAddrW; }
-        SymGetLineFromAddrW64_t SymGetLineFromAddrW64() const { return _owner->_symGetLineFromAddrW64; }
+        FSymFromAddrW SymFromAddrW() const { return _owner->_symFromAddrW; }
+        FSymGetLineFromAddrW64 SymGetLineFromAddrW64() const { return _owner->_symGetLineFromAddrW64; }
 
-        MiniDumpWriteDump_t MiniDumpWriteDump() const { return _owner->_miniDumpWriteDump; }
+        FMiniDumpWriteDump MiniDumpWriteDump() const { return _owner->_miniDumpWriteDump; }
 
     private:
         const FDbghelpWrapper* const _owner;
@@ -114,17 +114,17 @@ private:
 
     HMODULE _library;
 
-    SymInitializeW_t _symInitializeW;
-    SymCleanup_t _symCleanup;
+    FSymInitializeW _symInitializeW;
+    FSymCleanup _symCleanup;
 
-    SymGetOptions_t _symGetOptions;
-    SymSetOptions_t _symSetOptions;
-    SymLoadModuleExW_t _symLoadModuleExW;
+    FSymGetOptions _symGetOptions;
+    FSymSetOptions _symSetOptions;
+    FSymLoadModuleExW _symLoadModuleExW;
 
-    SymFromAddrW_t _symFromAddrW;
-    SymGetLineFromAddrW64_t _symGetLineFromAddrW64;
+    FSymFromAddrW _symFromAddrW;
+    FSymGetLineFromAddrW64 _symGetLineFromAddrW64;
 
-    MiniDumpWriteDump_t _miniDumpWriteDump;
+    FMiniDumpWriteDump _miniDumpWriteDump;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

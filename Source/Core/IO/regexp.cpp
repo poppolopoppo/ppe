@@ -22,11 +22,11 @@ WRegexp MakeRegexpI(const FWStringView& wstr) {
     return WRegexp(wstr.begin(), wstr.end(), WRegexp::ECMAScript|WRegexp::optimize|WRegexp::icase);
 }
 //----------------------------------------------------------------------------
-bool FMatch(const Regexp& exp, const FStringView& str) {
+bool Match(const Regexp& exp, const FStringView& str) {
     return std::regex_match(str.begin(), str.end(), exp, std::regex_constants::match_default);
 }
 //----------------------------------------------------------------------------
-bool FMatch(const WRegexp& exp, const FWStringView& wstr) {
+bool Match(const WRegexp& exp, const FWStringView& wstr) {
     return std::regex_match(wstr.begin(), wstr.end(), exp, std::regex_constants::match_default);
 }
 //----------------------------------------------------------------------------

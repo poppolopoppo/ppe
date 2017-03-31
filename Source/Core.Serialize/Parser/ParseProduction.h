@@ -46,7 +46,7 @@ struct TProduction : public std::unary_function<FParseList&, TParseResult<T> > {
     }
 
     TParseResult<T> TryParse(FParseList& input) const {
-        const FLexer::FMatch *state = input.Peek();
+        const Lexer::FMatch *state = input.Peek();
 
         TParseResult<T> result{ Lambda(input) };
         if (!result.Succeed())
@@ -108,7 +108,7 @@ struct TProduction : public std::unary_function<FParseList&, TParseResult<T> > {
     TProduction< TEnumerable<T> > Many() const {
         const TProduction& parser = *this;
         return TProduction< TEnumerable<T> >{[parser](FParseList& input) -> TParseResult< TEnumerable<T> > {
-            const FLexer::FMatch *offset = input.Peek();
+            const Lexer::FMatch *offset = input.Peek();
 
             TEnumerable<T> many;
             TParseResult<T> result;
@@ -122,7 +122,7 @@ struct TProduction : public std::unary_function<FParseList&, TParseResult<T> > {
     TProduction< TEnumerable<T> > AtLeastOnce() const {
         const TProduction& parser = *this;
         return TProduction< TEnumerable<T> >{[parser](FParseList& input) -> TParseResult< TEnumerable<T> > {
-            const FLexer::FMatch *offset = input.Peek();
+            const Lexer::FMatch *offset = input.Peek();
 
             TEnumerable<T> many;
             TParseResult<T> result;
@@ -131,7 +131,7 @@ struct TProduction : public std::unary_function<FParseList&, TParseResult<T> > {
 
             return (many.size())
                 ? TParseResult< TEnumerable<T> >::Success(std::move(many), offset ? offset->Site() : input.Site())
-                : TParseResult< TEnumerable<T> >::Failure("invalid match", FLexer::FSymbol::Invalid, offset ? offset->Site() : input.Site());
+                : TParseResult< TEnumerable<T> >::Failure("invalid match", Lexer::FSymbol::Invalid, offset ? offset->Site() : input.Site());
         }};
     }
 
@@ -175,53 +175,53 @@ struct TProduction : public std::unary_function<FParseList&, TParseResult<T> > {
     }
 };
 //----------------------------------------------------------------------------
-inline TProduction<const FLexer::FMatch *> Expect(FLexer::FSymbol::ETypeId symbol, const char *message = nullptr) {
-    return TProduction<const FLexer::FMatch *>{[symbol](FParseList& input) -> TParseResult<const FLexer::FMatch *> {
-        const FLexer::FMatch *match = input.Read();
+inline TProduction<const Lexer::FMatch *> Expect(Lexer::FSymbol::ETypeId symbol, const char *message = nullptr) {
+    return TProduction<const Lexer::FMatch *>{[symbol](FParseList& input) -> TParseResult<const Lexer::FMatch *> {
+        const Lexer::FMatch *match = input.Read();
 
         return (match && match->Symbol()->Type() == symbol)
-            ? TParseResult<const FLexer::FMatch *>::Success(match, match->Site())
-            : TParseResult<const FLexer::FMatch *>::Unexpected(symbol, match, input);
+            ? TParseResult<const Lexer::FMatch *>::Success(match, match->Site())
+            : TParseResult<const Lexer::FMatch *>::Unexpected(symbol, match, input);
     }};
 }
 //----------------------------------------------------------------------------
-inline TProduction<const FLexer::FMatch *> ExpectMask(uint64_t symbolMask, const char *message = nullptr) {
-    return TProduction<const FLexer::FMatch *>{[symbolMask](FParseList& input) -> TParseResult<const FLexer::FMatch *> {
-        const FLexer::FMatch *match = input.Read();
+inline TProduction<const Lexer::FMatch *> ExpectMask(uint64_t symbolMask, const char *message = nullptr) {
+    return TProduction<const Lexer::FMatch *>{[symbolMask](FParseList& input) -> TParseResult<const Lexer::FMatch *> {
+        const Lexer::FMatch *match = input.Read();
 
         return (match && match->Symbol()->Type() & symbolMask)
-            ? TParseResult<const FLexer::FMatch *>::Success(match, match->Site())
-            : TParseResult<const FLexer::FMatch *>::Unexpected(FLexer::FSymbol::ETypeId(symbolMask), match, input);
+            ? TParseResult<const Lexer::FMatch *>::Success(match, match->Site())
+            : TParseResult<const Lexer::FMatch *>::Unexpected(Lexer::FSymbol::ETypeId(symbolMask), match, input);
     }};
 }
 //----------------------------------------------------------------------------
-inline TProduction<const FLexer::FMatch *> Optional(FLexer::FSymbol::ETypeId symbol) {
-    return TProduction<const FLexer::FMatch *>{[symbol](FParseList& input) -> TParseResult<const FLexer::FMatch *> {
-        const FLexer::FMatch *match = input.Peek();
+inline TProduction<const Lexer::FMatch *> Optional(Lexer::FSymbol::ETypeId symbol) {
+    return TProduction<const Lexer::FMatch *>{[symbol](FParseList& input) -> TParseResult<const Lexer::FMatch *> {
+        const Lexer::FMatch *match = input.Peek();
         if (!match || match->Symbol()->Type() != symbol)
-            return TParseResult<const FLexer::FMatch *>::Success(nullptr, match ? match->Site() : input.Site());
+            return TParseResult<const Lexer::FMatch *>::Success(nullptr, match ? match->Site() : input.Site());
 
         Assert(match->Symbol()->Type() == symbol);
-        const FLexer::FMatch *consumed = input.Read(); // consumes match
+        const Lexer::FMatch *consumed = input.Read(); // consumes match
         Assert(consumed == match);
         UNUSED(consumed);
 
-        return TParseResult<const FLexer::FMatch *>::Success(match, match->Site());
+        return TParseResult<const Lexer::FMatch *>::Success(match, match->Site());
     }};
 }
 //----------------------------------------------------------------------------
-inline TProduction<const FLexer::FMatch *> OptionalMask(uint64_t symbolMask) {
-    return TProduction<const FLexer::FMatch *>{[symbolMask](FParseList& input) -> TParseResult<const FLexer::FMatch *> {
-        const FLexer::FMatch *match = input.Peek();
+inline TProduction<const Lexer::FMatch *> OptionalMask(uint64_t symbolMask) {
+    return TProduction<const Lexer::FMatch *>{[symbolMask](FParseList& input) -> TParseResult<const Lexer::FMatch *> {
+        const Lexer::FMatch *match = input.Peek();
         if (!match || 0 == (match->Symbol()->Type() & symbolMask) )
-            return TParseResult<const FLexer::FMatch *>::Success(nullptr, match ? match->Site() : input.Site());
+            return TParseResult<const Lexer::FMatch *>::Success(nullptr, match ? match->Site() : input.Site());
 
         Assert(match->Symbol()->Type() & symbolMask);
-        const FLexer::FMatch *consumed = input.Read(); // consumes match
+        const Lexer::FMatch *consumed = input.Read(); // consumes match
         Assert(consumed == match);
         UNUSED(consumed);
 
-        return TParseResult<const FLexer::FMatch *>::Success(match, match->Site());
+        return TParseResult<const Lexer::FMatch *>::Success(match, match->Site());
     }};
 }
 //----------------------------------------------------------------------------

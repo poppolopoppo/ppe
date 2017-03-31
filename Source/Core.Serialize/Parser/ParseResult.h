@@ -20,14 +20,14 @@ public:
     typedef T value_type;
 
     TParseResult()
-        : _succeed(false), _message(nullptr), _site(FLexer::FLocation::None()) {}
+        : _succeed(false), _message(nullptr), _site(Lexer::FLocation::None()) {}
 
-    TParseResult(T&& rvalue, const FLexer::FLocation& site)
+    TParseResult(T&& rvalue, const Lexer::FLocation& site)
         : _succeed(true), _value(std::move(rvalue)), _message(nullptr), _site(site) {
         Assert(_site.FileName);
     }
 
-    TParseResult(const char *message, FLexer::FSymbol::ETypeId expected, const FLexer::FLocation& site)
+    TParseResult(const char *message, Lexer::FSymbol::ETypeId expected, const Lexer::FLocation& site)
         : _succeed(false), _message(message), _expected(expected), _site(site) {
         Assert(_site.FileName);
     }
@@ -56,24 +56,24 @@ public:
     const T& Value() const { Assert(_succeed); return _value; }
 
     const char *Message() const { Assert(!_succeed); return _message; }
-    FLexer::FSymbol::ETypeId Expected() const { Assert(!_succeed); return _expected; }
+    Lexer::FSymbol::ETypeId Expected() const { Assert(!_succeed); return _expected; }
 
-    const FLexer::FLocation& Site() const { return _site; }
+    const Lexer::FLocation& Site() const { return _site; }
 
-    static TParseResult Success(T&& rvalue, const FLexer::FLocation& site) {
+    static TParseResult Success(T&& rvalue, const Lexer::FLocation& site) {
         return TParseResult(std::move(rvalue), site);
     }
 
-    static TParseResult Success(const T& value, const FLexer::FLocation& site) {
+    static TParseResult Success(const T& value, const Lexer::FLocation& site) {
         T rvalue(value);
         return TParseResult(std::move(rvalue), site);
     }
 
-    static TParseResult Failure(const char *message, FLexer::FSymbol::ETypeId expected, const FLexer::FLocation& site) {
+    static TParseResult Failure(const char *message, Lexer::FSymbol::ETypeId expected, const Lexer::FLocation& site) {
         return TParseResult(message, expected, site);
     }
 
-    static TParseResult Unexpected(FLexer::FSymbol::ETypeId expected, const FLexer::FMatch *found, const FParseList& input) {
+    static TParseResult Unexpected(Lexer::FSymbol::ETypeId expected, const Lexer::FMatch *found, const FParseList& input) {
         return TParseResult("unexpected match", expected, found ? found->Site() : input.Site());
     }
 
@@ -83,9 +83,9 @@ private:
     T _value;
 
     const char *_message;
-    FLexer::FSymbol::ETypeId _expected;
+    Lexer::FSymbol::ETypeId _expected;
 
-    FLexer::FLocation _site;
+    Lexer::FLocation _site;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

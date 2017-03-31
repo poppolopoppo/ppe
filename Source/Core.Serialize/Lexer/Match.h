@@ -9,7 +9,7 @@
 #include <iosfwd>
 
 namespace Core {
-namespace FLexer {
+namespace Lexer {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -18,7 +18,7 @@ class FLexer;
 class FMatch {
 public:
     friend class FLexer;
-    typedef Core::FLexer::FSymbol symbol_type;
+    typedef Core::Lexer::FSymbol symbol_type;
 
     FMatch();
     ~FMatch();
@@ -60,5 +60,5 @@ std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Trait
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace FLexer
+} //!namespace Lexer
 } //!namespace Core

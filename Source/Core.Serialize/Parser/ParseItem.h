@@ -16,10 +16,10 @@ FWD_REFPTR(ParseItem);
 //----------------------------------------------------------------------------
 class FParseItem : public FRefCountable {
 public:
-    FParseItem(const FLexer::FLocation& site);
+    FParseItem(const Lexer::FLocation& site);
     virtual ~FParseItem();
 
-    const FLexer::FLocation& Site() const { return _site; }
+    const Lexer::FLocation& Site() const { return _site; }
 
     virtual void Invoke(FParseContext *context) const = 0;
     virtual FString ToString() const { return FString(); }
@@ -30,7 +30,7 @@ public:
     }
 
 private:
-    FLexer::FLocation _site;
+    Lexer::FLocation _site;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

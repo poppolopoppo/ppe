@@ -19,7 +19,7 @@ namespace Parser {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FParseExpression::FParseExpression(const FLexer::FLocation& site)
+FParseExpression::FParseExpression(const Lexer::FLocation& site)
 :   FParseItem(site) {}
 //----------------------------------------------------------------------------
 FParseExpression::~FParseExpression() {}
@@ -28,7 +28,7 @@ FParseExpression::~FParseExpression() {}
 //----------------------------------------------------------------------------
 SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FVariableExport, )
 //----------------------------------------------------------------------------
-FVariableExport::FVariableExport(const RTTI::FName& name, const PCParseExpression& value, const EFlags scope, const FLexer::FLocation& site)
+FVariableExport::FVariableExport(const RTTI::FName& name, const PCParseExpression& value, const EFlags scope, const Lexer::FLocation& site)
 :   FParseExpression(site)
 ,   _name(name), _value(value), _scope(scope) {
     Assert(!name.empty());
@@ -68,7 +68,7 @@ FString FVariableExport::ToString() const {
 //----------------------------------------------------------------------------
 SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FVariableReference, )
 //----------------------------------------------------------------------------
-FVariableReference::FVariableReference(const RTTI::FName& name, const FLexer::FLocation& site)
+FVariableReference::FVariableReference(const RTTI::FName& name, const Lexer::FLocation& site)
 :   FParseExpression(site)
 ,   _name(name) {
     Assert(!name.empty());
@@ -94,7 +94,7 @@ FString FVariableReference::ToString() const {
 //----------------------------------------------------------------------------
 SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FObjectDefinition, )
 //----------------------------------------------------------------------------
-FObjectDefinition::FObjectDefinition(const RTTI::FName& name, const FLexer::FLocation& site)
+FObjectDefinition::FObjectDefinition(const RTTI::FName& name, const Lexer::FLocation& site)
 :   FParseExpression(site)
 ,   _name(name) {
     Assert(!name.empty());
@@ -140,7 +140,7 @@ SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FPropertyReference, )
 FPropertyReference::FPropertyReference(
     const PCParseExpression& object,
     const RTTI::FName& member,
-    const FLexer::FLocation& site)
+    const Lexer::FLocation& site)
 :   FParseExpression(site),
     _object(object), _member(member) {
     Assert(object);
@@ -186,7 +186,7 @@ SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, TPair, )
 TPair::TPair(
     const PCParseExpression& lhs,
     const PCParseExpression& rhs,
-    const FLexer::FLocation& site)
+    const Lexer::FLocation& site)
 :   FParseExpression(site),
     _lhs(lhs), _rhs(rhs) {
     Assert(lhs);
@@ -216,12 +216,12 @@ FString TPair::ToString() const {
 //----------------------------------------------------------------------------
 SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, TArray, )
 //----------------------------------------------------------------------------
-TArray::TArray(const FLexer::FLocation& site)
+TArray::TArray(const Lexer::FLocation& site)
 :   FParseExpression(site) {}
 //----------------------------------------------------------------------------
 TArray::TArray(
     const TMemoryView<const PCParseExpression>& items,
-    const FLexer::FLocation& site)
+    const Lexer::FLocation& site)
 :   FParseExpression(site) {
     _items.insert(_items.end(), items.begin(), items.end());
 }
@@ -253,12 +253,12 @@ FString TArray::ToString() const {
 //----------------------------------------------------------------------------
 SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, TDictionary, )
 //----------------------------------------------------------------------------
-TDictionary::TDictionary(const FLexer::FLocation& site)
+TDictionary::TDictionary(const Lexer::FLocation& site)
 :   FParseExpression(site) {}
 //----------------------------------------------------------------------------
 TDictionary::TDictionary(
     const TMemoryView<const Core::TPair<PCParseExpression, PCParseExpression>>& items,
-    const FLexer::FLocation& site)
+    const Lexer::FLocation& site)
 :   FParseExpression(site) {
     _items.insert(items.begin(), items.end());
 }
@@ -293,7 +293,7 @@ FString TDictionary::ToString() const {
 //----------------------------------------------------------------------------
 SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FCastExpr, )
 //----------------------------------------------------------------------------
-FCastExpr::FCastExpr(RTTI::FMetaTypeId typeId, const FParseExpression* expr, const FLexer::FLocation& site)
+FCastExpr::FCastExpr(RTTI::FMetaTypeId typeId, const FParseExpression* expr, const Lexer::FLocation& site)
 :   FParseExpression(site)
 ,   _typeId(typeId)
 ,   _expr(expr) {

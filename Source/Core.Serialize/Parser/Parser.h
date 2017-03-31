@@ -23,22 +23,22 @@ class FParserException : public Core::Serialize::FSerializeException {
 public:
     typedef Core::Serialize::FSerializeException parent_type;
 
-    FParserException(const char *what, FLexer::FLocation site)
+    FParserException(const char *what, Lexer::FLocation site)
         : parent_type(what), _site(site), _item(nullptr) {}
 
     FParserException(const char *what, const FParseItem *item)
         : parent_type(what), _site(item->Site()), _item(item) {}
 
-    FParserException(const char *what, FLexer::FLocation site, const FParseItem *item)
+    FParserException(const char *what, Lexer::FLocation site, const FParseItem *item)
         : parent_type(what), _site(site), _item(item) {}
 
     virtual ~FParserException() {}
 
-    const FLexer::FLocation& Site() const { return _site; }
+    const Lexer::FLocation& Site() const { return _site; }
     const FParseItem *Item() const { return _item.get(); }
 
 private:
-    FLexer::FLocation _site;
+    Lexer::FLocation _site;
     PCParseItem _item;
 };
 //----------------------------------------------------------------------------

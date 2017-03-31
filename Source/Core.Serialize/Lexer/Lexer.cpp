@@ -13,7 +13,7 @@
 #include <locale>
 
 namespace Core {
-namespace FLexer {
+namespace Lexer {
 POOL_TAG_DEF(FLexer);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -299,7 +299,8 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
             {
                 escaped = false;
 
-                char d0, d1;
+                char d0, d1, d2, d3;
+                u16 unicode;
 
                 // http://en.wikipedia.org/wiki/Escape_sequences_in_C
                 switch (ToLower(ch))
@@ -341,6 +342,30 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
                                 (d1 <= '9' ? d1 - '0' : d1 - 'a') );
 
                     oss.put(ch);
+
+                    break;
+
+                case 'u':
+                    d0 = ToLower(reader.Read());
+                    d1 = ToLower(reader.Read());
+                    d2 = ToLower(reader.Read());
+                    d3 = ToLower(reader.Read());
+
+                    if (!(Hexadecimal_(d0) && Hexadecimal_(d1) && Hexadecimal_(d2) && Hexadecimal_(d3)))
+                        CORE_THROW_IT(FLexerException("invalid unicode character escaping", FMatch(FSymbols::String, std::move(value), reader.SourceSite(), reader.Tell())));
+
+                    unicode =   u16(d0 <= '9' ? d0 - '0' : d0 - 'a') * (16 * 16 * 16) +
+                                u16(d1 <= '9' ? d1 - '0' : d1 - 'a') * (16 * 16) +
+                                u16(d2 <= '9' ? d2 - '0' : d2 - 'a') * (16) +
+                                u16(d3 <= '9' ? d3 - '0' : d3 - 'a');
+
+                    if (unicode <= 0xFF) {
+                        oss.put(char(unicode));
+                    }
+                    else {
+                        oss.put(char(unicode >> 8));
+                        oss.put(char(unicode & 0xFF));
+                    }
 
                     break;
 
@@ -477,7 +502,22 @@ bool FLexer::SkipUntil(const char ch) {
     return (ch == poken);
 }
 //----------------------------------------------------------------------------
-bool FLexer::Expect(FMatch& match, const Core::FLexer::FSymbol* expected) {
+bool FLexer::ReadIFN(const Core::Lexer::FSymbol* expected) {
+    FMatch match;
+    return ReadIFN(match, expected);
+}
+//----------------------------------------------------------------------------
+bool FLexer::ReadIFN(FMatch& match, const Core::Lexer::FSymbol* expected) {
+    Assert(expected);
+    return (Peek(expected) ? Expect(match, expected) : false);
+}
+//----------------------------------------------------------------------------
+bool FLexer::Expect(const Core::Lexer::FSymbol* expected) {
+    FMatch match;
+    return Expect(match, expected);
+}
+//----------------------------------------------------------------------------
+bool FLexer::Expect(FMatch& match, const Core::Lexer::FSymbol* expected) {
     Assert(expected);
     return (NextMatch_(match) && match.Symbol() == expected);
 }
@@ -553,5 +593,5 @@ void FLexerStartup::ClearAll_UnusedMemory() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace FLexer
+} //!namespace Lexer
 } //!namespace Core

@@ -26,8 +26,8 @@ WRegexp MakeRegexp(const FWStringView& wstr);
 Regexp MakeRegexpI(const FStringView& str);
 WRegexp MakeRegexpI(const FWStringView& wstr);
 //----------------------------------------------------------------------------
-bool FMatch(const Regexp& exp, const FStringView& str);
-bool FMatch(const WRegexp& exp, const FWStringView& wstr);
+bool Match(const Regexp& exp, const FStringView& str);
+bool Match(const WRegexp& exp, const FWStringView& wstr);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

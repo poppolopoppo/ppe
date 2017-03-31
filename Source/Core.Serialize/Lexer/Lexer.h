@@ -14,7 +14,7 @@
 
 namespace Core {
 class IStreamReader;
-namespace FLexer {
+namespace Lexer {
 POOL_TAG_DECL(FLexer);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -29,10 +29,10 @@ public:
 
     virtual ~FLexerException() {}
 
-    const Core::FLexer::FMatch& Match() const { return _match; }
+    const Core::Lexer::FMatch& Match() const { return _match; }
 
 private:
-    Core::FLexer::FMatch _match;
+    Core::Lexer::FMatch _match;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -42,14 +42,18 @@ public:
     FLexer(IStreamReader* input, const FWStringView& sourceFileName, bool allowTypenames);
     ~FLexer();
 
-    const FMatch *Peek();
-    const FMatch *Peek(const FSymbol* symbol);
+    const FMatch* Peek();
+    const FMatch* Peek(const FSymbol* symbol);
 
     bool Read(FMatch& match);
     bool ReadUntil(FMatch& match, const char ch);
     bool SkipUntil(const char ch);
 
-    bool Expect(FMatch& match, const Core::FLexer::FSymbol* expected);
+    bool ReadIFN(const Core::Lexer::FSymbol* expected);
+    bool ReadIFN(FMatch& match, const Core::Lexer::FSymbol* expected);
+
+    bool Expect(const Core::Lexer::FSymbol* expected);
+    bool Expect(FMatch& match, const Core::Lexer::FSymbol* expected);
 
     const FWString& SourceFileName() { return _sourceFileName; }
 
@@ -79,5 +83,5 @@ struct FLexerStartup {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace FLexer
+} //!namespace Lexer
 } //!namespace Core

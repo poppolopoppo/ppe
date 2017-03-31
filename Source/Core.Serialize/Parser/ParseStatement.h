@@ -19,7 +19,7 @@ FWD_REFPTR(ParseStatement);
 //----------------------------------------------------------------------------
 class FParseStatement : public FParseItem {
 public:
-    FParseStatement(const FLexer::FLocation& site);
+    FParseStatement(const Lexer::FLocation& site);
     virtual ~FParseStatement();
 
     virtual void Execute(FParseContext *context) const = 0;
