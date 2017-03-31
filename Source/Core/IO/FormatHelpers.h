@@ -2,6 +2,7 @@
 
 #include "Core/Core.h"
 
+#include "Core/IO/StringView.h"
 #include "Core/Memory/MemoryView.h"
 #include "Core/Meta/StronglyTyped.h"
 
@@ -114,6 +115,32 @@ std::basic_ostream<_Elem, _Traits>& crlf(std::basic_ostream<_Elem, _Traits>& oss
     oss.put(oss.widen('\r'));
     oss.put(oss.widen('\n'));
     return (oss);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+struct FIndent {
+    FStringView Tab = "    ";
+    int Level = 0;
+    void Inc() { ++Level; }
+    void Dec() { Assert(Level > 0); --Level; }
+    struct FScope {
+        FIndent& Indent;
+        FScope(FIndent& indent) : Indent(indent) { Indent.Inc(); }
+        ~FScope() { Indent.Dec(); }
+    };
+    static FIndent UsingTabs()  { return FIndent{ "\t" }; }
+    static FIndent TwoSpaces()  { return FIndent{ "  " }; }
+    static FIndent FourSpaces() { return FIndent{ "    " }; }
+    static FIndent None()       { return FIndent{ "" }; }
+};
+//----------------------------------------------------------------------------
+template<class _Char, class _Traits>
+std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const FIndent& indent) {
+    Assert(indent.Level >= 0);
+    forrange(i, 0, indent.Level)
+        oss << indent.Tab;
+    return oss;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
