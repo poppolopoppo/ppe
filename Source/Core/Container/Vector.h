@@ -237,7 +237,9 @@ public:
     void push_back(T&& rvalue) { emplace_back(std::move(rvalue)); }
     reference push_back_Default() { emplace_back(); return back(); }
     pointer push_back_Uninitialized() { reserve_Additional(1); return &_data[_size++]; }
+
     void pop_back();
+    value_type pop_back_ReturnBack();
 
     void clear();
     void clear_ReleaseMemory();

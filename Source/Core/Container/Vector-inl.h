@@ -277,7 +277,7 @@ template <typename _It, typename _ItCat>
 auto TVector<T, _Allocator>::insert_(const_iterator pos, _It first, _It last, _ItCat ) -> iterator {
     Assert(pos.AliasesToContainer(*this));
     const size_type p = std::distance<const_iterator>(begin(), pos);
-    const size_type count = std::distance(first, last);
+    const u32 count = checked_cast<u32>(std::distance(first, last));
     Assert(p <= count);
     if (0 < count) {
         reserve_Additional(count);
@@ -305,6 +305,13 @@ template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::pop_back() {
     AssertRelease(_size > 0);
     allocator_traits::destroy(*this, &_data[--_size]);
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+auto TVector<T, _Allocator>::pop_back_ReturnBack() -> value_type {
+    value_type result = std::move(back());
+    pop_back();
+    return result;
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
