@@ -492,7 +492,7 @@ struct TMetaAtomWrapper {
         typename trais_type::wrapper_type,
         typename trais_type::wrapped_type
     >::type dont_need_wrapper;
-    typedef std::integral_constant<bool, false == dont_need_wrapper::value> need_wrapper;
+    typedef std::integral_constant<bool, not dont_need_wrapper::value> need_wrapper;
     typedef TMetaTypedAtom< typename trais_type::wrapper_type > type;
 };
 //----------------------------------------------------------------------------

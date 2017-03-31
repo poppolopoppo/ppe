@@ -617,8 +617,8 @@ struct TMetaTypeTraitsImpl< FBasename > {
     static void WrapMove(wrapper_type& dst, wrapped_type&& src) { dst = src.ToWString(); }
     static void WrapCopy(wrapper_type& dst, const wrapped_type& src) { dst = src.ToWString(); }
 
-    static void UnwrapMove(wrapped_type& dst, wrapper_type&& src) { dst = src; }
-    static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src) { dst = src; }
+    static void UnwrapMove(wrapped_type& dst, wrapper_type&& src) { dst = src.MakeView(); }
+    static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src) { dst = src.MakeView(); }
 };
 //----------------------------------------------------------------------------
 template <>
