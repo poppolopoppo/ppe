@@ -22,7 +22,7 @@ POOL_TAG_DEF(Application);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#ifndef FINAL_RELEASE
+#ifdef USE_DEBUG_LOGGER
 static void PrintMemStats_(const Core::FCrtMemoryStats& memoryStats) {
     FStackLocalLoggerStream(ELogCategory::Info)
         << "Memory statistics :" << eol
@@ -90,11 +90,11 @@ FApplicationContext::FApplicationContext() {
 }
 //----------------------------------------------------------------------------
 FApplicationContext::~FApplicationContext() {
-#ifndef FINAL_RELEASE
-#if defined(PLATFORM_WINDOWS)
+#ifdef USE_DEBUG_LOGGER
+#   if defined(PLATFORM_WINDOWS)
     FCrtMemoryStats memoryStats;
     CrtDumpMemoryStats(&memoryStats);
-#endif
+#   endif
     PrintMemStats_(memoryStats);
 #endif
 }
@@ -104,33 +104,33 @@ int LaunchApplication(const FApplicationContext& context, FApplicationBase* app)
     AssertRelease(app);
     {
 #if WITH_APPLICATION_TRY_CATCH
-        try
+        CORE_TRY
 #endif
         {
             app->Start();
         }
 #if WITH_APPLICATION_TRY_CATCH
-        catch (const std::exception& e)
-        {
+        CORE_CATCH(const std::exception& e)
+        CORE_CATCH_BLOCK({
             const FWString wwhat = ToWString(e.what());
             Dialog::Ok(wwhat.c_str(), L"FException caught while starting !", Dialog::Icon::Exclamation);
             AssertNotReached();
-        }
+        })
 #endif
 
 #if WITH_APPLICATION_TRY_CATCH
-        try
+        CORE_TRY
 #endif
         {
             app->Shutdown();
         }
 #if WITH_APPLICATION_TRY_CATCH
-        catch (const std::exception& e)
-        {
+        CORE_CATCH(const std::exception& e)
+            CORE_CATCH_BLOCK({
             const FWString wwhat = ToWString(e.what());
             Dialog::Ok(wwhat.c_str(), L"FException caught while shutting down !", Dialog::Icon::Exclamation);
             AssertNotReached();
-        }
+        })
 #endif
     }
 #ifndef FINAL_RELEASE
