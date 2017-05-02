@@ -594,7 +594,7 @@ void FDeviceEncapsulator::DestroyDepthStencil(FDepthStencil *depthStencil, PDevi
 //----------------------------------------------------------------------------
 // Clear
 //----------------------------------------------------------------------------
-void FDeviceEncapsulator::Clear(const FRenderTarget *renderTarget, const ColorRGBAF& color) {
+void FDeviceEncapsulator::Clear(const FRenderTarget *renderTarget, const FLinearColor& color) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(renderTarget);
     Assert(renderTarget->Frozen());

@@ -117,8 +117,8 @@ static void Test_ConvexHull_(const FFilename& input) {
     if (not Pixmap::ConvexHull(uvs, &convexhull, AlphaCutoff))
         AssertNotReached();
 
-    Pixmap::DrawPolygon(&convexhull, corners, Color::Indigo().ToLinear());
-    Pixmap::DrawPolygon(&convexhull, uvs, Color::Red().ToLinear());
+    Pixmap::DrawPolygon(&convexhull, corners, FLinearColor::Indigo());
+    Pixmap::DrawPolygon(&convexhull, uvs, FLinearColor::Red());
 
     img.ConvertFrom(&convexhull);
     if (false == Pixmap::Save(&img, StringFormat(L"Process:/{0}_ConvexHull.png", input.BasenameNoExt())))
@@ -159,7 +159,7 @@ void Test_Binpacking() {
     Pixmap::FFloatImage intermediate(
         size_t(binsize.x()),
         size_t(binsize.y()),
-        Color::Transparent() );
+        FLinearColor::Transparent() );
 
     forrange(i, 0, COUNT) {
         const float2 pos = offsets[i].xy();
@@ -174,10 +174,10 @@ void Test_Binpacking() {
             0.5f + 0.5f * rng.NextFloat01() );
 
         const float3 rgb = HSV_to_RGB(hsv);
-        ColorRGBAF color(rgb.OneExtend());
+        FLinearColor color(rgb.OneExtend());
 
-        color.a() = 0.8f;
-        Pixmap::FillBoundingBox(&intermediate, box, color.ToLinear());
+        color.A = 0.8f;
+        Pixmap::FillBoundingBox(&intermediate, box, color);
     }
 
     Pixmap::FImage img;

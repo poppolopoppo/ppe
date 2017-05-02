@@ -12,6 +12,7 @@
 #include "Core/IO/FileSystem.h"
 #include "Core/IO/FS/ConstNames.h"
 #include "Core/IO/VirtualFileSystem.h"
+#include "Core/Maths/PackedVectors.h"
 #include "Core/Maths/ScalarVector.h"
 #include "Core/Memory/MemoryStream.h"
 
@@ -97,16 +98,16 @@ struct TPixelTraits_ {
 
     static void float_to_raw(raw_type* dst, const FFloatImage::color_type* src) {
         for (size_t i = 0; i < size_t(_Mask); ++i)
-            (*dst)[i] = src->Data()._data[i];
+            (*dst)[i] = (*src)[i];
     }
 
     static void raw_to_float(FFloatImage::color_type* dst, const raw_type* src) {
         for (size_t i = 0; i < size_t(_Mask); ++i)
-            dst->Data()._data[i] = (*src)[i];
+            (*dst)[i] = (*src)[i];
         for (size_t i = size_t(_Mask); i < 3; ++i)
-            dst->Data()._data[i] = 0.0f;
+            (*dst)[i] = 0.0f;
         if (size_t(_Mask) < 4)
-            dst->Data()._data[3] = 1.0f;
+            (*dst)[3] = 1.0f;
     }
 };
 //----------------------------------------------------------------------------
@@ -118,16 +119,16 @@ struct TPixelTraits_<_Depth, _Mask, EColorSpace::sRGB> {
 
     static void float_to_raw(raw_type* dst, const FFloatImage::color_type* src) {
         for (size_t i = 0; i < size_t(_Mask); ++i)
-            (*dst)[i] = Saturate(Linear_to_SRGB(src->Data()._data[i]));
+            (*dst)[i] = Saturate(Linear_to_SRGB((*src)[i]));
     }
 
     static void raw_to_float(FFloatImage::color_type* dst, const raw_type* src) {
         for (size_t i = 0; i < size_t(_Mask); ++i)
-            dst->Data()._data[i] = channel_traits::SRGB_to_Linear((*src)[i]);
+            (*dst)[i] = channel_traits::SRGB_to_Linear((*src)[i]);
         for (size_t i = size_t(_Mask); i < 3; ++i)
-            dst->Data()._data[i] = 0.0f;
+            (*dst)[i] = 0.0f;
         if (size_t(_Mask) < 4)
-            dst->Data()._data[3] = 1.0f;
+            (*dst)[3] = 1.0f;
     }
 };
 //----------------------------------------------------------------------------
@@ -139,14 +140,14 @@ struct TPixelTraits_<_Depth, EColorMask::RGBA, EColorSpace::sRGB> {
 
     static void float_to_raw(raw_type* dst, const FFloatImage::color_type* src) {
         for (size_t i = 0; i < 3; ++i)
-            (*dst)[i] = Saturate(Linear_to_SRGB(src->Data()._data[i]));
-        (*dst)[3] = Saturate(src->Data()._data[3]);
+            (*dst)[i] = Saturate(Linear_to_SRGB((*src)[i]));
+        (*dst)[3] = Saturate((*src)[3]);
     }
 
     static void raw_to_float(FFloatImage::color_type* dst, const raw_type* src) {
         for (size_t i = 0; i < 3; ++i)
-            dst->Data()._data[i] = channel_traits::SRGB_to_Linear((*src)[i]);
-        dst->Data()._data[3] = (*src)[3];
+            (*dst)[i] = channel_traits::SRGB_to_Linear((*src)[i]);
+        (*dst)[3] = (*src)[3];
     }
 };
 //----------------------------------------------------------------------------
@@ -168,9 +169,9 @@ struct TPixelTraits_<_Depth, EColorMask::RGB, EColorSpace::YCoCg> {
 
         const float3 rgb = YCoCg_to_RGB(yCoCg);
         for (size_t i = 0; i < 3; ++i)
-            dst->Data()._data[i] = rgb._data[i];
+            (*dst)[i] = rgb._data[i];
 
-        dst->a() = 1.0f;
+        dst->A = 1.0f;
     }
 };
 //----------------------------------------------------------------------------
@@ -593,10 +594,12 @@ bool Save(const FImage* src, const FFilename& filename, IStreamWriter* writer) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FImage::Start() {
+#if 0 // seems fixed
     // TODO: remove when fixed in an updated version
     // Workaround for thread safety of stb_image
     // https://github.com/nothings/stb/issues/309
     ::stbi__init_zdefaults();
+#endif
 }
 //----------------------------------------------------------------------------
 void FImage::Shutdown() {

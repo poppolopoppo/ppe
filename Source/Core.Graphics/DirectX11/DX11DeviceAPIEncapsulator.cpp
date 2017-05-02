@@ -677,14 +677,14 @@ void FDX11DeviceAPIEncapsulator::DestroyDepthStencil(FDepthStencil * /* depthSte
     RemoveRef_AssertReachZero(entity);
 }
 //----------------------------------------------------------------------------
-void FDX11DeviceAPIEncapsulator::Clear(const FRenderTarget *renderTarget, const ColorRGBAF& color) {
+void FDX11DeviceAPIEncapsulator::Clear(const FRenderTarget *renderTarget, const FLinearColor& color) {
     ::ID3D11DeviceContext *const context = _wrapper.ImmediateContext();
 
     ::ID3D11RenderTargetView *dx11RenderTarget =
         checked_cast<const FDX11RenderTarget *>(renderTarget->DeviceAPIDependantTexture2D().get())->RenderTargetView();
     Assert(dx11RenderTarget);
 
-    const FLOAT dx11ColorRGBA[4] = {color.r(), color.g(), color.b(), color.a()};
+    const FLOAT dx11ColorRGBA[4] = {color.R, color.G, color.B, color.A};
 
     context->ClearRenderTargetView(dx11RenderTarget, dx11ColorRGBA);
 

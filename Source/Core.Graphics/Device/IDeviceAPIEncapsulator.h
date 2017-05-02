@@ -95,7 +95,7 @@ public:
     virtual void SetRenderTarget(const FRenderTarget *renderTarget, const FDepthStencil *depthStencil) = 0;
     virtual void SetRenderTargets(const TMemoryView<const FRenderTargetBinding>& bindings, const FDepthStencil *depthStencil) = 0;
 
-    virtual void Clear(const FRenderTarget *renderTarget, const ColorRGBAF& color) = 0;
+    virtual void Clear(const FRenderTarget *renderTarget, const FLinearColor& color) = 0;
     virtual void Clear(const FDepthStencil *depthStencil, EClearOptions opts, float depth, u8 stencil) = 0;
 
     virtual FDeviceAPIDependantRenderTarget *CreateRenderTarget(FRenderTarget *renderTarget, const TMemoryView<const u8>& optionalData) = 0;

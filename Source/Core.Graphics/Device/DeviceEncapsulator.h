@@ -144,7 +144,7 @@ private: // IDeviceAPIEncapsulator impl
     virtual void SetRenderTarget(const FRenderTarget *renderTarget, const FDepthStencil *depthStencil) override final;
     virtual void SetRenderTargets(const TMemoryView<const FRenderTargetBinding>& bindings, const FDepthStencil *depthStencil) override final;
 
-    virtual void Clear(const FRenderTarget *renderTarget, const ColorRGBAF& color) override final;
+    virtual void Clear(const FRenderTarget *renderTarget, const FLinearColor& color) override final;
     virtual void Clear(const FDepthStencil *depthStencil, EClearOptions opts, float depth, u8 stencil) override final;
 
     virtual FDeviceAPIDependantRenderTarget *CreateRenderTarget(FRenderTarget *renderTarget, const TMemoryView<const u8>& optionalData) override final;

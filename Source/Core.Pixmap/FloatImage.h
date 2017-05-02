@@ -18,7 +18,7 @@ namespace Pixmap {
 FWD_REFPTR(FloatImage);
 class FFloatImage : public FRefCountable {
 public:
-    typedef ColorRGBAF color_type;
+    typedef FLinearColor color_type;
     typedef PIXELSTORAGE(FloatImage, color_type) float_data_type;
 
     FFloatImage();

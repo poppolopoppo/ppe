@@ -32,10 +32,10 @@ static float AlphaTestCoverage_(const FFloatImage* img, float cutoff, float scal
     forrange(y, 0, img->Height()-1) {
         forrange(x, 0, img->Width()-1) {
             const float samples[4] = {
-                Saturate(img->at(x+0, y+0).a() * scale),
-                Saturate(img->at(x+0, y+1).a() * scale),
-                Saturate(img->at(x+1, y+0).a() * scale),
-                Saturate(img->at(x+1, y+1).a() * scale)
+                Saturate(img->at(x+0, y+0).A * scale),
+                Saturate(img->at(x+0, y+1).A * scale),
+                Saturate(img->at(x+1, y+0).A * scale),
+                Saturate(img->at(x+1, y+1).A * scale)
             };
 
             forrange(dy, 0, subSamples) {
@@ -100,7 +100,7 @@ static void ScaleAlphaTestCoverage_(FFloatImage* img, float cutoff, float desire
     forrange(y, 0, img->Height()) {
         const TMemoryView<FFloatImage::color_type> scanline = img->Scanline(y);
         forrange(x, 0, img->Width()) {
-            float& alpha = scanline[x].a();
+            float& alpha = scanline[x].A;
             alpha = Saturate(alpha * alphaScale);
         }
     }

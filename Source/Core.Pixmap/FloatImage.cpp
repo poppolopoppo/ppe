@@ -84,12 +84,12 @@ auto FFloatImage::Scanline(size_t row) const -> TMemoryView<const color_type> {
 //----------------------------------------------------------------------------
 void FFloatImage::DiscardAlpha() {
     for (color_type& color : MakeView())
-        color.a() = 1.0f;
+        color.A = 1.0f;
 }
 //----------------------------------------------------------------------------
 bool FFloatImage::HasAlpha() const {
     for (const color_type& color : MakeConstView())
-        if (color.a() != 1.0f)
+        if (color.A != 1.0f)
             return true;
 
     return false;
@@ -99,7 +99,7 @@ bool FFloatImage::HasVisiblePixels(float cutoff/* = 1.0f/255 */) const {
     Assert(cutoff >= 0.f && cutoff < 1.f);
 
     for (const color_type& color : MakeConstView())
-        if (color.a() > cutoff)
+        if (color.A > cutoff)
             return true;
 
     return false;

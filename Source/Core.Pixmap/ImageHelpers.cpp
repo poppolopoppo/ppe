@@ -47,7 +47,7 @@ void DistanceField_CDT(FImage* dst, const FFloatImage* src, float alphaCutoff) {
         const size_t offset = y * w;
         forrange(x, 0, w) {
             const size_t index = offset + x;
-            if (srcData[index].a() > alphaCutoff) {
+            if (srcData[index].A > alphaCutoff) {
                 dstData[index] = 0;
                 nearest[index] = ushort2(ushort(x), ushort(y));
                 opaqueCount++;
@@ -152,7 +152,7 @@ void DistanceField_DRA(FImage* dst, const FFloatImage* src, float alphaCutoff) {
         const size_t offset = y * w;
         forrange(x, 0, w) {
             const size_t index = offset + x;
-            if (srcData[index].a() > alphaCutoff) {
+            if (srcData[index].A > alphaCutoff) {
                 dstData[index] = 0;
                 nearest[index] = ushort2(ushort(x), ushort(y));
                 opaqueCount++;
@@ -287,7 +287,7 @@ void ExpandColorToTransparentPixels(FFloatImage* img, float alphaCutoff) {
         const size_t offset = y * w;
         forrange(x, 0, w) {
             const size_t index = offset + x;
-            if (colors[index].a() > alphaCutoff) {
+            if (colors[index].A > alphaCutoff) {
                 distance[index] = 0;
                 opaqueCount++;
             }
@@ -315,46 +315,46 @@ void ExpandColorToTransparentPixels(FFloatImage* img, float alphaCutoff) {
             float nd = distance[index];
             if (nd != 0) {
                 color_type& dst = colors[index];
-                float r = dst.r();
-                float g = dst.g();
-                float b = dst.b();
+                float r = dst.R;
+                float g = dst.G;
+                float b = dst.B;
                 float d;
 
                 if (x > 0 && (d = d1 + distance[index - 1]) < nd) { // 0
                     const color_type& src = colors[index - 1];
-                    r = src.r();
-                    g = src.g();
-                    b = src.b();
+                    r = src.R;
+                    g = src.G;
+                    b = src.B;
                     nd = d;
                 }
 
                 if (x > 0 && y > 0 && (d = d2 + distance[index - 1 - w]) < nd) { // 1
                     const color_type& src = colors[index - 1 - w];
-                    r = src.r();
-                    g = src.g();
-                    b = src.b();
+                    r = src.R;
+                    g = src.G;
+                    b = src.B;
                     nd = d;
                 }
 
                 if (y > 0 && (d = d1 + distance[index - w]) < nd) { // 2
                     const color_type& src = colors[index - w];
-                    r = src.r();
-                    g = src.g();
-                    b = src.b();
+                    r = src.R;
+                    g = src.G;
+                    b = src.B;
                     nd = d;
                 }
 
                 if (x + 1 < w && y > 0 && (d = d2 + distance[index - w + 1]) < nd) { // 2
                     const color_type& src = colors[index - w + 1];
-                    r = src.r();
-                    g = src.g();
-                    b = src.b();
+                    r = src.R;
+                    g = src.G;
+                    b = src.B;
                     nd = d;
                 }
 
-                dst.r() = r;
-                dst.g() = g;
-                dst.b() = b;
+                dst.R = r;
+                dst.G = g;
+                dst.B = b;
 
                 distance[index] = nd;
             }
@@ -370,46 +370,46 @@ void ExpandColorToTransparentPixels(FFloatImage* img, float alphaCutoff) {
             float nd = distance[index];
             if (nd != 0) {
                 color_type& dst = colors[index];
-                float r = dst.r();
-                float g = dst.g();
-                float b = dst.b();
+                float r = dst.R;
+                float g = dst.G;
+                float b = dst.B;
                 float d;
 
                 if (x + 1 < w && (d = d1 + distance[index + 1]) < nd) { // 4
                     const color_type& src = colors[index + 1];
-                    r = src.r();
-                    g = src.g();
-                    b = src.b();
+                    r = src.R;
+                    g = src.G;
+                    b = src.B;
                     nd = d;
                 }
 
                 if (x > 0 && y + 1 < h && (d = d2 + distance[index + w - 1]) < nd) { // 5
                     const color_type& src = colors[index + w - 1];
-                    r = src.r();
-                    g = src.g();
-                    b = src.b();
+                    r = src.R;
+                    g = src.G;
+                    b = src.B;
                     nd = d;
                 }
 
                 if (y + 1 < h && (d = d1 + distance[index + w]) < nd) { // 6
                     const color_type& src = colors[index + w];
-                    r = src.r();
-                    g = src.g();
-                    b = src.b();
+                    r = src.R;
+                    g = src.G;
+                    b = src.B;
                     nd = d;
                 }
 
                 if (x + 1 < w && y + 1 < h && (d = d2 + distance[index + w + 1]) < nd) { // 7
                     const color_type& src = colors[index + w + 1];
-                    r = src.r();
-                    g = src.g();
-                    b = src.b();
+                    r = src.R;
+                    g = src.G;
+                    b = src.B;
                     nd = d;
                 }
 
-                dst.r() = r;
-                dst.g() = g;
-                dst.b() = b;
+                dst.R = r;
+                dst.G = g;
+                dst.B = b;
 
                 distance[index] = nd;
             }
@@ -441,7 +441,7 @@ bool BoundingBox(FAabb2f& uvs, const FFloatImage* img, float alphaCutoff) {
         size_t xMax = 0;
         forrange(x, 0, w) {
             const color_type& col = scanline[x];
-            if (col.a() > alphaCutoff) {
+            if (col.A > alphaCutoff) {
                 // add 1 offset to the left
                 xMin = Min(xMin, x);
                 // add 1 offset to the right
@@ -487,7 +487,7 @@ bool ConvexHull(const TMemoryView<float2>& uvs, const FFloatImage* img, float al
         size_t xMax = 0;
         forrange(x, 0, w) {
             const color_type& col = scanline[x];
-            if (col.a() > alphaCutoff) {
+            if (col.A > alphaCutoff) {
                 // add 1 offset to the left
                 xMin = Min(xMin, (x < BORDER ? 0 : x - BORDER));
                 // add 1 offset to the right
