@@ -61,21 +61,21 @@
 #   define RESTRICT     __declspec(restrict)
 #   define STDCALL      __stdcall
 #   define THREAD_LOCAL thread_local
-#   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, _DEFAULT_VALUE) static constexpr _TYPE _NAME = (_TYPE)(_DEFAULT_VALUE)
+#   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, ...) static constexpr _TYPE _NAME = (_TYPE)(__VA_ARGS__)
 #elif defined(CPP_VISUALSTUDIO) && _MSC_VER >= 1900
 #   define NOALIAS      __declspec(noalias)
 #   define NOEXCEPT     noexcept
 #   define RESTRICT     __declspec(restrict)
 #   define STDCALL      __stdcall
 #   define THREAD_LOCAL thread_local
-#   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, _DEFAULT_VALUE) static constexpr _TYPE _NAME = (_TYPE)(_DEFAULT_VALUE)
+#   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, ...) static constexpr _TYPE _NAME = (_TYPE)(__VA_ARGS__)
 #elif defined (CPP_VISUALSTUDIO)
 #   define NOALIAS      __declspec(noalias)
 #   define NOEXCEPT     __declspec(nothrow)
 #   define RESTRICT     __declspec(restrict)
 #   define STDCALL      __stdcall
 #   define THREAD_LOCAL __declspec(thread)
-#   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, _DEFAULT_VALUE) enum : _TYPE { _NAME = (_TYPE)(_DEFAULT_VALUE) }
+#   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, ...) enum : _TYPE { _NAME = (_TYPE)(__VA_ARGS__) }
 #else
 #   error "unsupported compiler"
 #endif
