@@ -183,15 +183,15 @@ public:
     }
 
     static bool HasInstance() {
-        return (nullptr != gMetaClassHandle.MetaClass());
+        return (nullptr != GMetaClassHandle.MetaClass());
     }
 
     static const FMetaClass* Instance() {
-        Assert(gMetaClassHandle.MetaClass());
-        return gMetaClassHandle.MetaClass();
+        Assert(GMetaClassHandle.MetaClass());
+        return GMetaClassHandle.MetaClass();
     }
 
-    static const FMetaClassHandle& Handle() { return gMetaClassHandle; }
+    static const FMetaClassHandle& Handle() { return GMetaClassHandle; }
 
 protected:
     TInScopeMetaClass(
@@ -231,11 +231,11 @@ private:
         *pMetaClass = new metaclass_type(classGuid, metaNamespace);
     }
 
-    static const FMetaClassHandle gMetaClassHandle;
+    static const FMetaClassHandle GMetaClassHandle;
 };
 //----------------------------------------------------------------------------
 template <typename T>
-const FMetaClassHandle TInScopeMetaClass<T>::gMetaClassHandle(
+const FMetaClassHandle TInScopeMetaClass<T>::GMetaClassHandle(
     T::FMetaClass::Namespace(),
     &TInScopeMetaClass<T>::CreateMetaClass_ );
 //----------------------------------------------------------------------------

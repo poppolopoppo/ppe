@@ -24,7 +24,7 @@ namespace Application {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static const u8 gVirtualKey_to_KeyboardKey[0xFF] = {
+static const u8 GVirtualKey_to_KeyboardKey[0xFF] = {
     0xFF,
     0xFF,
     0xFF,
@@ -283,7 +283,7 @@ static const u8 gVirtualKey_to_KeyboardKey[0xFF] = {
 };
 //----------------------------------------------------------------------------
 static void AddVirtualKey_IfMapped_(KeyboardKeyState& state, Graphics::MessageWParam virtualKey) {
-    const u8 keyboardKey = gVirtualKey_to_KeyboardKey[checked_cast<u8>(virtualKey)];
+    const u8 keyboardKey = GVirtualKey_to_KeyboardKey[checked_cast<u8>(virtualKey)];
 
     if (keyboardKey != 0xFF)
         state.Add_KeepExisting(EKeyboardKey(keyboardKey));

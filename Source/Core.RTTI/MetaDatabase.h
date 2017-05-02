@@ -30,7 +30,9 @@ private:
 public:
     using singleton_type::Create;
     using singleton_type::Destroy;
+#ifdef WITH_CORE_ASSERT
     using singleton_type::HasInstance;
+#endif
     using singleton_type::Instance;
 
     template <typename T>

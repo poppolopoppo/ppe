@@ -9,7 +9,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 static size_t LowerBoundPrimeU16_(u16 val) {
-    const auto primes = MakeView(gPrimeNumbersU16);
+    const auto primes = MakeView(GPrimeNumbersU16);
     const auto it = std::lower_bound(primes.begin(), primes.end(), val);
     Assert(it != primes.end());
     return std::distance(primes.begin(), it);
@@ -18,16 +18,16 @@ static size_t LowerBoundPrimeU16_(u16 val) {
 //----------------------------------------------------------------------------
 u16 ClosestPrimeU16Floor(u16 val) {
     const size_t index = LowerBoundPrimeU16_(val);
-    return (val == gPrimeNumbersU16[index] ? val : (index > 0 ? gPrimeNumbersU16[index - 1] : gPrimeNumbersU16[index]));
+    return (val == GPrimeNumbersU16[index] ? val : (index > 0 ? GPrimeNumbersU16[index - 1] : GPrimeNumbersU16[index]));
 }
 //----------------------------------------------------------------------------
 u16 ClosestPrimeU16Ceil(u16 val) {
-    return gPrimeNumbersU16[LowerBoundPrimeU16_(val)];
+    return GPrimeNumbersU16[LowerBoundPrimeU16_(val)];
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-CORE_API const u16 gPrimeNumbersU16[6542] = {
+CORE_API const u16 GPrimeNumbersU16[6542] = {
 0x0002u, 0x0003u, 0x0005u, 0x0007u, 0x000Bu, 0x000Du, 0x0011u, 0x0013u, 0x0017u,
 0x001Du, 0x001Fu, 0x0025u, 0x0029u, 0x002Bu, 0x002Fu, 0x0035u, 0x003Bu, 0x003Du,
 0x0043u, 0x0047u, 0x0049u, 0x004Fu, 0x0053u, 0x0059u, 0x0061u, 0x0065u, 0x0067u,

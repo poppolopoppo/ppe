@@ -177,7 +177,7 @@ static bool ReadToken(EToken *token, IVirtualFileSystemIStream *stream) {
         cstr[i] = ToLower(cstr[i]);
 
     for (size_t i = 0; i < lengthof(gTokenToCStr); ++i)
-        if (0 == CompareNI(cstr, gTokenToCStr[i], length - 1)) {
+        if (0 == CompareNI(cstr, GTokenToCStr[i], length - 1)) {
             *token = EToken(i);
             return true;
         }

@@ -330,7 +330,7 @@ namespace {
 #define SFMT_DXTC u32(ESurfaceFormatFlags::DXTC)
 #define SFMT_GammaSpace u32(ESurfaceFormatFlags::GammaSpace)
 //----------------------------------------------------------------------------
-static const FSurfaceFormat gAllSurfaceFormats[(u32)ESurfaceFormatType::__COUNT] = {
+static const FSurfaceFormat GAllSurfaceFormats[(u32)ESurfaceFormatType::__COUNT] = {
 DEF_SURFACEFORMAT_INSTANCE(UNKNOWN,             1,  0,  0),
 DEF_SURFACEFORMAT_INSTANCE(A8,                  1,  8,  SFMT_Alpha),
 DEF_SURFACEFORMAT_INSTANCE(D16,                 1, 16,  SFMT_Depth),
@@ -386,14 +386,14 @@ DEF_SURFACEFORMAT_INSTANCE(R32_F,               1, 32,  SFMT_Luminance|SFMT_Floa
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 TMemoryView<const FSurfaceFormat> FSurfaceFormat::AllFormats() {
-    return MakeView(gAllSurfaceFormats);
+    return MakeView(GAllSurfaceFormats);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define DEF_SURFACEFORMAT_MEMBER(_Type) \
-    STATIC_ASSERT(static_cast<size_t>(ESurfaceFormatType::_Type) < lengthof(gAllSurfaceFormats)); \
-    const FSurfaceFormat *FSurfaceFormat::_Type = &gAllSurfaceFormats[static_cast<size_t>(ESurfaceFormatType::_Type)];
+    STATIC_ASSERT(static_cast<size_t>(ESurfaceFormatType::_Type) < lengthof(GAllSurfaceFormats)); \
+    const FSurfaceFormat *FSurfaceFormat::_Type = &GAllSurfaceFormats[static_cast<size_t>(ESurfaceFormatType::_Type)];
 //----------------------------------------------------------------------------
 DEF_SURFACEFORMAT_MEMBER(UNKNOWN)
 DEF_SURFACEFORMAT_MEMBER(A8)

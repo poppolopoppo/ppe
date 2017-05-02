@@ -33,12 +33,12 @@ FMetaClassHandle::~FMetaClassHandle() NOEXCEPT {
 //----------------------------------------------------------------------------
 namespace {
 // Global lock instead of member (less space used in static vars)
-FAtomicSpinLock gMetaNamespaceSpinLock;
+FAtomicSpinLock GMetaNamespaceSpinLock;
 // Take a new prime number range for each namespace
 static size_t MetaNamespaceGuidOffset_(size_t count) {
-    static std::atomic<size_t>  gMetaNamespaceGuidOffset(0);
-    const size_t offset = gMetaNamespaceGuidOffset.fetch_add(count);
-    Assert(offset + count <= lengthof(gPrimeNumbersU16));
+    static std::atomic<size_t>  GMetaNamespaceGuidOffset(0);
+    const size_t offset = GMetaNamespaceGuidOffset.fetch_add(count);
+    Assert(offset + count <= lengthof(GPrimeNumbersU16));
     return offset;
 }
 } //!namespace
@@ -62,7 +62,7 @@ void FMetaNamespace::Start() {
 
     typedef INTRUSIVELIST_ACCESSOR(&FMetaClassHandle::_node) accessor_type;
 
-    const FAtomicSpinLock::FScope scopeLock(gMetaNamespaceSpinLock);
+    const FAtomicSpinLock::FScope scopeLock(GMetaNamespaceSpinLock);
 
     _nameTokenized = FName(_nameCStr);
 
@@ -76,7 +76,7 @@ void FMetaNamespace::Start() {
         _guidOffset = MetaNamespaceGuidOffset_(metaClassCount);
 
     size_t metaClassIndex = 0;
-    const TMemoryView<const u16> metaClassGuid = MakeView(gPrimeNumbersU16).SubRange(_guidOffset, metaClassCount);
+    const TMemoryView<const u16> metaClassGuid = MakeView(GPrimeNumbersU16).SubRange(_guidOffset, metaClassCount);
 
     for (FMetaClassHandle* pHandle = _handles.Head(); pHandle; pHandle = accessor_type::Next(pHandle), ++metaClassIndex) {
         Assert(nullptr == pHandle->_metaClass);
@@ -125,7 +125,7 @@ void FMetaNamespace::Shutdown() {
     Assert(_handles.empty() || not _metaClasses.empty());
     Assert(not _nameTokenized.empty());
 
-    const FAtomicSpinLock::FScope scopeLock(gMetaNamespaceSpinLock);
+    const FAtomicSpinLock::FScope scopeLock(GMetaNamespaceSpinLock);
 
     LOG(Info, L"[RTTI] Shutdown namespace <{0}>", _nameTokenized);
 
@@ -173,7 +173,7 @@ void FMetaNamespace::Append_(FMetaClassHandle* pHandle) {
     Assert(pHandle);
 
     // thread safety for constants initialization in different threads :
-    const FAtomicSpinLock::FScope scopeLock(gMetaNamespaceSpinLock);
+    const FAtomicSpinLock::FScope scopeLock(GMetaNamespaceSpinLock);
 
     Assert(_metaClasses.empty()); // don't register while already started
 

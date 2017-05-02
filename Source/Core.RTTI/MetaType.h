@@ -100,9 +100,9 @@ struct TMetaType< RTTI::TPair<_First, _Second> > {
     static constexpr EMetaTypeFlags Flags() { return EMetaTypeFlags::Pair; }
 
     NO_INLINE static FStringView Name() {
-        ONE_TIME_INITIALIZE(const CORE_RTTI_METATYPE_NAMETYPE, gName,
+        ONE_TIME_INITIALIZE(const CORE_RTTI_METATYPE_NAMETYPE, GName,
             "TPair<{0}, {1}>", first_meta_type::Name(), second_meta_type::Name() );
-        return gName.MakeView();
+        return GName.MakeView();
     }
 
     static RTTI::TPair<_First, _Second> DefaultValue() {
@@ -142,9 +142,9 @@ struct TMetaType< RTTI::TVector<T> > {
     static constexpr EMetaTypeFlags Flags() { return EMetaTypeFlags::Vector; }
 
     NO_INLINE static FStringView Name() {
-        ONE_TIME_INITIALIZE(const CORE_RTTI_METATYPE_NAMETYPE, gName,
+        ONE_TIME_INITIALIZE(const CORE_RTTI_METATYPE_NAMETYPE, GName,
             "TVector<{0}>", value_meta_type::Name() );
-        return gName.MakeView();
+        return GName.MakeView();
     }
 
     static RTTI::TVector<T> DefaultValue() {
@@ -192,9 +192,9 @@ struct TMetaType< RTTI::TDictionary<_Key, _Value> > {
     static constexpr EMetaTypeFlags Flags() { return EMetaTypeFlags::Dictionary; }
 
     NO_INLINE static FStringView Name() {
-        ONE_TIME_INITIALIZE(const CORE_RTTI_METATYPE_NAMETYPE, gName,
+        ONE_TIME_INITIALIZE(const CORE_RTTI_METATYPE_NAMETYPE, GName,
             "TDictionary<{0}, {1}>", key_meta_type::Name(), value_meta_type::Name() );
-        return gName.MakeView();
+        return GName.MakeView();
     }
 
     static RTTI::TDictionary<_Key, _Value> DefaultValue() {

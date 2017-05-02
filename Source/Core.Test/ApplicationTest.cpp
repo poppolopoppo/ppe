@@ -1105,7 +1105,7 @@ void TestInputs_() {
     using namespace Core;
     using namespace Core::Engine;
 
-    std::cout << "static const u8 gVirtualKey_to_KeyboardKey[0xFF] = {" << eol;
+    std::cout << "static const u8 GVirtualKey_to_KeyboardKey[0xFF] = {" << eol;
 
     u8 virtualKeyToKeyboardKey[0xFF];
     memset(virtualKeyToKeyboardKey, 0xFF, sizeof(virtualKeyToKeyboardKey));

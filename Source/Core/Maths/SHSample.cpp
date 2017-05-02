@@ -43,17 +43,17 @@ static SHScalar SHFactorial_(int x) {
     // use double precision if you plan to use SH with more than 3 bands.
 #endif
 
-    static const SHScalar gPrecomputedFactorial[16] = {
+    static const SHScalar GPrecomputedFactorial[16] = {
         SHScalar(1.0), SHScalar(1.0), SHScalar(2.0), SHScalar(6.0), SHScalar(24.0),
         SHScalar(120.0), SHScalar(720.0), SHScalar(5040.0), SHScalar(40320.0), SHScalar(362880.0),
         SHScalar(3628800.0), SHScalar(39916800.0), SHScalar(479001600.0), SHScalar(6227020800.0), SHScalar(87178291200.0), SHScalar(1307674368000.0) };
 
-    if (x < int(lengthof(gPrecomputedFactorial)))
-        return gPrecomputedFactorial[x];    //return precomputed value
+    if (x < int(lengthof(GPrecomputedFactorial)))
+        return GPrecomputedFactorial[x];    //return precomputed value
 
     //return non precomputed value starting using the last precomputed value in the array
-    SHScalar result = gPrecomputedFactorial[lengthof(gPrecomputedFactorial)-1];
-    for (int i = int(lengthof(gPrecomputedFactorial)); i <= x; ++i)
+    SHScalar result = GPrecomputedFactorial[lengthof(GPrecomputedFactorial)-1];
+    for (int i = int(lengthof(GPrecomputedFactorial)); i <= x; ++i)
         result = result *= i;
 
     return result;

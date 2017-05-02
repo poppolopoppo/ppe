@@ -24,7 +24,7 @@ FStringView ShaderProfileTypeToCStr(EShaderProfileType profile) {
 }
 //----------------------------------------------------------------------------
 namespace {
-    static constexpr EShaderProgramType gShaderProgramTypes[size_t(EShaderProgramType::__Count)] = {
+    static constexpr EShaderProgramType GShaderProgramTypes[size_t(EShaderProgramType::__Count)] = {
         EShaderProgramType::Vertex,
         EShaderProgramType::Hull,
         EShaderProgramType::Domain,
@@ -34,7 +34,7 @@ namespace {
     };
 }
 TMemoryView<const EShaderProgramType> EachShaderProgramType() {
-    return MakeView(gShaderProgramTypes);
+    return MakeView(GShaderProgramTypes);
 }
 //----------------------------------------------------------------------------
 FStringView ShaderProgramTypeToCStr(EShaderProgramType program) {

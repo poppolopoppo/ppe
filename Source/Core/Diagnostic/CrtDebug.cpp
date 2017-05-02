@@ -30,7 +30,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static THREAD_LOCAL bool gEnableCrtAllocationHook = true;
+static THREAD_LOCAL bool GEnableCrtAllocationHook = true;
 //----------------------------------------------------------------------------
 class FCrtAllocationCallstackLogger {
 public:
@@ -361,12 +361,12 @@ FCrtCheckMemoryLeaks::~FCrtCheckMemoryLeaks() {}
 #ifdef USE_CRT_DEBUG
 //----------------------------------------------------------------------------
 FCrtSkipMemoryLeaks::FCrtSkipMemoryLeaks() {
-    _prev = gEnableCrtAllocationHook;
-    gEnableCrtAllocationHook = false;
+    _prev = GEnableCrtAllocationHook;
+    GEnableCrtAllocationHook = false;
 }
 //----------------------------------------------------------------------------
 FCrtSkipMemoryLeaks::~FCrtSkipMemoryLeaks() {
-    gEnableCrtAllocationHook = _prev;
+    GEnableCrtAllocationHook = _prev;
 }
 //----------------------------------------------------------------------------
 #endif //!USE_CRT_DEBUG
@@ -375,16 +375,16 @@ FCrtSkipMemoryLeaks::~FCrtSkipMemoryLeaks() {
 //----------------------------------------------------------------------------
 #ifdef USE_CRT_DEBUG
 //----------------------------------------------------------------------------
-static std::unique_ptr<FCrtCheckMemoryLeaksImpl> gGlobalCrtCheckMemoryLeaks;
+static std::unique_ptr<FCrtCheckMemoryLeaksImpl> GGlobalCrtCheckMemoryLeaks;
 //----------------------------------------------------------------------------
 void CrtCheckGlobalMemoryLeaks(bool enabled) {
     if (enabled) {
-        Assert(nullptr == gGlobalCrtCheckMemoryLeaks.get());
-        gGlobalCrtCheckMemoryLeaks.reset(new FCrtCheckMemoryLeaksImpl());
+        Assert(nullptr == GGlobalCrtCheckMemoryLeaks.get());
+        GGlobalCrtCheckMemoryLeaks.reset(new FCrtCheckMemoryLeaksImpl());
     }
     else {
-        Assert(nullptr != gGlobalCrtCheckMemoryLeaks.get());
-        gGlobalCrtCheckMemoryLeaks.reset();
+        Assert(nullptr != GGlobalCrtCheckMemoryLeaks.get());
+        GGlobalCrtCheckMemoryLeaks.reset();
     }
 }
 //----------------------------------------------------------------------------

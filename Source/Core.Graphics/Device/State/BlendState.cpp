@@ -67,16 +67,16 @@ const FBlendState *FBlendState::NonPremultiplied = nullptr;
 const FBlendState *FBlendState::Opaque = nullptr;
 //----------------------------------------------------------------------------
 namespace {
-    static POD_STORAGE(FBlendState) gBlendState_Additive;
-    static POD_STORAGE(FBlendState) gBlendState_AlphaBlend;
-    static POD_STORAGE(FBlendState) gBlendState_NonPremultiplied;
-    static POD_STORAGE(FBlendState) gBlendState_Opaque;
+    static POD_STORAGE(FBlendState) GBlendState_Additive;
+    static POD_STORAGE(FBlendState) GBlendState_AlphaBlend;
+    static POD_STORAGE(FBlendState) GBlendState_NonPremultiplied;
+    static POD_STORAGE(FBlendState) GBlendState_Opaque;
 }
 //----------------------------------------------------------------------------
 void FBlendState::Start() {
     Assert(nullptr == Additive);
     {
-        FBlendState *const state = new ((void *)&gBlendState_Additive) FBlendState();
+        FBlendState *const state = new ((void *)&GBlendState_Additive) FBlendState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("Additive");
@@ -91,7 +91,7 @@ void FBlendState::Start() {
     }
     Assert(nullptr == AlphaBlend);
     {
-        FBlendState *const state = new ((void *)&gBlendState_AlphaBlend) FBlendState();
+        FBlendState *const state = new ((void *)&GBlendState_AlphaBlend) FBlendState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("AlphaBlend");
@@ -106,7 +106,7 @@ void FBlendState::Start() {
     }
     Assert(nullptr == NonPremultiplied);
     {
-        FBlendState *const state = new ((void *)&gBlendState_NonPremultiplied) FBlendState();
+        FBlendState *const state = new ((void *)&GBlendState_NonPremultiplied) FBlendState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("NonPremultiplied");
@@ -121,7 +121,7 @@ void FBlendState::Start() {
     }
     Assert(nullptr == Opaque);
     {
-        FBlendState *const state = new ((void *)&gBlendState_Opaque) FBlendState();
+        FBlendState *const state = new ((void *)&GBlendState_Opaque) FBlendState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("Opaque");
@@ -138,25 +138,25 @@ void FBlendState::Start() {
 void FBlendState::Shutdown() {
     Assert(nullptr != Additive);
     {
-        Assert((void *)Additive == (void *)&gBlendState_Additive);
+        Assert((void *)Additive == (void *)&GBlendState_Additive);
         RemoveRef_AssertReachZero_NoDelete(Additive);
         Additive = nullptr;
     }
     Assert(nullptr != AlphaBlend);
     {
-        Assert((void *)AlphaBlend == (void *)&gBlendState_AlphaBlend);
+        Assert((void *)AlphaBlend == (void *)&GBlendState_AlphaBlend);
         RemoveRef_AssertReachZero_NoDelete(AlphaBlend);
         AlphaBlend = nullptr;
     }
     Assert(nullptr != NonPremultiplied);
     {
-        Assert((void *)NonPremultiplied == (void *)&gBlendState_NonPremultiplied);
+        Assert((void *)NonPremultiplied == (void *)&GBlendState_NonPremultiplied);
         RemoveRef_AssertReachZero_NoDelete(NonPremultiplied);
         NonPremultiplied = nullptr;
     }
     Assert(nullptr != Opaque);
     {
-        Assert((void *)Opaque == (void *)&gBlendState_Opaque);
+        Assert((void *)Opaque == (void *)&GBlendState_Opaque);
         RemoveRef_AssertReachZero_NoDelete(Opaque);
         Opaque = nullptr;
     }

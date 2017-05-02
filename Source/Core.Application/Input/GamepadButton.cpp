@@ -9,7 +9,7 @@ namespace Application {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static constexpr EGamepadButton gEachGamepadButtons[] = {
+static constexpr EGamepadButton GEachGamepadButtons[] = {
     EGamepadButton::Button0,
     EGamepadButton::Button1,
     EGamepadButton::Button2,
@@ -105,7 +105,7 @@ FStringView GamepadButtonToXBoxCStr(EGamepadButton value) {
 }
 //----------------------------------------------------------------------------
 TMemoryView<const EGamepadButton> EachGamepadButtons() {
-    return MakeConstView(gEachGamepadButtons);
+    return MakeConstView(GEachGamepadButtons);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

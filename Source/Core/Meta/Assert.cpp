@@ -43,7 +43,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static std::atomic<AssertionHandler> gAssertionHandler = { nullptr };
+static std::atomic<AssertionHandler> GAssertionHandler = { nullptr };
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
@@ -57,24 +57,24 @@ FAssertException::~FAssertException() {}
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void AssertionFailed(const char *msg, const wchar_t *file, unsigned line) {
-    static THREAD_LOCAL bool gIsInAssertion = false;
-    static THREAD_LOCAL bool gIgnoreAssertsInThisThread = false;
-    static std::atomic<bool> gIgnoreAllAsserts = ATOMIC_VAR_INIT(false);
-    if (gIgnoreAllAsserts || gIgnoreAssertsInThisThread)
+    static THREAD_LOCAL bool GIsInAssertion = false;
+    static THREAD_LOCAL bool GIgnoreAssertsInThisThread = false;
+    static std::atomic<bool> GIgnoreAllAsserts = ATOMIC_VAR_INIT(false);
+    if (GIgnoreAllAsserts || GIgnoreAssertsInThisThread)
         return;
 
     FLUSH_LOG(); // flush log before continuing to get eventual log messages
 
-    if (gIsInAssertion)
+    if (GIsInAssertion)
         CORE_THROW_IT(FAssertException("Assert reentrancy !", WIDESTRING(__FILE__), __LINE__));
 
-    gIsInAssertion = true;
+    GIsInAssertion = true;
 
     bool failure = false;
 
     LOG(Assertion, L"error: '{0}' failed !\n\t{1}({2})", msg, file, line);
 
-    AssertionHandler const handler = gAssertionHandler.load();
+    AssertionHandler const handler = GAssertionHandler.load();
 
     if (handler) {
         failure = (*handler)(msg, file, line);
@@ -99,14 +99,14 @@ void AssertionFailed(const char *msg, const wchar_t *file, unsigned line) {
         }
     }
 
-    gIsInAssertion = false;
+    GIsInAssertion = false;
 
     if (failure)
         CORE_THROW_IT(FAssertException(msg, file, line));
 }
 //----------------------------------------------------------------------------
 void SetAssertionHandler(AssertionHandler handler) {
-    gAssertionHandler.store(handler);
+    GAssertionHandler.store(handler);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -121,7 +121,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static std::atomic<AssertionReleaseHandler> gAssertionReleaseHandler = { nullptr };
+static std::atomic<AssertionReleaseHandler> GAssertionReleaseHandler = { nullptr };
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
@@ -135,24 +135,24 @@ FAssertReleaseException::~FAssertReleaseException() {}
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line) {
-    static THREAD_LOCAL bool gIsInAssertion = false;
-    static THREAD_LOCAL bool gIgnoreAssertsInThisThread = false;
-    static std::atomic<bool> gIgnoreAllAsserts = ATOMIC_VAR_INIT(false);
-    if (gIgnoreAllAsserts || gIgnoreAssertsInThisThread)
+    static THREAD_LOCAL bool GIsInAssertion = false;
+    static THREAD_LOCAL bool GIgnoreAssertsInThisThread = false;
+    static std::atomic<bool> GIgnoreAllAsserts = ATOMIC_VAR_INIT(false);
+    if (GIgnoreAllAsserts || GIgnoreAssertsInThisThread)
         return;
 
     FLUSH_LOG(); // flush log before continuing to get eventual log messages
 
-    if (gIsInAssertion)
+    if (GIsInAssertion)
         CORE_THROW_IT(FAssertReleaseException("Assert release reentrancy !", WIDESTRING(__FILE__), __LINE__));
 
-    gIsInAssertion = true;
+    GIsInAssertion = true;
 
     bool failure = true; // AssertRelease() fails by default
 
     LOG(Assertion, L"error: '{0}' failed !\n\t{1}({2})", msg, file, line);
 
-    AssertionReleaseHandler const handler = gAssertionReleaseHandler.load();
+    AssertionReleaseHandler const handler = GAssertionReleaseHandler.load();
 
     if (handler) {
         failure = (*handler)(msg, file, line);
@@ -177,14 +177,14 @@ void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line)
         }
     }
 
-    gIsInAssertion = false;
+    GIsInAssertion = false;
 
     if (failure)
         CORE_THROW_IT(FAssertReleaseException(msg, file, line));
 }
 //----------------------------------------------------------------------------
 void SetAssertionReleaseHandler(AssertionReleaseHandler handler) {
-    gAssertionReleaseHandler.store(handler);
+    GAssertionReleaseHandler.store(handler);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

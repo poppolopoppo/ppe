@@ -20,7 +20,7 @@ enum : size_t {
     FiberFlags              = FIBER_FLAG_FLOAT_SWITCH,
 };
 //----------------------------------------------------------------------------
-static THREAD_LOCAL void *gCurrentThreadFiber = nullptr;
+static THREAD_LOCAL void* GCurrentThreadFiber = nullptr;
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
@@ -49,7 +49,7 @@ FFiber& FFiber::operator =(FFiber&& rvalue) {
 void FFiber::Create(callback_t entryPoint, void *arg, size_t stackSize/* = 0 */) {
     Assert(!_pimpl);
     Assert(entryPoint);
-    Assert(gCurrentThreadFiber);
+    Assert(GCurrentThreadFiber);
     Assert(::IsThreadAFiber());
 
     if (0 == stackSize)
@@ -67,7 +67,7 @@ void FFiber::Create(callback_t entryPoint, void *arg, size_t stackSize/* = 0 */)
 //----------------------------------------------------------------------------
 void FFiber::Resume() {
     Assert(_pimpl);
-    Assert(gCurrentThreadFiber);
+    Assert(GCurrentThreadFiber);
     Assert(::IsThreadAFiber());
     Assert(::GetCurrentFiber() != _pimpl);
 
@@ -87,30 +87,30 @@ void FFiber::Reset(void* pimpl /* = nullptr */) {
 }
 //----------------------------------------------------------------------------
 void FFiber::Start() {
-    Assert(!gCurrentThreadFiber);
+    Assert(!GCurrentThreadFiber);
     Assert(!::IsThreadAFiber());
 
-    gCurrentThreadFiber = ::ConvertThreadToFiberEx(nullptr, FiberFlags);
+    GCurrentThreadFiber = ::ConvertThreadToFiberEx(nullptr, FiberFlags);
 }
 //----------------------------------------------------------------------------
 void FFiber::Shutdown() {
-    Assert(gCurrentThreadFiber);
+    Assert(GCurrentThreadFiber);
     Assert(::IsThreadAFiber());
-    Assert(::GetCurrentFiber() == gCurrentThreadFiber);
+    Assert(::GetCurrentFiber() == GCurrentThreadFiber);
 
     ::ConvertFiberToThread();
-    gCurrentThreadFiber = nullptr;
+    GCurrentThreadFiber = nullptr;
 }
 //----------------------------------------------------------------------------
 void* FFiber::ThreadFiber() {
-    Assert(gCurrentThreadFiber);
+    Assert(GCurrentThreadFiber);
     Assert(::IsThreadAFiber());
 
-    return gCurrentThreadFiber;
+    return GCurrentThreadFiber;
 }
 //----------------------------------------------------------------------------
 void* FFiber::RunningFiber() {
-    Assert(gCurrentThreadFiber);
+    Assert(GCurrentThreadFiber);
     Assert(::IsThreadAFiber());
 
     return ::GetCurrentFiber();
@@ -123,7 +123,7 @@ void* FFiber::RunningFiberIFP() {
 }
 //----------------------------------------------------------------------------
 bool FFiber::IsInFiber() {
-    const bool result = (nullptr != gCurrentThreadFiber);
+    const bool result = (nullptr != GCurrentThreadFiber);
     Assert(result == (TRUE == ::IsThreadAFiber()) );
     return result;
 }

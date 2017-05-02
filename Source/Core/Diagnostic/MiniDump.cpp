@@ -45,7 +45,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static FAtomicSpinLock gMinidumpBarrier_;
+static FAtomicSpinLock GMinidumpBarrier_;
 //----------------------------------------------------------------------------
 struct FMinidumpParams_ {
     const wchar_t* Filename;
@@ -259,8 +259,10 @@ namespace MiniDump
         if ( nullptr == filename )
             return EResult::InvalidFilename;
 
+#ifdef WITH_CORE_ASSERT
         if ( false == FDbghelpWrapper::HasInstance() )
             return EResult::NoDbgHelpDLL;
+#endif
 
         const FMinidumpParams_ params = { filename, exception_ptrs, level };
 
@@ -324,11 +326,11 @@ namespace MiniDump
         MiniDump::Write(filename, InfoLevel::Large, pExceptionInfo, true);
     }
 
-    static volatile LPTOP_LEVEL_EXCEPTION_FILTER gPreviousUnhandledExceptionFilter = nullptr;
+    static volatile LPTOP_LEVEL_EXCEPTION_FILTER GPreviousUnhandledExceptionFilter = nullptr;
     LONG WINAPI OnUnhandledException_(PEXCEPTION_POINTERS pExceptionInfo)
     {
         // no reentrancy (needed by ::MiniDumpWriteDump !)
-        const FAtomicSpinLock::FTryScope scopeLock(gMinidumpBarrier_);
+        const FAtomicSpinLock::FTryScope scopeLock(GMinidumpBarrier_);
 
         if (scopeLock.Locked())
             Write(pExceptionInfo);
@@ -337,11 +339,11 @@ namespace MiniDump
     }
 
 #ifdef HANDLE_VECTORED_EXCEPTION
-    static volatile LPVOID gHandleVectoredExceptionHandler = nullptr;
+    static volatile LPVOID GHandleVectoredExceptionHandler = nullptr;
     LONG WINAPI OnVectoredHandler_(PEXCEPTION_POINTERS pExceptionInfo)
     {
         // no reentrancy (needed by ::MiniDumpWriteDump !)
-        const FAtomicSpinLock::FTryScope scopeLock(gMinidumpBarrier_);
+        const FAtomicSpinLock::FTryScope scopeLock(GMinidumpBarrier_);
 
         if (scopeLock.Locked())
             Write(pExceptionInfo);
@@ -352,25 +354,23 @@ namespace MiniDump
 
     void Start()
     {
-        if (not FDbghelpWrapper::HasInstance())
-            return;
+        Assert(FDbghelpWrapper::HasInstance());
 
 #ifdef HANDLE_VECTORED_EXCEPTION
-        gHandleVectoredExceptionHandler = ::AddVectoredExceptionHandler(0, &OnVectoredHandler_);
+        GHandleVectoredExceptionHandler = ::AddVectoredExceptionHandler(0, &OnVectoredHandler_);
 #endif
 
-        gPreviousUnhandledExceptionFilter = ::SetUnhandledExceptionFilter(&OnUnhandledException_);
+        GPreviousUnhandledExceptionFilter = ::SetUnhandledExceptionFilter(&OnUnhandledException_);
     }
 
     void Shutdown()
     {
-        if (not FDbghelpWrapper::HasInstance())
-            return;
+        Assert(FDbghelpWrapper::HasInstance());
 
-        ::SetUnhandledExceptionFilter(gPreviousUnhandledExceptionFilter);
+        ::SetUnhandledExceptionFilter(GPreviousUnhandledExceptionFilter);
 
 #ifdef HANDLE_VECTORED_EXCEPTION
-        ::RemoveVectoredExceptionHandler(gHandleVectoredExceptionHandler);
+        ::RemoveVectoredExceptionHandler(GHandleVectoredExceptionHandler);
 #endif
     }
 }//!namespace MiniDump

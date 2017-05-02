@@ -64,16 +64,16 @@ const FRasterizerState *FRasterizerState::CullNone = nullptr;
 const FRasterizerState *FRasterizerState::Wireframe = nullptr;
 //----------------------------------------------------------------------------
 namespace {
-    static POD_STORAGE(FRasterizerState) gRasterizerState_CullClockwise;
-    static POD_STORAGE(FRasterizerState) gRasterizerState_CullCounterClockwise;
-    static POD_STORAGE(FRasterizerState) gRasterizerState_CullNone;
-    static POD_STORAGE(FRasterizerState) gRasterizerState_Wireframe;
+    static POD_STORAGE(FRasterizerState) GRasterizerState_CullClockwise;
+    static POD_STORAGE(FRasterizerState) GRasterizerState_CullCounterClockwise;
+    static POD_STORAGE(FRasterizerState) GRasterizerState_CullNone;
+    static POD_STORAGE(FRasterizerState) GRasterizerState_Wireframe;
 }
 //----------------------------------------------------------------------------
 void FRasterizerState::Start() {
     Assert(nullptr == CullClockwise);
     {
-        FRasterizerState *const state = new ((void *)&gRasterizerState_CullClockwise) FRasterizerState();
+        FRasterizerState *const state = new ((void *)&GRasterizerState_CullClockwise) FRasterizerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("CullClockwise");
@@ -84,7 +84,7 @@ void FRasterizerState::Start() {
     }
     Assert(nullptr == CullCounterClockwise);
     {
-        FRasterizerState *const state = new ((void *)&gRasterizerState_CullCounterClockwise) FRasterizerState();
+        FRasterizerState *const state = new ((void *)&GRasterizerState_CullCounterClockwise) FRasterizerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("CullCounterClockwise");
@@ -95,7 +95,7 @@ void FRasterizerState::Start() {
     }
     Assert(nullptr == CullNone);
     {
-        FRasterizerState *const state = new ((void *)&gRasterizerState_CullNone) FRasterizerState();
+        FRasterizerState *const state = new ((void *)&GRasterizerState_CullNone) FRasterizerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("CullNone");
@@ -106,7 +106,7 @@ void FRasterizerState::Start() {
     }
     Assert(nullptr == Wireframe);
     {
-        FRasterizerState *const state = new ((void *)&gRasterizerState_Wireframe) FRasterizerState();
+        FRasterizerState *const state = new ((void *)&GRasterizerState_Wireframe) FRasterizerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("Wireframe");
@@ -121,25 +121,25 @@ void FRasterizerState::Start() {
 void FRasterizerState::Shutdown() {
     Assert(nullptr != CullClockwise);
     {
-        Assert((void *)CullClockwise == (void *)&gRasterizerState_CullClockwise);
+        Assert((void *)CullClockwise == (void *)&GRasterizerState_CullClockwise);
         RemoveRef_AssertReachZero_NoDelete(CullClockwise);
         CullClockwise = nullptr;
     }
     Assert(nullptr != CullCounterClockwise);
     {
-        Assert((void *)CullCounterClockwise == (void *)&gRasterizerState_CullCounterClockwise);
+        Assert((void *)CullCounterClockwise == (void *)&GRasterizerState_CullCounterClockwise);
         RemoveRef_AssertReachZero_NoDelete(CullCounterClockwise);
         CullCounterClockwise = nullptr;
     }
     Assert(nullptr != CullNone);
     {
-        Assert((void *)CullNone == (void *)&gRasterizerState_CullNone);
+        Assert((void *)CullNone == (void *)&GRasterizerState_CullNone);
         RemoveRef_AssertReachZero_NoDelete(CullNone);
         CullNone = nullptr;
     }
     Assert(nullptr != Wireframe);
     {
-        Assert((void *)Wireframe == (void *)&gRasterizerState_Wireframe);
+        Assert((void *)Wireframe == (void *)&GRasterizerState_Wireframe);
         RemoveRef_AssertReachZero_NoDelete(Wireframe);
         Wireframe = nullptr;
     }

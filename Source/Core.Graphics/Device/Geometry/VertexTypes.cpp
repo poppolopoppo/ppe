@@ -81,7 +81,7 @@ static FString VertexTypeName_(const FVertexDeclaration* vdecl) {
 namespace {
 //----------------------------------------------------------------------------
 #define DEF_VERTEXDECL_BUILTINTYPE_STATICPOD(_Name) \
-    static POD_STORAGE(FVertexDeclaration) CONCAT(gVertexDeclarationPOD_, _Name);
+    static POD_STORAGE(FVertexDeclaration) CONCAT(GVertexDeclarationPOD_, _Name);
 //----------------------------------------------------------------------------
 FOREACH_VERTEXDECL_BUILTINTYPE(DEF_VERTEXDECL_BUILTINTYPE_STATICPOD)
 //----------------------------------------------------------------------------
@@ -109,7 +109,7 @@ void VertexTypes_Start() {
 
     #define CREATE_VERTEXDECL_BUILTINTYPE(_Name) \
         Assert(nullptr == Vertex::_Name::Declaration); \
-        Vertex::_Name::Declaration = ::new ((void*)&CONCAT(gVertexDeclarationPOD_, _Name)) FVertexDeclaration(); \
+        Vertex::_Name::Declaration = ::new ((void*)&CONCAT(GVertexDeclarationPOD_, _Name)) FVertexDeclaration(); \
         FVertexDeclarator vdecl(remove_const(Vertex::_Name::Declaration));
 
     {
@@ -251,7 +251,7 @@ void VertexTypes_Shutdown() {
     Assert(Vertex::_Name::Declaration); \
     AddRef(Vertex::_Name::Declaration); \
     UnregisterVertexType(Vertex::_Name::Declaration); \
-    Assert((void *)&CONCAT(gVertexDeclarationPOD_, _Name) == Vertex::_Name::Declaration); \
+    Assert((void *)&CONCAT(GVertexDeclarationPOD_, _Name) == Vertex::_Name::Declaration); \
     RemoveRef_AssertReachZero_NoDelete(Vertex::_Name::Declaration);
 
     FOREACH_VERTEXDECL_BUILTINTYPE(DESTROY_VERTEXDECL_BUILTINTYPE)

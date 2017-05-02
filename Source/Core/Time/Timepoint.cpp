@@ -25,7 +25,7 @@ namespace {
         QueryPerformanceFrequency(&Frequency);
     }
 
-    static const FQueryPerformanceCounterContext gQPC_Context;
+    static const FQueryPerformanceCounterContext GQPC_Context;
 } //!namespace
 //----------------------------------------------------------------------------
 FTimepoint FTimepoint::Now() {
@@ -35,7 +35,7 @@ FTimepoint FTimepoint::Now() {
 }
 //----------------------------------------------------------------------------
 FTimepoint::value_type FTimepoint::Ticks(const FTimespan& duration) {
-    const double d = (duration.Value() * gQPC_Context.Frequency.QuadPart)/1000000;
+    const double d = (duration.Value() * GQPC_Context.Frequency.QuadPart)/1000000;
     return static_cast<FTimepoint::value_type>(d);
 }
 //----------------------------------------------------------------------------
@@ -45,7 +45,7 @@ FTimespan FTimepoint::Duration(const FTimepoint& start, const FTimepoint& stop) 
                              reinterpret_cast<const LARGE_INTEGER *>(&start)->QuadPart;
 
     elapsedMicroS.QuadPart *= 1000000;
-    elapsedMicroS.QuadPart /= gQPC_Context.Frequency.QuadPart;
+    elapsedMicroS.QuadPart /= GQPC_Context.Frequency.QuadPart;
 
     return FMicroseconds(static_cast<double>(elapsedMicroS.QuadPart));
 }

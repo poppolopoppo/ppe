@@ -12,7 +12,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static constexpr ETargetPlatform gTargetPlatforms[] = {
+static constexpr ETargetPlatform GTargetPlatforms[] = {
     ETargetPlatform::PC,
     ETargetPlatform::PS4,
     ETargetPlatform::XONE,
@@ -20,12 +20,28 @@ static constexpr ETargetPlatform gTargetPlatforms[] = {
     ETargetPlatform::LINUX
 };
 //----------------------------------------------------------------------------
+#if     defined(PLATFORM_WINDOWS)
+struct FWindowsSystemInfo_ : FPlatform::FSystemInfo {
+    FWindowsSystemInfo_() {
+        ::SYSTEM_INFO st;
+        ::GetSystemInfo(&st);
+
+        AllocationGranularity = checked_cast<size_t>(st.dwAllocationGranularity);
+        PageSize = checked_cast<size_t>(st.dwPageSize);
+        ProcessorsCount = checked_cast<size_t>(st.dwNumberOfProcessors);
+    }
+};
+static const FWindowsSystemInfo_ GSystemInfo;
+#else
+#   error "unsupported platform"
+#endif
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 TMemoryView<const ETargetPlatform> EachTargetPlatform() {
-    return MakeView(gTargetPlatforms);
+    return MakeView(GTargetPlatforms);
 }
 //----------------------------------------------------------------------------
 FStringView TargetPlatformToCStr(ETargetPlatform platform) {
@@ -63,6 +79,8 @@ EEndianness TargetPlatformEndianness(ETargetPlatform platform) {
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+const FPlatform::FSystemInfo& FPlatform::SystemInfo = GSystemInfo;
 //----------------------------------------------------------------------------
 #ifndef FINAL_RELEASE
 void FPlatform::CheckMemory() {

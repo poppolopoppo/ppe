@@ -46,8 +46,8 @@ public:
     }
 
     static const TMetaTypeScalarTraits* Instance() {
-        ONE_TIME_INITIALIZE_TPL(const TMetaTypeScalarTraits, gInstance);
-        return &gInstance;
+        ONE_TIME_INITIALIZE_TPL(const TMetaTypeScalarTraits, GInstance);
+        return &GInstance;
     }
 };
 //----------------------------------------------------------------------------
@@ -73,8 +73,8 @@ public:
     }
 
     static const TMetaTypePairTraits* Instance() {
-        ONE_TIME_INITIALIZE_TPL(const TMetaTypePairTraits, gInstance);
-        return &gInstance;
+        ONE_TIME_INITIALIZE_TPL(const TMetaTypePairTraits, GInstance);
+        return &GInstance;
     }
 };
 //----------------------------------------------------------------------------
@@ -99,8 +99,8 @@ public:
     }
 
     static const TMetaTypeVectorTraits* Instance() {
-        ONE_TIME_INITIALIZE_TPL(const TMetaTypeVectorTraits, gInstance);
-        return &gInstance;
+        ONE_TIME_INITIALIZE_TPL(const TMetaTypeVectorTraits, GInstance);
+        return &GInstance;
     }
 };
 //----------------------------------------------------------------------------
@@ -126,8 +126,8 @@ public:
     }
 
     static const TMetaTypeDictionaryTraits* Instance() {
-        ONE_TIME_INITIALIZE_TPL(const TMetaTypeDictionaryTraits, gInstance);
-        return &gInstance;
+        ONE_TIME_INITIALIZE_TPL(const TMetaTypeDictionaryTraits, GInstance);
+        return &GInstance;
     }
 };
 //----------------------------------------------------------------------------

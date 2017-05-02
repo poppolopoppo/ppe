@@ -65,15 +65,15 @@ const FDepthStencilState *FDepthStencilState::DepthRead = nullptr;
 const FDepthStencilState *FDepthStencilState::None = nullptr;
 //----------------------------------------------------------------------------
 namespace {
-    static POD_STORAGE(FDepthStencilState) gDepthStencilState_Default;
-    static POD_STORAGE(FDepthStencilState) gDepthStencilState_DepthRead;
-    static POD_STORAGE(FDepthStencilState) gDepthStencilState_None;
+    static POD_STORAGE(FDepthStencilState) GDepthStencilState_Default;
+    static POD_STORAGE(FDepthStencilState) GDepthStencilState_DepthRead;
+    static POD_STORAGE(FDepthStencilState) GDepthStencilState_None;
 }
 //----------------------------------------------------------------------------
 void FDepthStencilState::Start() {
     Assert(nullptr == Default);
     {
-        FDepthStencilState *const state = new ((void *)&gDepthStencilState_Default) FDepthStencilState();
+        FDepthStencilState *const state = new ((void *)&GDepthStencilState_Default) FDepthStencilState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("Default");
@@ -85,7 +85,7 @@ void FDepthStencilState::Start() {
     }
     Assert(nullptr == DepthRead);
     {
-        FDepthStencilState *const state = new ((void *)&gDepthStencilState_DepthRead) FDepthStencilState();
+        FDepthStencilState *const state = new ((void *)&GDepthStencilState_DepthRead) FDepthStencilState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("DepthRead");
@@ -97,7 +97,7 @@ void FDepthStencilState::Start() {
     }
     Assert(nullptr == None);
     {
-        FDepthStencilState *const state = new ((void *)&gDepthStencilState_None) FDepthStencilState();
+        FDepthStencilState *const state = new ((void *)&GDepthStencilState_None) FDepthStencilState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("None");
@@ -112,19 +112,19 @@ void FDepthStencilState::Start() {
 void FDepthStencilState::Shutdown() {
     Assert(nullptr != Default);
     {
-        Assert((void *)Default == (void *)&gDepthStencilState_Default);
+        Assert((void *)Default == (void *)&GDepthStencilState_Default);
         RemoveRef_AssertReachZero_NoDelete(Default);
         Default = nullptr;
     }
     Assert(nullptr != DepthRead);
     {
-        Assert((void *)DepthRead == (void *)&gDepthStencilState_DepthRead);
+        Assert((void *)DepthRead == (void *)&GDepthStencilState_DepthRead);
         RemoveRef_AssertReachZero_NoDelete(DepthRead);
         DepthRead = nullptr;
     }
     Assert(nullptr != None);
     {
-        Assert((void *)None == (void *)&gDepthStencilState_None);
+        Assert((void *)None == (void *)&GDepthStencilState_None);
         RemoveRef_AssertReachZero_NoDelete(None);
         None = nullptr;
     }

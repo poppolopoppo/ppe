@@ -66,7 +66,7 @@ static Graphics::FBindName *gMaterialConstNamesArray = nullptr;
 //----------------------------------------------------------------------------
 #define DEF_MATERIALCONSTNAMES_ACCESSOR(_Name) \
     const Graphics::FBindName& FMaterialConstNames::_Name() { \
-        return gMaterialConstNamesArray[MaterialConstNamesID::_Name]; \
+        return GMaterialConstNamesArray[MaterialConstNamesID::_Name]; \
     }
 FOREACH_MATERIALCONSTNAMES_NAME(DEF_MATERIALCONSTNAMES_ACCESSOR)
 #undef DEF_MATERIALCONSTNAMES_ACCESSOR
@@ -75,7 +75,7 @@ FOREACH_MATERIALCONSTNAMES_NAME(DEF_MATERIALCONSTNAMES_ACCESSOR)
 //----------------------------------------------------------------------------
 void FMaterialConstNames::Start() {
     AssertRelease(!gMaterialConstNamesArray);
-    gMaterialConstNamesArray = new Graphics::FBindName[MaterialConstNamesID::_Count] {
+    GMaterialConstNamesArray = new Graphics::FBindName[MaterialConstNamesID::_Count] {
 #define DEF_MATERIALCONSTNAMES_STARTUP(_Name) STRINGIZE(_Name),
         FOREACH_MATERIALCONSTNAMES_NAME(DEF_MATERIALCONSTNAMES_STARTUP)
 #undef DEF_MATERIALCONSTNAMES_STARTUP
@@ -87,8 +87,8 @@ void FMaterialConstNames::Start() {
 void FMaterialConstNames::Shutdown() {
     AssertRelease(gMaterialConstNamesArray);
 
-    delete[] gMaterialConstNamesArray;
-    gMaterialConstNamesArray = nullptr;
+    delete[] GMaterialConstNamesArray;
+    GMaterialConstNamesArray = nullptr;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

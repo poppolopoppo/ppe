@@ -9,7 +9,7 @@ namespace Application {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static constexpr EKeyboardKey gEachKeyboardKeys[] = {
+static constexpr EKeyboardKey GEachKeyboardKeys[] = {
     // TNumeric
 
     EKeyboardKey::_0,
@@ -302,7 +302,7 @@ FStringView KeyboardKeyToCStr(EKeyboardKey value) {
 }
 //----------------------------------------------------------------------------
 TMemoryView<const EKeyboardKey> EachKeyboardKeys() {
-    return MakeView(gEachKeyboardKeys);
+    return MakeView(GEachKeyboardKeys);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

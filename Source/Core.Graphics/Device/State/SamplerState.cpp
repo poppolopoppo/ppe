@@ -68,18 +68,18 @@ const FSamplerState *FSamplerState::PointClamp = nullptr;
 const FSamplerState *FSamplerState::PointWrap = nullptr;
 //----------------------------------------------------------------------------
 namespace {
-    static POD_STORAGE(FSamplerState) gSamplerState_AnisotropicClamp;
-    static POD_STORAGE(FSamplerState) gSamplerState_AnisotropicWrap;
-    static POD_STORAGE(FSamplerState) gSamplerState_LinearClamp;
-    static POD_STORAGE(FSamplerState) gSamplerState_LinearWrap;
-    static POD_STORAGE(FSamplerState) gSamplerState_PointClamp;
-    static POD_STORAGE(FSamplerState) gSamplerState_PointWrap;
+    static POD_STORAGE(FSamplerState) GSamplerState_AnisotropicClamp;
+    static POD_STORAGE(FSamplerState) GSamplerState_AnisotropicWrap;
+    static POD_STORAGE(FSamplerState) GSamplerState_LinearClamp;
+    static POD_STORAGE(FSamplerState) GSamplerState_LinearWrap;
+    static POD_STORAGE(FSamplerState) GSamplerState_PointClamp;
+    static POD_STORAGE(FSamplerState) GSamplerState_PointWrap;
 }
 //----------------------------------------------------------------------------
 void FSamplerState::Start() {
     Assert(nullptr == AnisotropicClamp);
     {
-        FSamplerState *const state = new ((void *)&gSamplerState_AnisotropicClamp) FSamplerState();
+        FSamplerState *const state = new ((void *)&GSamplerState_AnisotropicClamp) FSamplerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("AnisotropicClamp");
@@ -93,7 +93,7 @@ void FSamplerState::Start() {
     }
     Assert(nullptr == AnisotropicWrap);
     {
-        FSamplerState *const state = new ((void *)&gSamplerState_AnisotropicWrap) FSamplerState();
+        FSamplerState *const state = new ((void *)&GSamplerState_AnisotropicWrap) FSamplerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("AnisotropicWrap");
@@ -107,7 +107,7 @@ void FSamplerState::Start() {
     }
     Assert(nullptr == LinearClamp);
     {
-        FSamplerState *const state = new ((void *)&gSamplerState_LinearClamp) FSamplerState();
+        FSamplerState *const state = new ((void *)&GSamplerState_LinearClamp) FSamplerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("LinearClamp");
@@ -121,7 +121,7 @@ void FSamplerState::Start() {
     }
     Assert(nullptr == LinearWrap);
     {
-        FSamplerState *const state = new ((void *)&gSamplerState_LinearWrap) FSamplerState();
+        FSamplerState *const state = new ((void *)&GSamplerState_LinearWrap) FSamplerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("LinearWrap");
@@ -135,7 +135,7 @@ void FSamplerState::Start() {
     }
     Assert(nullptr == PointClamp);
     {
-        FSamplerState *const state = new ((void *)&gSamplerState_PointClamp) FSamplerState();
+        FSamplerState *const state = new ((void *)&GSamplerState_PointClamp) FSamplerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("PointClamp");
@@ -149,7 +149,7 @@ void FSamplerState::Start() {
     }
     Assert(nullptr == PointWrap);
     {
-        FSamplerState *const state = new ((void *)&gSamplerState_PointWrap) FSamplerState();
+        FSamplerState *const state = new ((void *)&GSamplerState_PointWrap) FSamplerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName("PointWrap");
@@ -166,37 +166,37 @@ void FSamplerState::Start() {
 void FSamplerState::Shutdown() {
     Assert(nullptr != AnisotropicClamp);
     {
-        Assert((void *)AnisotropicClamp == (void *)&gSamplerState_AnisotropicClamp);
+        Assert((void *)AnisotropicClamp == (void *)&GSamplerState_AnisotropicClamp);
         RemoveRef_AssertReachZero_NoDelete(AnisotropicClamp);
         AnisotropicClamp = nullptr;
     }
     Assert(nullptr != AnisotropicWrap);
     {
-        Assert((void *)AnisotropicWrap == (void *)&gSamplerState_AnisotropicWrap);
+        Assert((void *)AnisotropicWrap == (void *)&GSamplerState_AnisotropicWrap);
         RemoveRef_AssertReachZero_NoDelete(AnisotropicWrap);
         AnisotropicWrap = nullptr;
     }
     Assert(nullptr != LinearClamp);
     {
-        Assert((void *)LinearClamp == (void *)&gSamplerState_LinearClamp);
+        Assert((void *)LinearClamp == (void *)&GSamplerState_LinearClamp);
         RemoveRef_AssertReachZero_NoDelete(LinearClamp);
         LinearClamp = nullptr;
     }
     Assert(nullptr != LinearWrap);
     {
-        Assert((void *)LinearWrap == (void *)&gSamplerState_LinearWrap);
+        Assert((void *)LinearWrap == (void *)&GSamplerState_LinearWrap);
         RemoveRef_AssertReachZero_NoDelete(LinearWrap);
         LinearWrap = nullptr;
     }
     Assert(nullptr != PointClamp);
     {
-        Assert((void *)PointClamp == (void *)&gSamplerState_PointClamp);
+        Assert((void *)PointClamp == (void *)&GSamplerState_PointClamp);
         RemoveRef_AssertReachZero_NoDelete(PointClamp);
         PointClamp = nullptr;
     }
     Assert(nullptr != PointWrap);
     {
-        Assert((void *)PointWrap == (void *)&gSamplerState_PointWrap);
+        Assert((void *)PointWrap == (void *)&GSamplerState_PointWrap);
         RemoveRef_AssertReachZero_NoDelete(PointWrap);
         PointWrap = nullptr;
     }

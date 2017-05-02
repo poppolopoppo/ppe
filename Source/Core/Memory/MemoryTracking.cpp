@@ -146,8 +146,8 @@ void FMemoryTrackingData::Append(const FMemoryTrackingData& other) {
 }
 //----------------------------------------------------------------------------
 FMemoryTrackingData& FMemoryTrackingData::Global() {
-    ONE_TIME_INITIALIZE(FMemoryTrackingData, gGlobalMemoryTrackingData, "$");
-    return gGlobalMemoryTrackingData;
+    ONE_TIME_INITIALIZE(FMemoryTrackingData, GGlobalMemoryTrackingData, "$");
+    return GGlobalMemoryTrackingData;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -164,8 +164,8 @@ static bool LessTrackingData_(const FMemoryTrackingData& lhs, const FMemoryTrack
     Assert(lhs.Name());
     Assert(rhs.Name());
     return (lhs.Name() != rhs.Name()) &&
-        CompareI(   MakeStringView(lhs.Name(), Meta::noinit_tag()),
-                    MakeStringView(rhs.Name(), Meta::noinit_tag()) ) < 0;
+        CompareI(   MakeStringView(lhs.Name(), Meta::FForceInit{}),
+                    MakeStringView(rhs.Name(), Meta::FForceInit{})) < 0;
 }
 //----------------------------------------------------------------------------
 void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,

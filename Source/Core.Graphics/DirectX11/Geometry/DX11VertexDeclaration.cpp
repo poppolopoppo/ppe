@@ -211,7 +211,7 @@ FVertexFormat DXGIFormatToVertexFormat(DXGI_FORMAT value) {
 namespace {
 //----------------------------------------------------------------------------
 #define DEF_DX11SEMANTIC_NAME(_SEMANTIC) \
-    static const char *CONCAT(gDX11SemanticName_, _SEMANTIC) = STRINGIZE(_SEMANTIC)
+    static const char *CONCAT(GDX11SemanticName_, _SEMANTIC) = STRINGIZE(_SEMANTIC)
 //----------------------------------------------------------------------------
 DEF_DX11SEMANTIC_NAME(POSITION);
 DEF_DX11SEMANTIC_NAME(TEXCOORD);
@@ -226,17 +226,17 @@ DEF_DX11SEMANTIC_NAME(BINORMAL);
 //----------------------------------------------------------------------------
 LPCSTR VertexSubPartSemanticToDX11SemanticName(const Graphics::FName& value) {
     if      (value == FVertexSemantic::Position)
-        return gDX11SemanticName_POSITION;
+        return GDX11SemanticName_POSITION;
     else if (value == FVertexSemantic::TexCoord)
-        return gDX11SemanticName_TEXCOORD;
+        return GDX11SemanticName_TEXCOORD;
     else if (value == FVertexSemantic::Normal)
-        return gDX11SemanticName_NORMAL;
+        return GDX11SemanticName_NORMAL;
     else if (value == FVertexSemantic::Color)
-        return gDX11SemanticName_COLOR;
+        return GDX11SemanticName_COLOR;
     else if (value == FVertexSemantic::Tangent)
-        return gDX11SemanticName_TANGENT;
+        return GDX11SemanticName_TANGENT;
     else if (value == FVertexSemantic::Binormal)
-        return gDX11SemanticName_BINORMAL;
+        return GDX11SemanticName_BINORMAL;
     else {
         AssertNotImplemented();
         return NULL;
@@ -244,17 +244,17 @@ LPCSTR VertexSubPartSemanticToDX11SemanticName(const Graphics::FName& value) {
 }
 //----------------------------------------------------------------------------
 const FVertexSemantic& DX11SemanticNameVertexSubPartSemantic(LPCSTR value) {
-    if      (value == gDX11SemanticName_POSITION)
+    if      (value == GDX11SemanticName_POSITION)
         return FVertexSemantic::Position;
-    else if (value == gDX11SemanticName_TEXCOORD)
+    else if (value == GDX11SemanticName_TEXCOORD)
         return FVertexSemantic::TexCoord;
-    else if (value == gDX11SemanticName_COLOR)
+    else if (value == GDX11SemanticName_COLOR)
         return FVertexSemantic::Color;
-    else if (value == gDX11SemanticName_NORMAL)
+    else if (value == GDX11SemanticName_NORMAL)
         return FVertexSemantic::Normal;
-    else if (value == gDX11SemanticName_TANGENT)
+    else if (value == GDX11SemanticName_TANGENT)
         return FVertexSemantic::Tangent;
-    else if (value == gDX11SemanticName_BINORMAL)
+    else if (value == GDX11SemanticName_BINORMAL)
         return FVertexSemantic::Binormal;
     else {
         AssertNotImplemented();

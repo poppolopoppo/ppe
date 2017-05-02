@@ -9,7 +9,7 @@ namespace Engine {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static constexpr EKeyboardKey gEachKeyboardKeys[] = {
+static constexpr EKeyboardKey GEachKeyboardKeys[] = {
     // TNumeric
 
     EKeyboardKey::_0,

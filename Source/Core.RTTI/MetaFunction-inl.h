@@ -127,20 +127,20 @@ bool MetaFunctionCallPromote_(_Class* src, _Result(_Class::*func)(_Args...), PMe
 //----------------------------------------------------------------------------
 template <typename _Result, typename... _Args>
 TMemoryView<const FMetaTypeInfo> TMetaFunctionImpl<_Result, _Args...>::SignatureInfos() const {
-    static const FMetaTypeInfo gSignatureTypeInfos[] = {
+    static const FMetaTypeInfo GSignatureTypeInfos[] = {
         details::MetaFunctionArgTypeInfo_< _Result >(),
         details::MetaFunctionArgTypeInfo_< _Args   >()...
     };
-    return MakeView(gSignatureTypeInfos);
+    return MakeView(GSignatureTypeInfos);
 }
 //----------------------------------------------------------------------------
 template <typename _Result, typename... _Args>
 TMemoryView<const IMetaTypeVirtualTraits* const> TMetaFunctionImpl<_Result, _Args...>::SignatureTraits() const {
-    static const IMetaTypeVirtualTraits* const gSignatureTraits[] = {
+    static const IMetaTypeVirtualTraits* const GSignatureTraits[] = {
         details::MetaFunctionArgVirtualTraits_< _Result >(),
         details::MetaFunctionArgVirtualTraits_< _Args   >()...
     };
-    return MakeView(gSignatureTraits);
+    return MakeView(GSignatureTraits);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

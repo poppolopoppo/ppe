@@ -25,19 +25,19 @@ static ::timeval MakeTimeval(const FMilliseconds& duration) {
     return time_to_wait;
 }
 //----------------------------------------------------------------------------
-static constexpr intptr_t gInvalidSocket_ = PackSocket_(INVALID_SOCKET);
+static constexpr intptr_t GInvalidSocket_ = PackSocket_(INVALID_SOCKET);
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FSocket::FSocket()
-:   _handle(gInvalidSocket_)
+:   _handle(GInvalidSocket_)
 ,   _userData(nullptr)
 ,   _timeout(double(DefaultTimeoutInMs)) {}
 //----------------------------------------------------------------------------
 FSocket::FSocket(FAddress&& remote, FAddress&& local)
-:   _handle(gInvalidSocket_)
+:   _handle(GInvalidSocket_)
 ,   _userData(nullptr)
 ,   _local(std::move(local))
 ,   _remote(std::move(remote))
@@ -59,7 +59,7 @@ FSocket& FSocket::operator =(FSocket&& rvalue) {
     _remote = std::move(rvalue._remote);
     _timeout = std::move(rvalue._timeout);
 
-    rvalue._handle = gInvalidSocket_;
+    rvalue._handle = GInvalidSocket_;
 
     return *this;
 }
@@ -211,7 +211,7 @@ bool FSocket::Disconnect(bool gracefully/* = false */) {
     if (status == -1)
         return false;
 
-    _handle = gInvalidSocket_;
+    _handle = GInvalidSocket_;
 
     Assert(!IsConnected());
     return true;
@@ -235,7 +235,7 @@ bool FSocket::ShutdownOutgoing() {
 }
 //----------------------------------------------------------------------------
 bool FSocket::IsConnected() const {
-    return (gInvalidSocket_ != _handle);
+    return (GInvalidSocket_ != _handle);
 }
 //----------------------------------------------------------------------------
 bool FSocket::IsReadable(const FMilliseconds& timeout) const {

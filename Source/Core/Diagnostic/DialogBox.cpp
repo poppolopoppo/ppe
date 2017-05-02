@@ -336,7 +336,7 @@ static LRESULT CALLBACK Template_DialogProc_(HWND hwndDlg, UINT message, WPARAM 
     return FALSE;
 }
 //----------------------------------------------------------------------------
-static constexpr Dialog::EResult gTemplate_AllButtons[] = {
+static constexpr Dialog::EResult GTemplate_AllButtons[] = {
     Dialog::EResult::Ok,
     Dialog::EResult::Retry,
     Dialog::EResult::Ignore,
@@ -381,16 +381,16 @@ static Dialog::EResult Template_CreateDialogBox_(
     }
     ctx.CallstackFrames = callstackFrames.MakeConstView();
 
-    static constexpr size_t gAllocSize = 8192;
+    static constexpr size_t GAllocSize = 8192;
 
-    HGLOBAL const hgbl = ::GlobalAlloc(GMEM_ZEROINIT, gAllocSize);
+    HGLOBAL const hgbl = ::GlobalAlloc(GMEM_ZEROINIT, GAllocSize);
     Assert(nullptr != hgbl);
     {
         constexpr size_t buttonWidthPerChar = 4;
         constexpr size_t buttonWidthPadding = 3;
         constexpr size_t buttonHeight = 15;
 
-        FMemoryViewWriter writer(TMemoryView<u8>((u8*)::GlobalLock(hgbl), gAllocSize));
+        FMemoryViewWriter writer(TMemoryView<u8>((u8*)::GlobalLock(hgbl), GAllocSize));
 
         const auto eaten = writer.Eat(sizeof(::DLGTEMPLATE));
         Assert(IS_ALIGNED(sizeof(DWORD), eaten.Pointer()));
@@ -415,7 +415,7 @@ static Dialog::EResult Template_CreateDialogBox_(
         const size_t buttonTop = tpl->cy - 5 - buttonHeight;
         size_t buttonRight = tpl->cx - 2;
 
-        for (Dialog::EResult button : gTemplate_AllButtons) {
+        for (Dialog::EResult button : GTemplate_AllButtons) {
             if (((size_t)1<<(size_t)button) != (((size_t)1<<(size_t)button) & (size_t)buttons))
                 continue;
 

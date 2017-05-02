@@ -38,9 +38,9 @@ enum class ETargetPlatform {
 #endif
 };
 //----------------------------------------------------------------------------
-TMemoryView<const ETargetPlatform> EachTargetPlatform();
-FStringView TargetPlatformToCStr(ETargetPlatform platform);
-EEndianness TargetPlatformEndianness(ETargetPlatform platform);
+CORE_API TMemoryView<const ETargetPlatform> EachTargetPlatform();
+CORE_API FStringView TargetPlatformToCStr(ETargetPlatform platform);
+CORE_API EEndianness TargetPlatformEndianness(ETargetPlatform platform);
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(
@@ -49,14 +49,20 @@ std::basic_ostream<_Char, _Traits>& operator <<(
     return TargetPlatformToCStr(platform);
 }
 //----------------------------------------------------------------------------
-struct FPlatform {
+CORE_API struct FPlatform {
+    struct FSystemInfo {
+        size_t AllocationGranularity;
+        size_t PageSize;
+        size_t ProcessorsCount;
+    };
+    static const FSystemInfo& SystemInfo;
 #ifndef FINAL_RELEASE
-static void CheckMemory();
-static void DebugBreak();
-static void DebugBreakAttach();
-static bool IsDebuggerAttached();
-static void OutputDebug(const char* text);
-static void OutputDebug(const wchar_t* text);
+    static void CheckMemory();
+    static void DebugBreak();
+    static void DebugBreakAttach();
+    static bool IsDebuggerAttached();
+    static void OutputDebug(const char* text);
+    static void OutputDebug(const wchar_t* text);
 #endif
 };
 //----------------------------------------------------------------------------
