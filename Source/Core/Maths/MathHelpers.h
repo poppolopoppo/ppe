@@ -42,6 +42,12 @@ constexpr T Lerp(T v0, T v1, U f);
 template <typename T>
 constexpr float LinearStep(T value, T vmin, T vmax);
 //----------------------------------------------------------------------------
+template <typename T>
+constexpr T Max3(T a, T b, T c) { return Max(a, Max(b, c)); }
+//----------------------------------------------------------------------------
+template <typename T>
+constexpr T Min3(T a, T b, T c) { return Min(a, Min(b, c)); }
+//----------------------------------------------------------------------------
 template <typename T, typename U>
 constexpr T Pow(T v, U n);
 //----------------------------------------------------------------------------
