@@ -13,25 +13,33 @@ namespace details {
 template <typename T, typename _Tag, bool _ThreadLocal>
 class TSingletonStorage_ {
 public:
-    static bool gHasInstance;
+#ifdef WITH_CORE_ASSERT
+    static bool GHasInstance;
+#endif
     static T& Ref() {
-        static typename POD_STORAGE(T) gPod;
-        return reinterpret_cast<T&>(gPod);
+        static typename POD_STORAGE(T) GPod;
+        return reinterpret_cast<T&>(GPod);
     }
 };
+#ifdef WITH_CORE_ASSERT
 template <typename T, typename _Tag, bool _ThreadLocal>
-bool TSingletonStorage_<T, _Tag, _ThreadLocal>::gHasInstance = false;
+bool TSingletonStorage_<T, _Tag, _ThreadLocal>::GHasInstance = false;
+#endif
 template <typename T, typename _Tag>
 class TSingletonStorage_<T, _Tag, true> {
 public:
-    static THREAD_LOCAL bool gHasInstance;
+#ifdef WITH_CORE_ASSERT
+    static THREAD_LOCAL bool GHasInstance;
+#endif
     static T& Ref() {
-        static THREAD_LOCAL typename POD_STORAGE(T) gPod;
-        return reinterpret_cast<T&>(gPod);
+        static THREAD_LOCAL typename POD_STORAGE(T) GPod;
+        return reinterpret_cast<T&>(GPod);
     }
 };
+#ifdef WITH_CORE_ASSERT
 template <typename T, typename _Tag>
-THREAD_LOCAL bool TSingletonStorage_<T, _Tag, true>::gHasInstance = false;
+THREAD_LOCAL bool TSingletonStorage_<T, _Tag, true>::GHasInstance = false;
+#endif
 } //!details
 //----------------------------------------------------------------------------
 template <typename T, typename _Tag = T, bool _ThreadLocal = false>
@@ -47,9 +55,11 @@ public:
     TSingleton(TSingleton&& ) = delete;
     TSingleton& operator =(TSingleton&& ) = delete;
 
+#ifdef WITH_CORE_ASSERT
     static bool HasInstance() {
-        return storage_type::gHasInstance;
+        return storage_type::GHasInstance;
     }
+#endif
 
     static T& Instance() {
         Assert(HasInstance());
@@ -58,15 +68,15 @@ public:
 
     template <typename... _Args>
     static void Create(_Args&&... args) {
-        AssertRelease(not HasInstance());
+        Assert(not HasInstance());
         new ((void*)&storage_type::Ref()) T(std::forward<_Args>(args)...);
-        storage_type::gHasInstance = true;
+        ONLY_IF_ASSERT(storage_type::GHasInstance = true);
     }
 
     static void Destroy() {
-        AssertRelease(HasInstance());
+        Assert(HasInstance());
         storage_type::Ref().~T();
-        storage_type::gHasInstance = false;
+        ONLY_IF_ASSERT(storage_type::GHasInstance = false);
     }
 };
 //----------------------------------------------------------------------------

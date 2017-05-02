@@ -328,7 +328,9 @@ public:
     typedef Meta::TSingleton<set_type, TTokenFactory> parent_type;
 
     using parent_type::Instance;
+#ifdef WITH_CORE_ASSERT
     using parent_type::HasInstance;
+#endif
     using parent_type::Destroy;
 
     static void Create(size_t capacity) {

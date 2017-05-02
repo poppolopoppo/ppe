@@ -33,7 +33,9 @@ public:
     const FTimepoint& StartedAt() const { return _startedAt; }
 
     using parent_type::Instance;
+#ifdef WITH_CORE_ASSERT
     using parent_type::HasInstance;
+#endif
     using parent_type::Destroy;
 
     static void Create(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t **argv) {
@@ -41,9 +43,7 @@ public:
     }
 
     static FSeconds ElapsedSeconds() {
-        return HasInstance()
-            ? FSeconds(FTimepoint::ElapsedSince(Instance().StartedAt()))
-            : FSeconds(0);
+        return FSeconds(FTimepoint::ElapsedSince(Instance().StartedAt()));
     }
 
 private:

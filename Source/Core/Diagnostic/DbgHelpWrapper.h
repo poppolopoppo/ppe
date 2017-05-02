@@ -99,7 +99,9 @@ public:
     bool Available() const { return nullptr != _library; }
     FLocked Lock() const { return FLocked(*this); }
 
+#ifdef WITH_CORE_ASSERT
     using Meta::TSingleton<FDbghelpWrapper>::HasInstance;
+#endif
     using Meta::TSingleton<FDbghelpWrapper>::Instance;
 
     static void Create() { Meta::TSingleton<FDbghelpWrapper>::Create(); }

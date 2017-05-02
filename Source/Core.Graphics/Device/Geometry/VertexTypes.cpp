@@ -46,7 +46,9 @@ typedef STRINGVIEW_HASHMAP(Vertex, PCVertexDeclaration, ECase::Sensitive) string
 class FVertexDeclarationDico_ : Meta::TSingleton<stringview_to_vdecl_type, FVertexDeclarationDico_> {
     typedef Meta::TSingleton<stringview_to_vdecl_type, FVertexDeclarationDico_> parent_type;
 public:
+#ifdef WITH_CORE_ASSERT
     using parent_type::HasInstance;
+#endif
 
     static void Create() {
         AssertIsMainThread();

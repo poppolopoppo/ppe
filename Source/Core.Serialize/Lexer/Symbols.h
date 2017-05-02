@@ -26,7 +26,9 @@ private:
 public:
     ~FSymbols();
 
+#ifdef WITH_CORE_ASSERT
     using singleton_type::HasInstance;
+#endif
     using singleton_type::Destroy;
 
     static void Create() { singleton_type::Create(); }

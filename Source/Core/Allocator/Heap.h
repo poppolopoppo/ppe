@@ -80,7 +80,9 @@ class THeapSingleton : Meta::TSingleton<FHeap, _Tag> {
     typedef Meta::TSingleton<FHeap, _Tag> parent_type;
 public:
     using parent_type::Instance;
+#ifdef WITH_CORE_ASSERT
     using parent_type::HasInstance;
+#endif
     using parent_type::Destroy;
     using parent_type::Create;
 };

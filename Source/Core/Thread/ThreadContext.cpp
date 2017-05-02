@@ -26,7 +26,9 @@ namespace {
 class FThreadLocalContext_ : Meta::TThreadLocalSingleton<FThreadContext, FThreadLocalContext_> {
     typedef Meta::TThreadLocalSingleton<FThreadContext, FThreadLocalContext_> parent_type;
 public:
+#ifdef WITH_CORE_ASSERT
     using parent_type::HasInstance;
+#endif
     using parent_type::Instance;
     using parent_type::Destroy;
 

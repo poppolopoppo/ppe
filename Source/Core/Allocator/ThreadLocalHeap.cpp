@@ -15,7 +15,9 @@ class FThreadLocalHeap : Meta::TThreadLocalSingleton<FHeap, FThreadLocalHeap> {
     typedef Meta::TThreadLocalSingleton<FHeap, FThreadLocalHeap> parent_type;
 public:
     using parent_type::Instance;
+#ifdef WITH_CORE_ASSERT
     using parent_type::HasInstance;
+#endif
     using parent_type::Destroy;
 
     static void Create();

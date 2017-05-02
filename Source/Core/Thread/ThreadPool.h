@@ -16,7 +16,9 @@ public:
     typedef Meta::TSingleton<FTaskManager, FGlobalThreadPool> parent_type;
 
     using parent_type::Instance;
+#ifdef WITH_CORE_ASSERT
     using parent_type::HasInstance;
+#endif
 
     static void Create();
     static void Destroy();
@@ -31,7 +33,9 @@ public:
     typedef Meta::TSingleton<FTaskManager, FIOThreadPool> parent_type;
 
     using parent_type::Instance;
+#ifdef WITH_CORE_ASSERT
     using parent_type::HasInstance;
+#endif
 
     static void Create();
     static void Destroy();

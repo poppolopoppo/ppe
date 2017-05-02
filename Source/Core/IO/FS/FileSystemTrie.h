@@ -81,7 +81,9 @@ public:
     typedef Meta::TSingleton<FFileSystemTrie, FFileSystemPath> parent_type;
 
     using parent_type::Instance;
+#ifdef WITH_CORE_ASSERT
     using parent_type::HasInstance;
+#endif
     using parent_type::Destroy;
 
     static void Create() { parent_type::Create(); }
