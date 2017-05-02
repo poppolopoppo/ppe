@@ -31,9 +31,8 @@ public:
     typedef TScalarVector<T, _Width> row_type;
     typedef TScalarVector<T, _Height> column_type;
 
-    TScalarMatrix();
-    explicit TScalarMatrix(Meta::noinit_tag);
-    ~TScalarMatrix();
+    FORCE_INLINE TScalarMatrix() {}
+    explicit TScalarMatrix(Meta::FForceInit);
 
     TScalarMatrix(T broadcast);
     TScalarMatrix(std::initializer_list<T> values);

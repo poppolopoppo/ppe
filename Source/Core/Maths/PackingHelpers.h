@@ -50,6 +50,7 @@ struct FHalfFloat {
     u16 _data;
 
     FHalfFloat() {}
+    explicit FHalfFloat(Meta::FForceInit) : _data(0) {}
     ~FHalfFloat() {}
 
     FORCE_INLINE operator u16 () const { return _data; }
@@ -159,6 +160,7 @@ struct TBasicNorm {
     T _data;
 
     FORCE_INLINE TBasicNorm() {}
+    FORCE_INLINE explicit TBasicNorm(Meta::FForceInit) : _data(T(0)) {}
     FORCE_INLINE ~TBasicNorm() {}
 
     FORCE_INLINE operator T() const { return _data; }

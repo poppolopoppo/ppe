@@ -29,7 +29,7 @@ void FJSONSerializer::Deserialize(RTTI::FMetaTransaction* transaction, IStreamRe
     Assert(input);
 
     FJSON json;
-    if (not FJSON::Load(&json, FFilename(MakeStringView(sourceName, Meta::noinit_tag{})), input))
+    if (not FJSON::Load(&json, FFilename(MakeStringView(sourceName, Meta::FForceInit{})), input))
         CORE_THROW_IT(FJSONSerializerException("failed to parse JSON document"));
 
     VECTOR(Serialize, RTTI::PMetaAtom) parsed;

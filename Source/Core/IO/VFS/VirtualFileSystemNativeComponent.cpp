@@ -128,7 +128,7 @@ static size_t GlobFiles_Windows_(
     size_t total = 0;
 
     do {
-        const FileSystem::FStringView fname = MakeStringView(ffd.cFileName, Meta::noinit_tag());
+        const FileSystem::FStringView fname = MakeStringView(ffd.cFileName, Meta::FForceInit{});
         if (FILE_ATTRIBUTE_DIRECTORY & ffd.dwFileAttributes) {
             if (!recursive)
                 continue;

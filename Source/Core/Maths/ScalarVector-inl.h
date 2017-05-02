@@ -7,13 +7,9 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-TScalarVector<T, _Dim>::TScalarVector() : TScalarVector(TNumericLimits<T>::DefaultValue()) {}
-//----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
-TScalarVector<T, _Dim>::TScalarVector(Meta::noinit_tag) {}
-//----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
-TScalarVector<T, _Dim>::~TScalarVector() {}
+TScalarVector<T, _Dim>::TScalarVector(Meta::FForceInit)
+    : TScalarVector(TNumericLimits<T>::DefaultValue())
+{}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 TScalarVector<T, _Dim>::TScalarVector(T broadcast) {

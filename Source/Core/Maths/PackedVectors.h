@@ -15,7 +15,9 @@ namespace Core {
 struct UX10Y10Z10W2N {
     u32 _data;
 
-    UX10Y10Z10W2N() {}
+    FORCE_INLINE UX10Y10Z10W2N() {}
+    FORCE_INLINE explicit UX10Y10Z10W2N(Meta::FForceInit) : _data(0) {}
+
     UX10Y10Z10W2N(u32 data) : _data(data) {}
     UX10Y10Z10W2N(const float3& value) { Pack(value); }
     UX10Y10Z10W2N(const float4& value) { Pack(value); }

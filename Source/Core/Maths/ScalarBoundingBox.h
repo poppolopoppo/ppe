@@ -22,9 +22,8 @@ public:
     friend class TScalarBoundingBox;
 
     TScalarBoundingBox();
-    explicit TScalarBoundingBox(Meta::noinit_tag);
+    FORCE_INLINE explicit TScalarBoundingBox(Meta::FNoInit) {}
     TScalarBoundingBox(const vector_type& min, const vector_type& max);
-    ~TScalarBoundingBox();
 
     TScalarBoundingBox(const TScalarBoundingBox& other);
     TScalarBoundingBox& operator =(const TScalarBoundingBox& other);

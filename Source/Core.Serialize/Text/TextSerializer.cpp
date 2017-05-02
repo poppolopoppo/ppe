@@ -404,7 +404,7 @@ void FTextSerializer::Deserialize(RTTI::FMetaTransaction* transaction, IStreamRe
     Assert(transaction);
     Assert(input);
 
-    Lexer::FLexer lexer(input, MakeStringView(sourceName, Meta::noinit_tag()), true);
+    Lexer::FLexer lexer(input, MakeStringView(sourceName, Meta::FForceInit{}), true);
 
     Parser::FParseList parseList(&lexer);
     Parser::FParseContext parseContext;

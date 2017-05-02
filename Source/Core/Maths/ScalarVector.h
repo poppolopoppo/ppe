@@ -26,13 +26,12 @@ public:
     template <typename U, size_t _Width, size_t _Height>
     friend class TScalarMatrix;
 
-    TScalarVector();
-    explicit TScalarVector(Meta::noinit_tag);
-    ~TScalarVector();
+    FORCE_INLINE TScalarVector() {}
+    explicit TScalarVector(Meta::FForceInit);
 
-    TScalarVector(T broadcast);
+    explicit TScalarVector(T broadcast);
     template <typename U>
-    TScalarVector(U broadcast) : TScalarVector(checked_cast<T>(broadcast)) {}
+    explicit TScalarVector(U broadcast) : TScalarVector(checked_cast<T>(broadcast)) {}
     TScalarVector(std::initializer_list<T> values);
 
     FORCE_INLINE TScalarVector(T v0, T v1);

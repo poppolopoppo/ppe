@@ -81,8 +81,7 @@ HRESULT STDCALL FDX11ShaderIncludeHandler_::Open(::D3D_INCLUDE_TYPE IncludeType,
     *ppData = nullptr;
     *pBytes = 0;
 
-    if (0 == CompareI(  MakeStringView(pFileName, Meta::noinit_tag()),
-                        FShaderSource::AppIn_SubstitutionName()) ) {
+    if (0 == CompareI(MakeStringView(pFileName, Meta::FForceInit{}), FShaderSource::AppIn_SubstitutionName()) ) {
         GenerateAutomaticSubstitutions_(ppData, pBytes);
         return S_OK;
     }

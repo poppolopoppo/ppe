@@ -131,7 +131,7 @@ template <typename T, size_t _Dim>
 TScalarVector<T, _Dim> Normalize(const TScalarVector<T, _Dim>& v) {
     const float length = Length(v);
     Assert(length > 0); // no zero length normalize
-    TScalarVector<T, _Dim> result(Meta::noinit_tag{});
+    TScalarVector<T, _Dim> result;
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = static_cast<T>(v._data[i] / length);
     return result;
@@ -141,7 +141,7 @@ template <typename T, size_t _Dim>
 TScalarVector<T, _Dim> Normalize2(const TScalarVector<T, _Dim>& v) {
     const float length = Length2(v);
     Assert(length > 0); // no zero length normalize
-    TScalarVector<T, _Dim> result(Meta::noinit_tag{});
+    TScalarVector<T, _Dim> result;
     result.x() = static_cast<T>(v.x() / length);
     result.y() = static_cast<T>(v.y() / length);
     for (size_t i = 2; i < _Dim; ++i)
@@ -153,7 +153,7 @@ template <typename T, size_t _Dim>
 TScalarVector<T, _Dim> Normalize3(const TScalarVector<T, _Dim>& v) {
     const float length = Length3(v);
     Assert(length > 0); // no zero length normalize
-    TScalarVector<T, _Dim> result(Meta::noinit_tag{});
+    TScalarVector<T, _Dim> result;
     result.x() = static_cast<T>(v.x() / length);
     result.y() = static_cast<T>(v.y() / length);
     result.z() = static_cast<T>(v.z() / length);
@@ -180,7 +180,7 @@ TScalarVector<T, _Dim> Normalize4(const TScalarVector<T, _Dim>& v) {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 TScalarVector<T, _Dim> Min(const TScalarVector<T, _Dim>& lhs, const TScalarVector<T, _Dim>& rhs) {
-    TScalarVector<T, _Dim> result(Meta::noinit_tag{});
+    TScalarVector<T, _Dim> result;
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = std::min(lhs._data[i], rhs._data[i]);
     return result;
@@ -188,7 +188,7 @@ TScalarVector<T, _Dim> Min(const TScalarVector<T, _Dim>& lhs, const TScalarVecto
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 TScalarVector<T, _Dim> Max(const TScalarVector<T, _Dim>& lhs, const TScalarVector<T, _Dim>& rhs) {
-    TScalarVector<T, _Dim> result(Meta::noinit_tag{});
+    TScalarVector<T, _Dim> result;
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = std::max(lhs._data[i], rhs._data[i]);
     return result;
@@ -247,7 +247,7 @@ TScalarVector<T, _Dim> Refract(const TScalarVector<T, _Dim>& incident, const TSc
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 TScalarVector<T, _Dim> Abs(const TScalarVector<T, _Dim>& v) {
-    TScalarVector<T, _Dim> result(Meta::noinit_tag{});
+    TScalarVector<T, _Dim> result;
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = Abs(v._data[i]);
     return result;
@@ -255,7 +255,7 @@ TScalarVector<T, _Dim> Abs(const TScalarVector<T, _Dim>& v) {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim, typename U>
 TScalarVector<T, _Dim> BarycentricLerp(const TScalarVector<T, _Dim>& v0, const TScalarVector<T, _Dim>& v1, const TScalarVector<T, _Dim>& v2, U f0, U f1, U f2) {
-    TScalarVector<T, _Dim> result(Meta::noinit_tag{});
+    TScalarVector<T, _Dim> result;
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = BarycentricLerp(v0._data[i], v1._data[i], v2._data[i], f0, f1, f2);
     return result;
@@ -268,7 +268,7 @@ TScalarVector<T, _Dim> BarycentricLerp(const TScalarVector<T, _Dim>& v0, const T
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 TScalarVector<T, _Dim> Clamp(const TScalarVector<T, _Dim>& value, T vmin, T vmax) {
-    TScalarVector<T, _Dim> result(Meta::noinit_tag{});
+    TScalarVector<T, _Dim> result;
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = Clamp(value._data[i], vmin, vmax);
     return result;
@@ -276,7 +276,7 @@ TScalarVector<T, _Dim> Clamp(const TScalarVector<T, _Dim>& value, T vmin, T vmax
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 TScalarVector<T, _Dim> Clamp(const TScalarVector<T, _Dim>& value, const TScalarVector<T, _Dim>& vmin, const TScalarVector<T, _Dim>& vmax) {
-    TScalarVector<T, _Dim> result(Meta::noinit_tag{});
+    TScalarVector<T, _Dim> result;
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = Clamp(value._data[i], vmin._data[i], vmax._data[i]);
     return result;
@@ -284,7 +284,7 @@ TScalarVector<T, _Dim> Clamp(const TScalarVector<T, _Dim>& value, const TScalarV
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 TScalarVector<T, _Dim> Frac(const TScalarVector<T, _Dim>& f) {
-    TScalarVector<T, _Dim> result(Meta::noinit_tag{});
+    TScalarVector<T, _Dim> result;
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = Frac(f._data[i]);
     return result;
@@ -292,7 +292,7 @@ TScalarVector<T, _Dim> Frac(const TScalarVector<T, _Dim>& f) {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim, typename U>
 TScalarVector<T, _Dim> Lerp(const TScalarVector<T, _Dim>& v0, const TScalarVector<T, _Dim>& v1, U f) {
-    TScalarVector<T, _Dim> result(Meta::noinit_tag{});
+    TScalarVector<T, _Dim> result;
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = Lerp(v0._data[i], v1._data[i], f);
     return result;
@@ -300,7 +300,7 @@ TScalarVector<T, _Dim> Lerp(const TScalarVector<T, _Dim>& v0, const TScalarVecto
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim, typename U>
 TScalarVector<T, _Dim> Lerp(const TScalarVector<T, _Dim>& v0, const TScalarVector<T, _Dim>& v1, const TScalarVector<U, _Dim>& f) {
-    TScalarVector<T, _Dim> result(Meta::noinit_tag{});
+    TScalarVector<T, _Dim> result;
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = Lerp(v0._data[i], v1._data[i], f._data[i]);
     return result;
@@ -308,7 +308,7 @@ TScalarVector<T, _Dim> Lerp(const TScalarVector<T, _Dim>& v0, const TScalarVecto
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 TScalarVector<float, _Dim> LinearStep(const TScalarVector<T, _Dim>& value, const TScalarVector<T, _Dim>& vmin, const TScalarVector<T, _Dim>& vmax) {
-    TScalarVector<float, _Dim> result(Meta::noinit_tag{});
+    TScalarVector<float, _Dim> result;
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = LinearStep(value._data[i], vmin._data[i], vmax._data[i]);
     return result;
@@ -316,7 +316,7 @@ TScalarVector<float, _Dim> LinearStep(const TScalarVector<T, _Dim>& value, const
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 TScalarVector<float, _Dim> Pow(const TScalarVector<T, _Dim>& value, T n) {
-    TScalarVector<T, _Dim> result(Meta::noinit_tag{});
+    TScalarVector<T, _Dim> result;
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = Pow(value._data[i], n);
     return result;
@@ -324,7 +324,7 @@ TScalarVector<float, _Dim> Pow(const TScalarVector<T, _Dim>& value, T n) {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 TScalarVector<float, _Dim> Pow(const TScalarVector<T, _Dim>& value, const TScalarVector<T, _Dim>& n) {
-    TScalarVector<T, _Dim> result(Meta::noinit_tag{});
+    TScalarVector<T, _Dim> result;
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = Pow(value._data[i], n._data[i]);
     return result;
@@ -332,7 +332,7 @@ TScalarVector<float, _Dim> Pow(const TScalarVector<T, _Dim>& value, const TScala
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 TScalarVector<T, _Dim> Rcp(const TScalarVector<T, _Dim>& f) {
-    TScalarVector<T, _Dim> result(Meta::noinit_tag{});
+    TScalarVector<T, _Dim> result;
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = Rcp(f._data[i]);
     return result;
@@ -340,7 +340,7 @@ TScalarVector<T, _Dim> Rcp(const TScalarVector<T, _Dim>& f) {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 TScalarVector<T, _Dim> RSqrt(const TScalarVector<T, _Dim>& f) {
-    TScalarVector<T, _Dim> result(Meta::noinit_tag{});
+    TScalarVector<T, _Dim> result;
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = RSqrt(f._data[i]);
     return result;
@@ -348,7 +348,7 @@ TScalarVector<T, _Dim> RSqrt(const TScalarVector<T, _Dim>& f) {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim, typename U>
 TScalarVector<T, _Dim> SLerp(const TScalarVector<T, _Dim>& v0, const TScalarVector<T, _Dim>& v1, U f) {
-    TScalarVector<T, _Dim> result(Meta::noinit_tag{});
+    TScalarVector<T, _Dim> result;
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = SLerp(v0._data[i], v1._data[i], f);
     return result;
@@ -356,7 +356,7 @@ TScalarVector<T, _Dim> SLerp(const TScalarVector<T, _Dim>& v0, const TScalarVect
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim, typename U>
 TScalarVector<T, _Dim> SLerp(const TScalarVector<T, _Dim>& v0, const TScalarVector<T, _Dim>& v1, const TScalarVector<U, _Dim>& f) {
-    TScalarVector<T, _Dim> result(Meta::noinit_tag{});
+    TScalarVector<T, _Dim> result;
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = SLerp(v0._data[i], v1._data[i], f._data[i]);
     return result;
@@ -364,7 +364,7 @@ TScalarVector<T, _Dim> SLerp(const TScalarVector<T, _Dim>& v0, const TScalarVect
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 TScalarVector<T, _Dim> Step(const TScalarVector<T, _Dim>& y, const TScalarVector<T, _Dim>& x) {
-    TScalarVector<T, _Dim> result(Meta::noinit_tag{});
+    TScalarVector<T, _Dim> result;
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = Step(y._data[i], x._data[i]);
     return result;
@@ -372,7 +372,7 @@ TScalarVector<T, _Dim> Step(const TScalarVector<T, _Dim>& y, const TScalarVector
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim, typename U>
 TScalarVector<U, _Dim> Smoothstep(const TScalarVector<T, _Dim>& vmin, const TScalarVector<T, _Dim>& vmax, U f) {
-    TScalarVector<U, _Dim> result(Meta::noinit_tag{});
+    TScalarVector<U, _Dim> result;
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = Smoothstep(vmin._data[i], vmax._data[i], f);
     return result;
@@ -380,7 +380,7 @@ TScalarVector<U, _Dim> Smoothstep(const TScalarVector<T, _Dim>& vmin, const TSca
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim, typename U>
 TScalarVector<U, _Dim> Smoothstep(const TScalarVector<T, _Dim>& vmin, const TScalarVector<T, _Dim>& vmax, const TScalarVector<U, _Dim>& f) {
-    TScalarVector<U, _Dim> result(Meta::noinit_tag{});
+    TScalarVector<U, _Dim> result;
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = Smoothstep(vmin._data[i], vmax._data[i], f._data[i]);
     return result;

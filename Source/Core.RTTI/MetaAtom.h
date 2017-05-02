@@ -200,8 +200,8 @@ public:
     TMetaTypedAtomImpl(const TMetaTypedAtomImpl& other);
     TMetaTypedAtomImpl& operator =(const TMetaTypedAtomImpl& other);
 
-    T& Wrapper() { return _wrapper; }
-    const T& Wrapper() const { return _wrapper; }
+    FORCE_INLINE T& Wrapper() { return _wrapper; }
+    FORCE_INLINE const T& Wrapper() const { return _wrapper; }
 
     virtual FMetaTypeInfo TypeInfo() const override final;
     virtual const IMetaTypeVirtualTraits *Traits() const override final;
@@ -225,7 +225,7 @@ public:
 
     void Swap(T& wrapper);
 
-protected:
+private:
     T _wrapper;
 };
 //----------------------------------------------------------------------------
@@ -265,9 +265,6 @@ public:
     virtual void Accept(IMetaAtomConstVisitor* visitor) const override final { visitor->Visit(this); }
 
     SINGLETON_POOL_ALLOCATED_DECL();
-
-private:
-    using impl_type::_wrapper;
 };
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
@@ -317,8 +314,6 @@ public:
     // IMetaAtomPair interface
 
 private:
-    using impl_type::_wrapper;
-
     virtual const FMetaAtom* Atom() const override final { return this; }
 
     virtual FMetaTypeInfo FirstTypeInfo() const override final { return RTTI::TypeInfo< _First >(); }
@@ -389,8 +384,6 @@ public:
     // IMetaAtomVector interface
 
 private:
-    using impl_type::_wrapper;
-
     virtual const FMetaAtom* Atom() const override final { return this; }
 
     virtual FMetaTypeInfo ValueTypeInfo() const override final { return RTTI::TypeInfo< T >(); }
@@ -458,8 +451,6 @@ public:
     // IMetaAtomDictionary interface
 
 private:
-    using impl_type::_wrapper;
-
     virtual const FMetaAtom* Atom() const override final { return this; }
 
     virtual FMetaTypeInfo KeyTypeInfo() const override final { return RTTI::TypeInfo< _Key >(); }

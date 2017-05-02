@@ -13,8 +13,8 @@ namespace Core {
 //----------------------------------------------------------------------------
 class FQuaternion {
 public:
-    FQuaternion();
-    explicit FQuaternion(Meta::noinit_tag);
+    FORCE_INLINE  FQuaternion() {}
+    FQuaternion(Meta::FForceInit);
     explicit FQuaternion(float broadcast);
     explicit FQuaternion(const float4& value);
     FQuaternion(const float3& value, float w);

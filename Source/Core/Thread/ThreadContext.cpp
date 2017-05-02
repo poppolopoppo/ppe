@@ -112,7 +112,7 @@ FThreadContext::FThreadContext(const char* name, size_t tag)
 ,   _threadId(std::this_thread::get_id()) {
     Assert(name);
 
-    const size_t n = Copy(MakeView(_name), MakeStringView(name, Meta::noinit_tag()));
+    const size_t n = Copy(MakeView(_name), MakeStringView(name, Meta::FForceInit{}));
     Assert(n < lengthof(_name));
     _name[n] = '\0';
 

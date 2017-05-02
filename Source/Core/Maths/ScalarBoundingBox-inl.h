@@ -11,14 +11,8 @@ TScalarBoundingBox<T, _Dim>::TScalarBoundingBox()
 :   TScalarBoundingBox(TScalarBoundingBox::DefaultValue()) {}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-TScalarBoundingBox<T, _Dim>::TScalarBoundingBox(Meta::noinit_tag) {}
-//----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
 TScalarBoundingBox<T, _Dim>::TScalarBoundingBox(const vector_type& min, const vector_type& max)
 :   _min(min), _max(max) {}
-//----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
-TScalarBoundingBox<T, _Dim>::~TScalarBoundingBox() {}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 TScalarBoundingBox<T, _Dim>::TScalarBoundingBox(const TScalarBoundingBox& other)

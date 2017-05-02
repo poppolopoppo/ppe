@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "ScalarVector_fwd.h"
+#include "ScalarVector.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -19,6 +19,10 @@ DEF_SCALARVECTOR(double)
 //----------------------------------------------------------------------------
 #undef DEF_SCALARVECTOR
 */
+//----------------------------------------------------------------------------
+STATIC_ASSERT(Meta::has_forceinit_constructor<uint2>::value);
+STATIC_ASSERT(Meta::has_forceinit_constructor<word3>::value);
+STATIC_ASSERT(Meta::has_forceinit_constructor<float4>::value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

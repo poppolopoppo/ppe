@@ -18,8 +18,39 @@ namespace RTTI {
 namespace {
 //----------------------------------------------------------------------------
 template <typename T>
+static T DefaultValue_(std::true_type) {
+    return T(Meta::FForceInit{});
+}
+//----------------------------------------------------------------------------
+template <typename T>
+static T DefaultValue_(std::false_type) {
+    return T();
+}
+//----------------------------------------------------------------------------
+template <typename T>
+static T DefaultValue_() {
+    return DefaultValue_<T>(Meta::has_forceinit_constructor<T>{});
+}
+//----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+template <typename T>
+static bool IsDefaultValue_(const T& value, std::false_type) {
+    return (T() == value);
+}
+//----------------------------------------------------------------------------
+template <typename T>
+static bool IsDefaultValue_(const T& value, std::true_type) {
+    return (T(Meta::FForceInit{}) == value);
+}
+//----------------------------------------------------------------------------
+template <typename T>
 static bool IsDefaultValue_(const T& value) {
-    return T() == value;
+    return IsDefaultValue_(value, Meta::has_forceinit_constructor<T>{});
 }
 //----------------------------------------------------------------------------
 static bool IsDefaultValue_(const PMetaAtom& atom) {
@@ -95,7 +126,7 @@ static bool DeepEquals_(const FOpaqueData& lhs, const FOpaqueData& rhs) {
 //----------------------------------------------------------------------------
 #define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
     FStringView TMetaType< T >::Name() { return MakeStringView(STRINGIZE(_Name)); } \
-    T TMetaType< T >::DefaultValue() { return T(); } \
+    T TMetaType< T >::DefaultValue() { return DefaultValue_<T>(); } \
     bool TMetaType< T >::IsDefaultValue(const T& value) { return IsDefaultValue_(value); } \
     hash_t TMetaType< T >::HashValue(const T& value) { return HashValue_(value); } \
     bool TMetaType< T >::DeepEquals(const T& lhs, const T& rhs) { return DeepEquals_(lhs, rhs); } \

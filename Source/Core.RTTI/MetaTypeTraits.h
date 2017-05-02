@@ -6,6 +6,7 @@
 #include "Core.RTTI/MetaType.h"
 #include "Core.RTTI/MetaTypeVirtualTraits.h"
 
+#include "Core/Color/Color.h"
 #include "Core/Container/HashMap.h"
 #include "Core/Container/Token_fwd.h"
 #include "Core/IO/FS/Basename.h"
@@ -488,13 +489,20 @@ struct TMetaTypeTraits : details::bind_traits_<T>::type {
 
     using impl_type::VirtualTraits;
 
+    using impl_type::IsDefaultValue;
+
+    using impl_type::DeepEquals;
+
     using impl_type::WrapMove;
     using impl_type::WrapCopy;
 
     using impl_type::UnwrapMove;
     using impl_type::UnwrapCopy;
 
-    enum : bool { Wrapping = (false == std::is_same<wrapped_type, wrapper_type>::value) };
+    STATIC_CONST_INTEGRAL(
+        bool, Wrapping,
+        not std::is_same<wrapped_type, wrapper_type>::value
+    );
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -593,6 +601,56 @@ struct TMetaTypeTraitsImpl< UX10Y10Z10W2N > {
 
     static void UnwrapMove(wrapped_type& dst, wrapper_type&& src) { dst.Pack(src); }
     static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src) { dst.Pack(src); }
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Colors :
+//----------------------------------------------------------------------------
+template <>
+struct TMetaTypeTraitsImpl< FColor > {
+    typedef FColor wrapped_type;
+    typedef ubyte4 wrapper_type;
+
+    typedef TMetaType< wrapper_type > meta_type;
+
+    static const TMetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
+        STATIC_ASSERT(sizeof(wrapper_type) == sizeof(wrapped_type));
+        return TMetaTypeScalarTraits< wrapper_type >::Instance();
+    }
+
+    static bool IsDefaultValue(const wrapped_type& value) { return wrapped_type(Meta::FForceInit{}) == value; }
+
+    static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) { return lhs == rhs; }
+
+    static void WrapMove(wrapper_type& dst, wrapped_type&& src) { dst = reinterpret_cast<const wrapper_type&>(src); }
+    static void WrapCopy(wrapper_type& dst, const wrapped_type& src) { dst = reinterpret_cast<const wrapper_type&>(src); }
+
+    static void UnwrapMove(wrapped_type& dst, wrapper_type&& src) { dst = reinterpret_cast<const wrapped_type&>(src); }
+    static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src) { dst = reinterpret_cast<const wrapped_type&>(src); }
+};
+//----------------------------------------------------------------------------
+template <>
+struct TMetaTypeTraitsImpl< FLinearColor > {
+    typedef FLinearColor wrapped_type;
+    typedef float4 wrapper_type;
+
+    typedef TMetaType< wrapper_type > meta_type;
+
+    static const TMetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
+        STATIC_ASSERT(sizeof(wrapper_type) == sizeof(wrapped_type));
+        return TMetaTypeScalarTraits< wrapper_type >::Instance();
+    }
+
+    static bool IsDefaultValue(const wrapped_type& value) { return wrapped_type(Meta::FForceInit{}) == value; }
+
+    static bool DeepEquals(const wrapped_type& lhs, const wrapped_type& rhs) { return lhs == rhs; }
+
+    static void WrapMove(wrapper_type& dst, wrapped_type&& src) { dst = reinterpret_cast<const wrapper_type&>(src); }
+    static void WrapCopy(wrapper_type& dst, const wrapped_type& src) { dst = reinterpret_cast<const wrapper_type&>(src); }
+
+    static void UnwrapMove(wrapped_type& dst, wrapper_type&& src) { dst = reinterpret_cast<const wrapped_type&>(src); }
+    static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src) { dst = reinterpret_cast<const wrapped_type&>(src); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

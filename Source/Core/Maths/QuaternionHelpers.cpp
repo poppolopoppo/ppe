@@ -23,7 +23,7 @@ FQuaternion BarycentricLerp(const FQuaternion& v0, const FQuaternion& v1, const 
 FQuaternion Lerp(const FQuaternion& v0, const FQuaternion& v1, float f) {
     float inverse = 1.0f - f;
 
-    float4 result(Meta::noinit_tag{});
+    float4 result;
 
     if (Dot(v0, v1) >= 0.0f) {
         result.x() = (inverse * v0.x()) + (f * v1.x());
@@ -140,7 +140,7 @@ FQuaternion MakeQuaternionFromRotationMatrix(const float4x4& matrix) {
     float half;
     float scale = matrix._11() + matrix._22() + matrix._33();
 
-    float4 result(Meta::noinit_tag{});
+    float4 result;
 
     if (scale > 0.0f) {
         sqrt = std::sqrt(scale + 1.0f);

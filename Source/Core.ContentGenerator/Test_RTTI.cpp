@@ -476,7 +476,7 @@ void Test_RTTI() {
             char buffer[1024];
             std::cin.getline(buffer, lengthof(buffer));
 
-            const FStringView line = MakeStringView(buffer, Meta::noinit_tag());
+            const FStringView line = MakeStringView(buffer, Meta::FForceInit{});
 
             if (0 == CompareI(MakeStringView("exit"), line))
                 break;

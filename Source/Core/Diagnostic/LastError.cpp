@@ -22,7 +22,7 @@ namespace Core {
 FString GetLastErrorToString(long errorCode) {
 #ifdef PLATFORM_WINDOWS
     _com_error com(errorCode);
-    return ToString(MakeStringView(com.ErrorMessage(), Meta::noinit_tag()));
+    return ToString(MakeStringView(com.ErrorMessage(), Meta::FForceInit{}));
 
 #else
     return FString();
@@ -33,7 +33,7 @@ FString GetLastErrorToString(long errorCode) {
 FWString GetLastErrorToWString(long errorCode) {
 #ifdef PLATFORM_WINDOWS
     _com_error com(errorCode);
-    return ToWString(MakeStringView(com.ErrorMessage(), Meta::noinit_tag()));
+    return ToWString(MakeStringView(com.ErrorMessage(), Meta::FForceInit{}));
 
 #else
     return FWString();

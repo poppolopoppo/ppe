@@ -93,7 +93,7 @@ void FServiceContainer::Register(T* service) {
 
     const FStringView serviceName{
 #ifdef USE_DEBUG_LOGGER
-        MakeStringView(typeid(_Interface).name(), Meta::noinit_tag{})
+        MakeStringView(typeid(_Interface).name(), Meta::FForceInit{})
 #endif
     };
 

@@ -38,32 +38,9 @@ public:
     pointer address(reference x) const { return std::addressof(x); }
     const_pointer address(const_reference x) const { return std::addressof(x); }
 
-    void construct(pointer p, T&& rvalue) { ::new ((void*)p) T(std::forward<T>(rvalue)); }
-
-    template<typename U, typename... _Args>
-    typename std::enable_if< std::is_trivially_constructible<U>::value >::type
-        construct(U* p, _Args&&... args) { ::new((void*)p) U{std::forward<_Args>(args)...}; }
-
-    template<typename U, typename... _Args>
-    typename std::enable_if< not std::is_trivially_constructible<U>::value >::type
-        construct(U* p, _Args&&... args) { ::new((void*)p) U(std::forward<_Args>(args)...); }
-
-    void destroy(pointer p) {
-        Assert(p);
-        Likely(p);
-        typedef char type_must_be_complete[sizeof(T) ? 1 : -1];
-        (void) sizeof(type_must_be_complete);
-        p->~T();
-    }
-
-    template<typename U>
-    void destroy(U* p) {
-        Assert(p);
-        Likely(p);
-        typedef char type_must_be_complete[sizeof(U) ? 1 : -1];
-        (void) sizeof(type_must_be_complete);
-        p->~U();
-    }
+    template <typename... _Args>
+    void construct(pointer p, _Args&&... args) { Meta::Construct(p, std::forward<_Args>(args)...); }
+    void destroy(pointer p) { Meta::Destroy(p); }
 
     size_type max_size() const
     {

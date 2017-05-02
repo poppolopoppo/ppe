@@ -7,13 +7,8 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
-TScalarMatrix<T, _Width, _Height>::TScalarMatrix() : TScalarMatrix(0) {}
-//----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
-TScalarMatrix<T, _Width, _Height>::TScalarMatrix(Meta::noinit_tag) {}
-//----------------------------------------------------------------------------
-template <typename T, size_t _Width, size_t _Height>
-TScalarMatrix<T, _Width, _Height>::~TScalarMatrix() {}
+TScalarMatrix<T, _Width, _Height>::TScalarMatrix(Meta::FForceInit)
+    : TScalarMatrix(TNumericLimits<T>::DefaultValue()) {}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
 TScalarMatrix<T, _Width, _Height>::TScalarMatrix(T broadcast) {
