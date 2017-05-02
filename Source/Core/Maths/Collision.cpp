@@ -19,70 +19,59 @@ namespace Collision {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-float3 ClosestPointPointTriangle(const float3& point, const float3& vertex1, const float3& vertex2, const float3& vertex3) {
+float3 ClosestPointOnTriangleToPoint(const float3& p, const float3& a, const float3& b, const float3& c) {
     //Source: Real-Time Collision Detection by Christer Ericson
     //Reference: Page 136
 
-    float3 result;
-
-    //Check if P in vertex region outside A
-    float3 ab = vertex2 - vertex1;
-    float3 ac = vertex3 - vertex1;
-    float3 ap = point - vertex1;
-
+    // Check if P in vertex region outside A
+    float3 ab = b - a;
+    float3 ac = c - a;
+    float3 ap = p - a;
     float d1 = Dot3(ab, ap);
     float d2 = Dot3(ac, ap);
-    if (d1 <= 0.0f && d2 <= 0.0f)
-        result = vertex1; //Barycentric coordinates (1,0,0)
+    if (d1 <= 0.0f && d2 <= 0.0f) return a; // barycentric coordinates (1,0,0)
 
-    //Check if P in vertex region outside B
-    float3 bp = point - vertex2;
+    // Check if P in vertex region outside B
+    float3 bp = p - b;
     float d3 = Dot3(ab, bp);
     float d4 = Dot3(ac, bp);
-    if (d3 >= 0.0f && d4 <= d3)
-        result = vertex2; // barycentric coordinates (0,1,0)
+    if (d3 >= 0.0f && d4 <= d3) return b; // barycentric coordinates (0,1,0)
 
-    //Check if P in edge region of AB, if so return projection of P onto AB
-    float vc = d1 * d4 - d3 * d2;
-    if (vc <= 0.0f && d1 >= 0.0f && d3 <= 0.0f)
-    {
+    // Check if P in edge region of AB, if so return projection of P onto AB
+    float vc = d1*d4 - d3*d2;
+    if (vc <= 0.0f && d1 >= 0.0f && d3 <= 0.0f) {
         float v = d1 / (d1 - d3);
-        result = vertex1 + v * ab; //Barycentric coordinates (1-v,v,0)
+        return a + v * ab; // barycentric coordinates (1-v,v,0)
     }
 
-    //Check if P in vertex region outside C
-    float3 cp = point - vertex3;
+    // Check if P in vertex region outside C
+    float3 cp = p - c;
     float d5 = Dot3(ab, cp);
     float d6 = Dot3(ac, cp);
-    if (d6 >= 0.0f && d5 <= d6)
-        result = vertex3; //Barycentric coordinates (0,0,1)
+    if (d6 >= 0.0f && d5 <= d6) return c; // barycentric coordinates (0,0,1)
 
-    //Check if P in edge region of AC, if so return projection of P onto AC
-    float vb = d5 * d2 - d1 * d6;
-    if (vb <= 0.0f && d2 >= 0.0f && d6 <= 0.0f)
-    {
+    // Check if P in edge region of AC, if so return projection of P onto AC
+    float vb = d5*d2 - d1*d6;
+    if (vb <= 0.0f && d2 >= 0.0f && d6 <= 0.0f) {
         float w = d2 / (d2 - d6);
-        result = vertex1 + w * ac; //Barycentric coordinates (1-w,0,w)
+        return a + w * ac; // barycentric coordinates (1-w,0,w)
     }
 
-    //Check if P in edge region of BC, if so return projection of P onto BC
-    float va = d3 * d6 - d5 * d4;
-    if (va <= 0.0f && (d4 - d3) >= 0.0f && (d5 - d6) >= 0.0f)
-    {
+    // Check if P in edge region of BC, if so return projection of P onto BC
+    float va = d3*d6 - d5*d4;
+    if (va <= 0.0f && (d4 - d3) >= 0.0f && (d5 - d6) >= 0.0f) {
         float w = (d4 - d3) / ((d4 - d3) + (d5 - d6));
-        result = vertex2 + w * (vertex3 - vertex2); //Barycentric coordinates (0,1-w,w)
+        return b + w * (c - b); // barycentric coordinates (0,1-w,w)
     }
 
-    //P inside face region. Compute Q through its barycentric coordinates (u,v,w)
+    // P inside face region. Compute Q through its barycentric coordinates (u,v,w)
     float denom = 1.0f / (va + vb + vc);
-    float v2 = vb * denom;
-    float w2 = vc * denom;
-    result = vertex1 + ab * v2 + ac * w2; //= u*vertex1 + v*vertex2 + w*vertex3, u = va * denom = 1.0f - v - w
-
-    return result;
+    float v = vb * denom;
+    float w = vc * denom;
+    return a + ab * v + ac * w; // = u*a + v*b + w*c, u = va * denom = 1.0f-v-w
 }
 //----------------------------------------------------------------------------
-float3 ClosestPointPlanePoint(const FPlane& plane, const float3& point) {
+float3 ClosestPointOnPlaneToPoint(const FPlane& plane, const float3& point) {
     //Source: Real-Time Collision Detection by Christer Ericson
     //Reference: Page 126
 
@@ -92,7 +81,7 @@ float3 ClosestPointPlanePoint(const FPlane& plane, const float3& point) {
     return point - (t * plane.Normal());
 }
 //----------------------------------------------------------------------------
-float3 ClosestPointBoxPoint(const FBoundingBox& box, const float3& point) {
+float3 ClosestPointOnBoxToPoint(const FBoundingBox& box, const float3& point) {
     //Source: Real-Time Collision Detection by Christer Ericson
     //Reference: Page 130
 
@@ -100,7 +89,7 @@ float3 ClosestPointBoxPoint(const FBoundingBox& box, const float3& point) {
     return Min(temp, box.Max());
 }
 //----------------------------------------------------------------------------
-float3 ClosestPointSpherePoint(const FSphere& sphere, const float3& point) {
+float3 ClosestPointOnSphereToPoint(const FSphere& sphere, const float3& point) {
     //Source: Jorgy343
     //Reference: None
 
@@ -117,7 +106,7 @@ float3 ClosestPointSpherePoint(const FSphere& sphere, const float3& point) {
     return result;
 }
 //----------------------------------------------------------------------------
-float3 ClosestPointSphereSphere(const FSphere& sphere1, const FSphere& sphere2) {
+float3 ClosestPointOnSphereToSphere(const FSphere& sphere1, const FSphere& sphere2) {
     //Source: Jorgy343
     //Reference: None
 
@@ -829,7 +818,7 @@ bool SphereIntersectsTriangle(const FSphere& sphere, const float3& vertex1, cons
     //Source: Real-Time Collision Detection by Christer Ericson
     //Reference: Page 167
 
-    float3 point = ClosestPointPointTriangle(sphere.Center(), vertex1, vertex2, vertex3);
+    float3 point = ClosestPointOnTriangleToPoint(sphere.Center(), vertex1, vertex2, vertex3);
     float3 v = point - sphere.Center();
 
     float dot = Dot3(v, v);

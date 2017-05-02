@@ -26,15 +26,15 @@ namespace Collision {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-float3 ClosestPointPointTriangle(const float3& point, const float3& vertex1, const float3& vertex2, const float3& vertex3);
+float3 ClosestPointOnTriangleToPoint(const float3& point, const float3& vertex1, const float3& vertex2, const float3& vertex3);
 //----------------------------------------------------------------------------
-float3 ClosestPointPlanePoint(const FPlane& plane, const float3& point);
+float3 ClosestPointOnPlaneToPoint(const FPlane& plane, const float3& point);
 //----------------------------------------------------------------------------
-float3 ClosestPointBoxPoint(const FBoundingBox& box, const float3& point);
+float3 ClosestPointOnBoxToPoint(const FBoundingBox& box, const float3& point);
 //----------------------------------------------------------------------------
-float3 ClosestPointSpherePoint(const FSphere& sphere, const float3& point);
+float3 ClosestPointOnSphereToPoint(const FSphere& sphere, const float3& point);
 //----------------------------------------------------------------------------
-float3 ClosestPointSphereSphere(const FSphere& sphere1, const FSphere& sphere2);
+float3 ClosestPointOnSphereToSphere(const FSphere& sphere1, const FSphere& sphere2);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
